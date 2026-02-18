@@ -5,7 +5,7 @@ Track git commits for each release to enable changelog generation via `git diff`
 ---
 
 ## Latest
-v1.0.11 | 47e481f | 2026-02-18
+v1.0.12 | c1252b1 | 2026-02-18
 
 ---
 
@@ -13,6 +13,7 @@ v1.0.11 | 47e481f | 2026-02-18
 
 | Version | Commit | Date | Notes |
 |---------|--------|------|-------|
+| v1.0.11 | 47e481f | 2026-02-18 | 3 new regression tests, isTestDevice flag |
 | v1.0.10 | b490271 | 2026-02-17 | Fix chat duplication, promote mode |
 | v1.0.9 | 07764ea | 2026-02-17 | Chat media, usage limit, Google Play auto-upload |
 | v1.0.8 | 55a17a5 | 2026-02-17 | Push error UX, webhook test, skill doc |
