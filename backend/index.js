@@ -3495,12 +3495,17 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
     }
 }
 
-// Mark a chat message as delivered with target entity IDs
+// Mark a chat message as delivered with target entity IDs (APPENDS, does not overwrite)
 async function markChatMessageDelivered(chatMsgId, deliveredTo) {
     if (!chatMsgId) return;
     try {
         await chatPool.query(
-            `UPDATE chat_messages SET is_delivered = true, delivered_to = $2 WHERE id = $1`,
+            `UPDATE chat_messages SET is_delivered = true,
+               delivered_to = CASE
+                 WHEN delivered_to IS NULL OR delivered_to = '' THEN $2
+                 ELSE delivered_to || ',' || $2
+               END
+             WHERE id = $1`,
             [chatMsgId, deliveredTo]
         );
     } catch (err) {
