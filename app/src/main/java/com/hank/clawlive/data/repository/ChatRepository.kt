@@ -315,6 +315,16 @@ class ChatRepository private constructor(
             // Parse timestamp from ISO string
             val timestamp = parseIsoTimestamp(msg.created_at)
 
+            // Cross-source dedup: check if processEntityMessage() already stored this message
+            // (same text + same entity within the dedup window, but with a different key format)
+            if (!msg.is_from_user && msg.entity_id != null) {
+                val sinceTimestamp = timestamp - DEDUP_WINDOW_MS
+                if (chatDao.existsByContentAndEntity(msg.entity_id, msg.text, sinceTimestamp)) {
+                    Timber.d("Skipping backend message (already stored from entity polling): Entity ${msg.entity_id}")
+                    continue
+                }
+            }
+
             // Detect entity-to-entity pattern: "entity:0:LOBSTER->1" or "entity:0:LOBSTER->1,2,3"
             val entityPattern = Regex("^entity:(\\d+):([A-Z]+)->(\\S+)$")
             val entityMatch = entityPattern.find(msg.source)
