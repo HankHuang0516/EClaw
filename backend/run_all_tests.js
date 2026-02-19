@@ -14,9 +14,26 @@ const TEST_DIR = path.join(__dirname, 'tests');
 // API Base URL
 const API_BASE = process.env.API_BASE_URL || 'http://localhost:3000';
 
+// Load .env for credential-based tests
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    for (const line of envContent.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const eqIdx = trimmed.indexOf('=');
+        if (eqIdx > 0) {
+            const key = trimmed.slice(0, eqIdx);
+            const val = trimmed.slice(eqIdx + 1);
+            if (!process.env[key]) process.env[key] = val;
+        }
+    }
+}
+
 // Test files to run (in order of importance)
 // Note: Tests must be v5 compatible (deviceId + entityId based)
 const TEST_FILES = [
+    // ── Core API tests (no credentials needed) ──
     'test_ux_coverage.js',          // REQUIRED: UX coverage must be >= 98%
     'test_ux_improvements.js',      // Critical: API structure, isBound
     'test_device_isolation.js',     // Critical: Multi-device isolation
@@ -27,6 +44,12 @@ const TEST_FILES = [
     'test_chat_monitoring.js',      // Chat: Multi-entity speak-to, broadcast, dedup, rate limit
     'test_usage_limit.js',          // Usage: 15-message limit, premium bypass
     'test_mission_publish.js',      // Mission: TODO/RULE CRUD, incremental notify, delta publish
+    'test_entity_name_preservation.js', // Entity name persistence across rebind
+    'test_entity_echo_bug.js',      // Echo deduplication regression
+
+    // ── Credential-based tests (require .env with test device credentials) ──
+    'test-broadcast.js',            // Broadcast delivery + delivered_to append (needs BROADCAST_TEST_DEVICE_ID)
+    'test-bot-api-response.js',     // Bot API response rate >= 90% (needs TEST_DEVICE_ID + live bot)
 ];
 
 // Manual UI tests (run on device, not automated):
@@ -34,7 +57,7 @@ const TEST_FILES = [
 // - test_entity_communication.js - Manual device UI testing
 // - test_name_feature.js         - Manual device UI testing
 
-const TEST_TIMEOUT = 120000; // 120 seconds per test (entity_delete needs more time)
+const TEST_TIMEOUT = 300000; // 300 seconds per test (bot-api-response polls each test up to 120s)
 
 /**
  * Clean up test environment before/after tests
@@ -97,6 +120,7 @@ async function runTest(testFile) {
 
         const child = spawn('node', [testPath], {
             cwd: TEST_DIR,
+            env: { ...process.env },
             stdio: 'pipe'
         });
 
@@ -140,7 +164,9 @@ async function runTest(testFile) {
                 (output.includes('RESULTS:') && output.includes(', 0 failed')) ||
                 (output.includes('Results:') && output.includes('0 failed')) ||
                 (output.includes('Result:') && output.includes('passed') && !output.includes('0/')) ||
-                (output.match(/\d+\/\d+ tests passed/) && output.includes('✅'));
+                (output.match(/\d+\/\d+ tests passed/) && output.includes('✅')) ||
+                output.includes('RESULT: ALL PASS') ||       // test-broadcast.js
+                output.includes('RESULT: PASS')              // test-bot-api-response.js
             resolve({ file: testFile, passed, code, output });
         });
 
