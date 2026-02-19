@@ -270,10 +270,21 @@ async function main() {
     );
   }
 
-  // For entities with webhook (bot), wait for API response
-  // (The existing bot may update its state via /api/transform after receiving push)
-  console.log('\n  Waiting 15s for bot entities to process via webhook...');
-  await sleep(15000);
+  // Poll delivered_to until all webhook targets are marked, or timeout
+  console.log('\n  Waiting for webhook push delivery (polling delivered_to, max 60s)...');
+  const deliveryStart = Date.now();
+  const deliveryTimeout = 60000;
+  let lastDeliveredTo = '';
+  while (Date.now() - deliveryStart < deliveryTimeout) {
+    await sleep(5000);
+    const histCheck = await fetchJSON(`${API_BASE}/api/chat/history?deviceId=${deviceId}&deviceSecret=${encodeURIComponent(deviceSecret)}&limit=10`);
+    const bMsg = (histCheck.messages || []).find(m => m.text === broadcastText && m.is_from_bot === true);
+    lastDeliveredTo = bMsg?.delivered_to || '';
+    const ids = lastDeliveredTo.split(',').map(s => s.trim()).filter(Boolean);
+    const allDelivered = expectedTargets.every(t => ids.includes(String(t)));
+    console.log(`  [${((Date.now() - deliveryStart) / 1000).toFixed(0)}s] delivered_to="${lastDeliveredTo}" (${ids.length}/${expectedTargets.length})`);
+    if (allDelivered) break;
+  }
 
   for (const tid of expectedTargets) {
     const st = await fetchJSON(`${API_BASE}/api/status?deviceId=${deviceId}&entityId=${tid}`);
