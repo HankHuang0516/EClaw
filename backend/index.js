@@ -1073,6 +1073,7 @@ app.post('/api/bind', (req, res) => {
     delete pendingBindings[code];
 
     console.log(`[Bind] Device ${deviceId} Entity ${entityId} bound with botSecret${name ? ` (name: ${name})` : ''} (app v${deviceAppVersion || 'unknown'})`);
+    serverLog('info', 'bind', `Entity ${entityId} bound${name ? ` (name: ${name})` : ''}`, { deviceId, entityId });
 
     // Save data immediately after binding (critical operation)
     saveData();
@@ -1249,6 +1250,7 @@ app.post('/api/transform', (req, res) => {
     }
 
     console.log(`[Transform] Device ${deviceId} Entity ${eId}: ${state || entity.state} - "${message || entity.message}"`);
+    serverLog('info', 'transform', `${state || entity.state}: ${(message || entity.message || '').slice(0, 100)}`, { deviceId, entityId: eId, metadata: { state: state || entity.state } });
 
     res.json({
         success: true,
@@ -1343,6 +1345,7 @@ app.delete('/api/entity', async (req, res) => {
     device.entities[eId].name = removedEntityName || null;
 
     console.log(`[Remove] Device ${deviceId} Entity ${eId} unbound`);
+    serverLog('info', 'unbind', `Entity ${eId} unbound`, { deviceId, entityId: eId });
 
     // Save data immediately after unbinding (critical operation)
     await saveData();
@@ -1644,11 +1647,14 @@ app.post('/api/client/speak', async (req, res) => {
             if (pushResult.pushed) {
                 messageObj.delivered = true;
                 console.log(`[Push] ✓ Successfully pushed to Device ${deviceId} Entity ${eId}`);
+                serverLog('info', 'client_push', `Entity ${eId} push OK`, { deviceId, entityId: eId, metadata: { source } });
             } else {
                 console.warn(`[Push] ✗ Failed to push to Device ${deviceId} Entity ${eId}: ${pushResult.reason}`);
+                serverLog('warn', 'client_push', `Entity ${eId} push failed: ${pushResult.reason}`, { deviceId, entityId: eId });
             }
         } else if (entity.isBound) {
             console.warn(`[Push] ✗ No webhook registered for Device ${deviceId} Entity ${eId} - client will show dialog`);
+            serverLog('warn', 'client_push', `Entity ${eId} no webhook`, { deviceId, entityId: eId });
         }
 
         // Determine binding type for this entity
@@ -1801,12 +1807,17 @@ app.post('/api/entity/speak-to', async (req, res) => {
             if (pushResult.pushed) {
                 messageObj.delivered = true;
                 markChatMessageDelivered(chatMsgId, String(toId));
+                serverLog('info', 'speakto_push', `Entity ${fromId} -> ${toId} push OK`, { deviceId, entityId: fromId, metadata: { toId } });
+            } else {
+                serverLog('warn', 'speakto_push', `Entity ${fromId} -> ${toId} not-pushed: ${pushResult.reason || 'unknown'}`, { deviceId, entityId: fromId, metadata: { toId } });
             }
         }).catch(err => {
             console.error(`[SpeakTo] Background push failed: ${err.message}`);
+            serverLog('error', 'speakto_push', `Entity ${fromId} -> ${toId} FAILED: ${err.message}`, { deviceId, entityId: fromId, metadata: { toId } });
         });
     } else if (toEntity.isBound) {
         console.warn(`[Push] ✗ No webhook registered for Device ${deviceId} Entity ${toId} - client will show dialog`);
+        serverLog('warn', 'speakto_push', `Entity ${toId} no webhook (polling)`, { deviceId, entityId: toId });
     }
 
     // Determine binding type
@@ -1873,6 +1884,7 @@ app.post('/api/entity/broadcast', async (req, res) => {
     // Bot-to-bot loop prevention: rate limit per sending entity (resets only on human message)
     if (!checkBotToBotRateLimit(deviceId, fromId)) {
         console.warn(`[Broadcast] RATE LIMITED: Device ${deviceId} Entity ${fromId} (bot-to-bot loop prevention)`);
+        serverLog('warn', 'broadcast', `RATE LIMITED: Entity ${fromId}`, { deviceId, entityId: fromId });
         return res.status(429).json({
             success: false,
             message: `Entity ${fromId} bot-to-bot limit reached (${BOT2BOT_MAX_MESSAGES}). Counter resets when a human sends a message.`,
@@ -1903,6 +1915,7 @@ app.post('/api/entity/broadcast', async (req, res) => {
     }
 
     console.log(`[Broadcast] Device ${deviceId} Entity ${fromId} -> Entities [${targetIds.join(',')}]: "${text}" (b2b remaining: ${b2bRemaining})`);
+    serverLog('info', 'broadcast', `Entity ${fromId} -> [${targetIds.join(',')}]: "${text.slice(0, 80)}"`, { deviceId, entityId: fromId, metadata: { targets: targetIds, b2bRemaining } });
 
     // Save ONE chat message for the broadcast (sender's perspective, all targets)
     const broadcastChatMsgId = await saveChatMessage(deviceId, fromId, text, `${sourceLabel}->${targetIds.join(',')}`, false, true, mediaType || null, mediaUrl || null);
@@ -1961,12 +1974,17 @@ app.post('/api/entity/broadcast', async (req, res) => {
                 if (pushResult.pushed) {
                     messageObj.delivered = true;
                     markChatMessageDelivered(broadcastChatMsgId, String(toId));
+                    serverLog('info', 'broadcast_push', `Entity ${toId} push OK`, { deviceId, entityId: toId });
+                } else {
+                    serverLog('warn', 'broadcast_push', `Entity ${toId} push returned not-pushed: ${pushResult.reason || 'unknown'}`, { deviceId, entityId: toId });
                 }
             }).catch(err => {
                 console.error(`[Broadcast] Background push to Entity ${toId} failed: ${err.message}`);
+                serverLog('error', 'broadcast_push', `Entity ${toId} push FAILED: ${err.message}`, { deviceId, entityId: toId });
             });
         } else if (toEntity.isBound) {
             console.warn(`[Push] ✗ No webhook registered for Device ${deviceId} Entity ${toId} - client will show dialog`);
+            serverLog('warn', 'broadcast_push', `Entity ${toId} no webhook (polling mode)`, { deviceId, entityId: toId });
         }
 
         // Determine binding type for broadcast target
@@ -3512,6 +3530,83 @@ async function markChatMessageDelivered(chatMsgId, deliveredTo) {
         // Silently fail
     }
 }
+
+// ============================================
+// SERVER LOGS (PostgreSQL)
+// ============================================
+
+// Auto-create server_logs table
+chatPool.query(`
+    CREATE TABLE IF NOT EXISTS server_logs (
+        id SERIAL PRIMARY KEY,
+        level VARCHAR(8) NOT NULL DEFAULT 'info',
+        category VARCHAR(32) NOT NULL,
+        message TEXT NOT NULL,
+        device_id TEXT,
+        entity_id INTEGER,
+        metadata JSONB,
+        created_at TIMESTAMP DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_server_logs_created ON server_logs(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_server_logs_category ON server_logs(category);
+    CREATE INDEX IF NOT EXISTS idx_server_logs_device ON server_logs(device_id);
+`).catch(() => {});
+
+// Fire-and-forget log writer (never blocks main flow)
+function serverLog(level, category, message, opts = {}) {
+    const { deviceId, entityId, metadata } = opts;
+    chatPool.query(
+        `INSERT INTO server_logs (level, category, message, device_id, entity_id, metadata)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [level, category, message, deviceId || null, entityId ?? null, metadata ? JSON.stringify(metadata) : null]
+    ).catch(() => {}); // Never throw — logs are non-critical
+}
+
+// GET /api/logs — Query server logs for debugging
+// Auth: requires deviceSecret of ANY device on the server (proves you're an admin/owner)
+app.get('/api/logs', async (req, res) => {
+    const { deviceId, deviceSecret, category, level, since, limit = 100 } = req.query;
+
+    // Basic auth: must provide a valid deviceId+deviceSecret pair
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    }
+
+    try {
+        let query = 'SELECT * FROM server_logs WHERE 1=1';
+        const params = [];
+
+        if (category) {
+            params.push(category);
+            query += ` AND category = $${params.length}`;
+        }
+        if (level) {
+            params.push(level);
+            query += ` AND level = $${params.length}`;
+        }
+        if (since) {
+            params.push(new Date(parseInt(since)));
+            query += ` AND created_at > $${params.length}`;
+        }
+        // Optional: filter by a specific device
+        if (req.query.filterDevice) {
+            params.push(req.query.filterDevice);
+            query += ` AND device_id = $${params.length}`;
+        }
+
+        params.push(Math.min(parseInt(limit) || 100, 500));
+        query += ` ORDER BY created_at DESC LIMIT $${params.length}`;
+
+        const result = await chatPool.query(query, params);
+        res.json({ success: true, count: result.rows.length, logs: result.rows.reverse() });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
 
 // Mark user messages as read when bot responds
 async function markMessagesAsRead(deviceId, entityId) {
