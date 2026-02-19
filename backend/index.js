@@ -3445,8 +3445,25 @@ chatPool.query(`
 `).catch(() => {});
 
 // Save chat message to database, returns row ID (UUID) or null
+// Deduplication: bot messages with identical text for the same entity within 10s are skipped
 async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null) {
     try {
+        // Dedup: skip if the same bot message was already saved recently
+        // This prevents echo when bot calls multiple endpoints (broadcast + sync-message + transform)
+        if (isFromBot && !isFromUser && text) {
+            const dedup = await chatPool.query(
+                `SELECT id FROM chat_messages
+                 WHERE device_id = $1 AND entity_id = $2 AND text = $3
+                 AND is_from_bot = true AND created_at > NOW() - INTERVAL '10 seconds'
+                 LIMIT 1`,
+                [deviceId, entityId, text]
+            );
+            if (dedup.rows.length > 0) {
+                console.log(`[Chat] Dedup: skipping duplicate bot message for entity ${entityId} (existing id=${dedup.rows[0].id}, source="${source}")`);
+                return dedup.rows[0].id;
+            }
+        }
+
         const result = await chatPool.query(
             `INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot, media_type, media_url)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
