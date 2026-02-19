@@ -11,6 +11,8 @@ import android.os.Looper
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.FrameLayout
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -187,6 +189,29 @@ class ChatActivity : AppCompatActivity() {
         rootDimBackground.setOnClickListener { finish() }
         val chatCard = findViewById<View>(R.id.chatCard)
         chatCard.setOnClickListener { /* consume click */ }
+
+        // Handle keyboard (IME) insets for Android 15+ edge-to-edge enforcement.
+        // On targetSdk 35, adjustResize no longer shrinks the window — the keyboard
+        // overlaps app content. We must manually adjust the card's bottom margin.
+        val defaultBottomMargin = (chatCard.layoutParams as FrameLayout.LayoutParams).bottomMargin
+        ViewCompat.setOnApplyWindowInsetsListener(rootDimBackground) { _, insets ->
+            val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
+            val navBarInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            val params = chatCard.layoutParams as FrameLayout.LayoutParams
+            params.bottomMargin = if (imeInsets.bottom > 0) {
+                imeInsets.bottom
+            } else {
+                maxOf(defaultBottomMargin, navBarInsets.bottom)
+            }
+            chatCard.layoutParams = params
+
+            // Scroll chat to bottom when keyboard appears so latest messages stay visible
+            if (imeInsets.bottom > 0 && chatAdapter.itemCount > 0) {
+                recyclerChat.scrollToPosition(chatAdapter.itemCount - 1)
+            }
+
+            insets
+        }
     }
 
     private fun setupRecyclerView() {
