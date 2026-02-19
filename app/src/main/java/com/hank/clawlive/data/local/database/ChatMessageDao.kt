@@ -120,6 +120,13 @@ interface ChatMessageDao {
     suspend fun markDelivered(messageId: Long, deliveredTo: String)
 
     /**
+     * Update delivery status for an existing message matched by deduplication key.
+     * Used when backend sync detects updated is_delivered / delivered_to after initial insert.
+     */
+    @Query("UPDATE chat_messages SET isDelivered = :isDelivered, deliveredTo = :deliveredTo WHERE deduplicationKey = :dedupKey")
+    suspend fun updateDeliveryByDedupKey(dedupKey: String, isDelivered: Boolean, deliveredTo: String?)
+
+    /**
      * Get total message count
      */
     @Query("SELECT COUNT(*) FROM chat_messages")
