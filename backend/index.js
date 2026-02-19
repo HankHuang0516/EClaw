@@ -1562,7 +1562,8 @@ app.post('/api/client/speak', async (req, res) => {
                 message: "Daily message limit reached",
                 error: "USAGE_LIMIT_EXCEEDED",
                 remaining: 0,
-                limit: usage.limit
+                limit: usage.limit,
+                used: usage.used || 0
             });
         }
     } catch (usageErr) {

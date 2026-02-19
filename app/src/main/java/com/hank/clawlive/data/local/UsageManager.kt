@@ -140,6 +140,17 @@ class UsageManager private constructor(context: Context) {
     }
 
     /**
+     * Sync local usage count with server-reported value.
+     * Ensures client display matches actual server-side tracking.
+     */
+    fun syncFromServer(serverUsageCount: Int) {
+        prefs.edit()
+            .putInt(KEY_DAILY_COUNT, serverUsageCount)
+            .putString(KEY_LAST_RESET_DATE, getTodayString())
+            .apply()
+    }
+
+    /**
      * Reset usage (for testing only)
      */
     fun resetUsage() {

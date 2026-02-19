@@ -297,6 +297,55 @@ module.exports = function (devices, authMiddleware) {
     });
 
     // ============================================
+    // POST /usage (device-auth, for Android APP)
+    // ============================================
+    router.post('/usage', async (req, res) => {
+        try {
+            const { deviceId, deviceSecret } = req.body;
+
+            if (!deviceId || !deviceSecret) {
+                return res.status(400).json({ success: false, error: 'Missing credentials' });
+            }
+
+            const device = devices[deviceId];
+            if (!device || device.deviceSecret !== deviceSecret) {
+                return res.status(401).json({ success: false, error: 'Invalid credentials' });
+            }
+
+            // Check subscription status
+            let isPremium = !!device.isPremium;
+            if (!isPremium) {
+                const userResult = await pool.query(
+                    "SELECT subscription_status, subscription_expires_at FROM user_accounts WHERE device_id = $1",
+                    [deviceId]
+                );
+                if (userResult.rows.length > 0) {
+                    const user = userResult.rows[0];
+                    const expiresAt = user.subscription_expires_at ? parseInt(user.subscription_expires_at) : null;
+                    isPremium = user.subscription_status === 'premium' && (!expiresAt || expiresAt > Date.now());
+                }
+            }
+
+            // Get usage count
+            const usageResult = await pool.query(
+                'SELECT message_count FROM usage_tracking WHERE device_id = $1 AND date = CURRENT_DATE',
+                [deviceId]
+            );
+            const usageToday = usageResult.rows.length > 0 ? usageResult.rows[0].message_count : 0;
+
+            res.json({
+                success: true,
+                isPremium: isPremium,
+                usageToday: usageToday,
+                usageLimit: isPremium ? null : 15
+            });
+        } catch (error) {
+            console.error('[Subscription] Usage check error:', error);
+            res.status(500).json({ success: false, error: 'Failed to get usage' });
+        }
+    });
+
+    // ============================================
     // Recurring charge cron (runs daily)
     // ============================================
     async function processRecurringCharges() {
@@ -405,6 +454,21 @@ module.exports = function (devices, authMiddleware) {
         }
 
         // Check usage count for free-tier users
+        // First check current count WITHOUT incrementing to avoid inflating the counter on denied requests
+        const checkResult = await pool.query(
+            'SELECT message_count FROM usage_tracking WHERE device_id = $1 AND date = CURRENT_DATE',
+            [deviceId]
+        );
+
+        const currentCount = checkResult.rows.length > 0 ? checkResult.rows[0].message_count : 0;
+        const limit = 15;
+
+        if (currentCount >= limit) {
+            console.log(`[Usage] LIMIT HIT for ${deviceId}: ${currentCount}/${limit}`);
+            return { allowed: false, remaining: 0, limit: limit, used: currentCount };
+        }
+
+        // Only increment if within limit
         const usageResult = await pool.query(
             `INSERT INTO usage_tracking (device_id, date, message_count)
              VALUES ($1, CURRENT_DATE, 1)
@@ -415,14 +479,8 @@ module.exports = function (devices, authMiddleware) {
         );
 
         const count = usageResult.rows[0].message_count;
-        const limit = 15;
 
-        if (count > limit) {
-            console.log(`[Usage] LIMIT HIT for ${deviceId}: ${count}/${limit}`);
-            return { allowed: false, remaining: 0, limit: limit };
-        }
-
-        return { allowed: true, remaining: limit - count, limit: limit };
+        return { allowed: true, remaining: limit - count, limit: limit, used: count };
     }
 
     // Load premium status for all known users on startup

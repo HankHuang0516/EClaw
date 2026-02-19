@@ -328,7 +328,36 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
      */
     fun refreshState() {
         querySubscriptionStatus()
+        syncUsageFromServer()
         updateState()
+    }
+
+    /**
+     * Fetch actual usage count from server and sync local state.
+     * This ensures the client displays the correct usage even after app updates or reinstalls.
+     */
+    private fun syncUsageFromServer() {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val body = mapOf(
+                    "deviceId" to deviceManager.deviceId,
+                    "deviceSecret" to deviceManager.deviceSecret
+                )
+                val response = api.getSubscriptionUsage(body)
+                if (response.success) {
+                    usageManager.syncFromServer(response.usageToday)
+                    if (response.isPremium) {
+                        usageManager.isPremium = true
+                    }
+                    scope.launch(Dispatchers.Main) {
+                        updateState()
+                    }
+                    Timber.tag(TAG).d("Usage synced from server: ${response.usageToday}, premium=${response.isPremium}")
+                }
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Failed to sync usage from server")
+            }
+        }
     }
 
     /**

@@ -102,6 +102,9 @@ interface ClawApiService {
     @POST("api/subscription/verify-google")
     suspend fun verifyGoogleSubscription(@Body body: Map<String, @JvmSuppressWildcards Any>): ApiResponse
 
+    @POST("api/subscription/usage")
+    suspend fun getSubscriptionUsage(@Body body: Map<String, String>): SubscriptionUsageResponse
+
     // ============================================
     // CHAT HISTORY (Backend PostgreSQL)
     // ============================================
@@ -223,5 +226,13 @@ data class MediaUploadResponse(
     val success: Boolean,
     val mediaUrl: String? = null,
     val mediaType: String? = null,
+    val error: String? = null
+)
+
+data class SubscriptionUsageResponse(
+    val success: Boolean,
+    val isPremium: Boolean = false,
+    val usageToday: Int = 0,
+    val usageLimit: Int? = null,
     val error: String? = null
 )

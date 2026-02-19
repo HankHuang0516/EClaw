@@ -496,6 +496,12 @@ class ChatActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 Timber.e(e, "Failed to send media message")
                 if (e is retrofit2.HttpException && e.code() == 429) {
+                    try {
+                        val errorBody = e.response()?.errorBody()?.string()
+                        val json = org.json.JSONObject(errorBody ?: "{}")
+                        val serverUsed = json.optInt("used", -1)
+                        if (serverUsed >= 0) usageManager.syncFromServer(serverUsed)
+                    } catch (_: Exception) { }
                     showUsageLimitDialog()
                 } else {
                     Toast.makeText(this@ChatActivity, "Send failed: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -753,6 +759,12 @@ class ChatActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 Timber.e(e, "Failed to send message")
                 if (e is retrofit2.HttpException && e.code() == 429) {
+                    try {
+                        val errorBody = e.response()?.errorBody()?.string()
+                        val json = org.json.JSONObject(errorBody ?: "{}")
+                        val serverUsed = json.optInt("used", -1)
+                        if (serverUsed >= 0) usageManager.syncFromServer(serverUsed)
+                    } catch (_: Exception) { }
                     showUsageLimitDialog()
                 } else {
                     Toast.makeText(this@ChatActivity, "Send failed: ${e.message}", Toast.LENGTH_SHORT).show()
