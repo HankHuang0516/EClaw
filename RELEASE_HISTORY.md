@@ -5,7 +5,7 @@ Track git commits for each release to enable changelog generation via `git diff`
 ---
 
 ## Latest
-v1.0.15 | 0aaad4d | 2026-02-19
+v1.0.16 | 9241d5a | 2026-02-20
 
 ---
 
@@ -13,6 +13,7 @@ v1.0.15 | 0aaad4d | 2026-02-19
 
 | Version | Commit | Date | Notes |
 |---------|--------|------|-------|
+| v1.0.15 | 0aaad4d | 2026-02-19 | Chat echo dedup, LATEST_APP_VERSION sync, test fixes |
 | v1.0.14 | b31edb3 | 2026-02-19 | Server logs, broadcast fix, entity echo dedup |
 | v1.0.13 | 7048a5d | 2026-02-19 | Server logs, broadcast fix, entity echo dedup |
 | v1.0.12 | c1252b1 | 2026-02-18 | Subscription sync, usage limit fix |
