@@ -34,3 +34,41 @@ When investigating backend bugs (broadcast failure, push not delivered, etc.):
 - 4 entity slots per device (0-3), each independently bindable
 - Bots use OpenClaw platform (Zeabur), communicate via webhook push + exec+curl
 - Push notifications use instruction-first format with pre-filled curl templates
+
+## Device Telemetry (AI Debug Buffer)
+
+Every device has a structured telemetry buffer (~1 MB cap) at `POST/GET/DELETE /api/device-telemetry`.
+This buffer is the **primary data source for AI-automated debugging**.
+
+### Auto-captured (no action needed)
+- **Backend middleware** auto-logs every device-scoped API call (endpoint, params, response, duration)
+- **Web `telemetry.js`** auto-tracks page views + wraps `apiCall()` for all portal pages
+- **Android `TelemetryInterceptor`** auto-logs all OkHttp requests via interceptor
+
+### When adding new features — MUST DO:
+1. **New backend endpoint**: If it accepts `deviceId`, the middleware captures it automatically. No action needed.
+2. **New web portal page**: Include `<script src="../shared/telemetry.js"></script>` AFTER `auth.js`. Page view auto-tracked.
+3. **New Android Activity**: Call `TelemetryHelper.trackPageView(context, "page_name")` in `onResume()`.
+4. **New user-facing action** (button click, dialog, etc.): Call `telemetry.trackAction()` (web) or `TelemetryHelper.trackAction()` (Android).
+5. **Error handling**: Call `telemetry.trackError()` / `TelemetryHelper.trackError()` in catch blocks for user-visible errors.
+
+### Querying telemetry for debugging
+```bash
+# Get summary (usage, type breakdown)
+curl "https://eclaw.up.railway.app/api/device-telemetry/summary?deviceId=ID&deviceSecret=SECRET"
+
+# Get all entries (newest 500)
+curl "https://eclaw.up.railway.app/api/device-telemetry?deviceId=ID&deviceSecret=SECRET"
+
+# Filter by type
+curl "https://eclaw.up.railway.app/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&type=api_req"
+
+# Filter by time range
+curl "https://eclaw.up.railway.app/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&since=TIMESTAMP_MS"
+```
+
+### Key files
+- Backend module: `backend/device-telemetry.js`
+- Web SDK: `backend/public/shared/telemetry.js`
+- Android interceptor: `app/.../data/remote/TelemetryInterceptor.kt`
+- Android helper: `app/.../data/remote/TelemetryHelper.kt`

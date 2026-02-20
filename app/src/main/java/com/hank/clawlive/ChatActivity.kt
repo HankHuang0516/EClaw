@@ -39,6 +39,7 @@ import com.hank.clawlive.data.local.UsageManager
 import com.hank.clawlive.data.local.database.ChatMessage
 import com.hank.clawlive.data.remote.ClawApiService
 import com.hank.clawlive.data.remote.NetworkModule
+import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.data.repository.ChatRepository
 import com.hank.clawlive.ui.chat.ChatAdapter
 import com.hank.clawlive.widget.ChatWidgetProvider
@@ -141,6 +142,11 @@ class ChatActivity : AppCompatActivity() {
         setupTargetChips()
         setupListeners()
         observeMessages()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        TelemetryHelper.trackPageView(this, "chat")
     }
 
     override fun onDestroy() {

@@ -14,7 +14,10 @@ object NetworkModule {
         level = HttpLoggingInterceptor.Level.BODY
     }
 
+    private val telemetryInterceptor = TelemetryInterceptor()
+
     private val okHttpClient = OkHttpClient.Builder()
+        .addInterceptor(telemetryInterceptor)
         .addInterceptor(loggingInterceptor)
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)  // Increased for handshake + webhook processing

@@ -31,6 +31,7 @@ import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.local.UsageManager
 import com.hank.clawlive.data.remote.NetworkModule
+import com.hank.clawlive.data.remote.TelemetryHelper
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import kotlinx.coroutines.launch
@@ -101,6 +102,7 @@ class SettingsActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        TelemetryHelper.trackPageView(this, "settings")
         billingManager.refreshState()
         updateUsageDisplay()
         updateEntityCount()

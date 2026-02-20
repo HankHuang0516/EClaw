@@ -38,6 +38,7 @@ import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.data.model.UsageInfo
 import com.hank.clawlive.data.model.UsageStatus
 import com.hank.clawlive.data.remote.NetworkModule
+import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.data.repository.StateRepository
 import com.hank.clawlive.ui.MainViewModel
 import kotlinx.coroutines.delay
@@ -96,6 +97,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Initialize telemetry (safe to call multiple times)
+        TelemetryHelper.init(this)
+
         // Enable edge-to-edge display
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
@@ -110,6 +114,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        TelemetryHelper.trackPageView(this, "main")
         loadBoundEntities()
     }
 

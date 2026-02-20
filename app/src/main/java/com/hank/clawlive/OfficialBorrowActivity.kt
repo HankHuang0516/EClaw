@@ -23,6 +23,7 @@ import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.model.BorrowBinding
 import com.hank.clawlive.data.model.OfficialBorrowStatusResponse
 import com.hank.clawlive.data.remote.NetworkModule
+import com.hank.clawlive.data.remote.TelemetryHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -61,6 +62,7 @@ class OfficialBorrowActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        TelemetryHelper.trackPageView(this, "official_borrow")
         billingManager.refreshState()
 
         // After purchase completes, add paid slot and bind
