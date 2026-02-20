@@ -156,9 +156,17 @@
 
     <!-- Feedback -->
     <string name="feedback">意見回饋</string>
-    <string name="feedback_hint">請告訴我們您的想法…</string>
+    <string name="feedback_desc">發現 Bug 或有建議？讓我們知道！</string>
+    <string name="feedback_hint">描述問題或建議…</string>
     <string name="feedback_sent">意見已送出，感謝您！</string>
     <string name="feedback_empty">請輸入意見內容</string>
+    <string name="feedback_mark">標記</string>
+    <string name="feedback_marked_btn">已標記</string>
+    <string name="feedback_marked">已於 %s 標記 — 送出意見回饋時將自動擷取此時間點起的紀錄。</string>
+    <string name="feedback_auto_log_hint">系統將自動擷取最近 5 分鐘的紀錄以協助問題診斷。</string>
+    <string name="feedback_cat_bug">Bug</string>
+    <string name="feedback_cat_feature">功能建議</string>
+    <string name="feedback_cat_question">提問</string>
     <string name="submit">送出</string>
     <string name="app_version">版本：%s</string>
 

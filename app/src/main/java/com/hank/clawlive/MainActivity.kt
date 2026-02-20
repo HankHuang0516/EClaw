@@ -377,7 +377,7 @@ class MainActivity : AppCompatActivity() {
         entityAdapter.isEditMode = isEditMode
         // Visual feedback: tint edit button when active
         btnEditMode.setColorFilter(
-            if (isEditMode) Color.parseColor("#4FC3F7") else Color.parseColor("#888888")
+            if (isEditMode) Color.parseColor("#4FC3F7") else Color.WHITE
         )
 
         TelemetryHelper.trackAction(

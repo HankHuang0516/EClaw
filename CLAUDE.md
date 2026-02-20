@@ -1,5 +1,10 @@
 # Claude Code Instructions
 
+## Feature Parity Rule
+
+**All user-facing features must be kept in sync between the Web Portal and the Android App.**
+When implementing or modifying any feature on one platform, ensure the other platform is updated to match. This includes UI elements, API fields sent, string resources, and behavior.
+
 ## Debugging Server Issues
 
 When investigating backend bugs (broadcast failure, push not delivered, etc.):

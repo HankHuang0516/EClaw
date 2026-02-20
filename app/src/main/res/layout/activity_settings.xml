@@ -197,17 +197,74 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Feedback Button (Moved to top as requested) -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnFeedback"
+            <!-- Feedback Card (with Mark Bug Moment button, matching web portal) -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/feedback"
-                android:textColor="@android:color/black"
-                app:backgroundTint="@android:color/white"
                 android:layout_marginBottom="12dp"
-                app:cornerRadius="12dp"
-                style="@style/Widget.Material3.Button.TonalButton"/>
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="@android:color/white">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:id="@+id/btnFeedback"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/feedback"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/black"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/feedback_desc"
+                            android:textSize="13sp"
+                            android:textColor="#666666"
+                            android:layout_marginTop="2dp"/>
+
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnMarkBug"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:text="@string/feedback_mark"
+                        android:textSize="13sp"
+                        android:textColor="@android:color/black"
+                        android:minWidth="0dp"
+                        android:paddingHorizontal="14dp"
+                        app:backgroundTint="#F0F0F0"
+                        app:cornerRadius="8dp"
+                        style="@style/Widget.Material3.Button.TonalButton"/>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Mark status text (shown after marking) -->
+            <TextView
+                android:id="@+id/tvMarkStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="#FFD23F"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp"
+                android:paddingHorizontal="4dp"/>
 
             <!-- Privacy Policy Button -->
             <com.google.android.material.button.MaterialButton

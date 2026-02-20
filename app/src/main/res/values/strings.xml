@@ -173,9 +173,17 @@
 
     <!-- Feedback -->
     <string name="feedback">Feedback</string>
-    <string name="feedback_hint">Tell us what you think…</string>
+    <string name="feedback_desc">Found a bug or have a suggestion? Let us know!</string>
+    <string name="feedback_hint">Describe the issue or suggestion…</string>
     <string name="feedback_sent">Feedback sent, thank you!</string>
     <string name="feedback_empty">Please enter your feedback</string>
+    <string name="feedback_mark">Mark</string>
+    <string name="feedback_marked_btn">Marked</string>
+    <string name="feedback_marked">Marked at %s — logs from this point will be captured when you submit feedback.</string>
+    <string name="feedback_auto_log_hint">Logs from the last 5 minutes will be automatically captured to help diagnose the issue.</string>
+    <string name="feedback_cat_bug">Bug</string>
+    <string name="feedback_cat_feature">Feature</string>
+    <string name="feedback_cat_question">Question</string>
     <string name="submit">Submit</string>
     <string name="app_version">Version: %s</string>
 

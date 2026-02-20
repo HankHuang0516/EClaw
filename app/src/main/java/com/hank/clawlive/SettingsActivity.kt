@@ -51,7 +51,9 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var tvEntityCount: TextView
     private lateinit var progressUsage: ProgressBar
     private lateinit var btnSubscribe: MaterialButton
-    private lateinit var btnFeedback: MaterialButton
+    private lateinit var btnFeedback: LinearLayout
+    private lateinit var btnMarkBug: MaterialButton
+    private lateinit var tvMarkStatus: TextView
     private lateinit var btnPrivacyPolicy: MaterialButton
     private lateinit var btnWebPortal: MaterialButton
     private lateinit var chipGroupLanguage: ChipGroup
@@ -121,6 +123,8 @@ class SettingsActivity : AppCompatActivity() {
         topBar = findViewById(R.id.topBar)
         tvEntityCount = findViewById(R.id.tvEntityCount)
         btnFeedback = findViewById(R.id.btnFeedback)
+        btnMarkBug = findViewById(R.id.btnMarkBug)
+        tvMarkStatus = findViewById(R.id.tvMarkStatus)
         btnPrivacyPolicy = findViewById(R.id.btnPrivacyPolicy)
         btnWebPortal = findViewById(R.id.btnWebPortal)
     }
@@ -136,6 +140,10 @@ class SettingsActivity : AppCompatActivity() {
 
         btnFeedback.setOnClickListener {
             showFeedbackDialog()
+        }
+
+        btnMarkBug.setOnClickListener {
+            markBugMoment()
         }
 
         btnPrivacyPolicy.setOnClickListener {
@@ -275,45 +283,116 @@ class SettingsActivity : AppCompatActivity() {
             .show()
     }
 
+    private var feedbackCategory = "bug"
+
     private fun showFeedbackDialog() {
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dpToPx(20), dpToPx(12), dpToPx(20), 0)
+        }
+
+        // Description text
+        val descText = TextView(this).apply {
+            text = getString(R.string.feedback_auto_log_hint)
+            setTextColor(0xFF888888.toInt())
+            textSize = 13f
+        }
+        container.addView(descText)
+
+        // Category chips
+        val chipGroup = ChipGroup(this).apply {
+            isSingleSelection = true
+            isSelectionRequired = true
+            setPadding(0, dpToPx(8), 0, dpToPx(4))
+        }
+
+        val categories = listOf(
+            "bug" to getString(R.string.feedback_cat_bug),
+            "feature" to getString(R.string.feedback_cat_feature),
+            "question" to getString(R.string.feedback_cat_question)
+        )
+
+        feedbackCategory = "bug"
+
+        categories.forEach { (value, label) ->
+            val chip = Chip(this).apply {
+                text = label
+                isCheckable = true
+                isChecked = (value == "bug")
+                setOnCheckedChangeListener { _, isChecked ->
+                    if (isChecked) feedbackCategory = value
+                }
+            }
+            chipGroup.addView(chip)
+        }
+        container.addView(chipGroup)
+
+        // Text input
         val inputLayout = TextInputLayout(this).apply {
             hint = getString(R.string.feedback_hint)
             boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
-            setPadding(dpToPx(16), dpToPx(8), dpToPx(16), 0)
         }
         val input = TextInputEditText(this).apply {
             maxLines = 5
             minLines = 3
         }
         inputLayout.addView(input)
+        container.addView(inputLayout)
 
         AlertDialog.Builder(this)
             .setTitle(R.string.feedback)
-            .setView(inputLayout)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
+            .setView(container)
+            .setPositiveButton(R.string.send) { _, _ ->
                 val message = input.text?.toString()?.trim() ?: ""
                 if (message.isEmpty()) {
                     Toast.makeText(this, R.string.feedback_empty, Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
-                sendFeedback(message)
+                sendFeedback(message, feedbackCategory)
             }
-            .setNegativeButton(android.R.string.cancel, null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
-    private fun sendFeedback(message: String) {
+    private fun sendFeedback(message: String, category: String) {
         lifecycleScope.launch {
             try {
                 val body = mapOf(
                     "deviceId" to deviceManager.deviceId,
+                    "deviceSecret" to deviceManager.deviceSecret,
                     "message" to message,
+                    "category" to category,
                     "appVersion" to (packageManager.getPackageInfo(packageName, 0).versionName ?: "")
                 )
                 NetworkModule.api.sendFeedback(body)
                 Toast.makeText(this@SettingsActivity, R.string.feedback_sent, Toast.LENGTH_SHORT).show()
+                // Hide mark status after successful submit
+                tvMarkStatus.visibility = View.GONE
             } catch (e: Exception) {
                 Timber.e(e, "Failed to send feedback")
+                TelemetryHelper.trackError(this@SettingsActivity, "send_feedback", e.message ?: "unknown")
+                Toast.makeText(this@SettingsActivity, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun markBugMoment() {
+        lifecycleScope.launch {
+            try {
+                val body = mapOf("deviceId" to deviceManager.deviceId)
+                NetworkModule.api.markFeedback(body)
+                tvMarkStatus.visibility = View.VISIBLE
+                tvMarkStatus.text = getString(R.string.feedback_marked,
+                    java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
+                        .format(java.util.Date()))
+                btnMarkBug.text = getString(R.string.feedback_marked_btn)
+                btnMarkBug.postDelayed({
+                    btnMarkBug.text = getString(R.string.feedback_mark)
+                }, 5000)
+                TelemetryHelper.trackAction(this@SettingsActivity, "mark_bug_moment")
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to mark bug moment")
+                TelemetryHelper.trackError(this@SettingsActivity, "mark_bug_moment", e.message ?: "unknown")
                 Toast.makeText(this@SettingsActivity, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }

@@ -64,6 +64,9 @@ interface ClawApiService {
     @POST("api/feedback")
     suspend fun sendFeedback(@Body body: Map<String, String>): ApiResponse
 
+    @POST("api/feedback/mark")
+    suspend fun markFeedback(@Body body: Map<String, String>): ApiResponse
+
     // ============================================
     // BOT POLLING ENDPOINTS
     // ============================================
