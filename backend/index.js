@@ -1,4 +1,4 @@
-// Claw Live Wallpaper Backend - Multi-Device Multi-Entity Support (v5.2)
+// Claw Live Wallpaper Backend - Multi-Device Multi-Entity Support (v5.3)
 // Each device has its own 4 entity slots (matrix architecture)
 // v5.2 Changes (PostgreSQL):
 //   - Bug #1 Fix: Added validation to prevent crashes from malformed requests
