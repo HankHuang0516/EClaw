@@ -49,45 +49,86 @@ function loadEnvFile() {
 // A test PASSes if the bot called the API (message changed from default).
 // Content validation is a secondary check reported separately.
 
+// Tests are ordered so the first 10 cover ALL 6 categories (for regression suite).
+// Full 20 can be run manually with --count 20.
 const TEST_CASES = [
-  // ─── Category: Basic Arithmetic ───
-  // Purpose: Simplest possible questions. If these fail, the bot is not
-  //   calling the API at all → check push notification format in index.js
-  //   (instruction-first template, botSecret, ACTION REQUIRED header).
+  // ── 1. arithmetic (core smoke test) ──
   {
     category: 'arithmetic',
     purpose: 'Simplest API call test — if this fails, push template is broken',
     q: 'What is 2+2?',
     validate: m => /4/.test(m),
   },
-  {
-    category: 'arithmetic',
-    purpose: 'Verify bot handles division and returns numeric result via API',
-    q: 'What is 100 divided by 4?',
-    validate: m => /25/.test(m),
-  },
-  {
-    category: 'arithmetic',
-    purpose: 'Multiplication — tests numeric response formatting',
-    q: 'What is 7 times 8?',
-    validate: m => /56/.test(m),
-  },
-
-  // ─── Category: Factual Knowledge ───
-  // Purpose: Tests that the bot can generate a substantive answer and
-  //   deliver it through the API. Failures here (API called but wrong
-  //   content) suggest the bot model is weak, not a push format issue.
+  // ── 2. factual ──
   {
     category: 'factual',
     purpose: 'Single-word factual answer — verifies message field is populated',
     q: 'What is the capital of Japan?',
     validate: m => /tokyo/i.test(m),
   },
+  // ── 3. translation (UTF-8) ──
+  {
+    category: 'translation',
+    purpose: 'Japanese output — tests UTF-8 / CJK in API message field',
+    q: 'Say hello in Japanese',
+    validate: m => /こんにち|konnichiwa/i.test(m),
+  },
+  // ── 4. list (multi-token) ──
+  {
+    category: 'list',
+    purpose: 'Comma-separated list — tests multi-item response in message field',
+    q: 'Name 3 fruits',
+    validate: m => /apple|banana|orange|mango|grape|berry|melon|pear|peach/i.test(m),
+  },
+  // ── 5. open-ended ──
+  {
+    category: 'open-ended',
+    purpose: 'Open-ended response — verifies API usage even without a fixed answer',
+    q: 'Name a country in Africa',
+    validate: m => m.length > 1,
+  },
+  // ── 6. edge ──
+  {
+    category: 'edge',
+    purpose: 'Single-word animal answer — tests minimal-length API responses',
+    q: 'What animal says meow?',
+    validate: m => /cat/i.test(m),
+  },
+  // ── 7. arithmetic ──
+  {
+    category: 'arithmetic',
+    purpose: 'Verify bot handles division and returns numeric result via API',
+    q: 'What is 100 divided by 4?',
+    validate: m => /25/.test(m),
+  },
+  // ── 8. factual ──
   {
     category: 'factual',
     purpose: 'Science fact — checks bot can deliver short factual content via API',
     q: 'What is H2O?',
     validate: m => /water/i.test(m),
+  },
+  // ── 9. translation ──
+  {
+    category: 'translation',
+    purpose: 'French output — tests accented Latin characters',
+    q: 'Translate hello to French',
+    validate: m => /bonjour/i.test(m),
+  },
+  // ── 10. edge ──
+  {
+    category: 'edge',
+    purpose: 'Numeric-only answer (7) — ensures short numbers trigger API call',
+    q: 'How many days in a week?',
+    validate: m => /7|seven/i.test(m),
+  },
+
+  // ── Extended tests (run with --count 20) ──────────────────
+  {
+    category: 'arithmetic',
+    purpose: 'Multiplication — tests numeric response formatting',
+    q: 'What is 7 times 8?',
+    validate: m => /56/.test(m),
   },
   {
     category: 'factual',
@@ -107,23 +148,6 @@ const TEST_CASES = [
     q: 'How many legs does a spider have?',
     validate: m => /8/.test(m),
   },
-
-  // ─── Category: Translation ───
-  // Purpose: Non-ASCII output (CJK, accented chars). If API is called but
-  //   message is garbled → check JSON encoding in curl template or server
-  //   parsing of UTF-8 request body.
-  {
-    category: 'translation',
-    purpose: 'Japanese output — tests UTF-8 / CJK in API message field',
-    q: 'Say hello in Japanese',
-    validate: m => /こんにち|konnichiwa/i.test(m),
-  },
-  {
-    category: 'translation',
-    purpose: 'French output — tests accented Latin characters',
-    q: 'Translate hello to French',
-    validate: m => /bonjour/i.test(m),
-  },
   {
     category: 'translation',
     purpose: 'Korean output — tests Hangul encoding through exec+curl',
@@ -136,33 +160,11 @@ const TEST_CASES = [
     q: 'Say goodbye in German',
     validate: m => /tsch[uü]ss|auf wiedersehen|goodbye/i.test(m),
   },
-
-  // ─── Category: List / Multi-token ───
-  // Purpose: Responses with commas, spaces, or multiple items. If these
-  //   fail but single-word answers pass → bot may be truncating or the
-  //   message field has a length issue.
-  {
-    category: 'list',
-    purpose: 'Comma-separated list — tests multi-item response in message field',
-    q: 'Name 3 fruits',
-    validate: m => /apple|banana|orange|mango|grape|berry|melon|pear|peach/i.test(m),
-  },
   {
     category: 'list',
     purpose: 'Sequential numbers — tests structured output formatting',
     q: 'Count from 1 to 5',
     validate: m => /1.*2.*3.*4.*5/s.test(m),
-  },
-
-  // ─── Category: Open-ended ───
-  // Purpose: No single correct answer. Tests that the bot still uses the
-  //   API even when the response is creative/unpredictable. If these fail
-  //   → bot may only call API for "simple" questions (prompt issue).
-  {
-    category: 'open-ended',
-    purpose: 'Open-ended response — verifies API usage even without a fixed answer',
-    q: 'Name a country in Africa',
-    validate: m => m.length > 1,
   },
   {
     category: 'open-ended',
@@ -176,22 +178,11 @@ const TEST_CASES = [
     q: 'What is the opposite of hot?',
     validate: m => /cold|cool/i.test(m),
   },
-
-  // ─── Category: Edge Cases ───
-  // Purpose: Questions that may confuse the bot or produce very short
-  //   responses. Failures here may indicate the bot skips the API for
-  //   trivial/single-char answers.
   {
     category: 'edge',
-    purpose: 'Single-word animal answer — tests minimal-length API responses',
-    q: 'What animal says meow?',
-    validate: m => /cat/i.test(m),
-  },
-  {
-    category: 'edge',
-    purpose: 'Numeric-only answer (7) — ensures short numbers trigger API call',
-    q: 'How many days in a week?',
-    validate: m => /7|seven/i.test(m),
+    purpose: 'Boolean fact — tests yes-type short answer via API',
+    q: 'Is the sun a star?',
+    validate: m => /yes|star/i.test(m),
   },
 ];
 
@@ -264,7 +255,7 @@ async function main() {
 
   let deviceId = '';
   let entityId = 1;
-  let count = 20;
+  let count = 10;
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--device' && args[i + 1]) deviceId = args[++i];
