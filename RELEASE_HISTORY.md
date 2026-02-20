@@ -5,7 +5,7 @@ Track git commits for each release to enable changelog generation via `git diff`
 ---
 
 ## Latest
-v1.0.17 | 10947c4 | 2026-02-20
+v1.0.18 | 82803b3 | 2026-02-20
 
 ---
 
@@ -13,6 +13,7 @@ v1.0.17 | 10947c4 | 2026-02-20
 
 | Version | Commit | Date | Notes |
 |---------|--------|------|-------|
+| v1.0.17 | 10947c4 | 2026-02-20 | Free bot TOS agreement flow, gatekeeper module |
 | v1.0.16 | 9241d5a | 2026-02-20 | Echo suppression tests, delivery receipts, Kotlin unit tests |
 | v1.0.15 | 0aaad4d | 2026-02-19 | Chat echo dedup, LATEST_APP_VERSION sync, test fixes |
 | v1.0.14 | b31edb3 | 2026-02-19 | Server logs, broadcast fix, entity echo dedup |
