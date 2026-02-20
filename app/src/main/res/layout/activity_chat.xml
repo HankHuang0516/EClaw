@@ -171,6 +171,15 @@
                 android:orientation="vertical"
                 app:layout_constraintBottom_toBottomOf="parent">
 
+                <!-- Slash Command Suggestions (hidden by default) -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerSlashCommands"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="#FFFFFF"
+                    android:maxHeight="200dp"
+                    android:visibility="gone" />
+
                 <!-- Entity Selection Chips -->
                 <HorizontalScrollView
                     android:layout_width="match_parent"

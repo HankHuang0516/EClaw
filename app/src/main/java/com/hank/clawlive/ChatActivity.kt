@@ -42,6 +42,8 @@ import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.data.repository.ChatRepository
 import com.hank.clawlive.ui.chat.ChatAdapter
+import com.hank.clawlive.ui.chat.SlashCommandAdapter
+import com.hank.clawlive.ui.chat.SlashCommandRegistry
 import com.hank.clawlive.widget.ChatWidgetProvider
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -90,6 +92,10 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var tvRecordingTime: TextView
     private lateinit var btnCancelRecord: MaterialButton
     private lateinit var btnSendVoice: MaterialButton
+
+    // Slash command suggestions
+    private lateinit var recyclerSlashCommands: RecyclerView
+    private lateinit var slashCommandAdapter: SlashCommandAdapter
 
     // Photo preview UI
     private lateinit var photoPreviewBar: LinearLayout
@@ -188,6 +194,18 @@ class ChatActivity : AppCompatActivity() {
         ivPhotoPreview = findViewById(R.id.ivPhotoPreview)
         tvPhotoPreviewInfo = findViewById(R.id.tvPhotoPreviewInfo)
         btnRemovePhoto = findViewById(R.id.btnRemovePhoto)
+
+        // Slash command suggestions
+        recyclerSlashCommands = findViewById(R.id.recyclerSlashCommands)
+        slashCommandAdapter = SlashCommandAdapter { cmd ->
+            editMessage.setText(cmd.command + " ")
+            editMessage.setSelection(editMessage.text?.length ?: 0)
+            recyclerSlashCommands.visibility = View.GONE
+        }
+        recyclerSlashCommands.apply {
+            adapter = slashCommandAdapter
+            layoutManager = LinearLayoutManager(this@ChatActivity)
+        }
     }
 
     private fun setupFloatingDialog() {
@@ -302,6 +320,26 @@ class ChatActivity : AppCompatActivity() {
                 false
             }
         }
+
+        // Slash command autocomplete
+        editMessage.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val text = s?.toString() ?: ""
+                if (text.startsWith("/")) {
+                    val filtered = SlashCommandRegistry.filter(text)
+                    if (filtered.isNotEmpty()) {
+                        slashCommandAdapter.updateList(filtered)
+                        recyclerSlashCommands.visibility = View.VISIBLE
+                    } else {
+                        recyclerSlashCommands.visibility = View.GONE
+                    }
+                } else {
+                    recyclerSlashCommands.visibility = View.GONE
+                }
+            }
+        })
 
         // Photo button - show picker dialog
         btnPhoto.setOnClickListener { showPhotoPickerDialog() }
