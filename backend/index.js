@@ -11,6 +11,7 @@ const db = require('./db');
 const flickr = require('./flickr');
 const gatekeeper = require('./gatekeeper');
 const telemetry = require('./device-telemetry');
+const feedbackModule = require('./device-feedback');
 const multer = require('multer');
 const app = express();
 const port = process.env.PORT || 3000;
@@ -3901,12 +3902,13 @@ async function pushToBot(entity, deviceId, eventType, payload) {
 }
 
 // ============================================
-// FEEDBACK ENDPOINT
+// FEEDBACK ENDPOINTS (Enhanced with Log Snapshot + AI Prompt)
 // ============================================
 
+// POST /api/feedback — Submit feedback with auto log capture
 app.post('/api/feedback', async (req, res) => {
     try {
-        const { deviceId, message, appVersion } = req.body;
+        const { deviceId, deviceSecret, message, category, appVersion } = req.body;
 
         if (!message || !message.trim()) {
             return res.status(400).json({ success: false, message: "Message is required" });
@@ -3917,17 +3919,199 @@ app.post('/api/feedback', async (req, res) => {
             return res.status(400).json({ success: false, message: "Message too long (max 2000 chars)" });
         }
 
-        // Save to PostgreSQL if available
-        if (usePostgreSQL) {
-            await db.saveFeedback(deviceId || 'unknown', trimmedMessage, appVersion || '');
+        // Determine log capture window (from mark timestamp if available)
+        const markTs = feedbackModule.getMark(deviceId);
+        const sinceMs = markTs || (Date.now() - feedbackModule.LOG_WINDOW_MS);
+
+        // Auto-capture log snapshot + device state
+        const logSnapshot = await feedbackModule.captureLogSnapshot(chatPool, deviceId, sinceMs);
+        const deviceState = feedbackModule.captureDeviceState(devices, deviceId);
+
+        // Save enhanced feedback
+        const saved = await feedbackModule.saveFeedback(chatPool, {
+            deviceId: deviceId || 'unknown',
+            deviceSecret: deviceSecret || null,
+            message: trimmedMessage,
+            category: category || 'bug',
+            appVersion: appVersion || '',
+            logSnapshot,
+            deviceState,
+            markTs
+        });
+
+        // Clear mark after use
+        if (markTs) feedbackModule.clearMark(deviceId);
+
+        console.log(`[Feedback] #${saved?.id || '?'} from ${deviceId || 'unknown'}: ${trimmedMessage.substring(0, 100)} [${saved?.severity}] tags=[${saved?.tags}]`);
+
+        // Auto-create GitHub issue if configured
+        let githubIssue = null;
+        if (saved && process.env.GITHUB_TOKEN && process.env.GITHUB_REPO) {
+            const fullFeedback = await feedbackModule.getFeedbackById(chatPool, saved.id);
+            if (fullFeedback) {
+                githubIssue = await feedbackModule.createGithubIssue(fullFeedback);
+                if (githubIssue) {
+                    await feedbackModule.updateFeedback(chatPool, saved.id, { github_issue_url: githubIssue.url });
+                    console.log(`[Feedback] GitHub issue created: ${githubIssue.url}`);
+                }
+            }
         }
 
-        console.log(`[Feedback] From ${deviceId || 'unknown'}: ${trimmedMessage.substring(0, 100)}`);
-        res.json({ success: true, message: "Feedback received" });
+        res.json({
+            success: true,
+            message: "Feedback received",
+            feedbackId: saved?.id || null,
+            severity: saved?.severity || 'unknown',
+            tags: saved?.tags || [],
+            diagnosis: saved?.ai_diagnosis || null,
+            githubIssue: githubIssue ? { url: githubIssue.url, number: githubIssue.number } : null,
+            logsCaptured: {
+                telemetry: logSnapshot.telemetry.length,
+                serverLogs: logSnapshot.serverLogs.length,
+                windowMs: logSnapshot.windowMs
+            }
+        });
     } catch (err) {
         console.error('[Feedback] Error:', err.message);
         res.status(500).json({ success: false, message: "Server error" });
     }
+});
+
+// POST /api/feedback/mark — Mark current timestamp for later feedback
+app.post('/api/feedback/mark', (req, res) => {
+    const { deviceId } = req.body;
+    if (!deviceId) {
+        return res.status(400).json({ success: false, message: "deviceId required" });
+    }
+    const ts = feedbackModule.setMark(deviceId);
+    console.log(`[Feedback] Mark set for ${deviceId} at ${new Date(ts).toISOString()}`);
+    res.json({ success: true, markTs: ts });
+});
+
+// GET /api/feedback — List feedback with filters
+app.get('/api/feedback', async (req, res) => {
+    const { deviceId, deviceSecret, status, severity, limit, offset } = req.query;
+
+    // Auth: require valid device credentials
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, message: "deviceId and deviceSecret required" });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(401).json({ success: false, message: "Invalid credentials" });
+    }
+
+    const list = await feedbackModule.getFeedbackList(chatPool, { deviceId, status, severity, limit, offset });
+    res.json({ success: true, count: list.length, feedback: list });
+});
+
+// GET /api/feedback/:id — Get single feedback (full record)
+app.get('/api/feedback/:id', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query;
+
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, message: "deviceId and deviceSecret required" });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(401).json({ success: false, message: "Invalid credentials" });
+    }
+
+    const fb = await feedbackModule.getFeedbackById(chatPool, parseInt(req.params.id));
+    if (!fb) {
+        return res.status(404).json({ success: false, message: "Feedback not found" });
+    }
+    if (fb.device_id !== deviceId) {
+        return res.status(403).json({ success: false, message: "Access denied" });
+    }
+    res.json({ success: true, feedback: fb });
+});
+
+// GET /api/feedback/:id/ai-prompt — Generate AI diagnostic prompt
+app.get('/api/feedback/:id/ai-prompt', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query;
+
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, message: "deviceId and deviceSecret required" });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(401).json({ success: false, message: "Invalid credentials" });
+    }
+
+    const fb = await feedbackModule.getFeedbackById(chatPool, parseInt(req.params.id));
+    if (!fb) {
+        return res.status(404).json({ success: false, message: "Feedback not found" });
+    }
+    if (fb.device_id !== deviceId) {
+        return res.status(403).json({ success: false, message: "Access denied" });
+    }
+
+    const prompt = feedbackModule.generateAiPrompt(fb);
+    res.json({ success: true, feedbackId: fb.id, prompt });
+});
+
+// POST /api/feedback/:id/create-issue — Create GitHub issue from feedback
+app.post('/api/feedback/:id/create-issue', async (req, res) => {
+    const { deviceId, deviceSecret } = req.body;
+
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, message: "deviceId and deviceSecret required" });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(401).json({ success: false, message: "Invalid credentials" });
+    }
+
+    if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPO) {
+        return res.status(503).json({ success: false, message: "GitHub integration not configured (set GITHUB_TOKEN and GITHUB_REPO)" });
+    }
+
+    const fb = await feedbackModule.getFeedbackById(chatPool, parseInt(req.params.id));
+    if (!fb) {
+        return res.status(404).json({ success: false, message: "Feedback not found" });
+    }
+    if (fb.device_id !== deviceId) {
+        return res.status(403).json({ success: false, message: "Access denied" });
+    }
+
+    if (fb.github_issue_url) {
+        return res.json({ success: true, message: "Issue already created", url: fb.github_issue_url });
+    }
+
+    const issue = await feedbackModule.createGithubIssue(fb);
+    if (!issue) {
+        return res.status(500).json({ success: false, message: "Failed to create GitHub issue" });
+    }
+
+    await feedbackModule.updateFeedback(chatPool, fb.id, { github_issue_url: issue.url });
+    res.json({ success: true, url: issue.url, number: issue.number });
+});
+
+// PATCH /api/feedback/:id — Update feedback status/resolution
+app.patch('/api/feedback/:id', async (req, res) => {
+    const { deviceId, deviceSecret, status, resolution, severity } = req.body;
+
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, message: "deviceId and deviceSecret required" });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(401).json({ success: false, message: "Invalid credentials" });
+    }
+
+    const fb = await feedbackModule.getFeedbackById(chatPool, parseInt(req.params.id));
+    if (!fb) {
+        return res.status(404).json({ success: false, message: "Feedback not found" });
+    }
+
+    const updates = {};
+    if (status) updates.status = status;
+    if (resolution) updates.resolution = resolution;
+    if (severity) updates.severity = severity;
+
+    const updated = await feedbackModule.updateFeedback(chatPool, fb.id, updates);
+    res.json({ success: updated, message: updated ? "Updated" : "No changes" });
 });
 
 // Error Handling
@@ -3949,6 +4133,7 @@ const chatPool = new Pool({
 // Link telemetry middleware to the real pool
 _telemetryPool = chatPool;
 telemetry.initTelemetryTable(chatPool);
+feedbackModule.initFeedbackTable(chatPool);
 
 // Auto-migrate: add delivery tracking + media columns
 chatPool.query(`

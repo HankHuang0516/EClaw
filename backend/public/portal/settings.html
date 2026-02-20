@@ -310,11 +310,20 @@
         </div>
 
         <!-- Feedback Card -->
-        <div class="card" onclick="showFeedbackDialog()" style="cursor:pointer; margin-bottom: 20px;">
-            <div class="card-title" data-i18n="settings_feedback_title">Feedback</div>
-            <div style="font-size:14px;color:var(--text-secondary);margin-top:4px;" data-i18n="settings_feedback_desc">
-                Found a bug or have a suggestion? Let us know!
+        <div class="card" style="margin-bottom: 20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div onclick="showFeedbackDialog()" style="cursor:pointer;flex:1;">
+                    <div class="card-title" data-i18n="settings_feedback_title">Feedback</div>
+                    <div style="font-size:14px;color:var(--text-secondary);margin-top:4px;" data-i18n="settings_feedback_desc">
+                        Found a bug or have a suggestion? Let us know!
+                    </div>
+                </div>
+                <button onclick="markBugMoment()" id="btnMark"
+                    style="margin-left:12px;padding:8px 14px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--text-primary);cursor:pointer;font-size:13px;white-space:nowrap;">
+                    Mark
+                </button>
             </div>
+            <div id="markStatus" style="font-size:12px;color:var(--accent);margin-top:6px;display:none;"></div>
         </div>
 
         <!-- Logout -->
@@ -365,11 +374,27 @@
     <div class="dialog-overlay" id="feedbackDialog" style="display:none">
         <div class="dialog">
             <div class="dialog-title" data-i18n="settings_feedback_title">Feedback</div>
-            <p data-i18n="settings_feedback_desc" style="margin-bottom:10px;">Found a bug or have a suggestion? Let us
-                know!</p>
-            <textarea id="feedbackText" class="form-input" rows="5" data-i18n="settings_feedback_hint"
-                placeholder="Enter your feedback here..."
+            <p style="margin-bottom:10px;font-size:14px;color:var(--text-secondary);">
+                Logs from the last 5 minutes will be automatically captured to help diagnose the issue.
+            </p>
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+                <button class="feedback-cat-btn active" data-cat="bug" onclick="setFeedbackCategory('bug')">Bug</button>
+                <button class="feedback-cat-btn" data-cat="feature" onclick="setFeedbackCategory('feature')">Feature</button>
+                <button class="feedback-cat-btn" data-cat="question" onclick="setFeedbackCategory('question')">Question</button>
+            </div>
+            <style>
+                .feedback-cat-btn {
+                    padding: 6px 16px; border-radius: 20px; border: 1px solid var(--border-color);
+                    background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; font-size: 13px;
+                }
+                .feedback-cat-btn.active {
+                    background: var(--accent); color: #fff; border-color: var(--accent);
+                }
+            </style>
+            <textarea id="feedbackText" class="form-input" rows="5"
+                placeholder="Describe the issue or suggestion..."
                 style="width: 100%; resize: vertical; margin-bottom: 1rem; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);"></textarea>
+            <div id="feedbackResult" style="display:none;margin-bottom:12px;padding:10px;border-radius:8px;background:var(--bg-secondary);font-size:13px;"></div>
             <div class="dialog-actions">
                 <button class="btn btn-outline" onclick="closeFeedbackDialog()"
                     data-i18n="settings_feedback_cancel">Cancel</button>
@@ -699,16 +724,43 @@
         }
 
         // ============================================
-        // Feedback
+        // Feedback (Enhanced with log snapshot + AI triage)
         // ============================================
+        let feedbackCategory = 'bug';
+
+        function setFeedbackCategory(cat) {
+            feedbackCategory = cat;
+            document.querySelectorAll('.feedback-cat-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.cat === cat);
+            });
+        }
+
         function showFeedbackDialog() {
             document.getElementById('feedbackDialog').style.display = '';
             document.getElementById('feedbackText').value = '';
+            document.getElementById('feedbackResult').style.display = 'none';
+            setFeedbackCategory('bug');
             setTimeout(() => document.getElementById('feedbackText').focus(), 100);
         }
 
         function closeFeedbackDialog() {
             document.getElementById('feedbackDialog').style.display = 'none';
+        }
+
+        async function markBugMoment() {
+            try {
+                const user = await checkAuth();
+                await apiCall('POST', '/api/feedback/mark', {
+                    deviceId: user?.deviceId || 'web-portal'
+                });
+                const el = document.getElementById('markStatus');
+                el.style.display = '';
+                el.textContent = 'Marked at ' + new Date().toLocaleTimeString() + ' — logs from this point will be captured when you submit feedback.';
+                document.getElementById('btnMark').textContent = 'Marked';
+                setTimeout(() => { document.getElementById('btnMark').textContent = 'Mark'; }, 5000);
+            } catch (e) {
+                showToast('Mark failed: ' + e.message, 'error');
+            }
         }
 
         async function sendFeedback() {
@@ -725,14 +777,35 @@
 
             try {
                 const user = await checkAuth();
-                await apiCall('POST', '/api/feedback', {
+                const result = await apiCall('POST', '/api/feedback', {
                     deviceId: user?.deviceId || 'web-portal',
+                    deviceSecret: user?.deviceSecret || '',
                     message: message,
+                    category: feedbackCategory,
                     appVersion: 'Portal v' + PORTAL_VERSION
                 });
 
+                // Show triage result
+                const resultEl = document.getElementById('feedbackResult');
+                const logs = result.logsCaptured || {};
+                let html = `<strong>Feedback #${result.feedbackId || '?'}</strong> received<br>`;
+                html += `Severity: <strong>${result.severity || '?'}</strong> | `;
+                html += `Logs captured: ${logs.telemetry || 0} API calls, ${logs.serverLogs || 0} server logs<br>`;
+                if (result.tags && result.tags.length > 0) {
+                    html += `Tags: ${result.tags.map(t => '<code>' + t + '</code>').join(' ')}<br>`;
+                }
+                if (result.diagnosis) {
+                    html += `<div style="margin-top:6px;font-size:12px;color:var(--text-secondary);">${result.diagnosis.replace(/\n/g, '<br>')}</div>`;
+                }
+                if (result.githubIssue) {
+                    html += `<div style="margin-top:6px;"><a href="${result.githubIssue.url}" target="_blank">GitHub Issue #${result.githubIssue.number}</a></div>`;
+                }
+                resultEl.innerHTML = html;
+                resultEl.style.display = '';
+
                 showToast(i18n.t('settings_feedback_sent'), 'success');
-                closeFeedbackDialog();
+                // Hide mark status
+                document.getElementById('markStatus').style.display = 'none';
             } catch (e) {
                 showToast(e.message, 'error');
             } finally {
