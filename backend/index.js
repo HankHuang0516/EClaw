@@ -32,7 +32,7 @@ const MAX_ENTITIES_PER_DEVICE = 4;
 
 // Latest app version - update this with each release
 // Bot will warn users if their app version is older than this
-const LATEST_APP_VERSION = "1.0.16";
+const LATEST_APP_VERSION = "1.0.17";
 
 // Device registry - each device has its own entities
 const devices = {};
