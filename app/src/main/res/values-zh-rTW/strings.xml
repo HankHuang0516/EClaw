@@ -242,7 +242,7 @@ E-claw (電子蝦) 團隊深知隱私對您的重要性。我們在此鄭重聲�
     <string name="subscription_required">需要月租訂閱</string>
     <string name="entity_already_bound">實體 #%d 已被佔用，請先移除</string>
     <string name="borrow_cost_title">為什麼租用？自建成本比較</string>
-    <string name="borrow_cost_eclaw">E-Claw 官方 Bot: NT$288/月 (24/7 穩定)</string>
+    <string name="borrow_cost_eclaw">E-Claw 官方 Bot: 如上方所示 (24/7 穩定)</string>
     <string name="borrow_cost_vs">VS 自建：</string>
     <string name="borrow_cost_server">雲端伺服器: ~NT$300+/月</string>
     <string name="borrow_cost_llm">LLM API: ~NT$300+/月</string>

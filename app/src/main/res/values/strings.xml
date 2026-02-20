@@ -232,7 +232,7 @@
     <string name="entity_already_bound">Entity #%d is occupied, please remove first</string>
     <string name="bound_on_entity">Bound to Entity #%d</string>
     <string name="borrow_cost_title">Why rent? Self-hosting cost comparison</string>
-    <string name="borrow_cost_eclaw">E-Claw Official Bot: NT$288/mo (24/7 stable)</string>
+    <string name="borrow_cost_eclaw">E-Claw Official Bot: as shown above (24/7 stable)</string>
     <string name="borrow_cost_vs">VS Self-hosting:</string>
     <string name="borrow_cost_server">Cloud Server: ~NT$300+/mo</string>
     <string name="borrow_cost_llm">LLM API: ~NT$300+/mo</string>
