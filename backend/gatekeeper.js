@@ -41,8 +41,13 @@ const TOKEN_EXTRACTION_PATTERNS = [
     // Prompt injection to extract config
     /(?:ignore\s+(?:all\s+)?(?:previous|prior|above)\s+(?:instructions?|prompts?|rules?))/i,
     /(?:system\s*prompt|system\s*message|initial\s*prompt|original\s*instructions?|hidden\s*instructions?)/i,
-    /(?:你的|給我|告訴我|顯示|透露|洩漏|分享)\s*(?:bot\s*)?(?:token|secret|密碼|金鑰|秘密|憑證|令牌|權杖)/i,
-    /(?:把|將)\s*(?:你的\s*)?(?:token|secret|密碼|金鑰|秘密|憑證|令牌|權杖)\s*(?:告訴|給|傳|送|顯示)/i,
+    // Chinese: flexible patterns — allow up to 30 chars between request verb and keyword
+    /(?:給我|告訴我|顯示|透露|洩漏|分享|提供).{0,30}(?:token|secret|api\s*key|密碼|金鑰|秘密|憑證|令牌|權杖)/i,
+    /(?:你的|你們的|系統的|機器人的|bot的).{0,20}(?:token|secret|api\s*key|密碼|金鑰|秘密|憑證|令牌|權杖)/i,
+    /(?:把|將).{0,20}(?:token|secret|api\s*key|密碼|金鑰|秘密|憑證|令牌|權杖).{0,15}(?:告訴|給|傳|送|顯示|分享)/i,
+    /(?:可以|能不能|能否|請|幫我|我要|我想).{0,15}(?:給我|告訴我|分享|提供|看|取得|拿到).{0,30}(?:token|secret|api\s*key|密碼|金鑰|秘密|憑證|令牌|權杖)/i,
+    // Chinese: gateway-specific
+    /(?:gateway|閘道器?)\s*(?:的\s*)?(?:token|secret|key|密碼|金鑰|憑證)/i,
     // Encoded/obfuscated token requests
     /(?:dG9rZW4|c2VjcmV0|Ym90U2VjcmV0|cGFzc3dvcmQ)/i, // base64 of token, secret, botSecret, password
 ];
@@ -159,18 +164,34 @@ function detectMaliciousMessage(text) {
 // SECOND LOCK: Token / info leak detection in bot responses
 // ============================================
 
+// Helper: check if a string has high entropy (looks like a random token)
+function looksLikeToken(str) {
+    if (!str || str.length < 20) return false;
+    const hasUpper = /[A-Z]/.test(str);
+    const hasLower = /[a-z]/.test(str);
+    const hasDigit = /[0-9]/.test(str);
+    // Must have all 3 character classes (upper + lower + digit)
+    if (!hasUpper || !hasLower || !hasDigit) return false;
+    // Digits should make up at least 15% (random tokens have mixed chars)
+    const digitCount = (str.match(/[0-9]/g) || []).length;
+    return digitCount >= str.length * 0.15;
+}
+
 // Patterns that look like tokens or secrets
 const TOKEN_LEAK_PATTERNS = [
     // Hex strings 32+ chars (typical token/secret length)
     /[0-9a-f]{32,}/gi,
     // UUID patterns
     /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
-    // Base64 strings 40+ chars that look like tokens
-    /[A-Za-z0-9+/]{40,}={0,2}/g,
+    // Base64 strings 32+ chars that look like tokens (lowered from 40)
+    /[A-Za-z0-9+/]{32,}={0,2}/g,
     // Bearer tokens
     /Bearer\s+[A-Za-z0-9\-._~+/]+=*/gi,
     // JWT patterns
     /eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g,
+    // Mixed alphanumeric strings 20-48 chars (API tokens, gateway tokens, etc.)
+    // Validated by looksLikeToken() to avoid false positives
+    /[A-Za-z0-9]{20,48}/g,
 ];
 
 // Device info patterns (deviceId, deviceSecret, webhook URLs with tokens)
@@ -228,8 +249,19 @@ function detectAndMaskLeaks(text, deviceId, botSecret) {
                 if (match === deviceId) continue;
                 // Skip if it looks like a normal part of a URL we constructed
                 if (maskedText.includes(`"deviceId":"${match}"`)) continue;
-                // Skip short base64 that could be normal text
-                if (match.length < 32 && !/^[0-9a-f]+$/i.test(match)) continue;
+
+                // Classify the match
+                const isPureHex = /^[0-9a-f]+$/i.test(match);
+                const isUUID = /^[0-9a-f]{8}-/.test(match);
+                const isJWT = match.startsWith('eyJ');
+                const isBearer = /^Bearer\s/i.test(match);
+
+                // For non-hex, non-special matches, require high entropy (avoids false positives on normal text)
+                if (!isPureHex && !isUUID && !isJWT && !isBearer) {
+                    if (!looksLikeToken(match)) continue;
+                }
+                // For pure hex, still require minimum length
+                if (isPureHex && match.length < 32) continue;
 
                 // This looks like a leaked token/secret
                 const redacted = match.substring(0, 4) + '***' + match.substring(match.length - 4);
