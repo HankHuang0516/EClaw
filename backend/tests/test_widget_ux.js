@@ -258,6 +258,38 @@ async function runTests() {
         failed++;
     }
 
+    // Log / Telemetry API Verification
+    console.log('\n--- Log / Telemetry API Verification ---');
+    try {
+        const telRes = await fetch(
+            `${API_BASE}/api/device-telemetry?deviceId=${TEST_DEVICE_ID}&deviceSecret=${TEST_DEVICE_SECRET}&type=api_req`
+        );
+        const telData = await telRes.json();
+        if (telData.success && telData.entries && telData.entries.length > 0) {
+            const actions = telData.entries.map(e => e.action);
+            if (actions.some(a => a.includes('/api/device/register'))) { console.log('✅ Telemetry logged POST /api/device/register'); passed++; }
+            else { console.log('❌ Missing POST /api/device/register in telemetry'); failed++; }
+            if (actions.some(a => a.includes('/api/client/speak'))) { console.log('✅ Telemetry logged POST /api/client/speak'); passed++; }
+            else { console.log('❌ Missing POST /api/client/speak in telemetry'); failed++; }
+            if (actions.some(a => a.includes('/api/client/pending'))) { console.log('✅ Telemetry logged GET /api/client/pending'); passed++; }
+            else { console.log('❌ Missing GET /api/client/pending in telemetry'); failed++; }
+            const withDuration = telData.entries.filter(e => e.duration != null && e.duration > 0);
+            if (withDuration.length > 0) { console.log(`✅ Telemetry entries include duration (${withDuration.length}/${telData.entries.length})`); passed++; }
+            else { console.log('❌ No telemetry entries have duration'); failed++; }
+        } else {
+            console.log('⚠️ Telemetry API returned no entries');
+        }
+
+        const logRes = await fetch(
+            `${API_BASE}/api/logs?deviceId=${TEST_DEVICE_ID}&deviceSecret=${TEST_DEVICE_SECRET}&limit=50`
+        );
+        const logData = await logRes.json();
+        if (logData.success) { console.log(`✅ Server log API accessible (${logData.count} entries)`); passed++; }
+        else { console.log('❌ Server log API not accessible'); failed++; }
+    } catch (err) {
+        console.log(`⚠️ Telemetry verification error: ${err.message}`);
+    }
+
     return { passed, failed };
 }
 

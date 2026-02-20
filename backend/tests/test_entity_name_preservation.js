@@ -652,6 +652,36 @@ async function runTests() {
     console.log('');
 
     // ============================================
+    // Log / Telemetry API Verification
+    // ============================================
+    console.log('--- Log / Telemetry API Verification ---\n');
+
+    {
+        const telRes = await api('GET',
+            `/api/device-telemetry?deviceId=${deviceId}&deviceSecret=${encodeURIComponent(deviceSecret)}&type=api_req`
+        );
+        if (telRes.status === 200 && telRes.data.entries) {
+            const actions = telRes.data.entries.map(e => e.action);
+            assert(telRes.data.entries.length > 0, 'Telemetry captured API calls', `count=${telRes.data.entries.length}`);
+            assert(actions.some(a => a.includes('/api/device/register')), 'Telemetry logged POST /api/device/register');
+            assert(actions.some(a => a.includes('/api/status')), 'Telemetry logged GET /api/status');
+            assert(actions.some(a => a.includes('/api/transform')), 'Telemetry logged POST /api/transform');
+            assert(actions.some(a => a.includes('/api/device/entity/name')), 'Telemetry logged PUT /api/device/entity/name');
+            const withDuration = telRes.data.entries.filter(e => e.duration != null && e.duration > 0);
+            assert(withDuration.length > 0, 'Telemetry entries include response duration', `${withDuration.length}/${telRes.data.entries.length}`);
+        } else {
+            skip('Telemetry verification', 'API not available');
+        }
+
+        const logRes = await api('GET',
+            `/api/logs?deviceId=${deviceId}&deviceSecret=${encodeURIComponent(deviceSecret)}&limit=50`
+        );
+        assert(logRes.status === 200 && logRes.data.success, 'Server log API accessible', `status=${logRes.status}`);
+    }
+
+    console.log('');
+
+    // ============================================
     // Summary
     // ============================================
     console.log('='.repeat(60));

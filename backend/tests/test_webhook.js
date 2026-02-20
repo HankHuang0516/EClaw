@@ -174,6 +174,29 @@ async function runTest() {
         failed++;
     }
 
+    // Log / Telemetry API Verification
+    console.log('\n--- Log / Telemetry API Verification ---\n');
+
+    const telRes = await api('GET', `/api/device-telemetry?deviceId=${deviceId}&deviceSecret=${encodeURIComponent(deviceSecret)}&type=api_req`);
+    if (telRes.status === 200 && telRes.data.entries) {
+        const actions = telRes.data.entries.map(e => e.action);
+        if (actions.some(a => a.includes('/api/device/register'))) { console.log('   ✅ Telemetry logged POST /api/device/register'); passed++; }
+        else { console.log('   ❌ Missing POST /api/device/register in telemetry'); failed++; }
+        if (actions.some(a => a.includes('/api/client/speak'))) { console.log('   ✅ Telemetry logged POST /api/client/speak'); passed++; }
+        else { console.log('   ❌ Missing POST /api/client/speak in telemetry'); failed++; }
+        if (actions.some(a => a.includes('/api/bot/register'))) { console.log('   ✅ Telemetry logged POST /api/bot/register'); passed++; }
+        else { console.log('   ❌ Missing POST /api/bot/register in telemetry'); failed++; }
+        const withDuration = telRes.data.entries.filter(e => e.duration != null && e.duration > 0);
+        if (withDuration.length > 0) { console.log(`   ✅ Telemetry entries include duration (${withDuration.length}/${telRes.data.entries.length})`); passed++; }
+        else { console.log('   ❌ No telemetry entries have duration'); failed++; }
+    } else {
+        console.log('   ⚠️ Telemetry API not available');
+    }
+
+    const logRes = await api('GET', `/api/logs?deviceId=${deviceId}&deviceSecret=${encodeURIComponent(deviceSecret)}&limit=50`);
+    if (logRes.status === 200 && logRes.data.success) { console.log(`   ✅ Server log API accessible (${logRes.data.count} entries)`); passed++; }
+    else { console.log('   ❌ Server log API not accessible'); failed++; }
+
     // Summary
     console.log(`\n${'='.repeat(60)}`);
     console.log(`Result: ${passed}/${passed + failed} tests passed`);

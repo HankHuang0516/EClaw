@@ -196,6 +196,41 @@ async function runTests() {
         }
     }
 
+    // Log / Telemetry API Verification
+    console.log('\n--- Log / Telemetry API Verification ---');
+    try {
+        const telUrl = `${API_BASE}/api/device-telemetry?deviceId=${TEST_DEVICE_ID}&deviceSecret=${encodeURIComponent(TEST_DEVICE_SECRET)}&type=api_req`;
+        const telRes = await fetch(telUrl);
+        const telData = await telRes.json();
+        if (telData.success && telData.entries && telData.entries.length > 0) {
+            const actions = telData.entries.map(e => e.action);
+            const hasRegister = actions.some(a => a.includes('/api/device/register'));
+            const hasStatus = actions.some(a => a.includes('/api/status'));
+            const withDuration = telData.entries.filter(e => e.duration != null && e.duration > 0);
+            console.log(`  Telemetry: ${telData.entries.length} entries captured (${withDuration.length} with duration)`);
+            console.log(`  POST /api/device/register logged: ${hasRegister}`);
+            console.log(`  GET /api/status logged: ${hasStatus}`);
+            if (hasRegister) passed++; else failed++;
+            if (hasStatus) passed++; else failed++;
+            if (withDuration.length > 0) passed++; else failed++;
+        } else {
+            console.log('  Telemetry: no entries captured');
+        }
+
+        const logUrl = `${API_BASE}/api/logs?deviceId=${TEST_DEVICE_ID}&deviceSecret=${encodeURIComponent(TEST_DEVICE_SECRET)}&limit=50`;
+        const logRes = await fetch(logUrl);
+        const logData = await logRes.json();
+        if (logData.success) {
+            console.log(`  Server logs: ${logData.count} entries`);
+            passed++;
+        } else {
+            console.log('  Server log API not accessible');
+            failed++;
+        }
+    } catch (err) {
+        console.log(`  Telemetry verification error: ${err.message}`);
+    }
+
     // Calculate coverage
     const coverage = ((passed / TOTAL_ENDPOINTS) * 100).toFixed(1);
     const coverageMet = parseFloat(coverage) >= 98.0;
