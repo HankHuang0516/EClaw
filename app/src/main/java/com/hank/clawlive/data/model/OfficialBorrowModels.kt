@@ -7,7 +7,9 @@ data class OfficialBorrowStatusResponse(
     val paidSlots: Int = 0,
     val usedSlots: Int = 0,
     val availableSlots: Int = 0,
-    val bindings: List<BorrowBinding> = emptyList()
+    val bindings: List<BorrowBinding> = emptyList(),
+    val tosAgreed: Boolean = false,
+    val tosVersion: String? = null
 )
 
 data class FreeStatus(
@@ -44,4 +46,21 @@ data class AddPaidSlotResponse(
     val availableSlots: Int = 0,
     val error: String? = null,
     val message: String? = null
+)
+
+data class FreeBotTosResponse(
+    val success: Boolean = false,
+    val tos: FreeBotTos? = null,
+    val agreed: Boolean = false
+)
+
+data class FreeBotTos(
+    val version: String = "",
+    val title: String = "",
+    val sections: List<TosSection> = emptyList()
+)
+
+data class TosSection(
+    val heading: String = "",
+    val items: List<String> = emptyList()
 )

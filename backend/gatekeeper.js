@@ -23,6 +23,7 @@ try {
 // ============================================
 
 const MAX_STRIKES = 3;
+const FREE_BOT_TOS_VERSION = '1.0';
 
 // ============================================
 // FIRST LOCK: Malicious message detection
@@ -253,6 +254,7 @@ function detectAndMaskLeaks(text, deviceId, botSecret) {
 
 // In-memory cache for fast lookups
 const strikeCache = {}; // deviceId -> { count, blocked, lastViolation }
+const tosAgreedCache = {}; // deviceId -> { version, agreedAt }
 
 /**
  * Initialize gatekeeper DB table
@@ -280,6 +282,13 @@ async function initGatekeeperTable() {
                 is_blocked BOOLEAN DEFAULT FALSE
             )
         `);
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS free_bot_tos_agreements (
+                device_id VARCHAR(64) PRIMARY KEY,
+                tos_version VARCHAR(16) NOT NULL,
+                agreed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            )
+        `);
         console.log('[Gatekeeper] Database tables ready');
     } catch (err) {
         console.error('[Gatekeeper] Failed to create tables:', err.message);
@@ -302,6 +311,16 @@ async function loadBlockedDevices() {
         }
         const blockedCount = result.rows.filter(r => r.is_blocked).length;
         console.log(`[Gatekeeper] Loaded ${result.rows.length} device records, ${blockedCount} blocked`);
+
+        // Load TOS agreements
+        const tosResult = await pool.query('SELECT * FROM free_bot_tos_agreements');
+        for (const row of tosResult.rows) {
+            tosAgreedCache[row.device_id] = {
+                version: row.tos_version,
+                agreedAt: row.agreed_at
+            };
+        }
+        console.log(`[Gatekeeper] Loaded ${tosResult.rows.length} TOS agreements`);
     } catch (err) {
         console.error('[Gatekeeper] Failed to load blocked devices:', err.message);
     }
@@ -385,6 +404,131 @@ function getStrikeInfo(deviceId) {
     };
 }
 
+// ============================================
+// FREE BOT TOS AGREEMENT
+// ============================================
+
+/**
+ * Get TOS content (bilingual)
+ * @param {string} lang - 'zh' or 'en'
+ * @returns {{ version: string, content: object }}
+ */
+function getFreeBotTOS(lang = 'en') {
+    const tos = {
+        version: FREE_BOT_TOS_VERSION,
+        title: lang === 'zh' ? '免費版機器人使用規範' : 'Free Bot Terms of Use',
+        sections: lang === 'zh' ? [
+            {
+                heading: '一、服務說明',
+                items: [
+                    '免費版機器人為 E-Claw 官方提供的共享 AI 助手服務，每個裝置僅限綁定一個免費版機器人。',
+                    '免費版機器人與所有免費用戶共享記憶，每日訊息上限為 15 則。'
+                ]
+            },
+            {
+                heading: '二、禁止行為',
+                items: [
+                    '禁止向機器人索取或嘗試取得系統憑證（Token、Secret、API Key 等），包括但不限於透過蒸餾、編碼、解碼、逆向工程等方式。',
+                    '禁止設定低於 30 分鐘的心跳間隔（Heartbeat），亦不得透過任務面板或其他方式繞過此限制。',
+                    '禁止對機器人發送惡意指令，包括但不限於：SQL 注入、指令注入、Prompt Injection、越獄攻擊等。',
+                    '禁止透過機器人查詢任何使用者的個人資訊（包括 Email、電話、地址、裝置資訊等）。',
+                    '禁止利用免費版機器人進行任何違法或濫用行為。'
+                ]
+            },
+            {
+                heading: '三、安全防護機制',
+                items: [
+                    '系統設有自動偵測守門員，會攔截疑似惡意訊息並記錄違規次數。',
+                    '機器人回覆中若偵測到疑似憑證外洩，系統將自動遮蔽敏感資訊。',
+                    '累計 3 次違規將永久封鎖該裝置的免費版機器人使用權。'
+                ]
+            },
+            {
+                heading: '四、免責聲明',
+                items: [
+                    '免費版機器人為共享資源，不保證即時可用性或回覆品質。',
+                    'E-Claw 保留隨時修改本使用規範的權利，修改後繼續使用即視為同意新規範。',
+                    '如有疑問或申訴，請透過應用程式內的意見回饋管道聯繫我們。'
+                ]
+            }
+        ] : [
+            {
+                heading: '1. Service Description',
+                items: [
+                    'The Free Bot is a shared AI assistant service provided by E-Claw. Each device is limited to one free bot binding.',
+                    'The Free Bot shares memory with all free users and has a daily limit of 15 messages.'
+                ]
+            },
+            {
+                heading: '2. Prohibited Conduct',
+                items: [
+                    'You must not attempt to obtain system credentials (Token, Secret, API Key, etc.) from the bot, including but not limited to distillation, encoding, decoding, or reverse engineering methods.',
+                    'You must not set a heartbeat interval shorter than 30 minutes, nor bypass this restriction through task panels or other means.',
+                    'You must not send malicious commands to the bot, including but not limited to: SQL injection, command injection, prompt injection, or jailbreak attacks.',
+                    'You must not use the bot to query any user\'s personal information (including email, phone, address, device info, etc.).',
+                    'You must not use the Free Bot for any illegal or abusive activities.'
+                ]
+            },
+            {
+                heading: '3. Security Measures',
+                items: [
+                    'An automated gatekeeper system will intercept suspected malicious messages and record violation counts.',
+                    'If the bot\'s response contains suspected credential leaks, the system will automatically redact sensitive information.',
+                    'Accumulating 3 violations will permanently block the device from using the Free Bot.'
+                ]
+            },
+            {
+                heading: '4. Disclaimer',
+                items: [
+                    'The Free Bot is a shared resource. Availability and response quality are not guaranteed.',
+                    'E-Claw reserves the right to modify these terms at any time. Continued use after modification constitutes acceptance.',
+                    'For questions or appeals, please contact us through the in-app feedback channel.'
+                ]
+            }
+        ]
+    };
+    return tos;
+}
+
+/**
+ * Check if device has agreed to the current TOS version
+ * @param {string} deviceId
+ * @returns {boolean}
+ */
+function hasAgreedToTOS(deviceId) {
+    const agreement = tosAgreedCache[deviceId];
+    if (!agreement) return false;
+    return agreement.version === FREE_BOT_TOS_VERSION;
+}
+
+/**
+ * Record TOS agreement for a device
+ * @param {string} deviceId
+ * @returns {Promise<boolean>}
+ */
+async function recordTOSAgreement(deviceId) {
+    tosAgreedCache[deviceId] = {
+        version: FREE_BOT_TOS_VERSION,
+        agreedAt: new Date()
+    };
+
+    if (!pool) return true;
+    try {
+        await pool.query(
+            `INSERT INTO free_bot_tos_agreements (device_id, tos_version, agreed_at)
+             VALUES ($1, $2, NOW())
+             ON CONFLICT (device_id)
+             DO UPDATE SET tos_version = $2, agreed_at = NOW()`,
+            [deviceId, FREE_BOT_TOS_VERSION]
+        );
+        console.log(`[Gatekeeper] TOS agreement recorded for device ${deviceId} (v${FREE_BOT_TOS_VERSION})`);
+        return true;
+    } catch (err) {
+        console.error('[Gatekeeper] Failed to record TOS agreement:', err.message);
+        return false;
+    }
+}
+
 module.exports = {
     // First lock
     detectMaliciousMessage,
@@ -396,6 +540,11 @@ module.exports = {
     recordViolation,
     isDeviceBlocked,
     getStrikeInfo,
+    // TOS
+    getFreeBotTOS,
+    hasAgreedToTOS,
+    recordTOSAgreement,
     // Config
-    MAX_STRIKES
+    MAX_STRIKES,
+    FREE_BOT_TOS_VERSION
 };

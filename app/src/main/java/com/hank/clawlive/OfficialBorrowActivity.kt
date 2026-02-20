@@ -215,6 +215,67 @@ class OfficialBorrowActivity : AppCompatActivity() {
     }
 
     private fun bindFree() {
+        // Check if TOS agreement is needed
+        val status = borrowStatus
+        if (status != null && !status.tosAgreed) {
+            showFreeBotTosDialog()
+            return
+        }
+        proceedBindFree()
+    }
+
+    private fun showFreeBotTosDialog() {
+        lifecycleScope.launch {
+            try {
+                val lang = resources.configuration.locales[0].language
+                val tosLang = if (lang.startsWith("zh")) "zh" else "en"
+                val tosResponse = api.getFreeBotTos(tosLang, deviceManager.deviceId)
+                val tos = tosResponse.tos ?: return@launch
+
+                // Build TOS content
+                val sb = StringBuilder()
+                for (section in tos.sections) {
+                    sb.appendLine(section.heading)
+                    for (item in section.items) {
+                        sb.append("  • ").appendLine(item)
+                    }
+                    sb.appendLine()
+                }
+
+                AlertDialog.Builder(this@OfficialBorrowActivity, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
+                    .setTitle(tos.title)
+                    .setMessage(sb.toString().trimEnd())
+                    .setPositiveButton(R.string.tos_agree) { _, _ ->
+                        agreeAndBindFree(tos.version)
+                    }
+                    .setNegativeButton(R.string.tos_decline, null)
+                    .setCancelable(false)
+                    .show()
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to load free bot TOS")
+                Toast.makeText(this@OfficialBorrowActivity, getString(R.string.tos_load_failed), Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun agreeAndBindFree(tosVersion: String) {
+        lifecycleScope.launch {
+            try {
+                api.agreeFreeBotTos(mapOf(
+                    "deviceId" to deviceManager.deviceId,
+                    "deviceSecret" to deviceManager.deviceSecret,
+                    "tosVersion" to tosVersion
+                ))
+                borrowStatus = borrowStatus?.copy(tosAgreed = true)
+                proceedBindFree()
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to agree to TOS")
+                Toast.makeText(this@OfficialBorrowActivity, getString(R.string.tos_agree_failed), Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun proceedBindFree() {
         showLoading(getString(R.string.connecting_bot))
 
         lifecycleScope.launch {

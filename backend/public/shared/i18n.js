@@ -208,6 +208,11 @@ const TRANSLATIONS = {
         "borrow_cost_llm": "LLM API (OpenAI/Claude)",
         "borrow_cost_setup": "Learning OpenClaw deployment",
         "borrow_cost_priceless": "Priceless time",
+        "borrow_tos_title": "Free Bot Terms of Use",
+        "borrow_tos_agree": "I Agree",
+        "borrow_tos_decline": "Decline",
+        "borrow_tos_loading": "Loading terms...",
+        "borrow_tos_required": "You must agree to the Terms of Use before using the Free Bot.",
 
         // Settings (settings.html)
         "settings_title": "Settings",
@@ -542,6 +547,11 @@ const TRANSLATIONS = {
         "borrow_cost_llm": "LLM API (OpenAI/Claude)",
         "borrow_cost_setup": "自行摸索 OpenClaw 部署",
         "borrow_cost_priceless": "無價的時間",
+        "borrow_tos_title": "免費版機器人使用規範",
+        "borrow_tos_agree": "我同意",
+        "borrow_tos_decline": "不同意",
+        "borrow_tos_loading": "載入使用規範中...",
+        "borrow_tos_required": "使用免費版機器人前，請先閱讀並同意使用規範。",
 
         // Settings (settings.html)
         "settings_title": "設定",

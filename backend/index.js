@@ -406,6 +406,34 @@ setTimeout(() => subscriptionModule.loadPremiumStatus(), 5000);
 gatekeeper.initGatekeeperTable();
 setTimeout(() => gatekeeper.loadBlockedDevices(), 3000);
 
+// --- Free Bot TOS API ---
+
+// GET /api/free-bot-tos - Get TOS content
+app.get('/api/free-bot-tos', (req, res) => {
+    const lang = req.query.lang || 'en';
+    const deviceId = req.query.deviceId;
+    const tos = gatekeeper.getFreeBotTOS(lang);
+    const agreed = deviceId ? gatekeeper.hasAgreedToTOS(deviceId) : false;
+    res.json({ success: true, tos, agreed });
+});
+
+// POST /api/free-bot-tos/agree - Record TOS agreement
+app.post('/api/free-bot-tos/agree', async (req, res) => {
+    const { deviceId, deviceSecret, tosVersion } = req.body;
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device || (device.deviceSecret && device.deviceSecret !== deviceSecret)) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    if (tosVersion !== gatekeeper.FREE_BOT_TOS_VERSION) {
+        return res.status(400).json({ success: false, error: 'Invalid TOS version' });
+    }
+    await gatekeeper.recordTOSAgreement(deviceId);
+    res.json({ success: true, message: 'TOS agreement recorded', version: tosVersion });
+});
+
 // ============================================
 // ADMIN API (PostgreSQL, admin-only)
 // ============================================
@@ -2524,7 +2552,9 @@ app.get('/api/official-borrow/status', async (req, res) => {
             entityId: b.entity_id ?? b.entityId,
             botType: b.bot_type ?? b.botType,
             botId: b.bot_id ?? b.botId
-        }))
+        })),
+        tosAgreed: gatekeeper.hasAgreedToTOS(deviceId),
+        tosVersion: gatekeeper.FREE_BOT_TOS_VERSION
     });
 });
 
@@ -2554,6 +2584,18 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
             error: '您的免費機器人使用權已被封鎖，因為違規次數已達上限。如有疑問請聯繫客服。',
             gatekeeper_blocked: true,
             strikes: strikeInfo.count
+        });
+    }
+
+    // Gatekeeper: check if device has agreed to free bot TOS
+    if (!gatekeeper.hasAgreedToTOS(deviceId)) {
+        const lang = req.body.lang || 'en';
+        const tos = gatekeeper.getFreeBotTOS(lang);
+        return res.status(451).json({
+            success: false,
+            error: 'TOS_NOT_AGREED',
+            message: '使用免費版機器人前，請先閱讀並同意使用規範。',
+            tos: tos
         });
     }
 

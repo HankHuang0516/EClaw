@@ -857,6 +857,20 @@
         </div>
     </div>
 
+    <!-- Free Bot TOS Dialog -->
+    <div class="dialog-overlay" id="tosDialog" style="display:none">
+        <div class="dialog" style="max-width:520px;max-height:80vh;display:flex;flex-direction:column;">
+            <div class="dialog-title" data-i18n="borrow_tos_title">Free Bot Terms of Use</div>
+            <div id="tosContent" style="flex:1;overflow-y:auto;padding:8px 0;font-size:13px;color:var(--text-secondary);line-height:1.7;max-height:50vh;">
+                <div style="text-align:center;padding:24px;" data-i18n="borrow_tos_loading">Loading terms...</div>
+            </div>
+            <div class="dialog-actions" style="margin-top:12px;flex-shrink:0;">
+                <button class="btn btn-outline" onclick="closeTosDialog(false)" data-i18n="borrow_tos_decline">Decline</button>
+                <button class="btn btn-success" id="btnTosAgree" onclick="closeTosDialog(true)" data-i18n="borrow_tos_agree">I Agree</button>
+            </div>
+        </div>
+    </div>
+
     <!-- TapPay SDK -->
     <script src="https://js.tappaysdk.com/sdk/tpdirect/v5.17.0"></script>
 
@@ -1512,7 +1526,65 @@
             }).join('');
         }
 
+        // --- Free Bot TOS Dialog ---
+        let tosResolve = null;
+
+        async function showTosDialog() {
+            const dialog = document.getElementById('tosDialog');
+            const content = document.getElementById('tosContent');
+            dialog.style.display = '';
+            if (i18n) i18n.apply(dialog);
+
+            // Fetch TOS content from server
+            try {
+                const lang = i18n.lang || 'en';
+                const res = await apiCall('GET', '/api/free-bot-tos?lang=' + lang + '&deviceId=' + currentUser.deviceId);
+                if (res.tos) {
+                    let html = '';
+                    for (const section of res.tos.sections) {
+                        html += '<div style="margin-bottom:12px;"><strong style="color:var(--text-primary);font-size:14px;">' + section.heading + '</strong>';
+                        html += '<ul style="margin:6px 0 0 0;padding-left:20px;">';
+                        for (const item of section.items) {
+                            html += '<li style="margin-bottom:4px;">' + item + '</li>';
+                        }
+                        html += '</ul></div>';
+                    }
+                    content.innerHTML = html;
+                }
+            } catch (e) {
+                content.innerHTML = '<div style="color:#F44336;">Failed to load TOS content.</div>';
+            }
+
+            return new Promise(resolve => { tosResolve = resolve; });
+        }
+
+        function closeTosDialog(agreed) {
+            document.getElementById('tosDialog').style.display = 'none';
+            if (tosResolve) { tosResolve(agreed); tosResolve = null; }
+        }
+
         async function bindFree() {
+            // Check TOS agreement first
+            if (borrowStatus && !borrowStatus.tosAgreed) {
+                const agreed = await showTosDialog();
+                if (!agreed) {
+                    showToast(i18n.t('borrow_tos_required'), 'error');
+                    return;
+                }
+                // Record agreement on server
+                try {
+                    await apiCall('POST', '/api/free-bot-tos/agree', {
+                        deviceId: currentUser.deviceId,
+                        deviceSecret: currentUser.deviceSecret,
+                        tosVersion: borrowStatus.tosVersion
+                    });
+                    borrowStatus.tosAgreed = true;
+                } catch (e) {
+                    showToast('Failed to record agreement: ' + e.message, 'error');
+                    return;
+                }
+            }
+
             const btn = document.getElementById('btnBindFree');
             const btnPersonal = document.getElementById('btnBindPersonal');
             btn.disabled = true;

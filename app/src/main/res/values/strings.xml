@@ -218,6 +218,12 @@
     <string name="borrow_cost_llm">LLM API: ~NT$300+/mo</string>
     <string name="borrow_cost_setup">Learning OpenClaw: Priceless time</string>
 
+    <!-- Free Bot TOS -->
+    <string name="tos_agree">I Agree</string>
+    <string name="tos_decline">Decline</string>
+    <string name="tos_load_failed">Failed to load terms of use</string>
+    <string name="tos_agree_failed">Failed to record agreement</string>
+
     <!-- Privacy Policy -->
     <string name="privacy_policy_title">Privacy Policy</string>
     <string name="web_portal">Web Portal</string>

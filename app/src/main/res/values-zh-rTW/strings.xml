@@ -150,6 +150,12 @@
     <string name="submit">送出</string>
     <string name="app_version">版本：%s</string>
 
+    <!-- Free Bot TOS -->
+    <string name="tos_agree">我同意</string>
+    <string name="tos_decline">不同意</string>
+    <string name="tos_load_failed">載入使用規範失敗</string>
+    <string name="tos_agree_failed">記錄同意失敗</string>
+
     <!-- Privacy Policy -->
     <string name="privacy_policy_title">隱私權政策</string>
     <string name="web_portal">網頁入口</string>
