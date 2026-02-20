@@ -370,7 +370,7 @@ class SettingsActivity : AppCompatActivity() {
                 tvMarkStatus.visibility = View.GONE
             } catch (e: Exception) {
                 Timber.e(e, "Failed to send feedback")
-                TelemetryHelper.trackError(this@SettingsActivity, "send_feedback", e.message ?: "unknown")
+                TelemetryHelper.trackError(e, mapOf("action" to "send_feedback"))
                 Toast.makeText(this@SettingsActivity, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
@@ -389,10 +389,10 @@ class SettingsActivity : AppCompatActivity() {
                 btnMarkBug.postDelayed({
                     btnMarkBug.text = getString(R.string.feedback_mark)
                 }, 5000)
-                TelemetryHelper.trackAction(this@SettingsActivity, "mark_bug_moment")
+                TelemetryHelper.trackAction("mark_bug_moment")
             } catch (e: Exception) {
                 Timber.e(e, "Failed to mark bug moment")
-                TelemetryHelper.trackError(this@SettingsActivity, "mark_bug_moment", e.message ?: "unknown")
+                TelemetryHelper.trackError(e, mapOf("action" to "mark_bug_moment"))
                 Toast.makeText(this@SettingsActivity, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
