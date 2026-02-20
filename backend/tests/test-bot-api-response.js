@@ -265,6 +265,7 @@ async function main() {
 
   // Fallback: .env -> environment variable
   if (!deviceId) deviceId = envVars.TEST_DEVICE_ID || process.env.TEST_DEVICE_ID || '';
+  const deviceSecret = envVars.TEST_DEVICE_SECRET || process.env.TEST_DEVICE_SECRET || '';
 
   if (!deviceId) {
     console.error('Error: Device ID is required.');
@@ -294,6 +295,40 @@ async function main() {
     const result = await runSingleTest(deviceId, entityId, tests[i], i + 1);
     results.push(result);
     if (i < tests.length - 1) await sleep(BETWEEN_TESTS_MS);
+  }
+
+  // ── Log / Telemetry API Verification ──
+  console.log('');
+  console.log('--- Log / Telemetry API Verification ---');
+  if (deviceSecret) {
+    try {
+      const telUrl = `${API_BASE}/api/device-telemetry?deviceId=${deviceId}&deviceSecret=${encodeURIComponent(deviceSecret)}&type=api_req`;
+      const telRes = await fetchJSON(telUrl);
+      if (telRes.success && telRes.entries) {
+        const actions = telRes.entries.map(e => e.action);
+        const hasClientSpeak = actions.some(a => a.includes('/api/client/speak'));
+        const hasStatus = actions.some(a => a.includes('/api/status'));
+        const withDuration = telRes.entries.filter(e => e.duration != null && e.duration > 0);
+        console.log(`  [${hasClientSpeak ? 'PASS' : 'FAIL'}] Telemetry logged POST /api/client/speak`);
+        console.log(`  [${hasStatus ? 'PASS' : 'FAIL'}] Telemetry logged GET /api/status`);
+        console.log(`  [PASS] Telemetry captured ${telRes.entries.length} API calls (${withDuration.length} with duration)`);
+        if (!hasClientSpeak) failed++;
+        if (!hasStatus) failed++;
+      } else {
+        console.log('  [FAIL] Telemetry API returned no entries');
+        failed++;
+      }
+
+      const logUrl = `${API_BASE}/api/logs?deviceId=${deviceId}&deviceSecret=${encodeURIComponent(deviceSecret)}&limit=50`;
+      const logRes = await fetchJSON(logUrl);
+      console.log(`  [${logRes.success ? 'PASS' : 'FAIL'}] Server log API accessible (${logRes.count || 0} entries)`);
+      if (!logRes.success) failed++;
+    } catch (err) {
+      console.log(`  [FAIL] Log/Telemetry verification: ${err.message}`);
+      failed++;
+    }
+  } else {
+    console.log('  [SKIP] TEST_DEVICE_SECRET not set in .env — add it to enable telemetry verification');
   }
 
   // ── Summary ──

@@ -207,6 +207,49 @@ async function runTest() {
     }
 
     // ============================================
+    // Log / Telemetry API Verification
+    // ============================================
+    console.log('\n--- Log / Telemetry API Verification ---\n');
+
+    // Verify Device A telemetry
+    const telA = await api('GET', `/api/device-telemetry?deviceId=${deviceIdA}&deviceSecret=${encodeURIComponent(deviceSecretA)}&type=api_req`);
+    if (telA.status === 200 && telA.data.entries) {
+        const actionsA = telA.data.entries.map(e => e.action);
+        if (actionsA.some(a => a.includes('/api/device/register'))) { console.log('   ✅ Device A: Telemetry logged POST /api/device/register'); passed++; }
+        else { console.log('   ❌ Device A: Missing POST /api/device/register in telemetry'); failed++; }
+        if (actionsA.some(a => a.includes('/api/transform'))) { console.log('   ✅ Device A: Telemetry logged POST /api/transform'); passed++; }
+        else { console.log('   ❌ Device A: Missing POST /api/transform in telemetry'); failed++; }
+        if (actionsA.some(a => a.includes('/api/status'))) { console.log('   ✅ Device A: Telemetry logged GET /api/status'); passed++; }
+        else { console.log('   ❌ Device A: Missing GET /api/status in telemetry'); failed++; }
+        if (actionsA.some(a => a.includes('/api/client/speak'))) { console.log('   ✅ Device A: Telemetry logged POST /api/client/speak'); passed++; }
+        else { console.log('   ❌ Device A: Missing POST /api/client/speak in telemetry'); failed++; }
+        if (actionsA.some(a => a.includes('/api/client/pending'))) { console.log('   ✅ Device A: Telemetry logged GET /api/client/pending'); passed++; }
+        else { console.log('   ❌ Device A: Missing GET /api/client/pending in telemetry'); failed++; }
+        const withDur = telA.data.entries.filter(e => e.duration != null && e.duration > 0);
+        if (withDur.length > 0) { console.log(`   ✅ Device A: Telemetry entries include duration (${withDur.length}/${telA.data.entries.length})`); passed++; }
+        else { console.log('   ❌ Device A: No telemetry entries have duration'); failed++; }
+    } else {
+        console.log('   ⚠️ Device A telemetry not available');
+    }
+
+    // Verify Device B telemetry
+    const telB = await api('GET', `/api/device-telemetry?deviceId=${deviceIdB}&deviceSecret=${encodeURIComponent(deviceSecretB)}&type=api_req`);
+    if (telB.status === 200 && telB.data.entries) {
+        const actionsB = telB.data.entries.map(e => e.action);
+        if (actionsB.some(a => a.includes('/api/device/register'))) { console.log('   ✅ Device B: Telemetry logged POST /api/device/register'); passed++; }
+        else { console.log('   ❌ Device B: Missing POST /api/device/register in telemetry'); failed++; }
+        if (actionsB.some(a => a.includes('/api/transform'))) { console.log('   ✅ Device B: Telemetry logged POST /api/transform'); passed++; }
+        else { console.log('   ❌ Device B: Missing POST /api/transform in telemetry'); failed++; }
+    } else {
+        console.log('   ⚠️ Device B telemetry not available');
+    }
+
+    // Server logs
+    const logA = await api('GET', `/api/logs?deviceId=${deviceIdA}&deviceSecret=${encodeURIComponent(deviceSecretA)}&limit=50`);
+    if (logA.status === 200 && logA.data.success) { console.log(`   ✅ Server log API accessible (${logA.data.count} entries)`); passed++; }
+    else { console.log('   ❌ Server log API not accessible'); failed++; }
+
+    // ============================================
     // Summary
     // ============================================
     console.log(`\n${'='.repeat(60)}`);

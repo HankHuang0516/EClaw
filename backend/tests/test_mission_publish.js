@@ -316,6 +316,30 @@ async function main() {
         // Step 6: Error handling
         await testMissionApiErrors();
 
+        // Step 7: Log / Telemetry API Verification
+        console.log('\n--- Log / Telemetry API Verification ---');
+
+        const telRes = await api('GET',
+            `/api/device-telemetry?deviceId=${TEST_DEVICE_ID}&deviceSecret=${TEST_DEVICE_SECRET}&type=api_req`
+        );
+        if (telRes.status === 200 && telRes.data.entries) {
+            const actions = telRes.data.entries.map(e => e.action);
+            assert('Telemetry captured API calls', telRes.data.entries.length > 0, { count: telRes.data.entries.length });
+            assert('Telemetry logged POST /api/device/register', actions.some(a => a.includes('/api/device/register')));
+            assert('Telemetry logged POST /api/mission/todo/add', actions.some(a => a.includes('/api/mission/todo/add')));
+            assert('Telemetry logged POST /api/mission/notify', actions.some(a => a.includes('/api/mission/notify')));
+            assert('Telemetry logged GET /api/mission/dashboard', actions.some(a => a.includes('/api/mission/dashboard')));
+            assert('Telemetry logged POST /api/mission/rule/add', actions.some(a => a.includes('/api/mission/rule/add')));
+            assert('Telemetry logged GET /api/chat/history', actions.some(a => a.includes('/api/chat/history')));
+            const withDuration = telRes.data.entries.filter(e => e.duration != null && e.duration > 0);
+            assert('Telemetry entries include response duration', withDuration.length > 0, { withDuration: withDuration.length });
+        }
+
+        const logRes = await api('GET',
+            `/api/logs?deviceId=${TEST_DEVICE_ID}&deviceSecret=${TEST_DEVICE_SECRET}&limit=50`
+        );
+        assert('Server log API accessible', logRes.status === 200 && logRes.data.success, { status: logRes.status });
+
         // Summary
         console.log('\n============================================================');
         console.log('MISSION CONTROL PUBLISH TEST SUMMARY');

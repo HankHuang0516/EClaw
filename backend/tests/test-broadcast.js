@@ -454,7 +454,44 @@ async function main() {
   console.log('');
 
   // ────────────────────────────────────────────────────
-  // Phase 7: Cleanup
+  // Phase 7: Log / Telemetry API Verification
+  // ────────────────────────────────────────────────────
+  console.log('--- Phase 7: Log / Telemetry API Verification ---');
+
+  try {
+    const telUrl = `${API_BASE}/api/device-telemetry?deviceId=${deviceId}&deviceSecret=${encodeURIComponent(deviceSecret)}&type=api_req`;
+    const telRes = await fetchJSON(telUrl);
+
+    if (telRes.success && telRes.entries) {
+      const actions = telRes.entries.map(e => e.action);
+      check('Telemetry captured API calls', telRes.entries.length > 0, `count=${telRes.entries.length}`);
+      check('Telemetry logged POST /api/device/register', actions.some(a => a.includes('/api/device/register')));
+      check('Telemetry logged GET /api/entities', actions.some(a => a.includes('/api/entities')));
+      check('Telemetry logged POST /api/entity/broadcast', actions.some(a => a.includes('/api/entity/broadcast')));
+      check('Telemetry logged GET /api/status', actions.some(a => a.includes('/api/status')));
+      check('Telemetry logged GET /api/chat/history', actions.some(a => a.includes('/api/chat/history')));
+      check('Telemetry logged POST /api/entity/speak-to', actions.some(a => a.includes('/api/entity/speak-to')));
+
+      const withDuration = telRes.entries.filter(e => e.duration != null && e.duration > 0);
+      check('Telemetry entries include response duration', withDuration.length > 0, `${withDuration.length}/${telRes.entries.length}`);
+    } else {
+      check('Telemetry API returned entries', false, 'empty or unavailable');
+    }
+
+    const logUrl = `${API_BASE}/api/logs?deviceId=${deviceId}&deviceSecret=${encodeURIComponent(deviceSecret)}&limit=50`;
+    const logRes = await fetchJSON(logUrl);
+    check('Server log API accessible', logRes.success === true, `count=${logRes.count}`);
+    if (logRes.logs && logRes.logs.length > 0) {
+      const categories = [...new Set(logRes.logs.map(l => l.category))];
+      check('Server logs have entries', logRes.count > 0, `categories=[${categories.join(',')}]`);
+    }
+  } catch (err) {
+    check('Log/Telemetry verification', false, err.message);
+  }
+  console.log('');
+
+  // ────────────────────────────────────────────────────
+  // Phase 8: Cleanup
   // ────────────────────────────────────────────────────
   await cleanup(testEntities, deviceId, skipCleanup);
 
@@ -466,7 +503,7 @@ async function main() {
 
 // ── Cleanup ─────────────────────────────────────────────────
 async function cleanup(testEntities, deviceId, skipCleanup) {
-  console.log('--- Phase 7: Cleanup ---');
+  console.log('--- Phase 8: Cleanup ---');
   if (skipCleanup) {
     console.log('  Skipped (--skip-cleanup flag)');
     return;

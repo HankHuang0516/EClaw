@@ -418,6 +418,33 @@ async function runAll() {
         await testUserMessagesNotAffected();
         await testDifferentEntitiesNotDeduped();
 
+        // Log / Telemetry API Verification
+        console.log('\n--- Log / Telemetry API Verification ---\n');
+
+        const telRes = await api('GET',
+            `/api/device-telemetry?deviceId=${TEST_DEVICE_ID}&deviceSecret=${TEST_DEVICE_SECRET}&type=api_req`
+        );
+        if (telRes.status === 200 && telRes.data.entries) {
+            const actions = telRes.data.entries.map(e => e.action);
+            assert('Telemetry captured API calls', telRes.data.entries.length > 0, { count: telRes.data.entries.length });
+            assert('Telemetry logged POST /api/device/register', actions.some(a => a.includes('/api/device/register')));
+            assert('Telemetry logged POST /api/entity/broadcast', actions.some(a => a.includes('/api/entity/broadcast')));
+            assert('Telemetry logged POST /api/entity/speak-to', actions.some(a => a.includes('/api/entity/speak-to')));
+            assert('Telemetry logged POST /api/transform', actions.some(a => a.includes('/api/transform')));
+            assert('Telemetry logged POST /api/bot/sync-message', actions.some(a => a.includes('/api/bot/sync-message')));
+            assert('Telemetry logged POST /api/client/speak', actions.some(a => a.includes('/api/client/speak')));
+            assert('Telemetry logged GET /api/chat/history', actions.some(a => a.includes('/api/chat/history')));
+            const withDuration = telRes.data.entries.filter(e => e.duration != null && e.duration > 0);
+            assert('Telemetry entries include response duration', withDuration.length > 0, { withDuration: withDuration.length });
+        } else {
+            skip('Telemetry verification', 'API not available');
+        }
+
+        const logRes = await api('GET',
+            `/api/logs?deviceId=${TEST_DEVICE_ID}&deviceSecret=${TEST_DEVICE_SECRET}&limit=50`
+        );
+        assert('Server log API accessible', logRes.status === 200 && logRes.data.success, { status: logRes.status });
+
     } catch (e) {
         console.error('\nFATAL:', e.message);
         console.error(e.stack);
