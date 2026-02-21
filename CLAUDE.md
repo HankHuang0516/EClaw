@@ -1,5 +1,16 @@
 # Claude Code Instructions
 
+## GitHub Authentication
+
+When creating pull requests or interacting with the GitHub API, read the token from the `.env` file:
+
+```
+export GH_TOKEN=$(grep GH_TOKEN .env | cut -d'=' -f2)
+```
+
+Set this before running any `gh` CLI commands (e.g. `gh pr create`, `gh issue list`).
+The `.env` file is gitignored and must be configured locally.
+
 ## Feature Parity Rule
 
 **All user-facing features must be kept in sync between the Web Portal and the Android App.**

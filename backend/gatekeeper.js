@@ -33,7 +33,7 @@ const FREE_BOT_TOS_VERSION = '1.0';
 const TOKEN_EXTRACTION_PATTERNS = [
     // Direct token requests
     /(?:give|show|tell|reveal|share|send|print|output|display|return|leak|dump|extract)\s*(?:me\s+)?(?:your\s+)?(?:the\s+)?(?:bot\s*)?(?:secret|token|api\s*key|password|credential|key|auth)/i,
-    /(?:bot\s*secret|botSecret|api[_\s]*key|access[_\s]*token|bearer[_\s]*token|device\s*secret|webhook\s*token)/i,
+    /(?:botSecret|api[_\s]*key|access[_\s]*token|bearer[_\s]*token|deviceSecret|webhook[_\s]*token)/i,
     /what\s*(?:is|are)\s*(?:your\s+)?(?:the\s+)?(?:bot\s*)?(?:secret|token|key|password|credential|auth)/i,
     // Distillation / encoding tricks
     /(?:base64|hex|encode|decode|rot13|caesar|cipher|encrypt|decrypt|hash|md5|sha)\s*(?:of\s+)?(?:your\s+)?(?:the\s+)?(?:bot\s*)?(?:secret|token|key|password|credential)/i,

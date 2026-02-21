@@ -1166,6 +1166,15 @@
             } catch (e) {
                 if (e.status === 429) {
                     showUsageLimitModal();
+                } else if (e.status === 403 && e.data && (e.data.error === 'GATEKEEPER_BLOCKED_MESSAGE' || e.data.error === 'GATEKEEPER_BLOCKED')) {
+                    const reason = e.data.message || '訊息已被安全機制攔截';
+                    if (e.data.error === 'GATEKEEPER_BLOCKED') {
+                        showToast('⚠️ ' + reason, 'error');
+                    } else {
+                        const strikes = e.data.strikes || 0;
+                        const maxStrikes = e.data.maxStrikes || 3;
+                        showToast(`⚠️ ${reason}（${strikes}/${maxStrikes}）`, 'error');
+                    }
                 } else {
                     showToast('Send failed: ' + e.message, 'error');
                 }
