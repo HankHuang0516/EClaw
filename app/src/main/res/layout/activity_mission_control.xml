@@ -37,6 +37,17 @@
             android:textColor="@android:color/white"
             android:layout_marginStart="8dp" />
 
+        <!-- Schedule button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSchedule"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/schedule_title"
+            android:textSize="13sp"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            app:icon="@android:drawable/ic_menu_recent_history"
+            app:iconSize="16dp" />
+
         <!-- Upload button with dirty indicator -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnUpload"

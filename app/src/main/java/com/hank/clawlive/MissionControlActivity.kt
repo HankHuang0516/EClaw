@@ -155,6 +155,10 @@ class MissionControlActivity : AppCompatActivity() {
     private fun setupButtons() {
         findViewById<View>(R.id.btnBack).setOnClickListener { onBackPressedDispatcher.onBackPressed() }
 
+        findViewById<MaterialButton>(R.id.btnSchedule).setOnClickListener {
+            startActivity(Intent(this, ScheduleActivity::class.java))
+        }
+
         findViewById<MaterialButton>(R.id.btnUpload).setOnClickListener {
             viewModel.uploadDashboard(
                 onConflict = { yourVersion, serverVersion ->

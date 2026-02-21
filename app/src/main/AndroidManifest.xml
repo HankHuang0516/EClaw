@@ -112,6 +112,12 @@
             android:parentActivityName=".MainActivity" />
 
         <activity
+            android:name=".ScheduleActivity"
+            android:exported="false"
+            android:label="@string/schedule_title"
+            android:parentActivityName=".MissionControlActivity" />
+
+        <activity
             android:name=".OfficialBorrowActivity"
             android:exported="false"
             android:label="@string/official_borrow_title"

@@ -12,6 +12,7 @@ const flickr = require('./flickr');
 const gatekeeper = require('./gatekeeper');
 const telemetry = require('./device-telemetry');
 const feedbackModule = require('./device-feedback');
+const scheduler = require('./scheduler');
 const multer = require('multer');
 const app = express();
 const port = process.env.PORT || 3000;
@@ -4151,6 +4152,221 @@ chatPool.query(`
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS media_type VARCHAR(16) DEFAULT NULL;
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS media_url TEXT DEFAULT NULL;
 `).catch(() => {});
+
+// ============================================
+// SCHEDULER - Scheduled message delivery
+// ============================================
+
+// Schedule execution callback: sends message via the same path as /api/client/speak
+async function executeScheduledMessage(schedule) {
+    const { deviceId, entityId, message } = schedule;
+    const device = devices[deviceId];
+    if (!device) return { error: 'Device not found' };
+
+    const entity = device.entities[entityId];
+    if (!entity || !entity.isBound) return { error: `Entity ${entityId} not bound` };
+
+    // Update entity state
+    entity.message = `Received: "${message}"`;
+    entity.lastUpdated = Date.now();
+
+    const messageObj = {
+        text: message,
+        from: 'scheduled',
+        timestamp: Date.now(),
+        read: false
+    };
+    if (!entity.messageQueue) entity.messageQueue = [];
+    entity.messageQueue.push(messageObj);
+    saveChatMessage(deviceId, entityId, message, 'scheduled', true, false);
+
+    console.log(`[Scheduler] Sent to device ${deviceId} entity ${entityId}: "${message}"`);
+
+    // Push to bot if webhook is registered
+    let pushResult = { pushed: false, reason: 'no_webhook' };
+    if (entity.webhook) {
+        const apiBase = 'https://eclaw.up.railway.app';
+        let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API below. Your text reply is DISCARDED and the user will NEVER see it.\n`;
+        pushMsg += `Run this command to reply (replace YOUR_REPLY_HERE with your response):\n`;
+        pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${entity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
+        pushMsg += `[SCHEDULED MESSAGE] Device ${deviceId} Entity ${entityId}\n`;
+        pushMsg += `From: scheduled\n`;
+        pushMsg += `Content: ${message}`;
+
+        pushResult = await pushToBot(entity, deviceId, 'new_message', {
+            message: pushMsg
+        });
+
+        if (pushResult.pushed) {
+            messageObj.delivered = true;
+            console.log(`[Scheduler] Push OK to device ${deviceId} entity ${entityId}`);
+        }
+    }
+
+    return {
+        pushed: pushResult.pushed,
+        mode: entity.webhook ? 'push' : 'polling',
+        reason: pushResult.pushed ? 'ok' : (pushResult.reason || 'unknown')
+    };
+}
+
+// Init scheduler with chatPool (after DB is ready)
+setTimeout(() => {
+    scheduler.init(chatPool, executeScheduledMessage);
+}, 4000);
+
+// ── Schedule API Routes ──
+
+// GET /api/schedules - List schedules for a device
+app.get('/api/schedules', async (req, res) => {
+    const { deviceId, deviceSecret, status, limit, offset } = req.query;
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    try {
+        const schedules = await scheduler.getSchedules(deviceId, {
+            status: status || undefined,
+            limit: parseInt(limit) || 50,
+            offset: parseInt(offset) || 0
+        });
+        res.json({ success: true, schedules });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// POST /api/schedules - Create a new schedule
+app.post('/api/schedules', async (req, res) => {
+    const { deviceId, deviceSecret, entityId, message, scheduledAt, repeatType, cronExpr, label } = req.body;
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    try {
+        const schedule = await scheduler.createSchedule({
+            deviceId, entityId, message, scheduledAt, repeatType, cronExpr, label
+        });
+        res.json({ success: true, schedule });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+
+// PUT /api/schedules/:id - Update a schedule
+app.put('/api/schedules/:id', async (req, res) => {
+    const { deviceId, deviceSecret, ...updates } = req.body;
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    try {
+        const existing = await scheduler.getSchedule(parseInt(req.params.id));
+        if (!existing || existing.deviceId !== deviceId) {
+            return res.status(404).json({ success: false, error: 'Schedule not found' });
+        }
+        const schedule = await scheduler.updateSchedule(parseInt(req.params.id), updates);
+        res.json({ success: true, schedule });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+
+// DELETE /api/schedules/:id - Delete a schedule
+app.delete('/api/schedules/:id', async (req, res) => {
+    const { deviceId, deviceSecret } = req.body || {};
+    const qDeviceId = deviceId || req.query.deviceId;
+    const qDeviceSecret = deviceSecret || req.query.deviceSecret;
+    if (!qDeviceId || !qDeviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    const device = devices[qDeviceId];
+    if (!device || device.deviceSecret !== qDeviceSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    try {
+        await scheduler.deleteSchedule(parseInt(req.params.id), qDeviceId);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+
+// ── Bot Schedule API (read/write via botSecret) ──
+
+// GET /api/bot/schedules - Bot reads schedules
+app.get('/api/bot/schedules', async (req, res) => {
+    const { deviceId, entityId, botSecret } = req.query;
+    if (!deviceId || entityId === undefined || !botSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId, entityId, and botSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+    const eId = parseInt(entityId);
+    const entity = device.entities[eId];
+    if (!entity || !entity.isBound || entity.botSecret !== botSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    try {
+        const schedules = await scheduler.getSchedulesForBot(deviceId, eId);
+        res.json({ success: true, schedules });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// POST /api/bot/schedules - Bot creates a schedule
+app.post('/api/bot/schedules', async (req, res) => {
+    const { deviceId, entityId, botSecret, message, scheduledAt, repeatType, cronExpr, label } = req.body;
+    if (!deviceId || entityId === undefined || !botSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId, entityId, and botSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+    const eId = parseInt(entityId);
+    const entity = device.entities[eId];
+    if (!entity || !entity.isBound || entity.botSecret !== botSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    try {
+        const schedule = await scheduler.createSchedule({
+            deviceId, entityId: eId, message, scheduledAt, repeatType, cronExpr, label
+        });
+        res.json({ success: true, schedule });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+
+// DELETE /api/bot/schedules/:id - Bot deletes a schedule
+app.delete('/api/bot/schedules/:id', async (req, res) => {
+    const { deviceId, entityId, botSecret } = req.query;
+    if (!deviceId || entityId === undefined || !botSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId, entityId, and botSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+    const eId = parseInt(entityId);
+    const entity = device.entities[eId];
+    if (!entity || !entity.isBound || entity.botSecret !== botSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    try {
+        await scheduler.deleteSchedule(parseInt(req.params.id), deviceId);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
 
 // Save chat message to database, returns row ID (UUID) or null
 // Deduplication: bot messages with identical text for the same entity within 10s are skipped

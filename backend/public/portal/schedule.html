@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="sched_title">E-Claw - Schedule</title>
+    <link rel="stylesheet" href="shared/style.css">
+    <style>
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* ── Schedule List ── */
+        .sched-item {
+            background: var(--input-bg);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            margin-bottom: 8px;
+            transition: background 0.15s;
+            border-left: 3px solid transparent;
+        }
+
+        .sched-item.status-pending {
+            border-left-color: var(--warning);
+        }
+
+        .sched-item.status-active {
+            border-left-color: var(--success);
+        }
+
+        .sched-item.status-completed {
+            border-left-color: var(--text-muted);
+            opacity: 0.7;
+        }
+
+        .sched-item.status-failed {
+            border-left-color: var(--danger);
+            opacity: 0.8;
+        }
+
+        .sched-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sched-time {
+            flex-shrink: 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            min-width: 100px;
+        }
+
+        .sched-entity {
+            flex-shrink: 0;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: var(--card);
+            color: var(--text-secondary);
+        }
+
+        .sched-message {
+            flex: 1;
+            font-size: 13px;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
+        }
+
+        .sched-status {
+            flex-shrink: 0;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .sched-status.pending {
+            background: rgba(255, 210, 63, 0.15);
+            color: var(--warning);
+        }
+
+        .sched-status.active {
+            background: rgba(76, 175, 80, 0.15);
+            color: var(--success);
+        }
+
+        .sched-status.completed {
+            background: rgba(85, 85, 85, 0.15);
+            color: var(--text-muted);
+        }
+
+        .sched-status.failed {
+            background: rgba(244, 67, 54, 0.15);
+            color: var(--danger);
+        }
+
+        .sched-actions {
+            flex-shrink: 0;
+            display: flex;
+            gap: 4px;
+        }
+
+        .sched-actions button {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+
+        .sched-actions button:hover {
+            background: var(--card-border);
+            color: var(--text);
+        }
+
+        .sched-actions .btn-del:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .sched-detail {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .sched-result {
+            margin-top: 6px;
+            padding: 8px 10px;
+            background: var(--card);
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .sched-result.error {
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            color: var(--danger);
+        }
+
+        .sched-result.success {
+            border: 1px solid rgba(76, 175, 80, 0.2);
+        }
+
+        .sched-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .sched-repeat-badge {
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 8px;
+            background: rgba(108, 99, 255, 0.15);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .sched-empty {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--text-muted);
+        }
+
+        .sched-empty-icon {
+            font-size: 48px;
+            margin-bottom: 8px;
+            opacity: 0.5;
+        }
+
+        /* ── Dialog form ── */
+        .dialog-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+
+        .dialog {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 24px;
+            min-width: 340px;
+            max-width: 480px;
+            width: 90vw;
+        }
+
+        .dialog-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .dialog-field {
+            margin-bottom: 14px;
+        }
+
+        .dialog-field label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .dialog-field input,
+        .dialog-field select,
+        .dialog-field textarea {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .dialog-field input:focus,
+        .dialog-field select:focus,
+        .dialog-field textarea:focus {
+            border-color: var(--primary);
+        }
+
+        .dialog-field textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .dialog-field select {
+            cursor: pointer;
+        }
+
+        .dialog-field select option {
+            background: var(--input-bg);
+            color: var(--text);
+        }
+
+        .dialog-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        /* Entity selector chips */
+        .entity-chip-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .entity-chip {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            background: var(--card);
+            border: 2px solid var(--card-border);
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .entity-chip:hover {
+            border-color: var(--primary);
+            color: var(--text);
+        }
+
+        .entity-chip.active {
+            border-color: var(--primary);
+            background: rgba(108, 99, 255, 0.15);
+            color: var(--text);
+        }
+
+        /* Quick time buttons */
+        .quick-time-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+
+        .quick-time-btn {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            cursor: pointer;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            transition: all 0.15s;
+        }
+
+        .quick-time-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Repeat type selector */
+        .repeat-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .repeat-row select {
+            flex: 1;
+        }
+
+        .repeat-row input {
+            flex: 1;
+        }
+
+        /* Sections */
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            margin-top: 16px;
+        }
+
+        .section-title:first-child {
+            margin-top: 0;
+        }
+
+        @media (max-width: 640px) {
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .header-actions {
+                width: 100%;
+            }
+
+            .header-actions .btn {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .sched-row {
+                flex-wrap: wrap;
+            }
+
+            .sched-message {
+                width: 100%;
+                order: 10;
+                white-space: normal;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title" data-i18n="sched_title">Schedule</h1>
+            <div class="header-actions">
+                <button class="btn btn-outline" onclick="loadSchedules()" data-i18n="mc_refresh">Refresh</button>
+                <button class="btn btn-primary" onclick="showCreateDialog()" data-i18n="sched_btn_add">+ New Schedule</button>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-center" id="loadingState" style="text-align:center;padding:40px 0;">
+            <div class="spinner" style="margin:0 auto 12px;"></div>
+            <div style="color:var(--text-secondary);">Loading...</div>
+        </div>
+
+        <!-- Pending & Active Section -->
+        <div id="scheduleContent" style="display:none;">
+            <div class="section-title" data-i18n="sched_upcoming">Upcoming & Active</div>
+            <div class="card" id="upcomingCard">
+                <div id="upcomingList"></div>
+            </div>
+
+            <div class="section-title" data-i18n="sched_history">History</div>
+            <div class="card" id="historyCard">
+                <div id="historyList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dialog container -->
+    <div id="dialogContainer"></div>
+
+    <script src="shared/api.js"></script>
+    <script src="shared/nav.js"></script>
+    <script src="shared/auth.js"></script>
+    <script src="../shared/telemetry.js"></script>
+    <script src="../shared/i18n.js"></script>
+    <script>
+        // ── State ──
+        let allSchedules = [];
+        let boundEntities = [];
+        let refreshTimer = null;
+
+        const ENTITY_CHARS = {
+            0: { name: 'Lobster', emoji: '\u{1F99E}' },
+            1: { name: 'Pig', emoji: '\u{1F437}' },
+            2: { name: 'Lobster', emoji: '\u{1F99E}' },
+            3: { name: 'Pig', emoji: '\u{1F437}' }
+        };
+
+        let entityNameMap = {};
+        function getEntityDisplayName(id) {
+            if (entityNameMap[id]) return entityNameMap[id];
+            const char = ENTITY_CHARS[id] || { name: 'Entity' };
+            return char.name;
+        }
+
+        function getEntityLabel(id) {
+            const char = ENTITY_CHARS[id] || { name: 'Entity', emoji: '?' };
+            return char.emoji + ' ' + esc(getEntityDisplayName(id)) + ' (#' + id + ')';
+        }
+
+        function esc(s) {
+            const d = document.createElement('div');
+            d.textContent = s || '';
+            return d.innerHTML;
+        }
+
+        // ── Init ──
+        window.addEventListener('DOMContentLoaded', async () => {
+            renderNav('schedule');
+            const user = await checkAuth();
+            if (!user) return;
+
+            await loadBoundEntities();
+            await loadSchedules();
+
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('scheduleContent').style.display = '';
+
+            // Auto-refresh every 15s
+            refreshTimer = setInterval(loadSchedules, 15000);
+        });
+
+        async function loadBoundEntities() {
+            try {
+                const data = await apiCall('GET', '/api/entities?deviceId=' + currentUser.deviceId);
+                boundEntities = (data.entities || []).filter(e => e.isBound);
+                entityNameMap = {};
+                boundEntities.forEach(e => {
+                    if (e.name) entityNameMap[e.entityId] = e.name;
+                });
+            } catch (e) {
+                console.warn('Failed to load entities:', e.message);
+            }
+        }
+
+        // ── Load Schedules ──
+        async function loadSchedules() {
+            try {
+                const data = await apiCall('GET',
+                    '/api/schedules?deviceId=' + encodeURIComponent(currentUser.deviceId) +
+                    '&deviceSecret=' + encodeURIComponent(currentUser.deviceSecret)
+                );
+                if (data.success) {
+                    allSchedules = data.schedules || [];
+                    renderSchedules();
+                }
+            } catch (e) {
+                console.error('Failed to load schedules:', e);
+            }
+        }
+
+        // ── Render ──
+        function renderSchedules() {
+            const upcoming = allSchedules.filter(s => s.status === 'pending' || s.status === 'active');
+            const history = allSchedules.filter(s => s.status === 'completed' || s.status === 'failed');
+
+            renderList('upcomingList', upcoming, true);
+            renderList('historyList', history, false);
+        }
+
+        function renderList(containerId, items, showActions) {
+            const el = document.getElementById(containerId);
+            if (items.length === 0) {
+                const emptyKey = containerId === 'upcomingList' ? 'sched_empty_upcoming' : 'sched_empty_history';
+                const emptyDefault = containerId === 'upcomingList' ? 'No upcoming schedules' : 'No execution history';
+                el.innerHTML = '<div class="sched-empty">' +
+                    '<div class="sched-empty-icon">' + (containerId === 'upcomingList' ? '\u{1F4C5}' : '\u{1F4CB}') + '</div>' +
+                    '<div data-i18n="' + emptyKey + '">' + (i18n.t(emptyKey) || emptyDefault) + '</div>' +
+                    '</div>';
+                return;
+            }
+
+            el.innerHTML = items.map(s => {
+                const char = ENTITY_CHARS[s.entityId] || ENTITY_CHARS[0];
+                const entityLabel = char.emoji + ' ' + getEntityDisplayName(s.entityId) + ' #' + s.entityId;
+                const timeStr = formatScheduleTime(s);
+                const statusClass = s.status;
+                const statusLabel = getStatusLabel(s.status);
+                const repeatBadge = s.repeatType !== 'once'
+                    ? '<span class="sched-repeat-badge">' + getRepeatLabel(s.repeatType) + '</span>'
+                    : '';
+
+                let detailHtml = '';
+                if (s.label) {
+                    detailHtml += '<span class="sched-label">' + esc(s.label) + '</span> &middot; ';
+                }
+                detailHtml += i18n.t('sched_created') + ': ' + formatTime(s.createdAt);
+                if (s.executedAt) {
+                    detailHtml += ' &middot; ' + i18n.t('sched_executed') + ': ' + formatTime(s.executedAt);
+                }
+
+                let resultHtml = '';
+                if (s.result) {
+                    const resultClass = s.resultStatus === 'error' ? 'error' : 'success';
+                    let resultText = s.result;
+                    try {
+                        const parsed = JSON.parse(s.result);
+                        if (parsed.pushed !== undefined) {
+                            resultText = parsed.pushed ? '\u2713 ' + (i18n.t('sched_push_ok') || 'Pushed to bot') : '\u2717 ' + (parsed.reason || 'Push failed');
+                        }
+                    } catch (_) { }
+                    resultHtml = '<div class="sched-result ' + resultClass + '">' + esc(resultText) + '</div>';
+                }
+
+                const actionsHtml = showActions
+                    ? '<div class="sched-actions">' +
+                      '<button class="btn-del" onclick="event.stopPropagation();confirmDelete(' + s.id + ')" title="' + (i18n.t('sched_delete') || 'Delete') + '">&times;</button>' +
+                      '</div>'
+                    : '';
+
+                return '<div class="sched-item status-' + statusClass + '">' +
+                    '<div class="sched-row">' +
+                    '<span class="sched-time">' + timeStr + '</span>' +
+                    '<span class="sched-entity">' + esc(entityLabel) + '</span>' +
+                    repeatBadge +
+                    '<span class="sched-message">' + esc(s.message) + '</span>' +
+                    '<span class="sched-status ' + statusClass + '">' + statusLabel + '</span>' +
+                    actionsHtml +
+                    '</div>' +
+                    '<div class="sched-detail">' + detailHtml + '</div>' +
+                    resultHtml +
+                    '</div>';
+            }).join('');
+        }
+
+        function formatScheduleTime(s) {
+            if (s.scheduledAt) {
+                return formatTime(s.scheduledAt);
+            }
+            if (s.cronExpr) {
+                return describeCron(s.cronExpr);
+            }
+            return '-';
+        }
+
+        function getStatusLabel(status) {
+            const map = {
+                pending: i18n.t('sched_status_pending') || 'Pending',
+                active: i18n.t('sched_status_active') || 'Active',
+                completed: i18n.t('sched_status_completed') || 'Completed',
+                failed: i18n.t('sched_status_failed') || 'Failed'
+            };
+            return map[status] || status;
+        }
+
+        function getRepeatLabel(type) {
+            const map = {
+                daily: i18n.t('sched_repeat_daily') || 'Daily',
+                weekly: i18n.t('sched_repeat_weekly') || 'Weekly',
+                hourly: i18n.t('sched_repeat_hourly') || 'Hourly',
+                cron: 'Cron'
+            };
+            return map[type] || type;
+        }
+
+        function describeCron(expr) {
+            // Simple cron description
+            const parts = expr.split(' ');
+            if (parts.length < 5) return expr;
+            const [min, hour] = parts;
+            if (min !== '*' && hour !== '*') {
+                return hour.padStart(2, '0') + ':' + min.padStart(2, '0');
+            }
+            return expr;
+        }
+
+        // ── Create Dialog ──
+        function showCreateDialog() {
+            if (boundEntities.length === 0) {
+                showToast(i18n.t('sched_no_entities') || 'No bound entities. Bind an entity first.', 'error');
+                return;
+            }
+
+            const c = document.getElementById('dialogContainer');
+
+            // Entity chips
+            const entityChips = boundEntities.map((e, idx) => {
+                const char = ENTITY_CHARS[e.entityId] || ENTITY_CHARS[0];
+                const name = e.name || char.name;
+                const activeClass = idx === 0 ? ' active' : '';
+                return '<div class="entity-chip' + activeClass + '" data-entity="' + e.entityId + '" onclick="selectEntity(' + e.entityId + ')">' +
+                    char.emoji + ' ' + esc(name) + ' (#' + e.entityId + ')' +
+                    '</div>';
+            }).join('');
+
+            // Default to next hour rounded to :00
+            const nextHour = new Date();
+            nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
+            const defaultTime = toLocalISOString(nextHour);
+
+            c.innerHTML = '<div class="dialog-overlay" onclick="if(event.target===this)closeDialog()">' +
+                '<div class="dialog">' +
+                '<div class="dialog-title" data-i18n="sched_create_title">' + (i18n.t('sched_create_title') || 'New Schedule') + '</div>' +
+
+                '<div class="dialog-field">' +
+                '<label data-i18n="sched_label_entity">' + (i18n.t('sched_label_entity') || 'Target Entity') + '</label>' +
+                '<div class="entity-chip-group" id="entityChipGroup">' + entityChips + '</div>' +
+                '</div>' +
+
+                '<div class="dialog-field">' +
+                '<label data-i18n="sched_label_message">' + (i18n.t('sched_label_message') || 'Message') + '</label>' +
+                '<textarea id="dlgMessage" placeholder="' + (i18n.t('sched_placeholder_message') || 'Enter message to send...') + '"></textarea>' +
+                '</div>' +
+
+                '<div class="dialog-field">' +
+                '<label data-i18n="sched_label_repeat">' + (i18n.t('sched_label_repeat') || 'Repeat') + '</label>' +
+                '<div class="repeat-row">' +
+                '<select id="dlgRepeatType" onchange="onRepeatChange()">' +
+                '<option value="once">' + (i18n.t('sched_once') || 'One-time') + '</option>' +
+                '<option value="daily">' + (i18n.t('sched_repeat_daily') || 'Daily') + '</option>' +
+                '<option value="weekly">' + (i18n.t('sched_repeat_weekly') || 'Weekly') + '</option>' +
+                '<option value="hourly">' + (i18n.t('sched_repeat_hourly') || 'Hourly') + '</option>' +
+                '<option value="cron">' + (i18n.t('sched_repeat_cron') || 'Custom (Cron)') + '</option>' +
+                '</select>' +
+                '</div>' +
+                '</div>' +
+
+                '<div class="dialog-field" id="dlgTimeField">' +
+                '<label data-i18n="sched_label_time">' + (i18n.t('sched_label_time') || 'Scheduled Time') + '</label>' +
+                '<input type="datetime-local" id="dlgScheduledAt" value="' + defaultTime + '">' +
+                '<div class="quick-time-group">' +
+                '<button class="quick-time-btn" onclick="setQuickTime(5)">' + (i18n.t('sched_5min') || '5 min') + '</button>' +
+                '<button class="quick-time-btn" onclick="setQuickTime(15)">' + (i18n.t('sched_15min') || '15 min') + '</button>' +
+                '<button class="quick-time-btn" onclick="setQuickTime(30)">' + (i18n.t('sched_30min') || '30 min') + '</button>' +
+                '<button class="quick-time-btn" onclick="setQuickTime(60)">' + (i18n.t('sched_1hr') || '1 hr') + '</button>' +
+                '<button class="quick-time-btn" onclick="setQuickTime(180)">' + (i18n.t('sched_3hr') || '3 hr') + '</button>' +
+                '</div>' +
+                '</div>' +
+
+                '<div class="dialog-field" id="dlgCronField" style="display:none;">' +
+                '<label>' + (i18n.t('sched_label_cron') || 'Cron Expression') + '</label>' +
+                '<input type="text" id="dlgCronExpr" placeholder="30 8 * * *" value="">' +
+                '<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">' +
+                (i18n.t('sched_cron_hint') || 'Format: minute hour day month weekday (e.g., "30 8 * * *" = every day at 08:30)') +
+                '</div>' +
+                '</div>' +
+
+                '<div class="dialog-field">' +
+                '<label data-i18n="sched_label_label">' + (i18n.t('sched_label_label') || 'Label (optional)') + '</label>' +
+                '<input type="text" id="dlgLabel" placeholder="' + (i18n.t('sched_placeholder_label') || 'e.g., Morning greeting') + '">' +
+                '</div>' +
+
+                '<div class="dialog-actions">' +
+                '<button class="btn btn-outline" onclick="closeDialog()" data-i18n="mc_dlg_cancel">' + (i18n.t('mc_dlg_cancel') || 'Cancel') + '</button>' +
+                '<button class="btn btn-primary" id="dlgCreateBtn" onclick="createSchedule()" data-i18n="sched_btn_create">' + (i18n.t('sched_btn_create') || 'Create') + '</button>' +
+                '</div>' +
+                '</div>' +
+                '</div>';
+
+            // Focus message field
+            setTimeout(() => document.getElementById('dlgMessage').focus(), 100);
+        }
+
+        let selectedEntityId = null;
+        function selectEntity(id) {
+            selectedEntityId = id;
+            document.querySelectorAll('#entityChipGroup .entity-chip').forEach(chip => {
+                chip.classList.toggle('active', parseInt(chip.dataset.entity) === id);
+            });
+        }
+
+        // Auto-select first entity
+        function getSelectedEntity() {
+            if (selectedEntityId !== null) return selectedEntityId;
+            if (boundEntities.length > 0) return boundEntities[0].entityId;
+            return 0;
+        }
+
+        function setQuickTime(minutes) {
+            const d = new Date(Date.now() + minutes * 60000);
+            document.getElementById('dlgScheduledAt').value = toLocalISOString(d);
+        }
+
+        function onRepeatChange() {
+            const type = document.getElementById('dlgRepeatType').value;
+            const timeField = document.getElementById('dlgTimeField');
+            const cronField = document.getElementById('dlgCronField');
+
+            if (type === 'once') {
+                timeField.style.display = '';
+                cronField.style.display = 'none';
+            } else if (type === 'cron') {
+                timeField.style.display = 'none';
+                cronField.style.display = '';
+            } else {
+                // daily / weekly / hourly - show time picker for first execution, auto-generate cron
+                timeField.style.display = '';
+                cronField.style.display = 'none';
+            }
+        }
+
+        function toLocalISOString(d) {
+            const pad = n => String(n).padStart(2, '0');
+            return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+                'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+        }
+
+        function generateCronFromType(type, dateStr) {
+            const d = new Date(dateStr);
+            const min = d.getMinutes();
+            const hour = d.getHours();
+            const dayOfWeek = d.getDay(); // 0=Sun
+            switch (type) {
+                case 'daily': return min + ' ' + hour + ' * * *';
+                case 'weekly': return min + ' ' + hour + ' * * ' + dayOfWeek;
+                case 'hourly': return min + ' * * * *';
+                default: return null;
+            }
+        }
+
+        // ── Create Schedule ──
+        async function createSchedule() {
+            const entityId = getSelectedEntity();
+            const message = document.getElementById('dlgMessage').value.trim();
+            const repeatType = document.getElementById('dlgRepeatType').value;
+            const scheduledAt = document.getElementById('dlgScheduledAt').value;
+            const label = document.getElementById('dlgLabel').value.trim();
+
+            if (!message) {
+                showToast(i18n.t('sched_err_message') || 'Please enter a message', 'error');
+                return;
+            }
+
+            let cronExpr = null;
+            let finalScheduledAt = null;
+
+            if (repeatType === 'once') {
+                if (!scheduledAt) {
+                    showToast(i18n.t('sched_err_time') || 'Please select a time', 'error');
+                    return;
+                }
+                finalScheduledAt = new Date(scheduledAt).toISOString();
+            } else if (repeatType === 'cron') {
+                cronExpr = document.getElementById('dlgCronExpr').value.trim();
+                if (!cronExpr) {
+                    showToast(i18n.t('sched_err_cron') || 'Please enter a cron expression', 'error');
+                    return;
+                }
+            } else {
+                // daily/weekly/hourly - generate cron from time picker
+                if (!scheduledAt) {
+                    showToast(i18n.t('sched_err_time') || 'Please select a time', 'error');
+                    return;
+                }
+                cronExpr = generateCronFromType(repeatType, scheduledAt);
+                finalScheduledAt = new Date(scheduledAt).toISOString();
+            }
+
+            const btn = document.getElementById('dlgCreateBtn');
+            btn.disabled = true;
+            btn.textContent = i18n.t('sched_creating') || 'Creating...';
+
+            try {
+                await apiCall('POST', '/api/schedules', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    entityId: entityId,
+                    message: message,
+                    scheduledAt: finalScheduledAt,
+                    repeatType: repeatType,
+                    cronExpr: cronExpr,
+                    label: label || null
+                });
+
+                closeDialog();
+                showToast(i18n.t('sched_created_ok') || 'Schedule created!', 'success');
+                await loadSchedules();
+            } catch (e) {
+                showToast(e.message || 'Failed to create schedule', 'error');
+                btn.disabled = false;
+                btn.textContent = i18n.t('sched_btn_create') || 'Create';
+            }
+        }
+
+        // ── Delete ──
+        function confirmDelete(id) {
+            if (!confirm(i18n.t('sched_confirm_delete') || 'Delete this schedule?')) return;
+            deleteSchedule(id);
+        }
+
+        async function deleteSchedule(id) {
+            try {
+                await apiCall('DELETE', '/api/schedules/' + id + '?deviceId=' + encodeURIComponent(currentUser.deviceId) +
+                    '&deviceSecret=' + encodeURIComponent(currentUser.deviceSecret));
+                showToast(i18n.t('sched_deleted') || 'Schedule deleted', 'success');
+                await loadSchedules();
+            } catch (e) {
+                showToast(e.message || 'Failed to delete', 'error');
+            }
+        }
+
+        // ── Dialog helpers ──
+        function closeDialog() {
+            document.getElementById('dialogContainer').innerHTML = '';
+        }
+
+        // ── Cleanup ──
+        window.addEventListener('beforeunload', () => {
+            if (refreshTimer) clearInterval(refreshTimer);
+        });
+    </script>
+</body>
+
+</html>

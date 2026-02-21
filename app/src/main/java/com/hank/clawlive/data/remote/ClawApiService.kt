@@ -1,6 +1,9 @@
 package com.hank.clawlive.data.remote
 
 import com.hank.clawlive.data.model.*
+import com.hank.clawlive.data.model.ScheduleListResponse
+import com.hank.clawlive.data.model.ScheduleCreateResponse
+import com.hank.clawlive.data.model.ScheduleDeleteResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.http.*
@@ -195,6 +198,28 @@ interface ClawApiService {
     suspend fun notifyMissionUpdate(
         @Body body: Map<String, @JvmSuppressWildcards Any>
     ): MissionNotifyResponse
+
+    // ============================================
+    // SCHEDULE
+    // ============================================
+
+    @GET("api/schedules")
+    suspend fun getSchedules(
+        @Query("deviceId") deviceId: String,
+        @Query("deviceSecret") deviceSecret: String
+    ): ScheduleListResponse
+
+    @POST("api/schedules")
+    suspend fun createSchedule(
+        @Body body: Map<String, @JvmSuppressWildcards Any?>
+    ): ScheduleCreateResponse
+
+    @HTTP(method = "DELETE", path = "api/schedules/{id}", hasBody = false)
+    suspend fun deleteSchedule(
+        @Path("id") id: Int,
+        @Query("deviceId") deviceId: String,
+        @Query("deviceSecret") deviceSecret: String
+    ): ScheduleDeleteResponse
 }
 
 // ============ Mission Control Response Models ============

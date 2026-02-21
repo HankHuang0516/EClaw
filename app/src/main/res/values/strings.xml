@@ -319,5 +319,44 @@ If you have any questions, please contact us via our official email.
     <!-- Gatekeeper -->
     <string name="gatekeeper_blocked_message">⚠️ %1$s（%2$d/%3$d）</string>
     <string name="gatekeeper_blocked_permanent">⚠️ %1$s</string>
+
+    <!-- Schedule -->
+    <string name="schedule_title">Schedule</string>
+    <string name="schedule_add">+ Add</string>
+    <string name="schedule_upcoming">Upcoming &amp; Active</string>
+    <string name="schedule_history">History</string>
+    <string name="schedule_empty_upcoming">No upcoming schedules</string>
+    <string name="schedule_empty_history">No execution history</string>
+    <string name="schedule_create_title">New Schedule</string>
+    <string name="schedule_create">Create</string>
+    <string name="schedule_label_entity">Target Entity</string>
+    <string name="schedule_label_message">Message</string>
+    <string name="schedule_label_time">Scheduled Time</string>
+    <string name="schedule_label_repeat">Repeat</string>
+    <string name="schedule_label_label">Label (optional)</string>
+    <string name="schedule_placeholder_message">Enter message to send…</string>
+    <string name="schedule_placeholder_label">e.g., Morning greeting</string>
+    <string name="schedule_tap_time">Tap to select time</string>
+    <string name="schedule_once">One-time</string>
+    <string name="schedule_repeat_daily">Daily</string>
+    <string name="schedule_repeat_weekly">Weekly</string>
+    <string name="schedule_repeat_hourly">Hourly</string>
+    <string name="schedule_5min">5m</string>
+    <string name="schedule_15min">15m</string>
+    <string name="schedule_30min">30m</string>
+    <string name="schedule_1hr">1h</string>
+    <string name="schedule_3hr">3h</string>
+    <string name="schedule_created_ok">Schedule created!</string>
+    <string name="schedule_confirm_delete">Delete this schedule?</string>
+    <string name="schedule_deleted">Schedule deleted</string>
+    <string name="schedule_err_message">Please enter a message</string>
+    <string name="schedule_no_entities">No bound entities. Bind an entity first.</string>
+    <string name="schedule_status_pending">Pending</string>
+    <string name="schedule_status_active">Active</string>
+    <string name="schedule_status_completed">Completed</string>
+    <string name="schedule_status_failed">Failed</string>
+    <string name="schedule_created">Created</string>
+    <string name="schedule_executed">Executed</string>
+    <string name="schedule_push_ok">Pushed to bot</string>
 </resources>
 

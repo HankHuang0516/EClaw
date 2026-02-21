@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <!-- Entity -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/schedule_label_entity"
+        android:textSize="12sp"
+        android:textColor="#888888"
+        android:layout_marginBottom="4dp" />
+
+    <Spinner
+        android:id="@+id/spEntity"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginBottom="12dp"
+        android:background="@android:drawable/btn_dropdown" />
+
+    <!-- Message -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/schedule_label_message"
+        android:textSize="12sp"
+        android:textColor="#888888"
+        android:layout_marginBottom="4dp" />
+
+    <EditText
+        android:id="@+id/etMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minLines="3"
+        android:hint="@string/schedule_placeholder_message"
+        android:inputType="textMultiLine"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Repeat -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/schedule_label_repeat"
+        android:textSize="12sp"
+        android:textColor="#888888"
+        android:layout_marginBottom="4dp" />
+
+    <Spinner
+        android:id="@+id/spRepeat"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginBottom="12dp"
+        android:background="@android:drawable/btn_dropdown" />
+
+    <!-- Time -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/schedule_label_time"
+        android:textSize="12sp"
+        android:textColor="#888888"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:id="@+id/tvSelectedTime"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center_vertical"
+        android:textSize="14sp"
+        android:padding="8dp"
+        android:background="?attr/selectableItemBackground"
+        android:layout_marginBottom="6dp"
+        android:hint="@string/schedule_tap_time" />
+
+    <!-- Quick Time Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="12dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn5min"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/schedule_5min"
+            android:textSize="11sp"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_marginEnd="4dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn15min"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/schedule_15min"
+            android:textSize="11sp"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_marginEnd="4dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn30min"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/schedule_30min"
+            android:textSize="11sp"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_marginEnd="4dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn1hr"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/schedule_1hr"
+            android:textSize="11sp"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_marginEnd="4dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn3hr"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/schedule_3hr"
+            android:textSize="11sp"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+    </LinearLayout>
+
+    <!-- Label -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/schedule_label_label"
+        android:textSize="12sp"
+        android:textColor="#888888"
+        android:layout_marginBottom="4dp" />
+
+    <EditText
+        android:id="@+id/etLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/schedule_placeholder_label"
+        android:inputType="text"
+        android:maxLines="1" />
+
+</LinearLayout>
