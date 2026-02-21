@@ -59,6 +59,7 @@ const pendingBindings = {};
 // Key: "deviceId:entityId" -> count of bot-to-bot messages since last human message
 const botToBotCounter = {};
 const BOT2BOT_MAX_MESSAGES = 8; // max bot-to-bot messages before human must intervene
+const recentBroadcasts = {}; // deviceId -> [{fromEntityId, text, timestamp}] for dedup
 
 function checkBotToBotRateLimit(deviceId, entityId) {
     const key = `${deviceId}:${entityId}`;
@@ -82,6 +83,8 @@ function resetBotToBotCounter(deviceId) {
         const key = `${deviceId}:${i}`;
         if (botToBotCounter[key]) botToBotCounter[key] = 0;
     }
+    // Also clear broadcast dedup cache for this device so human-initiated broadcasts work fresh
+    delete recentBroadcasts[deviceId];
 }
 
 // Official bot pool (loaded from DB on startup)
@@ -2242,6 +2245,29 @@ app.post('/api/entity/broadcast', async (req, res) => {
         }
     }
 
+    // Broadcast deduplication: prevent bots from re-broadcasting content they just received
+    if (!recentBroadcasts[deviceId]) recentBroadcasts[deviceId] = [];
+    const now = Date.now();
+    const BROADCAST_DEDUP_WINDOW = 60000; // 60 seconds
+    // Clean old entries
+    recentBroadcasts[deviceId] = recentBroadcasts[deviceId].filter(b => now - b.timestamp < BROADCAST_DEDUP_WINDOW);
+    // Check if this broadcast text is a duplicate (same or very similar content recently broadcast by any entity)
+    const normalizedText = (broadcastText || '').trim().slice(0, 200);
+    const isDuplicate = recentBroadcasts[deviceId].some(b => b.fromEntityId !== fromId && b.text === normalizedText);
+    if (isDuplicate) {
+        console.warn(`[Broadcast] DEDUP BLOCKED: Device ${deviceId} Entity ${fromId} tried to re-broadcast recently received content`);
+        serverLog('warn', 'broadcast', `DEDUP BLOCKED: Entity ${fromId} re-broadcast`, { deviceId, entityId: fromId });
+        return res.json({
+            success: true,
+            message: `Broadcast suppressed (duplicate of recent broadcast)`,
+            from: { entityId: fromId, character: fromEntity.character },
+            sentCount: 0,
+            deduplicated: true
+        });
+    }
+    // Record this broadcast
+    recentBroadcasts[deviceId].push({ fromEntityId: fromId, text: normalizedText, timestamp: now });
+
     // Bot-to-bot loop prevention: rate limit per sending entity (resets only on human message)
     if (!checkBotToBotRateLimit(deviceId, fromId)) {
         console.warn(`[Broadcast] RATE LIMITED: Device ${deviceId} Entity ${fromId} (bot-to-bot loop prevention)`);
@@ -2318,7 +2344,7 @@ app.post('/api/entity/broadcast', async (req, res) => {
             pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${toId},"botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
             pushMsg += `To reply directly to Entity ${fromId}:\n`;
             pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/speak-to" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","fromEntityId":${toId},"toEntityId":${fromId},"botSecret":"${toEntity.botSecret}","text":"YOUR_REPLY_HERE"}'\n\n`;
-            pushMsg += `[BOT-TO-BOT BROADCAST] Remaining quota: ${toRemainingBcast}/${BOT2BOT_MAX_MESSAGES}. If the broadcast is just repeating emotions with no new info, do NOT reply — just update your wallpaper status.`;
+            pushMsg += `[BOT-TO-BOT BROADCAST] Remaining quota: ${toRemainingBcast}/${BOT2BOT_MAX_MESSAGES}. IMPORTANT: Do NOT re-broadcast this message. Do NOT call /api/entity/broadcast with similar content. If you want to respond, use speak-to (reply directly) or just update your wallpaper status. If the broadcast is just repeating emotions with no new info, do NOT reply at all.`;
             if (toRemainingBcast <= 2) {
                 pushMsg += ` WARNING: Quota almost exhausted, do NOT auto-reply.`;
             }
@@ -5081,7 +5107,7 @@ chatPool.query(`
     CREATE INDEX IF NOT EXISTS idx_bot_files_device_entity ON bot_files(device_id, entity_id);
 `).catch(err => console.warn('[BotFiles] Table migration:', err.message));
 
-const BOT_FILE_MAX_SIZE = 64 * 1024; // 64KB per file
+const BOT_FILE_MAX_SIZE = 15 * 1024 * 1024; // 15MB per file
 const BOT_FILE_MAX_COUNT = 20;       // 20 files per entity
 
 function authenticateBot(deviceId, entityId, botSecret) {
@@ -5094,7 +5120,7 @@ function authenticateBot(deviceId, entityId, botSecret) {
 /**
  * PUT /api/bot/file - Create or update a file (upsert)
  */
-app.put('/api/bot/file', async (req, res) => {
+app.put('/api/bot/file', express.json({ limit: '20mb' }), async (req, res) => {
     const { deviceId, entityId, botSecret, filename, content } = req.body;
     if (!deviceId || entityId == null || !botSecret || !filename) {
         return res.status(400).json({ success: false, error: 'Missing required fields: deviceId, entityId, botSecret, filename' });
