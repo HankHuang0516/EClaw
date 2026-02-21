@@ -294,4 +294,20 @@ E-claw (電子蝦) 團隊深知隱私對您的重要性。我們在此鄭重聲�
     <string name="usage_limit_title">已達每日上限</string>
     <string name="usage_limit_message">您今日已達 15 則訊息的免費上限。\n\n升級尊爵會員即可享有無限發送！</string>
     <string name="usage_limit_upgrade">立即升級</string>
+
+    <!-- File Manager -->
+    <string name="file_manager_title">檔案</string>
+    <string name="file_filter_photos">照片</string>
+    <string name="file_filter_voice">語音</string>
+    <string name="file_empty_title">尚無檔案</string>
+    <string name="file_empty_desc">您與 Bot 交流過的照片和語音訊息將顯示於此。</string>
+    <string name="file_load_failed">載入檔案失敗</string>
+    <string name="file_stats_total">個檔案</string>
+    <string name="file_type_photo">照片</string>
+    <string name="file_type_voice">語音</string>
+    <string name="file_btn_download">下載</string>
+    <string name="file_btn_share">分享</string>
+    <string name="file_load_more">載入更多</string>
+    <string name="file_playing_voice">播放語音中…</string>
+    <string name="file_playback_done">播放完成</string>
 </resources>

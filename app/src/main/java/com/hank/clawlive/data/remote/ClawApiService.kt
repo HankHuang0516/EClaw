@@ -156,6 +156,20 @@ interface ClawApiService {
     ): MediaUploadResponse
 
     // ============================================
+    // FILE MANAGER - List all media files from chat history
+    // ============================================
+
+    @GET("api/device/files")
+    suspend fun getDeviceFiles(
+        @Query("deviceId") deviceId: String,
+        @Query("deviceSecret") deviceSecret: String,
+        @Query("type") type: String? = null,
+        @Query("entityId") entityId: Int? = null,
+        @Query("limit") limit: Int = 200,
+        @Query("before") before: Long? = null
+    ): DeviceFilesResponse
+
+    // ============================================
     // MISSION CONTROL DASHBOARD
     // Auth: deviceId + deviceSecret in query/body
     // ============================================
@@ -285,4 +299,26 @@ data class SubscriptionUsageResponse(
     val usageToday: Int = 0,
     val usageLimit: Int? = null,
     val error: String? = null
+)
+
+// ============ Device Files Response Models ============
+
+data class DeviceFilesResponse(
+    val success: Boolean,
+    val files: List<DeviceFile> = emptyList(),
+    val count: Int = 0,
+    val hasMore: Boolean = false,
+    val error: String? = null
+)
+
+data class DeviceFile(
+    val id: String,
+    val entityId: Int,
+    val type: String, // "photo" or "voice"
+    val url: String,
+    val text: String? = null,
+    val source: String? = null,
+    val isFromUser: Boolean = false,
+    val isFromBot: Boolean = false,
+    val createdAt: String // ISO timestamp
 )

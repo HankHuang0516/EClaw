@@ -373,6 +373,18 @@
             app:cornerRadius="8dp"
             style="@style/Widget.Material3.Button" />
 
+        <!-- Files Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnFiles"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/file_manager_title"
+            android:textColor="#000000"
+            app:backgroundTint="#FFFFFF"
+            app:cornerRadius="8dp"
+            style="@style/Widget.Material3.Button" />
+
         <!-- Set Wallpaper Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSetWallpaper"
