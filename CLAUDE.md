@@ -1,14 +1,18 @@
 # Claude Code Instructions
 
+## Git Workflow
+
+- **Direct merge to main**: When work is complete, commit and merge directly to `main` branch. Do NOT create PRs or wait for approval — the user reviews all changes in real-time during the session.
+- **Workflow**: develop on feature branch → commit → merge to main → push
+
 ## GitHub Authentication
 
-When creating pull requests or interacting with the GitHub API, read the token from the `.env` file:
+When interacting with the GitHub API via `gh` CLI, read the token from the `.env` file:
 
 ```
 export GH_TOKEN=$(grep GH_TOKEN .env | cut -d'=' -f2)
 ```
 
-Set this before running any `gh` CLI commands (e.g. `gh pr create`, `gh issue list`).
 The `.env` file is gitignored and must be configured locally.
 
 ## Feature Parity Rule
