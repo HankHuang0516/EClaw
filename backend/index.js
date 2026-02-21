@@ -666,18 +666,68 @@ app.get('/api/admin/bots', adminAuth, adminCheck, async (req, res) => {
             }
         }
 
+        // Fetch per-bot binding counts and user emails for free bots
+        const bindingsResult = await pg.query(`
+            SELECT b.bot_id, COUNT(*) as binding_count,
+                   ARRAY_AGG(DISTINCT u.email) FILTER (WHERE u.email IS NOT NULL) as user_emails
+            FROM official_bot_bindings b
+            LEFT JOIN user_accounts u ON b.device_id = u.device_id
+            GROUP BY b.bot_id
+        `);
+        const bindingsMap = {};
+        for (const row of bindingsResult.rows) {
+            bindingsMap[row.bot_id] = {
+                bindingCount: parseInt(row.binding_count),
+                userEmails: row.user_emails || []
+            };
+        }
+
+        // Fetch per-bot conversation stats from chat_messages (last 24h)
+        const now24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const convResult = await pg.query(`
+            SELECT b.bot_id,
+                   COUNT(*) as conversations_24h,
+                   COUNT(DISTINCT m.device_id) as unique_users_24h
+            FROM official_bot_bindings b
+            JOIN chat_messages m ON b.device_id = m.device_id AND b.entity_id = m.entity_id
+            WHERE m.is_from_bot = TRUE AND m.created_at >= $1
+            GROUP BY b.bot_id
+        `, [now24h]);
+        const convMap = {};
+        for (const row of convResult.rows) {
+            convMap[row.bot_id] = {
+                conversations24h: parseInt(row.conversations_24h),
+                uniqueUsers24h: parseInt(row.unique_users_24h)
+            };
+        }
+
         res.json({
             success: true,
-            bots: result.rows.map(r => ({
-                botId: r.bot_id,
-                botType: r.bot_type,
-                status: r.status,
-                assignedDeviceId: r.assigned_device_id,
-                assignedEntityId: r.assigned_entity_id != null ? parseInt(r.assigned_entity_id) : null,
-                assignedUserEmail: r.assigned_user_email || null,
-                assignedAt: r.assigned_at ? parseInt(r.assigned_at) : null,
-                createdAt: r.created_at ? parseInt(r.created_at) : null
-            }))
+            bots: result.rows.map(r => {
+                const bindings = bindingsMap[r.bot_id] || { bindingCount: 0, userEmails: [] };
+                const conv = convMap[r.bot_id] || { conversations24h: 0, uniqueUsers24h: 0 };
+                const avgConvPer5h = conv.conversations24h > 0 ? Math.round(conv.conversations24h / 4.8 * 10) / 10 : 0;
+                const avgUsersPer5h = conv.uniqueUsers24h > 0 ? Math.round(conv.uniqueUsers24h / 4.8 * 10) / 10 : 0;
+                return {
+                    botId: r.bot_id,
+                    botType: r.bot_type,
+                    status: r.status,
+                    assignedDeviceId: r.assigned_device_id,
+                    assignedEntityId: r.assigned_entity_id != null ? parseInt(r.assigned_entity_id) : null,
+                    assignedUserEmail: r.assigned_user_email || null,
+                    assignedAt: r.assigned_at ? parseInt(r.assigned_at) : null,
+                    createdAt: r.created_at ? parseInt(r.created_at) : null,
+                    // Free bot bindings info
+                    bindingCount: bindings.bindingCount,
+                    boundUserEmails: bindings.userEmails,
+                    // Conversation stats (all bots)
+                    conversations24h: conv.conversations24h,
+                    avgConvPer5h: avgConvPer5h,
+                    // Unique user stats (meaningful for free bots)
+                    uniqueUsers24h: conv.uniqueUsers24h,
+                    avgUsersPer5h: avgUsersPer5h
+                };
+            })
         });
     } catch (err) {
         console.error('[Admin] Bots error:', err);

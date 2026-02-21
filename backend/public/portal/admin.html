@@ -500,23 +500,42 @@
             html += '<div class="section-title" style="justify-content:space-between;">' + i18n.t('admin_sec_bots') + ' (' + (botsData.bots || []).length + ') <button class="add-bot-btn" onclick="showCreateBotDialog()">' + i18n.t('admin_btn_add_bot') + '</button></div>';
             html += '<div class="table-scroll">';
             html += '<table class="data-table">';
-            html += '<thead><tr><th>' + i18n.t('admin_col_bot_id') + '</th><th>' + i18n.t('admin_col_type') + '</th><th>' + i18n.t('admin_col_status') + '</th><th>' + i18n.t('admin_col_assigned') + '</th><th>' + i18n.t('admin_col_user') + '</th><th>' + i18n.t('admin_col_assigned_at') + '</th></tr></thead>';
+            html += '<thead><tr><th>' + i18n.t('admin_col_bot_id') + '</th><th>' + i18n.t('admin_col_type') + '</th><th>' + i18n.t('admin_col_status') + '</th><th>' + i18n.t('admin_col_assigned') + '</th><th>' + i18n.t('admin_col_user') + '</th><th>' + i18n.t('admin_col_assigned_at') + '</th><th>' + i18n.t('admin_col_conv_24h') + '</th><th>' + i18n.t('admin_col_conv_avg5h') + '</th></tr></thead>';
             html += '<tbody>';
             if (botsData.bots && botsData.bots.length > 0) {
                 for (const b of botsData.bots) {
                     const typeCls = b.botType === 'free' ? 'type-free' : 'type-personal';
                     const statusCls = b.status === 'assigned' ? 'type-active' : '';
+                    // For free bots: show binding count + bound users instead of single assignment
+                    let assignedCell, userCell, assignedAtCell;
+                    if (b.botType === 'free') {
+                        assignedCell = b.bindingCount > 0
+                            ? '<span style="color:var(--success);">' + b.bindingCount + '</span> ' + i18n.t('admin_bindings_unit')
+                            : '-';
+                        userCell = b.boundUserEmails && b.boundUserEmails.length > 0
+                            ? escapeHtml(b.boundUserEmails.join(', '))
+                            : '-';
+                        // For free bots, show unique users stats instead of assigned time
+                        assignedAtCell = '<span title="' + i18n.t('admin_col_users_24h') + '">' + b.uniqueUsers24h + ' ' + i18n.t('admin_users_unit') + '</span>' +
+                            ' <span style="color:var(--text-secondary);font-size:11px;">(' + i18n.t('admin_avg_prefix') + b.avgUsersPer5h + '/5h)</span>';
+                    } else {
+                        assignedCell = (b.assignedDeviceId ? escapeHtml(b.assignedDeviceId).substring(0, 8) + '...' : '-') + ' ' + (b.assignedEntityId !== null ? 'E' + b.assignedEntityId : '');
+                        userCell = escapeHtml(b.assignedUserEmail || '-');
+                        assignedAtCell = formatDate(b.assignedAt);
+                    }
                     html += '<tr>' +
                         '<td class="mono">' + escapeHtml(b.botId).substring(0, 12) + '...</td>' +
                         '<td><span class="type-badge ' + typeCls + '">' + escapeHtml(b.botType) + '</span></td>' +
                         '<td><span class="type-badge ' + statusCls + '">' + escapeHtml(b.status) + '</span></td>' +
-                        '<td class="mono">' + (b.assignedDeviceId ? escapeHtml(b.assignedDeviceId).substring(0, 8) + '...' : '-') + ' ' + (b.assignedEntityId !== null ? 'E' + b.assignedEntityId : '') + '</td>' +
-                        '<td>' + escapeHtml(b.assignedUserEmail || '-') + '</td>' +
-                        '<td>' + formatDate(b.assignedAt) + '</td>' +
+                        '<td class="mono">' + assignedCell + '</td>' +
+                        '<td>' + userCell + '</td>' +
+                        '<td>' + assignedAtCell + '</td>' +
+                        '<td>' + b.conversations24h + '</td>' +
+                        '<td>' + b.avgConvPer5h + '</td>' +
                         '</tr>';
                 }
             } else {
-                html += '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);">' + i18n.t('admin_no_bots') + '</td></tr>';
+                html += '<tr><td colspan="8" style="text-align:center;color:var(--text-secondary);">' + i18n.t('admin_no_bots') + '</td></tr>';
             }
             html += '</tbody></table></div></div>';
 
