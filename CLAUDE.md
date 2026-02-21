@@ -26,6 +26,10 @@ When investigating backend bugs (broadcast failure, push not delivered, etc.):
   - Tests broadcast delivery, delivered_to tracking, speak-to, chat history
   - Requires `BROADCAST_TEST_DEVICE_ID` + `BROADCAST_TEST_DEVICE_SECRET` in `backend/.env`
 
+## Git Workflow
+
+工作完成後直接 commit 並 merge 到 main，不建立 PR、不等待額外批准。
+
 ## Deployment
 
 - Railway auto-deploys from `backend/` folder on push to main
