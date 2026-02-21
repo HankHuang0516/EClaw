@@ -791,7 +791,7 @@ Read the full mission dashboard for your device.
 - `todoList` / `missionList`: Items assigned to you via `assignedBot` (comma-separated entityIds, e.g., `"0"` or `"0,1"`)
 - `skills`: Skills assigned to you via `assignedEntities` array. May include a `url` with documentation.
 - `rules`: Rules assigned to you via `assignedEntities` array. Only apply when `isEnabled: true`.
-- `notes`: Read-only reference notes from the user (user-only, bots cannot edit).
+- `notes`: Reference notes (bots and users can both read and write).
 - `priority`: 1=LOW, 2=MEDIUM, 3=HIGH, 4=URGENT
 
 **When to call:**
@@ -863,6 +863,29 @@ POST /api/mission/rule/update
 POST /api/mission/skill/add
 {"deviceId":"xxx","botSecret":"xxx","entityId":0,"title":"Weather Query","url":"https://api.weather.gov"}
 → {"success":true,"message":"Skill \"Weather Query\" added","version":9}
+```
+
+#### NOTE Operations
+
+| Endpoint | Extra Body Fields | Action |
+|----------|------------------|--------|
+| `GET /api/mission/notes` | Query: `deviceId`, `botSecret`, `category` (optional) | Get all notes |
+| `POST /api/mission/note/add` | `title` (required), `content`, `category` (default: "general") | Add note |
+| `POST /api/mission/note/update` | `title` (to find), `newTitle`, `newContent`, `newCategory` | Update note |
+| `POST /api/mission/note/delete` | `title` | Delete note by title |
+
+**Example - Add note:**
+```json
+POST /api/mission/note/add
+{"deviceId":"xxx","botSecret":"xxx","entityId":0,"title":"Progress Log","content":"Completed step 1","category":"general"}
+→ {"success":true,"message":"Note \"Progress Log\" added","version":10}
+```
+
+**Example - Update note:**
+```json
+POST /api/mission/note/update
+{"deviceId":"xxx","botSecret":"xxx","entityId":0,"title":"Progress Log","newContent":"Completed step 1 and step 2"}
+→ {"success":true,"message":"Note \"Progress Log\" updated","version":11}
 ```
 
 **Notes:** All title/name matching is case-insensitive. All operations auto-increment dashboard version (optimistic locking).

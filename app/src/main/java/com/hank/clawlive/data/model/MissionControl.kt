@@ -9,7 +9,7 @@ import java.util.UUID
  * 1. TODO List - 優先權排序
  * 2. Mission List - bot名稱、狀態、ETA
  * 3. Done List - 完成日期時間
- * 4. Notes - Bot唯讀，用戶可寫
+ * 4. Notes - 用戶與 Bots 皆可讀寫
  * 5. Rule List - workflow 規則
  */
 
@@ -46,7 +46,7 @@ data class MissionItem(
 )
 
 /**
- * 筆記 (用戶可寫，Bots 唯讀)
+ * 筆記 (用戶與 Bots 皆可讀寫)
  */
 data class MissionNote(
     val id: String = UUID.randomUUID().toString(),

@@ -12,6 +12,9 @@
  * PUT  /items/:id          - 更新任務
  * DELETE /items/:id        - 刪除任務
  * GET  /notes              - 取得筆記
+ * POST /note/add           - 新增筆記 (Bot)
+ * POST /note/update        - 更新筆記 (Bot)
+ * POST /note/delete        - 刪除筆記 (Bot)
  * GET  /rules              - 取得規則
  *
  * Auth: All endpoints accept either deviceSecret (user/APP) or botSecret (bot)
@@ -500,7 +503,7 @@ module.exports = function(devices) {
 
     /**
      * GET /notes
-     * 取得筆記 (Bots 可讀)
+     * 取得筆記 (Bots 可讀寫)
      */
     router.get('/notes', async (req, res) => {
         if (!authenticate(req, res)) return;
@@ -522,6 +525,170 @@ module.exports = function(devices) {
         } catch (error) {
             console.error('[Mission] Error fetching notes:', error);
             res.status(500).json({ success: false, error: error.message });
+        }
+    });
+
+    // ============================================
+    // POST /note/add
+    // Bot adds a new note to dashboard
+    // ============================================
+    router.post('/note/add', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId, entityId, title, content, category } = req.body;
+
+        if (!title) {
+            return res.status(400).json({ success: false, error: 'Missing title' });
+        }
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            await client.query('SELECT init_mission_dashboard($1)', [deviceId]);
+
+            const result = await client.query(
+                'SELECT * FROM mission_dashboard WHERE device_id = $1 FOR UPDATE',
+                [deviceId]
+            );
+            const row = result.rows[0];
+            const notes = row.notes || [];
+
+            const newNote = {
+                id: crypto.randomUUID(),
+                title: title.trim(),
+                content: (content || '').trim(),
+                category: (category || 'general').trim(),
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+                createdBy: entityId != null ? `entity_${entityId}` : 'bot'
+            };
+            notes.push(newNote);
+
+            const updateResult = await client.query(
+                `UPDATE mission_dashboard SET notes = $2, last_synced_at = NOW()
+                 WHERE device_id = $1 RETURNING version`,
+                [deviceId, JSON.stringify(notes)]
+            );
+            await client.query('COMMIT');
+
+            console.log(`[Mission] Note added: "${newNote.title}" by bot, device ${deviceId}`);
+            res.json({ success: true, message: `Note "${newNote.title}" added`, item: newNote, version: updateResult.rows[0].version });
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('[Mission] Error adding note:', error);
+            res.status(500).json({ success: false, error: error.message });
+        } finally {
+            client.release();
+        }
+    });
+
+    // ============================================
+    // POST /note/update
+    // Bot updates a note by title
+    // ============================================
+    router.post('/note/update', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId, title, newTitle, newContent, newCategory } = req.body;
+
+        if (!title) {
+            return res.status(400).json({ success: false, error: 'Missing title' });
+        }
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const result = await client.query(
+                'SELECT * FROM mission_dashboard WHERE device_id = $1 FOR UPDATE',
+                [deviceId]
+            );
+            if (result.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ success: false, error: 'Dashboard not found' });
+            }
+
+            const row = result.rows[0];
+            const notes = row.notes || [];
+            const titleLower = title.trim().toLowerCase();
+            const note = notes.find(n => n.title && n.title.trim().toLowerCase() === titleLower);
+
+            if (!note) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ success: false, error: `Note not found: "${title}"` });
+            }
+
+            if (newTitle) note.title = newTitle.trim();
+            if (newContent !== undefined) note.content = newContent.trim();
+            if (newCategory !== undefined) note.category = newCategory.trim();
+            note.updatedAt = Date.now();
+
+            const updateResult = await client.query(
+                `UPDATE mission_dashboard SET notes = $2, last_synced_at = NOW()
+                 WHERE device_id = $1 RETURNING version`,
+                [deviceId, JSON.stringify(notes)]
+            );
+            await client.query('COMMIT');
+
+            console.log(`[Mission] Note updated: "${note.title}", device ${deviceId}`);
+            res.json({ success: true, message: `Note "${note.title}" updated`, item: note, version: updateResult.rows[0].version });
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('[Mission] Error updating note:', error);
+            res.status(500).json({ success: false, error: error.message });
+        } finally {
+            client.release();
+        }
+    });
+
+    // ============================================
+    // POST /note/delete
+    // Bot deletes a note by title
+    // ============================================
+    router.post('/note/delete', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId, title } = req.body;
+
+        if (!title) {
+            return res.status(400).json({ success: false, error: 'Missing title' });
+        }
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const result = await client.query(
+                'SELECT * FROM mission_dashboard WHERE device_id = $1 FOR UPDATE',
+                [deviceId]
+            );
+            if (result.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ success: false, error: 'Dashboard not found' });
+            }
+
+            const row = result.rows[0];
+            const notes = row.notes || [];
+            const titleLower = title.trim().toLowerCase();
+            const foundIdx = notes.findIndex(n => n.title && n.title.trim().toLowerCase() === titleLower);
+
+            if (foundIdx < 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ success: false, error: `Note not found: "${title}"` });
+            }
+
+            notes.splice(foundIdx, 1);
+
+            const updateResult = await client.query(
+                `UPDATE mission_dashboard SET notes = $2, last_synced_at = NOW()
+                 WHERE device_id = $1 RETURNING version`,
+                [deviceId, JSON.stringify(notes)]
+            );
+            await client.query('COMMIT');
+
+            console.log(`[Mission] Note deleted: "${title}", device ${deviceId}`);
+            res.json({ success: true, message: `Note "${title}" deleted`, version: updateResult.rows[0].version });
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('[Mission] Error deleting note:', error);
+            res.status(500).json({ success: false, error: error.message });
+        } finally {
+            client.release();
         }
     });
 
@@ -670,6 +837,11 @@ module.exports = function(devices) {
                 apiHints.push(`新增技能: POST /api/mission/skill/add {${auth},"title":"<技能名>","url":"<連結>"}`);
                 apiHints.push(`刪除技能: POST /api/mission/skill/delete {${auth},"title":"<技能名>"}`);
             }
+            // Notes: bots always have read-write access
+            apiHints.push(`取得筆記: GET /api/mission/notes?deviceId=${deviceId}&botSecret=${botSecret}&category=<可選>`);
+            apiHints.push(`新增筆記: POST /api/mission/note/add {${auth},"title":"<標題>","content":"<內容>","category":"general"}`);
+            apiHints.push(`更新筆記: POST /api/mission/note/update {${auth},"title":"<原標題>","newTitle":"<新標題>","newContent":"<新內容>"}`);
+            apiHints.push(`刪除筆記: POST /api/mission/note/delete {${auth},"title":"<標題>"}`);
 
             const pushMessage = `[Mission Control 任務更新]\n${lines.join('\n')}\n\n可用操作:\n${apiHints.join('\n')}`;
 
