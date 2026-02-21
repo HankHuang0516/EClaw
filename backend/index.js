@@ -1176,6 +1176,15 @@ app.get('/api/entities', (req, res) => {
         }
     }
 
+    // Log when a device-filtered request returns no entities but the device exists
+    // This helps diagnose transient empty responses that cause client-side card disappearing (#16)
+    if (filterDeviceId && entities.length === 0 && devices[filterDeviceId]) {
+        serverLog('warn', 'entity_poll', `Device ${filterDeviceId} returned 0 bound entities (device exists in memory)`, {
+            deviceId: filterDeviceId,
+            metadata: { totalDeviceSlots: MAX_ENTITIES_PER_DEVICE }
+        });
+    }
+
     res.json({
         entities: entities,
         activeCount: entities.length,

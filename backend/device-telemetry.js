@@ -391,6 +391,14 @@ function createMiddleware(pool, deviceLookup) {
                     if ('error' in data)   outputSummary.error = typeof data.error === 'string' ? data.error.substring(0, 200) : data.error;
                     if ('message' in data)  outputSummary.message = typeof data.message === 'string' ? data.message.substring(0, 200) : data.message;
                     if ('count' in data)   outputSummary.count = data.count;
+                    // Capture counts from entity/list responses (fixes logging blind spot for #16)
+                    if ('activeCount' in data) outputSummary.activeCount = data.activeCount;
+                    // Capture array lengths for any response containing lists
+                    for (const [k, v] of Object.entries(data)) {
+                        if (Array.isArray(v)) {
+                            outputSummary[k + 'Count'] = v.length;
+                        }
+                    }
                 }
                 outputSummary.status = res.statusCode;
 

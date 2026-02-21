@@ -27,7 +27,7 @@ When investigating backend bugs (broadcast failure, push not delivered, etc.):
 1. **Query server logs FIRST** via `GET /api/logs`
    - Requires `deviceId` + `deviceSecret` (ask user if not available)
    - Filters: `category`, `level` (info/warn/error), `since` (timestamp ms), `filterDevice`, `limit`
-   - Categories: `bind`, `unbind`, `transform`, `broadcast`, `broadcast_push`, `speakto_push`, `client_push`
+   - Categories: `bind`, `unbind`, `transform`, `broadcast`, `broadcast_push`, `speakto_push`, `client_push`, `entity_poll`
    - Example: `curl -s "https://eclaw.up.railway.app/api/logs?deviceId=DEVICE_ID&deviceSecret=DEVICE_SECRET&category=broadcast_push&limit=50"`
 
 2. **Check credentials**: Look in `backend/.env` (local only, gitignored). If not available, ask user for a valid deviceId+deviceSecret pair.

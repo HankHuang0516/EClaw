@@ -285,7 +285,23 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val response = api.getAllEntities(deviceId = deviceManager.deviceId)
-                boundEntities = response.entities.filter { it.isBound }
+                val newEntities = response.entities.filter { it.isBound }
+
+                // Guard against transient empty responses: if we previously had
+                // bound entities but the server returned none, skip this update.
+                // This prevents cards from disappearing during server restarts
+                // or transient API hiccups. (fixes #16 fully — previous fix only
+                // covered edit mode)
+                if (newEntities.isEmpty() && boundEntities.isNotEmpty()) {
+                    Timber.w("Skipping empty entity response (had ${boundEntities.size} entities)")
+                    TelemetryHelper.trackAction("entity_poll_empty_skipped", mapOf(
+                        "previousCount" to boundEntities.size,
+                        "responseActiveCount" to response.activeCount
+                    ))
+                    return@launch
+                }
+
+                boundEntities = newEntities
                 updateAgentCards()
                 updateEntityCount()
                 updateUsageStatusBar()  // Phase 9: Update usage bar
@@ -357,6 +373,12 @@ class MainActivity : AppCompatActivity() {
                 toggleAddEntitySection()
             }
         } else {
+            // Log when cards become visible again after being hidden
+            if (agentCardsContainer.visibility != View.VISIBLE) {
+                TelemetryHelper.trackAction("entity_cards_shown", mapOf(
+                    "count" to boundEntities.size
+                ))
+            }
             agentCardsContainer.visibility = View.VISIBLE
             emptyStateContainer.visibility = View.GONE
             btnEditMode.visibility = View.VISIBLE
