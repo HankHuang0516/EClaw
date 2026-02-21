@@ -197,95 +197,65 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Feedback Card (dark theme matching app style) -->
-            <com.google.android.material.card.MaterialCardView
+            <!-- Feedback Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnFeedback"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="#1A1A1A"
+                android:text="@string/feedback"
+                android:textColor="#CCFFFFFF"
+                app:backgroundTint="#1A1A1A"
+                app:cornerRadius="12dp"
                 app:strokeColor="#333333"
-                app:strokeWidth="1dp">
+                app:strokeWidth="1dp"
+                style="@style/Widget.Material3.Button.TonalButton"/>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+            <!-- Feedback sub-actions row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="4dp"
+                android:layout_marginTop="-4dp"
+                android:layout_marginBottom="4dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMarkBug"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="@string/feedback_mark"
+                    android:textSize="13sp"
+                    android:textColor="#CCFFFFFF"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="14dp"
+                    app:backgroundTint="#1A1A1A"
+                    app:cornerRadius="8dp"
+                    app:strokeColor="#333333"
+                    app:strokeWidth="1dp"
+                    style="@style/Widget.Material3.Button.TonalButton"/>
+
+                <TextView
+                    android:id="@+id/tvViewFeedbackHistory"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
+                    android:text="@string/feedback_view_history"
+                    android:textSize="13sp"
+                    android:textColor="#FFD23F"
+                    android:layout_marginStart="8dp"
+                    android:paddingVertical="4dp"/>
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                <TextView
+                    android:id="@+id/tvMarkStatus"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:textSize="12sp"
+                    android:textColor="#FFD23F"
+                    android:visibility="gone"/>
 
-                        <LinearLayout
-                            android:id="@+id/btnFeedback"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/feedback"
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                android:textColor="@android:color/white"/>
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/feedback_desc"
-                                android:textSize="13sp"
-                                android:textColor="#99FFFFFF"
-                                android:layout_marginTop="2dp"/>
-
-                        </LinearLayout>
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnMarkBug"
-                            android:layout_width="wrap_content"
-                            android:layout_height="36dp"
-                            android:text="@string/feedback_mark"
-                            android:textSize="13sp"
-                            android:textColor="@android:color/white"
-                            android:minWidth="0dp"
-                            android:paddingHorizontal="14dp"
-                            app:backgroundTint="#2A2A2A"
-                            app:cornerRadius="8dp"
-                            app:strokeColor="#444444"
-                            app:strokeWidth="1dp"
-                            style="@style/Widget.Material3.Button.TonalButton"/>
-
-                    </LinearLayout>
-
-                    <!-- Mark status text (shown after marking) -->
-                    <TextView
-                        android:id="@+id/tvMarkStatus"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textSize="12sp"
-                        android:textColor="#FFD23F"
-                        android:visibility="gone"
-                        android:layout_marginTop="8dp"/>
-
-                    <!-- View History link -->
-                    <TextView
-                        android:id="@+id/tvViewFeedbackHistory"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/feedback_view_history"
-                        android:textSize="13sp"
-                        android:textColor="#FFD23F"
-                        android:layout_marginTop="10dp"
-                        android:paddingVertical="4dp"/>
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
             <!-- Privacy Policy Button -->
             <com.google.android.material.button.MaterialButton

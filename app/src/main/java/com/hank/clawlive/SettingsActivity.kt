@@ -50,7 +50,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var tvEntityCount: TextView
     private lateinit var progressUsage: ProgressBar
     private lateinit var btnSubscribe: MaterialButton
-    private lateinit var btnFeedback: LinearLayout
+    private lateinit var btnFeedback: MaterialButton
     private lateinit var btnMarkBug: MaterialButton
     private lateinit var tvMarkStatus: TextView
     private lateinit var btnPrivacyPolicy: MaterialButton
