@@ -468,11 +468,13 @@ app.get('/api/admin/stats', adminAuth, adminCheck, async (req, res) => {
         const premiumCount = await pg.query("SELECT COUNT(*) as total FROM user_accounts WHERE subscription_status = 'premium'");
         const verifiedCount = await pg.query('SELECT COUNT(*) as total FROM user_accounts WHERE email_verified = true');
 
-        // Device counts (in-memory)
-        const deviceTotal = Object.keys(devices).length;
+        // Device counts (in-memory, excluding test devices)
+        let deviceTotal = 0;
         let entityTotal = 0;
         let boundEntities = 0;
-        for (const d of Object.values(devices)) {
+        for (const [deviceId, d] of Object.entries(devices)) {
+            if (isTestDeviceCheck(deviceId, d)) continue;
+            deviceTotal++;
             if (d.entities) {
                 for (const e of Object.values(d.entities)) {
                     entityTotal++;
@@ -548,18 +550,21 @@ app.get('/api/admin/bindings', adminAuth, adminCheck, async (req, res) => {
             ORDER BY b.bound_at DESC
         `);
 
+        const allBindings = result.rows.map(r => ({
+            botId: r.bot_id,
+            botType: r.bot_type,
+            deviceId: r.device_id,
+            entityId: r.entity_id != null ? parseInt(r.entity_id) : null,
+            userEmail: r.user_email || '(APP user)',
+            boundAt: r.bound_at ? parseInt(r.bound_at) : null,
+            subscriptionVerifiedAt: r.subscription_verified_at ? parseInt(r.subscription_verified_at) : null,
+            botStatus: r.bot_status
+        }));
+        // Filter out test device bindings
+        const realBindings = allBindings.filter(b => !isTestDeviceCheck(b.deviceId, devices[b.deviceId]));
         res.json({
             success: true,
-            bindings: result.rows.map(r => ({
-                botId: r.bot_id,
-                botType: r.bot_type,
-                deviceId: r.device_id,
-                entityId: r.entity_id != null ? parseInt(r.entity_id) : null,
-                userEmail: r.user_email || '(APP user)',
-                boundAt: r.bound_at ? parseInt(r.bound_at) : null,
-                subscriptionVerifiedAt: r.subscription_verified_at ? parseInt(r.subscription_verified_at) : null,
-                botStatus: r.bot_status
-            }))
+            bindings: realBindings
         });
     } catch (err) {
         console.error('[Admin] Bindings error:', err);
@@ -592,7 +597,7 @@ app.get('/api/admin/users', adminAuth, adminCheck, async (req, res) => {
                 createdAt: r.created_at ? parseInt(r.created_at) : null,
                 lastLoginAt: r.last_login_at ? parseInt(r.last_login_at) : null,
                 source: 'registered',
-                isTestDevice: dev ? isTestDeviceCheck(r.device_id, dev) : false
+                isTestDevice: isTestDeviceCheck(r.device_id, dev)
             };
         });
 

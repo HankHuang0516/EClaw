@@ -579,21 +579,19 @@
             html += '<table class="data-table">';
             html += '<thead><tr><th>' + i18n.t('admin_col_source') + '</th><th>' + i18n.t('admin_col_email') + '</th><th>' + i18n.t('admin_col_verified') + '</th><th>' + i18n.t('admin_col_sub') + '</th><th>' + i18n.t('admin_col_role') + '</th><th>' + i18n.t('admin_col_device') + '</th><th>' + i18n.t('admin_col_registered') + '</th><th>' + i18n.t('admin_col_last_login') + '</th></tr></thead>';
             html += '<tbody>';
-            if (allUsers.length > 0) {
-                for (const u of allUsers) {
+            if (realUsers.length > 0) {
+                for (const u of realUsers) {
                     const subCls = u.subscriptionStatus === 'premium' ? 'type-premium' :
                         u.subscriptionStatus === 'expired' ? 'type-expired' : '';
                     const isApp = u.source === 'app_device';
-                    const testBadge = u.isTestDevice ? ' <span class="type-badge" style="background:rgba(255,152,0,0.2);color:#FF9800;font-size:10px;">TEST</span>' : '';
                     const sourceBadge = isApp
                         ? '<span class="type-badge" style="background:rgba(33,150,243,0.2);color:#2196F3;">APP</span>'
                         : '<span class="type-badge type-active">' + i18n.t('admin_source_web') + '</span>';
                     const emailDisplay = isApp
                         ? '<span style="color:var(--text-secondary);font-style:italic;">(' + i18n.t('admin_app_only') + ')</span>'
                         : escapeHtml(u.email);
-                    const rowStyle = u.isTestDevice ? ' style="opacity:0.5;"' : '';
-                    html += '<tr' + rowStyle + '>' +
-                        '<td>' + sourceBadge + testBadge + '</td>' +
+                    html += '<tr>' +
+                        '<td>' + sourceBadge + '</td>' +
                         '<td>' + emailDisplay + '</td>' +
                         '<td>' + (isApp ? '-' : (u.emailVerified ? '<span style="color:var(--success)">Yes</span>' : '<span style="color:var(--text-muted)">No</span>')) + '</td>' +
                         '<td><span class="type-badge ' + subCls + '">' + escapeHtml(u.subscriptionStatus) + '</span></td>' +
