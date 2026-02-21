@@ -310,4 +310,10 @@ E-claw (電子蝦) 團隊深知隱私對您的重要性。我們在此鄭重聲�
     <string name="file_load_more">載入更多</string>
     <string name="file_playing_voice">播放語音中…</string>
     <string name="file_playback_done">播放完成</string>
+    <string name="file_view_toggle">切換檢視</string>
+    <string name="file_time_all">全部時間</string>
+    <string name="file_time_today">今天</string>
+    <string name="file_time_week">本週</string>
+    <string name="file_time_month">本月</string>
+    <string name="file_broadcast">廣播</string>
 </resources>

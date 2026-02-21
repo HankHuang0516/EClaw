@@ -2,6 +2,7 @@ package com.hank.clawlive
 
 import android.app.Dialog
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.media.MediaPlayer
@@ -23,6 +24,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.android.material.button.MaterialButton
@@ -36,19 +38,29 @@ import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.ui.FileCardAdapter
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.util.Calendar
 
 class FileManagerActivity : AppCompatActivity() {
 
     private val api by lazy { NetworkModule.api }
     private val deviceManager by lazy { DeviceManager.getInstance(this) }
     private val avatarManager by lazy { EntityAvatarManager.getInstance(this) }
+    private val prefs: SharedPreferences by lazy {
+        getSharedPreferences("eclaw_file_prefs", MODE_PRIVATE)
+    }
 
     private lateinit var topBar: LinearLayout
     private lateinit var tvFileCount: TextView
+    private lateinit var btnViewToggle: ImageButton
     private lateinit var chipGroupFilter: ChipGroup
     private lateinit var chipAll: Chip
     private lateinit var chipPhotos: Chip
     private lateinit var chipVoice: Chip
+    private lateinit var chipGroupTime: ChipGroup
+    private lateinit var chipTimeAll: Chip
+    private lateinit var chipTimeToday: Chip
+    private lateinit var chipTimeWeek: Chip
+    private lateinit var chipTimeMonth: Chip
     private lateinit var progressLoading: ProgressBar
     private lateinit var layoutEmpty: LinearLayout
     private lateinit var recyclerFiles: RecyclerView
@@ -57,6 +69,8 @@ class FileManagerActivity : AppCompatActivity() {
     private lateinit var adapter: FileCardAdapter
     private var allFiles = mutableListOf<DeviceFile>()
     private var currentFilter: String? = null // null = all
+    private var currentTimeFilter: String = "all"
+    private var isListMode: Boolean = false
     private var hasMore = false
     private var isLoading = false
     private var mediaPlayer: MediaPlayer? = null
@@ -68,10 +82,16 @@ class FileManagerActivity : AppCompatActivity() {
 
         topBar = findViewById(R.id.topBar)
         tvFileCount = findViewById(R.id.tvFileCount)
+        btnViewToggle = findViewById(R.id.btnViewToggle)
         chipGroupFilter = findViewById(R.id.chipGroupFilter)
         chipAll = findViewById(R.id.chipAll)
         chipPhotos = findViewById(R.id.chipPhotos)
         chipVoice = findViewById(R.id.chipVoice)
+        chipGroupTime = findViewById(R.id.chipGroupTime)
+        chipTimeAll = findViewById(R.id.chipTimeAll)
+        chipTimeToday = findViewById(R.id.chipTimeToday)
+        chipTimeWeek = findViewById(R.id.chipTimeWeek)
+        chipTimeMonth = findViewById(R.id.chipTimeMonth)
         progressLoading = findViewById(R.id.progressLoading)
         layoutEmpty = findViewById(R.id.layoutEmpty)
         recyclerFiles = findViewById(R.id.recyclerFiles)
@@ -87,17 +107,41 @@ class FileManagerActivity : AppCompatActivity() {
         // Back button
         findViewById<ImageButton>(R.id.btnBack).setOnClickListener { finish() }
 
+        // Restore view mode
+        isListMode = prefs.getBoolean("is_list_mode", false)
+
         // Setup RecyclerView
         adapter = FileCardAdapter(this) { file, _ -> previewFile(file) }
-        recyclerFiles.layoutManager = GridLayoutManager(this, 2)
-        recyclerFiles.adapter = adapter
+        adapter.isListMode = isListMode
+        applyLayoutManager()
 
-        // Filter chips
+        // View toggle
+        updateViewToggleIcon()
+        btnViewToggle.setOnClickListener {
+            isListMode = !isListMode
+            prefs.edit().putBoolean("is_list_mode", isListMode).apply()
+            adapter.isListMode = isListMode
+            applyLayoutManager()
+            updateViewToggleIcon()
+        }
+
+        // Type filter chips
         chipGroupFilter.setOnCheckedStateChangeListener { _, checkedIds ->
             currentFilter = when {
                 checkedIds.contains(R.id.chipPhotos) -> "photo"
                 checkedIds.contains(R.id.chipVoice) -> "voice"
                 else -> null
+            }
+            loadFiles(append = false)
+        }
+
+        // Time filter chips
+        chipGroupTime.setOnCheckedStateChangeListener { _, checkedIds ->
+            currentTimeFilter = when {
+                checkedIds.contains(R.id.chipTimeToday) -> "today"
+                checkedIds.contains(R.id.chipTimeWeek) -> "week"
+                checkedIds.contains(R.id.chipTimeMonth) -> "month"
+                else -> "all"
             }
             loadFiles(append = false)
         }
@@ -109,6 +153,23 @@ class FileManagerActivity : AppCompatActivity() {
         loadFiles(append = false)
     }
 
+    private fun applyLayoutManager() {
+        recyclerFiles.layoutManager = if (isListMode) {
+            LinearLayoutManager(this)
+        } else {
+            GridLayoutManager(this, 2)
+        }
+        recyclerFiles.adapter = adapter
+    }
+
+    private fun updateViewToggleIcon() {
+        // Use built-in icons: grid vs list
+        btnViewToggle.setImageResource(
+            if (isListMode) android.R.drawable.ic_dialog_dialer
+            else android.R.drawable.ic_menu_sort_by_size
+        )
+    }
+
     override fun onResume() {
         super.onResume()
         TelemetryHelper.trackPageView(this, "file_manager")
@@ -118,6 +179,36 @@ class FileManagerActivity : AppCompatActivity() {
         super.onDestroy()
         mediaPlayer?.release()
         mediaPlayer = null
+    }
+
+    private fun getTimeSince(): Long? {
+        val cal = Calendar.getInstance()
+        return when (currentTimeFilter) {
+            "today" -> {
+                cal.set(Calendar.HOUR_OF_DAY, 0)
+                cal.set(Calendar.MINUTE, 0)
+                cal.set(Calendar.SECOND, 0)
+                cal.set(Calendar.MILLISECOND, 0)
+                cal.timeInMillis
+            }
+            "week" -> {
+                cal.set(Calendar.DAY_OF_WEEK, cal.firstDayOfWeek)
+                cal.set(Calendar.HOUR_OF_DAY, 0)
+                cal.set(Calendar.MINUTE, 0)
+                cal.set(Calendar.SECOND, 0)
+                cal.set(Calendar.MILLISECOND, 0)
+                cal.timeInMillis
+            }
+            "month" -> {
+                cal.set(Calendar.DAY_OF_MONTH, 1)
+                cal.set(Calendar.HOUR_OF_DAY, 0)
+                cal.set(Calendar.MINUTE, 0)
+                cal.set(Calendar.SECOND, 0)
+                cal.set(Calendar.MILLISECOND, 0)
+                cal.timeInMillis
+            }
+            else -> null
+        }
     }
 
     private fun loadFiles(append: Boolean) {
@@ -141,12 +232,15 @@ class FileManagerActivity : AppCompatActivity() {
                     parseTimestamp(allFiles.last().createdAt)
                 } else null
 
+                val sinceTs = getTimeSince()
+
                 val response = api.getDeviceFiles(
                     deviceId = deviceId,
                     deviceSecret = deviceSecret,
                     type = currentFilter,
                     limit = 200,
-                    before = beforeTs
+                    before = beforeTs,
+                    since = sinceTs
                 )
 
                 if (response.success) {
@@ -194,8 +288,6 @@ class FileManagerActivity : AppCompatActivity() {
         btnLoadMore.visibility = if (hasMore) View.VISIBLE else View.GONE
 
         // Update count
-        val photoCount = allFiles.count { it.type == "photo" }
-        val voiceCount = allFiles.count { it.type == "voice" }
         tvFileCount.text = "${allFiles.size} ${getString(R.string.file_stats_total)}"
     }
 
@@ -245,11 +337,15 @@ class FileManagerActivity : AppCompatActivity() {
         Glide.with(this).load(file.url).into(imageView)
         layout.addView(imageView)
 
-        // Meta info
-        val avatar = avatarManager.getAvatar(file.entityId)
+        // Meta info - show all entities
+        val entityIds = file.allEntityIds()
+        val entityLabel = entityIds.joinToString(", ") { eid ->
+            "${avatarManager.getAvatar(eid)} Entity $eid"
+        }
         val sourceLabel = if (file.isFromUser) getString(R.string.you) else (file.source ?: "bot")
+        val broadcastLabel = if (file.isBroadcast()) " [${getString(R.string.file_broadcast)}]" else ""
         val metaText = TextView(this).apply {
-            text = "$avatar Entity ${file.entityId} — $sourceLabel"
+            text = "$entityLabel$broadcastLabel — $sourceLabel"
             setTextColor(Color.parseColor("#888888"))
             textSize = 13f
             gravity = android.view.Gravity.CENTER
@@ -333,7 +429,7 @@ class FileManagerActivity : AppCompatActivity() {
     private fun shareFile(file: DeviceFile) {
         TelemetryHelper.trackAction("file_share", mapOf("type" to file.type))
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            type = if (file.type == "photo") "text/plain" else "text/plain"
+            type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, file.url)
             putExtra(Intent.EXTRA_SUBJECT, "E-Claw ${if (file.type == "photo") "Photo" else "Voice"}")
         }

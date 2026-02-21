@@ -315,6 +315,12 @@ If you have any questions, please contact us via our official email.
     <string name="file_load_more">Load More</string>
     <string name="file_playing_voice">Playing voice…</string>
     <string name="file_playback_done">Playback complete</string>
+    <string name="file_view_toggle">Toggle view</string>
+    <string name="file_time_all">All time</string>
+    <string name="file_time_today">Today</string>
+    <string name="file_time_week">This week</string>
+    <string name="file_time_month">This month</string>
+    <string name="file_broadcast">Broadcast</string>
 
     <!-- Gatekeeper -->
     <string name="gatekeeper_blocked_message">⚠️ %1$s（%2$d/%3$d）</string>

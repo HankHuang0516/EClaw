@@ -14,12 +14,39 @@
             margin-bottom: 20px;
         }
 
+        .header-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .view-btn {
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .view-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .view-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+        }
+
         /* Filter bar */
         .filter-bar {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
-            margin-bottom: 16px;
+            margin-bottom: 8px;
             align-items: center;
         }
 
@@ -52,6 +79,39 @@
             height: 20px;
             background: var(--card-border);
             margin: 0 4px;
+        }
+
+        /* Time filter row */
+        .time-filter-bar {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            align-items: center;
+        }
+
+        .time-chip {
+            padding: 4px 12px;
+            border-radius: 14px;
+            font-size: 11px;
+            cursor: pointer;
+            background: transparent;
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            transition: all 0.2s;
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        .time-chip:hover {
+            border-color: var(--text-secondary);
+            color: var(--text-secondary);
+        }
+
+        .time-chip.active {
+            background: rgba(108, 99, 255, 0.15);
+            border-color: var(--primary);
+            color: var(--primary);
         }
 
         /* File stats */
@@ -98,6 +158,7 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
+            position: relative;
         }
 
         .file-thumb img {
@@ -109,6 +170,39 @@
         .file-thumb-icon {
             font-size: 40px;
             opacity: 0.5;
+        }
+
+        /* Multi-entity badge overlay on thumbnail */
+        .entity-badges {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            display: flex;
+            gap: 2px;
+            flex-wrap: wrap;
+        }
+
+        .entity-badge {
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 11px;
+            line-height: 1.2;
+            backdrop-filter: blur(4px);
+        }
+
+        .broadcast-badge {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: rgba(108, 99, 255, 0.85);
+            color: #fff;
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            backdrop-filter: blur(4px);
         }
 
         /* File info below thumb */
@@ -164,6 +258,50 @@
             overflow: hidden;
             text-overflow: ellipsis;
             line-height: 1.4;
+        }
+
+        /* ===== List View ===== */
+        .file-grid.list-view {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .file-grid.list-view .file-card {
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+        }
+
+        .file-grid.list-view .file-thumb {
+            width: 80px;
+            min-width: 80px;
+            aspect-ratio: 1;
+            flex-shrink: 0;
+        }
+
+        .file-grid.list-view .file-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 8px 12px;
+        }
+
+        .file-grid.list-view .file-card:hover {
+            transform: none;
+        }
+
+        .file-grid.list-view .entity-badges {
+            top: 4px;
+            left: 4px;
+        }
+
+        .file-grid.list-view .broadcast-badge {
+            top: 4px;
+            right: 4px;
+            font-size: 8px;
+            padding: 1px 6px;
         }
 
         /* Load more */
@@ -281,9 +419,13 @@
         <!-- Page Header -->
         <div class="page-header">
             <h1 class="page-title" data-i18n="files_title">Files</h1>
+            <div class="header-actions">
+                <button class="view-btn active" id="btnGridView" onclick="setViewMode('grid')" title="Grid">&#9638;</button>
+                <button class="view-btn" id="btnListView" onclick="setViewMode('list')" title="List">&#9776;</button>
+            </div>
         </div>
 
-        <!-- Filter Bar -->
+        <!-- Filter Bar: Type + Entity -->
         <div class="filter-bar">
             <div class="filter-chip active" data-type="all" onclick="setFilter('all')" data-i18n="files_filter_all">All</div>
             <div class="filter-chip" data-type="photo" onclick="setFilter('photo')">
@@ -294,6 +436,14 @@
             </div>
             <div class="filter-divider"></div>
             <div id="entityFilters"></div>
+        </div>
+
+        <!-- Time Filter Bar -->
+        <div class="time-filter-bar">
+            <div class="time-chip active" data-time="all" onclick="setTimeFilter('all')" data-i18n="files_time_all">All time</div>
+            <div class="time-chip" data-time="today" onclick="setTimeFilter('today')" data-i18n="files_time_today">Today</div>
+            <div class="time-chip" data-time="week" onclick="setTimeFilter('week')" data-i18n="files_time_week">This week</div>
+            <div class="time-chip" data-time="month" onclick="setTimeFilter('month')" data-i18n="files_time_month">This month</div>
         </div>
 
         <!-- Stats -->
@@ -339,9 +489,10 @@
 
         // --- State ---
         let allFiles = [];
-        let filteredFiles = [];
         let currentTypeFilter = 'all';
         let currentEntityFilter = null; // null = all
+        let currentTimeFilter = 'all';
+        let currentViewMode = localStorage.getItem('eclaw_file_view') || 'grid';
         let entities = [];
         let isLoading = false;
         let hasMore = false;
@@ -353,9 +504,23 @@
             const user = await checkAuth();
             if (!user) return;
 
+            // Restore view mode
+            setViewMode(currentViewMode, true);
+
             await loadEntities();
             await loadFiles();
         });
+
+        // --- View Mode ---
+        function setViewMode(mode, skipRender) {
+            currentViewMode = mode;
+            localStorage.setItem('eclaw_file_view', mode);
+            document.getElementById('btnGridView').classList.toggle('active', mode === 'grid');
+            document.getElementById('btnListView').classList.toggle('active', mode === 'list');
+            const grid = document.getElementById('fileGrid');
+            grid.classList.toggle('list-view', mode === 'list');
+            if (!skipRender && allFiles.length > 0) renderFiles();
+        }
 
         // --- Load Entities ---
         async function loadEntities() {
@@ -393,6 +558,32 @@
             return defaults[entityId] || '🦞';
         }
 
+        // --- Time Filter ---
+        function getTimeRange(filter) {
+            const now = new Date();
+            if (filter === 'today') {
+                const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                return { since: start.getTime() };
+            } else if (filter === 'week') {
+                const start = new Date(now);
+                start.setDate(start.getDate() - start.getDay());
+                start.setHours(0, 0, 0, 0);
+                return { since: start.getTime() };
+            } else if (filter === 'month') {
+                const start = new Date(now.getFullYear(), now.getMonth(), 1);
+                return { since: start.getTime() };
+            }
+            return {};
+        }
+
+        function setTimeFilter(filter) {
+            currentTimeFilter = filter;
+            document.querySelectorAll('.time-filter-bar .time-chip').forEach(c => {
+                c.classList.toggle('active', c.dataset.time === filter);
+            });
+            loadFiles();
+        }
+
         // --- Load Files ---
         async function loadFiles(append = false) {
             if (isLoading) return;
@@ -416,6 +607,12 @@
                 if (currentEntityFilter !== null) {
                     url += '&entityId=' + currentEntityFilter;
                 }
+
+                // Time range
+                const timeRange = getTimeRange(currentTimeFilter);
+                if (timeRange.since) url += '&since=' + timeRange.since;
+                if (timeRange.until) url += '&until=' + timeRange.until;
+
                 if (append && oldestTimestamp) {
                     url += '&before=' + oldestTimestamp;
                 }
@@ -462,7 +659,7 @@
 
         function setEntityFilter(entityId) {
             if (currentEntityFilter === entityId) {
-                currentEntityFilter = null; // Toggle off
+                currentEntityFilter = null;
             } else {
                 currentEntityFilter = entityId;
             }
@@ -471,10 +668,39 @@
         }
 
         // --- Rendering ---
+        function renderEntityBadges(file) {
+            const eIds = file.entityIds || [file.entityId];
+            const isBroadcast = eIds.length > 1;
+
+            let badges = '<div class="entity-badges">';
+            eIds.forEach(eid => {
+                const avatar = getAvatarForEntity(eid);
+                badges += '<span class="entity-badge">' + avatar + '</span>';
+            });
+            badges += '</div>';
+
+            if (isBroadcast) {
+                badges += '<div class="broadcast-badge">' + i18n.t('files_broadcast') + '</div>';
+            }
+
+            return badges;
+        }
+
+        function renderEntityNames(file) {
+            const eIds = file.entityIds || [file.entityId];
+            return eIds.map(eid => {
+                const avatar = getAvatarForEntity(eid);
+                return avatar + ' ' + escapeHtml(getEntityName(eid));
+            }).join(', ');
+        }
+
         function renderFiles() {
             const grid = document.getElementById('fileGrid');
             const emptyState = document.getElementById('emptyState');
             const loadMoreContainer = document.getElementById('loadMoreContainer');
+
+            // Re-apply view mode class
+            grid.classList.toggle('list-view', currentViewMode === 'list');
 
             if (allFiles.length === 0) {
                 grid.innerHTML = '';
@@ -487,29 +713,33 @@
             loadMoreContainer.style.display = hasMore ? '' : 'none';
 
             grid.innerHTML = allFiles.map((file, idx) => {
-                const char = ENTITY_CHARS[file.entityId] || ENTITY_CHARS[0];
-                const avatar = getAvatarForEntity(file.entityId);
-                const entityName = getEntityName(file.entityId);
                 const date = formatFileDate(file.createdAt);
                 const sourceLabel = file.isFromUser ? i18n.t('files_from_you') : (file.source || 'bot');
+                const entityBadgesHtml = renderEntityBadges(file);
+                const entityNamesHtml = renderEntityNames(file);
 
                 if (file.type === 'photo') {
                     return '<div class="file-card" onclick="previewFile(' + idx + ')">' +
-                        '<div class="file-thumb"><img src="' + escapeHtml(file.url) + '" alt="photo" loading="lazy" onerror="this.parentElement.innerHTML=\'<div class=file-thumb-icon>🖼️</div>\'"></div>' +
+                        '<div class="file-thumb">' +
+                        '<img src="' + escapeHtml(file.url) + '" alt="photo" loading="lazy" onerror="this.parentElement.innerHTML=\'<div class=file-thumb-icon>🖼️</div>\'">' +
+                        entityBadgesHtml +
+                        '</div>' +
                         '<div class="file-info">' +
                         '<span class="file-type-badge photo">' + i18n.t('files_type_photo') + '</span>' +
-                        '<div class="file-entity">' + avatar + ' ' + escapeHtml(entityName) + '</div>' +
+                        '<div class="file-entity">' + entityNamesHtml + '</div>' +
                         '<div class="file-source">' + escapeHtml(sourceLabel) + '</div>' +
                         (file.text ? '<div class="file-text">' + escapeHtml(file.text) + '</div>' : '') +
                         '<div class="file-date">' + date + '</div>' +
                         '</div></div>';
                 } else {
-                    // Voice
                     return '<div class="file-card" onclick="previewFile(' + idx + ')">' +
-                        '<div class="file-thumb"><div class="file-thumb-icon">🎙️</div></div>' +
+                        '<div class="file-thumb">' +
+                        '<div class="file-thumb-icon">🎙️</div>' +
+                        entityBadgesHtml +
+                        '</div>' +
                         '<div class="file-info">' +
                         '<span class="file-type-badge voice">' + i18n.t('files_type_voice') + '</span>' +
-                        '<div class="file-entity">' + avatar + ' ' + escapeHtml(entityName) + '</div>' +
+                        '<div class="file-entity">' + entityNamesHtml + '</div>' +
                         '<div class="file-source">' + escapeHtml(sourceLabel) + '</div>' +
                         (file.text ? '<div class="file-text">' + escapeHtml(file.text) + '</div>' : '') +
                         '<div class="file-date">' + date + '</div>' +
@@ -542,8 +772,7 @@
             const overlay = document.createElement('div');
             overlay.className = 'preview-overlay';
 
-            const entityName = getEntityName(file.entityId);
-            const avatar = getAvatarForEntity(file.entityId);
+            const entityNamesHtml = renderEntityNames(file);
             const date = formatFileDate(file.createdAt);
             const sourceLabel = file.isFromUser ? i18n.t('files_from_you') : (file.source || 'bot');
 
@@ -560,7 +789,7 @@
             overlay.innerHTML =
                 '<button class="preview-close" onclick="this.closest(\'.preview-overlay\').remove()">&times;</button>' +
                 contentHtml +
-                '<div class="preview-meta">' + avatar + ' ' + escapeHtml(entityName) + ' — ' + escapeHtml(sourceLabel) + ' — ' + date +
+                '<div class="preview-meta">' + entityNamesHtml + ' — ' + escapeHtml(sourceLabel) + ' — ' + date +
                 (file.text ? '<br>' + escapeHtml(file.text) : '') +
                 '</div>' +
                 '<div class="preview-actions">' +
@@ -570,12 +799,10 @@
 
             document.body.appendChild(overlay);
 
-            // Close on background click
             overlay.addEventListener('click', (e) => {
                 if (e.target === overlay) overlay.remove();
             });
 
-            // Close on escape
             const escHandler = (e) => {
                 if (e.key === 'Escape') {
                     overlay.remove();
@@ -591,7 +818,6 @@
             if (!file) return;
 
             if (file.type === 'photo') {
-                // Open in new tab for download
                 const a = document.createElement('a');
                 a.href = file.url;
                 a.target = '_blank';

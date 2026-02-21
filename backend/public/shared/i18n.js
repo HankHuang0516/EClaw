@@ -436,7 +436,15 @@ const TRANSLATIONS = {
         "files_load_more": "Load More",
         "files_download_started": "Download started",
         "files_link_copied": "Link copied to clipboard!",
-        "files_share_failed": "Failed to share"
+        "files_share_failed": "Failed to share",
+        "files_view_grid": "Grid",
+        "files_view_list": "List",
+        "files_time_all": "All time",
+        "files_time_today": "Today",
+        "files_time_week": "This week",
+        "files_time_month": "This month",
+        "files_entities_badge": "entities",
+        "files_broadcast": "Broadcast"
     },
     zh: {
         // Mission Control (mission.html)
@@ -874,7 +882,15 @@ const TRANSLATIONS = {
         "files_load_more": "載入更多",
         "files_download_started": "開始下載",
         "files_link_copied": "連結已複製到剪貼簿！",
-        "files_share_failed": "分享失敗"
+        "files_share_failed": "分享失敗",
+        "files_view_grid": "圖示",
+        "files_view_list": "列表",
+        "files_time_all": "全部時間",
+        "files_time_today": "今天",
+        "files_time_week": "本週",
+        "files_time_month": "本月",
+        "files_entities_badge": "個實體",
+        "files_broadcast": "廣播"
     }
 };
 

@@ -4668,6 +4668,8 @@ app.get('/api/device/files', async (req, res) => {
     }
 
     try {
+        const { since, until } = req.query;
+
         let query = `SELECT id, entity_id, text, source, is_from_user, is_from_bot,
                             media_type, media_url, created_at
                      FROM chat_messages
@@ -4687,6 +4689,16 @@ app.get('/api/device/files', async (req, res) => {
             query += ` AND entity_id = $${params.length}`;
         }
 
+        // Time range filtering
+        if (since) {
+            params.push(new Date(parseInt(since)));
+            query += ` AND created_at >= $${params.length}`;
+        }
+        if (until) {
+            params.push(new Date(parseInt(until)));
+            query += ` AND created_at <= $${params.length}`;
+        }
+
         // Pagination
         if (before) {
             params.push(new Date(parseInt(before)));
@@ -4698,23 +4710,44 @@ app.get('/api/device/files', async (req, res) => {
 
         const result = await chatPool.query(query, params);
 
-        const files = result.rows.map(row => ({
-            id: row.id,
-            entityId: row.entity_id,
-            type: row.media_type,
-            url: row.media_url,
-            text: row.text,
-            source: row.source,
-            isFromUser: row.is_from_user,
-            isFromBot: row.is_from_bot,
-            createdAt: row.created_at
-        }));
+        // Group files with the same media_url (broadcast files) into a single entry
+        const urlMap = new Map();
+        for (const row of result.rows) {
+            const url = row.media_url;
+            if (urlMap.has(url)) {
+                const existing = urlMap.get(url);
+                if (!existing.entityIds.includes(row.entity_id)) {
+                    existing.entityIds.push(row.entity_id);
+                }
+                // Keep earliest created_at
+                if (new Date(row.created_at) < new Date(existing.createdAt)) {
+                    existing.createdAt = row.created_at;
+                }
+            } else {
+                urlMap.set(url, {
+                    id: row.id,
+                    entityId: row.entity_id,
+                    entityIds: [row.entity_id],
+                    type: row.media_type,
+                    url: url,
+                    text: row.text,
+                    source: row.source,
+                    isFromUser: row.is_from_user,
+                    isFromBot: row.is_from_bot,
+                    createdAt: row.created_at
+                });
+            }
+        }
+
+        const files = Array.from(urlMap.values()).sort((a, b) =>
+            new Date(b.createdAt) - new Date(a.createdAt)
+        );
 
         res.json({
             success: true,
             files,
             count: files.length,
-            hasMore: files.length >= (parseInt(limit) || 200)
+            hasMore: result.rows.length >= (parseInt(limit) || 200)
         });
     } catch (error) {
         console.error('[Files] List error:', error);

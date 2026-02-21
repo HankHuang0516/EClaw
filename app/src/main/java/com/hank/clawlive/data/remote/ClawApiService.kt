@@ -166,7 +166,8 @@ interface ClawApiService {
         @Query("type") type: String? = null,
         @Query("entityId") entityId: Int? = null,
         @Query("limit") limit: Int = 200,
-        @Query("before") before: Long? = null
+        @Query("before") before: Long? = null,
+        @Query("since") since: Long? = null
     ): DeviceFilesResponse
 
     // ============================================
@@ -314,6 +315,7 @@ data class DeviceFilesResponse(
 data class DeviceFile(
     val id: String,
     val entityId: Int,
+    val entityIds: List<Int>? = null, // multiple entities for broadcast files
     val type: String, // "photo" or "voice"
     val url: String,
     val text: String? = null,
@@ -321,4 +323,9 @@ data class DeviceFile(
     val isFromUser: Boolean = false,
     val isFromBot: Boolean = false,
     val createdAt: String // ISO timestamp
-)
+) {
+    /** All entity IDs associated with this file (broadcast or single) */
+    fun allEntityIds(): List<Int> = entityIds ?: listOf(entityId)
+    /** Whether this file was sent via broadcast to multiple entities */
+    fun isBroadcast(): Boolean = (entityIds?.size ?: 0) > 1
+}
