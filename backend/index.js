@@ -4134,7 +4134,7 @@ app.post('/api/feedback/mark', (req, res) => {
     res.json({ success: true, markTs: ts });
 });
 
-// POST /api/admin/transfer-device — Transfer all entity bindings from one device to another
+// POST /api/admin/transfer-device — Transfer all entity bindings + DB data from one device to another
 app.post('/api/admin/transfer-device', async (req, res) => {
     const { sourceDeviceId, sourceDeviceSecret, targetDeviceId, targetDeviceSecret } = req.body;
 
@@ -4150,37 +4150,118 @@ app.post('/api/admin/transfer-device', async (req, res) => {
     if (!targetDevice.deviceSecret) targetDevice.deviceSecret = targetDeviceSecret;
 
     const transferred = [];
+    const dbMigrated = {};
     try {
+        // 1. Transfer in-memory entities + official bindings
         for (let eId = 0; eId < MAX_ENTITIES_PER_DEVICE; eId++) {
             const srcEntity = sourceDevice.entities[eId];
             if (!srcEntity || !srcEntity.isBound) continue;
 
-            // Copy entity data to target
             targetDevice.entities[eId] = { ...srcEntity, entityId: eId };
 
-            // Move official binding cache
             const srcKey = getBindingCacheKey(sourceDeviceId, eId);
             const tgtKey = getBindingCacheKey(targetDeviceId, eId);
             if (officialBindingsCache[srcKey]) {
                 const binding = { ...officialBindingsCache[srcKey], device_id: targetDeviceId };
                 officialBindingsCache[tgtKey] = binding;
                 delete officialBindingsCache[srcKey];
-
-                // Update PostgreSQL
                 if (usePostgreSQL) {
                     await db.removeOfficialBinding(sourceDeviceId, eId);
                     await db.saveOfficialBinding(binding);
                 }
             }
 
-            // Reset source entity
             sourceDevice.entities[eId] = createDefaultEntity(eId);
             transferred.push({ entityId: eId, name: srcEntity.name, character: srcEntity.character });
         }
 
+        // 2. Transfer PostgreSQL data (mission, scheduled messages, feedback, telemetry, etc.)
+        if (chatPool) {
+            const client = await chatPool.connect();
+            try {
+                await client.query('BEGIN');
+
+                // Mission dashboard: copy source → target, then delete source
+                const dashResult = await client.query(
+                    'SELECT * FROM mission_dashboard WHERE device_id = $1', [sourceDeviceId]
+                );
+                if (dashResult.rows.length > 0) {
+                    const dash = dashResult.rows[0];
+                    await client.query(
+                        `INSERT INTO mission_dashboard (device_id, version, todo_list, mission_list, done_list, notes, rules, skills)
+                         VALUES ($1, 1, $2, $3, $4, $5, $6, $7)
+                         ON CONFLICT (device_id) DO UPDATE SET
+                           todo_list = $2, mission_list = $3, done_list = $4,
+                           notes = $5, rules = $6, skills = $7, updated_at = NOW()`,
+                        [targetDeviceId, dash.todo_list, dash.mission_list, dash.done_list, dash.notes, dash.rules, dash.skills]
+                    );
+                    // Move child records (must happen before deleting source dashboard)
+                    const tables = ['mission_items', 'mission_notes', 'mission_rules', 'mission_sync_log'];
+                    for (const table of tables) {
+                        const r = await client.query(
+                            `UPDATE ${table} SET device_id = $1 WHERE device_id = $2`,
+                            [targetDeviceId, sourceDeviceId]
+                        );
+                        if (r.rowCount > 0) dbMigrated[table] = r.rowCount;
+                    }
+                    await client.query('DELETE FROM mission_dashboard WHERE device_id = $1', [sourceDeviceId]);
+                    dbMigrated['mission_dashboard'] = 1;
+                }
+
+                // Bot files
+                const bf = await client.query(
+                    'UPDATE bot_files SET device_id = $1 WHERE device_id = $2', [targetDeviceId, sourceDeviceId]
+                );
+                if (bf.rowCount > 0) dbMigrated['bot_files'] = bf.rowCount;
+
+                // Scheduled messages
+                const sm = await client.query(
+                    'UPDATE scheduled_messages SET device_id = $1 WHERE device_id = $2', [targetDeviceId, sourceDeviceId]
+                );
+                if (sm.rowCount > 0) dbMigrated['scheduled_messages'] = sm.rowCount;
+
+                // Feedback
+                const fb = await client.query(
+                    'UPDATE feedback SET device_id = $1 WHERE device_id = $2', [targetDeviceId, sourceDeviceId]
+                );
+                if (fb.rowCount > 0) dbMigrated['feedback'] = fb.rowCount;
+
+                // Device telemetry
+                const dt = await client.query(
+                    'UPDATE device_telemetry SET device_id = $1 WHERE device_id = $2', [targetDeviceId, sourceDeviceId]
+                );
+                if (dt.rowCount > 0) dbMigrated['device_telemetry'] = dt.rowCount;
+
+                // User accounts (subscription)
+                const ua = await client.query(
+                    'UPDATE user_accounts SET device_id = $1 WHERE device_id = $2', [targetDeviceId, sourceDeviceId]
+                );
+                if (ua.rowCount > 0) dbMigrated['user_accounts'] = ua.rowCount;
+
+                // Usage tracking
+                const ut = await client.query(
+                    'UPDATE usage_tracking SET device_id = $1 WHERE device_id = $2', [targetDeviceId, sourceDeviceId]
+                );
+                if (ut.rowCount > 0) dbMigrated['usage_tracking'] = ut.rowCount;
+
+                // Server logs
+                const sl = await client.query(
+                    'UPDATE server_logs SET device_id = $1 WHERE device_id = $2', [targetDeviceId, sourceDeviceId]
+                );
+                if (sl.rowCount > 0) dbMigrated['server_logs'] = sl.rowCount;
+
+                await client.query('COMMIT');
+            } catch (dbErr) {
+                await client.query('ROLLBACK');
+                throw new Error(`DB migration failed: ${dbErr.message}`);
+            } finally {
+                client.release();
+            }
+        }
+
         await saveData();
-        console.log(`[Transfer] ${transferred.length} entities: ${sourceDeviceId} → ${targetDeviceId}`);
-        res.json({ success: true, transferred, count: transferred.length });
+        console.log(`[Transfer] ${transferred.length} entities + DB tables: ${sourceDeviceId} → ${targetDeviceId}`, dbMigrated);
+        res.json({ success: true, transferred, count: transferred.length, dbMigrated });
     } catch (err) {
         console.error('[Transfer] Error:', err.message);
         res.status(500).json({ success: false, message: err.message });
