@@ -105,6 +105,20 @@ class DeviceManager private constructor(context: Context) {
         set(value) = prefs.edit().putLong(KEY_BINDING_EXPIRY, value).apply()
 
     /**
+     * Overwrite device credentials with values recovered from account login.
+     * Used when user logs in with email/password to restore their old device.
+     */
+    fun setCredentials(newDeviceId: String, newDeviceSecret: String) {
+        prefs.edit()
+            .putString(KEY_DEVICE_ID, newDeviceId)
+            .putString(KEY_DEVICE_SECRET, newDeviceSecret)
+            .remove(KEY_IS_BOUND)
+            .remove(KEY_BINDING_CODE)
+            .remove(KEY_BINDING_EXPIRY)
+            .apply()
+    }
+
+    /**
      * Reset device credentials (for re-binding)
      */
     fun reset() {

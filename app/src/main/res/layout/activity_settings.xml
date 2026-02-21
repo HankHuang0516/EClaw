@@ -280,9 +280,25 @@
                 android:text="@string/web_portal"
                 android:textColor="#CCFFFFFF"
                 app:backgroundTint="#1A1A1A"
-                android:layout_marginBottom="24dp"
+                android:layout_marginBottom="8dp"
                 app:cornerRadius="12dp"
                 app:icon="@android:drawable/ic_menu_share"
+                app:iconTint="#CCFFFFFF"
+                app:strokeColor="#333333"
+                app:strokeWidth="1dp"
+                style="@style/Widget.Material3.Button.TonalButton"/>
+
+            <!-- Account Login Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAccountLogin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/account_login"
+                android:textColor="#CCFFFFFF"
+                app:backgroundTint="#1A1A1A"
+                android:layout_marginBottom="24dp"
+                app:cornerRadius="12dp"
+                app:icon="@android:drawable/ic_lock_idle_lock"
                 app:iconTint="#CCFFFFFF"
                 app:strokeColor="#333333"
                 app:strokeWidth="1dp"

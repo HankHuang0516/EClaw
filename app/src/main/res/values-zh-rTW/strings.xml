@@ -196,6 +196,38 @@
     <string name="tos_load_failed">載入使用規範失敗</string>
     <string name="tos_agree_failed">記錄同意失敗</string>
 
+    <!-- Bind Email (Web Portal) -->
+    <string name="bind_email_title">綁定信箱以登入網頁版</string>
+    <string name="bind_email_prompt">綁定信箱和密碼即可直接登入網頁入口，或使用裝置憑證登入。</string>
+    <string name="bind_email_action">綁定信箱</string>
+    <string name="bind_email_use_device_login">複製裝置憑證</string>
+    <string name="bind_email_label">Email</string>
+    <string name="bind_email_password_label">密碼</string>
+    <string name="bind_email_confirm_label">確認密碼</string>
+    <string name="bind_email_password_hint">至少 6 個字元，須包含英文字母和數字</string>
+    <string name="bind_email_submit">綁定</string>
+    <string name="bind_email_submitting">綁定中…</string>
+    <string name="bind_email_fill_all">請填寫所有欄位</string>
+    <string name="bind_email_password_invalid">密碼至少 6 個字元，須包含英文字母和數字</string>
+    <string name="bind_email_password_mismatch">兩次密碼輸入不一致</string>
+    <string name="bind_email_success">信箱已綁定！請至信箱收取驗證信。</string>
+    <string name="bind_email_linked">已綁定信箱：</string>
+    <string name="bind_email_verified">已驗證</string>
+    <string name="bind_email_not_verified">未驗證</string>
+    <string name="bind_email_login_hint">您可以使用此信箱和密碼登入網頁入口。</string>
+    <string name="bind_email_verify_hint">請至信箱收取驗證信後才能登入。</string>
+    <string name="bind_email_open_portal">開啟網頁入口</string>
+    <string name="bind_email_copy_credentials">複製裝置憑證</string>
+
+    <!-- Account Login -->
+    <string name="account_login">帳號登入</string>
+    <string name="account_login_hint">使用已綁定的信箱登入，可在重新安裝後恢復裝置資料。</string>
+    <string name="account_login_btn">登入</string>
+    <string name="account_login_logging_in">登入中…</string>
+    <string name="account_login_success_title">登入成功</string>
+    <string name="account_login_success_msg">帳號已恢復：%s\nApp 將重新啟動以載入您的資料。</string>
+    <string name="account_login_restart">立即重啟</string>
+
     <!-- Privacy Policy -->
     <string name="privacy_policy_title">隱私權政策</string>
     <string name="web_portal">網頁入口</string>

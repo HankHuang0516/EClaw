@@ -670,5 +670,211 @@ module.exports = function(devices, getOrCreateDevice) {
         }
     });
 
+    // ============================================
+    // POST /bind-email (for Android users to link email/password to their device)
+    // ============================================
+    router.post('/bind-email', async (req, res) => {
+        try {
+            const { deviceId, deviceSecret, email, password } = req.body;
+
+            if (!deviceId || !deviceSecret || !email || !password) {
+                return res.status(400).json({ success: false, error: 'deviceId, deviceSecret, email, and password are required' });
+            }
+
+            // Verify device credentials
+            const device = devices[deviceId];
+            if (!device || device.deviceSecret !== deviceSecret) {
+                return res.status(401).json({ success: false, error: 'Invalid device credentials' });
+            }
+
+            const emailLower = email.toLowerCase().trim();
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLower)) {
+                return res.status(400).json({ success: false, error: 'Invalid email format' });
+            }
+
+            if (!isValidPassword(password)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Password must be at least 6 characters and contain both letters and numbers'
+                });
+            }
+
+            // Check if this device already has an account
+            const existingDevice = await pool.query(
+                'SELECT id, email FROM user_accounts WHERE device_id = $1',
+                [deviceId]
+            );
+            if (existingDevice.rows.length > 0) {
+                return res.status(409).json({
+                    success: false,
+                    error: 'This device already has a linked account: ' + existingDevice.rows[0].email
+                });
+            }
+
+            // Check if email is already taken
+            const existingEmail = await pool.query(
+                'SELECT id FROM user_accounts WHERE email = $1',
+                [emailLower]
+            );
+            if (existingEmail.rows.length > 0) {
+                return res.status(409).json({ success: false, error: 'Email already registered' });
+            }
+
+            // Hash password
+            const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+
+            // Generate verification token
+            const verifyTokenValue = generateToken();
+            const verifyExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+
+            // Create user account linked to existing device
+            const result = await pool.query(
+                `INSERT INTO user_accounts (email, password_hash, device_id, device_secret, verify_token, verify_token_expires)
+                 VALUES ($1, $2, $3, $4, $5, $6)
+                 RETURNING id, email, device_id`,
+                [emailLower, passwordHash, deviceId, deviceSecret, verifyTokenValue, verifyExpires]
+            );
+
+            const user = result.rows[0];
+
+            // Send verification email
+            try {
+                await resend.emails.send({
+                    from: EMAIL_FROM,
+                    to: emailLower,
+                    subject: 'Verify your E-Claw account',
+                    html: `
+                        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; background: #0D0D1A; color: #fff; padding: 32px; border-radius: 12px;">
+                            <h2 style="color: #6C63FF;">Welcome to E-Claw!</h2>
+                            <p>Your device has been linked to this email. Click below to verify:</p>
+                            <a href="${BASE_URL}/api/auth/verify-email?token=${verifyTokenValue}"
+                               style="display: inline-block; background: #6C63FF; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin: 16px 0;">
+                                Verify Email
+                            </a>
+                            <p style="color: #888; font-size: 12px; margin-top: 24px;">
+                                This link expires in 24 hours.<br>
+                                After verification, you can log in to the Web Portal with this email and password.
+                            </p>
+                        </div>
+                    `
+                });
+                console.log(`[Auth] Bind-email verification sent to ${emailLower} for device ${deviceId}`);
+            } catch (emailErr) {
+                console.error('[Auth] Failed to send bind-email verification:', emailErr.message);
+            }
+
+            res.json({
+                success: true,
+                message: 'Email bound! Please check your inbox to verify.',
+                email: user.email
+            });
+        } catch (error) {
+            console.error('[Auth] Bind-email error:', error);
+            res.status(500).json({ success: false, error: 'Failed to bind email' });
+        }
+    });
+
+    // ============================================
+    // GET /bind-email/status (check if device has a linked email account)
+    // ============================================
+    router.get('/bind-email/status', async (req, res) => {
+        try {
+            const { deviceId, deviceSecret } = req.query;
+
+            if (!deviceId || !deviceSecret) {
+                return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+            }
+
+            // Verify device credentials
+            const device = devices[deviceId];
+            if (!device || device.deviceSecret !== deviceSecret) {
+                return res.status(401).json({ success: false, error: 'Invalid device credentials' });
+            }
+
+            const result = await pool.query(
+                'SELECT email, email_verified FROM user_accounts WHERE device_id = $1',
+                [deviceId]
+            );
+
+            if (result.rows.length === 0) {
+                return res.json({ success: true, bound: false, email: null, emailVerified: false });
+            }
+
+            const user = result.rows[0];
+            res.json({
+                success: true,
+                bound: true,
+                email: user.email,
+                emailVerified: user.email_verified
+            });
+        } catch (error) {
+            console.error('[Auth] Bind-email status error:', error);
+            res.status(500).json({ success: false, error: 'Failed to check status' });
+        }
+    });
+
+    // ============================================
+    // POST /app-login (for Android app to recover device credentials via email/password)
+    // ============================================
+    router.post('/app-login', async (req, res) => {
+        try {
+            const { email, password } = req.body;
+
+            if (!email || !password) {
+                return res.status(400).json({ success: false, error: 'Email and password required' });
+            }
+
+            const emailLower = email.toLowerCase().trim();
+
+            const result = await pool.query(
+                'SELECT * FROM user_accounts WHERE email = $1',
+                [emailLower]
+            );
+
+            if (result.rows.length === 0) {
+                return res.status(401).json({ success: false, error: 'Invalid email or password' });
+            }
+
+            const user = result.rows[0];
+
+            // Verify password
+            const match = await bcrypt.compare(password, user.password_hash);
+            if (!match) {
+                return res.status(401).json({ success: false, error: 'Invalid email or password' });
+            }
+
+            // Check email verified
+            if (!user.email_verified) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Email not verified. Please check your inbox.',
+                    code: 'EMAIL_NOT_VERIFIED'
+                });
+            }
+
+            // Ensure virtual device exists in memory
+            getOrCreateDevice(user.device_id, user.device_secret);
+
+            // Update last login
+            await pool.query(
+                'UPDATE user_accounts SET last_login_at = NOW() WHERE id = $1',
+                [user.id]
+            );
+
+            console.log(`[Auth] App-login success for ${emailLower}, device ${user.device_id}`);
+
+            // Return device credentials so the app can store them locally
+            res.json({
+                success: true,
+                deviceId: user.device_id,
+                deviceSecret: user.device_secret,
+                email: user.email
+            });
+        } catch (error) {
+            console.error('[Auth] App-login error:', error);
+            res.status(500).json({ success: false, error: 'Login failed' });
+        }
+    });
+
     return { router, authMiddleware, adminMiddleware, initAuthDatabase, pool: pool };
 };

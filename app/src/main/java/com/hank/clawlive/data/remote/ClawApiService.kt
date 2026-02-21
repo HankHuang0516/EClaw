@@ -217,6 +217,22 @@ interface ClawApiService {
     ): MissionNotifyResponse
 
     // ============================================
+    // AUTH - BIND EMAIL
+    // ============================================
+
+    @POST("api/auth/bind-email")
+    suspend fun bindEmail(@Body body: Map<String, String>): BindEmailResponse
+
+    @GET("api/auth/bind-email/status")
+    suspend fun getBindEmailStatus(
+        @Query("deviceId") deviceId: String,
+        @Query("deviceSecret") deviceSecret: String
+    ): BindEmailStatusResponse
+
+    @POST("api/auth/app-login")
+    suspend fun appLogin(@Body body: Map<String, String>): AppLoginResponse
+
+    // ============================================
     // SCHEDULE
     // ============================================
 
@@ -345,3 +361,28 @@ data class DeviceFile(
     /** Whether this file was sent via broadcast to multiple entities */
     fun isBroadcast(): Boolean = (entityIds?.size ?: 0) > 1
 }
+
+// ============ Bind Email Response Models ============
+
+data class BindEmailResponse(
+    val success: Boolean,
+    val message: String? = null,
+    val email: String? = null,
+    val error: String? = null
+)
+
+data class BindEmailStatusResponse(
+    val success: Boolean,
+    val bound: Boolean = false,
+    val email: String? = null,
+    val emailVerified: Boolean = false,
+    val error: String? = null
+)
+
+data class AppLoginResponse(
+    val success: Boolean,
+    val deviceId: String? = null,
+    val deviceSecret: String? = null,
+    val email: String? = null,
+    val error: String? = null
+)

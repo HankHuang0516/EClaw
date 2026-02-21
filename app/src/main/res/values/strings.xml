@@ -264,6 +264,38 @@
     <string name="tos_load_failed">Failed to load terms of use</string>
     <string name="tos_agree_failed">Failed to record agreement</string>
 
+    <!-- Bind Email (Web Portal) -->
+    <string name="bind_email_title">Bind Email for Web Login</string>
+    <string name="bind_email_prompt">Bind an email and password to log in to the Web Portal directly, or use device credentials instead.</string>
+    <string name="bind_email_action">Bind Email</string>
+    <string name="bind_email_use_device_login">Copy Device Credentials</string>
+    <string name="bind_email_label">Email</string>
+    <string name="bind_email_password_label">Password</string>
+    <string name="bind_email_confirm_label">Confirm Password</string>
+    <string name="bind_email_password_hint">Must be at least 6 characters with both letters and numbers</string>
+    <string name="bind_email_submit">Bind</string>
+    <string name="bind_email_submitting">Binding…</string>
+    <string name="bind_email_fill_all">Please fill in all fields</string>
+    <string name="bind_email_password_invalid">Password must be at least 6 characters with both letters and numbers</string>
+    <string name="bind_email_password_mismatch">Passwords do not match</string>
+    <string name="bind_email_success">Email bound! Please check your inbox to verify.</string>
+    <string name="bind_email_linked">Linked email:</string>
+    <string name="bind_email_verified">Verified</string>
+    <string name="bind_email_not_verified">Not verified</string>
+    <string name="bind_email_login_hint">You can log in to the Web Portal with this email and password.</string>
+    <string name="bind_email_verify_hint">Please check your inbox and verify your email before logging in.</string>
+    <string name="bind_email_open_portal">Open Portal</string>
+    <string name="bind_email_copy_credentials">Copy Credentials</string>
+
+    <!-- Account Login -->
+    <string name="account_login">Account Login</string>
+    <string name="account_login_hint">Log in with your bound email to restore your device data after reinstalling.</string>
+    <string name="account_login_btn">Login</string>
+    <string name="account_login_logging_in">Logging in…</string>
+    <string name="account_login_success_title">Login Successful</string>
+    <string name="account_login_success_msg">Account restored: %s\nThe app will restart to load your data.</string>
+    <string name="account_login_restart">Restart Now</string>
+
     <!-- Privacy Policy -->
     <string name="privacy_policy_title">Privacy Policy</string>
     <string name="web_portal">Web Portal</string>

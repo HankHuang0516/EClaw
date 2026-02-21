@@ -24,6 +24,8 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.hank.clawlive.billing.BillingManager
 import com.hank.clawlive.billing.SubscriptionState
 import com.hank.clawlive.data.local.DeviceManager
@@ -55,6 +57,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var tvMarkStatus: TextView
     private lateinit var btnPrivacyPolicy: MaterialButton
     private lateinit var btnWebPortal: MaterialButton
+    private lateinit var btnAccountLogin: MaterialButton
     private lateinit var tvViewFeedbackHistory: TextView
     private lateinit var chipGroupLanguage: ChipGroup
     private lateinit var chipLangEn: Chip
@@ -127,6 +130,7 @@ class SettingsActivity : AppCompatActivity() {
         tvMarkStatus = findViewById(R.id.tvMarkStatus)
         btnPrivacyPolicy = findViewById(R.id.btnPrivacyPolicy)
         btnWebPortal = findViewById(R.id.btnWebPortal)
+        btnAccountLogin = findViewById(R.id.btnAccountLogin)
         tvViewFeedbackHistory = findViewById(R.id.tvViewFeedbackHistory)
     }
 
@@ -153,6 +157,10 @@ class SettingsActivity : AppCompatActivity() {
 
         btnWebPortal.setOnClickListener {
             showWebPortalDialog()
+        }
+
+        btnAccountLogin.setOnClickListener {
+            showAccountLoginDialog()
         }
 
         tvViewFeedbackHistory.setOnClickListener {
@@ -268,17 +276,35 @@ class SettingsActivity : AppCompatActivity() {
         val deviceSecret = deviceManager.deviceSecret
         val portalUrl = "https://eclaw.up.railway.app/portal/"
 
-        val msg = "Device ID:\n$deviceId\n\n" +
-            "Device Secret:\n$deviceSecret\n\n" +
-            "Portal URL:\n$portalUrl"
+        // Check bind status first, then show appropriate dialog
+        lifecycleScope.launch {
+            try {
+                val status = NetworkModule.api.getBindEmailStatus(deviceId, deviceSecret)
+                if (status.bound && status.email != null) {
+                    showWebPortalBoundDialog(status.email, status.emailVerified, portalUrl, deviceId, deviceSecret)
+                } else {
+                    showWebPortalUnboundDialog(portalUrl, deviceId, deviceSecret)
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to check bind status")
+                // Fallback: show unbound dialog
+                showWebPortalUnboundDialog(portalUrl, deviceId, deviceSecret)
+            }
+        }
+    }
+
+    private fun showWebPortalBoundDialog(email: String, verified: Boolean, portalUrl: String, deviceId: String, deviceSecret: String) {
+        val verifiedText = if (verified) getString(R.string.bind_email_verified) else getString(R.string.bind_email_not_verified)
+        val msg = "${getString(R.string.bind_email_linked)}\n$email ($verifiedText)\n\n" +
+            if (verified) getString(R.string.bind_email_login_hint) else getString(R.string.bind_email_verify_hint)
 
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.web_portal))
             .setMessage(msg)
-            .setPositiveButton("Open Portal") { _, _ ->
-                startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(portalUrl)))
+            .setPositiveButton(getString(R.string.bind_email_open_portal)) { _, _ ->
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(portalUrl)))
             }
-            .setNeutralButton("Copy Credentials") { _, _ ->
+            .setNeutralButton(getString(R.string.bind_email_copy_credentials)) { _, _ ->
                 val clip = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
                 clip.setPrimaryClip(ClipData.newPlainText("credentials",
                     "Device ID: $deviceId\nDevice Secret: $deviceSecret"))
@@ -286,6 +312,259 @@ class SettingsActivity : AppCompatActivity() {
             }
             .setNegativeButton(R.string.cancel, null)
             .show()
+    }
+
+    private fun showWebPortalUnboundDialog(portalUrl: String, deviceId: String, deviceSecret: String) {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.web_portal))
+            .setMessage(getString(R.string.bind_email_prompt))
+            .setPositiveButton(getString(R.string.bind_email_action)) { _, _ ->
+                showBindEmailDialog(deviceId, deviceSecret)
+            }
+            .setNeutralButton(getString(R.string.bind_email_use_device_login)) { _, _ ->
+                val clip = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+                clip.setPrimaryClip(ClipData.newPlainText("credentials",
+                    "Device ID: $deviceId\nDevice Secret: $deviceSecret"))
+                Toast.makeText(this, getString(R.string.confirm_copy), Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun showBindEmailDialog(deviceId: String, deviceSecret: String) {
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dpToPx(24), dpToPx(16), dpToPx(24), dpToPx(8))
+        }
+
+        val emailInput = TextInputLayout(this).apply {
+            hint = getString(R.string.bind_email_label)
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+        }
+        val emailEdit = TextInputEditText(this)
+        emailEdit.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+        emailInput.addView(emailEdit)
+        layout.addView(emailInput)
+
+        val passwordInput = TextInputLayout(this).apply {
+            hint = getString(R.string.bind_email_password_label)
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+            endIconMode = TextInputLayout.END_ICON_PASSWORD_TOGGLE
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            lp.topMargin = dpToPx(12)
+            layoutParams = lp
+        }
+        val passwordEdit = TextInputEditText(this)
+        passwordEdit.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        passwordInput.addView(passwordEdit)
+        layout.addView(passwordInput)
+
+        val confirmInput = TextInputLayout(this).apply {
+            hint = getString(R.string.bind_email_confirm_label)
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+            endIconMode = TextInputLayout.END_ICON_PASSWORD_TOGGLE
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            lp.topMargin = dpToPx(12)
+            layoutParams = lp
+        }
+        val confirmEdit = TextInputEditText(this)
+        confirmEdit.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        confirmInput.addView(confirmEdit)
+        layout.addView(confirmInput)
+
+        val hintText = TextView(this).apply {
+            text = getString(R.string.bind_email_password_hint)
+            setTextColor(0x99FFFFFF.toInt())
+            textSize = 12f
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            lp.topMargin = dpToPx(8)
+            layoutParams = lp
+        }
+        layout.addView(hintText)
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.bind_email_title))
+            .setView(layout)
+            .setPositiveButton(getString(R.string.bind_email_submit), null) // set below to prevent auto-dismiss
+            .setNegativeButton(R.string.cancel, null)
+            .create()
+
+        dialog.show()
+
+        // Override positive button to validate before dismissing
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val email = emailEdit.text?.toString()?.trim() ?: ""
+            val password = passwordEdit.text?.toString() ?: ""
+            val confirm = confirmEdit.text?.toString() ?: ""
+
+            if (email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, getString(R.string.bind_email_fill_all), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (password.length < 6 || !password.any { it.isLetter() } || !password.any { it.isDigit() }) {
+                Toast.makeText(this, getString(R.string.bind_email_password_invalid), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (password != confirm) {
+                Toast.makeText(this, getString(R.string.bind_email_password_mismatch), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).text = getString(R.string.bind_email_submitting)
+
+            lifecycleScope.launch {
+                try {
+                    val body = mapOf(
+                        "deviceId" to deviceId,
+                        "deviceSecret" to deviceSecret,
+                        "email" to email,
+                        "password" to password
+                    )
+                    val response = NetworkModule.api.bindEmail(body)
+                    if (response.success) {
+                        dialog.dismiss()
+                        Toast.makeText(this@SettingsActivity, getString(R.string.bind_email_success), Toast.LENGTH_LONG).show()
+                        TelemetryHelper.trackAction("bind_email_success")
+                    } else {
+                        Toast.makeText(this@SettingsActivity, response.error ?: getString(R.string.unknown_error), Toast.LENGTH_SHORT).show()
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).text = getString(R.string.bind_email_submit)
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Bind email failed")
+                    TelemetryHelper.trackError(e, mapOf("action" to "bind_email"))
+                    val errorMsg = try {
+                        val errorBody = (e as? retrofit2.HttpException)?.response()?.errorBody()?.string()
+                        val json = com.google.gson.JsonParser.parseString(errorBody ?: "").asJsonObject
+                        json.get("error")?.asString ?: e.message
+                    } catch (_: Exception) { e.message }
+                    Toast.makeText(this@SettingsActivity, errorMsg ?: getString(R.string.unknown_error), Toast.LENGTH_SHORT).show()
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).text = getString(R.string.bind_email_submit)
+                }
+            }
+        }
+    }
+
+    private fun showAccountLoginDialog() {
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dpToPx(24), dpToPx(16), dpToPx(24), dpToPx(8))
+        }
+
+        val emailInput = TextInputLayout(this).apply {
+            hint = getString(R.string.bind_email_label)
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+        }
+        val emailEdit = TextInputEditText(this)
+        emailEdit.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+        emailInput.addView(emailEdit)
+        layout.addView(emailInput)
+
+        val passwordInput = TextInputLayout(this).apply {
+            hint = getString(R.string.bind_email_password_label)
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+            endIconMode = TextInputLayout.END_ICON_PASSWORD_TOGGLE
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            lp.topMargin = dpToPx(12)
+            layoutParams = lp
+        }
+        val passwordEdit = TextInputEditText(this)
+        passwordEdit.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+        passwordInput.addView(passwordEdit)
+        layout.addView(passwordInput)
+
+        val hintText = TextView(this).apply {
+            text = getString(R.string.account_login_hint)
+            setTextColor(0x99FFFFFF.toInt())
+            textSize = 12f
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            lp.topMargin = dpToPx(8)
+            layoutParams = lp
+        }
+        layout.addView(hintText)
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.account_login))
+            .setView(layout)
+            .setPositiveButton(getString(R.string.account_login_btn), null)
+            .setNegativeButton(R.string.cancel, null)
+            .create()
+
+        dialog.show()
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val email = emailEdit.text?.toString()?.trim() ?: ""
+            val password = passwordEdit.text?.toString() ?: ""
+
+            if (email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, getString(R.string.bind_email_fill_all), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).text = getString(R.string.account_login_logging_in)
+
+            lifecycleScope.launch {
+                try {
+                    val body = mapOf("email" to email, "password" to password)
+                    val response = NetworkModule.api.appLogin(body)
+                    if (response.success && response.deviceId != null && response.deviceSecret != null) {
+                        // Overwrite local credentials with recovered ones
+                        deviceManager.setCredentials(response.deviceId, response.deviceSecret)
+                        dialog.dismiss()
+                        TelemetryHelper.trackAction("account_login_success")
+
+                        // Show success and prompt restart
+                        AlertDialog.Builder(this@SettingsActivity)
+                            .setTitle(getString(R.string.account_login_success_title))
+                            .setMessage(getString(R.string.account_login_success_msg, response.email ?: email))
+                            .setPositiveButton(getString(R.string.account_login_restart)) { _, _ ->
+                                // Restart the app to pick up new credentials
+                                val intent = packageManager.getLaunchIntentForPackage(packageName)
+                                intent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                startActivity(intent)
+                                Runtime.getRuntime().exit(0)
+                            }
+                            .setCancelable(false)
+                            .show()
+                    } else {
+                        Toast.makeText(this@SettingsActivity, response.error ?: getString(R.string.unknown_error), Toast.LENGTH_SHORT).show()
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).text = getString(R.string.account_login_btn)
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Account login failed")
+                    TelemetryHelper.trackError(e, mapOf("action" to "account_login"))
+                    val errorMsg = try {
+                        val errorBody = (e as? retrofit2.HttpException)?.response()?.errorBody()?.string()
+                        val json = com.google.gson.JsonParser.parseString(errorBody ?: "").asJsonObject
+                        json.get("error")?.asString ?: e.message
+                    } catch (_: Exception) { e.message }
+                    Toast.makeText(this@SettingsActivity, errorMsg ?: getString(R.string.unknown_error), Toast.LENGTH_SHORT).show()
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).text = getString(R.string.account_login_btn)
+                }
+            }
+        }
     }
 
     private fun markBugMoment() {
