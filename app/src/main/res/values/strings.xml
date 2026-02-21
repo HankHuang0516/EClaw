@@ -284,5 +284,9 @@ If you have any questions, please contact us via our official email.
     <string name="usage_limit_title">Daily Limit Reached</string>
     <string name="usage_limit_message">You have reached the daily limit of 15 messages.\n\nUpgrade to Premium for unlimited messaging!</string>
     <string name="usage_limit_upgrade">Upgrade</string>
+
+    <!-- Gatekeeper -->
+    <string name="gatekeeper_blocked_message">⚠️ %1$s（%2$d/%3$d）</string>
+    <string name="gatekeeper_blocked_permanent">⚠️ %1$s</string>
 </resources>
 

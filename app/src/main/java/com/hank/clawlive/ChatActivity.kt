@@ -835,6 +835,26 @@ class ChatActivity : AppCompatActivity() {
                         if (serverUsed >= 0) usageManager.syncFromServer(serverUsed)
                     } catch (_: Exception) { }
                     showUsageLimitDialog()
+                } else if (e is retrofit2.HttpException && e.code() == 403) {
+                    try {
+                        val errorBody = e.response()?.errorBody()?.string()
+                        val json = org.json.JSONObject(errorBody ?: "{}")
+                        val errorCode = json.optString("error", "")
+                        if (errorCode == "GATEKEEPER_BLOCKED_MESSAGE" || errorCode == "GATEKEEPER_BLOCKED") {
+                            val reason = json.optString("message", "訊息已被安全機制攔截")
+                            if (errorCode == "GATEKEEPER_BLOCKED") {
+                                Toast.makeText(this@ChatActivity, getString(R.string.gatekeeper_blocked_permanent, reason), Toast.LENGTH_LONG).show()
+                            } else {
+                                val strikes = json.optInt("strikes", 0)
+                                val maxStrikes = json.optInt("maxStrikes", 3)
+                                Toast.makeText(this@ChatActivity, getString(R.string.gatekeeper_blocked_message, reason, strikes, maxStrikes), Toast.LENGTH_LONG).show()
+                            }
+                        } else {
+                            Toast.makeText(this@ChatActivity, "Send failed: ${json.optString("message", e.message())}", Toast.LENGTH_SHORT).show()
+                        }
+                    } catch (_: Exception) {
+                        Toast.makeText(this@ChatActivity, "Send failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
                 } else {
                     Toast.makeText(this@ChatActivity, "Send failed: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
