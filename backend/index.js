@@ -4423,6 +4423,90 @@ app.get('/api/chat/history', async (req, res) => {
 });
 
 // ============================================
+// DEVICE FILE MANAGER - List all media files from chat history
+// ============================================
+app.get('/api/device/files', async (req, res) => {
+    const { deviceId, deviceSecret, type, entityId, limit = 200, before } = req.query;
+
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'Missing credentials' });
+    }
+
+    // Auth: deviceSecret or JWT cookie
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        const jwt = require('jsonwebtoken');
+        const token = req.cookies && req.cookies.eclaw_session;
+        if (token) {
+            try {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret-change-in-production');
+                if (decoded.deviceId !== deviceId) {
+                    return res.status(401).json({ success: false, error: 'Invalid credentials' });
+                }
+            } catch {
+                return res.status(401).json({ success: false, error: 'Invalid credentials' });
+            }
+        } else {
+            return res.status(401).json({ success: false, error: 'Invalid credentials' });
+        }
+    }
+
+    try {
+        let query = `SELECT id, entity_id, text, source, is_from_user, is_from_bot,
+                            media_type, media_url, created_at
+                     FROM chat_messages
+                     WHERE device_id = $1 AND media_url IS NOT NULL AND media_url != ''`;
+        const params = [deviceId];
+
+        // Filter by media type
+        if (type === 'photo') {
+            query += ` AND media_type = 'photo'`;
+        } else if (type === 'voice') {
+            query += ` AND media_type = 'voice'`;
+        }
+
+        // Filter by entity
+        if (entityId !== undefined && entityId !== '') {
+            params.push(parseInt(entityId));
+            query += ` AND entity_id = $${params.length}`;
+        }
+
+        // Pagination
+        if (before) {
+            params.push(new Date(parseInt(before)));
+            query += ` AND created_at < $${params.length}`;
+        }
+
+        query += ` ORDER BY created_at DESC LIMIT $${params.length + 1}`;
+        params.push(parseInt(limit) || 200);
+
+        const result = await chatPool.query(query, params);
+
+        const files = result.rows.map(row => ({
+            id: row.id,
+            entityId: row.entity_id,
+            type: row.media_type,
+            url: row.media_url,
+            text: row.text,
+            source: row.source,
+            isFromUser: row.is_from_user,
+            isFromBot: row.is_from_bot,
+            createdAt: row.created_at
+        }));
+
+        res.json({
+            success: true,
+            files,
+            count: files.length,
+            hasMore: files.length >= (parseInt(limit) || 200)
+        });
+    } catch (error) {
+        console.error('[Files] List error:', error);
+        res.status(500).json({ success: false, error: 'Failed to list files' });
+    }
+});
+
+// ============================================
 // CHAT MEDIA UPLOAD (Flickr for photos, Base64 for voice)
 // ============================================
 const mediaUpload = multer({

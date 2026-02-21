@@ -61,6 +61,7 @@ const TRANSLATIONS = {
         "portal_app_subtitle": "Live Wallpaper Companion",
         "nav_dashboard": "Dashboard",
         "nav_chat": "Chat",
+        "nav_files": "Files",
         "nav_mission": "Mission",
         "nav_settings": "Settings",
         "nav_logout": "Logout",
@@ -369,7 +370,27 @@ const TRANSLATIONS = {
         "admin_msg_required": "All fields are required.",
         "admin_msg_success": "Bot created successfully!",
         "admin_msg_secret": "Bot Secret (save this):",
-        "nav_admin": "Admin"
+        "nav_admin": "Admin",
+
+        // Files (files.html)
+        "files_title": "Files",
+        "files_filter_all": "All",
+        "files_filter_photos": "Photos",
+        "files_filter_voice": "Voice",
+        "files_loading": "Loading files...",
+        "files_empty_title": "No files yet",
+        "files_empty_desc": "Photos and voice messages from your chats will appear here.",
+        "files_error": "Failed to load files",
+        "files_stats_total": "files",
+        "files_type_photo": "Photo",
+        "files_type_voice": "Voice",
+        "files_from_you": "You",
+        "files_btn_download": "Download",
+        "files_btn_share": "Share",
+        "files_load_more": "Load More",
+        "files_download_started": "Download started",
+        "files_link_copied": "Link copied to clipboard!",
+        "files_share_failed": "Failed to share"
     },
     zh: {
         // Mission Control (mission.html)
@@ -433,6 +454,7 @@ const TRANSLATIONS = {
         "portal_app_subtitle": "動態桌布小幫手",
         "nav_dashboard": "儀表板",
         "nav_chat": "聊天",
+        "nav_files": "檔案",
         "nav_mission": "任務",
         "nav_settings": "設定",
         "nav_logout": "登出",
@@ -740,7 +762,27 @@ const TRANSLATIONS = {
         "admin_msg_required": "所有欄位皆為必填。",
         "admin_msg_success": "Bot 建立成功！",
         "admin_msg_secret": "Bot Secret (請妥善保存)：",
-        "nav_admin": "管理員"
+        "nav_admin": "管理員",
+
+        // Files (files.html)
+        "files_title": "檔案",
+        "files_filter_all": "全部",
+        "files_filter_photos": "照片",
+        "files_filter_voice": "語音",
+        "files_loading": "載入檔案中...",
+        "files_empty_title": "尚無檔案",
+        "files_empty_desc": "您與 Bot 交流過的照片和語音訊息將顯示於此。",
+        "files_error": "載入檔案失敗",
+        "files_stats_total": "個檔案",
+        "files_type_photo": "照片",
+        "files_type_voice": "語音",
+        "files_from_you": "你",
+        "files_btn_download": "下載",
+        "files_btn_share": "分享",
+        "files_load_more": "載入更多",
+        "files_download_started": "開始下載",
+        "files_link_copied": "連結已複製到剪貼簿！",
+        "files_share_failed": "分享失敗"
     }
 };
 
