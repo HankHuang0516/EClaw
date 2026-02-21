@@ -7,9 +7,8 @@
 
 ## GitHub PR Creation
 
-This environment does NOT have GitHub API credentials. Do NOT attempt to use `gh` CLI or GitHub REST API to create PRs — it will fail and waste tokens.
-
-When asked for a PR link, directly provide the compare URL:
+在雲端環境（Claude Code remote）中無法訪問外網，不要嘗試用 `gh` CLI 或 GitHub REST API 建立 PR。
+當需要提供 PR 連結時，直接給出 compare URL：
 ```
 https://github.com/HankHuang0516/realbot/compare/main...<branch-name>
 ```
