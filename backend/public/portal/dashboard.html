@@ -941,7 +941,25 @@
         async function loadEntities() {
             try {
                 const data = await apiCall('GET', '/api/entities?deviceId=' + currentUser.deviceId);
-                entities = (data.entities || []).filter(e => e.isBound);
+                const newEntities = (data.entities || []).filter(e => e.isBound);
+
+                // Guard against transient empty responses: skip update if
+                // server returned 0 entities but we previously had entities,
+                // OR if the server signals persistence hasn't finished loading.
+                // (fixes #16/#29 — parity with Android)
+                if (newEntities.length === 0 && (entities.length > 0 || data.serverReady === false)) {
+                    console.warn('[Dashboard] Skipping empty entity response (had ' + entities.length + ' entities, serverReady=' + data.serverReady + ')');
+                    if (window.telemetry) {
+                        telemetry.trackAction('entity_poll_empty_skipped', {
+                            previousCount: entities.length,
+                            responseActiveCount: data.activeCount || 0,
+                            serverReady: data.serverReady
+                        });
+                    }
+                    return;
+                }
+
+                entities = newEntities;
                 renderEntities();
                 updateEntityCount();
                 updateSlotAvailability();

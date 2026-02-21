@@ -1,0 +1,199 @@
+name: Entity Cards Stability CI
+
+# Runs regression tests to prevent entity cards from disappearing.
+# Triggered on PRs and pushes that touch entity-related code.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/index.js'
+      - 'backend/public/portal/dashboard.html'
+      - 'app/src/main/java/com/hank/clawlive/MainActivity.kt'
+      - 'app/src/main/java/com/hank/clawlive/data/model/MultiEntityResponse.kt'
+      - 'app/src/main/java/com/hank/clawlive/ui/EntityCardAdapter.kt'
+      - 'backend/tests/test-entity-cards-stability.js'
+      - 'backend/tests/test-entity-management.js'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/index.js'
+      - 'backend/public/portal/dashboard.html'
+      - 'app/src/main/java/com/hank/clawlive/MainActivity.kt'
+      - 'app/src/main/java/com/hank/clawlive/data/model/MultiEntityResponse.kt'
+      - 'app/src/main/java/com/hank/clawlive/ui/EntityCardAdapter.kt'
+      - 'backend/tests/test-entity-cards-stability.js'
+      - 'backend/tests/test-entity-management.js'
+
+jobs:
+  # ── Static Analysis: Verify empty-response guards exist ──
+  entity-cards-guard-check:
+    name: Verify entity-cards guards
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Android empty-response guard
+        run: |
+          echo "── Checking Android loadBoundEntities guard ──"
+          if grep -q "entity_poll_empty_skipped" app/src/main/java/com/hank/clawlive/MainActivity.kt; then
+            echo "✅ Android: empty-response guard present"
+          else
+            echo "❌ Android: missing empty-response guard in loadBoundEntities()"
+            echo "  Entity cards will disappear on transient empty API responses."
+            echo "  See: https://github.com/HankHuang0516/realbot/issues/16"
+            exit 1
+          fi
+
+      - name: Check Android serverReady guard
+        run: |
+          echo "── Checking Android serverReady guard ──"
+          if grep -q "serverReady" app/src/main/java/com/hank/clawlive/MainActivity.kt; then
+            echo "✅ Android: serverReady guard present"
+          else
+            echo "❌ Android: missing serverReady guard in loadBoundEntities()"
+            exit 1
+          fi
+
+      - name: Check Android persisted entity guard
+        run: |
+          echo "── Checking Android persisted entity guard ──"
+          if grep -q "getRegisteredEntityIds" app/src/main/java/com/hank/clawlive/MainActivity.kt; then
+            echo "✅ Android: persisted entity IDs guard present (survives app restart)"
+          else
+            echo "❌ Android: missing persisted entity guard (cards vanish after app update)"
+            echo "  See: https://github.com/HankHuang0516/realbot/issues/29"
+            exit 1
+          fi
+
+      - name: Check Web Portal empty-response guard
+        run: |
+          echo "── Checking Web Portal loadEntities guard ──"
+          if grep -q "entity_poll_empty_skipped" backend/public/portal/dashboard.html; then
+            echo "✅ Web Portal: empty-response guard present"
+          else
+            echo "❌ Web Portal: missing empty-response guard in loadEntities()"
+            echo "  Web portal must have parity with Android (CLAUDE.md Feature Parity Rule)."
+            exit 1
+          fi
+
+      - name: Check Web Portal serverReady guard
+        run: |
+          echo "── Checking Web Portal serverReady guard ──"
+          if grep -q "serverReady" backend/public/portal/dashboard.html; then
+            echo "✅ Web Portal: serverReady guard present"
+          else
+            echo "❌ Web Portal: missing serverReady guard"
+            exit 1
+          fi
+
+      - name: Check Backend serverReady flag in /api/entities
+        run: |
+          echo "── Checking Backend serverReady flag ──"
+          if grep -q "serverReady.*persistenceReady" backend/index.js; then
+            echo "✅ Backend: serverReady flag present in /api/entities response"
+          else
+            echo "❌ Backend: missing serverReady flag in /api/entities"
+            echo "  Clients need this flag to detect server-startup transient empty responses."
+            exit 1
+          fi
+
+      - name: Check Backend persistenceReady tracking
+        run: |
+          echo "── Checking Backend persistenceReady lifecycle ──"
+          if grep -q "let persistenceReady = false" backend/index.js && \
+             grep -q "persistenceReady = true" backend/index.js; then
+            echo "✅ Backend: persistenceReady lifecycle tracked"
+          else
+            echo "❌ Backend: persistenceReady not properly tracked"
+            exit 1
+          fi
+
+      - name: Check edit mode guard (Android)
+        run: |
+          echo "── Checking Android edit mode guard ──"
+          if grep -q "if (isEditMode) return" app/src/main/java/com/hank/clawlive/MainActivity.kt; then
+            echo "✅ Android: edit mode guard present in updateAgentCards()"
+          else
+            echo "❌ Android: missing edit mode guard — cards will disappear during edit"
+            exit 1
+          fi
+
+  # ── Integration Test: Run entity cards stability test against live API ──
+  entity-cards-integration:
+    name: Entity cards stability test
+    runs-on: ubuntu-latest
+    needs: entity-cards-guard-check
+    # Only run integration tests if secrets are available
+    if: ${{ vars.RUN_INTEGRATION_TESTS == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run entity cards stability test
+        env:
+          BROADCAST_TEST_DEVICE_ID: ${{ secrets.BROADCAST_TEST_DEVICE_ID }}
+          BROADCAST_TEST_DEVICE_SECRET: ${{ secrets.BROADCAST_TEST_DEVICE_SECRET }}
+        run: |
+          cd backend/tests
+          node test-entity-cards-stability.js
+
+      - name: Run entity management regression test
+        env:
+          BROADCAST_TEST_DEVICE_ID: ${{ secrets.BROADCAST_TEST_DEVICE_ID }}
+          BROADCAST_TEST_DEVICE_SECRET: ${{ secrets.BROADCAST_TEST_DEVICE_SECRET }}
+        run: |
+          cd backend/tests
+          node test-entity-management.js
+
+  # ── Feature Parity Check ──
+  feature-parity:
+    name: Web/Android feature parity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify entity guard parity
+        run: |
+          echo "── Feature Parity: Entity Cards Guards ──"
+          echo ""
+
+          ANDROID_FILE="app/src/main/java/com/hank/clawlive/MainActivity.kt"
+          WEB_FILE="backend/public/portal/dashboard.html"
+
+          # List of guard patterns that must exist in BOTH platforms
+          GUARDS=(
+            "entity_poll_empty_skipped"
+            "serverReady"
+          )
+
+          FAILED=0
+          for guard in "${GUARDS[@]}"; do
+            ANDROID_HAS=$(grep -c "$guard" "$ANDROID_FILE" 2>/dev/null || echo 0)
+            WEB_HAS=$(grep -c "$guard" "$WEB_FILE" 2>/dev/null || echo 0)
+
+            if [ "$ANDROID_HAS" -gt 0 ] && [ "$WEB_HAS" -gt 0 ]; then
+              echo "✅ Both platforms have: $guard"
+            elif [ "$ANDROID_HAS" -gt 0 ] && [ "$WEB_HAS" -eq 0 ]; then
+              echo "❌ PARITY VIOLATION: '$guard' exists in Android but missing from Web Portal"
+              FAILED=1
+            elif [ "$ANDROID_HAS" -eq 0 ] && [ "$WEB_HAS" -gt 0 ]; then
+              echo "❌ PARITY VIOLATION: '$guard' exists in Web Portal but missing from Android"
+              FAILED=1
+            else
+              echo "⚠️  Neither platform has: $guard"
+              FAILED=1
+            fi
+          done
+
+          echo ""
+          if [ "$FAILED" -eq 1 ]; then
+            echo "Feature parity check FAILED."
+            echo "See CLAUDE.md: 'All user-facing features must be kept in sync between the Web Portal and the Android App.'"
+            exit 1
+          else
+            echo "Feature parity check PASSED."
+          fi

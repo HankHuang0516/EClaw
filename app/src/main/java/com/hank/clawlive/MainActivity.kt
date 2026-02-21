@@ -291,18 +291,26 @@ class MainActivity : AppCompatActivity() {
                 val response = api.getAllEntities(deviceId = deviceManager.deviceId)
                 val newEntities = response.entities.filter { it.isBound }
 
-                // Guard against transient empty responses: if we previously had
-                // bound entities but the server returned none, skip this update.
-                // This prevents cards from disappearing during server restarts
-                // or transient API hiccups. (fixes #16 fully — previous fix only
-                // covered edit mode)
-                if (newEntities.isEmpty() && boundEntities.isNotEmpty()) {
-                    Timber.w("Skipping empty entity response (had ${boundEntities.size} entities)")
-                    TelemetryHelper.trackAction("entity_poll_empty_skipped", mapOf(
-                        "previousCount" to boundEntities.size,
-                        "responseActiveCount" to response.activeCount
-                    ))
-                    return@launch
+                // Guard against transient empty responses (fixes #16, #29):
+                // Skip update if the server returned 0 entities BUT we know
+                // this device had entities — either from the current session
+                // (boundEntities), from persisted registration data
+                // (registeredEntityIds survives app updates/restarts),
+                // or if the server signals persistence hasn't loaded yet.
+                if (newEntities.isEmpty()) {
+                    val hadEntitiesInSession = boundEntities.isNotEmpty()
+                    val hadEntitiesPersisted = layoutPrefs.getRegisteredEntityIds().isNotEmpty()
+                    val serverNotReady = !response.serverReady
+                    if (hadEntitiesInSession || hadEntitiesPersisted || serverNotReady) {
+                        Timber.w("Skipping empty entity response (session=${boundEntities.size}, persisted=${layoutPrefs.getRegisteredEntityIds().size}, serverReady=${response.serverReady})")
+                        TelemetryHelper.trackAction("entity_poll_empty_skipped", mapOf(
+                            "previousCount" to boundEntities.size,
+                            "persistedCount" to layoutPrefs.getRegisteredEntityIds().size,
+                            "responseActiveCount" to response.activeCount,
+                            "serverReady" to response.serverReady
+                        ))
+                        return@launch
+                    }
                 }
 
                 boundEntities = newEntities

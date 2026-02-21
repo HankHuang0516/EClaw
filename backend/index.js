@@ -49,6 +49,9 @@ const LATEST_APP_VERSION = "1.0.22";
 // Device registry - each device has its own entities
 const devices = {};
 
+// Tracks whether persistence has finished loading (prevents transient empty responses during startup)
+let persistenceReady = false;
+
 // Pending binding codes (code -> { deviceId, entityId, expires })
 const pendingBindings = {};
 
@@ -221,6 +224,9 @@ async function initPersistence() {
             console.log(`[Startup Cleanup] Released ${staleCount} stale bot assignments`);
         }
     }
+
+    persistenceReady = true;
+    console.log(`[Persistence] Ready — ${Object.keys(devices).length} devices loaded`);
 }
 
 // Auto-save interval
@@ -1232,7 +1238,14 @@ app.get('/api/entities', (req, res) => {
     if (filterDeviceId && entities.length === 0 && devices[filterDeviceId]) {
         serverLog('warn', 'entity_poll', `Device ${filterDeviceId} returned 0 bound entities (device exists in memory)`, {
             deviceId: filterDeviceId,
-            metadata: { totalDeviceSlots: MAX_ENTITIES_PER_DEVICE }
+            metadata: { totalDeviceSlots: MAX_ENTITIES_PER_DEVICE, persistenceReady }
+        });
+    }
+
+    // Warn clients if persistence hasn't loaded yet (entities may appear empty transiently)
+    if (!persistenceReady && filterDeviceId && entities.length === 0) {
+        serverLog('warn', 'entity_poll', `Serving empty entities for ${filterDeviceId} while persistence is still loading`, {
+            deviceId: filterDeviceId
         });
     }
 
@@ -1240,7 +1253,8 @@ app.get('/api/entities', (req, res) => {
         entities: entities,
         activeCount: entities.length,
         deviceCount: Object.keys(devices).length,
-        maxEntitiesPerDevice: MAX_ENTITIES_PER_DEVICE
+        maxEntitiesPerDevice: MAX_ENTITIES_PER_DEVICE,
+        serverReady: persistenceReady
     });
 });
 
