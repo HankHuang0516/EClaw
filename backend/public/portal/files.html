@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="files_title">E-Claw - Files</title>
+    <link rel="stylesheet" href="shared/style.css">
+    <style>
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        /* Filter bar */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            align-items: center;
+        }
+
+        .filter-chip {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        .filter-chip:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .filter-chip.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--text);
+        }
+
+        .filter-divider {
+            width: 1px;
+            height: 20px;
+            background: var(--card-border);
+            margin: 0 4px;
+        }
+
+        /* File stats */
+        .file-stats {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .file-stats strong {
+            color: var(--primary);
+        }
+
+        /* File grid */
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .file-card {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .file-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.15);
+        }
+
+        /* Photo thumbnail */
+        .file-thumb {
+            width: 100%;
+            aspect-ratio: 1;
+            background: var(--input-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .file-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .file-thumb-icon {
+            font-size: 40px;
+            opacity: 0.5;
+        }
+
+        /* File info below thumb */
+        .file-info {
+            padding: 10px 12px;
+        }
+
+        .file-type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .file-type-badge.photo {
+            background: rgba(76, 175, 80, 0.2);
+            color: var(--success);
+        }
+
+        .file-type-badge.voice {
+            background: rgba(108, 99, 255, 0.2);
+            color: var(--primary);
+        }
+
+        .file-entity {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+
+        .file-source {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .file-date {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .file-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.4;
+        }
+
+        /* Load more */
+        .load-more-container {
+            text-align: center;
+            padding: 16px 0;
+        }
+
+        /* Preview overlay */
+        .preview-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            padding: 20px;
+        }
+
+        .preview-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .preview-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .preview-content {
+            max-width: 90vw;
+            max-height: 70vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-content img {
+            max-width: 100%;
+            max-height: 70vh;
+            border-radius: var(--radius);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .preview-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .preview-meta {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-top: 12px;
+            text-align: center;
+        }
+
+        /* Audio player in preview */
+        .audio-player {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 24px 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            min-width: 300px;
+        }
+
+        .audio-player-icon {
+            font-size: 48px;
+        }
+
+        .audio-player audio {
+            width: 100%;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .file-grid {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                gap: 8px;
+            }
+
+            .preview-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .preview-actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title" data-i18n="files_title">Files</h1>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-chip active" data-type="all" onclick="setFilter('all')" data-i18n="files_filter_all">All</div>
+            <div class="filter-chip" data-type="photo" onclick="setFilter('photo')">
+                <span data-i18n="files_filter_photos">Photos</span>
+            </div>
+            <div class="filter-chip" data-type="voice" onclick="setFilter('voice')">
+                <span data-i18n="files_filter_voice">Voice</span>
+            </div>
+            <div class="filter-divider"></div>
+            <div id="entityFilters"></div>
+        </div>
+
+        <!-- Stats -->
+        <div class="file-stats" id="fileStats">
+            <div class="spinner" style="width:14px;height:14px;border-width:2px;vertical-align:middle;display:inline-block;"></div>
+            <span data-i18n="files_loading">Loading files...</span>
+        </div>
+
+        <!-- File Grid -->
+        <div class="file-grid" id="fileGrid">
+            <div class="empty-state" id="loadingState">
+                <div class="spinner" style="margin: 0 auto 12px;"></div>
+                <div data-i18n="files_loading">Loading files...</div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display:none;">
+            <div style="font-size:48px;margin-bottom:12px;">📁</div>
+            <div style="font-size:16px;color:var(--text-secondary);margin-bottom:4px;" data-i18n="files_empty_title">No files yet</div>
+            <div data-i18n="files_empty_desc">Photos and voice messages from your chats will appear here.</div>
+        </div>
+
+        <!-- Load More -->
+        <div class="load-more-container" id="loadMoreContainer" style="display:none;">
+            <button class="btn btn-outline" id="btnLoadMore" onclick="loadMore()" data-i18n="files_load_more">Load More</button>
+        </div>
+    </div>
+
+    <script src="shared/api.js"></script>
+    <script src="shared/nav.js"></script>
+    <script src="shared/auth.js"></script>
+    <script src="../shared/telemetry.js"></script>
+    <script src="../shared/i18n.js"></script>
+    <script>
+        // --- Constants ---
+        const ENTITY_CHARS = {
+            0: { name: 'Lobster', emoji: '🦞' },
+            1: { name: 'Pig', emoji: '🐷' },
+            2: { name: 'Lobster', emoji: '🦞' },
+            3: { name: 'Pig', emoji: '🐷' }
+        };
+
+        // --- State ---
+        let allFiles = [];
+        let filteredFiles = [];
+        let currentTypeFilter = 'all';
+        let currentEntityFilter = null; // null = all
+        let entities = [];
+        let isLoading = false;
+        let hasMore = false;
+        let oldestTimestamp = null;
+
+        // --- Init ---
+        window.addEventListener('DOMContentLoaded', async () => {
+            renderNav('files');
+            const user = await checkAuth();
+            if (!user) return;
+
+            await loadEntities();
+            await loadFiles();
+        });
+
+        // --- Load Entities ---
+        async function loadEntities() {
+            try {
+                const data = await apiCall('GET', '/api/entities?deviceId=' + currentUser.deviceId);
+                entities = (data.entities || []).filter(e => e.isBound);
+                renderEntityFilters();
+            } catch (e) {
+                console.warn('Failed to load entities:', e.message);
+            }
+        }
+
+        function renderEntityFilters() {
+            const container = document.getElementById('entityFilters');
+            if (entities.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = entities.map(e => {
+                const char = ENTITY_CHARS[e.entityId] || ENTITY_CHARS[0];
+                const avatar = getAvatarForEntity(e.entityId);
+                const name = e.name || (char.name + ' #' + e.entityId);
+                const isActive = currentEntityFilter === e.entityId;
+                return '<div class="filter-chip' + (isActive ? ' active' : '') + '" data-entity="' + e.entityId + '" onclick="setEntityFilter(' + e.entityId + ')">' +
+                    avatar + ' ' + escapeHtml(name) +
+                    '</div>';
+            }).join('');
+        }
+
+        function getAvatarForEntity(entityId) {
+            const saved = localStorage.getItem('eclaw_avatar_' + entityId);
+            if (saved) return saved;
+            const defaults = { 0: '🦞', 1: '🐷', 2: '🦞', 3: '🐷' };
+            return defaults[entityId] || '🦞';
+        }
+
+        // --- Load Files ---
+        async function loadFiles(append = false) {
+            if (isLoading) return;
+            isLoading = true;
+
+            if (!append) {
+                allFiles = [];
+                oldestTimestamp = null;
+                document.getElementById('fileGrid').innerHTML =
+                    '<div class="empty-state" id="loadingState"><div class="spinner" style="margin:0 auto 12px;"></div><div>' + i18n.t('files_loading') + '</div></div>';
+            }
+
+            try {
+                let url = '/api/device/files?deviceId=' + currentUser.deviceId +
+                    '&deviceSecret=' + currentUser.deviceSecret +
+                    '&limit=200';
+
+                if (currentTypeFilter !== 'all') {
+                    url += '&type=' + currentTypeFilter;
+                }
+                if (currentEntityFilter !== null) {
+                    url += '&entityId=' + currentEntityFilter;
+                }
+                if (append && oldestTimestamp) {
+                    url += '&before=' + oldestTimestamp;
+                }
+
+                const data = await apiCall('GET', url);
+                const newFiles = data.files || [];
+                hasMore = data.hasMore || false;
+
+                if (append) {
+                    allFiles = allFiles.concat(newFiles);
+                } else {
+                    allFiles = newFiles;
+                }
+
+                if (allFiles.length > 0) {
+                    oldestTimestamp = new Date(allFiles[allFiles.length - 1].createdAt).getTime();
+                }
+
+                renderFiles();
+                updateStats();
+            } catch (e) {
+                if (!append) {
+                    document.getElementById('fileGrid').innerHTML =
+                        '<div class="empty-state">' + i18n.t('files_error') + '</div>';
+                }
+                showToast(e.message || 'Failed to load files', 'error');
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        function loadMore() {
+            loadFiles(true);
+        }
+
+        // --- Filters ---
+        function setFilter(type) {
+            currentTypeFilter = type;
+            document.querySelectorAll('.filter-bar > .filter-chip').forEach(c => {
+                c.classList.toggle('active', c.dataset.type === type);
+            });
+            loadFiles();
+        }
+
+        function setEntityFilter(entityId) {
+            if (currentEntityFilter === entityId) {
+                currentEntityFilter = null; // Toggle off
+            } else {
+                currentEntityFilter = entityId;
+            }
+            renderEntityFilters();
+            loadFiles();
+        }
+
+        // --- Rendering ---
+        function renderFiles() {
+            const grid = document.getElementById('fileGrid');
+            const emptyState = document.getElementById('emptyState');
+            const loadMoreContainer = document.getElementById('loadMoreContainer');
+
+            if (allFiles.length === 0) {
+                grid.innerHTML = '';
+                emptyState.style.display = '';
+                loadMoreContainer.style.display = 'none';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            loadMoreContainer.style.display = hasMore ? '' : 'none';
+
+            grid.innerHTML = allFiles.map((file, idx) => {
+                const char = ENTITY_CHARS[file.entityId] || ENTITY_CHARS[0];
+                const avatar = getAvatarForEntity(file.entityId);
+                const entityName = getEntityName(file.entityId);
+                const date = formatFileDate(file.createdAt);
+                const sourceLabel = file.isFromUser ? i18n.t('files_from_you') : (file.source || 'bot');
+
+                if (file.type === 'photo') {
+                    return '<div class="file-card" onclick="previewFile(' + idx + ')">' +
+                        '<div class="file-thumb"><img src="' + escapeHtml(file.url) + '" alt="photo" loading="lazy" onerror="this.parentElement.innerHTML=\'<div class=file-thumb-icon>🖼️</div>\'"></div>' +
+                        '<div class="file-info">' +
+                        '<span class="file-type-badge photo">' + i18n.t('files_type_photo') + '</span>' +
+                        '<div class="file-entity">' + avatar + ' ' + escapeHtml(entityName) + '</div>' +
+                        '<div class="file-source">' + escapeHtml(sourceLabel) + '</div>' +
+                        (file.text ? '<div class="file-text">' + escapeHtml(file.text) + '</div>' : '') +
+                        '<div class="file-date">' + date + '</div>' +
+                        '</div></div>';
+                } else {
+                    // Voice
+                    return '<div class="file-card" onclick="previewFile(' + idx + ')">' +
+                        '<div class="file-thumb"><div class="file-thumb-icon">🎙️</div></div>' +
+                        '<div class="file-info">' +
+                        '<span class="file-type-badge voice">' + i18n.t('files_type_voice') + '</span>' +
+                        '<div class="file-entity">' + avatar + ' ' + escapeHtml(entityName) + '</div>' +
+                        '<div class="file-source">' + escapeHtml(sourceLabel) + '</div>' +
+                        (file.text ? '<div class="file-text">' + escapeHtml(file.text) + '</div>' : '') +
+                        '<div class="file-date">' + date + '</div>' +
+                        '</div></div>';
+                }
+            }).join('');
+        }
+
+        function getEntityName(entityId) {
+            const entity = entities.find(e => e.entityId === entityId);
+            if (entity && entity.name) return entity.name;
+            const char = ENTITY_CHARS[entityId] || ENTITY_CHARS[0];
+            return char.name + ' #' + entityId;
+        }
+
+        function updateStats() {
+            const stats = document.getElementById('fileStats');
+            const photoCount = allFiles.filter(f => f.type === 'photo').length;
+            const voiceCount = allFiles.filter(f => f.type === 'voice').length;
+            stats.innerHTML = '<strong>' + allFiles.length + '</strong> ' + i18n.t('files_stats_total') +
+                ' — ' + photoCount + ' ' + i18n.t('files_type_photo') +
+                ', ' + voiceCount + ' ' + i18n.t('files_type_voice');
+        }
+
+        // --- Preview ---
+        function previewFile(idx) {
+            const file = allFiles[idx];
+            if (!file) return;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'preview-overlay';
+
+            const entityName = getEntityName(file.entityId);
+            const avatar = getAvatarForEntity(file.entityId);
+            const date = formatFileDate(file.createdAt);
+            const sourceLabel = file.isFromUser ? i18n.t('files_from_you') : (file.source || 'bot');
+
+            let contentHtml;
+            if (file.type === 'photo') {
+                contentHtml = '<div class="preview-content"><img src="' + escapeHtml(file.url) + '" alt="photo"></div>';
+            } else {
+                contentHtml = '<div class="preview-content"><div class="audio-player">' +
+                    '<div class="audio-player-icon">🎙️</div>' +
+                    '<audio controls src="' + escapeHtml(file.url) + '"></audio>' +
+                    '</div></div>';
+            }
+
+            overlay.innerHTML =
+                '<button class="preview-close" onclick="this.closest(\'.preview-overlay\').remove()">&times;</button>' +
+                contentHtml +
+                '<div class="preview-meta">' + avatar + ' ' + escapeHtml(entityName) + ' — ' + escapeHtml(sourceLabel) + ' — ' + date +
+                (file.text ? '<br>' + escapeHtml(file.text) : '') +
+                '</div>' +
+                '<div class="preview-actions">' +
+                (file.type === 'photo' ? '<button class="btn btn-primary btn-sm" onclick="downloadFile(' + idx + ')">' + i18n.t('files_btn_download') + '</button>' : '') +
+                '<button class="btn btn-outline btn-sm" onclick="shareFile(' + idx + ')">' + i18n.t('files_btn_share') + '</button>' +
+                '</div>';
+
+            document.body.appendChild(overlay);
+
+            // Close on background click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.remove();
+            });
+
+            // Close on escape
+            const escHandler = (e) => {
+                if (e.key === 'Escape') {
+                    overlay.remove();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        }
+
+        // --- Download ---
+        function downloadFile(idx) {
+            const file = allFiles[idx];
+            if (!file) return;
+
+            if (file.type === 'photo') {
+                // Open in new tab for download
+                const a = document.createElement('a');
+                a.href = file.url;
+                a.target = '_blank';
+                a.download = 'eclaw_photo_' + new Date(file.createdAt).getTime() + '.jpg';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+            showToast(i18n.t('files_download_started'), 'success');
+        }
+
+        // --- Share ---
+        async function shareFile(idx) {
+            const file = allFiles[idx];
+            if (!file) return;
+
+            const shareData = {
+                title: 'E-Claw ' + (file.type === 'photo' ? 'Photo' : 'Voice'),
+                text: file.text || ('E-Claw ' + file.type),
+                url: file.url
+            };
+
+            if (navigator.share) {
+                try {
+                    await navigator.share(shareData);
+                } catch (e) {
+                    if (e.name !== 'AbortError') {
+                        fallbackShare(file.url);
+                    }
+                }
+            } else {
+                fallbackShare(file.url);
+            }
+        }
+
+        function fallbackShare(url) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(() => {
+                    showToast(i18n.t('files_link_copied'), 'success');
+                }).catch(() => {
+                    showToast(i18n.t('files_share_failed'), 'error');
+                });
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = url;
+                ta.style.position = 'fixed';
+                ta.style.left = '-9999px';
+                document.body.appendChild(ta);
+                ta.select();
+                try {
+                    document.execCommand('copy');
+                    showToast(i18n.t('files_link_copied'), 'success');
+                } catch (e) {
+                    showToast(i18n.t('files_share_failed'), 'error');
+                }
+                document.body.removeChild(ta);
+            }
+        }
+
+        // --- Helpers ---
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function formatFileDate(ts) {
+            if (!ts) return '';
+            const d = new Date(ts);
+            const now = new Date();
+            const isToday = d.toDateString() === now.toDateString();
+            if (isToday) {
+                return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+            return d.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' }) + ' ' +
+                d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+    </script>
+</body>
+
+</html>
