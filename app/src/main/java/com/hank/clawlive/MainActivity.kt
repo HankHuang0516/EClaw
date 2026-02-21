@@ -344,6 +344,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateAgentCards() {
+        // During edit mode, skip ALL UI updates to preserve drag state and prevent
+        // transient API responses from hiding entity cards (fixes #16)
+        if (isEditMode) return
+
         if (boundEntities.isEmpty()) {
             agentCardsContainer.visibility = View.GONE
             emptyStateContainer.visibility = View.VISIBLE
@@ -356,10 +360,7 @@ class MainActivity : AppCompatActivity() {
             agentCardsContainer.visibility = View.VISIBLE
             emptyStateContainer.visibility = View.GONE
             btnEditMode.visibility = View.VISIBLE
-            // Only update adapter data if NOT in edit mode (to preserve drag state)
-            if (!isEditMode) {
-                entityAdapter.submitList(boundEntities)
-            }
+            entityAdapter.submitList(boundEntities)
         }
     }
 
@@ -370,6 +371,8 @@ class MainActivity : AppCompatActivity() {
                 persistReorder()
             }
             isEditMode = false
+            // Refresh UI with latest data since updates were skipped during edit mode
+            updateAgentCards()
         } else {
             isEditMode = true
         }
