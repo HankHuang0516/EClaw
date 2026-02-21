@@ -5,7 +5,7 @@ Track git commits for each release to enable changelog generation via `git diff`
 ---
 
 ## Latest
-v1.0.20 | bca84ac | 2026-02-21
+v1.0.21 | 60b9235 | 2026-02-21
 
 ---
 
@@ -13,6 +13,7 @@ v1.0.20 | bca84ac | 2026-02-21
 
 | Version | Commit | Date | Notes |
 |---------|--------|------|-------|
+| v1.0.20 | bca84ac | 2026-02-21 | Feedback UI upgrade, telemetry call fixes |
 | v1.0.19 | 19d4f57 | 2026-02-20 | Telemetry SDK, entity refresh/reorder, slash commands, feedback |
 | v1.0.18 | 82803b3 | 2026-02-20 | Gatekeeper lock strengthening, gatekeeper tests |
 | v1.0.17 | 10947c4 | 2026-02-20 | Free bot TOS agreement flow, gatekeeper module |
