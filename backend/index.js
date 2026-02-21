@@ -4187,13 +4187,14 @@ app.post('/api/admin/transfer-device', async (req, res) => {
                 );
                 if (dashResult.rows.length > 0) {
                     const dash = dashResult.rows[0];
+                    const jsonStr = v => v ? JSON.stringify(v) : '[]';
                     await client.query(
                         `INSERT INTO mission_dashboard (device_id, version, todo_list, mission_list, done_list, notes, rules, skills)
-                         VALUES ($1, 1, $2, $3, $4, $5, $6, $7)
+                         VALUES ($1, 1, $2::jsonb, $3::jsonb, $4::jsonb, $5::jsonb, $6::jsonb, $7::jsonb)
                          ON CONFLICT (device_id) DO UPDATE SET
-                           todo_list = $2, mission_list = $3, done_list = $4,
-                           notes = $5, rules = $6, skills = $7, updated_at = NOW()`,
-                        [targetDeviceId, dash.todo_list, dash.mission_list, dash.done_list, dash.notes, dash.rules, dash.skills]
+                           todo_list = $2::jsonb, mission_list = $3::jsonb, done_list = $4::jsonb,
+                           notes = $5::jsonb, rules = $6::jsonb, skills = $7::jsonb, updated_at = NOW()`,
+                        [targetDeviceId, jsonStr(dash.todo_list), jsonStr(dash.mission_list), jsonStr(dash.done_list), jsonStr(dash.notes), jsonStr(dash.rules), jsonStr(dash.skills)]
                     );
                     // Move child records (must happen before deleting source dashboard)
                     const tables = ['mission_items', 'mission_notes', 'mission_rules', 'mission_sync_log'];
