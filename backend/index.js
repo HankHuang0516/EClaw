@@ -5457,14 +5457,16 @@ app.delete('/api/bot/file', async (req, res) => {
     }
 });
 
-app.listen(port, '0.0.0.0', async () => {
-    console.log(`Claw Backend v5.3 (PostgreSQL + Auth + Portal) running on port ${port}`);
-    console.log(`Max entities per device: ${MAX_ENTITIES_PER_DEVICE}`);
-    console.log(`Persistence: ${usePostgreSQL ? 'PostgreSQL' : 'File Storage (Fallback)'}`);
+if (require.main === module) {
+    app.listen(port, '0.0.0.0', async () => {
+        console.log(`Claw Backend v5.3 (PostgreSQL + Auth + Portal) running on port ${port}`);
+        console.log(`Max entities per device: ${MAX_ENTITIES_PER_DEVICE}`);
+        console.log(`Persistence: ${usePostgreSQL ? 'PostgreSQL' : 'File Storage (Fallback)'}`);
 
-    // Initialize Flickr client
-    flickr.initFlickr();
-});
+        // Initialize Flickr client
+        flickr.initFlickr();
+    });
+}
 // Force redeploy Mon Feb 17 2026 - fix startCommand: node index.js (no cd backend)
 
 // ============================================
@@ -5569,3 +5571,6 @@ app.get('/api/bot/pending-messages', (req, res) => {
         totalCount: entity.messageQueue.length
     });
 });
+
+// Export app for testing (Jest + Supertest)
+module.exports = app;
