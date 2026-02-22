@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/HankHuang0516/realbot/compare/v1.6.0...v1.6.1) (2026-02-22)
+
+
+### Bug Fixes
+
+* bottom nav position consistency and edge padding ([e7b184a](https://github.com/HankHuang0516/realbot/commit/e7b184aa4e4da367e2b84a2101c5f16f89829dd6))
+
 # [1.6.0](https://github.com/HankHuang0516/realbot/compare/v1.5.4...v1.6.0) (2026-02-22)
 
 
