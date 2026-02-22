@@ -164,6 +164,10 @@
     <string name="feedback_marked_btn">已標記</string>
     <string name="feedback_marked">已於 %s 標記 — 送出意見回饋時將自動擷取此時間點起的紀錄。</string>
     <string name="feedback_auto_log_hint">系統將自動擷取最近 5 分鐘的紀錄以協助問題診斷。</string>
+    <string name="feedback_mark_consent_title">標記 Bug 時刻</string>
+    <string name="feedback_mark_consent_message">標記後將返回主畫面，請重現問題後回來送出意見回饋。系統會自動擷取標記時刻起的紀錄。\n\n準備好了嗎？</string>
+    <string name="feedback_mark_consent_agree">開始記錄</string>
+    <string name="feedback_cancel_mark">取消標記</string>
     <string name="feedback_cat_bug">Bug</string>
     <string name="feedback_cat_feature">功能建議</string>
     <string name="feedback_cat_question">提問</string>
@@ -273,7 +277,7 @@ E-claw (電子蝦) 團隊深知隱私對您的重要性。我們在此鄭重聲�
     <string name="loading_status">載入中…</string>
     <string name="connecting_bot">正在連接機器人…</string>
     <string name="handshaking_bot">正在與機器人交握中…</string>
-    <string name="webhook_testing">Webhook 測試中… 在測試成功之前先不要透過 Eclaw 傳訊息給我呦~</string>
+    <string name="webhook_testing">正在測試 Webhook 連線，好了會通知你，先別傳訊息喔~</string>
     <string name="webhook_test_success">Webhook 測試通過！Bot 已就緒~</string>
     <string name="bind_success_returning">連接成功！返回中…</string>
     <string name="processing_payment">付款處理中…</string>
@@ -381,11 +385,16 @@ E-claw (電子蝦) 團隊深知隱私對您的重要性。我們在此鄭重聲�
     <string name="schedule_repeat_daily">每日</string>
     <string name="schedule_repeat_weekly">每週</string>
     <string name="schedule_repeat_hourly">每小時</string>
-    <string name="schedule_5min">5分</string>
-    <string name="schedule_15min">15分</string>
-    <string name="schedule_30min">30分</string>
-    <string name="schedule_1hr">1時</string>
-    <string name="schedule_3hr">3時</string>
+    <string name="schedule_5min">+5 分鐘</string>
+    <string name="schedule_15min">+15 分鐘</string>
+    <string name="schedule_30min">+30 分鐘</string>
+    <string name="schedule_1hr">+1 小時</string>
+    <string name="schedule_3hr">+3 小時</string>
+    <string name="schedule_repeat_cron">自訂 (Cron)</string>
+    <string name="schedule_label_cron">Cron 表達式</string>
+    <string name="schedule_cron_hint">格式：分鐘 小時 日 月 星期\n（例如 \"30 8 * * *\" = 每天 08:30）</string>
+    <string name="schedule_err_cron">請輸入 Cron 表達式</string>
+    <string name="schedule_err_cron_invalid">Cron 格式無效，必須為 5 個以空格分隔的欄位。</string>
     <string name="schedule_created_ok">排程已建立！</string>
     <string name="schedule_confirm_delete">確定要刪除此排程？</string>
     <string name="schedule_deleted">排程已刪除</string>

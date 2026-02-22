@@ -41,6 +41,7 @@ import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.data.repository.StateRepository
 import com.hank.clawlive.ui.EntityCardAdapter
 import com.hank.clawlive.ui.MainViewModel
+import com.hank.clawlive.ui.RecordingIndicatorHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
@@ -120,6 +121,12 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         TelemetryHelper.trackPageView(this, "main")
         loadBoundEntities()
+        RecordingIndicatorHelper.attach(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        RecordingIndicatorHelper.detach()
     }
 
     private fun startEntityPolling() {
@@ -290,6 +297,32 @@ class MainActivity : AppCompatActivity() {
             try {
                 val response = api.getAllEntities(deviceId = deviceManager.deviceId)
                 val newEntities = response.entities.filter { it.isBound }
+
+                // #48 diagnosis: log entity details on every poll
+                val prevIds = boundEntities.map { it.entityId }.sorted()
+                val newIds = newEntities.map { it.entityId }.sorted()
+                val registeredIds = layoutPrefs.getRegisteredEntityIds().sorted()
+                if (prevIds != newIds) {
+                    Timber.w("[#48] Entity list changed: prev=$prevIds new=$newIds registered=$registeredIds serverReady=${response.serverReady}")
+                    TelemetryHelper.trackAction("entity_list_changed", mapOf(
+                        "prevIds" to prevIds.toString(),
+                        "newIds" to newIds.toString(),
+                        "registeredIds" to registeredIds.toString(),
+                        "serverReady" to response.serverReady
+                    ))
+                }
+
+                // #48 fix: Auto-sync registeredEntityIds with server-bound entities.
+                // When a new entity is bound (e.g. via OfficialBorrow), the server returns it
+                // but the wallpaper's StateRepository filters by registeredEntityIds.
+                // Ensure newly bound entities are registered so the wallpaper shows them too.
+                val currentRegistered = layoutPrefs.getRegisteredEntityIds()
+                newEntities.forEach { entity ->
+                    if (entity.entityId !in currentRegistered) {
+                        layoutPrefs.addRegisteredEntity(entity.entityId)
+                        Timber.d("[#48] Auto-registered entity ${entity.entityId} from server response")
+                    }
+                }
 
                 // Guard against transient empty responses (fixes #16, #29):
                 // Skip update if the server returned 0 entities BUT we know

@@ -22,6 +22,7 @@ import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.service.ClawWallpaperService
+import com.hank.clawlive.ui.RecordingIndicatorHelper
 import com.hank.clawlive.ui.WallpaperPreviewView
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -91,6 +92,16 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         setupEdgeToEdgeInsets()
         setupListeners()
         loadBoundEntities()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        RecordingIndicatorHelper.attach(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        RecordingIndicatorHelper.detach()
     }
 
     private fun initViews() {

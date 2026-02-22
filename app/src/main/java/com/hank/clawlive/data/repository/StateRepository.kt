@@ -77,6 +77,13 @@ class StateRepository(
                     response.entities.filter { it.entityId in registeredIds }
                 }
 
+                // #48 diagnosis: log when server returns more entities than what passes filter
+                val serverIds = response.entities.map { it.entityId }.sorted()
+                val filteredIds = filteredEntities.map { it.entityId }.sorted()
+                if (serverIds != filteredIds) {
+                    Timber.w("[#48] Entity filter mismatch: server=$serverIds filtered=$filteredIds registered=$registeredIds")
+                }
+
                 // Process entity messages for chat history (with deduplication)
                 filteredEntities.forEach { entity ->
                     try {

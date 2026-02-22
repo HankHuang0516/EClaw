@@ -21,6 +21,7 @@ import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.data.model.MultiEntityResponse
 import com.hank.clawlive.data.remote.NetworkModule
+import com.hank.clawlive.ui.RecordingIndicatorHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -56,6 +57,16 @@ class EntityManagerActivity : AppCompatActivity() {
         setupEdgeToEdgeInsets()
         setupListeners()
         loadEntities()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        RecordingIndicatorHelper.attach(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        RecordingIndicatorHelper.detach()
     }
 
     private fun setupEdgeToEdgeInsets() {

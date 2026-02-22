@@ -29,6 +29,7 @@ import com.hank.clawlive.data.model.*
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.ui.MissionUiState
 import com.hank.clawlive.ui.MissionViewModel
+import com.hank.clawlive.ui.RecordingIndicatorHelper
 import com.hank.clawlive.ui.mission.*
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -92,9 +93,15 @@ class MissionControlActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        RecordingIndicatorHelper.attach(this)
         // Re-download dashboard to pick up changes made by bots or web portal
         viewModel.downloadDashboard()
         loadEntityOptions()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        RecordingIndicatorHelper.detach()
     }
 
     private fun loadEntityOptions() {

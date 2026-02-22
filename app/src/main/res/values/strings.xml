@@ -187,6 +187,10 @@
     <string name="feedback_marked_btn">Marked</string>
     <string name="feedback_marked">Marked at %s — logs from this point will be captured when you submit feedback.</string>
     <string name="feedback_auto_log_hint">Logs from the last 5 minutes will be automatically captured to help diagnose the issue.</string>
+    <string name="feedback_mark_consent_title">Mark Bug Moment</string>
+    <string name="feedback_mark_consent_message">After marking, you\'ll be taken back to the main screen to reproduce the problem. When you come back to submit feedback, logs from this moment will be captured.\n\nReady to begin?</string>
+    <string name="feedback_mark_consent_agree">Start Recording</string>
+    <string name="feedback_cancel_mark">Cancel Mark</string>
     <string name="feedback_cat_bug">Bug</string>
     <string name="feedback_cat_feature">Feature</string>
     <string name="feedback_cat_question">Question</string>
@@ -236,7 +240,7 @@
     <string name="loading_status">Loading…</string>
     <string name="connecting_bot">Connecting to bot…</string>
     <string name="handshaking_bot">Handshaking with bot…</string>
-    <string name="webhook_testing">Webhook testing… Please don\'t send messages through Eclaw until the test succeeds~</string>
+    <string name="webhook_testing">Testing Webhook connection, we\'ll let you know when it\'s ready. Hold off on messages for now~</string>
     <string name="webhook_test_success">Webhook test passed! Bot is ready~</string>
     <string name="bind_success_returning">Connected! Returning…</string>
     <string name="processing_payment">Processing payment…</string>
@@ -390,11 +394,16 @@ If you have any questions, please contact us via our official email.
     <string name="schedule_repeat_daily">Daily</string>
     <string name="schedule_repeat_weekly">Weekly</string>
     <string name="schedule_repeat_hourly">Hourly</string>
-    <string name="schedule_5min">5m</string>
-    <string name="schedule_15min">15m</string>
-    <string name="schedule_30min">30m</string>
-    <string name="schedule_1hr">1h</string>
-    <string name="schedule_3hr">3h</string>
+    <string name="schedule_5min">+5 min</string>
+    <string name="schedule_15min">+15 min</string>
+    <string name="schedule_30min">+30 min</string>
+    <string name="schedule_1hr">+1 hr</string>
+    <string name="schedule_3hr">+3 hr</string>
+    <string name="schedule_repeat_cron">Custom (Cron)</string>
+    <string name="schedule_label_cron">Cron Expression</string>
+    <string name="schedule_cron_hint">Format: minute hour day month weekday\n(e.g., \"30 8 * * *\" = every day at 08:30)</string>
+    <string name="schedule_err_cron">Please enter a cron expression</string>
+    <string name="schedule_err_cron_invalid">Invalid cron format. Must be 5 space-separated fields.</string>
     <string name="schedule_created_ok">Schedule created!</string>
     <string name="schedule_confirm_delete">Delete this schedule?</string>
     <string name="schedule_deleted">Schedule deleted</string>

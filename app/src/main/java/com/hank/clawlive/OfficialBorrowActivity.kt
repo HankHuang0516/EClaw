@@ -24,6 +24,7 @@ import com.hank.clawlive.data.model.BorrowBinding
 import com.hank.clawlive.data.model.OfficialBorrowStatusResponse
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
+import com.hank.clawlive.ui.RecordingIndicatorHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -63,6 +64,7 @@ class OfficialBorrowActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         TelemetryHelper.trackPageView(this, "official_borrow")
+        RecordingIndicatorHelper.attach(this)
         billingManager.refreshState()
 
         // After purchase completes, add paid slot and bind
@@ -71,6 +73,11 @@ class OfficialBorrowActivity : AppCompatActivity() {
             pendingBindEntityId = null
             addPaidSlotAndBind(entityId)
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        RecordingIndicatorHelper.detach()
     }
 
     private fun setupWindowInsets() {

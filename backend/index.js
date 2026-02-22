@@ -1282,13 +1282,29 @@ app.get('/api/entities', (req, res) => {
         }
     }
 
-    // Log when a device-filtered request returns no entities but the device exists
-    // This helps diagnose transient empty responses that cause client-side card disappearing (#16)
-    if (filterDeviceId && entities.length === 0 && devices[filterDeviceId]) {
-        serverLog('warn', 'entity_poll', `Device ${filterDeviceId} returned 0 bound entities (device exists in memory)`, {
-            deviceId: filterDeviceId,
-            metadata: { totalDeviceSlots: MAX_ENTITIES_PER_DEVICE, persistenceReady }
-        });
+    // Log entity count changes for device-filtered requests (#48 diagnosis)
+    if (filterDeviceId && devices[filterDeviceId]) {
+        const device = devices[filterDeviceId];
+        const allSlotStates = [];
+        for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
+            const e = device.entities[i];
+            allSlotStates.push(`${i}:${e.isBound ? 'bound' : 'unbound'}`);
+        }
+
+        if (entities.length === 0) {
+            // Log when a device-filtered request returns no entities but the device exists
+            // This helps diagnose transient empty responses that cause client-side card disappearing (#16)
+            serverLog('warn', 'entity_poll', `Device ${filterDeviceId} returned 0 bound entities (device exists, slots: ${allSlotStates.join(',')})`, {
+                deviceId: filterDeviceId,
+                metadata: { totalDeviceSlots: MAX_ENTITIES_PER_DEVICE, persistenceReady, slots: allSlotStates }
+            });
+        } else if (entities.length < MAX_ENTITIES_PER_DEVICE) {
+            // Log partial entity count (some bound, some not) — helps diagnose #48
+            serverLog('info', 'entity_poll', `Device ${filterDeviceId} returned ${entities.length}/${MAX_ENTITIES_PER_DEVICE} bound entities (slots: ${allSlotStates.join(',')})`, {
+                deviceId: filterDeviceId,
+                metadata: { boundCount: entities.length, slots: allSlotStates }
+            });
+        }
     }
 
     // Warn clients if persistence hasn't loaded yet (entities may appear empty transiently)
