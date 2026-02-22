@@ -40,7 +40,7 @@ app.use(telemetry.createMiddleware(telemetryPoolProxy, (deviceId) => devices[dev
 // Each device has independent entity slots
 // ============================================
 
-const MAX_ENTITIES_PER_DEVICE = 8;
+const MAX_ENTITIES_PER_DEVICE = 4;
 
 // Latest app version - update this with each release
 // Bot will warn users if their app version is older than this
