@@ -35,6 +35,24 @@ CREATE INDEX IF NOT EXISTS idx_sched_device ON scheduled_messages(device_id);
 CREATE INDEX IF NOT EXISTS idx_sched_status ON scheduled_messages(status);
 `;
 
+const CREATE_EXECUTIONS_TABLE_SQL = `
+CREATE TABLE IF NOT EXISTS schedule_executions (
+    id SERIAL PRIMARY KEY,
+    schedule_id INTEGER,
+    device_id TEXT NOT NULL,
+    entity_id INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    executed_at TIMESTAMPTZ DEFAULT NOW(),
+    result TEXT,
+    result_status TEXT,
+    label TEXT,
+    repeat_type TEXT DEFAULT 'once'
+);
+
+CREATE INDEX IF NOT EXISTS idx_sched_exec_device ON schedule_executions(device_id);
+CREATE INDEX IF NOT EXISTS idx_sched_exec_time ON schedule_executions(executed_at DESC);
+`;
+
 // ── Initialize ──
 async function init(pool, executeCallback) {
     _pool = pool;
@@ -42,9 +60,10 @@ async function init(pool, executeCallback) {
 
     try {
         await pool.query(CREATE_TABLE_SQL);
+        await pool.query(CREATE_EXECUTIONS_TABLE_SQL);
         // Migration: add timezone column if missing
         await pool.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS timezone TEXT`).catch(() => {});
-        console.log('[Scheduler] Table ready');
+        console.log('[Scheduler] Tables ready');
     } catch (err) {
         console.error('[Scheduler] Table creation failed:', err.message);
         return;
@@ -280,6 +299,48 @@ function disarmCronJob(id) {
     }
 }
 
+// ── Log execution to history table ──
+async function logExecution(schedule, resultText, resultStatus) {
+    try {
+        await _pool.query(
+            `INSERT INTO schedule_executions (schedule_id, device_id, entity_id, message, result, result_status, label, repeat_type)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            [schedule.id, schedule.deviceId, schedule.entityId, schedule.message,
+             resultText ? resultText.substring(0, 2000) : null, resultStatus,
+             schedule.label || null, schedule.repeatType || 'once']
+        );
+    } catch (err) {
+        console.error(`[Scheduler] Failed to log execution for #${schedule.id}:`, err.message);
+    }
+}
+
+// ── Get execution history for a device ──
+async function getExecutions(deviceId, { limit = 50, offset = 0 } = {}) {
+    if (!_pool) return [];
+
+    const { rows } = await _pool.query(
+        `SELECT * FROM schedule_executions WHERE device_id = $1 ORDER BY executed_at DESC LIMIT $2 OFFSET $3`,
+        [deviceId, limit, offset]
+    );
+
+    return rows.map(row => ({
+        id: row.id,
+        scheduleId: row.schedule_id,
+        deviceId: row.device_id,
+        entityId: row.entity_id,
+        message: row.message,
+        scheduledAt: null,
+        repeatType: row.repeat_type || 'once',
+        cronExpr: null,
+        status: row.result_status === 'error' ? 'failed' : 'completed',
+        createdAt: null,
+        executedAt: row.executed_at ? new Date(row.executed_at).toISOString() : null,
+        result: row.result || null,
+        resultStatus: row.result_status || null,
+        label: row.label || null
+    }));
+}
+
 // ── Execute a schedule ──
 async function executeSchedule(schedule, isRecurring = false) {
     try {
@@ -290,6 +351,9 @@ async function executeSchedule(schedule, isRecurring = false) {
 
         const resultText = result ? (typeof result === 'string' ? result : JSON.stringify(result)) : 'executed';
         const resultStatus = (result && result.error) ? 'error' : 'success';
+
+        // Log every execution to history table
+        await logExecution(schedule, resultText, resultStatus);
 
         if (isRecurring) {
             // For recurring, just record execution but keep active
@@ -317,6 +381,9 @@ async function executeSchedule(schedule, isRecurring = false) {
         console.log(`[Scheduler] Schedule #${schedule.id} executed: ${resultStatus}`);
     } catch (err) {
         console.error(`[Scheduler] Execution failed for #${schedule.id}:`, err.message);
+
+        // Log failed execution to history too
+        await logExecution(schedule, err.message, 'error');
 
         try {
             await _pool.query(
@@ -355,5 +422,6 @@ module.exports = {
     deleteSchedule,
     getSchedules,
     getSchedule,
+    getExecutions,
     getSchedulesForBot
 };

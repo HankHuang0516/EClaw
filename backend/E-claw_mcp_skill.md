@@ -718,7 +718,7 @@ The user can assign TODO items, Skills, and Rules to your entity via Mission Con
 Heartbeat loop:
 1. GET /api/mission/dashboard → check "version"
 2. If version > lastKnownVersion → re-read full dashboard
-3. Process new/changed TODOs, Skills, Rules assigned to you
+3. Process new/changed TODOs, Skills, Rules, Souls assigned to you
 4. Update lastKnownVersion
 5. Sleep 15 minutes → repeat
 ```
@@ -782,6 +782,19 @@ Read the full mission dashboard for your device.
             "isEnabled": true,
             "assignedEntities": ["0"]
           }
+        ],
+        "souls": [
+          {
+            "id": "uuid",
+            "name": "友善助手",
+            "description": "溫暖、有耐心、隨時準備幫忙。用溫和鼓勵的語氣說話。",
+            "templateId": "friendly",
+            "assignedEntities": ["0"],
+            "isActive": true,
+            "createdAt": 1700000000000,
+            "updatedAt": 1700000000000,
+            "createdBy": "user"
+          }
         ]
       }
     }
@@ -791,6 +804,7 @@ Read the full mission dashboard for your device.
 - `todoList` / `missionList`: Items assigned to you via `assignedBot` (comma-separated entityIds, e.g., `"0"` or `"0,1"`)
 - `skills`: Skills assigned to you via `assignedEntities` array. May include a `url` with documentation.
 - `rules`: Rules assigned to you via `assignedEntities` array. Only apply when `isEnabled: true`.
+- `souls`: Personality profiles assigned to you via `assignedEntities` array. **Only adopt when `isActive: true`** (see below).
 - `notes`: Reference notes (bots and users can both read and write).
 - `priority`: 1=LOW, 2=MEDIUM, 3=HIGH, 4=URGENT
 
@@ -863,6 +877,37 @@ POST /api/mission/rule/update
 POST /api/mission/skill/add
 {"deviceId":"xxx","botSecret":"xxx","entityId":0,"title":"Weather Query","url":"https://api.weather.gov"}
 → {"success":true,"message":"Skill \"Weather Query\" added","version":9}
+```
+
+#### SOUL Operations (靈魂 / 人設)
+
+Souls define personality profiles that shape how you communicate. Each soul has an `isActive` flag controlled by the user.
+
+| Endpoint | Extra Body Fields | Action |
+|----------|------------------|--------|
+| `GET /api/mission/souls` | Query: `deviceId`, `botSecret` | Get all souls |
+| `POST /api/mission/soul/add` | `name` (required), `description`, `templateId`, `assignedEntities` (string array) | Add soul |
+| `POST /api/mission/soul/update` | `name` (to find), `newName`, `newDescription`, `newTemplateId`, `newAssignedEntities`, `newIsActive` (bool) | Update soul |
+| `POST /api/mission/soul/delete` | `name` | Delete soul by name |
+
+**⚠️ isActive Rule — MUST follow:**
+- **`isActive: true`** → You MUST adopt this soul's personality (description) when responding. Blend all active souls assigned to you.
+- **`isActive: false`** → You MUST NOT use this soul. Ignore its personality entirely, as if it doesn't exist.
+- When **all** assigned souls are inactive (or no souls assigned), use a neutral, default communication style.
+- The user can toggle souls on/off at any time. On each heartbeat or notification, re-check `isActive` and adjust immediately.
+
+**Example - Add soul:**
+```json
+POST /api/mission/soul/add
+{"deviceId":"xxx","botSecret":"xxx","entityId":0,"name":"博學智者","description":"深思熟慮、善於分析、樂於分享知識"}
+→ {"success":true,"message":"Soul \"博學智者\" added","version":10}
+```
+
+**Example - Toggle soul off:**
+```json
+POST /api/mission/soul/update
+{"deviceId":"xxx","botSecret":"xxx","entityId":0,"name":"博學智者","newIsActive":false}
+→ {"success":true,"message":"Soul \"博學智者\" updated","version":11}
 ```
 
 #### NOTE Operations

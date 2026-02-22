@@ -4718,9 +4718,30 @@ app.get('/api/schedules', async (req, res) => {
     }
 });
 
+// GET /api/schedule-executions - Execution history for a device
+app.get('/api/schedule-executions', async (req, res) => {
+    const { deviceId, deviceSecret, limit, offset } = req.query;
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    try {
+        const executions = await scheduler.getExecutions(deviceId, {
+            limit: parseInt(limit) || 50,
+            offset: parseInt(offset) || 0
+        });
+        res.json({ success: true, schedules: executions });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 // POST /api/schedules - Create a new schedule
 app.post('/api/schedules', async (req, res) => {
-    const { deviceId, deviceSecret, entityId, message, scheduledAt, repeatType, cronExpr, label } = req.body;
+    const { deviceId, deviceSecret, entityId, message, scheduledAt, repeatType, cronExpr, label, timezone } = req.body;
     if (!deviceId || !deviceSecret) {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
@@ -4730,7 +4751,7 @@ app.post('/api/schedules', async (req, res) => {
     }
     try {
         const schedule = await scheduler.createSchedule({
-            deviceId, entityId, message, scheduledAt, repeatType, cronExpr, label
+            deviceId, entityId, message, scheduledAt, repeatType, cronExpr, label, timezone
         });
         res.json({ success: true, schedule });
     } catch (err) {

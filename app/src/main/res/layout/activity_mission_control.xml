@@ -14,50 +14,26 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingHorizontal="8dp"
+        android:paddingHorizontal="16dp"
         android:paddingTop="12dp"
         android:paddingBottom="8dp">
-
-        <ImageButton
-            android:id="@+id/btnBack"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/ic_back_arrow"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/back"
-            app:tint="@android:color/white" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/mission_control"
-            android:textSize="20sp"
+            android:textSize="24sp"
             android:textStyle="bold"
-            android:textColor="@android:color/white"
-            android:layout_marginStart="8dp" />
+            android:textColor="@android:color/white" />
 
-        <!-- Schedule button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSchedule"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/schedule_title"
-            android:textSize="13sp"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            app:icon="@android:drawable/ic_menu_recent_history"
-            app:iconSize="16dp" />
-
-        <!-- Upload button with dirty indicator -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnUpload"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/upload"
+            android:text="@string/save"
             android:textSize="13sp"
-            style="@style/Widget.Material3.Button.TonalButton"
-            app:icon="@android:drawable/ic_menu_upload"
-            app:iconSize="16dp" />
+            style="@style/Widget.Material3.Button.TonalButton" />
 
     </LinearLayout>
 
@@ -81,6 +57,48 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="12dp">
+
+            <!-- 0. Schedule (navigate to ScheduleActivity) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardSchedule"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardBackgroundColor="#1A1A2E"
+                app:cardCornerRadius="12dp"
+                app:strokeColor="#333355"
+                app:strokeWidth="1dp"
+                app:cardElevation="0dp"
+                app:rippleColor="#33FFFFFF">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/schedule_title"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@android:color/white"
+                        android:drawablePadding="8dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="›"
+                        android:textSize="20sp"
+                        android:textColor="#666666" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- 1. TODO List -->
             <com.google.android.material.card.MaterialCardView
@@ -356,7 +374,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="👻 Souls"
+                        android:text="🧠 Souls"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="@android:color/white"
@@ -458,5 +476,8 @@
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
+    <!-- Bottom Navigation -->
+    <include layout="@layout/layout_bottom_nav"/>
 
 </LinearLayout>

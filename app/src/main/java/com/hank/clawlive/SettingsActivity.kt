@@ -33,7 +33,9 @@ import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.local.UsageManager
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
+import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.EntityChipHelper
+import com.hank.clawlive.ui.NavItem
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
@@ -61,7 +63,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var chipGroupLanguage: ChipGroup
     private lateinit var chipLangEn: Chip
     private lateinit var chipLangZh: Chip
-    private lateinit var btnBack: ImageButton
+    private lateinit var btnSetWallpaper: MaterialButton
     private lateinit var btnDebugEntityLimit: MaterialButton
     private lateinit var topBar: LinearLayout
 
@@ -73,6 +75,7 @@ class SettingsActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_settings)
 
+        BottomNavHelper.setup(this, NavItem.SETTINGS)
         billingManager = BillingManager.getInstance(this)
         usageManager = UsageManager.getInstance(this)
 
@@ -128,8 +131,8 @@ class SettingsActivity : AppCompatActivity() {
         chipGroupLanguage = findViewById(R.id.chipGroupLanguage)
         chipLangEn = findViewById(R.id.chipLangEn)
         chipLangZh = findViewById(R.id.chipLangZh)
-        btnBack = findViewById(R.id.btnBack)
         topBar = findViewById(R.id.topBar)
+        btnSetWallpaper = findViewById(R.id.btnSetWallpaper)
         tvEntityCount = findViewById(R.id.tvEntityCount)
         btnFeedback = findViewById(R.id.btnFeedback)
         btnPrivacyPolicy = findViewById(R.id.btnPrivacyPolicy)
@@ -149,8 +152,8 @@ class SettingsActivity : AppCompatActivity() {
             billingManager.launchPurchaseFlow(this)
         }
 
-        btnBack.setOnClickListener {
-            finish()
+        btnSetWallpaper.setOnClickListener {
+            startActivity(Intent(this, WallpaperPreviewActivity::class.java))
         }
 
         btnFeedback.setOnClickListener {

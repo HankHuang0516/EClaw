@@ -520,6 +520,8 @@
         }
 
         // ── Load Schedules ──
+        let executionHistory = [];
+
         async function loadSchedules() {
             try {
                 const data = await apiCall('GET',
@@ -528,8 +530,18 @@
                 );
                 if (data.success) {
                     allSchedules = data.schedules || [];
-                    renderSchedules();
                 }
+
+                // Load execution history
+                const execData = await apiCall('GET',
+                    '/api/schedule-executions?deviceId=' + encodeURIComponent(currentUser.deviceId) +
+                    '&deviceSecret=' + encodeURIComponent(currentUser.deviceSecret)
+                );
+                if (execData.success) {
+                    executionHistory = execData.schedules || [];
+                }
+
+                renderSchedules();
             } catch (e) {
                 console.error('Failed to load schedules:', e);
             }
@@ -538,10 +550,9 @@
         // ── Render ──
         function renderSchedules() {
             const upcoming = allSchedules.filter(s => s.status === 'pending' || s.status === 'active');
-            const history = allSchedules.filter(s => s.status === 'completed' || s.status === 'failed');
 
             renderList('upcomingList', upcoming, true);
-            renderList('historyList', history, false);
+            renderList('historyList', executionHistory, false);
         }
 
         function renderList(containerId, items, showActions) {

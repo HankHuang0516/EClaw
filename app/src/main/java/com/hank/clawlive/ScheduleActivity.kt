@@ -134,15 +134,20 @@ class ScheduleActivity : AppCompatActivity() {
                 )
                 if (response.success) {
                     val upcoming = response.schedules.filter { it.status == "pending" || it.status == "active" }
-                    val history = response.schedules.filter { it.status == "completed" || it.status == "failed" }
-
                     upcomingAdapter.submitList(upcoming)
-                    historyAdapter.submitList(history)
-
                     findViewById<TextView>(R.id.tvUpcomingEmpty).visibility =
                         if (upcoming.isEmpty()) View.VISIBLE else View.GONE
+                }
+
+                // Load execution history (includes both one-time and recurring)
+                val execResponse = api.getScheduleExecutions(
+                    deviceId = deviceManager.deviceId,
+                    deviceSecret = deviceManager.deviceSecret
+                )
+                if (execResponse.success) {
+                    historyAdapter.submitList(execResponse.schedules)
                     findViewById<TextView>(R.id.tvHistoryEmpty).visibility =
-                        if (history.isEmpty()) View.VISIBLE else View.GONE
+                        if (execResponse.schedules.isEmpty()) View.VISIBLE else View.GONE
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load schedules")
