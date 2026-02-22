@@ -377,6 +377,7 @@ If you have any questions, please contact us via our official email.
 
     <!-- Schedule -->
     <string name="schedule_title">Schedule</string>
+    <string name="schedule_enter">Go to Schedule</string>
     <string name="schedule_add">Add</string>
     <string name="schedule_upcoming">Upcoming &amp; Active</string>
     <string name="schedule_history">History</string>

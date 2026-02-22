@@ -80,15 +80,22 @@
                     android:gravity="center_vertical"
                     android:padding="16dp">
 
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@android:drawable/ic_menu_recent_history"
+                        android:layout_marginEnd="12dp"
+                        app:tint="#6C63FF"
+                        android:contentDescription="@null" />
+
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="@string/schedule_title"
+                        android:text="@string/schedule_enter"
                         android:textSize="16sp"
                         android:textStyle="bold"
-                        android:textColor="@android:color/white"
-                        android:drawablePadding="8dp" />
+                        android:textColor="@android:color/white" />
 
                     <TextView
                         android:layout_width="wrap_content"

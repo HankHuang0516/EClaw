@@ -368,6 +368,7 @@ E-claw (電子蝦) 團隊深知隱私對您的重要性。我們在此鄭重聲�
 
     <!-- Schedule -->
     <string name="schedule_title">排程</string>
+    <string name="schedule_enter">進入排程</string>
     <string name="schedule_add">新增</string>
     <string name="schedule_upcoming">即將執行 &amp; 進行中</string>
     <string name="schedule_history">歷史紀錄</string>
