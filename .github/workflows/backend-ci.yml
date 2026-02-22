@@ -63,29 +63,29 @@ jobs:
           # No DATABASE_URL → backend falls back to file storage (mocked in tests)
 
   # ── Railway Preview Deploy ──────────────────────────────────────────────────
-  # Uncomment and add RAILWAY_TOKEN + RAILWAY_SERVICE_ID secrets to enable.
-  #
-  # preview:
-  #   name: Deploy preview to Railway
-  #   runs-on: ubuntu-latest
-  #   needs: [lint, jest]
-  #   if: github.event_name == 'pull_request'
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Install Railway CLI
-  #       run: npm install -g @railway/cli
-  #     - name: Deploy preview environment
-  #       run: railway up --service $RAILWAY_SERVICE_ID --environment pr-${{ github.event.number }}
-  #       env:
-  #         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-  #         RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
-  #     - name: Comment preview URL on PR
-  #       uses: actions/github-script@v7
-  #       with:
-  #         script: |
-  #           github.rest.issues.createComment({
-  #             issue_number: context.issue.number,
-  #             owner: context.repo.owner,
-  #             repo: context.repo.repo,
-  #             body: '🚂 Railway preview deployed for this PR.'
-  #           })
+  preview:
+    name: Deploy preview to Railway
+    runs-on: ubuntu-latest
+    needs: [lint, jest]
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy preview environment
+        run: railway up --service ${{ secrets.RAILWAY_SERVICE_ID }} --environment pr-${{ github.event.number }}
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Comment preview URL on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚂 Railway preview deployed for PR #${{ github.event.number }}. Check the Railway dashboard for the preview URL.'
+            })
