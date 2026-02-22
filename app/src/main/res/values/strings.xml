@@ -110,6 +110,12 @@
     <string name="no_done_items">No completed items</string>
     <string name="no_notes">No notes</string>
     <string name="no_rules">No rules</string>
+    <string name="add_soul">+ Add Soul</string>
+    <string name="no_souls">No souls defined</string>
+    <string name="soul_template">Soul Template</string>
+    <string name="soul_template_custom">-- Custom --</string>
+    <string name="soul_name_hint">Soul name</string>
+    <string name="soul_desc_hint">Describe personality, tone, behavior…</string>
     <string name="edit">Edit</string>
     <string name="priority">Priority</string>
     <string name="assign_entity">Assign Entity</string>

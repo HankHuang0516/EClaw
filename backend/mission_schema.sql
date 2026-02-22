@@ -197,6 +197,11 @@ $$ LANGUAGE plpgsql;
 ALTER TABLE mission_dashboard ADD COLUMN IF NOT EXISTS skills JSONB DEFAULT '[]'::jsonb;
 
 -- ============================================
+-- Migration: Add souls column
+-- ============================================
+ALTER TABLE mission_dashboard ADD COLUMN IF NOT EXISTS souls JSONB DEFAULT '[]'::jsonb;
+
+-- ============================================
 -- Bot File Storage Table
 -- ============================================
 CREATE TABLE IF NOT EXISTS bot_files (

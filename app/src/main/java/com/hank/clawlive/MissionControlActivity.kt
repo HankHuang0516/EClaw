@@ -51,7 +51,31 @@ class MissionControlActivity : AppCompatActivity() {
     private lateinit var doneAdapter: MissionItemAdapter
     private lateinit var noteAdapter: MissionNoteAdapter
     private lateinit var skillAdapter: MissionSkillAdapter
+    private lateinit var soulAdapter: MissionSoulAdapter
     private lateinit var ruleAdapter: MissionRuleAdapter
+
+    /** Soul template definitions */
+    private data class SoulTemplate(val id: String, val nameEn: String, val nameZh: String, val descEn: String, val descZh: String)
+    private val soulTemplates = listOf(
+        SoulTemplate("friendly", "Friendly Assistant", "友善助手", "Warm, patient, always ready to help. Speaks in a gentle and encouraging tone.", "溫暖、有耐心、隨時準備幫忙。用溫和鼓勵的語氣說話。"),
+        SoulTemplate("tsundere", "Tsundere", "傲嬌", "Acts cold and dismissive on the surface, but actually cares deeply. Often says \"it's not like I did it for you\" while helping.", "表面上冷漠高傲，其實內心非常在意。經常一邊幫忙一邊說「才不是為了你呢」。"),
+        SoulTemplate("scholar", "Wise Scholar", "博學智者", "Thoughtful, analytical, enjoys sharing knowledge. Answers with depth and cites references when possible.", "深思熟慮、善於分析、樂於分享知識。回答時有深度，盡可能引用來源。"),
+        SoulTemplate("trickster", "Playful Trickster", "調皮搗蛋鬼", "Loves jokes, puns, and playful teasing. Always finds a way to make things fun and lighthearted.", "喜歡開玩笑、講雙關語和善意的捉弄。總是能讓事情變得有趣輕鬆。"),
+        SoulTemplate("professional", "Cool Professional", "冷酷專業", "Efficient, precise, no-nonsense. Gets straight to the point with minimal pleasantries.", "高效、精確、不廢話。直奔重點，少寒暄。"),
+        SoulTemplate("caretaker", "Gentle Caretaker", "溫柔照護者", "Caring, nurturing, always checking if you're okay. Reminds you to rest and take care of yourself.", "關懷、體貼、總是確認你是否安好。會提醒你休息和照顧自己。"),
+        SoulTemplate("adventurer", "Bold Adventurer", "大膽冒險家", "Enthusiastic, fearless, always up for a challenge. Uses exciting and dramatic language.", "熱情、無畏、隨時迎接挑戰。用興奮和戲劇性的語言表達。"),
+        SoulTemplate("poet", "Poetic Dreamer", "詩意夢想家", "Speaks in metaphors and imagery. Finds beauty in everyday things and expresses thoughts artistically.", "善用隱喻和意象。在日常事物中發現美，用藝術性的方式表達想法。")
+    )
+
+    private fun getTemplateDisplayName(tpl: SoulTemplate): String {
+        val lang = resources.configuration.locales[0].language
+        return if (lang == "zh") tpl.nameZh else tpl.nameEn
+    }
+
+    private fun getTemplateDescription(tpl: SoulTemplate): String {
+        val lang = resources.configuration.locales[0].language
+        return if (lang == "zh") tpl.descZh else tpl.descEn
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -91,10 +115,12 @@ class MissionControlActivity : AppCompatActivity() {
                 todoAdapter.entityNames = nameMap
                 missionAdapter.entityNames = nameMap
                 skillAdapter.entityNames = nameMap
+                soulAdapter.entityNames = nameMap
                 ruleAdapter.entityNames = nameMap
                 todoAdapter.notifyDataSetChanged()
                 missionAdapter.notifyDataSetChanged()
                 skillAdapter.notifyDataSetChanged()
+                soulAdapter.notifyDataSetChanged()
                 ruleAdapter.notifyDataSetChanged()
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load entities for mission")
@@ -128,6 +154,11 @@ class MissionControlActivity : AppCompatActivity() {
             onSkillClick = { showEditSkillDialog(it) },
             onSkillLongClick = { showDeleteConfirm(it.title) { viewModel.deleteSkill(it.id) } }
         )
+        soulAdapter = MissionSoulAdapter(
+            onSoulClick = { showEditSoulDialog(it) },
+            onSoulLongClick = { showDeleteConfirm(it.name) { viewModel.deleteSoul(it.id) } },
+            onToggle = { viewModel.toggleSoul(it.id) }
+        )
         noteAdapter = MissionNoteAdapter(
             onNoteClick = { showEditNoteDialog(it) },
             onNoteLongClick = { showDeleteConfirm(it.title) { viewModel.deleteNote(it.id) } }
@@ -149,6 +180,7 @@ class MissionControlActivity : AppCompatActivity() {
         setup(findViewById(R.id.rvDone), doneAdapter)
         setup(findViewById(R.id.rvNotes), noteAdapter)
         setup(findViewById(R.id.rvSkills), skillAdapter)
+        setup(findViewById(R.id.rvSouls), soulAdapter)
         setup(findViewById(R.id.rvRules), ruleAdapter)
     }
 
@@ -180,6 +212,7 @@ class MissionControlActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.btnAddTodo).setOnClickListener { showAddItemDialog() }
         findViewById<MaterialButton>(R.id.btnAddSkill).setOnClickListener { showAddSkillDialog() }
         findViewById<MaterialButton>(R.id.btnAddNote).setOnClickListener { showAddNoteDialog() }
+        findViewById<MaterialButton>(R.id.btnAddSoul).setOnClickListener { showAddSoulDialog() }
         findViewById<MaterialButton>(R.id.btnAddRule).setOnClickListener { showAddRuleDialog() }
     }
 
@@ -209,6 +242,7 @@ class MissionControlActivity : AppCompatActivity() {
         doneAdapter.submitList(state.doneList)
         noteAdapter.submitList(state.notes)
         skillAdapter.submitList(state.skills)
+        soulAdapter.submitList(state.souls)
         ruleAdapter.submitList(state.rules)
 
         // Empty states
@@ -222,6 +256,8 @@ class MissionControlActivity : AppCompatActivity() {
             if (state.notes.isEmpty() && !state.isLoading) View.VISIBLE else View.GONE
         findViewById<View>(R.id.tvSkillsEmpty).visibility =
             if (state.skills.isEmpty() && !state.isLoading) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.tvSoulsEmpty).visibility =
+            if (state.souls.isEmpty() && !state.isLoading) View.VISIBLE else View.GONE
         findViewById<View>(R.id.tvRulesEmpty).visibility =
             if (state.rules.isEmpty() && !state.isLoading) View.VISIBLE else View.GONE
 
@@ -537,6 +573,73 @@ class MissionControlActivity : AppCompatActivity() {
     }
 
     // ============================================
+    // Soul Dialogs
+    // ============================================
+
+    private fun showAddSoulDialog() {
+        showSoulDialogInternal(null)
+    }
+
+    private fun showEditSoulDialog(soul: com.hank.clawlive.data.model.MissionSoul) {
+        showSoulDialogInternal(soul)
+    }
+
+    private fun showSoulDialogInternal(soul: com.hank.clawlive.data.model.MissionSoul?) {
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_mission_soul, null)
+        val spinnerTemplate = view.findViewById<Spinner>(R.id.spinnerTemplate)
+        val etName = view.findViewById<EditText>(R.id.etName)
+        val etDescription = view.findViewById<EditText>(R.id.etDescription)
+        val container = view.findViewById<LinearLayout>(R.id.entityCheckboxContainer)
+
+        // Build template list: custom + all templates
+        val templateLabels = mutableListOf(getString(R.string.soul_template_custom))
+        templateLabels.addAll(soulTemplates.map { getTemplateDisplayName(it) })
+        spinnerTemplate.adapter = ArrayAdapter(this,
+            android.R.layout.simple_spinner_dropdown_item, templateLabels)
+
+        if (soul != null) {
+            etName.setText(soul.name)
+            etDescription.setText(soul.description)
+            val tplIdx = soulTemplates.indexOfFirst { it.id == soul.templateId }
+            spinnerTemplate.setSelection(if (tplIdx >= 0) tplIdx + 1 else 0)
+        }
+
+        // Auto-fill when template is selected
+        spinnerTemplate.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, v: View?, position: Int, id: Long) {
+                if (position > 0) {
+                    val tpl = soulTemplates[position - 1]
+                    etName.setText(getTemplateDisplayName(tpl))
+                    etDescription.setText(getTemplateDescription(tpl))
+                }
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
+
+        val checkboxes = buildEntityCheckboxes(container, soul?.assignedEntities ?: emptyList())
+
+        AlertDialog.Builder(this)
+            .setTitle(if (soul != null) getString(R.string.edit) else getString(R.string.add_soul))
+            .setView(view)
+            .setPositiveButton(if (soul != null) R.string.done else R.string.send) { _, _ ->
+                val name = etName.text.toString().trim()
+                if (name.isNotEmpty()) {
+                    val description = etDescription.text.toString().trim()
+                    val tplPos = spinnerTemplate.selectedItemPosition
+                    val templateId = if (tplPos > 0) soulTemplates[tplPos - 1].id else null
+                    val selectedEntities = checkboxes.filter { it.second.isChecked }.map { it.first }
+                    if (soul != null) {
+                        viewModel.editSoul(soul.id, name, description, templateId, selectedEntities)
+                    } else {
+                        viewModel.addSoul(name, description, templateId, selectedEntities)
+                    }
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    // ============================================
     // Notification Prompt
     // ============================================
 
@@ -560,6 +663,13 @@ class MissionControlActivity : AppCompatActivity() {
             }
         }
 
+        // SOUL items with assigned entities (active only)
+        state.souls.forEach { soul ->
+            if (soul.assignedEntities.isNotEmpty() && soul.isActive) {
+                items.add(NotifyItem("SOUL", soul.name, 0, soul.assignedEntities))
+            }
+        }
+
         // RULE items with assigned entities (enabled only)
         state.rules.forEach { rule ->
             if (rule.assignedEntities.isNotEmpty() && rule.isEnabled) {
@@ -576,6 +686,7 @@ class MissionControlActivity : AppCompatActivity() {
             when (item.type) {
                 "TODO" -> "📋 ${item.title} → $entityLabel"
                 "SKILL" -> "🔧 ${item.title} → $entityLabel"
+                "SOUL" -> "👻 ${item.title} → $entityLabel"
                 "RULE" -> "📏 ${item.title} → $entityLabel"
                 else -> "${item.title} → $entityLabel"
             }

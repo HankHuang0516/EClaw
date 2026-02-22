@@ -408,6 +408,15 @@
                 <div id="skillsList"></div>
             </div>
 
+            <!-- Souls -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>👻 <span data-i18n="mc_souls_title">Souls</span></h2>
+                    <button class="btn btn-outline btn-sm" onclick="showAddSoul()" data-i18n="mc_btn_add">+ Add</button>
+                </div>
+                <div id="soulsList"></div>
+            </div>
+
             <!-- Rules -->
             <div class="card">
                 <div class="card-header">
@@ -434,7 +443,7 @@
     <script src="../shared/i18n.js"></script>
     <script>
         // --- State ---
-        let dashboard = { todoList: [], missionList: [], doneList: [], notes: [], rules: [], skills: [] };
+        let dashboard = { todoList: [], missionList: [], doneList: [], notes: [], rules: [], skills: [], souls: [] };
         let lastSavedDashboard = null; // snapshot for change detection
         let version = 1;
         let hasChanges = false;
@@ -679,6 +688,19 @@
                     });
                 }
             });
+            // SOUL items with assigned entities - only if changed
+            (dashboard.souls || []).forEach(soul => {
+                if (soul.assignedEntities && soul.assignedEntities.length > 0 && soul.isActive !== false && isSoulChanged(soul)) {
+                    const entLabels = soul.assignedEntities.map(id => getEntityLabel(parseInt(id))).join(', ');
+                    items.push({
+                        type: 'SOUL',
+                        title: soul.name,
+                        priority: 0,
+                        entityIds: soul.assignedEntities,
+                        label: `👻 ${esc(soul.name)} → ${entLabels}`
+                    });
+                }
+            });
             return items;
         }
 
@@ -740,7 +762,8 @@
                 doneList: d.doneList || [],
                 notes: d.notes || [],
                 rules: d.rules || [],
-                skills: d.skills || []
+                skills: d.skills || [],
+                souls: d.souls || []
             };
             version = d.version || 1;
             hasChanges = false;
@@ -755,6 +778,7 @@
             renderDone();
             renderNotes();
             renderSkills();
+            renderSouls();
             renderRules();
             renderSyncBar();
         }
@@ -1376,6 +1400,196 @@
             };
 
             setTimeout(() => document.addEventListener('click', () => menu.style.display = 'none', { once: true }), 10);
+        }
+
+        // ========== Souls ==========
+        const SOUL_TEMPLATES = [
+            { id: 'friendly', name: { en: 'Friendly Assistant', zh: '友善助手' }, desc: { en: 'Warm, patient, always ready to help. Speaks in a gentle and encouraging tone.', zh: '溫暖、有耐心、隨時準備幫忙。用溫和鼓勵的語氣說話。' } },
+            { id: 'tsundere', name: { en: 'Tsundere', zh: '傲嬌' }, desc: { en: 'Acts cold and dismissive on the surface, but actually cares deeply. Often says "it\'s not like I did it for you" while helping.', zh: '表面上冷漠高傲，其實內心非常在意。經常一邊幫忙一邊說「才不是為了你呢」。' } },
+            { id: 'scholar', name: { en: 'Wise Scholar', zh: '博學智者' }, desc: { en: 'Thoughtful, analytical, enjoys sharing knowledge. Answers with depth and cites references when possible.', zh: '深思熟慮、善於分析、樂於分享知識。回答時有深度，盡可能引用來源。' } },
+            { id: 'trickster', name: { en: 'Playful Trickster', zh: '調皮搗蛋鬼' }, desc: { en: 'Loves jokes, puns, and playful teasing. Always finds a way to make things fun and lighthearted.', zh: '喜歡開玩笑、講雙關語和善意的捉弄。總是能讓事情變得有趣輕鬆。' } },
+            { id: 'professional', name: { en: 'Cool Professional', zh: '冷酷專業' }, desc: { en: 'Efficient, precise, no-nonsense. Gets straight to the point with minimal pleasantries.', zh: '高效、精確、不廢話。直奔重點，少寒暄。' } },
+            { id: 'caretaker', name: { en: 'Gentle Caretaker', zh: '溫柔照護者' }, desc: { en: 'Caring, nurturing, always checking if you\'re okay. Reminds you to rest and take care of yourself.', zh: '關懷、體貼、總是確認你是否安好。會提醒你休息和照顧自己。' } },
+            { id: 'adventurer', name: { en: 'Bold Adventurer', zh: '大膽冒險家' }, desc: { en: 'Enthusiastic, fearless, always up for a challenge. Uses exciting and dramatic language.', zh: '熱情、無畏、隨時迎接挑戰。用興奮和戲劇性的語言表達。' } },
+            { id: 'poet', name: { en: 'Poetic Dreamer', zh: '詩意夢想家' }, desc: { en: 'Speaks in metaphors and imagery. Finds beauty in everyday things and expresses thoughts artistically.', zh: '善用隱喻和意象。在日常事物中發現美，用藝術性的方式表達想法。' } }
+        ];
+
+        function getSoulTemplateName(tpl) {
+            return i18n.lang === 'zh' ? tpl.name.zh : tpl.name.en;
+        }
+
+        function getSoulTemplateDesc(tpl) {
+            return i18n.lang === 'zh' ? tpl.desc.zh : tpl.desc.en;
+        }
+
+        function renderSouls() {
+            const el = document.getElementById('soulsList');
+            if (!dashboard.souls.length) {
+                el.innerHTML = `<div class="mc-empty">${i18n.t('mc_empty_souls')}</div>`;
+                return;
+            }
+            el.innerHTML = dashboard.souls.map(s => {
+                const entities = (s.assignedEntities || []).map(id => getEntityLabel(parseInt(id))).join(', ');
+                const tpl = s.templateId ? SOUL_TEMPLATES.find(t => t.id === s.templateId) : null;
+                const tplBadge = tpl ? getSoulTemplateName(tpl) : '';
+                return `
+                <div class="mc-item" onclick="showEditSoul('${s.id}')" oncontextmenu="showSoulMenu(event,'${s.id}')">
+                    <div class="item-row">
+                        <span class="item-title">${esc(s.name)}</span>
+                        ${tplBadge ? `<span class="item-badge">${esc(tplBadge)}</span>` : ''}
+                        ${entities ? `<span class="item-badge">${entities}</span>` : ''}
+                        <label class="switch" onclick="event.stopPropagation()">
+                            <input type="checkbox" ${s.isActive !== false ? 'checked' : ''} onchange="toggleSoul('${s.id}')">
+                            <span class="slider"></span>
+                        </label>
+                        <button class="item-delete" onclick="event.stopPropagation();deleteSoul('${s.id}')" title="${i18n.t('mc_menu_delete')}">&times;</button>
+                    </div>
+                    ${s.description ? `<div class="item-detail">${esc(s.description.slice(0, 100))}</div>` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        function showAddSoul() {
+            showSoulDialog(null, null);
+        }
+
+        function showEditSoul(id) {
+            const soul = dashboard.souls.find(s => s.id === id);
+            if (!soul) return;
+            showSoulDialog(id, soul);
+        }
+
+        function showSoulDialog(id, soul) {
+            const isEdit = soul !== null;
+            const c = document.getElementById('dialogContainer');
+
+            let entityCheckboxes = boundEntities.map(e => {
+                const char = ENTITY_CHARS[e.entityId] || ENTITY_CHARS[0];
+                const name = e.name || char.name;
+                const checked = isEdit && (soul.assignedEntities || []).includes(String(e.entityId)) ? 'checked' : '';
+                return `<label>
+                    <input type="checkbox" class="soul-entity-cb" value="${e.entityId}" ${checked}>
+                    ${char.emoji} ${esc(name)} (#${e.entityId})
+                </label>`;
+            }).join('');
+
+            if (!entityCheckboxes) entityCheckboxes = '<div style="color:var(--text-muted);font-size:12px;">No bound entities</div>';
+
+            const templateOptions = SOUL_TEMPLATES.map(tpl => {
+                const selected = isEdit && soul.templateId === tpl.id ? 'selected' : '';
+                return `<option value="${tpl.id}" ${selected}>${getSoulTemplateName(tpl)}</option>`;
+            }).join('');
+
+            let html = `<div class="dialog-overlay" onclick="if(event.target===this)closeDialog()">
+                <div class="dialog">
+                    <div class="dialog-title">${isEdit ? i18n.t('mc_dlg_edit_soul') : i18n.t('mc_dlg_add_soul')}</div>
+                    <div class="dialog-field-label">${i18n.t('mc_dlg_soul_template')}</div>
+                    <select id="dlg_soul_template" onchange="onSoulTemplateChange()">
+                        <option value="">${i18n.t('mc_dlg_soul_custom')}</option>
+                        ${templateOptions}
+                    </select>
+                    <div class="dialog-field-label">${i18n.t('mc_dlg_soul_name')}</div>
+                    <input id="dlg_soul_name" placeholder="${i18n.t('mc_dlg_soul_name')}" value="${esc(soul?.name || '')}" />
+                    <div class="dialog-field-label">${i18n.t('mc_dlg_soul_desc')}</div>
+                    <textarea id="dlg_soul_desc" placeholder="${i18n.t('mc_dlg_soul_desc_hint')}">${esc(soul?.description || '')}</textarea>
+                    <div class="dialog-field-label">${i18n.t('mc_dlg_assign') || '指派實體'} (${i18n.t('mc_dlg_soul_multi') || '可多選'})</div>
+                    <div class="entity-checkbox-grid" id="dlg_soul_entities">${entityCheckboxes}</div>
+                    <div class="dialog-actions">
+                        <button class="btn btn-outline" onclick="closeDialog()">${i18n.t('mc_dlg_cancel')}</button>
+                        <button class="btn btn-primary" id="dlgSaveBtn">${i18n.t('mc_dlg_save')}</button>
+                    </div>
+                </div>
+            </div>`;
+
+            c.innerHTML = html;
+
+            document.getElementById('dlgSaveBtn').onclick = () => {
+                const name = document.getElementById('dlg_soul_name').value.trim();
+                if (!name) return;
+                const description = document.getElementById('dlg_soul_desc').value.trim();
+                const templateId = document.getElementById('dlg_soul_template').value || null;
+                const selectedEntities = Array.from(document.querySelectorAll('.soul-entity-cb:checked')).map(cb => cb.value);
+
+                if (isEdit) {
+                    soul.name = name;
+                    soul.description = description;
+                    soul.templateId = templateId;
+                    soul.assignedEntities = selectedEntities;
+                    soul.updatedAt = Date.now();
+                } else {
+                    dashboard.souls.push({
+                        id: genId(),
+                        name,
+                        description,
+                        templateId,
+                        assignedEntities: selectedEntities,
+                        isActive: true,
+                        createdAt: Date.now(),
+                        updatedAt: Date.now(),
+                        createdBy: 'user'
+                    });
+                }
+                markChanged();
+                renderSouls();
+                closeDialog();
+            };
+
+            setTimeout(() => document.getElementById('dlg_soul_name').focus(), 50);
+        }
+
+        function onSoulTemplateChange() {
+            const tplId = document.getElementById('dlg_soul_template').value;
+            if (!tplId) return;
+            const tpl = SOUL_TEMPLATES.find(t => t.id === tplId);
+            if (!tpl) return;
+            document.getElementById('dlg_soul_name').value = getSoulTemplateName(tpl);
+            document.getElementById('dlg_soul_desc').value = getSoulTemplateDesc(tpl);
+        }
+
+        function toggleSoul(id) {
+            const soul = dashboard.souls.find(s => s.id === id);
+            if (!soul) return;
+            soul.isActive = !soul.isActive;
+            soul.updatedAt = Date.now();
+            markChanged();
+        }
+
+        function deleteSoul(id) {
+            if (confirm(i18n.t('mc_confirm_delete'))) {
+                dashboard.souls = dashboard.souls.filter(s => s.id !== id);
+                markChanged();
+                renderSouls();
+            }
+        }
+
+        function showSoulMenu(e, id) {
+            e.preventDefault();
+            const menu = document.getElementById('contextMenu');
+            menu.innerHTML = `<div class="context-menu-item">${i18n.t('mc_menu_delete')}</div>`;
+            menu.style.display = 'block';
+            menu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
+            menu.style.top = e.clientY + 'px';
+
+            menu.querySelector('.context-menu-item').onclick = () => {
+                if (confirm(i18n.t('mc_confirm_delete'))) {
+                    dashboard.souls = dashboard.souls.filter(s => s.id !== id);
+                    markChanged();
+                    renderSouls();
+                }
+                menu.style.display = 'none';
+            };
+
+            setTimeout(() => document.addEventListener('click', () => menu.style.display = 'none', { once: true }), 10);
+        }
+
+        // Add soul change detection for notify
+        function isSoulChanged(soul) {
+            if (!lastSavedDashboard) return true;
+            const prev = (lastSavedDashboard.souls || []).find(p => p.id === soul.id);
+            if (!prev) return true;
+            return soul.name !== prev.name || soul.description !== prev.description
+                || soul.templateId !== prev.templateId || soul.isActive !== prev.isActive
+                || JSON.stringify(soul.assignedEntities || []) !== JSON.stringify(prev.assignedEntities || []);
         }
 
         // --- Cleanup ---

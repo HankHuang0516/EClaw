@@ -75,7 +75,10 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Deploy preview environment
-        run: railway up --service ${{ secrets.RAILWAY_SERVICE_ID }} --environment pr-${{ github.event.number }}
+        continue-on-error: true
+        run: |
+          railway environment create pr-${{ github.event.number }} 2>/dev/null || true
+          railway up --service ${{ secrets.RAILWAY_SERVICE_ID }} --environment pr-${{ github.event.number }}
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 

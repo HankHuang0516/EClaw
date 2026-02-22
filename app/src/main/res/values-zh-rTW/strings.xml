@@ -325,6 +325,12 @@ E-claw (電子蝦) 團隊深知隱私對您的重要性。我們在此鄭重聲�
     <string name="no_done_items">尚無已完成項目</string>
     <string name="no_notes">尚無筆記</string>
     <string name="no_rules">尚無規則</string>
+    <string name="add_soul">+ 新增靈魂</string>
+    <string name="no_souls">尚無靈魂設定</string>
+    <string name="soul_template">靈魂模板</string>
+    <string name="soul_template_custom">-- 自訂 --</string>
+    <string name="soul_name_hint">靈魂名稱</string>
+    <string name="soul_desc_hint">描述個性、語氣和行為方式…</string>
     <string name="entity_read_receipt">Entity %d 已讀</string>
 
     <!-- Usage Limit -->

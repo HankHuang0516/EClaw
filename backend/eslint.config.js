@@ -2,16 +2,19 @@ const js = require('@eslint/js');
 
 module.exports = [
     {
-        ...js.configs.recommended,
-        files: ['**/*.js'],
         ignores: [
             'node_modules/**',
             'public/**',
+            'test/**',
             'tests/**',
             'stress-test.js',
             'test*.js',
             'run_all_tests.js',
         ],
+    },
+    {
+        ...js.configs.recommended,
+        files: ['**/*.js'],
         languageOptions: {
             ecmaVersion: 2022,
             sourceType: 'commonjs',
@@ -29,6 +32,8 @@ module.exports = [
                 setInterval: 'readonly',
                 clearInterval: 'readonly',
                 URL: 'readonly',
+                fetch: 'readonly',
+                AbortSignal: 'readonly',
             },
         },
         rules: {

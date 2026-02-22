@@ -24,6 +24,7 @@ data class MissionUiState(
     val notes: List<MissionNote> = emptyList(),
     val rules: List<MissionRule> = emptyList(),
     val skills: List<MissionSkill> = emptyList(),
+    val souls: List<MissionSoul> = emptyList(),
     val version: Int = 1,
     val lastSyncedAt: Long? = null,
     val error: String? = null,
@@ -55,6 +56,7 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
                 notes = snapshot.notes ?: emptyList(),
                 rules = snapshot.rules ?: emptyList(),
                 skills = snapshot.skills ?: emptyList(),
+                souls = snapshot.souls ?: emptyList(),
                 version = snapshot.version,
                 lastSyncedAt = snapshot.lastSyncedAt
             )
@@ -80,6 +82,7 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
                             notes = d.notes ?: emptyList(),
                             rules = d.rules ?: emptyList(),
                             skills = d.skills ?: emptyList(),
+                            souls = d.souls ?: emptyList(),
                             version = d.version,
                             lastSyncedAt = d.lastSyncedAt,
                             hasLocalChanges = false
@@ -113,7 +116,8 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
                         "doneList" to state.doneList,
                         "notes" to state.notes,
                         "rules" to state.rules,
-                        "skills" to state.skills
+                        "skills" to state.skills,
+                        "souls" to state.souls
                     )
                 )
                 val response = api.uploadMissionDashboard(body)
@@ -156,6 +160,7 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
                 notes = state.notes,
                 rules = state.rules,
                 skills = state.skills,
+                souls = state.souls,
                 version = state.version,
                 lastSyncedAt = state.lastSyncedAt ?: System.currentTimeMillis()
             )
@@ -354,6 +359,52 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
         _uiState.update { state ->
             state.copy(
                 skills = state.skills.filter { it.id != skillId },
+                hasLocalChanges = true
+            )
+        }
+        saveToLocal()
+    }
+
+    // ============================================
+    // Souls CRUD
+    // ============================================
+
+    fun addSoul(name: String, description: String = "", templateId: String? = null, assignedEntities: List<String> = emptyList()) {
+        val soul = MissionSoul(name = name, description = description, templateId = templateId, assignedEntities = assignedEntities)
+        _uiState.update {
+            it.copy(souls = it.souls + soul, hasLocalChanges = true)
+        }
+        saveToLocal()
+    }
+
+    fun editSoul(soulId: String, name: String, description: String, templateId: String?, assignedEntities: List<String>) {
+        _uiState.update { state ->
+            state.copy(
+                souls = state.souls.map {
+                    if (it.id == soulId) it.copy(name = name, description = description, templateId = templateId, assignedEntities = assignedEntities, updatedAt = System.currentTimeMillis()) else it
+                },
+                hasLocalChanges = true
+            )
+        }
+        saveToLocal()
+    }
+
+    fun deleteSoul(soulId: String) {
+        _uiState.update { state ->
+            state.copy(
+                souls = state.souls.filter { it.id != soulId },
+                hasLocalChanges = true
+            )
+        }
+        saveToLocal()
+    }
+
+    fun toggleSoul(soulId: String) {
+        _uiState.update { state ->
+            state.copy(
+                souls = state.souls.map {
+                    if (it.id == soulId) it.copy(isActive = !it.isActive, updatedAt = System.currentTimeMillis()) else it
+                },
                 hasLocalChanges = true
             )
         }

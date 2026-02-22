@@ -16,6 +16,10 @@
  * POST /note/update        - 更新筆記 (Bot)
  * POST /note/delete        - 刪除筆記 (Bot)
  * GET  /rules              - 取得規則
+ * GET  /souls              - 取得靈魂列表
+ * POST /soul/add           - 新增靈魂 (Bot)
+ * POST /soul/update        - 更新靈魂 (Bot)
+ * POST /soul/delete        - 刪除靈魂 (Bot)
  *
  * Auth: All endpoints accept either deviceSecret (user/APP) or botSecret (bot)
  */
@@ -187,6 +191,7 @@ module.exports = function(devices) {
                         notes: [],
                         rules: [],
                         skills: [],
+                        souls: [],
                         lastSyncedAt: Date.now()
                     }
                 });
@@ -226,6 +231,7 @@ module.exports = function(devices) {
                 notes: row.notes,
                 rules: row.rules,
                 skills: skills,
+                souls: row.souls || [],
                 lastUpdated: new Date(row.updated_at).getTime()
             };
 
@@ -293,7 +299,7 @@ module.exports = function(devices) {
             const result = await client.query(
                 `UPDATE mission_dashboard
                  SET todo_list = $2, mission_list = $3, done_list = $4,
-                     notes = $5, rules = $6, skills = $7, last_synced_at = NOW()
+                     notes = $5, rules = $6, skills = $7, souls = $8, last_synced_at = NOW()
                  WHERE device_id = $1
                  RETURNING version`,
                 [
@@ -303,7 +309,8 @@ module.exports = function(devices) {
                     JSON.stringify(dashboard.doneList || []),
                     JSON.stringify(dashboard.notes || []),
                     JSON.stringify(dashboard.rules || []),
-                    JSON.stringify(uploadedSkills)
+                    JSON.stringify(uploadedSkills),
+                    JSON.stringify(dashboard.souls || [])
                 ]
             );
 
@@ -763,6 +770,8 @@ module.exports = function(devices) {
                 typeTag = '[SKILL 必須安裝]';
             } else if (n.type === 'RULE') {
                 typeTag = '[RULE 必須遵守]';
+            } else if (n.type === 'SOUL') {
+                typeTag = '[SOUL 靈魂設定]';
             } else {
                 typeTag = `[${n.type}]`;
             }
@@ -836,6 +845,11 @@ module.exports = function(devices) {
             if (types.has('SKILL')) {
                 apiHints.push(`新增技能: POST /api/mission/skill/add {${auth},"title":"<技能名>","url":"<連結>"}`);
                 apiHints.push(`刪除技能: POST /api/mission/skill/delete {${auth},"title":"<技能名>"}`);
+            }
+            if (types.has('SOUL')) {
+                apiHints.push(`新增靈魂: POST /api/mission/soul/add {${auth},"name":"<靈魂名>","description":"<描述>"}`);
+                apiHints.push(`更新靈魂: POST /api/mission/soul/update {${auth},"name":"<原名>","newDescription":"<新描述>"}`);
+                apiHints.push(`刪除靈魂: POST /api/mission/soul/delete {${auth},"name":"<靈魂名>"}`);
             }
             // Notes: bots always have read-write access
             apiHints.push(`取得筆記: GET /api/mission/notes?deviceId=${deviceId}&botSecret=${botSecret}&category=<可選>`);
@@ -1514,6 +1528,200 @@ module.exports = function(devices) {
         } catch (error) {
             await client.query('ROLLBACK');
             console.error('[Mission] Error deleting skill:', error);
+            res.status(500).json({ success: false, error: error.message });
+        } finally {
+            client.release();
+        }
+    });
+
+    // ============================================
+    // Soul API
+    // ============================================
+
+    /**
+     * GET /souls
+     * 取得靈魂列表
+     */
+    router.get('/souls', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId } = req.query;
+
+        try {
+            const result = await pool.query(
+                'SELECT souls FROM mission_dashboard WHERE device_id = $1',
+                [deviceId]
+            );
+            const souls = result.rows.length > 0 ? (result.rows[0].souls || []) : [];
+            res.json({ success: true, souls });
+        } catch (error) {
+            console.error('[Mission] Error fetching souls:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    });
+
+    // ============================================
+    // POST /soul/add
+    // Bot adds a new soul to dashboard
+    // ============================================
+    router.post('/soul/add', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId, entityId, name, description, templateId, assignedEntities } = req.body;
+
+        if (!name) {
+            return res.status(400).json({ success: false, error: 'Missing name' });
+        }
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            await client.query('SELECT init_mission_dashboard($1)', [deviceId]);
+
+            const result = await client.query(
+                'SELECT * FROM mission_dashboard WHERE device_id = $1 FOR UPDATE',
+                [deviceId]
+            );
+            const row = result.rows[0];
+            const souls = row.souls || [];
+
+            const entities = assignedEntities || (entityId != null ? [String(entityId)] : []);
+            const newSoul = {
+                id: crypto.randomUUID(),
+                name: name.trim(),
+                description: (description || '').trim(),
+                templateId: templateId || null,
+                assignedEntities: entities,
+                isActive: true,
+                createdAt: Date.now(),
+                updatedAt: Date.now(),
+                createdBy: entityId != null ? `entity_${entityId}` : 'bot'
+            };
+            souls.push(newSoul);
+
+            const updateResult = await client.query(
+                `UPDATE mission_dashboard SET souls = $2, last_synced_at = NOW()
+                 WHERE device_id = $1 RETURNING version`,
+                [deviceId, JSON.stringify(souls)]
+            );
+            await client.query('COMMIT');
+
+            console.log(`[Mission] Soul added: "${newSoul.name}" by bot, device ${deviceId}`);
+            res.json({ success: true, message: `Soul "${newSoul.name}" added`, item: newSoul, version: updateResult.rows[0].version });
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('[Mission] Error adding soul:', error);
+            res.status(500).json({ success: false, error: error.message });
+        } finally {
+            client.release();
+        }
+    });
+
+    // ============================================
+    // POST /soul/update
+    // Bot updates a soul by name
+    // ============================================
+    router.post('/soul/update', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId, name, newName, newDescription, newTemplateId, newAssignedEntities, newIsActive } = req.body;
+
+        if (!name) {
+            return res.status(400).json({ success: false, error: 'Missing name' });
+        }
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const result = await client.query(
+                'SELECT * FROM mission_dashboard WHERE device_id = $1 FOR UPDATE',
+                [deviceId]
+            );
+            if (result.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ success: false, error: 'Dashboard not found' });
+            }
+
+            const row = result.rows[0];
+            const souls = row.souls || [];
+            const nameLower = name.trim().toLowerCase();
+            const soul = souls.find(s => s.name && s.name.trim().toLowerCase() === nameLower);
+
+            if (!soul) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ success: false, error: `Soul not found: "${name}"` });
+            }
+
+            if (newName) soul.name = newName.trim();
+            if (newDescription !== undefined) soul.description = newDescription.trim();
+            if (newTemplateId !== undefined) soul.templateId = newTemplateId;
+            if (newAssignedEntities !== undefined) soul.assignedEntities = newAssignedEntities;
+            if (newIsActive !== undefined) soul.isActive = newIsActive;
+            soul.updatedAt = Date.now();
+
+            const updateResult = await client.query(
+                `UPDATE mission_dashboard SET souls = $2, last_synced_at = NOW()
+                 WHERE device_id = $1 RETURNING version`,
+                [deviceId, JSON.stringify(souls)]
+            );
+            await client.query('COMMIT');
+
+            console.log(`[Mission] Soul updated: "${soul.name}", device ${deviceId}`);
+            res.json({ success: true, message: `Soul "${soul.name}" updated`, item: soul, version: updateResult.rows[0].version });
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('[Mission] Error updating soul:', error);
+            res.status(500).json({ success: false, error: error.message });
+        } finally {
+            client.release();
+        }
+    });
+
+    // ============================================
+    // POST /soul/delete
+    // Bot deletes a soul by name
+    // ============================================
+    router.post('/soul/delete', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId, name } = req.body;
+
+        if (!name) {
+            return res.status(400).json({ success: false, error: 'Missing name' });
+        }
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const result = await client.query(
+                'SELECT * FROM mission_dashboard WHERE device_id = $1 FOR UPDATE',
+                [deviceId]
+            );
+            if (result.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ success: false, error: 'Dashboard not found' });
+            }
+
+            const row = result.rows[0];
+            const souls = row.souls || [];
+            const nameLower = name.trim().toLowerCase();
+            const foundIdx = souls.findIndex(s => s.name && s.name.trim().toLowerCase() === nameLower);
+
+            if (foundIdx < 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ success: false, error: `Soul not found: "${name}"` });
+            }
+
+            souls.splice(foundIdx, 1);
+
+            const updateResult = await client.query(
+                `UPDATE mission_dashboard SET souls = $2, last_synced_at = NOW()
+                 WHERE device_id = $1 RETURNING version`,
+                [deviceId, JSON.stringify(souls)]
+            );
+            await client.query('COMMIT');
+
+            console.log(`[Mission] Soul deleted: "${name}", device ${deviceId}`);
+            res.json({ success: true, message: `Soul "${name}" deleted`, version: updateResult.rows[0].version });
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('[Mission] Error deleting soul:', error);
             res.status(500).json({ success: false, error: error.message });
         } finally {
             client.release();

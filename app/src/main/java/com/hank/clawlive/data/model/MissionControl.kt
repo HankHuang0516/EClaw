@@ -98,6 +98,21 @@ data class MissionSkill(
 )
 
 /**
+ * 靈魂設定 (可指派給實體的個性/人格)
+ */
+data class MissionSoul(
+    val id: String = UUID.randomUUID().toString(),
+    val name: String,
+    val description: String = "",
+    val templateId: String? = null,
+    val assignedEntities: List<String> = emptyList(),
+    val isActive: Boolean = true,
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis(),
+    val createdBy: String = "user"
+)
+
+/**
  * Dashboard 完整快照
  */
 data class MissionDashboardSnapshot(
@@ -107,6 +122,7 @@ data class MissionDashboardSnapshot(
     val notes: List<MissionNote>,
     val rules: List<MissionRule>,
     val skills: List<MissionSkill> = emptyList(),
+    val souls: List<MissionSoul> = emptyList(),
     val version: Int = 1,
     val lastSyncedAt: Long = System.currentTimeMillis()
 )
