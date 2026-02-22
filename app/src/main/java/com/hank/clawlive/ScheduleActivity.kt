@@ -4,6 +4,7 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.os.Bundle
 import android.view.View
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.Spinner
@@ -23,6 +24,7 @@ import com.hank.clawlive.data.local.EntityAvatarManager
 import com.hank.clawlive.data.model.ScheduleItem
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
+import com.hank.clawlive.ui.RecordingIndicatorHelper
 import com.hank.clawlive.ui.schedule.ScheduleAdapter
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -56,7 +58,13 @@ class ScheduleActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         TelemetryHelper.trackPageView(this, "schedule")
+        RecordingIndicatorHelper.attach(this)
         loadSchedules()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        RecordingIndicatorHelper.detach()
     }
 
     private fun setupWindowInsets() {
@@ -162,19 +170,37 @@ class ScheduleActivity : AppCompatActivity() {
         val spRepeat = dialogView.findViewById<Spinner>(R.id.spRepeat)
         val tvTime = dialogView.findViewById<TextView>(R.id.tvSelectedTime)
         val etLabel = dialogView.findViewById<EditText>(R.id.etLabel)
+        val layoutCronInput = dialogView.findViewById<View>(R.id.layoutCronInput)
+        val etCronExpr = dialogView.findViewById<EditText>(R.id.etCronExpr)
+        val layoutTimeSection = dialogView.findViewById<View>(R.id.layoutTimeSection)
 
         // Entity spinner
         val entityLabels = entityOptions.map { it.second }
         spEntity.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, entityLabels)
 
-        // Repeat spinner
+        // Repeat spinner (with cron option for feature parity with web)
         val repeatOptions = listOf(
             "once" to getString(R.string.schedule_once),
             "daily" to getString(R.string.schedule_repeat_daily),
             "weekly" to getString(R.string.schedule_repeat_weekly),
-            "hourly" to getString(R.string.schedule_repeat_hourly)
+            "hourly" to getString(R.string.schedule_repeat_hourly),
+            "cron" to getString(R.string.schedule_repeat_cron)
         )
         spRepeat.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, repeatOptions.map { it.second })
+
+        // Toggle cron input vs time section based on repeat selection
+        spRepeat.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                if (repeatOptions[position].first == "cron") {
+                    layoutTimeSection.visibility = View.GONE
+                    layoutCronInput.visibility = View.VISIBLE
+                } else {
+                    layoutTimeSection.visibility = View.VISIBLE
+                    layoutCronInput.visibility = View.GONE
+                }
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
 
         // Default time: next hour
         val cal = Calendar.getInstance()
@@ -198,12 +224,12 @@ class ScheduleActivity : AppCompatActivity() {
             }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show()
         }
 
-        // Quick time buttons
-        dialogView.findViewById<View>(R.id.btn5min)?.setOnClickListener { setQuickTime(tvTime, timeFmt, 5) }
-        dialogView.findViewById<View>(R.id.btn15min)?.setOnClickListener { setQuickTime(tvTime, timeFmt, 15) }
-        dialogView.findViewById<View>(R.id.btn30min)?.setOnClickListener { setQuickTime(tvTime, timeFmt, 30) }
-        dialogView.findViewById<View>(R.id.btn1hr)?.setOnClickListener { setQuickTime(tvTime, timeFmt, 60) }
-        dialogView.findViewById<View>(R.id.btn3hr)?.setOnClickListener { setQuickTime(tvTime, timeFmt, 180) }
+        // Quick time chips
+        dialogView.findViewById<View>(R.id.chip5min)?.setOnClickListener { setQuickTime(tvTime, timeFmt, 5) }
+        dialogView.findViewById<View>(R.id.chip15min)?.setOnClickListener { setQuickTime(tvTime, timeFmt, 15) }
+        dialogView.findViewById<View>(R.id.chip30min)?.setOnClickListener { setQuickTime(tvTime, timeFmt, 30) }
+        dialogView.findViewById<View>(R.id.chip1hr)?.setOnClickListener { setQuickTime(tvTime, timeFmt, 60) }
+        dialogView.findViewById<View>(R.id.chip3hr)?.setOnClickListener { setQuickTime(tvTime, timeFmt, 180) }
 
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.schedule_create_title))
@@ -217,10 +243,23 @@ class ScheduleActivity : AppCompatActivity() {
 
                 val entityId = entityOptions[spEntity.selectedItemPosition].first
                 val repeatType = repeatOptions[spRepeat.selectedItemPosition].first
-                val selectedCal = tvTime.tag as? Calendar ?: Calendar.getInstance()
                 val label = etLabel.text.toString().trim().ifEmpty { null }
 
-                createSchedule(entityId, message, selectedCal, repeatType, label)
+                if (repeatType == "cron") {
+                    val cronExpr = etCronExpr.text.toString().trim()
+                    if (cronExpr.isEmpty()) {
+                        Toast.makeText(this, getString(R.string.schedule_err_cron), Toast.LENGTH_SHORT).show()
+                        return@setPositiveButton
+                    }
+                    if (!isValidCronFormat(cronExpr)) {
+                        Toast.makeText(this, getString(R.string.schedule_err_cron_invalid), Toast.LENGTH_SHORT).show()
+                        return@setPositiveButton
+                    }
+                    createScheduleWithCron(entityId, message, cronExpr, label)
+                } else {
+                    val selectedCal = tvTime.tag as? Calendar ?: Calendar.getInstance()
+                    createSchedule(entityId, message, selectedCal, repeatType, label)
+                }
                 dialog.dismiss()
             }
             .setNegativeButton(getString(R.string.cancel), null)
@@ -232,6 +271,42 @@ class ScheduleActivity : AppCompatActivity() {
         cal.add(Calendar.MINUTE, minutes)
         tvTime.text = fmt.format(cal.time)
         tvTime.tag = cal
+    }
+
+    private fun isValidCronFormat(expr: String): Boolean {
+        val parts = expr.trim().split("\\s+".toRegex())
+        return parts.size == 5
+    }
+
+    private fun createScheduleWithCron(entityId: Int, message: String, cronExpr: String, label: String?) {
+        setLoading(true)
+        lifecycleScope.launch {
+            try {
+                val body = mutableMapOf<String, Any?>(
+                    "deviceId" to deviceManager.deviceId,
+                    "deviceSecret" to deviceManager.deviceSecret,
+                    "entityId" to entityId,
+                    "message" to message,
+                    "repeatType" to "cron",
+                    "cronExpr" to cronExpr
+                )
+                if (label != null) body["label"] = label
+
+                val response = api.createSchedule(body)
+                if (response.success) {
+                    Toast.makeText(this@ScheduleActivity, getString(R.string.schedule_created_ok), Toast.LENGTH_SHORT).show()
+                    TelemetryHelper.trackAction("schedule_create", mapOf("repeatType" to "cron"))
+                    loadSchedules()
+                } else {
+                    Toast.makeText(this@ScheduleActivity, response.error ?: "Failed", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to create cron schedule")
+                Toast.makeText(this@ScheduleActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            } finally {
+                setLoading(false)
+            }
+        }
     }
 
     private fun createSchedule(entityId: Int, message: String, cal: Calendar, repeatType: String, label: String?) {

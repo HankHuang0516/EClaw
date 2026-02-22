@@ -29,9 +29,11 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.textfield.TextInputEditText
 import com.hank.clawlive.data.local.DeviceManager
+import com.hank.clawlive.data.local.FeedbackPreferences
 import com.hank.clawlive.data.model.FeedbackResponse
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
+import com.hank.clawlive.ui.RecordingIndicatorHelper
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -41,8 +43,12 @@ import timber.log.Timber
 class FeedbackActivity : AppCompatActivity() {
 
     private val deviceManager: DeviceManager by lazy { DeviceManager.getInstance(this) }
+    private val feedbackPrefs: FeedbackPreferences by lazy { FeedbackPreferences.getInstance(this) }
 
     private lateinit var topBar: LinearLayout
+    private lateinit var btnMarkBug: MaterialButton
+    private lateinit var tvMarkStatus: TextView
+    private lateinit var btnViewFeedbackHistory: MaterialButton
     private lateinit var cardCatBug: MaterialCardView
     private lateinit var cardCatFeature: MaterialCardView
     private lateinit var cardCatQuestion: MaterialCardView
@@ -102,6 +108,13 @@ class FeedbackActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         TelemetryHelper.trackPageView(this, "feedback")
+        RecordingIndicatorHelper.attach(this)
+        updateMarkingUi()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        RecordingIndicatorHelper.detach()
     }
 
     private fun initViews() {
@@ -123,6 +136,9 @@ class FeedbackActivity : AppCompatActivity() {
         cardGithubIssue = findViewById(R.id.cardGithubIssue)
         tvGithubIssueTitle = findViewById(R.id.tvGithubIssueTitle)
         cardViewAll = findViewById(R.id.cardViewAll)
+        btnMarkBug = findViewById(R.id.btnMarkBug)
+        tvMarkStatus = findViewById(R.id.tvMarkStatus)
+        btnViewFeedbackHistory = findViewById(R.id.btnViewFeedbackHistory)
 
         rvPhotoPreview.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
     }
@@ -159,6 +175,19 @@ class FeedbackActivity : AppCompatActivity() {
         }
 
         cardViewAll.setOnClickListener {
+            startActivity(Intent(this, FeedbackHistoryActivity::class.java))
+        }
+
+        btnMarkBug.setOnClickListener {
+            if (feedbackPrefs.isMarking) {
+                feedbackPrefs.clearMarking()
+                updateMarkingUi()
+            } else {
+                showMarkConsentDialog()
+            }
+        }
+
+        btnViewFeedbackHistory.setOnClickListener {
             startActivity(Intent(this, FeedbackHistoryActivity::class.java))
         }
     }
@@ -252,6 +281,12 @@ class FeedbackActivity : AppCompatActivity() {
                 // Clear photo selection
                 selectedPhotoUris.clear()
                 updatePhotoPreview()
+
+                // Clear marking state after successful submission
+                if (feedbackPrefs.isMarking) {
+                    feedbackPrefs.clearMarking()
+                    updateMarkingUi()
+                }
 
                 showResult(result)
             } catch (e: Exception) {
@@ -422,6 +457,50 @@ class FeedbackActivity : AppCompatActivity() {
             feedbackId, parts, deviceIdBody, deviceSecretBody
         )
         return response.count
+    }
+
+    private fun showMarkConsentDialog() {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(getString(R.string.feedback_mark_consent_title))
+            .setMessage(getString(R.string.feedback_mark_consent_message))
+            .setPositiveButton(getString(R.string.feedback_mark_consent_agree)) { _, _ ->
+                performMark()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun performMark() {
+        lifecycleScope.launch {
+            try {
+                val body = mapOf("deviceId" to deviceManager.deviceId)
+                NetworkModule.api.markFeedback(body)
+                feedbackPrefs.startMarking(System.currentTimeMillis())
+                TelemetryHelper.trackAction("mark_bug_moment")
+                // Navigate to MainActivity so user can reproduce the bug
+                val intent = Intent(this@FeedbackActivity, MainActivity::class.java)
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                startActivity(intent)
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to mark bug moment")
+                TelemetryHelper.trackError(e, mapOf("action" to "mark_bug_moment"))
+                Toast.makeText(this@FeedbackActivity, getString(R.string.failed_format, e.message), Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun updateMarkingUi() {
+        if (feedbackPrefs.isMarking) {
+            val timestamp = feedbackPrefs.markTimestamp
+            val timeStr = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
+                .format(java.util.Date(timestamp))
+            tvMarkStatus.visibility = View.VISIBLE
+            tvMarkStatus.text = getString(R.string.feedback_marked, timeStr)
+            btnMarkBug.text = getString(R.string.feedback_cancel_mark)
+        } else {
+            tvMarkStatus.visibility = View.GONE
+            btnMarkBug.text = getString(R.string.feedback_mark)
+        }
     }
 
     private fun dpToPx(dp: Int): Int {

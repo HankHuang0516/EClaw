@@ -209,6 +209,15 @@ class LayoutPreferences private constructor(context: Context) {
         editor.apply()
     }
 
+    /**
+     * Debug entity limit (4 or 8). Only used when BuildConfig.DEBUG is true.
+     */
+    var debugEntityLimit: Int
+        get() = prefs.getInt(KEY_DEBUG_ENTITY_LIMIT, 8)
+        set(value) {
+            prefs.edit().putInt(KEY_DEBUG_ENTITY_LIMIT, value.coerceIn(4, 8)).apply()
+        }
+
     companion object {
         private const val PREFS_NAME = "entity_layout_prefs"
         private const val KEY_LAYOUT = "layout_type"
@@ -221,6 +230,7 @@ class LayoutPreferences private constructor(context: Context) {
         private const val KEY_ENTITY_SCALE_PREFIX = "entity_scale_"
         private const val KEY_USE_BACKGROUND_IMAGE = "use_background_image"
         private const val KEY_BACKGROUND_URI = "background_image_uri"
+        private const val KEY_DEBUG_ENTITY_LIMIT = "debug_entity_limit"
 
         // Display mode constants
         const val MODE_SINGLE = 1

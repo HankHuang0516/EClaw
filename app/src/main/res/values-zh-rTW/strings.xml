@@ -407,4 +407,10 @@ E-claw (電子蝦) 團隊深知隱私對您的重要性。我們在此鄭重聲�
     <string name="schedule_created">建立時間</string>
     <string name="schedule_executed">執行時間</string>
     <string name="schedule_push_ok">已推送至 Bot</string>
+
+    <!-- Navigation Bar -->
+    <string name="nav_mission">任務</string>
+    <string name="nav_chat">聊天</string>
+    <string name="nav_files">檔案</string>
+    <string name="nav_wallpaper">桌布</string>
 </resources>

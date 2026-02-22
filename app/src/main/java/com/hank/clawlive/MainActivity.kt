@@ -79,8 +79,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnGenerateCode: MaterialButton
     private lateinit var btnCopyCommand: MaterialButton
     private lateinit var progressBar: ProgressBar
-    private lateinit var btnChat: MaterialButton
-    private lateinit var btnSetWallpaper: MaterialButton
+    private lateinit var btnChat: View
+    private lateinit var btnSetWallpaper: View
     private lateinit var topBar: LinearLayout
     private lateinit var bottomActions: LinearLayout
     private lateinit var tvEntityCount: TextView
@@ -242,11 +242,11 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, ChatActivity::class.java))
         }
 
-        findViewById<MaterialButton>(R.id.btnFiles).setOnClickListener {
+        findViewById<View>(R.id.btnFiles).setOnClickListener {
             startActivity(Intent(this, FileManagerActivity::class.java))
         }
 
-        findViewById<MaterialButton>(R.id.btnMission).setOnClickListener {
+        findViewById<View>(R.id.btnMission).setOnClickListener {
             startActivity(Intent(this, MissionControlActivity::class.java))
         }
 
@@ -356,8 +356,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun getEffectiveEntityLimit(): Int {
+        return if (BuildConfig.DEBUG) layoutPrefs.debugEntityLimit else FREE_ENTITY_LIMIT
+    }
+
     private fun updateEntityCount() {
-        val maxEntities = if (usageManager.isPremium) PREMIUM_ENTITY_LIMIT else FREE_ENTITY_LIMIT
+        val maxEntities = if (usageManager.isPremium) PREMIUM_ENTITY_LIMIT else getEffectiveEntityLimit()
         tvEntityCount.text = getString(R.string.entity_count_format, boundEntities.size, maxEntities)
         tvEntityCount.visibility = View.VISIBLE
     }
@@ -460,16 +464,17 @@ class MainActivity : AppCompatActivity() {
 
         // Build the permutation array: order[newSlot] = oldSlot
         // currentOrder contains entity IDs in their new visual order
-        // We need to map: for each of 4 slots, which old slot goes there
-        val order = IntArray(FREE_ENTITY_LIMIT) { it } // identity
+        // We need to map: for each slot, which old slot goes there
+        val limit = getEffectiveEntityLimit()
+        val order = IntArray(limit) { it } // identity
         for (i in currentOrder.indices) {
             order[i] = currentOrder[i]
         }
         // Fill remaining slots with identity mapping
         val usedSlots = currentOrder.toSet()
         var fillIdx = currentOrder.size
-        for (slot in 0 until FREE_ENTITY_LIMIT) {
-            if (slot !in usedSlots && fillIdx < FREE_ENTITY_LIMIT) {
+        for (slot in 0 until limit) {
+            if (slot !in usedSlots && fillIdx < limit) {
                 order[fillIdx] = slot
                 fillIdx++
             }

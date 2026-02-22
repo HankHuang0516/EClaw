@@ -9,8 +9,19 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
+import com.hank.clawlive.ui.RecordingIndicatorHelper
 
 class PrivacyPolicyActivity : AppCompatActivity() {
+
+    override fun onResume() {
+        super.onResume()
+        RecordingIndicatorHelper.attach(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        RecordingIndicatorHelper.detach()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

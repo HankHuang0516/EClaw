@@ -416,5 +416,11 @@ If you have any questions, please contact us via our official email.
     <string name="schedule_created">Created</string>
     <string name="schedule_executed">Executed</string>
     <string name="schedule_push_ok">Pushed to bot</string>
+
+    <!-- Navigation Bar -->
+    <string name="nav_mission">Mission</string>
+    <string name="nav_chat">Chat</string>
+    <string name="nav_files">Files</string>
+    <string name="nav_wallpaper">Wallpaper</string>
 </resources>
 

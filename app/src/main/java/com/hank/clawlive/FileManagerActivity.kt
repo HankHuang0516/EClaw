@@ -36,6 +36,7 @@ import com.hank.clawlive.data.remote.DeviceFile
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.ui.FileCardAdapter
+import com.hank.clawlive.ui.RecordingIndicatorHelper
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.Calendar
@@ -173,6 +174,12 @@ class FileManagerActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         TelemetryHelper.trackPageView(this, "file_manager")
+        RecordingIndicatorHelper.attach(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        RecordingIndicatorHelper.detach()
     }
 
     override fun onDestroy() {

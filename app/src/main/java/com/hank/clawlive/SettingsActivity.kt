@@ -33,6 +33,7 @@ import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.local.UsageManager
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
+import com.hank.clawlive.ui.RecordingIndicatorHelper
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import kotlinx.coroutines.launch
@@ -53,16 +54,14 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var progressUsage: ProgressBar
     private lateinit var btnSubscribe: MaterialButton
     private lateinit var btnFeedback: MaterialButton
-    private lateinit var btnMarkBug: MaterialButton
-    private lateinit var tvMarkStatus: TextView
     private lateinit var btnPrivacyPolicy: MaterialButton
     private lateinit var btnWebPortal: MaterialButton
     private lateinit var btnAccountLogin: MaterialButton
-    private lateinit var tvViewFeedbackHistory: TextView
     private lateinit var chipGroupLanguage: ChipGroup
     private lateinit var chipLangEn: Chip
     private lateinit var chipLangZh: Chip
     private lateinit var btnBack: ImageButton
+    private lateinit var btnDebugEntityLimit: MaterialButton
     private lateinit var topBar: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -108,9 +107,15 @@ class SettingsActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         TelemetryHelper.trackPageView(this, "settings")
+        RecordingIndicatorHelper.attach(this)
         billingManager.refreshState()
         updateUsageDisplay()
         updateEntityCount()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        RecordingIndicatorHelper.detach()
     }
 
     private fun initViews() {
@@ -126,12 +131,16 @@ class SettingsActivity : AppCompatActivity() {
         topBar = findViewById(R.id.topBar)
         tvEntityCount = findViewById(R.id.tvEntityCount)
         btnFeedback = findViewById(R.id.btnFeedback)
-        btnMarkBug = findViewById(R.id.btnMarkBug)
-        tvMarkStatus = findViewById(R.id.tvMarkStatus)
         btnPrivacyPolicy = findViewById(R.id.btnPrivacyPolicy)
         btnWebPortal = findViewById(R.id.btnWebPortal)
         btnAccountLogin = findViewById(R.id.btnAccountLogin)
-        tvViewFeedbackHistory = findViewById(R.id.tvViewFeedbackHistory)
+        btnDebugEntityLimit = findViewById(R.id.btnDebugEntityLimit)
+
+        // Show debug button only in debug builds
+        if (BuildConfig.DEBUG) {
+            btnDebugEntityLimit.visibility = View.VISIBLE
+            updateDebugEntityLimitButton()
+        }
     }
 
     private fun setupClickListeners() {
@@ -147,10 +156,6 @@ class SettingsActivity : AppCompatActivity() {
             startActivity(Intent(this, FeedbackActivity::class.java))
         }
 
-        btnMarkBug.setOnClickListener {
-            markBugMoment()
-        }
-
         btnPrivacyPolicy.setOnClickListener {
             startActivity(android.content.Intent(this, PrivacyPolicyActivity::class.java))
         }
@@ -163,8 +168,13 @@ class SettingsActivity : AppCompatActivity() {
             showAccountLoginDialog()
         }
 
-        tvViewFeedbackHistory.setOnClickListener {
-            startActivity(Intent(this, FeedbackHistoryActivity::class.java))
+        btnDebugEntityLimit.setOnClickListener {
+            val current = layoutPrefs.debugEntityLimit
+            val newLimit = if (current == 8) 4 else 8
+            layoutPrefs.debugEntityLimit = newLimit
+            updateDebugEntityLimitButton()
+            updateEntityCount()
+            Toast.makeText(this, "Entity limit: $newLimit", Toast.LENGTH_SHORT).show()
         }
 
         // Language selection
@@ -254,8 +264,13 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
+    private fun updateDebugEntityLimitButton() {
+        val limit = layoutPrefs.debugEntityLimit
+        btnDebugEntityLimit.text = "[DEBUG] Entity Limit: $limit"
+    }
+
     private fun updateEntityCount() {
-        val maxEntities = if (usageManager.isPremium) 8 else 4
+        val maxEntities = if (usageManager.isPremium) 8 else if (BuildConfig.DEBUG) layoutPrefs.debugEntityLimit else 4
         // Show local count first, then update from API
         val localCount = layoutPrefs.getRegisteredEntityIds().size
         tvEntityCount.text = "$localCount/$maxEntities"
@@ -563,28 +578,6 @@ class SettingsActivity : AppCompatActivity() {
                     dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
                     dialog.getButton(AlertDialog.BUTTON_POSITIVE).text = getString(R.string.account_login_btn)
                 }
-            }
-        }
-    }
-
-    private fun markBugMoment() {
-        lifecycleScope.launch {
-            try {
-                val body = mapOf("deviceId" to deviceManager.deviceId)
-                NetworkModule.api.markFeedback(body)
-                tvMarkStatus.visibility = View.VISIBLE
-                tvMarkStatus.text = getString(R.string.feedback_marked,
-                    java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
-                        .format(java.util.Date()))
-                btnMarkBug.text = getString(R.string.feedback_marked_btn)
-                btnMarkBug.postDelayed({
-                    btnMarkBug.text = getString(R.string.feedback_mark)
-                }, 5000)
-                TelemetryHelper.trackAction("mark_bug_moment")
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to mark bug moment")
-                TelemetryHelper.trackError(e, mapOf("action" to "mark_bug_moment"))
-                Toast.makeText(this@SettingsActivity, "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }

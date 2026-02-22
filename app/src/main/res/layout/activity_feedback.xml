@@ -57,7 +57,43 @@
                 android:text="@string/feedback_auto_log_hint"
                 android:textSize="13sp"
                 android:textColor="#99FFFFFF"
-                android:layout_marginBottom="20dp"/>
+                android:layout_marginBottom="16dp"/>
+
+            <!-- Mark Bug / Feedback History Row -->
+            <LinearLayout
+                android:id="@+id/layoutMarkActions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMarkBug"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="@string/feedback_mark"
+                    android:textSize="13sp"
+                    android:textColor="#CCFFFFFF"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="14dp"
+                    app:backgroundTint="#1A1A1A"
+                    app:cornerRadius="8dp"
+                    app:strokeColor="#333333"
+                    app:strokeWidth="1dp"/>
+
+                <TextView
+                    android:id="@+id/tvMarkStatus"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    android:textSize="12sp"
+                    android:textColor="#FFD23F"
+                    android:visibility="gone"/>
+
+            </LinearLayout>
 
             <!-- Category Label -->
             <TextView
@@ -300,6 +336,23 @@
                 android:textColor="#000000"
                 app:backgroundTint="#FFD23F"
                 app:cornerRadius="12dp"/>
+
+            <!-- View Feedback History -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnViewFeedbackHistory"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="12dp"
+                android:text="@string/feedback_view_history"
+                android:textSize="14sp"
+                android:textColor="#CCFFFFFF"
+                app:backgroundTint="#1A1A1A"
+                app:cornerRadius="12dp"
+                app:strokeColor="#333333"
+                app:strokeWidth="1dp"
+                app:icon="@android:drawable/ic_menu_recent_history"
+                app:iconTint="#CCFFFFFF"/>
 
             <!-- Result Container (hidden initially) -->
             <com.google.android.material.card.MaterialCardView

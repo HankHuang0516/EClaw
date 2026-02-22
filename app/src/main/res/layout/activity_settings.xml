@@ -206,56 +206,11 @@
                 android:textColor="#CCFFFFFF"
                 app:backgroundTint="#1A1A1A"
                 app:cornerRadius="12dp"
+                app:icon="@drawable/ic_feedback"
+                app:iconTint="#CCFFFFFF"
                 app:strokeColor="#333333"
                 app:strokeWidth="1dp"
                 style="@style/Widget.Material3.Button.TonalButton"/>
-
-            <!-- Feedback sub-actions row -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingHorizontal="4dp"
-                android:layout_marginTop="-4dp"
-                android:layout_marginBottom="4dp">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnMarkBug"
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:text="@string/feedback_mark"
-                    android:textSize="13sp"
-                    android:textColor="#CCFFFFFF"
-                    android:minWidth="0dp"
-                    android:paddingHorizontal="14dp"
-                    app:backgroundTint="#1A1A1A"
-                    app:cornerRadius="8dp"
-                    app:strokeColor="#333333"
-                    app:strokeWidth="1dp"
-                    style="@style/Widget.Material3.Button.TonalButton"/>
-
-                <TextView
-                    android:id="@+id/tvViewFeedbackHistory"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/feedback_view_history"
-                    android:textSize="13sp"
-                    android:textColor="#FFD23F"
-                    android:layout_marginStart="8dp"
-                    android:paddingVertical="4dp"/>
-
-                <TextView
-                    android:id="@+id/tvMarkStatus"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="end"
-                    android:textSize="12sp"
-                    android:textColor="#FFD23F"
-                    android:visibility="gone"/>
-
-            </LinearLayout>
 
             <!-- Privacy Policy Button -->
             <com.google.android.material.button.MaterialButton
@@ -268,6 +223,8 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="12dp"
                 app:cornerRadius="12dp"
+                app:icon="@drawable/ic_privacy"
+                app:iconTint="#CCFFFFFF"
                 app:strokeColor="#333333"
                 app:strokeWidth="1dp"
                 style="@style/Widget.Material3.Button.TonalButton"/>
@@ -303,6 +260,23 @@
                 app:strokeColor="#333333"
                 app:strokeWidth="1dp"
                 style="@style/Widget.Material3.Button.TonalButton"/>
+
+            <!-- Debug: Entity Limit Toggle (hidden in release) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDebugEntityLimit"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Entity Limit: 8"
+                android:textColor="#CCFFFFFF"
+                app:backgroundTint="#1A1A1A"
+                android:layout_marginBottom="8dp"
+                app:cornerRadius="12dp"
+                app:icon="@android:drawable/ic_menu_manage"
+                app:iconTint="#FF9800"
+                app:strokeColor="#FF9800"
+                app:strokeWidth="1dp"
+                android:visibility="gone"/>
 
             <!-- Language Settings Section -->
             <TextView

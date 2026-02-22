@@ -41,6 +41,7 @@ import com.hank.clawlive.data.remote.ClawApiService
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.data.repository.ChatRepository
+import com.hank.clawlive.ui.RecordingIndicatorHelper
 import com.hank.clawlive.ui.chat.ChatAdapter
 import com.hank.clawlive.ui.chat.SlashCommandAdapter
 import com.hank.clawlive.ui.chat.SlashCommandRegistry
@@ -153,6 +154,12 @@ class ChatActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         TelemetryHelper.trackPageView(this, "chat")
+        RecordingIndicatorHelper.attach(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        RecordingIndicatorHelper.detach()
     }
 
     override fun onDestroy() {

@@ -23,6 +23,7 @@ import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.model.FeedbackItem
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
+import com.hank.clawlive.ui.RecordingIndicatorHelper
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.text.SimpleDateFormat
@@ -58,6 +59,12 @@ class FeedbackHistoryActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         TelemetryHelper.trackPageView(this, "feedback_history")
+        RecordingIndicatorHelper.attach(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        RecordingIndicatorHelper.detach()
     }
 
     private fun setupEdgeToEdgeInsets() {

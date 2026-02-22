@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -55,81 +56,114 @@
         android:layout_marginBottom="12dp"
         android:background="@android:drawable/btn_dropdown" />
 
-    <!-- Time -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/schedule_label_time"
-        android:textSize="12sp"
-        android:textColor="#888888"
-        android:layout_marginBottom="4dp" />
-
-    <TextView
-        android:id="@+id/tvSelectedTime"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:gravity="center_vertical"
-        android:textSize="14sp"
-        android:padding="8dp"
-        android:background="?attr/selectableItemBackground"
-        android:layout_marginBottom="6dp"
-        android:hint="@string/schedule_tap_time" />
-
-    <!-- Quick Time Buttons -->
+    <!-- Cron Expression (hidden by default, shown when "Custom (Cron)" selected) -->
     <LinearLayout
+        android:id="@+id/layoutCronInput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:orientation="vertical"
+        android:visibility="gone"
         android:layout_marginBottom="12dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn5min"
-            android:layout_width="0dp"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/schedule_5min"
-            android:textSize="11sp"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_marginEnd="4dp" />
+            android:text="@string/schedule_label_cron"
+            android:textSize="12sp"
+            android:textColor="#888888"
+            android:layout_marginBottom="4dp" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn15min"
-            android:layout_width="0dp"
+        <EditText
+            android:id="@+id/etCronExpr"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/schedule_15min"
-            android:textSize="11sp"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_marginEnd="4dp" />
+            android:hint="30 8 * * *"
+            android:inputType="text"
+            android:maxLines="1"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="4dp" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn30min"
-            android:layout_width="0dp"
+        <TextView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/schedule_30min"
+            android:text="@string/schedule_cron_hint"
             android:textSize="11sp"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_marginEnd="4dp" />
+            android:textColor="#999999" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn1hr"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/schedule_1hr"
-            android:textSize="11sp"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_marginEnd="4dp" />
+    </LinearLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn3hr"
-            android:layout_width="0dp"
+    <!-- Time Section (hidden when cron is selected) -->
+    <LinearLayout
+        android:id="@+id/layoutTimeSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/schedule_3hr"
-            android:textSize="11sp"
-            style="@style/Widget.Material3.Button.OutlinedButton" />
+            android:text="@string/schedule_label_time"
+            android:textSize="12sp"
+            android:textColor="#888888"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tvSelectedTime"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:gravity="center_vertical"
+            android:textSize="14sp"
+            android:padding="8dp"
+            android:background="?attr/selectableItemBackground"
+            android:layout_marginBottom="6dp"
+            android:hint="@string/schedule_tap_time" />
+
+        <!-- Quick Time Chips -->
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupQuickTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:singleLine="false"
+            app:selectionRequired="false"
+            app:singleSelection="false">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip5min"
+                style="@style/Widget.Material3.Chip.Suggestion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/schedule_5min" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip15min"
+                style="@style/Widget.Material3.Chip.Suggestion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/schedule_15min" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip30min"
+                style="@style/Widget.Material3.Chip.Suggestion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/schedule_30min" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip1hr"
+                style="@style/Widget.Material3.Chip.Suggestion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/schedule_1hr" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip3hr"
+                style="@style/Widget.Material3.Chip.Suggestion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/schedule_3hr" />
+
+        </com.google.android.material.chip.ChipGroup>
 
     </LinearLayout>
 
