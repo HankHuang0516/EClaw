@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/HankHuang0516/realbot/compare/v1.3.1...v1.3.2) (2026-02-22)
+
+
+### Bug Fixes
+
+* auto-sync feedback status with GitHub issue state ([723b859](https://github.com/HankHuang0516/realbot/commit/723b8598e27cf21194b0c6a23cf491c0b6c9ca3f))
+
 ## [1.3.1](https://github.com/HankHuang0516/realbot/compare/v1.3.0...v1.3.1) (2026-02-22)
 
 
