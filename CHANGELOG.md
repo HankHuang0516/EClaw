@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/HankHuang0516/realbot/compare/v1.4.1...v1.5.0) (2026-02-22)
+
+
+### Features
+
+* dynamic entity chips with debug 4/8 toggle ([0da6355](https://github.com/HankHuang0516/realbot/commit/0da6355ef4034756fb2a19a5c95fd5b3c766a2e8))
+
 ## [1.4.1](https://github.com/HankHuang0516/realbot/compare/v1.4.0...v1.4.1) (2026-02-22)
 
 
