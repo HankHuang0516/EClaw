@@ -33,7 +33,7 @@ const BORROW_AMOUNT = 288; // NT$288/month (official bot rental)
 const SUBSCRIPTION_CURRENCY = 'TWD';
 const SUBSCRIPTION_PERIOD_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
-module.exports = function (devices, authMiddleware) {
+module.exports = function (devices, authMiddleware, ensureEntitySlots) {
     const router = express.Router();
 
     // ============================================
@@ -206,6 +206,7 @@ module.exports = function (devices, authMiddleware) {
             // Update in-memory device premium status
             if (devices[user.device_id]) {
                 devices[user.device_id].isPremium = true;
+                ensureEntitySlots(devices[user.device_id]);
             }
 
             console.log(`[Subscription] Premium activated for ${user.email} via TapPay`);
@@ -267,6 +268,7 @@ module.exports = function (devices, authMiddleware) {
 
             // Mark device as premium in memory
             device.isPremium = true;
+            ensureEntitySlots(device);
 
             // Check if there's a user account linked to this device
             const userResult = await pool.query(
@@ -493,6 +495,7 @@ module.exports = function (devices, authMiddleware) {
             for (const row of result.rows) {
                 if (devices[row.device_id]) {
                     devices[row.device_id].isPremium = true;
+                    ensureEntitySlots(devices[row.device_id]);
                 }
             }
             console.log(`[Subscription] Loaded ${result.rows.length} premium users`);

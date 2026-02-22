@@ -169,8 +169,8 @@ async function saveDeviceData(deviceId, deviceData) {
                 [deviceId, deviceData.deviceSecret, deviceData.createdAt, Date.now()]
             );
 
-            // Save all entities
-            for (let i = 0; i < 4; i++) {
+            // Save all entities (supports up to 8 slots for premium devices)
+            for (const i of Object.keys(deviceData.entities).map(Number)) {
                 const entity = deviceData.entities[i];
                 if (!entity) continue;
 
@@ -313,7 +313,7 @@ async function loadAllDevices() {
         const deviceCount = Object.keys(devices).length;
         let boundCount = 0;
         for (const deviceId in devices) {
-            for (let i = 0; i < 4; i++) {
+            for (const i of Object.keys(devices[deviceId].entities).map(Number)) {
                 if (devices[deviceId].entities[i]?.isBound) boundCount++;
             }
         }

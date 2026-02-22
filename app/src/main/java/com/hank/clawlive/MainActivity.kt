@@ -62,8 +62,6 @@ class MainActivity : AppCompatActivity() {
     }
     companion object {
         private const val API_BASE_URL = "https://eclaw.up.railway.app"
-        private const val FREE_ENTITY_LIMIT = 4
-        private const val PREMIUM_ENTITY_LIMIT = 8
     }
 
     // UI elements
@@ -355,12 +353,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getEffectiveEntityLimit(): Int {
-        return if (BuildConfig.DEBUG) layoutPrefs.debugEntityLimit else FREE_ENTITY_LIMIT
-    }
-
     private fun updateEntityCount() {
-        val maxEntities = if (usageManager.isPremium) PREMIUM_ENTITY_LIMIT else getEffectiveEntityLimit()
+        val maxEntities = EntityChipHelper.getEntityLimit(this)
         tvEntityCount.text = getString(R.string.entity_count_format, boundEntities.size, maxEntities)
         tvEntityCount.visibility = View.VISIBLE
     }
@@ -459,7 +453,7 @@ class MainActivity : AppCompatActivity() {
         // Build the permutation array: order[newSlot] = oldSlot
         // currentOrder contains entity IDs in their new visual order
         // We need to map: for each slot, which old slot goes there
-        val limit = getEffectiveEntityLimit()
+        val limit = EntityChipHelper.getEntityLimit(this)
         val order = IntArray(limit) { it } // identity
         for (i in currentOrder.indices) {
             order[i] = currentOrder[i]

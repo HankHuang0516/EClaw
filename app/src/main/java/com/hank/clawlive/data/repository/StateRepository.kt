@@ -119,6 +119,9 @@ class StateRepository(
                     maxEntities = response.maxEntities
                 )
 
+                // Persist server-provided entity limit for EntityChipHelper
+                layoutPrefs.serverEntityLimit = response.maxEntities
+
                 emit(filteredResponse)
                 Timber.d("Multi-entity status: ${filteredEntities.size} entities for device ${deviceManager.deviceId}")
             } catch (e: Exception) {

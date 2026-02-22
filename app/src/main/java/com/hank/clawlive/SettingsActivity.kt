@@ -33,6 +33,7 @@ import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.local.UsageManager
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
+import com.hank.clawlive.ui.EntityChipHelper
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
@@ -270,7 +271,7 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun updateEntityCount() {
-        val maxEntities = if (usageManager.isPremium) 8 else if (BuildConfig.DEBUG) layoutPrefs.debugEntityLimit else 4
+        val maxEntities = EntityChipHelper.getEntityLimit(this)
         // Show local count first, then update from API
         val localCount = layoutPrefs.getRegisteredEntityIds().size
         tvEntityCount.text = "$localCount/$maxEntities"
