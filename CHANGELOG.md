@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/HankHuang0516/realbot/compare/v1.2.0...v1.3.0) (2026-02-22)
+
+
+### Features
+
+* auto-delete Railway preview environment on PR close ([8db5a0b](https://github.com/HankHuang0516/realbot/commit/8db5a0b27c2bfcda54733741875313564dbd9cf9))
+
 # [1.2.0](https://github.com/HankHuang0516/realbot/compare/v1.1.0...v1.2.0) (2026-02-22)
 
 
