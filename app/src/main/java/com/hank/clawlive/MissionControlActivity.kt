@@ -27,8 +27,10 @@ import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.EntityAvatarManager
 import com.hank.clawlive.data.model.*
 import com.hank.clawlive.data.remote.NetworkModule
+import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.MissionUiState
 import com.hank.clawlive.ui.MissionViewModel
+import com.hank.clawlive.ui.NavItem
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import com.hank.clawlive.ui.mission.*
 import kotlinx.coroutines.launch
@@ -83,6 +85,7 @@ class MissionControlActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_mission_control)
 
+        BottomNavHelper.setup(this, NavItem.MISSION)
         setupWindowInsets()
         setupAdapters()
         setupRecyclerViews()
@@ -192,9 +195,7 @@ class MissionControlActivity : AppCompatActivity() {
     }
 
     private fun setupButtons() {
-        findViewById<View>(R.id.btnBack).setOnClickListener { onBackPressedDispatcher.onBackPressed() }
-
-        findViewById<MaterialButton>(R.id.btnSchedule).setOnClickListener {
+        findViewById<View>(R.id.cardSchedule).setOnClickListener {
             startActivity(Intent(this, ScheduleActivity::class.java))
         }
 
@@ -239,9 +240,9 @@ class MissionControlActivity : AppCompatActivity() {
         // Upload button
         val btnUpload = findViewById<MaterialButton>(R.id.btnUpload)
         btnUpload.isEnabled = !state.isSyncing
-        btnUpload.text = if (state.isSyncing) getString(R.string.uploading)
-        else if (state.hasLocalChanges) getString(R.string.upload) + " *"
-        else getString(R.string.upload)
+        btnUpload.text = if (state.isSyncing) getString(R.string.saving)
+        else if (state.hasLocalChanges) getString(R.string.save) + " *"
+        else getString(R.string.save)
 
         // Lists
         todoAdapter.submitList(state.todoList)
@@ -693,7 +694,7 @@ class MissionControlActivity : AppCompatActivity() {
             when (item.type) {
                 "TODO" -> "📋 ${item.title} → $entityLabel"
                 "SKILL" -> "🔧 ${item.title} → $entityLabel"
-                "SOUL" -> "👻 ${item.title} → $entityLabel"
+                "SOUL" -> "🧠 ${item.title} → $entityLabel"
                 "RULE" -> "📏 ${item.title} → $entityLabel"
                 else -> "${item.title} → $entityLabel"
             }

@@ -40,9 +40,11 @@ import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.data.repository.StateRepository
+import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.EntityCardAdapter
 import com.hank.clawlive.ui.EntityChipHelper
 import com.hank.clawlive.ui.MainViewModel
+import com.hank.clawlive.ui.NavItem
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -62,12 +64,9 @@ class MainActivity : AppCompatActivity() {
     }
     companion object {
         private const val API_BASE_URL = "https://eclaw.up.railway.app"
-        private const val FREE_ENTITY_LIMIT = 4
-        private const val PREMIUM_ENTITY_LIMIT = 8
     }
 
     // UI elements
-    private lateinit var btnSettings: ImageButton
     private lateinit var btnEditMode: ImageButton
     private lateinit var agentCardsContainer: RecyclerView
     private lateinit var emptyStateContainer: LinearLayout
@@ -81,10 +80,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnGenerateCode: MaterialButton
     private lateinit var btnCopyCommand: MaterialButton
     private lateinit var progressBar: ProgressBar
-    private lateinit var btnChat: View
-    private lateinit var btnSetWallpaper: View
     private lateinit var topBar: LinearLayout
-    private lateinit var bottomActions: LinearLayout
     private lateinit var tvEntityCount: TextView
     // Phase 9: AI Usage Status Bar
     private lateinit var usageStatusBar: LinearLayout
@@ -113,6 +109,7 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
+        BottomNavHelper.setup(this, NavItem.HOME)
         initViews()
         setupEdgeToEdgeInsets()
         setupClickListeners()
@@ -144,7 +141,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initViews() {
-        btnSettings = findViewById(R.id.btnSettings)
         btnEditMode = findViewById(R.id.btnEditMode)
         agentCardsContainer = findViewById(R.id.agentCardsContainer)
         emptyStateContainer = findViewById(R.id.emptyStateContainer)
@@ -159,10 +155,7 @@ class MainActivity : AppCompatActivity() {
         btnGenerateCode = findViewById(R.id.btnGenerateCode)
         btnCopyCommand = findViewById(R.id.btnCopyCommand)
         progressBar = findViewById(R.id.progressBar)
-        btnChat = findViewById(R.id.btnChat)
-        btnSetWallpaper = findViewById(R.id.btnSetWallpaper)
         topBar = findViewById(R.id.topBar)
-        bottomActions = findViewById(R.id.bottomActions)
         tvEntityCount = findViewById(R.id.tvEntityCount)
         // Phase 9: AI Usage Status Bar
         usageStatusBar = findViewById(R.id.usageStatusBar)
@@ -215,12 +208,6 @@ class MainActivity : AppCompatActivity() {
                 right = insets.right + 16.dpToPx()
             )
 
-            bottomActions.updatePadding(
-                left = insets.left + 16.dpToPx(),
-                right = insets.right + 16.dpToPx(),
-                bottom = insets.bottom + 16.dpToPx()
-            )
-
             WindowInsetsCompat.CONSUMED
         }
     }
@@ -232,26 +219,6 @@ class MainActivity : AppCompatActivity() {
     private fun setupClickListeners() {
         btnEditMode.setOnClickListener {
             toggleEditMode()
-        }
-
-        btnSettings.setOnClickListener {
-            startActivity(Intent(this, SettingsActivity::class.java))
-        }
-
-        btnSetWallpaper.setOnClickListener {
-            openWallpaperPicker()
-        }
-
-        btnChat.setOnClickListener {
-            startActivity(Intent(this, ChatActivity::class.java))
-        }
-
-        findViewById<View>(R.id.btnFiles).setOnClickListener {
-            startActivity(Intent(this, FileManagerActivity::class.java))
-        }
-
-        findViewById<View>(R.id.btnMission).setOnClickListener {
-            startActivity(Intent(this, MissionControlActivity::class.java))
         }
 
         // Add Entity expandable section
@@ -355,12 +322,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getEffectiveEntityLimit(): Int {
-        return if (BuildConfig.DEBUG) layoutPrefs.debugEntityLimit else FREE_ENTITY_LIMIT
-    }
-
     private fun updateEntityCount() {
-        val maxEntities = if (usageManager.isPremium) PREMIUM_ENTITY_LIMIT else getEffectiveEntityLimit()
+        val maxEntities = EntityChipHelper.getEntityLimit(this)
         tvEntityCount.text = getString(R.string.entity_count_format, boundEntities.size, maxEntities)
         tvEntityCount.visibility = View.VISIBLE
     }
@@ -459,7 +422,7 @@ class MainActivity : AppCompatActivity() {
         // Build the permutation array: order[newSlot] = oldSlot
         // currentOrder contains entity IDs in their new visual order
         // We need to map: for each slot, which old slot goes there
-        val limit = getEffectiveEntityLimit()
+        val limit = EntityChipHelper.getEntityLimit(this)
         val order = IntArray(limit) { it } // identity
         for (i in currentOrder.indices) {
             order[i] = currentOrder[i]
@@ -852,7 +815,4 @@ After binding, use these tools:
         clipboard.setPrimaryClip(clip)
     }
 
-    private fun openWallpaperPicker() {
-        startActivity(Intent(this, WallpaperPreviewActivity::class.java))
-    }
 }

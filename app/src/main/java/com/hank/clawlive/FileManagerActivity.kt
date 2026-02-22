@@ -35,7 +35,9 @@ import com.hank.clawlive.data.local.EntityAvatarManager
 import com.hank.clawlive.data.remote.DeviceFile
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
+import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.FileCardAdapter
+import com.hank.clawlive.ui.NavItem
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -81,6 +83,7 @@ class FileManagerActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_file_manager)
 
+        BottomNavHelper.setup(this, NavItem.FILES)
         topBar = findViewById(R.id.topBar)
         tvFileCount = findViewById(R.id.tvFileCount)
         btnViewToggle = findViewById(R.id.btnViewToggle)
@@ -104,9 +107,6 @@ class FileManagerActivity : AppCompatActivity() {
             v.updatePadding(top = sys.top + 12)
             insets
         }
-
-        // Back button
-        findViewById<ImageButton>(R.id.btnBack).setOnClickListener { finish() }
 
         // Restore view mode
         isListMode = prefs.getBoolean("is_list_mode", false)

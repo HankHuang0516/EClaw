@@ -4,36 +4,26 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#000000">
+    android:background="#0D0D1A">
 
-    <!-- Minimal Header with back button (padding applied via WindowInsets) -->
+    <!-- Header (padding applied via WindowInsets) -->
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingHorizontal="8dp"
+        android:paddingHorizontal="16dp"
         android:paddingBottom="8dp">
-
-        <ImageButton
-            android:id="@+id/btnBack"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/ic_back_arrow"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Back"
-            android:padding="8dp"/>
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/settings_title"
-            android:textSize="18sp"
+            android:textSize="24sp"
             android:textStyle="bold"
-            android:textColor="@android:color/white"
-            android:layout_marginStart="8dp"/>
+            android:textColor="@android:color/white"/>
 
     </LinearLayout>
 
@@ -253,9 +243,25 @@
                 android:text="@string/account_login"
                 android:textColor="#CCFFFFFF"
                 app:backgroundTint="#1A1A1A"
-                android:layout_marginBottom="24dp"
+                android:layout_marginBottom="8dp"
                 app:cornerRadius="12dp"
                 app:icon="@android:drawable/ic_lock_idle_lock"
+                app:iconTint="#CCFFFFFF"
+                app:strokeColor="#333333"
+                app:strokeWidth="1dp"
+                style="@style/Widget.Material3.Button.TonalButton"/>
+
+            <!-- Set Wallpaper Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSetWallpaper"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/set_wallpaper"
+                android:textColor="#CCFFFFFF"
+                app:backgroundTint="#1A1A1A"
+                android:layout_marginBottom="24dp"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_wallpaper"
                 app:iconTint="#CCFFFFFF"
                 app:strokeColor="#333333"
                 app:strokeWidth="1dp"
@@ -339,5 +345,8 @@
 
         </LinearLayout>
     </ScrollView>
+
+    <!-- Bottom Navigation -->
+    <include layout="@layout/layout_bottom_nav"/>
 
 </LinearLayout>

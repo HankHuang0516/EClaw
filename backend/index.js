@@ -36,11 +36,19 @@ const telemetryPoolProxy = {
 app.use(telemetry.createMiddleware(telemetryPoolProxy, (deviceId) => devices[deviceId]));
 
 // ============================================
-// MATRIX ARCHITECTURE: devices[deviceId].entities[0-3]
+// MATRIX ARCHITECTURE: devices[deviceId].entities[0-7]
 // Each device has independent entity slots
+// Free users: 4 slots, Premium users: 8 slots
 // ============================================
 
-const MAX_ENTITIES_PER_DEVICE = 4;
+const MAX_ENTITIES_PER_DEVICE = 8; // absolute ceiling (all devices init 8 slots)
+const FREE_ENTITY_LIMIT = 4;
+
+// Helper: get the effective entity limit for a specific device
+function getDeviceEntityLimit(deviceId) {
+    const device = devices[deviceId];
+    return (device && device.isPremium) ? MAX_ENTITIES_PER_DEVICE : FREE_ENTITY_LIMIT;
+}
 
 // Latest app version - update this with each release
 // Bot will warn users if their app version is older than this
@@ -416,7 +424,7 @@ authModule.initAuthDatabase();
 // ============================================
 // SUBSCRIPTION & TAPPAY (PostgreSQL)
 // ============================================
-const subscriptionModule = require('./subscription')(devices, authModule.authMiddleware);
+const subscriptionModule = require('./subscription')(devices, authModule.authMiddleware, ensureEntitySlots);
 app.use('/api/subscription', subscriptionModule.router);
 // Load premium status after persistence is ready
 setTimeout(() => subscriptionModule.loadPremiumStatus(), 5000);
@@ -899,6 +907,15 @@ function compareVersions(v1, v2) {
     return 0;
 }
 
+// Helper: Ensure device has all 8 entity slots initialized (backfills missing slots)
+function ensureEntitySlots(device) {
+    for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
+        if (!device.entities[i]) {
+            device.entities[i] = createDefaultEntity(i);
+        }
+    }
+}
+
 // Helper: Get or create device
 function getOrCreateDevice(deviceId, deviceSecret = null, opts = {}) {
     if (!devices[deviceId]) {
@@ -909,14 +926,17 @@ function getOrCreateDevice(deviceId, deviceSecret = null, opts = {}) {
             isTestDevice: opts.isTestDevice || false,
             entities: {}
         };
-        // Initialize 4 entity slots
+        // Initialize all 8 entity slots
         for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
             devices[deviceId].entities[i] = createDefaultEntity(i);
         }
         console.log(`[Device] New device registered: ${deviceId}${opts.isTestDevice ? ' (TEST)' : ''}`);
-    } else if (opts.isTestDevice && !devices[deviceId].isTestDevice) {
-        // Mark existing device as test if requested
-        devices[deviceId].isTestDevice = true;
+    } else {
+        // Backfill missing entity slots for existing devices (e.g. loaded from DB with only 4 slots)
+        ensureEntitySlots(devices[deviceId]);
+        if (opts.isTestDevice && !devices[deviceId].isTestDevice) {
+            devices[deviceId].isTestDevice = true;
+        }
     }
     return devices[deviceId];
 }
@@ -1087,6 +1107,16 @@ app.post('/api/device/register', (req, res) => {
 
     // Get or create device
     const device = getOrCreateDevice(deviceId, deviceSecret, { isTestDevice: !!isTestDevice });
+
+    // Per-device entity limit: free users can only use slots 0-3
+    const deviceLimit = getDeviceEntityLimit(deviceId);
+    if (eId >= deviceLimit) {
+        return res.status(403).json({
+            success: false,
+            message: `Entity #${eId} requires premium subscription (your limit: ${deviceLimit})`,
+            entityLimit: deviceLimit
+        });
+    }
 
     // Verify device secret if device already exists
     if (device.deviceSecret && device.deviceSecret !== deviceSecret) {
@@ -1266,6 +1296,7 @@ app.get('/api/entities', (req, res) => {
         const device = devices[deviceId];
         for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
             const entity = device.entities[i];
+            if (!entity) continue;
             if (entity.isBound) {
                 entities.push({
                     deviceId: deviceId,
@@ -1288,6 +1319,7 @@ app.get('/api/entities', (req, res) => {
         const allSlotStates = [];
         for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
             const e = device.entities[i];
+            if (!e) { allSlotStates.push(`${i}:empty`); continue; }
             allSlotStates.push(`${i}:${e.isBound ? 'bound' : 'unbound'}`);
         }
 
@@ -1318,7 +1350,7 @@ app.get('/api/entities', (req, res) => {
         entities: entities,
         activeCount: entities.length,
         deviceCount: Object.keys(devices).length,
-        maxEntitiesPerDevice: MAX_ENTITIES_PER_DEVICE,
+        maxEntitiesPerDevice: filterDeviceId ? getDeviceEntityLimit(filterDeviceId) : MAX_ENTITIES_PER_DEVICE,
         serverReady: persistenceReady
     });
 });
@@ -2348,7 +2380,7 @@ app.post('/api/entity/broadcast', async (req, res) => {
     // Find all other bound entities and send in parallel
     const targetIds = [];
     for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
-        if (i !== fromId && device.entities[i].isBound) {
+        if (i !== fromId && device.entities[i] && device.entities[i].isBound) {
             targetIds.push(i);
         }
     }
@@ -2544,6 +2576,7 @@ app.get('/api/debug/devices', (req, res) => {
         const entities = [];
         for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
             const e = device.entities[i];
+            if (!e) { entities.push({ entityId: i, isBound: false, empty: true }); continue; }
             entities.push({
                 entityId: i,
                 isBound: e.isBound,
@@ -4685,9 +4718,30 @@ app.get('/api/schedules', async (req, res) => {
     }
 });
 
+// GET /api/schedule-executions - Execution history for a device
+app.get('/api/schedule-executions', async (req, res) => {
+    const { deviceId, deviceSecret, limit, offset } = req.query;
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    try {
+        const executions = await scheduler.getExecutions(deviceId, {
+            limit: parseInt(limit) || 50,
+            offset: parseInt(offset) || 0
+        });
+        res.json({ success: true, schedules: executions });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 // POST /api/schedules - Create a new schedule
 app.post('/api/schedules', async (req, res) => {
-    const { deviceId, deviceSecret, entityId, message, scheduledAt, repeatType, cronExpr, label } = req.body;
+    const { deviceId, deviceSecret, entityId, message, scheduledAt, repeatType, cronExpr, label, timezone } = req.body;
     if (!deviceId || !deviceSecret) {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
@@ -4697,7 +4751,7 @@ app.post('/api/schedules', async (req, res) => {
     }
     try {
         const schedule = await scheduler.createSchedule({
-            deviceId, entityId, message, scheduledAt, repeatType, cronExpr, label
+            deviceId, entityId, message, scheduledAt, repeatType, cronExpr, label, timezone
         });
         res.json({ success: true, schedule });
     } catch (err) {

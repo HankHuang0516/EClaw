@@ -242,6 +242,12 @@ interface ClawApiService {
         @Query("deviceSecret") deviceSecret: String
     ): ScheduleListResponse
 
+    @GET("api/schedule-executions")
+    suspend fun getScheduleExecutions(
+        @Query("deviceId") deviceId: String,
+        @Query("deviceSecret") deviceSecret: String
+    ): ScheduleListResponse
+
     @POST("api/schedules")
     suspend fun createSchedule(
         @Body body: Map<String, @JvmSuppressWildcards Any?>

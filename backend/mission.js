@@ -849,7 +849,9 @@ module.exports = function(devices) {
             if (types.has('SOUL')) {
                 apiHints.push(`新增靈魂: POST /api/mission/soul/add {${auth},"name":"<靈魂名>","description":"<描述>"}`);
                 apiHints.push(`更新靈魂: POST /api/mission/soul/update {${auth},"name":"<原名>","newDescription":"<新描述>"}`);
+                apiHints.push(`切換靈魂啟用: POST /api/mission/soul/update {${auth},"name":"<靈魂名>","newIsActive":true/false}`);
                 apiHints.push(`刪除靈魂: POST /api/mission/soul/delete {${auth},"name":"<靈魂名>"}`);
+                apiHints.push(`⚠️ 靈魂規則: isActive=true 的靈魂才需要採用其人設風格回覆，isActive=false 的靈魂請完全忽略`);
             }
             // Notes: bots always have read-write access
             apiHints.push(`取得筆記: GET /api/mission/notes?deviceId=${deviceId}&botSecret=${botSecret}&category=<可選>`);

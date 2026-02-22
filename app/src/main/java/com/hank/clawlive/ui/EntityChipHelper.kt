@@ -17,13 +17,14 @@ object EntityChipHelper {
 
     /**
      * Returns the effective entity limit for the current build.
-     * Debug: reads from user preference (4 or 8). Release: always 4.
+     * Debug: reads from user preference (4 or 8).
+     * Release: reads server-provided limit (4 for free, 8 for premium).
      */
     fun getEntityLimit(context: Context): Int {
         return if (BuildConfig.DEBUG) {
             LayoutPreferences.getInstance(context).debugEntityLimit
         } else {
-            4
+            LayoutPreferences.getInstance(context).serverEntityLimit
         }
     }
 
