@@ -100,7 +100,7 @@ class SettingsActivity : AppCompatActivity() {
                 right = insets.right + dpToPx(8)
             )
 
-            WindowInsetsCompat.CONSUMED
+            windowInsets
         }
     }
 

@@ -208,7 +208,7 @@ class MainActivity : AppCompatActivity() {
                 right = insets.right + 16.dpToPx()
             )
 
-            WindowInsetsCompat.CONSUMED
+            windowInsets
         }
     }
 

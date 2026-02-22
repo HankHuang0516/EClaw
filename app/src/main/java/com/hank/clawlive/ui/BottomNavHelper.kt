@@ -24,12 +24,13 @@ object BottomNavHelper {
     fun setup(activity: Activity, currentItem: NavItem) {
         val bottomNav = activity.findViewById<LinearLayout>(R.id.bottomNav) ?: return
 
-        // Edge-to-edge bottom insets
+        // Edge-to-edge bottom insets with minimum padding to avoid HOME button conflict
+        val minBottomPadding = (12 * activity.resources.displayMetrics.density).toInt()
         ViewCompat.setOnApplyWindowInsetsListener(bottomNav) { v, insets ->
             val sys = insets.getInsets(
                 WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
             )
-            v.updatePadding(bottom = sys.bottom)
+            v.updatePadding(bottom = maxOf(sys.bottom, minBottomPadding))
             insets
         }
 
