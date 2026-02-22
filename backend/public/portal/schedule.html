@@ -845,7 +845,8 @@
                     scheduledAt: finalScheduledAt,
                     repeatType: repeatType,
                     cronExpr: cronExpr,
-                    label: label || null
+                    label: label || null,
+                    timezone: cronExpr ? Intl.DateTimeFormat().resolvedOptions().timeZone : null
                 });
 
                 closeDialog();

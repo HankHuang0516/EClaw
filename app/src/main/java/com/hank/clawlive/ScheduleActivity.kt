@@ -288,7 +288,8 @@ class ScheduleActivity : AppCompatActivity() {
                     "entityId" to entityId,
                     "message" to message,
                     "repeatType" to "cron",
-                    "cronExpr" to cronExpr
+                    "cronExpr" to cronExpr,
+                    "timezone" to TimeZone.getDefault().id
                 )
                 if (label != null) body["label"] = label
 
@@ -333,7 +334,10 @@ class ScheduleActivity : AppCompatActivity() {
                     "scheduledAt" to scheduledAt,
                     "repeatType" to repeatType
                 )
-                if (cronExpr != null) body["cronExpr"] = cronExpr
+                if (cronExpr != null) {
+                    body["cronExpr"] = cronExpr
+                    body["timezone"] = TimeZone.getDefault().id
+                }
                 if (label != null) body["label"] = label
 
                 val response = api.createSchedule(body)

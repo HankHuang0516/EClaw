@@ -27,7 +27,8 @@ CREATE TABLE IF NOT EXISTS scheduled_messages (
     executed_at TIMESTAMPTZ,
     result TEXT,
     result_status TEXT,
-    label TEXT
+    label TEXT,
+    timezone TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_sched_device ON scheduled_messages(device_id);
@@ -41,6 +42,8 @@ async function init(pool, executeCallback) {
 
     try {
         await pool.query(CREATE_TABLE_SQL);
+        // Migration: add timezone column if missing
+        await pool.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS timezone TEXT`).catch(() => {});
         console.log('[Scheduler] Table ready');
     } catch (err) {
         console.error('[Scheduler] Table creation failed:', err.message);
@@ -91,12 +94,13 @@ function rowToSchedule(row) {
         executedAt: row.executed_at ? new Date(row.executed_at).toISOString() : null,
         result: row.result || null,
         resultStatus: row.result_status || null,
-        label: row.label || null
+        label: row.label || null,
+        timezone: row.timezone || null
     };
 }
 
 // ── Create Schedule ──
-async function createSchedule({ deviceId, entityId, message, scheduledAt, repeatType = 'once', cronExpr = null, label = null }) {
+async function createSchedule({ deviceId, entityId, message, scheduledAt, repeatType = 'once', cronExpr = null, label = null, timezone = null }) {
     if (!_pool) throw new Error('Scheduler not initialized');
 
     // Validate
@@ -126,9 +130,9 @@ async function createSchedule({ deviceId, entityId, message, scheduledAt, repeat
     const status = repeatType === 'once' ? 'pending' : 'active';
 
     const { rows } = await _pool.query(
-        `INSERT INTO scheduled_messages (device_id, entity_id, message, scheduled_at, repeat_type, cron_expr, status, label)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-        [deviceId, parsedEntityId, message, scheduledAt || null, repeatType, cronExpr, status, label]
+        `INSERT INTO scheduled_messages (device_id, entity_id, message, scheduled_at, repeat_type, cron_expr, status, label, timezone)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+        [deviceId, parsedEntityId, message, scheduledAt || null, repeatType, cronExpr, status, label, timezone]
     );
 
     const schedule = rowToSchedule(rows[0]);
@@ -256,10 +260,12 @@ function armCronJob(schedule) {
     if (activeJobs[schedule.id]) return; // already armed
 
     try {
+        const cronOptions = {};
+        if (schedule.timezone) cronOptions.timezone = schedule.timezone;
         const job = cron.schedule(schedule.cronExpr, async () => {
             console.log(`[Scheduler] Executing recurring schedule #${schedule.id}`);
             await executeSchedule(schedule, true);
-        });
+        }, cronOptions);
         activeJobs[schedule.id] = job;
     } catch (err) {
         console.error(`[Scheduler] Failed to arm cron job for #${schedule.id}:`, err.message);
