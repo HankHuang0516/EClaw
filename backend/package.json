@@ -12,7 +12,7 @@
     "test:production": "API_BASE=https://eclaw.up.railway.app node stress-test.js",
     "test:persistence": "node test-persistence.js",
     "test:persistence:check": "node test-persistence.js --check",
-    "lint": "eslint . --ext .js --ignore-path .eslintignore"
+    "lint": "eslint ."
   },
   "keywords": [
     "realbot",
