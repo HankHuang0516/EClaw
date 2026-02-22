@@ -68,6 +68,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint, jest]
     if: github.event_name == 'pull_request'
+    permissions:
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
@@ -75,14 +77,14 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Deploy preview environment
+        id: deploy
         continue-on-error: true
-        run: |
-          railway environment create pr-${{ github.event.number }} 2>/dev/null || true
-          railway up --service ${{ secrets.RAILWAY_SERVICE_ID }} --environment pr-${{ github.event.number }}
+        run: railway up --service ${{ secrets.RAILWAY_SERVICE_ID }} --environment pr-${{ github.event.number }}
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
       - name: Comment preview URL on PR
+        if: steps.deploy.outcome == 'success'
         uses: actions/github-script@v7
         with:
           script: |
