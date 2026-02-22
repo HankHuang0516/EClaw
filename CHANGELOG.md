@@ -1,3 +1,21 @@
+# [1.4.0](https://github.com/HankHuang0516/realbot/compare/v1.3.2...v1.4.0) (2026-02-22)
+
+
+### Bug Fixes
+
+* add JUnit and Gson test dependencies for Kotlin unit tests ([47a367d](https://github.com/HankHuang0516/realbot/commit/47a367deb6cb6b2a58886ed286ab3ac94fccff05))
+* auto-sync feedback status with GitHub issue state ([d908266](https://github.com/HankHuang0516/realbot/commit/d908266af85c4b1ccf18bd41dc7e0cbba3efaa3a))
+* create Railway preview environment before deploy ([fa45a23](https://github.com/HankHuang0516/realbot/commit/fa45a23d74999b523f018327e9562543a985427c))
+* resolve ESLint and Android Lint CI failures ([97e1c95](https://github.com/HankHuang0516/realbot/commit/97e1c95d1d825fa0dcaea1999ef9a8912c5a29cf))
+* resolve ESLint and Android Lint CI failures ([00c914b](https://github.com/HankHuang0516/realbot/commit/00c914b204567c20ce3de6a5eaf1ce586729bc3d))
+* resolve merge conflicts in package.json/package-lock.json ([b987c22](https://github.com/HankHuang0516/realbot/commit/b987c22f09fec51a92199087223b0ee4d386f180))
+* restore CI workflows, fix eslint version conflict, add Unix gradlew ([32517a9](https://github.com/HankHuang0516/realbot/commit/32517a99027f718c68da2eb35d9afe30a35399b8))
+
+
+### Features
+
+* add soul category to Mission Control for entity personality management ([fdced69](https://github.com/HankHuang0516/realbot/commit/fdced69cbc69b3891759bbdf7957e6598a76e2df))
+
 ## [1.3.2](https://github.com/HankHuang0516/realbot/compare/v1.3.1...v1.3.2) (2026-02-22)
 
 
