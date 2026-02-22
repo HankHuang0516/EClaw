@@ -1,3 +1,16 @@
+# [1.6.0](https://github.com/HankHuang0516/realbot/compare/v1.5.4...v1.6.0) (2026-02-22)
+
+
+### Bug Fixes
+
+* schedule card add icon and rename to 進入排程 ([09751b7](https://github.com/HankHuang0516/realbot/commit/09751b797eefb9ea9dc1956023eb2922f9ec7202))
+
+
+### Features
+
+* per-device entity limit (free: 4, premium: 8) ([ab07aef](https://github.com/HankHuang0516/realbot/commit/ab07aef4e888781a2b90433f55a2fe71f885cab8)), closes [#50](https://github.com/HankHuang0516/realbot/issues/50) [#49](https://github.com/HankHuang0516/realbot/issues/49) [#50](https://github.com/HankHuang0516/realbot/issues/50)
+* schedule execution history, mission control UI improvements ([e84c622](https://github.com/HankHuang0516/realbot/commit/e84c6227cc696488f199bf2dcf6548bd2348eee2))
+
 ## [1.5.4](https://github.com/HankHuang0516/realbot/compare/v1.5.3...v1.5.4) (2026-02-22)
 
 
