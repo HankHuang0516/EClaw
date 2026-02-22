@@ -81,33 +81,7 @@
                         android:checked="true"
                         android:text="@string/filter_all" />
 
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipEntity0"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Entity 0" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipEntity1"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Entity 1" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipEntity2"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Entity 2" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipEntity3"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Entity 3" />
+                    <!-- Entity filter chips inserted dynamically by EntityChipHelper -->
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipMyMessages"
@@ -188,43 +162,14 @@
                     android:paddingTop="4dp"
                     android:scrollbars="none">
 
+                    <!-- Target chips populated dynamically by EntityChipHelper -->
                     <com.google.android.material.chip.ChipGroup
                         android:id="@+id/chipGroupTargets"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         app:selectionRequired="false"
-                        app:singleSelection="false">
+                        app:singleSelection="false"/>
 
-                        <com.google.android.material.chip.Chip
-                            android:id="@+id/chipTarget0"
-                            style="@style/Widget.Material3.Chip.Filter"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Entity 0"
-                            android:checked="true" />
-
-                        <com.google.android.material.chip.Chip
-                            android:id="@+id/chipTarget1"
-                            style="@style/Widget.Material3.Chip.Filter"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Entity 1" />
-
-                        <com.google.android.material.chip.Chip
-                            android:id="@+id/chipTarget2"
-                            style="@style/Widget.Material3.Chip.Filter"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Entity 2" />
-
-                        <com.google.android.material.chip.Chip
-                            android:id="@+id/chipTarget3"
-                            style="@style/Widget.Material3.Chip.Filter"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Entity 3" />
-
-                    </com.google.android.material.chip.ChipGroup>
                 </HorizontalScrollView>
 
                 <!-- Voice Recording Panel (hidden by default) -->

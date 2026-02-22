@@ -177,7 +177,7 @@ class LayoutPreferences private constructor(context: Context) {
      */
     fun clearAllCustomPositions() {
         val editor = prefs.edit()
-        for (i in 0..3) {
+        for (i in 0..7) {
             editor.remove("${KEY_CUSTOM_POS_PREFIX}$i")
         }
         editor.apply()
@@ -203,7 +203,7 @@ class LayoutPreferences private constructor(context: Context) {
      */
     fun clearAllEntityScales() {
         val editor = prefs.edit()
-        for (i in 0..3) {
+        for (i in 0..7) {
             editor.remove("${KEY_ENTITY_SCALE_PREFIX}$i")
         }
         editor.apply()

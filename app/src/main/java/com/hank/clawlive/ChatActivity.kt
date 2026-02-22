@@ -36,6 +36,7 @@ import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.EntityAvatarManager
 import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.local.UsageManager
+import com.hank.clawlive.ui.EntityChipHelper
 import com.hank.clawlive.data.local.database.ChatMessage
 import com.hank.clawlive.data.remote.ClawApiService
 import com.hank.clawlive.data.remote.NetworkModule
@@ -76,16 +77,10 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var layoutEmpty: LinearLayout
     private lateinit var chipGroupFilter: ChipGroup
     private lateinit var chipAll: Chip
-    private lateinit var chipEntity0: Chip
-    private lateinit var chipEntity1: Chip
-    private lateinit var chipEntity2: Chip
-    private lateinit var chipEntity3: Chip
+    private var filterEntityChips: Map<Int, Chip> = emptyMap()
     private lateinit var chipMyMessages: Chip
     private lateinit var chipGroupTargets: ChipGroup
-    private lateinit var chipTarget0: Chip
-    private lateinit var chipTarget1: Chip
-    private lateinit var chipTarget2: Chip
-    private lateinit var chipTarget3: Chip
+    private var targetChips: Map<Int, Chip> = emptyMap()
     private lateinit var inputSection: LinearLayout
 
     // Voice recording UI
@@ -182,16 +177,11 @@ class ChatActivity : AppCompatActivity() {
         layoutEmpty = findViewById(R.id.layoutEmpty)
         chipGroupFilter = findViewById(R.id.chipGroupFilter)
         chipAll = findViewById(R.id.chipAll)
-        chipEntity0 = findViewById(R.id.chipEntity0)
-        chipEntity1 = findViewById(R.id.chipEntity1)
-        chipEntity2 = findViewById(R.id.chipEntity2)
-        chipEntity3 = findViewById(R.id.chipEntity3)
         chipMyMessages = findViewById(R.id.chipMyMessages)
+        // Insert entity filter chips between "All" (index 0) and "My Messages" (index 1)
+        filterEntityChips = EntityChipHelper.insertAt(this, chipGroupFilter, 1, labelFormat = { "Entity $it" })
         chipGroupTargets = findViewById(R.id.chipGroupTargets)
-        chipTarget0 = findViewById(R.id.chipTarget0)
-        chipTarget1 = findViewById(R.id.chipTarget1)
-        chipTarget2 = findViewById(R.id.chipTarget2)
-        chipTarget3 = findViewById(R.id.chipTarget3)
+        targetChips = EntityChipHelper.populate(this, chipGroupTargets, checkedByDefault = -1, labelFormat = { "Entity $it" })
         inputSection = findViewById(R.id.inputSection)
         voiceRecordingPanel = findViewById(R.id.voiceRecordingPanel)
         tvRecordingTime = findViewById(R.id.tvRecordingTime)
@@ -262,8 +252,7 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun setupTargetChips() {
-        val targetChipMap = mapOf(0 to chipTarget0, 1 to chipTarget1, 2 to chipTarget2, 3 to chipTarget3)
-        targetChipMap.values.forEach { it.visibility = View.GONE }
+        targetChips.values.forEach { it.visibility = View.GONE }
 
         // Restore last selected targets (null = first time, default all checked)
         val savedTargets = chatPrefs.lastMessageEntityIds
@@ -282,7 +271,7 @@ class ChatActivity : AppCompatActivity() {
                 }
                 chatAdapter.entityNames = nameMap
 
-                targetChipMap.forEach { (id, chip) ->
+                targetChips.forEach { (id, chip) ->
                     if (id in boundIds) {
                         chip.visibility = View.VISIBLE
                         chip.isChecked = savedTargets?.contains(id) ?: true
@@ -301,7 +290,7 @@ class ChatActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load bound entities for target chips")
                 val registeredIds = layoutPrefs.getRegisteredEntityIds()
-                targetChipMap.forEach { (id, chip) ->
+                targetChips.forEach { (id, chip) ->
                     if (id in registeredIds) {
                         chip.visibility = View.VISIBLE
                         chip.isChecked = savedTargets?.contains(id) ?: true
@@ -592,10 +581,7 @@ class ChatActivity : AppCompatActivity() {
                 showAll = true
                 showOnlyMyMessages = false
                 filterEntityIds.clear()
-                chipEntity0.isChecked = false
-                chipEntity1.isChecked = false
-                chipEntity2.isChecked = false
-                chipEntity3.isChecked = false
+                filterEntityChips.values.forEach { it.isChecked = false }
                 chipMyMessages.isChecked = false
                 refreshMessages()
             }
@@ -607,25 +593,21 @@ class ChatActivity : AppCompatActivity() {
                 showOnlyMyMessages = true
                 filterEntityIds.clear()
                 chipAll.isChecked = false
-                chipEntity0.isChecked = false
-                chipEntity1.isChecked = false
-                chipEntity2.isChecked = false
-                chipEntity3.isChecked = false
+                filterEntityChips.values.forEach { it.isChecked = false }
                 refreshMessages()
             }
         }
 
-        val entityChips = listOf(chipEntity0, chipEntity1, chipEntity2, chipEntity3)
-        entityChips.forEachIndexed { index, chip ->
+        filterEntityChips.forEach { (entityId, chip) ->
             chip.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
                     showAll = false
                     showOnlyMyMessages = false
-                    filterEntityIds.add(index)
+                    filterEntityIds.add(entityId)
                     chipAll.isChecked = false
                     chipMyMessages.isChecked = false
                 } else {
-                    filterEntityIds.remove(index)
+                    filterEntityIds.remove(entityId)
                     if (filterEntityIds.isEmpty() && !showOnlyMyMessages) {
                         showAll = true
                         chipAll.isChecked = true
@@ -692,8 +674,7 @@ class ChatActivity : AppCompatActivity() {
         chipAll.visibility = View.VISIBLE
         chipMyMessages.visibility = View.VISIBLE
 
-        val entityChipMap = mapOf(0 to chipEntity0, 1 to chipEntity1, 2 to chipEntity2, 3 to chipEntity3)
-        entityChipMap.forEach { (id, chip) ->
+        filterEntityChips.forEach { (id, chip) ->
             if (id in entityIds) {
                 chip.visibility = View.VISIBLE
                 val name = chatAdapter.entityNames[id]
@@ -737,17 +718,15 @@ class ChatActivity : AppCompatActivity() {
 
     private fun getSelectedTargets(): List<Int> {
         val selected = mutableListOf<Int>()
-        if (chipTarget0.isChecked) selected.add(0)
-        if (chipTarget1.isChecked) selected.add(1)
-        if (chipTarget2.isChecked) selected.add(2)
-        if (chipTarget3.isChecked) selected.add(3)
+        targetChips.forEach { (entityId, chip) ->
+            if (chip.isChecked) selected.add(entityId)
+        }
 
         // Fallback: if nothing selected but entities are bound, auto-select all bound
         if (selected.isEmpty()) {
-            if (chipTarget0.visibility == View.VISIBLE) selected.add(0)
-            if (chipTarget1.visibility == View.VISIBLE) selected.add(1)
-            if (chipTarget2.visibility == View.VISIBLE) selected.add(2)
-            if (chipTarget3.visibility == View.VISIBLE) selected.add(3)
+            targetChips.forEach { (entityId, chip) ->
+                if (chip.visibility == View.VISIBLE) selected.add(entityId)
+            }
         }
         return selected
     }

@@ -26,43 +26,14 @@
         android:textSize="14sp"
         android:layout_marginBottom="8dp"/>
 
+    <!-- Entity chips populated dynamically by EntityChipHelper -->
     <com.google.android.material.chip.ChipGroup
         android:id="@+id/chipGroupEntities"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:singleSelection="false"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="16dp"/>
 
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipEntity0"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="🦞 #0"
-            android:checked="true"
-            style="@style/Widget.Material3.Chip.Filter"/>
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipEntity1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="🐷 #1"
-            style="@style/Widget.Material3.Chip.Filter"/>
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipEntity2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="🦞 #2"
-            style="@style/Widget.Material3.Chip.Filter"/>
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chipEntity3"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="🐷 #3"
-            style="@style/Widget.Material3.Chip.Filter"/>
-
-    </com.google.android.material.chip.ChipGroup>
 
     <!-- Message Input -->
     <com.google.android.material.textfield.TextInputLayout

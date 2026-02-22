@@ -66,43 +66,14 @@
             android:textColor="#888888"
             android:layout_marginBottom="8dp" />
 
+        <!-- Entity chips populated dynamically by EntityChipHelper -->
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/chipGroupEntity"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:singleSelection="true"
-            app:selectionRequired="true">
+            app:selectionRequired="true"/>
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipEntity0"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="#0"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:checked="true" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipEntity1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="#1"
-                style="@style/Widget.Material3.Chip.Filter" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipEntity2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="#2"
-                style="@style/Widget.Material3.Chip.Filter" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipEntity3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="#3"
-                style="@style/Widget.Material3.Chip.Filter" />
-
-        </com.google.android.material.chip.ChipGroup>
 
     </LinearLayout>
 

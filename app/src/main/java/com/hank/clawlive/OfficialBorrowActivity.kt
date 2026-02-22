@@ -20,6 +20,7 @@ import com.google.android.material.chip.ChipGroup
 import com.hank.clawlive.billing.BillingManager
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.LayoutPreferences
+import com.hank.clawlive.ui.EntityChipHelper
 import com.hank.clawlive.data.model.BorrowBinding
 import com.hank.clawlive.data.model.OfficialBorrowStatusResponse
 import com.hank.clawlive.data.remote.NetworkModule
@@ -37,6 +38,7 @@ class OfficialBorrowActivity : AppCompatActivity() {
     private val billingManager by lazy { BillingManager.getInstance(this) }
 
     private lateinit var chipGroupEntity: ChipGroup
+    private var entityChips: Map<Int, Chip> = emptyMap()
     private lateinit var loadingOverlay: View
     private lateinit var progressLoading: ProgressBar
     private lateinit var tvLoadingStatus: TextView
@@ -93,6 +95,7 @@ class OfficialBorrowActivity : AppCompatActivity() {
         findViewById<ImageButton>(R.id.btnBack).setOnClickListener { finish() }
 
         chipGroupEntity = findViewById(R.id.chipGroupEntity)
+        entityChips = EntityChipHelper.populate(this, chipGroupEntity)
         loadingOverlay = findViewById(R.id.loadingOverlay)
         progressLoading = findViewById(R.id.progressLoading)
         tvLoadingStatus = findViewById(R.id.tvLoadingStatus)
@@ -107,13 +110,7 @@ class OfficialBorrowActivity : AppCompatActivity() {
         chipGroupEntity.setOnCheckedStateChangeListener { _, checkedIds ->
             if (checkedIds.isNotEmpty()) {
                 val chipId = checkedIds.first()
-                selectedEntityId = when (chipId) {
-                    R.id.chipEntity0 -> 0
-                    R.id.chipEntity1 -> 1
-                    R.id.chipEntity2 -> 2
-                    R.id.chipEntity3 -> 3
-                    else -> 0
-                }
+                selectedEntityId = entityChips.entries.find { it.value.id == chipId }?.key ?: 0
                 updateButtonStates()
             }
         }

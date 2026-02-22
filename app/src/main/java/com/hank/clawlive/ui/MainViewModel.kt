@@ -61,7 +61,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * Select which entity to register (0-3)
      */
     fun selectEntity(entityId: Int) {
-        if (entityId in 0..3) {
+        val limit = EntityChipHelper.getEntityLimit(getApplication())
+        if (entityId in 0 until limit) {
             _uiState.value = _uiState.value.copy(
                 selectedEntityId = entityId,
                 bindingCode = null // Clear previous code when switching entity

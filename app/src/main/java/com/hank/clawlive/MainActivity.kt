@@ -30,6 +30,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.EntityAvatarManager
@@ -40,6 +41,7 @@ import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.data.repository.StateRepository
 import com.hank.clawlive.ui.EntityCardAdapter
+import com.hank.clawlive.ui.EntityChipHelper
 import com.hank.clawlive.ui.MainViewModel
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import kotlinx.coroutines.delay
@@ -91,6 +93,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvUsageStatus: TextView
     private lateinit var btnOfficialBorrow: MaterialButton
 
+    private var entityChips: Map<Int, Chip> = emptyMap()
     private var boundEntities: List<EntityStatus> = emptyList()
     private var isAddEntityExpanded = false
     private var isEditMode = false
@@ -150,6 +153,7 @@ class MainActivity : AppCompatActivity() {
         addEntityContent = findViewById(R.id.addEntityContent)
         ivExpandArrow = findViewById(R.id.ivExpandArrow)
         chipGroupEntity = findViewById(R.id.chipGroupEntity)
+        entityChips = EntityChipHelper.populate(this, chipGroupEntity)
         tvBindingCode = findViewById(R.id.tvBindingCode)
         tvCountdown = findViewById(R.id.tvCountdown)
         btnGenerateCode = findViewById(R.id.btnGenerateCode)
@@ -274,13 +278,8 @@ class MainActivity : AppCompatActivity() {
         // Entity selection chips
         chipGroupEntity.setOnCheckedStateChangeListener { _, checkedIds ->
             if (checkedIds.isNotEmpty()) {
-                val selectedEntityId = when (checkedIds[0]) {
-                    R.id.chipEntity0 -> 0
-                    R.id.chipEntity1 -> 1
-                    R.id.chipEntity2 -> 2
-                    R.id.chipEntity3 -> 3
-                    else -> 0
-                }
+                val chipId = checkedIds[0]
+                val selectedEntityId = entityChips.entries.find { it.value.id == chipId }?.key ?: 0
                 viewModel.selectEntity(selectedEntityId)
             }
         }
@@ -399,13 +398,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getSelectedEntityId(): Int {
-        return when (chipGroupEntity.checkedChipId) {
-            R.id.chipEntity0 -> 0
-            R.id.chipEntity1 -> 1
-            R.id.chipEntity2 -> 2
-            R.id.chipEntity3 -> 3
-            else -> 0
-        }
+        val checkedId = chipGroupEntity.checkedChipId
+        return entityChips.entries.find { it.value.id == checkedId }?.key ?: 0
     }
 
     private fun updateAgentCards() {
@@ -782,13 +776,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateBindingUi(state: com.hank.clawlive.ui.BindingUiState) {
         // Update chip selection
-        val selectedChipId = when (state.selectedEntityId) {
-            0 -> R.id.chipEntity0
-            1 -> R.id.chipEntity1
-            2 -> R.id.chipEntity2
-            3 -> R.id.chipEntity3
-            else -> R.id.chipEntity0
-        }
+        val selectedChip = entityChips[state.selectedEntityId] ?: entityChips[0]
+        val selectedChipId = selectedChip?.id ?: return
         if (chipGroupEntity.checkedChipId != selectedChipId) {
             chipGroupEntity.check(selectedChipId)
         }

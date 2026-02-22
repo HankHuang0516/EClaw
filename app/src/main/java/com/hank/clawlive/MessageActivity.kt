@@ -13,6 +13,7 @@ import com.google.android.material.textfield.TextInputEditText
 import com.hank.clawlive.data.local.ChatPreferences
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.UsageManager
+import com.hank.clawlive.ui.EntityChipHelper
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.ClawApiService
 import com.hank.clawlive.data.repository.ChatRepository
@@ -29,10 +30,7 @@ class MessageActivity : AppCompatActivity() {
     private val chatRepository: ChatRepository by lazy { ChatRepository.getInstance(this) }
 
     private lateinit var chipGroupEntities: ChipGroup
-    private lateinit var chipEntity0: Chip
-    private lateinit var chipEntity1: Chip
-    private lateinit var chipEntity2: Chip
-    private lateinit var chipEntity3: Chip
+    private var entityChips: Map<Int, Chip> = emptyMap()
     private lateinit var editMessage: TextInputEditText
     private lateinit var btnSend: MaterialButton
     private lateinit var btnCancel: MaterialButton
@@ -57,10 +55,7 @@ class MessageActivity : AppCompatActivity() {
 
     private fun initViews() {
         chipGroupEntities = findViewById(R.id.chipGroupEntities)
-        chipEntity0 = findViewById(R.id.chipEntity0)
-        chipEntity1 = findViewById(R.id.chipEntity1)
-        chipEntity2 = findViewById(R.id.chipEntity2)
-        chipEntity3 = findViewById(R.id.chipEntity3)
+        entityChips = EntityChipHelper.populate(this, chipGroupEntities, checkedByDefault = -1)
         editMessage = findViewById(R.id.edit_message)
         btnSend = findViewById(R.id.btn_send)
         btnCancel = findViewById(R.id.btn_cancel)
@@ -108,10 +103,9 @@ class MessageActivity : AppCompatActivity() {
                 val boundIds = response.entities.map { it.entityId }.toSet()
 
                 // Update chip states based on bound entities
-                updateChipState(chipEntity0, 0, boundIds)
-                updateChipState(chipEntity1, 1, boundIds)
-                updateChipState(chipEntity2, 2, boundIds)
-                updateChipState(chipEntity3, 3, boundIds)
+                entityChips.forEach { (entityId, chip) ->
+                    updateChipState(chip, entityId, boundIds)
+                }
 
                 // If no entities are bound, show message
                 if (boundIds.isEmpty()) {
@@ -140,17 +134,15 @@ class MessageActivity : AppCompatActivity() {
      */
     private fun getSelectedEntityIds(): List<Int> {
         val selected = mutableListOf<Int>()
-        if (chipEntity0.isChecked) selected.add(0)
-        if (chipEntity1.isChecked) selected.add(1)
-        if (chipEntity2.isChecked) selected.add(2)
-        if (chipEntity3.isChecked) selected.add(3)
+        entityChips.forEach { (entityId, chip) ->
+            if (chip.isChecked) selected.add(entityId)
+        }
 
         // Fallback: if nothing selected but entities are enabled (bound), auto-select all
         if (selected.isEmpty()) {
-            if (chipEntity0.isEnabled) selected.add(0)
-            if (chipEntity1.isEnabled) selected.add(1)
-            if (chipEntity2.isEnabled) selected.add(2)
-            if (chipEntity3.isEnabled) selected.add(3)
+            entityChips.forEach { (entityId, chip) ->
+                if (chip.isEnabled) selected.add(entityId)
+            }
         }
         return selected
     }
