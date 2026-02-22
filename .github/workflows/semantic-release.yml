@@ -1,0 +1,66 @@
+name: Semantic Release
+
+# Automatically analyzes commits on main, bumps version, generates
+# CHANGELOG.md, and creates a GitHub Release.
+#
+# Commit message convention (Angular preset):
+#   feat: add feature          → minor bump (1.x.0)
+#   fix: fix bug               → patch bump (1.0.x)
+#   feat!: breaking change     → major bump (x.0.0)
+#   BREAKING CHANGE: ...       → major bump
+#   docs/style/refactor/test/chore → no release
+#
+# Required secrets:
+#   GITHUB_TOKEN — automatically provided by GitHub Actions (no setup needed)
+
+on:
+  push:
+    branches: [main]
+    # Only run when code actually changes (not on release commits themselves)
+    paths-ignore:
+      - 'CHANGELOG.md'
+      - 'release_v*/**'
+
+jobs:
+  release:
+    name: Semantic Release
+    runs-on: ubuntu-latest
+    # Skip release commits created by semantic-release itself
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+
+    permissions:
+      contents: write      # push tags + update CHANGELOG.md
+      issues: write        # close issues referenced in commits
+      pull-requests: write # comment on PRs
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Fetch full history so semantic-release can analyze all commits
+          fetch-depth: 0
+          # Use a PAT or the default GITHUB_TOKEN
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install semantic-release + plugins
+        run: |
+          npm install --no-save \
+            semantic-release@24 \
+            @semantic-release/commit-analyzer@13 \
+            @semantic-release/release-notes-generator@14 \
+            @semantic-release/changelog@6 \
+            @semantic-release/git@10 \
+            @semantic-release/github@10
+
+      - name: Run semantic-release
+        run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GIT_AUTHOR_NAME / GIT_COMMITTER_NAME for the release commit
+          GIT_AUTHOR_NAME: 'github-actions[bot]'
+          GIT_AUTHOR_EMAIL: 'github-actions[bot]@users.noreply.github.com'
+          GIT_COMMITTER_NAME: 'github-actions[bot]'
+          GIT_COMMITTER_EMAIL: 'github-actions[bot]@users.noreply.github.com'
