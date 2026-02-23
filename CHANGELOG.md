@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/HankHuang0516/realbot/compare/v1.9.0...v1.10.0) (2026-02-23)
+
+
+### Features
+
+* show payment maintenance notice for TapPay features on Web Portal ([1af5365](https://github.com/HankHuang0516/realbot/commit/1af5365ea315d6829eef9899c2dc48f101fec8da))
+
 # [1.9.0](https://github.com/HankHuang0516/realbot/compare/v1.8.0...v1.9.0) (2026-02-23)
 
 
