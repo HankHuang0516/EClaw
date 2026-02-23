@@ -4630,6 +4630,8 @@ chatPool.query(`
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS delivered_to TEXT DEFAULT NULL;
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS media_type VARCHAR(16) DEFAULT NULL;
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS media_url TEXT DEFAULT NULL;
+    ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS schedule_id INT DEFAULT NULL;
+    ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS schedule_label TEXT DEFAULT NULL;
 `).catch(() => {});
 
 // ============================================
@@ -4657,7 +4659,7 @@ async function executeScheduledMessage(schedule) {
     };
     if (!entity.messageQueue) entity.messageQueue = [];
     entity.messageQueue.push(messageObj);
-    saveChatMessage(deviceId, entityId, message, 'scheduled', true, false);
+    saveChatMessage(deviceId, entityId, message, 'scheduled', true, false, null, null, schedule.id, schedule.label || null);
 
     console.log(`[Scheduler] Sent to device ${deviceId} entity ${entityId}: "${message}"`);
 
@@ -4735,6 +4737,60 @@ app.get('/api/schedule-executions', async (req, res) => {
         });
         res.json({ success: true, schedules: executions });
     } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// GET /api/schedule-executions/:executionId/context - Get scheduled message + bot reply
+app.get('/api/schedule-executions/:executionId/context', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query;
+    const { executionId } = req.params;
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    try {
+        // Get the execution record
+        const execResult = await chatPool.query(
+            `SELECT * FROM schedule_executions WHERE id = $1 AND device_id = $2`,
+            [executionId, deviceId]
+        );
+        if (execResult.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Execution not found' });
+        }
+        const execution = execResult.rows[0];
+
+        // Find the scheduled chat message (source='scheduled', around execution time)
+        const scheduledMsg = await chatPool.query(
+            `SELECT * FROM chat_messages
+             WHERE device_id = $1 AND entity_id = $2 AND source = 'scheduled'
+             AND created_at BETWEEN ($3::timestamptz - INTERVAL '30 seconds') AND ($3::timestamptz + INTERVAL '30 seconds')
+             ORDER BY ABS(EXTRACT(EPOCH FROM (created_at - $3::timestamptz)))
+             LIMIT 1`,
+            [deviceId, execution.entity_id, execution.executed_at]
+        );
+
+        // Find bot replies to this entity within 5 minutes after execution
+        const botReplies = await chatPool.query(
+            `SELECT * FROM chat_messages
+             WHERE device_id = $1 AND entity_id = $2 AND is_from_bot = true
+             AND created_at > $3::timestamptz AND created_at < ($3::timestamptz + INTERVAL '5 minutes')
+             ORDER BY created_at ASC
+             LIMIT 5`,
+            [deviceId, execution.entity_id, execution.executed_at]
+        );
+
+        res.json({
+            success: true,
+            execution,
+            scheduledMessage: scheduledMsg.rows[0] || null,
+            botReplies: botReplies.rows
+        });
+    } catch (err) {
+        console.error('[Schedule] Context error:', err.message);
         res.status(500).json({ success: false, error: err.message });
     }
 });
@@ -4870,7 +4926,7 @@ app.delete('/api/bot/schedules/:id', async (req, res) => {
 
 // Save chat message to database, returns row ID (UUID) or null
 // Deduplication: bot messages with identical text for the same entity within 10s are skipped
-async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null) {
+async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null) {
     try {
         // Dedup: skip if the same bot message was already saved recently
         // This prevents echo when bot calls multiple endpoints (broadcast + sync-message + transform)
@@ -4889,9 +4945,9 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
         }
 
         const result = await chatPool.query(
-            `INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot, media_type, media_url)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-            [deviceId, entityId, text, source, isFromUser || false, isFromBot || false, mediaType, mediaUrl]
+            `INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot, media_type, media_url, schedule_id, schedule_label)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+            [deviceId, entityId, text, source, isFromUser || false, isFromBot || false, mediaType, mediaUrl, scheduleId, scheduleLabel]
         );
         return result.rows[0]?.id || null;
     } catch (err) {

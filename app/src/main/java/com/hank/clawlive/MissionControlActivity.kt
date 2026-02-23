@@ -685,7 +685,10 @@ class MissionControlActivity : AppCompatActivity() {
             }
         }
 
-        if (items.isEmpty()) return
+        if (items.isEmpty()) {
+            Toast.makeText(this, getString(R.string.task_saved), Toast.LENGTH_SHORT).show()
+            return
+        }
 
         val labels = items.map { item ->
             val entityLabel = item.entityIds.joinToString(", ") { id ->
@@ -726,7 +729,9 @@ class MissionControlActivity : AppCompatActivity() {
                 startActivity(Intent(this, ChatActivity::class.java))
                 Toast.makeText(this, getString(R.string.notification_sent), Toast.LENGTH_SHORT).show()
             }
-            .setNegativeButton("跳過", null)
+            .setNegativeButton("跳過") { _, _ ->
+                Toast.makeText(this, getString(R.string.task_saved), Toast.LENGTH_SHORT).show()
+            }
             .show()
     }
 

@@ -82,6 +82,7 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
      * ViewHolder for sent messages (right-aligned, green bubble)
      */
     class SentMessageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val tvScheduleTag: TextView = itemView.findViewById(R.id.tvScheduleTag)
         private val tvMessage: TextView = itemView.findViewById(R.id.tvMessage)
         private val tvTime: TextView = itemView.findViewById(R.id.tvTime)
         private val tvTargets: TextView = itemView.findViewById(R.id.tvTargets)
@@ -102,6 +103,19 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
             itemView.setOnLongClickListener {
                 copyToClipboard(it, message.text)
                 true
+            }
+
+            // Show schedule tag for scheduled messages
+            if (message.source == "scheduled") {
+                val label = if (!message.scheduleLabel.isNullOrBlank()) {
+                    "\uD83D\uDCC5 ${itemView.context.getString(R.string.schedule_tag)}: ${message.scheduleLabel}"
+                } else {
+                    "\uD83D\uDCC5 ${itemView.context.getString(R.string.schedule_tag)}"
+                }
+                tvScheduleTag.text = label
+                tvScheduleTag.visibility = View.VISIBLE
+            } else {
+                tvScheduleTag.visibility = View.GONE
             }
 
             // Handle media types

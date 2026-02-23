@@ -34,3 +34,33 @@ data class ScheduleDeleteResponse(
     val success: Boolean,
     val error: String? = null
 )
+
+data class ExecutionContextResponse(
+    val success: Boolean,
+    val execution: ExecutionDetail? = null,
+    val scheduledMessage: ExecutionChatMessage? = null,
+    val botReplies: List<ExecutionChatMessage> = emptyList(),
+    val error: String? = null
+)
+
+data class ExecutionDetail(
+    val id: Int,
+    @SerializedName("schedule_id") val scheduleId: Int?,
+    @SerializedName("device_id") val deviceId: String,
+    @SerializedName("entity_id") val entityId: Int,
+    val message: String,
+    @SerializedName("executed_at") val executedAt: String?,
+    val result: String? = null,
+    @SerializedName("result_status") val resultStatus: String? = null,
+    val label: String? = null
+)
+
+data class ExecutionChatMessage(
+    val id: String,
+    @SerializedName("entity_id") val entityId: Int?,
+    val text: String,
+    val source: String? = null,
+    @SerializedName("created_at") val createdAt: String?,
+    @SerializedName("is_from_bot") val isFromBot: Boolean = false,
+    @SerializedName("schedule_label") val scheduleLabel: String? = null
+)

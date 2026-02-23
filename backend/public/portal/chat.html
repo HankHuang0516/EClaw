@@ -1064,6 +1064,13 @@
                 if (msg.source && msg.source.startsWith('mission_notify')) {
                     return 'Mission Control';
                 }
+                // Scheduled message
+                if (msg.source === 'scheduled') {
+                    const schedLabel = msg.schedule_label
+                        ? `${i18n.t('chat_schedule_tag')}: ${escapeHtml(msg.schedule_label)}`
+                        : i18n.t('chat_schedule_tag');
+                    return `📅 ${schedLabel} &rarr; ${entityHtml}`;
+                }
                 // Determine source tag
                 const src = msg.source || 'client';
                 let sourceTag = src;

@@ -65,7 +65,10 @@ data class ChatMessage(
     val mediaType: String? = null,
 
     /** Media URL: Flickr URL for photos, base64 data URI for voice */
-    val mediaUrl: String? = null
+    val mediaUrl: String? = null,
+
+    /** Schedule label when source='scheduled' (from schedule_label field) */
+    val scheduleLabel: String? = null
 ) {
     /**
      * Get display name for the message sender

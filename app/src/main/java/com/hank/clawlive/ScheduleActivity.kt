@@ -81,7 +81,10 @@ class ScheduleActivity : AppCompatActivity() {
             showActions = true,
             onDelete = { confirmDelete(it) }
         )
-        historyAdapter = ScheduleAdapter(showActions = false)
+        historyAdapter = ScheduleAdapter(
+            showActions = false,
+            onItemClick = { showExecutionContext(it) }
+        )
 
         findViewById<RecyclerView>(R.id.rvUpcoming).apply {
             layoutManager = LinearLayoutManager(this@ScheduleActivity)
@@ -358,6 +361,54 @@ class ScheduleActivity : AppCompatActivity() {
                 Toast.makeText(this@ScheduleActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             } finally {
                 setLoading(false)
+            }
+        }
+    }
+
+    private fun showExecutionContext(item: ScheduleItem) {
+        lifecycleScope.launch {
+            try {
+                val data = api.getExecutionContext(
+                    executionId = item.id,
+                    deviceId = deviceManager.deviceId,
+                    deviceSecret = deviceManager.deviceSecret
+                )
+                if (!data.success) {
+                    Toast.makeText(this@ScheduleActivity, data.error ?: "Failed", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+
+                val exec = data.execution ?: return@launch
+                val replies = data.botReplies
+
+                val entityName = historyAdapter.entityNames[exec.entityId] ?: "Entity ${exec.entityId}"
+                val sb = StringBuilder()
+
+                // Scheduled message info
+                sb.appendLine("\uD83D\uDCC5 ${getString(R.string.schedule_message_label)}")
+                if (!exec.label.isNullOrBlank()) sb.appendLine(exec.label)
+                sb.appendLine(exec.message)
+                sb.appendLine()
+
+                // Bot replies
+                sb.appendLine("\uD83D\uDCAC ${getString(R.string.schedule_bot_reply)}")
+                if (replies.isNotEmpty()) {
+                    replies.forEach { reply ->
+                        val time = reply.createdAt?.take(16)?.replace("T", " ") ?: ""
+                        sb.appendLine("[$time] ${reply.text}")
+                    }
+                } else {
+                    sb.appendLine(getString(R.string.schedule_no_reply))
+                }
+
+                AlertDialog.Builder(this@ScheduleActivity)
+                    .setTitle("\uD83D\uDCC5 $entityName")
+                    .setMessage(sb.toString().trimEnd())
+                    .setPositiveButton("OK", null)
+                    .show()
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to load execution context")
+                Toast.makeText(this@ScheduleActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }

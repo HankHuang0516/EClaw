@@ -57,6 +57,12 @@
     <string name="language_system">系統預設</string>
     <string name="language_en">English</string>
     <string name="language_zh">中文 (繁體)</string>
+    <string name="language_zh_cn">简体中文</string>
+    <string name="language_ja">日本語</string>
+    <string name="language_ko">한국어</string>
+    <string name="language_th">ภาษาไทย</string>
+    <string name="language_vi">Tiếng Việt</string>
+    <string name="language_id">Bahasa Indonesia</string>
 
     <!-- Wallpaper Preview -->
     <string name="wallpaper_preview_title">桌布預覽</string>
@@ -141,6 +147,11 @@
     <string name="failed_add_slot">新增欄位失敗</string>
     <string name="no_bound_entities">沒有綁定的實體</string>
     <string name="notification_sent">通知已發送</string>
+    <string name="task_saved">任務已儲存</string>
+    <string name="schedule_tag">排程</string>
+    <string name="schedule_bot_reply">Bot 回覆</string>
+    <string name="schedule_no_reply">尚無回覆</string>
+    <string name="schedule_message_label">排程訊息</string>
     <string name="enter_message">請輸入訊息</string>
     <string name="select_one_entity">請至少選擇一個實體</string>
     <string name="entity_id_format">#%d</string>

@@ -605,7 +605,11 @@
                       '</div>'
                     : '';
 
-                return '<div class="sched-item status-' + statusClass + '">' +
+                const clickAttr = !showActions && s.id
+                    ? ' onclick="showExecutionContext(' + s.id + ')" style="cursor:pointer;" title="' + (i18n.t('sched_view_reply') || 'View Bot Reply') + '"'
+                    : '';
+
+                return '<div class="sched-item status-' + statusClass + '"' + clickAttr + '>' +
                     '<div class="sched-row">' +
                     '<span class="sched-time">' + timeStr + '</span>' +
                     '<span class="sched-entity">' + esc(entityLabel) + '</span>' +
@@ -659,6 +663,56 @@
                 return hour.padStart(2, '0') + ':' + min.padStart(2, '0');
             }
             return expr;
+        }
+
+        // ── Execution Context Dialog (bot reply) ──
+        async function showExecutionContext(executionId) {
+            const c = document.getElementById('dialogContainer');
+            c.innerHTML = '<div class="dialog-overlay"><div class="dialog" style="max-width:480px;"><div style="text-align:center;padding:24px;">Loading...</div></div></div>';
+            try {
+                const data = await apiCall('GET',
+                    '/api/schedule-executions/' + executionId + '/context' +
+                    '?deviceId=' + encodeURIComponent(currentUser.deviceId) +
+                    '&deviceSecret=' + encodeURIComponent(currentUser.deviceSecret)
+                );
+                if (!data.success) throw new Error(data.error);
+
+                const exec = data.execution;
+                const entityLabel = getEntityLabel(exec.entity_id);
+                const schedMsg = data.scheduledMessage;
+                const replies = data.botReplies || [];
+
+                let html = '<div class="dialog-overlay" onclick="if(event.target===this)closeDialog()">';
+                html += '<div class="dialog" style="max-width:480px;">';
+                html += '<div class="dialog-title">📅 ' + (i18n.t('sched_scheduled_msg') || 'Scheduled Message') + '</div>';
+
+                // Scheduled message
+                html += '<div style="background:var(--bg-secondary);border-radius:8px;padding:12px;margin-bottom:12px;">';
+                html += '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">' + entityLabel + ' &middot; ' + formatTime(exec.executed_at) + '</div>';
+                if (exec.label) html += '<div style="font-size:11px;color:var(--primary);margin-bottom:4px;">' + esc(exec.label) + '</div>';
+                html += '<div style="font-size:14px;">' + esc(exec.message) + '</div>';
+                html += '</div>';
+
+                // Bot replies
+                html += '<div class="dialog-title" style="font-size:14px;margin-top:8px;">💬 ' + (i18n.t('sched_bot_reply') || 'Bot Reply') + '</div>';
+                if (replies.length > 0) {
+                    replies.forEach(r => {
+                        html += '<div style="background:var(--bg-secondary);border-radius:8px;padding:12px;margin-bottom:8px;">';
+                        html += '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">' + entityLabel + ' &middot; ' + formatTime(r.created_at) + '</div>';
+                        html += '<div style="font-size:14px;">' + esc(r.text) + '</div>';
+                        html += '</div>';
+                    });
+                } else {
+                    html += '<div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:16px 0;">' + (i18n.t('sched_no_reply') || 'No reply yet') + '</div>';
+                }
+
+                html += '<div class="dialog-actions"><button class="btn btn-outline" onclick="closeDialog()">OK</button></div>';
+                html += '</div></div>';
+                c.innerHTML = html;
+            } catch (err) {
+                closeDialog();
+                showToast(err.message || 'Failed to load', 'error');
+            }
         }
 
         // ── Create Dialog ──

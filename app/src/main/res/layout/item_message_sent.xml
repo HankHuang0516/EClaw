@@ -19,6 +19,18 @@
         android:paddingVertical="8dp">
 
         <TextView
+            android:id="@+id/tvScheduleTag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#CCFFFFFF"
+            android:textSize="10sp"
+            android:visibility="gone"
+            android:drawablePadding="4dp"
+            android:paddingBottom="4dp"
+            tools:text="📅 排程: Morning greeting"
+            tools:visibility="visible" />
+
+        <TextView
             android:id="@+id/tvMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

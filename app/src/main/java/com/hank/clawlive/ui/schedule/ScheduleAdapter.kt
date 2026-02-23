@@ -18,6 +18,7 @@ import java.util.TimeZone
 class ScheduleAdapter(
     private val showActions: Boolean = true,
     private val onDelete: ((ScheduleItem) -> Unit)? = null,
+    private val onItemClick: ((ScheduleItem) -> Unit)? = null,
     var entityNames: Map<Int, String> = emptyMap()
 ) : ListAdapter<ScheduleItem, ScheduleAdapter.ViewHolder>(DIFF) {
 
@@ -127,6 +128,11 @@ class ScheduleAdapter(
             holder.btnDelete.setOnClickListener { onDelete.invoke(item) }
         } else {
             holder.btnDelete.visibility = View.GONE
+        }
+
+        // Click listener for history items (to view bot reply)
+        if (!showActions && onItemClick != null) {
+            holder.itemView.setOnClickListener { onItemClick.invoke(item) }
         }
     }
 

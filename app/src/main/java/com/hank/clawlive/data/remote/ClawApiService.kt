@@ -248,6 +248,13 @@ interface ClawApiService {
         @Query("deviceSecret") deviceSecret: String
     ): ScheduleListResponse
 
+    @GET("api/schedule-executions/{executionId}/context")
+    suspend fun getExecutionContext(
+        @Path("executionId") executionId: Int,
+        @Query("deviceId") deviceId: String,
+        @Query("deviceSecret") deviceSecret: String
+    ): ExecutionContextResponse
+
     @POST("api/schedules")
     suspend fun createSchedule(
         @Body body: Map<String, @JvmSuppressWildcards Any?>
@@ -322,7 +329,8 @@ data class ChatHistoryMessage(
     val delivered_to: String? = null,
     val created_at: String, // ISO timestamp from PostgreSQL
     val media_type: String? = null,
-    val media_url: String? = null
+    val media_url: String? = null,
+    val schedule_label: String? = null
 )
 
 data class MediaUploadResponse(

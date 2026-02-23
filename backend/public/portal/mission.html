@@ -591,8 +591,8 @@
                     hasChanges = false;
                     renderSyncBar();
                     btn.textContent = i18n.t('mc_save');
-                    showToast(i18n.t('mc_sync_synced'), 'success');
                     // After save, check if there are changed notifiable items
+                    // (toast shown after user interacts with notify prompt)
                     showNotifyPrompt();
                     // Update snapshot after notify prompt captures its items
                     lastSavedDashboard = JSON.parse(JSON.stringify(dashboard));
@@ -706,7 +706,10 @@
 
         function showNotifyPrompt() {
             const items = getNotifiableItems();
-            if (items.length === 0) return;
+            if (items.length === 0) {
+                showToast(i18n.t('mc_task_saved'), 'success');
+                return;
+            }
 
             const c = document.getElementById('dialogContainer');
             const checkboxes = items.map((item, idx) =>
@@ -724,7 +727,7 @@
                     </div>
                     <div style="margin-bottom:12px;">${checkboxes}</div>
                     <div class="dialog-actions">
-                        <button class="btn btn-outline" onclick="closeDialog()">跳過</button>
+                        <button class="btn btn-outline" onclick="closeDialog(); showToast(i18n.t('mc_task_saved'), 'success')">跳過</button>
                         <button class="btn btn-primary" id="dlgNotifyBtn">發送通知</button>
                     </div>
                 </div>
