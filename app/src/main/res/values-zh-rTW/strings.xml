@@ -93,6 +93,14 @@
     <string name="no_messages_yet">目前沒有訊息</string>
     <string name="you">我</string>
     <string name="to_entities">發送至：%s</string>
+    <string name="uploading_media">上傳中…</string>
+    <string name="upload_error">上傳失敗</string>
+    <string name="attach">附件</string>
+    <string name="attach_camera">相機</string>
+    <string name="attach_gallery">相簿</string>
+    <string name="attach_file">檔案</string>
+    <string name="file_too_large">檔案過大（上限 100MB）</string>
+    <string name="wait_upload">請等待上傳完成</string>
 
     <!-- Bot Avatar -->
     <string name="bot_avatar">Bot 頭像</string>

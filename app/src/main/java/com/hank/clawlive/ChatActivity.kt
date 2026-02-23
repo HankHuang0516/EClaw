@@ -8,8 +8,12 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.View
 import android.view.inputmethod.EditorInfo
+import android.widget.HorizontalScrollView
+import android.widget.ImageView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -73,7 +77,7 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var chatAdapter: ChatAdapter
     private lateinit var editMessage: TextInputEditText
     private lateinit var btnSend: MaterialButton
-    private lateinit var btnPhoto: ImageButton
+    private lateinit var btnAttach: ImageButton
     private lateinit var btnVoice: ImageButton
     private lateinit var topBar: LinearLayout
     private lateinit var layoutEmpty: LinearLayout
@@ -95,14 +99,21 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var recyclerSlashCommands: RecyclerView
     private lateinit var slashCommandAdapter: SlashCommandAdapter
 
-    // Photo preview UI
-    private lateinit var photoPreviewBar: LinearLayout
-    private lateinit var ivPhotoPreview: android.widget.ImageView
-    private lateinit var tvPhotoPreviewInfo: TextView
-    private lateinit var btnRemovePhoto: ImageButton
+    // File preview UI
+    private lateinit var filePreviewScroll: HorizontalScrollView
+    private lateinit var filePreviewContainer: LinearLayout
 
-    // Pending photo state (uploaded but not yet sent)
-    private var pendingPhotoUrl: String? = null
+    // Pending files state (uploaded but not yet sent)
+    data class PendingFile(
+        val id: String,
+        val uri: Uri,
+        val fileName: String,
+        val type: String, // "photo" or "file"
+        var status: String = "uploading", // "uploading", "ready", "error"
+        var mediaUrl: String? = null
+    )
+    private val pendingFiles = mutableListOf<PendingFile>()
+    private val MAX_FILE_SIZE = 100L * 1024 * 1024 // 100MB
 
     // Voice recording state
     private var mediaRecorder: MediaRecorder? = null
@@ -121,11 +132,15 @@ class ChatActivity : AppCompatActivity() {
 
     // Activity result launchers
     private val cameraLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-        if (success) pendingPhotoUri?.let { uploadAndSendPhoto(it) }
+        if (success) pendingPhotoUri?.let { stageFile(it, "photo") }
     }
 
-    private val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { uploadAndSendPhoto(it) }
+    private val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+        uris.forEach { uri -> stageFile(uri, "photo") }
+    }
+
+    private val fileLauncher = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        uris.forEach { uri -> stageFile(uri, "file") }
     }
 
     private val cameraPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -174,7 +189,7 @@ class ChatActivity : AppCompatActivity() {
         recyclerChat = findViewById(R.id.recyclerChat)
         editMessage = findViewById(R.id.editMessage)
         btnSend = findViewById(R.id.btnSend)
-        btnPhoto = findViewById(R.id.btnPhoto)
+        btnAttach = findViewById(R.id.btnAttach)
         btnVoice = findViewById(R.id.btnVoice)
         topBar = findViewById(R.id.topBar)
         layoutEmpty = findViewById(R.id.layoutEmpty)
@@ -190,10 +205,8 @@ class ChatActivity : AppCompatActivity() {
         tvRecordingTime = findViewById(R.id.tvRecordingTime)
         btnCancelRecord = findViewById(R.id.btnCancelRecord)
         btnSendVoice = findViewById(R.id.btnSendVoice)
-        photoPreviewBar = findViewById(R.id.photoPreviewBar)
-        ivPhotoPreview = findViewById(R.id.ivPhotoPreview)
-        tvPhotoPreviewInfo = findViewById(R.id.tvPhotoPreviewInfo)
-        btnRemovePhoto = findViewById(R.id.btnRemovePhoto)
+        filePreviewScroll = findViewById(R.id.filePreviewScroll)
+        filePreviewContainer = findViewById(R.id.filePreviewContainer)
 
         // Slash command suggestions
         recyclerSlashCommands = findViewById(R.id.recyclerSlashCommands)
@@ -336,8 +349,8 @@ class ChatActivity : AppCompatActivity() {
             }
         })
 
-        // Photo button - show picker dialog
-        btnPhoto.setOnClickListener { showPhotoPickerDialog() }
+        // Attach (+) button - show picker dialog
+        btnAttach.setOnClickListener { showAttachPickerDialog() }
 
         // Voice button
         btnVoice.setOnClickListener {
@@ -348,9 +361,6 @@ class ChatActivity : AppCompatActivity() {
             }
         }
 
-        // Photo preview remove button
-        btnRemovePhoto.setOnClickListener { clearPendingPhoto() }
-
         // Voice recording controls
         btnCancelRecord.setOnClickListener { stopVoiceRecording(send = false) }
         btnSendVoice.setOnClickListener { stopVoiceRecording(send = true) }
@@ -358,10 +368,14 @@ class ChatActivity : AppCompatActivity() {
         setupFilterListeners()
     }
 
-    private fun showPhotoPickerDialog() {
-        val options = arrayOf("Camera", "Gallery")
+    private fun showAttachPickerDialog() {
+        val options = arrayOf(
+            getString(R.string.attach_camera),
+            getString(R.string.attach_gallery),
+            getString(R.string.attach_file)
+        )
         AlertDialog.Builder(this)
-            .setTitle("Select Photo")
+            .setTitle(getString(R.string.attach))
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> { // Camera
@@ -371,8 +385,11 @@ class ChatActivity : AppCompatActivity() {
                             cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                         }
                     }
-                    1 -> { // Gallery
+                    1 -> { // Gallery (multi-select)
                         galleryLauncher.launch("image/*")
+                    }
+                    2 -> { // File (multi-select)
+                        fileLauncher.launch(arrayOf("*/*"))
                     }
                 }
             }
@@ -386,56 +403,156 @@ class ChatActivity : AppCompatActivity() {
         cameraLauncher.launch(pendingPhotoUri)
     }
 
-    private fun clearPendingPhoto() {
-        pendingPhotoUrl = null
-        photoPreviewBar.visibility = View.GONE
-        ivPhotoPreview.setImageDrawable(null)
-    }
-
-    private fun uploadAndSendPhoto(uri: Uri) {
+    private fun stageFile(uri: Uri, type: String) {
         lifecycleScope.launch {
             try {
                 val inputStream = contentResolver.openInputStream(uri) ?: return@launch
                 val bytes = inputStream.readBytes()
                 inputStream.close()
 
-                if (bytes.size > 10 * 1024 * 1024) {
-                    Toast.makeText(this@ChatActivity, "Image too large (max 10MB)", Toast.LENGTH_SHORT).show()
+                if (bytes.size > MAX_FILE_SIZE) {
+                    Toast.makeText(this@ChatActivity, getString(R.string.file_too_large), Toast.LENGTH_SHORT).show()
                     return@launch
                 }
 
-                // Show preview immediately with local URI
-                photoPreviewBar.visibility = View.VISIBLE
-                ivPhotoPreview.setImageURI(uri)
-                tvPhotoPreviewInfo.text = getString(R.string.uploading_media)
+                // Determine file name and MIME type
+                val cursor = contentResolver.query(uri, null, null, null, null)
+                var displayName = "file"
+                cursor?.use {
+                    if (it.moveToFirst()) {
+                        val idx = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                        if (idx >= 0) displayName = it.getString(idx) ?: "file"
+                    }
+                }
+                val mimeType = contentResolver.getType(uri) ?: "application/octet-stream"
+                val isImage = mimeType.startsWith("image/")
+                val mediaType = if (isImage) "photo" else type
 
+                val id = "${System.currentTimeMillis()}_${(Math.random() * 100000).toInt()}"
+                val entry = PendingFile(id = id, uri = uri, fileName = displayName, type = mediaType)
+                pendingFiles.add(entry)
+                renderFilePreviewBar()
+
+                // Upload
                 val filePart = MultipartBody.Part.createFormData(
-                    "file", "photo.jpg",
-                    bytes.toRequestBody("image/jpeg".toMediaType())
+                    "file", displayName,
+                    bytes.toRequestBody(mimeType.toMediaType())
                 )
                 val uploadResponse = api.uploadMedia(
                     file = filePart,
                     deviceId = deviceManager.deviceId.toRequestBody("text/plain".toMediaType()),
                     deviceSecret = deviceManager.deviceSecret.toRequestBody("text/plain".toMediaType()),
-                    mediaType = "photo".toRequestBody("text/plain".toMediaType())
+                    mediaType = mediaType.toRequestBody("text/plain".toMediaType())
                 )
 
                 if (!uploadResponse.success || uploadResponse.mediaUrl == null) {
+                    entry.status = "error"
+                    renderFilePreviewBar()
                     Toast.makeText(this@ChatActivity, "Upload failed: ${uploadResponse.error}", Toast.LENGTH_SHORT).show()
-                    clearPendingPhoto()
                     return@launch
                 }
 
-                // Stage the photo — don't send yet, let user type caption
-                pendingPhotoUrl = uploadResponse.mediaUrl
-                tvPhotoPreviewInfo.text = "Photo ready — type a caption or press send"
+                entry.status = "ready"
+                entry.mediaUrl = uploadResponse.mediaUrl
+                renderFilePreviewBar()
                 editMessage.requestFocus()
 
             } catch (e: Exception) {
-                Timber.e(e, "Photo upload failed")
+                Timber.e(e, "File upload failed")
                 Toast.makeText(this@ChatActivity, "Upload failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                clearPendingPhoto()
             }
+        }
+    }
+
+    private fun removePendingFile(id: String) {
+        pendingFiles.removeAll { it.id == id }
+        renderFilePreviewBar()
+    }
+
+    private fun clearAllPendingFiles() {
+        pendingFiles.clear()
+        renderFilePreviewBar()
+    }
+
+    private fun renderFilePreviewBar() {
+        filePreviewContainer.removeAllViews()
+        if (pendingFiles.isEmpty()) {
+            filePreviewScroll.visibility = View.GONE
+            return
+        }
+        filePreviewScroll.visibility = View.VISIBLE
+
+        for (entry in pendingFiles) {
+            val itemView = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(8, 4, 8, 4)
+                val lp = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                lp.marginEnd = 8
+                layoutParams = lp
+                setBackgroundResource(R.drawable.bubble_received)
+            }
+
+            val isImage = entry.type == "photo"
+            if (isImage) {
+                val iv = ImageView(this).apply {
+                    layoutParams = LinearLayout.LayoutParams(48, 48)
+                    scaleType = ImageView.ScaleType.CENTER_CROP
+                    setImageURI(entry.uri)
+                }
+                itemView.addView(iv)
+            } else {
+                val icon = ImageView(this).apply {
+                    layoutParams = LinearLayout.LayoutParams(48, 48)
+                    setImageResource(R.drawable.ic_attach_file)
+                    setPadding(8, 8, 8, 8)
+                }
+                itemView.addView(icon)
+            }
+
+            val textCol = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                val lp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                lp.marginStart = 6
+                layoutParams = lp
+            }
+            val nameText = TextView(this).apply {
+                text = if (entry.fileName.length > 18) entry.fileName.take(15) + "..." else entry.fileName
+                textSize = 12f
+                setTextColor(0xFF333333.toInt())
+                maxLines = 1
+            }
+            textCol.addView(nameText)
+            if (entry.status == "uploading") {
+                val statusText = TextView(this).apply {
+                    text = getString(R.string.uploading_media)
+                    textSize = 10f
+                    setTextColor(0xFF999999.toInt())
+                }
+                textCol.addView(statusText)
+            } else if (entry.status == "error") {
+                val statusText = TextView(this).apply {
+                    text = getString(R.string.upload_error)
+                    textSize = 10f
+                    setTextColor(0xFFFF4444.toInt())
+                }
+                textCol.addView(statusText)
+            }
+            itemView.addView(textCol)
+
+            val removeBtn = ImageButton(this).apply {
+                layoutParams = LinearLayout.LayoutParams(28, 28)
+                setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
+                background = null
+                val fileId = entry.id
+                setOnClickListener { removePendingFile(fileId) }
+            }
+            itemView.addView(removeBtn)
+
+            filePreviewContainer.addView(itemView)
         }
     }
 
@@ -732,11 +849,18 @@ class ChatActivity : AppCompatActivity() {
 
     private fun sendMessage() {
         val text = editMessage.text.toString().trim()
-        val hasPhoto = pendingPhotoUrl != null
+        val readyFiles = pendingFiles.filter { it.status == "ready" }
+        val hasFiles = readyFiles.isNotEmpty()
 
-        // Must have text or a pending photo
-        if (text.isEmpty() && !hasPhoto) {
+        // Must have text or pending files
+        if (text.isEmpty() && !hasFiles) {
             Toast.makeText(this, "Please enter a message", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Check if uploads are still in progress
+        if (pendingFiles.any { it.status == "uploading" }) {
+            Toast.makeText(this, getString(R.string.wait_upload), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -751,15 +875,18 @@ class ChatActivity : AppCompatActivity() {
             return
         }
 
-        // If there's a pending photo, send as media message
-        if (hasPhoto) {
-            val caption = text.ifEmpty { "[Photo]" }
+        // If there are pending files, send one message per file
+        if (hasFiles) {
             editMessage.text?.clear()
             usageManager.incrementUsage()
-            chatPrefs.saveLastMessage(caption, targetIds)
-            val photoUrl = pendingPhotoUrl!!
-            clearPendingPhoto()
-            sendMediaMessage(caption, targetIds, "photo", photoUrl)
+            for ((i, f) in readyFiles.withIndex()) {
+                val msgText = if (i == 0 && text.isNotEmpty()) text
+                    else if (f.type == "photo") "[Photo]"
+                    else "[File] ${f.fileName}"
+                chatPrefs.saveLastMessage(msgText, targetIds)
+                sendMediaMessage(msgText, targetIds, f.type, f.mediaUrl!!)
+            }
+            clearAllPendingFiles()
             return
         }
 

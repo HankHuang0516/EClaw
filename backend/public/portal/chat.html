@@ -463,50 +463,160 @@
             color: #fff;
         }
 
-        /* ── Photo Preview Bar ── */
-        .photo-preview-bar {
+        /* ── Attachment Menu ── */
+        .attach-menu-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .attach-menu {
             display: none;
+            position: absolute;
+            bottom: 52px;
+            left: 0;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            min-width: 160px;
+            z-index: 100;
+            overflow: hidden;
+        }
+
+        .attach-menu.active { display: block; }
+
+        .attach-menu-item {
+            display: flex;
             align-items: center;
             gap: 10px;
+            padding: 12px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            color: var(--text);
+            transition: background 0.15s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .attach-menu-item:hover {
+            background: var(--input-bg);
+        }
+
+        .attach-menu-item .menu-icon {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* ── File Preview Bar (multi-file) ── */
+        .file-preview-bar {
+            display: none;
+            flex-wrap: wrap;
+            gap: 8px;
             padding: 8px 16px;
             background: var(--input-bg);
             border-top: 1px solid var(--card-border);
         }
 
-        .photo-preview-bar.active { display: flex; }
+        .file-preview-bar.active { display: flex; }
 
-        .photo-preview-bar img {
-            width: 56px;
-            height: 56px;
-            border-radius: 8px;
-            object-fit: cover;
+        .file-preview-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            background: var(--card);
             border: 1px solid var(--card-border);
-        }
-
-        .photo-preview-info {
-            flex: 1;
+            border-radius: 10px;
             font-size: 12px;
             color: var(--text-secondary);
+            max-width: 220px;
         }
 
-        .btn-remove-photo {
-            width: 28px;
-            height: 28px;
+        .file-preview-item img {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .file-preview-item .file-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            background: var(--input-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .file-preview-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
+        }
+
+        .file-preview-status {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .btn-remove-file {
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
             border: none;
             background: var(--card-border);
             color: var(--text);
             cursor: pointer;
-            font-size: 14px;
+            font-size: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            line-height: 1;
         }
 
-        .btn-remove-photo:hover {
+        .btn-remove-file:hover {
             background: var(--danger);
             color: #fff;
+        }
+
+        /* ── File attachment in chat bubble ── */
+        .chat-file {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .chat-msg.received .chat-file {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+        }
+
+        .chat-file:hover { opacity: 0.85; }
+
+        .chat-file .file-icon {
+            font-size: 20px;
+        }
+
+        .chat-file .file-name {
+            font-size: 13px;
+            word-break: break-all;
         }
 
         /* ── Responsive ── */
@@ -642,13 +752,21 @@
                         <button class="btn-send-record" onclick="stopRecording(true)">Send</button>
                     </div>
                 </div>
-                <div class="photo-preview-bar" id="photoPreviewBar">
-                    <img id="photoPreviewImg" src="" alt="Preview">
-                    <span class="photo-preview-info" id="photoPreviewInfo">Photo attached</span>
-                    <button class="btn-remove-photo" onclick="clearPendingPhoto()" title="Remove photo">&#x2715;</button>
-                </div>
+                <div class="file-preview-bar" id="filePreviewBar"></div>
                 <div class="input-row">
-                    <button class="btn-media" id="btnPhoto" onclick="openPhotoPicker()" title="Send photo">&#x1F4F7;</button>
+                    <div class="attach-menu-wrapper">
+                        <button class="btn-media" id="btnAttach" onclick="toggleAttachMenu()" title="Attach">&#x2B;</button>
+                        <div class="attach-menu" id="attachMenu">
+                            <button class="attach-menu-item" onclick="openPhotoPicker()">
+                                <span class="menu-icon">&#x1F4F7;</span>
+                                <span data-i18n="chat_attach_photo">Photo</span>
+                            </button>
+                            <button class="attach-menu-item" onclick="openFilePicker()">
+                                <span class="menu-icon">&#x1F4CE;</span>
+                                <span data-i18n="chat_attach_file">File</span>
+                            </button>
+                        </div>
+                    </div>
                     <button class="btn-media" id="btnVoice" onclick="toggleRecording()" title="Voice message">&#x1F3A4;</button>
                     <input type="text" class="chat-input" id="messageInput"
                         data-i18n="chat_input_placeholder" placeholder="Type a message..."
@@ -656,7 +774,8 @@
                     <button class="btn btn-primary btn-send" id="btnSend" onclick="sendMessage()"
                         data-i18n="chat_btn_send" title="Send">&#10148;</button>
                 </div>
-                <input type="file" id="photoFileInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handlePhotoSelected(this)">
+                <input type="file" id="photoFileInput" accept="image/jpeg,image/png,image/webp" multiple style="display:none" onchange="handleFilesSelected(this, 'photo')">
+                <input type="file" id="fileFileInput" multiple style="display:none" onchange="handleFilesSelected(this, 'file')">
             </div>
         </div>
     </div>
@@ -983,6 +1102,12 @@
                 let mediaHtml = '';
                 if (msg.media_type === 'photo' && msg.media_url) {
                     mediaHtml = `<img class="chat-photo" src="${escapeHtml(msg.media_url)}" alt="Photo" onclick="openLightbox('${escapeHtml(msg.media_url)}')" loading="lazy">`;
+                } else if (msg.media_type === 'file' && msg.media_url) {
+                    const fname = extractFileName(msg.text, msg.media_url);
+                    mediaHtml = `<a class="chat-file" href="${escapeHtml(msg.media_url)}" target="_blank" rel="noopener">
+                        <span class="file-icon">&#x1F4CE;</span>
+                        <span class="file-name">${escapeHtml(fname)}</span>
+                    </a>`;
                 } else if (msg.media_type === 'voice' && msg.media_url) {
                     const durationMatch = (msg.text || '').match(/\d+/);
                     const seconds = durationMatch ? parseInt(durationMatch[0]) : 0;
@@ -997,7 +1122,7 @@
 
                 // Text content (hide placeholder text for media messages)
                 const rawText = msg.text || '';
-                const isPlaceholder = (rawText === '[Photo]' || rawText === '[Voice message]');
+                const isPlaceholder = (rawText === '[Photo]' || rawText === '[Voice message]' || rawText.startsWith('[File]'));
                 const textHtml = (!isPlaceholder && rawText) ? escapeHtml(rawText) : '';
 
                 // Read receipt for sent messages
@@ -1104,10 +1229,17 @@
         async function sendMessage() {
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
-            const hasPhoto = !!pendingPhotoUrl;
+            const readyFiles = pendingFiles.filter(f => f.status === 'ready');
+            const hasFiles = readyFiles.length > 0;
 
-            // Must have text or a pending photo
-            if (!text && !hasPhoto) return;
+            // Must have text or pending files
+            if (!text && !hasFiles) return;
+
+            // Check if any files still uploading
+            if (pendingFiles.some(f => f.status === 'uploading')) {
+                showToast(i18n.t('chat_wait_upload') || 'Please wait for uploads to finish', 'error');
+                return;
+            }
 
             const targets = getSelectedTargets();
             if (targets.length === 0) {
@@ -1131,30 +1263,42 @@
 
             try {
                 const entityId = targets.length === 1 ? targets[0] : targets;
-                const payload = {
-                    deviceId: currentUser.deviceId,
-                    entityId: entityId,
-                    text: text || (hasPhoto ? '[Photo]' : ''),
-                    source: 'web_chat'
-                };
 
-                // Attach photo if pending
-                if (hasPhoto) {
-                    payload.mediaType = 'photo';
-                    payload.mediaUrl = pendingPhotoUrl;
+                if (hasFiles) {
+                    // Send one message per file; first file carries caption text
+                    for (let i = 0; i < readyFiles.length; i++) {
+                        const f = readyFiles[i];
+                        const msgText = (i === 0 && text) ? text : (f.type === 'photo' ? '[Photo]' : `[File] ${f.fileName}`);
+                        await apiCall('POST', '/api/client/speak', {
+                            deviceId: currentUser.deviceId,
+                            entityId: entityId,
+                            text: msgText,
+                            source: 'web_chat',
+                            mediaType: f.type,
+                            mediaUrl: f.mediaUrl
+                        });
+                    }
+                    // If user typed text but there's no file to carry it as first, shouldn't happen (handled above)
+                } else {
+                    // Text-only message
+                    await apiCall('POST', '/api/client/speak', {
+                        deviceId: currentUser.deviceId,
+                        entityId: entityId,
+                        text: text,
+                        source: 'web_chat'
+                    });
                 }
-
-                await apiCall('POST', '/api/client/speak', payload);
 
                 // Save selected targets for next session
                 localStorage.setItem('chat_last_targets', targets.join(','));
 
-                // Clear pending photo
-                if (hasPhoto) clearPendingPhoto();
+                // Clear pending files
+                if (hasFiles) clearAllPendingFiles();
 
                 // Bump local usage
                 if (currentUser.usageToday !== undefined) {
-                    currentUser.usageToday += targets.length;
+                    const msgCount = hasFiles ? readyFiles.length : 1;
+                    currentUser.usageToday += msgCount * targets.length;
                     updateUsageBadge();
                 }
 
@@ -1193,41 +1337,71 @@
             return div.innerHTML;
         }
 
-        // ── Photo Upload (staged: upload first, then user types caption and presses send) ──
-        let pendingPhotoUrl = null;
+        function extractFileName(text, url) {
+            // Try to extract from text like "[File] filename.pdf"
+            if (text && text.startsWith('[File] ')) return text.slice(7);
+            // Fallback: extract from URL
+            try {
+                const parts = url.split('/');
+                return decodeURIComponent(parts[parts.length - 1]) || 'File';
+            } catch (e) { return 'File'; }
+        }
+
+        // ── Attachment Menu ──
+        function toggleAttachMenu() {
+            const menu = document.getElementById('attachMenu');
+            menu.classList.toggle('active');
+        }
+
+        // Close menu when clicking elsewhere
+        document.addEventListener('click', (e) => {
+            const wrapper = document.querySelector('.attach-menu-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) {
+                document.getElementById('attachMenu').classList.remove('active');
+            }
+        });
+
+        // ── Multi-File Upload ──
+        const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+        let pendingFiles = []; // { id, file, type ('photo'|'file'), status ('uploading'|'ready'|'error'), mediaUrl, localUrl, fileName }
 
         function openPhotoPicker() {
+            document.getElementById('attachMenu').classList.remove('active');
             document.getElementById('photoFileInput').click();
         }
 
-        function clearPendingPhoto() {
-            pendingPhotoUrl = null;
-            document.getElementById('photoPreviewBar').classList.remove('active');
-            document.getElementById('photoPreviewImg').src = '';
+        function openFilePicker() {
+            document.getElementById('attachMenu').classList.remove('active');
+            document.getElementById('fileFileInput').click();
         }
 
-        async function handlePhotoSelected(input) {
-            const file = input.files[0];
-            if (!file) return;
-            input.value = ''; // Reset for next pick
+        function handleFilesSelected(input, type) {
+            const files = Array.from(input.files);
+            input.value = '';
+            if (!files.length) return;
 
-            const btn = document.getElementById('btnPhoto');
-            btn.disabled = true;
-            btn.textContent = '⏳';
+            for (const file of files) {
+                if (file.size > MAX_FILE_SIZE) {
+                    showToast((i18n.t('chat_file_too_large') || 'File too large (max 100MB)') + ': ' + file.name, 'error');
+                    continue;
+                }
+                const id = Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+                const isImage = file.type.startsWith('image/');
+                const localUrl = isImage ? URL.createObjectURL(file) : null;
+                const entry = { id, file, type: isImage ? 'photo' : type, status: 'uploading', mediaUrl: null, localUrl, fileName: file.name };
+                pendingFiles.push(entry);
+                renderFilePreviewBar();
+                uploadPendingFile(entry);
+            }
+        }
 
+        async function uploadPendingFile(entry) {
             try {
-                // Show local preview immediately
-                const localUrl = URL.createObjectURL(file);
-                document.getElementById('photoPreviewImg').src = localUrl;
-                document.getElementById('photoPreviewInfo').textContent = 'Uploading...';
-                document.getElementById('photoPreviewBar').classList.add('active');
-
-                // Upload to backend (Flickr)
                 const formData = new FormData();
-                formData.append('file', file);
+                formData.append('file', entry.file);
                 formData.append('deviceId', currentUser.deviceId);
                 formData.append('deviceSecret', currentUser.deviceSecret);
-                formData.append('mediaType', 'photo');
+                formData.append('mediaType', entry.type);
 
                 const uploadRes = await fetch(API_BASE + '/api/chat/upload-media', {
                     method: 'POST',
@@ -1236,18 +1410,56 @@
                 const uploadData = await uploadRes.json();
                 if (!uploadData.success) throw new Error(uploadData.error || 'Upload failed');
 
-                // Store the URL, show preview, let user type caption
-                pendingPhotoUrl = uploadData.mediaUrl;
-                document.getElementById('photoPreviewInfo').textContent = 'Photo ready — type a caption or press send';
-                document.getElementById('messageInput').focus();
-
+                entry.status = 'ready';
+                entry.mediaUrl = uploadData.mediaUrl;
             } catch (e) {
-                showToast('Photo upload failed: ' + e.message, 'error');
-                clearPendingPhoto();
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '\u{1F4F7}';
+                entry.status = 'error';
+                showToast((i18n.t('chat_upload_failed') || 'Upload failed') + ': ' + e.message, 'error');
             }
+            renderFilePreviewBar();
+        }
+
+        function removePendingFile(id) {
+            const idx = pendingFiles.findIndex(f => f.id === id);
+            if (idx >= 0) {
+                if (pendingFiles[idx].localUrl) URL.revokeObjectURL(pendingFiles[idx].localUrl);
+                pendingFiles.splice(idx, 1);
+            }
+            renderFilePreviewBar();
+        }
+
+        function clearAllPendingFiles() {
+            pendingFiles.forEach(f => { if (f.localUrl) URL.revokeObjectURL(f.localUrl); });
+            pendingFiles = [];
+            renderFilePreviewBar();
+        }
+
+        function renderFilePreviewBar() {
+            const bar = document.getElementById('filePreviewBar');
+            if (pendingFiles.length === 0) {
+                bar.classList.remove('active');
+                bar.innerHTML = '';
+                return;
+            }
+            bar.classList.add('active');
+            bar.innerHTML = pendingFiles.map(f => {
+                const isImage = f.type === 'photo' && f.localUrl;
+                const thumb = isImage
+                    ? `<img src="${f.localUrl}" alt="Preview">`
+                    : `<div class="file-icon">&#x1F4CE;</div>`;
+                const statusText = f.status === 'uploading' ? (i18n.t('chat_uploading') || 'Uploading...')
+                    : f.status === 'error' ? (i18n.t('chat_upload_error') || 'Error')
+                    : '';
+                const nameDisplay = escapeHtml(f.fileName.length > 20 ? f.fileName.slice(0, 17) + '...' : f.fileName);
+                return `<div class="file-preview-item">
+                    ${thumb}
+                    <div style="flex:1;min-width:0;">
+                        <div class="file-preview-name">${nameDisplay}</div>
+                        ${statusText ? `<div class="file-preview-status">${statusText}</div>` : ''}
+                    </div>
+                    <button class="btn-remove-file" onclick="removePendingFile('${f.id}')" title="Remove">&#x2715;</button>
+                </div>`;
+            }).join('');
         }
 
         // ── Voice Recording ──

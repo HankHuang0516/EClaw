@@ -96,6 +96,13 @@
     <string name="send_voice">Send</string>
     <string name="recording_voice">Recording…</string>
     <string name="uploading_media">Uploading…</string>
+    <string name="upload_error">Upload failed</string>
+    <string name="attach">Attach</string>
+    <string name="attach_camera">Camera</string>
+    <string name="attach_gallery">Gallery</string>
+    <string name="attach_file">File</string>
+    <string name="file_too_large">File too large (max 100MB)</string>
+    <string name="wait_upload">Please wait for uploads to finish</string>
 
     <!-- Mission Control -->
     <!-- Mission Control -->

@@ -192,44 +192,24 @@
                 android:text="@string/send_voice" />
         </LinearLayout>
 
-        <!-- Photo Preview Bar (hidden by default) -->
-        <LinearLayout
-            android:id="@+id/photoPreviewBar"
+        <!-- File Preview Bar (multi-file, hidden by default) -->
+        <HorizontalScrollView
+            android:id="@+id/filePreviewScroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="#FFF8E1"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="8dp"
+            android:scrollbars="none"
             android:visibility="gone">
 
-            <ImageView
-                android:id="@+id/ivPhotoPreview"
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                android:scaleType="centerCrop"
-                android:contentDescription="Photo preview" />
-
-            <TextView
-                android:id="@+id/tvPhotoPreviewInfo"
-                android:layout_width="0dp"
+            <LinearLayout
+                android:id="@+id/filePreviewContainer"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginHorizontal="10dp"
-                android:text="Photo ready"
-                android:textColor="#666666"
-                android:textSize="12sp" />
+                android:orientation="horizontal"
+                android:padding="8dp"
+                android:gravity="center_vertical" />
 
-            <ImageButton
-                android:id="@+id/btnRemovePhoto"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Remove photo"
-                android:src="@android:drawable/ic_menu_close_clear_cancel"
-                app:tint="#999999" />
-
-        </LinearLayout>
+        </HorizontalScrollView>
 
         <!-- Input Bar -->
         <LinearLayout
@@ -240,14 +220,14 @@
             android:orientation="horizontal"
             android:padding="8dp">
 
-            <!-- Photo button -->
+            <!-- Attach (+) button -->
             <ImageButton
-                android:id="@+id/btnPhoto"
+                android:id="@+id/btnAttach"
                 android:layout_width="36dp"
                 android:layout_height="36dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Photo"
-                android:src="@android:drawable/ic_menu_gallery"
+                android:contentDescription="@string/attach"
+                android:src="@drawable/ic_add_circle"
                 app:tint="@color/lobster_orange" />
 
             <com.google.android.material.textfield.TextInputEditText

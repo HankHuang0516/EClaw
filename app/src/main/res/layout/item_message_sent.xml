@@ -36,6 +36,35 @@
             android:visibility="gone"
             tools:visibility="gone" />
 
+        <!-- File attachment (hidden for non-file messages) -->
+        <LinearLayout
+            android:id="@+id/layoutFile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="4dp"
+            android:visibility="gone"
+            tools:visibility="gone">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_attach_file"
+                app:tint="@android:color/white"
+                android:contentDescription="File" />
+
+            <TextView
+                android:id="@+id/tvFileName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:textColor="@android:color/white"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                tools:text="document.pdf" />
+        </LinearLayout>
+
         <!-- Voice player (hidden for text messages) -->
         <LinearLayout
             android:id="@+id/layoutVoice"

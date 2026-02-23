@@ -2071,6 +2071,7 @@ app.post('/api/client/speak', async (req, res) => {
                 const bkUrl = getBackupUrl(mediaUrl);
                 if (bkUrl) pushMsg += `\nbackup_url: ${bkUrl}`;
             } else if (mediaType === 'voice') pushMsg += `\n[Attachment: Voice]\nmedia_type: voice\nmedia_url: ${mediaUrl}`;
+            else if (mediaType === 'file') pushMsg += `\n[Attachment: File]\nmedia_type: file\nmedia_url: ${mediaUrl}`;
 
             pushResult = await pushToBot(entity, deviceId, "new_message", {
                 message: pushMsg
@@ -2246,6 +2247,7 @@ app.post('/api/entity/speak-to', async (req, res) => {
             const bkUrl = getBackupUrl(mediaUrl);
             if (bkUrl) pushMsg += `\nbackup_url: ${bkUrl}`;
         } else if (mediaType === 'voice') pushMsg += `\n[Attachment: Voice]\nmedia_type: voice\nmedia_url: ${mediaUrl}`;
+            else if (mediaType === 'file') pushMsg += `\n[Attachment: File]\nmedia_type: file\nmedia_url: ${mediaUrl}`;
         pushToBot(toEntity, deviceId, "entity_message", {
             message: pushMsg
         }).then(pushResult => {
@@ -2449,6 +2451,7 @@ app.post('/api/entity/broadcast', async (req, res) => {
                 const bkUrl = getBackupUrl(mediaUrl);
                 if (bkUrl) pushMsg += `\nbackup_url: ${bkUrl}`;
             } else if (mediaType === 'voice') pushMsg += `\n[Attachment: Voice]\nmedia_type: voice\nmedia_url: ${mediaUrl}`;
+            else if (mediaType === 'file') pushMsg += `\n[Attachment: File]\nmedia_type: file\nmedia_url: ${mediaUrl}`;
             pushToBot(toEntity, deviceId, "entity_broadcast", {
                 message: pushMsg
             }).then(pushResult => {
@@ -5256,20 +5259,37 @@ app.get('/api/device/files', async (req, res) => {
 });
 
 // ============================================
-// CHAT MEDIA UPLOAD (Flickr for photos, Base64 for voice)
+// CHAT MEDIA UPLOAD (Flickr for photos, Base64 for voice, DB for files)
 // ============================================
 const mediaUpload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+    limits: { fileSize: 100 * 1024 * 1024 }, // 100MB max
     fileFilter: (req, file, cb) => {
-        const allowed = ['image/jpeg', 'image/png', 'image/webp', 'audio/webm', 'audio/ogg', 'audio/mp4', 'audio/aac', 'audio/mpeg'];
-        if (allowed.includes(file.mimetype)) {
-            cb(null, true);
+        const imageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        const audioTypes = ['audio/webm', 'audio/ogg', 'audio/mp4', 'audio/aac', 'audio/mpeg'];
+        const mediaType = (req.body && req.body.mediaType) || '';
+        if (mediaType === 'photo' && !imageTypes.includes(file.mimetype)) {
+            cb(new Error('Unsupported image type: ' + file.mimetype));
+        } else if (mediaType === 'voice' && !audioTypes.includes(file.mimetype)) {
+            cb(new Error('Unsupported audio type: ' + file.mimetype));
         } else {
-            cb(new Error('Unsupported file type: ' + file.mimetype));
+            cb(null, true); // "file" type accepts anything
         }
     }
 });
+
+// Auto-migrate: create chat_uploads table for file storage
+chatPool.query(`
+    CREATE TABLE IF NOT EXISTS chat_uploads (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        device_id VARCHAR(64) NOT NULL,
+        original_name TEXT NOT NULL,
+        content_type VARCHAR(128) NOT NULL,
+        file_data BYTEA NOT NULL,
+        file_size BIGINT NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )
+`).catch(err => console.error('[ChatUploads] Table creation error:', err.message));
 
 // ============================================
 // PHOTO CACHE - Backup for Flickr rate limits
@@ -5327,9 +5347,33 @@ app.get('/api/media/:id', (req, res) => {
 });
 
 /**
+ * GET /api/chat/file/:id - Serve uploaded file from DB
+ */
+app.get('/api/chat/file/:id', async (req, res) => {
+    try {
+        const result = await chatPool.query(
+            'SELECT original_name, content_type, file_data FROM chat_uploads WHERE id = $1',
+            [req.params.id]
+        );
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'File not found' });
+        }
+        const row = result.rows[0];
+        res.set('Content-Type', row.content_type);
+        res.set('Content-Disposition', `inline; filename="${encodeURIComponent(row.original_name)}"`);
+        res.set('Cache-Control', 'public, max-age=86400');
+        res.send(row.file_data);
+    } catch (err) {
+        console.error('[ChatFile] Serve error:', err);
+        res.status(500).json({ error: 'Failed to serve file' });
+    }
+});
+
+/**
  * POST /api/chat/upload-media
- * Upload photo (→ Flickr) or voice (→ base64) for chat messages
- * Body (multipart): file, deviceId, deviceSecret, mediaType ("photo" | "voice")
+ * Upload photo (→ Flickr), voice (→ base64), or file (→ DB) for chat messages
+ * Body (multipart): file, deviceId, deviceSecret, mediaType ("photo" | "voice" | "file")
+ * Max file size: 100MB
  */
 app.post('/api/chat/upload-media', mediaUpload.single('file'), async (req, res) => {
     const { deviceId, deviceSecret, mediaType } = req.body;
@@ -5369,11 +5413,22 @@ app.post('/api/chat/upload-media', mediaUpload.single('file'), async (req, res) 
         } else if (mediaType === 'voice') {
             const base64 = req.file.buffer.toString('base64');
             mediaUrl = `data:${req.file.mimetype};base64,${base64}`;
+        } else if (mediaType === 'file') {
+            // Store file in PostgreSQL
+            const originalName = req.file.originalname || 'file';
+            const result = await chatPool.query(
+                'INSERT INTO chat_uploads (device_id, original_name, content_type, file_data, file_size) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+                [deviceId, originalName, req.file.mimetype, req.file.buffer, req.file.buffer.length]
+            );
+            const fileId = result.rows[0].id;
+            mediaUrl = `https://eclaw.up.railway.app/api/chat/file/${fileId}`;
+            console.log(`[Upload] File stored: ${originalName} (${(req.file.buffer.length / 1024 / 1024).toFixed(2)} MB) -> ${fileId}`);
         } else {
-            return res.status(400).json({ success: false, error: 'Invalid mediaType. Use "photo" or "voice"' });
+            return res.status(400).json({ success: false, error: 'Invalid mediaType. Use "photo", "voice", or "file"' });
         }
 
-        res.json({ success: true, mediaUrl, mediaType, backupUrl });
+        const fileName = req.file.originalname || null;
+        res.json({ success: true, mediaUrl, mediaType, backupUrl, fileName });
     } catch (err) {
         console.error('[Upload] Error:', err);
         res.status(500).json({ success: false, error: 'Upload failed: ' + err.message });

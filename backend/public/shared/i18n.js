@@ -327,6 +327,13 @@ const TRANSLATIONS = {
         "chat_usage_unlimited": "Unlimited",
         "chat_select_entity": "Please select at least one entity",
         "chat_enter_message": "Please enter a message",
+        "chat_attach_photo": "Photo",
+        "chat_attach_file": "File",
+        "chat_file_too_large": "File too large (max 100MB)",
+        "chat_uploading": "Uploading...",
+        "chat_upload_error": "Error",
+        "chat_upload_failed": "Upload failed",
+        "chat_wait_upload": "Please wait for uploads to finish",
 
         // Admin (admin.html)
         "admin_title": "E-Claw - Admin Dashboard",
@@ -811,6 +818,13 @@ const TRANSLATIONS = {
         "chat_usage_unlimited": "無限制",
         "chat_select_entity": "請選擇至少一個實體",
         "chat_enter_message": "請輸入訊息",
+        "chat_attach_photo": "照片",
+        "chat_attach_file": "檔案",
+        "chat_file_too_large": "檔案過大（上限 100MB）",
+        "chat_uploading": "上傳中...",
+        "chat_upload_error": "錯誤",
+        "chat_upload_failed": "上傳失敗",
+        "chat_wait_upload": "請等待上傳完成",
 
         // Admin (admin.html)
         "admin_title": "E-Claw - 管理者儀表板",

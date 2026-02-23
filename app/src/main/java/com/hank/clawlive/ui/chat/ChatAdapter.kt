@@ -2,7 +2,9 @@ package com.hank.clawlive.ui.chat
 
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.Intent
 import android.media.MediaPlayer
+import android.net.Uri
 import android.util.Base64
 import android.view.LayoutInflater
 import android.view.View
@@ -87,6 +89,8 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
         private val tvTargets: TextView = itemView.findViewById(R.id.tvTargets)
         private val tvDeliveryStatus: TextView = itemView.findViewById(R.id.tvDeliveryStatus)
         private val ivPhoto: ImageView = itemView.findViewById(R.id.ivPhoto)
+        private val layoutFile: LinearLayout = itemView.findViewById(R.id.layoutFile)
+        private val tvFileName: TextView = itemView.findViewById(R.id.tvFileName)
         private val layoutVoice: LinearLayout = itemView.findViewById(R.id.layoutVoice)
         private val btnPlay: ImageButton = itemView.findViewById(R.id.btnPlay)
         private val progressVoice: ProgressBar = itemView.findViewById(R.id.progressVoice)
@@ -141,6 +145,7 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
             when (message.mediaType) {
                 "photo" -> {
                     ivPhoto.visibility = View.VISIBLE
+                    layoutFile.visibility = View.GONE
                     layoutVoice.visibility = View.GONE
                     tvMessage.visibility = if (message.text == "[Photo]") View.GONE else View.VISIBLE
                     if (message.text != "[Photo]") tvMessage.text = message.text
@@ -149,8 +154,21 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
                         .centerCrop()
                         .into(ivPhoto)
                 }
+                "file" -> {
+                    ivPhoto.visibility = View.GONE
+                    layoutFile.visibility = View.VISIBLE
+                    layoutVoice.visibility = View.GONE
+                    val isPlaceholder = message.text.startsWith("[File]")
+                    tvMessage.visibility = if (isPlaceholder) View.GONE else View.VISIBLE
+                    if (!isPlaceholder) tvMessage.text = message.text
+                    tvFileName.text = extractFileName(message.text, message.mediaUrl)
+                    layoutFile.setOnClickListener {
+                        openFileUrl(itemView, message.mediaUrl ?: "")
+                    }
+                }
                 "voice" -> {
                     ivPhoto.visibility = View.GONE
+                    layoutFile.visibility = View.GONE
                     layoutVoice.visibility = View.VISIBLE
                     tvMessage.visibility = View.GONE
                     val durationMatch = Regex("\\d+").find(message.text)
@@ -162,6 +180,7 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
                 }
                 else -> {
                     ivPhoto.visibility = View.GONE
+                    layoutFile.visibility = View.GONE
                     layoutVoice.visibility = View.GONE
                     tvMessage.visibility = View.VISIBLE
                     tvMessage.text = message.text
@@ -212,6 +231,8 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
         private val tvTime: TextView = itemView.findViewById(R.id.tvTime)
         private val tvReadReceipt: TextView = itemView.findViewById(R.id.tvReadReceipt)
         private val ivPhoto: ImageView = itemView.findViewById(R.id.ivPhoto)
+        private val layoutFile: LinearLayout = itemView.findViewById(R.id.layoutFile)
+        private val tvFileName: TextView = itemView.findViewById(R.id.tvFileName)
         private val layoutVoice: LinearLayout = itemView.findViewById(R.id.layoutVoice)
         private val btnPlay: ImageButton = itemView.findViewById(R.id.btnPlay)
         private val progressVoice: ProgressBar = itemView.findViewById(R.id.progressVoice)
@@ -260,6 +281,7 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
             when (message.mediaType) {
                 "photo" -> {
                     ivPhoto.visibility = View.VISIBLE
+                    layoutFile.visibility = View.GONE
                     layoutVoice.visibility = View.GONE
                     tvMessage.visibility = if (message.text == "[Photo]") View.GONE else View.VISIBLE
                     if (message.text != "[Photo]") tvMessage.text = message.text
@@ -268,8 +290,21 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
                         .centerCrop()
                         .into(ivPhoto)
                 }
+                "file" -> {
+                    ivPhoto.visibility = View.GONE
+                    layoutFile.visibility = View.VISIBLE
+                    layoutVoice.visibility = View.GONE
+                    val isPlaceholder = message.text.startsWith("[File]")
+                    tvMessage.visibility = if (isPlaceholder) View.GONE else View.VISIBLE
+                    if (!isPlaceholder) tvMessage.text = message.text
+                    tvFileName.text = extractFileName(message.text, message.mediaUrl)
+                    layoutFile.setOnClickListener {
+                        openFileUrl(itemView, message.mediaUrl ?: "")
+                    }
+                }
                 "voice" -> {
                     ivPhoto.visibility = View.GONE
+                    layoutFile.visibility = View.GONE
                     layoutVoice.visibility = View.VISIBLE
                     tvMessage.visibility = View.GONE
                     val durationMatch = Regex("\\d+").find(message.text)
@@ -281,6 +316,7 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
                 }
                 else -> {
                     ivPhoto.visibility = View.GONE
+                    layoutFile.visibility = View.GONE
                     layoutVoice.visibility = View.GONE
                     tvMessage.visibility = View.VISIBLE
                     tvMessage.text = message.text
@@ -351,4 +387,30 @@ private fun copyToClipboard(view: View, text: String) {
     val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager
     clipboard.setPrimaryClip(ClipData.newPlainText("chat_message", text))
     Toast.makeText(context, context.getString(R.string.message_copied), Toast.LENGTH_SHORT).show()
+}
+
+/**
+ * Extract file name from message text or URL
+ */
+private fun extractFileName(text: String, mediaUrl: String?): String {
+    if (text.startsWith("[File] ")) return text.removePrefix("[File] ")
+    if (mediaUrl != null) {
+        try {
+            val path = Uri.parse(mediaUrl).lastPathSegment
+            if (!path.isNullOrBlank()) return path
+        } catch (_: Exception) {}
+    }
+    return "File"
+}
+
+/**
+ * Open a file URL in the browser
+ */
+private fun openFileUrl(view: View, url: String) {
+    try {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        view.context.startActivity(intent)
+    } catch (e: Exception) {
+        Toast.makeText(view.context, "Cannot open file", Toast.LENGTH_SHORT).show()
+    }
 }
