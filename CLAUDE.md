@@ -14,9 +14,17 @@
 
 6. **Autonomous Bug Fixing** — 當執行過程中遇到錯誤（build fail、test fail、runtime error），不要立刻停下來問使用者，先自行分析 log 並嘗試修復，連續失敗 3 次才 escalate。
 
-7. **Task Management** — 所有多步驟工作都使用 TodoWrite 追蹤，讓使用者隨時可見進度；完成一項立即標記 completed，不批量更新。
+7. **Task Management**
+   - 所有多步驟工作都使用 TodoWrite 追蹤，讓使用者隨時可見進度
+   - 完成一項立即標記 completed，不批量更新
+   - 同時只有一個 task 可以是 in_progress
 
-8. **Core Principles** — 安全第一（不引入 OWASP Top-10 漏洞）、不臆測（先讀再改）、最小驚訝原則（行為與命名一致）。
+8. **Core Principles**
+   - 安全第一（不引入 OWASP Top-10 漏洞）
+   - 不臆測（先讀再改）
+   - 最小驚訝原則（行為與命名一致）
+   - DRY but not premature abstraction
+   - 優先使用專用工具（Read > cat, Edit > sed, Grep > grep）
 
 ## Git Workflow
 
