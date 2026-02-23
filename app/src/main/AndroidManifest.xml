@@ -100,10 +100,7 @@
             android:name=".ChatActivity"
             android:exported="false"
             android:label="@string/chat_history"
-            android:theme="@style/Theme.ClawLiveCompanion.FloatingChat"
-            android:windowSoftInputMode="adjustResize"
-            android:parentActivityName=".MainActivity"
-            android:excludeFromRecents="true" />
+            android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".MissionControlActivity"
