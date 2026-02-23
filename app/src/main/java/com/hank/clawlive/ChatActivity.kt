@@ -10,9 +10,10 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import android.view.inputmethod.EditorInfo
-import android.widget.FrameLayout
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -42,6 +43,8 @@ import com.hank.clawlive.data.remote.ClawApiService
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.data.repository.ChatRepository
+import com.hank.clawlive.ui.BottomNavHelper
+import com.hank.clawlive.ui.NavItem
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import com.hank.clawlive.ui.chat.ChatAdapter
 import com.hank.clawlive.ui.chat.SlashCommandAdapter
@@ -70,7 +73,6 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var chatAdapter: ChatAdapter
     private lateinit var editMessage: TextInputEditText
     private lateinit var btnSend: MaterialButton
-    private lateinit var btnBack: ImageButton
     private lateinit var btnPhoto: ImageButton
     private lateinit var btnVoice: ImageButton
     private lateinit var topBar: LinearLayout
@@ -136,10 +138,12 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_chat)
+        BottomNavHelper.setup(this, NavItem.CHAT)
 
         initViews()
-        setupFloatingDialog()
+        setupEdgeToEdgeInsets()
         setupRecyclerView()
         setupTargetChips()
         setupListeners()
@@ -170,7 +174,6 @@ class ChatActivity : AppCompatActivity() {
         recyclerChat = findViewById(R.id.recyclerChat)
         editMessage = findViewById(R.id.editMessage)
         btnSend = findViewById(R.id.btnSend)
-        btnBack = findViewById(R.id.btnBack)
         btnPhoto = findViewById(R.id.btnPhoto)
         btnVoice = findViewById(R.id.btnVoice)
         topBar = findViewById(R.id.topBar)
@@ -205,30 +208,27 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupFloatingDialog() {
-        val rootDimBackground = findViewById<FrameLayout>(R.id.rootDimBackground)
-        rootDimBackground.setOnClickListener { finish() }
-        val chatCard = findViewById<View>(R.id.chatCard)
-        chatCard.setOnClickListener { /* consume click */ }
+    private fun setupEdgeToEdgeInsets() {
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content)) { _, insets ->
+            val systemBars = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+            )
+            topBar.updatePadding(top = systemBars.top)
 
-        // Handle keyboard (IME) insets for Android 15+ edge-to-edge enforcement.
-        // On targetSdk 35, adjustResize no longer shrinks the window — the keyboard
-        // overlaps app content. We must manually adjust the card's bottom margin.
-        val defaultBottomMargin = (chatCard.layoutParams as FrameLayout.LayoutParams).bottomMargin
-        ViewCompat.setOnApplyWindowInsetsListener(rootDimBackground) { _, insets ->
             val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
-            val navBarInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
-            val params = chatCard.layoutParams as FrameLayout.LayoutParams
-            params.bottomMargin = if (imeInsets.bottom > 0) {
-                imeInsets.bottom
+            val bottomNav = findViewById<View>(R.id.bottomNav)
+            if (imeInsets.bottom > 0) {
+                // Keyboard open: hide bottom nav, add padding to input section
+                bottomNav?.visibility = View.GONE
+                inputSection.updatePadding(bottom = imeInsets.bottom)
+                // Scroll chat to bottom
+                if (::chatAdapter.isInitialized && chatAdapter.itemCount > 0) {
+                    recyclerChat.scrollToPosition(chatAdapter.itemCount - 1)
+                }
             } else {
-                maxOf(defaultBottomMargin, navBarInsets.bottom)
-            }
-            chatCard.layoutParams = params
-
-            // Scroll chat to bottom when keyboard appears so latest messages stay visible
-            if (imeInsets.bottom > 0 && chatAdapter.itemCount > 0) {
-                recyclerChat.scrollToPosition(chatAdapter.itemCount - 1)
+                // Keyboard closed: show bottom nav, remove input padding
+                bottomNav?.visibility = View.VISIBLE
+                inputSection.updatePadding(bottom = 0)
             }
 
             insets
@@ -305,7 +305,6 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun setupListeners() {
-        btnBack.setOnClickListener { finish() }
         btnSend.setOnClickListener { sendMessage() }
 
         editMessage.setOnEditorActionListener { _, actionId, _ ->

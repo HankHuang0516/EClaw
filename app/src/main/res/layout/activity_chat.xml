@@ -1,321 +1,292 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/rootDimBackground"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#00000000">
+    android:orientation="vertical"
+    android:background="#0D0D1A">
 
-    <!-- Floating Chat Card -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/chatCard"
+    <!-- Top Bar -->
+    <LinearLayout
+        android:id="@+id/topBar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="60dp"
-        android:layout_marginBottom="32dp"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="8dp"
-        app:cardBackgroundColor="#FFFAFAFA">
+        android:layout_height="wrap_content"
+        android:background="@color/lobster_orange"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="10dp">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/chat_history"
+            android:textColor="@android:color/white"
+            android:textSize="24sp"
+            android:textStyle="bold" />
 
-            <!-- Top Bar -->
-            <LinearLayout
-                android:id="@+id/topBar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@color/lobster_orange"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="10dp"
-                app:layout_constraintTop_toTopOf="parent">
+    </LinearLayout>
 
-                <ImageButton
-                    android:id="@+id/btnBack"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Close"
-                    android:src="@drawable/ic_back_arrow"
-                    app:tint="@android:color/white" />
+    <!-- Filter Chips -->
+    <HorizontalScrollView
+        android:id="@+id/filterScroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none">
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_weight="1"
-                    android:text="@string/chat_history"
-                    android:textColor="@android:color/white"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupFilter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="6dp"
+            app:selectionRequired="false"
+            app:singleSelection="false">
 
-            </LinearLayout>
-
-            <!-- Filter Chips -->
-            <HorizontalScrollView
-                android:id="@+id/filterScroll"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:scrollbars="none"
-                app:layout_constraintTop_toBottomOf="@id/topBar">
-
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/chipGroupFilter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingHorizontal="10dp"
-                    android:paddingVertical="6dp"
-                    app:selectionRequired="false"
-                    app:singleSelection="false">
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipAll"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:checked="true"
-                        android:text="@string/filter_all" />
-
-                    <!-- Entity filter chips inserted dynamically by EntityChipHelper -->
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipMyMessages"
-                        style="@style/Widget.Material3.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/filter_my_messages" />
-
-                </com.google.android.material.chip.ChipGroup>
-
-            </HorizontalScrollView>
-
-            <!-- Chat Messages -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerChat"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:clipToPadding="false"
-                android:paddingBottom="8dp"
-                app:layout_constraintBottom_toTopOf="@id/inputSection"
-                app:layout_constraintTop_toBottomOf="@id/filterScroll"
-                tools:listitem="@layout/item_message_received" />
-
-            <!-- Empty State -->
-            <LinearLayout
-                android:id="@+id/layoutEmpty"
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipAll"
+                style="@style/Widget.Material3.Chip.Filter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:visibility="gone"
-                app:layout_constraintBottom_toTopOf="@id/inputSection"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/filterScroll"
-                tools:visibility="visible">
+                android:checked="true"
+                android:text="@string/filter_all" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="🦞"
-                    android:textSize="48sp" />
+            <!-- Entity filter chips inserted dynamically by EntityChipHelper -->
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/no_messages_yet"
-                    android:textColor="#666666"
-                    android:textSize="14sp" />
-
-            </LinearLayout>
-
-            <!-- Input Section -->
-            <LinearLayout
-                android:id="@+id/inputSection"
-                android:layout_width="match_parent"
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipMyMessages"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@android:color/white"
-                android:elevation="4dp"
-                android:orientation="vertical"
-                app:layout_constraintBottom_toBottomOf="parent">
+                android:text="@string/filter_my_messages" />
 
-                <!-- Slash Command Suggestions (hidden by default) -->
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recyclerSlashCommands"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="#FFFFFF"
-                    android:maxHeight="200dp"
-                    android:visibility="gone" />
+        </com.google.android.material.chip.ChipGroup>
 
-                <!-- Entity Selection Chips -->
-                <HorizontalScrollView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingHorizontal="8dp"
-                    android:paddingTop="4dp"
-                    android:scrollbars="none">
+    </HorizontalScrollView>
 
-                    <!-- Target chips populated dynamically by EntityChipHelper -->
-                    <com.google.android.material.chip.ChipGroup
-                        android:id="@+id/chipGroupTargets"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        app:selectionRequired="false"
-                        app:singleSelection="false"/>
+    <!-- Chat Messages + Empty State -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-                </HorizontalScrollView>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerChat"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="8dp"
+            tools:listitem="@layout/item_message_received" />
 
-                <!-- Voice Recording Panel (hidden by default) -->
-                <LinearLayout
-                    android:id="@+id/voiceRecordingPanel"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="#FFF3E0"
-                    android:gravity="center"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="16dp"
-                    android:visibility="gone">
+        <!-- Empty State -->
+        <LinearLayout
+            android:id="@+id/layoutEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible">
 
-                    <View
-                        android:id="@+id/recordingDot"
-                        android:layout_width="10dp"
-                        android:layout_height="10dp"
-                        android:background="@color/lobster_orange" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🦞"
+                android:textSize="48sp" />
 
-                    <TextView
-                        android:id="@+id/tvRecordingTime"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:text="0:00"
-                        android:textColor="#FF5722"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/no_messages_yet"
+                android:textColor="#666666"
+                android:textSize="14sp" />
 
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="0dp"
-                        android:layout_weight="1" />
+        </LinearLayout>
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnCancelRecord"
-                        style="@style/Widget.Material3.Button.TextButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/cancel"
-                        android:textColor="#999999" />
+    </FrameLayout>
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnSendVoice"
-                        style="@style/Widget.Material3.Button.TonalButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/send_voice" />
-                </LinearLayout>
+    <!-- Input Section -->
+    <LinearLayout
+        android:id="@+id/inputSection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#1A1A2E"
+        android:elevation="4dp"
+        android:orientation="vertical">
 
-                <!-- Photo Preview Bar (hidden by default) -->
-                <LinearLayout
-                    android:id="@+id/photoPreviewBar"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="#FFF8E1"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="8dp"
-                    android:visibility="gone">
+        <!-- Slash Command Suggestions (hidden by default) -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerSlashCommands"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#1A1A2E"
+            android:maxHeight="200dp"
+            android:visibility="gone" />
 
-                    <ImageView
-                        android:id="@+id/ivPhotoPreview"
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
-                        android:scaleType="centerCrop"
-                        android:contentDescription="Photo preview" />
+        <!-- Entity Selection Chips -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="8dp"
+            android:paddingTop="4dp"
+            android:scrollbars="none">
 
-                    <TextView
-                        android:id="@+id/tvPhotoPreviewInfo"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginHorizontal="10dp"
-                        android:text="Photo ready"
-                        android:textColor="#666666"
-                        android:textSize="12sp" />
+            <!-- Target chips populated dynamically by EntityChipHelper -->
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupTargets"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:selectionRequired="false"
+                app:singleSelection="false"/>
 
-                    <ImageButton
-                        android:id="@+id/btnRemovePhoto"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Remove photo"
-                        android:src="@android:drawable/ic_menu_close_clear_cancel"
-                        app:tint="#999999" />
+        </HorizontalScrollView>
 
-                </LinearLayout>
+        <!-- Voice Recording Panel (hidden by default) -->
+        <LinearLayout
+            android:id="@+id/voiceRecordingPanel"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="#FFF3E0"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:visibility="gone">
 
-                <!-- Input Bar -->
-                <LinearLayout
-                    android:id="@+id/inputBar"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="8dp">
+            <View
+                android:id="@+id/recordingDot"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@color/lobster_orange" />
 
-                    <!-- Photo button -->
-                    <ImageButton
-                        android:id="@+id/btnPhoto"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Photo"
-                        android:src="@android:drawable/ic_menu_gallery"
-                        app:tint="@color/lobster_orange" />
+            <TextView
+                android:id="@+id/tvRecordingTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="0:00"
+                android:textColor="#FF5722"
+                android:textSize="16sp"
+                android:textStyle="bold" />
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/editMessage"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginHorizontal="4dp"
-                        android:background="@drawable/bubble_received"
-                        android:hint="@string/type_message"
-                        android:inputType="textCapSentences|textMultiLine"
-                        android:maxLines="4"
-                        android:padding="12dp"
-                        android:textSize="14sp" />
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
 
-                    <!-- Voice record button -->
-                    <ImageButton
-                        android:id="@+id/btnVoice"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Record voice"
-                        android:src="@android:drawable/ic_btn_speak_now"
-                        app:tint="@color/lobster_orange" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCancelRecord"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/cancel"
+                android:textColor="#999999" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnSend"
-                        style="@style/Widget.Material3.Button.IconButton.Filled"
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
-                        android:layout_marginStart="4dp"
-                        android:contentDescription="Send"
-                        app:icon="@android:drawable/ic_menu_send"
-                        app:iconTint="@android:color/white" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSendVoice"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/send_voice" />
+        </LinearLayout>
 
-                </LinearLayout>
-            </LinearLayout>
+        <!-- Photo Preview Bar (hidden by default) -->
+        <LinearLayout
+            android:id="@+id/photoPreviewBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#FFF8E1"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:visibility="gone">
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            <ImageView
+                android:id="@+id/ivPhotoPreview"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:scaleType="centerCrop"
+                android:contentDescription="Photo preview" />
 
-    </com.google.android.material.card.MaterialCardView>
+            <TextView
+                android:id="@+id/tvPhotoPreviewInfo"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginHorizontal="10dp"
+                android:text="Photo ready"
+                android:textColor="#666666"
+                android:textSize="12sp" />
 
-</FrameLayout>
+            <ImageButton
+                android:id="@+id/btnRemovePhoto"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Remove photo"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                app:tint="#999999" />
+
+        </LinearLayout>
+
+        <!-- Input Bar -->
+        <LinearLayout
+            android:id="@+id/inputBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="8dp">
+
+            <!-- Photo button -->
+            <ImageButton
+                android:id="@+id/btnPhoto"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Photo"
+                android:src="@android:drawable/ic_menu_gallery"
+                app:tint="@color/lobster_orange" />
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editMessage"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginHorizontal="4dp"
+                android:background="@drawable/bubble_received"
+                android:hint="@string/type_message"
+                android:inputType="textCapSentences|textMultiLine"
+                android:maxLines="4"
+                android:padding="12dp"
+                android:textSize="14sp" />
+
+            <!-- Voice record button -->
+            <ImageButton
+                android:id="@+id/btnVoice"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Record voice"
+                android:src="@android:drawable/ic_btn_speak_now"
+                app:tint="@color/lobster_orange" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSend"
+                style="@style/Widget.Material3.Button.IconButton.Filled"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginStart="4dp"
+                android:contentDescription="Send"
+                app:icon="@android:drawable/ic_menu_send"
+                app:iconTint="@android:color/white" />
+
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Bottom Navigation -->
+    <include layout="@layout/layout_bottom_nav"/>
+
+</LinearLayout>
