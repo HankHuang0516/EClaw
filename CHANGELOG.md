@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/HankHuang0516/realbot/compare/v1.6.2...v1.7.0) (2026-02-23)
+
+
+### Features
+
+* replace chat photo icon with + button, support multi-file upload (100MB) ([09a1072](https://github.com/HankHuang0516/realbot/commit/09a10726263c226fadc6e13eba409577bd955e76))
+
 ## [1.6.2](https://github.com/HankHuang0516/realbot/compare/v1.6.1...v1.6.2) (2026-02-23)
 
 
