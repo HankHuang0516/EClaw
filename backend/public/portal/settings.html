@@ -89,6 +89,33 @@
             margin-bottom: 16px;
         }
 
+        /* Maintenance notice */
+        .maintenance-notice {
+            background: rgba(255, 193, 7, 0.08);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .maintenance-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .maintenance-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--warning);
+            margin-bottom: 6px;
+        }
+
+        .maintenance-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
         /* TapPay card form (dark theme) */
         .tappay-section {
             margin-top: 16px;
@@ -253,42 +280,11 @@
 
             <!-- FREE user: Subscribe section -->
             <div id="freeSection" style="display:none;margin-top:16px;">
-                <div class="subscribe-price" data-i18n="settings_price">NT$99</div>
-                <div class="subscribe-period" data-i18n="settings_period">per month</div>
-                <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;line-height:1.6;">
-                    <div data-i18n="settings_sub_benefit_1">&#10003; Unlimited messages (no 15/day limit)</div>
-                    <div data-i18n="settings_sub_benefit_2">&#10003; Up to 8 entity slots (instead of 4)</div>
-                </div>
-                <button class="btn btn-primary btn-block" id="btnShowCard" onclick="toggleCardForm()"
-                    data-i18n="settings_btn_subscribe">Subscribe</button>
-
-                <!-- TapPay Card Form (collapsible) -->
-                <div class="tappay-section" id="tappaySection">
-                    <div class="tappay-field">
-                        <label data-i18n="settings_label_card">Card Number</label>
-                        <div class="tappay-field-input" id="tappay-card-number"></div>
-                    </div>
-                    <div class="tappay-row">
-                        <div class="tappay-field">
-                            <label data-i18n="settings_label_expiry">Expiry Date</label>
-                            <div class="tappay-field-input" id="tappay-expiration-date"></div>
-                        </div>
-                        <div class="tappay-field">
-                            <label data-i18n="settings_label_ccv">CCV</label>
-                            <div class="tappay-field-input" id="tappay-ccv"></div>
-                        </div>
-                    </div>
-                    <div class="card-error" id="cardError"></div>
-                    <div style="display:flex; gap:10px; margin-top:12px;">
-                        <button class="btn btn-success" style="flex:1" id="btnPay" onclick="processPayment()" disabled
-                            data-i18n="settings_btn_pay">Pay NT$99</button>
-                        <button class="btn btn-outline" onclick="toggleCardForm()"
-                            data-i18n="settings_btn_hide_card">Hide Card Form</button>
-                    </div>
-                    <div class="card-loading" id="cardLoading">
-                        <div class="spinner"></div>
-                        <span data-i18n="settings_processing">Processing payment...</span>
-                    </div>
+                <!-- Maintenance notice (shown while TapPay is not ready) -->
+                <div class="maintenance-notice">
+                    <div class="maintenance-icon">&#9888;</div>
+                    <div class="maintenance-title" data-i18n="maintenance_payment_title">Payment Under Maintenance</div>
+                    <div class="maintenance-desc" data-i18n="maintenance_payment_desc">Payment feature is currently under maintenance. Please check back later.</div>
                 </div>
             </div>
 
@@ -594,6 +590,8 @@
         // TapPay Integration
         // ============================================
         function initTapPay() {
+            // Skip if card form elements don't exist (payment under maintenance)
+            if (!document.getElementById('tappay-card-number')) return;
             try {
                 TPDirect.setupSDK(
                     166632,

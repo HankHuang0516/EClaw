@@ -493,6 +493,21 @@
             font-weight: 600;
         }
 
+        /* Maintenance notice (inline) */
+        .maintenance-notice-inline {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            justify-content: center;
+            padding: 8px 12px;
+            background: rgba(255, 193, 7, 0.08);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--warning);
+        }
+
         /* Cost Comparison */
         .cost-compare {
             background: var(--input-bg);
@@ -760,25 +775,20 @@
                         <button class="btn btn-primary btn-block btn-sm" id="btnBindFree" onclick="bindFree()" disabled
                             data-i18n="borrow_btn_bind_free">Use Free Version</button>
                     </div>
-                    <div class="borrow-option" style="border-color:var(--warning);">
+                    <div class="borrow-option" style="border-color:var(--warning);opacity:0.6;">
                         <div class="borrow-option-header">
                             <span class="borrow-option-title" data-i18n="borrow_personal_title">Monthly Version</span>
-                            <span class="borrow-availability" id="personalAvailBadge">--</span>
                         </div>
-                        <div class="price-row">
-                            <span class="price-original">NT$588</span>
-                            <span class="price-discount">NT$288</span>
-                            <span class="price-period" data-i18n="borrow_price_period">/month</span>
-                        </div>
-                        <div class="discount-label" data-i18n="borrow_discount_label">Limited-time Beta discount</div>
                         <ul class="borrow-option-features">
                             <li data-i18n="borrow_personal_feat_dedicated">Dedicated cloud environment</li>
                             <li data-i18n="borrow_personal_feat_memory">Private memory (only yours)</li>
                             <li data-i18n="borrow_personal_feat_unlimited">Unlimited messages (no daily limit)</li>
                             <li data-i18n="borrow_personal_feat_247">24/7 always online</li>
                         </ul>
-                        <button class="btn btn-warning btn-block btn-sm" id="btnBindPersonal" onclick="bindPersonal()"
-                            disabled data-i18n="borrow_btn_bind_personal">Buy Monthly Plan</button>
+                        <div class="maintenance-notice-inline">
+                            <span>&#9888;</span>
+                            <span data-i18n="maintenance_payment_title">Payment Under Maintenance</span>
+                        </div>
                     </div>
                 </div>
 
@@ -1453,7 +1463,7 @@
 
             // Reset click handlers
             btnFree.onclick = bindFree;
-            btnPersonal.onclick = bindPersonal;
+            if (btnPersonal) btnPersonal.onclick = bindPersonal;
 
             // Free availability badge
             if (borrowStatus.free.available) {
@@ -1464,13 +1474,15 @@
                 freeAvail.className = 'borrow-availability sold-out';
             }
 
-            // Personal availability badge
-            if (borrowStatus.personal.available > 0) {
-                personalAvail.textContent = i18n.t('borrow_personal_available', { count: borrowStatus.personal.available });
-                personalAvail.className = 'borrow-availability available';
-            } else {
-                personalAvail.textContent = i18n.t('borrow_personal_sold_out');
-                personalAvail.className = 'borrow-availability sold-out';
+            // Personal availability badge (hidden during maintenance)
+            if (personalAvail) {
+                if (borrowStatus.personal.available > 0) {
+                    personalAvail.textContent = i18n.t('borrow_personal_available', { count: borrowStatus.personal.available });
+                    personalAvail.className = 'borrow-availability available';
+                } else {
+                    personalAvail.textContent = i18n.t('borrow_personal_sold_out');
+                    personalAvail.className = 'borrow-availability sold-out';
+                }
             }
 
             // Check if selected entity already has an official binding
@@ -1481,12 +1493,16 @@
                 if (existingBinding.botType === 'free') {
                     btnFree.textContent = i18n.t('borrow_bound_free');
                     btnFree.disabled = true;
-                    btnPersonal.textContent = i18n.t('borrow_btn_unbind');
-                    btnPersonal.disabled = false;
-                    btnPersonal.onclick = function () { confirmUnbind(selectedBorrowEntity, existingBinding.botType); };
+                    if (btnPersonal) {
+                        btnPersonal.textContent = i18n.t('borrow_btn_unbind');
+                        btnPersonal.disabled = false;
+                        btnPersonal.onclick = function () { confirmUnbind(selectedBorrowEntity, existingBinding.botType); };
+                    }
                 } else {
-                    btnPersonal.textContent = i18n.t('borrow_bound_personal');
-                    btnPersonal.disabled = true;
+                    if (btnPersonal) {
+                        btnPersonal.textContent = i18n.t('borrow_bound_personal');
+                        btnPersonal.disabled = true;
+                    }
                     btnFree.textContent = i18n.t('borrow_btn_unbind');
                     btnFree.disabled = false;
                     btnFree.onclick = function () { confirmUnbind(selectedBorrowEntity, existingBinding.botType); };
@@ -1505,13 +1521,15 @@
                 btnFree.disabled = !borrowStatus.free.available;
             }
 
-            // Personal - show "Rebind (Free)" if user has available paid slots
-            if (borrowStatus.availableSlots > 0) {
-                btnPersonal.textContent = i18n.t('borrow_btn_rebind_free');
-            } else {
-                btnPersonal.textContent = i18n.t('borrow_btn_bind_personal');
+            // Personal - hidden during payment maintenance
+            if (btnPersonal) {
+                if (borrowStatus.availableSlots > 0) {
+                    btnPersonal.textContent = i18n.t('borrow_btn_rebind_free');
+                } else {
+                    btnPersonal.textContent = i18n.t('borrow_btn_bind_personal');
+                }
+                btnPersonal.disabled = borrowStatus.personal.available <= 0;
             }
-            btnPersonal.disabled = borrowStatus.personal.available <= 0;
 
             // Override mode: backend auto-unbinds existing binding, no client-side blocking
         }
@@ -1607,7 +1625,7 @@
             const btn = document.getElementById('btnBindFree');
             const btnPersonal = document.getElementById('btnBindPersonal');
             btn.disabled = true;
-            btnPersonal.disabled = true;
+            if (btnPersonal) btnPersonal.disabled = true;
             btn.textContent = i18n.t('borrow_btn_handshaking');
 
             try {
@@ -1777,6 +1795,7 @@
         async function bindPersonal() {
             // Step 1: Try to bind - backend checks paid slots
             const btn = document.getElementById('btnBindPersonal');
+            if (!btn) return; // Payment under maintenance
             const btnFree = document.getElementById('btnBindFree');
             btn.disabled = true;
             btnFree.disabled = true;
