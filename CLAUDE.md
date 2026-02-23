@@ -1,5 +1,31 @@
 # Claude Code Instructions
 
+## Workflow Orchestration Rules
+
+1. **Plan Mode Default** — 收到新任務時，先進入 Plan Mode（只讀 + 搜索），產出一份 step-by-step 計畫並讓使用者確認後才動手寫程式碼。
+
+2. **Subagent Strategy** — 遇到需要大量搜索或分析的子任務，使用 Task tool 派出 subagent（Explore / Plan / Bash）並行處理，減少主對話的 context 消耗。
+
+3. **Self-Improvement Loop** — 每次 session 結束前，把學到的 codebase 知識、常見陷阱、偏好寫回 CLAUDE.md，讓下一個 session 的 Claude 不必從零開始。
+
+4. **Verification Before Done** — 修改程式碼後必須跑 lint / type-check / test；若任何一步失敗就修到通過為止，不把破損的 code commit。
+
+5. **Demand Elegance (Balanced)** — 在保持 minimal change 的前提下，追求可讀、一致的程式風格；不為了「漂亮」而過度重構，但也不容忍明顯的 code smell 在新增的程式碼中出現。
+
+6. **Autonomous Bug Fixing** — 當執行過程中遇到錯誤（build fail、test fail、runtime error），不要立刻停下來問使用者，先自行分析 log 並嘗試修復，連續失敗 3 次才 escalate。
+
+7. **Task Management**
+   - 所有多步驟工作都使用 TodoWrite 追蹤，讓使用者隨時可見進度
+   - 完成一項立即標記 completed，不批量更新
+   - 同時只有一個 task 可以是 in_progress
+
+8. **Core Principles**
+   - 安全第一（不引入 OWASP Top-10 漏洞）
+   - 不臆測（先讀再改）
+   - 最小驚訝原則（行為與命名一致）
+   - DRY but not premature abstraction
+   - 優先使用專用工具（Read > cat, Edit > sed, Grep > grep）
+
 ## Git Workflow
 
 - **Direct merge to main**: When work is complete, commit and merge directly to `main` branch. Do NOT create PRs or wait for approval — the user reviews all changes in real-time during the session.
