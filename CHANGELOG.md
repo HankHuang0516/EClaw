@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/HankHuang0516/realbot/compare/v1.13.0...v1.14.0) (2026-02-24)
+
+
+### Features
+
+* add comprehensive notification system (Socket.IO, Web Push, FCM prep, preferences) ([8f629fc](https://github.com/HankHuang0516/realbot/commit/8f629fcde80f20e6adb85371b1b4dab6a0e0e7bf))
+
 # [1.13.0](https://github.com/HankHuang0516/realbot/compare/v1.12.0...v1.13.0) (2026-02-24)
 
 
