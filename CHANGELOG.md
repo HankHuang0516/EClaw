@@ -1,3 +1,11 @@
+## [1.20.1](https://github.com/HankHuang0516/realbot/compare/v1.20.0...v1.20.1) (2026-02-24)
+
+
+### Bug Fixes
+
+* allow debug/test devices to use all 8 entity slots ([#66](https://github.com/HankHuang0516/realbot/issues/66)) ([3ec7ca4](https://github.com/HankHuang0516/realbot/commit/3ec7ca490899495daaab56a4dd6bfeb01cba6fe2))
+* dark theme for notification/language cards and fix API field name mismatch ([9b89f46](https://github.com/HankHuang0516/realbot/commit/9b89f461059b8547f1914dd002ef5c42c62e8f56)), closes [#1A1A1A](https://github.com/HankHuang0516/realbot/issues/1A1A1A) [#333333](https://github.com/HankHuang0516/realbot/issues/333333)
+
 # [1.20.0](https://github.com/HankHuang0516/realbot/compare/v1.19.0...v1.20.0) (2026-02-24)
 
 
