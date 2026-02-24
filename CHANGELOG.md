@@ -1,3 +1,16 @@
+# [1.11.0](https://github.com/HankHuang0516/realbot/compare/v1.10.0...v1.11.0) (2026-02-24)
+
+
+### Bug Fixes
+
+* correct Multi-Entity max to 8 and Setup description (independent platforms) ([13a8770](https://github.com/HankHuang0516/realbot/commit/13a8770fbf0d5fe773785292d904aac1a7664a7e))
+
+
+### Features
+
+* add E-Claw vs Telegram channel comparison page ([231b555](https://github.com/HankHuang0516/realbot/commit/231b555c16ea4397f1e297402a6201db9c05a418))
+* add Mission Control & Chat Attachments comparison rows, fix Setup description ([009c4d1](https://github.com/HankHuang0516/realbot/commit/009c4d1290dc5972a1360b37771c76c0291bb5c9))
+
 # [1.10.0](https://github.com/HankHuang0516/realbot/compare/v1.9.0...v1.10.0) (2026-02-23)
 
 
