@@ -1,3 +1,10 @@
+## [1.16.1](https://github.com/HankHuang0516/realbot/compare/v1.16.0...v1.16.1) (2026-02-24)
+
+
+### Bug Fixes
+
+* canonical domain redirect to prevent cookie/auth loop ([e7b2d5b](https://github.com/HankHuang0516/realbot/commit/e7b2d5bfdaf036b3a4fe69dc6ac1a4402e299e23))
+
 # [1.16.0](https://github.com/HankHuang0516/realbot/compare/v1.15.0...v1.16.0) (2026-02-24)
 
 
