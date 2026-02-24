@@ -22,7 +22,10 @@ import com.bumptech.glide.Glide
 import com.hank.clawlive.R
 import com.hank.clawlive.data.local.EntityAvatarManager
 import com.hank.clawlive.data.local.database.ChatMessage
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 import java.io.File
+import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -96,6 +99,11 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
         private val btnPlay: ImageButton = itemView.findViewById(R.id.btnPlay)
         private val progressVoice: ProgressBar = itemView.findViewById(R.id.progressVoice)
         private val tvDuration: TextView = itemView.findViewById(R.id.tvDuration)
+        private val layoutLinkPreview: LinearLayout = itemView.findViewById(R.id.layoutLinkPreview)
+        private val ivLinkPreview: ImageView = itemView.findViewById(R.id.ivLinkPreview)
+        private val tvLinkTitle: TextView = itemView.findViewById(R.id.tvLinkTitle)
+        private val tvLinkDesc: TextView = itemView.findViewById(R.id.tvLinkDesc)
+        private val tvLinkDomain: TextView = itemView.findViewById(R.id.tvLinkDomain)
 
         private var mediaPlayer: MediaPlayer? = null
         private var tempFile: File? = null
@@ -152,6 +160,37 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
                 tvDeliveryStatus.visibility = View.VISIBLE
             } else {
                 tvDeliveryStatus.visibility = View.GONE
+            }
+
+            // Link preview
+            bindLinkPreview(message)
+        }
+
+        private fun bindLinkPreview(message: ChatMessage) {
+            val url = LinkPreviewHelper.extractFirstUrl(message.text)
+            if (url == null || message.mediaType != null) {
+                layoutLinkPreview.visibility = View.GONE
+                return
+            }
+            layoutLinkPreview.visibility = View.GONE // hide until loaded
+            MainScope().launch {
+                val data = LinkPreviewHelper.fetch(url) ?: return@launch
+                if (bindingAdapterPosition == RecyclerView.NO_POSITION) return@launch
+                tvLinkTitle.text = data.title
+                tvLinkDesc.text = data.description
+                tvLinkDesc.visibility = if (data.description.isNotEmpty()) View.VISIBLE else View.GONE
+                try { tvLinkDomain.text = URL(data.url).host } catch (_: Exception) { tvLinkDomain.text = "" }
+                if (data.image.isNotEmpty()) {
+                    ivLinkPreview.visibility = View.VISIBLE
+                    Glide.with(itemView.context).load(data.image).centerCrop().into(ivLinkPreview)
+                } else {
+                    ivLinkPreview.visibility = View.GONE
+                }
+                layoutLinkPreview.visibility = View.VISIBLE
+                layoutLinkPreview.setOnClickListener {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    itemView.context.startActivity(intent)
+                }
             }
         }
 
@@ -251,6 +290,11 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
         private val btnPlay: ImageButton = itemView.findViewById(R.id.btnPlay)
         private val progressVoice: ProgressBar = itemView.findViewById(R.id.progressVoice)
         private val tvDuration: TextView = itemView.findViewById(R.id.tvDuration)
+        private val layoutLinkPreview: LinearLayout = itemView.findViewById(R.id.layoutLinkPreview)
+        private val ivLinkPreview: ImageView = itemView.findViewById(R.id.ivLinkPreview)
+        private val tvLinkTitle: TextView = itemView.findViewById(R.id.tvLinkTitle)
+        private val tvLinkDesc: TextView = itemView.findViewById(R.id.tvLinkDesc)
+        private val tvLinkDomain: TextView = itemView.findViewById(R.id.tvLinkDomain)
 
         private var mediaPlayer: MediaPlayer? = null
         private var tempFile: File? = null
@@ -288,6 +332,37 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
                 tvReadReceipt.visibility = View.VISIBLE
             } else {
                 tvReadReceipt.visibility = View.GONE
+            }
+
+            // Link preview
+            bindLinkPreview(message)
+        }
+
+        private fun bindLinkPreview(message: ChatMessage) {
+            val url = LinkPreviewHelper.extractFirstUrl(message.text)
+            if (url == null || message.mediaType != null) {
+                layoutLinkPreview.visibility = View.GONE
+                return
+            }
+            layoutLinkPreview.visibility = View.GONE // hide until loaded
+            MainScope().launch {
+                val data = LinkPreviewHelper.fetch(url) ?: return@launch
+                if (bindingAdapterPosition == RecyclerView.NO_POSITION) return@launch
+                tvLinkTitle.text = data.title
+                tvLinkDesc.text = data.description
+                tvLinkDesc.visibility = if (data.description.isNotEmpty()) View.VISIBLE else View.GONE
+                try { tvLinkDomain.text = URL(data.url).host } catch (_: Exception) { tvLinkDomain.text = "" }
+                if (data.image.isNotEmpty()) {
+                    ivLinkPreview.visibility = View.VISIBLE
+                    Glide.with(itemView.context).load(data.image).centerCrop().into(ivLinkPreview)
+                } else {
+                    ivLinkPreview.visibility = View.GONE
+                }
+                layoutLinkPreview.visibility = View.VISIBLE
+                layoutLinkPreview.setOnClickListener {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    itemView.context.startActivity(intent)
+                }
             }
         }
 

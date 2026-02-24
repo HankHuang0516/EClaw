@@ -1076,6 +1076,111 @@ app.get('/api/version', (req, res) => {
 });
 
 // ============================================
+// LINK PREVIEW (Open Graph metadata extraction)
+// ============================================
+
+const linkPreviewCache = new Map();
+const LINK_PREVIEW_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+/* global AbortController, TextDecoder */
+app.get('/api/link-preview', async (req, res) => {
+    const { url } = req.query;
+    if (!url) return res.status(400).json({ error: 'url parameter required' });
+
+    // Validate URL format
+    let parsedUrl;
+    try {
+        parsedUrl = new URL(url);
+        if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+            return res.status(400).json({ error: 'Only http/https URLs are supported' });
+        }
+    } catch {
+        return res.status(400).json({ error: 'Invalid URL' });
+    }
+
+    // Check cache
+    const cached = linkPreviewCache.get(url);
+    if (cached && (Date.now() - cached.ts < LINK_PREVIEW_CACHE_TTL)) {
+        return res.json(cached.data);
+    }
+
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+
+        const response = await fetch(url, {
+            signal: controller.signal,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; RealBot/1.0; +https://eclaw.up.railway.app)',
+                'Accept': 'text/html'
+            },
+            redirect: 'follow'
+        });
+        clearTimeout(timeout);
+
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('text/html')) {
+            return res.json({ url, title: '', description: '', image: '' });
+        }
+
+        // Read only first 50KB to avoid large payloads
+        const reader = response.body.getReader();
+        let html = '';
+        const decoder = new TextDecoder();
+        while (html.length < 50000) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            html += decoder.decode(value, { stream: true });
+        }
+        reader.cancel();
+
+        // Extract Open Graph tags
+        const getMeta = (property) => {
+            const re = new RegExp(`<meta[^>]+(?:property|name)=["']${property}["'][^>]+content=["']([^"']*)["']`, 'i');
+            const re2 = new RegExp(`<meta[^>]+content=["']([^"']*)["'][^>]+(?:property|name)=["']${property}["']`, 'i');
+            return (html.match(re) || html.match(re2) || [])[1] || '';
+        };
+
+        let title = getMeta('og:title') || getMeta('twitter:title');
+        if (!title) {
+            const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+            title = titleMatch ? titleMatch[1].trim() : '';
+        }
+
+        const description = getMeta('og:description') || getMeta('twitter:description') || getMeta('description');
+        let image = getMeta('og:image') || getMeta('twitter:image');
+        // Resolve relative image URLs
+        if (image && !image.startsWith('http')) {
+            try { image = new URL(image, url).href; } catch { /* keep as-is */ }
+        }
+
+        const data = {
+            url,
+            title: title.substring(0, 200),
+            description: description.substring(0, 500),
+            image
+        };
+
+        // Cache the result
+        linkPreviewCache.set(url, { ts: Date.now(), data });
+        // Evict old entries periodically
+        if (linkPreviewCache.size > 500) {
+            const now = Date.now();
+            for (const [key, val] of linkPreviewCache) {
+                if (now - val.ts > LINK_PREVIEW_CACHE_TTL) linkPreviewCache.delete(key);
+            }
+        }
+
+        res.json(data);
+    } catch (err) {
+        if (err.name === 'AbortError') {
+            return res.status(504).json({ error: 'Timeout fetching URL' });
+        }
+        res.status(500).json({ error: 'Failed to fetch link preview' });
+    }
+});
+
+// ============================================
 // DEVICE REGISTRATION (Android App)
 // ============================================
 
