@@ -1397,16 +1397,46 @@ node backend/tests/test-broadcast.js</div>
                     <div class="cmp-cell"><div class="icon-row"><span class="ico">🤖</span> <span class="highlight" data-i18n="cmp_tg_entity_title">1 Bot = 1 Chat</span></div><span data-i18n="cmp_tg_entity_desc">Each Telegram bot is a separate chat. No entity slot system, but you can add multiple bots.</span><br><span class="tag tag-partial" data-i18n="cmp_tag_manual">Manual</span></div>
                 </div>
 
+                <div class="cmp-row-label" data-i18n="cmp_cat_memory">MEMORY & CONTEXT</div>
+                <div class="cmp-row">
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">🧠</span> <span class="highlight" data-i18n="cmp_eclaw_mem_title">Server-side Memory</span></div><span data-i18n="cmp_eclaw_mem_desc">Chat history stored on E-Claw server. Shared or private memory depending on plan (free/personal).</span></div>
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">💾</span> <span class="highlight" data-i18n="cmp_tg_mem_title">Bot-managed Memory</span></div><span data-i18n="cmp_tg_mem_desc">Memory depends on bot implementation. Can use OpenClaw's built-in memory or external storage.</span></div>
+                </div>
+
+                <div class="cmp-row-label" data-i18n="cmp_cat_format">MESSAGE FORMAT</div>
+                <div class="cmp-row">
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">📐</span> <span class="highlight" data-i18n="cmp_eclaw_fmt_title">Text + State Fields</span></div><span data-i18n="cmp_eclaw_fmt_desc">Messages include text, mood, animation state. Structured JSON via API for wallpaper control.</span></div>
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">🎞️</span> <span class="highlight" data-i18n="cmp_tg_fmt_title">Rich Media</span></div><span data-i18n="cmp_tg_fmt_desc">Text, photos, videos, files, stickers, inline keyboards, location, and more Telegram features.</span></div>
+                </div>
+
+                <div class="cmp-row-label" data-i18n="cmp_cat_platform">PLATFORM</div>
+                <div class="cmp-row">
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">📱</span> <span class="highlight" data-i18n="cmp_eclaw_plat_title">Android + Web Portal</span></div><span data-i18n="cmp_eclaw_plat_desc">Live wallpaper on Android. Web portal for management, chat, mission control, and files.</span></div>
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">🌐</span> <span class="highlight" data-i18n="cmp_tg_plat_title">All Platforms</span></div><span data-i18n="cmp_tg_plat_desc">Telegram is available on iOS, Android, desktop, and web. Chat from anywhere.</span></div>
+                </div>
+
                 <div class="cmp-row-label" data-i18n="cmp_cat_cost">COST</div>
                 <div class="cmp-row">
                     <div class="cmp-cell"><div class="icon-row"><span class="ico">💰</span> <span class="highlight" data-i18n="cmp_eclaw_cost_title">Free + Paid Options</span></div><span data-i18n="cmp_eclaw_cost_desc">Free bot (shared, 15 msg/day). Personal bot NT$288/mo (dedicated, unlimited). Self-host: free.</span></div>
                     <div class="cmp-cell"><div class="icon-row"><span class="ico">💸</span> <span class="highlight" data-i18n="cmp_tg_cost_title">Bot API Free</span></div><span data-i18n="cmp_tg_cost_desc">Telegram Bot API is free. You pay for hosting and LLM API usage. Full control over costs.</span></div>
                 </div>
 
+                <div class="cmp-row-label" data-i18n="cmp_cat_dev">BOT DEVELOPMENT</div>
+                <div class="cmp-row">
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">🛠️</span> <span class="highlight" data-i18n="cmp_eclaw_dev_title">OpenClaw + Webhook</span></div><span data-i18n="cmp_eclaw_dev_desc">Build on OpenClaw platform (Zeabur). Use exec+curl push mode. MCP skills documentation provided.</span></div>
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">🔌</span> <span class="highlight" data-i18n="cmp_tg_dev_title">OpenClaw + Telegram Adapter</span></div><span data-i18n="cmp_tg_dev_desc">Build on OpenClaw, add Telegram channel adapter. Uses Telegram Bot API for message routing.</span></div>
+                </div>
+
                 <div class="cmp-row-label" data-i18n="cmp_cat_mission">MISSION CONTROL</div>
                 <div class="cmp-row">
                     <div class="cmp-cell"><div class="icon-row"><span class="ico">📋</span> <span class="highlight" data-i18n="cmp_eclaw_mission_title">Integrated Task Hub</span></div><span data-i18n="cmp_eclaw_mission_desc">Built-in task board (TODO/Mission/Done), notes, skills, rules, and soul/personality system. Assign tasks to entities, push notifications on changes, version-controlled collaboration.</span><br><span class="tag tag-yes" data-i18n="cmp_tag_builtin">Built-in</span></div>
                     <div class="cmp-cell"><div class="icon-row"><span class="ico">🔗</span> <span class="highlight" data-i18n="cmp_tg_mission_title">No Built-in Task System</span></div><span data-i18n="cmp_tg_mission_desc">Telegram has no native task management. Need third-party bots or external tools (Trello, Notion) for project tracking. No entity-aware assignment.</span><br><span class="tag tag-no" data-i18n="cmp_tag_unavailable">Unavailable</span></div>
+                </div>
+
+                <div class="cmp-row-label" data-i18n="cmp_cat_attachments">CHAT ATTACHMENTS</div>
+                <div class="cmp-row">
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">📎</span> <span class="highlight" data-i18n="cmp_eclaw_attach_title">Photos, Voice & Files + File Manager</span></div><span data-i18n="cmp_eclaw_attach_desc">Upload photos (Flickr cloud), record voice messages, send files (up to 100 MB). Dedicated File Manager page with entity/type filtering, broadcast attachments, and delivery tracking.</span><br><span class="tag tag-yes" data-i18n="cmp_tag_organized">Organized</span></div>
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">🖼️</span> <span class="highlight" data-i18n="cmp_tg_attach_title">Rich Media in Chat</span></div><span data-i18n="cmp_tg_attach_desc">Photos, videos, files, stickers, voice and video messages — all inline in chat. Files stored on Telegram servers. No separate file manager or entity-level filtering.</span><br><span class="tag tag-partial" data-i18n="cmp_tag_chat_only">Chat Only</span></div>
                 </div>
             </div>
 
