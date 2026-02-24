@@ -1,223 +1,409 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 2120" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1420" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#0D0D1A"/>
-      <stop offset="100%" stop-color="#12122B"/>
-    </linearGradient>
-    <linearGradient id="eclawGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#6C63FF" stop-opacity="0.25"/>
-      <stop offset="100%" stop-color="#6C63FF" stop-opacity="0.08"/>
-    </linearGradient>
-    <linearGradient id="tgGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0088CC" stop-opacity="0.25"/>
-      <stop offset="100%" stop-color="#0088CC" stop-opacity="0.08"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#0B0E17"/>
+      <stop offset="100%" stop-color="#101828"/>
     </linearGradient>
     <linearGradient id="titleGrad" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0%" stop-color="#6C63FF"/>
       <stop offset="50%" stop-color="#FF6584"/>
       <stop offset="100%" stop-color="#FFD23F"/>
     </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="3" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    <linearGradient id="greenGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#4ECDC4"/>
+      <stop offset="100%" stop-color="#44B09E"/>
+    </linearGradient>
+    <filter id="cardShadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#000000" flood-opacity="0.3"/>
     </filter>
-    <clipPath id="roundCard">
-      <rect width="1160" height="108" rx="12"/>
-    </clipPath>
   </defs>
 
-  <!-- Background -->
-  <rect width="1200" height="2120" fill="url(#bg)"/>
-
-  <!-- Subtle grid pattern -->
-  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#ffffff" stroke-opacity="0.02" stroke-width="1"/>
+  <!-- ═══ Background ═══ -->
+  <rect width="1200" height="1420" fill="url(#bg)"/>
+  <!-- Subtle dot grid -->
+  <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+    <circle cx="2" cy="2" r="0.5" fill="#ffffff" fill-opacity="0.04"/>
   </pattern>
-  <rect width="1200" height="2120" fill="url(#grid)"/>
+  <rect width="1200" height="1420" fill="url(#dots)"/>
 
-  <!-- ═══════ HEADER ═══════ -->
-  <text x="600" y="70" text-anchor="middle" fill="url(#titleGrad)" font-size="18" font-weight="700" letter-spacing="4">OPENCLAW CHANNEL COMPARISON</text>
+  <!-- ═══════════════════════════════════════════ -->
+  <!--                  HEADER                     -->
+  <!-- ═══════════════════════════════════════════ -->
+  <text x="600" y="52" text-anchor="middle" fill="#ffffff" font-size="30" font-weight="800">E-Claw 跟 Telegram 差在哪？該怎麼選？</text>
+  <text x="600" y="82" text-anchor="middle" fill="#6a7080" font-size="14">兩者都跑在 OpenClaw 上，但使用情境和體驗完全不同。搞懂差異，選對頻道。</text>
 
-  <!-- E-Claw header card -->
-  <rect x="40" y="100" width="545" height="110" rx="16" fill="url(#eclawGrad)" stroke="#6C63FF" stroke-opacity="0.4" stroke-width="1.5"/>
-  <text x="312" y="142" text-anchor="middle" font-size="36">🦞</text>
-  <text x="312" y="178" text-anchor="middle" fill="#6C63FF" font-size="26" font-weight="800">E-Claw</text>
-  <text x="312" y="198" text-anchor="middle" fill="#888888" font-size="13">原生動態桌布頻道</text>
+  <!-- Divider line -->
+  <line x1="100" y1="102" x2="1100" y2="102" stroke="#1e2536" stroke-width="1"/>
 
-  <!-- VS badge -->
-  <circle cx="600" cy="155" r="24" fill="#1A1A2E" stroke="#333355" stroke-width="1.5"/>
-  <text x="600" y="161" text-anchor="middle" fill="#555555" font-size="14" font-weight="700">VS</text>
+  <!-- ═══════════════════════════════════════════ -->
+  <!--           COLUMN 1 (Left ~380px)            -->
+  <!-- ═══════════════════════════════════════════ -->
 
-  <!-- Telegram header card -->
-  <rect x="615" y="100" width="545" height="110" rx="16" fill="url(#tgGrad)" stroke="#0088CC" stroke-opacity="0.4" stroke-width="1.5"/>
-  <text x="887" y="142" text-anchor="middle" font-size="36">✈️</text>
-  <text x="887" y="178" text-anchor="middle" fill="#0088CC" font-size="26" font-weight="800">Telegram</text>
-  <text x="887" y="198" text-anchor="middle" fill="#888888" font-size="13">聊天訊息頻道</text>
+  <!-- ── Section 1: 兩者互補 ── -->
+  <text x="50" y="140" fill="url(#greenGrad)" font-size="17" font-weight="700">🤝 兩者互補，不是競品</text>
 
-  <!-- ═══════ COMPARISON ROWS ═══════ -->
-  <!-- Row template: category label + two cells side by side -->
+  <!-- E-Claw mini card -->
+  <rect x="50" y="158" width="175" height="200" rx="10" fill="#141926" stroke="#6C63FF" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="137" y="186" text-anchor="middle" font-size="24">🦞</text>
+  <text x="137" y="210" text-anchor="middle" fill="#6C63FF" font-size="14" font-weight="700">E-Claw</text>
+  <text x="137" y="228" text-anchor="middle" fill="#4a5568" font-size="10">動態桌布頻道</text>
+  <line x1="75" y1="240" x2="200" y2="240" stroke="#1e2536" stroke-width="1"/>
+  <circle cx="70" cy="260" r="3" fill="#6C63FF"/>
+  <text x="82" y="264" fill="#8b95a5" font-size="11">主動推播到桌布</text>
+  <circle cx="70" cy="282" r="3" fill="#6C63FF"/>
+  <text x="82" y="286" fill="#8b95a5" font-size="11">控制心情與動畫</text>
+  <circle cx="70" cy="304" r="3" fill="#6C63FF"/>
+  <text x="82" y="308" fill="#8b95a5" font-size="11">多實體管理 (0-7)</text>
+  <circle cx="70" cy="326" r="3" fill="#6C63FF"/>
+  <text x="82" y="330" fill="#8b95a5" font-size="11">內建任務中心</text>
+  <circle cx="70" cy="348" r="3" fill="#6C63FF"/>
+  <text x="82" y="352" fill="#8b95a5" font-size="11">檔案管理員</text>
 
-  <!-- Row 1: SETUP (Y=240) -->
-  <text x="60" y="255" fill="#555555" font-size="11" font-weight="700" letter-spacing="1.5">設定方式</text>
-  <rect x="40" y="268" width="545" height="92" rx="10" fill="#1A1A2E"/>
-  <text x="68" y="295" fill="#ffffff" font-size="15" font-weight="700">📱 Android App 或網頁入口</text>
-  <text x="68" y="316" fill="#888888" font-size="12">使用 Android App 或網頁入口皆可，兩者獨立運作。</text>
-  <text x="68" y="336" fill="#888888" font-size="12">註冊帳號 → 產生綁定碼 → 貼給機器人即完成。</text>
-  <rect x="615" y="268" width="545" height="92" rx="10" fill="#1A1A2E"/>
-  <text x="643" y="295" fill="#ffffff" font-size="15" font-weight="700">💬 在 Telegram 搜尋機器人</text>
-  <text x="643" y="316" fill="#888888" font-size="12">打開 Telegram，搜尋機器人名稱，</text>
-  <text x="643" y="336" fill="#888888" font-size="12">按下 /start — 馬上就能開始聊天。</text>
+  <!-- Telegram mini card -->
+  <rect x="240" y="158" width="175" height="200" rx="10" fill="#141926" stroke="#0088CC" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="327" y="186" text-anchor="middle" font-size="24">✈️</text>
+  <text x="327" y="210" text-anchor="middle" fill="#0088CC" font-size="14" font-weight="700">Telegram</text>
+  <text x="327" y="228" text-anchor="middle" fill="#4a5568" font-size="10">聊天訊息頻道</text>
+  <line x1="265" y1="240" x2="390" y2="240" stroke="#1e2536" stroke-width="1"/>
+  <circle cx="260" cy="260" r="3" fill="#0088CC"/>
+  <text x="272" y="264" fill="#8b95a5" font-size="11">標準聊天體驗</text>
+  <circle cx="260" cy="282" r="3" fill="#0088CC"/>
+  <text x="272" y="286" fill="#8b95a5" font-size="11">豐富多媒體訊息</text>
+  <circle cx="260" cy="304" r="3" fill="#0088CC"/>
+  <text x="272" y="308" fill="#8b95a5" font-size="11">全平台 (iOS/桌面)</text>
+  <circle cx="260" cy="326" r="3" fill="#0088CC"/>
+  <text x="272" y="330" fill="#8b95a5" font-size="11">免費 Bot API</text>
+  <circle cx="260" cy="348" r="3" fill="#0088CC"/>
+  <text x="272" y="352" fill="#8b95a5" font-size="11">無需安裝新 App</text>
 
-  <!-- Row 2: INTERACTION (Y=385) -->
-  <text x="60" y="400" fill="#555555" font-size="11" font-weight="700" letter-spacing="1.5">互動方式</text>
-  <rect x="40" y="413" width="545" height="92" rx="10" fill="#1A1A2E"/>
-  <text x="68" y="440" fill="#ffffff" font-size="15" font-weight="700">🔄 推播 + 對話 + 廣播</text>
-  <text x="68" y="461" fill="#888888" font-size="12">機器人主動推播狀態更新到桌布。</text>
-  <text x="68" y="481" fill="#888888" font-size="12">可直接對話，也可廣播訊息給所有實體。</text>
-  <rect x="615" y="413" width="545" height="92" rx="10" fill="#1A1A2E"/>
-  <text x="643" y="440" fill="#ffffff" font-size="15" font-weight="700">⌨️ 標準聊天</text>
-  <text x="643" y="461" fill="#888888" font-size="12">傳訊息、收回覆。經典聊天機器人體驗，</text>
-  <text x="643" y="481" fill="#888888" font-size="12">支援文字、圖片和按鈕。</text>
+  <!-- Footer text for section 1 -->
+  <rect x="50" y="368" width="365" height="32" rx="6" fill="#0d1117" stroke="#1e2536" stroke-width="1"/>
+  <text x="232" y="389" text-anchor="middle" fill="#4ECDC4" font-size="11" font-weight="600">同一個 OpenClaw 機器人，可同時接兩個頻道 ✨</text>
 
-  <!-- Row 3: LIVE WALLPAPER (Y=530) -->
-  <text x="60" y="545" fill="#555555" font-size="11" font-weight="700" letter-spacing="1.5">動態桌布</text>
-  <rect x="40" y="558" width="545" height="92" rx="10" fill="#1A1A2E"/>
-  <text x="68" y="585" fill="#ffffff" font-size="15" font-weight="700">🎨 完整整合</text>
-  <text x="68" y="606" fill="#888888" font-size="12">機器人控制桌布狀態（心情、訊息、動畫），</text>
-  <text x="68" y="626" fill="#888888" font-size="12">你的手機桌面活過來。</text>
-  <rect x="68" y="636" width="68" height="18" rx="9" fill="#4CAF50" fill-opacity="0.15"/>
-  <text x="102" y="649" text-anchor="middle" fill="#4CAF50" font-size="10" font-weight="600">原生支援</text>
-  <rect x="615" y="558" width="545" height="92" rx="10" fill="#1A1A2E"/>
-  <text x="643" y="585" fill="#ffffff" font-size="15" font-weight="700">🖼️ 無桌布控制</text>
-  <text x="643" y="606" fill="#888888" font-size="12">Telegram 機器人無法更新手機動態桌布，</text>
-  <text x="643" y="626" fill="#888888" font-size="12">僅有聊天體驗。</text>
-  <rect x="643" y="636" width="56" height="18" rx="9" fill="#F44336" fill-opacity="0.15"/>
-  <text x="671" y="649" text-anchor="middle" fill="#F44336" font-size="10" font-weight="600">不支援</text>
+  <!-- ── Section 2: 關鍵差異 ── -->
+  <text x="50" y="436" fill="url(#greenGrad)" font-size="17" font-weight="700">⚡ 關鍵差異速查</text>
 
-  <!-- Row 4: PUSH NOTIFICATIONS (Y=680) -->
-  <text x="60" y="695" fill="#555555" font-size="11" font-weight="700" letter-spacing="1.5">推播通知</text>
-  <rect x="40" y="708" width="545" height="92" rx="10" fill="#1A1A2E"/>
-  <text x="68" y="735" fill="#ffffff" font-size="15" font-weight="700">🔔 主動推播</text>
-  <text x="68" y="756" fill="#888888" font-size="12">機器人透過 API 自主推播更新，</text>
-  <text x="68" y="776" fill="#888888" font-size="12">桌布即時變化，無需使用者操作。</text>
-  <rect x="68" y="786" width="40" height="18" rx="9" fill="#4CAF50" fill-opacity="0.15"/>
-  <text x="88" y="799" text-anchor="middle" fill="#4CAF50" font-size="10" font-weight="600">即時</text>
-  <rect x="615" y="708" width="545" height="92" rx="10" fill="#1A1A2E"/>
-  <text x="643" y="735" fill="#ffffff" font-size="15" font-weight="700">📩 訊息通知</text>
-  <text x="643" y="756" fill="#888888" font-size="12">機器人傳訊時收到 Telegram 標準通知，</text>
-  <text x="643" y="776" fill="#888888" font-size="12">需要打開 App 才能閱讀。</text>
-  <rect x="643" y="786" width="40" height="18" rx="9" fill="#FFD23F" fill-opacity="0.15"/>
-  <text x="663" y="799" text-anchor="middle" fill="#FFD23F" font-size="10" font-weight="600">被動</text>
+  <!-- Comparison table card -->
+  <rect x="50" y="454" width="365" height="540" rx="10" fill="#141926" stroke="#1e2536" stroke-width="1"/>
 
-  <!-- Row 5: MULTI-ENTITY (Y=830) -->
-  <text x="60" y="845" fill="#555555" font-size="11" font-weight="700" letter-spacing="1.5">多實體</text>
-  <rect x="40" y="858" width="545" height="92" rx="10" fill="#1A1A2E"/>
-  <text x="68" y="885" fill="#ffffff" font-size="15" font-weight="700">👥 最多 8 個實體</text>
-  <text x="68" y="906" fill="#888888" font-size="12">將不同機器人綁定到不同實體欄位 (0-7)，</text>
-  <text x="68" y="926" fill="#888888" font-size="12">各自獨立的狀態和記憶。</text>
-  <rect x="68" y="936" width="52" height="18" rx="9" fill="#4CAF50" fill-opacity="0.15"/>
-  <text x="94" y="949" text-anchor="middle" fill="#4CAF50" font-size="10" font-weight="600">多實體</text>
-  <rect x="615" y="858" width="545" height="92" rx="10" fill="#1A1A2E"/>
-  <text x="643" y="885" fill="#ffffff" font-size="15" font-weight="700">🤖 1 機器人 = 1 對話</text>
-  <text x="643" y="906" fill="#888888" font-size="12">每個 Telegram 機器人是獨立對話，</text>
-  <text x="643" y="926" fill="#888888" font-size="12">沒有實體欄位系統，但可以加多個機器人。</text>
-  <rect x="643" y="936" width="40" height="18" rx="9" fill="#FFD23F" fill-opacity="0.15"/>
-  <text x="663" y="949" text-anchor="middle" fill="#FFD23F" font-size="10" font-weight="600">手動</text>
+  <!-- Table header -->
+  <rect x="50" y="454" width="365" height="32" rx="10" fill="#1a2030"/>
+  <rect x="50" y="474" width="365" height="12" fill="#1a2030"/>
+  <text x="83" y="475" fill="#4a5568" font-size="10" font-weight="700" letter-spacing="1">功能</text>
+  <text x="230" y="475" fill="#6C63FF" font-size="10" font-weight="700">E-CLAW</text>
+  <text x="340" y="475" fill="#0088CC" font-size="10" font-weight="700">TELEGRAM</text>
 
-  <!-- Row 6: MEMORY & CONTEXT (Y=980) -->
-  <text x="60" y="995" fill="#555555" font-size="11" font-weight="700" letter-spacing="1.5">記憶與上下文</text>
-  <rect x="40" y="1008" width="545" height="92" rx="10" fill="#1A1A2E"/>
-  <text x="68" y="1035" fill="#ffffff" font-size="15" font-weight="700">🧠 伺服器端記憶</text>
-  <text x="68" y="1056" fill="#888888" font-size="12">聊天記錄存在 E-Claw 伺服器。</text>
-  <text x="68" y="1076" fill="#888888" font-size="12">根據方案（免費/個人）可共享或私有記憶。</text>
-  <rect x="615" y="1008" width="545" height="92" rx="10" fill="#1A1A2E"/>
-  <text x="643" y="1035" fill="#ffffff" font-size="15" font-weight="700">💾 機器人自管記憶</text>
-  <text x="643" y="1056" fill="#888888" font-size="12">記憶取決於機器人實作，</text>
-  <text x="643" y="1076" fill="#888888" font-size="12">可使用 OpenClaw 內建記憶或外部儲存。</text>
+  <!-- Row 1 -->
+  <line x1="65" y1="494" x2="400" y2="494" stroke="#1e2536" stroke-width="0.5"/>
+  <text x="83" y="513" fill="#c0c8d4" font-size="11">動態桌布</text>
+  <text x="240" y="513" fill="#4CAF50" font-size="12">✔</text>
+  <text x="355" y="513" fill="#F44336" font-size="12">✘</text>
 
-  <!-- Row 7: MESSAGE FORMAT (Y=1125) -->
-  <text x="60" y="1140" fill="#555555" font-size="11" font-weight="700" letter-spacing="1.5">訊息格式</text>
-  <rect x="40" y="1153" width="545" height="92" rx="10" fill="#1A1A2E"/>
-  <text x="68" y="1180" fill="#ffffff" font-size="15" font-weight="700">📐 文字 + 狀態欄位</text>
-  <text x="68" y="1201" fill="#888888" font-size="12">訊息包含文字、心情、動畫狀態。</text>
-  <text x="68" y="1221" fill="#888888" font-size="12">透過 API 以結構化 JSON 控制桌布。</text>
-  <rect x="615" y="1153" width="545" height="92" rx="10" fill="#1A1A2E"/>
-  <text x="643" y="1180" fill="#ffffff" font-size="15" font-weight="700">🎞️ 豐富多媒體</text>
-  <text x="643" y="1201" fill="#888888" font-size="12">文字、照片、影片、檔案、貼圖、</text>
-  <text x="643" y="1221" fill="#888888" font-size="12">內嵌鍵盤、位置等 Telegram 功能。</text>
+  <!-- Row 2 -->
+  <line x1="65" y1="525" x2="400" y2="525" stroke="#1e2536" stroke-width="0.5"/>
+  <text x="83" y="544" fill="#c0c8d4" font-size="11">主動推播</text>
+  <text x="230" y="544" fill="#4CAF50" font-size="11">即時到桌布</text>
+  <text x="340" y="544" fill="#FFD23F" font-size="11">被動通知</text>
 
-  <!-- Row 8: PLATFORM (Y=1270) -->
-  <text x="60" y="1285" fill="#555555" font-size="11" font-weight="700" letter-spacing="1.5">平台</text>
-  <rect x="40" y="1298" width="545" height="92" rx="10" fill="#1A1A2E"/>
-  <text x="68" y="1325" fill="#ffffff" font-size="15" font-weight="700">📱 Android + 網頁入口</text>
-  <text x="68" y="1346" fill="#888888" font-size="12">動態桌布在 Android 上使用。</text>
-  <text x="68" y="1366" fill="#888888" font-size="12">網頁入口可管理、聊天、任務控制和檔案。</text>
-  <rect x="615" y="1298" width="545" height="92" rx="10" fill="#1A1A2E"/>
-  <text x="643" y="1325" fill="#ffffff" font-size="15" font-weight="700">🌐 全平台</text>
-  <text x="643" y="1346" fill="#888888" font-size="12">Telegram 支援 iOS、Android、桌面版和網頁版，</text>
-  <text x="643" y="1366" fill="#888888" font-size="12">隨處都能聊天。</text>
+  <!-- Row 3 -->
+  <line x1="65" y1="556" x2="400" y2="556" stroke="#1e2536" stroke-width="0.5"/>
+  <text x="83" y="575" fill="#c0c8d4" font-size="11">多實體</text>
+  <text x="230" y="575" fill="#4CAF50" font-size="11">最多 8 個</text>
+  <text x="340" y="575" fill="#FFD23F" font-size="11">1 Bot=1 Chat</text>
 
-  <!-- Row 9: COST (Y=1415) -->
-  <text x="60" y="1430" fill="#555555" font-size="11" font-weight="700" letter-spacing="1.5">費用</text>
-  <rect x="40" y="1443" width="545" height="92" rx="10" fill="#1A1A2E"/>
-  <text x="68" y="1470" fill="#ffffff" font-size="15" font-weight="700">💰 免費 + 付費選項</text>
-  <text x="68" y="1491" fill="#888888" font-size="12">免費機器人（共享、每日 15 則）。</text>
-  <text x="68" y="1511" fill="#888888" font-size="12">個人機器人 NT$288/月（專屬、無限制）。自架：免費。</text>
-  <rect x="615" y="1443" width="545" height="92" rx="10" fill="#1A1A2E"/>
-  <text x="643" y="1470" fill="#ffffff" font-size="15" font-weight="700">💸 Bot API 免費</text>
-  <text x="643" y="1491" fill="#888888" font-size="12">Telegram Bot API 免費使用，你只需付主機和</text>
-  <text x="643" y="1511" fill="#888888" font-size="12">LLM API 費用，完全掌控成本。</text>
+  <!-- Row 4 -->
+  <line x1="65" y1="587" x2="400" y2="587" stroke="#1e2536" stroke-width="0.5"/>
+  <text x="83" y="606" fill="#c0c8d4" font-size="11">互動模式</text>
+  <text x="230" y="606" fill="#8b95a5" font-size="11">推播+對話+廣播</text>
+  <text x="340" y="606" fill="#8b95a5" font-size="11">標準聊天</text>
 
-  <!-- Row 10: BOT DEVELOPMENT (Y=1555) -->
-  <text x="60" y="1570" fill="#555555" font-size="11" font-weight="700" letter-spacing="1.5">機器人開發</text>
-  <rect x="40" y="1583" width="545" height="92" rx="10" fill="#1A1A2E"/>
-  <text x="68" y="1610" fill="#ffffff" font-size="15" font-weight="700">🛠️ OpenClaw + Webhook</text>
-  <text x="68" y="1631" fill="#888888" font-size="12">在 OpenClaw 平台 (Zeabur) 上開發。</text>
-  <text x="68" y="1651" fill="#888888" font-size="12">使用 exec+curl 推播模式。提供 MCP 技能文件。</text>
-  <rect x="615" y="1583" width="545" height="92" rx="10" fill="#1A1A2E"/>
-  <text x="643" y="1610" fill="#ffffff" font-size="15" font-weight="700">🔌 OpenClaw + Telegram 轉接器</text>
-  <text x="643" y="1631" fill="#888888" font-size="12">在 OpenClaw 上開發，加入 Telegram 頻道轉接器。</text>
-  <text x="643" y="1651" fill="#888888" font-size="12">透過 Telegram Bot API 路由訊息。</text>
+  <!-- Row 5 -->
+  <line x1="65" y1="618" x2="400" y2="618" stroke="#1e2536" stroke-width="0.5"/>
+  <text x="83" y="637" fill="#c0c8d4" font-size="11">訊息格式</text>
+  <text x="230" y="637" fill="#8b95a5" font-size="11">JSON 狀態欄位</text>
+  <text x="340" y="637" fill="#8b95a5" font-size="11">富文本多媒體</text>
 
-  <!-- Row 11: MISSION CONTROL (Y=1700) -->
-  <text x="60" y="1715" fill="#555555" font-size="11" font-weight="700" letter-spacing="1.5">任務中心</text>
-  <rect x="40" y="1728" width="545" height="108" rx="10" fill="#1A1A2E"/>
-  <text x="68" y="1755" fill="#ffffff" font-size="15" font-weight="700">📋 整合式任務樞紐</text>
-  <text x="68" y="1776" fill="#888888" font-size="12">內建任務看板（待辦/進行中/完成）、筆記、技能、</text>
-  <text x="68" y="1796" fill="#888888" font-size="12">規則和靈魂/人格系統。可指派任務給實體。</text>
-  <rect x="68" y="1810" width="40" height="18" rx="9" fill="#4CAF50" fill-opacity="0.15"/>
-  <text x="88" y="1823" text-anchor="middle" fill="#4CAF50" font-size="10" font-weight="600">內建</text>
-  <rect x="615" y="1728" width="545" height="108" rx="10" fill="#1A1A2E"/>
-  <text x="643" y="1755" fill="#ffffff" font-size="15" font-weight="700">🔗 無內建任務系統</text>
-  <text x="643" y="1776" fill="#888888" font-size="12">Telegram 沒有原生任務管理功能。</text>
-  <text x="643" y="1796" fill="#888888" font-size="12">需要第三方工具（Trello、Notion）來追蹤專案。</text>
-  <rect x="643" y="1810" width="56" height="18" rx="9" fill="#F44336" fill-opacity="0.15"/>
-  <text x="671" y="1823" text-anchor="middle" fill="#F44336" font-size="10" font-weight="600">不支援</text>
+  <!-- Row 6 -->
+  <line x1="65" y1="649" x2="400" y2="649" stroke="#1e2536" stroke-width="0.5"/>
+  <text x="83" y="668" fill="#c0c8d4" font-size="11">平台</text>
+  <text x="230" y="668" fill="#8b95a5" font-size="11">Android + Web</text>
+  <text x="340" y="668" fill="#4CAF50" font-size="11">全平台</text>
 
-  <!-- Row 12: CHAT ATTACHMENTS (Y=1860) -->
-  <text x="60" y="1875" fill="#555555" font-size="11" font-weight="700" letter-spacing="1.5">聊天附件</text>
-  <rect x="40" y="1888" width="545" height="108" rx="10" fill="#1A1A2E"/>
-  <text x="68" y="1915" fill="#ffffff" font-size="15" font-weight="700">📎 照片、語音、檔案 + 檔案管理員</text>
-  <text x="68" y="1936" fill="#888888" font-size="12">上傳照片（Flickr 雲端）、錄製語音訊息、傳送檔案。</text>
-  <text x="68" y="1956" fill="#888888" font-size="12">獨立的檔案管理頁面，支援實體/類型篩選。</text>
-  <rect x="68" y="1970" width="68" height="18" rx="9" fill="#4CAF50" fill-opacity="0.15"/>
-  <text x="102" y="1983" text-anchor="middle" fill="#4CAF50" font-size="10" font-weight="600">系統化管理</text>
-  <rect x="615" y="1888" width="545" height="108" rx="10" fill="#1A1A2E"/>
-  <text x="643" y="1915" fill="#ffffff" font-size="15" font-weight="700">🖼️ 聊天中的多媒體</text>
-  <text x="643" y="1936" fill="#888888" font-size="12">照片、影片、檔案、貼圖、語音——全都嵌在聊天中。</text>
-  <text x="643" y="1956" fill="#888888" font-size="12">檔案存在 Telegram 伺服器，沒有獨立檔案管理。</text>
-  <rect x="643" y="1970" width="56" height="18" rx="9" fill="#FFD23F" fill-opacity="0.15"/>
-  <text x="671" y="1983" text-anchor="middle" fill="#FFD23F" font-size="10" font-weight="600">僅限聊天</text>
+  <!-- Row 7 -->
+  <line x1="65" y1="680" x2="400" y2="680" stroke="#1e2536" stroke-width="0.5"/>
+  <text x="83" y="699" fill="#c0c8d4" font-size="11">任務中心</text>
+  <text x="240" y="699" fill="#4CAF50" font-size="12">✔</text>
+  <text x="355" y="699" fill="#F44336" font-size="12">✘</text>
 
-  <!-- ═══════ FOOTER: Best For ═══════ -->
-  <rect x="40" y="2020" width="545" height="80" rx="12" fill="none" stroke="#6C63FF" stroke-opacity="0.35" stroke-width="1.5"/>
-  <text x="312" y="2048" text-anchor="middle" fill="#6C63FF" font-size="14" font-weight="700">E-Claw 最適合</text>
-  <text x="312" y="2070" text-anchor="middle" fill="#888888" font-size="11">動態桌布互動 · 主動推播 · 多實體管理 · 任務中心</text>
-  <text x="312" y="2088" text-anchor="middle" fill="#888888" font-size="11">檔案管理 · 靈魂系統</text>
+  <!-- Row 8 -->
+  <line x1="65" y1="711" x2="400" y2="711" stroke="#1e2536" stroke-width="0.5"/>
+  <text x="83" y="730" fill="#c0c8d4" font-size="11">檔案管理</text>
+  <text x="230" y="730" fill="#4CAF50" font-size="11">系統化管理</text>
+  <text x="340" y="730" fill="#FFD23F" font-size="11">僅聊天內</text>
 
-  <rect x="615" y="2020" width="545" height="80" rx="12" fill="none" stroke="#0088CC" stroke-opacity="0.35" stroke-width="1.5"/>
-  <text x="887" y="2048" text-anchor="middle" fill="#0088CC" font-size="14" font-weight="700">Telegram 最適合</text>
-  <text x="887" y="2070" text-anchor="middle" fill="#888888" font-size="11">跨平台聊天 · 豐富多媒體 · 熟悉介面</text>
-  <text x="887" y="2088" text-anchor="middle" fill="#888888" font-size="11">免費 Bot API · 開發者完全掌控</text>
+  <!-- Row 9 -->
+  <line x1="65" y1="742" x2="400" y2="742" stroke="#1e2536" stroke-width="0.5"/>
+  <text x="83" y="761" fill="#c0c8d4" font-size="11">記憶管理</text>
+  <text x="230" y="761" fill="#8b95a5" font-size="11">伺服器端</text>
+  <text x="340" y="761" fill="#8b95a5" font-size="11">機器人自管</text>
+
+  <!-- Row 10 -->
+  <line x1="65" y1="773" x2="400" y2="773" stroke="#1e2536" stroke-width="0.5"/>
+  <text x="83" y="792" fill="#c0c8d4" font-size="11">開發方式</text>
+  <text x="230" y="792" fill="#8b95a5" font-size="11">Webhook 推播</text>
+  <text x="340" y="792" fill="#8b95a5" font-size="11">TG Adapter</text>
+
+  <!-- Row 11 -->
+  <line x1="65" y1="804" x2="400" y2="804" stroke="#1e2536" stroke-width="0.5"/>
+  <text x="83" y="823" fill="#c0c8d4" font-size="11">靈魂系統</text>
+  <text x="240" y="823" fill="#4CAF50" font-size="12">✔</text>
+  <text x="355" y="823" fill="#F44336" font-size="12">✘</text>
+
+  <!-- Row 12 -->
+  <line x1="65" y1="835" x2="400" y2="835" stroke="#1e2536" stroke-width="0.5"/>
+  <text x="83" y="854" fill="#c0c8d4" font-size="11">費用</text>
+  <text x="230" y="854" fill="#8b95a5" font-size="11">免費 / NT$288</text>
+  <text x="340" y="854" fill="#4CAF50" font-size="11">Bot API 免費</text>
+
+  <!-- Row 13 -->
+  <line x1="65" y1="866" x2="400" y2="866" stroke="#1e2536" stroke-width="0.5"/>
+  <text x="83" y="885" fill="#c0c8d4" font-size="11">附件類型</text>
+  <text x="230" y="885" fill="#8b95a5" font-size="11">照片/語音/檔案</text>
+  <text x="340" y="885" fill="#8b95a5" font-size="11">全多媒體</text>
+
+  <!-- Row 14 -->
+  <line x1="65" y1="897" x2="400" y2="897" stroke="#1e2536" stroke-width="0.5"/>
+  <text x="83" y="916" fill="#c0c8d4" font-size="11">排程系統</text>
+  <text x="240" y="916" fill="#4CAF50" font-size="12">✔</text>
+  <text x="355" y="916" fill="#F44336" font-size="12">✘</text>
+
+  <!-- Row 15 -->
+  <line x1="65" y1="928" x2="400" y2="928" stroke="#1e2536" stroke-width="0.5"/>
+  <text x="83" y="947" fill="#c0c8d4" font-size="11">廣播功能</text>
+  <text x="240" y="947" fill="#4CAF50" font-size="12">✔</text>
+  <text x="355" y="947" fill="#F44336" font-size="12">✘</text>
+
+  <!-- Row 16 -->
+  <line x1="65" y1="959" x2="400" y2="959" stroke="#1e2536" stroke-width="0.5"/>
+  <text x="83" y="978" fill="#c0c8d4" font-size="11">設定難度</text>
+  <text x="230" y="978" fill="#FFD23F" font-size="11">需綁定碼</text>
+  <text x="340" y="978" fill="#4CAF50" font-size="11">搜尋即用</text>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!--           COLUMN 2 (Middle ~340px)          -->
+  <!-- ═══════════════════════════════════════════ -->
+
+  <text x="460" y="140" fill="url(#greenGrad)" font-size="17" font-weight="700">🧭 新手該怎麼選？</text>
+
+  <!-- Step card container -->
+  <rect x="460" y="158" width="310" height="836" rx="10" fill="#141926" stroke="#1e2536" stroke-width="1"/>
+
+  <!-- Step 1 -->
+  <rect x="480" y="178" width="40" height="40" rx="20" fill="#6C63FF" fill-opacity="0.15"/>
+  <text x="500" y="204" text-anchor="middle" fill="#6C63FF" font-size="16" font-weight="800">1</text>
+  <text x="532" y="196" fill="#ffffff" font-size="14" font-weight="700">先問自己一個問題</text>
+  <text x="532" y="214" fill="#8b95a5" font-size="11">「我最想要什麼體驗？」</text>
+
+  <!-- Arrow -->
+  <line x1="500" y1="232" x2="500" y2="262" stroke="#1e2536" stroke-width="1.5"/>
+  <polygon points="494,256 500,268 506,256" fill="#1e2536"/>
+
+  <!-- Step 2 -->
+  <rect x="480" y="278" width="40" height="40" rx="20" fill="#6C63FF" fill-opacity="0.15"/>
+  <text x="500" y="304" text-anchor="middle" fill="#6C63FF" font-size="16" font-weight="800">2</text>
+  <text x="532" y="296" fill="#ffffff" font-size="14" font-weight="700">對照你的需求</text>
+
+  <!-- Decision cards -->
+  <rect x="480" y="318" width="270" height="56" rx="8" fill="#0d1117" stroke="#6C63FF" stroke-opacity="0.25" stroke-width="1"/>
+  <text x="496" y="340" fill="#6C63FF" font-size="11" font-weight="600">想要桌布活起來？</text>
+  <text x="496" y="358" fill="#4ECDC4" font-size="12" font-weight="700">→ 選 E-Claw</text>
+
+  <rect x="480" y="384" width="270" height="56" rx="8" fill="#0d1117" stroke="#0088CC" stroke-opacity="0.25" stroke-width="1"/>
+  <text x="496" y="406" fill="#0088CC" font-size="11" font-weight="600">想在 iPhone / 電腦聊天？</text>
+  <text x="496" y="424" fill="#4ECDC4" font-size="12" font-weight="700">→ 選 Telegram</text>
+
+  <rect x="480" y="450" width="270" height="56" rx="8" fill="#0d1117" stroke="#6C63FF" stroke-opacity="0.25" stroke-width="1"/>
+  <text x="496" y="472" fill="#6C63FF" font-size="11" font-weight="600">需要任務管理和排程？</text>
+  <text x="496" y="490" fill="#4ECDC4" font-size="12" font-weight="700">→ 選 E-Claw</text>
+
+  <rect x="480" y="516" width="270" height="56" rx="8" fill="#0d1117" stroke="#0088CC" stroke-opacity="0.25" stroke-width="1"/>
+  <text x="496" y="538" fill="#0088CC" font-size="11" font-weight="600">想發圖片、貼圖、影片？</text>
+  <text x="496" y="556" fill="#4ECDC4" font-size="12" font-weight="700">→ 選 Telegram</text>
+
+  <rect x="480" y="582" width="270" height="56" rx="8" fill="#0d1117" stroke="#6C63FF" stroke-opacity="0.25" stroke-width="1"/>
+  <text x="496" y="604" fill="#6C63FF" font-size="11" font-weight="600">想管理多個 AI 角色？</text>
+  <text x="496" y="622" fill="#4ECDC4" font-size="12" font-weight="700">→ 選 E-Claw（多實體）</text>
+
+  <rect x="480" y="648" width="270" height="56" rx="8" fill="#0d1117" stroke="#4ECDC4" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="496" y="670" fill="#4ECDC4" font-size="11" font-weight="600">什麼都想要？</text>
+  <text x="496" y="688" fill="#FFD23F" font-size="12" font-weight="700">→ 兩個都用！</text>
+
+  <!-- Arrow -->
+  <line x1="500" y1="718" x2="500" y2="748" stroke="#1e2536" stroke-width="1.5"/>
+  <polygon points="494,742 500,754 506,742" fill="#1e2536"/>
+
+  <!-- Step 3 -->
+  <rect x="480" y="764" width="40" height="40" rx="20" fill="#6C63FF" fill-opacity="0.15"/>
+  <text x="500" y="790" text-anchor="middle" fill="#6C63FF" font-size="16" font-weight="800">3</text>
+  <text x="532" y="782" fill="#ffffff" font-size="14" font-weight="700">在 OpenClaw 建立機器人</text>
+  <text x="532" y="802" fill="#8b95a5" font-size="11">建好後加入你選的頻道就完成了</text>
+
+  <!-- Arrow -->
+  <line x1="500" y1="818" x2="500" y2="848" stroke="#1e2536" stroke-width="1.5"/>
+  <polygon points="494,842 500,854 506,842" fill="#1e2536"/>
+
+  <!-- Step 4 -->
+  <rect x="480" y="864" width="40" height="40" rx="20" fill="#4CAF50" fill-opacity="0.15"/>
+  <text x="500" y="890" text-anchor="middle" fill="#4CAF50" font-size="16" font-weight="800">4</text>
+  <text x="532" y="882" fill="#ffffff" font-size="14" font-weight="700">綁定頻道，開始互動</text>
+  <text x="480" y="920" fill="#8b95a5" font-size="11">E-Claw：產生綁定碼 → 貼給機器人</text>
+  <text x="480" y="938" fill="#8b95a5" font-size="11">Telegram：搜尋機器人 → 按 /start</text>
+
+  <!-- Bottom tip -->
+  <rect x="480" y="960" width="270" height="26" rx="6" fill="#4CAF50" fill-opacity="0.08"/>
+  <text x="615" y="978" text-anchor="middle" fill="#4CAF50" font-size="10" font-weight="600">完成！你的 AI 夥伴準備好了 🎉</text>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!--           COLUMN 3 (Right ~370px)           -->
+  <!-- ═══════════════════════════════════════════ -->
+
+  <text x="810" y="140" fill="url(#greenGrad)" font-size="17" font-weight="700">🔑 OpenClaw 扮演什麼角色？</text>
+
+  <!-- OpenClaw role card -->
+  <rect x="810" y="158" width="350" height="250" rx="10" fill="#141926" stroke="#1e2536" stroke-width="1"/>
+  <text x="840" y="190" fill="#ffffff" font-size="13" font-weight="700">OpenClaw 是機器人的「大腦」</text>
+  <text x="840" y="212" fill="#8b95a5" font-size="11">不管你選 E-Claw 還是 Telegram，</text>
+  <text x="840" y="230" fill="#8b95a5" font-size="11">背後都是同一個 OpenClaw 機器人在運作。</text>
+
+  <line x1="840" y1="246" x2="1130" y2="246" stroke="#1e2536" stroke-width="0.5"/>
+
+  <circle cx="840" cy="270" r="3" fill="#4ECDC4"/>
+  <text x="852" y="274" fill="#c0c8d4" font-size="11">人格設定、指令、記憶 — 在 OpenClaw 上管理</text>
+  <circle cx="840" cy="294" r="3" fill="#4ECDC4"/>
+  <text x="852" y="298" fill="#c0c8d4" font-size="11">MCP 技能 — 擴充機器人的能力</text>
+  <circle cx="840" cy="318" r="3" fill="#4ECDC4"/>
+  <text x="852" y="322" fill="#c0c8d4" font-size="11">多頻道輸出 — 同時連接 E-Claw 和 Telegram</text>
+  <circle cx="840" cy="342" r="3" fill="#4ECDC4"/>
+  <text x="852" y="346" fill="#c0c8d4" font-size="11">Zeabur 託管 — 不用自己架伺服器</text>
+  <circle cx="840" cy="366" r="3" fill="#4ECDC4"/>
+  <text x="852" y="370" fill="#c0c8d4" font-size="11">exec+curl 推播 — 主動觸發頻道更新</text>
+  <circle cx="840" cy="390" r="3" fill="#4ECDC4"/>
+  <text x="852" y="394" fill="#c0c8d4" font-size="11">免費開始 — 個人使用零成本</text>
+
+  <!-- ── E-Claw 最適合 ── -->
+  <text x="810" y="440" fill="url(#greenGrad)" font-size="17" font-weight="700">🦞 E-Claw 最適合誰？</text>
+
+  <rect x="810" y="458" width="350" height="195" rx="10" fill="#141926" stroke="#6C63FF" stroke-opacity="0.25" stroke-width="1"/>
+
+  <circle cx="840" cy="486" r="3" fill="#6C63FF"/>
+  <text x="852" y="490" fill="#c0c8d4" font-size="11">想讓手機桌布變成 AI 夥伴的人</text>
+  <circle cx="840" cy="510" r="3" fill="#6C63FF"/>
+  <text x="852" y="514" fill="#c0c8d4" font-size="11">喜歡不用開 App 就能收到推播的人</text>
+  <circle cx="840" cy="534" r="3" fill="#6C63FF"/>
+  <text x="852" y="538" fill="#c0c8d4" font-size="11">想同時管理多個 AI 角色的人</text>
+  <circle cx="840" cy="558" r="3" fill="#6C63FF"/>
+  <text x="852" y="562" fill="#c0c8d4" font-size="11">需要任務看板 + 排程自動化的人</text>
+  <circle cx="840" cy="582" r="3" fill="#6C63FF"/>
+  <text x="852" y="586" fill="#c0c8d4" font-size="11">在意 AI 有「靈魂」和個性設定的人</text>
+  <circle cx="840" cy="606" r="3" fill="#6C63FF"/>
+  <text x="852" y="610" fill="#c0c8d4" font-size="11">想用網頁入口隨時管理一切的人</text>
+
+  <rect x="830" y="622" width="310" height="24" rx="6" fill="#6C63FF" fill-opacity="0.08"/>
+  <text x="985" y="639" text-anchor="middle" fill="#6C63FF" font-size="10" font-weight="600">Android 用戶的最佳選擇</text>
+
+  <!-- ── Telegram 最適合 ── -->
+  <text x="810" y="686" fill="url(#greenGrad)" font-size="17" font-weight="700">✈️ Telegram 最適合誰？</text>
+
+  <rect x="810" y="704" width="350" height="195" rx="10" fill="#141926" stroke="#0088CC" stroke-opacity="0.25" stroke-width="1"/>
+
+  <circle cx="840" cy="732" r="3" fill="#0088CC"/>
+  <text x="852" y="736" fill="#c0c8d4" font-size="11">iPhone / 電腦使用者，需要跨平台</text>
+  <circle cx="840" cy="756" r="3" fill="#0088CC"/>
+  <text x="852" y="760" fill="#c0c8d4" font-size="11">習慣 Telegram 介面，不想裝新 App</text>
+  <circle cx="840" cy="780" r="3" fill="#0088CC"/>
+  <text x="852" y="784" fill="#c0c8d4" font-size="11">想用貼圖、GIF、影片互動的人</text>
+  <circle cx="840" cy="804" r="3" fill="#0088CC"/>
+  <text x="852" y="808" fill="#c0c8d4" font-size="11">開發者想完全掌控 Bot API 的人</text>
+  <circle cx="840" cy="828" r="3" fill="#0088CC"/>
+  <text x="852" y="832" fill="#c0c8d4" font-size="11">追求零成本（Bot API 免費）的人</text>
+  <circle cx="840" cy="852" r="3" fill="#0088CC"/>
+  <text x="852" y="856" fill="#c0c8d4" font-size="11">想與朋友分享機器人的人</text>
+
+  <rect x="830" y="868" width="310" height="24" rx="6" fill="#0088CC" fill-opacity="0.08"/>
+  <text x="985" y="885" text-anchor="middle" fill="#0088CC" font-size="10" font-weight="600">跨平台用戶的最佳選擇</text>
+
+  <!-- ── Quote box ── -->
+  <text x="810" y="932" fill="url(#greenGrad)" font-size="17" font-weight="700">💡 一句話總結</text>
+
+  <rect x="810" y="950" width="350" height="44" rx="10" fill="#141926" stroke="#4ECDC4" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="985" y="971" text-anchor="middle" fill="#4ECDC4" font-size="12" font-weight="600" font-style="italic">「E-Claw 是 AI 住進你的手機桌面，</text>
+  <text x="985" y="988" text-anchor="middle" fill="#4ECDC4" font-size="12" font-weight="600" font-style="italic">Telegram 是 AI 住進你的聊天室。」</text>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!--           BOTTOM SECTION                    -->
+  <!-- ═══════════════════════════════════════════ -->
+  <line x1="50" y1="1030" x2="1150" y2="1030" stroke="#1e2536" stroke-width="1"/>
+
+  <text x="600" y="1065" text-anchor="middle" fill="#ffffff" font-size="20" font-weight="800">📊 完整功能對照表</text>
+
+  <!-- Full comparison table -->
+  <rect x="50" y="1085" width="1100" height="290" rx="10" fill="#141926" stroke="#1e2536" stroke-width="1"/>
+
+  <!-- Table header -->
+  <rect x="50" y="1085" width="1100" height="34" rx="10" fill="#1a2030"/>
+  <rect x="50" y="1105" width="1100" height="14" fill="#1a2030"/>
+  <text x="110" y="1107" fill="#4a5568" font-size="11" font-weight="700" letter-spacing="0.5">比較項目</text>
+  <text x="400" y="1107" fill="#6C63FF" font-size="11" font-weight="700">🦞 E-Claw</text>
+  <text x="780" y="1107" fill="#0088CC" font-size="11" font-weight="700">✈️ Telegram</text>
+
+  <!-- Table rows with alternating subtle bg -->
+  <rect x="50" y="1119" width="1100" height="24" fill="#0d1117" fill-opacity="0.3"/>
+  <text x="110" y="1136" fill="#c0c8d4" font-size="11">設定方式</text>
+  <text x="400" y="1136" fill="#8b95a5" font-size="11">Android App / Web Portal + 綁定碼</text>
+  <text x="780" y="1136" fill="#8b95a5" font-size="11">搜尋機器人 → /start</text>
+
+  <text x="110" y="1160" fill="#c0c8d4" font-size="11">互動方式</text>
+  <text x="400" y="1160" fill="#8b95a5" font-size="11">推播 + 對話 + 廣播</text>
+  <text x="780" y="1160" fill="#8b95a5" font-size="11">標準聊天（文字/圖片/按鈕）</text>
+
+  <rect x="50" y="1167" width="1100" height="24" fill="#0d1117" fill-opacity="0.3"/>
+  <text x="110" y="1184" fill="#c0c8d4" font-size="11">動態桌布</text>
+  <text x="400" y="1184" fill="#4CAF50" font-size="11">✔ 原生支援（心情/動畫/訊息）</text>
+  <text x="780" y="1184" fill="#F44336" font-size="11">✘ 不支援</text>
+
+  <text x="110" y="1208" fill="#c0c8d4" font-size="11">推播通知</text>
+  <text x="400" y="1208" fill="#4CAF50" font-size="11">✔ 即時推播到桌布，無需開 App</text>
+  <text x="780" y="1208" fill="#FFD23F" font-size="11">△ 被動訊息通知</text>
+
+  <rect x="50" y="1215" width="1100" height="24" fill="#0d1117" fill-opacity="0.3"/>
+  <text x="110" y="1232" fill="#c0c8d4" font-size="11">多實體管理</text>
+  <text x="400" y="1232" fill="#4CAF50" font-size="11">✔ 最多 8 個實體，各自獨立</text>
+  <text x="780" y="1232" fill="#FFD23F" font-size="11">△ 1 Bot = 1 Chat（需手動加）</text>
+
+  <text x="110" y="1256" fill="#c0c8d4" font-size="11">平台支援</text>
+  <text x="400" y="1256" fill="#FFD23F" font-size="11">△ Android + Web Portal</text>
+  <text x="780" y="1256" fill="#4CAF50" font-size="11">✔ iOS / Android / Desktop / Web</text>
+
+  <rect x="50" y="1263" width="1100" height="24" fill="#0d1117" fill-opacity="0.3"/>
+  <text x="110" y="1280" fill="#c0c8d4" font-size="11">任務中心</text>
+  <text x="400" y="1280" fill="#4CAF50" font-size="11">✔ 看板 + 筆記 + 技能 + 規則 + 靈魂</text>
+  <text x="780" y="1280" fill="#F44336" font-size="11">✘ 無內建（需 Trello/Notion）</text>
+
+  <text x="110" y="1304" fill="#c0c8d4" font-size="11">費用</text>
+  <text x="400" y="1304" fill="#8b95a5" font-size="11">免費（15則/日）/ NT$288/月（無限）</text>
+  <text x="780" y="1304" fill="#4CAF50" font-size="11">✔ Bot API 免費（付主機+LLM）</text>
+
+  <rect x="50" y="1311" width="1100" height="24" fill="#0d1117" fill-opacity="0.3"/>
+  <text x="110" y="1328" fill="#c0c8d4" font-size="11">機器人開發</text>
+  <text x="400" y="1328" fill="#8b95a5" font-size="11">OpenClaw + exec+curl Webhook</text>
+  <text x="780" y="1328" fill="#8b95a5" font-size="11">OpenClaw + Telegram Adapter</text>
+
+  <text x="110" y="1352" fill="#c0c8d4" font-size="11">訊息格式</text>
+  <text x="400" y="1352" fill="#8b95a5" font-size="11">文字 + JSON 狀態欄位（心情/動畫）</text>
+  <text x="780" y="1352" fill="#8b95a5" font-size="11">富文本 + 照片/影片/貼圖/鍵盤</text>
+
+  <!-- ═══ Footer ═══ -->
+  <rect x="50" y="1390" width="1100" height="22" rx="6" fill="#0d1117" fill-opacity="0.5"/>
+  <text x="600" y="1406" text-anchor="middle" fill="#4a5568" font-size="10">E-Claw × Telegram × OpenClaw — 選你所需，或全部都要 🦞✈️</text>
 
 </svg>
