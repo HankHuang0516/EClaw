@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="cmp_title">E-Claw vs Telegram - Channel Comparison</title>
+    <link rel="stylesheet" href="shared/style.css">
+    <style>
+        /* ── Hero Header ── */
+        .cmp-hero {
+            text-align: center;
+            padding: 32px 0 24px;
+        }
+
+        .cmp-hero-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .cmp-hero-title .vs {
+            color: var(--text-muted);
+            font-weight: 400;
+            margin: 0 8px;
+        }
+
+        .cmp-hero-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            max-width: 520px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* ── Channel Header Cards ── */
+        .cmp-channels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .cmp-channel-header {
+            text-align: center;
+            padding: 24px 16px;
+            border-radius: var(--radius);
+            border: 1px solid var(--card-border);
+        }
+
+        .cmp-channel-header.eclaw {
+            background: linear-gradient(135deg, rgba(108, 99, 255, 0.15), rgba(108, 99, 255, 0.05));
+            border-color: rgba(108, 99, 255, 0.3);
+        }
+
+        .cmp-channel-header.telegram {
+            background: linear-gradient(135deg, rgba(0, 136, 204, 0.15), rgba(0, 136, 204, 0.05));
+            border-color: rgba(0, 136, 204, 0.3);
+        }
+
+        .cmp-channel-icon {
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+
+        .cmp-channel-name {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .cmp-channel-header.eclaw .cmp-channel-name {
+            color: var(--primary);
+        }
+
+        .cmp-channel-header.telegram .cmp-channel-name {
+            color: #0088CC;
+        }
+
+        .cmp-channel-tagline {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* ── Comparison Table ── */
+        .cmp-table {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-bottom: 32px;
+        }
+
+        .cmp-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+        }
+
+        .cmp-row-label {
+            grid-column: 1 / -1;
+            padding: 12px 16px 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-muted);
+        }
+
+        .cmp-cell {
+            padding: 14px 16px;
+            background: var(--card);
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .cmp-cell:first-child {
+            border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+        }
+
+        .cmp-cell:last-child {
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        }
+
+        .cmp-cell .highlight {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .cmp-cell .accent-eclaw {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .cmp-cell .accent-tg {
+            color: #0088CC;
+            font-weight: 600;
+        }
+
+        .cmp-cell .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .tag-yes {
+            background: rgba(76, 175, 80, 0.15);
+            color: var(--success);
+        }
+
+        .tag-no {
+            background: rgba(244, 67, 54, 0.15);
+            color: var(--danger);
+        }
+
+        .tag-partial {
+            background: rgba(255, 210, 63, 0.15);
+            color: var(--warning);
+        }
+
+        .tag-free {
+            background: rgba(76, 175, 80, 0.15);
+            color: var(--success);
+        }
+
+        .cmp-cell .icon-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .cmp-cell .icon-row .ico {
+            font-size: 16px;
+        }
+
+        /* ── Summary Section ── */
+        .cmp-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .cmp-summary-card {
+            padding: 20px;
+            border-radius: var(--radius);
+            border: 1px solid var(--card-border);
+        }
+
+        .cmp-summary-card.eclaw {
+            border-color: rgba(108, 99, 255, 0.3);
+        }
+
+        .cmp-summary-card.telegram {
+            border-color: rgba(0, 136, 204, 0.3);
+        }
+
+        .cmp-summary-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .cmp-summary-card.eclaw .cmp-summary-title {
+            color: var(--primary);
+        }
+
+        .cmp-summary-card.telegram .cmp-summary-title {
+            color: #0088CC;
+        }
+
+        .cmp-summary-list {
+            list-style: none;
+            padding: 0;
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .cmp-summary-list li::before {
+            content: "✓ ";
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        /* ── CTA ── */
+        .cmp-cta {
+            text-align: center;
+            padding: 24px;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            margin-bottom: 32px;
+        }
+
+        .cmp-cta-text {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        .cmp-cta-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 640px) {
+            .cmp-hero-title { font-size: 22px; }
+            .cmp-channels { gap: 10px; }
+            .cmp-channel-header { padding: 16px 10px; }
+            .cmp-channel-icon { font-size: 36px; }
+            .cmp-channel-name { font-size: 16px; }
+            .cmp-cell { padding: 10px 12px; font-size: 12px; }
+            .cmp-row-label { padding: 10px 12px 4px; font-size: 10px; }
+            .cmp-summary { grid-template-columns: 1fr; }
+            .cmp-cta-buttons { flex-direction: column; }
+            .cmp-cta-buttons .btn { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container" style="max-width: 720px;">
+
+        <!-- Hero -->
+        <div class="cmp-hero">
+            <div class="cmp-hero-title">
+                <span data-i18n="cmp_eclaw_name">E-Claw</span>
+                <span class="vs">vs</span>
+                <span data-i18n="cmp_telegram_name">Telegram</span>
+            </div>
+            <div class="cmp-hero-subtitle" data-i18n="cmp_subtitle">
+                Compare how OpenClaw bots work across different channels — each has its own strengths for your live wallpaper companion.
+            </div>
+        </div>
+
+        <!-- Channel Headers -->
+        <div class="cmp-channels">
+            <div class="cmp-channel-header eclaw">
+                <div class="cmp-channel-icon">🦞</div>
+                <div class="cmp-channel-name" data-i18n="cmp_eclaw_name">E-Claw</div>
+                <div class="cmp-channel-tagline" data-i18n="cmp_eclaw_tagline">Native live wallpaper channel</div>
+            </div>
+            <div class="cmp-channel-header telegram">
+                <div class="cmp-channel-icon">✈️</div>
+                <div class="cmp-channel-name" data-i18n="cmp_telegram_name">Telegram</div>
+                <div class="cmp-channel-tagline" data-i18n="cmp_telegram_tagline">Chat-based messaging channel</div>
+            </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="cmp-table">
+
+            <!-- Setup -->
+            <div class="cmp-row-label" data-i18n="cmp_cat_setup">SETUP</div>
+            <div class="cmp-row">
+                <div class="cmp-cell">
+                    <div class="icon-row"><span class="ico">📱</span> <span class="highlight" data-i18n="cmp_eclaw_setup_title">Install App + Web Portal</span></div>
+                    <span data-i18n="cmp_eclaw_setup_desc">Download Android app, register on web portal, generate binding code, paste to bot.</span>
+                </div>
+                <div class="cmp-cell">
+                    <div class="icon-row"><span class="ico">💬</span> <span class="highlight" data-i18n="cmp_tg_setup_title">Search Bot on Telegram</span></div>
+                    <span data-i18n="cmp_tg_setup_desc">Open Telegram, search for the bot, press /start — ready to chat immediately.</span>
+                </div>
+            </div>
+
+            <!-- Interaction -->
+            <div class="cmp-row-label" data-i18n="cmp_cat_interaction">INTERACTION</div>
+            <div class="cmp-row">
+                <div class="cmp-cell">
+                    <div class="icon-row"><span class="ico">🔄</span> <span class="highlight" data-i18n="cmp_eclaw_interact_title">Push + Speak-to + Broadcast</span></div>
+                    <span data-i18n="cmp_eclaw_interact_desc">Bot pushes status updates to wallpaper. Speak-to for direct conversation. Broadcast to reach all entities.</span>
+                </div>
+                <div class="cmp-cell">
+                    <div class="icon-row"><span class="ico">⌨️</span> <span class="highlight" data-i18n="cmp_tg_interact_title">Standard Chat</span></div>
+                    <span data-i18n="cmp_tg_interact_desc">Send messages, receive replies. Classic chatbot experience with text, images, and inline buttons.</span>
+                </div>
+            </div>
+
+            <!-- Live Wallpaper -->
+            <div class="cmp-row-label" data-i18n="cmp_cat_wallpaper">LIVE WALLPAPER</div>
+            <div class="cmp-row">
+                <div class="cmp-cell">
+                    <div class="icon-row"><span class="ico">🎨</span> <span class="highlight" data-i18n="cmp_eclaw_wp_title">Full Integration</span></div>
+                    <span data-i18n="cmp_eclaw_wp_desc">Bot controls wallpaper state (mood, message, animation). Your home screen becomes alive.</span>
+                    <br><span class="tag tag-yes" data-i18n="cmp_tag_native">Native Support</span>
+                </div>
+                <div class="cmp-cell">
+                    <div class="icon-row"><span class="ico">🖼️</span> <span class="highlight" data-i18n="cmp_tg_wp_title">No Wallpaper Control</span></div>
+                    <span data-i18n="cmp_tg_wp_desc">Telegram bots cannot update your phone's live wallpaper. Chat-only experience.</span>
+                    <br><span class="tag tag-no" data-i18n="cmp_tag_unavailable">Unavailable</span>
+                </div>
+            </div>
+
+            <!-- Push Notifications -->
+            <div class="cmp-row-label" data-i18n="cmp_cat_push">PUSH NOTIFICATIONS</div>
+            <div class="cmp-row">
+                <div class="cmp-cell">
+                    <div class="icon-row"><span class="ico">🔔</span> <span class="highlight" data-i18n="cmp_eclaw_push_title">Proactive Push</span></div>
+                    <span data-i18n="cmp_eclaw_push_desc">Bot pushes updates autonomously via API. Wallpaper changes in real-time without user action.</span>
+                    <br><span class="tag tag-yes" data-i18n="cmp_tag_realtime">Real-time</span>
+                </div>
+                <div class="cmp-cell">
+                    <div class="icon-row"><span class="ico">📩</span> <span class="highlight" data-i18n="cmp_tg_push_title">Message Notification</span></div>
+                    <span data-i18n="cmp_tg_push_desc">Standard Telegram notifications when bot sends a message. User needs to open app to read.</span>
+                    <br><span class="tag tag-partial" data-i18n="cmp_tag_passive">Passive</span>
+                </div>
+            </div>
+
+            <!-- Multi-Entity -->
+            <div class="cmp-row-label" data-i18n="cmp_cat_entity">MULTI-ENTITY</div>
+            <div class="cmp-row">
+                <div class="cmp-cell">
+                    <div class="icon-row"><span class="ico">👥</span> <span class="highlight" data-i18n="cmp_eclaw_entity_title">Up to 4 Entities</span></div>
+                    <span data-i18n="cmp_eclaw_entity_desc">Bind different bots to different entity slots (0-3). Each has independent state and memory.</span>
+                    <br><span class="tag tag-yes" data-i18n="cmp_tag_multi">Multi-Entity</span>
+                </div>
+                <div class="cmp-cell">
+                    <div class="icon-row"><span class="ico">🤖</span> <span class="highlight" data-i18n="cmp_tg_entity_title">1 Bot = 1 Chat</span></div>
+                    <span data-i18n="cmp_tg_entity_desc">Each Telegram bot is a separate chat. No entity slot system, but you can add multiple bots.</span>
+                    <br><span class="tag tag-partial" data-i18n="cmp_tag_manual">Manual</span>
+                </div>
+            </div>
+
+            <!-- Memory & Context -->
+            <div class="cmp-row-label" data-i18n="cmp_cat_memory">MEMORY & CONTEXT</div>
+            <div class="cmp-row">
+                <div class="cmp-cell">
+                    <div class="icon-row"><span class="ico">🧠</span> <span class="highlight" data-i18n="cmp_eclaw_mem_title">Server-side Memory</span></div>
+                    <span data-i18n="cmp_eclaw_mem_desc">Chat history stored on E-Claw server. Shared or private memory depending on plan (free/personal).</span>
+                </div>
+                <div class="cmp-cell">
+                    <div class="icon-row"><span class="ico">💾</span> <span class="highlight" data-i18n="cmp_tg_mem_title">Bot-managed Memory</span></div>
+                    <span data-i18n="cmp_tg_mem_desc">Memory depends on bot implementation. Can use OpenClaw's built-in memory or external storage.</span>
+                </div>
+            </div>
+
+            <!-- Message Format -->
+            <div class="cmp-row-label" data-i18n="cmp_cat_format">MESSAGE FORMAT</div>
+            <div class="cmp-row">
+                <div class="cmp-cell">
+                    <div class="icon-row"><span class="ico">📝</span> <span class="highlight" data-i18n="cmp_eclaw_fmt_title">Text + State Fields</span></div>
+                    <span data-i18n="cmp_eclaw_fmt_desc">Messages include text, mood, animation state. Structured JSON via API for wallpaper control.</span>
+                </div>
+                <div class="cmp-cell">
+                    <div class="icon-row"><span class="ico">🖊️</span> <span class="highlight" data-i18n="cmp_tg_fmt_title">Rich Media</span></div>
+                    <span data-i18n="cmp_tg_fmt_desc">Text, photos, videos, files, stickers, inline keyboards, location, and more Telegram features.</span>
+                </div>
+            </div>
+
+            <!-- Platform -->
+            <div class="cmp-row-label" data-i18n="cmp_cat_platform">PLATFORM</div>
+            <div class="cmp-row">
+                <div class="cmp-cell">
+                    <div class="icon-row"><span class="ico">📲</span> <span class="highlight" data-i18n="cmp_eclaw_plat_title">Android + Web Portal</span></div>
+                    <span data-i18n="cmp_eclaw_plat_desc">Live wallpaper on Android. Web portal for management, chat, mission control, and files.</span>
+                </div>
+                <div class="cmp-cell">
+                    <div class="icon-row"><span class="ico">🌍</span> <span class="highlight" data-i18n="cmp_tg_plat_title">All Platforms</span></div>
+                    <span data-i18n="cmp_tg_plat_desc">Telegram is available on iOS, Android, desktop, and web. Chat from anywhere.</span>
+                </div>
+            </div>
+
+            <!-- Cost -->
+            <div class="cmp-row-label" data-i18n="cmp_cat_cost">COST</div>
+            <div class="cmp-row">
+                <div class="cmp-cell">
+                    <div class="icon-row"><span class="ico">💰</span> <span class="highlight" data-i18n="cmp_eclaw_cost_title">Free + Paid Options</span></div>
+                    <span data-i18n="cmp_eclaw_cost_desc">Free bot (shared, 15 msg/day). Personal bot NT$288/mo (dedicated, unlimited). Self-host: free.</span>
+                </div>
+                <div class="cmp-cell">
+                    <div class="icon-row"><span class="ico">💸</span> <span class="highlight" data-i18n="cmp_tg_cost_title">Bot API Free</span></div>
+                    <span data-i18n="cmp_tg_cost_desc">Telegram Bot API is free. You pay for hosting and LLM API usage. Full control over costs.</span>
+                </div>
+            </div>
+
+            <!-- Bot Development -->
+            <div class="cmp-row-label" data-i18n="cmp_cat_dev">BOT DEVELOPMENT</div>
+            <div class="cmp-row">
+                <div class="cmp-cell">
+                    <div class="icon-row"><span class="ico">🛠️</span> <span class="highlight" data-i18n="cmp_eclaw_dev_title">OpenClaw + Webhook</span></div>
+                    <span data-i18n="cmp_eclaw_dev_desc">Build on OpenClaw platform (Zeabur). Use exec+curl push mode. MCP skills documentation provided.</span>
+                </div>
+                <div class="cmp-cell">
+                    <div class="icon-row"><span class="ico">⚙️</span> <span class="highlight" data-i18n="cmp_tg_dev_title">OpenClaw + Telegram Adapter</span></div>
+                    <span data-i18n="cmp_tg_dev_desc">Build on OpenClaw, add Telegram channel adapter. Uses Telegram Bot API for message routing.</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="cmp-summary">
+            <div class="cmp-summary-card eclaw">
+                <div class="cmp-summary-title" data-i18n="cmp_eclaw_best_for">E-Claw is best for...</div>
+                <ul class="cmp-summary-list">
+                    <li data-i18n="cmp_eclaw_best_1">Live wallpaper interaction on Android</li>
+                    <li data-i18n="cmp_eclaw_best_2">Real-time proactive push updates</li>
+                    <li data-i18n="cmp_eclaw_best_3">Multi-entity management (up to 4 bots)</li>
+                    <li data-i18n="cmp_eclaw_best_4">Integrated mission control & files</li>
+                </ul>
+            </div>
+            <div class="cmp-summary-card telegram">
+                <div class="cmp-summary-title" data-i18n="cmp_tg_best_for">Telegram is best for...</div>
+                <ul class="cmp-summary-list">
+                    <li data-i18n="cmp_tg_best_1">Cross-platform chat (iOS, desktop, web)</li>
+                    <li data-i18n="cmp_tg_best_2">Rich media (photos, stickers, files)</li>
+                    <li data-i18n="cmp_tg_best_3">Familiar chat UI, no new app needed</li>
+                    <li data-i18n="cmp_tg_best_4">Free Bot API with full developer control</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="cmp-cta">
+            <div class="cmp-cta-text" data-i18n="cmp_cta_text">
+                Both channels use OpenClaw bots — choose the one that fits your needs, or use both!
+            </div>
+            <div class="cmp-cta-buttons">
+                <a href="dashboard.html" class="btn btn-primary" data-i18n="cmp_cta_eclaw">Get Started with E-Claw</a>
+                <a href="https://core.telegram.org/bots" target="_blank" class="btn btn-outline" data-i18n="cmp_cta_telegram">Learn about Telegram Bots</a>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="shared/api.js"></script>
+    <script src="shared/nav.js"></script>
+    <script src="shared/auth.js"></script>
+    <script src="../shared/telemetry.js"></script>
+    <script src="../shared/i18n.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', async () => {
+            renderNav('');
+            await checkAuth();
+        });
+    </script>
+</body>
+
+</html>
