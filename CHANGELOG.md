@@ -1,3 +1,10 @@
+# [1.16.0](https://github.com/HankHuang0516/realbot/compare/v1.15.0...v1.16.0) (2026-02-24)
+
+
+### Features
+
+* redirect root URL to /portal/ for custom domain ([a0affdf](https://github.com/HankHuang0516/realbot/commit/a0affdf6ce249314b5f2d4bec489e59142ad43f5))
+
 # [1.15.0](https://github.com/HankHuang0516/realbot/compare/v1.14.0...v1.15.0) (2026-02-24)
 
 
