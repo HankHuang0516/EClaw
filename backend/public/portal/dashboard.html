@@ -891,6 +891,7 @@
     <script src="../shared/i18n.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
+    <script src="shared/footer.js"></script>
     <script>
         // --- Constants ---
         const DEFAULT_AVATARS = { 0: '🦞', 1: '🐷', 2: '🦞', 3: '🐷' };
@@ -937,6 +938,7 @@
         // --- Init ---
         window.addEventListener('DOMContentLoaded', async () => {
             renderNav('dashboard');
+            if (typeof renderFooter === 'function') renderFooter();
             const user = await checkAuth();
             if (!user) return;
             initPortalSocket();

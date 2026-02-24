@@ -492,6 +492,7 @@
     <script src="../shared/i18n.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
+    <script src="shared/footer.js"></script>
 
     <script>
         let tappayReady = false;
@@ -502,6 +503,7 @@
         // ============================================
         window.addEventListener('DOMContentLoaded', async () => {
             renderNav('settings');
+            if (typeof renderFooter === 'function') renderFooter();
 
             // Wait for i18n to load if it's async or just ensure it's applied
             if (typeof i18n !== 'undefined') {

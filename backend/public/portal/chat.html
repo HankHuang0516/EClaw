@@ -890,6 +890,7 @@
     <script src="../shared/i18n.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
+    <script src="shared/footer.js"></script>
     <script>
         // ── State ──
         let allMessages = [];
@@ -924,6 +925,7 @@
         // ── Init ──
         window.addEventListener('DOMContentLoaded', async () => {
             renderNav('chat');
+            if (typeof renderFooter === 'function') renderFooter();
             const user = await checkAuth();
             if (!user) return;
             initPortalSocket();

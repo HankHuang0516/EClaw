@@ -335,12 +335,14 @@
     <script src="shared/api.js"></script>
     <!-- IMPORTANT: Check path for i18n.js relative to portal/index.html. it is in ../shared/i18n.js since index.html is in portal/ -->
     <script src="../shared/i18n.js"></script>
+    <script src="shared/footer.js"></script>
     <script>
         let resetToken = null;
         let termsAccepted = false;
 
         // Check URL params
         window.addEventListener('DOMContentLoaded', async () => {
+            if (typeof renderFooter === 'function') renderFooter();
             const params = new URLSearchParams(window.location.search);
 
             if (params.get('verified') === 'true') {

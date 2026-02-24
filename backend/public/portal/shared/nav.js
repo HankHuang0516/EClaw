@@ -6,7 +6,8 @@ function renderNav(activePage) {
         { id: 'chat', i18nKey: 'nav_chat', label: 'Chat', href: 'chat.html', icon: '💬' },
         { id: 'files', i18nKey: 'nav_files', label: 'Files', href: 'files.html', icon: '📁' },
         { id: 'mission', i18nKey: 'nav_mission', label: 'Mission', href: 'mission.html', icon: '🚀' },
-        { id: 'settings', i18nKey: 'nav_settings', label: 'Settings', href: 'settings.html', icon: '⚙️' }
+        { id: 'settings', i18nKey: 'nav_settings', label: 'Settings', href: 'settings.html', icon: '⚙️' },
+        { id: 'info', i18nKey: 'nav_info', label: 'Info', href: 'info.html', icon: '📖' }
     ];
 
     // Deferred: add admin link after auth check completes

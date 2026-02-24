@@ -2,10 +2,7 @@
 
 function renderPublicNav(activePage) {
     const pages = [
-        { id: 'compare', i18nKey: 'nav_compare', label: 'Compare', href: 'compare-channels.html' },
-        { id: 'faq', i18nKey: 'nav_faq', label: 'FAQ', href: 'faq.html' },
-        { id: 'release-notes', i18nKey: 'nav_release_notes', label: 'Release Notes', href: 'release-notes.html' },
-        { id: 'guide', i18nKey: 'nav_user_guide', label: 'User Guide', href: 'https://hankhuang0516.github.io/eclawguide/', external: true }
+        { id: 'info', i18nKey: 'nav_info', label: 'Info', href: 'info.html' }
     ];
 
     const t = (key, fallback) => typeof i18n !== 'undefined' ? i18n.t(key) : fallback;

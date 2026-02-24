@@ -656,6 +656,7 @@
     <script src="../shared/i18n.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
+    <script src="shared/footer.js"></script>
     <script>
         let statsData = null;
         let bindingsData = null;
@@ -664,6 +665,7 @@
 
         async function init() {
             renderNav('admin');
+            if (typeof renderFooter === 'function') renderFooter();
             if (typeof i18n !== 'undefined') {
                 i18n.apply();
                 i18n.onLanguageChange(() => {

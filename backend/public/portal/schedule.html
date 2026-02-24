@@ -461,6 +461,7 @@
     <script src="../shared/i18n.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
+    <script src="shared/footer.js"></script>
     <script>
         // ── State ──
         let allSchedules = [];
@@ -495,6 +496,7 @@
         // ── Init ──
         window.addEventListener('DOMContentLoaded', async () => {
             renderNav('mission');
+            if (typeof renderFooter === 'function') renderFooter();
             const user = await checkAuth();
             if (!user) return;
             initPortalSocket();

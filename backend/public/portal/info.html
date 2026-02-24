@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="info_title">E-Claw - Info Hub</title>
+    <link rel="stylesheet" href="shared/style.css">
+    <style>
+        /* ── Info Tab Bar ── */
+        .info-tabs {
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid var(--card-border);
+            margin-bottom: 24px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .info-tabs::-webkit-scrollbar { display: none; }
+
+        .info-tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .info-tab:hover { color: var(--text); }
+        .info-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .info-panel { display: none; }
+        .info-panel.active { display: block; }
+
+        /* ── Guide Layout (sidebar + content) ── */
+        .guide-layout {
+            display: flex;
+            gap: 24px;
+        }
+
+        .guide-sidebar {
+            width: 200px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 80px;
+            align-self: flex-start;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+
+        .guide-sidebar-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 8px 12px;
+            border: none;
+            background: none;
+            font-family: inherit;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-left: 2px solid transparent;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            transition: all 0.15s;
+        }
+
+        .guide-sidebar-btn:hover {
+            background: var(--input-bg);
+            color: var(--text);
+        }
+
+        .guide-sidebar-btn.active {
+            background: rgba(108, 99, 255, 0.1);
+            color: var(--primary);
+            font-weight: 700;
+            border-left-color: var(--primary);
+        }
+
+        .guide-sidebar-btn .expand-arrow {
+            float: right;
+            font-size: 10px;
+            color: var(--text-muted);
+            transition: transform 0.2s;
+        }
+
+        .guide-sidebar-btn.expanded .expand-arrow {
+            transform: rotate(90deg);
+        }
+
+        .guide-sub-nav {
+            display: none;
+            padding-left: 12px;
+        }
+
+        .guide-sub-nav.open { display: block; }
+
+        .guide-sub-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 6px 12px;
+            border: none;
+            background: none;
+            font-family: inherit;
+            font-size: 12px;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-left: 2px solid transparent;
+            border-radius: 0 4px 4px 0;
+            transition: all 0.15s;
+        }
+
+        .guide-sub-btn:hover {
+            background: var(--input-bg);
+            color: var(--text-secondary);
+        }
+
+        .guide-sub-btn.active {
+            background: rgba(108, 99, 255, 0.08);
+            color: var(--primary);
+            font-weight: 700;
+            border-left-color: var(--primary);
+        }
+
+        .guide-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .guide-panel { display: none; }
+        .guide-panel.active { display: block; }
+
+        /* ── Guide Typography (dark theme) ── */
+        .guide-content header {
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 20px;
+        }
+
+        .guide-content header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .guide-content .meta {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .guide-content h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 32px;
+            margin-bottom: 10px;
+        }
+
+        .guide-content h2:first-child { margin-top: 0; }
+
+        .guide-content h3 {
+            font-size: 15px;
+            font-weight: 700;
+            margin-top: 24px;
+            margin-bottom: 8px;
+        }
+
+        .guide-content p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            line-height: 1.7;
+        }
+
+        .guide-content strong { color: var(--text); }
+
+        .guide-content a { color: var(--primary); }
+
+        .guide-content .step-heading {
+            font-size: 15px;
+            font-weight: 700;
+            margin-top: 24px;
+            margin-bottom: 8px;
+        }
+
+        .guide-content .step-image {
+            width: 100%;
+            max-width: 320px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--card-border);
+            margin: 12px 0;
+            display: block;
+        }
+
+        .guide-content .note {
+            background: rgba(108, 99, 255, 0.06);
+            border-left: 3px solid var(--primary);
+            padding: 10px 14px;
+            margin: 12px 0;
+            font-size: 13px;
+            color: var(--text-secondary);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        }
+
+        .guide-content .warning {
+            background: rgba(255, 210, 63, 0.06);
+            border-left: 3px solid var(--warning);
+            padding: 10px 14px;
+            margin: 12px 0;
+            font-size: 13px;
+            color: var(--text-secondary);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        }
+
+        .guide-content .tips-list,
+        .guide-content .content-list {
+            margin: 12px 0;
+            padding-left: 20px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .guide-content .tips-list li,
+        .guide-content .content-list li {
+            margin-bottom: 6px;
+            line-height: 1.7;
+        }
+
+        .guide-content hr {
+            border: none;
+            border-top: 1px solid var(--card-border);
+            margin: 28px 0;
+        }
+
+        .guide-content code {
+            background: var(--input-bg);
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        /* ── Guide: Feature table ── */
+        .guide-content .feature-table,
+        .guide-content .mc-api-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0 20px;
+            font-size: 13px;
+        }
+
+        .guide-content .feature-table th,
+        .guide-content .feature-table td,
+        .guide-content .mc-api-table th,
+        .guide-content .mc-api-table td {
+            text-align: left;
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .guide-content .feature-table th,
+        .guide-content .mc-api-table th {
+            background: var(--input-bg);
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .guide-content .feature-table td:first-child {
+            white-space: nowrap;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        /* ── Guide: Code / diagram blocks ── */
+        .guide-content .code-block {
+            background: var(--card);
+            color: #d4d4d4;
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: pre;
+            border: 1px solid var(--card-border);
+        }
+
+        .guide-content .arch-diagram,
+        .guide-content .file-tree {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            white-space: pre;
+            color: var(--text-secondary);
+        }
+
+        /* ── Guide: Badge row ── */
+        .guide-content .badge-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .guide-content .badge-row .badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-weight: 700;
+        }
+
+        .badge-android { background: #3ddc84; color: #1a1a1a; }
+        .badge-license { background: #0969da; color: #fff; }
+        .badge-railway { background: #7c3aed; color: #fff; }
+
+        /* ── Guide: MC labels ── */
+        .mc-label {
+            display: inline-block;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-weight: 700;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        .mc-label-user { background: rgba(21, 101, 192, 0.2); color: #64B5F6; }
+        .mc-label-bot { background: rgba(198, 40, 40, 0.2); color: #EF9A9A; }
+        .mc-label-shared { background: rgba(230, 81, 0, 0.2); color: #FFB74D; }
+
+        /* ── Guide: Screenshot ── */
+        .guide-content .mc-screenshot {
+            width: 100%;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--card-border);
+            margin: 12px 0 24px;
+        }
+
+        /* ── Guide: Why E-Claw cards ── */
+        .guide-content .why-eclaw-card {
+            margin-top: 16px;
+            padding: 16px 20px;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-left: 3px solid var(--primary);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        }
+
+        .guide-content .why-eclaw-card .pain-point {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .guide-content .why-eclaw-card .solution {
+            font-size: 14px;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .guide-content .why-eclaw-card .solution-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 0;
+        }
+
+        /* ── Guide: CTA ── */
+        .guide-content .cta-links {
+            margin-top: 24px;
+            padding: 20px;
+            background: rgba(108, 99, 255, 0.06);
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(108, 99, 255, 0.2);
+        }
+
+        .guide-content .cta-links h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+
+        .guide-content .cta-links .cta-item {
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .guide-content .cta-links .cta-label {
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        /* ── Guide: MC section ── */
+        .guide-content .mc-section {
+            margin-top: 24px;
+            padding: 20px;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+        }
+
+        .guide-content .mc-section h3 {
+            margin-top: 0;
+            font-size: 15px;
+            margin-bottom: 10px;
+        }
+
+        .guide-content .mc-section p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .guide-content .mc-feature-list {
+            margin: 8px 0 0;
+            padding-left: 20px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .guide-content .mc-feature-list li {
+            margin-bottom: 4px;
+            line-height: 1.7;
+        }
+
+        .guide-content footer {
+            border-top: 1px solid var(--card-border);
+            padding-top: 16px;
+            margin-top: 28px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* ══════════════ FAQ Styles ══════════════ */
+        .faq-hero { text-align: center; padding: 24px 0 20px; }
+        .faq-hero-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+        .faq-hero-subtitle { font-size: 13px; color: var(--text-secondary); max-width: 480px; margin: 0 auto; line-height: 1.6; }
+        .faq-section-title { font-size: 15px; font-weight: 700; color: var(--primary); margin: 24px 0 10px; padding-left: 4px; }
+        .faq-item { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius-sm); margin-bottom: 8px; overflow: hidden; }
+        .faq-question { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text); user-select: none; transition: background 0.2s; }
+        .faq-question:hover { background: var(--input-bg); }
+        .faq-arrow { font-size: 12px; color: var(--text-secondary); transition: transform 0.2s; flex-shrink: 0; margin-left: 12px; }
+        .faq-item.open .faq-arrow { transform: rotate(180deg); }
+        .faq-answer { display: none; padding: 0 14px 12px; font-size: 13px; color: var(--text-secondary); line-height: 1.7; border-top: 1px solid var(--card-border); padding-top: 10px; }
+        .faq-item.open .faq-answer { display: block; }
+        .faq-answer a { color: var(--primary); }
+        .faq-cta { text-align: center; padding: 20px; background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); margin: 24px 0; }
+        .faq-cta-text { font-size: 13px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.6; }
+
+        /* ══════════════ Release Notes Styles ══════════════ */
+        .rn-hero { text-align: center; padding: 24px 0 20px; }
+        .rn-hero-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+        .rn-hero-subtitle { font-size: 13px; color: var(--text-secondary); max-width: 480px; margin: 0 auto; line-height: 1.6; }
+        .rn-entry { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; }
+        .rn-entry.latest { border-color: rgba(108, 99, 255, 0.4); }
+        .rn-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+        .rn-version { font-size: 17px; font-weight: 800; }
+        .rn-date { font-size: 12px; color: var(--text-muted); }
+        .rn-badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        .rn-badge-latest { background: rgba(108, 99, 255, 0.2); color: var(--primary); }
+        .rn-changes { list-style: none; padding: 0; font-size: 13px; color: var(--text-secondary); line-height: 1.8; }
+        .rn-changes li { display: flex; align-items: flex-start; gap: 8px; }
+        .rn-tag { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; flex-shrink: 0; margin-top: 3px; }
+        .rn-tag-feat { background: rgba(108, 99, 255, 0.15); color: var(--primary); }
+        .rn-tag-fix { background: rgba(76, 175, 80, 0.15); color: var(--success); }
+        .rn-tag-improve { background: rgba(255, 210, 63, 0.15); color: var(--warning); }
+        .rn-platforms { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+        .rn-platform { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: var(--input-bg); color: var(--text-secondary); }
+
+        /* ══════════════ Compare Styles ══════════════ */
+        .cmp-hero { text-align: center; padding: 24px 0 20px; }
+        .cmp-hero-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+        .cmp-hero-title .vs { color: var(--text-muted); font-weight: 400; margin: 0 8px; }
+        .cmp-hero-subtitle { font-size: 13px; color: var(--text-secondary); max-width: 520px; margin: 0 auto; line-height: 1.6; }
+        .cmp-channels { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+        .cmp-channel-header { text-align: center; padding: 20px 14px; border-radius: var(--radius); border: 1px solid var(--card-border); }
+        .cmp-channel-header.eclaw { background: linear-gradient(135deg, rgba(108,99,255,0.15), rgba(108,99,255,0.05)); border-color: rgba(108,99,255,0.3); }
+        .cmp-channel-header.telegram { background: linear-gradient(135deg, rgba(0,136,204,0.15), rgba(0,136,204,0.05)); border-color: rgba(0,136,204,0.3); }
+        .cmp-channel-icon { font-size: 40px; margin-bottom: 6px; }
+        .cmp-channel-name { font-size: 18px; font-weight: 700; }
+        .cmp-channel-header.eclaw .cmp-channel-name { color: var(--primary); }
+        .cmp-channel-header.telegram .cmp-channel-name { color: #0088CC; }
+        .cmp-channel-tagline { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+        .cmp-table { display: flex; flex-direction: column; gap: 2px; margin-bottom: 24px; }
+        .cmp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+        .cmp-row-label { grid-column: 1 / -1; padding: 10px 14px 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-muted); }
+        .cmp-cell { padding: 12px 14px; background: var(--card); font-size: 13px; line-height: 1.6; color: var(--text-secondary); }
+        .cmp-cell:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+        .cmp-cell:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+        .cmp-cell .highlight { color: var(--text); font-weight: 600; }
+        .cmp-cell .accent-eclaw { color: var(--primary); font-weight: 600; }
+        .cmp-cell .accent-tg { color: #0088CC; font-weight: 600; }
+        .cmp-cell .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; margin-top: 4px; }
+        .tag-yes { background: rgba(76,175,80,0.15); color: var(--success); }
+        .tag-no { background: rgba(244,67,54,0.15); color: var(--danger); }
+        .tag-partial { background: rgba(255,210,63,0.15); color: var(--warning); }
+        .cmp-cell .icon-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+        .cmp-cell .icon-row .ico { font-size: 16px; }
+        .cmp-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+        .cmp-summary-card { padding: 18px; border-radius: var(--radius); border: 1px solid var(--card-border); }
+        .cmp-summary-card.eclaw { border-color: rgba(108,99,255,0.3); }
+        .cmp-summary-card.telegram { border-color: rgba(0,136,204,0.3); }
+        .cmp-summary-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+        .cmp-summary-card.eclaw .cmp-summary-title { color: var(--primary); }
+        .cmp-summary-card.telegram .cmp-summary-title { color: #0088CC; }
+        .cmp-summary-list { list-style: none; padding: 0; font-size: 13px; color: var(--text-secondary); line-height: 1.8; }
+        .cmp-summary-list li::before { content: "\2713 "; color: var(--success); font-weight: 600; }
+        .cmp-cta { text-align: center; padding: 20px; background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); margin-bottom: 24px; }
+        .cmp-cta-text { font-size: 14px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.6; }
+        .cmp-cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+        /* ══════════════ Responsive ══════════════ */
+        @media (max-width: 768px) {
+            .guide-layout { flex-direction: column; }
+            .guide-sidebar {
+                width: 100%;
+                position: static;
+                max-height: none;
+                display: flex;
+                gap: 4px;
+                overflow-x: auto;
+                border-bottom: 1px solid var(--card-border);
+                padding-bottom: 8px;
+                margin-bottom: 16px;
+                flex-wrap: nowrap;
+            }
+            .guide-sidebar-btn {
+                border-left: none;
+                border-bottom: 2px solid transparent;
+                border-radius: var(--radius-sm);
+                padding: 6px 12px;
+                white-space: nowrap;
+                font-size: 12px;
+            }
+            .guide-sidebar-btn.active { border-left: none; border-bottom-color: var(--primary); }
+            .guide-sub-nav {
+                padding-left: 0;
+                display: flex !important;
+                gap: 4px;
+            }
+            .guide-sub-nav:not(.open) { display: none !important; }
+            .guide-sub-btn {
+                border-left: none;
+                border-bottom: 2px solid transparent;
+                border-radius: var(--radius-sm);
+                padding: 4px 10px;
+                white-space: nowrap;
+                font-size: 11px;
+            }
+            .guide-sub-btn.active { border-left: none; border-bottom-color: var(--primary); }
+            .guide-sidebar-btn .expand-arrow { display: none; }
+            .info-tab { padding: 10px 14px; font-size: 13px; }
+            .cmp-channels { gap: 8px; }
+            .cmp-channel-header { padding: 14px 10px; }
+            .cmp-channel-icon { font-size: 32px; }
+            .cmp-channel-name { font-size: 16px; }
+            .cmp-cell { padding: 10px 12px; font-size: 12px; }
+            .cmp-summary { grid-template-columns: 1fr; }
+            .cmp-cta-buttons { flex-direction: column; }
+            .cmp-cta-buttons .btn { width: 100%; justify-content: center; }
+        }
+
+        @media (max-width: 480px) {
+            .faq-hero-title, .rn-hero-title, .cmp-hero-title { font-size: 20px; }
+            .guide-content header h1 { font-size: 18px; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container" style="max-width: 960px;">
+
+        <!-- ══════════════ Tab Bar ══════════════ -->
+        <div class="info-tabs">
+            <button class="info-tab active" data-info-tab="guide" data-i18n="info_tab_guide">User Guide</button>
+            <button class="info-tab" data-info-tab="faq" data-i18n="info_tab_faq">FAQ</button>
+            <button class="info-tab" data-info-tab="release-notes" data-i18n="info_tab_release_notes">Release Notes</button>
+            <button class="info-tab" data-info-tab="compare" data-i18n="info_tab_compare">Compare</button>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════
+             TAB 1: USER GUIDE
+             ══════════════════════════════════════════════════ -->
+        <div class="info-panel active" id="panel-guide">
+            <div class="guide-layout">
+
+                <!-- Guide Sidebar -->
+                <div class="guide-sidebar" id="guideSidebar">
+                    <button class="guide-sidebar-btn active" data-guide="setup">設定教學</button>
+                    <button class="guide-sidebar-btn" data-guide="features">功能介紹</button>
+                    <button class="guide-sidebar-btn" data-guide="architecture">系統架構</button>
+                    <button class="guide-sidebar-btn" data-guide="quickstart">快速開始</button>
+                    <button class="guide-sidebar-btn" data-guide="structure">專案結構</button>
+                    <button class="guide-sidebar-btn" data-guide="mission" id="missionToggle">任務中心 <span class="expand-arrow">&#9654;</span></button>
+                    <div class="guide-sub-nav" id="missionSubNav">
+                        <button class="guide-sub-btn" data-guide="mission-overview">總覽</button>
+                        <button class="guide-sub-btn" data-guide="mission-todo">待辦事項</button>
+                        <button class="guide-sub-btn" data-guide="mission-list">任務列表</button>
+                        <button class="guide-sub-btn" data-guide="mission-done">已完成</button>
+                        <button class="guide-sub-btn" data-guide="mission-notes">筆記</button>
+                        <button class="guide-sub-btn" data-guide="mission-skills">Skills</button>
+                        <button class="guide-sub-btn" data-guide="mission-soul">靈魂</button>
+                        <button class="guide-sub-btn" data-guide="mission-rules">規則</button>
+                        <button class="guide-sub-btn" data-guide="mission-schedule">排程</button>
+                    </div>
+                    <button class="guide-sidebar-btn" data-guide="testing">測試與文件</button>
+                </div>
+
+                <!-- Guide Content -->
+                <div class="guide-content">
+
+                    <!-- ── 設定教學 ── -->
+                    <div class="guide-panel active" id="guide-setup">
+                        <header>
+                            <h1>如何免費使用 OpenClaw — E-Claw App 設定教學</h1>
+                            <p class="meta">2026 年 2 月 ｜ 圖文教學</p>
+                        </header>
+
+                        <h2>OpenClaw 是什麼？</h2>
+                        <p>OpenClaw 是一個 AI Agent，可以理解為一個能夠自主執行任務的 AI 助手，而不只是單純的語言模型。透過 <strong>E-Claw</strong> 這款 App，你可以免費使用 OpenClaw 提供的功能。</p>
+                        <p>具體來說，E-Claw 的「官方 Bot 租用」功能提供了一個免費方案，搭載 <strong>MiniMax 2.1</strong> 模型，每天有 15 則訊息的額度。以下是完整的設定流程。</p>
+
+                        <hr>
+
+                        <h2>設定步驟</h2>
+
+                        <h3 class="step-heading">1. 下載 E-Claw App</h3>
+                        <p>到 Google Play Store 搜尋「<strong>e-claw</strong>」，安裝 E-Claw 電子蝦桌布 (OpenClaw)。</p>
+                        <img src="assets/guide/1000005528.png" alt="Google Play Store 搜尋 E-Claw" class="step-image">
+                        <div class="note">下載連結放在文末。</div>
+
+                        <h3 class="step-heading">2. 找到「官方 Bot 租用」</h3>
+                        <p>打開 App 後在主畫面往下滑，找到「<strong>官方 Bot 租用</strong>」按鈕並點進去。</p>
+                        <img src="assets/guide/1000005517.png" alt="E-Claw 主畫面" class="step-image">
+
+                        <h3 class="step-heading">3. 選擇免費版</h3>
+                        <p>進入租用頁面後會看到免費版和月租版兩個選項，選「<strong>免費版</strong>」然後點「<strong>使用免費版</strong>」。</p>
+                        <img src="assets/guide/1000005518.png" alt="選擇免費版" class="step-image">
+                        <div class="note">免費版使用 MiniMax 2.1 模型，與所有免費用戶共享記憶，每天 15 則訊息。</div>
+
+                        <h3 class="step-heading">4. 等待伺服器連接</h3>
+                        <p>點擊後 App 會開始連接伺服器，畫面會顯示「<strong>正在與機器人交握中...</strong>」，等一下就好。</p>
+                        <img src="assets/guide/1000005526.png" alt="連接伺服器中" class="step-image">
+
+                        <h3 class="step-heading">5. 完成連接流程</h3>
+                        <p>連接過程中畫面會跑一些 Webhook 測試訊息，建議等流程跑完再離開頁面。</p>
+                        <img src="assets/guide/1000005527.png" alt="Webhook 測試" class="step-image">
+                        <div class="warning">連接過程中不要關閉 App 或切到其他頁面，不然可能會連接失敗。</div>
+
+                        <h3 class="step-heading">6. 看到龍蝦圖示就完成了</h3>
+                        <p>畫面出現龍蝦圖示並顯示「<strong>Connected!</strong>」或「<strong>成功啦</strong>」，代表連接成功，可以回主頁開始用了。</p>
+                        <img src="assets/guide/1000005519.png" alt="連接成功" class="step-image">
+
+                        <hr>
+
+                        <h2>開始使用</h2>
+                        <p>回到 E-Claw 主頁，點「<strong>聊天</strong>」就能跟 OpenClaw 對話了。</p>
+                        <img src="assets/guide/1000005524.png" alt="聊天畫面" class="step-image">
+                        <img src="assets/guide/1000005525.png" alt="對話示範" class="step-image">
+
+                        <h2>幾點補充</h2>
+                        <ul class="tips-list">
+                            <li>免費版每天 15 則訊息，用完隔天重置。</li>
+                            <li>記憶是所有免費用戶共用的，別丟敏感資料進去。</li>
+                            <li>MiniMax 2.1 拿來日常對話、問問題夠用了。</li>
+                            <li>如果覺得不夠用，可以考慮月租版，有無限訊息和獨立記憶。</li>
+                        </ul>
+
+                        <hr>
+                        <p>E-Claw 下載連結：<a href="https://play.google.com/store/apps/details?id=com.hank.clawlive" target="_blank" rel="noopener">Google Play Store</a></p>
+
+                        <footer><p>圖片來源：E-Claw App 截圖 ｜ 2026 年 2 月</p></footer>
+                    </div>
+
+                    <!-- ── 功能介紹 ── -->
+                    <div class="guide-panel" id="guide-features">
+                        <header>
+                            <h1>功能介紹</h1>
+                            <p class="meta">E-Claw 電子蝦 — 復古電子寵物 × AI 動態桌布</p>
+                        </header>
+
+                        <div class="badge-row">
+                            <span class="badge badge-android">Android</span>
+                            <span class="badge badge-license">MIT License</span>
+                            <span class="badge badge-railway">Railway Backend</span>
+                        </div>
+
+                        <p>把 90 年代電子雞的靈魂注入你的 Android 桌布——由 AI Bot 驅動，24/7 陪伴你。</p>
+
+                        <h2>功能特色</h2>
+                        <table class="feature-table">
+                            <thead><tr><th>功能</th><th>說明</th></tr></thead>
+                            <tbody>
+                                <tr><td>AI 電子寵物桌布</td><td>最多 4 個 AI 驅動的實體，在你的動態桌布上自由活動</td></tr>
+                                <tr><td>OpenClaw Bot 整合</td><td>透過 Webhook + Exec-curl 與 AI Bot 雙向溝通</td></tr>
+                                <tr><td>即時聊天</td><td>長按桌布即可與實體對話，支援完整訊息歷程</td></tr>
+                                <tr><td>Push 通知</td><td>Bot 主動推送訊息，instruction-first 格式</td></tr>
+                                <tr><td>Web 管理介面</td><td>跨裝置管理實體、查看狀態、遠端控制</td></tr>
+                                <tr><td>裝置遙測</td><td>結構化 debug buffer，AI 輔助問題排查</td></tr>
+                                <tr><td>帳號登入</td><td>綁定 Google 帳號，重裝後自動恢復資料</td></tr>
+                                <tr><td>免費 / 付費方案</td><td>內建 gatekeeper，15 則免費訊息 + 付費無限制</td></tr>
+                            </tbody>
+                        </table>
+
+                        <h2>為什麼選擇 E-Claw？</h2>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point">🎭 想讓 OpenClaw 分身？怕無法控管秩序、token 無限燃燒？</p>
+                            <p class="solution">→ E-Claw 幫你有效管理</p>
+                            <p class="solution-desc">直接在平台為你的 OpenClaw 設定人設、更改名字、分配工作，一切盡在掌握。</p>
+                        </div>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point">🤝 想讓多個 OpenClaw 協作？沒有更多 Mac、也不想額外花錢？</p>
+                            <p class="solution">→ E-Claw 提供多 Agent 協作平台</p>
+                            <p class="solution-desc">10 秒即可快速租用 OpenClaw 上線運作。不想花錢？沒問題，還有免費 OpenClaw 讓你直接使用！</p>
+                        </div>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point">📋 追蹤不到 OpenClaw 的工作進度？</p>
+                            <p class="solution">→ E-Claw 任務中心讓你一覽無遺</p>
+                            <p class="solution-desc">即時查看所有 OpenClaw 的工作狀態，中途也能隨時調整任務內容，完成後自動更新狀態通知你。</p>
+                        </div>
+
+                        <div class="cta-links">
+                            <h3>🚀 立即體驗</h3>
+                            <p class="cta-item">🌐 <span class="cta-label">Web 版</span>（專注多 Agent 協作）：<a href="dashboard.html">開啟 E-Claw 網頁版</a></p>
+                            <p class="cta-item">📱 <span class="cta-label">Android APP 版</span>（你手機上的電子寵物）：<a href="https://play.google.com/store/apps/details?id=com.hank.clawlive" target="_blank" rel="noopener">前往 Google Play 下載</a></p>
+                        </div>
+                    </div>
+
+                    <!-- ── 系統架構 ── -->
+                    <div class="guide-panel" id="guide-architecture">
+                        <header>
+                            <h1>系統架構</h1>
+                            <p class="meta">Android App ↔ Backend ↔ OpenClaw Platform</p>
+                        </header>
+
+                        <h2>架構總覽</h2>
+                        <p>E-Claw 由三個主要部分組成：Android App、後端服務（Railway）、以及 OpenClaw AI 平台（Zeabur）。</p>
+
+                        <div class="arch-diagram">┌─────────────────────┐     ┌──────────────────────┐
+│   Android App       │     │   Web Portal         │
+│   (Kotlin)          │     │   (HTML/JS)          │
+│                     │     │                      │
+│  Live Wallpaper     │     │  Entity Management   │
+│  Chat UI            │◄────►  Bot Config          │
+│  Push Receiver      │     │  Telemetry Viewer    │
+└─────────┬───────────┘     └────────┬─────────────┘
+          │                          │
+          │    HTTPS / REST API      │
+          ▼                          ▼
+┌─────────────────────────────────────────────────┐
+│              Backend (Railway)                   │
+│              Node.js + Express                   │
+│                                                  │
+│  /api/bind      /api/broadcast   /api/transform  │
+│  /api/chat      /api/logs        /api/telemetry  │
+│                                                  │
+│         PostgreSQL (persistent store)            │
+└────────────────────────┬────────────────────────┘
+                         │  Webhook Push + exec+curl
+                         ▼
+              ┌──────────────────────┐
+              │  OpenClaw Platform   │
+              │  (Zeabur)            │
+              │                      │
+              │  AI Bot Instances    │
+              │  (up to 4 per device)│
+              └──────────────────────┘</div>
+
+                        <h2>核心設計</h2>
+                        <ul class="content-list">
+                            <li>每個裝置有 <strong>4 個 entity slots</strong>（0–3），可獨立綁定不同 Bot</li>
+                            <li><strong>Bots</strong> 透過 Webhook push（進入）+ exec+curl（POST /api/transform）進行通訊</li>
+                            <li><strong>Railway</strong> 在 push 到 <code>main</code> 時自動部署（監控 <code>backend/</code> 資料夾）</li>
+                        </ul>
+                    </div>
+
+                    <!-- ── 快速開始 ── -->
+                    <div class="guide-panel" id="guide-quickstart">
+                        <header>
+                            <h1>快速開始</h1>
+                            <p class="meta">本地開發、部署、Android App 安裝</p>
+                        </header>
+
+                        <h2>先決條件</h2>
+                        <ul class="content-list">
+                            <li>Android 8.0+ 裝置</li>
+                            <li>Node.js 18+</li>
+                            <li>PostgreSQL（或使用 Railway 的託管 PostgreSQL）</li>
+                        </ul>
+
+                        <h2>本地後端開發</h2>
+                        <div class="code-block"># Clone the repo
+git clone https://github.com/HankHuang0516/realbot.git
+cd realbot/backend
+
+# Install dependencies
+npm install
+
+# Configure environment
+cp .env.example .env   # then fill in DATABASE_URL, etc.
+
+# Start dev server
+npm run dev
+# → Server running on http://localhost:3000</div>
+
+                        <h2>部署到 Railway</h2>
+                        <div class="code-block"># Connect repo to Railway (auto-deploys from backend/ on push to main)
+# Set environment variables in Railway dashboard:
+#   DATABASE_URL  PORT  NODE_ENV
+git push origin main</div>
+
+                        <h2>Android App 安裝</h2>
+                        <ol class="content-list">
+                            <li>從 <a href="https://github.com/HankHuang0516/realbot/releases/latest" target="_blank" rel="noopener">GitHub Releases</a> 下載最新的 <code>.aab</code> / <code>.apk</code></li>
+                            <li>設定為 Live Wallpaper → Long Settings → 輸入你的 <code>deviceId</code></li>
+                            <li>打開 Web Portal 綁定 AI 實體</li>
+                        </ol>
+                    </div>
+
+                    <!-- ── 專案結構 ── -->
+                    <div class="guide-panel" id="guide-structure">
+                        <header>
+                            <h1>專案結構</h1>
+                            <p class="meta">realbot 原始碼目錄說明</p>
+                        </header>
+
+                        <h2>目錄總覽</h2>
+                        <div class="file-tree">realbot/
+├── app/                    # Android app (Kotlin)
+│   └── src/main/
+│       ├── java/           # App source code
+│       └── res/            # Resources, layouts, strings
+├── backend/                # Node.js backend (Railway)
+│   ├── index.js            # Express server entry point
+│   ├── public/             # Web Portal (HTML/JS/CSS)
+│   ├── device-telemetry.js # Telemetry buffer module
+│   └── tests/              # Regression test suite
+├── google_play/            # Store assets (icon, feature graphic)
+├── RELEASE_HISTORY.md      # Version history with commit hashes
+├── PRIVACY_POLICY.md       # Privacy policy
+└── CLAUDE.md               # AI assistant instructions</div>
+
+                        <h2>主要模組說明</h2>
+                        <ul class="content-list">
+                            <li><strong>app/</strong> — Android 應用程式，使用 Kotlin 開發，包含 Live Wallpaper、聊天介面、Push 接收器</li>
+                            <li><strong>backend/</strong> — Node.js + Express 後端，部署於 Railway，負責 API、資料庫、與 OpenClaw 平台通訊</li>
+                            <li><strong>backend/public/</strong> — Web Portal 前端，提供跨裝置的實體管理介面</li>
+                            <li><strong>backend/tests/</strong> — 回歸測試套件，確保 Bot API 與廣播功能正常運作</li>
+                            <li><strong>google_play/</strong> — Google Play Store 上架素材（圖標、功能圖片）</li>
+                        </ul>
+                    </div>
+
+                    <!-- ── 任務中心 — 總覽 ── -->
+                    <div class="guide-panel" id="guide-mission-overview">
+                        <header>
+                            <h1>任務中心 (Mission Control)</h1>
+                            <p class="meta">Web 管理面板 — 管理 Bot 的待辦、任務、筆記、Skills、靈魂、規則、排程</p>
+                        </header>
+
+                        <p>Mission Control 是 E-Claw 的 Web 管理面板，讓你透過瀏覽器跨裝置管理 AI Bot 的所有行為。同一裝置上的所有 Entity（最多 4 個）<strong>共享同一個 Dashboard</strong>，可互相協作。</p>
+
+                        <img src="assets/guide/mission-control-web.png" alt="E-Claw Mission Control Web 介面截圖" class="mc-screenshot">
+
+                        <h2>功能樹狀圖</h2>
+                        <div class="file-tree">任務中心 (Task Center)
+├── E-Claw Mission Control (Dashboard)
+│   ├── 待辦事項 (TODO)
+│   ├── 任務列表 (Mission List)
+│   ├── 已完成 (Done)
+│   ├── 筆記 (Notes)
+│   ├── Skills
+│   ├── 靈魂 (Soul / 人設)
+│   └── 規則 (Rules / Workflow)
+└── 排程 (Schedule)</div>
+
+                        <h2>子項目總覽</h2>
+                        <table class="feature-table">
+                            <thead><tr><th>子項目</th><th>說明</th><th>存取權限</th></tr></thead>
+                            <tbody>
+                                <tr><td>待辦事項</td><td>管理尚未開始的工作項目，支援優先順序與 Entity 指派</td><td>User + Bot 共用</td></tr>
+                                <tr><td>任務列表</td><td>追蹤進行中的任務，按優先順序排序顯示</td><td>User + Bot 共用</td></tr>
+                                <tr><td>已完成</td><td>歸檔已完成項目，附帶完成時間戳記</td><td>User + Bot 共用</td></tr>
+                                <tr><td>筆記</td><td>記錄參考資訊，支援分類管理與跨 Entity 共享</td><td>User + Bot 共用</td></tr>
+                                <tr><td>Skills</td><td>擴充 Bot 能力，附帶 API 文件 URL</td><td>Bot 能力擴充</td></tr>
+                                <tr><td>靈魂</td><td>定義 Bot 人格特質與溝通風格</td><td>User 定義人格</td></tr>
+                                <tr><td>規則</td><td>制定行為準則與自動化工作流程，支援 6 種規則類型</td><td>User 定義行為</td></tr>
+                                <tr><td>排程</td><td>定時執行任務，支援即時狀態追蹤與執行紀錄</td><td>User + Bot 共用</td></tr>
+                            </tbody>
+                        </table>
+
+                        <h2>Dashboard 同步機制</h2>
+                        <p>Mission Control Dashboard 使用<strong>版本號（version）</strong>做樂觀鎖定。每次操作都會自動遞增版本號，Bot 可透過定期輪詢 <code>GET /api/mission/dashboard</code> 比對版本號來偵測使用者的靜默修改。</p>
+                        <div class="note">建議 Bot 每 15 分鐘輪詢一次 Dashboard，比對 <code>version</code> 欄位，若版本變更則重新讀取所有項目。這能確保 Bot 即時回應使用者在 Web 面板上的操作。</div>
+                    </div>
+
+                    <!-- ── 任務中心 — 待辦事項 ── -->
+                    <div class="guide-panel" id="guide-mission-todo">
+                        <header>
+                            <h1>待辦事項 (TODO)</h1>
+                            <p class="meta">任務中心 &gt; 待辦事項 <span class="mc-label mc-label-shared">User + Bot 共用</span></p>
+                        </header>
+                        <p>待辦事項列表用來管理「尚未開始」的工作項目。使用者可以從 Web 面板新增，Bot 也可以透過 API 自行新增。</p>
+                        <h2>功能明細</h2>
+                        <table class="feature-table">
+                            <thead><tr><th>功能</th><th>說明</th></tr></thead>
+                            <tbody>
+                                <tr><td>新增待辦</td><td>點擊「+ 新增」按鈕建立項目，可設定標題、描述、優先順序（LOW / MEDIUM / HIGH / URGENT）</td></tr>
+                                <tr><td>指派 Bot</td><td>每個待辦可指派給特定 Entity（如 Entity 0、Entity 1），或同時指派給多個 Entity</td></tr>
+                                <tr><td>開始任務</td><td>將待辦移至「任務列表」（狀態轉為 IN_PROGRESS）</td></tr>
+                                <tr><td>直接完成</td><td>跳過任務階段，直接標記為完成並移至「已完成」</td></tr>
+                                <tr><td>刪除待辦</td><td>移除不再需要的項目</td></tr>
+                                <tr><td>Bot 自動操作</td><td>Bot 可透過 API 新增、更新、刪除待辦，並即時反映在面板上</td></tr>
+                            </tbody>
+                        </table>
+                        <h2>API 端點</h2>
+                        <table class="mc-api-table">
+                            <thead><tr><th>操作</th><th>API</th></tr></thead>
+                            <tbody>
+                                <tr><td>新增</td><td><code>POST /api/mission/todo/add</code></td></tr>
+                                <tr><td>更新</td><td><code>POST /api/mission/todo/update</code></td></tr>
+                                <tr><td>開始</td><td><code>POST /api/mission/todo/start</code></td></tr>
+                                <tr><td>完成</td><td><code>POST /api/mission/todo/done</code></td></tr>
+                                <tr><td>刪除</td><td><code>POST /api/mission/todo/delete</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- ── 任務中心 — 任務列表 ── -->
+                    <div class="guide-panel" id="guide-mission-list">
+                        <header>
+                            <h1>任務列表 (Mission List)</h1>
+                            <p class="meta">任務中心 &gt; 任務列表 <span class="mc-label mc-label-shared">User + Bot 共用</span></p>
+                        </header>
+                        <p>顯示目前「進行中」的任務。當一個待辦項目被「開始」後，會自動移到這裡，狀態為 IN_PROGRESS。</p>
+                        <h2>功能明細</h2>
+                        <table class="feature-table">
+                            <thead><tr><th>功能</th><th>說明</th></tr></thead>
+                            <tbody>
+                                <tr><td>狀態追蹤</td><td>即時顯示每個任務的執行狀態，Bot 處理中會自動更新</td></tr>
+                                <tr><td>優先順序排序</td><td>任務按 URGENT → HIGH → MEDIUM → LOW 排序顯示</td></tr>
+                                <tr><td>指派資訊</td><td>顯示該任務由哪個 Entity 負責執行</td></tr>
+                                <tr><td>標記完成</td><td>任務完成後移至「已完成」區塊</td></tr>
+                                <tr><td>退回待辦</td><td>如果任務需要暫停，可退回待辦清單</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- ── 任務中心 — 已完成 ── -->
+                    <div class="guide-panel" id="guide-mission-done">
+                        <header>
+                            <h1>已完成 (Done)</h1>
+                            <p class="meta">任務中心 &gt; 已完成</p>
+                        </header>
+                        <p>所有已完成的待辦與任務會歸檔到這裡，附帶完成時間戳記，方便追蹤歷史紀錄。</p>
+                        <h2>功能明細</h2>
+                        <table class="feature-table">
+                            <thead><tr><th>功能</th><th>說明</th></tr></thead>
+                            <tbody>
+                                <tr><td>完成紀錄</td><td>每個完成項目都記錄 <code>completedAt</code> 時間戳</td></tr>
+                                <tr><td>歷史回顧</td><td>方便確認 Bot 過去執行了哪些任務</td></tr>
+                                <tr><td>清理功能</td><td>可刪除不再需要的歷史紀錄</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- ── 任務中心 — 筆記 ── -->
+                    <div class="guide-panel" id="guide-mission-notes">
+                        <header>
+                            <h1>筆記 (Notes)</h1>
+                            <p class="meta">任務中心 &gt; 筆記 <span class="mc-label mc-label-shared">User + Bot 共用</span></p>
+                        </header>
+                        <p>筆記功能讓使用者和 Bot 都能記錄參考資訊。適合存放備忘、偏好設定、對話摘要等。</p>
+                        <h2>功能明細</h2>
+                        <table class="feature-table">
+                            <thead><tr><th>功能</th><th>說明</th></tr></thead>
+                            <tbody>
+                                <tr><td>新增筆記</td><td>點擊「+ 新增」建立筆記，包含標題、內容、分類（category）</td></tr>
+                                <tr><td>分類管理</td><td>可自訂分類標籤（預設 <code>general</code>），方便歸類</td></tr>
+                                <tr><td>Bot 讀寫</td><td>Bot 可透過 API 讀取、新增、更新、刪除筆記</td></tr>
+                                <tr><td>跨 Entity 共享</td><td>同一裝置的所有 Entity 都能存取所有筆記</td></tr>
+                                <tr><td>用途範例</td><td>使用者偏好紀錄、對話摘要、Bot 工作日誌、設定備忘</td></tr>
+                            </tbody>
+                        </table>
+                        <h2>API 端點</h2>
+                        <table class="mc-api-table">
+                            <thead><tr><th>操作</th><th>API</th></tr></thead>
+                            <tbody>
+                                <tr><td>列表</td><td><code>GET /api/mission/notes</code></td></tr>
+                                <tr><td>新增</td><td><code>POST /api/mission/note/add</code></td></tr>
+                                <tr><td>更新</td><td><code>POST /api/mission/note/update</code></td></tr>
+                                <tr><td>刪除</td><td><code>POST /api/mission/note/delete</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- ── 任務中心 — Skills ── -->
+                    <div class="guide-panel" id="guide-mission-skills">
+                        <header>
+                            <h1>Skills</h1>
+                            <p class="meta">任務中心 &gt; Skills <span class="mc-label mc-label-bot">Bot 能力擴充</span></p>
+                        </header>
+                        <p>Skills 定義 Bot 可以使用的外部技能或 API 文件。每個 Skill 可附帶文件 URL，讓 Bot 學習如何使用該技能。</p>
+                        <h2>功能明細</h2>
+                        <table class="feature-table">
+                            <thead><tr><th>功能</th><th>說明</th></tr></thead>
+                            <tbody>
+                                <tr><td>新增 Skill</td><td>點擊「+ Add」建立技能，設定標題、文件 URL</td></tr>
+                                <tr><td>文件連結</td><td>每個 Skill 可附帶 <code>url</code> 指向 API 文件或使用說明</td></tr>
+                                <tr><td>指派 Entity</td><td>可指定哪些 Entity 具備此技能（如只有 Entity 0 有天氣查詢能力）</td></tr>
+                                <tr><td>內建 Skill</td><td>預設包含「E-Claw API Skill」，指向 E-Claw 自身的 API 文件</td></tr>
+                                <tr><td>多技能管理</td><td>一個 Bot 可擁有多個 Skill，擴展不同能力</td></tr>
+                            </tbody>
+                        </table>
+                        <h2>API 端點</h2>
+                        <table class="mc-api-table">
+                            <thead><tr><th>操作</th><th>API</th></tr></thead>
+                            <tbody>
+                                <tr><td>新增</td><td><code>POST /api/mission/skill/add</code></td></tr>
+                                <tr><td>刪除</td><td><code>POST /api/mission/skill/delete</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- ── 任務中心 — 靈魂 ── -->
+                    <div class="guide-panel" id="guide-mission-soul">
+                        <header>
+                            <h1>靈魂 (Soul / 人設)</h1>
+                            <p class="meta">任務中心 &gt; 靈魂 <span class="mc-label mc-label-user">User 定義人格</span></p>
+                        </header>
+                        <p>靈魂定義 Bot 的人格特質與溝通風格。使用者可以為每個 Entity 指定不同的人格設定，隨時切換啟用或停用。</p>
+                        <h2>功能明細</h2>
+                        <table class="feature-table">
+                            <thead><tr><th>功能</th><th>說明</th></tr></thead>
+                            <tbody>
+                                <tr><td>新增靈魂</td><td>點擊「+ 新增」建立人格設定，填寫名稱與人格描述</td></tr>
+                                <tr><td>人格描述</td><td>以自然語言描述 Bot 的性格、語氣、回應風格</td></tr>
+                                <tr><td>範本選擇</td><td>可使用預設範本（如 <code>friendly</code>、<code>professional</code>），也可完全自訂</td></tr>
+                                <tr><td>啟用 / 停用</td><td>每個靈魂有 <code>isActive</code> 開關，使用者可隨時切換</td></tr>
+                                <tr><td>多靈魂混合</td><td>當多個靈魂同時啟用時，Bot 會融合所有啟用靈魂的特質來回應</td></tr>
+                                <tr><td>指派 Entity</td><td>不同 Entity 可以有不同的人格設定</td></tr>
+                                <tr><td>即時生效</td><td>修改後 Bot 在下次回應時立即採用新人格</td></tr>
+                            </tbody>
+                        </table>
+                        <h2>API 端點</h2>
+                        <table class="mc-api-table">
+                            <thead><tr><th>操作</th><th>API</th></tr></thead>
+                            <tbody>
+                                <tr><td>列表</td><td><code>GET /api/mission/souls</code></td></tr>
+                                <tr><td>新增</td><td><code>POST /api/mission/soul/add</code></td></tr>
+                                <tr><td>更新</td><td><code>POST /api/mission/soul/update</code></td></tr>
+                                <tr><td>刪除</td><td><code>POST /api/mission/soul/delete</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- ── 任務中心 — 規則 ── -->
+                    <div class="guide-panel" id="guide-mission-rules">
+                        <header>
+                            <h1>規則 / Workflow</h1>
+                            <p class="meta">任務中心 &gt; 規則 <span class="mc-label mc-label-user">User 定義行為</span></p>
+                        </header>
+                        <p>規則系統讓使用者為 Bot 制定行為準則和自動化工作流程。可定義多種類型的規則並指派給不同 Entity。</p>
+                        <h2>功能明細</h2>
+                        <table class="feature-table">
+                            <thead><tr><th>功能</th><th>說明</th></tr></thead>
+                            <tbody>
+                                <tr><td>新增規則</td><td>點擊「+ 新增」建立規則，設定名稱、描述、規則類型</td></tr>
+                                <tr><td>規則類型</td><td>支援 6 種：WORKFLOW、CODE_REVIEW、COMMUNICATION、DEPLOYMENT、SYNC、HEARTBEAT</td></tr>
+                                <tr><td>啟用 / 停用</td><td>每個規則有 <code>isEnabled</code> 開關，停用的規則 Bot 會完全忽略</td></tr>
+                                <tr><td>指派多個 Entity</td><td>一個規則可同時套用到多個 Entity</td></tr>
+                                <tr><td>跨 Entity 管理</td><td>任何 Entity 都可以新增或修改規則，不限於自己被指派的</td></tr>
+                            </tbody>
+                        </table>
+                        <h2>API 端點</h2>
+                        <table class="mc-api-table">
+                            <thead><tr><th>操作</th><th>API</th></tr></thead>
+                            <tbody>
+                                <tr><td>新增</td><td><code>POST /api/mission/rule/add</code></td></tr>
+                                <tr><td>更新</td><td><code>POST /api/mission/rule/update</code></td></tr>
+                                <tr><td>刪除</td><td><code>POST /api/mission/rule/delete</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- ── 任務中心 — 排程 ── -->
+                    <div class="guide-panel" id="guide-mission-schedule">
+                        <header>
+                            <h1>排程 (Schedule)</h1>
+                            <p class="meta">任務中心 &gt; 排程 <span class="mc-label mc-label-shared">User + Bot 共用</span></p>
+                        </header>
+                        <p>排程功能讓使用者和 Bot 設定定時執行的任務。可在指定時間自動觸發任務，並追蹤每次執行的狀態與結果。</p>
+
+                        <img src="assets/guide/sech_web.jpg" alt="E-Claw 排程 Web 介面截圖" class="mc-screenshot">
+
+                        <h2>功能明細</h2>
+                        <table class="feature-table">
+                            <thead><tr><th>功能</th><th>說明</th></tr></thead>
+                            <tbody>
+                                <tr><td>新增排程</td><td>點擊「+ 新增排程」建立定時任務，設定執行時間、目標 Entity、任務內容</td></tr>
+                                <tr><td>執行時間</td><td>設定排程的執行時間點（如 09:00 PM），到時自動觸發</td></tr>
+                                <tr><td>目標 Entity</td><td>指定由哪個 Entity 執行此排程任務</td></tr>
+                                <tr><td>狀態追蹤</td><td>即時顯示排程狀態：等待中、執行中、已完成、失敗</td></tr>
+                                <tr><td>取消排程</td><td>取消尚未執行的排程</td></tr>
+                                <tr><td>執行紀錄</td><td>歸檔所有已執行的排程，包含執行時間、目標 Entity、結果</td></tr>
+                            </tbody>
+                        </table>
+                        <h2>狀態標籤說明</h2>
+                        <table class="feature-table">
+                            <thead><tr><th>狀態</th><th>說明</th><th>顏色</th></tr></thead>
+                            <tbody>
+                                <tr><td>等待中</td><td>排程已建立，尚未到執行時間</td><td>紫色</td></tr>
+                                <tr><td>執行中</td><td>已到執行時間，Bot 正在處理任務</td><td>藍色</td></tr>
+                                <tr><td>已完成</td><td>任務已成功執行完畢</td><td>綠色</td></tr>
+                                <tr><td>失敗</td><td>任務執行過程中發生錯誤</td><td>紅色</td></tr>
+                            </tbody>
+                        </table>
+                        <h2>API 端點</h2>
+                        <table class="mc-api-table">
+                            <thead><tr><th>操作</th><th>API</th></tr></thead>
+                            <tbody>
+                                <tr><td>列表</td><td><code>GET /api/mission/schedules</code></td></tr>
+                                <tr><td>新增</td><td><code>POST /api/mission/schedule/add</code></td></tr>
+                                <tr><td>取消</td><td><code>POST /api/mission/schedule/cancel</code></td></tr>
+                                <tr><td>執行紀錄</td><td><code>GET /api/mission/schedule/history</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- ── 測試與文件 ── -->
+                    <div class="guide-panel" id="guide-testing">
+                        <header>
+                            <h1>測試與文件</h1>
+                            <p class="meta">回歸測試、文件連結、貢獻指南</p>
+                        </header>
+
+                        <h2>回歸測試</h2>
+                        <div class="code-block"># Bot API response rate (target: 90%+)
+node backend/tests/test-bot-api-response.js
+
+# Full broadcast flow (delivery, speak-to, chat history)
+node backend/tests/test-broadcast.js</div>
+                        <div class="note">測試需要在 <code>backend/.env</code> 中設定 <code>TEST_DEVICE_ID</code> / <code>BROADCAST_TEST_DEVICE_ID</code> + <code>BROADCAST_TEST_DEVICE_SECRET</code>。</div>
+
+                        <h2>相關文件</h2>
+                        <ul class="content-list">
+                            <li><a href="https://github.com/HankHuang0516/realbot/blob/main/PRIVACY_POLICY.md" target="_blank" rel="noopener">Privacy Policy 隱私權政策</a></li>
+                            <li><a href="https://github.com/HankHuang0516/realbot/blob/main/backend/README.md" target="_blank" rel="noopener">Backend API Reference</a></li>
+                            <li><a href="https://github.com/HankHuang0516/realbot/blob/main/backend/E-claw_mcp_skill.md" target="_blank" rel="noopener">MCP Skill Guide</a></li>
+                            <li><a href="https://github.com/HankHuang0516/realbot/blob/main/RELEASE_HISTORY.md" target="_blank" rel="noopener">Release History</a></li>
+                        </ul>
+
+                        <h2>貢獻指南</h2>
+                        <p>這是一個個人/實驗性專案，歡迎提交 Issue 和建議。</p>
+                        <ol class="content-list">
+                            <li>Fork 此 repo</li>
+                            <li>建立 feature branch：<code>git checkout -b feat/your-feature</code></li>
+                            <li>提交你的變更</li>
+                            <li>先開 Issue 討論，再發 PR</li>
+                        </ol>
+                        <div class="warning"><strong>Feature Parity Rule</strong>：所有面向使用者的功能必須在 Web Portal 和 Android App 之間保持同步。</div>
+
+                        <h2>授權</h2>
+                        <p><a href="https://github.com/HankHuang0516/realbot/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a> &copy; 2026 HankHuang0516</p>
+                    </div>
+
+                </div><!-- /guide-content -->
+            </div><!-- /guide-layout -->
+        </div><!-- /panel-guide -->
+
+
+        <!-- ══════════════════════════════════════════════════
+             TAB 2: FAQ
+             ══════════════════════════════════════════════════ -->
+        <div class="info-panel" id="panel-faq">
+            <div class="faq-hero">
+                <div class="faq-hero-title" data-i18n="faq_hero_title">Frequently Asked Questions</div>
+                <div class="faq-hero-subtitle" data-i18n="faq_hero_subtitle">Everything you need to know about E-Claw and the OpenClaw bot platform.</div>
+            </div>
+
+            <div class="faq-section-title" data-i18n="faq_section_general">General</div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_what_is">What is E-Claw?<span class="faq-arrow">▼</span></div>
+                <div class="faq-answer" data-i18n="faq_a_what_is">E-Claw is a live wallpaper companion platform for Android. You can bind AI bots to your device — they update your home screen in real time with messages, mood, and animations. Manage everything through the Android app or the web portal.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_openclaw">What is OpenClaw?<span class="faq-arrow">▼</span></div>
+                <div class="faq-answer" data-i18n="faq_a_openclaw">OpenClaw is the bot development platform behind E-Claw. Bot developers build and host their bots on OpenClaw (powered by Zeabur), which then communicates with E-Claw devices via webhook push and exec+curl.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_free">Is E-Claw free?<span class="faq-arrow">▼</span></div>
+                <div class="faq-answer" data-i18n="faq_a_free">Yes! E-Claw offers a free tier with shared bots (up to 15 messages/day). For unlimited messaging and a dedicated personal bot, there's a subscription plan at NT$288/month. Self-hosted bots are always free.</div>
+            </div>
+
+            <div class="faq-section-title" data-i18n="faq_section_setup">Setup & Binding</div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_bind">How do I bind a bot to my device?<span class="faq-arrow">▼</span></div>
+                <div class="faq-answer" data-i18n="faq_a_bind">Go to the Dashboard (in the app or web portal), select an entity slot, and click "Generate Code". Copy the binding command and paste it to the bot you want to bind. The bot will confirm the binding automatically.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_slots">How many bots can I bind?<span class="faq-arrow">▼</span></div>
+                <div class="faq-answer" data-i18n="faq_a_slots">Each device supports up to 8 entity slots (0–7). Each slot can be bound to a different bot independently with its own state, memory, and chat history.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_web_vs_app">Do I need the Android app, or can I use the web portal only?<span class="faq-arrow">▼</span></div>
+                <div class="faq-answer" data-i18n="faq_a_web_vs_app">Both work independently. The Android app provides the live wallpaper experience. The web portal lets you manage entities, chat, upload files, and configure missions — all from your browser. You can use either or both.</div>
+            </div>
+
+            <div class="faq-section-title" data-i18n="faq_section_features">Features</div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_broadcast">What is Broadcast?<span class="faq-arrow">▼</span></div>
+                <div class="faq-answer" data-i18n="faq_a_broadcast">Broadcast lets you send a single message to all your bound entities at once. Great for announcements or updates that every bot should hear. You can track which entities received the broadcast in the delivery report.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_speakto">What is Speak-to?<span class="faq-arrow">▼</span></div>
+                <div class="faq-answer" data-i18n="faq_a_speakto">Speak-to is a direct conversation mode where you send a message to a specific entity and get a reply. It's like a one-on-one chat with your bot, with the conversation stored in chat history.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_mission">What is Mission Control?<span class="faq-arrow">▼</span></div>
+                <div class="faq-answer" data-i18n="faq_a_mission">Mission Control is a built-in task management system. You can create tasks (TODO/Mission/Done), assign them to entities, manage notes, configure skills and rules, and define your bot's personality ("soul"). Bots get notified when their tasks change.</div>
+            </div>
+
+            <div class="faq-section-title" data-i18n="faq_section_dev">Bot Development</div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_create_bot">How do I create my own bot?<span class="faq-arrow">▼</span></div>
+                <div class="faq-answer" data-i18n="faq_a_create_bot">Bots are built on the OpenClaw platform (hosted on Zeabur). Check the User Guide tab above for tutorials, API docs, and MCP skills documentation to get started.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_telegram">Can I use my bot on Telegram too?<span class="faq-arrow">▼</span></div>
+                <div class="faq-answer" data-i18n="faq_a_telegram">Yes! OpenClaw bots support multiple channels. You can add a Telegram channel adapter to your bot. See the Compare tab above for differences between E-Claw and Telegram.</div>
+            </div>
+
+            <div class="faq-cta">
+                <div class="faq-cta-text" data-i18n="faq_cta_text">Still have questions? Check the User Guide for detailed documentation.</div>
+                <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="switchInfoTab('guide')" data-i18n="nav_user_guide">User Guide</button>
+                    <a href="index.html" class="btn btn-outline" data-i18n="faq_cta_get_started">Get Started</a>
+                </div>
+            </div>
+        </div><!-- /panel-faq -->
+
+
+        <!-- ══════════════════════════════════════════════════
+             TAB 3: RELEASE NOTES
+             ══════════════════════════════════════════════════ -->
+        <div class="info-panel" id="panel-release-notes">
+            <div class="rn-hero">
+                <div class="rn-hero-title" data-i18n="rn_hero_title">Release Notes</div>
+                <div class="rn-hero-subtitle" data-i18n="rn_hero_subtitle">What's new in E-Claw — features, improvements, and fixes across the platform.</div>
+            </div>
+
+            <div class="rn-entry latest">
+                <div class="rn-header">
+                    <span class="rn-version">v1.11.0</span>
+                    <span class="rn-badge rn-badge-latest" data-i18n="rn_badge_latest">Latest</span>
+                    <span class="rn-date">2026-02</span>
+                </div>
+                <ul class="rn-changes">
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1110_1">Real-time notification system — Socket.IO live updates, Web Push, and notification center with bell icon</span></li>
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1110_2">Firebase Cloud Messaging (FCM) — Android push notifications even when app is closed</span></li>
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1110_3">Per-category notification preferences — toggle bot replies, broadcasts, feedback, and more</span></li>
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1110_4">Public navigation bar with FAQ, Release Notes, and User Guide pages</span></li>
+                </ul>
+                <div class="rn-platforms">
+                    <span class="rn-platform">Web Portal</span>
+                    <span class="rn-platform">Android</span>
+                    <span class="rn-platform">Backend</span>
+                </div>
+            </div>
+
+            <div class="rn-entry">
+                <div class="rn-header"><span class="rn-version">v1.10.0</span><span class="rn-date">2025-01</span></div>
+                <ul class="rn-changes">
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1100_1">Channel comparison page — E-Claw vs Telegram side-by-side feature comparison</span></li>
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1100_2">Payment maintenance notice for TapPay features on Web Portal</span></li>
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1100_3">Mission Control & Chat Attachments comparison rows</span></li>
+                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1100_4">Multi-Entity max corrected to 8 slots, Setup description improved</span></li>
+                </ul>
+                <div class="rn-platforms"><span class="rn-platform">Web Portal</span></div>
+            </div>
+
+            <div class="rn-entry">
+                <div class="rn-header"><span class="rn-version">v1.9.0</span><span class="rn-date">2025-01</span></div>
+                <ul class="rn-changes">
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_190_1">Multi-language support — 8 languages for Web Portal and Android (EN, 繁中, 简中, 日本語, 한국어, ไทย, Tiếng Việt, Indonesia)</span></li>
+                </ul>
+                <div class="rn-platforms"><span class="rn-platform">Web Portal</span><span class="rn-platform">Android</span></div>
+            </div>
+
+            <div class="rn-entry">
+                <div class="rn-header"><span class="rn-version">v1.8.0</span><span class="rn-date">2024-12</span></div>
+                <ul class="rn-changes">
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_180_1">Schedule execution history and chat annotation</span></li>
+                    <li><span class="rn-tag rn-tag-improve">improve</span> <span data-i18n="rn_180_2">Task saved toast notification</span></li>
+                    <li><span class="rn-tag rn-tag-improve">improve</span> <span data-i18n="rn_180_3">Mission Control UI improvements</span></li>
+                </ul>
+                <div class="rn-platforms"><span class="rn-platform">Web Portal</span><span class="rn-platform">Android</span></div>
+            </div>
+
+            <div class="rn-entry">
+                <div class="rn-header"><span class="rn-version">v1.7.0</span><span class="rn-date">2024-12</span></div>
+                <ul class="rn-changes">
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_170_1">Multi-file upload in chat (up to 100 MB per file)</span></li>
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_170_2">Replaced chat photo icon with + button for multi-attachment</span></li>
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_170_3">File Manager page with entity/type filtering and delivery tracking</span></li>
+                </ul>
+                <div class="rn-platforms"><span class="rn-platform">Web Portal</span><span class="rn-platform">Android</span></div>
+            </div>
+
+            <div class="rn-entry">
+                <div class="rn-header"><span class="rn-version">v1.6.0 – v1.6.2</span><span class="rn-date">2024-11</span></div>
+                <ul class="rn-changes">
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_160_1">Per-device entity limit (free: 4, premium: 8)</span></li>
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_160_2">Schedule card and schedule management page</span></li>
+                    <li><span class="rn-tag rn-tag-improve">improve</span> <span data-i18n="rn_160_3">Full-screen dark style refactor for Chat on Android</span></li>
+                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_160_4">Bottom navigation position consistency and edge padding</span></li>
+                </ul>
+                <div class="rn-platforms"><span class="rn-platform">Web Portal</span><span class="rn-platform">Android</span><span class="rn-platform">Backend</span></div>
+            </div>
+        </div><!-- /panel-release-notes -->
+
+
+        <!-- ══════════════════════════════════════════════════
+             TAB 4: COMPARE
+             ══════════════════════════════════════════════════ -->
+        <div class="info-panel" id="panel-compare">
+            <div class="cmp-hero">
+                <div class="cmp-hero-title">
+                    <span data-i18n="cmp_eclaw_name">E-Claw</span>
+                    <span class="vs">vs</span>
+                    <span data-i18n="cmp_telegram_name">Telegram</span>
+                </div>
+                <div class="cmp-hero-subtitle" data-i18n="cmp_subtitle">Compare how OpenClaw bots work across different channels — each has its own strengths for your live wallpaper companion.</div>
+            </div>
+
+            <div class="cmp-channels">
+                <div class="cmp-channel-header eclaw">
+                    <div class="cmp-channel-icon">🦞</div>
+                    <div class="cmp-channel-name" data-i18n="cmp_eclaw_name">E-Claw</div>
+                    <div class="cmp-channel-tagline" data-i18n="cmp_eclaw_tagline">Native live wallpaper channel</div>
+                </div>
+                <div class="cmp-channel-header telegram">
+                    <div class="cmp-channel-icon">✈️</div>
+                    <div class="cmp-channel-name" data-i18n="cmp_telegram_name">Telegram</div>
+                    <div class="cmp-channel-tagline" data-i18n="cmp_telegram_tagline">Chat-based messaging channel</div>
+                </div>
+            </div>
+
+            <div class="cmp-table">
+                <div class="cmp-row-label" data-i18n="cmp_cat_setup">SETUP</div>
+                <div class="cmp-row">
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">📱</span> <span class="highlight" data-i18n="cmp_eclaw_setup_title">Android App or Web Portal</span></div><span data-i18n="cmp_eclaw_setup_desc">Use either the Android app or the web portal — each works independently. Register, generate binding code, paste to bot.</span></div>
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">💬</span> <span class="highlight" data-i18n="cmp_tg_setup_title">Search Bot on Telegram</span></div><span data-i18n="cmp_tg_setup_desc">Open Telegram, search for the bot, press /start — ready to chat immediately.</span></div>
+                </div>
+
+                <div class="cmp-row-label" data-i18n="cmp_cat_interaction">INTERACTION</div>
+                <div class="cmp-row">
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">🔄</span> <span class="highlight" data-i18n="cmp_eclaw_interact_title">Push + Speak-to + Broadcast</span></div><span data-i18n="cmp_eclaw_interact_desc">Bot pushes status updates to wallpaper. Speak-to for direct conversation. Broadcast to reach all entities.</span></div>
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">⌨️</span> <span class="highlight" data-i18n="cmp_tg_interact_title">Standard Chat</span></div><span data-i18n="cmp_tg_interact_desc">Send messages, receive replies. Classic chatbot experience with text, images, and inline buttons.</span></div>
+                </div>
+
+                <div class="cmp-row-label" data-i18n="cmp_cat_wallpaper">LIVE WALLPAPER</div>
+                <div class="cmp-row">
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">🎨</span> <span class="highlight" data-i18n="cmp_eclaw_wp_title">Full Integration</span></div><span data-i18n="cmp_eclaw_wp_desc">Bot controls wallpaper state (mood, message, animation). Your home screen becomes alive.</span><br><span class="tag tag-yes" data-i18n="cmp_tag_native">Native Support</span></div>
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">🖼️</span> <span class="highlight" data-i18n="cmp_tg_wp_title">No Wallpaper Control</span></div><span data-i18n="cmp_tg_wp_desc">Telegram bots cannot update your phone's live wallpaper. Chat-only experience.</span><br><span class="tag tag-no" data-i18n="cmp_tag_unavailable">Unavailable</span></div>
+                </div>
+
+                <div class="cmp-row-label" data-i18n="cmp_cat_push">PUSH NOTIFICATIONS</div>
+                <div class="cmp-row">
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">🔔</span> <span class="highlight" data-i18n="cmp_eclaw_push_title">Proactive Push</span></div><span data-i18n="cmp_eclaw_push_desc">Bot pushes updates autonomously via API. Wallpaper changes in real-time without user action.</span><br><span class="tag tag-yes" data-i18n="cmp_tag_realtime">Real-time</span></div>
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">📩</span> <span class="highlight" data-i18n="cmp_tg_push_title">Message Notification</span></div><span data-i18n="cmp_tg_push_desc">Standard Telegram notifications when bot sends a message. User needs to open app to read.</span><br><span class="tag tag-partial" data-i18n="cmp_tag_passive">Passive</span></div>
+                </div>
+
+                <div class="cmp-row-label" data-i18n="cmp_cat_entity">MULTI-ENTITY</div>
+                <div class="cmp-row">
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">👥</span> <span class="highlight" data-i18n="cmp_eclaw_entity_title">Up to 8 Entities</span></div><span data-i18n="cmp_eclaw_entity_desc">Bind different bots to different entity slots (0-7). Each has independent state and memory.</span><br><span class="tag tag-yes" data-i18n="cmp_tag_multi">Multi-Entity</span></div>
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">🤖</span> <span class="highlight" data-i18n="cmp_tg_entity_title">1 Bot = 1 Chat</span></div><span data-i18n="cmp_tg_entity_desc">Each Telegram bot is a separate chat. No entity slot system, but you can add multiple bots.</span><br><span class="tag tag-partial" data-i18n="cmp_tag_manual">Manual</span></div>
+                </div>
+
+                <div class="cmp-row-label" data-i18n="cmp_cat_cost">COST</div>
+                <div class="cmp-row">
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">💰</span> <span class="highlight" data-i18n="cmp_eclaw_cost_title">Free + Paid Options</span></div><span data-i18n="cmp_eclaw_cost_desc">Free bot (shared, 15 msg/day). Personal bot NT$288/mo (dedicated, unlimited). Self-host: free.</span></div>
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">💸</span> <span class="highlight" data-i18n="cmp_tg_cost_title">Bot API Free</span></div><span data-i18n="cmp_tg_cost_desc">Telegram Bot API is free. You pay for hosting and LLM API usage. Full control over costs.</span></div>
+                </div>
+
+                <div class="cmp-row-label" data-i18n="cmp_cat_mission">MISSION CONTROL</div>
+                <div class="cmp-row">
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">📋</span> <span class="highlight" data-i18n="cmp_eclaw_mission_title">Integrated Task Hub</span></div><span data-i18n="cmp_eclaw_mission_desc">Built-in task board (TODO/Mission/Done), notes, skills, rules, and soul/personality system. Assign tasks to entities, push notifications on changes, version-controlled collaboration.</span><br><span class="tag tag-yes" data-i18n="cmp_tag_builtin">Built-in</span></div>
+                    <div class="cmp-cell"><div class="icon-row"><span class="ico">🔗</span> <span class="highlight" data-i18n="cmp_tg_mission_title">No Built-in Task System</span></div><span data-i18n="cmp_tg_mission_desc">Telegram has no native task management. Need third-party bots or external tools (Trello, Notion) for project tracking. No entity-aware assignment.</span><br><span class="tag tag-no" data-i18n="cmp_tag_unavailable">Unavailable</span></div>
+                </div>
+            </div>
+
+            <div class="cmp-summary">
+                <div class="cmp-summary-card eclaw">
+                    <div class="cmp-summary-title" data-i18n="cmp_eclaw_best_for">E-Claw is best for...</div>
+                    <ul class="cmp-summary-list">
+                        <li data-i18n="cmp_eclaw_best_1">Live wallpaper interaction on Android</li>
+                        <li data-i18n="cmp_eclaw_best_2">Real-time proactive push updates</li>
+                        <li data-i18n="cmp_eclaw_best_3">Multi-entity management (up to 8 bots)</li>
+                        <li data-i18n="cmp_eclaw_best_4">Mission Control with task assignment & soul system</li>
+                        <li data-i18n="cmp_eclaw_best_5">File Manager with entity-level filtering</li>
+                    </ul>
+                </div>
+                <div class="cmp-summary-card telegram">
+                    <div class="cmp-summary-title" data-i18n="cmp_tg_best_for">Telegram is best for...</div>
+                    <ul class="cmp-summary-list">
+                        <li data-i18n="cmp_tg_best_1">Cross-platform chat (iOS, desktop, web)</li>
+                        <li data-i18n="cmp_tg_best_2">Rich media (photos, stickers, files)</li>
+                        <li data-i18n="cmp_tg_best_3">Familiar chat UI, no new app needed</li>
+                        <li data-i18n="cmp_tg_best_4">Free Bot API with full developer control</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="cmp-cta">
+                <div class="cmp-cta-text" data-i18n="cmp_cta_text">Both channels use OpenClaw bots — choose the one that fits your needs, or use both!</div>
+                <div class="cmp-cta-buttons">
+                    <a href="index.html" class="btn btn-primary" data-i18n="cmp_cta_eclaw">Get Started with E-Claw</a>
+                    <a href="https://core.telegram.org/bots" target="_blank" class="btn btn-outline" data-i18n="cmp_cta_telegram">Learn about Telegram Bots</a>
+                </div>
+            </div>
+        </div><!-- /panel-compare -->
+
+    </div><!-- /container -->
+
+    <script src="shared/api.js"></script>
+    <script src="shared/public-nav.js"></script>
+    <script src="../shared/i18n.js"></script>
+    <script src="shared/footer.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            renderPublicNav('info');
+            if (typeof renderFooter === 'function') renderFooter();
+
+            // ── Info tab switching ──
+            const infoTabs = document.querySelectorAll('.info-tab');
+            const infoPanels = document.querySelectorAll('.info-panel');
+
+            infoTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const target = tab.getAttribute('data-info-tab');
+                    switchInfoTab(target);
+                });
+            });
+
+            // ── Guide sidebar ──
+            const guideSidebarBtns = document.querySelectorAll('.guide-sidebar-btn');
+            const guideSubBtns = document.querySelectorAll('.guide-sub-btn');
+            const guidePanels = document.querySelectorAll('.guide-panel');
+            const missionToggle = document.getElementById('missionToggle');
+            const missionSubNav = document.getElementById('missionSubNav');
+
+            function clearGuideActive() {
+                guideSidebarBtns.forEach(b => b.classList.remove('active'));
+                guideSubBtns.forEach(b => b.classList.remove('active'));
+                guidePanels.forEach(p => p.classList.remove('active'));
+            }
+
+            function activateGuide(tabId, btn) {
+                clearGuideActive();
+                btn.classList.add('active');
+                const panel = document.getElementById('guide-' + tabId);
+                if (panel) panel.classList.add('active');
+            }
+
+            missionToggle.addEventListener('click', () => {
+                const isOpen = missionSubNav.classList.contains('open');
+                if (isOpen) {
+                    missionSubNav.classList.remove('open');
+                    missionToggle.classList.remove('expanded');
+                } else {
+                    missionSubNav.classList.add('open');
+                    missionToggle.classList.add('expanded');
+                    const overviewBtn = missionSubNav.querySelector('[data-guide="mission-overview"]');
+                    activateGuide('mission-overview', overviewBtn);
+                    missionToggle.classList.add('active');
+                }
+            });
+
+            guideSidebarBtns.forEach(btn => {
+                if (btn.id === 'missionToggle') return;
+                btn.addEventListener('click', () => {
+                    missionSubNav.classList.remove('open');
+                    missionToggle.classList.remove('expanded');
+                    missionToggle.classList.remove('active');
+                    activateGuide(btn.getAttribute('data-guide'), btn);
+                });
+            });
+
+            guideSubBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activateGuide(btn.getAttribute('data-guide'), btn);
+                    missionToggle.classList.add('active');
+                });
+            });
+
+            // ── URL hash navigation ──
+            handleHash();
+            window.addEventListener('hashchange', handleHash);
+        });
+
+        function switchInfoTab(target) {
+            const infoTabs = document.querySelectorAll('.info-tab');
+            const infoPanels = document.querySelectorAll('.info-panel');
+            infoTabs.forEach(t => t.classList.remove('active'));
+            infoPanels.forEach(p => p.classList.remove('active'));
+            const tab = document.querySelector(`.info-tab[data-info-tab="${target}"]`);
+            const panel = document.getElementById('panel-' + target);
+            if (tab) tab.classList.add('active');
+            if (panel) panel.classList.add('active');
+            history.replaceState(null, '', '#' + target);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function handleHash() {
+            const hash = location.hash.replace('#', '');
+            if (!hash) return;
+            const validTabs = ['guide', 'faq', 'release-notes', 'compare'];
+            if (validTabs.includes(hash)) {
+                switchInfoTab(hash);
+            }
+        }
+
+        function toggleFaq(el) {
+            el.parentElement.classList.toggle('open');
+        }
+    </script>
+</body>
+
+</html>
