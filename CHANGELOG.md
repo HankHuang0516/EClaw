@@ -1,3 +1,10 @@
+# [1.20.0](https://github.com/HankHuang0516/realbot/compare/v1.19.0...v1.20.0) (2026-02-24)
+
+
+### Features
+
+* redesign comparison infographic with 3-column card layout ([41511fd](https://github.com/HankHuang0516/realbot/commit/41511fdc27d2a2420ae75374a434dd2a8bcd3439))
+
 # [1.19.0](https://github.com/HankHuang0516/realbot/compare/v1.18.0...v1.19.0) (2026-02-24)
 
 
