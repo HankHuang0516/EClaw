@@ -7,7 +7,7 @@
     <title data-i18n="settings_title">E-Claw - Settings</title>
     <link rel="stylesheet" href="shared/style.css">
     <style>
-        /* Info rows (label/value pairs) */
+        /* ── Info rows (label / value pairs) ── */
         .info-row {
             display: flex;
             justify-content: space-between;
@@ -38,7 +38,7 @@
             font-family: 'Courier New', Courier, monospace;
         }
 
-        /* Subscription header with badge */
+        /* ── Subscription ── */
         .subscription-header {
             display: flex;
             align-items: center;
@@ -51,7 +51,6 @@
             font-weight: 600;
         }
 
-        /* Usage bar */
         .usage-row {
             display: flex;
             justify-content: space-between;
@@ -75,7 +74,6 @@
             margin-top: 10px;
         }
 
-        /* Price / period */
         .subscribe-price {
             font-size: 24px;
             font-weight: 700;
@@ -89,7 +87,7 @@
             margin-bottom: 16px;
         }
 
-        /* Maintenance notice */
+        /* ── Maintenance notice ── */
         .maintenance-notice {
             background: rgba(255, 193, 7, 0.08);
             border: 1px solid rgba(255, 193, 7, 0.3);
@@ -116,7 +114,7 @@
             line-height: 1.5;
         }
 
-        /* TapPay card form (dark theme) */
+        /* ── TapPay card form ── */
         .tappay-section {
             margin-top: 16px;
             display: none;
@@ -167,7 +165,6 @@
             min-height: 16px;
         }
 
-        /* Loading state for card form */
         .card-loading {
             display: none;
             align-items: center;
@@ -182,14 +179,38 @@
             display: flex;
         }
 
-        /* Cancel section */
+        /* ── Cancel section ── */
         .cancel-section {
             margin-top: 12px;
             padding-top: 12px;
             border-top: 1px solid var(--card-border);
         }
 
-        /* Language chips */
+        /* ── Setting row (reusable for toggle rows) ── */
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(51, 51, 85, 0.3);
+        }
+
+        .setting-row:last-child {
+            border-bottom: none;
+        }
+
+        .setting-row-label {
+            font-size: 14px;
+        }
+
+        /* ── Section description ── */
+        .section-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 4px 0 12px;
+        }
+
+        /* ── Language chips ── */
         .language-chips {
             display: flex;
             flex-wrap: wrap;
@@ -197,11 +218,149 @@
             margin-top: 8px;
         }
 
-        /* Logout button (red outline) */
-        .actions-section {
-            margin-top: 8px;
+        /* ── Feedback card ── */
+        .feedback-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
+        .feedback-body {
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .feedback-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .btn-mark {
+            margin-left: 12px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            background: var(--card);
+            color: var(--text);
+            cursor: pointer;
+            font-size: 13px;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .btn-mark:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .mark-status {
+            font-size: 12px;
+            color: var(--primary);
+            margin-top: 6px;
+            display: none;
+        }
+
+        .feedback-history-link {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--warning);
+            text-decoration: underline;
+        }
+
+        /* ── Feedback dialog category cards ── */
+        .feedback-cat-card {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 14px 8px;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            background: var(--card);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .feedback-cat-card:hover {
+            border-color: var(--text-secondary);
+        }
+
+        .feedback-cat-card .cat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            transition: all 0.2s;
+        }
+
+        .feedback-cat-card .cat-icon {
+            font-size: 22px;
+        }
+
+        .feedback-cat-card.selected-bug {
+            border-color: #F44336;
+            border-width: 2px;
+            background: rgba(244, 67, 54, 0.1);
+        }
+
+        .feedback-cat-card.selected-bug .cat-label {
+            color: #F44336;
+            font-weight: 600;
+        }
+
+        .feedback-cat-card.selected-feature {
+            border-color: #2196F3;
+            border-width: 2px;
+            background: rgba(33, 150, 243, 0.1);
+        }
+
+        .feedback-cat-card.selected-feature .cat-label {
+            color: #2196F3;
+            font-weight: 600;
+        }
+
+        .feedback-cat-card.selected-question {
+            border-color: #9C27B0;
+            border-width: 2px;
+            background: rgba(156, 39, 176, 0.1);
+        }
+
+        .feedback-cat-card.selected-question .cat-label {
+            color: #9C27B0;
+            font-weight: 600;
+        }
+
+        .feedback-cats {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .feedback-textarea {
+            width: 100%;
+            resize: vertical;
+            margin-bottom: 1rem;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            background: var(--card);
+            color: var(--text);
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .feedback-result {
+            display: none;
+            margin-bottom: 12px;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #2E7D32;
+            background: rgba(17, 26, 17, 0.8);
+            font-size: 13px;
+        }
+
+        /* ── Logout / footer area ── */
         .logout-btn {
             width: 100%;
             padding: 12px;
@@ -220,14 +379,32 @@
             color: var(--text);
         }
 
-        /* Cancel confirmation dialog */
+        .meta-section {
+            text-align: center;
+            margin-top: 20px;
+            padding-bottom: 12px;
+        }
+
+        .meta-section a {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-decoration: underline;
+        }
+
+        .meta-version {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        /* ── Dialog ── */
         .dialog-overlay .dialog p {
             font-size: 14px;
             color: var(--text-secondary);
             line-height: 1.5;
         }
 
-        /* Responsive */
+        /* ── Responsive ── */
         @media (max-width: 640px) {
             .info-value {
                 max-width: 55%;
@@ -250,7 +427,9 @@
 
         <!-- Account Info Card -->
         <div class="card">
-            <div class="card-title" data-i18n="settings_account">Account</div>
+            <div class="card-title">
+                <span>👤 <span data-i18n="settings_account">Account</span></span>
+            </div>
             <div class="info-row">
                 <span class="info-label">Email</span>
                 <span class="info-value" id="accountEmail">--</span>
@@ -264,7 +443,7 @@
         <!-- Subscription Card -->
         <div class="card">
             <div class="subscription-header">
-                <h3 data-i18n="settings_sub">Subscription</h3>
+                <h3>💎 <span data-i18n="settings_sub">Subscription</span></h3>
                 <span class="badge" id="subBadge">--</span>
             </div>
 
@@ -280,7 +459,6 @@
 
             <!-- FREE user: Subscribe section -->
             <div id="freeSection" style="display:none;margin-top:16px;">
-                <!-- Maintenance notice (shown while TapPay is not ready) -->
                 <div class="maintenance-notice">
                     <div class="maintenance-icon">&#9888;</div>
                     <div class="maintenance-title" data-i18n="maintenance_payment_title">Payment Under Maintenance</div>
@@ -299,7 +477,9 @@
 
         <!-- Language Card -->
         <div class="card">
-            <div class="card-title" data-i18n="settings_lang">Language</div>
+            <div class="card-title">
+                <span>🌐 <span data-i18n="settings_lang">Language</span></span>
+            </div>
             <div class="language-chips">
                 <div class="chip" id="chipEn" onclick="setLanguage('en')">English</div>
                 <div class="chip" id="chipZh" onclick="setLanguage('zh')">繁體中文</div>
@@ -314,38 +494,39 @@
 
         <!-- Notifications Card -->
         <div class="card">
-            <div class="card-title" data-i18n="notif_settings_title">Notifications</div>
-            <p style="font-size:13px;color:var(--text-secondary);margin:4px 0 12px;" data-i18n="notif_settings_desc">Manage notification preferences</p>
+            <div class="card-title">
+                <span>🔔 <span data-i18n="notif_settings_title">Notifications</span></span>
+            </div>
+            <p class="section-desc" data-i18n="notif_settings_desc">Manage notification preferences</p>
 
             <!-- Browser Push Toggle -->
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--card-border);">
-                <span style="font-size:14px;" data-i18n="notif_push_enable">Enable browser notifications</span>
+            <div class="setting-row">
+                <span class="setting-row-label" data-i18n="notif_push_enable">Enable browser notifications</span>
                 <button class="btn btn-sm" id="btnPushToggle" onclick="toggleWebPush()" style="min-width:80px;">
                     ...
                 </button>
             </div>
 
             <!-- Per-category toggles (loaded dynamically) -->
-            <div id="notifPrefsContainer" style="margin-top:8px;"></div>
+            <div id="notifPrefsContainer"></div>
         </div>
 
         <!-- Feedback Card -->
-        <div class="card" style="margin-bottom: 20px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div onclick="showFeedbackDialog()" style="cursor:pointer;flex:1;">
-                    <div class="card-title" data-i18n="settings_feedback_title">Feedback</div>
-                    <div style="font-size:14px;color:var(--text-secondary);margin-top:4px;" data-i18n="settings_feedback_desc">
+        <div class="card">
+            <div class="feedback-header">
+                <div class="feedback-body" onclick="showFeedbackDialog()">
+                    <div class="card-title">
+                        <span>💬 <span data-i18n="settings_feedback_title">Feedback</span></span>
+                    </div>
+                    <div class="feedback-desc" data-i18n="settings_feedback_desc">
                         Found a bug or have a suggestion? Let us know!
                     </div>
                 </div>
-                <button onclick="markBugMoment()" id="btnMark"
-                    style="margin-left:12px;padding:8px 14px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--text-primary);cursor:pointer;font-size:13px;white-space:nowrap;">
-                    Mark
-                </button>
+                <button class="btn-mark" onclick="markBugMoment()" id="btnMark">Mark</button>
             </div>
-            <div id="markStatus" style="font-size:12px;color:var(--accent);margin-top:6px;display:none;"></div>
-            <div style="margin-top:8px;">
-                <a href="feedback.html" style="font-size:13px;color:var(--warning);text-decoration:underline;"
+            <div class="mark-status" id="markStatus"></div>
+            <div>
+                <a href="feedback.html" class="feedback-history-link"
                     data-i18n="settings_feedback_view_history">View feedback history</a>
             </div>
         </div>
@@ -353,11 +534,10 @@
         <!-- Logout -->
         <div class="actions-section">
             <button class="logout-btn" onclick="doLogout()" data-i18n="nav_logout">Logout</button>
-            <div style="text-align:center;margin-top:20px;">
+            <div class="meta-section">
                 <a href="#" onclick="showPrivacyPolicy()"
-                    style="font-size:13px;color:var(--text-secondary);text-decoration:underline;"
                     data-i18n="settings_privacy_link">Privacy Policy</a>
-                <div style="font-size:12px;color:var(--text-secondary);margin-top:8px;">
+                <div class="meta-version">
                     <span data-i18n="settings_version">Version</span> <span id="appVersion">1.2.0</span>
                 </div>
             </div>
@@ -398,79 +578,28 @@
     <div class="dialog-overlay" id="feedbackDialog" style="display:none">
         <div class="dialog">
             <div class="dialog-title" data-i18n="settings_feedback_title">Feedback</div>
-            <p style="margin-bottom:10px;font-size:13px;color:var(--text-secondary);" data-i18n="feedback_auto_log_hint">
+            <p class="section-desc" data-i18n="feedback_auto_log_hint">
                 Logs from the last 5 minutes will be automatically captured to help diagnose the issue.
             </p>
-            <div style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:10px;" data-i18n="feedback_category_label">Category</div>
-            <div style="display:flex;gap:10px;margin-bottom:16px;">
+            <div class="section-desc" style="font-weight:600;margin-bottom:10px;" data-i18n="feedback_category_label">Category</div>
+            <div class="feedback-cats">
                 <div class="feedback-cat-card selected-bug" data-cat="bug" onclick="setFeedbackCategory('bug')">
-                    <span style="font-size:22px;">🐛</span>
+                    <span class="cat-icon">🐛</span>
                     <span class="cat-label" data-i18n="feedback_cat_bug">Bug</span>
                 </div>
                 <div class="feedback-cat-card" data-cat="feature" onclick="setFeedbackCategory('feature')">
-                    <span style="font-size:22px;">💡</span>
+                    <span class="cat-icon">💡</span>
                     <span class="cat-label" data-i18n="feedback_cat_feature">Feature</span>
                 </div>
                 <div class="feedback-cat-card" data-cat="question" onclick="setFeedbackCategory('question')">
-                    <span style="font-size:22px;">❓</span>
+                    <span class="cat-icon">❓</span>
                     <span class="cat-label" data-i18n="feedback_cat_question">Question</span>
                 </div>
             </div>
-            <style>
-                .feedback-cat-card {
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    padding: 14px 8px;
-                    border-radius: 12px;
-                    border: 1px solid var(--card-border, #333);
-                    background: var(--bg-secondary, #1a1a1a);
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .feedback-cat-card:hover {
-                    border-color: var(--text-secondary);
-                }
-                .feedback-cat-card .cat-label {
-                    font-size: 13px;
-                    color: var(--text-secondary);
-                    margin-top: 6px;
-                    transition: all 0.2s;
-                }
-                .feedback-cat-card.selected-bug {
-                    border-color: #F44336;
-                    border-width: 2px;
-                    background: rgba(244, 67, 54, 0.1);
-                }
-                .feedback-cat-card.selected-bug .cat-label {
-                    color: #F44336;
-                    font-weight: 600;
-                }
-                .feedback-cat-card.selected-feature {
-                    border-color: #2196F3;
-                    border-width: 2px;
-                    background: rgba(33, 150, 243, 0.1);
-                }
-                .feedback-cat-card.selected-feature .cat-label {
-                    color: #2196F3;
-                    font-weight: 600;
-                }
-                .feedback-cat-card.selected-question {
-                    border-color: #9C27B0;
-                    border-width: 2px;
-                    background: rgba(156, 39, 176, 0.1);
-                }
-                .feedback-cat-card.selected-question .cat-label {
-                    color: #9C27B0;
-                    font-weight: 600;
-                }
-            </style>
-            <textarea id="feedbackText" class="form-input" rows="5"
+            <textarea id="feedbackText" class="feedback-textarea" rows="5"
                 placeholder="Describe the issue or suggestion..."
-                data-i18n-placeholder="feedback_hint"
-                style="width: 100%; resize: vertical; margin-bottom: 1rem; padding: 12px; border-radius: 12px; border: 1px solid var(--card-border, #333); background: var(--bg-secondary, #1a1a1a); color: var(--text); font-size: 14px; font-family: inherit;"></textarea>
-            <div id="feedbackResult" style="display:none;margin-bottom:12px;padding:14px;border-radius:12px;border:1px solid #2E7D32;background:rgba(17,26,17,0.8);font-size:13px;"></div>
+                data-i18n-placeholder="feedback_hint"></textarea>
+            <div class="feedback-result" id="feedbackResult"></div>
             <div class="dialog-actions">
                 <button class="btn btn-outline" onclick="closeFeedbackDialog()"
                     data-i18n="settings_feedback_cancel">Cancel</button>
@@ -488,7 +617,6 @@
     <script src="shared/nav.js"></script>
     <script src="shared/auth.js"></script>
     <script src="../shared/telemetry.js"></script>
-    <!-- i18n is now a class, need to wait for it before use -->
     <script src="../shared/i18n.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
@@ -505,7 +633,6 @@
             renderNav('settings');
             if (typeof renderFooter === 'function') renderFooter();
 
-            // Wait for i18n to load if it's async or just ensure it's applied
             if (typeof i18n !== 'undefined') {
                 i18n.apply();
                 document.getElementById('appVersion').textContent = PORTAL_VERSION;
@@ -524,7 +651,6 @@
             document.getElementById('pageContent').style.display = '';
             initTapPay();
 
-            // Auto-refresh subscription status every 15 seconds
             setInterval(loadSubscriptionStatus, 15000);
         });
 
@@ -558,7 +684,6 @@
 
             const isPremium = data.status === 'premium';
 
-            // Badge
             if (isPremium) {
                 badge.textContent = i18n.t('settings_sub_premium');
                 badge.className = 'badge badge-premium';
@@ -567,7 +692,6 @@
                 badge.className = 'badge badge-free';
             }
 
-            // Usage
             const used = data.usageToday || 0;
             const limit = data.usageLimit || 15;
 
@@ -579,16 +703,9 @@
                 usageCount.textContent = i18n.t('settings_usage_limit', { used, limit });
                 const pct = Math.min((used / limit) * 100, 100);
                 usageProgress.style.width = pct + '%';
-
-                // Red when near limit (>=80%)
-                if (pct >= 80) {
-                    usageProgress.style.background = 'var(--danger)';
-                } else {
-                    usageProgress.style.background = 'var(--warning)';
-                }
+                usageProgress.style.background = pct >= 80 ? 'var(--danger)' : 'var(--warning)';
             }
 
-            // Expiry / renewal
             if (isPremium && data.expiresAt) {
                 const expiryDate = new Date(Number(data.expiresAt));
                 const dateStr = expiryDate.toLocaleDateString(undefined, {
@@ -600,7 +717,6 @@
                 expiryText.style.display = 'none';
             }
 
-            // Show/hide sections
             if (isPremium) {
                 freeSection.style.display = 'none';
                 premiumSection.style.display = '';
@@ -614,7 +730,6 @@
         // TapPay Integration
         // ============================================
         function initTapPay() {
-            // Skip if card form elements don't exist (payment under maintenance)
             if (!document.getElementById('tappay-card-number')) return;
             try {
                 TPDirect.setupSDK(
@@ -625,18 +740,9 @@
 
                 TPDirect.card.setup({
                     fields: {
-                        number: {
-                            element: '#tappay-card-number',
-                            placeholder: '4242 4242 4242 4242'
-                        },
-                        expirationDate: {
-                            element: '#tappay-expiration-date',
-                            placeholder: 'MM / YY'
-                        },
-                        ccv: {
-                            element: '#tappay-ccv',
-                            placeholder: 'CCV'
-                        }
+                        number: { element: '#tappay-card-number', placeholder: '4242 4242 4242 4242' },
+                        expirationDate: { element: '#tappay-expiration-date', placeholder: 'MM / YY' },
+                        ccv: { element: '#tappay-ccv', placeholder: 'CCV' }
                     },
                     styles: {
                         'input': {
@@ -644,27 +750,14 @@
                             'font-size': '14px',
                             'font-family': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
                         },
-                        'input::placeholder': {
-                            'color': '#555555'
-                        },
-                        'input.ccv': {
-                            'font-size': '14px'
-                        },
-                        ':focus': {
-                            'color': '#ffffff'
-                        },
-                        '.valid': {
-                            'color': '#4CAF50'
-                        },
-                        '.invalid': {
-                            'color': '#F44336'
-                        }
+                        'input::placeholder': { 'color': '#555555' },
+                        'input.ccv': { 'font-size': '14px' },
+                        ':focus': { 'color': '#ffffff' },
+                        '.valid': { 'color': '#4CAF50' },
+                        '.invalid': { 'color': '#F44336' }
                     },
                     isMaskCreditCardNumber: true,
-                    maskCreditCardNumberRange: {
-                        beginIndex: 6,
-                        endIndex: 11
-                    }
+                    maskCreditCardNumberRange: { beginIndex: 6, endIndex: 11 }
                 });
 
                 TPDirect.card.onUpdate(function (update) {
@@ -726,16 +819,9 @@
                 }
 
                 try {
-                    await apiCall('POST', '/api/subscription/tappay/pay', {
-                        prime: result.card.prime
-                    });
-
+                    await apiCall('POST', '/api/subscription/tappay/pay', { prime: result.card.prime });
                     showToast('Premium subscription activated!', 'success');
-
-                    // Reload subscription status to update UI
                     await loadSubscriptionStatus();
-
-                    // Hide card form
                     document.getElementById('tappaySection').classList.remove('visible');
                     document.getElementById('btnShowCard').textContent = i18n.t('settings_btn_subscribe');
                 } catch (e) {
@@ -791,7 +877,7 @@
         }
 
         // ============================================
-        // Language - CRITICAL: page reload on change
+        // Language
         // ============================================
         function loadLanguagePreference() {
             const lang = localStorage.getItem('eclaw-language') || i18n.lang || 'en';
@@ -800,7 +886,7 @@
 
         function setLanguage(lang) {
             localStorage.setItem('eclaw-language', lang);
-            window.location.reload(); // RELOAD PAGE to fully apply language
+            window.location.reload();
         }
 
         function setLanguageChip(lang) {
@@ -813,7 +899,6 @@
         // ============================================
         // Notification Preferences
         // ============================================
-
         const NOTIF_PREF_CATEGORIES = [
             { key: 'bot_reply', i18n: 'notif_pref_bot_reply', label: 'Bot replies' },
             { key: 'broadcast', i18n: 'notif_pref_broadcast', label: 'Broadcasts' },
@@ -839,9 +924,9 @@
                     const t = typeof i18n !== 'undefined' ? i18n.t(cat.i18n) : cat.label;
 
                     const row = document.createElement('div');
-                    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(51,51,85,0.3);';
+                    row.className = 'setting-row';
                     row.innerHTML = `
-                        <span style="font-size:14px;">${t}</span>
+                        <span class="setting-row-label">${t}</span>
                         <label class="toggle-switch">
                             <input type="checkbox" ${enabled ? 'checked' : ''} onchange="toggleNotifPref('${cat.key}', this.checked)">
                             <span class="toggle-slider"></span>
@@ -850,17 +935,15 @@
                     container.appendChild(row);
                 }
             } catch (e) {
-                container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">Failed to load preferences</div>';
+                container.innerHTML = '<div class="section-desc">Failed to load preferences</div>';
             }
         }
 
         async function toggleNotifPref(key, enabled) {
             try {
-                // Also toggle related hidden categories together
                 const prefs = {};
                 prefs[key] = enabled;
                 if (key === 'feedback_resolved') prefs['feedback_reply'] = enabled;
-
                 await apiCall('PUT', '/api/notification-preferences', { prefs });
             } catch (e) {
                 showToast('Failed to update preference', 'error');
@@ -916,12 +999,10 @@
                 const existing = await reg.pushManager.getSubscription();
 
                 if (existing) {
-                    // Unsubscribe
                     await existing.unsubscribe();
                     await apiCall('DELETE', '/api/push/unsubscribe', { endpoint: existing.endpoint });
                     showToast(typeof i18n !== 'undefined' ? i18n.t('notif_push_disabled') : 'Push disabled', 'info');
                 } else {
-                    // Subscribe
                     const vapidRes = await apiCall('GET', '/api/push/vapid-public-key');
                     if (!vapidRes.publicKey) {
                         showToast('Push not configured on server', 'error');
@@ -950,7 +1031,7 @@
         }
 
         // ============================================
-        // Feedback (Enhanced with log snapshot + AI triage)
+        // Feedback
         // ============================================
         let feedbackCategory = 'bug';
 
@@ -1019,10 +1100,9 @@
                     appVersion: 'Portal v' + PORTAL_VERSION
                 });
 
-                // Show triage result with improved styling
                 const resultEl = document.getElementById('feedbackResult');
                 const logs = result.logsCaptured || {};
-                const sevColor = {critical:'#F44336',high:'#FF9800',medium:'#FFC107',low:'#4CAF50'}[result.severity] || '#4CAF50';
+                const sevColor = { critical: '#F44336', high: '#FF9800', medium: '#FFC107', low: '#4CAF50' }[result.severity] || '#4CAF50';
 
                 let html = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">`;
                 html += `<span style="color:#4CAF50;font-size:18px;font-weight:bold;">✓</span>`;
@@ -1038,11 +1118,11 @@
                     html += `</div>`;
                 }
                 if (result.githubIssue) {
-                    html += `<a href="${result.githubIssue.url}" target="_blank" style="display:flex;align-items:center;gap:8px;margin-top:12px;padding:10px;border-radius:10px;border:1px solid var(--card-border);background:var(--card-bg);text-decoration:none;color:var(--warning);">`;
+                    html += `<a href="${result.githubIssue.url}" target="_blank" style="display:flex;align-items:center;gap:8px;margin-top:12px;padding:10px;border-radius:10px;border:1px solid var(--card-border);background:var(--card);text-decoration:none;color:var(--warning);">`;
                     html += `<span>⊙</span><span style="flex:1;"><div style="font-weight:600;">${i18n.t('feedback_result_issue').replace('%d', result.githubIssue.number)}</div><div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${i18n.t('feedback_github_issue_desc')}</div></span><span style="color:var(--text-muted);">→</span>`;
                     html += `</a>`;
                 }
-                html += `<a href="feedback.html" style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:10px;border-radius:10px;border:1px solid var(--card-border);background:var(--card-bg);text-decoration:none;color:var(--warning);">`;
+                html += `<a href="feedback.html" style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:10px;border-radius:10px;border:1px solid var(--card-border);background:var(--card);text-decoration:none;color:var(--warning);">`;
                 html += `<span>📋</span><span style="flex:1;"><div style="font-weight:600;">${i18n.t('feedback_track_title')}</div><div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${i18n.t('feedback_track_desc')}</div></span><span style="color:var(--text-muted);">→</span>`;
                 html += `</a>`;
 
