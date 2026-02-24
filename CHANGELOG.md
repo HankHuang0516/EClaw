@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/HankHuang0516/realbot/compare/v1.12.0...v1.13.0) (2026-02-24)
+
+
+### Features
+
+* add public navigation bar with FAQ, Release Notes, and User Guide pages ([cfd30f0](https://github.com/HankHuang0516/realbot/commit/cfd30f004562ff7d85f49c8f0cf40c9456f4b302))
+
 # [1.12.0](https://github.com/HankHuang0516/realbot/compare/v1.11.0...v1.12.0) (2026-02-24)
 
 
