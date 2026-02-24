@@ -1,3 +1,10 @@
+# [1.18.0](https://github.com/HankHuang0516/realbot/compare/v1.17.0...v1.18.0) (2026-02-24)
+
+
+### Features
+
+* collapsible notification preferences section in settings ([8faf562](https://github.com/HankHuang0516/realbot/commit/8faf5627c74de1d48791527ddc1a8d76d29a7833))
+
 # [1.17.0](https://github.com/HankHuang0516/realbot/compare/v1.16.2...v1.17.0) (2026-02-24)
 
 
