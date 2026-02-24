@@ -876,5 +876,15 @@ module.exports = function(devices, getOrCreateDevice) {
         }
     });
 
-    return { router, authMiddleware, adminMiddleware, initAuthDatabase, pool: pool };
+    // Soft auth: populate req.user from cookie if valid, but never reject
+    function softAuthMiddleware(req, res, next) {
+        const token = req.cookies && req.cookies.eclaw_session;
+        if (token) {
+            const decoded = verifyToken(token);
+            if (decoded) req.user = decoded;
+        }
+        next();
+    }
+
+    return { router, authMiddleware, softAuthMiddleware, adminMiddleware, initAuthDatabase, pool: pool };
 };

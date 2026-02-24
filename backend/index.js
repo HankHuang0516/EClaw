@@ -488,6 +488,7 @@ missionModule.setNotifyCallback((deviceId, notif) => notifyDevice(deviceId, noti
 // USER AUTHENTICATION (PostgreSQL)
 // ============================================
 const authModule = require('./auth')(devices, getOrCreateDevice);
+app.use(authModule.softAuthMiddleware); // Populate req.user from cookie on ALL requests
 app.use('/api/auth', authModule.router);
 authModule.initAuthDatabase();
 
