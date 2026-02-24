@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/HankHuang0516/realbot/compare/v1.11.0...v1.12.0) (2026-02-24)
+
+
+### Features
+
+* fix newline display and add link preview for chat ([#58](https://github.com/HankHuang0516/realbot/issues/58), [#57](https://github.com/HankHuang0516/realbot/issues/57)) ([3ccba06](https://github.com/HankHuang0516/realbot/commit/3ccba0624f5615cda00f29e56d4f83c292cbb231))
+
 # [1.11.0](https://github.com/HankHuang0516/realbot/compare/v1.10.0...v1.11.0) (2026-02-24)
 
 
