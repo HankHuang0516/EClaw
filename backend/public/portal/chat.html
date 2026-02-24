@@ -130,6 +130,7 @@
             font-size: 14px;
             line-height: 1.4;
             word-break: break-word;
+            white-space: pre-wrap;
         }
 
         .chat-msg.sent .chat-bubble {
@@ -701,6 +702,90 @@
         .modal-actions .btn {
             min-width: 120px;
         }
+
+        /* ── Link Preview Card ── */
+        .link-preview {
+            display: flex;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 8px;
+            background: var(--card);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            max-width: 320px;
+        }
+
+        .link-preview:hover {
+            background: var(--input-bg);
+        }
+
+        .link-preview-img {
+            width: 80px;
+            min-height: 80px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .link-preview-body {
+            padding: 8px 10px;
+            overflow: hidden;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .link-preview-title {
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            color: var(--text);
+        }
+
+        .link-preview-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .link-preview-domain {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            opacity: 0.7;
+        }
+
+        .chat-msg.sent .link-preview {
+            border-color: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1);
+        }
+
+        .chat-msg.sent .link-preview:hover {
+            background: rgba(255,255,255,0.18);
+        }
+
+        .chat-msg.sent .link-preview-title { color: #fff; }
+        .chat-msg.sent .link-preview-desc { color: rgba(255,255,255,0.7); }
+        .chat-msg.sent .link-preview-domain { color: rgba(255,255,255,0.5); }
+
+        /* ── Linkified URLs in messages ── */
+        .chat-bubble a.msg-link {
+            color: inherit;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .chat-bubble a.msg-link:hover {
+            opacity: 0.8;
+        }
     </style>
 </head>
 
@@ -1123,7 +1208,14 @@
                 // Text content (hide placeholder text for media messages)
                 const rawText = msg.text || '';
                 const isPlaceholder = (rawText === '[Photo]' || rawText === '[Voice message]' || rawText.startsWith('[File]'));
-                const textHtml = (!isPlaceholder && rawText) ? escapeHtml(rawText) : '';
+                let textHtml = '';
+                let firstUrl = '';
+                if (!isPlaceholder && rawText) {
+                    const linkified = linkifyText(escapeHtml(rawText));
+                    textHtml = linkified.html;
+                    firstUrl = linkified.urls[0] || '';
+                }
+                const previewId = firstUrl ? `lp-${msg.id || Math.random().toString(36).slice(2)}` : '';
 
                 // Read receipt for sent messages
                 let receipt = '';
@@ -1155,6 +1247,7 @@
                     <div class="chat-msg ${msgClass}">
                         <div class="chat-source">${sourceLabel}</div>
                         <div class="chat-bubble">${textHtml}${mediaHtml}</div>
+                        ${previewId ? `<div class="link-preview-slot" id="${previewId}" data-url="${escapeHtml(firstUrl)}"></div>` : ''}
                         <div class="chat-meta">${time}</div>
                         ${receipt ? `<div class="chat-receipt">${receipt}</div>` : ''}
                     </div>`;
@@ -1164,6 +1257,12 @@
             if (isFirstLoad || hasNewMessages || wasAtBottom) {
                 container.scrollTop = container.scrollHeight;
             }
+
+            // Fetch link previews for visible messages
+            container.querySelectorAll('.link-preview-slot[data-url]').forEach(slot => {
+                if (slot.children.length > 0) return; // already loaded
+                fetchLinkPreview(slot.dataset.url, slot);
+            });
         }
 
         /**
@@ -1352,6 +1451,56 @@
                 const parts = url.split('/');
                 return decodeURIComponent(parts[parts.length - 1]) || 'File';
             } catch (e) { return 'File'; }
+        }
+
+        // URL regex for detecting links in message text
+        const urlRegex = /(https?:\/\/[^\s<>"']+)/gi;
+
+        function linkifyText(escapedHtml) {
+            if (!escapedHtml) return { html: '', urls: [] };
+            const urls = [];
+            const html = escapedHtml.replace(urlRegex, (match) => {
+                urls.push(match);
+                return `<a class="msg-link" href="${match}" target="_blank" rel="noopener">${match}</a>`;
+            });
+            return { html, urls };
+        }
+
+        // Link preview cache (client-side)
+        const linkPreviewClientCache = {};
+
+        async function fetchLinkPreview(url, container) {
+            if (linkPreviewClientCache[url] === 'none') return;
+            if (linkPreviewClientCache[url]) {
+                container.innerHTML = linkPreviewClientCache[url];
+                return;
+            }
+            try {
+                const res = await fetch(`/api/link-preview?url=${encodeURIComponent(url)}`);
+                if (!res.ok) { linkPreviewClientCache[url] = 'none'; return; }
+                const data = await res.json();
+                if (!data.title && !data.description) { linkPreviewClientCache[url] = 'none'; return; }
+
+                let domain = '';
+                try { domain = new URL(url).hostname; } catch {}
+
+                const imgHtml = data.image
+                    ? `<img class="link-preview-img" src="${escapeHtml(data.image)}" alt="" onerror="this.style.display='none'">`
+                    : '';
+                const cardHtml = `<a class="link-preview" href="${escapeHtml(url)}" target="_blank" rel="noopener">
+                    ${imgHtml}
+                    <div class="link-preview-body">
+                        <div class="link-preview-title">${escapeHtml(data.title)}</div>
+                        ${data.description ? `<div class="link-preview-desc">${escapeHtml(data.description)}</div>` : ''}
+                        <div class="link-preview-domain">${escapeHtml(domain)}</div>
+                    </div>
+                </a>`;
+
+                linkPreviewClientCache[url] = cardHtml;
+                container.innerHTML = cardHtml;
+            } catch {
+                linkPreviewClientCache[url] = 'none';
+            }
         }
 
         // ── Attachment Menu ──
