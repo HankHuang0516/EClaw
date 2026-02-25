@@ -1,3 +1,10 @@
+## [1.22.1](https://github.com/HankHuang0516/realbot/compare/v1.22.0...v1.22.1) (2026-02-25)
+
+
+### Bug Fixes
+
+* repair all GitHub Actions CI failures ([cf0145e](https://github.com/HankHuang0516/realbot/commit/cf0145efddb0dc8a714d0a78198b5250888cd38e))
+
 # [1.22.0](https://github.com/HankHuang0516/realbot/compare/v1.21.0...v1.22.0) (2026-02-25)
 
 
