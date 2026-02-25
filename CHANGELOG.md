@@ -1,3 +1,15 @@
+# [1.23.0](https://github.com/HankHuang0516/realbot/compare/v1.22.3...v1.23.0) (2026-02-25)
+
+
+### Bug Fixes
+
+* show authenticated nav on info page for logged-in users ([ec7eed9](https://github.com/HankHuang0516/realbot/commit/ec7eed91589cba04bd40756ef7808cde94691538))
+
+
+### Features
+
+* add photo upload to settings feedback dialog ([e409ff6](https://github.com/HankHuang0516/realbot/commit/e409ff67f2bee5400384fab157fc095fc2f75df7))
+
 ## [1.22.3](https://github.com/HankHuang0516/realbot/compare/v1.22.2...v1.22.3) (2026-02-25)
 
 
