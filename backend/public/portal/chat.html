@@ -1013,6 +1013,14 @@
 
         // ── Entities ──
         async function loadBoundEntities() {
+            const bar = document.getElementById('targetBar');
+            if (bar && boundEntities.length === 0) {
+                const hint = document.createElement('span');
+                hint.className = 'target-loading-hint';
+                hint.style.cssText = 'color:var(--text-muted);font-size:12px;';
+                hint.textContent = 'Loading entities...';
+                bar.appendChild(hint);
+            }
             try {
                 const data = await apiCall('GET', `/api/entities?deviceId=${currentUser.deviceId}`);
                 boundEntities = (data.entities || []).filter(e => e.isBound);
@@ -1031,8 +1039,8 @@
             const bar = document.getElementById('targetBar');
             const allLabel = document.getElementById('targetAll');
 
-            // Remove old dynamic checkboxes
-            bar.querySelectorAll('.target-entity-check').forEach(el => el.remove());
+            // Remove old dynamic checkboxes and loading hints
+            bar.querySelectorAll('.target-entity-check, .target-loading-hint').forEach(el => el.remove());
 
             if (boundEntities.length === 0) {
                 allLabel.style.display = 'none';

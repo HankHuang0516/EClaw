@@ -392,6 +392,85 @@
             font-size: 13px;
         }
 
+        /* ── Feedback photo upload ── */
+        .fb-photo-section {
+            margin-bottom: 12px;
+        }
+
+        .fb-photo-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .fb-photo-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: 1px dashed var(--card-border);
+            background: var(--bg-secondary, var(--card));
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .fb-photo-btn:hover {
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+
+        .fb-photo-previews {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .fb-photo-preview {
+            position: relative;
+            width: 72px;
+            height: 72px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--card-border);
+        }
+
+        .fb-photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .fb-photo-preview .remove-btn {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            border: none;
+            font-size: 12px;
+            line-height: 20px;
+            text-align: center;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .fb-photo-preview .remove-btn:hover {
+            background: #F44336;
+        }
+
+        .fb-photo-status {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
         /* ── Logout / footer area ── */
         .logout-btn {
             width: 100%;
@@ -636,6 +715,16 @@
             <textarea id="feedbackText" class="feedback-textarea" rows="5"
                 placeholder="Describe the issue or suggestion..."
                 data-i18n-placeholder="feedback_hint"></textarea>
+            <!-- Photo upload -->
+            <div class="fb-photo-section">
+                <div class="fb-photo-label" data-i18n="feedback_photo_label">Attach Photos (Optional)</div>
+                <input type="file" id="fbPhotoInput" accept="image/jpeg,image/png,image/webp,image/gif" multiple style="display:none" onchange="onFeedbackPhotosSelected(event)">
+                <button type="button" class="fb-photo-btn" id="fbPhotoAddBtn" onclick="document.getElementById('fbPhotoInput').click()">
+                    📷 <span data-i18n="feedback_photo_add">Add Photos</span>
+                </button>
+                <div class="fb-photo-previews" id="fbPhotoPreviews"></div>
+                <div class="fb-photo-status" id="fbPhotoStatus"></div>
+            </div>
             <div class="feedback-result" id="feedbackResult"></div>
             <div class="dialog-actions">
                 <button class="btn btn-outline" onclick="closeFeedbackDialog()"
@@ -957,6 +1046,8 @@
             const container = document.getElementById('notifPrefsContainer');
             if (!container) return;
 
+            container.innerHTML = '<div class="section-desc" style="display:flex;align-items:center;gap:8px;"><span class="spinner" style="width:14px;height:14px;border-width:2px;"></span> Loading...</div>';
+
             try {
                 const data = await apiCall('GET', '/api/notification-preferences');
                 const prefs = data.prefs || {};
@@ -1078,6 +1169,72 @@
         // Feedback
         // ============================================
         let feedbackCategory = 'bug';
+        let feedbackPhotos = []; // File objects selected for upload
+
+        function onFeedbackPhotosSelected(event) {
+            const files = Array.from(event.target.files);
+            const maxPhotos = 5;
+            const maxSize = 5 * 1024 * 1024;
+
+            for (const file of files) {
+                if (feedbackPhotos.length >= maxPhotos) break;
+                if (file.size > maxSize) continue;
+                if (!file.type.startsWith('image/')) continue;
+                feedbackPhotos.push(file);
+            }
+
+            event.target.value = '';
+            renderFeedbackPhotoPreviews();
+        }
+
+        function renderFeedbackPhotoPreviews() {
+            const container = document.getElementById('fbPhotoPreviews');
+            const addBtn = document.getElementById('fbPhotoAddBtn');
+            container.innerHTML = '';
+
+            feedbackPhotos.forEach((file, idx) => {
+                const wrap = document.createElement('div');
+                wrap.className = 'fb-photo-preview';
+
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.alt = file.name;
+                wrap.appendChild(img);
+
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-btn';
+                removeBtn.textContent = '\u00d7';
+                removeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    feedbackPhotos.splice(idx, 1);
+                    renderFeedbackPhotoPreviews();
+                };
+                wrap.appendChild(removeBtn);
+                container.appendChild(wrap);
+            });
+
+            addBtn.style.display = feedbackPhotos.length >= 5 ? 'none' : '';
+        }
+
+        async function uploadFeedbackPhotos(feedbackId) {
+            if (feedbackPhotos.length === 0) return 0;
+
+            const user = await checkAuth();
+            const formData = new FormData();
+            formData.append('deviceId', user?.deviceId || 'web-portal');
+            formData.append('deviceSecret', user?.deviceSecret || '');
+            feedbackPhotos.forEach(file => {
+                formData.append('photos', file);
+            });
+
+            const resp = await fetch(`${API_BASE}/api/feedback/${feedbackId}/photos`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await resp.json();
+            if (!data.success) throw new Error(data.message || 'Photo upload failed');
+            return data.count || 0;
+        }
 
         function setFeedbackCategory(cat) {
             feedbackCategory = cat;
@@ -1093,6 +1250,11 @@
             document.getElementById('feedbackDialog').style.display = '';
             document.getElementById('feedbackText').value = '';
             document.getElementById('feedbackResult').style.display = 'none';
+            // Reset photo state
+            feedbackPhotos = [];
+            document.getElementById('fbPhotoPreviews').innerHTML = '';
+            document.getElementById('fbPhotoStatus').textContent = '';
+            document.getElementById('fbPhotoAddBtn').style.display = '';
             const btn = document.getElementById('btnSendFeedback');
             btn.disabled = false;
             btn.style.background = '';
@@ -1141,8 +1303,27 @@
                     deviceSecret: user?.deviceSecret || '',
                     message: message,
                     category: feedbackCategory,
-                    appVersion: 'Portal v' + PORTAL_VERSION
+                    appVersion: 'Portal v' + PORTAL_VERSION,
+                    source: 'web'
                 });
+
+                // Upload photos if any
+                let photosUploaded = 0;
+                if (feedbackPhotos.length > 0 && result.feedbackId) {
+                    const statusEl = document.getElementById('fbPhotoStatus');
+                    statusEl.textContent = i18n.t('feedback_photo_uploading') || 'Uploading photos...';
+                    try {
+                        photosUploaded = await uploadFeedbackPhotos(result.feedbackId);
+                        statusEl.textContent = '';
+                    } catch (photoErr) {
+                        statusEl.textContent = 'Photo upload failed: ' + photoErr.message;
+                        statusEl.style.color = '#F44336';
+                    }
+                }
+
+                // Clear photo selection
+                feedbackPhotos = [];
+                renderFeedbackPhotoPreviews();
 
                 const resultEl = document.getElementById('feedbackResult');
                 const logs = result.logsCaptured || {};
@@ -1160,6 +1341,9 @@
                         html += `<span style="padding:2px 8px;border-radius:8px;font-size:10px;color:var(--warning);border:1px solid var(--warning);background:rgba(255,210,63,0.1);">${t}</span>`;
                     });
                     html += `</div>`;
+                }
+                if (photosUploaded > 0) {
+                    html += `<div style="color:var(--text-secondary);margin-top:6px;">📷 ${photosUploaded} photo(s) uploaded</div>`;
                 }
                 if (result.githubIssue) {
                     html += `<a href="${result.githubIssue.url}" target="_blank" style="display:flex;align-items:center;gap:8px;margin-top:12px;padding:10px;border-radius:10px;border:1px solid var(--card-border);background:var(--card);text-decoration:none;color:var(--warning);">`;

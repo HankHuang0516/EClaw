@@ -440,6 +440,7 @@ If you have any questions, please contact us via our official email.
 
     <!-- Notifications -->
     <string name="notifications_title">Notifications</string>
+    <string name="notif_pref_title">Notification Preferences</string>
     <string name="notifications_desc">Configure which notifications you want to receive.</string>
     <string name="notif_pref_bot_reply">Bot Replies</string>
     <string name="notif_pref_broadcast">Broadcasts</string>

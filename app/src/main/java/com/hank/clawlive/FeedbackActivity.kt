@@ -255,7 +255,8 @@ class FeedbackActivity : AppCompatActivity() {
                     "deviceSecret" to deviceManager.deviceSecret,
                     "message" to message,
                     "category" to selectedCategory,
-                    "appVersion" to (packageManager.getPackageInfo(packageName, 0).versionName ?: "")
+                    "appVersion" to (packageManager.getPackageInfo(packageName, 0).versionName ?: ""),
+                    "source" to "android"
                 )
                 val result = NetworkModule.api.sendFeedback(body)
                 TelemetryHelper.trackAction("send_feedback", mapOf("category" to selectedCategory))

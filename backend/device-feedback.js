@@ -35,6 +35,7 @@ async function initFeedbackTable(pool) {
         await pool.query(`ALTER TABLE feedback ADD COLUMN IF NOT EXISTS device_secret TEXT`);
         await pool.query(`ALTER TABLE feedback ADD COLUMN IF NOT EXISTS debug_status VARCHAR(16)`);
         await pool.query(`ALTER TABLE feedback ADD COLUMN IF NOT EXISTS debug_result JSONB`);
+        await pool.query(`ALTER TABLE feedback ADD COLUMN IF NOT EXISTS source VARCHAR(16) DEFAULT 'unknown'`);
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_feedback_device ON feedback(device_id)`);
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status)`);
         console.log('[Feedback] Table migration complete');
@@ -272,6 +273,7 @@ function generateAiPrompt(feedback, photos) {
     lines.push(`**Status:** ${feedback.status || 'open'}`);
     lines.push(`**Device:** ${feedback.device_id}`);
     lines.push(`**App Version:** ${feedback.app_version || 'unknown'}`);
+    lines.push(`**Source:** ${(feedback.source || 'unknown').toUpperCase() === 'WEB' ? '🌐 Web Portal' : (feedback.source || 'unknown').toUpperCase() === 'ANDROID' ? '📱 Android App' : feedback.source || 'unknown'}`);
     lines.push(`**Reported:** ${new Date(parseInt(feedback.created_at)).toISOString()}`);
 
     if (feedback.tags && feedback.tags.length > 0) {
@@ -377,7 +379,7 @@ function generateAiPrompt(feedback, photos) {
 /**
  * Save enhanced feedback with log snapshot.
  */
-async function saveFeedback(pool, { deviceId, deviceSecret, message, category, appVersion, logSnapshot, deviceState, markTs }) {
+async function saveFeedback(pool, { deviceId, deviceSecret, message, category, appVersion, logSnapshot, deviceState, markTs, source }) {
     if (!pool) return null;
 
     const triage = autoTriage(logSnapshot);
@@ -385,12 +387,15 @@ async function saveFeedback(pool, { deviceId, deviceSecret, message, category, a
     const effectiveCategory = category || 'bug';
     const debugStatus = effectiveCategory === 'bug' ? 'pending' : null;
 
+    // Determine source: explicit > inferred from appVersion > unknown
+    const effectiveSource = source || (appVersion && appVersion.startsWith('web') ? 'web' : appVersion ? 'android' : 'unknown');
+
     try {
         const result = await pool.query(
             `INSERT INTO feedback
              (device_id, device_secret, message, category, app_version, log_snapshot, device_state,
-              severity, status, tags, ai_diagnosis, mark_ts, debug_status, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10, $11, $12, $13)
+              severity, status, tags, ai_diagnosis, mark_ts, debug_status, source, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10, $11, $12, $13, $14)
              RETURNING id, severity, tags, ai_diagnosis`,
             [
                 deviceId,
@@ -405,6 +410,7 @@ async function saveFeedback(pool, { deviceId, deviceSecret, message, category, a
                 triage.diagnosis,
                 markTs || null,
                 debugStatus,
+                effectiveSource,
                 Date.now()
             ]
         );
@@ -421,7 +427,7 @@ async function saveFeedback(pool, { deviceId, deviceSecret, message, category, a
 async function getFeedbackList(pool, { deviceId, status, severity, limit = 50, offset = 0 }) {
     if (!pool) return [];
 
-    let query = 'SELECT id, device_id, message, category, severity, status, tags, app_version, github_issue_url, created_at FROM feedback WHERE 1=1';
+    let query = 'SELECT id, device_id, message, category, severity, status, tags, app_version, source, github_issue_url, created_at FROM feedback WHERE 1=1';
     const params = [];
 
     if (deviceId) {
@@ -559,6 +565,9 @@ async function createGithubIssue(feedback, photos) {
     const labels = [categoryLabel, 'ai-feedback'];
     if (cat === 'bug') {
         labels.push(`severity:${feedback.severity || 'medium'}`);
+    }
+    if (feedback.source && feedback.source !== 'unknown') {
+        labels.push(feedback.source === 'web' ? 'platform:web' : 'platform:android');
     }
     if (feedback.tags) {
         for (const tag of feedback.tags) {

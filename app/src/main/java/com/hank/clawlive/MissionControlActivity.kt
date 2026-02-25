@@ -109,6 +109,9 @@ class MissionControlActivity : AppCompatActivity() {
 
     private fun loadEntityOptions() {
         lifecycleScope.launch {
+            val progressBar = findViewById<View>(R.id.progressBar)
+            val vmBusy = viewModel.uiState.value.isLoading || viewModel.uiState.value.isSyncing
+            if (!vmBusy) progressBar.visibility = View.VISIBLE
             try {
                 val response = api.getAllEntities(deviceId = deviceManager.deviceId)
                 val opts = mutableListOf("" to "-- 不指定 --")
@@ -134,6 +137,9 @@ class MissionControlActivity : AppCompatActivity() {
                 ruleAdapter.notifyDataSetChanged()
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load entities for mission")
+            } finally {
+                val stillBusy = viewModel.uiState.value.isLoading || viewModel.uiState.value.isSyncing
+                if (!stillBusy) progressBar.visibility = View.GONE
             }
         }
     }

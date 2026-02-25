@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import com.android.billingclient.api.*
 import com.hank.clawlive.data.local.DeviceManager
+import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.local.UsageManager
 import com.hank.clawlive.data.remote.NetworkModule
 import kotlinx.coroutines.CoroutineScope
@@ -223,6 +224,7 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
                         if (purchase.products.contains(SUBSCRIPTION_ID)) {
                             usageManager.isPremium = true
                             syncPremiumWithServer(purchase.purchaseToken, SUBSCRIPTION_ID)
+                            refreshEntityLimitFromServer()
                         }
                         if (purchase.products.contains(BORROW_SUBSCRIPTION_ID)) {
                             _subscriptionState.value = _subscriptionState.value.copy(
@@ -290,6 +292,21 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
                 Timber.tag(TAG).d("Premium status synced with server")
             } catch (e: Exception) {
                 Timber.tag(TAG).e(e, "Failed to sync premium status with server")
+            }
+        }
+    }
+
+    /**
+     * #69: Refresh entity limit from server after premium activation
+     */
+    private fun refreshEntityLimitFromServer() {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val response = api.getAllEntities(deviceId = deviceManager.deviceId)
+                LayoutPreferences.getInstance(context).serverEntityLimit = response.maxEntities
+                Timber.tag(TAG).d("Entity limit refreshed: ${response.maxEntities}")
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Failed to refresh entity limit")
             }
         }
     }
