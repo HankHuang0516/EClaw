@@ -7,6 +7,7 @@ async function checkAuth() {
     try {
         const data = await apiCall('GET', '/api/auth/me');
         currentUser = data.user;
+        window.currentUser = currentUser;
 
         // Update nav email
         const emailEl = document.getElementById('navEmail');

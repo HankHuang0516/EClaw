@@ -11,8 +11,10 @@ function renderNav(activePage) {
     ];
 
     // Deferred: add admin link after auth check completes
-    setTimeout(() => {
-        if (typeof currentUser !== 'undefined' && currentUser && currentUser.isAdmin) {
+    // Use window._addAdminLink so pages can also call it directly after auth
+    window._addAdminLink = function() {
+        const user = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
+        if (user && user.isAdmin) {
             const navLinks = document.getElementById('navLinks');
             if (navLinks && !navLinks.querySelector('[data-admin-link]')) {
                 const link = document.createElement('a');
@@ -23,7 +25,8 @@ function renderNav(activePage) {
                 navLinks.appendChild(link);
             }
         }
-    }, 600);
+    };
+    setTimeout(window._addAdminLink, 600);
 
     const t = (key, fallback) => typeof i18n !== 'undefined' ? i18n.t(key) : fallback;
 

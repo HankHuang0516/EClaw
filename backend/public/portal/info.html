@@ -1504,7 +1504,9 @@ node backend/tests/test-broadcast.js</div>
             try {
                 const data = await apiCall('GET', '/api/auth/me');
                 currentUser = data.user;
+                window.currentUser = currentUser;
                 renderNav('info');
+                if (window._addAdminLink) window._addAdminLink();
                 const emailEl = document.getElementById('navEmail');
                 if (emailEl) emailEl.textContent = currentUser.email;
             } catch (e) {
