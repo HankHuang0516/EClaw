@@ -1,3 +1,10 @@
+## [1.25.2](https://github.com/HankHuang0516/realbot/compare/v1.25.1...v1.25.2) (2026-02-25)
+
+
+### Bug Fixes
+
+* update footer description to AI collaboration platform ([20bb415](https://github.com/HankHuang0516/realbot/commit/20bb415d23671a4b3b2c86273a78384843c4f1d0))
+
 ## [1.25.1](https://github.com/HankHuang0516/realbot/compare/v1.25.0...v1.25.1) (2026-02-25)
 
 
