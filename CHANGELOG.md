@@ -1,3 +1,10 @@
+## [1.25.1](https://github.com/HankHuang0516/realbot/compare/v1.25.0...v1.25.1) (2026-02-25)
+
+
+### Bug Fixes
+
+* admin link not showing on info page ([ad28fe4](https://github.com/HankHuang0516/realbot/commit/ad28fe4a2a32b2ea2c77c5c3a032a5075f920a7e))
+
 # [1.25.0](https://github.com/HankHuang0516/realbot/compare/v1.24.0...v1.25.0) (2026-02-25)
 
 
