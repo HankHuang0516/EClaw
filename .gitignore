@@ -37,6 +37,7 @@ app/google-services.json
 keystore.properties
 found_secrets.json
 tappay_dump.txt
+Eclaw_bots_register.txt
 play-service-account.json
 secrets.7z
 .release_*
