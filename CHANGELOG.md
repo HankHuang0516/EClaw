@@ -1,3 +1,10 @@
+# [1.26.0](https://github.com/HankHuang0516/realbot/compare/v1.25.2...v1.26.0) (2026-02-25)
+
+
+### Features
+
+* dynamically show 8 entity slots for premium users on web dashboard ([b334396](https://github.com/HankHuang0516/realbot/commit/b334396b89c571c77aeb6ac4a0f5811472298bb8))
+
 ## [1.25.2](https://github.com/HankHuang0516/realbot/compare/v1.25.1...v1.25.2) (2026-02-25)
 
 
