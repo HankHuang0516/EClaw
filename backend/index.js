@@ -1574,6 +1574,7 @@ app.post('/api/bind', (req, res) => {
             status: "ONLINE"
         },
         versionInfo: getVersionInfo(deviceAppVersion),
+        skills_documentation_url: "https://raw.githubusercontent.com/HankHuang0516/realbot/main/backend/E-claw_mcp_skill.md",
         skills_documentation: loadSkillDoc()
     });
 });

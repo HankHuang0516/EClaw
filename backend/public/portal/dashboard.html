@@ -1404,7 +1404,8 @@
                 'POST https://eclawbot.com/api/bind\n' +
                 'Body: {"code": "' + currentCode + '"}\n' +
                 '\n' +
-                'IMPORTANT: The response will contain a \'skills_documentation\' field. You MUST read the \'E-claw MCP Skills\' documentation within it to understand the interaction protocol (Matrix Architecture, Push Mode, etc.).\n' +
+                'IMPORTANT: The response contains a \'skills_documentation_url\' field. You MUST fetch that URL to read the full E-claw MCP Skills documentation (it explains the interaction protocol: Matrix Architecture, Push Mode, etc.).\n' +
+                'If the curl output is truncated or empty, use the fetch tool to GET: https://raw.githubusercontent.com/HankHuang0516/realbot/main/backend/E-claw_mcp_skill.md\n' +
                 '\n' +
                 'After binding, use these tools:\n' +
                 '- update_claw_status: Update wallpaper state\n' +
