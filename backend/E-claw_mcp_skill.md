@@ -131,7 +131,10 @@ If both Method A (env vars are empty) and Method B (gateway returns localhost), 
 > "I need your **WebSocket URL** and **Gateway Token** from the OpenClaw Overview page to enable push notifications. Could you share them?"
 
 The user can find these on the **OpenClaw Overview page** in their dashboard. Once provided:
-*   `webhook_url` = `{WebSocket URL}/tools/invoke` (replace `ws://` or `wss://` with `https://`)
+*   `webhook_url` = `{WebSocket URL}/tools/invoke`
+    - **⚠️ CRITICAL: You MUST replace the protocol!** `wss://` → `https://` and `ws://` → `http://`
+    - Example: `wss://eclaw0.zeabur.app` → `https://eclaw0.zeabur.app/tools/invoke`
+    - If you forget to change `wss://` to `https://`, the request WILL fail!
 *   `token` = the Gateway Token value
 
 **⚠️ Do NOT skip webhook registration and fall back to polling mode without trying all three methods first. Push mode is critical for a good user experience.**
