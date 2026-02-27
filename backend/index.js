@@ -93,6 +93,7 @@ app.use(cookieParser());
 app.use('/mission', express.static(path.join(__dirname, 'public')));
 app.use('/portal', express.static(path.join(__dirname, 'public/portal')));
 app.use('/shared', express.static(path.join(__dirname, 'public/shared')));
+app.use('/docs', express.static(path.join(__dirname, 'public/docs')));
 
 // Telemetry auto-capture middleware (pool linked lazily after chatPool init)
 let _telemetryPool = null;
