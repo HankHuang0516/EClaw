@@ -4337,9 +4337,8 @@ app.post('/api/bot/register', async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: `webhook_url points to a local/private address (${hn}) which is unreachable from the internet. ` +
-                    "Please ask the user to provide the 'WebSocket URL' and 'Gateway Token' from the OpenClaw Overview page, " +
-                    "then use those values to construct the correct webhook_url and token. This is the fastest way to fix the issue.",
-                hint: "Ask user for the WebSocket URL and Gateway Token shown on the OpenClaw Overview page."
+                    "Fetch the troubleshooting guide for step-by-step fix: https://eclawbot.com/docs/webhook-troubleshooting.md",
+                hint: "Fetch https://eclawbot.com/docs/webhook-troubleshooting.md — see 'localhost / private IP' section."
             });
         }
     } catch (e) {
@@ -4431,10 +4430,8 @@ app.post('/api/bot/register', async (req, res) => {
                     success: false,
                     message: "Webhook handshake failed: gateway cannot execute 'sessions_send' tool. " +
                         `Server responded: "${errorMessage}". ` +
-                        "Please ask the user to enable 'sessions_send' in their OpenClaw gateway config. " +
-                        "WARNING: Do NOT directly edit config files with the edit tool — use 'openclaw config set' CLI command instead. " +
-                        "Editing config files directly can corrupt JSON and crash the gateway.",
-                    hint: "Ask user to run: openclaw config set gateway.tools.sessions_send.enabled true (or equivalent CLI command). Do NOT use edit/write tools on config files.",
+                        "Fetch the troubleshooting guide for step-by-step fix: https://eclawbot.com/docs/webhook-troubleshooting.md",
+                    hint: "Fetch https://eclawbot.com/docs/webhook-troubleshooting.md for the fix. Do NOT edit config files directly — use openclaw CLI.",
                     debug: { probeUrl: finalUrl, httpStatus: probeResponse.status, serverError: errorMessage }
                 });
             }
@@ -4459,8 +4456,8 @@ app.post('/api/bot/register', async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: "Webhook handshake failed: bot gateway is disconnected (pairing required). " +
-                    "Fix: edit ~/.openclaw/devices/pending.json and change \"silent\" from false to true, then restart the gateway.",
-                hint: "Edit ~/.openclaw/devices/pending.json → set \"silent\": true → then run 'openclaw gateway restart'.",
+                    "Fetch the troubleshooting guide for step-by-step fix: https://eclawbot.com/docs/webhook-troubleshooting.md",
+                hint: "Fetch https://eclawbot.com/docs/webhook-troubleshooting.md for the fix.",
                 debug: { probeUrl: finalUrl, httpStatus: 200, bodyError: 'pairing_required' }
             });
         }
@@ -4938,7 +4935,7 @@ async function pushToBot(entity, deviceId, eventType, payload) {
             if (responseText && (responseText.includes('pairing required') || responseText.includes('gateway closed'))) {
                 console.warn(`[Push] ✗ Device ${deviceId} Entity ${entity.entityId}: Bot gateway disconnected (pairing required)`);
 
-                entity.message = `[SYSTEM:BOT_OFFLINE] Bot gateway disconnected — pairing required. Fix: edit ~/.openclaw/devices/pending.json and change "silent" from false to true, then restart the gateway.`;
+                entity.message = `[SYSTEM:BOT_OFFLINE] Bot gateway disconnected — pairing required. Fetch fix: https://eclawbot.com/docs/webhook-troubleshooting.md`;
                 entity.lastUpdated = Date.now();
 
                 // Immediately notify connected clients via Socket.IO
@@ -4972,7 +4969,7 @@ async function pushToBot(entity, deviceId, eventType, payload) {
             } else if (response.status === 405) {
                 debugHint = ' URL may be incorrect (double slash?). Re-register webhook with correct URL.';
             } else if (response.status === 404) {
-                debugHint = ' sessions_send tool not available. Ask user to enable it via openclaw CLI. WARNING: Do NOT edit config files directly — use openclaw config set CLI command to avoid corrupting JSON and crashing the gateway.';
+                debugHint = ' sessions_send tool not available. Fetch fix: https://eclawbot.com/docs/webhook-troubleshooting.md';
             }
 
             // Notify device about webhook failure via entity message
