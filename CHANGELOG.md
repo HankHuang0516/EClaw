@@ -1,3 +1,10 @@
+# [1.30.0](https://github.com/HankHuang0516/realbot/compare/v1.29.2...v1.30.0) (2026-02-27)
+
+
+### Features
+
+* add skills_documentation_url to bind response for large skill doc fetch ([51cd7bb](https://github.com/HankHuang0516/realbot/commit/51cd7bb06bb4abbe737967bb15b27e93fc4473da))
+
 ## [1.29.2](https://github.com/HankHuang0516/realbot/compare/v1.29.1...v1.29.2) (2026-02-27)
 
 
