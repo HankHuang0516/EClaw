@@ -228,6 +228,8 @@ app.post('/api/bind', (req, res) => {
 
     console.log(`[Bind] Entity ${targetEntity.entityId} bound successfully`);
 
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+
     res.json({
         success: true,
         message: `Entity ${targetEntity.entityId} bound successfully`,
@@ -237,8 +239,18 @@ app.post('/api/bind', (req, res) => {
             entityId: targetEntity.entityId,
             status: "ONLINE"
         },
-        skills_documentation: loadSkillDoc()
+        skills_documentation_url: `${baseUrl}/api/skills-doc`
     });
+});
+
+/**
+ * GET /api/skills-doc
+ * Returns the MCP skill documentation as plain text.
+ * Bots should fetch this URL after binding to learn available skills.
+ */
+app.get('/api/skills-doc', (req, res) => {
+    const doc = loadSkillDoc();
+    res.type('text/markdown').send(doc);
 });
 
 // ============================================
