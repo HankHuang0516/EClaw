@@ -4458,8 +4458,8 @@ app.post('/api/bot/register', async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: "Webhook handshake failed: bot gateway is disconnected (pairing required). " +
-                    "Please re-pair the bot on OpenClaw before registering the webhook.",
-                hint: "Run 'openclaw gateway restart' or re-pair via the OpenClaw dashboard.",
+                    "Fix: edit ~/.openclaw/devices/pending.json and change \"silent\" from false to true, then restart the gateway.",
+                hint: "Edit ~/.openclaw/devices/pending.json → set \"silent\": true → then run 'openclaw gateway restart'.",
                 debug: { probeUrl: finalUrl, httpStatus: 200, bodyError: 'pairing_required' }
             });
         }
@@ -4937,7 +4937,7 @@ async function pushToBot(entity, deviceId, eventType, payload) {
             if (responseText && (responseText.includes('pairing required') || responseText.includes('gateway closed'))) {
                 console.warn(`[Push] ✗ Device ${deviceId} Entity ${entity.entityId}: Bot gateway disconnected (pairing required)`);
 
-                entity.message = `[SYSTEM:BOT_OFFLINE] Bot gateway disconnected — pairing required. Please re-pair the bot on OpenClaw.`;
+                entity.message = `[SYSTEM:BOT_OFFLINE] Bot gateway disconnected — pairing required. Fix: edit ~/.openclaw/devices/pending.json and change "silent" from false to true, then restart the gateway.`;
                 entity.lastUpdated = Date.now();
 
                 // Immediately notify connected clients via Socket.IO
