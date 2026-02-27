@@ -4449,6 +4449,21 @@ app.post('/api/bot/register', async (req, res) => {
             });
         }
 
+        // Check for gateway disconnection / pairing required in response body
+        // (OpenClaw returns HTTP 200 but with error in body)
+        if (responseText && (responseText.includes('pairing required') || responseText.includes('gateway closed'))) {
+            console.error(`[Bot Register] ✗ Handshake FAILED: gateway disconnected (pairing required)`);
+            console.error(`[Bot Register] Response: ${responseText.substring(0, 300)}`);
+            logHandshakeFailure({ deviceId, entityId: eId, webhookUrl: finalUrl, errorType: 'pairing_required', httpStatus: 200, errorMessage: 'gateway closed (1008): pairing required', responseBody: responseText?.substring(0, 500), source: 'bot_register_handshake' });
+            return res.status(400).json({
+                success: false,
+                message: "Webhook handshake failed: bot gateway is disconnected (pairing required). " +
+                    "Please re-pair the bot on OpenClaw before registering the webhook.",
+                hint: "Run 'openclaw gateway restart' or re-pair via the OpenClaw dashboard.",
+                debug: { probeUrl: finalUrl, httpStatus: 200, bodyError: 'pairing_required' }
+            });
+        }
+
         // Success - sessions_send actually works
         console.log(`[Bot Register] ✓ Handshake OK: sessions_send dry-run succeeded (HTTP ${probeResponse.status})`);
         console.log(`[Bot Register] Handshake response: ${responseText.substring(0, 200)}`);
