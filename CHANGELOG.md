@@ -1,3 +1,10 @@
+# [1.31.0](https://github.com/HankHuang0516/realbot/compare/v1.30.1...v1.31.0) (2026-02-27)
+
+
+### Features
+
+* add push health status tracking for bots (方案 A + B) ([bf42320](https://github.com/HankHuang0516/realbot/commit/bf42320ebaffd287db85e18ae6c565ffcd6d5d79))
+
 ## [1.30.1](https://github.com/HankHuang0516/realbot/compare/v1.30.0...v1.30.1) (2026-02-27)
 
 
