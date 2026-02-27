@@ -1,3 +1,11 @@
+# [1.33.0](https://github.com/HankHuang0516/realbot/compare/v1.32.1...v1.33.0) (2026-02-27)
+
+
+### Features
+
+* **web:** add edit mode to dashboard entity cards (parity with Android) ([d41156c](https://github.com/HankHuang0516/realbot/commit/d41156cc2297db9e500c42d8714575ce6a29a2c6))
+* **admin:** add individual remove button to official bot list ([1f85683](https://github.com/HankHuang0516/realbot/commit/1f85683a09e4c1997d962ee42debc6533a891ed8))
+
 ## [1.32.1](https://github.com/HankHuang0516/realbot/compare/v1.32.0...v1.32.1) (2026-02-27)
 
 
