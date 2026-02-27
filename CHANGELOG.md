@@ -1,3 +1,10 @@
+## [1.31.3](https://github.com/HankHuang0516/realbot/compare/v1.31.2...v1.31.3) (2026-02-27)
+
+
+### Bug Fixes
+
+* warn bots not to edit config files directly, use openclaw CLI ([e67037e](https://github.com/HankHuang0516/realbot/commit/e67037e1ce95893889dd9224ef3491139c412626))
+
 ## [1.31.2](https://github.com/HankHuang0516/realbot/compare/v1.31.1...v1.31.2) (2026-02-27)
 
 
