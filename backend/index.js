@@ -1024,7 +1024,8 @@ function createDefaultEntity(entityId) {
         avatar: null, // User-chosen emoji avatar (synced across devices)
         xp: 0,
         level: 1,
-        publicCode: null
+        publicCode: null,
+        pushStatus: null // { ok: bool, reason?: string, at: number }
     };
 }
 
@@ -1827,7 +1828,8 @@ app.post('/api/transform', (req, res) => {
             level: entity.level || 1,
             publicCode: entity.publicCode || null
         },
-        versionInfo: getVersionInfo(entity.appVersion)
+        versionInfo: getVersionInfo(entity.appVersion),
+        push_status: entity.pushStatus || null
     });
 });
 
@@ -2703,7 +2705,8 @@ app.post('/api/entity/speak-to', async (req, res) => {
         pushed: hasWebhook ? "pending" : false,
         mode: hasWebhook ? "push" : "polling",
         reason: hasWebhook ? "fire_and_forget" : "no_webhook",
-        bindingType: bindingTypeTo
+        bindingType: bindingTypeTo,
+        push_status: fromEntity.pushStatus || null
     });
 });
 
@@ -3274,7 +3277,8 @@ app.post('/api/entity/broadcast', async (req, res) => {
         from: { entityId: fromId, character: fromEntity.character },
         sentCount: results.length,
         targets: results,
-        broadcast: targetIds.length > 1
+        broadcast: targetIds.length > 1,
+        push_status: fromEntity.pushStatus || null
     });
 });
 
@@ -4482,6 +4486,7 @@ app.post('/api/bot/register', async (req, res) => {
         sessionKey: session_key,
         registeredAt: Date.now()
     };
+    entity.pushStatus = { ok: true, at: Date.now() };
 
     console.log(`[Bot Register] Device ${deviceId} Entity ${eId} webhook registered: ${finalUrl} (token: ${tokenPreview}, len: ${cleanToken.length})`);
 
@@ -4500,12 +4505,16 @@ app.post('/api/bot/register', async (req, res) => {
         warnings.push(`webhook_url is not HTTPS. This may cause issues in production.`);
     }
 
+    const apiBase = `https://${req.get('host') || 'eclawbot.com'}`;
+
     res.json({
         success: true,
         message: "Webhook registered. You will now receive push notifications.",
         deviceId: deviceId,
         entityId: eId,
         mode: "push",
+        push_status_url: `${apiBase}/api/bot/push-status?deviceId=${deviceId}&entityId=${eId}&botSecret=${entity.botSecret}`,
+        push_status_hint: "Poll this endpoint periodically to check if push is still healthy. If push_status.ok is false, re-register webhook via POST /api/bot/register.",
         debug: {
             webhook_url_registered: finalUrl,
             token_length: cleanToken.length,
@@ -4556,6 +4565,49 @@ app.delete('/api/bot/register', (req, res) => {
         entityId: eId,
         mode: "polling"
     });
+});
+
+/**
+ * GET /api/bot/push-status
+ * Bot checks if its push notifications are still healthy.
+ * Query: ?deviceId=xxx&entityId=0&botSecret=xxx
+ */
+app.get('/api/bot/push-status', (req, res) => {
+    const { deviceId, entityId, botSecret } = req.query;
+
+    if (!deviceId) {
+        return res.status(400).json({ success: false, message: "deviceId required" });
+    }
+
+    const eId = parseInt(entityId) || 0;
+    if (eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
+        return res.status(400).json({ success: false, message: "Invalid entityId" });
+    }
+
+    const device = devices[deviceId];
+    if (!device) {
+        return res.status(404).json({ success: false, message: "Device not found" });
+    }
+
+    const entity = device.entities[eId];
+
+    if (!botSecret || botSecret !== entity.botSecret) {
+        return res.status(403).json({ success: false, message: "Invalid botSecret" });
+    }
+
+    const result = {
+        success: true,
+        deviceId,
+        entityId: eId,
+        webhook_registered: !!entity.webhook,
+        push_status: entity.pushStatus || null
+    };
+
+    if (entity.pushStatus && !entity.pushStatus.ok) {
+        result.action_required = "Push is failing. Re-register webhook via POST /api/bot/register to restore push notifications.";
+    }
+
+    res.json(result);
 });
 
 /**
@@ -4852,13 +4904,16 @@ async function pushToBot(entity, deviceId, eventType, payload) {
                             console.log(`[Push] Updated entity sessionKey to: ${sessions[0]}`);
                         }
                         if (entity.pendingRename) { entity.pendingRename = null; }
+                        entity.pushStatus = { ok: true, at: Date.now() };
                         return { pushed: true };
                     } else {
                         console.error(`[Push] ✗ Retry with discovered session failed: ${retryText.substring(0, 200)}`);
+                        entity.pushStatus = { ok: false, reason: 'session_discovery_failed', at: Date.now() };
                         return { pushed: false, reason: 'session_discovery_retry_failed', error: retryText };
                     }
                 } else {
                     console.error(`[Push] ✗ No sessions discovered on gateway`);
+                    entity.pushStatus = { ok: false, reason: 'no_sessions', at: Date.now() };
                     return { pushed: false, reason: 'no_sessions_available', error: responseText };
                 }
             }
@@ -4882,10 +4937,12 @@ async function pushToBot(entity, deviceId, eventType, payload) {
                 serverLog('warn', 'client_push', `Entity ${entity.entityId} bot pairing required`, { deviceId, entityId: entity.entityId });
                 logHandshakeFailure({ deviceId, entityId: entity.entityId, webhookUrl: url, errorType: 'pairing_required', httpStatus: 200, errorMessage: 'gateway closed (1008): pairing required', responseBody: responseText?.substring(0, 500), source: 'push' });
 
+                entity.pushStatus = { ok: false, reason: 'pairing_required', at: Date.now() };
                 return { pushed: false, reason: 'pairing_required', error: 'Bot gateway disconnected — pairing required' };
             }
 
             if (entity.pendingRename) { entity.pendingRename = null; }
+            entity.pushStatus = { ok: true, at: Date.now() };
             return { pushed: true };
         } else {
             const errorText = await response.text().catch(() => '');
@@ -4907,6 +4964,7 @@ async function pushToBot(entity, deviceId, eventType, payload) {
             entity.lastUpdated = Date.now();
             console.log(`[Push] Set WEBHOOK_ERROR system message for Device ${deviceId} Entity ${entity.entityId}`);
 
+            entity.pushStatus = { ok: false, reason: `http_${response.status}`, at: Date.now() };
             return { pushed: false, reason: `http_${response.status}`, error: errorText, debug: { url, tokenLength: token.length, status: response.status, hint: debugHint.trim() } };
         }
     } catch (err) {
@@ -4918,6 +4976,7 @@ async function pushToBot(entity, deviceId, eventType, payload) {
         entity.lastUpdated = Date.now();
         console.log(`[Push] Set WEBHOOK_ERROR system message for Device ${deviceId} Entity ${entity.entityId}`);
 
+        entity.pushStatus = { ok: false, reason: err.message, at: Date.now() };
         return { pushed: false, reason: err.message };
     }
 }
