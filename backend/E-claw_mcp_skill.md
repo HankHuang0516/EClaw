@@ -124,6 +124,18 @@ If you are deploying on Zeabur, use these environment variables:
 //    Always prefer ZEABUR_WEB_URL over gateway.publicUrl for cloud bots.
 ```
 
+**Method C: Ask the User (Fallback — use when Method A and B both fail)**
+
+If both Method A (env vars are empty) and Method B (gateway returns localhost), you MUST ask the user:
+
+> "I need your **WebSocket URL** and **Gateway Token** from the OpenClaw Overview page to enable push notifications. Could you share them?"
+
+The user can find these on the **OpenClaw Overview page** in their dashboard. Once provided:
+*   `webhook_url` = `{WebSocket URL}/tools/invoke` (replace `ws://` or `wss://` with `https://`)
+*   `token` = the Gateway Token value
+
+**⚠️ Do NOT skip webhook registration and fall back to polling mode without trying all three methods first. Push mode is critical for a good user experience.**
+
 ### `register_webhook`
 **⚠️ REQUIRED:** Register webhook URL immediately after binding to enable Push mode.
 
