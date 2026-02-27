@@ -4407,6 +4407,7 @@ app.post('/api/bot/register', async (req, res) => {
             const errorMessage = parsedError?.error?.message || responseText;
 
             if (probeResponse.status === 401) {
+                logHandshakeFailure({ deviceId, entityId: eId, webhookUrl: finalUrl, errorType: 'http_401', httpStatus: 401, errorMessage, responseBody: responseText, source: 'bot_register' });
                 return res.status(400).json({
                     success: false,
                     message: "Webhook handshake failed: gateway rejected the token (HTTP 401). " +
@@ -4417,6 +4418,7 @@ app.post('/api/bot/register', async (req, res) => {
             }
 
             if (probeResponse.status === 404 || errorMessage.includes('not available') || errorMessage.includes('not found')) {
+                logHandshakeFailure({ deviceId, entityId: eId, webhookUrl: finalUrl, errorType: 'tool_not_available', httpStatus: probeResponse.status, errorMessage, responseBody: responseText, source: 'bot_register' });
                 return res.status(400).json({
                     success: false,
                     message: "Webhook handshake failed: gateway cannot execute 'sessions_send' tool. " +
@@ -4430,6 +4432,7 @@ app.post('/api/bot/register', async (req, res) => {
             }
 
             // Other errors - reject registration
+            logHandshakeFailure({ deviceId, entityId: eId, webhookUrl: finalUrl, errorType: `http_${probeResponse.status}`, httpStatus: probeResponse.status, errorMessage, responseBody: responseText, source: 'bot_register' });
             return res.status(400).json({
                 success: false,
                 message: `Webhook handshake failed: gateway returned HTTP ${probeResponse.status}. ` +
@@ -4457,6 +4460,7 @@ app.post('/api/bot/register', async (req, res) => {
         } else {
             // Actual connection failure - gateway is unreachable
             console.error(`[Bot Register] ✗ Handshake connection failed: ${probeErr.message}`);
+            logHandshakeFailure({ deviceId, entityId: eId, webhookUrl: finalUrl, errorType: 'connection_failed', errorMessage: probeErr.message, source: 'bot_register' });
             return res.status(400).json({
                 success: false,
                 message: `Webhook handshake failed: cannot reach gateway at ${finalUrl}. ` +
@@ -4690,6 +4694,7 @@ async function handshakeWithBot(url, token, preferredSessionKey, deviceId, entit
     }
 
     console.error(`[Handshake] ✗ All session attempts failed. Bot gateway may not have active sessions.`);
+    logHandshakeFailure({ deviceId, entityId, webhookUrl: url, errorType: 'no_sessions', errorMessage: result.error || 'No working session found on gateway', source: 'bind_handshake' });
     return { success: false, error: result.error || 'No working session found on gateway' };
 }
 
@@ -4713,6 +4718,7 @@ async function sendToSession(url, token, sessionKey, message) {
         const text = await response.text().catch(() => '');
 
         if (!response.ok) {
+            logHandshakeFailure({ webhookUrl: url, errorType: `http_${response.status}`, httpStatus: response.status, errorMessage: text, responseBody: text, source: 'send_session' });
             return { success: false, error: `HTTP ${response.status}: ${text}` };
         }
 
@@ -4739,6 +4745,7 @@ async function sendToSession(url, token, sessionKey, message) {
 
         return { success: true, botResponse };
     } catch (err) {
+        logHandshakeFailure({ webhookUrl: url, errorType: 'connection_failed', errorMessage: err.message, source: 'send_session' });
         return { success: false, error: err.message };
     }
 }
@@ -4870,6 +4877,7 @@ async function pushToBot(entity, deviceId, eventType, payload) {
                 });
 
                 serverLog('warn', 'client_push', `Entity ${entity.entityId} bot pairing required`, { deviceId, entityId: entity.entityId });
+                logHandshakeFailure({ deviceId, entityId: entity.entityId, webhookUrl: url, errorType: 'pairing_required', httpStatus: 200, errorMessage: 'gateway closed (1008): pairing required', responseBody: responseText?.substring(0, 500), source: 'push' });
 
                 return { pushed: false, reason: 'pairing_required', error: 'Bot gateway disconnected — pairing required' };
             }
@@ -6144,6 +6152,26 @@ chatPool.query(`
     CREATE INDEX IF NOT EXISTS idx_server_logs_device ON server_logs(device_id);
 `).catch(() => {});
 
+// Auto-create handshake_failures table
+chatPool.query(`
+    CREATE TABLE IF NOT EXISTS handshake_failures (
+        id SERIAL PRIMARY KEY,
+        device_id TEXT,
+        entity_id INTEGER,
+        webhook_url TEXT,
+        error_type VARCHAR(64) NOT NULL,
+        http_status INTEGER,
+        error_message TEXT,
+        request_payload JSONB,
+        response_body TEXT,
+        source VARCHAR(32) NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_hf_created ON handshake_failures(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_hf_error_type ON handshake_failures(error_type);
+    CREATE INDEX IF NOT EXISTS idx_hf_device ON handshake_failures(device_id);
+`).catch(() => {});
+
 // Fire-and-forget log writer (never blocks main flow)
 function serverLog(level, category, message, opts = {}) {
     const { deviceId, entityId, metadata } = opts;
@@ -6152,6 +6180,17 @@ function serverLog(level, category, message, opts = {}) {
          VALUES ($1, $2, $3, $4, $5, $6)`,
         [level, category, message, deviceId || null, entityId ?? null, metadata ? JSON.stringify(metadata) : null]
     ).catch(() => {}); // Never throw — logs are non-critical
+}
+
+// Fire-and-forget handshake failure recorder
+function logHandshakeFailure(opts) {
+    const { deviceId, entityId, webhookUrl, errorType, httpStatus, errorMessage, requestPayload, responseBody, source } = opts;
+    chatPool.query(
+        `INSERT INTO handshake_failures (device_id, entity_id, webhook_url, error_type, http_status, error_message, request_payload, response_body, source)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [deviceId || null, entityId ?? null, webhookUrl || null, errorType, httpStatus || null,
+         errorMessage || null, requestPayload ? JSON.stringify(requestPayload) : null, responseBody || null, source]
+    ).catch(() => {});
 }
 
 // GET /api/logs — Query server logs for debugging
@@ -6195,6 +6234,49 @@ app.get('/api/logs', async (req, res) => {
 
         const result = await chatPool.query(query, params);
         res.json({ success: true, count: result.rows.length, logs: result.rows.reverse() });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// GET /api/handshake-failures — Query handshake failure records for analysis
+app.get('/api/handshake-failures', async (req, res) => {
+    const { deviceId, deviceSecret, error_type, source, since, limit = 100 } = req.query;
+
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    }
+
+    try {
+        let query = 'SELECT * FROM handshake_failures WHERE 1=1';
+        const params = [];
+
+        if (error_type) {
+            params.push(error_type);
+            query += ` AND error_type = $${params.length}`;
+        }
+        if (source) {
+            params.push(source);
+            query += ` AND source = $${params.length}`;
+        }
+        if (since) {
+            params.push(new Date(parseInt(since)));
+            query += ` AND created_at > $${params.length}`;
+        }
+        if (req.query.filterDevice) {
+            params.push(req.query.filterDevice);
+            query += ` AND device_id = $${params.length}`;
+        }
+
+        params.push(Math.min(parseInt(limit) || 100, 500));
+        query += ` ORDER BY created_at DESC LIMIT $${params.length}`;
+
+        const result = await chatPool.query(query, params);
+        res.json({ success: true, count: result.rows.length, failures: result.rows.reverse() });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
