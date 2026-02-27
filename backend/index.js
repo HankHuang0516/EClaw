@@ -121,7 +121,7 @@ function getDeviceEntityLimit(deviceId) {
 
 // Latest app version - update this with each release
 // Bot will warn users if their app version is older than this
-const LATEST_APP_VERSION = "1.0.30";
+const LATEST_APP_VERSION = "1.0.31";
 
 // Device registry - each device has its own entities
 const devices = {};
@@ -1575,7 +1575,7 @@ app.post('/api/bind', (req, res) => {
         },
         versionInfo: getVersionInfo(deviceAppVersion),
         skills_documentation_url: "https://raw.githubusercontent.com/HankHuang0516/realbot/main/backend/E-claw_mcp_skill.md",
-        skills_documentation: loadSkillDoc()
+        skills_documentation: "Fetch the skills_documentation_url above to read the full E-claw MCP Skills guide."
     });
 });
 
