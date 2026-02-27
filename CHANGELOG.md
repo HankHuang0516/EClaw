@@ -1,3 +1,10 @@
+## [1.27.2](https://github.com/HankHuang0516/realbot/compare/v1.27.1...v1.27.2) (2026-02-27)
+
+
+### Bug Fixes
+
+* let entity cards scroll independently via RecyclerView ([d2a5c36](https://github.com/HankHuang0516/realbot/commit/d2a5c362b923bc88da2d46189b90d76fbe6baa6d))
+
 ## [1.27.1](https://github.com/HankHuang0516/realbot/compare/v1.27.0...v1.27.1) (2026-02-26)
 
 
