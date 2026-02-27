@@ -1,3 +1,10 @@
+## [1.33.2](https://github.com/HankHuang0516/realbot/compare/v1.33.1...v1.33.2) (2026-02-27)
+
+
+### Bug Fixes
+
+* **admin:** use cookie-based auth for DELETE official-bot endpoint ([0c1b8dd](https://github.com/HankHuang0516/realbot/commit/0c1b8dd5aacdb6b14dae3c99c36b01547efbf765))
+
 ## [1.33.1](https://github.com/HankHuang0516/realbot/compare/v1.33.0...v1.33.1) (2026-02-27)
 
 
