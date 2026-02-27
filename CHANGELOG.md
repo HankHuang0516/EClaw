@@ -1,3 +1,10 @@
+## [1.29.2](https://github.com/HankHuang0516/realbot/compare/v1.29.1...v1.29.2) (2026-02-27)
+
+
+### Bug Fixes
+
+* improve local/private IP webhook rejection with OpenClaw Overview guidance ([940feda](https://github.com/HankHuang0516/realbot/commit/940fedaa42e6bc96c5aa93fb5d4639c64cef12d4))
+
 ## [1.29.1](https://github.com/HankHuang0516/realbot/compare/v1.29.0...v1.29.1) (2026-02-27)
 
 
