@@ -584,6 +584,22 @@
             background: var(--card-border);
         }
 
+        .btn-remove-bot {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .btn-remove-bot:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
         .add-bot-btn {
             background: var(--primary);
             color: #fff;
@@ -789,7 +805,7 @@
             html += '<div class="section-title" style="justify-content:space-between;">' + i18n.t('admin_sec_bots') + ' (' + (botsData.bots || []).length + ') <button class="add-bot-btn" onclick="showCreateBotDialog()">' + i18n.t('admin_btn_add_bot') + '</button></div>';
             html += '<div class="table-scroll">';
             html += '<table class="data-table">';
-            html += '<thead><tr><th>' + i18n.t('admin_col_bot_id') + '</th><th>' + i18n.t('admin_col_type') + '</th><th>' + i18n.t('admin_col_status') + '</th><th>' + i18n.t('admin_col_assigned') + '</th><th>' + i18n.t('admin_col_user') + '</th><th>' + i18n.t('admin_col_assigned_at') + '</th><th>' + i18n.t('admin_col_conv_24h') + '</th><th>' + i18n.t('admin_col_conv_avg5h') + '</th><th>' + i18n.t('admin_col_users_24h') + '</th><th>' + i18n.t('admin_col_users_avg5h') + '</th></tr></thead>';
+            html += '<thead><tr><th>' + i18n.t('admin_col_bot_id') + '</th><th>' + i18n.t('admin_col_type') + '</th><th>' + i18n.t('admin_col_status') + '</th><th>' + i18n.t('admin_col_assigned') + '</th><th>' + i18n.t('admin_col_user') + '</th><th>' + i18n.t('admin_col_assigned_at') + '</th><th>' + i18n.t('admin_col_conv_24h') + '</th><th>' + i18n.t('admin_col_conv_avg5h') + '</th><th>' + i18n.t('admin_col_users_24h') + '</th><th>' + i18n.t('admin_col_users_avg5h') + '</th><th>' + i18n.t('admin_col_actions') + '</th></tr></thead>';
             html += '<tbody>';
             if (botsData.bots && botsData.bots.length > 0) {
                 for (const b of botsData.bots) {
@@ -824,10 +840,11 @@
                         '<td>' + b.avgConvPer5h + '</td>' +
                         '<td>' + users24hCell + '</td>' +
                         '<td>' + usersAvg5hCell + '</td>' +
+                        '<td><button class="btn-remove-bot" onclick="confirmRemoveBot(\'' + escapeHtml(b.botId) + '\', \'' + escapeHtml(b.status) + '\')">' + i18n.t('admin_btn_remove_bot') + '</button></td>' +
                         '</tr>';
                 }
             } else {
-                html += '<tr><td colspan="10" style="text-align:center;color:var(--text-secondary);">' + i18n.t('admin_no_bots') + '</td></tr>';
+                html += '<tr><td colspan="11" style="text-align:center;color:var(--text-secondary);">' + i18n.t('admin_no_bots') + '</td></tr>';
             }
             html += '</tbody></table></div></div>';
 
@@ -1039,6 +1056,51 @@
             }
             html += '</div>';
             return html;
+        }
+
+        function confirmRemoveBot(botId, status) {
+            const isAssigned = status === 'assigned';
+            const overlay = document.createElement('div');
+            overlay.className = 'create-bot-overlay';
+            overlay.innerHTML =
+                '<div class="create-bot-dialog">' +
+                '<h3>' + i18n.t('admin_dlg_remove_bot_title') + '</h3>' +
+                '<p style="color:var(--text-secondary);font-size:14px;margin:0 0 8px 0;">' +
+                i18n.t('admin_dlg_remove_bot_desc', { botId: botId }) +
+                '</p>' +
+                (isAssigned ? '<p style="color:var(--warning);font-size:13px;margin:0 0 8px 0;">' + i18n.t('admin_dlg_remove_bot_warn_assigned') + '</p>' : '') +
+                '<div class="dialog-actions">' +
+                '<button class="btn-cancel" onclick="this.closest(\'.create-bot-overlay\').remove()">' + i18n.t('admin_dlg_cancel') + '</button>' +
+                '<button class="btn-remove-bot" style="padding:8px 16px;font-size:14px;" id="btnConfirmRemoveBot" onclick="removeBot(\'' + botId + '\', ' + isAssigned + ', this)">' + i18n.t('admin_btn_remove_bot') + '</button>' +
+                '</div>' +
+                '</div>';
+            document.body.appendChild(overlay);
+
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.remove();
+            });
+        }
+
+        async function removeBot(botId, isAssigned, btnEl) {
+            btnEl.disabled = true;
+            btnEl.textContent = i18n.t('admin_dlg_removing');
+
+            try {
+                const url = '/api/admin/official-bot/' + encodeURIComponent(botId) + (isAssigned ? '?force=true' : '');
+                await apiCall('DELETE', url);
+
+                const overlay = btnEl.closest('.create-bot-overlay');
+                if (overlay) overlay.remove();
+
+                showToast(i18n.t('admin_msg_bot_removed'), 'success');
+
+                botsData = await apiCall('GET', '/api/admin/bots');
+                render();
+            } catch (e) {
+                showToast(e.message, 'error');
+                btnEl.disabled = false;
+                btnEl.textContent = i18n.t('admin_btn_remove_bot');
+            }
         }
 
         function showCreateBotDialog() {
