@@ -1,3 +1,10 @@
+## [1.43.3](https://github.com/HankHuang0516/realbot/compare/v1.43.2...v1.43.3) (2026-02-28)
+
+
+### Bug Fixes
+
+* set CLAUDE_DANGEROUSLY_SKIP_PERMISSIONS env var for headless CLI ([7a5681b](https://github.com/HankHuang0516/realbot/commit/7a5681b117c831664694fbae065115e9058d8c19))
+
 ## [1.43.2](https://github.com/HankHuang0516/realbot/compare/v1.43.1...v1.43.2) (2026-02-28)
 
 
