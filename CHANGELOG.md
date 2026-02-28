@@ -1,3 +1,10 @@
+# [1.43.0](https://github.com/HankHuang0516/realbot/compare/v1.42.2...v1.43.0) (2026-02-28)
+
+
+### Features
+
+* **proxy:** enable AI to query server logs via Bash + curl ([cf49236](https://github.com/HankHuang0516/realbot/commit/cf49236a86be3e61844a2af77d4b781e08daa6bd))
+
 ## [1.42.2](https://github.com/HankHuang0516/realbot/compare/v1.42.1...v1.42.2) (2026-02-28)
 
 
