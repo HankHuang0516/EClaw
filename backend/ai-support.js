@@ -239,6 +239,10 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         const proxyKey = process.env.SUPPORT_API_KEY;
 
         if (!proxyUrl || !proxyKey) {
+            const missing = [];
+            if (!proxyUrl) missing.push('CLAUDE_CLI_PROXY_URL');
+            if (!proxyKey) missing.push('SUPPORT_API_KEY');
+            console.warn(`[AI Support] Proxy not configured — missing env: ${missing.join(', ')}`);
             return {
                 success: true,
                 source: 'fallback',
@@ -249,13 +253,17 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                     'If SETUP_PASSWORD is enabled, include setup_username and setup_password.',
                     'Retry POST /api/bot/register with openclaw_version included.'
                 ],
-                confidence: 0
+                confidence: 0,
+                debug: { reason: 'proxy_not_configured', missing_env: missing }
             };
         }
 
+        const targetUrl = proxyUrl + '/analyze';
+        console.log(`[AI Support] Forwarding to proxy: ${targetUrl}`);
+
         const startTime = Date.now();
         try {
-            const response = await fetch(proxyUrl + '/analyze', {
+            const response = await fetch(targetUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -272,9 +280,12 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
             });
 
             const latencyMs = Date.now() - startTime;
+            console.log(`[AI Support] Proxy responded: HTTP ${response.status} (${latencyMs}ms)`);
 
             if (!response.ok) {
-                throw new Error(`Proxy returned HTTP ${response.status}`);
+                const body = await response.text().catch(() => '(unreadable)');
+                console.error(`[AI Support] Proxy error body: ${body.slice(0, 500)}`);
+                throw new Error(`Proxy returned HTTP ${response.status}: ${body.slice(0, 200)}`);
             }
 
             const result = await response.json();
@@ -288,7 +299,8 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
             };
         } catch (err) {
             const latencyMs = Date.now() - startTime;
-            console.error(`[AI Support] Proxy error (${latencyMs}ms):`, err.message);
+            const errDetail = err.cause ? `${err.message} (cause: ${err.cause.code || err.cause.message})` : err.message;
+            console.error(`[AI Support] Proxy error (${latencyMs}ms): ${errDetail}`);
 
             return {
                 success: true,
@@ -300,7 +312,8 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                     'If SETUP_PASSWORD is enabled, include setup_username and setup_password.',
                     'Retry POST /api/bot/register with openclaw_version included.'
                 ],
-                confidence: 0
+                confidence: 0,
+                debug: { reason: 'proxy_error', error: errDetail, latency_ms: latencyMs, target_url: targetUrl }
             };
         }
     }
@@ -446,6 +459,42 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         }
 
         return res.json(proxyResult);
+    });
+
+    // ── Debug: Proxy Connectivity Test ────────
+    router.get('/proxy-status', async (req, res) => {
+        const proxyUrl = process.env.CLAUDE_CLI_PROXY_URL;
+        const proxyKey = process.env.SUPPORT_API_KEY;
+
+        const status = {
+            proxy_url: proxyUrl || '(not set)',
+            api_key_set: !!proxyKey,
+            connectivity: 'unknown'
+        };
+
+        if (!proxyUrl) {
+            status.connectivity = 'not_configured';
+            return res.json(status);
+        }
+
+        try {
+            const healthUrl = proxyUrl + '/health';
+            const startTime = Date.now();
+            const response = await fetch(healthUrl, { signal: AbortSignal.timeout(5000) });
+            status.latency_ms = Date.now() - startTime;
+            status.http_status = response.status;
+            status.connectivity = response.ok ? 'ok' : 'error';
+            if (response.ok) {
+                status.health = await response.json().catch(() => null);
+            } else {
+                status.body = await response.text().catch(() => '(unreadable)');
+            }
+        } catch (err) {
+            status.connectivity = 'unreachable';
+            status.error = err.cause ? `${err.message} (${err.cause.code || err.cause.message})` : err.message;
+        }
+
+        res.json(status);
     });
 
     // ── Admin Chat Endpoint (no botSecret needed) ──

@@ -16,8 +16,20 @@ const PORT = process.env.PORT || 4000;
 const CLAUDE_TIMEOUT_MS = 25000; // 25s (leave 5s buffer for HTTP)
 
 // ── Health Check ────────────────────────────
-app.get('/health', (req, res) => {
-    res.json({ status: 'ok', service: 'eclaw-claude-cli-proxy' });
+app.get('/health', async (req, res) => {
+    const health = { status: 'ok', service: 'eclaw-claude-cli-proxy', claude_cli: 'unknown' };
+    try {
+        const { stdout } = await execFileAsync('claude', ['--version'], {
+            timeout: 5000, encoding: 'utf8',
+            env: { ...process.env, HOME: process.env.HOME || '/root' }
+        });
+        health.claude_cli = 'available';
+        health.claude_version = stdout.trim();
+    } catch (err) {
+        health.claude_cli = 'unavailable';
+        health.claude_error = err.message.slice(0, 200);
+    }
+    res.json(health);
 });
 
 // ── Auth Middleware ─────────────────────────
@@ -38,22 +50,33 @@ app.post('/analyze', async (req, res) => {
 
     const prompt = buildAnalysisPrompt(problem_description, error_messages, logs, handshake_failures, device_context);
 
+    console.log(`[Proxy] Received analysis request for device: ${device_context?.deviceId || '?'}`);
+
     try {
-        // Call Claude CLI in print mode (-p flag) with --output-format json for structured output
-        const { stdout } = await execFileAsync('claude', ['-p', prompt, '--output-format', 'json'], {
+        // Check if claude CLI is available
+        console.log('[Proxy] Calling claude CLI...');
+        const startTime = Date.now();
+
+        const { stdout, stderr } = await execFileAsync('claude', ['-p', prompt, '--output-format', 'json'], {
             timeout: CLAUDE_TIMEOUT_MS,
             encoding: 'utf8',
             maxBuffer: 1024 * 1024,
             env: { ...process.env, HOME: process.env.HOME || '/root' }
         });
 
+        const latencyMs = Date.now() - startTime;
+        console.log(`[Proxy] Claude CLI responded (${latencyMs}ms), stdout length: ${stdout.length}`);
+        if (stderr) console.warn(`[Proxy] Claude CLI stderr: ${stderr.slice(0, 500)}`);
+
         const analysis = parseClaudeResponse(stdout);
         res.json(analysis);
     } catch (err) {
-        console.error('[Proxy] Claude CLI error:', err.message);
-        if (err.killed) {
-            console.error('[Proxy] Process killed (timeout)');
-        }
+        const errCode = err.code || 'unknown';
+        const errSignal = err.signal || 'none';
+        console.error(`[Proxy] Claude CLI error: ${err.message}`);
+        console.error(`[Proxy] Error details — code: ${errCode}, signal: ${errSignal}, killed: ${!!err.killed}`);
+        if (err.stderr) console.error(`[Proxy] stderr: ${err.stderr.slice(0, 500)}`);
+
         res.status(500).json({
             diagnosis: 'AI analysis timed out or failed. Please try standard troubleshooting.',
             suggested_steps: [
@@ -62,7 +85,13 @@ app.post('/analyze', async (req, res) => {
                 'If SETUP_PASSWORD is enabled, include it in /api/bot/register.',
                 'Retry POST /api/bot/register with openclaw_version included.'
             ],
-            confidence: 0
+            confidence: 0,
+            debug: {
+                error: err.message.slice(0, 300),
+                code: errCode,
+                killed: !!err.killed,
+                signal: errSignal
+            }
         });
     }
 });
