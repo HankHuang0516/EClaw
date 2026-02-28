@@ -1,3 +1,10 @@
+## [1.39.2](https://github.com/HankHuang0516/realbot/compare/v1.39.1...v1.39.2) (2026-02-28)
+
+
+### Bug Fixes
+
+* add debug logging to AI support proxy communication ([a3dcd81](https://github.com/HankHuang0516/realbot/commit/a3dcd816ce642126f2fc132e36781a8c6de2c096))
+
 ## [1.39.1](https://github.com/HankHuang0516/realbot/compare/v1.39.0...v1.39.1) (2026-02-28)
 
 
