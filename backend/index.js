@@ -12,6 +12,7 @@ const flickr = require('./flickr');
 const gatekeeper = require('./gatekeeper');
 const telemetry = require('./device-telemetry');
 const feedbackModule = require('./device-feedback');
+const chatIntegrity = require('./chat-integrity');
 const scheduler = require('./scheduler');
 const notifModule = require('./notifications');
 const feedbackEmail = require('./feedback-email');
@@ -2369,20 +2370,25 @@ app.post('/api/client/speak', async (req, res) => {
         return res.status(404).json({ success: false, message: "Device not found" });
     }
 
-    // Usage enforcement — only for free bot targets
+    // Usage enforcement — apply to all bound entities except personal bots
     const targetEids = entityId === "all"
         ? Object.keys(device.entities).map(Number).filter(i => device.entities[i]?.isBound)
         : Array.isArray(entityId)
             ? entityId.map(id => parseInt(id))
             : [parseInt(entityId) || 0];
-    const hasFreeBotTarget = targetEids.some(eId => {
+    const hasLimitedTarget = targetEids.some(eId => {
+        const entity = device.entities[eId];
+        if (!entity || !entity.isBound) return false;
+        // Personal bots (user's own) are exempt from usage limits
         const binding = officialBindingsCache[getBindingCacheKey(deviceId, eId)];
-        if (!binding) return false;
-        const bot = officialBots[binding.bot_id];
-        return bot && bot.bot_type === 'free';
+        if (binding) {
+            const bot = officialBots[binding.bot_id];
+            if (bot && bot.bot_type === 'personal') return false;
+        }
+        return true;
     });
 
-    if (hasFreeBotTarget) {
+    if (hasLimitedTarget) {
         try {
             const usage = await subscriptionModule.enforceUsageLimit(deviceId);
             if (!usage.allowed) {
@@ -6049,6 +6055,7 @@ telemetry.initTelemetryTable(chatPool);
 feedbackModule.initFeedbackTable(chatPool);
 feedbackModule.initFeedbackPhotosTable(chatPool);
 notifModule.initNotificationTables(chatPool);
+chatIntegrity.initIntegrityTable(chatPool);
 
 // Auto-migrate: add delivery tracking + media columns
 chatPool.query(`
@@ -7062,6 +7069,27 @@ app.get('/api/chat/history', async (req, res) => {
 // ============================================
 // MESSAGE REACTIONS (Like / Dislike)
 // ============================================
+
+/**
+ * POST /api/chat/integrity-report
+ * Receives chat display/data integrity mismatch reports from Web/Android.
+ * Auto-logs, persists, and creates GitHub issues on new mismatches.
+ * Body: { deviceId, deviceSecret, platform, layer, checkType, description, expected, actual, affectedIds, appVersion }
+ */
+app.post('/api/chat/integrity-report', async (req, res) => {
+    const { deviceId, deviceSecret } = req.body;
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    }
+    try {
+        const result = await chatIntegrity.report(chatPool, req.body, { serverLog });
+        res.json({ success: true, ...result });
+    } catch (err) {
+        console.error('[ChatIntegrity] Endpoint error:', err.message);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
 
 /**
  * POST /api/message/:messageId/react

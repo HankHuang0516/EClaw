@@ -227,7 +227,7 @@ function captureApiCall(pool, deviceId, data) {
         page:     null,
         input:    data.input || null,
         output:   data.output || null,
-        duration: data.duration || null,
+        duration: data.duration ?? null,
         meta:     data.meta || null
     }]).catch(() => {});
 }
@@ -347,7 +347,7 @@ async function clearEntries(pool, deviceId) {
  */
 function createMiddleware(pool, deviceLookup) {
     // Paths to skip (telemetry endpoints themselves, static, health)
-    const SKIP = ['/api/device-telemetry', '/favicon', '/shared/', '/portal/', '/mission/'];
+    const SKIP = ['/api/device-telemetry', '/favicon', '/shared/', '/portal/'];
 
     return (req, res, next) => {
         // Only capture API requests
@@ -356,6 +356,8 @@ function createMiddleware(pool, deviceLookup) {
         }
 
         const start = Date.now();
+        // Save path before Express sub-routers strip mount point
+        const capturedPath = req.path;
 
         // Intercept res.json to capture output
         const originalJson = res.json.bind(res);
@@ -404,7 +406,7 @@ function createMiddleware(pool, deviceLookup) {
 
                 captureApiCall(pool, deviceId, {
                     method:   req.method,
-                    path:     req.path,
+                    path:     capturedPath,
                     input:    inputSummary,
                     output:   outputSummary,
                     duration: duration
