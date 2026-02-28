@@ -468,6 +468,7 @@ process.on('SIGTERM', async () => {
 // Initialize persistence on startup (async)
 initPersistence().catch(err => {
     console.error('[Persistence] Initialization failed:', err.message);
+    serverLog('error', 'system', `Persistence initialization failed: ${err.message}`, { metadata: { error: err.message } });
 });
 
 // ============================================
@@ -3212,6 +3213,7 @@ app.post('/api/client/cross-speak', async (req, res) => {
             }
         }).catch(err => {
             console.error(`[ClientCrossSpeak] Push failed: ${err.message}`);
+            serverLog('error', 'push_error', `ClientCrossSpeak ${fromEntity.publicCode} -> ${targetCode} FAILED: ${err.message}`, { deviceId, entityId: fromId });
         });
     }
 
@@ -4696,6 +4698,7 @@ app.post('/api/bot/register', async (req, res) => {
         if (!probeResponse.ok) {
             console.error(`[Bot Register] ✗ Handshake FAILED: ${finalUrl} returned HTTP ${probeResponse.status}`);
             console.error(`[Bot Register] Response: ${responseText}`);
+            serverLog('error', 'handshake', `Handshake HTTP ${probeResponse.status}: ${finalUrl}`, { deviceId, entityId: eId, metadata: { status: probeResponse.status, error: responseText.substring(0, 300) } });
 
             // Parse error for specific failure reasons
             let parsedError = null;
@@ -4774,6 +4777,7 @@ app.post('/api/bot/register', async (req, res) => {
         if (responseText && (responseText.includes('pairing required') || responseText.includes('gateway closed'))) {
             console.error(`[Bot Register] ✗ Handshake FAILED: gateway disconnected (pairing required)`);
             console.error(`[Bot Register] Response: ${responseText.substring(0, 300)}`);
+            serverLog('error', 'handshake', `Handshake pairing required: ${finalUrl}`, { deviceId, entityId: eId });
             logHandshakeFailure({ deviceId, entityId: eId, webhookUrl: finalUrl, errorType: 'pairing_required', httpStatus: 200, errorMessage: 'gateway closed (1008): pairing required', responseBody: responseText?.substring(0, 500), source: 'bot_register_handshake' });
             const fix = getWebhookFixInstructions('pairing_required', openclaw_version);
             return res.status(400).json({
@@ -4803,6 +4807,7 @@ app.post('/api/bot/register', async (req, res) => {
         } else {
             // Actual connection failure - gateway is unreachable
             console.error(`[Bot Register] ✗ Handshake connection failed: ${probeErr.message}`);
+            serverLog('error', 'handshake', `Handshake connection failed: ${probeErr.message}`, { deviceId, entityId: eId, metadata: { url: finalUrl } });
             logHandshakeFailure({ deviceId, entityId: eId, webhookUrl: finalUrl, errorType: 'connection_failed', errorMessage: probeErr.message, source: 'bot_register' });
             const fix = getWebhookFixInstructions('localhost_rejected', openclaw_version);
             return res.status(400).json({
@@ -5235,6 +5240,7 @@ async function gatewayWsFetch(httpUrl, token, body, options) {
         }
     } catch (err) {
         console.error(`[GatewayWS] Invocation failed:`, err.message);
+        serverLog('error', 'handshake', `GatewayWS invocation failed: ${err.message}`, {});
         return {
             ok: false,
             status: 502,
@@ -5350,6 +5356,7 @@ async function handshakeWithBot(url, token, preferredSessionKey, deviceId, entit
     }
 
     console.error(`[Handshake] ✗ All session attempts failed. Bot gateway may not have active sessions.`);
+    serverLog('error', 'handshake', `All session attempts failed for Entity ${entityId}`, { deviceId, entityId, metadata: { url } });
     logHandshakeFailure({ deviceId, entityId, webhookUrl: url, errorType: 'no_sessions', errorMessage: result.error || 'No working session found on gateway', source: 'bind_handshake' });
     return { success: false, error: result.error || 'No working session found on gateway' };
 }
@@ -5489,11 +5496,13 @@ async function pushToBot(entity, deviceId, eventType, payload) {
                         return { pushed: true };
                     } else {
                         console.error(`[Push] ✗ Retry with discovered session failed: ${retryText.substring(0, 200)}`);
+                        serverLog('error', 'push_error', `Session discovery retry failed for Entity ${entity.entityId}`, { deviceId, entityId: entity.entityId, metadata: { error: retryText.substring(0, 200) } });
                         entity.pushStatus = { ok: false, reason: 'session_discovery_failed', at: Date.now() };
                         return { pushed: false, reason: 'session_discovery_retry_failed', error: retryText };
                     }
                 } else {
                     console.error(`[Push] ✗ No sessions discovered on gateway`);
+                    serverLog('error', 'push_error', `No sessions on gateway for Entity ${entity.entityId}`, { deviceId, entityId: entity.entityId });
                     entity.pushStatus = { ok: false, reason: 'no_sessions', at: Date.now() };
                     return { pushed: false, reason: 'no_sessions_available', error: responseText };
                 }
@@ -5529,6 +5538,7 @@ async function pushToBot(entity, deviceId, eventType, payload) {
             const errorText = await response.text().catch(() => '');
             console.error(`[Push] ✗ Device ${deviceId} Entity ${entity.entityId}: Push failed with status ${response.status}`);
             console.error(`[Push] Error response: ${errorText}`);
+            serverLog('error', 'push_error', `Entity ${entity.entityId} push HTTP ${response.status}`, { deviceId, entityId: entity.entityId, metadata: { status: response.status, error: errorText.substring(0, 300) } });
 
             // Build debug hint based on error status
             let debugHint = '';
@@ -5551,6 +5561,7 @@ async function pushToBot(entity, deviceId, eventType, payload) {
     } catch (err) {
         console.error(`[Push] ✗ Device ${deviceId} Entity ${entity.entityId}: Push error:`, err.message);
         console.error(`[Push] Full error:`, err);
+        serverLog('error', 'push_error', `Entity ${entity.entityId} push exception: ${err.message}`, { deviceId, entityId: entity.entityId });
 
         // Notify device about webhook failure via entity message
         entity.message = `[SYSTEM:WEBHOOK_ERROR] Push connection failed: ${err.message}`;

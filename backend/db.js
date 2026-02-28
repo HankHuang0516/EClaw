@@ -260,6 +260,11 @@ async function saveDeviceData(deviceId, deviceData) {
         }
     } catch (err) {
         console.error(`[DB] Failed to save device ${deviceId}:`, err.message);
+        // Log to server_logs for AI visibility
+        pool.query(
+            `INSERT INTO server_logs (level, category, message, device_id, metadata) VALUES ($1, $2, $3, $4, $5)`,
+            ['error', 'db_save', `Failed to save device: ${err.message}`, deviceId, JSON.stringify({ error: err.message })]
+        ).catch(() => {});
         return false;
     }
 }

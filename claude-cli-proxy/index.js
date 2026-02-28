@@ -246,7 +246,7 @@ You can query real-time server logs using Bash + curl when debugging issues.
 Command template:
   curl -s "${ECLAW_API_URL}/api/logs?deviceId=${LOG_DEVICE_ID}&deviceSecret=${LOG_DEVICE_SECRET}&limit=30"
 Available filters (append as query params):
-  - category: bind, unbind, transform, broadcast, broadcast_push, speakto_push, client_push, entity_poll, ai_support, ai_chat
+  - category: bind, unbind, transform, broadcast, broadcast_push, speakto_push, client_push, entity_poll, ai_support, ai_chat, db_save, push_error, handshake, system
   - level: info, warn, error
   - since: timestamp in milliseconds (e.g. since=1700000000000)
   - filterDevice: filter by specific deviceId
