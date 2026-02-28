@@ -1,3 +1,10 @@
+## [1.43.7](https://github.com/HankHuang0516/realbot/compare/v1.43.6...v1.43.7) (2026-02-28)
+
+
+### Bug Fixes
+
+* handle duplicate public_code gracefully during device save ([3c15ea6](https://github.com/HankHuang0516/realbot/commit/3c15ea6be4dea4360f44f82464e86e99cec159fe))
+
 ## [1.43.6](https://github.com/HankHuang0516/realbot/compare/v1.43.5...v1.43.6) (2026-02-28)
 
 
