@@ -1,3 +1,10 @@
+## [1.39.3](https://github.com/HankHuang0516/realbot/compare/v1.39.2...v1.39.3) (2026-02-28)
+
+
+### Bug Fixes
+
+* install Claude CLI as dependency in proxy container ([3f4c854](https://github.com/HankHuang0516/realbot/commit/3f4c85443e45c3cef2eaecc767e6814024a41f82))
+
 ## [1.39.2](https://github.com/HankHuang0516/realbot/compare/v1.39.1...v1.39.2) (2026-02-28)
 
 
