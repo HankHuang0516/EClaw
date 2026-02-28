@@ -1,3 +1,10 @@
+# [1.47.0](https://github.com/HankHuang0516/realbot/compare/v1.46.0...v1.47.0) (2026-02-28)
+
+
+### Features
+
+* add AI chat concurrency queue with auto-retry ([ea58eb7](https://github.com/HankHuang0516/realbot/commit/ea58eb70e0f07b494cec7db495910edffe727d56))
+
 # [1.46.0](https://github.com/HankHuang0516/realbot/compare/v1.45.1...v1.46.0) (2026-02-28)
 
 
