@@ -184,7 +184,7 @@ app.use('/chat', (req, res, next) => {
 // ── Chat Endpoint (Sonnet + repo tools) ────
 function runClaudeChat(prompt, timeoutMs = CHAT_TIMEOUT_MS, { isAdmin = false } = {}) {
     return new Promise((resolve, reject) => {
-        const args = ['--print', '--output-format', 'json', '--model', 'sonnet', '--dangerouslySkipPermissions'];
+        const args = ['--print', '--output-format', 'json', '--model', 'sonnet'];
         // Enable file access tools if repo is cloned; Bash only for admin
         if (fs.existsSync(path.join(REPO_DIR, '.git'))) {
             const tools = isAdmin ? 'Read,Glob,Grep,Bash' : 'Read,Glob,Grep';
