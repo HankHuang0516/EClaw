@@ -37,6 +37,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import com.hank.clawlive.data.local.database.ChatDatabase
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.EntityAvatarManager
 import com.hank.clawlive.fcm.ClawFcmService
@@ -53,8 +54,10 @@ import com.hank.clawlive.ui.EntityChipHelper
 import com.hank.clawlive.ui.MainViewModel
 import com.hank.clawlive.ui.NavItem
 import com.hank.clawlive.ui.RecordingIndicatorHelper
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import timber.log.Timber
 
@@ -505,6 +508,9 @@ class MainActivity : AppCompatActivity() {
                 val response = api.reorderEntities(body)
 
                 if (response.success) {
+                    // Migrate wallpaper positions, scales, and registered entity IDs
+                    layoutPrefs.migrateEntityOrder(order)
+
                     // Update local avatar mappings to match new order
                     val oldAvatars = mutableMapOf<Int, String>()
                     for (i in currentOrder.indices) {
@@ -512,6 +518,15 @@ class MainActivity : AppCompatActivity() {
                     }
                     for (i in currentOrder.indices) {
                         avatarManager.setAvatar(i, oldAvatars[currentOrder[i]] ?: avatarManager.getAvatar(currentOrder[i]))
+                    }
+
+                    // Clear local chat cache (server has migrated entity_ids)
+                    withContext(Dispatchers.IO) {
+                        try {
+                            ChatDatabase.getDao(this@MainActivity).clearAll()
+                        } catch (e: Exception) {
+                            Timber.w(e, "Failed to clear chat cache after reorder")
+                        }
                     }
 
                     entityAdapter.markOrderSaved()

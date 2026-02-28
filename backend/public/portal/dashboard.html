@@ -1459,6 +1459,20 @@
                     order: order
                 });
                 if (result.success) {
+                    // Migrate localStorage avatar keys to match new order
+                    var oldAvatars = {};
+                    for (var j = 0; j < currentOrder.length; j++) {
+                        var saved = localStorage.getItem('eclaw_avatar_' + currentOrder[j]);
+                        if (saved) oldAvatars[currentOrder[j]] = saved;
+                    }
+                    for (var j = 0; j < currentOrder.length; j++) {
+                        if (oldAvatars[currentOrder[j]]) {
+                            localStorage.setItem('eclaw_avatar_' + j, oldAvatars[currentOrder[j]]);
+                        } else {
+                            localStorage.removeItem('eclaw_avatar_' + j);
+                        }
+                    }
+
                     showToast(i18n.t('dash_reorder_success'), 'success');
                     setTimeout(function() { loadEntities(); }, 500);
                 } else {

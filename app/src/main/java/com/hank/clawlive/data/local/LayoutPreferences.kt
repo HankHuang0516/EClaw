@@ -210,6 +210,54 @@ class LayoutPreferences private constructor(context: Context) {
     }
 
     /**
+     * Migrate custom positions, scales, and registered entity IDs after a reorder.
+     * @param permutation order[newSlot] = oldSlot (same semantics as the reorder API)
+     */
+    fun migrateEntityOrder(permutation: IntArray) {
+        // 1. Snapshot old positions and scales
+        val oldPositions = mutableMapOf<Int, String?>()
+        val oldScales = mutableMapOf<Int, Float?>()
+        for (oldSlot in permutation) {
+            oldPositions[oldSlot] = prefs.getString("${KEY_CUSTOM_POS_PREFIX}$oldSlot", null)
+            val scaleKey = "${KEY_ENTITY_SCALE_PREFIX}$oldSlot"
+            oldScales[oldSlot] = if (prefs.contains(scaleKey)) prefs.getFloat(scaleKey, 1.0f) else null
+        }
+
+        // 2. Apply to new slots
+        val editor = prefs.edit()
+        for (newSlot in permutation.indices) {
+            val oldSlot = permutation[newSlot]
+            // Custom position
+            val posStr = oldPositions[oldSlot]
+            if (posStr != null) {
+                editor.putString("${KEY_CUSTOM_POS_PREFIX}$newSlot", posStr)
+            } else {
+                editor.remove("${KEY_CUSTOM_POS_PREFIX}$newSlot")
+            }
+            // Entity scale
+            val scale = oldScales[oldSlot]
+            if (scale != null) {
+                editor.putFloat("${KEY_ENTITY_SCALE_PREFIX}$newSlot", scale)
+            } else {
+                editor.remove("${KEY_ENTITY_SCALE_PREFIX}$newSlot")
+            }
+        }
+
+        // 3. Rebuild registered entity IDs through permutation
+        val oldRegistered = getRegisteredEntityIds()
+        val newRegistered = mutableSetOf<Int>()
+        for (newSlot in permutation.indices) {
+            val oldSlot = permutation[newSlot]
+            if (oldRegistered.contains(oldSlot)) {
+                newRegistered.add(newSlot)
+            }
+        }
+        editor.putStringSet(KEY_REGISTERED_ENTITIES, newRegistered.map { it.toString() }.toSet())
+
+        editor.apply()
+    }
+
+    /**
      * Debug entity limit (4 or 8). Only used when BuildConfig.DEBUG is true.
      */
     var debugEntityLimit: Int

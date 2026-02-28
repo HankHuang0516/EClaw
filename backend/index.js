@@ -2099,15 +2099,17 @@ app.post('/api/device/reorder-entities', async (req, res) => {
         return res.status(403).json({ success: false, error: 'Invalid device credentials' });
     }
 
-    if (!Array.isArray(order) || order.length !== MAX_ENTITIES_PER_DEVICE) {
-        return res.status(400).json({ success: false, error: `order must be array of ${MAX_ENTITIES_PER_DEVICE} slot indices` });
+    const deviceLimit = getDeviceEntityLimit(deviceId);
+
+    if (!Array.isArray(order) || order.length !== deviceLimit) {
+        return res.status(400).json({ success: false, error: `order must be array of ${deviceLimit} slot indices` });
     }
 
-    // Validate order is a valid permutation of [0..MAX_ENTITIES_PER_DEVICE-1]
+    // Validate order is a valid permutation of [0..deviceLimit-1]
     const sorted = [...order].sort();
-    for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
+    for (let i = 0; i < deviceLimit; i++) {
         if (sorted[i] !== i) {
-            return res.status(400).json({ success: false, error: 'order must be a valid permutation of [0,1,2,3]' });
+            return res.status(400).json({ success: false, error: `order must be a valid permutation of [0..${deviceLimit - 1}]` });
         }
     }
 
@@ -2122,7 +2124,7 @@ app.post('/api/device/reorder-entities', async (req, res) => {
     // Step 1: Snapshot current entities and bindings
     const oldEntities = [];
     const oldBindings = {};
-    for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
+    for (let i = 0; i < deviceLimit; i++) {
         oldEntities[i] = device.entities[i] ? { ...device.entities[i] } : createDefaultEntity(i);
         const cacheKey = getBindingCacheKey(deviceId, i);
         if (officialBindingsCache[cacheKey]) {
@@ -2134,7 +2136,7 @@ app.post('/api/device/reorder-entities', async (req, res) => {
     // order[newSlot] = oldSlot → entity from oldSlot goes to newSlot
     const botsToNotify = [];
 
-    for (let newSlot = 0; newSlot < MAX_ENTITIES_PER_DEVICE; newSlot++) {
+    for (let newSlot = 0; newSlot < deviceLimit; newSlot++) {
         const oldSlot = order[newSlot];
         const entity = { ...oldEntities[oldSlot] };
         entity.entityId = newSlot; // Update entity ID to new slot
@@ -2161,29 +2163,91 @@ app.post('/api/device/reorder-entities', async (req, res) => {
         }
     }
 
-    // Step 3: Persist binding changes to DB
-    if (usePostgreSQL) {
-        // Remove all old bindings for this device, re-insert with new entity IDs
-        for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
-            await db.removeOfficialBinding(deviceId, i);
+    // Step 2b: Rebuild publicCodeIndex for this device
+    for (let slot = 0; slot < deviceLimit; slot++) {
+        const entity = device.entities[slot];
+        if (entity && entity.isBound && entity.publicCode) {
+            publicCodeIndex[entity.publicCode] = { deviceId, entityId: slot };
         }
-        for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
-            const cacheKey = getBindingCacheKey(deviceId, i);
-            const binding = officialBindingsCache[cacheKey];
-            if (binding) {
-                await db.saveOfficialBinding(binding);
-            }
-        }
+    }
 
-        // Update personal bot assignments
-        for (const info of botsToNotify) {
-            if (info.binding) {
-                const bot = officialBots[info.binding.bot_id];
-                if (bot && bot.bot_type === 'personal' && bot.assigned_device_id === deviceId) {
-                    bot.assigned_entity_id = info.newSlot;
-                    await db.saveOfficialBot(bot);
+    // Build CASE WHEN mapping for DB migrations (only slots that moved)
+    const movedSlots = []; // { oldSlot, newSlot }
+    for (let newSlot = 0; newSlot < deviceLimit; newSlot++) {
+        const oldSlot = order[newSlot];
+        if (oldSlot !== newSlot) {
+            movedSlots.push({ oldSlot, newSlot });
+        }
+    }
+
+    // Step 3: Persist all changes to DB (in a single transaction)
+    if (usePostgreSQL && movedSlots.length > 0) {
+        const client = await chatPool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // 3a: Remove old bindings and re-insert with new entity IDs
+            for (let i = 0; i < deviceLimit; i++) {
+                await client.query(
+                    'DELETE FROM official_bot_bindings WHERE device_id = $1 AND entity_id = $2',
+                    [deviceId, i]
+                );
+            }
+            for (let i = 0; i < deviceLimit; i++) {
+                const cacheKey = getBindingCacheKey(deviceId, i);
+                const binding = officialBindingsCache[cacheKey];
+                if (binding) {
+                    await client.query(
+                        `INSERT INTO official_bot_bindings (bot_id, device_id, entity_id, session_key, bound_at, subscription_verified_at)
+                         VALUES ($1, $2, $3, $4, $5, $6)
+                         ON CONFLICT (device_id, entity_id)
+                         DO UPDATE SET bot_id = $1, session_key = $4, bound_at = $5, subscription_verified_at = $6`,
+                        [binding.bot_id, binding.device_id, binding.entity_id,
+                         binding.session_key, binding.bound_at || Date.now(), binding.subscription_verified_at || Date.now()]
+                    );
                 }
             }
+
+            // 3b: Migrate chat_messages entity_id
+            const caseClauses = movedSlots.map(s => `WHEN ${s.oldSlot} THEN ${s.newSlot}`).join(' ');
+            const affectedOldSlots = movedSlots.map(s => s.oldSlot);
+            await client.query(
+                `UPDATE chat_messages
+                 SET entity_id = CASE entity_id ${caseClauses} ELSE entity_id END
+                 WHERE device_id = $1 AND entity_id = ANY($2)`,
+                [deviceId, affectedOldSlots]
+            );
+
+            // 3c: Migrate scheduled_messages entity_id (active/pending only)
+            await client.query(
+                `UPDATE scheduled_messages
+                 SET entity_id = CASE entity_id ${caseClauses} ELSE entity_id END
+                 WHERE device_id = $1 AND entity_id = ANY($2) AND status IN ('pending', 'active')`,
+                [deviceId, affectedOldSlots]
+            );
+
+            // 3d: Update personal bot assignments
+            for (const info of botsToNotify) {
+                if (info.binding) {
+                    const bot = officialBots[info.binding.bot_id];
+                    if (bot && bot.bot_type === 'personal' && bot.assigned_device_id === deviceId) {
+                        bot.assigned_entity_id = info.newSlot;
+                        await client.query(
+                            `UPDATE official_bots SET assigned_entity_id = $1 WHERE bot_id = $2`,
+                            [info.newSlot, bot.bot_id]
+                        );
+                    }
+                }
+            }
+
+            await client.query('COMMIT');
+            console.log(`[Reorder] DB transaction committed (${movedSlots.length} slots moved, chat+schedule migrated)`);
+        } catch (dbErr) {
+            await client.query('ROLLBACK').catch(() => {});
+            console.error(`[Reorder] DB transaction failed, rolled back:`, dbErr.message);
+            // In-memory state was already applied; reload from DB on next restart
+        } finally {
+            client.release();
         }
     }
 
