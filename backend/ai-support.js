@@ -63,6 +63,45 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         }
     }, 1800000);
 
+    // ── Auto-create GitHub issue (for AI-initiated actions) ──
+    async function autoCreateIssue(action, user) {
+        const token = process.env.GITHUB_TOKEN;
+        const repo = process.env.GITHUB_REPO || 'HankHuang0516/realbot';
+        if (!token) return null;
+
+        try {
+            const userInfo = user.email ? `User: ${user.email}` : `Device: ${(user.deviceId || '').slice(0, 8)}...`;
+            const body = (action.body || action.title)
+                + `\n\n---\n_Reported by ${userInfo} via E-Claw AI Assistant_`;
+
+            const ghRes = await fetch(`https://api.github.com/repos/${repo}/issues`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    title: action.title,
+                    body,
+                    labels: Array.isArray(action.labels) ? action.labels : ['ai-assistant']
+                })
+            });
+
+            if (!ghRes.ok) {
+                console.error(`[AI Chat] Auto-issue failed (${ghRes.status})`);
+                return null;
+            }
+
+            const data = await ghRes.json();
+            serverLog('info', 'ai_chat', `Auto-created GitHub issue #${data.number} for user`, { userId: user.userId });
+            return { url: data.html_url, number: data.number };
+        } catch (err) {
+            console.error('[AI Chat] Auto-issue error:', err.message);
+            return null;
+        }
+    }
+
     // ── Rule Patterns ───────────────────────────
     const RULE_PATTERNS = [
         {
@@ -679,9 +718,23 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                 [req.user.userId, isAdmin, page || null, latencyMs]
             ).catch(() => {});
 
+            let responseText = result.response;
+
+            // Auto-execute create_issue actions for regular users
+            if (!isAdmin && result.actions && result.actions.length > 0) {
+                for (const action of result.actions) {
+                    if (action.type === 'create_issue' && action.title) {
+                        const issueResult = await autoCreateIssue(action, req.user);
+                        if (issueResult) {
+                            responseText += `\n\n---\n📋 GitHub issue [#${issueResult.number}](${issueResult.url}) created`;
+                        }
+                    }
+                }
+            }
+
             return res.json({
                 success: true,
-                response: result.response,
+                response: responseText,
                 actions: isAdmin ? result.actions : undefined,
                 remaining: rateCheck.remaining,
                 latency_ms: latencyMs
