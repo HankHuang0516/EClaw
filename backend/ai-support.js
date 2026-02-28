@@ -652,6 +652,20 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
 
             const latencyMs = Date.now() - startTime;
 
+            if (response.status === 503) {
+                // Proxy is busy (queue full or timeout)
+                const body = await response.json().catch(() => ({}));
+                const latencyMs = Date.now() - startTime;
+                return res.json({
+                    success: true,
+                    response: null,
+                    busy: true,
+                    retry_after: body.retry_after || 15,
+                    remaining: rateCheck.remaining,
+                    latency_ms: latencyMs
+                });
+            }
+
             if (!response.ok) {
                 const body = await response.text().catch(() => '');
                 throw new Error(`Proxy HTTP ${response.status}: ${body.slice(0, 200)}`);

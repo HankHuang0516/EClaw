@@ -32,6 +32,8 @@
     <string name="broadcast_message_hint">廣播訊息…</string>
     <string name="send_to_entities">發送給 %d 個實體</string>
     <string name="entity_format">實體 %d</string>
+    <string name="entity_public_code">代碼：%s</string>
+    <string name="code_copied">公開代碼已複製！</string>
 
     <!-- Settings -->
     <string name="settings_title">設定</string>
@@ -99,6 +101,8 @@
     <string name="ai_chat_clear_title">清除記錄</string>
     <string name="ai_chat_clear_message">確定清除所有聊天記錄？</string>
     <string name="ai_chat_clear_confirm">清除</string>
+    <string name="ai_chat_busy_retry">AI 忙碌中，%1$d 秒後重試… (%2$d/%3$d)</string>
+    <string name="ai_chat_busy_exhausted">AI 目前正在處理其他請求，請稍後再試。</string>
 
     <!-- Chat -->
     <string name="chat_history">聊天</string>
@@ -108,6 +112,8 @@
     <string name="no_messages_yet">目前沒有訊息</string>
     <string name="you">我</string>
     <string name="to_entities">發送至：%s</string>
+    <string name="send_voice">傳送</string>
+    <string name="recording_voice">錄音中…</string>
     <string name="uploading_media">上傳中…</string>
     <string name="upload_error">上傳失敗</string>
     <string name="attach">附件</string>
@@ -145,6 +151,7 @@
     <!-- Entity Rename -->
     <string name="rename_title">更改名稱</string>
     <string name="rename_hint">輸入新名稱（最多 20 字）</string>
+    <string name="rename_saving">儲存中…</string>
     <string name="rename_success">名稱已更新！</string>
     <string name="edit">編輯</string>
     <string name="priority">優先權</string>
@@ -402,6 +409,10 @@ E-claw (電子蝦) 團隊深知隱私對您的重要性。我們在此鄭重聲�
     <string name="file_time_month">本月</string>
     <string name="file_broadcast">廣播</string>
 
+    <!-- Gatekeeper -->
+    <string name="gatekeeper_blocked_message">⚠️ %1$s（%2$d/%3$d）</string>
+    <string name="gatekeeper_blocked_permanent">⚠️ %1$s</string>
+
     <!-- Schedule -->
     <string name="schedule_title">排程</string>
     <string name="schedule_enter">進入排程</string>
@@ -449,6 +460,7 @@ E-claw (電子蝦) 團隊深知隱私對您的重要性。我們在此鄭重聲�
 
     <!-- Notifications -->
     <string name="notifications_title">通知</string>
+    <string name="notif_pref_title">通知偏好設定</string>
     <string name="notifications_desc">設定您想接收的通知類別。</string>
     <string name="notif_pref_bot_reply">Bot 回覆</string>
     <string name="notif_pref_broadcast">廣播訊息</string>

@@ -511,5 +511,7 @@ data class AiChatResponse(
     val remaining: Int? = null,
     val latency_ms: Long? = null,
     val error: String? = null,
-    val message: String? = null
+    val message: String? = null,
+    val busy: Boolean = false,
+    val retry_after: Int? = null
 )

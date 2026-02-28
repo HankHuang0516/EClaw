@@ -13,6 +13,51 @@ const execFileAsync = promisify(execFile);
 // Resolve claude binary from node_modules/.bin (installed as dependency)
 const CLAUDE_BIN = path.join(__dirname, 'node_modules', '.bin', 'claude');
 
+// ── Concurrency Queue ─────────────────────────
+// Claude CLI (Sonnet) is heavyweight — limit concurrent processes
+const MAX_CONCURRENT = 2;   // max simultaneous Claude CLI processes
+const MAX_QUEUE = 8;        // max waiting requests before rejecting
+let activeCount = 0;
+const waitQueue = [];       // { resolve, reject, timer }
+
+function acquireSlot(timeoutMs = 120000) {
+    if (activeCount < MAX_CONCURRENT) {
+        activeCount++;
+        console.log(`[Queue] Slot acquired (active: ${activeCount}/${MAX_CONCURRENT}, queued: ${waitQueue.length})`);
+        return Promise.resolve();
+    }
+    if (waitQueue.length >= MAX_QUEUE) {
+        console.warn(`[Queue] FULL — rejecting request (active: ${activeCount}, queued: ${waitQueue.length})`);
+        const err = new Error('QUEUE_FULL');
+        err.queueFull = true;
+        return Promise.reject(err);
+    }
+    return new Promise((resolve, reject) => {
+        const entry = { resolve, reject, timer: null };
+        entry.timer = setTimeout(() => {
+            const idx = waitQueue.indexOf(entry);
+            if (idx !== -1) waitQueue.splice(idx, 1);
+            const err = new Error('QUEUE_TIMEOUT');
+            err.queueTimeout = true;
+            reject(err);
+        }, timeoutMs);
+        waitQueue.push(entry);
+        console.log(`[Queue] Request queued (active: ${activeCount}/${MAX_CONCURRENT}, queued: ${waitQueue.length})`);
+    });
+}
+
+function releaseSlot() {
+    if (waitQueue.length > 0) {
+        const next = waitQueue.shift();
+        clearTimeout(next.timer);
+        console.log(`[Queue] Slot passed to queued request (active: ${activeCount}/${MAX_CONCURRENT}, queued: ${waitQueue.length})`);
+        next.resolve();
+    } else {
+        activeCount--;
+        console.log(`[Queue] Slot released (active: ${activeCount}/${MAX_CONCURRENT})`);
+    }
+}
+
 // Run claude CLI with prompt via stdin (avoids CLI arg length limits)
 function runClaude(prompt, timeoutMs) {
     return new Promise((resolve, reject) => {
@@ -94,6 +139,11 @@ function ensureRepoClone() {
     }
 }
 
+// ── Queue Status ─────────────────────────────
+app.get('/queue-status', (req, res) => {
+    res.json({ active: activeCount, max_concurrent: MAX_CONCURRENT, queued: waitQueue.length, max_queue: MAX_QUEUE });
+});
+
 // ── Health Check ────────────────────────────
 app.get('/health', async (req, res) => {
     const health = { status: 'ok', service: 'eclaw-claude-cli-proxy', claude_cli: 'unknown' };
@@ -131,6 +181,16 @@ app.post('/analyze', async (req, res) => {
 
     console.log(`[Proxy] Received analysis request for device: ${device_context?.deviceId || '?'}`);
 
+    // Acquire concurrency slot
+    try {
+        await acquireSlot(CLAUDE_TIMEOUT_MS);
+    } catch (qErr) {
+        if (qErr.queueFull) {
+            return res.status(503).json({ error: 'busy', message: 'AI is busy. Please try again shortly.', retry_after: 15 });
+        }
+        return res.status(503).json({ error: 'queue_timeout', message: 'AI queue timeout. Please try again.', retry_after: 10 });
+    }
+
     try {
         console.log(`[Proxy] Calling claude CLI via stdin (prompt length: ${prompt.length})...`);
         const startTime = Date.now();
@@ -166,6 +226,8 @@ app.post('/analyze', async (req, res) => {
                 signal: errSignal
             }
         });
+    } finally {
+        releaseSlot();
     }
 });
 
@@ -339,6 +401,16 @@ app.post('/chat', async (req, res) => {
         return res.status(400).json({ error: 'message is required' });
     }
 
+    // Acquire concurrency slot (queue if busy)
+    try {
+        await acquireSlot(CHAT_TIMEOUT_MS);
+    } catch (qErr) {
+        if (qErr.queueFull) {
+            return res.status(503).json({ error: 'busy', message: 'AI is busy handling other requests. Please try again shortly.', retry_after: 15 });
+        }
+        return res.status(503).json({ error: 'queue_timeout', message: 'AI queue timeout. Please try again.', retry_after: 10 });
+    }
+
     // Save images to temp files so Claude can Read them
     const imagePaths = [];
     if (images && Array.isArray(images)) {
@@ -380,6 +452,7 @@ app.post('/chat', async (req, res) => {
             latency_ms: latencyMs
         });
     } finally {
+        releaseSlot();
         // Clean up temp image files
         for (const p of imagePaths) {
             try { fs.unlinkSync(p); } catch (_) {}

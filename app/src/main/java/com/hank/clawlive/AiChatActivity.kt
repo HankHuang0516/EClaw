@@ -214,6 +214,8 @@ class AiChatActivity : AppCompatActivity() {
 
     // ── Send Message ─────────────────────────
 
+    private val MAX_RETRY = 3
+
     private fun sendMessage() {
         val text = editMessage.text?.toString()?.trim() ?: ""
         if (text.isEmpty() && pendingImages.isEmpty()) return
@@ -238,43 +240,66 @@ class AiChatActivity : AppCompatActivity() {
 
         isLoading = true
 
+        val body = mutableMapOf<String, Any>(
+            "deviceId" to deviceManager.deviceId,
+            "deviceSecret" to deviceManager.deviceSecret,
+            "message" to (text.ifEmpty { "(user attached image(s) — please analyze them)" }),
+            "history" to messages.filter { it.role != "typing" }.takeLast(20).map {
+                mapOf("role" to it.role, "content" to it.content)
+            },
+            "page" to "android_app"
+        )
+        if (images != null) {
+            body["images"] = images.map {
+                mapOf("data" to it.data, "mimeType" to it.mimeType)
+            }
+        }
+
         lifecycleScope.launch {
-            try {
-                val body = mutableMapOf<String, Any>(
-                    "deviceId" to deviceManager.deviceId,
-                    "deviceSecret" to deviceManager.deviceSecret,
-                    "message" to (text.ifEmpty { "(user attached image(s) — please analyze them)" }),
-                    "history" to messages.filter { it.role != "typing" }.takeLast(20).map {
-                        mapOf("role" to it.role, "content" to it.content)
-                    },
-                    "page" to "android_app"
-                )
-                if (images != null) {
-                    body["images"] = images.map {
-                        mapOf("data" to it.data, "mimeType" to it.mimeType)
-                    }
+            callWithRetry(body, 0)
+        }
+    }
+
+    private suspend fun callWithRetry(body: Map<String, Any>, attempt: Int) {
+        try {
+            val response: AiChatResponse = api.aiChat(body)
+
+            // Handle busy — auto-retry with countdown
+            if (response.busy && attempt < MAX_RETRY) {
+                val waitSec = response.retry_after ?: 15
+                for (sec in waitSec downTo 1) {
+                    messages.removeAll { it.role == "typing" }
+                    messages.add(AiMessage("typing", getString(R.string.ai_chat_busy_retry, sec, attempt + 1, MAX_RETRY)))
+                    updateUi()
+                    scrollToBottom()
+                    kotlinx.coroutines.delay(1000)
                 }
-
-                val response: AiChatResponse = api.aiChat(body)
-
-                // Remove typing indicator
                 messages.removeAll { it.role == "typing" }
-
-                if (response.success && response.response != null) {
-                    messages.add(AiMessage("assistant", response.response))
-                } else {
-                    val errorMsg = response.message ?: response.error ?: "AI is temporarily unavailable"
-                    messages.add(AiMessage("assistant", errorMsg))
-                }
-            } catch (e: Exception) {
-                messages.removeAll { it.role == "typing" }
-                messages.add(AiMessage("assistant", "Sorry, something went wrong. Please try again."))
-            } finally {
-                isLoading = false
-                saveHistory()
+                messages.add(AiMessage("typing", "..."))
                 updateUi()
                 scrollToBottom()
+                return callWithRetry(body, attempt + 1)
             }
+
+            // Remove typing indicator
+            messages.removeAll { it.role == "typing" }
+
+            if (response.busy) {
+                messages.add(AiMessage("assistant", getString(R.string.ai_chat_busy_exhausted)))
+            } else if (response.success && response.response != null) {
+                messages.add(AiMessage("assistant", response.response))
+            } else {
+                val errorMsg = response.message ?: response.error ?: "AI is temporarily unavailable"
+                messages.add(AiMessage("assistant", errorMsg))
+            }
+        } catch (e: Exception) {
+            messages.removeAll { it.role == "typing" }
+            messages.add(AiMessage("assistant", "Sorry, something went wrong. Please try again."))
+        } finally {
+            isLoading = false
+            saveHistory()
+            updateUi()
+            scrollToBottom()
         }
     }
 

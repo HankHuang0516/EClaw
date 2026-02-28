@@ -253,6 +253,15 @@
                 max-height: 90%;
                 border-radius: 8px;
             }
+            .ai-chat-busy-text {
+                font-size: 12px;
+                color: var(--text-secondary, #888);
+                animation: ai-chat-pulse 1.5s ease-in-out infinite;
+            }
+            @keyframes ai-chat-pulse {
+                0%, 100% { opacity: 0.6; }
+                50% { opacity: 1; }
+            }
         `;
         document.head.appendChild(style);
 
@@ -422,6 +431,8 @@
     }
 
     // ── Send ──────────────────────────────────
+    const MAX_RETRY = 3;
+
     async function sendMessage() {
         const input = document.getElementById('aiChatInput');
         const text = input.value.trim();
@@ -444,29 +455,44 @@
         isLoading = true;
         showTyping();
 
-        try {
-            const body = {
-                message: text || '(user attached image(s) — please analyze them)',
-                history: chatHistory.slice(-MAX_HISTORY).map(m => ({
-                    role: m.role,
-                    content: m.content
-                })),
-                page: getCurrentPage()
-            };
-            if (images) {
-                body.images = images;
-            }
+        const body = {
+            message: text || '(user attached image(s) — please analyze them)',
+            history: chatHistory.slice(-MAX_HISTORY).map(m => ({
+                role: m.role,
+                content: m.content
+            })),
+            page: getCurrentPage()
+        };
+        if (images) {
+            body.images = images;
+        }
 
+        await callWithRetry(body, 0);
+    }
+
+    async function callWithRetry(body, attempt) {
+        try {
             const data = await apiCall('POST', '/api/ai-support/chat', body);
+
+            // Handle busy response — auto-retry with countdown
+            if (data.busy && attempt < MAX_RETRY) {
+                const waitSec = data.retry_after || 15;
+                updateTypingText(`AI is busy, retrying in ${waitSec}s... (${attempt + 1}/${MAX_RETRY})`);
+                await countdown(waitSec);
+                return callWithRetry(body, attempt + 1);
+            }
 
             hideTyping();
 
-            if (data.response) {
+            if (data.busy) {
+                // Exhausted retries
+                chatHistory.push({ role: 'assistant', content: 'AI is currently busy with other requests. Please try again in a moment.' });
+            } else if (data.response) {
                 chatHistory.push({ role: 'assistant', content: data.response });
-                saveHistory();
-                renderMessages();
-                scrollToBottom();
             }
+            saveHistory();
+            renderMessages();
+            scrollToBottom();
 
             if (data.actions && data.actions.length > 0) {
                 showActionBar(data.actions);
@@ -481,6 +507,29 @@
             isLoading = false;
             document.getElementById('aiChatInput').focus();
         }
+    }
+
+    function updateTypingText(text) {
+        const el = document.getElementById('aiChatTyping');
+        if (el) {
+            el.innerHTML = '<span class="ai-chat-busy-text">' + escapeHtml(text) + '</span>';
+        }
+    }
+
+    function countdown(seconds) {
+        return new Promise(resolve => {
+            let remaining = seconds;
+            const interval = setInterval(() => {
+                remaining--;
+                if (remaining <= 0) {
+                    clearInterval(interval);
+                    showTyping(); // restore dots
+                    resolve();
+                } else {
+                    updateTypingText(`AI is busy, retrying in ${remaining}s...`);
+                }
+            }, 1000);
+        });
     }
 
     // ── Admin Actions ─────────────────────────
