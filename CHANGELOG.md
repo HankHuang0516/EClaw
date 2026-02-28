@@ -1,3 +1,10 @@
+# [1.46.0](https://github.com/HankHuang0516/realbot/compare/v1.45.1...v1.46.0) (2026-02-28)
+
+
+### Features
+
+* AI chat enhancements — feedback entry, image support, Android app ([ee94822](https://github.com/HankHuang0516/realbot/commit/ee94822739e20e48107db12851caf35fc360536c))
+
 ## [1.45.1](https://github.com/HankHuang0516/realbot/compare/v1.45.0...v1.45.1) (2026-02-28)
 
 
