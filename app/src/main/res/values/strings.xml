@@ -102,6 +102,9 @@
     <string name="ai_chat_clear_confirm">Clear</string>
     <string name="ai_chat_busy_retry">AI is busy, retrying in %1$ds… (%2$d/%3$d)</string>
     <string name="ai_chat_busy_exhausted">AI is currently busy with other requests. Please try again in a moment.</string>
+    <string name="ai_chat_uploading">Uploading image(s)…</string>
+    <string name="ai_chat_analyzing">AI is analyzing your image(s)…</string>
+    <string name="ai_chat_thinking">Still working on it…</string>
 
     <!-- Chat -->
     <string name="chat_history">Chat</string>

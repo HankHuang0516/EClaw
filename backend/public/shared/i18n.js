@@ -753,6 +753,9 @@ const TRANSLATIONS = {
         "ai_chat_welcome": "Hi! I'm E-Claw AI. Ask me anything about the platform.",
         "ai_chat_error": "Sorry, something went wrong. Please try again.",
         "ai_chat_rate_limited": "Message limit reached. Try again later.",
+        "ai_chat_uploading": "Uploading image(s)...",
+        "ai_chat_analyzing": "AI is analyzing your image(s)...",
+        "ai_chat_thinking": "Still working on it...",
         "feedback_ask_ai": "🤖 Ask AI",
         "feedback_ask_ai_title": "Need quick help? Ask AI",
         "feedback_ask_ai_desc": "Get instant answers before submitting feedback"
@@ -1506,6 +1509,9 @@ const TRANSLATIONS = {
         "ai_chat_welcome": "嗨！我是 E-Claw AI，歡迎問我任何關於平台的問題。",
         "ai_chat_error": "抱歉，出了點問題，請稍後再試。",
         "ai_chat_rate_limited": "已達到訊息上限，請稍後再試。",
+        "ai_chat_uploading": "正在上傳圖片...",
+        "ai_chat_analyzing": "AI 正在分析您的圖片...",
+        "ai_chat_thinking": "仍在努力中...",
         "feedback_ask_ai": "🤖 問 AI",
         "feedback_ask_ai_title": "需要快速協助？問 AI",
         "feedback_ask_ai_desc": "提交回饋前先試試 AI 助手"

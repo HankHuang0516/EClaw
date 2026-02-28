@@ -103,6 +103,9 @@
     <string name="ai_chat_clear_confirm">清除</string>
     <string name="ai_chat_busy_retry">AI 忙碌中，%1$d 秒後重試… (%2$d/%3$d)</string>
     <string name="ai_chat_busy_exhausted">AI 目前正在處理其他請求，請稍後再試。</string>
+    <string name="ai_chat_uploading">正在上傳圖片…</string>
+    <string name="ai_chat_analyzing">AI 正在分析您的圖片…</string>
+    <string name="ai_chat_thinking">仍在努力中…</string>
 
     <!-- Chat -->
     <string name="chat_history">聊天</string>

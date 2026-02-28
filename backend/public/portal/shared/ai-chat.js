@@ -455,6 +455,11 @@
         isLoading = true;
         showTyping();
 
+        // Show upload status when images are present
+        if (images) {
+            updateTypingText(t('ai_chat_uploading') || 'Uploading image(s)...');
+        }
+
         const body = {
             message: text || '(user attached image(s) — please analyze them)',
             history: chatHistory.slice(-MAX_HISTORY).map(m => ({
@@ -471,8 +476,25 @@
     }
 
     async function callWithRetry(body, attempt) {
+        // Progressive status for image uploads
+        let statusTimer;
+        if (body.images && attempt === 0) {
+            const phases = [
+                { delay: 4000, text: t('ai_chat_analyzing') || 'AI is analyzing your image(s)...' },
+                { delay: 15000, text: t('ai_chat_thinking') || 'Still working on it...' }
+            ];
+            for (const phase of phases) {
+                const timer = setTimeout(() => updateTypingText(phase.text), phase.delay);
+                statusTimer = () => { clearTimeout(timer); };
+            }
+            // Keep references for cleanup
+            const timers = phases.map(p => setTimeout(() => updateTypingText(p.text), p.delay));
+            statusTimer = () => timers.forEach(t => clearTimeout(t));
+        }
+
         try {
             const data = await apiCall('POST', '/api/ai-support/chat', body);
+            if (statusTimer) statusTimer();
 
             // Handle busy response — auto-retry with countdown
             if (data.busy && attempt < MAX_RETRY) {

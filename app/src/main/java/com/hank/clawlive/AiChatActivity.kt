@@ -233,8 +233,9 @@ class AiChatActivity : AppCompatActivity() {
         renderImagePreview()
         updateSendButton()
 
-        // Show typing indicator
-        messages.add(AiMessage("typing", "..."))
+        // Show typing indicator — with upload status if images present
+        val typingText = if (images != null) getString(R.string.ai_chat_uploading) else "..."
+        messages.add(AiMessage("typing", typingText))
         updateUi()
         scrollToBottom()
 
@@ -261,8 +262,25 @@ class AiChatActivity : AppCompatActivity() {
     }
 
     private suspend fun callWithRetry(body: Map<String, Any>, attempt: Int) {
+        // Progressive status for image uploads
+        val hasImages = body.containsKey("images")
+        var statusJob: kotlinx.coroutines.Job? = null
+        if (hasImages && attempt == 0) {
+            statusJob = lifecycleScope.launch {
+                kotlinx.coroutines.delay(4000)
+                messages.removeAll { it.role == "typing" }
+                messages.add(AiMessage("typing", getString(R.string.ai_chat_analyzing)))
+                updateUi()
+                kotlinx.coroutines.delay(11000)
+                messages.removeAll { it.role == "typing" }
+                messages.add(AiMessage("typing", getString(R.string.ai_chat_thinking)))
+                updateUi()
+            }
+        }
+
         try {
             val response: AiChatResponse = api.aiChat(body)
+            statusJob?.cancel()
 
             // Handle busy — auto-retry with countdown
             if (response.busy && attempt < MAX_RETRY) {
