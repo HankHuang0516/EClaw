@@ -1,3 +1,10 @@
+## [1.35.1](https://github.com/HankHuang0516/realbot/compare/v1.35.0...v1.35.1) (2026-02-28)
+
+
+### Bug Fixes
+
+* rename loading UI, entity card removal, copy button UX ([ca73a9e](https://github.com/HankHuang0516/realbot/commit/ca73a9ee4a92411215a2ba33b280e125d6b0d13c))
+
 # [1.35.0](https://github.com/HankHuang0516/realbot/compare/v1.34.1...v1.35.0) (2026-02-28)
 
 
