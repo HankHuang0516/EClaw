@@ -1,3 +1,10 @@
+## [1.42.2](https://github.com/HankHuang0516/realbot/compare/v1.42.1...v1.42.2) (2026-02-28)
+
+
+### Bug Fixes
+
+* deduplicate broadcast header entities + user message dedup ([1722755](https://github.com/HankHuang0516/realbot/commit/1722755c54841a9d630e076cacb1b6f3083390c5))
+
 ## [1.42.1](https://github.com/HankHuang0516/realbot/compare/v1.42.0...v1.42.1) (2026-02-28)
 
 
