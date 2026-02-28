@@ -241,10 +241,41 @@ function parseClaudeResponse(output) {
     }
 }
 
+// ── Warmup: Pre-start Claude CLI ────────────
+let lastWarmupAt = 0;
+const WARMUP_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
+async function warmup() {
+    const now = Date.now();
+    if (now - lastWarmupAt < 60000) return; // Skip if warmed up less than 1 min ago
+    lastWarmupAt = now;
+
+    console.log('[Warmup] Pre-warming Claude CLI...');
+    const startTime = Date.now();
+    try {
+        await runClaude('Reply with exactly: {"status":"warm"}', 15000);
+        console.log(`[Warmup] Claude CLI warm (${Date.now() - startTime}ms)`);
+    } catch (err) {
+        console.warn(`[Warmup] Failed (${Date.now() - startTime}ms): ${err.message.slice(0, 200)}`);
+    }
+}
+
+// Warmup trigger endpoint (called by E-Claw backend on handshake start)
+app.post('/warmup', (req, res) => {
+    warmup(); // Fire-and-forget, don't wait
+    res.json({ status: 'warming' });
+});
+
 // ── Start Server ────────────────────────────
 app.listen(PORT, () => {
     console.log(`[Claude CLI Proxy] Listening on port ${PORT}`);
     if (!SUPPORT_API_KEY) {
         console.warn('[Claude CLI Proxy] WARNING: SUPPORT_API_KEY not set — all requests will be rejected');
     }
+
+    // Warmup on startup (after 3s to let server settle)
+    setTimeout(warmup, 3000);
+
+    // Periodic warmup every 5 minutes
+    setInterval(warmup, WARMUP_INTERVAL_MS);
 });

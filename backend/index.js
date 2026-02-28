@@ -6819,6 +6819,12 @@ function logHandshakeFailure(opts) {
         [deviceId || null, entityId ?? null, webhookUrl || null, errorType, httpStatus || null,
          errorMessage || null, requestPayload ? JSON.stringify(requestPayload) : null, responseBody || null, source]
     ).catch(() => {});
+
+    // Pre-warm Claude CLI proxy (so it's ready if bot calls /api/ai-support/binding)
+    const proxyUrl = process.env.CLAUDE_CLI_PROXY_URL;
+    if (proxyUrl) {
+        fetch(proxyUrl + '/warmup', { method: 'POST', signal: AbortSignal.timeout(3000) }).catch(() => {});
+    }
 }
 
 // GET /api/logs — Query server logs for debugging
