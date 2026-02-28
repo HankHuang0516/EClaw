@@ -1,3 +1,10 @@
+# [1.38.0](https://github.com/HankHuang0516/realbot/compare/v1.37.1...v1.38.0) (2026-02-28)
+
+
+### Features
+
+* add AI-powered binding troubleshooter with rule engine + Claude CLI proxy ([8bf04b3](https://github.com/HankHuang0516/realbot/commit/8bf04b3b36c7ca0a83a3c3a942e53fbd161142e0))
+
 ## [1.37.1](https://github.com/HankHuang0516/realbot/compare/v1.37.0...v1.37.1) (2026-02-28)
 
 
