@@ -1,3 +1,10 @@
+# [1.50.0](https://github.com/HankHuang0516/realbot/compare/v1.49.2...v1.50.0) (2026-02-28)
+
+
+### Features
+
+* AI chat runs in background — survives page refresh and navigation ([6d8a021](https://github.com/HankHuang0516/realbot/commit/6d8a0219ada442e1b45589cfd2356adf78fd08e1))
+
 ## [1.49.2](https://github.com/HankHuang0516/realbot/compare/v1.49.1...v1.49.2) (2026-02-28)
 
 
