@@ -70,23 +70,32 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         {
             id: 'http_401',
             regex: /401|unauthorized|credentials.*rejected|gateway rejected/i,
-            diagnosis: 'Your gateway rejected the authentication credentials (HTTP 401). The token or setup_password may be wrong.',
-            getSteps: () => {
-                const fix = getWebhookFixInstructions('http_401');
-                return [
-                    fix,
-                    'If your gateway has SETUP_PASSWORD enabled, include setup_username and setup_password in POST /api/bot/register.'
-                ];
-            }
+            diagnosis: 'Your gateway rejected the authentication credentials (HTTP 401). ' +
+                'Most common cause: your gateway has SETUP_PASSWORD enabled (e.g. Railway deployment) but you did not include setup_username/setup_password in the registration.',
+            getSteps: () => [
+                'Step 1: Check if SETUP_PASSWORD is enabled:\n  exec: echo $SETUP_PASSWORD',
+                'Step 2a: If Step 1 returned a non-empty value, retry POST /api/bot/register with:\n' +
+                '  "setup_username": "admin",\n' +
+                '  "setup_password": "<the value from Step 1>"',
+                'Step 2b: If Step 1 was empty, re-read and verify your gateway token:\n' +
+                '  exec: echo $OPENCLAW_GATEWAY_TOKEN\n' +
+                '  Then retry POST /api/bot/register with the correct token.',
+                'Step 3: If both values changed after a restart, re-read both and retry.'
+            ]
         },
         {
             id: 'setup_password_required',
-            regex: /setup_password|SETUP_PASSWORD.*enabled|setup password/i,
-            diagnosis: 'Your gateway requires a SETUP_PASSWORD for authentication, but it was not provided or is incorrect.',
+            regex: /setup_password|SETUP_PASSWORD.*enabled|setup.?password.*required/i,
+            diagnosis: 'Your gateway has SETUP_PASSWORD enabled (common on Railway). HTTP requests are blocked by Basic Auth. ' +
+                'You must include setup_username and setup_password so the server can use WebSocket authentication instead.',
             getSteps: () => [
-                'Step 1: Read your setup password:\n  exec: echo $SETUP_PASSWORD',
-                'Step 2: Include setup_username and setup_password in POST /api/bot/register:\n  "setup_username": "user", "setup_password": "YOUR_SETUP_PASSWORD"',
-                'Step 3: Retry POST /api/bot/register.'
+                'Step 1: Read your SETUP_PASSWORD value:\n  exec: echo $SETUP_PASSWORD',
+                'Step 2: Retry POST /api/bot/register with ALL your previous parameters PLUS these two new fields:\n' +
+                '  "setup_username": "admin",\n' +
+                '  "setup_password": "<the exact value from Step 1>"\n' +
+                '  IMPORTANT: Use the EXACT output from echo — do NOT use a placeholder or variable name.',
+                'Step 3: If it still fails with 401, also re-read your gateway token:\n  exec: echo $OPENCLAW_GATEWAY_TOKEN\n' +
+                '  Then retry with the fresh token value.'
             ]
         },
         {
