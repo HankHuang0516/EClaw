@@ -1,3 +1,10 @@
+## [1.38.1](https://github.com/HankHuang0516/realbot/compare/v1.38.0...v1.38.1) (2026-02-28)
+
+
+### Bug Fixes
+
+* **ai-support:** improve 401 and setup_password rules ([d782e4f](https://github.com/HankHuang0516/realbot/commit/d782e4fda2d86fc765beace60e4ff54479298f90))
+
 # [1.38.0](https://github.com/HankHuang0516/realbot/compare/v1.37.1...v1.38.0) (2026-02-28)
 
 
