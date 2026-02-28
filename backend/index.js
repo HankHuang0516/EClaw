@@ -2370,57 +2370,39 @@ app.post('/api/client/speak', async (req, res) => {
         return res.status(404).json({ success: false, message: "Device not found" });
     }
 
-    // Usage enforcement — apply to all bound entities except personal bots
-    const targetEids = entityId === "all"
-        ? Object.keys(device.entities).map(Number).filter(i => device.entities[i]?.isBound)
-        : Array.isArray(entityId)
-            ? entityId.map(id => parseInt(id))
-            : [parseInt(entityId) || 0];
-    const hasLimitedTarget = targetEids.some(eId => {
-        const entity = device.entities[eId];
-        if (!entity || !entity.isBound) return false;
-        // Personal bots (user's own) are exempt from usage limits
-        const binding = officialBindingsCache[getBindingCacheKey(deviceId, eId)];
-        if (binding) {
-            const bot = officialBots[binding.bot_id];
-            if (bot && bot.bot_type === 'personal') return false;
+    // Usage enforcement — apply to all non-premium devices
+    // Premium check is inside enforceUsageLimit; personal bot exemption handled separately
+    const DAILY_LIMIT = 15;
+    try {
+        const usage = await subscriptionModule.enforceUsageLimit(deviceId);
+        if (!usage.allowed) {
+            return res.status(429).json({
+                success: false,
+                message: "Daily message limit reached",
+                error: "USAGE_LIMIT_EXCEEDED",
+                remaining: 0,
+                limit: usage.limit,
+                used: usage.used || 0
+            });
         }
-        return true;
-    });
-
-    if (hasLimitedTarget) {
-        const DAILY_LIMIT = 15;
-        try {
-            const usage = await subscriptionModule.enforceUsageLimit(deviceId);
-            if (!usage.allowed) {
-                return res.status(429).json({
-                    success: false,
-                    message: "Daily message limit reached",
-                    error: "USAGE_LIMIT_EXCEEDED",
-                    remaining: 0,
-                    limit: usage.limit,
-                    used: usage.used || 0
-                });
-            }
-        } catch (usageErr) {
-            // Fail-safe: use in-memory counter when DB is unavailable
-            console.warn('[Usage] DB enforcement failed, using in-memory fallback:', usageErr.message);
-            serverLog('warn', 'client_push', `Usage DB fallback: ${usageErr.message}`, { deviceId });
-            const today = new Date().toISOString().slice(0, 10);
-            const memKey = `${deviceId}:${today}`;
-            if (!global._usageMemCounter) global._usageMemCounter = {};
-            const memCount = (global._usageMemCounter[memKey] || 0) + 1;
-            global._usageMemCounter[memKey] = memCount;
-            if (memCount > DAILY_LIMIT) {
-                return res.status(429).json({
-                    success: false,
-                    message: "Daily message limit reached",
-                    error: "USAGE_LIMIT_EXCEEDED",
-                    remaining: 0,
-                    limit: DAILY_LIMIT,
-                    used: memCount
-                });
-            }
+    } catch (usageErr) {
+        // Fail-safe: use in-memory counter when DB is unavailable
+        console.warn('[Usage] DB enforcement failed, using in-memory fallback:', usageErr.message);
+        serverLog('warn', 'client_push', `Usage DB fallback: ${usageErr.message}`, { deviceId });
+        const today = new Date().toISOString().slice(0, 10);
+        const memKey = `${deviceId}:${today}`;
+        if (!global._usageMemCounter) global._usageMemCounter = {};
+        const memCount = (global._usageMemCounter[memKey] || 0) + 1;
+        global._usageMemCounter[memKey] = memCount;
+        if (memCount > DAILY_LIMIT) {
+            return res.status(429).json({
+                success: false,
+                message: "Daily message limit reached",
+                error: "USAGE_LIMIT_EXCEEDED",
+                remaining: 0,
+                limit: DAILY_LIMIT,
+                used: memCount
+            });
         }
     }
 
