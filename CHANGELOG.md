@@ -1,3 +1,10 @@
+## [1.40.1](https://github.com/HankHuang0516/realbot/compare/v1.40.0...v1.40.1) (2026-02-28)
+
+
+### Bug Fixes
+
+* auto-restore .claude.json from backup on proxy startup ([9f87b2f](https://github.com/HankHuang0516/realbot/commit/9f87b2fecaac64ed50bed59d95bb636d98177ea6))
+
 # [1.40.0](https://github.com/HankHuang0516/realbot/compare/v1.39.4...v1.40.0) (2026-02-28)
 
 
