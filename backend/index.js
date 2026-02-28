@@ -2412,7 +2412,7 @@ app.post('/api/client/speak', async (req, res) => {
             return { eId, exists: !!entity, isBound: entity?.isBound };
         });
         if (debugInfo.some(d => d.exists)) {
-            console.log(`[Usage] Skipped for ${deviceId}: targets=${JSON.stringify(debugInfo)}`);
+            serverLog('info', 'client_push', `Usage skipped: targets=${JSON.stringify(debugInfo)}`, { deviceId });
         }
     }
 
