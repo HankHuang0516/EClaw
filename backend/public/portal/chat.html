@@ -1518,7 +1518,10 @@
                         prev._groupedEntityIds = [prev.entity_id];
                         prev._groupedMessages = [prev];
                     }
-                    prev._groupedEntityIds.push(msg.entity_id);
+                    // Deduplicate: skip if this entity is already in the group
+                    if (!prev._groupedEntityIds.includes(msg.entity_id)) {
+                        prev._groupedEntityIds.push(msg.entity_id);
+                    }
                     prev._groupedMessages.push(msg);
                 } else {
                     grouped.push(msg);

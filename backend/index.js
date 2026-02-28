@@ -6764,18 +6764,20 @@ app.delete('/api/bot/schedules/:id', async (req, res) => {
 // Deduplication: bot messages with identical text for the same entity within 10s are skipped
 async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null) {
     try {
-        // Dedup: skip if the same bot message was already saved recently
-        // This prevents echo when bot calls multiple endpoints (broadcast + sync-message + transform)
-        if (isFromBot && !isFromUser && text) {
+        // Dedup: skip if the same message (user or bot) was already saved recently
+        // Bot dedup: prevents echo when bot calls multiple endpoints (broadcast + sync-message + transform)
+        // User dedup: prevents duplicate rows from race conditions or retries
+        if (text) {
             const dedup = await chatPool.query(
                 `SELECT id FROM chat_messages
                  WHERE device_id = $1 AND entity_id = $2 AND text = $3
-                 AND is_from_bot = true AND created_at > NOW() - INTERVAL '10 seconds'
+                 AND is_from_user = $4 AND is_from_bot = $5
+                 AND created_at > NOW() - INTERVAL '10 seconds'
                  LIMIT 1`,
-                [deviceId, entityId, text]
+                [deviceId, entityId, text, isFromUser || false, isFromBot || false]
             );
             if (dedup.rows.length > 0) {
-                console.log(`[Chat] Dedup: skipping duplicate bot message for entity ${entityId} (existing id=${dedup.rows[0].id}, source="${source}")`);
+                console.log(`[Chat] Dedup: skipping duplicate ${isFromBot ? 'bot' : 'user'} message for entity ${entityId} (existing id=${dedup.rows[0].id}, source="${source}")`);
                 return dedup.rows[0].id;
             }
         }
