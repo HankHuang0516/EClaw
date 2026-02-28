@@ -1,3 +1,10 @@
+# [1.36.0](https://github.com/HankHuang0516/realbot/compare/v1.35.1...v1.36.0) (2026-02-28)
+
+
+### Features
+
+* add WebSocket transport for OpenClaw gateways with SETUP_PASSWORD ([8cb91b4](https://github.com/HankHuang0516/realbot/commit/8cb91b4e1d86a86b69abf648b370d8dec953eeb8))
+
 ## [1.35.1](https://github.com/HankHuang0516/realbot/compare/v1.35.0...v1.35.1) (2026-02-28)
 
 
