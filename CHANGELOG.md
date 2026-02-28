@@ -1,3 +1,10 @@
+# [1.51.0](https://github.com/HankHuang0516/realbot/compare/v1.50.0...v1.51.0) (2026-02-28)
+
+
+### Features
+
+* assign public_code to free bot bindings ([8ae1bb7](https://github.com/HankHuang0516/realbot/commit/8ae1bb77a66dd1dba1c11f080487a8a51305a357))
+
 # [1.50.0](https://github.com/HankHuang0516/realbot/compare/v1.49.2...v1.50.0) (2026-02-28)
 
 
