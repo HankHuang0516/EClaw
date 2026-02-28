@@ -63,20 +63,20 @@ function runClaude(prompt, timeoutMs) {
     return new Promise((resolve, reject) => {
         const child = spawn(CLAUDE_BIN, ['--print', '--output-format', 'json', '--model', 'haiku'], {
             env: { ...process.env, HOME: process.env.HOME || '/root' },
-            stdio: ['pipe', 'pipe', 'pipe'],
-            timeout: timeoutMs
+            stdio: ['pipe', 'pipe', 'pipe']
         });
 
         let stdout = '';
         let stderr = '';
+        let killed = false;
 
         child.stdout.on('data', d => { stdout += d; });
         child.stderr.on('data', d => { stderr += d; });
 
         child.on('error', err => reject(err));
         child.on('close', (code, signal) => {
-            if (signal === 'SIGTERM' || signal === 'SIGKILL') {
-                const err = new Error(`Claude CLI killed by ${signal} (timeout)`);
+            if (killed || signal === 'SIGTERM' || signal === 'SIGKILL' || code === 143 || code === 137) {
+                const err = new Error(`Claude CLI killed by ${signal || 'timeout'} (timeout after ${timeoutMs}ms)`);
                 err.killed = true;
                 err.signal = signal;
                 err.stderr = stderr;
@@ -95,8 +95,9 @@ function runClaude(prompt, timeoutMs) {
         child.stdin.write(prompt);
         child.stdin.end();
 
-        // Safety: kill if timeout fires before 'close'
+        // Single timeout mechanism
         setTimeout(() => {
+            killed = true;
             try { child.kill('SIGTERM'); } catch (_) {}
         }, timeoutMs);
     });
@@ -108,7 +109,7 @@ app.use(express.json({ limit: '10mb' }));
 const SUPPORT_API_KEY = process.env.SUPPORT_API_KEY;
 const PORT = process.env.PORT || 4000;
 const CLAUDE_TIMEOUT_MS = 55000; // 55s (Haiku binding analysis)
-const CHAT_TIMEOUT_MS = 120000; // 120s (Sonnet general chat with tool access)
+const CHAT_TIMEOUT_MS = 180000; // 180s (Sonnet general chat with tool access)
 
 // ── Log Query Credentials (for AI to curl /api/logs) ──
 const ECLAW_API_URL = process.env.ECLAW_API_URL || 'https://eclawbot.com';
@@ -246,7 +247,7 @@ app.use('/chat', (req, res, next) => {
 // ── Chat Endpoint (Sonnet + repo tools) ────
 function runClaudeChat(prompt, timeoutMs = CHAT_TIMEOUT_MS, { isAdmin = false, hasImages = false } = {}) {
     return new Promise((resolve, reject) => {
-        const args = ['--print', '--output-format', 'json', '--model', 'sonnet'];
+        const args = ['--print', '--output-format', 'json', '--model', 'sonnet', '--max-turns', '6'];
         // Build tool list: repo tools need clone, Bash always available for admin
         const tools = [];
         if (fs.existsSync(path.join(REPO_DIR, '.git'))) {
@@ -267,18 +268,18 @@ function runClaudeChat(prompt, timeoutMs = CHAT_TIMEOUT_MS, { isAdmin = false, h
                 HOME: process.env.HOME || '/root',
                 CLAUDE_DANGEROUSLY_SKIP_PERMISSIONS: '1'
             },
-            stdio: ['pipe', 'pipe', 'pipe'],
-            timeout: timeoutMs
+            stdio: ['pipe', 'pipe', 'pipe']
         });
 
         let stdout = '';
         let stderr = '';
+        let killed = false;
         child.stdout.on('data', d => { stdout += d; });
         child.stderr.on('data', d => { stderr += d; });
         child.on('error', err => reject(err));
         child.on('close', (code, signal) => {
-            if (signal === 'SIGTERM' || signal === 'SIGKILL') {
-                const err = new Error(`Claude CLI killed by ${signal} (timeout)`);
+            if (killed || signal === 'SIGTERM' || signal === 'SIGKILL' || code === 143 || code === 137) {
+                const err = new Error(`Claude CLI killed by ${signal || 'timeout'} (timeout after ${timeoutMs}ms)`);
                 err.killed = true;
                 return reject(err);
             }
@@ -292,98 +293,68 @@ function runClaudeChat(prompt, timeoutMs = CHAT_TIMEOUT_MS, { isAdmin = false, h
 
         child.stdin.write(prompt);
         child.stdin.end();
-        setTimeout(() => { try { child.kill('SIGTERM'); } catch (_) {} }, timeoutMs);
+        // Single timeout mechanism (removed duplicate spawn timeout option)
+        setTimeout(() => {
+            killed = true;
+            try { child.kill('SIGTERM'); } catch (_) {}
+        }, timeoutMs);
     });
 }
 
 function buildChatPrompt(message, history, context, imagePaths = []) {
     const isAdmin = context.role === 'admin';
-    const historyText = (history || []).slice(-20).map(h =>
-        `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content}`
-    ).join('\n\n');
+
+    // Truncate history: keep last 10 messages, each capped at 500 chars
+    const MAX_HISTORY_MSGS = 10;
+    const MAX_MSG_CHARS = 500;
+    const historyText = (history || []).slice(-MAX_HISTORY_MSGS).map(h => {
+        const content = h.content && h.content.length > MAX_MSG_CHARS
+            ? h.content.slice(0, MAX_MSG_CHARS) + '...[truncated]'
+            : (h.content || '');
+        return `${h.role === 'user' ? 'User' : 'Assistant'}: ${content}`;
+    }).join('\n\n');
 
     const pageContext = context.page ? `The user is currently on the "${context.page}" page of the portal.` : '';
 
-    const logQueryBlock = (LOG_DEVICE_ID && LOG_DEVICE_SECRET)
+    // Only include log query instructions when user is debugging (or admin)
+    const debugKeywords = /error|debug|log|fail|broken|issue|bug|crash|問題|錯誤|失敗|壞|不行|卡住/i;
+    const needsLogQuery = isAdmin || debugKeywords.test(message);
+
+    const logQueryBlock = (needsLogQuery && LOG_DEVICE_ID && LOG_DEVICE_SECRET)
         ? (isAdmin
-            ? `\nSERVER LOG QUERY (admin):
-You can query real-time server logs using Bash + curl when debugging issues.
-Command template:
-  curl -s "${ECLAW_API_URL}/api/logs?deviceId=${LOG_DEVICE_ID}&deviceSecret=${LOG_DEVICE_SECRET}&limit=30"
-Available filters (append as query params):
-  - category: bind, unbind, transform, broadcast, broadcast_push, speakto_push, client_push, entity_poll, ai_support, ai_chat, db_save, push_error, handshake, system
-  - level: info, warn, error
-  - since: timestamp in milliseconds (e.g. since=1700000000000)
-  - filterDevice: filter by specific deviceId
-  - limit: max entries (default 100, max 500)
-Example — recent errors: curl -s "${ECLAW_API_URL}/api/logs?deviceId=${LOG_DEVICE_ID}&deviceSecret=${LOG_DEVICE_SECRET}&level=error&limit=20"
-Example — broadcast logs: curl -s "${ECLAW_API_URL}/api/logs?deviceId=${LOG_DEVICE_ID}&deviceSecret=${LOG_DEVICE_SECRET}&category=broadcast_push&limit=20"
-Use this when the admin asks about errors, delivery issues, server status, or debugging.
-IMPORTANT: You are running in non-interactive mode. Execute Bash commands DIRECTLY — do NOT ask for permission or approval. Just run the curl command and present the results.
-NEVER expose the deviceId/deviceSecret values in your response to the admin.`
-            : `\nSERVER LOG QUERY (user's own device):
-The user's Device ID is: ${context.deviceId || 'unknown'}
-You can query this user's server logs using Bash + curl to help debug their issues.
-IMPORTANT: Always add filterDevice=${context.deviceId} to restrict results to this user's device ONLY.
-Command template:
-  curl -s "${ECLAW_API_URL}/api/logs?deviceId=${LOG_DEVICE_ID}&deviceSecret=${LOG_DEVICE_SECRET}&filterDevice=${context.deviceId}&limit=30"
-Available filters:
-  - category: bind, unbind, transform, broadcast, broadcast_push, speakto_push, client_push, entity_poll
-  - level: info, warn, error
-  - since: timestamp in milliseconds
-Example: curl -s "${ECLAW_API_URL}/api/logs?deviceId=${LOG_DEVICE_ID}&deviceSecret=${LOG_DEVICE_SECRET}&filterDevice=${context.deviceId}&limit=20"
-IMPORTANT: Execute Bash commands DIRECTLY — do NOT ask for permission, deviceId, or deviceSecret. You already have everything needed.
-NEVER expose deviceId, deviceSecret, or filterDevice values in your response. Just show the log results.`)
+            ? `\nLOG QUERY: curl -s "${ECLAW_API_URL}/api/logs?deviceId=${LOG_DEVICE_ID}&deviceSecret=${LOG_DEVICE_SECRET}&limit=30"
+Filters: category (bind,unbind,transform,broadcast,broadcast_push,speakto_push,client_push,entity_poll,push_error,handshake,system), level (info,warn,error), since (ms), filterDevice, limit (max 500).
+Execute Bash commands DIRECTLY. NEVER expose credentials in response.`
+            : `\nLOG QUERY (user device ${context.deviceId || '?'}): curl -s "${ECLAW_API_URL}/api/logs?deviceId=${LOG_DEVICE_ID}&deviceSecret=${LOG_DEVICE_SECRET}&filterDevice=${context.deviceId}&limit=30"
+Filters: category (bind,unbind,transform,broadcast,broadcast_push,speakto_push,client_push,entity_poll), level (info,warn,error), since (ms).
+Execute Bash commands DIRECTLY. NEVER expose credentials in response.`)
         : '';
 
     const adminBlock = isAdmin
         ? `ADMIN CAPABILITIES:
 You are talking to the E-Claw platform admin/developer.
-- You may suggest code changes, architecture improvements, or debugging strategies.
-- You can read source code files in the repository using Read, Glob, and Grep tools.
-- You can use Bash to run commands (e.g. curl to query server logs).
-- If the admin asks you to create a GitHub issue, include an action block at the END of your response:
-  <!--ACTION:{"type":"create_issue","title":"...","body":"...","labels":["bug"]}-->
-  Only include this when explicitly asked to create an issue.
-- Speak as a fellow engineer. Use technical language freely.
-${logQueryBlock}`
+- Suggest code changes, architecture improvements, or debugging strategies.
+- Use Read, Glob, Grep tools to read source code; Bash for curl/commands.
+- On request, create GitHub issues via: <!--ACTION:{"type":"create_issue","title":"...","body":"...","labels":["bug"]}-->
+- Speak as a fellow engineer.${logQueryBlock}`
         : `USER CONTEXT:
 You are talking to a regular E-Claw user (Device ID: ${context.deviceId || 'unknown'}).
-- Help them understand how to use the portal, manage entities, configure bots, etc.
-- Keep language friendly and accessible. Avoid overly technical jargon.
-- You can query this user's server logs using Bash + curl (see LOG QUERY section below). Do NOT ask the user for their Device ID or Secret — you already have it.
-- PROACTIVE ISSUE CREATION: When a user reports a bug, suggests a feature, or provides actionable feedback, YOU should proactively create a GitHub issue on their behalf. Include an action block at the END of your response:
-  <!--ACTION:{"type":"create_issue","title":"[Bug/Feature] brief title","body":"**Reported by user**\\n\\nDescription...\\n\\n**Steps / Details**\\n...","labels":["bug"]}-->
-  Use label "bug" for bugs, "enhancement" for feature requests/suggestions.
-  Tell the user you've recorded their feedback — do NOT ask them to submit it themselves.
-- For general questions (not bugs/suggestions), just answer helpfully.
-${logQueryBlock}`;
+- Help them use the portal, manage entities, configure bots. Keep language friendly.
+- When user reports a bug or suggests a feature, proactively create a GitHub issue: <!--ACTION:{"type":"create_issue","title":"[Bug/Feature] ...","body":"...","labels":["bug"]}-->
+  Tell user you've recorded their feedback.${logQueryBlock}`;
 
-    return `You are E-Claw AI, the intelligent assistant for the E-Claw platform.
-E-Claw is an AI-powered Android live wallpaper app where users can bind AI bots (OpenClaw) to entities (Lobster, Pig) that live on their phone screen. The web portal at eclawbot.com lets users manage entities, chat with bots, schedule tasks, manage files, and view bot activity.
-
+    return `You are E-Claw AI, assistant for the E-Claw platform — an AI-powered Android live wallpaper app where users bind AI bots (OpenClaw) to entities (Lobster, Pig) on their phone. Web portal: eclawbot.com.
 ${pageContext}
 
 ${adminBlock}
 
-WHAT YOU CAN DO:
-- Answer questions about E-Claw features, portal pages, and bot management
-- Explain how binding, webhooks, entity slots, broadcasts, and speak-to work
-- Help troubleshoot common issues (binding errors, bot not responding, push not delivered)
-- Read source code from the E-Claw repository to give accurate, specific answers
-- Reference API endpoints and their parameters
-
-IMPORTANT RULES:
-- You are running in NON-INTERACTIVE mode. Use tools directly without asking for user approval or confirmation.
-- Respond in the SAME LANGUAGE as the user's message (Chinese → Chinese, English → English)
-- Keep responses concise but helpful (1-4 paragraphs unless more detail is needed)
-- Use markdown formatting (bold, lists, code blocks) for readability
-- Never reveal sensitive data (tokens, secrets, passwords, device IDs)
-- If unsure, say so honestly — don't fabricate information
+RULES:
+- NON-INTERACTIVE mode: use tools directly, no permission prompts.
+- Respond in the SAME LANGUAGE as the user (Chinese → Chinese, English → English).
+- Concise (1-4 paragraphs). Use markdown. Never reveal secrets/tokens/device IDs.
 
 ${imagePaths.length > 0 ? `USER ATTACHED ${imagePaths.length} IMAGE(S):
-The user has pasted/uploaded screenshot(s). Use the Read tool to view each image file below, then incorporate what you see into your response.
-${imagePaths.map((p, i) => `  Image ${i + 1}: ${p}`).join('\n')}
+Use Read tool to view: ${imagePaths.map((p, i) => `${p}`).join(', ')}
 ` : ''}${historyText ? `CONVERSATION HISTORY:\n${historyText}\n` : ''}User: ${message}
 
 Respond naturally as E-Claw AI.`;
