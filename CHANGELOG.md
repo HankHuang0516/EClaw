@@ -1,3 +1,10 @@
+# [1.40.0](https://github.com/HankHuang0516/realbot/compare/v1.39.4...v1.40.0) (2026-02-28)
+
+
+### Features
+
+* add Claude CLI warmup to reduce cold start latency ([dd4d0ae](https://github.com/HankHuang0516/realbot/commit/dd4d0aec88f5989121fe809ed9569f03261f7a3b))
+
 ## [1.39.4](https://github.com/HankHuang0516/realbot/compare/v1.39.3...v1.39.4) (2026-02-28)
 
 
