@@ -1,3 +1,10 @@
+## [1.43.4](https://github.com/HankHuang0516/realbot/compare/v1.43.3...v1.43.4) (2026-02-28)
+
+
+### Bug Fixes
+
+* add git to proxy container + remove invalid CLI flag ([3b98cd7](https://github.com/HankHuang0516/realbot/commit/3b98cd783415a5bf4dac82c321e6592c8581a4f2))
+
 ## [1.43.3](https://github.com/HankHuang0516/realbot/compare/v1.43.2...v1.43.3) (2026-02-28)
 
 
