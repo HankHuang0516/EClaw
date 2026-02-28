@@ -46,7 +46,12 @@ object ChatIntegrityValidator {
         deviceSecret: String
     ) {
         val localDedupKeys = localMessages.mapNotNull { it.deduplicationKey }.toSet()
-        val backendKeys = backendMessages.map { "backend_${it.id}" }
+        // Filter out user messages from Android — these are saved locally by saveOutgoingMessage()
+        // without a backend_ dedup key, so syncFromBackend() intentionally skips them (not missing)
+        val androidLocalSources = setOf("android_chat", "android_widget")
+        val backendKeys = backendMessages
+            .filter { !(it.is_from_user && it.source in androidLocalSources) }
+            .map { "backend_${it.id}" }
 
         // CHECK 1: Missing messages
         val missingKeys = backendKeys.filter { it !in localDedupKeys }
