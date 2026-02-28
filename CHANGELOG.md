@@ -1,3 +1,10 @@
+# [1.44.0](https://github.com/HankHuang0516/realbot/compare/v1.43.7...v1.44.0) (2026-02-28)
+
+
+### Features
+
+* log system errors to server_logs for AI visibility ([7410ac4](https://github.com/HankHuang0516/realbot/commit/7410ac46ee2ba9717f2d9f9ecba30443296091c2))
+
 ## [1.43.7](https://github.com/HankHuang0516/realbot/compare/v1.43.6...v1.43.7) (2026-02-28)
 
 
