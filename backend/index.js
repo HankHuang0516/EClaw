@@ -1,6 +1,6 @@
-// Claw Live Wallpaper Backend - Multi-Device Multi-Entity Support (v5.4)
+// Claw Live Wallpaper Backend - Multi-Device Multi-Entity Support (v5.5)
 // Each device has its own 4 entity slots (matrix architecture)
-// v5.4 Changes: Notification system + Socket.IO real-time
+// v5.5 Changes: Telemetry sub-router fix + usage limit scope broadened
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
