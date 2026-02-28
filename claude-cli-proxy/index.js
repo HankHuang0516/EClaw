@@ -192,7 +192,11 @@ function runClaudeChat(prompt, timeoutMs = CHAT_TIMEOUT_MS, { isAdmin = false } 
         }
         const child = spawn(CLAUDE_BIN, args, {
             cwd: fs.existsSync(REPO_DIR) ? REPO_DIR : __dirname,
-            env: { ...process.env, HOME: process.env.HOME || '/root' },
+            env: {
+                ...process.env,
+                HOME: process.env.HOME || '/root',
+                CLAUDE_DANGEROUSLY_SKIP_PERMISSIONS: '1'
+            },
             stdio: ['pipe', 'pipe', 'pipe'],
             timeout: timeoutMs
         });
