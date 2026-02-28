@@ -1,3 +1,10 @@
+## [1.34.1](https://github.com/HankHuang0516/realbot/compare/v1.34.0...v1.34.1) (2026-02-28)
+
+
+### Bug Fixes
+
+* change message_reactions.message_id from INTEGER to UUID ([ac96233](https://github.com/HankHuang0516/realbot/commit/ac96233209a9565b57db12dc76a7f322e766740f))
+
 # [1.34.0](https://github.com/HankHuang0516/realbot/compare/v1.33.2...v1.34.0) (2026-02-28)
 
 
