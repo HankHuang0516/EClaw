@@ -255,9 +255,8 @@ function runClaudeChat(prompt, timeoutMs = CHAT_TIMEOUT_MS, { isAdmin = false, h
             // Read tool needed for viewing user-attached images even without repo
             tools.push('Read');
         }
-        if (isAdmin) {
-            tools.push('Bash');
-        }
+        // Bash for curl log queries (admin: full access, user: own device only)
+        tools.push('Bash');
         if (tools.length > 0) {
             args.push('--allowedTools', tools.join(','));
         }
@@ -305,8 +304,9 @@ function buildChatPrompt(message, history, context, imagePaths = []) {
 
     const pageContext = context.page ? `The user is currently on the "${context.page}" page of the portal.` : '';
 
-    const logQueryBlock = (isAdmin && LOG_DEVICE_ID && LOG_DEVICE_SECRET)
-        ? `\nSERVER LOG QUERY (admin only):
+    const logQueryBlock = (LOG_DEVICE_ID && LOG_DEVICE_SECRET)
+        ? (isAdmin
+            ? `\nSERVER LOG QUERY (admin):
 You can query real-time server logs using Bash + curl when debugging issues.
 Command template:
   curl -s "${ECLAW_API_URL}/api/logs?deviceId=${LOG_DEVICE_ID}&deviceSecret=${LOG_DEVICE_SECRET}&limit=30"
@@ -321,6 +321,19 @@ Example — broadcast logs: curl -s "${ECLAW_API_URL}/api/logs?deviceId=${LOG_DE
 Use this when the admin asks about errors, delivery issues, server status, or debugging.
 IMPORTANT: You are running in non-interactive mode. Execute Bash commands DIRECTLY — do NOT ask for permission or approval. Just run the curl command and present the results.
 NEVER expose the deviceId/deviceSecret values in your response to the admin.`
+            : `\nSERVER LOG QUERY (user's own device):
+The user's Device ID is: ${context.deviceId || 'unknown'}
+You can query this user's server logs using Bash + curl to help debug their issues.
+IMPORTANT: Always add filterDevice=${context.deviceId} to restrict results to this user's device ONLY.
+Command template:
+  curl -s "${ECLAW_API_URL}/api/logs?deviceId=${LOG_DEVICE_ID}&deviceSecret=${LOG_DEVICE_SECRET}&filterDevice=${context.deviceId}&limit=30"
+Available filters:
+  - category: bind, unbind, transform, broadcast, broadcast_push, speakto_push, client_push, entity_poll
+  - level: info, warn, error
+  - since: timestamp in milliseconds
+Example: curl -s "${ECLAW_API_URL}/api/logs?deviceId=${LOG_DEVICE_ID}&deviceSecret=${LOG_DEVICE_SECRET}&filterDevice=${context.deviceId}&limit=20"
+IMPORTANT: Execute Bash commands DIRECTLY — do NOT ask for permission, deviceId, or deviceSecret. You already have everything needed.
+NEVER expose deviceId, deviceSecret, or filterDevice values in your response. Just show the log results.`)
         : '';
 
     const adminBlock = isAdmin
@@ -335,14 +348,16 @@ You are talking to the E-Claw platform admin/developer.
 - Speak as a fellow engineer. Use technical language freely.
 ${logQueryBlock}`
         : `USER CONTEXT:
-You are talking to a regular E-Claw user.
+You are talking to a regular E-Claw user (Device ID: ${context.deviceId || 'unknown'}).
 - Help them understand how to use the portal, manage entities, configure bots, etc.
 - Keep language friendly and accessible. Avoid overly technical jargon.
+- You can query this user's server logs using Bash + curl (see LOG QUERY section below). Do NOT ask the user for their Device ID or Secret — you already have it.
 - PROACTIVE ISSUE CREATION: When a user reports a bug, suggests a feature, or provides actionable feedback, YOU should proactively create a GitHub issue on their behalf. Include an action block at the END of your response:
   <!--ACTION:{"type":"create_issue","title":"[Bug/Feature] brief title","body":"**Reported by user**\\n\\nDescription...\\n\\n**Steps / Details**\\n...","labels":["bug"]}-->
   Use label "bug" for bugs, "enhancement" for feature requests/suggestions.
   Tell the user you've recorded their feedback — do NOT ask them to submit it themselves.
-- For general questions (not bugs/suggestions), just answer helpfully.`;
+- For general questions (not bugs/suggestions), just answer helpfully.
+${logQueryBlock}`;
 
     return `You are E-Claw AI, the intelligent assistant for the E-Claw platform.
 E-Claw is an AI-powered Android live wallpaper app where users can bind AI bots (OpenClaw) to entities (Lobster, Pig) that live on their phone screen. The web portal at eclawbot.com lets users manage entities, chat with bots, schedule tasks, manage files, and view bot activity.
