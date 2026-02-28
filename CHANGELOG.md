@@ -1,3 +1,10 @@
+## [1.37.1](https://github.com/HankHuang0516/realbot/compare/v1.37.0...v1.37.1) (2026-02-28)
+
+
+### Bug Fixes
+
+* smart 401 handling — guide bot to retry with setup_password ([c1f9e70](https://github.com/HankHuang0516/realbot/commit/c1f9e705dc2b28cf9e283b4c0ede325d8b813ade))
+
 # [1.37.0](https://github.com/HankHuang0516/realbot/compare/v1.36.0...v1.37.0) (2026-02-28)
 
 
