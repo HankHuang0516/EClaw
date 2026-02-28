@@ -5778,11 +5778,19 @@ chatPool.query(`
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS dislike_count INTEGER DEFAULT 0;
 `).catch(() => {});
 
-// Auto-migrate: create message_reactions table
+// Auto-migrate: create message_reactions table (message_id must be UUID to match chat_messages.id)
 chatPool.query(`
+    DO $$ BEGIN
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'message_reactions' AND column_name = 'message_id' AND data_type = 'integer'
+        ) THEN
+            DROP TABLE message_reactions;
+        END IF;
+    END $$;
     CREATE TABLE IF NOT EXISTS message_reactions (
         id SERIAL PRIMARY KEY,
-        message_id INTEGER NOT NULL,
+        message_id UUID NOT NULL,
         device_id TEXT NOT NULL,
         reaction_type VARCHAR(8) NOT NULL,
         created_at TIMESTAMP DEFAULT NOW(),
