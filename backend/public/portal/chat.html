@@ -1345,6 +1345,44 @@
             });
         }
 
+        // ── Group Broadcast Messages ──
+        // Merge consecutive user-sent messages that belong to the same broadcast
+        // (same text, same source, timestamps within 5s) into a single virtual message
+        function groupBroadcastMessages(messages) {
+            const grouped = [];
+            for (let i = 0; i < messages.length; i++) {
+                const msg = messages[i];
+                // Only group user-sent, non-special messages
+                if (!msg.is_from_user
+                    || (msg.source && (msg.source.startsWith('mission_notify') || msg.source === 'scheduled'))
+                ) {
+                    grouped.push(msg);
+                    continue;
+                }
+                // Try to merge with the previous grouped entry
+                const prev = grouped.length > 0 ? grouped[grouped.length - 1] : null;
+                if (prev && prev.is_from_user
+                    && prev.text === msg.text
+                    && (prev.media_type || null) === (msg.media_type || null)
+                    && (prev.media_url || null) === (msg.media_url || null)
+                    && prev.source === msg.source
+                    && !(prev.source && (prev.source.startsWith('mission_notify') || prev.source === 'scheduled'))
+                    && Math.abs(new Date(prev.created_at).getTime() - new Date(msg.created_at).getTime()) <= 5000
+                ) {
+                    // Merge into the previous entry
+                    if (!prev._groupedEntityIds) {
+                        prev._groupedEntityIds = [prev.entity_id];
+                        prev._groupedMessages = [prev];
+                    }
+                    prev._groupedEntityIds.push(msg.entity_id);
+                    prev._groupedMessages.push(msg);
+                } else {
+                    grouped.push(msg);
+                }
+            }
+            return grouped;
+        }
+
         // ── Render Messages ──
         function renderMessages(hasNewMessages) {
             const container = document.getElementById('chatMessages');
@@ -1361,7 +1399,8 @@
                 return;
             }
 
-            container.innerHTML = filtered.map(msg => {
+            const displayMessages = groupBroadcastMessages(filtered);
+            container.innerHTML = displayMessages.map(msg => {
                 const isSent = msg.is_from_user;
                 const msgClass = isSent ? 'sent' : 'received';
                 const time = formatTime(msg.created_at);
@@ -1422,6 +1461,23 @@
                         ).join(' ');
                         receipt = (sendTo ? `<div style="opacity:0.7;margin-bottom:2px">${sendTo}</div>` : '')
                             + `<div>${statusBadges}</div>`;
+                    } else if (msg._groupedMessages && msg._groupedMessages.length > 1) {
+                        // Grouped broadcast: show per-entity delivery status
+                        const allDelivered = msg._groupedMessages.every(m => m.is_delivered || m.read_at);
+                        const noneDelivered = msg._groupedMessages.every(m => !m.is_delivered && !m.read_at);
+                        if (allDelivered) {
+                            receipt = `<span class="read-receipt">${escapeHtml(i18n.t('chat_read') || '\u2713 Read')}</span>`;
+                        } else if (noneDelivered) {
+                            receipt = `<span class="read-receipt">${escapeHtml(i18n.t('chat_sent') || '\u2713 Sent')}</span>`;
+                        } else {
+                            // Mixed status: show per-entity
+                            receipt = msg._groupedMessages.map(m => {
+                                const label = getEntityLabel(m.entity_id);
+                                return (m.is_delivered || m.read_at)
+                                    ? `<span class="read-receipt">${label} \u2713 已讀</span>`
+                                    : `<span class="read-receipt" style="opacity:0.5">${label} 已送出</span>`;
+                            }).join(' ');
+                        }
                     } else if (msg.read_at) {
                         receipt = `<span class="read-receipt">${escapeHtml(i18n.t('chat_read') || '\u2713 Read')}</span>`;
                     } else if (msg.is_delivered) {
@@ -1520,6 +1576,14 @@
                 if (src === 'web_chat') sourceTag = 'Web';
                 else if (src === 'android_chat') sourceTag = 'Android';
                 else if (src === 'widget') sourceTag = 'Widget';
+
+                // Grouped broadcast: show all target entities in one label
+                if (msg._groupedEntityIds && msg._groupedEntityIds.length > 1) {
+                    const entitiesHtml = msg._groupedEntityIds.map(eid =>
+                        `<span class="entity-label" data-entity="${eid}">${getEntityLabel(eid)}</span>`
+                    ).join('&ensp;');
+                    return `You &rarr; ${entitiesHtml} &middot; ${escapeHtml(sourceTag)}`;
+                }
 
                 return `You &rarr; ${entityHtml} &middot; ${escapeHtml(sourceTag)}`;
             }

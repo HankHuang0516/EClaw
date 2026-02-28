@@ -319,9 +319,10 @@ class ChatRepository private constructor(
                 continue
             }
 
-            // Skip user messages - we already save those locally when sent
-            // Exception: mission_notify and scheduled messages are user-side but saved by backend
-            if (msg.is_from_user && !msg.source.startsWith("mission_notify") && msg.source != "scheduled") {
+            // Skip user messages that Android already saved locally when sent.
+            // Messages from other platforms (web_chat, widget, client) must be synced.
+            val androidLocalSources = setOf("android_chat", "android_widget")
+            if (msg.is_from_user && msg.source in androidLocalSources) {
                 continue
             }
 
@@ -373,6 +374,26 @@ class ChatRepository private constructor(
                     messageType = MessageType.USER_BROADCAST,
                     source = "mission_notify",
                     targetEntityIds = targets.ifEmpty { null },
+                    deduplicationKey = deduplicationKey,
+                    isSynced = true,
+                    isDelivered = msg.is_delivered,
+                    deliveredTo = msg.delivered_to,
+                    mediaType = msg.media_type,
+                    mediaUrl = msg.media_url,
+                    likeCount = msg.like_count,
+                    dislikeCount = msg.dislike_count,
+                    userReaction = msg.user_reaction
+                )
+            } else if (msg.is_from_user) {
+                // User message from another platform (web_chat, widget, client, etc.)
+                ChatMessage(
+                    text = msg.text,
+                    timestamp = timestamp,
+                    isFromUser = true,
+                    messageType = MessageType.USER_TO_ENTITY,
+                    source = msg.source,
+                    targetEntityIds = msg.entity_id?.toString(),
+                    fromEntityId = msg.entity_id,
                     deduplicationKey = deduplicationKey,
                     isSynced = true,
                     isDelivered = msg.is_delivered,
