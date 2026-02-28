@@ -1,3 +1,10 @@
+## [1.44.1](https://github.com/HankHuang0516/realbot/compare/v1.44.0...v1.44.1) (2026-02-28)
+
+
+### Bug Fixes
+
+* use Dockerfile for claude-cli-proxy to ensure git is installed ([6e57edd](https://github.com/HankHuang0516/realbot/commit/6e57edd393cb0e7856179399030b3e3ba5abb175))
+
 # [1.44.0](https://github.com/HankHuang0516/realbot/compare/v1.43.7...v1.44.0) (2026-02-28)
 
 
