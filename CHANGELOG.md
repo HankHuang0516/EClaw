@@ -1,3 +1,10 @@
+## [1.49.1](https://github.com/HankHuang0516/realbot/compare/v1.49.0...v1.49.1) (2026-02-28)
+
+
+### Bug Fixes
+
+* show upload progress status when sending images in AI chat ([a3e1fae](https://github.com/HankHuang0516/realbot/commit/a3e1faee54e7083bc54e77be48256ceba688837b))
+
 # [1.49.0](https://github.com/HankHuang0516/realbot/compare/v1.48.0...v1.49.0) (2026-02-28)
 
 
