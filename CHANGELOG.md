@@ -1,3 +1,10 @@
+## [1.45.1](https://github.com/HankHuang0516/realbot/compare/v1.45.0...v1.45.1) (2026-02-28)
+
+
+### Bug Fixes
+
+* resetBotToBotCounter now resets all entity slots dynamically ([80b16ed](https://github.com/HankHuang0516/realbot/commit/80b16edb871afa1f6213f7c9f3d958cac1d7c9d8)), closes [#85](https://github.com/HankHuang0516/realbot/issues/85)
+
 # [1.45.0](https://github.com/HankHuang0516/realbot/compare/v1.44.1...v1.45.0) (2026-02-28)
 
 
