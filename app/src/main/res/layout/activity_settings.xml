@@ -290,53 +290,77 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
                 app:cardCornerRadius="12dp"
-                app:cardElevation="2dp">
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="#1A1A1A"
+                app:strokeColor="#333333"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="12dp">
 
+                    <!-- Collapsible header — icon + title + expand arrow -->
                     <LinearLayout
                         android:id="@+id/notifHeader"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:padding="16dp">
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_notification"
+                            android:contentDescription="Notification"
+                            app:tint="#CCFFFFFF"/>
 
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/notif_pref_title"
-                            android:textSize="15sp"
-                            android:textStyle="bold"
-                            android:textColor="@android:color/white"/>
+                            android:layout_marginStart="16dp"
+                            android:text="@string/notifications_title"
+                            android:textSize="14sp"
+                            android:textColor="#CCFFFFFF"
+                            android:gravity="center"/>
 
                         <ImageView
                             android:id="@+id/notifExpandArrow"
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:src="@android:drawable/arrow_down_float"
-                            android:contentDescription="Expand"/>
+                            android:src="@drawable/ic_expand_more"
+                            android:contentDescription="Expand"
+                            app:tint="#99FFFFFF"/>
                     </LinearLayout>
 
+                    <!-- Collapsible content (default GONE) -->
                     <LinearLayout
                         android:id="@+id/notifContentLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:paddingHorizontal="16dp"
-                        android:paddingBottom="16dp"
-                        android:visibility="gone">
+                        android:visibility="gone"
+                        android:layout_marginTop="12dp">
 
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/notifications_desc"
+                            android:textSize="13sp"
+                            android:textColor="#99FFFFFF"
+                            android:layout_marginBottom="8dp"/>
+
+                        <!-- Notification preference toggles container (populated programmatically) -->
                         <LinearLayout
                             android:id="@+id/notifPrefsContainer"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"/>
                     </LinearLayout>
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -346,46 +370,61 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
                 app:cardCornerRadius="12dp"
-                app:cardElevation="2dp">
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="#1A1A1A"
+                app:strokeColor="#333333"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="12dp">
 
+                    <!-- Collapsible header — icon + title + expand arrow -->
                     <LinearLayout
                         android:id="@+id/langHeader"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:padding="16dp">
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_language"
+                            android:contentDescription="Language"
+                            app:tint="#CCFFFFFF"/>
 
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
+                            android:layout_marginStart="16dp"
                             android:text="@string/language_title"
-                            android:textSize="15sp"
-                            android:textStyle="bold"
-                            android:textColor="@android:color/white"/>
+                            android:textSize="14sp"
+                            android:textColor="#CCFFFFFF"
+                            android:gravity="center"/>
 
                         <ImageView
                             android:id="@+id/langExpandArrow"
                             android:layout_width="24dp"
                             android:layout_height="24dp"
-                            android:src="@android:drawable/arrow_down_float"
-                            android:contentDescription="Expand"/>
+                            android:src="@drawable/ic_expand_more"
+                            android:contentDescription="Expand"
+                            app:tint="#99FFFFFF"/>
+
                     </LinearLayout>
 
+                    <!-- Collapsible content (default GONE) -->
                     <LinearLayout
                         android:id="@+id/langContentLayout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:paddingHorizontal="16dp"
-                        android:paddingBottom="16dp"
-                        android:visibility="gone">
+                        android:visibility="gone"
+                        android:layout_marginTop="12dp">
 
                         <com.google.android.material.chip.ChipGroup
                             android:id="@+id/chipGroupLanguage"

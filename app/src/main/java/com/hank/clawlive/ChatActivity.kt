@@ -51,6 +51,7 @@ import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.NavItem
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import com.hank.clawlive.ui.chat.ChatAdapter
+import com.hank.clawlive.ui.chat.ChatIntegrityValidator
 import com.hank.clawlive.ui.chat.SlashCommandAdapter
 import com.hank.clawlive.ui.chat.SlashCommandRegistry
 import com.hank.clawlive.widget.ChatWidgetProvider
@@ -779,6 +780,14 @@ class ChatActivity : AppCompatActivity() {
                         Timber.d("ChatActivity: Synced $addedCount new messages from backend")
                     }
                     lastSyncTimestamp = System.currentTimeMillis()
+                    // Data layer integrity check (non-blocking)
+                    val localMessages = chatRepository.getRecentMessagesSync(200)
+                    ChatIntegrityValidator.validateDataLayer(
+                        localMessages = localMessages,
+                        backendMessages = response.messages,
+                        deviceId = deviceManager.deviceId,
+                        deviceSecret = deviceManager.deviceSecret
+                    )
                 }
             } catch (e: Exception) {
                 Timber.e(e, "ChatActivity: Error polling backend chat history")
@@ -830,7 +839,14 @@ class ChatActivity : AppCompatActivity() {
             }
         }
 
-        chatAdapter.submitList(filtered) {}
+        chatAdapter.submitList(filtered) {
+            ChatIntegrityValidator.validateDisplayLayer(
+                adapter = chatAdapter,
+                submittedList = filtered,
+                deviceId = deviceManager.deviceId,
+                deviceSecret = deviceManager.deviceSecret
+            )
+        }
 
         if (filtered.isEmpty()) {
             layoutEmpty.visibility = View.VISIBLE

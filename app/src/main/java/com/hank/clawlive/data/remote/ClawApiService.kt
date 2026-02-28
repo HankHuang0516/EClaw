@@ -165,6 +165,12 @@ interface ClawApiService {
         @Query("limit") limit: Int = 100
     ): ChatHistoryResponse
 
+    // Chat integrity mismatch report
+    @POST("api/chat/integrity-report")
+    suspend fun reportChatIntegrity(
+        @Body body: Map<String, @JvmSuppressWildcards Any?>
+    ): retrofit2.Response<Unit>
+
     // React to a message (like/dislike)
     @POST("api/message/{messageId}/react")
     suspend fun reactToMessage(

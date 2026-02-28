@@ -1005,6 +1005,148 @@
         let isFirstLoad = true;
         let crossDeviceMode = false;
 
+        // ── Chat Integrity Validator ──
+        const ChatIntegrityValidator = (() => {
+            const _reportedTs = {};
+            const COOLDOWN_MS = 30 * 60 * 1000; // 30 min per fingerprint
+
+            async function _send(mismatch) {
+                const fp = `${mismatch.layer}:${mismatch.checkType}:${(mismatch.affectedIds||[])[0]||''}`;
+                const now = Date.now();
+                if (_reportedTs[fp] && now - _reportedTs[fp] < COOLDOWN_MS) return;
+                _reportedTs[fp] = now;
+                try {
+                    await fetch('/api/chat/integrity-report', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            deviceId: currentUser.deviceId,
+                            deviceSecret: currentUser.deviceSecret,
+                            platform: 'web',
+                            appVersion: 'web',
+                            ...mismatch
+                        })
+                    });
+                } catch (e) { /* never block UI */ }
+            }
+
+            // DATA LAYER: compare allMessages vs backend response
+            function validateDataLayer(backendMessages) {
+                if (isFirstLoad) return;
+                setTimeout(() => {
+                    try {
+                        const backendIds = new Set(backendMessages.map(m => String(m.id)));
+                        const localIds = new Set(allMessages.map(m => String(m.id)));
+                        // Check missing messages
+                        const missing = [...backendIds].filter(id => !localIds.has(id));
+                        if (missing.length > 2) {
+                            _send({ layer: 'data', checkType: 'message_count',
+                                description: `Local missing ${missing.length} messages from backend`,
+                                expected: { count: backendIds.size },
+                                actual: { count: localIds.size, missingIds: missing.slice(0, 5) },
+                                affectedIds: missing.slice(0, 5) });
+                            return;
+                        }
+                        // Check content + fields for last 50
+                        for (const bMsg of backendMessages.slice(-50)) {
+                            const lMsg = allMessages.find(m => String(m.id) === String(bMsg.id));
+                            if (!lMsg) continue;
+                            if (lMsg.text !== bMsg.text) {
+                                _send({ layer: 'data', checkType: 'content_mismatch',
+                                    description: `Message ${bMsg.id} text differs`,
+                                    expected: { text: (bMsg.text||'').slice(0, 80) },
+                                    actual: { text: (lMsg.text||'').slice(0, 80) },
+                                    affectedIds: [String(bMsg.id)] });
+                                break;
+                            }
+                            if (lMsg.is_from_user !== bMsg.is_from_user) {
+                                _send({ layer: 'data', checkType: 'field_is_from_user',
+                                    description: `Message ${bMsg.id} direction differs`,
+                                    expected: { is_from_user: bMsg.is_from_user },
+                                    actual: { is_from_user: lMsg.is_from_user },
+                                    affectedIds: [String(bMsg.id)] });
+                                break;
+                            }
+                            if ((lMsg.media_type||null) !== (bMsg.media_type||null)) {
+                                _send({ layer: 'data', checkType: 'field_media_type',
+                                    description: `Message ${bMsg.id} media_type differs`,
+                                    expected: { media_type: bMsg.media_type },
+                                    actual: { media_type: lMsg.media_type },
+                                    affectedIds: [String(bMsg.id)] });
+                                break;
+                            }
+                        }
+                    } catch (e) { /* silent */ }
+                }, 0);
+            }
+
+            // DISPLAY LAYER: compare rendered DOM vs displayMessages
+            function validateDisplayLayer(displayMessages) {
+                if (!displayMessages || displayMessages.length === 0) return;
+                setTimeout(() => {
+                    try {
+                        const container = document.getElementById('chatMessages');
+                        if (!container) return;
+                        const bubbles = container.querySelectorAll('.chat-msg');
+                        // Bubble count
+                        if (bubbles.length !== displayMessages.length) {
+                            _send({ layer: 'display', checkType: 'bubble_count',
+                                description: `DOM has ${bubbles.length} bubbles but data has ${displayMessages.length}`,
+                                expected: { count: displayMessages.length },
+                                actual: { count: bubbles.length } });
+                            return;
+                        }
+                        for (let i = 0; i < bubbles.length; i++) {
+                            const msg = displayMessages[i];
+                            const el = bubbles[i];
+                            // Direction
+                            const expClass = msg.is_from_user ? 'sent' : 'received';
+                            if (!el.classList.contains(expClass)) {
+                                _send({ layer: 'display', checkType: 'direction',
+                                    description: `Bubble ${i} wrong direction`,
+                                    expected: { class: expClass },
+                                    actual: { class: el.classList.contains('sent') ? 'sent' : 'received' },
+                                    affectedIds: msg.id ? [String(msg.id)] : [] });
+                                break;
+                            }
+                            // Text content (skip media placeholders)
+                            const isPlaceholder = ['[Photo]','[Video]','[Voice message]'].includes(msg.text||'');
+                            const isMedia = msg.media_type && ['photo','video','file','voice'].includes(msg.media_type);
+                            if (!isMedia && !isPlaceholder && msg.text) {
+                                const bubble = el.querySelector('.chat-bubble');
+                                if (bubble) {
+                                    const domText = bubble.textContent || '';
+                                    const snippet = (msg.text||'').slice(0, 40).trim();
+                                    if (snippet && !domText.includes(snippet)) {
+                                        _send({ layer: 'display', checkType: 'text_content',
+                                            description: `Bubble ${i} text mismatch`,
+                                            expected: { text: snippet },
+                                            actual: { text: domText.slice(0, 60) },
+                                            affectedIds: msg.id ? [String(msg.id)] : [] });
+                                        break;
+                                    }
+                                }
+                            }
+                            // Media element presence
+                            if (isMedia && !isPlaceholder && msg.media_url) {
+                                const hasMedia = el.querySelector('img.chat-photo, video, .chat-file, .chat-voice');
+                                if (!hasMedia) {
+                                    _send({ layer: 'display', checkType: 'media_element_missing',
+                                        description: `Bubble ${i} has media_type=${msg.media_type} but no media element`,
+                                        expected: { media_type: msg.media_type },
+                                        actual: { hasMediaElement: false },
+                                        affectedIds: msg.id ? [String(msg.id)] : [] });
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (e) { /* silent */ }
+                }, 0);
+            }
+
+            return { validateDataLayer, validateDisplayLayer };
+        })();
+
         // ENTITY_CHARS, getEntityDisplayName, getEntityLabel, getAvatarForEntity
         // are provided by shared/entity-utils.js
 
@@ -1269,6 +1411,7 @@
                     allMessages = data.messages;
                     renderFilterChips();
                     renderMessages(prevCount < allMessages.length);
+                    ChatIntegrityValidator.validateDataLayer(data.messages);
                 }
             } catch (e) {
                 if (isFirstLoad) {
@@ -1522,6 +1665,9 @@
                 if (slot.children.length > 0) return; // already loaded
                 fetchLinkPreview(slot.dataset.url, slot);
             });
+
+            // Integrity: display layer (non-blocking)
+            ChatIntegrityValidator.validateDisplayLayer(displayMessages);
         }
 
         /**

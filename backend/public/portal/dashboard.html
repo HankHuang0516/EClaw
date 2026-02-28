@@ -236,7 +236,7 @@
             font-size: 13px;
         }
 
-        .slot-btn:hover:not(.occupied) {
+        .slot-btn:hover {
             border-color: var(--primary);
             color: var(--text);
         }
@@ -248,8 +248,22 @@
         }
 
         .slot-btn.occupied {
-            opacity: 0.4;
-            cursor: not-allowed;
+            border-color: var(--warning, #f59e0b);
+            background: rgba(245, 158, 11, 0.08);
+        }
+
+        .slot-btn.occupied.active {
+            border-color: var(--primary);
+            background: rgba(108, 99, 255, 0.15);
+        }
+
+        .slot-btn.occupied .slot-occupied-label {
+            font-size: 10px;
+            color: var(--warning, #f59e0b);
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .slot-emoji {
@@ -1146,7 +1160,8 @@
 
         function renderSlotSelector() {
             const container = document.getElementById('slotSelector');
-            const occupiedSlots = new Set(entities.map(e => e.entityId));
+            const occupiedMap = {};
+            entities.forEach(e => { occupiedMap[e.entityId] = e; });
             container.innerHTML = '';
             for (let i = 0; i < maxEntitySlots; i++) {
                 const btn = document.createElement('button');
@@ -1154,20 +1169,42 @@
                 btn.dataset.slot = i;
                 btn.onclick = () => selectSlot(i);
                 if (i === selectedSlot) btn.classList.add('active');
-                if (occupiedSlots.has(i)) btn.classList.add('occupied');
-                btn.innerHTML = '<span class="slot-emoji">' + (ENTITY_CHARS_DEFAULT[i]?.emoji || ENTITY_CHARS_DEFAULT[i % 4]?.emoji || '\u{1F99E}') + '</span><span>Slot ' + i + '</span>';
+                const entity = occupiedMap[i];
+                if (entity) btn.classList.add('occupied');
+                let labelHtml = '<span class="slot-emoji">' + (ENTITY_CHARS_DEFAULT[i]?.emoji || ENTITY_CHARS_DEFAULT[i % 4]?.emoji || '\u{1F99E}') + '</span><span>Slot ' + i + '</span>';
+                if (entity) {
+                    const name = entity.name || (getEntityDisplayName(i) + ' #' + i);
+                    labelHtml += '<span class="slot-occupied-label">' + escapeHtml(name) + '</span>';
+                }
+                btn.innerHTML = labelHtml;
                 container.appendChild(btn);
             }
         }
 
         function updateSlotAvailability() {
-            const occupiedSlots = new Set(entities.map(e => e.entityId));
+            const occupiedMap = {};
+            entities.forEach(e => { occupiedMap[e.entityId] = e; });
             let needsReset = false;
             document.querySelectorAll('.slot-btn').forEach(btn => {
                 const slot = parseInt(btn.dataset.slot);
                 const wasOccupied = btn.classList.contains('occupied');
-                const isOccupied = occupiedSlots.has(slot);
+                const entity = occupiedMap[slot];
+                const isOccupied = !!entity;
                 btn.classList.toggle('occupied', isOccupied);
+
+                // Update occupied label
+                let label = btn.querySelector('.slot-occupied-label');
+                if (isOccupied) {
+                    const name = entity.name || (getEntityDisplayName(slot) + ' #' + slot);
+                    if (!label) {
+                        label = document.createElement('span');
+                        label.className = 'slot-occupied-label';
+                        btn.appendChild(label);
+                    }
+                    label.textContent = name;
+                } else if (label) {
+                    label.remove();
+                }
 
                 // Detect newly bound entity on currently selected slot
                 if (isOccupied && !wasOccupied && slot === selectedSlot) {
@@ -1179,7 +1216,7 @@
                 // Reset code display since current slot was just bound
                 resetCodeDisplay();
                 // Auto-select first available slot
-                const firstAvailable = Array.from({length: maxEntitySlots}, (_, i) => i).find(s => !occupiedSlots.has(s));
+                const firstAvailable = Array.from({length: maxEntitySlots}, (_, i) => i).find(s => !occupiedMap[s]);
                 if (firstAvailable !== undefined) {
                     selectSlot(firstAvailable);
                 }
@@ -1615,31 +1652,48 @@
         }
 
         function selectSlot(slot) {
-            const btn = document.querySelector('.slot-btn[data-slot="' + slot + '"]');
-            if (btn && btn.classList.contains('occupied')) {
-                showToast(i18n.t('dash_slot_occupied', { id: slot }), 'error');
-                return;
-            }
-
             selectedSlot = slot;
             document.querySelectorAll('.slot-btn').forEach(b => {
                 b.classList.toggle('active', parseInt(b.dataset.slot) === slot);
             });
         }
 
+        function showOverwriteConfirm(slotId, entityName) {
+            return new Promise(resolve => {
+                const overlay = document.createElement('div');
+                overlay.className = 'confirm-overlay';
+                overlay.innerHTML =
+                    '<div class="dialog">' +
+                    '<div class="dialog-title">' + i18n.t('dash_overwrite_title') + '</div>' +
+                    '<p style="color:var(--text-secondary);font-size:14px;">' +
+                    i18n.t('dash_overwrite_desc', { id: slotId, name: escapeHtml(entityName) }) +
+                    '</p>' +
+                    '<div class="dialog-actions">' +
+                    '<button class="btn btn-outline cancel-btn">' + i18n.t('mc_dlg_cancel') + '</button>' +
+                    '<button class="btn btn-danger confirm-btn">' + i18n.t('dash_btn_overwrite') + '</button>' +
+                    '</div>' +
+                    '</div>';
+                document.body.appendChild(overlay);
+
+                overlay.querySelector('.cancel-btn').addEventListener('click', () => { overlay.remove(); resolve(false); });
+                overlay.querySelector('.confirm-btn').addEventListener('click', () => { overlay.remove(); resolve(true); });
+                overlay.addEventListener('click', (e) => { if (e.target === overlay) { overlay.remove(); resolve(false); } });
+            });
+        }
+
         async function generateCode() {
             const btn = document.getElementById('btnGenerate');
+
+            // Check if slot is occupied — confirm overwrite first
+            const existingEntity = entities.find(e => e.entityId === selectedSlot);
+            if (existingEntity) {
+                const displayName = existingEntity.name || (getEntityDisplayName(selectedSlot) + ' #' + selectedSlot);
+                const confirmed = await showOverwriteConfirm(selectedSlot, displayName);
+                if (!confirmed) return;
+            }
+
             btn.disabled = true;
             btn.textContent = i18n.t('dash_btn_generating');
-
-            // Check if slot is occupied
-            const occupiedSlots = new Set(entities.map(e => e.entityId));
-            if (occupiedSlots.has(selectedSlot)) {
-                showToast(i18n.t('dash_slot_occupied', { id: selectedSlot }), 'error');
-                btn.disabled = false;
-                btn.textContent = i18n.t('dash_btn_generate');
-                return;
-            }
 
             try {
                 const data = await apiCall('POST', '/api/device/register', {

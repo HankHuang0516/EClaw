@@ -125,7 +125,7 @@ function getDeviceEntityLimit(deviceId) {
 
 // Latest app version - update this with each release
 // Bot will warn users if their app version is older than this
-const LATEST_APP_VERSION = "1.0.31";
+const LATEST_APP_VERSION = "1.0.32";
 
 // Device registry - each device has its own entities
 const devices = {};
