@@ -1,3 +1,10 @@
+# [1.41.0](https://github.com/HankHuang0516/realbot/compare/v1.40.1...v1.41.0) (2026-02-28)
+
+
+### Features
+
+* add admin role awareness to AI support proxy ([1d025e2](https://github.com/HankHuang0516/realbot/commit/1d025e2366b998599e090690f0bd1dd43ddfc993))
+
 ## [1.40.1](https://github.com/HankHuang0516/realbot/compare/v1.40.0...v1.40.1) (2026-02-28)
 
 
