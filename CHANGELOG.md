@@ -1,3 +1,10 @@
+## [1.39.1](https://github.com/HankHuang0516/realbot/compare/v1.39.0...v1.39.1) (2026-02-28)
+
+
+### Bug Fixes
+
+* sync web-sent messages to Android chat + merge broadcast bubbles ([0e8c0b0](https://github.com/HankHuang0516/realbot/commit/0e8c0b0523fc36598e4863949d0021ab844934cd))
+
 # [1.39.0](https://github.com/HankHuang0516/realbot/compare/v1.38.1...v1.39.0) (2026-02-28)
 
 
