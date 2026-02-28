@@ -1,3 +1,10 @@
+# [1.48.0](https://github.com/HankHuang0516/realbot/compare/v1.47.1...v1.48.0) (2026-02-28)
+
+
+### Features
+
+* auto-create GitHub issues for user feedback via AI chat ([35c6edb](https://github.com/HankHuang0516/realbot/commit/35c6edb5c192d5efd99a563d107502f6bcead79f))
+
 ## [1.47.1](https://github.com/HankHuang0516/realbot/compare/v1.47.0...v1.47.1) (2026-02-28)
 
 
