@@ -1,3 +1,10 @@
+## [1.41.3](https://github.com/HankHuang0516/realbot/compare/v1.41.2...v1.41.3) (2026-02-28)
+
+
+### Bug Fixes
+
+* add missing chat-integrity.js (fixes deployment crash) ([a87e700](https://github.com/HankHuang0516/realbot/commit/a87e7007ded80fdfa425d4aae84a973696d8e581))
+
 ## [1.41.2](https://github.com/HankHuang0516/realbot/compare/v1.41.1...v1.41.2) (2026-02-28)
 
 
