@@ -1,3 +1,10 @@
+## [1.47.1](https://github.com/HankHuang0516/realbot/compare/v1.47.0...v1.47.1) (2026-02-28)
+
+
+### Bug Fixes
+
+* AI chat proactively creates GitHub issues for user feedback ([7270fa3](https://github.com/HankHuang0516/realbot/commit/7270fa3b4c665e710c74d57509549510f837c699))
+
 # [1.47.0](https://github.com/HankHuang0516/realbot/compare/v1.46.0...v1.47.0) (2026-02-28)
 
 
