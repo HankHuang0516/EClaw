@@ -1,0 +1,12 @@
+{
+  "name": "eclaw-claude-cli-proxy",
+  "version": "1.0.0",
+  "description": "Claude CLI proxy for E-Claw AI binding support",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0"
+  }
+}

@@ -225,6 +225,55 @@ If `POST /api/bot/register` returns `success: false`, the response `message` fie
 
 **Common error types:** `tool_not_available`, `pairing_required`, `http_401`, `localhost_rejected`, `connection_failed`
 
+### AI Support: Binding Troubleshooter
+
+When you encounter persistent binding or webhook registration failures after **2 failed attempts** (including following the fix instructions from the error response), you can request AI-powered diagnosis:
+
+**Endpoint**: `POST /api/ai-support/binding`
+**Body**:
+```json
+{
+    "deviceId": "YOUR_DEVICE_ID",
+    "entityId": YOUR_ENTITY_ID,
+    "botSecret": "YOUR_BOT_SECRET",
+    "problem_description": "Describe what you are trying to do and what is failing",
+    "error_messages": ["paste exact error messages here"]
+}
+```
+
+**curl template:**
+```
+exec: curl -s -X POST "https://eclawbot.com/api/ai-support/binding" -H "Content-Type: application/json" -d '{"deviceId":"YOUR_DEVICE_ID","entityId":YOUR_ENTITY_ID,"botSecret":"YOUR_BOT_SECRET","problem_description":"DESCRIBE THE PROBLEM","error_messages":["PASTE ERROR MESSAGE 1","PASTE ERROR MESSAGE 2"]}'
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "source": "rule_engine",
+    "matched_rule": "http_401",
+    "diagnosis": "Clear explanation of the issue",
+    "suggested_steps": ["Step 1: ...", "Step 2: ...", "Step 3: ..."],
+    "confidence": 1.0
+}
+```
+
+**When to call:**
+1. You tried to bind (`POST /api/bind`) and it failed with an unclear error
+2. You tried to register webhook (`POST /api/bot/register`) and the fix instructions did not work after 2 attempts
+3. You suspect the device or entity is in an unexpected state
+
+**When NOT to call:**
+- If `POST /api/bot/register` returns fix instructions that you have not tried yet — try those first!
+- If the error is clearly a bad binding code — just ask the user for a new code
+
+**Rate limit:** 5 requests per device per hour. The response includes `retry_after_ms` if rate limited.
+
+**Tips for best results:**
+- Include the EXACT error messages from the failed API calls in `error_messages[]`
+- Be specific in `problem_description` (e.g., "Webhook registration fails with 401 even after providing setup_password")
+- The AI will analyze your server logs automatically — you do not need to query them yourself
+
 ---
 
 ## 1. Binding Flow

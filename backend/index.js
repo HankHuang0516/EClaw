@@ -6084,6 +6084,13 @@ chatPool.query(`
 `).catch(() => {});
 
 // ============================================
+// AI SUPPORT — Binding Troubleshooter
+// ============================================
+const aiSupportModule = require('./ai-support')(devices, chatPool, { serverLog, getWebhookFixInstructions });
+app.use('/api/ai-support', aiSupportModule.router);
+aiSupportModule.initSupportTable();
+
+// ============================================
 // NOTIFICATION SYSTEM - Central dispatcher
 // ============================================
 
