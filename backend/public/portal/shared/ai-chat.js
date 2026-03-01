@@ -463,7 +463,7 @@
         showTyping();
 
         if (images) {
-            updateTypingText(t('ai_chat_uploading') || 'Uploading image(s)...');
+            updateTypingText(i18n.t('ai_chat_uploading') || 'Uploading image(s)...');
         }
 
         // Generate requestId before fetch (survives page refresh)
@@ -528,11 +528,11 @@
 
             // Progressive status text
             if (elapsed > 60000) {
-                updateTypingText(t('ai_chat_still_working') || 'This is taking a while, still working...');
+                updateTypingText(i18n.t('ai_chat_still_working') || 'This is taking a while, still working...');
             } else if (elapsed > 15000) {
-                updateTypingText(t('ai_chat_thinking') || 'Still working on it...');
+                updateTypingText(i18n.t('ai_chat_thinking') || 'Still working on it...');
             } else if (elapsed > 5000) {
-                updateTypingText(t('ai_chat_analyzing') || 'AI is analyzing...');
+                updateTypingText(i18n.t('ai_chat_analyzing') || 'AI is analyzing...');
             }
 
             try {
@@ -620,7 +620,7 @@
             console.log('[AI Chat] Resuming pending request');
             isLoading = true;
             showTyping();
-            updateTypingText(t('ai_chat_thinking') || 'Retrieving AI response...');
+            updateTypingText(i18n.t('ai_chat_thinking') || 'Retrieving AI response...');
             startPolling(pending.requestId);
         } catch (err) {
             console.error('[AI Chat] resumePendingRequest error:', err);
