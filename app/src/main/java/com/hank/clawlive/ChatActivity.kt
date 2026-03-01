@@ -20,6 +20,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -43,6 +44,8 @@ import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.local.UsageManager
 import com.hank.clawlive.ui.EntityChipHelper
 import com.hank.clawlive.data.local.database.ChatMessage
+import com.hank.clawlive.data.local.database.MessageType
+import com.hank.clawlive.data.model.Contact
 import com.hank.clawlive.data.remote.ClawApiService
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
@@ -126,6 +129,12 @@ class ChatActivity : AppCompatActivity() {
     // Camera capture
     private var pendingPhotoUri: Uri? = null
 
+    // Cross-device contacts
+    private var contacts: List<Contact> = emptyList()
+    private var contactChips: Map<String, Chip> = emptyMap()
+    private var addContactChip: Chip? = null
+    private var boundEntityPublicCodes: Map<Int, String> = emptyMap()
+
     // Current filter state
     private var showAll = true
     private var filterEntityIds = mutableSetOf<Int>()
@@ -166,6 +175,7 @@ class ChatActivity : AppCompatActivity() {
         setupEdgeToEdgeInsets()
         setupRecyclerView()
         setupTargetChips()
+        loadContacts()
         setupListeners()
         observeMessages()
     }
@@ -302,7 +312,14 @@ class ChatActivity : AppCompatActivity() {
                     }
                 }
 
-                if (boundIds.size <= 1) {
+                // Collect public codes for bound entities
+                val publicCodeMap = mutableMapOf<Int, String>()
+                response.entities.forEach { entity ->
+                    entity.publicCode?.let { publicCodeMap[entity.entityId] = it }
+                }
+                boundEntityPublicCodes = publicCodeMap
+
+                if (boundIds.size <= 1 && contacts.isEmpty()) {
                     chipGroupTargets.visibility = View.GONE
                 }
             } catch (e: Exception) {
@@ -320,6 +337,201 @@ class ChatActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun loadContacts() {
+        lifecycleScope.launch {
+            try {
+                val response = api.getContacts(deviceId = deviceManager.deviceId)
+                if (response.success) {
+                    contacts = response.contacts
+
+                    // Build xdevice label cache for ChatAdapter
+                    val labels = mutableMapOf<String, String>()
+                    contacts.forEach { c ->
+                        labels[c.publicCode] = c.name ?: c.publicCode
+                    }
+                    chatAdapter.xdeviceLabels = labels
+
+                    renderContactChips()
+
+                    // Show target bar if contacts exist even with single entity
+                    if (contacts.isNotEmpty()) {
+                        chipGroupTargets.visibility = View.VISIBLE
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to load contacts")
+            }
+        }
+    }
+
+    private fun renderContactChips() {
+        // Remove old contact chips and add button
+        contactChips.values.forEach { chipGroupTargets.removeView(it) }
+        addContactChip?.let { chipGroupTargets.removeView(it) }
+
+        // Restore checked contact codes from prefs
+        val savedContactCodes = chatPrefs.lastMessageEntityIds
+            ?.split(",")
+            ?.filter { it.startsWith("c:") }
+            ?.map { it.removePrefix("c:") }
+            ?.toSet() ?: emptySet()
+
+        contactChips = EntityChipHelper.addContactChips(
+            context = this,
+            chipGroup = chipGroupTargets,
+            contacts = contacts,
+            checkedCodes = savedContactCodes,
+            onRemoveClick = { code -> confirmRemoveContact(code) }
+        )
+
+        // Add "➕" button
+        addContactChip = EntityChipHelper.createAddContactChip(this) {
+            showAddContactDialog()
+        }
+        chipGroupTargets.addView(addContactChip)
+    }
+
+    private fun showAddContactDialog() {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_contact, null)
+        val editCode = dialogView.findViewById<TextInputEditText>(R.id.editContactCode)
+        val tvPreview = dialogView.findViewById<TextView>(R.id.tvContactPreview)
+        val progressBar = dialogView.findViewById<ProgressBar>(R.id.progressLookup)
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.add_contact))
+            .setView(dialogView)
+            .setPositiveButton(getString(R.string.add_contact_btn), null) // set below
+            .setNegativeButton(getString(R.string.cancel), null)
+            .create()
+
+        dialog.show()
+
+        // Debounced lookup
+        var lookupJob: kotlinx.coroutines.Job? = null
+        var foundEntity: com.hank.clawlive.data.model.LookupEntity? = null
+
+        editCode.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val code = s?.toString()?.trim()?.uppercase() ?: ""
+                if (code.length < 4) {
+                    tvPreview.text = ""
+                    tvPreview.visibility = View.GONE
+                    foundEntity = null
+                    return
+                }
+
+                lookupJob?.cancel()
+                lookupJob = lifecycleScope.launch {
+                    delay(400)
+                    progressBar.visibility = View.VISIBLE
+                    try {
+                        val resp = api.lookupEntity(code)
+                        progressBar.visibility = View.GONE
+                        if (resp.success && resp.entity != null) {
+                            foundEntity = resp.entity
+                            val name = resp.entity.name ?: code
+                            val char = resp.entity.character ?: ""
+                            tvPreview.text = "$name  $char  Lv.${resp.entity.level}"
+                            tvPreview.visibility = View.VISIBLE
+                        } else {
+                            foundEntity = null
+                            tvPreview.text = getString(R.string.contact_not_found)
+                            tvPreview.visibility = View.VISIBLE
+                        }
+                    } catch (e: Exception) {
+                        progressBar.visibility = View.GONE
+                        foundEntity = null
+                        tvPreview.text = getString(R.string.contact_not_found)
+                        tvPreview.visibility = View.VISIBLE
+                    }
+                }
+            }
+        })
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val code = editCode.text?.toString()?.trim()?.uppercase() ?: ""
+            if (code.isEmpty()) return@setOnClickListener
+
+            // Check self
+            if (boundEntityPublicCodes.values.any { it.equals(code, ignoreCase = true) }) {
+                Toast.makeText(this, getString(R.string.contact_cannot_add_self), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // Check duplicate
+            if (contacts.any { it.publicCode.equals(code, ignoreCase = true) }) {
+                Toast.makeText(this, getString(R.string.contact_already_exists), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            lifecycleScope.launch {
+                try {
+                    val body = mapOf(
+                        "deviceId" to deviceManager.deviceId,
+                        "deviceSecret" to deviceManager.deviceSecret,
+                        "publicCode" to code
+                    )
+                    val resp = api.addContact(body)
+                    if (resp.success) {
+                        Toast.makeText(this@ChatActivity, getString(R.string.contact_added), Toast.LENGTH_SHORT).show()
+                        dialog.dismiss()
+                        loadContacts()
+                    } else {
+                        Toast.makeText(this@ChatActivity, resp.error ?: "Failed", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(this@ChatActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun confirmRemoveContact(publicCode: String) {
+        val contact = contacts.find { it.publicCode == publicCode }
+        val name = contact?.name ?: publicCode
+
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.remove_contact))
+            .setMessage(getString(R.string.remove_contact_confirm, name))
+            .setPositiveButton(getString(R.string.remove)) { _, _ ->
+                lifecycleScope.launch {
+                    try {
+                        val body = mapOf(
+                            "deviceId" to deviceManager.deviceId,
+                            "deviceSecret" to deviceManager.deviceSecret,
+                            "publicCode" to publicCode
+                        )
+                        api.removeContact(body)
+                        Toast.makeText(this@ChatActivity, getString(R.string.contact_removed), Toast.LENGTH_SHORT).show()
+                        loadContacts()
+                    } catch (e: Exception) {
+                        Toast.makeText(this@ChatActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show()
+    }
+
+    /**
+     * Selected targets including both local entities and contacts.
+     */
+    data class SelectedTargets(
+        val localEntityIds: List<Int>,
+        val contactCodes: List<String>
+    )
+
+    private fun getSelectedTargetsWithContacts(): SelectedTargets {
+        val localIds = getSelectedTargets()
+        val codes = mutableListOf<String>()
+        contactChips.forEach { (code, chip) ->
+            if (chip.isChecked) codes.add(code)
+        }
+        return SelectedTargets(localIds, codes)
     }
 
     private fun setupListeners() {
@@ -830,11 +1042,15 @@ class ChatActivity : AppCompatActivity() {
             messages.filter { it.isFromUser }
         } else {
             messages.filter { msg ->
-                if (msg.isFromUser) {
+                // Cross-device messages pass through entity filters (show when "all" entities or specific filter)
+                if (msg.messageType == MessageType.CROSS_DEVICE_SENT || msg.messageType == MessageType.CROSS_DEVICE_RECEIVED) {
+                    true
+                } else if (msg.isFromUser) {
                     val targets = msg.getTargetEntityIdList()
                     targets.any { it in filterEntityIds }
                 } else {
-                    msg.fromEntityId in filterEntityIds
+                    msg.fromEntityId in filterEntityIds ||
+                        msg.getTargetEntityIdList().any { it in filterEntityIds }
                 }
             }
         }
@@ -889,8 +1105,11 @@ class ChatActivity : AppCompatActivity() {
             return
         }
 
-        val targetIds = getSelectedTargets()
-        if (targetIds.isEmpty()) {
+        val selected = getSelectedTargetsWithContacts()
+        val targetIds = selected.localEntityIds
+        val contactCodes = selected.contactCodes
+
+        if (targetIds.isEmpty() && contactCodes.isEmpty()) {
             Toast.makeText(this, "Please select at least one entity", Toast.LENGTH_SHORT).show()
             return
         }
@@ -900,8 +1119,12 @@ class ChatActivity : AppCompatActivity() {
             return
         }
 
-        // If there are pending files, send one message per file
+        // If there are pending files, send one message per file (local only, no cross-device files)
         if (hasFiles) {
+            if (targetIds.isEmpty()) {
+                Toast.makeText(this, "Files can only be sent to local entities", Toast.LENGTH_SHORT).show()
+                return
+            }
             editMessage.text?.clear()
             usageManager.incrementUsage()
             for ((i, f) in readyFiles.withIndex()) {
@@ -918,85 +1141,140 @@ class ChatActivity : AppCompatActivity() {
 
         editMessage.text?.clear()
         usageManager.incrementUsage()
-        chatPrefs.saveLastMessage(text, targetIds)
+
+        // Save selected targets (including contacts with c: prefix)
+        val allTargetKeys = targetIds.map { it.toString() } + contactCodes.map { "c:$it" }
+        chatPrefs.lastMessageEntityIds = allTargetKeys.joinToString(",")
+        chatPrefs.lastMessage = text
+        chatPrefs.lastMessageTimestamp = System.currentTimeMillis()
 
         lifecycleScope.launch {
-            val messageId = chatRepository.saveOutgoingMessage(
-                text = text,
-                entityIds = targetIds,
-                source = "android_chat"
-            )
-
-            try {
-                val entityIdValue: Any = if (targetIds.size == 1) {
-                    targetIds.first()
-                } else {
-                    targetIds
-                }
-
-                val request = mapOf<String, Any>(
-                    "deviceId" to deviceManager.deviceId,
-                    "entityId" to entityIdValue,
-                    "text" to text,
-                    "source" to "android_chat"
+            // === Send to local entities ===
+            if (targetIds.isNotEmpty()) {
+                val messageId = chatRepository.saveOutgoingMessage(
+                    text = text,
+                    entityIds = targetIds,
+                    source = "android_chat"
                 )
-                val response = api.sendClientMessage(request)
-                chatRepository.markMessageSynced(messageId)
 
-                Timber.d("Message sent from ChatActivity to entities $targetIds")
-
-                val deliveredEntityIds = response.targets
-                    .filter { it.pushed }
-                    .map { it.entityId }
-                if (deliveredEntityIds.isNotEmpty()) {
-                    chatRepository.markMessageDelivered(messageId, deliveredEntityIds)
-                }
-
-                // Only check push failures for entities in "push" mode (has webhook)
-                // Entities in "polling" mode have no webhook - pushed:false is expected
-                val pushModeTargets = response.targets.filter { it.mode == "push" }
-                val failedPushTargets = pushModeTargets.filter { !it.pushed }
-
-                if (failedPushTargets.isNotEmpty()) {
-                    Timber.w("Push failed for ${failedPushTargets.size} push-mode entity(s)")
-                    showPushErrorDialog(failedPushTargets)
-                }
-
-                ChatWidgetProvider.updateWidgets(this@ChatActivity)
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to send message")
-                if (e is retrofit2.HttpException && e.code() == 429) {
-                    try {
-                        val errorBody = e.response()?.errorBody()?.string()
-                        val json = org.json.JSONObject(errorBody ?: "{}")
-                        val serverUsed = json.optInt("used", -1)
-                        if (serverUsed >= 0) usageManager.syncFromServer(serverUsed)
-                    } catch (_: Exception) { }
-                    showUsageLimitDialog()
-                } else if (e is retrofit2.HttpException && e.code() == 403) {
-                    try {
-                        val errorBody = e.response()?.errorBody()?.string()
-                        val json = org.json.JSONObject(errorBody ?: "{}")
-                        val errorCode = json.optString("error", "")
-                        if (errorCode == "GATEKEEPER_BLOCKED_MESSAGE" || errorCode == "GATEKEEPER_BLOCKED") {
-                            val reason = json.optString("message", "訊息已被安全機制攔截")
-                            if (errorCode == "GATEKEEPER_BLOCKED") {
-                                Toast.makeText(this@ChatActivity, getString(R.string.gatekeeper_blocked_permanent, reason), Toast.LENGTH_LONG).show()
-                            } else {
-                                val strikes = json.optInt("strikes", 0)
-                                val maxStrikes = json.optInt("maxStrikes", 3)
-                                Toast.makeText(this@ChatActivity, getString(R.string.gatekeeper_blocked_message, reason, strikes, maxStrikes), Toast.LENGTH_LONG).show()
-                            }
-                        } else {
-                            Toast.makeText(this@ChatActivity, "Send failed: ${json.optString("message", e.message())}", Toast.LENGTH_SHORT).show()
-                        }
-                    } catch (_: Exception) {
-                        Toast.makeText(this@ChatActivity, "Send failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                try {
+                    val entityIdValue: Any = if (targetIds.size == 1) {
+                        targetIds.first()
+                    } else {
+                        targetIds
                     }
-                } else {
-                    Toast.makeText(this@ChatActivity, "Send failed: ${e.message}", Toast.LENGTH_SHORT).show()
+
+                    val request = mapOf<String, Any>(
+                        "deviceId" to deviceManager.deviceId,
+                        "entityId" to entityIdValue,
+                        "text" to text,
+                        "source" to "android_chat"
+                    )
+                    val response = api.sendClientMessage(request)
+                    chatRepository.markMessageSynced(messageId)
+
+                    Timber.d("Message sent from ChatActivity to entities $targetIds")
+
+                    val deliveredEntityIds = response.targets
+                        .filter { it.pushed }
+                        .map { it.entityId }
+                    if (deliveredEntityIds.isNotEmpty()) {
+                        chatRepository.markMessageDelivered(messageId, deliveredEntityIds)
+                    }
+
+                    val pushModeTargets = response.targets.filter { it.mode == "push" }
+                    val failedPushTargets = pushModeTargets.filter { !it.pushed }
+                    if (failedPushTargets.isNotEmpty()) {
+                        Timber.w("Push failed for ${failedPushTargets.size} push-mode entity(s)")
+                        showPushErrorDialog(failedPushTargets)
+                    }
+
+                    ChatWidgetProvider.updateWidgets(this@ChatActivity)
+                } catch (e: Exception) {
+                    handleSendError(e)
                 }
             }
+
+            // === Send to cross-device contacts ===
+            if (contactCodes.isNotEmpty() && text.isNotEmpty()) {
+                val senderCode = targetIds.firstOrNull()?.let { boundEntityPublicCodes[it] }
+                    ?: boundEntityPublicCodes.values.firstOrNull()
+
+                if (senderCode == null) {
+                    Toast.makeText(this@ChatActivity, "No bound entity to send from", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+
+                val senderEntity = targetIds.firstOrNull() ?: boundEntityPublicCodes.keys.firstOrNull() ?: 0
+                val senderCharacter = chatAdapter.entityNames[senderEntity]
+
+                for (code in contactCodes) {
+                    try {
+                        val request = mapOf<String, Any>(
+                            "deviceId" to deviceManager.deviceId,
+                            "deviceSecret" to deviceManager.deviceSecret,
+                            "senderEntityId" to senderEntity,
+                            "targetPublicCode" to code,
+                            "text" to text
+                        )
+                        val resp = api.sendCrossDeviceMessage(request)
+                        if (resp.success) {
+                            chatRepository.saveCrossDeviceMessage(
+                                text = text,
+                                fromPublicCode = senderCode,
+                                targetPublicCode = code,
+                                fromCharacter = senderCharacter
+                            )
+                            Timber.d("Cross-device message sent to $code")
+                        } else {
+                            val label = chatAdapter.xdeviceLabels[code] ?: code
+                            Toast.makeText(this@ChatActivity, "${resp.error ?: "Failed"}: $label", Toast.LENGTH_SHORT).show()
+                        }
+                    } catch (e: Exception) {
+                        if (e is retrofit2.HttpException && e.code() == 404) {
+                            Toast.makeText(this@ChatActivity, getString(R.string.contact_offline), Toast.LENGTH_SHORT).show()
+                        } else {
+                            Timber.e(e, "Cross-device send failed to $code")
+                            Toast.makeText(this@ChatActivity, "Send failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun handleSendError(e: Exception) {
+        Timber.e(e, "Failed to send message")
+        if (e is retrofit2.HttpException && e.code() == 429) {
+            try {
+                val errorBody = e.response()?.errorBody()?.string()
+                val json = org.json.JSONObject(errorBody ?: "{}")
+                val serverUsed = json.optInt("used", -1)
+                if (serverUsed >= 0) usageManager.syncFromServer(serverUsed)
+            } catch (_: Exception) { }
+            showUsageLimitDialog()
+        } else if (e is retrofit2.HttpException && e.code() == 403) {
+            try {
+                val errorBody = e.response()?.errorBody()?.string()
+                val json = org.json.JSONObject(errorBody ?: "{}")
+                val errorCode = json.optString("error", "")
+                if (errorCode == "GATEKEEPER_BLOCKED_MESSAGE" || errorCode == "GATEKEEPER_BLOCKED") {
+                    val reason = json.optString("message", "訊息已被安全機制攔截")
+                    if (errorCode == "GATEKEEPER_BLOCKED") {
+                        Toast.makeText(this@ChatActivity, getString(R.string.gatekeeper_blocked_permanent, reason), Toast.LENGTH_LONG).show()
+                    } else {
+                        val strikes = json.optInt("strikes", 0)
+                        val maxStrikes = json.optInt("maxStrikes", 3)
+                        Toast.makeText(this@ChatActivity, getString(R.string.gatekeeper_blocked_message, reason, strikes, maxStrikes), Toast.LENGTH_LONG).show()
+                    }
+                } else {
+                    Toast.makeText(this@ChatActivity, "Send failed: ${json.optString("message", e.message())}", Toast.LENGTH_SHORT).show()
+                }
+            } catch (_: Exception) {
+                Toast.makeText(this@ChatActivity, "Send failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(this@ChatActivity, "Send failed: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 

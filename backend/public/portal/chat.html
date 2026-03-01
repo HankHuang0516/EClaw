@@ -1655,6 +1655,11 @@
                     const targets = m.source.split(':')[1].split(',').map(Number);
                     return targets.includes(entityId);
                 }
+                // Bot-to-bot speak-to / broadcast: check if this entity is a target
+                const parsed = parseEntitySource(m.source);
+                if (parsed && !parsed.crossDevice && parsed.targets && parsed.targets.includes(entityId)) {
+                    return true;
+                }
                 return false;
             });
         }
