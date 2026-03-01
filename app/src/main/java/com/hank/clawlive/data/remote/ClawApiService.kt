@@ -1,6 +1,10 @@
 package com.hank.clawlive.data.remote
 
 import com.hank.clawlive.data.model.*
+import com.hank.clawlive.data.model.ContactListResponse
+import com.hank.clawlive.data.model.ContactAddResponse
+import com.hank.clawlive.data.model.EntityLookupResponse
+import com.hank.clawlive.data.model.CrossSpeakResponse
 import com.hank.clawlive.data.model.ScheduleListResponse
 import com.hank.clawlive.data.model.ScheduleCreateResponse
 import com.hank.clawlive.data.model.ScheduleDeleteResponse
@@ -152,6 +156,25 @@ interface ClawApiService {
 
     @POST("api/subscription/usage")
     suspend fun getSubscriptionUsage(@Body body: Map<String, String>): SubscriptionUsageResponse
+
+    // ============================================
+    // CROSS-DEVICE CONTACTS
+    // ============================================
+
+    @GET("api/contacts")
+    suspend fun getContacts(@Query("deviceId") deviceId: String): ContactListResponse
+
+    @POST("api/contacts")
+    suspend fun addContact(@Body body: Map<String, String>): ContactAddResponse
+
+    @HTTP(method = "DELETE", path = "api/contacts", hasBody = true)
+    suspend fun removeContact(@Body body: Map<String, String>): ApiResponse
+
+    @GET("api/entity/lookup")
+    suspend fun lookupEntity(@Query("code") code: String): EntityLookupResponse
+
+    @POST("api/client/cross-speak")
+    suspend fun sendCrossDeviceMessage(@Body body: Map<String, @JvmSuppressWildcards Any>): CrossSpeakResponse
 
     // ============================================
     // CHAT HISTORY (Backend PostgreSQL)

@@ -262,6 +262,16 @@
     <string name="bind_email_open_portal">開啟網頁入口</string>
     <string name="bind_email_copy_credentials">複製裝置憑證</string>
 
+    <!-- Account Status Card -->
+    <string name="account_card_title">帳號</string>
+    <string name="account_status_loading">正在確認帳號狀態\u2026</string>
+    <string name="account_status_unbound">尚未綁定 Email</string>
+    <string name="account_status_unbound_desc">綁定後可在 Web Portal 管理，換機時也能恢復資料</string>
+    <string name="account_bind_email_btn">綁定 Email</string>
+    <string name="account_recovery_link">已有帳號？點此恢復</string>
+    <string name="account_open_portal">開啟 Web Portal</string>
+    <string name="account_copy_credentials">複製裝置憑證</string>
+
     <!-- Account Login -->
     <string name="account_login">帳號登入</string>
     <string name="account_login_hint">使用已綁定的信箱登入，可在重新安裝後恢復裝置資料。</string>
@@ -363,6 +373,22 @@ E-claw (電子蝦) 團隊深知隱私對您的重要性。我們在此鄭重聲�
     <string name="delete_confirm_message_format">確定要刪除「%s」嗎？</string>
     <string name="delete">刪除</string>
     <string name="last_synced_format"> | 上次同步: %s</string>
+    <!-- Cross-Device Contacts -->
+    <string name="add_contact">新增聯絡人</string>
+    <string name="add_contact_btn">新增</string>
+    <string name="remove_contact">移除聯絡人</string>
+    <string name="remove_contact_confirm">確定要移除 %s？</string>
+    <string name="contact_code_hint">輸入公開代碼</string>
+    <string name="contact_not_found">找不到此實體</string>
+    <string name="contact_added">已新增聯絡人！</string>
+    <string name="contact_removed">已移除聯絡人</string>
+    <string name="contact_already_exists">已在聯絡人中</string>
+    <string name="contact_cannot_add_self">無法新增自己的實體</string>
+    <string name="contact_limit_reached">聯絡人已達上限（最多 20 人）</string>
+    <string name="contact_offline">聯絡人目前離線</string>
+    <string name="to_contact_cross_device">傳送至：%s（跨裝置）</string>
+    <string name="remove">移除</string>
+
     <!-- Mission Control (Restored) -->
     <string name="mission_control">任務控制中心</string>
     <string name="upload">上傳</string>

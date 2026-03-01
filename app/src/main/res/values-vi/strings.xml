@@ -91,6 +91,23 @@
     <string name="attach_file">Tệp</string>
     <string name="file_too_large">Tệp quá lớn (tối đa 100MB)</string>
     <string name="wait_upload">Vui lòng đợi quá trình tải lên hoàn tất</string>
+    <!-- Cross-Device Contacts -->
+    <string name="add_contact">Thêm liên hệ</string>
+    <string name="add_contact_btn">Thêm</string>
+    <string name="remove_contact">Xóa liên hệ</string>
+    <string name="remove_contact_confirm">Xóa %s khỏi danh bạ?</string>
+    <string name="contact_code_hint">Nhập mã công khai</string>
+    <string name="contact_not_found">Không tìm thấy thực thể</string>
+    <string name="contact_added">Đã thêm liên hệ!</string>
+    <string name="contact_removed">Đã xóa liên hệ</string>
+    <string name="contact_already_exists">Đã có trong danh bạ</string>
+    <string name="contact_cannot_add_self">Không thể thêm thực thể của bạn</string>
+    <string name="contact_limit_reached">Đã đạt giới hạn liên hệ (tối đa 20)</string>
+    <string name="contact_offline">Liên hệ đang ngoại tuyến</string>
+    <string name="to_contact_cross_device">Gửi tới: %s (xuyên thiết bị)</string>
+    <string name="remove">Xóa</string>
+
+    <!-- Mission Control -->
     <string name="mission_control">Trung tâm nhiệm vụ</string>
     <string name="upload">Tải lên</string>
     <string name="uploading">Đang tải lên…</string>
@@ -279,6 +296,16 @@
     <string name="bind_email_verify_hint">Vui lòng kiểm tra hộp thư và xác minh email trước khi đăng nhập.</string>
     <string name="bind_email_open_portal">Mở Cổng Web</string>
     <string name="bind_email_copy_credentials">Sao chép thông tin đăng nhập</string>
+    <!-- Account Status Card -->
+    <string name="account_card_title">Tài khoản</string>
+    <string name="account_status_loading">Đang kiểm tra trạng thái tài khoản\u2026</string>
+    <string name="account_status_unbound">Chưa liên kết email</string>
+    <string name="account_status_unbound_desc">Liên kết email để quản lý qua Web Portal và khôi phục dữ liệu khi đổi thiết bị.</string>
+    <string name="account_bind_email_btn">Liên kết Email</string>
+    <string name="account_recovery_link">Đã có tài khoản? Khôi phục tại đây</string>
+    <string name="account_open_portal">Mở Web Portal</string>
+    <string name="account_copy_credentials">Sao chép thông tin thiết bị</string>
+
     <string name="account_login">Đăng nhập tài khoản</string>
     <string name="account_login_hint">Đăng nhập bằng email đã liên kết để khôi phục dữ liệu thiết bị sau khi cài đặt lại.</string>
     <string name="account_login_btn">Đăng nhập</string>

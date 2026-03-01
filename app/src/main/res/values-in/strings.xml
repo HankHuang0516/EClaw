@@ -91,6 +91,23 @@
     <string name="attach_file">Berkas</string>
     <string name="file_too_large">Berkas terlalu besar (maks 100MB)</string>
     <string name="wait_upload">Mohon tunggu hingga unggahan selesai</string>
+    <!-- Cross-Device Contacts -->
+    <string name="add_contact">Tambah Kontak</string>
+    <string name="add_contact_btn">Tambah</string>
+    <string name="remove_contact">Hapus Kontak</string>
+    <string name="remove_contact_confirm">Hapus %s dari kontak?</string>
+    <string name="contact_code_hint">Masukkan kode publik</string>
+    <string name="contact_not_found">Entitas tidak ditemukan</string>
+    <string name="contact_added">Kontak ditambahkan!</string>
+    <string name="contact_removed">Kontak dihapus</string>
+    <string name="contact_already_exists">Sudah ada di kontak</string>
+    <string name="contact_cannot_add_self">Tidak dapat menambahkan entitas sendiri</string>
+    <string name="contact_limit_reached">Batas kontak tercapai (maks 20)</string>
+    <string name="contact_offline">Kontak sedang offline</string>
+    <string name="to_contact_cross_device">Kepada: %s (lintas perangkat)</string>
+    <string name="remove">Hapus</string>
+
+    <!-- Mission Control -->
     <string name="mission_control">Pusat Misi</string>
     <string name="upload">Unggah</string>
     <string name="uploading">Mengunggah…</string>
@@ -279,6 +296,16 @@
     <string name="bind_email_verify_hint">Silakan periksa kotak masuk dan verifikasi email Anda sebelum masuk.</string>
     <string name="bind_email_open_portal">Buka Portal</string>
     <string name="bind_email_copy_credentials">Salin Kredensial</string>
+    <!-- Account Status Card -->
+    <string name="account_card_title">Akun</string>
+    <string name="account_status_loading">Memeriksa status akun\u2026</string>
+    <string name="account_status_unbound">Email belum ditautkan</string>
+    <string name="account_status_unbound_desc">Tautkan email untuk mengelola melalui Web Portal dan memulihkan data saat ganti perangkat.</string>
+    <string name="account_bind_email_btn">Tautkan Email</string>
+    <string name="account_recovery_link">Sudah punya akun? Pulihkan di sini</string>
+    <string name="account_open_portal">Buka Web Portal</string>
+    <string name="account_copy_credentials">Salin Kredensial Perangkat</string>
+
     <string name="account_login">Login Akun</string>
     <string name="account_login_hint">Masuk dengan email terikat Anda untuk memulihkan data perangkat setelah menginstal ulang.</string>
     <string name="account_login_btn">Masuk</string>

@@ -11,7 +11,9 @@ enum class MessageType {
     USER_BROADCAST,      // User sends to multiple entities (RIGHT side)
     ENTITY_RESPONSE,      // Entity's message from /api/status (LEFT side)
     ENTITY_TO_ENTITY,    // source = "entity:{ID}:{CHARACTER}" (LEFT side)
-    ENTITY_BROADCAST     // Entity broadcast via messageQueue (LEFT side)
+    ENTITY_BROADCAST,    // Entity broadcast via messageQueue (LEFT side)
+    CROSS_DEVICE_SENT,   // User sent cross-device message (RIGHT side)
+    CROSS_DEVICE_RECEIVED // Received cross-device message (LEFT side)
 }
 
 /**
@@ -75,7 +77,13 @@ data class ChatMessage(
     val dislikeCount: Int = 0,
 
     /** Current user's reaction: "like", "dislike", or null */
-    val userReaction: String? = null
+    val userReaction: String? = null,
+
+    /** Cross-device: sender's public code */
+    val fromPublicCode: String? = null,
+
+    /** Cross-device: target's public code */
+    val targetPublicCode: String? = null
 ) {
     /**
      * Get display name for the message sender

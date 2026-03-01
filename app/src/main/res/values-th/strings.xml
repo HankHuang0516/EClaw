@@ -91,6 +91,23 @@
     <string name="attach_file">ไฟล์</string>
     <string name="file_too_large">ไฟล์ใหญ่เกินไป (สูงสุด 100MB)</string>
     <string name="wait_upload">กรุณารอให้อัปโหลดเสร็จก่อน</string>
+    <!-- Cross-Device Contacts -->
+    <string name="add_contact">เพิ่มผู้ติดต่อ</string>
+    <string name="add_contact_btn">เพิ่ม</string>
+    <string name="remove_contact">ลบผู้ติดต่อ</string>
+    <string name="remove_contact_confirm">ลบ %s ออกจากผู้ติดต่อ?</string>
+    <string name="contact_code_hint">ป้อนรหัสสาธารณะ</string>
+    <string name="contact_not_found">ไม่พบเอนทิตี</string>
+    <string name="contact_added">เพิ่มผู้ติดต่อแล้ว!</string>
+    <string name="contact_removed">ลบผู้ติดต่อแล้ว</string>
+    <string name="contact_already_exists">อยู่ในรายชื่อผู้ติดต่อแล้ว</string>
+    <string name="contact_cannot_add_self">ไม่สามารถเพิ่มเอนทิตีของตัวเอง</string>
+    <string name="contact_limit_reached">ถึงขีดจำกัดผู้ติดต่อแล้ว (สูงสุด 20)</string>
+    <string name="contact_offline">ผู้ติดต่อออฟไลน์</string>
+    <string name="to_contact_cross_device">ถึง: %s (ข้ามอุปกรณ์)</string>
+    <string name="remove">ลบ</string>
+
+    <!-- Mission Control -->
     <string name="mission_control">ศูนย์ภารกิจ</string>
     <string name="upload">อัปโหลด</string>
     <string name="uploading">กำลังอัปโหลด…</string>
@@ -279,6 +296,16 @@
     <string name="bind_email_verify_hint">กรุณาตรวจสอบกล่องจดหมายและยืนยันอีเมลก่อนเข้าสู่ระบบ</string>
     <string name="bind_email_open_portal">เปิด Portal</string>
     <string name="bind_email_copy_credentials">คัดลอกข้อมูลรับรอง</string>
+    <!-- Account Status Card -->
+    <string name="account_card_title">บัญชี</string>
+    <string name="account_status_loading">กำลังตรวจสอบสถานะบัญชี\u2026</string>
+    <string name="account_status_unbound">ยังไม่ได้ผูกอีเมล</string>
+    <string name="account_status_unbound_desc">ผูกอีเมลเพื่อจัดการผ่าน Web Portal และกู้คืนข้อมูลเมื่อเปลี่ยนเครื่อง</string>
+    <string name="account_bind_email_btn">ผูกอีเมล</string>
+    <string name="account_recovery_link">มีบัญชีอยู่แล้ว? กู้คืนที่นี่</string>
+    <string name="account_open_portal">เปิด Web Portal</string>
+    <string name="account_copy_credentials">คัดลอกข้อมูลรับรองอุปกรณ์</string>
+
     <string name="account_login">เข้าสู่ระบบบัญชี</string>
     <string name="account_login_hint">เข้าสู่ระบบด้วยอีเมลที่ผูกไว้เพื่อกู้คืนข้อมูลอุปกรณ์หลังจากติดตั้งใหม่</string>
     <string name="account_login_btn">เข้าสู่ระบบ</string>

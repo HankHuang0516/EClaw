@@ -22,6 +22,7 @@ import com.bumptech.glide.Glide
 import com.hank.clawlive.R
 import com.hank.clawlive.data.local.EntityAvatarManager
 import com.hank.clawlive.data.local.database.ChatMessage
+import com.hank.clawlive.data.local.database.MessageType
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import java.io.File
@@ -42,8 +43,15 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
     /** Callback for reaction button clicks: (messageId, reaction: "like"|"dislike"|null) */
     var onReactionClick: ((Long, String?) -> Unit)? = null
 
+    /** Cross-device contact label cache (publicCode -> display name), set from Activity */
+    var xdeviceLabels: Map<String, String> = emptyMap()
+
     fun getEntityDisplayName(entityId: Int): String {
         return entityNames[entityId]?.let { "$it (#$entityId)" } ?: "Entity $entityId"
+    }
+
+    fun getXDeviceLabel(code: String): String {
+        return xdeviceLabels[code] ?: "\uD83C\uDF10 $code"
     }
 
     companion object {
@@ -139,7 +147,12 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
             // Show target entities
             val targets = message.getTargetEntityIdList()
             val isMissionNotify = message.source == "mission_notify"
-            if (targets.isNotEmpty() && (targets.size > 1 || isMissionNotify)) {
+
+            if (message.messageType == MessageType.CROSS_DEVICE_SENT && message.targetPublicCode != null) {
+                val label = adapter.getXDeviceLabel(message.targetPublicCode)
+                tvTargets.text = itemView.context.getString(R.string.to_contact_cross_device, label)
+                tvTargets.visibility = View.VISIBLE
+            } else if (targets.isNotEmpty() && (targets.size > 1 || isMissionNotify)) {
                 tvTargets.text = itemView.context.getString(
                     R.string.to_entities,
                     targets.joinToString(", ") { adapter.getEntityDisplayName(it) }
@@ -338,10 +351,15 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
             }
 
             // Entity name and avatar
-            val entityId = message.fromEntityId ?: 0
             val avatarManager = EntityAvatarManager.getInstance(itemView.context)
-            tvAvatar.text = avatarManager.getAvatar(entityId)
-            tvEntityName.text = adapter.getEntityDisplayName(entityId)
+            if (message.messageType == MessageType.CROSS_DEVICE_RECEIVED && message.fromPublicCode != null) {
+                tvAvatar.text = "\uD83C\uDF10"  // 🌐 globe
+                tvEntityName.text = adapter.getXDeviceLabel(message.fromPublicCode)
+            } else {
+                val entityId = message.fromEntityId ?: 0
+                tvAvatar.text = avatarManager.getAvatar(entityId)
+                tvEntityName.text = adapter.getEntityDisplayName(entityId)
+            }
 
             // Handle media types
             bindMedia(message)

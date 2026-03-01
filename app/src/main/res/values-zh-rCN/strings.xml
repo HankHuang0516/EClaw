@@ -92,6 +92,23 @@
     <string name="attach_file">文件</string>
     <string name="file_too_large">文件过大（最大 100MB）</string>
     <string name="wait_upload">请等待上传完成</string>
+    <!-- Cross-Device Contacts -->
+    <string name="add_contact">添加联系人</string>
+    <string name="add_contact_btn">添加</string>
+    <string name="remove_contact">移除联系人</string>
+    <string name="remove_contact_confirm">确定要移除 %s？</string>
+    <string name="contact_code_hint">输入公开代码</string>
+    <string name="contact_not_found">找不到此实体</string>
+    <string name="contact_added">已添加联系人！</string>
+    <string name="contact_removed">已移除联系人</string>
+    <string name="contact_already_exists">已在联系人中</string>
+    <string name="contact_cannot_add_self">无法添加自己的实体</string>
+    <string name="contact_limit_reached">联系人已达上限（最多 20 人）</string>
+    <string name="contact_offline">联系人当前离线</string>
+    <string name="to_contact_cross_device">发送至：%s（跨设备）</string>
+    <string name="remove">移除</string>
+
+    <!-- Mission Control -->
     <string name="mission_control">任务控制</string>
     <string name="upload">上传</string>
     <string name="uploading">上传中…</string>
@@ -280,6 +297,16 @@
     <string name="bind_email_verify_hint">请检查收件箱并验证邮箱后再登录。</string>
     <string name="bind_email_open_portal">打开门户</string>
     <string name="bind_email_copy_credentials">复制凭证</string>
+    <!-- Account Status Card -->
+    <string name="account_card_title">账号</string>
+    <string name="account_status_loading">正在确认账号状态\u2026</string>
+    <string name="account_status_unbound">尚未绑定 Email</string>
+    <string name="account_status_unbound_desc">绑定后可在 Web Portal 管理，换机时也能恢复数据</string>
+    <string name="account_bind_email_btn">绑定 Email</string>
+    <string name="account_recovery_link">已有账号？点此恢复</string>
+    <string name="account_open_portal">打开 Web Portal</string>
+    <string name="account_copy_credentials">复制设备凭证</string>
+
     <string name="account_login">账号登录</string>
     <string name="account_login_hint">使用已绑定的邮箱登录，可在重新安装后恢复设备数据。</string>
     <string name="account_login_btn">登录</string>

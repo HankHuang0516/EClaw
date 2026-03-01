@@ -8,6 +8,7 @@ import com.google.android.material.chip.ChipGroup
 import com.hank.clawlive.BuildConfig
 import com.hank.clawlive.data.local.EntityAvatarManager
 import com.hank.clawlive.data.local.LayoutPreferences
+import com.hank.clawlive.data.model.Contact
 
 /**
  * Dynamically populates ChipGroups with entity chips based on the current entity limit.
@@ -83,6 +84,110 @@ object EntityChipHelper {
         }
 
         return chips
+    }
+
+    // ============================================
+    // CROSS-DEVICE CONTACT CHIPS
+    // ============================================
+
+    /**
+     * Add contact chips to a ChipGroup with teal styling (distinct from purple entity chips).
+     *
+     * @param context Activity context
+     * @param chipGroup The ChipGroup to add chips to
+     * @param contacts List of contacts to create chips for
+     * @param checkedCodes Set of public codes that should be pre-checked
+     * @param onRemoveClick Callback when the close/remove icon is tapped
+     * @return Map of publicCode -> Chip
+     */
+    fun addContactChips(
+        context: Context,
+        chipGroup: ChipGroup,
+        contacts: List<Contact>,
+        checkedCodes: Set<String> = emptySet(),
+        onRemoveClick: ((String) -> Unit)? = null
+    ): Map<String, Chip> {
+        val chips = mutableMapOf<String, Chip>()
+
+        for (contact in contacts) {
+            val label = contact.name ?: contact.publicCode
+            val chip = createContactChip(context, label, contact.publicCode, contact.publicCode in checkedCodes)
+            chip.alpha = if (contact.online) 1.0f else 0.6f
+
+            if (onRemoveClick != null) {
+                chip.isCloseIconVisible = true
+                chip.setOnCloseIconClickListener { onRemoveClick(contact.publicCode) }
+            }
+
+            chipGroup.addView(chip)
+            chips[contact.publicCode] = chip
+        }
+
+        return chips
+    }
+
+    /**
+     * Create an "add contact" button chip with teal outline.
+     */
+    fun createAddContactChip(context: Context, onClick: () -> Unit): Chip {
+        return Chip(context).apply {
+            text = "➕"
+            isCheckable = false
+            isCloseIconVisible = false
+            chipBackgroundColor = ColorStateList.valueOf(Color.TRANSPARENT)
+            chipStrokeColor = ColorStateList.valueOf(Color.parseColor("#009688"))
+            chipStrokeWidth = 1.5f * context.resources.displayMetrics.density
+            setTextColor(Color.parseColor("#4DB6AC"))
+            textSize = 13f
+            setOnClickListener { onClick() }
+        }
+    }
+
+    private fun createContactChip(context: Context, label: String, publicCode: String, checked: Boolean): Chip {
+        return Chip(context).apply {
+            text = "\uD83C\uDF10 $label"  // 🌐 globe prefix
+            isCheckable = true
+            isChecked = checked
+            tag = "contact:$publicCode"
+
+            isCheckedIconVisible = true
+
+            // Teal/green styling (vs purple for local entities)
+            chipBackgroundColor = ColorStateList(
+                arrayOf(
+                    intArrayOf(android.R.attr.state_checked),
+                    intArrayOf()
+                ),
+                intArrayOf(
+                    Color.parseColor("#00695C"),  // checked: teal dark
+                    Color.parseColor("#1E1E2E")   // unchecked: dark surface
+                )
+            )
+            chipStrokeColor = ColorStateList(
+                arrayOf(
+                    intArrayOf(android.R.attr.state_checked),
+                    intArrayOf()
+                ),
+                intArrayOf(
+                    Color.parseColor("#009688"),  // checked: teal accent
+                    Color.parseColor("#3A3A4E")   // unchecked: subtle border
+                )
+            )
+            chipStrokeWidth = 1.5f * context.resources.displayMetrics.density
+            setTextColor(ColorStateList(
+                arrayOf(
+                    intArrayOf(android.R.attr.state_checked),
+                    intArrayOf()
+                ),
+                intArrayOf(
+                    Color.WHITE,
+                    Color.parseColor("#AAAAAA")
+                )
+            ))
+            checkedIconTint = ColorStateList.valueOf(Color.parseColor("#80CBC4"))
+            closeIconTint = ColorStateList.valueOf(Color.parseColor("#EF5350"))
+            textSize = 13f
+        }
     }
 
     private fun createChip(context: Context, label: String, entityId: Int, checked: Boolean): Chip {

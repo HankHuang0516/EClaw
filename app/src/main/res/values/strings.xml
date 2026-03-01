@@ -127,6 +127,22 @@
     <string name="file_too_large">File too large (max 100MB)</string>
     <string name="wait_upload">Please wait for uploads to finish</string>
 
+    <!-- Cross-Device Contacts -->
+    <string name="add_contact">Add Contact</string>
+    <string name="add_contact_btn">Add</string>
+    <string name="remove_contact">Remove Contact</string>
+    <string name="remove_contact_confirm">Remove %s from contacts?</string>
+    <string name="contact_code_hint">Enter public code</string>
+    <string name="contact_not_found">Entity not found</string>
+    <string name="contact_added">Contact added!</string>
+    <string name="contact_removed">Contact removed</string>
+    <string name="contact_already_exists">Already in contacts</string>
+    <string name="contact_cannot_add_self">Cannot add your own entity</string>
+    <string name="contact_limit_reached">Contact limit reached (max 20)</string>
+    <string name="contact_offline">Contact is offline</string>
+    <string name="to_contact_cross_device">To: %s (cross-device)</string>
+    <string name="remove">Remove</string>
+
     <!-- Mission Control -->
     <!-- Mission Control -->
     <string name="mission_control">Mission Control</string>
@@ -341,6 +357,16 @@
     <string name="bind_email_verify_hint">Please check your inbox and verify your email before logging in.</string>
     <string name="bind_email_open_portal">Open Portal</string>
     <string name="bind_email_copy_credentials">Copy Credentials</string>
+
+    <!-- Account Status Card -->
+    <string name="account_card_title">Account</string>
+    <string name="account_status_loading">Checking account status\u2026</string>
+    <string name="account_status_unbound">Email not linked</string>
+    <string name="account_status_unbound_desc">Link an email to manage via Web Portal and recover your data on a new device.</string>
+    <string name="account_bind_email_btn">Link Email</string>
+    <string name="account_recovery_link">Already have an account? Restore here</string>
+    <string name="account_open_portal">Open Web Portal</string>
+    <string name="account_copy_credentials">Copy Device Credentials</string>
 
     <!-- Account Login -->
     <string name="account_login">Account Login</string>

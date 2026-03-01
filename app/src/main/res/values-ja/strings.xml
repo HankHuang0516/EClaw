@@ -91,6 +91,23 @@
     <string name="attach_file">ファイル</string>
     <string name="file_too_large">ファイルが大きすぎます（最大100MB）</string>
     <string name="wait_upload">アップロードの完了をお待ちください</string>
+    <!-- Cross-Device Contacts -->
+    <string name="add_contact">連絡先を追加</string>
+    <string name="add_contact_btn">追加</string>
+    <string name="remove_contact">連絡先を削除</string>
+    <string name="remove_contact_confirm">%s を連絡先から削除しますか？</string>
+    <string name="contact_code_hint">パブリックコードを入力</string>
+    <string name="contact_not_found">エンティティが見つかりません</string>
+    <string name="contact_added">連絡先を追加しました！</string>
+    <string name="contact_removed">連絡先を削除しました</string>
+    <string name="contact_already_exists">既に連絡先にあります</string>
+    <string name="contact_cannot_add_self">自分のエンティティは追加できません</string>
+    <string name="contact_limit_reached">連絡先の上限に達しました（最大20件）</string>
+    <string name="contact_offline">連絡先はオフラインです</string>
+    <string name="to_contact_cross_device">送信先：%s（クロスデバイス）</string>
+    <string name="remove">削除</string>
+
+    <!-- Mission Control -->
     <string name="mission_control">ミッションコントロール</string>
     <string name="upload">アップロード</string>
     <string name="uploading">アップロード中…</string>
@@ -279,6 +296,16 @@
     <string name="bind_email_verify_hint">ログインする前に、受信箱を確認してメールアドレスを認証してください。</string>
     <string name="bind_email_open_portal">ポータルを開く</string>
     <string name="bind_email_copy_credentials">認証情報をコピー</string>
+    <!-- Account Status Card -->
+    <string name="account_card_title">アカウント</string>
+    <string name="account_status_loading">アカウント状態を確認中\u2026</string>
+    <string name="account_status_unbound">メール未連携</string>
+    <string name="account_status_unbound_desc">メールを連携すると Web Portal で管理でき、機種変更時にデータを復元できます。</string>
+    <string name="account_bind_email_btn">メールを連携</string>
+    <string name="account_recovery_link">アカウントをお持ちですか？こちらから復元</string>
+    <string name="account_open_portal">Web Portal を開く</string>
+    <string name="account_copy_credentials">デバイス認証情報をコピー</string>
+
     <string name="account_login">アカウントログイン</string>
     <string name="account_login_hint">紐付け済みのメールアドレスでログインすると、再インストール後にデバイスデータを復元できます。</string>
     <string name="account_login_btn">ログイン</string>
