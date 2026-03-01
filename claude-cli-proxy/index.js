@@ -101,7 +101,7 @@ function finalizeSession(session) {
 // Always resolves (never rejects) — caller checks events/status.
 function runClaudeStream(prompt, extraArgs, timeoutMs, { cwd, env } = {}) {
     return new Promise((resolve) => {
-        const args = ['--print', '--output-format', 'stream-json', ...extraArgs];
+        const args = ['--verbose', '--print', '--output-format', 'stream-json', ...extraArgs];
 
         const child = spawn(CLAUDE_BIN, args, {
             cwd: cwd || __dirname,
