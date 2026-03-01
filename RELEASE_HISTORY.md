@@ -5,7 +5,7 @@ Track git commits for each release to enable changelog generation via `git diff`
 ---
 
 ## Latest
-v1.0.32 | 8fcdacb | 2026-02-28
+v1.0.33 | 5986366 | 2026-03-01
 
 ---
 
@@ -13,6 +13,7 @@ v1.0.32 | 8fcdacb | 2026-02-28
 
 | Version | Commit | Date | Notes |
 |---------|--------|------|-------|
+| v1.0.32 | 8fcdacb | 2026-02-28 | AI binding troubleshooter, WebSocket transport, XP expansion |
 | v1.0.31 | d6bd1d3 | 2026-02-27 | Bot gateway disconnection detection, handshake failure recording, push health tracking, skill doc optimization |
 | v1.0.30 | b6bfa93 | 2026-02-26 | Avatar sync, premium entity slots, schedule editing, bot push hints, feedback redesign |
 | v1.0.29 | f10bddf | 2026-02-25 | Cross-device bot-to-bot, 8 entity slots, video chat, admin, security |
