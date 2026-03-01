@@ -35,6 +35,7 @@ import com.hank.clawlive.data.local.EntityAvatarManager
 import com.hank.clawlive.data.remote.DeviceFile
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
+import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.FileCardAdapter
 import com.hank.clawlive.ui.NavItem
@@ -84,6 +85,7 @@ class FileManagerActivity : AppCompatActivity() {
         setContentView(R.layout.activity_file_manager)
 
         BottomNavHelper.setup(this, NavItem.FILES)
+        AiChatFabHelper.setup(this, "files")
         topBar = findViewById(R.id.topBar)
         tvFileCount = findViewById(R.id.tvFileCount)
         btnViewToggle = findViewById(R.id.btnViewToggle)

@@ -187,21 +187,198 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- AI Chat Button -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnAiChat"
+            <!-- Account Status Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardAccountStatus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:text="@string/ai_chat_title"
-                android:textColor="#CCFFFFFF"
-                app:backgroundTint="#1A1A1A"
-                app:cornerRadius="12dp"
-                app:icon="@drawable/ic_ai_chat"
-                app:iconTint="#7C4DFF"
-                app:strokeColor="#7C4DFF"
-                app:strokeWidth="1dp"
-                style="@style/Widget.Material3.Button.TonalButton"/>
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="#1A1A1A"
+                app:strokeColor="#333333"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- Card Title: Icon + "Account" -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="12dp">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_account"
+                            android:contentDescription="Account"
+                            app:tint="#CCFFFFFF"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:text="@string/account_card_title"
+                            android:textSize="16sp"
+                            android:textColor="@android:color/white"
+                            android:textStyle="bold"/>
+                    </LinearLayout>
+
+                    <!-- Loading State -->
+                    <LinearLayout
+                        android:id="@+id/accountStatusLoading"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:visibility="visible">
+
+                        <ProgressBar
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:indeterminateTint="#99FFFFFF"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:text="@string/account_status_loading"
+                            android:textSize="13sp"
+                            android:textColor="#99FFFFFF"/>
+                    </LinearLayout>
+
+                    <!-- State A: Email Bound -->
+                    <LinearLayout
+                        android:id="@+id/accountBoundLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <!-- Email + verified badge -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="12dp">
+
+                            <TextView
+                                android:id="@+id/tvAccountEmail"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:textSize="14sp"
+                                android:textColor="#DDFFFFFF"
+                                android:ellipsize="middle"
+                                android:singleLine="true"/>
+
+                            <TextView
+                                android:id="@+id/tvAccountVerified"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textSize="11sp"
+                                android:paddingHorizontal="8dp"
+                                android:paddingVertical="2dp"
+                                android:layout_marginStart="8dp"/>
+                        </LinearLayout>
+
+                        <!-- Open Portal button -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnAccountOpenPortal"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/account_open_portal"
+                            android:textColor="@android:color/white"
+                            app:backgroundTint="#7C4DFF"
+                            app:cornerRadius="8dp"
+                            android:layout_marginBottom="8dp"
+                            style="@style/Widget.Material3.Button"/>
+
+                        <!-- Copy Credentials link -->
+                        <TextView
+                            android:id="@+id/tvAccountCopyCredentials"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/account_copy_credentials"
+                            android:textSize="12sp"
+                            android:textColor="#7C4DFF"
+                            android:gravity="center"
+                            android:paddingVertical="4dp"/>
+                    </LinearLayout>
+
+                    <!-- State B: Email Not Bound -->
+                    <LinearLayout
+                        android:id="@+id/accountUnboundLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <!-- Warning row -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="4dp">
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:src="@android:drawable/ic_dialog_alert"
+                                app:tint="#FFD23F"/>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:text="@string/account_status_unbound"
+                                android:textSize="14sp"
+                                android:textColor="#FFD23F"
+                                android:textStyle="bold"/>
+                        </LinearLayout>
+
+                        <!-- Description -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/account_status_unbound_desc"
+                            android:textSize="12sp"
+                            android:textColor="#99FFFFFF"
+                            android:layout_marginBottom="12dp"/>
+
+                        <!-- Bind Email button -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnAccountBindEmail"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/account_bind_email_btn"
+                            android:textColor="@android:color/white"
+                            app:backgroundTint="#7C4DFF"
+                            app:cornerRadius="8dp"
+                            android:layout_marginBottom="8dp"
+                            style="@style/Widget.Material3.Button"/>
+
+                        <!-- Recovery link -->
+                        <TextView
+                            android:id="@+id/tvAccountRecoveryLink"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/account_recovery_link"
+                            android:textSize="12sp"
+                            android:textColor="#7C4DFF"
+                            android:gravity="center"
+                            android:paddingVertical="4dp"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Feedback Button -->
             <com.google.android.material.button.MaterialButton
@@ -230,38 +407,6 @@
                 android:layout_marginBottom="12dp"
                 app:cornerRadius="12dp"
                 app:icon="@drawable/ic_privacy"
-                app:iconTint="#CCFFFFFF"
-                app:strokeColor="#333333"
-                app:strokeWidth="1dp"
-                style="@style/Widget.Material3.Button.TonalButton"/>
-
-            <!-- Web Portal Button -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnWebPortal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/web_portal"
-                android:textColor="#CCFFFFFF"
-                app:backgroundTint="#1A1A1A"
-                android:layout_marginBottom="8dp"
-                app:cornerRadius="12dp"
-                app:icon="@android:drawable/ic_menu_share"
-                app:iconTint="#CCFFFFFF"
-                app:strokeColor="#333333"
-                app:strokeWidth="1dp"
-                style="@style/Widget.Material3.Button.TonalButton"/>
-
-            <!-- Account Login Button -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnAccountLogin"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/account_login"
-                android:textColor="#CCFFFFFF"
-                app:backgroundTint="#1A1A1A"
-                android:layout_marginBottom="8dp"
-                app:cornerRadius="12dp"
-                app:icon="@android:drawable/ic_lock_idle_lock"
                 app:iconTint="#CCFFFFFF"
                 app:strokeColor="#333333"
                 app:strokeWidth="1dp"

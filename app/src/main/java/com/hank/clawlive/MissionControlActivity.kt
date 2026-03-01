@@ -27,6 +27,7 @@ import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.EntityAvatarManager
 import com.hank.clawlive.data.model.*
 import com.hank.clawlive.data.remote.NetworkModule
+import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.MissionUiState
 import com.hank.clawlive.ui.MissionViewModel
@@ -86,6 +87,7 @@ class MissionControlActivity : AppCompatActivity() {
         setContentView(R.layout.activity_mission_control)
 
         BottomNavHelper.setup(this, NavItem.MISSION)
+        AiChatFabHelper.setup(this, "mission")
         setupWindowInsets()
         setupAdapters()
         setupRecyclerViews()

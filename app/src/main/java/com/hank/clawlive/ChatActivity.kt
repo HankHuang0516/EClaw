@@ -50,6 +50,7 @@ import com.hank.clawlive.data.remote.ClawApiService
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.data.repository.ChatRepository
+import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.NavItem
 import com.hank.clawlive.ui.RecordingIndicatorHelper
@@ -170,6 +171,7 @@ class ChatActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_chat)
         BottomNavHelper.setup(this, NavItem.CHAT)
+        AiChatFabHelper.setup(this, "chat")
 
         initViews()
         setupEdgeToEdgeInsets()

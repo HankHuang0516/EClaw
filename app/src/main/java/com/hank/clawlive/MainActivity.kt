@@ -48,6 +48,7 @@ import com.hank.clawlive.data.model.UpdateAvatarRequest
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.data.repository.StateRepository
+import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.EntityCardAdapter
 import com.hank.clawlive.ui.EntityChipHelper
@@ -140,6 +141,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         BottomNavHelper.setup(this, NavItem.HOME)
+        AiChatFabHelper.setup(this, "home")
         initViews()
         setupEdgeToEdgeInsets()
         setupClickListeners()

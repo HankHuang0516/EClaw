@@ -22,11 +22,19 @@ const { Resend } = require('resend');
 const fs = require('fs');
 const path = require('path');
 
+const { OAuth2Client } = require('google-auth-library');
+
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
 });
 
 const resend = new Resend(process.env.RESEND_API_KEY || 'dummy');
+
+// OAuth configuration
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
+const FACEBOOK_APP_ID = process.env.FACEBOOK_APP_ID;
+const FACEBOOK_APP_SECRET = process.env.FACEBOOK_APP_SECRET;
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 const JWT_EXPIRY = '7d';
@@ -263,6 +271,15 @@ module.exports = function(devices, getOrCreateDevice) {
             }
 
             const user = result.rows[0];
+
+            // Social-only account guard
+            if (!user.password_hash) {
+                return res.status(401).json({
+                    success: false,
+                    error: 'This account uses social login. Please sign in with Google or Facebook.',
+                    code: 'SOCIAL_ONLY_ACCOUNT'
+                });
+            }
 
             // Verify password
             const match = await bcrypt.compare(password, user.password_hash);
@@ -565,7 +582,7 @@ module.exports = function(devices, getOrCreateDevice) {
             }
 
             const result = await pool.query(
-                'SELECT id, email, device_id, device_secret, subscription_status, subscription_expires_at, language, email_verified, is_admin, created_at FROM user_accounts WHERE id = $1',
+                'SELECT id, email, device_id, device_secret, subscription_status, subscription_expires_at, language, email_verified, is_admin, created_at, display_name, avatar_url, google_id, facebook_id FROM user_accounts WHERE id = $1',
                 [req.user.userId]
             );
 
@@ -606,6 +623,10 @@ module.exports = function(devices, getOrCreateDevice) {
                     emailVerified: user.email_verified,
                     createdAt: user.created_at,
                     isAdmin: user.is_admin || false,
+                    displayName: user.display_name || null,
+                    avatarUrl: user.avatar_url || null,
+                    googleLinked: !!user.google_id,
+                    facebookLinked: !!user.facebook_id,
                     usageToday: usageToday,
                     usageLimit: user.subscription_status === 'premium' ? null : 15
                 }
@@ -792,12 +813,12 @@ module.exports = function(devices, getOrCreateDevice) {
             }
 
             const result = await pool.query(
-                'SELECT email, email_verified FROM user_accounts WHERE device_id = $1',
+                'SELECT email, email_verified, google_id, facebook_id, display_name FROM user_accounts WHERE device_id = $1',
                 [deviceId]
             );
 
             if (result.rows.length === 0) {
-                return res.json({ success: true, bound: false, email: null, emailVerified: false });
+                return res.json({ success: true, bound: false, email: null, emailVerified: false, googleLinked: false, facebookLinked: false, displayName: null });
             }
 
             const user = result.rows[0];
@@ -805,7 +826,10 @@ module.exports = function(devices, getOrCreateDevice) {
                 success: true,
                 bound: true,
                 email: user.email,
-                emailVerified: user.email_verified
+                emailVerified: user.email_verified,
+                googleLinked: !!user.google_id,
+                facebookLinked: !!user.facebook_id,
+                displayName: user.display_name || null
             });
         } catch (error) {
             console.error('[Auth] Bind-email status error:', error);
@@ -836,6 +860,15 @@ module.exports = function(devices, getOrCreateDevice) {
             }
 
             const user = result.rows[0];
+
+            // OAuth-only accounts cannot use password login
+            if (!user.password_hash) {
+                return res.status(401).json({
+                    success: false,
+                    error: 'This account uses social login. Please sign in with Google or Facebook.',
+                    code: 'SOCIAL_ONLY_ACCOUNT'
+                });
+            }
 
             // Verify password
             const match = await bcrypt.compare(password, user.password_hash);
@@ -873,6 +906,229 @@ module.exports = function(devices, getOrCreateDevice) {
         } catch (error) {
             console.error('[Auth] App-login error:', error);
             res.status(500).json({ success: false, error: 'Login failed' });
+        }
+    });
+
+    // ============================================
+    // OAuth: Shared account merge logic
+    // ============================================
+    async function handleOAuthLogin(provider, providerId, email, displayName, avatarUrl, deviceId, deviceSecret, res) {
+        const providerCol = provider === 'google' ? 'google_id' : 'facebook_id';
+
+        // Step 1: Lookup by provider ID
+        const byProvider = await pool.query(
+            `SELECT * FROM user_accounts WHERE ${providerCol} = $1`,
+            [providerId]
+        );
+
+        if (byProvider.rows.length > 0) {
+            const user = byProvider.rows[0];
+            // Update display info and last login
+            await pool.query(
+                `UPDATE user_accounts SET display_name = COALESCE($1, display_name), avatar_url = COALESCE($2, avatar_url), last_login_at = NOW() WHERE id = $3`,
+                [displayName, avatarUrl, user.id]
+            );
+            getOrCreateDevice(user.device_id, user.device_secret);
+            const token = signToken(user);
+            res.cookie('eclaw_session', token, {
+                httpOnly: true, secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000
+            });
+            return res.json({
+                success: true,
+                user: {
+                    id: user.id, email: user.email,
+                    deviceId: user.device_id, deviceSecret: user.device_secret,
+                    displayName: displayName || user.display_name,
+                    avatarUrl: avatarUrl || user.avatar_url,
+                    isNewAccount: false,
+                    subscriptionStatus: user.subscription_status,
+                    googleLinked: !!user.google_id, facebookLinked: !!user.facebook_id
+                }
+            });
+        }
+
+        // Step 2: Lookup by email (if available)
+        if (email) {
+            const byEmail = await pool.query(
+                'SELECT * FROM user_accounts WHERE email = $1',
+                [email.toLowerCase()]
+            );
+
+            if (byEmail.rows.length > 0) {
+                const user = byEmail.rows[0];
+                // Merge: link this provider to existing account
+                await pool.query(
+                    `UPDATE user_accounts SET ${providerCol} = $1, display_name = COALESCE($2, display_name), avatar_url = COALESCE($3, avatar_url), email_verified = TRUE, last_login_at = NOW() WHERE id = $4`,
+                    [providerId, displayName, avatarUrl, user.id]
+                );
+                user[providerCol] = providerId;
+                getOrCreateDevice(user.device_id, user.device_secret);
+                const token = signToken(user);
+                res.cookie('eclaw_session', token, {
+                    httpOnly: true, secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000
+                });
+                return res.json({
+                    success: true,
+                    user: {
+                        id: user.id, email: user.email,
+                        deviceId: user.device_id, deviceSecret: user.device_secret,
+                        displayName: displayName || user.display_name,
+                        avatarUrl: avatarUrl || user.avatar_url,
+                        isNewAccount: false,
+                        subscriptionStatus: user.subscription_status,
+                        googleLinked: provider === 'google' ? true : !!user.google_id,
+                        facebookLinked: provider === 'facebook' ? true : !!user.facebook_id
+                    }
+                });
+            }
+        }
+
+        // Step 3: Check if deviceId+deviceSecret provided and has existing user row
+        if (deviceId && deviceSecret) {
+            const device = devices[deviceId];
+            if (device && device.deviceSecret === deviceSecret) {
+                const byDevice = await pool.query(
+                    'SELECT * FROM user_accounts WHERE device_id = $1',
+                    [deviceId]
+                );
+                if (byDevice.rows.length > 0) {
+                    const user = byDevice.rows[0];
+                    // Link provider to existing device account
+                    await pool.query(
+                        `UPDATE user_accounts SET ${providerCol} = $1, display_name = COALESCE($2, display_name), avatar_url = COALESCE($3, avatar_url), email = COALESCE(email, $4), email_verified = COALESCE(NULLIF(email_verified, FALSE), $5), auth_provider = $6, last_login_at = NOW() WHERE id = $7`,
+                        [providerId, displayName, avatarUrl, email ? email.toLowerCase() : null, !!email, provider, user.id]
+                    );
+                    getOrCreateDevice(user.device_id, user.device_secret);
+                    const token = signToken(user);
+                    res.cookie('eclaw_session', token, {
+                        httpOnly: true, secure: process.env.NODE_ENV === 'production',
+                        sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000
+                    });
+                    return res.json({
+                        success: true,
+                        user: {
+                            id: user.id, email: email || user.email,
+                            deviceId: user.device_id, deviceSecret: user.device_secret,
+                            displayName: displayName || user.display_name,
+                            avatarUrl: avatarUrl || user.avatar_url,
+                            isNewAccount: false,
+                            subscriptionStatus: user.subscription_status,
+                            googleLinked: provider === 'google' ? true : !!user.google_id,
+                            facebookLinked: provider === 'facebook' ? true : !!user.facebook_id
+                        }
+                    });
+                }
+            }
+        }
+
+        // Step 4: Create new account
+        const creds = (deviceId && deviceSecret && devices[deviceId] && devices[deviceId].deviceSecret === deviceSecret)
+            ? { deviceId, deviceSecret }
+            : generateDeviceCredentials();
+
+        const insertResult = await pool.query(
+            `INSERT INTO user_accounts (email, ${providerCol}, display_name, avatar_url, email_verified, auth_provider, device_id, device_secret)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             RETURNING *`,
+            [email ? email.toLowerCase() : null, providerId, displayName, avatarUrl, !!email, provider, creds.deviceId, creds.deviceSecret]
+        );
+
+        const newUser = insertResult.rows[0];
+        getOrCreateDevice(newUser.device_id, newUser.device_secret);
+
+        const token = signToken(newUser);
+        res.cookie('eclaw_session', token, {
+            httpOnly: true, secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        console.log(`[Auth] OAuth ${provider} new account created: ${email || providerId}, device ${newUser.device_id}`);
+
+        return res.json({
+            success: true,
+            user: {
+                id: newUser.id, email: newUser.email,
+                deviceId: newUser.device_id, deviceSecret: newUser.device_secret,
+                displayName, avatarUrl,
+                isNewAccount: true,
+                subscriptionStatus: 'free',
+                googleLinked: provider === 'google',
+                facebookLinked: provider === 'facebook'
+            }
+        });
+    }
+
+    // ============================================
+    // POST /oauth/google — Verify Google ID token
+    // ============================================
+    router.post('/oauth/google', async (req, res) => {
+        try {
+            if (!googleClient) {
+                return res.status(503).json({ success: false, error: 'Google Sign-In not configured' });
+            }
+
+            const { idToken, deviceId, deviceSecret } = req.body;
+            if (!idToken) {
+                return res.status(400).json({ success: false, error: 'idToken required' });
+            }
+
+            // Verify the token with Google
+            const ticket = await googleClient.verifyIdToken({
+                idToken,
+                audience: GOOGLE_CLIENT_ID
+            });
+            const payload = ticket.getPayload();
+
+            const googleId = payload.sub;
+            const email = payload.email_verified ? payload.email : null;
+            const displayName = payload.name || null;
+            const avatarUrl = payload.picture || null;
+
+            await handleOAuthLogin('google', googleId, email, displayName, avatarUrl, deviceId, deviceSecret, res);
+        } catch (error) {
+            console.error('[Auth] Google OAuth error:', error);
+            res.status(401).json({ success: false, error: 'Google sign-in failed: ' + (error.message || 'Invalid token') });
+        }
+    });
+
+    // ============================================
+    // POST /oauth/facebook — Verify Facebook access token
+    // ============================================
+    router.post('/oauth/facebook', async (req, res) => {
+        try {
+            if (!FACEBOOK_APP_ID || !FACEBOOK_APP_SECRET) {
+                return res.status(503).json({ success: false, error: 'Facebook Login not configured' });
+            }
+
+            const { accessToken, deviceId, deviceSecret } = req.body;
+            if (!accessToken) {
+                return res.status(400).json({ success: false, error: 'accessToken required' });
+            }
+
+            // Verify token with Facebook Graph API
+            const fbRes = await fetch(
+                `https://graph.facebook.com/me?fields=id,name,email,picture.type(large)&access_token=${encodeURIComponent(accessToken)}`
+            );
+
+            if (!fbRes.ok) {
+                const errBody = await fbRes.text();
+                console.error('[Auth] Facebook token verification failed:', errBody);
+                return res.status(401).json({ success: false, error: 'Invalid Facebook token' });
+            }
+
+            const fbUser = await fbRes.json();
+
+            const facebookId = fbUser.id;
+            const email = fbUser.email || null; // May not be provided
+            const displayName = fbUser.name || null;
+            const avatarUrl = fbUser.picture?.data?.url || null;
+
+            await handleOAuthLogin('facebook', facebookId, email, displayName, avatarUrl, deviceId, deviceSecret, res);
+        } catch (error) {
+            console.error('[Auth] Facebook OAuth error:', error);
+            res.status(401).json({ success: false, error: 'Facebook login failed: ' + (error.message || 'Invalid token') });
         }
     });
 

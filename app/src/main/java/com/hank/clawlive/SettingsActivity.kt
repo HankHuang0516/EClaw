@@ -35,6 +35,7 @@ import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.local.UsageManager
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
+import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.EntityChipHelper
 import com.hank.clawlive.ui.NavItem
@@ -58,11 +59,19 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var tvEntityCount: TextView
     private lateinit var progressUsage: ProgressBar
     private lateinit var btnSubscribe: MaterialButton
-    private lateinit var btnAiChat: MaterialButton
     private lateinit var btnFeedback: MaterialButton
     private lateinit var btnPrivacyPolicy: MaterialButton
-    private lateinit var btnWebPortal: MaterialButton
-    private lateinit var btnAccountLogin: MaterialButton
+    // Account Status Card views
+    private lateinit var cardAccountStatus: MaterialCardView
+    private lateinit var accountStatusLoading: LinearLayout
+    private lateinit var accountBoundLayout: LinearLayout
+    private lateinit var accountUnboundLayout: LinearLayout
+    private lateinit var tvAccountEmail: TextView
+    private lateinit var tvAccountVerified: TextView
+    private lateinit var btnAccountOpenPortal: MaterialButton
+    private lateinit var tvAccountCopyCredentials: TextView
+    private lateinit var btnAccountBindEmail: MaterialButton
+    private lateinit var tvAccountRecoveryLink: TextView
     private lateinit var chipGroupLanguage: ChipGroup
     private lateinit var chipLangEn: Chip
     private lateinit var chipLangZh: Chip
@@ -94,6 +103,7 @@ class SettingsActivity : AppCompatActivity() {
         setContentView(R.layout.activity_settings)
 
         BottomNavHelper.setup(this, NavItem.SETTINGS)
+        AiChatFabHelper.setup(this, "settings")
         billingManager = BillingManager.getInstance(this)
         usageManager = UsageManager.getInstance(this)
 
@@ -135,6 +145,7 @@ class SettingsActivity : AppCompatActivity() {
         billingManager.refreshState()
         updateUsageDisplay()
         updateEntityCount()
+        loadAccountStatus()
     }
 
     override fun onPause() {
@@ -160,11 +171,18 @@ class SettingsActivity : AppCompatActivity() {
         topBar = findViewById(R.id.topBar)
         btnSetWallpaper = findViewById(R.id.btnSetWallpaper)
         tvEntityCount = findViewById(R.id.tvEntityCount)
-        btnAiChat = findViewById(R.id.btnAiChat)
         btnFeedback = findViewById(R.id.btnFeedback)
         btnPrivacyPolicy = findViewById(R.id.btnPrivacyPolicy)
-        btnWebPortal = findViewById(R.id.btnWebPortal)
-        btnAccountLogin = findViewById(R.id.btnAccountLogin)
+        cardAccountStatus = findViewById(R.id.cardAccountStatus)
+        accountStatusLoading = findViewById(R.id.accountStatusLoading)
+        accountBoundLayout = findViewById(R.id.accountBoundLayout)
+        accountUnboundLayout = findViewById(R.id.accountUnboundLayout)
+        tvAccountEmail = findViewById(R.id.tvAccountEmail)
+        tvAccountVerified = findViewById(R.id.tvAccountVerified)
+        btnAccountOpenPortal = findViewById(R.id.btnAccountOpenPortal)
+        tvAccountCopyCredentials = findViewById(R.id.tvAccountCopyCredentials)
+        btnAccountBindEmail = findViewById(R.id.btnAccountBindEmail)
+        tvAccountRecoveryLink = findViewById(R.id.tvAccountRecoveryLink)
         btnDebugEntityLimit = findViewById(R.id.btnDebugEntityLimit)
         notifPrefsContainer = findViewById(R.id.notifPrefsContainer)
         notifHeader = findViewById(R.id.notifHeader)
@@ -190,10 +208,6 @@ class SettingsActivity : AppCompatActivity() {
             startActivity(Intent(this, WallpaperPreviewActivity::class.java))
         }
 
-        btnAiChat.setOnClickListener {
-            startActivity(Intent(this, AiChatActivity::class.java))
-        }
-
         btnFeedback.setOnClickListener {
             startActivity(Intent(this, FeedbackActivity::class.java))
         }
@@ -202,11 +216,27 @@ class SettingsActivity : AppCompatActivity() {
             startActivity(android.content.Intent(this, PrivacyPolicyActivity::class.java))
         }
 
-        btnWebPortal.setOnClickListener {
-            showWebPortalDialog()
+        // Account Status Card listeners
+        btnAccountOpenPortal.setOnClickListener {
+            TelemetryHelper.trackAction("account_card_open_portal")
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://eclawbot.com/portal/")))
         }
 
-        btnAccountLogin.setOnClickListener {
+        tvAccountCopyCredentials.setOnClickListener {
+            TelemetryHelper.trackAction("account_card_copy_credentials")
+            val clip = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+            clip.setPrimaryClip(ClipData.newPlainText("credentials",
+                "Device ID: ${deviceManager.deviceId}\nDevice Secret: ${deviceManager.deviceSecret}"))
+            Toast.makeText(this, getString(R.string.confirm_copy), Toast.LENGTH_SHORT).show()
+        }
+
+        btnAccountBindEmail.setOnClickListener {
+            TelemetryHelper.trackAction("account_card_bind_email")
+            showBindEmailDialog(deviceManager.deviceId, deviceManager.deviceSecret)
+        }
+
+        tvAccountRecoveryLink.setOnClickListener {
+            TelemetryHelper.trackAction("account_card_recovery")
             showAccountLoginDialog()
         }
 
@@ -334,64 +364,49 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    private fun showWebPortalDialog() {
-        val deviceId = deviceManager.deviceId
-        val deviceSecret = deviceManager.deviceSecret
-        val portalUrl = "https://eclawbot.com/portal/"
+    private fun loadAccountStatus() {
+        accountStatusLoading.visibility = View.VISIBLE
+        accountBoundLayout.visibility = View.GONE
+        accountUnboundLayout.visibility = View.GONE
 
-        // Check bind status first, then show appropriate dialog
         lifecycleScope.launch {
             try {
-                val status = NetworkModule.api.getBindEmailStatus(deviceId, deviceSecret)
+                val status = NetworkModule.api.getBindEmailStatus(
+                    deviceManager.deviceId,
+                    deviceManager.deviceSecret
+                )
                 if (status.bound && status.email != null) {
-                    showWebPortalBoundDialog(status.email, status.emailVerified, portalUrl, deviceId, deviceSecret)
+                    showAccountBoundState(status.email, status.emailVerified)
                 } else {
-                    showWebPortalUnboundDialog(portalUrl, deviceId, deviceSecret)
+                    showAccountUnboundState()
                 }
             } catch (e: Exception) {
-                Timber.e(e, "Failed to check bind status")
-                // Fallback: show unbound dialog
-                showWebPortalUnboundDialog(portalUrl, deviceId, deviceSecret)
+                Timber.e(e, "Failed to load account status")
+                showAccountUnboundState()
             }
         }
     }
 
-    private fun showWebPortalBoundDialog(email: String, verified: Boolean, portalUrl: String, deviceId: String, deviceSecret: String) {
-        val verifiedText = if (verified) getString(R.string.bind_email_verified) else getString(R.string.bind_email_not_verified)
-        val msg = "${getString(R.string.bind_email_linked)}\n$email ($verifiedText)\n\n" +
-            if (verified) getString(R.string.bind_email_login_hint) else getString(R.string.bind_email_verify_hint)
+    private fun showAccountBoundState(email: String, verified: Boolean) {
+        accountStatusLoading.visibility = View.GONE
+        accountBoundLayout.visibility = View.VISIBLE
+        accountUnboundLayout.visibility = View.GONE
 
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.web_portal))
-            .setMessage(msg)
-            .setPositiveButton(getString(R.string.bind_email_open_portal)) { _, _ ->
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(portalUrl)))
-            }
-            .setNeutralButton(getString(R.string.bind_email_copy_credentials)) { _, _ ->
-                val clip = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-                clip.setPrimaryClip(ClipData.newPlainText("credentials",
-                    "Device ID: $deviceId\nDevice Secret: $deviceSecret"))
-                Toast.makeText(this, getString(R.string.confirm_copy), Toast.LENGTH_SHORT).show()
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
+        tvAccountEmail.text = email
+
+        if (verified) {
+            tvAccountVerified.text = getString(R.string.bind_email_verified)
+            tvAccountVerified.setTextColor(0xFF4CAF50.toInt())
+        } else {
+            tvAccountVerified.text = getString(R.string.bind_email_not_verified)
+            tvAccountVerified.setTextColor(0xFFFF9800.toInt())
+        }
     }
 
-    private fun showWebPortalUnboundDialog(portalUrl: String, deviceId: String, deviceSecret: String) {
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.web_portal))
-            .setMessage(getString(R.string.bind_email_prompt))
-            .setPositiveButton(getString(R.string.bind_email_action)) { _, _ ->
-                showBindEmailDialog(deviceId, deviceSecret)
-            }
-            .setNeutralButton(getString(R.string.bind_email_use_device_login)) { _, _ ->
-                val clip = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-                clip.setPrimaryClip(ClipData.newPlainText("credentials",
-                    "Device ID: $deviceId\nDevice Secret: $deviceSecret"))
-                Toast.makeText(this, getString(R.string.confirm_copy), Toast.LENGTH_SHORT).show()
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
+    private fun showAccountUnboundState() {
+        accountStatusLoading.visibility = View.GONE
+        accountBoundLayout.visibility = View.GONE
+        accountUnboundLayout.visibility = View.VISIBLE
     }
 
     private fun showBindEmailDialog(deviceId: String, deviceSecret: String) {
@@ -500,6 +515,7 @@ class SettingsActivity : AppCompatActivity() {
                         dialog.dismiss()
                         Toast.makeText(this@SettingsActivity, getString(R.string.bind_email_success), Toast.LENGTH_LONG).show()
                         TelemetryHelper.trackAction("bind_email_success")
+                        loadAccountStatus()
                     } else {
                         Toast.makeText(this@SettingsActivity, response.error ?: getString(R.string.unknown_error), Toast.LENGTH_SHORT).show()
                         dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
