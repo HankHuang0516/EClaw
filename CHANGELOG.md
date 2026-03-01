@@ -1,3 +1,10 @@
+# [1.55.0](https://github.com/HankHuang0516/realbot/compare/v1.54.2...v1.55.0) (2026-03-01)
+
+
+### Features
+
+* floating AI chat FAB on all main pages + account status card ([d8b1342](https://github.com/HankHuang0516/realbot/commit/d8b1342f25df3addb4e32784b6ed29918dcdae6d))
+
 ## [1.54.2](https://github.com/HankHuang0516/realbot/compare/v1.54.1...v1.54.2) (2026-03-01)
 
 
