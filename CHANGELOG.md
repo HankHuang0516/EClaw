@@ -1,3 +1,10 @@
+## [1.60.4](https://github.com/HankHuang0516/realbot/compare/v1.60.3...v1.60.4) (2026-03-01)
+
+
+### Bug Fixes
+
+* increase max-turns to 15 and add intermediate feedback for AI chat ([87169be](https://github.com/HankHuang0516/realbot/commit/87169bea548dec916f946ea12f5398013d9686f7))
+
 ## [1.60.3](https://github.com/HankHuang0516/realbot/compare/v1.60.2...v1.60.3) (2026-03-01)
 
 
