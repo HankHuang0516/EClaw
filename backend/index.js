@@ -95,7 +95,13 @@ app.use(express.json());
 app.use(cookieParser());
 app.use('/mission', express.static(path.join(__dirname, 'public')));
 app.use('/portal', express.static(path.join(__dirname, 'public/portal')));
-app.use('/shared', express.static(path.join(__dirname, 'public/shared')));
+app.use('/shared', express.static(path.join(__dirname, 'public/shared'), {
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('i18n.js')) {
+            res.set('Cache-Control', 'no-cache');
+        }
+    }
+}));
 app.use('/docs', express.static(path.join(__dirname, 'public/docs')));
 
 // Telemetry auto-capture middleware (pool linked lazily after chatPool init)
@@ -126,6 +132,8 @@ function getDeviceEntityLimit(deviceId) {
 // Latest app version - update this with each release
 // Bot will warn users if their app version is older than this
 const LATEST_APP_VERSION = "1.0.33";
+const FORCE_UPDATE_BELOW = null; // Set to version string (e.g. "1.0.30") to force-update anything below
+const APP_RELEASE_NOTES = process.env.APP_RELEASE_NOTES || null;
 
 // Device registry - each device has its own entities
 const devices = {};
@@ -683,7 +691,8 @@ app.get('/api/admin/stats', adminAuth, adminCheck, async (req, res) => {
                 web: webDeviceCount,
                 app: appOnlyCount,
                 total: webDeviceCount + appOnlyCount
-            }
+            },
+            currentAppVersion: LATEST_APP_VERSION
         });
     } catch (err) {
         console.error('[Admin] Stats error:', err);
@@ -899,6 +908,89 @@ app.get('/api/admin/bots', adminAuth, adminCheck, async (req, res) => {
         console.error('[Admin] Bots error:', err);
         res.status(500).json({ success: false, error: 'Failed to get bots' });
     }
+});
+
+// POST /api/admin/push-update - Broadcast app update notification to all devices via FCM
+app.post('/api/admin/push-update', adminAuth, adminCheck, async (req, res) => {
+    if (!firebaseAdmin) {
+        return res.status(503).json({ success: false, error: 'Firebase Admin not configured' });
+    }
+
+    const { version, releaseNotes, forceUpdate } = req.body;
+    const targetVersion = version || LATEST_APP_VERSION;
+    const notes = releaseNotes || `Version ${targetVersion} is now available!`;
+
+    // Collect all FCM tokens from in-memory devices
+    const tokens = [];
+    const deviceIds = [];
+    for (const deviceId in devices) {
+        const device = devices[deviceId];
+        if (device.fcmToken) {
+            tokens.push(device.fcmToken);
+            deviceIds.push(deviceId);
+        }
+    }
+
+    if (tokens.length === 0) {
+        return res.json({ success: true, sent: 0, failed: 0, total: 0, message: 'No devices with FCM tokens' });
+    }
+
+    let successCount = 0;
+    let failureCount = 0;
+    let staleTokensCleaned = 0;
+
+    // Send via Firebase sendEachForMulticast (batches of 500)
+    for (let i = 0; i < tokens.length; i += 500) {
+        const batch = tokens.slice(i, i + 500);
+        const batchDeviceIds = deviceIds.slice(i, i + 500);
+        try {
+            const response = await firebaseAdmin.messaging().sendEachForMulticast({
+                tokens: batch,
+                data: {
+                    title: `Update Available: v${targetVersion}`,
+                    body: notes,
+                    category: 'app_update',
+                    link: 'https://play.google.com/store/apps/details?id=com.hank.clawlive',
+                    version: targetVersion,
+                    forceUpdate: forceUpdate ? 'true' : 'false'
+                },
+                android: {
+                    priority: 'high',
+                    notification: {
+                        channelId: 'eclaw_system',
+                        sound: 'default'
+                    }
+                }
+            });
+            successCount += response.successCount;
+            failureCount += response.failureCount;
+
+            // Clean up stale tokens
+            response.responses.forEach((resp, idx) => {
+                if (!resp.success && resp.error?.code === 'messaging/registration-token-not-registered') {
+                    const staleDeviceId = batchDeviceIds[idx];
+                    if (devices[staleDeviceId]) {
+                        delete devices[staleDeviceId].fcmToken;
+                    }
+                    chatPool.query('UPDATE devices SET fcm_token = NULL WHERE device_id = $1', [staleDeviceId]).catch(() => {});
+                    staleTokensCleaned++;
+                }
+            });
+        } catch (e) {
+            console.warn('[FCM] Batch send failed:', e.message);
+            failureCount += batch.length;
+        }
+    }
+
+    serverLog('info', 'system', `App update push sent: v${targetVersion}, success=${successCount}, fail=${failureCount}, staleTokensCleaned=${staleTokensCleaned}`);
+
+    res.json({
+        success: true,
+        sent: successCount,
+        failed: failureCount,
+        total: tokens.length,
+        staleTokensCleaned
+    });
 });
 
 // POST /api/admin/bots/create - Create new official bot (cookie-based admin auth)
@@ -1291,17 +1383,35 @@ app.get('/api/health', (req, res) => {
 
 
 // Version sync endpoint - AI Agent can check Web/APP sync status
+// Also serves as app update check when ?appVersion= is provided
 app.get('/api/version', (req, res) => {
-    res.json({
+    const clientVersion = req.query.appVersion;
+    const isOutdated = clientVersion && compareVersions(clientVersion, LATEST_APP_VERSION) < 0;
+    const isForceUpdate = isOutdated && FORCE_UPDATE_BELOW && compareVersions(clientVersion, FORCE_UPDATE_BELOW) < 0;
+
+    const response = {
         api: '1.2.0',
         portal: '1.2.0',
-        android: '1.0.6',
+        android: LATEST_APP_VERSION,
         features: {
             portal: ['auth', 'dashboard', 'chat', 'mission', 'settings', 'subscription', 'i18n', 'avatar-picker'],
             android: ['auth', 'dashboard', 'chat', 'mission', 'settings', 'subscription', 'i18n', 'avatar-picker', 'live-wallpaper', 'widget']
         },
         lastSync: Date.now()
-    });
+    };
+
+    if (clientVersion) {
+        response.update = {
+            available: !!isOutdated,
+            latestVersion: LATEST_APP_VERSION,
+            currentVersion: clientVersion,
+            forceUpdate: !!isForceUpdate,
+            releaseNotes: APP_RELEASE_NOTES,
+            storeUrl: 'https://play.google.com/store/apps/details?id=com.hank.clawlive'
+        };
+    }
+
+    res.json(response);
 });
 
 // ============================================
