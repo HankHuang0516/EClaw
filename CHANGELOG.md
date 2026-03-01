@@ -1,3 +1,10 @@
+## [1.61.1](https://github.com/HankHuang0516/realbot/compare/v1.61.0...v1.61.1) (2026-03-01)
+
+
+### Bug Fixes
+
+* use absolute path for db-query.js in system prompt ([63b9b14](https://github.com/HankHuang0516/realbot/commit/63b9b1459dab3fd7211bc0eee3bcf30781d29fed))
+
 # [1.61.0](https://github.com/HankHuang0516/realbot/compare/v1.60.4...v1.61.0) (2026-03-01)
 
 
