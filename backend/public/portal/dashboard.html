@@ -408,61 +408,6 @@
             margin-bottom: 16px;
         }
 
-        .borrow-entity-chips {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 16px;
-        }
-
-        .borrow-chip {
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            cursor: pointer;
-            background: var(--input-bg);
-            border: 2px solid var(--card-border);
-            color: var(--text-secondary);
-            transition: all 0.2s;
-            user-select: none;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .borrow-chip:hover:not(.disabled) {
-            border-color: var(--primary);
-            color: var(--text);
-        }
-
-        .borrow-chip.active {
-            border-color: var(--primary);
-            background: rgba(108, 99, 255, 0.15);
-            color: var(--text);
-        }
-
-        .borrow-chip.disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        .borrow-chip .chip-badge {
-            font-size: 10px;
-            padding: 1px 6px;
-            border-radius: 8px;
-            font-weight: 600;
-        }
-
-        .chip-badge.badge-free {
-            background: rgba(76, 175, 80, 0.2);
-            color: var(--success);
-        }
-
-        .chip-badge.badge-personal {
-            background: rgba(255, 152, 0, 0.2);
-            color: var(--warning);
-        }
-
         .borrow-options {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -901,12 +846,6 @@
             <div class="add-entity-content" id="borrowContent">
                 <div class="borrow-desc" data-i18n="borrow_desc">
                     Rent an official bot for your entity. The bot will automatically interact with your live wallpaper.
-                </div>
-
-                <!-- Entity Chip Selector -->
-                <label class="form-label" data-i18n="borrow_select_entity">Select Entity</label>
-                <div class="borrow-entity-chips" id="borrowChips">
-                    <!-- Dynamically generated -->
                 </div>
 
                 <!-- Free / Personal Options -->
@@ -1676,6 +1615,8 @@
             document.querySelectorAll('.slot-btn').forEach(b => {
                 b.classList.toggle('active', parseInt(b.dataset.slot) === slot);
             });
+            // Sync bot rental section
+            if (borrowStatus) updateBorrowButtons();
         }
 
         function showOverwriteConfirm(slotId, entityName) {
@@ -1913,7 +1854,7 @@
         // Official Borrow (Entity Rental)
         // ============================================
         let borrowStatus = null;
-        let selectedBorrowEntity = 0;
+
         let isBorrowExpanded = false;
 
         function toggleBorrow() {
@@ -1931,47 +1872,11 @@
         async function loadBorrowStatus() {
             try {
                 borrowStatus = await apiCall('GET', '/api/official-borrow/status?deviceId=' + currentUser.deviceId);
-                renderBorrowChips();
                 updateBorrowButtons();
                 renderBindingsList();
             } catch (e) {
                 console.warn('Failed to load borrow status:', e.message);
             }
-        }
-
-        function renderBorrowChips() {
-            const container = document.getElementById('borrowChips');
-            const occupiedSlots = new Set(entities.map(e => e.entityId));
-            const bindingMap = {};
-            if (borrowStatus && borrowStatus.bindings) {
-                borrowStatus.bindings.forEach(b => { bindingMap[b.entityId] = b; });
-            }
-
-            let html = '';
-            for (let i = 0; i < maxEntitySlots; i++) {
-                const avatar = getAvatarForEntity(i);
-                const isActive = i === selectedBorrowEntity;
-                const binding = bindingMap[i];
-                const isOccupied = occupiedSlots.has(i) && !binding;
-
-                let badgeHtml = '';
-                if (binding) {
-                    const badgeClass = binding.botType === 'free' ? 'badge-free' : 'badge-personal';
-                    const badgeText = binding.botType === 'free' ? i18n.t('borrow_type_free') : i18n.t('borrow_type_personal');
-                    badgeHtml = '<span class="chip-badge ' + badgeClass + '">' + badgeText + '</span>';
-                }
-
-                html += '<div class="borrow-chip' + (isActive ? ' active' : '') + '" data-slot="' + i + '" onclick="selectBorrowEntity(' + i + ')">' +
-                    avatar + ' Entity ' + i + badgeHtml +
-                    '</div>';
-            }
-            container.innerHTML = html;
-        }
-
-        function selectBorrowEntity(slot) {
-            selectedBorrowEntity = slot;
-            renderBorrowChips();
-            updateBorrowButtons();
         }
 
         function updateBorrowButtons() {
@@ -2007,7 +1912,7 @@
             }
 
             // Check if selected entity already has an official binding
-            const existingBinding = (borrowStatus.bindings || []).find(b => b.entityId === selectedBorrowEntity);
+            const existingBinding = (borrowStatus.bindings || []).find(b => b.entityId === selectedSlot);
 
             if (existingBinding) {
                 // Already bound - show unbind option
@@ -2017,7 +1922,7 @@
                     if (btnPersonal) {
                         btnPersonal.textContent = i18n.t('borrow_btn_unbind');
                         btnPersonal.disabled = false;
-                        btnPersonal.onclick = function () { confirmUnbind(selectedBorrowEntity, existingBinding.botType); };
+                        btnPersonal.onclick = function () { confirmUnbind(selectedSlot, existingBinding.botType); };
                     }
                 } else {
                     if (btnPersonal) {
@@ -2026,7 +1931,7 @@
                     }
                     btnFree.textContent = i18n.t('borrow_btn_unbind');
                     btnFree.disabled = false;
-                    btnFree.onclick = function () { confirmUnbind(selectedBorrowEntity, existingBinding.botType); };
+                    btnFree.onclick = function () { confirmUnbind(selectedSlot, existingBinding.botType); };
                 }
                 return;
             }
@@ -2158,7 +2063,7 @@
                 const result = await apiCall('POST', '/api/official-borrow/bind-free', {
                     deviceId: currentUser.deviceId,
                     deviceSecret: currentUser.deviceSecret,
-                    entityId: selectedBorrowEntity
+                    entityId: selectedSlot
                 });
 
                 if (result.success) {
@@ -2283,7 +2188,7 @@
                     const bindResult = await apiCall('POST', '/api/official-borrow/bind-personal', {
                         deviceId: currentUser.deviceId,
                         deviceSecret: currentUser.deviceSecret,
-                        entityId: selectedBorrowEntity
+                        entityId: selectedSlot
                     });
 
                     if (bindResult.success) {
@@ -2292,7 +2197,7 @@
                             await apiCall('POST', '/api/official-borrow/verify-subscription', {
                                 deviceId: currentUser.deviceId,
                                 deviceSecret: currentUser.deviceSecret,
-                                entityId: selectedBorrowEntity
+                                entityId: selectedSlot
                             });
                         } catch (_) { }
 
@@ -2330,7 +2235,7 @@
                 const result = await apiCall('POST', '/api/official-borrow/bind-personal', {
                     deviceId: currentUser.deviceId,
                     deviceSecret: currentUser.deviceSecret,
-                    entityId: selectedBorrowEntity
+                    entityId: selectedSlot
                 });
                 if (result.success) {
                     // Had available slot - bound without payment
