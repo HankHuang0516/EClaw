@@ -1,3 +1,10 @@
+## [1.57.1](https://github.com/HankHuang0516/realbot/compare/v1.57.0...v1.57.1) (2026-03-01)
+
+
+### Bug Fixes
+
+* add missing ai_chat_view_feedback string resource ([1429efc](https://github.com/HankHuang0516/realbot/commit/1429efc7aed573ae3eb6182f2be97af679b9a733))
+
 # [1.57.0](https://github.com/HankHuang0516/realbot/compare/v1.56.0...v1.57.0) (2026-03-01)
 
 
