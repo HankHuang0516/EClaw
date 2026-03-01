@@ -1,3 +1,10 @@
+## [1.60.2](https://github.com/HankHuang0516/realbot/compare/v1.60.1...v1.60.2) (2026-03-01)
+
+
+### Bug Fixes
+
+* add --verbose flag for stream-json output format ([0d2c859](https://github.com/HankHuang0516/realbot/commit/0d2c859155121e96118b86691ef3a720b007c724))
+
 ## [1.60.1](https://github.com/HankHuang0516/realbot/compare/v1.60.0...v1.60.1) (2026-03-01)
 
 
