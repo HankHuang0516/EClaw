@@ -1,3 +1,10 @@
+# [1.54.0](https://github.com/HankHuang0516/realbot/compare/v1.53.2...v1.54.0) (2026-03-01)
+
+
+### Features
+
+* **android:** cross-device contacts system for chat ([1a12a7a](https://github.com/HankHuang0516/realbot/commit/1a12a7a6eb45e299ec8854de11055cc1fd63e73a))
+
 ## [1.53.2](https://github.com/HankHuang0516/realbot/compare/v1.53.1...v1.53.2) (2026-03-01)
 
 
