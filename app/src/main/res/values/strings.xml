@@ -105,6 +105,7 @@
     <string name="ai_chat_uploading">Uploading image(s)…</string>
     <string name="ai_chat_analyzing">AI is analyzing your image(s)…</string>
     <string name="ai_chat_thinking">Still working on it…</string>
+    <string name="ai_chat_fallback_error">Sorry, I was unable to process your request. Please try rephrasing your question.</string>
 
     <!-- Chat -->
     <string name="chat_history">Chat</string>

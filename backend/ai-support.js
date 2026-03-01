@@ -720,6 +720,34 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
 
             let responseText = result.response;
 
+            // Sanitize: proxy may return raw Claude session JSON instead of clean text
+            if (responseText && typeof responseText === 'string') {
+                const trimmed = responseText.trim();
+                // Detect raw JSON session results (e.g. {"type":"result","subtype":"error_max_turns",...})
+                if (trimmed.startsWith('{') && trimmed.includes('"type"')) {
+                    try {
+                        const parsed = JSON.parse(trimmed);
+                        if (parsed.type === 'result' || parsed.subtype || parsed.session_id) {
+                            console.warn(`[AI Chat] Proxy returned raw session JSON (subtype: ${parsed.subtype}), sanitizing`);
+                            // Try to extract useful text from the raw result
+                            if (parsed.result_text) {
+                                responseText = parsed.result_text;
+                            } else if (parsed.subtype === 'error_max_turns') {
+                                responseText = 'Sorry, this question was too complex for me to fully analyze. Could you try asking a more specific question?';
+                            } else if (parsed.subtype === 'error_tool_execution') {
+                                responseText = 'I encountered an error while looking into your issue. Please try again.';
+                            } else {
+                                responseText = 'Sorry, I was unable to process your request. Please try rephrasing your question.';
+                            }
+                        }
+                    } catch (_) {
+                        // Not valid JSON, leave as-is
+                    }
+                }
+            } else if (!responseText) {
+                responseText = 'Sorry, I could not generate a response. Please try again.';
+            }
+
             // Auto-execute create_issue actions for regular users
             if (!isAdmin && result.actions && result.actions.length > 0) {
                 for (const action of result.actions) {
