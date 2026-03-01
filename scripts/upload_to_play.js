@@ -144,6 +144,7 @@ async function main() {
     await play.edits.commit({
         packageName: PACKAGE_NAME,
         editId,
+        changesNotSentForReview: true,
     });
 
     console.log(`\n=== SUCCESS ===`);
