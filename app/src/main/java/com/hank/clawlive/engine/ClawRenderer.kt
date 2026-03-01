@@ -866,76 +866,70 @@ class ClawRenderer(private val context: Context) {
         }
         canvas.drawPath(antennaR, strokePaint)
 
-        // Eyes
-        val eyePaint = Paint().apply {
-            color = Color.parseColor("#1a1a2e") // var(--bg-deep)
-            style = Paint.Style.FILL
-            isAntiAlias = true
-        }
-        val eyeGlowPaint = Paint().apply {
-            color = Color.CYAN // var(--cyan-bright)
-            style = Paint.Style.FILL
-            isAntiAlias = true
-        }
-
-        // Left Eye
-        canvas.drawCircle(45f, 35f, 6f, eyePaint)
-        canvas.drawCircle(46f, 34f, 2f, eyeGlowPaint)
-
-        // Right Eye
-        canvas.drawCircle(75f, 35f, 6f, eyePaint)
-        canvas.drawCircle(76f, 34f, 2f, eyeGlowPaint)
+        // Eyes (with EYE_LID and EYE_ANGLE support)
+        drawLobsterEyesForEntity(canvas, entity, coralBright)
 
         canvas.restore()
     }
 
     /**
-     * Draw lobster eyes (called within scaled canvas context).
+     * Draw lobster eyes with EYE_LID and EYE_ANGLE support (called within scaled canvas context).
+     * Uses cyberpunk style: deep dark blue base + cyan glow pupil + body-colored lid overlay.
      */
-    private fun drawLobsterEyesForEntity(canvas: Canvas, entity: EntityStatus) {
+    private fun drawLobsterEyesForEntity(canvas: Canvas, entity: EntityStatus, bodyColor: Int) {
         val eyeRadius = 6f
-        val pupilRadius = 2f
         val leftEyeX = 45f
         val rightEyeX = 75f
         val eyeY = 35f
 
-        val pupilPaint = Paint().apply { style = Paint.Style.FILL; color = Color.BLACK; isAntiAlias = true }
-        val lidPaint = Paint().apply { style = Paint.Style.FILL; color = Color.parseColor("#FF7F50"); isAntiAlias = true }
+        val eyePaint = Paint().apply {
+            color = Color.parseColor("#1a1a2e")
+            style = Paint.Style.FILL
+            isAntiAlias = true
+        }
+        val eyeGlowPaint = Paint().apply {
+            color = Color.CYAN
+            style = Paint.Style.FILL
+            isAntiAlias = true
+        }
+        val lidPaint = Paint().apply {
+            style = Paint.Style.FILL
+            color = bodyColor
+            isAntiAlias = true
+        }
 
         val defaultLid = if (entity.state == CharacterState.SLEEPING) 1.0f else 0f
         val lidFactor = entity.parts?.get("EYE_LID")?.toFloat() ?: defaultLid
         val browAngle = entity.parts?.get("EYE_ANGLE")?.toFloat() ?: 0f
 
-        drawSingleEye(canvas, leftEyeX, eyeY, eyeRadius, pupilRadius, lidFactor, browAngle, pupilPaint, lidPaint)
-        drawSingleEye(canvas, rightEyeX, eyeY, eyeRadius, pupilRadius, lidFactor, -browAngle, pupilPaint, lidPaint)
+        drawSingleEye(canvas, leftEyeX, eyeY, eyeRadius, lidFactor, browAngle, eyePaint, eyeGlowPaint, lidPaint)
+        drawSingleEye(canvas, rightEyeX, eyeY, eyeRadius, lidFactor, -browAngle, eyePaint, eyeGlowPaint, lidPaint)
     }
 
     private fun drawSingleEye(
-        canvas: Canvas, cx: Float, cy: Float, radius: Float, pupilRadius: Float,
+        canvas: Canvas, cx: Float, cy: Float, radius: Float,
         lidFactor: Float, browAngle: Float,
-        pupilPaint: Paint, lidPaint: Paint
+        eyePaint: Paint, glowPaint: Paint, lidPaint: Paint
     ) {
-        canvas.save()
+        // Draw base eye (deep dark blue circle)
+        canvas.drawCircle(cx, cy, radius, eyePaint)
+        // Draw cyan glow pupil
+        canvas.drawCircle(cx + 1f, cy - 1f, 2f, glowPaint)
 
-        val eyePath = android.graphics.Path()
-        eyePath.addCircle(cx, cy, radius, android.graphics.Path.Direction.CW)
-        canvas.clipPath(eyePath)
-
-        canvas.drawColor(Color.WHITE)
-        canvas.drawCircle(cx, cy, pupilRadius * 1.5f, pupilPaint)
-
-        canvas.restore()
-
+        // Draw lid overlay if needed
         if (lidFactor > 0.05f || browAngle != 0f) {
             canvas.save()
             canvas.rotate(browAngle, cx, cy)
+
+            val eyePath = android.graphics.Path()
+            eyePath.addCircle(cx, cy, radius, android.graphics.Path.Direction.CW)
             canvas.clipPath(eyePath)
 
-            val lidTop = cy - radius - 5f
+            val lidTop = cy - radius - 2f
             val coverage = 2 * radius * lidFactor + 2f
             val lidBottom = (cy - radius) + coverage
 
-            canvas.drawRect(cx - radius - 5f, lidTop, cx + radius + 5f, lidBottom, lidPaint)
+            canvas.drawRect(cx - radius - 2f, lidTop, cx + radius + 2f, lidBottom, lidPaint)
             canvas.restore()
         }
     }

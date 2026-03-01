@@ -9,6 +9,7 @@ const DELAY_EMOTION = 2000;
 const DELAY_ANIM = 200;
 
 let botSecret = null;
+let deviceId = null;
 let entityId = 0;
 
 function sleep(ms) {
@@ -28,6 +29,7 @@ async function api(method, path, body = null) {
 async function send(state, message, parts) {
     try {
         const res = await api('POST', '/api/transform', {
+            deviceId: deviceId,
             entityId: entityId,
             botSecret: botSecret,
             character: "LOBSTER",
@@ -35,6 +37,9 @@ async function send(state, message, parts) {
             message: message,
             parts: parts
         });
+        if (!res.data.success) {
+            console.log(`   ⚠️  Transform rejected: ${res.data.message}`);
+        }
         return res.data.success;
     } catch (e) {
         console.error(e.message);
@@ -43,7 +48,7 @@ async function send(state, message, parts) {
 }
 
 async function verify(expectedState, expectedMessage) {
-    const res = await api('GET', `/api/status?entityId=${entityId}`);
+    const res = await api('GET', `/api/status?deviceId=${deviceId}&entityId=${entityId}`);
     const data = res.data;
     const ok = data.state === expectedState && data.message === expectedMessage;
     console.log(ok ? `   ✅ ${data.state} - "${data.message}"` : `   ❌ Got: ${data.state}`);
@@ -53,7 +58,7 @@ async function verify(expectedState, expectedMessage) {
 async function setupAuth() {
     console.log('🔐 Setting up authentication...\n');
 
-    const deviceId = `eye-test-${Date.now()}`;
+    deviceId = `eye-test-${Date.now()}`;
     const deviceSecret = `secret-${Date.now()}`;
 
     const registerRes = await api('POST', '/api/device/register', {

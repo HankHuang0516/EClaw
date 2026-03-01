@@ -10,6 +10,7 @@ const DELAY_EMOTION = 2000; // Time to hold the emotion
 const DELAY_ANIM = 200;     // Fast animation tick
 
 let botSecret = null;
+let deviceId = null;
 let entityId = 0;
 
 function sleep(ms) {
@@ -29,6 +30,7 @@ async function api(method, path, body = null) {
 async function send(state, message, left, right) {
     try {
         const res = await api('POST', '/api/transform', {
+            deviceId: deviceId,
             entityId: entityId,
             botSecret: botSecret,
             character: "LOBSTER",
@@ -48,7 +50,7 @@ async function send(state, message, left, right) {
 
 async function verify(expectedState, expectedMessage) {
     try {
-        const res = await api('GET', `/api/status?entityId=${entityId}`);
+        const res = await api('GET', `/api/status?deviceId=${deviceId}&entityId=${entityId}`);
         const data = res.data;
         const stateOk = data.state === expectedState;
         const msgOk = data.message === expectedMessage;
@@ -68,7 +70,7 @@ async function setupAuth() {
     console.log('🔐 Setting up authentication...\n');
 
     // Step 1: Register entity
-    const deviceId = `emotion-test-${Date.now()}`;
+    deviceId = `emotion-test-${Date.now()}`;
     const deviceSecret = `secret-${Date.now()}`;
 
     const registerRes = await api('POST', '/api/device/register', {
