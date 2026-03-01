@@ -258,6 +258,8 @@ async function runTests() {
     // Log / Telemetry API Verification
     // =====================================================
     console.log('\n--- Log / Telemetry API Verification ---');
+    // Wait for async telemetry writes to flush
+    await new Promise(r => setTimeout(r, 2000));
     try {
         const telData = await api('GET',
             `/api/device-telemetry?deviceId=${testDeviceId}&deviceSecret=${encodeURIComponent(testDeviceSecret)}&type=api_req`

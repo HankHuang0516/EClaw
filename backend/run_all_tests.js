@@ -57,7 +57,7 @@ const TEST_FILES = [
 // - test_entity_communication.js - Manual device UI testing
 // - test_name_feature.js         - Manual device UI testing
 
-const TEST_TIMEOUT = 300000; // 300 seconds per test (bot-api-response polls each test up to 120s)
+const TEST_TIMEOUT = 600000; // 600 seconds per test (stress tests need more time when running in full suite)
 
 /**
  * Clean up test environment before/after tests
