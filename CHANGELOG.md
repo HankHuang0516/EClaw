@@ -1,3 +1,10 @@
+# [1.53.0](https://github.com/HankHuang0516/realbot/compare/v1.52.1...v1.53.0) (2026-03-01)
+
+
+### Features
+
+* cross-device contacts system with unified target bar ([f58435f](https://github.com/HankHuang0516/realbot/commit/f58435f9d98b4700a306629649602e6b94478edb))
+
 ## [1.52.1](https://github.com/HankHuang0516/realbot/compare/v1.52.0...v1.52.1) (2026-03-01)
 
 
