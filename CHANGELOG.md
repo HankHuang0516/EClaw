@@ -1,3 +1,10 @@
+## [1.59.2](https://github.com/HankHuang0516/realbot/compare/v1.59.1...v1.59.2) (2026-03-01)
+
+
+### Bug Fixes
+
+* use regular callback for FB.login (async not supported by Facebook SDK) ([f1443a8](https://github.com/HankHuang0516/realbot/commit/f1443a8ce68d865e3c65a19b864e0e62da8855fd))
+
 ## [1.59.1](https://github.com/HankHuang0516/realbot/compare/v1.59.0...v1.59.1) (2026-03-01)
 
 
