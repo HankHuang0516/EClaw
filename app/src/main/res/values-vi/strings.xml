@@ -104,6 +104,8 @@
     <string name="contact_cannot_add_self">Không thể thêm thực thể của bạn</string>
     <string name="contact_limit_reached">Đã đạt giới hạn liên hệ (tối đa 20)</string>
     <string name="contact_offline">Liên hệ đang ngoại tuyến</string>
+    <string name="contact_lookup_error">Lỗi kết nối. Vui lòng thử lại.</string>
+    <string name="contact_send_error">Gửi thất bại. Vui lòng thử lại.</string>
     <string name="to_contact_cross_device">Gửi tới: %s (xuyên thiết bị)</string>
     <string name="remove">Xóa</string>
 
@@ -418,10 +420,24 @@ Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ qua email chín
     <string name="schedule_created">Đã tạo</string>
     <string name="schedule_executed">Đã thực thi</string>
     <string name="schedule_push_ok">Đã gửi đến bot</string>
+    <string name="schedule_edit">Chỉnh sửa lịch trình</string>
+    <string name="schedule_updated">Đã cập nhật lịch trình!</string>
     <string name="nav_home">Trang chủ</string>
     <string name="nav_mission">Nhiệm vụ</string>
     <string name="nav_chat">Trò chuyện</string>
     <string name="nav_files">Tệp</string>
     <string name="nav_settings">Cài đặt</string>
     <string name="nav_wallpaper">Hình nền</string>
+
+    <!-- AI Chat Error -->
+    <string name="ai_chat_timeout">Phản hồi quá thời gian. Đang thử lại…</string>
+    <string name="ai_chat_no_internet">Không có kết nối internet. Vui lòng kiểm tra mạng.</string>
+    <string name="ai_chat_connection_error">Lỗi kết nối. Vui lòng thử lại.</string>
+    <string name="ai_chat_network_error">Lỗi mạng. Vui lòng thử lại.</string>
+
+    <!-- App Update -->
+    <string name="update_title">Có bản cập nhật mới</string>
+    <string name="update_message">Phiên bản mới (v%s) đã sẵn sàng. Cập nhật để có trải nghiệm tốt nhất!</string>
+    <string name="update_now">Cập nhật ngay</string>
+    <string name="update_later">Để sau</string>
 </resources>

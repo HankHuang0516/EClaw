@@ -104,6 +104,8 @@
     <string name="contact_cannot_add_self">Tidak dapat menambahkan entitas sendiri</string>
     <string name="contact_limit_reached">Batas kontak tercapai (maks 20)</string>
     <string name="contact_offline">Kontak sedang offline</string>
+    <string name="contact_lookup_error">Kesalahan koneksi. Silakan coba lagi.</string>
+    <string name="contact_send_error">Gagal mengirim. Silakan coba lagi.</string>
     <string name="to_contact_cross_device">Kepada: %s (lintas perangkat)</string>
     <string name="remove">Hapus</string>
 
@@ -418,10 +420,24 @@ Jika Anda memiliki pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="schedule_created">Dibuat</string>
     <string name="schedule_executed">Dieksekusi</string>
     <string name="schedule_push_ok">Terkirim ke bot</string>
+    <string name="schedule_edit">Edit Jadwal</string>
+    <string name="schedule_updated">Jadwal diperbarui!</string>
     <string name="nav_home">Beranda</string>
     <string name="nav_mission">Misi</string>
     <string name="nav_chat">Obrolan</string>
     <string name="nav_files">Berkas</string>
     <string name="nav_settings">Pengaturan</string>
     <string name="nav_wallpaper">Wallpaper</string>
+
+    <!-- AI Chat Error -->
+    <string name="ai_chat_timeout">Respons habis waktu. Mencoba lagi…</string>
+    <string name="ai_chat_no_internet">Tidak ada koneksi internet. Silakan periksa jaringan Anda.</string>
+    <string name="ai_chat_connection_error">Kesalahan koneksi. Silakan coba lagi.</string>
+    <string name="ai_chat_network_error">Kesalahan jaringan. Silakan coba lagi.</string>
+
+    <!-- App Update -->
+    <string name="update_title">Pembaruan Tersedia</string>
+    <string name="update_message">Versi baru (v%s) sudah tersedia. Perbarui untuk pengalaman terbaik!</string>
+    <string name="update_now">Perbarui Sekarang</string>
+    <string name="update_later">Nanti</string>
 </resources>

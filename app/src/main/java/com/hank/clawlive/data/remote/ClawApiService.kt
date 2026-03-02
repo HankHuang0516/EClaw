@@ -336,6 +336,12 @@ interface ClawApiService {
         @Body body: Map<String, @JvmSuppressWildcards Any?>
     ): ScheduleCreateResponse
 
+    @PUT("api/schedules/{id}")
+    suspend fun updateSchedule(
+        @Path("id") scheduleId: Int,
+        @Body body: Map<String, @JvmSuppressWildcards Any>
+    ): GenericResponse
+
     @HTTP(method = "DELETE", path = "api/schedules/{id}", hasBody = false)
     suspend fun deleteSchedule(
         @Path("id") id: Int,
@@ -367,6 +373,13 @@ interface ClawApiService {
 
     @POST("api/auth/oauth/facebook")
     suspend fun oauthFacebook(@Body body: Map<String, String>): OAuthLoginResponse
+
+    // ============ Version Check ============
+
+    @GET("api/version")
+    suspend fun checkAppVersion(
+        @Query("appVersion") appVersion: String
+    ): VersionCheckResponse
 }
 
 // ============ Mission Control Response Models ============
@@ -593,4 +606,20 @@ data class AiChatPollResponse(
     val retry_after: Int? = null,
     val error: String? = null,
     val latency_ms: Long? = null
+)
+
+// ============ Version Check ============
+
+data class VersionCheckResponse(
+    val android: String? = null,
+    val update: UpdateInfo? = null
+)
+
+data class UpdateInfo(
+    val available: Boolean = false,
+    val latestVersion: String = "",
+    val currentVersion: String = "",
+    val forceUpdate: Boolean = false,
+    val releaseNotes: String? = null,
+    val storeUrl: String = "https://play.google.com/store/apps/details?id=com.hank.clawlive"
 )

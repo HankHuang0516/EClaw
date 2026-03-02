@@ -447,7 +447,7 @@ class ChatActivity : AppCompatActivity() {
                     } catch (e: Exception) {
                         progressBar.visibility = View.GONE
                         foundEntity = null
-                        tvPreview.text = getString(R.string.contact_not_found)
+                        tvPreview.text = getString(R.string.contact_lookup_error)
                         tvPreview.visibility = View.VISIBLE
                     }
                 }
@@ -1230,14 +1230,20 @@ class ChatActivity : AppCompatActivity() {
                             Timber.d("Cross-device message sent to $code")
                         } else {
                             val label = chatAdapter.xdeviceLabels[code] ?: code
-                            Toast.makeText(this@ChatActivity, "${resp.error ?: "Failed"}: $label", Toast.LENGTH_SHORT).show()
+                            Timber.w("Cross-device send non-success to $code: ${resp.error}")
+                            if (resp.error != null) {
+                                Toast.makeText(this@ChatActivity, "${resp.error}: $label", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     } catch (e: Exception) {
-                        if (e is retrofit2.HttpException && e.code() == 404) {
-                            Toast.makeText(this@ChatActivity, getString(R.string.contact_offline), Toast.LENGTH_SHORT).show()
+                        Timber.e(e, "Cross-device send failed to $code")
+                        if (e is retrofit2.HttpException) {
+                            when (e.code()) {
+                                404 -> Toast.makeText(this@ChatActivity, getString(R.string.contact_offline), Toast.LENGTH_SHORT).show()
+                                else -> Toast.makeText(this@ChatActivity, getString(R.string.contact_send_error), Toast.LENGTH_SHORT).show()
+                            }
                         } else {
-                            Timber.e(e, "Cross-device send failed to $code")
-                            Toast.makeText(this@ChatActivity, "Send failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@ChatActivity, getString(R.string.contact_send_error), Toast.LENGTH_SHORT).show()
                         }
                     }
                 }

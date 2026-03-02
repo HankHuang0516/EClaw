@@ -111,6 +111,52 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         }
     }
 
+    // ── Close GitHub issue (for AI-initiated actions) ──
+    async function closeIssue(issueNumber, comment) {
+        const token = process.env.GITHUB_TOKEN;
+        const repo = process.env.GITHUB_REPO || 'HankHuang0516/realbot';
+        if (!token) return { success: false, error: 'GITHUB_TOKEN not configured' };
+
+        try {
+            // Add comment if provided
+            if (comment) {
+                await fetch(`https://api.github.com/repos/${repo}/issues/${issueNumber}/comments`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ body: comment })
+                });
+            }
+
+            // Close the issue
+            const ghRes = await fetch(`https://api.github.com/repos/${repo}/issues/${issueNumber}`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ state: 'closed' })
+            });
+
+            if (!ghRes.ok) {
+                const errBody = await ghRes.text();
+                console.error(`[AI Chat] Close issue #${issueNumber} failed (${ghRes.status}):`, errBody);
+                return { success: false, error: `GitHub API error (${ghRes.status})` };
+            }
+
+            const data = await ghRes.json();
+            serverLog('info', 'ai_chat', `Closed GitHub issue #${issueNumber}`, { issueNumber });
+            return { success: true, url: data.html_url, number: data.number };
+        } catch (err) {
+            console.error('[AI Chat] Close issue error:', err.message);
+            return { success: false, error: err.message };
+        }
+    }
+
     // ── Dual-track: create feedback record alongside GitHub issue ──
     async function createFeedbackFromAiIssue(issueResult, action, user) {
         if (!feedbackModule || !issueResult) return null;
@@ -1376,5 +1422,5 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         });
     }
 
-    return { router, initSupportTable };
+    return { router, initSupportTable, closeIssue };
 };

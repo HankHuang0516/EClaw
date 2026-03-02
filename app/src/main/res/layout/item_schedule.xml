@@ -62,6 +62,16 @@
             android:layout_marginEnd="6dp" />
 
         <ImageButton
+            android:id="@+id/btnEdit"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@android:drawable/ic_menu_edit"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/edit"
+            android:layout_marginEnd="4dp"
+            android:visibility="gone" />
+
+        <ImageButton
             android:id="@+id/btnDelete"
             android:layout_width="28dp"
             android:layout_height="28dp"

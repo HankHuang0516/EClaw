@@ -403,7 +403,12 @@ class AiChatActivity : AppCompatActivity() {
 
     private fun resolveHttpError(e: Exception): String {
         if (e !is HttpException) {
-            return "Network error. Please check your connection."
+            return when (e) {
+                is java.net.SocketTimeoutException -> getString(R.string.ai_chat_timeout)
+                is java.net.UnknownHostException -> getString(R.string.ai_chat_no_internet)
+                is java.io.IOException -> getString(R.string.ai_chat_connection_error)
+                else -> getString(R.string.ai_chat_network_error)
+            }
         }
         val errorBody = try {
             e.response()?.errorBody()?.string()
