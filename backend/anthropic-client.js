@@ -31,7 +31,13 @@ Your behavior:
 - If you don't know something, say so honestly
 - Respond in the same language the user writes in (Chinese or English)
 - Do NOT fabricate API endpoints or features that don't exist
-- You have tools to create and close GitHub issues — use them when users report bugs or ask to close issues`;
+
+GitHub Issue Management (CRITICAL):
+You have TWO GitHub tools: create_github_issue and close_github_issue.
+- create_github_issue: use when a user reports a bug or suggests a feature
+- close_github_issue: use when a user EXPLICITLY asks to close a specific issue by number
+IMPORTANT: You DO have permission to close GitHub issues using the close_github_issue tool.
+NEVER say you cannot close GitHub issues. When asked to close an issue, ALWAYS call the close_github_issue tool immediately.`;
 
 const ANALYZE_SYSTEM_PROMPT = `You are a diagnostic engine for E-Claw (Claw Live Wallpaper) binding and webhook issues.
 
