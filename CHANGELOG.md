@@ -1,3 +1,10 @@
+## [1.64.1](https://github.com/HankHuang0516/realbot/compare/v1.64.0...v1.64.1) (2026-03-02)
+
+
+### Bug Fixes
+
+* strengthen system prompt to override model's GitHub permission hesitation ([c765813](https://github.com/HankHuang0516/realbot/commit/c7658138f0a0c84a11f8567e849a256e8cbdfaf6))
+
 # [1.64.0](https://github.com/HankHuang0516/realbot/compare/v1.63.2...v1.64.0) (2026-03-02)
 
 
