@@ -259,6 +259,46 @@
             accent-color: var(--primary);
         }
 
+        .skill-template-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 2px;
+        }
+
+        .skill-template-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 12px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        .skill-template-chip:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .skill-template-chip.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        #dlg_skill_steps {
+            min-height: 160px;
+            resize: vertical;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
         /* Inline delete button on sub-items */
         .item-delete {
             flex-shrink: 0;
@@ -624,6 +664,7 @@
             const prev = lastSavedDashboard.skills.find(p => p.id === skill.id);
             if (!prev) return true;
             return skill.title !== prev.title || skill.url !== prev.url
+                || (skill.steps || '') !== (prev.steps || '')
                 || JSON.stringify(skill.assignedEntities || []) !== JSON.stringify(prev.assignedEntities || []);
         }
 
@@ -1152,6 +1193,40 @@
         }
 
         // ========== Skills ==========
+        const SKILL_TEMPLATES = [
+            {
+                id: 'claude-proxy',
+                label: '🤖 claude-proxy',
+                title: 'Claude Proxy',
+                url: 'http://claude-cli-proxy.railway.internal:4000',
+                steps: `Step 1: Deploy claude-cli-proxy to Railway
+  - Source: claude-cli-proxy/index.js
+  - Set env var: SUPPORT_API_KEY=<your-secret-key>
+
+Step 2: Set env vars in main backend (Railway)
+  - CLAUDE_CLI_PROXY_URL=http://claude-cli-proxy.railway.internal:4000
+  - SUPPORT_API_KEY=<same-secret-key>
+
+Step 3: Verify the proxy is running
+  - GET /api/ai-support/proxy-sessions  →  should return { sessions: [] }
+
+Step 4: Test via Admin Chat
+  - Open admin.html → click the 💬 chat button (bottom-right)
+  - Send any question to confirm Claude responds`
+            }
+        ];
+
+        function applySkillTemplate(templateId) {
+            const tpl = SKILL_TEMPLATES.find(t => t.id === templateId);
+            if (!tpl) return;
+            document.getElementById('dlg_skill_title').value = tpl.title;
+            document.getElementById('dlg_skill_url').value = tpl.url || '';
+            document.getElementById('dlg_skill_steps').value = tpl.steps || '';
+            document.querySelectorAll('.skill-template-chip').forEach(c => {
+                c.classList.toggle('active', c.dataset.template === templateId);
+            });
+        }
+
         function renderSkills() {
             const el = document.getElementById('skillsList');
             if (!dashboard.skills.length) {
@@ -1198,13 +1273,21 @@
 
             if (!entityCheckboxes) entityCheckboxes = '<div style="color:var(--text-muted);font-size:12px;">No bound entities</div>';
 
+            const templateChips = SKILL_TEMPLATES.map(t =>
+                `<div class="skill-template-chip" data-template="${t.id}" onclick="applySkillTemplate('${t.id}')">${t.label}</div>`
+            ).join('');
+
             let html = `<div class="dialog-overlay" onclick="if(event.target===this)closeDialog()">
                 <div class="dialog">
                     <div class="dialog-title">${isEdit ? '編輯技能' : '新增技能'}</div>
-                    <div class="dialog-field-label">技能名稱</div>
+                    <div class="dialog-field-label">官方模板</div>
+                    <div class="skill-template-list">${templateChips}</div>
+                    <div class="dialog-field-label" style="margin-top:10px;">技能名稱</div>
                     <input id="dlg_skill_title" placeholder="例：Google 搜尋" value="${esc(skill?.title || '')}" />
                     <div class="dialog-field-label">相關網址 (選填)</div>
                     <input id="dlg_skill_url" placeholder="https://..." value="${esc(skill?.url || '')}" />
+                    <div class="dialog-field-label">安裝步驟 (選填)</div>
+                    <textarea id="dlg_skill_steps" placeholder="詳細安裝與設定步驟...">${esc(skill?.steps || '')}</textarea>
                     <div class="dialog-field-label">指派實體 (可多選)</div>
                     <div class="entity-checkbox-grid" id="dlg_skill_entities">${entityCheckboxes}</div>
                     <div class="dialog-actions">
@@ -1220,11 +1303,13 @@
                 const title = document.getElementById('dlg_skill_title').value.trim();
                 if (!title) return;
                 const url = document.getElementById('dlg_skill_url').value.trim();
+                const steps = document.getElementById('dlg_skill_steps').value.trim();
                 const selectedEntities = Array.from(document.querySelectorAll('.skill-entity-cb:checked')).map(cb => cb.value);
 
                 if (isEdit) {
                     skill.title = title;
                     skill.url = url;
+                    skill.steps = steps;
                     skill.assignedEntities = selectedEntities;
                     skill.updatedAt = Date.now();
                 } else {
@@ -1232,6 +1317,7 @@
                         id: genId(),
                         title,
                         url,
+                        steps,
                         assignedEntities: selectedEntities,
                         createdAt: Date.now(),
                         updatedAt: Date.now(),
