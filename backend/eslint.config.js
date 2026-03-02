@@ -35,6 +35,9 @@ module.exports = [
                 URLSearchParams: 'readonly',
                 fetch: 'readonly',
                 AbortSignal: 'readonly',
+                AbortController: 'readonly',
+                TextDecoder: 'readonly',
+                TextEncoder: 'readonly',
             },
         },
         rules: {
