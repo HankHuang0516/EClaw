@@ -1,3 +1,10 @@
+## [1.67.2](https://github.com/HankHuang0516/realbot/compare/v1.67.1...v1.67.2) (2026-03-02)
+
+
+### Bug Fixes
+
+* remove duplicate currentUser declaration causing SyntaxError in env-vars.html ([42eddbd](https://github.com/HankHuang0516/realbot/commit/42eddbde824a1efe040f02fd98b7d7b7091aab4c))
+
 ## [1.67.1](https://github.com/HankHuang0516/realbot/compare/v1.67.0...v1.67.1) (2026-03-02)
 
 
