@@ -1,3 +1,10 @@
+## [1.65.4](https://github.com/HankHuang0516/realbot/compare/v1.65.3...v1.65.4) (2026-03-02)
+
+
+### Bug Fixes
+
+* **lint:** add AbortController, TextDecoder, TextEncoder to ESLint globals ([271d0d5](https://github.com/HankHuang0516/realbot/commit/271d0d5cb7d98bf0f5afdbefbf0af975cca50a8b))
+
 ## [1.65.3](https://github.com/HankHuang0516/realbot/compare/v1.65.2...v1.65.3) (2026-03-02)
 
 
