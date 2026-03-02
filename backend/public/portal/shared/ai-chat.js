@@ -503,19 +503,49 @@
         }
     }
 
+    // ── Progress label mapping ────────────────────
+    const TOOL_PROGRESS = {
+        Read:  { key: 'ai_progress_read',  fallback: 'Reading file' },
+        Grep:  { key: 'ai_progress_grep',  fallback: 'Searching code' },
+        Glob:  { key: 'ai_progress_glob',  fallback: 'Finding files' },
+        Bash:  { key: 'ai_progress_bash',  fallback: 'Running analysis' },
+        Edit:  { key: 'ai_progress_edit',  fallback: 'Editing file' },
+        Write: { key: 'ai_progress_write', fallback: 'Writing file' },
+    };
+    const MAX_TURNS = 15; // must match proxy's --max-turns
+
+    function progressToText(progress) {
+        if (!progress) return null;
+        const turn = progress.turn || 0;
+        const suffix = turn > 0 ? ' (' + (i18n.t('ai_progress_step') || 'Step') + ' ' + turn + '/' + MAX_TURNS + ')' : '';
+        if (progress.event === 'tool_use' && progress.tool) {
+            const info = TOOL_PROGRESS[progress.tool];
+            const label = info ? (i18n.t(info.key) || info.fallback) : progress.tool;
+            return label + '...' + suffix;
+        }
+        if (progress.event === 'thinking') {
+            return (i18n.t('ai_progress_thinking') || 'Analyzing') + '...' + suffix;
+        }
+        if (progress.event === 'tool_result') {
+            return (i18n.t('ai_progress_processing') || 'Processing result') + '...' + suffix;
+        }
+        return null;
+    }
+
     // ── Polling ──────────────────────────────────
 
     function startPolling(requestId) {
         const startedAt = Date.now();
         let pollAttemptErrors = 0;
+        let lastProgressAt = Date.now(); // track when we last received a progress update
         console.log('[AI Chat] startPolling() requestId:', requestId);
 
         async function poll() {
             const elapsed = Date.now() - startedAt;
             console.log('[AI Chat] poll() elapsed:', Math.round(elapsed / 1000) + 's', 'errors:', pollAttemptErrors);
 
-            // Timeout guard
-            if (elapsed > POLL_MAX_DURATION) {
+            // Timeout guard: only fire if BOTH total time exceeded AND no recent progress
+            if (elapsed > POLL_MAX_DURATION && Date.now() - lastProgressAt > 60000) {
                 clearPending();
                 hideTyping();
                 chatHistory.push({ role: 'assistant', content: 'Request timed out. Please try again.' });
@@ -526,17 +556,21 @@
                 return;
             }
 
-            // Progressive status text
-            if (elapsed > 60000) {
-                updateTypingText(i18n.t('ai_chat_still_working') || 'This is taking a while, still working...');
-            } else if (elapsed > 15000) {
-                updateTypingText(i18n.t('ai_chat_thinking') || 'Still working on it...');
-            } else if (elapsed > 5000) {
-                updateTypingText(i18n.t('ai_chat_analyzing') || 'AI is analyzing...');
-            }
-
             try {
                 const data = await apiCall('GET', '/api/ai-support/chat/poll/' + requestId);
+
+                // Update typing text: prefer real-time progress over time-based fallback
+                if (data.progress) {
+                    lastProgressAt = Date.now();
+                    const text = progressToText(data.progress);
+                    if (text) updateTypingText(text);
+                } else if (elapsed > 60000) {
+                    updateTypingText(i18n.t('ai_chat_still_working') || 'This is taking a while, still working...');
+                } else if (elapsed > 15000) {
+                    updateTypingText(i18n.t('ai_chat_thinking') || 'Still working on it...');
+                } else if (elapsed > 5000) {
+                    updateTypingText(i18n.t('ai_chat_analyzing') || 'AI is analyzing...');
+                }
                 console.log('[AI Chat] poll response:', JSON.stringify({ status: data.status, busy: data.busy, hasResponse: !!data.response, error: data.error, latency_ms: data.latency_ms }));
                 pollAttemptErrors = 0;
 

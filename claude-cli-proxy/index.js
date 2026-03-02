@@ -99,7 +99,7 @@ function finalizeSession(session) {
 // Uses --output-format stream-json for full event visibility.
 // Falls back to single-JSON parsing if stream-json produces no NDJSON lines.
 // Always resolves (never rejects) — caller checks events/status.
-function runClaudeStream(prompt, extraArgs, timeoutMs, { cwd, env } = {}) {
+function runClaudeStream(prompt, extraArgs, timeoutMs, { cwd, env, onEvent } = {}) {
     return new Promise((resolve) => {
         const args = ['--verbose', '--print', '--output-format', 'stream-json', ...extraArgs];
 
@@ -128,6 +128,7 @@ function runClaudeStream(prompt, extraArgs, timeoutMs, { cwd, env } = {}) {
                     event._ts = Date.now();
                     events.push(event);
                     logStreamEvent(event);
+                    if (onEvent) onEvent(event);
                 } catch (_) {
                     // Not valid JSON line, skip
                 }
@@ -231,6 +232,28 @@ function logStreamEvent(event) {
     } else if (type === 'result') {
         console.log(`[Stream] result — subtype: ${event.subtype}, turns: ${event.num_turns}, cost: $${event.total_cost_usd?.toFixed(4) || '?'}`);
     }
+}
+
+// Build a safe status line for NDJSON streaming — NO content, only action metadata
+// Returns null if event is not worth streaming to caller
+function buildSafeLine(event, turn) {
+    if (event.type === 'assistant' && event.message?.content) {
+        const content = event.message.content;
+        const toolUseBlock = content.find(c => c.type === 'tool_use');
+        if (toolUseBlock) {
+            return { type: 'status', event: 'tool_use', tool: toolUseBlock.name, turn };
+        }
+        const hasText = content.some(c => c.type === 'text' && c.text?.trim());
+        if (hasText) {
+            return { type: 'status', event: 'thinking', tool: null, turn };
+        }
+    }
+    // Tool results come as 'user' messages in stream-json format
+    if (event.type === 'user' && Array.isArray(event.message?.content)) {
+        const hasTR = event.message.content.some(c => c.type === 'tool_result');
+        if (hasTR) return { type: 'status', event: 'tool_result', tool: null, turn };
+    }
+    return null;
 }
 
 // ── Parse Stream Events ──────────────────────
@@ -548,6 +571,15 @@ app.post('/chat', async (req, res) => {
             cliArgs.push('--allowedTools', tools.join(','));
         }
 
+        // Streaming mode: emit safe NDJSON status lines as events arrive
+        const wantStream = req.query.stream === '1';
+        let streamTurn = 0;
+        if (wantStream) {
+            res.setHeader('Content-Type', 'application/x-ndjson');
+            res.setHeader('Cache-Control', 'no-cache');
+            res.setHeader('X-Accel-Buffering', 'no');
+        }
+
         const { events, stderr, timedOut } = await runClaudeStream(
             prompt,
             cliArgs,
@@ -558,7 +590,14 @@ app.post('/chat', async (req, res) => {
                     ...process.env,
                     HOME: process.env.HOME || '/root',
                     CLAUDE_DANGEROUSLY_SKIP_PERMISSIONS: '1'
-                }
+                },
+                onEvent: wantStream ? (event) => {
+                    const line = buildSafeLine(event, streamTurn);
+                    if (line) {
+                        if (event.type === 'assistant') streamTurn++;
+                        res.write(JSON.stringify(line) + '\n');
+                    }
+                } : undefined
             }
         );
 
@@ -571,6 +610,18 @@ app.post('/chat', async (req, res) => {
         session.cost_usd = parsed.cost_usd;
         session.model = parsed.model;
 
+        // Helper: send final result (JSON or NDJSON complete line depending on mode)
+        const sendResult = (payload, httpStatus) => {
+            if (wantStream) {
+                res.write(JSON.stringify({ type: 'complete', ...payload }) + '\n');
+                res.end();
+            } else if (httpStatus && httpStatus !== 200) {
+                res.status(httpStatus).json(payload);
+            } else {
+                res.json(payload);
+            }
+        };
+
         if (timedOut) {
             session.status = 'timeout';
             session.error = 'Claude CLI timed out';
@@ -580,12 +631,7 @@ app.post('/chat', async (req, res) => {
             finalizeSession(session);
 
             console.error(`[Chat] Timeout (${latencyMs}ms), partial response: ${partialText.length} chars`);
-            return res.json({
-                response: partialText,
-                status: 'timeout',
-                session_id: session.id,
-                latency_ms: latencyMs
-            });
+            return sendResult({ response: partialText, status: 'timeout', session_id: session.id, latency_ms: latencyMs });
         }
 
         if (parsed.status === 'error_max_turns') {
@@ -614,13 +660,7 @@ app.post('/chat', async (req, res) => {
 
             console.warn(`[Chat] Max turns reached (${parsed.turns} turns, ${latencyMs}ms), partial response: ${partialText.length} chars`);
             const { cleanText, actions } = extractActions(partialText);
-            return res.json({
-                response: cleanText,
-                actions: actions.length > 0 ? actions : undefined,
-                status: 'max_turns',
-                session_id: session.id,
-                latency_ms: latencyMs
-            });
+            return sendResult({ response: cleanText, actions: actions.length > 0 ? actions : undefined, status: 'max_turns', session_id: session.id, latency_ms: latencyMs });
         }
 
         session.status = parsed.status === 'success' ? 'success' : parsed.status;
@@ -634,12 +674,7 @@ app.post('/chat', async (req, res) => {
         const { cleanText, actions } = extractActions(parsed.responseText || '');
         const responseText = cleanText || 'I received your message but had trouble generating a response.';
 
-        res.json({
-            response: responseText,
-            actions: actions.length > 0 ? actions : undefined,
-            session_id: session.id,
-            latency_ms: latencyMs
-        });
+        sendResult({ response: responseText, actions: actions.length > 0 ? actions : undefined, session_id: session.id, latency_ms: latencyMs });
     } catch (err) {
         const latencyMs = Date.now() - startTime;
         session.status = 'error';
@@ -647,11 +682,15 @@ app.post('/chat', async (req, res) => {
         finalizeSession(session);
 
         console.error(`[Chat] Error (${latencyMs}ms): ${err.message}`);
-        res.status(500).json({
-            response: 'Sorry, I was unable to process your request. Please try again in a moment.',
-            session_id: session.id,
-            latency_ms: latencyMs
-        });
+        if (wantStream) {
+            // Headers already sent for streaming — write error complete line
+            try {
+                res.write(JSON.stringify({ type: 'complete', status: 'error', response: 'Sorry, I was unable to process your request. Please try again in a moment.', session_id: session.id, latency_ms: latencyMs }) + '\n');
+                res.end();
+            } catch (_) {}
+        } else {
+            res.status(500).json({ response: 'Sorry, I was unable to process your request. Please try again in a moment.', session_id: session.id, latency_ms: latencyMs });
+        }
     } finally {
         releaseSlot();
         // Clean up temp image files

@@ -1180,7 +1180,18 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         }
 
         try {
-            const response = await fetch(proxyUrl + '/chat', {
+            // Use per-event idle timeout instead of a fixed 130s hard limit.
+            // If the proxy is actively streaming events, the timer resets each time.
+            // Only abort if no event arrives for IDLE_TIMEOUT_MS (AI appears stuck).
+            const IDLE_TIMEOUT_MS = 60000;
+            const controller = new AbortController();
+            let eventTimer = setTimeout(() => controller.abort(new Error('Idle timeout: no event for 60s')), IDLE_TIMEOUT_MS);
+            const resetTimer = () => {
+                clearTimeout(eventTimer);
+                eventTimer = setTimeout(() => controller.abort(new Error('Idle timeout: no event for 60s')), IDLE_TIMEOUT_MS);
+            };
+
+            const response = await fetch(proxyUrl + '/chat?stream=1', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${proxyKey}` },
                 body: JSON.stringify({
@@ -1189,13 +1200,13 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                     images: images.length > 0 ? images : undefined,
                     device_context: ctx
                 }),
-                signal: AbortSignal.timeout(130000)
+                signal: controller.signal
             });
 
-            const latencyMs = Date.now() - startTime;
-
             if (response.status === 503) {
+                clearTimeout(eventTimer);
                 const body = await response.json().catch(() => ({}));
+                const latencyMs = Date.now() - startTime;
                 await chatPool.query(
                     `UPDATE ai_chat_requests SET status = 'completed', busy = true, retry_after = $2, latency_ms = $3, completed_at = NOW(), images = NULL WHERE id = $1`,
                     [id, body.retry_after || 15, latencyMs]
@@ -1203,14 +1214,53 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                 return;
             }
 
-            if (!response.ok) throw new Error(`Proxy HTTP ${response.status}`);
+            if (!response.ok) {
+                clearTimeout(eventTimer);
+                throw new Error(`Proxy HTTP ${response.status}`);
+            }
 
-            const result = await response.json();
-            let responseText = sanitizeProxyResponse(result.response);
+            // Read NDJSON stream — each line is either a status update or the final 'complete' event
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buf = '';
+            let finalEvent = null;
+
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buf += decoder.decode(value, { stream: true });
+                    const lines = buf.split('\n');
+                    buf = lines.pop(); // keep incomplete last line
+                    for (const line of lines) {
+                        if (!line.trim()) continue;
+                        let evt;
+                        try { evt = JSON.parse(line); } catch { continue; }
+                        resetTimer(); // reset idle timeout on every event
+                        if (evt.type === 'complete') {
+                            finalEvent = evt;
+                        } else if (evt.type === 'status') {
+                            // Update progress in DB (fire-and-forget)
+                            chatPool.query(
+                                `UPDATE ai_chat_requests SET progress = $2 WHERE id = $1`,
+                                [id, JSON.stringify({ ...evt, updated_at: Date.now() })]
+                            ).catch(() => {});
+                        }
+                    }
+                }
+            } finally {
+                clearTimeout(eventTimer);
+                reader.releaseLock();
+            }
+
+            if (!finalEvent) throw new Error('Stream ended without complete event');
+
+            const latencyMs = Date.now() - startTime;
+            let responseText = sanitizeProxyResponse(finalEvent.response);
 
             // Auto-execute GitHub actions (create_issue, close_issue)
             const user = { userId: row.user_id, email: ctx.email, deviceId: ctx.deviceId };
-            const actionResults = await executeGitHubActions(result.actions, user);
+            const actionResults = await executeGitHubActions(finalEvent.actions, user);
             let feedbackId = null;
             for (const ar of actionResults) {
                 responseText += ar.text;
@@ -1219,9 +1269,9 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
 
             const actionsToStore = feedbackId
                 ? JSON.stringify({ feedbackId })
-                : (result.actions ? JSON.stringify(result.actions) : null);
+                : (finalEvent.actions ? JSON.stringify(finalEvent.actions) : null);
             await chatPool.query(
-                `UPDATE ai_chat_requests SET status = 'completed', response = $2, actions = $3, latency_ms = $4, completed_at = NOW(), images = NULL WHERE id = $1`,
+                `UPDATE ai_chat_requests SET status = 'completed', response = $2, actions = $3, latency_ms = $4, completed_at = NOW(), images = NULL, progress = NULL WHERE id = $1`,
                 [id, responseText, actionsToStore, latencyMs]
             );
 
@@ -1233,7 +1283,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
             const latencyMs = Date.now() - startTime;
             console.error(`[AI Chat] processRequest error (${latencyMs}ms): ${err.message}`);
             await chatPool.query(
-                `UPDATE ai_chat_requests SET status = 'failed', error = $2, latency_ms = $3, completed_at = NOW(), images = NULL WHERE id = $1`,
+                `UPDATE ai_chat_requests SET status = 'failed', error = $2, latency_ms = $3, completed_at = NOW(), images = NULL, progress = NULL WHERE id = $1`,
                 [id, 'AI assistant temporarily unavailable. Please try again.', latencyMs]
             ).catch(() => {});
         }
@@ -1340,7 +1390,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
 
         try {
             const { rows } = await chatPool.query(
-                'SELECT status, response, actions, busy, retry_after, error, latency_ms FROM ai_chat_requests WHERE id = $1 AND user_id = $2',
+                'SELECT status, response, actions, busy, retry_after, error, latency_ms, progress FROM ai_chat_requests WHERE id = $1 AND user_id = $2',
                 [requestId, req.user.userId]
             );
 
@@ -1357,7 +1407,8 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                 busy: r.busy || false,
                 retry_after: r.retry_after,
                 error: r.error,
-                latency_ms: r.latency_ms
+                latency_ms: r.latency_ms,
+                progress: r.progress || null
             });
         } catch (err) {
             console.error('[AI Chat] Poll error:', err.message);
@@ -1442,6 +1493,9 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         `).catch(err => {
             console.error('[AI Chat] Requests table init error:', err.message);
         });
+        // Migration: add progress column for real-time status updates
+        chatPool.query(`ALTER TABLE ai_chat_requests ADD COLUMN IF NOT EXISTS progress JSONB DEFAULT NULL`)
+            .catch(err => console.error('[AI Chat] progress column migration error:', err.message));
     }
 
     return { router, initSupportTable, closeIssue };
