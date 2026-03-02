@@ -1,3 +1,10 @@
+# [1.66.0](https://github.com/HankHuang0516/realbot/compare/v1.65.4...v1.66.0) (2026-03-02)
+
+
+### Features
+
+* add local variables vault — device-only .env-like secret store ([bfebeba](https://github.com/HankHuang0516/realbot/commit/bfebeba869a958d7010361c1616a005ef6748996))
+
 ## [1.65.4](https://github.com/HankHuang0516/realbot/compare/v1.65.3...v1.65.4) (2026-03-02)
 
 
