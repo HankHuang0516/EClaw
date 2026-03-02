@@ -16,7 +16,7 @@ class TelemetryInterceptor : Interceptor {
 
     companion object {
         private val SENSITIVE_KEYS = listOf(
-            "deviceSecret", "botSecret", "password", "secret", "token", "jwt"
+            "deviceSecret", "botSecret", "password", "secret", "token", "jwt", "vars"
         )
         private const val MAX_BODY_LOG = 512 // truncate large bodies
     }

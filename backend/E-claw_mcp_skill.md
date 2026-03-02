@@ -1358,3 +1358,50 @@ Persistent key-value file storage for bots. Each entity can store up to **20 fil
 | Content type | Text only (UTF-8) |
 
 **Auth:** All endpoints require `botSecret`. Files are scoped to `(deviceId, entityId)` — each entity's files are isolated.
+
+---
+
+## 10. Local Variables (Device-Only Secret Vault)
+
+Users can store private tokens and API keys on their device (never uploaded to the cloud database).
+These are synced to a **server-side in-memory cache** when the user opens the Portal or Android app.
+They **expire after 30 minutes of inactivity**, so the user must have the app open for bots to read them.
+
+### `GET /api/device-vars` — Read local variables
+
+```
+exec: curl -s "https://eclawbot.com/api/device-vars?deviceId=DEVICE_ID&botSecret=BOT_SECRET"
+```
+
+**Response (vars available):**
+```json
+{
+  "success": true,
+  "vars": {
+    "CLAUDE_OAUTH_TOKEN": "sk-ant-oat...",
+    "MY_API_KEY": "abc123"
+  }
+}
+```
+
+**Response (user hasn't opened the app yet):**
+```json
+{
+  "success": true,
+  "vars": {},
+  "hint": "No vars synced — open the portal or app to sync local variables"
+}
+```
+
+**Auth:** `botSecret` of any entity bound to the same device.
+
+### When to use
+
+Each push notification you receive will include a hint at the bottom if vars are available:
+
+```
+[Local Variables available: CLAUDE_OAUTH_TOKEN, MY_API_KEY]
+exec: curl -s "https://eclawbot.com/api/device-vars?deviceId=...&botSecret=..."
+```
+
+When you see this, call the endpoint to retrieve the token values you need before performing the action.
