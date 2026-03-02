@@ -1,3 +1,10 @@
+## [1.67.1](https://github.com/HankHuang0516/realbot/compare/v1.67.0...v1.67.1) (2026-03-02)
+
+
+### Bug Fixes
+
+* allow key name editing in Env Variables dialog ([b21f424](https://github.com/HankHuang0516/realbot/commit/b21f42414c2d7a26f20f6fff568e77a3e045f923))
+
 # [1.67.0](https://github.com/HankHuang0516/realbot/compare/v1.66.1...v1.67.0) (2026-03-02)
 
 
