@@ -1,3 +1,10 @@
+# [1.62.0](https://github.com/HankHuang0516/realbot/compare/v1.61.3...v1.62.0) (2026-03-02)
+
+
+### Features
+
+* enable AI to close GitHub issues via action system ([#98](https://github.com/HankHuang0516/realbot/issues/98)) ([ea0131d](https://github.com/HankHuang0516/realbot/commit/ea0131d482796074b283702015ae7953317ef19e))
+
 ## [1.61.3](https://github.com/HankHuang0516/realbot/compare/v1.61.2...v1.61.3) (2026-03-02)
 
 
