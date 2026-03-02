@@ -279,6 +279,26 @@ class ChatActivity : AppCompatActivity() {
                 }
             }
         })
+
+        // Wire reaction buttons (like/dislike) on bot messages
+        chatAdapter.onReactionClick = { localId, backendId, reaction ->
+            lifecycleScope.launch {
+                try {
+                    val body = mapOf<String, Any?>(
+                        "deviceId" to deviceManager.deviceId,
+                        "deviceSecret" to deviceManager.deviceSecret,
+                        "reaction" to reaction
+                    )
+                    val resp = api.reactToMessage(backendId, body)
+                    if (resp.success) {
+                        val dao = com.hank.clawlive.data.local.database.ChatDatabase.getDao(this@ChatActivity)
+                        dao.updateReaction(localId, resp.reaction, resp.like_count, resp.dislike_count)
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to react to message")
+                }
+            }
+        }
     }
 
     private fun setupTargetChips() {

@@ -142,6 +142,25 @@ interface ChatMessageDao {
     suspend fun pruneOldMessages(keepCount: Int = 500)
 
     /**
+     * Get a single message by local ID
+     */
+    @Query("SELECT * FROM chat_messages WHERE id = :id")
+    suspend fun getById(id: Long): ChatMessage?
+
+    /**
+     * Update reaction state after API call
+     */
+    @Query("UPDATE chat_messages SET userReaction = :userReaction, likeCount = :likeCount, dislikeCount = :dislikeCount WHERE id = :id")
+    suspend fun updateReaction(id: Long, userReaction: String?, likeCount: Int, dislikeCount: Int)
+
+    /**
+     * Set backendId on an existing entity-polled message matched by content.
+     * Called during backend sync when cross-source dedup finds an existing message.
+     */
+    @Query("UPDATE chat_messages SET backendId = :backendId WHERE fromEntityId = :entityId AND text = :text AND isFromUser = 0 AND timestamp > :sinceTimestamp AND backendId IS NULL")
+    suspend fun setBackendIdByContentMatch(entityId: Int, text: String, sinceTimestamp: Long, backendId: String)
+
+    /**
      * Clear all messages
      */
     @Query("DELETE FROM chat_messages")

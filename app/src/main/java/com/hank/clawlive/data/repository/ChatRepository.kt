@@ -359,6 +359,8 @@ class ChatRepository private constructor(
             if (!msg.is_from_user && msg.entity_id != null) {
                 val sinceTimestamp = timestamp - DEDUP_WINDOW_MS
                 if (chatDao.existsByContentAndEntity(msg.entity_id, msg.text, sinceTimestamp)) {
+                    // Set backendId on existing message so reactions can work
+                    chatDao.setBackendIdByContentMatch(msg.entity_id, msg.text, sinceTimestamp, msg.id)
                     Timber.d("Skipping backend message (already stored from entity polling): Entity ${msg.entity_id}")
                     continue
                 }
@@ -391,7 +393,8 @@ class ChatRepository private constructor(
                     scheduleLabel = msg.schedule_label,
                     likeCount = msg.like_count,
                     dislikeCount = msg.dislike_count,
-                    userReaction = msg.user_reaction
+                    userReaction = msg.user_reaction,
+                    backendId = msg.id
                 )
             } else if (msg.source.startsWith("mission_notify")) {
                 // Mission Control notification - source format: "mission_notify:0,1"
@@ -431,7 +434,8 @@ class ChatRepository private constructor(
                     mediaUrl = msg.media_url,
                     likeCount = msg.like_count,
                     dislikeCount = msg.dislike_count,
-                    userReaction = msg.user_reaction
+                    userReaction = msg.user_reaction,
+                    backendId = msg.id
                 )
             } else if (entityMatch != null) {
                 val senderEntityId = entityMatch.groupValues[1].toIntOrNull()
@@ -455,7 +459,8 @@ class ChatRepository private constructor(
                     mediaUrl = msg.media_url,
                     likeCount = msg.like_count,
                     dislikeCount = msg.dislike_count,
-                    userReaction = msg.user_reaction
+                    userReaction = msg.user_reaction,
+                    backendId = msg.id
                 )
             } else if (xdeviceMatch != null) {
                 // Cross-device message: xdevice:SENDER_CODE:CHARACTER->TARGET_CODE
@@ -478,7 +483,8 @@ class ChatRepository private constructor(
                     targetPublicCode = targetCode,
                     likeCount = msg.like_count,
                     dislikeCount = msg.dislike_count,
-                    userReaction = msg.user_reaction
+                    userReaction = msg.user_reaction,
+                    backendId = msg.id
                 )
             } else {
                 ChatMessage(
@@ -494,7 +500,8 @@ class ChatRepository private constructor(
                     mediaUrl = msg.media_url,
                     likeCount = msg.like_count,
                     dislikeCount = msg.dislike_count,
-                    userReaction = msg.user_reaction
+                    userReaction = msg.user_reaction,
+                    backendId = msg.id
                 )
             }
 

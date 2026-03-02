@@ -79,6 +79,9 @@ data class ChatMessage(
     /** Current user's reaction: "like", "dislike", or null */
     val userReaction: String? = null,
 
+    /** Backend UUID — needed for API calls like reactions */
+    val backendId: String? = null,
+
     /** Cross-device: sender's public code */
     val fromPublicCode: String? = null,
 

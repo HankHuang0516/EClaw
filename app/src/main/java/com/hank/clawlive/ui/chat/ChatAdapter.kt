@@ -40,8 +40,8 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
     /** Entity name lookup map (entityId -> name), set from Activity */
     var entityNames: Map<Int, String> = emptyMap()
 
-    /** Callback for reaction button clicks: (messageId, reaction: "like"|"dislike"|null) */
-    var onReactionClick: ((Long, String?) -> Unit)? = null
+    /** Callback for reaction button clicks: (localId, backendId, reaction: "like"|"dislike"|null) */
+    var onReactionClick: ((Long, String, String?) -> Unit)? = null
 
     /** Cross-device contact label cache (publicCode -> display name), set from Activity */
     var xdeviceLabels: Map<String, String> = emptyMap()
@@ -389,7 +389,11 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
         }
 
         private fun bindReactions(message: ChatMessage, adapter: ChatAdapter) {
-            // Show reactions for all received messages
+            // Only show reactions when backendId is available (needed for API call)
+            if (message.backendId == null) {
+                layoutReactions.visibility = View.GONE
+                return
+            }
             layoutReactions.visibility = View.VISIBLE
 
             // Update like button state
@@ -419,11 +423,11 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
             // Click handlers — toggle reaction
             btnLike.setOnClickListener {
                 val newReaction = if (isLiked) null else "like"
-                adapter.onReactionClick?.invoke(message.id, newReaction)
+                adapter.onReactionClick?.invoke(message.id, message.backendId!!, newReaction)
             }
             btnDislike.setOnClickListener {
                 val newReaction = if (isDisliked) null else "dislike"
-                adapter.onReactionClick?.invoke(message.id, newReaction)
+                adapter.onReactionClick?.invoke(message.id, message.backendId!!, newReaction)
             }
         }
 
