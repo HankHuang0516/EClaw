@@ -1,3 +1,10 @@
+## [1.61.3](https://github.com/HankHuang0516/realbot/compare/v1.61.2...v1.61.3) (2026-03-02)
+
+
+### Bug Fixes
+
+* resolve 7 GitHub issues — parallel agent batch fix ([9262f6b](https://github.com/HankHuang0516/realbot/commit/9262f6b9081f3357343a618e59b48e3d21055a82)), closes [#97](https://github.com/HankHuang0516/realbot/issues/97)
+
 ## [1.61.2](https://github.com/HankHuang0516/realbot/compare/v1.61.1...v1.61.2) (2026-03-01)
 
 
