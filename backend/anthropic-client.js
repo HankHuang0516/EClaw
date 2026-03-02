@@ -1,5 +1,5 @@
 // ============================================
-// Anthropic Messages API — Direct Client
+// Anthropic Messages API — Direct Client (v2: tool_use)
 // Replaces CLAUDE_CLI_PROXY_URL when ANTHROPIC_API_KEY is set
 // Priority: ANTHROPIC_API_KEY > CLAUDE_CLI_PROXY_URL > fallback
 // ============================================
