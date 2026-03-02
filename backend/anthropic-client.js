@@ -167,6 +167,7 @@ async function callAnthropic(systemPrompt, messages, tools) {
         messages
     };
     if (tools && tools.length > 0) {
+        console.log(`[Anthropic] Sending ${tools.length} tool(s): ${tools.map(t => t.name).join(', ')}`);
         body.tools = tools;
     }
 
@@ -193,6 +194,7 @@ async function callAnthropic(systemPrompt, messages, tools) {
  * Extract text response and tool use calls from Anthropic response.
  */
 function parseResponse(result) {
+    console.log(`[Anthropic] Response stop_reason=${result.stop_reason}, content_blocks=${(result.content || []).length}, types=${(result.content || []).map(b => b.type).join(',')}`);
     let responseText = '';
     const actions = [];
 
