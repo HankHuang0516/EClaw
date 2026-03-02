@@ -1,3 +1,10 @@
+# [1.63.0](https://github.com/HankHuang0516/realbot/compare/v1.62.0...v1.63.0) (2026-03-02)
+
+
+### Features
+
+* use Anthropic tool use for GitHub actions instead of text parsing ([b567834](https://github.com/HankHuang0516/realbot/commit/b5678348b693b0cbfcaac7562ec790b6f00983c6))
+
 # [1.62.0](https://github.com/HankHuang0516/realbot/compare/v1.61.3...v1.62.0) (2026-03-02)
 
 
