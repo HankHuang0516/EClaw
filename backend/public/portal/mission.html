@@ -462,6 +462,7 @@
         <div class="sub-tabs">
             <a class="sub-tab active" href="mission.html">🎯 <span data-i18n="mc_title">Mission Control</span></a>
             <a class="sub-tab" href="schedule.html">📅 <span data-i18n="nav_schedule">Schedule</span></a>
+            <a class="sub-tab" href="env-vars.html">🔐 Env Variables</a>
         </div>
 
         <!-- Loading State -->
@@ -513,20 +514,6 @@
                     <button class="btn btn-outline btn-sm" onclick="showAddSkill()">+ Add</button>
                 </div>
                 <div id="skillsList"></div>
-            </div>
-
-            <!-- Variables (local-only .env vault) -->
-            <div class="card">
-                <div class="card-header">
-                    <h2>🔐 Variables</h2>
-                    <button class="btn btn-outline btn-sm" onclick="showAddVar()">+ Add</button>
-                </div>
-                <div class="vars-notice">⚠️ 僅儲存於此裝置，不同步至雲端</div>
-                <div id="varsList"></div>
-                <div class="vars-sync-row">
-                    <button class="btn btn-outline btn-sm" onclick="syncVarsToServer()" id="varsSyncBtn">同步至 Bot Session</button>
-                    <span class="vars-sync-status" id="varsSyncStatus"></span>
-                </div>
             </div>
 
             <!-- Souls -->
@@ -652,7 +639,6 @@
 
             await loadBoundEntities();
             await downloadDashboard();
-            renderVars();
             syncVarsToServer(); // auto-sync local vars to server in-memory on load
 
             document.getElementById('loadingState').style.display = 'none';
@@ -1594,106 +1580,18 @@ Optional: Enable auto-start via systemd
             catch { return {}; }
         }
 
-        function saveLocalVars(vars) {
-            localStorage.setItem(VARS_STORAGE_KEY(), JSON.stringify(vars));
-            renderVars();
-            syncVarsToServer();
-        }
-
-        function renderVars() {
-            const el = document.getElementById('varsList');
-            if (!el) return;
-            const vars = loadLocalVars();
-            const keys = Object.keys(vars);
-            if (!keys.length) {
-                el.innerHTML = `<div class="mc-empty">No variables</div>`;
-                return;
-            }
-            el.innerHTML = keys.map(k => `
-                <div class="var-item" onclick="showEditVar('${esc(k)}')">
-                    <span class="var-key">${esc(k)}</span>
-                    <span class="var-sep">=</span>
-                    <span class="var-val" id="varVal_${esc(k)}">••••••••</span>
-                    <button class="var-show-btn" onclick="event.stopPropagation();toggleVarVisibility('${esc(k)}')" title="Show/Hide">👁</button>
-                    <button class="item-delete" onclick="event.stopPropagation();deleteVar('${esc(k)}')" title="刪除">&times;</button>
-                </div>`).join('');
-        }
-
-        function toggleVarVisibility(key) {
-            const vars = loadLocalVars();
-            const el = document.getElementById(`varVal_${key}`);
-            if (!el) return;
-            el.textContent = el.textContent === '••••••••' ? (vars[key] || '') : '••••••••';
-        }
-
-        function showAddVar() { showVarDialog(null); }
-        function showEditVar(key) { showVarDialog(key); }
-
-        function showVarDialog(editKey) {
-            const vars = loadLocalVars();
-            const isEdit = editKey !== null;
-            const c = document.getElementById('dialogContainer');
-            c.innerHTML = `<div class="dialog-overlay" onclick="if(event.target===this)closeDialog()">
-                <div class="dialog">
-                    <div class="dialog-title">${isEdit ? '編輯變數' : '新增變數'}</div>
-                    <div class="dialog-field-label">Key (名稱)</div>
-                    <input id="dlg_var_key" placeholder="例：CLAUDE_OAUTH_TOKEN" value="${esc(editKey || '')}"
-                        oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9_]/g,'')" style="font-family:monospace" ${isEdit ? 'readonly' : ''} />
-                    <div class="dialog-field-label">Value (值)</div>
-                    <div style="position:relative">
-                        <input id="dlg_var_value" type="password" placeholder="sk-ant-oat..." value="${esc(isEdit ? (vars[editKey] || '') : '')}" style="font-family:monospace;padding-right:60px" />
-                        <button onclick="const i=document.getElementById('dlg_var_value');i.type=i.type==='password'?'text':'password'"
-                            style="position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;font-size:14px;color:var(--text-muted)">👁</button>
-                    </div>
-                    <div class="dialog-actions">
-                        <button class="btn btn-outline" onclick="closeDialog()">取消</button>
-                        <button class="btn btn-primary" id="dlgVarSaveBtn">儲存</button>
-                    </div>
-                </div>
-            </div>`;
-            document.getElementById('dlgVarSaveBtn').onclick = () => {
-                const key = document.getElementById('dlg_var_key').value.trim();
-                const val = document.getElementById('dlg_var_value').value;
-                if (!key) return;
-                const updated = loadLocalVars();
-                updated[key] = val;
-                saveLocalVars(updated);
-                closeDialog();
-            };
-            setTimeout(() => {
-                const f = isEdit ? document.getElementById('dlg_var_value') : document.getElementById('dlg_var_key');
-                f && f.focus();
-            }, 50);
-        }
-
-        function deleteVar(key) {
-            if (!confirm(`刪除變數 "${key}"？`)) return;
-            const vars = loadLocalVars();
-            delete vars[key];
-            saveLocalVars(vars);
-        }
-
+        // Background sync only — UI lives in env-vars.html
         async function syncVarsToServer() {
             if (!currentUser) return;
-            const vars = loadLocalVars();
-            const statusEl = document.getElementById('varsSyncStatus');
+            const locked = localStorage.getItem(`eclawVarsLocked_${currentUser.deviceId}`) === 'true';
+            const vars = locked ? {} : loadLocalVars();
             try {
                 await apiCall('POST', '/api/device-vars', {
                     deviceId: currentUser.deviceId,
                     deviceSecret: currentUser.deviceSecret,
                     vars
                 });
-                if (statusEl) {
-                    statusEl.textContent = '✓ 已同步';
-                    statusEl.className = 'vars-sync-status ok';
-                    setTimeout(() => { statusEl.textContent = ''; statusEl.className = 'vars-sync-status'; }, 3000);
-                }
-            } catch (e) {
-                if (statusEl) {
-                    statusEl.textContent = '⚠ 同步失敗';
-                    statusEl.className = 'vars-sync-status err';
-                }
-            }
+            } catch (e) { /* silent */ }
         }
 
         // ========== Souls ==========

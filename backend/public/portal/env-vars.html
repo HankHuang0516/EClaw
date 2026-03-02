@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Claw - Env Variables</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦞</text></svg>">
+    <link rel="stylesheet" href="shared/style.css">
+    <style>
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* Sub-tab navigation */
+        .sub-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .sub-tab {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: color 0.15s, border-color 0.15s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sub-tab:hover { color: var(--text); }
+
+        .sub-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Lock toggle button */
+        .lock-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: transparent;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .lock-btn.locked {
+            border-color: var(--danger, #f44336);
+            color: var(--danger, #f44336);
+        }
+
+        .lock-btn.unlocked {
+            border-color: var(--success, #4caf50);
+            color: var(--success, #4caf50);
+        }
+
+        /* Vars list */
+        .vars-card {
+            transition: opacity 0.2s;
+        }
+
+        .vars-card.locked-state {
+            opacity: 0.45;
+            pointer-events: none;
+        }
+
+        .vars-locked-banner {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            border-radius: var(--radius-sm);
+            color: var(--danger, #f44336);
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .vars-locked-banner.visible { display: flex; }
+
+        .var-row {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            background: var(--input-bg);
+            border-radius: var(--radius-sm);
+            margin-bottom: 6px;
+            overflow: hidden;
+            transition: background 0.15s;
+        }
+
+        .var-row:hover { background: var(--hover-bg, rgba(255,255,255,0.06)); }
+
+        .var-row-key {
+            padding: 10px 14px;
+            font-family: monospace;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            flex: 0 0 auto;
+            min-width: 140px;
+            border-right: 1px solid var(--border);
+        }
+
+        .var-row-val {
+            padding: 10px 14px;
+            font-family: monospace;
+            font-size: 12px;
+            color: var(--text-secondary);
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            letter-spacing: 0.08em;
+        }
+
+        .var-row-actions {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            padding: 0 8px;
+            flex-shrink: 0;
+        }
+
+        .var-action-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            opacity: 0.5;
+        }
+
+        .var-row:hover .var-action-btn { opacity: 1; }
+
+        .var-action-btn:hover {
+            background: var(--input-bg);
+            color: var(--text);
+        }
+
+        .var-action-btn.delete:hover {
+            background: var(--danger, #f44336);
+            color: #fff;
+        }
+
+        .vars-add-row {
+            margin-top: 8px;
+        }
+
+        .vars-notice {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .mc-empty {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+            padding: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">🔐 Env Variables</h1>
+            <div class="header-actions">
+                <button class="lock-btn unlocked" id="lockBtn" onclick="toggleLock()">
+                    <span id="lockIcon">🔓</span>
+                    <span id="lockLabel">Bot 可讀取</span>
+                </button>
+                <button class="btn btn-outline btn-sm" id="addVarBtn" onclick="showVarDialog(null)">+ Add</button>
+            </div>
+        </div>
+
+        <!-- Sub-tab Navigation -->
+        <div class="sub-tabs">
+            <a class="sub-tab" href="mission.html">🎯 <span data-i18n="mc_title">Mission Control</span></a>
+            <a class="sub-tab" href="schedule.html">📅 <span data-i18n="nav_schedule">Schedule</span></a>
+            <a class="sub-tab active" href="env-vars.html">🔐 Env Variables</a>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-center" id="loadingState" style="text-align:center;padding:40px 0;">
+            <div class="spinner" style="margin:0 auto 12px;"></div>
+            <div style="color:var(--text-secondary);">Loading...</div>
+        </div>
+
+        <!-- Content -->
+        <div id="varsContent" style="display:none;">
+
+            <!-- Locked banner -->
+            <div class="vars-locked-banner" id="lockedBanner">
+                🔒 已鎖定 — Bot 無法讀取任何變數
+            </div>
+
+            <!-- Vars card -->
+            <div class="card vars-card" id="varsCard">
+                <div class="vars-notice">⚠️ 值僅儲存於此裝置，不寫入雲端資料庫。開啟此頁或 App 時自動同步至 Bot Session。</div>
+                <div id="varsList"></div>
+                <div class="vars-add-row">
+                    <button class="btn btn-outline btn-sm" style="width:100%" onclick="showVarDialog(null)">+ 新增變數</button>
+                </div>
+            </div>
+
+            <!-- How bots read -->
+            <div class="card" style="margin-top:12px;">
+                <div style="font-size:13px;font-weight:600;margin-bottom:8px;">🤖 Bot 讀取方式</div>
+                <div style="font-size:12px;color:var(--text-secondary);line-height:1.8;">
+                    Bot 收到訊息時，push 通知底部會列出可用的 key 名稱（值不會出現）。<br>
+                    Bot 主動呼叫以下指令取得實際值：
+                </div>
+                <div id="botCurlHint" style="margin-top:8px;padding:10px 12px;background:var(--input-bg);border-radius:var(--radius-sm);font-family:monospace;font-size:11px;color:var(--text-secondary);word-break:break-all;">
+                    載入中...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dialog container -->
+    <div id="dialogContainer"></div>
+
+    <script src="shared/api.js"></script>
+    <script src="shared/nav.js"></script>
+    <script src="shared/auth.js"></script>
+    <script src="../shared/telemetry.js"></script>
+    <script src="../shared/i18n.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="shared/socket.js"></script>
+    <script src="shared/footer.js"></script>
+    <script src="shared/ai-chat.js"></script>
+    <script>
+        let currentUser = null;
+
+        function esc(s) {
+            const d = document.createElement('div');
+            d.textContent = s || '';
+            return d.innerHTML;
+        }
+
+        // ── Storage keys ──
+        const varsKey = () => `eclawLocalVars_${currentUser?.deviceId || 'default'}`;
+        const lockKey = () => `eclawVarsLocked_${currentUser?.deviceId || 'default'}`;
+
+        function loadLocalVars() {
+            try { return JSON.parse(localStorage.getItem(varsKey()) || '{}'); }
+            catch { return {}; }
+        }
+
+        function isLocked() {
+            return localStorage.getItem(lockKey()) === 'true';
+        }
+
+        // ── Render ──
+        function renderAll() {
+            renderLockState();
+            renderVars();
+        }
+
+        function renderLockState() {
+            const locked = isLocked();
+            const btn = document.getElementById('lockBtn');
+            const icon = document.getElementById('lockIcon');
+            const label = document.getElementById('lockLabel');
+            const banner = document.getElementById('lockedBanner');
+            const card = document.getElementById('varsCard');
+            const addBtn = document.getElementById('addVarBtn');
+
+            if (locked) {
+                btn.className = 'lock-btn locked';
+                icon.textContent = '🔒';
+                label.textContent = 'Bot 無法讀取';
+                banner.classList.add('visible');
+                card.classList.add('locked-state');
+                addBtn.disabled = true;
+            } else {
+                btn.className = 'lock-btn unlocked';
+                icon.textContent = '🔓';
+                label.textContent = 'Bot 可讀取';
+                banner.classList.remove('visible');
+                card.classList.remove('locked-state');
+                addBtn.disabled = false;
+            }
+        }
+
+        function renderVars() {
+            const el = document.getElementById('varsList');
+            const vars = loadLocalVars();
+            const keys = Object.keys(vars).sort();
+            if (!keys.length) {
+                el.innerHTML = '<div class="mc-empty">尚無變數</div>';
+                return;
+            }
+            el.innerHTML = keys.map(k => `
+                <div class="var-row">
+                    <div class="var-row-key">${esc(k)}</div>
+                    <div class="var-row-val" id="varVal_${esc(k)}">••••••••</div>
+                    <div class="var-row-actions">
+                        <button class="var-action-btn" onclick="toggleVarVal('${esc(k)}')" title="顯示/隱藏">👁</button>
+                        <button class="var-action-btn" onclick="showVarDialog('${esc(k)}')" title="編輯">✏️</button>
+                        <button class="var-action-btn delete" onclick="deleteVar('${esc(k)}')" title="刪除">×</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        function toggleVarVal(key) {
+            const vars = loadLocalVars();
+            const el = document.getElementById(`varVal_${key}`);
+            if (!el) return;
+            el.textContent = el.textContent === '••••••••' ? (vars[key] || '') : '••••••••';
+        }
+
+        // ── CRUD ──
+        function saveLocalVars(vars) {
+            localStorage.setItem(varsKey(), JSON.stringify(vars));
+            renderVars();
+            syncVarsToServer();
+        }
+
+        function deleteVar(key) {
+            if (!confirm(`刪除變數「${key}」？`)) return;
+            const vars = loadLocalVars();
+            delete vars[key];
+            saveLocalVars(vars);
+        }
+
+        function showVarDialog(editKey) {
+            if (isLocked()) return;
+            const vars = loadLocalVars();
+            const isEdit = editKey !== null;
+            const c = document.getElementById('dialogContainer');
+            c.innerHTML = `<div class="dialog-overlay" onclick="if(event.target===this)closeDialog()">
+                <div class="dialog">
+                    <div class="dialog-title">${isEdit ? '編輯變數' : '新增變數'}</div>
+                    <div class="dialog-field-label">Key</div>
+                    <input id="dlg_var_key" placeholder="例：CLAUDE_OAUTH_TOKEN"
+                        value="${esc(editKey || '')}"
+                        ${isEdit ? 'readonly style="opacity:0.6;font-family:monospace"' : 'style="font-family:monospace"'}
+                        oninput="if(!this.readOnly)this.value=this.value.toUpperCase().replace(/[^A-Z0-9_]/g,'')" />
+                    <div class="dialog-field-label" style="margin-top:10px;">Value</div>
+                    <div style="position:relative">
+                        <input id="dlg_var_value" type="password"
+                            placeholder="sk-ant-oat..."
+                            value="${esc(isEdit ? (vars[editKey] || '') : '')}"
+                            style="font-family:monospace;padding-right:44px" />
+                        <button onclick="const i=document.getElementById('dlg_var_value');i.type=i.type==='password'?'text':'password'"
+                            style="position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;font-size:14px;color:var(--text-muted)">👁</button>
+                    </div>
+                    <div class="dialog-actions">
+                        <button class="btn btn-outline" onclick="closeDialog()">取消</button>
+                        <button class="btn btn-primary" id="dlgVarSaveBtn">儲存</button>
+                    </div>
+                </div>
+            </div>`;
+            document.getElementById('dlgVarSaveBtn').onclick = () => {
+                const key = document.getElementById('dlg_var_key').value.trim();
+                const val = document.getElementById('dlg_var_value').value;
+                if (!key) return;
+                const updated = loadLocalVars();
+                updated[key] = val;
+                saveLocalVars(updated);
+                closeDialog();
+            };
+            setTimeout(() => {
+                const f = isEdit
+                    ? document.getElementById('dlg_var_value')
+                    : document.getElementById('dlg_var_key');
+                f && f.focus();
+            }, 50);
+        }
+
+        function closeDialog() {
+            document.getElementById('dialogContainer').innerHTML = '';
+        }
+
+        // ── Lock toggle ──
+        function toggleLock() {
+            const nowLocked = !isLocked();
+            localStorage.setItem(lockKey(), String(nowLocked));
+            renderLockState();
+            syncVarsToServer(); // locked → sends {}, unlocked → sends real vars
+        }
+
+        // ── Server sync ──
+        async function syncVarsToServer() {
+            if (!currentUser) return;
+            const locked = isLocked();
+            const vars = locked ? {} : loadLocalVars(); // locked = send empty
+            try {
+                await apiCall('POST', '/api/device-vars', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    vars
+                });
+            } catch (e) {
+                // silent — non-critical background sync
+            }
+        }
+
+        // ── Bot curl hint ──
+        function renderBotHint() {
+            const el = document.getElementById('botCurlHint');
+            if (!el || !currentUser) return;
+            el.textContent = `exec: curl -s "https://eclawbot.com/api/device-vars?deviceId=${currentUser.deviceId}&botSecret=BOT_SECRET"`;
+        }
+
+        // ── Init ──
+        window.addEventListener('DOMContentLoaded', async () => {
+            renderNav('mission');
+            if (typeof renderFooter === 'function') renderFooter();
+            currentUser = await checkAuth();
+            if (!currentUser) return;
+
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('varsContent').style.display = '';
+
+            renderAll();
+            renderBotHint();
+            syncVarsToServer(); // sync on page load
+        });
+    </script>
+</body>
+
+</html>
