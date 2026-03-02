@@ -763,6 +763,14 @@
         .ai-msg.bot .msg-steps li {
             background: var(--bg);
         }
+        .ai-msg a {
+            color: #64B5F6;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .ai-msg a:hover {
+            color: #90CAF9;
+        }
 
         .ai-chat-input {
             display: flex;
@@ -903,6 +911,14 @@
             return div.innerHTML;
         }
 
+        function renderSafeMarkdown(text) {
+            if (!text) return '';
+            let h = escapeHtml(text);
+            h = h.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+            h = h.replace(/\n/g, '<br>');
+            return h;
+        }
+
         function formatDate(ts) {
             if (!ts) return '-';
             const d = new Date(typeof ts === 'number' ? ts : ts);
@@ -969,6 +985,16 @@
                 html += renderBotActivityChart(botsData.bots);
                 html += '</div>';
             }
+
+            // === App Update Push ===
+            html += '<div class="section-card">';
+            html += '<div class="section-title">' + i18n.t('admin_sec_app_update', 'App Update Notification') + '</div>';
+            html += '<p style="color:var(--text-secondary);font-size:13px;margin:0 0 12px 0;">' + i18n.t('admin_update_desc', 'Push an update notification to all devices with FCM tokens.') + '</p>';
+            html += '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">';
+            html += '<span style="font-size:13px;">' + i18n.t('admin_current_version', 'Current version') + ': <strong>v' + escapeHtml(s.currentAppVersion || 'unknown') + '</strong></span>';
+            html += '<button class="add-bot-btn" onclick="showPushUpdateDialog()">' + i18n.t('admin_btn_push_update', 'Push Update Notification') + '</button>';
+            html += '</div>';
+            html += '</div>';
 
             // === Official Bots ===
             html += '<div class="section-card">';
@@ -1273,6 +1299,69 @@
             }
         }
 
+        function showPushUpdateDialog() {
+            const overlay = document.createElement('div');
+            overlay.className = 'create-bot-overlay';
+            overlay.innerHTML =
+                '<div class="create-bot-dialog">' +
+                '<h3>' + i18n.t('admin_sec_app_update', 'App Update Notification') + '</h3>' +
+                '<div class="form-group">' +
+                '<label>' + i18n.t('admin_update_version', 'Target Version') + '</label>' +
+                '<input type="text" id="updateVersion" value="' + escapeHtml(statsData?.currentAppVersion || '') + '" placeholder="e.g. 1.0.33">' +
+                '</div>' +
+                '<div class="form-group">' +
+                '<label>' + i18n.t('admin_update_notes', 'Release Notes (optional)') + '</label>' +
+                '<input type="text" id="updateNotes" placeholder="Bug fixes and improvements">' +
+                '</div>' +
+                '<div class="form-group">' +
+                '<label><input type="checkbox" id="updateForce"> ' + i18n.t('admin_update_force', 'Force Update (non-dismissable dialog)') + '</label>' +
+                '</div>' +
+                '<div id="pushUpdateResult"></div>' +
+                '<div class="dialog-actions">' +
+                '<button class="btn-cancel" onclick="this.closest(\'.create-bot-overlay\').remove()">' + i18n.t('admin_btn_cancel', 'Cancel') + '</button>' +
+                '<button class="btn-create" id="btnPushUpdate" onclick="pushUpdateNotification()">' + i18n.t('admin_btn_send_push', 'Send Push') + '</button>' +
+                '</div>' +
+                '</div>';
+            document.body.appendChild(overlay);
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.remove();
+            });
+        }
+
+        async function pushUpdateNotification() {
+            const version = document.getElementById('updateVersion').value.trim();
+            const releaseNotes = document.getElementById('updateNotes').value.trim();
+            const forceUpdate = document.getElementById('updateForce').checked;
+            const resultDiv = document.getElementById('pushUpdateResult');
+            const btn = document.getElementById('btnPushUpdate');
+
+            if (!version) {
+                resultDiv.innerHTML = '<p style="color:var(--danger);font-size:13px;">' + i18n.t('admin_update_version_required', 'Version is required') + '</p>';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = i18n.t('admin_update_sending', 'Sending...');
+            resultDiv.innerHTML = '';
+
+            try {
+                const result = await apiCall('POST', '/api/admin/push-update', {
+                    version, releaseNotes: releaseNotes || undefined, forceUpdate
+                });
+                resultDiv.innerHTML =
+                    '<div style="margin-top:12px;">' +
+                    '<p style="margin:0;color:var(--success);font-weight:600;">' + i18n.t('admin_update_sent', 'Push sent!') + '</p>' +
+                    '<p style="margin:4px 0 0;font-size:12px;color:var(--text-secondary);">Success: ' + result.sent + ' / Failed: ' + result.failed + ' / Total: ' + result.total + '</p>' +
+                    (result.staleTokensCleaned > 0 ? '<p style="margin:2px 0 0;font-size:11px;color:var(--text-secondary);">Stale tokens cleaned: ' + result.staleTokensCleaned + '</p>' : '') +
+                    '</div>';
+                btn.textContent = i18n.t('admin_btn_send_push', 'Send Push');
+            } catch (e) {
+                resultDiv.innerHTML = '<p style="color:var(--danger);font-size:13px;">' + escapeHtml(e.message) + '</p>';
+                btn.disabled = false;
+                btn.textContent = i18n.t('admin_btn_send_push', 'Send Push');
+            }
+        }
+
         function showCreateBotDialog() {
             const overlay = document.createElement('div');
             overlay.className = 'create-bot-overlay';
@@ -1369,6 +1458,12 @@
         }
 
         // ── AI Support Chat ──────────────────────
+        document.getElementById('aiChatMessages').addEventListener('click', function(e) {
+            if (e.target.tagName === 'A') {
+                e.stopPropagation();
+            }
+        });
+
         function toggleAIChat() {
             document.getElementById('aiChatPanel').classList.toggle('open');
             if (document.getElementById('aiChatPanel').classList.contains('open')) {
@@ -1398,12 +1493,12 @@
             try {
                 const result = await apiCall('POST', '/api/ai-support/admin-chat', { message: msg });
 
-                let html = '<strong>' + escapeHtml(result.diagnosis || 'No diagnosis') + '</strong>';
+                let html = '<strong>' + renderSafeMarkdown(result.diagnosis || 'No diagnosis') + '</strong>';
 
                 if (result.suggested_steps && result.suggested_steps.length > 0) {
                     html += '<ul class="msg-steps">';
                     result.suggested_steps.forEach(s => {
-                        html += '<li>' + escapeHtml(s) + '</li>';
+                        html += '<li>' + renderSafeMarkdown(s) + '</li>';
                     });
                     html += '</ul>';
                 }

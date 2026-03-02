@@ -18,6 +18,7 @@ import java.util.TimeZone
 class ScheduleAdapter(
     private val showActions: Boolean = true,
     private val onDelete: ((ScheduleItem) -> Unit)? = null,
+    private val onEdit: ((ScheduleItem) -> Unit)? = null,
     private val onItemClick: ((ScheduleItem) -> Unit)? = null,
     var entityNames: Map<Int, String> = emptyMap()
 ) : ListAdapter<ScheduleItem, ScheduleAdapter.ViewHolder>(DIFF) {
@@ -39,6 +40,7 @@ class ScheduleAdapter(
         val tvMessage: TextView = view.findViewById(R.id.tvMessage)
         val tvDetail: TextView = view.findViewById(R.id.tvDetail)
         val tvResult: TextView = view.findViewById(R.id.tvResult)
+        val btnEdit: ImageButton = view.findViewById(R.id.btnEdit)
         val btnDelete: ImageButton = view.findViewById(R.id.btnDelete)
     }
 
@@ -120,6 +122,14 @@ class ScheduleAdapter(
             )
         } else {
             holder.tvResult.visibility = View.GONE
+        }
+
+        // Edit button
+        if (showActions && onEdit != null) {
+            holder.btnEdit.visibility = View.VISIBLE
+            holder.btnEdit.setOnClickListener { onEdit.invoke(item) }
+        } else {
+            holder.btnEdit.visibility = View.GONE
         }
 
         // Delete button

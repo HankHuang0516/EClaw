@@ -104,6 +104,8 @@
     <string name="contact_cannot_add_self">ไม่สามารถเพิ่มเอนทิตีของตัวเอง</string>
     <string name="contact_limit_reached">ถึงขีดจำกัดผู้ติดต่อแล้ว (สูงสุด 20)</string>
     <string name="contact_offline">ผู้ติดต่อออฟไลน์</string>
+    <string name="contact_lookup_error">ข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่</string>
+    <string name="contact_send_error">ส่งไม่สำเร็จ กรุณาลองใหม่</string>
     <string name="to_contact_cross_device">ถึง: %s (ข้ามอุปกรณ์)</string>
     <string name="remove">ลบ</string>
 
@@ -418,10 +420,24 @@
     <string name="schedule_created">สร้างเมื่อ</string>
     <string name="schedule_executed">ดำเนินการเมื่อ</string>
     <string name="schedule_push_ok">ส่งถึงบอทแล้ว</string>
+    <string name="schedule_edit">แก้ไขกำหนดการ</string>
+    <string name="schedule_updated">อัปเดตกำหนดการแล้ว!</string>
     <string name="nav_home">หน้าหลัก</string>
     <string name="nav_mission">ภารกิจ</string>
     <string name="nav_chat">แชท</string>
     <string name="nav_files">ไฟล์</string>
     <string name="nav_settings">ตั้งค่า</string>
     <string name="nav_wallpaper">วอลเปเปอร์</string>
+
+    <!-- AI Chat Error -->
+    <string name="ai_chat_timeout">การตอบกลับหมดเวลา กำลังลองใหม่…</string>
+    <string name="ai_chat_no_internet">ไม่มีการเชื่อมต่ออินเทอร์เน็ต กรุณาตรวจสอบเครือข่าย</string>
+    <string name="ai_chat_connection_error">ข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่</string>
+    <string name="ai_chat_network_error">ข้อผิดพลาดเครือข่าย กรุณาลองใหม่</string>
+
+    <!-- App Update -->
+    <string name="update_title">มีอัปเดตใหม่</string>
+    <string name="update_message">เวอร์ชันใหม่ (v%s) พร้อมใช้งานแล้ว อัปเดตเพื่อประสบการณ์ที่ดีที่สุด!</string>
+    <string name="update_now">อัปเดตเลย</string>
+    <string name="update_later">ภายหลัง</string>
 </resources>

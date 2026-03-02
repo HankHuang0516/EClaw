@@ -6419,6 +6419,22 @@ app.use('/api/ai-support/chat', express.json({ limit: '10mb' }));
 app.use('/api/ai-support', aiSupportModule.router);
 aiSupportModule.initSupportTable();
 
+// Close GitHub issue (device-authenticated)
+app.patch('/api/github/issues/:number', async (req, res) => {
+    const { deviceId, deviceSecret } = req.body;
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+    const issueNumber = parseInt(req.params.number);
+    if (isNaN(issueNumber)) {
+        return res.status(400).json({ success: false, error: 'Invalid issue number' });
+    }
+    const comment = req.body.comment || null;
+    const result = await aiSupportModule.closeIssue(issueNumber, comment);
+    res.json(result);
+});
+
 // ============================================
 // NOTIFICATION SYSTEM - Central dispatcher
 // ============================================
