@@ -1,3 +1,10 @@
+## [1.65.3](https://github.com/HankHuang0516/realbot/compare/v1.65.2...v1.65.3) (2026-03-02)
+
+
+### Bug Fixes
+
+* resolve 4 GitHub issues in parallel — [#100](https://github.com/HankHuang0516/realbot/issues/100), [#111](https://github.com/HankHuang0516/realbot/issues/111), [#112](https://github.com/HankHuang0516/realbot/issues/112), [#113](https://github.com/HankHuang0516/realbot/issues/113) ([09f3a6c](https://github.com/HankHuang0516/realbot/commit/09f3a6c2259d2a616e13aa9909560b75b4fbcdc5))
+
 ## [1.65.2](https://github.com/HankHuang0516/realbot/compare/v1.65.1...v1.65.2) (2026-03-02)
 
 
