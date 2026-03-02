@@ -1,3 +1,10 @@
+## [1.68.1](https://github.com/HankHuang0516/realbot/compare/v1.68.0...v1.68.1) (2026-03-02)
+
+
+### Bug Fixes
+
+* add dialog input CSS to env-vars.html for consistent styling ([b1e40c3](https://github.com/HankHuang0516/realbot/commit/b1e40c381de7b10e422ab47511a20c04dd13674f))
+
 # [1.68.0](https://github.com/HankHuang0516/realbot/compare/v1.67.2...v1.68.0) (2026-03-02)
 
 
