@@ -956,17 +956,22 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
             });
         }
 
-        // Build message with pre-executed action context
-        let messageForAI = message.trim();
-        let preExecSuffix = '';
+        // Short-circuit: if close was pre-executed, return result directly (skip AI call)
         if (preExecutedCloseResult) {
             if (preExecutedCloseResult.success) {
-                preExecSuffix = `\n\n[SYSTEM: GitHub issue #${preExecutedCloseResult.number} was automatically closed successfully. URL: ${preExecutedCloseResult.url}]`;
+                return res.json({
+                    success: true,
+                    response: `✅ GitHub issue [#${preExecutedCloseResult.number}](${preExecutedCloseResult.url}) has been closed.`
+                });
             } else {
-                preExecSuffix = `\n\n[SYSTEM: Attempted to close GitHub issue #${preExecutedCloseResult.number} but failed: ${preExecutedCloseResult.error}]`;
+                return res.json({
+                    success: true,
+                    response: `❌ Failed to close GitHub issue #${preExecutedCloseResult.number}: ${preExecutedCloseResult.error}`
+                });
             }
-            messageForAI = message.trim() + preExecSuffix;
         }
+
+        const messageForAI = message.trim();
 
         // Priority: Anthropic direct API > CLI proxy > fallback
         const anthropic = getAnthropicClient();
@@ -998,15 +1003,6 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                 for (const ar of actionResults) {
                     responseText += ar.text;
                     if (ar.feedbackId) feedbackId = ar.feedbackId;
-                }
-
-                // Append pre-executed close result to response if AI didn't mention it
-                if (preExecutedCloseResult) {
-                    if (preExecutedCloseResult.success) {
-                        responseText += `\n\n---\n✅ GitHub issue [#${preExecutedCloseResult.number}](${preExecutedCloseResult.url}) closed`;
-                    } else {
-                        responseText += `\n\n---\n❌ Failed to close issue #${preExecutedCloseResult.number}: ${preExecutedCloseResult.error}`;
-                    }
                 }
 
                 return res.json({
