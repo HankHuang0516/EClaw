@@ -1,3 +1,10 @@
+# [1.67.0](https://github.com/HankHuang0516/realbot/compare/v1.66.1...v1.67.0) (2026-03-02)
+
+
+### Features
+
+* move Env Variables to dedicated tab (env-vars.html) ([0c909f8](https://github.com/HankHuang0516/realbot/commit/0c909f8499e90cd684c67f3e78d69a5acd46daa6))
+
 ## [1.66.1](https://github.com/HankHuang0516/realbot/compare/v1.66.0...v1.66.1) (2026-03-02)
 
 
