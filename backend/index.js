@@ -1378,7 +1378,7 @@ app.get('/', (req, res) => {
 
 // Health check endpoint for Railway
 app.get('/api/health', (req, res) => {
-    res.status(200).json({ status: 'ok', timestamp: Date.now(), build: 'v5.5-20260228' });
+    res.status(200).json({ status: 'ok', timestamp: Date.now(), build: 'v5.6-20260302', uptime: process.uptime() });
 });
 
 
