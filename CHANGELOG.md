@@ -1,3 +1,10 @@
+## [1.66.1](https://github.com/HankHuang0516/realbot/compare/v1.66.0...v1.66.1) (2026-03-02)
+
+
+### Bug Fixes
+
+* short-circuit AI call when close_issue is pre-executed ([4245826](https://github.com/HankHuang0516/realbot/commit/424582643c240b4d015d976a9fb059fe77b1ab74))
+
 # [1.66.0](https://github.com/HankHuang0516/realbot/compare/v1.65.4...v1.66.0) (2026-03-02)
 
 
