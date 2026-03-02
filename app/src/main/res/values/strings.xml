@@ -110,6 +110,8 @@
     <string name="ai_chat_no_internet">No internet connection. Please check your network.</string>
     <string name="ai_chat_connection_error">Connection error. Please try again.</string>
     <string name="ai_chat_network_error">Network error. Please try again.</string>
+    <string name="ai_chat_device_not_registered">Device not registered. Please restart the app.</string>
+    <string name="ai_chat_image_too_large">Images are too large. Please try with fewer or smaller images, or describe your issue in text.</string>
     <string name="ai_chat_view_feedback">View Feedback History →</string>
 
     <!-- Chat -->

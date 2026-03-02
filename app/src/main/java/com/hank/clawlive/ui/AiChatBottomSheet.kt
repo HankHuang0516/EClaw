@@ -414,7 +414,10 @@ class AiChatBottomSheet : BottomSheetDialogFragment() {
         } catch (_: Exception) { JSONObject() }
 
         return when (e.code()) {
-            401 -> "Device not registered. Please restart the app."
+            401 -> json.optString("message", "").ifEmpty {
+                getString(R.string.ai_chat_device_not_registered)
+            }
+            413 -> getString(R.string.ai_chat_image_too_large)
             429 -> {
                 val retryMs = json.optLong("retry_after_ms", 0)
                 if (retryMs > 0) "Message limit reached. Try again in ${retryMs / 1000}s."

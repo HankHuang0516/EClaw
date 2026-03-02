@@ -91,6 +91,7 @@ app.use((req, res, next) => {
 
 const cookieParser = require('cookie-parser');
 app.use(cors({ origin: true, credentials: true }));
+app.use('/api/ai-support/chat', express.json({ limit: '10mb' }));
 app.use(express.json());
 app.use(cookieParser());
 app.use('/mission', express.static(path.join(__dirname, 'public')));
@@ -1420,6 +1421,13 @@ app.get('/api/version', (req, res) => {
 
 const linkPreviewCache = new Map();
 const LINK_PREVIEW_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+// Local vars cache — in-memory only, never written to DB
+const deviceVarsCache = new Map(); // deviceId → { vars: {KEY:VALUE}, syncedAt: ms }
+setInterval(() => {
+    const cut = Date.now() - 30 * 60 * 1000;
+    for (const [id, e] of deviceVarsCache) if (e.syncedAt < cut) deviceVarsCache.delete(id);
+}, 5 * 60 * 1000);
 
 /* global AbortController, TextDecoder */
 app.get('/api/link-preview', async (req, res) => {
@@ -5690,6 +5698,14 @@ async function pushToBot(entity, deviceId, eventType, payload) {
         console.log(`[Push] Including pending rename notification: "${oldName}" -> "${newName}"`);
     }
 
+    // Append local vars hint if any are cached (keys only — fetch values via API)
+    const cachedVars = deviceVarsCache.get(deviceId);
+    if (cachedVars && Object.keys(cachedVars.vars).length > 0) {
+        const varKeys = Object.keys(cachedVars.vars).join(', ');
+        const apiBase = process.env.API_BASE || 'https://eclawbot.com';
+        messageContent += `\n\n[Local Variables available: ${varKeys}]\nexec: curl -s "${apiBase}/api/device-vars?deviceId=${deviceId}&botSecret=${entity.botSecret}"`;
+    }
+
     const requestPayload = {
         tool: "sessions_send",
         args: {
@@ -6355,6 +6371,13 @@ app.use((err, req, res, next) => {
     if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
         return res.status(400).json({ success: false, message: "Invalid JSON format" });
     }
+    if (err.status === 413 || err.type === 'entity.too.large') {
+        return res.status(413).json({
+            success: false,
+            error: 'payload_too_large',
+            message: 'Request too large. If you attached images, please try with fewer or smaller images.'
+        });
+    }
     next();
 });
 
@@ -6413,9 +6436,7 @@ chatPool.query(`
 const aiSupportModule = require('./ai-support')(devices, chatPool, { serverLog, getWebhookFixInstructions, feedbackModule });
 // Admin-chat requires admin auth; other ai-support routes use bot auth
 app.use('/api/ai-support/admin-chat', adminAuth, adminCheck);
-// Increase body limit for chat (images can be large)
-app.use('/api/ai-support/chat/submit', express.json({ limit: '10mb' }));
-app.use('/api/ai-support/chat', express.json({ limit: '10mb' }));
+// Body limit for chat with images is set globally (before express.json() default)
 app.use('/api/ai-support', aiSupportModule.router);
 aiSupportModule.initSupportTable();
 
@@ -7186,6 +7207,72 @@ function logHandshakeFailure(opts) {
         fetch(proxyUrl + '/warmup', { method: 'POST', signal: AbortSignal.timeout(3000) }).catch(() => {});
     }
 }
+
+// ============================================================
+// LOCAL VARS API — in-memory only, never written to DB
+// ============================================================
+
+// POST /api/device-vars — client syncs local vars to server in-memory cache
+// Auth: deviceSecret
+app.post('/api/device-vars', (req, res) => {
+    const { deviceId, deviceSecret, vars } = req.body;
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    if (vars !== null && typeof vars !== 'object') {
+        return res.status(400).json({ success: false, error: 'vars must be an object' });
+    }
+    const sanitized = {};
+    for (const [k, v] of Object.entries(vars || {})) {
+        if (typeof k === 'string' && k.length > 0 && typeof v === 'string') {
+            sanitized[k] = v;
+        }
+    }
+    deviceVarsCache.set(deviceId, { vars: sanitized, syncedAt: Date.now() });
+    res.json({ success: true, count: Object.keys(sanitized).length });
+});
+
+// GET /api/device-vars — bot reads local vars from in-memory cache
+// Auth: botSecret (entity must be bound to the device)
+app.get('/api/device-vars', (req, res) => {
+    const { deviceId, botSecret } = req.query;
+    if (!deviceId || !botSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and botSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device) {
+        return res.status(404).json({ success: false, error: 'Device not found' });
+    }
+    const entities = Object.values(device.entities || {});
+    const validBot = entities.some(e => e.isBound && e.botSecret === botSecret);
+    if (!validBot) {
+        return res.status(403).json({ success: false, error: 'Invalid botSecret' });
+    }
+    const cached = deviceVarsCache.get(deviceId);
+    if (!cached) {
+        return res.json({ success: true, vars: {}, hint: 'No vars synced — open the portal or app to sync local variables' });
+    }
+    res.json({ success: true, vars: cached.vars });
+});
+
+// DELETE /api/device-vars — client clears all local vars from cache
+// Auth: deviceSecret
+app.delete('/api/device-vars', (req, res) => {
+    const { deviceId, deviceSecret } = req.body;
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    deviceVarsCache.delete(deviceId);
+    res.json({ success: true });
+});
 
 // GET /api/logs — Query server logs for debugging
 // Auth: requires deviceSecret of ANY device on the server (proves you're an admin/owner)

@@ -380,7 +380,28 @@ interface ClawApiService {
     suspend fun checkAppVersion(
         @Query("appVersion") appVersion: String
     ): VersionCheckResponse
+
+    // ============ Local Variables (device-only vault) ============
+
+    @POST("api/device-vars")
+    suspend fun syncLocalVars(
+        @Body body: SyncLocalVarsRequest
+    ): retrofit2.Response<com.google.gson.JsonObject>
+
+    @GET("api/device-vars")
+    suspend fun getDeviceVars(
+        @Query("deviceId") deviceId: String,
+        @Query("botSecret") botSecret: String
+    ): retrofit2.Response<com.google.gson.JsonObject>
 }
+
+// ============ Local Variables Models ============
+
+data class SyncLocalVarsRequest(
+    val deviceId: String,
+    val deviceSecret: String,
+    val vars: Map<String, String>
+)
 
 // ============ Mission Control Response Models ============
 

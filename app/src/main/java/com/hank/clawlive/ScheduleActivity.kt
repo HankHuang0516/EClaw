@@ -81,7 +81,6 @@ class ScheduleActivity : AppCompatActivity() {
     private fun setupAdapters() {
         upcomingAdapter = ScheduleAdapter(
             showActions = true,
-            onDelete = { confirmDelete(it) },
             onEdit = { showEditDialog(it) }
         )
         historyAdapter = ScheduleAdapter(
@@ -116,15 +115,19 @@ class ScheduleActivity : AppCompatActivity() {
             val response = api.getAllEntities(deviceId = deviceManager.deviceId)
             val opts = mutableListOf<Pair<Int, String>>()
             val nameMap = mutableMapOf<Int, String>()
+            val avatarMap = mutableMapOf<Int, String>()
             response.entities.forEach { entity ->
                 val avatar = avatarManager.getAvatar(entity.entityId)
                 val name = entity.name ?: "Entity ${entity.entityId}"
                 opts.add(entity.entityId to "$avatar $name (#${entity.entityId})")
                 nameMap[entity.entityId] = name
+                avatarMap[entity.entityId] = avatar
             }
             entityOptions = opts
             upcomingAdapter.entityNames = nameMap
+            upcomingAdapter.entityAvatars = avatarMap
             historyAdapter.entityNames = nameMap
+            historyAdapter.entityAvatars = avatarMap
         } catch (e: Exception) {
             Timber.e(e, "Failed to load entities for schedule")
         }
@@ -469,10 +472,10 @@ class ScheduleActivity : AppCompatActivity() {
         dialogView.findViewById<View>(R.id.chip1hr)?.setOnClickListener { setQuickTime(tvTime, timeFmt, 60) }
         dialogView.findViewById<View>(R.id.chip3hr)?.setOnClickListener { setQuickTime(tvTime, timeFmt, 180) }
 
-        AlertDialog.Builder(this)
+        val dialog = AlertDialog.Builder(this)
             .setTitle(getString(R.string.schedule_edit))
             .setView(dialogView)
-            .setPositiveButton(getString(R.string.save)) { dialog, _ ->
+            .setPositiveButton(getString(R.string.save)) { dlg, _ ->
                 val message = etMessage.text.toString().trim()
                 if (message.isEmpty()) {
                     Toast.makeText(this, getString(R.string.schedule_err_message), Toast.LENGTH_SHORT).show()
@@ -524,10 +527,19 @@ class ScheduleActivity : AppCompatActivity() {
                 }
 
                 updateSchedule(item.id, body)
-                dialog.dismiss()
+                dlg.dismiss()
             }
             .setNegativeButton(getString(R.string.cancel), null)
+            .setNeutralButton(getString(R.string.delete)) { dlg, _ ->
+                dlg.dismiss()
+                confirmDelete(item)
+            }
             .show()
+
+        // Style the neutral (Delete) button red
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.setTextColor(
+            android.graphics.Color.parseColor("#F44336")
+        )
     }
 
     private fun updateSchedule(id: Int, body: Map<String, Any>) {

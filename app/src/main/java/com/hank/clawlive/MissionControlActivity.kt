@@ -25,6 +25,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.EntityAvatarManager
+import com.hank.clawlive.data.local.LocalVarsManager
+import com.hank.clawlive.data.remote.SyncLocalVarsRequest
 import com.hank.clawlive.data.model.*
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.ui.AiChatFabHelper
@@ -45,6 +47,7 @@ class MissionControlActivity : AppCompatActivity() {
     private val viewModel: MissionViewModel by viewModels()
     private val deviceManager: DeviceManager by lazy { DeviceManager.getInstance(this) }
     private val avatarManager: EntityAvatarManager by lazy { EntityAvatarManager.getInstance(this) }
+    private val localVarsManager: LocalVarsManager by lazy { LocalVarsManager.getInstance(this) }
     private val api by lazy { NetworkModule.api }
 
     /** Bound entity options: list of (entityId, displayLabel). First entry is placeholder. */
@@ -102,6 +105,8 @@ class MissionControlActivity : AppCompatActivity() {
         // Re-download dashboard to pick up changes made by bots or web portal
         viewModel.downloadDashboard()
         loadEntityOptions()
+        renderVars()
+        syncVarsToServer() // fire-and-forget: push local vars to server in-memory cache
     }
 
     override fun onPause() {
@@ -230,6 +235,8 @@ class MissionControlActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.btnAddNote).setOnClickListener { showAddNoteDialog() }
         findViewById<MaterialButton>(R.id.btnAddSoul).setOnClickListener { showAddSoulDialog() }
         findViewById<MaterialButton>(R.id.btnAddRule).setOnClickListener { showAddRuleDialog() }
+        findViewById<MaterialButton>(R.id.btnAddVar).setOnClickListener { showVarDialog(null) }
+        findViewById<MaterialButton>(R.id.btnSyncVars).setOnClickListener { syncVarsToServer() }
     }
 
     private fun observeState() {
@@ -660,38 +667,9 @@ class MissionControlActivity : AppCompatActivity() {
     // ============================================
 
     private fun showNotifyPrompt() {
-        val state = viewModel.uiState.value
-        data class NotifyItem(val type: String, val title: String, val priority: Int, val entityIds: List<String>, val url: String = "")
-
-        val items = mutableListOf<NotifyItem>()
-
-        // TODO items with assigned entity (any priority)
-        state.todoList.forEach { item ->
-            if (item.assignedBot != null) {
-                items.add(NotifyItem("TODO", item.title, (item.priority ?: Priority.MEDIUM).value, item.assignedBot.split(",").map { it.trim() }))
-            }
-        }
-
-        // SKILL items with assigned entities
-        state.skills.forEach { skill ->
-            if (skill.assignedEntities.isNotEmpty()) {
-                items.add(NotifyItem("SKILL", skill.title, 0, skill.assignedEntities, skill.url))
-            }
-        }
-
-        // SOUL items with assigned entities (active only)
-        state.souls.forEach { soul ->
-            if (soul.assignedEntities.isNotEmpty() && soul.isActive) {
-                items.add(NotifyItem("SOUL", soul.name, 0, soul.assignedEntities))
-            }
-        }
-
-        // RULE items with assigned entities (enabled only)
-        state.rules.forEach { rule ->
-            if (rule.assignedEntities.isNotEmpty() && rule.isEnabled) {
-                items.add(NotifyItem("RULE", rule.name, 0, rule.assignedEntities))
-            }
-        }
+        // Use ViewModel's change-aware method: only items that actually changed
+        // since the last save/download are included (matches Web Portal behaviour).
+        val items = viewModel.getNotifiableItems()
 
         if (items.isEmpty()) {
             Toast.makeText(this, getString(R.string.task_saved), Toast.LENGTH_SHORT).show()
@@ -703,22 +681,23 @@ class MissionControlActivity : AppCompatActivity() {
                 entityOptions.find { it.first == id }?.second ?: "Entity $id"
             }
             when (item.type) {
-                "TODO" -> "📋 ${item.title} → $entityLabel"
-                "SKILL" -> "🔧 ${item.title} → $entityLabel"
-                "SOUL" -> "🧠 ${item.title} → $entityLabel"
-                "RULE" -> "📏 ${item.title} → $entityLabel"
-                else -> "${item.title} → $entityLabel"
+                "TODO" -> "\uD83D\uDCCB ${item.title} \u2192 $entityLabel"
+                "SKILL" -> "\uD83D\uDD27 ${item.title} \u2192 $entityLabel"
+                "SOUL" -> "\uD83E\uDDE0 ${item.title} \u2192 $entityLabel"
+                "RULE" -> "\uD83D\uDCCF ${item.title} \u2192 $entityLabel"
+                else -> "${item.title} \u2192 $entityLabel"
             }
         }.toTypedArray()
 
+        // Default all to checked -- only changed items are in the list
         val checked = BooleanArray(items.size) { true }
 
         AlertDialog.Builder(this)
-            .setTitle("📢 發布任務更新通知")
+            .setTitle("\uD83D\uDCE2 \u767C\u5E03\u4EFB\u52D9\u66F4\u65B0\u901A\u77E5")
             .setMultiChoiceItems(labels, checked) { _, which, isChecked ->
                 checked[which] = isChecked
             }
-            .setPositiveButton("發送通知") { _, _ ->
+            .setPositiveButton("\u767C\u9001\u901A\u77E5") { _, _ ->
                 val selected = items.filterIndexed { idx, _ -> checked[idx] }
                 if (selected.isEmpty()) return@setPositiveButton
 
@@ -737,7 +716,7 @@ class MissionControlActivity : AppCompatActivity() {
                 startActivity(Intent(this, ChatActivity::class.java))
                 Toast.makeText(this, getString(R.string.notification_sent), Toast.LENGTH_SHORT).show()
             }
-            .setNegativeButton("跳過") { _, _ ->
+            .setNegativeButton("\u8DF3\u904E") { _, _ ->
                 Toast.makeText(this, getString(R.string.task_saved), Toast.LENGTH_SHORT).show()
             }
             .show()
@@ -750,5 +729,97 @@ class MissionControlActivity : AppCompatActivity() {
             .setPositiveButton(getString(R.string.delete)) { _, _ -> onConfirm() }
             .setNegativeButton(R.string.cancel, null)
             .show()
+    }
+
+    // ========== Variables (local .env vault) ==========
+
+    private fun renderVars() {
+        val container = findViewById<LinearLayout>(R.id.varsContainer) ?: return
+        val emptyView = findViewById<TextView>(R.id.tvVarsEmpty) ?: return
+        val vars = localVarsManager.getAll()
+        container.removeAllViews()
+        if (vars.isEmpty()) {
+            emptyView.visibility = View.VISIBLE
+            return
+        }
+        emptyView.visibility = View.GONE
+        vars.entries.sortedBy { it.key }.forEach { (key, value) ->
+            val row = LayoutInflater.from(this).inflate(android.R.layout.simple_list_item_2, container, false)
+            row.findViewById<TextView>(android.R.id.text1).apply {
+                text = key
+                setTextColor(0xFF7B9EFF.toInt())
+                textSize = 13f
+                typeface = android.graphics.Typeface.MONOSPACE
+            }
+            row.findViewById<TextView>(android.R.id.text2).apply {
+                text = "••••••••"
+                textSize = 12f
+            }
+            row.setOnClickListener { showVarDialog(key) }
+            row.setOnLongClickListener {
+                showDeleteConfirm(key) { localVarsManager.delete(key); renderVars(); syncVarsToServer() }
+                true
+            }
+            container.addView(row)
+        }
+    }
+
+    private fun showVarDialog(editKey: String?) {
+        val isEdit = editKey != null
+        val vars = localVarsManager.getAll()
+        val view = LayoutInflater.from(this).inflate(android.R.layout.simple_list_item_2, null, false)
+        val dialogView = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(48, 24, 48, 8)
+        }
+        val keyInput = EditText(this).apply {
+            hint = "KEY  (e.g. CLAUDE_OAUTH_TOKEN)"
+            typeface = android.graphics.Typeface.MONOSPACE
+            if (isEdit) { setText(editKey); isEnabled = false }
+            filters = arrayOf(android.text.InputFilter.AllCaps(), android.text.InputFilter { src, _, _, _, _, _ ->
+                src.toString().replace(Regex("[^A-Z0-9_]"), "")
+            })
+        }
+        val valueInput = EditText(this).apply {
+            hint = "VALUE"
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+            typeface = android.graphics.Typeface.MONOSPACE
+            if (isEdit) setText(vars[editKey] ?: "")
+        }
+        dialogView.addView(TextView(this).apply { text = "Key"; textSize = 12f; setTextColor(0xFF888888.toInt()) })
+        dialogView.addView(keyInput)
+        dialogView.addView(TextView(this).apply { text = "Value"; textSize = 12f; setTextColor(0xFF888888.toInt()); setPadding(0, 16, 0, 0) })
+        dialogView.addView(valueInput)
+
+        AlertDialog.Builder(this)
+            .setTitle(if (isEdit) "編輯變數" else "新增變數")
+            .setView(dialogView)
+            .setPositiveButton("儲存") { _, _ ->
+                val k = keyInput.text.toString().trim()
+                val v = valueInput.text.toString()
+                if (k.isNotEmpty()) {
+                    localVarsManager.set(k, v)
+                    renderVars()
+                    syncVarsToServer()
+                }
+            }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+
+    private fun syncVarsToServer() {
+        lifecycleScope.launch {
+            try {
+                val vars = localVarsManager.getAll()
+                api.syncLocalVars(SyncLocalVarsRequest(
+                    deviceId = deviceManager.deviceId,
+                    deviceSecret = deviceManager.deviceSecret,
+                    vars = vars
+                ))
+                Timber.d("[Vars] Synced ${vars.size} vars to server in-memory cache")
+            } catch (e: Exception) {
+                Timber.w(e, "[Vars] Failed to sync local vars to server")
+            }
+        }
     }
 }

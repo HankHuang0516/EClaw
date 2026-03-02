@@ -110,6 +110,8 @@
     <string name="ai_chat_no_internet">無網路連線，請檢查網路設定。</string>
     <string name="ai_chat_connection_error">連線錯誤，請再試一次。</string>
     <string name="ai_chat_network_error">網路錯誤，請再試一次。</string>
+    <string name="ai_chat_device_not_registered">裝置未註冊，請重新啟動 App。</string>
+    <string name="ai_chat_image_too_large">圖片太大，請減少圖片數量或改用文字描述您的問題。</string>
 
     <!-- Chat -->
     <string name="chat_history">聊天</string>

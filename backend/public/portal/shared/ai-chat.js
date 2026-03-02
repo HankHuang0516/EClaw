@@ -495,7 +495,11 @@
             console.error('[AI Chat] Submit FAILED:', err.message || err, err);
             clearPending();
             hideTyping();
-            chatHistory.push({ role: 'assistant', content: 'Sorry, something went wrong. Please try again.' });
+            // Show server error message if available (e.g. image too large, auth failure)
+            const errMsg = (err.data && (err.data.message || err.data.error))
+                || err.message
+                || 'Sorry, something went wrong. Please try again.';
+            chatHistory.push({ role: 'assistant', content: errMsg });
             saveHistory();
             renderMessages();
             scrollToBottom();

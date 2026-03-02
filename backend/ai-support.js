@@ -888,6 +888,15 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
 
     // ── Universal AI Chat Endpoint ─────────────
     router.post('/chat', async (req, res) => {
+        // Guard: if body parsing failed (e.g. payload too large), req.body may be empty
+        if (!req.body || typeof req.body !== 'object') {
+            return res.status(400).json({
+                success: false,
+                error: 'invalid_request',
+                message: 'Request body could not be parsed. If you attached images, they may be too large.'
+            });
+        }
+
         // Auth: web users via cookie (softAuthMiddleware), Android via deviceId+deviceSecret
         if (!req.user || !req.user.userId) {
             const { deviceId, deviceSecret } = req.body;
@@ -896,10 +905,10 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                 if (dev && dev.deviceSecret === deviceSecret) {
                     req.user = { userId: `device_${deviceId}`, deviceId, email: null };
                 } else {
-                    return res.status(401).json({ success: false, error: 'Invalid device credentials' });
+                    return res.status(401).json({ success: false, error: 'invalid_credentials', message: 'Invalid device credentials. Please restart the app to re-register.' });
                 }
             } else {
-                return res.status(401).json({ success: false, error: 'Not authenticated' });
+                return res.status(401).json({ success: false, error: 'not_authenticated', message: 'Authentication required. Please restart the app.' });
             }
         }
 
@@ -1328,6 +1337,15 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
 
     // ── Async Chat: Submit Endpoint ──────────────
     router.post('/chat/submit', async (req, res) => {
+        // Guard: if body parsing failed (e.g. payload too large), req.body may be empty
+        if (!req.body || typeof req.body !== 'object') {
+            return res.status(400).json({
+                success: false,
+                error: 'invalid_request',
+                message: 'Request body could not be parsed. If you attached images, they may be too large.'
+            });
+        }
+
         // Auth: same as /chat
         if (!req.user || !req.user.userId) {
             const { deviceId, deviceSecret } = req.body;
@@ -1336,10 +1354,10 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                 if (dev && dev.deviceSecret === deviceSecret) {
                     req.user = { userId: `device_${deviceId}`, deviceId, email: null };
                 } else {
-                    return res.status(401).json({ success: false, error: 'Invalid device credentials' });
+                    return res.status(401).json({ success: false, error: 'invalid_credentials', message: 'Invalid device credentials. Please restart the app to re-register.' });
                 }
             } else {
-                return res.status(401).json({ success: false, error: 'Not authenticated' });
+                return res.status(401).json({ success: false, error: 'not_authenticated', message: 'Authentication required. Please restart the app.' });
             }
         }
 

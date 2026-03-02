@@ -31,6 +31,18 @@ data class MissionUiState(
     val hasLocalChanges: Boolean = false
 )
 
+/**
+ * Represents a notifiable item that has changed since the last save.
+ * Mirrors the Web Portal's getNotifiableItems() logic.
+ */
+data class NotifyItem(
+    val type: String,
+    val title: String,
+    val priority: Int,
+    val entityIds: List<String>,
+    val url: String = ""
+)
+
 class MissionViewModel(application: Application) : AndroidViewModel(application) {
 
     private val api = NetworkModule.api
@@ -39,6 +51,13 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
 
     private val _uiState = MutableStateFlow(MissionUiState())
     val uiState: StateFlow<MissionUiState> = _uiState.asStateFlow()
+
+    /**
+     * Snapshot of the dashboard state at the time of last successful download or upload.
+     * Used for change detection in the notification prompt -- only items that differ
+     * from this snapshot are shown as "changed" (matching Web Portal behaviour).
+     */
+    private var lastSavedSnapshot: MissionDashboardSnapshot? = null
 
     init {
         // Load from local cache first, then fetch from server
@@ -61,6 +80,8 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
                 lastSyncedAt = snapshot.lastSyncedAt
             )
         }
+        // Use local cache as baseline snapshot for change detection
+        lastSavedSnapshot = snapshot
     }
 
     fun downloadDashboard() {
@@ -88,6 +109,18 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
                             hasLocalChanges = false
                         )
                     }
+                    // Capture snapshot for change detection (mirrors Web Portal's lastSavedDashboard)
+                    lastSavedSnapshot = MissionDashboardSnapshot(
+                        todoList = d.todoList ?: emptyList(),
+                        missionList = d.missionList ?: emptyList(),
+                        doneList = d.doneList ?: emptyList(),
+                        notes = d.notes ?: emptyList(),
+                        rules = d.rules ?: emptyList(),
+                        skills = d.skills ?: emptyList(),
+                        souls = d.souls ?: emptyList(),
+                        version = d.version,
+                        lastSyncedAt = d.lastSyncedAt ?: System.currentTimeMillis()
+                    )
                     missionPrefs.saveDashboard(d)
                 } else {
                     _uiState.update {
@@ -134,7 +167,11 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
                     // Save updated version locally
                     saveToLocal()
                     Timber.d("Dashboard uploaded, version: $newVersion")
+                    // onSuccess (showNotifyPrompt) must run BEFORE we update the snapshot,
+                    // so it can detect changes against the OLD snapshot.
                     onSuccess?.invoke()
+                    // Now update snapshot so next save cycle starts fresh
+                    captureSnapshot()
                 } else if (response.error == "VERSION_CONFLICT") {
                     _uiState.update { it.copy(isSyncing = false) }
                     onConflict?.invoke(state.version, response.version ?: 0)
@@ -409,6 +446,133 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
             )
         }
         saveToLocal()
+    }
+
+    // ============================================
+    // Change Detection (mirrors Web Portal logic)
+    // ============================================
+
+    /** Capture current state as the baseline snapshot for change detection. */
+    private fun captureSnapshot() {
+        val s = _uiState.value
+        lastSavedSnapshot = MissionDashboardSnapshot(
+            todoList = s.todoList.map { it.copy() },
+            missionList = s.missionList.map { it.copy() },
+            doneList = s.doneList.map { it.copy() },
+            notes = s.notes.map { it.copy() },
+            rules = s.rules.map { it.copy() },
+            skills = s.skills.map { it.copy() },
+            souls = s.souls.map { it.copy() },
+            version = s.version,
+            lastSyncedAt = s.lastSyncedAt ?: System.currentTimeMillis()
+        )
+    }
+
+    private fun isTodoChanged(item: MissionItem): Boolean {
+        val snap = lastSavedSnapshot ?: return true
+        val prev = snap.todoList?.find { it.id == item.id } ?: return true // new item
+        return item.title != prev.title
+                || item.description != prev.description
+                || (item.priority?.value ?: 2) != (prev.priority?.value ?: 2)
+                || (item.assignedBot ?: "") != (prev.assignedBot ?: "")
+                || (item.status?.name ?: "PENDING") != (prev.status?.name ?: "PENDING")
+    }
+
+    private fun isSkillChanged(skill: MissionSkill): Boolean {
+        val snap = lastSavedSnapshot ?: return true
+        val prev = snap.skills?.find { it.id == skill.id } ?: return true
+        return skill.title != prev.title
+                || skill.url != prev.url
+                || skill.assignedEntities != prev.assignedEntities
+    }
+
+    private fun isRuleChanged(rule: MissionRule): Boolean {
+        val snap = lastSavedSnapshot ?: return true
+        val prev = snap.rules?.find { it.id == rule.id } ?: return true
+        return rule.name != prev.name
+                || rule.description != prev.description
+                || rule.ruleType != prev.ruleType
+                || rule.isEnabled != prev.isEnabled
+                || rule.assignedEntities != prev.assignedEntities
+    }
+
+    private fun isSoulChanged(soul: MissionSoul): Boolean {
+        val snap = lastSavedSnapshot ?: return true
+        val prev = snap.souls?.find { it.id == soul.id } ?: return true
+        return soul.name != prev.name
+                || soul.description != prev.description
+                || soul.templateId != prev.templateId
+                || soul.isActive != prev.isActive
+                || soul.assignedEntities != prev.assignedEntities
+    }
+
+    /**
+     * Returns only the items that have changed since the last save/download,
+     * matching the Web Portal's getNotifiableItems() logic.
+     * Items that haven't changed are excluded entirely.
+     */
+    fun getNotifiableItems(): List<NotifyItem> {
+        val state = _uiState.value
+        val items = mutableListOf<NotifyItem>()
+
+        // TODO items with assigned entity -- only if changed
+        state.todoList.forEach { item ->
+            if (item.assignedBot != null && isTodoChanged(item)) {
+                items.add(
+                    NotifyItem(
+                        type = "TODO",
+                        title = item.title,
+                        priority = (item.priority ?: Priority.MEDIUM).value,
+                        entityIds = item.assignedBot.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                    )
+                )
+            }
+        }
+
+        // SKILL items with assigned entities -- only if changed
+        state.skills.forEach { skill ->
+            if (skill.assignedEntities.isNotEmpty() && isSkillChanged(skill)) {
+                items.add(
+                    NotifyItem(
+                        type = "SKILL",
+                        title = skill.title,
+                        priority = 0,
+                        entityIds = skill.assignedEntities,
+                        url = skill.url
+                    )
+                )
+            }
+        }
+
+        // SOUL items with assigned entities (active only) -- only if changed
+        state.souls.forEach { soul ->
+            if (soul.assignedEntities.isNotEmpty() && soul.isActive && isSoulChanged(soul)) {
+                items.add(
+                    NotifyItem(
+                        type = "SOUL",
+                        title = soul.name,
+                        priority = 0,
+                        entityIds = soul.assignedEntities
+                    )
+                )
+            }
+        }
+
+        // RULE items with assigned entities (enabled only) -- only if changed
+        state.rules.forEach { rule ->
+            if (rule.assignedEntities.isNotEmpty() && rule.isEnabled && isRuleChanged(rule)) {
+                items.add(
+                    NotifyItem(
+                        type = "RULE",
+                        title = rule.name,
+                        priority = 0,
+                        entityIds = rule.assignedEntities
+                    )
+                )
+            }
+        }
+
+        return items
     }
 
     // ============================================

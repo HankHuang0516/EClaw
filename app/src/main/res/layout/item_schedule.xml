@@ -4,10 +4,13 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="#252540"
+    android:foreground="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
     android:padding="12dp"
     android:layout_marginBottom="6dp">
 
-    <!-- Row 1: Time, Entity, Status, Delete -->
+    <!-- Row 1: Time, Entity, Repeat, Status -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -60,25 +63,6 @@
             android:paddingHorizontal="8dp"
             android:paddingVertical="2dp"
             android:layout_marginEnd="6dp" />
-
-        <ImageButton
-            android:id="@+id/btnEdit"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:src="@android:drawable/ic_menu_edit"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/edit"
-            android:layout_marginEnd="4dp"
-            android:visibility="gone" />
-
-        <ImageButton
-            android:id="@+id/btnDelete"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/delete"
-            android:visibility="gone" />
 
     </LinearLayout>
 

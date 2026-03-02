@@ -4,7 +4,6 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -20,7 +19,8 @@ class ScheduleAdapter(
     private val onDelete: ((ScheduleItem) -> Unit)? = null,
     private val onEdit: ((ScheduleItem) -> Unit)? = null,
     private val onItemClick: ((ScheduleItem) -> Unit)? = null,
-    var entityNames: Map<Int, String> = emptyMap()
+    var entityNames: Map<Int, String> = emptyMap(),
+    var entityAvatars: Map<Int, String> = emptyMap()
 ) : ListAdapter<ScheduleItem, ScheduleAdapter.ViewHolder>(DIFF) {
 
     companion object {
@@ -29,7 +29,7 @@ class ScheduleAdapter(
             override fun areContentsTheSame(a: ScheduleItem, b: ScheduleItem) = a == b
         }
 
-        private val ENTITY_EMOJIS = mapOf(0 to "\uD83E\uDD9E", 1 to "\uD83D\uDC37", 2 to "\uD83E\uDD9E", 3 to "\uD83D\uDC37")
+        private val ENTITY_EMOJIS_DEFAULT = mapOf(0 to "\uD83E\uDD9E", 1 to "\uD83D\uDC37", 2 to "\uD83E\uDD9E", 3 to "\uD83D\uDC37")
     }
 
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -40,8 +40,6 @@ class ScheduleAdapter(
         val tvMessage: TextView = view.findViewById(R.id.tvMessage)
         val tvDetail: TextView = view.findViewById(R.id.tvDetail)
         val tvResult: TextView = view.findViewById(R.id.tvResult)
-        val btnEdit: ImageButton = view.findViewById(R.id.btnEdit)
-        val btnDelete: ImageButton = view.findViewById(R.id.btnDelete)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -56,8 +54,8 @@ class ScheduleAdapter(
         // Time
         holder.tvTime.text = formatScheduleTime(item)
 
-        // Entity
-        val emoji = ENTITY_EMOJIS[item.entityId] ?: "?"
+        // Entity — use real avatar from entityAvatars map, fall back to defaults
+        val emoji = entityAvatars[item.entityId] ?: ENTITY_EMOJIS_DEFAULT[item.entityId] ?: "?"
         val name = entityNames[item.entityId] ?: "Entity"
         holder.tvEntity.text = "$emoji $name #${item.entityId}"
 
@@ -124,25 +122,14 @@ class ScheduleAdapter(
             holder.tvResult.visibility = View.GONE
         }
 
-        // Edit button
+        // Card click: upcoming items open edit dialog, history items show execution context
         if (showActions && onEdit != null) {
-            holder.btnEdit.visibility = View.VISIBLE
-            holder.btnEdit.setOnClickListener { onEdit.invoke(item) }
-        } else {
-            holder.btnEdit.visibility = View.GONE
-        }
-
-        // Delete button
-        if (showActions && onDelete != null) {
-            holder.btnDelete.visibility = View.VISIBLE
-            holder.btnDelete.setOnClickListener { onDelete.invoke(item) }
-        } else {
-            holder.btnDelete.visibility = View.GONE
-        }
-
-        // Click listener for history items (to view bot reply)
-        if (!showActions && onItemClick != null) {
+            holder.itemView.setOnClickListener { onEdit.invoke(item) }
+        } else if (!showActions && onItemClick != null) {
             holder.itemView.setOnClickListener { onItemClick.invoke(item) }
+        } else {
+            holder.itemView.setOnClickListener(null)
+            holder.itemView.isClickable = false
         }
     }
 
