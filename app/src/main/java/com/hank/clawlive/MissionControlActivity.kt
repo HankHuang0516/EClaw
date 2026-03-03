@@ -13,6 +13,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -162,33 +163,33 @@ class MissionControlActivity : AppCompatActivity() {
 
     private fun setupAdapters() {
         todoAdapter = MissionItemAdapter(ListMode.TODO,
-            onItemClick = { showEditItemDialog(it) },
+            onItemClick = { showEditItemDialog(it, ListMode.TODO) },
             onItemLongClick = { showItemActionMenu(it, ListMode.TODO) }
         )
         missionAdapter = MissionItemAdapter(ListMode.MISSION,
-            onItemClick = { showEditItemDialog(it) },
+            onItemClick = { showEditItemDialog(it, ListMode.MISSION) },
             onItemLongClick = { showItemActionMenu(it, ListMode.MISSION) }
         )
         doneAdapter = MissionItemAdapter(ListMode.DONE,
-            onItemClick = { },
-            onItemLongClick = { showItemActionMenu(it, ListMode.DONE) }
+            onItemClick = { showEditItemDialog(it, ListMode.DONE) },
+            onItemLongClick = { }
         )
         skillAdapter = MissionSkillAdapter(
             onSkillClick = { showEditSkillDialog(it) },
-            onSkillLongClick = { showDeleteConfirm(it.title) { viewModel.deleteSkill(it.id) } }
+            onSkillLongClick = { }
         )
         soulAdapter = MissionSoulAdapter(
             onSoulClick = { showEditSoulDialog(it) },
-            onSoulLongClick = { showDeleteConfirm(it.name) { viewModel.deleteSoul(it.id) } },
+            onSoulLongClick = { },
             onToggle = { viewModel.toggleSoul(it.id) }
         )
         noteAdapter = MissionNoteAdapter(
             onNoteClick = { showEditNoteDialog(it) },
-            onNoteLongClick = { showDeleteConfirm(it.title) { viewModel.deleteNote(it.id) } }
+            onNoteLongClick = { }
         )
         ruleAdapter = MissionRuleAdapter(
             onRuleClick = { showEditRuleDialog(it) },
-            onRuleLongClick = { showDeleteConfirm(it.name) { viewModel.deleteRule(it.id) } },
+            onRuleLongClick = { },
             onToggle = { viewModel.toggleRule(it.id) }
         )
     }
@@ -216,7 +217,7 @@ class MissionControlActivity : AppCompatActivity() {
             viewModel.uploadDashboard(
                 onConflict = { yourVersion, serverVersion ->
                     runOnUiThread {
-                        AlertDialog.Builder(this)
+                        MaterialAlertDialogBuilder(this)
                             .setTitle(getString(R.string.version_conflict_title))
                             .setMessage(getString(R.string.version_conflict_message, yourVersion, serverVersion))
                             .setPositiveButton(getString(R.string.download_latest)) { _, _ -> viewModel.downloadDashboard() }
@@ -319,7 +320,7 @@ class MissionControlActivity : AppCompatActivity() {
 
         val checkboxes = buildEntityCheckboxes(container, emptyList())
 
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.add_todo))
             .setView(view)
             .setPositiveButton(R.string.send) { _, _ ->
@@ -338,7 +339,7 @@ class MissionControlActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showEditItemDialog(item: MissionItem) {
+    private fun showEditItemDialog(item: MissionItem, mode: ListMode) {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_mission_item, null)
         val etTitle = view.findViewById<EditText>(R.id.etTitle)
         val etDescription = view.findViewById<EditText>(R.id.etDescription)
@@ -357,7 +358,7 @@ class MissionControlActivity : AppCompatActivity() {
         val selectedEntities = item.assignedBot?.split(",")?.map { it.trim() } ?: emptyList()
         val checkboxes = buildEntityCheckboxes(container, selectedEntities)
 
-        AlertDialog.Builder(this)
+        val dialog = MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.edit))
             .setView(view)
             .setPositiveButton(R.string.done) { _, _ ->
@@ -374,7 +375,15 @@ class MissionControlActivity : AppCompatActivity() {
                 }
             }
             .setNegativeButton(R.string.cancel, null)
+            .setNeutralButton(R.string.delete) { dlg, _ ->
+                dlg.dismiss()
+                showDeleteConfirm(item.title) { viewModel.deleteItem(item.id) }
+            }
             .show()
+
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.setTextColor(
+            android.graphics.Color.parseColor("#F44336")
+        )
     }
 
     private fun showItemActionMenu(item: MissionItem, mode: ListMode) {
@@ -391,12 +400,10 @@ class MissionControlActivity : AppCompatActivity() {
             options.add(getString(R.string.action_mark_done))
             actions.add { viewModel.moveToDone(item.id) }
         }
-        options.add(getString(R.string.action_edit))
-        actions.add { showEditItemDialog(item) }
-        options.add(getString(R.string.action_delete))
-        actions.add { showDeleteConfirm(item.title) { viewModel.deleteItem(item.id) } }
 
-        AlertDialog.Builder(this)
+        if (options.isEmpty()) return
+
+        MaterialAlertDialogBuilder(this)
             .setTitle(item.title)
             .setItems(options.toTypedArray()) { _, which -> actions[which]() }
             .show()
@@ -408,7 +415,7 @@ class MissionControlActivity : AppCompatActivity() {
         val etContent = view.findViewById<EditText>(R.id.etContent)
         val etCategory = view.findViewById<EditText>(R.id.etCategory)
 
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.add_note))
             .setView(view)
             .setPositiveButton(R.string.send) { _, _ ->
@@ -436,7 +443,7 @@ class MissionControlActivity : AppCompatActivity() {
         etContent.setText(note.content)
         etCategory.setText(note.category)
 
-        AlertDialog.Builder(this)
+        val dialog = MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.edit))
             .setView(view)
             .setPositiveButton(R.string.done) { _, _ ->
@@ -451,7 +458,15 @@ class MissionControlActivity : AppCompatActivity() {
                 }
             }
             .setNegativeButton(R.string.cancel, null)
+            .setNeutralButton(R.string.delete) { dlg, _ ->
+                dlg.dismiss()
+                showDeleteConfirm(note.title) { viewModel.deleteNote(note.id) }
+            }
             .show()
+
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.setTextColor(
+            android.graphics.Color.parseColor("#F44336")
+        )
     }
 
     private fun showAddRuleDialog() {
@@ -468,7 +483,7 @@ class MissionControlActivity : AppCompatActivity() {
 
         val checkboxes = buildEntityCheckboxes(container, emptyList())
 
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.add_rule))
             .setView(view)
             .setPositiveButton(R.string.send) { _, _ ->
@@ -504,7 +519,7 @@ class MissionControlActivity : AppCompatActivity() {
 
         val checkboxes = buildEntityCheckboxes(container, rule.assignedEntities)
 
-        AlertDialog.Builder(this)
+        val dialog = MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.edit))
             .setView(view)
             .setPositiveButton(R.string.done) { _, _ ->
@@ -520,7 +535,15 @@ class MissionControlActivity : AppCompatActivity() {
                 }
             }
             .setNegativeButton(R.string.cancel, null)
+            .setNeutralButton(R.string.delete) { dlg, _ ->
+                dlg.dismiss()
+                showDeleteConfirm(rule.name) { viewModel.deleteRule(rule.id) }
+            }
             .show()
+
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.setTextColor(
+            android.graphics.Color.parseColor("#F44336")
+        )
     }
 
     /** Build entity checkboxes into a container, returns list of (entityId, CheckBox) */
@@ -576,7 +599,7 @@ class MissionControlActivity : AppCompatActivity() {
 
         val checkboxes = buildEntityCheckboxes(container, skill?.assignedEntities ?: emptyList())
 
-        AlertDialog.Builder(this)
+        val builder = MaterialAlertDialogBuilder(this)
             .setTitle(if (skill != null) getString(R.string.edit) else "新增技能")
             .setView(view)
             .setPositiveButton(if (skill != null) R.string.done else R.string.send) { _, _ ->
@@ -592,7 +615,20 @@ class MissionControlActivity : AppCompatActivity() {
                 }
             }
             .setNegativeButton(R.string.cancel, null)
-            .show()
+
+        if (skill != null && !skill.isSystem) {
+            builder.setNeutralButton(R.string.delete) { dlg, _ ->
+                dlg.dismiss()
+                showDeleteConfirm(skill.title) { viewModel.deleteSkill(skill.id) }
+            }
+        }
+
+        val dialog = builder.show()
+        if (skill != null && !skill.isSystem) {
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.setTextColor(
+                android.graphics.Color.parseColor("#F44336")
+            )
+        }
     }
 
     // ============================================
@@ -641,7 +677,7 @@ class MissionControlActivity : AppCompatActivity() {
 
         val checkboxes = buildEntityCheckboxes(container, soul?.assignedEntities ?: emptyList())
 
-        AlertDialog.Builder(this)
+        val builder = MaterialAlertDialogBuilder(this)
             .setTitle(if (soul != null) getString(R.string.edit) else getString(R.string.add_soul))
             .setView(view)
             .setPositiveButton(if (soul != null) R.string.done else R.string.send) { _, _ ->
@@ -659,7 +695,20 @@ class MissionControlActivity : AppCompatActivity() {
                 }
             }
             .setNegativeButton(R.string.cancel, null)
-            .show()
+
+        if (soul != null) {
+            builder.setNeutralButton(R.string.delete) { dlg, _ ->
+                dlg.dismiss()
+                showDeleteConfirm(soul.name) { viewModel.deleteSoul(soul.id) }
+            }
+        }
+
+        val dialog = builder.show()
+        if (soul != null) {
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.setTextColor(
+                android.graphics.Color.parseColor("#F44336")
+            )
+        }
     }
 
     // ============================================
@@ -692,7 +741,7 @@ class MissionControlActivity : AppCompatActivity() {
         // Default all to checked -- only changed items are in the list
         val checked = BooleanArray(items.size) { true }
 
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle("\uD83D\uDCE2 \u767C\u5E03\u4EFB\u52D9\u66F4\u65B0\u901A\u77E5")
             .setMultiChoiceItems(labels, checked) { _, which, isChecked ->
                 checked[which] = isChecked
@@ -723,7 +772,7 @@ class MissionControlActivity : AppCompatActivity() {
     }
 
     private fun showDeleteConfirm(name: String, onConfirm: () -> Unit) {
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.delete_confirm_title))
             .setMessage(getString(R.string.delete_confirm_message_format, name))
             .setPositiveButton(getString(R.string.delete)) { _, _ -> onConfirm() }
@@ -756,10 +805,6 @@ class MissionControlActivity : AppCompatActivity() {
                 textSize = 12f
             }
             row.setOnClickListener { showVarDialog(key) }
-            row.setOnLongClickListener {
-                showDeleteConfirm(key) { localVarsManager.delete(key); renderVars(); syncVarsToServer() }
-                true
-            }
             container.addView(row)
         }
     }
@@ -791,7 +836,7 @@ class MissionControlActivity : AppCompatActivity() {
         dialogView.addView(TextView(this).apply { text = "Value"; textSize = 12f; setTextColor(0xFF888888.toInt()); setPadding(0, 16, 0, 0) })
         dialogView.addView(valueInput)
 
-        AlertDialog.Builder(this)
+        val builder = MaterialAlertDialogBuilder(this)
             .setTitle(if (isEdit) "編輯變數" else "新增變數")
             .setView(dialogView)
             .setPositiveButton("儲存") { _, _ ->
@@ -804,7 +849,20 @@ class MissionControlActivity : AppCompatActivity() {
                 }
             }
             .setNegativeButton("取消", null)
-            .show()
+
+        if (isEdit) {
+            builder.setNeutralButton(R.string.delete) { dlg, _ ->
+                dlg.dismiss()
+                showDeleteConfirm(editKey!!) { localVarsManager.delete(editKey); renderVars(); syncVarsToServer() }
+            }
+        }
+
+        val dialog = builder.show()
+        if (isEdit) {
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.setTextColor(
+                android.graphics.Color.parseColor("#F44336")
+            )
+        }
     }
 
     private fun syncVarsToServer() {
