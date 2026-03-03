@@ -171,6 +171,19 @@ async function createTables() {
             CREATE INDEX IF NOT EXISTS idx_contacts_device ON cross_device_contacts(device_id)
         `);
 
+        // Encrypted device variables (env vars vault)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS device_vars (
+                device_id       TEXT PRIMARY KEY REFERENCES devices(device_id) ON DELETE CASCADE,
+                encrypted_vars  TEXT NOT NULL,
+                iv              TEXT NOT NULL,
+                auth_tag        TEXT NOT NULL,
+                var_keys        TEXT[] DEFAULT '{}',
+                is_locked       BOOLEAN DEFAULT FALSE,
+                updated_at      BIGINT NOT NULL
+            )
+        `);
+
         console.log('[DB] Database tables ready');
         client.release();
     } catch (err) {
@@ -774,6 +787,66 @@ async function closeDatabase() {
     }
 }
 
+// ============================================
+// Device Vars (Encrypted Vault)
+// ============================================
+
+async function upsertDeviceVars(deviceId, encryptedVars, iv, authTag, varKeys, isLocked) {
+    if (!pool) return false;
+    try {
+        await pool.query(
+            `INSERT INTO device_vars (device_id, encrypted_vars, iv, auth_tag, var_keys, is_locked, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT (device_id)
+             DO UPDATE SET encrypted_vars = $2, iv = $3, auth_tag = $4, var_keys = $5, is_locked = $6, updated_at = $7`,
+            [deviceId, encryptedVars, iv, authTag, varKeys, isLocked, Date.now()]
+        );
+        return true;
+    } catch (err) {
+        console.error(`[DB] Failed to upsert device_vars for ${deviceId}:`, err.message);
+        return false;
+    }
+}
+
+async function getDeviceVars(deviceId) {
+    if (!pool) return null;
+    try {
+        const result = await pool.query(
+            'SELECT encrypted_vars, iv, auth_tag, var_keys, is_locked, updated_at FROM device_vars WHERE device_id = $1',
+            [deviceId]
+        );
+        return result.rows[0] || null;
+    } catch (err) {
+        console.error(`[DB] Failed to get device_vars for ${deviceId}:`, err.message);
+        return null;
+    }
+}
+
+async function getDeviceVarsMeta(deviceId) {
+    if (!pool) return null;
+    try {
+        const result = await pool.query(
+            'SELECT var_keys, is_locked FROM device_vars WHERE device_id = $1',
+            [deviceId]
+        );
+        return result.rows[0] || null;
+    } catch (err) {
+        console.error(`[DB] Failed to get device_vars meta for ${deviceId}:`, err.message);
+        return null;
+    }
+}
+
+async function deleteDeviceVars(deviceId) {
+    if (!pool) return false;
+    try {
+        await pool.query('DELETE FROM device_vars WHERE device_id = $1', [deviceId]);
+        return true;
+    } catch (err) {
+        console.error(`[DB] Failed to delete device_vars for ${deviceId}:`, err.message);
+        return false;
+    }
+}
+
 module.exports = {
     initDatabase,
     saveDeviceData,
@@ -802,5 +875,10 @@ module.exports = {
     getContacts,
     addContact,
     removeContact,
-    getContactCount
+    getContactCount,
+    // Device vars (encrypted vault)
+    upsertDeviceVars,
+    getDeviceVars,
+    getDeviceVarsMeta,
+    deleteDeviceVars
 };
