@@ -2677,6 +2677,13 @@ app.post('/api/client/speak', async (req, res) => {
         return res.status(400).json({ success: false, message: "No valid target entities" });
     }
 
+    // Check device preference for broadcast recipient info (only for multi-target broadcasts)
+    let showRecipientInfo = false;
+    if (targetIds.length > 1) {
+        const bcastPrefs = await devicePrefs.getPrefs(deviceId);
+        showRecipientInfo = bcastPrefs.broadcast_recipient_info !== false;
+    }
+
     // Parallel processing for broadcast - all entities receive message simultaneously
     const pushPromises = targetIds.map(async (eId) => {
         const entity = device.entities[eId];
@@ -2713,6 +2720,10 @@ app.post('/api/client/speak', async (req, res) => {
             pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${eId},"botSecret":"${entity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
             pushMsg += `To BROADCAST to ALL other entities (use ONLY when user asks to broadcast):\n`;
             pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/broadcast" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","fromEntityId":${eId},"botSecret":"${entity.botSecret}","text":"YOUR_BROADCAST_HERE"}'\n\n`;
+            // Inject broadcast recipient info if this is a multi-target broadcast
+            if (showRecipientInfo) {
+                pushMsg += buildBroadcastRecipientBlock(device, targetIds, eId);
+            }
             pushMsg += `[MESSAGE] Device ${deviceId} Entity ${eId}\n`;
             pushMsg += `From: ${source}\n`;
             pushMsg += `Content: ${text}`;
