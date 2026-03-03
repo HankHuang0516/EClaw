@@ -1,3 +1,10 @@
+# [1.71.0](https://github.com/HankHuang0516/realbot/compare/v1.70.0...v1.71.0) (2026-03-03)
+
+
+### Features
+
+* add crash reporting & debug logging for issue [#120](https://github.com/HankHuang0516/realbot/issues/120) ([99f6216](https://github.com/HankHuang0516/realbot/commit/99f621648b602c5cc402b24e10f5672159a45531))
+
 # [1.70.0](https://github.com/HankHuang0516/realbot/compare/v1.69.0...v1.70.0) (2026-03-03)
 
 
