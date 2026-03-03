@@ -1,3 +1,11 @@
+# [1.72.0](https://github.com/HankHuang0516/realbot/compare/v1.71.0...v1.72.0) (2026-03-03)
+
+
+### Features
+
+* **db:** add device_vars table + CRUD helpers for encrypted env vars ([43b631e](https://github.com/HankHuang0516/realbot/commit/43b631e04a2973e6813deba70fb94037a392fd96))
+* chat cloud sync recovery + app version in telemetry ([#123](https://github.com/HankHuang0516/realbot/issues/123), [#124](https://github.com/HankHuang0516/realbot/issues/124)) ([6a71c35](https://github.com/HankHuang0516/realbot/commit/6a71c350f76f4554a9c95eb47350c58fd814f2d0))
+
 # [1.71.0](https://github.com/HankHuang0516/realbot/compare/v1.70.0...v1.71.0) (2026-03-03)
 
 
