@@ -861,41 +861,16 @@ module.exports = function(devices, { awardEntityXP } = {}) {
 
             const pushMessage = `[Mission Control 任務更新]\n${lines.join('\n')}\n\n可用操作:\n${apiHints.join('\n')}`;
 
-            if (!entity.webhook) {
-                return { entityId: eId, pushed: false, reason: 'no_webhook' };
+            const fullMessage = `[Device ${deviceId} Entity ${eId} - Mission Control 更新]\n${pushMessage}\n注意: 請使用 update_claw_status (POST /api/transform) 來回覆此訊息，將回覆內容放在 message 欄位`;
+
+            if (_pushToBot) {
+                const result = await _pushToBot(entity, deviceId, "mission_notify", { message: fullMessage });
+                return { entityId: eId, ...result };
             }
 
-            const { url, token, sessionKey } = entity.webhook;
-            const requestPayload = {
-                tool: "sessions_send",
-                args: {
-                    sessionKey: sessionKey,
-                    message: `[Device ${deviceId} Entity ${eId} - Mission Control 更新]\n${pushMessage}\n注意: 請使用 update_claw_status (POST /api/transform) 來回覆此訊息，將回覆內容放在 message 欄位`
-                }
-            };
-
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestPayload)
-                });
-
-                if (response.ok) {
-                    const responseText = await response.text().catch(() => '');
-                    if (responseText && responseText.includes('No session found')) {
-                        return { entityId: eId, pushed: false, reason: 'session_not_found' };
-                    }
-                    console.log(`[Mission] ✓ Notify pushed to Device ${deviceId} Entity ${eId}`);
-                    return { entityId: eId, pushed: true };
-                } else {
-                    console.error(`[Mission] ✗ Notify push failed for Entity ${eId}: ${response.status}`);
-                    return { entityId: eId, pushed: false, reason: `http_${response.status}` };
-                }
-            } catch (err) {
-                console.error(`[Mission] ✗ Notify push error for Entity ${eId}:`, err.message);
-                return { entityId: eId, pushed: false, reason: err.message };
-            }
+            // Fallback: no pushToBot wired (should not happen in production)
+            console.warn(`[Mission] _pushToBot not set, skipping push for Entity ${eId}`);
+            return { entityId: eId, pushed: false, reason: 'pushToBot_not_configured' };
         });
 
         // Background: update delivery status after all pushes complete
@@ -1760,5 +1735,9 @@ module.exports = function(devices, { awardEntityXP } = {}) {
     let _notifyCallback = null;
     function setNotifyCallback(fn) { _notifyCallback = fn; }
 
-    return { router, initMissionDatabase, setNotifyCallback };
+    // Push-to-bot callback (set from index.js, replaces direct fetch)
+    let _pushToBot = null;
+    function setPushToBot(fn) { _pushToBot = fn; }
+
+    return { router, initMissionDatabase, setNotifyCallback, setPushToBot };
 };
