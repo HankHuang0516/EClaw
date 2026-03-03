@@ -189,7 +189,7 @@ async function runTests() {
 
   const entities = await fetchJSON(`${API_BASE}/api/entities?deviceId=${DEVICE_ID}`);
   assert(entities.status === 200, 'GET /api/entities still works');
-  assert(Array.isArray(entities.data), 'Returns entity array');
+  assert(Array.isArray(entities.data?.entities), 'Returns entity array');
 
   console.log('');
 
