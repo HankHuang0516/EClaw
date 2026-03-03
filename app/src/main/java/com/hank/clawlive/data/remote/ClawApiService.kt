@@ -413,7 +413,8 @@ interface ClawApiService {
 data class SyncLocalVarsRequest(
     val deviceId: String,
     val deviceSecret: String,
-    val vars: Map<String, String>
+    val vars: Map<String, String>,
+    val locked: Boolean = false
 )
 
 // ============ Mission Control Response Models ============

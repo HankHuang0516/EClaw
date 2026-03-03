@@ -30,6 +30,7 @@ import com.hank.clawlive.data.local.LocalVarsManager
 import com.hank.clawlive.data.remote.SyncLocalVarsRequest
 import com.hank.clawlive.data.model.*
 import com.hank.clawlive.data.remote.NetworkModule
+import com.hank.clawlive.data.remote.SocketManager
 import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.MissionUiState
@@ -244,6 +245,22 @@ class MissionControlActivity : AppCompatActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state -> updateUI(state) }
+            }
+        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                SocketManager.varsApprovalFlow.collect { data ->
+                    val requestId = data.optString("requestId")
+                    val entityName = data.optString("entityName", "Bot")
+                    val varKeys = mutableListOf<String>()
+                    val keysArray = data.optJSONArray("varKeys")
+                    if (keysArray != null) {
+                        for (i in 0 until keysArray.length()) {
+                            varKeys.add(keysArray.getString(i))
+                        }
+                    }
+                    showVarsApprovalDialog(requestId, entityName, varKeys)
+                }
             }
         }
     }
@@ -869,15 +886,77 @@ class MissionControlActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val vars = localVarsManager.getAll()
+                val locked = getSharedPreferences("realbot_prefs", MODE_PRIVATE)
+                    .getBoolean("eclawVarsLocked_${deviceManager.deviceId}", false)
                 api.syncLocalVars(SyncLocalVarsRequest(
                     deviceId = deviceManager.deviceId,
                     deviceSecret = deviceManager.deviceSecret,
-                    vars = vars
+                    vars = vars,
+                    locked = locked
                 ))
-                Timber.d("[Vars] Synced ${vars.size} vars to server in-memory cache")
+                Timber.d("[Vars] Synced ${vars.size} vars to server in-memory cache (locked=$locked)")
             } catch (e: Exception) {
                 Timber.w(e, "[Vars] Failed to sync local vars to server")
             }
         }
+    }
+
+    // ========== JIT Vars Approval ==========
+
+    private fun showVarsApprovalDialog(requestId: String, entityName: String, varKeys: List<String>) {
+        val keysText = if (varKeys.isNotEmpty()) varKeys.joinToString(", ") else getString(R.string.vars_no_keys)
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.vars_approval_title))
+            .setMessage(getString(R.string.vars_approval_body, entityName, keysText))
+            .setPositiveButton(getString(R.string.vars_allow), null)
+            .setNegativeButton(getString(R.string.vars_deny)) { _, _ ->
+                emitApprovalResponse(requestId, false)
+            }
+            .setCancelable(false)
+            .create()
+
+        dialog.show()
+
+        val allowBtn = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+        allowBtn.isEnabled = false
+        allowBtn.text = "${getString(R.string.vars_allow)} (3s)"
+
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        var countdown = 3
+        val countdownRunnable = object : Runnable {
+            override fun run() {
+                countdown--
+                if (countdown > 0) {
+                    allowBtn.text = "${getString(R.string.vars_allow)} (${countdown}s)"
+                    handler.postDelayed(this, 1000)
+                } else {
+                    allowBtn.isEnabled = true
+                    allowBtn.text = getString(R.string.vars_allow)
+                    allowBtn.setOnClickListener {
+                        emitApprovalResponse(requestId, true)
+                        dialog.dismiss()
+                    }
+                }
+            }
+        }
+        handler.postDelayed(countdownRunnable, 1000)
+
+        // Auto-deny after 60 seconds
+        handler.postDelayed({
+            if (dialog.isShowing) {
+                emitApprovalResponse(requestId, false)
+                dialog.dismiss()
+            }
+        }, 60_000)
+    }
+
+    private fun emitApprovalResponse(requestId: String, approved: Boolean) {
+        val data = org.json.JSONObject().apply {
+            put("requestId", requestId)
+            put("approved", approved)
+        }
+        SocketManager.emit("vars:approval-response", data)
+        Timber.d("[Vars] Approval response: requestId=$requestId approved=$approved")
     }
 }

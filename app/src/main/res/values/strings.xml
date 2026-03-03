@@ -548,6 +548,13 @@ If you have any questions, please contact us via our official email.
     <string name="nav_settings">Settings</string>
     <string name="nav_wallpaper">Wallpaper</string>
 
+    <!-- JIT Vars Approval -->
+    <string name="vars_approval_title">Variable Access Request</string>
+    <string name="vars_approval_body">%1$s wants to read your variables:\n\n%2$s</string>
+    <string name="vars_allow">Allow</string>
+    <string name="vars_deny">Deny</string>
+    <string name="vars_no_keys">no variables</string>
+
     <!-- App Update -->
     <string name="update_title">Update Available</string>
     <string name="update_message">A new version (v%s) is available. Update for the best experience!</string>

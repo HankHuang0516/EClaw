@@ -31,6 +31,9 @@ object SocketManager {
     private val _notificationFlow = MutableSharedFlow<JSONObject>(extraBufferCapacity = 16)
     val notificationFlow: SharedFlow<JSONObject> = _notificationFlow
 
+    private val _varsApprovalFlow = MutableSharedFlow<JSONObject>(extraBufferCapacity = 8)
+    val varsApprovalFlow: SharedFlow<JSONObject> = _varsApprovalFlow
+
     fun connect(context: Context) {
         if (isInitialized) return
 
@@ -80,6 +83,12 @@ object SocketManager {
                     _notificationFlow.tryEmit(json)
                 }
 
+                on("vars:approval-request") { args ->
+                    val json = args.firstOrNull() as? JSONObject ?: return@on
+                    Timber.d("[Socket] vars:approval-request received: $json")
+                    _varsApprovalFlow.tryEmit(json)
+                }
+
                 connect()
             }
 
@@ -99,4 +108,9 @@ object SocketManager {
     }
 
     fun isConnected(): Boolean = socket?.connected() == true
+
+    /** Emit an event to the server via the active socket. */
+    fun emit(event: String, data: JSONObject) {
+        socket?.emit(event, data)
+    }
 }
