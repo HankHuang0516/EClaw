@@ -1,0 +1,27 @@
+{
+  "id": "eclaw",
+  "name": "E-Claw",
+  "version": "1.0.0",
+  "description": "E-Claw AI chat platform channel for OpenClaw",
+  "channels": ["eclaw"],
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "accounts": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "apiKey": { "type": "string", "description": "Channel API Key (eck_...)" },
+            "apiSecret": { "type": "string", "description": "Channel API Secret (ecs_...)" },
+            "apiBase": { "type": "string", "default": "https://eclawbot.com" },
+            "entityId": { "type": "number", "default": 0, "minimum": 0, "maximum": 7 },
+            "botName": { "type": "string", "maxLength": 20 }
+          },
+          "required": ["apiKey", "apiSecret"]
+        }
+      }
+    }
+  }
+}
