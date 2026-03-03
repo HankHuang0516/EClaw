@@ -1,3 +1,10 @@
+# [1.70.0](https://github.com/HankHuang0516/realbot/compare/v1.69.0...v1.70.0) (2026-03-03)
+
+
+### Features
+
+* unify Mission Control delete UX — tap to edit, delete inside dialog ([#114](https://github.com/HankHuang0516/realbot/issues/114)) ([093af72](https://github.com/HankHuang0516/realbot/commit/093af72d5ee317d9a65380ca4f9e79c2afa3cc58))
+
 # [1.69.0](https://github.com/HankHuang0516/realbot/compare/v1.68.1...v1.69.0) (2026-03-03)
 
 
