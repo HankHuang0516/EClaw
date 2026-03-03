@@ -281,6 +281,18 @@
     <string name="submit">Submit</string>
     <string name="app_version">Version: %s</string>
 
+    <!-- Crash Logs -->
+    <string name="crash_logs_title">Crash Logs</string>
+    <string name="crash_logs_empty">No crash logs recorded.\nCrash reports will appear here automatically.</string>
+    <string name="crash_log_expand">Details</string>
+    <string name="crash_log_collapse">Hide</string>
+    <string name="crash_log_share">Share</string>
+    <string name="crash_log_delete">Delete</string>
+    <string name="crash_log_delete_all">Delete All</string>
+    <string name="crash_log_delete_all_confirm">Delete all %d crash log(s)?</string>
+    <string name="crash_log_deleted">Crash log deleted</string>
+    <string name="crash_logs_all_deleted">%d crash log(s) deleted</string>
+
     <!-- Official Borrow -->
     <string name="official_borrow">Official Bot Rental</string>
     <string name="official_borrow_title">Official Bot Rental</string>

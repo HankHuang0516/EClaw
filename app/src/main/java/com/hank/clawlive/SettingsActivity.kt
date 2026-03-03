@@ -35,6 +35,7 @@ import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.local.UsageManager
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
+import com.hank.clawlive.debug.CrashLogManager
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -70,6 +71,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var btnSubscribe: MaterialButton
     private lateinit var btnFeedback: MaterialButton
     private lateinit var btnPrivacyPolicy: MaterialButton
+    private lateinit var btnCrashLogs: MaterialButton
     // Account Status Card views
     private lateinit var cardAccountStatus: MaterialCardView
     private lateinit var accountStatusLoading: LinearLayout
@@ -165,6 +167,7 @@ class SettingsActivity : AppCompatActivity() {
         updateUsageDisplay()
         updateEntityCount()
         loadAccountStatus()
+        updateCrashLogBadge()
     }
 
     override fun onPause() {
@@ -192,6 +195,7 @@ class SettingsActivity : AppCompatActivity() {
         tvEntityCount = findViewById(R.id.tvEntityCount)
         btnFeedback = findViewById(R.id.btnFeedback)
         btnPrivacyPolicy = findViewById(R.id.btnPrivacyPolicy)
+        btnCrashLogs = findViewById(R.id.btnCrashLogs)
         cardAccountStatus = findViewById(R.id.cardAccountStatus)
         accountStatusLoading = findViewById(R.id.accountStatusLoading)
         accountBoundLayout = findViewById(R.id.accountBoundLayout)
@@ -240,6 +244,10 @@ class SettingsActivity : AppCompatActivity() {
 
         btnPrivacyPolicy.setOnClickListener {
             startActivity(android.content.Intent(this, PrivacyPolicyActivity::class.java))
+        }
+
+        btnCrashLogs.setOnClickListener {
+            startActivity(Intent(this, CrashLogViewerActivity::class.java))
         }
 
         // Account Status Card listeners
@@ -400,6 +408,15 @@ class SettingsActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 Timber.e(e, "Failed to fetch entity count from API")
             }
+        }
+    }
+
+    private fun updateCrashLogBadge() {
+        val count = CrashLogManager.getCrashLogs().size
+        btnCrashLogs.text = if (count > 0) {
+            getString(R.string.crash_logs_title) + " ($count)"
+        } else {
+            getString(R.string.crash_logs_title)
         }
     }
 

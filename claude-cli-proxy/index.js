@@ -425,9 +425,9 @@ app.use('/sessions', requireAuth);
 
 // ── Analysis Endpoint ───────────────────────
 app.post('/analyze', async (req, res) => {
-    const { problem_description, error_messages, logs, handshake_failures, device_context } = req.body;
+    const { problem_description, error_messages, logs, handshake_failures, app_crashes, device_context } = req.body;
 
-    const prompt = buildAnalysisPrompt(problem_description, error_messages, logs, handshake_failures, device_context);
+    const prompt = buildAnalysisPrompt(problem_description, error_messages, logs, handshake_failures, device_context, app_crashes);
 
     console.log(`[Analyze] Request for device: ${device_context?.deviceId || '?'}`);
 
@@ -782,6 +782,18 @@ DATABASE ACCESS (read-only):
   Recent logs:   SELECT level, category, message, created_at FROM server_logs WHERE device_id='...' ORDER BY created_at DESC LIMIT 30
   Binding hist:  SELECT category, message, created_at FROM server_logs WHERE device_id='...' AND category IN ('bind','unbind') ORDER BY created_at DESC LIMIT 20
   Webhook fails: SELECT error_type, error_message, webhook_url, created_at FROM handshake_failures WHERE device_id='...' ORDER BY created_at DESC LIMIT 10
+  App crashes:   SELECT ts, action, meta FROM device_telemetry WHERE device_id='...' AND type='crash' ORDER BY ts DESC LIMIT 10
+  App errors:    SELECT ts, action, meta FROM device_telemetry WHERE device_id='...' AND type='error' ORDER BY ts DESC LIMIT 20
+  Recent activity: SELECT ts, type, action, page, duration FROM device_telemetry WHERE device_id='...' ORDER BY ts DESC LIMIT 30
+
+CRASH INVESTIGATION:
+When a user reports app crash/閃退/force close, ALWAYS query device_telemetry for crash data:
+  1. Query type='crash' entries — these contain full stack traces in meta.stack_trace and recent debug logs in meta.recent_log
+  2. Query type='error' entries — these are non-fatal errors that may show a pattern leading to the crash
+  3. Look at meta.message for the exception message, meta.stack_trace for the full trace, meta.thread for the crashing thread
+  4. Check the action field — it contains the exception class name (e.g. NullPointerException, IllegalStateException)
+  5. Cross-reference with server_logs around the same timestamp to see if a backend API call failed
+  6. Report findings: exception type, which method/line crashed, what the user was doing (from recent debug log), and suggested fix
 - NEVER expose device_secret, tokens, or raw credentials in your response.` : '';
 
     const adminBlock = isAdmin
@@ -816,7 +828,7 @@ Respond naturally as E-Claw AI.`;
 }
 
 // ── Prompt Builder (Binding Analysis) ──────
-function buildAnalysisPrompt(problem, errors, logs, failures, context) {
+function buildAnalysisPrompt(problem, errors, logs, failures, context, crashes) {
     const isAdmin = context?.role === 'admin';
     const errorList = (errors || []).map(e => `- ${e}`).join('\n') || '(none provided)';
 
@@ -827,6 +839,12 @@ function buildAnalysisPrompt(problem, errors, logs, failures, context) {
     const failureList = (failures || []).slice(0, 5).map(f =>
         `[${f.error_type}] ${f.error_message || 'no detail'} | URL: ${f.webhook_url || '?'} | source: ${f.source || '?'} (${f.created_at})`
     ).join('\n') || '(no recent failures)';
+
+    const crashList = (crashes || []).slice(0, 10).map(c => {
+        const meta = c.meta || {};
+        const ts = c.ts ? new Date(Number(c.ts)).toISOString() : c.created_at;
+        return `[${ts}] ${c.action || 'unknown'}: ${meta.message || '(no message)'}\n  Stack: ${(meta.stack_trace || '').slice(0, 500)}`;
+    }).join('\n\n') || '(no recent crashes)';
 
     const roleContext = isAdmin
         ? `ROLE: You are talking to the E-Claw ADMIN (the developer/owner of the platform).
@@ -859,6 +877,9 @@ ${logList}
 
 RECENT HANDSHAKE FAILURES:
 ${failureList}
+
+RECENT APP CRASHES & ERRORS (from device telemetry, last 24h):
+${crashList}
 
 KNOWN ERROR TYPES AND THEIR FIXES:
 - localhost_rejected: webhook URL points to private IP -> use ZEABUR_WEB_URL env var

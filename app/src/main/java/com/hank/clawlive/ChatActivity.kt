@@ -884,7 +884,8 @@ class ChatActivity : AppCompatActivity() {
                 sendMediaMessage("[Voice ${duration}s]", targetIds, "voice", uploadResponse.mediaUrl)
 
             } catch (e: Exception) {
-                Timber.e(e, "Voice upload failed")
+                Timber.e(e, "[VOICE] Voice upload failed")
+                TelemetryHelper.trackError(e, mapOf("action" to "voice_upload"))
                 Toast.makeText(this@ChatActivity, "Upload failed: ${e.message}", Toast.LENGTH_SHORT).show()
             } finally {
                 file.delete()
@@ -893,11 +894,13 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun sendMediaMessage(text: String, targetIds: List<Int>, mediaType: String, mediaUrl: String) {
+        Timber.d("[MEDIA] sendMediaMessage: type=%s, targets=%s, url=%s", mediaType, targetIds, mediaUrl.take(60))
         lifecycleScope.launch {
             val messageId = chatRepository.saveOutgoingMessage(
                 text = text, entityIds = targetIds, source = "android_chat",
                 mediaType = mediaType, mediaUrl = mediaUrl
             )
+            Timber.d("[MEDIA] saved outgoing message: id=%d", messageId)
 
             try {
                 val entityIdValue: Any = if (targetIds.size == 1) targetIds.first() else targetIds
@@ -909,7 +912,10 @@ class ChatActivity : AppCompatActivity() {
                     "mediaType" to mediaType,
                     "mediaUrl" to mediaUrl
                 )
+                Timber.d("[MEDIA] calling api.sendClientMessage: entityId=%s, mediaType=%s", entityIdValue, mediaType)
+                val apiStartTime = System.currentTimeMillis()
                 val response = api.sendClientMessage(request)
+                Timber.d("[MEDIA] sendClientMessage returned in %dms", System.currentTimeMillis() - apiStartTime)
                 chatRepository.markMessageSynced(messageId)
 
                 val deliveredEntityIds = response.targets.filter { it.pushed }.map { it.entityId }
@@ -919,7 +925,8 @@ class ChatActivity : AppCompatActivity() {
 
                 ChatWidgetProvider.updateWidgets(this@ChatActivity)
             } catch (e: Exception) {
-                Timber.e(e, "Failed to send media message")
+                Timber.e(e, "[MEDIA] Failed to send media message")
+                TelemetryHelper.trackError(e, mapOf("action" to "send_media_message", "mediaType" to mediaType))
                 if (e is retrofit2.HttpException && e.code() == 429) {
                     try {
                         val errorBody = e.response()?.errorBody()?.string()
@@ -1114,6 +1121,8 @@ class ChatActivity : AppCompatActivity() {
         val text = editMessage.text.toString().trim()
         val readyFiles = pendingFiles.filter { it.status == "ready" }
         val hasFiles = readyFiles.isNotEmpty()
+        Timber.d("[MSG] sendMessage() entry: text.len=%d, readyFiles=%d, pendingUploading=%d",
+            text.length, readyFiles.size, pendingFiles.count { it.status == "uploading" })
 
         // Must have text or pending files
         if (text.isEmpty() && !hasFiles) {
@@ -1130,6 +1139,7 @@ class ChatActivity : AppCompatActivity() {
         val selected = getSelectedTargetsWithContacts()
         val targetIds = selected.localEntityIds
         val contactCodes = selected.contactCodes
+        Timber.d("[MSG] targets: localEntityIds=%s, contactCodes=%s", targetIds, contactCodes)
 
         if (targetIds.isEmpty() && contactCodes.isEmpty()) {
             Toast.makeText(this, "Please select at least one entity", Toast.LENGTH_SHORT).show()
@@ -1192,10 +1202,13 @@ class ChatActivity : AppCompatActivity() {
                         "text" to text,
                         "source" to "android_chat"
                     )
+                    Timber.d("[MSG] calling api.sendClientMessage: entityId=%s, text.len=%d", entityIdValue, text.length)
+                    val apiStartTime = System.currentTimeMillis()
                     val response = api.sendClientMessage(request)
+                    Timber.d("[MSG] sendClientMessage returned in %dms: targets=%d, pushed=%d",
+                        System.currentTimeMillis() - apiStartTime, response.targets.size,
+                        response.targets.count { it.pushed })
                     chatRepository.markMessageSynced(messageId)
-
-                    Timber.d("Message sent from ChatActivity to entities $targetIds")
 
                     val deliveredEntityIds = response.targets
                         .filter { it.pushed }
@@ -1231,6 +1244,7 @@ class ChatActivity : AppCompatActivity() {
                 val senderCharacter = chatAdapter.entityNames[senderEntity]
 
                 for (code in contactCodes) {
+                    Timber.d("[MSG] sending cross-device message to code=%s from entity=%d", code, senderEntity)
                     try {
                         val request = mapOf<String, Any>(
                             "deviceId" to deviceManager.deviceId,
@@ -1272,7 +1286,11 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun handleSendError(e: Exception) {
-        Timber.e(e, "Failed to send message")
+        Timber.e(e, "[MSG] handleSendError: %s (class=%s)", e.message, e.javaClass.simpleName)
+        TelemetryHelper.trackError(e, mapOf(
+            "action" to "send_message",
+            "httpCode" to (if (e is retrofit2.HttpException) e.code().toString() else "N/A")
+        ))
         if (e is retrofit2.HttpException && e.code() == 429) {
             try {
                 val errorBody = e.response()?.errorBody()?.string()

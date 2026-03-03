@@ -17,9 +17,6 @@ class ClawWallpaperService : WallpaperService() {
 
     override fun onCreate() {
         super.onCreate()
-        if (Timber.treeCount == 0) {
-            Timber.plant(Timber.DebugTree())
-        }
         Timber.d("ClawWallpaperService Created")
     }
 

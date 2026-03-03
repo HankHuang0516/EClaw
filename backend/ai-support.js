@@ -428,7 +428,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
     }
 
     // ── Proxy Forwarding (Anthropic direct or CLI proxy) ──
-    async function forwardToProxy(deviceId, entityId, problemDescription, errorMessages, recentLogs, recentFailures, opts = {}) {
+    async function forwardToProxy(deviceId, entityId, problemDescription, errorMessages, recentLogs, recentFailures, opts = {}, recentCrashes = []) {
         // Priority: Anthropic direct API > CLI proxy > fallback
         const anthropic = getAnthropicClient();
         if (anthropic) {
@@ -440,6 +440,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                     errorMessages,
                     logs: recentLogs,
                     handshakeFailures: recentFailures,
+                    appCrashes: recentCrashes,
                     deviceContext: { deviceId, entityId, timestamp: new Date().toISOString(), role: opts.role || 'bot' }
                 });
                 const latencyMs = Date.now() - startTime;
@@ -498,6 +499,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                     error_messages: errorMessages,
                     logs: (recentLogs || []).slice(0, 30),
                     handshake_failures: (recentFailures || []).slice(0, 10),
+                    app_crashes: (recentCrashes || []).slice(0, 10),
                     device_context: { deviceId, entityId, timestamp: new Date().toISOString(), role: opts.role || 'bot' }
                 }),
                 signal: AbortSignal.timeout(65000)
@@ -546,6 +548,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
     async function fetchRecentData(deviceId) {
         let recentLogs = [];
         let recentFailures = [];
+        let recentCrashes = [];
 
         try {
             const logsResult = await chatPool.query(
@@ -570,7 +573,19 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
             recentFailures = failResult.rows;
         } catch (err) { /* ignore */ }
 
-        return { recentLogs, recentFailures };
+        try {
+            const crashResult = await chatPool.query(
+                `SELECT ts, action, meta, created_at
+                 FROM device_telemetry
+                 WHERE device_id = $1 AND type IN ('crash', 'error')
+                   AND created_at > NOW() - INTERVAL '24 hours'
+                 ORDER BY ts DESC LIMIT 20`,
+                [deviceId]
+            );
+            recentCrashes = crashResult.rows;
+        } catch (err) { /* ignore */ }
+
+        return { recentLogs, recentFailures, recentCrashes };
     }
 
     // ── Sanitize raw Claude CLI session JSON ─────
@@ -705,8 +720,8 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
 
         // Stage C: Forward to Claude CLI proxy
         serverLog('info', 'ai_support', 'Forwarding to Claude CLI proxy', { deviceId, entityId: eId });
-        const { recentLogs, recentFailures } = await fetchRecentData(deviceId);
-        const proxyResult = await forwardToProxy(deviceId, eId, desc, msgs, recentLogs, recentFailures);
+        const { recentLogs, recentFailures, recentCrashes } = await fetchRecentData(deviceId);
+        const proxyResult = await forwardToProxy(deviceId, eId, desc, msgs, recentLogs, recentFailures, {}, recentCrashes);
 
         logSupportQuery(deviceId, eId, proxyResult);
         if (proxyResult.source === 'claude_proxy') {
@@ -869,9 +884,9 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         }
 
         // Stage C: Forward to Claude CLI proxy
-        const { recentLogs, recentFailures } = deviceId
+        const { recentLogs, recentFailures, recentCrashes } = deviceId
             ? await fetchRecentData(deviceId)
-            : { recentLogs: [], recentFailures: [] };
+            : { recentLogs: [], recentFailures: [], recentCrashes: [] };
 
         const proxyResult = await forwardToProxy(
             deviceId || 'admin-test',

@@ -225,6 +225,19 @@
     <string name="feedback_photo_max">最多允许 5 张照片</string>
     <string name="submit">提交</string>
     <string name="app_version">版本：%s</string>
+
+    <!-- Crash Logs -->
+    <string name="crash_logs_title">闪退记录</string>
+    <string name="crash_logs_empty">暂无闪退记录。\n闪退报告将自动记录于此。</string>
+    <string name="crash_log_expand">详情</string>
+    <string name="crash_log_collapse">收起</string>
+    <string name="crash_log_share">分享</string>
+    <string name="crash_log_delete">删除</string>
+    <string name="crash_log_delete_all">全部删除</string>
+    <string name="crash_log_delete_all_confirm">确定删除全部 %d 条闪退记录？</string>
+    <string name="crash_log_deleted">已删除闪退记录</string>
+    <string name="crash_logs_all_deleted">已删除 %d 条闪退记录</string>
+
     <string name="official_borrow">官方机器人租赁</string>
     <string name="official_borrow_title">官方机器人租赁</string>
     <string name="borrow_beta_label">测试版</string>

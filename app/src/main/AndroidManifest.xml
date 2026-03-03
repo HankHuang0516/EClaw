@@ -21,6 +21,7 @@
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
 
     <application
+        android:name=".ClawApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -94,6 +95,12 @@
             android:name=".FeedbackHistoryActivity"
             android:exported="false"
             android:label="@string/feedback_history_title"
+            android:parentActivityName=".SettingsActivity" />
+
+        <activity
+            android:name=".CrashLogViewerActivity"
+            android:exported="false"
+            android:label="@string/crash_logs_title"
             android:parentActivityName=".SettingsActivity" />
 
         <activity
