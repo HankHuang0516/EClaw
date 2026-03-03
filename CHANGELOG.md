@@ -1,3 +1,10 @@
+## [1.74.1](https://github.com/HankHuang0516/realbot/compare/v1.74.0...v1.74.1) (2026-03-03)
+
+
+### Bug Fixes
+
+* channel test checks entities wrapper object correctly ([40a08ee](https://github.com/HankHuang0516/realbot/commit/40a08ee6899f5413edb36236661da133425a0ed1))
+
 # [1.74.0](https://github.com/HankHuang0516/realbot/compare/v1.73.0...v1.74.0) (2026-03-03)
 
 
