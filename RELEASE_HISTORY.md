@@ -5,7 +5,7 @@ Track git commits for each release to enable changelog generation via `git diff`
 ---
 
 ## Latest
-v1.0.34 | 5b951a6 | 2026-03-02
+v1.0.35 | a4ffebd | 2026-03-03
 
 ---
 
@@ -13,6 +13,7 @@ v1.0.34 | 5b951a6 | 2026-03-02
 
 | Version | Commit | Date | Notes |
 |---------|--------|------|-------|
+| v1.0.34 | 5b951a6 | 2026-03-02 | Broadcast recipient info, device preferences, Mission Control delete UX, chat reactions, env vars tab |
 | v1.0.33 | 5986366 | 2026-03-01 | Social login, floating AI chat, cross-device contacts, AI feedback to GitHub |
 | v1.0.32 | 8fcdacb | 2026-02-28 | AI binding troubleshooter, WebSocket transport, XP expansion |
 | v1.0.31 | d6bd1d3 | 2026-02-27 | Bot gateway disconnection detection, handshake failure recording, push health tracking, skill doc optimization |
