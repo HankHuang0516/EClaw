@@ -8,8 +8,9 @@ data class SlashCommand(
 
 object SlashCommandRegistry {
     val commands = listOf(
-        SlashCommand("/status", "Status", "Check bot connection status"),
         SlashCommand("/help", "Help", "Show available commands"),
+        SlashCommand("/status", "Status", "Check bot connection status"),
+        SlashCommand("/reset", "Reset", "Clear conversation history"),
         SlashCommand("/activation", "Activation", "Manage bot activation"),
         SlashCommand("/pair", "Pair", "Pair with a new device"),
         SlashCommand("/reasoning", "Reasoning", "Toggle reasoning mode"),

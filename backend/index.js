@@ -18,6 +18,7 @@ const notifModule = require('./notifications');
 const devicePrefs = require('./device-preferences');
 const feedbackEmail = require('./feedback-email');
 const multer = require('multer');
+const crypto = require('crypto');
 const WebSocket = require('ws');
 const app = express();
 const httpServer = http.createServer(app);
@@ -123,6 +124,91 @@ app.use(telemetry.createMiddleware(telemetryPoolProxy, (deviceId) => devices[dev
 
 const MAX_ENTITIES_PER_DEVICE = 8; // absolute ceiling (all devices init 8 slots)
 const FREE_ENTITY_LIMIT = 4;
+
+// ============================================
+// PLATFORM SLASH COMMANDS
+// ============================================
+const PLATFORM_COMMANDS = new Set(['help', 'status', 'reset']);
+
+function parsePlatformCommand(text) {
+    if (!text || !text.startsWith('/')) return null;
+    const match = text.match(/^\/(\w+)(?:\s+(.*))?$/);
+    if (!match) return null;
+    const cmd = match[1].toLowerCase();
+    if (!PLATFORM_COMMANDS.has(cmd)) return null;
+    return { command: cmd, args: match[2] || '' };
+}
+
+async function handlePlatformCommand(command, deviceId, device, targetIds, confirmed) {
+    switch (command) {
+        case 'help':
+            return {
+                text: [
+                    'Available Commands:',
+                    '/help \u2014 Show this help message',
+                    '/status \u2014 Check entity connection status',
+                    '/reset \u2014 Clear conversation history',
+                ].join('\n'),
+                needsConfirmation: false
+            };
+
+        case 'status': {
+            const lines = ['Entity Status:'];
+            for (const eId of targetIds) {
+                const entity = device.entities[eId];
+                if (!entity) continue;
+                const name = entity.name || `Entity ${eId}`;
+                const character = entity.character || 'LOBSTER';
+                const bound = entity.isBound ? 'Bound' : 'Unbound';
+                const webhook = entity.webhook ? 'Push active' : 'Polling';
+                const xp = entity.xp || 0;
+                const level = entity.level || 1;
+                lines.push(`#${eId} ${name} (${character}) \u2014 ${bound} \u2014 ${webhook} \u2014 XP: ${xp} Lv.${level}`);
+            }
+            return { text: lines.join('\n'), needsConfirmation: false };
+        }
+
+        case 'reset': {
+            // Broadcast mode: require confirmation
+            if (targetIds.length > 1 && !confirmed) {
+                const names = targetIds.map(eId => {
+                    const e = device.entities[eId];
+                    return e ? (e.name || `Entity ${eId}`) : `Entity ${eId}`;
+                }).join(', ');
+                return {
+                    text: `This will clear conversation history for ${targetIds.length} entities: ${names}.\nSend /reset again to confirm.`,
+                    needsConfirmation: true,
+                    confirmCommand: 'reset'
+                };
+            }
+
+            // Execute reset
+            const results = [];
+            for (const eId of targetIds) {
+                const entity = device.entities[eId];
+                if (!entity) continue;
+                try {
+                    await chatPool.query(
+                        'DELETE FROM chat_messages WHERE device_id = $1 AND entity_id = $2',
+                        [deviceId, eId]
+                    );
+                    entity.messageQueue = [];
+                    const name = entity.name || `Entity ${eId}`;
+                    results.push(`#${eId} ${name}: history cleared`);
+                } catch (err) {
+                    results.push(`#${eId}: failed - ${err.message}`);
+                }
+            }
+            return {
+                text: 'Conversation Reset:\n' + results.join('\n'),
+                needsConfirmation: false
+            };
+        }
+
+        default:
+            return { text: 'Unknown command.', needsConfirmation: false };
+    }
+}
 
 // Helper: get the effective entity limit for a specific device
 function getDeviceEntityLimit(deviceId) {
@@ -1423,12 +1509,44 @@ app.get('/api/version', (req, res) => {
 const linkPreviewCache = new Map();
 const LINK_PREVIEW_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
-// Local vars cache — in-memory only, never written to DB
-const deviceVarsCache = new Map(); // deviceId → { vars: {KEY:VALUE}, syncedAt: ms }
-setInterval(() => {
-    const cut = Date.now() - 30 * 60 * 1000;
-    for (const [id, e] of deviceVarsCache) if (e.syncedAt < cut) deviceVarsCache.delete(id);
-}, 5 * 60 * 1000);
+// ============================================
+// ENV VARS ENCRYPTION (AES-256-GCM)
+// ============================================
+const SEAL_KEY_HEX = process.env.SEAL_KEY;
+
+function encryptVars(varsObj) {
+    if (!SEAL_KEY_HEX) throw new Error('SEAL_KEY not configured');
+    const key = Buffer.from(SEAL_KEY_HEX, 'hex');
+    const iv = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+    let encrypted = cipher.update(JSON.stringify(varsObj), 'utf8', 'base64');
+    encrypted += cipher.final('base64');
+    const authTag = cipher.getAuthTag();
+    return {
+        encrypted,
+        iv: iv.toString('hex'),
+        authTag: authTag.toString('hex')
+    };
+}
+
+function decryptVars(encrypted, ivHex, authTagHex) {
+    if (!SEAL_KEY_HEX) throw new Error('SEAL_KEY not configured');
+    const key = Buffer.from(SEAL_KEY_HEX, 'hex');
+    const iv = Buffer.from(ivHex, 'hex');
+    const authTag = Buffer.from(authTagHex, 'hex');
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+    decipher.setAuthTag(authTag);
+    let decrypted = decipher.update(encrypted, 'base64', 'utf8');
+    decrypted += decipher.final('utf8');
+    return JSON.parse(decrypted);
+}
+
+// JIT approval cache — deviceId → { approvedAt, expiresAt }
+const varsApprovalCache = new Map();
+// Pending approval requests — deviceId → { requestId, resolvers: [{ resolve, reject }], timer }
+const varsApprovalPending = new Map();
+const VARS_APPROVAL_TTL = 5 * 60 * 1000; // 5 minutes
+const VARS_APPROVAL_TIMEOUT = 60 * 1000; // 60 seconds
 
 /* global AbortController, TextDecoder */
 app.get('/api/link-preview', async (req, res) => {
@@ -2676,6 +2794,52 @@ app.post('/api/client/speak', async (req, res) => {
     if (targetIds.length === 0) {
         return res.status(400).json({ success: false, message: "No valid target entities" });
     }
+
+    // ── Platform Slash Commands ──
+    const parsedCmd = parsePlatformCommand(text);
+    if (parsedCmd) {
+        // Save user's command as a user message for each target
+        for (const eId of targetIds) {
+            saveChatMessage(deviceId, eId, text, source, true, false);
+        }
+
+        const confirmed = req.body.confirmed === true;
+        const cmdResult = await handlePlatformCommand(parsedCmd.command, deviceId, device, targetIds, confirmed);
+
+        // Save platform response for each target
+        for (const eId of targetIds) {
+            await saveChatMessage(deviceId, eId, cmdResult.text, "platform", false, false);
+        }
+
+        // Notify device
+        notifyDevice(deviceId, {
+            type: 'chat', category: 'platform_command',
+            title: 'E-Claw',
+            body: cmdResult.text.slice(0, 100),
+            link: 'chat.html',
+            metadata: { command: parsedCmd.command }
+        }).catch(() => {});
+
+        console.log(`[Platform] Device ${deviceId} command /${parsedCmd.command} -> ${targetIds.length} entity(s)`);
+        serverLog('info', 'platform_command', `/${parsedCmd.command} for ${targetIds.length} entity(s)`, { deviceId, metadata: { command: parsedCmd.command, targetIds } });
+
+        return res.json({
+            success: true,
+            message: cmdResult.text,
+            source: 'platform',
+            command: parsedCmd.command,
+            needsConfirmation: cmdResult.needsConfirmation || false,
+            confirmCommand: cmdResult.confirmCommand || null,
+            targets: targetIds.map(eId => ({
+                entityId: eId,
+                pushed: false,
+                mode: 'platform',
+                reason: 'slash_command'
+            })),
+            broadcast: targetIds.length > 1
+        });
+    }
+    // ── End Platform Slash Commands ──
 
     // Check device preference for broadcast recipient info (only for multi-target broadcasts)
     let showRecipientInfo = false;
@@ -7280,13 +7444,13 @@ function logHandshakeFailure(opts) {
 }
 
 // ============================================================
-// LOCAL VARS API — in-memory only, never written to DB
+// ENV VARS API — encrypted DB persistence + JIT approval
 // ============================================================
 
-// POST /api/device-vars — client syncs local vars to server in-memory cache
+// POST /api/device-vars — client syncs local vars to server (encrypted DB)
 // Auth: deviceSecret
-app.post('/api/device-vars', (req, res) => {
-    const { deviceId, deviceSecret, vars } = req.body;
+app.post('/api/device-vars', async (req, res) => {
+    const { deviceId, deviceSecret, vars, locked } = req.body;
     if (!deviceId || !deviceSecret) {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
@@ -7297,19 +7461,34 @@ app.post('/api/device-vars', (req, res) => {
     if (vars !== null && typeof vars !== 'object') {
         return res.status(400).json({ success: false, error: 'vars must be an object' });
     }
+    if (!SEAL_KEY_HEX) {
+        return res.status(500).json({ success: false, error: 'Encryption not configured' });
+    }
+
+    // Sanitize: only string keys + string values
     const sanitized = {};
     for (const [k, v] of Object.entries(vars || {})) {
         if (typeof k === 'string' && k.length > 0 && typeof v === 'string') {
             sanitized[k] = v;
         }
     }
-    deviceVarsCache.set(deviceId, { vars: sanitized, syncedAt: Date.now() });
-    res.json({ success: true, count: Object.keys(sanitized).length });
+
+    const isLocked = locked === true;
+    const varKeys = Object.keys(sanitized);
+
+    try {
+        const { encrypted, iv, authTag } = encryptVars(sanitized);
+        await db.upsertDeviceVars(deviceId, encrypted, iv, authTag, varKeys, isLocked);
+        res.json({ success: true, count: varKeys.length });
+    } catch (err) {
+        console.error(`[Vars] Failed to save vars for ${deviceId}:`, err.message);
+        res.status(500).json({ success: false, error: 'Failed to save variables' });
+    }
 });
 
-// GET /api/device-vars — bot reads local vars from in-memory cache
+// GET /api/device-vars — bot reads vars (JIT approval required)
 // Auth: botSecret (entity must be bound to the device)
-app.get('/api/device-vars', (req, res) => {
+app.get('/api/device-vars', async (req, res) => {
     const { deviceId, botSecret } = req.query;
     if (!deviceId || !botSecret) {
         return res.status(400).json({ success: false, error: 'deviceId and botSecret required' });
@@ -7318,21 +7497,120 @@ app.get('/api/device-vars', (req, res) => {
     if (!device) {
         return res.status(404).json({ success: false, error: 'Device not found' });
     }
-    const entities = Object.values(device.entities || {});
-    const validBot = entities.some(e => e.isBound && e.botSecret === botSecret);
-    if (!validBot) {
+
+    // Authenticate bot
+    const allEntities = Object.values(device.entities || {});
+    const botEntity = allEntities.find(e => e.isBound && e.botSecret === botSecret);
+    if (!botEntity) {
         return res.status(403).json({ success: false, error: 'Invalid botSecret' });
     }
-    const cached = deviceVarsCache.get(deviceId);
-    if (!cached) {
-        return res.json({ success: true, vars: {}, hint: 'No vars synced — open the portal or app to sync local variables' });
+
+    // Check if vars exist in DB
+    const row = await db.getDeviceVars(deviceId);
+    if (!row) {
+        return res.json({ success: true, vars: {}, hint: 'No vars saved — owner has not configured any variables' });
     }
-    res.json({ success: true, vars: cached.vars });
+
+    // Check lock
+    if (row.is_locked) {
+        return res.status(403).json({ success: false, error: 'locked', message: 'Variables are locked by owner' });
+    }
+
+    // Check approval cache
+    const cached = varsApprovalCache.get(deviceId);
+    if (cached && Date.now() < cached.expiresAt) {
+        try {
+            const vars = decryptVars(row.encrypted_vars, row.iv, row.auth_tag);
+            return res.json({ success: true, vars });
+        } catch (err) {
+            console.error(`[Vars] Decrypt failed for ${deviceId}:`, err.message);
+            return res.status(500).json({ success: false, error: 'Decryption failed' });
+        }
+    }
+
+    // Check if owner is online via Socket.IO
+    const sockets = await io.in(`device:${deviceId}`).fetchSockets();
+    if (sockets.length === 0) {
+        return res.status(403).json({ success: false, error: 'owner_offline', message: 'Device owner is not online — open Portal or App to approve' });
+    }
+
+    // Check if there's already a pending approval for this device
+    const pending = varsApprovalPending.get(deviceId);
+    if (pending) {
+        // Piggyback on the existing approval request
+        try {
+            const approved = await new Promise((resolve, reject) => {
+                pending.resolvers.push({ resolve, reject });
+            });
+            if (!approved) {
+                return res.status(403).json({ success: false, error: 'denied', message: 'Access denied by owner' });
+            }
+            const vars = decryptVars(row.encrypted_vars, row.iv, row.auth_tag);
+            return res.json({ success: true, vars });
+        } catch (err) {
+            if (err.message === 'timeout') {
+                return res.status(408).json({ success: false, error: 'timeout', message: 'Approval request timed out (60s)' });
+            }
+            return res.status(500).json({ success: false, error: err.message });
+        }
+    }
+
+    // Create new approval request
+    const requestId = crypto.randomBytes(8).toString('hex');
+    const entityName = botEntity.name || `Entity ${botEntity.entityId}`;
+    const varKeys = row.var_keys || [];
+
+    try {
+        const approved = await new Promise((resolve, reject) => {
+            const timer = setTimeout(() => {
+                const entry = varsApprovalPending.get(deviceId);
+                if (entry && entry.requestId === requestId) {
+                    varsApprovalPending.delete(deviceId);
+                    for (const { reject: rej } of entry.resolvers) {
+                        rej(new Error('timeout'));
+                    }
+                }
+            }, VARS_APPROVAL_TIMEOUT);
+
+            const entry = {
+                requestId,
+                resolvers: [{ resolve, reject }],
+                timer
+            };
+            varsApprovalPending.set(deviceId, entry);
+
+            // Emit to all connected clients for this device
+            io.to(`device:${deviceId}`).emit('vars:approval-request', {
+                requestId,
+                entityName,
+                varKeys,
+                expiresAt: Date.now() + VARS_APPROVAL_TIMEOUT
+            });
+        });
+
+        if (!approved) {
+            return res.status(403).json({ success: false, error: 'denied', message: 'Access denied by owner' });
+        }
+
+        // Approved — decrypt and return
+        const vars = decryptVars(row.encrypted_vars, row.iv, row.auth_tag);
+        varsApprovalCache.set(deviceId, {
+            approvedAt: Date.now(),
+            expiresAt: Date.now() + VARS_APPROVAL_TTL
+        });
+        return res.json({ success: true, vars });
+    } catch (err) {
+        if (err.message === 'timeout') {
+            return res.status(408).json({ success: false, error: 'timeout', message: 'Approval request timed out (60s)' });
+        }
+        console.error(`[Vars] Approval error for ${deviceId}:`, err.message);
+        return res.status(500).json({ success: false, error: 'Approval failed' });
+    }
 });
 
-// DELETE /api/device-vars — client clears all local vars from cache
+// DELETE /api/device-vars — client clears all vars
 // Auth: deviceSecret
-app.delete('/api/device-vars', (req, res) => {
+app.delete('/api/device-vars', async (req, res) => {
     const { deviceId, deviceSecret } = req.body;
     if (!deviceId || !deviceSecret) {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
@@ -7341,7 +7619,8 @@ app.delete('/api/device-vars', (req, res) => {
     if (!device || device.deviceSecret !== deviceSecret) {
         return res.status(403).json({ success: false, error: 'Invalid credentials' });
     }
-    deviceVarsCache.delete(deviceId);
+    await db.deleteDeviceVars(deviceId);
+    varsApprovalCache.delete(deviceId);
     res.json({ success: true });
 });
 
@@ -7440,7 +7719,7 @@ app.get('/api/handshake-failures', async (req, res) => {
 
 // POST /api/device-telemetry — Device pushes telemetry entries
 app.post('/api/device-telemetry', async (req, res) => {
-    const { deviceId, deviceSecret, entries } = req.body;
+    const { deviceId, deviceSecret, entries, appVersion, appVersionCode, platform } = req.body;
     if (!deviceId || !deviceSecret) {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
@@ -7450,6 +7729,17 @@ app.post('/api/device-telemetry', async (req, res) => {
     }
     if (!Array.isArray(entries) || entries.length === 0) {
         return res.status(400).json({ success: false, error: 'entries array required' });
+    }
+    // Store appVersion/platform on device entities for AI Support and feedback
+    if (appVersion && device) {
+        for (const entity of device.entities) {
+            if (entity) entity.appVersion = appVersion;
+        }
+        device.appVersion = appVersion;
+        if (appVersionCode) device.appVersionCode = appVersionCode;
+    }
+    if (platform && device) {
+        device.lastPlatform = platform;
     }
     // Cap batch size to 100 entries per request
     const batch = entries.slice(0, 100);

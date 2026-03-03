@@ -7,6 +7,7 @@ import com.hank.clawlive.data.local.database.ChatMessageDao
 import com.hank.clawlive.data.local.database.MessageType
 import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.data.remote.ChatHistoryMessage
+import com.hank.clawlive.data.remote.ClawApiService
 import kotlinx.coroutines.flow.Flow
 import timber.log.Timber
 import java.text.SimpleDateFormat
@@ -33,6 +34,9 @@ class ChatRepository private constructor(
 
         /** Deduplication time window in milliseconds (5 minutes) */
         private const val DEDUP_WINDOW_MS = 5 * 60 * 1000L
+
+        /** If local DB has fewer than this many messages, trigger a full cloud sync */
+        private const val FULL_SYNC_THRESHOLD = 5
     }
 
     // ===== Message Flows for UI =====
@@ -486,6 +490,23 @@ class ChatRepository private constructor(
                     userReaction = msg.user_reaction,
                     backendId = msg.id
                 )
+            } else if (!msg.is_from_user && !msg.is_from_bot && msg.source == "platform") {
+                // Platform slash command response
+                ChatMessage(
+                    text = msg.text,
+                    timestamp = timestamp,
+                    isFromUser = false,
+                    messageType = MessageType.PLATFORM_RESPONSE,
+                    source = "platform",
+                    fromEntityId = msg.entity_id,
+                    fromEntityName = "E-Claw",
+                    deduplicationKey = deduplicationKey,
+                    isSynced = true,
+                    likeCount = msg.like_count,
+                    dislikeCount = msg.dislike_count,
+                    userReaction = msg.user_reaction,
+                    backendId = msg.id
+                )
             } else {
                 ChatMessage(
                     text = msg.text,
@@ -516,6 +537,38 @@ class ChatRepository private constructor(
         }
 
         return addedCount
+    }
+
+    // ===== Cloud Sync Recovery =====
+
+    /**
+     * Check if local DB is empty (post-update/fresh install) and perform
+     * a full history sync from the backend. Returns true if sync was triggered.
+     */
+    suspend fun performFullSyncIfNeeded(
+        api: ClawApiService,
+        deviceId: String,
+        deviceSecret: String
+    ): Boolean {
+        val localCount = chatDao.getMessageCount()
+        if (localCount >= FULL_SYNC_THRESHOLD) return false
+
+        Timber.i("Local DB has only $localCount messages — triggering full cloud sync")
+        try {
+            val response = api.getChatHistory(
+                deviceId = deviceId,
+                deviceSecret = deviceSecret,
+                since = null,
+                limit = 500
+            )
+            if (response.success && response.messages.isNotEmpty()) {
+                val added = syncFromBackend(response.messages)
+                Timber.i("Full cloud sync complete: restored $added messages from ${response.messages.size} server records")
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Full cloud sync failed")
+        }
+        return true
     }
 
     private fun parseIsoTimestamp(isoString: String): Long {

@@ -80,8 +80,12 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
 
         try {
             const userInfo = user.email ? `User: ${user.email}` : `Device: ${(user.deviceId || '').slice(0, 8)}...`;
+            const deviceState = feedbackModule ? feedbackModule.captureDeviceState(devices, user.deviceId) : null;
+            const appVersion = deviceState?.appVersion || devices[user.deviceId]?.appVersion || null;
+            const platformLabel = devices[user.deviceId]?.lastPlatform || 'unknown';
+            const versionSuffix = appVersion ? ` (Platform: ${platformLabel}, App v${appVersion})` : '';
             const body = (action.body || action.title)
-                + `\n\n---\n_Reported by ${userInfo} via E-Claw AI Assistant_`;
+                + `\n\n---\n_Reported by ${userInfo} via E-Claw AI Assistant${versionSuffix}_`;
 
             const ghRes = await fetch(`https://api.github.com/repos/${repo}/issues`, {
                 method: 'POST',
@@ -209,7 +213,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                 deviceSecret,
                 message: action.body || action.title,
                 category: 'bug',
-                appVersion: '',
+                appVersion: deviceState?.appVersion || device?.appVersion || '',
                 source: 'ai_chat',
                 logSnapshot,
                 deviceState,

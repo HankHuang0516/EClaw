@@ -13,7 +13,8 @@ enum class MessageType {
     ENTITY_TO_ENTITY,    // source = "entity:{ID}:{CHARACTER}" (LEFT side)
     ENTITY_BROADCAST,    // Entity broadcast via messageQueue (LEFT side)
     CROSS_DEVICE_SENT,   // User sent cross-device message (RIGHT side)
-    CROSS_DEVICE_RECEIVED // Received cross-device message (LEFT side)
+    CROSS_DEVICE_RECEIVED, // Received cross-device message (LEFT side)
+    PLATFORM_RESPONSE    // Platform slash command response (LEFT side, centered)
 }
 
 /**

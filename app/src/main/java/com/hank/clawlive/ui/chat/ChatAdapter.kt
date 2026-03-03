@@ -352,7 +352,10 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
 
             // Entity name and avatar
             val avatarManager = EntityAvatarManager.getInstance(itemView.context)
-            if (message.messageType == MessageType.CROSS_DEVICE_RECEIVED && message.fromPublicCode != null) {
+            if (message.messageType == MessageType.PLATFORM_RESPONSE) {
+                tvAvatar.text = "\uD83E\uDD9E"  // lobster emoji
+                tvEntityName.text = "E-Claw"
+            } else if (message.messageType == MessageType.CROSS_DEVICE_RECEIVED && message.fromPublicCode != null) {
                 tvAvatar.text = "\uD83C\uDF10"  // 🌐 globe
                 tvEntityName.text = adapter.getXDeviceLabel(message.fromPublicCode)
             } else {
@@ -389,8 +392,8 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
         }
 
         private fun bindReactions(message: ChatMessage, adapter: ChatAdapter) {
-            // Only show reactions when backendId is available (needed for API call)
-            if (message.backendId == null) {
+            // Hide reactions for platform messages and when backendId is missing
+            if (message.backendId == null || message.messageType == MessageType.PLATFORM_RESPONSE) {
                 layoutReactions.visibility = View.GONE
                 return
             }
