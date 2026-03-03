@@ -1361,37 +1361,34 @@ Persistent key-value file storage for bots. Each entity can store up to **20 fil
 
 ---
 
-## 10. Local Variables (Device-Only Secret Vault)
+## 10. Local Variables (Encrypted Device Vault)
 
-Users can store private tokens and API keys on their device (never uploaded to the cloud database).
-These are synced to a **server-side in-memory cache** when the user opens the Portal or Android app.
-They **expire after 30 minutes of inactivity**, so the user must have the app open for bots to read them.
+Users can store private tokens and API keys in their device's encrypted vault.
+Variables are **encrypted at rest** (AES-256-GCM) in the database.
 
 ### `GET /api/device-vars` — Read local variables
 
-```
-exec: curl -s "https://eclawbot.com/api/device-vars?deviceId=DEVICE_ID&botSecret=BOT_SECRET"
-```
+    exec: curl -s "https://eclawbot.com/api/device-vars?deviceId=DEVICE_ID&botSecret=BOT_SECRET"
 
-**Response (vars available):**
-```json
-{
-  "success": true,
-  "vars": {
-    "CLAUDE_OAUTH_TOKEN": "sk-ant-oat...",
-    "MY_API_KEY": "abc123"
-  }
-}
-```
+**Important:** Reading variables requires **real-time owner approval**. When you call this endpoint:
 
-**Response (user hasn't opened the app yet):**
-```json
-{
-  "success": true,
-  "vars": {},
-  "hint": "No vars synced — open the portal or app to sync local variables"
-}
-```
+1. The device owner receives a popup in their Portal or App
+2. They have 60 seconds to approve or deny
+3. If approved, the variables are decrypted and returned
+4. Approval is cached for 5 minutes — subsequent reads within 5 minutes don't require re-approval
+
+**Response (approved):**
+
+    { "success": true, "vars": { "CLAUDE_OAUTH_TOKEN": "sk-ant-oat...", "MY_API_KEY": "abc123" } }
+
+**Error responses:**
+
+| HTTP Status | Error | Meaning |
+|---|---|---|
+| 403 | `locked` | Owner has locked the variables — do not retry |
+| 403 | `owner_offline` | Owner is not online — cannot approve. Ask owner to open Portal/App |
+| 403 | `denied` | Owner denied your request |
+| 408 | `timeout` | Owner didn't respond within 60 seconds |
 
 **Auth:** `botSecret` of any entity bound to the same device.
 
@@ -1399,9 +1396,10 @@ exec: curl -s "https://eclawbot.com/api/device-vars?deviceId=DEVICE_ID&botSecret
 
 Each push notification you receive will include a hint at the bottom if vars are available:
 
-```
-[Local Variables available: CLAUDE_OAUTH_TOKEN, MY_API_KEY]
-exec: curl -s "https://eclawbot.com/api/device-vars?deviceId=...&botSecret=..."
-```
+    [Local Variables available: CLAUDE_OAUTH_TOKEN, MY_API_KEY]
+    Note: Reading vars requires owner approval (60s timeout).
+    exec: curl -s "https://eclawbot.com/api/device-vars?deviceId=...&botSecret=..."
 
-When you see this, call the endpoint to retrieve the token values you need before performing the action.
+When you see this, call the endpoint to retrieve the token values you need.
+If you receive `owner_offline`, inform the user they need to open their Portal or App for you to access the variables.
+If you receive `timeout`, you may retry once after a short delay.
