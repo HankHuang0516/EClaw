@@ -42,6 +42,10 @@ function initPortalSocket() {
         if (typeof onSocketEntityUpdate === 'function') onSocketEntityUpdate(data);
     });
 
+    portalSocket.on('vars:approval-request', (data) => {
+        showVarsApprovalDialog(data);
+    });
+
     portalSocket.on('disconnect', () => {
         console.log('[Socket] Disconnected');
     });
@@ -188,6 +192,100 @@ async function markAllNotifsRead() {
         // Update dropdown items
         document.querySelectorAll('.notif-unread').forEach(el => el.classList.remove('notif-unread'));
     } catch (e) { /* ignore */ }
+}
+
+// ============================================
+// Vars Approval Dialog (JIT Authorization)
+// ============================================
+
+let varsApprovalTimer = null;
+
+function showVarsApprovalDialog(data) {
+    const { requestId, entityName, varKeys, expiresAt } = data;
+
+    // Remove any existing dialog
+    const existing = document.getElementById('varsApprovalOverlay');
+    if (existing) existing.remove();
+    if (varsApprovalTimer) clearInterval(varsApprovalTimer);
+
+    const t = (key, fallback) => typeof i18n !== 'undefined' ? i18n.t(key) : fallback;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'varsApprovalOverlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);z-index:10000;display:flex;align-items:center;justify-content:center;';
+
+    const keysHtml = varKeys.length > 0
+        ? varKeys.map(k => `<code style="background:#f0f0f0;padding:2px 8px;border-radius:4px;font-size:13px;">${k}</code>`).join(' ')
+        : '<em>(' + t('vars_no_keys', 'no variables') + ')</em>';
+
+    overlay.innerHTML = `
+        <div style="background:#fff;border-radius:16px;padding:32px;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.3);text-align:center;">
+            <div style="font-size:40px;margin-bottom:12px;">&#x1f510;</div>
+            <h3 style="margin:0 0 8px;font-size:18px;">${t('vars_approval_title', 'Variable Access Request')}</h3>
+            <p style="margin:0 0 16px;color:#555;font-size:14px;">
+                <strong>${entityName}</strong> ${t('vars_approval_body', 'wants to read your variables')}
+            </p>
+            <div style="margin:0 0 20px;text-align:left;padding:12px;background:#f8f8f8;border-radius:8px;">
+                ${keysHtml}
+            </div>
+            <div style="display:flex;gap:12px;justify-content:center;">
+                <button id="varsApprovalDeny" style="padding:10px 24px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;">
+                    ${t('vars_deny', 'Deny')}
+                </button>
+                <button id="varsApprovalAllow" disabled style="padding:10px 24px;border:none;border-radius:8px;background:#ccc;color:#fff;cursor:not-allowed;font-size:14px;min-width:120px;">
+                    ${t('vars_allow', 'Allow')} (3s)
+                </button>
+            </div>
+            <p id="varsApprovalCountdown" style="margin:12px 0 0;color:#999;font-size:12px;"></p>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const allowBtn = document.getElementById('varsApprovalAllow');
+    const denyBtn = document.getElementById('varsApprovalDeny');
+    const countdownEl = document.getElementById('varsApprovalCountdown');
+
+    // 3-second cooldown on Allow button
+    let cooldown = 3;
+    const cooldownInterval = setInterval(() => {
+        cooldown--;
+        if (cooldown > 0) {
+            allowBtn.textContent = `${t('vars_allow', 'Allow')} (${cooldown}s)`;
+        } else {
+            clearInterval(cooldownInterval);
+            allowBtn.disabled = false;
+            allowBtn.style.background = '#4CAF50';
+            allowBtn.style.cursor = 'pointer';
+            allowBtn.textContent = t('vars_allow', 'Allow');
+        }
+    }, 1000);
+
+    // Auto-timeout countdown
+    const timeoutMs = expiresAt - Date.now();
+    let remaining = Math.ceil(timeoutMs / 1000);
+    countdownEl.textContent = `${t('vars_auto_deny', 'Auto-deny in')} ${remaining}s`;
+    varsApprovalTimer = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+            respond(false);
+        } else {
+            countdownEl.textContent = `${t('vars_auto_deny', 'Auto-deny in')} ${remaining}s`;
+        }
+    }, 1000);
+
+    function respond(approved) {
+        clearInterval(cooldownInterval);
+        clearInterval(varsApprovalTimer);
+        varsApprovalTimer = null;
+        overlay.remove();
+        if (portalSocket && portalSocket.connected) {
+            portalSocket.emit('vars:approval-response', { requestId, approved });
+        }
+    }
+
+    allowBtn.addEventListener('click', () => respond(true));
+    denyBtn.addEventListener('click', () => respond(false));
 }
 
 // Close dropdown when clicking outside

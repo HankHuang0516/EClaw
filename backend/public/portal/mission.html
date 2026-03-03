@@ -1584,12 +1584,13 @@ Optional: Enable auto-start via systemd
         async function syncVarsToServer() {
             if (!currentUser) return;
             const locked = localStorage.getItem(`eclawVarsLocked_${currentUser.deviceId}`) === 'true';
-            const vars = locked ? {} : loadLocalVars();
+            const vars = loadLocalVars(); // always send real vars
             try {
                 await apiCall('POST', '/api/device-vars', {
                     deviceId: currentUser.deviceId,
                     deviceSecret: currentUser.deviceSecret,
-                    vars
+                    vars,
+                    locked
                 });
             } catch (e) { /* silent */ }
         }
