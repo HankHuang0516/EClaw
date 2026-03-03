@@ -15,6 +15,7 @@ const feedbackModule = require('./device-feedback');
 const chatIntegrity = require('./chat-integrity');
 const scheduler = require('./scheduler');
 const notifModule = require('./notifications');
+const devicePrefs = require('./device-preferences');
 const feedbackEmail = require('./feedback-email');
 const multer = require('multer');
 const WebSocket = require('ws');
@@ -6395,6 +6396,7 @@ telemetry.initTelemetryTable(chatPool);
 feedbackModule.initFeedbackTable(chatPool);
 feedbackModule.initFeedbackPhotosTable(chatPool);
 notifModule.initNotificationTables(chatPool);
+devicePrefs.initTable(chatPool);
 chatIntegrity.initIntegrityTable(chatPool);
 
 // Auto-migrate: add delivery tracking + media columns
