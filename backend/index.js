@@ -3466,6 +3466,26 @@ app.post('/api/client/cross-speak', async (req, res) => {
 });
 
 /**
+ * Build [BROADCAST RECIPIENTS] context block for push messages.
+ * @param {object} device - The device object
+ * @param {number[]} recipientIds - All recipient entity IDs (excluding sender)
+ * @param {number} currentEntityId - The entity receiving this particular push
+ * @returns {string} The formatted block, or empty string
+ */
+function buildBroadcastRecipientBlock(device, recipientIds, currentEntityId) {
+    if (recipientIds.length === 0) return '';
+    let block = `[BROADCAST RECIPIENTS] This message was sent to ${recipientIds.length} entities:\n`;
+    for (const id of recipientIds) {
+        const entity = device.entities[id];
+        if (!entity) continue;
+        const nameStr = entity.name ? ` "${entity.name}"` : '';
+        const youMarker = id === currentEntityId ? ' \u2190 YOU' : '';
+        block += `- entity_${id}${nameStr} (${entity.character || 'LOBSTER'})${youMarker}\n`;
+    }
+    return block + '\n';
+}
+
+/**
  * POST /api/entity/broadcast
  * Broadcast message from one entity to all other bound entities on the same device.
  * Body: { deviceId, fromEntityId, botSecret, text, expects_reply? }
