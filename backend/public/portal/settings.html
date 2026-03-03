@@ -658,6 +658,21 @@
             </div>
         </div>
 
+        <!-- Broadcast Settings Card -->
+        <div class="card">
+            <div class="card-title">
+                <span>📡 <span data-i18n="broadcast_settings_title">Broadcast Settings</span></span>
+            </div>
+            <p class="section-desc" data-i18n="broadcast_settings_desc">Configure how broadcast messages work</p>
+            <div class="setting-row">
+                <span class="setting-row-label" data-i18n="broadcast_pref_recipient_info">Show recipient list in broadcasts</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggleBroadcastRecipientInfo" onchange="toggleDevicePref('broadcast_recipient_info', this.checked)">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+
         <!-- Feedback Card -->
         <div class="card">
             <div class="feedback-header">
@@ -806,6 +821,7 @@
             await loadSubscriptionStatus();
             loadLanguagePreference();
             loadNotifPreferences();
+            loadDevicePreferences();
             updatePushToggle();
 
             document.getElementById('pageContent').style.display = '';
@@ -1123,6 +1139,30 @@
                 prefs[key] = enabled;
                 if (key === 'feedback_resolved') prefs['feedback_reply'] = enabled;
                 await apiCall('PUT', '/api/notification-preferences', { prefs });
+            } catch (e) {
+                showToast('Failed to update preference', 'error');
+            }
+        }
+
+        // ============================================
+        // DEVICE PREFERENCES (broadcast settings)
+        // ============================================
+        async function loadDevicePreferences() {
+            try {
+                const data = await apiCall('GET', '/api/device-preferences');
+                const prefs = data.prefs || {};
+                const toggle = document.getElementById('toggleBroadcastRecipientInfo');
+                if (toggle) toggle.checked = prefs.broadcast_recipient_info !== false;
+            } catch (e) {
+                console.error('Failed to load device preferences:', e);
+            }
+        }
+
+        async function toggleDevicePref(key, enabled) {
+            try {
+                const prefs = {};
+                prefs[key] = enabled;
+                await apiCall('PUT', '/api/device-preferences', { prefs });
             } catch (e) {
                 showToast('Failed to update preference', 'error');
             }
