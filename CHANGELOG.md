@@ -1,3 +1,16 @@
+# [1.69.0](https://github.com/HankHuang0516/realbot/compare/v1.68.1...v1.69.0) (2026-03-03)
+
+
+### Features
+
+* add broadcast recipient info toggle to Web Portal settings ([#105](https://github.com/HankHuang0516/realbot/issues/105)) ([fa0b07b](https://github.com/HankHuang0516/realbot/commit/fa0b07b894f31f2bedfbfbd8bcf344c74c89cb2b))
+* add buildBroadcastRecipientBlock() helper ([#105](https://github.com/HankHuang0516/realbot/issues/105)) ([746ae03](https://github.com/HankHuang0516/realbot/commit/746ae038841a9556d9b6b4fd58ac170c64490912))
+* add device preferences module with DB table ([#105](https://github.com/HankHuang0516/realbot/issues/105)) ([abfe650](https://github.com/HankHuang0516/realbot/commit/abfe6505064ec0e2d5136d318804e9de7b43701f))
+* add device preferences UI in SettingsActivity + localized strings ([#105](https://github.com/HankHuang0516/realbot/issues/105)) ([60ac42b](https://github.com/HankHuang0516/realbot/commit/60ac42b7fa5c8ed63658a506b60f3048065701aa))
+* add device-preferences API endpoints (GET/PUT) ([#105](https://github.com/HankHuang0516/realbot/issues/105)) ([2bd73b1](https://github.com/HankHuang0516/realbot/commit/2bd73b16575a88687926b7cb727286f4a25b1482))
+* inject recipient info into bot broadcast push ([#105](https://github.com/HankHuang0516/realbot/issues/105)) ([0f41b34](https://github.com/HankHuang0516/realbot/commit/0f41b34c58a2230e2fba8ad7466ca38e43335526))
+* inject recipient info into user broadcast push ([#105](https://github.com/HankHuang0516/realbot/issues/105)) ([eb7c5e1](https://github.com/HankHuang0516/realbot/commit/eb7c5e10ed394fd78204a20470bf3150fe7db9b5))
+
 ## [1.68.1](https://github.com/HankHuang0516/realbot/compare/v1.68.0...v1.68.1) (2026-03-02)
 
 
