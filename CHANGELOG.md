@@ -1,3 +1,18 @@
+# [1.73.0](https://github.com/HankHuang0516/realbot/compare/v1.72.0...v1.73.0) (2026-03-03)
+
+
+### Bug Fixes
+
+* address code review issues before merge ([0b246cf](https://github.com/HankHuang0516/realbot/commit/0b246cf99cefa3a68d77f1eb8bd4b4af56125eeb))
+
+
+### Features
+
+* **android:** add JIT vars approval dialog + sync locked flag ([44f446e](https://github.com/HankHuang0516/realbot/commit/44f446e06d557e12d09741201a85f375c85801e4))
+* add JIT vars approval dialog to Portal shared socket handler ([dda4edc](https://github.com/HankHuang0516/realbot/commit/dda4edc5ffc4e73063c6cd62f62c90aba3b71fc4))
+* encrypted env vars with JIT approval via Socket.IO ([#121](https://github.com/HankHuang0516/realbot/issues/121)) ([56416e2](https://github.com/HankHuang0516/realbot/commit/56416e21009cde73dd218fedac941fcd30fe6c5e))
+* env-vars.html sends lock as separate flag + adds security info section ([ab410b9](https://github.com/HankHuang0516/realbot/commit/ab410b9eef890e79ac4896992d8b7f5884e2a0b3))
+
 # [1.72.0](https://github.com/HankHuang0516/realbot/compare/v1.71.0...v1.72.0) (2026-03-03)
 
 
