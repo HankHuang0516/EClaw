@@ -146,6 +146,8 @@ function captureDeviceState(devices, deviceId) {
 
     return {
         deviceId,
+        appVersion: device.appVersion || null,
+        lastPlatform: device.lastPlatform || null,
         entityCount: entities.length,
         boundCount: entities.filter(e => e.isBound).length,
         entities,

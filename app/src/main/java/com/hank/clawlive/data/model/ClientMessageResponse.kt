@@ -8,7 +8,11 @@ data class ClientMessageResponse(
     val success: Boolean,
     val message: String,
     val targets: List<MessageTarget> = emptyList(),
-    val broadcast: Boolean = false
+    val broadcast: Boolean = false,
+    val source: String? = null,
+    val command: String? = null,
+    val needsConfirmation: Boolean = false,
+    val confirmCommand: String? = null
 )
 
 data class MessageTarget(

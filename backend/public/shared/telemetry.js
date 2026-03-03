@@ -54,6 +54,7 @@ const _telemetry = (() => {
                 body: JSON.stringify({
                     deviceId: creds.deviceId,
                     deviceSecret: creds.deviceSecret,
+                    platform: 'web',
                     entries: batch
                 })
             });

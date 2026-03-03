@@ -1,6 +1,7 @@
 package com.hank.clawlive.data.remote
 
 import android.content.Context
+import com.hank.clawlive.BuildConfig
 import com.hank.clawlive.data.local.DeviceManager
 import kotlinx.coroutines.*
 import timber.log.Timber
@@ -176,7 +177,11 @@ object TelemetryHelper {
         entries: List<Map<String, Any?>>
     ): String {
         val sb = StringBuilder()
-        sb.append("""{"deviceId":"${escapeJson(deviceId)}","deviceSecret":"${escapeJson(deviceSecret)}","entries":[""")
+        sb.append("""{"deviceId":"${escapeJson(deviceId)}","deviceSecret":"${escapeJson(deviceSecret)}",""")
+        sb.append(""""appVersion":"${escapeJson(BuildConfig.VERSION_NAME)}",""")
+        sb.append(""""appVersionCode":${BuildConfig.VERSION_CODE},""")
+        sb.append(""""platform":"android",""")
+        sb.append(""""entries":[""")
         entries.forEachIndexed { i, entry ->
             if (i > 0) sb.append(",")
             sb.append(mapToJson(entry))

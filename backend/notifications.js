@@ -10,7 +10,8 @@ const DEFAULT_PREFS = {
     feedback_resolved: true,
     feedback_reply: true,
     todo_done: true,
-    scheduled: true
+    scheduled: true,
+    platform_command: true
 };
 
 let pool = null;

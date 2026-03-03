@@ -120,6 +120,9 @@ class ChatActivity : AppCompatActivity() {
     private val pendingFiles = mutableListOf<PendingFile>()
     private val MAX_FILE_SIZE = 100L * 1024 * 1024 // 100MB
 
+    // Platform slash command confirmation state
+    private var pendingConfirmCommand: String? = null
+
     // Voice recording state
     private var mediaRecorder: MediaRecorder? = null
     private var voiceFile: File? = null
@@ -988,6 +991,17 @@ class ChatActivity : AppCompatActivity() {
     private fun observeMessages() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // Cloud sync recovery: restore messages if local DB is empty (post-update)
+                launch {
+                    val didSync = chatRepository.performFullSyncIfNeeded(
+                        api = api,
+                        deviceId = deviceManager.deviceId,
+                        deviceSecret = deviceManager.deviceSecret
+                    )
+                    if (didSync) {
+                        Timber.i("ChatActivity: Full cloud sync completed on startup")
+                    }
+                }
                 launch {
                     chatRepository.getMessagesAscending(500).collectLatest { messages ->
                         updateMessageList(messages)
@@ -1196,12 +1210,17 @@ class ChatActivity : AppCompatActivity() {
                         targetIds
                     }
 
-                    val request = mapOf<String, Any>(
+                    val request = mutableMapOf<String, Any>(
                         "deviceId" to deviceManager.deviceId,
                         "entityId" to entityIdValue,
                         "text" to text,
                         "source" to "android_chat"
                     )
+                    // Inject confirmation flag for slash command re-send
+                    if (pendingConfirmCommand != null && text == "/$pendingConfirmCommand") {
+                        request["confirmed"] = true
+                        pendingConfirmCommand = null
+                    }
                     Timber.d("[MSG] calling api.sendClientMessage: entityId=%s, text.len=%d", entityIdValue, text.length)
                     val apiStartTime = System.currentTimeMillis()
                     val response = api.sendClientMessage(request)
@@ -1209,6 +1228,11 @@ class ChatActivity : AppCompatActivity() {
                         System.currentTimeMillis() - apiStartTime, response.targets.size,
                         response.targets.count { it.pushed })
                     chatRepository.markMessageSynced(messageId)
+
+                    // Track confirmation state from platform commands
+                    if (response.needsConfirmation && response.confirmCommand != null) {
+                        pendingConfirmCommand = response.confirmCommand
+                    }
 
                     val deliveredEntityIds = response.targets
                         .filter { it.pushed }

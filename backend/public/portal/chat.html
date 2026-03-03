@@ -147,6 +147,28 @@
             border-bottom-left-radius: 4px;
         }
 
+        .chat-msg.platform {
+            align-self: center;
+            align-items: center;
+            max-width: 90%;
+        }
+        .chat-msg.platform .chat-bubble {
+            background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+            color: #334155;
+            border: 1px solid #a5b4fc;
+            border-radius: 12px;
+            font-size: 13px;
+            white-space: pre-line;
+        }
+        .chat-msg.platform .chat-source {
+            text-align: center;
+        }
+        [data-theme="dark"] .chat-msg.platform .chat-bubble {
+            background: linear-gradient(135deg, #1e1b4b, #1e293b);
+            color: #cbd5e1;
+            border-color: #4f46e5;
+        }
+
         .chat-meta {
             font-size: 11px;
             color: var(--text-muted);
@@ -1756,7 +1778,8 @@
             const displayMessages = groupBroadcastMessages(filtered);
             container.innerHTML = displayMessages.map(msg => {
                 const isSent = msg.is_from_user;
-                const msgClass = isSent ? 'sent' : 'received';
+                const isPlatform = !msg.is_from_user && !msg.is_from_bot && msg.source === 'platform';
+                const msgClass = isSent ? 'sent' : isPlatform ? 'platform' : 'received';
                 const time = formatTime(msg.created_at);
                 const sourceLabel = buildSourceLabel(msg);
 
@@ -1977,6 +2000,11 @@
                 return entityHtml;
             }
 
+            // Platform command response
+            if (msg.source === 'platform') {
+                return '\uD83E\uDD9E E-Claw Platform';
+            }
+
             // Fallback for other sources
             return `${entityHtml} &middot; ${escapeHtml(msg.source || 'unknown')}`;
         }
@@ -2020,6 +2048,9 @@
                 }
             });
         }
+
+        // ── Slash Command Confirmation State ──
+        let pendingConfirmCommand = null;
 
         // ── Send Message ──
         async function sendMessage() {
@@ -2075,12 +2106,22 @@
                             });
                         }
                     } else {
-                        await apiCall('POST', '/api/client/speak', {
+                        const speakBody = {
                             deviceId: currentUser.deviceId,
                             entityId: entityId,
                             text: text,
                             source: 'web_chat'
-                        });
+                        };
+                        // Inject confirmation flag for slash command re-send
+                        if (pendingConfirmCommand && text === `/${pendingConfirmCommand}`) {
+                            speakBody.confirmed = true;
+                            pendingConfirmCommand = null;
+                        }
+                        const speakResp = await apiCall('POST', '/api/client/speak', speakBody);
+                        // Track confirmation state from platform commands
+                        if (speakResp && speakResp.needsConfirmation && speakResp.confirmCommand) {
+                            pendingConfirmCommand = speakResp.confirmCommand;
+                        }
                     }
                 }
 
