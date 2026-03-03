@@ -1,3 +1,10 @@
+# [1.74.0](https://github.com/HankHuang0516/realbot/compare/v1.73.0...v1.74.0) (2026-03-03)
+
+
+### Features
+
+* add OpenClaw channel plugin + backend Channel API ([4912fdd](https://github.com/HankHuang0516/realbot/commit/4912fdd7394facbbbcb8c5cbf31887660a0b4e7b))
+
 # [1.73.0](https://github.com/HankHuang0516/realbot/compare/v1.72.0...v1.73.0) (2026-03-03)
 
 
