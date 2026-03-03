@@ -2896,9 +2896,31 @@ app.post('/api/client/speak', async (req, res) => {
 
         console.log(`[Client] Device ${deviceId} -> Entity ${eId}: "${text}" (source: ${source})`);
 
-        // Push to bot if webhook is registered
+        // Push to bot — channel callback (structured JSON) or traditional webhook (instruction-first)
         let pushResult = { pushed: false, reason: "no_webhook" };
-        if (entity.webhook) {
+        if (entity.bindingType === 'channel') {
+            // Channel plugin: send structured JSON to registered callback URL
+            console.log(`[Push] Attempting channel callback for Device ${deviceId} Entity ${eId}`);
+            pushResult = await channelModule.pushToChannelCallback(deviceId, eId, {
+                event: targetIds.length > 1 ? 'broadcast' : 'message',
+                from: source,
+                text,
+                mediaType: mediaType || null,
+                mediaUrl: mediaUrl || null,
+                backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
+                isBroadcast: targetIds.length > 1,
+                broadcastRecipients: targetIds.length > 1 ? targetIds : null
+            });
+
+            if (pushResult.pushed) {
+                messageObj.delivered = true;
+                console.log(`[Push] ✓ Channel callback OK for Device ${deviceId} Entity ${eId}`);
+                serverLog('info', 'client_push', `Entity ${eId} channel push OK`, { deviceId, entityId: eId, metadata: { source, mode: 'channel' } });
+            } else {
+                console.warn(`[Push] ✗ Channel callback failed for Device ${deviceId} Entity ${eId}: ${pushResult.reason}`);
+                serverLog('warn', 'client_push', `Entity ${eId} channel push failed: ${pushResult.reason}`, { deviceId, entityId: eId });
+            }
+        } else if (entity.webhook) {
             console.log(`[Push] Attempting push to Device ${deviceId} Entity ${eId} (webhook: ${entity.webhook.url})`);
 
             // Instruction-first push format with pre-filled curl template
@@ -3110,9 +3132,32 @@ app.post('/api/entity/speak-to', async (req, res) => {
     toEntity.message = `entity:${fromId}:${fromEntity.character}: ${speakToText}`;
     toEntity.lastUpdated = Date.now();
 
-    // Fire-and-forget: push to target bot webhook (don't block response)
+    // Fire-and-forget: push to target bot — channel callback or traditional webhook
+    const isChannelBound = toEntity.bindingType === 'channel';
     const hasWebhook = !!toEntity.webhook;
-    if (hasWebhook) {
+    if (isChannelBound) {
+        // Channel plugin: send structured JSON
+        channelModule.pushToChannelCallback(deviceId, toId, {
+            event: 'entity_message',
+            from: sourceLabel,
+            text: speakToText,
+            mediaType: mediaType || null,
+            mediaUrl: mediaUrl || null,
+            backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
+            fromEntityId: fromId,
+            fromCharacter: fromEntity.character
+        }).then(pushResult => {
+            if (pushResult.pushed) {
+                messageObj.delivered = true;
+                markChatMessageDelivered(chatMsgId, String(toId));
+                serverLog('info', 'speakto_push', `Entity ${fromId} -> ${toId} channel push OK`, { deviceId, entityId: fromId, metadata: { toId, mode: 'channel' } });
+            } else {
+                serverLog('warn', 'speakto_push', `Entity ${fromId} -> ${toId} channel push failed: ${pushResult.reason}`, { deviceId, entityId: fromId, metadata: { toId } });
+            }
+        }).catch(err => {
+            console.error(`[SpeakTo] Channel push failed: ${err.message}`);
+        });
+    } else if (hasWebhook) {
         // Instruction-first push format with pre-filled curl templates
         const apiBase = 'https://eclawbot.com';
         const toRemaining = getBotToBotRemaining(deviceId, toId);
@@ -3839,10 +3884,35 @@ app.post('/api/entity/broadcast', async (req, res) => {
         toEntity.message = `entity:${fromId}:${fromEntity.character}: [廣播] ${broadcastText}`;
         toEntity.lastUpdated = Date.now();
 
+        const isChannelBoundBcast = toEntity.bindingType === 'channel';
         const hasWebhook = !!toEntity.webhook;
 
-        // Fire-and-forget: push to target bot webhook (don't block response)
-        if (hasWebhook) {
+        // Fire-and-forget: push to target bot — channel callback or traditional webhook
+        if (isChannelBoundBcast) {
+            // Channel plugin: send structured JSON
+            channelModule.pushToChannelCallback(deviceId, toId, {
+                event: 'broadcast',
+                from: sourceLabel,
+                text: broadcastText,
+                mediaType: mediaType || null,
+                mediaUrl: mediaUrl || null,
+                backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
+                isBroadcast: true,
+                broadcastRecipients: targetIds,
+                fromEntityId: fromId,
+                fromCharacter: fromEntity.character
+            }).then(pushResult => {
+                if (pushResult.pushed) {
+                    messageObj.delivered = true;
+                    markChatMessageDelivered(broadcastChatMsgId, String(toId));
+                    serverLog('info', 'broadcast_push', `Entity ${toId} channel push OK`, { deviceId, entityId: toId, metadata: { mode: 'channel' } });
+                } else {
+                    serverLog('warn', 'broadcast_push', `Entity ${toId} channel push failed: ${pushResult.reason}`, { deviceId, entityId: toId });
+                }
+            }).catch(err => {
+                console.error(`[Broadcast] Channel push to Entity ${toId} failed: ${err.message}`);
+            });
+        } else if (hasWebhook) {
             // Instruction-first push format with pre-filled curl templates
             const apiBase = 'https://eclawbot.com';
             const toRemainingBcast = getBotToBotRemaining(deviceId, toId);
@@ -6677,6 +6747,21 @@ app.use('/api/ai-support/admin-chat', adminAuth, adminCheck);
 // Body limit for chat with images is set globally (before express.json() default)
 app.use('/api/ai-support', aiSupportModule.router);
 aiSupportModule.initSupportTable();
+
+// ============================================
+// CHANNEL API — OpenClaw Channel Plugin
+// ============================================
+const channelModule = require('./channel-api')(devices, {
+    authMiddleware: authModule.authMiddleware,
+    serverLog,
+    generateBotSecret,
+    generatePublicCode,
+    publicCodeIndex,
+    saveChatMessage,
+    io,
+    saveData
+});
+app.use('/api/channel', channelModule.router);
 
 // Close GitHub issue (device-authenticated)
 app.patch('/api/github/issues/:number', async (req, res) => {

@@ -184,6 +184,23 @@ async function createTables() {
             )
         `);
 
+        // Channel accounts (OpenClaw channel plugin integration)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS channel_accounts (
+                id SERIAL PRIMARY KEY,
+                device_id TEXT NOT NULL REFERENCES devices(device_id) ON DELETE CASCADE,
+                channel_api_key TEXT NOT NULL UNIQUE,
+                channel_api_secret TEXT NOT NULL,
+                callback_url TEXT,
+                callback_token TEXT,
+                status TEXT DEFAULT 'active',
+                created_at BIGINT NOT NULL,
+                updated_at BIGINT NOT NULL,
+                UNIQUE(device_id)
+            )
+        `);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_channel_api_key ON channel_accounts(channel_api_key)`);
+
         console.log('[DB] Database tables ready');
         client.release();
     } catch (err) {
@@ -847,6 +864,86 @@ async function deleteDeviceVars(deviceId) {
     }
 }
 
+// ============================================
+// Channel Accounts (OpenClaw Channel Plugin)
+// ============================================
+
+async function createChannelAccount(deviceId, apiKey, apiSecret) {
+    if (!pool) return null;
+    try {
+        const result = await pool.query(
+            `INSERT INTO channel_accounts (device_id, channel_api_key, channel_api_secret, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $4)
+             ON CONFLICT (device_id)
+             DO UPDATE SET channel_api_key = $2, channel_api_secret = $3, updated_at = $4
+             RETURNING *`,
+            [deviceId, apiKey, apiSecret, Date.now()]
+        );
+        return result.rows[0] || null;
+    } catch (err) {
+        console.error(`[DB] Failed to create channel account for ${deviceId}:`, err.message);
+        return null;
+    }
+}
+
+async function getChannelAccountByKey(apiKey) {
+    if (!pool) return null;
+    try {
+        const result = await pool.query(
+            'SELECT * FROM channel_accounts WHERE channel_api_key = $1 AND status = $2',
+            [apiKey, 'active']
+        );
+        return result.rows[0] || null;
+    } catch (err) {
+        console.error('[DB] Failed to get channel account:', err.message);
+        return null;
+    }
+}
+
+async function getChannelAccountByDevice(deviceId) {
+    if (!pool) return null;
+    try {
+        const result = await pool.query(
+            'SELECT * FROM channel_accounts WHERE device_id = $1',
+            [deviceId]
+        );
+        return result.rows[0] || null;
+    } catch (err) {
+        console.error('[DB] Failed to get channel account by device:', err.message);
+        return null;
+    }
+}
+
+async function updateChannelCallback(apiKey, callbackUrl, callbackToken) {
+    if (!pool) return false;
+    try {
+        await pool.query(
+            `UPDATE channel_accounts SET callback_url = $1, callback_token = $2, updated_at = $3
+             WHERE channel_api_key = $4`,
+            [callbackUrl, callbackToken, Date.now(), apiKey]
+        );
+        return true;
+    } catch (err) {
+        console.error('[DB] Failed to update channel callback:', err.message);
+        return false;
+    }
+}
+
+async function clearChannelCallback(apiKey) {
+    if (!pool) return false;
+    try {
+        await pool.query(
+            `UPDATE channel_accounts SET callback_url = NULL, callback_token = NULL, updated_at = $1
+             WHERE channel_api_key = $2`,
+            [Date.now(), apiKey]
+        );
+        return true;
+    } catch (err) {
+        console.error('[DB] Failed to clear channel callback:', err.message);
+        return false;
+    }
+}
+
 module.exports = {
     initDatabase,
     saveDeviceData,
@@ -880,5 +977,11 @@ module.exports = {
     upsertDeviceVars,
     getDeviceVars,
     getDeviceVarsMeta,
-    deleteDeviceVars
+    deleteDeviceVars,
+    // Channel accounts (OpenClaw plugin)
+    createChannelAccount,
+    getChannelAccountByKey,
+    getChannelAccountByDevice,
+    updateChannelCallback,
+    clearChannelCallback
 };

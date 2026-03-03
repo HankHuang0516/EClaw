@@ -1,0 +1,29 @@
+{
+  "name": "@eclaw/openclaw-channel",
+  "version": "1.0.0",
+  "description": "E-Claw channel plugin for OpenClaw — AI chat platform for live wallpaper entities",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "lint": "tsc --noEmit"
+  },
+  "openclaw": {
+    "extensions": ["./src/index.ts"]
+  },
+  "keywords": ["openclaw", "channel", "eclaw", "ai-agent", "live-wallpaper"],
+  "author": "HankHuang",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HankHuang0516/openclaw-channel-eclaw"
+  },
+  "devDependencies": {
+    "typescript": "^5.4",
+    "vitest": "^2.0",
+    "@types/node": "^20"
+  }
+}
