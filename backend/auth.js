@@ -211,6 +211,21 @@ module.exports = function(devices, getOrCreateDevice) {
             // Create the virtual device in the in-memory devices object
             getOrCreateDevice(deviceId, deviceSecret);
 
+            // Auto-provision channel API key (non-fatal if fails)
+            try {
+                const channelApiKey = 'eck_' + crypto.randomBytes(32).toString('hex');
+                const channelApiSecret = 'ecs_' + crypto.randomBytes(32).toString('hex');
+                await pool.query(
+                    `INSERT INTO channel_accounts (device_id, channel_api_key, channel_api_secret, created_at, updated_at)
+                     VALUES ($1, $2, $3, $4, $4)
+                     ON CONFLICT (device_id) DO NOTHING`,
+                    [deviceId, channelApiKey, channelApiSecret, Date.now()]
+                );
+                console.log(`[Auth] Channel API key auto-provisioned for ${emailLower}`);
+            } catch (channelErr) {
+                console.error('[Auth] Auto-provision channel key failed (non-fatal):', channelErr.message);
+            }
+
             // Send verification email
             try {
                 await resend.emails.send({
@@ -610,6 +625,22 @@ module.exports = function(devices, getOrCreateDevice) {
             );
             const usageToday = usageResult.rows.length > 0 ? usageResult.rows[0].message_count : 0;
 
+            // Get channel API key (if provisioned)
+            let channelApiKey = null;
+            let channelApiSecret = null;
+            try {
+                const channelResult = await pool.query(
+                    'SELECT channel_api_key, channel_api_secret FROM channel_accounts WHERE device_id = $1',
+                    [user.device_id]
+                );
+                if (channelResult.rows.length > 0) {
+                    channelApiKey = channelResult.rows[0].channel_api_key;
+                    channelApiSecret = channelResult.rows[0].channel_api_secret;
+                }
+            } catch (chErr) {
+                console.error('[Auth] Failed to query channel account:', chErr.message);
+            }
+
             res.json({
                 success: true,
                 user: {
@@ -628,7 +659,9 @@ module.exports = function(devices, getOrCreateDevice) {
                     googleLinked: !!user.google_id,
                     facebookLinked: !!user.facebook_id,
                     usageToday: usageToday,
-                    usageLimit: user.subscription_status === 'premium' ? null : 15
+                    usageLimit: user.subscription_status === 'premium' ? null : 15,
+                    channelApiKey,
+                    channelApiSecret
                 }
             });
         } catch (error) {

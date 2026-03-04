@@ -498,6 +498,46 @@
             margin-top: 6px;
         }
 
+        /* ── Channel API ── */
+        .channel-key-box {
+            background: var(--bg-secondary, rgba(0,0,0,0.2));
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            color: var(--text-muted);
+            word-break: break-all;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .channel-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .channel-copy-toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--success, #2E7D32);
+            color: #fff;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        .channel-copy-toast.show {
+            opacity: 1;
+        }
+
         /* ── Logout / footer area ── */
         .logout-btn {
             width: 100%;
@@ -581,6 +621,42 @@
                 <span class="info-value" id="connectedAccounts">--</span>
             </div>
         </div>
+
+        <!-- Channel API Card -->
+        <div class="card" id="channelApiCard" style="display:none">
+            <div class="card-title">
+                <span>🔗 Channel API</span>
+            </div>
+            <p class="section-desc">OpenClaw channel plugin credentials</p>
+
+            <!-- Has key -->
+            <div id="channelKeySection" style="display:none">
+                <div class="info-row">
+                    <span class="info-label">API Key</span>
+                    <span class="info-value mono" id="channelApiKey">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">API Secret</span>
+                    <span class="info-value mono">
+                        <span id="channelSecretMasked">••••••••••••••••</span>
+                        <span id="channelSecretRevealed" style="display:none">--</span>
+                    </span>
+                </div>
+                <div class="channel-actions">
+                    <button class="btn btn-sm" onclick="toggleChannelSecret()">Show / Hide</button>
+                    <button class="btn btn-sm" onclick="copyChannelKeys()">Copy</button>
+                </div>
+            </div>
+
+            <!-- No key yet (legacy users) -->
+            <div id="channelProvisionSection" style="display:none">
+                <p class="section-desc">No API key yet. Generate one to enable OpenClaw channel integration.</p>
+                <button class="btn btn-primary btn-sm" id="btnProvision" onclick="provisionChannelKey()">Generate API Key</button>
+            </div>
+        </div>
+
+        <!-- Copy toast -->
+        <div class="channel-copy-toast" id="channelCopyToast">Copied!</div>
 
         <!-- Subscription Card -->
         <div class="card">
@@ -818,6 +894,7 @@
             initPortalSocket();
 
             populateAccountInfo(user);
+            populateChannelApi(user);
             await loadSubscriptionStatus();
             loadLanguagePreference();
             loadNotifPreferences();
@@ -844,6 +921,71 @@
             if (providers.length > 0) {
                 document.getElementById('connectedAccountsRow').style.display = '';
                 document.getElementById('connectedAccounts').textContent = providers.join(', ');
+            }
+        }
+
+        // ============================================
+        // Channel API
+        // ============================================
+        let _channelSecret = null;
+
+        function populateChannelApi(user) {
+            const card = document.getElementById('channelApiCard');
+            card.style.display = '';
+
+            if (user.channelApiKey) {
+                _channelSecret = user.channelApiSecret;
+                document.getElementById('channelKeySection').style.display = '';
+                document.getElementById('channelProvisionSection').style.display = 'none';
+                document.getElementById('channelApiKey').textContent = user.channelApiKey;
+                document.getElementById('channelSecretRevealed').textContent = user.channelApiSecret;
+            } else {
+                document.getElementById('channelKeySection').style.display = 'none';
+                document.getElementById('channelProvisionSection').style.display = '';
+            }
+        }
+
+        function toggleChannelSecret() {
+            const masked = document.getElementById('channelSecretMasked');
+            const revealed = document.getElementById('channelSecretRevealed');
+            if (masked.style.display === 'none') {
+                masked.style.display = '';
+                revealed.style.display = 'none';
+            } else {
+                masked.style.display = 'none';
+                revealed.style.display = '';
+            }
+        }
+
+        async function copyChannelKeys() {
+            const key = document.getElementById('channelApiKey').textContent;
+            const secret = _channelSecret || document.getElementById('channelSecretRevealed').textContent;
+            const text = `channel_api_key: ${key}\nchannel_api_secret: ${secret}`;
+            try {
+                await navigator.clipboard.writeText(text);
+                const toast = document.getElementById('channelCopyToast');
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 1500);
+            } catch (e) {
+                console.error('Copy failed:', e);
+            }
+        }
+
+        async function provisionChannelKey() {
+            const btn = document.getElementById('btnProvision');
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+            try {
+                const data = await apiCall('POST', '/api/channel/provision');
+                _channelSecret = data.channel_api_secret;
+                document.getElementById('channelApiKey').textContent = data.channel_api_key;
+                document.getElementById('channelSecretRevealed').textContent = data.channel_api_secret;
+                document.getElementById('channelKeySection').style.display = '';
+                document.getElementById('channelProvisionSection').style.display = 'none';
+            } catch (e) {
+                alert('Failed to generate API key: ' + e.message);
+                btn.disabled = false;
+                btn.textContent = 'Generate API Key';
             }
         }
 
