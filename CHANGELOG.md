@@ -1,3 +1,10 @@
+## [1.74.2](https://github.com/HankHuang0516/realbot/compare/v1.74.1...v1.74.2) (2026-03-04)
+
+
+### Bug Fixes
+
+* crash on device.entities iteration + add crash logging to /api/logs ([9818442](https://github.com/HankHuang0516/realbot/commit/9818442db389db89f6ea606079c4e6cfcbf23b2b))
+
 ## [1.74.1](https://github.com/HankHuang0516/realbot/compare/v1.74.0...v1.74.1) (2026-03-03)
 
 
