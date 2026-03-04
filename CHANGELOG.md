@@ -1,3 +1,10 @@
+# [1.80.0](https://github.com/HankHuang0516/realbot/compare/v1.79.0...v1.80.0) (2026-03-04)
+
+
+### Features
+
+* **settings:** add Delete Account entry in Settings (web + Android) ([cb94da1](https://github.com/HankHuang0516/realbot/commit/cb94da17610aa29c9f15bb3a57c5c4f2d2e40012))
+
 # [1.79.0](https://github.com/HankHuang0516/realbot/compare/v1.78.0...v1.79.0) (2026-03-04)
 
 
