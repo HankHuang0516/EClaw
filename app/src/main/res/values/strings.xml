@@ -410,6 +410,7 @@
 
     <!-- Privacy Policy -->
     <string name="privacy_policy_title">Privacy Policy</string>
+    <string name="delete_account">Delete Account</string>
     <string name="web_portal">Web Portal</string>
     <string name="privacy_policy_content">
 <b>1. Commitment to Privacy First</b>\n

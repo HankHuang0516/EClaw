@@ -71,6 +71,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var btnSubscribe: MaterialButton
     private lateinit var btnFeedback: MaterialButton
     private lateinit var btnPrivacyPolicy: MaterialButton
+    private lateinit var btnDeleteAccount: MaterialButton
     private lateinit var btnCrashLogs: MaterialButton
     // Account Status Card views
     private lateinit var cardAccountStatus: MaterialCardView
@@ -201,6 +202,7 @@ class SettingsActivity : AppCompatActivity() {
         tvEntityCount = findViewById(R.id.tvEntityCount)
         btnFeedback = findViewById(R.id.btnFeedback)
         btnPrivacyPolicy = findViewById(R.id.btnPrivacyPolicy)
+        btnDeleteAccount = findViewById(R.id.btnDeleteAccount)
         btnCrashLogs = findViewById(R.id.btnCrashLogs)
         cardAccountStatus = findViewById(R.id.cardAccountStatus)
         accountStatusLoading = findViewById(R.id.accountStatusLoading)
@@ -254,6 +256,11 @@ class SettingsActivity : AppCompatActivity() {
 
         btnPrivacyPolicy.setOnClickListener {
             startActivity(android.content.Intent(this, PrivacyPolicyActivity::class.java))
+        }
+
+        btnDeleteAccount.setOnClickListener {
+            TelemetryHelper.trackAction("settings_delete_account")
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://eclawbot.com/portal/delete-account.html")))
         }
 
         btnCrashLogs.setOnClickListener {

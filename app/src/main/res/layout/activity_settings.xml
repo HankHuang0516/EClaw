@@ -461,6 +461,22 @@
                 app:strokeWidth="1dp"
                 style="@style/Widget.Material3.Button.TonalButton"/>
 
+            <!-- Delete Account Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDeleteAccount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/delete_account"
+                android:textColor="#CCFFFFFF"
+                app:backgroundTint="#1A1A1A"
+                android:layout_marginTop="8dp"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_privacy"
+                app:iconTint="#FF6B6B"
+                app:strokeColor="#333333"
+                app:strokeWidth="1dp"
+                style="@style/Widget.Material3.Button.TonalButton"/>
+
             <!-- Crash Logs Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCrashLogs"
