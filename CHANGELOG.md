@@ -1,3 +1,10 @@
+# [1.81.0](https://github.com/HankHuang0516/realbot/compare/v1.80.0...v1.81.0) (2026-03-04)
+
+
+### Features
+
+* Android Channel API display + OpenClaw metadata + backend auth fix ([762ed62](https://github.com/HankHuang0516/realbot/commit/762ed62c29d42b4072ede530e01242a57f3d08dc))
+
 # [1.80.0](https://github.com/HankHuang0516/realbot/compare/v1.79.0...v1.80.0) (2026-03-04)
 
 
