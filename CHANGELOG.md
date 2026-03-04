@@ -1,3 +1,10 @@
+# [1.83.0](https://github.com/HankHuang0516/realbot/compare/v1.82.0...v1.83.0) (2026-03-04)
+
+
+### Features
+
+* **remote-control:** add ime_action command to submit keyboard input ([acb04a8](https://github.com/HankHuang0516/realbot/commit/acb04a8f509786d0938c9a20d99a0f7aa8cbf768))
+
 # [1.82.0](https://github.com/HankHuang0516/realbot/compare/v1.81.0...v1.82.0) (2026-03-04)
 
 
