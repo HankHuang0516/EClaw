@@ -1,3 +1,10 @@
+# [1.79.0](https://github.com/HankHuang0516/realbot/compare/v1.78.0...v1.79.0) (2026-03-04)
+
+
+### Features
+
+* **auth:** add account deletion page and API for Google Play Data Safety ([c2071f5](https://github.com/HankHuang0516/realbot/commit/c2071f52b468878559e2c5aa4c2a6366154c5fce))
+
 # [1.78.0](https://github.com/HankHuang0516/realbot/compare/v1.77.5...v1.78.0) (2026-03-04)
 
 
