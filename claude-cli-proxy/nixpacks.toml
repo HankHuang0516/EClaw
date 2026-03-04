@@ -1,3 +1,0 @@
-[phases.setup]
-nixPkgs = ["git"]
-aptPkgs = ["git"]

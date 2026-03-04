@@ -1,11 +1,16 @@
-FROM node:20-slim
+FROM python:3.12-slim
 
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+# Install git (for repo clone) + Node.js (for Claude CLI npm package)
+RUN apt-get update && apt-get install -y git curl \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g @anthropic-ai/claude-code \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY package*.json ./
-RUN npm install
+COPY pyproject.toml ./
+RUN pip install --no-cache-dir .
 COPY . .
 
 EXPOSE 4000
-CMD ["node", "index.js"]
+CMD ["python", "-m", "uvicorn", "proxy:app", "--host", "0.0.0.0", "--port", "4000"]

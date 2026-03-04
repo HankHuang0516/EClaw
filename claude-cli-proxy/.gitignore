@@ -1,2 +1,6 @@
-node_modules/
+__pycache__/
+.env
 .db-config
+*.pyc
+.venv/
+node_modules/

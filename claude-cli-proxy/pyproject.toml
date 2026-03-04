@@ -1,0 +1,16 @@
+[project]
+name = "eclaw-claude-cli-proxy"
+version = "2.0.0"
+description = "Claude CLI proxy for E-Claw AI support — Python/FastAPI rewrite based on openclaw-claude-proxy"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.29.0",
+    "pydantic>=2.0",
+    "python-dotenv>=1.0",
+    "psycopg2-binary>=2.9",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
