@@ -1,3 +1,10 @@
+# [1.75.0](https://github.com/HankHuang0516/realbot/compare/v1.74.2...v1.75.0) (2026-03-04)
+
+
+### Features
+
+* auto-provision channel API key on registration + settings UI ([cfa0a37](https://github.com/HankHuang0516/realbot/commit/cfa0a37495c50fd2d76f43b782c9465f3917c26d))
+
 ## [1.74.2](https://github.com/HankHuang0516/realbot/compare/v1.74.1...v1.74.2) (2026-03-04)
 
 
