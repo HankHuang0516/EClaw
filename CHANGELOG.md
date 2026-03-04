@@ -1,3 +1,10 @@
+## [1.77.5](https://github.com/HankHuang0516/realbot/compare/v1.77.4...v1.77.5) (2026-03-04)
+
+
+### Bug Fixes
+
+* **chat:** resolve link preview crash and coroutine lifecycle issues ([39a201d](https://github.com/HankHuang0516/realbot/commit/39a201d0cdc33b42d67429a4fb3bcbd026b5fe7a)), closes [#131](https://github.com/HankHuang0516/realbot/issues/131) [#136](https://github.com/HankHuang0516/realbot/issues/136) [#128](https://github.com/HankHuang0516/realbot/issues/128) [#127](https://github.com/HankHuang0516/realbot/issues/127) [#130](https://github.com/HankHuang0516/realbot/issues/130)
+
 ## [1.77.4](https://github.com/HankHuang0516/realbot/compare/v1.77.3...v1.77.4) (2026-03-04)
 
 
