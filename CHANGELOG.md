@@ -1,3 +1,10 @@
+## [1.76.1](https://github.com/HankHuang0516/realbot/compare/v1.76.0...v1.76.1) (2026-03-04)
+
+
+### Performance Improvements
+
+* screen-capture latency optimizations ([c903d03](https://github.com/HankHuang0516/realbot/commit/c903d0321168158d4e9d9a799b0ae46ceadd6483))
+
 # [1.76.0](https://github.com/HankHuang0516/realbot/compare/v1.75.0...v1.76.0) (2026-03-04)
 
 
