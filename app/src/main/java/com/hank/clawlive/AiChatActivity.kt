@@ -19,6 +19,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.DiffUtil
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -445,11 +446,18 @@ class AiChatActivity : AppCompatActivity() {
 
     // ── UI Updates ───────────────────────────
 
+    private fun isAtBottom(): Boolean {
+        val lm = recyclerChat.layoutManager as? LinearLayoutManager ?: return true
+        return lm.findLastCompletelyVisibleItemPosition() >= chatAdapter.itemCount - 1
+    }
+
     private fun updateUi() {
+        val atBottom = isAtBottom()
         val displayMessages = messages.filter { it.role != "typing" || isLoading }
         chatAdapter.submitList(displayMessages.toList())
         emptyState.visibility = if (messages.isEmpty()) View.VISIBLE else View.GONE
         recyclerChat.visibility = if (messages.isEmpty()) View.GONE else View.VISIBLE
+        if (atBottom) scrollToBottom()
     }
 
     private fun updateSendButton() {
@@ -516,8 +524,17 @@ class AiChatActivity : AppCompatActivity() {
         private var items = listOf<AiMessage>()
 
         fun submitList(newList: List<AiMessage>) {
+            val oldList = items
+            val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+                override fun getOldListSize() = oldList.size
+                override fun getNewListSize() = newList.size
+                override fun areItemsTheSame(oldPos: Int, newPos: Int) =
+                    oldList[oldPos] === newList[newPos]
+                override fun areContentsTheSame(oldPos: Int, newPos: Int) =
+                    oldList[oldPos] == newList[newPos]
+            })
             items = newList
-            notifyDataSetChanged()
+            diff.dispatchUpdatesTo(this)
         }
 
         override fun getItemCount() = items.size

@@ -17,7 +17,7 @@ data class LinkPreviewData(
 object LinkPreviewHelper {
 
     private const val API_BASE = "https://eclawbot.com"
-    private val cache = LruCache<String, LinkPreviewData?>(100)
+    private val cache = LruCache<String, LinkPreviewData>(100)
 
     private val urlRegex = Regex("https?://\\S+")
 
@@ -44,7 +44,6 @@ object LinkPreviewHelper {
                 val title = obj.optString("title", "")
                 val desc = obj.optString("description", "")
                 if (title.isEmpty() && desc.isEmpty()) {
-                    cache.put(url, null)
                     return@withContext null
                 }
 
@@ -57,7 +56,6 @@ object LinkPreviewHelper {
                 cache.put(url, data)
                 data
             } catch (e: Exception) {
-                cache.put(url, null)
                 null
             }
         }

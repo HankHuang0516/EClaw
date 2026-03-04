@@ -23,7 +23,9 @@ import com.hank.clawlive.R
 import com.hank.clawlive.data.local.EntityAvatarManager
 import com.hank.clawlive.data.local.database.ChatMessage
 import com.hank.clawlive.data.local.database.MessageType
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import java.io.File
 import java.net.URL
@@ -89,8 +91,8 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
     override fun onViewRecycled(holder: RecyclerView.ViewHolder) {
         super.onViewRecycled(holder)
         when (holder) {
-            is SentMessageViewHolder -> holder.stopAudio()
-            is ReceivedMessageViewHolder -> holder.stopAudio()
+            is SentMessageViewHolder -> { holder.stopAudio(); holder.cancelPreview() }
+            is ReceivedMessageViewHolder -> { holder.stopAudio(); holder.cancelPreview() }
         }
     }
 
@@ -118,6 +120,12 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
 
         private var mediaPlayer: MediaPlayer? = null
         private var tempFile: File? = null
+        private var previewScope: CoroutineScope? = null
+
+        fun cancelPreview() {
+            previewScope?.cancel()
+            previewScope = null
+        }
 
         fun bind(message: ChatMessage, adapter: ChatAdapter) {
             tvTime.text = formatTime(message.timestamp)
@@ -189,18 +197,19 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
                 return
             }
             layoutLinkPreview.visibility = View.GONE // hide until loaded
-            val holder = this
-            MainScope().launch {
+            previewScope?.cancel()
+            previewScope = MainScope()
+            previewScope!!.launch {
                 val data = LinkPreviewHelper.fetch(url) ?: return@launch
                 @Suppress("DEPRECATION")
-                if (holder.adapterPosition == RecyclerView.NO_POSITION) return@launch
+                if (adapterPosition == RecyclerView.NO_POSITION) return@launch
                 tvLinkTitle.text = data.title
                 tvLinkDesc.text = data.description
                 tvLinkDesc.visibility = if (data.description.isNotEmpty()) View.VISIBLE else View.GONE
                 try { tvLinkDomain.text = URL(data.url).host } catch (_: Exception) { tvLinkDomain.text = "" }
                 if (data.image.isNotEmpty()) {
                     ivLinkPreview.visibility = View.VISIBLE
-                    Glide.with(itemView.context).load(data.image).centerCrop().into(ivLinkPreview)
+                    Glide.with(itemView.context.applicationContext).load(data.image).centerCrop().into(ivLinkPreview)
                 } else {
                     ivLinkPreview.visibility = View.GONE
                 }
@@ -340,6 +349,12 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
 
         private var mediaPlayer: MediaPlayer? = null
         private var tempFile: File? = null
+        private var previewScope: CoroutineScope? = null
+
+        fun cancelPreview() {
+            previewScope?.cancel()
+            previewScope = null
+        }
 
         fun bind(message: ChatMessage, adapter: ChatAdapter) {
             tvTime.text = formatTime(message.timestamp)
@@ -441,18 +456,19 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
                 return
             }
             layoutLinkPreview.visibility = View.GONE // hide until loaded
-            val holder = this
-            MainScope().launch {
+            previewScope?.cancel()
+            previewScope = MainScope()
+            previewScope!!.launch {
                 val data = LinkPreviewHelper.fetch(url) ?: return@launch
                 @Suppress("DEPRECATION")
-                if (holder.adapterPosition == RecyclerView.NO_POSITION) return@launch
+                if (adapterPosition == RecyclerView.NO_POSITION) return@launch
                 tvLinkTitle.text = data.title
                 tvLinkDesc.text = data.description
                 tvLinkDesc.visibility = if (data.description.isNotEmpty()) View.VISIBLE else View.GONE
                 try { tvLinkDomain.text = URL(data.url).host } catch (_: Exception) { tvLinkDomain.text = "" }
                 if (data.image.isNotEmpty()) {
                     ivLinkPreview.visibility = View.VISIBLE
-                    Glide.with(itemView.context).load(data.image).centerCrop().into(ivLinkPreview)
+                    Glide.with(itemView.context.applicationContext).load(data.image).centerCrop().into(ivLinkPreview)
                 } else {
                     ivLinkPreview.visibility = View.GONE
                 }
