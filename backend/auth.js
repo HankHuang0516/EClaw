@@ -1223,6 +1223,62 @@ module.exports = function(devices, getOrCreateDevice) {
         }
     });
 
+    // ============================================
+    // DELETE /account — Permanently delete user account and all associated data
+    // ============================================
+    router.delete('/account', authMiddleware, async (req, res) => {
+        if (!req.user.userId) {
+            return res.status(403).json({ success: false, error: 'Device-only sessions cannot delete accounts. Please sign in with Google or email.' });
+        }
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            const userResult = await client.query(
+                'SELECT device_id, email FROM user_accounts WHERE id = $1',
+                [req.user.userId]
+            );
+            if (!userResult.rows.length) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ success: false, error: 'Account not found' });
+            }
+
+            const deviceId = userResult.rows[0].device_id;
+            const email = userResult.rows[0].email;
+
+            if (deviceId) {
+                // Delete all device-scoped data
+                await client.query('DELETE FROM chat_messages WHERE device_id = $1', [deviceId]);
+                await client.query('DELETE FROM mission_dashboard WHERE device_id = $1', [deviceId]);
+                await client.query('DELETE FROM official_bot_bindings WHERE device_id = $1', [deviceId]);
+                await client.query('DELETE FROM message_reactions WHERE device_id = $1', [deviceId]);
+                await client.query('DELETE FROM device_vars WHERE device_id = $1', [deviceId]);
+                await client.query('DELETE FROM device_telemetry WHERE device_id = $1', [deviceId]);
+                await client.query('DELETE FROM schedules WHERE device_id = $1', [deviceId]);
+                // Unbind all entities (don't delete — entity slots may be reused)
+                await client.query(
+                    `UPDATE entities SET is_bound = FALSE, bot_secret = NULL, name = NULL
+                     WHERE device_id = $1`,
+                    [deviceId]
+                );
+            }
+
+            await client.query('DELETE FROM user_accounts WHERE id = $1', [req.user.userId]);
+            await client.query('COMMIT');
+
+            res.clearCookie('eclaw_session', { path: '/' });
+            console.log(`[Auth] Account deleted: userId=${req.user.userId} email=${email} deviceId=${deviceId}`);
+            res.json({ success: true });
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('[Auth] Account deletion error:', error);
+            res.status(500).json({ success: false, error: 'Failed to delete account. Please try again.' });
+        } finally {
+            client.release();
+        }
+    });
+
     // Soft auth: populate req.user from cookie if valid, but never reject
     function softAuthMiddleware(req, res, next) {
         const token = req.cookies && req.cookies.eclaw_session;
