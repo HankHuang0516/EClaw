@@ -5,7 +5,7 @@ Track git commits for each release to enable changelog generation via `git diff`
 ---
 
 ## Latest
-v1.0.35 | a4ffebd | 2026-03-03
+v1.0.36 | 1e9907f | 2026-03-04
 
 ---
 
@@ -13,6 +13,7 @@ v1.0.35 | a4ffebd | 2026-03-03
 
 | Version | Commit | Date | Notes |
 |---------|--------|------|-------|
+| v1.0.35 | a4ffebd | 2026-03-03 | Phone remote control, encrypted vars vault, OpenClaw channel plugin, screen control stability |
 | v1.0.34 | 5b951a6 | 2026-03-02 | Broadcast recipient info, device preferences, Mission Control delete UX, chat reactions, env vars tab |
 | v1.0.33 | 5986366 | 2026-03-01 | Social login, floating AI chat, cross-device contacts, AI feedback to GitHub |
 | v1.0.32 | 8fcdacb | 2026-02-28 | AI binding troubleshooter, WebSocket transport, XP expansion |
