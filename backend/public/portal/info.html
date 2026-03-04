@@ -1750,6 +1750,7 @@ node backend/tests/test-broadcast.js</div>
                 renderPublicNav('info');
             }
             if (typeof renderFooter === 'function') renderFooter();
+            if (typeof i18n !== 'undefined') i18n.apply();
 
             // ── Info tab switching ──
             const infoTabs = document.querySelectorAll('.info-tab');
