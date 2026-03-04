@@ -1,3 +1,11 @@
+## [1.77.2](https://github.com/HankHuang0516/realbot/compare/v1.77.1...v1.77.2) (2026-03-04)
+
+
+### Bug Fixes
+
+* **portal:** apply i18n after nav/footer render in info.html ([586ece7](https://github.com/HankHuang0516/realbot/commit/586ece7b17511a8bfbece7a1be739d44191e49f1))
+* **upload:** remove changesNotSentForReview param (rejected by Play API) ([a183a1f](https://github.com/HankHuang0516/realbot/commit/a183a1f647360de2047591d51eba9f912360c2df))
+
 ## [1.77.1](https://github.com/HankHuang0516/realbot/compare/v1.77.0...v1.77.1) (2026-03-04)
 
 
