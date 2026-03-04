@@ -196,6 +196,28 @@
                 </div>
             </div>
 
+            <!-- Security Info Card -->
+            <div class="card" style="margin-bottom:16px;">
+                <div class="section-title" style="margin-bottom:12px;">Security & Privacy</div>
+                <div style="display:grid;gap:10px;font-size:13px;color:var(--text-secondary);line-height:1.6;">
+                    <div style="display:flex;gap:10px;align-items:flex-start;">
+                        <span style="font-size:16px;flex-shrink:0;">🔑</span>
+                        <div><strong style="color:var(--text);">Per-binding secret key</strong><br>
+                        Each bot binding generates a unique <code>botSecret</code> scoped to your device. Even if multiple users share the same bot, each bot session can only access the device it was bound to — using another user's credentials will result in a 403 error.</div>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:flex-start;">
+                        <span style="font-size:16px;flex-shrink:0;">📋</span>
+                        <div><strong style="color:var(--text);">Accessibility Tree only — no screenshots</strong><br>
+                        The bot sees a structured list of UI elements (text, buttons, input fields) — not a screenshot of your screen. Sensitive visuals (images, videos, drawing canvas) are never captured.</div>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:flex-start;">
+                        <span style="font-size:16px;flex-shrink:0;">🛑</span>
+                        <div><strong style="color:var(--text);">You stay in control</strong><br>
+                        Remote Control is <strong>off by default</strong>. You can disable it at any time in App Settings → Remote Control. Revoking the bot binding immediately invalidates its <code>botSecret</code>.</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Screen Capture Card -->
             <div class="card" style="margin-bottom:16px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
