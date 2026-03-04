@@ -1,3 +1,10 @@
+## [1.77.4](https://github.com/HankHuang0516/realbot/compare/v1.77.3...v1.77.4) (2026-03-04)
+
+
+### Bug Fixes
+
+* **claude-cli-proxy:** replace hatchling local package install with requirements.txt ([542b918](https://github.com/HankHuang0516/realbot/commit/542b9184a30930a2df480dfd2d5f2a19d108b088))
+
 ## [1.77.3](https://github.com/HankHuang0516/realbot/compare/v1.77.2...v1.77.3) (2026-03-04)
 
 
