@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Claw — Delete Account</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦞</text></svg>">
+    <link rel="stylesheet" href="shared/style.css">
+    <style>
+        body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+        .container { width: 100%; max-width: 440px; }
+        .logo { text-align: center; margin-bottom: 32px; }
+        .logo-icon { font-size: 48px; }
+        .logo-name { font-size: 22px; font-weight: 700; color: var(--text); margin-top: 8px; }
+        .card { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 32px; }
+        h1 { font-size: 20px; font-weight: 700; color: var(--text); margin: 0 0 8px; }
+        .subtitle { font-size: 14px; color: var(--text-secondary); margin: 0 0 24px; line-height: 1.5; }
+        .data-list { background: var(--input-bg); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 24px; }
+        .data-list p { font-size: 13px; color: var(--text-secondary); margin: 0 0 8px; font-weight: 600; }
+        .data-list ul { margin: 0; padding-left: 18px; }
+        .data-list li { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
+        .btn { display: block; width: 100%; padding: 12px; border-radius: var(--radius-sm); border: none; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.15s; text-align: center; }
+        .btn:hover { opacity: 0.85; }
+        .btn-google { background: #fff; color: #3c4043; border: 1px solid #dadce0; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-delete { background: #d32f2f; color: #fff; margin-top: 12px; }
+        .btn-cancel { background: var(--input-bg); color: var(--text-secondary); border: 1px solid var(--card-border); margin-top: 8px; }
+        .divider { height: 1px; background: var(--card-border); margin: 24px 0; }
+        .user-info { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; overflow: hidden; }
+        .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .user-name { font-size: 15px; font-weight: 600; color: var(--text); }
+        .user-email { font-size: 13px; color: var(--text-secondary); }
+        .warning-box { background: rgba(211,47,47,0.08); border: 1px solid rgba(211,47,47,0.3); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 20px; font-size: 13px; color: #d32f2f; line-height: 1.5; }
+        .msg { margin-top: 12px; font-size: 13px; text-align: center; min-height: 20px; }
+        .msg.error { color: #d32f2f; }
+        .msg.success { color: #2e7d32; }
+        #stepSign { display: block; }
+        #stepConfirm { display: none; }
+        #stepDone { display: none; }
+        .success-icon { font-size: 48px; text-align: center; margin-bottom: 16px; }
+        .confirm-checkbox { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 20px; }
+        .confirm-checkbox input[type=checkbox] { margin-top: 2px; flex-shrink: 0; width: 16px; height: 16px; cursor: pointer; }
+        .confirm-checkbox label { font-size: 13px; color: var(--text-secondary); line-height: 1.5; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <div class="logo-icon">🦞</div>
+            <div class="logo-name">E-Claw</div>
+        </div>
+
+        <!-- Step 1: Sign in -->
+        <div class="card" id="stepSign">
+            <h1>Delete Account</h1>
+            <p class="subtitle">Sign in with your Google account to verify your identity and permanently delete your E-Claw account.</p>
+
+            <div class="data-list">
+                <p>Data that will be deleted:</p>
+                <ul>
+                    <li>Account info (email, name, profile)</li>
+                    <li>Chat history with all entities</li>
+                    <li>Mission Control data (tasks, notes, rules, soul)</li>
+                    <li>Schedules and execution history</li>
+                    <li>Encrypted environment variables</li>
+                    <li>Bot bindings and entity configurations</li>
+                    <li>Device telemetry data</li>
+                </ul>
+            </div>
+
+            <button class="btn btn-google" onclick="signInWithGoogle()">
+                <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/><path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/><path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/></svg>
+                Continue with Google
+            </button>
+            <div class="msg error" id="signMsg"></div>
+        </div>
+
+        <!-- Step 2: Confirm deletion -->
+        <div class="card" id="stepConfirm">
+            <h1>Confirm Deletion</h1>
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">🦞</div>
+                <div>
+                    <div class="user-name" id="userName">—</div>
+                    <div class="user-email" id="userEmail">—</div>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                ⚠ This action is permanent and cannot be undone. All your data will be deleted immediately.
+            </div>
+
+            <div class="confirm-checkbox">
+                <input type="checkbox" id="confirmCheck" onchange="updateDeleteBtn()">
+                <label for="confirmCheck">I understand that deleting my account is permanent and all my data will be erased.</label>
+            </div>
+
+            <button class="btn btn-delete" id="deleteBtn" onclick="deleteAccount()" disabled>Delete My Account</button>
+            <button class="btn btn-cancel" onclick="cancelDelete()">Cancel</button>
+            <div class="msg" id="deleteMsg"></div>
+        </div>
+
+        <!-- Step 3: Done -->
+        <div class="card" id="stepDone">
+            <div class="success-icon">✅</div>
+            <h1 style="text-align:center;">Account Deleted</h1>
+            <p class="subtitle" style="text-align:center;">Your E-Claw account and all associated data have been permanently deleted. You will no longer receive any communications from us.</p>
+            <div class="divider"></div>
+            <p style="font-size:13px;color:var(--text-secondary);text-align:center;">If you change your mind, you can always create a new account in the E-Claw App.</p>
+        </div>
+    </div>
+
+    <script src="shared/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        let googleClientId = null;
+        let googleAccessToken = null;
+
+        async function loadConfig() {
+            try {
+                const data = await apiCall('GET', '/api/auth/oauth/config');
+                googleClientId = data.googleClientId || null;
+            } catch (e) {
+                // ignore
+            }
+        }
+
+        async function signInWithGoogle() {
+            if (!googleClientId) return showSignMsg('Google sign-in not configured.');
+            if (typeof google === 'undefined') return showSignMsg('Google SDK loading, please retry.');
+
+            try {
+                const client = google.accounts.oauth2.initTokenClient({
+                    client_id: googleClientId,
+                    scope: 'openid email profile',
+                    callback: async (resp) => {
+                        if (resp.error) return showSignMsg(resp.error);
+                        googleAccessToken = resp.access_token;
+                        await loginAndShowConfirm(resp.access_token);
+                    }
+                });
+                client.requestAccessToken();
+            } catch (e) {
+                showSignMsg(e.message || 'Google sign-in failed');
+            }
+        }
+
+        async function loginAndShowConfirm(accessToken) {
+            try {
+                // Sign in to get session + user info
+                await apiCall('POST', '/api/auth/oauth/google', { accessToken });
+                const meData = await apiCall('GET', '/api/auth/me');
+                const user = meData.user;
+
+                // Populate confirm step
+                document.getElementById('userName').textContent = user.displayName || user.email || 'Unknown';
+                document.getElementById('userEmail').textContent = user.email || '';
+                const avatarEl = document.getElementById('userAvatar');
+                if (user.avatarUrl) {
+                    avatarEl.innerHTML = `<img src="${user.avatarUrl}" alt="avatar">`;
+                }
+
+                document.getElementById('stepSign').style.display = 'none';
+                document.getElementById('stepConfirm').style.display = 'block';
+            } catch (e) {
+                showSignMsg(e.message || 'Sign-in failed. Please try again.');
+            }
+        }
+
+        function updateDeleteBtn() {
+            const checked = document.getElementById('confirmCheck').checked;
+            document.getElementById('deleteBtn').disabled = !checked;
+        }
+
+        async function deleteAccount() {
+            const btn = document.getElementById('deleteBtn');
+            btn.disabled = true;
+            btn.textContent = 'Deleting...';
+            showDeleteMsg('', '');
+
+            try {
+                await apiCall('DELETE', '/api/auth/account');
+                document.getElementById('stepConfirm').style.display = 'none';
+                document.getElementById('stepDone').style.display = 'block';
+            } catch (e) {
+                btn.disabled = false;
+                btn.textContent = 'Delete My Account';
+                showDeleteMsg(e.message || 'Deletion failed. Please try again.', 'error');
+            }
+        }
+
+        function cancelDelete() {
+            document.getElementById('stepConfirm').style.display = 'none';
+            document.getElementById('stepSign').style.display = 'block';
+            document.getElementById('confirmCheck').checked = false;
+            updateDeleteBtn();
+        }
+
+        function showSignMsg(msg) {
+            document.getElementById('signMsg').textContent = msg;
+        }
+
+        function showDeleteMsg(msg, type) {
+            const el = document.getElementById('deleteMsg');
+            el.textContent = msg;
+            el.className = 'msg' + (type ? ' ' + type : '');
+        }
+
+        loadConfig();
+    </script>
+</body>
+</html>
