@@ -1,3 +1,10 @@
+# [1.77.0](https://github.com/HankHuang0516/realbot/compare/v1.76.3...v1.77.0) (2026-03-04)
+
+
+### Features
+
+* **portal:** add Security & Privacy info card to Remote Control page ([1e9907f](https://github.com/HankHuang0516/realbot/commit/1e9907f16fa6bd4bf8990e993fb287c1b5544c4a))
+
 ## [1.76.3](https://github.com/HankHuang0516/realbot/compare/v1.76.2...v1.76.3) (2026-03-04)
 
 
