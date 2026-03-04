@@ -563,6 +563,9 @@ If you have any questions, please contact us via our official email.
     <string name="remote_control_open_accessibility">Open Accessibility Settings</string>
     <string name="remote_control_status_active">Accessibility Service: Active</string>
     <string name="remote_control_status_inactive">Accessibility Service: Not enabled</string>
+    <string name="remote_control_disclosure_title">Accessibility Permission Required</string>
+    <string name="remote_control_disclosure_message">E-Claw uses the Accessibility Service to allow your AI bot to read and interact with your phone screen (taps, swipes, text input) on your behalf.\n\nThis service is used solely for bot-driven remote control. No personal or sensitive data is collected or shared.\n\nYou can disable this at any time in Settings.</string>
+    <string name="remote_control_disclosure_confirm">Understand &amp; Continue</string>
 
     <!-- App Update -->
     <string name="update_title">Update Available</string>

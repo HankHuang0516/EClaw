@@ -1189,12 +1189,19 @@ class SettingsActivity : AppCompatActivity() {
         row.addView(toggle)
         remoteControlContainer.addView(row)
 
-        // Button to open system Accessibility Settings
+        // Button to open system Accessibility Settings (with mandatory prominent disclosure)
         val btnAccessibility = com.google.android.material.button.MaterialButton(this).apply {
             text = getString(R.string.remote_control_open_accessibility)
             setOnClickListener {
                 TelemetryHelper.trackAction("remote_control_open_accessibility")
-                startActivity(android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                com.google.android.material.dialog.MaterialAlertDialogBuilder(this@SettingsActivity)
+                    .setTitle(getString(R.string.remote_control_disclosure_title))
+                    .setMessage(getString(R.string.remote_control_disclosure_message))
+                    .setPositiveButton(getString(R.string.remote_control_disclosure_confirm)) { _, _ ->
+                        startActivity(android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                    }
+                    .setNegativeButton(getString(R.string.cancel), null)
+                    .show()
             }
             val lp = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
