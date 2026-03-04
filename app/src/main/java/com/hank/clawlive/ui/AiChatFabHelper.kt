@@ -67,8 +67,9 @@ object AiChatFabHelper {
 
             if (savedX >= 0 && savedY >= 0) {
                 // Restore saved position, clamped to safe area
-                val x = savedX.coerceIn(defaultMargin.toFloat(), (parentW - fabSize - defaultMargin).toFloat())
-                val y = savedY.coerceIn(topSafe.toFloat(), (parentH - fabSize - bottomSafe).toFloat())
+                // Guard: if parentW/parentH isn't laid out yet, max could be < min — use min as fallback
+                val x = savedX.coerceIn(defaultMargin.toFloat(), maxOf((parentW - fabSize - defaultMargin).toFloat(), defaultMargin.toFloat()))
+                val y = savedY.coerceIn(topSafe.toFloat(), maxOf((parentH - fabSize - bottomSafe).toFloat(), topSafe.toFloat()))
                 fab.x = x
                 fab.y = y
             } else {
@@ -103,11 +104,11 @@ object AiChatFabHelper {
                         if (isDragging) {
                             val newX = (event.rawX + downX).coerceIn(
                                 defaultMargin.toFloat(),
-                                (parentW - fabSize - defaultMargin).toFloat()
+                                maxOf((parentW - fabSize - defaultMargin).toFloat(), defaultMargin.toFloat())
                             )
                             val newY = (event.rawY + downY).coerceIn(
                                 topSafe.toFloat(),
-                                (parentH - fabSize - bottomSafe).toFloat()
+                                maxOf((parentH - fabSize - bottomSafe).toFloat(), topSafe.toFloat())
                             )
                             v.x = newX
                             v.y = newY
