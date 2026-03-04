@@ -1,3 +1,10 @@
+# [1.76.0](https://github.com/HankHuang0516/realbot/compare/v1.75.0...v1.76.0) (2026-03-04)
+
+
+### Features
+
+* phone remote control via Accessibility Tree ([6a08cf3](https://github.com/HankHuang0516/realbot/commit/6a08cf3f241e480c845da794a0b4ecccb1e65b9f))
+
 # [1.75.0](https://github.com/HankHuang0516/realbot/compare/v1.74.2...v1.75.0) (2026-03-04)
 
 
