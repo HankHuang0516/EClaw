@@ -1,3 +1,10 @@
+## [1.76.2](https://github.com/HankHuang0516/realbot/compare/v1.76.1...v1.76.2) (2026-03-04)
+
+
+### Bug Fixes
+
+* **screen-control:** revert OkHttp to HttpURLConnection, remove typeWindowContentChanged ([6ee40ba](https://github.com/HankHuang0516/realbot/commit/6ee40ba3ced6a457d6154b3088c27d5c0504ae7d))
+
 ## [1.76.1](https://github.com/HankHuang0516/realbot/compare/v1.76.0...v1.76.1) (2026-03-04)
 
 
