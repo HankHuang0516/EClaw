@@ -1,3 +1,10 @@
+## [1.77.3](https://github.com/HankHuang0516/realbot/compare/v1.77.2...v1.77.3) (2026-03-04)
+
+
+### Bug Fixes
+
+* add prominent accessibility disclosure dialog for Google Play compliance (v1.0.37) ([aa39248](https://github.com/HankHuang0516/realbot/commit/aa3924865a2017b03dc4f1faf6fc87b39f375fb7))
+
 ## [1.77.2](https://github.com/HankHuang0516/realbot/compare/v1.77.1...v1.77.2) (2026-03-04)
 
 
