@@ -1503,6 +1503,7 @@ exec: curl -s -X POST "https://eclawbot.com/api/device/control" \
 | `scroll` | `{"nodeId": "n5", "direction": "down"}` | Scroll an element down (or `"up"`) |
 | `back` | _(no params needed)_ | Press the system Back button |
 | `home` | _(no params needed)_ | Press the system Home button |
+| `ime_action` | _(no params needed)_ | Press the keyboard's action key (Send / Go / Done / Search) — use after `type` to submit text |
 
 **Success response:**
 ```json

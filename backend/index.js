@@ -7074,7 +7074,7 @@ app.post('/api/device/control', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and command required' });
     }
 
-    const VALID_COMMANDS = new Set(['tap', 'type', 'scroll', 'back', 'home']);
+    const VALID_COMMANDS = new Set(['tap', 'type', 'scroll', 'back', 'home', 'ime_action']);
     if (!VALID_COMMANDS.has(command)) {
         return res.status(400).json({ success: false, error: `Invalid command. Must be one of: ${[...VALID_COMMANDS].join(', ')}` });
     }
