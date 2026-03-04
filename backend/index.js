@@ -7539,6 +7539,35 @@ function serverLog(level, category, message, opts = {}) {
     ).catch(() => {}); // Never throw — logs are non-critical
 }
 
+// ── Crash handlers: log uncaught errors to /api/logs (category: crash) before dying ──
+process.on('uncaughtException', async (err) => {
+    console.error('[FATAL] Uncaught exception:', err);
+    try {
+        await chatPool.query(
+            `INSERT INTO server_logs (level, category, message, metadata)
+             VALUES ($1, $2, $3, $4)`,
+            ['error', 'crash', `Uncaught exception: ${err.message}`,
+             JSON.stringify({ stack: err.stack?.substring(0, 2000) })]
+        );
+    } catch (_) { /* DB write failed, nothing we can do */ }
+    process.exit(1);
+});
+
+process.on('unhandledRejection', async (reason) => {
+    const msg = reason instanceof Error ? reason.message : String(reason);
+    const stack = reason instanceof Error ? reason.stack : undefined;
+    console.error('[FATAL] Unhandled rejection:', reason);
+    try {
+        await chatPool.query(
+            `INSERT INTO server_logs (level, category, message, metadata)
+             VALUES ($1, $2, $3, $4)`,
+            ['error', 'crash', `Unhandled rejection: ${msg}`,
+             JSON.stringify({ stack: stack?.substring(0, 2000) })]
+        );
+    } catch (_) { /* DB write failed, nothing we can do */ }
+    process.exit(1);
+});
+
 // Fire-and-forget handshake failure recorder
 function logHandshakeFailure(opts) {
     const { deviceId, entityId, webhookUrl, errorType, httpStatus, errorMessage, requestPayload, responseBody, source } = opts;
@@ -7845,7 +7874,7 @@ app.post('/api/device-telemetry', async (req, res) => {
     }
     // Store appVersion/platform on device entities for AI Support and feedback
     if (appVersion && device) {
-        for (const entity of device.entities) {
+        for (const entity of Object.values(device.entities)) {
             if (entity) entity.appVersion = appVersion;
         }
         device.appVersion = appVersion;
