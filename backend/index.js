@@ -1571,8 +1571,7 @@ const VARS_APPROVAL_TIMEOUT = 60 * 1000; // 60 seconds
 // pendingScreenRequests: deviceId -> { resolve, reject, timeoutHandle }
 // ============================================
 const pendingScreenRequests = {};
-const screenCaptureRateLimits = {}; // deviceId -> { count, lastAt }
-const SCREEN_CAPTURE_SESSION_LIMIT = 20;
+const screenCaptureRateLimits = {}; // deviceId -> { lastAt }
 const SCREEN_CAPTURE_MIN_INTERVAL_MS = 500;
 
 setInterval(() => {
@@ -6981,25 +6980,16 @@ app.post('/api/device/screen-capture', async (req, res) => {
             message: 'Remote control is not enabled. User must enable it in App Settings.' });
     }
 
-    // Rate limiting
+    // Rate limiting: 500ms minimum interval only
     const now = Date.now();
     if (!screenCaptureRateLimits[deviceId]) {
-        screenCaptureRateLimits[deviceId] = { count: 0, lastAt: 0 };
+        screenCaptureRateLimits[deviceId] = { lastAt: 0 };
     }
     const rateState = screenCaptureRateLimits[deviceId];
-    // Reset counter if idle > 5 min
-    if (now - rateState.lastAt > 5 * 60 * 1000) {
-        rateState.count = 0;
-    }
-    if (rateState.count >= SCREEN_CAPTURE_SESSION_LIMIT) {
-        return res.status(429).json({ success: false, error: 'rate_limit_exceeded',
-            message: `Max ${SCREEN_CAPTURE_SESSION_LIMIT} screen captures per session.` });
-    }
     if (now - rateState.lastAt < SCREEN_CAPTURE_MIN_INTERVAL_MS) {
         return res.status(429).json({ success: false, error: 'too_fast',
             message: `Min ${SCREEN_CAPTURE_MIN_INTERVAL_MS}ms between captures.` });
     }
-    rateState.count++;
     rateState.lastAt = now;
 
     // Check device is connected via Socket.IO
