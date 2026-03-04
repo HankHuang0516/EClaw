@@ -555,6 +555,15 @@ If you have any questions, please contact us via our official email.
     <string name="vars_deny">Deny</string>
     <string name="vars_no_keys">no variables</string>
 
+    <!-- Remote Control -->
+    <string name="remote_control_service_label">E-Claw Remote Control</string>
+    <string name="remote_control_service_description">Allows E-Claw bots to read and interact with your phone screen when you grant permission.</string>
+    <string name="remote_control_section_title">Remote Control</string>
+    <string name="remote_control_toggle_label">Allow Bot Remote Control</string>
+    <string name="remote_control_open_accessibility">Open Accessibility Settings</string>
+    <string name="remote_control_status_active">Accessibility Service: Active</string>
+    <string name="remote_control_status_inactive">Accessibility Service: Not enabled</string>
+
     <!-- App Update -->
     <string name="update_title">Update Available</string>
     <string name="update_message">A new version (v%s) is available. Update for the best experience!</string>

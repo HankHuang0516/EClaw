@@ -1565,6 +1565,16 @@ const varsApprovalCache = new Map();
 const varsApprovalPending = new Map();
 const VARS_APPROVAL_TTL = 5 * 60 * 1000; // 5 minutes
 const VARS_APPROVAL_TIMEOUT = 60 * 1000; // 60 seconds
+
+// ============================================
+// REMOTE SCREEN CONTROL
+// pendingScreenRequests: deviceId -> { resolve, reject, timeoutHandle }
+// ============================================
+const pendingScreenRequests = {};
+const screenCaptureRateLimits = {}; // deviceId -> { count, lastAt }
+const SCREEN_CAPTURE_SESSION_LIMIT = 20;
+const SCREEN_CAPTURE_MIN_INTERVAL_MS = 500;
+
 setInterval(() => {
     const now = Date.now();
     for (const [id, entry] of varsApprovalCache) {
@@ -6925,6 +6935,182 @@ app.put('/api/device-preferences', async (req, res) => {
     await devicePrefs.updatePrefs(deviceId, prefs);
     const updated = await devicePrefs.getPrefs(deviceId);
     res.json({ success: true, prefs: updated });
+});
+
+// ============================================
+// REMOTE SCREEN CONTROL
+// ============================================
+
+/**
+ * POST /api/device/screen-capture
+ * Bot or device owner requests the current screen UI tree (long-poll, ≤5s).
+ * Body: { deviceId, entityId, botSecret } — bot auth
+ *    or { deviceId, entityId, deviceSecret } — device owner auth (portal)
+ */
+app.post('/api/device/screen-capture', async (req, res) => {
+    const { deviceId, entityId, botSecret, deviceSecret } = req.body;
+
+    if (!deviceId || (botSecret === undefined && deviceSecret === undefined)) {
+        return res.status(400).json({ success: false, error: 'deviceId and botSecret (or deviceSecret) required' });
+    }
+
+    const eId = parseInt(entityId) || 0;
+    if (eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+
+    // Auth: device owner (portal) OR bot
+    const isOwner = deviceSecret && device.deviceSecret && deviceSecret === device.deviceSecret;
+    const entity = device.entities[eId];
+    if (!isOwner) {
+        if (!entity || !entity.isBound) {
+            return res.status(400).json({ success: false, error: 'Entity not bound' });
+        }
+        if (!botSecret || botSecret !== entity.botSecret) {
+            return res.status(403).json({ success: false, error: 'Invalid botSecret' });
+        }
+    }
+
+    // Feature gate
+    const prefs = await devicePrefs.getPrefs(deviceId);
+    if (!prefs.remote_control_enabled) {
+        return res.status(403).json({ success: false, error: 'remote_control_disabled',
+            message: 'Remote control is not enabled. User must enable it in App Settings.' });
+    }
+
+    // Rate limiting
+    const now = Date.now();
+    if (!screenCaptureRateLimits[deviceId]) {
+        screenCaptureRateLimits[deviceId] = { count: 0, lastAt: 0 };
+    }
+    const rateState = screenCaptureRateLimits[deviceId];
+    // Reset counter if idle > 5 min
+    if (now - rateState.lastAt > 5 * 60 * 1000) {
+        rateState.count = 0;
+    }
+    if (rateState.count >= SCREEN_CAPTURE_SESSION_LIMIT) {
+        return res.status(429).json({ success: false, error: 'rate_limit_exceeded',
+            message: `Max ${SCREEN_CAPTURE_SESSION_LIMIT} screen captures per session.` });
+    }
+    if (now - rateState.lastAt < SCREEN_CAPTURE_MIN_INTERVAL_MS) {
+        return res.status(429).json({ success: false, error: 'too_fast',
+            message: `Min ${SCREEN_CAPTURE_MIN_INTERVAL_MS}ms between captures.` });
+    }
+    rateState.count++;
+    rateState.lastAt = now;
+
+    // Check device is connected via Socket.IO
+    const sockets = await io.in(`device:${deviceId}`).fetchSockets();
+    if (sockets.length === 0) {
+        return res.status(503).json({ success: false, error: 'device_offline',
+            message: 'Device is not connected. Open the app.' });
+    }
+
+    // Only one pending capture per device at a time
+    if (pendingScreenRequests[deviceId]) {
+        return res.status(409).json({ success: false, error: 'capture_in_progress',
+            message: 'Another screen capture is already pending for this device.' });
+    }
+
+    serverLog('info', 'remote_control', 'screen-capture requested', { deviceId, entityId: eId });
+
+    try {
+        const screenData = await new Promise((resolve, reject) => {
+            const timeoutHandle = setTimeout(() => {
+                delete pendingScreenRequests[deviceId];
+                reject(new Error('timeout'));
+            }, 5000);
+            pendingScreenRequests[deviceId] = { resolve, reject, timeoutHandle };
+            io.to(`device:${deviceId}`).emit('device:screen-request', { requestedAt: now });
+        });
+        return res.json({ success: true, ...screenData });
+    } catch (err) {
+        if (err.message === 'timeout') {
+            return res.status(504).json({ success: false, error: 'timeout',
+                message: 'Device did not respond within 5 seconds. Is the Accessibility Service enabled?' });
+        }
+        return res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+/**
+ * POST /api/device/screen-result
+ * App delivers the captured UI tree, resolving the pending long-poll.
+ * Auth: deviceId + deviceSecret (device owner).
+ * Body: { deviceId, deviceSecret, screen, timestamp, elements }
+ */
+app.post('/api/device/screen-result', (req, res) => {
+    const deviceId = authDevice(req);
+    if (!deviceId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const { screen, timestamp, elements } = req.body;
+    const pending = pendingScreenRequests[deviceId];
+    if (!pending) {
+        return res.json({ success: true, message: 'No pending request, result discarded' });
+    }
+
+    clearTimeout(pending.timeoutHandle);
+    delete pendingScreenRequests[deviceId];
+    pending.resolve({ screen, timestamp, elements });
+
+    serverLog('info', 'remote_control', 'screen-result delivered', { deviceId,
+        metadata: { screen, elementCount: Array.isArray(elements) ? elements.length : 0 } });
+    res.json({ success: true });
+});
+
+/**
+ * POST /api/device/control
+ * Bot or device owner sends a UI control command. Relayed to App via Socket.IO (fire-and-forget).
+ * Body: { deviceId, entityId, botSecret, command, params } — bot auth
+ *    or { deviceId, entityId, deviceSecret, command, params } — device owner auth (portal)
+ */
+app.post('/api/device/control', async (req, res) => {
+    const { deviceId, entityId, botSecret, deviceSecret, command, params } = req.body;
+
+    if (!deviceId || !command) {
+        return res.status(400).json({ success: false, error: 'deviceId and command required' });
+    }
+
+    const VALID_COMMANDS = new Set(['tap', 'type', 'scroll', 'back', 'home']);
+    if (!VALID_COMMANDS.has(command)) {
+        return res.status(400).json({ success: false, error: `Invalid command. Must be one of: ${[...VALID_COMMANDS].join(', ')}` });
+    }
+
+    const eId = parseInt(entityId) || 0;
+    if (eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+
+    // Auth: device owner (portal) OR bot
+    const isOwner = deviceSecret && device.deviceSecret && deviceSecret === device.deviceSecret;
+    if (!isOwner) {
+        const entity = device.entities[eId];
+        if (!entity || !entity.isBound) {
+            return res.status(400).json({ success: false, error: 'Entity not bound' });
+        }
+        if (!botSecret || botSecret !== entity.botSecret) {
+            return res.status(403).json({ success: false, error: 'Invalid botSecret' });
+        }
+    }
+
+    // Feature gate
+    const prefs = await devicePrefs.getPrefs(deviceId);
+    if (!prefs.remote_control_enabled) {
+        return res.status(403).json({ success: false, error: 'remote_control_disabled',
+            message: 'Remote control is not enabled. User must enable it in App Settings.' });
+    }
+
+    serverLog('info', 'remote_control', `control command: ${command}`, { deviceId, entityId: eId,
+        metadata: { command, params } });
+
+    io.to(`device:${deviceId}`).emit('device:control-command', { command, params: params || {} });
+    res.json({ success: true, message: `Command "${command}" sent to device` });
 });
 
 // Prune old notifications daily

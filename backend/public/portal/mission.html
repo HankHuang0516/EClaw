@@ -463,6 +463,7 @@
             <a class="sub-tab active" href="mission.html">🎯 <span data-i18n="mc_title">Mission Control</span></a>
             <a class="sub-tab" href="schedule.html">📅 <span data-i18n="nav_schedule">Schedule</span></a>
             <a class="sub-tab" href="env-vars.html">🔐 Env Variables</a>
+            <a class="sub-tab" href="screen-control.html">📱 Remote Control</a>
         </div>
 
         <!-- Loading State -->
@@ -1269,38 +1270,61 @@
                 url: 'https://github.com/timothy-node/openclaw-claude-proxy',
                 steps: `Repo: https://github.com/timothy-node/openclaw-claude-proxy
 Forwards OpenClaw messages to the local Claude CLI (--print mode) via HTTP.
+Updated: 2026-03-03
 
-Step 1: Clone the repo
+== Prerequisites ==
+node v22, npm 10.9.4, python3 3.11+
+
+== Step 1: Install uv ==
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  source ~/.local/bin/env
+
+== Step 2: Install Claude Code ==
+  npm install -g @anthropic-ai/claude-code
+  claude --version  # verify installation
+
+== Step 3: Clone claude-proxy ==
   git clone https://github.com/timothy-node/openclaw-claude-proxy \\
     ~/.openclaw/skills/claude-proxy
 
-Step 2: Install uv (Python package manager)
-  curl -LsSf https://astral.sh/uv/install.sh | sh
-
-Step 3: Install Claude CLI
-  npm install -g @anthropic-ai/claude-code
-
-Step 4: Configure credentials
+== Step 4: Create venv ==
   cd ~/.openclaw/skills/claude-proxy
+  uv venv && source .venv/bin/activate
+  uv pip install -r pyproject.toml
+
+== Step 5: Configure .env ==
   cp .env.example .env
   # Edit .env and set:
-  #   CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat...
+  #   CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-...
   #   CLAUDE_TIMEOUT_DEFAULT=120
 
-Step 5: Start the proxy
-  ./start.sh
-  # Runs at http://localhost:8765
-  # GET /health  →  health check
-  # POST /chat   →  send messages
+== Step 6: Patch proxy.py ==
+  In run_claude(), add: env["IS_SANDBOX"] = "1"
+  (bypasses root restriction in container environments)
 
-Step 6: Stop the proxy (when needed)
-  ./stop.sh
+== Step 7: Start ==
+  source ~/.local/bin/env
+  cd ~/.openclaw/skills/claude-proxy
+  source .venv/bin/activate
+  export CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-...
+  nohup python proxy.py > /tmp/proxy.log 2>&1 &
+
+== Verify ==
+  curl http://127.0.0.1:8765/health
+  Expected: {"status":"ok"}
+
+== API ==
+  GET  /health        Health check
+  POST /chat          { "message": "..." }
+
+== Stop ==
+  pkill -f proxy.py
 
 Optional: Enable auto-start via systemd
   sudo cp claude-proxy.service /etc/systemd/system/
   sudo systemctl enable claude-proxy
 
-⚠️ Use at your own risk. Provided as-is, without warranty.`
+Use at your own risk. Provided as-is, without warranty.`
             }
         ];
 

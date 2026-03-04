@@ -34,6 +34,12 @@ object SocketManager {
     private val _varsApprovalFlow = MutableSharedFlow<JSONObject>(extraBufferCapacity = 8)
     val varsApprovalFlow: SharedFlow<JSONObject> = _varsApprovalFlow
 
+    private val _screenRequestFlow = MutableSharedFlow<JSONObject>(extraBufferCapacity = 4)
+    val screenRequestFlow: SharedFlow<JSONObject> = _screenRequestFlow
+
+    private val _controlCommandFlow = MutableSharedFlow<JSONObject>(extraBufferCapacity = 16)
+    val controlCommandFlow: SharedFlow<JSONObject> = _controlCommandFlow
+
     fun connect(context: Context) {
         if (isInitialized) return
 
@@ -87,6 +93,18 @@ object SocketManager {
                     val json = args.firstOrNull() as? JSONObject ?: return@on
                     Timber.d("[Socket] vars:approval-request received: $json")
                     _varsApprovalFlow.tryEmit(json)
+                }
+
+                on("device:screen-request") { args ->
+                    val json = args.firstOrNull() as? JSONObject ?: JSONObject()
+                    Timber.d("[Socket] device:screen-request received")
+                    _screenRequestFlow.tryEmit(json)
+                }
+
+                on("device:control-command") { args ->
+                    val json = args.firstOrNull() as? JSONObject ?: return@on
+                    Timber.d("[Socket] device:control-command: $json")
+                    _controlCommandFlow.tryEmit(json)
                 }
 
                 connect()

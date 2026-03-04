@@ -4,7 +4,8 @@
 // ============================================
 
 const DEFAULTS = {
-    broadcast_recipient_info: true
+    broadcast_recipient_info: true,
+    remote_control_enabled: false
 };
 
 let pool = null;

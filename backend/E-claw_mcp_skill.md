@@ -1403,3 +1403,148 @@ Each push notification you receive will include a hint at the bottom if vars are
 When you see this, call the endpoint to retrieve the token values you need.
 If you receive `owner_offline`, inform the user they need to open their Portal or App for you to access the variables.
 If you receive `timeout`, you may retry once after a short delay.
+
+---
+
+## 📱 Phone Remote Control
+
+> **User must enable Remote Control in App Settings first.** The feature is OFF by default.
+> The user must also grant the Accessibility Service permission from Android system settings.
+
+Use this to autonomously navigate the user's phone UI. You can read the screen contents (as a structured text tree), then tap elements, type text, scroll, or press system buttons.
+
+### Typical workflow
+
+1. Call `POST /api/device/screen-capture` → receive the current UI tree as JSON
+2. Parse `elements` array — find the element you want by `text`, `type`, or `desc`
+3. Note its `id` (e.g. `"n3"`)
+4. Call `POST /api/device/control` with the `id` to tap/type/scroll
+5. Repeat as needed (max **20 screen captures per session**, min **500ms** between captures)
+
+---
+
+### `POST /api/device/screen-capture` — Get current screen UI tree
+
+Waits up to 5 seconds for the device to respond.
+
+```
+exec: curl -s -X POST "https://eclawbot.com/api/device/screen-capture" \
+  -H "Content-Type: application/json" \
+  -d '{"deviceId":"YOUR_DEVICE_ID","entityId":YOUR_ENTITY_ID,"botSecret":"YOUR_BOT_SECRET"}'
+```
+
+**Success response:**
+```json
+{
+  "success": true,
+  "screen": "com.android.settings",
+  "timestamp": 1709999999999,
+  "elements": [
+    {
+      "id": "n0",
+      "type": "TextView",
+      "text": "Settings",
+      "bounds": {"x": 0, "y": 64, "w": 360, "h": 56},
+      "clickable": false,
+      "scrollable": false,
+      "editable": false
+    },
+    {
+      "id": "n1",
+      "type": "LinearLayout",
+      "text": "Wi-Fi",
+      "desc": "Wi-Fi settings",
+      "bounds": {"x": 0, "y": 120, "w": 360, "h": 72},
+      "clickable": true,
+      "scrollable": false,
+      "editable": false
+    },
+    {
+      "id": "n2",
+      "type": "EditText",
+      "text": "",
+      "bounds": {"x": 16, "y": 200, "w": 328, "h": 48},
+      "clickable": true,
+      "scrollable": false,
+      "editable": true
+    }
+  ]
+}
+```
+
+**Error responses:**
+
+| HTTP | `error` | Meaning |
+|------|---------|---------|
+| 403 | `remote_control_disabled` | User hasn't enabled Remote Control in Settings |
+| 503 | `device_offline` | App is not connected — user must open the app |
+| 504 | `timeout` | Device didn't respond in 5s — Accessibility Service may not be running |
+| 429 | `rate_limit_exceeded` | Max 20 captures per session reached |
+| 429 | `too_fast` | Wait at least 500ms between captures |
+| 409 | `capture_in_progress` | Another capture is already pending |
+
+---
+
+### `POST /api/device/control` — Send a UI action
+
+```
+exec: curl -s -X POST "https://eclawbot.com/api/device/control" \
+  -H "Content-Type: application/json" \
+  -d '{"deviceId":"YOUR_DEVICE_ID","entityId":YOUR_ENTITY_ID,"botSecret":"YOUR_BOT_SECRET","command":"tap","params":{"nodeId":"n1"}}'
+```
+
+**Commands:**
+
+| `command` | `params` | Description |
+|-----------|----------|-------------|
+| `tap` | `{"nodeId": "n1"}` | Tap a UI element by its ID from the screen tree |
+| `tap` | `{"x": 180, "y": 148}` | Tap by absolute screen coordinates |
+| `type` | `{"nodeId": "n2", "text": "hello world"}` | Type text into a focused/editable field |
+| `scroll` | `{"nodeId": "n5", "direction": "down"}` | Scroll an element down (or `"up"`) |
+| `back` | _(no params needed)_ | Press the system Back button |
+| `home` | _(no params needed)_ | Press the system Home button |
+
+**Success response:**
+```json
+{ "success": true, "message": "Command \"tap\" sent to device" }
+```
+
+**Error responses:** Same auth errors as screen-capture (403, 404, 400).
+
+---
+
+### Example: Open Wi-Fi settings and connect to a network
+
+```
+# Step 1: See what's on screen
+exec: curl -s -X POST "https://eclawbot.com/api/device/screen-capture" \
+  -H "Content-Type: application/json" \
+  -d '{"deviceId":"DEVICE_ID","entityId":0,"botSecret":"BOT_SECRET"}'
+
+# (Parse response — find "Wi-Fi" element, e.g. id="n3")
+
+# Step 2: Tap Wi-Fi
+exec: curl -s -X POST "https://eclawbot.com/api/device/control" \
+  -H "Content-Type: application/json" \
+  -d '{"deviceId":"DEVICE_ID","entityId":0,"botSecret":"BOT_SECRET","command":"tap","params":{"nodeId":"n3"}}'
+
+# Step 3: Capture again to see Wi-Fi list
+exec: curl -s -X POST "https://eclawbot.com/api/device/screen-capture" \
+  -H "Content-Type: application/json" \
+  -d '{"deviceId":"DEVICE_ID","entityId":0,"botSecret":"BOT_SECRET"}'
+
+# (Find "Home_WiFi" network in elements, e.g. id="n7")
+
+# Step 4: Tap it
+exec: curl -s -X POST "https://eclawbot.com/api/device/control" \
+  -H "Content-Type: application/json" \
+  -d '{"deviceId":"DEVICE_ID","entityId":0,"botSecret":"BOT_SECRET","command":"tap","params":{"nodeId":"n7"}}'
+```
+
+### Tips
+
+- After tapping or typing, always re-capture the screen to confirm the result before proceeding
+- If an element you want is not visible, use `scroll` on the list container, then re-capture
+- If `remote_control_disabled`, tell the user: "Please enable Remote Control in App Settings → Remote Control"
+- If `device_offline`, tell the user to open the app so the connection is re-established
+- Node IDs (`n0`, `n1`, ...) are positional — they change when the screen changes. Always capture fresh before acting.
