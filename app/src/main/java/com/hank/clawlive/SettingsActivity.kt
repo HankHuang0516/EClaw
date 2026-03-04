@@ -109,6 +109,11 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var broadcastSettingsExpandArrow: ImageView
     private lateinit var broadcastPrefsContainer: LinearLayout
     private var isBroadcastSettingsExpanded = false
+    private lateinit var remoteControlHeader: LinearLayout
+    private lateinit var remoteControlContentLayout: LinearLayout
+    private lateinit var remoteControlExpandArrow: ImageView
+    private lateinit var remoteControlContainer: LinearLayout
+    private var isRemoteControlExpanded = false
     private lateinit var langHeader: LinearLayout
     private lateinit var langContentLayout: LinearLayout
     private lateinit var langExpandArrow: ImageView
@@ -136,6 +141,7 @@ class SettingsActivity : AppCompatActivity() {
         displayAppVersion()
         setupNotifCollapsible()
         setupBroadcastSettingsCollapsible()
+        setupRemoteControlCollapsible()
         setupLangCollapsible()
     }
 
@@ -218,6 +224,10 @@ class SettingsActivity : AppCompatActivity() {
         broadcastSettingsContentLayout = findViewById(R.id.broadcastSettingsContentLayout)
         broadcastSettingsExpandArrow = findViewById(R.id.broadcastSettingsExpandArrow)
         broadcastPrefsContainer = findViewById(R.id.broadcastPrefsContainer)
+        remoteControlHeader = findViewById(R.id.remoteControlHeader)
+        remoteControlContentLayout = findViewById(R.id.remoteControlContentLayout)
+        remoteControlExpandArrow = findViewById(R.id.remoteControlExpandArrow)
+        remoteControlContainer = findViewById(R.id.remoteControlContainer)
         langHeader = findViewById(R.id.langHeader)
         langContentLayout = findViewById(R.id.langContentLayout)
         langExpandArrow = findViewById(R.id.langExpandArrow)
@@ -1083,5 +1093,144 @@ class SettingsActivity : AppCompatActivity() {
             setTextColor(0x99FFFFFF.toInt())
         }
         broadcastPrefsContainer.addView(errorText)
+    }
+
+    // ─── Remote Control ────────────────────────────────────────────────────
+
+    private var remoteControlPrefsLoaded = false
+
+    private fun setupRemoteControlCollapsible() {
+        remoteControlHeader.setOnClickListener {
+            isRemoteControlExpanded = !isRemoteControlExpanded
+            remoteControlContentLayout.visibility = if (isRemoteControlExpanded) View.VISIBLE else View.GONE
+            remoteControlExpandArrow.animate()
+                .rotation(if (isRemoteControlExpanded) 180f else 0f)
+                .setDuration(200)
+                .start()
+            if (isRemoteControlExpanded && !remoteControlPrefsLoaded) {
+                remoteControlPrefsLoaded = true
+                loadRemoteControlPrefs()
+            }
+        }
+    }
+
+    private fun loadRemoteControlPrefs() {
+        remoteControlContainer.removeAllViews()
+        val loadingText = TextView(this).apply {
+            text = getString(R.string.notif_prefs_loading)
+            textSize = 13f
+            setTextColor(0x99FFFFFF.toInt())
+        }
+        remoteControlContainer.addView(loadingText)
+
+        lifecycleScope.launch {
+            try {
+                val response = NetworkModule.api.getDevicePreferences(
+                    deviceId = deviceManager.deviceId,
+                    deviceSecret = deviceManager.deviceSecret
+                )
+                if (response.success) {
+                    buildRemoteControlUi(response.prefs)
+                } else {
+                    remoteControlContainer.removeAllViews()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to load remote control preferences")
+            }
+        }
+    }
+
+    private fun buildRemoteControlUi(prefs: Map<String, Boolean>) {
+        remoteControlContainer.removeAllViews()
+        val enabled = prefs["remote_control_enabled"] ?: false
+
+        // Accessibility status indicator
+        val isActive = isAccessibilityServiceEnabled()
+        val statusText = TextView(this).apply {
+            text = if (isActive) getString(R.string.remote_control_status_active)
+                   else getString(R.string.remote_control_status_inactive)
+            textSize = 12f
+            setTextColor(if (isActive) 0xFF4CAF50.toInt() else 0xFFFF9800.toInt())
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            lp.bottomMargin = dpToPx(8)
+            layoutParams = lp
+        }
+        remoteControlContainer.addView(statusText)
+
+        // Enable/disable toggle row
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            lp.bottomMargin = dpToPx(4)
+            layoutParams = lp
+            setPadding(0, dpToPx(4), 0, dpToPx(4))
+        }
+        val label = TextView(this).apply {
+            text = getString(R.string.remote_control_toggle_label)
+            textSize = 14f
+            setTextColor(0xDDFFFFFF.toInt())
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        val toggle = MaterialSwitch(this).apply {
+            isChecked = enabled
+            setOnCheckedChangeListener { _, isChecked ->
+                TelemetryHelper.trackAction("remote_control_toggle", mapOf("enabled" to isChecked.toString()))
+                updateRemoteControlPref(isChecked)
+            }
+        }
+        row.addView(label)
+        row.addView(toggle)
+        remoteControlContainer.addView(row)
+
+        // Button to open system Accessibility Settings
+        val btnAccessibility = com.google.android.material.button.MaterialButton(this).apply {
+            text = getString(R.string.remote_control_open_accessibility)
+            setOnClickListener {
+                TelemetryHelper.trackAction("remote_control_open_accessibility")
+                startActivity(android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            }
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            lp.topMargin = dpToPx(8)
+            layoutParams = lp
+        }
+        remoteControlContainer.addView(btnAccessibility)
+    }
+
+    private fun updateRemoteControlPref(enabled: Boolean) {
+        lifecycleScope.launch {
+            try {
+                val body = mapOf<String, Any>(
+                    "deviceId" to deviceManager.deviceId,
+                    "deviceSecret" to deviceManager.deviceSecret,
+                    "prefs" to mapOf("remote_control_enabled" to enabled)
+                )
+                val response = NetworkModule.api.updateDevicePreferences(body)
+                if (!response.success) {
+                    Timber.w("Failed to update remote control pref: ${response.message}")
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to update remote control preference")
+                TelemetryHelper.trackError(e, mapOf("action" to "update_remote_control_pref"))
+            }
+        }
+    }
+
+    private fun isAccessibilityServiceEnabled(): Boolean {
+        val prefString = android.provider.Settings.Secure.getString(
+            contentResolver,
+            android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+        ) ?: return false
+        val serviceName = "$packageName/.service.ScreenControlService"
+        return prefString.split(':').any { it.equals(serviceName, ignoreCase = true) }
     }
 }

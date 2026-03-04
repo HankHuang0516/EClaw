@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Claw - Remote Control</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦞</text></svg>">
+    <link rel="stylesheet" href="shared/style.css">
+    <style>
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0;
+        }
+
+        /* Sub-tab navigation */
+        .sub-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .sub-tab {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: color 0.15s, border-color 0.15s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sub-tab:hover { color: var(--text); }
+
+        .sub-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge.enabled { background: rgba(76,175,80,0.15); color: #4CAF50; }
+        .status-badge.disabled { background: rgba(255,152,0,0.15); color: #FF9800; }
+
+        .screen-tree {
+            background: #0d0d0d;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 12px;
+            font-family: monospace;
+        }
+
+        .tree-element {
+            padding: 6px 8px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            border: 1px solid #222;
+            cursor: pointer;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            transition: background 0.1s;
+        }
+
+        .tree-element:hover { background: #1a1a1a; }
+        .tree-element.selected { background: rgba(255,68,68,0.1); border-color: var(--primary); }
+
+        .tree-element .elem-id {
+            color: #888;
+            font-size: 11px;
+            min-width: 30px;
+        }
+
+        .tree-element .elem-type {
+            color: #569cd6;
+            font-size: 11px;
+            min-width: 80px;
+        }
+
+        .tree-element .elem-text {
+            color: #ce9178;
+            flex: 1;
+        }
+
+        .tree-element .elem-actions {
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.1s;
+        }
+
+        .tree-element:hover .elem-actions { opacity: 1; }
+
+        .tree-element .badge {
+            font-size: 10px;
+            padding: 1px 5px;
+            border-radius: 3px;
+            background: #2a2a2a;
+            color: #aaa;
+        }
+
+        .tree-element .badge.clickable { background: rgba(255,68,68,0.15); color: var(--primary); }
+        .tree-element .badge.editable { background: rgba(33,150,243,0.15); color: #64B5F6; }
+
+        .command-form {
+            display: grid;
+            gap: 12px;
+        }
+
+        .command-form select, .command-form input {
+            background: #1a1a1a;
+            border: 1px solid var(--card-border);
+            color: var(--text);
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            width: 100%;
+        }
+
+        .command-form label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">📱 Remote Control</h1>
+        </div>
+
+        <!-- Sub-tab Navigation -->
+        <div class="sub-tabs">
+            <a class="sub-tab" href="mission.html">🎯 <span data-i18n="mc_title">Mission Control</span></a>
+            <a class="sub-tab" href="schedule.html">📅 <span data-i18n="nav_schedule">Schedule</span></a>
+            <a class="sub-tab" href="env-vars.html">🔐 Env Variables</a>
+            <a class="sub-tab active" href="screen-control.html">📱 Remote Control</a>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-center" id="loadingState" style="text-align:center;padding:40px 0;">
+            <div class="spinner" style="margin:0 auto 12px;"></div>
+            <div style="color:var(--text-secondary);">Loading...</div>
+        </div>
+
+        <!-- Content -->
+        <div id="pageContent" style="display:none;">
+
+            <!-- Status Card -->
+            <div class="card" style="margin-bottom:16px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                    <div>
+                        <div class="section-title" style="margin-bottom:4px;">Feature Status</div>
+                        <span id="statusBadge" class="status-badge disabled">⚠ Disabled</span>
+                    </div>
+                    <div style="font-size:12px;color:var(--text-secondary);max-width:320px;">
+                        Enable Remote Control in the App (Settings → Remote Control), then grant the Accessibility Service permission.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screen Capture Card -->
+            <div class="card" style="margin-bottom:16px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                    <div class="section-title" style="margin-bottom:0;">Screen State</div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span id="screenMeta" style="font-size:12px;color:var(--text-secondary);"></span>
+                        <button class="btn btn-primary btn-sm" onclick="captureScreen()" id="captureBtn">Capture Screen</button>
+                    </div>
+                </div>
+                <div id="screenTreeContainer">
+                    <div class="empty-state">Click "Capture Screen" to see the current UI tree from the device.</div>
+                </div>
+            </div>
+
+            <!-- Send Command Card -->
+            <div class="card">
+                <div class="section-title" style="margin-bottom:12px;">Send Command</div>
+                <div class="command-form">
+                    <div>
+                        <label>Command</label>
+                        <select id="commandType" onchange="onCommandTypeChange()">
+                            <option value="tap">tap — Tap an element or coordinate</option>
+                            <option value="type">type — Type text into a field</option>
+                            <option value="scroll">scroll — Scroll an element</option>
+                            <option value="back">back — System Back button</option>
+                            <option value="home">home — System Home button</option>
+                        </select>
+                    </div>
+                    <div id="paramsGroup">
+                        <label>Node ID (from tree above, e.g. <code>n3</code>)</label>
+                        <input type="text" id="paramNodeId" placeholder="n0">
+                    </div>
+                    <div id="textGroup" style="display:none;">
+                        <label>Text to type</label>
+                        <input type="text" id="paramText" placeholder="Enter text...">
+                    </div>
+                    <div id="scrollDirGroup" style="display:none;">
+                        <label>Scroll direction</label>
+                        <select id="paramScrollDir">
+                            <option value="down">down</option>
+                            <option value="up">up</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="sendCommand()" id="sendBtn">Send Command</button>
+                </div>
+                <div id="commandResult" style="margin-top:12px;font-size:13px;"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="shared/auth.js"></script>
+    <script src="shared/api.js"></script>
+    <script src="shared/nav.js"></script>
+    <script src="shared/telemetry.js"></script>
+    <script>
+        let currentUser = null;
+        let selectedNodeId = null;
+
+        async function init() {
+            currentUser = await checkAuth();
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('pageContent').style.display = 'block';
+            loadStatus();
+        }
+
+        async function loadStatus() {
+            try {
+                const data = await apiCall('GET',
+                    `/api/device-preferences?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`
+                );
+                const enabled = data.prefs && data.prefs.remote_control_enabled;
+                const badge = document.getElementById('statusBadge');
+                if (enabled) {
+                    badge.className = 'status-badge enabled';
+                    badge.textContent = '✓ Enabled';
+                } else {
+                    badge.className = 'status-badge disabled';
+                    badge.textContent = '⚠ Disabled — enable in App Settings';
+                }
+            } catch (e) {
+                console.error('Failed to load status', e);
+            }
+        }
+
+        async function captureScreen() {
+            const btn = document.getElementById('captureBtn');
+            btn.disabled = true;
+            btn.textContent = 'Capturing...';
+            document.getElementById('screenMeta').textContent = '';
+
+            // Use entity 0 and deviceSecret as botSecret for portal testing
+            // NOTE: For actual bot use, the bot uses its own botSecret
+            try {
+                const data = await apiCall('POST', '/api/device/screen-capture', {
+                    deviceId: currentUser.deviceId,
+                    entityId: 0,
+                    botSecret: currentUser.deviceSecret  // portal uses deviceSecret for testing
+                });
+
+                if (data.success) {
+                    renderTree(data);
+                    document.getElementById('screenMeta').textContent =
+                        `${data.screen || ''} · ${(data.elements || []).length} elements · ${new Date(data.timestamp).toLocaleTimeString()}`;
+                    telemetry.trackAction('screen_capture_success');
+                } else {
+                    showTreeError(data.message || data.error || 'Capture failed');
+                }
+            } catch (e) {
+                showTreeError(e.message || 'Request failed');
+                telemetry.trackError('screen_capture_failed', { error: e.message });
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Capture Screen';
+            }
+        }
+
+        function renderTree(data) {
+            const container = document.getElementById('screenTreeContainer');
+            const elements = data.elements || [];
+            if (elements.length === 0) {
+                container.innerHTML = '<div class="empty-state">No interactive elements found on screen.</div>';
+                return;
+            }
+
+            container.innerHTML = '<div class="screen-tree" id="screenTree"></div>';
+            const tree = document.getElementById('screenTree');
+
+            elements.forEach(elem => {
+                const div = document.createElement('div');
+                div.className = 'tree-element';
+                div.dataset.id = elem.id;
+
+                const displayText = elem.text || elem.desc || '—';
+                const badges = [];
+                if (elem.clickable) badges.push('<span class="badge clickable">click</span>');
+                if (elem.editable) badges.push('<span class="badge editable">edit</span>');
+                if (elem.scrollable) badges.push('<span class="badge">scroll</span>');
+
+                div.innerHTML = `
+                    <span class="elem-id">${elem.id}</span>
+                    <span class="elem-type">${elem.type || 'View'}</span>
+                    <span class="elem-text">${escapeHtml(displayText)}</span>
+                    <div style="display:flex;gap:4px;flex-shrink:0;">${badges.join('')}</div>
+                `;
+
+                div.addEventListener('click', () => selectNode(elem.id));
+                tree.appendChild(div);
+            });
+        }
+
+        function selectNode(nodeId) {
+            selectedNodeId = nodeId;
+            document.querySelectorAll('.tree-element').forEach(el => {
+                el.classList.toggle('selected', el.dataset.id === nodeId);
+            });
+            document.getElementById('paramNodeId').value = nodeId;
+        }
+
+        function showTreeError(msg) {
+            document.getElementById('screenTreeContainer').innerHTML =
+                `<div class="empty-state" style="color:var(--error);">Error: ${escapeHtml(msg)}</div>`;
+        }
+
+        function onCommandTypeChange() {
+            const cmd = document.getElementById('commandType').value;
+            document.getElementById('paramsGroup').style.display = ['tap', 'type', 'scroll'].includes(cmd) ? 'block' : 'none';
+            document.getElementById('textGroup').style.display = cmd === 'type' ? 'block' : 'none';
+            document.getElementById('scrollDirGroup').style.display = cmd === 'scroll' ? 'block' : 'none';
+        }
+
+        async function sendCommand() {
+            const cmd = document.getElementById('commandType').value;
+            const nodeId = document.getElementById('paramNodeId').value.trim();
+            const text = document.getElementById('paramText').value;
+            const scrollDir = document.getElementById('paramScrollDir').value;
+
+            const params = {};
+            if (['tap', 'type', 'scroll'].includes(cmd) && nodeId) params.nodeId = nodeId;
+            if (cmd === 'type') params.text = text;
+            if (cmd === 'scroll') params.direction = scrollDir;
+
+            const resultEl = document.getElementById('commandResult');
+            const btn = document.getElementById('sendBtn');
+            btn.disabled = true;
+            resultEl.textContent = '';
+
+            try {
+                const data = await apiCall('POST', '/api/device/control', {
+                    deviceId: currentUser.deviceId,
+                    entityId: 0,
+                    botSecret: currentUser.deviceSecret,
+                    command: cmd,
+                    params
+                });
+                resultEl.style.color = data.success ? 'var(--success, #4CAF50)' : 'var(--error)';
+                resultEl.textContent = data.success ? `✓ ${data.message}` : `✗ ${data.error || data.message}`;
+                telemetry.trackAction('send_control_command', { command: cmd });
+            } catch (e) {
+                resultEl.style.color = 'var(--error)';
+                resultEl.textContent = `✗ ${e.message}`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        init();
+    </script>
+</body>
+</html>
