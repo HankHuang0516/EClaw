@@ -24,7 +24,9 @@
     "prepublishOnly": "npm run build"
   },
   "openclaw": {
-    "extensions": ["./dist/index.js"],
+    "extensions": [
+      "./dist/index.js"
+    ],
     "channel": {
       "id": "eclaw",
       "label": "E-Claw",
@@ -36,12 +38,19 @@
       "npmSpec": "@eclaw/openclaw-channel"
     }
   },
-  "keywords": ["openclaw", "openclaw-channel", "channel", "eclaw", "ai-agent", "live-wallpaper"],
+  "keywords": [
+    "openclaw",
+    "openclaw-channel",
+    "channel",
+    "eclaw",
+    "ai-agent",
+    "live-wallpaper"
+  ],
   "author": "HankHuang",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/HankHuang0516/openclaw-channel-eclaw"
+    "url": "git+https://github.com/HankHuang0516/openclaw-channel-eclaw.git"
   },
   "devDependencies": {
     "typescript": "^5.4",

@@ -34,6 +34,26 @@ git pull origin main
 
 ---
 
+## 0.3. Verify Docker Build (REQUIRED)
+
+> [!CAUTION]
+> **Must pass before release. Catches Dockerfile/dependency errors before Railway deploy.**
+
+// turbo
+```bash
+docker build -f claude-cli-proxy/Dockerfile claude-cli-proxy/
+```
+
+**Expected Output:**
+```
+=> exporting to image
+=> => writing image sha256:...
+```
+
+**If build fails:** Fix the Dockerfile or dependency files before proceeding.
+
+---
+
 ## 0.5. Run Regression Tests (REQUIRED)
 
 > [!CAUTION]
