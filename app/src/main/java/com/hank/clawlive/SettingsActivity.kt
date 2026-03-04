@@ -129,6 +129,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var channelApiActions: LinearLayout
     private lateinit var btnChannelApiToggleSecret: com.google.android.material.button.MaterialButton
     private lateinit var btnChannelApiCopy: com.google.android.material.button.MaterialButton
+    private lateinit var tvChannelApiSlotStatus: TextView
     private var isChannelApiExpanded = false
     private var channelApiSecretVisible = false
     private var cachedChannelSecret: String? = null
@@ -256,6 +257,7 @@ class SettingsActivity : AppCompatActivity() {
         channelApiActions = findViewById(R.id.channelApiActions)
         btnChannelApiToggleSecret = findViewById(R.id.btnChannelApiToggleSecret)
         btnChannelApiCopy = findViewById(R.id.btnChannelApiCopy)
+        tvChannelApiSlotStatus = findViewById(R.id.tvChannelApiSlotStatus)
 
         // Show debug button only in debug builds
         if (BuildConfig.DEBUG) {
@@ -482,6 +484,7 @@ class SettingsActivity : AppCompatActivity() {
                     showAccountUnboundState()
                 }
                 updateChannelApiDisplay(status.channelApiKey, status.channelApiSecret)
+                loadChannelEntitySlotStatus()
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load account status")
                 showAccountUnboundState()
@@ -1303,6 +1306,24 @@ class SettingsActivity : AppCompatActivity() {
             clip.setPrimaryClip(ClipData.newPlainText("channel_api", text))
             Toast.makeText(this, getString(R.string.channel_api_copied), Toast.LENGTH_SHORT).show()
             TelemetryHelper.trackAction("channel_api_copy")
+        }
+    }
+
+    private fun loadChannelEntitySlotStatus() {
+        lifecycleScope.launch {
+            try {
+                val response = NetworkModule.api.getAllEntities(deviceId = deviceManager.deviceId)
+                val channelEntities = response.entities.filter { it.bindingType == "channel" }
+                if (channelEntities.isNotEmpty()) {
+                    val slots = channelEntities.joinToString("  ") { "⚡ #${it.entityId}" }
+                    tvChannelApiSlotStatus.text = getString(R.string.channel_api_slots_active, slots)
+                    tvChannelApiSlotStatus.visibility = View.VISIBLE
+                } else {
+                    tvChannelApiSlotStatus.visibility = View.GONE
+                }
+            } catch (e: Exception) {
+                tvChannelApiSlotStatus.visibility = View.GONE
+            }
         }
     }
 

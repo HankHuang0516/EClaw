@@ -392,6 +392,7 @@
     <string name="channel_api_copy_btn">Copy</string>
     <string name="channel_api_copied">Credentials copied</string>
     <string name="channel_api_no_key">No API key yet. Open the Web Portal to generate one.</string>
+    <string name="channel_api_slots_active">Connected: %1$s</string>
 
     <!-- Account Status Card -->
     <string name="account_card_title">Account</string>

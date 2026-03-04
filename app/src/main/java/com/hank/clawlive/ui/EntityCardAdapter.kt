@@ -88,6 +88,7 @@ class EntityCardAdapter(
         private val tvEntityName: TextView = itemView.findViewById(R.id.tvEntityName)
         private val tvEntityId: TextView = itemView.findViewById(R.id.tvEntityId)
         private val tvStateBadge: TextView = itemView.findViewById(R.id.tvStateBadge)
+        private val tvChannelBadge: TextView = itemView.findViewById(R.id.tvChannelBadge)
         private val tvLastMessage: TextView = itemView.findViewById(R.id.tvLastMessage)
         private val tvMessageTime: TextView = itemView.findViewById(R.id.tvMessageTime)
         private val ivDragHandle: ImageView = itemView.findViewById(R.id.ivDragHandle)
@@ -116,6 +117,9 @@ class EntityCardAdapter(
             // State Badge
             tvStateBadge.text = entity.state.name
             tvStateBadge.setBackgroundColor(getStateBadgeColor(entity.state))
+
+            // Channel Badge
+            tvChannelBadge.visibility = if (entity.bindingType == "channel") View.VISIBLE else View.GONE
 
             // Message
             tvLastMessage.text = entity.message

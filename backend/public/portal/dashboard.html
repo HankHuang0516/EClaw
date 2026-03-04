@@ -91,6 +91,16 @@
             font-weight: 600;
         }
 
+        .badge-channel {
+            background: #1a3a2a;
+            color: #4ade80;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            border: 1px solid #2d6a4a;
+        }
+
         .entity-public-code {
             display: inline-flex;
             align-items: center;
@@ -1229,6 +1239,7 @@
                     '<div class="entity-badges">' +
                     '<span class="badge-id">#' + entity.entityId + '</span>' +
                     '<span class="badge ' + stateBadgeClass + '">' + escapeHtml(state) + '</span>' +
+                    (entity.bindingType === 'channel' ? '<span class="badge-channel">⚡ Channel</span>' : '') +
                     '</div>' +
                     (function() {
                         var xd = getXpDisplay(entity);

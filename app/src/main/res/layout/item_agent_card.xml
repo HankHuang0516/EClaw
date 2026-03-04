@@ -87,6 +87,20 @@
                 android:textSize="12sp"
                 android:background="@drawable/badge_background" />
 
+            <!-- Channel Badge (visible only for channel-bound entities) -->
+            <TextView
+                android:id="@+id/tvChannelBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="⚡ Channel"
+                android:textColor="#4ade80"
+                android:textSize="11sp"
+                android:background="@drawable/badge_channel_background"
+                android:visibility="gone" />
+
         </LinearLayout>
 
         <!-- XP/Level Bar -->

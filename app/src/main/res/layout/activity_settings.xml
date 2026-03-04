@@ -564,6 +564,16 @@
                             android:layout_marginBottom="12dp"
                             android:visibility="gone"/>
 
+                        <!-- Connected entity slots status -->
+                        <TextView
+                            android:id="@+id/tvChannelApiSlotStatus"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="12dp"
+                            android:textSize="12sp"
+                            android:textColor="#4ade80"
+                            android:visibility="gone"/>
+
                         <!-- Action buttons -->
                         <LinearLayout
                             android:id="@+id/channelApiActions"

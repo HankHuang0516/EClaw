@@ -1922,7 +1922,8 @@ app.get('/api/entities', (req, res) => {
                     avatar: entity.avatar || null,
                     xp: entity.xp || 0,
                     level: entity.level || 1,
-                    publicCode: entity.publicCode || null
+                    publicCode: entity.publicCode || null,
+                    bindingType: entity.bindingType || null
                 });
             }
         }
