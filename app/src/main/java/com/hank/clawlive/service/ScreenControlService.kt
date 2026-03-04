@@ -15,43 +15,33 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import timber.log.Timber
-import java.util.concurrent.TimeUnit
+import java.io.OutputStreamWriter
+import java.net.HttpURLConnection
+import java.net.URL
 
 /**
  * AccessibilityService that enables bot-driven phone control.
  *
  * Optimizations:
- * - OkHttp connection pool: eliminates per-request TCP+TLS handshake
  * - MAX_ELEMENTS / MAX_DEPTH: prevents slow walk on complex screens (Chrome, etc.)
- * - Screen-change cache: if nothing changed since last capture, returns immediately
+ * - Screen-change cache: if nothing changed since last capture, returns tree instantly
+ *   Cache is invalidated by: typeWindowStateChanged events OR after any control command
  */
 class ScreenControlService : AccessibilityService() {
 
     companion object {
         private const val MAX_ELEMENTS = 150
         private const val MAX_DEPTH = 12
-
-        // Single OkHttp client shared across all captures — connection pool reuses keep-alive connections
-        private val httpClient by lazy {
-            OkHttpClient.Builder()
-                .connectTimeout(4, TimeUnit.SECONDS)
-                .readTimeout(4, TimeUnit.SECONDS)
-                .build()
-        }
     }
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     // Screen-change cache
     private var cachedTree: JSONObject? = null
-    @Volatile private var screenChanged = true  // true on first capture
+    @Volatile private var screenChanged = true
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -60,10 +50,7 @@ class ScreenControlService : AccessibilityService() {
         observeControlCommands()
     }
 
-    /**
-     * Invalidate cache whenever the screen changes.
-     * Configured to receive typeWindowStateChanged + typeWindowContentChanged.
-     */
+    /** Invalidate cache on major screen navigation (typeWindowStateChanged). */
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         screenChanged = true
     }
@@ -87,18 +74,17 @@ class ScreenControlService : AccessibilityService() {
                     val tree = captureScreenTree()
                     postScreenResult(tree)
                 } catch (e: Exception) {
-                    Timber.e(e, "[ScreenControl] Screen capture failed")
+                    Timber.e(e, "[ScreenControl] Screen capture failed: ${e.message}")
                 }
             }
         }
     }
 
     /**
-     * Returns the cached tree if the screen hasn't changed since the last capture,
-     * otherwise walks rootInActiveWindow (depth-first, max MAX_ELEMENTS / MAX_DEPTH).
+     * Returns the cached tree if the screen hasn't changed, otherwise walks
+     * rootInActiveWindow (depth-first, capped at MAX_ELEMENTS / MAX_DEPTH).
      */
     private fun captureScreenTree(): JSONObject {
-        // Fast path: return cached tree if screen unchanged
         val cached = cachedTree
         if (!screenChanged && cached != null) {
             Timber.d("[ScreenControl] Returning cached tree (${cached.getJSONArray("elements").length()} elements)")
@@ -153,9 +139,8 @@ class ScreenControlService : AccessibilityService() {
         result.put("screen", packageName)
         result.put("timestamp", System.currentTimeMillis())
         result.put("elements", elements)
-        Timber.d("[ScreenControl] Captured ${nodeIndex} elements from $packageName")
+        Timber.d("[ScreenControl] Captured $nodeIndex elements from $packageName")
 
-        // Update cache
         cachedTree = result
         screenChanged = false
         return result
@@ -163,21 +148,27 @@ class ScreenControlService : AccessibilityService() {
 
     private fun postScreenResult(tree: JSONObject) {
         val dm = DeviceManager.getInstance(applicationContext)
-        val body = JSONObject().apply {
-            put("deviceId", dm.deviceId)
-            put("deviceSecret", dm.deviceSecret)
-            put("screen", tree.getString("screen"))
-            put("timestamp", tree.getLong("timestamp"))
-            put("elements", tree.getJSONArray("elements"))
-        }
+        val url = URL("https://eclawbot.com/api/device/screen-result")
+        val conn = url.openConnection() as HttpURLConnection
+        try {
+            conn.requestMethod = "POST"
+            conn.setRequestProperty("Content-Type", "application/json")
+            conn.doOutput = true
+            conn.connectTimeout = 4000
+            conn.readTimeout = 4000
 
-        val request = Request.Builder()
-            .url("https://eclawbot.com/api/device/screen-result")
-            .post(body.toString().toRequestBody("application/json".toMediaType()))
-            .build()
+            val body = JSONObject()
+            body.put("deviceId", dm.deviceId)
+            body.put("deviceSecret", dm.deviceSecret)
+            body.put("screen", tree.getString("screen"))
+            body.put("timestamp", tree.getLong("timestamp"))
+            body.put("elements", tree.getJSONArray("elements"))
 
-        httpClient.newCall(request).execute().use { response ->
-            Timber.d("[ScreenControl] screen-result POST: HTTP ${response.code}")
+            OutputStreamWriter(conn.outputStream).use { it.write(body.toString()) }
+            val code = conn.responseCode
+            Timber.d("[ScreenControl] screen-result POST: HTTP $code")
+        } finally {
+            conn.disconnect()
         }
     }
 
@@ -189,8 +180,10 @@ class ScreenControlService : AccessibilityService() {
                 Timber.d("[ScreenControl] Control command: $json")
                 try {
                     executeControlCommand(json)
+                    // Invalidate cache after every control action — screen may have changed
+                    screenChanged = true
                 } catch (e: Exception) {
-                    Timber.e(e, "[ScreenControl] Control command failed")
+                    Timber.e(e, "[ScreenControl] Control command failed: ${e.message}")
                 }
             }
         }
