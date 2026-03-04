@@ -287,6 +287,49 @@ git push origin main
 
 ---
 
+## 7.5. Publish npm Plugin (if channel-api changed)
+
+> [!NOTE]
+> **Only needed when `backend/channel-api.js` or `openclaw-channel-eclaw/src/` has changed.**
+> Skip this step if only Android or unrelated backend code changed.
+
+### 判斷是否需要發佈
+
+// turbo
+```bash
+git diff PREV_COMMIT..HEAD --name-only | grep -E "channel-api|openclaw-channel-eclaw/src"
+```
+
+如果有輸出 → 需要發佈 npm；如果無輸出 → 跳過此步驟。
+
+### 發佈步驟
+
+// turbo
+```powershell
+cd openclaw-channel-eclaw
+
+# 1. 更新版本號（patch = bug fix, minor = 新功能, major = breaking change）
+npm version patch
+
+# 2. 發佈（prepublishOnly 會自動 build）
+npm publish --access public
+
+# 3. 推到獨立 GitHub repo
+git push origin main
+```
+
+> [!IMPORTANT]
+> Token 已設定在 `~/.npmrc`，不需要重新登入。
+> 如果遇到 E403，執行：
+> `npm set //registry.npmjs.org/:_authToken YOUR_AUTOMATION_TOKEN`
+
+**驗證發佈成功：**
+```
++ @eclaw/openclaw-channel@x.x.x
+```
+
+---
+
 ## 8. Upload AAB to Google Play Internal Testing
 
 > [!IMPORTANT]
