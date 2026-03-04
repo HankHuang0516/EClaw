@@ -4,8 +4,12 @@ import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
 import android.content.Intent
 import android.graphics.Path
+import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import com.hank.clawlive.data.local.DeviceManager
@@ -43,6 +47,11 @@ class ScreenControlService : AccessibilityService() {
     private var cachedTree: JSONObject? = null
     @Volatile private var screenChanged = true
 
+    // ─── Remote-control border overlay ────────────────────────────────────
+    private var overlayView: RemoteControlBorderView? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val hideOverlayRunnable = Runnable { hideControlOverlay() }
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         Timber.d("[ScreenControl] AccessibilityService connected")
@@ -60,6 +69,7 @@ class ScreenControlService : AccessibilityService() {
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
+        mainHandler.post { hideControlOverlay() }
         serviceScope.cancel()
         return super.onUnbind(intent)
     }
@@ -182,11 +192,54 @@ class ScreenControlService : AccessibilityService() {
                     executeControlCommand(json)
                     // Invalidate cache after every control action — screen may have changed
                     screenChanged = true
+                    onControlCommandReceived()
                 } catch (e: Exception) {
                     Timber.e(e, "[ScreenControl] Control command failed: ${e.message}")
                 }
             }
         }
+    }
+
+    private fun onControlCommandReceived() {
+        mainHandler.post {
+            if (overlayView == null) showControlOverlay()
+            resetHideTimer()
+        }
+    }
+
+    private fun showControlOverlay() {
+        val wm = getSystemService(WINDOW_SERVICE) as WindowManager
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            PixelFormat.TRANSLUCENT
+        )
+        val view = RemoteControlBorderView(this)
+        overlayView = view
+        wm.addView(view, params)
+        view.startAnimation()
+        Timber.d("[ScreenControl] Remote control overlay shown")
+    }
+
+    private fun hideControlOverlay() {
+        overlayView?.let { view ->
+            view.stopAnimation()
+            runCatching {
+                (getSystemService(WINDOW_SERVICE) as WindowManager).removeView(view)
+            }
+            overlayView = null
+            Timber.d("[ScreenControl] Remote control overlay hidden")
+        }
+        mainHandler.removeCallbacks(hideOverlayRunnable)
+    }
+
+    private fun resetHideTimer() {
+        mainHandler.removeCallbacks(hideOverlayRunnable)
+        mainHandler.postDelayed(hideOverlayRunnable, 5000L)
     }
 
     private fun executeControlCommand(json: JSONObject) {
@@ -199,6 +252,7 @@ class ScreenControlService : AccessibilityService() {
             "scroll" -> executeScroll(params)
             "back" -> performGlobalAction(GLOBAL_ACTION_BACK)
             "home" -> performGlobalAction(GLOBAL_ACTION_HOME)
+            "ime_action" -> executeImeAction()
             else -> Timber.w("[ScreenControl] Unknown command: $command")
         }
     }
@@ -253,6 +307,20 @@ class ScreenControlService : AccessibilityService() {
             node.performAction(action)
             node.recycle()
         }
+    }
+
+    private fun executeImeAction() {
+        val root = rootInActiveWindow ?: return
+        val focused = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+        if (focused != null) {
+            // ACTION_IME_ENTER (0x01000000) triggers the keyboard's action key (Send/Go/Done/Search)
+            focused.performAction(0x01000000)
+            focused.recycle()
+            Timber.d("[ScreenControl] IME action performed on focused input")
+        } else {
+            Timber.w("[ScreenControl] No focused input found for ime_action")
+        }
+        root.recycle()
     }
 
     /**
