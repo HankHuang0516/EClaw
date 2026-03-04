@@ -24,6 +24,7 @@ Thumbs.db
 # Data persistence (keep directory structure, ignore data files)
 data/*.json
 !data/.gitkeep
+!data/skill-templates.json
 
 # Test files
 test-entity-info.json

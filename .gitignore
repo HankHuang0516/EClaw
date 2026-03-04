@@ -17,7 +17,8 @@ local.properties
 # Node
 node_modules/
 backend/node_modules/
-backend/data/
+backend/data/*
+!backend/data/skill-templates.json
 dist/
 coverage/
 .env

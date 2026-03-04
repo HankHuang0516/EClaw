@@ -648,6 +648,15 @@ setTimeout(() => subscriptionModule.loadPremiumStatus(), 5000);
 gatekeeper.initGatekeeperTable();
 setTimeout(() => gatekeeper.loadBlockedDevices(), 3000);
 
+// --- Skill Templates API ---
+
+const skillTemplatesData = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/skill-templates.json'), 'utf8'));
+
+// GET /api/skill-templates - Community skill template registry (public)
+app.get('/api/skill-templates', (req, res) => {
+    res.json({ success: true, templates: skillTemplatesData });
+});
+
 // --- Free Bot TOS API ---
 
 // GET /api/free-bot-tos - Get TOS content

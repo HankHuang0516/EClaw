@@ -292,6 +292,15 @@
             border-color: var(--primary);
         }
 
+        .skill-template-chip.configured {
+            border-color: #4caf50;
+            color: #4caf50;
+        }
+
+        .skill-template-chip.configured:hover {
+            background: #4caf5020;
+        }
+
         #dlg_skill_steps {
             min-height: 160px;
             resize: vertical;
@@ -639,6 +648,7 @@
             initPortalSocket();
 
             await loadBoundEntities();
+            await loadSkillTemplates();
             await downloadDashboard();
             syncVarsToServer(); // auto-sync local vars to server in-memory on load
 
@@ -1262,81 +1272,83 @@
         }
 
         // ========== Skills ==========
-        const SKILL_TEMPLATES = [
-            {
-                id: 'claude-proxy',
-                label: '🤖 claude-proxy',
-                title: 'claude-proxy',
-                url: 'https://github.com/timothy-node/openclaw-claude-proxy',
-                steps: `Repo: https://github.com/timothy-node/openclaw-claude-proxy
-Forwards OpenClaw messages to the local Claude CLI (--print mode) via HTTP.
-Updated: 2026-03-03
+        let skillTemplates = []; // loaded from /api/skill-templates
 
-== Prerequisites ==
-node v22, npm 10.9.4, python3 3.11+
+        async function loadSkillTemplates() {
+            try {
+                const data = await apiCall('GET', '/api/skill-templates');
+                if (data.success) skillTemplates = data.templates;
+            } catch (e) { console.warn('Failed to load skill templates:', e); }
+        }
 
-== Step 1: Install uv ==
-  curl -LsSf https://astral.sh/uv/install.sh | sh
-  source ~/.local/bin/env
-
-== Step 2: Install Claude Code ==
-  npm install -g @anthropic-ai/claude-code
-  claude --version  # verify installation
-
-== Step 3: Clone claude-proxy ==
-  git clone https://github.com/timothy-node/openclaw-claude-proxy \\
-    ~/.openclaw/skills/claude-proxy
-
-== Step 4: Create venv ==
-  cd ~/.openclaw/skills/claude-proxy
-  uv venv && source .venv/bin/activate
-  uv pip install -r pyproject.toml
-
-== Step 5: Configure .env ==
-  cp .env.example .env
-  # Edit .env and set:
-  #   CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-...
-  #   CLAUDE_TIMEOUT_DEFAULT=120
-
-== Step 6: Patch proxy.py ==
-  In run_claude(), add: env["IS_SANDBOX"] = "1"
-  (bypasses root restriction in container environments)
-
-== Step 7: Start ==
-  source ~/.local/bin/env
-  cd ~/.openclaw/skills/claude-proxy
-  source .venv/bin/activate
-  export CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-...
-  nohup python proxy.py > /tmp/proxy.log 2>&1 &
-
-== Verify ==
-  curl http://127.0.0.1:8765/health
-  Expected: {"status":"ok"}
-
-== API ==
-  GET  /health        Health check
-  POST /chat          { "message": "..." }
-
-== Stop ==
-  pkill -f proxy.py
-
-Optional: Enable auto-start via systemd
-  sudo cp claude-proxy.service /etc/systemd/system/
-  sudo systemctl enable claude-proxy
-
-Use at your own risk. Provided as-is, without warranty.`
-            }
-        ];
-
-        function applySkillTemplate(templateId) {
-            const tpl = SKILL_TEMPLATES.find(t => t.id === templateId);
-            if (!tpl) return;
+        function fillSkillTemplate(tpl) {
             document.getElementById('dlg_skill_title').value = tpl.title;
             document.getElementById('dlg_skill_url').value = tpl.url || '';
             document.getElementById('dlg_skill_steps').value = tpl.steps || '';
             document.querySelectorAll('.skill-template-chip').forEach(c => {
-                c.classList.toggle('active', c.dataset.template === templateId);
+                c.classList.toggle('active', c.dataset.template === tpl.id);
             });
+        }
+
+        function applySkillTemplate(templateId) {
+            const tpl = skillTemplates.find(t => t.id === templateId);
+            if (!tpl) return;
+
+            if (tpl.requiredVars && tpl.requiredVars.length > 0) {
+                const vars = loadLocalVars();
+                const missing = tpl.requiredVars.filter(v => !vars[v.key]);
+                if (missing.length > 0) {
+                    showRequiredVarsDialog(tpl, missing);
+                    return;
+                }
+            }
+            fillSkillTemplate(tpl);
+        }
+
+        function showRequiredVarsDialog(tpl, missingVars) {
+            const c = document.getElementById('dialogContainer');
+            const fields = missingVars.map((v, i) => `
+                <div class="dialog-field-label" style="font-family:monospace;font-size:13px;">${esc(v.key)}</div>
+                ${v.description ? `<div style="color:var(--text-muted);font-size:11px;margin-bottom:6px;">${esc(v.description)}</div>` : ''}
+                <div style="display:flex;gap:6px;align-items:center;margin-bottom:12px;">
+                    <input id="dlg_reqvar_${i}" type="password" placeholder="${esc(v.hint || '')}"
+                        style="flex:1;font-family:monospace;" autocomplete="off" />
+                    <button type="button" onclick="
+                        var inp=document.getElementById('dlg_reqvar_${i}');
+                        inp.type=inp.type==='password'?'text':'password';
+                        this.textContent=inp.type==='password'?'👁':'🙈';
+                    " style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:14px;">👁</button>
+                </div>
+            `).join('');
+
+            c.innerHTML = `<div class="dialog-overlay" onclick="if(event.target===this)closeDialog()">
+                <div class="dialog">
+                    <div class="dialog-title">Environment Variable Required</div>
+                    <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;">
+                        The <strong>${esc(tpl.label)}</strong> skill needs the following variable(s) to be saved in your Env Variables:
+                    </p>
+                    ${fields}
+                    <div class="dialog-actions">
+                        <button class="btn btn-outline" onclick="showSkillDialog(null,null);fillSkillTemplate(skillTemplates.find(t=>t.id==='${esc(tpl.id)}'))">Skip</button>
+                        <button class="btn btn-primary" id="dlgReqVarSaveBtn">Save &amp; Continue</button>
+                    </div>
+                </div>
+            </div>`;
+
+            document.getElementById('dlgReqVarSaveBtn').onclick = () => {
+                missingVars.forEach((v, i) => {
+                    const val = document.getElementById(`dlg_reqvar_${i}`).value;
+                    if (val) saveLocalVar(v.key, val);
+                });
+                // Re-open the skill dialog and apply template (chips re-render with ✓)
+                showSkillDialog(null, null);
+                fillSkillTemplate(tpl);
+            };
+
+            setTimeout(() => {
+                const first = document.getElementById('dlg_reqvar_0');
+                if (first) first.focus();
+            }, 50);
         }
 
         function renderSkills() {
@@ -1385,9 +1397,7 @@ Use at your own risk. Provided as-is, without warranty.`
 
             if (!entityCheckboxes) entityCheckboxes = '<div style="color:var(--text-muted);font-size:12px;">No bound entities</div>';
 
-            const templateChips = SKILL_TEMPLATES.map(t =>
-                `<div class="skill-template-chip" data-template="${t.id}" onclick="applySkillTemplate('${t.id}')">${t.label}</div>`
-            ).join('');
+            const templateChips = skillTemplates.map(t => buildTemplateChip(t)).join('');
 
             let html = `<div class="dialog-overlay" onclick="if(event.target===this)closeDialog()">
                 <div class="dialog">
@@ -1602,6 +1612,19 @@ Use at your own risk. Provided as-is, without warranty.`
         function loadLocalVars() {
             try { return JSON.parse(localStorage.getItem(VARS_STORAGE_KEY()) || '{}'); }
             catch { return {}; }
+        }
+
+        function saveLocalVar(key, value) {
+            const vars = loadLocalVars();
+            vars[key] = value;
+            localStorage.setItem(VARS_STORAGE_KEY(), JSON.stringify(vars));
+            syncVarsToServer();
+        }
+
+        function buildTemplateChip(t) {
+            const vars = loadLocalVars();
+            const configured = t.requiredVars && t.requiredVars.length > 0 && t.requiredVars.every(v => vars[v.key]);
+            return `<div class="skill-template-chip${configured ? ' configured' : ''}" data-template="${t.id}" onclick="applySkillTemplate('${t.id}')">${t.icon ? t.icon + ' ' : ''}${esc(t.label)}${configured ? ' ✓' : ''}</div>`;
         }
 
         // Background sync only — UI lives in env-vars.html
