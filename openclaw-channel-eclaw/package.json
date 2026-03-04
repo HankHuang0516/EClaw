@@ -24,9 +24,19 @@
     "prepublishOnly": "npm run build"
   },
   "openclaw": {
-    "extensions": ["./dist/index.js"]
+    "extensions": ["./dist/index.js"],
+    "channel": {
+      "id": "eclaw",
+      "label": "E-Claw",
+      "selectionLabel": "E-Claw (AI Live Wallpaper Chat)",
+      "docsPath": "https://github.com/HankHuang0516/openclaw-channel-eclaw#readme",
+      "description": "Connect OpenClaw to E-Claw — an AI chat platform for live wallpaper entities on Android."
+    },
+    "install": {
+      "npmSpec": "@eclaw/openclaw-channel"
+    }
   },
-  "keywords": ["openclaw", "channel", "eclaw", "ai-agent", "live-wallpaper"],
+  "keywords": ["openclaw", "openclaw-channel", "channel", "eclaw", "ai-agent", "live-wallpaper"],
   "author": "HankHuang",
   "license": "MIT",
   "repository": {

@@ -553,6 +553,8 @@ data class BindEmailStatusResponse(
     val googleLinked: Boolean = false,
     val facebookLinked: Boolean = false,
     val displayName: String? = null,
+    val channelApiKey: String? = null,
+    val channelApiSecret: String? = null,
     val error: String? = null
 )
 

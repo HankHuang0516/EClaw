@@ -380,6 +380,19 @@
     <string name="bind_email_open_portal">Open Portal</string>
     <string name="bind_email_copy_credentials">Copy Credentials</string>
 
+    <!-- Common labels -->
+    <string name="show_label">Show</string>
+    <string name="hide_label">Hide</string>
+
+    <!-- Channel API Card -->
+    <string name="channel_api_card_title">Channel API</string>
+    <string name="channel_api_card_desc">OpenClaw channel plugin credentials</string>
+    <string name="channel_api_key_label">API Key</string>
+    <string name="channel_api_secret_label">API Secret</string>
+    <string name="channel_api_copy_btn">Copy</string>
+    <string name="channel_api_copied">Credentials copied</string>
+    <string name="channel_api_no_key">No API key yet. Open the Web Portal to generate one.</string>
+
     <!-- Account Status Card -->
     <string name="account_card_title">Account</string>
     <string name="account_status_loading">Checking account status\u2026</string>

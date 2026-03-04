@@ -855,6 +855,21 @@ module.exports = function(devices, getOrCreateDevice) {
             }
 
             const user = result.rows[0];
+
+            // Fetch channel API key (if provisioned) — non-fatal
+            let channelApiKey = null;
+            let channelApiSecret = null;
+            try {
+                const chResult = await pool.query(
+                    'SELECT channel_api_key, channel_api_secret FROM channel_accounts WHERE device_id = $1',
+                    [deviceId]
+                );
+                if (chResult.rows.length > 0) {
+                    channelApiKey = chResult.rows[0].channel_api_key;
+                    channelApiSecret = chResult.rows[0].channel_api_secret;
+                }
+            } catch (_) { /* non-fatal */ }
+
             res.json({
                 success: true,
                 bound: true,
@@ -862,7 +877,9 @@ module.exports = function(devices, getOrCreateDevice) {
                 emailVerified: user.email_verified,
                 googleLinked: !!user.google_id,
                 facebookLinked: !!user.facebook_id,
-                displayName: user.display_name || null
+                displayName: user.display_name || null,
+                channelApiKey,
+                channelApiSecret
             });
         } catch (error) {
             console.error('[Auth] Bind-email status error:', error);

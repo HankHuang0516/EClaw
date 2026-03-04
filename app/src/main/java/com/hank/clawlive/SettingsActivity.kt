@@ -119,6 +119,19 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var langContentLayout: LinearLayout
     private lateinit var langExpandArrow: ImageView
     private var isLangExpanded = false
+    // Channel API card
+    private lateinit var channelApiHeader: LinearLayout
+    private lateinit var channelApiContentLayout: LinearLayout
+    private lateinit var channelApiExpandArrow: ImageView
+    private lateinit var tvChannelApiKey: TextView
+    private lateinit var tvChannelApiSecret: TextView
+    private lateinit var tvChannelApiNoKey: TextView
+    private lateinit var channelApiActions: LinearLayout
+    private lateinit var btnChannelApiToggleSecret: com.google.android.material.button.MaterialButton
+    private lateinit var btnChannelApiCopy: com.google.android.material.button.MaterialButton
+    private var isChannelApiExpanded = false
+    private var channelApiSecretVisible = false
+    private var cachedChannelSecret: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -144,6 +157,7 @@ class SettingsActivity : AppCompatActivity() {
         setupBroadcastSettingsCollapsible()
         setupRemoteControlCollapsible()
         setupLangCollapsible()
+        setupChannelApiCollapsible()
     }
 
     private fun setupEdgeToEdgeInsets() {
@@ -233,6 +247,15 @@ class SettingsActivity : AppCompatActivity() {
         langHeader = findViewById(R.id.langHeader)
         langContentLayout = findViewById(R.id.langContentLayout)
         langExpandArrow = findViewById(R.id.langExpandArrow)
+        channelApiHeader = findViewById(R.id.channelApiHeader)
+        channelApiContentLayout = findViewById(R.id.channelApiContentLayout)
+        channelApiExpandArrow = findViewById(R.id.channelApiExpandArrow)
+        tvChannelApiKey = findViewById(R.id.tvChannelApiKey)
+        tvChannelApiSecret = findViewById(R.id.tvChannelApiSecret)
+        tvChannelApiNoKey = findViewById(R.id.tvChannelApiNoKey)
+        channelApiActions = findViewById(R.id.channelApiActions)
+        btnChannelApiToggleSecret = findViewById(R.id.btnChannelApiToggleSecret)
+        btnChannelApiCopy = findViewById(R.id.btnChannelApiCopy)
 
         // Show debug button only in debug builds
         if (BuildConfig.DEBUG) {
@@ -458,6 +481,7 @@ class SettingsActivity : AppCompatActivity() {
                 } else {
                     showAccountUnboundState()
                 }
+                updateChannelApiDisplay(status.channelApiKey, status.channelApiSecret)
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load account status")
                 showAccountUnboundState()
@@ -1246,5 +1270,58 @@ class SettingsActivity : AppCompatActivity() {
         ) ?: return false
         val serviceName = "$packageName/.service.ScreenControlService"
         return prefString.split(':').any { it.equals(serviceName, ignoreCase = true) }
+    }
+
+    // ─── Channel API ──────────────────────────────────────────────────────────
+
+    private fun setupChannelApiCollapsible() {
+        channelApiHeader.setOnClickListener {
+            isChannelApiExpanded = !isChannelApiExpanded
+            channelApiContentLayout.visibility = if (isChannelApiExpanded) View.VISIBLE else View.GONE
+            channelApiExpandArrow.animate()
+                .rotation(if (isChannelApiExpanded) 180f else 0f)
+                .setDuration(200)
+                .start()
+        }
+
+        btnChannelApiToggleSecret.setOnClickListener {
+            channelApiSecretVisible = !channelApiSecretVisible
+            if (channelApiSecretVisible) {
+                tvChannelApiSecret.text = cachedChannelSecret ?: "—"
+                btnChannelApiToggleSecret.text = getString(R.string.hide_label)
+            } else {
+                tvChannelApiSecret.text = "••••••••••••••••"
+                btnChannelApiToggleSecret.text = getString(R.string.show_label)
+            }
+        }
+
+        btnChannelApiCopy.setOnClickListener {
+            val key = tvChannelApiKey.text.toString()
+            val secret = cachedChannelSecret ?: return@setOnClickListener
+            val text = "channel_api_key: $key\nchannel_api_secret: $secret"
+            val clip = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+            clip.setPrimaryClip(ClipData.newPlainText("channel_api", text))
+            Toast.makeText(this, getString(R.string.channel_api_copied), Toast.LENGTH_SHORT).show()
+            TelemetryHelper.trackAction("channel_api_copy")
+        }
+    }
+
+    private fun updateChannelApiDisplay(apiKey: String?, apiSecret: String?) {
+        cachedChannelSecret = apiSecret
+        if (!apiKey.isNullOrEmpty()) {
+            tvChannelApiKey.text = apiKey
+            tvChannelApiSecret.text = "••••••••••••••••"
+            channelApiSecretVisible = false
+            btnChannelApiToggleSecret.text = getString(R.string.show_label)
+            tvChannelApiNoKey.visibility = View.GONE
+            tvChannelApiKey.visibility = View.VISIBLE
+            tvChannelApiSecret.visibility = View.VISIBLE
+            channelApiActions.visibility = View.VISIBLE
+        } else {
+            tvChannelApiNoKey.visibility = View.VISIBLE
+            tvChannelApiKey.visibility = View.GONE
+            tvChannelApiSecret.visibility = View.GONE
+            channelApiActions.visibility = View.GONE
+        }
     }
 }

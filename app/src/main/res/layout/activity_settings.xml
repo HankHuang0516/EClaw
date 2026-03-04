@@ -430,6 +430,173 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Channel API Card (collapsible) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardChannelApi"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="#1A1A1A"
+                app:strokeColor="#333333"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="12dp">
+
+                    <!-- Collapsible header -->
+                    <LinearLayout
+                        android:id="@+id/channelApiHeader"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_settings"
+                            android:contentDescription="Channel API"
+                            app:tint="#CCFFFFFF"/>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="16dp"
+                            android:text="@string/channel_api_card_title"
+                            android:textSize="14sp"
+                            android:textColor="#CCFFFFFF"
+                            android:gravity="center"/>
+
+                        <ImageView
+                            android:id="@+id/channelApiExpandArrow"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_expand_more"
+                            android:contentDescription="Expand"
+                            app:tint="#99FFFFFF"/>
+                    </LinearLayout>
+
+                    <!-- Collapsible content -->
+                    <LinearLayout
+                        android:id="@+id/channelApiContentLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone"
+                        android:layout_marginTop="12dp">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/channel_api_card_desc"
+                            android:textSize="13sp"
+                            android:textColor="#99FFFFFF"
+                            android:layout_marginBottom="12dp"/>
+
+                        <!-- Key row -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="6dp">
+
+                            <TextView
+                                android:layout_width="72dp"
+                                android:layout_height="wrap_content"
+                                android:text="@string/channel_api_key_label"
+                                android:textSize="12sp"
+                                android:textColor="#99FFFFFF"/>
+
+                            <TextView
+                                android:id="@+id/tvChannelApiKey"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:textSize="11sp"
+                                android:textColor="#DDFFFFFF"
+                                android:fontFamily="monospace"
+                                android:ellipsize="middle"
+                                android:singleLine="true"/>
+                        </LinearLayout>
+
+                        <!-- Secret row -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginBottom="12dp">
+
+                            <TextView
+                                android:layout_width="72dp"
+                                android:layout_height="wrap_content"
+                                android:text="@string/channel_api_secret_label"
+                                android:textSize="12sp"
+                                android:textColor="#99FFFFFF"/>
+
+                            <TextView
+                                android:id="@+id/tvChannelApiSecret"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:textSize="11sp"
+                                android:textColor="#DDFFFFFF"
+                                android:fontFamily="monospace"
+                                android:text="••••••••••••••••"/>
+                        </LinearLayout>
+
+                        <!-- No key state -->
+                        <TextView
+                            android:id="@+id/tvChannelApiNoKey"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/channel_api_no_key"
+                            android:textSize="13sp"
+                            android:textColor="#99FFFFFF"
+                            android:layout_marginBottom="12dp"
+                            android:visibility="gone"/>
+
+                        <!-- Action buttons -->
+                        <LinearLayout
+                            android:id="@+id/channelApiActions"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="end"
+                            android:visibility="gone">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnChannelApiToggleSecret"
+                                style="@style/Widget.Material3.Button.OutlinedButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Show"
+                                android:textColor="#CCFFFFFF"
+                                app:strokeColor="#444444"
+                                android:layout_marginEnd="8dp"/>
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnChannelApiCopy"
+                                style="@style/Widget.Material3.Button.OutlinedButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/channel_api_copy_btn"
+                                android:textColor="#CCFFFFFF"
+                                app:strokeColor="#444444"/>
+                        </LinearLayout>
+
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- Feedback Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnFeedback"
