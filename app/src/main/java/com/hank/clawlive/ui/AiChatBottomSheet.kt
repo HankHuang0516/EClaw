@@ -249,7 +249,7 @@ class AiChatBottomSheet : BottomSheetDialogFragment() {
             "deviceId" to deviceManager.deviceId,
             "deviceSecret" to deviceManager.deviceSecret,
             "message" to (text.ifEmpty { "(user attached image(s) — please analyze them)" }),
-            "history" to messages.filter { it.role != "typing" }.takeLast(20).map {
+            "history" to messages.filter { it.role != "typing" }.dropLast(1).takeLast(20).map {
                 mapOf("role" to it.role, "content" to it.content)
             },
             "page" to "android_app"
