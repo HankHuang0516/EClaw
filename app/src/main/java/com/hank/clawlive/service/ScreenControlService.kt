@@ -345,15 +345,78 @@ class ScreenControlService : AccessibilityService() {
     private fun executeImeAction() {
         val root = rootInActiveWindow ?: return
         val focused = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+
         if (focused != null) {
-            // ACTION_IME_ENTER (0x01000000) triggers the keyboard's action key (Send/Go/Done/Search)
-            focused.performAction(0x01000000)
+            // Step 1: try standard ACTION_IME_ENTER (works for most apps)
+            val supported = focused.actionList?.any { it.id == 0x01000000 } == true
+            if (supported) {
+                focused.performAction(0x01000000)
+                focused.recycle()
+                root.recycle()
+                Timber.d("[ScreenControl] IME action performed via ACTION_IME_ENTER")
+                return
+            }
+
+            // Step 2: fallback — search for a nearby send/submit button
+            // (for apps like LINE that ignore ACTION_IME_ENTER)
+            val bounds = android.graphics.Rect()
+            focused.getBoundsInScreen(bounds)
             focused.recycle()
-            Timber.d("[ScreenControl] IME action performed on focused input")
+
+            val sendNode = findSendButton(root, bounds)
+            if (sendNode != null) {
+                sendNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                sendNode.recycle()
+                Timber.d("[ScreenControl] IME action: clicked send button as fallback")
+            } else {
+                // Step 3: last resort — perform ACTION_IME_ENTER unconditionally
+                val focused2 = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+                focused2?.let {
+                    it.performAction(0x01000000)
+                    it.recycle()
+                    Timber.d("[ScreenControl] IME action: forced ACTION_IME_ENTER")
+                } ?: Timber.w("[ScreenControl] No send button or focused input found")
+            }
         } else {
             Timber.w("[ScreenControl] No focused input found for ime_action")
         }
         root.recycle()
+    }
+
+    /**
+     * Looks for a send/submit button near the input field.
+     * Searches for a clickable node whose desc or text matches common send labels
+     * and is positioned to the right of or below the input field bounds.
+     */
+    private fun findSendButton(
+        root: AccessibilityNodeInfo,
+        inputBounds: android.graphics.Rect
+    ): AccessibilityNodeInfo? {
+        val sendLabels = setOf("傳送", "send", "go", "搜尋", "search", "done", "完成", "submit")
+        var result: AccessibilityNodeInfo? = null
+
+        fun walk(node: AccessibilityNodeInfo?, depth: Int) {
+            if (node == null || result != null || depth > MAX_DEPTH) return
+            val desc = node.contentDescription?.toString()?.lowercase() ?: ""
+            val text = node.text?.toString()?.lowercase() ?: ""
+            if (node.isClickable && sendLabels.any { desc.contains(it) || text.contains(it) }) {
+                val nb = android.graphics.Rect()
+                node.getBoundsInScreen(nb)
+                // Must be on same row (y overlap) or just below, and to the right or at same x
+                val sameRow = nb.top < inputBounds.bottom + 50 && nb.bottom > inputBounds.top - 50
+                if (sameRow) {
+                    result = node
+                    return
+                }
+            }
+            for (i in 0 until node.childCount) {
+                if (result != null) break
+                walk(node.getChild(i), depth + 1)
+            }
+        }
+
+        walk(root, 0)
+        return result
     }
 
     /**
