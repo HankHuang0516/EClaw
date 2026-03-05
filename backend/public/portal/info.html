@@ -625,6 +625,7 @@
                     <button class="guide-sidebar-btn" data-guide="envvars">環境變數</button>
                     <button class="guide-sidebar-btn" data-guide="remotecontrol">遠端控制</button>
                     <button class="guide-sidebar-btn" data-guide="testing">測試與文件</button>
+                    <button class="guide-sidebar-btn" data-guide="openclaw-channel">OpenClaw Channel</button>
                 </div>
 
                 <!-- Guide Content -->
@@ -1284,6 +1285,108 @@ node backend/tests/test-broadcast.js</div>
 
                         <h2>授權</h2>
                         <p><a href="https://github.com/HankHuang0516/realbot/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a> &copy; 2026 HankHuang0516</p>
+                    </div>
+
+                    <!-- ── OpenClaw Channel 教學 ── -->
+                    <div class="guide-panel" id="guide-openclaw-channel">
+                        <header>
+                            <h1>自帶 OpenClaw Bot — Channel 綁定教學</h1>
+                            <p class="meta">讓你自己的 AI（例如 Claude）住進 E-Claw 角色裡</p>
+                        </header>
+
+                        <h2>Channel 是什麼？</h2>
+                        <p>E-Claw 預設的「官方 Bot」是平台提供的共用 AI。如果你有自己的 OpenClaw 伺服器（自架或 Zeabur 部署），可以透過 <strong>Channel 綁定</strong>，把你的 AI 直接接進 E-Claw 的角色裡。</p>
+                        <p>綁定後，你在 App 或 Portal 裡傳給那個角色的訊息，會直接推送到你的 OpenClaw AI；AI 回覆後，角色的狀態會即時更新。</p>
+
+                        <div class="note">Channel 綁定是<strong>選用功能</strong>——沒有自己的 OpenClaw 的話，繼續使用官方 Bot 即可。</div>
+
+                        <hr>
+
+                        <h2>前置條件</h2>
+                        <ul class="tips-list">
+                            <li>✅ 已有 E-Claw 帳號並登入 Portal</li>
+                            <li>✅ 已安裝 OpenClaw（Zeabur / Railway / 本機均可）</li>
+                            <li>✅ 在 OpenClaw 安裝了 <code>openclaw-channel-eclaw</code> plugin</li>
+                            <li>✅ 你的 OpenClaw 伺服器可被外網存取（或設定了 ECLAW_WEBHOOK_URL）</li>
+                        </ul>
+
+                        <hr>
+
+                        <h2>步驟教學</h2>
+
+                        <h3 class="step-heading">第 1 步：在 Portal 產生 API Key</h3>
+                        <p>前往 <strong>設定 → Channel API</strong>，點「新增 API Key」。系統會產生一組 Key + Secret，請立刻複製妥當——Secret 只顯示一次。</p>
+                        <div class="note">每個 API Key 對應一個 OpenClaw 連線。你可以為不同的 OpenClaw session 分別產生不同的 Key。</div>
+
+                        <h3 class="step-heading">第 2 步：在 OpenClaw 安裝並設定 E-Claw Channel</h3>
+                        <p>在你的 OpenClaw 設定（<code>openclaw.config.yaml</code>）加入以下 channel 設定：</p>
+                        <div class="code-block">channels:
+  - type: eclaw
+    config:
+      channel_api_key: "eck_你的Key貼這裡"
+      channel_api_secret: "ecs_你的Secret貼這裡"
+      entity_id: 0          # 要綁定哪個角色（0–7）
+      entity_name: "我的AI"  # 角色顯示名稱（可選）
+      eclaw_webhook_url: "https://你的OpenClaw網址"</div>
+                        <div class="warning"><strong>ECLAW_WEBHOOK_URL</strong> 必須是外網可連到的位址，E-Claw 伺服器需要用它把用戶訊息推送過去。</div>
+
+                        <h3 class="step-heading">第 3 步：重啟 OpenClaw</h3>
+                        <p>儲存設定後重啟 OpenClaw。Plugin 啟動時會自動：</p>
+                        <ol class="content-list">
+                            <li>向 E-Claw 伺服器登記 Callback URL</li>
+                            <li>用 API Key 綁定你指定的角色（entity_id）</li>
+                        </ol>
+                        <p>成功的話，OpenClaw 的 log 會出現類似 <code>[eclaw] Bound entity 0 as "我的AI"</code> 的訊息。</p>
+
+                        <h3 class="step-heading">第 4 步：確認角色出現在 App / Portal</h3>
+                        <p>回到 E-Claw App 主畫面，或重新整理 Portal 儀表板。你指定的角色應該會顯示為已綁定，名稱也會更新為你設定的 <code>entity_name</code>。</p>
+                        <div class="note">角色旁邊如果有 <strong>[C]</strong> 標記，代表這是 Channel 綁定（Channel binding type）。</div>
+
+                        <h3 class="step-heading">第 5 步：傳第一則訊息</h3>
+                        <p>在 App 裡點進那個角色的聊天畫面，輸入任何訊息。流程如下：</p>
+                        <ol class="content-list">
+                            <li>E-Claw 把你的訊息推送到 OpenClaw（你設定的 ECLAW_WEBHOOK_URL）</li>
+                            <li>你的 AI 處理後，呼叫 E-Claw 的 <code>POST /api/channel/message</code> 回覆</li>
+                            <li>角色狀態更新，App 顯示 AI 的回覆</li>
+                        </ol>
+                        <p>如果 AI 有回應，代表 Channel 雙向通訊正常運作。</p>
+
+                        <hr>
+
+                        <h2>常見問題</h2>
+
+                        <h3>Q: 角色綁定後沒出現在 App？</h3>
+                        <p>先確認 OpenClaw log 有出現 <code>Bound entity</code> 成功訊息。如果沒有，通常是 API Key/Secret 貼錯、或 <code>entity_id</code> 超出範圍（最大 7）。</p>
+
+                        <h3>Q: 傳訊息後 AI 沒有回應？</h3>
+                        <p>最常見原因是 <code>ECLAW_WEBHOOK_URL</code> 外網連不到。確認你的 OpenClaw 伺服器有公開的 HTTPS 端點，或透過 ngrok 等工具暴露出來。</p>
+
+                        <h3>Q: 可以同時綁定多個角色給不同的 AI 嗎？</h3>
+                        <p>可以。為每個 OpenClaw session 分別產生一組 API Key，各自設定不同的 <code>entity_id</code>，即可讓角色 0 對應 AI-A、角色 1 對應 AI-B，彼此獨立。</p>
+
+                        <h3>Q: API Key 外洩怎麼辦？</h3>
+                        <p>前往設定頁刪除該 Key，再產生新的一組即可。舊 Key 刪除後立即失效，對應的角色會自動解綁。</p>
+
+                        <hr>
+
+                        <h2>技術補充（進階）</h2>
+                        <p>Channel API 端點一覽（開發者用）：</p>
+                        <div class="code-block"># 登記 Callback URL
+POST /api/channel/register
+  { channel_api_key, channel_api_secret, callback_url, callback_token }
+
+# 綁定角色
+POST /api/channel/bind
+  { channel_api_key, channel_api_secret, entityId, name }
+
+# Bot 回覆用戶（更新角色狀態）
+POST /api/channel/message
+  { channel_api_key, deviceId, entityId, botSecret, message, state }
+
+# 取消登記
+DELETE /api/channel/register
+  { channel_api_key, channel_api_secret }</div>
+                        <p>完整 API 文件與 plugin 原始碼：<a href="https://github.com/HankHuang0516/openclaw-channel-eclaw" target="_blank" rel="noopener">github.com/HankHuang0516/openclaw-channel-eclaw</a></p>
                     </div>
 
                 </div><!-- /guide-content -->
