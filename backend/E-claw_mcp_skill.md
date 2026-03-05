@@ -1413,13 +1413,22 @@ If you receive `timeout`, you may retry once after a short delay.
 
 Use this to autonomously navigate the user's phone UI. You can read the screen contents (as a structured text tree), then tap elements, type text, scroll, or press system buttons.
 
+### Recommended thinking pattern: OBSERVE → THINK → ACT → VERIFY
+
+For every screen interaction, follow this loop:
+
+1. **OBSERVE**: Call `screen-capture` — read the `elements` array. Note each element's `id`, `text`, `desc`, `type`, and `editable/clickable` flags.
+2. **THINK**: Based on the task goal, decide which element to interact with and what action to take. Prefer elements with clear `text` or `desc` labels.
+3. **ACT**: Call `control` with the chosen `command` + `nodeId` (prefer ID over raw coordinates).
+4. **VERIFY**: Re-capture the screen to confirm the action succeeded before continuing.
+
 ### Typical workflow
 
 1. Call `POST /api/device/screen-capture` → receive the current UI tree as JSON
-2. Parse `elements` array — find the element you want by `text`, `type`, or `desc`
-3. Note its `id` (e.g. `"n3"`)
-4. Call `POST /api/device/control` with the `id` to tap/type/scroll
-5. Repeat as needed (max **20 screen captures per session**, min **500ms** between captures)
+2. Parse `elements` array — find the element you want by `text`, `desc`, or `type`
+3. Note its `id` (e.g. `"n3"`) — **always prefer `nodeId` over raw x/y coordinates**
+4. Call `POST /api/device/control` with `{"nodeId": "n3"}` to tap/type/scroll
+5. Re-capture to verify the result, then repeat as needed (max **20 captures per session**, min **500ms** between captures)
 
 ---
 
@@ -1503,7 +1512,7 @@ exec: curl -s -X POST "https://eclawbot.com/api/device/control" \
 | `scroll` | `{"nodeId": "n5", "direction": "down"}` | Scroll an element down (or `"up"`) |
 | `back` | _(no params needed)_ | Press the system Back button |
 | `home` | _(no params needed)_ | Press the system Home button |
-| `ime_action` | _(no params needed)_ | Press the keyboard's action key (Send / Go / Done / Search) — use after `type` to submit text |
+| `ime_action` | _(no params needed)_ | Submit text after typing. Smart 3-step fallback: (1) tries standard keyboard Enter key, (2) auto-finds a nearby Send/Go/搜尋 button if the app ignores Enter (e.g. LINE), (3) forces Enter as last resort |
 
 **Success response:**
 ```json
@@ -1544,8 +1553,14 @@ exec: curl -s -X POST "https://eclawbot.com/api/device/control" \
 
 ### Tips
 
-- After tapping or typing, always re-capture the screen to confirm the result before proceeding
-- If an element you want is not visible, use `scroll` on the list container, then re-capture
+- **Prefer `nodeId` over coordinates**: `{"nodeId": "n3"}` is more reliable than `{"x": 500, "y": 300}`. Coordinates can miss the target if screen density differs.
+- **Always verify after action**: Re-capture after every tap/type to confirm the UI changed as expected before the next step.
+- **If an element is not visible**: Use `scroll` on the list container, then re-capture. Repeat up to 3 times before giving up.
+- **Error recovery strategy**:
+  1. Element not found on screen → `scroll down` → re-capture → retry
+  2. Still not found after 2 scrolls → `navigate_back` and try a different path
+  3. After 3 failed attempts → stop and report why you couldn't complete the task
+- **`type` + `ime_action` for text input**: Always `type` first, then `ime_action` to submit. `ime_action` auto-handles apps that need a Send button click (like LINE) — no extra tap needed.
 - If `remote_control_disabled`, tell the user: "Please enable Remote Control in App Settings → Remote Control"
 - If `device_offline`, tell the user to open the app so the connection is re-established
 - Node IDs (`n0`, `n1`, ...) are positional — they change when the screen changes. Always capture fresh before acting.
