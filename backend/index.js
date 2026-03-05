@@ -2100,7 +2100,15 @@ app.post('/api/transform', (req, res) => {
         }
     }
     if (finalMessage !== undefined) entity.message = finalMessage;
-    if (parts) entity.parts = { ...entity.parts, ...parts };
+    if (parts) {
+        // Only store numeric values — reject URLs/strings that would crash Android Gson deserialization
+        const sanitizedParts = {};
+        for (const [key, value] of Object.entries(parts)) {
+            const num = Number(value);
+            if (!isNaN(num)) sanitizedParts[key] = num;
+        }
+        entity.parts = { ...entity.parts, ...sanitizedParts };
+    }
 
     entity.lastUpdated = Date.now();
 

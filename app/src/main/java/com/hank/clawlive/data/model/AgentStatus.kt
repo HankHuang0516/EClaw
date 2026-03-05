@@ -5,7 +5,7 @@ data class AgentStatus(
     val character: String = "LOBSTER",
     val state: CharacterState = CharacterState.IDLE,
     val message: String = "Loading...",
-    val parts: Map<String, Double>? = null,
+    val parts: Map<String, Any>? = null,
     val lastUpdated: Long = System.currentTimeMillis(),
     val isBound: Boolean = false,
     val usage: UsageInfo? = null,

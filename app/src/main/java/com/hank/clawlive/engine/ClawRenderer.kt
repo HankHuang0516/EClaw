@@ -743,9 +743,9 @@ class ClawRenderer(private val context: Context) {
         // Dynamic color
         val charString = entity.character.uppercase(java.util.Locale.ROOT)
         // Check for overrides in parts
-        val customColor = entity.parts?.get("COLOR")?.toInt()
-        val metallic = entity.parts?.get("METALLIC")?.toFloat() ?: 0f
-        val gloss = entity.parts?.get("GLOSS")?.toFloat() ?: 0f
+        val customColor = (entity.parts?.get("COLOR") as? Double)?.toInt()
+        val metallic = (entity.parts?.get("METALLIC") as? Double)?.toFloat() ?: 0f
+        val gloss = (entity.parts?.get("GLOSS") as? Double)?.toFloat() ?: 0f
 
         val (coralBright, coralDark) = if (customColor != null) {
             // Ensure alpha channel is set (in case only RGB was provided without alpha)
@@ -823,7 +823,7 @@ class ClawRenderer(private val context: Context) {
 
         // Left Claw
         canvas.save()
-        val leftRotation = entity.parts?.get("CLAW_LEFT")?.toFloat() ?: 0f
+        val leftRotation = (entity.parts?.get("CLAW_LEFT") as? Double)?.toFloat() ?: 0f
         if (leftRotation != 0f) {
             canvas.rotate(leftRotation, 20f, 55f)
         }
@@ -839,7 +839,7 @@ class ClawRenderer(private val context: Context) {
 
         // Right Claw
         canvas.save()
-        val rightRotation = entity.parts?.get("CLAW_RIGHT")?.toFloat() ?: 0f
+        val rightRotation = (entity.parts?.get("CLAW_RIGHT") as? Double)?.toFloat() ?: 0f
         if (rightRotation != 0f) {
             canvas.rotate(rightRotation, 100f, 55f) // Adjusted pivot
         }
@@ -899,8 +899,8 @@ class ClawRenderer(private val context: Context) {
         }
 
         val defaultLid = if (entity.state == CharacterState.SLEEPING) 1.0f else 0f
-        val lidFactor = entity.parts?.get("EYE_LID")?.toFloat() ?: defaultLid
-        val browAngle = entity.parts?.get("EYE_ANGLE")?.toFloat() ?: 0f
+        val lidFactor = (entity.parts?.get("EYE_LID") as? Double)?.toFloat() ?: defaultLid
+        val browAngle = (entity.parts?.get("EYE_ANGLE") as? Double)?.toFloat() ?: 0f
 
         drawSingleEye(canvas, leftEyeX, eyeY, eyeRadius, lidFactor, browAngle, eyePaint, eyeGlowPaint, lidPaint)
         drawSingleEye(canvas, rightEyeX, eyeY, eyeRadius, lidFactor, -browAngle, eyePaint, eyeGlowPaint, lidPaint)
