@@ -1,3 +1,10 @@
+## [1.90.1](https://github.com/HankHuang0516/realbot/compare/v1.90.0...v1.90.1) (2026-03-05)
+
+
+### Bug Fixes
+
+* **android:** resolve ChatIntegrity false-positives and LinkPreviewHelper NPE ([ee98c2c](https://github.com/HankHuang0516/realbot/commit/ee98c2c9543ee5025aae6e8f399c07e00ce7dc32)), closes [#141](https://github.com/HankHuang0516/realbot/issues/141) [#142](https://github.com/HankHuang0516/realbot/issues/142)
+
 # [1.90.0](https://github.com/HankHuang0516/realbot/compare/v1.89.8...v1.90.0) (2026-03-05)
 
 
