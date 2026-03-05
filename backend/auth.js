@@ -211,17 +211,22 @@ module.exports = function(devices, getOrCreateDevice) {
             // Create the virtual device in the in-memory devices object
             getOrCreateDevice(deviceId, deviceSecret);
 
-            // Auto-provision channel API key (non-fatal if fails)
+            // Auto-provision first channel API key if none exist yet (non-fatal if fails)
             try {
-                const channelApiKey = 'eck_' + crypto.randomBytes(32).toString('hex');
-                const channelApiSecret = 'ecs_' + crypto.randomBytes(32).toString('hex');
-                await pool.query(
-                    `INSERT INTO channel_accounts (device_id, channel_api_key, channel_api_secret, created_at, updated_at)
-                     VALUES ($1, $2, $3, $4, $4)
-                     ON CONFLICT (device_id) DO NOTHING`,
-                    [deviceId, channelApiKey, channelApiSecret, Date.now()]
+                const existingCh = await pool.query(
+                    'SELECT 1 FROM channel_accounts WHERE device_id = $1 LIMIT 1',
+                    [deviceId]
                 );
-                console.log(`[Auth] Channel API key auto-provisioned for ${emailLower}`);
+                if (existingCh.rows.length === 0) {
+                    const channelApiKey = 'eck_' + crypto.randomBytes(32).toString('hex');
+                    const channelApiSecret = 'ecs_' + crypto.randomBytes(32).toString('hex');
+                    await pool.query(
+                        `INSERT INTO channel_accounts (device_id, channel_api_key, channel_api_secret, created_at, updated_at)
+                         VALUES ($1, $2, $3, $4, $4)`,
+                        [deviceId, channelApiKey, channelApiSecret, Date.now()]
+                    );
+                    console.log(`[Auth] Channel API key auto-provisioned for ${emailLower}`);
+                }
             } catch (channelErr) {
                 console.error('[Auth] Auto-provision channel key failed (non-fatal):', channelErr.message);
             }
@@ -625,20 +630,24 @@ module.exports = function(devices, getOrCreateDevice) {
             );
             const usageToday = usageResult.rows.length > 0 ? usageResult.rows[0].message_count : 0;
 
-            // Get channel API key (if provisioned)
-            let channelApiKey = null;
-            let channelApiSecret = null;
+            // Get all channel accounts for this device
+            let channelAccounts = [];
             try {
                 const channelResult = await pool.query(
-                    'SELECT channel_api_key, channel_api_secret FROM channel_accounts WHERE device_id = $1',
+                    `SELECT id, channel_api_key, channel_api_secret, callback_url, status, created_at
+                     FROM channel_accounts WHERE device_id = $1 ORDER BY created_at ASC`,
                     [user.device_id]
                 );
-                if (channelResult.rows.length > 0) {
-                    channelApiKey = channelResult.rows[0].channel_api_key;
-                    channelApiSecret = channelResult.rows[0].channel_api_secret;
-                }
+                channelAccounts = channelResult.rows.map(r => ({
+                    id: r.id,
+                    channel_api_key: r.channel_api_key,
+                    channel_api_secret: r.channel_api_secret,
+                    has_callback: !!r.callback_url,
+                    status: r.status,
+                    created_at: parseInt(r.created_at)
+                }));
             } catch (chErr) {
-                console.error('[Auth] Failed to query channel account:', chErr.message);
+                console.error('[Auth] Failed to query channel accounts:', chErr.message);
             }
 
             res.json({
@@ -660,8 +669,7 @@ module.exports = function(devices, getOrCreateDevice) {
                     facebookLinked: !!user.facebook_id,
                     usageToday: usageToday,
                     usageLimit: user.subscription_status === 'premium' ? null : 15,
-                    channelApiKey,
-                    channelApiSecret
+                    channelAccounts
                 }
             });
         } catch (error) {

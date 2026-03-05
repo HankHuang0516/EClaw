@@ -623,35 +623,34 @@
         </div>
 
         <!-- Channel API Card -->
-        <div class="card" id="channelApiCard" style="display:none">
-            <div class="card-title">
+        <div class="card" id="channelApiCard">
+            <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;">
                 <span>🔗 Channel API</span>
+                <button class="btn btn-sm btn-primary" id="btnGenChannel" onclick="generateChannelKey()">+ New Key</button>
             </div>
-            <p class="section-desc">OpenClaw channel plugin credentials</p>
+            <p class="section-desc" style="margin-bottom:12px;">Each OpenClaw plugin gets its own key pair. Paste the key into your OpenClaw channel config.</p>
 
-            <!-- Has key -->
-            <div id="channelKeySection" style="display:none">
+            <!-- Account list -->
+            <div id="channelAccountList"></div>
+
+            <!-- Empty state -->
+            <p id="channelNoAccounts" class="section-desc" style="display:none;color:var(--text-muted);margin:8px 0;">No API keys yet. Click "+ New Key" to generate one.</p>
+
+            <!-- New key reveal (shown once after generation) -->
+            <div id="newKeyReveal" style="display:none;margin-top:12px;padding:12px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--accent);">
+                <div style="font-weight:600;color:var(--accent);margin-bottom:8px;">🔑 Copy now — secret is shown only once!</div>
                 <div class="info-row">
                     <span class="info-label">API Key</span>
-                    <span class="info-value mono" id="channelApiKey">--</span>
+                    <span class="info-value mono" id="newKeyValue" style="word-break:break-all;">--</span>
                 </div>
-                <div class="info-row">
+                <div class="info-row" style="margin-top:4px;">
                     <span class="info-label">API Secret</span>
-                    <span class="info-value mono">
-                        <span id="channelSecretMasked">••••••••••••••••</span>
-                        <span id="channelSecretRevealed" style="display:none">--</span>
-                    </span>
+                    <span class="info-value mono" id="newSecretValue" style="word-break:break-all;">--</span>
                 </div>
-                <div class="channel-actions">
-                    <button class="btn btn-sm" onclick="toggleChannelSecret()">Show / Hide</button>
-                    <button class="btn btn-sm" onclick="copyChannelKeys()">Copy</button>
+                <div class="channel-actions" style="margin-top:10px;">
+                    <button class="btn btn-primary btn-sm" onclick="copyNewKeyBoth()">📋 Copy Both</button>
+                    <button class="btn btn-sm" onclick="dismissNewKey()">Done</button>
                 </div>
-            </div>
-
-            <!-- No key yet (legacy users) -->
-            <div id="channelProvisionSection" style="display:none">
-                <p class="section-desc">No API key yet. Generate one to enable OpenClaw channel integration.</p>
-                <button class="btn btn-primary btn-sm" id="btnProvision" onclick="provisionChannelKey()">Generate API Key</button>
             </div>
         </div>
 
@@ -926,68 +925,127 @@
         }
 
         // ============================================
-        // Channel API
+        // Channel API (multi-account)
         // ============================================
-        let _channelSecret = null;
 
+        // Render the list of channel accounts from user.channelAccounts[]
         function populateChannelApi(user) {
-            const card = document.getElementById('channelApiCard');
-            card.style.display = '';
-
-            if (user.channelApiKey) {
-                _channelSecret = user.channelApiSecret;
-                document.getElementById('channelKeySection').style.display = '';
-                document.getElementById('channelProvisionSection').style.display = 'none';
-                document.getElementById('channelApiKey').textContent = user.channelApiKey;
-                document.getElementById('channelSecretRevealed').textContent = user.channelApiSecret;
-            } else {
-                document.getElementById('channelKeySection').style.display = 'none';
-                document.getElementById('channelProvisionSection').style.display = '';
-            }
+            renderChannelAccounts(user.channelAccounts || []);
         }
 
-        function toggleChannelSecret() {
-            const masked = document.getElementById('channelSecretMasked');
-            const revealed = document.getElementById('channelSecretRevealed');
-            if (masked.style.display === 'none') {
-                masked.style.display = '';
-                revealed.style.display = 'none';
-            } else {
-                masked.style.display = 'none';
-                revealed.style.display = '';
+        function renderChannelAccounts(accounts) {
+            const list = document.getElementById('channelAccountList');
+            const empty = document.getElementById('channelNoAccounts');
+
+            if (!accounts || accounts.length === 0) {
+                list.innerHTML = '';
+                empty.style.display = '';
+                return;
             }
+
+            empty.style.display = 'none';
+            list.innerHTML = accounts.map(a => {
+                const keyPartial = a.channel_api_key.substring(0, 12) + '…' + a.channel_api_key.slice(-6);
+                const badge = a.has_callback
+                    ? '<span style="font-size:11px;color:var(--success);margin-left:6px;">● callback active</span>'
+                    : '<span style="font-size:11px;color:var(--text-muted);margin-left:6px;">○ no callback</span>';
+                const safeKey = encodeURIComponent(a.channel_api_key);
+                const safeSec = encodeURIComponent(a.channel_api_secret);
+                return `
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);" data-ch-id="${a.id}">
+                    <div>
+                        <span class="mono" style="font-size:13px;">${keyPartial}</span>
+                        ${badge}
+                    </div>
+                    <div style="display:flex;gap:6px;flex-shrink:0;">
+                        <button class="btn btn-sm" onclick="copyAccountKeys('${safeKey}','${safeSec}')">Copy</button>
+                        <button class="btn btn-sm" style="color:var(--danger);border-color:var(--danger);" onclick="deleteChannelAccount(${a.id})">Delete</button>
+                    </div>
+                </div>`;
+            }).join('');
         }
 
-        async function copyChannelKeys() {
-            const key = document.getElementById('channelApiKey').textContent;
-            const secret = _channelSecret || document.getElementById('channelSecretRevealed').textContent;
-            const text = `channel_api_key: ${key}\nchannel_api_secret: ${secret}`;
-            try {
-                await navigator.clipboard.writeText(text);
-                const toast = document.getElementById('channelCopyToast');
-                toast.classList.add('show');
-                setTimeout(() => toast.classList.remove('show'), 1500);
-            } catch (e) {
-                console.error('Copy failed:', e);
-            }
-        }
-
-        async function provisionChannelKey() {
-            const btn = document.getElementById('btnProvision');
+        async function generateChannelKey() {
+            const btn = document.getElementById('btnGenChannel');
             btn.disabled = true;
-            btn.textContent = 'Generating...';
+            btn.textContent = 'Generating…';
             try {
                 const data = await apiCall('POST', '/api/channel/provision');
-                _channelSecret = data.channel_api_secret;
-                document.getElementById('channelApiKey').textContent = data.channel_api_key;
-                document.getElementById('channelSecretRevealed').textContent = data.channel_api_secret;
-                document.getElementById('channelKeySection').style.display = '';
-                document.getElementById('channelProvisionSection').style.display = 'none';
+                document.getElementById('newKeyValue').textContent   = data.channel_api_key;
+                document.getElementById('newSecretValue').textContent = data.channel_api_secret;
+                document.getElementById('newKeyReveal').style.display = '';
+                document.getElementById('channelNoAccounts').style.display = 'none';
+
+                // Append new row to list immediately (without secret, just partial key)
+                const list = document.getElementById('channelAccountList');
+                const keyPartial = data.channel_api_key.substring(0, 12) + '…' + data.channel_api_key.slice(-6);
+                const safeKey = encodeURIComponent(data.channel_api_key);
+                const safeSec = encodeURIComponent(data.channel_api_secret);
+                const div = document.createElement('div');
+                div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);';
+                div.dataset.chId = data.id;
+                div.innerHTML = `
+                    <div>
+                        <span class="mono" style="font-size:13px;">${keyPartial}</span>
+                        <span style="font-size:11px;color:var(--text-muted);margin-left:6px;">○ no callback</span>
+                    </div>
+                    <div style="display:flex;gap:6px;flex-shrink:0;">
+                        <button class="btn btn-sm" onclick="copyAccountKeys('${safeKey}','${safeSec}')">Copy</button>
+                        <button class="btn btn-sm" style="color:var(--danger);border-color:var(--danger);" onclick="deleteChannelAccount(${data.id})">Delete</button>
+                    </div>`;
+                list.appendChild(div);
             } catch (e) {
                 alert('Failed to generate API key: ' + e.message);
+            } finally {
                 btn.disabled = false;
-                btn.textContent = 'Generate API Key';
+                btn.textContent = '+ New Key';
             }
+        }
+
+        async function copyAccountKeys(encodedKey, encodedSecret) {
+            const key    = decodeURIComponent(encodedKey);
+            const secret = decodeURIComponent(encodedSecret);
+            const text   = `channel_api_key: ${key}\nchannel_api_secret: ${secret}`;
+            try {
+                await navigator.clipboard.writeText(text);
+                showCopyToast();
+            } catch (e) { console.error('Copy failed:', e); }
+        }
+
+        async function copyNewKeyBoth() {
+            const key    = document.getElementById('newKeyValue').textContent;
+            const secret = document.getElementById('newSecretValue').textContent;
+            const text   = `channel_api_key: ${key}\nchannel_api_secret: ${secret}`;
+            try {
+                await navigator.clipboard.writeText(text);
+                showCopyToast();
+            } catch (e) { console.error('Copy failed:', e); }
+        }
+
+        function dismissNewKey() {
+            document.getElementById('newKeyReveal').style.display = 'none';
+            document.getElementById('newKeyValue').textContent    = '--';
+            document.getElementById('newSecretValue').textContent = '--';
+        }
+
+        async function deleteChannelAccount(id) {
+            if (!confirm('Delete this channel API key? Any bound entities will be unbound.')) return;
+            try {
+                await apiCall('DELETE', `/api/channel/account/${id}`);
+                const row = document.querySelector(`[data-ch-id="${id}"]`);
+                if (row) row.remove();
+                if (!document.querySelector('#channelAccountList [data-ch-id]')) {
+                    document.getElementById('channelNoAccounts').style.display = '';
+                }
+            } catch (e) {
+                alert('Failed to delete: ' + e.message);
+            }
+        }
+
+        function showCopyToast() {
+            const toast = document.getElementById('channelCopyToast');
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 1500);
         }
 
         // ============================================
