@@ -378,9 +378,43 @@ class ScreenControlService : AccessibilityService() {
                 } ?: Timber.w("[ScreenControl] No send button or focused input found")
             }
         } else {
-            Timber.w("[ScreenControl] No focused input found for ime_action")
+            // No INPUT focus (e.g. after ACTION_SET_TEXT which doesn't trigger focus).
+            // Still try to find a send button near any editable field on screen.
+            val editNode = findEditableNode(root)
+            if (editNode != null) {
+                val editBounds = android.graphics.Rect()
+                editNode.getBoundsInScreen(editBounds)
+                editNode.recycle()
+                val sendNode = findSendButton(root, editBounds)
+                if (sendNode != null) {
+                    sendNode.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                    sendNode.recycle()
+                    Timber.d("[ScreenControl] IME action: no focus — clicked send button near editable")
+                } else {
+                    Timber.w("[ScreenControl] No focused input and no send button found for ime_action")
+                }
+            } else {
+                Timber.w("[ScreenControl] No focused input found for ime_action")
+            }
         }
         root.recycle()
+    }
+
+    /** Find the first editable (EditText) node in the tree. */
+    private fun findEditableNode(root: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        var result: AccessibilityNodeInfo? = null
+        fun walk(node: AccessibilityNodeInfo?, depth: Int) {
+            if (node == null || result != null || depth > MAX_DEPTH) return
+            if (node.isEditable) { result = node; return }
+            for (i in 0 until node.childCount) {
+                if (result != null) break
+                val child = node.getChild(i)
+                walk(child, depth + 1)
+                if (result == null) child?.recycle()
+            }
+        }
+        walk(root, 0)
+        return result
     }
 
     /**
