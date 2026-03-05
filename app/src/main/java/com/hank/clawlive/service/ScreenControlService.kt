@@ -3,15 +3,20 @@ package com.hank.clawlive.service
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.Path
 import android.graphics.PixelFormat
 import android.graphics.Rect
+import android.graphics.Typeface
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import android.widget.TextView
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.remote.SocketManager
 import kotlinx.coroutines.CoroutineScope
@@ -47,8 +52,8 @@ class ScreenControlService : AccessibilityService() {
     private var cachedTree: JSONObject? = null
     @Volatile private var screenChanged = true
 
-    // ─── Remote-control border overlay ────────────────────────────────────
-    private var overlayView: RemoteControlBorderView? = null
+    // ─── Remote-control text indicator overlay ─────────────────────────────
+    private var overlayView: TextView? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     private val hideOverlayRunnable = Runnable { hideControlOverlay() }
 
@@ -192,7 +197,7 @@ class ScreenControlService : AccessibilityService() {
                     executeControlCommand(json)
                     // Invalidate cache after every control action — screen may have changed
                     screenChanged = true
-                    onControlCommandReceived()
+                    onControlCommandReceived(json.optString("entityName", ""))
                 } catch (e: Exception) {
                     Timber.e(e, "[ScreenControl] Control command failed: ${e.message}")
                 }
@@ -200,39 +205,67 @@ class ScreenControlService : AccessibilityService() {
         }
     }
 
-    private fun onControlCommandReceived() {
+    private fun onControlCommandReceived(entityName: String) {
         mainHandler.post {
-            if (overlayView == null) showControlOverlay()
+            showControlOverlay(entityName)
             resetHideTimer()
         }
     }
 
-    private fun showControlOverlay() {
+    private fun showControlOverlay(entityName: String) {
         val wm = getSystemService(WINDOW_SERVICE) as WindowManager
+
+        // Update text on existing view if already shown
+        overlayView?.let { existing ->
+            existing.text = buildLabel(entityName)
+            return
+        }
+
+        val density = resources.displayMetrics.density
+        val padH = (10 * density).toInt()
+        val padV = (4 * density).toInt()
+
+        val tv = TextView(this).apply {
+            text = buildLabel(entityName)
+            setTextColor(Color.WHITE)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+            typeface = Typeface.DEFAULT_BOLD
+            setPadding(padH, padV, padH, padV)
+            setBackgroundColor(0xCC1B5E20.toInt())  // E-Claw dark green, 80% opacity
+            gravity = Gravity.CENTER
+        }
+
         val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                     WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT
-        )
-        val view = RemoteControlBorderView(this)
-        overlayView = view
-        wm.addView(view, params)
-        view.startAnimation()
-        Timber.d("[ScreenControl] Remote control overlay shown")
+        ).apply {
+            gravity = Gravity.TOP or Gravity.END
+            x = (8 * density).toInt()
+            y = (48 * density).toInt()
+        }
+
+        overlayView = tv
+        wm.addView(tv, params)
+        Timber.d("[ScreenControl] Control indicator shown: ${tv.text}")
+    }
+
+    private fun buildLabel(entityName: String): String {
+        val name = entityName.ifEmpty { "Bot" }
+        return "🦞 $name"
     }
 
     private fun hideControlOverlay() {
         overlayView?.let { view ->
-            view.stopAnimation()
             runCatching {
                 (getSystemService(WINDOW_SERVICE) as WindowManager).removeView(view)
             }
             overlayView = null
-            Timber.d("[ScreenControl] Remote control overlay hidden")
+            Timber.d("[ScreenControl] Control indicator hidden")
         }
         mainHandler.removeCallbacks(hideOverlayRunnable)
     }

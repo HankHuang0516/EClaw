@@ -1267,12 +1267,13 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun isAccessibilityServiceEnabled(): Boolean {
-        val prefString = android.provider.Settings.Secure.getString(
-            contentResolver,
-            android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-        ) ?: return false
-        val serviceName = "$packageName/.service.ScreenControlService"
-        return prefString.split(':').any { it.equals(serviceName, ignoreCase = true) }
+        val am = getSystemService(ACCESSIBILITY_SERVICE) as android.view.accessibility.AccessibilityManager
+        return am.getEnabledAccessibilityServiceList(
+            android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_ALL_MASK
+        ).any { info ->
+            info.resolveInfo.serviceInfo.packageName == packageName &&
+            info.resolveInfo.serviceInfo.name.endsWith(".ScreenControlService")
+        }
     }
 
     // ─── Channel API ──────────────────────────────────────────────────────────
