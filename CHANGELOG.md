@@ -1,3 +1,10 @@
+## [1.89.8](https://github.com/HankHuang0516/realbot/compare/v1.89.7...v1.89.8) (2026-03-05)
+
+
+### Bug Fixes
+
+* **screenshot:** register 5mb json limit before global middleware ([2c07a68](https://github.com/HankHuang0516/realbot/commit/2c07a686d68db5baff170c41045c7e991aa04fe5))
+
 ## [1.89.7](https://github.com/HankHuang0516/realbot/compare/v1.89.6...v1.89.7) (2026-03-05)
 
 
