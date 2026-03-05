@@ -1,3 +1,10 @@
+## [1.86.1](https://github.com/HankHuang0516/realbot/compare/v1.86.0...v1.86.1) (2026-03-05)
+
+
+### Bug Fixes
+
+* **channel:** multi-account portal UI + auth.js regression fixes ([e34603c](https://github.com/HankHuang0516/realbot/commit/e34603caf2701c53e78c9feb8036f9564dbc82cf))
+
 # [1.86.0](https://github.com/HankHuang0516/realbot/compare/v1.85.0...v1.86.0) (2026-03-05)
 
 
