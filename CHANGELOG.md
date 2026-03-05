@@ -1,3 +1,10 @@
+# [1.85.0](https://github.com/HankHuang0516/realbot/compare/v1.84.0...v1.85.0) (2026-03-05)
+
+
+### Features
+
+* **channel:** add self-test infrastructure + provision-device endpoint ([5e187bf](https://github.com/HankHuang0516/realbot/commit/5e187bf1118266a6f9d31f29d8f6871010a301ac))
+
 # [1.84.0](https://github.com/HankHuang0516/realbot/compare/v1.83.2...v1.84.0) (2026-03-05)
 
 
