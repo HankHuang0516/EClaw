@@ -1,3 +1,10 @@
+## [1.87.1](https://github.com/HankHuang0516/realbot/compare/v1.87.0...v1.87.1) (2026-03-05)
+
+
+### Bug Fixes
+
+* **claude-cli-proxy:** wrap startCommand with sh -c for PORT variable expansion ([91d6310](https://github.com/HankHuang0516/realbot/commit/91d6310365d8d14aeb768c1f8477717430cc1d97))
+
 # [1.87.0](https://github.com/HankHuang0516/realbot/compare/v1.86.1...v1.87.0) (2026-03-05)
 
 
