@@ -1,3 +1,10 @@
+## [1.90.2](https://github.com/HankHuang0516/realbot/compare/v1.90.1...v1.90.2) (2026-03-05)
+
+
+### Bug Fixes
+
+* **entities:** prevent Gson crash when bot sends non-numeric parts value ([5b9f097](https://github.com/HankHuang0516/realbot/commit/5b9f0979e60c9f3227ac0c9a536aac6ed2070de3))
+
 ## [1.90.1](https://github.com/HankHuang0516/realbot/compare/v1.90.0...v1.90.1) (2026-03-05)
 
 
