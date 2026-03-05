@@ -1,3 +1,10 @@
+# [1.86.0](https://github.com/HankHuang0516/realbot/compare/v1.85.0...v1.86.0) (2026-03-05)
+
+
+### Features
+
+* **remote-control:** replace border with entity name indicator + fix accessibility detection ([74b0e89](https://github.com/HankHuang0516/realbot/commit/74b0e893acbf8e4b697a052645055780f11de134))
+
 # [1.85.0](https://github.com/HankHuang0516/realbot/compare/v1.84.0...v1.85.0) (2026-03-05)
 
 
