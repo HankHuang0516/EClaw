@@ -1,3 +1,10 @@
+# [1.89.0](https://github.com/HankHuang0516/realbot/compare/v1.88.3...v1.89.0) (2026-03-05)
+
+
+### Features
+
+* **remote-control:** add getWindows() fallback + pixel screenshot endpoint ([b17393c](https://github.com/HankHuang0516/realbot/commit/b17393cd92dcf36a665daa670d5d58b07e88cdc7))
+
 ## [1.88.3](https://github.com/HankHuang0516/realbot/compare/v1.88.2...v1.88.3) (2026-03-05)
 
 
