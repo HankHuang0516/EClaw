@@ -7150,8 +7150,9 @@ app.post('/api/device/screenshot', async (req, res) => {
  * POST /api/device/screenshot-result
  * App delivers the captured screenshot, resolving the pending long-poll.
  * Body: { deviceId, deviceSecret, imageBase64, mimeType, timestamp }
+ * Large body limit (5mb) needed for base64-encoded JPEG screenshots.
  */
-app.post('/api/device/screenshot-result', (req, res) => {
+app.post('/api/device/screenshot-result', express.json({ limit: '5mb' }), (req, res) => {
     const deviceId = authDevice(req);
     if (!deviceId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
