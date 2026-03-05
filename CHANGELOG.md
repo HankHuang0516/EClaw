@@ -1,3 +1,10 @@
+## [1.88.1](https://github.com/HankHuang0516/realbot/compare/v1.88.0...v1.88.1) (2026-03-05)
+
+
+### Bug Fixes
+
+* **screen-control:** always include truncated field in screen-capture response ([d97579a](https://github.com/HankHuang0516/realbot/commit/d97579a2bea0e6313fc57a76abc51a935be020b3))
+
 # [1.88.0](https://github.com/HankHuang0516/realbot/compare/v1.87.2...v1.88.0) (2026-03-05)
 
 
