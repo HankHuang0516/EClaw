@@ -1,3 +1,10 @@
+# [1.90.0](https://github.com/HankHuang0516/realbot/compare/v1.89.8...v1.90.0) (2026-03-05)
+
+
+### Features
+
+* **cleanup:** remove pixel screenshot (Option B) feature ([788563f](https://github.com/HankHuang0516/realbot/commit/788563f849cf84c9794d076bcc39e1636e84decf))
+
 ## [1.89.8](https://github.com/HankHuang0516/realbot/compare/v1.89.7...v1.89.8) (2026-03-05)
 
 
