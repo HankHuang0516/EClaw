@@ -1,3 +1,10 @@
+## [1.89.1](https://github.com/HankHuang0516/realbot/compare/v1.89.0...v1.89.1) (2026-03-05)
+
+
+### Bug Fixes
+
+* **screenshot:** report onFailure error immediately to backend ([6226704](https://github.com/HankHuang0516/realbot/commit/6226704f1503f9fc0022335c254b4ae6b5982044))
+
 # [1.89.0](https://github.com/HankHuang0516/realbot/compare/v1.88.3...v1.89.0) (2026-03-05)
 
 
