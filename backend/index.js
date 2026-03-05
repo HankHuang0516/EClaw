@@ -7132,7 +7132,7 @@ app.post('/api/device/screenshot', async (req, res) => {
             const timeoutHandle = setTimeout(() => {
                 delete pendingScreenshotRequests[deviceId];
                 reject(new Error('timeout'));
-            }, 10000);
+            }, 8000);
             pendingScreenshotRequests[deviceId] = { resolve, reject, timeoutHandle };
             io.to(`device:${deviceId}`).emit('device:screenshot-request', { requestedAt: now });
         });

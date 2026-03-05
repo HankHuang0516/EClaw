@@ -6,6 +6,7 @@
     android:accessibilityFlags="flagRetrieveInteractiveWindows|flagReportViewIds"
     android:canPerformGestures="true"
     android:canRetrieveWindowContent="true"
+    android:canTakeScreenshot="true"
     android:description="@string/remote_control_service_description"
     android:notificationTimeout="100"
     android:settingsActivity=".SettingsActivity" />
