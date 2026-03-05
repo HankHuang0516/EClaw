@@ -443,7 +443,11 @@ DATABASE ACCESS (read-only):
   python {db_query_path} "SELECT ..."
 - Only SELECT/WITH allowed. Returns JSON array.
 - KEY TABLES:
-  * entities (device_id, entity_id, is_bound, name, character, state, message, webhook JSONB, xp, level, avatar, public_code)
+  * entities (device_id, entity_id, is_bound, name, character, state, message, webhook JSONB, xp, level, avatar, public_code, binding_type, channel_account_id)
+    binding_type: NULL=normal webhook bot, 'channel'=OpenClaw channel plugin
+    channel_account_id: FK to channel_accounts.id (which plugin owns this entity)
+  * channel_accounts (id, device_id, channel_api_key, channel_api_secret, callback_url, callback_token, status, created_at)
+    multiple rows per device allowed — one per OpenClaw channel plugin
   * devices (device_id, device_secret, created_at, paid_borrow_slots)
   * server_logs (id, level, category, message, device_id, entity_id, metadata JSONB, created_at)
     categories: bind, unbind, transform, broadcast, broadcast_push, speakto_push, client_push, entity_poll, push_error, handshake, system
@@ -453,7 +457,8 @@ DATABASE ACCESS (read-only):
   * official_bots (bot_id, bot_type, webhook_url, status, assigned_device_id, assigned_entity_id)
   * official_bot_bindings (bot_id, device_id, entity_id, session_key, bound_at)
 - COMMON QUERIES:
-  Entity status: SELECT entity_id, name, character, is_bound, state, webhook, last_updated FROM entities WHERE device_id='...'
+  Entity status: SELECT entity_id, name, character, is_bound, state, binding_type, channel_account_id, webhook, last_updated FROM entities WHERE device_id='...'
+  Channel accounts: SELECT id, channel_api_key, callback_url, status, created_at FROM channel_accounts WHERE device_id='...'
   Recent logs:   SELECT level, category, message, created_at FROM server_logs WHERE device_id='...' ORDER BY created_at DESC LIMIT 30
   Binding hist:  SELECT category, message, created_at FROM server_logs WHERE device_id='...' AND category IN ('bind','unbind') ORDER BY created_at DESC LIMIT 20
   Webhook fails: SELECT error_type, error_message, webhook_url, created_at FROM handshake_failures WHERE device_id='...' ORDER BY created_at DESC LIMIT 10
