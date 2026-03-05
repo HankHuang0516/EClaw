@@ -7111,7 +7111,12 @@ app.post('/api/device/control', async (req, res) => {
     serverLog('info', 'remote_control', `control command: ${command}`, { deviceId, entityId: eId,
         metadata: { command, params } });
 
-    io.to(`device:${deviceId}`).emit('device:control-command', { command, params: params || {} });
+    const controlEntity = device.entities[eId];
+    const entityName = controlEntity?.name || `Bot ${eId + 1}`;
+    io.to(`device:${deviceId}`).emit('device:control-command', {
+        command, params: params || {},
+        entityId: eId, entityName
+    });
     res.json({ success: true, message: `Command "${command}" sent to device` });
 });
 
