@@ -1,3 +1,10 @@
+## [1.88.3](https://github.com/HankHuang0516/realbot/compare/v1.88.2...v1.88.3) (2026-03-05)
+
+
+### Bug Fixes
+
+* **claude-cli-proxy:** redirect Python logging to stdout ([6eab316](https://github.com/HankHuang0516/realbot/commit/6eab31667069b0ff82b92d9fe8c5fe20269ee139))
+
 ## [1.88.2](https://github.com/HankHuang0516/realbot/compare/v1.88.1...v1.88.2) (2026-03-05)
 
 
