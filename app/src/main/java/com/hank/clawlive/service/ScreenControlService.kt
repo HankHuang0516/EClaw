@@ -523,6 +523,7 @@ class ScreenControlService : AccessibilityService() {
 
                             if (hwBitmap == null) {
                                 Timber.e("[ScreenControl] Screenshot: null bitmap")
+                                postScreenshotResult(null, "null bitmap from HardwareBuffer")
                                 return@launch
                             }
 
@@ -536,7 +537,7 @@ class ScreenControlService : AccessibilityService() {
 
                             val base64 = Base64.encodeToString(stream.toByteArray(), Base64.NO_WRAP)
                             Timber.d("[ScreenControl] Screenshot: ${stream.size()} bytes → ${base64.length} chars base64")
-                            postScreenshotResult(base64)
+                            postScreenshotResult(base64, null)
                         } catch (e: Exception) {
                             Timber.e(e, "[ScreenControl] Screenshot processing failed: ${e.message}")
                         }
@@ -545,12 +546,14 @@ class ScreenControlService : AccessibilityService() {
 
                 override fun onFailure(errorCode: Int) {
                     Timber.e("[ScreenControl] takeScreenshot failed: errorCode=$errorCode")
+                    // Report error immediately so backend doesn't hang for 10s
+                    serviceScope.launch { postScreenshotResult(null, "takeScreenshot failed: errorCode=$errorCode") }
                 }
             }
         )
     }
 
-    private fun postScreenshotResult(base64: String) {
+    private fun postScreenshotResult(base64: String?, error: String? = null) {
         val dm = DeviceManager.getInstance(applicationContext)
         val url = URL("https://eclawbot.com/api/device/screenshot-result")
         val conn = url.openConnection() as HttpURLConnection
@@ -564,13 +567,17 @@ class ScreenControlService : AccessibilityService() {
             val body = JSONObject()
             body.put("deviceId", dm.deviceId)
             body.put("deviceSecret", dm.deviceSecret)
-            body.put("imageBase64", base64)
-            body.put("mimeType", "image/jpeg")
             body.put("timestamp", System.currentTimeMillis())
+            if (error != null) {
+                body.put("error", error)
+            } else {
+                body.put("imageBase64", base64)
+                body.put("mimeType", "image/jpeg")
+            }
 
             OutputStreamWriter(conn.outputStream).use { it.write(body.toString()) }
             val code = conn.responseCode
-            Timber.d("[ScreenControl] screenshot-result POST: HTTP $code")
+            Timber.d("[ScreenControl] screenshot-result POST: HTTP $code (error=$error)")
         } finally {
             conn.disconnect()
         }

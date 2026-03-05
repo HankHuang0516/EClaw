@@ -7155,7 +7155,7 @@ app.post('/api/device/screenshot-result', (req, res) => {
     const deviceId = authDevice(req);
     if (!deviceId) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-    const { imageBase64, mimeType, timestamp } = req.body;
+    const { imageBase64, mimeType, timestamp, error } = req.body;
     const pending = pendingScreenshotRequests[deviceId];
     if (!pending) {
         return res.json({ success: true, message: 'No pending request, result discarded' });
@@ -7163,10 +7163,14 @@ app.post('/api/device/screenshot-result', (req, res) => {
 
     clearTimeout(pending.timeoutHandle);
     delete pendingScreenshotRequests[deviceId];
-    pending.resolve({ imageBase64, mimeType: mimeType || 'image/jpeg', timestamp });
+    if (error) {
+        pending.reject(new Error(error));
+    } else {
+        pending.resolve({ imageBase64, mimeType: mimeType || 'image/jpeg', timestamp });
+    }
 
     serverLog('info', 'remote_control', 'screenshot-result delivered', { deviceId,
-        metadata: { mimeType, sizeBytes: imageBase64 ? Math.round(imageBase64.length * 0.75) : 0 } });
+        metadata: { mimeType, error: error || null, sizeBytes: imageBase64 ? Math.round(imageBase64.length * 0.75) : 0 } });
     res.json({ success: true });
 });
 
