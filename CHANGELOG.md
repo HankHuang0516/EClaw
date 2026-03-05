@@ -1,3 +1,10 @@
+## [1.89.2](https://github.com/HankHuang0516/realbot/compare/v1.89.1...v1.89.2) (2026-03-05)
+
+
+### Bug Fixes
+
+* **screenshot:** add canTakeScreenshot flag + shorten backend timeout ([a4ef2ed](https://github.com/HankHuang0516/realbot/commit/a4ef2edd823006d7f4aa58ef7d538ab4032c21c1))
+
 ## [1.89.1](https://github.com/HankHuang0516/realbot/compare/v1.89.0...v1.89.1) (2026-03-05)
 
 
