@@ -1,3 +1,10 @@
+## [1.89.3](https://github.com/HankHuang0516/realbot/compare/v1.89.2...v1.89.3) (2026-03-05)
+
+
+### Bug Fixes
+
+* **claude-cli-proxy:** add missing import sys ([8a53b5d](https://github.com/HankHuang0516/realbot/commit/8a53b5d81e35c9ecfb2299405d85cfef22aa06b5))
+
 ## [1.89.2](https://github.com/HankHuang0516/realbot/compare/v1.89.1...v1.89.2) (2026-03-05)
 
 
