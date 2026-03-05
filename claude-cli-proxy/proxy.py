@@ -705,7 +705,7 @@ async def lifespan(app: FastAPI):
     # Periodic warmup every 5 minutes
     async def periodic_warmup():
         while True:
-            await asyncio.sleep(5 * 60)
+            await asyncio.sleep(30 * 60)
             await warmup()
 
     periodic_warmup_task = asyncio.create_task(periodic_warmup())
