@@ -41,7 +41,35 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
     }
 
     // ============================================
-    // POST /provision — User generates channel API key
+    // GET /provision — List all channel accounts for device
+    // ============================================
+    router.get('/provision', authMiddleware, async (req, res) => {
+        try {
+            const deviceId = req.query.deviceId || req.user?.deviceId;
+            if (!deviceId) {
+                return res.status(400).json({ success: false, message: 'deviceId required' });
+            }
+
+            const accounts = await db.getChannelAccountsByDevice(deviceId);
+            res.json({
+                success: true,
+                accounts: accounts.map(a => ({
+                    id: a.id,
+                    channel_api_key: a.channel_api_key,
+                    has_callback: !!a.callback_url,
+                    status: a.status,
+                    created_at: a.created_at
+                }))
+            });
+        } catch (err) {
+            console.error('[Channel] List accounts error:', err.message);
+            res.status(500).json({ success: false, message: 'Internal error' });
+        }
+    });
+
+    // ============================================
+    // POST /provision — User generates a new channel API key
+    // Multiple accounts per device are allowed (one per plugin)
     // ============================================
     router.post('/provision', authMiddleware, async (req, res) => {
         try {
@@ -55,19 +83,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 return res.status(404).json({ success: false, message: 'Device not found' });
             }
 
-            // Check if channel account already exists
-            const existing = await db.getChannelAccountByDevice(deviceId);
-            if (existing) {
-                return res.json({
-                    success: true,
-                    message: 'Channel account already exists',
-                    channel_api_key: existing.channel_api_key,
-                    channel_api_secret: existing.channel_api_secret,
-                    created_at: existing.created_at
-                });
-            }
-
-            // Generate prefixed API key pair
+            // Generate new prefixed API key pair
             const apiKey = 'eck_' + crypto.randomBytes(32).toString('hex');
             const apiSecret = 'ecs_' + crypto.randomBytes(32).toString('hex');
 
@@ -76,16 +92,62 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 return res.status(500).json({ success: false, message: 'Failed to create channel account' });
             }
 
-            serverLog('info', 'channel', `Channel account provisioned`, { deviceId });
+            serverLog('info', 'channel', `Channel account provisioned (id=${account.id})`, { deviceId });
 
             res.json({
                 success: true,
+                id: account.id,
                 channel_api_key: apiKey,
                 channel_api_secret: apiSecret,
-                instructions: 'Add these to your OpenClaw config under channels.eclaw.accounts.default'
+                instructions: 'Add these to your OpenClaw config under channels.eclaw.accounts.<name>'
             });
         } catch (err) {
             console.error('[Channel] Provision error:', err.message);
+            res.status(500).json({ success: false, message: 'Internal error' });
+        }
+    });
+
+    // ============================================
+    // DELETE /account/:id — Revoke a channel account
+    // ============================================
+    router.delete('/account/:id', authMiddleware, async (req, res) => {
+        try {
+            const deviceId = req.body.deviceId || req.user?.deviceId;
+            const accountId = parseInt(req.params.id);
+            if (!deviceId || isNaN(accountId)) {
+                return res.status(400).json({ success: false, message: 'deviceId and valid account id required' });
+            }
+
+            const account = await db.getChannelAccountById(accountId);
+            if (!account || account.device_id !== deviceId) {
+                return res.status(404).json({ success: false, message: 'Channel account not found' });
+            }
+
+            // Unbind any entities still linked to this account
+            const device = devices[deviceId];
+            if (device) {
+                for (const eid of Object.keys(device.entities).map(Number)) {
+                    const entity = device.entities[eid];
+                    if (entity && entity.channelAccountId === accountId) {
+                        entity.isBound = false;
+                        entity.botSecret = null;
+                        entity.publicCode = null;
+                        entity.bindingType = null;
+                        entity.channelAccountId = null;
+                        entity.state = 'IDLE';
+                        entity.message = null;
+                        serverLog('info', 'unbind', `Entity ${eid} unbound (channel account ${accountId} revoked)`, { deviceId, entityId: eid });
+                    }
+                }
+                saveData();
+            }
+
+            await db.deleteChannelAccount(accountId);
+            serverLog('info', 'channel', `Channel account ${accountId} revoked`, { deviceId });
+
+            res.json({ success: true });
+        } catch (err) {
+            console.error('[Channel] Delete account error:', err.message);
             res.status(500).json({ success: false, message: 'Internal error' });
         }
     });
@@ -115,7 +177,9 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                         isBound: e.isBound || false,
                         name: e.name || null,
                         character: e.character,
-                        bindingType: e.bindingType || null
+                        bindingType: e.bindingType || null,
+                        // true if this entity is bound to this specific channel account
+                        boundToThisAccount: e.channelAccountId === account.id
                     });
                 }
             }
@@ -125,6 +189,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             res.json({
                 success: true,
                 deviceId: account.device_id,
+                accountId: account.id,
                 entities,
                 maxEntities: 8
             });
@@ -181,17 +246,26 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 return res.status(400).json({ success: false, message: `Entity slot ${eId} not available` });
             }
 
-            // If already bound via channel, return existing credentials
+            // If already bound via channel
             if (entity.isBound && entity.bindingType === 'channel') {
-                return res.json({
-                    success: true,
-                    message: 'Entity already bound via channel',
-                    deviceId,
-                    entityId: eId,
-                    botSecret: entity.botSecret,
-                    publicCode: entity.publicCode,
-                    bindingType: 'channel'
-                });
+                if (entity.channelAccountId === account.id) {
+                    // Same plugin — return existing credentials (idempotent)
+                    return res.json({
+                        success: true,
+                        message: 'Entity already bound via channel',
+                        deviceId,
+                        entityId: eId,
+                        botSecret: entity.botSecret,
+                        publicCode: entity.publicCode,
+                        bindingType: 'channel'
+                    });
+                } else {
+                    // Different plugin already owns this entity
+                    return res.status(409).json({
+                        success: false,
+                        message: 'Entity already bound by a different channel account. Unbind first via DELETE /api/entity/:entityId'
+                    });
+                }
             }
 
             // Don't allow binding over an existing non-channel binding
@@ -210,6 +284,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             entity.botSecret = botSecret;
             entity.publicCode = publicCode;
             entity.bindingType = 'channel';
+            entity.channelAccountId = account.id;
             publicCodeIndex[publicCode] = { deviceId, entityId: eId };
             entity.name = name || null;
             entity.state = 'IDLE';
@@ -313,8 +388,15 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
     });
 
     // ── Helper: Push structured message to channel callback ──
-    async function pushToChannelCallback(deviceId, entityId, payload) {
-        const account = await db.getChannelAccountByDevice(deviceId);
+    // channelAccountId: the specific account bound to this entity (preferred)
+    // Falls back to device-level lookup for legacy entities without channelAccountId
+    async function pushToChannelCallback(deviceId, entityId, payload, channelAccountId) {
+        let account;
+        if (channelAccountId) {
+            account = await db.getChannelAccountById(channelAccountId);
+        } else {
+            account = await db.getChannelAccountByDevice(deviceId);
+        }
         if (!account || !account.callback_url) {
             return { pushed: false, reason: 'no_channel_callback' };
         }

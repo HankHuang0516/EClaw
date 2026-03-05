@@ -116,6 +116,25 @@ async function createTables() {
         await client.query(`ALTER TABLE entities ADD COLUMN IF NOT EXISTS public_code VARCHAR(8)`);
         await client.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_entities_public_code ON entities(public_code) WHERE public_code IS NOT NULL`);
 
+        // Channel binding persistence — store bindingType and per-entity channel account reference
+        await client.query(`ALTER TABLE entities ADD COLUMN IF NOT EXISTS binding_type TEXT`);
+        await client.query(`ALTER TABLE entities ADD COLUMN IF NOT EXISTS channel_account_id INTEGER`);
+
+        // Allow multiple channel accounts per device (each plugin gets its own account)
+        // Drop the UNIQUE(device_id) constraint if it still exists from the original schema
+        await client.query(`
+            DO $$ BEGIN
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.table_constraints
+                    WHERE table_name = 'channel_accounts'
+                      AND constraint_type = 'UNIQUE'
+                      AND constraint_name = 'channel_accounts_device_id_key'
+                ) THEN
+                    ALTER TABLE channel_accounts DROP CONSTRAINT channel_accounts_device_id_key;
+                END IF;
+            END $$
+        `);
+
         // Add bot_secret column if it doesn't exist (migration for existing deployments)
         await client.query(`
             ALTER TABLE official_bots ADD COLUMN IF NOT EXISTS bot_secret TEXT
@@ -253,14 +272,16 @@ async function saveDeviceData(deviceId, deviceData) {
                     entity.xp || 0,
                     entity.level || 1,
                     entity.avatar || null,
-                    entity.publicCode || null
+                    entity.publicCode || null,
+                    entity.bindingType || null,
+                    entity.channelAccountId || null
                 ];
                 const entitySql = `INSERT INTO entities (
                         device_id, entity_id, bot_secret, is_bound, name,
                         character, state, message, parts,
                         last_updated, message_queue, webhook, app_version,
-                        xp, level, avatar, public_code
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+                        xp, level, avatar, public_code, binding_type, channel_account_id
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
                     ON CONFLICT (device_id, entity_id)
                     DO UPDATE SET
                         bot_secret = $3,
@@ -277,7 +298,9 @@ async function saveDeviceData(deviceId, deviceData) {
                         xp = $14,
                         level = $15,
                         avatar = $16,
-                        public_code = $17`;
+                        public_code = $17,
+                        binding_type = $18,
+                        channel_account_id = $19`;
 
                 await client.query(`SAVEPOINT entity_${i}`);
                 try {
@@ -401,7 +424,9 @@ async function loadAllDevices() {
                 avatar: row.avatar || null,
                 xp: parseInt(row.xp) || 0,
                 level: parseInt(row.level) || 1,
-                publicCode: row.public_code || null
+                publicCode: row.public_code || null,
+                bindingType: row.binding_type || null,
+                channelAccountId: row.channel_account_id ? parseInt(row.channel_account_id) : null
             };
         }
 
@@ -874,8 +899,6 @@ async function createChannelAccount(deviceId, apiKey, apiSecret) {
         const result = await pool.query(
             `INSERT INTO channel_accounts (device_id, channel_api_key, channel_api_secret, created_at, updated_at)
              VALUES ($1, $2, $3, $4, $4)
-             ON CONFLICT (device_id)
-             DO UPDATE SET channel_api_key = $2, channel_api_secret = $3, updated_at = $4
              RETURNING *`,
             [deviceId, apiKey, apiSecret, Date.now()]
         );
@@ -883,6 +906,34 @@ async function createChannelAccount(deviceId, apiKey, apiSecret) {
     } catch (err) {
         console.error(`[DB] Failed to create channel account for ${deviceId}:`, err.message);
         return null;
+    }
+}
+
+async function getChannelAccountById(id) {
+    if (!pool) return null;
+    try {
+        const result = await pool.query(
+            'SELECT * FROM channel_accounts WHERE id = $1',
+            [id]
+        );
+        return result.rows[0] || null;
+    } catch (err) {
+        console.error('[DB] Failed to get channel account by id:', err.message);
+        return null;
+    }
+}
+
+async function getChannelAccountsByDevice(deviceId) {
+    if (!pool) return [];
+    try {
+        const result = await pool.query(
+            'SELECT * FROM channel_accounts WHERE device_id = $1 ORDER BY created_at ASC',
+            [deviceId]
+        );
+        return result.rows;
+    } catch (err) {
+        console.error('[DB] Failed to get channel accounts by device:', err.message);
+        return [];
     }
 }
 
@@ -925,6 +976,17 @@ async function updateChannelCallback(apiKey, callbackUrl, callbackToken) {
         return true;
     } catch (err) {
         console.error('[DB] Failed to update channel callback:', err.message);
+        return false;
+    }
+}
+
+async function deleteChannelAccount(id) {
+    if (!pool) return false;
+    try {
+        await pool.query('DELETE FROM channel_accounts WHERE id = $1', [id]);
+        return true;
+    } catch (err) {
+        console.error(`[DB] Failed to delete channel account ${id}:`, err.message);
         return false;
     }
 }
@@ -980,8 +1042,11 @@ module.exports = {
     deleteDeviceVars,
     // Channel accounts (OpenClaw plugin)
     createChannelAccount,
+    getChannelAccountById,
+    getChannelAccountsByDevice,
     getChannelAccountByKey,
     getChannelAccountByDevice,
+    deleteChannelAccount,
     updateChannelCallback,
     clearChannelCallback
 };

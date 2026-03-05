@@ -1237,7 +1237,9 @@ function createDefaultEntity(entityId) {
         xp: 0,
         level: 1,
         publicCode: null,
-        pushStatus: null // { ok: bool, reason?: string, at: number }
+        pushStatus: null, // { ok: bool, reason?: string, at: number }
+        bindingType: null,
+        channelAccountId: null
     };
 }
 
@@ -2929,7 +2931,7 @@ app.post('/api/client/speak', async (req, res) => {
                 backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
                 isBroadcast: targetIds.length > 1,
                 broadcastRecipients: targetIds.length > 1 ? targetIds : null
-            });
+            }, entity.channelAccountId);
 
             if (pushResult.pushed) {
                 messageObj.delivered = true;
@@ -3165,7 +3167,7 @@ app.post('/api/entity/speak-to', async (req, res) => {
             backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
             fromEntityId: fromId,
             fromCharacter: fromEntity.character
-        }).then(pushResult => {
+        }, toEntity.channelAccountId).then(pushResult => {
             if (pushResult.pushed) {
                 messageObj.delivered = true;
                 markChatMessageDelivered(chatMsgId, String(toId));
@@ -3920,7 +3922,7 @@ app.post('/api/entity/broadcast', async (req, res) => {
                 broadcastRecipients: targetIds,
                 fromEntityId: fromId,
                 fromCharacter: fromEntity.character
-            }).then(pushResult => {
+            }, toEntity.channelAccountId).then(pushResult => {
                 if (pushResult.pushed) {
                     messageObj.delivered = true;
                     markChatMessageDelivered(broadcastChatMsgId, String(toId));
