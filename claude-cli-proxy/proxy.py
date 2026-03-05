@@ -57,7 +57,7 @@ REPO_URL = (
     else "https://github.com/HankHuang0516/realbot.git"
 )
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", stream=sys.stdout)
 log = logging.getLogger("claude-proxy")
 
 # Resolve claude binary
