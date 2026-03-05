@@ -512,9 +512,11 @@ class ScreenControlService : AccessibilityService() {
 
     @androidx.annotation.RequiresApi(Build.VERSION_CODES.R)
     private fun takeAndPostScreenshot() {
+        Timber.d("[ScreenControl] takeAndPostScreenshot: calling takeScreenshot()")
         takeScreenshot(android.view.Display.DEFAULT_DISPLAY, mainExecutor,
             object : TakeScreenshotCallback {
                 override fun onSuccess(result: ScreenshotResult) {
+                    Timber.d("[ScreenControl] takeScreenshot onSuccess")
                     serviceScope.launch {
                         try {
                             val hardwareBuffer = result.hardwareBuffer
@@ -540,14 +542,19 @@ class ScreenControlService : AccessibilityService() {
                             postScreenshotResult(base64, null)
                         } catch (e: Exception) {
                             Timber.e(e, "[ScreenControl] Screenshot processing failed: ${e.message}")
+                            // Report processing failure so backend doesn't hang
+                            try { postScreenshotResult(null, "processing failed: ${e.message}") } catch (_: Exception) {}
                         }
                     }
                 }
 
                 override fun onFailure(errorCode: Int) {
-                    Timber.e("[ScreenControl] takeScreenshot failed: errorCode=$errorCode")
-                    // Report error immediately so backend doesn't hang for 10s
-                    serviceScope.launch { postScreenshotResult(null, "takeScreenshot failed: errorCode=$errorCode") }
+                    Timber.e("[ScreenControl] takeScreenshot onFailure: errorCode=$errorCode")
+                    // Report error immediately so backend doesn't hang for 8s
+                    serviceScope.launch {
+                        try { postScreenshotResult(null, "takeScreenshot failed: errorCode=$errorCode") }
+                        catch (e: Exception) { Timber.e(e, "[ScreenControl] postScreenshotResult threw: ${e.message}") }
+                    }
                 }
             }
         )
