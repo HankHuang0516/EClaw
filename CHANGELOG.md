@@ -1,3 +1,10 @@
+# [1.87.0](https://github.com/HankHuang0516/realbot/compare/v1.86.1...v1.87.0) (2026-03-05)
+
+
+### Features
+
+* **screen-control:** smart ime_action fallback for apps without Enter key ([b4f0ddb](https://github.com/HankHuang0516/realbot/commit/b4f0ddba3f84cff59e094aad1ca7bc0df9714bb9))
+
 ## [1.86.1](https://github.com/HankHuang0516/realbot/compare/v1.86.0...v1.86.1) (2026-03-05)
 
 
