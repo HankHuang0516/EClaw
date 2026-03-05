@@ -7056,7 +7056,7 @@ app.post('/api/device/screen-result', (req, res) => {
 
     clearTimeout(pending.timeoutHandle);
     delete pendingScreenRequests[deviceId];
-    pending.resolve({ screen, timestamp, elements, ...(truncated ? { truncated: true } : {}) });
+    pending.resolve({ screen, timestamp, elements, truncated: !!truncated });
 
     serverLog('info', 'remote_control', 'screen-result delivered', { deviceId,
         metadata: { screen, elementCount: Array.isArray(elements) ? elements.length : 0, truncated: !!truncated } });
