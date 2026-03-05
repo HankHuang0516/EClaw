@@ -1,3 +1,10 @@
+## [1.89.4](https://github.com/HankHuang0516/realbot/compare/v1.89.3...v1.89.4) (2026-03-05)
+
+
+### Bug Fixes
+
+* **ssl:** add network_security_config to trust user CAs in debug builds ([67f142a](https://github.com/HankHuang0516/realbot/commit/67f142a0f4dcedd676523a185dd3ba47e763d34d))
+
 ## [1.89.3](https://github.com/HankHuang0516/realbot/compare/v1.89.2...v1.89.3) (2026-03-05)
 
 
