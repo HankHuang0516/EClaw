@@ -286,7 +286,7 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnAddPhoto"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="wrap_content"
                     android:layout_height="40dp"
                     android:text="@string/feedback_photo_add"

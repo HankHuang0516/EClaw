@@ -1029,7 +1029,7 @@
 
                 '<hr style="border:none;border-top:1px solid var(--card-border);margin:16px 0 12px;">' +
                 '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-                '<button class="btn" style="background:transparent;color:var(--danger);border:1px solid var(--danger);font-size:12px;padding:6px 14px;" onclick="closeDialog();confirmDelete(' + scheduleId + ')">' + (i18n.t('sched_delete') || 'Delete') + '</button>' +
+                '<button class="btn btn-sm btn-outline" style="color:var(--danger);border-color:var(--danger);" onclick="closeDialog();confirmDelete(' + scheduleId + ')">' + (i18n.t('sched_delete') || 'Delete') + '</button>' +
                 '<div class="dialog-actions" style="margin-top:0;">' +
                 '<button class="btn btn-outline" onclick="closeDialog()">' + (i18n.t('mc_dlg_cancel') || 'Cancel') + '</button>' +
                 '<button class="btn btn-primary" id="dlgSaveBtn" onclick="updateSchedule(' + scheduleId + ')">' + (i18n.t('sched_btn_save') || 'Save') + '</button>' +

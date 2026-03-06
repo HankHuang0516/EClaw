@@ -550,55 +550,6 @@
             margin-top: 20px;
         }
 
-        .btn-create {
-            background: var(--primary);
-            color: #fff;
-            border: none;
-            padding: 8px 20px;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .btn-create:hover {
-            opacity: 0.9;
-        }
-
-        .btn-create:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .btn-cancel {
-            background: var(--input-bg);
-            border: 1px solid var(--card-border);
-            color: var(--text);
-            padding: 8px 20px;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .btn-cancel:hover {
-            background: var(--card-border);
-        }
-
-        .btn-remove-bot {
-            background: transparent;
-            color: var(--danger);
-            border: 1px solid var(--danger);
-            padding: 4px 10px;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .btn-remove-bot:hover {
-            background: var(--danger);
-            color: #fff;
-        }
 
         .add-bot-btn {
             background: var(--primary);
@@ -1036,7 +987,7 @@
                         '<td>' + b.avgConvPer5h + '</td>' +
                         '<td>' + users24hCell + '</td>' +
                         '<td>' + usersAvg5hCell + '</td>' +
-                        '<td><button class="btn-remove-bot" onclick="confirmRemoveBot(\'' + escapeHtml(b.botId) + '\', \'' + escapeHtml(b.status) + '\')">' + i18n.t('admin_btn_remove_bot') + '</button></td>' +
+                        '<td><button class="btn btn-danger" onclick="confirmRemoveBot(\'' + escapeHtml(b.botId) + '\', \'' + escapeHtml(b.status) + '\')">' + i18n.t('admin_btn_remove_bot') + '</button></td>' +
                         '</tr>';
                 }
             } else {
@@ -1266,8 +1217,8 @@
                 '</p>' +
                 (isAssigned ? '<p style="color:var(--warning);font-size:13px;margin:0 0 8px 0;">' + i18n.t('admin_dlg_remove_bot_warn_assigned') + '</p>' : '') +
                 '<div class="dialog-actions">' +
-                '<button class="btn-cancel" onclick="this.closest(\'.create-bot-overlay\').remove()">' + i18n.t('admin_dlg_cancel') + '</button>' +
-                '<button class="btn-remove-bot" style="padding:8px 16px;font-size:14px;" id="btnConfirmRemoveBot" onclick="removeBot(\'' + botId + '\', ' + isAssigned + ', this)">' + i18n.t('admin_btn_remove_bot') + '</button>' +
+                '<button class="btn btn-outline" onclick="this.closest(\'.create-bot-overlay\').remove()">' + i18n.t('admin_dlg_cancel') + '</button>' +
+                '<button class="btn btn-danger" id="btnConfirmRemoveBot" onclick="removeBot(\'' + botId + '\', ' + isAssigned + ', this)">' + i18n.t('admin_btn_remove_bot') + '</button>' +
                 '</div>' +
                 '</div>';
             document.body.appendChild(overlay);
@@ -1318,8 +1269,8 @@
                 '</div>' +
                 '<div id="pushUpdateResult"></div>' +
                 '<div class="dialog-actions">' +
-                '<button class="btn-cancel" onclick="this.closest(\'.create-bot-overlay\').remove()">' + i18n.t('admin_btn_cancel', 'Cancel') + '</button>' +
-                '<button class="btn-create" id="btnPushUpdate" onclick="pushUpdateNotification()">' + i18n.t('admin_btn_send_push', 'Send Push') + '</button>' +
+                '<button class="btn btn-outline" onclick="this.closest(\'.create-bot-overlay\').remove()">' + i18n.t('admin_btn_cancel', 'Cancel') + '</button>' +
+                '<button class="btn btn-primary" id="btnPushUpdate" onclick="pushUpdateNotification()">' + i18n.t('admin_btn_send_push', 'Send Push') + '</button>' +
                 '</div>' +
                 '</div>';
             document.body.appendChild(overlay);
@@ -1393,8 +1344,8 @@
                 '</div>' +
                 '<div id="createBotResult"></div>' +
                 '<div class="dialog-actions">' +
-                '<button class="btn-cancel" onclick="closeCreateBotDialog()">' + i18n.t('admin_dlg_cancel') + '</button>' +
-                '<button class="btn-create" id="btnCreateBot" onclick="createBot()">' + i18n.t('admin_dlg_create') + '</button>' +
+                '<button class="btn btn-outline" onclick="closeCreateBotDialog()">' + i18n.t('admin_dlg_cancel') + '</button>' +
+                '<button class="btn btn-primary" id="btnCreateBot" onclick="createBot()">' + i18n.t('admin_dlg_create') + '</button>' +
                 '</div>' +
                 '</div>';
             document.body.appendChild(overlay);

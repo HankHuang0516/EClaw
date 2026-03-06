@@ -194,11 +194,10 @@
                 android:layout_weight="1"
                 android:layout_marginEnd="4dp"
                 android:text="@string/refresh_connection"
-                android:textColor="#4FC3F7"
+                android:textColor="?attr/colorPrimary"
                 app:icon="@android:drawable/ic_popup_sync"
-                app:iconTint="#4FC3F7"
-                app:strokeColor="#4FC3F7"
-                app:rippleColor="#334FC3F7"
+                app:iconTint="?attr/colorPrimary"
+                app:strokeColor="?attr/colorPrimary"
                 app:cornerRadius="8dp"
                 style="@style/Widget.Material3.Button.OutlinedButton" />
 
@@ -210,10 +209,10 @@
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
                 android:text="@string/remove_entity"
-                android:textColor="#FF6B6B"
-                app:iconTint="#FF6B6B"
-                app:strokeColor="#FF6B6B"
-                app:rippleColor="#33FF6B6B"
+                android:textColor="?attr/colorError"
+                app:iconTint="?attr/colorError"
+                app:strokeColor="?attr/colorError"
+                app:rippleColor="?attr/colorErrorContainer"
                 app:cornerRadius="8dp"
                 style="@style/Widget.Material3.Button.OutlinedButton" />
 

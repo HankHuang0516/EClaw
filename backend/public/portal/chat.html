@@ -565,8 +565,8 @@
         }
 
         .btn-media.recording {
-            background: #ff4444;
-            border-color: #ff4444;
+            background: var(--danger);
+            border-color: var(--danger);
             color: #fff;
             animation: pulse-record 1s ease-in-out infinite;
         }
@@ -606,19 +606,8 @@
         .recording-actions button {
             padding: 4px 12px;
             border-radius: 12px;
-            border: none;
             font-size: 12px;
             cursor: pointer;
-        }
-
-        .btn-cancel-record {
-            background: var(--card-border);
-            color: var(--text);
-        }
-
-        .btn-send-record {
-            background: var(--primary);
-            color: #fff;
         }
 
         /* ── Attachment Menu ── */
@@ -990,8 +979,8 @@
                     <span class="recording-dot"></span>
                     <span id="recordingTime">0:00</span>
                     <div class="recording-actions">
-                        <button class="btn-cancel-record" onclick="stopRecording(false)" data-i18n="chat_cancel">Cancel</button>
-                        <button class="btn-send-record" onclick="stopRecording(true)" data-i18n="chat_btn_send">Send</button>
+                        <button class="btn btn-outline btn-sm" onclick="stopRecording(false)" data-i18n="chat_cancel">Cancel</button>
+                        <button class="btn btn-primary btn-sm" onclick="stopRecording(true)" data-i18n="chat_btn_send">Send</button>
                     </div>
                 </div>
                 <div class="file-preview-bar" id="filePreviewBar"></div>

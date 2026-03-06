@@ -728,42 +728,6 @@
         .edit-mode .entity-edit-actions { display: flex; }
         .edit-mode .entity-card-footer { display: none; }
 
-        .btn-refresh {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 8px 12px;
-            background: transparent;
-            border: 1px solid #4FC3F7;
-            border-radius: var(--radius-sm);
-            color: #4FC3F7;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .btn-refresh:hover { background: rgba(79, 195, 247, 0.1); }
-        .btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .btn-remove-edit {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 8px 12px;
-            background: transparent;
-            border: 1px solid var(--danger);
-            border-radius: var(--radius-sm);
-            color: var(--danger);
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .btn-remove-edit:hover { background: rgba(244, 67, 54, 0.1); }
 
         .entity-card.dragging { opacity: 0.4; transform: scale(0.97); }
         .entity-card.drag-over { border-color: #4FC3F7; box-shadow: 0 0 12px rgba(79, 195, 247, 0.3); }
@@ -1257,8 +1221,8 @@
                     '<span class="entity-timestamp">' + time + '</span>' +
                     '</div>' +
                     '<div class="entity-edit-actions">' +
-                    '<button class="btn-refresh" onclick="refreshEntity(' + entity.entityId + ', this)">&#x1F504; ' + i18n.t('dash_btn_refresh') + '</button>' +
-                    '<button class="btn-remove-edit" onclick="confirmRemove(' + entity.entityId + ', \'' + escapedName + '\')">' + i18n.t('dash_btn_remove') + '</button>' +
+                    '<button class="btn btn-sm btn-outline" onclick="refreshEntity(' + entity.entityId + ', this)">&#x1F504; ' + i18n.t('dash_btn_refresh') + '</button>' +
+                    '<button class="btn btn-sm btn-danger" onclick="confirmRemove(' + entity.entityId + ', \'' + escapedName + '\')">' + i18n.t('dash_btn_remove') + '</button>' +
                     '</div>' +
                     '</div>';
             }).join('');

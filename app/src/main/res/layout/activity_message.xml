@@ -71,12 +71,13 @@
             android:layout_height="wrap_content"
             android:text="Cancel"
             android:textColor="#FFFFFF"
-            app:backgroundTint="#555555"
+            app:backgroundTint="?attr/colorSurfaceVariant"
             android:layout_marginEnd="8dp"
             style="@style/Widget.Material3.Button.TonalButton"/>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_send"
+            style="@style/Widget.Material3.Button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Send"

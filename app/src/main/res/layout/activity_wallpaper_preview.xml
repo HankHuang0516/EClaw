@@ -134,7 +134,7 @@
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
                 android:text="@string/set_wallpaper"
-                app:backgroundTint="#FF7F50"
+                app:backgroundTint="@color/lobster_orange"
                 style="@style/Widget.Material3.Button" />
 
         </LinearLayout>
