@@ -1,3 +1,10 @@
+# [1.92.0](https://github.com/HankHuang0516/realbot/compare/v1.91.2...v1.92.0) (2026-03-06)
+
+
+### Features
+
+* **channel:** simplify auth to API key only, remove secret requirement ([c687d93](https://github.com/HankHuang0516/realbot/commit/c687d93ec9cc43f54b7641d4e251d5fadad51c6b))
+
 ## [1.91.2](https://github.com/HankHuang0516/realbot/compare/v1.91.1...v1.91.2) (2026-03-06)
 
 
