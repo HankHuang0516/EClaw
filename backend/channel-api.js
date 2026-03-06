@@ -41,18 +41,24 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
         return { deviceId, device };
     }
 
-    // ── Auth helper: validate channel API key + secret ──
+    // ── Auth helper: validate channel API key (secret optional for backward compat) ──
     async function channelAuth(req, res) {
         const apiKey = req.body.channel_api_key || req.headers['x-channel-api-key'];
         const apiSecret = req.body.channel_api_secret || req.headers['x-channel-api-secret'];
 
-        if (!apiKey || !apiSecret) {
-            res.status(401).json({ success: false, message: 'channel_api_key and channel_api_secret required' });
+        if (!apiKey) {
+            res.status(401).json({ success: false, message: 'channel_api_key required' });
             return null;
         }
 
         const account = await db.getChannelAccountByKey(apiKey);
-        if (!account || account.channel_api_secret !== apiSecret) {
+        if (!account) {
+            res.status(403).json({ success: false, message: 'Invalid channel_api_key' });
+            return null;
+        }
+
+        // If secret provided, validate it (backward compat with old clients)
+        if (apiSecret && account.channel_api_secret !== apiSecret) {
             res.status(403).json({ success: false, message: 'Invalid channel credentials' });
             return null;
         }

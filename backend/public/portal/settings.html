@@ -315,9 +315,9 @@
             gap: 4px;
             padding: 5px 12px;
             border-radius: 8px;
-            border: 1px solid #7C4DFF;
-            background: rgba(124, 77, 255, 0.1);
-            color: #7C4DFF;
+            border: 1px solid var(--primary);
+            background: rgba(var(--primary-rgb), 0.1);
+            color: var(--primary);
             cursor: pointer;
             font-size: 13px;
             white-space: nowrap;
@@ -325,7 +325,7 @@
         }
 
         .btn-ask-ai:hover {
-            background: rgba(124, 77, 255, 0.2);
+            background: rgba(var(--primary-rgb), 0.2);
         }
 
         /* ── Feedback dialog category cards ── */
@@ -638,17 +638,13 @@
 
             <!-- New key reveal (shown once after generation) -->
             <div id="newKeyReveal" style="display:none;margin-top:12px;padding:12px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--accent);">
-                <div style="font-weight:600;color:var(--accent);margin-bottom:8px;">🔑 Copy now — secret is shown only once!</div>
+                <div style="font-weight:600;color:var(--accent);margin-bottom:8px;">🔑 Copy your API Key</div>
                 <div class="info-row">
                     <span class="info-label">API Key</span>
                     <span class="info-value mono" id="newKeyValue" style="word-break:break-all;">--</span>
                 </div>
-                <div class="info-row" style="margin-top:4px;">
-                    <span class="info-label">API Secret</span>
-                    <span class="info-value mono" id="newSecretValue" style="word-break:break-all;">--</span>
-                </div>
                 <div class="channel-actions" style="margin-top:10px;">
-                    <button class="btn btn-primary btn-sm" onclick="copyNewKeyBoth()">📋 Copy Both</button>
+                    <button class="btn btn-primary btn-sm" onclick="copyNewKeyBoth()">📋 Copy Key</button>
                     <button class="btn btn-sm btn-outline" onclick="dismissNewKey()">Done</button>
                 </div>
             </div>
@@ -723,7 +719,7 @@
                 <!-- Browser Push Toggle -->
                 <div class="setting-row">
                     <span class="setting-row-label" data-i18n="notif_push_enable">Enable browser notifications</span>
-                    <button class="btn btn-sm" id="btnPushToggle" onclick="toggleWebPush()" style="min-width:80px;">
+                    <button class="btn btn-sm btn-outline" id="btnPushToggle" onclick="toggleWebPush()" style="min-width:80px;">
                         ...
                     </button>
                 </div>
@@ -950,7 +946,6 @@
                     ? '<span style="font-size:11px;color:var(--success);margin-left:6px;">● callback active</span>'
                     : '<span style="font-size:11px;color:var(--text-muted);margin-left:6px;">○ no callback</span>';
                 const safeKey = encodeURIComponent(a.channel_api_key);
-                const safeSec = encodeURIComponent(a.channel_api_secret);
                 return `
                 <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);" data-ch-id="${a.id}">
                     <div>
@@ -958,7 +953,7 @@
                         ${badge}
                     </div>
                     <div style="display:flex;gap:6px;flex-shrink:0;">
-                        <button class="btn btn-sm btn-outline" onclick="copyAccountKeys('${safeKey}','${safeSec}')">Copy</button>
+                        <button class="btn btn-sm btn-outline" onclick="copyAccountKeys('${safeKey}')">Copy</button>
                         <button class="btn btn-sm btn-danger" onclick="deleteChannelAccount(${a.id})">Delete</button>
                     </div>
                 </div>`;
@@ -971,8 +966,7 @@
             btn.textContent = 'Generating…';
             try {
                 const data = await apiCall('POST', '/api/channel/provision');
-                document.getElementById('newKeyValue').textContent   = data.channel_api_key;
-                document.getElementById('newSecretValue').textContent = data.channel_api_secret;
+                document.getElementById('newKeyValue').textContent = data.channel_api_key;
                 document.getElementById('newKeyReveal').style.display = '';
                 document.getElementById('channelNoAccounts').style.display = 'none';
 
@@ -980,7 +974,6 @@
                 const list = document.getElementById('channelAccountList');
                 const keyPartial = data.channel_api_key.substring(0, 12) + '…' + data.channel_api_key.slice(-6);
                 const safeKey = encodeURIComponent(data.channel_api_key);
-                const safeSec = encodeURIComponent(data.channel_api_secret);
                 const div = document.createElement('div');
                 div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);';
                 div.dataset.chId = data.id;
@@ -990,7 +983,7 @@
                         <span style="font-size:11px;color:var(--text-muted);margin-left:6px;">○ no callback</span>
                     </div>
                     <div style="display:flex;gap:6px;flex-shrink:0;">
-                        <button class="btn btn-sm btn-outline" onclick="copyAccountKeys('${safeKey}','${safeSec}')">Copy</button>
+                        <button class="btn btn-sm btn-outline" onclick="copyAccountKeys('${safeKey}')">Copy</button>
                         <button class="btn btn-sm btn-danger" onclick="deleteChannelAccount(${data.id})">Delete</button>
                     </div>`;
                 list.appendChild(div);
@@ -1002,10 +995,9 @@
             }
         }
 
-        async function copyAccountKeys(encodedKey, encodedSecret) {
-            const key    = decodeURIComponent(encodedKey);
-            const secret = decodeURIComponent(encodedSecret);
-            const text   = `channel_api_key: ${key}\nchannel_api_secret: ${secret}`;
+        async function copyAccountKeys(encodedKey) {
+            const key  = decodeURIComponent(encodedKey);
+            const text = key;
             try {
                 await navigator.clipboard.writeText(text);
                 showCopyToast();
@@ -1013,9 +1005,8 @@
         }
 
         async function copyNewKeyBoth() {
-            const key    = document.getElementById('newKeyValue').textContent;
-            const secret = document.getElementById('newSecretValue').textContent;
-            const text   = `channel_api_key: ${key}\nchannel_api_secret: ${secret}`;
+            const key  = document.getElementById('newKeyValue').textContent;
+            const text = key;
             try {
                 await navigator.clipboard.writeText(text);
                 showCopyToast();
