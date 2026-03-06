@@ -1,3 +1,10 @@
+## [1.91.1](https://github.com/HankHuang0516/realbot/compare/v1.91.0...v1.91.1) (2026-03-06)
+
+
+### Bug Fixes
+
+* **portal:** remove broken security info block from env-vars page ([6363aa7](https://github.com/HankHuang0516/realbot/commit/6363aa7b0cd1ae860af1e8f06e3b786c72368675))
+
 # [1.91.0](https://github.com/HankHuang0516/realbot/compare/v1.90.3...v1.91.0) (2026-03-06)
 
 
