@@ -292,8 +292,6 @@
                 </div>
             </div>
 
-            <!-- Security info -->
-            <div id="securityInfo"></div>
         </div>
     </div>
 
@@ -484,25 +482,6 @@
             el.textContent = `exec: curl -s "https://eclawbot.com/api/device-vars?deviceId=${currentUser.deviceId}&botSecret=BOT_SECRET"`;
         }
 
-        // ── Security info ──
-        function renderSecurityInfo() {
-            const el = document.getElementById('securityInfo');
-            if (!el) return;
-            const t = (key, fallback) => typeof i18n !== 'undefined' ? i18n.t(key) : fallback;
-            el.innerHTML = `
-                <div style="margin-top:16px;padding:16px;background:#f0f7ff;border-radius:12px;border:1px solid #d0e3ff;">
-                    <h4 style="margin:0 0 8px;font-size:14px;">&#x1f512; ${t('vars_security_title', 'Security')}</h4>
-                    <ul style="margin:0;padding-left:20px;font-size:13px;color:#555;line-height:1.8;">
-                        <li>${t('vars_security_encrypted', 'Variables are encrypted (AES-256-GCM) before storage')}</li>
-                        <li>${t('vars_security_approval', 'Bot access requires your real-time approval (popup)')}</li>
-                        <li>${t('vars_security_cache', 'Approval is cached for 5 minutes to reduce popups')}</li>
-                        <li>${t('vars_security_lock', 'Lock immediately blocks all bot access')}</li>
-                        <li>${t('vars_security_offline', 'If you are offline, bots cannot access variables')}</li>
-                    </ul>
-                </div>
-            `;
-        }
-
         // ── Init ──
         window.addEventListener('DOMContentLoaded', async () => {
             renderNav('mission');
@@ -515,7 +494,6 @@
 
             renderAll();
             renderBotHint();
-            renderSecurityInfo();
             syncVarsToServer(); // sync on page load
         });
     </script>
