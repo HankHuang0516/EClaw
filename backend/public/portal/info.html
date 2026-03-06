@@ -713,8 +713,8 @@
                         <table class="feature-table">
                             <thead><tr><th>功能</th><th>說明</th></tr></thead>
                             <tbody>
-                                <tr><td>AI 電子寵物桌布</td><td>最多 4 個 AI 驅動的實體，在你的動態桌布上自由活動</td></tr>
-                                <tr><td>OpenClaw Bot 整合</td><td>透過 Webhook + Exec-curl 與 AI Bot 雙向溝通</td></tr>
+                                <tr><td>AI 電子寵物桌布</td><td>最多 8 個 AI 驅動的實體（免費 4 個、付費 8 個），在你的動態桌布上自由活動</td></tr>
+                                <tr><td>OpenClaw Bot 整合</td><td>Webhook + Exec-curl 或 Channel plugin 兩種方式接入 AI Bot，雙向溝通</td></tr>
                                 <tr><td>即時聊天</td><td>長按桌布即可與實體對話，支援完整訊息歷程</td></tr>
                                 <tr><td>Push 通知</td><td>Bot 主動推送訊息，instruction-first 格式</td></tr>
                                 <tr><td>Web 管理介面</td><td>跨裝置管理實體、查看狀態、遠端控制</td></tr>
@@ -782,21 +782,23 @@
 │  /api/chat      /api/logs        /api/telemetry  │
 │                                                  │
 │         PostgreSQL (persistent store)            │
-└────────────────────────┬────────────────────────┘
-                         │  Webhook Push + exec+curl
-                         ▼
-              ┌──────────────────────┐
-              │  OpenClaw Platform   │
-              │  (Zeabur)            │
-              │                      │
-              │  AI Bot Instances    │
-              │  (up to 4 per device)│
-              └──────────────────────┘</div>
+└────────────────┬───────────────────┬────────────────┘
+                 │  Webhook mode      │  Channel mode
+                 │  push + exec+curl  │  /api/channel/*
+                 ▼                    ▼
+      ┌──────────────────────────────────────┐
+      │         OpenClaw Platform            │
+      │    (Zeabur / Railway / self-host)    │
+      │                                      │
+      │  AI Bot Instances (Webhook binding)  │
+      │  Channel Plugin   (Channel binding)  │
+      │  (free: 4 slots / paid: 8 slots)     │
+      └──────────────────────────────────────┘</div>
 
                         <h2>核心設計</h2>
                         <ul class="content-list">
-                            <li>每個裝置有 <strong>4 個 entity slots</strong>（0–3），可獨立綁定不同 Bot</li>
-                            <li><strong>Bots</strong> 透過 Webhook push（進入）+ exec+curl（POST /api/transform）進行通訊</li>
+                            <li>每個裝置有 <strong>最多 8 個 entity slots</strong>（免費 4 個 / 付費 8 個），可獨立綁定不同 Bot</li>
+                            <li><strong>Bots 接入方式</strong>：Webhook mode（push + exec+curl）或 Channel plugin mode（<code>/api/channel/*</code>），可混用</li>
                             <li><strong>Railway</strong> 在 push 到 <code>main</code> 時自動部署（監控 <code>backend/</code> 資料夾）</li>
                         </ul>
                     </div>
@@ -1212,9 +1214,10 @@ git push origin main</div>
                         <table class="feature-table">
                             <thead><tr><th>功能</th><th>說明</th></tr></thead>
                             <tbody>
-                                <tr><td>畫面擷取</td><td>Bot 請求目前畫面的語意樹（最多 150 個元素），包含文字、類型、座標、可互動屬性</td></tr>
+                                <tr><td>畫面擷取</td><td>Bot 請求目前畫面的語意樹（最多 300 個元素），包含文字、類型、座標、可互動屬性</td></tr>
                                 <tr><td>點擊 (tap)</td><td>按 Node ID 或 XY 座標點擊元素</td></tr>
                                 <tr><td>輸入 (type)</td><td>對指定輸入欄位輸入文字</td></tr>
+                                <tr><td>提交 (ime_action)</td><td>對輸入欄位送出鍵盤 Enter / 確認，適用於沒有實體送出按鈕的情境</td></tr>
                                 <tr><td>滑動 (scroll)</td><td>對可滾動元素向上或向下滑動</td></tr>
                                 <tr><td>系統按鍵</td><td>返回鍵（back）、主畫面鍵（home）</td></tr>
                                 <tr><td>多輪自主操作</td><td>Bot 可反覆截圖 → 判斷 → 執行指令，完成複雜的多步驟任務</td></tr>
@@ -1316,7 +1319,7 @@ node backend/tests/test-broadcast.js</div>
 
                         <h3 class="step-heading">第 1 步：在 Portal 產生 API Key</h3>
                         <p>前往 <strong>設定 → Channel API</strong>，點「新增 API Key」。系統會產生一組 Key + Secret，請立刻複製妥當——Secret 只顯示一次。</p>
-                        <div class="note">每個 API Key 對應一個 OpenClaw 連線。你可以為不同的 OpenClaw session 分別產生不同的 Key。</div>
+                        <div class="note">一個 API Key 可以同時綁定多個 entity slots（讓同一台 OpenClaw 管理多個角色）。如果你有多台獨立的 OpenClaw 伺服器，才需要分別產生不同的 Key。</div>
 
                         <h3 class="step-heading">第 2 步：在 OpenClaw 安裝並設定 E-Claw Channel</h3>
                         <p>在你的 OpenClaw 設定（<code>openclaw.config.yaml</code>）加入以下 channel 設定：</p>
@@ -1356,7 +1359,7 @@ node backend/tests/test-broadcast.js</div>
                         <h2>常見問題</h2>
 
                         <h3>Q: 角色綁定後沒出現在 App？</h3>
-                        <p>先確認 OpenClaw log 有出現 <code>Bound entity</code> 成功訊息。如果沒有，通常是 API Key/Secret 貼錯、或 <code>entity_id</code> 超出範圍（最大 7）。</p>
+                        <p>先確認 OpenClaw log 有出現 <code>Bound entity</code> 成功訊息。如果沒有，通常是 API Key/Secret 貼錯、或 <code>entity_id</code> 超出範圍（免費方案 0–3，付費方案 0–7）。</p>
 
                         <h3>Q: 傳訊息後 AI 沒有回應？</h3>
                         <p>最常見原因是 <code>ECLAW_WEBHOOK_URL</code> 外網連不到。確認你的 OpenClaw 伺服器有公開的 HTTPS 端點，或透過 ngrok 等工具暴露出來。</p>
@@ -1476,8 +1479,48 @@ DELETE /api/channel/register
 
             <div class="rn-entry latest">
                 <div class="rn-header">
-                    <span class="rn-version">v1.0.38</span>
+                    <span class="rn-version">v1.0.40</span>
                     <span class="rn-badge rn-badge-latest" data-i18n="rn_badge_latest">Latest</span>
+                    <span class="rn-date">2026-03</span>
+                </div>
+                <ul class="rn-changes">
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1040_1">Chat Image Preview — image URLs now display as inline previews in the chat window</span></li>
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1040_2">Remote Control Improvements — screen elements limit increased to 300, smarter keyboard input handling</span></li>
+                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1040_3">Entity Crash Fix — critical crash fixed when a bot sends non-numeric data to the wallpaper parts field (caused all entity slots to go blank)</span></li>
+                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1040_4">Chat Stability — ChatIntegrity false-positive detections and LinkPreview crash resolved</span></li>
+                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1040_5">Screenshot Reliability — 5 MB upload limit, improved error reporting and canTakeScreenshot guard</span></li>
+                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1040_6">Claude CLI Proxy — Docker startup fixed, log output improved, warmup interval optimized</span></li>
+                </ul>
+                <div class="rn-platforms">
+                    <span class="rn-platform">Backend</span>
+                    <span class="rn-platform">Web Portal</span>
+                    <span class="rn-platform">Android</span>
+                </div>
+            </div>
+
+            <div class="rn-entry">
+                <div class="rn-header">
+                    <span class="rn-version">v1.0.39</span>
+                    <span class="rn-date">2026-03</span>
+                </div>
+                <ul class="rn-changes">
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span>Channel Binding Indicators — Portal and Android now display how each entity is bound (Channel plugin vs Webhook)</span></li>
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span>Multi-Plugin Channel — one Channel API key can independently bind multiple entity slots</span></li>
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span>Channel Self-Test — built-in provision-device endpoint to verify channel connectivity before binding</span></li>
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span>Remote Control ime_action — keyboard submit (Enter) without needing an on-screen confirm button</span></li>
+                    <li><span class="rn-tag rn-tag-feat">feat</span> <span>Remote Control Entity Label — entity name indicator replaces colored border on screen overlay</span></li>
+                    <li><span class="rn-tag rn-tag-fix">fix</span> <span>Multi-account portal UI polish + auth.js regression fixes</span></li>
+                </ul>
+                <div class="rn-platforms">
+                    <span class="rn-platform">Backend</span>
+                    <span class="rn-platform">Web Portal</span>
+                    <span class="rn-platform">Android</span>
+                </div>
+            </div>
+
+            <div class="rn-entry">
+                <div class="rn-header">
+                    <span class="rn-version">v1.0.38</span>
                     <span class="rn-date">2026-03</span>
                 </div>
                 <ul class="rn-changes">
