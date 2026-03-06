@@ -1,3 +1,10 @@
+## [1.91.2](https://github.com/HankHuang0516/realbot/compare/v1.91.1...v1.91.2) (2026-03-06)
+
+
+### Bug Fixes
+
+* **portal:** fix inconsistent white button styles in Channel API section ([d56537f](https://github.com/HankHuang0516/realbot/commit/d56537f3c191a9ba9ff454445f3a3a40488e36fd))
+
 ## [1.91.1](https://github.com/HankHuang0516/realbot/compare/v1.91.0...v1.91.1) (2026-03-06)
 
 
