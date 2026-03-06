@@ -1,3 +1,10 @@
+# [1.91.0](https://github.com/HankHuang0516/realbot/compare/v1.90.3...v1.91.0) (2026-03-06)
+
+
+### Features
+
+* **chat:** add inline image preview for direct image URLs ([c57256c](https://github.com/HankHuang0516/realbot/commit/c57256c7a5a182a562666f7cccbc86e1ecf8bcff))
+
 ## [1.90.3](https://github.com/HankHuang0516/realbot/compare/v1.90.2...v1.90.3) (2026-03-05)
 
 
