@@ -731,6 +731,20 @@ app.post('/api/skill-templates/contribute', async (req, res) => {
         return res.status(400).json({ success: false, error: 'skill must include: id, title, url, steps' });
     }
 
+    // Structural validation of steps content
+    const stepsStr = typeof steps === 'string' ? steps : JSON.stringify(steps);
+    const PLACEHOLDER_RE = /\b(YOUR_[A-Z_]+|TODO|PLACEHOLDER|FIXME|<[A-Z_]+>)\b/i;
+    const STEP_RE = /(\d+\.|step\s*\d+|exec:|curl\s)/i;
+    if (stepsStr.length < 50) {
+        return res.status(400).json({ success: false, error: 'steps too short — must describe actual actions (min 50 chars)' });
+    }
+    if (!STEP_RE.test(stepsStr)) {
+        return res.status(400).json({ success: false, error: 'steps must contain numbered steps or exec: commands' });
+    }
+    if (PLACEHOLDER_RE.test(stepsStr)) {
+        return res.status(400).json({ success: false, error: 'steps contain unfilled placeholders (e.g. YOUR_XXX, TODO)' });
+    }
+
     // Duplicate ID check (against approved list)
     if (skillTemplatesData.some(t => t.id === id)) {
         serverLog('warn', 'skill_contribute', `Duplicate skill id rejected: ${id}`, { deviceId, entityId: eId });
