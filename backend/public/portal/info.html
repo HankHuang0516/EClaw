@@ -626,6 +626,10 @@
                     <button class="guide-sidebar-btn" data-guide="remotecontrol">遠端控制</button>
                     <button class="guide-sidebar-btn" data-guide="testing">測試與文件</button>
                     <button class="guide-sidebar-btn" data-guide="openclaw-channel">OpenClaw Channel</button>
+                    <button class="guide-sidebar-btn" id="usecaseToggle">實用案例 <span class="expand-arrow">&#9654;</span></button>
+                    <div class="guide-sub-nav" id="usecaseSubNav">
+                        <button class="guide-sub-btn" data-guide="usecase-claude-openclaw">用 Claude 指揮 OpenClaw</button>
+                    </div>
                 </div>
 
                 <!-- Guide Content -->
@@ -1392,6 +1396,133 @@ DELETE /api/channel/register
                         <p>完整 API 文件與 plugin 原始碼：<a href="https://github.com/HankHuang0516/openclaw-channel-eclaw" target="_blank" rel="noopener">github.com/HankHuang0516/openclaw-channel-eclaw</a></p>
                     </div>
 
+                    <!-- ── 實用案例：用 Claude 指揮 OpenClaw ── -->
+                    <div class="guide-panel" id="guide-usecase-claude-openclaw">
+                        <header>
+                            <h1>用 Claude 透過 Eclaw 指揮 OpenClaw</h1>
+                            <p class="meta">讓 Claude AI 成為你的「AI 指揮官」，透過 Eclaw 遠端控制你的 OpenClaw bot</p>
+                        </header>
+
+                        <h2>架構概覽</h2>
+                        <p>這個方案把三個系統串在一起：</p>
+                        <div class="code-block">你（自然語言）→ Claude（AI 指揮官）→ Eclaw API → OpenClaw Bot（執行任務）→ 回報結果</div>
+
+                        <table class="api-table" style="margin-top:16px">
+                            <thead><tr><th>角色</th><th>說明</th></tr></thead>
+                            <tbody>
+                                <tr><td><strong>Eclaw</strong></td><td>中控台，管理 entity（bot 席位），提供 HTTP API</td></tr>
+                                <tr><td><strong>OpenClaw</strong></td><td>AI bot 的運行平台，執行實際任務</td></tr>
+                                <tr><td><strong>Claude</strong></td><td>你的 AI 指揮官，透過 Eclaw API 傳達指令給 OpenClaw</td></tr>
+                            </tbody>
+                        </table>
+
+                        <hr>
+
+                        <h2>前置準備</h2>
+                        <ul class="tips-list">
+                            <li>✅ Eclaw 帳號 + 手機 App 或 Web Portal</li>
+                            <li>✅ 一個已在 OpenClaw 平台上運行的 AI bot，並已綁定到你的 Eclaw entity</li>
+                            <li>✅ <strong>Claude Code CLI</strong>（推薦）或 Claude.ai（含 MCP 工具）</li>
+                        </ul>
+                        <div class="note">⚠️ Claude.ai 標準對話介面<strong>無法直接執行 HTTP 請求</strong>，需要 <strong>Claude Code CLI</strong> 才能讓 Claude 真正幫你操作 API。</div>
+
+                        <hr>
+
+                        <h2>Step 1：取得你的憑證</h2>
+
+                        <h3 class="step-heading">Device ID</h3>
+                        <p>Web Portal → 右上角頭像 → Settings → 複製 <strong>Device ID</strong></p>
+
+                        <h3 class="step-heading">Bot Secret</h3>
+                        <p>Portal → Mission Control → 選擇你的 entity → 複製 <strong>Bot Secret</strong></p>
+                        <div class="note">Bot Secret 只用於 bot 操作，無法存取帳號設定或付款資訊。請勿公開分享。</div>
+
+                        <h3 class="step-heading">Entity ID</h3>
+                        <p>最多 8 個 slot（0–7）。第一個 bot 通常是 entity <strong>0</strong>。</p>
+
+                        <hr>
+
+                        <h2>Step 2：給 Claude 看技能說明書</h2>
+                        <p>Eclaw 有一份 AI 指令說明書（<code>E-claw_mcp_skill.md</code>），告訴 Claude 有哪些 API 可用。</p>
+
+                        <h3 class="step-heading">方法 A：Claude Code CLI（推薦）</h3>
+                        <p>對話開始時把說明書內容貼入：</p>
+                        <div class="code-block">請閱讀以下 Eclaw 技能說明書，之後我會用你來控制我的 OpenClaw bot：
+[貼入 E-claw_mcp_skill.md 的內容]</div>
+
+                        <h3 class="step-heading">方法 B：Claude.ai + 上傳檔案</h3>
+                        <p>從 Eclaw Portal 下載 <code>E-claw_mcp_skill.md</code>，在 Claude.ai 對話中點擊 📎 上傳。</p>
+
+                        <hr>
+
+                        <h2>Step 3：告訴 Claude 你的憑證</h2>
+                        <div class="code-block">我的 Eclaw 設定：
+- Device ID: 你的-device-id
+- Entity ID: 0
+- Bot Secret: 你的-bot-secret
+
+請幫我控制這個 OpenClaw bot。</div>
+
+                        <hr>
+
+                        <h2>Step 4：用自然語言下指令</h2>
+
+                        <h3 class="step-heading">查看 bot 目前狀態</h3>
+                        <div class="code-block">幫我看看我的 bot 目前在做什麼</div>
+                        <p style="color:var(--text-secondary);font-size:0.9em">Claude 會呼叫 <code>GET /api/entities</code>，讀取 entity 的 state 與 message 後回報。</p>
+
+                        <h3 class="step-heading">交辦一次性任務</h3>
+                        <div class="code-block">叫我的 bot 去搜尋最近 GitHub 上最受歡迎的 Python 爬蟲框架，整理成清單回報</div>
+                        <p style="color:var(--text-secondary);font-size:0.9em">Claude 會呼叫 <code>POST /api/entity/speak-to</code>，把任務推送給 bot。</p>
+
+                        <h3 class="step-heading">設定每日自動任務（排程）</h3>
+                        <div class="code-block">幫我設定一個排程：每天早上 9 點，讓 bot 自動抓取今日科技新聞摘要</div>
+                        <p style="color:var(--text-secondary);font-size:0.9em">Claude 會呼叫 <code>POST /api/bot/schedules</code>，建立 cron 排程，bot 不需要每次手動觸發。</p>
+
+                        <h3 class="step-heading">讓 bot 更新顯示狀態</h3>
+                        <div class="code-block">讓我的 bot 進入工作模式，顯示「正在分析市場數據」</div>
+
+                        <h3 class="step-heading">貢獻技能到社群庫</h3>
+                        <div class="code-block">幫我把這個 arxiv 論文摘要技能提交到 Eclaw 技能庫</div>
+                        <p style="color:var(--text-secondary);font-size:0.9em">Claude 會呼叫 <code>POST /api/skill-templates/contribute</code>，系統自動驗證 GitHub URL 後批准。</p>
+
+                        <hr>
+
+                        <h2>常用指令速查</h2>
+                        <table class="api-table">
+                            <thead><tr><th>你想做的事</th><th>說法範例</th></tr></thead>
+                            <tbody>
+                                <tr><td>查看 bot 狀態</td><td>「我的 bot 在幹嘛？」</td></tr>
+                                <tr><td>交辦任務</td><td>「叫 bot 去做 ___」</td></tr>
+                                <tr><td>更新顯示訊息</td><td>「讓 bot 顯示 '___'」</td></tr>
+                                <tr><td>設定排程</td><td>「每天/每小時讓 bot 自動做 ___」</td></tr>
+                                <tr><td>查看排程</td><td>「列出我設定的所有排程」</td></tr>
+                                <tr><td>取消排程</td><td>「取消 '___' 這個排程」</td></tr>
+                                <tr><td>查看記錄</td><td>「bot 最近說了什麼？」</td></tr>
+                                <tr><td>貢獻技能</td><td>「幫我把這個技能提交到 Eclaw 技能庫」</td></tr>
+                            </tbody>
+                        </table>
+
+                        <hr>
+
+                        <h2>進階：多 Bot 協作</h2>
+                        <p>如果你有多個 entity（多個 bot），Claude 可以協調它們一起工作：</p>
+                        <div class="code-block">讓 entity 0 負責收集資料，entity 1 負責分析，兩個 bot 一起幫我做市場調查</div>
+                        <p>Claude 會分別對兩個 entity 發送任務，整合結果後回報給你。</p>
+
+                        <hr>
+
+                        <h2>常見問題</h2>
+                        <p><strong>Q: Claude 說「我沒有辦法執行 HTTP 請求」怎麼辦？</strong><br>
+                        A: 你需要使用 <strong>Claude Code CLI</strong>（有 Bash 工具），或在 Claude.ai 啟用 MCP 工具。標準對話介面只會給你指令讓你自己貼到終端機執行。</p>
+
+                        <p><strong>Q: Bot Secret 在哪裡找？</strong><br>
+                        A: Portal → Mission Control → 選擇你的 entity 查看。</p>
+
+                        <p><strong>Q: Claude 下的指令 bot 沒有反應？</strong><br>
+                        A: 確認 bot 已綁定（isBound: true）、Bot Secret 正確、OpenClaw 在線。</p>
+                    </div>
+
                 </div><!-- /guide-content -->
             </div><!-- /guide-layout -->
         </div><!-- /panel-guide -->
@@ -1934,6 +2065,14 @@ DELETE /api/channel/register
             const guidePanels = document.querySelectorAll('.guide-panel');
             const missionToggle = document.getElementById('missionToggle');
             const missionSubNav = document.getElementById('missionSubNav');
+            const usecaseToggle = document.getElementById('usecaseToggle');
+            const usecaseSubNav = document.getElementById('usecaseSubNav');
+
+            // Expandable toggle groups: [toggle btn, sub nav, first sub item data-guide]
+            const toggleGroups = [
+                { toggle: missionToggle, subNav: missionSubNav, defaultGuide: 'mission-overview' },
+                { toggle: usecaseToggle, subNav: usecaseSubNav, defaultGuide: 'usecase-claude-openclaw' }
+            ];
 
             function clearGuideActive() {
                 guideSidebarBtns.forEach(b => b.classList.remove('active'));
@@ -1948,34 +2087,49 @@ DELETE /api/channel/register
                 if (panel) panel.classList.add('active');
             }
 
-            missionToggle.addEventListener('click', () => {
-                const isOpen = missionSubNav.classList.contains('open');
-                if (isOpen) {
-                    missionSubNav.classList.remove('open');
-                    missionToggle.classList.remove('expanded');
-                } else {
-                    missionSubNav.classList.add('open');
-                    missionToggle.classList.add('expanded');
-                    const overviewBtn = missionSubNav.querySelector('[data-guide="mission-overview"]');
-                    activateGuide('mission-overview', overviewBtn);
-                    missionToggle.classList.add('active');
-                }
+            function collapseAllToggles(exceptToggle) {
+                toggleGroups.forEach(g => {
+                    if (g.toggle !== exceptToggle) {
+                        g.subNav.classList.remove('open');
+                        g.toggle.classList.remove('expanded');
+                        g.toggle.classList.remove('active');
+                    }
+                });
+            }
+
+            toggleGroups.forEach(g => {
+                g.toggle.addEventListener('click', () => {
+                    const isOpen = g.subNav.classList.contains('open');
+                    collapseAllToggles(g.toggle);
+                    if (isOpen) {
+                        g.subNav.classList.remove('open');
+                        g.toggle.classList.remove('expanded');
+                    } else {
+                        g.subNav.classList.add('open');
+                        g.toggle.classList.add('expanded');
+                        const firstBtn = g.subNav.querySelector('[data-guide="' + g.defaultGuide + '"]');
+                        if (firstBtn) activateGuide(g.defaultGuide, firstBtn);
+                        g.toggle.classList.add('active');
+                    }
+                });
             });
 
             guideSidebarBtns.forEach(btn => {
-                if (btn.id === 'missionToggle') return;
+                if (toggleGroups.some(g => g.toggle === btn)) return;
                 btn.addEventListener('click', () => {
-                    missionSubNav.classList.remove('open');
-                    missionToggle.classList.remove('expanded');
-                    missionToggle.classList.remove('active');
+                    collapseAllToggles(null);
                     activateGuide(btn.getAttribute('data-guide'), btn);
                 });
             });
 
             guideSubBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
-                    activateGuide(btn.getAttribute('data-guide'), btn);
-                    missionToggle.classList.add('active');
+                    const guideId = btn.getAttribute('data-guide');
+                    activateGuide(guideId, btn);
+                    // Mark parent toggle as active
+                    toggleGroups.forEach(g => {
+                        if (g.subNav.contains(btn)) g.toggle.classList.add('active');
+                    });
                 });
             });
 
