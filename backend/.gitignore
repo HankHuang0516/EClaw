@@ -25,6 +25,8 @@ Thumbs.db
 data/*.json
 !data/.gitkeep
 !data/skill-templates.json
+!data/soul-templates.json
+!data/rule-templates.json
 
 # Test files
 test-entity-info.json

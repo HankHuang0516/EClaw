@@ -1,0 +1,22 @@
+[
+  {
+    "id": "reply-in-english",
+    "label": "Reply in English",
+    "icon": "🇬🇧",
+    "ruleType": "COMMUNICATION",
+    "name": "Reply in English",
+    "description": "Always respond in English regardless of the language used in the incoming message. If the user writes in another language, acknowledge it briefly then continue in English.",
+    "author": "E-Claw",
+    "updatedAt": "2026-03-07"
+  },
+  {
+    "id": "daily-summary",
+    "label": "Daily Summary",
+    "icon": "📋",
+    "ruleType": "WORKFLOW",
+    "name": "Daily Summary",
+    "description": "At the end of each day (or when requested), provide a brief summary of completed tasks, pending items, and any blockers encountered. Format as a bulleted list.",
+    "author": "E-Claw",
+    "updatedAt": "2026-03-07"
+  }
+]
