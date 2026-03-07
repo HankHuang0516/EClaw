@@ -492,6 +492,13 @@
     <string name="soul_name_poet">Poetic Dreamer</string>
     <string name="soul_desc_poet">Speaks in metaphors. Finds beauty in everyday things.</string>
 
+    <!-- Skill Templates -->
+    <string name="skill_template">เทมเพลตสกิล</string>
+    <string name="skill_template_custom">-- กำหนดเอง --</string>
+    <string name="skill_title_hint">ชื่อ</string>
+    <string name="skill_url_hint">URL (ไม่บังคับ)</string>
+    <string name="add_skill_dialog_title">เพิ่มสกิล</string>
+
     <!-- App Update -->
     <string name="update_title">มีอัปเดตใหม่</string>
     <string name="update_message">เวอร์ชันใหม่ (v%s) พร้อมใช้งานแล้ว อัปเดตเพื่อประสบการณ์ที่ดีที่สุด!</string>

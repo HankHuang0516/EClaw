@@ -492,6 +492,13 @@ E-claw 팀은 개인정보의 중요성을 잘 알고 있습니다. 이에 엄�
     <string name="soul_name_poet">Poetic Dreamer</string>
     <string name="soul_desc_poet">Speaks in metaphors and imagery. Finds beauty in everyday things.</string>
 
+    <!-- Skill Templates -->
+    <string name="skill_template">스킬 템플릿</string>
+    <string name="skill_template_custom">-- 직접 입력 --</string>
+    <string name="skill_title_hint">제목</string>
+    <string name="skill_url_hint">URL (선택)</string>
+    <string name="add_skill_dialog_title">스킬 추가</string>
+
     <!-- App Update -->
     <string name="update_title">업데이트 가능</string>
     <string name="update_message">새 버전 (v%s)이 출시되었습니다. 최상의 경험을 위해 업데이트하세요!</string>

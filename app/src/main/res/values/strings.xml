@@ -586,6 +586,13 @@ If you have any questions, please contact us via our official email.
     <string name="activity_message_title">Chat with Entities</string>
     <string name="activity_message_select_recipients">Select recipients:</string>
 
+    <!-- Skill Templates -->
+    <string name="skill_template">Skill Template</string>
+    <string name="skill_template_custom">-- Custom --</string>
+    <string name="skill_title_hint">Title</string>
+    <string name="skill_url_hint">URL (optional)</string>
+    <string name="add_skill_dialog_title">Add Skill</string>
+
     <!-- Mission Control Tabs & Labels -->
     <string name="mission_tab_todo">📋 TODO List</string>
     <string name="mission_tab_missions">🚀 Mission List</string>

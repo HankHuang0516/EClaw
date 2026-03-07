@@ -391,15 +391,18 @@ class AiChatActivity : AppCompatActivity() {
                 }
             }
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             statusJob?.cancel()
             messages.removeAll { it.role == "typing" }
             messages.add(AiMessage("assistant", resolveHttpError(e)))
         } finally {
             isLoading = false
             savePendingRequestId(null)
-            saveHistory()
-            updateUi()
-            scrollToBottom()
+            if (!isFinishing) {
+                saveHistory()
+                updateUi()
+                scrollToBottom()
+            }
         }
     }
 
@@ -534,14 +537,17 @@ class AiChatActivity : AppCompatActivity() {
                     }
                 }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 messages.removeAll { it.role == "typing" }
                 messages.add(AiMessage("assistant", resolveHttpError(e)))
             } finally {
                 isLoading = false
                 savePendingRequestId(null)
-                saveHistory()
-                updateUi()
-                scrollToBottom()
+                if (!isFinishing) {
+                    saveHistory()
+                    updateUi()
+                    scrollToBottom()
+                }
             }
         }
     }

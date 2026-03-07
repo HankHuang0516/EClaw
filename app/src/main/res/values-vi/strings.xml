@@ -492,6 +492,13 @@ Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ qua email chín
     <string name="soul_name_poet">Poetic Dreamer</string>
     <string name="soul_desc_poet">Speaks in metaphors. Finds beauty in everyday things.</string>
 
+    <!-- Skill Templates -->
+    <string name="skill_template">Mẫu kỹ năng</string>
+    <string name="skill_template_custom">-- Tùy chỉnh --</string>
+    <string name="skill_title_hint">Tiêu đề</string>
+    <string name="skill_url_hint">URL (tùy chọn)</string>
+    <string name="add_skill_dialog_title">Thêm kỹ năng</string>
+
     <!-- App Update -->
     <string name="update_title">Có bản cập nhật mới</string>
     <string name="update_message">Phiên bản mới (v%s) đã sẵn sàng. Cập nhật để có trải nghiệm tốt nhất!</string>

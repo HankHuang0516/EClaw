@@ -492,6 +492,13 @@ Jika Anda memiliki pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="soul_name_poet">Pemimpi Puitis</string>
     <string name="soul_desc_poet">Berbicara dengan metafora. Menemukan keindahan dalam hal sehari-hari.</string>
 
+    <!-- Skill Templates -->
+    <string name="skill_template">Template Skill</string>
+    <string name="skill_template_custom">-- Kustom --</string>
+    <string name="skill_title_hint">Judul</string>
+    <string name="skill_url_hint">URL (opsional)</string>
+    <string name="add_skill_dialog_title">Tambah Skill</string>
+
     <!-- App Update -->
     <string name="update_title">Pembaruan Tersedia</string>
     <string name="update_message">Versi baru (v%s) sudah tersedia. Perbarui untuk pengalaman terbaik!</string>

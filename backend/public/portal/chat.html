@@ -391,6 +391,42 @@
         .chat-input:focus { border-color: var(--primary); }
         .chat-input::placeholder { color: var(--text-muted); }
 
+        /* ── Slash Command Suggestions ── */
+        .slash-suggestions {
+            display: none;
+            flex-direction: column;
+            background: var(--bg-secondary);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        .slash-suggestions.visible { display: flex; }
+        .slash-suggestion-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .slash-suggestion-item:hover { background: var(--card); }
+        .slash-suggestion-cmd {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+            flex-shrink: 0;
+            min-width: 110px;
+        }
+        .slash-suggestion-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         .btn-send {
             width: 44px;
             height: 44px;
@@ -984,6 +1020,8 @@
                     </div>
                 </div>
                 <div class="file-preview-bar" id="filePreviewBar"></div>
+                <!-- Slash Command Suggestions -->
+                <div class="slash-suggestions" id="slashSuggestions"></div>
                 <div class="input-row">
                     <div class="attach-menu-wrapper">
                         <button class="btn-media" id="btnAttach" onclick="toggleAttachMenu()">&#x2B;</button>
@@ -1005,6 +1043,7 @@
                     <button class="btn-media" id="btnVoice" onclick="toggleRecording()">&#x1F3A4;</button>
                     <input type="text" class="chat-input" id="messageInput"
                         data-i18n="chat_input_placeholder" placeholder="Type a message..."
+                        oninput="renderSlashSuggestions(this.value)"
                         onkeydown="if(event.key==='Enter')sendMessage()">
                     <button class="btn btn-primary btn-send" id="btnSend" onclick="sendMessage()"
                         data-i18n="chat_btn_send" title="Send">&#10148;</button>
@@ -1213,6 +1252,11 @@
             const user = await checkAuth();
             if (!user) return;
             initPortalSocket();
+
+            // Hide slash suggestions on blur
+            document.getElementById('messageInput').addEventListener('blur', () => {
+                document.getElementById('slashSuggestions').classList.remove('visible');
+            });
 
             updateUsageBadge();
             await loadBoundEntities();
@@ -2051,6 +2095,40 @@
                     renderMessages(false);
                 }
             });
+        }
+
+        // ── Slash Commands Autocomplete ──
+        const SLASH_COMMANDS = [
+            { command: '/help',       key: 'slash_cmd_help' },
+            { command: '/status',     key: 'slash_cmd_status' },
+            { command: '/reset',      key: 'slash_cmd_reset' },
+            { command: '/activation', key: 'slash_cmd_activation' },
+            { command: '/pair',       key: 'slash_cmd_pair' },
+            { command: '/reasoning',  key: 'slash_cmd_reasoning' },
+            { command: '/config',     key: 'slash_cmd_config' },
+            { command: '/broadcast',  key: 'slash_cmd_broadcast' },
+        ];
+
+        function renderSlashSuggestions(text) {
+            const el = document.getElementById('slashSuggestions');
+            if (!text.startsWith('/')) { el.classList.remove('visible'); return; }
+            const q = text.toLowerCase();
+            const filtered = SLASH_COMMANDS.filter(c => c.command.startsWith(q));
+            if (filtered.length === 0) { el.classList.remove('visible'); return; }
+            el.innerHTML = filtered.map(c =>
+                `<div class="slash-suggestion-item" onmousedown="pickSlashCommand('${c.command}')">
+                    <span class="slash-suggestion-cmd">${c.command}</span>
+                    <span class="slash-suggestion-desc">${i18n.t(c.key)}</span>
+                </div>`
+            ).join('');
+            el.classList.add('visible');
+        }
+
+        function pickSlashCommand(command) {
+            const input = document.getElementById('messageInput');
+            input.value = command + ' ';
+            input.focus();
+            document.getElementById('slashSuggestions').classList.remove('visible');
         }
 
         // ── Slash Command Confirmation State ──

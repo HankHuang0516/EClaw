@@ -394,6 +394,11 @@ interface ClawApiService {
         @Query("appVersion") appVersion: String
     ): VersionCheckResponse
 
+    // ============ Skill Templates ============
+
+    @GET("api/skill-templates")
+    suspend fun getSkillTemplates(): SkillTemplatesResponse
+
     // ============ Local Variables (device-only vault) ============
 
     @POST("api/device-vars")
@@ -407,6 +412,22 @@ interface ClawApiService {
         @Query("botSecret") botSecret: String
     ): retrofit2.Response<com.google.gson.JsonObject>
 }
+
+// ============ Skill Templates Models ============
+
+data class SkillTemplatesResponse(
+    val success: Boolean,
+    val templates: List<SkillTemplate> = emptyList(),
+    val error: String? = null
+)
+
+data class SkillTemplate(
+    val id: String,
+    val label: String,
+    val icon: String? = null,
+    val title: String,
+    val url: String? = null
+)
 
 // ============ Local Variables Models ============
 

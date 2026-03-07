@@ -5,11 +5,24 @@
     android:orientation="vertical"
     android:padding="24dp">
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/skill_template"
+        android:textSize="12sp"
+        android:layout_marginBottom="4dp" />
+
+    <Spinner
+        android:id="@+id/spinnerTemplate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp" />
+
     <EditText
         android:id="@+id/etTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="標題"
+        android:hint="@string/skill_title_hint"
         android:inputType="text"
         android:layout_marginBottom="12dp" />
 
@@ -17,7 +30,7 @@
         android:id="@+id/etUrl"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="網址 (選填)"
+        android:hint="@string/skill_url_hint"
         android:inputType="textUri"
         android:layout_marginBottom="12dp" />
 

@@ -27,6 +27,7 @@ import com.google.android.material.button.MaterialButton
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.EntityAvatarManager
 import com.hank.clawlive.data.local.LocalVarsManager
+import com.hank.clawlive.data.remote.SkillTemplate
 import com.hank.clawlive.data.remote.SyncLocalVarsRequest
 import com.hank.clawlive.data.model.*
 import com.hank.clawlive.data.remote.NetworkModule
@@ -64,6 +65,9 @@ class MissionControlActivity : AppCompatActivity() {
     private lateinit var soulAdapter: MissionSoulAdapter
     private lateinit var ruleAdapter: MissionRuleAdapter
 
+    /** Official skill templates loaded from server */
+    private var skillTemplates: List<SkillTemplate> = emptyList()
+
     /** Soul template definitions */
     private data class SoulTemplate(val id: String)
     private val soulTemplates = listOf(
@@ -100,6 +104,20 @@ class MissionControlActivity : AppCompatActivity() {
         setupButtons()
         observeState()
         loadEntityOptions()
+        loadSkillTemplates()
+    }
+
+    private fun loadSkillTemplates() {
+        lifecycleScope.launch {
+            try {
+                val response = api.getSkillTemplates()
+                if (response.success) {
+                    skillTemplates = response.templates
+                }
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to load skill templates")
+            }
+        }
     }
 
     override fun onResume() {
@@ -601,9 +619,28 @@ class MissionControlActivity : AppCompatActivity() {
 
     private fun showSkillDialogInternal(skill: MissionSkill?) {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_mission_skill, null)
+        val spinnerTemplate = view.findViewById<Spinner>(R.id.spinnerTemplate)
         val etTitle = view.findViewById<EditText>(R.id.etTitle)
         val etUrl = view.findViewById<EditText>(R.id.etUrl)
         val container = view.findViewById<LinearLayout>(R.id.entityCheckboxContainer)
+
+        // Build template spinner: custom + all official templates
+        val templateLabels = mutableListOf(getString(R.string.skill_template_custom))
+        templateLabels.addAll(skillTemplates.map { "${it.icon ?: ""} ${it.label}".trim() })
+        spinnerTemplate.adapter = ArrayAdapter(this,
+            android.R.layout.simple_spinner_dropdown_item, templateLabels)
+
+        // Auto-fill when an official template is selected
+        spinnerTemplate.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, v: View?, position: Int, id: Long) {
+                if (position > 0) {
+                    val tpl = skillTemplates[position - 1]
+                    etTitle.setText(tpl.title)
+                    etUrl.setText(tpl.url ?: "")
+                }
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
 
         if (skill != null) {
             etTitle.setText(skill.title)
@@ -618,7 +655,7 @@ class MissionControlActivity : AppCompatActivity() {
         val checkboxes = buildEntityCheckboxes(container, skill?.assignedEntities ?: emptyList())
 
         val builder = MaterialAlertDialogBuilder(this)
-            .setTitle(if (skill != null) getString(R.string.edit) else "新增技能")
+            .setTitle(if (skill != null) getString(R.string.edit) else getString(R.string.add_skill_dialog_title))
             .setView(view)
             .setPositiveButton(if (skill != null) R.string.done else R.string.send) { _, _ ->
                 val title = etTitle.text.toString().trim()

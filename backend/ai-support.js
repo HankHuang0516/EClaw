@@ -1050,13 +1050,16 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
 
         const startTime = Date.now();
         try {
-            const response = await fetch(proxyUrl + '/chat', {
+            // CLI proxy doesn't support image vision — strip images and include a text note
+        const proxyMessage = validImages.length > 0
+            ? `${messageForAI}\n\n[Note: ${validImages.length} image(s) were attached but image analysis is only supported via the direct Anthropic API. Please describe the image in text if possible.]`
+            : messageForAI;
+        const response = await fetch(proxyUrl + '/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${proxyKey}` },
                 body: JSON.stringify({
-                    message: messageForAI,
+                    message: proxyMessage,
                     history: (history || []).slice(-20),
-                    images: validImages.length > 0 ? validImages : undefined,
                     device_context: {
                         deviceId: req.user.deviceId,
                         page: page || 'unknown',
@@ -1256,13 +1259,16 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                 eventTimer = setTimeout(() => controller.abort(new Error('Idle timeout: no event for 60s')), IDLE_TIMEOUT_MS);
             };
 
+            // CLI proxy doesn't support image vision — strip images and include a text note
+            const proxyMessage = images.length > 0
+                ? `${row.message}\n\n[Note: ${images.length} image(s) were attached but image analysis is only supported via the direct Anthropic API. Please describe the image in text if possible.]`
+                : row.message;
             const response = await fetch(proxyUrl + '/chat?stream=1', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${proxyKey}` },
                 body: JSON.stringify({
-                    message: row.message,
+                    message: proxyMessage,
                     history,
-                    images: images.length > 0 ? images : undefined,
                     device_context: ctx
                 }),
                 signal: controller.signal
