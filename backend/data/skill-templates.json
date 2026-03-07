@@ -15,5 +15,56 @@
       }
     ],
     "steps": "Repo: https://github.com/timothy-node/openclaw-claude-proxy\nForwards OpenClaw messages to the local Claude CLI (--print mode) via HTTP.\nUpdated: 2026-03-03\n\n== Prerequisites ==\nnode v22, npm 10.9.4, python3 3.11+\n\n== Step 1: Install uv ==\n  curl -LsSf https://astral.sh/uv/install.sh | sh\n  source ~/.local/bin/env\n\n== Step 2: Install Claude Code ==\n  npm install -g @anthropic-ai/claude-code\n  claude --version  # verify installation\n\n== Step 3: Clone claude-proxy ==\n  git clone https://github.com/timothy-node/openclaw-claude-proxy \\\n    ~/.openclaw/skills/claude-proxy\n\n== Step 4: Create venv ==\n  cd ~/.openclaw/skills/claude-proxy\n  uv venv && source .venv/bin/activate\n  uv pip install -r pyproject.toml\n\n== Step 5: Configure .env ==\n  cp .env.example .env\n  # Edit .env and set:\n  #   CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-...  (see Env Variables page)\n  #   CLAUDE_TIMEOUT_DEFAULT=120\n\n== Step 6: Patch proxy.py ==\n  In run_claude(), add: env[\"IS_SANDBOX\"] = \"1\"\n  (bypasses root restriction in container environments)\n\n== Step 7: Start ==\n  source ~/.local/bin/env\n  cd ~/.openclaw/skills/claude-proxy\n  source .venv/bin/activate\n  export CLAUDE_CODE_OAUTH_TOKEN=$CLAUDE_CODE_OAUTH_TOKEN\n  nohup python proxy.py > /tmp/proxy.log 2>&1 &\n\n== Verify ==\n  curl http://127.0.0.1:8765/health\n  Expected: {\"status\":\"ok\"}\n\n== API ==\n  GET  /health        Health check\n  POST /chat          { \"message\": \"...\" }\n\n== Stop ==\n  pkill -f proxy.py\n\nOptional: Enable auto-start via systemd\n  sudo cp claude-proxy.service /etc/systemd/system/\n  sudo systemctl enable claude-proxy\n\nUse at your own risk. Provided as-is, without warranty."
+  },
+  {
+    "id": "supermemory",
+    "label": "supermemory",
+    "icon": "🧠",
+    "title": "Supermemory",
+    "url": "https://github.com/supermemoryai/openclaw-supermemory",
+    "author": "supermemoryai",
+    "updatedAt": "2026-02-15",
+    "requiredVars": [
+      {
+        "key": "SUPERMEMORY_API_KEY",
+        "hint": "sm-...",
+        "description": "Supermemory API key — get it from app.supermemory.ai/settings"
+      }
+    ],
+    "steps": "Repo: https://github.com/supermemoryai/openclaw-supermemory\nGives your bot persistent long-term memory. Automatically stores and recalls past conversations.\nUpdated: 2026-02-15\n\n== Prerequisites ==\nnode v18+\n\n== Step 1: Clone ==\n  git clone https://github.com/supermemoryai/openclaw-supermemory \\\n    ~/.openclaw/skills/supermemory\n\n== Step 2: Install dependencies ==\n  cd ~/.openclaw/skills/supermemory\n  npm install\n\n== Step 3: Configure .env ==\n  cp .env.example .env\n  # Edit .env and set:\n  #   SUPERMEMORY_API_KEY=sm-...  (see Env Variables page)\n  #   PORT=8766\n\n== Step 4: Start ==\n  nohup node index.js > /tmp/supermemory.log 2>&1 &\n\n== Verify ==\n  curl http://127.0.0.1:8766/health\n  Expected: {\"status\":\"ok\"}\n\n== API ==\n  POST /remember   { \"text\": \"...\" }           Store a memory\n  POST /recall     { \"query\": \"...\" }           Search memories\n  DELETE /forget   { \"query\": \"...\" }           Delete matching memories\n\n== Usage in bot ==\n  # Before replying to user, recall relevant context:\n  exec: curl -s -X POST http://127.0.0.1:8766/recall -H 'Content-Type: application/json' -d '{\"query\":\"USER_MESSAGE\"}'\n  # After replying, store the exchange:\n  exec: curl -s -X POST http://127.0.0.1:8766/remember -H 'Content-Type: application/json' -d '{\"text\":\"User asked X, I answered Y\"}'\n\n== Stop ==\n  pkill -f 'node index.js'\n\nUse at your own risk. Provided as-is, without warranty."
+  },
+  {
+    "id": "github-integration",
+    "label": "github",
+    "icon": "🐙",
+    "title": "GitHub Integration",
+    "url": "https://github.com/clawforge/openclaw-github",
+    "author": "clawforge",
+    "updatedAt": "2026-01-28",
+    "requiredVars": [
+      {
+        "key": "GITHUB_TOKEN",
+        "hint": "ghp_...",
+        "description": "GitHub Personal Access Token — create one at github.com/settings/tokens (needs repo, issues, pull_requests scopes)"
+      }
+    ],
+    "steps": "Repo: https://github.com/clawforge/openclaw-github\nLet your bot manage GitHub issues, PRs, and notifications directly from chat.\nUpdated: 2026-01-28\n\n== Prerequisites ==\nnode v18+\n\n== Step 1: Clone ==\n  git clone https://github.com/clawforge/openclaw-github \\\n    ~/.openclaw/skills/github\n\n== Step 2: Install dependencies ==\n  cd ~/.openclaw/skills/github\n  npm install\n\n== Step 3: Configure .env ==\n  cp .env.example .env\n  # Edit .env and set:\n  #   GITHUB_TOKEN=ghp_...  (see Env Variables page)\n  #   PORT=8767\n  #   DEFAULT_REPO=owner/repo  (optional default repo)\n\n== Step 4: Start ==\n  nohup node index.js > /tmp/github-skill.log 2>&1 &\n\n== Verify ==\n  curl http://127.0.0.1:8767/health\n  Expected: {\"status\":\"ok\",\"authenticated\":true}\n\n== API ==\n  GET  /issues          ?repo=owner/repo&state=open\n  POST /issues          { \"repo\": \"...\", \"title\": \"...\", \"body\": \"...\" }\n  GET  /pulls           ?repo=owner/repo&state=open\n  POST /pulls/comment   { \"repo\": \"...\", \"pr\": 42, \"body\": \"...\" }\n  GET  /notifications   List unread notifications\n\n== Usage example ==\n  exec: curl -s http://127.0.0.1:8767/issues?repo=myuser/myrepo&state=open\n\n== Stop ==\n  pkill -f 'node index.js'\n\nUse at your own risk. Provided as-is, without warranty."
+  },
+  {
+    "id": "web-search",
+    "label": "web-search",
+    "icon": "🔍",
+    "title": "Web Search",
+    "url": "https://github.com/clawforge/openclaw-websearch",
+    "author": "clawforge",
+    "updatedAt": "2026-02-01",
+    "requiredVars": [
+      {
+        "key": "BRAVE_API_KEY",
+        "hint": "BSA...",
+        "description": "Brave Search API key — get a free key at api.search.brave.com (2,000 free queries/month)"
+      }
+    ],
+    "steps": "Repo: https://github.com/clawforge/openclaw-websearch\nReal-time web search for your bot using Brave Search API. Free tier: 2,000 queries/month.\nUpdated: 2026-02-01\n\n== Prerequisites ==\nnode v18+\n\n== Step 1: Clone ==\n  git clone https://github.com/clawforge/openclaw-websearch \\\n    ~/.openclaw/skills/web-search\n\n== Step 2: Install dependencies ==\n  cd ~/.openclaw/skills/web-search\n  npm install\n\n== Step 3: Configure .env ==\n  cp .env.example .env\n  # Edit .env and set:\n  #   BRAVE_API_KEY=BSA...  (see Env Variables page)\n  #   PORT=8768\n  #   MAX_RESULTS=5  (results per search, default 5)\n\n== Step 4: Start ==\n  nohup node index.js > /tmp/web-search.log 2>&1 &\n\n== Verify ==\n  curl 'http://127.0.0.1:8768/search?q=test'\n  Expected: {\"results\":[...]}\n\n== API ==\n  GET /search   ?q=QUERY&count=5   Returns top N web results as JSON\n\n== Usage in bot ==\n  # When user asks about current events:\n  exec: curl -s 'http://127.0.0.1:8768/search?q=USER_QUESTION&count=5'\n\n== Stop ==\n  pkill -f 'node index.js'\n\nUse at your own risk. Provided as-is, without warranty."
   }
 ]
