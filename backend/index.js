@@ -7706,6 +7706,11 @@ app.post('/api/schedules', async (req, res) => {
     if (!device || device.deviceSecret !== deviceSecret) {
         return res.status(403).json({ success: false, error: 'Invalid credentials' });
     }
+    const eIdParsed = parseInt(entityId);
+    const deviceLimit = getDeviceEntityLimit(deviceId);
+    if (isNaN(eIdParsed) || eIdParsed < 0 || eIdParsed >= deviceLimit) {
+        return res.status(400).json({ success: false, error: `entityId must be 0-${deviceLimit - 1}` });
+    }
     try {
         const schedule = await scheduler.createSchedule({
             deviceId, entityId, message, scheduledAt, repeatType, cronExpr, label, timezone

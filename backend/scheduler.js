@@ -133,8 +133,8 @@ async function createSchedule({ deviceId, entityId, message, scheduledAt, repeat
     }
 
     const parsedEntityId = parseInt(entityId);
-    if (isNaN(parsedEntityId) || parsedEntityId < 0 || parsedEntityId > 3) {
-        throw new Error('entityId must be 0-3');
+    if (isNaN(parsedEntityId) || parsedEntityId < 0) {
+        throw new Error('entityId must be a non-negative integer');
     }
 
     // For one-time schedules, require scheduledAt in the future
