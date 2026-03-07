@@ -332,6 +332,8 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
 
     // ============================================
     // POST /bind — Plugin binds an entity
+    // If entityId is omitted, auto-selects the first free slot.
+    // If all slots are full, returns 409 with entity list so the plugin can guide the user.
     // ============================================
     router.post('/bind', async (req, res) => {
         try {
@@ -341,12 +343,8 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
 
             if (process.env.DEBUG === 'true') console.log(`[BIND] auth OK, accountId=${account.id}, deviceId=${account.device_id}`);
 
-            const { entityId, name } = req.body;
-            const eId = parseInt(entityId);
-            if (isNaN(eId) || eId < 0 || eId > 7) {
-                if (process.env.DEBUG === 'true') console.log(`[BIND] invalid entityId: ${entityId}`);
-                return res.status(400).json({ success: false, message: 'entityId must be 0-7' });
-            }
+            const { name } = req.body;
+            const rawEntityId = req.body.entityId;
 
             if (name && name.length > 20) {
                 return res.status(400).json({ success: false, message: 'Name must be 20 characters or less' });
@@ -357,6 +355,56 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             if (!device) {
                 if (process.env.DEBUG === 'true') console.log(`[BIND] device not found: ${deviceId}`);
                 return res.status(404).json({ success: false, message: 'Device not found' });
+            }
+
+            let eId;
+            if (rawEntityId !== undefined && rawEntityId !== null) {
+                // Explicit entityId specified
+                eId = parseInt(rawEntityId);
+                if (isNaN(eId) || eId < 0 || eId > 7) {
+                    if (process.env.DEBUG === 'true') console.log(`[BIND] invalid entityId: ${rawEntityId}`);
+                    return res.status(400).json({ success: false, message: 'entityId must be 0-7' });
+                }
+                if (process.env.DEBUG === 'true') console.log(`[BIND] using explicit entityId=${eId}`);
+            } else {
+                // Auto-select: first slot bound to this channel account (reconnect), else first free slot
+                eId = null;
+                const slotKeys = Object.keys(device.entities).map(Number).sort();
+                // Prefer reconnecting to the same account's existing slot
+                for (const i of slotKeys) {
+                    if (device.entities[i]?.isBound && device.entities[i]?.channelAccountId === account.id) {
+                        eId = i;
+                        if (process.env.DEBUG === 'true') console.log(`[BIND] auto-selected slot ${eId} (reconnect same account)`);
+                        break;
+                    }
+                }
+                // Fallback: first unbound slot
+                if (eId === null) {
+                    for (const i of slotKeys) {
+                        if (device.entities[i] && !device.entities[i].isBound) {
+                            eId = i;
+                            if (process.env.DEBUG === 'true') console.log(`[BIND] auto-selected slot ${eId} (first free)`);
+                            break;
+                        }
+                    }
+                }
+                // All slots full
+                if (eId === null) {
+                    const allEntities = slotKeys.map(i => ({
+                        entityId: i,
+                        name: device.entities[i].name || null,
+                        character: device.entities[i].character,
+                        bindingType: device.entities[i].bindingType || null,
+                        isBound: device.entities[i].isBound || false,
+                    }));
+                    if (process.env.DEBUG === 'true') console.log(`[BIND] all slots full, returning entity list`);
+                    return res.status(409).json({
+                        success: false,
+                        message: 'All entity slots are full. Set entityId in your channel config to override a specific slot (after unbinding it), or unbind an entity first.',
+                        entities: allEntities,
+                        hint: 'To unbind: DELETE /api/entity/:entityId with your deviceId + deviceSecret'
+                    });
+                }
             }
 
             const entity = device.entities[eId];
