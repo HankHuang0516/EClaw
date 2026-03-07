@@ -224,6 +224,52 @@ Each entry in `requiredVars` prompts the user for a value that is saved to their
 
 ---
 
+### Contributing Soul Templates
+
+Community members can contribute soul (personality) templates for others to use.
+
+1. Fork this repository
+2. Edit `backend/data/soul-templates.json` — add one object to the array
+3. Required fields:
+
+   | Field | Type | Description |
+   |-------|------|-------------|
+   | `id` | string | Unique kebab-case identifier |
+   | `label` | string | Display name shown in the gallery |
+   | `icon` | string | Single emoji |
+   | `name` | string | Pre-filled name for the soul |
+   | `description` | string | Personality description (**must be in English**) |
+   | `author` | string | Your GitHub username |
+   | `updatedAt` | string | Format: `YYYY-MM-DD` |
+
+4. Additional fields are allowed (e.g., `personality`, `examplePhrases`)
+5. Open a Pull Request
+
+---
+
+### Contributing Rule Templates
+
+Community members can contribute rule templates for common workflows and communication patterns.
+
+1. Fork this repository
+2. Edit `backend/data/rule-templates.json` — add one object to the array
+3. Required fields:
+
+   | Field | Type | Description |
+   |-------|------|-------------|
+   | `id` | string | Unique kebab-case identifier |
+   | `label` | string | Display name shown in the gallery |
+   | `icon` | string | Single emoji |
+   | `ruleType` | string | One of: `WORKFLOW`, `COMMUNICATION`, `CODE_REVIEW`, `DEPLOYMENT`, `SYNC`, `HEARTBEAT` |
+   | `name` | string | Pre-filled rule name |
+   | `description` | string | Rule content, supports Markdown (**must be in English**) |
+   | `author` | string | Your GitHub username |
+   | `updatedAt` | string | Format: `YYYY-MM-DD` |
+
+4. Open a Pull Request
+
+---
+
 ## License
 
 [MIT License](LICENSE) © 2026 HankHuang0516
