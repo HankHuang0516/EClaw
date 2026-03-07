@@ -2079,6 +2079,11 @@ app.post('/api/bind', (req, res) => {
     // Get app version from pending binding (stored when device registered)
     const deviceAppVersion = binding.appVersion || entity.appVersion;
 
+    // Reset bot-to-bot counters for this entity (fresh bot gets a clean slate)
+    const counterKey = `${deviceId}:${entityId}`;
+    delete botToBotCounter[counterKey];
+    delete crossSpeakCounter[counterKey];
+
     // Clear used binding code
     delete pendingBindings[code];
 
