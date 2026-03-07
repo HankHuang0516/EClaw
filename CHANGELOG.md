@@ -5,6 +5,42 @@
 
 * **channel:** add channel bot parity for schedule and entity reorder ([10b9535](https://github.com/HankHuang0516/realbot/commit/10b9535877e395133c8b71f26c7f6dd8ce2fa675))
 * **api:** add PATCH to apiCall body serialization ([c317b33](https://github.com/HankHuang0516/realbot/commit/c317b33f6bbc41b8879280a2fbabff2f452a0238))
+* **api:** add try/catch and docs to soul/rule-templates data loading ([ccd7070](https://github.com/HankHuang0516/realbot/commit/ccd707008d8f2bfb34456ae58c5ff408ff892ce4))
+* **scheduler:** allow entityId up to device limit (not hardcoded 0-3) ([160a061](https://github.com/HankHuang0516/realbot/commit/160a061de9a7f947a4d09680101f878b4a068bf9))
+* **ai-support:** handle object-shaped device.entities in fetchDeviceContext ([10b8fcd](https://github.com/HankHuang0516/realbot/commit/10b8fcdd9a15be57f929a5c16380321e706d8b31))
+* **mission:** move channel callback wiring after channelModule init ([783d726](https://github.com/HankHuang0516/realbot/commit/783d7261c9188396ed0376dba9b043f1f230cd60))
+* resolve issues [#145](https://github.com/HankHuang0516/realbot/issues/145) [#146](https://github.com/HankHuang0516/realbot/issues/146)-149 [#150](https://github.com/HankHuang0516/realbot/issues/150) — skill templates, AI chat fixes ([c532245](https://github.com/HankHuang0516/realbot/commit/c532245ab645b27207e8bf0523f22ebc145b0da4)), closes [#146-149](https://github.com/HankHuang0516/realbot/issues/146-149) [#146-149](https://github.com/HankHuang0516/realbot/issues/146-149)
+* **channel:** route debug messages through serverLog for /api/logs visibility ([ae1e5fe](https://github.com/HankHuang0516/realbot/commit/ae1e5fe1762a5a32808ab1cb72ebeb131acd573e))
+* **android:** show requiredVars warning when selecting skill template ([95287bb](https://github.com/HankHuang0516/realbot/commit/95287bb807d39e261d77348582f7065dbf6c4ef7))
+* **test:** use correct reorder endpoint /api/device/reorder-entities ([abb1eb3](https://github.com/HankHuang0516/realbot/commit/abb1eb3b031a293dd01be34080471b00a35a799b))
+
+
+### Features
+
+* **channel:** add [BIND]/[PUSH] debug messages to channel-api.js ([aa9a7b7](https://github.com/HankHuang0516/realbot/commit/aa9a7b73378c7d4e44ec0f58d833e2a6c5b27300))
+* **skills:** add 3 popular community skill templates ([559bce0](https://github.com/HankHuang0516/realbot/commit/559bce00ee19a2e05fd339cfc523a04bb0cf44e9))
+* **mission:** add channel bot support for mission notify (Bot Push Parity Rule) ([a9b4b16](https://github.com/HankHuang0516/realbot/commit/a9b4b16fe5827cbe6df3f5b4dc2c5f79f6d49df7))
+* **skill-templates:** add community skill contribution API + review flow ([375961c](https://github.com/HankHuang0516/realbot/commit/375961c10791ad9c49013a0d790ce388dcdeefee))
+* **channel:** add eclaw_context to channel bot push (v1.0.17 parity) ([a43ac93](https://github.com/HankHuang0516/realbot/commit/a43ac93b0df0d3609e7e697153cfa2512dd66538))
+* **schedule:** add Enable/Disable toggle + fix missing i18n keys ([6c6a96c](https://github.com/HankHuang0516/realbot/commit/6c6a96c2fb8151b2bec5004c84d2f2bd40e36583))
+* **api:** add GET /api/soul-templates and /api/rule-templates endpoints ([47f24d4](https://github.com/HankHuang0516/realbot/commit/47f24d473d32d3ed98492066ebdfa855daad101c))
+* **i18n:** add missing i18n keys across Web Portal and Android App ([60fad93](https://github.com/HankHuang0516/realbot/commit/60fad933ba7e9ac18da333940a58c34db4874aa2))
+* **data:** add soul-templates.json and rule-templates.json with starter templates ([0affa7b](https://github.com/HankHuang0516/realbot/commit/0affa7b7aa272895b6058b5bad1129e442f3d82b))
+* **portal:** always show requiredVars dialog with read/overwrite UX ([42e5e47](https://github.com/HankHuang0516/realbot/commit/42e5e4774373f1bb764c32e6dfacdae0c7b47ae9))
+* **channel:** auto-select entity slot + all-slots-full error ([49b29fa](https://github.com/HankHuang0516/realbot/commit/49b29fa0bd27fd66c3613d10d9e2e6b3a3fa4779))
+* **ai-chat:** disable image upload button while vision is unavailable ([334d618](https://github.com/HankHuang0516/realbot/commit/334d6182f8b2212fe395bdc0254c3d6bb8a50ac5))
+* **ai-support:** inject device diagnostics into Claude chat context ([eb621dd](https://github.com/HankHuang0516/realbot/commit/eb621dd02edb1c7724174d7b5a162f468d427912))
+* **skills:** replace placeholder templates with verified real repos ([9384751](https://github.com/HankHuang0516/realbot/commit/9384751ff9c288225508c072ced4432f79e1fd09))
+* **ui:** replace skill template chips/spinner with Gallery dialog ([b1f2782](https://github.com/HankHuang0516/realbot/commit/b1f27826d728c9fa7f97cb601d9d928d34077493))
+* **logging:** route all debug messages through serverLog for /api/logs visibility ([be8ad19](https://github.com/HankHuang0516/realbot/commit/be8ad19661fad806c5932c53790e5ce1f5f97458))
+
+# [1.1.0](https://github.com/HankHuang0516/realbot/compare/v1.0.0...v1.1.0) (2026-03-07)
+
+
+### Bug Fixes
+
+* **channel:** add channel bot parity for schedule and entity reorder ([10b9535](https://github.com/HankHuang0516/realbot/commit/10b9535877e395133c8b71f26c7f6dd8ce2fa675))
+* **api:** add PATCH to apiCall body serialization ([c317b33](https://github.com/HankHuang0516/realbot/commit/c317b33f6bbc41b8879280a2fbabff2f452a0238))
 * **scheduler:** allow entityId up to device limit (not hardcoded 0-3) ([160a061](https://github.com/HankHuang0516/realbot/commit/160a061de9a7f947a4d09680101f878b4a068bf9))
 * **ai-support:** handle object-shaped device.entities in fetchDeviceContext ([10b8fcd](https://github.com/HankHuang0516/realbot/commit/10b8fcdd9a15be57f929a5c16380321e706d8b31))
 * **mission:** move channel callback wiring after channelModule init ([783d726](https://github.com/HankHuang0516/realbot/commit/783d7261c9188396ed0376dba9b043f1f230cd60))
