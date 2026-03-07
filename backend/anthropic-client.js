@@ -384,4 +384,4 @@ async function analyzeWithClaude({ problemDescription, errorMessages, logs, hand
     };
 }
 
-module.exports = { chatWithClaude, analyzeWithClaude };
+module.exports = { chatWithClaude, analyzeWithClaude, formatDiagnostics };
