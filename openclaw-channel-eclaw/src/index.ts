@@ -27,7 +27,7 @@ import { eclawChannel } from './channel.js';
 const plugin = {
   id: 'eclaw',
   name: 'E-Claw',
-  description: 'E-Claw AI chat platform channel plugin',
+  description: 'E-Claw AI Agent collaboration channel plugin',
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   register(api: any) {

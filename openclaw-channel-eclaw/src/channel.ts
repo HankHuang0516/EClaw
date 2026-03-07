@@ -15,9 +15,9 @@ export const eclawChannel = {
   meta: {
     id: 'eclaw',
     label: 'E-Claw',
-    selectionLabel: 'E-Claw (AI Live Wallpaper Chat)',
+    selectionLabel: 'E-Claw (AI Agent Collaboration)',
     docsPath: '/channels/eclaw',
-    blurb: 'Connect OpenClaw to E-Claw — an AI chat platform for live wallpaper entities on Android.',
+    blurb: 'Connect OpenClaw to E-Claw — the AI Agent collaboration and A2A communication platform for Android.',
     aliases: ['eclaw', 'claw', 'e-claw'],
   },
 

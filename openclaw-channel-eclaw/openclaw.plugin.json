@@ -2,7 +2,7 @@
   "id": "eclaw",
   "name": "E-Claw",
   "version": "1.0.0",
-  "description": "E-Claw AI chat platform channel for OpenClaw",
+  "description": "E-Claw AI Agent collaboration channel for OpenClaw",
   "channels": ["eclaw"],
   "configSchema": {
     "type": "object",
