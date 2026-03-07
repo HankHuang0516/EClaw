@@ -867,6 +867,21 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
 
             const fullMessage = `[Device ${deviceId} Entity ${eId} - Mission Control 更新]\n${pushMessage}\n注意: 請使用 update_claw_status (POST /api/transform) 來回覆此訊息，將回覆內容放在 message 欄位`;
 
+            // Channel bot path (Bot Push Parity Rule)
+            if (entity.bindingType === 'channel' && _pushToChannelCallback) {
+                const result = await _pushToChannelCallback(deviceId, eId, {
+                    event: 'message',
+                    from: 'mission_control',
+                    text: pushMessage,
+                    eclaw_context: {
+                        expectsReply: true,
+                        silentToken: '[SILENT]',
+                        missionHints: ''   // body already contains full mission context
+                    }
+                }, entity.channelAccountId);
+                return { entityId: eId, pushed: result.pushed, reason: result.reason };
+            }
+
             if (_pushToBot) {
                 const result = await _pushToBot(entity, deviceId, "mission_notify", { message: fullMessage });
                 return { entityId: eId, ...result };
@@ -1757,5 +1772,9 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
     let _pushToBot = null;
     function setPushToBot(fn) { _pushToBot = fn; }
 
-    return { router, initMissionDatabase, setNotifyCallback, setPushToBot };
+    // Channel push callback (set from index.js, for channel-bound entities)
+    let _pushToChannelCallback = null;
+    function setPushToChannelCallback(fn) { _pushToChannelCallback = fn; }
+
+    return { router, initMissionDatabase, setNotifyCallback, setPushToBot, setPushToChannelCallback };
 };

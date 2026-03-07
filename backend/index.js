@@ -6182,6 +6182,8 @@ async function pushToBot(entity, deviceId, eventType, payload) {
 
 // Wire pushToBot into mission module (late binding — pushToBot defined after mission init)
 missionModule.setPushToBot(pushToBot);
+// Wire channel push into mission module (Bot Push Parity Rule)
+missionModule.setPushToChannelCallback(channelModule.pushToChannelCallback.bind(channelModule));
 
 // ============================================
 // FEEDBACK ENDPOINTS (Enhanced with Log Snapshot + AI Prompt)
