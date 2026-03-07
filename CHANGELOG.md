@@ -5,6 +5,23 @@
 
 * **test:** fix reorder-channel test order array size to match device limit ([3103918](https://github.com/HankHuang0516/realbot/commit/31039180cf26e0e5f2db3292bd153be856c541f6))
 * **portal:** fix XSS, broken tags, and filter consistency in soul/rule gallery ([0dd30ec](https://github.com/HankHuang0516/realbot/commit/0dd30ec0c8a358594d4c603ed5c92e7b86871226))
+* **test:** shorten NEW_NAME to stay within 20-char server limit ([45a1653](https://github.com/HankHuang0516/realbot/commit/45a165359c4212b2d0851cebbfa20c19f26e81e5))
+
+
+### Features
+
+* **android:** add fetchSoulTemplates/fetchRuleTemplates to MissionViewModel ([1c411fc](https://github.com/HankHuang0516/realbot/commit/1c411fce073055eb743d09c71f5d6ce9aed4b988))
+* **android/i18n:** add soul & rule template gallery strings ([0a28d99](https://github.com/HankHuang0516/realbot/commit/0a28d9979ab846214683a9c3bbc76c62be69e385))
+* **skill-templates:** auto-approve pipeline + admin contributions UI ([5f94ea1](https://github.com/HankHuang0516/realbot/commit/5f94ea13291d6b0d4f12e563d8451402452b09b7))
+* **channel:** push NAME_CHANGED to channel bots immediately on rename ([d7992fc](https://github.com/HankHuang0516/realbot/commit/d7992fceb50ce615887ed3fe5e5e54c4306be7e9))
+
+# [1.3.0](https://github.com/HankHuang0516/realbot/compare/v1.2.0...v1.3.0) (2026-03-07)
+
+
+### Bug Fixes
+
+* **test:** fix reorder-channel test order array size to match device limit ([3103918](https://github.com/HankHuang0516/realbot/commit/31039180cf26e0e5f2db3292bd153be856c541f6))
+* **portal:** fix XSS, broken tags, and filter consistency in soul/rule gallery ([0dd30ec](https://github.com/HankHuang0516/realbot/commit/0dd30ec0c8a358594d4c603ed5c92e7b86871226))
 
 
 ### Features
