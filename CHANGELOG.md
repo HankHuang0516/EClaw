@@ -1,3 +1,17 @@
+# [1.3.0](https://github.com/HankHuang0516/realbot/compare/v1.2.0...v1.3.0) (2026-03-07)
+
+
+### Bug Fixes
+
+* **test:** fix reorder-channel test order array size to match device limit ([3103918](https://github.com/HankHuang0516/realbot/commit/31039180cf26e0e5f2db3292bd153be856c541f6))
+* **portal:** fix XSS, broken tags, and filter consistency in soul/rule gallery ([0dd30ec](https://github.com/HankHuang0516/realbot/commit/0dd30ec0c8a358594d4c603ed5c92e7b86871226))
+
+
+### Features
+
+* **android/i18n:** add soul & rule template gallery strings ([0a28d99](https://github.com/HankHuang0516/realbot/commit/0a28d9979ab846214683a9c3bbc76c62be69e385))
+* **skill-templates:** auto-approve pipeline + admin contributions UI ([5f94ea1](https://github.com/HankHuang0516/realbot/commit/5f94ea13291d6b0d4f12e563d8451402452b09b7))
+
 # [1.2.0](https://github.com/HankHuang0516/realbot/compare/v1.1.0...v1.2.0) (2026-03-07)
 
 
