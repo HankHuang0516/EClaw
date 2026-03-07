@@ -10,6 +10,25 @@
 ### Features
 
 * **channel:** add [BIND]/[PUSH] debug messages to channel-api.js ([aa9a7b7](https://github.com/HankHuang0516/realbot/commit/aa9a7b73378c7d4e44ec0f58d833e2a6c5b27300))
+* **skills:** add 3 popular community skill templates ([559bce0](https://github.com/HankHuang0516/realbot/commit/559bce00ee19a2e05fd339cfc523a04bb0cf44e9))
+* **schedule:** add Enable/Disable toggle + fix missing i18n keys ([6c6a96c](https://github.com/HankHuang0516/realbot/commit/6c6a96c2fb8151b2bec5004c84d2f2bd40e36583))
+* **i18n:** add missing i18n keys across Web Portal and Android App ([60fad93](https://github.com/HankHuang0516/realbot/commit/60fad933ba7e9ac18da333940a58c34db4874aa2))
+* **channel:** auto-select entity slot + all-slots-full error ([49b29fa](https://github.com/HankHuang0516/realbot/commit/49b29fa0bd27fd66c3613d10d9e2e6b3a3fa4779))
+* **skills:** replace placeholder templates with verified real repos ([9384751](https://github.com/HankHuang0516/realbot/commit/9384751ff9c288225508c072ced4432f79e1fd09))
+* **logging:** route all debug messages through serverLog for /api/logs visibility ([be8ad19](https://github.com/HankHuang0516/realbot/commit/be8ad19661fad806c5932c53790e5ce1f5f97458))
+
+# [1.1.0](https://github.com/HankHuang0516/realbot/compare/v1.0.0...v1.1.0) (2026-03-07)
+
+
+### Bug Fixes
+
+* **api:** add PATCH to apiCall body serialization ([c317b33](https://github.com/HankHuang0516/realbot/commit/c317b33f6bbc41b8879280a2fbabff2f452a0238))
+* **channel:** route debug messages through serverLog for /api/logs visibility ([ae1e5fe](https://github.com/HankHuang0516/realbot/commit/ae1e5fe1762a5a32808ab1cb72ebeb131acd573e))
+
+
+### Features
+
+* **channel:** add [BIND]/[PUSH] debug messages to channel-api.js ([aa9a7b7](https://github.com/HankHuang0516/realbot/commit/aa9a7b73378c7d4e44ec0f58d833e2a6c5b27300))
 * **schedule:** add Enable/Disable toggle + fix missing i18n keys ([6c6a96c](https://github.com/HankHuang0516/realbot/commit/6c6a96c2fb8151b2bec5004c84d2f2bd40e36583))
 * **channel:** auto-select entity slot + all-slots-full error ([49b29fa](https://github.com/HankHuang0516/realbot/commit/49b29fa0bd27fd66c3613d10d9e2e6b3a3fa4779))
 * **logging:** route all debug messages through serverLog for /api/logs visibility ([be8ad19](https://github.com/HankHuang0516/realbot/commit/be8ad19661fad806c5932c53790e5ce1f5f97458))
