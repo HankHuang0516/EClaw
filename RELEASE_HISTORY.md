@@ -5,7 +5,7 @@ Track git commits for each release to enable changelog generation via `git diff`
 ---
 
 ## Latest
-v1.0.41 | (pending) | 2026-03-08
+v1.0.41 | a24ad79 | 2026-03-08
 
 ---
 
