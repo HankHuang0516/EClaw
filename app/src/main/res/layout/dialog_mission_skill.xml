@@ -18,6 +18,47 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp" />
 
+    <LinearLayout
+        android:id="@+id/layoutRequiredVarsWarning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#1AFF9800"
+        android:padding="10dp"
+        android:layout_marginBottom="12dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tvRequiredVarsTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/skill_required_vars_title"
+            android:textColor="#FF9800"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tvRequiredVarsList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FF9800"
+            android:textSize="11sp"
+            android:fontFamily="monospace"
+            android:layout_marginBottom="6dp" />
+
+        <Button
+            android:id="@+id/btnGoToEnvVars"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/skill_go_to_env_vars"
+            android:textSize="11sp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp" />
+
+    </LinearLayout>
+
     <EditText
         android:id="@+id/etTitle"
         android:layout_width="match_parent"

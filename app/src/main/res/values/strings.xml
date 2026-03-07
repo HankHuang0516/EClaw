@@ -592,6 +592,8 @@ If you have any questions, please contact us via our official email.
     <string name="skill_title_hint">Title</string>
     <string name="skill_url_hint">URL (optional)</string>
     <string name="add_skill_dialog_title">Add Skill</string>
+    <string name="skill_required_vars_title">⚠ Env Variables Required</string>
+    <string name="skill_go_to_env_vars">Set Env Variables →</string>
 
     <!-- Mission Control Tabs & Labels -->
     <string name="mission_tab_todo">📋 TODO List</string>

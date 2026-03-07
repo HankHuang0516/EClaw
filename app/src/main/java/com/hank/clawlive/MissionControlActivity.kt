@@ -623,6 +623,9 @@ class MissionControlActivity : AppCompatActivity() {
         val etTitle = view.findViewById<EditText>(R.id.etTitle)
         val etUrl = view.findViewById<EditText>(R.id.etUrl)
         val container = view.findViewById<LinearLayout>(R.id.entityCheckboxContainer)
+        val layoutRequiredVarsWarning = view.findViewById<LinearLayout>(R.id.layoutRequiredVarsWarning)
+        val tvRequiredVarsList = view.findViewById<TextView>(R.id.tvRequiredVarsList)
+        val btnGoToEnvVars = view.findViewById<MaterialButton>(R.id.btnGoToEnvVars)
 
         // Build template spinner: custom + all official templates
         val templateLabels = mutableListOf(getString(R.string.skill_template_custom))
@@ -630,13 +633,25 @@ class MissionControlActivity : AppCompatActivity() {
         spinnerTemplate.adapter = ArrayAdapter(this,
             android.R.layout.simple_spinner_dropdown_item, templateLabels)
 
-        // Auto-fill when an official template is selected
+        // Auto-fill when an official template is selected; show requiredVars warning if any
         spinnerTemplate.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, v: View?, position: Int, id: Long) {
                 if (position > 0) {
                     val tpl = skillTemplates[position - 1]
                     etTitle.setText(tpl.title)
                     etUrl.setText(tpl.url ?: "")
+                    if (tpl.requiredVars.isNotEmpty()) {
+                        val varNames = tpl.requiredVars.joinToString("\n") { "• ${it.key}" }
+                        tvRequiredVarsList.text = varNames
+                        layoutRequiredVarsWarning.visibility = android.view.View.VISIBLE
+                        btnGoToEnvVars.setOnClickListener {
+                            showVarDialog(null)
+                        }
+                    } else {
+                        layoutRequiredVarsWarning.visibility = android.view.View.GONE
+                    }
+                } else {
+                    layoutRequiredVarsWarning.visibility = android.view.View.GONE
                 }
             }
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}

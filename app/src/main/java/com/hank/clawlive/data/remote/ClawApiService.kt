@@ -426,7 +426,14 @@ data class SkillTemplate(
     val label: String,
     val icon: String? = null,
     val title: String,
-    val url: String? = null
+    val url: String? = null,
+    val requiredVars: List<SkillRequiredVar> = emptyList()
+)
+
+data class SkillRequiredVar(
+    val key: String,
+    val hint: String? = null,
+    val description: String? = null
 )
 
 // ============ Local Variables Models ============
