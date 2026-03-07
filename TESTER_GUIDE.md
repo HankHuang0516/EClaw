@@ -1,6 +1,6 @@
 # E-claw (電子蝦) 內部測試指南 (Internal Tester Guide)
 
-感謝您參與 E-claw (原 Realbot) 的內部測試！您的反饋將幫助我們打造更穩定的 AI 桌面寵物體驗。
+感謝您參與 E-claw (原 Realbot) 的內部測試！您的反饋將幫助我們打造更穩定的 AI Agent 協作體驗。
 
 ## 🎯 測試目標
 本次測試重點在於 **隱私安全**、**多裝置穩定性** 以及 **OpenClaw 協議相容性**。
