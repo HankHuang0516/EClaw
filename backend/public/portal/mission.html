@@ -645,6 +645,8 @@
 
             await loadBoundEntities();
             await loadSkillTemplates();
+            loadSoulTemplates();
+            loadRuleTemplates();
             await downloadDashboard();
             syncVarsToServer(); // auto-sync local vars to server in-memory on load
 
@@ -1269,12 +1271,28 @@
 
         // ========== Skills ==========
         let skillTemplates = []; // loaded from /api/skill-templates
+        let soulTemplates = []; // loaded from /api/soul-templates
+        let ruleTemplates = []; // loaded from /api/rule-templates
 
         async function loadSkillTemplates() {
             try {
                 const data = await apiCall('GET', '/api/skill-templates');
                 if (data.success) skillTemplates = data.templates;
             } catch (e) { console.warn('Failed to load skill templates:', e); }
+        }
+
+        async function loadSoulTemplates() {
+            try {
+                const data = await apiCall('GET', '/api/soul-templates');
+                if (data.success) soulTemplates = data.templates;
+            } catch (e) { console.warn('Failed to load soul templates:', e); }
+        }
+
+        async function loadRuleTemplates() {
+            try {
+                const data = await apiCall('GET', '/api/rule-templates');
+                if (data.success) ruleTemplates = data.templates;
+            } catch (e) { console.warn('Failed to load rule templates:', e); }
         }
 
         // Context saved when gallery opens so we can restore on back/cancel
@@ -1367,6 +1385,108 @@
 
         function _restoreSkillDialog() {
             showSkillDialog(_skillDialogCtx.id, _skillDialogCtx.skill);
+        }
+
+        // ========== Soul Gallery ==========
+        function fillSoulTemplate(tpl) {
+            const nameEl = document.getElementById('dlg_soul_name');
+            const descEl = document.getElementById('dlg_soul_desc');
+            if (nameEl) nameEl.value = tpl.name || '';
+            if (descEl) descEl.value = tpl.description || '';
+        }
+
+        function showSoulGallery() {
+            const cards = soulTemplates.map(t =>
+                `<div class="tpl-gallery-card" onclick="selectSoulTemplate('${esc(t.id)}')">
+                    <div class="tpl-gallery-icon">${t.icon || '🧠'}</div>
+                    <div class="tpl-gallery-info">
+                        <div class="tpl-gallery-title">${esc(t.label)}</div>
+                        <div class="tpl-gallery-meta">by ${esc(t.author || '—')} · ${esc(t.updatedAt || '')}</div>
+                        <div class="tpl-gallery-status" style="color:var(--text-muted);">${esc((t.description || '').substring(0, 60))}…</div>
+                    </div>
+                    <button class="btn btn-outline" style="font-size:12px;padding:5px 12px;flex-shrink:0;" onclick="event.stopPropagation();selectSoulTemplate('${esc(t.id)}')">Select</button>
+                </div>`
+            ).join('') || '<p style="color:var(--text-muted);text-align:center;">No templates available</p>';
+
+            document.body.insertAdjacentHTML('beforeend',
+                `<div id="soul_gallery_overlay" class="dialog-overlay" onclick="if(event.target===this)document.getElementById('soul_gallery_overlay').remove()">
+                    <div class="dialog" style="max-width:480px;">
+                        <div class="dialog-title">靈魂模板</div>
+                        <input type="text" placeholder="搜尋…" oninput="filterSoulGallery(this.value)" style="margin-bottom:12px;" />
+                        <div id="soul_gallery_list" style="max-height:380px;overflow-y:auto;">${cards}</div>
+                        <div class="dialog-actions">
+                            <button class="btn btn-outline" onclick="document.getElementById('soul_gallery_overlay').remove()">取消</button>
+                        </div>
+                    </div>
+                </div>`
+            );
+        }
+
+        function filterSoulGallery(query) {
+            const q = query.toLowerCase();
+            document.querySelectorAll('#soul_gallery_list .tpl-gallery-card').forEach(card => {
+                const title = card.querySelector('.tpl-gallery-title');
+                card.style.display = (title && title.textContent.toLowerCase().includes(q)) ? '' : 'none';
+            });
+        }
+
+        function selectSoulTemplate(id) {
+            const tpl = soulTemplates.find(t => t.id === id);
+            if (!tpl) return;
+            fillSoulTemplate(tpl);
+            document.getElementById('soul_gallery_overlay')?.remove();
+        }
+
+        // ========== Rule Gallery ==========
+        function fillRuleTemplate(tpl) {
+            const nameEl = document.getElementById('dlg_rule_name');
+            const descEl = document.getElementById('dlg_rule_desc');
+            const typeEl = document.getElementById('dlg_rule_type');
+            if (nameEl) nameEl.value = tpl.name || '';
+            if (descEl) descEl.value = tpl.description || '';
+            if (typeEl && tpl.ruleType) typeEl.value = tpl.ruleType;
+        }
+
+        function showRuleGallery() {
+            const cards = ruleTemplates.map(t =>
+                `<div class="tpl-gallery-card" onclick="selectRuleTemplate('${esc(t.id)}')">
+                    <div class="tpl-gallery-icon">${t.icon || '📋'}</div>
+                    <div class="tpl-gallery-info">
+                        <div class="tpl-gallery-title">${esc(t.label)}</div>
+                        <div class="tpl-gallery-meta">by ${esc(t.author || '—')} · ${esc(t.ruleType || '')} · ${esc(t.updatedAt || '')}</div>
+                        <div class="tpl-gallery-status" style="color:var(--text-muted);">${esc((t.description || '').substring(0, 60))}…</div>
+                    </div>
+                    <button class="btn btn-outline" style="font-size:12px;padding:5px 12px;flex-shrink:0;" onclick="event.stopPropagation();selectRuleTemplate('${esc(t.id)}')">Select</button>
+                </div>`
+            ).join('') || '<p style="color:var(--text-muted);text-align:center;">No templates available</p>';
+
+            document.body.insertAdjacentHTML('beforeend',
+                `<div id="rule_gallery_overlay" class="dialog-overlay" onclick="if(event.target===this)document.getElementById('rule_gallery_overlay').remove()">
+                    <div class="dialog" style="max-width:480px;">
+                        <div class="dialog-title">規則模板</div>
+                        <input type="text" placeholder="搜尋…" oninput="filterRuleGallery(this.value)" style="margin-bottom:12px;" />
+                        <div id="rule_gallery_list" style="max-height:380px;overflow-y:auto;">${cards}</div>
+                        <div class="dialog-actions">
+                            <button class="btn btn-outline" onclick="document.getElementById('rule_gallery_overlay').remove()">取消</button>
+                        </div>
+                    </div>
+                </div>`
+            );
+        }
+
+        function filterRuleGallery(query) {
+            const q = query.toLowerCase();
+            document.querySelectorAll('#rule_gallery_list .tpl-gallery-card').forEach(card => {
+                const title = card.querySelector('.tpl-gallery-title');
+                card.style.display = (title && title.textContent.toLowerCase().includes(q)) ? '' : 'none';
+            });
+        }
+
+        function selectRuleTemplate(id) {
+            const tpl = ruleTemplates.find(t => t.id === id);
+            if (!tpl) return;
+            fillRuleTemplate(tpl);
+            document.getElementById('rule_gallery_overlay')?.remove();
         }
 
         function showRequiredVarsDialog(tpl) {
@@ -1599,6 +1719,7 @@
             let html = `<div class="dialog-overlay" onclick="if(event.target===this)closeDialog()">
                 <div class="dialog">
                     <div class="dialog-title">${isEdit ? i18n.t('mc_dlg_edit_rule') : i18n.t('mc_dlg_add_rule')}</div>
+                    ${!isEdit ? `<button class="btn btn-outline" onclick="showRuleGallery()" style="margin-bottom:12px;width:100%;">📋 從模板選擇</button>` : ''}
                     <div class="dialog-field-label">規則名稱</div>
                     <input id="dlg_rule_name" placeholder="${i18n.t('mc_dlg_rule_name')}" value="${esc(rule?.name || '')}" />
                     <div class="dialog-field-label">說明</div>
@@ -1798,6 +1919,7 @@
             let html = `<div class="dialog-overlay" onclick="if(event.target===this)closeDialog()">
                 <div class="dialog">
                     <div class="dialog-title">${isEdit ? i18n.t('mc_dlg_edit_soul') : i18n.t('mc_dlg_add_soul')}</div>
+                    ${!isEdit ? `<button class="btn btn-outline" onclick="showSoulGallery()" style="margin-bottom:12px;width:100%;">🎭 從模板選擇</button>` : ''}
                     <div class="dialog-field-label">${i18n.t('mc_dlg_soul_template')}</div>
                     <select id="dlg_soul_template" onchange="onSoulTemplateChange()">
                         <option value="">${i18n.t('mc_dlg_soul_custom')}</option>
