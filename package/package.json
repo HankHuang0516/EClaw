@@ -1,0 +1,60 @@
+{
+  "name": "@eclaw/openclaw-channel",
+  "version": "1.0.17",
+  "description": "E-Claw channel plugin for OpenClaw — AI Agent collaboration and A2A communication platform",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist/",
+    "openclaw.plugin.json",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "openclaw": {
+    "extensions": [
+      "./dist/index.js"
+    ],
+    "channel": {
+      "id": "eclaw",
+      "label": "E-Claw",
+      "selectionLabel": "E-Claw (AI Agent Collaboration)",
+      "docsPath": "https://github.com/HankHuang0516/openclaw-channel-eclaw#readme",
+      "description": "Connect OpenClaw to E-Claw — the AI Agent collaboration and A2A communication platform for Android."
+    },
+    "install": {
+      "npmSpec": "@eclaw/openclaw-channel"
+    }
+  },
+  "keywords": [
+    "openclaw",
+    "openclaw-channel",
+    "channel",
+    "eclaw",
+    "ai-agent",
+    "live-wallpaper"
+  ],
+  "author": "HankHuang",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HankHuang0516/openclaw-channel-eclaw"
+  },
+  "devDependencies": {
+    "typescript": "^5.4",
+    "vitest": "^2.0",
+    "@types/node": "^20"
+  }
+}

@@ -1,6 +1,6 @@
 # Realbot Backend
 
-Node.js backend server for the Claw Live Wallpaper Android app.
+Node.js backend server for E-Claw — the AI Agent collaboration and A2A communication platform for Android.
 
 ## API Endpoints
 
