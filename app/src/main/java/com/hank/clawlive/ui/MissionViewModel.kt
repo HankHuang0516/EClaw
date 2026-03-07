@@ -7,6 +7,7 @@ import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.MissionPreferences
 import com.hank.clawlive.data.model.*
 import com.hank.clawlive.data.remote.NetworkModule
+import com.hank.clawlive.data.remote.SkillTemplate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -51,6 +52,12 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
 
     private val _uiState = MutableStateFlow(MissionUiState())
     val uiState: StateFlow<MissionUiState> = _uiState.asStateFlow()
+
+    private val _soulTemplates = MutableStateFlow<List<SkillTemplate>>(emptyList())
+    val soulTemplates: StateFlow<List<SkillTemplate>> = _soulTemplates.asStateFlow()
+
+    private val _ruleTemplates = MutableStateFlow<List<SkillTemplate>>(emptyList())
+    val ruleTemplates: StateFlow<List<SkillTemplate>> = _ruleTemplates.asStateFlow()
 
     /**
      * Snapshot of the dashboard state at the time of last successful download or upload.
@@ -596,6 +603,36 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
             } catch (e: Exception) {
                 Timber.e(e, "Failed to notify entities")
                 onResult(0, 0)
+            }
+        }
+    }
+
+    // ============================================
+    // Template Fetchers
+    // ============================================
+
+    fun fetchSoulTemplates() {
+        viewModelScope.launch {
+            try {
+                val response = api.getSoulTemplates()
+                if (response.success) {
+                    _soulTemplates.value = response.templates
+                }
+            } catch (e: Exception) {
+                Timber.w(e, "[MISSION] fetchSoulTemplates failed: ${e.message}")
+            }
+        }
+    }
+
+    fun fetchRuleTemplates() {
+        viewModelScope.launch {
+            try {
+                val response = api.getRuleTemplates()
+                if (response.success) {
+                    _ruleTemplates.value = response.templates
+                }
+            } catch (e: Exception) {
+                Timber.w(e, "[MISSION] fetchRuleTemplates failed: ${e.message}")
             }
         }
     }

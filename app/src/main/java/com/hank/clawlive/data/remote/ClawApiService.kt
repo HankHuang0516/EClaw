@@ -399,6 +399,12 @@ interface ClawApiService {
     @GET("api/skill-templates")
     suspend fun getSkillTemplates(): SkillTemplatesResponse
 
+    @GET("api/soul-templates")
+    suspend fun getSoulTemplates(): SkillTemplatesResponse
+
+    @GET("api/rule-templates")
+    suspend fun getRuleTemplates(): SkillTemplatesResponse
+
     // ============ Local Variables (device-only vault) ============
 
     @POST("api/device-vars")
