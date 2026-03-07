@@ -23,8 +23,8 @@ const fs   = require('fs');
 const args    = process.argv.slice(2);
 const API_BASE = args.includes('--local') ? 'http://localhost:3000' : 'https://eclawbot.com';
 
-const ENTITY_CH = 6;  // channel bot starts here
-const SWAP_WITH  = 7;  // we swap it with slot 7
+const ENTITY_CH = 1;  // channel bot starts here (must be within free device limit 0-3)
+const SWAP_WITH  = 2;  // we swap it with slot 2
 const POLL_MS   = 1500;
 const WAIT_MS   = 15000;
 
@@ -134,10 +134,11 @@ async function run() {
 
     // First get current device entity limit
     const entData = await get(`${API_BASE}/api/entities?deviceId=${DEVICE_ID}`);
-    const maxSlot = Math.max(...(entData.data?.entities || []).map(e => e.entityId), 7);
+    const deviceLimit = entData.data?.limit || Math.max(...(entData.data?.entities || []).map(e => e.entityId + 1), 4);
+    const maxSlot = deviceLimit - 1;
 
     const order = buildSwappedOrder(maxSlot, ENTITY_CH, SWAP_WITH);
-    console.log(`    Order: ${order.join(',')}`);
+    console.log(`    Order (${deviceLimit} slots): ${order.join(',')}`);
 
     const reorderRes = await post(`${API_BASE}/api/device/reorder-entities`, {
         deviceId:     DEVICE_ID,
