@@ -1295,37 +1295,45 @@
             if (!tpl) return;
 
             if (tpl.requiredVars && tpl.requiredVars.length > 0) {
-                const vars = loadLocalVars();
-                const missing = tpl.requiredVars.filter(v => !vars[v.key]);
-                if (missing.length > 0) {
-                    showRequiredVarsDialog(tpl, missing);
-                    return;
-                }
+                showRequiredVarsDialog(tpl);
+                return;
             }
             fillSkillTemplate(tpl);
         }
 
-        function showRequiredVarsDialog(tpl, missingVars) {
+        function showRequiredVarsDialog(tpl) {
             const c = document.getElementById('dialogContainer');
-            const fields = missingVars.map((v, i) => `
-                <div class="dialog-field-label" style="font-family:monospace;font-size:13px;">${esc(v.key)}</div>
-                ${v.description ? `<div style="color:var(--text-muted);font-size:11px;margin-bottom:6px;">${esc(v.description)}</div>` : ''}
-                <div style="display:flex;gap:6px;align-items:center;margin-bottom:12px;">
-                    <input id="dlg_reqvar_${i}" type="password" placeholder="${esc(v.hint || '')}"
-                        style="flex:1;font-family:monospace;" autocomplete="off" />
-                    <button type="button" onclick="
-                        var inp=document.getElementById('dlg_reqvar_${i}');
-                        inp.type=inp.type==='password'?'text':'password';
-                        this.textContent=inp.type==='password'?'👁':'🙈';
-                    " style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:14px;">👁</button>
-                </div>
-            `).join('');
+            const vars = loadLocalVars();
+            const fields = tpl.requiredVars.map((v, i) => {
+                const existing = vars[v.key] || '';
+                const isSet = !!existing;
+                return `
+                <div style="margin-bottom:14px;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+                        <input id="dlg_reqvar_key_${i}" type="text" value="${esc(v.key)}"
+                            style="flex:1;font-family:monospace;font-size:12px;padding:3px 6px;" autocomplete="off"
+                            title="Variable name (editable)" />
+                        ${isSet ? `<span style="color:#4caf50;font-size:12px;white-space:nowrap;">✓ already set</span>` : `<span style="color:var(--text-muted);font-size:12px;white-space:nowrap;">not set</span>`}
+                    </div>
+                    ${v.description ? `<div style="color:var(--text-muted);font-size:11px;margin-bottom:4px;">${esc(v.description)}</div>` : ''}
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <input id="dlg_reqvar_${i}" type="password" value="${esc(existing)}"
+                            placeholder="${esc(v.hint || (isSet ? '(leave blank to keep current)' : ''))}"
+                            style="flex:1;font-family:monospace;" autocomplete="off" />
+                        <button type="button" onclick="
+                            var inp=document.getElementById('dlg_reqvar_${i}');
+                            inp.type=inp.type==='password'?'text':'password';
+                            this.textContent=inp.type==='password'?'👁':'🙈';
+                        " style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:14px;">👁</button>
+                    </div>
+                </div>`;
+            }).join('');
 
             c.innerHTML = `<div class="dialog-overlay" onclick="if(event.target===this)closeDialog()">
                 <div class="dialog">
-                    <div class="dialog-title">Environment Variable Required</div>
+                    <div class="dialog-title">Env Variables — ${esc(tpl.label)}</div>
                     <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;">
-                        The <strong>${esc(tpl.label)}</strong> skill needs the following variable(s) to be saved in your Env Variables:
+                        Review and set the required variables. You can rename the key or leave the value blank to keep the current value.
                     </p>
                     ${fields}
                     <div class="dialog-actions">
@@ -1336,18 +1344,20 @@
             </div>`;
 
             document.getElementById('dlgReqVarSaveBtn').onclick = () => {
-                missingVars.forEach((v, i) => {
+                tpl.requiredVars.forEach((v, i) => {
+                    const key = document.getElementById(`dlg_reqvar_key_${i}`).value.trim().toUpperCase();
                     const val = document.getElementById(`dlg_reqvar_${i}`).value;
-                    if (val) saveLocalVar(v.key, val);
+                    if (key && val) saveLocalVar(key, val);
                 });
-                // Re-open the skill dialog and apply template (chips re-render with ✓)
                 showSkillDialog(null, null);
                 fillSkillTemplate(tpl);
             };
 
             setTimeout(() => {
-                const first = document.getElementById('dlg_reqvar_0');
-                if (first) first.focus();
+                const firstEmpty = tpl.requiredVars.findIndex(v => !vars[v.key]);
+                const focusIdx = firstEmpty >= 0 ? firstEmpty : 0;
+                const inp = document.getElementById(`dlg_reqvar_${focusIdx}`);
+                if (inp) inp.focus();
             }, 50);
         }
 
