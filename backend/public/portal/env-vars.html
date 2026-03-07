@@ -372,9 +372,9 @@
                     <div class="var-row-key">${esc(k)}</div>
                     <div class="var-row-val" id="varVal_${esc(k)}">••••••••</div>
                     <div class="var-row-actions">
-                        <button class="var-action-btn" onclick="toggleVarVal('${esc(k)}')" title="顯示/隱藏">👁</button>
-                        <button class="var-action-btn" onclick="showVarDialog('${esc(k)}')" title="編輯">✏️</button>
-                        <button class="var-action-btn delete" onclick="deleteVar('${esc(k)}')" title="刪除">×</button>
+                        <button class="var-action-btn" onclick="toggleVarVal('${esc(k)}')" title="${i18n.t('common_toggle_visibility')}">👁</button>
+                        <button class="var-action-btn" onclick="showVarDialog('${esc(k)}')" title="${i18n.t('common_edit')}">✏️</button>
+                        <button class="var-action-btn delete" onclick="deleteVar('${esc(k)}')" title="${i18n.t('common_delete')}">×</button>
                     </div>
                 </div>`).join('');
         }
@@ -409,14 +409,14 @@
                 <div class="dialog">
                     <div class="dialog-title">${isEdit ? '編輯變數' : '新增變數'}</div>
                     <div class="dialog-field-label">Key</div>
-                    <input id="dlg_var_key" placeholder="例：CLAUDE_OAUTH_TOKEN"
+                    <input id="dlg_var_key" placeholder="${i18n.t('env_placeholder_key')}"
                         value="${esc(editKey || '')}"
                         style="font-family:monospace"
                         oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9_]/g,'')" />
                     <div class="dialog-field-label" style="margin-top:10px;">Value</div>
                     <div style="position:relative">
                         <input id="dlg_var_value" type="password"
-                            placeholder="sk-ant-oat..."
+                            placeholder="${i18n.t('env_placeholder_value')}"
                             value="${esc(isEdit ? (vars[editKey] || '') : '')}"
                             style="font-family:monospace;padding-right:44px" />
                         <button onclick="const i=document.getElementById('dlg_var_value');i.type=i.type==='password'?'text':'password'"

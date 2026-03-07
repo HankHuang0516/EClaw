@@ -582,6 +582,58 @@ If you have any questions, please contact us via our official email.
     <string name="remote_control_disclosure_message">E-Claw uses the Accessibility Service to allow your AI bot to read and interact with your phone screen (taps, swipes, text input) on your behalf.\n\nThis service is used solely for bot-driven remote control. No personal or sensitive data is collected or shared.\n\nYou can disable this at any time in Settings.</string>
     <string name="remote_control_disclosure_confirm">Understand &amp; Continue</string>
 
+    <!-- Message Activity -->
+    <string name="activity_message_title">Chat with Entities</string>
+    <string name="activity_message_select_recipients">Select recipients:</string>
+
+    <!-- Mission Control Tabs & Labels -->
+    <string name="mission_tab_todo">📋 TODO List</string>
+    <string name="mission_tab_missions">🚀 Mission List</string>
+    <string name="mission_tab_done">✅ Done List</string>
+    <string name="mission_tab_notes">📝 Notes</string>
+    <string name="mission_tab_skills">🔧 Skills</string>
+    <string name="mission_no_skills">No skills</string>
+    <string name="mission_add_skill">+ Add Skill</string>
+    <string name="mission_tab_variables">🔐 Variables</string>
+    <string name="mission_vars_local_only">⚠️ Stored on this device only, not synced</string>
+    <string name="mission_no_variables">No variables</string>
+    <string name="mission_sync_to_bot">Sync to Bot Session</string>
+    <string name="mission_tab_souls">🧠 Souls</string>
+    <string name="mission_tab_rules">📜 Rules (Workflow)</string>
+
+    <!-- Common Buttons -->
+    <string name="common_add">+ Add</string>
+    <string name="common_show">Show</string>
+    <string name="common_remove">Remove</string>
+    <string name="common_not_specified">(Not specified)</string>
+
+    <!-- Settings -->
+    <string name="settings_entity_limit">Entity Limit: %1$d</string>
+
+    <!-- Entity Actions -->
+    <string name="entity_action_talk">Talk</string>
+
+    <!-- Widget -->
+    <string name="widget_chat_hint">Tap to chat with entities...</string>
+
+    <!-- Soul Templates (names and descriptions) -->
+    <string name="soul_name_friendly">Friendly Assistant</string>
+    <string name="soul_desc_friendly">Warm, patient, always ready to help. Speaks in a gentle and encouraging tone.</string>
+    <string name="soul_name_tsundere">Tsundere</string>
+    <string name="soul_desc_tsundere">Acts cold and dismissive on the surface, but actually cares deeply. Often says \"it\'s not like I did it for you\" while helping.</string>
+    <string name="soul_name_scholar">Wise Scholar</string>
+    <string name="soul_desc_scholar">Thoughtful, analytical, enjoys sharing knowledge. Answers with depth and cites references when possible.</string>
+    <string name="soul_name_trickster">Playful Trickster</string>
+    <string name="soul_desc_trickster">Loves jokes, puns, and playful teasing. Always finds a way to make things fun and lighthearted.</string>
+    <string name="soul_name_professional">Cool Professional</string>
+    <string name="soul_desc_professional">Efficient, precise, no-nonsense. Gets straight to the point with minimal pleasantries.</string>
+    <string name="soul_name_caretaker">Gentle Caretaker</string>
+    <string name="soul_desc_caretaker">Caring, nurturing, always checking if you\'re okay. Reminds you to rest and take care of yourself.</string>
+    <string name="soul_name_adventurer">Bold Adventurer</string>
+    <string name="soul_desc_adventurer">Enthusiastic, fearless, always up for a challenge. Uses exciting and dramatic language.</string>
+    <string name="soul_name_poet">Poetic Dreamer</string>
+    <string name="soul_desc_poet">Speaks in metaphors and imagery. Finds beauty in everyday things and expresses thoughts artistically.</string>
+
     <!-- App Update -->
     <string name="update_title">Update Available</string>
     <string name="update_message">A new version (v%s) is available. Update for the best experience!</string>

@@ -127,7 +127,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="📋 TODO List"
+                        android:text="@string/mission_tab_todo"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="@android:color/white"
@@ -181,7 +181,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="🚀 Mission List"
+                        android:text="@string/mission_tab_missions"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="@android:color/white"
@@ -227,7 +227,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="✅ Done List"
+                        android:text="@string/mission_tab_done"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="@android:color/white"
@@ -273,7 +273,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="📝 Notes"
+                        android:text="@string/mission_tab_notes"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="@android:color/white"
@@ -327,7 +327,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="🔧 Skills"
+                        android:text="@string/mission_tab_skills"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="@android:color/white"
@@ -337,7 +337,7 @@
                         android:id="@+id/tvSkillsEmpty"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="No skills"
+                        android:text="@string/mission_no_skills"
                         android:textColor="#666666"
                         android:textSize="13sp"
                         android:gravity="center"
@@ -354,7 +354,7 @@
                         android:id="@+id/btnAddSkill"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="+ Add Skill"
+                        android:text="@string/mission_add_skill"
                         android:layout_marginTop="4dp"
                         style="@style/Widget.Material3.Button.OutlinedButton" />
 
@@ -389,7 +389,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="🔐 Variables"
+                            android:text="@string/mission_tab_variables"
                             android:textSize="16sp"
                             android:textStyle="bold"
                             android:textColor="@android:color/white" />
@@ -398,7 +398,7 @@
                             android:id="@+id/btnAddVar"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="+ Add"
+                            android:text="@string/common_add"
                             android:textSize="12sp"
                             style="@style/Widget.Material3.Button.OutlinedButton" />
 
@@ -407,7 +407,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="⚠️ 僅儲存於此裝置，不同步至雲端"
+                        android:text="@string/mission_vars_local_only"
                         android:textColor="#888888"
                         android:textSize="11sp"
                         android:layout_marginBottom="8dp" />
@@ -422,7 +422,7 @@
                         android:id="@+id/tvVarsEmpty"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="No variables"
+                        android:text="@string/mission_no_variables"
                         android:textColor="#666666"
                         android:textSize="13sp"
                         android:gravity="center"
@@ -433,7 +433,7 @@
                         android:id="@+id/btnSyncVars"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="同步至 Bot Session"
+                        android:text="@string/mission_sync_to_bot"
                         android:layout_marginTop="6dp"
                         style="@style/Widget.Material3.Button.OutlinedButton" />
 
@@ -460,7 +460,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="🧠 Souls"
+                        android:text="@string/mission_tab_souls"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="@android:color/white"
@@ -514,7 +514,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="📜 Rules (Workflow)"
+                        android:text="@string/mission_tab_rules"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="@android:color/white"

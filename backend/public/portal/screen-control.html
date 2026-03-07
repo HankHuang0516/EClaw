@@ -163,7 +163,7 @@
     <div class="container">
         <!-- Page Header -->
         <div class="page-header">
-            <h1 class="page-title">📱 Remote Control</h1>
+            <h1 class="page-title">📱 <span data-i18n="screen_ctrl_title">Remote Control</span></h1>
         </div>
 
         <!-- Sub-tab Navigation -->
@@ -187,7 +187,7 @@
             <div class="card" style="margin-bottom:16px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
                     <div>
-                        <div class="section-title" style="margin-bottom:4px;">Feature Status</div>
+                        <div class="section-title" style="margin-bottom:4px;" data-i18n="screen_ctrl_feature_status">Feature Status</div>
                         <span id="statusBadge" class="status-badge disabled">⚠ Disabled</span>
                     </div>
                     <div style="font-size:12px;color:var(--text-secondary);max-width:320px;">
@@ -221,7 +221,7 @@
             <!-- Screen Capture Card -->
             <div class="card" style="margin-bottom:16px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                    <div class="section-title" style="margin-bottom:0;">Screen State</div>
+                    <div class="section-title" style="margin-bottom:0;" data-i18n="screen_ctrl_screen_state">Screen State</div>
                     <div style="display:flex;align-items:center;gap:8px;">
                         <span id="screenMeta" style="font-size:12px;color:var(--text-secondary);"></span>
                         <button class="btn btn-primary btn-sm" onclick="captureScreen()" id="captureBtn">Capture Screen</button>
@@ -234,7 +234,7 @@
 
             <!-- Send Command Card -->
             <div class="card">
-                <div class="section-title" style="margin-bottom:12px;">Send Command</div>
+                <div class="section-title" style="margin-bottom:12px;" data-i18n="screen_ctrl_send_command">Send Command</div>
                 <div class="command-form">
                     <div>
                         <label>Command</label>
@@ -261,7 +261,7 @@
                             <option value="up">up</option>
                         </select>
                     </div>
-                    <button class="btn btn-primary" onclick="sendCommand()" id="sendBtn">Send Command</button>
+                    <button class="btn btn-primary" onclick="sendCommand()" id="sendBtn" data-i18n="screen_ctrl_btn_send_command">Send Command</button>
                 </div>
                 <div id="commandResult" style="margin-top:12px;font-size:13px;"></div>
             </div>

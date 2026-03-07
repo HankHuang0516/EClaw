@@ -986,7 +986,7 @@
                 <div class="file-preview-bar" id="filePreviewBar"></div>
                 <div class="input-row">
                     <div class="attach-menu-wrapper">
-                        <button class="btn-media" id="btnAttach" onclick="toggleAttachMenu()" title="Attach">&#x2B;</button>
+                        <button class="btn-media" id="btnAttach" onclick="toggleAttachMenu()">&#x2B;</button>
                         <div class="attach-menu" id="attachMenu">
                             <button class="attach-menu-item" onclick="openPhotoPicker()">
                                 <span class="menu-icon">&#x1F4F7;</span>
@@ -1002,7 +1002,7 @@
                             </button>
                         </div>
                     </div>
-                    <button class="btn-media" id="btnVoice" onclick="toggleRecording()" title="Voice message">&#x1F3A4;</button>
+                    <button class="btn-media" id="btnVoice" onclick="toggleRecording()">&#x1F3A4;</button>
                     <input type="text" class="chat-input" id="messageInput"
                         data-i18n="chat_input_placeholder" placeholder="Type a message..."
                         onkeydown="if(event.key==='Enter')sendMessage()">
@@ -1390,7 +1390,7 @@
                     chip.innerHTML = `<input type="checkbox" data-contact-code="${escapeHtml(c.publicCode)}" ${isChecked ? 'checked' : ''}>
                         <span>${avatar} ${escapeHtml(name)}</span>
                         ${isOffline ? `<span class="contact-offline-tag">${i18n.t('chat_contacts_offline')}</span>` : ''}
-                        <button class="btn-remove-contact" onclick="removeContact('${escapeHtml(c.publicCode)}', event)" title="Remove">&#x2715;</button>`;
+                        <button class="btn-remove-contact" onclick="removeContact('${escapeHtml(c.publicCode)}', event)" title="${i18n.t('common_remove')}">&#x2715;</button>`;
                     bar.appendChild(chip);
                 });
 
@@ -2397,7 +2397,7 @@
                         <div class="file-preview-name">${nameDisplay}</div>
                         ${statusText ? `<div class="file-preview-status">${statusText}</div>` : ''}
                     </div>
-                    <button class="btn-remove-file" onclick="removePendingFile('${f.id}')" title="Remove">&#x2715;</button>
+                    <button class="btn-remove-file" onclick="removePendingFile('${f.id}')" title="${i18n.t('common_remove')}">&#x2715;</button>
                 </div>`;
             }).join('');
         }

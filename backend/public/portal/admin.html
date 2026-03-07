@@ -758,7 +758,7 @@
 
 <body>
     <!-- AI Support Chat Widget -->
-    <button class="ai-chat-fab" onclick="toggleAIChat()" title="AI Support Chat">🤖</button>
+    <button class="ai-chat-fab" onclick="toggleAIChat()">🤖</button>
     <div class="ai-chat-panel" id="aiChatPanel">
         <div class="ai-chat-header">
             <h3>🤖 AI Support Tester</h3>
@@ -771,9 +771,10 @@
             </div>
         </div>
         <div class="ai-chat-input">
-            <input type="text" id="aiChatInput" placeholder="Paste error or describe problem..."
+            <input type="text" id="aiChatInput" data-i18n="admin_ai_chat_placeholder"
+                placeholder="Paste error or describe problem..."
                 onkeydown="if(event.key==='Enter')sendAIChat()">
-            <button id="aiChatSendBtn" onclick="sendAIChat()">Send</button>
+            <button id="aiChatSendBtn" onclick="sendAIChat()" data-i18n="common_send">Send</button>
         </div>
     </div>
 
@@ -1258,11 +1259,11 @@
                 '<h3>' + i18n.t('admin_sec_app_update', 'App Update Notification') + '</h3>' +
                 '<div class="form-group">' +
                 '<label>' + i18n.t('admin_update_version', 'Target Version') + '</label>' +
-                '<input type="text" id="updateVersion" value="' + escapeHtml(statsData?.currentAppVersion || '') + '" placeholder="e.g. 1.0.33">' +
+                '<input type="text" id="updateVersion" value="' + escapeHtml(statsData?.currentAppVersion || '') + '" placeholder="' + i18n.t('admin_placeholder_version') + '">' +
                 '</div>' +
                 '<div class="form-group">' +
                 '<label>' + i18n.t('admin_update_notes', 'Release Notes (optional)') + '</label>' +
-                '<input type="text" id="updateNotes" placeholder="Bug fixes and improvements">' +
+                '<input type="text" id="updateNotes" placeholder="' + i18n.t('admin_placeholder_notes') + '">' +
                 '</div>' +
                 '<div class="form-group">' +
                 '<label><input type="checkbox" id="updateForce"> ' + i18n.t('admin_update_force', 'Force Update (non-dismissable dialog)') + '</label>' +
@@ -1321,7 +1322,7 @@
                 '<h3>' + i18n.t('admin_dlg_add_bot') + '</h3>' +
                 '<div class="form-group">' +
                 '<label>' + i18n.t('admin_dlg_bot_id') + '</label>' +
-                '<input type="text" id="newBotId" placeholder="e.g. my-personal-bot-01">' +
+                '<input type="text" id="newBotId" placeholder="' + i18n.t('admin_placeholder_bot_id') + '">' +
                 '</div>' +
                 '<div class="form-group">' +
                 '<label>' + i18n.t('admin_dlg_type') + '</label>' +
@@ -1332,15 +1333,15 @@
                 '</div>' +
                 '<div class="form-group">' +
                 '<label>' + i18n.t('admin_dlg_webhook') + '</label>' +
-                '<input type="text" id="newBotWebhook" placeholder="https://...">' +
+                '<input type="text" id="newBotWebhook" placeholder="' + i18n.t('admin_placeholder_webhook') + '">' +
                 '</div>' +
                 '<div class="form-group">' +
                 '<label>' + i18n.t('admin_dlg_token') + '</label>' +
-                '<input type="text" id="newBotToken" placeholder="Bot webhook token">' +
+                '<input type="text" id="newBotToken" placeholder="' + i18n.t('admin_placeholder_token') + '">' +
                 '</div>' +
                 '<div class="form-group">' +
                 '<label>Setup Password <span style="color:var(--text-secondary);font-weight:400;font-size:12px;">(Railway only)</span></label>' +
-                '<input type="text" id="newBotSetupPassword" placeholder="Leave empty if not using SETUP_PASSWORD">' +
+                '<input type="text" id="newBotSetupPassword" placeholder="' + i18n.t('admin_placeholder_setup_pwd') + '">' +
                 '</div>' +
                 '<div id="createBotResult"></div>' +
                 '<div class="dialog-actions">' +

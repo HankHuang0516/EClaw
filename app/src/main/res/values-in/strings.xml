@@ -440,6 +440,58 @@ Jika Anda memiliki pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="ai_chat_connection_error">Kesalahan koneksi. Silakan coba lagi.</string>
     <string name="ai_chat_network_error">Kesalahan jaringan. Silakan coba lagi.</string>
 
+    <!-- Message Activity -->
+    <string name="activity_message_title">Chat with Entities</string>
+    <string name="activity_message_select_recipients">Pilih penerima:</string>
+
+    <!-- Mission Control Tabs & Labels -->
+    <string name="mission_tab_todo">📋 Daftar TODO</string>
+    <string name="mission_tab_missions">🚀 Daftar Misi</string>
+    <string name="mission_tab_done">✅ Daftar Selesai</string>
+    <string name="mission_tab_notes">📝 Catatan</string>
+    <string name="mission_tab_skills">🔧 Keahlian</string>
+    <string name="mission_no_skills">Tidak ada keahlian</string>
+    <string name="mission_add_skill">+ Tambah Keahlian</string>
+    <string name="mission_tab_variables">🔐 Variabel</string>
+    <string name="mission_vars_local_only">⚠️ Hanya disimpan di perangkat ini, tidak disinkronkan</string>
+    <string name="mission_no_variables">Tidak ada variabel</string>
+    <string name="mission_sync_to_bot">Sinkronkan ke Bot Session</string>
+    <string name="mission_tab_souls">🧠 Jiwa</string>
+    <string name="mission_tab_rules">📜 Aturan (Workflow)</string>
+
+    <!-- Common Buttons -->
+    <string name="common_add">+ Tambah</string>
+    <string name="common_show">Tampilkan</string>
+    <string name="common_remove">Hapus</string>
+    <string name="common_not_specified">(Tidak ditentukan)</string>
+
+    <!-- Settings -->
+    <string name="settings_entity_limit">Batas Entitas: %1$d</string>
+
+    <!-- Entity Actions -->
+    <string name="entity_action_talk">Bicara</string>
+
+    <!-- Widget -->
+    <string name="widget_chat_hint">Ketuk untuk chat dengan entitas...</string>
+
+    <!-- Soul Templates -->
+    <string name="soul_name_friendly">Asisten Ramah</string>
+    <string name="soul_desc_friendly">Hangat, sabar, selalu siap membantu.</string>
+    <string name="soul_name_tsundere">Tsundere</string>
+    <string name="soul_desc_tsundere">Terlihat dingin di permukaan, tapi sebenarnya sangat peduli.</string>
+    <string name="soul_name_scholar">Cendekiawan Bijak</string>
+    <string name="soul_desc_scholar">Penuh pemikiran, analitis, senang berbagi ilmu.</string>
+    <string name="soul_name_trickster">Pengusil Ceria</string>
+    <string name="soul_desc_trickster">Suka bercanda dan menggoda dengan cara yang menyenangkan.</string>
+    <string name="soul_name_professional">Profesional Dingin</string>
+    <string name="soul_desc_professional">Efisien, tepat, langsung ke inti masalah.</string>
+    <string name="soul_name_caretaker">Pengasuh Lembut</string>
+    <string name="soul_desc_caretaker">Penuh kasih, selalu memastikan kamu baik-baik saja.</string>
+    <string name="soul_name_adventurer">Petualang Berani</string>
+    <string name="soul_desc_adventurer">Antusias, berani, selalu siap menghadapi tantangan.</string>
+    <string name="soul_name_poet">Pemimpi Puitis</string>
+    <string name="soul_desc_poet">Berbicara dengan metafora. Menemukan keindahan dalam hal sehari-hari.</string>
+
     <!-- App Update -->
     <string name="update_title">Pembaruan Tersedia</string>
     <string name="update_message">Versi baru (v%s) sudah tersedia. Perbarui untuk pengalaman terbaik!</string>

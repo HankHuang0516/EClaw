@@ -916,7 +916,7 @@
                         <span class="item-title">${esc(item.title)}</span>
                         ${assignLabel ? `<span class="item-badge">${assignLabel}</span>` : ''}
                         <span class="item-badge">${getStatusLabel(item.status?.name || item.status)}</span>
-                        <button class="item-delete" onclick="event.stopPropagation();deleteItem('${item.id}','todo')" title="刪除">&times;</button>
+                        <button class="item-delete" onclick="event.stopPropagation();deleteItem('${item.id}','todo')" title="${i18n.t('common_delete')}">&times;</button>
                     </div>
                     ${item.description ? `<div class="item-detail">${esc(item.description)}</div>` : ''}
                 </div>`;
@@ -940,7 +940,7 @@
                         <span class="item-title">${esc(item.title)}</span>
                         ${assignLabel ? `<span class="item-badge">${assignLabel}</span>` : ''}
                         <span class="item-badge">${getStatusLabel(item.status?.name || item.status)}</span>
-                        <button class="item-delete" onclick="event.stopPropagation();deleteItem('${item.id}','mission')" title="刪除">&times;</button>
+                        <button class="item-delete" onclick="event.stopPropagation();deleteItem('${item.id}','mission')" title="${i18n.t('common_delete')}">&times;</button>
                     </div>
                     ${item.description ? `<div class="item-detail">${esc(item.description)}</div>` : ''}
                 </div>`;
@@ -958,7 +958,7 @@
                     <div class="item-row">
                         <span class="item-title">${esc(item.title)}</span>
                         ${item.completedAt ? `<span class="item-badge" style="color:var(--success);">${fmtDate(item.completedAt)}</span>` : ''}
-                        <button class="item-delete" onclick="event.stopPropagation();deleteItem('${item.id}','done')" title="刪除">&times;</button>
+                        <button class="item-delete" onclick="event.stopPropagation();deleteItem('${item.id}','done')" title="${i18n.t('common_delete')}">&times;</button>
                     </div>
                     ${item.description ? `<div class="item-detail">${esc(item.description)}</div>` : ''}
                 </div>
@@ -976,7 +976,7 @@
                     <div class="item-row">
                         <span class="item-title">${esc(n.title)}</span>
                         <span class="item-badge">${esc(n.category || 'general')}</span>
-                        <button class="item-delete" onclick="event.stopPropagation();deleteNote('${n.id}')" title="刪除">&times;</button>
+                        <button class="item-delete" onclick="event.stopPropagation();deleteNote('${n.id}')" title="${i18n.t('common_delete')}">&times;</button>
                     </div>
                     <div class="item-detail">${esc((n.content || '').slice(0, 80))}</div>
                 </div>
@@ -1001,7 +1001,7 @@
                             <input type="checkbox" ${r.isEnabled !== false ? 'checked' : ''} onchange="toggleRule('${r.id}')">
                             <span class="slider"></span>
                         </label>
-                        <button class="item-delete" onclick="event.stopPropagation();deleteRule('${r.id}')" title="刪除">&times;</button>
+                        <button class="item-delete" onclick="event.stopPropagation();deleteRule('${r.id}')" title="${i18n.t('common_delete')}">&times;</button>
                     </div>
                     ${r.description ? `<div class="item-detail">${esc(r.description)}</div>` : ''}
                 </div>`;
@@ -1364,7 +1364,7 @@
                     <div class="item-row">
                         <span class="item-title">${esc(s.title)}</span>
                         ${entities ? `<span class="item-badge">${entities}</span>` : ''}
-                        <button class="item-delete" onclick="event.stopPropagation();deleteSkill('${s.id}')" title="刪除">&times;</button>
+                        <button class="item-delete" onclick="event.stopPropagation();deleteSkill('${s.id}')" title="${i18n.t('common_delete')}">&times;</button>
                     </div>
                     ${s.url ? `<div class="item-detail">${esc(s.url)}</div>` : ''}
                 </div>`;

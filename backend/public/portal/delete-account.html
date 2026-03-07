@@ -52,7 +52,7 @@
 
         <!-- Step 1: Sign in -->
         <div class="card" id="stepSign">
-            <h1>Delete Account</h1>
+            <h1 data-i18n="delete_account_title">Delete Account</h1>
             <p class="subtitle">Sign in with your Google account to verify your identity and permanently delete your E-Claw account.</p>
 
             <div class="data-list">
@@ -95,8 +95,8 @@
                 <label for="confirmCheck">I understand that deleting my account is permanent and all my data will be erased.</label>
             </div>
 
-            <button class="btn btn-delete" id="deleteBtn" onclick="deleteAccount()" disabled>Delete My Account</button>
-            <button class="btn btn-cancel" onclick="cancelDelete()">Cancel</button>
+            <button class="btn btn-delete" id="deleteBtn" onclick="deleteAccount()" disabled data-i18n="delete_account_btn">Delete My Account</button>
+            <button class="btn btn-cancel" onclick="cancelDelete()" data-i18n="delete_account_cancel">Cancel</button>
             <div class="msg" id="deleteMsg"></div>
         </div>
 
@@ -110,6 +110,7 @@
         </div>
     </div>
 
+    <script src="shared/i18n.js"></script>
     <script src="shared/api.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script>
@@ -175,7 +176,7 @@
         async function deleteAccount() {
             const btn = document.getElementById('deleteBtn');
             btn.disabled = true;
-            btn.textContent = 'Deleting...';
+            btn.textContent = i18n.t('delete_account_deleting');
             showDeleteMsg('', '');
 
             try {
@@ -184,7 +185,7 @@
                 document.getElementById('stepDone').style.display = 'block';
             } catch (e) {
                 btn.disabled = false;
-                btn.textContent = 'Delete My Account';
+                btn.textContent = i18n.t('delete_account_btn');
                 showDeleteMsg(e.message || 'Deletion failed. Please try again.', 'error');
             }
         }

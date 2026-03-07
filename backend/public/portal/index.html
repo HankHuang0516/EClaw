@@ -238,13 +238,13 @@
             </div>
             <div class="form-group">
                 <label class="form-label" data-i18n="login_label_password">Password</label>
-                <input type="password" class="form-input" id="regPassword" data-i18n="login_placeholder_password"
+                <input type="password" class="form-input" id="regPassword" data-i18n="login_placeholder_reg_password"
                     placeholder="At least 6 characters">
                 <div class="password-hint" data-i18n="login_hint_password">Must contain both letters and numbers</div>
             </div>
             <div class="form-group">
                 <label class="form-label" data-i18n="login_label_confirm">Confirm Password</label>
-                <input type="password" class="form-input" id="regPasswordConfirm" data-i18n="login_placeholder_password"
+                <input type="password" class="form-input" id="regPasswordConfirm" data-i18n="login_placeholder_confirm"
                     placeholder="Confirm password" onkeydown="if(event.key==='Enter')doRegister()">
             </div>
             <div id="regError" class="error-text" style="display:none"></div>
@@ -273,11 +273,11 @@
             </p>
             <div class="form-group">
                 <label class="form-label" data-i18n="mc_input_device_id">Device ID</label>
-                <input type="text" class="form-input" id="deviceId" placeholder="e.g. abc12345-...">
+                <input type="text" class="form-input" id="deviceId" data-i18n="login_placeholder_device_id" placeholder="e.g. abc12345-...">
             </div>
             <div class="form-group">
                 <label class="form-label" data-i18n="mc_input_device_secret">Device Secret</label>
-                <input type="password" class="form-input" id="deviceSecret" placeholder="Enter device secret"
+                <input type="password" class="form-input" id="deviceSecret" data-i18n="login_placeholder_device_secret" placeholder="Enter device secret"
                     onkeydown="if(event.key==='Enter')doDeviceLogin()">
             </div>
             <div id="deviceError" class="error-text" style="display:none"></div>
@@ -310,14 +310,14 @@
             </p>
             <div class="form-group">
                 <label class="form-label">New Password</label>
-                <input type="password" class="form-input" id="resetPassword" data-i18n="login_placeholder_password"
+                <input type="password" class="form-input" id="resetPassword" data-i18n="login_placeholder_reg_password"
                     placeholder="At least 6 characters">
                 <div class="password-hint" data-i18n="login_hint_password">Must contain both letters and numbers</div>
             </div>
             <div class="form-group">
                 <label class="form-label" data-i18n="login_label_confirm">Confirm Password</label>
                 <input type="password" class="form-input" id="resetPasswordConfirm"
-                    data-i18n="login_placeholder_password" placeholder="Confirm password"
+                    data-i18n="login_placeholder_confirm" placeholder="Confirm password"
                     onkeydown="if(event.key==='Enter')doReset()">
             </div>
             <div id="resetMsg" style="display:none"></div>

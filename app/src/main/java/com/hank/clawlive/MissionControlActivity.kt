@@ -53,7 +53,8 @@ class MissionControlActivity : AppCompatActivity() {
     private val api by lazy { NetworkModule.api }
 
     /** Bound entity options: list of (entityId, displayLabel). First entry is placeholder. */
-    private var entityOptions: List<Pair<String, String>> = listOf("" to "-- 不指定 --")
+    private var entityOptions: List<Pair<String, String>> = emptyList()
+        get() = if (field.isEmpty()) listOf("" to getString(R.string.common_not_specified)) else field
 
     private lateinit var todoAdapter: MissionItemAdapter
     private lateinit var missionAdapter: MissionItemAdapter
@@ -64,26 +65,26 @@ class MissionControlActivity : AppCompatActivity() {
     private lateinit var ruleAdapter: MissionRuleAdapter
 
     /** Soul template definitions */
-    private data class SoulTemplate(val id: String, val nameEn: String, val nameZh: String, val descEn: String, val descZh: String)
+    private data class SoulTemplate(val id: String)
     private val soulTemplates = listOf(
-        SoulTemplate("friendly", "Friendly Assistant", "友善助手", "Warm, patient, always ready to help. Speaks in a gentle and encouraging tone.", "溫暖、有耐心、隨時準備幫忙。用溫和鼓勵的語氣說話。"),
-        SoulTemplate("tsundere", "Tsundere", "傲嬌", "Acts cold and dismissive on the surface, but actually cares deeply. Often says \"it's not like I did it for you\" while helping.", "表面上冷漠高傲，其實內心非常在意。經常一邊幫忙一邊說「才不是為了你呢」。"),
-        SoulTemplate("scholar", "Wise Scholar", "博學智者", "Thoughtful, analytical, enjoys sharing knowledge. Answers with depth and cites references when possible.", "深思熟慮、善於分析、樂於分享知識。回答時有深度，盡可能引用來源。"),
-        SoulTemplate("trickster", "Playful Trickster", "調皮搗蛋鬼", "Loves jokes, puns, and playful teasing. Always finds a way to make things fun and lighthearted.", "喜歡開玩笑、講雙關語和善意的捉弄。總是能讓事情變得有趣輕鬆。"),
-        SoulTemplate("professional", "Cool Professional", "冷酷專業", "Efficient, precise, no-nonsense. Gets straight to the point with minimal pleasantries.", "高效、精確、不廢話。直奔重點，少寒暄。"),
-        SoulTemplate("caretaker", "Gentle Caretaker", "溫柔照護者", "Caring, nurturing, always checking if you're okay. Reminds you to rest and take care of yourself.", "關懷、體貼、總是確認你是否安好。會提醒你休息和照顧自己。"),
-        SoulTemplate("adventurer", "Bold Adventurer", "大膽冒險家", "Enthusiastic, fearless, always up for a challenge. Uses exciting and dramatic language.", "熱情、無畏、隨時迎接挑戰。用興奮和戲劇性的語言表達。"),
-        SoulTemplate("poet", "Poetic Dreamer", "詩意夢想家", "Speaks in metaphors and imagery. Finds beauty in everyday things and expresses thoughts artistically.", "善用隱喻和意象。在日常事物中發現美，用藝術性的方式表達想法。")
+        SoulTemplate("friendly"),
+        SoulTemplate("tsundere"),
+        SoulTemplate("scholar"),
+        SoulTemplate("trickster"),
+        SoulTemplate("professional"),
+        SoulTemplate("caretaker"),
+        SoulTemplate("adventurer"),
+        SoulTemplate("poet")
     )
 
     private fun getTemplateDisplayName(tpl: SoulTemplate): String {
-        val lang = resources.configuration.locales[0].language
-        return if (lang == "zh") tpl.nameZh else tpl.nameEn
+        val resId = resources.getIdentifier("soul_name_${tpl.id}", "string", packageName)
+        return if (resId != 0) getString(resId) else tpl.id
     }
 
     private fun getTemplateDescription(tpl: SoulTemplate): String {
-        val lang = resources.configuration.locales[0].language
-        return if (lang == "zh") tpl.descZh else tpl.descEn
+        val resId = resources.getIdentifier("soul_desc_${tpl.id}", "string", packageName)
+        return if (resId != 0) getString(resId) else tpl.id
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -123,7 +124,7 @@ class MissionControlActivity : AppCompatActivity() {
             if (!vmBusy) progressBar.visibility = View.VISIBLE
             try {
                 val response = api.getAllEntities(deviceId = deviceManager.deviceId)
-                val opts = mutableListOf("" to "-- 不指定 --")
+                val opts = mutableListOf("" to getString(R.string.common_not_specified))
                 val nameMap = mutableMapOf<String, String>()
                 response.entities.forEach { entity ->
                     val avatar = avatarManager.getAvatar(entity.entityId)

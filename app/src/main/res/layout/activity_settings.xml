@@ -588,7 +588,7 @@
                                 style="@style/Widget.Material3.Button.OutlinedButton"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Show"
+                                android:text="@string/show_label"
                                 android:textColor="#CCFFFFFF"
                                 app:strokeColor="#444444"
                                 android:layout_marginEnd="8dp"/>
@@ -693,7 +693,7 @@
                 style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Entity Limit: 8"
+                android:text="@string/settings_entity_limit"
                 android:textColor="#CCFFFFFF"
                 app:backgroundTint="#1A1A1A"
                 android:layout_marginBottom="8dp"

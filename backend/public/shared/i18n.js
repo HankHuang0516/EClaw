@@ -852,7 +852,51 @@ const TRANSLATIONS = {
         "ai_progress_processing": "Processing result",
         "feedback_ask_ai": "🤖 Ask AI",
         "feedback_ask_ai_title": "Need quick help? Ask AI",
-        "feedback_ask_ai_desc": "Get instant answers before submitting feedback"
+        "feedback_ask_ai_desc": "Get instant answers before submitting feedback",
+
+        // Common (shared across pages)
+        "common_ok": "OK",
+        "common_done": "Done",
+        "common_send": "Send",
+        "common_delete": "Delete",
+        "common_edit": "Edit",
+        "common_toggle_visibility": "Show/Hide",
+        "common_remove": "Remove",
+        "common_attach": "Attach",
+        "common_voice_msg": "Voice message",
+        "common_copy_key": "📋 Copy Key",
+
+        // Delete Account (delete-account.html)
+        "delete_account_title": "Delete Account",
+        "delete_account_cancel": "Cancel",
+        "delete_account_deleting": "Deleting...",
+        "delete_account_btn": "Delete My Account",
+
+        // Screen Control (screen-control.html)
+        "screen_ctrl_title": "Remote Control",
+        "screen_ctrl_feature_status": "Feature Status",
+        "screen_ctrl_screen_state": "Screen State",
+        "screen_ctrl_send_command": "Send Command",
+        "screen_ctrl_btn_send_command": "Send Command",
+
+        // Login placeholders (index.html)
+        "login_placeholder_device_id": "e.g. abc12345-...",
+        "login_placeholder_device_secret": "Enter device secret",
+        "login_placeholder_confirm": "Confirm password",
+        "login_placeholder_reg_password": "At least 6 characters",
+
+        // Admin placeholders (admin.html)
+        "admin_placeholder_version": "e.g. 1.0.33",
+        "admin_placeholder_notes": "Bug fixes and improvements",
+        "admin_placeholder_bot_id": "e.g. my-personal-bot-01",
+        "admin_placeholder_webhook": "https://...",
+        "admin_placeholder_token": "Bot webhook token",
+        "admin_placeholder_setup_pwd": "Leave empty if not using SETUP_PASSWORD",
+        "admin_ai_chat_placeholder": "Paste error or describe problem...",
+
+        // Env Vars placeholders (env-vars.html)
+        "env_placeholder_key": "e.g. CLAUDE_OAUTH_TOKEN",
+        "env_placeholder_value": "sk-ant-oat..."
     },
     zh: {
         // Mission Control (mission.html)
@@ -1702,7 +1746,51 @@ const TRANSLATIONS = {
         "ai_progress_processing": "處理結果",
         "feedback_ask_ai": "🤖 問 AI",
         "feedback_ask_ai_title": "需要快速協助？問 AI",
-        "feedback_ask_ai_desc": "提交回饋前先試試 AI 助手"
+        "feedback_ask_ai_desc": "提交回饋前先試試 AI 助手",
+
+        // Common (shared across pages)
+        "common_ok": "確定",
+        "common_done": "完成",
+        "common_send": "傳送",
+        "common_delete": "刪除",
+        "common_edit": "編輯",
+        "common_toggle_visibility": "顯示/隱藏",
+        "common_remove": "移除",
+        "common_attach": "附加",
+        "common_voice_msg": "語音訊息",
+        "common_copy_key": "📋 複製金鑰",
+
+        // Delete Account (delete-account.html)
+        "delete_account_title": "刪除帳號",
+        "delete_account_cancel": "取消",
+        "delete_account_deleting": "刪除中...",
+        "delete_account_btn": "刪除我的帳號",
+
+        // Screen Control (screen-control.html)
+        "screen_ctrl_title": "遠端控制",
+        "screen_ctrl_feature_status": "功能狀態",
+        "screen_ctrl_screen_state": "螢幕狀態",
+        "screen_ctrl_send_command": "傳送指令",
+        "screen_ctrl_btn_send_command": "傳送指令",
+
+        // Login placeholders (index.html)
+        "login_placeholder_device_id": "例：abc12345-...",
+        "login_placeholder_device_secret": "輸入裝置密碼",
+        "login_placeholder_confirm": "確認密碼",
+        "login_placeholder_reg_password": "至少 6 個字元",
+
+        // Admin placeholders (admin.html)
+        "admin_placeholder_version": "例：1.0.33",
+        "admin_placeholder_notes": "Bug 修復和改善",
+        "admin_placeholder_bot_id": "例：my-personal-bot-01",
+        "admin_placeholder_webhook": "https://...",
+        "admin_placeholder_token": "Bot webhook token",
+        "admin_placeholder_setup_pwd": "若未使用 SETUP_PASSWORD 請留空",
+        "admin_ai_chat_placeholder": "貼上錯誤訊息或描述問題...",
+
+        // Env Vars placeholders (env-vars.html)
+        "env_placeholder_key": "例：CLAUDE_OAUTH_TOKEN",
+        "env_placeholder_value": "sk-ant-oat..."
     },
     "zh-CN": {
         "mc_title": "E-Claw 任务控制",
@@ -2362,7 +2450,51 @@ const TRANSLATIONS = {
         "files_time_week": "本周",
         "files_time_month": "本月",
         "files_entities_badge": "个实体",
-        "files_broadcast": "广播"
+        "files_broadcast": "广播",
+
+        // Common (shared across pages)
+        "common_ok": "确定",
+        "common_done": "完成",
+        "common_send": "发送",
+        "common_delete": "删除",
+        "common_edit": "编辑",
+        "common_toggle_visibility": "显示/隐藏",
+        "common_remove": "移除",
+        "common_attach": "附加",
+        "common_voice_msg": "语音消息",
+        "common_copy_key": "📋 复制密钥",
+
+        // Delete Account (delete-account.html)
+        "delete_account_title": "删除账号",
+        "delete_account_cancel": "取消",
+        "delete_account_deleting": "删除中...",
+        "delete_account_btn": "删除我的账号",
+
+        // Screen Control (screen-control.html)
+        "screen_ctrl_title": "远程控制",
+        "screen_ctrl_feature_status": "功能状态",
+        "screen_ctrl_screen_state": "屏幕状态",
+        "screen_ctrl_send_command": "发送指令",
+        "screen_ctrl_btn_send_command": "发送指令",
+
+        // Login placeholders (index.html)
+        "login_placeholder_device_id": "例：abc12345-...",
+        "login_placeholder_device_secret": "输入设备密码",
+        "login_placeholder_confirm": "确认密码",
+        "login_placeholder_reg_password": "至少 6 个字符",
+
+        // Admin placeholders (admin.html)
+        "admin_placeholder_version": "例：1.0.33",
+        "admin_placeholder_notes": "Bug 修复和改进",
+        "admin_placeholder_bot_id": "例：my-personal-bot-01",
+        "admin_placeholder_webhook": "https://...",
+        "admin_placeholder_token": "Bot webhook token",
+        "admin_placeholder_setup_pwd": "如未使用 SETUP_PASSWORD 请留空",
+        "admin_ai_chat_placeholder": "粘贴错误信息或描述问题...",
+
+        // Env Vars placeholders (env-vars.html)
+        "env_placeholder_key": "例：CLAUDE_OAUTH_TOKEN",
+        "env_placeholder_value": "sk-ant-oat..."
     },
     ja: {
         "mc_title": "E-Claw ミッションコントロール",
@@ -3016,7 +3148,51 @@ const TRANSLATIONS = {
         "files_time_week": "今週",
         "files_time_month": "今月",
         "files_entities_badge": "エンティティ",
-        "files_broadcast": "ブロードキャスト"
+        "files_broadcast": "ブロードキャスト",
+
+        // Common (shared across pages)
+        "common_ok": "OK",
+        "common_done": "完了",
+        "common_send": "送信",
+        "common_delete": "削除",
+        "common_edit": "編集",
+        "common_toggle_visibility": "表示/非表示",
+        "common_remove": "削除",
+        "common_attach": "添付",
+        "common_voice_msg": "音声メッセージ",
+        "common_copy_key": "📋 キーをコピー",
+
+        // Delete Account (delete-account.html)
+        "delete_account_title": "アカウント削除",
+        "delete_account_cancel": "キャンセル",
+        "delete_account_deleting": "削除中...",
+        "delete_account_btn": "アカウントを削除",
+
+        // Screen Control (screen-control.html)
+        "screen_ctrl_title": "リモートコントロール",
+        "screen_ctrl_feature_status": "機能状態",
+        "screen_ctrl_screen_state": "画面状態",
+        "screen_ctrl_send_command": "コマンドを送信",
+        "screen_ctrl_btn_send_command": "コマンドを送信",
+
+        // Login placeholders (index.html)
+        "login_placeholder_device_id": "例：abc12345-...",
+        "login_placeholder_device_secret": "デバイスパスワードを入力",
+        "login_placeholder_confirm": "パスワードを確認",
+        "login_placeholder_reg_password": "6文字以上",
+
+        // Admin placeholders (admin.html)
+        "admin_placeholder_version": "例：1.0.33",
+        "admin_placeholder_notes": "バグ修正と改善",
+        "admin_placeholder_bot_id": "例：my-personal-bot-01",
+        "admin_placeholder_webhook": "https://...",
+        "admin_placeholder_token": "Bot webhook token",
+        "admin_placeholder_setup_pwd": "SETUP_PASSWORD を使用しない場合は空白",
+        "admin_ai_chat_placeholder": "エラーメッセージを貼り付けるか問題を説明...",
+
+        // Env Vars placeholders (env-vars.html)
+        "env_placeholder_key": "例：CLAUDE_OAUTH_TOKEN",
+        "env_placeholder_value": "sk-ant-oat..."
     },
     ko: {
         "mc_title": "E-Claw 미션 컨트롤",
@@ -3670,7 +3846,51 @@ const TRANSLATIONS = {
         "files_time_week": "이번 주",
         "files_time_month": "이번 달",
         "files_entities_badge": "엔티티",
-        "files_broadcast": "브로드캐스트"
+        "files_broadcast": "브로드캐스트",
+
+        // Common (shared across pages)
+        "common_ok": "확인",
+        "common_done": "완료",
+        "common_send": "전송",
+        "common_delete": "삭제",
+        "common_edit": "편집",
+        "common_toggle_visibility": "표시/숨기기",
+        "common_remove": "제거",
+        "common_attach": "첨부",
+        "common_voice_msg": "음성 메시지",
+        "common_copy_key": "📋 키 복사",
+
+        // Delete Account (delete-account.html)
+        "delete_account_title": "계정 삭제",
+        "delete_account_cancel": "취소",
+        "delete_account_deleting": "삭제 중...",
+        "delete_account_btn": "내 계정 삭제",
+
+        // Screen Control (screen-control.html)
+        "screen_ctrl_title": "원격 제어",
+        "screen_ctrl_feature_status": "기능 상태",
+        "screen_ctrl_screen_state": "화면 상태",
+        "screen_ctrl_send_command": "명령 전송",
+        "screen_ctrl_btn_send_command": "명령 전송",
+
+        // Login placeholders (index.html)
+        "login_placeholder_device_id": "예: abc12345-...",
+        "login_placeholder_device_secret": "기기 비밀번호 입력",
+        "login_placeholder_confirm": "비밀번호 확인",
+        "login_placeholder_reg_password": "6자 이상",
+
+        // Admin placeholders (admin.html)
+        "admin_placeholder_version": "예: 1.0.33",
+        "admin_placeholder_notes": "버그 수정 및 개선",
+        "admin_placeholder_bot_id": "예: my-personal-bot-01",
+        "admin_placeholder_webhook": "https://...",
+        "admin_placeholder_token": "Bot webhook token",
+        "admin_placeholder_setup_pwd": "SETUP_PASSWORD를 사용하지 않는 경우 비워두기",
+        "admin_ai_chat_placeholder": "오류 메시지를 붙여넣거나 문제를 설명...",
+
+        // Env Vars placeholders (env-vars.html)
+        "env_placeholder_key": "예: CLAUDE_OAUTH_TOKEN",
+        "env_placeholder_value": "sk-ant-oat..."
     },
     th: {
         "mc_title": "E-Claw ศูนย์ควบคุมภารกิจ",
@@ -4330,7 +4550,51 @@ const TRANSLATIONS = {
         "files_time_week": "สัปดาห์นี้",
         "files_time_month": "เดือนนี้",
         "files_entities_badge": "เอนทิตี",
-        "files_broadcast": "ส่งถึงทุกคน"
+        "files_broadcast": "ส่งถึงทุกคน",
+
+        // Common (shared across pages)
+        "common_ok": "ตกลง",
+        "common_done": "เสร็จสิ้น",
+        "common_send": "ส่ง",
+        "common_delete": "ลบ",
+        "common_edit": "แก้ไข",
+        "common_toggle_visibility": "แสดง/ซ่อน",
+        "common_remove": "ลบออก",
+        "common_attach": "แนบไฟล์",
+        "common_voice_msg": "ข้อความเสียง",
+        "common_copy_key": "📋 คัดลอก Key",
+
+        // Delete Account (delete-account.html)
+        "delete_account_title": "ลบบัญชี",
+        "delete_account_cancel": "ยกเลิก",
+        "delete_account_deleting": "กำลังลบ...",
+        "delete_account_btn": "ลบบัญชีของฉัน",
+
+        // Screen Control (screen-control.html)
+        "screen_ctrl_title": "ควบคุมระยะไกล",
+        "screen_ctrl_feature_status": "สถานะฟีเจอร์",
+        "screen_ctrl_screen_state": "สถานะหน้าจอ",
+        "screen_ctrl_send_command": "ส่งคำสั่ง",
+        "screen_ctrl_btn_send_command": "ส่งคำสั่ง",
+
+        // Login placeholders (index.html)
+        "login_placeholder_device_id": "เช่น abc12345-...",
+        "login_placeholder_device_secret": "ป้อนรหัสผ่านอุปกรณ์",
+        "login_placeholder_confirm": "ยืนยันรหัสผ่าน",
+        "login_placeholder_reg_password": "อย่างน้อย 6 ตัวอักษร",
+
+        // Admin placeholders (admin.html)
+        "admin_placeholder_version": "เช่น 1.0.33",
+        "admin_placeholder_notes": "แก้ไขข้อบกพร่องและปรับปรุง",
+        "admin_placeholder_bot_id": "เช่น my-personal-bot-01",
+        "admin_placeholder_webhook": "https://...",
+        "admin_placeholder_token": "Bot webhook token",
+        "admin_placeholder_setup_pwd": "เว้นว่างหากไม่ใช้ SETUP_PASSWORD",
+        "admin_ai_chat_placeholder": "วางข้อความผิดพลาดหรืออธิบายปัญหา...",
+
+        // Env Vars placeholders (env-vars.html)
+        "env_placeholder_key": "เช่น CLAUDE_OAUTH_TOKEN",
+        "env_placeholder_value": "sk-ant-oat..."
     },
     vi: {
         "mc_title": "E-Claw Trung tâm Điều khiển",
@@ -4986,7 +5250,51 @@ const TRANSLATIONS = {
         "files_time_week": "Tuần này",
         "files_time_month": "Tháng này",
         "files_entities_badge": "thực thể",
-        "files_broadcast": "Phát sóng"
+        "files_broadcast": "Phát sóng",
+
+        // Common (shared across pages)
+        "common_ok": "OK",
+        "common_done": "Xong",
+        "common_send": "Gửi",
+        "common_delete": "Xóa",
+        "common_edit": "Chỉnh sửa",
+        "common_toggle_visibility": "Hiện/Ẩn",
+        "common_remove": "Xóa bỏ",
+        "common_attach": "Đính kèm",
+        "common_voice_msg": "Tin nhắn thoại",
+        "common_copy_key": "📋 Sao chép Key",
+
+        // Delete Account (delete-account.html)
+        "delete_account_title": "Xóa tài khoản",
+        "delete_account_cancel": "Hủy",
+        "delete_account_deleting": "Đang xóa...",
+        "delete_account_btn": "Xóa tài khoản của tôi",
+
+        // Screen Control (screen-control.html)
+        "screen_ctrl_title": "Điều khiển từ xa",
+        "screen_ctrl_feature_status": "Trạng thái tính năng",
+        "screen_ctrl_screen_state": "Trạng thái màn hình",
+        "screen_ctrl_send_command": "Gửi lệnh",
+        "screen_ctrl_btn_send_command": "Gửi lệnh",
+
+        // Login placeholders (index.html)
+        "login_placeholder_device_id": "VD: abc12345-...",
+        "login_placeholder_device_secret": "Nhập mật khẩu thiết bị",
+        "login_placeholder_confirm": "Xác nhận mật khẩu",
+        "login_placeholder_reg_password": "Ít nhất 6 ký tự",
+
+        // Admin placeholders (admin.html)
+        "admin_placeholder_version": "VD: 1.0.33",
+        "admin_placeholder_notes": "Sửa lỗi và cải tiến",
+        "admin_placeholder_bot_id": "VD: my-personal-bot-01",
+        "admin_placeholder_webhook": "https://...",
+        "admin_placeholder_token": "Bot webhook token",
+        "admin_placeholder_setup_pwd": "Để trống nếu không dùng SETUP_PASSWORD",
+        "admin_ai_chat_placeholder": "Dán thông báo lỗi hoặc mô tả vấn đề...",
+
+        // Env Vars placeholders (env-vars.html)
+        "env_placeholder_key": "VD: CLAUDE_OAUTH_TOKEN",
+        "env_placeholder_value": "sk-ant-oat..."
     },
     id: {
         "mc_title": "E-Claw Pusat Misi",
@@ -5642,7 +5950,51 @@ const TRANSLATIONS = {
         "files_time_week": "Minggu ini",
         "files_time_month": "Bulan ini",
         "files_entities_badge": "entitas",
-        "files_broadcast": "Siaran"
+        "files_broadcast": "Siaran",
+
+        // Common (shared across pages)
+        "common_ok": "OK",
+        "common_done": "Selesai",
+        "common_send": "Kirim",
+        "common_delete": "Hapus",
+        "common_edit": "Edit",
+        "common_toggle_visibility": "Tampilkan/Sembunyikan",
+        "common_remove": "Hapus",
+        "common_attach": "Lampirkan",
+        "common_voice_msg": "Pesan suara",
+        "common_copy_key": "📋 Salin Key",
+
+        // Delete Account (delete-account.html)
+        "delete_account_title": "Hapus Akun",
+        "delete_account_cancel": "Batal",
+        "delete_account_deleting": "Menghapus...",
+        "delete_account_btn": "Hapus Akun Saya",
+
+        // Screen Control (screen-control.html)
+        "screen_ctrl_title": "Kontrol Jarak Jauh",
+        "screen_ctrl_feature_status": "Status Fitur",
+        "screen_ctrl_screen_state": "Status Layar",
+        "screen_ctrl_send_command": "Kirim Perintah",
+        "screen_ctrl_btn_send_command": "Kirim Perintah",
+
+        // Login placeholders (index.html)
+        "login_placeholder_device_id": "cth: abc12345-...",
+        "login_placeholder_device_secret": "Masukkan kata sandi perangkat",
+        "login_placeholder_confirm": "Konfirmasi kata sandi",
+        "login_placeholder_reg_password": "Minimal 6 karakter",
+
+        // Admin placeholders (admin.html)
+        "admin_placeholder_version": "cth: 1.0.33",
+        "admin_placeholder_notes": "Perbaikan bug dan peningkatan",
+        "admin_placeholder_bot_id": "cth: my-personal-bot-01",
+        "admin_placeholder_webhook": "https://...",
+        "admin_placeholder_token": "Bot webhook token",
+        "admin_placeholder_setup_pwd": "Kosongkan jika tidak menggunakan SETUP_PASSWORD",
+        "admin_ai_chat_placeholder": "Tempel pesan kesalahan atau jelaskan masalah...",
+
+        // Env Vars placeholders (env-vars.html)
+        "env_placeholder_key": "cth: CLAUDE_OAUTH_TOKEN",
+        "env_placeholder_value": "sk-ant-oat..."
     }
 };
 

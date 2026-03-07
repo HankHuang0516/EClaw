@@ -724,7 +724,7 @@
                     html += '<div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:16px 0;">' + (i18n.t('sched_no_reply') || 'No reply yet') + '</div>';
                 }
 
-                html += '<div class="dialog-actions"><button class="btn btn-outline" onclick="closeDialog()">OK</button></div>';
+                html += '<div class="dialog-actions"><button class="btn btn-outline" onclick="closeDialog()">' + i18n.t('common_ok') + '</button></div>';
                 html += '</div></div>';
                 c.innerHTML = html;
             } catch (err) {
