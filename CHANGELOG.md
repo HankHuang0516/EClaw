@@ -15,6 +15,33 @@
 
 ### Features
 
+* **info:** add deep linking support for guide sub-items ([e16ebb7](https://github.com/HankHuang0516/realbot/commit/e16ebb76d8fdf5d5b53ca117da92c3ea158579f6)), closes [#faq](https://github.com/HankHuang0516/realbot/issues/faq) [#release-notes](https://github.com/HankHuang0516/realbot/issues/release-notes) [#compare](https://github.com/HankHuang0516/realbot/issues/compare)
+* **android:** add fetchSoulTemplates/fetchRuleTemplates to MissionViewModel ([1c411fc](https://github.com/HankHuang0516/realbot/commit/1c411fce073055eb743d09c71f5d6ce9aed4b988))
+* **android/i18n:** add soul & rule template gallery strings ([0a28d99](https://github.com/HankHuang0516/realbot/commit/0a28d9979ab846214683a9c3bbc76c62be69e385))
+* **android:** add SoulGalleryDialog and RuleGalleryDialog ([5a3142a](https://github.com/HankHuang0516/realbot/commit/5a3142af3f67dfa4c4ba9473a4381f89e04aee24))
+* **skill-templates:** add structural validation to contribute endpoint ([891327d](https://github.com/HankHuang0516/realbot/commit/891327dc02dbd3d2a8bbbf254d596cdb33fca3ed))
+* **info:** add 實用案例 category with Claude x OpenClaw guide ([94475ea](https://github.com/HankHuang0516/realbot/commit/94475eaf8c8f0cf9cc2068d6edff14b9036f136d))
+* **skill-templates:** auto-approve pipeline + admin contributions UI ([5f94ea1](https://github.com/HankHuang0516/realbot/commit/5f94ea13291d6b0d4f12e563d8451402452b09b7))
+* **channel:** push NAME_CHANGED to channel bots immediately on rename ([d7992fc](https://github.com/HankHuang0516/realbot/commit/d7992fceb50ce615887ed3fe5e5e54c4306be7e9))
+* **android:** wire SoulGalleryDialog and RuleGalleryDialog into add dialogs ([74898b3](https://github.com/HankHuang0516/realbot/commit/74898b3d527990ea769e7f2d3ac8d32a07df9c38))
+
+# [1.3.0](https://github.com/HankHuang0516/realbot/compare/v1.2.0...v1.3.0) (2026-03-07)
+
+
+### Bug Fixes
+
+* **android:** add name/description/ruleType to SkillTemplate and fix gallery dialogs ([e0a79b7](https://github.com/HankHuang0516/realbot/commit/e0a79b76503d36e21e7dc28246e940b27791492b))
+* **bind:** await single-device save after binding to prevent race condition ([811b3e9](https://github.com/HankHuang0516/realbot/commit/811b3e9b250f7dee518e1f7f7cdf65c1a8dd94d8))
+* **test:** fix reorder-channel test order array size to match device limit ([3103918](https://github.com/HankHuang0516/realbot/commit/31039180cf26e0e5f2db3292bd153be856c541f6))
+* **portal:** fix XSS, broken tags, and filter consistency in soul/rule gallery ([0dd30ec](https://github.com/HankHuang0516/realbot/commit/0dd30ec0c8a358594d4c603ed5c92e7b86871226))
+* **bind:** make /api/bind handler async to fix await syntax error ([f78d373](https://github.com/HankHuang0516/realbot/commit/f78d373e2826b710adf6a7039604d93e90a627d0))
+* **tests:** read TEST_ENTITY_ID from .env in bot-api-response test; add setup_broadcast_webhook.js ([0dc137c](https://github.com/HankHuang0516/realbot/commit/0dc137c85e00de20c74b0c42c7569acbaf117dae))
+* **bind:** reset bot-to-bot counter on rebind to prevent stale rate limits ([daea976](https://github.com/HankHuang0516/realbot/commit/daea976e44768dc65eb515d2bff4b5f400385642))
+* **test:** shorten NEW_NAME to stay within 20-char server limit ([45a1653](https://github.com/HankHuang0516/realbot/commit/45a165359c4212b2d0851cebbfa20c19f26e81e5))
+
+
+### Features
+
 * **android:** add fetchSoulTemplates/fetchRuleTemplates to MissionViewModel ([1c411fc](https://github.com/HankHuang0516/realbot/commit/1c411fce073055eb743d09c71f5d6ce9aed4b988))
 * **android/i18n:** add soul & rule template gallery strings ([0a28d99](https://github.com/HankHuang0516/realbot/commit/0a28d9979ab846214683a9c3bbc76c62be69e385))
 * **android:** add SoulGalleryDialog and RuleGalleryDialog ([5a3142a](https://github.com/HankHuang0516/realbot/commit/5a3142af3f67dfa4c4ba9473a4381f89e04aee24))
