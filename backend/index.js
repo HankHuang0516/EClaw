@@ -1,4 +1,4 @@
-// Claw Live Wallpaper Backend - Multi-Device Multi-Entity Support (v5.5)
+﻿// Claw Live Wallpaper Backend - Multi-Device Multi-Entity Support (v5.5)
 // Each device has its own 4 entity slots (matrix architecture)
 // v5.5 Changes: Telemetry sub-router fix + usage limit scope broadened
 const express = require('express');
@@ -652,6 +652,8 @@ setTimeout(() => gatekeeper.loadBlockedDevices(), 3000);
 // --- Skill Templates API ---
 
 const skillTemplatesData = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/skill-templates.json'), 'utf8'));
+const soulTemplatesData = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/soul-templates.json'), 'utf8'));
+const ruleTemplatesData = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/rule-templates.json'), 'utf8'));
 const pendingTemplatesPath = path.join(__dirname, 'data/skill-templates-pending.json');
 let pendingTemplatesData = (() => {
     try { return JSON.parse(fs.readFileSync(pendingTemplatesPath, 'utf8')); }
@@ -665,6 +667,14 @@ function savePendingTemplates() {
 // GET /api/skill-templates - Community skill template registry (public)
 app.get('/api/skill-templates', (req, res) => {
     res.json({ success: true, templates: skillTemplatesData });
+});
+
+app.get('/api/soul-templates', (req, res) => {
+    res.json({ success: true, templates: soulTemplatesData });
+});
+
+app.get('/api/rule-templates', (req, res) => {
+    res.json({ success: true, templates: ruleTemplatesData });
 });
 
 /**
