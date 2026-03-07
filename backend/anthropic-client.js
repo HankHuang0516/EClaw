@@ -231,6 +231,66 @@ function parseResponse(result) {
     };
 }
 
+// ── Diagnostics Formatter ────────────────────
+
+/**
+ * Format device diagnostics into a human-readable block for the system prompt.
+ * Covers: platform/version, entity slot states, recent errors (24h), recent
+ * key activity (1h), and handshake failures (1h).
+ */
+function formatDiagnostics(diag) {
+    if (!diag) return null;
+    const parts = [];
+
+    // Platform + version
+    if (diag.platform || diag.appVersion) {
+        const ver = diag.appVersion ? ` (v${diag.appVersion})` : '';
+        parts.push(`Platform: ${diag.platform || 'unknown'}${ver}`);
+    }
+
+    // Entity slot states
+    if (diag.entityStates?.length > 0) {
+        const lines = diag.entityStates.map(e => {
+            if (e.bound) {
+                const webhook = e.hasWebhook ? '[webhook registered]' : '[no webhook]';
+                return `  Slot ${e.slot} (${e.type}): bound as "${e.name}" ${webhook}`;
+            }
+            return `  Slot ${e.slot} (${e.type}): unbound`;
+        });
+        parts.push('Entity slots:\n' + lines.join('\n'));
+    }
+
+    // Recent errors — 24h
+    if (diag.recentErrors?.length > 0) {
+        const lines = diag.recentErrors.map(e => {
+            const ts = new Date(e.created_at).toISOString().slice(0, 16).replace('T', ' ');
+            const meta = e.metadata ? ' — ' + JSON.stringify(e.metadata).slice(0, 100) : '';
+            return `  [${ts}][${e.category}] slot_${e.entity_id ?? '-'}: ${e.message}${meta}`;
+        });
+        parts.push('Recent errors (24h):\n' + lines.join('\n'));
+    }
+
+    // Recent key activity — 1h (bind/unbind/push/transform)
+    if (diag.recentActivity?.length > 0) {
+        const lines = diag.recentActivity.map(e => {
+            const ts = new Date(e.created_at).toISOString().slice(0, 16).replace('T', ' ');
+            return `  [${ts}][${e.level}][${e.category}] slot_${e.entity_id ?? '-'}: ${e.message}`;
+        });
+        parts.push('Recent activity (1h):\n' + lines.join('\n'));
+    }
+
+    // Handshake failures — 1h
+    if (diag.handshakeFailures?.length > 0) {
+        const lines = diag.handshakeFailures.map(f => {
+            const ts = new Date(f.created_at).toISOString().slice(0, 16).replace('T', ' ');
+            return `  [${ts}] ${f.error_type}: ${f.error_message || '(no detail)'}`;
+        });
+        parts.push('Handshake failures (1h):\n' + lines.join('\n'));
+    }
+
+    return parts.length > 0 ? parts.join('\n\n') : null;
+}
+
 // ── Exported Functions ──────────────────────
 
 /**
@@ -240,9 +300,10 @@ function parseResponse(result) {
  * @param {Array}  opts.history - Conversation history [{role, content}]
  * @param {Array}  [opts.images] - Optional images [{data, mimeType}]
  * @param {Object} [opts.deviceContext] - {deviceId, page, role, email}
+ * @param {Object} [opts.deviceDiagnostics] - Full device diagnostic snapshot from fetchDeviceContext()
  * @returns {Promise<{response: string, actions: Array|null}>}
  */
-async function chatWithClaude({ message, history, images, deviceContext }) {
+async function chatWithClaude({ message, history, images, deviceContext, deviceDiagnostics }) {
     // Build context-enriched system prompt
     let system = CHAT_SYSTEM_PROMPT;
     if (deviceContext) {
@@ -253,6 +314,12 @@ async function chatWithClaude({ message, history, images, deviceContext }) {
         if (ctx.length > 0) {
             system += `\n\nCurrent session context:\n${ctx.join('\n')}`;
         }
+    }
+
+    // Append device diagnostics (errors, activity, entity states)
+    const diagText = formatDiagnostics(deviceDiagnostics);
+    if (diagText) {
+        system += `\n\nDevice diagnostics snapshot:\n${diagText}`;
     }
 
     // Build messages array

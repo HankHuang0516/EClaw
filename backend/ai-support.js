@@ -596,6 +596,72 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         return { recentLogs, recentFailures, recentCrashes };
     }
 
+    // ── Fetch Full Device Diagnostics for AI Chat ──
+    // Collects errors (24h), key activity (1h), entity states, platform/version info.
+    // Used by both /chat and processRequest to give Claude full device context.
+    async function fetchDeviceContext(deviceId, device) {
+        const ctx = {
+            platform: device?.lastPlatform || null,
+            appVersion: device?.appVersion || null,
+            entityStates: [],
+            recentErrors: [],
+            recentActivity: [],
+            handshakeFailures: []
+        };
+
+        // Entity states from in-memory device object
+        if (device?.entities) {
+            ctx.entityStates = (device.entities || []).map((e, i) => ({
+                slot: i,
+                type: i % 2 === 0 ? 'LOBSTER' : 'PIG',
+                bound: e?.isBound || false,
+                name: e?.name || null,
+                hasWebhook: !!(e?.webhookUrl)
+            }));
+        }
+
+        // Recent errors — all categories, last 24h
+        try {
+            const r = await chatPool.query(
+                `SELECT level, category, message, entity_id, metadata, created_at
+                 FROM server_logs
+                 WHERE device_id = $1 AND level = 'error'
+                   AND created_at > NOW() - INTERVAL '24 hours'
+                 ORDER BY created_at DESC LIMIT 20`,
+                [deviceId]
+            );
+            ctx.recentErrors = r.rows;
+        } catch (_) {}
+
+        // Recent important activity — bind/unbind/push/transform/broadcast, last 1h
+        try {
+            const r = await chatPool.query(
+                `SELECT level, category, message, entity_id, metadata, created_at
+                 FROM server_logs
+                 WHERE device_id = $1
+                   AND category IN ('bind', 'unbind', 'broadcast', 'broadcast_push', 'speakto_push', 'transform', 'client_push', 'push_error')
+                   AND created_at > NOW() - INTERVAL '1 hour'
+                 ORDER BY created_at DESC LIMIT 30`,
+                [deviceId]
+            );
+            ctx.recentActivity = r.rows;
+        } catch (_) {}
+
+        // Handshake failures — last 1h
+        try {
+            const r = await chatPool.query(
+                `SELECT error_type, error_message, webhook_url, http_status, source, created_at
+                 FROM handshake_failures
+                 WHERE device_id = $1 AND created_at > NOW() - INTERVAL '1 hour'
+                 ORDER BY created_at DESC LIMIT 10`,
+                [deviceId]
+            );
+            ctx.handshakeFailures = r.rows;
+        } catch (_) {}
+
+        return ctx;
+    }
+
     // ── Sanitize raw Claude CLI session JSON ─────
     // The proxy sometimes returns raw Claude CLI session output (e.g. {"type":"result","subtype":"error_max_turns",...})
     // instead of clean text. Detect and replace with user-friendly message.
@@ -996,6 +1062,11 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
 
         const messageForAI = message.trim();
 
+        // Fetch device diagnostics (errors, activity, entity states) if deviceId available
+        const deviceDiag = req.user.deviceId
+            ? await fetchDeviceContext(req.user.deviceId, devices[req.user.deviceId])
+            : null;
+
         // Priority: Anthropic direct API > CLI proxy > fallback
         const anthropic = getAnthropicClient();
         if (anthropic) {
@@ -1010,7 +1081,8 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                         page: page || 'unknown',
                         role: isAdmin ? 'admin' : 'user',
                         email: req.user.email
-                    }
+                    },
+                    deviceDiagnostics: deviceDiag
                 });
                 const latencyMs = Date.now() - startTime;
 
@@ -1064,7 +1136,8 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                         deviceId: req.user.deviceId,
                         page: page || 'unknown',
                         role: isAdmin ? 'admin' : 'user',
-                        email: req.user.email
+                        email: req.user.email,
+                        diagnostics: deviceDiag
                     }
                 }),
                 signal: AbortSignal.timeout(130000)
@@ -1199,6 +1272,11 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         const images = row.images || [];
         const ctx = row.device_context || {};
 
+        // Fetch device diagnostics for this async request
+        const deviceDiag = ctx.deviceId
+            ? await fetchDeviceContext(ctx.deviceId, devices[ctx.deviceId])
+            : null;
+
         // Priority: Anthropic direct API > CLI proxy > fallback
         const anthropic = getAnthropicClient();
         if (anthropic) {
@@ -1207,7 +1285,8 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                     message: row.message,
                     history,
                     images: images.length > 0 ? images : undefined,
-                    deviceContext: ctx
+                    deviceContext: ctx,
+                    deviceDiagnostics: deviceDiag
                 });
 
                 const latencyMs = Date.now() - startTime;
@@ -1269,7 +1348,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                 body: JSON.stringify({
                     message: proxyMessage,
                     history,
-                    device_context: ctx
+                    device_context: { ...ctx, diagnostics: deviceDiag }
                 }),
                 signal: controller.signal
             });
