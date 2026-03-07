@@ -2033,7 +2033,7 @@ app.post('/api/device/status', (req, res) => {
  *
  * The binding code maps to a specific device + entity combination.
  */
-app.post('/api/bind', (req, res) => {
+app.post('/api/bind', async (req, res) => {
     const { code, name } = req.body;
 
     if (!code) {
