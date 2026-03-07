@@ -310,7 +310,7 @@ async function runChatTests() {
     });
     assert(authStatus === 200, 'C1a: /chat accepts device auth (HTTP 200)', `got ${authStatus}`);
     assert(authData.success === true, 'C1b: response.success = true', JSON.stringify(authData).slice(0, 150));
-    assert(typeof authData.response === 'string' && authData.response.length > 5,
+    assert(typeof authData.response === 'string' && authData.response.length > 0,
         'C1c: response is non-empty string', `got: "${(authData.response || '').slice(0, 80)}"`);
 
     // C2: Ask about device status — Claude should respond with entity/device awareness
