@@ -265,6 +265,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
     // ============================================
     router.post('/register', async (req, res) => {
         try {
+            if (process.env.DEBUG === 'true') console.log('[BIND] /register called, apiKey prefix:', (req.body.channel_api_key || '').slice(0, 12));
             const account = await channelAuth(req, res);
             if (!account) return;
 
@@ -272,6 +273,8 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             if (!callback_url) {
                 return res.status(400).json({ success: false, message: 'callback_url required' });
             }
+
+            if (process.env.DEBUG === 'true') console.log(`[BIND] /register deviceId=${account.device_id} callback_url=${callback_url}`);
 
             await db.updateChannelCallback(account.channel_api_key, callback_url, callback_token || null);
 
@@ -291,6 +294,8 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                     });
                 }
             }
+
+            if (process.env.DEBUG === 'true') console.log(`[BIND] /register OK, entities:`, entities.map(e => `${e.entityId}(bound=${e.isBound},mine=${e.boundToThisAccount})`).join(', '));
 
             serverLog('info', 'channel', `Callback registered: ${callback_url}`, { deviceId: account.device_id });
 
@@ -330,12 +335,16 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
     // ============================================
     router.post('/bind', async (req, res) => {
         try {
+            if (process.env.DEBUG === 'true') console.log('[BIND] /channel/bind called, apiKey prefix:', (req.body.channel_api_key || '').slice(0, 12), 'entityId:', req.body.entityId);
             const account = await channelAuth(req, res);
             if (!account) return;
+
+            if (process.env.DEBUG === 'true') console.log(`[BIND] auth OK, accountId=${account.id}, deviceId=${account.device_id}`);
 
             const { entityId, name } = req.body;
             const eId = parseInt(entityId);
             if (isNaN(eId) || eId < 0 || eId > 7) {
+                if (process.env.DEBUG === 'true') console.log(`[BIND] invalid entityId: ${entityId}`);
                 return res.status(400).json({ success: false, message: 'entityId must be 0-7' });
             }
 
@@ -346,18 +355,23 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             const deviceId = account.device_id;
             const device = devices[deviceId];
             if (!device) {
+                if (process.env.DEBUG === 'true') console.log(`[BIND] device not found: ${deviceId}`);
                 return res.status(404).json({ success: false, message: 'Device not found' });
             }
 
             const entity = device.entities[eId];
             if (!entity) {
+                if (process.env.DEBUG === 'true') console.log(`[BIND] entity slot ${eId} not found`);
                 return res.status(400).json({ success: false, message: `Entity slot ${eId} not available` });
             }
+
+            if (process.env.DEBUG === 'true') console.log(`[BIND] entity ${eId} state: isBound=${entity.isBound}, bindingType=${entity.bindingType}, channelAccountId=${entity.channelAccountId}`);
 
             // If already bound via channel
             if (entity.isBound && entity.bindingType === 'channel') {
                 if (entity.channelAccountId === account.id) {
                     // Same plugin — return existing credentials (idempotent)
+                    if (process.env.DEBUG === 'true') console.log(`[BIND] entity ${eId} already bound to this account (idempotent), returning existing botSecret`);
                     return res.json({
                         success: true,
                         message: 'Entity already bound via channel',
@@ -369,6 +383,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                     });
                 } else {
                     // Different plugin already owns this entity
+                    if (process.env.DEBUG === 'true') console.log(`[BIND] entity ${eId} owned by different channelAccountId=${entity.channelAccountId}, rejecting`);
                     return res.status(409).json({
                         success: false,
                         message: 'Entity already bound by a different channel account. Unbind first via DELETE /api/entity/:entityId'
@@ -378,6 +393,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
 
             // Don't allow binding over an existing non-channel binding
             if (entity.isBound) {
+                if (process.env.DEBUG === 'true') console.log(`[BIND] entity ${eId} bound via non-channel method (bindingType=${entity.bindingType}), rejecting`);
                 return res.status(409).json({
                     success: false,
                     message: 'Entity already bound. Unbind first via DELETE /api/entity/:entityId'
@@ -385,6 +401,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             }
 
             // Bind the entity
+            if (process.env.DEBUG === 'true') console.log(`[BIND] binding entity ${eId} via channel, name="${name || ''}"`);
             const botSecret = generateBotSecret();
             const publicCode = generatePublicCode();
 
@@ -401,6 +418,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
 
             saveData();
             serverLog('info', 'bind', `Entity ${eId} bound via channel plugin`, { deviceId, entityId: eId });
+            if (process.env.DEBUG === 'true') console.log(`[BIND] entity ${eId} bound OK, publicCode=${publicCode}`);
 
             res.json({
                 success: true,
@@ -423,7 +441,10 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
         try {
             const { channel_api_key, deviceId, entityId, botSecret, message, state, mediaType, mediaUrl } = req.body;
 
+            if (process.env.DEBUG === 'true') console.log(`[PUSH] /channel/message called, deviceId=${deviceId}, entityId=${entityId}, state=${state}, hasMsg=${!!message}`);
+
             if (!channel_api_key || !deviceId || entityId === undefined || !botSecret) {
+                if (process.env.DEBUG === 'true') console.log('[PUSH] /channel/message missing required fields');
                 return res.status(400).json({
                     success: false,
                     message: 'channel_api_key, deviceId, entityId, and botSecret required'
