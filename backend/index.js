@@ -7531,6 +7531,28 @@ app.put('/api/schedules/:id', async (req, res) => {
     }
 });
 
+// PATCH /api/schedules/:id/toggle - Toggle pause/resume
+app.patch('/api/schedules/:id/toggle', async (req, res) => {
+    const { deviceId, deviceSecret } = req.body;
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    try {
+        const existing = await scheduler.getSchedule(parseInt(req.params.id));
+        if (!existing || existing.deviceId !== deviceId) {
+            return res.status(404).json({ success: false, error: 'Schedule not found' });
+        }
+        const schedule = await scheduler.togglePause(parseInt(req.params.id), deviceId);
+        res.json({ success: true, schedule });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+
 // DELETE /api/schedules/:id - Delete a schedule
 app.delete('/api/schedules/:id', async (req, res) => {
     const { deviceId, deviceSecret } = req.body || {};

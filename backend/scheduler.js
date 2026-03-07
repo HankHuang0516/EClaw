@@ -63,6 +63,8 @@ async function init(pool, executeCallback) {
         await pool.query(CREATE_EXECUTIONS_TABLE_SQL);
         // Migration: add timezone column if missing
         await pool.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS timezone TEXT`).catch(() => {});
+        // Migration: add is_paused column if missing
+        await pool.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS is_paused BOOLEAN DEFAULT FALSE`).catch(() => {});
         console.log('[Scheduler] Tables ready');
     } catch (err) {
         console.error('[Scheduler] Table creation failed:', err.message);
@@ -89,8 +91,8 @@ async function loadSchedules() {
         schedules = {};
         for (const row of rows) {
             schedules[row.id] = rowToSchedule(row);
-            // Re-arm recurring jobs
-            if (row.repeat_type !== 'once' && row.cron_expr && row.status === 'active') {
+            // Re-arm recurring jobs (skip paused)
+            if (row.repeat_type !== 'once' && row.cron_expr && row.status === 'active' && !row.is_paused) {
                 armCronJob(schedules[row.id]);
             }
         }
@@ -114,7 +116,8 @@ function rowToSchedule(row) {
         result: row.result || null,
         resultStatus: row.result_status || null,
         label: row.label || null,
-        timezone: row.timezone || null
+        timezone: row.timezone || null,
+        isPaused: row.is_paused || false
     };
 }
 
@@ -264,6 +267,7 @@ async function checkOneTimeSchedules() {
 
     for (const [id, schedule] of Object.entries(schedules)) {
         if (schedule.status !== 'pending' || schedule.repeatType !== 'once') continue;
+        if (schedule.isPaused) continue;
         if (!schedule.scheduledAt) continue;
 
         const scheduledTime = new Date(schedule.scheduledAt).getTime();
@@ -415,6 +419,34 @@ async function getSchedulesForBot(deviceId, entityId) {
     return rows.map(rowToSchedule);
 }
 
+// ── Toggle pause/resume ──
+async function togglePause(id, deviceId) {
+    if (!_pool) throw new Error('Scheduler not initialized');
+
+    const schedule = schedules[id] || await getSchedule(id);
+    if (!schedule) throw new Error('Schedule not found');
+    if (deviceId && schedule.deviceId !== deviceId) throw new Error('Not authorized');
+
+    const newPaused = !schedule.isPaused;
+    const { rows } = await _pool.query(
+        `UPDATE scheduled_messages SET is_paused = $1 WHERE id = $2 RETURNING *`,
+        [newPaused, id]
+    );
+    if (rows.length === 0) throw new Error('Schedule not found');
+
+    const updated = rowToSchedule(rows[0]);
+    schedules[updated.id] = updated;
+
+    // Re-arm or disarm cron job based on new pause state
+    disarmCronJob(id);
+    if (!newPaused && updated.repeatType !== 'once' && updated.cronExpr && updated.status === 'active') {
+        armCronJob(updated);
+    }
+
+    if (process.env.DEBUG === 'true') console.log(`[Scheduler] Schedule #${id} ${newPaused ? 'paused' : 'resumed'}`);
+    return updated;
+}
+
 module.exports = {
     init,
     createSchedule,
@@ -423,5 +455,6 @@ module.exports = {
     getSchedules,
     getSchedule,
     getExecutions,
-    getSchedulesForBot
+    getSchedulesForBot,
+    togglePause
 };

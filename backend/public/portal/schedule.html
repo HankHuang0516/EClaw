@@ -83,6 +83,11 @@
             opacity: 0.8;
         }
 
+        .sched-item.is-paused {
+            border-left-color: var(--text-muted);
+            opacity: 0.65;
+        }
+
         .sched-row {
             display: flex;
             align-items: center;
@@ -136,6 +141,11 @@
 
         .sched-status.completed {
             background: rgba(85, 85, 85, 0.15);
+            color: var(--text-muted);
+        }
+
+        .sched-status.paused {
+            background: rgba(128, 128, 128, 0.12);
             color: var(--text-muted);
         }
 
@@ -581,8 +591,8 @@
             el.innerHTML = items.map(s => {
                 const entityLabel = getAvatarForEntity(s.entityId) + ' ' + getEntityDisplayName(s.entityId) + ' #' + s.entityId;
                 const timeStr = formatScheduleTime(s);
-                const statusClass = s.status;
-                const statusLabel = getStatusLabel(s.status);
+                const statusClass = s.isPaused ? 'paused' : s.status;
+                const statusLabel = s.isPaused ? (i18n.t('sched_status_paused') || 'Paused') : getStatusLabel(s.status);
                 const repeatBadge = s.repeatType !== 'once'
                     ? '<span class="sched-repeat-badge">' + getRepeatLabel(s.repeatType) + '</span>'
                     : '';
@@ -618,7 +628,7 @@
                         ? ' onclick="showExecutionContext(' + s.id + ')" style="cursor:pointer;" title="' + (i18n.t('sched_view_reply') || 'View Bot Reply') + '"'
                         : '');
 
-                return '<div class="sched-item status-' + statusClass + '"' + clickAttr + '>' +
+                return '<div class="sched-item status-' + statusClass + (s.isPaused ? ' is-paused' : '') + '"' + clickAttr + '>' +
                     '<div class="sched-row">' +
                     '<span class="sched-time">' + timeStr + '</span>' +
                     '<span class="sched-entity">' + esc(entityLabel) + '</span>' +
@@ -1029,7 +1039,10 @@
 
                 '<hr style="border:none;border-top:1px solid var(--card-border);margin:16px 0 12px;">' +
                 '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                '<div style="display:flex;gap:8px;">' +
                 '<button class="btn btn-sm btn-outline" style="color:var(--danger);border-color:var(--danger);" onclick="closeDialog();confirmDelete(' + scheduleId + ')">' + (i18n.t('sched_delete') || 'Delete') + '</button>' +
+                '<button class="btn btn-sm btn-outline" id="dlgToggleBtn" onclick="toggleSchedulePause(' + scheduleId + ')" style="' + (schedule.isPaused ? 'color:var(--success);border-color:var(--success);' : '') + '">' + (schedule.isPaused ? (i18n.t('sched_enable') || 'Enable') : (i18n.t('sched_disable') || 'Disable')) + '</button>' +
+                '</div>' +
                 '<div class="dialog-actions" style="margin-top:0;">' +
                 '<button class="btn btn-outline" onclick="closeDialog()">' + (i18n.t('mc_dlg_cancel') || 'Cancel') + '</button>' +
                 '<button class="btn btn-primary" id="dlgSaveBtn" onclick="updateSchedule(' + scheduleId + ')">' + (i18n.t('sched_btn_save') || 'Save') + '</button>' +
@@ -1104,6 +1117,24 @@
                 showToast(e.message || 'Failed to update schedule', 'error');
                 btn.disabled = false;
                 btn.textContent = i18n.t('sched_btn_save') || 'Save';
+            }
+        }
+
+        // ── Toggle Pause ──
+        async function toggleSchedulePause(scheduleId) {
+            const btn = document.getElementById('dlgToggleBtn');
+            if (btn) btn.disabled = true;
+            try {
+                await apiCall('PATCH', '/api/schedules/' + scheduleId + '/toggle', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret
+                });
+                showToast(i18n.t('sched_toggle_ok') || 'Schedule updated', 'success');
+                closeDialog();
+                await loadSchedules();
+            } catch (e) {
+                showToast(e.message || 'Failed to update schedule', 'error');
+                if (btn) btn.disabled = false;
             }
         }
 
