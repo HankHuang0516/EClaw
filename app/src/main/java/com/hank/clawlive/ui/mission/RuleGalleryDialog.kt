@@ -26,19 +26,19 @@ class RuleGalleryDialog(
             return
         }
 
-        val defaultRuleType = "WORKFLOW"
-
         val labels = templates.map { t ->
             val icon = t.icon ?: "📋"
             val label = t.label
-            "$icon $label  [$defaultRuleType]"
+            val ruleTypeDisplay = t.ruleType ?: "WORKFLOW"
+            "$icon $label  [$ruleTypeDisplay]"
         }.toTypedArray()
 
         builder.setItems(labels) { _, which ->
             val tpl = templates[which]
-            val name = tpl.title
-            val description = tpl.label
-            onTemplateSelected(name, description, defaultRuleType)
+            val name = tpl.name ?: tpl.title
+            val desc = tpl.description ?: tpl.label
+            val ruleType = tpl.ruleType ?: "WORKFLOW"
+            onTemplateSelected(name, desc, ruleType)
         }
             .setNegativeButton(android.R.string.cancel, null)
             .show()

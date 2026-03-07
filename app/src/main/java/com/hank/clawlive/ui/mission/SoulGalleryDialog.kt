@@ -34,9 +34,9 @@ class SoulGalleryDialog(
 
         builder.setItems(labels) { _, which ->
             val tpl = templates[which]
-            val name = tpl.title
-            val description = tpl.label
-            onTemplateSelected(name, description)
+            val name = tpl.name ?: tpl.title
+            val desc = tpl.description ?: tpl.label
+            onTemplateSelected(name, desc)
         }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
