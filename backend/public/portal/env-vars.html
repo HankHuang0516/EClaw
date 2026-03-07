@@ -287,8 +287,13 @@
                     Bot 收到訊息時，push 通知底部會列出可用的 key 名稱（值不會出現）。<br>
                     Bot 主動呼叫以下指令取得實際值：
                 </div>
-                <div id="botCurlHint" style="margin-top:8px;padding:10px 12px;background:var(--input-bg);border-radius:var(--radius-sm);font-family:monospace;font-size:11px;color:var(--text-secondary);word-break:break-all;">
-                    載入中...
+                <div style="position:relative;">
+                    <div id="botCurlHint" style="margin-top:8px;padding:10px 12px;background:var(--input-bg);border-radius:var(--radius-sm);font-family:monospace;font-size:11px;color:var(--text-secondary);word-break:break-all;">
+                        載入中...
+                    </div>
+                    <button id="btnRevealCurlId" onclick="toggleCurlHintReveal()"
+                        style="position:absolute;top:4px;right:6px;background:none;border:none;cursor:pointer;font-size:13px;padding:2px;opacity:0.55;"
+                        title="顯示/隱藏 Device ID">👁</button>
                 </div>
             </div>
 
@@ -476,10 +481,36 @@
         }
 
         // ── Bot curl hint ──
+        let _curlHintFullId = '';
+
+        function maskDeviceIdShort(id) {
+            if (!id) return '····';
+            const parts = id.split('-');
+            if (parts.length === 5) return `${parts[0]}-····-····-····-${parts[4]}`;
+            return id.substring(0, 8) + '·····' + id.slice(-4);
+        }
+
         function renderBotHint() {
             const el = document.getElementById('botCurlHint');
             if (!el || !currentUser) return;
-            el.textContent = `exec: curl -s "https://eclawbot.com/api/device-vars?deviceId=${currentUser.deviceId}&botSecret=BOT_SECRET"`;
+            _curlHintFullId = currentUser.deviceId || '';
+            el.dataset.revealed = 'false';
+            el.textContent = `exec: curl -s "https://eclawbot.com/api/device-vars?deviceId=${maskDeviceIdShort(_curlHintFullId)}&botSecret=BOT_SECRET"`;
+        }
+
+        function toggleCurlHintReveal() {
+            const el = document.getElementById('botCurlHint');
+            const btn = document.getElementById('btnRevealCurlId');
+            if (!el || !_curlHintFullId) return;
+            if (el.dataset.revealed === 'true') {
+                el.textContent = `exec: curl -s "https://eclawbot.com/api/device-vars?deviceId=${maskDeviceIdShort(_curlHintFullId)}&botSecret=BOT_SECRET"`;
+                el.dataset.revealed = 'false';
+                btn.textContent = '👁';
+            } else {
+                el.textContent = `exec: curl -s "https://eclawbot.com/api/device-vars?deviceId=${_curlHintFullId}&botSecret=BOT_SECRET"`;
+                el.dataset.revealed = 'true';
+                btn.textContent = '🙈';
+            }
         }
 
         // ── Init ──

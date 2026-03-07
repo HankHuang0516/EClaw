@@ -1407,7 +1407,7 @@ DELETE /api/channel/register
                         <p>這個方案把三個系統串在一起：</p>
                         <div class="code-block">你（自然語言）→ Claude（AI 指揮官）→ Eclaw API → OpenClaw Bot（執行任務）→ 回報結果</div>
 
-                        <table class="api-table" style="margin-top:16px">
+                        <table class="feature-table" style="margin-top:16px">
                             <thead><tr><th>角色</th><th>說明</th></tr></thead>
                             <tbody>
                                 <tr><td><strong>Eclaw</strong></td><td>中控台，管理 entity（bot 席位），提供 HTTP API</td></tr>
@@ -1435,7 +1435,7 @@ DELETE /api/channel/register
 
                         <h3 class="step-heading">Device Secret</h3>
                         <p>Device Secret 讓 Claude 可以設定排程、查詢 entity 狀態等 owner 層級操作。</p>
-                        <p>取得方式：瀏覽器開啟 Portal → 按 <strong>F12</strong>（開發者工具）→ Network → 找 <code>/api/auth/me</code> 請求 → Response 中有 <code>deviceSecret</code> 欄位。</p>
+                        <p>取得方式：Web Portal → 右上角頭像 → <strong>Settings</strong> → Device Secret 列 → 點眼睛圖示顯示 → 複製。</p>
                         <div class="note">⚠️ Device Secret 請勿公開分享。<br>Bot Secret 是 bot 自己在綁定時收到的憑證，由 bot 持有，用戶<strong>不需要</strong>取得或提供給 Claude。</div>
 
                         <h3 class="step-heading">Entity ID</h3>
@@ -1507,7 +1507,7 @@ DELETE /api/channel/register
                         <hr>
 
                         <h2>常用指令速查</h2>
-                        <table class="api-table">
+                        <table class="feature-table">
                             <thead><tr><th>你想做的事</th><th>說法範例</th></tr></thead>
                             <tbody>
                                 <tr><td>查看 bot 狀態</td><td>「我的 bot 在幹嘛？」</td></tr>
@@ -1567,7 +1567,7 @@ Claude 主動查詢執行結果
                         </ol>
                         <div class="note">從頭到尾你只說了一句話。Claude 獨立完成了發送、驗證、發現錯誤、糾正、再驗證的完整流程。</div>
 
-                        <table class="api-table" style="margin-top:16px">
+                        <table class="feature-table" style="margin-top:16px">
                             <thead><tr><th>傳統做法</th><th>Claude 閉環做法</th></tr></thead>
                             <tbody>
                                 <tr><td>下指令 → 自己去 Portal 檢查 → 發現錯了 → 手動糾正 → 再確認</td><td>下指令 → 等結果</td></tr>
@@ -1584,7 +1584,7 @@ Claude 主動查詢執行結果
                         A: 你需要使用 <strong>Claude Code CLI</strong>（有 Bash 工具），或在 Claude.ai 啟用 MCP 工具。標準對話介面只會給你指令讓你自己貼到終端機執行。</p>
 
                         <p><strong>Q: Device Secret 在哪裡找？</strong><br>
-                        A: 瀏覽器 F12 → Network → 找 <code>/api/auth/me</code> 回應 → 裡面有 <code>deviceSecret</code> 欄位。Bot Secret 是 bot 自己的憑證，用戶不需要取得。</p>
+                        A: Web Portal → 右上角頭像 → Settings → Device Secret 列 → 點眼睛圖示顯示 → 複製。Bot Secret 是 bot 自己的憑證，用戶不需要取得。</p>
 
                         <p><strong>Q: Claude 下的指令 bot 沒有反應？</strong><br>
                         A: 確認 bot 已綁定（isBound: true）、Device Secret 正確、OpenClaw 在線。</p>

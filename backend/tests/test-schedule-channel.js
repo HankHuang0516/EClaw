@@ -23,9 +23,9 @@ const fs   = require('fs');
 const args    = process.argv.slice(2);
 const API_BASE = args.includes('--local') ? 'http://localhost:3000' : 'https://eclawbot.com';
 
-const ENTITY_CH = 6;
+const ENTITY_CH = 1;   // must be within free device limit (0-3); entity 6 is premium-only
 const POLL_MS   = 1500;
-const WAIT_MS   = 30000; // schedule fires in ~5s, give 30s total
+const WAIT_MS   = 90000; // scheduler runs every minute; wait up to 90s for the next cron tick
 
 function loadEnv() {
     const p = path.resolve(__dirname, '..', '.env');
@@ -115,10 +115,12 @@ async function run() {
     assert(bind.data?.bindingType === 'channel', 'bindingType=channel');
 
     // ── 3. Clear sink + create schedule (fires in 5s) ─────────────────────────
-    console.log('\n── 3. Create one-time schedule (fires in 5 seconds) ──');
+    // Scheduler runs every minute (cron * * * * *). Set scheduledAt to NOW so the
+    // next cron tick (within 60s) will always execute it (scheduledAt <= now).
+    console.log('\n── 3. Create one-time schedule (already overdue — next cron tick will fire it) ──');
     await del(`${SINK}?slot=${SLOT}&deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`);
 
-    const fireAt = new Date(Date.now() + 5000).toISOString();
+    const fireAt = new Date(Date.now()).toISOString();
     const schedRes = await post(`${API_BASE}/api/schedules`, {
         deviceId:     DEVICE_ID,
         deviceSecret: DEVICE_SECRET,
