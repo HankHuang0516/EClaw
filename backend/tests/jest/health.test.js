@@ -109,6 +109,7 @@ jest.mock('../../gatekeeper', () => ({
     getFreeBotTOS: jest.fn().mockResolvedValue(null),
     hasAgreedToTOS: jest.fn().mockResolvedValue(false),
     recordTOSAgreement: jest.fn().mockResolvedValue(undefined),
+    setServerLog: jest.fn(),
     MAX_STRIKES: 3,
     FREE_BOT_TOS_VERSION: '1.0',
 }));
@@ -119,6 +120,8 @@ jest.mock('../../mission', () => {
         router: express.Router(),
         initMissionDatabase: jest.fn().mockResolvedValue(undefined),
         setNotifyCallback: jest.fn(),
+        setPushToBot: jest.fn(),
+        setPushToChannelCallback: jest.fn(),
     });
 });
 
