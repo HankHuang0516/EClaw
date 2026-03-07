@@ -2072,7 +2072,12 @@ app.post('/api/bind', (req, res) => {
     serverLog('info', 'bind', `Entity ${entityId} bound${name ? ` (name: ${name})` : ''}`, { deviceId, entityId });
 
     // Save data immediately after binding (critical operation)
-    saveData();
+    // Await single-device save to ensure state is persisted before responding
+    if (usePostgreSQL) {
+        await db.saveDeviceData(deviceId, device);
+    } else {
+        saveData();
+    }
 
     res.json({
         success: true,
