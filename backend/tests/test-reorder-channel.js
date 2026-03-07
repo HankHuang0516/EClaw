@@ -139,7 +139,7 @@ async function run() {
     const order = buildSwappedOrder(maxSlot, ENTITY_CH, SWAP_WITH);
     console.log(`    Order: ${order.join(',')}`);
 
-    const reorderRes = await post(`${API_BASE}/api/device/reorder`, {
+    const reorderRes = await post(`${API_BASE}/api/device/reorder-entities`, {
         deviceId:     DEVICE_ID,
         deviceSecret: DEVICE_SECRET,
         order
@@ -187,7 +187,7 @@ async function run() {
     console.log('\n── Cleanup ──');
     // Restore original order
     const restoreOrder = buildSwappedOrder(maxSlot, ENTITY_CH, SWAP_WITH); // swap back
-    await post(`${API_BASE}/api/device/reorder`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, order: restoreOrder });
+    await post(`${API_BASE}/api/device/reorder-entities`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, order: restoreOrder });
     await new Promise(x => setTimeout(x, 300));
     // Now entity is back at slot ENTITY_CH — unbind it
     await del(`${API_BASE}/api/device/entity`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, entityId: ENTITY_CH });
