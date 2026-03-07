@@ -1397,8 +1397,8 @@
 
         function showSoulGallery() {
             const cards = soulTemplates.map(t =>
-                `<div class="tpl-gallery-card" onclick="selectSoulTemplate('${esc(t.id)}')">
-                    <div class="tpl-gallery-icon">${t.icon || '🧠'}</div>
+                `<div class="tpl-gallery-card" data-id="${esc(t.id)}" data-label="${esc(t.label)}" onclick="selectSoulTemplate('${esc(t.id)}')">
+                    <div class="tpl-gallery-icon">${esc(t.icon) || '🧠'}</div>
                     <div class="tpl-gallery-info">
                         <div class="tpl-gallery-title">${esc(t.label)}</div>
                         <div class="tpl-gallery-meta">by ${esc(t.author || '—')} · ${esc(t.updatedAt || '')}</div>
@@ -1425,8 +1425,7 @@
         function filterSoulGallery(query) {
             const q = query.toLowerCase();
             document.querySelectorAll('#soul_gallery_list .tpl-gallery-card').forEach(card => {
-                const title = card.querySelector('.tpl-gallery-title');
-                card.style.display = (title && title.textContent.toLowerCase().includes(q)) ? '' : 'none';
+                card.style.display = (card.dataset.label || '').toLowerCase().includes(q) ? '' : 'none';
             });
         }
 
@@ -1449,8 +1448,8 @@
 
         function showRuleGallery() {
             const cards = ruleTemplates.map(t =>
-                `<div class="tpl-gallery-card" onclick="selectRuleTemplate('${esc(t.id)}')">
-                    <div class="tpl-gallery-icon">${t.icon || '📋'}</div>
+                `<div class="tpl-gallery-card" data-id="${esc(t.id)}" data-label="${esc(t.label)}" onclick="selectRuleTemplate('${esc(t.id)}')">
+                    <div class="tpl-gallery-icon">${esc(t.icon) || '📋'}</div>
                     <div class="tpl-gallery-info">
                         <div class="tpl-gallery-title">${esc(t.label)}</div>
                         <div class="tpl-gallery-meta">by ${esc(t.author || '—')} · ${esc(t.ruleType || '')} · ${esc(t.updatedAt || '')}</div>
@@ -1477,8 +1476,7 @@
         function filterRuleGallery(query) {
             const q = query.toLowerCase();
             document.querySelectorAll('#rule_gallery_list .tpl-gallery-card').forEach(card => {
-                const title = card.querySelector('.tpl-gallery-title');
-                card.style.display = (title && title.textContent.toLowerCase().includes(q)) ? '' : 'none';
+                card.style.display = (card.dataset.label || '').toLowerCase().includes(q) ? '' : 'none';
             });
         }
 
