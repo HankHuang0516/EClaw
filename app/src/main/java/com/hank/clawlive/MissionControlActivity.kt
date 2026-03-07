@@ -39,6 +39,7 @@ import com.hank.clawlive.ui.MissionViewModel
 import com.hank.clawlive.ui.NavItem
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import com.hank.clawlive.ui.mission.*
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.text.SimpleDateFormat
@@ -507,6 +508,7 @@ class MissionControlActivity : AppCompatActivity() {
 
     private fun showAddRuleDialog() {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_mission_rule, null)
+        val btnChooseRuleTemplate = view.findViewById<MaterialButton>(R.id.btnChooseRuleTemplate)
         val etName = view.findViewById<EditText>(R.id.etName)
         val etDescription = view.findViewById<EditText>(R.id.etDescription)
         val spinnerType = view.findViewById<Spinner>(R.id.spinnerRuleType)
@@ -516,6 +518,20 @@ class MissionControlActivity : AppCompatActivity() {
         spinnerType.adapter = ArrayAdapter(this,
             android.R.layout.simple_spinner_dropdown_item,
             types.map { it.name })
+
+        // Wire up server-side rule gallery button
+        btnChooseRuleTemplate.setOnClickListener {
+            viewModel.fetchRuleTemplates()
+            lifecycleScope.launch {
+                val templates = viewModel.ruleTemplates.first { it.isNotEmpty() }
+                RuleGalleryDialog(this@MissionControlActivity, templates) { name, desc, ruleType ->
+                    etName.setText(name)
+                    etDescription.setText(desc)
+                    val idx = types.indexOfFirst { it.name == ruleType }
+                    if (idx >= 0) spinnerType.setSelection(idx)
+                }.show()
+            }
+        }
 
         val checkboxes = buildEntityCheckboxes(container, emptyList())
 
@@ -774,6 +790,7 @@ class MissionControlActivity : AppCompatActivity() {
     private fun showSoulDialogInternal(soul: com.hank.clawlive.data.model.MissionSoul?) {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_mission_soul, null)
         val spinnerTemplate = view.findViewById<Spinner>(R.id.spinnerTemplate)
+        val btnChooseSoulTemplate = view.findViewById<MaterialButton>(R.id.btnChooseSoulTemplate)
         val etName = view.findViewById<EditText>(R.id.etName)
         val etDescription = view.findViewById<EditText>(R.id.etDescription)
         val container = view.findViewById<LinearLayout>(R.id.entityCheckboxContainer)
@@ -801,6 +818,19 @@ class MissionControlActivity : AppCompatActivity() {
                 }
             }
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
+
+        // Wire up server-side soul gallery button
+        btnChooseSoulTemplate.setOnClickListener {
+            viewModel.fetchSoulTemplates()
+            lifecycleScope.launch {
+                val templates = viewModel.soulTemplates.first { it.isNotEmpty() }
+                SoulGalleryDialog(this@MissionControlActivity, templates) { name, desc ->
+                    etName.setText(name)
+                    etDescription.setText(desc)
+                    spinnerTemplate.setSelection(0) // reset to custom
+                }.show()
+            }
         }
 
         val checkboxes = buildEntityCheckboxes(container, soul?.assignedEntities ?: emptyList())

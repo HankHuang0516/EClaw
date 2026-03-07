@@ -5,11 +5,19 @@
     android:orientation="vertical"
     android:padding="24dp">
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnChooseRuleTemplate"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/mission_choose_from_template"
+        android:layout_marginBottom="12dp" />
+
     <EditText
         android:id="@+id/etName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="規則名稱"
+        android:hint="@string/rule_name_hint"
         android:inputType="text"
         android:layout_marginBottom="12dp" />
 
@@ -17,7 +25,7 @@
         android:id="@+id/etDescription"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="規則說明"
+        android:hint="@string/rule_desc_hint"
         android:inputType="textMultiLine"
         android:minLines="2"
         android:layout_marginBottom="12dp" />

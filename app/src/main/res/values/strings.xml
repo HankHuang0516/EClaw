@@ -184,6 +184,8 @@
     <string name="soul_template_custom">-- Custom --</string>
     <string name="soul_name_hint">Soul name</string>
     <string name="soul_desc_hint">Describe personality, tone, behavior…</string>
+    <string name="rule_name_hint">Rule name</string>
+    <string name="rule_desc_hint">Describe the rule…</string>
     <string name="edit">Edit</string>
     <string name="priority">Priority</string>
     <string name="assign_entity">Assign Entity</string>
