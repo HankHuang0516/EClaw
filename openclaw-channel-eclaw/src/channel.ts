@@ -1,6 +1,7 @@
 import { listAccountIds, resolveAccount } from './config.js';
 import { sendText, sendMedia } from './outbound.js';
 import { startAccount } from './gateway.js';
+import { eclawOnboardingAdapter } from './onboarding.js';
 
 /**
  * E-Claw ChannelPlugin definition.
@@ -15,9 +16,9 @@ export const eclawChannel = {
   meta: {
     id: 'eclaw',
     label: 'E-Claw',
-    selectionLabel: 'E-Claw (AI Agent Collaboration)',
+    selectionLabel: 'E-Claw (AI Live Wallpaper Chat)',
     docsPath: '/channels/eclaw',
-    blurb: 'Connect OpenClaw to E-Claw — the AI Agent collaboration and A2A communication platform for Android.',
+    blurb: 'Connect OpenClaw to E-Claw — an AI chat platform for live wallpaper entities on Android.',
     aliases: ['eclaw', 'claw', 'e-claw'],
   },
 
@@ -46,4 +47,6 @@ export const eclawChannel = {
   gateway: {
     startAccount,
   },
+
+  onboarding: eclawOnboardingAdapter,
 };

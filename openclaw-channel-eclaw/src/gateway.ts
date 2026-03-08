@@ -1,54 +1,61 @@
-import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { randomBytes } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { homedir } from 'node:os';
 import { resolveAccount } from './config.js';
+import type { EClawAccountConfig } from './types.js';
 import { EClawClient } from './client.js';
 import { setClient } from './outbound.js';
 import { createWebhookHandler } from './webhook-handler.js';
+import { registerWebhookToken, unregisterWebhookToken } from './webhook-registry.js';
 
-// ── Reconnect / health-check constants ───────────────────────────────────────
-const HEALTH_CHECK_INTERVAL_MS = 60_000;  // re-register every 60 s to stay live
-const BACKOFF_INITIAL_MS       =  5_000;  // first retry after 5 s
-const BACKOFF_MAX_MS           = 300_000; // cap at 5 min
-const BACKOFF_MULTIPLIER       = 2;
+/**
+ * Resolve account from ctx.
+ *
+ * OpenClaw may pass a pre-resolved account object in ctx.account,
+ * or an empty config. Fall back to reading openclaw.json from disk.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function resolveAccountFromCtx(ctx: any): EClawAccountConfig {
+  // Preferred: OpenClaw passes the resolved account in ctx.account
+  if (ctx.account?.apiKey) {
+    return {
+      enabled: ctx.account.enabled ?? true,
+      apiKey: ctx.account.apiKey,
+      apiSecret: ctx.account.apiSecret,
+      apiBase: (ctx.account.apiBase ?? 'https://eclawbot.com').replace(/\/$/, ''),
+      entityId: ctx.account.entityId,  // undefined = auto-select
+      botName: ctx.account.botName,
+      webhookUrl: ctx.account.webhookUrl,
+    };
+  }
 
-/** Build callbackUrl fresh from env every time — never use a stale closure value. */
-function buildCallbackUrl(actualPort: number): string {
-  const publicUrl = process.env.ECLAW_WEBHOOK_URL?.replace(/\/$/, '');
-  const base = publicUrl || `http://localhost:${actualPort}`;
-  return `${base}/eclaw-webhook`;
-}
-
-/** Sleep ms, but resolve early if abortSignal fires. */
-function sleep(ms: number, signal?: AbortSignal): Promise<void> {
-  return new Promise<void>((resolve) => {
-    if (signal?.aborted) { resolve(); return; }
-    const timer = setTimeout(resolve, ms);
-    signal?.addEventListener('abort', () => { clearTimeout(timer); resolve(); }, { once: true });
-  });
-}
-
-/** Add ±20 % random jitter to reduce thundering-herd on reconnect. */
-function jitter(ms: number): number {
-  return Math.floor(ms * (0.8 + Math.random() * 0.4));
+  // Fallback: read config from disk (OpenClaw passes empty config object)
+  const configPath = process.env.OPENCLAW_CONFIG_PATH
+    || join(homedir(), '.openclaw', 'openclaw.json');
+  let fullConfig: unknown = {};
+  try {
+    fullConfig = JSON.parse(readFileSync(configPath, 'utf8'));
+  } catch { /* ignore */ }
+  return resolveAccount(fullConfig, ctx.accountId ?? ctx.account?.accountId);
 }
 
 /**
  * Gateway lifecycle: start an E-Claw account.
  *
- * 1. Initialize HTTP client with channel API credentials
- * 2. Start a local HTTP server to receive webhook callbacks
- * 3. Register callback URL with E-Claw backend (with exponential-backoff retry)
+ * 1. Resolve credentials from ctx.account or disk
+ * 2. Register a per-session handler in the webhook-registry (served by the
+ *    main OpenClaw gateway HTTP server at /eclaw-webhook — no separate port)
+ * 3. Register callback URL with E-Claw backend
  * 4. Auto-bind entity if not already bound
- * 5. Periodically re-register to keep callback URL live (health check)
- * 6. On health-check failure, reconnect with exponential backoff
- * 7. Keep the promise alive until abort signal fires
+ * 5. Keep the promise alive until abort signal fires
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function startAccount(ctx: any): Promise<void> {
-  const { accountId, config } = ctx;
-  const account = resolveAccount(config, accountId);
+  const accountId: string = ctx.accountId ?? ctx.account?.accountId ?? 'default';
+  const account = resolveAccountFromCtx(ctx);
 
-  if (!account.enabled || !account.apiKey || !account.apiSecret) {
+  if (!account.enabled || !account.apiKey) {
     console.log(`[E-Claw] Account ${accountId} disabled or missing credentials, skipping`);
     return;
   }
@@ -60,155 +67,68 @@ export async function startAccount(ctx: any): Promise<void> {
   // Generate per-session callback token
   const callbackToken = randomBytes(32).toString('hex');
 
-  // Determine webhook configuration
-  const webhookPort = parseInt(process.env.ECLAW_WEBHOOK_PORT || '0') || 0;
-  const publicUrl = process.env.ECLAW_WEBHOOK_URL;
+  // Webhook URL: account config > env var > warn
+  const publicUrl = account.webhookUrl?.replace(/\/$/, '')
+    || process.env.ECLAW_WEBHOOK_URL?.replace(/\/$/, '');
 
   if (!publicUrl) {
     console.warn(
-      '[E-Claw] ECLAW_WEBHOOK_URL not set. Set this to your public-facing URL ' +
-      'so E-Claw can send messages to this plugin. Example: https://my-openclaw.example.com'
+      '[E-Claw] Webhook URL not configured. ' +
+      'Run "openclaw configure" and enter your OpenClaw public URL, ' +
+      'or set ECLAW_WEBHOOK_URL env var. ' +
+      'Example: https://your-openclaw-domain.com'
     );
   }
 
-  // Create webhook handler
-  const handler = createWebhookHandler(callbackToken, accountId);
+  // The callback URL points to /eclaw-webhook on the main gateway HTTP server
+  const callbackUrl = `${publicUrl || 'http://localhost'}/eclaw-webhook`;
 
-  // Parse JSON body for incoming requests
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const requestHandler = (req: IncomingMessage, res: ServerResponse & { end: any }) => {
-    if (req.method === 'POST' && req.url?.startsWith('/eclaw-webhook')) {
-      let body = '';
-      req.on('data', (chunk: Buffer) => { body += chunk.toString(); });
-      req.on('end', () => {
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (req as any).body = JSON.parse(body);
-        } catch {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (req as any).body = {};
-        }
-        handler(req, res);
+  // Register handler in the per-token registry
+  // Pass ctx.cfg so the handler can dispatch to the correct OpenClaw agent
+  const handler = createWebhookHandler(callbackToken, accountId, ctx.cfg);
+  registerWebhookToken(callbackToken, accountId, handler);
+  console.log(`[E-Claw] Webhook registered at: ${callbackUrl}`);
+
+  try {
+    // Register callback with E-Claw backend
+    const regData = await client.registerCallback(callbackUrl, callbackToken);
+    console.log(`[E-Claw] Registered with E-Claw. Device: ${regData.deviceId}, Entities: ${regData.entities.length}`);
+
+    // Bind entity via channel API.
+    // /api/channel/bind is idempotent for the same channel account:
+    //   - Not bound → binds fresh, returns new botSecret
+    //   - Already bound via this channel account → returns existing botSecret (reconnect)
+    //   - Bound via different method → throws error (user must unbind first)
+    // entityId is omitted here so the server auto-selects the best slot
+    const bindData = await client.bindEntity(account.entityId, account.botName);
+    const assignedEntityId = bindData.entityId;
+    const entityInfo = regData.entities.find(e => e.entityId === assignedEntityId);
+    const wasAlreadyBound = entityInfo?.isBound ?? false;
+    console.log(
+      wasAlreadyBound
+        ? `[E-Claw] Entity ${assignedEntityId} reconnected (existing channel binding), publicCode: ${bindData.publicCode}`
+        : `[E-Claw] Entity ${assignedEntityId} bound, publicCode: ${bindData.publicCode}`
+    );
+
+    console.log(`[E-Claw] Account ${accountId} ready!`);
+  } catch (err) {
+    console.error(`[E-Claw] Setup failed for account ${accountId}:`, err);
+    unregisterWebhookToken(callbackToken);
+    return;
+  }
+
+  // Keep the promise alive until abort signal fires
+  return new Promise<void>((resolve) => {
+    const signal: AbortSignal | undefined = ctx.abortSignal;
+    if (signal) {
+      signal.addEventListener('abort', () => {
+        console.log(`[E-Claw] Shutting down account ${accountId}`);
+        client.unregisterCallback().catch(() => {});
+        unregisterWebhookToken(callbackToken);
+        resolve();
       });
     } else {
-      res.writeHead(404);
-      res.end('Not Found');
+      resolve();
     }
-  };
-
-  const server = createServer(requestHandler);
-
-  return new Promise<void>((resolve) => {
-    server.listen(webhookPort, async () => {
-      const addr = server.address();
-      const actualPort = typeof addr === 'object' && addr ? addr.port : webhookPort;
-
-      console.log(`[E-Claw] Webhook server listening on port ${actualPort}`);
-
-      const signal: AbortSignal | undefined = ctx.abortSignal;
-
-      // ── Core setup: register callback + bind entity ─────────────────────
-      /**
-       * One full register+bind cycle. Returns true on success, false on failure.
-       * Reads ECLAW_WEBHOOK_URL fresh every call so a corrected env var takes
-       * effect automatically on the next reconnect.
-       */
-      async function attemptSetup(): Promise<boolean> {
-        const callbackUrl = buildCallbackUrl(actualPort);
-        console.log(`[E-Claw][${accountId}] Registering callback: ${callbackUrl}`);
-        try {
-          const regData = await client.registerCallback(callbackUrl, callbackToken);
-          console.log(`[E-Claw][${accountId}] Registered. Device: ${regData.deviceId}, Entities: ${regData.entities.length}`);
-
-          const entity = regData.entities.find(e => e.entityId === account.entityId);
-          if (!entity?.isBound) {
-            console.log(`[E-Claw][${accountId}] Entity ${account.entityId} not bound, binding...`);
-            const bindData = await client.bindEntity(account.entityId, account.botName);
-            console.log(`[E-Claw][${accountId}] Bound entity ${account.entityId}, publicCode: ${bindData.publicCode}`);
-          } else {
-            console.log(`[E-Claw][${accountId}] Entity ${account.entityId} already bound`);
-            // For already-bound entities, retrieve credentials via bind endpoint
-            const bindData = await client.bindEntity(account.entityId, account.botName);
-            console.log(`[E-Claw][${accountId}] Retrieved credentials for entity ${account.entityId}`);
-            void bindData; // credentials stored in client
-          }
-          return true;
-        } catch (err) {
-          console.error(`[E-Claw][${accountId}] Setup attempt failed:`, err);
-          return false;
-        }
-      }
-
-      // ── Initial connect with exponential backoff ────────────────────────
-      let backoffMs = BACKOFF_INITIAL_MS;
-      let attempt = 0;
-
-      while (!signal?.aborted) {
-        attempt++;
-        const ok = await attemptSetup();
-        if (ok) {
-          console.log(`[E-Claw][${accountId}] Account ready! (attempt #${attempt})`);
-          break;
-        }
-        const delay = jitter(Math.min(backoffMs, BACKOFF_MAX_MS));
-        console.warn(`[E-Claw][${accountId}] Retrying in ${Math.round(delay / 1000)}s (attempt #${attempt})...`);
-        await sleep(delay, signal);
-        backoffMs = Math.min(backoffMs * BACKOFF_MULTIPLIER, BACKOFF_MAX_MS);
-      }
-
-      if (signal?.aborted) return;
-
-      // ── Periodic health check + auto-reconnect ──────────────────────────
-      // Re-register every 60 s. If it fails, enter a reconnect backoff loop.
-      // Guard flag prevents concurrent reconnect loops from stacking.
-      let isReconnecting = false;
-
-      async function runHealthCheck(): Promise<void> {
-        if (isReconnecting) return; // already reconnecting, skip this tick
-
-        const callbackUrl = buildCallbackUrl(actualPort);
-        try {
-          await client.registerCallback(callbackUrl, callbackToken);
-          // Silent success — no log spam when healthy
-        } catch (err) {
-          if (isReconnecting) return;
-          isReconnecting = true;
-          console.warn(`[E-Claw][${accountId}] Health check failed — starting reconnect loop:`, err);
-
-          let reconnBackoff = BACKOFF_INITIAL_MS;
-          let reconnAttempt = 0;
-
-          while (!signal?.aborted) {
-            reconnAttempt++;
-            const delay = jitter(Math.min(reconnBackoff, BACKOFF_MAX_MS));
-            console.warn(`[E-Claw][${accountId}] Reconnect attempt #${reconnAttempt} in ${Math.round(delay / 1000)}s...`);
-            await sleep(delay, signal);
-            if (signal?.aborted) break;
-
-            const recovered = await attemptSetup();
-            if (recovered) {
-              console.log(`[E-Claw][${accountId}] Reconnected successfully after ${reconnAttempt} attempt(s)!`);
-              break;
-            }
-            reconnBackoff = Math.min(reconnBackoff * BACKOFF_MULTIPLIER, BACKOFF_MAX_MS);
-          }
-
-          isReconnecting = false;
-        }
-      }
-
-      const healthTimer = setInterval(() => { void runHealthCheck(); }, HEALTH_CHECK_INTERVAL_MS);
-
-      // ── Cleanup on abort ────────────────────────────────────────────────
-      if (signal) {
-        signal.addEventListener('abort', () => {
-          console.log(`[E-Claw][${accountId}] Shutting down account`);
-          clearInterval(healthTimer);
-          client.unregisterCallback().catch(() => {});
-          server.close();
-          resolve();
-        });
-      }
-    });
   });
 }

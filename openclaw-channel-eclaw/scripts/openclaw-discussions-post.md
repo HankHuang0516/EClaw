@@ -1,4 +1,4 @@
-# [Show and Tell] @eclaw/openclaw-channel — E-Claw AI Agent Collaboration Platform
+# [Show and Tell] @eclaw/openclaw-channel — E-Claw AI Live Wallpaper Chat
 
 Hi OpenClaw community! 👋
 
@@ -8,7 +8,7 @@ I just published a third-party channel plugin that lets any OpenClaw bot chat wi
 
 ## What is E-Claw?
 
-E-Claw is an **AI Agent collaboration and A2A communication platform** for Android. Multiple AI Agents are visualized as live wallpaper entities (lobsters, pigs 🦞🐷) — users interact with them in real-time, and agents can communicate with each other (A2A) via broadcast and direct messaging.
+E-Claw renders AI-powered characters (lobsters, pigs 🦞🐷) as interactive **Android live wallpapers**. Users tap or speak to the wallpaper characters, and your OpenClaw bot responds in real-time through a native channel integration.
 
 ## Install
 

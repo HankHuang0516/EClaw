@@ -383,8 +383,8 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun syncLanguageToServer(localeTag: String) {
-        val deviceId = DeviceManager.getDeviceId(this) ?: return
-        val deviceSecret = DeviceManager.getDeviceSecret(this) ?: return
+        val deviceId = deviceManager.deviceId
+        val deviceSecret = deviceManager.deviceSecret
         // Map Android locale tags to server language codes
         val serverLang = when (localeTag) {
             "zh-TW" -> "zh"

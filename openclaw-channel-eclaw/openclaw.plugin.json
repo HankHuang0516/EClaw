@@ -1,8 +1,8 @@
 {
-  "id": "eclaw",
+  "id": "openclaw-channel",
   "name": "E-Claw",
   "version": "1.0.0",
-  "description": "E-Claw AI Agent collaboration channel for OpenClaw",
+  "description": "E-Claw AI chat platform channel for OpenClaw",
   "channels": ["eclaw"],
   "configSchema": {
     "type": "object",
@@ -16,7 +16,7 @@
             "apiKey": { "type": "string", "description": "Channel API Key (eck_...)" },
             "apiSecret": { "type": "string", "description": "Channel API Secret (ecs_...)" },
             "apiBase": { "type": "string", "default": "https://eclawbot.com" },
-            "entityId": { "type": "number", "default": 0, "minimum": 0, "maximum": 7 },
+            "entityId": { "type": "number", "minimum": 0, "maximum": 7, "description": "Optional: entity slot to use (0-7). If omitted, auto-assigned to first free slot." },
             "botName": { "type": "string", "maxLength": 20 }
           },
           "required": ["apiKey", "apiSecret"]

@@ -3,6 +3,17 @@ import { EClawClient } from './client.js';
 /** Client instances keyed by accountId */
 const clients = new Map<string, EClawClient>();
 
+/** Track current inbound event type per account to suppress duplicate sendMessage calls */
+const activeEvent = new Map<string, string>();
+
+export function setActiveEvent(accountId: string, event: string): void {
+  activeEvent.set(accountId, event);
+}
+
+export function clearActiveEvent(accountId: string): void {
+  activeEvent.delete(accountId);
+}
+
 export function setClient(accountId: string, client: EClawClient): void {
   clients.set(accountId, client);
 }
@@ -15,6 +26,11 @@ export function getClient(accountId: string): EClawClient | undefined {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function sendText(ctx: any): Promise<any> {
   const accountId: string = ctx.accountId ?? 'default';
+  // Suppress duplicate delivery for bot-to-bot events — webhook-handler's deliver handles these
+  const event = activeEvent.get(accountId) ?? 'message';
+  if (event === 'entity_message' || event === 'broadcast') {
+    return { channel: 'eclaw', messageId: '', chatId: '' };
+  }
   const client = clients.get(accountId);
   if (!client) {
     return { channel: 'eclaw', messageId: '', chatId: '' };
@@ -38,6 +54,11 @@ export async function sendText(ctx: any): Promise<any> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function sendMedia(ctx: any): Promise<any> {
   const accountId: string = ctx.accountId ?? 'default';
+  // Suppress duplicate delivery for bot-to-bot events — webhook-handler's deliver handles these
+  const event = activeEvent.get(accountId) ?? 'message';
+  if (event === 'entity_message' || event === 'broadcast') {
+    return { channel: 'eclaw', messageId: '', chatId: '' };
+  }
   const client = clients.get(accountId);
   if (!client) {
     return { channel: 'eclaw', messageId: '', chatId: '' };

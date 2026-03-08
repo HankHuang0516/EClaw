@@ -2,10 +2,20 @@
 export interface EClawAccountConfig {
   enabled: boolean;
   apiKey: string;
-  apiSecret: string;
+  apiSecret?: string;
   apiBase: string;
-  entityId: number;
+  entityId?: number;  // Optional: auto-assigned if omitted
   botName?: string;
+  webhookUrl?: string;
+}
+
+/** Context block injected by E-Claw server for Channel Bot parity with Traditional Bot */
+export interface EClawContext {
+  b2bRemaining?: number;   // Remaining bot-to-bot quota for receiving entity
+  b2bMax?: number;         // Max quota (currently 8)
+  expectsReply?: boolean;  // Whether sender expects a reply
+  missionHints?: string;   // Output of getMissionApiHints() for receiving entity
+  silentToken?: string;    // AI outputs this exact string to stay silent (e.g. "[SILENT]")
 }
 
 /** Inbound message from E-Claw callback webhook */
@@ -25,6 +35,7 @@ export interface EClawInboundMessage {
   fromEntityId?: number;
   fromCharacter?: string;
   fromPublicCode?: string;
+  eclaw_context?: EClawContext;
 }
 
 /** Entity info returned by channel register */
@@ -48,10 +59,18 @@ export interface RegisterResponse {
 export interface BindResponse {
   success: boolean;
   deviceId: string;
-  entityId: number;
+  entityId: number;  // Assigned slot (may differ from requested if auto-selected)
   botSecret: string;
   publicCode: string;
   bindingType: string;
+}
+
+/** Error response when all entity slots are full */
+export interface SlotsFullError {
+  success: false;
+  message: string;
+  entities: EClawEntityInfo[];
+  hint: string;
 }
 
 /** Response from POST /api/channel/message */
