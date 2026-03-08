@@ -156,7 +156,7 @@ async function createSchedule({ deviceId, entityId, message, scheduledAt, repeat
     const { rows } = await _pool.query(
         `INSERT INTO scheduled_messages (device_id, entity_id, message, scheduled_at, repeat_type, cron_expr, status, label, timezone)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-        [deviceId, parsedEntityId, message, scheduledAt || null, repeatType, cronExpr, status, label, timezone]
+        [deviceId, parsedEntityId, message, scheduledAt || new Date().toISOString(), repeatType, cronExpr, status, label, timezone]
     );
 
     const schedule = rowToSchedule(rows[0]);
