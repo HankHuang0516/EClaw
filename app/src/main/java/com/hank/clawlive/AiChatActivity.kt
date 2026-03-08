@@ -349,6 +349,7 @@ class AiChatActivity : AppCompatActivity() {
 
             when {
                 poll == null -> {
+                    savePendingRequestId(null)
                     messages.add(AiMessage("assistant", "The request is taking too long. Please try again."))
                 }
                 poll.status == "completed" && poll.busy -> {
@@ -369,10 +370,12 @@ class AiChatActivity : AppCompatActivity() {
                         body["requestId"] = UUID.randomUUID().toString()
                         return submitAndPoll(body, busyAttempt + 1)
                     } else {
+                        savePendingRequestId(null)
                         messages.add(AiMessage("assistant", getString(R.string.ai_chat_busy_exhausted)))
                     }
                 }
                 poll.status == "completed" && poll.response != null -> {
+                    savePendingRequestId(null)
                     val text = poll.response.trim()
                     val displayText = if (text.startsWith("{") && text.contains("\"type\"")) {
                         getString(R.string.ai_chat_fallback_error)
@@ -383,24 +386,27 @@ class AiChatActivity : AppCompatActivity() {
                     }
                 }
                 poll.status == "failed" -> {
+                    savePendingRequestId(null)
                     messages.add(AiMessage("assistant",
                         poll.error ?: "AI is temporarily unavailable."))
                 }
                 poll.status == "expired" -> {
+                    savePendingRequestId(null)
                     messages.add(AiMessage("assistant", "Request expired. Please try again."))
                 }
                 else -> {
+                    savePendingRequestId(null)
                     messages.add(AiMessage("assistant", "Something went wrong. Please try again."))
                 }
             }
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
+            savePendingRequestId(null)
             statusJob?.cancel()
             messages.removeAll { it.role == "typing" }
             messages.add(AiMessage("assistant", resolveHttpError(e)))
         } finally {
             isLoading = false
-            savePendingRequestId(null)
             if (!isFinishing) {
                 saveHistory()
                 updateUi()

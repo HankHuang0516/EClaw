@@ -100,6 +100,7 @@ class AiChatBottomSheet : BottomSheetDialogFragment() {
         initViews(view)
         setupListeners()
         loadHistory()
+        resumePendingIfNeeded()
         updateUi()
 
         if (pageName.isNotEmpty()) {
@@ -286,6 +287,7 @@ class AiChatBottomSheet : BottomSheetDialogFragment() {
                 messages.add(AiMessage("assistant", "Failed to send message."))
                 return
             }
+            savePendingRequestId(requestId)
 
             // ── PROGRESSIVE TYPING INDICATOR ──
             statusJob = viewLifecycleOwner.lifecycleScope.launch {
@@ -338,6 +340,7 @@ class AiChatBottomSheet : BottomSheetDialogFragment() {
 
             when {
                 poll == null -> {
+                    savePendingRequestId(null)
                     messages.add(AiMessage("assistant", "The request is taking too long. Please try again."))
                 }
                 poll.status == "completed" && poll.busy -> {
@@ -358,10 +361,12 @@ class AiChatBottomSheet : BottomSheetDialogFragment() {
                         body["requestId"] = UUID.randomUUID().toString()
                         return submitAndPoll(body, busyAttempt + 1)
                     } else {
+                        savePendingRequestId(null)
                         messages.add(AiMessage("assistant", getString(R.string.ai_chat_busy_exhausted)))
                     }
                 }
                 poll.status == "completed" && poll.response != null -> {
+                    savePendingRequestId(null)
                     val text = poll.response.trim()
                     val displayText = if (text.startsWith("{") && text.contains("\"type\"")) {
                         getString(R.string.ai_chat_fallback_error)
@@ -372,25 +377,32 @@ class AiChatBottomSheet : BottomSheetDialogFragment() {
                     }
                 }
                 poll.status == "failed" -> {
+                    savePendingRequestId(null)
                     messages.add(AiMessage("assistant",
                         poll.error ?: "AI is temporarily unavailable."))
                 }
                 poll.status == "expired" -> {
+                    savePendingRequestId(null)
                     messages.add(AiMessage("assistant", "Request expired. Please try again."))
                 }
                 else -> {
+                    savePendingRequestId(null)
                     messages.add(AiMessage("assistant", "Something went wrong. Please try again."))
                 }
             }
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            savePendingRequestId(null)
             statusJob?.cancel()
             messages.removeAll { it.role == "typing" }
             messages.add(AiMessage("assistant", resolveHttpError(e)))
         } finally {
             isLoading = false
-            saveHistory()
-            updateUi()
-            scrollToBottom()
+            if (isAdded) {
+                saveHistory()
+                updateUi()
+                scrollToBottom()
+            }
         }
     }
 
@@ -436,6 +448,81 @@ class AiChatBottomSheet : BottomSheetDialogFragment() {
         super.onDestroyView()
         pollingJob?.cancel()
         statusJob?.cancel()
+    }
+
+    // ── Pending Request Persistence ──────────
+
+    private fun savePendingRequestId(requestId: String?) {
+        try {
+            requireContext().getSharedPreferences("ai_chat", android.content.Context.MODE_PRIVATE)
+                .edit().putString("pending_request_id", requestId).apply()
+        } catch (_: Exception) {}
+    }
+
+    private fun loadPendingRequestId(): String? =
+        try {
+            requireContext().getSharedPreferences("ai_chat", android.content.Context.MODE_PRIVATE)
+                .getString("pending_request_id", null)
+        } catch (_: Exception) { null }
+
+    private fun resumePendingIfNeeded() {
+        val requestId = loadPendingRequestId() ?: return
+        if (isLoading) return
+        isLoading = true
+        messages.add(AiMessage("typing", getString(R.string.ai_chat_thinking)))
+        updateUi()
+        viewLifecycleOwner.lifecycleScope.launch {
+            var pollResult: com.hank.clawlive.data.remote.AiChatPollResponse? = null
+            try {
+                for (attempt in 1..MAX_POLL_ATTEMPTS) {
+                    delay(POLL_INTERVAL_MS)
+                    if (!isAdded) break
+                    try {
+                        val poll = api.aiChatPoll(requestId, deviceManager.deviceId, deviceManager.deviceSecret)
+                        when (poll.status) {
+                            "completed", "failed", "expired" -> { pollResult = poll; break }
+                        }
+                    } catch (_: Exception) {}
+                }
+                messages.removeAll { it.role == "typing" }
+                when {
+                    pollResult == null -> {
+                        messages.add(AiMessage("assistant", "The request is taking too long. Please try again."))
+                    }
+                    pollResult!!.status == "completed" && pollResult!!.response != null -> {
+                        val text = pollResult!!.response!!.trim()
+                        val displayText = if (text.startsWith("{") && text.contains("\"type\"")) {
+                            getString(R.string.ai_chat_fallback_error)
+                        } else text
+                        messages.add(AiMessage("assistant", displayText))
+                        if (displayText.contains("Feedback #") && displayText.contains("recorded")) {
+                            messages.add(AiMessage("action", getString(R.string.ai_chat_view_feedback)))
+                        }
+                    }
+                    pollResult!!.status == "failed" -> {
+                        messages.add(AiMessage("assistant", pollResult!!.error ?: "AI is temporarily unavailable."))
+                    }
+                    pollResult!!.status == "expired" -> {
+                        messages.add(AiMessage("assistant", "Request expired. Please try again."))
+                    }
+                    else -> {
+                        messages.add(AiMessage("assistant", "Something went wrong. Please try again."))
+                    }
+                }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                messages.removeAll { it.role == "typing" }
+                messages.add(AiMessage("assistant", resolveHttpError(e)))
+            } finally {
+                isLoading = false
+                savePendingRequestId(null)
+                if (isAdded) {
+                    saveHistory()
+                    updateUi()
+                    scrollToBottom()
+                }
+            }
+        }
     }
 
     // ── UI Updates ───────────────────────────
