@@ -743,8 +743,8 @@ app.get('/api/rule-templates', (req, res) => {
 /**
  * POST /api/skill-templates/contribute
  * Bot submits a new skill. Auto-verifies GitHub URL asynchronously.
- * Auth: deviceId + botSecret + entityId
- * Body: { deviceId, botSecret, entityId, skill: { id, label, icon, title, url, author, requiredVars, steps } }
+ * Auth: deviceId + botSecret (entityId optional — auto-detected from botSecret)
+ * Body: { deviceId, botSecret, entityId?, skill: { id, label, icon, title, url, author, requiredVars, steps } }
  */
 app.post('/api/skill-templates/contribute', async (req, res) => {
     const { deviceId, botSecret, entityId, skill } = req.body;
@@ -755,10 +755,24 @@ app.post('/api/skill-templates/contribute', async (req, res) => {
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    const eId = parseInt(entityId) || 0;
-    const entity = device.entities[eId];
+    // Find entity: try explicit entityId first, then search all slots by botSecret
+    let eId = parseInt(entityId);
+    let entity = !isNaN(eId) && device.entities[eId];
     if (!entity || !entity.isBound || entity.botSecret !== botSecret) {
-        return res.status(403).json({ success: false, error: 'Invalid botSecret or entity not bound' });
+        // Search all entity slots for matching botSecret
+        eId = -1;
+        entity = null;
+        for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
+            const e = device.entities[i];
+            if (e && e.isBound && e.botSecret === botSecret) {
+                eId = i;
+                entity = e;
+                break;
+            }
+        }
+    }
+    if (!entity) {
+        return res.status(403).json({ success: false, error: 'Invalid botSecret or no bound entity found' });
     }
 
     const { id, label, icon, title, url, author, requiredVars, steps } = skill;
@@ -906,7 +920,7 @@ function validateRulePayload(rule) {
 /**
  * POST /api/soul-templates/contribute
  * Bot submits a new soul template. Synchronous structure validation; auto-approved.
- * Auth: deviceId + botSecret + entityId
+ * Auth: deviceId + botSecret (entityId optional — auto-detected from botSecret)
  */
 app.post('/api/soul-templates/contribute', async (req, res) => {
     const { deviceId, botSecret, entityId, soul } = req.body;
@@ -916,10 +930,23 @@ app.post('/api/soul-templates/contribute', async (req, res) => {
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    const eId = parseInt(entityId) || 0;
-    const entity = device.entities[eId];
-    if (!entity || !entity.isBound || entity.botSecret !== botSecret)
-        return res.status(403).json({ success: false, error: 'Invalid botSecret or entity not bound' });
+    // Find entity: try explicit entityId first, then search all slots by botSecret
+    let eId = parseInt(entityId);
+    let entity = !isNaN(eId) && device.entities[eId];
+    if (!entity || !entity.isBound || entity.botSecret !== botSecret) {
+        eId = -1;
+        entity = null;
+        for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
+            const e = device.entities[i];
+            if (e && e.isBound && e.botSecret === botSecret) {
+                eId = i;
+                entity = e;
+                break;
+            }
+        }
+    }
+    if (!entity)
+        return res.status(403).json({ success: false, error: 'Invalid botSecret or no bound entity found' });
 
     const validationError = validateSoulPayload(soul);
     if (validationError) return res.status(400).json({ success: false, error: validationError });
@@ -979,7 +1006,7 @@ app.delete('/api/soul-templates/:soulId', async (req, res) => {
 /**
  * POST /api/rule-templates/contribute
  * Bot submits a new rule template. Synchronous structure validation; auto-approved.
- * Auth: deviceId + botSecret + entityId
+ * Auth: deviceId + botSecret (entityId optional — auto-detected from botSecret)
  */
 app.post('/api/rule-templates/contribute', async (req, res) => {
     const { deviceId, botSecret, entityId, rule } = req.body;
@@ -989,10 +1016,23 @@ app.post('/api/rule-templates/contribute', async (req, res) => {
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    const eId = parseInt(entityId) || 0;
-    const entity = device.entities[eId];
-    if (!entity || !entity.isBound || entity.botSecret !== botSecret)
-        return res.status(403).json({ success: false, error: 'Invalid botSecret or entity not bound' });
+    // Find entity: try explicit entityId first, then search all slots by botSecret
+    let eId = parseInt(entityId);
+    let entity = !isNaN(eId) && device.entities[eId];
+    if (!entity || !entity.isBound || entity.botSecret !== botSecret) {
+        eId = -1;
+        entity = null;
+        for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
+            const e = device.entities[i];
+            if (e && e.isBound && e.botSecret === botSecret) {
+                eId = i;
+                entity = e;
+                break;
+            }
+        }
+    }
+    if (!entity)
+        return res.status(403).json({ success: false, error: 'Invalid botSecret or no bound entity found' });
 
     const validationError = validateRulePayload(rule);
     if (validationError) return res.status(400).json({ success: false, error: validationError });
