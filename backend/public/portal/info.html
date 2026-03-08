@@ -605,30 +605,30 @@
 
                 <!-- Guide Sidebar -->
                 <div class="guide-sidebar" id="guideSidebar">
-                    <button class="guide-sidebar-btn active" data-guide="setup">設定教學</button>
-                    <button class="guide-sidebar-btn" data-guide="features">功能介紹</button>
-                    <button class="guide-sidebar-btn" data-guide="architecture">系統架構</button>
-                    <button class="guide-sidebar-btn" data-guide="quickstart">快速開始</button>
-                    <button class="guide-sidebar-btn" data-guide="structure">專案結構</button>
-                    <button class="guide-sidebar-btn" data-guide="mission" id="missionToggle">任務中心 <span class="expand-arrow">&#9654;</span></button>
+                    <button class="guide-sidebar-btn active" data-guide="setup" data-i18n="guide_nav_setup">設定教學</button>
+                    <button class="guide-sidebar-btn" data-guide="features" data-i18n="guide_nav_features">功能介紹</button>
+                    <button class="guide-sidebar-btn" data-guide="architecture" data-i18n="guide_nav_architecture">系統架構</button>
+                    <button class="guide-sidebar-btn" data-guide="quickstart" data-i18n="guide_nav_quickstart">快速開始</button>
+                    <button class="guide-sidebar-btn" data-guide="structure" data-i18n="guide_nav_structure">專案結構</button>
+                    <button class="guide-sidebar-btn" data-guide="mission" id="missionToggle" data-i18n="guide_nav_mission">任務中心 <span class="expand-arrow">&#9654;</span></button>
                     <div class="guide-sub-nav" id="missionSubNav">
-                        <button class="guide-sub-btn" data-guide="mission-overview">總覽</button>
-                        <button class="guide-sub-btn" data-guide="mission-todo">待辦事項</button>
-                        <button class="guide-sub-btn" data-guide="mission-list">任務列表</button>
-                        <button class="guide-sub-btn" data-guide="mission-done">已完成</button>
-                        <button class="guide-sub-btn" data-guide="mission-notes">筆記</button>
-                        <button class="guide-sub-btn" data-guide="mission-skills">Skills</button>
-                        <button class="guide-sub-btn" data-guide="mission-soul">靈魂</button>
-                        <button class="guide-sub-btn" data-guide="mission-rules">規則</button>
-                        <button class="guide-sub-btn" data-guide="mission-schedule">排程</button>
+                        <button class="guide-sub-btn" data-guide="mission-overview" data-i18n="guide_nav_mission_overview">總覽</button>
+                        <button class="guide-sub-btn" data-guide="mission-todo" data-i18n="guide_nav_mission_todo">待辦事項</button>
+                        <button class="guide-sub-btn" data-guide="mission-list" data-i18n="guide_nav_mission_list">任務列表</button>
+                        <button class="guide-sub-btn" data-guide="mission-done" data-i18n="guide_nav_mission_done">已完成</button>
+                        <button class="guide-sub-btn" data-guide="mission-notes" data-i18n="guide_nav_mission_notes">筆記</button>
+                        <button class="guide-sub-btn" data-guide="mission-skills" data-i18n="guide_nav_mission_skills">Skills</button>
+                        <button class="guide-sub-btn" data-guide="mission-soul" data-i18n="guide_nav_mission_soul">靈魂</button>
+                        <button class="guide-sub-btn" data-guide="mission-rules" data-i18n="guide_nav_mission_rules">規則</button>
+                        <button class="guide-sub-btn" data-guide="mission-schedule" data-i18n="guide_nav_mission_schedule">排程</button>
                     </div>
-                    <button class="guide-sidebar-btn" data-guide="envvars">環境變數</button>
-                    <button class="guide-sidebar-btn" data-guide="remotecontrol">遠端控制</button>
-                    <button class="guide-sidebar-btn" data-guide="testing">測試與文件</button>
-                    <button class="guide-sidebar-btn" data-guide="openclaw-channel">OpenClaw Channel</button>
-                    <button class="guide-sidebar-btn" id="usecaseToggle">實用案例 <span class="expand-arrow">&#9654;</span></button>
+                    <button class="guide-sidebar-btn" data-guide="envvars" data-i18n="guide_nav_envvars">環境變數</button>
+                    <button class="guide-sidebar-btn" data-guide="remotecontrol" data-i18n="guide_nav_remotecontrol">遠端控制</button>
+                    <button class="guide-sidebar-btn" data-guide="testing" data-i18n="guide_nav_testing">測試與文件</button>
+                    <button class="guide-sidebar-btn" data-guide="openclaw-channel" data-i18n="guide_nav_openclaw_channel">OpenClaw Channel</button>
+                    <button class="guide-sidebar-btn" id="usecaseToggle" data-i18n="guide_nav_usecases">實用案例 <span class="expand-arrow">&#9654;</span></button>
                     <div class="guide-sub-nav" id="usecaseSubNav">
-                        <button class="guide-sub-btn" data-guide="usecase-claude-openclaw">用 Claude 指揮 OpenClaw</button>
+                        <button class="guide-sub-btn" data-guide="usecase-claude-openclaw" data-i18n="guide_nav_usecase_claude">用 Claude 指揮 OpenClaw</button>
                     </div>
                 </div>
 
@@ -638,71 +638,71 @@
                     <!-- ── 設定教學 ── -->
                     <div class="guide-panel active" id="guide-setup">
                         <header>
-                            <h1>如何免費使用 OpenClaw — E-Claw App 設定教學</h1>
-                            <p class="meta">2026 年 2 月 ｜ 圖文教學</p>
+                            <h1 data-i18n="guide_setup_title">如何免費使用 OpenClaw — E-Claw App 設定教學</h1>
+                            <p class="meta" data-i18n="guide_setup_meta">2026 年 2 月 ｜ 圖文教學</p>
                         </header>
 
-                        <h2>OpenClaw 是什麼？</h2>
-                        <p>OpenClaw 是一個 AI Agent，可以理解為一個能夠自主執行任務的 AI 助手，而不只是單純的語言模型。透過 <strong>E-Claw</strong> 這款 App，你可以免費使用 OpenClaw 提供的功能。</p>
-                        <p>具體來說，E-Claw 的「官方 Bot 租用」功能提供了一個免費方案，搭載 <strong>MiniMax 2.1</strong> 模型，每天有 15 則訊息的額度。以下是完整的設定流程。</p>
+                        <h2 data-i18n="guide_setup_what_is_openclaw">OpenClaw 是什麼？</h2>
+                        <p data-i18n="guide_setup_what_is_openclaw_desc">OpenClaw 是一個 AI Agent，可以理解為一個能夠自主執行任務的 AI 助手，而不只是單純的語言模型。透過 <strong>E-Claw</strong> 這款 App，你可以免費使用 OpenClaw 提供的功能。</p>
+                        <p data-i18n="guide_setup_free_plan_intro">具體來說，E-Claw 的「官方 Bot 租用」功能提供了一個免費方案，搭載 <strong>MiniMax 2.1</strong> 模型，每天有 15 則訊息的額度。以下是完整的設定流程。</p>
 
                         <hr>
 
-                        <h2>設定步驟</h2>
+                        <h2 data-i18n="guide_setup_steps_heading">設定步驟</h2>
 
-                        <h3 class="step-heading">1. 下載 E-Claw App</h3>
-                        <p>到 Google Play Store 搜尋「<strong>e-claw</strong>」，安裝 E-Claw 電子蝦桌布 (OpenClaw)。</p>
+                        <h3 class="step-heading" data-i18n="guide_setup_step1_title">1. 下載 E-Claw App</h3>
+                        <p data-i18n="guide_setup_step1_desc">到 Google Play Store 搜尋「<strong>e-claw</strong>」，安裝 E-Claw 電子蝦桌布 (OpenClaw)。</p>
                         <img src="assets/guide/1000005528.png" alt="Google Play Store 搜尋 E-Claw" class="step-image">
-                        <div class="note">下載連結放在文末。</div>
+                        <div class="note" data-i18n="guide_setup_step1_note">下載連結放在文末。</div>
 
-                        <h3 class="step-heading">2. 找到「官方 Bot 租用」</h3>
-                        <p>打開 App 後在主畫面往下滑，找到「<strong>官方 Bot 租用</strong>」按鈕並點進去。</p>
+                        <h3 class="step-heading" data-i18n="guide_setup_step2_title">2. 找到「官方 Bot 租用」</h3>
+                        <p data-i18n="guide_setup_step2_desc">打開 App 後在主畫面往下滑，找到「<strong>官方 Bot 租用</strong>」按鈕並點進去。</p>
                         <img src="assets/guide/1000005517.png" alt="E-Claw 主畫面" class="step-image">
 
-                        <h3 class="step-heading">3. 選擇免費版</h3>
-                        <p>進入租用頁面後會看到免費版和月租版兩個選項，選「<strong>免費版</strong>」然後點「<strong>使用免費版</strong>」。</p>
+                        <h3 class="step-heading" data-i18n="guide_setup_step3_title">3. 選擇免費版</h3>
+                        <p data-i18n="guide_setup_step3_desc">進入租用頁面後會看到免費版和月租版兩個選項，選「<strong>免費版</strong>」然後點「<strong>使用免費版</strong>」。</p>
                         <img src="assets/guide/1000005518.png" alt="選擇免費版" class="step-image">
-                        <div class="note">免費版使用 MiniMax 2.1 模型，與所有免費用戶共享記憶，每天 15 則訊息。</div>
+                        <div class="note" data-i18n="guide_setup_step3_note">免費版使用 MiniMax 2.1 模型，與所有免費用戶共享記憶，每天 15 則訊息。</div>
 
-                        <h3 class="step-heading">4. 等待伺服器連接</h3>
-                        <p>點擊後 App 會開始連接伺服器，畫面會顯示「<strong>正在與機器人交握中...</strong>」，等一下就好。</p>
+                        <h3 class="step-heading" data-i18n="guide_setup_step4_title">4. 等待伺服器連接</h3>
+                        <p data-i18n="guide_setup_step4_desc">點擊後 App 會開始連接伺服器，畫面會顯示「<strong>正在與機器人交握中...</strong>」，等一下就好。</p>
                         <img src="assets/guide/1000005526.png" alt="連接伺服器中" class="step-image">
 
-                        <h3 class="step-heading">5. 完成連接流程</h3>
-                        <p>連接過程中畫面會跑一些 Webhook 測試訊息，建議等流程跑完再離開頁面。</p>
+                        <h3 class="step-heading" data-i18n="guide_setup_step5_title">5. 完成連接流程</h3>
+                        <p data-i18n="guide_setup_step5_desc">連接過程中畫面會跑一些 Webhook 測試訊息，建議等流程跑完再離開頁面。</p>
                         <img src="assets/guide/1000005527.png" alt="Webhook 測試" class="step-image">
-                        <div class="warning">連接過程中不要關閉 App 或切到其他頁面，不然可能會連接失敗。</div>
+                        <div class="warning" data-i18n="guide_setup_step5_warning">連接過程中不要關閉 App 或切到其他頁面，不然可能會連接失敗。</div>
 
-                        <h3 class="step-heading">6. 看到龍蝦圖示就完成了</h3>
-                        <p>畫面出現龍蝦圖示並顯示「<strong>Connected!</strong>」或「<strong>成功啦</strong>」，代表連接成功，可以回主頁開始用了。</p>
+                        <h3 class="step-heading" data-i18n="guide_setup_step6_title">6. 看到龍蝦圖示就完成了</h3>
+                        <p data-i18n="guide_setup_step6_desc">畫面出現龍蝦圖示並顯示「<strong>Connected!</strong>」或「<strong>成功啦</strong>」，代表連接成功，可以回主頁開始用了。</p>
                         <img src="assets/guide/1000005519.png" alt="連接成功" class="step-image">
 
                         <hr>
 
-                        <h2>開始使用</h2>
-                        <p>回到 E-Claw 主頁，點「<strong>聊天</strong>」就能跟 OpenClaw 對話了。</p>
+                        <h2 data-i18n="guide_setup_start_using">開始使用</h2>
+                        <p data-i18n="guide_setup_start_using_desc">回到 E-Claw 主頁，點「<strong>聊天</strong>」就能跟 OpenClaw 對話了。</p>
                         <img src="assets/guide/1000005524.png" alt="聊天畫面" class="step-image">
                         <img src="assets/guide/1000005525.png" alt="對話示範" class="step-image">
 
-                        <h2>幾點補充</h2>
+                        <h2 data-i18n="guide_setup_tips_heading">幾點補充</h2>
                         <ul class="tips-list">
-                            <li>免費版每天 15 則訊息，用完隔天重置。</li>
-                            <li>記憶是所有免費用戶共用的，別丟敏感資料進去。</li>
-                            <li>MiniMax 2.1 拿來日常對話、問問題夠用了。</li>
-                            <li>如果覺得不夠用，可以考慮月租版，有無限訊息和獨立記憶。</li>
+                            <li data-i18n="guide_setup_tip_daily_limit">免費版每天 15 則訊息，用完隔天重置。</li>
+                            <li data-i18n="guide_setup_tip_shared_memory">記憶是所有免費用戶共用的，別丟敏感資料進去。</li>
+                            <li data-i18n="guide_setup_tip_model_quality">MiniMax 2.1 拿來日常對話、問問題夠用了。</li>
+                            <li data-i18n="guide_setup_tip_upgrade">如果覺得不夠用，可以考慮月租版，有無限訊息和獨立記憶。</li>
                         </ul>
 
                         <hr>
-                        <p>E-Claw 下載連結：<a href="https://play.google.com/store/apps/details?id=com.hank.clawlive" target="_blank" rel="noopener">Google Play Store</a></p>
+                        <p data-i18n="guide_setup_download_link">E-Claw 下載連結：<a href="https://play.google.com/store/apps/details?id=com.hank.clawlive" target="_blank" rel="noopener">Google Play Store</a></p>
 
-                        <footer><p>圖片來源：E-Claw App 截圖 ｜ 2026 年 2 月</p></footer>
+                        <footer><p data-i18n="guide_setup_footer">圖片來源：E-Claw App 截圖 ｜ 2026 年 2 月</p></footer>
                     </div>
 
                     <!-- ── 功能介紹 ── -->
                     <div class="guide-panel" id="guide-features">
                         <header>
-                            <h1>功能介紹</h1>
-                            <p class="meta">E-Claw 電子蝦 — AI Agent 協作 × 即時視覺化</p>
+                            <h1 data-i18n="guide_features_title">功能介紹</h1>
+                            <p class="meta" data-i18n="guide_features_subtitle">E-Claw 電子蝦 — AI Agent 協作 × 即時視覺化</p>
                         </header>
 
                         <div class="badge-row">
@@ -711,61 +711,61 @@
                             <span class="badge badge-railway">Railway Backend</span>
                         </div>
 
-                        <p>讓多個 AI Agent 在 Android 桌布上即時互動——支援 Agent 間通訊（A2A）、廣播推送、多模型協作。</p>
+                        <p data-i18n="guide_features_intro">讓多個 AI Agent 在 Android 桌布上即時互動——支援 Agent 間通訊（A2A）、廣播推送、多模型協作。</p>
 
-                        <h2>功能特色</h2>
+                        <h2 data-i18n="guide_features_highlights">功能特色</h2>
                         <table class="feature-table">
-                            <thead><tr><th>功能</th><th>說明</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_features_tbl_h_feature">功能</th><th data-i18n="guide_features_tbl_h_desc">說明</th></tr></thead>
                             <tbody>
-                                <tr><td>AI Agent 協作平台</td><td>最多 8 個 AI Agent 即時視覺化，支援 Agent 間通訊（A2A）與廣播協作（免費 4 個、付費 8 個）</td></tr>
-                                <tr><td>OpenClaw Bot 整合</td><td>Webhook + Exec-curl 或 Channel plugin 兩種方式接入 AI Bot，雙向溝通</td></tr>
-                                <tr><td>即時聊天</td><td>長按桌布即可與實體對話，支援完整訊息歷程</td></tr>
-                                <tr><td>Push 通知</td><td>Bot 主動推送訊息，instruction-first 格式</td></tr>
-                                <tr><td>Web 管理介面</td><td>跨裝置管理實體、查看狀態、遠端控制</td></tr>
-                                <tr><td>裝置遙測</td><td>結構化 debug buffer，AI 輔助問題排查</td></tr>
-                                <tr><td>加密環境變數</td><td>AES-256-GCM 加密儲存 Bot 私密金鑰，JIT 即時授權機制</td></tr>
-                                <tr><td>遠端手機控制</td><td>Bot 透過 Accessibility Tree 自主操控手機 UI（預設關閉）</td></tr>
-                                <tr><td>帳號登入</td><td>綁定 Google 帳號，重裝後自動恢復資料</td></tr>
-                                <tr><td>免費 / 付費方案</td><td>內建 gatekeeper，15 則免費訊息 + 付費無限制</td></tr>
+                                <tr><td data-i18n="guide_features_tbl_1_feature">AI Agent 協作平台</td><td data-i18n="guide_features_tbl_1_desc">最多 8 個 AI Agent 即時視覺化，支援 Agent 間通訊（A2A）與廣播協作（免費 4 個、付費 8 個）</td></tr>
+                                <tr><td data-i18n="guide_features_tbl_2_feature">OpenClaw Bot 整合</td><td data-i18n="guide_features_tbl_2_desc">Webhook + Exec-curl 或 Channel plugin 兩種方式接入 AI Bot，雙向溝通</td></tr>
+                                <tr><td data-i18n="guide_features_tbl_3_feature">即時聊天</td><td data-i18n="guide_features_tbl_3_desc">長按桌布即可與實體對話，支援完整訊息歷程</td></tr>
+                                <tr><td data-i18n="guide_features_tbl_4_feature">Push 通知</td><td data-i18n="guide_features_tbl_4_desc">Bot 主動推送訊息，instruction-first 格式</td></tr>
+                                <tr><td data-i18n="guide_features_tbl_5_feature">Web 管理介面</td><td data-i18n="guide_features_tbl_5_desc">跨裝置管理實體、查看狀態、遠端控制</td></tr>
+                                <tr><td data-i18n="guide_features_tbl_6_feature">裝置遙測</td><td data-i18n="guide_features_tbl_6_desc">結構化 debug buffer，AI 輔助問題排查</td></tr>
+                                <tr><td data-i18n="guide_features_tbl_7_feature">加密環境變數</td><td data-i18n="guide_features_tbl_7_desc">AES-256-GCM 加密儲存 Bot 私密金鑰，JIT 即時授權機制</td></tr>
+                                <tr><td data-i18n="guide_features_tbl_8_feature">遠端手機控制</td><td data-i18n="guide_features_tbl_8_desc">Bot 透過 Accessibility Tree 自主操控手機 UI（預設關閉）</td></tr>
+                                <tr><td data-i18n="guide_features_tbl_9_feature">帳號登入</td><td data-i18n="guide_features_tbl_9_desc">綁定 Google 帳號，重裝後自動恢復資料</td></tr>
+                                <tr><td data-i18n="guide_features_tbl_10_feature">免費 / 付費方案</td><td data-i18n="guide_features_tbl_10_desc">內建 gatekeeper，15 則免費訊息 + 付費無限制</td></tr>
                             </tbody>
                         </table>
 
-                        <h2>為什麼選擇 E-Claw？</h2>
+                        <h2 data-i18n="guide_features_why_title">為什麼選擇 E-Claw？</h2>
 
                         <div class="why-eclaw-card">
-                            <p class="pain-point">🎭 想讓 OpenClaw 分身？怕無法控管秩序、token 無限燃燒？</p>
-                            <p class="solution">→ E-Claw 幫你有效管理</p>
-                            <p class="solution-desc">直接在平台為你的 OpenClaw 設定人設、更改名字、分配工作，一切盡在掌握。</p>
+                            <p class="pain-point" data-i18n="guide_features_why1_pain">🎭 想讓 OpenClaw 分身？怕無法控管秩序、token 無限燃燒？</p>
+                            <p class="solution" data-i18n="guide_features_why1_solution">→ E-Claw 幫你有效管理</p>
+                            <p class="solution-desc" data-i18n="guide_features_why1_desc">直接在平台為你的 OpenClaw 設定人設、更改名字、分配工作，一切盡在掌握。</p>
                         </div>
 
                         <div class="why-eclaw-card">
-                            <p class="pain-point">🤝 想讓多個 OpenClaw 協作？沒有更多 Mac、也不想額外花錢？</p>
-                            <p class="solution">→ E-Claw 提供多 Agent 協作平台</p>
-                            <p class="solution-desc">10 秒即可快速租用 OpenClaw 上線運作。不想花錢？沒問題，還有免費 OpenClaw 讓你直接使用！</p>
+                            <p class="pain-point" data-i18n="guide_features_why2_pain">🤝 想讓多個 OpenClaw 協作？沒有更多 Mac、也不想額外花錢？</p>
+                            <p class="solution" data-i18n="guide_features_why2_solution">→ E-Claw 提供多 Agent 協作平台</p>
+                            <p class="solution-desc" data-i18n="guide_features_why2_desc">10 秒即可快速租用 OpenClaw 上線運作。不想花錢？沒問題，還有免費 OpenClaw 讓你直接使用！</p>
                         </div>
 
                         <div class="why-eclaw-card">
-                            <p class="pain-point">📋 追蹤不到 OpenClaw 的工作進度？</p>
-                            <p class="solution">→ E-Claw 任務中心讓你一覽無遺</p>
-                            <p class="solution-desc">即時查看所有 OpenClaw 的工作狀態，中途也能隨時調整任務內容，完成後自動更新狀態通知你。</p>
+                            <p class="pain-point" data-i18n="guide_features_why3_pain">📋 追蹤不到 OpenClaw 的工作進度？</p>
+                            <p class="solution" data-i18n="guide_features_why3_solution">→ E-Claw 任務中心讓你一覽無遺</p>
+                            <p class="solution-desc" data-i18n="guide_features_why3_desc">即時查看所有 OpenClaw 的工作狀態，中途也能隨時調整任務內容，完成後自動更新狀態通知你。</p>
                         </div>
 
                         <div class="cta-links">
-                            <h3>🚀 立即體驗</h3>
-                            <p class="cta-item">🌐 <span class="cta-label">Web 版</span>（專注多 Agent 協作）：<a href="dashboard.html">開啟 E-Claw 網頁版</a></p>
-                            <p class="cta-item">📱 <span class="cta-label">Android APP 版</span>（你手機上的電子寵物）：<a href="https://play.google.com/store/apps/details?id=com.hank.clawlive" target="_blank" rel="noopener">前往 Google Play 下載</a></p>
+                            <h3 data-i18n="guide_features_cta_title">🚀 立即體驗</h3>
+                            <p class="cta-item" data-i18n="[html]guide_features_cta_web">🌐 <span class="cta-label">Web 版</span>（專注多 Agent 協作）：<a href="dashboard.html">開啟 E-Claw 網頁版</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_features_cta_android">📱 <span class="cta-label">Android APP 版</span>（你手機上的電子寵物）：<a href="https://play.google.com/store/apps/details?id=com.hank.clawlive" target="_blank" rel="noopener">前往 Google Play 下載</a></p>
                         </div>
                     </div>
 
                     <!-- ── 系統架構 ── -->
                     <div class="guide-panel" id="guide-architecture">
                         <header>
-                            <h1>系統架構</h1>
-                            <p class="meta">Android App ↔ Backend ↔ OpenClaw Platform</p>
+                            <h1 data-i18n="guide_arch_title">系統架構</h1>
+                            <p class="meta" data-i18n="guide_arch_meta">Android App ↔ Backend ↔ OpenClaw Platform</p>
                         </header>
 
-                        <h2>架構總覽</h2>
-                        <p>E-Claw 由三個主要部分組成：Android App、後端服務（Railway）、以及 OpenClaw AI 平台（Zeabur）。</p>
+                        <h2 data-i18n="guide_arch_overview">架構總覽</h2>
+                        <p data-i18n="guide_arch_overview_desc">E-Claw 由三個主要部分組成：Android App、後端服務（Railway）、以及 OpenClaw AI 平台（Zeabur）。</p>
 
                         <div class="arch-diagram">┌─────────────────────┐     ┌──────────────────────┐
 │   Android App       │     │   Web Portal         │
@@ -799,29 +799,29 @@
       │  (free: 4 slots / paid: 8 slots)     │
       └──────────────────────────────────────┘</div>
 
-                        <h2>核心設計</h2>
+                        <h2 data-i18n="guide_arch_core_design">核心設計</h2>
                         <ul class="content-list">
-                            <li>每個裝置有 <strong>最多 8 個 entity slots</strong>（免費 4 個 / 付費 8 個），可獨立綁定不同 Bot</li>
-                            <li><strong>Bots 接入方式</strong>：Webhook mode（push + exec+curl）或 Channel plugin mode（<code>/api/channel/*</code>），可混用</li>
-                            <li><strong>Railway</strong> 在 push 到 <code>main</code> 時自動部署（監控 <code>backend/</code> 資料夾）</li>
+                            <li data-i18n="guide_arch_core_slots">每個裝置有 <strong>最多 8 個 entity slots</strong>（免費 4 個 / 付費 8 個），可獨立綁定不同 Bot</li>
+                            <li data-i18n="guide_arch_core_bots"><strong>Bots 接入方式</strong>：Webhook mode（push + exec+curl）或 Channel plugin mode（<code>/api/channel/*</code>），可混用</li>
+                            <li data-i18n="guide_arch_core_deploy"><strong>Railway</strong> 在 push 到 <code>main</code> 時自動部署（監控 <code>backend/</code> 資料夾）</li>
                         </ul>
                     </div>
 
                     <!-- ── 快速開始 ── -->
                     <div class="guide-panel" id="guide-quickstart">
                         <header>
-                            <h1>快速開始</h1>
-                            <p class="meta">本地開發、部署、Android App 安裝</p>
+                            <h1 data-i18n="guide_quickstart_title">快速開始</h1>
+                            <p class="meta" data-i18n="guide_quickstart_meta">本地開發、部署、Android App 安裝</p>
                         </header>
 
-                        <h2>先決條件</h2>
+                        <h2 data-i18n="guide_quickstart_prerequisites">先決條件</h2>
                         <ul class="content-list">
-                            <li>Android 8.0+ 裝置</li>
-                            <li>Node.js 18+</li>
-                            <li>PostgreSQL（或使用 Railway 的託管 PostgreSQL）</li>
+                            <li data-i18n="guide_quickstart_prereq_android">Android 8.0+ 裝置</li>
+                            <li data-i18n="guide_quickstart_prereq_node">Node.js 18+</li>
+                            <li data-i18n="guide_quickstart_prereq_pg">PostgreSQL（或使用 Railway 的託管 PostgreSQL）</li>
                         </ul>
 
-                        <h2>本地後端開發</h2>
+                        <h2 data-i18n="guide_quickstart_local_dev">本地後端開發</h2>
                         <div class="code-block"># Clone the repo
 git clone https://github.com/HankHuang0516/realbot.git
 cd realbot/backend
@@ -836,28 +836,28 @@ cp .env.example .env   # then fill in DATABASE_URL, etc.
 npm run dev
 # → Server running on http://localhost:3000</div>
 
-                        <h2>部署到 Railway</h2>
+                        <h2 data-i18n="guide_quickstart_deploy">部署到 Railway</h2>
                         <div class="code-block"># Connect repo to Railway (auto-deploys from backend/ on push to main)
 # Set environment variables in Railway dashboard:
 #   DATABASE_URL  PORT  NODE_ENV
 git push origin main</div>
 
-                        <h2>Android App 安裝</h2>
+                        <h2 data-i18n="guide_quickstart_app_install">Android App 安裝</h2>
                         <ol class="content-list">
-                            <li>從 <a href="https://github.com/HankHuang0516/realbot/releases/latest" target="_blank" rel="noopener">GitHub Releases</a> 下載最新的 <code>.aab</code> / <code>.apk</code></li>
-                            <li>設定為 Live Wallpaper → Long Settings → 輸入你的 <code>deviceId</code></li>
-                            <li>打開 Web Portal 綁定 AI 實體</li>
+                            <li data-i18n="guide_quickstart_step_download">從 <a href="https://github.com/HankHuang0516/realbot/releases/latest" target="_blank" rel="noopener">GitHub Releases</a> 下載最新的 <code>.aab</code> / <code>.apk</code></li>
+                            <li data-i18n="guide_quickstart_step_wallpaper">設定為 Live Wallpaper → Long Settings → 輸入你的 <code>deviceId</code></li>
+                            <li data-i18n="guide_quickstart_step_bind">打開 Web Portal 綁定 AI 實體</li>
                         </ol>
                     </div>
 
                     <!-- ── 專案結構 ── -->
                     <div class="guide-panel" id="guide-structure">
                         <header>
-                            <h1>專案結構</h1>
-                            <p class="meta">realbot 原始碼目錄說明</p>
+                            <h1 data-i18n="guide_structure_title">專案結構</h1>
+                            <p class="meta" data-i18n="guide_structure_meta">realbot 原始碼目錄說明</p>
                         </header>
 
-                        <h2>目錄總覽</h2>
+                        <h2 data-i18n="guide_structure_dir_overview">目錄總覽</h2>
                         <div class="file-tree">realbot/
 ├── app/                    # Android app (Kotlin)
 │   └── src/main/
@@ -873,28 +873,28 @@ git push origin main</div>
 ├── PRIVACY_POLICY.md       # Privacy policy
 └── CLAUDE.md               # AI assistant instructions</div>
 
-                        <h2>主要模組說明</h2>
+                        <h2 data-i18n="guide_structure_modules">主要模組說明</h2>
                         <ul class="content-list">
-                            <li><strong>app/</strong> — Android 應用程式，使用 Kotlin 開發，包含 Live Wallpaper、聊天介面、Push 接收器</li>
-                            <li><strong>backend/</strong> — Node.js + Express 後端，部署於 Railway，負責 API、資料庫、與 OpenClaw 平台通訊</li>
-                            <li><strong>backend/public/</strong> — Web Portal 前端，提供跨裝置的實體管理介面</li>
-                            <li><strong>backend/tests/</strong> — 回歸測試套件，確保 Bot API 與廣播功能正常運作</li>
-                            <li><strong>google_play/</strong> — Google Play Store 上架素材（圖標、功能圖片）</li>
+                            <li data-i18n="guide_structure_mod_app"><strong>app/</strong> — Android 應用程式，使用 Kotlin 開發，包含 Live Wallpaper、聊天介面、Push 接收器</li>
+                            <li data-i18n="guide_structure_mod_backend"><strong>backend/</strong> — Node.js + Express 後端，部署於 Railway，負責 API、資料庫、與 OpenClaw 平台通訊</li>
+                            <li data-i18n="guide_structure_mod_portal"><strong>backend/public/</strong> — Web Portal 前端，提供跨裝置的實體管理介面</li>
+                            <li data-i18n="guide_structure_mod_tests"><strong>backend/tests/</strong> — 回歸測試套件，確保 Bot API 與廣播功能正常運作</li>
+                            <li data-i18n="guide_structure_mod_play"><strong>google_play/</strong> — Google Play Store 上架素材（圖標、功能圖片）</li>
                         </ul>
                     </div>
 
                     <!-- ── 任務中心 — 總覽 ── -->
                     <div class="guide-panel" id="guide-mission-overview">
                         <header>
-                            <h1>任務中心 (Mission Control)</h1>
-                            <p class="meta">Web 管理面板 — 管理 Bot 的待辦、任務、筆記、Skills、靈魂、規則、排程</p>
+                            <h1 data-i18n="guide_mission_overview_title">任務中心 (Mission Control)</h1>
+                            <p class="meta" data-i18n="guide_mission_overview_meta">Web 管理面板 — 管理 Bot 的待辦、任務、筆記、Skills、靈魂、規則、排程</p>
                         </header>
 
-                        <p>Mission Control 是 E-Claw 的 Web 管理面板，讓你透過瀏覽器跨裝置管理 AI Bot 的所有行為。同一裝置上的所有 Entity（最多 4 個）<strong>共享同一個 Dashboard</strong>，可互相協作。</p>
+                        <p data-i18n="guide_mission_overview_intro">Mission Control 是 E-Claw 的 Web 管理面板，讓你透過瀏覽器跨裝置管理 AI Bot 的所有行為。同一裝置上的所有 Entity（最多 4 個）<strong>共享同一個 Dashboard</strong>，可互相協作。</p>
 
                         <img src="assets/guide/mission-control-web.jpg" alt="E-Claw Mission Control Web 介面截圖" class="mc-screenshot">
 
-                        <h2>功能樹狀圖</h2>
+                        <h2 data-i18n="guide_mission_overview_feature_tree">功能樹狀圖</h2>
                         <div class="file-tree">任務中心 (Task Center)
 ├── E-Claw Mission Control (Dashboard)
 │   ├── 待辦事項 (TODO)
@@ -908,56 +908,56 @@ git push origin main</div>
 ├── 環境變數 (Env Variables)
 └── 遠端控制 (Remote Control)</div>
 
-                        <h2>子項目總覽</h2>
+                        <h2 data-i18n="guide_mission_overview_sub_overview">子項目總覽</h2>
                         <table class="feature-table">
-                            <thead><tr><th>子項目</th><th>說明</th><th>存取權限</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_mission_overview_tbl_h_item">子項目</th><th data-i18n="guide_mission_overview_tbl_h_desc">說明</th><th data-i18n="guide_mission_overview_tbl_h_access">存取權限</th></tr></thead>
                             <tbody>
-                                <tr><td>待辦事項</td><td>管理尚未開始的工作項目，支援優先順序與 Entity 指派</td><td>User + Bot 共用</td></tr>
-                                <tr><td>任務列表</td><td>追蹤進行中的任務，按優先順序排序顯示</td><td>User + Bot 共用</td></tr>
-                                <tr><td>已完成</td><td>歸檔已完成項目，附帶完成時間戳記</td><td>User + Bot 共用</td></tr>
-                                <tr><td>筆記</td><td>記錄參考資訊，支援分類管理與跨 Entity 共享</td><td>User + Bot 共用</td></tr>
-                                <tr><td>Skills</td><td>擴充 Bot 能力，附帶 API 文件 URL</td><td>Bot 能力擴充</td></tr>
-                                <tr><td>靈魂</td><td>定義 Bot 人格特質與溝通風格</td><td>User 定義人格</td></tr>
-                                <tr><td>規則</td><td>制定行為準則與自動化工作流程，支援 6 種規則類型</td><td>User 定義行為</td></tr>
-                                <tr><td>排程</td><td>定時執行任務，支援即時狀態追蹤與執行紀錄</td><td>User + Bot 共用</td></tr>
-                                <tr><td>環境變數</td><td>AES-256-GCM 加密儲存 Bot 私密變數，JIT 即時授權機制</td><td>User 授權 / Bot 讀取</td></tr>
-                                <tr><td>遠端控制</td><td>Bot 透過 Accessibility Tree 自主操控手機 UI（預設關閉）</td><td>User 啟用 / Bot 執行</td></tr>
+                                <tr><td data-i18n="guide_mission_overview_tbl_todo_item">待辦事項</td><td data-i18n="guide_mission_overview_tbl_todo_desc">管理尚未開始的工作項目，支援優先順序與 Entity 指派</td><td data-i18n="guide_mission_overview_tbl_todo_access">User + Bot 共用</td></tr>
+                                <tr><td data-i18n="guide_mission_overview_tbl_mission_item">任務列表</td><td data-i18n="guide_mission_overview_tbl_mission_desc">追蹤進行中的任務，按優先順序排序顯示</td><td data-i18n="guide_mission_overview_tbl_mission_access">User + Bot 共用</td></tr>
+                                <tr><td data-i18n="guide_mission_overview_tbl_done_item">已完成</td><td data-i18n="guide_mission_overview_tbl_done_desc">歸檔已完成項目，附帶完成時間戳記</td><td data-i18n="guide_mission_overview_tbl_done_access">User + Bot 共用</td></tr>
+                                <tr><td data-i18n="guide_mission_overview_tbl_notes_item">筆記</td><td data-i18n="guide_mission_overview_tbl_notes_desc">記錄參考資訊，支援分類管理與跨 Entity 共享</td><td data-i18n="guide_mission_overview_tbl_notes_access">User + Bot 共用</td></tr>
+                                <tr><td data-i18n="guide_mission_overview_tbl_skills_item">Skills</td><td data-i18n="guide_mission_overview_tbl_skills_desc">擴充 Bot 能力，附帶 API 文件 URL</td><td data-i18n="guide_mission_overview_tbl_skills_access">Bot 能力擴充</td></tr>
+                                <tr><td data-i18n="guide_mission_overview_tbl_soul_item">靈魂</td><td data-i18n="guide_mission_overview_tbl_soul_desc">定義 Bot 人格特質與溝通風格</td><td data-i18n="guide_mission_overview_tbl_soul_access">User 定義人格</td></tr>
+                                <tr><td data-i18n="guide_mission_overview_tbl_rules_item">規則</td><td data-i18n="guide_mission_overview_tbl_rules_desc">制定行為準則與自動化工作流程，支援 6 種規則類型</td><td data-i18n="guide_mission_overview_tbl_rules_access">User 定義行為</td></tr>
+                                <tr><td data-i18n="guide_mission_overview_tbl_schedule_item">排程</td><td data-i18n="guide_mission_overview_tbl_schedule_desc">定時執行任務，支援即時狀態追蹤與執行紀錄</td><td data-i18n="guide_mission_overview_tbl_schedule_access">User + Bot 共用</td></tr>
+                                <tr><td data-i18n="guide_mission_overview_tbl_env_item">環境變數</td><td data-i18n="guide_mission_overview_tbl_env_desc">AES-256-GCM 加密儲存 Bot 私密變數，JIT 即時授權機制</td><td data-i18n="guide_mission_overview_tbl_env_access">User 授權 / Bot 讀取</td></tr>
+                                <tr><td data-i18n="guide_mission_overview_tbl_remote_item">遠端控制</td><td data-i18n="guide_mission_overview_tbl_remote_desc">Bot 透過 Accessibility Tree 自主操控手機 UI（預設關閉）</td><td data-i18n="guide_mission_overview_tbl_remote_access">User 啟用 / Bot 執行</td></tr>
                             </tbody>
                         </table>
 
-                        <h2>Dashboard 同步機制</h2>
-                        <p>Mission Control Dashboard 使用<strong>版本號（version）</strong>做樂觀鎖定。每次操作都會自動遞增版本號，Bot 可透過定期輪詢 <code>GET /api/mission/dashboard</code> 比對版本號來偵測使用者的靜默修改。</p>
-                        <div class="note">建議 Bot 每 15 分鐘輪詢一次 Dashboard，比對 <code>version</code> 欄位，若版本變更則重新讀取所有項目。這能確保 Bot 即時回應使用者在 Web 面板上的操作。</div>
+                        <h2 data-i18n="guide_mission_overview_sync">Dashboard 同步機制</h2>
+                        <p data-i18n="guide_mission_overview_sync_desc">Mission Control Dashboard 使用<strong>版本號（version）</strong>做樂觀鎖定。每次操作都會自動遞增版本號，Bot 可透過定期輪詢 <code>GET /api/mission/dashboard</code> 比對版本號來偵測使用者的靜默修改。</p>
+                        <div class="note" data-i18n="guide_mission_overview_sync_note">建議 Bot 每 15 分鐘輪詢一次 Dashboard，比對 <code>version</code> 欄位，若版本變更則重新讀取所有項目。這能確保 Bot 即時回應使用者在 Web 面板上的操作。</div>
                     </div>
 
                     <!-- ── 任務中心 — 待辦事項 ── -->
                     <div class="guide-panel" id="guide-mission-todo">
                         <header>
-                            <h1>待辦事項 (TODO)</h1>
-                            <p class="meta">任務中心 &gt; 待辦事項 <span class="mc-label mc-label-shared">User + Bot 共用</span></p>
+                            <h1 data-i18n="guide_todo_title">待辦事項 (TODO)</h1>
+                            <p class="meta" data-i18n="guide_todo_meta">任務中心 &gt; 待辦事項 <span class="mc-label mc-label-shared">User + Bot 共用</span></p>
                         </header>
-                        <p>待辦事項列表用來管理「尚未開始」的工作項目。使用者可以從 Web 面板新增，Bot 也可以透過 API 自行新增。</p>
-                        <h2>功能明細</h2>
+                        <p data-i18n="guide_todo_p_1">待辦事項列表用來管理「尚未開始」的工作項目。使用者可以從 Web 面板新增，Bot 也可以透過 API 自行新增。</p>
+                        <h2 data-i18n="guide_todo_h2_1">功能明細</h2>
                         <table class="feature-table">
-                            <thead><tr><th>功能</th><th>說明</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_features_tbl_h_feature">功能</th><th data-i18n="guide_features_tbl_h_desc">說明</th></tr></thead>
                             <tbody>
-                                <tr><td>新增待辦</td><td>點擊「+ 新增」按鈕建立項目，可設定標題、描述、優先順序（LOW / MEDIUM / HIGH / URGENT）</td></tr>
-                                <tr><td>指派 Bot</td><td>每個待辦可指派給特定 Entity（如 Entity 0、Entity 1），或同時指派給多個 Entity</td></tr>
-                                <tr><td>開始任務</td><td>將待辦移至「任務列表」（狀態轉為 IN_PROGRESS）</td></tr>
-                                <tr><td>直接完成</td><td>跳過任務階段，直接標記為完成並移至「已完成」</td></tr>
-                                <tr><td>刪除待辦</td><td>移除不再需要的項目</td></tr>
-                                <tr><td>Bot 自動操作</td><td>Bot 可透過 API 新增、更新、刪除待辦，並即時反映在面板上</td></tr>
+                                <tr><td data-i18n="guide_todo_td_1">新增待辦</td><td data-i18n="guide_todo_td_2">點擊「+ 新增」按鈕建立項目，可設定標題、描述、優先順序（LOW / MEDIUM / HIGH / URGENT）</td></tr>
+                                <tr><td data-i18n="guide_todo_td_3">指派 Bot</td><td data-i18n="guide_todo_td_4">每個待辦可指派給特定 Entity（如 Entity 0、Entity 1），或同時指派給多個 Entity</td></tr>
+                                <tr><td data-i18n="guide_todo_td_5">開始任務</td><td data-i18n="guide_todo_td_6">將待辦移至「任務列表」（狀態轉為 IN_PROGRESS）</td></tr>
+                                <tr><td data-i18n="guide_todo_td_7">直接完成</td><td data-i18n="guide_todo_td_8">跳過任務階段，直接標記為完成並移至「已完成」</td></tr>
+                                <tr><td data-i18n="guide_todo_td_9">刪除待辦</td><td data-i18n="guide_todo_td_10">移除不再需要的項目</td></tr>
+                                <tr><td data-i18n="guide_todo_td_11">Bot 自動操作</td><td data-i18n="guide_todo_td_12">Bot 可透過 API 新增、更新、刪除待辦，並即時反映在面板上</td></tr>
                             </tbody>
                         </table>
-                        <h2>API 端點</h2>
+                        <h2 data-i18n="guide_todo_h2_2">API 端點</h2>
                         <table class="mc-api-table">
-                            <thead><tr><th>操作</th><th>API</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_todo_th_1">操作</th><th data-i18n="guide_todo_th_2">API</th></tr></thead>
                             <tbody>
-                                <tr><td>新增</td><td><code>POST /api/mission/todo/add</code></td></tr>
-                                <tr><td>更新</td><td><code>POST /api/mission/todo/update</code></td></tr>
-                                <tr><td>開始</td><td><code>POST /api/mission/todo/start</code></td></tr>
-                                <tr><td>完成</td><td><code>POST /api/mission/todo/done</code></td></tr>
-                                <tr><td>刪除</td><td><code>POST /api/mission/todo/delete</code></td></tr>
+                                <tr><td data-i18n="guide_todo_td_13">新增</td><td><code>POST /api/mission/todo/add</code></td></tr>
+                                <tr><td data-i18n="guide_todo_td_14">更新</td><td><code>POST /api/mission/todo/update</code></td></tr>
+                                <tr><td data-i18n="guide_todo_td_15">開始</td><td><code>POST /api/mission/todo/start</code></td></tr>
+                                <tr><td data-i18n="guide_todo_td_16">完成</td><td><code>POST /api/mission/todo/done</code></td></tr>
+                                <tr><td data-i18n="guide_todo_td_17">刪除</td><td><code>POST /api/mission/todo/delete</code></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -965,19 +965,19 @@ git push origin main</div>
                     <!-- ── 任務中心 — 任務列表 ── -->
                     <div class="guide-panel" id="guide-mission-list">
                         <header>
-                            <h1>任務列表 (Mission List)</h1>
-                            <p class="meta">任務中心 &gt; 任務列表 <span class="mc-label mc-label-shared">User + Bot 共用</span></p>
+                            <h1 data-i18n="guide_mlist_title">任務列表 (Mission List)</h1>
+                            <p class="meta" data-i18n="guide_mlist_meta">任務中心 &gt; 任務列表 <span class="mc-label mc-label-shared">User + Bot 共用</span></p>
                         </header>
-                        <p>顯示目前「進行中」的任務。當一個待辦項目被「開始」後，會自動移到這裡，狀態為 IN_PROGRESS。</p>
-                        <h2>功能明細</h2>
+                        <p data-i18n="guide_mlist_p_1">顯示目前「進行中」的任務。當一個待辦項目被「開始」後，會自動移到這裡，狀態為 IN_PROGRESS。</p>
+                        <h2 data-i18n="guide_mlist_h2_1">功能明細</h2>
                         <table class="feature-table">
-                            <thead><tr><th>功能</th><th>說明</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_features_tbl_h_feature">功能</th><th data-i18n="guide_features_tbl_h_desc">說明</th></tr></thead>
                             <tbody>
-                                <tr><td>狀態追蹤</td><td>即時顯示每個任務的執行狀態，Bot 處理中會自動更新</td></tr>
-                                <tr><td>優先順序排序</td><td>任務按 URGENT → HIGH → MEDIUM → LOW 排序顯示</td></tr>
-                                <tr><td>指派資訊</td><td>顯示該任務由哪個 Entity 負責執行</td></tr>
-                                <tr><td>標記完成</td><td>任務完成後移至「已完成」區塊</td></tr>
-                                <tr><td>退回待辦</td><td>如果任務需要暫停，可退回待辦清單</td></tr>
+                                <tr><td data-i18n="guide_mlist_td_1">狀態追蹤</td><td data-i18n="guide_mlist_td_2">即時顯示每個任務的執行狀態，Bot 處理中會自動更新</td></tr>
+                                <tr><td data-i18n="guide_mlist_td_3">優先順序排序</td><td data-i18n="guide_mlist_td_4">任務按 URGENT → HIGH → MEDIUM → LOW 排序顯示</td></tr>
+                                <tr><td data-i18n="guide_mlist_td_5">指派資訊</td><td data-i18n="guide_mlist_td_6">顯示該任務由哪個 Entity 負責執行</td></tr>
+                                <tr><td data-i18n="guide_mlist_td_7">標記完成</td><td data-i18n="guide_mlist_td_8">任務完成後移至「已完成」區塊</td></tr>
+                                <tr><td data-i18n="guide_mlist_td_9">退回待辦</td><td data-i18n="guide_mlist_td_10">如果任務需要暫停，可退回待辦清單</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -985,17 +985,17 @@ git push origin main</div>
                     <!-- ── 任務中心 — 已完成 ── -->
                     <div class="guide-panel" id="guide-mission-done">
                         <header>
-                            <h1>已完成 (Done)</h1>
-                            <p class="meta">任務中心 &gt; 已完成</p>
+                            <h1 data-i18n="guide_mdone_title">已完成 (Done)</h1>
+                            <p class="meta" data-i18n="guide_mdone_meta">任務中心 &gt; 已完成</p>
                         </header>
-                        <p>所有已完成的待辦與任務會歸檔到這裡，附帶完成時間戳記，方便追蹤歷史紀錄。</p>
-                        <h2>功能明細</h2>
+                        <p data-i18n="guide_mdone_p_1">所有已完成的待辦與任務會歸檔到這裡，附帶完成時間戳記，方便追蹤歷史紀錄。</p>
+                        <h2 data-i18n="guide_mdone_h2_1">功能明細</h2>
                         <table class="feature-table">
-                            <thead><tr><th>功能</th><th>說明</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_features_tbl_h_feature">功能</th><th data-i18n="guide_features_tbl_h_desc">說明</th></tr></thead>
                             <tbody>
-                                <tr><td>完成紀錄</td><td>每個完成項目都記錄 <code>completedAt</code> 時間戳</td></tr>
-                                <tr><td>歷史回顧</td><td>方便確認 Bot 過去執行了哪些任務</td></tr>
-                                <tr><td>清理功能</td><td>可刪除不再需要的歷史紀錄</td></tr>
+                                <tr><td data-i18n="guide_mdone_td_1">完成紀錄</td><td>每個完成項目都記錄 <code>completedAt</code> 時間戳</td></tr>
+                                <tr><td data-i18n="guide_mdone_td_2">歷史回顧</td><td data-i18n="guide_mdone_td_3">方便確認 Bot 過去執行了哪些任務</td></tr>
+                                <tr><td data-i18n="guide_mdone_td_4">清理功能</td><td data-i18n="guide_mdone_td_5">可刪除不再需要的歷史紀錄</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1003,29 +1003,29 @@ git push origin main</div>
                     <!-- ── 任務中心 — 筆記 ── -->
                     <div class="guide-panel" id="guide-mission-notes">
                         <header>
-                            <h1>筆記 (Notes)</h1>
-                            <p class="meta">任務中心 &gt; 筆記 <span class="mc-label mc-label-shared">User + Bot 共用</span></p>
+                            <h1 data-i18n="guide_notes_title">筆記 (Notes)</h1>
+                            <p class="meta" data-i18n="guide_notes_meta">任務中心 &gt; 筆記 <span class="mc-label mc-label-shared">User + Bot 共用</span></p>
                         </header>
-                        <p>筆記功能讓使用者和 Bot 都能記錄參考資訊。適合存放備忘、偏好設定、對話摘要等。</p>
-                        <h2>功能明細</h2>
+                        <p data-i18n="guide_notes_p_1">筆記功能讓使用者和 Bot 都能記錄參考資訊。適合存放備忘、偏好設定、對話摘要等。</p>
+                        <h2 data-i18n="guide_notes_h2_1">功能明細</h2>
                         <table class="feature-table">
-                            <thead><tr><th>功能</th><th>說明</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_features_tbl_h_feature">功能</th><th data-i18n="guide_features_tbl_h_desc">說明</th></tr></thead>
                             <tbody>
-                                <tr><td>新增筆記</td><td>點擊「+ 新增」建立筆記，包含標題、內容、分類（category）</td></tr>
-                                <tr><td>分類管理</td><td>可自訂分類標籤（預設 <code>general</code>），方便歸類</td></tr>
-                                <tr><td>Bot 讀寫</td><td>Bot 可透過 API 讀取、新增、更新、刪除筆記</td></tr>
-                                <tr><td>跨 Entity 共享</td><td>同一裝置的所有 Entity 都能存取所有筆記</td></tr>
-                                <tr><td>用途範例</td><td>使用者偏好紀錄、對話摘要、Bot 工作日誌、設定備忘</td></tr>
+                                <tr><td data-i18n="guide_notes_td_1">新增筆記</td><td data-i18n="guide_notes_td_2">點擊「+ 新增」建立筆記，包含標題、內容、分類（category）</td></tr>
+                                <tr><td data-i18n="guide_notes_td_3">分類管理</td><td>可自訂分類標籤（預設 <code>general</code>），方便歸類</td></tr>
+                                <tr><td data-i18n="guide_notes_td_4">Bot 讀寫</td><td data-i18n="guide_notes_td_5">Bot 可透過 API 讀取、新增、更新、刪除筆記</td></tr>
+                                <tr><td data-i18n="guide_notes_td_6">跨 Entity 共享</td><td data-i18n="guide_notes_td_7">同一裝置的所有 Entity 都能存取所有筆記</td></tr>
+                                <tr><td data-i18n="guide_notes_td_8">用途範例</td><td data-i18n="guide_notes_td_9">使用者偏好紀錄、對話摘要、Bot 工作日誌、設定備忘</td></tr>
                             </tbody>
                         </table>
-                        <h2>API 端點</h2>
+                        <h2 data-i18n="guide_notes_h2_2">API 端點</h2>
                         <table class="mc-api-table">
-                            <thead><tr><th>操作</th><th>API</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_notes_th_1">操作</th><th data-i18n="guide_notes_th_2">API</th></tr></thead>
                             <tbody>
-                                <tr><td>列表</td><td><code>GET /api/mission/notes</code></td></tr>
-                                <tr><td>新增</td><td><code>POST /api/mission/note/add</code></td></tr>
-                                <tr><td>更新</td><td><code>POST /api/mission/note/update</code></td></tr>
-                                <tr><td>刪除</td><td><code>POST /api/mission/note/delete</code></td></tr>
+                                <tr><td data-i18n="guide_notes_td_10">列表</td><td><code>GET /api/mission/notes</code></td></tr>
+                                <tr><td data-i18n="guide_notes_td_11">新增</td><td><code>POST /api/mission/note/add</code></td></tr>
+                                <tr><td data-i18n="guide_notes_td_12">更新</td><td><code>POST /api/mission/note/update</code></td></tr>
+                                <tr><td data-i18n="guide_notes_td_13">刪除</td><td><code>POST /api/mission/note/delete</code></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1033,27 +1033,27 @@ git push origin main</div>
                     <!-- ── 任務中心 — Skills ── -->
                     <div class="guide-panel" id="guide-mission-skills">
                         <header>
-                            <h1>Skills</h1>
-                            <p class="meta">任務中心 &gt; Skills <span class="mc-label mc-label-bot">Bot 能力擴充</span></p>
+                            <h1 data-i18n="guide_skills_title">Skills</h1>
+                            <p class="meta" data-i18n="guide_skills_meta">任務中心 &gt; Skills <span class="mc-label mc-label-bot">Bot 能力擴充</span></p>
                         </header>
-                        <p>Skills 定義 Bot 可以使用的外部技能或 API 文件。每個 Skill 可附帶文件 URL，讓 Bot 學習如何使用該技能。</p>
-                        <h2>功能明細</h2>
+                        <p data-i18n="guide_skills_p_1">Skills 定義 Bot 可以使用的外部技能或 API 文件。每個 Skill 可附帶文件 URL，讓 Bot 學習如何使用該技能。</p>
+                        <h2 data-i18n="guide_skills_h2_1">功能明細</h2>
                         <table class="feature-table">
-                            <thead><tr><th>功能</th><th>說明</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_features_tbl_h_feature">功能</th><th data-i18n="guide_features_tbl_h_desc">說明</th></tr></thead>
                             <tbody>
-                                <tr><td>新增 Skill</td><td>點擊「+ Add」建立技能，設定標題、文件 URL</td></tr>
-                                <tr><td>文件連結</td><td>每個 Skill 可附帶 <code>url</code> 指向 API 文件或使用說明</td></tr>
-                                <tr><td>指派 Entity</td><td>可指定哪些 Entity 具備此技能（如只有 Entity 0 有天氣查詢能力）</td></tr>
-                                <tr><td>內建 Skill</td><td>預設包含「E-Claw API Skill」，指向 E-Claw 自身的 API 文件</td></tr>
-                                <tr><td>多技能管理</td><td>一個 Bot 可擁有多個 Skill，擴展不同能力</td></tr>
+                                <tr><td data-i18n="guide_skills_td_1">新增 Skill</td><td data-i18n="guide_skills_td_2">點擊「+ Add」建立技能，設定標題、文件 URL</td></tr>
+                                <tr><td data-i18n="guide_skills_td_3">文件連結</td><td>每個 Skill 可附帶 <code>url</code> 指向 API 文件或使用說明</td></tr>
+                                <tr><td data-i18n="guide_skills_td_4">指派 Entity</td><td data-i18n="guide_skills_td_5">可指定哪些 Entity 具備此技能（如只有 Entity 0 有天氣查詢能力）</td></tr>
+                                <tr><td data-i18n="guide_skills_td_6">內建 Skill</td><td data-i18n="guide_skills_td_7">預設包含「E-Claw API Skill」，指向 E-Claw 自身的 API 文件</td></tr>
+                                <tr><td data-i18n="guide_skills_td_8">多技能管理</td><td data-i18n="guide_skills_td_9">一個 Bot 可擁有多個 Skill，擴展不同能力</td></tr>
                             </tbody>
                         </table>
-                        <h2>API 端點</h2>
+                        <h2 data-i18n="guide_skills_h2_2">API 端點</h2>
                         <table class="mc-api-table">
-                            <thead><tr><th>操作</th><th>API</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_skills_th_1">操作</th><th data-i18n="guide_skills_th_2">API</th></tr></thead>
                             <tbody>
-                                <tr><td>新增</td><td><code>POST /api/mission/skill/add</code></td></tr>
-                                <tr><td>刪除</td><td><code>POST /api/mission/skill/delete</code></td></tr>
+                                <tr><td data-i18n="guide_skills_td_10">新增</td><td><code>POST /api/mission/skill/add</code></td></tr>
+                                <tr><td data-i18n="guide_skills_td_11">刪除</td><td><code>POST /api/mission/skill/delete</code></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1061,31 +1061,31 @@ git push origin main</div>
                     <!-- ── 任務中心 — 靈魂 ── -->
                     <div class="guide-panel" id="guide-mission-soul">
                         <header>
-                            <h1>靈魂 (Soul / 人設)</h1>
-                            <p class="meta">任務中心 &gt; 靈魂 <span class="mc-label mc-label-user">User 定義人格</span></p>
+                            <h1 data-i18n="guide_soul_title">靈魂 (Soul / 人設)</h1>
+                            <p class="meta" data-i18n="guide_soul_meta">任務中心 &gt; 靈魂 <span class="mc-label mc-label-user">User 定義人格</span></p>
                         </header>
-                        <p>靈魂定義 Bot 的人格特質與溝通風格。使用者可以為每個 Entity 指定不同的人格設定，隨時切換啟用或停用。</p>
-                        <h2>功能明細</h2>
+                        <p data-i18n="guide_soul_p_1">靈魂定義 Bot 的人格特質與溝通風格。使用者可以為每個 Entity 指定不同的人格設定，隨時切換啟用或停用。</p>
+                        <h2 data-i18n="guide_soul_h2_1">功能明細</h2>
                         <table class="feature-table">
-                            <thead><tr><th>功能</th><th>說明</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_features_tbl_h_feature">功能</th><th data-i18n="guide_features_tbl_h_desc">說明</th></tr></thead>
                             <tbody>
-                                <tr><td>新增靈魂</td><td>點擊「+ 新增」建立人格設定，填寫名稱與人格描述</td></tr>
-                                <tr><td>人格描述</td><td>以自然語言描述 Bot 的性格、語氣、回應風格</td></tr>
-                                <tr><td>範本選擇</td><td>可使用預設範本（如 <code>friendly</code>、<code>professional</code>），也可完全自訂</td></tr>
-                                <tr><td>啟用 / 停用</td><td>每個靈魂有 <code>isActive</code> 開關，使用者可隨時切換</td></tr>
-                                <tr><td>多靈魂混合</td><td>當多個靈魂同時啟用時，Bot 會融合所有啟用靈魂的特質來回應</td></tr>
-                                <tr><td>指派 Entity</td><td>不同 Entity 可以有不同的人格設定</td></tr>
-                                <tr><td>即時生效</td><td>修改後 Bot 在下次回應時立即採用新人格</td></tr>
+                                <tr><td data-i18n="guide_soul_td_1">新增靈魂</td><td data-i18n="guide_soul_td_2">點擊「+ 新增」建立人格設定，填寫名稱與人格描述</td></tr>
+                                <tr><td data-i18n="guide_soul_td_3">人格描述</td><td data-i18n="guide_soul_td_4">以自然語言描述 Bot 的性格、語氣、回應風格</td></tr>
+                                <tr><td data-i18n="guide_soul_td_5">範本選擇</td><td>可使用預設範本（如 <code>friendly</code>、<code>professional</code>），也可完全自訂</td></tr>
+                                <tr><td data-i18n="guide_soul_td_6">啟用 / 停用</td><td>每個靈魂有 <code>isActive</code> 開關，使用者可隨時切換</td></tr>
+                                <tr><td data-i18n="guide_soul_td_7">多靈魂混合</td><td data-i18n="guide_soul_td_8">當多個靈魂同時啟用時，Bot 會融合所有啟用靈魂的特質來回應</td></tr>
+                                <tr><td data-i18n="guide_soul_td_9">指派 Entity</td><td data-i18n="guide_soul_td_10">不同 Entity 可以有不同的人格設定</td></tr>
+                                <tr><td data-i18n="guide_soul_td_11">即時生效</td><td data-i18n="guide_soul_td_12">修改後 Bot 在下次回應時立即採用新人格</td></tr>
                             </tbody>
                         </table>
-                        <h2>API 端點</h2>
+                        <h2 data-i18n="guide_soul_h2_2">API 端點</h2>
                         <table class="mc-api-table">
-                            <thead><tr><th>操作</th><th>API</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_soul_th_1">操作</th><th data-i18n="guide_soul_th_2">API</th></tr></thead>
                             <tbody>
-                                <tr><td>列表</td><td><code>GET /api/mission/souls</code></td></tr>
-                                <tr><td>新增</td><td><code>POST /api/mission/soul/add</code></td></tr>
-                                <tr><td>更新</td><td><code>POST /api/mission/soul/update</code></td></tr>
-                                <tr><td>刪除</td><td><code>POST /api/mission/soul/delete</code></td></tr>
+                                <tr><td data-i18n="guide_soul_td_13">列表</td><td><code>GET /api/mission/souls</code></td></tr>
+                                <tr><td data-i18n="guide_soul_td_14">新增</td><td><code>POST /api/mission/soul/add</code></td></tr>
+                                <tr><td data-i18n="guide_soul_td_15">更新</td><td><code>POST /api/mission/soul/update</code></td></tr>
+                                <tr><td data-i18n="guide_soul_td_16">刪除</td><td><code>POST /api/mission/soul/delete</code></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1093,28 +1093,28 @@ git push origin main</div>
                     <!-- ── 任務中心 — 規則 ── -->
                     <div class="guide-panel" id="guide-mission-rules">
                         <header>
-                            <h1>規則 / Workflow</h1>
-                            <p class="meta">任務中心 &gt; 規則 <span class="mc-label mc-label-user">User 定義行為</span></p>
+                            <h1 data-i18n="guide_rules_title">規則 / Workflow</h1>
+                            <p class="meta" data-i18n="guide_rules_meta">任務中心 &gt; 規則 <span class="mc-label mc-label-user">User 定義行為</span></p>
                         </header>
-                        <p>規則系統讓使用者為 Bot 制定行為準則和自動化工作流程。可定義多種類型的規則並指派給不同 Entity。</p>
-                        <h2>功能明細</h2>
+                        <p data-i18n="guide_rules_p_1">規則系統讓使用者為 Bot 制定行為準則和自動化工作流程。可定義多種類型的規則並指派給不同 Entity。</p>
+                        <h2 data-i18n="guide_rules_h2_1">功能明細</h2>
                         <table class="feature-table">
-                            <thead><tr><th>功能</th><th>說明</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_features_tbl_h_feature">功能</th><th data-i18n="guide_features_tbl_h_desc">說明</th></tr></thead>
                             <tbody>
-                                <tr><td>新增規則</td><td>點擊「+ 新增」建立規則，設定名稱、描述、規則類型</td></tr>
-                                <tr><td>規則類型</td><td>支援 6 種：WORKFLOW、CODE_REVIEW、COMMUNICATION、DEPLOYMENT、SYNC、HEARTBEAT</td></tr>
-                                <tr><td>啟用 / 停用</td><td>每個規則有 <code>isEnabled</code> 開關，停用的規則 Bot 會完全忽略</td></tr>
-                                <tr><td>指派多個 Entity</td><td>一個規則可同時套用到多個 Entity</td></tr>
-                                <tr><td>跨 Entity 管理</td><td>任何 Entity 都可以新增或修改規則，不限於自己被指派的</td></tr>
+                                <tr><td data-i18n="guide_rules_td_1">新增規則</td><td data-i18n="guide_rules_td_2">點擊「+ 新增」建立規則，設定名稱、描述、規則類型</td></tr>
+                                <tr><td data-i18n="guide_rules_td_3">規則類型</td><td data-i18n="guide_rules_td_4">支援 6 種：WORKFLOW、CODE_REVIEW、COMMUNICATION、DEPLOYMENT、SYNC、HEARTBEAT</td></tr>
+                                <tr><td data-i18n="guide_rules_td_5">啟用 / 停用</td><td>每個規則有 <code>isEnabled</code> 開關，停用的規則 Bot 會完全忽略</td></tr>
+                                <tr><td data-i18n="guide_rules_td_6">指派多個 Entity</td><td data-i18n="guide_rules_td_7">一個規則可同時套用到多個 Entity</td></tr>
+                                <tr><td data-i18n="guide_rules_td_8">跨 Entity 管理</td><td data-i18n="guide_rules_td_9">任何 Entity 都可以新增或修改規則，不限於自己被指派的</td></tr>
                             </tbody>
                         </table>
-                        <h2>API 端點</h2>
+                        <h2 data-i18n="guide_rules_h2_2">API 端點</h2>
                         <table class="mc-api-table">
-                            <thead><tr><th>操作</th><th>API</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_rules_th_1">操作</th><th data-i18n="guide_rules_th_2">API</th></tr></thead>
                             <tbody>
-                                <tr><td>新增</td><td><code>POST /api/mission/rule/add</code></td></tr>
-                                <tr><td>更新</td><td><code>POST /api/mission/rule/update</code></td></tr>
-                                <tr><td>刪除</td><td><code>POST /api/mission/rule/delete</code></td></tr>
+                                <tr><td data-i18n="guide_rules_td_10">新增</td><td><code>POST /api/mission/rule/add</code></td></tr>
+                                <tr><td data-i18n="guide_rules_td_11">更新</td><td><code>POST /api/mission/rule/update</code></td></tr>
+                                <tr><td data-i18n="guide_rules_td_12">刪除</td><td><code>POST /api/mission/rule/delete</code></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1122,43 +1122,43 @@ git push origin main</div>
                     <!-- ── 任務中心 — 排程 ── -->
                     <div class="guide-panel" id="guide-mission-schedule">
                         <header>
-                            <h1>排程 (Schedule)</h1>
-                            <p class="meta">任務中心 &gt; 排程 <span class="mc-label mc-label-shared">User + Bot 共用</span></p>
+                            <h1 data-i18n="guide_schedule_title">排程 (Schedule)</h1>
+                            <p class="meta" data-i18n="guide_schedule_meta">任務中心 &gt; 排程 <span class="mc-label mc-label-shared">User + Bot 共用</span></p>
                         </header>
-                        <p>排程功能讓使用者和 Bot 設定定時執行的任務。可在指定時間自動觸發任務，並追蹤每次執行的狀態與結果。</p>
+                        <p data-i18n="guide_schedule_p_1">排程功能讓使用者和 Bot 設定定時執行的任務。可在指定時間自動觸發任務，並追蹤每次執行的狀態與結果。</p>
 
                         <img src="assets/guide/sech_web.jpg" alt="E-Claw 排程 Web 介面截圖" class="mc-screenshot">
 
-                        <h2>功能明細</h2>
+                        <h2 data-i18n="guide_schedule_h2_1">功能明細</h2>
                         <table class="feature-table">
-                            <thead><tr><th>功能</th><th>說明</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_features_tbl_h_feature">功能</th><th data-i18n="guide_features_tbl_h_desc">說明</th></tr></thead>
                             <tbody>
-                                <tr><td>新增排程</td><td>點擊「+ 新增排程」建立定時任務，設定執行時間、目標 Entity、任務內容</td></tr>
-                                <tr><td>執行時間</td><td>設定排程的執行時間點（如 09:00 PM），到時自動觸發</td></tr>
-                                <tr><td>目標 Entity</td><td>指定由哪個 Entity 執行此排程任務</td></tr>
-                                <tr><td>狀態追蹤</td><td>即時顯示排程狀態：等待中、執行中、已完成、失敗</td></tr>
-                                <tr><td>取消排程</td><td>取消尚未執行的排程</td></tr>
-                                <tr><td>執行紀錄</td><td>歸檔所有已執行的排程，包含執行時間、目標 Entity、結果</td></tr>
+                                <tr><td data-i18n="guide_schedule_td_1">新增排程</td><td data-i18n="guide_schedule_td_2">點擊「+ 新增排程」建立定時任務，設定執行時間、目標 Entity、任務內容</td></tr>
+                                <tr><td data-i18n="guide_schedule_td_3">執行時間</td><td data-i18n="guide_schedule_td_4">設定排程的執行時間點（如 09:00 PM），到時自動觸發</td></tr>
+                                <tr><td data-i18n="guide_schedule_td_5">目標 Entity</td><td data-i18n="guide_schedule_td_6">指定由哪個 Entity 執行此排程任務</td></tr>
+                                <tr><td data-i18n="guide_schedule_td_7">狀態追蹤</td><td data-i18n="guide_schedule_td_8">即時顯示排程狀態：等待中、執行中、已完成、失敗</td></tr>
+                                <tr><td data-i18n="guide_schedule_td_9">取消排程</td><td data-i18n="guide_schedule_td_10">取消尚未執行的排程</td></tr>
+                                <tr><td data-i18n="guide_schedule_td_11">執行紀錄</td><td data-i18n="guide_schedule_td_12">歸檔所有已執行的排程，包含執行時間、目標 Entity、結果</td></tr>
                             </tbody>
                         </table>
-                        <h2>狀態標籤說明</h2>
+                        <h2 data-i18n="guide_schedule_h2_2">狀態標籤說明</h2>
                         <table class="feature-table">
-                            <thead><tr><th>狀態</th><th>說明</th><th>顏色</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_schedule_th_1">狀態</th><th data-i18n="guide_schedule_th_2">說明</th><th data-i18n="guide_schedule_th_3">顏色</th></tr></thead>
                             <tbody>
-                                <tr><td>等待中</td><td>排程已建立，尚未到執行時間</td><td>紫色</td></tr>
-                                <tr><td>執行中</td><td>已到執行時間，Bot 正在處理任務</td><td>藍色</td></tr>
-                                <tr><td>已完成</td><td>任務已成功執行完畢</td><td>綠色</td></tr>
-                                <tr><td>失敗</td><td>任務執行過程中發生錯誤</td><td>紅色</td></tr>
+                                <tr><td data-i18n="guide_schedule_td_13">等待中</td><td data-i18n="guide_schedule_td_14">排程已建立，尚未到執行時間</td><td data-i18n="guide_schedule_td_15">紫色</td></tr>
+                                <tr><td data-i18n="guide_schedule_td_16">執行中</td><td data-i18n="guide_schedule_td_17">已到執行時間，Bot 正在處理任務</td><td data-i18n="guide_schedule_td_18">藍色</td></tr>
+                                <tr><td data-i18n="guide_schedule_td_19">已完成</td><td data-i18n="guide_schedule_td_20">任務已成功執行完畢</td><td data-i18n="guide_schedule_td_21">綠色</td></tr>
+                                <tr><td data-i18n="guide_schedule_td_22">失敗</td><td data-i18n="guide_schedule_td_23">任務執行過程中發生錯誤</td><td data-i18n="guide_schedule_td_24">紅色</td></tr>
                             </tbody>
                         </table>
-                        <h2>API 端點</h2>
+                        <h2 data-i18n="guide_schedule_h2_3">API 端點</h2>
                         <table class="mc-api-table">
-                            <thead><tr><th>操作</th><th>API</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_schedule_th_4">操作</th><th data-i18n="guide_schedule_th_5">API</th></tr></thead>
                             <tbody>
-                                <tr><td>列表</td><td><code>GET /api/mission/schedules</code></td></tr>
-                                <tr><td>新增</td><td><code>POST /api/mission/schedule/add</code></td></tr>
-                                <tr><td>取消</td><td><code>POST /api/mission/schedule/cancel</code></td></tr>
-                                <tr><td>執行紀錄</td><td><code>GET /api/mission/schedule/history</code></td></tr>
+                                <tr><td data-i18n="guide_schedule_td_25">列表</td><td><code>GET /api/mission/schedules</code></td></tr>
+                                <tr><td data-i18n="guide_schedule_td_26">新增</td><td><code>POST /api/mission/schedule/add</code></td></tr>
+                                <tr><td data-i18n="guide_schedule_td_27">取消</td><td><code>POST /api/mission/schedule/cancel</code></td></tr>
+                                <tr><td data-i18n="guide_schedule_td_28">執行紀錄</td><td><code>GET /api/mission/schedule/history</code></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1166,25 +1166,25 @@ git push origin main</div>
                     <!-- ── 環境變數 ── -->
                     <div class="guide-panel" id="guide-envvars">
                         <header>
-                            <h1>環境變數 (Env Variables)</h1>
-                            <p class="meta">任務中心 &gt; 環境變數 <span class="mc-label" style="background:rgba(255,152,0,0.15);color:#FF9800;">User 授權 / Bot 讀取</span></p>
+                            <h1 data-i18n="guide_envvars_title">環境變數 (Env Variables)</h1>
+                            <p class="meta" data-i18n="guide_envvars_meta">任務中心 &gt; 環境變數 <span class="mc-label" style="background:rgba(255,152,0,0.15);color:#FF9800;">User 授權 / Bot 讀取</span></p>
                         </header>
-                        <p>讓 Bot 安全存取敏感資訊（API Key、Token 等）。變數以 <strong>AES-256-GCM</strong> 加密儲存於伺服器，Bot 每次讀取都需要裝置擁有者即時授權（JIT — Just-in-Time Approval）。</p>
+                        <p data-i18n="guide_envvars_p_1">讓 Bot 安全存取敏感資訊（API Key、Token 等）。變數以 <strong>AES-256-GCM</strong> 加密儲存於伺服器，Bot 每次讀取都需要裝置擁有者即時授權（JIT — Just-in-Time Approval）。</p>
 
-                        <h2>功能明細</h2>
+                        <h2 data-i18n="guide_envvars_h2_1">功能明細</h2>
                         <table class="feature-table">
-                            <thead><tr><th>功能</th><th>說明</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_features_tbl_h_feature">功能</th><th data-i18n="guide_features_tbl_h_desc">說明</th></tr></thead>
                             <tbody>
-                                <tr><td>加密儲存</td><td>變數值以 AES-256-GCM 加密，伺服器僅存密文，Key 名稱可見但值不可見</td></tr>
-                                <tr><td>JIT 即時授權</td><td>Bot 請求讀取時，App 彈出授權對話框，使用者確認後才解密回傳，授權快取 5 分鐘</td></tr>
-                                <tr><td>鎖定保護</td><td>開啟鎖定後，Bot 的所有讀取請求立即拒絕，不顯示授權彈窗</td></tr>
-                                <tr><td>離線保護</td><td>裝置未連線（Socket.IO 斷線）時，Bot 請求直接回傳 403，不會等待</td></tr>
-                                <tr><td>Web 管理</td><td>可在 Portal → Env Variables 頁面新增、編輯、刪除變數</td></tr>
-                                <tr><td>App 管理</td><td>在 App → Mission Control → Env Variables 同樣可管理，並接收授權通知</td></tr>
+                                <tr><td data-i18n="guide_envvars_td_1">加密儲存</td><td data-i18n="guide_envvars_td_2">變數值以 AES-256-GCM 加密，伺服器僅存密文，Key 名稱可見但值不可見</td></tr>
+                                <tr><td data-i18n="guide_envvars_td_3">JIT 即時授權</td><td data-i18n="guide_envvars_td_4">Bot 請求讀取時，App 彈出授權對話框，使用者確認後才解密回傳，授權快取 5 分鐘</td></tr>
+                                <tr><td data-i18n="guide_envvars_td_5">鎖定保護</td><td data-i18n="guide_envvars_td_6">開啟鎖定後，Bot 的所有讀取請求立即拒絕，不顯示授權彈窗</td></tr>
+                                <tr><td data-i18n="guide_envvars_td_7">離線保護</td><td data-i18n="guide_envvars_td_8">裝置未連線（Socket.IO 斷線）時，Bot 請求直接回傳 403，不會等待</td></tr>
+                                <tr><td data-i18n="guide_envvars_td_9">Web 管理</td><td data-i18n="guide_envvars_td_10">可在 Portal → Env Variables 頁面新增、編輯、刪除變數</td></tr>
+                                <tr><td data-i18n="guide_envvars_td_11">App 管理</td><td data-i18n="guide_envvars_td_12">在 App → Mission Control → Env Variables 同樣可管理，並接收授權通知</td></tr>
                             </tbody>
                         </table>
 
-                        <h2>授權流程</h2>
+                        <h2 data-i18n="guide_envvars_h2_2">授權流程</h2>
                         <div class="file-tree">Bot 呼叫 GET /api/device-vars
   ↓ 伺服器確認變數存在
   ↓ 透過 Socket.IO 推送授權請求到 App
@@ -1193,14 +1193,14 @@ git push origin main</div>
   ↓ 伺服器解密 → 回傳變數值給 Bot
   ↓ 授權快取 5 分鐘（同 Bot 再次請求免彈窗）</div>
 
-                        <h2>API 端點</h2>
+                        <h2 data-i18n="guide_envvars_h2_3">API 端點</h2>
                         <table class="mc-api-table">
-                            <thead><tr><th>操作</th><th>API</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_envvars_th_1">操作</th><th data-i18n="guide_envvars_th_2">API</th></tr></thead>
                             <tbody>
-                                <tr><td>讀取（Bot）</td><td><code>GET /api/device-vars</code></td></tr>
-                                <tr><td>寫入（User）</td><td><code>POST /api/device-vars</code></td></tr>
-                                <tr><td>批准授權</td><td><code>POST /api/device-vars/approve</code></td></tr>
-                                <tr><td>拒絕授權</td><td><code>POST /api/device-vars/deny</code></td></tr>
+                                <tr><td data-i18n="guide_envvars_td_13">讀取（Bot）</td><td><code>GET /api/device-vars</code></td></tr>
+                                <tr><td data-i18n="guide_envvars_td_14">寫入（User）</td><td><code>POST /api/device-vars</code></td></tr>
+                                <tr><td data-i18n="guide_envvars_td_15">批准授權</td><td><code>POST /api/device-vars/approve</code></td></tr>
+                                <tr><td data-i18n="guide_envvars_td_16">拒絕授權</td><td><code>POST /api/device-vars/deny</code></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1208,48 +1208,48 @@ git push origin main</div>
                     <!-- ── 遠端控制 ── -->
                     <div class="guide-panel" id="guide-remotecontrol">
                         <header>
-                            <h1>遠端控制 (Remote Control)</h1>
-                            <p class="meta">任務中心 &gt; 遠端控制 <span class="mc-label" style="background:rgba(244,67,54,0.15);color:#F44336;">User 啟用 / Bot 執行</span></p>
+                            <h1 data-i18n="guide_remote_title">遠端控制 (Remote Control)</h1>
+                            <p class="meta" data-i18n="guide_remote_meta">任務中心 &gt; 遠端控制 <span class="mc-label" style="background:rgba(244,67,54,0.15);color:#F44336;">User 啟用 / Bot 執行</span></p>
                         </header>
-                        <p>讓 Bot 自主操控你的手機 UI。Bot 透過 <strong>Accessibility Tree（無障礙語意樹）</strong> 讀取畫面結構，再發送點擊、輸入、滑動等指令。整個過程不截圖，Bot 只看到文字元素，不會擷取敏感視覺內容。</p>
-                        <div class="note">此功能預設關閉，需在 App Settings → Remote Control 手動開啟並授予無障礙服務權限。</div>
+                        <p data-i18n="guide_remote_p_1">讓 Bot 自主操控你的手機 UI。Bot 透過 <strong>Accessibility Tree（無障礙語意樹）</strong> 讀取畫面結構，再發送點擊、輸入、滑動等指令。整個過程不截圖，Bot 只看到文字元素，不會擷取敏感視覺內容。</p>
+                        <div class="note" data-i18n="guide_remote_note_1">此功能預設關閉，需在 App Settings → Remote Control 手動開啟並授予無障礙服務權限。</div>
 
-                        <h2>功能明細</h2>
+                        <h2 data-i18n="guide_remote_h2_1">功能明細</h2>
                         <table class="feature-table">
-                            <thead><tr><th>功能</th><th>說明</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_features_tbl_h_feature">功能</th><th data-i18n="guide_features_tbl_h_desc">說明</th></tr></thead>
                             <tbody>
-                                <tr><td>畫面擷取</td><td>Bot 請求目前畫面的語意樹（最多 300 個元素），包含文字、類型、座標、可互動屬性</td></tr>
-                                <tr><td>點擊 (tap)</td><td>按 Node ID 或 XY 座標點擊元素</td></tr>
-                                <tr><td>輸入 (type)</td><td>對指定輸入欄位輸入文字</td></tr>
-                                <tr><td>提交 (ime_action)</td><td>對輸入欄位送出鍵盤 Enter / 確認，適用於沒有實體送出按鈕的情境</td></tr>
-                                <tr><td>滑動 (scroll)</td><td>對可滾動元素向上或向下滑動</td></tr>
-                                <tr><td>系統按鍵</td><td>返回鍵（back）、主畫面鍵（home）</td></tr>
-                                <tr><td>多輪自主操作</td><td>Bot 可反覆截圖 → 判斷 → 執行指令，完成複雜的多步驟任務</td></tr>
+                                <tr><td data-i18n="guide_remote_td_1">畫面擷取</td><td data-i18n="guide_remote_td_2">Bot 請求目前畫面的語意樹（最多 300 個元素），包含文字、類型、座標、可互動屬性</td></tr>
+                                <tr><td data-i18n="guide_remote_td_3">點擊 (tap)</td><td data-i18n="guide_remote_td_4">按 Node ID 或 XY 座標點擊元素</td></tr>
+                                <tr><td data-i18n="guide_remote_td_5">輸入 (type)</td><td data-i18n="guide_remote_td_6">對指定輸入欄位輸入文字</td></tr>
+                                <tr><td data-i18n="guide_remote_td_7">提交 (ime_action)</td><td data-i18n="guide_remote_td_8">對輸入欄位送出鍵盤 Enter / 確認，適用於沒有實體送出按鈕的情境</td></tr>
+                                <tr><td data-i18n="guide_remote_td_9">滑動 (scroll)</td><td data-i18n="guide_remote_td_10">對可滾動元素向上或向下滑動</td></tr>
+                                <tr><td data-i18n="guide_remote_td_11">系統按鍵</td><td data-i18n="guide_remote_td_12">返回鍵（back）、主畫面鍵（home）</td></tr>
+                                <tr><td data-i18n="guide_remote_td_13">多輪自主操作</td><td data-i18n="guide_remote_td_14">Bot 可反覆截圖 → 判斷 → 執行指令，完成複雜的多步驟任務</td></tr>
                             </tbody>
                         </table>
 
-                        <h2>安全機制</h2>
+                        <h2 data-i18n="guide_remote_h2_2">安全機制</h2>
                         <table class="feature-table">
-                            <thead><tr><th>保護</th><th>說明</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_remote_th_1">保護</th><th data-i18n="guide_remote_th_2">說明</th></tr></thead>
                             <tbody>
-                                <tr><td>預設關閉</td><td>功能預設 OFF，需用戶主動開啟</td></tr>
-                                <tr><td>Per-binding 金鑰</td><td>每個 Bot 綁定有獨立 <code>botSecret</code>，共用同一 Bot 的多個用戶互不影響</td></tr>
-                                <tr><td>離線保護</td><td>手機 Socket.IO 斷線時，Bot 請求立即回傳 503</td></tr>
-                                <tr><td>無截圖</td><td>Bot 只取得文字結構（Accessibility Tree），不含圖片、影片等視覺內容</td></tr>
-                                <tr><td>速率限制</td><td>每次畫面擷取最少間隔 500ms，防止過度輪詢</td></tr>
+                                <tr><td data-i18n="guide_remote_td_15">預設關閉</td><td data-i18n="guide_remote_td_16">功能預設 OFF，需用戶主動開啟</td></tr>
+                                <tr><td data-i18n="guide_remote_td_17">Per-binding 金鑰</td><td>每個 Bot 綁定有獨立 <code>botSecret</code>，共用同一 Bot 的多個用戶互不影響</td></tr>
+                                <tr><td data-i18n="guide_remote_td_18">離線保護</td><td data-i18n="guide_remote_td_19">手機 Socket.IO 斷線時，Bot 請求立即回傳 503</td></tr>
+                                <tr><td data-i18n="guide_remote_td_20">無截圖</td><td data-i18n="guide_remote_td_21">Bot 只取得文字結構（Accessibility Tree），不含圖片、影片等視覺內容</td></tr>
+                                <tr><td data-i18n="guide_remote_td_22">速率限制</td><td data-i18n="guide_remote_td_23">每次畫面擷取最少間隔 500ms，防止過度輪詢</td></tr>
                             </tbody>
                         </table>
 
-                        <h2>API 端點</h2>
+                        <h2 data-i18n="guide_remote_h2_3">API 端點</h2>
                         <table class="mc-api-table">
-                            <thead><tr><th>操作</th><th>API</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_remote_th_3">操作</th><th data-i18n="guide_remote_th_4">API</th></tr></thead>
                             <tbody>
-                                <tr><td>畫面擷取（長輪詢）</td><td><code>POST /api/device/screen-capture</code></td></tr>
-                                <tr><td>執行控制指令</td><td><code>POST /api/device/control</code></td></tr>
+                                <tr><td data-i18n="guide_remote_td_24">畫面擷取（長輪詢）</td><td><code>POST /api/device/screen-capture</code></td></tr>
+                                <tr><td data-i18n="guide_remote_td_25">執行控制指令</td><td><code>POST /api/device/control</code></td></tr>
                             </tbody>
                         </table>
 
-                        <h2>Bot 使用範例</h2>
+                        <h2 data-i18n="guide_remote_h2_4">Bot 使用範例</h2>
                         <div class="file-tree">1. Bot 呼叫 screen-capture → 取得元素列表
 2. 找到目標元素（如 "設定" 按鈕，id: n5）
 3. 呼叫 control { command: "tap", params: { nodeId: "n5" } }
@@ -1260,11 +1260,11 @@ git push origin main</div>
                     <!-- ── 測試與文件 ── -->
                     <div class="guide-panel" id="guide-testing">
                         <header>
-                            <h1>測試與文件</h1>
-                            <p class="meta">回歸測試、文件連結、貢獻指南</p>
+                            <h1 data-i18n="guide_testing_title">測試與文件</h1>
+                            <p class="meta" data-i18n="guide_testing_meta">回歸測試、文件連結、貢獻指南</p>
                         </header>
 
-                        <h2>回歸測試</h2>
+                        <h2 data-i18n="guide_testing_h2_1">回歸測試</h2>
                         <div class="code-block"># Bot API response rate (target: 90%+)
 node backend/tests/test-bot-api-response.js
 
@@ -1272,61 +1272,61 @@ node backend/tests/test-bot-api-response.js
 node backend/tests/test-broadcast.js</div>
                         <div class="note">測試需要在 <code>backend/.env</code> 中設定 <code>TEST_DEVICE_ID</code> / <code>BROADCAST_TEST_DEVICE_ID</code> + <code>BROADCAST_TEST_DEVICE_SECRET</code>。</div>
 
-                        <h2>相關文件</h2>
+                        <h2 data-i18n="guide_testing_h2_2">相關文件</h2>
                         <ul class="content-list">
-                            <li><a href="https://github.com/HankHuang0516/realbot/blob/main/PRIVACY_POLICY.md" target="_blank" rel="noopener">Privacy Policy 隱私權政策</a></li>
-                            <li><a href="https://github.com/HankHuang0516/realbot/blob/main/backend/README.md" target="_blank" rel="noopener">Backend API Reference</a></li>
-                            <li><a href="https://github.com/HankHuang0516/realbot/blob/main/backend/E-claw_mcp_skill.md" target="_blank" rel="noopener">MCP Skill Guide</a></li>
-                            <li><a href="https://github.com/HankHuang0516/realbot/blob/main/RELEASE_HISTORY.md" target="_blank" rel="noopener">Release History</a></li>
+                            <li data-i18n="guide_testing_li_link_1"><a href="https://github.com/HankHuang0516/realbot/blob/main/PRIVACY_POLICY.md" target="_blank" rel="noopener">Privacy Policy 隱私權政策</a></li>
+                            <li data-i18n="guide_testing_li_link_2"><a href="https://github.com/HankHuang0516/realbot/blob/main/backend/README.md" target="_blank" rel="noopener">Backend API Reference</a></li>
+                            <li data-i18n="guide_testing_li_link_3"><a href="https://github.com/HankHuang0516/realbot/blob/main/backend/E-claw_mcp_skill.md" target="_blank" rel="noopener">MCP Skill Guide</a></li>
+                            <li data-i18n="guide_testing_li_link_4"><a href="https://github.com/HankHuang0516/realbot/blob/main/RELEASE_HISTORY.md" target="_blank" rel="noopener">Release History</a></li>
                         </ul>
 
-                        <h2>貢獻指南</h2>
-                        <p>這是一個個人/實驗性專案，歡迎提交 Issue 和建議。</p>
+                        <h2 data-i18n="guide_testing_h2_3">貢獻指南</h2>
+                        <p data-i18n="guide_testing_p_1">這是一個個人/實驗性專案，歡迎提交 Issue 和建議。</p>
                         <ol class="content-list">
-                            <li>Fork 此 repo</li>
-                            <li>建立 feature branch：<code>git checkout -b feat/your-feature</code></li>
-                            <li>提交你的變更</li>
-                            <li>先開 Issue 討論，再發 PR</li>
+                            <li data-i18n="guide_testing_li_1">Fork 此 repo</li>
+                            <li data-i18n="guide_testing_li_branch">建立 feature branch：<code>git checkout -b feat/your-feature</code></li>
+                            <li data-i18n="guide_testing_li_2">提交你的變更</li>
+                            <li data-i18n="guide_testing_li_3">先開 Issue 討論，再發 PR</li>
                         </ol>
-                        <div class="warning"><strong>Feature Parity Rule</strong>：所有面向使用者的功能必須在 Web Portal 和 Android App 之間保持同步。</div>
+                        <div class="warning" data-i18n="guide_testing_warning_1"><strong>Feature Parity Rule</strong>：所有面向使用者的功能必須在 Web Portal 和 Android App 之間保持同步。</div>
 
-                        <h2>授權</h2>
-                        <p><a href="https://github.com/HankHuang0516/realbot/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a> &copy; 2026 HankHuang0516</p>
+                        <h2 data-i18n="guide_testing_h2_4">授權</h2>
+                        <p data-i18n="guide_testing_p_license"><a href="https://github.com/HankHuang0516/realbot/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a> &copy; 2026 HankHuang0516</p>
                     </div>
 
                     <!-- ── OpenClaw Channel 教學 ── -->
                     <div class="guide-panel" id="guide-openclaw-channel">
                         <header>
-                            <h1>自帶 OpenClaw Bot — Channel 綁定教學</h1>
-                            <p class="meta">讓你自己的 AI（例如 Claude）住進 E-Claw 角色裡</p>
+                            <h1 data-i18n="guide_channel_title">自帶 OpenClaw Bot — Channel 綁定教學</h1>
+                            <p class="meta" data-i18n="guide_channel_meta">讓你自己的 AI（例如 Claude）住進 E-Claw 角色裡</p>
                         </header>
 
-                        <h2>Channel 是什麼？</h2>
-                        <p>E-Claw 預設的「官方 Bot」是平台提供的共用 AI。如果你有自己的 OpenClaw 伺服器（自架或 Zeabur 部署），可以透過 <strong>Channel 綁定</strong>，把你的 AI 直接接進 E-Claw 的角色裡。</p>
-                        <p>綁定後，你在 App 或 Portal 裡傳給那個角色的訊息，會直接推送到你的 OpenClaw AI；AI 回覆後，角色的狀態會即時更新。</p>
+                        <h2 data-i18n="guide_channel_h2_1">Channel 是什麼？</h2>
+                        <p data-i18n="guide_channel_p_1">E-Claw 預設的「官方 Bot」是平台提供的共用 AI。如果你有自己的 OpenClaw 伺服器（自架或 Zeabur 部署），可以透過 <strong>Channel 綁定</strong>，把你的 AI 直接接進 E-Claw 的角色裡。</p>
+                        <p data-i18n="guide_channel_p_2">綁定後，你在 App 或 Portal 裡傳給那個角色的訊息，會直接推送到你的 OpenClaw AI；AI 回覆後，角色的狀態會即時更新。</p>
 
-                        <div class="note">Channel 綁定是<strong>選用功能</strong>——沒有自己的 OpenClaw 的話，繼續使用官方 Bot 即可。</div>
+                        <div class="note" data-i18n="guide_channel_note_1">Channel 綁定是<strong>選用功能</strong>——沒有自己的 OpenClaw 的話，繼續使用官方 Bot 即可。</div>
 
                         <hr>
 
-                        <h2>前置條件</h2>
+                        <h2 data-i18n="guide_channel_h2_2">前置條件</h2>
                         <ul class="tips-list">
-                            <li>✅ 已有 E-Claw 帳號並登入 Portal</li>
-                            <li>✅ 已安裝 OpenClaw（Zeabur / Railway / 本機均可）</li>
-                            <li>✅ 在 OpenClaw 安裝了 <code>openclaw-channel-eclaw</code> plugin</li>
-                            <li>✅ 你的 OpenClaw 伺服器可被外網存取（或設定了 ECLAW_WEBHOOK_URL）</li>
+                            <li data-i18n="guide_channel_li_1">✅ 已有 E-Claw 帳號並登入 Portal</li>
+                            <li data-i18n="guide_channel_li_2">✅ 已安裝 OpenClaw（Zeabur / Railway / 本機均可）</li>
+                            <li data-i18n="guide_channel_li_plugin">✅ 在 OpenClaw 安裝了 <code>openclaw-channel-eclaw</code> plugin</li>
+                            <li data-i18n="guide_channel_li_3">✅ 你的 OpenClaw 伺服器可被外網存取（或設定了 ECLAW_WEBHOOK_URL）</li>
                         </ul>
 
                         <hr>
 
-                        <h2>步驟教學</h2>
+                        <h2 data-i18n="guide_channel_h2_3">步驟教學</h2>
 
-                        <h3 class="step-heading">第 1 步：在 Portal 產生 API Key</h3>
-                        <p>前往 <strong>設定 → Channel API</strong>，點「新增 API Key」。系統會產生一組 Key + Secret，請立刻複製妥當——Secret 只顯示一次。</p>
-                        <div class="note">一個 API Key 可以同時綁定多個 entity slots（讓同一台 OpenClaw 管理多個角色）。如果你有多台獨立的 OpenClaw 伺服器，才需要分別產生不同的 Key。</div>
+                        <h3 class="step-heading" data-i18n="guide_channel_h3_1">第 1 步：在 Portal 產生 API Key</h3>
+                        <p data-i18n="guide_channel_p_3">前往 <strong>設定 → Channel API</strong>，點「新增 API Key」。系統會產生一組 Key + Secret，請立刻複製妥當——Secret 只顯示一次。</p>
+                        <div class="note" data-i18n="guide_channel_note_2">一個 API Key 可以同時綁定多個 entity slots（讓同一台 OpenClaw 管理多個角色）。如果你有多台獨立的 OpenClaw 伺服器，才需要分別產生不同的 Key。</div>
 
-                        <h3 class="step-heading">第 2 步：在 OpenClaw 安裝並設定 E-Claw Channel</h3>
-                        <p>在你的 OpenClaw 設定（<code>openclaw.config.yaml</code>）加入以下 channel 設定：</p>
+                        <h3 class="step-heading" data-i18n="guide_channel_h3_2">第 2 步：在 OpenClaw 安裝並設定 E-Claw Channel</h3>
+                        <p data-i18n="guide_channel_p_config">在你的 OpenClaw 設定（<code>openclaw.config.yaml</code>）加入以下 channel 設定：</p>
                         <div class="code-block">channels:
   - type: eclaw
     config:
@@ -1335,49 +1335,49 @@ node backend/tests/test-broadcast.js</div>
       entity_id: 0          # 要綁定哪個角色（0–7）
       entity_name: "我的AI"  # 角色顯示名稱（可選）
       eclaw_webhook_url: "https://你的OpenClaw網址"</div>
-                        <div class="warning"><strong>ECLAW_WEBHOOK_URL</strong> 必須是外網可連到的位址，E-Claw 伺服器需要用它把用戶訊息推送過去。</div>
+                        <div class="warning" data-i18n="guide_channel_warning_1"><strong>ECLAW_WEBHOOK_URL</strong> 必須是外網可連到的位址，E-Claw 伺服器需要用它把用戶訊息推送過去。</div>
 
-                        <h3 class="step-heading">第 3 步：重啟 OpenClaw</h3>
-                        <p>儲存設定後重啟 OpenClaw。Plugin 啟動時會自動：</p>
+                        <h3 class="step-heading" data-i18n="guide_channel_h3_3">第 3 步：重啟 OpenClaw</h3>
+                        <p data-i18n="guide_channel_p_4">儲存設定後重啟 OpenClaw。Plugin 啟動時會自動：</p>
                         <ol class="content-list">
-                            <li>向 E-Claw 伺服器登記 Callback URL</li>
-                            <li>用 API Key 綁定你指定的角色（entity_id）</li>
+                            <li data-i18n="guide_channel_li_4">向 E-Claw 伺服器登記 Callback URL</li>
+                            <li data-i18n="guide_channel_li_5">用 API Key 綁定你指定的角色（entity_id）</li>
                         </ol>
-                        <p>成功的話，OpenClaw 的 log 會出現類似 <code>[eclaw] Bound entity 0 as "我的AI"</code> 的訊息。</p>
+                        <p data-i18n="guide_channel_p_success">成功的話，OpenClaw 的 log 會出現類似 <code>[eclaw] Bound entity 0 as "我的AI"</code> 的訊息。</p>
 
-                        <h3 class="step-heading">第 4 步：確認角色出現在 App / Portal</h3>
-                        <p>回到 E-Claw App 主畫面，或重新整理 Portal 儀表板。你指定的角色應該會顯示為已綁定，名稱也會更新為你設定的 <code>entity_name</code>。</p>
-                        <div class="note">角色旁邊如果有 <strong>[C]</strong> 標記，代表這是 Channel 綁定（Channel binding type）。</div>
+                        <h3 class="step-heading" data-i18n="guide_channel_h3_4">第 4 步：確認角色出現在 App / Portal</h3>
+                        <p data-i18n="guide_channel_p_verify">回到 E-Claw App 主畫面，或重新整理 Portal 儀表板。你指定的角色應該會顯示為已綁定，名稱也會更新為你設定的 <code>entity_name</code>。</p>
+                        <div class="note" data-i18n="guide_channel_note_3">角色旁邊如果有 <strong>[C]</strong> 標記，代表這是 Channel 綁定（Channel binding type）。</div>
 
-                        <h3 class="step-heading">第 5 步：傳第一則訊息</h3>
-                        <p>在 App 裡點進那個角色的聊天畫面，輸入任何訊息。流程如下：</p>
+                        <h3 class="step-heading" data-i18n="guide_channel_h3_5">第 5 步：傳第一則訊息</h3>
+                        <p data-i18n="guide_channel_p_5">在 App 裡點進那個角色的聊天畫面，輸入任何訊息。流程如下：</p>
                         <ol class="content-list">
-                            <li>E-Claw 把你的訊息推送到 OpenClaw（你設定的 ECLAW_WEBHOOK_URL）</li>
-                            <li>你的 AI 處理後，呼叫 E-Claw 的 <code>POST /api/channel/message</code> 回覆</li>
-                            <li>角色狀態更新，App 顯示 AI 的回覆</li>
+                            <li data-i18n="guide_channel_li_6">E-Claw 把你的訊息推送到 OpenClaw（你設定的 ECLAW_WEBHOOK_URL）</li>
+                            <li data-i18n="guide_channel_li_reply">你的 AI 處理後，呼叫 E-Claw 的 <code>POST /api/channel/message</code> 回覆</li>
+                            <li data-i18n="guide_channel_li_7">角色狀態更新，App 顯示 AI 的回覆</li>
                         </ol>
-                        <p>如果 AI 有回應，代表 Channel 雙向通訊正常運作。</p>
+                        <p data-i18n="guide_channel_p_6">如果 AI 有回應，代表 Channel 雙向通訊正常運作。</p>
 
                         <hr>
 
-                        <h2>常見問題</h2>
+                        <h2 data-i18n="guide_channel_h2_4">常見問題</h2>
 
-                        <h3>Q: 角色綁定後沒出現在 App？</h3>
-                        <p>先確認 OpenClaw log 有出現 <code>Bound entity</code> 成功訊息。如果沒有，通常是 API Key/Secret 貼錯、或 <code>entity_id</code> 超出範圍（免費方案 0–3，付費方案 0–7）。</p>
+                        <h3 data-i18n="guide_channel_h3_6">Q: 角色綁定後沒出現在 App？</h3>
+                        <p data-i18n="guide_channel_p_faq1_a">先確認 OpenClaw log 有出現 <code>Bound entity</code> 成功訊息。如果沒有，通常是 API Key/Secret 貼錯、或 <code>entity_id</code> 超出範圍（免費方案 0–3，付費方案 0–7）。</p>
 
-                        <h3>Q: 傳訊息後 AI 沒有回應？</h3>
-                        <p>最常見原因是 <code>ECLAW_WEBHOOK_URL</code> 外網連不到。確認你的 OpenClaw 伺服器有公開的 HTTPS 端點，或透過 ngrok 等工具暴露出來。</p>
+                        <h3 data-i18n="guide_channel_h3_7">Q: 傳訊息後 AI 沒有回應？</h3>
+                        <p data-i18n="guide_channel_p_faq2_a">最常見原因是 <code>ECLAW_WEBHOOK_URL</code> 外網連不到。確認你的 OpenClaw 伺服器有公開的 HTTPS 端點，或透過 ngrok 等工具暴露出來。</p>
 
-                        <h3>Q: 可以同時綁定多個角色給不同的 AI 嗎？</h3>
-                        <p>可以。為每個 OpenClaw session 分別產生一組 API Key，各自設定不同的 <code>entity_id</code>，即可讓角色 0 對應 AI-A、角色 1 對應 AI-B，彼此獨立。</p>
+                        <h3 data-i18n="guide_channel_h3_8">Q: 可以同時綁定多個角色給不同的 AI 嗎？</h3>
+                        <p data-i18n="guide_channel_p_faq3_a">可以。為每個 OpenClaw session 分別產生一組 API Key，各自設定不同的 <code>entity_id</code>，即可讓角色 0 對應 AI-A、角色 1 對應 AI-B，彼此獨立。</p>
 
-                        <h3>Q: API Key 外洩怎麼辦？</h3>
-                        <p>前往設定頁刪除該 Key，再產生新的一組即可。舊 Key 刪除後立即失效，對應的角色會自動解綁。</p>
+                        <h3 data-i18n="guide_channel_h3_9">Q: API Key 外洩怎麼辦？</h3>
+                        <p data-i18n="guide_channel_p_7">前往設定頁刪除該 Key，再產生新的一組即可。舊 Key 刪除後立即失效，對應的角色會自動解綁。</p>
 
                         <hr>
 
-                        <h2>技術補充（進階）</h2>
-                        <p>Channel API 端點一覽（開發者用）：</p>
+                        <h2 data-i18n="guide_channel_h2_5">技術補充（進階）</h2>
+                        <p data-i18n="guide_channel_p_8">Channel API 端點一覽（開發者用）：</p>
                         <div class="code-block"># 登記 Callback URL
 POST /api/channel/register
   { channel_api_key, channel_api_secret, callback_url, callback_token }
@@ -1393,43 +1393,43 @@ POST /api/channel/message
 # 取消登記
 DELETE /api/channel/register
   { channel_api_key, channel_api_secret }</div>
-                        <p>完整 API 文件與 plugin 原始碼：<a href="https://github.com/HankHuang0516/openclaw-channel-eclaw" target="_blank" rel="noopener">github.com/HankHuang0516/openclaw-channel-eclaw</a></p>
+                        <p data-i18n="guide_channel_p_source">完整 API 文件與 plugin 原始碼：<a href="https://github.com/HankHuang0516/openclaw-channel-eclaw" target="_blank" rel="noopener">github.com/HankHuang0516/openclaw-channel-eclaw</a></p>
                     </div>
 
                     <!-- ── 實用案例：用 Claude 指揮 OpenClaw ── -->
                     <div class="guide-panel" id="guide-usecase-claude-openclaw">
                         <header>
-                            <h1>用 Claude 透過 Eclaw 指揮 OpenClaw</h1>
-                            <p class="meta">讓 Claude AI 成為你的「AI 指揮官」，透過 Eclaw 遠端控制你的 OpenClaw bot</p>
+                            <h1 data-i18n="guide_usecase_title">用 Claude 透過 Eclaw 指揮 OpenClaw</h1>
+                            <p class="meta" data-i18n="guide_usecase_meta">讓 Claude AI 成為你的「AI 指揮官」，透過 Eclaw 遠端控制你的 OpenClaw bot</p>
                         </header>
 
-                        <h2>架構概覽</h2>
-                        <p>這個方案把三個系統串在一起：</p>
+                        <h2 data-i18n="guide_usecase_h2_1">架構概覽</h2>
+                        <p data-i18n="guide_usecase_p_1">這個方案把三個系統串在一起：</p>
                         <div class="code-block">你（自然語言）→ Claude（AI 指揮官）→ Eclaw API → OpenClaw Bot（執行任務）→ 回報結果</div>
 
                         <table class="feature-table" style="margin-top:16px">
-                            <thead><tr><th>角色</th><th>說明</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_usecase_th_1">角色</th><th data-i18n="guide_usecase_th_2">說明</th></tr></thead>
                             <tbody>
-                                <tr><td><strong>Eclaw</strong></td><td>中控台，管理 entity（bot 席位），提供 HTTP API</td></tr>
-                                <tr><td><strong>OpenClaw</strong></td><td>AI bot 的運行平台，執行實際任務</td></tr>
-                                <tr><td><strong>Claude</strong></td><td>你的 AI 指揮官，透過 Eclaw API 傳達指令給 OpenClaw</td></tr>
+                                <tr><td data-i18n="guide_usecase_td_1"><strong>Eclaw</strong></td><td data-i18n="guide_usecase_td_2">中控台，管理 entity（bot 席位），提供 HTTP API</td></tr>
+                                <tr><td data-i18n="guide_usecase_td_3"><strong>OpenClaw</strong></td><td data-i18n="guide_usecase_td_4">AI bot 的運行平台，執行實際任務</td></tr>
+                                <tr><td data-i18n="guide_usecase_td_5"><strong>Claude</strong></td><td data-i18n="guide_usecase_td_6">你的 AI 指揮官，透過 Eclaw API 傳達指令給 OpenClaw</td></tr>
                             </tbody>
                         </table>
 
                         <hr>
 
-                        <h2>前置準備</h2>
+                        <h2 data-i18n="guide_usecase_h2_2">前置準備</h2>
                         <ul class="tips-list">
-                            <li>✅ Eclaw 帳號 + 手機 App 或 Web Portal</li>
-                            <li>✅ 一個已在 OpenClaw 平台上運行的 AI bot，並已綁定到你的 Eclaw entity</li>
-                            <li>✅ <strong>Claude Code CLI</strong>（推薦）或 Claude.ai（含 MCP 工具）</li>
+                            <li data-i18n="guide_usecase_li_1">✅ Eclaw 帳號 + 手機 App 或 Web Portal</li>
+                            <li data-i18n="guide_usecase_li_2">✅ 一個已在 OpenClaw 平台上運行的 AI bot，並已綁定到你的 Eclaw entity</li>
+                            <li data-i18n="guide_usecase_li_3">✅ <strong>Claude Code CLI</strong>（推薦）或 Claude.ai（含 MCP 工具）</li>
                         </ul>
-                        <div class="note">⚠️ Claude.ai 標準對話介面<strong>無法直接執行 HTTP 請求</strong>，需要 <strong>Claude Code CLI</strong> 才能讓 Claude 真正幫你操作 API。</div>
+                        <div class="note" data-i18n="guide_usecase_note_1">⚠️ Claude.ai 標準對話介面<strong>無法直接執行 HTTP 請求</strong>，需要 <strong>Claude Code CLI</strong> 才能讓 Claude 真正幫你操作 API。</div>
 
                         <hr>
 
-                        <h2>完整範例</h2>
-                        <p>直接複製以下內容，貼給 Claude，它會自動讀取說明書並幫你控制 OpenClaw bot：</p>
+                        <h2 data-i18n="guide_usecase_h2_3">完整範例</h2>
+                        <p data-i18n="guide_usecase_p_2">直接複製以下內容，貼給 Claude，它會自動讀取說明書並幫你控制 OpenClaw bot：</p>
                         <div class="code-block">請用 WebFetch 讀取 https://eclawbot.com/api/skill-doc，然後幫我控制我的 OpenClaw bot
 
 我的 Eclaw 設定：
@@ -1453,32 +1453,32 @@ Device Secret: xxxxdb10-2xxx-42b6-xxxx-f9d446c97ff9-7cff9697-xxxx1-415d-a282-4e8
 
                         <hr>
 
-                        <h2>常用指令速查</h2>
+                        <h2 data-i18n="guide_usecase_h2_4">常用指令速查</h2>
                         <table class="feature-table">
-                            <thead><tr><th>你想做的事</th><th>說法範例</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_usecase_cmd_th_1">你想做的事</th><th data-i18n="guide_usecase_cmd_th_2">說法範例</th></tr></thead>
                             <tbody>
-                                <tr><td>查看 bot 狀態</td><td>「我的 bot 在幹嘛？」</td></tr>
-                                <tr><td>交辦任務</td><td>「叫 bot 去做 ___」</td></tr>
-                                <tr><td>更新顯示訊息</td><td>「讓 bot 顯示 '___'」</td></tr>
-                                <tr><td>設定排程</td><td>「每天/每小時讓 bot 自動做 ___」</td></tr>
-                                <tr><td>查看排程</td><td>「列出我設定的所有排程」</td></tr>
-                                <tr><td>取消排程</td><td>「取消 '___' 這個排程」</td></tr>
-                                <tr><td>查看記錄</td><td>「bot 最近說了什麼？」</td></tr>
-                                <tr><td>貢獻技能</td><td>「幫我把這個技能提交到 Eclaw 技能庫」</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmd_1a">查看 bot 狀態</td><td data-i18n="guide_usecase_cmd_1b">「我的 bot 在幹嘛？」</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmd_2a">交辦任務</td><td data-i18n="guide_usecase_cmd_2b">「叫 bot 去做 ___」</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmd_3a">更新顯示訊息</td><td data-i18n="guide_usecase_cmd_3b">「讓 bot 顯示 '___'」</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmd_4a">設定排程</td><td data-i18n="guide_usecase_cmd_4b">「每天/每小時讓 bot 自動做 ___」</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmd_5a">查看排程</td><td data-i18n="guide_usecase_cmd_5b">「列出我設定的所有排程」</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmd_6a">取消排程</td><td data-i18n="guide_usecase_cmd_6b">「取消 '___' 這個排程」</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmd_7a">查看記錄</td><td data-i18n="guide_usecase_cmd_7b">「bot 最近說了什麼？」</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmd_8a">貢獻技能</td><td data-i18n="guide_usecase_cmd_8b">「幫我把這個技能提交到 Eclaw 技能庫」</td></tr>
                             </tbody>
                         </table>
 
                         <hr>
 
-                        <h2>進階：多 Bot 協作</h2>
-                        <p>如果你有多個 entity（多個 bot），Claude 可以協調它們一起工作：</p>
+                        <h2 data-i18n="guide_usecase_h2_5">進階：多 Bot 協作</h2>
+                        <p data-i18n="guide_usecase_p_3">如果你有多個 entity（多個 bot），Claude 可以協調它們一起工作：</p>
                         <div class="code-block">讓 entity 0 負責收集資料，entity 1 負責分析，兩個 bot 一起幫我做市場調查</div>
-                        <p>Claude 會分別對兩個 entity 發送任務，整合結果後回報給你。</p>
+                        <p data-i18n="guide_usecase_p_4">Claude 會分別對兩個 entity 發送任務，整合結果後回報給你。</p>
 
                         <hr>
 
-                        <h2>閉環驗證與自動糾錯（最關鍵的特性）</h2>
-                        <p>這是整個系統最重要的特性：<strong>你下完指令後，不需要自己進去驗證結果。</strong> Claude 會自動完成「發送 → 驗證 → 糾錯 → 再驗證」的完整閉環，直到任務真正正確完成為止。</p>
+                        <h2 data-i18n="guide_usecase_h2_6">閉環驗證與自動糾錯（最關鍵的特性）</h2>
+                        <p data-i18n="guide_usecase_p_5">這是整個系統最重要的特性：<strong>你下完指令後，不需要自己進去驗證結果。</strong> Claude 會自動完成「發送 → 驗證 → 糾錯 → 再驗證」的完整閉環，直到任務真正正確完成為止。</p>
 
                         <div class="code-block">你下指令
   │
@@ -1501,39 +1501,39 @@ Claude 主動查詢執行結果
         ▼
       Claude 再次驗證（重複直到正確）</div>
 
-                        <h3 class="step-heading">真實案例：排程設錯位置，Claude 自動糾正</h3>
-                        <p>你只說了一句：<strong>「幫我的 bot 設定每小時自動搜尋技能的排程」</strong></p>
-                        <p>Claude 在背後自動完成：</p>
+                        <h3 class="step-heading" data-i18n="guide_usecase_h3_1">真實案例：排程設錯位置，Claude 自動糾正</h3>
+                        <p data-i18n="guide_usecase_p_6">你只說了一句：<strong>「幫我的 bot 設定每小時自動搜尋技能的排程」</strong></p>
+                        <p data-i18n="guide_usecase_p_7">Claude 在背後自動完成：</p>
                         <ol style="line-height:2">
-                            <li>發送排程設定指令給 bot（speak-to）</li>
-                            <li>查詢 <code>GET /api/mission/dashboard</code>，<strong>發現 bot 把排程放進了 Mission Rules（錯誤位置）</strong></li>
-                            <li>查詢 <code>GET /api/bot/schedules</code>，確認正式排程列表是空的</li>
-                            <li>發送糾錯指令：刪除錯誤 Rule + 用正確 API 建立排程</li>
-                            <li>再次驗證：Rule 已消失 ✓ 排程已出現 ✓ bot 回報「✅ 排程已設定」</li>
-                            <li><strong>最終才回報給你：完成</strong></li>
+                            <li data-i18n="guide_usecase_li_4">發送排程設定指令給 bot（speak-to）</li>
+                            <li data-i18n="guide_usecase_li_5">查詢 <code>GET /api/mission/dashboard</code>，<strong>發現 bot 把排程放進了 Mission Rules（錯誤位置）</strong></li>
+                            <li data-i18n="guide_usecase_li_6">查詢 <code>GET /api/bot/schedules</code>，確認正式排程列表是空的</li>
+                            <li data-i18n="guide_usecase_li_7">發送糾錯指令：刪除錯誤 Rule + 用正確 API 建立排程</li>
+                            <li data-i18n="guide_usecase_li_8">再次驗證：Rule 已消失 ✓ 排程已出現 ✓ bot 回報「✅ 排程已設定」</li>
+                            <li data-i18n="guide_usecase_li_9"><strong>最終才回報給你：完成</strong></li>
                         </ol>
-                        <div class="note">從頭到尾你只說了一句話。Claude 獨立完成了發送、驗證、發現錯誤、糾正、再驗證的完整流程。</div>
+                        <div class="note" data-i18n="guide_usecase_note_2">從頭到尾你只說了一句話。Claude 獨立完成了發送、驗證、發現錯誤、糾正、再驗證的完整流程。</div>
 
                         <table class="feature-table" style="margin-top:16px">
-                            <thead><tr><th>傳統做法</th><th>Claude 閉環做法</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_usecase_cmp_th_1">傳統做法</th><th data-i18n="guide_usecase_cmp_th_2">Claude 閉環做法</th></tr></thead>
                             <tbody>
-                                <tr><td>下指令 → 自己去 Portal 檢查 → 發現錯了 → 手動糾正 → 再確認</td><td>下指令 → 等結果</td></tr>
-                                <tr><td>需要了解 API 結構才能判斷對錯</td><td>Claude 自行對照 API 回應判斷</td></tr>
-                                <tr><td>容易遺漏細節（例如放錯頁面）</td><td>Claude 多點交叉驗證</td></tr>
-                                <tr><td>每次都需人工介入</td><td>只有真正完成時才通知你</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmp_1a">下指令 → 自己去 Portal 檢查 → 發現錯了 → 手動糾正 → 再確認</td><td data-i18n="guide_usecase_cmp_1b">下指令 → 等結果</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmp_2a">需要了解 API 結構才能判斷對錯</td><td data-i18n="guide_usecase_cmp_2b">Claude 自行對照 API 回應判斷</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmp_3a">容易遺漏細節（例如放錯頁面）</td><td data-i18n="guide_usecase_cmp_3b">Claude 多點交叉驗證</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmp_4a">每次都需人工介入</td><td data-i18n="guide_usecase_cmp_4b">只有真正完成時才通知你</td></tr>
                             </tbody>
                         </table>
 
                         <hr>
 
-                        <h2>常見問題</h2>
-                        <p><strong>Q: Claude 說「我沒有辦法執行 HTTP 請求」怎麼辦？</strong><br>
+                        <h2 data-i18n="guide_usecase_h2_7">常見問題</h2>
+                        <p data-i18n="guide_usecase_faq_1"><strong>Q: Claude 說「我沒有辦法執行 HTTP 請求」怎麼辦？</strong><br>
                         A: 你需要使用 <strong>Claude Code CLI</strong>（有 Bash 工具），或在 Claude.ai 啟用 MCP 工具。標準對話介面只會給你指令讓你自己貼到終端機執行。</p>
 
-                        <p><strong>Q: Device Secret 在哪裡找？</strong><br>
+                        <p data-i18n="guide_usecase_faq_2"><strong>Q: Device Secret 在哪裡找？</strong><br>
                         A: Web Portal → 右上角頭像 → Settings → Device Secret 列 → 點眼睛圖示顯示 → 複製。Bot Secret 是 bot 自己的憑證，用戶不需要取得。</p>
 
-                        <p><strong>Q: Claude 下的指令 bot 沒有反應？</strong><br>
+                        <p data-i18n="guide_usecase_faq_3"><strong>Q: Claude 下的指令 bot 沒有反應？</strong><br>
                         A: 確認 bot 已綁定（isBound: true）、Device Secret 正確、OpenClaw 在線。</p>
                     </div>
 
