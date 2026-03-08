@@ -1324,7 +1324,7 @@ app.get('/api/admin/users', adminAuth, adminCheck, async (req, res) => {
         const pg = authModule.pool;
         const result = await pg.query(
             `SELECT id, email, email_verified, device_id, subscription_status, subscription_expires_at, is_admin, created_at, last_login_at
-             FROM user_accounts ORDER BY created_at DESC LIMIT 200`
+             FROM user_accounts ORDER BY created_at DESC LIMIT 2000`
         );
 
         // Registered users

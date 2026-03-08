@@ -137,6 +137,43 @@
             color: var(--text-secondary);
         }
 
+        /* Pagination */
+        .pagination-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 12px 0 4px;
+        }
+
+        .btn-pagination {
+            background: none;
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            padding: 4px 14px;
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--text-primary);
+            line-height: 1.4;
+            transition: background 0.15s;
+        }
+
+        .btn-pagination:hover:not(:disabled) {
+            background: rgba(108, 99, 255, 0.1);
+        }
+
+        .btn-pagination:disabled {
+            opacity: 0.3;
+            cursor: default;
+        }
+
+        .pagination-info {
+            font-size: 13px;
+            color: var(--text-secondary);
+            min-width: 50px;
+            text-align: center;
+        }
+
         /* Badges */
         .type-badge {
             display: inline-block;
@@ -808,6 +845,7 @@
         let statsData = null;
         let bindingsData = null;
         let usersData = null;
+        let usersPage = 0;
         let botsData = null;
         let contribData = null;
         let soulContribData = null;
@@ -1041,9 +1079,13 @@
             html += '<div class="table-scroll">';
             html += '<table class="data-table">';
             html += '<thead><tr><th>' + i18n.t('admin_col_source') + '</th><th>' + i18n.t('admin_col_email') + '</th><th>' + i18n.t('admin_col_verified') + '</th><th>' + i18n.t('admin_col_sub') + '</th><th>' + i18n.t('admin_col_role') + '</th><th>' + i18n.t('admin_col_device') + '</th><th>' + i18n.t('admin_col_registered') + '</th><th>' + i18n.t('admin_col_last_login') + '</th></tr></thead>';
+            const USERS_PAGE_SIZE = 50;
+            const usersTotalPages = Math.max(1, Math.ceil(realUsers.length / USERS_PAGE_SIZE));
+            if (usersPage >= usersTotalPages) usersPage = usersTotalPages - 1;
+            const pageUsers = realUsers.slice(usersPage * USERS_PAGE_SIZE, (usersPage + 1) * USERS_PAGE_SIZE);
             html += '<tbody>';
-            if (realUsers.length > 0) {
-                for (const u of realUsers) {
+            if (pageUsers.length > 0) {
+                for (const u of pageUsers) {
                     const subCls = u.subscriptionStatus === 'premium' ? 'type-premium' :
                         u.subscriptionStatus === 'expired' ? 'type-expired' : '';
                     const isApp = u.source === 'app_device';
@@ -1067,7 +1109,15 @@
             } else {
                 html += '<tr><td colspan="8" style="text-align:center;color:var(--text-secondary);">' + i18n.t('admin_no_users') + '</td></tr>';
             }
-            html += '</tbody></table></div></div>';
+            html += '</tbody></table></div>';
+            if (usersTotalPages > 1) {
+                html += '<div class="pagination-bar">' +
+                    '<button class="btn-pagination" onclick="prevUsersPage()" ' + (usersPage === 0 ? 'disabled' : '') + '>&#8249;</button>' +
+                    '<span class="pagination-info">' + (usersPage + 1) + ' / ' + usersTotalPages + '</span>' +
+                    '<button class="btn-pagination" onclick="nextUsersPage()" ' + (usersPage >= usersTotalPages - 1 ? 'disabled' : '') + '>&#8250;</button>' +
+                    '</div>';
+            }
+            html += '</div>';
 
             // Skill Contributions section
             html += '<div class="section-card">';
@@ -1548,6 +1598,17 @@
                 btn.disabled = false;
                 btn.textContent = i18n.t('admin_dlg_create');
             }
+        }
+
+        function prevUsersPage() {
+            if (usersPage > 0) { usersPage--; render(); }
+        }
+
+        function nextUsersPage() {
+            const allUsers = usersData.users || [];
+            const realUsers = allUsers.filter(u => !u.isTestDevice);
+            const totalPages = Math.max(1, Math.ceil(realUsers.length / 50));
+            if (usersPage < totalPages - 1) { usersPage++; render(); }
         }
 
         // ── AI Support Chat ──────────────────────
