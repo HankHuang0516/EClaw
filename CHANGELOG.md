@@ -88,6 +88,64 @@
 * **settings:** add Device Secret display with reveal/copy toggle ([4d4281a](https://github.com/HankHuang0516/realbot/commit/4d4281a967a87f404ca5217f32045f1ff6fb500b))
 * **schedule:** add deviceSecret dual auth for schedule endpoints ([2716375](https://github.com/HankHuang0516/realbot/commit/2716375a2023b2ff259bdf7aae6051832ddc49c8))
 * **android:** add fetchSoulTemplates/fetchRuleTemplates to MissionViewModel ([1c411fc](https://github.com/HankHuang0516/realbot/commit/1c411fce073055eb743d09c71f5d6ce9aed4b988))
+* **admin:** add pagination to user list (50 per page) ([ccd5fb3](https://github.com/HankHuang0516/realbot/commit/ccd5fb35117fd978d93bc4265e904f7b8ed20a7b))
+* **android/i18n:** add soul & rule template gallery strings ([0a28d99](https://github.com/HankHuang0516/realbot/commit/0a28d9979ab846214683a9c3bbc76c62be69e385))
+* **templates:** add Soul/Rule template community contribution API ([c6fdcba](https://github.com/HankHuang0516/realbot/commit/c6fdcba5076d34dd85a94293a30b875e8a243b34))
+* **android:** add SoulGalleryDialog and RuleGalleryDialog ([5a3142a](https://github.com/HankHuang0516/realbot/commit/5a3142af3f67dfa4c4ba9473a4381f89e04aee24))
+* **skill-templates:** add structural validation to contribute endpoint ([891327d](https://github.com/HankHuang0516/realbot/commit/891327dc02dbd3d2a8bbbf254d596cdb33fca3ed))
+* **templates:** add Wise Mentor soul and Brevity First rule templates ([f1494fd](https://github.com/HankHuang0516/realbot/commit/f1494fde800c03fe2c650bda26fc87df36f9dd8d))
+* **info:** add 實用案例 category with Claude x OpenClaw guide ([94475ea](https://github.com/HankHuang0516/realbot/commit/94475eaf8c8f0cf9cc2068d6edff14b9036f136d))
+* **skill-templates:** auto-approve pipeline + admin contributions UI ([5f94ea1](https://github.com/HankHuang0516/realbot/commit/5f94ea13291d6b0d4f12e563d8451402452b09b7))
+* **soul-dialog:** merge dropdown into Gallery, unify template selection ([b9eeb41](https://github.com/HankHuang0516/realbot/commit/b9eeb415d789243243426adf345552c7970cd8b9))
+* **channel:** push NAME_CHANGED to channel bots immediately on rename ([d7992fc](https://github.com/HankHuang0516/realbot/commit/d7992fceb50ce615887ed3fe5e5e54c4306be7e9))
+* **info:** simplify claude-openclaw guide with full example + copy button ([d8e31e9](https://github.com/HankHuang0516/realbot/commit/d8e31e9a3bf1b0b0dd05ef7bb7498bdcff82b335))
+* **rebrand:** update community post intro to AI Agent collaboration ([5fb15a0](https://github.com/HankHuang0516/realbot/commit/5fb15a0eca7911ac987686f844216f818a980e75))
+* **rebrand:** update comparison page strings to AI Agent collaboration ([82171a1](https://github.com/HankHuang0516/realbot/commit/82171a161819149f7a9977f0425e41742c816849))
+* **rebrand:** update faq_a_what_is to AI Agent collaboration messaging ([a79324a](https://github.com/HankHuang0516/realbot/commit/a79324aeefbe931e0119986ef4917a0516878bb5))
+* **rebrand:** update info.html features section to AI Agent positioning ([1a7fae8](https://github.com/HankHuang0516/realbot/commit/1a7fae8758b801a1da934eccbbad7be8d64bc9d8))
+* **rebrand:** update openclaw plugin metadata to AI Agent collaboration ([96baef7](https://github.com/HankHuang0516/realbot/commit/96baef7cb5fcf57159ad401b2ed543fef218ae5e))
+* **rebrand:** update openclaw-channel README to AI Agent collaboration ([f11653f](https://github.com/HankHuang0516/realbot/commit/f11653f11c44584e0783dddecc1fcef3dd4e8f55))
+* **rebrand:** update privacy policy - replace pet terminology with AI agent ([72b487d](https://github.com/HankHuang0516/realbot/commit/72b487d0260f5d2ece537c5c606ebb8f87dd4734))
+* **rebrand:** update README and package descriptions to AI Agent collaboration ([f9efffa](https://github.com/HankHuang0516/realbot/commit/f9efffa5179c5685023ef6d199d16f3e8018ee75))
+* **android:** wire SoulGalleryDialog and RuleGalleryDialog into add dialogs ([74898b3](https://github.com/HankHuang0516/realbot/commit/74898b3d527990ea769e7f2d3ac8d32a07df9c38))
+
+
+### Reverts
+
+* **templates:** remove manually added templates, let bot contribute via API ([b1e7914](https://github.com/HankHuang0516/realbot/commit/b1e79143d3bc10afea36dc8fe7294011a5f75c10))
+
+# [1.3.0](https://github.com/HankHuang0516/realbot/compare/v1.2.0...v1.3.0) (2026-03-08)
+
+
+### Bug Fixes
+
+* **android:** add name/description/ruleType to SkillTemplate and fix gallery dialogs ([e0a79b7](https://github.com/HankHuang0516/realbot/commit/e0a79b76503d36e21e7dc28246e940b27791492b))
+* **bind:** await single-device save after binding to prevent race condition ([811b3e9](https://github.com/HankHuang0516/realbot/commit/811b3e9b250f7dee518e1f7f7cdf65c1a8dd94d8))
+* code review corrections — credential UI and guide accuracy ([5992dc5](https://github.com/HankHuang0516/realbot/commit/5992dc5ca0cf35adee17253f5742ed3619ec836e)), closes [#newSecretValue](https://github.com/HankHuang0516/realbot/issues/newSecretValue)
+* **test:** fix reorder-channel test order array size to match device limit ([3103918](https://github.com/HankHuang0516/realbot/commit/31039180cf26e0e5f2db3292bd153be856c541f6))
+* **portal:** fix XSS, broken tags, and filter consistency in soul/rule gallery ([0dd30ec](https://github.com/HankHuang0516/realbot/commit/0dd30ec0c8a358594d4c603ed5c92e7b86871226))
+* **bind:** make /api/bind handler async to fix await syntax error ([f78d373](https://github.com/HankHuang0516/realbot/commit/f78d373e2826b710adf6a7039604d93e90a627d0))
+* **api:** move skill-templates/contributions route after adminAuth definition ([4915f3d](https://github.com/HankHuang0516/realbot/commit/4915f3d8f737445f4144bd5998ff5588fb126bbb))
+* **tests:** read TEST_ENTITY_ID from .env in bot-api-response test; add setup_broadcast_webhook.js ([0dc137c](https://github.com/HankHuang0516/realbot/commit/0dc137c85e00de20c74b0c42c7569acbaf117dae))
+* **bind:** reset bot-to-bot counter on rebind to prevent stale rate limits ([daea976](https://github.com/HankHuang0516/realbot/commit/daea976e44768dc65eb515d2bff4b5f400385642))
+* **settings:** right-align copy icon, remove eye buttons ([010ffb7](https://github.com/HankHuang0516/realbot/commit/010ffb7487fe57019423e843676752ad203c1c2d))
+* **test:** shorten NEW_NAME to stay within 20-char server limit ([45a1653](https://github.com/HankHuang0516/realbot/commit/45a165359c4212b2d0851cebbfa20c19f26e81e5))
+* **settings:** truncate Device ID/Secret with ellipsis, no line wrap ([94a2ea4](https://github.com/HankHuang0516/realbot/commit/94a2ea41be12a026d5149a53e779b2403558639b))
+* **info:** update example template with review steps after each goal ([ba3ceb6](https://github.com/HankHuang0516/realbot/commit/ba3ceb61c3df158c43f081784958ca5cb5f7e451))
+* **rebrand:** update HTML fallback strings in comparison section ([a332dbd](https://github.com/HankHuang0516/realbot/commit/a332dbd95a4069952d1eb785e3969961f0d89cf3))
+* **rebrand:** update SVG and tester guide - remove pet terminology ([c27b27e](https://github.com/HankHuang0516/realbot/commit/c27b27e6fb71240a05e5a5afd1b6b8c42b3b5c41))
+* **admin:** use cookie auth for skill-templates/contributions endpoint ([fcefb1a](https://github.com/HankHuang0516/realbot/commit/fcefb1a0a7d295646024931bb1d6e018022d0945))
+* **scheduler:** use current timestamp as default scheduled_at for cron schedules ([1610110](https://github.com/HankHuang0516/realbot/commit/1610110239212ffca506b6cbf3dec67dfb862278))
+
+
+### Features
+
+* **settings:** add copy icon for Device ID and Copy Credentials button ([35a68d7](https://github.com/HankHuang0516/realbot/commit/35a68d70044c94b643ee6a685ecb88840c008179))
+* **templates:** add Creative Thinker soul and Step-by-Step Reasoning rule templates ([61e916f](https://github.com/HankHuang0516/realbot/commit/61e916feadad2683d5d774073211d54cda6de898))
+* **info:** add deep linking support for guide sub-items ([e16ebb7](https://github.com/HankHuang0516/realbot/commit/e16ebb76d8fdf5d5b53ca117da92c3ea158579f6)), closes [#faq](https://github.com/HankHuang0516/realbot/issues/faq) [#release-notes](https://github.com/HankHuang0516/realbot/issues/release-notes) [#compare](https://github.com/HankHuang0516/realbot/issues/compare)
+* **settings:** add Device Secret display with reveal/copy toggle ([4d4281a](https://github.com/HankHuang0516/realbot/commit/4d4281a967a87f404ca5217f32045f1ff6fb500b))
+* **schedule:** add deviceSecret dual auth for schedule endpoints ([2716375](https://github.com/HankHuang0516/realbot/commit/2716375a2023b2ff259bdf7aae6051832ddc49c8))
+* **android:** add fetchSoulTemplates/fetchRuleTemplates to MissionViewModel ([1c411fc](https://github.com/HankHuang0516/realbot/commit/1c411fce073055eb743d09c71f5d6ce9aed4b988))
 * **android/i18n:** add soul & rule template gallery strings ([0a28d99](https://github.com/HankHuang0516/realbot/commit/0a28d9979ab846214683a9c3bbc76c62be69e385))
 * **templates:** add Soul/Rule template community contribution API ([c6fdcba](https://github.com/HankHuang0516/realbot/commit/c6fdcba5076d34dd85a94293a30b875e8a243b34))
 * **android:** add SoulGalleryDialog and RuleGalleryDialog ([5a3142a](https://github.com/HankHuang0516/realbot/commit/5a3142af3f67dfa4c4ba9473a4381f89e04aee24))
