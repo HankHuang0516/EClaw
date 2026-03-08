@@ -47,8 +47,18 @@ const TEST_FILES = [
     'test_entity_name_preservation.js', // Entity name persistence across rebind
     'test_entity_echo_bug.js',      // Echo deduplication regression
 
+    // ── Static code + API shape tests (no auth credentials needed) ──
+    'test-broadcast-recipient-block.js', // Unit: buildBroadcastRecipientBlock() output format
+    'test-channel-api.js',          // Channel API: auth rejection, required fields, coexistence
+    'test-issue-fixes.js',          // Static code checks (#145/#146-149/#150) + GET /api/skill-templates
+
     // ── Credential-based tests (require .env with test device credentials) ──
     'test-broadcast.js',            // Broadcast delivery + delivered_to append (needs BROADCAST_TEST_DEVICE_ID)
+    'test-reorder-channel.js',      // Reorder → ENTITY_MOVED channel push (needs BROADCAST_TEST_DEVICE_ID)
+    'test-rename-channel.js',       // Rename → NAME_CHANGED channel push (needs BROADCAST_TEST_DEVICE_ID)
+    'test-schedule-channel.js',     // Schedule → channel push + eclaw_context (needs BROADCAST_TEST_DEVICE_ID)
+    'test-mission-notify-all-types.js', // Mission notify all 4 types to channel bot (needs BROADCAST_TEST_DEVICE_ID)
+    // Note: test-eclaw-context-injection.js excluded (flaky: fails when bot-to-bot rate limit exhausted)
     'test-bot-api-response.js',     // Bot API response rate >= 90% (needs TEST_DEVICE_ID + live bot)
 ];
 
@@ -165,6 +175,8 @@ async function runTest(testFile) {
                 (output.includes('Results:') && output.includes('0 failed')) ||
                 (output.includes('Result:') && output.includes('passed') && !output.includes('0/')) ||
                 (output.match(/\d+\/\d+ tests passed/) && output.includes('✅')) ||
+                // Generic: "N passed, 0 failed" — used by channel/issue-fix tests
+                /\d+ passed, 0 failed/.test(output) ||
                 output.includes('RESULT: ALL PASS') ||       // test-broadcast.js
                 output.includes('RESULT: PASS')              // test-bot-api-response.js
             resolve({ file: testFile, passed, code, output });

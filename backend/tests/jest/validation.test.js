@@ -153,7 +153,9 @@ beforeAll(() => {
     app = require('../../index');
 });
 
-afterAll(() => {
+afterAll(async () => {
+    const { httpServer } = require('../../index');
+    await new Promise(resolve => httpServer.close(resolve));
     jest.resetModules();
 });
 
