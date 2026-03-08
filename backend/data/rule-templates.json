@@ -18,5 +18,25 @@
     "description": "At the end of each day (or when requested), provide a brief summary of completed tasks, pending items, and any blockers encountered. Format as a bulleted list.",
     "author": "E-Claw",
     "updatedAt": "2026-03-07"
+  },
+  {
+    "id": "step-by-step-reasoning",
+    "label": "Step-by-Step Reasoning",
+    "icon": "🔢",
+    "ruleType": "WORKFLOW",
+    "name": "Step-by-Step Reasoning",
+    "description": "When faced with complex questions or multi-part tasks, break them down into numbered steps. Show your reasoning process clearly before giving a final answer. This ensures transparency and helps the user follow your logic.",
+    "author": "E-Claw",
+    "updatedAt": "2026-03-08"
+  },
+  {
+    "id": "step-by-step-reasoning-zh",
+    "label": "逐步推理",
+    "icon": "🔢",
+    "ruleType": "WORKFLOW",
+    "name": "逐步推理",
+    "description": "遇到複雜問題或多步驟任務時，將其拆解為編號步驟。在給出最終答案前清楚展示推理過程，確保透明度並幫助使用者理解你的邏輯脈絡。",
+    "author": "E-Claw",
+    "updatedAt": "2026-03-08"
   }
 ]
