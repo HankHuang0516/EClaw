@@ -1127,7 +1127,7 @@
                 html += '<p style="color:var(--text-secondary)">' + i18n.t('skill_contrib_no_data') + '</p>';
             } else {
                 html += '<div class="table-scroll"><table class="data-table"><thead><tr>' +
-                    '<th>ID</th><th>' + i18n.t('skill_contrib_col_title') + '</th><th>By</th><th>' + i18n.t('skill_contrib_col_status') + '</th><th>GitHub</th><th>Date</th><th></th>' +
+                    '<th>ID</th><th>' + i18n.t('skill_contrib_col_title') + '</th><th>' + i18n.t('contrib_col_by') + '</th><th>' + i18n.t('skill_contrib_col_status') + '</th><th>GitHub</th><th>' + i18n.t('contrib_col_date') + '</th><th></th>' +
                     '</tr></thead><tbody>';
                 contribs.forEach(function(c) {
                     const statusIcon = c.status === 'approved' ? '✅' : c.status === 'rejected' ? '❌' : '⏳';
@@ -1166,7 +1166,7 @@
                 html += '<div class="table-scroll"><table class="data-table"><thead><tr>' +
                     '<th>ID</th><th>' + i18n.t('soul_contrib_col_name') + '</th>' +
                     '<th>' + i18n.t('soul_contrib_col_description') + '</th>' +
-                    '<th>By</th><th>Date</th><th></th>' +
+                    '<th>' + i18n.t('contrib_col_by') + '</th><th>' + i18n.t('contrib_col_date') + '</th><th></th>' +
                     '</tr></thead><tbody>';
                 soulContribs.forEach(function(c) {
                     const descPreview = escapeHtml((c.description || '').slice(0, 120)) + (c.description && c.description.length > 120 ? '…' : '');
@@ -1197,7 +1197,7 @@
                     '<th>ID</th><th>' + i18n.t('rule_contrib_col_name') + '</th>' +
                     '<th>' + i18n.t('rule_contrib_col_type') + '</th>' +
                     '<th>' + i18n.t('rule_contrib_col_description') + '</th>' +
-                    '<th>By</th><th>Date</th><th></th>' +
+                    '<th>' + i18n.t('contrib_col_by') + '</th><th>' + i18n.t('contrib_col_date') + '</th><th></th>' +
                     '</tr></thead><tbody>';
                 ruleContribs.forEach(function(c) {
                     const descPreview = escapeHtml((c.description || '').slice(0, 120)) + (c.description && c.description.length > 120 ? '…' : '');
