@@ -1428,81 +1428,29 @@ DELETE /api/channel/register
 
                         <hr>
 
-                        <h2>Step 1：取得你的憑證</h2>
+                        <h2>完整範例</h2>
+                        <p>直接複製以下內容，貼給 Claude，它會自動讀取說明書並幫你控制 OpenClaw bot：</p>
+                        <div class="code-block">請用 WebFetch 讀取 https://eclawbot.com/api/skill-doc，然後幫我控制我的 OpenClaw bot
 
-                        <h3 class="step-heading">Device ID</h3>
-                        <p>Web Portal → 右上角頭像 → Settings → 複製 <strong>Device ID</strong></p>
-
-                        <h3 class="step-heading">Device Secret</h3>
-                        <p>Device Secret 讓 Claude 可以設定排程、查詢 entity 狀態等 owner 層級操作。</p>
-                        <p>取得方式：Web Portal → 右上角頭像 → <strong>Settings</strong> → Device Secret 列 → 點眼睛圖示顯示 → 複製。</p>
-                        <div class="note">⚠️ Device Secret 請勿公開分享。<br>Bot Secret 是 bot 自己在綁定時收到的憑證，由 bot 持有，用戶<strong>不需要</strong>取得或提供給 Claude。</div>
-
-                        <h3 class="step-heading">Entity ID</h3>
-                        <p>最多 8 個 slot（0–7）。第一個 bot 通常是 entity <strong>0</strong>，在 Dashboard 可確認各 entity 的名稱與狀態。</p>
-
-                        <hr>
-
-                        <h2>Step 2：給 Claude 看技能說明書</h2>
-                        <p>Eclaw 有一份 AI 指令說明書，告訴 Claude 有哪些 API 可用。說明書網址：</p>
-                        <div class="code-block">https://eclawbot.com/api/skill-doc</div>
-
-                        <h3 class="step-heading">方法 A：Claude Code CLI（最簡單）</h3>
-                        <p>直接對 Claude 說，讓它自己抓：</p>
-                        <div class="code-block">請用 WebFetch 讀取 https://eclawbot.com/api/skill-doc，然後幫我控制我的 OpenClaw bot。</div>
-                        <p style="color:var(--text-secondary);font-size:0.9em">Claude Code 有 WebFetch 工具，會直接抓取說明書，不需要手動複製貼上。</p>
-
-                        <h3 class="step-heading">方法 B：Claude.ai（上傳檔案）</h3>
-                        <p>在瀏覽器開啟說明書連結，複製全文，在 Claude.ai 對話中貼入；或點擊 📎 上傳 <code>.md</code> 檔案。</p>
-
-                        <hr>
-
-                        <h2>Step 3：告訴 Claude 你的憑證</h2>
-                        <div class="code-block">我的 Eclaw 設定：
-- Device ID: 你的-device-id
-- Device Secret: 你的-device-secret
+我的 Eclaw 設定：
+Device ID: 48xxxx4c-2183-xxxx-afd0-b131ae8xxxxc
+Device Secret: xxxxdb10-2xxx-42b6-xxxx-f9d446c97ff9-7cff9697-xxxx1-415d-a282-4e8axxxxe49a
 - 我要控制的 bot 是 Entity 0
 
-請幫我控制這個 OpenClaw bot。</div>
+請幫我控制這個 OpenClaw bot。
 
-                        <hr>
-
-                        <h2>Step 4：用自然語言下指令</h2>
-
-                        <h3 class="step-heading">查看 bot 目前狀態</h3>
-                        <div class="code-block">幫我看看我的 bot 目前在做什麼</div>
-                        <p style="color:var(--text-secondary);font-size:0.9em">
-                            Claude 動作：呼叫 <code>GET /api/entities</code>，讀取 entity 的 state 與 message 後回報。<br>
-                            驗證：讀取即是驗證，無需額外步驟。
-                        </p>
-
-                        <h3 class="step-heading">交辦一次性任務</h3>
-                        <div class="code-block">叫我的 bot 去搜尋最近 GitHub 上最受歡迎的 Python 爬蟲框架，整理成清單回報</div>
-                        <p style="color:var(--text-secondary);font-size:0.9em">
-                            Claude 動作：呼叫 <code>POST /api/entity/speak-to</code> 推送任務給 bot。<br>
-                            驗證：等待後再呼叫 <code>GET /api/entities</code>，確認 bot state 從 BUSY 回到 IDLE 且 message 含有回報結果。若 bot 長時間未回應，Claude 會發送提醒。
-                        </p>
-
-                        <h3 class="step-heading">設定每日自動任務（排程）</h3>
-                        <div class="code-block">幫我設定一個排程：每天早上 9 點，讓 bot 自動抓取今日科技新聞摘要</div>
-                        <p style="color:var(--text-secondary);font-size:0.9em">
-                            Claude 動作：呼叫 <code>POST /api/schedules</code>，建立 cron 排程。<br>
-                            驗證：呼叫 <code>GET /api/schedules</code> 確認排程存在，並確認 cron 表達式與目標 entity 正確。
-                        </p>
-
-                        <h3 class="step-heading">讓 bot 更新顯示狀態</h3>
-                        <div class="code-block">讓我的 bot 進入工作模式，顯示「正在分析市場數據」</div>
-                        <p style="color:var(--text-secondary);font-size:0.9em">
-                            Claude 動作：發送 speak-to 讓 bot 用 <code>POST /api/transform</code> 更新自身 state/message。<br>
-                            驗證：呼叫 <code>GET /api/entities</code> 確認 message 已更新為目標文字。
-                        </p>
-
-                        <h3 class="step-heading">貢獻技能到社群庫</h3>
-                        <div class="code-block">幫我把這個 arxiv 論文摘要技能提交到 Eclaw 技能庫</div>
-                        <p style="color:var(--text-secondary);font-size:0.9em">
-                            Claude 動作：呼叫 <code>POST /api/skill-templates/contribute</code>，系統自動驗證 GitHub URL 後批准。<br>
-                            驗證：呼叫 <code>GET /api/skill-templates</code> 確認新技能出現在清單中，並確認 GitHub URL 可訪問（HTTP 200）。
-                        </p>
+短期目標: 參考 https://github.com/HankHuang0516/realbot 的 Contributing Soul Templates 與 Contributing Rule Templates 來貢獻Soul模板(中文+英文)與Rule模板(中文+英文)且不能與官方模板重複
+等待Entity 0貢獻完畢後，你要進行貢獻審查，確定Soul與Rule已正確在列表上沒有失誤
+(必須驗證完短期目標後才可以開始進行)
+最終目標: 設定排程項目，每一個小時貢獻1個Soul模板(中文+英文)與1個Rule模板(中文+英文)
+設定完之後進行審查是否正確</div>
+                        <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
+                            <button class="btn btn-primary" id="copyClaudeExampleBtn" onclick="copyClaudeOpenclawExample()">
+                                📋 <span data-i18n="guide_copy_example_btn">複製範例（填入你的憑證）</span>
+                            </button>
+                            <span id="copyClaudeExampleFeedback" style="display:none;color:var(--color-success)" data-i18n="guide_copy_example_copied">已複製！</span>
+                        </div>
+                        <p style="color:var(--text-secondary);font-size:0.9em;margin-top:8px" data-i18n="guide_copy_example_hint">若你已登入，複製內容會自動帶入你的 Device ID 與 Device Secret；短期目標與最終目標欄位請自行填寫。</p>
 
                         <hr>
 
@@ -2276,6 +2224,43 @@ Claude 主動查詢執行結果
 
         function toggleFaq(el) {
             el.parentElement.classList.toggle('open');
+        }
+
+        async function copyClaudeOpenclawExample() {
+            const TEMPLATE = `請用 WebFetch 讀取 https://eclawbot.com/api/skill-doc，然後幫我控制我的 OpenClaw bot\n\n我的 Eclaw 設定：\nDevice ID: {{DEVICE_ID}}\nDevice Secret: {{DEVICE_SECRET}}\n- 我要控制的 bot 是 Entity 0\n\n請幫我控制這個 OpenClaw bot。\n\n短期目標: [你的短期目標]\n最終目標: [你的最終目標]`;
+
+            let deviceId = '你的-device-id';
+            let deviceSecret = '你的-device-secret';
+
+            try {
+                const data = await apiCall('GET', '/api/auth/me');
+                if (data?.user?.deviceId) deviceId = data.user.deviceId;
+                if (data?.user?.deviceSecret) deviceSecret = data.user.deviceSecret;
+            } catch (e) {
+                // Not logged in, use placeholder
+            }
+
+            const text = TEMPLATE
+                .replace('{{DEVICE_ID}}', deviceId)
+                .replace('{{DEVICE_SECRET}}', deviceSecret);
+
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch (e) {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+            }
+
+            const feedback = document.getElementById('copyClaudeExampleFeedback');
+            if (feedback) {
+                feedback.style.display = 'inline';
+                setTimeout(() => { feedback.style.display = 'none'; }, 3000);
+            }
         }
     </script>
 </body>
