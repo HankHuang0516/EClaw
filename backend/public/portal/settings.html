@@ -48,7 +48,7 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            max-width: 55%;
+            width: 55%;
             min-width: 0;
         }
 
@@ -629,9 +629,6 @@
                 <span class="info-label" data-i18n="settings_device_id">Device ID</span>
                 <span class="info-value-mono-group">
                     <span class="info-value mono" id="accountDeviceId">--</span>
-                    <button id="btnRevealDeviceId" onclick="toggleDeviceIdReveal()"
-                        style="background:none;border:none;cursor:pointer;font-size:14px;padding:0 2px;opacity:0.6;line-height:1;flex-shrink:0;"
-                        title="顯示/隱藏 Device ID">👁</button>
                     <button onclick="copyDeviceId()"
                         style="background:none;border:none;cursor:pointer;font-size:14px;padding:0 2px;opacity:0.6;line-height:1;flex-shrink:0;"
                         data-i18n-title="common_copy" title="複製">📋</button>
@@ -641,9 +638,6 @@
                 <span class="info-label" data-i18n="settings_device_secret">Device Secret</span>
                 <span class="info-value-mono-group">
                     <span class="info-value mono" id="accountDeviceSecret">--</span>
-                    <button id="btnRevealDeviceSecret" onclick="toggleDeviceSecretReveal()"
-                        style="background:none;border:none;cursor:pointer;font-size:14px;padding:0 2px;opacity:0.6;line-height:1;flex-shrink:0;"
-                        title="顯示/隱藏 Device Secret">👁</button>
                     <button onclick="copyDeviceSecret()"
                         style="background:none;border:none;cursor:pointer;font-size:14px;padding:0 2px;opacity:0.6;line-height:1;flex-shrink:0;"
                         data-i18n-title="common_copy" title="複製">📋</button>
