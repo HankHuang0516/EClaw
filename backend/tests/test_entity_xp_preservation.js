@@ -49,7 +49,7 @@ async function setXP(deviceId, deviceSecret, entityId, xp) {
 
 async function getXP(deviceId, deviceSecret, entityId) {
     const r = await api('GET', '/api/entities?deviceId=' + deviceId + '&deviceSecret=' + deviceSecret, null);
-    if (!r.data.success) throw new Error('get-entities failed: ' + JSON.stringify(r.data));
+    if (!Array.isArray(r.data.entities)) throw new Error('get-entities failed: ' + JSON.stringify(r.data));
     const entity = (r.data.entities || []).find(function(e) { return e.entityId === entityId; });
     // /api/entities only returns bound entities; missing = unbound
     return entity ? { xp: entity.xp, level: entity.level, isBound: true } : { xp: null, level: null, isBound: false };
@@ -100,8 +100,8 @@ async function runTests() {
     console.log('--- Scenario 2: Rebind after unbind preserves XP ---');
     console.log('');
     {
-        const snap = await getXP(deviceId, deviceSecret, 0);
-        const xpBefore = (snap && snap.xp) || 0;
+        // After Scenario 1 unbind, entity not in list; use known XP from Scenario 0
+        const xpBefore = 250; // Set in Scenario 0
         await registerAndBind(deviceId, deviceSecret, 0);
         const after = await getXP(deviceId, deviceSecret, 0);
         assert(after && after.isBound === true, 'entity is bound after rebind');
@@ -134,14 +134,21 @@ async function runTests() {
     {
         const CYCLES = 3;
         let currentXP = 0;
+        // Start fresh: entity may still be unbound from Scenario 3 cleanup
         for (let i = 0; i < CYCLES; i++) {
+            // Unbind if needed (catch if already unbound)
             await api('DELETE', '/api/device/entity', { deviceId: deviceId, deviceSecret: deviceSecret, entityId: 0 }).catch(function() {});
             await registerAndBind(deviceId, deviceSecret, 0);
             currentXP += (i + 1) * 100;
             await setXP(deviceId, deviceSecret, 0, currentXP);
+            // Read XP while bound
+            const afterSet = await getXP(deviceId, deviceSecret, 0);
+            assert(afterSet && afterSet.xp === currentXP, 'Cycle ' + (i + 1) + ': setXP=' + currentXP + ' confirmed while bound', 'got ' + (afterSet && afterSet.xp));
+            // Unbind, then rebind to verify XP survived the cycle
             await api('DELETE', '/api/device/entity', { deviceId: deviceId, deviceSecret: deviceSecret, entityId: 0 });
-            const after = await getXP(deviceId, deviceSecret, 0);
-            assert(after && after.xp === currentXP, 'Cycle ' + (i + 1) + ': XP=' + currentXP + ' preserved after unbind', 'got ' + (after && after.xp));
+            await registerAndBind(deviceId, deviceSecret, 0);
+            const afterRebind = await getXP(deviceId, deviceSecret, 0);
+            assert(afterRebind && afterRebind.xp === currentXP, 'Cycle ' + (i + 1) + ': XP=' + currentXP + ' preserved after unbind+rebind', 'got ' + (afterRebind && afterRebind.xp));
         }
     }
     console.log('');
