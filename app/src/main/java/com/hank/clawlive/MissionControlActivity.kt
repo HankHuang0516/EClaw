@@ -70,16 +70,16 @@ class MissionControlActivity : AppCompatActivity() {
     private var skillTemplates: List<SkillTemplate> = emptyList()
 
     /** Soul template definitions */
-    private data class SoulTemplate(val id: String)
+    private data class SoulTemplate(val id: String, val icon: String)
     private val soulTemplates = listOf(
-        SoulTemplate("friendly"),
-        SoulTemplate("tsundere"),
-        SoulTemplate("scholar"),
-        SoulTemplate("trickster"),
-        SoulTemplate("professional"),
-        SoulTemplate("caretaker"),
-        SoulTemplate("adventurer"),
-        SoulTemplate("poet")
+        SoulTemplate("friendly",     "😊"),
+        SoulTemplate("tsundere",     "😤"),
+        SoulTemplate("scholar",      "📚"),
+        SoulTemplate("trickster",    "🃏"),
+        SoulTemplate("professional", "💼"),
+        SoulTemplate("caretaker",    "💗"),
+        SoulTemplate("adventurer",   "⚔️"),
+        SoulTemplate("poet",         "🌸")
     )
 
     private fun getTemplateDisplayName(tpl: SoulTemplate): String {
@@ -789,48 +789,42 @@ class MissionControlActivity : AppCompatActivity() {
 
     private fun showSoulDialogInternal(soul: com.hank.clawlive.data.model.MissionSoul?) {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_mission_soul, null)
-        val spinnerTemplate = view.findViewById<Spinner>(R.id.spinnerTemplate)
         val btnChooseSoulTemplate = view.findViewById<MaterialButton>(R.id.btnChooseSoulTemplate)
         val etName = view.findViewById<EditText>(R.id.etName)
         val etDescription = view.findViewById<EditText>(R.id.etDescription)
         val container = view.findViewById<LinearLayout>(R.id.entityCheckboxContainer)
 
-        // Build template list: custom + all templates
-        val templateLabels = mutableListOf(getString(R.string.soul_template_custom))
-        templateLabels.addAll(soulTemplates.map { getTemplateDisplayName(it) })
-        spinnerTemplate.adapter = ArrayAdapter(this,
-            android.R.layout.simple_spinner_dropdown_item, templateLabels)
+        // Track currently selected template ID
+        var selectedTemplateId: String? = soul?.templateId
 
+        // Pre-fill fields and button label when editing existing soul
         if (soul != null) {
             etName.setText(soul.name)
             etDescription.setText(soul.description)
-            val tplIdx = soulTemplates.indexOfFirst { it.id == soul.templateId }
-            spinnerTemplate.setSelection(if (tplIdx >= 0) tplIdx + 1 else 0)
-        }
-
-        // Auto-fill when template is selected
-        spinnerTemplate.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: android.widget.AdapterView<*>?, v: View?, position: Int, id: Long) {
-                if (position > 0) {
-                    val tpl = soulTemplates[position - 1]
-                    etName.setText(getTemplateDisplayName(tpl))
-                    etDescription.setText(getTemplateDescription(tpl))
-                }
+            val existingTpl = soulTemplates.find { it.id == soul.templateId }
+            if (existingTpl != null) {
+                btnChooseSoulTemplate.text = "🎭 ${getTemplateDisplayName(existingTpl)}"
             }
-            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
         }
 
-        // Wire up server-side soul gallery button
+        // Single Gallery button — shows built-in + community templates unified
         btnChooseSoulTemplate.setOnClickListener {
-            viewModel.fetchSoulTemplates()
-            lifecycleScope.launch {
-                val templates = viewModel.soulTemplates.first { it.isNotEmpty() }
-                SoulGalleryDialog(this@MissionControlActivity, templates) { name, desc ->
-                    etName.setText(name)
-                    etDescription.setText(desc)
-                    spinnerTemplate.setSelection(0) // reset to custom
-                }.show()
+            viewModel.fetchSoulTemplates() // trigger background fetch (non-blocking)
+            val builtinList = soulTemplates.map { tpl ->
+                SoulGalleryDialog.BuiltinTemplate(
+                    id          = tpl.id,
+                    icon        = tpl.icon,
+                    name        = getTemplateDisplayName(tpl),
+                    description = getTemplateDescription(tpl)
+                )
             }
+            val communityList = viewModel.soulTemplates.value
+            SoulGalleryDialog(this, builtinList, communityList) { name, desc, templateId ->
+                etName.setText(name)
+                etDescription.setText(desc)
+                selectedTemplateId = templateId
+                btnChooseSoulTemplate.text = "🎭 $name"
+            }.show()
         }
 
         val checkboxes = buildEntityCheckboxes(container, soul?.assignedEntities ?: emptyList())
@@ -842,13 +836,11 @@ class MissionControlActivity : AppCompatActivity() {
                 val name = etName.text.toString().trim()
                 if (name.isNotEmpty()) {
                     val description = etDescription.text.toString().trim()
-                    val tplPos = spinnerTemplate.selectedItemPosition
-                    val templateId = if (tplPos > 0) soulTemplates[tplPos - 1].id else null
                     val selectedEntities = checkboxes.filter { it.second.isChecked }.map { it.first }
                     if (soul != null) {
-                        viewModel.editSoul(soul.id, name, description, templateId, selectedEntities)
+                        viewModel.editSoul(soul.id, name, description, selectedTemplateId, selectedEntities)
                     } else {
-                        viewModel.addSoul(name, description, templateId, selectedEntities)
+                        viewModel.addSoul(name, description, selectedTemplateId, selectedEntities)
                     }
                 }
             }

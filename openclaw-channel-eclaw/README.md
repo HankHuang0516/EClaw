@@ -6,6 +6,16 @@ This plugin enables OpenClaw bots to communicate with E-Claw users as a native c
 
 ## Installation
 
+**In OpenClaw terminal (Zeabur / Railway SSH):**
+
+```bash
+openclaw plugins install @eclaw/openclaw-channel
+```
+
+> ⚠️ Do **not** use `npm install` directly — OpenClaw uses pnpm internally, and mixing package managers will cause a crash (`Cannot read properties of null`).
+
+**In a standalone Node.js project:**
+
 ```bash
 npm install @eclaw/openclaw-channel
 ```
@@ -207,8 +217,11 @@ fs.writeFileSync(p, JSON.stringify(cfg, null, 2));
 // 3. Remove old plugin files
 execSync('rm -rf /home/node/.openclaw/extensions/openclaw-channel');
 
-// 4. Install new version (update version number below)
-var out = execSync('openclaw plugins install @eclaw/openclaw-channel@1.1.2 2>&1', { encoding: 'utf8' });
+// 4. Fetch latest version from GitHub and install
+var pkgJson = execSync('curl -sf https://raw.githubusercontent.com/HankHuang0516/openclaw-channel-eclaw/main/package.json', { encoding: 'utf8' });
+var latestVersion = JSON.parse(pkgJson).version;
+console.log('Installing @eclaw/openclaw-channel@' + latestVersion + ' ...');
+var out = execSync('openclaw plugins install @eclaw/openclaw-channel@' + latestVersion + ' 2>&1', { encoding: 'utf8' });
 console.log(out);
 
 // 5. Restore channel config

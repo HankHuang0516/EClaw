@@ -6,38 +6,60 @@ import com.hank.clawlive.R
 import com.hank.clawlive.data.remote.SkillTemplate
 
 /**
- * A simple dialog that lists soul templates (from server) and lets the user pick one.
- * On selection, the callback receives the template name (title) and label (used as description).
+ * Gallery dialog listing both built-in and community soul templates.
+ * Callback receives (name, description, templateId) where templateId is non-null
+ * for built-in templates and null for community templates.
  */
 class SoulGalleryDialog(
     private val context: Context,
-    private val templates: List<SkillTemplate>,
-    private val onTemplateSelected: (name: String, description: String) -> Unit
+    private val builtinTemplates: List<BuiltinTemplate>,
+    private val communityTemplates: List<SkillTemplate>,
+    private val onSelected: (name: String, description: String, templateId: String?) -> Unit
 ) {
-    fun show() {
-        val builder = MaterialAlertDialogBuilder(context)
-            .setTitle(context.getString(R.string.mission_soul_gallery_title))
+    data class BuiltinTemplate(
+        val id: String,
+        val icon: String,
+        val name: String,
+        val description: String
+    )
 
-        if (templates.isEmpty()) {
-            builder.setMessage(context.getString(R.string.mission_template_empty))
+    fun show() {
+        val total = builtinTemplates.size + communityTemplates.size
+        val title = "${context.getString(R.string.mission_soul_gallery_title)} ($total)"
+
+        // Build flat item list: built-in first, then community
+        data class Item(val label: String, val name: String, val description: String, val templateId: String?)
+
+        val items = mutableListOf<Item>()
+        builtinTemplates.forEach { t ->
+            items.add(Item("${t.icon} ${t.name}", t.name, t.description, t.id))
+        }
+        communityTemplates.forEach { t ->
+            val icon = t.icon ?: "🧠"
+            val label = t.label ?: t.name ?: ""
+            val author = t.author ?: ""
+            val displayLabel = if (author.isNotEmpty()) "$icon $label  (by $author)" else "$icon $label"
+            val name = t.name ?: t.title ?: label
+            val desc = t.description ?: label
+            items.add(Item(displayLabel, name, desc, null))
+        }
+
+        if (items.isEmpty()) {
+            MaterialAlertDialogBuilder(context)
+                .setTitle(title)
+                .setMessage(context.getString(R.string.mission_template_empty))
                 .setPositiveButton(android.R.string.ok, null)
                 .show()
             return
         }
 
-        val labels = templates.map { t ->
-            val icon = t.icon ?: "🧠"
-            val label = t.label
-            val author = t.author ?: ""
-            if (author.isNotEmpty()) "$icon $label  (by $author)" else "$icon $label"
-        }.toTypedArray()
-
-        builder.setItems(labels) { _, which ->
-            val tpl = templates[which]
-            val name = tpl.name ?: tpl.title
-            val desc = tpl.description ?: tpl.label
-            onTemplateSelected(name, desc)
-        }
+        val labels = items.map { it.label }.toTypedArray()
+        MaterialAlertDialogBuilder(context)
+            .setTitle(title)
+            .setItems(labels) { _, which ->
+                val item = items[which]
+                onSelected(item.name, item.description, item.templateId)
+            }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
     }

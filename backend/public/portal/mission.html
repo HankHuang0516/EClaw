@@ -1429,7 +1429,7 @@
             document.body.insertAdjacentHTML('beforeend',
                 `<div id="soul_gallery_overlay" class="dialog-overlay" onclick="if(event.target===this)document.getElementById('soul_gallery_overlay').remove()">
                     <div class="dialog" style="max-width:480px;">
-                        <div class="dialog-title">${esc(i18n.t('mc_dlg_soul_template'))}</div>
+                        <div class="dialog-title">${esc(i18n.t('mc_dlg_soul_template'))} (${SOUL_TEMPLATES.length + soulTemplates.length})</div>
                         <input type="text" placeholder="${esc(i18n.t('mc_search_placeholder') || '搜尋…')}" oninput="filterSoulGallery(this.value)" style="margin-bottom:12px;" />
                         <div id="soul_gallery_list" style="max-height:380px;overflow-y:auto;">${allCards}</div>
                         <div class="dialog-actions">

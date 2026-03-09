@@ -244,6 +244,17 @@ async function main() {
     printSummary();
     process.exit(1);
   }
+
+  // Determine webhook vs polling targets from broadcast response
+  const webhookTargetIds = expectedTargets.filter(tid => {
+    const t = broadcastRes.targets?.find(t => t.entityId === tid);
+    return t && t.mode === 'push';
+  });
+  const hasWebhookTargets = webhookTargetIds.length > 0;
+  console.log(`  Webhook (push) targets: [${webhookTargetIds.join(', ')}]`);
+  if (!hasWebhookTargets) {
+    console.log('  Note: All targets use polling mode — delivered_to checks will be skipped');
+  }
   console.log('');
 
   // ────────────────────────────────────────────────────
@@ -270,20 +281,22 @@ async function main() {
     );
   }
 
-  // Poll delivered_to until all webhook targets are marked, or timeout
-  console.log('\n  Waiting for webhook push delivery (polling delivered_to, max 60s)...');
-  const deliveryStart = Date.now();
-  const deliveryTimeout = 60000;
+  // Poll delivered_to only when there are webhook (push) targets
   let lastDeliveredTo = '';
-  while (Date.now() - deliveryStart < deliveryTimeout) {
-    await sleep(5000);
-    const histCheck = await fetchJSON(`${API_BASE}/api/chat/history?deviceId=${deviceId}&deviceSecret=${encodeURIComponent(deviceSecret)}&limit=10`);
-    const bMsg = (histCheck.messages || []).find(m => m.text === broadcastText && m.is_from_bot === true);
-    lastDeliveredTo = bMsg?.delivered_to || '';
-    const ids = lastDeliveredTo.split(',').map(s => s.trim()).filter(Boolean);
-    const allDelivered = expectedTargets.every(t => ids.includes(String(t)));
-    console.log(`  [${((Date.now() - deliveryStart) / 1000).toFixed(0)}s] delivered_to="${lastDeliveredTo}" (${ids.length}/${expectedTargets.length})`);
-    if (allDelivered) break;
+  if (hasWebhookTargets) {
+    console.log('\n  Waiting for webhook push delivery (polling delivered_to, max 60s)...');
+    const deliveryStart = Date.now();
+    const deliveryTimeout = 60000;
+    while (Date.now() - deliveryStart < deliveryTimeout) {
+      await sleep(5000);
+      const histCheck = await fetchJSON(`${API_BASE}/api/chat/history?deviceId=${deviceId}&deviceSecret=${encodeURIComponent(deviceSecret)}&limit=10`);
+      const bMsg = (histCheck.messages || []).find(m => m.text === broadcastText && m.is_from_bot === true);
+      lastDeliveredTo = bMsg?.delivered_to || '';
+      const ids = lastDeliveredTo.split(',').map(s => s.trim()).filter(Boolean);
+      const allDelivered = webhookTargetIds.every(t => ids.includes(String(t)));
+      console.log(`  [${((Date.now() - deliveryStart) / 1000).toFixed(0)}s] delivered_to="${lastDeliveredTo}" (${ids.length}/${webhookTargetIds.length})`);
+      if (allDelivered) break;
+    }
   }
 
   for (const tid of expectedTargets) {
@@ -338,56 +351,44 @@ async function main() {
       }
 
       // Check delivered_to field (THE KEY BUG FIX TEST)
+      // Only meaningful when webhook (push) targets exist — polling targets never populate delivered_to
       const deliveredTo = broadcastMsg.delivered_to || '';
       const deliveredIds = deliveredTo.split(',').map(s => s.trim()).filter(Boolean);
       console.log(`\n  delivered_to field: "${deliveredTo}"`);
       console.log(`  Parsed delivered IDs: [${deliveredIds.join(', ')}]`);
 
-      check('delivered_to is not empty',
-        deliveredIds.length > 0,
-        deliveredIds.length > 0
-          ? `${deliveredIds.length} entities delivered`
-          : 'EMPTY — markChatMessageDelivered may not be called or webhook push failed'
-      );
+      if (hasWebhookTargets) {
+        check('delivered_to is not empty',
+          deliveredIds.length > 0,
+          deliveredIds.length > 0
+            ? `${deliveredIds.length} entities delivered`
+            : 'EMPTY — markChatMessageDelivered may not be called or webhook push failed'
+        );
 
-      // Check if delivered_to has ALL target entities (not just the last one)
-      // This is the critical test for the APPEND fix
-      if (deliveredIds.length > 0) {
-        const webhookTargets = expectedTargets.filter(tid => {
-          const target = broadcastRes.targets?.find(t => t.entityId === tid);
-          return target && target.mode === 'push';
-        });
-        const pollingTargets = expectedTargets.filter(tid => {
+        // Check if delivered_to has ALL webhook targets (not just the last one)
+        // This is the critical test for the APPEND fix
+        const allWebhookDelivered = webhookTargetIds.every(t =>
+          deliveredIds.includes(String(t))
+        );
+        check('delivered_to contains ALL webhook targets (APPEND fix)',
+          allWebhookDelivered,
+          `webhook_targets=[${webhookTargetIds}], delivered=[${deliveredIds}]` +
+          (!allWebhookDelivered ? ' — BUG: markChatMessageDelivered overwrites instead of appending' : '')
+        );
+
+        // Check is_delivered flag (only meaningful after webhook delivery)
+        check('is_delivered is true',
+          broadcastMsg.is_delivered === true,
+          `is_delivered=${broadcastMsg.is_delivered}`
+        );
+      } else {
+        console.log('  Note: All targets use polling mode — skipping delivered_to / is_delivered checks');
+        const pollingTargetIds = expectedTargets.filter(tid => {
           const target = broadcastRes.targets?.find(t => t.entityId === tid);
           return target && target.mode === 'polling';
         });
-
-        console.log(`  Webhook (push) targets: [${webhookTargets.join(', ')}]`);
-        console.log(`  Polling targets: [${pollingTargets.join(', ')}]`);
-
-        // Only webhook targets get delivered_to entries
-        if (webhookTargets.length > 0) {
-          const allWebhookDelivered = webhookTargets.every(t =>
-            deliveredIds.includes(String(t))
-          );
-          check('delivered_to contains ALL webhook targets (APPEND fix)',
-            allWebhookDelivered,
-            `webhook_targets=[${webhookTargets}], delivered=[${deliveredIds}]` +
-            (!allWebhookDelivered ? ' — BUG: markChatMessageDelivered overwrites instead of appending' : '')
-          );
-        }
-
-        // Polling targets won't be in delivered_to (no webhook to confirm)
-        if (pollingTargets.length > 0) {
-          console.log(`  Note: Polling targets [${pollingTargets}] won't appear in delivered_to (no webhook confirmation)`);
-        }
+        console.log(`  Polling targets [${pollingTargetIds}] won't appear in delivered_to (no webhook confirmation)`);
       }
-
-      // Check is_delivered flag
-      check('is_delivered is true',
-        broadcastMsg.is_delivered === true,
-        `is_delivered=${broadcastMsg.is_delivered}`
-      );
     }
   } catch (err) {
     check('Chat history verification', false, err.message);

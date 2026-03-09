@@ -20,8 +20,8 @@ android {
         applicationId = "com.hank.clawlive"
         minSdk = 24
         targetSdk = 35
-        versionCode = 45
-        versionName = "1.0.42"
+        versionCode = 46
+        versionName = "1.0.43"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

@@ -155,9 +155,9 @@ test('#146-149 loadSkillTemplates() function exists', () => {
     assert(src.includes('loadSkillTemplates'), 'loadSkillTemplates() not found in MissionControlActivity.kt');
 });
 
-test('#146-149 spinnerTemplate wired in showSkillDialogInternal()', () => {
+test('#146-149 template selector wired in showSkillDialogInternal()', () => {
     const src = readSrc(MISSION_PATH);
-    assert(src.includes('spinnerTemplate'), 'spinnerTemplate not wired in MissionControlActivity.kt');
+    assert(src.includes('btnBrowseTemplates') || src.includes('spinnerTemplate'), 'Template selector (btnBrowseTemplates or spinnerTemplate) not found in MissionControlActivity.kt');
 });
 
 test('#146-149 dialog title uses R.string.add_skill_dialog_title', () => {

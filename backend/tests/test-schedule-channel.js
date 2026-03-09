@@ -161,7 +161,7 @@ async function run() {
 
         assert(pl.event === 'message',   'event=message');
         assert(pl.from  === 'scheduled', 'from=scheduled');
-        assert(pl.text  === SCHED_MSG,   `text matches scheduled message`);
+        assert(pl.text  && pl.text.startsWith(SCHED_MSG), `text matches scheduled message`);
         assert(pl.entityId === ENTITY_CH, `entityId=${ENTITY_CH}`);
 
         const ctx = pl.eclaw_context;

@@ -43,16 +43,6 @@ export const eclawOnboardingAdapter = {
       validate: (v: string) => (String(v ?? '').trim() ? undefined : 'Required'),
     });
 
-    const entityIdStr = await prompter.text({
-      message: 'Entity ID (0–3)',
-      placeholder: '0',
-      initialValue: String(resolved.entityId ?? 0),
-      validate: (v: string) => {
-        const n = Number(v);
-        return Number.isInteger(n) && n >= 0 && n <= 3 ? undefined : 'Must be 0–3';
-      },
-    });
-
     const botName = await prompter.text({
       message: 'Bot display name (optional)',
       placeholder: 'My Bot',
@@ -76,7 +66,7 @@ export const eclawOnboardingAdapter = {
             [accountId]: {
               apiKey: String(apiKey).trim(),
               apiBase: resolved.apiBase || 'https://eclawbot.com',
-              entityId: Number(entityIdStr),
+              entityId: resolved.entityId,  // keep existing if re-configuring, else undefined = auto-assign
               botName: String(botName).trim() || undefined,
               webhookUrl: String(webhookUrl).trim() || undefined,
               enabled: true,
