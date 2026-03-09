@@ -38,6 +38,84 @@
 
 ### Features
 
+* **backend:** add /api/platform-stats endpoint for bot daily report ([bcd090e](https://github.com/HankHuang0516/realbot/commit/bcd090e662da9f4877f957c9e5779c0cd5ae3852)), closes [#6](https://github.com/HankHuang0516/realbot/issues/6) [#6](https://github.com/HankHuang0516/realbot/issues/6) [#38842](https://github.com/HankHuang0516/realbot/issues/38842)
+* **i18n:** add 160-166 missing translation keys per language for zh-CN/ja/ko/th/vi/id ([1642a92](https://github.com/HankHuang0516/realbot/commit/1642a929e6b708e5e5737d1ef71325da2b73f4df))
+* **settings:** add copy icon for Device ID and Copy Credentials button ([35a68d7](https://github.com/HankHuang0516/realbot/commit/35a68d70044c94b643ee6a685ecb88840c008179))
+* **templates:** add Creative Thinker soul and Step-by-Step Reasoning rule templates ([61e916f](https://github.com/HankHuang0516/realbot/commit/61e916feadad2683d5d774073211d54cda6de898))
+* **info:** add deep linking support for guide sub-items ([e16ebb7](https://github.com/HankHuang0516/realbot/commit/e16ebb76d8fdf5d5b53ca117da92c3ea158579f6)), closes [#faq](https://github.com/HankHuang0516/realbot/issues/faq) [#release-notes](https://github.com/HankHuang0516/realbot/issues/release-notes) [#compare](https://github.com/HankHuang0516/realbot/issues/compare)
+* **settings:** add Device Secret display with reveal/copy toggle ([4d4281a](https://github.com/HankHuang0516/realbot/commit/4d4281a967a87f404ca5217f32045f1ff6fb500b))
+* **schedule:** add deviceSecret dual auth for schedule endpoints ([2716375](https://github.com/HankHuang0516/realbot/commit/2716375a2023b2ff259bdf7aae6051832ddc49c8))
+* **android:** add fetchSoulTemplates/fetchRuleTemplates to MissionViewModel ([1c411fc](https://github.com/HankHuang0516/realbot/commit/1c411fce073055eb743d09c71f5d6ce9aed4b988))
+* **skill-contribute:** add GET status endpoint for async verification feedback ([e71af93](https://github.com/HankHuang0516/realbot/commit/e71af9310223c23b786e52d24434e47aaafd9132))
+* **admin:** add pagination to user list (50 per page) ([ccd5fb3](https://github.com/HankHuang0516/realbot/commit/ccd5fb35117fd978d93bc4265e904f7b8ed20a7b))
+* **ios:** add React Native Expo iOS app with full feature parity ([934fe0b](https://github.com/HankHuang0516/realbot/commit/934fe0b2a35929d06fc987803eb7be7175cc4293))
+* **android/i18n:** add soul & rule template gallery strings ([0a28d99](https://github.com/HankHuang0516/realbot/commit/0a28d9979ab846214683a9c3bbc76c62be69e385))
+* **templates:** add Soul/Rule template community contribution API ([c6fdcba](https://github.com/HankHuang0516/realbot/commit/c6fdcba5076d34dd85a94293a30b875e8a243b34))
+* **android:** add SoulGalleryDialog and RuleGalleryDialog ([5a3142a](https://github.com/HankHuang0516/realbot/commit/5a3142af3f67dfa4c4ba9473a4381f89e04aee24))
+* **skill-templates:** add structural validation to contribute endpoint ([891327d](https://github.com/HankHuang0516/realbot/commit/891327dc02dbd3d2a8bbbf254d596cdb33fca3ed))
+* **scheduler:** add Taiwan time to missionHints + timezone update support ([20f50f7](https://github.com/HankHuang0516/realbot/commit/20f50f746867c20933c58fd20d3051a41f445af3))
+* **templates:** add Wise Mentor soul and Brevity First rule templates ([f1494fd](https://github.com/HankHuang0516/realbot/commit/f1494fde800c03fe2c650bda26fc87df36f9dd8d))
+* **info:** add 實用案例 category with Claude x OpenClaw guide ([94475ea](https://github.com/HankHuang0516/realbot/commit/94475eaf8c8f0cf9cc2068d6edff14b9036f136d))
+* **skill-templates:** auto-approve pipeline + admin contributions UI ([5f94ea1](https://github.com/HankHuang0516/realbot/commit/5f94ea13291d6b0d4f12e563d8451402452b09b7))
+* **soul-dialog:** merge dropdown into Gallery, unify template selection ([b9eeb41](https://github.com/HankHuang0516/realbot/commit/b9eeb415d789243243426adf345552c7970cd8b9))
+* **channel:** push NAME_CHANGED to channel bots immediately on rename ([d7992fc](https://github.com/HankHuang0516/realbot/commit/d7992fceb50ce615887ed3fe5e5e54c4306be7e9))
+* **channel:** send ECLAW_READY init push to bot after full bind ([656f930](https://github.com/HankHuang0516/realbot/commit/656f93086a9832de63dc29825d829c44170cc9e7))
+* **info:** simplify claude-openclaw guide with full example + copy button ([d8e31e9](https://github.com/HankHuang0516/realbot/commit/d8e31e9a3bf1b0b0dd05ef7bb7498bdcff82b335))
+* **rebrand:** update community post intro to AI Agent collaboration ([5fb15a0](https://github.com/HankHuang0516/realbot/commit/5fb15a0eca7911ac987686f844216f818a980e75))
+* **rebrand:** update comparison page strings to AI Agent collaboration ([82171a1](https://github.com/HankHuang0516/realbot/commit/82171a161819149f7a9977f0425e41742c816849))
+* **rebrand:** update faq_a_what_is to AI Agent collaboration messaging ([a79324a](https://github.com/HankHuang0516/realbot/commit/a79324aeefbe931e0119986ef4917a0516878bb5))
+* **rebrand:** update info.html features section to AI Agent positioning ([1a7fae8](https://github.com/HankHuang0516/realbot/commit/1a7fae8758b801a1da934eccbbad7be8d64bc9d8))
+* **rebrand:** update openclaw plugin metadata to AI Agent collaboration ([96baef7](https://github.com/HankHuang0516/realbot/commit/96baef7cb5fcf57159ad401b2ed543fef218ae5e))
+* **rebrand:** update openclaw-channel README to AI Agent collaboration ([f11653f](https://github.com/HankHuang0516/realbot/commit/f11653f11c44584e0783dddecc1fcef3dd4e8f55))
+* **rebrand:** update privacy policy - replace pet terminology with AI agent ([72b487d](https://github.com/HankHuang0516/realbot/commit/72b487d0260f5d2ece537c5c606ebb8f87dd4734))
+* **rebrand:** update README and package descriptions to AI Agent collaboration ([f9efffa](https://github.com/HankHuang0516/realbot/commit/f9efffa5179c5685023ef6d199d16f3e8018ee75))
+* **android:** wire SoulGalleryDialog and RuleGalleryDialog into add dialogs ([74898b3](https://github.com/HankHuang0516/realbot/commit/74898b3d527990ea769e7f2d3ac8d32a07df9c38))
+
+
+### Reverts
+
+* **templates:** remove manually added templates, let bot contribute via API ([b1e7914](https://github.com/HankHuang0516/realbot/commit/b1e79143d3bc10afea36dc8fe7294011a5f75c10))
+
+# [1.3.0](https://github.com/HankHuang0516/realbot/compare/v1.2.0...v1.3.0) (2026-03-09)
+
+
+### Bug Fixes
+
+* **plugin:** add auto-reconnect with exponential backoff to openclaw-channel-eclaw v1.1.0 ([0ae83a0](https://github.com/HankHuang0516/realbot/commit/0ae83a00da24ce72afd63d59f9be828ca2df32a8))
+* **debug:** add entityId bounds check in set-entity-xp ([051a1c6](https://github.com/HankHuang0516/realbot/commit/051a1c6ef1c01ec9bacd2acbfafdce24b3f17c2f))
+* **skill-contribute:** add GITHUB_TOKEN support to bypass API rate limit ([51dcea3](https://github.com/HankHuang0516/realbot/commit/51dcea3a561d3a083cdf9436b9c61f688d3573fa))
+* add i18n support to entire User Guide section in info.html ([1f2131a](https://github.com/HankHuang0516/realbot/commit/1f2131a90b29255075839723536dc0cc823f9d0c))
+* **android:** add name/description/ruleType to SkillTemplate and fix gallery dialogs ([e0a79b7](https://github.com/HankHuang0516/realbot/commit/e0a79b76503d36e21e7dc28246e940b27791492b))
+* **settings:** align copy icons to far right edge ([a735ce9](https://github.com/HankHuang0516/realbot/commit/a735ce95aabdee2f501a5589c0da2e2cb99a84c5))
+* **scheduler:** append missionHints to channel scheduled message text ([f1244d6](https://github.com/HankHuang0516/realbot/commit/f1244d66c2226c04798952e41898be8a7ad8d00a))
+* **api:** auto-detect entityId from botSecret in contribute endpoints ([9b3e8d1](https://github.com/HankHuang0516/realbot/commit/9b3e8d12a8084f7a4fe88363291393e6159bb47b))
+* **bind:** await single-device save after binding to prevent race condition ([811b3e9](https://github.com/HankHuang0516/realbot/commit/811b3e9b250f7dee518e1f7f7cdf65c1a8dd94d8))
+* code review corrections — credential UI and guide accuracy ([5992dc5](https://github.com/HankHuang0516/realbot/commit/5992dc5ca0cf35adee17253f5742ed3619ec836e)), closes [#newSecretValue](https://github.com/HankHuang0516/realbot/issues/newSecretValue)
+* **ios-app:** fix i18n compliance and asset config ([e952ec3](https://github.com/HankHuang0516/realbot/commit/e952ec3a0dc569565fff21fd1e3974a507822e19))
+* **test:** fix reorder-channel test order array size to match device limit ([3103918](https://github.com/HankHuang0516/realbot/commit/31039180cf26e0e5f2db3292bd153be856c541f6))
+* **portal:** fix XSS, broken tags, and filter consistency in soul/rule gallery ([0dd30ec](https://github.com/HankHuang0516/realbot/commit/0dd30ec0c8a358594d4c603ed5c92e7b86871226))
+* **admin:** i18n By/Date column headers in contribution tables ([c1caaf6](https://github.com/HankHuang0516/realbot/commit/c1caaf67d893266fca7831cf2c32a231230db4e2))
+* **bind:** make /api/bind handler async to fix await syntax error ([f78d373](https://github.com/HankHuang0516/realbot/commit/f78d373e2826b710adf6a7039604d93e90a627d0))
+* **api:** move skill-templates/contributions route after adminAuth definition ([4915f3d](https://github.com/HankHuang0516/realbot/commit/4915f3d8f737445f4144bd5998ff5588fb126bbb))
+* persist language preference to server for cross-device sync ([bd3f7f6](https://github.com/HankHuang0516/realbot/commit/bd3f7f65657434136dcf40d1f499de2924fc0c74))
+* **entity:** preserve XP/level across all unbind/rebind paths ([a27bddf](https://github.com/HankHuang0516/realbot/commit/a27bddf86c15c340ffe44e6b91506b930ef7992c))
+* **ai-chat:** prevent false network error when closing chat mid-request ([e787e2e](https://github.com/HankHuang0516/realbot/commit/e787e2e6c489885de8bd6a022255f32fccbe8588))
+* **tests:** read TEST_ENTITY_ID from .env in bot-api-response test; add setup_broadcast_webhook.js ([0dc137c](https://github.com/HankHuang0516/realbot/commit/0dc137c85e00de20c74b0c42c7569acbaf117dae))
+* **admin:** reorder By/date columns and show full datetime in contribution tables ([260b522](https://github.com/HankHuang0516/realbot/commit/260b5221407c539f6369368fe83e19120bf6d1eb))
+* **bind:** reset bot-to-bot counter on rebind to prevent stale rate limits ([daea976](https://github.com/HankHuang0516/realbot/commit/daea976e44768dc65eb515d2bff4b5f400385642))
+* restore template literal in set-entity-xp error message ([40a44ad](https://github.com/HankHuang0516/realbot/commit/40a44ad9abbc6f85ae7dfa981d80c8c1f7c9ea59))
+* **settings:** right-align copy icon, remove eye buttons ([010ffb7](https://github.com/HankHuang0516/realbot/commit/010ffb7487fe57019423e843676752ad203c1c2d))
+* **test:** shorten NEW_NAME to stay within 20-char server limit ([45a1653](https://github.com/HankHuang0516/realbot/commit/45a165359c4212b2d0851cebbfa20c19f26e81e5))
+* **settings:** truncate Device ID/Secret with ellipsis, no line wrap ([94a2ea4](https://github.com/HankHuang0516/realbot/commit/94a2ea41be12a026d5149a53e779b2403558639b))
+* **info:** update example template with review steps after each goal ([ba3ceb6](https://github.com/HankHuang0516/realbot/commit/ba3ceb61c3df158c43f081784958ca5cb5f7e451))
+* **rebrand:** update HTML fallback strings in comparison section ([a332dbd](https://github.com/HankHuang0516/realbot/commit/a332dbd95a4069952d1eb785e3969961f0d89cf3))
+* **rebrand:** update SVG and tester guide - remove pet terminology ([c27b27e](https://github.com/HankHuang0516/realbot/commit/c27b27e6fb71240a05e5a5afd1b6b8c42b3b5c41))
+* **admin:** use cookie auth for skill-templates/contributions endpoint ([fcefb1a](https://github.com/HankHuang0516/realbot/commit/fcefb1a0a7d295646024931bb1d6e018022d0945))
+* **scheduler:** use current timestamp as default scheduled_at for cron schedules ([1610110](https://github.com/HankHuang0516/realbot/commit/1610110239212ffca506b6cbf3dec67dfb862278))
+
+
+### Features
+
 * **i18n:** add 160-166 missing translation keys per language for zh-CN/ja/ko/th/vi/id ([1642a92](https://github.com/HankHuang0516/realbot/commit/1642a929e6b708e5e5737d1ef71325da2b73f4df))
 * **settings:** add copy icon for Device ID and Copy Credentials button ([35a68d7](https://github.com/HankHuang0516/realbot/commit/35a68d70044c94b643ee6a685ecb88840c008179))
 * **templates:** add Creative Thinker soul and Step-by-Step Reasoning rule templates ([61e916f](https://github.com/HankHuang0516/realbot/commit/61e916feadad2683d5d774073211d54cda6de898))
