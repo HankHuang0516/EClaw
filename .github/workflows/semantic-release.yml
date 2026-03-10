@@ -21,6 +21,10 @@ on:
       - 'CHANGELOG.md'
       - 'release_v*/**'
 
+concurrency:
+  group: semantic-release
+  cancel-in-progress: false   # queue runs; never cancel — every release must complete
+
 jobs:
   release:
     name: Semantic Release
