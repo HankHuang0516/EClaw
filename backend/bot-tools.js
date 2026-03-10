@@ -328,12 +328,4 @@ router.get('/web-fetch', authBot, async (req, res) => {
     }
 });
 
-// ── Helper: Generate Bot Tools API hints for push messages ────
-function getBotToolsHints(apiBase, deviceId, entityId, botSecret) {
-    let hints = `\n\n[AVAILABLE TOOLS — Web Search & Fetch]\n`;
-    hints += `Search the web: exec: curl -s "${apiBase}/api/bot/web-search?q=YOUR_QUERY&deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}"\n`;
-    hints += `Fetch webpage content: exec: curl -s "${apiBase}/api/bot/web-fetch?url=TARGET_URL&deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}"\n`;
-    return hints;
-}
-
-module.exports = { router, getBotToolsHints };
+module.exports = { router };
