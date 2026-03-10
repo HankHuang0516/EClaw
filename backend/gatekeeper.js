@@ -63,7 +63,8 @@ const HEARTBEAT_MANIPULATION_PATTERNS = [
 const MALICIOUS_ATTACK_PATTERNS = [
     // Command injection
     /(?:exec|eval|system|spawn|fork|require|import)\s*\(/i,
-    /(?:curl|wget|fetch)\s+(?:https?:\/\/)?(?!eclaw\.up\.railway\.app|eclawbot\.com|127\.0\.0\.1|localhost)/i,
+    /(?:curl|wget)\s+(?:-[a-zA-Z]+\s+)*(?:https?:\/\/)?(?!eclaw\.up\.railway\.app|eclawbot\.com|127\.0\.0\.1|localhost)/i,
+    /(?:^|[;&|]\s*)fetch\s+(?:https?:\/\/)(?!eclaw\.up\.railway\.app|eclawbot\.com|127\.0\.0\.1|localhost)/im,
     /`[^`]*(?:rm|del|kill|shutdown|reboot|format|drop|delete|truncate)[^`]*`/i,
     // SQL injection
     /(?:;\s*(?:DROP|DELETE|UPDATE|INSERT|ALTER|CREATE|TRUNCATE)\s+)/i,
