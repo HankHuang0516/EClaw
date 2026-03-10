@@ -110,6 +110,18 @@
         android:inputType="textUri"
         android:layout_marginBottom="12dp" />
 
+    <EditText
+        android:id="@+id/etSteps"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/skill_steps_hint"
+        android:inputType="textMultiLine"
+        android:minLines="3"
+        android:maxLines="6"
+        android:gravity="top|start"
+        android:scrollbars="vertical"
+        android:layout_marginBottom="12dp" />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

@@ -379,19 +379,19 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
     // Skills CRUD
     // ============================================
 
-    fun addSkill(title: String, url: String = "", assignedEntities: List<String> = emptyList()) {
-        val skill = MissionSkill(title = title, url = url, assignedEntities = assignedEntities)
+    fun addSkill(title: String, url: String = "", steps: String = "", assignedEntities: List<String> = emptyList()) {
+        val skill = MissionSkill(title = title, url = url, steps = steps, assignedEntities = assignedEntities)
         _uiState.update {
             it.copy(skills = it.skills + skill, hasLocalChanges = true)
         }
         saveToLocal()
     }
 
-    fun editSkill(skillId: String, title: String, url: String, assignedEntities: List<String>) {
+    fun editSkill(skillId: String, title: String, url: String, steps: String, assignedEntities: List<String>) {
         _uiState.update { state ->
             state.copy(
                 skills = state.skills.map {
-                    if (it.id == skillId) it.copy(title = title, url = url, assignedEntities = assignedEntities, updatedAt = System.currentTimeMillis()) else it
+                    if (it.id == skillId) it.copy(title = title, url = url, steps = steps, assignedEntities = assignedEntities, updatedAt = System.currentTimeMillis()) else it
                 },
                 hasLocalChanges = true
             )

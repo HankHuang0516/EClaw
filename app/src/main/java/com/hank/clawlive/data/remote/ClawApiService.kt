@@ -441,7 +441,8 @@ data class SkillTemplate(
     val requiredVars: List<SkillRequiredVar> = emptyList(),
     val name: String? = null,
     val description: String? = null,
-    val ruleType: String? = null
+    val ruleType: String? = null,
+    val steps: String? = null
 )
 
 data class SkillRequiredVar(

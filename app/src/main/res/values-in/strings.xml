@@ -498,6 +498,7 @@ Jika Anda memiliki pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="skill_template_custom">-- Kustom --</string>
     <string name="skill_title_hint">Judul</string>
     <string name="skill_url_hint">URL (opsional)</string>
+    <string name="skill_steps_hint">Langkah instalasi (opsional)</string>
     <string name="add_skill_dialog_title">Tambah Skill</string>
 
     <!-- App Update -->

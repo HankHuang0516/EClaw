@@ -498,6 +498,7 @@
     <string name="skill_template_custom">-- กำหนดเอง --</string>
     <string name="skill_title_hint">ชื่อ</string>
     <string name="skill_url_hint">URL (ไม่บังคับ)</string>
+    <string name="skill_steps_hint">ขั้นตอนการติดตั้ง (ไม่บังคับ)</string>
     <string name="add_skill_dialog_title">เพิ่มสกิล</string>
 
     <!-- App Update -->

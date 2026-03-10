@@ -637,6 +637,7 @@ class MissionControlActivity : AppCompatActivity() {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_mission_skill, null)
         val etTitle = view.findViewById<EditText>(R.id.etTitle)
         val etUrl = view.findViewById<EditText>(R.id.etUrl)
+        val etSteps = view.findViewById<EditText>(R.id.etSteps)
         val container = view.findViewById<LinearLayout>(R.id.entityCheckboxContainer)
         val layoutRequiredVarsWarning = view.findViewById<LinearLayout>(R.id.layoutRequiredVarsWarning)
         val tvRequiredVarsList = view.findViewById<TextView>(R.id.tvRequiredVarsList)
@@ -649,6 +650,7 @@ class MissionControlActivity : AppCompatActivity() {
         fun applyTemplate(tpl: SkillTemplate) {
             etTitle.setText(tpl.title)
             etUrl.setText(tpl.url ?: "")
+            etSteps.setText(tpl.steps ?: "")
             tvSelectedTemplate.text = "${tpl.icon ?: ""} ${tpl.label}".trim()
             layoutSelectedTemplate.visibility = android.view.View.VISIBLE
             btnBrowseTemplates.visibility = android.view.View.GONE
@@ -672,6 +674,7 @@ class MissionControlActivity : AppCompatActivity() {
         if (skill != null) {
             etTitle.setText(skill.title)
             etUrl.setText(skill.url)
+            etSteps.setText(skill.steps)
             // System skills: lock title and URL
             if (skill.isSystem) {
                 etTitle.isEnabled = false
@@ -688,11 +691,12 @@ class MissionControlActivity : AppCompatActivity() {
                 val title = etTitle.text.toString().trim()
                 if (title.isNotEmpty()) {
                     val url = etUrl.text.toString().trim()
+                    val steps = etSteps.text.toString().trim()
                     val selectedEntities = checkboxes.filter { it.second.isChecked }.map { it.first }
                     if (skill != null) {
-                        viewModel.editSkill(skill.id, title, url, selectedEntities)
+                        viewModel.editSkill(skill.id, title, url, steps, selectedEntities)
                     } else {
-                        viewModel.addSkill(title, url, selectedEntities)
+                        viewModel.addSkill(title, url, steps, selectedEntities)
                     }
                 }
             }

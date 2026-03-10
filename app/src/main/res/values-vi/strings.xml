@@ -498,6 +498,7 @@ Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ qua email chín
     <string name="skill_template_custom">-- Tùy chỉnh --</string>
     <string name="skill_title_hint">Tiêu đề</string>
     <string name="skill_url_hint">URL (tùy chọn)</string>
+    <string name="skill_steps_hint">Các bước cài đặt (tùy chọn)</string>
     <string name="add_skill_dialog_title">Thêm kỹ năng</string>
 
     <!-- App Update -->

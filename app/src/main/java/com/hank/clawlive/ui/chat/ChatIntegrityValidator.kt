@@ -116,9 +116,14 @@ object ChatIntegrityValidator {
         deviceId: String,
         deviceSecret: String
     ) {
+        // Snapshot adapter state synchronously on the calling (main) thread before dispatching
+        // to IO. This prevents a race condition where a subsequent submitList() updates the
+        // adapter between the commit callback and when the coroutine actually executes.
+        val adapterCount = adapter.itemCount
+        val adapterSnapshot = adapter.currentList.toList()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                checkDisplayLayer(adapter, submittedList, deviceId, deviceSecret)
+                checkDisplayLayer(adapterCount, adapterSnapshot, submittedList, deviceId, deviceSecret)
             } catch (e: Exception) {
                 Timber.w(e, "ChatIntegrityValidator display layer check failed")
             }
@@ -126,13 +131,13 @@ object ChatIntegrityValidator {
     }
 
     private suspend fun checkDisplayLayer(
-        adapter: ChatAdapter,
+        adapterCount: Int,
+        adapterSnapshot: List<ChatMessage>,
         submittedList: List<ChatMessage>,
         deviceId: String,
         deviceSecret: String
     ) {
         // CHECK 1: Adapter count vs submitted
-        val adapterCount = adapter.itemCount
         if (adapterCount != submittedList.size) {
             sendReport(deviceId, deviceSecret, mapOf(
                 "layer" to "display",
@@ -145,14 +150,13 @@ object ChatIntegrityValidator {
         }
 
         // CHECK 2 & 3: Direction + ordering for items
-        val adapterList = adapter.currentList
         for (i in submittedList.indices.take(100)) {
             val submitted = submittedList[i]
-            val inAdapter = adapterList.getOrNull(i) ?: break
+            val inAdapter = adapterSnapshot.getOrNull(i) ?: break
 
             // Direction (view type)
             val expectedType = if (submitted.isFromUser) 0 else 1
-            val actualType = adapter.getItemViewType(i)
+            val actualType = if (inAdapter.isFromUser) 0 else 1
             if (expectedType != actualType) {
                 sendReport(deviceId, deviceSecret, mapOf(
                     "layer" to "display",

@@ -90,6 +90,7 @@ data class MissionSkill(
     val id: String = UUID.randomUUID().toString(),
     val title: String,
     val url: String = "",
+    val steps: String = "",
     val assignedEntities: List<String> = emptyList(),
     val isSystem: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
