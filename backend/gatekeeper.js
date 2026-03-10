@@ -52,6 +52,35 @@ const TOKEN_EXTRACTION_PATTERNS = [
     /(?:dG9rZW4|c2VjcmV0|Ym90U2VjcmV0|cGFzc3dvcmQ)/i, // base64 of token, secret, botSecret, password
 ];
 
+// Negative context patterns — if matched keyword is preceded by these, it's informational, not malicious
+const NEGATIVE_CONTEXT_PATTERNS = [
+    // English negations
+    /(?:don'?t|doesn'?t|do\s+not|does\s+not|no)\s+(?:need|require|use|want|have)\s+(?:an?\s+)?$/i,
+    /(?:without|not?\s+required|not?\s+necessary|not?\s+needed|unnecessary|no\s+need\s+(?:for|to))\s*$/i,
+    /(?:免費|free)\b.*$/i,
+    // Chinese negations (allow extra words between negation and keyword, but NOT across sentence boundaries)
+    /(?:不需要|不用|無須|無需|沒有|不必|免|不要|不含|不使用|無需使用|不會用到)[^？。！；?!;.]{0,10}$/,
+];
+
+/**
+ * Check if a keyword match is in a negative/informational context
+ * @param {string} text - Full message text
+ * @param {RegExp} pattern - The pattern that matched
+ * @returns {boolean} true if the match is in a negative context (should NOT be blocked)
+ */
+function isNegativeContext(text, pattern) {
+    const match = text.match(pattern);
+    if (!match) return false;
+    // Get the text BEFORE the match
+    const beforeMatch = text.substring(0, match.index);
+    // Check if preceded by negation within a reasonable window (last 30 chars)
+    const window = beforeMatch.slice(-30);
+    for (const neg of NEGATIVE_CONTEXT_PATTERNS) {
+        if (neg.test(window)) return true;
+    }
+    return false;
+}
+
 // 2. Heartbeat manipulation patterns
 const HEARTBEAT_MANIPULATION_PATTERNS = [
     /(?:set|change|modify|update|configure)\s*(?:the\s+)?(?:heartbeat|heart\s*beat|polling|interval|frequency|check\s*interval)\s*(?:to\s+)?(?:\d{1,2}\s*(?:s(?:ec)?|m(?:in)?(?:ute)?))/i,
@@ -99,6 +128,8 @@ function detectMaliciousMessage(text) {
     // Check token extraction
     for (const pattern of TOKEN_EXTRACTION_PATTERNS) {
         if (pattern.test(trimmed)) {
+            // Skip if keyword appears in a negative/informational context
+            if (isNegativeContext(trimmed, pattern)) continue;
             return {
                 blocked: true,
                 reason: '偵測到疑似索取機器人憑證的行為。為了安全，此訊息已被攔截。',
