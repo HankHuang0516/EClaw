@@ -1,3 +1,11 @@
+## [1.92.1](https://github.com/HankHuang0516/realbot/compare/v1.92.0...v1.92.1) (2026-03-10)
+
+
+### Bug Fixes
+
+* **ci:** add setImmediate and clearImmediate to ESLint globals ([8e408f4](https://github.com/HankHuang0516/realbot/commit/8e408f4decc2ede1d03e87bf27c9d4522644fa97))
+* **android:** close issues [#157](https://github.com/HankHuang0516/realbot/issues/157) [#159](https://github.com/HankHuang0516/realbot/issues/159) [#160](https://github.com/HankHuang0516/realbot/issues/160) ([94a6b92](https://github.com/HankHuang0516/realbot/commit/94a6b92e26968d54de4b065f4ef79ecdb33a846b))
+
 # [1.3.0](https://github.com/HankHuang0516/realbot/compare/v1.2.0...v1.3.0) (2026-03-10)
 
 
