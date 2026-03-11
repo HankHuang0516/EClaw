@@ -10,22 +10,22 @@
 
 4. **Verification Before Done** — 修改程式碼後必須跑 lint / type-check / test；若任何一步失敗就修到通過為止，不把破損的 code commit。
 
-9. **Issue Fix → Regression Test Required** — 修好 GitHub Issue 後，**必須**在對應的 regression test 檔案中新增 scenario 驗證該修復，測試通過後才能 close issue。
+5. **Issue Fix → Regression Test Required** — 修好 GitHub Issue 後，**必須**在對應的 regression test 檔案中新增 scenario 驗證該修復，測試通過後才能 close issue。
    - Android UI bug → 在 `app/src/androidTest/` 或 `backend/tests/` 新增對應 case
    - Backend bug → 在 `backend/tests/` 對應的 test 檔案新增 case
    - 若沒有現成 test 檔案，新建一個（命名規則：`test-<feature>.js`）
    - Close issue 時在 comment 中附上測試 case 的檔案與行號
 
-5. **Demand Elegance (Balanced)** — 在保持 minimal change 的前提下，追求可讀、一致的程式風格；不為了「漂亮」而過度重構，但也不容忍明顯的 code smell 在新增的程式碼中出現。
+6. **Demand Elegance (Balanced)** — 在保持 minimal change 的前提下，追求可讀、一致的程式風格；不為了「漂亮」而過度重構，但也不容忍明顯的 code smell 在新增的程式碼中出現。
 
-6. **Autonomous Bug Fixing** — 當執行過程中遇到錯誤（build fail、test fail、runtime error），不要立刻停下來問使用者，先自行分析 log 並嘗試修復，連續失敗 3 次才 escalate。
+7. **Autonomous Bug Fixing** — 當執行過程中遇到錯誤（build fail、test fail、runtime error），不要立刻停下來問使用者，先自行分析 log 並嘗試修復，連續失敗 3 次才 escalate。
 
-7. **Task Management**
+8. **Task Management**
    - 所有多步驟工作都使用 TodoWrite 追蹤，讓使用者隨時可見進度
    - 完成一項立即標記 completed，不批量更新
    - 同時只有一個 task 可以是 in_progress
 
-8. **Core Principles**
+9. **Core Principles**
    - 安全第一（不引入 OWASP Top-10 漏洞）
    - 不臆測（先讀再改）
    - 最小驚訝原則（行為與命名一致）
