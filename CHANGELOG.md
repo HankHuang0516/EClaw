@@ -1,3 +1,10 @@
+## [1.94.2](https://github.com/HankHuang0516/EClaw/compare/v1.94.1...v1.94.2) (2026-03-11)
+
+
+### Bug Fixes
+
+* [#168](https://github.com/HankHuang0516/EClaw/issues/168) chat bubble text selection & [#167](https://github.com/HankHuang0516/EClaw/issues/167) entity public code display ([c89dccc](https://github.com/HankHuang0516/EClaw/commit/c89dcccdd3f00b96d18aab3d3a0d659569769e54))
+
 ## [1.94.1](https://github.com/HankHuang0516/EClaw/compare/v1.94.0...v1.94.1) (2026-03-11)
 
 
