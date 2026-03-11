@@ -32,8 +32,7 @@
     <string name="broadcast_message_hint">廣播訊息…</string>
     <string name="send_to_entities">發送給 %d 個實體</string>
     <string name="entity_format">實體 %d</string>
-    <string name="entity_public_code">代碼：%s</string>
-    <string name="code_copied">公開代碼已複製！</string>
+
 
     <!-- Settings -->
     <string name="settings_title">設定</string>

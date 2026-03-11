@@ -31,8 +31,7 @@
     <string name="broadcast_message_hint">Broadcast message…</string>
     <string name="send_to_entities">Send to %d entities</string>
     <string name="entity_format">Entity %d</string>
-    <string name="entity_public_code">Code: %s</string>
-    <string name="code_copied">Public code copied!</string>
+
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
