@@ -727,7 +727,7 @@
         }
         .edit-mode .entity-edit-actions { display: flex; }
         .edit-mode .entity-card-footer { display: none; }
-
+        .edit-mode .entity-public-code { display: inline-flex; }
 
         .entity-card.dragging { opacity: 0.4; transform: scale(0.97); }
         .entity-card.drag-over { border-color: #4FC3F7; box-shadow: 0 0 12px rgba(79, 195, 247, 0.3); }
@@ -1299,7 +1299,8 @@
                 var tmp = entities[fromIdx];
                 entities[fromIdx] = entities[toIdx];
                 entities[toIdx] = tmp;
-                renderEntities();
+                // Defer DOM rebuild to next frame so browser finishes drag lifecycle first
+                requestAnimationFrame(function() { renderEntities(); });
             }
         }
         function handleDragEnd() {
@@ -1340,7 +1341,8 @@
                     var tmp = entities[fromIdx];
                     entities[fromIdx] = entities[toIdx];
                     entities[toIdx] = tmp;
-                    renderEntities();
+                    // Defer DOM rebuild to next frame so browser finishes touch lifecycle first
+                    requestAnimationFrame(function() { renderEntities(); });
                 }
             }
             document.querySelectorAll('.entity-card').forEach(function(c) {

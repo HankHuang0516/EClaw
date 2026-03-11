@@ -145,6 +145,21 @@
 
         </LinearLayout>
 
+        <!-- Public Code (cross-device messaging) -->
+        <TextView
+            android:id="@+id/tvPublicCode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="2dp"
+            android:background="@drawable/badge_background"
+            android:textColor="#4FC3F7"
+            android:textSize="12sp"
+            android:fontFamily="monospace"
+            android:letterSpacing="0.08"
+            android:visibility="gone" />
+
         <!-- Last Message Bubble -->
         <LinearLayout
             android:id="@+id/messageBubble"

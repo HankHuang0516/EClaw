@@ -89,6 +89,7 @@ class EntityCardAdapter(
         private val tvEntityId: TextView = itemView.findViewById(R.id.tvEntityId)
         private val tvStateBadge: TextView = itemView.findViewById(R.id.tvStateBadge)
         private val tvChannelBadge: TextView = itemView.findViewById(R.id.tvChannelBadge)
+        private val tvPublicCode: TextView = itemView.findViewById(R.id.tvPublicCode)
         private val tvLastMessage: TextView = itemView.findViewById(R.id.tvLastMessage)
         private val tvMessageTime: TextView = itemView.findViewById(R.id.tvMessageTime)
         private val ivDragHandle: ImageView = itemView.findViewById(R.id.ivDragHandle)
@@ -141,6 +142,19 @@ class EntityCardAdapter(
                 xpProgressBar.setProgressCompat(xpInLevel.coerceAtLeast(0), true)
             } else {
                 xpBarRow.visibility = View.GONE
+            }
+
+            // Public code
+            if (!entity.publicCode.isNullOrBlank()) {
+                tvPublicCode.visibility = View.VISIBLE
+                tvPublicCode.text = itemView.context.getString(R.string.entity_public_code, entity.publicCode)
+                tvPublicCode.setOnClickListener {
+                    val clipboard = itemView.context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                    clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Public Code", entity.publicCode))
+                    android.widget.Toast.makeText(itemView.context, R.string.code_copied, android.widget.Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                tvPublicCode.visibility = View.GONE
             }
 
             // Edit mode: drag handle + action buttons
