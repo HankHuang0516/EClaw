@@ -7664,6 +7664,7 @@ notifModule.initNotificationTables(chatPool);
 devicePrefs.initTable(chatPool);
 crossDeviceSettings.initTable(chatPool);
 chatIntegrity.initIntegrityTable(chatPool);
+articlePublisher.initPublisherTable(chatPool);
 
 // Auto-migrate: add delivery tracking + media columns
 chatPool.query(`

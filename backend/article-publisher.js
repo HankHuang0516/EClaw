@@ -14,8 +14,57 @@ const BLOGGER_SCOPE = 'https://www.googleapis.com/auth/blogger';
 const HASHNODE_API_TOKEN = process.env.HASHNODE_API_TOKEN;
 const HASHNODE_GQL_ENDPOINT = 'https://gql.hashnode.com';
 
-// In-memory token store (per device) — production should use DB
-const bloggerTokens = new Map(); // deviceId -> { access_token, refresh_token, expires_at, blog_id }
+// Token store: DB-backed with in-memory cache
+let _pool = null;
+const bloggerTokens = new Map(); // in-memory cache: deviceId -> { access_token, refresh_token, expires_at, blog_id, blogs }
+
+function initPublisherTable(pool) {
+    _pool = pool;
+    pool.query(`
+        CREATE TABLE IF NOT EXISTS blogger_tokens (
+            device_id TEXT PRIMARY KEY,
+            access_token TEXT,
+            refresh_token TEXT,
+            expires_at BIGINT,
+            blog_id TEXT,
+            blogs JSONB DEFAULT '[]',
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        )
+    `).then(() => {
+        console.log('[Publisher] blogger_tokens table ready');
+        // Load existing tokens into memory cache
+        return pool.query('SELECT * FROM blogger_tokens');
+    }).then(result => {
+        for (const row of result.rows) {
+            bloggerTokens.set(row.device_id, {
+                access_token: row.access_token,
+                refresh_token: row.refresh_token,
+                expires_at: Number(row.expires_at),
+                blog_id: row.blog_id,
+                blogs: row.blogs || []
+            });
+        }
+        if (result.rows.length > 0) {
+            console.log(`[Publisher] Loaded ${result.rows.length} Blogger token(s) from DB`);
+        }
+    }).catch(err => console.warn('[Publisher] blogger_tokens init:', err.message));
+}
+
+async function saveBloggerToken(deviceId) {
+    const entry = bloggerTokens.get(deviceId);
+    if (!_pool || !entry) return;
+    await _pool.query(`
+        INSERT INTO blogger_tokens (device_id, access_token, refresh_token, expires_at, blog_id, blogs, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, NOW())
+        ON CONFLICT (device_id) DO UPDATE SET
+            access_token = EXCLUDED.access_token,
+            refresh_token = EXCLUDED.refresh_token,
+            expires_at = EXCLUDED.expires_at,
+            blog_id = EXCLUDED.blog_id,
+            blogs = EXCLUDED.blogs,
+            updated_at = NOW()
+    `, [deviceId, entry.access_token, entry.refresh_token, entry.expires_at, entry.blog_id, JSON.stringify(entry.blogs || [])]);
+}
 
 // ============================================
 // BLOGGER OAUTH FLOW
@@ -81,6 +130,9 @@ router.get('/blogger/oauth/callback', async (req, res) => {
             entry.blog_id = blogs.items[0].id; // default to first blog
         }
 
+        // Persist to DB
+        await saveBloggerToken(deviceId);
+
         res.send(`<h2>Blogger OAuth Success!</h2>
             <p>Device: ${deviceId}</p>
             <p>Blogs found: ${blogs.items ? blogs.items.length : 0}</p>
@@ -113,6 +165,7 @@ async function refreshBloggerToken(deviceId) {
 
     entry.access_token = data.access_token;
     entry.expires_at = Date.now() + (data.expires_in * 1000) - 60000;
+    saveBloggerToken(deviceId).catch(err => console.warn('[Publisher] Token persist error:', err.message));
     return entry.access_token;
 }
 
@@ -269,4 +322,4 @@ router.delete('/hashnode/post/:postId', async (req, res) => {
     }
 });
 
-module.exports = { router };
+module.exports = { router, initPublisherTable };
