@@ -17,9 +17,10 @@ if ! command -v gh &>/dev/null; then
     sudo apt-get update -qq && sudo apt-get install -y -qq gh 2>/dev/null
 fi
 
-if [ -n "$GH_TOKEN" ]; then
-    echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null
-    echo "  ✅ gh CLI authenticated"
+if gh auth status &>/dev/null; then
+    echo "  ✅ gh CLI already authenticated"
+elif [ -n "$GH_TOKEN" ]; then
+    echo "  ✅ gh CLI authenticated via GH_TOKEN env var"
 else
     echo "  ⚠️  GH_TOKEN not set — gh CLI won't be authenticated"
 fi
