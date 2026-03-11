@@ -1,3 +1,10 @@
+## [1.94.1](https://github.com/HankHuang0516/EClaw/compare/v1.94.0...v1.94.1) (2026-03-11)
+
+
+### Bug Fixes
+
+* public code UI disappears when swapping entities in edit mode ([9150750](https://github.com/HankHuang0516/EClaw/commit/915075093f75531483b9ab9d89fc87d65fb73248))
+
 # [1.94.0](https://github.com/HankHuang0516/EClaw/compare/v1.93.0...v1.94.0) (2026-03-11)
 
 
