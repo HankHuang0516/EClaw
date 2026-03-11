@@ -1,3 +1,15 @@
+# [1.93.0](https://github.com/HankHuang0516/realbot/compare/v1.92.2...v1.93.0) (2026-03-11)
+
+
+### Bug Fixes
+
+* hashnode tags need both name and slug fields ([b6da5e5](https://github.com/HankHuang0516/realbot/commit/b6da5e5c0e286c3a0c5fa456751c9929462f7ab2))
+
+
+### Features
+
+* add article-publisher module (Blogger OAuth + Hashnode API) ([03f3264](https://github.com/HankHuang0516/realbot/commit/03f3264ce79bed63da5e6643c018d146b61ce775))
+
 ## [1.92.2](https://github.com/HankHuang0516/realbot/compare/v1.92.1...v1.92.2) (2026-03-10)
 
 
