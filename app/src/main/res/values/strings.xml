@@ -230,6 +230,26 @@
     <string name="refresh_cooldown">Please wait %d seconds</string>
     <string name="edit_entities">Edit</string>
     <string name="drag_to_reorder">Drag to reorder</string>
+    <string name="xd_settings_btn">Cross-Device Msg</string>
+    <string name="xd_settings_title">Cross-Device Message Settings</string>
+    <string name="xd_pre_inject">Pre-inject Instruction</string>
+    <string name="xd_pre_inject_desc">Added before cross-device messages in push notification</string>
+    <string name="xd_forbidden">Forbidden Words</string>
+    <string name="xd_forbidden_desc">Messages containing these words will be rejected (comma-separated)</string>
+    <string name="xd_rate_limit">Rate Limit (seconds)</string>
+    <string name="xd_rate_limit_desc">Cooldown per sender (0 = no limit)</string>
+    <string name="xd_blacklist">Blacklist (public codes)</string>
+    <string name="xd_codes_sep">Comma-separated public codes</string>
+    <string name="xd_whitelist_mode">Whitelist Mode</string>
+    <string name="xd_whitelist">Whitelist (public codes)</string>
+    <string name="xd_reject_msg">Reject Message</string>
+    <string name="xd_reject_msg_hint">Auto-reply when blocked (empty = silent)</string>
+    <string name="xd_allowed_media">Allowed Media Types</string>
+    <string name="xd_save">Save</string>
+    <string name="xd_reset">Reset to Default</string>
+    <string name="xd_saved">Cross-device settings saved!</string>
+    <string name="xd_save_failed">Failed to save settings</string>
+    <string name="xd_reset_done">Settings reset to defaults</string>
     <string name="reorder_saving">Saving new order…</string>
     <string name="reorder_success">Entity order updated!</string>
     <string name="reorder_failed">Failed to update order</string>

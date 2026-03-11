@@ -735,6 +735,100 @@
         @media (max-width: 640px) {
             .entity-edit-actions { padding: 10px 12px; }
         }
+
+        /* ── Cross-Device Settings Panel ── */
+        .xd-settings-toggle {
+            background: none;
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .xd-settings-toggle:hover { background: var(--input-bg); color: var(--text); }
+        .xd-settings-toggle.active { color: #4FC3F7; border-color: #4FC3F7; }
+
+        .xd-settings-panel {
+            display: none;
+            padding: 16px 20px;
+            border-top: 1px solid var(--card-border);
+            background: var(--input-bg);
+        }
+        .xd-settings-panel.open { display: block; }
+        .xd-settings-panel h4 { margin: 0 0 12px; font-size: 14px; color: var(--text); }
+
+        .xd-field { margin-bottom: 14px; }
+        .xd-field label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .xd-field input[type="text"],
+        .xd-field input[type="number"],
+        .xd-field textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            background: var(--card-bg);
+            color: var(--text);
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+        .xd-field textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+        .xd-field input[type="number"] { max-width: 120px; }
+        .xd-field .xd-hint {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+            opacity: 0.7;
+        }
+
+        .xd-toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .xd-toggle-row label { margin: 0; font-size: 13px; color: var(--text); }
+        .xd-switch {
+            position: relative; width: 40px; height: 22px;
+        }
+        .xd-switch input { opacity: 0; width: 0; height: 0; }
+        .xd-switch .xd-slider {
+            position: absolute; cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #555; border-radius: 22px;
+            transition: 0.2s;
+        }
+        .xd-switch .xd-slider:before {
+            content: ""; position: absolute;
+            height: 16px; width: 16px; left: 3px; bottom: 3px;
+            background: white; border-radius: 50%;
+            transition: 0.2s;
+        }
+        .xd-switch input:checked + .xd-slider { background: #4FC3F7; }
+        .xd-switch input:checked + .xd-slider:before { transform: translateX(18px); }
+
+        .xd-media-checks { display: flex; gap: 10px; flex-wrap: wrap; }
+        .xd-media-checks label {
+            display: flex; align-items: center; gap: 4px;
+            font-size: 13px; color: var(--text); cursor: pointer;
+        }
+
+        .xd-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--card-border);
+        }
+        .xd-actions .btn { font-size: 13px; padding: 6px 16px; }
     </style>
 </head>
 
@@ -1222,7 +1316,54 @@
                     '</div>' +
                     '<div class="entity-edit-actions">' +
                     '<button class="btn btn-sm btn-outline" onclick="refreshEntity(' + entity.entityId + ', this)">&#x1F504; ' + i18n.t('dash_btn_refresh') + '</button>' +
+                    '<button class="xd-settings-toggle" id="xdToggle' + entity.entityId + '" onclick="toggleXdSettings(' + entity.entityId + ')">' + i18n.t('dash_xd_settings') + '</button>' +
                     '<button class="btn btn-sm btn-danger" onclick="confirmRemove(' + entity.entityId + ', \'' + escapedName + '\')">' + i18n.t('dash_btn_remove') + '</button>' +
+                    '</div>' +
+                    '<div class="xd-settings-panel" id="xdPanel' + entity.entityId + '">' +
+                    '<h4>' + i18n.t('dash_xd_title') + '</h4>' +
+                    '<div class="xd-field">' +
+                        '<label>' + i18n.t('dash_xd_pre_inject') + '</label>' +
+                        '<textarea id="xdPreInject' + entity.entityId + '" maxlength="500" placeholder="' + i18n.t('dash_xd_pre_inject_hint') + '"></textarea>' +
+                        '<div class="xd-hint">' + i18n.t('dash_xd_pre_inject_desc') + '</div>' +
+                    '</div>' +
+                    '<div class="xd-field">' +
+                        '<label>' + i18n.t('dash_xd_forbidden') + '</label>' +
+                        '<input type="text" id="xdForbidden' + entity.entityId + '" placeholder="' + i18n.t('dash_xd_comma_sep') + '">' +
+                        '<div class="xd-hint">' + i18n.t('dash_xd_forbidden_desc') + '</div>' +
+                    '</div>' +
+                    '<div class="xd-field">' +
+                        '<label>' + i18n.t('dash_xd_rate_limit') + '</label>' +
+                        '<input type="number" id="xdRateLimit' + entity.entityId + '" min="0" max="86400" value="0">' +
+                        '<div class="xd-hint">' + i18n.t('dash_xd_rate_limit_desc') + '</div>' +
+                    '</div>' +
+                    '<div class="xd-field">' +
+                        '<label>' + i18n.t('dash_xd_blacklist') + '</label>' +
+                        '<input type="text" id="xdBlacklist' + entity.entityId + '" placeholder="' + i18n.t('dash_xd_codes_sep') + '">' +
+                    '</div>' +
+                    '<div class="xd-toggle-row">' +
+                        '<label class="xd-switch"><input type="checkbox" id="xdWhitelistOn' + entity.entityId + '"><span class="xd-slider"></span></label>' +
+                        '<label>' + i18n.t('dash_xd_whitelist_mode') + '</label>' +
+                    '</div>' +
+                    '<div class="xd-field">' +
+                        '<label>' + i18n.t('dash_xd_whitelist') + '</label>' +
+                        '<input type="text" id="xdWhitelist' + entity.entityId + '" placeholder="' + i18n.t('dash_xd_codes_sep') + '">' +
+                    '</div>' +
+                    '<div class="xd-field">' +
+                        '<label>' + i18n.t('dash_xd_reject_msg') + '</label>' +
+                        '<input type="text" id="xdRejectMsg' + entity.entityId + '" maxlength="200" placeholder="' + i18n.t('dash_xd_reject_msg_hint') + '">' +
+                    '</div>' +
+                    '<div class="xd-field">' +
+                        '<label>' + i18n.t('dash_xd_allowed_media') + '</label>' +
+                        '<div class="xd-media-checks">' +
+                            ['text','photo','voice','video','file'].map(function(m) {
+                                return '<label><input type="checkbox" data-xd-media="' + m + '" data-entity="' + entity.entityId + '" checked> ' + m + '</label>';
+                            }).join('') +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="xd-actions">' +
+                        '<button class="btn btn-sm btn-primary" onclick="saveXdSettings(' + entity.entityId + ')">' + i18n.t('dash_xd_save') + '</button>' +
+                        '<button class="btn btn-sm btn-outline" onclick="resetXdSettings(' + entity.entityId + ')">' + i18n.t('dash_xd_reset') + '</button>' +
+                    '</div>' +
                     '</div>' +
                     '</div>';
             }).join('');
@@ -1254,6 +1395,101 @@
             if (window.telemetry) {
                 telemetry.trackAction(isEditMode ? 'edit_mode_on' : 'edit_mode_off');
             }
+        }
+
+        // --- Cross-Device Settings ---
+        function toggleXdSettings(entityId) {
+            var panel = document.getElementById('xdPanel' + entityId);
+            var btn = document.getElementById('xdToggle' + entityId);
+            if (!panel) return;
+            var isOpen = panel.classList.toggle('open');
+            btn.classList.toggle('active', isOpen);
+            if (isOpen) loadXdSettings(entityId);
+            if (window.telemetry) telemetry.trackAction(isOpen ? 'xd_settings_open' : 'xd_settings_close', { entityId: entityId });
+        }
+
+        async function loadXdSettings(entityId) {
+            try {
+                var data = await apiCall('GET', '/api/entity/cross-device-settings?deviceId=' + currentUser.deviceId + '&deviceSecret=' + encodeURIComponent(currentUser.deviceSecret) + '&entityId=' + entityId);
+                if (!data.success) return;
+                var s = data.settings;
+                var el = function(id) { return document.getElementById(id); };
+                el('xdPreInject' + entityId).value = s.pre_inject || '';
+                el('xdForbidden' + entityId).value = (s.forbidden_words || []).join(', ');
+                el('xdRateLimit' + entityId).value = s.rate_limit_seconds || 0;
+                el('xdBlacklist' + entityId).value = (s.blacklist || []).join(', ');
+                el('xdWhitelistOn' + entityId).checked = !!s.whitelist_enabled;
+                el('xdWhitelist' + entityId).value = (s.whitelist || []).join(', ');
+                el('xdRejectMsg' + entityId).value = s.reject_message || '';
+                // Media checkboxes
+                var allowed = s.allowed_media || ['text','photo','voice','video','file'];
+                document.querySelectorAll('[data-xd-media][data-entity="' + entityId + '"]').forEach(function(cb) {
+                    cb.checked = allowed.includes(cb.getAttribute('data-xd-media'));
+                });
+            } catch (err) {
+                console.error('[XD Settings] Load error:', err);
+            }
+        }
+
+        function collectXdSettings(entityId) {
+            var el = function(id) { return document.getElementById(id); };
+            var splitCsv = function(val) {
+                return val.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+            };
+            var allowedMedia = [];
+            document.querySelectorAll('[data-xd-media][data-entity="' + entityId + '"]').forEach(function(cb) {
+                if (cb.checked) allowedMedia.push(cb.getAttribute('data-xd-media'));
+            });
+            return {
+                pre_inject: el('xdPreInject' + entityId).value,
+                forbidden_words: splitCsv(el('xdForbidden' + entityId).value),
+                rate_limit_seconds: parseInt(el('xdRateLimit' + entityId).value, 10) || 0,
+                blacklist: splitCsv(el('xdBlacklist' + entityId).value),
+                whitelist_enabled: el('xdWhitelistOn' + entityId).checked,
+                whitelist: splitCsv(el('xdWhitelist' + entityId).value),
+                reject_message: el('xdRejectMsg' + entityId).value,
+                allowed_media: allowedMedia
+            };
+        }
+
+        async function saveXdSettings(entityId) {
+            var settings = collectXdSettings(entityId);
+            try {
+                var data = await apiCall('PUT', '/api/entity/cross-device-settings', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    entityId: entityId,
+                    settings: settings
+                });
+                if (data.success) {
+                    showToast(i18n.t('dash_xd_saved'), 'success');
+                } else {
+                    showToast(data.message || 'Error', 'error');
+                }
+            } catch (err) {
+                showToast('Save failed: ' + err.message, 'error');
+            }
+            if (window.telemetry) telemetry.trackAction('xd_settings_save', { entityId: entityId });
+        }
+
+        async function resetXdSettings(entityId) {
+            if (!confirm(i18n.t('dash_xd_reset_confirm'))) return;
+            try {
+                var data = await apiCall('DELETE', '/api/entity/cross-device-settings', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    entityId: entityId
+                });
+                if (data.success) {
+                    showToast(i18n.t('dash_xd_reset_done'), 'success');
+                    loadXdSettings(entityId);
+                } else {
+                    showToast(data.message || 'Error', 'error');
+                }
+            } catch (err) {
+                showToast('Reset failed: ' + err.message, 'error');
+            }
+            if (window.telemetry) telemetry.trackAction('xd_settings_reset', { entityId: entityId });
         }
 
         // --- Drag to Reorder ---

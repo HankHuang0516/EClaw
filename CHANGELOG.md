@@ -1,3 +1,10 @@
+# [1.94.0](https://github.com/HankHuang0516/EClaw/compare/v1.93.0...v1.94.0) (2026-03-11)
+
+
+### Features
+
+* add cross-device message management interface ([dd8f27a](https://github.com/HankHuang0516/EClaw/commit/dd8f27a8d63e106c4b10672355580d2e1b80d5d4))
+
 # [1.93.0](https://github.com/HankHuang0516/realbot/compare/v1.92.2...v1.93.0) (2026-03-11)
 
 

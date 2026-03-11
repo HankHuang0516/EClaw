@@ -16,6 +16,7 @@ const chatIntegrity = require('./chat-integrity');
 const scheduler = require('./scheduler');
 const notifModule = require('./notifications');
 const devicePrefs = require('./device-preferences');
+const crossDeviceSettings = require('./entity-cross-device-settings');
 const feedbackEmail = require('./feedback-email');
 const multer = require('multer');
 const crypto = require('crypto');
@@ -255,6 +256,7 @@ const recentBroadcasts = {}; // deviceId -> [{fromEntityId, text, timestamp}] fo
 // Cross-device messaging
 const publicCodeIndex = {}; // code -> { deviceId, entityId }
 const crossSpeakCounter = {};
+const crossDeviceOwnerRateLimit = {}; // owner-defined per-sender rate limit timestamps
 const CROSS_SPEAK_MAX_MESSAGES = 4; // stricter limit for cross-device messages
 
 function checkBotToBotRateLimit(deviceId, entityId) {
@@ -3991,6 +3993,88 @@ app.post('/api/entity/speak-to', async (req, res) => {
 });
 
 /**
+ * GET /api/entity/cross-device-settings
+ * Get cross-device message settings for an entity.
+ * Query: ?deviceId=X&deviceSecret=Y&entityId=N
+ */
+app.get('/api/entity/cross-device-settings', async (req, res) => {
+    const { deviceId, deviceSecret, entityId } = req.query;
+    if (!deviceId || !deviceSecret || entityId === undefined) {
+        return res.status(400).json({ success: false, message: 'deviceId, deviceSecret, entityId required' });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+    const eid = parseInt(entityId, 10);
+    if (isNaN(eid) || eid < 0 || eid > 3) {
+        return res.status(400).json({ success: false, message: 'Invalid entityId' });
+    }
+    try {
+        const settings = await crossDeviceSettings.getSettings(deviceId, eid);
+        res.json({ success: true, settings });
+    } catch (err) {
+        console.error('[CrossDeviceSettings] GET error:', err.message);
+        res.status(500).json({ success: false, message: 'Internal error' });
+    }
+});
+
+/**
+ * PUT /api/entity/cross-device-settings
+ * Update cross-device message settings for an entity.
+ * Body: { deviceId, deviceSecret, entityId, settings: {...} }
+ */
+app.put('/api/entity/cross-device-settings', async (req, res) => {
+    const { deviceId, deviceSecret, entityId, settings } = req.body;
+    if (!deviceId || !deviceSecret || entityId === undefined || !settings) {
+        return res.status(400).json({ success: false, message: 'deviceId, deviceSecret, entityId, settings required' });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+    const eid = parseInt(entityId, 10);
+    if (isNaN(eid) || eid < 0 || eid > 3) {
+        return res.status(400).json({ success: false, message: 'Invalid entityId' });
+    }
+    try {
+        await crossDeviceSettings.updateSettings(deviceId, eid, settings);
+        const updated = await crossDeviceSettings.getSettings(deviceId, eid);
+        res.json({ success: true, settings: updated });
+    } catch (err) {
+        console.error('[CrossDeviceSettings] PUT error:', err.message);
+        res.status(500).json({ success: false, message: 'Internal error' });
+    }
+});
+
+/**
+ * DELETE /api/entity/cross-device-settings
+ * Reset cross-device message settings to defaults.
+ * Body: { deviceId, deviceSecret, entityId }
+ */
+app.delete('/api/entity/cross-device-settings', async (req, res) => {
+    const { deviceId, deviceSecret, entityId } = req.body;
+    if (!deviceId || !deviceSecret || entityId === undefined) {
+        return res.status(400).json({ success: false, message: 'deviceId, deviceSecret, entityId required' });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+    const eid = parseInt(entityId, 10);
+    if (isNaN(eid) || eid < 0 || eid > 3) {
+        return res.status(400).json({ success: false, message: 'Invalid entityId' });
+    }
+    try {
+        await crossDeviceSettings.resetSettings(deviceId, eid);
+        res.json({ success: true, settings: crossDeviceSettings.DEFAULTS });
+    } catch (err) {
+        console.error('[CrossDeviceSettings] DELETE error:', err.message);
+        res.status(500).json({ success: false, message: 'Internal error' });
+    }
+});
+
+/**
  * POST /api/entity/cross-speak
  * Cross-device entity-to-entity messaging via public code.
  * Body: { deviceId, fromEntityId, botSecret, targetCode, text, mediaType?, mediaUrl? }
@@ -4040,6 +4124,48 @@ app.post('/api/entity/cross-speak', async (req, res) => {
     // Prevent self-message
     if (fromEntity.publicCode === targetCode) {
         return res.status(400).json({ success: false, message: "Cannot send cross-device message to yourself" });
+    }
+
+    // --- Cross-device settings enforcement (target entity's owner rules) ---
+    const xdSettings = await crossDeviceSettings.getSettings(target.deviceId, target.entityId);
+    const senderCode = fromEntity.publicCode;
+
+    // Blacklist check
+    if (xdSettings.blacklist.length > 0 && xdSettings.blacklist.includes(senderCode)) {
+        const msg = xdSettings.reject_message || 'Message rejected';
+        return res.status(403).json({ success: false, message: msg, reason: 'blacklisted' });
+    }
+    // Whitelist check
+    if (xdSettings.whitelist_enabled && xdSettings.whitelist.length > 0 && !xdSettings.whitelist.includes(senderCode)) {
+        const msg = xdSettings.reject_message || 'Message rejected';
+        return res.status(403).json({ success: false, message: msg, reason: 'not_whitelisted' });
+    }
+    // Forbidden words check
+    if (xdSettings.forbidden_words.length > 0 && text) {
+        const lowerText = text.toLowerCase();
+        const blocked = xdSettings.forbidden_words.find(w => lowerText.includes(w.toLowerCase()));
+        if (blocked) {
+            const msg = xdSettings.reject_message || 'Message rejected';
+            return res.status(403).json({ success: false, message: msg, reason: 'forbidden_word' });
+        }
+    }
+    // Allowed media check
+    const msgMediaType = mediaType || 'text';
+    if (!xdSettings.allowed_media.includes(msgMediaType)) {
+        const msg = xdSettings.reject_message || 'Media type not allowed';
+        return res.status(403).json({ success: false, message: msg, reason: 'media_not_allowed' });
+    }
+    // Per-sender rate limit (owner-defined, separate from system rate limit)
+    if (xdSettings.rate_limit_seconds > 0) {
+        const rlKey = `xd_owner_rl:${target.deviceId}:${target.entityId}:${senderCode}`;
+        const now = Date.now();
+        const lastTime = crossDeviceOwnerRateLimit[rlKey] || 0;
+        if (now - lastTime < xdSettings.rate_limit_seconds * 1000) {
+            const waitSec = Math.ceil((xdSettings.rate_limit_seconds * 1000 - (now - lastTime)) / 1000);
+            const msg = xdSettings.reject_message || `Rate limited, wait ${waitSec}s`;
+            return res.status(429).json({ success: false, message: msg, reason: 'owner_rate_limit', wait_seconds: waitSec });
+        }
+        crossDeviceOwnerRateLimit[rlKey] = now;
     }
 
     // Gatekeeper: mask leaked tokens from free bots
@@ -4122,6 +4248,9 @@ app.post('/api/entity/cross-speak', async (req, res) => {
         pushMsg += `[CROSS-DEVICE] Remaining quota: ${csRemaining}/${CROSS_SPEAK_MAX_MESSAGES}. If the message is just repeating emotions with no new info, do NOT reply — just update your wallpaper status.`;
         if (csRemaining <= 1) {
             pushMsg += ` WARNING: Quota almost exhausted, do NOT auto-reply.`;
+        }
+        if (xdSettings.pre_inject) {
+            pushMsg += `\n\n[DEVICE OWNER INSTRUCTION]\n${xdSettings.pre_inject}`;
         }
         pushMsg += `\n\n[CROSS-DEVICE MESSAGE] From: ${fromEntity.name || 'Entity'} (code: ${fromEntity.publicCode}, ${fromEntity.character})\n`;
         pushMsg += `Content: ${crossText}`;
@@ -4368,6 +4497,43 @@ app.post('/api/client/cross-speak', async (req, res) => {
         return res.status(400).json({ success: false, message: "Cannot send cross-device message to yourself" });
     }
 
+    // --- Cross-device settings enforcement (target entity's owner rules) ---
+    const xdSettingsClient = await crossDeviceSettings.getSettings(target.deviceId, target.entityId);
+    const senderCodeClient = fromEntity.publicCode;
+
+    if (xdSettingsClient.blacklist.length > 0 && xdSettingsClient.blacklist.includes(senderCodeClient)) {
+        const msg = xdSettingsClient.reject_message || 'Message rejected';
+        return res.status(403).json({ success: false, message: msg, reason: 'blacklisted' });
+    }
+    if (xdSettingsClient.whitelist_enabled && xdSettingsClient.whitelist.length > 0 && !xdSettingsClient.whitelist.includes(senderCodeClient)) {
+        const msg = xdSettingsClient.reject_message || 'Message rejected';
+        return res.status(403).json({ success: false, message: msg, reason: 'not_whitelisted' });
+    }
+    if (xdSettingsClient.forbidden_words.length > 0 && text) {
+        const lowerText = text.toLowerCase();
+        const blocked = xdSettingsClient.forbidden_words.find(w => lowerText.includes(w.toLowerCase()));
+        if (blocked) {
+            const msg = xdSettingsClient.reject_message || 'Message rejected';
+            return res.status(403).json({ success: false, message: msg, reason: 'forbidden_word' });
+        }
+    }
+    const msgMediaTypeClient = mediaType || 'text';
+    if (!xdSettingsClient.allowed_media.includes(msgMediaTypeClient)) {
+        const msg = xdSettingsClient.reject_message || 'Media type not allowed';
+        return res.status(403).json({ success: false, message: msg, reason: 'media_not_allowed' });
+    }
+    if (xdSettingsClient.rate_limit_seconds > 0) {
+        const rlKey = `xd_owner_rl:${target.deviceId}:${target.entityId}:${senderCodeClient}`;
+        const now = Date.now();
+        const lastTime = crossDeviceOwnerRateLimit[rlKey] || 0;
+        if (now - lastTime < xdSettingsClient.rate_limit_seconds * 1000) {
+            const waitSec = Math.ceil((xdSettingsClient.rate_limit_seconds * 1000 - (now - lastTime)) / 1000);
+            const msg = xdSettingsClient.reject_message || `Rate limited, wait ${waitSec}s`;
+            return res.status(429).json({ success: false, message: msg, reason: 'owner_rate_limit', wait_seconds: waitSec });
+        }
+        crossDeviceOwnerRateLimit[rlKey] = now;
+    }
+
     // Reset b2b counter on human message (same as /api/client/speak)
     resetBotToBotCounter(deviceId);
 
@@ -4415,6 +4581,9 @@ app.post('/api/client/cross-speak', async (req, res) => {
         pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","entityId":${target.entityId},"botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
         pushMsg += `To reply to this cross-device message:\n`;
         pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/cross-speak" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","fromEntityId":${target.entityId},"botSecret":"${toEntity.botSecret}","targetCode":"${fromEntity.publicCode}","text":"YOUR_REPLY_HERE"}'\n\n`;
+        if (xdSettingsClient.pre_inject) {
+            pushMsg += `[DEVICE OWNER INSTRUCTION]\n${xdSettingsClient.pre_inject}\n\n`;
+        }
         pushMsg += `[CROSS-DEVICE MESSAGE from Human User] From: ${fromEntity.name || 'User'} (code: ${fromEntity.publicCode})\n`;
         pushMsg += `Content: ${text}`;
         if (mediaType === 'photo') {
@@ -7493,6 +7662,7 @@ feedbackModule.initFeedbackTable(chatPool);
 feedbackModule.initFeedbackPhotosTable(chatPool);
 notifModule.initNotificationTables(chatPool);
 devicePrefs.initTable(chatPool);
+crossDeviceSettings.initTable(chatPool);
 chatIntegrity.initIntegrityTable(chatPool);
 
 // Auto-migrate: add delivery tracking + media columns

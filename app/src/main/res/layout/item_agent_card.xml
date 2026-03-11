@@ -216,6 +216,20 @@
                 app:cornerRadius="8dp"
                 style="@style/Widget.Material3.Button.OutlinedButton" />
 
+            <!-- Cross-Device Settings Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnXdSettings"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginHorizontal="4dp"
+                android:text="@string/xd_settings_btn"
+                android:textColor="#4FC3F7"
+                app:strokeColor="#4FC3F7"
+                app:cornerRadius="8dp"
+                android:textSize="11sp"
+                style="@style/Widget.Material3.Button.OutlinedButton" />
+
             <!-- Remove Entity Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnRemoveEntity"

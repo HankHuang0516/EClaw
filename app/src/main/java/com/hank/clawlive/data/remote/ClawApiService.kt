@@ -177,6 +177,23 @@ interface ClawApiService {
     suspend fun sendCrossDeviceMessage(@Body body: Map<String, @JvmSuppressWildcards Any>): CrossSpeakResponse
 
     // ============================================
+    // CROSS-DEVICE SETTINGS
+    // ============================================
+
+    @GET("api/entity/cross-device-settings")
+    suspend fun getCrossDeviceSettings(
+        @Query("deviceId") deviceId: String,
+        @Query("deviceSecret") deviceSecret: String,
+        @Query("entityId") entityId: Int
+    ): CrossDeviceSettingsResponse
+
+    @PUT("api/entity/cross-device-settings")
+    suspend fun updateCrossDeviceSettings(@Body body: Map<String, @JvmSuppressWildcards Any>): CrossDeviceSettingsResponse
+
+    @HTTP(method = "DELETE", path = "api/entity/cross-device-settings", hasBody = true)
+    suspend fun resetCrossDeviceSettings(@Body body: Map<String, String>): CrossDeviceSettingsResponse
+
+    // ============================================
     // CHAT HISTORY (Backend PostgreSQL)
     // ============================================
 
@@ -710,4 +727,23 @@ data class UpdateInfo(
     val forceUpdate: Boolean = false,
     val releaseNotes: String? = null,
     val storeUrl: String = "https://play.google.com/store/apps/details?id=com.hank.clawlive"
+)
+
+// ============ Cross-Device Settings Models ============
+
+data class CrossDeviceSettings(
+    val pre_inject: String = "",
+    val forbidden_words: List<String> = emptyList(),
+    val rate_limit_seconds: Int = 0,
+    val blacklist: List<String> = emptyList(),
+    val whitelist_enabled: Boolean = false,
+    val whitelist: List<String> = emptyList(),
+    val reject_message: String = "",
+    val allowed_media: List<String> = listOf("text", "photo", "voice", "video", "file")
+)
+
+data class CrossDeviceSettingsResponse(
+    val success: Boolean,
+    val settings: CrossDeviceSettings? = null,
+    val message: String? = null
 )

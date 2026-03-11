@@ -31,7 +31,8 @@ class EntityCardAdapter(
     private val onAvatarClick: (EntityStatus, TextView) -> Unit,
     private val onNameClick: (EntityStatus) -> Unit,
     private val onRefreshClick: (EntityStatus, MaterialButton) -> Unit,
-    private val onRemoveClick: (EntityStatus) -> Unit
+    private val onRemoveClick: (EntityStatus) -> Unit,
+    private val onXdSettingsClick: ((EntityStatus) -> Unit)? = null
 ) : RecyclerView.Adapter<EntityCardAdapter.ViewHolder>() {
 
     private val items = mutableListOf<EntityStatus>()
@@ -96,6 +97,7 @@ class EntityCardAdapter(
         private val editActionsRow: LinearLayout = itemView.findViewById(R.id.editActionsRow)
         private val btnRefreshEntity: MaterialButton = itemView.findViewById(R.id.btnRefreshEntity)
         private val btnRemoveEntity: MaterialButton = itemView.findViewById(R.id.btnRemoveEntity)
+        private val btnXdSettings: MaterialButton = itemView.findViewById(R.id.btnXdSettings)
         private val xpBarRow: LinearLayout = itemView.findViewById(R.id.xpBarRow)
         private val tvLevel: TextView = itemView.findViewById(R.id.tvLevel)
         private val xpProgressBar: LinearProgressIndicator = itemView.findViewById(R.id.xpProgressBar)
@@ -171,6 +173,7 @@ class EntityCardAdapter(
 
             // Action buttons
             btnRefreshEntity.setOnClickListener { onRefreshClick(entity, btnRefreshEntity) }
+            btnXdSettings.setOnClickListener { onXdSettingsClick?.invoke(entity) }
             btnRemoveEntity.setOnClickListener { onRemoveClick(entity) }
         }
 

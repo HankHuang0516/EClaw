@@ -281,7 +281,8 @@ class MainActivity : AppCompatActivity() {
             onAvatarClick = { entity, iconView -> showAvatarPicker(entity.entityId, iconView) },
             onNameClick = { entity -> showRenameDialog(entity) },
             onRefreshClick = { entity, btn -> refreshEntity(entity, btn) },
-            onRemoveClick = { entity -> showRemoveConfirmDialog(entity) }
+            onRemoveClick = { entity -> showRemoveConfirmDialog(entity) },
+            onXdSettingsClick = { entity -> showXdSettingsDialog(entity) }
         )
 
         val dragCallback = object : ItemTouchHelper.SimpleCallback(
@@ -832,6 +833,122 @@ class MainActivity : AppCompatActivity() {
             } finally {
                 loadingDialog.dismiss()
             }
+        }
+    }
+
+    private fun showXdSettingsDialog(entity: EntityStatus) {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_xd_settings, null)
+        val etPreInject = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etPreInject)
+        val etForbidden = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etForbiddenWords)
+        val etRateLimit = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etRateLimit)
+        val etBlacklist = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etBlacklist)
+        val switchWhitelist = dialogView.findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(R.id.switchWhitelistEnabled)
+        val etWhitelist = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etWhitelist)
+        val etRejectMsg = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etRejectMessage)
+        val cbText = dialogView.findViewById<android.widget.CheckBox>(R.id.cbMediaText)
+        val cbPhoto = dialogView.findViewById<android.widget.CheckBox>(R.id.cbMediaPhoto)
+        val cbVoice = dialogView.findViewById<android.widget.CheckBox>(R.id.cbMediaVoice)
+        val cbVideo = dialogView.findViewById<android.widget.CheckBox>(R.id.cbMediaVideo)
+        val cbFile = dialogView.findViewById<android.widget.CheckBox>(R.id.cbMediaFile)
+
+        // Load current settings
+        lifecycleScope.launch {
+            try {
+                val resp = api.getCrossDeviceSettings(
+                    deviceManager.deviceId, deviceManager.deviceSecret, entity.entityId
+                )
+                if (resp.success && resp.settings != null) {
+                    val s = resp.settings
+                    etPreInject.setText(s.pre_inject)
+                    etForbidden.setText(s.forbidden_words.joinToString(", "))
+                    etRateLimit.setText(s.rate_limit_seconds.toString())
+                    etBlacklist.setText(s.blacklist.joinToString(", "))
+                    switchWhitelist.isChecked = s.whitelist_enabled
+                    etWhitelist.setText(s.whitelist.joinToString(", "))
+                    etRejectMsg.setText(s.reject_message)
+                    cbText.isChecked = "text" in s.allowed_media
+                    cbPhoto.isChecked = "photo" in s.allowed_media
+                    cbVoice.isChecked = "voice" in s.allowed_media
+                    cbVideo.isChecked = "video" in s.allowed_media
+                    cbFile.isChecked = "file" in s.allowed_media
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to load cross-device settings")
+            }
+        }
+
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.xd_settings_title))
+            .setView(dialogView)
+            .setPositiveButton(getString(R.string.xd_save), null)
+            .setNegativeButton(getString(R.string.cancel), null)
+            .setNeutralButton(getString(R.string.xd_reset), null)
+            .create()
+
+        dialog.show()
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val allowedMedia = mutableListOf<String>()
+            if (cbText.isChecked) allowedMedia.add("text")
+            if (cbPhoto.isChecked) allowedMedia.add("photo")
+            if (cbVoice.isChecked) allowedMedia.add("voice")
+            if (cbVideo.isChecked) allowedMedia.add("video")
+            if (cbFile.isChecked) allowedMedia.add("file")
+
+            val settings = mapOf<String, Any>(
+                "pre_inject" to (etPreInject.text?.toString() ?: ""),
+                "forbidden_words" to (etForbidden.text?.toString() ?: "").split(",").map { it.trim() }.filter { it.isNotEmpty() },
+                "rate_limit_seconds" to (etRateLimit.text?.toString()?.toIntOrNull() ?: 0),
+                "blacklist" to (etBlacklist.text?.toString() ?: "").split(",").map { it.trim() }.filter { it.isNotEmpty() },
+                "whitelist_enabled" to switchWhitelist.isChecked,
+                "whitelist" to (etWhitelist.text?.toString() ?: "").split(",").map { it.trim() }.filter { it.isNotEmpty() },
+                "reject_message" to (etRejectMsg.text?.toString() ?: ""),
+                "allowed_media" to allowedMedia
+            )
+
+            lifecycleScope.launch {
+                try {
+                    val body = mapOf<String, Any>(
+                        "deviceId" to deviceManager.deviceId,
+                        "deviceSecret" to deviceManager.deviceSecret,
+                        "entityId" to entity.entityId,
+                        "settings" to settings
+                    )
+                    val resp = api.updateCrossDeviceSettings(body)
+                    if (resp.success) {
+                        Toast.makeText(this@MainActivity, getString(R.string.xd_saved), Toast.LENGTH_SHORT).show()
+                        dialog.dismiss()
+                    } else {
+                        Toast.makeText(this@MainActivity, resp.message ?: "Error", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to save cross-device settings")
+                    Toast.makeText(this@MainActivity, getString(R.string.xd_save_failed), Toast.LENGTH_SHORT).show()
+                }
+            }
+            TelemetryHelper.trackAction(this, "xd_settings_save", mapOf("entityId" to entity.entityId.toString()))
+        }
+
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
+            lifecycleScope.launch {
+                try {
+                    val body = mapOf(
+                        "deviceId" to deviceManager.deviceId,
+                        "deviceSecret" to deviceManager.deviceSecret,
+                        "entityId" to entity.entityId.toString()
+                    )
+                    val resp = api.resetCrossDeviceSettings(body)
+                    if (resp.success) {
+                        Toast.makeText(this@MainActivity, getString(R.string.xd_reset_done), Toast.LENGTH_SHORT).show()
+                        dialog.dismiss()
+                    } else {
+                        Toast.makeText(this@MainActivity, resp.message ?: "Error", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to reset cross-device settings")
+                }
+            }
+            TelemetryHelper.trackAction(this, "xd_settings_reset", mapOf("entityId" to entity.entityId.toString()))
         }
     }
 
