@@ -629,6 +629,12 @@ const missionModule = require('./mission')(devices, { awardEntityXP, serverLog }
 app.use('/api/mission', missionModule.router);
 
 // ============================================
+// ARTICLE PUBLISHER — Blogger + Hashnode
+// ============================================
+const articlePublisher = require('./article-publisher');
+app.use('/api/publisher', articlePublisher.router);
+
+// ============================================
 // BOT TOOLS — Search & Web Fetch Proxy
 // ============================================
 const botTools = require('./bot-tools');
