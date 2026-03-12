@@ -1360,7 +1360,7 @@
 
             return `<div class="dialog-overlay" onclick="if(event.target===this)_restoreSkillDialog()">
                 <div class="dialog" style="max-width:480px;">
-                    <div class="dialog-title">瀏覽官方模板</div>
+                    <div class="dialog-title">瀏覽官方模板 (${templates.length})</div>
                     <input id="tpl_gallery_search" type="text" placeholder="搜尋…" oninput="filterGallery(this.value)" style="margin-bottom:12px;" />
                     <div id="tpl_gallery_list" style="max-height:380px;overflow-y:auto;">${cards}</div>
                     <div class="dialog-actions">
@@ -1653,7 +1653,7 @@
                         <span class="tpl-selected-label" id="dlg_tpl_selected_label"></span>
                         <button class="btn btn-outline" style="font-size:11px;padding:3px 8px;" onclick="showTemplateGallery()">更換</button>
                     </div>
-                    <button class="btn btn-outline" id="dlg_browse_tpl_btn" style="width:100%;margin-bottom:8px;" onclick="showTemplateGallery()">瀏覽官方模板…</button>
+                    <button class="btn btn-outline" id="dlg_browse_tpl_btn" style="width:100%;margin-bottom:8px;" onclick="showTemplateGallery()">瀏覽官方模板${skillTemplates.length ? ` (${skillTemplates.length})` : '…'}</button>
                     <div class="dialog-field-label" style="margin-top:10px;">技能名稱</div>
                     <input id="dlg_skill_title" placeholder="例：Google 搜尋" value="${esc(skill?.title || '')}" />
                     <div class="dialog-field-label">相關網址 (選填)</div>
