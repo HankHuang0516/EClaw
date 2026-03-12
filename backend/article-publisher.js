@@ -373,7 +373,17 @@ async function xApiRequest(method, path, body = null) {
 
     if (!res.ok) {
         const errMsg = data?.detail || data?.title || data?.errors?.[0]?.message || `HTTP ${res.status}`;
-        throw new Error(errMsg);
+        const err = new Error(errMsg);
+        err.status = res.status;
+        err.xResponse = data;
+        err.xHeaders = {
+            'x-rate-limit-limit': res.headers.get('x-rate-limit-limit'),
+            'x-rate-limit-remaining': res.headers.get('x-rate-limit-remaining'),
+            'x-rate-limit-reset': res.headers.get('x-rate-limit-reset'),
+            'x-app-limit-24hour-limit': res.headers.get('x-app-limit-24hour-limit'),
+            'x-app-limit-24hour-remaining': res.headers.get('x-app-limit-24hour-remaining'),
+        };
+        throw err;
     }
     return data;
 }
@@ -398,7 +408,7 @@ router.post('/x/tweet', express.json(), async (req, res) => {
         });
     } catch (err) {
         console.error('[Publisher] X tweet error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(err.status || 500).json({ error: err.message, xResponse: err.xResponse, xHeaders: err.xHeaders });
     }
 });
 
