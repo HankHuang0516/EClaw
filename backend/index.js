@@ -102,8 +102,9 @@ app.use((req, res, next) => {
 });
 
 // HTTPS redirect (Railway terminates TLS, forwards X-Forwarded-Proto)
+// Skip for health check path — Railway probes containers internally over HTTP
 app.use((req, res, next) => {
-    if (req.protocol === 'http' && req.hostname !== 'localhost') {
+    if (req.protocol === 'http' && req.hostname !== 'localhost' && req.path !== '/api/health') {
         return res.redirect(301, `https://${req.hostname}${req.originalUrl}`);
     }
     next();
