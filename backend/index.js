@@ -22,6 +22,7 @@ const multer = require('multer');
 const crypto = require('crypto');
 const WebSocket = require('ws');
 const app = express();
+app.set('trust proxy', 1); // Railway reverse proxy — makes req.ip, req.protocol accurate
 const httpServer = http.createServer(app);
 const port = process.env.PORT || 3000;
 
@@ -90,6 +91,23 @@ io.on('connection', (socket) => {
 });
 
 // Middleware
+
+// Security headers (HSTS, anti-sniff, anti-clickjack)
+app.use((req, res, next) => {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    next();
+});
+
+// HTTPS redirect (Railway terminates TLS, forwards X-Forwarded-Proto)
+app.use((req, res, next) => {
+    if (req.protocol === 'http' && req.hostname !== 'localhost') {
+        return res.redirect(301, `https://${req.hostname}${req.originalUrl}`);
+    }
+    next();
+});
 
 // Canonical domain redirect: www → non-www, old Railway domain → custom domain (portal only)
 const CANONICAL_HOST = 'eclawbot.com';
@@ -648,7 +666,7 @@ missionModule.setNotifyCallback((deviceId, notif) => notifyDevice(deviceId, noti
 // ============================================
 // USER AUTHENTICATION (PostgreSQL)
 // ============================================
-const authModule = require('./auth')(devices, getOrCreateDevice);
+const authModule = require('./auth')(devices, getOrCreateDevice, serverLog);
 app.use(authModule.softAuthMiddleware); // Populate req.user from cookie on ALL requests
 app.use('/api/auth', authModule.router);
 authModule.initAuthDatabase();
@@ -1901,7 +1919,8 @@ function createDefaultEntity(entityId) {
         publicCode: null,
         pushStatus: null, // { ok: bool, reason?: string, at: number }
         bindingType: null,
-        channelAccountId: null
+        channelAccountId: null,
+        agentCard: null // A2A capability discovery (Issue #174)
     };
 }
 
@@ -4323,9 +4342,88 @@ app.get('/api/entity/lookup', (req, res) => {
             character: entity.character,
             state: entity.state,
             avatar: entity.avatar,
-            level: entity.level
+            level: entity.level,
+            agentCard: entity.agentCard || null
         }
     });
+});
+
+// ── Agent Card: A2A Capability Discovery (Issue #174) ──
+
+function validateAgentCard(card) {
+    if (!card || typeof card !== 'object') return { valid: false, error: 'Agent card must be an object' };
+    const cleaned = {};
+    if (card.description) cleaned.description = String(card.description).substring(0, 500);
+    if (Array.isArray(card.capabilities)) cleaned.capabilities = card.capabilities.slice(0, 10).map(c => typeof c === 'object' ? { id: String(c.id || '').substring(0, 64), name: String(c.name || '').substring(0, 128), description: String(c.description || '').substring(0, 256) } : String(c).substring(0, 128));
+    if (Array.isArray(card.protocols)) cleaned.protocols = card.protocols.slice(0, 10).map(p => String(p).substring(0, 64));
+    if (Array.isArray(card.tags)) cleaned.tags = card.tags.slice(0, 20).map(t => String(t).substring(0, 64));
+    if (card.version) cleaned.version = String(card.version).substring(0, 32);
+    if (card.website) cleaned.website = String(card.website).substring(0, 500);
+    if (card.contactEmail) cleaned.contactEmail = String(card.contactEmail).substring(0, 255);
+    return { valid: true, card: cleaned };
+}
+
+/**
+ * PUT /api/entity/agent-card — Create or update agent card
+ */
+app.put('/api/entity/agent-card', (req, res) => {
+    const { deviceId, deviceSecret, entityId, agentCard } = req.body;
+    if (!deviceId || !deviceSecret || entityId === undefined || entityId === null) {
+        return res.status(400).json({ success: false, error: 'deviceId, deviceSecret, entityId required' });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
+    }
+    const entity = device.entities[entityId];
+    if (!entity || !entity.isBound) {
+        return res.status(404).json({ success: false, error: 'Entity not found or not bound' });
+    }
+    const { valid, card, error } = validateAgentCard(agentCard);
+    if (!valid) return res.status(400).json({ success: false, error });
+    entity.agentCard = card;
+    entity.lastUpdated = Date.now();
+    res.json({ success: true, agentCard: card });
+});
+
+/**
+ * GET /api/entity/agent-card — Read agent card
+ */
+app.get('/api/entity/agent-card', (req, res) => {
+    const { deviceId, deviceSecret, entityId } = req.query;
+    if (!deviceId || !deviceSecret || entityId === undefined) {
+        return res.status(400).json({ success: false, error: 'deviceId, deviceSecret, entityId required' });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
+    }
+    const entity = device.entities[parseInt(entityId)];
+    if (!entity) {
+        return res.status(404).json({ success: false, error: 'Entity not found' });
+    }
+    res.json({ success: true, agentCard: entity.agentCard || null });
+});
+
+/**
+ * DELETE /api/entity/agent-card — Remove agent card
+ */
+app.delete('/api/entity/agent-card', (req, res) => {
+    const { deviceId, deviceSecret, entityId } = req.body;
+    if (!deviceId || !deviceSecret || entityId === undefined) {
+        return res.status(400).json({ success: false, error: 'deviceId, deviceSecret, entityId required' });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
+    }
+    const entity = device.entities[entityId];
+    if (!entity) {
+        return res.status(404).json({ success: false, error: 'Entity not found' });
+    }
+    entity.agentCard = null;
+    entity.lastUpdated = Date.now();
+    res.json({ success: true });
 });
 
 // ── Cross-Device Contacts (Friends System) ──
@@ -8702,6 +8800,17 @@ chatPool.query(`
     CREATE INDEX IF NOT EXISTS idx_server_logs_device ON server_logs(device_id);
 `).catch(() => {});
 
+// Audit logging columns (Issue #177)
+chatPool.query(`
+    ALTER TABLE server_logs ADD COLUMN IF NOT EXISTS user_id UUID;
+    ALTER TABLE server_logs ADD COLUMN IF NOT EXISTS ip_address INET;
+    ALTER TABLE server_logs ADD COLUMN IF NOT EXISTS action VARCHAR(64);
+    ALTER TABLE server_logs ADD COLUMN IF NOT EXISTS resource VARCHAR(128);
+    ALTER TABLE server_logs ADD COLUMN IF NOT EXISTS result VARCHAR(16);
+    CREATE INDEX IF NOT EXISTS idx_server_logs_user ON server_logs(user_id) WHERE user_id IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS idx_server_logs_action ON server_logs(action) WHERE action IS NOT NULL;
+`).catch(() => {});
+
 // Auto-create handshake_failures table
 chatPool.query(`
     CREATE TABLE IF NOT EXISTS handshake_failures (
@@ -8724,11 +8833,13 @@ chatPool.query(`
 
 // Fire-and-forget log writer (never blocks main flow)
 function serverLog(level, category, message, opts = {}) {
-    const { deviceId, entityId, metadata } = opts;
+    const { deviceId, entityId, metadata, userId, ipAddress, action, resource, result } = opts;
     chatPool.query(
-        `INSERT INTO server_logs (level, category, message, device_id, entity_id, metadata)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [level, category, message, deviceId || null, entityId ?? null, metadata ? JSON.stringify(metadata) : null]
+        `INSERT INTO server_logs (level, category, message, device_id, entity_id, metadata, user_id, ip_address, action, resource, result)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        [level, category, message, deviceId || null, entityId ?? null,
+         metadata ? JSON.stringify(metadata) : null,
+         userId || null, ipAddress || null, action || null, resource || null, result || null]
     ).catch(() => {}); // Never throw — logs are non-critical
 }
 
@@ -8994,6 +9105,29 @@ app.get('/api/logs', async (req, res) => {
             params.push(req.query.filterDevice);
             query += ` AND device_id = $${params.length}`;
         }
+
+        params.push(Math.min(parseInt(limit) || 100, 500));
+        query += ` ORDER BY created_at DESC LIMIT $${params.length}`;
+
+        const result = await chatPool.query(query, params);
+        res.json({ success: true, count: result.rows.length, logs: result.rows.reverse() });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// GET /api/audit-logs — Admin-only audit log query (Issue #177)
+app.get('/api/audit-logs', adminAuth, adminCheck, async (req, res) => {
+    try {
+        const { userId, action, category, since, until, limit = 100 } = req.query;
+        let query = 'SELECT id, level, category, message, device_id, entity_id, user_id, ip_address, action, resource, result, created_at FROM server_logs WHERE 1=1';
+        const params = [];
+
+        if (userId) { params.push(userId); query += ` AND user_id = $${params.length}`; }
+        if (action) { params.push(action); query += ` AND action = $${params.length}`; }
+        if (category) { params.push(category); query += ` AND category = $${params.length}`; }
+        if (since) { params.push(new Date(parseInt(since))); query += ` AND created_at > $${params.length}`; }
+        if (until) { params.push(new Date(parseInt(until))); query += ` AND created_at < $${params.length}`; }
 
         params.push(Math.min(parseInt(limit) || 100, 500));
         query += ` ORDER BY created_at DESC LIMIT $${params.length}`;

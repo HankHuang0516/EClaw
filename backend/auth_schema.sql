@@ -111,3 +111,49 @@ ALTER TABLE user_accounts ALTER COLUMN email DROP NOT NULL;
 -- Unique indexes on provider IDs (NULLs are allowed in UNIQUE)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_user_accounts_google_id ON user_accounts(google_id) WHERE google_id IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_user_accounts_facebook_id ON user_accounts(facebook_id) WHERE facebook_id IS NOT NULL;
+
+-- ============================================
+-- Migration: Generic OIDC SSO (Issue #175)
+-- ============================================
+ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS oidc_provider VARCHAR(64);
+ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS oidc_subject VARCHAR(255);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_accounts_oidc ON user_accounts(oidc_provider, oidc_subject)
+    WHERE oidc_provider IS NOT NULL AND oidc_subject IS NOT NULL;
+
+-- ============================================
+-- Migration: RBAC Role-Based Access Control (Issue #178)
+-- ============================================
+
+-- Roles table
+CREATE TABLE IF NOT EXISTS roles (
+    id VARCHAR(32) PRIMARY KEY,
+    description TEXT,
+    permissions JSONB NOT NULL DEFAULT '[]',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- User-role assignments (device-scoped)
+CREATE TABLE IF NOT EXISTS user_roles (
+    user_id UUID NOT NULL REFERENCES user_accounts(id) ON DELETE CASCADE,
+    role_id VARCHAR(32) NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    device_id VARCHAR(64),
+    granted_by UUID REFERENCES user_accounts(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (user_id, role_id, COALESCE(device_id, '__global__'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_roles_user ON user_roles(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_roles_device ON user_roles(device_id) WHERE device_id IS NOT NULL;
+
+-- Seed default roles
+INSERT INTO roles (id, description, permissions) VALUES
+    ('admin', 'Full system access', '["*"]'),
+    ('developer', 'API access, entity management, logs', '["entity:manage", "entity:read", "logs:read", "api:full", "mission:manage"]'),
+    ('operator', 'Entity control, chat, mission management', '["entity:control", "entity:read", "chat:send", "mission:manage", "dashboard:read"]'),
+    ('viewer', 'Read-only access to dashboard and logs', '["dashboard:read", "logs:read", "entity:read"]')
+ON CONFLICT (id) DO NOTHING;
+
+-- Migrate existing admins to role system
+INSERT INTO user_roles (user_id, role_id, device_id)
+SELECT id, 'admin', NULL FROM user_accounts WHERE is_admin = TRUE
+ON CONFLICT DO NOTHING;
