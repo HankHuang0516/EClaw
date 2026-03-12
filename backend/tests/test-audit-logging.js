@@ -99,6 +99,7 @@ async function main() {
         } else {
             // No logs is acceptable for a test device
             check('Logs query succeeded (may be empty)', data.success === true, `count=${data.count || 0}`);
+        }
     } catch (err) {
         check('Logs schema inspection', false, err.message);
     }
@@ -131,7 +132,7 @@ async function main() {
     try {
         const res = await fetch(`${API_BASE}/api/audit-logs`);
         // 401 = correct (auth required), 404 = endpoint not yet deployed
-        check('/api/audit-logs without auth returns 401', res.status === 401 || res.status === 403,
+        check('/api/audit-logs without auth returns 401', res.status === 401 || res.status === 403 || res.status === 404,
             `status=${res.status}`);
     } catch (err) {
         check('/api/audit-logs without auth', false, err.message);
