@@ -1,3 +1,10 @@
+## [1.94.6](https://github.com/HankHuang0516/EClaw/compare/v1.94.5...v1.94.6) (2026-03-12)
+
+
+### Bug Fixes
+
+* cron schedule update no longer violates NOT NULL on scheduled_at ([15e46af](https://github.com/HankHuang0516/EClaw/commit/15e46af150476bc0f2a6e0213ae5960c8e078fa1))
+
 ## [1.94.5](https://github.com/HankHuang0516/EClaw/compare/v1.94.4...v1.94.5) (2026-03-12)
 
 
