@@ -1,3 +1,10 @@
+## [1.94.5](https://github.com/HankHuang0516/EClaw/compare/v1.94.4...v1.94.5) (2026-03-12)
+
+
+### Bug Fixes
+
+* remove extra context arg from TelemetryHelper.trackAction calls ([1f25b76](https://github.com/HankHuang0516/EClaw/commit/1f25b76183092249dcbad9239e8dca9166c71ff5))
+
 ## [1.94.4](https://github.com/HankHuang0516/EClaw/compare/v1.94.3...v1.94.4) (2026-03-11)
 
 
