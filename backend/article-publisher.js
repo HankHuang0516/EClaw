@@ -1,7 +1,8 @@
-// Article Publisher — Blogger OAuth + Hashnode API integration
-// Provides: OAuth flow for Blogger, publish/delete for both platforms
+// Article Publisher — Blogger OAuth + Hashnode API + X (Twitter) integration
+// Provides: OAuth flow for Blogger, publish/delete for all platforms
 const express = require('express');
 const crypto = require('crypto');
+const OAuth = require('oauth-1.0a');
 const router = express.Router();
 
 // ============================================
@@ -318,6 +319,108 @@ router.delete('/hashnode/post/:postId', async (req, res) => {
         res.json({ success: true, platform: 'hashnode', deleted: postId });
     } catch (err) {
         console.error('[Publisher] Hashnode delete error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// X (TWITTER) PUBLISH / REPLY / DELETE
+// Uses OAuth 1.0a (HMAC-SHA1) for Twitter API v2
+// Tokens stored in env: X_CONSUMER_KEY, X_CONSUMER_SECRET, X_ACCESS_TOKEN, X_ACCESS_TOKEN_SECRET
+// ============================================
+
+const X_API_BASE = 'https://api.x.com/2';
+
+function getXOAuth() {
+    return OAuth({
+        consumer: {
+            key: process.env.X_CONSUMER_KEY,
+            secret: process.env.X_CONSUMER_SECRET
+        },
+        signature_method: 'HMAC-SHA1',
+        hash_function(base_string, key) {
+            return crypto.createHmac('sha1', key).update(base_string).digest('base64');
+        }
+    });
+}
+
+function getXToken() {
+    return {
+        key: process.env.X_ACCESS_TOKEN,
+        secret: process.env.X_ACCESS_TOKEN_SECRET
+    };
+}
+
+async function xApiRequest(method, path, body = null) {
+    const url = `${X_API_BASE}${path}`;
+    const oauth = getXOAuth();
+    const token = getXToken();
+    const authHeader = oauth.toHeader(oauth.authorize({ url, method }, token));
+
+    const options = {
+        method,
+        headers: {
+            ...authHeader,
+            'Content-Type': 'application/json'
+        }
+    };
+    if (body) options.body = JSON.stringify(body);
+
+    const res = await fetch(url, options);
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = { raw: text }; }
+
+    if (!res.ok) {
+        const errMsg = data?.detail || data?.title || data?.errors?.[0]?.message || `HTTP ${res.status}`;
+        throw new Error(errMsg);
+    }
+    return data;
+}
+
+// POST /api/publisher/x/tweet — Create a tweet (or reply if reply_to is set)
+router.post('/x/tweet', express.json(), async (req, res) => {
+    const { text, reply_to } = req.body;
+    if (!text) return res.status(400).json({ error: 'text required' });
+
+    try {
+        const body = { text };
+        if (reply_to) body.reply = { in_reply_to_tweet_id: reply_to };
+
+        const data = await xApiRequest('POST', '/tweets', body);
+        console.log(`[Publisher] X tweet created: ${data.data?.id} ${reply_to ? '(reply to ' + reply_to + ')' : ''}`);
+        res.json({
+            success: true,
+            platform: 'x',
+            tweetId: data.data?.id,
+            text: data.data?.text,
+            isReply: !!reply_to
+        });
+    } catch (err) {
+        console.error('[Publisher] X tweet error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// DELETE /api/publisher/x/tweet/:tweetId — Delete a tweet
+router.delete('/x/tweet/:tweetId', async (req, res) => {
+    const { tweetId } = req.params;
+    try {
+        await xApiRequest('DELETE', `/tweets/${tweetId}`);
+        console.log(`[Publisher] X tweet deleted: ${tweetId}`);
+        res.json({ success: true, platform: 'x', deleted: tweetId });
+    } catch (err) {
+        console.error('[Publisher] X delete error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET /api/publisher/x/me — Get authenticated user info
+router.get('/x/me', async (req, res) => {
+    try {
+        const data = await xApiRequest('GET', '/users/me');
+        res.json({ success: true, user: data.data });
+    } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
