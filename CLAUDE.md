@@ -32,10 +32,17 @@
    - DRY but not premature abstraction
    - 優先使用專用工具（Read > cat, Edit > sed, Grep > grep）
 
+10. **Post-Push Production Verification** — push 到 main 後**必須**驗證 production：
+    - 等 Railway 部署完成（檢查 `/api/health` 的 build 版本或 uptime 重置）
+    - 跑所有 regression tests 對 live server（`test-bot-api-response.js`, `test-broadcast.js`, `test-cross-device-settings.js`, `test-edit-mode-public-code.js` 及新增的 feature tests）
+    - 若有 test failure，立即分析是 pre-existing 還是本次改動引起的
+    - 驗新功能的端點能正常回應（curl 檢查 status code + response body）
+    - 所有驗證通過後才算任務完成
+
 ## Git Workflow
 
 - **Direct merge to main**: When work is complete, commit and merge directly to `main` branch. Do NOT create PRs or wait for approval — the user reviews all changes in real-time during the session.
-- **Workflow**: develop on feature branch → commit → merge to main → push
+- **Workflow**: develop on feature branch → commit → merge to main → push → **verify production**
 
 ## GitHub CLI
 
@@ -89,6 +96,21 @@ When investigating backend bugs (broadcast failure, push not delivered, etc.):
 - **Cross-device settings**: `node backend/tests/test-cross-device-settings.js`
   - Tests CRUD lifecycle, validation, merge behavior, auth, edge cases for entity cross-device settings
   - Requires `BROADCAST_TEST_DEVICE_ID` + `BROADCAST_TEST_DEVICE_SECRET` in `backend/.env`
+- **TLS/Security headers**: `node backend/tests/test-tls-headers.js`
+  - Verifies HSTS, X-Content-Type-Options, X-Frame-Options, Referrer-Policy headers
+  - No credentials needed
+- **Audit logging**: `node backend/tests/test-audit-logging.js`
+  - Tests GET /api/logs response format, category filter, admin-only /api/audit-logs protection
+  - Requires `BROADCAST_TEST_DEVICE_ID` + `BROADCAST_TEST_DEVICE_SECRET` in `backend/.env`
+- **Agent Card**: `node backend/tests/test-agent-card.js`
+  - Tests PUT/GET/DELETE /api/entity/agent-card lifecycle, lookup integration, auth validation
+  - Requires `BROADCAST_TEST_DEVICE_ID` + `BROADCAST_TEST_DEVICE_SECRET` in `backend/.env`
+- **OIDC foundation**: `node backend/tests/test-oidc-foundation.js`
+  - Tests GET /api/auth/oauth/providers, /oauth/config, POST /api/auth/oauth/oidc validation
+  - No credentials needed
+- **RBAC**: `node backend/tests/test-rbac.js`
+  - Tests GET/POST/DELETE /api/auth/roles and /api/auth/user-roles auth protection
+  - No credentials needed
 
 ## Git Workflow
 
@@ -107,6 +129,22 @@ When investigating backend bugs (broadcast failure, push not delivered, etc.):
 - 4 entity slots per device (0-3), each independently bindable
 - Bots use OpenClaw platform (Zeabur), communicate via webhook push + exec+curl
 - Push notifications use instruction-first format with pre-filled curl templates
+
+## Enterprise Security Features (Issues #174-#178)
+
+- **TLS/HTTPS (#176)**: `trust proxy` enabled, HSTS + security headers middleware, HTTPS redirect for non-localhost
+- **Audit Logging (#177)**: `server_logs` table extended with `user_id`, `ip_address`, `action`, `resource`, `result` columns; auth events hooked in `auth.js`; admin-only `GET /api/audit-logs` endpoint
+- **Agent Card (#174)**: `agent_card` JSONB column on `entities` table; `PUT/GET/DELETE /api/entity/agent-card` CRUD; included in `GET /api/entity/lookup` response; auto-cleared on unbind
+- **OAuth OIDC (#175)**: Generic OIDC provider via env vars (`OIDC_PROVIDER_<NAME>_ISSUER/CLIENT_ID/CLIENT_SECRET`); discovery + code exchange at `POST /api/auth/oauth/oidc`; `GET /api/auth/oauth/providers` lists all configured providers
+- **RBAC (#178)**: `roles` + `user_roles` PostgreSQL tables; 4 default roles (admin/developer/operator/viewer); `requirePermission()` middleware exported from `auth.js`; `GET/POST/DELETE /api/auth/roles` and `/api/auth/user-roles` endpoints
+
+### Key Learnings
+- `serverLog()` function is hoisted so can be passed to auth module init at line 669 even though defined at ~line 8755
+- `server_logs` schema extension is backward-compatible — all existing 67+ `serverLog()` calls work without modification (new fields default to null)
+- Entity unbind calls `createDefaultEntity()` which resets all fields including new ones — no separate cleanup needed
+- Railway sits behind Cloudflare CDN — deploy can take 2-5 minutes; use `/api/auth/oauth/providers` or `/api/audit-logs` as deploy canary endpoints
+- `const` redeclaration in same scope is a JS error — check existing variable names before adding new ones (e.g., `adminAuth` already declared at line 1198)
+- `/api/health` build string is hardcoded, not useful for detecting deploys — check uptime or new endpoint availability instead
 
 ## Device Telemetry (AI Debug Buffer)
 
