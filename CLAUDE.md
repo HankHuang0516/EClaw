@@ -127,6 +127,12 @@ When investigating backend bugs (broadcast failure, push not delivered, etc.):
 - **OAuth 2.0 (#190)**: `node backend/tests/test-oauth-server.js`
   - Tests client registration, client_credentials grant, token introspection, revocation, refresh_token flow
   - Requires `BROADCAST_TEST_DEVICE_ID` + `BROADCAST_TEST_DEVICE_SECRET` in `backend/.env`
+- **SDK Generation (#188)**: `node backend/tests/test-sdk-generation.js`
+  - Validates OpenAPI spec has operationIds, component schemas, security schemes for SDK generation; checks sdk/ infrastructure files
+  - No credentials needed
+- **gRPC Transport (#191)**: `node backend/tests/test-grpc-transport.js`
+  - Tests proto loading, gRPC server startup, HealthService, EntityService, auth rejection (runs locally, no remote server needed)
+  - No credentials needed (local gRPC server)
 - **ENV Vars Merge**: `node backend/tests/test-vars-merge.js`
   - Tests cross-platform merge: Web/APP conflict splitting (KEY_Web/KEY_APP), merged result sync-back, legacy mode
   - Requires `BROADCAST_TEST_DEVICE_ID` + `BROADCAST_TEST_DEVICE_SECRET` in `backend/.env`

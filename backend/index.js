@@ -10185,6 +10185,15 @@ if (require.main === module) {
 
         // Initialize Flickr client
         flickr.initFlickr();
+
+        // Start gRPC server on PORT+1
+        try {
+            const grpcModule = require('./grpc-server')(devices, { serverLog });
+            const grpcPort = parseInt(process.env.GRPC_PORT || (port + 1));
+            grpcModule.startGrpcServer(grpcPort);
+        } catch (err) {
+            console.error('[gRPC] Failed to initialize:', err.message);
+        }
     });
 }
 // Force redeploy Mon Feb 17 2026 - fix startCommand: node index.js (no cd backend)

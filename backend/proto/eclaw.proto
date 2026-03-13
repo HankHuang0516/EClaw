@@ -1,0 +1,228 @@
+syntax = "proto3";
+
+package eclaw.v1;
+
+// EClaw Platform gRPC Service Definitions
+// Mirrors the REST API for high-performance transport
+
+// ── Health ──
+service HealthService {
+  rpc GetHealth (Empty) returns (HealthResponse);
+  rpc GetVersion (Empty) returns (VersionResponse);
+}
+
+// ── Entity ──
+service EntityService {
+  rpc GetStatus (GetStatusRequest) returns (EntityStatus);
+  rpc ListEntities (ListEntitiesRequest) returns (EntityList);
+  rpc RenameEntity (RenameEntityRequest) returns (SuccessResponse);
+  rpc LookupEntity (LookupRequest) returns (LookupResponse);
+}
+
+// ── Communication ──
+service CommunicationService {
+  rpc Speak (SpeakRequest) returns (SpeakResponse);
+  rpc SpeakTo (SpeakToRequest) returns (SpeakToResponse);
+  rpc Broadcast (BroadcastRequest) returns (BroadcastResponse);
+  rpc CrossSpeak (CrossSpeakRequest) returns (SpeakToResponse);
+}
+
+// ── Mission ──
+service MissionService {
+  rpc GetDashboard (DashboardRequest) returns (DashboardResponse);
+  rpc AddTodo (AddTodoRequest) returns (TodoResponse);
+}
+
+// ── Bot ──
+service BotService {
+  rpc Transform (TransformRequest) returns (SuccessResponse);
+  rpc GetPendingMessages (PendingRequest) returns (PendingResponse);
+}
+
+// ── Messages ──
+
+message Empty {}
+
+message SuccessResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message HealthResponse {
+  string status = 1;
+  double timestamp = 2;
+  double uptime = 3;
+  string version = 4;
+}
+
+message VersionResponse {
+  string build_id = 1;
+  string version = 2;
+  string latest_app_version = 3;
+  string force_update_below = 4;
+}
+
+message GetStatusRequest {
+  string device_id = 1;
+  string device_secret = 2;
+  int32 entity_id = 3;
+}
+
+message EntityStatus {
+  string device_id = 1;
+  int32 entity_id = 2;
+  string name = 3;
+  string character = 4;
+  string state = 5;
+  string message = 6;
+  double last_updated = 7;
+  bool is_bound = 8;
+  int32 xp = 9;
+  int32 level = 10;
+  string public_code = 11;
+  string binding_type = 12;
+}
+
+message ListEntitiesRequest {
+  string device_id = 1;  // optional filter
+}
+
+message EntityList {
+  repeated EntityStatus entities = 1;
+  int32 active_count = 2;
+  int32 device_count = 3;
+}
+
+message RenameEntityRequest {
+  string device_id = 1;
+  string device_secret = 2;
+  int32 entity_id = 3;
+  string name = 4;
+}
+
+message LookupRequest {
+  string code = 1;  // public code
+}
+
+message LookupResponse {
+  bool success = 1;
+  EntityStatus entity = 2;
+}
+
+message SpeakRequest {
+  string device_id = 1;
+  string device_secret = 2;
+  int32 entity_id = 3;
+  string text = 4;
+  string source = 5;
+  string media_type = 6;
+  string media_url = 7;
+}
+
+message SpeakTarget {
+  int32 entity_id = 1;
+  bool pushed = 2;
+  string mode = 3;
+  string reason = 4;
+  string binding_type = 5;
+}
+
+message SpeakResponse {
+  bool success = 1;
+  string message = 2;
+  repeated SpeakTarget targets = 3;
+  bool broadcast = 4;
+}
+
+message SpeakToRequest {
+  string device_id = 1;
+  int32 from_entity_id = 2;
+  int32 to_entity_id = 3;
+  string bot_secret = 4;
+  string text = 5;
+  string media_type = 6;
+  string media_url = 7;
+}
+
+message SpeakToResponse {
+  bool success = 1;
+  string message = 2;
+  bool delivered = 3;
+}
+
+message BroadcastRequest {
+  string device_id = 1;
+  int32 from_entity_id = 2;
+  string bot_secret = 3;
+  string text = 4;
+  string media_type = 5;
+  string media_url = 6;
+  bool expects_reply = 7;
+}
+
+message BroadcastResponse {
+  bool success = 1;
+  string message = 2;
+  int32 sent_count = 3;
+  repeated SpeakTarget targets = 4;
+}
+
+message CrossSpeakRequest {
+  string device_id = 1;
+  int32 from_entity_id = 2;
+  string bot_secret = 3;
+  string target_public_code = 4;
+  string text = 5;
+  string media_type = 6;
+  string media_url = 7;
+}
+
+message DashboardRequest {
+  string device_id = 1;
+  string device_secret = 2;
+  string bot_secret = 3;
+  int32 entity_id = 4;
+}
+
+message DashboardResponse {
+  bool success = 1;
+  string dashboard_json = 2;  // JSON string of full dashboard
+}
+
+message AddTodoRequest {
+  string device_id = 1;
+  string device_secret = 2;
+  string bot_secret = 3;
+  int32 entity_id = 4;
+  string title = 5;
+  int32 priority = 6;
+  double deadline = 7;
+}
+
+message TodoResponse {
+  bool success = 1;
+  string message = 2;
+  string item_json = 3;  // JSON string of created item
+}
+
+message TransformRequest {
+  string device_id = 1;
+  int32 entity_id = 2;
+  string bot_secret = 3;
+  string state = 4;
+  string message = 5;
+  string parts_json = 6;  // JSON string of parts object
+}
+
+message PendingRequest {
+  string device_id = 1;
+  int32 entity_id = 2;
+  string bot_secret = 3;
+}
+
+message PendingResponse {
+  string device_id = 1;
+  int32 entity_id = 2;
+  int32 count = 3;
+  string messages_json = 4;  // JSON string of messages array
+}
