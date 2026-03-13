@@ -1338,6 +1338,26 @@ app.post('/api/gatekeeper/appeal', async (req, res) => {
     res.json({ success: true, message: 'Device unblocked via appeal', previousStrikes: result.previousCount });
 });
 
+// GET /api/admin/gatekeeper/debug - Debug developer device cache
+app.get('/api/admin/gatekeeper/debug', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query;
+    if (!deviceId || !deviceSecret) return res.status(400).json({ error: 'deviceId and deviceSecret required' });
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) return res.status(403).json({ error: 'Invalid credentials' });
+    // Query DB for is_admin
+    let dbAdmin = null;
+    try {
+        const r = await db.pool.query('SELECT id, email, is_admin, device_id FROM user_accounts WHERE device_id = $1', [deviceId]);
+        dbAdmin = r.rows;
+    } catch (e) { dbAdmin = e.message; }
+    res.json({
+        developerDeviceIds: [...developerDeviceIds],
+        deviceIdInSet: developerDeviceIds.has(deviceId),
+        dbAdminRows: dbAdmin,
+        strikeInfo: gatekeeper.getStrikeInfo(deviceId)
+    });
+});
+
 // GET /api/admin/stats - Overview stats
 app.get('/api/admin/stats', adminAuth, adminCheck, async (req, res) => {
     try {
@@ -3473,6 +3493,9 @@ app.post('/api/client/speak', async (req, res) => {
 
     // Developer exemption: admin-owned devices with valid deviceSecret skip Gatekeeper First Lock
     const isDeveloper = deviceSecret && device.deviceSecret === deviceSecret && developerDeviceIds.has(deviceId);
+    if (deviceSecret) {
+        console.log(`[Gatekeeper Debug] deviceId=${deviceId}, secretMatch=${device.deviceSecret === deviceSecret}, inDevSet=${developerDeviceIds.has(deviceId)}, devSetSize=${developerDeviceIds.size}, isDeveloper=${isDeveloper}`);
+    }
 
     // Usage enforcement — apply to all non-premium devices
     // Premium check is inside enforceUsageLimit; personal bot exemption handled separately
