@@ -1925,14 +1925,18 @@
         async function syncVarsToServer() {
             if (!currentUser) return;
             const locked = localStorage.getItem(`eclawVarsLocked_${currentUser.deviceId}`) === 'true';
-            const vars = loadLocalVars(); // always send real vars
+            const vars = loadLocalVars();
             try {
-                await apiCall('POST', '/api/device-vars', {
+                const result = await apiCall('POST', '/api/device-vars', {
                     deviceId: currentUser.deviceId,
                     deviceSecret: currentUser.deviceSecret,
                     vars,
-                    locked
+                    locked,
+                    source: 'web'
                 });
+                if (result && result.mergedVars) {
+                    localStorage.setItem(VARS_STORAGE_KEY(), JSON.stringify(result.mergedVars));
+                }
             } catch (e) { /* silent */ }
         }
 

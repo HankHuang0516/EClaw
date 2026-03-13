@@ -1087,13 +1087,28 @@ class MissionControlActivity : AppCompatActivity() {
                 val vars = localVarsManager.getAll()
                 val locked = getSharedPreferences("realbot_prefs", MODE_PRIVATE)
                     .getBoolean("eclawVarsLocked_${deviceManager.deviceId}", false)
-                api.syncLocalVars(SyncLocalVarsRequest(
+                val response = api.syncLocalVars(SyncLocalVarsRequest(
                     deviceId = deviceManager.deviceId,
                     deviceSecret = deviceManager.deviceSecret,
                     vars = vars,
                     locked = locked
                 ))
-                Timber.d("[Vars] Synced ${vars.size} vars to server in-memory cache (locked=$locked)")
+                // Sync back merged vars from server (includes keys from Web)
+                val body = response.body()
+                if (response.isSuccessful && body != null && body.has("mergedVars")) {
+                    val mergedObj = body.getAsJsonObject("mergedVars")
+                    // Clear and re-populate local vars with merged result
+                    localVarsManager.clear()
+                    for ((k, v) in mergedObj.entrySet()) {
+                        if (v.isJsonPrimitive) {
+                            localVarsManager.set(k, v.asString)
+                        }
+                    }
+                    runOnUiThread { renderVars() }
+                    Timber.d("[Vars] Merged ${mergedObj.size()} vars from server (locked=$locked)")
+                } else {
+                    Timber.d("[Vars] Synced ${vars.size} vars to server (locked=$locked)")
+                }
             } catch (e: Exception) {
                 Timber.w(e, "[Vars] Failed to sync local vars to server")
             }

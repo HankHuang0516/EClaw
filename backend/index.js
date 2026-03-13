@@ -8991,8 +8991,11 @@ function logHandshakeFailure(opts) {
 
 // POST /api/device-vars — client syncs local vars to server (encrypted DB)
 // Auth: deviceSecret
+// Supports merge mode: when source is provided ("web" or "app"), merges with existing vars
+// instead of replacing. Conflicting keys (same key, different value, different source)
+// are split into KEY_Web and KEY_APP to avoid data loss.
 app.post('/api/device-vars', async (req, res) => {
-    const { deviceId, deviceSecret, vars, locked } = req.body;
+    const { deviceId, deviceSecret, vars, locked, source } = req.body;
     if (!deviceId || !deviceSecret) {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
@@ -9008,20 +9011,121 @@ app.post('/api/device-vars', async (req, res) => {
     }
 
     // Sanitize: only string keys + string values
-    const sanitized = {};
+    const incoming = {};
     for (const [k, v] of Object.entries(vars || {})) {
         if (typeof k === 'string' && k.length > 0 && typeof v === 'string') {
-            sanitized[k] = v;
+            incoming[k] = v;
         }
     }
 
     const isLocked = locked === true;
-    const varKeys = Object.keys(sanitized);
+    const src = (source === 'web' || source === 'app') ? source : null;
 
     try {
-        const { encrypted, iv, authTag } = encryptVars(sanitized);
-        await db.upsertDeviceVars(deviceId, encrypted, iv, authTag, varKeys, isLocked);
-        res.json({ success: true, count: varKeys.length });
+        let merged = incoming;
+        let mergedSources = {};
+        let conflicts = [];
+
+        // If source is provided, do merge instead of replace
+        if (src) {
+            const existing = await db.getDeviceVars(deviceId);
+            let existingVars = {};
+            let existingSources = {};
+
+            if (existing) {
+                try {
+                    existingVars = decryptVars(existing.encrypted_vars, existing.iv, existing.auth_tag);
+                    existingSources = existing.var_sources || {};
+                } catch (e) {
+                    console.error(`[Vars] Failed to decrypt existing vars for merge, starting fresh:`, e.message);
+                }
+            }
+
+            merged = {};
+            mergedSources = {};
+
+            // 1. Keep keys from other source that are NOT in incoming
+            for (const [k, v] of Object.entries(existingVars)) {
+                const keySrc = existingSources[k] || null;
+                if (keySrc && keySrc !== src && !(k in incoming)) {
+                    // Key from the other platform, not present in incoming — preserve it
+                    merged[k] = v;
+                    mergedSources[k] = keySrc;
+                }
+            }
+
+            // 2. Process incoming keys — detect conflicts
+            for (const [k, v] of Object.entries(incoming)) {
+                const existingVal = existingVars[k];
+                const existingSrc = existingSources[k] || null;
+
+                if (existingVal === undefined || existingVal === v || existingSrc === src || !existingSrc) {
+                    // No conflict: new key, same value, same source, or no source info
+                    merged[k] = v;
+                    mergedSources[k] = src;
+                } else {
+                    // Conflict: same key, different value, different source
+                    const otherSrc = existingSrc;
+                    const webSuffix = '_Web';
+                    const appSuffix = '_APP';
+
+                    // Remove the unsuffixed key from merged (if carried over in step 1)
+                    delete merged[k];
+                    delete mergedSources[k];
+
+                    // Create suffixed keys
+                    const webKey = k + webSuffix;
+                    const appKey = k + appSuffix;
+
+                    if (src === 'web') {
+                        merged[webKey] = v;
+                        mergedSources[webKey] = 'web';
+                        merged[appKey] = existingVal;
+                        mergedSources[appKey] = 'app';
+                    } else {
+                        merged[webKey] = existingVal;
+                        mergedSources[webKey] = 'web';
+                        merged[appKey] = v;
+                        mergedSources[appKey] = 'app';
+                    }
+
+                    conflicts.push({ key: k, webKey, appKey });
+                }
+            }
+
+            // 3. Carry over suffixed keys from existing that still belong to the other source
+            for (const [k, v] of Object.entries(existingVars)) {
+                if (!(k in merged) && (k.endsWith('_Web') || k.endsWith('_APP'))) {
+                    const keySrc = existingSources[k] || null;
+                    if (keySrc && keySrc !== src) {
+                        merged[k] = v;
+                        mergedSources[k] = keySrc;
+                    }
+                }
+            }
+        } else {
+            // Legacy mode (no source): replace all, no merge
+            for (const k of Object.keys(incoming)) {
+                mergedSources[k] = null;
+            }
+        }
+
+        const varKeys = Object.keys(merged);
+        const { encrypted, iv, authTag } = encryptVars(merged);
+        await db.upsertDeviceVars(deviceId, encrypted, iv, authTag, varKeys, isLocked, mergedSources);
+
+        const response = { success: true, count: varKeys.length };
+
+        // Return merged vars so client can sync back
+        if (src) {
+            response.mergedVars = merged;
+            response.sources = mergedSources;
+            if (conflicts.length > 0) {
+                response.conflicts = conflicts;
+            }
+        }
+
+        res.json(response);
     } catch (err) {
         console.error(`[Vars] Failed to save vars for ${deviceId}:`, err.message);
         res.status(500).json({ success: false, error: 'Failed to save variables' });

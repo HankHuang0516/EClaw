@@ -474,7 +474,8 @@ data class SyncLocalVarsRequest(
     val deviceId: String,
     val deviceSecret: String,
     val vars: Map<String, String>,
-    val locked: Boolean = false
+    val locked: Boolean = false,
+    val source: String = "app"
 )
 
 // ============ Mission Control Response Models ============

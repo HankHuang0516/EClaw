@@ -467,14 +467,20 @@
         async function syncVarsToServer() {
             if (!currentUser) return;
             const locked = isLocked();
-            const vars = loadLocalVars(); // always send real vars (lock is a separate flag)
+            const vars = loadLocalVars();
             try {
-                await apiCall('POST', '/api/device-vars', {
+                const result = await apiCall('POST', '/api/device-vars', {
                     deviceId: currentUser.deviceId,
                     deviceSecret: currentUser.deviceSecret,
                     vars,
-                    locked
+                    locked,
+                    source: 'web'
                 });
+                // Sync back merged vars (includes keys from APP)
+                if (result && result.mergedVars) {
+                    localStorage.setItem(VARS_STORAGE_KEY(), JSON.stringify(result.mergedVars));
+                    renderAll();
+                }
             } catch (e) {
                 // silent — non-critical background sync
             }

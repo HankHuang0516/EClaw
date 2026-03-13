@@ -201,9 +201,15 @@ async function createTables() {
                 iv              TEXT NOT NULL,
                 auth_tag        TEXT NOT NULL,
                 var_keys        TEXT[] DEFAULT '{}',
+                var_sources     JSONB DEFAULT '{}',
                 is_locked       BOOLEAN DEFAULT FALSE,
                 updated_at      BIGINT NOT NULL
             )
+        `);
+
+        // Migration: add var_sources column if missing
+        await client.query(`
+            ALTER TABLE device_vars ADD COLUMN IF NOT EXISTS var_sources JSONB DEFAULT '{}'
         `);
 
         // Channel accounts (OpenClaw channel plugin integration)
@@ -905,15 +911,15 @@ async function closeDatabase() {
 // Device Vars (Encrypted Vault)
 // ============================================
 
-async function upsertDeviceVars(deviceId, encryptedVars, iv, authTag, varKeys, isLocked) {
+async function upsertDeviceVars(deviceId, encryptedVars, iv, authTag, varKeys, isLocked, varSources = {}) {
     if (!pool) return false;
     try {
         await pool.query(
-            `INSERT INTO device_vars (device_id, encrypted_vars, iv, auth_tag, var_keys, is_locked, updated_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
+            `INSERT INTO device_vars (device_id, encrypted_vars, iv, auth_tag, var_keys, var_sources, is_locked, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
              ON CONFLICT (device_id)
-             DO UPDATE SET encrypted_vars = $2, iv = $3, auth_tag = $4, var_keys = $5, is_locked = $6, updated_at = $7`,
-            [deviceId, encryptedVars, iv, authTag, varKeys, isLocked, Date.now()]
+             DO UPDATE SET encrypted_vars = $2, iv = $3, auth_tag = $4, var_keys = $5, var_sources = $6, is_locked = $7, updated_at = $8`,
+            [deviceId, encryptedVars, iv, authTag, varKeys, JSON.stringify(varSources), isLocked, Date.now()]
         );
         return true;
     } catch (err) {
@@ -926,7 +932,7 @@ async function getDeviceVars(deviceId) {
     if (!pool) return null;
     try {
         const result = await pool.query(
-            'SELECT encrypted_vars, iv, auth_tag, var_keys, is_locked, updated_at FROM device_vars WHERE device_id = $1',
+            'SELECT encrypted_vars, iv, auth_tag, var_keys, var_sources, is_locked, updated_at FROM device_vars WHERE device_id = $1',
             [deviceId]
         );
         return result.rows[0] || null;
