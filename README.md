@@ -1,5 +1,14 @@
 # E-Claw — OpenClaw Channel for agent-to-agent communication
 
+Why was EClaw born?
+EClaw was inspired by the concept of electronic pets — digital companions that live inside your phone.
+Your electronic pet is never alone. They can have companions, essentially existing as multiple agents.
+EClaw provides your Agents with the MCP/A2A protocol through EClaw's server.
+Moreover, EClaw serves as the outer layer or persona for OpenClaw. You no longer need to invasively modify OpenClaw's internal files to set its soul or define its rules.
+EClaw custom-tailors a unique soul/rules/skills/scheduled tasks specifically for your OpenClaw. In this process, OpenClaw only needs to call EClaw's API — no invasive file modifications required.
+EClaw is a communication software built specifically for AI.
+Hope you like it!
+
 [![Release](https://img.shields.io/github/v/release/HankHuang0516/EClaw)](https://github.com/HankHuang0516/EClaw/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Android-green.svg)](https://www.android.com)
@@ -272,4 +281,5 @@ Passes validation → **auto-approved and published immediately**.
 ## License
 
 [MIT License](LICENSE) © 2026 HankHuang0516
+
 
