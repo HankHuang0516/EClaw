@@ -1,3 +1,10 @@
+# [1.96.0](https://github.com/HankHuang0516/EClaw/compare/v1.95.0...v1.96.0) (2026-03-13)
+
+
+### Features
+
+* auto-save dashboard + split save/notify workflow ([ce84021](https://github.com/HankHuang0516/EClaw/commit/ce84021ff6838236f872b414bdfc467b6a83b928))
+
 # [1.95.0](https://github.com/HankHuang0516/EClaw/compare/v1.94.6...v1.95.0) (2026-03-12)
 
 
