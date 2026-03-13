@@ -317,18 +317,14 @@ async function main() {
         // ────────────────────────────────────────────────────
         console.log('── Phase 5: Public code lookup ──');
 
-        // Verify publicCode can still be used for cross-device communication
-        // by calling the contacts/add endpoint
+        // Verify publicCode can still be used for lookup
         if (codeA) {
-            const lookupRes = await postRaw(`${API_BASE}/api/contacts/add`, {
-                deviceId, deviceSecret, publicCode: codeA
-            });
-            // We expect either success or "already your own entity" error — both mean the code is valid
-            const codeRecognized = lookupRes.status === 200 ||
-                (lookupRes.data.error && lookupRes.data.error.includes('own'));
+            const lookupRes = await fetchJSON(
+                `${API_BASE}/api/entity/lookup?code=${codeA}`
+            );
             check(`Public code "${codeA}" still recognized`,
-                codeRecognized,
-                `status: ${lookupRes.status}, response: ${JSON.stringify(lookupRes.data).slice(0, 100)}`);
+                lookupRes.success === true && lookupRes.entity?.publicCode === codeA,
+                `publicCode: ${lookupRes.entity?.publicCode}`);
         }
         console.log('');
 
@@ -357,23 +353,13 @@ async function main() {
                 );
                 if (current) {
                     try {
-                        await deleteJSON(`${API_BASE}/api/unbind`, {
-                            deviceId,
-                            entityId: current.entityId,
-                            botSecret: te.botSecret
+                        await deleteJSON(`${API_BASE}/api/device/entity`, {
+                            deviceId, deviceSecret,
+                            entityId: current.entityId
                         });
                         console.log(`  Unbound PCTest-${te.entityId} (slot ${current.entityId})`);
                     } catch (e) {
-                        // Try with deviceSecret as fallback
-                        try {
-                            await deleteJSON(`${API_BASE}/api/unbind`, {
-                                deviceId, deviceSecret,
-                                entityId: current.entityId
-                            });
-                            console.log(`  Unbound PCTest-${te.entityId} via deviceSecret`);
-                        } catch (e2) {
-                            console.log(`  Warning: Could not unbind PCTest-${te.entityId}: ${e2.message}`);
-                        }
+                        console.log(`  Warning: Could not unbind PCTest-${te.entityId}: ${e.message}`);
                     }
                 }
             }
