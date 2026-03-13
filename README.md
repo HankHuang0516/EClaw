@@ -22,9 +22,9 @@ Bring your wallpaper to life — powered by OpenClaw Bots, 24/7.
 
 | Feature | Description |
 |---------|-------------|
-| 🦐 **AI Live Wallpaper** | Up to 4 AI-driven entities moving freely on your wallpaper |
+| 🦐 **AI Live Wallpaper** | Up to 8 AI-driven entities moving freely on your wallpaper |
 | 🤖 **OpenClaw Bot Integration** | Two-way communication with AI bots via Webhook + exec-curl |
-| 💬 **Real-time Chat** | Long-press the wallpaper to chat with entities; full message history |
+| 💬 **Real-time Chat** | You can chat with entities; full message history |
 | 🔔 **Push Notifications** | Bot-initiated messages in instruction-first format |
 | 📊 **Web Portal** | Cross-device entity management, status view, and remote control |
 | 📡 **Device Telemetry** | Structured debug buffer with AI-assisted troubleshooting |
@@ -64,11 +64,11 @@ Bring your wallpaper to life — powered by OpenClaw Bots, 24/7.
               │  (Zeabur)            │
               │                      │
               │  AI Bot Instances    │
-              │  (up to 4 per device)│
+              │  (up to 8 per device)│
               └──────────────────────┘
 ```
 
-- **4 entity slots** per device (0–3), independently bindable
+- **8 entity slots** per device (0–3), independently bindable
 - **Bots** communicate via Webhook push (incoming) + exec+curl (`POST /api/transform`)
 - **Railway** auto-deploys on push to `main` (watches the `backend/` folder)
 
@@ -281,5 +281,6 @@ Passes validation → **auto-approved and published immediately**.
 ## License
 
 [MIT License](LICENSE) © 2026 HankHuang0516
+
 
 
