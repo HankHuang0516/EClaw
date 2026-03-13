@@ -1,3 +1,10 @@
+## [1.96.2](https://github.com/HankHuang0516/EClaw/compare/v1.96.1...v1.96.2) (2026-03-13)
+
+
+### Bug Fixes
+
+* test uses correct lookup and unbind endpoints ([ed3c913](https://github.com/HankHuang0516/EClaw/commit/ed3c9138bed58efcdd429095ba94b39522d248f4))
+
 ## [1.96.1](https://github.com/HankHuang0516/EClaw/compare/v1.96.0...v1.96.1) (2026-03-13)
 
 
