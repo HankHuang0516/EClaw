@@ -1,3 +1,75 @@
+## [1.96.2](https://github.com/HankHuang0516/EClaw/compare/v1.96.1...v1.96.2) (2026-03-13)
+
+
+### Bug Fixes
+
+* test uses correct lookup and unbind endpoints ([ed3c913](https://github.com/HankHuang0516/EClaw/commit/ed3c9138bed58efcdd429095ba94b39522d248f4))
+
+## [1.96.1](https://github.com/HankHuang0516/EClaw/compare/v1.96.0...v1.96.1) (2026-03-13)
+
+
+### Bug Fixes
+
+* prevent publicCode loss during entity reorder ([bd8f1f4](https://github.com/HankHuang0516/EClaw/commit/bd8f1f407aa5764fdf7a068bb4f1aeda6d9045ea))
+
+# [1.96.0](https://github.com/HankHuang0516/EClaw/compare/v1.95.0...v1.96.0) (2026-03-13)
+
+
+### Features
+
+* auto-save dashboard + split save/notify workflow ([ce84021](https://github.com/HankHuang0516/EClaw/commit/ce84021ff6838236f872b414bdfc467b6a83b928))
+
+# [1.95.0](https://github.com/HankHuang0516/EClaw/compare/v1.94.6...v1.95.0) (2026-03-12)
+
+
+### Features
+
+* implement 5 enterprise security features ([#174](https://github.com/HankHuang0516/EClaw/issues/174)-[#178](https://github.com/HankHuang0516/EClaw/issues/178)) ([320f204](https://github.com/HankHuang0516/EClaw/commit/320f204772ef24bf89e2f8527879ad488aa6859d)), closes [#176](https://github.com/HankHuang0516/EClaw/issues/176) [#177](https://github.com/HankHuang0516/EClaw/issues/177) [#175](https://github.com/HankHuang0516/EClaw/issues/175) [#175](https://github.com/HankHuang0516/EClaw/issues/175) [#176](https://github.com/HankHuang0516/EClaw/issues/176) [#177](https://github.com/HankHuang0516/EClaw/issues/177)
+* **portal:** show template count on browse button and gallery title ([13ba042](https://github.com/HankHuang0516/EClaw/commit/13ba0422c56dc2fb894c9c4e110dbf6f245a5b4b))
+* skill template gallery — search, count badge, retry-on-empty ([05e5239](https://github.com/HankHuang0516/EClaw/commit/05e5239c4b95746a73123f6b4b2c24ae5427003c))
+
+## [1.94.6](https://github.com/HankHuang0516/EClaw/compare/v1.94.5...v1.94.6) (2026-03-12)
+
+
+### Bug Fixes
+
+* cron schedule update no longer violates NOT NULL on scheduled_at ([15e46af](https://github.com/HankHuang0516/EClaw/commit/15e46af150476bc0f2a6e0213ae5960c8e078fa1))
+
+## [1.94.5](https://github.com/HankHuang0516/EClaw/compare/v1.94.4...v1.94.5) (2026-03-12)
+
+
+### Bug Fixes
+
+* remove extra context arg from TelemetryHelper.trackAction calls ([1f25b76](https://github.com/HankHuang0516/EClaw/commit/1f25b76183092249dcbad9239e8dca9166c71ff5))
+
+## [1.94.4](https://github.com/HankHuang0516/EClaw/compare/v1.94.3...v1.94.4) (2026-03-11)
+
+
+### Bug Fixes
+
+* remove duplicate string resources entity_public_code and code_copied ([ba238a4](https://github.com/HankHuang0516/EClaw/commit/ba238a49dbb4d70ff7454d3a291ed3a4e0bc815e)), closes [#167](https://github.com/HankHuang0516/EClaw/issues/167)
+
+## [1.94.3](https://github.com/HankHuang0516/EClaw/compare/v1.94.2...v1.94.3) (2026-03-11)
+
+
+### Bug Fixes
+
+* avoid gh auth login conflict when GH_TOKEN env var is set ([d94a669](https://github.com/HankHuang0516/EClaw/commit/d94a6695f9293f083376caea97d8356bdbbccd20))
+
+## [1.94.2](https://github.com/HankHuang0516/EClaw/compare/v1.94.1...v1.94.2) (2026-03-11)
+
+
+### Bug Fixes
+
+* [#168](https://github.com/HankHuang0516/EClaw/issues/168) chat bubble text selection & [#167](https://github.com/HankHuang0516/EClaw/issues/167) entity public code display ([c89dccc](https://github.com/HankHuang0516/EClaw/commit/c89dcccdd3f00b96d18aab3d3a0d659569769e54))
+
+## [1.94.1](https://github.com/HankHuang0516/EClaw/compare/v1.94.0...v1.94.1) (2026-03-11)
+
+
+### Bug Fixes
+
+* public code UI disappears when swapping entities in edit mode ([9150750](https://github.com/HankHuang0516/EClaw/commit/915075093f75531483b9ab9d89fc87d65fb73248))
+
 # [1.94.0](https://github.com/HankHuang0516/EClaw/compare/v1.93.0...v1.94.0) (2026-03-11)
 
 

@@ -20,7 +20,10 @@ import org.junit.runners.Suite
     EntityManagerActivityUiTest::class,
     DebugRenderActivityUiTest::class,
     WallpaperPreviewUiTest::class,
-    
+
+    // Chat UI Tests
+    ChatBubbleTextSelectionTest::class,  // #168: chat bubble partial text selection
+
     // Localization Tests
     BilingualVerificationTest::class
 )

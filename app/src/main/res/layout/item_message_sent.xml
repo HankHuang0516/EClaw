@@ -39,6 +39,7 @@
             android:autoLink="web"
             android:linksClickable="true"
             android:textColorLink="#DDFFFFFF"
+            android:textIsSelectable="true"
             tools:text="Hello, this is a sent message!" />
 
         <!-- Photo preview (hidden for text messages) -->

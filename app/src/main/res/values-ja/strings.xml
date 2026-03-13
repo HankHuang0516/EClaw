@@ -147,6 +147,8 @@
     <string name="unknown_error">不明なエラー</string>
     <string name="failed_add_slot">スロットの追加に失敗しました</string>
     <string name="no_bound_entities">バインドされたエンティティはありません</string>
+    <string name="publish_notification">通知を発行</string>
+    <string name="no_notify_items">通知する新しい変更はありません</string>
     <string name="notification_sent">通知を送信しました</string>
     <string name="task_saved">タスクを保存しました</string>
     <string name="schedule_tag">スケジュール</string>
@@ -172,6 +174,26 @@
     <string name="reorder_saving">順序を保存中…</string>
     <string name="reorder_success">エンティティの順序を更新しました！</string>
     <string name="reorder_failed">順序の更新に失敗しました</string>
+    <string name="xd_settings_btn">クロスデバイスメッセージ</string>
+    <string name="xd_settings_title">クロスデバイスメッセージ設定</string>
+    <string name="xd_pre_inject">プリインジェクト指示</string>
+    <string name="xd_pre_inject_desc">プッシュ通知のクロスデバイスメッセージの前に追加</string>
+    <string name="xd_forbidden">禁止ワード</string>
+    <string name="xd_forbidden_desc">これらのワードを含むメッセージは拒否されます（カンマ区切り）</string>
+    <string name="xd_rate_limit">レート制限（秒）</string>
+    <string name="xd_rate_limit_desc">送信者ごとのクールダウン（0 = 制限なし）</string>
+    <string name="xd_blacklist">ブラックリスト（パブリックコード）</string>
+    <string name="xd_codes_sep">カンマ区切りのパブリックコード</string>
+    <string name="xd_whitelist_mode">ホワイトリストモード</string>
+    <string name="xd_whitelist">ホワイトリスト（パブリックコード）</string>
+    <string name="xd_reject_msg">拒否メッセージ</string>
+    <string name="xd_reject_msg_hint">ブロック時の自動返信（空 = サイレント）</string>
+    <string name="xd_allowed_media">許可されたメディアタイプ</string>
+    <string name="xd_save">保存</string>
+    <string name="xd_reset">デフォルトに戻す</string>
+    <string name="xd_saved">クロスデバイス設定を保存しました！</string>
+    <string name="xd_save_failed">設定の保存に失敗しました</string>
+    <string name="xd_reset_done">デフォルト設定に戻しました</string>
     <string name="refreshing">更新中…</string>
     <string name="rebind">再バインド</string>
     <string name="entity_count_format">%1$d/%2$d エンティティ</string>

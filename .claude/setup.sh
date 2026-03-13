@@ -45,17 +45,29 @@ ENV_KEYS=(
     FACEBOOK_APP_SECRET
 )
 
-# Write all available env vars
-> "$ENV_FILE"  # truncate
+# Check if any cloud env vars are present before overwriting
+has_cloud_vars=false
 for key in "${ENV_KEYS[@]}"; do
-    val="${!key}"
-    if [ -n "$val" ]; then
-        echo "$key=$val" >> "$ENV_FILE"
+    if [ -n "${!key}" ]; then
+        has_cloud_vars=true
+        break
     fi
 done
 
-COUNT=$(wc -l < "$ENV_FILE")
-echo "  ✅ $ENV_FILE written ($COUNT keys)"
+if ! $has_cloud_vars; then
+    echo "  ⚠️  No cloud env vars detected — skipping .env write (local environment)"
+else
+    # Write all available env vars
+    > "$ENV_FILE"  # truncate
+    for key in "${ENV_KEYS[@]}"; do
+        val="${!key}"
+        if [ -n "$val" ]; then
+            echo "$key=$val" >> "$ENV_FILE"
+        fi
+    done
+    COUNT=$(wc -l < "$ENV_FILE")
+    echo "  ✅ $ENV_FILE written ($COUNT keys)"
+fi
 
 # ── 3. Node.js check ────────────────────────
 if command -v node &>/dev/null; then

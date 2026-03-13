@@ -120,6 +120,9 @@ async function createTables() {
         await client.query(`ALTER TABLE entities ADD COLUMN IF NOT EXISTS binding_type TEXT`);
         await client.query(`ALTER TABLE entities ADD COLUMN IF NOT EXISTS channel_account_id INTEGER`);
 
+        // Agent Card for A2A capability discovery (Issue #174)
+        await client.query(`ALTER TABLE entities ADD COLUMN IF NOT EXISTS agent_card JSONB`);
+
         // Allow multiple channel accounts per device (each plugin gets its own account)
         // Drop the UNIQUE(device_id) constraint if it still exists from the original schema
         await client.query(`
@@ -309,6 +312,13 @@ async function saveDeviceData(deviceId, deviceData) {
                 [deviceId, deviceData.deviceSecret, deviceData.createdAt, Date.now()]
             );
 
+            // Clear all public_code for this device first to avoid unique constraint
+            // violations when entities swap publicCodes during reorder
+            await client.query(
+                'UPDATE entities SET public_code = NULL WHERE device_id = $1',
+                [deviceId]
+            );
+
             // Save all entities (supports up to 8 slots for premium devices)
             for (const i of Object.keys(deviceData.entities).map(Number)) {
                 const entity = deviceData.entities[i];
@@ -333,14 +343,15 @@ async function saveDeviceData(deviceId, deviceData) {
                     entity.avatar || null,
                     entity.publicCode || null,
                     entity.bindingType || null,
-                    entity.channelAccountId || null
+                    entity.channelAccountId || null,
+                    entity.agentCard ? JSON.stringify(entity.agentCard) : null
                 ];
                 const entitySql = `INSERT INTO entities (
                         device_id, entity_id, bot_secret, is_bound, name,
                         character, state, message, parts,
                         last_updated, message_queue, webhook, app_version,
-                        xp, level, avatar, public_code, binding_type, channel_account_id
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+                        xp, level, avatar, public_code, binding_type, channel_account_id, agent_card
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
                     ON CONFLICT (device_id, entity_id)
                     DO UPDATE SET
                         bot_secret = $3,
@@ -359,7 +370,8 @@ async function saveDeviceData(deviceId, deviceData) {
                         avatar = $16,
                         public_code = $17,
                         binding_type = $18,
-                        channel_account_id = $19`;
+                        channel_account_id = $19,
+                        agent_card = $20`;
 
                 await client.query(`SAVEPOINT entity_${i}`);
                 try {
@@ -485,7 +497,8 @@ async function loadAllDevices() {
                 level: parseInt(row.level) || 1,
                 publicCode: row.public_code || null,
                 bindingType: row.binding_type || null,
-                channelAccountId: row.channel_account_id ? parseInt(row.channel_account_id) : null
+                channelAccountId: row.channel_account_id ? parseInt(row.channel_account_id) : null,
+                agentCard: row.agent_card ? (typeof row.agent_card === 'string' ? JSON.parse(row.agent_card) : row.agent_card) : null
             };
         }
 

@@ -235,6 +235,7 @@ class MissionControlActivity : AppCompatActivity() {
         }
 
         findViewById<MaterialButton>(R.id.btnUpload).setOnClickListener {
+            // Flush any pending auto-save first, then show notify prompt
             viewModel.uploadDashboard(
                 onConflict = { yourVersion, serverVersion ->
                     runOnUiThread {
@@ -290,12 +291,10 @@ class MissionControlActivity : AppCompatActivity() {
         findViewById<View>(R.id.progressBar).visibility =
             if (state.isLoading || state.isSyncing) View.VISIBLE else View.GONE
 
-        // Upload button
+        // Publish Notification button
         val btnUpload = findViewById<MaterialButton>(R.id.btnUpload)
         btnUpload.isEnabled = !state.isSyncing
-        btnUpload.text = if (state.isSyncing) getString(R.string.saving)
-        else if (state.hasLocalChanges) getString(R.string.save) + " *"
-        else getString(R.string.save)
+        btnUpload.text = getString(R.string.publish_notification)
 
         // Lists
         todoAdapter.submitList(state.todoList)
@@ -671,6 +670,11 @@ class MissionControlActivity : AppCompatActivity() {
         btnBrowseTemplates.setOnClickListener { openGallery() }
         btnChangeTemplate.setOnClickListener { openGallery() }
 
+        // Show template count on the browse button if already loaded
+        if (skillTemplates.isNotEmpty()) {
+            btnBrowseTemplates.text = getString(R.string.skill_template_browse) + " (${skillTemplates.size})"
+        }
+
         if (skill != null) {
             etTitle.setText(skill.title)
             etUrl.setText(skill.url)
@@ -719,62 +723,119 @@ class MissionControlActivity : AppCompatActivity() {
 
     /** Opens a scrollable gallery dialog listing all official skill templates. */
     private fun showTemplateGalleryDialog(onSelect: (SkillTemplate) -> Unit) {
+        if (skillTemplates.isEmpty()) {
+            lifecycleScope.launch {
+                try {
+                    val response = api.getSkillTemplates()
+                    if (response.success) {
+                        skillTemplates = response.templates
+                    }
+                } catch (e: Exception) {
+                    Timber.w(e, "Failed to reload skill templates")
+                }
+                showTemplateGalleryDialogInternal(onSelect)
+            }
+            return
+        }
+        showTemplateGalleryDialogInternal(onSelect)
+    }
+
+    private fun showTemplateGalleryDialogInternal(onSelect: (SkillTemplate) -> Unit) {
         val localVars = LocalVarsManager.getInstance(this).getAll()
 
-        // Build a scrollable LinearLayout of card-like rows
+        // Outer container: search bar + scrollable list
+        val outerLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(24, 8, 24, 8)
+        }
+
+        // Search bar
+        val etSearch = EditText(this).apply {
+            hint = "搜尋…"
+            inputType = android.text.InputType.TYPE_CLASS_TEXT
+            setSingleLine(true)
+            setBackgroundResource(android.R.drawable.edit_text)
+        }
+        val searchParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply { bottomMargin = 8 }
+        outerLayout.addView(etSearch, searchParams)
+
         val scrollView = android.widget.ScrollView(this)
         val listLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(0, 8, 0, 8)
         }
-
-        if (skillTemplates.isEmpty()) {
-            val empty = TextView(this).apply {
-                text = "No templates available"
-                setPadding(32, 32, 32, 32)
-                setTextColor(android.graphics.Color.parseColor("#888888"))
-            }
-            listLayout.addView(empty)
-        }
+        scrollView.addView(listLayout)
+        outerLayout.addView(scrollView)
 
         var galleryDialog: androidx.appcompat.app.AlertDialog? = null
 
-        for (tpl in skillTemplates) {
-            val row = LayoutInflater.from(this).inflate(R.layout.item_template_gallery, null)
-            row.findViewById<TextView>(R.id.tvGalleryIcon).text = tpl.icon ?: "📦"
-            row.findViewById<TextView>(R.id.tvGalleryTitle).text = tpl.label
-            row.findViewById<TextView>(R.id.tvGalleryMeta).text =
-                "by ${tpl.author ?: "—"} · ${tpl.updatedAt ?: ""}"
-            val tvStatus = row.findViewById<TextView>(R.id.tvGalleryStatus)
-            if (tpl.requiredVars.isEmpty()) {
-                tvStatus.text = "No API key needed"
-                tvStatus.setTextColor(android.graphics.Color.parseColor("#888888"))
-            } else {
-                val allSet = tpl.requiredVars.all { localVars.containsKey(it.key) }
-                if (allSet) {
-                    tvStatus.text = "✓ All vars configured"
-                    tvStatus.setTextColor(android.graphics.Color.parseColor("#4CAF50"))
+        fun buildRows(query: String) {
+            listLayout.removeAllViews()
+            val filtered = if (query.isBlank()) skillTemplates
+            else skillTemplates.filter {
+                it.label.contains(query, ignoreCase = true) ||
+                (it.title?.contains(query, ignoreCase = true) == true) ||
+                (it.author?.contains(query, ignoreCase = true) == true)
+            }
+            if (filtered.isEmpty()) {
+                listLayout.addView(TextView(this).apply {
+                    text = "沒有符合的模板"
+                    setPadding(0, 32, 0, 32)
+                    setTextColor(android.graphics.Color.parseColor("#888888"))
+                })
+                return
+            }
+            for (tpl in filtered) {
+                val row = LayoutInflater.from(this).inflate(R.layout.item_template_gallery, null)
+                row.findViewById<TextView>(R.id.tvGalleryIcon).text = tpl.icon ?: "📦"
+                row.findViewById<TextView>(R.id.tvGalleryTitle).text = tpl.label
+                row.findViewById<TextView>(R.id.tvGalleryMeta).text =
+                    "by ${tpl.author ?: "—"} · ${tpl.updatedAt ?: ""}"
+                val tvStatus = row.findViewById<TextView>(R.id.tvGalleryStatus)
+                if (tpl.requiredVars.isEmpty()) {
+                    tvStatus.text = "No API key needed"
+                    tvStatus.setTextColor(android.graphics.Color.parseColor("#888888"))
                 } else {
-                    val missing = tpl.requiredVars.filter { !localVars.containsKey(it.key) }.joinToString(", ") { it.key }
-                    tvStatus.text = "⚠ Needs: $missing"
-                    tvStatus.setTextColor(android.graphics.Color.parseColor("#FF9800"))
+                    val allSet = tpl.requiredVars.all { localVars.containsKey(it.key) }
+                    if (allSet) {
+                        tvStatus.text = "✓ All vars configured"
+                        tvStatus.setTextColor(android.graphics.Color.parseColor("#4CAF50"))
+                    } else {
+                        val missing = tpl.requiredVars.filter { !localVars.containsKey(it.key) }.joinToString(", ") { it.key }
+                        tvStatus.text = "⚠ Needs: $missing"
+                        tvStatus.setTextColor(android.graphics.Color.parseColor("#FF9800"))
+                    }
                 }
+                row.setOnClickListener {
+                    galleryDialog?.dismiss()
+                    onSelect(tpl)
+                }
+                row.findViewById<MaterialButton>(R.id.btnGallerySelect).setOnClickListener {
+                    galleryDialog?.dismiss()
+                    onSelect(tpl)
+                }
+                listLayout.addView(row)
             }
-            row.setOnClickListener {
-                galleryDialog?.dismiss()
-                onSelect(tpl)
-            }
-            row.findViewById<MaterialButton>(R.id.btnGallerySelect).setOnClickListener {
-                galleryDialog?.dismiss()
-                onSelect(tpl)
-            }
-            listLayout.addView(row)
         }
 
-        scrollView.addView(listLayout)
+        buildRows("")
+
+        etSearch.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                buildRows(s?.toString() ?: "")
+            }
+            override fun afterTextChanged(s: android.text.Editable?) {}
+        })
+
+        val title = getString(R.string.skill_template_browse).trimEnd('…', '.') +
+            " (${skillTemplates.size})"
         galleryDialog = MaterialAlertDialogBuilder(this)
-            .setTitle(getString(R.string.skill_template_browse).trimEnd('…', '.'))
-            .setView(scrollView)
+            .setTitle(title)
+            .setView(outerLayout)
             .setNegativeButton(R.string.cancel, null)
             .show()
     }
@@ -875,7 +936,7 @@ class MissionControlActivity : AppCompatActivity() {
         val items = viewModel.getNotifiableItems()
 
         if (items.isEmpty()) {
-            Toast.makeText(this, getString(R.string.task_saved), Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.no_notify_items), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -916,11 +977,12 @@ class MissionControlActivity : AppCompatActivity() {
 
                 // Fire-and-forget, then navigate to chat
                 viewModel.notifyEntities(notifications) { _, _ -> }
+                viewModel.updateNotifiedSnapshot()
                 startActivity(Intent(this, ChatActivity::class.java))
                 Toast.makeText(this, getString(R.string.notification_sent), Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("\u8DF3\u904E") { _, _ ->
-                Toast.makeText(this, getString(R.string.task_saved), Toast.LENGTH_SHORT).show()
+                viewModel.updateNotifiedSnapshot()
             }
             .show()
     }

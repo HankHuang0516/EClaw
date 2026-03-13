@@ -1098,17 +1098,18 @@
             btn.textContent = i18n.t('sched_saving') || 'Saving...';
 
             try {
-                await apiCall('PUT', '/api/schedules/' + scheduleId, {
+                const updatePayload = {
                     deviceId: currentUser.deviceId,
                     deviceSecret: currentUser.deviceSecret,
                     entityId: entityId,
                     message: message,
-                    scheduledAt: finalScheduledAt,
                     repeatType: repeatType,
                     cronExpr: cronExpr,
                     label: label || null,
                     timezone: cronExpr ? Intl.DateTimeFormat().resolvedOptions().timeZone : null
-                });
+                };
+                if (finalScheduledAt !== null) updatePayload.scheduledAt = finalScheduledAt;
+                await apiCall('PUT', '/api/schedules/' + scheduleId, updatePayload);
 
                 closeDialog();
                 showToast(i18n.t('sched_updated_ok') || 'Schedule updated!', 'success');

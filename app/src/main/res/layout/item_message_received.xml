@@ -54,6 +54,7 @@
                 android:autoLink="web"
                 android:linksClickable="true"
                 android:textColorLink="#1565C0"
+                android:textIsSelectable="true"
                 tools:text="This is a received message from the entity!" />
 
             <!-- Photo preview (hidden for text messages) -->

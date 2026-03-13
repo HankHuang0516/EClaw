@@ -1,10 +1,12 @@
 package com.hank.clawlive
 
 import android.view.View
+import android.widget.TextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -119,6 +121,42 @@ class EntityManagerActivityUiTest {
                 )
             }
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Regression: GitHub Issue #167 — Entity public code display
+    // Root cause: R.string.entity_public_code and R.string.code_copied were
+    // missing from strings.xml, causing compilation failure and no display.
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun testEntityPublicCodeStringResourcesExist() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+
+        val formatted = context.getString(R.string.entity_public_code, "ABCD1234")
+        assertTrue(
+            "entity_public_code string must contain the public code value (#167)",
+            formatted.contains("ABCD1234")
+        )
+
+        val copiedMsg = context.getString(R.string.code_copied)
+        assertTrue("code_copied string must not be empty (#167)", copiedMsg.isNotBlank())
+    }
+
+    @Test
+    fun testEntityAgentCardHasPublicCodeView() {
+        val inflater = android.view.LayoutInflater.from(
+            InstrumentationRegistry.getInstrumentation().targetContext
+        )
+        val root = inflater.inflate(R.layout.item_agent_card, null, false)
+        val tvPublicCode = root.findViewById<TextView>(R.id.tvPublicCode)
+
+        assertNotNull("tvPublicCode must exist in item_agent_card layout (#167)", tvPublicCode)
+        assertEquals(
+            "tvPublicCode should be GONE by default (shown only when code is set)",
+            View.GONE,
+            tvPublicCode.visibility
+        )
     }
 
     @Test

@@ -130,12 +130,6 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
         fun bind(message: ChatMessage, adapter: ChatAdapter) {
             tvTime.text = formatTime(message.timestamp)
 
-            // Long-press to copy message text
-            itemView.setOnLongClickListener {
-                copyToClipboard(it, message.text)
-                true
-            }
-
             // Show schedule tag for scheduled messages
             if (message.source == "scheduled") {
                 val label = if (!message.scheduleLabel.isNullOrBlank()) {
@@ -372,12 +366,6 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
 
         fun bind(message: ChatMessage, adapter: ChatAdapter) {
             tvTime.text = formatTime(message.timestamp)
-
-            // Long-press to copy message text
-            itemView.setOnLongClickListener {
-                copyToClipboard(it, message.text)
-                true
-            }
 
             // Entity name and avatar
             val avatarManager = EntityAvatarManager.getInstance(itemView.context)

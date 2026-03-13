@@ -103,7 +103,9 @@ async function initAuthDatabase() {
 /**
  * Factory function - receives the in-memory devices object from index.js
  */
-module.exports = function(devices, getOrCreateDevice) {
+module.exports = function(devices, getOrCreateDevice, serverLog) {
+    // Audit helper (no-op if serverLog not provided for backward compat)
+    const audit = serverLog || (() => {});
     const router = express.Router();
 
     // ============================================
@@ -257,6 +259,8 @@ module.exports = function(devices, getOrCreateDevice) {
                 console.error('[Auth] Failed to send verification email:', emailErr.message);
             }
 
+            audit('info', 'auth', 'Account registered', { userId: user.id, deviceId, ipAddress: req.ip, action: 'register', resource: 'account', result: 'success' });
+
             res.json({
                 success: true,
                 message: 'Account created. Please check your email to verify.',
@@ -287,6 +291,7 @@ module.exports = function(devices, getOrCreateDevice) {
             );
 
             if (result.rows.length === 0) {
+                audit('warn', 'auth', 'Login failed: unknown email', { ipAddress: req.ip, action: 'login', resource: 'session', result: 'failure', metadata: { email: emailLower } });
                 return res.status(401).json({ success: false, error: 'Invalid email or password' });
             }
 
@@ -294,6 +299,7 @@ module.exports = function(devices, getOrCreateDevice) {
 
             // Social-only account guard
             if (!user.password_hash) {
+                audit('warn', 'auth', 'Login failed: social-only account', { userId: user.id, ipAddress: req.ip, action: 'login', resource: 'session', result: 'failure' });
                 return res.status(401).json({
                     success: false,
                     error: 'This account uses social login. Please sign in with Google or Facebook.',
@@ -304,6 +310,7 @@ module.exports = function(devices, getOrCreateDevice) {
             // Verify password
             const match = await bcrypt.compare(password, user.password_hash);
             if (!match) {
+                audit('warn', 'auth', 'Login failed: wrong password', { userId: user.id, ipAddress: req.ip, action: 'login', resource: 'session', result: 'failure' });
                 return res.status(401).json({ success: false, error: 'Invalid email or password' });
             }
 
@@ -334,6 +341,8 @@ module.exports = function(devices, getOrCreateDevice) {
                 maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
                 path: '/'
             });
+
+            audit('info', 'auth', 'Login success', { userId: user.id, deviceId: user.device_id, ipAddress: req.ip, action: 'login', resource: 'session', result: 'success' });
 
             res.json({
                 success: true,
@@ -421,6 +430,7 @@ module.exports = function(devices, getOrCreateDevice) {
     // POST /logout
     // ============================================
     router.post('/logout', (req, res) => {
+        audit('info', 'auth', 'Logout', { ipAddress: req.ip, action: 'logout', resource: 'session', result: 'success' });
         res.clearCookie('eclaw_session', { path: '/' });
         res.json({ success: true });
     });
@@ -1022,7 +1032,7 @@ module.exports = function(devices, getOrCreateDevice) {
     // ============================================
     // OAuth: Shared account merge logic
     // ============================================
-    async function handleOAuthLogin(provider, providerId, email, displayName, avatarUrl, deviceId, deviceSecret, res) {
+    async function handleOAuthLogin(provider, providerId, email, displayName, avatarUrl, deviceId, deviceSecret, req, res) {
         const providerCol = provider === 'google' ? 'google_id' : 'facebook_id';
 
         // Step 1: Lookup by provider ID
@@ -1039,6 +1049,7 @@ module.exports = function(devices, getOrCreateDevice) {
                 [displayName, avatarUrl, user.id]
             );
             getOrCreateDevice(user.device_id, user.device_secret);
+            audit('info', 'auth', `OAuth login (${provider})`, { userId: user.id, deviceId: user.device_id, ipAddress: req?.ip, action: 'oauth_login', resource: 'session', result: 'success', metadata: { provider } });
             const token = signToken(user);
             res.cookie('eclaw_session', token, {
                 httpOnly: true, secure: process.env.NODE_ENV === 'production',
@@ -1222,7 +1233,7 @@ module.exports = function(devices, getOrCreateDevice) {
                 avatarUrl = userInfo.picture || null;
             }
 
-            await handleOAuthLogin('google', googleId, email, displayName, avatarUrl, deviceId, deviceSecret, res);
+            await handleOAuthLogin('google', googleId, email, displayName, avatarUrl, deviceId, deviceSecret, req, res);
         } catch (error) {
             console.error('[Auth] Google OAuth error:', error);
             res.status(401).json({ success: false, error: 'Google sign-in failed: ' + (error.message || 'Invalid token') });
@@ -1261,7 +1272,7 @@ module.exports = function(devices, getOrCreateDevice) {
             const displayName = fbUser.name || null;
             const avatarUrl = fbUser.picture?.data?.url || null;
 
-            await handleOAuthLogin('facebook', facebookId, email, displayName, avatarUrl, deviceId, deviceSecret, res);
+            await handleOAuthLogin('facebook', facebookId, email, displayName, avatarUrl, deviceId, deviceSecret, req, res);
         } catch (error) {
             console.error('[Auth] Facebook OAuth error:', error);
             res.status(401).json({ success: false, error: 'Facebook login failed: ' + (error.message || 'Invalid token') });
@@ -1297,6 +1308,213 @@ module.exports = function(devices, getOrCreateDevice) {
         } catch (err) {
             console.error('[Auth] Facebook data deletion parse error:', err.message);
             res.json({ url: `${BASE_URL}/portal/index.html`, confirmation_code: 'parse_error' });
+        }
+    });
+
+    // ============================================
+    // Generic OIDC SSO (Issue #175)
+    // ============================================
+
+    // Parse OIDC provider config from environment variables
+    // Format: OIDC_PROVIDER_<NAME>_ISSUER, _CLIENT_ID, _CLIENT_SECRET
+    const OIDC_PROVIDERS = {};
+    const oidcEnvKeys = Object.keys(process.env).filter(k => k.startsWith('OIDC_PROVIDER_'));
+    const oidcProviderNames = new Set(oidcEnvKeys.map(k => k.split('_').slice(2, -1).join('_')));
+    for (const name of oidcProviderNames) {
+        const prefix = `OIDC_PROVIDER_${name}`;
+        const issuer = process.env[`${prefix}_ISSUER`];
+        const clientId = process.env[`${prefix}_CLIENT_ID`];
+        const clientSecret = process.env[`${prefix}_CLIENT_SECRET`];
+        if (issuer && clientId && clientSecret) {
+            OIDC_PROVIDERS[name.toLowerCase()] = {
+                name: name.toLowerCase(),
+                issuer: issuer.replace(/\/$/, ''),
+                clientId,
+                clientSecret
+            };
+            console.log(`[Auth] OIDC provider configured: ${name.toLowerCase()}`);
+        }
+    }
+
+    // OIDC discovery cache (1hr TTL)
+    const oidcDiscoveryCache = {};
+    async function discoverOIDC(issuer) {
+        const cached = oidcDiscoveryCache[issuer];
+        if (cached && Date.now() - cached.fetchedAt < 3600000) return cached.data;
+        const url = issuer + '/.well-known/openid-configuration';
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error(`OIDC discovery failed for ${issuer}: ${resp.status}`);
+        const data = await resp.json();
+        oidcDiscoveryCache[issuer] = { data, fetchedAt: Date.now() };
+        return data;
+    }
+
+    /**
+     * GET /oauth/providers — List configured OIDC providers (public)
+     */
+    router.get('/oauth/providers', async (req, res) => {
+        const providers = [];
+        for (const [name, config] of Object.entries(OIDC_PROVIDERS)) {
+            try {
+                const discovery = await discoverOIDC(config.issuer);
+                providers.push({
+                    name,
+                    authorizationUrl: discovery.authorization_endpoint,
+                    clientId: config.clientId,
+                    scopes: 'openid email profile'
+                });
+            } catch (err) {
+                console.error(`[Auth] OIDC discovery failed for ${name}:`, err.message);
+            }
+        }
+        providers.push(
+            ...(GOOGLE_CLIENT_ID ? [{ name: 'google', type: 'built-in', clientId: GOOGLE_CLIENT_ID }] : []),
+            ...(FACEBOOK_APP_ID ? [{ name: 'facebook', type: 'built-in', clientId: FACEBOOK_APP_ID }] : [])
+        );
+        res.json({ success: true, providers });
+    });
+
+    /**
+     * POST /oauth/oidc — Exchange authorization code for tokens (Generic OIDC)
+     * Body: { provider, code, redirectUri, deviceId?, deviceSecret? }
+     */
+    router.post('/oauth/oidc', async (req, res) => {
+        try {
+            const { provider: providerName, code, redirectUri, deviceId, deviceSecret } = req.body;
+
+            if (!providerName || !code || !redirectUri) {
+                return res.status(400).json({ success: false, error: 'provider, code, and redirectUri required' });
+            }
+
+            const config = OIDC_PROVIDERS[providerName.toLowerCase()];
+            if (!config) {
+                return res.status(400).json({ success: false, error: `Unknown OIDC provider: ${providerName}` });
+            }
+
+            // Discover endpoints
+            const discovery = await discoverOIDC(config.issuer);
+
+            // Exchange code for tokens
+            const tokenResp = await fetch(discovery.token_endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    grant_type: 'authorization_code',
+                    code,
+                    redirect_uri: redirectUri,
+                    client_id: config.clientId,
+                    client_secret: config.clientSecret
+                })
+            });
+
+            if (!tokenResp.ok) {
+                const errBody = await tokenResp.text();
+                audit('warn', 'auth', `OIDC token exchange failed (${providerName})`, { ipAddress: req.ip, action: 'oauth_login', resource: 'session', result: 'failure', metadata: { provider: providerName, error: errBody.substring(0, 200) } });
+                return res.status(401).json({ success: false, error: 'Token exchange failed' });
+            }
+
+            const tokens = await tokenResp.json();
+            const idToken = tokens.id_token;
+            if (!idToken) {
+                return res.status(401).json({ success: false, error: 'No id_token in response' });
+            }
+
+            // Decode ID token (verify claims — basic validation)
+            const [, payloadB64] = idToken.split('.');
+            const claims = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf-8'));
+
+            // Validate issuer and audience
+            if (claims.iss !== config.issuer && claims.iss !== config.issuer + '/') {
+                return res.status(401).json({ success: false, error: 'Invalid token issuer' });
+            }
+            if (claims.aud !== config.clientId && !(Array.isArray(claims.aud) && claims.aud.includes(config.clientId))) {
+                return res.status(401).json({ success: false, error: 'Invalid token audience' });
+            }
+            if (claims.exp && claims.exp < Math.floor(Date.now() / 1000)) {
+                return res.status(401).json({ success: false, error: 'Token expired' });
+            }
+
+            const sub = claims.sub;
+            const email = claims.email_verified !== false ? claims.email : null;
+            const displayName = claims.name || claims.preferred_username || null;
+            const avatarUrl = claims.picture || null;
+
+            // Lookup by OIDC provider + subject
+            const byOIDC = await pool.query(
+                'SELECT * FROM user_accounts WHERE oidc_provider = $1 AND oidc_subject = $2',
+                [providerName.toLowerCase(), sub]
+            );
+
+            let user;
+            let isNewAccount = false;
+
+            if (byOIDC.rows.length > 0) {
+                // Existing OIDC-linked account
+                user = byOIDC.rows[0];
+                await pool.query(
+                    `UPDATE user_accounts SET display_name = COALESCE($1, display_name), avatar_url = COALESCE($2, avatar_url), last_login_at = NOW() WHERE id = $3`,
+                    [displayName, avatarUrl, user.id]
+                );
+            } else if (email) {
+                // Try email merge
+                const byEmail = await pool.query('SELECT * FROM user_accounts WHERE email = $1', [email.toLowerCase()]);
+                if (byEmail.rows.length > 0) {
+                    user = byEmail.rows[0];
+                    await pool.query(
+                        `UPDATE user_accounts SET oidc_provider = $1, oidc_subject = $2, display_name = COALESCE($3, display_name), avatar_url = COALESCE($4, avatar_url), email_verified = TRUE, last_login_at = NOW() WHERE id = $5`,
+                        [providerName.toLowerCase(), sub, displayName, avatarUrl, user.id]
+                    );
+                }
+            }
+
+            if (!user) {
+                // Create new account
+                const { deviceId: newDeviceId, deviceSecret: newDeviceSecret } = generateDeviceCredentials();
+                const result = await pool.query(
+                    `INSERT INTO user_accounts (email, oidc_provider, oidc_subject, display_name, avatar_url, auth_provider, device_id, device_secret, email_verified)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE)
+                     RETURNING *`,
+                    [email, providerName.toLowerCase(), sub, displayName, avatarUrl, `oidc:${providerName.toLowerCase()}`, newDeviceId, newDeviceSecret]
+                );
+                user = result.rows[0];
+                isNewAccount = true;
+            }
+
+            // Ensure device exists
+            getOrCreateDevice(user.device_id, user.device_secret);
+
+            // Link device credentials if provided
+            if (deviceId && deviceSecret && deviceId !== user.device_id) {
+                const existingDevice = devices[deviceId];
+                if (existingDevice && existingDevice.deviceSecret === deviceSecret) {
+                    // Already has a device — keep the provided one if no data on account device
+                    // (simplified: always use the account's virtual device)
+                }
+            }
+
+            audit('info', 'auth', `OIDC login (${providerName})`, { userId: user.id, deviceId: user.device_id, ipAddress: req.ip, action: 'oauth_login', resource: 'session', result: 'success', metadata: { provider: providerName } });
+
+            const token = signToken(user);
+            res.cookie('eclaw_session', token, {
+                httpOnly: true, secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000
+            });
+
+            res.json({
+                success: true,
+                user: {
+                    id: user.id, email: user.email,
+                    deviceId: user.device_id, deviceSecret: user.device_secret,
+                    displayName: displayName || user.display_name,
+                    avatarUrl: avatarUrl || user.avatar_url,
+                    isNewAccount,
+                    subscriptionStatus: user.subscription_status,
+                    oidcProvider: providerName.toLowerCase()
+                }
+            });
+        } catch (error) {
+            console.error('[Auth] OIDC login error:', error);
+            res.status(500).json({ success: false, error: 'OIDC login failed' });
         }
     });
 
@@ -1366,5 +1584,144 @@ module.exports = function(devices, getOrCreateDevice) {
         next();
     }
 
-    return { router, authMiddleware, softAuthMiddleware, adminMiddleware, initAuthDatabase, pool: pool };
+    // ============================================
+    // RBAC: Permission Check Middleware (Issue #178)
+    // ============================================
+
+    /**
+     * requirePermission(...perms) — Middleware factory that checks user has all specified permissions.
+     * Permissions are loaded from user_roles + roles tables.
+     * Admin role (permissions: ["*"]) bypasses all checks.
+     */
+    function requirePermission(...requiredPerms) {
+        return async (req, res, next) => {
+            if (!req.user || !req.user.userId) {
+                return res.status(401).json({ success: false, error: 'Authentication required' });
+            }
+            try {
+                const deviceId = req.query.deviceId || req.body?.deviceId || req.user.deviceId;
+                const result = await pool.query(
+                    `SELECT r.permissions FROM user_roles ur
+                     JOIN roles r ON ur.role_id = r.id
+                     WHERE ur.user_id = $1 AND (ur.device_id IS NULL OR ur.device_id = $2)`,
+                    [req.user.userId, deviceId || null]
+                );
+                const allPerms = new Set();
+                for (const row of result.rows) {
+                    const perms = Array.isArray(row.permissions) ? row.permissions : JSON.parse(row.permissions || '[]');
+                    perms.forEach(p => allPerms.add(p));
+                }
+                // Wildcard admin
+                if (allPerms.has('*')) { req.permissions = allPerms; return next(); }
+                // Check required permissions
+                if (!requiredPerms.every(p => allPerms.has(p))) {
+                    return res.status(403).json({ success: false, error: 'Insufficient permissions' });
+                }
+                req.permissions = allPerms;
+                next();
+            } catch (err) {
+                console.error('[Auth] Permission check error:', err);
+                res.status(500).json({ success: false, error: 'Permission check failed' });
+            }
+        };
+    }
+
+    // ── RBAC Management Endpoints ──
+
+    /**
+     * GET /roles — List all available roles (admin only)
+     */
+    router.get('/roles', authMiddleware, adminMiddleware, async (req, res) => {
+        try {
+            const result = await pool.query('SELECT * FROM roles ORDER BY id');
+            res.json({ success: true, roles: result.rows });
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    /**
+     * GET /user-roles — Get roles for a user (admin or self)
+     * Query: ?userId=<uuid>
+     */
+    router.get('/user-roles', authMiddleware, async (req, res) => {
+        try {
+            const targetUserId = req.query.userId || req.user.userId;
+            // Non-admin can only view own roles
+            if (targetUserId !== req.user.userId) {
+                const adminResult = await pool.query('SELECT is_admin FROM user_accounts WHERE id = $1', [req.user.userId]);
+                if (!adminResult.rows.length || !adminResult.rows[0].is_admin) {
+                    return res.status(403).json({ success: false, error: 'Admin access required to view other users\' roles' });
+                }
+            }
+            const result = await pool.query(
+                `SELECT ur.role_id, ur.device_id, ur.created_at, r.description, r.permissions
+                 FROM user_roles ur JOIN roles r ON ur.role_id = r.id
+                 WHERE ur.user_id = $1 ORDER BY ur.created_at`,
+                [targetUserId]
+            );
+            res.json({ success: true, roles: result.rows });
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    /**
+     * POST /user-roles — Assign role to user (admin only)
+     * Body: { userId, roleId, deviceId? }
+     */
+    router.post('/user-roles', authMiddleware, adminMiddleware, async (req, res) => {
+        try {
+            const { userId, roleId, deviceId } = req.body;
+            if (!userId || !roleId) {
+                return res.status(400).json({ success: false, error: 'userId and roleId required' });
+            }
+            // Verify role exists
+            const roleCheck = await pool.query('SELECT id FROM roles WHERE id = $1', [roleId]);
+            if (!roleCheck.rows.length) {
+                return res.status(404).json({ success: false, error: 'Role not found' });
+            }
+            // Verify user exists
+            const userCheck = await pool.query('SELECT id FROM user_accounts WHERE id = $1', [userId]);
+            if (!userCheck.rows.length) {
+                return res.status(404).json({ success: false, error: 'User not found' });
+            }
+            await pool.query(
+                `INSERT INTO user_roles (user_id, role_id, device_id, granted_by)
+                 VALUES ($1, $2, $3, $4)
+                 ON CONFLICT DO NOTHING`,
+                [userId, roleId, deviceId || null, req.user.userId]
+            );
+            audit('info', 'auth', `Role assigned: ${roleId} to ${userId}`, { userId: req.user.userId, ipAddress: req.ip, action: 'role_assign', resource: 'user_role', result: 'success', metadata: { targetUserId: userId, roleId, deviceId } });
+            res.json({ success: true, message: `Role ${roleId} assigned` });
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    /**
+     * DELETE /user-roles — Revoke role from user (admin only)
+     * Body: { userId, roleId, deviceId? }
+     */
+    router.delete('/user-roles', authMiddleware, adminMiddleware, async (req, res) => {
+        try {
+            const { userId, roleId, deviceId } = req.body;
+            if (!userId || !roleId) {
+                return res.status(400).json({ success: false, error: 'userId and roleId required' });
+            }
+            const result = await pool.query(
+                `DELETE FROM user_roles WHERE user_id = $1 AND role_id = $2 AND COALESCE(device_id, '__global__') = COALESCE($3, '__global__')`,
+                [userId, roleId, deviceId || null]
+            );
+            if (result.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'Role assignment not found' });
+            }
+            audit('info', 'auth', `Role revoked: ${roleId} from ${userId}`, { userId: req.user.userId, ipAddress: req.ip, action: 'role_revoke', resource: 'user_role', result: 'success', metadata: { targetUserId: userId, roleId, deviceId } });
+            res.json({ success: true, message: `Role ${roleId} revoked` });
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    return { router, authMiddleware, softAuthMiddleware, adminMiddleware, requirePermission, initAuthDatabase, pool: pool };
 };

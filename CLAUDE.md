@@ -10,31 +10,60 @@
 
 4. **Verification Before Done** — 修改程式碼後必須跑 lint / type-check / test；若任何一步失敗就修到通過為止，不把破損的 code commit。
 
-5. **Demand Elegance (Balanced)** — 在保持 minimal change 的前提下，追求可讀、一致的程式風格；不為了「漂亮」而過度重構，但也不容忍明顯的 code smell 在新增的程式碼中出現。
+5. **Issue Fix → Regression Test Required** — 修好 GitHub Issue 後，**必須**新增 regression test 驗證該修復，測試通過後才能 close issue。
+   - Android UI bug → 在 `app/src/androidTest/` 或 `backend/tests/` 新增對應 case
+   - Backend bug → 在 `backend/tests/` 對應的 test 檔案新增 case
+   - 若沒有現成 test 檔案，新建一個（命名規則：`test-<feature>.js`）
+   - **新增的 test 檔案必須登錄到本文件的「Regression Tests」清單**，含說明、執行指令、所需 credentials
+   - Close issue 時在 comment 中附上測試 case 的檔案與行號
 
-6. **Autonomous Bug Fixing** — 當執行過程中遇到錯誤（build fail、test fail、runtime error），不要立刻停下來問使用者，先自行分析 log 並嘗試修復，連續失敗 3 次才 escalate。
+6. **Demand Elegance (Balanced)** — 在保持 minimal change 的前提下，追求可讀、一致的程式風格；不為了「漂亮」而過度重構，但也不容忍明顯的 code smell 在新增的程式碼中出現。
 
-7. **Task Management**
+7. **Autonomous Bug Fixing** — 當執行過程中遇到錯誤（build fail、test fail、runtime error），不要立刻停下來問使用者，先自行分析 log 並嘗試修復，連續失敗 3 次才 escalate。
+
+8. **Task Management**
    - 所有多步驟工作都使用 TodoWrite 追蹤，讓使用者隨時可見進度
    - 完成一項立即標記 completed，不批量更新
    - 同時只有一個 task 可以是 in_progress
 
-8. **Core Principles**
+9. **Core Principles**
    - 安全第一（不引入 OWASP Top-10 漏洞）
    - 不臆測（先讀再改）
    - 最小驚訝原則（行為與命名一致）
    - DRY but not premature abstraction
    - 優先使用專用工具（Read > cat, Edit > sed, Grep > grep）
 
+10. **Chinese Summary on Completion** — 每次任務完成後，用**繁體中文**回報總結，包含：修改了哪些檔案、做了什麼改動、有無需要注意的事項。
+
+11. **Post-Push Production Verification** — push 到 main 後**必須**驗證 production：
+    - 等 Railway 部署完成（檢查 `/api/health` 的 build 版本或 uptime 重置）
+    - 跑所有 regression tests 對 live server（`test-bot-api-response.js`, `test-broadcast.js`, `test-cross-device-settings.js`, `test-edit-mode-public-code.js` 及新增的 feature tests）
+    - 若有 test failure，立即分析是 pre-existing 還是本次改動引起的
+    - 驗新功能的端點能正常回應（curl 檢查 status code + response body）
+    - 所有驗證通過後才算任務完成
+
 ## Git Workflow
 
 - **Direct merge to main**: When work is complete, commit and merge directly to `main` branch. Do NOT create PRs or wait for approval — the user reviews all changes in real-time during the session.
-- **Workflow**: develop on feature branch → commit → merge to main → push
+- **Workflow**: develop on feature branch → commit → merge to main → push → **verify production**
 
-## GitHub PR Creation
+## GitHub CLI
 
-在雲端環境（Claude Code remote）中無法訪問外網，不要嘗試用 `gh` CLI 或 GitHub REST API 建立 PR。
-當需要提供 PR 連結時，直接給出 compare URL：
+`GH_TOKEN` 已存入 `backend/.env`（gitignored）。Session startup 會自動注入。
+本地環境 PATH 中沒有 `gh` 二進位，改用 GitHub REST API + curl：
+
+```bash
+# 列出 open issues
+curl -sL -H "Authorization: Bearer $GH_TOKEN" \
+  "https://api.github.com/repositories/1150444936/issues?state=open&per_page=50"
+
+# Close issue
+curl -sL -X PATCH -H "Authorization: Bearer $GH_TOKEN" \
+  -d '{"state":"closed"}' \
+  "https://api.github.com/repositories/1150444936/issues/<number>"
+```
+
+PR 連結格式（無法用 gh CLI 建立時）：
 ```
 https://github.com/HankHuang0516/realbot/compare/main...<branch-name>
 ```
@@ -70,6 +99,25 @@ When investigating backend bugs (broadcast failure, push not delivered, etc.):
 - **Cross-device settings**: `node backend/tests/test-cross-device-settings.js`
   - Tests CRUD lifecycle, validation, merge behavior, auth, edge cases for entity cross-device settings
   - Requires `BROADCAST_TEST_DEVICE_ID` + `BROADCAST_TEST_DEVICE_SECRET` in `backend/.env`
+- **TLS/Security headers**: `node backend/tests/test-tls-headers.js`
+  - Verifies HSTS, X-Content-Type-Options, X-Frame-Options, Referrer-Policy headers
+  - No credentials needed
+- **Audit logging**: `node backend/tests/test-audit-logging.js`
+  - Tests GET /api/logs response format, category filter, admin-only /api/audit-logs protection
+  - Requires `BROADCAST_TEST_DEVICE_ID` + `BROADCAST_TEST_DEVICE_SECRET` in `backend/.env`
+- **Agent Card**: `node backend/tests/test-agent-card.js`
+  - Tests PUT/GET/DELETE /api/entity/agent-card lifecycle, lookup integration, auth validation
+  - Requires `BROADCAST_TEST_DEVICE_ID` + `BROADCAST_TEST_DEVICE_SECRET` in `backend/.env`
+- **OIDC foundation**: `node backend/tests/test-oidc-foundation.js`
+  - Tests GET /api/auth/oauth/providers, /oauth/config, POST /api/auth/oauth/oidc validation
+  - No credentials needed
+- **RBAC**: `node backend/tests/test-rbac.js`
+  - Tests GET/POST/DELETE /api/auth/roles and /api/auth/user-roles auth protection
+  - No credentials needed
+- **Multi-entity push (#181)**: `node backend/tests/test-multi-entity-push.js`
+  - Verifies POST /api/client/speak with entityId array processes all entities (no silent skip)
+  - Checks server_logs contain client_push entries for every target entity
+  - Requires `BROADCAST_TEST_DEVICE_ID` + `BROADCAST_TEST_DEVICE_SECRET` in `backend/.env`
 
 ## Git Workflow
 
@@ -88,6 +136,22 @@ When investigating backend bugs (broadcast failure, push not delivered, etc.):
 - 4 entity slots per device (0-3), each independently bindable
 - Bots use OpenClaw platform (Zeabur), communicate via webhook push + exec+curl
 - Push notifications use instruction-first format with pre-filled curl templates
+
+## Enterprise Security Features (Issues #174-#178)
+
+- **TLS/HTTPS (#176)**: `trust proxy` enabled, HSTS + security headers middleware, HTTPS redirect for non-localhost
+- **Audit Logging (#177)**: `server_logs` table extended with `user_id`, `ip_address`, `action`, `resource`, `result` columns; auth events hooked in `auth.js`; admin-only `GET /api/audit-logs` endpoint
+- **Agent Card (#174)**: `agent_card` JSONB column on `entities` table; `PUT/GET/DELETE /api/entity/agent-card` CRUD; included in `GET /api/entity/lookup` response; auto-cleared on unbind
+- **OAuth OIDC (#175)**: Generic OIDC provider via env vars (`OIDC_PROVIDER_<NAME>_ISSUER/CLIENT_ID/CLIENT_SECRET`); discovery + code exchange at `POST /api/auth/oauth/oidc`; `GET /api/auth/oauth/providers` lists all configured providers
+- **RBAC (#178)**: `roles` + `user_roles` PostgreSQL tables; 4 default roles (admin/developer/operator/viewer); `requirePermission()` middleware exported from `auth.js`; `GET/POST/DELETE /api/auth/roles` and `/api/auth/user-roles` endpoints
+
+### Key Learnings
+- `serverLog()` function is hoisted so can be passed to auth module init at line 669 even though defined at ~line 8755
+- `server_logs` schema extension is backward-compatible — all existing 67+ `serverLog()` calls work without modification (new fields default to null)
+- Entity unbind calls `createDefaultEntity()` which resets all fields including new ones — no separate cleanup needed
+- Railway sits behind Cloudflare CDN — deploy can take 2-5 minutes; use `/api/auth/oauth/providers` or `/api/audit-logs` as deploy canary endpoints
+- `const` redeclaration in same scope is a JS error — check existing variable names before adding new ones (e.g., `adminAuth` already declared at line 1198)
+- `/api/health` build string is hardcoded, not useful for detecting deploys — check uptime or new endpoint availability instead
 
 ## Device Telemetry (AI Debug Buffer)
 

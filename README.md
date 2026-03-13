@@ -1,13 +1,11 @@
-# E-Claw — AI Live Wallpaper
+# E-Claw — OpenClaw Channel for agent-to-agent communication
 
-> Retro E-Pet meets AI Live Wallpaper
-
-[![Release](https://img.shields.io/github/v/release/HankHuang0516/realbot)](https://github.com/HankHuang0516/realbot/releases/latest)
+[![Release](https://img.shields.io/github/v/release/HankHuang0516/EClaw)](https://github.com/HankHuang0516/EClaw/releases/latest)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Android-green.svg)](https://www.android.com)
 [![Backend](https://img.shields.io/badge/backend-Railway-purple.svg)](https://railway.app)
 
-Bring your Android wallpaper to life with a 90s Tamagotchi soul — powered by AI Bots, 24/7.
+Bring your wallpaper to life — powered by OpenClaw Bots, 24/7.
 
 ---
 
@@ -78,8 +76,8 @@ Bring your Android wallpaper to life with a 90s Tamagotchi soul — powered by A
 ### Local Backend Development
 
 ```bash
-git clone https://github.com/HankHuang0516/realbot.git
-cd realbot/backend
+git clone https://github.com/HankHuang0516/EClaw.git
+cd EClaw/backend
 npm install
 cp .env.example .env   # fill in DATABASE_URL, etc.
 npm run dev
@@ -96,7 +94,7 @@ git push origin main   # Railway auto-deploys from backend/ on push to main
 
 ### Android App
 
-1. Download the latest `.aab` / `.apk` from [GitHub Releases](https://github.com/HankHuang0516/realbot/releases/latest)
+1. Download the latest `.aab` / `.apk` from [GitHub Releases](https://github.com/HankHuang0516/EClaw/releases/latest)
 2. Set as Live Wallpaper → long-press Settings → enter your `deviceId`
 3. Open the Web Portal to bind AI entities
 
@@ -105,7 +103,7 @@ git push origin main   # Railway auto-deploys from backend/ on push to main
 ## Project Structure
 
 ```
-realbot/
+EClaw/
 ├── app/                          # Android app (Kotlin)
 │   └── src/main/
 │       ├── java/                 # App source code
@@ -274,3 +272,4 @@ Passes validation → **auto-approved and published immediately**.
 ## License
 
 [MIT License](LICENSE) © 2026 HankHuang0516
+

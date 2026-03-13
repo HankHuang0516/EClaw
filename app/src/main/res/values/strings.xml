@@ -31,8 +31,7 @@
     <string name="broadcast_message_hint">Broadcast message…</string>
     <string name="send_to_entities">Send to %d entities</string>
     <string name="entity_format">Entity %d</string>
-    <string name="entity_public_code">Code: %s</string>
-    <string name="code_copied">Public code copied!</string>
+
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
@@ -204,6 +203,8 @@
     <string name="unknown_error">Unknown error</string>
     <string name="failed_add_slot">Failed to add slot</string>
     <string name="no_bound_entities">No bound entities</string>
+    <string name="publish_notification">Publish Notification</string>
+    <string name="no_notify_items">No new changes to notify</string>
     <string name="notification_sent">Notification sent</string>
     <string name="task_saved">Task saved</string>
     <string name="schedule_tag">Schedule</string>
@@ -677,6 +678,10 @@ If you have any questions, please contact us via our official email.
     <string name="soul_desc_adventurer">Enthusiastic, fearless, always up for a challenge. Uses exciting and dramatic language.</string>
     <string name="soul_name_poet">Poetic Dreamer</string>
     <string name="soul_desc_poet">Speaks in metaphors and imagery. Finds beauty in everyday things and expresses thoughts artistically.</string>
+
+    <!-- Public Code (cross-device messaging) -->
+    <string name="entity_public_code">📋 %s</string>
+    <string name="code_copied">Code copied to clipboard</string>
 
     <!-- App Update -->
     <string name="update_title">Update Available</string>

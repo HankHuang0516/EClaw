@@ -147,6 +147,8 @@
     <string name="unknown_error">Kesalahan tidak diketahui</string>
     <string name="failed_add_slot">Gagal menambahkan slot</string>
     <string name="no_bound_entities">Tidak ada entitas terikat</string>
+    <string name="publish_notification">Kirim Notifikasi</string>
+    <string name="no_notify_items">Tidak ada perubahan baru untuk diberitahukan</string>
     <string name="notification_sent">Notifikasi terkirim</string>
     <string name="task_saved">Tugas disimpan</string>
     <string name="schedule_tag">Jadwal</string>
@@ -172,6 +174,26 @@
     <string name="reorder_saving">Menyimpan urutan baru…</string>
     <string name="reorder_success">Urutan entitas diperbarui!</string>
     <string name="reorder_failed">Gagal memperbarui urutan</string>
+    <string name="xd_settings_btn">Pesan Lintas Perangkat</string>
+    <string name="xd_settings_title">Pengaturan Pesan Lintas Perangkat</string>
+    <string name="xd_pre_inject">Instruksi Pra-injeksi</string>
+    <string name="xd_pre_inject_desc">Ditambahkan sebelum pesan lintas perangkat di notifikasi push</string>
+    <string name="xd_forbidden">Kata Terlarang</string>
+    <string name="xd_forbidden_desc">Pesan yang mengandung kata-kata ini akan ditolak (dipisahkan koma)</string>
+    <string name="xd_rate_limit">Batas Kecepatan (detik)</string>
+    <string name="xd_rate_limit_desc">Waktu tunggu per pengirim (0 = tanpa batas)</string>
+    <string name="xd_blacklist">Daftar Hitam (kode publik)</string>
+    <string name="xd_codes_sep">Kode publik dipisahkan koma</string>
+    <string name="xd_whitelist_mode">Mode Daftar Putih</string>
+    <string name="xd_whitelist">Daftar Putih (kode publik)</string>
+    <string name="xd_reject_msg">Pesan Penolakan</string>
+    <string name="xd_reject_msg_hint">Balasan otomatis saat diblokir (kosong = diam)</string>
+    <string name="xd_allowed_media">Jenis Media yang Diizinkan</string>
+    <string name="xd_save">Simpan</string>
+    <string name="xd_reset">Atur Ulang ke Default</string>
+    <string name="xd_saved">Pengaturan lintas perangkat tersimpan!</string>
+    <string name="xd_save_failed">Gagal menyimpan pengaturan</string>
+    <string name="xd_reset_done">Pengaturan dikembalikan ke default</string>
     <string name="refreshing">Menyegarkan…</string>
     <string name="rebind">Ikat Ulang</string>
     <string name="entity_count_format">%1$d/%2$d entitas</string>

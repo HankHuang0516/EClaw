@@ -185,7 +185,7 @@ async function updateSchedule(id, updates) {
     let paramIdx = 1;
 
     for (const key of allowedFields) {
-        if (updates[key] !== undefined) {
+        if (updates[key] !== undefined && updates[key] !== null) {
             const dbKey = key === 'scheduledAt' ? 'scheduled_at'
                 : key === 'repeatType' ? 'repeat_type'
                 : key === 'cronExpr' ? 'cron_expr'
