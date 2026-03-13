@@ -687,6 +687,24 @@ gatekeeper.initGatekeeperTable();
 gatekeeper.setServerLog(serverLog);
 setTimeout(() => gatekeeper.loadBlockedDevices(), 3000);
 
+// Developer device cache — devices owned by admin accounts are exempt from Gatekeeper First Lock
+const developerDeviceIds = new Set();
+async function loadDeveloperDevices() {
+    try {
+        const result = await db.pool.query(
+            'SELECT device_id FROM user_accounts WHERE is_admin = true AND device_id IS NOT NULL'
+        );
+        developerDeviceIds.clear();
+        for (const row of result.rows) {
+            developerDeviceIds.add(row.device_id);
+        }
+        console.log(`[Gatekeeper] Loaded ${developerDeviceIds.size} developer device(s)`);
+    } catch (err) {
+        console.error('[Gatekeeper] Failed to load developer devices:', err.message);
+    }
+}
+setTimeout(() => loadDeveloperDevices(), 3500);
+
 // --- Skill / Soul / Rule Templates API ---
 
 const skillTemplatesData = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/skill-templates.json'), 'utf8'));
@@ -3442,7 +3460,7 @@ app.put('/api/device/entity/avatar', async (req, res) => {
  * If bot has registered webhook, push notification is sent.
  */
 app.post('/api/client/speak', async (req, res) => {
-    const { deviceId, entityId, text, source = "client", mediaType, mediaUrl } = req.body;
+    const { deviceId, deviceSecret, entityId, text, source = "client", mediaType, mediaUrl } = req.body;
 
     if (!deviceId) {
         return res.status(400).json({ success: false, message: "deviceId required" });
@@ -3452,6 +3470,9 @@ app.post('/api/client/speak', async (req, res) => {
     if (!device) {
         return res.status(404).json({ success: false, message: "Device not found" });
     }
+
+    // Developer exemption: admin-owned devices with valid deviceSecret skip Gatekeeper First Lock
+    const isDeveloper = deviceSecret && device.deviceSecret === deviceSecret && developerDeviceIds.has(deviceId);
 
     // Usage enforcement — apply to all non-premium devices
     // Premium check is inside enforceUsageLimit; personal bot exemption handled separately
@@ -3489,8 +3510,8 @@ app.post('/api/client/speak', async (req, res) => {
         }
     }
 
-    // Gatekeeper First Lock: check if device is blocked from free bots
-    if (gatekeeper.isDeviceBlocked(deviceId)) {
+    // Gatekeeper First Lock: device owner with valid deviceSecret is exempt
+    if (!isDeveloper && gatekeeper.isDeviceBlocked(deviceId)) {
         // Check if ANY target entity is a free bot
         const hasFreeBot = (() => {
             const eIds = entityId === "all"
@@ -3514,8 +3535,8 @@ app.post('/api/client/speak', async (req, res) => {
         }
     }
 
-    // Gatekeeper First Lock: detect malicious messages targeting free bots
-    if (text) {
+    // Gatekeeper First Lock: detect malicious messages targeting free bots (skip for developer)
+    if (text && !isDeveloper) {
         const hasFreeBotTarget = (() => {
             const eIds = entityId === "all"
                 ? Object.keys(device.entities).map(Number).filter(i => device.entities[i] && device.entities[i].isBound)
