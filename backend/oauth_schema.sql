@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS oauth_authorization_codes (
 
 CREATE TABLE IF NOT EXISTS oauth_tokens (
     id VARCHAR(64) PRIMARY KEY,
-    access_token VARCHAR(256) UNIQUE NOT NULL,
+    access_token VARCHAR(512) UNIQUE NOT NULL,
     refresh_token VARCHAR(256) UNIQUE,
     client_id VARCHAR(64) REFERENCES oauth_clients(client_id) ON DELETE CASCADE,
     device_id VARCHAR(255),

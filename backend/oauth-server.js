@@ -44,6 +44,8 @@ module.exports = function (devices, { serverLog } = {}) {
       for (const stmt of statements) {
         if (stmt.trim()) await pool.query(stmt);
       }
+      // Migrate: widen access_token column if needed (JWT tokens > 256 chars)
+      await pool.query(`ALTER TABLE oauth_tokens ALTER COLUMN access_token TYPE VARCHAR(512)`).catch(() => {});
       console.log('[OAuth] Database initialized');
     } catch (err) {
       console.error('[OAuth] Database init error:', err.message);
