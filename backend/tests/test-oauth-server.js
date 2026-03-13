@@ -160,20 +160,33 @@ async function main() {
     }
   }
 
-  // Test 8: Refresh token flow
-  if (refreshToken) {
+  // Test 8: Refresh token flow (needs a fresh token pair since Test 6 revoked the previous one)
+  if (clientId && clientSecret) {
     console.log('\nTest 8: POST /api/oauth/token — refresh_token');
     {
-      const res = await fetchJSON('POST', '/api/oauth/token', {
-        grant_type: 'refresh_token',
+      // Issue fresh tokens for refresh test
+      const freshRes = await fetchJSON('POST', '/api/oauth/token', {
+        grant_type: 'client_credentials',
         client_id: clientId,
         client_secret: clientSecret,
-        refresh_token: refreshToken
+        scope: 'read'
       });
-      assert(res.status === 200, `Status 200 (got ${res.status})`);
-      assert(res.json && res.json.access_token, 'New access_token issued');
-      assert(res.json && res.json.refresh_token, 'New refresh_token issued');
-      assert(res.json && res.json.access_token !== accessToken, 'New token is different');
+      const freshRefresh = freshRes.json?.refresh_token;
+      const freshAccess = freshRes.json?.access_token;
+      if (!freshRefresh) {
+        assert(false, 'Could not obtain fresh refresh_token');
+      } else {
+        const res = await fetchJSON('POST', '/api/oauth/token', {
+          grant_type: 'refresh_token',
+          client_id: clientId,
+          client_secret: clientSecret,
+          refresh_token: freshRefresh
+        });
+        assert(res.status === 200, `Status 200 (got ${res.status})`);
+        assert(res.json && res.json.access_token, 'New access_token issued');
+        assert(res.json && res.json.refresh_token, 'New refresh_token issued');
+        assert(res.json && res.json.access_token !== freshAccess, 'New token is different');
+      }
     }
   }
 
