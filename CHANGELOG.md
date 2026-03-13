@@ -1,3 +1,10 @@
+# [1.99.0](https://github.com/HankHuang0516/EClaw/compare/v1.98.0...v1.99.0) (2026-03-13)
+
+
+### Features
+
+* implement issues [#187](https://github.com/HankHuang0516/EClaw/issues/187)-[#191](https://github.com/HankHuang0516/EClaw/issues/191) — A2A compat, API docs, OAuth 2.0, SDK, gRPC ([a0b2845](https://github.com/HankHuang0516/EClaw/commit/a0b28451849076863d30813d15732f99fd2ec4ae))
+
 # [1.98.0](https://github.com/HankHuang0516/EClaw/compare/v1.97.2...v1.98.0) (2026-03-13)
 
 
