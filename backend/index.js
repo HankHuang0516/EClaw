@@ -3628,7 +3628,9 @@ app.post('/api/client/speak', async (req, res) => {
     }
 
     // Parallel processing for broadcast - all entities receive message simultaneously
+    // Use Promise.allSettled to ensure one entity's failure doesn't block others (#181)
     const pushPromises = targetIds.map(async (eId) => {
+      try {
         const entity = device.entities[eId];
         if (!entity) return null;
 
@@ -3716,6 +3718,10 @@ app.post('/api/client/speak', async (req, res) => {
         } else if (entity.isBound) {
             console.warn(`[Push] ✗ No webhook registered for Device ${deviceId} Entity ${eId} - client will show dialog`);
             serverLog('warn', 'client_push', `Entity ${eId} no webhook`, { deviceId, entityId: eId });
+        } else {
+            // No condition matched — entity is unbound or in unexpected state (#181 diagnostic)
+            console.warn(`[Push] ✗ Entity ${eId} skipped: bindingType=${entity.bindingType}, webhook=${!!entity.webhook}, isBound=${entity.isBound}`);
+            serverLog('warn', 'client_push', `Entity ${eId} skipped (no push condition matched)`, { deviceId, entityId: eId, metadata: { bindingType: entity.bindingType, hasWebhook: !!entity.webhook, isBound: entity.isBound } });
         }
 
         // Determine binding type for this entity
@@ -3733,10 +3739,33 @@ app.post('/api/client/speak', async (req, res) => {
             reason: pushResult.pushed ? "ok" : (pushResult.reason || "unknown"),
             bindingType: bindingType
         };
+      } catch (pushErr) {
+        // Catch-all: ensure one entity's error doesn't break the entire broadcast (#181)
+        console.error(`[Push] ✗ Unhandled error for Device ${deviceId} Entity ${eId}:`, pushErr.message);
+        serverLog('error', 'client_push', `Entity ${eId} unhandled push error: ${pushErr.message}`, { deviceId, entityId: eId });
+        return {
+            entityId: eId,
+            pushed: false,
+            mode: "error",
+            reason: `unhandled_error: ${pushErr.message}`,
+            bindingType: null
+        };
+      }
     });
 
     // Wait for all push operations to complete in parallel
-    const results = (await Promise.all(pushPromises)).filter(r => r !== null);
+    // Promise.allSettled ensures all entities are processed even if one fails (#181)
+    const settled = await Promise.allSettled(pushPromises);
+    const results = settled
+        .filter(s => s.status === 'fulfilled' && s.value !== null)
+        .map(s => s.value);
+    // Log any rejected promises (should not happen with inner try/catch, but just in case)
+    for (const s of settled) {
+        if (s.status === 'rejected') {
+            console.error(`[Push] Promise rejected in broadcast:`, s.reason);
+            serverLog('error', 'client_push', `Broadcast promise rejected: ${s.reason}`, { deviceId });
+        }
+    }
 
     // XP: Keyword detection for praise/scold
     if (text) {
@@ -6873,11 +6902,13 @@ async function gatewayFetch(url, token, body, options = {}) {
     const headers = { 'Content-Type': 'application/json' };
     headers['Authorization'] = `Bearer ${token}`;
 
+    // Default 15s timeout to prevent infinite hangs on unresponsive webhooks (#181)
+    const DEFAULT_HTTP_TIMEOUT = 15000;
     return fetch(url, {
         method: 'POST',
         headers,
         body: JSON.stringify(body),
-        signal: signal || (timeout ? AbortSignal.timeout(timeout) : undefined)
+        signal: signal || AbortSignal.timeout(timeout || DEFAULT_HTTP_TIMEOUT)
     });
 }
 
