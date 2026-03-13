@@ -1,3 +1,10 @@
+# [1.100.0](https://github.com/HankHuang0516/EClaw/compare/v1.99.0...v1.100.0) (2026-03-13)
+
+
+### Features
+
+* channel callback Basic Auth for Railway WEB_PASSWORD ([cb9afb4](https://github.com/HankHuang0516/EClaw/commit/cb9afb43f77c4443499100b30da551b61ade126e))
+
 # [1.99.0](https://github.com/HankHuang0516/EClaw/compare/v1.98.0...v1.99.0) (2026-03-13)
 
 
