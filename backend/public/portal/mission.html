@@ -459,7 +459,7 @@
             <h1 class="page-title" data-i18n="nav_mission">Mission</h1>
             <div class="header-actions">
                 <button class="btn btn-outline" onclick="downloadDashboard()" data-i18n="mc_refresh">Refresh</button>
-                <button class="btn btn-primary" id="btnSave" onclick="uploadDashboard()" data-i18n="mc_save">Save to Cloud</button>
+                <button class="btn btn-primary" id="btnNotify" onclick="publishNotification()" data-i18n="mc_notify_btn">Publish Notification</button>
             </div>
         </div>
 
@@ -563,9 +563,12 @@
     <script>
         // --- State ---
         let dashboard = { todoList: [], missionList: [], doneList: [], notes: [], rules: [], skills: [], souls: [] };
-        let lastSavedDashboard = null; // snapshot for change detection
+        let lastSavedDashboard = null; // snapshot for auto-save conflict detection
+        let lastNotifiedDashboard = null; // snapshot for notification diff (updated only on notify/skip)
         let version = 1;
         let hasChanges = false;
+        let isSyncing = false;
+        let autoSaveTimer = null;
         let refreshTimer = null;
         let boundEntities = [];
 
@@ -613,6 +616,38 @@
         function markChanged() {
             hasChanges = true;
             renderSyncBar();
+            debouncedAutoSave();
+        }
+
+        function debouncedAutoSave() {
+            if (autoSaveTimer) clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(() => autoSave(), 2000);
+        }
+
+        async function autoSave() {
+            if (!hasChanges || isSyncing) return;
+            isSyncing = true;
+            renderSyncBar();
+            try {
+                const data = await apiCall('POST', '/api/mission/dashboard', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    version: version,
+                    dashboard: dashboard
+                });
+                if (data.success) {
+                    version = data.version || version + 1;
+                    hasChanges = false;
+                    lastSavedDashboard = JSON.parse(JSON.stringify(dashboard));
+                } else if (data.error === 'VERSION_CONFLICT') {
+                    // Silent conflict — will resolve on next manual refresh or auto-refresh
+                    console.warn('Auto-save version conflict, will retry on next change');
+                }
+            } catch (e) {
+                console.warn('Auto-save failed:', e.message);
+            }
+            isSyncing = false;
+            renderSyncBar();
         }
 
         // --- Init ---
@@ -653,10 +688,10 @@
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('dashboardContent').style.display = '';
 
-            // Auto-refresh every 30s (skip if editing or unsaved)
+            // Auto-refresh every 30s (skip if editing or syncing)
             refreshTimer = setInterval(() => {
                 const dialogOpen = document.getElementById('dialogContainer').innerHTML.trim() !== '';
-                if (!hasChanges && !dialogOpen) downloadDashboard();
+                if (!hasChanges && !isSyncing && !dialogOpen) downloadDashboard();
             }, 30000);
 
             // Re-render on language change
@@ -683,51 +718,62 @@
             }
         }
 
-        async function uploadDashboard() {
-            const btn = document.getElementById('btnSave');
+        // publishNotification: the main button action — save first if needed, then show notify prompt
+        async function publishNotification() {
+            const btn = document.getElementById('btnNotify');
             btn.disabled = true;
-            btn.textContent = i18n.t('mc_saving');
 
-            try {
-                const data = await apiCall('POST', '/api/mission/dashboard', {
-                    deviceId: currentUser.deviceId,
-                    deviceSecret: currentUser.deviceSecret,
-                    version: version,
-                    dashboard: dashboard
-                });
-
-                if (data.success) {
-                    version = data.version || version + 1;
-                    hasChanges = false;
-                    renderSyncBar();
-                    btn.textContent = i18n.t('mc_save');
-                    // After save, check if there are changed notifiable items
-                    // (toast shown after user interacts with notify prompt)
-                    showNotifyPrompt();
-                    // Update snapshot after notify prompt captures its items
-                    lastSavedDashboard = JSON.parse(JSON.stringify(dashboard));
-                } else if (data.error === 'VERSION_CONFLICT') {
-                    if (confirm(i18n.t('mc_confirm_version', { you: version, server: data.currentVersion }))) {
-                        await downloadDashboard();
+            // Flush any pending auto-save first
+            if (autoSaveTimer) { clearTimeout(autoSaveTimer); autoSaveTimer = null; }
+            if (hasChanges) {
+                isSyncing = true;
+                renderSyncBar();
+                try {
+                    const data = await apiCall('POST', '/api/mission/dashboard', {
+                        deviceId: currentUser.deviceId,
+                        deviceSecret: currentUser.deviceSecret,
+                        version: version,
+                        dashboard: dashboard
+                    });
+                    if (data.success) {
+                        version = data.version || version + 1;
+                        hasChanges = false;
+                        lastSavedDashboard = JSON.parse(JSON.stringify(dashboard));
+                    } else if (data.error === 'VERSION_CONFLICT') {
+                        isSyncing = false;
+                        renderSyncBar();
+                        btn.disabled = false;
+                        if (confirm(i18n.t('mc_confirm_version', { you: version, server: data.currentVersion }))) {
+                            await downloadDashboard();
+                        }
+                        return;
+                    } else {
+                        showToast('Upload failed: ' + (data.error || 'Unknown'), 'error');
+                        isSyncing = false;
+                        renderSyncBar();
+                        btn.disabled = false;
+                        return;
                     }
-                } else {
-                    showToast('Upload failed: ' + (data.error || 'Unknown'), 'error');
+                } catch (e) {
+                    showToast('Error: ' + e.message, 'error');
+                    isSyncing = false;
+                    renderSyncBar();
+                    btn.disabled = false;
+                    return;
                 }
-            } catch (e) {
-                showToast('Error: ' + e.message, 'error');
+                isSyncing = false;
+                renderSyncBar();
             }
 
+            showNotifyPrompt();
             btn.disabled = false;
-            if (btn.textContent === i18n.t('mc_saving')) {
-                btn.textContent = i18n.t('mc_save');
-            }
         }
 
         // ========== Notification Prompt ==========
         // Change detection helpers
         function isTodoChanged(item) {
-            if (!lastSavedDashboard) return true;
-            const prev = lastSavedDashboard.todoList.find(p => p.id === item.id);
+            if (!lastNotifiedDashboard) return true;
+            const prev = lastNotifiedDashboard.todoList.find(p => p.id === item.id);
             if (!prev) return true; // new item
             const pCur = item.priority?.value || item.priority;
             const pPrev = prev.priority?.value || prev.priority;
@@ -737,8 +783,8 @@
         }
 
         function isSkillChanged(skill) {
-            if (!lastSavedDashboard) return true;
-            const prev = lastSavedDashboard.skills.find(p => p.id === skill.id);
+            if (!lastNotifiedDashboard) return true;
+            const prev = lastNotifiedDashboard.skills.find(p => p.id === skill.id);
             if (!prev) return true;
             return skill.title !== prev.title || skill.url !== prev.url
                 || (skill.steps || '') !== (prev.steps || '')
@@ -746,8 +792,8 @@
         }
 
         function isRuleChanged(rule) {
-            if (!lastSavedDashboard) return true;
-            const prev = lastSavedDashboard.rules.find(p => p.id === rule.id);
+            if (!lastNotifiedDashboard) return true;
+            const prev = lastNotifiedDashboard.rules.find(p => p.id === rule.id);
             if (!prev) return true;
             return rule.name !== prev.name || rule.description !== prev.description
                 || (rule.ruleType?.name || rule.ruleType) !== (prev.ruleType?.name || prev.ruleType)
@@ -818,7 +864,7 @@
         function showNotifyPrompt() {
             const items = getNotifiableItems();
             if (items.length === 0) {
-                showToast(i18n.t('mc_task_saved'), 'success');
+                showToast(i18n.t('mc_no_notify_items'), 'info');
                 return;
             }
 
@@ -832,14 +878,14 @@
 
             let html = `<div class="dialog-overlay" onclick="if(event.target===this)closeDialog()">
                 <div class="dialog">
-                    <div class="dialog-title">📢 發布任務更新通知</div>
+                    <div class="dialog-title">${i18n.t('mc_notify_dialog_title')}</div>
                     <div style="color:var(--text-secondary);font-size:13px;margin-bottom:12px;">
-                        選擇要通知的項目，將透過 Webhook 推送給對應的實體：
+                        ${i18n.t('mc_notify_dialog_desc')}
                     </div>
                     <div style="margin-bottom:12px;">${checkboxes}</div>
                     <div class="dialog-actions">
-                        <button class="btn btn-outline" onclick="closeDialog(); showToast(i18n.t('mc_task_saved'), 'success')">跳過</button>
-                        <button class="btn btn-primary" id="dlgNotifyBtn">發送通知</button>
+                        <button class="btn btn-outline" onclick="updateNotifiedSnapshot(); closeDialog();">${i18n.t('mc_notify_skip')}</button>
+                        <button class="btn btn-primary" id="dlgNotifyBtn">${i18n.t('mc_notify_send')}</button>
                     </div>
                 </div>
             </div>`;
@@ -848,7 +894,7 @@
 
             document.getElementById('dlgNotifyBtn').onclick = async () => {
                 const selectedIdxs = Array.from(document.querySelectorAll('.notify-cb:checked')).map(cb => parseInt(cb.dataset.idx));
-                if (selectedIdxs.length === 0) { closeDialog(); return; }
+                if (selectedIdxs.length === 0) { updateNotifiedSnapshot(); closeDialog(); return; }
 
                 const notifications = selectedIdxs.map(idx => ({
                     type: items[idx].type,
@@ -864,9 +910,14 @@
                     deviceSecret: currentUser.deviceSecret,
                     notifications
                 }).catch(() => {});
+                updateNotifiedSnapshot();
                 closeDialog();
                 window.location.href = 'chat.html';
             };
+        }
+
+        function updateNotifiedSnapshot() {
+            lastNotifiedDashboard = JSON.parse(JSON.stringify(dashboard));
         }
 
         function applyDashboard(d) {
@@ -882,6 +933,7 @@
             version = d.version || 1;
             hasChanges = false;
             lastSavedDashboard = JSON.parse(JSON.stringify(dashboard));
+            if (!lastNotifiedDashboard) lastNotifiedDashboard = JSON.parse(JSON.stringify(dashboard));
             renderAll();
         }
 
@@ -1007,18 +1059,15 @@
         }
 
         function renderSyncBar() {
-            const btn = document.getElementById('btnSave');
+            const status = isSyncing ? i18n.t('mc_syncing') : hasChanges ? i18n.t('mc_sync_unsaved') : i18n.t('mc_sync_synced');
             document.getElementById('syncBar').textContent =
-                `v${version} | ${hasChanges ? i18n.t('mc_sync_unsaved') : i18n.t('mc_sync_synced')} | ${fmtDate(Date.now())}`;
-            if (!btn.disabled) {
-                btn.textContent = hasChanges ? i18n.t('mc_save_unsaved') : i18n.t('mc_save');
-            }
+                `v${version} | ${status} | ${fmtDate(Date.now())}`;
         }
 
         // ========== Dialogs ==========
         function showDialog(title, fields, onSave) {
             const c = document.getElementById('dialogContainer');
-            let html = `<div class="dialog-overlay" onclick="if(event.target===this)closeDialog()">
+            let html = `<div class="dialog-overlay">
                 <div class="dialog">
                     <div class="dialog-title">${title}</div>`;
 
@@ -1566,7 +1615,7 @@
                 </div>`;
             }).join('');
 
-            c.innerHTML = `<div class="dialog-overlay" onclick="if(event.target===this)closeDialog()">
+            c.innerHTML = `<div class="dialog-overlay">
                 <div class="dialog">
                     <div class="dialog-title">Env Variables — ${esc(tpl.label)}</div>
                     <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;">
@@ -1645,7 +1694,7 @@
 
             if (!entityCheckboxes) entityCheckboxes = '<div style="color:var(--text-muted);font-size:12px;">No bound entities</div>';
 
-            let html = `<div class="dialog-overlay" onclick="if(event.target===this)closeDialog()">
+            let html = `<div class="dialog-overlay">
                 <div class="dialog">
                     <div class="dialog-title">${isEdit ? '編輯技能' : '新增技能'}</div>
                     <div class="dialog-field-label">官方模板</div>
@@ -1765,7 +1814,7 @@
 
             if (!entityCheckboxes) entityCheckboxes = '<div style="color:var(--text-muted);font-size:12px;">No bound entities</div>';
 
-            let html = `<div class="dialog-overlay" onclick="if(event.target===this)closeDialog()">
+            let html = `<div class="dialog-overlay">
                 <div class="dialog">
                     <div class="dialog-title">${isEdit ? i18n.t('mc_dlg_edit_rule') : i18n.t('mc_dlg_add_rule')}</div>
                     ${!isEdit ? `<button class="btn btn-outline" onclick="showRuleGallery()" style="margin-bottom:12px;width:100%;">📋 從模板選擇</button>` : ''}
@@ -1968,7 +2017,7 @@
                 return esc(i18n.t('mc_dlg_soul_template_btn'));
             })();
 
-            let html = `<div class="dialog-overlay" onclick="if(event.target===this)closeDialog()">
+            let html = `<div class="dialog-overlay">
                 <div class="dialog">
                     <div class="dialog-title">${isEdit ? i18n.t('mc_dlg_edit_soul') : i18n.t('mc_dlg_add_soul')}</div>
                     <button id="dlgTemplateBtn" class="btn btn-outline" onclick="showSoulGallery()" style="margin-bottom:12px;width:100%;">${tplBtnLabel}</button>
@@ -2060,8 +2109,8 @@
 
         // Add soul change detection for notify
         function isSoulChanged(soul) {
-            if (!lastSavedDashboard) return true;
-            const prev = (lastSavedDashboard.souls || []).find(p => p.id === soul.id);
+            if (!lastNotifiedDashboard) return true;
+            const prev = (lastNotifiedDashboard.souls || []).find(p => p.id === soul.id);
             if (!prev) return true;
             return soul.name !== prev.name || soul.description !== prev.description
                 || soul.templateId !== prev.templateId || soul.isActive !== prev.isActive

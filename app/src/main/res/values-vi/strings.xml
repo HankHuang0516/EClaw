@@ -147,6 +147,8 @@
     <string name="unknown_error">Lỗi không xác định</string>
     <string name="failed_add_slot">Thêm vị trí thất bại</string>
     <string name="no_bound_entities">Không có thực thể nào được liên kết</string>
+    <string name="publish_notification">Gửi thông báo</string>
+    <string name="no_notify_items">Không có thay đổi mới cần thông báo</string>
     <string name="notification_sent">Đã gửi thông báo</string>
     <string name="task_saved">Đã lưu tác vụ</string>
     <string name="schedule_tag">Lịch trình</string>
@@ -172,6 +174,26 @@
     <string name="reorder_saving">Đang lưu thứ tự mới…</string>
     <string name="reorder_success">Đã cập nhật thứ tự thực thể!</string>
     <string name="reorder_failed">Cập nhật thứ tự thất bại</string>
+    <string name="xd_settings_btn">Tin nhắn liên thiết bị</string>
+    <string name="xd_settings_title">Cài đặt tin nhắn liên thiết bị</string>
+    <string name="xd_pre_inject">Hướng dẫn tiêm trước</string>
+    <string name="xd_pre_inject_desc">Thêm trước tin nhắn liên thiết bị trong thông báo đẩy</string>
+    <string name="xd_forbidden">Từ cấm</string>
+    <string name="xd_forbidden_desc">Tin nhắn chứa các từ này sẽ bị từ chối (phân cách bằng dấu phẩy)</string>
+    <string name="xd_rate_limit">Giới hạn tốc độ (giây)</string>
+    <string name="xd_rate_limit_desc">Thời gian chờ mỗi người gửi (0 = không giới hạn)</string>
+    <string name="xd_blacklist">Danh sách đen (mã công khai)</string>
+    <string name="xd_codes_sep">Mã công khai phân cách bằng dấu phẩy</string>
+    <string name="xd_whitelist_mode">Chế độ danh sách trắng</string>
+    <string name="xd_whitelist">Danh sách trắng (mã công khai)</string>
+    <string name="xd_reject_msg">Tin nhắn từ chối</string>
+    <string name="xd_reject_msg_hint">Tự động trả lời khi bị chặn (để trống = im lặng)</string>
+    <string name="xd_allowed_media">Loại phương tiện được phép</string>
+    <string name="xd_save">Lưu</string>
+    <string name="xd_reset">Đặt lại mặc định</string>
+    <string name="xd_saved">Đã lưu cài đặt liên thiết bị!</string>
+    <string name="xd_save_failed">Lưu cài đặt thất bại</string>
+    <string name="xd_reset_done">Đã đặt lại về mặc định</string>
     <string name="refreshing">Đang làm mới…</string>
     <string name="rebind">Liên kết lại</string>
     <string name="entity_count_format">%1$d/%2$d thực thể</string>

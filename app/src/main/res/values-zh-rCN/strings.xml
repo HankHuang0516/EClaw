@@ -148,6 +148,8 @@
     <string name="unknown_error">未知错误</string>
     <string name="failed_add_slot">添加槽位失败</string>
     <string name="no_bound_entities">暂无已绑定的实体</string>
+    <string name="publish_notification">发布通知</string>
+    <string name="no_notify_items">没有新的变更需要通知</string>
     <string name="notification_sent">通知已发送</string>
     <string name="task_saved">任务已保存</string>
     <string name="schedule_tag">定时任务</string>
@@ -173,6 +175,26 @@
     <string name="reorder_saving">正在保存新顺序…</string>
     <string name="reorder_success">实体顺序已更新！</string>
     <string name="reorder_failed">更新顺序失败</string>
+    <string name="xd_settings_btn">跨设备消息</string>
+    <string name="xd_settings_title">跨设备消息设置</string>
+    <string name="xd_pre_inject">预注入指令</string>
+    <string name="xd_pre_inject_desc">在推送通知中添加在跨设备消息前面</string>
+    <string name="xd_forbidden">禁止词汇</string>
+    <string name="xd_forbidden_desc">包含这些词汇的消息将被拒绝（以逗号分隔）</string>
+    <string name="xd_rate_limit">频率限制（秒）</string>
+    <string name="xd_rate_limit_desc">每位发送者的冷却时间（0 = 不限制）</string>
+    <string name="xd_blacklist">黑名单（公开代码）</string>
+    <string name="xd_codes_sep">以逗号分隔的公开代码</string>
+    <string name="xd_whitelist_mode">白名单模式</string>
+    <string name="xd_whitelist">白名单（公开代码）</string>
+    <string name="xd_reject_msg">拒绝消息</string>
+    <string name="xd_reject_msg_hint">被屏蔽时自动回复（留空 = 静默）</string>
+    <string name="xd_allowed_media">允许的媒体类型</string>
+    <string name="xd_save">保存</string>
+    <string name="xd_reset">恢复默认</string>
+    <string name="xd_saved">跨设备设置已保存！</string>
+    <string name="xd_save_failed">保存设置失败</string>
+    <string name="xd_reset_done">已恢复为默认设置</string>
     <string name="refreshing">刷新中…</string>
     <string name="rebind">重新绑定</string>
     <string name="entity_count_format">%1$d/%2$d 个实体</string>

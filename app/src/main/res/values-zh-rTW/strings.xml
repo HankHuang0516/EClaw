@@ -154,6 +154,26 @@
     <string name="reorder_saving">正在儲存新順序…</string>
     <string name="reorder_success">實體順序已更新！</string>
     <string name="reorder_failed">更新順序失敗</string>
+    <string name="xd_settings_btn">跨裝置訊息</string>
+    <string name="xd_settings_title">跨裝置訊息設定</string>
+    <string name="xd_pre_inject">預注入指令</string>
+    <string name="xd_pre_inject_desc">在推送通知中加在跨裝置訊息前面</string>
+    <string name="xd_forbidden">禁止詞彙</string>
+    <string name="xd_forbidden_desc">包含這些詞彙的訊息將被拒絕（以逗號分隔）</string>
+    <string name="xd_rate_limit">頻率限制（秒）</string>
+    <string name="xd_rate_limit_desc">每位發送者的冷卻時間（0 = 不限制）</string>
+    <string name="xd_blacklist">黑名單（公開代碼）</string>
+    <string name="xd_codes_sep">以逗號分隔的公開代碼</string>
+    <string name="xd_whitelist_mode">白名單模式</string>
+    <string name="xd_whitelist">白名單（公開代碼）</string>
+    <string name="xd_reject_msg">拒絕訊息</string>
+    <string name="xd_reject_msg_hint">被封鎖時自動回覆（留空 = 靜默）</string>
+    <string name="xd_allowed_media">允許的媒體類型</string>
+    <string name="xd_save">儲存</string>
+    <string name="xd_reset">恢復預設</string>
+    <string name="xd_saved">跨裝置設定已儲存！</string>
+    <string name="xd_save_failed">儲存設定失敗</string>
+    <string name="xd_reset_done">已恢復為預設設定</string>
     <string name="entity_count_format">%1$d/%2$d 個實體</string>
     <string name="entities_label">個實體</string>
 
@@ -180,6 +200,8 @@
     <string name="unknown_error">未知錯誤</string>
     <string name="failed_add_slot">新增欄位失敗</string>
     <string name="no_bound_entities">沒有綁定的實體</string>
+    <string name="publish_notification">發布通知</string>
+    <string name="no_notify_items">沒有新的變更需要通知</string>
     <string name="notification_sent">通知已發送</string>
     <string name="task_saved">任務已儲存</string>
     <string name="schedule_tag">排程</string>

@@ -203,6 +203,8 @@
     <string name="unknown_error">Unknown error</string>
     <string name="failed_add_slot">Failed to add slot</string>
     <string name="no_bound_entities">No bound entities</string>
+    <string name="publish_notification">Publish Notification</string>
+    <string name="no_notify_items">No new changes to notify</string>
     <string name="notification_sent">Notification sent</string>
     <string name="task_saved">Task saved</string>
     <string name="schedule_tag">Schedule</string>

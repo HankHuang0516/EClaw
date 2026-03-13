@@ -32,7 +32,9 @@
    - DRY but not premature abstraction
    - 優先使用專用工具（Read > cat, Edit > sed, Grep > grep）
 
-10. **Post-Push Production Verification** — push 到 main 後**必須**驗證 production：
+10. **Chinese Summary on Completion** — 每次任務完成後，用**繁體中文**回報總結，包含：修改了哪些檔案、做了什麼改動、有無需要注意的事項。
+
+11. **Post-Push Production Verification** — push 到 main 後**必須**驗證 production：
     - 等 Railway 部署完成（檢查 `/api/health` 的 build 版本或 uptime 重置）
     - 跑所有 regression tests 對 live server（`test-bot-api-response.js`, `test-broadcast.js`, `test-cross-device-settings.js`, `test-edit-mode-public-code.js` 及新增的 feature tests）
     - 若有 test failure，立即分析是 pre-existing 還是本次改動引起的

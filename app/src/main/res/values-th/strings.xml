@@ -147,6 +147,8 @@
     <string name="unknown_error">เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ</string>
     <string name="failed_add_slot">เพิ่มช่องไม่สำเร็จ</string>
     <string name="no_bound_entities">ไม่มี Entity ที่ผูกไว้</string>
+    <string name="publish_notification">เผยแพร่การแจ้งเตือน</string>
+    <string name="no_notify_items">ไม่มีการเปลี่ยนแปลงใหม่ที่ต้องแจ้งเตือน</string>
     <string name="notification_sent">ส่งการแจ้งเตือนแล้ว</string>
     <string name="task_saved">บันทึกงานแล้ว</string>
     <string name="schedule_tag">กำหนดการ</string>
@@ -172,6 +174,26 @@
     <string name="reorder_saving">กำลังบันทึกลำดับใหม่…</string>
     <string name="reorder_success">อัปเดตลำดับ Entity แล้ว!</string>
     <string name="reorder_failed">อัปเดตลำดับไม่สำเร็จ</string>
+    <string name="xd_settings_btn">ข้อความข้ามอุปกรณ์</string>
+    <string name="xd_settings_title">การตั้งค่าข้อความข้ามอุปกรณ์</string>
+    <string name="xd_pre_inject">คำสั่งก่อนแทรก</string>
+    <string name="xd_pre_inject_desc">เพิ่มก่อนข้อความข้ามอุปกรณ์ในการแจ้งเตือน</string>
+    <string name="xd_forbidden">คำต้องห้าม</string>
+    <string name="xd_forbidden_desc">ข้อความที่มีคำเหล่านี้จะถูกปฏิเสธ (คั่นด้วยเครื่องหมายจุลภาค)</string>
+    <string name="xd_rate_limit">จำกัดอัตรา (วินาที)</string>
+    <string name="xd_rate_limit_desc">ระยะเวลาพักต่อผู้ส่ง (0 = ไม่จำกัด)</string>
+    <string name="xd_blacklist">บัญชีดำ (รหัสสาธารณะ)</string>
+    <string name="xd_codes_sep">รหัสสาธารณะคั่นด้วยเครื่องหมายจุลภาค</string>
+    <string name="xd_whitelist_mode">โหมดบัญชีขาว</string>
+    <string name="xd_whitelist">บัญชีขาว (รหัสสาธารณะ)</string>
+    <string name="xd_reject_msg">ข้อความปฏิเสธ</string>
+    <string name="xd_reject_msg_hint">ตอบกลับอัตโนมัติเมื่อถูกบล็อก (ว่าง = เงียบ)</string>
+    <string name="xd_allowed_media">ประเภทสื่อที่อนุญาต</string>
+    <string name="xd_save">บันทึก</string>
+    <string name="xd_reset">รีเซ็ตเป็นค่าเริ่มต้น</string>
+    <string name="xd_saved">บันทึกการตั้งค่าข้ามอุปกรณ์แล้ว!</string>
+    <string name="xd_save_failed">บันทึกการตั้งค่าไม่สำเร็จ</string>
+    <string name="xd_reset_done">รีเซ็ตเป็นค่าเริ่มต้นแล้ว</string>
     <string name="refreshing">กำลังรีเฟรช…</string>
     <string name="rebind">ผูกใหม่</string>
     <string name="entity_count_format">%1$d/%2$d entity</string>

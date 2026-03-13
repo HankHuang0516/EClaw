@@ -8,6 +8,8 @@ import com.hank.clawlive.data.local.MissionPreferences
 import com.hank.clawlive.data.model.*
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.SkillTemplate
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -61,10 +63,18 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
 
     /**
      * Snapshot of the dashboard state at the time of last successful download or upload.
-     * Used for change detection in the notification prompt -- only items that differ
-     * from this snapshot are shown as "changed" (matching Web Portal behaviour).
+     * Used for auto-save conflict detection.
      */
     private var lastSavedSnapshot: MissionDashboardSnapshot? = null
+
+    /**
+     * Snapshot of the dashboard state at the time of last notification publish/skip.
+     * Used for notification diff — only items that differ from this snapshot are shown.
+     */
+    private var lastNotifiedSnapshot: MissionDashboardSnapshot? = null
+
+    /** Debounced auto-save coroutine job. */
+    private var autoSaveJob: Job? = null
 
     init {
         // Load from local cache first, then fetch from server
@@ -89,6 +99,7 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
         }
         // Use local cache as baseline snapshot for change detection
         lastSavedSnapshot = snapshot
+        if (lastNotifiedSnapshot == null) lastNotifiedSnapshot = snapshot
     }
 
     fun downloadDashboard() {
@@ -129,6 +140,7 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
                         lastSyncedAt = d.lastSyncedAt ?: System.currentTimeMillis()
                     )
                     missionPrefs.saveDashboard(d)
+                    if (lastNotifiedSnapshot == null) lastNotifiedSnapshot = lastSavedSnapshot
                 } else {
                     _uiState.update {
                         it.copy(isLoading = false, error = response.error ?: response.message)
@@ -208,6 +220,39 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
                 version = state.version,
                 lastSyncedAt = state.lastSyncedAt ?: System.currentTimeMillis()
             )
+        )
+        // Auto-save if there are pending changes
+        if (state.hasLocalChanges) scheduleAutoSave()
+    }
+
+    /** Debounced auto-save: schedules an upload 2s after the last change. */
+    private fun scheduleAutoSave() {
+        autoSaveJob?.cancel()
+        autoSaveJob = viewModelScope.launch {
+            delay(2000)
+            if (!_uiState.value.hasLocalChanges || _uiState.value.isSyncing) return@launch
+            uploadDashboard(
+                onConflict = { _, _ ->
+                    Timber.w("Auto-save version conflict, will retry on next change")
+                },
+                onSuccess = null  // no notify prompt on auto-save
+            )
+        }
+    }
+
+    /** Update the notified snapshot — call after user publishes or skips notification. */
+    fun updateNotifiedSnapshot() {
+        val s = _uiState.value
+        lastNotifiedSnapshot = MissionDashboardSnapshot(
+            todoList = s.todoList.map { it.copy() },
+            missionList = s.missionList.map { it.copy() },
+            doneList = s.doneList.map { it.copy() },
+            notes = s.notes.map { it.copy() },
+            rules = s.rules.map { it.copy() },
+            skills = s.skills.map { it.copy() },
+            souls = s.souls.map { it.copy() },
+            version = s.version,
+            lastSyncedAt = s.lastSyncedAt ?: System.currentTimeMillis()
         )
     }
 
@@ -476,7 +521,7 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun isTodoChanged(item: MissionItem): Boolean {
-        val snap = lastSavedSnapshot ?: return true
+        val snap = lastNotifiedSnapshot ?: return true
         val prev = snap.todoList?.find { it.id == item.id } ?: return true // new item
         return item.title != prev.title
                 || item.description != prev.description
@@ -486,7 +531,7 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun isSkillChanged(skill: MissionSkill): Boolean {
-        val snap = lastSavedSnapshot ?: return true
+        val snap = lastNotifiedSnapshot ?: return true
         val prev = snap.skills?.find { it.id == skill.id } ?: return true
         return skill.title != prev.title
                 || skill.url != prev.url
@@ -494,7 +539,7 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun isRuleChanged(rule: MissionRule): Boolean {
-        val snap = lastSavedSnapshot ?: return true
+        val snap = lastNotifiedSnapshot ?: return true
         val prev = snap.rules?.find { it.id == rule.id } ?: return true
         return rule.name != prev.name
                 || rule.description != prev.description
@@ -504,7 +549,7 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private fun isSoulChanged(soul: MissionSoul): Boolean {
-        val snap = lastSavedSnapshot ?: return true
+        val snap = lastNotifiedSnapshot ?: return true
         val prev = snap.souls?.find { it.id == soul.id } ?: return true
         return soul.name != prev.name
                 || soul.description != prev.description
@@ -514,7 +559,7 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
     }
 
     /**
-     * Returns only the items that have changed since the last save/download,
+     * Returns only the items that have changed since the last notification publish/skip,
      * matching the Web Portal's getNotifiableItems() logic.
      * Items that haven't changed are excluded entirely.
      */

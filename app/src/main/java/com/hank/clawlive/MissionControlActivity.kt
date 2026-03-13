@@ -235,6 +235,7 @@ class MissionControlActivity : AppCompatActivity() {
         }
 
         findViewById<MaterialButton>(R.id.btnUpload).setOnClickListener {
+            // Flush any pending auto-save first, then show notify prompt
             viewModel.uploadDashboard(
                 onConflict = { yourVersion, serverVersion ->
                     runOnUiThread {
@@ -290,12 +291,10 @@ class MissionControlActivity : AppCompatActivity() {
         findViewById<View>(R.id.progressBar).visibility =
             if (state.isLoading || state.isSyncing) View.VISIBLE else View.GONE
 
-        // Upload button
+        // Publish Notification button
         val btnUpload = findViewById<MaterialButton>(R.id.btnUpload)
         btnUpload.isEnabled = !state.isSyncing
-        btnUpload.text = if (state.isSyncing) getString(R.string.saving)
-        else if (state.hasLocalChanges) getString(R.string.save) + " *"
-        else getString(R.string.save)
+        btnUpload.text = getString(R.string.publish_notification)
 
         // Lists
         todoAdapter.submitList(state.todoList)
@@ -937,7 +936,7 @@ class MissionControlActivity : AppCompatActivity() {
         val items = viewModel.getNotifiableItems()
 
         if (items.isEmpty()) {
-            Toast.makeText(this, getString(R.string.task_saved), Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.no_notify_items), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -978,11 +977,12 @@ class MissionControlActivity : AppCompatActivity() {
 
                 // Fire-and-forget, then navigate to chat
                 viewModel.notifyEntities(notifications) { _, _ -> }
+                viewModel.updateNotifiedSnapshot()
                 startActivity(Intent(this, ChatActivity::class.java))
                 Toast.makeText(this, getString(R.string.notification_sent), Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("\u8DF3\u904E") { _, _ ->
-                Toast.makeText(this, getString(R.string.task_saved), Toast.LENGTH_SHORT).show()
+                viewModel.updateNotifiedSnapshot()
             }
             .show()
     }
