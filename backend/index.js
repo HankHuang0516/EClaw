@@ -650,10 +650,30 @@ const missionModule = require('./mission')(devices, { awardEntityXP, serverLog }
 app.use('/api/mission', missionModule.router);
 
 // ============================================
+// A2A PROTOCOL COMPATIBILITY LAYER
+// ============================================
+const a2aCompat = require('./a2a-compat')(devices, { publicCodeIndex, serverLog, missionPool: require('pg').Pool ? new (require('pg').Pool)({ connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot' }) : null });
+app.use('/api/a2a', a2aCompat.router);
+app.get('/.well-known/agent.json', (req, res) => res.json(a2aCompat.getPlatformAgentCard()));
+
+// ============================================
+// OAUTH 2.0 AUTHORIZATION SERVER
+// ============================================
+const oauthServer = require('./oauth-server')(devices, { serverLog });
+app.use('/api/oauth', oauthServer.router);
+oauthServer.initOAuthDatabase();
+
+// ============================================
 // ARTICLE PUBLISHER — Blogger + Hashnode
 // ============================================
 const articlePublisher = require('./article-publisher');
 app.use('/api/publisher', articlePublisher.router);
+
+// ============================================
+// API DOCS — OpenAPI / Swagger UI
+// ============================================
+const apiDocs = require('./api-docs')();
+app.use('/api/docs', apiDocs.router);
 
 // ============================================
 // BOT TOOLS — Search & Web Fetch Proxy

@@ -1,0 +1,2586 @@
+openapi: 3.0.3
+info:
+  title: EClaw Platform API
+  description: |
+    EClaw is a multi-device, multi-entity IoT agent platform.
+    Each device supports up to 8 entity slots, each independently bindable to bots.
+    Communication flows: Client → Entity (speak), Entity → Entity (speak-to), Entity → All (broadcast).
+  version: 1.0.0
+  contact:
+    name: EClaw Support
+    url: https://eclawbot.com
+
+servers:
+  - url: https://eclawbot.com
+    description: Production
+  - url: http://localhost:3000
+    description: Local development
+
+tags:
+  - name: Health
+    description: Server health and version
+  - name: Device
+    description: Device registration and entity management
+  - name: Binding
+    description: Bot binding via code exchange
+  - name: Communication
+    description: Client-to-bot and bot-to-bot messaging
+  - name: Mission
+    description: Task dashboard, todos, notes, souls, rules
+  - name: AgentCard
+    description: A2A capability discovery
+  - name: Lookup
+    description: Entity lookup and contacts
+  - name: Auth
+    description: User authentication and account management
+  - name: Bot
+    description: Bot registration and management
+  - name: Telemetry
+    description: Device telemetry debug buffer
+  - name: Logs
+    description: Server logs and audit trail
+
+components:
+  securitySchemes:
+    DeviceSecret:
+      type: apiKey
+      in: query
+      name: deviceSecret
+      description: Device owner credential (UUID-UUID format)
+    BotSecret:
+      type: apiKey
+      in: query
+      name: botSecret
+      description: Bot credential returned from /api/bind
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: eclaw_session
+      description: JWT session cookie (httpOnly)
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: OAuth 2.0 bearer token
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        error:
+          type: string
+
+    Entity:
+      type: object
+      properties:
+        deviceId:
+          type: string
+        entityId:
+          type: integer
+        name:
+          type: string
+          nullable: true
+        character:
+          type: string
+        state:
+          type: string
+          enum: [IDLE, BUSY, HAPPY, SAD, ANGRY, CONFUSED, SLEEPING]
+        message:
+          type: string
+        parts:
+          type: object
+          description: Animation state
+        lastUpdated:
+          type: number
+          description: Timestamp in milliseconds
+        isBound:
+          type: boolean
+        avatar:
+          type: string
+          nullable: true
+        xp:
+          type: integer
+        level:
+          type: integer
+        publicCode:
+          type: string
+          description: 3-8 character public identifier
+        bindingType:
+          type: string
+          nullable: true
+          enum: [free, personal, null]
+
+    AgentCard:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 500
+        capabilities:
+          type: array
+          maxItems: 10
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+        protocols:
+          type: array
+          maxItems: 10
+          items:
+            type: string
+            maxLength: 64
+        tags:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            maxLength: 64
+        version:
+          type: string
+          maxLength: 32
+        website:
+          type: string
+          maxLength: 500
+        contactEmail:
+          type: string
+          maxLength: 255
+
+    MissionDashboard:
+      type: object
+      properties:
+        deviceId:
+          type: string
+        version:
+          type: integer
+        lastSyncedAt:
+          type: number
+        todoList:
+          type: array
+          items:
+            $ref: '#/components/schemas/TodoItem'
+        notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Note'
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/MissionItem'
+        souls:
+          type: array
+          items:
+            $ref: '#/components/schemas/MissionItem'
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/MissionItem'
+
+    TodoItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        completed:
+          type: boolean
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 4
+        deadline:
+          type: number
+          nullable: true
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+
+    Note:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: number
+
+    MissionItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: number
+
+    SpeakTarget:
+      type: object
+      properties:
+        entityId:
+          type: integer
+        pushed:
+          type: boolean
+        mode:
+          type: string
+          enum: [push, polling]
+        reason:
+          type: string
+        bindingType:
+          type: string
+          nullable: true
+
+    CrossDeviceSettings:
+      type: object
+      properties:
+        whitelist_enabled:
+          type: boolean
+        whitelist:
+          type: array
+          items:
+            type: string
+        blacklist:
+          type: array
+          items:
+            type: string
+        forbidden_words:
+          type: array
+          items:
+            type: string
+        reject_message:
+          type: string
+        allow_cross_broadcast:
+          type: boolean
+
+    UserInfo:
+      type: object
+      properties:
+        id:
+          type: integer
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        deviceId:
+          type: string
+        language:
+          type: string
+        subscriptionStatus:
+          type: string
+          enum: [free, premium, expired]
+        subscriptionExpiresAt:
+          type: number
+          nullable: true
+
+    TelemetryEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        ts:
+          type: number
+        type:
+          type: string
+          enum: [page_view, user_action, api_req, error, lifecycle, push_sent, gatekeeper]
+        action:
+          type: string
+        page:
+          type: string
+        duration:
+          type: integer
+        meta:
+          type: object
+
+paths:
+  # ── Health ──
+  /api/health:
+    get:
+      tags: [Health]
+      summary: Health check
+      operationId: getHealth
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: number
+                  uptime:
+                    type: number
+                  version:
+                    type: string
+
+  /api/version:
+    get:
+      tags: [Health]
+      summary: Server version info
+      operationId: getVersion
+      responses:
+        '200':
+          description: Version information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  buildId:
+                    type: string
+                  version:
+                    type: string
+                  latestAppVersion:
+                    type: string
+                  forceUpdateBelow:
+                    type: string
+                    nullable: true
+
+  # ── Device Management ──
+  /api/device/register:
+    post:
+      tags: [Device]
+      summary: Register entity and get binding code
+      operationId: registerDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, deviceSecret]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+                entityId:
+                  type: integer
+                  default: 0
+                appVersion:
+                  type: string
+                isTestDevice:
+                  type: boolean
+      responses:
+        '200':
+          description: Binding code generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  deviceId:
+                    type: string
+                  entityId:
+                    type: integer
+                  bindingCode:
+                    type: string
+                    description: 6-char code, expires in 5 min
+                  expiresIn:
+                    type: integer
+        '403':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/device/status:
+    post:
+      tags: [Device]
+      summary: Poll entity status
+      operationId: getDeviceStatus
+      security:
+        - DeviceSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, deviceSecret]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+                entityId:
+                  type: integer
+                appVersion:
+                  type: string
+      responses:
+        '200':
+          description: Entity status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity'
+
+  /api/entities:
+    get:
+      tags: [Device]
+      summary: List all entities
+      operationId: listEntities
+      parameters:
+        - name: deviceId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entities:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Entity'
+                  activeCount:
+                    type: integer
+                  deviceCount:
+                    type: integer
+
+  /api/device/entity/name:
+    put:
+      tags: [Device]
+      summary: Rename entity
+      operationId: renameEntity
+      security:
+        - DeviceSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, deviceSecret, entityId, name]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+                entityId:
+                  type: integer
+                name:
+                  type: string
+                  maxLength: 20
+      responses:
+        '200':
+          description: Name updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  name:
+                    type: string
+
+  /api/device/entity/avatar:
+    put:
+      tags: [Device]
+      summary: Set entity avatar
+      operationId: setEntityAvatar
+      security:
+        - DeviceSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, deviceSecret, entityId, avatar]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+                entityId:
+                  type: integer
+                avatar:
+                  type: string
+                  description: Base64 encoded image (max 500KB)
+      responses:
+        '200':
+          description: Avatar updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  avatar:
+                    type: string
+
+  /api/device/reorder-entities:
+    post:
+      tags: [Device]
+      summary: Swap entity slots
+      operationId: reorderEntities
+      security:
+        - DeviceSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, deviceSecret, fromIndex, toIndex]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+                fromIndex:
+                  type: integer
+                toIndex:
+                  type: integer
+      responses:
+        '200':
+          description: Entities reordered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /api/device/entity:
+    delete:
+      tags: [Device]
+      summary: Unbind and reset entity
+      operationId: deleteEntity
+      security:
+        - DeviceSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, deviceSecret, entityId]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+                entityId:
+                  type: integer
+      responses:
+        '200':
+          description: Entity removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  # ── Binding ──
+  /api/bind:
+    post:
+      tags: [Binding]
+      summary: Complete bot binding via code
+      operationId: bindBot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+                  description: 6-char binding code from /api/device/register
+                name:
+                  type: string
+                  maxLength: 20
+      responses:
+        '200':
+          description: Bot bound successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  deviceId:
+                    type: string
+                  entityId:
+                    type: integer
+                  botSecret:
+                    type: string
+                    description: Save this — required for all bot API calls
+                  publicCode:
+                    type: string
+                  name:
+                    type: string
+                    nullable: true
+
+  /api/bot/register:
+    post:
+      tags: [Bot]
+      summary: Register bot webhook
+      operationId: registerBotWebhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, entityId, botSecret, webhook]
+              properties:
+                deviceId:
+                  type: string
+                entityId:
+                  type: integer
+                botSecret:
+                  type: string
+                webhook:
+                  type: object
+                  required: [url]
+                  properties:
+                    url:
+                      type: string
+                      format: uri
+                    method:
+                      type: string
+                      enum: [POST, GET]
+                      default: POST
+                    retries:
+                      type: integer
+                      default: 3
+                    timeout:
+                      type: integer
+                      default: 30000
+      responses:
+        '200':
+          description: Webhook registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  # ── Communication ──
+  /api/client/speak:
+    post:
+      tags: [Communication]
+      summary: Send message to entity (supports broadcast)
+      operationId: clientSpeak
+      security:
+        - DeviceSecret: []
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, entityId]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+                entityId:
+                  description: Single entity ID, array of IDs, or "all"
+                  oneOf:
+                    - type: integer
+                    - type: string
+                      enum: ["all"]
+                    - type: array
+                      items:
+                        type: integer
+                text:
+                  type: string
+                source:
+                  type: string
+                  default: client
+                mediaType:
+                  type: string
+                  enum: [photo, voice, video, file]
+                mediaUrl:
+                  type: string
+      responses:
+        '200':
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  targets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SpeakTarget'
+                  broadcast:
+                    type: boolean
+
+  /api/entity/speak-to:
+    post:
+      tags: [Communication]
+      summary: Bot sends message to another entity (A2A)
+      operationId: entitySpeakTo
+      security:
+        - BotSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, fromEntityId, toEntityId, botSecret, text]
+              properties:
+                deviceId:
+                  type: string
+                fromEntityId:
+                  type: integer
+                toEntityId:
+                  type: integer
+                botSecret:
+                  type: string
+                text:
+                  type: string
+                mediaType:
+                  type: string
+                  enum: [photo, voice, video, file]
+                mediaUrl:
+                  type: string
+      responses:
+        '200':
+          description: Message delivered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  delivered:
+                    type: boolean
+
+  /api/entity/broadcast:
+    post:
+      tags: [Communication]
+      summary: Bot broadcasts to all entities
+      operationId: entityBroadcast
+      security:
+        - BotSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, fromEntityId, botSecret]
+              properties:
+                deviceId:
+                  type: string
+                fromEntityId:
+                  type: integer
+                botSecret:
+                  type: string
+                text:
+                  type: string
+                mediaType:
+                  type: string
+                mediaUrl:
+                  type: string
+                expects_reply:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Broadcast sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  sentCount:
+                    type: integer
+                  targets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SpeakTarget'
+
+  /api/entity/cross-speak:
+    post:
+      tags: [Communication]
+      summary: Bot sends cross-device message
+      operationId: entityCrossSpeak
+      security:
+        - BotSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, fromEntityId, botSecret, targetPublicCode, text]
+              properties:
+                deviceId:
+                  type: string
+                fromEntityId:
+                  type: integer
+                botSecret:
+                  type: string
+                targetPublicCode:
+                  type: string
+                text:
+                  type: string
+                mediaType:
+                  type: string
+                mediaUrl:
+                  type: string
+      responses:
+        '200':
+          description: Cross-device message sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  delivered:
+                    type: boolean
+
+  /api/client/cross-speak:
+    post:
+      tags: [Communication]
+      summary: Client sends cross-device message
+      operationId: clientCrossSpeak
+      security:
+        - DeviceSecret: []
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, fromEntityId, targetCode, text]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+                fromEntityId:
+                  type: integer
+                targetCode:
+                  type: string
+                text:
+                  type: string
+                mediaType:
+                  type: string
+                mediaUrl:
+                  type: string
+      responses:
+        '200':
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  delivered:
+                    type: boolean
+
+  /api/client/pending:
+    get:
+      tags: [Communication]
+      summary: Get pending messages for entity
+      operationId: getPendingMessages
+      parameters:
+        - name: deviceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: entityId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: botSecret
+          in: query
+          schema:
+            type: string
+            description: If provided, messages are consumed
+      responses:
+        '200':
+          description: Pending messages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pending:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        text:
+                          type: string
+                        from:
+                          type: string
+                        timestamp:
+                          type: number
+                        mediaType:
+                          type: string
+                          nullable: true
+                        mediaUrl:
+                          type: string
+                          nullable: true
+                  count:
+                    type: integer
+
+  /api/transform:
+    post:
+      tags: [Bot]
+      summary: Bot updates wallpaper state
+      operationId: transform
+      security:
+        - BotSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, entityId, botSecret]
+              properties:
+                deviceId:
+                  type: string
+                entityId:
+                  type: integer
+                botSecret:
+                  type: string
+                state:
+                  type: string
+                  enum: [IDLE, BUSY, HAPPY, SAD, ANGRY, CONFUSED, SLEEPING]
+                message:
+                  type: string
+                parts:
+                  type: object
+      responses:
+        '200':
+          description: State updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  lastUpdated:
+                    type: number
+
+  # ── Agent Card ──
+  /api/entity/agent-card:
+    put:
+      tags: [AgentCard]
+      summary: Set agent card
+      operationId: setAgentCard
+      security:
+        - DeviceSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, deviceSecret, entityId, agentCard]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+                entityId:
+                  type: integer
+                agentCard:
+                  $ref: '#/components/schemas/AgentCard'
+      responses:
+        '200':
+          description: Agent card saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  agentCard:
+                    $ref: '#/components/schemas/AgentCard'
+    get:
+      tags: [AgentCard]
+      summary: Get agent card
+      operationId: getAgentCard
+      security:
+        - DeviceSecret: []
+      parameters:
+        - name: deviceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: deviceSecret
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: entityId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Agent card
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  agentCard:
+                    $ref: '#/components/schemas/AgentCard'
+                    nullable: true
+    delete:
+      tags: [AgentCard]
+      summary: Delete agent card
+      operationId: deleteAgentCard
+      security:
+        - DeviceSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, deviceSecret, entityId]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+                entityId:
+                  type: integer
+      responses:
+        '200':
+          description: Agent card deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  # ── Lookup & Contacts ──
+  /api/entity/lookup:
+    get:
+      tags: [Lookup]
+      summary: Lookup entity by public code
+      operationId: lookupEntity
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+            description: 3-8 char public code
+      responses:
+        '200':
+          description: Entity found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  entity:
+                    type: object
+                    properties:
+                      publicCode:
+                        type: string
+                      name:
+                        type: string
+                        nullable: true
+                      character:
+                        type: string
+                      state:
+                        type: string
+                      avatar:
+                        type: string
+                        nullable: true
+                      level:
+                        type: integer
+                      agentCard:
+                        $ref: '#/components/schemas/AgentCard'
+                        nullable: true
+        '404':
+          description: Entity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/contacts:
+    get:
+      tags: [Lookup]
+      summary: List contacts
+      operationId: listContacts
+      security:
+        - DeviceSecret: []
+        - CookieAuth: []
+      parameters:
+        - name: deviceId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Contact list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  contacts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        publicCode:
+                          type: string
+                        name:
+                          type: string
+                        character:
+                          type: string
+                        avatar:
+                          type: string
+                          nullable: true
+                        online:
+                          type: boolean
+    post:
+      tags: [Lookup]
+      summary: Add contact
+      operationId: addContact
+      security:
+        - DeviceSecret: []
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [publicCode]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+                publicCode:
+                  type: string
+      responses:
+        '200':
+          description: Contact added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+    delete:
+      tags: [Lookup]
+      summary: Remove contact
+      operationId: deleteContact
+      security:
+        - DeviceSecret: []
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [publicCode]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+                publicCode:
+                  type: string
+      responses:
+        '200':
+          description: Contact removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  # ── Cross-Device Settings ──
+  /api/entity/cross-device-settings:
+    get:
+      tags: [Device]
+      summary: Get cross-device message filters
+      operationId: getCrossDeviceSettings
+      security:
+        - DeviceSecret: []
+      parameters:
+        - name: deviceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: deviceSecret
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: entityId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  settings:
+                    $ref: '#/components/schemas/CrossDeviceSettings'
+    put:
+      tags: [Device]
+      summary: Update cross-device message filters
+      operationId: updateCrossDeviceSettings
+      security:
+        - DeviceSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, deviceSecret, entityId]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+                entityId:
+                  type: integer
+                whitelist_enabled:
+                  type: boolean
+                whitelist:
+                  type: array
+                  items:
+                    type: string
+                blacklist:
+                  type: array
+                  items:
+                    type: string
+                forbidden_words:
+                  type: array
+                  items:
+                    type: string
+                reject_message:
+                  type: string
+                allow_cross_broadcast:
+                  type: boolean
+      responses:
+        '200':
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  settings:
+                    $ref: '#/components/schemas/CrossDeviceSettings'
+    delete:
+      tags: [Device]
+      summary: Reset cross-device settings to defaults
+      operationId: deleteCrossDeviceSettings
+      security:
+        - DeviceSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, deviceSecret, entityId]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+                entityId:
+                  type: integer
+      responses:
+        '200':
+          description: Settings reset
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  # ── Mission ──
+  /api/mission/dashboard:
+    get:
+      tags: [Mission]
+      summary: Get mission dashboard
+      operationId: getMissionDashboard
+      security:
+        - DeviceSecret: []
+        - BotSecret: []
+      parameters:
+        - name: deviceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: deviceSecret
+          in: query
+          schema:
+            type: string
+        - name: botSecret
+          in: query
+          schema:
+            type: string
+        - name: entityId
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  dashboard:
+                    $ref: '#/components/schemas/MissionDashboard'
+    post:
+      tags: [Mission]
+      summary: Upload dashboard (optimistic locking)
+      operationId: saveMissionDashboard
+      security:
+        - DeviceSecret: []
+        - BotSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, dashboard, version]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+                botSecret:
+                  type: string
+                entityId:
+                  type: integer
+                dashboard:
+                  type: object
+                version:
+                  type: integer
+      responses:
+        '200':
+          description: Dashboard saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  version:
+                    type: integer
+        '409':
+          description: Version conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: VERSION_CONFLICT
+                  currentVersion:
+                    type: integer
+
+  /api/mission/todo/add:
+    post:
+      tags: [Mission]
+      summary: Add todo item
+      operationId: addTodo
+      security:
+        - DeviceSecret: []
+        - BotSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, title]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+                botSecret:
+                  type: string
+                entityId:
+                  type: integer
+                title:
+                  type: string
+                priority:
+                  type: integer
+                  minimum: 1
+                  maximum: 4
+                deadline:
+                  type: number
+      responses:
+        '200':
+          description: Todo created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  todo:
+                    $ref: '#/components/schemas/TodoItem'
+
+  /api/mission/note/add:
+    post:
+      tags: [Mission]
+      summary: Add note
+      operationId: addNote
+      security:
+        - BotSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, entityId, botSecret, title, content]
+              properties:
+                deviceId:
+                  type: string
+                entityId:
+                  type: integer
+                botSecret:
+                  type: string
+                title:
+                  type: string
+                content:
+                  type: string
+      responses:
+        '200':
+          description: Note created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  note:
+                    $ref: '#/components/schemas/Note'
+
+  /api/mission/rules:
+    get:
+      tags: [Mission]
+      summary: Get rules
+      operationId: getRules
+      security:
+        - DeviceSecret: []
+        - BotSecret: []
+      parameters:
+        - name: deviceId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Rules list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  rules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MissionItem'
+
+  /api/mission/souls:
+    get:
+      tags: [Mission]
+      summary: Get souls
+      operationId: getSouls
+      security:
+        - DeviceSecret: []
+        - BotSecret: []
+      parameters:
+        - name: deviceId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Souls list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  souls:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MissionItem'
+
+  # ── Auth ──
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register new user account
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+      responses:
+        '200':
+          description: Account created (sets session cookie)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  userId:
+                    type: integer
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with email and password
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful (sets session cookie)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/UserInfo'
+
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout (clear session)
+      operationId: logout
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Session cleared
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user info
+      operationId: getCurrentUser
+      security:
+        - CookieAuth: []
+        - DeviceSecret: []
+      parameters:
+        - name: deviceId
+          in: query
+          schema:
+            type: string
+        - name: deviceSecret
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/UserInfo'
+
+  /api/auth/device-login:
+    post:
+      tags: [Auth]
+      summary: Login with device credentials
+      operationId: deviceLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, deviceSecret]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+      responses:
+        '200':
+          description: Session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/UserInfo'
+
+  /api/auth/oauth/providers:
+    get:
+      tags: [Auth]
+      summary: List available OAuth providers
+      operationId: getOAuthProviders
+      responses:
+        '200':
+          description: Provider list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  providers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        type:
+                          type: string
+                          enum: [google, facebook, oidc]
+
+  /api/auth/roles:
+    get:
+      tags: [Auth]
+      summary: List all roles (admin only)
+      operationId: listRoles
+      security:
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Role list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  roles:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
+                        description:
+                          type: string
+                        permissions:
+                          type: array
+                          items:
+                            type: string
+
+  # ── Telemetry ──
+  /api/device-telemetry:
+    post:
+      tags: [Telemetry]
+      summary: Log telemetry entries
+      operationId: logTelemetry
+      security:
+        - DeviceSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, deviceSecret, entries]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+                entries:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/TelemetryEntry'
+      responses:
+        '200':
+          description: Entries logged
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  accepted:
+                    type: integer
+                  dropped:
+                    type: integer
+    get:
+      tags: [Telemetry]
+      summary: Retrieve telemetry entries
+      operationId: getTelemetry
+      security:
+        - DeviceSecret: []
+      parameters:
+        - name: deviceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: deviceSecret
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: since
+          in: query
+          schema:
+            type: number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 500
+      responses:
+        '200':
+          description: Telemetry entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  entries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TelemetryEntry'
+                  count:
+                    type: integer
+    delete:
+      tags: [Telemetry]
+      summary: Clear telemetry buffer
+      operationId: clearTelemetry
+      security:
+        - DeviceSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, deviceSecret]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+      responses:
+        '200':
+          description: Buffer cleared
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  deletedCount:
+                    type: integer
+
+  /api/device-telemetry/summary:
+    get:
+      tags: [Telemetry]
+      summary: Get telemetry buffer summary
+      operationId: getTelemetrySummary
+      security:
+        - DeviceSecret: []
+      parameters:
+        - name: deviceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: deviceSecret
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Buffer summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  summary:
+                    type: object
+                    properties:
+                      totalEntries:
+                        type: integer
+                      bufferUsedBytes:
+                        type: integer
+                      bufferMaxBytes:
+                        type: integer
+                      typeBreakdown:
+                        type: object
+
+  # ── Logs ──
+  /api/logs:
+    get:
+      tags: [Logs]
+      summary: Query server logs
+      operationId: getServerLogs
+      security:
+        - DeviceSecret: []
+      parameters:
+        - name: deviceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: deviceSecret
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [bind, unbind, transform, broadcast, broadcast_push, speakto_push, client_push, entity_poll]
+        - name: level
+          in: query
+          schema:
+            type: string
+            enum: [info, warn, error]
+        - name: since
+          in: query
+          schema:
+            type: number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Log entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  logs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        timestamp:
+                          type: number
+                        level:
+                          type: string
+                        category:
+                          type: string
+                        message:
+                          type: string
+                  count:
+                    type: integer
+
+  /api/audit-logs:
+    get:
+      tags: [Logs]
+      summary: Get audit logs (admin only)
+      operationId: getAuditLogs
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: since
+          in: query
+          schema:
+            type: number
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: resource
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: Audit log entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  logs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        timestamp:
+                          type: number
+                        userId:
+                          type: integer
+                          nullable: true
+                        action:
+                          type: string
+                        resource:
+                          type: string
+                        result:
+                          type: string
+                        ipAddress:
+                          type: string
+
+  # ── Bot Tools ──
+  # ── A2A Compatibility ──
+  /.well-known/agent.json:
+    get:
+      tags: [AgentCard]
+      summary: Platform-level A2A agent card
+      operationId: getPlatformAgentCard
+      responses:
+        '200':
+          description: A2A-format platform agent card
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  url:
+                    type: string
+                  provider:
+                    type: object
+                    properties:
+                      organization:
+                        type: string
+                      url:
+                        type: string
+                  version:
+                    type: string
+                  capabilities:
+                    type: object
+                  skills:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        description:
+                          type: string
+
+  /api/a2a/agents/{publicCode}:
+    get:
+      tags: [AgentCard]
+      summary: Get entity A2A agent card by public code
+      operationId: getA2AAgentCard
+      parameters:
+        - name: publicCode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A2A-format entity agent card
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Agent not found
+
+  /api/a2a/tasks/send:
+    post:
+      tags: [Mission]
+      summary: Create or continue an A2A task (JSON-RPC 2.0)
+      operationId: a2aTaskSend
+      security:
+        - BearerAuth: []
+        - DeviceSecret: []
+        - BotSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                jsonrpc:
+                  type: string
+                  example: "2.0"
+                id:
+                  type: string
+                method:
+                  type: string
+                  example: tasks/send
+                params:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    targetAgent:
+                      type: string
+                      description: Public code of target entity
+                    message:
+                      type: object
+                      required: [parts]
+                      properties:
+                        role:
+                          type: string
+                          enum: [user, agent]
+                        parts:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              type:
+                                type: string
+                                enum: [text]
+                              text:
+                                type: string
+      responses:
+        '200':
+          description: Task created/continued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jsonrpc:
+                    type: string
+                  result:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      status:
+                        type: object
+                        properties:
+                          state:
+                            type: string
+                            enum: [submitted, working, completed, canceled, failed, input-required]
+                          timestamp:
+                            type: string
+
+  /api/a2a/tasks/{taskId}:
+    get:
+      tags: [Mission]
+      summary: Get A2A task status
+      operationId: a2aTaskGet
+      security:
+        - BearerAuth: []
+        - DeviceSecret: []
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deviceId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jsonrpc:
+                    type: string
+                  result:
+                    type: object
+        '404':
+          description: Task not found
+
+  /api/a2a/tasks/{taskId}/cancel:
+    post:
+      tags: [Mission]
+      summary: Cancel an A2A task
+      operationId: a2aTaskCancel
+      security:
+        - BearerAuth: []
+        - DeviceSecret: []
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deviceId:
+                  type: string
+      responses:
+        '200':
+          description: Task canceled
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Task not found
+
+  # ── OAuth 2.0 ──
+  /api/oauth/clients:
+    post:
+      tags: [Auth]
+      summary: Register OAuth 2.0 client
+      operationId: registerOAuthClient
+      security:
+        - DeviceSecret: []
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [client_name]
+              properties:
+                client_name:
+                  type: string
+                redirect_uris:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+                grant_types:
+                  type: array
+                  items:
+                    type: string
+                    enum: [authorization_code, client_credentials, refresh_token]
+                scopes:
+                  type: array
+                  items:
+                    type: string
+                    enum: [read, write, entity:manage, mission:manage, admin]
+      responses:
+        '201':
+          description: Client registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  client_id:
+                    type: string
+                  client_secret:
+                    type: string
+                  client_name:
+                    type: string
+    get:
+      tags: [Auth]
+      summary: List own OAuth clients
+      operationId: listOAuthClients
+      security:
+        - DeviceSecret: []
+        - CookieAuth: []
+      responses:
+        '200':
+          description: Client list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clients:
+                    type: array
+                    items:
+                      type: object
+
+  /api/oauth/token:
+    post:
+      tags: [Auth]
+      summary: Token endpoint (authorization_code, client_credentials, refresh_token)
+      operationId: oauthToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [grant_type, client_id, client_secret]
+              properties:
+                grant_type:
+                  type: string
+                  enum: [authorization_code, client_credentials, refresh_token]
+                client_id:
+                  type: string
+                client_secret:
+                  type: string
+                code:
+                  type: string
+                redirect_uri:
+                  type: string
+                refresh_token:
+                  type: string
+                scope:
+                  type: string
+      responses:
+        '200':
+          description: Token issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+                    example: Bearer
+                  expires_in:
+                    type: integer
+                  refresh_token:
+                    type: string
+                  scope:
+                    type: string
+
+  /api/oauth/revoke:
+    post:
+      tags: [Auth]
+      summary: Revoke token (RFC 7009)
+      operationId: oauthRevoke
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                token_type_hint:
+                  type: string
+                  enum: [access_token, refresh_token]
+      responses:
+        '200':
+          description: Token revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /api/oauth/introspect:
+    post:
+      tags: [Auth]
+      summary: Token introspection (RFC 7662)
+      operationId: oauthIntrospect
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Token info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active:
+                    type: boolean
+                  scope:
+                    type: string
+                  client_id:
+                    type: string
+                  token_type:
+                    type: string
+                  exp:
+                    type: integer
+
+  # ── Bot Tools ──
+  /api/bot/web-search:
+    get:
+      tags: [Bot]
+      summary: Web search proxy for bots
+      operationId: botWebSearch
+      security:
+        - BotSecret: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: deviceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: botSecret
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: entityId
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        title:
+                          type: string
+                        url:
+                          type: string
+                        snippet:
+                          type: string
+
+  /api/bot/web-fetch:
+    get:
+      tags: [Bot]
+      summary: Web fetch proxy for bots
+      operationId: botWebFetch
+      security:
+        - BotSecret: []
+      parameters:
+        - name: url
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uri
+        - name: deviceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: botSecret
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: entityId
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Fetched content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: string
+                  contentType:
+                    type: string
+                  url:
+                    type: string
