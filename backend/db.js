@@ -312,6 +312,13 @@ async function saveDeviceData(deviceId, deviceData) {
                 [deviceId, deviceData.deviceSecret, deviceData.createdAt, Date.now()]
             );
 
+            // Clear all public_code for this device first to avoid unique constraint
+            // violations when entities swap publicCodes during reorder
+            await client.query(
+                'UPDATE entities SET public_code = NULL WHERE device_id = $1',
+                [deviceId]
+            );
+
             // Save all entities (supports up to 8 slots for premium devices)
             for (const i of Object.keys(deviceData.entities).map(Number)) {
                 const entity = deviceData.entities[i];
