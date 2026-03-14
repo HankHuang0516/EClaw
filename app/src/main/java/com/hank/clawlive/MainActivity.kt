@@ -282,7 +282,8 @@ class MainActivity : AppCompatActivity() {
             onNameClick = { entity -> showRenameDialog(entity) },
             onRefreshClick = { entity, btn -> refreshEntity(entity, btn) },
             onRemoveClick = { entity -> showRemoveConfirmDialog(entity) },
-            onXdSettingsClick = { entity -> showXdSettingsDialog(entity) }
+            onXdSettingsClick = { entity -> showXdSettingsDialog(entity) },
+            onAgentCardClick = { entity -> showAgentCardDialog(entity.entityId) }
         )
 
         val dragCallback = object : ItemTouchHelper.SimpleCallback(
@@ -967,6 +968,137 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             TelemetryHelper.trackAction("xd_settings_reset", mapOf("entityId" to entity.entityId.toString()))
+        }
+    }
+
+    // ── Agent Card Dialog ──
+
+    private fun showAgentCardDialog(entityId: Int) {
+        lifecycleScope.launch {
+            try {
+                val response = api.getAgentCard(
+                    deviceId = deviceManager.deviceId,
+                    deviceSecret = deviceManager.deviceSecret,
+                    entityId = entityId
+                )
+                showAgentCardEditDialog(entityId, response.agentCard)
+            } catch (e: Exception) {
+                Timber.w(e, "No agent card found, showing empty form")
+                showAgentCardEditDialog(entityId, null)
+            }
+        }
+    }
+
+    private fun showAgentCardEditDialog(entityId: Int, card: com.hank.clawlive.data.model.AgentCard?) {
+        val dp = { px: Int -> (px * resources.displayMetrics.density).toInt() }
+
+        val scrollView = android.widget.ScrollView(this).apply {
+            setPadding(dp(16), dp(8), dp(16), dp(8))
+        }
+        val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        scrollView.addView(layout)
+
+        fun addField(hint: String, value: String?, inputType: Int = android.text.InputType.TYPE_CLASS_TEXT, helper: String? = null, maxLength: Int = 0): com.google.android.material.textfield.TextInputEditText {
+            val til = com.google.android.material.textfield.TextInputLayout(this).apply {
+                this.hint = hint
+                boxBackgroundMode = com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE
+                if (helper != null) helperText = helper
+                if (maxLength > 0) { counterMaxLength = maxLength; isCounterEnabled = true }
+            }
+            val et = com.google.android.material.textfield.TextInputEditText(this).apply {
+                this.inputType = inputType
+                setText(value ?: "")
+            }
+            til.addView(et)
+            layout.addView(til, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dp(12) })
+            return et
+        }
+
+        val descEdit = addField("Description", card?.description,
+            android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE,
+            maxLength = 500)
+        val capsEdit = addField("Capabilities (comma-separated)", card?.capabilities?.joinToString(", ") { it.name },
+            helper = "e.g. chat, search, translate")
+        val protosEdit = addField("Protocols (comma-separated)", card?.protocols?.joinToString(", "),
+            helper = "e.g. A2A, REST, gRPC")
+        val tagsEdit = addField("Tags (comma-separated)", card?.tags?.joinToString(", "),
+            helper = "e.g. IoT, claw-machine")
+        val versionEdit = addField("Version", card?.version)
+        val websiteEdit = addField("Website", card?.website,
+            android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_URI)
+        val emailEdit = addField("Contact Email", card?.contactEmail,
+            android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Agent Card — Entity #$entityId")
+            .setView(scrollView)
+            .setPositiveButton("Save") { _, _ ->
+                saveAgentCard(entityId,
+                    descEdit.text.toString().trim(), capsEdit.text.toString().trim(),
+                    protosEdit.text.toString().trim(), tagsEdit.text.toString().trim(),
+                    versionEdit.text.toString().trim(), websiteEdit.text.toString().trim(),
+                    emailEdit.text.toString().trim())
+            }
+            .setNegativeButton("Cancel", null)
+            .setNeutralButton("Delete") { _, _ -> deleteAgentCard(entityId) }
+            .show()
+    }
+
+    private fun saveAgentCard(entityId: Int, description: String, capsText: String,
+                              protosText: String, tagsText: String, version: String,
+                              website: String, email: String) {
+        if (description.isEmpty()) {
+            Toast.makeText(this, "Description is required", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val capabilities = capsText.split(",").map { it.trim() }.filter { it.isNotEmpty() }.take(10)
+            .map { mapOf("id" to it.lowercase().replace(" ", "-"), "name" to it, "description" to "") }
+        val protocols = protosText.split(",").map { it.trim() }.filter { it.isNotEmpty() }.take(10)
+        val tags = tagsText.split(",").map { it.trim() }.filter { it.isNotEmpty() }.take(20)
+
+        lifecycleScope.launch {
+            try {
+                val body = mapOf<String, Any>(
+                    "deviceId" to deviceManager.deviceId,
+                    "deviceSecret" to deviceManager.deviceSecret,
+                    "entityId" to entityId,
+                    "agentCard" to mapOf("description" to description, "capabilities" to capabilities,
+                        "protocols" to protocols, "tags" to tags, "version" to version,
+                        "website" to website, "contactEmail" to email)
+                )
+                val response = api.updateAgentCard(body)
+                if (response.success) {
+                    Toast.makeText(this@MainActivity, "Agent Card saved", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this@MainActivity, response.message ?: "Save failed", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to save agent card")
+                Toast.makeText(this@MainActivity, "Save failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun deleteAgentCard(entityId: Int) {
+        lifecycleScope.launch {
+            try {
+                val body = mapOf<String, Any>(
+                    "deviceId" to deviceManager.deviceId,
+                    "deviceSecret" to deviceManager.deviceSecret,
+                    "entityId" to entityId
+                )
+                val response = api.deleteAgentCard(body)
+                if (response.success) {
+                    Toast.makeText(this@MainActivity, "Agent Card deleted", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this@MainActivity, response.message ?: "Delete failed", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to delete agent card")
+                Toast.makeText(this@MainActivity, "Delete failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
