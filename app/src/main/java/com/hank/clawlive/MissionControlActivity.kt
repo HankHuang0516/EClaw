@@ -28,7 +28,6 @@ import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.EntityAvatarManager
 import com.hank.clawlive.data.local.LocalVarsManager
 import com.hank.clawlive.data.remote.SkillTemplate
-import com.hank.clawlive.data.remote.SkillTemplatesResponse
 import com.hank.clawlive.data.remote.SyncLocalVarsRequest
 import com.hank.clawlive.data.model.*
 import com.hank.clawlive.data.remote.NetworkModule
@@ -110,44 +109,14 @@ class MissionControlActivity : AppCompatActivity() {
     }
 
     private fun loadSkillTemplates() {
-        Timber.d("SKILL_TPL_DEBUG loadSkillTemplates() called")
         lifecycleScope.launch {
-            // --- Raw HTTP debug: fetch body as string first ---
             try {
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    val rawUrl = "https://eclawbot.com/api/skill-templates"
-                    Timber.d("SKILL_TPL_DEBUG fetching raw URL: $rawUrl")
-                    val rawReq = okhttp3.Request.Builder().url(rawUrl).get().build()
-                    val rawResp = okhttp3.OkHttpClient().newCall(rawReq).execute()
-                    val rawBody = rawResp.body?.string() ?: "(null body)"
-                    Timber.d("SKILL_TPL_DEBUG raw HTTP status=${rawResp.code}, bodyLen=${rawBody.length}")
-                    Timber.d("SKILL_TPL_DEBUG raw body first 500 chars: ${rawBody.take(500)}")
-                    // Try manual parse to see if Gson works
-                    val manualParsed = com.google.gson.Gson().fromJson(rawBody, SkillTemplatesResponse::class.java)
-                    Timber.d("SKILL_TPL_DEBUG manual Gson parse: success=${manualParsed.success}, templates.size=${manualParsed.templates.size}")
-                    rawResp.close()
-                }
-            } catch (e: Exception) {
-                Timber.e(e, "SKILL_TPL_DEBUG RAW fetch exception: ${e::class.simpleName}: ${e.message}")
-            }
-
-            // --- Normal Retrofit call ---
-            try {
-                Timber.d("SKILL_TPL_DEBUG calling api.getSkillTemplates() via Retrofit...")
                 val response = api.getSkillTemplates()
-                Timber.d("SKILL_TPL_DEBUG Retrofit response: success=${response.success}, templates.size=${response.templates.size}, error=${response.error}")
                 if (response.success) {
                     skillTemplates = response.templates
-                    Timber.d("SKILL_TPL_DEBUG assigned skillTemplates, size=${skillTemplates.size}")
-                    if (skillTemplates.isNotEmpty()) {
-                        val first = skillTemplates.first()
-                        Timber.d("SKILL_TPL_DEBUG first template: id=${first.id}, label=${first.label}, title=${first.title}")
-                    }
-                } else {
-                    Timber.w("SKILL_TPL_DEBUG Retrofit response.success=false, error=${response.error}")
                 }
             } catch (e: Exception) {
-                Timber.e(e, "SKILL_TPL_DEBUG EXCEPTION in Retrofit getSkillTemplates: ${e::class.simpleName}: ${e.message}")
+                Timber.w(e, "Failed to load skill templates")
             }
         }
     }
@@ -328,7 +297,6 @@ class MissionControlActivity : AppCompatActivity() {
         btnUpload.text = getString(R.string.publish_notification)
 
         // Lists
-        Timber.d("SKILL_TPL_DEBUG updateUI: skills.size=${state.skills.size}, todoList.size=${state.todoList.size}, notes.size=${state.notes.size}, souls.size=${state.souls.size}")
         todoAdapter.submitList(state.todoList)
         missionAdapter.submitList(state.missionList)
         doneAdapter.submitList(state.doneList)
@@ -755,35 +723,25 @@ class MissionControlActivity : AppCompatActivity() {
 
     /** Opens a scrollable gallery dialog listing all official skill templates. */
     private fun showTemplateGalleryDialog(onSelect: (SkillTemplate) -> Unit) {
-        Timber.d("SKILL_TPL_DEBUG showTemplateGalleryDialog() called, current skillTemplates.size=${skillTemplates.size}")
         if (skillTemplates.isEmpty()) {
-            Timber.d("SKILL_TPL_DEBUG skillTemplates is empty, re-fetching from API...")
             lifecycleScope.launch {
                 try {
                     val response = api.getSkillTemplates()
-                    Timber.d("SKILL_TPL_DEBUG gallery re-fetch: success=${response.success}, templates.size=${response.templates.size}, error=${response.error}")
                     if (response.success) {
                         skillTemplates = response.templates
-                        Timber.d("SKILL_TPL_DEBUG gallery re-fetch assigned, size=${skillTemplates.size}")
-                    } else {
-                        Timber.w("SKILL_TPL_DEBUG gallery re-fetch success=false")
                     }
                 } catch (e: Exception) {
-                    Timber.e(e, "SKILL_TPL_DEBUG EXCEPTION in gallery re-fetch: ${e::class.simpleName}: ${e.message}")
+                    Timber.w(e, "Failed to reload skill templates")
                 }
-                Timber.d("SKILL_TPL_DEBUG opening gallery internal with ${skillTemplates.size} templates")
                 showTemplateGalleryDialogInternal(onSelect)
             }
             return
         }
-        Timber.d("SKILL_TPL_DEBUG opening gallery internal (cached) with ${skillTemplates.size} templates")
         showTemplateGalleryDialogInternal(onSelect)
     }
 
     private fun showTemplateGalleryDialogInternal(onSelect: (SkillTemplate) -> Unit) {
-        Timber.d("SKILL_TPL_DEBUG showTemplateGalleryDialogInternal() skillTemplates.size=${skillTemplates.size}")
         val localVars = LocalVarsManager.getInstance(this).getAll()
-        Timber.d("SKILL_TPL_DEBUG localVars.size=${localVars.size}")
 
         // Outer container: search bar + scrollable list
         val outerLayout = LinearLayout(this).apply {

@@ -462,7 +462,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | gRPC Transport | `node backend/tests/test-grpc-transport.js` | None (local) | Proto loading, gRPC server, HealthService |
 | ENV Vars Merge | `node backend/tests/test-vars-merge.js` | Device ID + Secret | Cross-platform merge, conflict splitting |
 | Channel API | `node backend/tests/test-channel-api.js` | Device ID + Secret | OpenClaw channel integration |
-| Skill Templates | `node backend/tests/test-skill-templates.js` | Device ID + Secret | Skill template CRUD |
+| Skill Templates | `node backend/tests/test-skill-templates.js` | None | Skill template CRUD, requiredVars format validation (Gson compat), contribute endpoint input guard |
 | WebSocket Auth | `node backend/tests/test-ws-auth.js` | Device ID + Secret | Socket.IO authentication |
 | AI Chat Image | `node backend/tests/test-ai-chat-image.js` | Device ID + Secret | AI chat with image support |
 | Discord Webhook | `node backend/tests/test-discord-webhook.js` | Device ID + Secret | Discord webhook URL detection, registration, rich messages, content limits |
