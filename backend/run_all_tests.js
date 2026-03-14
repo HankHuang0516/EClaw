@@ -60,6 +60,8 @@ const TEST_FILES = [
     'test-mission-notify-all-types.js', // Mission notify all 4 types to channel bot (needs BROADCAST_TEST_DEVICE_ID)
     // Note: test-eclaw-context-injection.js excluded (flaky: fails when bot-to-bot rate limit exhausted)
     'test-bot-api-response.js',     // Bot API response rate >= 90% (needs TEST_DEVICE_ID + live bot)
+    'test-discord-webhook.js',      // Discord webhook URL detection, rich message structure, content limits
+    'test-agent-card-ui.js',        // Agent Card CRUD lifecycle, field validation
 ];
 
 // Manual UI tests (run on device, not automated):

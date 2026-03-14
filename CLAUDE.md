@@ -465,6 +465,8 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Skill Templates | `node backend/tests/test-skill-templates.js` | Device ID + Secret | Skill template CRUD |
 | WebSocket Auth | `node backend/tests/test-ws-auth.js` | Device ID + Secret | Socket.IO authentication |
 | AI Chat Image | `node backend/tests/test-ai-chat-image.js` | Device ID + Secret | AI chat with image support |
+| Discord Webhook | `node backend/tests/test-discord-webhook.js` | Device ID + Secret | Discord webhook URL detection, registration, rich messages, content limits |
+| Agent Card UI | `node backend/tests/test-agent-card-ui.js` | Device ID + Secret | Agent Card CRUD lifecycle, field validation, three-platform API parity |
 
 ### Running All Tests
 ```bash
