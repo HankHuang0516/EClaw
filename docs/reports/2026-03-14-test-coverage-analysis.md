@@ -1,7 +1,7 @@
 # EClaw 測試覆蓋率分析報告
 
 **日期**: 2026-03-14
-**分析範圍**: Backend (139 endpoints) + Android App (16 Activities, 90+ API calls)
+**分析範圍**: Backend (200+ endpoints across 20+ modules) + Android App (16 Activities, 90+ API calls)
 
 ---
 
@@ -9,7 +9,7 @@
 
 | 類別 | 數量 | 說明 |
 |------|------|------|
-| Backend API Endpoints | 139 | `backend/index.js` 中定義 |
+| Backend API Endpoints | 200+ | `index.js` (139) + module routers (mission.js, auth.js, oauth-server.js, channel-api.js, article-publisher.js, ai-support.js, subscription.js 等) |
 | Backend Test Files | 56 | `backend/tests/` |
 | Jest Unit Tests | 2 | 本地 mock，無需伺服器 |
 | Live Integration Tests | ~50 | 需要 live server |
@@ -18,9 +18,9 @@
 
 ### 覆蓋率估算
 
-- **有直接測試的 endpoints**: ~85/139 ≈ **61%**
-- **完全無測試的 endpoints**: ~54/139 ≈ **39%**
-- **有 unit test（mock/local）的模組**: 3/15+ ≈ **20%**
+- **有直接測試的 endpoints**: ~85/200+ ≈ **42%**
+- **完全無測試的 endpoints**: ~115/200+ ≈ **58%**
+- **有 unit test（mock/local）的模組**: 3/20+ ≈ **15%**
 
 ---
 
@@ -147,6 +147,66 @@
 | `POST /api/official-borrow/unbind` | 解除綁定 |
 | `POST /api/official-borrow/verify-subscription` | 驗證訂閱 |
 | `GET /api/official-borrow/status` | 借用狀態 |
+
+### 7. 模組化 Router 端點 — 大量未覆蓋
+
+以下模組的端點大部分或完全沒有測試：
+
+#### Authentication (`auth.js`) — 部分覆蓋
+已測試: OAuth providers, OIDC, RBAC auth rejection
+未測試:
+| Endpoint | 說明 |
+|----------|------|
+| `POST /api/auth/register` | 使用者註冊 |
+| `POST /api/auth/login` | 登入 |
+| `POST /api/auth/app-login` | App 裝置登入 |
+| `POST /api/auth/device-login` | 裝置登入 |
+| `POST /api/auth/logout` | 登出 |
+| `GET /api/auth/me` | 取得使用者資訊 |
+| `GET /api/auth/verify-email` | Email 驗證 |
+| `POST /api/auth/forgot-password` | 忘記密碼 |
+| `POST /api/auth/reset-password` | 重設密碼 |
+| `POST /api/auth/bind-email` | 綁定 Email |
+| `DELETE /api/auth/account` | 刪除帳號 |
+
+#### Subscription (`subscription.js`) — 0% 覆蓋
+| Endpoint | 說明 |
+|----------|------|
+| `GET /api/subscription/status` | 訂閱狀態 |
+| `POST /api/subscription/tappay/pay` | TapPay 付款 |
+| `POST /api/subscription/cancel` | 取消訂閱 |
+| `POST /api/subscription/verify-google` | Google Play 驗證 |
+| `POST /api/subscription/usage` | 用量報告 |
+
+**風險**: 付款相關邏輯完全未測，可能導致計費錯誤或安全漏洞。
+
+#### AI Support (`ai-support.js`) — 0% 覆蓋
+| Endpoint | 說明 |
+|----------|------|
+| `POST /api/ai-support/binding` | 綁定問題診斷 |
+| `POST /api/ai-support/chat` | AI 通用聊天 |
+| `POST /api/ai-support/chat/submit` | 聊天提交（polling） |
+| `GET /api/ai-support/chat/poll/:requestId` | 輪詢回應 |
+| `POST /api/ai-support/create-issue` | 從聊天建立 Issue |
+| `POST /api/ai-support/admin-chat` | Admin AI 聊天 |
+
+#### Article Publisher (`article-publisher.js`) — 0% 覆蓋
+| Endpoint | 說明 |
+|----------|------|
+| `GET /api/publisher/blogger/oauth/start` | Blogger OAuth |
+| `POST /api/publisher/blogger/publish` | 發布到 Blogger |
+| `POST /api/publisher/hashnode/publish` | 發布到 Hashnode |
+| `POST /api/publisher/x/tweet` | 發布推文 |
+
+#### Channel API (`channel-api.js`) — 部分覆蓋
+已測試: Auth rejection, required fields（`test-channel-api.js`）
+未測試:
+| Endpoint | 說明 |
+|----------|------|
+| `POST /api/channel/provision` | Channel 配置 |
+| `POST /api/channel/bind` | Channel 綁定 |
+| `POST /api/channel/message` | Channel 訊息 |
+| `POST /api/channel/provision-device` | 裝置配置 |
 
 ---
 
