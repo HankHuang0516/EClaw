@@ -110,13 +110,8 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
                     deviceId = deviceManager.deviceId,
                     deviceSecret = deviceManager.deviceSecret
                 )
-                Timber.d("SKILL_TPL_DEBUG downloadDashboard response: success=${response.success}, dashboard=${response.dashboard != null}")
                 if (response.success && response.dashboard != null) {
                     val d = response.dashboard
-                    Timber.d("SKILL_TPL_DEBUG dashboard.skills=${d.skills?.size ?: "null"}, dashboard.souls=${d.souls?.size ?: "null"}")
-                    if (d.skills != null && d.skills.isNotEmpty()) {
-                        Timber.d("SKILL_TPL_DEBUG first dashboard skill: id=${d.skills.first().id}, title=${d.skills.first().title}")
-                    }
                     _uiState.update {
                         it.copy(
                             isLoading = false,
