@@ -151,13 +151,12 @@ const telemetryPoolProxy = {
 app.use(telemetry.createMiddleware(telemetryPoolProxy, (deviceId) => devices[deviceId]));
 
 // ============================================
-// MATRIX ARCHITECTURE: devices[deviceId].entities[0-7]
-// Each device has independent entity slots
-// Free users: 4 slots, Premium users: 8 slots
+// DYNAMIC ENTITY ARCHITECTURE: devices[deviceId].entities[sparse integer keys]
+// Each device starts with 1 entity slot, auto-expands on bind
+// No upper limit — entity IDs are monotonically increasing, never reused
 // ============================================
 
-const MAX_ENTITIES_PER_DEVICE = 8; // absolute ceiling (all devices init 8 slots)
-const FREE_ENTITY_LIMIT = 4;
+const DEFAULT_INITIAL_SLOTS = 1; // new devices start with 1 slot (entity #0)
 
 // ============================================
 // PLATFORM SLASH COMMANDS
@@ -244,11 +243,27 @@ async function handlePlatformCommand(command, deviceId, device, targetIds, confi
     }
 }
 
-// Helper: get the effective entity limit for a specific device
-function getDeviceEntityLimit(deviceId) {
-    const device = devices[deviceId];
-    if (device && device.isTestDevice) return MAX_ENTITIES_PER_DEVICE;
-    return (device && device.isPremium) ? MAX_ENTITIES_PER_DEVICE : FREE_ENTITY_LIMIT;
+// Helper: validate entity ID exists on a device (dynamic entity system)
+function isValidEntityId(device, eId) {
+    return Number.isInteger(eId) && eId >= 0 && device && device.entities.hasOwnProperty(eId);
+}
+
+// Helper: count entities on a device
+function entityCount(device) {
+    return Object.keys(device.entities).length;
+}
+
+// Helper: ensure at least one empty (unbound) slot exists on device
+// Called after bind to auto-expand. Returns new entity ID or null.
+function ensureOneEmptySlot(device) {
+    const hasEmpty = Object.values(device.entities).some(e => !e.isBound);
+    if (!hasEmpty) {
+        const newId = device.nextEntityId++;
+        device.entities[newId] = createDefaultEntity(newId);
+        console.log(`[DynamicEntity] Auto-expand: deviceId=${device.deviceId}, newEntityId=${newId}, totalSlots=${entityCount(device)}`);
+        return newId;
+    }
+    return null;
 }
 
 // Latest app version - update this with each release
@@ -389,7 +404,7 @@ async function loadData() {
 
                 let boundCount = 0;
                 for (const deviceId in devices) {
-                    for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
+                    for (const i of Object.keys(devices[deviceId].entities).map(Number)) {
                         if (devices[deviceId].entities[i]?.isBound) boundCount++;
                     }
                 }
@@ -526,7 +541,7 @@ setInterval(async () => {
 
         // 2. Remove zombie devices: ALL entities inactive for 7+ days
         let latestActivity = device.createdAt || 0;
-        for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
+        for (const i of Object.keys(device.entities).map(Number)) {
             const entity = device.entities[i];
             if (!entity) continue;
             if (entity.lastUpdated > latestActivity) {
@@ -846,7 +861,7 @@ app.post('/api/skill-templates/contribute', async (req, res) => {
         // Search all entity slots for matching botSecret
         eId = -1;
         entity = null;
-        for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
+        for (const i of Object.keys(device.entities).map(Number)) {
             const e = device.entities[i];
             if (e && e.isBound && e.botSecret === botSecret) {
                 eId = i;
@@ -1084,7 +1099,7 @@ app.post('/api/soul-templates/contribute', async (req, res) => {
     if (!entity || !entity.isBound || entity.botSecret !== botSecret) {
         eId = -1;
         entity = null;
-        for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
+        for (const i of Object.keys(device.entities).map(Number)) {
             const e = device.entities[i];
             if (e && e.isBound && e.botSecret === botSecret) {
                 eId = i;
@@ -1170,7 +1185,7 @@ app.post('/api/rule-templates/contribute', async (req, res) => {
     if (!entity || !entity.isBound || entity.botSecret !== botSecret) {
         eId = -1;
         entity = null;
-        for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
+        for (const i of Object.keys(device.entities).map(Number)) {
             const e = device.entities[i];
             if (e && e.isBound && e.botSecret === botSecret) {
                 eId = i;
@@ -1653,7 +1668,7 @@ app.get('/api/admin/users', adminAuth, adminCheck, async (req, res) => {
             if (registeredDeviceIds.has(deviceId)) continue;
             // Count bound entities
             let boundCount = 0;
-            for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
+            for (const i of Object.keys(device.entities).map(Number)) {
                 if (device.entities[i]?.isBound) boundCount++;
             }
             users.push({
@@ -2121,16 +2136,7 @@ function compareVersions(v1, v2) {
     return 0;
 }
 
-// Helper: Ensure device has all 8 entity slots initialized (backfills missing slots)
-function ensureEntitySlots(device) {
-    for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
-        if (!device.entities[i]) {
-            device.entities[i] = createDefaultEntity(i);
-        }
-    }
-}
-
-// Helper: Get or create device
+// Helper: Get or create device (dynamic entity system — starts with 1 slot)
 function getOrCreateDevice(deviceId, deviceSecret = null, opts = {}) {
     if (!devices[deviceId]) {
         devices[deviceId] = {
@@ -2138,18 +2144,21 @@ function getOrCreateDevice(deviceId, deviceSecret = null, opts = {}) {
             deviceSecret: deviceSecret,
             createdAt: Date.now(),
             isTestDevice: opts.isTestDevice || false,
+            nextEntityId: DEFAULT_INITIAL_SLOTS, // = 1
             entities: {}
         };
-        // Initialize all 8 entity slots
-        for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
-            devices[deviceId].entities[i] = createDefaultEntity(i);
-        }
-        console.log(`[Device] New device registered: ${deviceId}${opts.isTestDevice ? ' (TEST)' : ''}`);
+        // Initialize only 1 slot (entity #0)
+        devices[deviceId].entities[0] = createDefaultEntity(0);
+        console.log(`[DynamicEntity] New device registered: ${deviceId}, initialSlots=${DEFAULT_INITIAL_SLOTS}${opts.isTestDevice ? ' (TEST)' : ''}`);
     } else {
-        // Backfill missing entity slots for existing devices (e.g. loaded from DB with only 4 slots)
-        ensureEntitySlots(devices[deviceId]);
         if (opts.isTestDevice && !devices[deviceId].isTestDevice) {
             devices[deviceId].isTestDevice = true;
+        }
+        // Ensure nextEntityId is set (backward compat for devices loaded from DB)
+        if (!devices[deviceId].nextEntityId) {
+            const maxId = Math.max(-1, ...Object.keys(devices[deviceId].entities).map(Number));
+            devices[deviceId].nextEntityId = maxId + 1;
+            console.log(`[DynamicEntity] Backfilled nextEntityId=${devices[deviceId].nextEntityId} for device ${deviceId}`);
         }
     }
     return devices[deviceId];
@@ -2228,7 +2237,7 @@ setInterval(() => {
     const now = Date.now();
     for (const deviceId in devices) {
         const device = devices[deviceId];
-        for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
+        for (const i of Object.keys(device.entities).map(Number)) {
             const entity = device.entities[i];
             if (!entity || !entity.isBound) continue;
 
@@ -2480,10 +2489,10 @@ app.post('/api/device/register', (req, res) => {
 
     // Validate entityId
     const eId = parseInt(entityId);
-    if (isNaN(eId) || eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
+    if (isNaN(eId) || eId < 0) {
         return res.status(400).json({
             success: false,
-            message: `Invalid entityId. Must be 0-${MAX_ENTITIES_PER_DEVICE - 1}`
+            message: 'Invalid entityId. Must be a non-negative integer'
         });
     }
 
@@ -2497,13 +2506,13 @@ app.post('/api/device/register', (req, res) => {
     // Get or create device
     const device = getOrCreateDevice(deviceId, deviceSecret, { isTestDevice: !!isTestDevice });
 
-    // Per-device entity limit: free users can only use slots 0-3
-    const deviceLimit = getDeviceEntityLimit(deviceId);
-    if (eId >= deviceLimit) {
-        return res.status(403).json({
+    // Validate entity slot exists on this device
+    if (!isValidEntityId(device, eId)) {
+        console.log(`[DynamicEntity] Register rejected: entityId=${eId} not found on device ${deviceId}, existing=[${Object.keys(device.entities)}]`);
+        return res.status(400).json({
             success: false,
-            message: `Entity #${eId} requires premium subscription (your limit: ${deviceLimit})`,
-            entityLimit: deviceLimit
+            message: `Entity #${eId} does not exist on this device. Use POST /api/device/add-entity to create new slots.`,
+            existingEntityIds: Object.keys(device.entities).map(Number)
         });
     }
 
@@ -2553,7 +2562,7 @@ app.post('/api/device/status', (req, res) => {
     const { entityId, deviceId, deviceSecret, appVersion } = req.body;
 
     const eId = parseInt(entityId);
-    if (isNaN(eId) || eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
+    if (isNaN(eId) || eId < 0) {
         return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
@@ -2563,6 +2572,10 @@ app.post('/api/device/status', (req, res) => {
     // Verify device secret
     if (device.deviceSecret && device.deviceSecret !== deviceSecret) {
         return res.status(403).json({ success: false, message: "Unauthorized" });
+    }
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, message: `Entity #${eId} does not exist on this device` });
     }
 
     const entity = device.entities[eId];
@@ -2656,12 +2669,23 @@ app.post('/api/bind', async (req, res) => {
     console.log(`[Bind] Device ${deviceId} Entity ${entityId} bound with botSecret${name ? ` (name: ${name})` : ''} (app v${deviceAppVersion || 'unknown'})`);
     serverLog('info', 'bind', `Entity ${entityId} bound${name ? ` (name: ${name})` : ''}`, { deviceId, entityId });
 
+    // Dynamic entity auto-expand: ensure at least one empty slot after bind
+    const newSlotId = ensureOneEmptySlot(device);
+    if (newSlotId !== null) {
+        console.log(`[DynamicEntity] Auto-expand after bind: deviceId=${deviceId}, newSlotId=${newSlotId}, totalSlots=${entityCount(device)}`);
+    }
+
     // Save data immediately after binding (critical operation)
     // Await single-device save to ensure state is persisted before responding
     if (usePostgreSQL) {
         await db.saveDeviceData(deviceId, device);
     } else {
         saveData();
+    }
+
+    // Notify clients of new slot (if auto-expanded)
+    if (newSlotId !== null) {
+        io.to(deviceId).emit('entityAdded', { entityId: newSlotId, totalSlots: entityCount(device) });
     }
 
     res.json({
@@ -2672,6 +2696,7 @@ app.post('/api/bind', async (req, res) => {
         botSecret: botSecret, // Bot must save this!
         publicCode: publicCode, // For cross-device messaging
         name: entity.name,
+        newSlotCreated: newSlotId, // New empty slot auto-created (dynamic entity system)
         deviceInfo: {
             deviceId: deviceId,
             entityId: entityId,
@@ -2700,7 +2725,7 @@ app.get('/api/entities', (req, res) => {
         if (filterDeviceId && deviceId !== filterDeviceId) continue;
 
         const device = devices[deviceId];
-        for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
+        for (const i of Object.keys(device.entities).map(Number)) {
             const entity = device.entities[i];
             if (!entity) continue;
             if (entity.isBound) {
@@ -2728,7 +2753,7 @@ app.get('/api/entities', (req, res) => {
     if (filterDeviceId && devices[filterDeviceId]) {
         const device = devices[filterDeviceId];
         const allSlotStates = [];
-        for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
+        for (const i of Object.keys(device.entities).map(Number)) {
             const e = device.entities[i];
             if (!e) { allSlotStates.push(`${i}:empty`); continue; }
             allSlotStates.push(`${i}:${e.isBound ? 'bound' : 'unbound'}`);
@@ -2739,11 +2764,11 @@ app.get('/api/entities', (req, res) => {
             // This helps diagnose transient empty responses that cause client-side card disappearing (#16)
             serverLog('warn', 'entity_poll', `Device ${filterDeviceId} returned 0 bound entities (device exists, slots: ${allSlotStates.join(',')})`, {
                 deviceId: filterDeviceId,
-                metadata: { totalDeviceSlots: MAX_ENTITIES_PER_DEVICE, persistenceReady, slots: allSlotStates }
+                metadata: { totalDeviceSlots: Object.keys(device.entities).length, persistenceReady, slots: allSlotStates }
             });
-        } else if (entities.length < MAX_ENTITIES_PER_DEVICE) {
+        } else if (entities.length < Object.keys(device.entities).length) {
             // Log partial entity count (some bound, some not) — helps diagnose #48
-            serverLog('info', 'entity_poll', `Device ${filterDeviceId} returned ${entities.length}/${MAX_ENTITIES_PER_DEVICE} bound entities (slots: ${allSlotStates.join(',')})`, {
+            serverLog('info', 'entity_poll', `Device ${filterDeviceId} returned ${entities.length}/${Object.keys(device.entities).length} bound entities (slots: ${allSlotStates.join(',')})`, {
                 deviceId: filterDeviceId,
                 metadata: { boundCount: entities.length, slots: allSlotStates }
             });
@@ -2761,7 +2786,8 @@ app.get('/api/entities', (req, res) => {
         entities: entities,
         activeCount: entities.length,
         deviceCount: Object.keys(devices).length,
-        maxEntitiesPerDevice: filterDeviceId ? getDeviceEntityLimit(filterDeviceId) : MAX_ENTITIES_PER_DEVICE,
+        totalSlots: filterDeviceId ? entityCount(devices[filterDeviceId]) : undefined,
+        entityIds: filterDeviceId && devices[filterDeviceId] ? Object.keys(devices[filterDeviceId].entities).map(Number) : undefined,
         serverReady: persistenceReady
     });
 });
@@ -2780,13 +2806,17 @@ app.get('/api/status', (req, res) => {
         return res.status(400).json({ success: false, message: "deviceId required" });
     }
 
-    if (eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
+    if (eId < 0) {
         return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
     const device = devices[deviceId];
     if (!device) {
         return res.status(404).json({ success: false, message: "Device not found" });
+    }
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
     const entity = device.entities[eId];
@@ -2824,7 +2854,7 @@ app.post('/api/transform', (req, res) => {
     }
 
     const eId = parseInt(entityId) || 0;
-    if (eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
+    if (eId < 0) {
         return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
@@ -2977,13 +3007,17 @@ app.delete('/api/entity', async (req, res) => {
     }
 
     const eId = parseInt(entityId);
-    if (isNaN(eId) || eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
+    if (isNaN(eId) || eId < 0) {
         return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
     const device = devices[deviceId];
     if (!device) {
         return res.status(404).json({ success: false, message: "Device not found" });
+    }
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
     const entity = device.entities[eId];
@@ -3085,7 +3119,7 @@ app.delete('/api/device/entity', async (req, res) => {
     }
 
     const eId = parseInt(entityId);
-    if (isNaN(eId) || eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
+    if (isNaN(eId) || eId < 0) {
         return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
@@ -3097,6 +3131,10 @@ app.delete('/api/device/entity', async (req, res) => {
     // Verify deviceSecret
     if (device.deviceSecret !== deviceSecret) {
         return res.status(403).json({ success: false, message: "Invalid deviceSecret" });
+    }
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
     const entity = device.entities[eId];
@@ -3161,12 +3199,158 @@ app.delete('/api/device/entity', async (req, res) => {
 });
 
 /**
+ * POST /api/device/add-entity
+ * Dynamically add a new entity slot to a device. Entity ID is auto-assigned (monotonically increasing).
+ * Body: { deviceId, deviceSecret }
+ */
+app.post('/api/device/add-entity', async (req, res) => {
+    const { deviceId, deviceSecret } = req.body;
+
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid device credentials' });
+    }
+
+    // Assign next entity ID
+    if (!device.nextEntityId) {
+        device.nextEntityId = Math.max(-1, ...Object.keys(device.entities).map(Number)) + 1;
+    }
+    const newEntityId = device.nextEntityId++;
+    device.entities[newEntityId] = createDefaultEntity(newEntityId);
+
+    console.log(`[DynamicEntity] Manual add-entity: deviceId=${deviceId}, newEntityId=${newEntityId}, totalSlots=${entityCount(device)}, nextEntityId=${device.nextEntityId}`);
+    serverLog('info', 'entity_add', `Entity #${newEntityId} added manually`, { deviceId, entityId: newEntityId });
+
+    // Persist
+    await saveData();
+
+    // Notify clients
+    io.to(deviceId).emit('entityAdded', { entityId: newEntityId, totalSlots: entityCount(device) });
+
+    res.json({
+        success: true,
+        entityId: newEntityId,
+        entity: {
+            entityId: newEntityId,
+            isBound: false,
+            character: device.entities[newEntityId].character,
+            state: device.entities[newEntityId].state,
+            message: device.entities[newEntityId].message
+        },
+        totalEntities: entityCount(device),
+        entityIds: Object.keys(device.entities).map(Number)
+    });
+});
+
+/**
+ * DELETE /api/device/entity/:entityId/permanent
+ * Permanently delete an entity slot from a device (not just unbind — removes the slot entirely).
+ * Body: { deviceId, deviceSecret }
+ */
+app.delete('/api/device/entity/:entityId/permanent', async (req, res) => {
+    const { deviceId, deviceSecret } = req.body;
+    const eId = parseInt(req.params.entityId);
+
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+
+    if (isNaN(eId) || eId < 0) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid device credentials' });
+    }
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(404).json({ success: false, error: `Entity #${eId} does not exist on this device` });
+    }
+
+    // Protect: at least 1 entity must remain
+    if (entityCount(device) <= 1) {
+        return res.status(400).json({ success: false, error: 'Cannot delete the last entity. At least one entity must remain.' });
+    }
+
+    const entity = device.entities[eId];
+    console.log(`[DynamicEntity] Permanent delete: deviceId=${deviceId}, entityId=${eId}, isBound=${entity.isBound}, totalSlotsBefore=${entityCount(device)}`);
+
+    // If bound, perform full unbind cleanup
+    if (entity.isBound) {
+        // Clean up public code index
+        if (entity.publicCode) delete publicCodeIndex[entity.publicCode];
+
+        // Clean up official bot binding
+        const bindCacheKey = getBindingCacheKey(deviceId, eId);
+        const officialBinding = officialBindingsCache[bindCacheKey];
+        if (officialBinding) {
+            const bot = officialBots[officialBinding.bot_id];
+            if (bot) {
+                if (bot.bot_type === 'free') {
+                    // Release free bot back to available
+                    bot.status = 'available';
+                    bot.assigned_device_id = null;
+                    bot.assigned_entity_id = null;
+                } else if (bot.bot_type === 'personal' && bot.assigned_device_id === deviceId) {
+                    bot.assigned_entity_id = null;
+                    bot.assigned_device_id = null;
+                    bot.status = 'available';
+                }
+                if (usePostgreSQL) await db.saveOfficialBot(bot);
+            }
+            delete officialBindingsCache[bindCacheKey];
+            if (usePostgreSQL) await db.removeOfficialBinding(deviceId, eId);
+        }
+
+        // Clean up channel binding if any
+        if (entity.channelAccountId) {
+            entity.channelAccountId = null;
+        }
+
+        // Reset bot-to-bot counters
+        const counterKey = `${deviceId}:${eId}`;
+        delete botToBotCounter[counterKey];
+        delete crossSpeakCounter[counterKey];
+
+        serverLog('info', 'unbind', `Entity ${eId} unbound (permanent delete)`, { deviceId, entityId: eId });
+    }
+
+    // Permanently delete the entity slot
+    delete device.entities[eId];
+
+    // Delete from DB
+    if (usePostgreSQL) {
+        await db.deleteEntity(deviceId, eId);
+    }
+
+    // Save device state (updated entities + nextEntityId)
+    await saveData();
+
+    console.log(`[DynamicEntity] Permanent delete complete: deviceId=${deviceId}, entityId=${eId}, totalSlotsAfter=${entityCount(device)}`);
+    serverLog('info', 'entity_delete', `Entity #${eId} permanently deleted`, { deviceId, entityId: eId });
+
+    // Notify clients
+    io.to(deviceId).emit('entityDeleted', { entityId: eId, totalSlots: entityCount(device) });
+
+    res.json({
+        success: true,
+        deletedEntityId: eId,
+        remainingEntities: entityCount(device),
+        entityIds: Object.keys(device.entities).map(Number)
+    });
+});
+
+/**
  * POST /api/device/reorder-entities
  * Swap entity slot assignments. Atomically moves entity data between slots
  * and updates all references (bindings, webhook, bot notifications).
- * Body: { deviceId, deviceSecret, order: [2, 0, 1, 3] }
- *   where index = new slot, value = old slot
- *   (e.g. [2,0,1,3] means: old slot 2 → new slot 0, old slot 0 → new slot 1, etc.)
+ * Body: { deviceId, deviceSecret, order: [...entityIds] }
+ *   order is a permutation of existing entity IDs in desired display order
  */
 app.post('/api/device/reorder-entities', async (req, res) => {
     const { deviceId, deviceSecret, order } = req.body;
@@ -3180,84 +3364,93 @@ app.post('/api/device/reorder-entities', async (req, res) => {
         return res.status(403).json({ success: false, error: 'Invalid device credentials' });
     }
 
-    const deviceLimit = getDeviceEntityLimit(deviceId);
+    // Dynamic entity system: order is a permutation of actual entity IDs
+    const existingIds = Object.keys(device.entities).map(Number).sort((a, b) => a - b);
+    const totalEntities = existingIds.length;
 
-    if (!Array.isArray(order) || order.length !== deviceLimit) {
-        return res.status(400).json({ success: false, error: `order must be array of ${deviceLimit} slot indices` });
+    if (!Array.isArray(order) || order.length !== totalEntities) {
+        return res.status(400).json({ success: false, error: `order must be array of ${totalEntities} entity IDs (current: [${existingIds}])` });
     }
 
-    // Validate order is a valid permutation of [0..deviceLimit-1]
-    const sorted = [...order].sort();
-    for (let i = 0; i < deviceLimit; i++) {
-        if (sorted[i] !== i) {
-            return res.status(400).json({ success: false, error: `order must be a valid permutation of [0..${deviceLimit - 1}]` });
-        }
+    // Validate order is a valid permutation of existing entity IDs
+    const sortedOrder = [...order].map(Number).sort((a, b) => a - b);
+    const isValidPermutation = sortedOrder.length === existingIds.length &&
+        sortedOrder.every((id, idx) => id === existingIds[idx]);
+    if (!isValidPermutation) {
+        return res.status(400).json({ success: false, error: `order must be a permutation of existing entity IDs: [${existingIds}]` });
     }
 
     // Check if anything actually changed
-    const isIdentity = order.every((v, i) => v === i);
+    const isIdentity = order.every((v, idx) => Number(v) === existingIds[idx]);
     if (isIdentity) {
         return res.json({ success: true, message: 'No changes' });
     }
 
-    console.log(`[Reorder] Device ${deviceId} reorder: ${JSON.stringify(order)}`);
+    console.log(`[DynamicEntity] Reorder: device=${deviceId}, order=${JSON.stringify(order)}, existingIds=[${existingIds}]`);
 
-    // Step 1: Snapshot current entities and bindings
-    const oldEntities = [];
+    // Step 1: Snapshot current entities and bindings (keyed by actual entity ID)
+    const oldEntities = {};
     const oldBindings = {};
-    for (let i = 0; i < deviceLimit; i++) {
-        oldEntities[i] = device.entities[i] ? { ...device.entities[i] } : createDefaultEntity(i);
-        const cacheKey = getBindingCacheKey(deviceId, i);
+    for (const eid of existingIds) {
+        oldEntities[eid] = device.entities[eid] ? { ...device.entities[eid] } : createDefaultEntity(eid);
+        const cacheKey = getBindingCacheKey(deviceId, eid);
         if (officialBindingsCache[cacheKey]) {
-            oldBindings[i] = { ...officialBindingsCache[cacheKey] };
+            oldBindings[eid] = { ...officialBindingsCache[cacheKey] };
         }
     }
 
     // Step 2: Apply the permutation
-    // order[newSlot] = oldSlot → entity from oldSlot goes to newSlot
+    // order = [5, 0, 3] means: position 0 gets entity 5, position 1 gets entity 0, position 2 gets entity 3
+    // New entity IDs become existingIds[positionIndex] for each position
     const botsToNotify = [];
+    const newEntities = {};
 
-    for (let newSlot = 0; newSlot < deviceLimit; newSlot++) {
-        const oldSlot = order[newSlot];
-        const entity = { ...oldEntities[oldSlot] };
-        entity.entityId = newSlot; // Update entity ID to new slot
-        device.entities[newSlot] = entity;
+    for (let posIdx = 0; posIdx < totalEntities; posIdx++) {
+        const sourceId = Number(order[posIdx]); // entity ID to move
+        const targetId = existingIds[posIdx];     // target slot ID
+        const entity = { ...oldEntities[sourceId] };
+        entity.entityId = targetId;
+        newEntities[targetId] = entity;
 
         // Update official binding cache
-        const newCacheKey = getBindingCacheKey(deviceId, newSlot);
-        const oldBinding = oldBindings[oldSlot];
+        const newCacheKey = getBindingCacheKey(deviceId, targetId);
+        const oldBinding = oldBindings[sourceId];
         if (oldBinding) {
-            const updatedBinding = { ...oldBinding, entity_id: newSlot };
+            const updatedBinding = { ...oldBinding, entity_id: targetId };
             officialBindingsCache[newCacheKey] = updatedBinding;
         } else {
             delete officialBindingsCache[newCacheKey];
         }
 
         // Track bots that need notification (only if entity moved AND is bound)
-        if (oldSlot !== newSlot && entity.isBound && (entity.webhook || entity.bindingType === 'channel')) {
+        if (sourceId !== targetId && entity.isBound && (entity.webhook || entity.bindingType === 'channel')) {
             botsToNotify.push({
                 entity,
-                oldSlot,
-                newSlot,
+                oldSlot: sourceId,
+                newSlot: targetId,
                 binding: oldBinding
             });
         }
     }
 
+    // Apply new entities to device
+    device.entities = newEntities;
+
     // Step 2b: Rebuild publicCodeIndex for this device
-    for (let slot = 0; slot < deviceLimit; slot++) {
-        const entity = device.entities[slot];
+    for (const eid of Object.keys(device.entities).map(Number)) {
+        const entity = device.entities[eid];
         if (entity && entity.isBound && entity.publicCode) {
-            publicCodeIndex[entity.publicCode] = { deviceId, entityId: slot };
+            publicCodeIndex[entity.publicCode] = { deviceId, entityId: eid };
         }
     }
 
     // Build CASE WHEN mapping for DB migrations (only slots that moved)
     const movedSlots = []; // { oldSlot, newSlot }
-    for (let newSlot = 0; newSlot < deviceLimit; newSlot++) {
-        const oldSlot = order[newSlot];
-        if (oldSlot !== newSlot) {
-            movedSlots.push({ oldSlot, newSlot });
+    for (let posIdx = 0; posIdx < totalEntities; posIdx++) {
+        const sourceId = Number(order[posIdx]);
+        const targetId = existingIds[posIdx];
+        if (sourceId !== targetId) {
+            movedSlots.push({ oldSlot: sourceId, newSlot: targetId });
         }
     }
 
@@ -3268,14 +3461,14 @@ app.post('/api/device/reorder-entities', async (req, res) => {
             await client.query('BEGIN');
 
             // 3a: Remove old bindings and re-insert with new entity IDs
-            for (let i = 0; i < deviceLimit; i++) {
+            for (const eid of existingIds) {
                 await client.query(
                     'DELETE FROM official_bot_bindings WHERE device_id = $1 AND entity_id = $2',
-                    [deviceId, i]
+                    [deviceId, eid]
                 );
             }
-            for (let i = 0; i < deviceLimit; i++) {
-                const cacheKey = getBindingCacheKey(deviceId, i);
+            for (const eid of existingIds) {
+                const cacheKey = getBindingCacheKey(deviceId, eid);
                 const binding = officialBindingsCache[cacheKey];
                 if (binding) {
                     await client.query(
@@ -3401,7 +3594,7 @@ app.put('/api/device/entity/name', async (req, res) => {
     }
 
     const eId = parseInt(entityId);
-    if (isNaN(eId) || eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
+    if (isNaN(eId) || eId < 0) {
         return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
@@ -3416,6 +3609,10 @@ app.put('/api/device/entity/name', async (req, res) => {
 
     if (device.deviceSecret !== deviceSecret) {
         return res.status(403).json({ success: false, message: "Invalid deviceSecret" });
+    }
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
     const entity = device.entities[eId];
@@ -3485,7 +3682,7 @@ app.put('/api/device/entity/avatar', async (req, res) => {
     }
 
     const eId = parseInt(entityId);
-    if (isNaN(eId) || eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
+    if (isNaN(eId) || eId < 0) {
         return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
@@ -3651,18 +3848,18 @@ app.post('/api/client/speak', async (req, res) => {
     let targetIds = [];
     if (entityId === "all") {
         // Broadcast to all bound entities
-        for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
-            if (device.entities[i] && device.entities[i].isBound) {
-                targetIds.push(i);
+        for (const eId of Object.keys(device.entities).map(Number)) {
+            if (device.entities[eId] && device.entities[eId].isBound) {
+                targetIds.push(eId);
             }
         }
     } else if (Array.isArray(entityId)) {
         // Array of entity IDs
-        targetIds = entityId.map(id => parseInt(id)).filter(id => id >= 0 && id < MAX_ENTITIES_PER_DEVICE);
+        targetIds = entityId.map(id => parseInt(id)).filter(id => id >= 0 && device.entities.hasOwnProperty(id));
     } else {
         // Single entity ID
         const eId = parseInt(entityId) || 0;
-        if (eId >= 0 && eId < MAX_ENTITIES_PER_DEVICE) {
+        if (eId >= 0 && device.entities.hasOwnProperty(eId)) {
             targetIds.push(eId);
         }
     }
@@ -3937,10 +4134,10 @@ app.post('/api/entity/speak-to', async (req, res) => {
     const fromId = parseInt(fromEntityId);
     const toId = parseInt(toEntityId);
 
-    if (fromId < 0 || fromId >= MAX_ENTITIES_PER_DEVICE) {
+    if (!isValidEntityId(device, fromId)) {
         return res.status(400).json({ success: false, message: "Invalid fromEntityId" });
     }
-    if (toId < 0 || toId >= MAX_ENTITIES_PER_DEVICE) {
+    if (!isValidEntityId(device, toId)) {
         return res.status(400).json({ success: false, message: "Invalid toEntityId" });
     }
     if (fromId === toId) {
@@ -4250,7 +4447,7 @@ app.post('/api/entity/cross-speak', async (req, res) => {
     }
 
     const fromId = parseInt(fromEntityId);
-    if (isNaN(fromId) || fromId < 0 || fromId >= MAX_ENTITIES_PER_DEVICE) {
+    if (isNaN(fromId) || fromId < 0) {
         return res.status(400).json({ success: false, message: "Invalid fromEntityId" });
     }
 
@@ -4705,7 +4902,7 @@ app.post('/api/client/cross-speak', async (req, res) => {
     }
 
     const fromId = parseInt(fromEntityId);
-    if (isNaN(fromId) || fromId < 0 || fromId >= MAX_ENTITIES_PER_DEVICE) {
+    if (isNaN(fromId) || fromId < 0) {
         return res.status(400).json({ success: false, message: "Invalid fromEntityId" });
     }
 
@@ -4905,7 +5102,7 @@ app.post('/api/entity/broadcast', async (req, res) => {
     }
 
     const fromId = parseInt(fromEntityId);
-    if (isNaN(fromId) || fromId < 0 || fromId >= MAX_ENTITIES_PER_DEVICE) {
+    if (!isValidEntityId(device, fromId)) {
         return res.status(400).json({ success: false, message: "Invalid fromEntityId" });
     }
 
@@ -4975,7 +5172,7 @@ app.post('/api/entity/broadcast', async (req, res) => {
 
     // Find all other bound entities and send in parallel
     const targetIds = [];
-    for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
+    for (const i of Object.keys(device.entities).map(Number)) {
         if (i !== fromId && device.entities[i] && device.entities[i].isBound) {
             targetIds.push(i);
         }
@@ -5171,13 +5368,17 @@ app.get('/api/client/pending', (req, res) => {
         return res.status(400).json({ success: false, message: "deviceId required" });
     }
 
-    if (eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
+    if (eId < 0) {
         return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
     const device = devices[deviceId];
     if (!device) {
         return res.status(404).json({ success: false, message: "Device not found" });
+    }
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
     const entity = device.entities[eId];
@@ -5232,7 +5433,7 @@ app.get('/api/debug/devices', (req, res) => {
     for (const deviceId in devices) {
         const device = devices[deviceId];
         const entities = [];
-        for (let i = 0; i < MAX_ENTITIES_PER_DEVICE; i++) {
+        for (const i of Object.keys(device.entities).map(Number)) {
             const e = device.entities[i];
             if (!e) { entities.push({ entityId: i, isBound: false, empty: true }); continue; }
             entities.push({
@@ -5303,8 +5504,8 @@ app.post('/api/debug/set-entity-xp', (req, res) => {
         return res.status(403).json({ success: false, error: 'Test devices only' });
     }
     const eId = parseInt(entityId);
-    if (isNaN(eId) || eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
-        return res.status(400).json({ success: false, error: 'Invalid entityId (0-7)' });
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
     }
     const entity = device.entities[eId];
     if (!entity) {
@@ -5605,8 +5806,8 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
     }
 
     const eId = parseInt(entityId);
-    if (isNaN(eId) || eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
-        return res.status(400).json({ success: false, error: 'Invalid entityId (0-3)' });
+    if (isNaN(eId) || eId < 0) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
     }
 
     // Gatekeeper: check if device is blocked from free bot usage
@@ -5638,6 +5839,10 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
 
     if (device.deviceSecret && device.deviceSecret !== deviceSecret) {
         return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
+    }
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
     }
 
     // Override mode: auto-unbind if entity already has a binding
@@ -5733,7 +5938,17 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
     freeBot.status = 'assigned';
     if (usePostgreSQL) await db.saveOfficialBot(freeBot);
 
+    // Dynamic entity auto-expand after official free bot bind
+    const newSlotFree = ensureOneEmptySlot(device);
+    if (newSlotFree !== null) {
+        console.log(`[DynamicEntity] Auto-expand after free-bind: deviceId=${deviceId}, newSlotId=${newSlotFree}, totalSlots=${entityCount(device)}`);
+    }
+
     await saveData();
+
+    if (newSlotFree !== null) {
+        io.to(deviceId).emit('entityAdded', { entityId: newSlotFree, totalSlots: entityCount(device) });
+    }
 
     console.log(`[Borrow] Free bot ${freeBot.bot_id} bound to device ${deviceId} entity ${eId} (session: ${sessionKey})`);
 
@@ -5745,6 +5960,7 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
         entityId: eId,
         botType: 'free',
         publicCode: freePublicCode,
+        newSlotCreated: newSlotFree,
         message: 'Free bot bound successfully'
     });
 });
@@ -5762,8 +5978,8 @@ app.post('/api/official-borrow/bind-personal', async (req, res) => {
     }
 
     const eId = parseInt(entityId);
-    if (isNaN(eId) || eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
-        return res.status(400).json({ success: false, error: 'Invalid entityId (0-3)' });
+    if (isNaN(eId) || eId < 0) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
     }
 
     // Auto-create device if missing (e.g. after server redeploy)
@@ -5771,6 +5987,10 @@ app.post('/api/official-borrow/bind-personal', async (req, res) => {
 
     if (device.deviceSecret && device.deviceSecret !== deviceSecret) {
         return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
+    }
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
     }
 
     // Override mode: auto-unbind if entity already has a binding
@@ -5873,7 +6093,17 @@ app.post('/api/official-borrow/bind-personal', async (req, res) => {
     officialBindingsCache[getBindingCacheKey(deviceId, eId)] = binding;
     if (usePostgreSQL) await db.saveOfficialBinding(binding);
 
+    // Dynamic entity auto-expand after personal bot bind
+    const newSlotPersonal = ensureOneEmptySlot(device);
+    if (newSlotPersonal !== null) {
+        console.log(`[DynamicEntity] Auto-expand after personal-bind: deviceId=${deviceId}, newSlotId=${newSlotPersonal}, totalSlots=${entityCount(device)}`);
+    }
+
     await saveData();
+
+    if (newSlotPersonal !== null) {
+        io.to(deviceId).emit('entityAdded', { entityId: newSlotPersonal, totalSlots: entityCount(device) });
+    }
 
     console.log(`[Borrow] Personal bot ${personalBot.bot_id} assigned to device ${deviceId} entity ${eId} (session: ${sessionKey}, usedSlot: ${usedSlot})`);
 
@@ -5886,6 +6116,7 @@ app.post('/api/official-borrow/bind-personal', async (req, res) => {
         botType: 'personal',
         botId: personalBot.bot_id,
         usedSlot: usedSlot,
+        newSlotCreated: newSlotPersonal,
         message: usedSlot ? 'Personal bot bound using existing paid slot' : 'Personal bot bound successfully'
     });
 });
@@ -5945,8 +6176,8 @@ app.post('/api/official-borrow/unbind', async (req, res) => {
     }
 
     const eId = parseInt(entityId);
-    if (isNaN(eId) || eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
-        return res.status(400).json({ success: false, error: 'Invalid entityId (0-3)' });
+    if (isNaN(eId) || eId < 0) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
     }
 
     // Auto-create device if missing (e.g. after server redeploy)
@@ -5954,6 +6185,10 @@ app.post('/api/official-borrow/unbind', async (req, res) => {
 
     if (device.deviceSecret && device.deviceSecret !== deviceSecret) {
         return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
+    }
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
     }
 
     // Check if this entity has an official binding
@@ -6064,13 +6299,17 @@ app.post('/api/entity/refresh', async (req, res) => {
     }
 
     const eId = parseInt(entityId);
-    if (isNaN(eId) || eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
-        return res.status(400).json({ success: false, error: 'Invalid entityId (0-3)' });
+    if (isNaN(eId) || eId < 0) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
     }
 
     const device = devices[deviceId];
     if (!device || device.deviceSecret !== deviceSecret) {
         return res.status(403).json({ success: false, error: 'Invalid device credentials' });
+    }
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
     }
 
     const entity = device.entities[eId];
@@ -6338,13 +6577,17 @@ app.post('/api/bot/register', async (req, res) => {
     }
 
     const eId = parseInt(entityId) || 0;
-    if (eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
+    if (eId < 0) {
         return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
     const device = devices[deviceId];
     if (!device) {
         return res.status(404).json({ success: false, message: "Device not found" });
+    }
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
     const entity = device.entities[eId];
@@ -6699,13 +6942,17 @@ app.delete('/api/bot/register', (req, res) => {
     }
 
     const eId = parseInt(entityId) || 0;
-    if (eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
+    if (eId < 0) {
         return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
     const device = devices[deviceId];
     if (!device) {
         return res.status(404).json({ success: false, message: "Device not found" });
+    }
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
     const entity = device.entities[eId];
@@ -6739,13 +6986,17 @@ app.get('/api/bot/push-status', (req, res) => {
     }
 
     const eId = parseInt(entityId) || 0;
-    if (eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
+    if (eId < 0) {
         return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
     const device = devices[deviceId];
     if (!device) {
         return res.status(404).json({ success: false, message: "Device not found" });
+    }
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
     const entity = device.entities[eId];
@@ -6785,13 +7036,17 @@ app.post('/api/bot/pending-messages', async (req, res) => {
     }
 
     const eId = parseInt(entityId) ?? 0;
-    if (eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
+    if (eId < 0) {
         return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
     const device = devices[deviceId];
     if (!device) {
         return res.status(404).json({ success: false, message: "Device not found" });
+    }
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
     const entity = device.entities[eId];
@@ -7607,7 +7862,7 @@ app.post('/api/admin/transfer-device', async (req, res) => {
     const dbMigrated = {};
     try {
         // 1. Transfer in-memory entities + official bindings
-        for (let eId = 0; eId < MAX_ENTITIES_PER_DEVICE; eId++) {
+        for (const eId of Object.keys(sourceDevice.entities).map(Number)) {
             const srcEntity = sourceDevice.entities[eId];
             if (!srcEntity || !srcEntity.isBound) continue;
 
@@ -8124,6 +8379,7 @@ const channelModule = require('./channel-api')(devices, {
     saveChatMessage,
     io,
     saveData,
+    createDefaultEntity,
     apiBase: process.env.API_BASE || 'https://eclawbot.com'
 });
 app.use('/api/channel', channelModule.router);
@@ -8312,12 +8568,16 @@ app.post('/api/device/screen-capture', async (req, res) => {
     }
 
     const eId = parseInt(entityId) || 0;
-    if (eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
+    if (eId < 0) {
         return res.status(400).json({ success: false, error: 'Invalid entityId' });
     }
 
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
 
     // Auth: device owner (portal) OR bot
     const isOwner = deviceSecret && device.deviceSecret && deviceSecret === device.deviceSecret;
@@ -8428,12 +8688,16 @@ app.post('/api/device/control', async (req, res) => {
     }
 
     const eId = parseInt(entityId) || 0;
-    if (eId < 0 || eId >= MAX_ENTITIES_PER_DEVICE) {
+    if (eId < 0) {
         return res.status(400).json({ success: false, error: 'Invalid entityId' });
     }
 
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
 
     // Auth: device owner (portal) OR bot
     const isOwner = deviceSecret && device.deviceSecret && deviceSecret === device.deviceSecret;
@@ -8861,9 +9125,8 @@ app.post('/api/schedules', async (req, res) => {
         return res.status(403).json({ success: false, error: 'Invalid credentials' });
     }
     const eIdParsed = parseInt(entityId);
-    const deviceLimit = getDeviceEntityLimit(deviceId);
-    if (isNaN(eIdParsed) || eIdParsed < 0 || eIdParsed >= deviceLimit) {
-        return res.status(400).json({ success: false, error: `entityId must be 0-${deviceLimit - 1}` });
+    if (!isValidEntityId(device, eIdParsed)) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
     }
     try {
         const schedule = await scheduler.createSchedule({
@@ -10389,7 +10652,7 @@ app.delete('/api/bot/file', async (req, res) => {
 if (require.main === module) {
     httpServer.listen(port, '0.0.0.0', async () => {
         console.log(`Claw Backend v5.4 (Socket.IO + Notifications) running on port ${port}`);
-        console.log(`Max entities per device: ${MAX_ENTITIES_PER_DEVICE}`);
+        console.log(`Dynamic entity system: initial slots=${DEFAULT_INITIAL_SLOTS}, no upper limit`);
         console.log(`Persistence: ${usePostgreSQL ? 'PostgreSQL' : 'File Storage (Fallback)'}`);
 
         // Initialize Flickr client

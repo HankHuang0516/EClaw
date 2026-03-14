@@ -70,8 +70,16 @@ export const deviceApi = {
   removeEntity: (entityId: string) =>
     apiClient.delete('/api/device/entity', { data: { entityId } }),
 
+  /** Add a new entity slot (dynamic entity system) */
+  addEntity: () =>
+    apiClient.post('/api/device/add-entity', {}),
+
+  /** Permanently delete an entity slot */
+  deleteEntityPermanent: (entityId: number) =>
+    apiClient.delete(`/api/device/entity/${entityId}/permanent`, {}),
+
   /** Reorder entities */
-  reorderEntities: (order: string[]) =>
+  reorderEntities: (order: number[]) =>
     apiClient.post('/api/device/reorder-entities', { order }),
 
   /** Upload FCM/APNs token */

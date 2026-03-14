@@ -42,6 +42,14 @@ function initPortalSocket() {
         if (typeof onSocketEntityUpdate === 'function') onSocketEntityUpdate(data);
     });
 
+    portalSocket.on('entityAdded', (data) => {
+        if (typeof onSocketEntityAdded === 'function') onSocketEntityAdded(data);
+    });
+
+    portalSocket.on('entityDeleted', (data) => {
+        if (typeof onSocketEntityDeleted === 'function') onSocketEntityDeleted(data);
+    });
+
     portalSocket.on('vars:approval-request', (data) => {
         showVarsApprovalDialog(data);
     });

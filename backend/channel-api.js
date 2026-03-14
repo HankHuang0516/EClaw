@@ -18,7 +18,7 @@ const express = require('express');
 const crypto = require('crypto');
 const db = require('./db');
 
-module.exports = function (devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, apiBase }) {
+module.exports = function (devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase }) {
     const router = express.Router();
 
     // ── In-memory test sink (for self-testing without ngrok) ──
@@ -311,7 +311,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 deviceId: account.device_id,
                 accountId: account.id,
                 entities,
-                maxEntities: 8
+                totalEntities: Object.keys(device?.entities || {}).length
             });
         } catch (err) {
             console.error('[Channel] Register error:', err.message);
@@ -368,9 +368,9 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             if (rawEntityId !== undefined && rawEntityId !== null) {
                 // Explicit entityId specified
                 eId = parseInt(rawEntityId);
-                if (isNaN(eId) || eId < 0 || eId > 7) {
-                    if (process.env.DEBUG === 'true') serverLog('warn', 'bind', `[BIND] invalid entityId: ${rawEntityId}`, { deviceId });
-                    return res.status(400).json({ success: false, message: 'entityId must be 0-7' });
+                if (isNaN(eId) || eId < 0 || !device.entities.hasOwnProperty(eId)) {
+                    if (process.env.DEBUG === 'true') serverLog('warn', 'bind', `[BIND] invalid entityId: ${rawEntityId}, existing=[${Object.keys(device.entities)}]`, { deviceId });
+                    return res.status(400).json({ success: false, message: `entityId ${rawEntityId} does not exist on this device. Available: [${Object.keys(device.entities)}]` });
                 }
                 if (process.env.DEBUG === 'true') serverLog('info', 'bind', `[BIND] using explicit entityId=${eId}`, { deviceId, entityId: eId });
             } else {
@@ -395,22 +395,15 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                         }
                     }
                 }
-                // All slots full
+                // All slots full — auto-create a new empty slot (dynamic entity system)
                 if (eId === null) {
-                    const allEntities = slotKeys.map(i => ({
-                        entityId: i,
-                        name: device.entities[i].name || null,
-                        character: device.entities[i].character,
-                        bindingType: device.entities[i].bindingType || null,
-                        isBound: device.entities[i].isBound || false,
-                    }));
-                    if (process.env.DEBUG === 'true') serverLog('warn', 'bind', `[BIND] all slots full`, { deviceId, metadata: { entities: allEntities } });
-                    return res.status(409).json({
-                        success: false,
-                        message: 'All entity slots are full. Set entityId in your channel config to override a specific slot (after unbinding it), or unbind an entity first.',
-                        entities: allEntities,
-                        hint: 'To unbind: DELETE /api/entity/:entityId with your deviceId + deviceSecret'
-                    });
+                    if (!device.nextEntityId) {
+                        device.nextEntityId = Math.max(-1, ...Object.keys(device.entities).map(Number)) + 1;
+                    }
+                    eId = device.nextEntityId++;
+                    device.entities[eId] = createDefaultEntity(eId);
+                    console.log(`[DynamicEntity] Channel auto-expand: deviceId=${deviceId}, newEntityId=${eId}, totalSlots=${Object.keys(device.entities).length}`);
+                    if (process.env.DEBUG === 'true') serverLog('info', 'bind', `[BIND] auto-created new slot ${eId} (all existing slots full)`, { deviceId, entityId: eId });
                 }
             }
 
@@ -471,7 +464,23 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             entity.message = 'Connected via OpenClaw channel!';
             entity.lastUpdated = Date.now();
 
+            // Dynamic entity auto-expand after channel bind
+            const hasEmpty = Object.values(device.entities).some(e => !e.isBound);
+            let newChannelSlot = null;
+            if (!hasEmpty) {
+                if (!device.nextEntityId) {
+                    device.nextEntityId = Math.max(-1, ...Object.keys(device.entities).map(Number)) + 1;
+                }
+                newChannelSlot = device.nextEntityId++;
+                device.entities[newChannelSlot] = createDefaultEntity(newChannelSlot);
+                console.log(`[DynamicEntity] Channel auto-expand after bind: deviceId=${deviceId}, newSlotId=${newChannelSlot}, totalSlots=${Object.keys(device.entities).length}`);
+            }
+
             saveData();
+
+            if (newChannelSlot !== null) {
+                io.to(deviceId).emit('entityAdded', { entityId: newChannelSlot, totalSlots: Object.keys(device.entities).length });
+            }
             serverLog('info', 'bind', `Entity ${eId} bound via channel plugin`, { deviceId, entityId: eId });
             if (process.env.DEBUG === 'true') serverLog('info', 'bind', `[BIND] entity ${eId} bound OK, publicCode=${publicCode}`, { deviceId, entityId: eId });
 

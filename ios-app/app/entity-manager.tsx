@@ -109,6 +109,46 @@ export default function EntityManagerScreen() {
     );
   };
 
+  const handleAddEntity = async () => {
+    setIsLoading(true);
+    try {
+      await deviceApi.addEntity();
+      await refetch();
+      setSnack('Entity added');
+    } catch {
+      setSnack(t('errors.server'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePermanentDelete = (entity: Entity) => {
+    if (entities.length <= 1) {
+      setSnack('Cannot delete the last entity');
+      return;
+    }
+    Alert.alert(
+      'Permanently Delete Entity',
+      `This will permanently remove Entity #${entity.entityIndex} (${entity.name || 'unnamed'}). Chat history will be preserved but the slot will be gone forever.`,
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: 'Delete Permanently',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deviceApi.deleteEntityPermanent(entity.entityIndex);
+              removeEntity(entity.entityId);
+              setSnack('Entity permanently deleted');
+            } catch {
+              setSnack(t('errors.server'));
+            }
+          },
+        },
+      ]
+    );
+  };
+
   // Agent Card handlers
   const openAgentCard = async (entity: Entity) => {
     setAcEntity(entity);
@@ -235,10 +275,16 @@ export default function EntityManagerScreen() {
                   }}
                 />
                 <IconButton
-                  icon="delete"
+                  icon="link-off"
+                  size={20}
+                  onPress={() => handleRemove(item)}
+                />
+                <IconButton
+                  icon="delete-forever"
                   size={20}
                   iconColor={theme.colors.error}
-                  onPress={() => handleRemove(item)}
+                  onPress={() => handlePermanentDelete(item)}
+                  disabled={entities.length <= 1}
                 />
               </View>
             </Card.Content>
@@ -250,6 +296,17 @@ export default function EntityManagerScreen() {
               {t('home.no_entities')}
             </Text>
           </View>
+        }
+        ListFooterComponent={
+          <Button
+            mode="outlined"
+            icon="plus"
+            onPress={handleAddEntity}
+            loading={isLoading}
+            style={{ marginTop: 8 }}
+          >
+            Add Entity
+          </Button>
         }
       />
 

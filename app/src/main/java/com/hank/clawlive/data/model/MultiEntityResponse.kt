@@ -8,7 +8,8 @@ import com.google.gson.annotations.SerializedName
 data class MultiEntityResponse(
     val entities: List<EntityStatus> = emptyList(),
     val activeCount: Int = 0,
-    @SerializedName("maxEntitiesPerDevice")
-    val maxEntities: Int = 4,
+    @SerializedName("totalSlots")
+    val totalSlots: Int = 1,
+    val entityIds: List<Int> = emptyList(),
     val serverReady: Boolean = true
 )

@@ -150,7 +150,7 @@ class EntityManagerActivity : AppCompatActivity() {
 
     private fun updateEntityList(response: MultiEntityResponse) {
         // Update count
-        tvEntityCount.text = "${response.activeCount}/${response.maxEntities}"
+        tvEntityCount.text = "${response.activeCount}/${response.totalSlots}"
 
         // Clear existing entity cards (except empty state)
         val childCount = entityListContainer.childCount
@@ -173,6 +173,9 @@ class EntityManagerActivity : AppCompatActivity() {
         response.entities.forEach { entity ->
             addEntityCard(entity)
         }
+
+        // Add "+" card to create a new entity slot
+        addNewEntityCard()
     }
 
     private fun addEntityCard(entity: EntityStatus) {
@@ -248,6 +251,14 @@ class EntityManagerActivity : AppCompatActivity() {
             }
         }
 
+        // Long-press for permanent delete option (hide for entity 0)
+        if (entity.entityId != 0) {
+            cardView.setOnLongClickListener {
+                showDeleteEntityConfirmDialog(entity)
+                true
+            }
+        }
+
         entityListContainer.addView(cardView, 0) // Add at top
     }
 
@@ -309,6 +320,81 @@ class EntityManagerActivity : AppCompatActivity() {
                     getString(R.string.failed_format, e.message),
                     Toast.LENGTH_LONG
                 ).show()
+            }
+        }
+    }
+
+    private fun addNewEntityCard() {
+        val card = TextView(this).apply {
+            text = "+ Add Entity"
+            textSize = 18f
+            setTextColor(resources.getColor(R.color.white, theme))
+            setBackgroundResource(R.drawable.badge_idle)
+            setPadding(dpToPx(16), dpToPx(24), dpToPx(16), dpToPx(24))
+            gravity = android.view.Gravity.CENTER
+            setOnClickListener { addEntity() }
+        }
+        val params = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply { topMargin = dpToPx(8) }
+        entityListContainer.addView(card, params)
+    }
+
+    private fun addEntity() {
+        lifecycleScope.launch {
+            try {
+                val body = mapOf(
+                    "deviceId" to deviceManager.deviceId,
+                    "deviceSecret" to deviceManager.deviceSecret
+                )
+                val response = api.addEntity(body)
+                if (response.isSuccessful) {
+                    Toast.makeText(this@EntityManagerActivity, "Entity added", Toast.LENGTH_SHORT).show()
+                    delay(500)
+                    loadEntities()
+                } else {
+                    val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                    Toast.makeText(this@EntityManagerActivity, getString(R.string.failed_format, errorBody), Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to add entity")
+                Toast.makeText(this@EntityManagerActivity, getString(R.string.failed_format, e.message), Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun showDeleteEntityConfirmDialog(entity: EntityStatus) {
+        AlertDialog.Builder(this)
+            .setTitle("Permanently delete Entity #${entity.entityId}?")
+            .setMessage("This will permanently remove this entity slot and all its data. This action cannot be undone.")
+            .setPositiveButton("Delete") { _, _ ->
+                deleteEntityPermanent(entity.entityId)
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show()
+    }
+
+    private fun deleteEntityPermanent(entityId: Int) {
+        lifecycleScope.launch {
+            try {
+                val body = mapOf(
+                    "deviceId" to deviceManager.deviceId,
+                    "deviceSecret" to deviceManager.deviceSecret
+                )
+                val response = api.deleteEntityPermanent(entityId, body)
+                if (response.isSuccessful) {
+                    layoutPrefs.removeRegisteredEntity(entityId)
+                    Toast.makeText(this@EntityManagerActivity, "Entity #$entityId deleted", Toast.LENGTH_SHORT).show()
+                    delay(500)
+                    loadEntities()
+                } else {
+                    val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                    Toast.makeText(this@EntityManagerActivity, getString(R.string.failed_format, errorBody), Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to delete entity permanently")
+                Toast.makeText(this@EntityManagerActivity, getString(R.string.failed_format, e.message), Toast.LENGTH_LONG).show()
             }
         }
     }

@@ -52,6 +52,14 @@ interface ClawApiService {
     @GET("api/entities")
     suspend fun getAllEntities(@Query("deviceId") deviceId: String? = null): MultiEntityResponse
 
+    // Add a new entity slot to the device
+    @POST("api/device/add-entity")
+    suspend fun addEntity(@Body body: Map<String, String>): retrofit2.Response<com.google.gson.JsonObject>
+
+    // Permanently delete an entity slot from the device
+    @HTTP(method = "DELETE", path = "api/device/entity/{entityId}/permanent", hasBody = true)
+    suspend fun deleteEntityPermanent(@Path("entityId") entityId: Int, @Body body: Map<String, String>): retrofit2.Response<com.google.gson.JsonObject>
+
     // Remove entity by bot (requires botSecret)
     @HTTP(method = "DELETE", path = "api/entity", hasBody = true)
     suspend fun removeEntity(@Body body: Map<String, String>): ApiResponse

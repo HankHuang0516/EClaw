@@ -466,6 +466,14 @@ paths:
                     type: integer
                   deviceCount:
                     type: integer
+                  totalSlots:
+                    type: integer
+                    description: Total number of entity slots on this device
+                  entityIds:
+                    type: array
+                    items:
+                      type: integer
+                    description: List of all entity IDs (may be non-contiguous)
 
   /api/device/entity/name:
     put:
@@ -541,11 +549,12 @@ paths:
                   avatar:
                     type: string
 
-  /api/device/reorder-entities:
+  /api/device/add-entity:
     post:
       tags: [Device]
-      summary: Swap entity slots
-      operationId: reorderEntities
+      summary: Add a new entity slot to the device
+      operationId: addEntity
+      description: Creates a new entity slot with an auto-assigned monotonically increasing ID. Entity IDs are never reused.
       security:
         - DeviceSecret: []
       requestBody:
@@ -554,16 +563,102 @@ paths:
           application/json:
             schema:
               type: object
-              required: [deviceId, deviceSecret, fromIndex, toIndex]
+              required: [deviceId, deviceSecret]
               properties:
                 deviceId:
                   type: string
                 deviceSecret:
                   type: string
-                fromIndex:
-                  type: integer
-                toIndex:
-                  type: integer
+      responses:
+        '200':
+          description: Entity added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  entityId:
+                    type: integer
+                    description: The auto-assigned entity ID
+                  entity:
+                    type: object
+                  totalEntities:
+                    type: integer
+                  entityIds:
+                    type: array
+                    items:
+                      type: integer
+
+  /api/device/entity/{entityId}/permanent:
+    delete:
+      tags: [Device]
+      summary: Permanently delete an entity slot
+      operationId: deleteEntityPermanent
+      description: Permanently removes an entity slot. If bound, performs full unbind cleanup first. At least one entity must remain. Chat history is preserved.
+      security:
+        - DeviceSecret: []
+      parameters:
+        - name: entityId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, deviceSecret]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+      responses:
+        '200':
+          description: Entity permanently deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  deletedEntityId:
+                    type: integer
+                  remainingEntities:
+                    type: integer
+        '400':
+          description: Cannot delete last entity or entity not found
+
+  /api/device/reorder-entities:
+    post:
+      tags: [Device]
+      summary: Reorder entity slots
+      operationId: reorderEntities
+      description: Accepts a permutation of actual entity IDs in desired display order. Must include all existing entity IDs.
+      security:
+        - DeviceSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deviceId, deviceSecret, order]
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+                order:
+                  type: array
+                  items:
+                    type: integer
+                  description: Permutation of all existing entity IDs in desired order
       responses:
         '200':
           description: Entities reordered

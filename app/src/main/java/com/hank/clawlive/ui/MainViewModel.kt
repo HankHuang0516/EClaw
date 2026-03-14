@@ -20,7 +20,7 @@ import timber.log.Timber
 
 data class BindingUiState(
     val isLoading: Boolean = false,
-    val selectedEntityId: Int = 0, // 0-3
+    val selectedEntityId: Int = 0, // dynamic entity ID
     val bindingCode: String? = null,
     val remainingSeconds: Int = 0,
     val isBound: Boolean = false,

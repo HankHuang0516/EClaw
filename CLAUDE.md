@@ -137,7 +137,7 @@ EClaw/
 - **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
 - **Real-time**: Socket.IO for live updates to Web Portal and Android app
 - **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
-- **Entity model**: Each device has up to 8 entity slots (0-7), each independently bindable to a bot
+- **Entity model**: Each device has dynamically managed entity slots (starting with 1, no upper limit). Entity IDs are monotonically increasing per-device and never reused. Auto-expands on bind to ensure at least one empty slot. Manual add/delete via `POST /api/device/add-entity` and `DELETE /api/device/entity/:entityId/permanent`.
 - **Bot communication**: Webhook push + `exec+curl` pattern; bots on OpenClaw platform (Zeabur)
 - **Push format**: Instruction-first with pre-filled curl templates for bot responses
 
@@ -467,6 +467,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | AI Chat Image | `node backend/tests/test-ai-chat-image.js` | Device ID + Secret | AI chat with image support |
 | Discord Webhook | `node backend/tests/test-discord-webhook.js` | Device ID + Secret | Discord webhook URL detection, registration, rich messages, content limits |
 | Agent Card UI | `node backend/tests/test-agent-card-ui.js` | Device ID + Secret | Agent Card CRUD lifecycle, field validation, three-platform API parity |
+| Dynamic Entities | `node backend/tests/test-dynamic-entities.js` | Device ID + Secret | Dynamic entity add/delete, 20-entity extreme, sparse IDs, reorder, skip-ID permutations |
 
 ### Running All Tests
 ```bash

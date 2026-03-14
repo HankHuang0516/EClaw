@@ -43,7 +43,7 @@ data class ChatMessage(
     /** For user messages: target entity IDs (comma-separated for broadcast, e.g., "0,1,2") */
     val targetEntityIds: String? = null,
 
-    /** For entity messages: which entity sent it (0-3) */
+    /** For entity messages: which entity sent it (dynamic entity ID) */
     val fromEntityId: Int? = null,
 
     /** For entity messages: entity name */

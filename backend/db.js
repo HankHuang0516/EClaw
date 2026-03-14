@@ -152,6 +152,22 @@ async function createTables() {
             ALTER TABLE devices ADD COLUMN IF NOT EXISTS paid_borrow_slots INTEGER DEFAULT 0
         `);
 
+        // Dynamic entity system: per-device counter for unique entity ID assignment
+        await client.query(`
+            ALTER TABLE devices ADD COLUMN IF NOT EXISTS next_entity_id INTEGER DEFAULT 1
+        `);
+        // Migration: existing devices with entities should have next_entity_id = max(entity_id) + 1
+        await client.query(`
+            UPDATE devices SET next_entity_id = sub.next_id
+            FROM (
+                SELECT device_id, MAX(entity_id) + 1 AS next_id
+                FROM entities GROUP BY device_id
+            ) sub
+            WHERE devices.device_id = sub.device_id
+              AND (devices.next_entity_id IS NULL OR devices.next_entity_id < sub.next_id)
+        `);
+        console.log('[DynamicEntity] DB migration: next_entity_id column ensured on devices table');
+
         // Official bot bindings (free bot multi-device tracking)
         await client.query(`
             CREATE TABLE IF NOT EXISTS official_bot_bindings (
@@ -315,11 +331,11 @@ async function saveDeviceData(deviceId, deviceData) {
 
             // Upsert device
             await client.query(
-                `INSERT INTO devices (device_id, device_secret, created_at, updated_at)
-                 VALUES ($1, $2, $3, $4)
+                `INSERT INTO devices (device_id, device_secret, created_at, updated_at, next_entity_id)
+                 VALUES ($1, $2, $3, $4, $5)
                  ON CONFLICT (device_id)
-                 DO UPDATE SET updated_at = $4`,
-                [deviceId, deviceData.deviceSecret, deviceData.createdAt, Date.now()]
+                 DO UPDATE SET updated_at = $4, next_entity_id = $5`,
+                [deviceId, deviceData.deviceSecret, deviceData.createdAt, Date.now(), deviceData.nextEntityId || 1]
             );
 
             // Clear all public_code for this device first to avoid unique constraint
@@ -474,6 +490,7 @@ async function loadAllDevices() {
                 deviceId: row.device_id,
                 deviceSecret: row.device_secret,
                 createdAt: parseInt(row.created_at),
+                nextEntityId: parseInt(row.next_entity_id) || 1,
                 entities: {}
             };
         }
@@ -544,6 +561,23 @@ async function deleteDevice(deviceId) {
         return true;
     } catch (err) {
         console.error(`[DB] Failed to delete device ${deviceId}:`, err.message);
+        return false;
+    }
+}
+
+// Delete a single entity from database (permanent removal)
+async function deleteEntity(deviceId, entityId) {
+    if (!pool) return false;
+
+    try {
+        const result = await pool.query(
+            'DELETE FROM entities WHERE device_id = $1 AND entity_id = $2',
+            [deviceId, entityId]
+        );
+        console.log(`[DynamicEntity] DB deleteEntity: deviceId=${deviceId}, entityId=${entityId}, rowsDeleted=${result.rowCount}`);
+        return result.rowCount > 0;
+    } catch (err) {
+        console.error(`[DynamicEntity] Failed to delete entity ${entityId} from device ${deviceId}:`, err.message);
         return false;
     }
 }
@@ -1192,6 +1226,7 @@ module.exports = {
     saveAllDevices,
     loadAllDevices,
     deleteDevice,
+    deleteEntity,
     getStats,
     closeDatabase,
     // Official bot pool

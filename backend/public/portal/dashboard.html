@@ -230,8 +230,8 @@
         }
 
         .slot-btn {
-            flex: 1 1 calc(25% - 6px);
-            min-width: 0;
+            flex: 1 1 80px;
+            min-width: 80px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -278,6 +278,33 @@
 
         .slot-emoji {
             font-size: 24px;
+        }
+
+        .slot-btn.add-slot-btn {
+            border-style: dashed;
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        .slot-btn.add-slot-btn:hover {
+            opacity: 1;
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-delete-permanent {
+            background: #dc2626 !important;
+            color: #fff !important;
+            border: none !important;
+        }
+
+        .btn-delete-permanent:hover:not(:disabled) {
+            background: #b91c1c !important;
+        }
+
+        .btn-delete-permanent:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
         }
 
         /* Binding code display */
@@ -1276,8 +1303,9 @@
 
         // --- State ---
         let entities = [];
-        let selectedSlot = 0;
-        let maxEntitySlots = 4; // Updated from API (premium=8, free=4)
+        let selectedSlot = null; // Will be set to first unbound slot
+        let totalSlots = 0; // Updated from API (totalSlots)
+        let allEntityIds = []; // All entity IDs present (bound + unbound)
         let currentCode = null;
         let codeExpiry = null;
         let countdownInterval = null;
@@ -1324,6 +1352,17 @@
             }, 10000);
         });
 
+        // --- Socket Event Handlers ---
+        function onSocketEntityAdded(data) {
+            console.log('[Dashboard] entityAdded event', data);
+            loadEntities();
+        }
+
+        function onSocketEntityDeleted(data) {
+            console.log('[Dashboard] entityDeleted event', data);
+            loadEntities();
+        }
+
         // --- Entity Loading ---
         async function loadEntities() {
             // Skip updates during edit mode to preserve drag state (parity with Android)
@@ -1351,10 +1390,13 @@
                 entities = newEntities;
                 updateEntityMaps(entities);
 
-                // Update slot limit from server (premium=8, free=4)
-                const serverMax = data.maxEntitiesPerDevice || 4;
-                if (serverMax !== maxEntitySlots) {
-                    maxEntitySlots = serverMax;
+                // Update slot info from server
+                const serverTotal = data.totalSlots || data.maxEntitiesPerDevice || 4;
+                const serverEntityIds = data.entityIds || [];
+                const slotsChanged = serverTotal !== totalSlots || JSON.stringify(serverEntityIds) !== JSON.stringify(allEntityIds);
+                totalSlots = serverTotal;
+                allEntityIds = serverEntityIds;
+                if (slotsChanged) {
                     renderSlotSelector();
                 }
 
@@ -1372,7 +1414,7 @@
 
         function updateEntityCount() {
             document.getElementById('entityCount').innerHTML =
-                '<strong>' + entities.length + '</strong> / ' + maxEntitySlots + ' bound';
+                '<strong>' + entities.length + '</strong> bound / ' + totalSlots + ' total';
             // Show edit button only when there are entities
             var editBtn = document.getElementById('btnEditMode');
             if (editBtn) editBtn.style.display = entities.length > 0 ? 'inline-flex' : 'none';
@@ -1380,66 +1422,62 @@
 
         function renderSlotSelector() {
             const container = document.getElementById('slotSelector');
-            const occupiedMap = {};
-            entities.forEach(e => { occupiedMap[e.entityId] = e; });
+            const boundSet = new Set(entities.map(e => e.entityId));
+            // Show only unbound entity IDs
+            const unboundIds = allEntityIds.filter(id => !boundSet.has(id));
             container.innerHTML = '';
-            for (let i = 0; i < maxEntitySlots; i++) {
+
+            unboundIds.forEach(id => {
                 const btn = document.createElement('button');
                 btn.className = 'slot-btn';
-                btn.dataset.slot = i;
-                btn.onclick = () => selectSlot(i);
-                if (i === selectedSlot) btn.classList.add('active');
-                const entity = occupiedMap[i];
-                if (entity) btn.classList.add('occupied');
-                let labelHtml = '<span class="slot-emoji">' + (ENTITY_CHARS_DEFAULT[i]?.emoji || ENTITY_CHARS_DEFAULT[i % 4]?.emoji || '\u{1F99E}') + '</span><span>Slot ' + i + '</span>';
-                if (entity) {
-                    const name = entity.name || (getEntityDisplayName(i) + ' #' + i);
-                    labelHtml += '<span class="slot-occupied-label">' + escapeHtml(name) + '</span>';
-                }
-                btn.innerHTML = labelHtml;
+                btn.dataset.slot = id;
+                btn.onclick = () => selectSlot(id);
+                if (id === selectedSlot) btn.classList.add('active');
+                const emoji = ENTITY_CHARS_DEFAULT[id]?.emoji || ENTITY_CHARS_DEFAULT[id % 4]?.emoji || '\u{1F99E}';
+                btn.innerHTML = '<span class="slot-emoji">' + emoji + '</span><span>Slot ' + id + '</span>';
                 container.appendChild(btn);
+            });
+
+            // "+" button to add a new entity slot
+            const addBtn = document.createElement('button');
+            addBtn.className = 'slot-btn add-slot-btn';
+            addBtn.onclick = addEntitySlot;
+            addBtn.innerHTML = '<span class="slot-emoji">+</span><span>New Slot</span>';
+            container.appendChild(addBtn);
+
+            // Auto-select first unbound slot if current selection is invalid
+            if (selectedSlot === null || !unboundIds.includes(selectedSlot)) {
+                if (unboundIds.length > 0) {
+                    selectSlot(unboundIds[0]);
+                } else {
+                    selectedSlot = null;
+                }
+            }
+        }
+
+        async function addEntitySlot() {
+            try {
+                const data = await apiCall('POST', '/api/device/add-entity', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret
+                });
+                showToast('New entity slot created', 'success');
+                if (window.telemetry) telemetry.trackAction('add_entity_slot');
+                await loadEntities();
+            } catch (e) {
+                showToast('Failed to add slot: ' + e.message, 'error');
             }
         }
 
         function updateSlotAvailability() {
-            const occupiedMap = {};
-            entities.forEach(e => { occupiedMap[e.entityId] = e; });
-            let needsReset = false;
-            document.querySelectorAll('.slot-btn').forEach(btn => {
-                const slot = parseInt(btn.dataset.slot);
-                const wasOccupied = btn.classList.contains('occupied');
-                const entity = occupiedMap[slot];
-                const isOccupied = !!entity;
-                btn.classList.toggle('occupied', isOccupied);
-
-                // Update occupied label
-                let label = btn.querySelector('.slot-occupied-label');
-                if (isOccupied) {
-                    const name = entity.name || (getEntityDisplayName(slot) + ' #' + slot);
-                    if (!label) {
-                        label = document.createElement('span');
-                        label.className = 'slot-occupied-label';
-                        btn.appendChild(label);
-                    }
-                    label.textContent = name;
-                } else if (label) {
-                    label.remove();
-                }
-
-                // Detect newly bound entity on currently selected slot
-                if (isOccupied && !wasOccupied && slot === selectedSlot) {
-                    needsReset = true;
-                }
-            });
-
-            if (needsReset) {
-                // Reset code display since current slot was just bound
+            const boundSet = new Set(entities.map(e => e.entityId));
+            // If the selected slot just got bound, reset code display and re-render slots
+            if (selectedSlot !== null && boundSet.has(selectedSlot)) {
                 resetCodeDisplay();
-                // Auto-select first available slot
-                const firstAvailable = Array.from({length: maxEntitySlots}, (_, i) => i).find(s => !occupiedMap[s]);
-                if (firstAvailable !== undefined) {
-                    selectSlot(firstAvailable);
-                }
+                renderSlotSelector();
+            } else {
+                // Re-render to reflect any changes in unbound slots
+                renderSlotSelector();
             }
         }
 
@@ -1526,6 +1564,7 @@
                     '<button class="xd-settings-toggle" id="xdToggle' + entity.entityId + '" onclick="toggleXdSettings(' + entity.entityId + ')">' + i18n.t('dash_xd_settings') + '</button>' +
                     '<button class="ac-settings-toggle" id="acToggle' + entity.entityId + '" onclick="toggleAgentCard(' + entity.entityId + ')">&#x1F4C7; Agent Card</button>' +
                     '<button class="btn btn-sm btn-danger" onclick="confirmRemove(' + entity.entityId + ', \'' + escapedName + '\')">' + i18n.t('dash_btn_remove') + '</button>' +
+                    '<button class="btn btn-sm btn-delete-permanent"' + (entities.length <= 1 ? ' disabled title="Cannot delete the last entity"' : '') + ' onclick="confirmDeletePermanent(' + entity.entityId + ', \'' + escapedName + '\')">&#x1F5D1; Delete Permanently</button>' +
                     '</div>' +
                     '<div class="xd-settings-panel" id="xdPanel' + entity.entityId + '">' +
                     '<h4>' + i18n.t('dash_xd_title') + '</h4>' +
@@ -2268,6 +2307,11 @@
         async function generateCode() {
             const btn = document.getElementById('btnGenerate');
 
+            if (selectedSlot === null) {
+                showToast('No available slot selected. Add a new slot first.', 'error');
+                return;
+            }
+
             // Check if slot is occupied — confirm overwrite first
             const existingEntity = entities.find(e => e.entityId === selectedSlot);
             if (existingEntity) {
@@ -2489,6 +2533,53 @@
                 showToast('Failed to remove: ' + e.message, 'error');
                 btnEl.disabled = false;
                 btnEl.textContent = i18n.t('dash_btn_remove');
+            }
+        }
+
+        // --- Delete Permanently ---
+        function confirmDeletePermanent(entityId, displayName) {
+            if (entities.length <= 1) {
+                showToast('Cannot delete the last entity', 'error');
+                return;
+            }
+            const overlay = document.createElement('div');
+            overlay.className = 'confirm-overlay';
+            overlay.innerHTML =
+                '<div class="dialog">' +
+                '<div class="dialog-title" style="color:#dc2626;">&#x26A0; Delete Entity Permanently</div>' +
+                '<p style="color:var(--text-secondary);font-size:14px;">' +
+                'This will <strong>permanently delete</strong> entity <strong>' + escapeHtml(displayName) + '</strong> (ID: ' + entityId + '). ' +
+                'The entity slot will be removed and cannot be recovered.' +
+                '</p>' +
+                '<div class="dialog-actions">' +
+                '<button class="btn btn-outline" onclick="this.closest(\'.confirm-overlay\').remove()">Cancel</button>' +
+                '<button class="btn btn-delete-permanent" id="btnConfirmDeletePerm" onclick="deletePermanent(' + entityId + ', this)">Delete Permanently</button>' +
+                '</div>' +
+                '</div>';
+            document.body.appendChild(overlay);
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.remove();
+            });
+        }
+
+        async function deletePermanent(entityId, btnEl) {
+            btnEl.disabled = true;
+            btnEl.textContent = 'Deleting...';
+            try {
+                await apiCall('DELETE', '/api/device/entity/' + entityId + '/permanent', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret
+                });
+                const overlay = btnEl.closest('.confirm-overlay');
+                if (overlay) overlay.remove();
+                showToast('Entity permanently deleted', 'success');
+                if (window.telemetry) telemetry.trackAction('entity_delete_permanent', { entityId: entityId });
+                if (isEditMode) toggleEditMode();
+                await loadEntities();
+            } catch (e) {
+                showToast('Failed to delete: ' + e.message, 'error');
+                btnEl.disabled = false;
+                btnEl.textContent = 'Delete Permanently';
             }
         }
 
