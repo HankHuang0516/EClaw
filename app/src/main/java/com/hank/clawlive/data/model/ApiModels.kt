@@ -67,3 +67,26 @@ data class GenericResponse(
     @SerializedName("success") val success: Boolean = false,
     @SerializedName("message") val message: String? = null
 )
+
+// Agent Card models
+data class AgentCardCapability(
+    @SerializedName("id") val id: String = "",
+    @SerializedName("name") val name: String = "",
+    @SerializedName("description") val description: String = ""
+)
+
+data class AgentCard(
+    @SerializedName("description") val description: String? = null,
+    @SerializedName("capabilities") val capabilities: List<AgentCardCapability>? = null,
+    @SerializedName("protocols") val protocols: List<String>? = null,
+    @SerializedName("tags") val tags: List<String>? = null,
+    @SerializedName("version") val version: String? = null,
+    @SerializedName("website") val website: String? = null,
+    @SerializedName("contactEmail") val contactEmail: String? = null
+)
+
+data class AgentCardResponse(
+    @SerializedName("success") val success: Boolean = false,
+    @SerializedName("agentCard") val agentCard: AgentCard? = null,
+    @SerializedName("message") val message: String? = null
+)

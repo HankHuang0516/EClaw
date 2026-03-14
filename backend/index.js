@@ -3744,32 +3744,49 @@ app.post('/api/client/speak', async (req, res) => {
         } else if (entity.webhook) {
             console.log(`[Push] Attempting push to Device ${deviceId} Entity ${eId} (webhook: ${entity.webhook.url})`);
 
-            // Instruction-first push format with pre-filled curl template
-            const apiBase = 'https://eclawbot.com';
-            let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API below. Your text reply is DISCARDED and the user will NEVER see it.\n`;
-            pushMsg += `Run this command to reply (replace YOUR_REPLY_HERE with your response):\n`;
-            pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${eId},"botSecret":"${entity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
-            pushMsg += `To BROADCAST to ALL other entities (use ONLY when user asks to broadcast):\n`;
-            pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/broadcast" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","fromEntityId":${eId},"botSecret":"${entity.botSecret}","text":"YOUR_BROADCAST_HERE"}'\n\n`;
-            // Inject broadcast recipient info if this is a multi-target broadcast
-            if (showRecipientInfo) {
-                pushMsg += buildBroadcastRecipientBlock(device, targetIds, eId);
-            }
-            pushMsg += `[MESSAGE] Device ${deviceId} Entity ${eId}\n`;
-            pushMsg += `From: ${source}\n`;
-            pushMsg += `Content: ${text}`;
-            if (mediaType === 'photo') {
-                pushMsg += `\n[Attachment: Photo]\nmedia_type: photo\nmedia_url: ${mediaUrl}`;
-                const bkUrl = getBackupUrl(mediaUrl);
-                if (bkUrl) pushMsg += `\nbackup_url: ${bkUrl}`;
-            } else if (mediaType === 'voice') pushMsg += `\n[Attachment: Voice]\nmedia_type: voice\nmedia_url: ${mediaUrl}`;
-            else if (mediaType === 'video') pushMsg += `\n[Attachment: Video]\nmedia_type: video\nmedia_url: ${mediaUrl}`;
-            else if (mediaType === 'file') pushMsg += `\n[Attachment: File]\nmedia_type: file\nmedia_url: ${mediaUrl}`;
-            pushMsg += getMissionApiHints(apiBase, deviceId, eId, entity.botSecret);
+            if (entity.webhook.type === 'discord') {
+                // Discord: send user message directly (no instruction-first format)
+                const discordPayload = {
+                    message: `**${source}**: ${text}`,
+                    discord: req.body.discord || {}
+                };
+                // Include media as embed if present
+                if (mediaType === 'photo' && mediaUrl) {
+                    if (!discordPayload.discord.embeds) discordPayload.discord.embeds = [];
+                    discordPayload.discord.embeds.push({ image: { url: mediaUrl } });
+                } else if (mediaUrl) {
+                    discordPayload.message += `\n📎 ${mediaType}: ${mediaUrl}`;
+                }
 
-            pushResult = await pushToBot(entity, deviceId, "new_message", {
-                message: pushMsg
-            });
+                pushResult = await pushToBot(entity, deviceId, "new_message", discordPayload);
+            } else {
+                // OpenClaw: instruction-first push format with pre-filled curl template
+                const apiBase = 'https://eclawbot.com';
+                let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API below. Your text reply is DISCARDED and the user will NEVER see it.\n`;
+                pushMsg += `Run this command to reply (replace YOUR_REPLY_HERE with your response):\n`;
+                pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${eId},"botSecret":"${entity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
+                pushMsg += `To BROADCAST to ALL other entities (use ONLY when user asks to broadcast):\n`;
+                pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/broadcast" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","fromEntityId":${eId},"botSecret":"${entity.botSecret}","text":"YOUR_BROADCAST_HERE"}'\n\n`;
+                // Inject broadcast recipient info if this is a multi-target broadcast
+                if (showRecipientInfo) {
+                    pushMsg += buildBroadcastRecipientBlock(device, targetIds, eId);
+                }
+                pushMsg += `[MESSAGE] Device ${deviceId} Entity ${eId}\n`;
+                pushMsg += `From: ${source}\n`;
+                pushMsg += `Content: ${text}`;
+                if (mediaType === 'photo') {
+                    pushMsg += `\n[Attachment: Photo]\nmedia_type: photo\nmedia_url: ${mediaUrl}`;
+                    const bkUrl = getBackupUrl(mediaUrl);
+                    if (bkUrl) pushMsg += `\nbackup_url: ${bkUrl}`;
+                } else if (mediaType === 'voice') pushMsg += `\n[Attachment: Voice]\nmedia_type: voice\nmedia_url: ${mediaUrl}`;
+                else if (mediaType === 'video') pushMsg += `\n[Attachment: Video]\nmedia_type: video\nmedia_url: ${mediaUrl}`;
+                else if (mediaType === 'file') pushMsg += `\n[Attachment: File]\nmedia_type: file\nmedia_url: ${mediaUrl}`;
+                pushMsg += getMissionApiHints(apiBase, deviceId, eId, entity.botSecret);
+
+                pushResult = await pushToBot(entity, deviceId, "new_message", {
+                    message: pushMsg
+                });
+            }
 
             if (pushResult.pushed) {
                 messageObj.delivered = true;
@@ -6311,8 +6328,14 @@ app.post('/api/bot/register', async (req, res) => {
         return res.status(403).json({ success: false, message: "Invalid botSecret" });
     }
 
-    // Validate required fields
-    if (!webhook_url || !token || !session_key) {
+    // Discord webhooks don't need token or session_key — the URL itself contains the auth token
+    const isDiscord = isDiscordWebhook(webhook_url || '');
+
+    // Validate required fields (Discord webhooks only need webhook_url)
+    if (!webhook_url) {
+        return res.status(400).json({ success: false, message: "Missing required field: webhook_url" });
+    }
+    if (!isDiscord && (!token || !session_key)) {
         return res.status(400).json({
             success: false,
             message: "Missing required fields: webhook_url, token, session_key"
@@ -6342,10 +6365,10 @@ app.post('/api/bot/register', async (req, res) => {
         });
     }
 
-    // Reject placeholder/unresolved token values
-    const tokenStr = token.trim();
+    // Reject placeholder/unresolved token values (skip for Discord — no token needed)
+    const tokenStr = (token || '').trim();
     const placeholderPattern = /^\[.*\]$|^\{.*\}$|^\$\{.*\}$|^<.*>$|^__.*__$|^process\.env\.|^your[-_]|^xxx|^test$/i;
-    if (placeholderPattern.test(tokenStr) || tokenStr.includes('gateway token') || tokenStr.includes('your-') || tokenStr.includes('TOKEN_HERE') || tokenStr.includes('REDACTED') || tokenStr.includes('PLACEHOLDER')) {
+    if (!isDiscord && (placeholderPattern.test(tokenStr) || tokenStr.includes('gateway token') || tokenStr.includes('your-') || tokenStr.includes('TOKEN_HERE') || tokenStr.includes('REDACTED') || tokenStr.includes('PLACEHOLDER'))) {
         console.warn(`[Bot Register] Rejected placeholder token: "${tokenStr}"`);
         return res.status(400).json({
             success: false,
@@ -6360,9 +6383,11 @@ app.post('/api/bot/register', async (req, res) => {
     // Clean token: Remove "Bearer " prefix if present (case-insensitive)
     // This prevents "Bearer Bearer xyz" issue when backend adds Bearer prefix during push
     let cleanToken = tokenStr;
-    if (cleanToken.toLowerCase().startsWith('bearer ')) {
-        cleanToken = cleanToken.substring(7).trim(); // Remove "Bearer " (7 chars)
-        console.log(`[Bot Register] Cleaned token: removed "Bearer " prefix`);
+    if (!isDiscord) {
+        if (cleanToken.toLowerCase().startsWith('bearer ')) {
+            cleanToken = cleanToken.substring(7).trim(); // Remove "Bearer " (7 chars)
+            console.log(`[Bot Register] Cleaned token: removed "Bearer " prefix`);
+        }
     }
 
     // Normalize webhook URL: fix double slashes in path (e.g. https://x.com//tools/invoke)
@@ -6372,7 +6397,66 @@ app.post('/api/bot/register', async (req, res) => {
 
     const tokenPreview = cleanToken.length > 8 ? cleanToken.substring(0, 4) + '...' + cleanToken.substring(cleanToken.length - 4) : '***';
 
-    // ── Handshake: dry-run test of sessions_send via /tools/invoke ──
+    // ── Discord webhook: simplified registration (no session key, no OpenClaw handshake) ──
+    if (isDiscord) {
+        console.log(`[Bot Register] Discord webhook detected: ${finalUrl}`);
+
+        // Handshake: send a test message to Discord
+        try {
+            const testResponse = await discordPush(finalUrl, `✅ EClaw webhook connected! (Device ${deviceId} Entity ${eId})`);
+
+            if (!testResponse.ok) {
+                const errText = await testResponse.text().catch(() => '');
+                console.error(`[Bot Register] ✗ Discord handshake FAILED: HTTP ${testResponse.status}`);
+                serverLog('error', 'handshake', `Discord handshake HTTP ${testResponse.status}`, { deviceId, entityId: eId, metadata: { error: errText.substring(0, 300) } });
+                return res.status(400).json({
+                    success: false,
+                    error_type: `discord_http_${testResponse.status}`,
+                    message: `Discord webhook handshake failed (HTTP ${testResponse.status}). ` +
+                        (testResponse.status === 404 ? 'Webhook URL is invalid or has been deleted.' :
+                         testResponse.status === 401 || testResponse.status === 403 ? 'Webhook token is invalid.' :
+                         testResponse.status === 429 ? 'Discord rate limit hit. Try again later.' :
+                         `Discord responded: ${errText.substring(0, 200)}`),
+                    debug: { url: finalUrl, httpStatus: testResponse.status }
+                });
+            }
+
+            // Discord returns 204 No Content on success
+            console.log(`[Bot Register] ✓ Discord handshake OK (HTTP ${testResponse.status})`);
+        } catch (err) {
+            console.error(`[Bot Register] ✗ Discord handshake error:`, err.message);
+            return res.status(400).json({
+                success: false,
+                error_type: 'discord_connection_failed',
+                message: `Cannot reach Discord webhook: ${err.message}`
+            });
+        }
+
+        // Store Discord webhook
+        entity.webhook = {
+            url: finalUrl,
+            token: null,
+            sessionKey: null,
+            type: 'discord',
+            registeredAt: Date.now()
+        };
+        entity.pushStatus = { ok: true, at: Date.now() };
+        serverLog('info', 'bind', `Discord webhook registered for Entity ${eId}`, { deviceId, entityId: eId });
+
+        // Persist
+        db.saveEntity(deviceId, eId, entity);
+        io.to(`device:${deviceId}`).emit('entity:update', { deviceId, entityId: eId, name: entity.name, character: entity.character, state: entity.state, message: entity.message });
+
+        return res.json({
+            success: true,
+            message: "Discord webhook registered successfully",
+            webhook_type: 'discord',
+            push_mode: 'discord',
+            push_status_hint: "Discord webhooks are stateless — no polling needed."
+        });
+    }
+
+    // ── OpenClaw Handshake: dry-run test of sessions_send via /tools/invoke ──
     // Instead of checking /tools/list (unreliable), actually invoke sessions_send
     // with a harmless test message to verify the full push pipeline works.
     const handshakePayload = {
@@ -6954,6 +7038,55 @@ async function gatewayWsFetch(httpUrl, token, body, options) {
  * routes through WebSocket to bypass the HTTP Basic Auth / Bearer Token conflict.
  * When not provided, uses standard HTTP with Bearer Token (Zeabur default).
  */
+/**
+ * Helper: Detect if a webhook URL is a Discord webhook.
+ * Discord webhooks follow: https://discord.com/api/webhooks/{id}/{token}
+ *                      or: https://discordapp.com/api/webhooks/{id}/{token}
+ */
+function isDiscordWebhook(url) {
+    try {
+        const u = new URL(url);
+        return (u.hostname === 'discord.com' || u.hostname === 'discordapp.com') &&
+               u.pathname.startsWith('/api/webhooks/');
+    } catch { return false; }
+}
+
+/**
+ * Helper: Push a message to a Discord webhook.
+ * Discord webhooks accept POST with JSON body: { content, embeds?, components? }
+ * Docs: https://discord.com/developers/docs/resources/webhook#execute-webhook
+ */
+async function discordPush(url, messageContent, discordOptions = {}) {
+    const body = { content: messageContent };
+
+    // Merge rich message options (embeds, components) if provided
+    if (discordOptions.embeds && Array.isArray(discordOptions.embeds)) {
+        body.embeds = discordOptions.embeds.slice(0, 10); // Discord limit: 10 embeds
+    }
+    if (discordOptions.components && Array.isArray(discordOptions.components)) {
+        body.components = discordOptions.components.slice(0, 5); // Discord limit: 5 action rows
+    }
+    if (discordOptions.username) {
+        body.username = discordOptions.username;
+    }
+    if (discordOptions.avatar_url) {
+        body.avatar_url = discordOptions.avatar_url;
+    }
+
+    // Discord has a 2000 char limit for content
+    if (body.content && body.content.length > 2000) {
+        body.content = body.content.substring(0, 1997) + '...';
+    }
+
+    const DEFAULT_TIMEOUT = 15000;
+    return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(DEFAULT_TIMEOUT)
+    });
+}
+
 async function gatewayFetch(url, token, body, options = {}) {
     const { setupUsername, setupPassword, timeout, signal } = options;
 
@@ -7163,6 +7296,49 @@ async function pushToBot(entity, deviceId, eventType, payload) {
         // Non-critical — just skip the hint
     }
 
+    // ── Discord webhook: direct POST, no session key needed ──
+    if (entity.webhook.type === 'discord') {
+        try {
+            console.log(`[Push] Discord push to ${url} for Device ${deviceId} Entity ${entity.entityId}`);
+            const discordOpts = payload.discord || {};
+            if (entity.name && !discordOpts.username) {
+                discordOpts.username = entity.name;
+            }
+            const response = await discordPush(url, messageContent, discordOpts);
+
+            if (response.ok || response.status === 204) {
+                console.log(`[Push] ✓ Discord push OK (HTTP ${response.status})`);
+                if (entity.pendingRename) { entity.pendingRename = null; }
+                entity.pushStatus = { ok: true, at: Date.now() };
+                return { pushed: true };
+            }
+
+            const errText = await response.text().catch(() => '');
+            console.error(`[Push] ✗ Discord push failed: HTTP ${response.status} — ${errText.substring(0, 200)}`);
+
+            // Handle Discord rate limits (429) — include retry_after info
+            if (response.status === 429) {
+                let retryAfter = 5;
+                try { retryAfter = JSON.parse(errText).retry_after || 5; } catch {}
+                serverLog('warn', 'push_error', `Discord rate limited for Entity ${entity.entityId}, retry_after: ${retryAfter}s`, { deviceId, entityId: entity.entityId });
+                entity.pushStatus = { ok: false, reason: 'discord_rate_limited', retryAfter, at: Date.now() };
+                return { pushed: false, reason: 'discord_rate_limited', retryAfter };
+            }
+
+            serverLog('error', 'push_error', `Discord push HTTP ${response.status} for Entity ${entity.entityId}`, { deviceId, entityId: entity.entityId });
+            entity.message = `[SYSTEM:WEBHOOK_ERROR] Discord push failed (HTTP ${response.status}).`;
+            entity.lastUpdated = Date.now();
+            entity.pushStatus = { ok: false, reason: `discord_http_${response.status}`, at: Date.now() };
+            return { pushed: false, reason: `discord_http_${response.status}`, error: errText };
+        } catch (err) {
+            console.error(`[Push] ✗ Discord push error:`, err.message);
+            serverLog('error', 'push_error', `Discord push exception for Entity ${entity.entityId}: ${err.message}`, { deviceId, entityId: entity.entityId });
+            entity.pushStatus = { ok: false, reason: err.message, at: Date.now() };
+            return { pushed: false, reason: err.message };
+        }
+    }
+
+    // ── OpenClaw webhook: sessions_send format ──
     const requestPayload = {
         tool: "sessions_send",
         args: {

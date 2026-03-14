@@ -939,6 +939,74 @@
             border-top: 1px solid var(--card-border);
         }
         .xd-actions .btn { font-size: 13px; padding: 6px 16px; }
+
+        /* ── Agent Card Panel ── */
+        .ac-settings-toggle {
+            background: none;
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .ac-settings-toggle:hover { background: var(--input-bg); color: var(--text); }
+        .ac-settings-toggle.active { color: #6C63FF; border-color: #6C63FF; }
+
+        .ac-panel {
+            display: none;
+            padding: 16px 20px;
+            border-top: 1px solid var(--card-border);
+            background: var(--input-bg);
+        }
+        .ac-panel.open { display: block; }
+        .ac-panel h4 { margin: 0 0 12px; font-size: 14px; color: var(--text); }
+
+        .ac-caps-list { margin: 8px 0; }
+        .ac-cap-item {
+            display: flex;
+            gap: 6px;
+            align-items: flex-start;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: var(--card);
+            border-radius: 6px;
+            border: 1px solid var(--card-border);
+        }
+        .ac-cap-item input { flex: 1; min-width: 0; }
+        .ac-cap-remove {
+            background: none; border: none; color: var(--danger, #F44336);
+            cursor: pointer; font-size: 16px; padding: 4px; line-height: 1;
+        }
+
+        .ac-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .ac-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 3px 10px;
+            font-size: 12px;
+            color: var(--text);
+        }
+        .ac-tag-remove {
+            background: none; border: none; color: var(--text-secondary);
+            cursor: pointer; font-size: 14px; padding: 0; line-height: 1;
+        }
+        .ac-tag-input {
+            display: flex; gap: 6px; margin-top: 6px;
+        }
+        .ac-tag-input input { flex: 1; }
+        .ac-tag-input button { flex-shrink: 0; }
     </style>
 </head>
 
@@ -1456,6 +1524,7 @@
                     '<div class="entity-edit-actions">' +
                     '<button class="btn btn-sm btn-outline" onclick="refreshEntity(' + entity.entityId + ', this)">&#x1F504; ' + i18n.t('dash_btn_refresh') + '</button>' +
                     '<button class="xd-settings-toggle" id="xdToggle' + entity.entityId + '" onclick="toggleXdSettings(' + entity.entityId + ')">' + i18n.t('dash_xd_settings') + '</button>' +
+                    '<button class="ac-settings-toggle" id="acToggle' + entity.entityId + '" onclick="toggleAgentCard(' + entity.entityId + ')">&#x1F4C7; Agent Card</button>' +
                     '<button class="btn btn-sm btn-danger" onclick="confirmRemove(' + entity.entityId + ', \'' + escapedName + '\')">' + i18n.t('dash_btn_remove') + '</button>' +
                     '</div>' +
                     '<div class="xd-settings-panel" id="xdPanel' + entity.entityId + '">' +
@@ -1502,6 +1571,45 @@
                     '<div class="xd-actions">' +
                         '<button class="btn btn-sm btn-primary" onclick="saveXdSettings(' + entity.entityId + ')">' + i18n.t('dash_xd_save') + '</button>' +
                         '<button class="btn btn-sm btn-outline" onclick="resetXdSettings(' + entity.entityId + ')">' + i18n.t('dash_xd_reset') + '</button>' +
+                    '</div>' +
+                    '</div>' +
+                    /* ── Agent Card Panel ── */
+                    '<div class="ac-panel" id="acPanel' + entity.entityId + '">' +
+                    '<h4>&#x1F4C7; A2A Agent Card</h4>' +
+                    '<div class="xd-field">' +
+                        '<label>Description</label>' +
+                        '<textarea id="acDesc' + entity.entityId + '" maxlength="500" placeholder="Describe this entity\'s purpose and capabilities..." rows="3"></textarea>' +
+                    '</div>' +
+                    '<div class="xd-field">' +
+                        '<label>Capabilities</label>' +
+                        '<div class="ac-caps-list" id="acCaps' + entity.entityId + '"></div>' +
+                        '<button class="btn btn-sm btn-outline" onclick="addCapability(' + entity.entityId + ')" style="font-size:12px;">+ Add Capability</button>' +
+                    '</div>' +
+                    '<div class="xd-field">' +
+                        '<label>Protocols</label>' +
+                        '<div class="ac-tags" id="acProtos' + entity.entityId + '"></div>' +
+                        '<div class="ac-tag-input"><input type="text" id="acProtoInput' + entity.entityId + '" placeholder="e.g. A2A, REST, gRPC" maxlength="64"><button class="btn btn-sm btn-outline" onclick="addTag(\'acProtos\',' + entity.entityId + ',\'acProtoInput\',10)">+</button></div>' +
+                    '</div>' +
+                    '<div class="xd-field">' +
+                        '<label>Tags</label>' +
+                        '<div class="ac-tags" id="acTags' + entity.entityId + '"></div>' +
+                        '<div class="ac-tag-input"><input type="text" id="acTagInput' + entity.entityId + '" placeholder="e.g. chat, IoT, automation" maxlength="64"><button class="btn btn-sm btn-outline" onclick="addTag(\'acTags\',' + entity.entityId + ',\'acTagInput\',20)">+</button></div>' +
+                    '</div>' +
+                    '<div class="xd-field">' +
+                        '<label>Version</label>' +
+                        '<input type="text" id="acVersion' + entity.entityId + '" maxlength="32" placeholder="e.g. 1.0.0">' +
+                    '</div>' +
+                    '<div class="xd-field">' +
+                        '<label>Website</label>' +
+                        '<input type="text" id="acWebsite' + entity.entityId + '" maxlength="500" placeholder="https://...">' +
+                    '</div>' +
+                    '<div class="xd-field">' +
+                        '<label>Contact Email</label>' +
+                        '<input type="text" id="acEmail' + entity.entityId + '" maxlength="255" placeholder="contact@example.com">' +
+                    '</div>' +
+                    '<div class="xd-actions">' +
+                        '<button class="btn btn-sm btn-primary" onclick="saveAgentCard(' + entity.entityId + ')">Save</button>' +
+                        '<button class="btn btn-sm btn-outline" onclick="deleteAgentCard(' + entity.entityId + ')">Delete</button>' +
                     '</div>' +
                     '</div>' +
                     '</div>';
@@ -1629,6 +1737,169 @@
                 showToast('Reset failed: ' + err.message, 'error');
             }
             if (window.telemetry) telemetry.trackAction('xd_settings_reset', { entityId: entityId });
+        }
+
+        // --- Agent Card Functions ---
+        function toggleAgentCard(entityId) {
+            var panel = document.getElementById('acPanel' + entityId);
+            var btn = document.getElementById('acToggle' + entityId);
+            if (!panel) return;
+            var isOpen = panel.classList.toggle('open');
+            btn.classList.toggle('active', isOpen);
+            if (isOpen) loadAgentCard(entityId);
+            if (window.telemetry) telemetry.trackAction(isOpen ? 'agent_card_open' : 'agent_card_close', { entityId: entityId });
+        }
+
+        async function loadAgentCard(entityId) {
+            try {
+                var data = await apiCall('GET', '/api/entity/agent-card?deviceId=' + currentUser.deviceId + '&deviceSecret=' + encodeURIComponent(currentUser.deviceSecret) + '&entityId=' + entityId);
+                var card = (data.success && data.agentCard) ? data.agentCard : {};
+                var el = function(id) { return document.getElementById(id); };
+                el('acDesc' + entityId).value = card.description || '';
+                el('acVersion' + entityId).value = card.version || '';
+                el('acWebsite' + entityId).value = card.website || '';
+                el('acEmail' + entityId).value = card.contactEmail || '';
+
+                // Render capabilities
+                var capsEl = el('acCaps' + entityId);
+                capsEl.innerHTML = '';
+                (card.capabilities || []).forEach(function(cap) {
+                    appendCapabilityRow(entityId, cap.name || '', cap.description || '');
+                });
+
+                // Render protocols
+                renderTags('acProtos', entityId, card.protocols || []);
+
+                // Render tags
+                renderTags('acTags', entityId, card.tags || []);
+            } catch (err) {
+                console.error('[Agent Card] Load error:', err);
+            }
+        }
+
+        function appendCapabilityRow(entityId, name, desc) {
+            var container = document.getElementById('acCaps' + entityId);
+            var row = document.createElement('div');
+            row.className = 'ac-cap-item';
+            row.innerHTML = '<input type="text" placeholder="Name" value="' + escapeHtml(name) + '" class="ac-cap-name" style="padding:6px 8px;border:1px solid var(--card-border);border-radius:4px;background:var(--input-bg);color:var(--text);font-size:12px;">' +
+                '<input type="text" placeholder="Description" value="' + escapeHtml(desc) + '" class="ac-cap-desc" style="padding:6px 8px;border:1px solid var(--card-border);border-radius:4px;background:var(--input-bg);color:var(--text);font-size:12px;">' +
+                '<button class="ac-cap-remove" title="Remove">&times;</button>';
+            row.querySelector('.ac-cap-remove').onclick = function() { row.remove(); };
+            container.appendChild(row);
+        }
+
+        function addCapability(entityId) {
+            var container = document.getElementById('acCaps' + entityId);
+            if (container.children.length >= 10) {
+                showToast('Maximum 10 capabilities', 'warning');
+                return;
+            }
+            appendCapabilityRow(entityId, '', '');
+        }
+
+        function renderTags(prefix, entityId, tags) {
+            var container = document.getElementById(prefix + entityId);
+            container.innerHTML = '';
+            tags.forEach(function(tag) {
+                var span = document.createElement('span');
+                span.className = 'ac-tag';
+                span.innerHTML = escapeHtml(tag) + ' <button class="ac-tag-remove">&times;</button>';
+                span.querySelector('.ac-tag-remove').onclick = function() { span.remove(); };
+                container.appendChild(span);
+            });
+        }
+
+        function addTag(prefix, entityId, inputPrefix, maxCount) {
+            var input = document.getElementById(inputPrefix + entityId);
+            var container = document.getElementById(prefix + entityId);
+            var val = (input.value || '').trim();
+            if (!val) return;
+            if (container.children.length >= maxCount) {
+                showToast('Maximum ' + maxCount + ' items', 'warning');
+                return;
+            }
+            var span = document.createElement('span');
+            span.className = 'ac-tag';
+            span.innerHTML = escapeHtml(val) + ' <button class="ac-tag-remove">&times;</button>';
+            span.querySelector('.ac-tag-remove').onclick = function() { span.remove(); };
+            container.appendChild(span);
+            input.value = '';
+        }
+
+        function collectAgentCard(entityId) {
+            var el = function(id) { return document.getElementById(id); };
+            var caps = [];
+            document.querySelectorAll('#acCaps' + entityId + ' .ac-cap-item').forEach(function(row) {
+                var name = row.querySelector('.ac-cap-name').value.trim();
+                var desc = row.querySelector('.ac-cap-desc').value.trim();
+                if (name) caps.push({ id: name.toLowerCase().replace(/\s+/g, '-'), name: name, description: desc });
+            });
+
+            var protos = [];
+            document.querySelectorAll('#acProtos' + entityId + ' .ac-tag').forEach(function(tag) {
+                var t = tag.firstChild.textContent.trim();
+                if (t) protos.push(t);
+            });
+
+            var tags = [];
+            document.querySelectorAll('#acTags' + entityId + ' .ac-tag').forEach(function(tag) {
+                var t = tag.firstChild.textContent.trim();
+                if (t) tags.push(t);
+            });
+
+            return {
+                description: el('acDesc' + entityId).value.trim(),
+                capabilities: caps,
+                protocols: protos,
+                tags: tags,
+                version: el('acVersion' + entityId).value.trim(),
+                website: el('acWebsite' + entityId).value.trim(),
+                contactEmail: el('acEmail' + entityId).value.trim()
+            };
+        }
+
+        async function saveAgentCard(entityId) {
+            var card = collectAgentCard(entityId);
+            if (!card.description) {
+                showToast('Description is required', 'warning');
+                return;
+            }
+            try {
+                var data = await apiCall('PUT', '/api/entity/agent-card', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    entityId: entityId,
+                    agentCard: card
+                });
+                if (data.success) {
+                    showToast('Agent Card saved', 'success');
+                } else {
+                    showToast(data.message || 'Error saving', 'error');
+                }
+            } catch (err) {
+                showToast('Save failed: ' + err.message, 'error');
+            }
+            if (window.telemetry) telemetry.trackAction('agent_card_save', { entityId: entityId });
+        }
+
+        async function deleteAgentCard(entityId) {
+            if (!confirm('Delete Agent Card for Entity #' + entityId + '?')) return;
+            try {
+                var data = await apiCall('DELETE', '/api/entity/agent-card', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    entityId: entityId
+                });
+                if (data.success) {
+                    showToast('Agent Card deleted', 'success');
+                    loadAgentCard(entityId);
+                } else {
+                    showToast(data.message || 'Error', 'error');
+                }
+            } catch (err) {
+                showToast('Delete failed: ' + err.message, 'error');
+            }
+            if (window.telemetry) telemetry.trackAction('agent_card_delete', { entityId: entityId });
         }
 
         // --- Drag to Reorder ---

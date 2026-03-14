@@ -21,8 +21,15 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.LayoutPreferences
+import com.hank.clawlive.data.model.AgentCard
+import com.hank.clawlive.data.model.AgentCardCapability
 import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.data.model.MultiEntityResponse
+import android.text.InputType
+import android.widget.EditText
+import android.widget.ScrollView
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import kotlinx.coroutines.delay
@@ -224,6 +231,12 @@ class EntityManagerActivity : AppCompatActivity() {
         val btnTalk = cardView.findViewById<MaterialButton>(R.id.btnTalk)
         btnTalk.visibility = View.GONE
 
+        // Agent Card button
+        val btnAgentCard = cardView.findViewById<MaterialButton>(R.id.btnAgentCard)
+        btnAgentCard.setOnClickListener {
+            showAgentCardDialog(entity.entityId)
+        }
+
         // Remove button (hide for entity 0)
         val btnRemove = cardView.findViewById<MaterialButton>(R.id.btnRemove)
         if (entity.entityId == 0) {
@@ -296,6 +309,239 @@ class EntityManagerActivity : AppCompatActivity() {
                     getString(R.string.failed_format, e.message),
                     Toast.LENGTH_LONG
                 ).show()
+            }
+        }
+    }
+
+    // ── Agent Card Dialog ──
+
+    private fun showAgentCardDialog(entityId: Int) {
+        lifecycleScope.launch {
+            try {
+                val response = api.getAgentCard(
+                    deviceId = deviceManager.deviceId,
+                    deviceSecret = deviceManager.deviceSecret,
+                    entityId = entityId
+                )
+                val card = response.agentCard
+                showAgentCardEditDialog(entityId, card)
+            } catch (e: Exception) {
+                // No existing card — show empty form
+                Timber.w(e, "No agent card found, showing empty form")
+                showAgentCardEditDialog(entityId, null)
+            }
+        }
+    }
+
+    private fun showAgentCardEditDialog(entityId: Int, card: AgentCard?) {
+        val dp = { px: Int -> (px * resources.displayMetrics.density).toInt() }
+
+        val scrollView = ScrollView(this).apply {
+            setPadding(dp(16), dp(8), dp(16), dp(8))
+        }
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+        scrollView.addView(layout)
+
+        // Description
+        val descLayout = TextInputLayout(this).apply {
+            hint = "Description"
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+            counterMaxLength = 500
+            isCounterEnabled = true
+        }
+        val descEdit = TextInputEditText(this).apply {
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            maxLines = 4
+            setText(card?.description ?: "")
+        }
+        descLayout.addView(descEdit)
+        layout.addView(descLayout, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply { bottomMargin = dp(12) })
+
+        // Capabilities (simplified: comma-separated names)
+        val capsLayout = TextInputLayout(this).apply {
+            hint = "Capabilities (comma-separated names)"
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+            helperText = "e.g. chat, search, translate"
+        }
+        val capsEdit = TextInputEditText(this).apply {
+            inputType = InputType.TYPE_CLASS_TEXT
+            setText(card?.capabilities?.joinToString(", ") { it.name } ?: "")
+        }
+        capsLayout.addView(capsEdit)
+        layout.addView(capsLayout, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply { bottomMargin = dp(12) })
+
+        // Protocols
+        val protosLayout = TextInputLayout(this).apply {
+            hint = "Protocols (comma-separated)"
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+            helperText = "e.g. A2A, REST, gRPC"
+        }
+        val protosEdit = TextInputEditText(this).apply {
+            inputType = InputType.TYPE_CLASS_TEXT
+            setText(card?.protocols?.joinToString(", ") ?: "")
+        }
+        protosLayout.addView(protosEdit)
+        layout.addView(protosLayout, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply { bottomMargin = dp(12) })
+
+        // Tags
+        val tagsLayout = TextInputLayout(this).apply {
+            hint = "Tags (comma-separated)"
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+            helperText = "e.g. IoT, claw-machine, automation"
+        }
+        val tagsEdit = TextInputEditText(this).apply {
+            inputType = InputType.TYPE_CLASS_TEXT
+            setText(card?.tags?.joinToString(", ") ?: "")
+        }
+        tagsLayout.addView(tagsEdit)
+        layout.addView(tagsLayout, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply { bottomMargin = dp(12) })
+
+        // Version
+        val versionLayout = TextInputLayout(this).apply {
+            hint = "Version"
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+        }
+        val versionEdit = TextInputEditText(this).apply {
+            inputType = InputType.TYPE_CLASS_TEXT
+            setText(card?.version ?: "")
+        }
+        versionLayout.addView(versionEdit)
+        layout.addView(versionLayout, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply { bottomMargin = dp(12) })
+
+        // Website
+        val websiteLayout = TextInputLayout(this).apply {
+            hint = "Website"
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+        }
+        val websiteEdit = TextInputEditText(this).apply {
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
+            setText(card?.website ?: "")
+        }
+        websiteLayout.addView(websiteEdit)
+        layout.addView(websiteLayout, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply { bottomMargin = dp(12) })
+
+        // Contact Email
+        val emailLayout = TextInputLayout(this).apply {
+            hint = "Contact Email"
+            boxBackgroundMode = TextInputLayout.BOX_BACKGROUND_OUTLINE
+        }
+        val emailEdit = TextInputEditText(this).apply {
+            inputType = InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+            setText(card?.contactEmail ?: "")
+        }
+        emailLayout.addView(emailEdit)
+        layout.addView(emailLayout)
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Agent Card — Entity #$entityId")
+            .setView(scrollView)
+            .setPositiveButton("Save") { _, _ ->
+                saveAgentCard(
+                    entityId,
+                    descEdit.text.toString().trim(),
+                    capsEdit.text.toString().trim(),
+                    protosEdit.text.toString().trim(),
+                    tagsEdit.text.toString().trim(),
+                    versionEdit.text.toString().trim(),
+                    websiteEdit.text.toString().trim(),
+                    emailEdit.text.toString().trim()
+                )
+            }
+            .setNegativeButton("Cancel", null)
+            .setNeutralButton("Delete") { _, _ ->
+                deleteAgentCard(entityId)
+            }
+            .create()
+
+        dialog.show()
+    }
+
+    private fun saveAgentCard(
+        entityId: Int,
+        description: String,
+        capsText: String,
+        protosText: String,
+        tagsText: String,
+        version: String,
+        website: String,
+        email: String
+    ) {
+        if (description.isEmpty()) {
+            Toast.makeText(this, "Description is required", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val capabilities = capsText.split(",")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .take(10)
+            .map { mapOf("id" to it.lowercase().replace(" ", "-"), "name" to it, "description" to "") }
+
+        val protocols = protosText.split(",").map { it.trim() }.filter { it.isNotEmpty() }.take(10)
+        val tags = tagsText.split(",").map { it.trim() }.filter { it.isNotEmpty() }.take(20)
+
+        val agentCard = mapOf<String, Any>(
+            "description" to description,
+            "capabilities" to capabilities,
+            "protocols" to protocols,
+            "tags" to tags,
+            "version" to version,
+            "website" to website,
+            "contactEmail" to email
+        )
+
+        lifecycleScope.launch {
+            try {
+                val body = mapOf<String, Any>(
+                    "deviceId" to deviceManager.deviceId,
+                    "deviceSecret" to deviceManager.deviceSecret,
+                    "entityId" to entityId,
+                    "agentCard" to agentCard
+                )
+                val response = api.updateAgentCard(body)
+                if (response.success) {
+                    Toast.makeText(this@EntityManagerActivity, "Agent Card saved", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this@EntityManagerActivity, response.message ?: "Save failed", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to save agent card")
+                Toast.makeText(this@EntityManagerActivity, "Save failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun deleteAgentCard(entityId: Int) {
+        lifecycleScope.launch {
+            try {
+                val body = mapOf<String, Any>(
+                    "deviceId" to deviceManager.deviceId,
+                    "deviceSecret" to deviceManager.deviceSecret,
+                    "entityId" to entityId
+                )
+                val response = api.deleteAgentCard(body)
+                if (response.success) {
+                    Toast.makeText(this@EntityManagerActivity, "Agent Card deleted", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this@EntityManagerActivity, response.message ?: "Delete failed", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to delete agent card")
+                Toast.makeText(this@EntityManagerActivity, "Delete failed: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }

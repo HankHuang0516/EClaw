@@ -77,6 +77,18 @@ export const deviceApi = {
   /** Upload FCM/APNs token */
   uploadPushToken: (token: string, platform: 'fcm' | 'apns') =>
     apiClient.post('/api/device/fcm-token', { token, platform }),
+
+  /** Get A2A Agent Card for an entity */
+  getAgentCard: (entityId: string) =>
+    apiClient.get('/api/entity/agent-card', { params: { entityId } }),
+
+  /** Create or update Agent Card */
+  updateAgentCard: (entityId: string, agentCard: object) =>
+    apiClient.put('/api/entity/agent-card', { entityId, agentCard }),
+
+  /** Delete Agent Card */
+  deleteAgentCard: (entityId: string) =>
+    apiClient.delete('/api/entity/agent-card', { data: { entityId } }),
 };
 
 // ── Chat APIs ────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, FlatList, StyleSheet, Alert } from 'react-native';
+import { View, FlatList, StyleSheet, Alert, ScrollView } from 'react-native';
 import {
   Text,
   Card,
@@ -12,6 +12,7 @@ import {
   useTheme,
   Snackbar,
   ActivityIndicator,
+  Chip,
 } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -33,6 +34,18 @@ export default function EntityManagerScreen() {
   const [newName, setNewName] = useState('');
   const [snack, setSnack] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Agent Card state
+  const [acVisible, setAcVisible] = useState(false);
+  const [acEntity, setAcEntity] = useState<Entity | null>(null);
+  const [acDesc, setAcDesc] = useState('');
+  const [acCaps, setAcCaps] = useState('');
+  const [acProtos, setAcProtos] = useState('');
+  const [acTags, setAcTags] = useState('');
+  const [acVersion, setAcVersion] = useState('');
+  const [acWebsite, setAcWebsite] = useState('');
+  const [acEmail, setAcEmail] = useState('');
+  const [acLoading, setAcLoading] = useState(false);
 
   React.useLayoutEffect(() => {
     navigation.setOptions({ title: t('settings.manage_entities'), headerShown: true });
@@ -96,6 +109,78 @@ export default function EntityManagerScreen() {
     );
   };
 
+  // Agent Card handlers
+  const openAgentCard = async (entity: Entity) => {
+    setAcEntity(entity);
+    setAcDesc(''); setAcCaps(''); setAcProtos(''); setAcTags('');
+    setAcVersion(''); setAcWebsite(''); setAcEmail('');
+    setAcVisible(true);
+    try {
+      const res = await deviceApi.getAgentCard(entity.entityId);
+      const card = res.data?.agentCard;
+      if (card) {
+        setAcDesc(card.description || '');
+        setAcCaps((card.capabilities || []).map((c: any) => c.name).join(', '));
+        setAcProtos((card.protocols || []).join(', '));
+        setAcTags((card.tags || []).join(', '));
+        setAcVersion(card.version || '');
+        setAcWebsite(card.website || '');
+        setAcEmail(card.contactEmail || '');
+      }
+    } catch {
+      // No existing card — empty form is fine
+    }
+  };
+
+  const saveAgentCard = async () => {
+    if (!acEntity || !acDesc.trim()) {
+      setSnack('Description is required');
+      return;
+    }
+    setAcLoading(true);
+    try {
+      const capabilities = acCaps.split(',').map(s => s.trim()).filter(Boolean)
+        .slice(0, 10).map(name => ({ id: name.toLowerCase().replace(/\s+/g, '-'), name, description: '' }));
+      const protocols = acProtos.split(',').map(s => s.trim()).filter(Boolean).slice(0, 10);
+      const tags = acTags.split(',').map(s => s.trim()).filter(Boolean).slice(0, 20);
+
+      await deviceApi.updateAgentCard(acEntity.entityId, {
+        description: acDesc.trim(),
+        capabilities,
+        protocols,
+        tags,
+        version: acVersion.trim(),
+        website: acWebsite.trim(),
+        contactEmail: acEmail.trim(),
+      });
+      setAcVisible(false);
+      setSnack('Agent Card saved');
+    } catch {
+      setSnack('Failed to save Agent Card');
+    } finally {
+      setAcLoading(false);
+    }
+  };
+
+  const deleteAgentCard = () => {
+    if (!acEntity) return;
+    Alert.alert('Delete Agent Card', 'Remove the Agent Card for this entity?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete', style: 'destructive',
+        onPress: async () => {
+          try {
+            await deviceApi.deleteAgentCard(acEntity.entityId);
+            setAcVisible(false);
+            setSnack('Agent Card deleted');
+          } catch {
+            setSnack('Failed to delete');
+          }
+        },
+      },
+    ]);
+  };
+
   const CHARACTER_ICONS = { LOBSTER: '🦞', PIG: '🐷' };
   const CHARACTER_COLORS = { LOBSTER: '#FF6B6B', PIG: '#FFB3C6' };
 
@@ -135,6 +220,11 @@ export default function EntityManagerScreen() {
 
               {/* Actions */}
               <View style={styles.actions}>
+                <IconButton
+                  icon="card-account-details-outline"
+                  size={20}
+                  onPress={() => openAgentCard(item)}
+                />
                 <IconButton
                   icon="pencil"
                   size={20}
@@ -185,6 +275,39 @@ export default function EntityManagerScreen() {
               loading={isLoading}
               disabled={!newName.trim() || isLoading}
             >
+              {t('common.save')}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      {/* Agent Card Dialog */}
+      <Portal>
+        <Dialog visible={acVisible} onDismiss={() => setAcVisible(false)} style={{ maxHeight: '85%' }}>
+          <Dialog.Title>Agent Card{acEntity ? ` — ${acEntity.name}` : ''}</Dialog.Title>
+          <Dialog.ScrollArea style={{ paddingHorizontal: 0 }}>
+            <ScrollView contentContainerStyle={{ paddingHorizontal: 24, gap: 8, paddingBottom: 8 }}>
+              <TextInput mode="outlined" label="Description *" value={acDesc} onChangeText={setAcDesc}
+                maxLength={500} multiline numberOfLines={3} />
+              <TextInput mode="outlined" label="Capabilities (comma-separated)" value={acCaps}
+                onChangeText={setAcCaps} placeholder="e.g. chat, search, translate" />
+              <TextInput mode="outlined" label="Protocols (comma-separated)" value={acProtos}
+                onChangeText={setAcProtos} placeholder="e.g. A2A, REST, gRPC" />
+              <TextInput mode="outlined" label="Tags (comma-separated)" value={acTags}
+                onChangeText={setAcTags} placeholder="e.g. IoT, automation" />
+              <TextInput mode="outlined" label="Version" value={acVersion}
+                onChangeText={setAcVersion} maxLength={32} placeholder="e.g. 1.0.0" />
+              <TextInput mode="outlined" label="Website" value={acWebsite}
+                onChangeText={setAcWebsite} maxLength={500} keyboardType="url" />
+              <TextInput mode="outlined" label="Contact Email" value={acEmail}
+                onChangeText={setAcEmail} maxLength={255} keyboardType="email-address" />
+            </ScrollView>
+          </Dialog.ScrollArea>
+          <Dialog.Actions>
+            <Button onPress={deleteAgentCard} textColor={theme.colors.error}>Delete</Button>
+            <Button onPress={() => setAcVisible(false)}>{t('common.cancel')}</Button>
+            <Button mode="contained" onPress={saveAgentCard} loading={acLoading}
+              disabled={!acDesc.trim() || acLoading}>
               {t('common.save')}
             </Button>
           </Dialog.Actions>

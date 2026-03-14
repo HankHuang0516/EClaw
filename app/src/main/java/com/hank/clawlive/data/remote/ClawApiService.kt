@@ -68,6 +68,20 @@ interface ClawApiService {
     @PUT("api/device/entity/avatar")
     suspend fun updateEntityAvatar(@Body request: UpdateAvatarRequest): GenericResponse
 
+    // Agent Card CRUD
+    @GET("api/entity/agent-card")
+    suspend fun getAgentCard(
+        @Query("deviceId") deviceId: String,
+        @Query("deviceSecret") deviceSecret: String,
+        @Query("entityId") entityId: Int
+    ): AgentCardResponse
+
+    @PUT("api/entity/agent-card")
+    suspend fun updateAgentCard(@Body body: Map<String, @JvmSuppressWildcards Any>): GenericResponse
+
+    @HTTP(method = "DELETE", path = "api/entity/agent-card", hasBody = true)
+    suspend fun deleteAgentCard(@Body body: Map<String, @JvmSuppressWildcards Any>): GenericResponse
+
     // ============================================
     // FEEDBACK
     // ============================================

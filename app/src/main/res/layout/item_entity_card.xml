@@ -136,6 +136,18 @@
                 app:iconSize="16dp"
                 app:rippleColor="#33FF7F50"/>
 
+            <!-- Agent Card Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAgentCard"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="Agent Card"
+                android:textSize="12sp"
+                android:textColor="@color/accent"
+                style="@style/Widget.Material3.Button.TextButton"
+                app:cornerRadius="8dp"
+                app:rippleColor="#336C63FF"/>
+
             <!-- Remove Button (hidden for entity 0) -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnRemove"
