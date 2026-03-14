@@ -1,3 +1,11 @@
+# [1.2.0](https://github.com/HankHuang0516/EClaw/compare/v1.1.0...v1.2.0) (2026-03-14)
+
+
+### Features
+
+* add A2A Agent Card UI across all three platforms ([7812aad](https://github.com/HankHuang0516/EClaw/commit/7812aad89920962efce27fa8d7a1701dbf948dac))
+* Discord webhook support + rich messages + test coverage report ([e0d0dcc](https://github.com/HankHuang0516/EClaw/commit/e0d0dcc0280da0c2eb9d55bde5719a13d1d06103)), closes [#199](https://github.com/HankHuang0516/EClaw/issues/199) [#200](https://github.com/HankHuang0516/EClaw/issues/200) [#194](https://github.com/HankHuang0516/EClaw/issues/194) [#194](https://github.com/HankHuang0516/EClaw/issues/194) [#195](https://github.com/HankHuang0516/EClaw/issues/195) [#196](https://github.com/HankHuang0516/EClaw/issues/196) [#197](https://github.com/HankHuang0516/EClaw/issues/197) [#198](https://github.com/HankHuang0516/EClaw/issues/198) [#199](https://github.com/HankHuang0516/EClaw/issues/199) [#200](https://github.com/HankHuang0516/EClaw/issues/200)
+
 # [1.1.0](https://github.com/HankHuang0516/EClaw/compare/v1.0.0...v1.1.0) (2026-03-14)
 
 
