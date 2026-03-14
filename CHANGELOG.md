@@ -1,3 +1,11 @@
+# [1.3.0](https://github.com/HankHuang0516/EClaw/compare/v1.2.2...v1.3.0) (2026-03-14)
+
+
+### Features
+
+* add requiredVars format validation in contribute endpoint + regression tests ([328a56d](https://github.com/HankHuang0516/EClaw/commit/328a56d11964c7fd0c59d2da183ac3d31d549b2a))
+* requiredVars validation + regression tests + remove debug logs ([7222b95](https://github.com/HankHuang0516/EClaw/commit/7222b95107cc7a341346d83d748e2e2a740c5676))
+
 ## [1.2.2](https://github.com/HankHuang0516/EClaw/compare/v1.2.1...v1.2.2) (2026-03-14)
 
 
