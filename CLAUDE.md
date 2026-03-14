@@ -136,6 +136,18 @@ When investigating backend bugs (broadcast failure, push not delivered, etc.):
 - **ENV Vars Merge**: `node backend/tests/test-vars-merge.js`
   - Tests cross-platform merge: Web/APP conflict splitting (KEY_Web/KEY_APP), merged result sync-back, legacy mode
   - Requires `BROADCAST_TEST_DEVICE_ID` + `BROADCAST_TEST_DEVICE_SECRET` in `backend/.env`
+- **Admin Auth Protection (P0)**: `node backend/tests/test-admin-auth.js`
+  - Verifies all admin endpoints reject unauthenticated requests (cookie-based → 401, token-based → 403)
+  - Tests fake JWT cookies, wrong admin tokens, transfer-device credential validation
+  - No credentials needed (tests rejection behavior only)
+- **Input Validation (P0)**: `node backend/tests/test-input-validation.js`
+  - Tests SQL injection, XSS reflection, path traversal, invalid JSON, oversized payloads, null bytes
+  - Verifies security headers (X-Content-Type-Options, X-Frame-Options)
+  - No credentials needed
+- **Gatekeeper Extended (P0)**: `node backend/tests/test-gatekeeper-extended.js`
+  - 59 tests covering heartbeat manipulation, command injection, prompt injection, personal info extraction, encoding bypasses, edge cases
+  - Documents known gaps (polling interval pattern, Chinese heartbeat, plural possessive)
+  - No credentials needed (pure unit test)
 
 ## Git Workflow
 
