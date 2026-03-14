@@ -3,14 +3,14 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:padding="20dp">
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnChooseRuleTemplate"
         style="@style/Widget.Material3.Button.OutlinedButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/mission_choose_from_template"
+        android:text="@string/mission_browse_templates"
         android:layout_marginBottom="12dp" />
 
     <EditText

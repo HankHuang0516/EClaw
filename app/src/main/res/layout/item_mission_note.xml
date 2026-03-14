@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="6dp"
-    app:cardBackgroundColor="#252540"
+    app:cardBackgroundColor="@color/surface_bright"
     app:cardCornerRadius="8dp"
     app:cardElevation="0dp">
 
@@ -41,7 +41,7 @@
                 android:background="@drawable/bg_status_chip"
                 android:paddingHorizontal="6dp"
                 android:paddingVertical="2dp"
-                android:textColor="#AAAAAA"
+                android:textColor="@color/text_secondary"
                 android:textSize="10sp"
                 tools:text="general" />
 
@@ -53,7 +53,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:textColor="#AAAAAA"
+            android:textColor="@color/text_secondary"
             android:textSize="12sp"
             android:maxLines="2"
             android:ellipsize="end"

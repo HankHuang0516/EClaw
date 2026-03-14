@@ -32,7 +32,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="2dp"
-            android:textColor="#666666"
+            android:textColor="@color/text_disabled"
             android:textSize="11sp"
             tools:text="Entity 0 (LOBSTER)" />
 
@@ -49,11 +49,11 @@
                 android:id="@+id/tvMessage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#333333"
+                android:textColor="@color/text_dark"
                 android:textSize="15sp"
                 android:autoLink="web"
                 android:linksClickable="true"
-                android:textColorLink="#1565C0"
+                android:textColorLink="@color/info_blue"
                 android:textIsSelectable="true"
                 tools:text="This is a received message from the entity!" />
 
@@ -82,7 +82,7 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:src="@drawable/ic_attach_file"
-                    app:tint="#333333"
+                    app:tint="@color/text_dark"
                     android:contentDescription="File" />
 
                 <TextView
@@ -90,7 +90,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
-                    android:textColor="#1565C0"
+                    android:textColor="@color/info_blue"
                     android:textSize="13sp"
                     android:textStyle="bold"
                     tools:text="document.pdf" />
@@ -113,7 +113,7 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Play"
                     android:src="@android:drawable/ic_media_play"
-                    app:tint="#333333" />
+                    app:tint="@color/text_dark" />
 
                 <ProgressBar
                     android:id="@+id/progressVoice"
@@ -127,7 +127,7 @@
                     android:id="@+id/tvDuration"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="#666666"
+                    android:textColor="@color/text_disabled"
                     android:textSize="11sp"
                     tools:text="0:15" />
             </LinearLayout>
@@ -162,7 +162,7 @@
                         android:id="@+id/tvLinkTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="#333333"
+                        android:textColor="@color/text_dark"
                         android:textSize="12sp"
                         android:textStyle="bold"
                         android:maxLines="2"
@@ -172,7 +172,7 @@
                         android:id="@+id/tvLinkDesc"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="#666666"
+                        android:textColor="@color/text_disabled"
                         android:textSize="11sp"
                         android:maxLines="2"
                         android:ellipsize="end"
@@ -182,7 +182,7 @@
                         android:id="@+id/tvLinkDomain"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="#999999"
+                        android:textColor="@color/text_on_dark"
                         android:textSize="10sp"
                         android:layout_marginTop="2dp" />
                 </LinearLayout>
@@ -194,7 +194,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
-                android:textColor="#4CAF50"
+                android:textColor="@color/success"
                 android:textSize="10sp"
                 android:visibility="gone"
                 tools:text="Entity 0 已讀"
@@ -205,7 +205,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
-                android:textColor="#999999"
+                android:textColor="@color/text_on_dark"
                 android:textSize="10sp"
                 tools:text="14:31" />
 
@@ -236,7 +236,7 @@
                 android:id="@+id/tvLikeCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#4CAF50"
+                android:textColor="@color/success"
                 android:textSize="11sp"
                 android:layout_marginEnd="8dp"
                 android:visibility="gone"
@@ -257,7 +257,7 @@
                 android:id="@+id/tvDislikeCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#F44336"
+                android:textColor="@color/error"
                 android:textSize="11sp"
                 android:visibility="gone"
                 tools:text="0"

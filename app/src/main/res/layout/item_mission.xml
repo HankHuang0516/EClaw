@@ -8,7 +8,7 @@
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
-    app:cardBackgroundColor="#252540"
+    app:cardBackgroundColor="@color/surface_bright"
     app:cardCornerRadius="8dp"
     app:cardElevation="0dp">
 
@@ -53,7 +53,7 @@
                 android:background="@drawable/bg_status_chip"
                 android:paddingHorizontal="6dp"
                 android:paddingVertical="2dp"
-                android:textColor="#AAAAAA"
+                android:textColor="@color/text_secondary"
                 tools:text="待處理" />
 
         </LinearLayout>
@@ -64,7 +64,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:textColor="#888888"
+            android:textColor="@color/text_secondary"
             android:textSize="12sp"
             android:maxLines="2"
             android:ellipsize="end"
@@ -86,7 +86,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:textSize="11sp"
-                android:textColor="#AAAAAA"
+                android:textColor="@color/text_secondary"
                 tools:text="🤖 Bot: #1" />
 
             <TextView
@@ -95,7 +95,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:textSize="11sp"
-                android:textColor="#AAAAAA"
+                android:textColor="@color/text_secondary"
                 android:gravity="end"
                 tools:text="⏰ ETA: 14:00" />
 
@@ -108,7 +108,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:textSize="10sp"
-            android:textColor="#4CAF50"
+            android:textColor="@color/success"
             android:visibility="gone"
             android:layout_gravity="end"
             tools:text="✓ 2026/02/15 14:31" />

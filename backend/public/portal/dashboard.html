@@ -308,6 +308,116 @@
             color: var(--warning);
         }
 
+        /* EClaw Channel promotion */
+        .channel-promo {
+            margin-top: 14px;
+            border-radius: var(--radius-sm);
+            border: 1px dashed var(--card-border);
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .channel-promo:hover {
+            border-color: var(--primary);
+        }
+        .channel-promo-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.2s;
+            user-select: none;
+        }
+        .channel-promo-header:hover {
+            color: var(--primary);
+        }
+        .channel-promo-icon {
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+        .channel-promo-arrow {
+            margin-left: auto;
+            font-size: 16px;
+            font-weight: bold;
+            opacity: 0.4;
+            transition: transform 0.25s;
+            flex-shrink: 0;
+        }
+        .channel-promo-arrow.expanded {
+            transform: rotate(90deg);
+            opacity: 0.7;
+        }
+        .channel-promo-steps {
+            padding: 0 14px 12px;
+        }
+        .channel-step {
+            font-size: 11px;
+            color: var(--text-muted, #666);
+            margin-bottom: 8px;
+        }
+        .channel-step-code {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            margin-bottom: 4px;
+            background: var(--input-bg);
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .channel-step-code:hover {
+            background: rgba(108, 99, 255, 0.08);
+        }
+        .channel-step-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .channel-step-code code {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 11.5px;
+            color: var(--text-primary, #e0e0e0);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .channel-step-copy {
+            margin-left: auto;
+            opacity: 0;
+            font-size: 13px;
+            color: var(--text-secondary);
+            transition: opacity 0.15s;
+            flex-shrink: 0;
+        }
+        .channel-step-code:hover .channel-step-copy {
+            opacity: 0.6;
+        }
+        .channel-promo-link {
+            display: block;
+            text-align: right;
+            font-size: 11px;
+            color: var(--primary);
+            text-decoration: none;
+            margin-top: 8px;
+            opacity: 0.7;
+            transition: opacity 0.15s;
+        }
+        .channel-promo-link:hover {
+            opacity: 1;
+        }
+
         .code-countdown.expired {
             color: var(--danger);
         }
@@ -710,7 +820,7 @@
             align-items: center;
             cursor: grab;
             font-size: 20px;
-            color: #666;
+            color: var(--text-muted);
             padding: 4px;
             flex-shrink: 0;
             user-select: none;
@@ -896,6 +1006,35 @@
                             data-i18n="dash_btn_regenerate">
                             Regenerate
                         </button>
+                    </div>
+                </div>
+
+                <!-- EClaw Channel Promotion -->
+                <div class="channel-promo" id="channelPromo">
+                    <div class="channel-promo-header" onclick="toggleChannelPromo()">
+                        <span class="channel-promo-icon">⚡</span>
+                        <span data-i18n="dash_channel_promo">Try EClaw Channel? More native, faster</span>
+                        <span class="channel-promo-arrow" id="channelPromoArrow">›</span>
+                    </div>
+                    <div class="channel-promo-steps" id="channelPromoSteps" style="display:none;">
+                        <div class="channel-step" data-i18n="dash_channel_step_intro">In OpenClaw terminal:</div>
+                        <div class="channel-step-code" onclick="copyText('openclaw plugins install @eclaw/openclaw-channel', this)">
+                            <span class="channel-step-num">1</span>
+                            <code>openclaw plugins install @eclaw/openclaw-channel</code>
+                            <span class="channel-step-copy">⧉</span>
+                        </div>
+                        <div class="channel-step-code" onclick="copyText('openclaw configure', this)">
+                            <span class="channel-step-num">2</span>
+                            <code>openclaw configure</code>
+                            <span class="channel-step-copy">⧉</span>
+                        </div>
+                        <div class="channel-step-code">
+                            <span class="channel-step-num">3</span>
+                            <code data-i18n="dash_channel_step3">Select "EClaw"</code>
+                        </div>
+                        <a class="channel-promo-link" href="https://www.npmjs.com/package/@eclaw/openclaw-channel" target="_blank" rel="noopener">
+                            <span data-i18n="dash_channel_learn_more">Learn more</span> →
+                        </a>
                     </div>
                 </div>
             </div>
@@ -1995,6 +2134,25 @@
             document.body.removeChild(ta);
         }
 
+        // --- Channel Promo ---
+        function toggleChannelPromo() {
+            const steps = document.getElementById('channelPromoSteps');
+            const arrow = document.getElementById('channelPromoArrow');
+            const visible = steps.style.display !== 'none';
+            steps.style.display = visible ? 'none' : 'block';
+            arrow.classList.toggle('expanded', !visible);
+        }
+
+        function copyText(text, el) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast(i18n.t('dash_copied') || 'Copied!', 'success');
+                });
+            } else {
+                fallbackCopy(text);
+            }
+        }
+
         // --- Remove Entity ---
         function copyPublicCode(code) {
             if (!code) return;
@@ -2317,7 +2475,7 @@
                     },
                     styles: {
                         'input': { 'color': '#ffffff', 'font-size': '14px', 'font-family': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' },
-                        'input::placeholder': { 'color': '#555555' },
+                        'input::placeholder': { 'color': '#777777' },
                         ':focus': { 'color': '#ffffff' },
                         '.valid': { 'color': '#4CAF50' },
                         '.invalid': { 'color': '#F44336' }

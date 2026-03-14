@@ -13,8 +13,8 @@
     --success: #4CAF50;
     --warning: #FFD23F;
     --text: #ffffff;
-    --text-secondary: #888888;
-    --text-muted: #555555;
+    --text-secondary: #AAAAAA;
+    --text-muted: #777777;
     --radius: 12px;
     --radius-sm: 8px;
 }
@@ -158,8 +158,8 @@ a:hover { text-decoration: underline; }
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     transition: background 0.2s;
 }
@@ -169,7 +169,7 @@ a:hover { text-decoration: underline; }
 
 .notif-badge {
     position: absolute;
-    top: 2px;
+    top: 4px;
     right: 2px;
     background: var(--danger);
     color: #fff;
@@ -327,6 +327,7 @@ a:hover { text-decoration: underline; }
     align-items: center;
     gap: 6px;
     padding: 10px 20px;
+    min-height: 44px;
     border: none;
     border-radius: var(--radius-sm);
     font-size: 14px;
@@ -351,7 +352,14 @@ a:hover { text-decoration: underline; }
 .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
 .btn-sm { padding: 6px 12px; font-size: 12px; }
 .btn-block { width: 100%; justify-content: center; }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; background: var(--card-border); }
+.btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* Focus indicators for all interactive elements */
+.nav-link:focus-visible,
+.entity-card:focus-visible,
+.chip:focus-visible,
+.notif-bell:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: var(--radius-sm); }
 
 /* ==========================================
    Inputs
@@ -448,7 +456,7 @@ a:hover { text-decoration: underline; }
 }
 
 .entity-info { flex: 1; min-width: 0; }
-.entity-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+.entity-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .entity-message {
     font-size: 13px;
     color: var(--text-secondary);
@@ -512,7 +520,7 @@ a:hover { text-decoration: underline; }
 
 .chat-bubble {
     display: inline-block;
-    padding: 10px 14px;
+    padding: 12px 16px;
     border-radius: 12px;
     font-size: 14px;
     word-break: break-word;
@@ -895,9 +903,15 @@ a:hover { text-decoration: underline; }
     .auth-container { margin: 40px auto; }
 }
 
+@media (max-width: 640px) {
+    .entity-grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+}
+
 @media (max-width: 480px) {
     .nav-logo-text { display: none; }
     .chip { padding: 4px 10px; font-size: 11px; }
+    .entity-grid { grid-template-columns: 1fr; }
 }
 
 /* ==========================================
@@ -1161,7 +1175,7 @@ a:hover { text-decoration: underline; }
     border: 1px solid var(--card-border);
     border-radius: 6px;
     color: var(--text);
-    padding: 8px 12px;
+    padding: 10px 14px;
     font-size: 13px;
     font-family: inherit;
     resize: none;
@@ -1180,6 +1194,9 @@ a:hover { text-decoration: underline; }
 .ai-chat-send-btn:disabled { opacity: 0.4; cursor: default; }
 .ai-chat-send-btn:not(:disabled):hover { background: var(--primary-hover); }
 
+@media (max-width: 900px) {
+    .ai-chat-panel { width: 320px; height: 460px; }
+}
 @media (max-width: 640px) {
     .ai-chat-panel { width: calc(100vw - 16px); height: calc(100vh - 80px); bottom: 8px; right: 8px; }
     .ai-chat-fab { bottom: 16px; right: 16px; width: 50px; height: 50px; }

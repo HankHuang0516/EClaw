@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#0D0D1A">
+    android:background="@color/surface_dim">
 
     <!-- Header (padding applied via WindowInsets) -->
     <LinearLayout
@@ -128,7 +128,7 @@
                             android:layout_marginStart="4dp"
                             android:layout_marginBottom="4dp"
                             android:textSize="14sp"
-                            android:textColor="#CCFFFFFF"/>
+                            android:textColor="@color/text_white_80"/>
                     </LinearLayout>
 
                     <!-- Entity Usage Row -->
@@ -156,7 +156,7 @@
                             android:layout_marginStart="4dp"
                             android:layout_marginBottom="4dp"
                             android:textSize="14sp"
-                            android:textColor="#CCFFFFFF"/>
+                            android:textColor="@color/text_white_80"/>
                     </LinearLayout>
 
                     <!-- Progress Bar -->
@@ -167,7 +167,7 @@
                         android:layout_height="8dp"
                         android:max="100"
                         android:progress="0"
-                        android:progressTint="#FFD23F"
+                        android:progressTint="@color/warning"
                         android:progressBackgroundTint="#33FFFFFF"
                         android:layout_marginBottom="16dp"/>
 
@@ -195,8 +195,8 @@
                 android:layout_marginBottom="16dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp"
-                app:cardBackgroundColor="#1A1A1A"
-                app:strokeColor="#333333"
+                app:cardBackgroundColor="@color/surface_input"
+                app:strokeColor="@color/text_dark"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -218,7 +218,7 @@
                             android:layout_height="24dp"
                             android:src="@drawable/ic_account"
                             android:contentDescription="Account"
-                            app:tint="#CCFFFFFF"/>
+                            app:tint="@color/text_white_80"/>
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -242,7 +242,7 @@
                         <ProgressBar
                             android:layout_width="16dp"
                             android:layout_height="16dp"
-                            android:indeterminateTint="#99FFFFFF"/>
+                            android:indeterminateTint="@color/text_white_60"/>
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -250,7 +250,7 @@
                             android:layout_marginStart="8dp"
                             android:text="@string/account_status_loading"
                             android:textSize="13sp"
-                            android:textColor="#99FFFFFF"/>
+                            android:textColor="@color/text_white_60"/>
                     </LinearLayout>
 
                     <!-- State A: Email Bound -->
@@ -275,7 +275,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:textSize="14sp"
-                                android:textColor="#DDFFFFFF"
+                                android:textColor="@color/text_primary_87"
                                 android:ellipsize="middle"
                                 android:singleLine="true"/>
 
@@ -307,7 +307,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:textSize="12sp"
-                            android:textColor="#99FFFFFF"
+                            android:textColor="@color/text_white_60"
                             android:layout_marginBottom="8dp"
                             android:visibility="gone"/>
 
@@ -318,7 +318,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/account_copy_credentials"
                             android:textSize="12sp"
-                            android:textColor="#7C4DFF"
+                            android:textColor="@color/primary_variant"
                             android:gravity="center"
                             android:paddingVertical="4dp"/>
                     </LinearLayout>
@@ -343,7 +343,7 @@
                                 android:layout_width="18dp"
                                 android:layout_height="18dp"
                                 android:src="@android:drawable/ic_dialog_alert"
-                                app:tint="#FFD23F"/>
+                                app:tint="@color/warning"/>
 
                             <TextView
                                 android:layout_width="wrap_content"
@@ -351,7 +351,7 @@
                                 android:layout_marginStart="8dp"
                                 android:text="@string/account_status_unbound"
                                 android:textSize="14sp"
-                                android:textColor="#FFD23F"
+                                android:textColor="@color/warning"
                                 android:textStyle="bold"/>
                         </LinearLayout>
 
@@ -361,7 +361,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/account_status_unbound_desc"
                             android:textSize="12sp"
-                            android:textColor="#99FFFFFF"
+                            android:textColor="@color/text_white_60"
                             android:layout_marginBottom="12dp"/>
 
                         <!-- Google Sign-In button -->
@@ -370,8 +370,8 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/sign_in_google"
-                            android:textColor="#DDFFFFFF"
-                            app:backgroundTint="#333333"
+                            android:textColor="@color/text_primary_87"
+                            app:backgroundTint="@color/text_dark"
                             app:cornerRadius="8dp"
                             app:icon="@drawable/ic_google"
                             app:iconGravity="textStart"
@@ -385,8 +385,8 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/sign_in_facebook"
-                            android:textColor="#DDFFFFFF"
-                            app:backgroundTint="#333333"
+                            android:textColor="@color/text_primary_87"
+                            app:backgroundTint="@color/text_dark"
                             app:cornerRadius="8dp"
                             app:icon="@drawable/ic_facebook"
                             app:iconGravity="textStart"
@@ -400,7 +400,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/account_or"
                             android:textSize="12sp"
-                            android:textColor="#66FFFFFF"
+                            android:textColor="@color/text_white_40"
                             android:gravity="center"
                             android:layout_marginBottom="8dp"/>
 
@@ -411,7 +411,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/account_bind_email_btn"
                             android:textColor="@android:color/white"
-                            app:backgroundTint="#7C4DFF"
+                            app:backgroundTint="@color/primary_variant"
                             app:cornerRadius="8dp"
                             android:layout_marginBottom="8dp"
                             style="@style/Widget.Material3.Button"/>
@@ -423,7 +423,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/account_recovery_link"
                             android:textSize="12sp"
-                            android:textColor="#7C4DFF"
+                            android:textColor="@color/primary_variant"
                             android:gravity="center"
                             android:paddingVertical="4dp"/>
                     </LinearLayout>
@@ -438,8 +438,8 @@
                 android:layout_marginBottom="16dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp"
-                app:cardBackgroundColor="#1A1A1A"
-                app:strokeColor="#333333"
+                app:cardBackgroundColor="@color/surface_input"
+                app:strokeColor="@color/text_dark"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -462,7 +462,7 @@
                             android:layout_height="24dp"
                             android:src="@drawable/ic_settings"
                             android:contentDescription="Channel API"
-                            app:tint="#CCFFFFFF"/>
+                            app:tint="@color/text_white_80"/>
 
                         <TextView
                             android:layout_width="0dp"
@@ -471,7 +471,7 @@
                             android:layout_marginStart="16dp"
                             android:text="@string/channel_api_card_title"
                             android:textSize="14sp"
-                            android:textColor="#CCFFFFFF"
+                            android:textColor="@color/text_white_80"
                             android:gravity="center"/>
 
                         <ImageView
@@ -480,7 +480,7 @@
                             android:layout_height="24dp"
                             android:src="@drawable/ic_expand_more"
                             android:contentDescription="Expand"
-                            app:tint="#99FFFFFF"/>
+                            app:tint="@color/text_white_60"/>
                     </LinearLayout>
 
                     <!-- Collapsible content -->
@@ -497,7 +497,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/channel_api_card_desc"
                             android:textSize="13sp"
-                            android:textColor="#99FFFFFF"
+                            android:textColor="@color/text_white_60"
                             android:layout_marginBottom="12dp"/>
 
                         <!-- Key row -->
@@ -513,7 +513,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/channel_api_key_label"
                                 android:textSize="12sp"
-                                android:textColor="#99FFFFFF"/>
+                                android:textColor="@color/text_white_60"/>
 
                             <TextView
                                 android:id="@+id/tvChannelApiKey"
@@ -521,7 +521,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:textSize="11sp"
-                                android:textColor="#DDFFFFFF"
+                                android:textColor="@color/text_primary_87"
                                 android:fontFamily="monospace"
                                 android:ellipsize="middle"
                                 android:singleLine="true"/>
@@ -540,7 +540,7 @@
                                 android:layout_height="wrap_content"
                                 android:text="@string/channel_api_secret_label"
                                 android:textSize="12sp"
-                                android:textColor="#99FFFFFF"/>
+                                android:textColor="@color/text_white_60"/>
 
                             <TextView
                                 android:id="@+id/tvChannelApiSecret"
@@ -548,7 +548,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:textSize="11sp"
-                                android:textColor="#DDFFFFFF"
+                                android:textColor="@color/text_primary_87"
                                 android:fontFamily="monospace"
                                 android:text="••••••••••••••••"/>
                         </LinearLayout>
@@ -560,7 +560,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/channel_api_no_key"
                             android:textSize="13sp"
-                            android:textColor="#99FFFFFF"
+                            android:textColor="@color/text_white_60"
                             android:layout_marginBottom="12dp"
                             android:visibility="gone"/>
 
@@ -571,7 +571,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="12dp"
                             android:textSize="12sp"
-                            android:textColor="#4ade80"
+                            android:textColor="@color/success_light"
                             android:visibility="gone"/>
 
                         <!-- Action buttons -->
@@ -589,8 +589,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/show_label"
-                                android:textColor="#CCFFFFFF"
-                                app:strokeColor="#444444"
+                                android:textColor="@color/text_white_80"
+                                app:strokeColor="@color/divider_subtle"
                                 android:layout_marginEnd="8dp"/>
 
                             <com.google.android.material.button.MaterialButton
@@ -599,8 +599,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/channel_api_copy_btn"
-                                android:textColor="#CCFFFFFF"
-                                app:strokeColor="#444444"/>
+                                android:textColor="@color/text_white_80"
+                                app:strokeColor="@color/divider_subtle"/>
                         </LinearLayout>
 
                     </LinearLayout>
@@ -613,12 +613,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/feedback"
-                android:textColor="#CCFFFFFF"
-                app:backgroundTint="#1A1A1A"
+                android:textColor="@color/text_white_80"
+                app:backgroundTint="@color/surface_input"
                 app:cornerRadius="12dp"
                 app:icon="@drawable/ic_feedback"
-                app:iconTint="#CCFFFFFF"
-                app:strokeColor="#333333"
+                app:iconTint="@color/text_white_80"
+                app:strokeColor="@color/text_dark"
                 app:strokeWidth="1dp"
                 style="@style/Widget.Material3.Button.TonalButton"/>
 
@@ -628,13 +628,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/privacy_policy_title"
-                android:textColor="#CCFFFFFF"
-                app:backgroundTint="#1A1A1A"
+                android:textColor="@color/text_white_80"
+                app:backgroundTint="@color/surface_input"
                 android:layout_marginTop="8dp"
                 app:cornerRadius="12dp"
                 app:icon="@drawable/ic_privacy"
-                app:iconTint="#CCFFFFFF"
-                app:strokeColor="#333333"
+                app:iconTint="@color/text_white_80"
+                app:strokeColor="@color/text_dark"
                 app:strokeWidth="1dp"
                 style="@style/Widget.Material3.Button.TonalButton"/>
 
@@ -644,13 +644,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/delete_account"
-                android:textColor="#CCFFFFFF"
-                app:backgroundTint="#1A1A1A"
+                android:textColor="@color/text_white_80"
+                app:backgroundTint="@color/surface_input"
                 android:layout_marginTop="8dp"
                 app:cornerRadius="12dp"
                 app:icon="@drawable/ic_privacy"
-                app:iconTint="#FF6B6B"
-                app:strokeColor="#333333"
+                app:iconTint="@color/error_light"
+                app:strokeColor="@color/text_dark"
                 app:strokeWidth="1dp"
                 style="@style/Widget.Material3.Button.TonalButton"/>
 
@@ -660,14 +660,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/crash_logs_title"
-                android:textColor="#CCFFFFFF"
-                app:backgroundTint="#1A1A1A"
+                android:textColor="@color/text_white_80"
+                app:backgroundTint="@color/surface_input"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="12dp"
                 app:cornerRadius="12dp"
                 app:icon="@drawable/ic_feedback"
-                app:iconTint="#FF6B6B"
-                app:strokeColor="#333333"
+                app:iconTint="@color/error_light"
+                app:strokeColor="@color/text_dark"
                 app:strokeWidth="1dp"
                 style="@style/Widget.Material3.Button.TonalButton"/>
 
@@ -677,13 +677,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/set_wallpaper"
-                android:textColor="#CCFFFFFF"
-                app:backgroundTint="#1A1A1A"
+                android:textColor="@color/text_white_80"
+                app:backgroundTint="@color/surface_input"
                 android:layout_marginBottom="24dp"
                 app:cornerRadius="12dp"
                 app:icon="@drawable/ic_wallpaper"
-                app:iconTint="#CCFFFFFF"
-                app:strokeColor="#333333"
+                app:iconTint="@color/text_white_80"
+                app:strokeColor="@color/text_dark"
                 app:strokeWidth="1dp"
                 style="@style/Widget.Material3.Button.TonalButton"/>
 
@@ -694,13 +694,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/settings_entity_limit"
-                android:textColor="#CCFFFFFF"
-                app:backgroundTint="#1A1A1A"
+                android:textColor="@color/text_white_80"
+                app:backgroundTint="@color/surface_input"
                 android:layout_marginBottom="8dp"
                 app:cornerRadius="12dp"
                 app:icon="@android:drawable/ic_menu_manage"
-                app:iconTint="#FF9800"
-                app:strokeColor="#FF9800"
+                app:iconTint="@color/priority_high"
+                app:strokeColor="@color/priority_high"
                 app:strokeWidth="1dp"
                 android:visibility="gone"/>
 
@@ -711,8 +711,8 @@
                 android:layout_marginBottom="12dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp"
-                app:cardBackgroundColor="#1A1A1A"
-                app:strokeColor="#333333"
+                app:cardBackgroundColor="@color/surface_input"
+                app:strokeColor="@color/text_dark"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -735,7 +735,7 @@
                             android:layout_height="24dp"
                             android:src="@drawable/ic_notification"
                             android:contentDescription="Notification"
-                            app:tint="#CCFFFFFF"/>
+                            app:tint="@color/text_white_80"/>
 
                         <TextView
                             android:layout_width="0dp"
@@ -744,7 +744,7 @@
                             android:layout_marginStart="16dp"
                             android:text="@string/notifications_title"
                             android:textSize="14sp"
-                            android:textColor="#CCFFFFFF"
+                            android:textColor="@color/text_white_80"
                             android:gravity="center"/>
 
                         <ImageView
@@ -753,7 +753,7 @@
                             android:layout_height="24dp"
                             android:src="@drawable/ic_expand_more"
                             android:contentDescription="Expand"
-                            app:tint="#99FFFFFF"/>
+                            app:tint="@color/text_white_60"/>
                     </LinearLayout>
 
                     <!-- Collapsible content (default GONE) -->
@@ -770,7 +770,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/notifications_desc"
                             android:textSize="13sp"
-                            android:textColor="#99FFFFFF"
+                            android:textColor="@color/text_white_60"
                             android:layout_marginBottom="8dp"/>
 
                         <!-- Notification preference toggles container (populated programmatically) -->
@@ -791,8 +791,8 @@
                 android:layout_marginBottom="12dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp"
-                app:cardBackgroundColor="#1A1A1A"
-                app:strokeColor="#333333"
+                app:cardBackgroundColor="@color/surface_input"
+                app:strokeColor="@color/text_dark"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -815,7 +815,7 @@
                             android:layout_height="24dp"
                             android:src="@drawable/ic_broadcast"
                             android:contentDescription="Broadcast"
-                            app:tint="#CCFFFFFF"/>
+                            app:tint="@color/text_white_80"/>
 
                         <TextView
                             android:layout_width="0dp"
@@ -824,7 +824,7 @@
                             android:layout_marginStart="16dp"
                             android:text="@string/broadcast_settings_title"
                             android:textSize="14sp"
-                            android:textColor="#CCFFFFFF"
+                            android:textColor="@color/text_white_80"
                             android:gravity="center"/>
 
                         <ImageView
@@ -833,7 +833,7 @@
                             android:layout_height="24dp"
                             android:src="@drawable/ic_expand_more"
                             android:contentDescription="Expand"
-                            app:tint="#99FFFFFF"/>
+                            app:tint="@color/text_white_60"/>
                     </LinearLayout>
 
                     <!-- Collapsible content (default GONE) -->
@@ -850,7 +850,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/broadcast_settings_desc"
                             android:textSize="13sp"
-                            android:textColor="#99FFFFFF"
+                            android:textColor="@color/text_white_60"
                             android:layout_marginBottom="8dp"/>
 
                         <!-- Broadcast preference toggles container (populated programmatically) -->
@@ -871,8 +871,8 @@
                 android:layout_marginBottom="16dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp"
-                app:cardBackgroundColor="#1A1A1A"
-                app:strokeColor="#333333"
+                app:cardBackgroundColor="@color/surface_input"
+                app:strokeColor="@color/text_dark"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -895,7 +895,7 @@
                             android:layout_height="24dp"
                             android:src="@drawable/ic_settings"
                             android:contentDescription="Remote Control"
-                            app:tint="#CCFFFFFF"/>
+                            app:tint="@color/text_white_80"/>
 
                         <TextView
                             android:layout_width="0dp"
@@ -904,7 +904,7 @@
                             android:layout_marginStart="16dp"
                             android:text="@string/remote_control_section_title"
                             android:textSize="14sp"
-                            android:textColor="#CCFFFFFF"
+                            android:textColor="@color/text_white_80"
                             android:gravity="center"/>
 
                         <ImageView
@@ -913,7 +913,7 @@
                             android:layout_height="24dp"
                             android:src="@drawable/ic_expand_more"
                             android:contentDescription="Expand"
-                            app:tint="#99FFFFFF"/>
+                            app:tint="@color/text_white_60"/>
                     </LinearLayout>
 
                     <!-- Collapsible content (default GONE) -->
@@ -943,8 +943,8 @@
                 android:layout_marginBottom="24dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="2dp"
-                app:cardBackgroundColor="#1A1A1A"
-                app:strokeColor="#333333"
+                app:cardBackgroundColor="@color/surface_input"
+                app:strokeColor="@color/text_dark"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -967,7 +967,7 @@
                             android:layout_height="24dp"
                             android:src="@drawable/ic_language"
                             android:contentDescription="Language"
-                            app:tint="#CCFFFFFF"/>
+                            app:tint="@color/text_white_80"/>
 
                         <TextView
                             android:layout_width="0dp"
@@ -976,7 +976,7 @@
                             android:layout_marginStart="16dp"
                             android:text="@string/language_title"
                             android:textSize="14sp"
-                            android:textColor="#CCFFFFFF"
+                            android:textColor="@color/text_white_80"
                             android:gravity="center"/>
 
                         <ImageView
@@ -985,7 +985,7 @@
                             android:layout_height="24dp"
                             android:src="@drawable/ic_expand_more"
                             android:contentDescription="Expand"
-                            app:tint="#99FFFFFF"/>
+                            app:tint="@color/text_white_60"/>
 
                     </LinearLayout>
 
@@ -1072,7 +1072,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:textColor="#80FFFFFF"
+                android:textColor="@color/text_white_50"
                 android:textSize="12sp"
                 android:layout_marginBottom="16dp"/>
 

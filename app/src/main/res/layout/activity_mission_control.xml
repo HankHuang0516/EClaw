@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#0D0D1A">
+    android:background="@color/surface_dim">
 
     <!-- Top Bar -->
     <LinearLayout
@@ -66,9 +66,9 @@
                 android:layout_marginBottom="12dp"
                 android:clickable="true"
                 android:focusable="true"
-                app:cardBackgroundColor="#1A1A2E"
+                app:cardBackgroundColor="@color/surface"
                 app:cardCornerRadius="12dp"
-                app:strokeColor="#333355"
+                app:strokeColor="@color/divider"
                 app:strokeWidth="1dp"
                 app:cardElevation="0dp"
                 app:rippleColor="#33FFFFFF">
@@ -85,7 +85,7 @@
                         android:layout_height="24dp"
                         android:src="@android:drawable/ic_menu_recent_history"
                         android:layout_marginEnd="12dp"
-                        app:tint="#6C63FF"
+                        app:tint="@color/primary"
                         android:contentDescription="@null" />
 
                     <TextView
@@ -102,7 +102,7 @@
                         android:layout_height="wrap_content"
                         android:text="›"
                         android:textSize="20sp"
-                        android:textColor="#666666" />
+                        android:textColor="@color/text_disabled" />
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -112,9 +112,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardBackgroundColor="#1A1A2E"
+                app:cardBackgroundColor="@color/surface"
                 app:cardCornerRadius="12dp"
-                app:strokeColor="#333355"
+                app:strokeColor="@color/divider"
                 app:strokeWidth="1dp"
                 app:cardElevation="0dp">
 
@@ -138,7 +138,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/no_items"
-                        android:textColor="#666666"
+                        android:textColor="@color/text_disabled"
                         android:textSize="13sp"
                         android:gravity="center"
                         android:padding="16dp"
@@ -166,9 +166,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardBackgroundColor="#1A1A2E"
+                app:cardBackgroundColor="@color/surface"
                 app:cardCornerRadius="12dp"
-                app:strokeColor="#333355"
+                app:strokeColor="@color/divider"
                 app:strokeWidth="1dp"
                 app:cardElevation="0dp">
 
@@ -192,7 +192,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/no_missions"
-                        android:textColor="#666666"
+                        android:textColor="@color/text_disabled"
                         android:textSize="13sp"
                         android:gravity="center"
                         android:padding="16dp"
@@ -212,9 +212,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardBackgroundColor="#1A1A2E"
+                app:cardBackgroundColor="@color/surface"
                 app:cardCornerRadius="12dp"
-                app:strokeColor="#333355"
+                app:strokeColor="@color/divider"
                 app:strokeWidth="1dp"
                 app:cardElevation="0dp">
 
@@ -238,7 +238,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/no_done_items"
-                        android:textColor="#666666"
+                        android:textColor="@color/text_disabled"
                         android:textSize="13sp"
                         android:gravity="center"
                         android:padding="16dp"
@@ -258,9 +258,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardBackgroundColor="#1A1A2E"
+                app:cardBackgroundColor="@color/surface"
                 app:cardCornerRadius="12dp"
-                app:strokeColor="#333355"
+                app:strokeColor="@color/divider"
                 app:strokeWidth="1dp"
                 app:cardElevation="0dp">
 
@@ -284,7 +284,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/no_notes"
-                        android:textColor="#666666"
+                        android:textColor="@color/text_disabled"
                         android:textSize="13sp"
                         android:gravity="center"
                         android:padding="16dp"
@@ -312,9 +312,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardBackgroundColor="#1A1A2E"
+                app:cardBackgroundColor="@color/surface"
                 app:cardCornerRadius="12dp"
-                app:strokeColor="#333355"
+                app:strokeColor="@color/divider"
                 app:strokeWidth="1dp"
                 app:cardElevation="0dp">
 
@@ -338,7 +338,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/mission_no_skills"
-                        android:textColor="#666666"
+                        android:textColor="@color/text_disabled"
                         android:textSize="13sp"
                         android:gravity="center"
                         android:padding="16dp"
@@ -366,9 +366,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardBackgroundColor="#1A1A2E"
+                app:cardBackgroundColor="@color/surface"
                 app:cardCornerRadius="12dp"
-                app:strokeColor="#333355"
+                app:strokeColor="@color/divider"
                 app:strokeWidth="1dp"
                 app:cardElevation="0dp">
 
@@ -408,7 +408,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/mission_vars_local_only"
-                        android:textColor="#888888"
+                        android:textColor="@color/text_secondary"
                         android:textSize="11sp"
                         android:layout_marginBottom="8dp" />
 
@@ -423,7 +423,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/mission_no_variables"
-                        android:textColor="#666666"
+                        android:textColor="@color/text_disabled"
                         android:textSize="13sp"
                         android:gravity="center"
                         android:padding="16dp"
@@ -445,9 +445,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardBackgroundColor="#1A1A2E"
+                app:cardBackgroundColor="@color/surface"
                 app:cardCornerRadius="12dp"
-                app:strokeColor="#333355"
+                app:strokeColor="@color/divider"
                 app:strokeWidth="1dp"
                 app:cardElevation="0dp">
 
@@ -471,7 +471,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/no_souls"
-                        android:textColor="#666666"
+                        android:textColor="@color/text_disabled"
                         android:textSize="13sp"
                         android:gravity="center"
                         android:padding="16dp"
@@ -499,9 +499,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                app:cardBackgroundColor="#1A1A2E"
+                app:cardBackgroundColor="@color/surface"
                 app:cardCornerRadius="12dp"
-                app:strokeColor="#333355"
+                app:strokeColor="@color/divider"
                 app:strokeWidth="1dp"
                 app:cardElevation="0dp">
 
@@ -525,7 +525,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/no_rules"
-                        android:textColor="#666666"
+                        android:textColor="@color/text_disabled"
                         android:textSize="13sp"
                         android:gravity="center"
                         android:padding="16dp"
@@ -554,7 +554,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
-                android:textColor="#666666"
+                android:textColor="@color/text_disabled"
                 android:textSize="11sp"
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="16dp"

@@ -8,7 +8,7 @@
     android:gravity="center"
     android:paddingHorizontal="8dp"
     android:paddingTop="8dp"
-    android:background="#0D0D1A">
+    android:background="@color/surface_dim">
 
     <!-- Home -->
     <LinearLayout
@@ -16,6 +16,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:minHeight="48dp"
         android:orientation="vertical"
         android:gravity="center"
         android:paddingVertical="8dp"
@@ -27,8 +28,9 @@
             android:id="@+id/navHomeIcon"
             android:layout_width="24dp"
             android:layout_height="24dp"
+            android:importantForAccessibility="no"
             android:src="@drawable/ic_home"
-            app:tint="#CCCCCC" />
+            app:tint="@color/text_on_surface" />
 
         <TextView
             android:id="@+id/navHomeText"
@@ -36,7 +38,7 @@
             android:layout_height="wrap_content"
             android:text="@string/nav_home"
             android:textSize="10sp"
-            android:textColor="#AAAAAA"
+            android:textColor="@color/text_secondary"
             android:layout_marginTop="2dp" />
 
     </LinearLayout>
@@ -47,6 +49,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:minHeight="48dp"
         android:orientation="vertical"
         android:gravity="center"
         android:paddingVertical="8dp"
@@ -58,8 +61,9 @@
             android:id="@+id/navMissionIcon"
             android:layout_width="24dp"
             android:layout_height="24dp"
+            android:importantForAccessibility="no"
             android:src="@drawable/ic_mission"
-            app:tint="#CCCCCC" />
+            app:tint="@color/text_on_surface" />
 
         <TextView
             android:id="@+id/navMissionText"
@@ -67,7 +71,7 @@
             android:layout_height="wrap_content"
             android:text="@string/nav_mission"
             android:textSize="10sp"
-            android:textColor="#AAAAAA"
+            android:textColor="@color/text_secondary"
             android:layout_marginTop="2dp" />
 
     </LinearLayout>
@@ -78,6 +82,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:minHeight="48dp"
         android:orientation="vertical"
         android:gravity="center"
         android:paddingVertical="8dp"
@@ -89,8 +94,9 @@
             android:id="@+id/navChatIcon"
             android:layout_width="24dp"
             android:layout_height="24dp"
+            android:importantForAccessibility="no"
             android:src="@drawable/ic_chat"
-            app:tint="#CCCCCC" />
+            app:tint="@color/text_on_surface" />
 
         <TextView
             android:id="@+id/navChatText"
@@ -98,7 +104,7 @@
             android:layout_height="wrap_content"
             android:text="@string/nav_chat"
             android:textSize="10sp"
-            android:textColor="#AAAAAA"
+            android:textColor="@color/text_secondary"
             android:layout_marginTop="2dp" />
 
     </LinearLayout>
@@ -109,6 +115,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:minHeight="48dp"
         android:orientation="vertical"
         android:gravity="center"
         android:paddingVertical="8dp"
@@ -120,8 +127,9 @@
             android:id="@+id/navFilesIcon"
             android:layout_width="24dp"
             android:layout_height="24dp"
+            android:importantForAccessibility="no"
             android:src="@drawable/ic_folder"
-            app:tint="#CCCCCC" />
+            app:tint="@color/text_on_surface" />
 
         <TextView
             android:id="@+id/navFilesText"
@@ -129,7 +137,7 @@
             android:layout_height="wrap_content"
             android:text="@string/nav_files"
             android:textSize="10sp"
-            android:textColor="#AAAAAA"
+            android:textColor="@color/text_secondary"
             android:layout_marginTop="2dp" />
 
     </LinearLayout>
@@ -140,6 +148,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:minHeight="48dp"
         android:orientation="vertical"
         android:gravity="center"
         android:paddingVertical="8dp"
@@ -151,8 +160,9 @@
             android:id="@+id/navSettingsIcon"
             android:layout_width="24dp"
             android:layout_height="24dp"
+            android:importantForAccessibility="no"
             android:src="@drawable/ic_settings"
-            app:tint="#CCCCCC" />
+            app:tint="@color/text_on_surface" />
 
         <TextView
             android:id="@+id/navSettingsText"
@@ -160,7 +170,7 @@
             android:layout_height="wrap_content"
             android:text="@string/nav_settings"
             android:textSize="10sp"
-            android:textColor="#AAAAAA"
+            android:textColor="@color/text_secondary"
             android:layout_marginTop="2dp" />
 
     </LinearLayout>

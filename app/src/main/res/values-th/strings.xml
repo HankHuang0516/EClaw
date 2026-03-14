@@ -11,6 +11,10 @@
     <string name="tap_to_generate_code">แตะเพื่อสร้างรหัส</string>
     <string name="generate">สร้างรหัส</string>
     <string name="regenerate">สร้างรหัสใหม่</string>
+    <string name="channel_promo">ลอง EClaw Channel? เนทีฟกว่า เร็วกว่า</string>
+    <string name="channel_step_intro">ใน OpenClaw terminal:</string>
+    <string name="channel_step3">3  เลือก \"EClaw\"</string>
+    <string name="channel_learn_more">เรียนรู้เพิ่มเติม →</string>
     <string name="copy">คัดลอก</string>
     <string name="broadcast_to_all">ส่งถึงทุกคน</string>
     <string name="set_live_wallpaper">ตั้งวอลเปเปอร์สด</string>
@@ -481,6 +485,12 @@
     <string name="mission_sync_to_bot">Sync to Bot Session</string>
     <string name="mission_tab_souls">🧠 Souls</string>
     <string name="mission_tab_rules">📜 Rules (Workflow)</string>
+    <string name="mission_browse_templates">เรียกดูเทมเพลต…</string>
+    <string name="mission_soul_gallery_title">เทมเพลตวิญญาณ</string>
+    <string name="mission_rule_gallery_title">เทมเพลตกฎ</string>
+    <string name="mission_template_empty">ไม่มีเทมเพลตที่ใช้ได้</string>
+    <string name="mission_template_no_match">ไม่พบเทมเพลตที่ตรงกัน</string>
+    <string name="search_hint">ค้นหา…</string>
 
     <!-- Common Buttons -->
     <string name="common_add">+ Add</string>

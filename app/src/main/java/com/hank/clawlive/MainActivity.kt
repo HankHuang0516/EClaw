@@ -348,6 +348,24 @@ class MainActivity : AppCompatActivity() {
             copyFullCommand()
         }
 
+        // Channel promo expandable
+        val channelSteps = findViewById<LinearLayout>(R.id.channelPromoSteps)
+        val channelArrow = findViewById<TextView>(R.id.tvChannelPromoArrow)
+        findViewById<LinearLayout>(R.id.channelPromoHeader).setOnClickListener {
+            val visible = channelSteps.visibility == android.view.View.VISIBLE
+            channelSteps.visibility = if (visible) android.view.View.GONE else android.view.View.VISIBLE
+            channelArrow.animate().rotation(if (visible) 0f else 90f).setDuration(200).start()
+        }
+        findViewById<TextView>(R.id.tvStep1).setOnClickListener {
+            copyToClipboard("openclaw plugins install @eclaw/openclaw-channel")
+        }
+        findViewById<TextView>(R.id.tvStep2).setOnClickListener {
+            copyToClipboard("openclaw configure")
+        }
+        findViewById<TextView>(R.id.tvChannelLearnMore).setOnClickListener {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.npmjs.com/package/@eclaw/openclaw-channel")))
+        }
+
         btnOfficialBorrow.setOnClickListener {
             startActivity(Intent(this, OfficialBorrowActivity::class.java))
         }

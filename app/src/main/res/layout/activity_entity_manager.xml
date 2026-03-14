@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#0D0D1A">
+    android:background="@color/surface_dim">
 
     <!-- Minimal Header (padding applied via WindowInsets) -->
     <LinearLayout
@@ -31,7 +31,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/entities_title"
-            android:textSize="18sp"
+            android:textSize="20sp"
             android:textStyle="bold"
             android:textColor="@android:color/white"
             android:layout_marginStart="8dp"/>
@@ -42,7 +42,7 @@
             android:layout_height="wrap_content"
             android:text="0/4"
             android:textSize="14sp"
-            android:textColor="#888888"
+            android:textColor="@color/text_secondary"
             android:layout_marginEnd="8dp"/>
 
     </LinearLayout>
@@ -70,7 +70,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/loading_entities"
                 android:textSize="16sp"
-                android:textColor="#888888"
+                android:textColor="@color/text_secondary"
                 android:gravity="center"
                 android:padding="32dp"/>
 
@@ -85,7 +85,7 @@
         android:orientation="vertical"
         android:paddingHorizontal="16dp"
         android:paddingTop="16dp"
-        android:background="#1A1A2E"
+        android:background="@color/surface"
         android:elevation="8dp">
 
         <!-- Refresh Button -->

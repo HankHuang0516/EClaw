@@ -43,7 +43,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/crash_log_delete_all"
             android:padding="8dp"
-            app:tint="#80FFFFFF"/>
+            app:tint="@color/text_white_50"/>
 
     </LinearLayout>
 
@@ -62,7 +62,7 @@
             android:layout_height="wrap_content"
             android:text="@string/crash_logs_empty"
             android:textSize="15sp"
-            android:textColor="#80FFFFFF"
+            android:textColor="@color/text_white_50"
             android:gravity="center"/>
 
     </LinearLayout>

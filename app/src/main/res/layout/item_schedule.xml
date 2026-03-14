@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="#252540"
+    android:background="@color/surface_bright"
     android:foreground="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
@@ -23,7 +23,7 @@
             android:layout_height="wrap_content"
             android:textSize="13sp"
             android:textStyle="bold"
-            android:textColor="#6C63FF"
+            android:textColor="@color/primary"
             android:layout_marginEnd="8dp" />
 
         <TextView
@@ -31,8 +31,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="11sp"
-            android:textColor="#888888"
-            android:background="#1A1A2E"
+            android:textColor="@color/text_secondary"
+            android:background="@color/surface"
             android:paddingHorizontal="8dp"
             android:paddingVertical="2dp"
             android:layout_marginEnd="6dp" />
@@ -42,7 +42,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="10sp"
-            android:textColor="#6C63FF"
+            android:textColor="@color/primary"
             android:background="#1A1A3E"
             android:paddingHorizontal="6dp"
             android:paddingVertical="1dp"
@@ -83,7 +83,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="11sp"
-        android:textColor="#888888"
+        android:textColor="@color/text_secondary"
         android:layout_marginTop="4dp" />
 
     <!-- Row 4: Result (if any) -->
@@ -92,8 +92,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="11sp"
-        android:textColor="#888888"
-        android:background="#1A1A2E"
+        android:textColor="@color/text_secondary"
+        android:background="@color/surface"
         android:padding="8dp"
         android:layout_marginTop="4dp"
         android:visibility="gone" />

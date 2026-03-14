@@ -22,7 +22,7 @@
             android:id="@+id/tvScheduleTag"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#CCFFFFFF"
+            android:textColor="@color/text_white_80"
             android:textSize="10sp"
             android:visibility="gone"
             android:drawablePadding="4dp"
@@ -38,7 +38,7 @@
             android:textSize="15sp"
             android:autoLink="web"
             android:linksClickable="true"
-            android:textColorLink="#DDFFFFFF"
+            android:textColorLink="@color/text_primary_87"
             android:textIsSelectable="true"
             tools:text="Hello, this is a sent message!" />
 
@@ -112,7 +112,7 @@
                 android:id="@+id/tvDuration"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#CCFFFFFF"
+                android:textColor="@color/text_white_80"
                 android:textSize="11sp"
                 tools:text="0:15" />
         </LinearLayout>
@@ -157,7 +157,7 @@
                     android:id="@+id/tvLinkDesc"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="#CCFFFFFF"
+                    android:textColor="@color/text_white_80"
                     android:textSize="11sp"
                     android:maxLines="2"
                     android:ellipsize="end"
@@ -167,7 +167,7 @@
                     android:id="@+id/tvLinkDomain"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="#99FFFFFF"
+                    android:textColor="@color/text_white_60"
                     android:textSize="10sp"
                     android:layout_marginTop="2dp" />
             </LinearLayout>
@@ -184,7 +184,7 @@
                 android:id="@+id/tvTargets"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#CCFFFFFF"
+                android:textColor="@color/text_white_80"
                 android:textSize="10sp"
                 android:visibility="gone"
                 tools:text="To: Entity 0, 1"
@@ -211,7 +211,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:textColor="#CCFFFFFF"
+                    android:textColor="@color/text_white_80"
                     android:textSize="10sp"
                     tools:text="14:30" />
 

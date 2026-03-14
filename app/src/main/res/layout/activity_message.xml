@@ -22,7 +22,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/activity_message_select_recipients"
-        android:textColor="#AAAAAA"
+        android:textColor="@color/text_secondary"
         android:textSize="14sp"
         android:layout_marginBottom="8dp"/>
 
@@ -40,8 +40,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        app:boxStrokeColor="#FF7F50"
-        app:hintTextColor="#FF7F50"
+        app:boxStrokeColor="@color/accent"
+        app:hintTextColor="@color/accent"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -50,7 +50,7 @@
             android:layout_height="wrap_content"
             android:hint="Type your message..."
             android:textColor="#FFFFFF"
-            android:textColorHint="#AAAAAA"
+            android:textColorHint="@color/text_secondary"
             android:imeOptions="actionSend"
             android:inputType="textShortMessage"
             android:minLines="2"
@@ -82,7 +82,7 @@
             android:layout_height="wrap_content"
             android:text="@string/send"
             android:textColor="#FFFFFF"
-            app:backgroundTint="#FF7F50"
+            app:backgroundTint="@color/accent"
             app:icon="@android:drawable/ic_menu_send"
             app:iconTint="#FFFFFF"/>
 

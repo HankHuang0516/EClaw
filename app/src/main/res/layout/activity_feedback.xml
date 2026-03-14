@@ -56,7 +56,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/feedback_auto_log_hint"
                 android:textSize="13sp"
-                android:textColor="#99FFFFFF"
+                android:textColor="@color/text_white_60"
                 android:layout_marginBottom="16dp"/>
 
             <!-- Mark Bug / Feedback History Row -->
@@ -75,12 +75,12 @@
                     android:layout_height="40dp"
                     android:text="@string/feedback_mark"
                     android:textSize="13sp"
-                    android:textColor="#CCFFFFFF"
+                    android:textColor="@color/text_white_80"
                     android:minWidth="0dp"
                     android:paddingHorizontal="14dp"
-                    app:backgroundTint="#1A1A1A"
+                    app:backgroundTint="@color/surface_input"
                     app:cornerRadius="8dp"
-                    app:strokeColor="#333333"
+                    app:strokeColor="@color/text_dark"
                     app:strokeWidth="1dp"/>
 
                 <TextView
@@ -90,7 +90,7 @@
                     android:layout_weight="1"
                     android:layout_marginStart="10dp"
                     android:textSize="12sp"
-                    android:textColor="#FFD23F"
+                    android:textColor="@color/warning"
                     android:visibility="gone"/>
 
             </LinearLayout>
@@ -122,8 +122,8 @@
                     android:layout_marginEnd="8dp"
                     app:cardCornerRadius="12dp"
                     app:cardElevation="0dp"
-                    app:cardBackgroundColor="#1A1A1A"
-                    app:strokeColor="#333333"
+                    app:cardBackgroundColor="@color/surface_input"
+                    app:strokeColor="@color/text_dark"
                     app:strokeWidth="1dp"
                     android:clickable="true"
                     android:focusable="true">
@@ -150,7 +150,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/feedback_cat_bug"
                             android:textSize="13sp"
-                            android:textColor="#999999"/>
+                            android:textColor="@color/text_on_dark"/>
 
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -164,8 +164,8 @@
                     android:layout_marginEnd="8dp"
                     app:cardCornerRadius="12dp"
                     app:cardElevation="0dp"
-                    app:cardBackgroundColor="#1A1A1A"
-                    app:strokeColor="#333333"
+                    app:cardBackgroundColor="@color/surface_input"
+                    app:strokeColor="@color/text_dark"
                     app:strokeWidth="1dp"
                     android:clickable="true"
                     android:focusable="true">
@@ -192,7 +192,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/feedback_cat_feature"
                             android:textSize="13sp"
-                            android:textColor="#999999"/>
+                            android:textColor="@color/text_on_dark"/>
 
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -205,8 +205,8 @@
                     android:layout_weight="1"
                     app:cardCornerRadius="12dp"
                     app:cardElevation="0dp"
-                    app:cardBackgroundColor="#1A1A1A"
-                    app:strokeColor="#333333"
+                    app:cardBackgroundColor="@color/surface_input"
+                    app:strokeColor="@color/text_dark"
                     app:strokeWidth="1dp"
                     android:clickable="true"
                     android:focusable="true">
@@ -233,7 +233,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/feedback_cat_question"
                             android:textSize="13sp"
-                            android:textColor="#999999"/>
+                            android:textColor="@color/text_on_dark"/>
 
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -247,8 +247,8 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/feedback_hint"
                 app:boxBackgroundMode="outline"
-                app:boxStrokeColor="#444444"
-                app:boxBackgroundColor="#1A1A1A"
+                app:boxStrokeColor="@color/divider_subtle"
+                app:boxBackgroundColor="@color/surface_input"
                 app:hintTextColor="@android:color/white"
                 app:boxStrokeWidth="1dp"
                 app:boxCornerRadiusTopStart="12dp"
@@ -274,7 +274,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/feedback_photo_hint"
                 android:textSize="12sp"
-                android:textColor="#66FFFFFF"
+                android:textColor="@color/text_white_40"
                 android:layout_marginBottom="8dp"/>
 
             <LinearLayout
@@ -291,11 +291,11 @@
                     android:layout_height="40dp"
                     android:text="@string/feedback_photo_add"
                     android:textSize="13sp"
-                    android:textColor="#AAAAAA"
+                    android:textColor="@color/text_secondary"
                     app:icon="@android:drawable/ic_menu_camera"
-                    app:iconTint="#AAAAAA"
+                    app:iconTint="@color/text_secondary"
                     app:cornerRadius="10dp"
-                    app:strokeColor="#444444"
+                    app:strokeColor="@color/divider_subtle"
                     app:strokeWidth="1dp"/>
 
                 <TextView
@@ -304,7 +304,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="12dp"
                     android:textSize="12sp"
-                    android:textColor="#66FFFFFF"
+                    android:textColor="@color/text_white_40"
                     android:visibility="gone"/>
 
             </LinearLayout>
@@ -321,7 +321,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="12sp"
-                android:textColor="#66FFFFFF"
+                android:textColor="@color/text_white_40"
                 android:visibility="gone"
                 android:layout_marginBottom="8dp"/>
 
@@ -334,7 +334,7 @@
                 android:textSize="15sp"
                 android:textStyle="bold"
                 android:textColor="#000000"
-                app:backgroundTint="#FFD23F"
+                app:backgroundTint="@color/warning"
                 app:cornerRadius="12dp"/>
 
             <!-- View Feedback History -->
@@ -346,13 +346,13 @@
                 android:layout_marginTop="12dp"
                 android:text="@string/feedback_view_history"
                 android:textSize="14sp"
-                android:textColor="#CCFFFFFF"
-                app:backgroundTint="#1A1A1A"
+                android:textColor="@color/text_white_80"
+                app:backgroundTint="@color/surface_input"
                 app:cornerRadius="12dp"
-                app:strokeColor="#333333"
+                app:strokeColor="@color/text_dark"
                 app:strokeWidth="1dp"
                 app:icon="@android:drawable/ic_menu_recent_history"
-                app:iconTint="#CCFFFFFF"/>
+                app:iconTint="@color/text_white_80"/>
 
             <!-- Result Container (hidden initially) -->
             <com.google.android.material.card.MaterialCardView
@@ -387,7 +387,7 @@
                             android:layout_height="wrap_content"
                             android:text="✓"
                             android:textSize="20sp"
-                            android:textColor="#4CAF50"
+                            android:textColor="@color/success"
                             android:textStyle="bold"
                             android:layout_marginEnd="8dp"/>
 
@@ -397,7 +397,7 @@
                             android:layout_height="wrap_content"
                             android:textSize="16sp"
                             android:textStyle="bold"
-                            android:textColor="#4CAF50"/>
+                            android:textColor="@color/success"/>
 
                     </LinearLayout>
 
@@ -420,8 +420,8 @@
                 android:visibility="gone"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="0dp"
-                app:cardBackgroundColor="#1A1A1A"
-                app:strokeColor="#333333"
+                app:cardBackgroundColor="@color/surface_input"
+                app:strokeColor="@color/text_dark"
                 app:strokeWidth="1dp"
                 android:clickable="true"
                 android:focusable="true">
@@ -448,7 +448,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/feedback_track_desc"
                         android:textSize="12sp"
-                        android:textColor="#99FFFFFF"/>
+                        android:textColor="@color/text_white_60"/>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -462,8 +462,8 @@
                 android:visibility="gone"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="0dp"
-                app:cardBackgroundColor="#1A1A1A"
-                app:strokeColor="#333333"
+                app:cardBackgroundColor="@color/surface_input"
+                app:strokeColor="@color/text_dark"
                 app:strokeWidth="1dp"
                 android:clickable="true"
                 android:focusable="true">
@@ -480,7 +480,7 @@
                         android:layout_height="wrap_content"
                         android:text="⊙"
                         android:textSize="18sp"
-                        android:textColor="#FFD23F"
+                        android:textColor="@color/warning"
                         android:layout_marginEnd="12dp"/>
 
                     <LinearLayout
@@ -495,14 +495,14 @@
                             android:layout_height="wrap_content"
                             android:textSize="14sp"
                             android:textStyle="bold"
-                            android:textColor="#FFD23F"/>
+                            android:textColor="@color/warning"/>
 
                         <TextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="@string/feedback_github_issue_desc"
                             android:textSize="12sp"
-                            android:textColor="#99FFFFFF"
+                            android:textColor="@color/text_white_60"
                             android:layout_marginTop="2dp"/>
 
                     </LinearLayout>
@@ -512,7 +512,7 @@
                         android:layout_height="wrap_content"
                         android:text="→"
                         android:textSize="16sp"
-                        android:textColor="#666666"/>
+                        android:textColor="@color/text_disabled"/>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -526,8 +526,8 @@
                 android:visibility="gone"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="0dp"
-                app:cardBackgroundColor="#1A1A1A"
-                app:strokeColor="#333333"
+                app:cardBackgroundColor="@color/surface_input"
+                app:strokeColor="@color/text_dark"
                 app:strokeWidth="1dp"
                 android:clickable="true"
                 android:focusable="true">
@@ -545,14 +545,14 @@
                         android:layout_weight="1"
                         android:text="@string/feedback_view_all"
                         android:textSize="14sp"
-                        android:textColor="#FFD23F"/>
+                        android:textColor="@color/warning"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="→"
                         android:textSize="16sp"
-                        android:textColor="#666666"/>
+                        android:textColor="@color/text_disabled"/>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

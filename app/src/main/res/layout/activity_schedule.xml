@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#0D0D1A">
+    android:background="@color/surface_dim">
 
     <!-- Top Bar -->
     <LinearLayout
@@ -76,16 +76,16 @@
                 android:text="@string/schedule_upcoming"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                android:textColor="#888888"
+                android:textColor="@color/text_secondary"
                 android:layout_marginBottom="8dp" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="#1A1A2E"
+                app:cardBackgroundColor="@color/surface"
                 app:cardCornerRadius="12dp"
-                app:strokeColor="#333355"
+                app:strokeColor="@color/divider"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -105,7 +105,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/schedule_empty_upcoming"
-                        android:textColor="#555555"
+                        android:textColor="@color/divider_muted"
                         android:textSize="13sp"
                         android:gravity="center"
                         android:padding="24dp"
@@ -121,16 +121,16 @@
                 android:text="@string/schedule_history"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                android:textColor="#888888"
+                android:textColor="@color/text_secondary"
                 android:layout_marginBottom="8dp" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="#1A1A2E"
+                app:cardBackgroundColor="@color/surface"
                 app:cardCornerRadius="12dp"
-                app:strokeColor="#333355"
+                app:strokeColor="@color/divider"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -150,7 +150,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/schedule_empty_history"
-                        android:textColor="#555555"
+                        android:textColor="@color/divider_muted"
                         android:textSize="13sp"
                         android:gravity="center"
                         android:padding="24dp"

@@ -1,4 +1,5 @@
 <resources>
+    <!-- Legacy (keep for compatibility) -->
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>
@@ -7,16 +8,62 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="lobster_orange">#FFFF9800</color>
-    
+
+    <!-- Brand / Primary -->
+    <color name="primary">#6C63FF</color>
+    <color name="primary_variant">#7C4DFF</color>
+    <color name="accent">#FF7F50</color>
+
+    <!-- Surface / Background -->
+    <color name="surface_dim">#0D0D1A</color>
+    <color name="surface">#1A1A2E</color>
+    <color name="surface_bright">#252540</color>
+    <color name="surface_input">#1A1A1A</color>
+
+    <!-- Text -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_primary_87">#DDFFFFFF</color>
+    <color name="text_secondary">#AAAAAA</color>
+    <color name="text_hint">#777777</color>
+    <color name="text_disabled">#666666</color>
+    <color name="text_on_surface">#CCCCCC</color>
+    <color name="text_on_dark">#999999</color>
+    <color name="text_dark">#333333</color>
+
+    <!-- Text with alpha -->
+    <color name="text_white_80">#CCFFFFFF</color>
+    <color name="text_white_60">#99FFFFFF</color>
+    <color name="text_white_50">#80FFFFFF</color>
+    <color name="text_white_40">#66FFFFFF</color>
+    <color name="text_white_8">#15FFFFFF</color>
+
+    <!-- Divider / Border -->
+    <color name="divider">#333355</color>
+    <color name="divider_subtle">#444444</color>
+    <color name="divider_muted">#555555</color>
+
     <!-- Priority Colors -->
     <color name="priority_critical">#F44336</color>
     <color name="priority_high">#FF9800</color>
     <color name="priority_medium">#FFC107</color>
     <color name="priority_low">#4CAF50</color>
-    
+
     <!-- Status Colors -->
     <color name="status_pending">#9E9E9E</color>
     <color name="status_in_progress">#2196F3</color>
     <color name="status_blocked">#F44336</color>
     <color name="status_done">#4CAF50</color>
+
+    <!-- Semantic -->
+    <color name="success">#4CAF50</color>
+    <color name="success_light">#4ade80</color>
+    <color name="warning">#FFD23F</color>
+    <color name="warning_gold">#FFD700</color>
+    <color name="error">#F44336</color>
+    <color name="error_light">#FF6B6B</color>
+    <color name="info_blue">#1565C0</color>
+
+    <!-- Alert surfaces -->
+    <color name="surface_warning">#FFF8E1</color>
+    <color name="surface_alert">#FFF3E0</color>
 </resources>

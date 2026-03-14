@@ -4,10 +4,10 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
-    app:cardBackgroundColor="#1A1A2E"
+    app:cardBackgroundColor="@color/surface"
     app:cardCornerRadius="16dp"
     app:cardElevation="4dp"
-    app:strokeColor="#333355"
+    app:strokeColor="@color/divider"
     app:strokeWidth="1dp">
 
     <LinearLayout
@@ -32,7 +32,7 @@
                 android:contentDescription="@string/drag_to_reorder"
                 android:layout_marginEnd="8dp"
                 android:visibility="gone"
-                app:tint="#666666"/>
+                app:tint="@color/text_disabled"/>
 
             <!-- Entity Avatar (tap to change) -->
             <TextView
@@ -70,7 +70,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="#0"
-                    android:textColor="#888888"
+                    android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
 
             </LinearLayout>
@@ -96,7 +96,7 @@
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="4dp"
                 android:text="⚡ Channel"
-                android:textColor="#4ade80"
+                android:textColor="@color/success_light"
                 android:textSize="11sp"
                 android:background="@drawable/badge_channel_background"
                 android:visibility="gone" />
@@ -119,7 +119,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Lv.1"
-                android:textColor="#FFD700"
+                android:textColor="@color/warning_gold"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:layout_marginEnd="8dp"/>
@@ -131,15 +131,15 @@
                 android:layout_weight="1"
                 app:trackThickness="6dp"
                 app:trackCornerRadius="3dp"
-                app:indicatorColor="#FFD700"
-                app:trackColor="#333355"/>
+                app:indicatorColor="@color/warning_gold"
+                app:trackColor="@color/divider"/>
 
             <TextView
                 android:id="@+id/tvXpText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0/100 XP"
-                android:textColor="#888888"
+                android:textColor="@color/text_secondary"
                 android:textSize="10sp"
                 android:layout_marginStart="8dp"/>
 
@@ -175,7 +175,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Last message..."
-                android:textColor="#CCCCCC"
+                android:textColor="@color/text_on_surface"
                 android:textSize="14sp"
                 android:maxLines="3"
                 android:ellipsize="end" />
@@ -186,7 +186,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="Just now"
-                android:textColor="#666666"
+                android:textColor="@color/text_disabled"
                 android:textSize="11sp"
                 android:gravity="end" />
 

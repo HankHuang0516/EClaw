@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#0D0D1A">
+    android:background="@color/surface_dim">
 
     <!-- Top Bar -->
     <LinearLayout
@@ -63,7 +63,7 @@
             android:layout_height="wrap_content"
             android:text="@string/select_entity_to_bind"
             android:textSize="12sp"
-            android:textColor="#888888"
+            android:textColor="@color/text_secondary"
             android:layout_marginBottom="8dp" />
 
         <!-- Entity chips populated dynamically by EntityChipHelper -->
@@ -121,10 +121,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="#1A1A2E"
+                app:cardBackgroundColor="@color/surface"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="4dp"
-                app:strokeColor="#333355"
+                app:strokeColor="@color/divider"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -147,7 +147,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/free_version_model"
                         android:textSize="14sp"
-                        android:textColor="#AAAAAA"
+                        android:textColor="@color/text_secondary"
                         android:layout_marginBottom="4dp" />
 
                     <TextView
@@ -155,7 +155,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/free_version_desc"
                         android:textSize="13sp"
-                        android:textColor="#888888"
+                        android:textColor="@color/text_secondary"
                         android:layout_marginBottom="8dp" />
 
                     <TextView
@@ -163,7 +163,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/free_version_warning"
                         android:textSize="12sp"
-                        android:textColor="#FF9800"
+                        android:textColor="@color/priority_high"
                         android:background="#2D1A00"
                         android:padding="8dp"
                         android:layout_marginBottom="8dp" />
@@ -195,7 +195,7 @@
                 android:id="@+id/cardPersonal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="#1A1A2E"
+                app:cardBackgroundColor="@color/surface"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="4dp"
                 app:strokeColor="#4A3D8F"
@@ -250,7 +250,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/monthly_version_price_original"
                             android:textSize="14sp"
-                            android:textColor="#666666"
+                            android:textColor="@color/text_disabled"
                             android:layout_marginEnd="8dp" />
 
                         <TextView
@@ -260,7 +260,7 @@
                             android:text="@string/monthly_version_price_discount"
                             android:textSize="22sp"
                             android:textStyle="bold"
-                            android:textColor="#FFD23F" />
+                            android:textColor="@color/warning" />
 
                     </LinearLayout>
 
@@ -278,7 +278,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/monthly_version_model"
                         android:textSize="14sp"
-                        android:textColor="#AAAAAA"
+                        android:textColor="@color/text_secondary"
                         android:layout_marginBottom="4dp" />
 
                     <TextView
@@ -286,7 +286,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/monthly_version_desc"
                         android:textSize="13sp"
-                        android:textColor="#888888"
+                        android:textColor="@color/text_secondary"
                         android:lineSpacingExtra="4dp"
                         android:layout_marginBottom="12dp" />
 
@@ -296,7 +296,7 @@
                         android:layout_height="wrap_content"
                         android:textSize="14sp"
                         android:textStyle="bold"
-                        android:textColor="#4CAF50"
+                        android:textColor="@color/success"
                         android:layout_marginBottom="16dp" />
 
                     <com.google.android.material.button.MaterialButton
@@ -319,7 +319,7 @@
                 app:cardBackgroundColor="#151528"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="0dp"
-                app:strokeColor="#333355"
+                app:strokeColor="@color/divider"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -342,7 +342,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/borrow_cost_eclaw"
                         android:textSize="13sp"
-                        android:textColor="#4CAF50"
+                        android:textColor="@color/success"
                         android:textStyle="bold"
                         android:layout_marginBottom="8dp" />
 
@@ -360,7 +360,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/borrow_cost_server"
                         android:textSize="12sp"
-                        android:textColor="#888888"
+                        android:textColor="@color/text_secondary"
                         android:layout_marginBottom="2dp" />
 
                     <TextView
@@ -368,7 +368,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/borrow_cost_llm"
                         android:textSize="12sp"
-                        android:textColor="#888888"
+                        android:textColor="@color/text_secondary"
                         android:layout_marginBottom="2dp" />
 
                     <TextView
@@ -376,7 +376,7 @@
                         android:layout_height="wrap_content"
                         android:text="@string/borrow_cost_setup"
                         android:textSize="12sp"
-                        android:textColor="#888888" />
+                        android:textColor="@color/text_secondary" />
 
                 </LinearLayout>
 

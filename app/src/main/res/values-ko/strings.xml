@@ -11,6 +11,10 @@
     <string name="tap_to_generate_code">탭하여 코드 생성</string>
     <string name="generate">생성</string>
     <string name="regenerate">재생성</string>
+    <string name="channel_promo">EClaw Channel을 사용해 보세요! 더 네이티브하고 더 빠릅니다</string>
+    <string name="channel_step_intro">OpenClaw 터미널에서:</string>
+    <string name="channel_step3">3  \"EClaw\" 선택</string>
+    <string name="channel_learn_more">자세히 보기 →</string>
     <string name="copy">복사</string>
     <string name="broadcast_to_all">전체 브로드캐스트</string>
     <string name="set_live_wallpaper">라이브 배경화면 설정</string>
@@ -481,6 +485,12 @@ E-claw 팀은 개인정보의 중요성을 잘 알고 있습니다. 이에 엄�
     <string name="mission_sync_to_bot">Bot Session에 동기화</string>
     <string name="mission_tab_souls">🧠 소울</string>
     <string name="mission_tab_rules">📜 규칙 (Workflow)</string>
+    <string name="mission_browse_templates">템플릿 찾아보기…</string>
+    <string name="mission_soul_gallery_title">소울 템플릿</string>
+    <string name="mission_rule_gallery_title">규칙 템플릿</string>
+    <string name="mission_template_empty">사용 가능한 템플릿이 없습니다</string>
+    <string name="mission_template_no_match">일치하는 템플릿이 없습니다</string>
+    <string name="search_hint">검색…</string>
 
     <!-- Common Buttons -->
     <string name="common_add">+ 추가</string>

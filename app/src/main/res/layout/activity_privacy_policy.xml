@@ -43,7 +43,7 @@
 
         <TextView
             android:text="@string/privacy_policy_content"
-            android:textColor="#DDFFFFFF"
+            android:textColor="@color/text_primary_87"
             android:textSize="14sp"
             android:lineSpacingExtra="4dp"
             android:layout_width="match_parent"

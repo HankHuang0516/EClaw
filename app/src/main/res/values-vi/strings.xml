@@ -11,6 +11,10 @@
     <string name="tap_to_generate_code">Nhấn để tạo mã</string>
     <string name="generate">Tạo mã</string>
     <string name="regenerate">Tạo lại</string>
+    <string name="channel_promo">Thử EClaw Channel? Tích hợp gốc hơn, nhanh hơn</string>
+    <string name="channel_step_intro">Trong terminal OpenClaw:</string>
+    <string name="channel_step3">3  Chọn \"EClaw\"</string>
+    <string name="channel_learn_more">Tìm hiểu thêm →</string>
     <string name="copy">Sao chép</string>
     <string name="broadcast_to_all">Phát tới tất cả</string>
     <string name="set_live_wallpaper">Đặt hình nền động</string>
@@ -481,6 +485,12 @@ Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ qua email chín
     <string name="mission_sync_to_bot">Sync to Bot Session</string>
     <string name="mission_tab_souls">🧠 Souls</string>
     <string name="mission_tab_rules">📜 Rules (Workflow)</string>
+    <string name="mission_browse_templates">Duyệt mẫu…</string>
+    <string name="mission_soul_gallery_title">Mẫu linh hồn</string>
+    <string name="mission_rule_gallery_title">Mẫu quy tắc</string>
+    <string name="mission_template_empty">Không có mẫu nào khả dụng</string>
+    <string name="mission_template_no_match">Không tìm thấy mẫu phù hợp</string>
+    <string name="search_hint">Tìm kiếm…</string>
 
     <!-- Common Buttons -->
     <string name="common_add">+ Add</string>

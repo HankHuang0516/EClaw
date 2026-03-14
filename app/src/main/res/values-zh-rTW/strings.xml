@@ -14,6 +14,10 @@
     <string name="tap_to_generate_code">點擊產生綁定碼</string>
     <string name="generate">產生</string>
     <string name="regenerate">重新產生</string>
+    <string name="channel_promo">試試 EClaw Channel？更原生、更快速</string>
+    <string name="channel_step_intro">在 OpenClaw 終端機中：</string>
+    <string name="channel_step3">3  選擇「EClaw」</string>
+    <string name="channel_learn_more">了解更多 →</string>
     <string name="copy">複製</string>
     <string name="broadcast_to_all">廣播給全部</string>
     <string name="set_live_wallpaper">設定動態桌布</string>
@@ -580,6 +584,12 @@ E-claw (電子蝦) 團隊深知隱私對您的重要性。我們在此鄭重聲�
     <string name="mission_sync_to_bot">同步至 Bot Session</string>
     <string name="mission_tab_souls">🧠 靈魂</string>
     <string name="mission_tab_rules">📜 規則 (Workflow)</string>
+    <string name="mission_browse_templates">瀏覽模板…</string>
+    <string name="mission_soul_gallery_title">靈魂模板</string>
+    <string name="mission_rule_gallery_title">規則模板</string>
+    <string name="mission_template_empty">目前沒有可用的模板</string>
+    <string name="mission_template_no_match">沒有符合的模板</string>
+    <string name="search_hint">搜尋…</string>
 
     <!-- Common Buttons -->
     <string name="common_add">+ 新增</string>

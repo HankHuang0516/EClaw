@@ -44,7 +44,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginTop="24dp"
-        android:indeterminateTint="#FFD23F"
+        android:indeterminateTint="@color/warning"
         android:visibility="gone"/>
 
     <!-- Empty state -->
@@ -62,7 +62,7 @@
             android:layout_height="wrap_content"
             android:text="@string/feedback_history_empty"
             android:textSize="15sp"
-            android:textColor="#80FFFFFF"
+            android:textColor="@color/text_white_50"
             android:gravity="center"/>
 
     </LinearLayout>

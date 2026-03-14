@@ -11,6 +11,10 @@
     <string name="tap_to_generate_code">Ketuk untuk membuat kode</string>
     <string name="generate">Buat</string>
     <string name="regenerate">Buat Ulang</string>
+    <string name="channel_promo">Coba EClaw Channel? Lebih native, lebih cepat</string>
+    <string name="channel_step_intro">Di terminal OpenClaw:</string>
+    <string name="channel_step3">3  Pilih \"EClaw\"</string>
+    <string name="channel_learn_more">Pelajari lebih lanjut →</string>
     <string name="copy">Salin</string>
     <string name="broadcast_to_all">Siarkan ke Semua</string>
     <string name="set_live_wallpaper">Atur Wallpaper Hidup</string>
@@ -481,6 +485,12 @@ Jika Anda memiliki pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="mission_sync_to_bot">Sinkronkan ke Bot Session</string>
     <string name="mission_tab_souls">🧠 Jiwa</string>
     <string name="mission_tab_rules">📜 Aturan (Workflow)</string>
+    <string name="mission_browse_templates">Jelajahi Template…</string>
+    <string name="mission_soul_gallery_title">Template Jiwa</string>
+    <string name="mission_rule_gallery_title">Template Aturan</string>
+    <string name="mission_template_empty">Tidak ada template yang tersedia</string>
+    <string name="mission_template_no_match">Tidak ada template yang cocok</string>
+    <string name="search_hint">Cari…</string>
 
     <!-- Common Buttons -->
     <string name="common_add">+ Tambah</string>

@@ -55,7 +55,7 @@
                     android:layout_height="wrap_content"
                     android:text="LOBSTER"
                     android:textSize="12sp"
-                    android:textColor="#888888"/>
+                    android:textColor="@color/text_secondary"/>
 
                 <!-- Public Code (for cross-device messaging) -->
                 <TextView
@@ -63,7 +63,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="12sp"
-                    android:textColor="#888888"
+                    android:textColor="@color/text_secondary"
                     android:fontFamily="monospace"
                     android:visibility="gone"/>
 
@@ -99,7 +99,7 @@
                 android:layout_height="wrap_content"
                 android:text="Hello, I'm here!"
                 android:textSize="14sp"
-                android:textColor="#333333"
+                android:textColor="@color/text_dark"
                 android:lineSpacingExtra="4dp"/>
 
             <TextView
@@ -108,7 +108,7 @@
                 android:layout_height="wrap_content"
                 android:text="Last updated: just now"
                 android:textSize="10sp"
-                android:textColor="#999999"
+                android:textColor="@color/text_on_dark"
                 android:gravity="end"
                 android:layout_marginTop="4dp"/>
 
@@ -128,11 +128,11 @@
                 android:layout_height="36dp"
                 android:text="@string/entity_action_talk"
                 android:textSize="12sp"
-                android:textColor="#FF7F50"
+                android:textColor="@color/accent"
                 style="@style/Widget.Material3.Button.TextButton"
                 app:cornerRadius="8dp"
                 app:icon="@android:drawable/ic_menu_send"
-                app:iconTint="#FF7F50"
+                app:iconTint="@color/accent"
                 app:iconSize="16dp"
                 app:rippleColor="#33FF7F50"/>
 
