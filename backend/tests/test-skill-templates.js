@@ -97,6 +97,132 @@ test('no template has an empty label or title (would break UI display)', () => {
 });
 
 // ════════════════════════════════════════════════════════════════════════════
+// 1b. Runtime: requiredVars format — never send raw strings (Gson crash)
+//     Root cause: DB contributions stored ["KEY"] instead of [{key:"KEY"}].
+//     Gson expected BEGIN_OBJECT but got STRING → entire response parse failed.
+// ════════════════════════════════════════════════════════════════════════════
+
+section('Runtime: GET /api/skill-templates — requiredVars format (Gson compat)');
+
+test('every template.requiredVars entry is an object with a "key" string (never a raw string)', () => {
+    const templates = templatesData?.templates || [];
+    for (const t of templates) {
+        if (!t.requiredVars || t.requiredVars.length === 0) continue;
+        for (let i = 0; i < t.requiredVars.length; i++) {
+            const v = t.requiredVars[i];
+            assert(
+                typeof v === 'object' && v !== null,
+                `Template "${t.id}" requiredVars[${i}] is ${typeof v} ("${v}"), expected {key: string}. ` +
+                `This causes Gson JsonSyntaxException on Android (Expected BEGIN_OBJECT but was STRING).`
+            );
+            assert(
+                typeof v.key === 'string' && v.key.trim() !== '',
+                `Template "${t.id}" requiredVars[${i}].key is missing or empty`
+            );
+        }
+    }
+});
+
+test('normalizeRequiredVars is applied in GET response (static check)', () => {
+    const src = readSrc('backend/index.js');
+    const getRoute = src.indexOf("app.get('/api/skill-templates'");
+    assert(getRoute !== -1, 'GET /api/skill-templates route not found');
+    const routeBody = src.slice(getRoute, getRoute + 500);
+    assert(
+        routeBody.includes('normalizeRequiredVars'),
+        'GET /api/skill-templates does not call normalizeRequiredVars() — raw strings may leak to clients'
+    );
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// 1c. Runtime: POST /api/skill-templates/contribute — requiredVars validation
+// ════════════════════════════════════════════════════════════════════════════
+
+section('Static + Runtime: POST /api/skill-templates/contribute — requiredVars validation');
+
+// --- Static checks: validation code exists ---
+
+test('contribute endpoint validates requiredVars is an array (static check)', () => {
+    const src = readSrc('backend/index.js');
+    const contributeRoute = src.indexOf("app.post('/api/skill-templates/contribute'");
+    assert(contributeRoute !== -1, 'POST /api/skill-templates/contribute route not found');
+    const routeBody = src.slice(contributeRoute, contributeRoute + 4000);
+    assert(
+        routeBody.includes("!Array.isArray(requiredVars)"),
+        'Contribute endpoint missing Array.isArray(requiredVars) check'
+    );
+});
+
+test('contribute endpoint validates requiredVars entries have .key (static check)', () => {
+    const src = readSrc('backend/index.js');
+    const contributeRoute = src.indexOf("app.post('/api/skill-templates/contribute'");
+    const routeBody = src.slice(contributeRoute, contributeRoute + 4000);
+    assert(
+        routeBody.includes('.key') && routeBody.includes('non-empty string'),
+        'Contribute endpoint missing requiredVars[].key validation'
+    );
+});
+
+test('normalizeRequiredVars is applied in contribute entry creation (static check)', () => {
+    const src = readSrc('backend/index.js');
+    const contributeRoute = src.indexOf("app.post('/api/skill-templates/contribute'");
+    assert(contributeRoute !== -1, 'POST /api/skill-templates/contribute route not found');
+    const routeBody = src.slice(contributeRoute, contributeRoute + 6000);
+    assert(
+        routeBody.includes('normalizeRequiredVars(requiredVars)'),
+        'Contribute endpoint does not call normalizeRequiredVars() when building entry — raw strings may be stored in DB'
+    );
+});
+
+// --- Runtime checks: actual HTTP validation ---
+// Note: bad requiredVars validation happens AFTER auth (device + botSecret).
+// Tests use the real test device + a fake botSecret to reach the validation layer
+// only when device exists. For format-only checks, we rely on static analysis above.
+
+test('contribute endpoint rejects missing required skill fields before reaching requiredVars', async () => {
+    const res = await fetch(`${API_BASE}/api/skill-templates/contribute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            deviceId: 'test-validator', botSecret: 'fake',
+            skill: { id: 'x' }  // missing title, url, steps
+        })
+    });
+    // Either 400 (missing fields) or 404 (device not found) — both acceptable
+    assert(res.status === 400 || res.status === 404, `Expected 400 or 404, got ${res.status}`);
+});
+
+test('contribute endpoint does not crash on requiredVars: "NOT_AN_ARRAY" (no 500)', async () => {
+    const res = await fetch(`${API_BASE}/api/skill-templates/contribute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            deviceId: 'test-validator', botSecret: 'fake',
+            skill: {
+                id: 'test-bad-1', title: 'T', url: 'https://github.com/t/t',
+                steps: '1. Step one.', requiredVars: 'NOT_AN_ARRAY'
+            }
+        })
+    });
+    assert(res.status !== 500, `Server returned 500 — requiredVars validation not catching bad input`);
+});
+
+test('contribute endpoint does not crash on requiredVars: [42] (no 500)', async () => {
+    const res = await fetch(`${API_BASE}/api/skill-templates/contribute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            deviceId: 'test-validator', botSecret: 'fake',
+            skill: {
+                id: 'test-bad-2', title: 'T', url: 'https://github.com/t/t',
+                steps: '1. Step one.', requiredVars: [42]
+            }
+        })
+    });
+    assert(res.status !== 500, `Server returned 500 — requiredVars validation not catching numeric entries`);
+});
+
+// ════════════════════════════════════════════════════════════════════════════
 // 2. Static: Android retry-on-empty logic
 // ════════════════════════════════════════════════════════════════════════════
 

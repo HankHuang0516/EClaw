@@ -864,6 +864,28 @@ app.post('/api/skill-templates/contribute', async (req, res) => {
         return res.status(400).json({ success: false, error: 'skill must include: id, title, url, steps' });
     }
 
+    // Validate requiredVars format: must be array of {key} objects or strings (auto-normalized)
+    if (requiredVars !== undefined && requiredVars !== null) {
+        if (!Array.isArray(requiredVars)) {
+            return res.status(400).json({ success: false, error: 'requiredVars must be an array' });
+        }
+        for (let i = 0; i < requiredVars.length; i++) {
+            const v = requiredVars[i];
+            if (typeof v === 'string') {
+                if (!v.trim()) {
+                    return res.status(400).json({ success: false, error: `requiredVars[${i}] is an empty string` });
+                }
+                // valid — will be normalized to {key: v} downstream
+            } else if (typeof v === 'object' && v !== null) {
+                if (!v.key || typeof v.key !== 'string' || !v.key.trim()) {
+                    return res.status(400).json({ success: false, error: `requiredVars[${i}].key must be a non-empty string` });
+                }
+            } else {
+                return res.status(400).json({ success: false, error: `requiredVars[${i}] must be a string or {key, hint?, description?} object` });
+            }
+        }
+    }
+
     // Structural validation of steps content
     const stepsStr = typeof steps === 'string' ? steps : JSON.stringify(steps);
     const PLACEHOLDER_RE = /\b(YOUR_[A-Z_]+|TODO|PLACEHOLDER|FIXME|<[A-Z_]+>)\b/i;
@@ -889,7 +911,7 @@ app.post('/api/skill-templates/contribute', async (req, res) => {
         pendingId, id,
         label: label || id, icon: icon || '🔧',
         title, url, author: author || entity.name || `entity_${eId}`,
-        requiredVars: requiredVars || [], steps,
+        requiredVars: normalizeRequiredVars(requiredVars), steps,
         submittedBy: { deviceId, entityId: eId, entityName: entity.name || null }
     };
 
