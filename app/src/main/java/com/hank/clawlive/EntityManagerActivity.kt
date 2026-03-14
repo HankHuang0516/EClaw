@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageButton
@@ -233,7 +234,9 @@ class EntityManagerActivity : AppCompatActivity() {
 
         // Agent Card button
         val btnAgentCard = cardView.findViewById<MaterialButton>(R.id.btnAgentCard)
+        Log.d("EntityManager", "AgentCard-btn entity=${entity.entityId} visibility=${btnAgentCard.visibility} text=${btnAgentCard.text}")
         btnAgentCard.setOnClickListener {
+            Log.d("EntityManager", "AgentCard-btn CLICKED entity=${entity.entityId}")
             showAgentCardDialog(entity.entityId)
         }
 
