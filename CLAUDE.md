@@ -286,6 +286,7 @@ EClaw/
 - **Direct merge to main**: When work is complete, commit and merge directly to `main` branch. Do NOT create PRs or wait for approval — the user reviews all changes in real-time during the session.
 - **Workflow**: develop on feature branch → commit → merge to main → push → **verify production**
 - 工作完成後直接 commit 並 merge 到 main，不建立 PR、不等待額外批准。
+- Codex 會在 git push 之前審查你的代碼
 
 ## CI/CD
 
