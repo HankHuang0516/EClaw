@@ -738,6 +738,12 @@ const ruleTemplatesData = (() => {
 })();
 // Load approved contributions from DB on startup and merge into in-memory list
 // (DB entries supplement the git-tracked JSON; safe to run async)
+/** Normalize requiredVars: accept both string[] and {key,hint?,description?}[] formats */
+function normalizeRequiredVars(vars) {
+    if (!Array.isArray(vars)) return [];
+    return vars.map(v => (typeof v === 'string') ? { key: v } : v);
+}
+
 async function loadApprovedContributions() {
     try {
         const rows = await db.getApprovedSkillContributions();
@@ -752,7 +758,7 @@ async function loadApprovedContributions() {
                     url: row.url,
                     author: row.author,
                     updatedAt: row.verified_at ? row.verified_at.toISOString().slice(0, 10) : '',
-                    requiredVars: row.required_vars || [],
+                    requiredVars: normalizeRequiredVars(row.required_vars),
                     steps: row.steps
                 });
             }
@@ -800,7 +806,12 @@ async function loadApprovedContributions() {
 
 // GET /api/skill-templates - Community skill template registry (public)
 app.get('/api/skill-templates', (req, res) => {
-    res.json({ success: true, templates: skillTemplatesData });
+    // Normalize requiredVars on output to handle mixed string[]/object[] from DB contributions
+    const sanitized = skillTemplatesData.map(t => ({
+        ...t,
+        requiredVars: normalizeRequiredVars(t.requiredVars)
+    }));
+    res.json({ success: true, templates: sanitized });
 });
 
 // GET /api/soul-templates - Soul (personality) template registry (public)
@@ -918,7 +929,7 @@ app.post('/api/skill-templates/contribute', async (req, res) => {
                     id, label: entry.label, icon: entry.icon, title, url,
                     author: entry.author,
                     updatedAt: new Date().toISOString().slice(0, 10),
-                    requiredVars: entry.requiredVars, steps
+                    requiredVars: normalizeRequiredVars(entry.requiredVars), steps
                 };
                 skillTemplatesData.push(approved);
                 fs.writeFileSync(path.join(__dirname, 'data/skill-templates.json'), JSON.stringify(skillTemplatesData, null, 2));
