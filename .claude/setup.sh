@@ -11,21 +11,7 @@ set -e
 
 echo "🦞 EClaw session setup starting..."
 
-# ── 1. GitHub CLI ────────────────────────────
-if ! command -v gh &>/dev/null; then
-    echo "  Installing gh CLI..."
-    sudo apt-get update -qq && sudo apt-get install -y -qq gh 2>/dev/null
-fi
-
-if gh auth status &>/dev/null; then
-    echo "  ✅ gh CLI already authenticated"
-elif [ -n "$GH_TOKEN" ]; then
-    echo "  ✅ gh CLI authenticated via GH_TOKEN env var"
-else
-    echo "  ⚠️  GH_TOKEN not set — gh CLI won't be authenticated"
-fi
-
-# ── 2. Backend .env (from cloud env vars) ────
+# ── 1. Backend .env (from cloud env vars) ────
 ENV_FILE="backend/.env"
 echo "  Writing $ENV_FILE..."
 
@@ -69,7 +55,7 @@ else
     echo "  ✅ $ENV_FILE written ($COUNT keys)"
 fi
 
-# ── 3. Node.js check ────────────────────────
+# ── 2. Node.js check ────────────────────────
 if command -v node &>/dev/null; then
     echo "  ✅ Node.js $(node -v)"
 else
