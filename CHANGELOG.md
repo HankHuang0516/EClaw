@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/HankHuang0516/EClaw/compare/v1.0.0...v1.1.0) (2026-03-14)
+
+
+### Features
+
+* expandable EClaw Channel promo + comprehensive UIUX audit fixes ([6252dd4](https://github.com/HankHuang0516/EClaw/commit/6252dd46317fb9cf501bc3b594834980d9b12410)), closes [#AAA](https://github.com/HankHuang0516/EClaw/issues/AAA) [#777](https://github.com/HankHuang0516/EClaw/issues/777)
+
 # 1.0.0 (2026-03-14)
 
 
