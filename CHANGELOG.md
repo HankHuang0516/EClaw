@@ -1,3 +1,10 @@
+## [1.6.2](https://github.com/HankHuang0516/EClaw/compare/v1.6.1...v1.6.2) (2026-03-15)
+
+
+### Bug Fixes
+
+* update regression tests for dynamic entity system ([a671070](https://github.com/HankHuang0516/EClaw/commit/a67107012dfb30588d42df2c2f0748e77048414e))
+
 ## [1.6.1](https://github.com/HankHuang0516/EClaw/compare/v1.6.0...v1.6.1) (2026-03-15)
 
 
