@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/HankHuang0516/EClaw/compare/v1.6.2...v1.7.0) (2026-03-15)
+
+
+### Features
+
+* align Skill/Soul/Rule template gallery across Web, Android, and iOS ([4809358](https://github.com/HankHuang0516/EClaw/commit/4809358d58b6400f7b12b3fc0102ec8d73c289f4))
+
 ## [1.6.2](https://github.com/HankHuang0516/EClaw/compare/v1.6.1...v1.6.2) (2026-03-15)
 
 
