@@ -1,3 +1,10 @@
+## [1.9.2](https://github.com/HankHuang0516/EClaw/compare/v1.9.1...v1.9.2) (2026-03-15)
+
+
+### Bug Fixes
+
+* **ci:** relax edit mode guard grep to match multi-line Kotlin style ([9e19e1a](https://github.com/HankHuang0516/EClaw/commit/9e19e1ac65317f7783b3787986901b24570661af))
+
 ## [1.9.1](https://github.com/HankHuang0516/EClaw/compare/v1.9.0...v1.9.1) (2026-03-15)
 
 
