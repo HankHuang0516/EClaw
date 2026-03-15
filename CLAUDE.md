@@ -128,6 +128,9 @@ EClaw/
 └── package.json              # Root (Android Gradle wrapper)
 ```
 
+> **三平台頁面/功能完整盤點**：`docs/reports/2026-03-14-platform-pages-features-inventory.md`
+> 包含每個頁面的渲染邏輯、API 呼叫、跨平台對照表、可清除項目、缺口分析。
+
 ---
 
 ## Key Architecture

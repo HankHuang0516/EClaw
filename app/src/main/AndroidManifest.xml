@@ -62,17 +62,7 @@
             android:excludeFromRecents="true"
             android:taskAffinity="" />
 
-        <activity
-            android:name=".EntityManagerActivity"
-            android:exported="false"
-            android:label="Entity Manager"
-            android:parentActivityName=".MainActivity" />
 
-        <activity
-            android:name=".DebugRenderActivity"
-            android:exported="false"
-            android:label="Debug Render"
-            android:parentActivityName=".MainActivity" />
 
         <activity
             android:name=".SettingsActivity"
@@ -116,12 +106,7 @@
             android:label="@string/chat_history"
             android:windowSoftInputMode="adjustResize" />
 
-        <activity
-            android:name=".AiChatActivity"
-            android:exported="false"
-            android:label="@string/ai_chat_title"
-            android:parentActivityName=".SettingsActivity"
-            android:windowSoftInputMode="adjustResize" />
+
 
         <activity
             android:name=".MissionControlActivity"

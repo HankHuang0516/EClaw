@@ -17,8 +17,6 @@ import org.junit.runners.Suite
     // Core UI Tests
     MainActivityUiTest::class,
     SettingsActivityUiTest::class,
-    EntityManagerActivityUiTest::class,
-    DebugRenderActivityUiTest::class,
     WallpaperPreviewUiTest::class,
 
     // Chat UI Tests

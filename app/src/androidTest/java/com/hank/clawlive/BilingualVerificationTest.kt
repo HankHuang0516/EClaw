@@ -23,8 +23,8 @@ import java.util.Locale
  * Test Scope:
  * - MainActivity
  * - SettingsActivity
- * - EntityManagerActivity
- * - DebugRenderActivity
+ *
+ *
  * - WallpaperPreviewActivity (if applicable)
  */
 @RunWith(AndroidJUnit4::class)
@@ -163,36 +163,6 @@ class BilingualVerificationTest {
                     "SettingsActivity should show Chinese text in Chinese locale",
                     hasChineseContent
                 )
-            }
-        }
-    }
-
-    @Test
-    fun testEntityManagerActivityInBothLocales() {
-        // English
-        setLocale(Locale.ENGLISH)
-        ActivityScenario.launch(EntityManagerActivity::class.java).use { scenario ->
-            scenario.onActivity { activity ->
-                println("=== EntityManagerActivity in ENGLISH ===")
-                val allTextViews = getAllTextViews(activity.window.decorView)
-                allTextViews.forEach { tv ->
-                    val text = tv.text?.toString() ?: ""
-                    if (text.isNotBlank()) println("  TextView: $text")
-                }
-                assertTrue("EntityManagerActivity should load", allTextViews.size >= 0)
-            }
-        }
-
-        // Chinese
-        setLocale(Locale.TRADITIONAL_CHINESE)
-        ActivityScenario.launch(EntityManagerActivity::class.java).use { scenario ->
-            scenario.onActivity { activity ->
-                println("=== EntityManagerActivity in CHINESE ===")
-                val allTextViews = getAllTextViews(activity.window.decorView)
-                allTextViews.forEach { tv ->
-                    val text = tv.text?.toString() ?: ""
-                    if (text.isNotBlank()) println("  TextView: $text")
-                }
             }
         }
     }
