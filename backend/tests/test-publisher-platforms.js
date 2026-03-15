@@ -3,8 +3,24 @@
 // Tests: /platforms listing, input validation for all 5 new platforms, Telegraph auto-account
 // Run: node backend/tests/test-publisher-platforms.js
 
+const path = require('path');
+const fs   = require('fs');
+
 const BASE = process.env.TEST_BASE_URL || 'https://eclawbot.com';
 let passed = 0, failed = 0;
+
+// Load publisher key from .env
+function loadPublisherKey() {
+    const envPath = path.resolve(__dirname, '..', '.env');
+    if (!fs.existsSync(envPath)) return '';
+    const lines = fs.readFileSync(envPath, 'utf8').split('\n');
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('X-Publisher-Key=')) return trimmed.slice('X-Publisher-Key='.length).trim();
+    }
+    return '';
+}
+const PUBLISHER_KEY = loadPublisherKey();
 
 function assert(cond, msg) {
     if (cond) { passed++; console.log(`  ✅ ${msg}`); }
@@ -12,7 +28,9 @@ function assert(cond, msg) {
 }
 
 async function api(method, path, body = null, headers = {}) {
-    const opts = { method, headers: { 'Content-Type': 'application/json', ...headers } };
+    const defaultHeaders = { 'Content-Type': 'application/json' };
+    if (PUBLISHER_KEY && method !== 'GET') defaultHeaders['X-Publisher-Key'] = PUBLISHER_KEY;
+    const opts = { method, headers: { ...defaultHeaders, ...headers } };
     if (body) opts.body = JSON.stringify(body);
     const res = await fetch(`${BASE}/api/publisher${path}`, opts);
     const text = await res.text();

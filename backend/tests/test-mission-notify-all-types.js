@@ -16,7 +16,7 @@ const fs   = require('fs');
 const args    = process.argv.slice(2);
 const API_BASE = args.includes('--local') ? 'http://localhost:3000' : 'https://eclawbot.com';
 
-const ENTITY_CH = 6;
+let ENTITY_CH;  // resolved at runtime from actual device entities
 const POLL_MS   = 1500;
 const WAIT_MS   = 20000;
 
@@ -70,6 +70,12 @@ async function run() {
     const DEVICE_SECRET = env.BROADCAST_TEST_DEVICE_SECRET;
     if (!DEVICE_ID) { console.error('Missing BROADCAST_TEST_DEVICE_ID in .env'); process.exit(1); }
 
+    // Query actual entity slot IDs from device (may be unbound)
+    const entitiesRes = await get(`${API_BASE}/api/entities?deviceId=${DEVICE_ID}`);
+    const availableIds = entitiesRes.data?.entityIds || [];
+    if (availableIds.length < 1) { console.error(`Need at least 1 entity slot, found: ${availableIds}`); process.exit(1); }
+    ENTITY_CH = availableIds[0];
+
     const SINK     = `${API_BASE}/api/channel/test-sink`;
     const SLOT     = `mn-all-types-${Date.now()}`;
     const TOKEN    = 'mn-token-' + Math.random().toString(36).slice(2);
@@ -95,7 +101,7 @@ async function run() {
     assert(reg.status === 200, 'Register callback to test-sink OK');
 
     // ── 2. Bind entity ────────────────────────────────────────────────────────
-    console.log('\n── 2. Bind entity 6 as channel ──');
+    console.log(`\n── 2. Bind entity ${ENTITY_CH} as channel ──`);
     await del(`${API_BASE}/api/device/entity`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, entityId: ENTITY_CH });
     await new Promise(x => setTimeout(x, 500));
 
@@ -173,7 +179,7 @@ async function run() {
     console.log('\n── Cleanup ──');
     await del(`${API_BASE}/api/device/entity`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, entityId: ENTITY_CH });
     await del(`${API_BASE}/api/channel/register`, { channel_api_key: apiKey, channel_api_secret: apiSecret });
-    console.log('  Entity 6 unbound, channel account unregistered');
+    console.log(`  Entity ${ENTITY_CH} unbound, channel account unregistered`);
 
     // ── Summary ───────────────────────────────────────────────────────────────
     console.log('\n' + '═'.repeat(60));

@@ -23,8 +23,8 @@ const fs   = require('fs');
 const args    = process.argv.slice(2);
 const API_BASE = args.includes('--local') ? 'http://localhost:3000' : 'https://eclawbot.com';
 
-const ENTITY_CH = 1;  // channel bot starts here (must be within free device limit 0-3)
-const SWAP_WITH  = 2;  // we swap it with slot 2
+let ENTITY_CH;  // resolved at runtime from actual device entities
+let SWAP_WITH;  // resolved at runtime from actual device entities
 const POLL_MS   = 1500;
 const WAIT_MS   = 15000;
 
@@ -73,15 +73,13 @@ async function poll(fn, desc) {
     throw new Error(`Timeout: ${desc}`);
 }
 
-// Build the full-length order array (0..maxSlot) with slots 6 and 7 swapped
-function buildSwappedOrder(maxSlot, slotA, slotB) {
-    const order = [];
-    for (let i = 0; i <= maxSlot; i++) {
-        if (i === slotA) order.push(slotB);
-        else if (i === slotB) order.push(slotA);
-        else order.push(i);
-    }
-    return order;
+// Build reorder array by swapping two entity IDs within the full ID list
+function buildSwappedOrder(allIds, idA, idB) {
+    return allIds.map(id => {
+        if (id === idA) return idB;
+        if (id === idB) return idA;
+        return id;
+    });
 }
 
 async function run() {
@@ -89,6 +87,13 @@ async function run() {
     const DEVICE_ID     = env.BROADCAST_TEST_DEVICE_ID;
     const DEVICE_SECRET = env.BROADCAST_TEST_DEVICE_SECRET;
     if (!DEVICE_ID) { console.error('Missing BROADCAST_TEST_DEVICE_ID in .env'); process.exit(1); }
+
+    // Query actual entity slot IDs from device (may be unbound)
+    const entitiesRes = await get(`${API_BASE}/api/entities?deviceId=${DEVICE_ID}`);
+    const availableIds = entitiesRes.data?.entityIds || [];
+    if (availableIds.length < 2) { console.error(`Need at least 2 entity slots, found: ${availableIds}`); process.exit(1); }
+    ENTITY_CH = availableIds[0];
+    SWAP_WITH = availableIds[1];
 
     const SINK     = `${API_BASE}/api/channel/test-sink`;
     const SLOT     = `reorder-ch-${Date.now()}`;
@@ -132,13 +137,12 @@ async function run() {
     console.log(`\n── 3. Reorder: swap slot ${ENTITY_CH} ↔ slot ${SWAP_WITH} ──`);
     await del(`${SINK}?slot=${SLOT}&deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`);
 
-    // First get current device entity limit
+    // Get current entity IDs for reorder permutation
     const entData = await get(`${API_BASE}/api/entities?deviceId=${DEVICE_ID}`);
-    const deviceLimit = entData.data?.limit || Math.max(...(entData.data?.entities || []).map(e => e.entityId + 1), 4);
-    const maxSlot = deviceLimit - 1;
+    const allEntityIds = entData.data?.entityIds || [];
 
-    const order = buildSwappedOrder(maxSlot, ENTITY_CH, SWAP_WITH);
-    console.log(`    Order (${deviceLimit} slots): ${order.join(',')}`);
+    const order = buildSwappedOrder(allEntityIds, ENTITY_CH, SWAP_WITH);
+    console.log(`    Entity IDs: [${allEntityIds.join(',')}] → Swapped order: [${order.join(',')}]`);
 
     const reorderRes = await post(`${API_BASE}/api/device/reorder-entities`, {
         deviceId:     DEVICE_ID,
@@ -186,14 +190,13 @@ async function run() {
 
     // ── 5. Cleanup (restore order first, then unbind) ─────────────────────────
     console.log('\n── Cleanup ──');
-    // Restore original order
-    const restoreOrder = buildSwappedOrder(maxSlot, ENTITY_CH, SWAP_WITH); // swap back
-    await post(`${API_BASE}/api/device/reorder-entities`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, order: restoreOrder });
+    // Restore original order (the original allEntityIds is the un-swapped order)
+    await post(`${API_BASE}/api/device/reorder-entities`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, order: allEntityIds });
     await new Promise(x => setTimeout(x, 300));
     // Now entity is back at slot ENTITY_CH — unbind it
     await del(`${API_BASE}/api/device/entity`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, entityId: ENTITY_CH });
     await del(`${API_BASE}/api/channel/register`, { channel_api_key: apiKey, channel_api_secret: apiSecret });
-    console.log('  Order restored, entity 6 unbound, channel account unregistered');
+    console.log(`  Order restored, entity ${ENTITY_CH} unbound, channel account unregistered`);
 
     // ── Summary ───────────────────────────────────────────────────────────────
     console.log('\n' + '═'.repeat(60));

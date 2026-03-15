@@ -102,6 +102,15 @@ async function main() {
   // Auto-determine extras if not specified: random 1-3
   if (numExtras === 0) numExtras = Math.floor(Math.random() * 3) + 1;
 
+  // Pre-check: discover existing bound entities so we can ensure at least 2 total
+  const preCheckRes = await fetchJSON(`${API_BASE}/api/entities?deviceId=${deviceId}`);
+  const preBoundCount = (preCheckRes.entities || []).length;
+  const minNeeded = Math.max(numExtras, 2 - preBoundCount);
+  if (minNeeded > numExtras) {
+    console.log(`  Adjusting extras from ${numExtras} to ${minNeeded} (need at least 2 total bound, currently ${preBoundCount})`);
+    numExtras = minNeeded;
+  }
+
   console.log('='.repeat(65));
   console.log('  Broadcast API — Comprehensive Regression Test');
   console.log('='.repeat(65));

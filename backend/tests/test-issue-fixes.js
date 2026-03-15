@@ -73,8 +73,13 @@ function readSrc(relPath) {
 section('Static: #145 – AiChatActivity.kt CancellationException fix');
 
 const AI_CHAT_PATH = 'app/src/main/java/com/hank/clawlive/AiChatActivity.kt';
+const AI_CHAT_EXISTS = fs.existsSync(path.join(ROOT, AI_CHAT_PATH));
 
 test('#145 catch block re-throws CancellationException', () => {
+    if (!AI_CHAT_EXISTS) {
+        console.log(`       (skipped: ${AI_CHAT_PATH} not found — file was removed)`);
+        return;
+    }
     const src = readSrc(AI_CHAT_PATH);
     assert(
         src.includes('is kotlinx.coroutines.CancellationException') &&
@@ -84,6 +89,10 @@ test('#145 catch block re-throws CancellationException', () => {
 });
 
 test('#145 finally block guards saveHistory() with !isFinishing', () => {
+    if (!AI_CHAT_EXISTS) {
+        console.log(`       (skipped: ${AI_CHAT_PATH} not found — file was removed)`);
+        return;
+    }
     const src = readSrc(AI_CHAT_PATH);
     assert(
         src.includes('!isFinishing'),

@@ -119,17 +119,39 @@ async function runTests() {
     const customNames = ['小花', '阿明', '小白', '大黃'];
     const botSecrets = {};
 
-    for (let i = 0; i < 4; i++) {
+    // Entity 0 exists by default; add slots for entities 1, 2, 3
+    // First register entity 0 to create the device
+    const createdIds = [0]; // track IDs in creation order
+    botSecrets[0] = await setupEntity(deviceId, deviceSecret, 0);
+    await renameEntity(deviceId, deviceSecret, 0, customNames[0]);
+    const name0 = await getEntityName(deviceId, 0);
+    console.log(`  Entity 0: bound ✓, name = "${name0}"`);
+
+    for (let i = 1; i < 4; i++) {
         try {
-            botSecrets[i] = await setupEntity(deviceId, deviceSecret, i);
-            // Rename to custom name via device owner
-            await renameEntity(deviceId, deviceSecret, i, customNames[i]);
-            const name = await getEntityName(deviceId, i);
-            console.log(`  Entity ${i}: bound ✓, name = "${name}"`);
+            // Add new entity slot (dynamic entity system)
+            const addRes = await api('POST', '/api/device/add-entity', { deviceId, deviceSecret });
+            if (!addRes.data.success) throw new Error(`add-entity failed: ${addRes.data.error}`);
+            const newId = addRes.data.entityId;
+            createdIds.push(newId);
+            botSecrets[newId] = await setupEntity(deviceId, deviceSecret, newId);
+            await renameEntity(deviceId, deviceSecret, newId, customNames[i]);
+            const name = await getEntityName(deviceId, newId);
+            console.log(`  Entity ${newId}: bound ✓, name = "${name}"`);
         } catch (e) {
             console.log(`  Entity ${i}: setup failed — ${e.message}`);
         }
     }
+
+    // Map logical indices to actual entity IDs and names
+    const entityIds = createdIds; // [0, id1, id2, id3] in creation order
+    // Build name mapping: entityId → customName
+    const nameMap = {};
+    for (let i = 0; i < entityIds.length; i++) {
+        nameMap[entityIds[i]] = customNames[i];
+    }
+    console.log(`  Device entity IDs: [${entityIds.join(', ')}]`);
+    console.log(`  Name mapping: ${JSON.stringify(nameMap)}`);
 
     console.log('');
 
@@ -143,9 +165,9 @@ async function runTests() {
     {
         const eId = 0;
         const nameBefore = await getEntityName(deviceId, eId);
-        assert(nameBefore === customNames[eId],
+        assert(nameBefore === nameMap[eId],
             `Entity ${eId} has custom name before delete`,
-            `expected "${customNames[eId]}", got "${nameBefore}"`);
+            `expected "${nameMap[eId]}", got "${nameBefore}"`);
 
         // Delete via bot
         const del = await api('DELETE', '/api/entity', {
@@ -155,9 +177,9 @@ async function runTests() {
 
         // Check name is preserved
         const nameAfter = await getEntityName(deviceId, eId);
-        assert(nameAfter === customNames[eId],
+        assert(nameAfter === nameMap[eId],
             `Entity ${eId} name preserved after bot-side delete`,
-            `expected "${customNames[eId]}", got "${nameAfter}"`);
+            `expected "${nameMap[eId]}", got "${nameAfter}"`);
 
         // Check entity is unbound
         const status = await getEntityStatus(deviceId, eId);
@@ -172,7 +194,7 @@ async function runTests() {
         console.log(`  ℹ️  After rebind (no name param): name = ${nameAfterRebind === null ? 'null' : `"${nameAfterRebind}"`}`);
 
         // Restore name for subsequent tests
-        await renameEntity(deviceId, deviceSecret, eId, customNames[eId]);
+        await renameEntity(deviceId, deviceSecret, eId, nameMap[eId]);
     }
 
     console.log('');
@@ -185,11 +207,11 @@ async function runTests() {
     console.log('    名稱應在 unbind 後保留 ---\n');
 
     {
-        const eId = 1;
+        const eId = entityIds[1];
         const nameBefore = await getEntityName(deviceId, eId);
-        assert(nameBefore === customNames[eId],
+        assert(nameBefore === nameMap[eId],
             `Entity ${eId} has custom name before delete`,
-            `expected "${customNames[eId]}", got "${nameBefore}"`);
+            `expected "${nameMap[eId]}", got "${nameBefore}"`);
 
         // Delete via device owner
         const del = await api('DELETE', '/api/device/entity', {
@@ -199,9 +221,9 @@ async function runTests() {
 
         // Check name is preserved
         const nameAfter = await getEntityName(deviceId, eId);
-        assert(nameAfter === customNames[eId],
+        assert(nameAfter === nameMap[eId],
             `Entity ${eId} name preserved after device-side delete`,
-            `expected "${customNames[eId]}", got "${nameAfter}"`);
+            `expected "${nameMap[eId]}", got "${nameAfter}"`);
 
         // Check entity is unbound
         const status = await getEntityStatus(deviceId, eId);
@@ -219,11 +241,11 @@ async function runTests() {
     console.log('    名稱不應被意外清除 ---\n');
 
     {
-        const eId = 2;
+        const eId = entityIds[2];
         const nameBefore = await getEntityName(deviceId, eId);
-        assert(nameBefore === customNames[eId],
+        assert(nameBefore === nameMap[eId],
             `Entity ${eId} has custom name before transform`,
-            `expected "${customNames[eId]}", got "${nameBefore}"`);
+            `expected "${nameMap[eId]}", got "${nameBefore}"`);
 
         // Transform without name field
         const tf = await api('POST', '/api/transform', {
@@ -234,9 +256,9 @@ async function runTests() {
 
         // Name should be unchanged
         const nameAfter = await getEntityName(deviceId, eId);
-        assert(nameAfter === customNames[eId],
+        assert(nameAfter === nameMap[eId],
             `Entity ${eId} name unchanged after transform (no name field)`,
-            `expected "${customNames[eId]}", got "${nameAfter}"`);
+            `expected "${nameMap[eId]}", got "${nameAfter}"`);
     }
 
     console.log('');
@@ -249,7 +271,7 @@ async function runTests() {
     console.log('    名稱應被更新為新值 ---\n');
 
     {
-        const eId = 2;
+        const eId = entityIds[2];
         const newName = '新名字';
 
         const tf = await api('POST', '/api/transform', {
@@ -267,7 +289,7 @@ async function runTests() {
         // Restore original name for later tests
         await api('POST', '/api/transform', {
             deviceId, entityId: eId, botSecret: botSecrets[eId],
-            name: customNames[eId]
+            name: nameMap[eId]
         });
     }
 
@@ -281,11 +303,11 @@ async function runTests() {
     console.log('    空字串 name 應將名稱清除為 null ---\n');
 
     {
-        const eId = 3;
+        const eId = entityIds[3];
         const nameBefore = await getEntityName(deviceId, eId);
-        assert(nameBefore === customNames[eId],
+        assert(nameBefore === nameMap[eId],
             `Entity ${eId} has custom name before empty-string transform`,
-            `expected "${customNames[eId]}", got "${nameBefore}"`);
+            `expected "${nameMap[eId]}", got "${nameBefore}"`);
 
         // Transform with empty name
         const tf = await api('POST', '/api/transform', {
@@ -302,7 +324,7 @@ async function runTests() {
         // Restore name
         await api('POST', '/api/transform', {
             deviceId, entityId: eId, botSecret: botSecrets[eId],
-            name: customNames[eId]
+            name: nameMap[eId]
         });
     }
 
@@ -315,44 +337,46 @@ async function runTests() {
     console.log('    刪除一個實體不影響其他實體的名稱 ---\n');
 
     {
+        const id1 = entityIds[1], id2 = entityIds[2], id3 = entityIds[3];
         // Rebind entity 1 (was deleted in Scenario 2)
-        botSecrets[1] = await setupEntity(deviceId, deviceSecret, 1);
-        await renameEntity(deviceId, deviceSecret, 1, customNames[1]);
+        botSecrets[id1] = await setupEntity(deviceId, deviceSecret, id1);
+        await renameEntity(deviceId, deviceSecret, id1, nameMap[id1]);
 
         // Verify all 4 have names
-        for (let i = 0; i < 4; i++) {
-            const name = await getEntityName(deviceId, i);
-            assert(name === customNames[i],
-                `Entity ${i} has name "${customNames[i]}" before isolation test`,
+        for (let idx = 0; idx < entityIds.length; idx++) {
+            const eid = entityIds[idx];
+            const name = await getEntityName(deviceId, eid);
+            assert(name === nameMap[eid],
+                `Entity ${eid} has name "${nameMap[eid]}" before isolation test`,
                 `got "${name}"`);
         }
 
-        // Delete entity 2
+        // Delete entity at index 2
         await api('DELETE', '/api/device/entity', {
-            deviceId, deviceSecret, entityId: 2
+            deviceId, deviceSecret, entityId: id2
         });
 
-        // Entity 2 should keep its name (unbound)
-        const name2 = await getEntityName(deviceId, 2);
-        assert(name2 === customNames[2],
-            `Entity 2 name preserved after own deletion`,
-            `expected "${customNames[2]}", got "${name2}"`);
+        // Entity at index 2 should keep its name (unbound)
+        const name2 = await getEntityName(deviceId, id2);
+        assert(name2 === nameMap[id2],
+            `Entity ${id2} name preserved after own deletion`,
+            `expected "${nameMap[id2]}", got "${name2}"`);
 
         // Other entities should be completely unaffected
-        for (const i of [0, 1, 3]) {
-            const name = await getEntityName(deviceId, i);
-            assert(name === customNames[i],
-                `Entity ${i} name unaffected by entity 2's deletion`,
-                `expected "${customNames[i]}", got "${name}"`);
+        for (const eid of [entityIds[0], id1, id3]) {
+            const name = await getEntityName(deviceId, eid);
+            assert(name === nameMap[eid],
+                `Entity ${eid} name unaffected by entity ${id2}'s deletion`,
+                `expected "${nameMap[eid]}", got "${name}"`);
 
-            const status = await getEntityStatus(deviceId, i);
+            const status = await getEntityStatus(deviceId, eid);
             assert(status.isBound === true,
-                `Entity ${i} still bound after entity 2's deletion`);
+                `Entity ${eid} still bound after entity ${id2}'s deletion`);
         }
 
-        // Rebind entity 2 for later tests
-        botSecrets[2] = await setupEntity(deviceId, deviceSecret, 2);
-        await renameEntity(deviceId, deviceSecret, 2, customNames[2]);
+        // Rebind entity at index 2 for later tests
+        botSecrets[id2] = await setupEntity(deviceId, deviceSecret, id2);
+        await renameEntity(deviceId, deviceSecret, id2, nameMap[id2]);
     }
 
     console.log('');
@@ -365,7 +389,7 @@ async function runTests() {
     console.log('    名稱在完整循環後應被保留 ---\n');
 
     {
-        const eId = 3;
+        const eId = entityIds[3];
         const specialName = '特殊名字🦞';
 
         // Step 1: Rename
@@ -420,7 +444,7 @@ async function runTests() {
     {
         const eId = 0;
         // Ensure entity has a custom name
-        await renameEntity(deviceId, deviceSecret, eId, customNames[eId]);
+        await renameEntity(deviceId, deviceSecret, eId, nameMap[eId]);
         const nameBefore = await getEntityName(deviceId, eId);
 
         // Try bind-free (may fail if no official bots available)
@@ -452,8 +476,8 @@ async function runTests() {
     console.log('    官方月租版覆蓋綁定時保留自訂名稱 ---\n');
 
     {
-        const eId = 1;
-        await renameEntity(deviceId, deviceSecret, eId, customNames[eId]);
+        const eId = entityIds[1];
+        await renameEntity(deviceId, deviceSecret, eId, nameMap[eId]);
         const nameBefore = await getEntityName(deviceId, eId);
 
         const res = await api('POST', '/api/official-borrow/bind-personal', {
@@ -482,7 +506,7 @@ async function runTests() {
     console.log('--- Scenario 10: Name boundary tests ---\n');
 
     {
-        const eId = 2;
+        const eId = entityIds[2];
         // Rebind if needed
         const status = await getEntityStatus(deviceId, eId);
         if (!status.isBound) {
@@ -533,7 +557,7 @@ async function runTests() {
     console.log('    快速連續操作不應丟失名稱 ---\n');
 
     {
-        const eId = 2;
+        const eId = entityIds[2];
         // Rebind if needed
         let status = await getEntityStatus(deviceId, eId);
         if (!status.isBound) {
@@ -569,38 +593,60 @@ async function runTests() {
         const ts2 = Date.now();
         const dId = `test-bug-repro-${ts2}`;
         const dSec = `secret-repro-${ts2}`;
-        const names = { 1: '月月', 2: '免免', 3: '租租' };
         const secrets = {};
+        const reproIds = [];
 
-        // Setup entities 1, 2, 3 with names
-        for (const eId of [1, 2, 3]) {
-            secrets[eId] = await setupEntity(dId, dSec, eId, names[eId]);
-            // Also rename via device owner to ensure it's a user-set name
-            await renameEntity(dId, dSec, eId, names[eId]);
+        // Create device by registering entity 0 (default slot), then add 2 more slots
+        await setupEntity(dId, dSec, 0);
+        for (let i = 0; i < 2; i++) {
+            const addRes = await api('POST', '/api/device/add-entity', { deviceId: dId, deviceSecret: dSec });
+            if (!addRes.data.success) throw new Error(`add-entity failed: ${addRes.data.error}`);
+        }
+
+        // Get actual entity IDs (dynamic system may create extra slots)
+        const reproEntities = await api('GET', `/api/entities?deviceId=${dId}`);
+        const allIds = (reproEntities.data.entityIds || []).sort((a, b) => a - b);
+        // Use only first 3 slots for this test scenario
+        const testIds = allIds.slice(0, 3);
+        console.log(`  [Repro] Device entity IDs: [${allIds.join(', ')}], using first 3: [${testIds.join(', ')}]`);
+
+        // Unbind entity 0 first (we'll use the 3 slots for our test)
+        await api('DELETE', '/api/device/entity', { deviceId: dId, deviceSecret: dSec, entityId: testIds[0] });
+
+        // Bind all 3 slots with names
+        const nameLabels = ['月月', '免免', '租租'];
+        const names = {};
+        for (let i = 0; i < testIds.length; i++) {
+            const eId = testIds[i];
+            secrets[eId] = await setupEntity(dId, dSec, eId, nameLabels[i]);
+            await renameEntity(dId, dSec, eId, nameLabels[i]);
+            names[eId] = nameLabels[i];
+            reproIds.push(eId);
         }
 
         // Verify all names set
-        for (const eId of [1, 2, 3]) {
+        for (const eId of reproIds) {
             const name = await getEntityName(dId, eId);
             assert(name === names[eId],
                 `[Repro] Entity ${eId} initial name = "${names[eId]}"`,
                 `got "${name}"`);
         }
 
-        // Simulate: unbind entities 1 and 3 (as if subscription expired)
+        // Simulate: unbind first and third entities (as if subscription expired)
         // This is the code path that was buggy: createDefaultEntity() wiped name
-        await api('DELETE', '/api/device/entity', { deviceId: dId, deviceSecret: dSec, entityId: 1 });
-        await api('DELETE', '/api/device/entity', { deviceId: dId, deviceSecret: dSec, entityId: 3 });
+        await api('DELETE', '/api/device/entity', { deviceId: dId, deviceSecret: dSec, entityId: reproIds[0] });
+        await api('DELETE', '/api/device/entity', { deviceId: dId, deviceSecret: dSec, entityId: reproIds[2] });
 
-        // Entity 2 should still be bound and named
-        const name2 = await getEntityName(dId, 2);
-        const status2 = await getEntityStatus(dId, 2);
-        assert(name2 === names[2] && status2.isBound === true,
-            `[Repro] Entity 2 still bound with name "${names[2]}" (unaffected)`,
+        // Middle entity should still be bound and named
+        const midId = reproIds[1];
+        const name2 = await getEntityName(dId, midId);
+        const status2 = await getEntityStatus(dId, midId);
+        assert(name2 === names[midId] && status2.isBound === true,
+            `[Repro] Entity ${midId} still bound with name "${names[midId]}" (unaffected)`,
             `name="${name2}", isBound=${status2.isBound}`);
 
-        // Entities 1 and 3 should be unbound BUT names preserved
-        for (const eId of [1, 3]) {
+        // First and third entities should be unbound BUT names preserved
+        for (const eId of [reproIds[0], reproIds[2]]) {
             const name = await getEntityName(dId, eId);
             const st = await getEntityStatus(dId, eId);
             assert(st.isBound === false,
@@ -621,30 +667,33 @@ async function runTests() {
     {
         // Re-setup all entities to ensure fresh botSecrets
         // (previous scenarios like bind-free may have replaced botSecrets)
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < entityIds.length; i++) {
+            const eid = entityIds[i];
             // Always unbind + rebind to get fresh botSecret
-            try { await api('DELETE', '/api/entity/' + i, { deviceId, botSecret: botSecrets[i] }); } catch {}
-            botSecrets[i] = await setupEntity(deviceId, deviceSecret, i);
-            await renameEntity(deviceId, deviceSecret, i, customNames[i]);
+            try { await api('DELETE', '/api/entity/' + eid, { deviceId, botSecret: botSecrets[eid] }); } catch {}
+            botSecrets[eid] = await setupEntity(deviceId, deviceSecret, eid);
+            await renameEntity(deviceId, deviceSecret, eid, customNames[i]);
         }
 
         // Transform entity 0 with a new name
+        const eid0 = entityIds[0];
         await api('POST', '/api/transform', {
-            deviceId, entityId: 0, botSecret: botSecrets[0],
+            deviceId, entityId: eid0, botSecret: botSecrets[eid0],
             name: '被改名的', message: 'name changed via transform'
         });
 
         // Entity 0's name changed
-        const name0 = await getEntityName(deviceId, 0);
+        const name0 = await getEntityName(deviceId, eid0);
         assert(name0 === '被改名的',
-            `Entity 0 name changed via transform`,
+            `Entity ${eid0} name changed via transform`,
             `expected "被改名的", got "${name0}"`);
 
         // Others should be untouched
-        for (let i = 1; i < 4; i++) {
-            const name = await getEntityName(deviceId, i);
+        for (let i = 1; i < entityIds.length; i++) {
+            const eid = entityIds[i];
+            const name = await getEntityName(deviceId, eid);
             assert(name === customNames[i],
-                `Entity ${i} name unaffected by entity 0's transform`,
+                `Entity ${eid} name unaffected by entity ${eid0}'s transform`,
                 `expected "${customNames[i]}", got "${name}"`);
         }
     }

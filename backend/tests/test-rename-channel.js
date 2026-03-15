@@ -16,7 +16,7 @@ const fs   = require('fs');
 const args    = process.argv.slice(2);
 const API_BASE = args.includes('--local') ? 'http://localhost:3000' : 'https://eclawbot.com';
 
-const ENTITY_CH = 1;
+let ENTITY_CH;  // resolved at runtime from actual device entities
 const POLL_MS   = 1500;
 const WAIT_MS   = 15000;
 
@@ -70,6 +70,12 @@ async function run() {
     const DEVICE_ID     = env.BROADCAST_TEST_DEVICE_ID;
     const DEVICE_SECRET = env.BROADCAST_TEST_DEVICE_SECRET;
     if (!DEVICE_ID) { console.error('Missing BROADCAST_TEST_DEVICE_ID in .env'); process.exit(1); }
+
+    // Query actual entity slot IDs from device (may be unbound)
+    const entitiesRes = await get(`${API_BASE}/api/entities?deviceId=${DEVICE_ID}`);
+    const availableIds = entitiesRes.data?.entityIds || [];
+    if (availableIds.length < 1) { console.error(`Need at least 1 entity slot, found: ${availableIds}`); process.exit(1); }
+    ENTITY_CH = availableIds[0];
 
     const SINK     = `${API_BASE}/api/channel/test-sink`;
     const SLOT     = `rename-ch-${Date.now()}`;

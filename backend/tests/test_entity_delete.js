@@ -40,38 +40,59 @@ async function setupDevices() {
 
         process.stdout.write(`Device ${d}: `);
 
-        for (let e = 0; e < ENTITIES_PER_DEVICE; e++) {
+        // Register entity 0 first to create the device (entity 0 exists by default)
+        const firstReg = await api('POST', '/api/device/register', {
+            deviceId, deviceSecret, entityId: 0, isTestDevice: true
+        });
+        if (!firstReg.data.success) {
+            console.log(`\n  ERROR creating device: ${firstReg.data.message}`);
+            testData.devices.push(device);
+            continue;
+        }
+
+        // Add extra entity slots (dynamic entity system: only slot 0 exists initially)
+        const entitySlotIds = [0];
+        for (let e = 1; e < ENTITIES_PER_DEVICE; e++) {
+            const addRes = await api('POST', '/api/device/add-entity', { deviceId, deviceSecret });
+            if (addRes.data.success) {
+                entitySlotIds.push(addRes.data.entityId);
+            } else {
+                console.log(`\n  ERROR adding entity slot: ${addRes.data.error}`);
+            }
+        }
+
+        for (const eId of entitySlotIds) {
             // Register entity slot
             const regRes = await api('POST', '/api/device/register', {
                 deviceId,
                 deviceSecret,
-                entityId: e,
+                entityId: eId,
                 isTestDevice: true
             });
 
             if (!regRes.data.success) {
-                console.log(`\n  ERROR registering entity ${e}: ${regRes.data.message}`);
+                console.log(`\n  ERROR registering entity ${eId}: ${regRes.data.message}`);
                 continue;
             }
 
             // Bind entity
             const bindRes = await api('POST', '/api/bind', {
                 code: regRes.data.bindingCode,
-                name: `Bot-D${d}-E${e}`
+                name: `Bot-D${d}-E${eId}`
             });
 
             if (!bindRes.data.success) {
-                console.log(`\n  ERROR binding entity ${e}: ${bindRes.data.message}`);
+                console.log(`\n  ERROR binding entity ${eId}: ${bindRes.data.message}`);
                 continue;
             }
 
             device.entities.push({
-                entityId: e,
+                entityId: eId,
                 botSecret: bindRes.data.botSecret,
                 deleted: false
             });
 
-            process.stdout.write(`E${e}✓ `);
+            process.stdout.write(`E${eId}✓ `);
         }
 
         testData.devices.push(device);

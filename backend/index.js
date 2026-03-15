@@ -4693,8 +4693,12 @@ app.get('/api/entity/lookup', (req, res) => {
 
 function validateAgentCard(card) {
     if (!card || typeof card !== 'object') return { valid: false, error: 'Agent card must be an object' };
+    if (!card.description) return { valid: false, error: 'description is required' };
+    if (String(card.description).length > 500) return { valid: false, error: 'description must be 500 characters or less' };
+    if (Array.isArray(card.capabilities) && card.capabilities.length > 10) return { valid: false, error: 'Maximum 10 capabilities allowed' };
+    if (Array.isArray(card.tags) && card.tags.length > 20) return { valid: false, error: 'Maximum 20 tags allowed' };
     const cleaned = {};
-    if (card.description) cleaned.description = String(card.description).substring(0, 500);
+    cleaned.description = String(card.description).substring(0, 500);
     if (Array.isArray(card.capabilities)) cleaned.capabilities = card.capabilities.slice(0, 10).map(c => typeof c === 'object' ? { id: String(c.id || '').substring(0, 64), name: String(c.name || '').substring(0, 128), description: String(c.description || '').substring(0, 256) } : String(c).substring(0, 128));
     if (Array.isArray(card.protocols)) cleaned.protocols = card.protocols.slice(0, 10).map(p => String(p).substring(0, 64));
     if (Array.isArray(card.tags)) cleaned.tags = card.tags.slice(0, 20).map(t => String(t).substring(0, 64));

@@ -59,6 +59,48 @@ async function api(method, path, body) {
     catch { return { status: res.status, ok: res.ok, data: text }; }
 }
 
+// ─── Helper: ensure a bound entity exists on a test device ───
+let resolvedEntityId = 0;
+let testDeviceId = DEVICE_ID;
+let testDeviceSecret = DEVICE_SECRET;
+let createdOwnDevice = false;
+
+async function ensureBoundEntity() {
+    // First, check if the configured test device already has a bound entity
+    const res = await api('GET', '/api/entities', { deviceId: DEVICE_ID });
+    if (res.ok && Array.isArray(res.data?.entities) && res.data.entities.length > 0) {
+        resolvedEntityId = res.data.entities[0].entityId;
+        console.log(`  Found existing bound entity: ${resolvedEntityId}`);
+        return;
+    }
+
+    // No bound entity — register a temporary device and bind an entity
+    console.log('  No bound entities on test device; creating temporary device...');
+    testDeviceId = 'test-agentcard-' + Date.now();
+    testDeviceSecret = 'secret-' + Date.now();
+    createdOwnDevice = true;
+
+    const reg = await api('POST', '/api/device/register', {
+        deviceId: testDeviceId,
+        deviceSecret: testDeviceSecret,
+        entityId: 0,
+        isTestDevice: true
+    });
+
+    if (!reg.ok || !reg.data?.success) {
+        throw new Error('Failed to register temp device: ' + JSON.stringify(reg.data));
+    }
+
+    const code = reg.data.code || reg.data.bindingCode;
+    const bind = await api('POST', '/api/bind', { code, name: 'AgentCardTestBot' });
+    if (!bind.ok || !bind.data?.success) {
+        throw new Error('Failed to bind entity: ' + JSON.stringify(bind.data));
+    }
+
+    resolvedEntityId = 0;
+    console.log(`  Created temp device ${testDeviceId}, bound entity 0`);
+}
+
 // ─── Test 1: Full agent card with all fields (UI parity) ───
 async function testFullCardCreate() {
     console.log('\n[Test 1] Create agent card with all UI fields');
@@ -78,9 +120,9 @@ async function testFullCardCreate() {
     };
 
     const res = await api('PUT', '/api/entity/agent-card', {
-        deviceId: DEVICE_ID,
-        deviceSecret: DEVICE_SECRET,
-        entityId: 0,
+        deviceId: testDeviceId,
+        deviceSecret: testDeviceSecret,
+        entityId: resolvedEntityId,
         agentCard: card
     });
 
@@ -89,9 +131,9 @@ async function testFullCardCreate() {
 
     // Verify GET returns all fields
     const get = await api('GET', '/api/entity/agent-card', {
-        deviceId: DEVICE_ID,
-        deviceSecret: DEVICE_SECRET,
-        entityId: 0
+        deviceId: testDeviceId,
+        deviceSecret: testDeviceSecret,
+        entityId: resolvedEntityId
     });
 
     assert(get.ok, 'GET returns 200');
@@ -116,18 +158,18 @@ async function testMinimalCard() {
     console.log('\n[Test 2] Minimal card (description only)');
 
     const res = await api('PUT', '/api/entity/agent-card', {
-        deviceId: DEVICE_ID,
-        deviceSecret: DEVICE_SECRET,
-        entityId: 0,
+        deviceId: testDeviceId,
+        deviceSecret: testDeviceSecret,
+        entityId: resolvedEntityId,
         agentCard: { description: 'Minimal test card' }
     });
 
     assert(res.ok, 'PUT with only description succeeds');
 
     const get = await api('GET', '/api/entity/agent-card', {
-        deviceId: DEVICE_ID,
-        deviceSecret: DEVICE_SECRET,
-        entityId: 0
+        deviceId: testDeviceId,
+        deviceSecret: testDeviceSecret,
+        entityId: resolvedEntityId
     });
 
     const ac = get.data?.agentCard;
@@ -144,9 +186,9 @@ async function testFieldLimits() {
     // Description > 500 chars should be rejected
     const longDesc = 'A'.repeat(501);
     const res = await api('PUT', '/api/entity/agent-card', {
-        deviceId: DEVICE_ID,
-        deviceSecret: DEVICE_SECRET,
-        entityId: 0,
+        deviceId: testDeviceId,
+        deviceSecret: testDeviceSecret,
+        entityId: resolvedEntityId,
         agentCard: { description: longDesc }
     });
     assert(!res.ok || res.data?.success === false, 'Description > 500 chars rejected');
@@ -156,9 +198,9 @@ async function testFieldLimits() {
         id: `cap${i}`, name: `Cap ${i}`, description: ''
     }));
     const res2 = await api('PUT', '/api/entity/agent-card', {
-        deviceId: DEVICE_ID,
-        deviceSecret: DEVICE_SECRET,
-        entityId: 0,
+        deviceId: testDeviceId,
+        deviceSecret: testDeviceSecret,
+        entityId: resolvedEntityId,
         agentCard: { description: 'Test', capabilities: manyCaps }
     });
     assert(!res2.ok || res2.data?.success === false, '> 10 capabilities rejected');
@@ -166,9 +208,9 @@ async function testFieldLimits() {
     // Too many tags (> 20)
     const manyTags = Array.from({ length: 21 }, (_, i) => `tag${i}`);
     const res3 = await api('PUT', '/api/entity/agent-card', {
-        deviceId: DEVICE_ID,
-        deviceSecret: DEVICE_SECRET,
-        entityId: 0,
+        deviceId: testDeviceId,
+        deviceSecret: testDeviceSecret,
+        entityId: resolvedEntityId,
         agentCard: { description: 'Test', tags: manyTags }
     });
     assert(!res3.ok || res3.data?.success === false, '> 20 tags rejected');
@@ -180,17 +222,17 @@ async function testUpdateCard() {
 
     // Create initial card
     await api('PUT', '/api/entity/agent-card', {
-        deviceId: DEVICE_ID,
-        deviceSecret: DEVICE_SECRET,
-        entityId: 0,
+        deviceId: testDeviceId,
+        deviceSecret: testDeviceSecret,
+        entityId: resolvedEntityId,
         agentCard: { description: 'Initial card', version: '1.0.0' }
     });
 
     // Update with new fields
     const res = await api('PUT', '/api/entity/agent-card', {
-        deviceId: DEVICE_ID,
-        deviceSecret: DEVICE_SECRET,
-        entityId: 0,
+        deviceId: testDeviceId,
+        deviceSecret: testDeviceSecret,
+        entityId: resolvedEntityId,
         agentCard: {
             description: 'Updated card',
             version: '2.0.0',
@@ -201,9 +243,9 @@ async function testUpdateCard() {
     assert(res.ok, 'PUT update returns 200');
 
     const get = await api('GET', '/api/entity/agent-card', {
-        deviceId: DEVICE_ID,
-        deviceSecret: DEVICE_SECRET,
-        entityId: 0
+        deviceId: testDeviceId,
+        deviceSecret: testDeviceSecret,
+        entityId: resolvedEntityId
     });
 
     const ac = get.data?.agentCard;
@@ -218,16 +260,16 @@ async function testDeleteCard() {
 
     // Ensure a card exists
     await api('PUT', '/api/entity/agent-card', {
-        deviceId: DEVICE_ID,
-        deviceSecret: DEVICE_SECRET,
-        entityId: 0,
+        deviceId: testDeviceId,
+        deviceSecret: testDeviceSecret,
+        entityId: resolvedEntityId,
         agentCard: { description: 'To be deleted' }
     });
 
     const del = await api('DELETE', '/api/entity/agent-card', {
-        deviceId: DEVICE_ID,
-        deviceSecret: DEVICE_SECRET,
-        entityId: 0
+        deviceId: testDeviceId,
+        deviceSecret: testDeviceSecret,
+        entityId: resolvedEntityId
     });
 
     assert(del.ok, 'DELETE returns 200');
@@ -235,9 +277,9 @@ async function testDeleteCard() {
 
     // Verify card is gone
     const get = await api('GET', '/api/entity/agent-card', {
-        deviceId: DEVICE_ID,
-        deviceSecret: DEVICE_SECRET,
-        entityId: 0
+        deviceId: testDeviceId,
+        deviceSecret: testDeviceSecret,
+        entityId: resolvedEntityId
     });
 
     assert(get.ok, 'GET after delete returns 200');
@@ -249,9 +291,9 @@ async function testMissingDescription() {
     console.log('\n[Test 6] Missing description rejected');
 
     const res = await api('PUT', '/api/entity/agent-card', {
-        deviceId: DEVICE_ID,
-        deviceSecret: DEVICE_SECRET,
-        entityId: 0,
+        deviceId: testDeviceId,
+        deviceSecret: testDeviceSecret,
+        entityId: resolvedEntityId,
         agentCard: { version: '1.0.0', tags: ['test'] }
     });
 
@@ -278,6 +320,8 @@ async function main() {
         process.exit(0);
     }
 
+    await ensureBoundEntity();
+
     await testFullCardCreate();
     await testMinimalCard();
     await testFieldLimits();
@@ -288,7 +332,7 @@ async function main() {
     // Cleanup: delete any test card left
     try {
         await api('DELETE', '/api/entity/agent-card', {
-            deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, entityId: 0
+            deviceId: testDeviceId, deviceSecret: testDeviceSecret, entityId: resolvedEntityId
         });
     } catch {}
 

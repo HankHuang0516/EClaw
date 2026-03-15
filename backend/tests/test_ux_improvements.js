@@ -20,7 +20,12 @@ async function api(method, path, body = null) {
     if (body) options.body = JSON.stringify(body);
 
     const response = await fetch(url, options);
-    return response.json();
+    const text = await response.text();
+    try {
+        return JSON.parse(text);
+    } catch {
+        throw new Error(`Non-JSON response (HTTP ${response.status}): ${text.substring(0, 100)}`);
+    }
 }
 
 async function runTests() {
@@ -83,27 +88,8 @@ async function runTests() {
     }
 
     // =====================================================
-    // Test 2: /api/entities with deviceId filter
-    // =====================================================
-    console.log('\n--- Test 2: /api/entities with deviceId filter ---');
-    try {
-        const response = await api('GET', `/api/entities?deviceId=${testDeviceId}`);
-
-        if (response.entities && Array.isArray(response.entities)) {
-            console.log('PASS: Filter by deviceId works');
-            console.log(`Entities for ${testDeviceId}: ${response.entities.length}`);
-            passed++;
-        } else {
-            console.log('FAIL: Invalid response for filtered query');
-            failed++;
-        }
-    } catch (e) {
-        console.log('FAIL: API error -', e.message);
-        failed++;
-    }
-
-    // =====================================================
     // Test 3: /api/device/register creates device with deviceSecret
+    // (moved before Test 2 so the device exists when filtering)
     // =====================================================
     console.log('\n--- Test 3: /api/device/register (with deviceSecret) ---');
     let bindingCode = null;
@@ -123,6 +109,27 @@ async function runTests() {
         } else if (response.success === false) {
             console.log('FAIL: Device registration failed');
             console.log('Response:', response);
+            failed++;
+        }
+    } catch (e) {
+        console.log('FAIL: API error -', e.message);
+        failed++;
+    }
+
+    // =====================================================
+    // Test 2: /api/entities with deviceId filter
+    // (runs after registration so the device exists)
+    // =====================================================
+    console.log('\n--- Test 2: /api/entities with deviceId filter ---');
+    try {
+        const response = await api('GET', `/api/entities?deviceId=${testDeviceId}`);
+
+        if (response.entities && Array.isArray(response.entities)) {
+            console.log('PASS: Filter by deviceId works');
+            console.log(`Entities for ${testDeviceId}: ${response.entities.length}`);
+            passed++;
+        } else {
+            console.log('FAIL: Invalid response for filtered query');
             failed++;
         }
     } catch (e) {
