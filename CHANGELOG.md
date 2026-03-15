@@ -1,3 +1,13 @@
+# [1.10.0](https://github.com/HankHuang0516/EClaw/compare/v1.9.2...v1.10.0) (2026-03-15)
+
+
+### Features
+
+* add optional X-Publisher-Key auth to publisher API ([e0534a7](https://github.com/HankHuang0516/EClaw/commit/e0534a7436c78a67d0fac0b14cc432f3b0d99953))
+* add optional X-Publisher-Key auth to publisher API ([298250f](https://github.com/HankHuang0516/EClaw/commit/298250f0010101e6f31ae637b25211b5a35a09d6))
+* add optional X-Publisher-Key auth to publisher API ([af2cd05](https://github.com/HankHuang0516/EClaw/commit/af2cd05d71db59eb75b43c795a0fb5cd8a4843d9))
+* add Publisher API key auth middleware ([#215](https://github.com/HankHuang0516/EClaw/issues/215)) ([6bdc30d](https://github.com/HankHuang0516/EClaw/commit/6bdc30d07a94f47e6b6a15d808773fb4470ab157))
+
 ## [1.9.2](https://github.com/HankHuang0516/EClaw/compare/v1.9.1...v1.9.2) (2026-03-15)
 
 
