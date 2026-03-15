@@ -119,44 +119,80 @@ class MainActivity : AppCompatActivity() {
     private lateinit var itemTouchHelper: ItemTouchHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        android.util.Log.d("DEBUG_BLACKSCREEN", "=== MainActivity.onCreate() START ===")
         super.onCreate(savedInstanceState)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] super.onCreate() done")
 
         // Initialize telemetry (safe to call multiple times)
         TelemetryHelper.init(this)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] TelemetryHelper.init() done")
 
         // Connect Socket.IO for real-time updates
         com.hank.clawlive.data.remote.SocketManager.connect(this)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] SocketManager.connect() done")
 
         // FCM: Create notification channels + request permission (Android 13+)
         ClawFcmService.createChannels(this)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] FCM channels created")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                 != PackageManager.PERMISSION_GRANTED
             ) {
                 notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] Requested POST_NOTIFICATIONS permission")
             }
         }
 
         // Enable edge-to-edge display
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] Edge-to-edge enabled")
 
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] About to setContentView(activity_main)")
         setContentView(R.layout.activity_main)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] setContentView() done")
 
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] About to setup BottomNavHelper")
         BottomNavHelper.setup(this, NavItem.HOME)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] BottomNavHelper.setup() done")
+
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] About to setup AiChatFabHelper")
         AiChatFabHelper.setup(this, "home")
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] AiChatFabHelper.setup() done")
+
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] About to initViews()")
         initViews()
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] initViews() done")
+
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] About to setupEdgeToEdgeInsets()")
         setupEdgeToEdgeInsets()
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] setupEdgeToEdgeInsets() done")
+
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] About to setupClickListeners()")
         setupClickListeners()
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] setupClickListeners() done")
+
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] About to observeUiState()")
         observeUiState()
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] observeUiState() done")
+
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] About to startEntityPolling()")
         startEntityPolling()
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] startEntityPolling() done")
+
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] About to checkForAppUpdate()")
         checkForAppUpdate()
+        android.util.Log.d("DEBUG_BLACKSCREEN", "=== MainActivity.onCreate() END ===")
     }
 
     override fun onResume() {
+        android.util.Log.d("DEBUG_BLACKSCREEN", "=== MainActivity.onResume() START ===")
         super.onResume()
         TelemetryHelper.trackPageView(this, "main")
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] onResume: about to loadBoundEntities()")
         loadBoundEntities()
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] onResume: about to RecordingIndicatorHelper.attach()")
         RecordingIndicatorHelper.attach(this)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "=== MainActivity.onResume() END ===")
     }
 
     override fun onPause() {
@@ -250,30 +286,45 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initViews() {
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[initViews] START — finding all views")
         btnEditMode = findViewById(R.id.btnEditMode)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[initViews] btnEditMode=${btnEditMode != null}")
         agentCardsContainer = findViewById(R.id.agentCardsContainer)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[initViews] agentCardsContainer=${agentCardsContainer != null}")
         emptyStateContainer = findViewById(R.id.emptyStateContainer)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[initViews] emptyStateContainer=${emptyStateContainer != null}")
         cardAddEntity = findViewById(R.id.cardAddEntity)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[initViews] cardAddEntity=${cardAddEntity != null}")
         addEntityHeader = findViewById(R.id.addEntityHeader)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[initViews] addEntityHeader=${addEntityHeader != null}")
         addEntityContent = findViewById(R.id.addEntityContent)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[initViews] addEntityContent=${addEntityContent != null}")
         ivExpandArrow = findViewById(R.id.ivExpandArrow)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[initViews] ivExpandArrow=${ivExpandArrow != null}")
         chipGroupEntity = findViewById(R.id.chipGroupEntity)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[initViews] chipGroupEntity=${chipGroupEntity != null}")
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[initViews] About to populate EntityChipHelper")
         entityChips = EntityChipHelper.populate(this, chipGroupEntity)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[initViews] EntityChipHelper populated, chipCount=${entityChips.size}")
         tvBindingCode = findViewById(R.id.tvBindingCode)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[initViews] tvBindingCode=${tvBindingCode != null}")
         tvCountdown = findViewById(R.id.tvCountdown)
         btnGenerateCode = findViewById(R.id.btnGenerateCode)
         btnCopyCommand = findViewById(R.id.btnCopyCommand)
         progressBar = findViewById(R.id.progressBar)
         topBar = findViewById(R.id.topBar)
         tvEntityCount = findViewById(R.id.tvEntityCount)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[initViews] Core views found OK")
         // Phase 9: AI Usage Status Bar
         usageStatusBar = findViewById(R.id.usageStatusBar)
         tvUsageLabel = findViewById(R.id.tvUsageLabel)
         progressUsage = findViewById(R.id.progressUsage)
         tvUsageStatus = findViewById(R.id.tvUsageStatus)
         btnOfficialBorrow = findViewById(R.id.btnOfficialBorrow)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[initViews] Usage bar + officialBorrow views found OK")
 
         // Set up RecyclerView with adapter
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[initViews] About to create EntityCardAdapter")
         entityAdapter = EntityCardAdapter(
             getAvatar = { entityId -> avatarManager.getAvatar(entityId) },
             getEntityLabel = { entity -> entity.name ?: getString(R.string.entity_format, entity.entityId) },
@@ -305,6 +356,7 @@ class MainActivity : AppCompatActivity() {
 
         agentCardsContainer.layoutManager = LinearLayoutManager(this)
         agentCardsContainer.adapter = entityAdapter
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[initViews] RecyclerView adapter + layoutManager set. END initViews()")
     }
 
     private fun setupEdgeToEdgeInsets() {
@@ -328,6 +380,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupClickListeners() {
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[setupClickListeners] START")
         btnEditMode.setOnClickListener {
             toggleEditMode()
         }
@@ -379,6 +432,7 @@ class MainActivity : AppCompatActivity() {
                 viewModel.selectEntity(selectedEntityId)
             }
         }
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[setupClickListeners] END — all listeners attached")
     }
 
     private fun toggleAddEntitySection() {
@@ -388,10 +442,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadBoundEntities() {
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[loadBoundEntities] START — deviceId=${deviceManager.deviceId}")
         lifecycleScope.launch {
             try {
+                android.util.Log.d("DEBUG_BLACKSCREEN", "[loadBoundEntities] Calling api.getAllEntities()...")
                 val response = api.getAllEntities(deviceId = deviceManager.deviceId)
+                android.util.Log.d("DEBUG_BLACKSCREEN", "[loadBoundEntities] API response: entities=${response.entities.size}, totalSlots=${response.totalSlots}, activeCount=${response.activeCount}, serverReady=${response.serverReady}")
                 val newEntities = response.entities.filter { it.isBound }
+                android.util.Log.d("DEBUG_BLACKSCREEN", "[loadBoundEntities] Bound entities: ${newEntities.size}, IDs=${newEntities.map { it.entityId }}")
 
                 // #72 fix: Sync serverEntityLimit from API response
                 val prevLimit = layoutPrefs.serverEntityLimit
@@ -469,10 +527,15 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 boundEntities = newEntities
+                android.util.Log.d("DEBUG_BLACKSCREEN", "[loadBoundEntities] About to updateAgentCards()")
                 updateAgentCards()
+                android.util.Log.d("DEBUG_BLACKSCREEN", "[loadBoundEntities] About to updateEntityCount()")
                 updateEntityCount()
+                android.util.Log.d("DEBUG_BLACKSCREEN", "[loadBoundEntities] About to updateUsageStatusBar()")
                 updateUsageStatusBar()  // Phase 9: Update usage bar
+                android.util.Log.d("DEBUG_BLACKSCREEN", "[loadBoundEntities] END — all updates done")
             } catch (e: Exception) {
+                android.util.Log.e("DEBUG_BLACKSCREEN", "[loadBoundEntities] EXCEPTION: ${e.message}", e)
                 Timber.e(e, "Failed to load entities")
             }
         }
@@ -522,11 +585,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateAgentCards() {
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[updateAgentCards] START — boundEntities=${boundEntities.size}, isEditMode=$isEditMode")
         // During edit mode, skip ALL UI updates to preserve drag state and prevent
         // transient API responses from hiding entity cards (fixes #16)
-        if (isEditMode) return
+        if (isEditMode) {
+            android.util.Log.d("DEBUG_BLACKSCREEN", "[updateAgentCards] SKIPPED — edit mode active")
+            return
+        }
 
         if (boundEntities.isEmpty()) {
+            android.util.Log.d("DEBUG_BLACKSCREEN", "[updateAgentCards] No entities — showing empty state")
             agentCardsContainer.visibility = View.GONE
             emptyStateContainer.visibility = View.VISIBLE
             btnEditMode.visibility = View.GONE
@@ -535,6 +603,7 @@ class MainActivity : AppCompatActivity() {
                 toggleAddEntitySection()
             }
         } else {
+            android.util.Log.d("DEBUG_BLACKSCREEN", "[updateAgentCards] Has ${boundEntities.size} entities — showing cards")
             // Log when cards become visible again after being hidden
             if (agentCardsContainer.visibility != View.VISIBLE) {
                 TelemetryHelper.trackAction("entity_cards_shown", mapOf(
@@ -544,8 +613,11 @@ class MainActivity : AppCompatActivity() {
             agentCardsContainer.visibility = View.VISIBLE
             emptyStateContainer.visibility = View.GONE
             btnEditMode.visibility = View.VISIBLE
+            android.util.Log.d("DEBUG_BLACKSCREEN", "[updateAgentCards] About to submitList to adapter")
             entityAdapter.submitList(boundEntities)
+            android.util.Log.d("DEBUG_BLACKSCREEN", "[updateAgentCards] submitList done")
         }
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[updateAgentCards] END")
     }
 
     private fun toggleEditMode() {
@@ -1162,9 +1234,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun observeUiState() {
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[observeUiState] Setting up ViewModel observer")
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
+                    android.util.Log.d("DEBUG_BLACKSCREEN", "[observeUiState] Got state: selectedEntityId=${state.selectedEntityId}, isLoading=${state.isLoading}, bindingCode=${state.bindingCode}")
                     updateBindingUi(state)
                 }
             }

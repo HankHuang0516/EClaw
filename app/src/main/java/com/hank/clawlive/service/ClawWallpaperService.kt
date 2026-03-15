@@ -17,16 +17,19 @@ class ClawWallpaperService : WallpaperService() {
 
     override fun onCreate() {
         super.onCreate()
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[WallpaperService] onCreate()")
         Timber.d("ClawWallpaperService Created")
     }
 
     override fun onCreateEngine(): Engine {
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[WallpaperService] onCreateEngine()")
         Timber.d("Creating ClawEngine")
         return ClawEngine()
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[WallpaperService] onDestroy()")
         Timber.d("ClawWallpaperService Destroyed")
     }
 
@@ -60,17 +63,20 @@ class ClawWallpaperService : WallpaperService() {
 
         override fun onCreate(surfaceHolder: SurfaceHolder?) {
             super.onCreate(surfaceHolder)
+            android.util.Log.d("DEBUG_BLACKSCREEN", "[ClawEngine] onCreate — surfaceHolder=$surfaceHolder")
             Timber.d("ClawEngine onCreate")
             setTouchEventsEnabled(true)
             observeStatus()
         }
 
         private fun observeStatus() {
+            android.util.Log.d("DEBUG_BLACKSCREEN", "[ClawEngine] observeStatus() — multiEntityMode=$multiEntityMode")
             engineScope.launch {
                 if (multiEntityMode) {
                     // Multi-entity mode: fetch all entities
                     repository.getMultiEntityStatusFlow(intervalMs = 5000)
                         .collect { response ->
+                            android.util.Log.d("DEBUG_BLACKSCREEN", "[ClawEngine] Got multi-entity response: ${response.activeCount} entities")
                             Timber.d("Multi-entity status: ${response.activeCount} entities")
                             // Debug: log first entity's name
                             response.entities.firstOrNull()?.let { e ->
@@ -150,20 +156,31 @@ class ClawWallpaperService : WallpaperService() {
             Timber.d("onSurfaceDestroyed")
         }
 
+        private var drawCount = 0
         private fun draw() {
             val holder = surfaceHolder
             var canvas: Canvas? = null
+            drawCount++
+            if (drawCount <= 5 || drawCount % 100 == 0) {
+                android.util.Log.d("DEBUG_BLACKSCREEN", "[ClawEngine] draw() #$drawCount — visible=$visible, entityCount=${currentEntities.size}")
+            }
 
             try {
                 canvas = holder.lockCanvas()
                 if (canvas != null) {
+                    if (drawCount <= 3) {
+                        android.util.Log.d("DEBUG_BLACKSCREEN", "[ClawEngine] Canvas locked: ${canvas.width}x${canvas.height}")
+                    }
                     if (multiEntityMode) {
                         renderer.drawMultiEntity(canvas, currentEntities)
                     } else {
                         renderer.draw(canvas, currentStatus)
                     }
+                } else if (drawCount <= 5) {
+                    android.util.Log.w("DEBUG_BLACKSCREEN", "[ClawEngine] draw() — lockCanvas returned null!")
                 }
             } catch (e: Exception) {
+                android.util.Log.e("DEBUG_BLACKSCREEN", "[ClawEngine] DRAW EXCEPTION: ${e.message}", e)
                 Timber.e(e, "Error during drawing")
             } finally {
                 if (canvas != null) {

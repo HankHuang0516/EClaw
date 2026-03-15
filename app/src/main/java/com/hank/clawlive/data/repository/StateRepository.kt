@@ -55,10 +55,13 @@ class StateRepository(
      * Also processes entity messages for chat history.
      */
     fun getMultiEntityStatusFlow(intervalMs: Long = 5_000): Flow<MultiEntityResponse> = flow {
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[StateRepository] getMultiEntityStatusFlow START — deviceId=${deviceManager.deviceId}, interval=${intervalMs}ms")
         while (true) {
             try {
                 // v5: Filter by deviceId on server side
+                android.util.Log.d("DEBUG_BLACKSCREEN", "[StateRepository] Calling api.getAllEntities()...")
                 val response = api.getAllEntities(deviceId = deviceManager.deviceId)
+                android.util.Log.d("DEBUG_BLACKSCREEN", "[StateRepository] API response: entities=${response.entities.size}, totalSlots=${response.totalSlots}")
 
                 // Additional client-side filter for registered entities
                 // Auto-sync: if server has bound entities not in local registry, add them
@@ -125,6 +128,7 @@ class StateRepository(
                 emit(filteredResponse)
                 Timber.d("Multi-entity status: ${filteredEntities.size} entities for device ${deviceManager.deviceId}")
             } catch (e: Exception) {
+                android.util.Log.e("DEBUG_BLACKSCREEN", "[StateRepository] EXCEPTION fetching entities: ${e.javaClass.simpleName}: ${e.message}", e)
                 Timber.e(e, "Error fetching multi-entity status")
                 // Fallback to single error entity
                 emit(

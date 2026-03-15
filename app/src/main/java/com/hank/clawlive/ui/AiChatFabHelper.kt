@@ -22,6 +22,7 @@ object AiChatFabHelper {
 
     @SuppressLint("ClickableViewAccessibility")
     fun setup(activity: AppCompatActivity, pageName: String) {
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[AiChatFabHelper] setup() START — pageName=$pageName")
         val density = activity.resources.displayMetrics.density
         val fabSize = (56 * density).toInt()
         val defaultMargin = (16 * density).toInt()
@@ -30,6 +31,7 @@ object AiChatFabHelper {
         val prefs = activity.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val savedX = prefs.getFloat(KEY_X, -1f)
         val savedY = prefs.getFloat(KEY_Y, -1f)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[AiChatFabHelper] savedX=$savedX, savedY=$savedY")
 
         val fab = ImageButton(activity).apply {
             setImageResource(R.drawable.ic_ai_chat)
@@ -49,10 +51,12 @@ object AiChatFabHelper {
             addView(fab, params)
         }
 
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[AiChatFabHelper] Adding FAB to content view")
         activity.addContentView(wrapper, ViewGroup.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT
         ))
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[AiChatFabHelper] FAB added. setup() END")
 
         // Position after layout pass so we know parent dimensions
         wrapper.post {

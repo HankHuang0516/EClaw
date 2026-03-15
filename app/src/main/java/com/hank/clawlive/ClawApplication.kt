@@ -18,19 +18,24 @@ class ClawApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        android.util.Log.d("DEBUG_BLACKSCREEN", "=== ClawApplication.onCreate() START ===")
+
         // 1. Plant Timber trees FIRST
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }
         val fileTree = FileTimberTree(this)
         Timber.plant(fileTree)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[App] Timber trees planted")
 
         // 2. Initialize crash log manager
         CrashLogManager.init(this)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[App] CrashLogManager initialized")
 
         // 3. Install UncaughtExceptionHandler
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            android.util.Log.e("DEBUG_BLACKSCREEN", "[App] UNCAUGHT EXCEPTION on thread=${thread.name}: ${throwable.message}", throwable)
             try {
                 val recentLines = fileTree.getRecentLines(200)
                 CrashLogManager.writeCrashLog(thread, throwable, recentLines)
@@ -41,14 +46,18 @@ class ClawApplication : Application() {
                 defaultHandler?.uncaughtException(thread, throwable)
             }
         }
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[App] UncaughtExceptionHandler installed")
 
         // 4. Initialize TelemetryHelper early (centralized here)
         TelemetryHelper.init(this)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[App] TelemetryHelper initialized")
 
         // 5. Upload any pending crash logs from previous session
         uploadPendingCrashLogs()
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[App] Pending crash logs uploaded")
 
         Timber.i("ClawApplication initialized")
+        android.util.Log.d("DEBUG_BLACKSCREEN", "=== ClawApplication.onCreate() END ===")
     }
 
     /**
