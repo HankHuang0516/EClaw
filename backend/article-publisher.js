@@ -1,5 +1,6 @@
 // Article Publisher — Multi-platform article publishing
-// Supported: Blogger, Hashnode, X/Twitter, DEV.to, WordPress.com, Telegraph, Qiita, WeChat Official Account
+// Supported: Blogger, Hashnode, X/Twitter, DEV.to, WordPress.com, Telegraph, Qiita, WeChat,
+//            Tumblr, Reddit, LinkedIn, Mastodon
 const express = require('express');
 const crypto = require('crypto');
 const OAuth = require('oauth-1.0a');
@@ -36,6 +37,28 @@ const WECHAT_APP_ID = process.env.WECHAT_APP_ID;
 const WECHAT_APP_SECRET = process.env.WECHAT_APP_SECRET;
 const WECHAT_API_BASE = 'https://api.weixin.qq.com/cgi-bin';
 let wechatTokenCache = { access_token: null, expires_at: 0 };
+
+// Tumblr (API v2, OAuth 1.0a — reuse oauth-1.0a lib)
+const TUMBLR_CONSUMER_KEY = process.env.TUMBLR_CONSUMER_KEY;
+const TUMBLR_CONSUMER_SECRET = process.env.TUMBLR_CONSUMER_SECRET;
+const TUMBLR_ACCESS_TOKEN = process.env.TUMBLR_ACCESS_TOKEN;
+const TUMBLR_ACCESS_TOKEN_SECRET = process.env.TUMBLR_ACCESS_TOKEN_SECRET;
+const TUMBLR_API_BASE = 'https://api.tumblr.com/v2';
+
+// Reddit (OAuth2 password grant — script app)
+const REDDIT_CLIENT_ID = process.env.REDDIT_CLIENT_ID;
+const REDDIT_CLIENT_SECRET = process.env.REDDIT_CLIENT_SECRET;
+const REDDIT_USERNAME = process.env.REDDIT_USERNAME;
+const REDDIT_PASSWORD = process.env.REDDIT_PASSWORD;
+let redditTokenCache = { access_token: null, expires_at: 0 };
+
+// LinkedIn (OAuth2 Bearer)
+const LINKEDIN_ACCESS_TOKEN = process.env.LINKEDIN_ACCESS_TOKEN;
+const LINKEDIN_PERSON_URN = process.env.LINKEDIN_PERSON_URN; // e.g. "urn:li:person:abc123"
+
+// Mastodon (Bearer token, any instance)
+const MASTODON_ACCESS_TOKEN = process.env.MASTODON_ACCESS_TOKEN;
+const MASTODON_INSTANCE_URL = process.env.MASTODON_INSTANCE_URL || 'https://mastodon.social';
 
 // Token store: DB-backed with in-memory cache
 let _pool = null;
@@ -1054,6 +1077,420 @@ router.delete('/wechat/draft/:mediaId', async (req, res) => {
 });
 
 // ============================================
+// TUMBLR (API v2) — Global social blogging platform
+// Auth: OAuth 1.0a | Content: NPF (Neue Post Format) / HTML
+// ============================================
+
+function requireTumblr(res) {
+    if (!TUMBLR_CONSUMER_KEY || !TUMBLR_ACCESS_TOKEN) {
+        res.status(501).json({ error: 'Tumblr not configured (TUMBLR_CONSUMER_KEY, TUMBLR_ACCESS_TOKEN missing)' });
+        return false;
+    }
+    return true;
+}
+
+function getTumblrOAuth() {
+    return OAuth({
+        consumer: { key: TUMBLR_CONSUMER_KEY, secret: TUMBLR_CONSUMER_SECRET },
+        signature_method: 'HMAC-SHA1',
+        hash_function(base_string, key) {
+            return crypto.createHmac('sha1', key).update(base_string).digest('base64');
+        }
+    });
+}
+
+async function tumblrRequest(method, path, body = null) {
+    const url = `${TUMBLR_API_BASE}${path}`;
+    const oauth = getTumblrOAuth();
+    const token = { key: TUMBLR_ACCESS_TOKEN, secret: TUMBLR_ACCESS_TOKEN_SECRET };
+    const authHeader = oauth.toHeader(oauth.authorize({ url, method }, token));
+
+    const options = {
+        method,
+        headers: { ...authHeader, 'Content-Type': 'application/json' }
+    };
+    if (body) options.body = JSON.stringify(body);
+
+    const res = await fetch(url, options);
+    const data = await res.json();
+    if (!res.ok) {
+        const err = new Error(data.meta?.msg || data.errors?.[0]?.detail || `HTTP ${res.status}`);
+        err.status = res.status;
+        throw err;
+    }
+    return data.response;
+}
+
+// GET /api/publisher/tumblr/me — Get user info + blogs
+router.get('/tumblr/me', async (req, res) => {
+    if (!requireTumblr(res)) return;
+    try {
+        const data = await tumblrRequest('GET', '/user/info');
+        const user = data.user;
+        res.json({
+            success: true,
+            user: { name: user.name, blogs: user.blogs.map(b => ({ name: b.name, url: b.url, title: b.title })) }
+        });
+    } catch (err) {
+        res.status(err.status || 500).json({ error: err.message });
+    }
+});
+
+// POST /api/publisher/tumblr/publish
+router.post('/tumblr/publish', express.json(), async (req, res) => {
+    if (!requireTumblr(res)) return;
+    const { blogName, title, content, tags, state } = req.body;
+    if (!blogName || !content) return res.status(400).json({ error: 'blogName, content required' });
+
+    try {
+        // Use NPF (Neue Post Format)
+        const postBody = {
+            content: [{ type: 'text', text: content, formatting: [] }],
+            state: state || 'published',
+            tags: tags ? tags.join(',') : ''
+        };
+        if (title) {
+            // Prepend title as heading block
+            postBody.content.unshift({ type: 'text', subtype: 'heading1', text: title });
+        }
+
+        const data = await tumblrRequest('POST', `/blog/${blogName}/posts`, postBody);
+        console.log(`[Publisher] Tumblr post created: ${data.id} on ${blogName}`);
+        res.json({
+            success: true, platform: 'tumblr', postId: String(data.id),
+            url: `https://${blogName}.tumblr.com/post/${data.id}`, blogName
+        });
+    } catch (err) {
+        console.error('[Publisher] Tumblr publish error:', err);
+        res.status(err.status || 500).json({ error: err.message });
+    }
+});
+
+// DELETE /api/publisher/tumblr/post/:postId
+router.delete('/tumblr/post/:postId', async (req, res) => {
+    if (!requireTumblr(res)) return;
+    const { postId } = req.params;
+    const { blogName } = req.query;
+    if (!blogName) return res.status(400).json({ error: 'blogName query param required' });
+
+    try {
+        await tumblrRequest('DELETE', `/blog/${blogName}/post/delete`, { id: postId });
+        console.log(`[Publisher] Tumblr post deleted: ${postId}`);
+        res.json({ success: true, platform: 'tumblr', deleted: postId });
+    } catch (err) {
+        console.error('[Publisher] Tumblr delete error:', err);
+        res.status(err.status || 500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// REDDIT (OAuth2 script app) — Global discussion platform
+// Auth: OAuth2 password grant | Content: text/link
+// ============================================
+
+function requireReddit(res) {
+    if (!REDDIT_CLIENT_ID || !REDDIT_CLIENT_SECRET || !REDDIT_USERNAME || !REDDIT_PASSWORD) {
+        res.status(501).json({ error: 'Reddit not configured (REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USERNAME, REDDIT_PASSWORD missing)' });
+        return false;
+    }
+    return true;
+}
+
+async function getRedditToken() {
+    if (redditTokenCache.access_token && redditTokenCache.expires_at > Date.now() + 60000) {
+        return redditTokenCache.access_token;
+    }
+    const auth = Buffer.from(`${REDDIT_CLIENT_ID}:${REDDIT_CLIENT_SECRET}`).toString('base64');
+    const res = await fetch('https://www.reddit.com/api/v1/access_token', {
+        method: 'POST',
+        headers: {
+            Authorization: `Basic ${auth}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': 'EClaw:v1.0 (by /u/' + REDDIT_USERNAME + ')'
+        },
+        body: new URLSearchParams({
+            grant_type: 'password',
+            username: REDDIT_USERNAME,
+            password: REDDIT_PASSWORD
+        })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(`Reddit auth: ${data.error}`);
+    redditTokenCache = {
+        access_token: data.access_token,
+        expires_at: Date.now() + (data.expires_in * 1000)
+    };
+    return data.access_token;
+}
+
+async function redditRequest(method, path, body = null) {
+    const token = await getRedditToken();
+    const options = {
+        method,
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': 'EClaw:v1.0 (by /u/' + REDDIT_USERNAME + ')'
+        }
+    };
+    if (body) options.body = new URLSearchParams(body);
+    const res = await fetch(`https://oauth.reddit.com${path}`, options);
+    const data = await res.json();
+    if (!res.ok && !data.json) {
+        const err = new Error(data.message || `HTTP ${res.status}`);
+        err.status = res.status;
+        throw err;
+    }
+    return data;
+}
+
+// GET /api/publisher/reddit/me
+router.get('/reddit/me', async (req, res) => {
+    if (!requireReddit(res)) return;
+    try {
+        const token = await getRedditToken();
+        const meRes = await fetch('https://oauth.reddit.com/api/v1/me', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'User-Agent': 'EClaw:v1.0 (by /u/' + REDDIT_USERNAME + ')'
+            }
+        });
+        const data = await meRes.json();
+        res.json({ success: true, user: { name: data.name, id: data.id, link_karma: data.link_karma, comment_karma: data.comment_karma } });
+    } catch (err) {
+        res.status(err.status || 500).json({ error: err.message });
+    }
+});
+
+// POST /api/publisher/reddit/submit — Submit a text or link post
+router.post('/reddit/submit', express.json(), async (req, res) => {
+    if (!requireReddit(res)) return;
+    const { subreddit, title, text, url: linkUrl, kind } = req.body;
+    if (!subreddit || !title) return res.status(400).json({ error: 'subreddit, title required' });
+
+    try {
+        const postBody = {
+            sr: subreddit,
+            title,
+            kind: kind || (linkUrl ? 'link' : 'self'),
+            api_type: 'json'
+        };
+        if (linkUrl) postBody.url = linkUrl;
+        if (text) postBody.text = text;
+
+        const data = await redditRequest('POST', '/api/submit', postBody);
+        const result = data.json?.data;
+        if (data.json?.errors?.length > 0) {
+            return res.status(400).json({ error: data.json.errors.map(e => e.join(': ')).join('; ') });
+        }
+        console.log(`[Publisher] Reddit post submitted to r/${subreddit}: ${result?.id}`);
+        res.json({
+            success: true, platform: 'reddit', postId: result?.id,
+            url: result?.url, subreddit, title
+        });
+    } catch (err) {
+        console.error('[Publisher] Reddit submit error:', err);
+        res.status(err.status || 500).json({ error: err.message });
+    }
+});
+
+// DELETE /api/publisher/reddit/post/:postId — Delete (requires fullname t3_id)
+router.delete('/reddit/post/:postId', async (req, res) => {
+    if (!requireReddit(res)) return;
+    const { postId } = req.params;
+    try {
+        const fullname = postId.startsWith('t3_') ? postId : `t3_${postId}`;
+        await redditRequest('POST', '/api/del', { id: fullname });
+        console.log(`[Publisher] Reddit post deleted: ${postId}`);
+        res.json({ success: true, platform: 'reddit', deleted: postId });
+    } catch (err) {
+        console.error('[Publisher] Reddit delete error:', err);
+        res.status(err.status || 500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// LINKEDIN (Posts API) — Professional publishing
+// Auth: Bearer token | Content: text/article
+// ============================================
+
+function requireLinkedin(res) {
+    if (!LINKEDIN_ACCESS_TOKEN || !LINKEDIN_PERSON_URN) {
+        res.status(501).json({ error: 'LinkedIn not configured (LINKEDIN_ACCESS_TOKEN, LINKEDIN_PERSON_URN missing)' });
+        return false;
+    }
+    return true;
+}
+
+async function linkedinRequest(method, path, body = null) {
+    const options = {
+        method,
+        headers: {
+            Authorization: `Bearer ${LINKEDIN_ACCESS_TOKEN}`,
+            'Content-Type': 'application/json',
+            'X-Restli-Protocol-Version': '2.0.0',
+            'LinkedIn-Version': '202501'
+        }
+    };
+    if (body) options.body = JSON.stringify(body);
+    const res = await fetch(`https://api.linkedin.com${path}`, options);
+    if (res.status === 204) return null;
+    const data = await res.json();
+    if (!res.ok) {
+        const err = new Error(data.message || data.serviceErrorCode || `HTTP ${res.status}`);
+        err.status = res.status;
+        throw err;
+    }
+    return data;
+}
+
+// GET /api/publisher/linkedin/me
+router.get('/linkedin/me', async (req, res) => {
+    if (!requireLinkedin(res)) return;
+    try {
+        const data = await linkedinRequest('GET', '/v2/userinfo');
+        res.json({ success: true, user: { sub: data.sub, name: data.name, email: data.email, picture: data.picture } });
+    } catch (err) {
+        res.status(err.status || 500).json({ error: err.message });
+    }
+});
+
+// POST /api/publisher/linkedin/publish — Create a post (text or article)
+router.post('/linkedin/publish', express.json(), async (req, res) => {
+    if (!requireLinkedin(res)) return;
+    const { text, articleUrl, articleTitle, articleDescription, visibility } = req.body;
+    if (!text) return res.status(400).json({ error: 'text required' });
+
+    try {
+        const postBody = {
+            author: LINKEDIN_PERSON_URN,
+            commentary: text,
+            visibility: visibility || 'PUBLIC',
+            distribution: { feedDistribution: 'MAIN_FEED', targetEntities: [], thirdPartyDistributionChannels: [] },
+            lifecycleState: 'PUBLISHED'
+        };
+
+        // If article URL provided, add as article content
+        if (articleUrl) {
+            postBody.content = {
+                article: {
+                    source: articleUrl,
+                    title: articleTitle || '',
+                    description: articleDescription || ''
+                }
+            };
+        }
+
+        const data = await linkedinRequest('POST', '/rest/posts', postBody);
+        // LinkedIn returns 201 with x-restli-id header for the post URN
+        console.log(`[Publisher] LinkedIn post created`);
+        res.json({ success: true, platform: 'linkedin', postId: data?.id || 'created' });
+    } catch (err) {
+        console.error('[Publisher] LinkedIn publish error:', err);
+        res.status(err.status || 500).json({ error: err.message });
+    }
+});
+
+// DELETE /api/publisher/linkedin/post/:postUrn — Delete a post
+router.delete('/linkedin/post/:postUrn', async (req, res) => {
+    if (!requireLinkedin(res)) return;
+    const { postUrn } = req.params;
+    try {
+        await linkedinRequest('DELETE', `/rest/posts/${encodeURIComponent(postUrn)}`);
+        console.log(`[Publisher] LinkedIn post deleted: ${postUrn}`);
+        res.json({ success: true, platform: 'linkedin', deleted: postUrn });
+    } catch (err) {
+        console.error('[Publisher] LinkedIn delete error:', err);
+        res.status(err.status || 500).json({ error: err.message });
+    }
+});
+
+// ============================================
+// MASTODON (API v1) — Decentralized social / Fediverse
+// Auth: Bearer token | Content: text (500 chars default, varies by instance)
+// ============================================
+
+function requireMastodon(res) {
+    if (!MASTODON_ACCESS_TOKEN) {
+        res.status(501).json({ error: 'Mastodon not configured (MASTODON_ACCESS_TOKEN missing)' });
+        return false;
+    }
+    return true;
+}
+
+async function mastodonRequest(method, path, body = null) {
+    const options = {
+        method,
+        headers: {
+            Authorization: `Bearer ${MASTODON_ACCESS_TOKEN}`,
+            'Content-Type': 'application/json'
+        }
+    };
+    if (body) options.body = JSON.stringify(body);
+    const res = await fetch(`${MASTODON_INSTANCE_URL}${path}`, options);
+    if (res.status === 204) return null;
+    const data = await res.json();
+    if (!res.ok) {
+        const err = new Error(data.error || `HTTP ${res.status}`);
+        err.status = res.status;
+        throw err;
+    }
+    return data;
+}
+
+// GET /api/publisher/mastodon/me
+router.get('/mastodon/me', async (req, res) => {
+    if (!requireMastodon(res)) return;
+    try {
+        const data = await mastodonRequest('GET', '/api/v1/accounts/verify_credentials');
+        res.json({
+            success: true,
+            user: { id: data.id, username: data.username, display_name: data.display_name, url: data.url, instance: MASTODON_INSTANCE_URL }
+        });
+    } catch (err) {
+        res.status(err.status || 500).json({ error: err.message });
+    }
+});
+
+// POST /api/publisher/mastodon/publish — Post a status (toot)
+router.post('/mastodon/publish', express.json(), async (req, res) => {
+    if (!requireMastodon(res)) return;
+    const { status, visibility, language, scheduled_at, in_reply_to_id } = req.body;
+    if (!status) return res.status(400).json({ error: 'status required' });
+
+    try {
+        const postBody = { status, visibility: visibility || 'public' };
+        if (language) postBody.language = language;
+        if (scheduled_at) postBody.scheduled_at = scheduled_at;
+        if (in_reply_to_id) postBody.in_reply_to_id = in_reply_to_id;
+
+        const data = await mastodonRequest('POST', '/api/v1/statuses', postBody);
+        console.log(`[Publisher] Mastodon status posted: ${data.id} on ${MASTODON_INSTANCE_URL}`);
+        res.json({
+            success: true, platform: 'mastodon', postId: data.id,
+            url: data.url, instance: MASTODON_INSTANCE_URL
+        });
+    } catch (err) {
+        console.error('[Publisher] Mastodon publish error:', err);
+        res.status(err.status || 500).json({ error: err.message });
+    }
+});
+
+// DELETE /api/publisher/mastodon/post/:postId
+router.delete('/mastodon/post/:postId', async (req, res) => {
+    if (!requireMastodon(res)) return;
+    const { postId } = req.params;
+    try {
+        await mastodonRequest('DELETE', `/api/v1/statuses/${postId}`);
+        console.log(`[Publisher] Mastodon status deleted: ${postId}`);
+        res.json({ success: true, platform: 'mastodon', deleted: postId });
+    } catch (err) {
+        console.error('[Publisher] Mastodon delete error:', err);
+        res.status(err.status || 500).json({ error: err.message });
+    }
+});
+
+// ============================================
 // UNIFIED PLATFORMS LISTING
 // ============================================
 
@@ -1070,11 +1507,19 @@ router.get('/platforms', (req, res) => {
         { id: 'wordpress', name: 'WordPress.com', region: 'global', authType: 'bearer', contentFormat: 'html',
           configured: !!WORDPRESS_ACCESS_TOKEN },
         { id: 'telegraph', name: 'Telegraph', region: 'global', authType: 'auto', contentFormat: 'html',
-          configured: true },  // Telegraph always works — auto-creates account
+          configured: true },
         { id: 'qiita', name: 'Qiita', region: 'ja', authType: 'bearer', contentFormat: 'markdown',
           configured: !!QIITA_ACCESS_TOKEN },
         { id: 'wechat', name: 'WeChat Official Account', region: 'zh-CN', authType: 'app_credentials', contentFormat: 'html',
-          configured: !!(WECHAT_APP_ID && WECHAT_APP_SECRET), draftsOnly: true }
+          configured: !!(WECHAT_APP_ID && WECHAT_APP_SECRET), draftsOnly: true },
+        { id: 'tumblr', name: 'Tumblr', region: 'global', authType: 'oauth1a', contentFormat: 'npf',
+          configured: !!(TUMBLR_CONSUMER_KEY && TUMBLR_ACCESS_TOKEN) },
+        { id: 'reddit', name: 'Reddit', region: 'global', authType: 'oauth2_password', contentFormat: 'text',
+          configured: !!(REDDIT_CLIENT_ID && REDDIT_USERNAME) },
+        { id: 'linkedin', name: 'LinkedIn', region: 'global', authType: 'bearer', contentFormat: 'text',
+          configured: !!(LINKEDIN_ACCESS_TOKEN && LINKEDIN_PERSON_URN) },
+        { id: 'mastodon', name: 'Mastodon', region: 'global', authType: 'bearer', contentFormat: 'text',
+          configured: !!MASTODON_ACCESS_TOKEN, instance: MASTODON_INSTANCE_URL }
     ];
     res.json({ success: true, platforms });
 });

@@ -31,10 +31,10 @@ async function run() {
         assert(status === 200, 'GET /platforms returns 200');
         assert(data.success === true, 'Response has success: true');
         assert(Array.isArray(data.platforms), 'platforms is array');
-        assert(data.platforms.length === 8, `8 platforms listed (got ${data.platforms.length})`);
+        assert(data.platforms.length === 12, `12 platforms listed (got ${data.platforms.length})`);
 
         const ids = data.platforms.map(p => p.id);
-        for (const expected of ['blogger', 'hashnode', 'x', 'devto', 'wordpress', 'telegraph', 'qiita', 'wechat']) {
+        for (const expected of ['blogger', 'hashnode', 'x', 'devto', 'wordpress', 'telegraph', 'qiita', 'wechat', 'tumblr', 'reddit', 'linkedin', 'mastodon']) {
             assert(ids.includes(expected), `Platform "${expected}" present`);
         }
 
@@ -106,6 +106,46 @@ async function run() {
     {
         const { status } = await api('POST', '/wechat/draft', {});
         assert(status === 400 || status === 501, `WeChat empty body → ${status}`);
+    }
+
+    // ── Tumblr validation ──
+    console.log('\n── Tumblr validation ──');
+    {
+        const { status } = await api('POST', '/tumblr/publish', { blogName: 'test' });
+        assert(status === 400 || status === 501, `Tumblr without content → ${status}`);
+    }
+    {
+        const { status } = await api('POST', '/tumblr/publish', {});
+        assert(status === 400 || status === 501, `Tumblr empty body → ${status}`);
+    }
+    {
+        const { status } = await api('DELETE', '/tumblr/post/123');
+        assert(status === 400 || status === 501, `Tumblr delete without blogName → ${status}`);
+    }
+
+    // ── Reddit validation ──
+    console.log('\n── Reddit validation ──');
+    {
+        const { status } = await api('POST', '/reddit/submit', { subreddit: 'test' });
+        assert(status === 400 || status === 501, `Reddit without title → ${status}`);
+    }
+    {
+        const { status } = await api('POST', '/reddit/submit', {});
+        assert(status === 400 || status === 501, `Reddit empty body → ${status}`);
+    }
+
+    // ── LinkedIn validation ──
+    console.log('\n── LinkedIn validation ──');
+    {
+        const { status } = await api('POST', '/linkedin/publish', {});
+        assert(status === 400 || status === 501, `LinkedIn without text → ${status}`);
+    }
+
+    // ── Mastodon validation ──
+    console.log('\n── Mastodon validation ──');
+    {
+        const { status } = await api('POST', '/mastodon/publish', {});
+        assert(status === 400 || status === 501, `Mastodon without status → ${status}`);
     }
 
     // ── Summary ──
