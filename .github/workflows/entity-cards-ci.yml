@@ -4,6 +4,7 @@ name: Entity Cards Stability CI
 # Triggered on PRs and pushes that touch entity-related code.
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
