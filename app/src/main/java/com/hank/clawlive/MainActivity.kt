@@ -119,9 +119,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var itemTouchHelper: ItemTouchHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        android.util.Log.d("DEBUG_BLACKSCREEN", "=== MainActivity.onCreate() START ===")
+        android.util.Log.d("DEBUG_BLACKSCREEN", "=== MainActivity.onCreate() START === PID=${android.os.Process.myPid()}")
         super.onCreate(savedInstanceState)
         android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] super.onCreate() done")
+        // DEBUG: Show Toast to confirm Activity is alive and rendering
+        Toast.makeText(this, "DEBUG: MainActivity alive PID=${android.os.Process.myPid()}", Toast.LENGTH_LONG).show()
 
         // Initialize telemetry (safe to call multiple times)
         TelemetryHelper.init(this)
@@ -150,6 +152,9 @@ class MainActivity : AppCompatActivity() {
         android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] About to setContentView(activity_main)")
         setContentView(R.layout.activity_main)
         android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] setContentView() done")
+        // DEBUG: Set bright red background to test if rendering works
+        findViewById<View>(android.R.id.content).setBackgroundColor(Color.RED)
+        android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] DEBUG RED BACKGROUND SET")
 
         android.util.Log.d("DEBUG_BLACKSCREEN", "[Main] About to setup BottomNavHelper")
         BottomNavHelper.setup(this, NavItem.HOME)

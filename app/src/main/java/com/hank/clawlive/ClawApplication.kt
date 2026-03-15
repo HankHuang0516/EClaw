@@ -18,7 +18,7 @@ class ClawApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        android.util.Log.d("DEBUG_BLACKSCREEN", "=== ClawApplication.onCreate() START ===")
+        android.util.Log.d("DEBUG_BLACKSCREEN", "=== ClawApplication.onCreate() START === PID=${android.os.Process.myPid()}")
 
         // 1. Plant Timber trees FIRST
         if (BuildConfig.DEBUG) {
