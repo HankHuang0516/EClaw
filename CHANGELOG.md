@@ -1,3 +1,10 @@
+## [1.8.2](https://github.com/HankHuang0516/EClaw/compare/v1.8.1...v1.8.2) (2026-03-15)
+
+
+### Bug Fixes
+
+* **android:** remove yellow diagnostic background after confirming black screen was emulator data corruption ([9c25fe4](https://github.com/HankHuang0516/EClaw/commit/9c25fe46f5edfa4bff73dd07326176b678dc062d))
+
 ## [1.8.1](https://github.com/HankHuang0516/EClaw/compare/v1.8.0...v1.8.1) (2026-03-15)
 
 
