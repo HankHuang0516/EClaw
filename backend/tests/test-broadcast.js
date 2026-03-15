@@ -134,14 +134,30 @@ async function main() {
   // ────────────────────────────────────────────────────
   console.log('--- Phase 2: Register + bind test entities ---');
 
-  // Find available slots (not already bound)
-  const availableSlots = [];
-  for (let i = 0; i < 4; i++) {
-    if (!existingIds.has(i)) availableSlots.push(i);
-  }
+  // Dynamic entity system: find unbound entity IDs or create new slots
+  const allEntityIds = entitiesRes.entityIds || [];
+  const unboundIds = allEntityIds.filter(id => !existingIds.has(id));
+  console.log(`  All entity IDs on device: [${allEntityIds.join(', ')}]`);
+  console.log(`  Unbound entity IDs: [${unboundIds.join(', ')}]`);
 
-  const slotsToUse = availableSlots.slice(0, numExtras);
-  console.log(`  Available slots: [${availableSlots.join(', ')}], will use: [${slotsToUse.join(', ')}]`);
+  // Use existing unbound slots first, then add-entity for more
+  const slotsToUse = unboundIds.slice(0, numExtras);
+  const extraNeeded = numExtras - slotsToUse.length;
+  for (let i = 0; i < extraNeeded; i++) {
+    try {
+      const addRes = await postJSON(`${API_BASE}/api/device/add-entity`, {
+        deviceId,
+        deviceSecret,
+      });
+      if (addRes.success) {
+        slotsToUse.push(addRes.entityId);
+        console.log(`  [DynamicEntity] Created new entity slot: ${addRes.entityId}`);
+      }
+    } catch (err) {
+      console.log(`  [DynamicEntity] Failed to add entity: ${err.message}`);
+    }
+  }
+  console.log(`  Slots to use for test: [${slotsToUse.join(', ')}]`);
 
   for (const slot of slotsToUse) {
     try {

@@ -140,16 +140,26 @@ async function main() {
         check('Fetch all entities', allEntities.success !== false,
             `got ${allEntities.entities?.length || 0} entities`);
 
-        // Find 2 free (unbound) slots
-        const freeSlots = [];
-        for (let i = 0; i < 4; i++) {
-            const e = allEntities.entities?.find(e => e.entityId === i);
-            if (!e || !e.isBound) freeSlots.push(i);
-            if (freeSlots.length >= 2) break;
+        // Dynamic entity system: find unbound slots or create new ones
+        const allEntityIds = allEntities.entityIds || [];
+        const boundIds = new Set((allEntities.entities || []).filter(e => e.isBound).map(e => e.entityId));
+        const freeSlots = allEntityIds.filter(id => !boundIds.has(id)).slice(0, 2);
+
+        // If not enough free slots, add new entities
+        while (freeSlots.length < 2) {
+            const addRes = await postJSON(`${API_BASE}/api/device/add-entity`, {
+                deviceId, deviceSecret,
+            });
+            if (addRes.success) {
+                freeSlots.push(addRes.entityId);
+                console.log(`  [DynamicEntity] Created new entity slot: ${addRes.entityId}`);
+            } else {
+                break;
+            }
         }
 
         if (freeSlots.length < 2) {
-            console.error('  Need at least 2 free entity slots. Unbind some entities first.');
+            console.error('  Need at least 2 free entity slots. Could not create enough.');
             printSummary();
             process.exit(1);
         }
@@ -209,9 +219,17 @@ async function main() {
 
         console.log(`  Swapping slot ${slotA} (code: ${codeA}) ↔ slot ${slotB} (code: ${codeB})`);
 
-        const order = [0, 1, 2, 3];
-        order[slotA] = slotB;
-        order[slotB] = slotA;
+        // Build reorder permutation: fetch current entity IDs, swap only slotA and slotB
+        const preReorder = await fetchJSON(`${API_BASE}/api/entities?deviceId=${deviceId}`);
+        const currentIds = preReorder.entityIds || [];
+        const order = [...currentIds];
+        const idxA = order.indexOf(slotA);
+        const idxB = order.indexOf(slotB);
+        if (idxA >= 0 && idxB >= 0) {
+            order[idxA] = slotB;
+            order[idxB] = slotA;
+        }
+        console.log(`  Reorder: [${currentIds.join(',')}] → [${order.join(',')}]`);
 
         const reorderRes = await postRaw(`${API_BASE}/api/device/reorder-entities`, {
             deviceId, deviceSecret, order
