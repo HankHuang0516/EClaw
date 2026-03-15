@@ -1,3 +1,10 @@
+## [1.95.1](https://github.com/HankHuang0516/EClaw/compare/v1.95.0...v1.95.1) (2026-03-15)
+
+
+### Bug Fixes
+
+* harden release workflow publisher API calls with real values ([7c2ff9f](https://github.com/HankHuang0516/EClaw/commit/7c2ff9f0db541cce0962989757308ad8048c1918))
+
 # [1.95.0](https://github.com/HankHuang0516/EClaw/compare/v1.94.1...v1.95.0) (2026-03-15)
 
 
