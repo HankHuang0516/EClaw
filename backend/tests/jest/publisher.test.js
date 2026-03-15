@@ -162,6 +162,59 @@ afterAll(async () => {
 });
 
 // ════════════════════════════════════════════════════════════════
+// Publisher Auth (X-Publisher-Key)
+// ════════════════════════════════════════════════════════════════
+describe('Publisher API auth (X-Publisher-Key)', () => {
+    const origKey = process.env.PUBLISHER_API_KEY;
+
+    afterEach(() => {
+        if (origKey) process.env.PUBLISHER_API_KEY = origKey;
+        else delete process.env.PUBLISHER_API_KEY;
+    });
+
+    it('allows requests when PUBLISHER_API_KEY is not set', async () => {
+        delete process.env.PUBLISHER_API_KEY;
+        const res = await request(app).get('/api/publisher/platforms');
+        expect(res.status).toBe(200);
+    });
+
+    it('rejects publish requests with wrong key when PUBLISHER_API_KEY is set', async () => {
+        process.env.PUBLISHER_API_KEY = 'test-secret-key';
+        const res = await request(app)
+            .post('/api/publisher/telegraph/publish')
+            .set('X-Publisher-Key', 'wrong-key')
+            .send({ title: 'Test', content: '<p>test</p>' });
+        expect(res.status).toBe(401);
+        expect(res.body.error).toMatch(/X-Publisher-Key/);
+    });
+
+    it('rejects publish requests with no key when PUBLISHER_API_KEY is set', async () => {
+        process.env.PUBLISHER_API_KEY = 'test-secret-key';
+        const res = await request(app)
+            .post('/api/publisher/telegraph/publish')
+            .send({ title: 'Test', content: '<p>test</p>' });
+        expect(res.status).toBe(401);
+    });
+
+    it('allows requests with correct key', async () => {
+        process.env.PUBLISHER_API_KEY = 'test-secret-key';
+        const res = await request(app)
+            .post('/api/publisher/telegraph/publish')
+            .set('X-Publisher-Key', 'test-secret-key')
+            .send({ title: 'Test' });
+        // Should pass auth and hit validation (400) not auth rejection (401)
+        expect(res.status).toBe(400);
+    });
+
+    it('GET /platforms is always public even when PUBLISHER_API_KEY is set', async () => {
+        process.env.PUBLISHER_API_KEY = 'test-secret-key';
+        const res = await request(app).get('/api/publisher/platforms');
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
 // GET /api/publisher/platforms
 // ════════════════════════════════════════════════════════════════
 describe('GET /api/publisher/platforms', () => {
