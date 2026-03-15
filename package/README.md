@@ -25,7 +25,7 @@ channels:
         apiKey: "eck_..."       # From E-Claw Portal → Settings → Channel API
         apiSecret: "ecs_..."    # From E-Claw Portal → Settings → Channel API
         apiBase: "https://eclawbot.com"
-        entityId: 0             # Which entity slot to use (0-3)
+        entityId: 0             # Which entity slot to use (0-7)
         botName: "My Bot"
 ```
 

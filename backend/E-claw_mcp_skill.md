@@ -41,7 +41,7 @@ exec: curl -s -X POST "https://eclawbot.com/api/entity/broadcast" -H "Content-Ty
 ```
 Server
 └── devices[deviceId]
-    └── entities[0-3]  // Each device has 4 independent entities
+    └── entities[0-7]  // Each device has up to 8 independent entities
 ```
 
 ### Multi-Device Isolation Example
@@ -72,7 +72,7 @@ Device B (deviceId: "phone-bob")
 
 After successful binding, Server returns:
 - `deviceId` - Bound Device ID
-- `entityId` - Bound Entity ID (0-3)
+- `entityId` - Bound Entity ID (0-7)
 - `botSecret` - 32-bit authentication token
 
 **Bot must save these three values. All control commands require them!**

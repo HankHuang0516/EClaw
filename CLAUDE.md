@@ -7,6 +7,7 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
+- **Current version**: 1.2.2 (via semantic-release; `package.json` stays 1.0.0 placeholder)
 
 ---
 
@@ -15,7 +16,7 @@
 ```
 EClaw/
 ├── backend/                  # Node.js Express server (deployed to Railway)
-│   ├── index.js              # Main server (~10,300 lines) — all API routes
+│   ├── index.js              # Main server (~10,500 lines) — all API routes
 │   ├── db.js                 # PostgreSQL connection pool + schema creation
 │   ├── auth.js               # Auth module (JWT, OAuth, OIDC, RBAC)
 │   ├── mission.js            # Mission Control dashboard system
@@ -72,8 +73,8 @@ EClaw/
 │   │   │   └── i18n.js            # Internationalization
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
-│   ├── tests/                # Regression + integration tests (50+ files)
-│   ├── test/                 # Jest unit tests
+│   ├── tests/                # Regression + integration tests (57 files)
+│   ├── tests/jest/           # Jest unit tests (6 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -133,7 +134,7 @@ EClaw/
 
 ### Backend (Node.js/Express)
 
-- **Single-file server**: `backend/index.js` (~10,300 lines) contains all API routes
+- **Single-file server**: `backend/index.js` (~10,500 lines) contains all API routes
 - **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
 - **Real-time**: Socket.IO for live updates to Web Portal and Android app
 - **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
@@ -430,6 +431,33 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **OAuth OIDC (#175)**: Generic OIDC provider via env vars (`OIDC_PROVIDER_<NAME>_ISSUER/CLIENT_ID/CLIENT_SECRET`); discovery + code exchange at `POST /api/auth/oauth/oidc`; `GET /api/auth/oauth/providers` lists all configured providers
 - **RBAC (#178)**: `roles` + `user_roles` PostgreSQL tables; 4 default roles (admin/developer/operator/viewer); `requirePermission()` middleware exported from `auth.js`; `GET/POST/DELETE /api/auth/roles` and `/api/auth/user-roles` endpoints
 
+### Recent Features (v1.2.x)
+
+- **Discord Webhook Support**: Auto-detects Discord webhook URLs in `POST /api/bot/register`; supports rich embeds, buttons, select menus via `discordOptions` field; handles rate limiting (429) and 2000-char content limit
+- **requiredVars Validation**: `POST /api/skill-templates/contribute` validates `requiredVars` format — must be `KEY=value` or `KEY=` (Gson-compatible for Android deserialization); rejects `key: value` YAML-style or bare `KEY` entries
+- **Agent Card UI (#203)**: Three-platform Agent Card CRUD (Web Portal, Android, iOS) with field validation and lookup integration
+- **A2A Protocol (#187)**: `/.well-known/agent.json` endpoint, `POST /api/a2a/tasks/send` for inter-agent task dispatch
+- **OAuth 2.0 Server (#189)**: `client_credentials` grant, token introspection, client registration at `/api/oauth/*`
+- **gRPC Transport (#191)**: `backend/grpc-server.js` + `backend/proto/eclaw.proto`, HealthService for load balancer probes
+
+---
+
+## Test Coverage Summary
+
+**238 total API routes** across all modules, **~45% covered** (~107 routes tested).
+
+| Module | Coverage | Notes |
+|--------|----------|-------|
+| OAuth Server | 100% (8/8) | Full lifecycle tested |
+| A2A Compat | 100% (6/6) | |
+| Channel API | 100% (3/3) | |
+| Mission | 54% (14/26) | Missing: reorder, move, archive |
+| Core API (index.js) | ~50% (70/139) | Largest gap area |
+| Auth | 21% (5/24) | Critical gap — OIDC, social OAuth, RBAC endpoints |
+| Article Publisher | 0% (0/11) | No coverage at all |
+
+Full analysis: `docs/reports/2026-03-14-test-coverage-analysis.md`
+
 ---
 
 ## Regression Tests
@@ -468,10 +496,21 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Discord Webhook | `node backend/tests/test-discord-webhook.js` | Device ID + Secret | Discord webhook URL detection, registration, rich messages, content limits |
 | Agent Card UI | `node backend/tests/test-agent-card-ui.js` | Device ID + Secret | Agent Card CRUD lifecycle, field validation, three-platform API parity |
 
+### Jest Unit Tests (CI-run, `npm test`)
+
+| Test | File | Description |
+|------|------|-------------|
+| Health & Version | `tests/jest/health.test.js` | GET /api/health, /api/version, root redirect |
+| Input Validation | `tests/jest/validation.test.js` | POST /api/bind, /api/bot/sync-message, /api/transform — missing fields |
+| Gatekeeper Security | `tests/jest/gatekeeper.test.js` | First Lock (malicious message detection), Second Lock (leak masking), TOS, strike system |
+| Auth Validation | `tests/jest/auth.test.js` | POST register/login/logout, GET /me, OAuth providers — input validation |
+| Mutation Validation | `tests/jest/mutations.test.js` | POST client/speak, speak-to, broadcast, device/register, feedback, chat/history, GET entities/status/logs |
+| Admin Authorization | `tests/jest/admin-auth.test.js` | Admin endpoints reject unauthenticated + non-admin users, audit-logs auth |
+
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests only
+cd backend && npm test                  # Jest unit tests (6 files)
 cd backend && npm run lint              # ESLint
 ```
 
@@ -490,7 +529,7 @@ Set in `backend/.env` (gitignored):
 - `server_logs` schema extension is backward-compatible — all existing 67+ `serverLog()` calls work without modification (new fields default to null)
 - Entity unbind calls `createDefaultEntity()` which resets all fields including new ones — no separate cleanup needed
 - `const` redeclaration in same scope is a JS error — check existing variable names before adding new ones (e.g., `adminAuth` already declared at line 1198)
-- `index.js` is a single 10,300-line file — use line numbers when referencing specific code sections
+- `index.js` is a single 10,500-line file — use line numbers when referencing specific code sections
 - Module initialization order matters: `db.js` → `devices` in-memory map → module `require()` calls with dependency injection
 
 ### Gatekeeper System
@@ -508,6 +547,13 @@ Set in `backend/.env` (gitignored):
 - Push → bot usually responds in 30-90 seconds
 - Free bots cannot use `speak-to` (agentToAgent disabled)
 - Skill templates in `backend/data/skill-templates.json`, `eclaw-a2a-toolkit` contains official API docs
+
+### Testing
+- Jest config in `backend/jest.config.js`: `runInBand: true` (Windows compat), `forceExit: true`, `testTimeout: 15000`
+- Jest tests use `supertest` against the Express app directly (no live server needed)
+- Integration tests in `backend/tests/` hit the live production server (`eclawbot.com`)
+- `backend/run_all_tests.js` orchestrates 25 registered integration tests sequentially
+- `requiredVars` in skill templates must be `KEY=value` or `KEY=` format (Gson deserialization constraint)
 
 ### Deployment & Monitoring
 - Railway sits behind Cloudflare CDN — deploy can take 2-5 minutes

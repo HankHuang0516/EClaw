@@ -412,6 +412,34 @@ Google will review your app. Check status in Google Play Console.
 
 ---
 
+## 10. Clean Up Old Release Folders
+
+> [!IMPORTANT]
+> **Delete all `release_v*` folders except the current version to free up disk space.**
+> Run this after both internal testing and production uploads succeed.
+
+// turbo
+```bash
+# List all release folders (to review before deleting)
+ls release_v*/
+
+# Delete all except the current version (replace X.X.XX with current versionName)
+ls -d release_v* | grep -v "release_vX.X.XX" | xargs rm -rf
+```
+
+**Example for v1.0.46:**
+```bash
+ls -d release_v* | grep -v "release_v1.0.46" | xargs rm -rf
+```
+
+**Expected result:** Only `release_v{CURRENT}/` remains in the project root.
+
+> [!NOTE]
+> The AAB is already uploaded to Google Play — local copies are not needed after release.
+> The CHANGELOG.md inside the release folder is committed to git, so it is never lost.
+
+---
+
 ## Troubleshooting (upload_to_play.js)
 
 | Error | Cause | Fix |

@@ -9,6 +9,8 @@ module.exports = {
     runInBand: true,
     // Clear mocks between tests
     clearMocks: true,
+    // Reset module registry between test files to avoid shared state
+    restoreMocks: true,
     // Verbose output for CI readability
     verbose: true,
 };

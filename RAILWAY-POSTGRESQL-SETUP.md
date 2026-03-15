@@ -61,7 +61,7 @@ Persistence: PostgreSQL
 | 欄位 | 類型 | 說明 |
 |------|------|------|
 | device_id | TEXT (PK) | 裝置 ID (外鍵) |
-| entity_id | INTEGER (PK) | 實體 ID (0-3) |
+| entity_id | INTEGER (PK) | 實體 ID (0-7) |
 | bot_secret | TEXT | Bot 金鑰 |
 | is_bound | BOOLEAN | 是否已綁定 |
 | name | TEXT | 實體名稱 |

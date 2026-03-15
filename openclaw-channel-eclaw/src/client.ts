@@ -24,15 +24,27 @@ export class EClawClient {
   }
 
   /** Register callback URL with E-Claw backend */
-  async registerCallback(callbackUrl: string, callbackToken: string): Promise<RegisterResponse> {
+  async registerCallback(
+    callbackUrl: string,
+    callbackToken: string,
+    callbackUsername?: string,
+    callbackPassword?: string,
+  ): Promise<RegisterResponse> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const body: Record<string, any> = {
+      channel_api_key: this.apiKey,
+      callback_url: callbackUrl,
+      callback_token: callbackToken,
+    };
+    if (callbackUsername && callbackPassword) {
+      body.callback_username = callbackUsername;
+      body.callback_password = callbackPassword;
+    }
+
     const res = await fetch(`${this.apiBase}/api/channel/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        channel_api_key: this.apiKey,
-        callback_url: callbackUrl,
-        callback_token: callbackToken,
-      }),
+      body: JSON.stringify(body),
     });
 
     const data = await res.json() as RegisterResponse & { message?: string };

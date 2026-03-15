@@ -90,8 +90,13 @@ export async function startAccount(ctx: any): Promise<void> {
   console.log(`[E-Claw] Webhook registered at: ${callbackUrl}`);
 
   try {
+    // Detect WEB_PASSWORD / SETUP_PASSWORD for Railway Basic Auth
+    const webPassword = process.env.WEB_PASSWORD || process.env.SETUP_PASSWORD;
+    const callbackUsername = webPassword ? 'admin' : undefined;
+    const callbackPassword = webPassword || undefined;
+
     // Register callback with E-Claw backend
-    const regData = await client.registerCallback(callbackUrl, callbackToken);
+    const regData = await client.registerCallback(callbackUrl, callbackToken, callbackUsername, callbackPassword);
     console.log(`[E-Claw] Registered with E-Claw. Device: ${regData.deviceId}, Entities: ${regData.entities.length}`);
 
     // Bind entity via channel API.
