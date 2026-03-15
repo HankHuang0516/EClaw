@@ -142,12 +142,6 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
-        // DIAGNOSTIC: Bright yellow on the root LinearLayout to test rendering.
-        // If you see yellow → rendering works. If black → window/system issue.
-        // TODO: Remove after debugging.
-        (findViewById<android.view.ViewGroup>(android.R.id.content).getChildAt(0))
-            ?.setBackgroundColor(Color.YELLOW)
-
         BottomNavHelper.setup(this, NavItem.HOME)
         AiChatFabHelper.setup(this, "home")
         initViews()
