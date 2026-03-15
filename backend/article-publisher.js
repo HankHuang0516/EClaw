@@ -1174,7 +1174,7 @@ router.delete('/tumblr/post/:postId', async (req, res) => {
     if (!blogName) return res.status(400).json({ error: 'blogName query param required' });
 
     try {
-        await tumblrRequest('DELETE', `/blog/${blogName}/post/delete`, { id: postId });
+        await tumblrRequest('POST', `/blog/${blogName}/post/delete`, { id: postId });
         console.log(`[Publisher] Tumblr post deleted: ${postId}`);
         res.json({ success: true, platform: 'tumblr', deleted: postId });
     } catch (err) {
