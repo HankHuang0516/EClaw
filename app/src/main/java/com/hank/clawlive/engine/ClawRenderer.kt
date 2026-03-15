@@ -393,7 +393,6 @@ class ClawRenderer(private val context: Context) {
         val height = canvas.height.toFloat()
 
         if (multiDrawCount <= 5) {
-            android.util.Log.d("DEBUG_BLACKSCREEN", "[ClawRenderer] drawMultiEntity #$multiDrawCount: canvas=${width}x${height}, entities=${entities.size}, bgImage=${layoutPrefs.useBackgroundImage}")
         }
 
         // Background: draw custom image or solid black
@@ -401,12 +400,10 @@ class ClawRenderer(private val context: Context) {
         if (backgroundBitmap != null) {
             canvas.drawBitmap(backgroundBitmap, 0f, 0f, backgroundPaint)
             if (multiDrawCount <= 3) {
-                android.util.Log.d("DEBUG_BLACKSCREEN", "[ClawRenderer] Drew background image bitmap")
             }
         } else {
             canvas.drawColor(Color.BLACK)
             if (multiDrawCount <= 3) {
-                android.util.Log.d("DEBUG_BLACKSCREEN", "[ClawRenderer] Drew solid BLACK background (no bg image)")
             }
         }
 

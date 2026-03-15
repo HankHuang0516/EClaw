@@ -42,16 +42,13 @@ object SocketManager {
     val controlCommandFlow: SharedFlow<JSONObject> = _controlCommandFlow
 
     fun connect(context: Context) {
-        android.util.Log.d("DEBUG_BLACKSCREEN", "[SocketManager] connect() called, isInitialized=$isInitialized")
         if (isInitialized) return
 
         val dm = DeviceManager.getInstance(context)
         val deviceId = dm.deviceId
         val deviceSecret = dm.deviceSecret
-        android.util.Log.d("DEBUG_BLACKSCREEN", "[SocketManager] deviceId=${deviceId?.take(8)}..., hasSecret=${!deviceSecret.isNullOrEmpty()}")
 
         if (deviceId.isNullOrEmpty() || deviceSecret.isNullOrEmpty()) {
-            android.util.Log.w("DEBUG_BLACKSCREEN", "[SocketManager] No device credentials, skipping connect!")
             Timber.w("[Socket] No device credentials, skipping connect")
             return
         }

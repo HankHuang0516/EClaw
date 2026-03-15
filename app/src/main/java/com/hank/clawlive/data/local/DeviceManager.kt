@@ -14,20 +14,13 @@ class DeviceManager private constructor(context: Context) {
 
     private val appContext = context.applicationContext
 
-    init {
-        android.util.Log.d("DEBUG_BLACKSCREEN", "[DeviceManager] constructor START")
-    }
-
     private val masterKey = MasterKey.Builder(context)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-        .build().also {
-            android.util.Log.d("DEBUG_BLACKSCREEN", "[DeviceManager] MasterKey created")
-        }
+        .build()
 
     private val prefs: SharedPreferences = createEncryptedPrefs(context, masterKey)
 
     private fun createEncryptedPrefs(context: Context, masterKey: MasterKey): SharedPreferences {
-        android.util.Log.d("DEBUG_BLACKSCREEN", "[DeviceManager] createEncryptedPrefs START")
         return try {
             EncryptedSharedPreferences.create(
                 context,
@@ -37,7 +30,6 @@ class DeviceManager private constructor(context: Context) {
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             )
         } catch (e: Exception) {
-            android.util.Log.e("DEBUG_BLACKSCREEN", "[DeviceManager] EncryptedSharedPreferences FAILED, recreating: ${e.message}", e)
             // If keys are corrupted (e.g. key invalidated or content bad), delete file and recreate
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().clear().apply()
             // Some devices need file deletion too
@@ -63,7 +55,6 @@ class DeviceManager private constructor(context: Context) {
             if (id == null) {
                 id = UUID.randomUUID().toString()
                 prefs.edit().putString(KEY_DEVICE_ID, id).apply()
-                android.util.Log.d("DEBUG_BLACKSCREEN", "[DeviceManager] Generated NEW deviceId=${id.take(8)}...")
             }
             return id
         }

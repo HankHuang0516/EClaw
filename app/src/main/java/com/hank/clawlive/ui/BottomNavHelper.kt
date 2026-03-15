@@ -22,13 +22,7 @@ enum class NavItem {
 object BottomNavHelper {
 
     fun setup(activity: Activity, currentItem: NavItem) {
-        android.util.Log.d("DEBUG_BLACKSCREEN", "[BottomNavHelper] setup() START — currentItem=$currentItem")
-        val bottomNav = activity.findViewById<LinearLayout>(R.id.bottomNav)
-        android.util.Log.d("DEBUG_BLACKSCREEN", "[BottomNavHelper] bottomNav=${bottomNav != null}")
-        if (bottomNav == null) {
-            android.util.Log.e("DEBUG_BLACKSCREEN", "[BottomNavHelper] bottomNav is NULL! R.id.bottomNav not found in layout!")
-            return
-        }
+        val bottomNav = activity.findViewById<LinearLayout>(R.id.bottomNav) ?: return
 
         // Edge-to-edge bottom insets with minimum padding to avoid HOME button conflict
         val minBottomPadding = (12 * activity.resources.displayMetrics.density).toInt()
@@ -41,7 +35,6 @@ object BottomNavHelper {
         }
 
         highlightItem(activity, currentItem)
-        android.util.Log.d("DEBUG_BLACKSCREEN", "[BottomNavHelper] highlightItem done, setting up nav click listeners")
 
         val navMap = mapOf(
             R.id.navHome to Pair(NavItem.HOME, MainActivity::class.java),
@@ -54,7 +47,6 @@ object BottomNavHelper {
         for ((viewId, pair) in navMap) {
             val (navItem, targetClass) = pair
             val navView = activity.findViewById<LinearLayout>(viewId)
-            android.util.Log.d("DEBUG_BLACKSCREEN", "[BottomNavHelper] navItem=$navItem viewId=$viewId found=${navView != null}")
             navView?.setOnClickListener {
                 if (navItem != currentItem) {
                     val intent = Intent(activity, targetClass)

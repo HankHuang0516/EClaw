@@ -45,7 +45,6 @@ object NetworkModule {
     private const val BASE_URL = "https://eclawbot.com/"
 
     init {
-        android.util.Log.d("DEBUG_BLACKSCREEN", "[NetworkModule] init — BASE_URL=$BASE_URL")
     }
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {

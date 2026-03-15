@@ -40,12 +40,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var countdownJob: Job? = null
 
     init {
-        android.util.Log.d("DEBUG_BLACKSCREEN", "[MainViewModel] init START")
         // Check if already has a valid binding code
         val savedCode = deviceManager.currentBindingCode
         val expiry = deviceManager.bindingCodeExpiry
         val now = System.currentTimeMillis()
-        android.util.Log.d("DEBUG_BLACKSCREEN", "[MainViewModel] savedCode=${savedCode != null}, expiry=$expiry, now=$now")
 
         if (savedCode != null && expiry > now) {
             val remaining = ((expiry - now) / 1000).toInt()
@@ -57,9 +55,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         // Start polling for status if we have credentials
-        android.util.Log.d("DEBUG_BLACKSCREEN", "[MainViewModel] Starting status polling")
         startStatusPolling()
-        android.util.Log.d("DEBUG_BLACKSCREEN", "[MainViewModel] init END")
     }
 
     /**
@@ -165,7 +161,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * Start polling for agent status
      */
     private fun startStatusPolling() {
-        android.util.Log.d("DEBUG_BLACKSCREEN", "[MainViewModel] startStatusPolling()")
         viewModelScope.launch {
             while (true) {
                 try {
