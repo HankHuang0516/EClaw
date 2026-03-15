@@ -23,8 +23,6 @@ import java.util.Locale
  * Test Scope:
  * - MainActivity
  * - SettingsActivity
- *
- *
  * - WallpaperPreviewActivity (if applicable)
  */
 @RunWith(AndroidJUnit4::class)

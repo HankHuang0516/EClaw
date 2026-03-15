@@ -62,8 +62,6 @@
             android:excludeFromRecents="true"
             android:taskAffinity="" />
 
-
-
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
@@ -105,8 +103,6 @@
             android:exported="false"
             android:label="@string/chat_history"
             android:windowSoftInputMode="adjustResize" />
-
-
 
         <activity
             android:name=".MissionControlActivity"
