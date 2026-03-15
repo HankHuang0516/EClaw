@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/HankHuang0516/EClaw/compare/v1.5.1...v1.6.0) (2026-03-15)
+
+
+### Features
+
+* dynamic unlimited entities — replace hard-coded 8-slot limit with per-device auto-expanding system ([c24888d](https://github.com/HankHuang0516/EClaw/commit/c24888ded40f663fb44646626ebc12d6971302c3))
+
 ## [1.5.1](https://github.com/HankHuang0516/EClaw/compare/v1.5.0...v1.5.1) (2026-03-15)
 
 
