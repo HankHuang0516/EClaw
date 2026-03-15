@@ -1,3 +1,10 @@
+## [1.9.1](https://github.com/HankHuang0516/EClaw/compare/v1.9.0...v1.9.1) (2026-03-15)
+
+
+### Bug Fixes
+
+* comprehensive UI audit fixes across Web, Android, and iOS ([eb6e8e8](https://github.com/HankHuang0516/EClaw/commit/eb6e8e8c90ce0cf4e3ba4b9af0763805dae7af61)), closes [#FF6B6B](https://github.com/HankHuang0516/EClaw/issues/FF6B6B) [#FFB6C1](https://github.com/HankHuang0516/EClaw/issues/FFB6C1)
+
 # [1.9.0](https://github.com/HankHuang0516/EClaw/compare/v1.8.2...v1.9.0) (2026-03-15)
 
 
