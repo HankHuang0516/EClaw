@@ -7,6 +7,23 @@ const OAuth = require('oauth-1.0a');
 const router = express.Router();
 
 // ============================================
+// PUBLISHER AUTH — optional API key gate
+// ============================================
+function requirePublisherAuth(req, res, next) {
+    // GET /platforms is always public (read-only discovery)
+    if (req.method === 'GET' && req.path === '/platforms') return next();
+    // Read at request time so env changes take effect without restart
+    const apiKey = process.env.PUBLISHER_API_KEY;
+    // If PUBLISHER_API_KEY not set, skip auth (backward-compatible)
+    if (!apiKey) return next();
+    const key = req.headers['x-publisher-key'];
+    if (key === apiKey) return next();
+    res.status(401).json({ error: 'Invalid or missing X-Publisher-Key header' });
+}
+
+router.use(requirePublisherAuth);
+
+// ============================================
 // CONFIG
 // ============================================
 const BLOGGER_CLIENT_ID = process.env.BLOGGER_CLIENT_ID;
