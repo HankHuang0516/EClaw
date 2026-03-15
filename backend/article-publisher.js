@@ -20,9 +20,13 @@ const HASHNODE_GQL_ENDPOINT = 'https://gql.hashnode.com';
 const DEVTO_API_KEY = process.env.DEVTO_API_KEY;
 const DEVTO_API_BASE = 'https://dev.to/api';
 
-// WordPress.com
+// WordPress (supports OAuth2 Bearer token OR Application Password)
 const WORDPRESS_ACCESS_TOKEN = process.env.WORDPRESS_ACCESS_TOKEN;
 const WORDPRESS_API_BASE = 'https://public-api.wordpress.com';
+const WORDPRESS_SITE_URL = (process.env.WORDPRESS_SITE_URL || '').replace(/\/+$/, '');
+const WORDPRESS_USERNAME = process.env.WORDPRESS_USERNAME;
+const WORDPRESS_APP_PASSWORD = process.env.WORDPRESS_APP_PASSWORD;
+const WP_USE_APP_PASSWORD = !!(WORDPRESS_SITE_URL && WORDPRESS_USERNAME && WORDPRESS_APP_PASSWORD);
 
 // Telegraph (Telegra.ph)
 const TELEGRAPH_API_BASE = 'https://api.telegra.ph';
@@ -586,20 +590,29 @@ router.delete('/devto/post/:postId', async (req, res) => {
 // ============================================
 
 function requireWordpress(res) {
-    if (!WORDPRESS_ACCESS_TOKEN) { res.status(501).json({ error: 'WordPress not configured (WORDPRESS_ACCESS_TOKEN missing)' }); return false; }
+    if (!WP_USE_APP_PASSWORD && !WORDPRESS_ACCESS_TOKEN) {
+        res.status(501).json({ error: 'WordPress not configured (need WORDPRESS_ACCESS_TOKEN or WORDPRESS_SITE_URL+USERNAME+APP_PASSWORD)' });
+        return false;
+    }
     return true;
 }
 
 async function wordpressRequest(method, path, body = null) {
-    const options = {
-        method,
-        headers: {
-            Authorization: `Bearer ${WORDPRESS_ACCESS_TOKEN}`,
-            'Content-Type': 'application/json'
-        }
-    };
+    const headers = { 'Content-Type': 'application/json' };
+    let url;
+
+    if (WP_USE_APP_PASSWORD) {
+        const credentials = Buffer.from(`${WORDPRESS_USERNAME}:${WORDPRESS_APP_PASSWORD}`).toString('base64');
+        headers.Authorization = `Basic ${credentials}`;
+        url = `${WORDPRESS_SITE_URL}/wp-json${path}`;
+    } else {
+        headers.Authorization = `Bearer ${WORDPRESS_ACCESS_TOKEN}`;
+        url = `${WORDPRESS_API_BASE}${path}`;
+    }
+
+    const options = { method, headers };
     if (body) options.body = JSON.stringify(body);
-    const res = await fetch(`${WORDPRESS_API_BASE}${path}`, options);
+    const res = await fetch(url, options);
     const data = await res.json();
     if (!res.ok) {
         const err = new Error(data.message || data.error || `HTTP ${res.status}`);
@@ -613,13 +626,22 @@ async function wordpressRequest(method, path, body = null) {
 router.get('/wordpress/me', async (req, res) => {
     if (!requireWordpress(res)) return;
     try {
-        const data = await wordpressRequest('GET', '/rest/v1.1/me');
-        const sites = await wordpressRequest('GET', '/rest/v1.1/me/sites');
-        res.json({
-            success: true,
-            user: { id: data.ID, username: data.username, display_name: data.display_name },
-            sites: (sites.sites || []).map(s => ({ id: s.ID, name: s.name, url: s.URL }))
-        });
+        if (WP_USE_APP_PASSWORD) {
+            const user = await wordpressRequest('GET', '/wp/v2/users/me');
+            res.json({
+                success: true, authMode: 'app_password',
+                user: { id: user.id, username: user.slug, display_name: user.name },
+                sites: [{ id: 'default', name: user.name, url: WORDPRESS_SITE_URL }]
+            });
+        } else {
+            const data = await wordpressRequest('GET', '/rest/v1.1/me');
+            const sites = await wordpressRequest('GET', '/rest/v1.1/me/sites');
+            res.json({
+                success: true, authMode: 'oauth2',
+                user: { id: data.ID, username: data.username, display_name: data.display_name },
+                sites: (sites.sites || []).map(s => ({ id: s.ID, name: s.name, url: s.URL }))
+            });
+        }
     } catch (err) {
         res.status(err.status || 500).json({ error: err.message });
     }
@@ -629,16 +651,23 @@ router.get('/wordpress/me', async (req, res) => {
 router.post('/wordpress/publish', express.json(), async (req, res) => {
     if (!requireWordpress(res)) return;
     const { siteId, title, content, status, categories, tags } = req.body;
-    if (!siteId || !title || !content) return res.status(400).json({ error: 'siteId, title, content required' });
+    if (!title || !content) return res.status(400).json({ error: 'title, content required' });
+    if (!WP_USE_APP_PASSWORD && !siteId) return res.status(400).json({ error: 'siteId required for OAuth2 mode' });
 
     try {
         const postBody = { title, content, status: status || 'publish' };
         if (categories) postBody.categories = categories;
         if (tags) postBody.tags = tags;
 
-        const data = await wordpressRequest('POST', `/rest/v1.1/sites/${siteId}/posts/new`, postBody);
-        console.log(`[Publisher] WordPress post created: ${data.ID} "${title}"`);
-        res.json({ success: true, platform: 'wordpress', postId: String(data.ID), url: data.URL, title: data.title, status: data.status });
+        if (WP_USE_APP_PASSWORD) {
+            const data = await wordpressRequest('POST', '/wp/v2/posts', postBody);
+            console.log(`[Publisher] WordPress post created (app_password): ${data.id} "${title}"`);
+            res.json({ success: true, platform: 'wordpress', postId: String(data.id), url: data.link, title: data.title?.rendered || title, status: data.status });
+        } else {
+            const data = await wordpressRequest('POST', `/rest/v1.1/sites/${siteId}/posts/new`, postBody);
+            console.log(`[Publisher] WordPress post created: ${data.ID} "${title}"`);
+            res.json({ success: true, platform: 'wordpress', postId: String(data.ID), url: data.URL, title: data.title, status: data.status });
+        }
     } catch (err) {
         console.error('[Publisher] WordPress publish error:', err);
         res.status(err.status || 500).json({ error: err.message });
@@ -650,7 +679,7 @@ router.put('/wordpress/post/:postId', express.json(), async (req, res) => {
     if (!requireWordpress(res)) return;
     const { postId } = req.params;
     const { siteId, title, content, status, categories, tags } = req.body;
-    if (!siteId) return res.status(400).json({ error: 'siteId required' });
+    if (!WP_USE_APP_PASSWORD && !siteId) return res.status(400).json({ error: 'siteId required for OAuth2 mode' });
 
     try {
         const postBody = {};
@@ -660,9 +689,15 @@ router.put('/wordpress/post/:postId', express.json(), async (req, res) => {
         if (categories !== undefined) postBody.categories = categories;
         if (tags !== undefined) postBody.tags = tags;
 
-        const data = await wordpressRequest('POST', `/rest/v1.1/sites/${siteId}/posts/${postId}`, postBody);
-        console.log(`[Publisher] WordPress post updated: ${postId}`);
-        res.json({ success: true, platform: 'wordpress', postId: String(data.ID), url: data.URL, title: data.title });
+        if (WP_USE_APP_PASSWORD) {
+            const data = await wordpressRequest('POST', `/wp/v2/posts/${postId}`, postBody);
+            console.log(`[Publisher] WordPress post updated (app_password): ${postId}`);
+            res.json({ success: true, platform: 'wordpress', postId: String(data.id), url: data.link, title: data.title?.rendered });
+        } else {
+            const data = await wordpressRequest('POST', `/rest/v1.1/sites/${siteId}/posts/${postId}`, postBody);
+            console.log(`[Publisher] WordPress post updated: ${postId}`);
+            res.json({ success: true, platform: 'wordpress', postId: String(data.ID), url: data.URL, title: data.title });
+        }
     } catch (err) {
         console.error('[Publisher] WordPress update error:', err);
         res.status(err.status || 500).json({ error: err.message });
@@ -674,10 +709,14 @@ router.delete('/wordpress/post/:postId', async (req, res) => {
     if (!requireWordpress(res)) return;
     const { postId } = req.params;
     const { siteId } = req.query;
-    if (!siteId) return res.status(400).json({ error: 'siteId query param required' });
+    if (!WP_USE_APP_PASSWORD && !siteId) return res.status(400).json({ error: 'siteId query param required for OAuth2 mode' });
 
     try {
-        await wordpressRequest('POST', `/rest/v1.1/sites/${siteId}/posts/${postId}/delete`);
+        if (WP_USE_APP_PASSWORD) {
+            await wordpressRequest('DELETE', `/wp/v2/posts/${postId}?force=true`);
+        } else {
+            await wordpressRequest('POST', `/rest/v1.1/sites/${siteId}/posts/${postId}/delete`);
+        }
         console.log(`[Publisher] WordPress post deleted: ${postId}`);
         res.json({ success: true, platform: 'wordpress', deleted: postId });
     } catch (err) {
@@ -1504,8 +1543,11 @@ router.get('/platforms', (req, res) => {
           configured: !!(process.env.X_CONSUMER_KEY && process.env.X_ACCESS_TOKEN) },
         { id: 'devto', name: 'DEV.to', region: 'global', authType: 'api_key', contentFormat: 'markdown',
           configured: !!DEVTO_API_KEY },
-        { id: 'wordpress', name: 'WordPress.com', region: 'global', authType: 'bearer', contentFormat: 'html',
-          configured: !!WORDPRESS_ACCESS_TOKEN },
+        { id: 'wordpress', name: 'WordPress', region: 'global',
+          authType: WP_USE_APP_PASSWORD ? 'basic' : 'bearer',
+          authMode: WP_USE_APP_PASSWORD ? 'app_password' : 'oauth2',
+          contentFormat: 'html',
+          configured: WP_USE_APP_PASSWORD || !!WORDPRESS_ACCESS_TOKEN },
         { id: 'telegraph', name: 'Telegraph', region: 'global', authType: 'auto', contentFormat: 'html',
           configured: true },
         { id: 'qiita', name: 'Qiita', region: 'ja', authType: 'bearer', contentFormat: 'markdown',
