@@ -1,3 +1,18 @@
+# [1.9.0](https://github.com/HankHuang0516/EClaw/compare/v1.8.2...v1.9.0) (2026-03-15)
+
+
+### Bug Fixes
+
+* **publisher:** Tumblr delete uses POST not DELETE method ([ab23e27](https://github.com/HankHuang0516/EClaw/commit/ab23e273f2cee405b10127eb741662216f813c12))
+* **publisher:** Tumblr delete uses POST not DELETE method ([9452991](https://github.com/HankHuang0516/EClaw/commit/945299111efd2f1a529156b10bf0bff25a010a74))
+
+
+### Features
+
+* **publisher:** add WordPress token expiry warning in API responses ([2c3c513](https://github.com/HankHuang0516/EClaw/commit/2c3c51368ef9ec2e972db373b26353f87f911fb5))
+* **publisher:** add WordPress.com OAuth flow with DB-backed token storage ([3a4dda8](https://github.com/HankHuang0516/EClaw/commit/3a4dda82898ab26d36cf2e1bf846ada081f7acc0))
+* **publisher:** support WordPress Application Password auth ([95f111f](https://github.com/HankHuang0516/EClaw/commit/95f111fdfd6abfd2a5e2428e015daeb5fbc86b43))
+
 ## [1.8.2](https://github.com/HankHuang0516/EClaw/compare/v1.8.1...v1.8.2) (2026-03-15)
 
 
