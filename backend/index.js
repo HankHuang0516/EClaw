@@ -710,7 +710,7 @@ authModule.initAuthDatabase();
 // ============================================
 // SUBSCRIPTION & TAPPAY (PostgreSQL)
 // ============================================
-const subscriptionModule = require('./subscription')(devices, authModule.authMiddleware, null, serverLog);
+const subscriptionModule = require('./subscription')(devices, authModule.authMiddleware, ensureOneEmptySlot, serverLog);
 app.use('/api/subscription', subscriptionModule.router);
 // Load premium status after persistence is ready
 setTimeout(() => subscriptionModule.loadPremiumStatus(), 5000);

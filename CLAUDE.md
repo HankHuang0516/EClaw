@@ -35,7 +35,7 @@ EClaw/
 │   ├── oauth-server.js       # OAuth 2.0 server (client_credentials, tokens)
 │   ├── api-docs.js           # Swagger/OpenAPI docs endpoint
 │   ├── bot-tools.js          # Bot utility API (web-search, web-fetch)
-│   ├── article-publisher.js  # Article publishing (X/Twitter integration)
+│   ├── article-publisher.js  # Multi-platform article publishing (8 platforms)
 │   ├── channel-api.js        # OpenClaw channel integration API
 │   ├── flickr.js             # Flickr photo storage for chat images
 │   ├── grpc-server.js        # gRPC transport layer
@@ -198,7 +198,7 @@ EClaw/
 | `/api/logs` | index.js | Server log querying |
 | `/api/audit-logs` | index.js | Admin audit log access |
 | `/api/admin/*` | index.js | Admin panel endpoints |
-| `/api/publisher/*` | article-publisher.js | Article publishing |
+| `/api/publisher/*` | article-publisher.js | Multi-platform article publishing (12 platforms: Blogger, Hashnode, X, DEV.to, WordPress, Telegraph, Qiita, WeChat, Tumblr, Reddit, LinkedIn, Mastodon) |
 | `/api/docs` | api-docs.js | Swagger UI + OpenAPI spec |
 | `/api/skill-templates` | index.js | Skill template CRUD + contributions |
 | `/api/soul-templates` | index.js | Soul template CRUD |
@@ -359,6 +359,15 @@ See `backend/.env.example` for full list. Key variables:
 | `FACEBOOK_APP_ID/SECRET` | Facebook OAuth |
 | `GITHUB_TOKEN` | GitHub API access |
 | `X_CONSUMER_KEY/SECRET` | X/Twitter publishing |
+| `DEVTO_API_KEY` | DEV.to article publishing |
+| `WORDPRESS_ACCESS_TOKEN` | WordPress.com publishing |
+| `TELEGRAPH_ACCESS_TOKEN` | Telegraph publishing (optional, auto-creates) |
+| `QIITA_ACCESS_TOKEN` | Qiita article publishing (Japan) |
+| `WECHAT_APP_ID/APP_SECRET` | WeChat Official Account drafts (China) |
+| `TUMBLR_CONSUMER_KEY/SECRET` + `TUMBLR_ACCESS_TOKEN/SECRET` | Tumblr publishing |
+| `REDDIT_CLIENT_ID/SECRET` + `REDDIT_USERNAME/PASSWORD` | Reddit posting |
+| `LINKEDIN_ACCESS_TOKEN` + `LINKEDIN_PERSON_URN` | LinkedIn publishing |
+| `MASTODON_ACCESS_TOKEN` + `MASTODON_INSTANCE_URL` | Mastodon/Fediverse publishing |
 | `FIREBASE_*` | FCM push notifications |
 
 Test-specific variables (in `backend/.env`, gitignored):
@@ -457,7 +466,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 | Mission | 54% (14/26) | Missing: reorder, move, archive |
 | Core API (index.js) | ~50% (70/139) | Largest gap area |
 | Auth | 21% (5/24) | Critical gap — OIDC, social OAuth, RBAC endpoints |
-| Article Publisher | 0% (0/11) | No coverage at all |
+| Article Publisher | 25% (11/44) | Platforms listing + input validation for all new platforms |
 
 Full analysis: `docs/reports/2026-03-14-test-coverage-analysis.md`
 
@@ -499,6 +508,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Discord Webhook | `node backend/tests/test-discord-webhook.js` | Device ID + Secret | Discord webhook URL detection, registration, rich messages, content limits |
 | Agent Card UI | `node backend/tests/test-agent-card-ui.js` | Device ID + Secret | Agent Card CRUD lifecycle, field validation, three-platform API parity |
 | Dynamic Entities | `node backend/tests/test-dynamic-entities.js` | Device ID + Secret | Dynamic entity add/delete, 20-entity extreme, sparse IDs, reorder, skip-ID permutations |
+| Publisher Platforms | `node backend/tests/test-publisher-platforms.js` | None | Platforms listing (12 platforms), input validation for all new platforms |
 
 ### Jest Unit Tests (CI-run, `npm test`)
 
@@ -510,6 +520,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Auth Validation | `tests/jest/auth.test.js` | POST register/login/logout, GET /me, OAuth providers — input validation |
 | Mutation Validation | `tests/jest/mutations.test.js` | POST client/speak, speak-to, broadcast, device/register, feedback, chat/history, GET entities/status/logs |
 | Admin Authorization | `tests/jest/admin-auth.test.js` | Admin endpoints reject unauthenticated + non-admin users, audit-logs auth |
+| Publisher Platforms | `tests/jest/publisher.test.js` | Platforms listing (12), input validation for all new platforms |
 
 ### Running All Tests
 ```bash
