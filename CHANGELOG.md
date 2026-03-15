@@ -1,3 +1,62 @@
+# [1.95.0](https://github.com/HankHuang0516/EClaw/compare/v1.94.1...v1.95.0) (2026-03-15)
+
+
+### Bug Fixes
+
+* [#168](https://github.com/HankHuang0516/EClaw/issues/168) chat bubble text selection & [#167](https://github.com/HankHuang0516/EClaw/issues/167) entity public code display ([c89dccc](https://github.com/HankHuang0516/EClaw/commit/c89dcccdd3f00b96d18aab3d3a0d659569769e54))
+* add flex-wrap to dashboard entity action buttons to prevent truncation ([6f0fa21](https://github.com/HankHuang0516/EClaw/commit/6f0fa210fae2e43878ed7c560ad2467644a189d4))
+* allow 127.0.0.1 through HTTPS redirect for Jest/supertest tests ([a38f804](https://github.com/HankHuang0516/EClaw/commit/a38f804923d28f11566f90563224783b626021fa))
+* avoid gh auth login conflict when GH_TOKEN env var is set ([d94a669](https://github.com/HankHuang0516/EClaw/commit/d94a6695f9293f083376caea97d8356bdbbccd20))
+* comprehensive UI audit fixes across Web, Android, and iOS ([eb6e8e8](https://github.com/HankHuang0516/EClaw/commit/eb6e8e8c90ce0cf4e3ba4b9af0763805dae7af61)), closes [#FF6B6B](https://github.com/HankHuang0516/EClaw/issues/FF6B6B) [#FFB6C1](https://github.com/HankHuang0516/EClaw/issues/FFB6C1)
+* cron schedule update no longer violates NOT NULL on scheduled_at ([15e46af](https://github.com/HankHuang0516/EClaw/commit/15e46af150476bc0f2a6e0213ae5960c8e078fa1))
+* **android:** entity card buttons overflow — apply M3 card action pattern ([f6b4b68](https://github.com/HankHuang0516/EClaw/commit/f6b4b681d77c9dc814e7a19e01a305b90e3b3fcf))
+* **android:** force Dark theme to fix black screen on light-mode devices ([47ed30b](https://github.com/HankHuang0516/EClaw/commit/47ed30b5c19f62ea0a7bea5c2fb035ac9011f7c2)), closes [#0D0D1A](https://github.com/HankHuang0516/EClaw/issues/0D0D1A)
+* **android:** improve Public Code badge contrast and add functional label ([f725bc6](https://github.com/HankHuang0516/EClaw/commit/f725bc6c7e19521bdf4f9559805d197ba2cf6968)), closes [#4FC3F7](https://github.com/HankHuang0516/EClaw/issues/4FC3F7) [#4CAF50](https://github.com/HankHuang0516/EClaw/issues/4CAF50)
+* normalize requiredVars to prevent Gson deserialization crash on Android ([30f9924](https://github.com/HankHuang0516/EClaw/commit/30f99248c95c3c664350e574670aa5f671e42369))
+* OAuth test uses fresh token pair for refresh_token test ([392dd05](https://github.com/HankHuang0516/EClaw/commit/392dd0529b671542a7c01b095c67ebd6778c5ddc))
+* prevent publicCode loss during entity reorder ([bd8f1f4](https://github.com/HankHuang0516/EClaw/commit/bd8f1f407aa5764fdf7a068bb4f1aeda6d9045ea))
+* **ci:** relax edit mode guard grep to match multi-line Kotlin style ([9e19e1a](https://github.com/HankHuang0516/EClaw/commit/9e19e1ac65317f7783b3787986901b24570661af))
+* remove duplicate string resources entity_public_code and code_copied ([ba238a4](https://github.com/HankHuang0516/EClaw/commit/ba238a49dbb4d70ff7454d3a291ed3a4e0bc815e)), closes [#167](https://github.com/HankHuang0516/EClaw/issues/167)
+* remove ensureEntitySlots and maxEntities references for dynamic entity system ([4aaa3bf](https://github.com/HankHuang0516/EClaw/commit/4aaa3bf89349e991692e4c831d41648506036604))
+* remove extra context arg from TelemetryHelper.trackAction calls ([1f25b76](https://github.com/HankHuang0516/EClaw/commit/1f25b76183092249dcbad9239e8dca9166c71ff5))
+* **android:** remove yellow diagnostic background after confirming black screen was emulator data corruption ([9c25fe4](https://github.com/HankHuang0516/EClaw/commit/9c25fe46f5edfa4bff73dd07326176b678dc062d))
+* send callback_token via X-Callback-Token header alongside Basic Auth ([958d2fd](https://github.com/HankHuang0516/EClaw/commit/958d2fd9690e2694c6788c85baa54ab3e03568fe))
+* test uses correct lookup and unbind endpoints ([ed3c913](https://github.com/HankHuang0516/EClaw/commit/ed3c9138bed58efcdd429095ba94b39522d248f4))
+* **publisher:** Tumblr delete uses POST not DELETE method ([#213](https://github.com/HankHuang0516/EClaw/issues/213)) ([db2084b](https://github.com/HankHuang0516/EClaw/commit/db2084b44dc51b069d7bf3c3c47c5c3bd704206f))
+* **publisher:** Tumblr delete uses POST not DELETE method ([ab23e27](https://github.com/HankHuang0516/EClaw/commit/ab23e273f2cee405b10127eb741662216f813c12))
+* **publisher:** Tumblr delete uses POST not DELETE method ([9452991](https://github.com/HankHuang0516/EClaw/commit/945299111efd2f1a529156b10bf0bff25a010a74))
+* update regression tests for dynamic entity system ([a671070](https://github.com/HankHuang0516/EClaw/commit/a67107012dfb30588d42df2c2f0748e77048414e))
+* widen OAuth access_token column from VARCHAR(256) to VARCHAR(512) ([a93da54](https://github.com/HankHuang0516/EClaw/commit/a93da54d50991908dd2b7e568b07410ac9397e2a))
+
+
+### Features
+
+* add A2A Agent Card UI across all three platforms ([7812aad](https://github.com/HankHuang0516/EClaw/commit/7812aad89920962efce27fa8d7a1701dbf948dac))
+* add A2A compat layer, OAuth 2.0 server, and interactive API docs ([#187](https://github.com/HankHuang0516/EClaw/issues/187), [#189](https://github.com/HankHuang0516/EClaw/issues/189), [#190](https://github.com/HankHuang0516/EClaw/issues/190)) ([9351a9d](https://github.com/HankHuang0516/EClaw/commit/9351a9db5cf0df4aec21615a671cf5f198669f7e))
+* add Agent Card button to Home page entity cards ([71d5937](https://github.com/HankHuang0516/EClaw/commit/71d59374322cca2802da2a77f349f5251735c0af))
+* add optional X-Publisher-Key auth to publisher API ([e0534a7](https://github.com/HankHuang0516/EClaw/commit/e0534a7436c78a67d0fac0b14cc432f3b0d99953))
+* add optional X-Publisher-Key auth to publisher API ([298250f](https://github.com/HankHuang0516/EClaw/commit/298250f0010101e6f31ae637b25211b5a35a09d6))
+* add optional X-Publisher-Key auth to publisher API ([af2cd05](https://github.com/HankHuang0516/EClaw/commit/af2cd05d71db59eb75b43c795a0fb5cd8a4843d9))
+* add Publisher API key auth middleware ([#215](https://github.com/HankHuang0516/EClaw/issues/215)) ([6bdc30d](https://github.com/HankHuang0516/EClaw/commit/6bdc30d07a94f47e6b6a15d808773fb4470ab157))
+* add requiredVars format validation in contribute endpoint + regression tests ([328a56d](https://github.com/HankHuang0516/EClaw/commit/328a56d11964c7fd0c59d2da183ac3d31d549b2a))
+* **publisher:** add Telegraph, Qiita, Tumblr, Mastodon + other new platforms ([33b9c4e](https://github.com/HankHuang0516/EClaw/commit/33b9c4e54fe5ee1897b3a10541211a9f3d6e05e2))
+* **publisher:** add WordPress token expiry warning in API responses ([2c3c513](https://github.com/HankHuang0516/EClaw/commit/2c3c51368ef9ec2e972db373b26353f87f911fb5))
+* **publisher:** add WordPress.com OAuth flow with DB-backed token storage ([3a4dda8](https://github.com/HankHuang0516/EClaw/commit/3a4dda82898ab26d36cf2e1bf846ada081f7acc0))
+* align Skill/Soul/Rule template gallery across Web, Android, and iOS ([4809358](https://github.com/HankHuang0516/EClaw/commit/4809358d58b6400f7b12b3fc0102ec8d73c289f4))
+* allow bots to manage their own Agent Card via botSecret ([7f95b2c](https://github.com/HankHuang0516/EClaw/commit/7f95b2cbe3195fc222526b434d3f11820aec0026))
+* auto-save dashboard + split save/notify workflow ([ce84021](https://github.com/HankHuang0516/EClaw/commit/ce84021ff6838236f872b414bdfc467b6a83b928))
+* channel callback Basic Auth for Railway WEB_PASSWORD ([cb9afb4](https://github.com/HankHuang0516/EClaw/commit/cb9afb43f77c4443499100b30da551b61ade126e))
+* cross-platform env vars merge mode — avoid key loss on sync ([354ba3a](https://github.com/HankHuang0516/EClaw/commit/354ba3a927c0b2e44fa2a3815af2e30ac810898c))
+* Discord webhook support + rich messages + test coverage report ([e0d0dcc](https://github.com/HankHuang0516/EClaw/commit/e0d0dcc0280da0c2eb9d55bde5719a13d1d06103)), closes [#199](https://github.com/HankHuang0516/EClaw/issues/199) [#200](https://github.com/HankHuang0516/EClaw/issues/200) [#194](https://github.com/HankHuang0516/EClaw/issues/194) [#194](https://github.com/HankHuang0516/EClaw/issues/194) [#195](https://github.com/HankHuang0516/EClaw/issues/195) [#196](https://github.com/HankHuang0516/EClaw/issues/196) [#197](https://github.com/HankHuang0516/EClaw/issues/197) [#198](https://github.com/HankHuang0516/EClaw/issues/198) [#199](https://github.com/HankHuang0516/EClaw/issues/199) [#200](https://github.com/HankHuang0516/EClaw/issues/200)
+* dynamic unlimited entities — replace hard-coded 8-slot limit with per-device auto-expanding system ([c24888d](https://github.com/HankHuang0516/EClaw/commit/c24888ded40f663fb44646626ebc12d6971302c3))
+* expandable EClaw Channel promo + comprehensive UIUX audit fixes ([6252dd4](https://github.com/HankHuang0516/EClaw/commit/6252dd46317fb9cf501bc3b594834980d9b12410)), closes [#AAA](https://github.com/HankHuang0516/EClaw/issues/AAA) [#777](https://github.com/HankHuang0516/EClaw/issues/777)
+* implement 5 enterprise security features ([#174](https://github.com/HankHuang0516/EClaw/issues/174)-[#178](https://github.com/HankHuang0516/EClaw/issues/178)) ([320f204](https://github.com/HankHuang0516/EClaw/commit/320f204772ef24bf89e2f8527879ad488aa6859d)), closes [#176](https://github.com/HankHuang0516/EClaw/issues/176) [#177](https://github.com/HankHuang0516/EClaw/issues/177) [#175](https://github.com/HankHuang0516/EClaw/issues/175) [#175](https://github.com/HankHuang0516/EClaw/issues/175) [#176](https://github.com/HankHuang0516/EClaw/issues/176) [#177](https://github.com/HankHuang0516/EClaw/issues/177)
+* implement issues [#187](https://github.com/HankHuang0516/EClaw/issues/187)-[#191](https://github.com/HankHuang0516/EClaw/issues/191) — A2A compat, API docs, OAuth 2.0, SDK, gRPC ([a0b2845](https://github.com/HankHuang0516/EClaw/commit/a0b28451849076863d30813d15732f99fd2ec4ae))
+* requiredVars validation + regression tests + remove debug logs ([7222b95](https://github.com/HankHuang0516/EClaw/commit/7222b95107cc7a341346d83d748e2e2a740c5676))
+* **portal:** show template count on browse button and gallery title ([13ba042](https://github.com/HankHuang0516/EClaw/commit/13ba0422c56dc2fb894c9c4e110dbf6f245a5b4b))
+* skill template gallery — search, count badge, retry-on-empty ([05e5239](https://github.com/HankHuang0516/EClaw/commit/05e5239c4b95746a73123f6b4b2c24ae5427003c))
+* **publisher:** support WordPress Application Password auth ([95f111f](https://github.com/HankHuang0516/EClaw/commit/95f111fdfd6abfd2a5e2428e015daeb5fbc86b43))
+
 # [1.10.0](https://github.com/HankHuang0516/EClaw/compare/v1.9.2...v1.10.0) (2026-03-15)
 
 
