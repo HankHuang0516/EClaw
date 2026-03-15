@@ -125,7 +125,7 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnTalk"
                 android:layout_width="wrap_content"
-                android:layout_height="36dp"
+                android:layout_height="48dp"
                 android:text="@string/entity_action_talk"
                 android:textSize="12sp"
                 android:textColor="@color/accent"
@@ -140,7 +140,7 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAgentCard"
                 android:layout_width="wrap_content"
-                android:layout_height="36dp"
+                android:layout_height="48dp"
                 android:text="Agent Card"
                 android:textSize="12sp"
                 android:textColor="@color/accent"
@@ -152,7 +152,7 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnRemove"
                 android:layout_width="wrap_content"
-                android:layout_height="36dp"
+                android:layout_height="48dp"
                 android:text="@string/remove"
                 android:textSize="12sp"
                 android:textColor="#FF5252"

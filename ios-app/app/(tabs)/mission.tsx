@@ -493,7 +493,7 @@ const styles = StyleSheet.create({
   tabChip: { marginRight: 6 },
   content: { flex: 1 },
   tabContent: { padding: 16, gap: 8 },
-  itemCard: { marginBottom: 8, borderRadius: 12 },
+  itemCard: { marginBottom: 8, borderRadius: 16 },
   itemContent: { flexDirection: 'row', alignItems: 'center' },
   templateHeader: { flexDirection: 'row', alignItems: 'center' },
   fab: { position: 'absolute', bottom: 24, right: 16 },

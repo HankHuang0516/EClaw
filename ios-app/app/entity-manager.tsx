@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useEntityStore, Entity } from '../store/entityStore';
+import { CHARACTER_COLORS } from '../constants/colors';
 import { deviceApi } from '../services/api';
 import { useEntities } from '../hooks/useEntities';
 
@@ -222,7 +223,7 @@ export default function EntityManagerScreen() {
   };
 
   const CHARACTER_ICONS = { LOBSTER: '🦞', PIG: '🐷' };
-  const CHARACTER_COLORS = { LOBSTER: '#FF6B6B', PIG: '#FFB3C6' };
+  // CHARACTER_COLORS imported from constants/colors
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom']}>
@@ -344,19 +345,19 @@ export default function EntityManagerScreen() {
           <Dialog.Title>Agent Card{acEntity ? ` — ${acEntity.name}` : ''}</Dialog.Title>
           <Dialog.ScrollArea style={{ paddingHorizontal: 0 }}>
             <ScrollView contentContainerStyle={{ paddingHorizontal: 24, gap: 8, paddingBottom: 8 }}>
-              <TextInput mode="outlined" label="Description *" value={acDesc} onChangeText={setAcDesc}
+              <TextInput mode="outlined" dense label="Description *" value={acDesc} onChangeText={setAcDesc}
                 maxLength={500} multiline numberOfLines={3} />
-              <TextInput mode="outlined" label="Capabilities (comma-separated)" value={acCaps}
+              <TextInput mode="outlined" dense label="Capabilities (comma-separated)" value={acCaps}
                 onChangeText={setAcCaps} placeholder="e.g. chat, search, translate" />
-              <TextInput mode="outlined" label="Protocols (comma-separated)" value={acProtos}
+              <TextInput mode="outlined" dense label="Protocols (comma-separated)" value={acProtos}
                 onChangeText={setAcProtos} placeholder="e.g. A2A, REST, gRPC" />
-              <TextInput mode="outlined" label="Tags (comma-separated)" value={acTags}
+              <TextInput mode="outlined" dense label="Tags (comma-separated)" value={acTags}
                 onChangeText={setAcTags} placeholder="e.g. IoT, automation" />
-              <TextInput mode="outlined" label="Version" value={acVersion}
+              <TextInput mode="outlined" dense label="Version" value={acVersion}
                 onChangeText={setAcVersion} maxLength={32} placeholder="e.g. 1.0.0" />
-              <TextInput mode="outlined" label="Website" value={acWebsite}
+              <TextInput mode="outlined" dense label="Website" value={acWebsite}
                 onChangeText={setAcWebsite} maxLength={500} keyboardType="url" />
-              <TextInput mode="outlined" label="Contact Email" value={acEmail}
+              <TextInput mode="outlined" dense label="Contact Email" value={acEmail}
                 onChangeText={setAcEmail} maxLength={255} keyboardType="email-address" />
             </ScrollView>
           </Dialog.ScrollArea>

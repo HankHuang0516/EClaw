@@ -108,8 +108,8 @@
 
                 <ImageButton
                     android:id="@+id/btnPlay"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Play"
                     android:src="@android:drawable/ic_media_play"

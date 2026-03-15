@@ -5,16 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { Entity } from '../store/entityStore';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { CHARACTER_COLORS, STATUS_COLORS } from '../constants/colors';
 
 interface EntityCardProps {
   entity: Entity;
   onLongPress?: () => void;
 }
-
-const CHARACTER_COLORS = {
-  LOBSTER: '#FF6B6B',
-  PIG: '#FFB3C6',
-};
 
 const CHARACTER_ICONS = {
   LOBSTER: '🦞',
@@ -27,7 +23,7 @@ export default function EntityCard({ entity, onLongPress }: EntityCardProps) {
   const router = useRouter();
 
   const isOnline = entity.state === 'online' || entity.isBound;
-  const statusColor = isOnline ? '#4CAF50' : theme.colors.onSurfaceVariant;
+  const statusColor = isOnline ? STATUS_COLORS.online : theme.colors.onSurfaceVariant;
 
   const handlePress = () => {
     router.push(`/chat/${entity.entityId}`);

@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from 'expo-router';
 import { officialBorrowApi, miscApi } from '../services/api';
 import { useEntityStore } from '../store/entityStore';
+import { TIER_COLORS } from '../constants/colors';
 
 interface BorrowStatus {
   freeSlots: number;
@@ -120,7 +121,7 @@ export default function OfficialBorrowScreen() {
                   </View>
                   <Divider style={{ height: '100%', width: 1 }} />
                   <View style={styles.slotItem}>
-                    <Text variant="headlineMedium" style={{ color: '#FFD700' }}>
+                    <Text variant="headlineMedium" style={{ color: TIER_COLORS.paid }}>
                       {status?.paidSlots ?? 0}
                     </Text>
                     <Text variant="bodySmall">{t('official_borrow.paid_tier')}</Text>
@@ -223,7 +224,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 16, gap: 12, paddingBottom: 40 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
-  overviewCard: { borderRadius: 20 },
+  overviewCard: { borderRadius: 16 },
   card: { borderRadius: 16 },
   slotRow: { flexDirection: 'row', justifyContent: 'space-around', gap: 16 },
   slotItem: { flex: 1, alignItems: 'center', gap: 4 },

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, Image, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import {
   Text,
   TextInput,
@@ -72,6 +72,7 @@ export default function FeedbackScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom']}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
       <ScrollView contentContainerStyle={styles.content}>
         {/* Type selector */}
         <Text variant="labelLarge" style={styles.label}>{t('feedback.type_bug')}</Text>
@@ -132,6 +133,7 @@ export default function FeedbackScreen() {
           {t('feedback.submit')}
         </Button>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <Snackbar visible={!!snack} onDismiss={() => setSnack('')} duration={2000}>
         {snack}

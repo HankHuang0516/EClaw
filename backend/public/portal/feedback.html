@@ -86,22 +86,22 @@
         }
 
         .cat-card.selected-bug {
-            border-color: #F44336;
+            border-color: var(--danger);
             border-width: 2px;
             background: rgba(244, 67, 54, 0.1);
         }
         .cat-card.selected-bug .cat-label {
-            color: #F44336;
+            color: var(--danger);
             font-weight: 600;
         }
 
         .cat-card.selected-feature {
-            border-color: #2196F3;
+            border-color: var(--info);
             border-width: 2px;
             background: rgba(33, 150, 243, 0.1);
         }
         .cat-card.selected-feature .cat-label {
-            color: #2196F3;
+            color: var(--info);
             font-weight: 600;
         }
 
@@ -324,13 +324,13 @@
 
         .badge-bug {
             background: rgba(244, 67, 54, 0.15);
-            color: #F44336;
+            color: var(--danger);
             border: 1px solid rgba(244, 67, 54, 0.3);
         }
 
         .badge-feature {
             background: rgba(33, 150, 243, 0.15);
-            color: #2196F3;
+            color: var(--info);
             border: 1px solid rgba(33, 150, 243, 0.3);
         }
 
@@ -345,10 +345,10 @@
             font-weight: 500;
         }
 
-        .severity-critical { color: #F44336; }
+        .severity-critical { color: var(--danger); }
         .severity-high { color: #FF9800; }
         .severity-medium { color: #FFC107; }
-        .severity-low { color: #4CAF50; }
+        .severity-low { color: var(--success); }
 
         .badge-status {
             padding: 3px 10px;
@@ -366,13 +366,13 @@
 
         .status-resolved {
             background: rgba(76, 175, 80, 0.15);
-            color: #4CAF50;
+            color: var(--success);
             border: 1px solid rgba(76, 175, 80, 0.3);
         }
 
         .status-in_progress {
             background: rgba(33, 150, 243, 0.15);
-            color: #2196F3;
+            color: var(--info);
             border: 1px solid rgba(33, 150, 243, 0.3);
         }
 
@@ -540,7 +540,7 @@
         }
 
         .photo-preview .remove-btn:hover {
-            background: #F44336;
+            background: var(--danger);
         }
 
         .photo-upload-status {

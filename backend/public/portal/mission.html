@@ -241,7 +241,8 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 6px 8px;
+            padding: 8px;
+            min-height: 44px;
             border-radius: var(--radius-sm);
             cursor: pointer;
             font-size: 13px;
@@ -253,10 +254,11 @@
         }
 
         .entity-checkbox-grid input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             flex-shrink: 0;
             accent-color: var(--primary);
+            cursor: pointer;
         }
 
         /* Template gallery */
@@ -294,8 +296,8 @@
         .tpl-gallery-title { font-weight: 600; font-size: 14px; }
         .tpl-gallery-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
         .tpl-gallery-status { font-size: 11px; margin-top: 4px; }
-        .tpl-gallery-status.ok { color: #4caf50; }
-        .tpl-gallery-status.warn { color: #FF9800; }
+        .tpl-gallery-status.ok { color: var(--success); }
+        .tpl-gallery-status.warn { color: var(--warning-hover); }
 
         #dlg_skill_steps {
             min-height: 160px;

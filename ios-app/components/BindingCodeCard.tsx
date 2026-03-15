@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: 16,
     marginVertical: 8,
-    borderRadius: 20,
+    borderRadius: 16,
   },
   code: {
     textAlign: 'center',

@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { useEntityStore } from '../../store/entityStore';
 import { useChatStore } from '../../store/chatStore';
 import { useEntities } from '../../hooks/useEntities';
+import { CHARACTER_COLORS, STATUS_COLORS } from '../../constants/colors';
 
 export default function ChatListScreen() {
   const { t } = useTranslation();
@@ -17,7 +18,6 @@ export default function ChatListScreen() {
   useEntities(); // Keep entity list updated
 
   const CHARACTER_ICONS = { LOBSTER: '🦞', PIG: '🐷' };
-  const CHARACTER_COLORS = { LOBSTER: '#FF6B6B', PIG: '#FFB3C6' };
 
   const handleEntityPress = (entityId: string) => {
     router.push(`/chat/${entityId}`);
@@ -38,7 +38,7 @@ export default function ChatListScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom']}>
       <FlatList
         data={entities}
         keyExtractor={(item) => item.entityId}
@@ -83,7 +83,7 @@ export default function ChatListScreen() {
               <View
                 style={[
                   styles.onlineDot,
-                  { backgroundColor: item.isBound ? '#4CAF50' : theme.colors.outline },
+                  { backgroundColor: item.isBound ? STATUS_COLORS.online : theme.colors.outline },
                 ]}
               />
             </TouchableOpacity>

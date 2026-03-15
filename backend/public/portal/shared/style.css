@@ -12,6 +12,11 @@
     --danger: #F44336;
     --success: #4CAF50;
     --warning: #FFD23F;
+    --info: #2196F3;
+    --accent-cyan: #4FC3F7;
+    --accent-gold: #FFD700;
+    --danger-hover: #D32F2F;
+    --warning-hover: #F57C00;
     --text: #ffffff;
     --text-secondary: #AAAAAA;
     --text-muted: #777777;
@@ -340,10 +345,10 @@ a:hover { text-decoration: underline; }
 .btn-primary { background: var(--primary); }
 .btn-primary:hover { background: var(--primary-hover); }
 .btn-danger { background: var(--danger); }
-.btn-danger:hover { background: #D32F2F; }
+.btn-danger:hover { background: var(--danger-hover); }
 .btn-success { background: var(--success); }
 .btn-warning { background: var(--warning); color: #000; }
-.btn-warning:hover { background: #F57C00; }
+.btn-warning:hover { background: var(--warning-hover); }
 .btn-outline {
     background: transparent;
     border: 1px solid var(--card-border);
@@ -359,7 +364,19 @@ a:hover { text-decoration: underline; }
 .nav-link:focus-visible,
 .entity-card:focus-visible,
 .chip:focus-visible,
-.notif-bell:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: var(--radius-sm); }
+.notif-bell:focus-visible,
+.toggle-switch:focus-within,
+.form-input:focus-visible,
+.auth-tab:focus-visible,
+.dialog .btn:focus-visible,
+.ai-chat-fab:focus-visible,
+.ai-chat-close-btn:focus-visible,
+.ai-chat-clear-btn:focus-visible,
+.ai-chat-send-btn:focus-visible,
+.ai-chat-action-btn:focus-visible,
+.notif-mark-all:focus-visible,
+.notif-item:focus-visible,
+.badge:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: var(--radius-sm); }
 
 /* ==========================================
    Inputs
@@ -722,7 +739,7 @@ a:hover { text-decoration: underline; }
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 200;
+    z-index: 300;
 }
 
 .dialog {

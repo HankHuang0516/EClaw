@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from 'expo-router';
 import { scheduleApi } from '../services/api';
+import { STATUS_COLORS } from '../constants/colors';
 
 interface Schedule {
   id: string;
@@ -140,7 +141,7 @@ export default function ScheduleScreen() {
 
   const statusColor: Record<string, string> = {
     pending: theme.colors.onSurfaceVariant,
-    active: '#4CAF50',
+    active: STATUS_COLORS.success,
     completed: theme.colors.primary,
     failed: theme.colors.error,
   };
@@ -204,6 +205,7 @@ export default function ScheduleScreen() {
             <View style={{ padding: 16, gap: 12 }}>
               <TextInput
                 mode="outlined"
+                dense
                 label={t('schedule.message')}
                 value={newMessage}
                 onChangeText={setNewMessage}

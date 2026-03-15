@@ -1,5 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Chat UI dimensions -->
+
+    <!-- ========== Spacing Scale ========== -->
+    <dimen name="spacing_xxs">2dp</dimen>
+    <dimen name="spacing_xs">4dp</dimen>
+    <dimen name="spacing_sm">6dp</dimen>
+    <dimen name="spacing_md">8dp</dimen>
+    <dimen name="spacing_lg">12dp</dimen>
+    <dimen name="spacing_xl">16dp</dimen>
+    <dimen name="spacing_xxl">24dp</dimen>
+
+    <!-- ========== Text Sizes ========== -->
+    <dimen name="text_size_caption">10sp</dimen>
+    <dimen name="text_size_hint">11sp</dimen>
+    <dimen name="text_size_body_sm">12sp</dimen>
+    <dimen name="text_size_body">13sp</dimen>
+    <dimen name="text_size_body_lg">14sp</dimen>
+    <dimen name="text_size_subheading">16sp</dimen>
+    <dimen name="text_size_heading">20sp</dimen>
+    <dimen name="text_size_heading_lg">24sp</dimen>
+    <dimen name="text_size_emoji">32sp</dimen>
+
+    <!-- ========== Corner Radius ========== -->
+    <dimen name="corner_radius_sm">8dp</dimen>
+    <dimen name="corner_radius_md">12dp</dimen>
+    <dimen name="corner_radius_lg">16dp</dimen>
+    <dimen name="corner_radius_xl">20dp</dimen>
+    <dimen name="corner_radius_pill">24dp</dimen>
+
+    <!-- ========== Elevation ========== -->
+    <dimen name="elevation_none">0dp</dimen>
+    <dimen name="elevation_low">2dp</dimen>
+    <dimen name="elevation_medium">4dp</dimen>
+    <dimen name="elevation_high">6dp</dimen>
+
+    <!-- ========== Touch Targets ========== -->
+    <dimen name="touch_target_min">48dp</dimen>
+    <dimen name="touch_target_compact">40dp</dimen>
+    <dimen name="touch_target_small">36dp</dimen>
+    <dimen name="touch_target_large">56dp</dimen>
+
+    <!-- ========== Icon Sizes ========== -->
+    <dimen name="icon_sm">24dp</dimen>
+    <dimen name="icon_md">32dp</dimen>
+    <dimen name="icon_lg">40dp</dimen>
+    <dimen name="icon_avatar">56dp</dimen>
+
+    <!-- ========== Dividers ========== -->
+    <dimen name="divider_thin">1dp</dimen>
+    <dimen name="divider_thick">2dp</dimen>
+
+    <!-- ========== Component-specific ========== -->
     <dimen name="chat_input_section_height">180dp</dimen>
+
 </resources>

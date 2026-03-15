@@ -4,6 +4,7 @@ name: Entity Cards Stability CI
 # Triggered on PRs and pushes that touch entity-related code.
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
@@ -112,7 +113,8 @@ jobs:
       - name: Check edit mode guard (Android)
         run: |
           echo "── Checking Android edit mode guard ──"
-          if grep -q "if (isEditMode) return" app/src/main/java/com/hank/clawlive/MainActivity.kt; then
+          # Match both single-line "if (isEditMode) return" and multi-line block with return
+          if grep -A2 "if (isEditMode)" app/src/main/java/com/hank/clawlive/MainActivity.kt | grep -q "return"; then
             echo "✅ Android: edit mode guard present in updateAgentCards()"
           else
             echo "❌ Android: missing edit mode guard — cards will disappear during edit"
