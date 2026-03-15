@@ -416,7 +416,29 @@ Google will review your app. Check status in Google Play Console.
 
 > [!IMPORTANT]
 > **Every release MUST publish release notes to all 9 platforms for brand visibility.**
-> Uses the EClaw Publisher API. `X-Publisher-Key` is stored in `backend/.env`.
+> Uses the EClaw Publisher API. `X-Publisher-Key` is stored in `backend/.env` as `PUBLISHER_API_KEY`.
+
+> [!CAUTION]
+> **Previous failures and how to avoid them:**
+> - **Garbled title (WordPress)** — Do NOT use em-dash `—` via shell `'single quotes'`; use `-d @file.json` with a temp JSON file instead to preserve UTF-8.
+> - **DEV.to "not configured"** — Requires `DEVTO_API_KEY` env var on Railway. Check with `GET /api/publisher/platforms`.
+> - **Hashnode "needs publicationId"** — The `publicationId` is **`69b0ed0aabc0d95001c31624`** (hardcoded below).
+> - **Blogger "needs device OAuth refresh token"** — The `deviceId` is **`480def4c-2183-4d8e-afd0-b131ae89adcc`** (hardcoded below). Blogger OAuth must be active.
+> - **Tumblr "needs blogName"** — The `blogName` is **`eclawofficial`** (hardcoded below).
+
+### Prerequisites
+
+// turbo
+```bash
+# 1. Read the publisher key from backend/.env
+PUBLISHER_KEY=$(grep PUBLISHER_API_KEY backend/.env | cut -d= -f2)
+echo "Key: ${PUBLISHER_KEY:0:10}..."
+
+# 2. Verify all platforms are configured
+curl -s "https://eclawbot.com/api/publisher/platforms" | python3 -m json.tool
+```
+
+If any platform shows as not configured, set the missing env var on Railway before proceeding.
 
 ### Platforms & API calls
 
@@ -425,115 +447,212 @@ All requests use the base URL `https://eclawbot.com/api/publisher/` and require 
 -H "X-Publisher-Key: $PUBLISHER_KEY"
 ```
 
-Read the key from `backend/.env` (`X-Publisher-Key=...`).
+### Fixed parameters (DO NOT use placeholders)
 
-#### Content preparation
+| Parameter | Value | Used by |
+|-----------|-------|---------|
+| `publicationId` | `69b0ed0aabc0d95001c31624` | Hashnode |
+| `deviceId` | `480def4c-2183-4d8e-afd0-b131ae89adcc` | Blogger |
+| `blogName` | `eclawofficial` | Tumblr |
+| `siteId` (EClaw Official) | `253401752` | WordPress Site 1 |
+| `siteId` (Site 2) | `253401275` | WordPress Site 2 |
 
-Generate platform-appropriate content from the release changelog:
+### Content preparation
 
-| Platform | Format | Limit | Language |
-|----------|--------|-------|----------|
-| DEV.to | Markdown | — | English |
-| Hashnode | Markdown | — | English |
-| Blogger | HTML | — | English |
-| Telegraph | HTML | — | English |
-| Tumblr | HTML/Markdown | — | English |
-| Mastodon | Plain text | 500 chars | English |
-| Qiita | Markdown | — | Japanese |
-| X / Twitter | Plain text | 280 chars | English |
-| WordPress | HTML | — | English |
+Generate platform-appropriate content from the release changelog.
+**Each platform publishes in its designated language:**
 
-#### 1. DEV.to
+| # | Platform | Format | Limit | Language | Notes |
+|---|----------|--------|-------|----------|-------|
+| 1 | WordPress (Site 1) | HTML | — | **繁體中文** | eclawbot.wordpress.com |
+| 2 | WordPress (Site 2) | HTML | — | **English** | Secondary site |
+| 3 | DEV.to | Markdown | — | English | Requires `DEVTO_API_KEY` env var |
+| 4 | Hashnode | Markdown | — | English | `publicationId` required |
+| 5 | Blogger | HTML | — | English | `deviceId` required |
+| 6 | Telegraph | HTML | — | English | |
+| 7 | Tumblr | HTML | — | English | `blogName` required |
+| 8 | Mastodon | Plain text | 500 chars | English | |
+| 9 | Qiita | Markdown | — | **日本語** | Rate limit: ~10 req/hour |
+| 10 | X / Twitter | Plain text | 280 chars | English | |
+
+> [!IMPORTANT]
+> **UTF-8 encoding**: For titles with special characters (em-dash `—`, CJK, emoji),
+> always write the JSON payload to a temp file and use `curl -d @file.json` instead of inline `-d '...'`.
+> This avoids shell encoding issues that cause garbled characters (e.g., `—` → `�X`).
+
+#### 1. WordPress Site 1 (繁體中文)
 // turbo
 ```bash
-curl -X POST "https://eclawbot.com/api/publisher/devto/publish" \
+cat > /tmp/release_wp1.json << 'EOF'
+{
+  "siteId": "253401752",
+  "title": "EClaw v{VERSION} — {中文標題}",
+  "content": "<h2>EClaw v{VERSION} 更新內容</h2>... (繁體中文 HTML)",
+  "status": "publish",
+  "tags": ["eclaw", "release", "iot"]
+}
+EOF
+curl -s -X POST "https://eclawbot.com/api/publisher/wordpress/publish" \
   -H "Content-Type: application/json" \
   -H "X-Publisher-Key: $PUBLISHER_KEY" \
-  -d '{"title":"EClaw v{VERSION} Release Notes","body_markdown":"...","published":true,"tags":["eclaw","iot","release"]}'
+  -d @/tmp/release_wp1.json
 ```
 
-#### 2. Hashnode
+#### 2. WordPress Site 2 (English)
 // turbo
 ```bash
-curl -X POST "https://eclawbot.com/api/publisher/hashnode/publish" \
+cat > /tmp/release_wp2.json << 'EOF'
+{
+  "siteId": "253401275",
+  "title": "EClaw v{VERSION} Release Notes",
+  "content": "<h2>EClaw v{VERSION} Release Notes</h2>... (English HTML)",
+  "status": "publish",
+  "tags": ["eclaw", "release", "iot"]
+}
+EOF
+curl -s -X POST "https://eclawbot.com/api/publisher/wordpress/publish" \
   -H "Content-Type: application/json" \
   -H "X-Publisher-Key: $PUBLISHER_KEY" \
-  -d '{"publicationId":"PUBLICATION_ID","title":"EClaw v{VERSION} Release Notes","contentMarkdown":"...","tags":["eclaw","iot","release"]}'
+  -d @/tmp/release_wp2.json
 ```
 
-#### 3. Blogger
+#### 3. DEV.to (English)
 // turbo
 ```bash
-curl -X POST "https://eclawbot.com/api/publisher/blogger/publish" \
+cat > /tmp/release_devto.json << 'EOF'
+{
+  "title": "EClaw v{VERSION} Release Notes",
+  "body_markdown": "## EClaw v{VERSION}\n\n... (English Markdown)",
+  "published": true,
+  "tags": ["eclaw", "iot", "release", "opensource"]
+}
+EOF
+curl -s -X POST "https://eclawbot.com/api/publisher/devto/publish" \
   -H "Content-Type: application/json" \
   -H "X-Publisher-Key: $PUBLISHER_KEY" \
-  -d '{"deviceId":"DEVICE_ID","title":"EClaw v{VERSION} Release Notes","content":"<p>HTML content</p>","labels":["eclaw","release"],"isDraft":false}'
+  -d @/tmp/release_devto.json
 ```
 
-#### 4. Telegraph
+#### 4. Hashnode (English)
 // turbo
 ```bash
-curl -X POST "https://eclawbot.com/api/publisher/telegraph/publish" \
+cat > /tmp/release_hashnode.json << 'EOF'
+{
+  "publicationId": "69b0ed0aabc0d95001c31624",
+  "title": "EClaw v{VERSION} Release Notes",
+  "contentMarkdown": "## EClaw v{VERSION}\n\n... (English Markdown)",
+  "tags": ["eclaw", "iot", "release"],
+  "slug": "eclaw-v{VERSION_NO_DOTS}-release-notes"
+}
+EOF
+curl -s -X POST "https://eclawbot.com/api/publisher/hashnode/publish" \
   -H "Content-Type: application/json" \
   -H "X-Publisher-Key: $PUBLISHER_KEY" \
-  -d '{"title":"EClaw v{VERSION} Release Notes","content":"<p>HTML content</p>","author_name":"EClaw","author_url":"https://eclawbot.com"}'
+  -d @/tmp/release_hashnode.json
 ```
 
-#### 5. Tumblr
+#### 5. Blogger (English)
 // turbo
 ```bash
-curl -X POST "https://eclawbot.com/api/publisher/tumblr/publish" \
+cat > /tmp/release_blogger.json << 'EOF'
+{
+  "deviceId": "480def4c-2183-4d8e-afd0-b131ae89adcc",
+  "title": "EClaw v{VERSION} Release Notes",
+  "content": "<h2>EClaw v{VERSION}</h2>... (English HTML)",
+  "labels": ["eclaw", "release", "iot"],
+  "isDraft": false
+}
+EOF
+curl -s -X POST "https://eclawbot.com/api/publisher/blogger/publish" \
   -H "Content-Type: application/json" \
   -H "X-Publisher-Key: $PUBLISHER_KEY" \
-  -d '{"blogName":"BLOG_NAME","title":"EClaw v{VERSION} Release Notes","content":"...","tags":["eclaw","release"],"state":"published"}'
+  -d @/tmp/release_blogger.json
 ```
 
-#### 6. Mastodon (500 char limit)
+#### 6. Telegraph (English)
 // turbo
 ```bash
-curl -X POST "https://eclawbot.com/api/publisher/mastodon/publish" \
+cat > /tmp/release_telegraph.json << 'EOF'
+{
+  "title": "EClaw v{VERSION} Release Notes",
+  "content": "<h3>Key Features</h3>... (English HTML, use <p>, <h3>, <ul>, <li> tags)",
+  "author_name": "EClaw",
+  "author_url": "https://eclawbot.com"
+}
+EOF
+curl -s -X POST "https://eclawbot.com/api/publisher/telegraph/publish" \
   -H "Content-Type: application/json" \
   -H "X-Publisher-Key: $PUBLISHER_KEY" \
-  -d '{"status":"🦞 EClaw v{VERSION} released!\n\nKey changes:\n- ...\n\nhttps://eclawbot.com\n\n#EClaw #IoT #release","visibility":"public","language":"en"}'
+  -d @/tmp/release_telegraph.json
 ```
 
-#### 7. Qiita (Japanese)
+#### 7. Tumblr (English)
 // turbo
 ```bash
-curl -X POST "https://eclawbot.com/api/publisher/qiita/publish" \
+cat > /tmp/release_tumblr.json << 'EOF'
+{
+  "blogName": "eclawofficial",
+  "title": "EClaw v{VERSION} Release Notes",
+  "content": "<h2>EClaw v{VERSION}</h2>... (English HTML)",
+  "tags": ["eclaw", "release", "iot", "a2a"],
+  "state": "published"
+}
+EOF
+curl -s -X POST "https://eclawbot.com/api/publisher/tumblr/publish" \
   -H "Content-Type: application/json" \
   -H "X-Publisher-Key: $PUBLISHER_KEY" \
-  -d '{"title":"EClaw v{VERSION} リリースノート","body":"Markdown content in Japanese","tags":[{"name":"EClaw","versions":[]},{"name":"IoT","versions":[]},{"name":"release","versions":[]}],"private":false}'
+  -d @/tmp/release_tumblr.json
 ```
 
-#### 8. X / Twitter (280 char limit)
+#### 8. Mastodon (English, 500 char limit)
 // turbo
 ```bash
-curl -X POST "https://eclawbot.com/api/publisher/x/tweet" \
+curl -s -X POST "https://eclawbot.com/api/publisher/mastodon/publish" \
   -H "Content-Type: application/json" \
   -H "X-Publisher-Key: $PUBLISHER_KEY" \
-  -d '{"text":"🦞 EClaw v{VERSION} is out!\n\nHighlights:\n- ...\n\nhttps://eclawbot.com #EClaw #IoT"}'
+  -d '{"status":"🦞 EClaw v{VERSION} released!\n\n✨ Feature 1\n✨ Feature 2\n✨ Feature 3\n\nhttps://eclawbot.com\n\n#EClaw #IoT #release","visibility":"public","language":"en"}'
 ```
 
-#### 9. WordPress
+#### 9. Qiita (日本語)
+> [!NOTE]
+> Qiita has strict rate limiting (~10 requests/hour). If you get "Too many requests", wait 10+ minutes and retry.
+
 // turbo
 ```bash
-curl -X POST "https://eclawbot.com/api/publisher/wordpress/publish" \
+cat > /tmp/release_qiita.json << 'EOF'
+{
+  "title": "EClaw v{VERSION} リリースノート",
+  "body": "## EClaw v{VERSION}\n\n... (日本語 Markdown)",
+  "tags": [{"name":"EClaw","versions":[]},{"name":"IoT","versions":[]},{"name":"release","versions":[]}],
+  "private": false
+}
+EOF
+curl -s -X POST "https://eclawbot.com/api/publisher/qiita/publish" \
   -H "Content-Type: application/json" \
   -H "X-Publisher-Key: $PUBLISHER_KEY" \
-  -d '{"siteId":"253401752","title":"EClaw v{VERSION} Release Notes","content":"<p>HTML content</p>","status":"publish"}'
+  -d @/tmp/release_qiita.json
+```
+
+#### 10. X / Twitter (English, 280 char limit)
+// turbo
+```bash
+curl -s -X POST "https://eclawbot.com/api/publisher/x/tweet" \
+  -H "Content-Type: application/json" \
+  -H "X-Publisher-Key: $PUBLISHER_KEY" \
+  -d '{"text":"🦞 EClaw v{VERSION} released!\n\n✨ Highlight 1\n✨ Highlight 2\n\nhttps://eclawbot.com #EClaw #IoT"}'
 ```
 
 #### Verification
 // turbo
 ```bash
 # Check all platform statuses
-curl "https://eclawbot.com/api/publisher/platforms"
+curl -s "https://eclawbot.com/api/publisher/platforms" | python3 -m json.tool
 ```
 
 > [!NOTE]
 > If a platform fails (e.g., missing credentials), log the error and continue with the remaining platforms.
 > Platforms can be retried individually later.
+> **Qiita** rate limits are strict — if blocked, retry after 10 minutes.
 
 ---
 
