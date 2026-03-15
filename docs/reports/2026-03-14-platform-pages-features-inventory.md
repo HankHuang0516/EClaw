@@ -1,6 +1,7 @@
 # EClaw 三平台頁面與功能渲染邏輯整理
 
 > 建立日期：2026-03-14
+> 最後更新：2026-03-15（清理完成 + UI 審查修復）
 > 涵蓋範圍：Web Portal、Android App、iOS/React Native App
 
 ---
@@ -22,8 +23,8 @@
 
 | 平台 | 頁面/畫面數 | 主要技術 | 狀態 |
 |------|-----------|---------|------|
-| Web Portal | 16 HTML（含 3 個 redirect stub） | 原生 HTML/JS/CSS、Socket.IO | 生產中 |
-| Android App | 16 Activities（3 個未使用） | Kotlin、Retrofit、Socket.IO、Room DB | 生產中 |
+| Web Portal | 13 HTML | 原生 HTML/JS/CSS、Socket.IO | 生產中 |
+| Android App | 13 Activities | Kotlin、Retrofit、Socket.IO、Room DB | 生產中 |
 | iOS App | 11 Screens | React Native (Expo)、Zustand、Axios、Socket.IO | 生產中 |
 
 ---
@@ -34,7 +35,7 @@
 |------|:---:|:-------:|:---:|------|
 | **登入/註冊** | ✅ `index.html` | ✅ 首次啟動自動建立 | ✅ 自動建立 | Web 支援 Email/OAuth；App 以 deviceId 為主 |
 | **Entity 卡片首頁** | ✅ `dashboard.html` | ✅ `MainActivity` | ✅ Home tab | 核心頁面 |
-| **Entity 管理 (CRUD)** | ✅ dashboard 內 | ✅ MainActivity 內（~~EntityManagerActivity~~ 已廢棄） | ✅ `entity-manager` | |
+| **Entity 管理 (CRUD)** | ✅ dashboard 內 | ✅ MainActivity 內 | ✅ `entity-manager` | |
 | **即時聊天** | ✅ `chat.html` | ✅ `ChatActivity` | ✅ Chat tab → `chat/[id]` | |
 | **AI 客服聊天** | ✅ 浮動 widget (`ai-chat.js`) | ✅ `AiChatActivity` | ✅ `ai-chat` | |
 | **Mission Dashboard** | ✅ `mission.html` | ✅ `MissionControlActivity` | ✅ Mission tab | TODO/Notes/Rules |
@@ -57,7 +58,7 @@
 | **隱私政策** | ✅ settings modal | ✅ `PrivacyPolicyActivity` | ⚠️ 按鈕存在但無實作 | iOS 缺口 |
 | **刪除帳號** | ✅ `delete-account.html` | ❌ 透過 Web | ❌ 透過 Web | Web-only |
 | **Live Wallpaper** | ❌ N/A | ✅ `ClawWallpaperService` | ❌ N/A | Android-only |
-| **Layout 編輯器** | ❌ N/A | ✅ `DebugRenderActivity` | ❌ N/A | Android-only |
+| ~~**Layout 編輯器**~~ | ❌ N/A | ~~已刪除~~ | ❌ N/A | 功能整合到 WallpaperPreview |
 | **Crash Log Viewer** | ❌ N/A | ✅ `CrashLogViewerActivity` | ❌ N/A | Android-only |
 | **Home Widget** | ❌ N/A | ✅ `ChatWidgetProvider` | ❌ N/A | Android-only |
 | **Quick Message** | ❌ N/A | ✅ `MessageActivity` | ❌ N/A | Android-only |
@@ -79,17 +80,9 @@
 - **API**：僅 `GET /api/auth/me`（判斷是否顯示登入 CTA）
 - **特殊**：整合了原本獨立的 faq / release-notes / compare 頁面
 
-#### ~~`faq.html`~~ — 🗑️ Redirect Stub
-- **渲染邏輯**：`<meta http-equiv="refresh">` 轉向 `info.html#faq`
-- **狀態**：可清除（12 行，純重導向）
-
-#### ~~`release-notes.html`~~ — 🗑️ Redirect Stub
-- **渲染邏輯**：`<meta http-equiv="refresh">` 轉向 `info.html#release-notes`
-- **狀態**：可清除（12 行，純重導向）
-
-#### ~~`compare-channels.html`~~ — 🗑️ Redirect Stub
-- **渲染邏輯**：`<meta http-equiv="refresh">` 轉向 `info.html#compare`
-- **狀態**：可清除（12 行，純重導向）
+#### ~~`faq.html`~~ — ✅ 已刪除 (2026-03-14)
+#### ~~`release-notes.html`~~ — ✅ 已刪除 (2026-03-14)
+#### ~~`compare-channels.html`~~ — ✅ 已刪除 (2026-03-14)
 
 ### 3.2 認證頁面（需登入）
 
@@ -210,20 +203,16 @@
 
 ### 4.2 子頁面
 
-#### `EntityManagerActivity` — Entity 管理面板
-- **進入方式**：MainActivity → Entity 管理按鈕
-- **渲染邏輯**：Entity 卡片列表（狀態徽章、public code、Agent Card 對話框）、新增/移除/永久刪除
-- **API**：entities、agent-card CRUD、add-entity、delete permanent
+#### ~~`EntityManagerActivity`~~ — ✅ 已刪除 (2026-03-14)
+- 功能已由 `MainActivity` 的 Entity 卡片操作取代
 
 #### `ScheduleActivity` — 排程管理
 - **進入方式**：MissionControlActivity → 排程 Tab
 - **渲染邏輯**：排程列表 + 執行歷史、建立/編輯對話框、執行環境檢視
 - **API**：schedules CRUD、schedule-executions
 
-#### `AiChatActivity` — AI 客服
-- **進入方式**：Settings → AI Chat / FAB 按鈕（Mission、Schedule、Files 頁面）
-- **渲染邏輯**：聊天 RecyclerView、圖片附件（max 3）、非同步輪詢
-- **API**：ai-support/chat、chat/submit、chat/poll
+#### ~~`AiChatActivity`~~ — ✅ 已刪除 (2026-03-14)
+- 已被 `AiChatBottomSheet` fragment 取代
 
 #### `OfficialBorrowActivity` — Official Bot 借用
 - **進入方式**：MainActivity → Official Bot 按鈕
@@ -252,9 +241,8 @@
 - **渲染邏輯**：Live wallpaper 預覽、自訂背景圖、設定桌布按鈕
 - **儲存**：`LayoutPreferences` SharedPreferences
 
-#### `DebugRenderActivity` — Layout 編輯器
-- **渲染邏輯**：可拖曳 Entity 定位、自訂 layout 開關、重置按鈕
-- **儲存**：`LayoutPreferences` SharedPreferences
+#### ~~`DebugRenderActivity`~~ — ✅ 已刪除 (2026-03-14)
+- 僅測試用，production 無入口
 
 #### `PrivacyPolicyActivity` — 隱私政策
 - **渲染邏輯**：唯讀 HTML 文字 from `strings.xml`
@@ -376,15 +364,13 @@
 
 ## 7. 可清除項目
 
-### 7.1 Web Portal — 確認可清除
+### 7.1 Web Portal — ✅ 已清除 (2026-03-14)
 
-| 檔案 | 行數 | 原因 | 影響評估 |
-|------|------|------|---------|
-| `portal/faq.html` | 12 | 純 redirect 到 `info.html#faq`，已無獨立內容 | 低風險（可能有舊書籤） |
-| `portal/release-notes.html` | 12 | 純 redirect 到 `info.html#release-notes` | 低風險 |
-| `portal/compare-channels.html` | 12 | 純 redirect 到 `info.html#compare` | 低風險 |
-
-> **建議**：這三個檔案總共僅 36 行，功能已完全由 `info.html` 取代。可以保留作為向後相容 redirect（零維護成本），或直接刪除。
+| 檔案 | 狀態 |
+|------|------|
+| ~~`portal/faq.html`~~ | ✅ 已刪除 |
+| ~~`portal/release-notes.html`~~ | ✅ 已刪除 |
+| ~~`portal/compare-channels.html`~~ | ✅ 已刪除 |
 
 ### 7.2 iOS App — 未實作功能（可考慮移除 UI 殼或補齊實作）
 
@@ -396,34 +382,33 @@
 | 隱私政策連結 | 按鈕存在但 handler 為空 | 加入 WebView 或連結到 info.html |
 | 付費 Bot 借用 | 顯示 "IAP coming soon" | 補齊或暫時隱藏 |
 
-### 7.3 Android App — 未使用的 Activity（3 個）
+### 7.3 Android App — ✅ 已清除 (2026-03-14)
 
-| Activity | 檔案 | 原因 | 影響評估 |
-|----------|------|------|---------|
-| `EntityManagerActivity` | `EntityManagerActivity.kt` + `activity_entity_manager.xml` | Manifest 中宣告，但無任何 production Intent 啟動它。功能已由 `MainActivity` 的 Entity 卡片操作取代 | 可安全移除（測試檔案需同步清理） |
-| `AiChatActivity` | `AiChatActivity.kt` + `activity_ai_chat.xml` | 已被 `AiChatBottomSheet` fragment 取代，無 production Intent | 可安全移除 |
-| `DebugRenderActivity` | `DebugRenderActivity.kt` + `activity_layout_editor.xml` | 僅測試檔案啟動，production 無入口。Layout 編輯功能已整合到 `WallpaperPreviewActivity` | 可安全移除或未來開放入口 |
+| Activity | 狀態 |
+|----------|------|
+| ~~`EntityManagerActivity`~~ + layout + test | ✅ 已刪除 |
+| ~~`AiChatActivity`~~ + layout | ✅ 已刪除 |
+| ~~`DebugRenderActivity`~~ + layout + test | ✅ 已刪除 |
 
-### 7.4 Android App — 未使用的 Drawable 資源（12 個）
+### 7.4 Android App — ✅ 已清除 8 個 Drawable (2026-03-14)
 
-| 檔案 | 原因 |
-|------|------|
-| `badge_busy.xml` | 舊版 Entity 狀態徽章，已不使用 |
-| `badge_eating.xml` | 同上 |
-| `badge_excited.xml` | 同上 |
-| `badge_idle.xml` | 同上 |
-| `badge_sleeping.xml` | 同上 |
-| `bg_entity_badge.xml` | 舊版 Entity badge 背景 |
-| `bg_recording_indicator.xml` | 舊版錄音指示器 |
-| `chat_bubble_lobster.xml` | 舊版聊天主題 bubble |
-| `chat_bubble_pig.xml` | 同上 |
-| `ic_drag.xml` | 未使用的拖曳圖示 |
-| `ic_thumb_down_filled.xml` | 未使用的按讚圖示 |
-| `ic_thumb_up_filled.xml` | 同上 |
+已刪除：`badge_busy.xml`、`badge_eating.xml`、`badge_excited.xml`、`badge_idle.xml`、`badge_sleeping.xml`、`chat_bubble_lobster.xml`、`chat_bubble_pig.xml`、`ic_drag.xml`
 
-### 7.5 Web Portal — 無其他可清除頁面
+保留（仍有引用）：`bg_entity_badge.xml`、`bg_recording_indicator.xml`、`ic_thumb_up_filled.xml`、`ic_thumb_down_filled.xml`
 
-Web Portal 扣除 3 個 redirect stub 後，13 個頁面全部活躍。
+### 7.5 UI 審查修復 — ✅ 已完成 (2026-03-15)
+
+詳細修復清單見 [UI Code 審查報告](2026-03-15-ui-code-audit.md)。
+
+主要修復：
+- **P0**：Android 觸控目標 48dp、Web 觸控目標、iOS SafeAreaView/KeyboardAvoidingView
+- **P1**：三平台 Entity 角色顏色統一（LOBSTER `#FF6B6B`、PIG `#FFB6C1`）、iOS 集中化顏色常量（`constants/colors.ts`）、Android dimens.xml 補齊 50+ token、Web CSS 變數統一（8 頁面）、card borderRadius 統一
+- **P2**：Web focus-visible 補齊、iOS dialog TextInput dense、Web dark theme 修復、Android top bar padding 統一
+- **P3**：Web z-index 層級重整
+
+### 7.6 Web Portal — 無其他可清除頁面
+
+Web Portal 13 個頁面全部活躍。
 
 ---
 
@@ -460,4 +445,4 @@ Web Portal 扣除 3 個 redirect stub 後，13 個頁面全部活躍。
 
 ---
 
-*此文件由 Claude Code 自動產生，基於 2026-03-14 的 codebase 狀態。*
+*此文件由 Claude Code 自動產生，基於 2026-03-14 的 codebase 狀態。2026-03-15 更新清理狀態與 UI 修復記錄。*
