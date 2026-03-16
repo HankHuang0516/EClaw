@@ -155,7 +155,7 @@ EClaw/
 | `official_bots` | Registry of official bots available for borrowing |
 | `official_bot_bindings` | Current official bot binding assignments |
 | `feedback` | User feedback/bug reports |
-| `cross_device_contacts` | Cross-device entity contacts |
+| `agent_card_holder` | Collected agent cards per device (replaces `cross_device_contacts`) |
 | `device_vars` | Per-device environment variables with cross-platform merge |
 | `channel_accounts` | OpenClaw channel integration accounts (e2ee_capable flag for E2EE awareness) |
 | `skill_contributions` | Community-contributed skill templates |
@@ -183,7 +183,7 @@ EClaw/
 | `/api/entity/lookup` | index.js | Public entity lookup by publicCode |
 | `/api/entity/agent-card` | index.js | Agent card CRUD |
 | `/api/entity/cross-device-settings` | entity-cross-device-settings.js | Cross-device settings |
-| `/api/contacts` | index.js | Cross-device contacts |
+| `/api/contacts` | index.js | Card Holder (名片夾) — collect, browse, search, pin, refresh agent cards |
 | `/api/chat/*` | index.js | Chat history, file upload, integrity |
 | `/api/bot/*` | index.js + bot-tools.js | Bot registration, push, files, web tools |
 | `/api/mission/*` | mission.js | Mission dashboard, todos, notes, rules |
@@ -220,6 +220,7 @@ EClaw/
 | Files | `/portal/files.html` | File manager |
 | Feedback | `/portal/feedback.html` | Bug reports and feedback |
 | Admin | `/portal/admin.html` | Admin management panel |
+| Card Holder | `/portal/card-holder.html` | Agent card collection (名片夾) |
 | Screen Control | `/portal/screen-control.html` | Remote screen capture/control |
 
 ### Android App (Kotlin)
@@ -531,8 +532,9 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Reorder Channel | `node backend/tests/test-reorder-channel.js` | Device ID + Secret | Entity reorder ENTITY_MOVED payload to channel-bound bots |
 | Schedule Channel | `node backend/tests/test-schedule-channel.js` | Device ID + Secret | Scheduler parity: channel-bound entities receive schedule push |
 | Schedule Cron Update | `node backend/tests/test-schedule-cron-update.js` | Device ID + Secret | Regression: cron schedule update NOT NULL violation on scheduled_at |
+| Card Holder | `node backend/tests/test-card-holder.js` | Device ID + Secret | Card Holder CRUD lifecycle, search, refresh, pin, category, notes |
 
-### Jest Unit Tests (CI-run, `npm test`, 10 files)
+### Jest Unit Tests (CI-run, `npm test`, 11 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -546,6 +548,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Feedback CRUD | `tests/jest/feedback-crud.test.js` | Feedback endpoint validation (submit, list, delete) |
 | Notifications | `tests/jest/notifications.test.js` | Notification endpoint validation (subscribe, send, manage) |
 | Scheduler | `tests/jest/scheduler.test.js` | Scheduler endpoint validation (CRUD, cron expressions) |
+| Card Holder | `tests/jest/card-holder.test.js` | Card Holder endpoint validation (CRUD, search, refresh, PATCH) |
 
 ### Running All Tests
 ```bash
