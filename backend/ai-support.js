@@ -686,7 +686,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                     if (parsed.result_text) {
                         return parsed.result_text;
                     } else if (parsed.subtype === 'error_max_turns') {
-                        return 'Sorry, this question was too complex for me to fully analyze. Could you try asking a more specific question?';
+                        return 'This question required more analysis steps than allowed. Here is what I found so far — please try breaking your question into smaller, more specific parts for a complete answer.';
                     } else if (parsed.subtype === 'error_tool_execution') {
                         return 'I encountered an error while looking into your issue. Please try again.';
                     } else {
