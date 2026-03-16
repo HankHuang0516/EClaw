@@ -41,6 +41,16 @@ function authBot(req, res, next) {
     next();
 }
 
+/** Auth middleware for POST endpoints (reads from req.body) */
+function authBotPost(req, res, next) {
+    const { deviceId, botSecret, deviceSecret, entityId } = req.body;
+    if (!deviceId || (!botSecret && !deviceSecret)) {
+        return res.status(400).json({ error: 'deviceId and botSecret (or deviceSecret) required' });
+    }
+    req.botAuth = { deviceId, botSecret: botSecret || deviceSecret, entityId: parseInt(entityId) || 0 };
+    next();
+}
+
 // ── Rate limiting (per device) ────────────────────────────────
 const rateLimits = new Map();
 const RATE_WINDOW = 60 * 1000;  // 1 min
@@ -326,6 +336,203 @@ router.get('/web-fetch', authBot, async (req, res) => {
         console.error(`[BotTools] web-fetch error:`, err.message);
         res.status(500).json({ error: 'Fetch failed', detail: err.message });
     }
+});
+
+// ── POST /api/bot/github-issue ─────────────────────────────────
+// Proxy for bots to create GitHub issues (server holds the token)
+// Rate limit: 5 issues/day per device
+const issueCounters = new Map();
+const MAX_ISSUES_PER_DAY = 5;
+
+function checkIssueDailyLimit(deviceId) {
+    const today = new Date().toISOString().slice(0, 10);
+    const key = `${deviceId}:${today}`;
+    const count = issueCounters.get(key) || 0;
+    if (count >= MAX_ISSUES_PER_DAY) return false;
+    // Clean old days
+    for (const [k] of issueCounters) {
+        if (!k.endsWith(today)) issueCounters.delete(k);
+    }
+    issueCounters.set(key, count + 1);
+    return true;
+}
+
+router.post('/github-issue', authBotPost, async (req, res) => {
+    const { deviceId } = req.botAuth;
+    const { title, body, labels } = req.body;
+
+    if (!title || typeof title !== 'string' || title.trim().length === 0) {
+        return res.status(400).json({ error: 'title required (string, non-empty)' });
+    }
+    if (title.length > 256) {
+        return res.status(400).json({ error: 'title max 256 characters' });
+    }
+    if (body && typeof body !== 'string') {
+        return res.status(400).json({ error: 'body must be a string' });
+    }
+    if (body && body.length > 10000) {
+        return res.status(400).json({ error: 'body max 10000 characters' });
+    }
+
+    // Validate labels
+    const issueLabels = ['bot-audit'];
+    if (Array.isArray(labels)) {
+        const ALLOWED_LABELS = [
+            'skill-template', 'infrastructure', 'documentation',
+            'feature-parity', 'community', 'bug', 'enhancement',
+            'publisher', 'api-health', 'stale'
+        ];
+        for (const l of labels) {
+            if (typeof l === 'string' && ALLOWED_LABELS.includes(l)) {
+                issueLabels.push(l);
+            }
+        }
+    }
+
+    const token = process.env.GITHUB_TOKEN;
+    const repo = process.env.GITHUB_REPO;
+    if (!token || !repo) {
+        return res.status(501).json({ error: 'GitHub integration not configured (GITHUB_TOKEN / GITHUB_REPO)' });
+    }
+
+    if (!checkIssueDailyLimit(deviceId)) {
+        return res.status(429).json({
+            error: `Daily GitHub issue limit reached (${MAX_ISSUES_PER_DAY}/day). Try again tomorrow.`
+        });
+    }
+
+    try {
+        const ghRes = await fetch(`https://api.github.com/repos/${repo}/issues`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title: title.trim(),
+                body: (body || '').trim() + `\n\n---\n_Created by bot audit (entity #${req.botAuth.entityId}, device: ${deviceId.slice(0, 8)}…)_`,
+                labels: issueLabels
+            })
+        });
+
+        if (!ghRes.ok) {
+            const err = await ghRes.text();
+            console.error(`[BotTools] GitHub issue creation failed (${ghRes.status}):`, err);
+            return res.status(502).json({ error: `GitHub API returned ${ghRes.status}` });
+        }
+
+        const data = await ghRes.json();
+        console.log(`[BotTools] GitHub issue #${data.number} created by device ${deviceId.slice(0, 8)}…: ${title.trim()}`);
+        res.json({
+            success: true,
+            issue: {
+                number: data.number,
+                url: data.html_url,
+                title: data.title
+            }
+        });
+    } catch (err) {
+        console.error('[BotTools] GitHub API error:', err.message);
+        res.status(500).json({ error: 'GitHub API request failed', detail: err.message });
+    }
+});
+
+// ── POST /api/bot/audit-log ───────────────────────────────────
+// Structured audit finding log — stored as Mission Dashboard notes
+// with [AUDIT] prefix so local Claude can query & act on them.
+router.post('/audit-log', authBotPost, async (req, res) => {
+    const { deviceId } = req.botAuth;
+    const { type, findings, summary, severity } = req.body;
+
+    // Validate required fields
+    const VALID_TYPES = [
+        'url-validation', 'api-health', 'openapi-audit',
+        'parity-audit', 'community-engagement', 'agent-card',
+        'template-quality', 'general'
+    ];
+    if (!type || !VALID_TYPES.includes(type)) {
+        return res.status(400).json({
+            error: `type required, must be one of: ${VALID_TYPES.join(', ')}`
+        });
+    }
+    if (!findings || !Array.isArray(findings)) {
+        return res.status(400).json({ error: 'findings required (array of objects)' });
+    }
+    if (findings.length > 20) {
+        return res.status(400).json({ error: 'findings max 20 items per log' });
+    }
+
+    const VALID_SEVERITIES = ['info', 'warning', 'critical'];
+    const sev = VALID_SEVERITIES.includes(severity) ? severity : 'info';
+
+    // Validate each finding
+    for (const f of findings) {
+        if (!f.item || typeof f.item !== 'string') {
+            return res.status(400).json({ error: 'each finding must have "item" (string)' });
+        }
+        if (!f.status || !['ok', 'warning', 'error', 'dead', 'missing', 'stale'].includes(f.status)) {
+            return res.status(400).json({
+                error: 'each finding must have "status" (ok|warning|error|dead|missing|stale)'
+            });
+        }
+    }
+
+    // Build structured note for Mission Dashboard
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10);
+    const timeStr = now.toISOString().slice(11, 16);
+
+    const issueFindings = findings.filter(f => f.status !== 'ok');
+    const okCount = findings.length - issueFindings.length;
+
+    let content = `## Audit: ${type}\n`;
+    content += `**Date:** ${dateStr} ${timeStr} UTC\n`;
+    content += `**Severity:** ${sev}\n`;
+    content += `**Entity:** #${req.botAuth.entityId}\n`;
+    content += `**Results:** ${okCount}/${findings.length} OK\n\n`;
+
+    if (issueFindings.length > 0) {
+        content += `### Issues Found\n`;
+        for (const f of issueFindings) {
+            const icon = f.status === 'error' || f.status === 'dead' ? '❌' :
+                         f.status === 'warning' || f.status === 'stale' ? '⚠️' : '❓';
+            content += `- ${icon} **${f.item}**: ${f.status}`;
+            if (f.detail) content += ` — ${f.detail}`;
+            if (f.suggestion) content += ` → _${f.suggestion}_`;
+            content += `\n`;
+        }
+    }
+
+    if (summary) {
+        content += `\n### Summary\n${summary}\n`;
+    }
+
+    // Store via Mission Dashboard note API (internal call)
+    // We pass this to the caller to forward to mission/note/add
+    // But since bot-tools doesn't have direct mission access,
+    // return the formatted content so the schedule can store it.
+    //
+    // Also return as machine-readable JSON for local Claude.
+    const noteTitle = `[AUDIT] ${type} — ${dateStr}`;
+
+    res.json({
+        success: true,
+        audit: {
+            type,
+            severity: sev,
+            date: dateStr,
+            totalChecked: findings.length,
+            issuesFound: issueFindings.length,
+            findings,
+            noteTitle,
+            noteContent: content,
+            // Pre-built curl for the bot to store in Mission Dashboard
+            storageHint: `To persist this audit, POST to /api/mission/note/add with title="${noteTitle}" and the noteContent above.`
+        }
+    });
+
+    console.log(`[BotTools] audit-log: type=${type}, severity=${sev}, findings=${findings.length}, issues=${issueFindings.length} (device: ${deviceId.slice(0, 8)}…)`);
 });
 
 module.exports = { router };
