@@ -1,3 +1,10 @@
+## [1.103.5](https://github.com/HankHuang0516/EClaw/compare/v1.103.4...v1.103.5) (2026-03-16)
+
+
+### Bug Fixes
+
+* screen-control.html telemetry script path missing ../ ([#239](https://github.com/HankHuang0516/EClaw/issues/239)) ([5ce930f](https://github.com/HankHuang0516/EClaw/commit/5ce930f779e6e11b1ffe72bfd86187647c0c8e6c))
+
 ## [1.103.4](https://github.com/HankHuang0516/EClaw/compare/v1.103.3...v1.103.4) (2026-03-16)
 
 
