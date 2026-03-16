@@ -84,6 +84,46 @@ const LINKEDIN_PERSON_URN = process.env.LINKEDIN_PERSON_URN; // e.g. "urn:li:per
 const MASTODON_ACCESS_TOKEN = process.env.MASTODON_ACCESS_TOKEN;
 const MASTODON_INSTANCE_URL = process.env.MASTODON_INSTANCE_URL || 'https://mastodon.social';
 
+// ============================================
+// DAILY RATE LIMITER — prevent platform bans from automated mass posting
+// ============================================
+const publishRateLimits = {
+    qiita: { maxPerDay: 2, label: 'Qiita' },
+    wordpress: { maxPerDay: 4, label: 'WordPress' },  // 2 sites × 2 posts
+};
+const publishCounters = new Map(); // key: "platform:YYYY-MM-DD" -> count
+
+function checkPublishRateLimit(platform) {
+    const limit = publishRateLimits[platform];
+    if (!limit) return null; // no limit for this platform
+    const today = new Date().toISOString().slice(0, 10);
+    const key = `${platform}:${today}`;
+    const count = publishCounters.get(key) || 0;
+    if (count >= limit.maxPerDay) {
+        return `${limit.label} daily publish limit reached (${limit.maxPerDay}/day) — skipping to avoid platform ban. Try again tomorrow.`;
+    }
+    return null;
+}
+
+function recordPublish(platform) {
+    const today = new Date().toISOString().slice(0, 10);
+    const key = `${platform}:${today}`;
+    publishCounters.set(key, (publishCounters.get(key) || 0) + 1);
+    // Clean old entries (keep only today)
+    for (const k of publishCounters.keys()) {
+        if (!k.endsWith(today)) publishCounters.delete(k);
+    }
+}
+
+function rateLimitInfo(platform) {
+    const limit = publishRateLimits[platform];
+    if (!limit) return {};
+    const today = new Date().toISOString().slice(0, 10);
+    const key = `${platform}:${today}`;
+    const used = publishCounters.get(key) || 0;
+    return { rateLimit: { maxPerDay: limit.maxPerDay, usedToday: used, remaining: Math.max(0, limit.maxPerDay - used) } };
+}
+
 // Token store: DB-backed with in-memory cache
 let _pool = null;
 const bloggerTokens = new Map(); // in-memory cache: deviceId -> { access_token, refresh_token, expires_at, blog_id, blogs }
@@ -855,6 +895,8 @@ router.get('/wordpress/me', async (req, res) => {
 // POST /api/publisher/wordpress/publish
 router.post('/wordpress/publish', express.json(), async (req, res) => {
     if (!requireWordpress(res)) return;
+    const rateLimitMsg = checkPublishRateLimit('wordpress');
+    if (rateLimitMsg) return res.status(429).json({ error: rateLimitMsg });
     const { siteId, title, content, status, categories, tags } = req.body;
     if (!title || !content) return res.status(400).json({ error: 'title, content required' });
     if (!WP_USE_APP_PASSWORD && !siteId) return res.status(400).json({ error: 'siteId required for OAuth2 mode' });
@@ -866,10 +908,12 @@ router.post('/wordpress/publish', express.json(), async (req, res) => {
 
         if (WP_USE_APP_PASSWORD) {
             const data = await wordpressRequest('POST', '/wp/v2/posts', postBody);
+            recordPublish('wordpress');
             console.log(`[Publisher] WordPress post created (app_password): ${data.id} "${title}"`);
             res.json({ success: true, platform: 'wordpress', postId: String(data.id), url: data.link, title: data.title?.rendered || title, status: data.status });
         } else {
             const data = await wordpressRequest('POST', `/rest/v1.1/sites/${siteId}/posts/new`, postBody);
+            recordPublish('wordpress');
             console.log(`[Publisher] WordPress post created: ${data.ID} "${title}"`);
             res.json({ success: true, platform: 'wordpress', postId: String(data.ID), url: data.URL, title: data.title, status: data.status, ...wpExpiryWarning() });
         }
@@ -1113,6 +1157,8 @@ router.get('/qiita/me', async (req, res) => {
 // POST /api/publisher/qiita/publish
 router.post('/qiita/publish', express.json(), async (req, res) => {
     if (!requireQiita(res)) return;
+    const rateLimitMsg = checkPublishRateLimit('qiita');
+    if (rateLimitMsg) return res.status(429).json({ error: rateLimitMsg });
     const { title, body, tags, private: isPrivate, tweet } = req.body;
     if (!title || !body) return res.status(400).json({ error: 'title, body required' });
 
@@ -1127,6 +1173,7 @@ router.post('/qiita/publish', express.json(), async (req, res) => {
         if (item.tags.length === 0) item.tags = [{ name: 'EClaw', versions: [] }];
 
         const data = await qiitaRequest('POST', '/items', item);
+        recordPublish('qiita');
         console.log(`[Publisher] Qiita article created: ${data.id} "${title}"`);
         res.json({ success: true, platform: 'qiita', postId: data.id, url: data.url, title: data.title });
     } catch (err) {
@@ -1757,11 +1804,11 @@ router.get('/platforms', (req, res) => {
           authMode: WP_USE_APP_PASSWORD ? 'app_password' : (wordpressTokens.has('default') ? 'oauth2_db' : 'oauth2'),
           contentFormat: 'html',
           configured: WP_USE_APP_PASSWORD || !!getWordpressToken().token,
-          ...wpExpiryWarning() },
+          ...wpExpiryWarning(), ...rateLimitInfo('wordpress') },
         { id: 'telegraph', name: 'Telegraph', region: 'global', authType: 'auto', contentFormat: 'html',
           configured: true },
         { id: 'qiita', name: 'Qiita', region: 'ja', authType: 'bearer', contentFormat: 'markdown',
-          configured: !!QIITA_ACCESS_TOKEN },
+          configured: !!QIITA_ACCESS_TOKEN, ...rateLimitInfo('qiita') },
         { id: 'wechat', name: 'WeChat Official Account', region: 'zh-CN', authType: 'app_credentials', contentFormat: 'html',
           configured: !!(WECHAT_APP_ID && WECHAT_APP_SECRET), draftsOnly: true },
         { id: 'tumblr', name: 'Tumblr', region: 'global', authType: 'oauth1a', contentFormat: 'npf',
