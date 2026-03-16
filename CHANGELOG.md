@@ -1,3 +1,10 @@
+# [1.99.0](https://github.com/HankHuang0516/EClaw/compare/v1.98.1...v1.99.0) (2026-03-16)
+
+
+### Features
+
+* **i18n:** internationalize hard-coded Chinese in OpenClaw usecase examples ([db301ea](https://github.com/HankHuang0516/EClaw/commit/db301eaf08e47b570235a786a30f77f1a9b9820a))
+
 ## [1.98.1](https://github.com/HankHuang0516/EClaw/compare/v1.98.0...v1.98.1) (2026-03-16)
 
 
