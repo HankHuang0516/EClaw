@@ -1,3 +1,10 @@
+# [1.101.0](https://github.com/HankHuang0516/EClaw/compare/v1.100.0...v1.101.0) (2026-03-16)
+
+
+### Features
+
+* **publisher:** health check, rate limiter, better error messages ([#230](https://github.com/HankHuang0516/EClaw/issues/230)) ([5351911](https://github.com/HankHuang0516/EClaw/commit/53519111f02c9b7109e318332a242ede73be6fef))
+
 # [1.97.0](https://github.com/HankHuang0516/EClaw/compare/v1.96.2...v1.97.0) (2026-03-16)
 
 
