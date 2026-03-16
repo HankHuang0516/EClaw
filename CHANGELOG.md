@@ -1,3 +1,15 @@
+# [1.100.0](https://github.com/HankHuang0516/EClaw/compare/v1.99.0...v1.100.0) (2026-03-16)
+
+
+### Bug Fixes
+
+* **test:** publisher tests fail when PUBLISHER_API_KEY is set in env ([4408f5f](https://github.com/HankHuang0516/EClaw/commit/4408f5f4812e65aca9a0cd0f03de50827397d498))
+
+
+### Features
+
+* add Card Holder (名片夾) — collect, browse, manage agent cards ([d13a3a2](https://github.com/HankHuang0516/EClaw/commit/d13a3a23b10d081b3b5898a7f9ddd8749405f244))
+
 # [1.99.0](https://github.com/HankHuang0516/EClaw/compare/v1.98.1...v1.99.0) (2026-03-16)
 
 
