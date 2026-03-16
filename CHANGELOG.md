@@ -1,3 +1,10 @@
+## [1.103.4](https://github.com/HankHuang0516/EClaw/compare/v1.103.3...v1.103.4) (2026-03-16)
+
+
+### Bug Fixes
+
+* publisher Jest tests fail when PUBLISHER_API_KEY is set ([#238](https://github.com/HankHuang0516/EClaw/issues/238)) ([59f1521](https://github.com/HankHuang0516/EClaw/commit/59f15217386577a5688e052d837591a9d20e4994))
+
 ## [1.103.3](https://github.com/HankHuang0516/EClaw/compare/v1.103.2...v1.103.3) (2026-03-16)
 
 
