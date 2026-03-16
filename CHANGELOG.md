@@ -1,3 +1,10 @@
+## [1.103.1](https://github.com/HankHuang0516/EClaw/compare/v1.103.0...v1.103.1) (2026-03-16)
+
+
+### Bug Fixes
+
+* chat input text invisible due to white-on-light-gray contrast ([#235](https://github.com/HankHuang0516/EClaw/issues/235)) ([292412b](https://github.com/HankHuang0516/EClaw/commit/292412b2369f152eb9b9bce66facf611baac0b06)), closes [#FFE0E0E0](https://github.com/HankHuang0516/EClaw/issues/FFE0E0E0) [#1A1A2E](https://github.com/HankHuang0516/EClaw/issues/1A1A2E)
+
 # [1.103.0](https://github.com/HankHuang0516/EClaw/compare/v1.102.1...v1.103.0) (2026-03-16)
 
 
