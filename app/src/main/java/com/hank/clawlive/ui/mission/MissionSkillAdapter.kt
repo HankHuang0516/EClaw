@@ -28,8 +28,7 @@ class MissionSkillAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val skill = getItem(position) ?: return
-        holder.bind(skill)
+        holder.bind(getItem(position))
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

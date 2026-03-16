@@ -9,8 +9,6 @@ const ANTHROPIC_MODEL = 'claude-sonnet-4-20250514';
 const ANTHROPIC_VERSION = '2023-06-01';
 const MAX_TOKENS = 2048;
 const TIMEOUT_MS = 120000; // 120s
-const MAX_TOOL_STEPS = 15; // Max agentic loop iterations
-const CONVERGENCE_STEP = 14; // Force conclusion at this step
 
 // ── System Prompts ──────────────────────────
 
@@ -329,62 +327,8 @@ async function chatWithClaude({ message, history, images, deviceContext, deviceD
     const userContent = buildUserContent(message, images);
     messages.push({ role: 'user', content: userContent });
 
-    // Agentic tool-use loop: keep calling API until we get a final text response
-    let allActions = [];
-    for (let step = 1; step <= MAX_TOOL_STEPS; step++) {
-        // At convergence step, inject forced conclusion instruction
-        let stepSystem = system;
-        if (step >= CONVERGENCE_STEP) {
-            stepSystem += '\n\nIMPORTANT: You are running low on analysis steps. You MUST provide your final answer NOW. Summarize your findings and give a conclusion based on what you have so far. Do NOT call any more tools.';
-        }
-
-        const result = await callAnthropic(stepSystem, messages, step >= CONVERGENCE_STEP ? [] : GITHUB_TOOLS);
-        const parsed = parseResponse(result);
-
-        // Collect any tool actions
-        if (parsed.actions) {
-            allActions.push(...parsed.actions);
-        }
-
-        // If the model didn't request tool use, we're done
-        if (result.stop_reason !== 'tool_use') {
-            return {
-                response: parsed.response,
-                actions: allActions.length > 0 ? allActions : null
-            };
-        }
-
-        // Model requested tool use — append assistant response and tool results to messages
-        messages.push({ role: 'assistant', content: result.content });
-
-        // Build tool results for each tool_use block
-        const toolResults = [];
-        for (const block of (result.content || [])) {
-            if (block.type === 'tool_use') {
-                // We don't execute tools server-side in the loop — just acknowledge them.
-                // Actual execution (GitHub actions) happens after the loop via the actions array.
-                toolResults.push({
-                    type: 'tool_result',
-                    tool_use_id: block.id,
-                    content: 'Tool call acknowledged. The action will be executed after your response.'
-                });
-            }
-        }
-        if (toolResults.length > 0) {
-            messages.push({ role: 'user', content: toolResults });
-        }
-
-        console.log(`[Anthropic] Tool-use loop step ${step}/${MAX_TOOL_STEPS}, actions so far: ${allActions.length}`);
-    }
-
-    // Exceeded max steps — return whatever we have with a warning
-    console.warn(`[Anthropic] Reached max tool steps (${MAX_TOOL_STEPS}), forcing response`);
-    return {
-        response: allActions.length > 0
-            ? 'I\'ve completed the requested actions. Due to complexity limits, I may not have fully addressed all aspects of your question.'
-            : 'I apologize — your question required more analysis than I could complete. Here\'s what I gathered so far: please try asking a more specific question for better results.',
-        actions: allActions.length > 0 ? allActions : null
-    };
+    const result = await callAnthropic(system, messages, GITHUB_TOOLS);
+    return parseResponse(result);
 }
 
 /**

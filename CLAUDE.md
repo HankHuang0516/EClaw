@@ -532,14 +532,6 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Schedule Channel | `node backend/tests/test-schedule-channel.js` | Device ID + Secret | Scheduler parity: channel-bound entities receive schedule push |
 | Schedule Cron Update | `node backend/tests/test-schedule-cron-update.js` | Device ID + Secret | Regression: cron schedule update NOT NULL violation on scheduled_at |
 
-### Jest Unit Tests (CI-run, `npm test`)
-
-*(In addition to the 10 core Jest files listed above)*
-
-| Test | File | Description |
-|------|------|-------------|
-| AI Chat Steps | `tests/jest/ai-chat-steps.test.js` | Issue #221: Agentic loop convergence at step 14, max step fallback, tool-use loop |
-
 ### Jest Unit Tests (CI-run, `npm test`, 10 files)
 
 | Test | File | Description |

@@ -1407,7 +1407,7 @@ DELETE /api/channel/register
 
                         <h2 data-i18n="guide_usecase_h2_1">架構概覽</h2>
                         <p data-i18n="guide_usecase_p_1">這個方案把三個系統串在一起：</p>
-                        <div class="code-block" data-i18n="guide_usecase_code_arch">你（自然語言）→ Claude（AI 指揮官）→ Eclaw API → OpenClaw Bot（執行任務）→ 回報結果</div>
+                        <div class="code-block">你（自然語言）→ Claude（AI 指揮官）→ Eclaw API → OpenClaw Bot（執行任務）→ 回報結果</div>
 
                         <table class="feature-table" style="margin-top:16px">
                             <thead><tr><th data-i18n="guide_usecase_th_1">角色</th><th data-i18n="guide_usecase_th_2">說明</th></tr></thead>
@@ -1432,7 +1432,7 @@ DELETE /api/channel/register
 
                         <h2 data-i18n="guide_usecase_h2_3">完整範例</h2>
                         <p data-i18n="guide_usecase_p_2">直接複製以下內容，貼給 Claude，它會自動讀取說明書並幫你控制 OpenClaw bot：</p>
-                        <div class="code-block" data-i18n="guide_usecase_code_example">請用 WebFetch 讀取 https://eclawbot.com/api/skill-doc，然後幫我控制我的 OpenClaw bot
+                        <div class="code-block">請用 WebFetch 讀取 https://eclawbot.com/api/skill-doc，然後幫我控制我的 OpenClaw bot
 
 我的 Eclaw 設定：
 Device ID: 48xxxx4c-2183-xxxx-afd0-b131ae8xxxxc
@@ -1474,7 +1474,7 @@ Device Secret: xxxxdb10-2xxx-42b6-xxxx-f9d446c97ff9-7cff9697-xxxx1-415d-a282-4e8
 
                         <h2 data-i18n="guide_usecase_h2_5">進階：多 Bot 協作</h2>
                         <p data-i18n="guide_usecase_p_3">如果你有多個 entity（多個 bot），Claude 可以協調它們一起工作：</p>
-                        <div class="code-block" data-i18n="guide_usecase_code_multibot">讓 entity 0 負責收集資料，entity 1 負責分析，兩個 bot 一起幫我做市場調查</div>
+                        <div class="code-block">讓 entity 0 負責收集資料，entity 1 負責分析，兩個 bot 一起幫我做市場調查</div>
                         <p data-i18n="guide_usecase_p_4">Claude 會分別對兩個 entity 發送任務，整合結果後回報給你。</p>
 
                         <hr>
@@ -1482,7 +1482,7 @@ Device Secret: xxxxdb10-2xxx-42b6-xxxx-f9d446c97ff9-7cff9697-xxxx1-415d-a282-4e8
                         <h2 data-i18n="guide_usecase_h2_6">閉環驗證與自動糾錯（最關鍵的特性）</h2>
                         <p data-i18n="guide_usecase_p_5">這是整個系統最重要的特性：<strong>你下完指令後，不需要自己進去驗證結果。</strong> Claude 會自動完成「發送 → 驗證 → 糾錯 → 再驗證」的完整閉環，直到任務真正正確完成為止。</p>
 
-                        <div class="code-block" data-i18n="guide_usecase_code_loop">你下指令
+                        <div class="code-block">你下指令
   │
   ▼
 Claude 發送任務給 OpenClaw bot
@@ -2320,10 +2320,10 @@ Claude 主動查詢執行結果
         }
 
         async function copyClaudeOpenclawExample() {
-            const TEMPLATE = i18n.t('guide_usecase_copy_template');
+            const TEMPLATE = `請用 WebFetch 讀取 https://eclawbot.com/api/skill-doc，然後幫我控制我的 OpenClaw bot\n\n我的 Eclaw 設定：\nDevice ID: {{DEVICE_ID}}\nDevice Secret: {{DEVICE_SECRET}}\n- 我要控制的 bot 是 Entity 0\n\n請幫我控制這個 OpenClaw bot。\n\n短期目標: [你的短期目標]\n短期目標完畢後，你要進行審查，確定沒有失誤\n最終目標: [你的最終目標]\n最終目標完畢後，你要進行審查，確定沒有失誤`;
 
-            let deviceId = i18n.t('guide_usecase_copy_device_id_placeholder');
-            let deviceSecret = i18n.t('guide_usecase_copy_device_secret_placeholder');
+            let deviceId = '你的-device-id';
+            let deviceSecret = '你的-device-secret';
 
             try {
                 const data = await apiCall('GET', '/api/auth/me');

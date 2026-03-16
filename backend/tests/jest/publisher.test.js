@@ -150,14 +150,12 @@ jest.mock('../../subscription', () => {
 // ── Load app after mocks are established ──
 const request = require('supertest');
 let app;
-const savedPublisherKey = process.env.PUBLISHER_API_KEY;
 
 beforeAll(() => {
     app = require('../../index');
 });
 
 afterAll(async () => {
-    if (savedPublisherKey) process.env.PUBLISHER_API_KEY = savedPublisherKey;
     const { httpServer } = require('../../index');
     await new Promise(resolve => httpServer.close(resolve));
     jest.resetModules();
@@ -268,9 +266,6 @@ describe('GET /api/publisher/platforms', () => {
 // DEV.to input validation
 // ════════════════════════════════════════════════════════════════
 describe('POST /api/publisher/devto/publish', () => {
-    beforeAll(() => { delete process.env.PUBLISHER_API_KEY; });
-    afterAll(() => { if (savedPublisherKey) process.env.PUBLISHER_API_KEY = savedPublisherKey; });
-
     it('rejects missing body_markdown', async () => {
         const res = await request(app)
             .post('/api/publisher/devto/publish')
@@ -292,9 +287,6 @@ describe('POST /api/publisher/devto/publish', () => {
 // WordPress input validation
 // ════════════════════════════════════════════════════════════════
 describe('POST /api/publisher/wordpress/publish', () => {
-    beforeAll(() => { delete process.env.PUBLISHER_API_KEY; });
-    afterAll(() => { if (savedPublisherKey) process.env.PUBLISHER_API_KEY = savedPublisherKey; });
-
     it('rejects missing siteId', async () => {
         const res = await request(app)
             .post('/api/publisher/wordpress/publish')
@@ -307,9 +299,6 @@ describe('POST /api/publisher/wordpress/publish', () => {
 // Telegraph input validation
 // ════════════════════════════════════════════════════════════════
 describe('POST /api/publisher/telegraph/publish', () => {
-    beforeAll(() => { delete process.env.PUBLISHER_API_KEY; });
-    afterAll(() => { if (savedPublisherKey) process.env.PUBLISHER_API_KEY = savedPublisherKey; });
-
     it('rejects missing content', async () => {
         const res = await request(app)
             .post('/api/publisher/telegraph/publish')
@@ -330,9 +319,6 @@ describe('POST /api/publisher/telegraph/publish', () => {
 // Qiita input validation
 // ════════════════════════════════════════════════════════════════
 describe('POST /api/publisher/qiita/publish', () => {
-    beforeAll(() => { delete process.env.PUBLISHER_API_KEY; });
-    afterAll(() => { if (savedPublisherKey) process.env.PUBLISHER_API_KEY = savedPublisherKey; });
-
     it('rejects missing body', async () => {
         const res = await request(app)
             .post('/api/publisher/qiita/publish')
@@ -345,9 +331,6 @@ describe('POST /api/publisher/qiita/publish', () => {
 // WeChat input validation
 // ════════════════════════════════════════════════════════════════
 describe('POST /api/publisher/wechat/draft', () => {
-    beforeAll(() => { delete process.env.PUBLISHER_API_KEY; });
-    afterAll(() => { if (savedPublisherKey) process.env.PUBLISHER_API_KEY = savedPublisherKey; });
-
     it('rejects missing thumb_media_id', async () => {
         const res = await request(app)
             .post('/api/publisher/wechat/draft')

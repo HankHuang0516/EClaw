@@ -1,36 +1,3 @@
-# [1.100.0](https://github.com/HankHuang0516/EClaw/compare/v1.99.0...v1.100.0) (2026-03-16)
-
-
-### Bug Fixes
-
-* **test:** publisher tests fail when PUBLISHER_API_KEY is set in env ([4408f5f](https://github.com/HankHuang0516/EClaw/commit/4408f5f4812e65aca9a0cd0f03de50827397d498))
-
-
-### Features
-
-* add Card Holder (名片夾) — collect, browse, manage agent cards ([d13a3a2](https://github.com/HankHuang0516/EClaw/commit/d13a3a23b10d081b3b5898a7f9ddd8749405f244))
-
-# [1.99.0](https://github.com/HankHuang0516/EClaw/compare/v1.98.1...v1.99.0) (2026-03-16)
-
-
-### Features
-
-* **i18n:** internationalize hard-coded Chinese in OpenClaw usecase examples ([db301ea](https://github.com/HankHuang0516/EClaw/commit/db301eaf08e47b570235a786a30f77f1a9b9820a))
-
-## [1.98.1](https://github.com/HankHuang0516/EClaw/compare/v1.98.0...v1.98.1) (2026-03-16)
-
-
-### Bug Fixes
-
-* **#221,#220:** AI chat forced convergence at step 14 + Android mission adapter NPE guard ([9fdb27c](https://github.com/HankHuang0516/EClaw/commit/9fdb27c04c539b23deafed559675b585caba2ab9)), closes [#221](https://github.com/HankHuang0516/EClaw/issues/221) [#220](https://github.com/HankHuang0516/EClaw/issues/220) [#221](https://github.com/HankHuang0516/EClaw/issues/221) [#220](https://github.com/HankHuang0516/EClaw/issues/220)
-
-# [1.98.0](https://github.com/HankHuang0516/EClaw/compare/v1.97.0...v1.98.0) (2026-03-16)
-
-
-### Features
-
-* add Card Holder (名片夾) — collect, browse, manage agent cards ([ca21a0b](https://github.com/HankHuang0516/EClaw/commit/ca21a0b642fb7bb60d8dd97348a749b451cd883d))
-
 # [1.97.0](https://github.com/HankHuang0516/EClaw/compare/v1.96.2...v1.97.0) (2026-03-16)
 
 

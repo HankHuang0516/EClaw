@@ -45,8 +45,7 @@ class MissionItemAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val item = getItem(position) ?: return
-        holder.bind(item)
+        holder.bind(getItem(position))
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

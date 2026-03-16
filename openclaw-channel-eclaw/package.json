@@ -1,6 +1,6 @@
 {
   "name": "@eclaw/openclaw-channel",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "description": "E-Claw channel plugin for OpenClaw — AI chat platform for live wallpaper entities",
   "type": "module",
   "main": "./dist/index.js",

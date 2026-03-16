@@ -26,8 +26,7 @@ class MissionNoteAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val note = getItem(position) ?: return
-        holder.bind(note)
+        holder.bind(getItem(position))
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
