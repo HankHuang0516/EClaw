@@ -130,6 +130,15 @@ app.use(cors({ origin: true, credentials: true }));
 app.use('/api/ai-support/chat', express.json({ limit: '10mb' }));
 app.use(express.json());
 app.use(cookieParser());
+
+// SEO: serve robots.txt and sitemap.xml at root
+app.get('/robots.txt', (req, res) => {
+    res.type('text/plain').sendFile(path.join(__dirname, 'public/robots.txt'));
+});
+app.get('/sitemap.xml', (req, res) => {
+    res.type('application/xml').sendFile(path.join(__dirname, 'public/sitemap.xml'));
+});
+
 app.use('/mission', express.static(path.join(__dirname, 'public')));
 app.use('/portal', express.static(path.join(__dirname, 'public/portal')));
 app.use('/shared', express.static(path.join(__dirname, 'public/shared'), {

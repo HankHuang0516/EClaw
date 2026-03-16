@@ -4,7 +4,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="portal_login_title">E-Claw - Login</title>
+    <title data-i18n="portal_login_title">EClaw - IoT Claw Machine Management Platform</title>
+    <meta name="description" content="EClaw connects physical claw machines to AI-powered agents. Manage devices, entities, and missions from a unified web portal.">
+    <link rel="canonical" href="https://eclawbot.com/portal/">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="EClaw - IoT Claw Machine Management Platform">
+    <meta property="og:description" content="EClaw connects physical claw machines to AI-powered agents. Manage devices, entities, and missions from a unified web portal.">
+    <meta property="og:url" content="https://eclawbot.com/portal/">
+    <meta property="og:site_name" content="EClaw">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="EClaw - IoT Claw Machine Management Platform">
+    <meta name="twitter:description" content="EClaw connects physical claw machines to AI-powered agents. Manage devices, entities, and missions from a unified web portal.">
+    <!-- Preconnect to external origins -->
+    <link rel="preconnect" href="https://accounts.google.com" crossorigin>
+    <link rel="dns-prefetch" href="https://connect.facebook.net">
+    <!-- hreflang for multi-language -->
+    <link rel="alternate" hreflang="en" href="https://eclawbot.com/portal/">
+    <link rel="alternate" hreflang="zh-Hant" href="https://eclawbot.com/portal/">
+    <link rel="alternate" hreflang="zh-Hans" href="https://eclawbot.com/portal/">
+    <link rel="alternate" hreflang="ja" href="https://eclawbot.com/portal/">
+    <link rel="alternate" hreflang="ko" href="https://eclawbot.com/portal/">
+    <link rel="alternate" hreflang="th" href="https://eclawbot.com/portal/">
+    <link rel="alternate" hreflang="vi" href="https://eclawbot.com/portal/">
+    <link rel="alternate" hreflang="id" href="https://eclawbot.com/portal/">
+    <link rel="alternate" hreflang="x-default" href="https://eclawbot.com/portal/">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦞</text></svg>">
     <link rel="stylesheet" href="shared/style.css">
     <style>
@@ -123,9 +148,32 @@
             .terms-footer { padding: 12px 16px; flex-direction: column; }
         }
     </style>
+    <!-- JSON-LD Organization schema -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "EClaw",
+        "url": "https://eclawbot.com",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web, Android, iOS",
+        "description": "IoT claw machine management platform with AI-powered agent ecosystem. Connect physical claw machines to AI entities for remote management and automation.",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "EClaw",
+            "url": "https://eclawbot.com"
+        }
+    }
+    </script>
 </head>
 
 <body>
+    <main>
     <!-- Terms & Privacy Dialog -->
     <div id="termsOverlay" class="terms-overlay" style="display:none">
         <div class="terms-dialog">
@@ -186,7 +234,7 @@
 
     <div class="auth-container">
         <div class="auth-logo">
-            <h1 data-i18n="portal_app_title">E-Claw</h1>
+            <h1 data-i18n="portal_app_title">EClaw</h1>
         </div>
 
         <!-- Tabs -->
@@ -671,6 +719,7 @@
         loadOAuthConfig();
     </script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    </main>
 </body>
 
 </html>

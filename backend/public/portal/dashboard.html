@@ -4,7 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="dash_title">E-Claw - Dashboard</title>
+    <meta name="robots" content="noindex, nofollow">
+    <title data-i18n="dash_title">EClaw - Dashboard</title>
+    <meta name="description" content="EClaw device dashboard — manage entities, monitor status, and control your claw machines.">
+    <link rel="preconnect" href="https://js.tappaysdk.com">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦞</text></svg>">
     <link rel="stylesheet" href="shared/style.css">
     <style>
@@ -1287,8 +1290,8 @@
         </div>
     </div>
 
-    <!-- TapPay SDK -->
-    <script src="https://js.tappaysdk.com/sdk/tpdirect/v5.17.0"></script>
+    <!-- TapPay SDK (async — only needed for billing interactions) -->
+    <script src="https://js.tappaysdk.com/sdk/tpdirect/v5.17.0" async></script>
 
     <script src="shared/api.js"></script>
     <script src="shared/nav.js"></script>
