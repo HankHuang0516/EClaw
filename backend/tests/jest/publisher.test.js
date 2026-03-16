@@ -266,6 +266,10 @@ describe('GET /api/publisher/platforms', () => {
 // DEV.to input validation
 // ════════════════════════════════════════════════════════════════
 describe('POST /api/publisher/devto/publish', () => {
+    const origKey = process.env.PUBLISHER_API_KEY;
+    beforeAll(() => { delete process.env.PUBLISHER_API_KEY; });
+    afterAll(() => { if (origKey) process.env.PUBLISHER_API_KEY = origKey; });
+
     it('rejects missing body_markdown', async () => {
         const res = await request(app)
             .post('/api/publisher/devto/publish')
@@ -287,6 +291,10 @@ describe('POST /api/publisher/devto/publish', () => {
 // WordPress input validation
 // ════════════════════════════════════════════════════════════════
 describe('POST /api/publisher/wordpress/publish', () => {
+    const origKey = process.env.PUBLISHER_API_KEY;
+    beforeAll(() => { delete process.env.PUBLISHER_API_KEY; });
+    afterAll(() => { if (origKey) process.env.PUBLISHER_API_KEY = origKey; });
+
     it('rejects missing siteId', async () => {
         const res = await request(app)
             .post('/api/publisher/wordpress/publish')
@@ -299,6 +307,10 @@ describe('POST /api/publisher/wordpress/publish', () => {
 // Telegraph input validation
 // ════════════════════════════════════════════════════════════════
 describe('POST /api/publisher/telegraph/publish', () => {
+    const origKey = process.env.PUBLISHER_API_KEY;
+    beforeAll(() => { delete process.env.PUBLISHER_API_KEY; });
+    afterAll(() => { if (origKey) process.env.PUBLISHER_API_KEY = origKey; });
+
     it('rejects missing content', async () => {
         const res = await request(app)
             .post('/api/publisher/telegraph/publish')
@@ -319,6 +331,10 @@ describe('POST /api/publisher/telegraph/publish', () => {
 // Qiita input validation
 // ════════════════════════════════════════════════════════════════
 describe('POST /api/publisher/qiita/publish', () => {
+    const origKey = process.env.PUBLISHER_API_KEY;
+    beforeAll(() => { delete process.env.PUBLISHER_API_KEY; });
+    afterAll(() => { if (origKey) process.env.PUBLISHER_API_KEY = origKey; });
+
     it('rejects missing body', async () => {
         const res = await request(app)
             .post('/api/publisher/qiita/publish')
@@ -331,6 +347,10 @@ describe('POST /api/publisher/qiita/publish', () => {
 // WeChat input validation
 // ════════════════════════════════════════════════════════════════
 describe('POST /api/publisher/wechat/draft', () => {
+    const origKey = process.env.PUBLISHER_API_KEY;
+    beforeAll(() => { delete process.env.PUBLISHER_API_KEY; });
+    afterAll(() => { if (origKey) process.env.PUBLISHER_API_KEY = origKey; });
+
     it('rejects missing thumb_media_id', async () => {
         const res = await request(app)
             .post('/api/publisher/wechat/draft')
