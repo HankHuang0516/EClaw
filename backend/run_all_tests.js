@@ -65,6 +65,7 @@ const TEST_FILES = [
     'test-agent-card-ui.js',        // Agent Card CRUD lifecycle, field validation
     'test-publisher-platforms.js',  // Publisher platforms listing + input validation (8 platforms)
     'test-card-holder.js',          // Card Holder CRUD lifecycle, search, refresh, pin, category, notes
+    'test-screen-control-auth.js',  // Screen control portal auth: deviceSecret instead of botSecret
 ];
 
 // Manual UI tests (run on device, not automated):

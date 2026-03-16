@@ -310,13 +310,11 @@
             btn.textContent = 'Capturing...';
             document.getElementById('screenMeta').textContent = '';
 
-            // Use entity 0 and deviceSecret as botSecret for portal testing
-            // NOTE: For actual bot use, the bot uses its own botSecret
             try {
                 const data = await apiCall('POST', '/api/device/screen-capture', {
                     deviceId: currentUser.deviceId,
                     entityId: 0,
-                    botSecret: currentUser.deviceSecret  // portal uses deviceSecret for testing
+                    deviceSecret: currentUser.deviceSecret
                 });
 
                 if (data.success) {
@@ -410,7 +408,7 @@
                 const data = await apiCall('POST', '/api/device/control', {
                     deviceId: currentUser.deviceId,
                     entityId: 0,
-                    botSecret: currentUser.deviceSecret,
+                    deviceSecret: currentUser.deviceSecret,
                     command: cmd,
                     params
                 });
