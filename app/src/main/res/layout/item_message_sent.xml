@@ -200,7 +200,7 @@
                     android:id="@+id/tvDeliveryStatus"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="#AA90EE90"
+                    android:textColor="@color/success_alpha"
                     android:textSize="10sp"
                     android:visibility="gone"
                     tools:text="Entity 0 已讀"

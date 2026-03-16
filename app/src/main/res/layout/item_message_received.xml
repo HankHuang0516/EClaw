@@ -224,13 +224,13 @@
 
             <ImageButton
                 android:id="@+id/btnLike"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_thumb_up_outline"
                 android:scaleType="centerInside"
                 android:contentDescription="Like"
-                android:padding="4dp" />
+                android:padding="10dp" />
 
             <TextView
                 android:id="@+id/tvLikeCount"
@@ -245,13 +245,13 @@
 
             <ImageButton
                 android:id="@+id/btnDislike"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_thumb_down_outline"
                 android:scaleType="centerInside"
                 android:contentDescription="Dislike"
-                android:padding="4dp" />
+                android:padding="10dp" />
 
             <TextView
                 android:id="@+id/tvDislikeCount"

@@ -43,7 +43,7 @@
             android:layout_height="wrap_content"
             android:textSize="10sp"
             android:textColor="@color/primary"
-            android:background="#1A1A3E"
+            android:background="@color/surface_schedule"
             android:paddingHorizontal="6dp"
             android:paddingVertical="1dp"
             android:visibility="gone"

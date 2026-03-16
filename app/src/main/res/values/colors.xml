@@ -63,6 +63,11 @@
     <color name="error_light">#FF6B6B</color>
     <color name="info_blue">#1565C0</color>
 
+    <!-- Derived / Alpha variants -->
+    <color name="success_alpha">#AA90EE90</color>
+    <color name="teal">#80CBC4</color>
+    <color name="surface_schedule">#1A1A3E</color>
+
     <!-- Alert surfaces -->
     <color name="surface_warning">#FFF8E1</color>
     <color name="surface_alert">#FFF3E0</color>

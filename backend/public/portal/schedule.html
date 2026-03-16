@@ -106,7 +106,7 @@
             flex-shrink: 0;
             font-size: 12px;
             padding: 2px 8px;
-            border-radius: 10px;
+            border-radius: var(--radius);
             background: var(--card);
             color: var(--text-secondary);
         }
@@ -125,18 +125,18 @@
             flex-shrink: 0;
             font-size: 11px;
             padding: 2px 8px;
-            border-radius: 10px;
+            border-radius: var(--radius);
             font-weight: 600;
         }
 
         .sched-status.pending {
-            background: rgba(255, 210, 63, 0.15);
-            color: var(--warning);
+            background: var(--status-paused);
+            color: var(--status-paused-text);
         }
 
         .sched-status.active {
-            background: rgba(76, 175, 80, 0.15);
-            color: var(--success);
+            background: var(--status-active);
+            color: var(--status-active-text);
         }
 
         .sched-status.completed {
@@ -150,8 +150,8 @@
         }
 
         .sched-status.failed {
-            background: rgba(244, 67, 54, 0.15);
-            color: var(--danger);
+            background: var(--status-error);
+            color: var(--status-error-text);
         }
 
         /* sched-actions removed: edit/delete buttons now inside edit dialog */
@@ -167,7 +167,7 @@
             margin-top: 6px;
             padding: 8px 10px;
             background: var(--card);
-            border-radius: 6px;
+            border-radius: var(--radius-sm);
             font-size: 12px;
             color: var(--text-secondary);
             line-height: 1.4;
@@ -298,7 +298,7 @@
 
         .entity-chip {
             padding: 6px 14px;
-            border-radius: 20px;
+            border-radius: var(--radius-pill);
             font-size: 12px;
             cursor: pointer;
             background: var(--card);

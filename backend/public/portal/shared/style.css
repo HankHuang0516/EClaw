@@ -22,6 +22,41 @@
     --text-muted: #777777;
     --radius: 12px;
     --radius-sm: 8px;
+    --radius-pill: 20px;
+
+    /* Entity character colors */
+    --entity-lobster: #FF6B6B;
+    --entity-pig: #FFB6C1;
+
+    /* Status badge colors */
+    --status-active: rgba(76, 175, 80, 0.15);
+    --status-active-text: #4CAF50;
+    --status-paused: rgba(255, 210, 63, 0.15);
+    --status-paused-text: #FFD23F;
+    --status-error: rgba(244, 67, 54, 0.15);
+    --status-error-text: #F44336;
+
+    /* Category badge colors */
+    --cat-bug-bg: rgba(244, 67, 54, 0.15);
+    --cat-bug-text: #F44336;
+    --cat-feature-bg: rgba(33, 150, 243, 0.15);
+    --cat-feature-text: #2196F3;
+    --cat-question-bg: rgba(156, 39, 176, 0.15);
+    --cat-question-text: #9C27B0;
+
+    /* Channel badge */
+    --badge-channel-bg: #1a3a2a;
+    --badge-channel-text: #4ade80;
+    --badge-channel-border: #2d6a4a;
+
+    /* XP gradient */
+    --xp-from: #FFD700;
+    --xp-to: #FFA500;
+
+    /* Code syntax (screen-control) */
+    --code-keyword: #569cd6;
+    --code-string: #ce9178;
+    --code-comment: #888888;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }

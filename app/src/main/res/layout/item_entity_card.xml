@@ -155,7 +155,7 @@
                 android:layout_height="48dp"
                 android:text="@string/remove"
                 android:textSize="12sp"
-                android:textColor="#FF5252"
+                android:textColor="@color/error"
                 style="@style/Widget.Material3.Button.TextButton"
                 app:cornerRadius="8dp"
                 app:rippleColor="#33FF5252"/>

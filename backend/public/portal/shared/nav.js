@@ -32,6 +32,8 @@ function renderNav(activePage) {
 
     const nav = document.createElement('nav');
     nav.className = 'nav';
+    nav.setAttribute('role', 'navigation');
+    nav.setAttribute('aria-label', 'Main navigation');
     nav.innerHTML = `
         <a href="dashboard.html" class="nav-brand">
             <span class="nav-logo">🦞</span>
@@ -50,7 +52,7 @@ function renderNav(activePage) {
             `).join('')}
         </div>
         <div class="nav-user" id="navUser">
-            <div class="notif-bell" id="notifBell" onclick="toggleNotifDropdown(event)" title="${t('notif_title', 'Notifications')}">
+            <div class="notif-bell" id="notifBell" onclick="toggleNotifDropdown(event)" role="button" tabindex="0" aria-label="${t('notif_title', 'Notifications')}" title="${t('notif_title', 'Notifications')}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleNotifDropdown(event)}">
                 <svg class="bell-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                     <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
