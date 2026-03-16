@@ -4642,6 +4642,9 @@ app.post('/api/entity/cross-speak', async (req, res) => {
                 messageObj.delivered = true;
                 markChatMessageDelivered(chatMsgId, String(target.entityId));
                 serverLog('info', 'cross_speak_push', `${fromEntity.publicCode} -> ${targetCode} push OK`, { deviceId, entityId: fromId, metadata: { targetCode, targetDeviceId: target.deviceId } });
+                    // Auto-collect: sender collects target's card, target collects sender's card
+                    autoCollectCard(deviceId, targetCode, toEntity, 'auto_speak');
+                    autoCollectCard(target.deviceId, fromEntity.publicCode, fromEntity, 'auto_speak');
             } else {
                 serverLog('warn', 'cross_speak_push', `${fromEntity.publicCode} -> ${targetCode} not-pushed: ${pushResult.reason || 'unknown'}`, { deviceId, entityId: fromId });
             }
@@ -4828,39 +4831,62 @@ app.delete('/api/entity/agent-card', (req, res) => {
     res.json({ success: true });
 });
 
-// ── Cross-Device Contacts (Friends System) ──
-const MAX_CONTACTS_PER_DEVICE = 20;
+// ── Agent Card Holder (replaces Cross-Device Contacts — no upper limit) ──
 
 /**
- * GET /api/contacts — List contacts for a device, enriched with live data
+ * Helper: auto-collect an entity's card into the sender's card holder after successful cross-speak.
+ * Non-blocking — fires and forgets. Collects the TARGET entity on the SENDER's device.
+ */
+function autoCollectCard(senderDeviceId, targetPublicCode, targetEntity, exchangeType) {
+    if (!targetPublicCode || !senderDeviceId) return;
+    db.addCard(senderDeviceId, targetPublicCode, {
+        name: targetEntity?.name || targetEntity?.character || null,
+        character: targetEntity?.character || null,
+        avatar: targetEntity?.avatar || null,
+        cardSnapshot: targetEntity?.agentCard || null,
+        exchangeType
+    }).catch(err => console.error('[CardHolder] Auto-collect failed:', err.message));
+}
+
+/** Helper: enrich card holder entries with live data */
+function enrichCardHolderEntry(c) {
+    const live = publicCodeIndex[c.publicCode];
+    if (live) {
+        const dev = devices[live.deviceId];
+        const ent = dev?.entities?.[live.entityId];
+        return {
+            ...c,
+            name: ent?.name || c.name,
+            character: ent?.character || c.character,
+            avatar: ent?.avatar || c.avatar,
+            online: true
+        };
+    }
+    return { ...c, online: false };
+}
+
+/**
+ * GET /api/contacts — List card holder entries, enriched with live data
+ * Query: ?deviceId=X&pinned=true&category=tools&limit=50&offset=0
  */
 app.get('/api/contacts', async (req, res) => {
     let deviceId = req.query.deviceId;
     if (!deviceId && req.user) deviceId = req.user.deviceId;
     if (!deviceId) return res.status(400).json({ success: false, error: 'Missing deviceId' });
 
-    const contacts = await db.getContacts(deviceId);
-    // Enrich with live data from publicCodeIndex
-    const enriched = contacts.map(c => {
-        const live = publicCodeIndex[c.publicCode];
-        if (live) {
-            const dev = devices[live.deviceId];
-            const ent = dev?.entities?.[live.entityId];
-            return {
-                ...c,
-                name: ent?.name || c.name,
-                character: ent?.character || c.character,
-                avatar: ent?.avatar || c.avatar,
-                online: true
-            };
-        }
-        return { ...c, online: false };
-    });
+    const opts = {};
+    if (req.query.pinned !== undefined) opts.pinned = req.query.pinned === 'true';
+    if (req.query.category) opts.category = req.query.category;
+    if (req.query.limit) opts.limit = Math.min(parseInt(req.query.limit) || 200, 500);
+    if (req.query.offset) opts.offset = parseInt(req.query.offset) || 0;
+
+    const cards = await db.getCardHolder(deviceId, opts);
+    const enriched = cards.map(enrichCardHolderEntry);
     res.json({ success: true, contacts: enriched });
 });
 
 /**
- * POST /api/contacts — Add a contact
+ * POST /api/contacts — Add a card to the holder
  * Body: { deviceId, deviceSecret, publicCode }
  */
 app.post('/api/contacts', async (req, res) => {
@@ -4893,33 +4919,30 @@ app.post('/api/contacts', async (req, res) => {
         return res.status(404).json({ success: false, error: 'Entity not found' });
     }
 
-    // Check limit
-    const count = await db.getContactCount(deviceId);
-    if (count >= MAX_CONTACTS_PER_DEVICE) {
-        return res.status(429).json({ success: false, error: 'Contact limit reached' });
-    }
-
     // Check duplicate
-    const existing = await db.getContacts(deviceId);
-    if (existing.some(c => c.publicCode === publicCode)) {
+    const existing = await db.getCardByCode(deviceId, publicCode);
+    if (existing) {
         return res.status(409).json({ success: false, error: 'Already in contacts' });
     }
 
-    // Get live entity data
+    // Get live entity data + agent card snapshot
     const dev = devices[selfEntry.deviceId];
     const ent = dev?.entities?.[selfEntry.entityId];
     const name = ent?.name || ent?.character || null;
     const character = ent?.character || null;
     const avatar = ent?.avatar || null;
+    const cardSnapshot = ent?.agentCard || null;
 
-    const contact = await db.addContact(deviceId, publicCode, name, character, avatar);
-    if (!contact) return res.status(500).json({ success: false, error: 'Failed to add contact' });
+    const card = await db.addCard(deviceId, publicCode, {
+        name, character, avatar, cardSnapshot, exchangeType: 'manual'
+    });
+    if (!card) return res.status(500).json({ success: false, error: 'Failed to add card' });
 
-    res.json({ success: true, contact: { ...contact, online: true } });
+    res.json({ success: true, contact: enrichCardHolderEntry(card) });
 });
 
 /**
- * DELETE /api/contacts — Remove a contact
+ * DELETE /api/contacts — Remove a card from the holder
  * Body: { deviceId, deviceSecret, publicCode }
  */
 app.delete('/api/contacts', async (req, res) => {
@@ -4934,8 +4957,108 @@ app.delete('/api/contacts', async (req, res) => {
         }
     }
 
-    await db.removeContact(deviceId, publicCode.trim().toLowerCase());
+    await db.removeCard(deviceId, publicCode.trim().toLowerCase());
     res.json({ success: true });
+});
+
+/**
+ * GET /api/contacts/search — Search card holder by name, tags, capabilities, notes
+ * Query: ?deviceId=X&q=translate
+ * NOTE: Must be registered BEFORE /api/contacts/:publicCode to avoid "search" being captured as param
+ */
+app.get('/api/contacts/search', async (req, res) => {
+    let deviceId = req.query.deviceId;
+    if (!deviceId && req.user) deviceId = req.user.deviceId;
+    if (!deviceId) return res.status(400).json({ success: false, error: 'Missing deviceId' });
+
+    const q = (req.query.q || '').trim();
+    if (!q) return res.status(400).json({ success: false, error: 'Missing search query' });
+    if (q.length > 100) return res.status(400).json({ success: false, error: 'Query too long' });
+
+    const cards = await db.searchCards(deviceId, q);
+    const enriched = cards.map(enrichCardHolderEntry);
+    res.json({ success: true, cards: enriched });
+});
+
+/**
+ * GET /api/contacts/:publicCode — Get a single card detail
+ */
+app.get('/api/contacts/:publicCode', async (req, res) => {
+    let deviceId = req.query.deviceId;
+    if (!deviceId && req.user) deviceId = req.user.deviceId;
+    if (!deviceId) return res.status(400).json({ success: false, error: 'Missing deviceId' });
+
+    const card = await db.getCardByCode(deviceId, req.params.publicCode.trim().toLowerCase());
+    if (!card) return res.status(404).json({ success: false, error: 'Card not found' });
+
+    res.json({ success: true, card: enrichCardHolderEntry(card) });
+});
+
+/**
+ * PATCH /api/contacts/:publicCode — Update notes, pinned, category
+ * Body: { deviceId, deviceSecret, notes?, pinned?, category? }
+ */
+app.patch('/api/contacts/:publicCode', async (req, res) => {
+    let { deviceId, deviceSecret, notes, pinned, category } = req.body;
+    if (!deviceId && req.user) { deviceId = req.user.deviceId; deviceSecret = req.user.deviceSecret; }
+    if (!deviceId) return res.status(400).json({ success: false, error: 'Missing deviceId' });
+
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        if (!req.user || req.user.deviceId !== deviceId) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+    }
+
+    // Validate inputs
+    const updates = {};
+    if (notes !== undefined) updates.notes = typeof notes === 'string' ? notes.slice(0, 500) : null;
+    if (pinned !== undefined) updates.pinned = !!pinned;
+    if (category !== undefined) updates.category = typeof category === 'string' ? category.slice(0, 50) : null;
+
+    if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ success: false, error: 'No valid fields to update' });
+    }
+
+    const result = await db.updateCard(deviceId, req.params.publicCode.trim().toLowerCase(), updates);
+    if (!result) return res.status(404).json({ success: false, error: 'Card not found' });
+
+    res.json({ success: true, card: result });
+});
+
+/**
+ * POST /api/contacts/:publicCode/refresh — Refresh agent card snapshot from live data
+ * Body: { deviceId, deviceSecret }
+ */
+app.post('/api/contacts/:publicCode/refresh', async (req, res) => {
+    let { deviceId, deviceSecret } = req.body;
+    if (!deviceId && req.user) { deviceId = req.user.deviceId; deviceSecret = req.user.deviceSecret; }
+    if (!deviceId) return res.status(400).json({ success: false, error: 'Missing deviceId' });
+
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        if (!req.user || req.user.deviceId !== deviceId) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+    }
+
+    const code = req.params.publicCode.trim().toLowerCase();
+    const live = publicCodeIndex[code];
+    if (!live) {
+        return res.status(404).json({ success: false, error: 'Entity no longer exists' });
+    }
+
+    const dev = devices[live.deviceId];
+    const ent = dev?.entities?.[live.entityId];
+    const cardSnapshot = ent?.agentCard || null;
+    const name = ent?.name || null;
+    const character = ent?.character || null;
+    const avatar = ent?.avatar || null;
+
+    const result = await db.refreshCardSnapshot(deviceId, code, cardSnapshot, name, character, avatar);
+    if (!result) return res.status(404).json({ success: false, error: 'Card not found in holder' });
+
+    res.json({ success: true, card: result });
 });
 
 /**
@@ -5102,6 +5225,9 @@ app.post('/api/client/cross-speak', async (req, res) => {
                 messageObj.delivered = true;
                 markChatMessageDelivered(chatMsgId, String(target.entityId));
                 serverLog('info', 'cross_speak_push', `Client ${fromEntity.publicCode} -> ${targetCode} push OK`, { deviceId, entityId: fromId });
+                    // Auto-collect: sender collects target's card, target collects sender's card
+                    autoCollectCard(deviceId, targetCode, toEntity, 'auto_speak');
+                    autoCollectCard(target.deviceId, fromEntity.publicCode, fromEntity, 'auto_speak');
             }
         }).catch(err => {
             console.error(`[ClientCrossSpeak] Push failed: ${err.message}`);

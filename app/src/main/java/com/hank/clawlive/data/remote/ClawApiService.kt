@@ -3,6 +3,9 @@ package com.hank.clawlive.data.remote
 import com.hank.clawlive.data.model.*
 import com.hank.clawlive.data.model.ContactListResponse
 import com.hank.clawlive.data.model.ContactAddResponse
+import com.hank.clawlive.data.model.CardUpdateResponse
+import com.hank.clawlive.data.model.CardRefreshResponse
+import com.hank.clawlive.data.model.CardSearchResponse
 import com.hank.clawlive.data.model.EntityLookupResponse
 import com.hank.clawlive.data.model.CrossSpeakResponse
 import com.hank.clawlive.data.model.ScheduleListResponse
@@ -191,6 +194,15 @@ interface ClawApiService {
 
     @HTTP(method = "DELETE", path = "api/contacts", hasBody = true)
     suspend fun removeContact(@Body body: Map<String, String>): ApiResponse
+
+    @PATCH("api/contacts/{publicCode}")
+    suspend fun updateCard(@Path("publicCode") publicCode: String, @Body body: Map<String, @JvmSuppressWildcards Any?>): CardUpdateResponse
+
+    @POST("api/contacts/{publicCode}/refresh")
+    suspend fun refreshCard(@Path("publicCode") publicCode: String, @Body body: Map<String, String>): CardRefreshResponse
+
+    @GET("api/contacts/search")
+    suspend fun searchCards(@Query("deviceId") deviceId: String, @Query("q") query: String): CardSearchResponse
 
     @GET("api/entity/lookup")
     suspend fun lookupEntity(@Query("code") code: String): EntityLookupResponse

@@ -607,6 +607,20 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Card Holder Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCardHolder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/card_holder_title"
+                android:textColor="@color/text_white_80"
+                app:backgroundTint="@color/surface_input"
+                app:cornerRadius="12dp"
+                app:iconTint="@color/text_white_80"
+                app:strokeColor="@color/text_dark"
+                app:strokeWidth="1dp"
+                style="@style/Widget.Material3.Button.TonalButton"/>
+
             <!-- Feedback Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnFeedback"

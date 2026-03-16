@@ -195,7 +195,7 @@ async function createTables() {
             )
         `);
 
-        // Cross-device contacts (friends system)
+        // Cross-device contacts (friends system) — legacy table kept for migration
         await client.query(`
             CREATE TABLE IF NOT EXISTS cross_device_contacts (
                 id SERIAL PRIMARY KEY,
@@ -210,6 +210,41 @@ async function createTables() {
         `);
         await client.query(`
             CREATE INDEX IF NOT EXISTS idx_contacts_device ON cross_device_contacts(device_id)
+        `);
+
+        // Agent Card Holder (replaces cross_device_contacts — no upper limit)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS agent_card_holder (
+                id SERIAL PRIMARY KEY,
+                device_id TEXT NOT NULL REFERENCES devices(device_id) ON DELETE CASCADE,
+                public_code VARCHAR(8) NOT NULL,
+                contact_name TEXT,
+                contact_character TEXT,
+                contact_avatar TEXT,
+                added_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW()) * 1000,
+                card_snapshot JSONB,
+                exchange_type VARCHAR(20) DEFAULT 'manual',
+                last_refreshed BIGINT,
+                notes TEXT,
+                pinned BOOLEAN DEFAULT false,
+                category VARCHAR(50),
+                interaction_count INT DEFAULT 0,
+                UNIQUE(device_id, public_code)
+            )
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_card_holder_device ON agent_card_holder(device_id)
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_card_holder_pinned ON agent_card_holder(device_id, pinned)
+        `);
+
+        // Migration: copy cross_device_contacts → agent_card_holder (idempotent)
+        await client.query(`
+            INSERT INTO agent_card_holder (device_id, public_code, contact_name, contact_character, contact_avatar, added_at, exchange_type)
+            SELECT device_id, contact_public_code, contact_name, contact_character, contact_avatar, added_at, 'manual'
+            FROM cross_device_contacts
+            ON CONFLICT (device_id, public_code) DO NOTHING
         `);
 
         // Encrypted device variables (env vars vault)
@@ -883,69 +918,197 @@ async function saveFeedback(deviceId, message, appVersion) {
     }
 }
 
-// ── Cross-Device Contacts ──
-async function getContacts(deviceId) {
+// ── Agent Card Holder (replaces Cross-Device Contacts) ──
+async function getCardHolder(deviceId, { pinned, category, limit, offset } = {}) {
     if (!pool) return [];
     try {
-        const result = await pool.query(
-            `SELECT contact_public_code AS "publicCode", contact_name AS name, contact_character AS character, contact_avatar AS avatar, added_at AS "addedAt"
-             FROM cross_device_contacts WHERE device_id = $1 ORDER BY added_at ASC`,
-            [deviceId]
-        );
+        let sql = `SELECT public_code AS "publicCode", contact_name AS name, contact_character AS character,
+                    contact_avatar AS avatar, added_at AS "addedAt", card_snapshot AS "cardSnapshot",
+                    exchange_type AS "exchangeType", last_refreshed AS "lastRefreshed",
+                    notes, pinned, category, interaction_count AS "interactionCount"
+                    FROM agent_card_holder WHERE device_id = $1`;
+        const params = [deviceId];
+        let idx = 2;
+        if (pinned !== undefined) { sql += ` AND pinned = $${idx++}`; params.push(pinned); }
+        if (category) { sql += ` AND category = $${idx++}`; params.push(category); }
+        sql += ` ORDER BY pinned DESC, added_at DESC`;
+        if (limit) { sql += ` LIMIT $${idx++}`; params.push(limit); }
+        if (offset) { sql += ` OFFSET $${idx++}`; params.push(offset); }
+        const result = await pool.query(sql, params);
         return result.rows;
     } catch (err) {
-        console.error('[DB] Failed to get contacts:', err.message);
+        console.error('[DB] Failed to get card holder:', err.message);
         return [];
     }
 }
 
-async function addContact(deviceId, publicCode, name, character, avatar) {
+async function addCard(deviceId, publicCode, { name, character, avatar, cardSnapshot, exchangeType } = {}) {
     if (!pool) return null;
     try {
         const result = await pool.query(
-            `INSERT INTO cross_device_contacts (device_id, contact_public_code, contact_name, contact_character, contact_avatar, added_at)
-             VALUES ($1, $2, $3, $4, $5, $6)
-             ON CONFLICT (device_id, contact_public_code) DO UPDATE SET
+            `INSERT INTO agent_card_holder (device_id, public_code, contact_name, contact_character, contact_avatar, added_at, card_snapshot, exchange_type, last_refreshed)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $6)
+             ON CONFLICT (device_id, public_code) DO UPDATE SET
                 contact_name = EXCLUDED.contact_name,
                 contact_character = EXCLUDED.contact_character,
-                contact_avatar = EXCLUDED.contact_avatar
-             RETURNING id, contact_public_code AS "publicCode", contact_name AS name, contact_character AS character, contact_avatar AS avatar, added_at AS "addedAt"`,
-            [deviceId, publicCode, name || null, character || null, avatar || null, Date.now()]
+                contact_avatar = EXCLUDED.contact_avatar,
+                card_snapshot = COALESCE(EXCLUDED.card_snapshot, agent_card_holder.card_snapshot),
+                last_refreshed = EXCLUDED.last_refreshed,
+                interaction_count = agent_card_holder.interaction_count + 1
+             RETURNING id, public_code AS "publicCode", contact_name AS name, contact_character AS character,
+                contact_avatar AS avatar, added_at AS "addedAt", card_snapshot AS "cardSnapshot",
+                exchange_type AS "exchangeType", last_refreshed AS "lastRefreshed",
+                notes, pinned, category, interaction_count AS "interactionCount"`,
+            [deviceId, publicCode, name || null, character || null, avatar || null, Date.now(),
+             cardSnapshot ? JSON.stringify(cardSnapshot) : null, exchangeType || 'manual']
         );
         return result.rows[0];
     } catch (err) {
-        console.error('[DB] Failed to add contact:', err.message);
+        console.error('[DB] Failed to add card:', err.message);
         return null;
     }
 }
 
-async function removeContact(deviceId, publicCode) {
+async function updateCard(deviceId, publicCode, updates) {
+    if (!pool) return null;
+    const allowed = ['notes', 'pinned', 'category'];
+    const sets = [];
+    const params = [deviceId, publicCode];
+    let idx = 3;
+    for (const key of allowed) {
+        if (updates[key] !== undefined) {
+            sets.push(`${key} = $${idx++}`);
+            params.push(updates[key]);
+        }
+    }
+    if (sets.length === 0) return null;
+    try {
+        const result = await pool.query(
+            `UPDATE agent_card_holder SET ${sets.join(', ')}
+             WHERE device_id = $1 AND public_code = $2
+             RETURNING public_code AS "publicCode", notes, pinned, category`,
+            params
+        );
+        return result.rows[0] || null;
+    } catch (err) {
+        console.error('[DB] Failed to update card:', err.message);
+        return null;
+    }
+}
+
+async function refreshCardSnapshot(deviceId, publicCode, cardSnapshot, name, character, avatar) {
+    if (!pool) return null;
+    try {
+        const result = await pool.query(
+            `UPDATE agent_card_holder
+             SET card_snapshot = $3, last_refreshed = $4,
+                 contact_name = COALESCE($5, contact_name),
+                 contact_character = COALESCE($6, contact_character),
+                 contact_avatar = COALESCE($7, contact_avatar)
+             WHERE device_id = $1 AND public_code = $2
+             RETURNING public_code AS "publicCode", card_snapshot AS "cardSnapshot", last_refreshed AS "lastRefreshed"`,
+            [deviceId, publicCode, cardSnapshot ? JSON.stringify(cardSnapshot) : null, Date.now(),
+             name || null, character || null, avatar || null]
+        );
+        return result.rows[0] || null;
+    } catch (err) {
+        console.error('[DB] Failed to refresh card:', err.message);
+        return null;
+    }
+}
+
+async function searchCards(deviceId, query) {
+    if (!pool) return [];
+    try {
+        const pattern = `%${query}%`;
+        const result = await pool.query(
+            `SELECT public_code AS "publicCode", contact_name AS name, contact_character AS character,
+                    contact_avatar AS avatar, added_at AS "addedAt", card_snapshot AS "cardSnapshot",
+                    exchange_type AS "exchangeType", last_refreshed AS "lastRefreshed",
+                    notes, pinned, category, interaction_count AS "interactionCount"
+             FROM agent_card_holder WHERE device_id = $1
+             AND (
+                 contact_name ILIKE $2
+                 OR category ILIKE $2
+                 OR notes ILIKE $2
+                 OR card_snapshot::text ILIKE $2
+             )
+             ORDER BY pinned DESC, interaction_count DESC, added_at DESC`,
+            [deviceId, pattern]
+        );
+        return result.rows;
+    } catch (err) {
+        console.error('[DB] Failed to search cards:', err.message);
+        return [];
+    }
+}
+
+async function getCardByCode(deviceId, publicCode) {
+    if (!pool) return null;
+    try {
+        const result = await pool.query(
+            `SELECT public_code AS "publicCode", contact_name AS name, contact_character AS character,
+                    contact_avatar AS avatar, added_at AS "addedAt", card_snapshot AS "cardSnapshot",
+                    exchange_type AS "exchangeType", last_refreshed AS "lastRefreshed",
+                    notes, pinned, category, interaction_count AS "interactionCount"
+             FROM agent_card_holder WHERE device_id = $1 AND public_code = $2`,
+            [deviceId, publicCode]
+        );
+        return result.rows[0] || null;
+    } catch (err) {
+        console.error('[DB] Failed to get card:', err.message);
+        return null;
+    }
+}
+
+async function removeCard(deviceId, publicCode) {
     if (!pool) return false;
     try {
         await pool.query(
-            `DELETE FROM cross_device_contacts WHERE device_id = $1 AND contact_public_code = $2`,
+            `DELETE FROM agent_card_holder WHERE device_id = $1 AND public_code = $2`,
             [deviceId, publicCode]
         );
         return true;
     } catch (err) {
-        console.error('[DB] Failed to remove contact:', err.message);
+        console.error('[DB] Failed to remove card:', err.message);
         return false;
     }
 }
 
-async function getContactCount(deviceId) {
+async function getCardCount(deviceId) {
     if (!pool) return 0;
     try {
         const result = await pool.query(
-            `SELECT COUNT(*) AS count FROM cross_device_contacts WHERE device_id = $1`,
+            `SELECT COUNT(*) AS count FROM agent_card_holder WHERE device_id = $1`,
             [deviceId]
         );
         return parseInt(result.rows[0].count);
     } catch (err) {
-        console.error('[DB] Failed to get contact count:', err.message);
+        console.error('[DB] Failed to get card count:', err.message);
         return 0;
     }
 }
+
+async function incrementInteraction(deviceId, publicCode) {
+    if (!pool) return;
+    try {
+        await pool.query(
+            `UPDATE agent_card_holder SET interaction_count = interaction_count + 1
+             WHERE device_id = $1 AND public_code = $2`,
+            [deviceId, publicCode]
+        );
+    } catch (err) {
+        // Non-critical, just log
+        console.error('[DB] Failed to increment interaction:', err.message);
+    }
+}
+
+// Legacy aliases for backward compatibility during migration
+const getContacts = async (deviceId) => getCardHolder(deviceId);
+const addContact = async (deviceId, publicCode, name, character, avatar) =>
+    addCard(deviceId, publicCode, { name, character, avatar, exchangeType: 'manual' });
+const removeContact = async (deviceId, publicCode) => removeCard(deviceId, publicCode);
+const getContactCount = async (deviceId) => getCardCount(deviceId);
 
 // Close database connection
 async function closeDatabase() {
@@ -1270,7 +1433,17 @@ module.exports = {
     incrementPaidBorrowSlots,
     // Feedback
     saveFeedback,
-    // Cross-device contacts
+    // Agent Card Holder (replaces cross-device contacts)
+    getCardHolder,
+    addCard,
+    updateCard,
+    refreshCardSnapshot,
+    searchCards,
+    getCardByCode,
+    removeCard,
+    getCardCount,
+    incrementInteraction,
+    // Legacy aliases (backward compat)
     getContacts,
     addContact,
     removeContact,

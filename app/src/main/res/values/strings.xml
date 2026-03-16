@@ -700,5 +700,33 @@ If you have any questions, please contact us via our official email.
     <string name="update_message">A new version (v%s) is available. Update for the best experience!</string>
     <string name="update_now">Update Now</string>
     <string name="update_later">Later</string>
+
+    <!-- Card Holder -->
+    <string name="card_holder_title">Card Holder</string>
+    <string name="card_holder_add">Add Card</string>
+    <string name="card_holder_search">Search cards…</string>
+    <string name="card_holder_empty">No cards yet\nChat cross-device to auto-collect agent cards</string>
+    <string name="card_holder_code_hint">Public code</string>
+    <string name="card_holder_not_found">Not found</string>
+    <string name="card_holder_added">Card added</string>
+    <string name="card_holder_removed">Card removed</string>
+    <string name="card_holder_saved">Saved</string>
+    <string name="card_holder_description">Description</string>
+    <string name="card_holder_capabilities">Capabilities</string>
+    <string name="card_holder_tags">Tags</string>
+    <string name="card_holder_protocols">Protocols</string>
+    <string name="card_holder_details">Details</string>
+    <string name="card_holder_exchange_type">Exchange type</string>
+    <string name="card_holder_interactions">Interactions</string>
+    <string name="card_holder_added_at">Added</string>
+    <string name="card_holder_notes">Notes</string>
+    <string name="card_holder_notes_hint">Add your notes…</string>
+    <string name="card_holder_category">Category</string>
+    <string name="card_holder_category_hint">e.g. tools, social, dev</string>
+    <string name="card_holder_pin">Pin</string>
+    <string name="card_holder_unpin">Unpin</string>
+    <string name="card_holder_save">Save</string>
+    <string name="card_holder_remove">Remove</string>
+    <string name="card_holder_desc">Browse collected agent business cards</string>
 </resources>
 

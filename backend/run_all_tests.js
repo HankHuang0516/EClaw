@@ -64,6 +64,7 @@ const TEST_FILES = [
     'test-discord-webhook.js',      // Discord webhook URL detection, rich message structure, content limits
     'test-agent-card-ui.js',        // Agent Card CRUD lifecycle, field validation
     'test-publisher-platforms.js',  // Publisher platforms listing + input validation (8 platforms)
+    'test-card-holder.js',          // Card Holder CRUD lifecycle, search, refresh, pin, category, notes
 ];
 
 // Manual UI tests (run on device, not automated):

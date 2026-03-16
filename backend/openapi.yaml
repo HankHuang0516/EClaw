@@ -30,6 +30,8 @@ tags:
   - name: AgentCard
     description: A2A capability discovery
   - name: Lookup
+  - name: CardHolder
+    description: Agent card holder (collected business cards)
     description: Entity lookup and contacts
   - name: Auth
     description: User authentication and account management
@@ -74,6 +76,43 @@ components:
           type: string
         error:
           type: string
+
+    CardHolderEntry:
+      type: object
+      properties:
+        publicCode:
+          type: string
+        name:
+          type: string
+        character:
+          type: string
+        avatar:
+          type: string
+          nullable: true
+        online:
+          type: boolean
+        cardSnapshot:
+          type: object
+          nullable: true
+          description: Agent card snapshot at time of collection
+        exchangeType:
+          type: string
+          enum: [manual, auto_speak, auto_broadcast, auto_a2a, lookup]
+        lastRefreshed:
+          type: integer
+          nullable: true
+        addedAt:
+          type: integer
+        notes:
+          type: string
+          nullable: true
+        pinned:
+          type: boolean
+        category:
+          type: string
+          nullable: true
+        interactionCount:
+          type: integer
 
     Entity:
       type: object
@@ -1283,9 +1322,9 @@ paths:
 
   /api/contacts:
     get:
-      tags: [Lookup]
-      summary: List contacts
-      operationId: listContacts
+      tags: [CardHolder]
+      summary: List card holder entries
+      operationId: listCards
       security:
         - DeviceSecret: []
         - CookieAuth: []
@@ -1294,9 +1333,25 @@ paths:
           in: query
           schema:
             type: string
+        - name: pinned
+          in: query
+          schema:
+            type: boolean
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          schema:
+            type: integer
       responses:
         '200':
-          description: Contact list
+          description: Card holder entries
           content:
             application/json:
               schema:
@@ -1307,23 +1362,11 @@ paths:
                   contacts:
                     type: array
                     items:
-                      type: object
-                      properties:
-                        publicCode:
-                          type: string
-                        name:
-                          type: string
-                        character:
-                          type: string
-                        avatar:
-                          type: string
-                          nullable: true
-                        online:
-                          type: boolean
+                      $ref: '#/components/schemas/CardHolderEntry'
     post:
-      tags: [Lookup]
-      summary: Add contact
-      operationId: addContact
+      tags: [CardHolder]
+      summary: Add card to holder
+      operationId: addCard
       security:
         - DeviceSecret: []
         - CookieAuth: []
@@ -1343,7 +1386,7 @@ paths:
                   type: string
       responses:
         '200':
-          description: Contact added
+          description: Card added
           content:
             application/json:
               schema:
@@ -1351,10 +1394,12 @@ paths:
                 properties:
                   success:
                     type: boolean
+                  contact:
+                    $ref: '#/components/schemas/CardHolderEntry'
     delete:
-      tags: [Lookup]
-      summary: Remove contact
-      operationId: deleteContact
+      tags: [CardHolder]
+      summary: Remove card from holder
+      operationId: removeCard
       security:
         - DeviceSecret: []
         - CookieAuth: []
@@ -1374,7 +1419,7 @@ paths:
                   type: string
       responses:
         '200':
-          description: Contact removed
+          description: Card removed
           content:
             application/json:
               schema:
@@ -1382,6 +1427,151 @@ paths:
                 properties:
                   success:
                     type: boolean
+
+  /api/contacts/search:
+    get:
+      tags: [CardHolder]
+      summary: Search card holder
+      operationId: searchCards
+      security:
+        - DeviceSecret: []
+        - CookieAuth: []
+      parameters:
+        - name: deviceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  cards:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CardHolderEntry'
+
+  /api/contacts/{publicCode}:
+    get:
+      tags: [CardHolder]
+      summary: Get card detail
+      operationId: getCardDetail
+      parameters:
+        - name: publicCode
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: deviceId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Card detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  card:
+                    $ref: '#/components/schemas/CardHolderEntry'
+    patch:
+      tags: [CardHolder]
+      summary: Update card notes, pinned, category
+      operationId: updateCard
+      security:
+        - DeviceSecret: []
+        - CookieAuth: []
+      parameters:
+        - name: publicCode
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+                notes:
+                  type: string
+                  nullable: true
+                pinned:
+                  type: boolean
+                category:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: Card updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  card:
+                    type: object
+
+  /api/contacts/{publicCode}/refresh:
+    post:
+      tags: [CardHolder]
+      summary: Refresh agent card snapshot
+      operationId: refreshCard
+      security:
+        - DeviceSecret: []
+        - CookieAuth: []
+      parameters:
+        - name: publicCode
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deviceId:
+                  type: string
+                deviceSecret:
+                  type: string
+      responses:
+        '200':
+          description: Card refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  card:
+                    type: object
 
   # ── Cross-Device Settings ──
   /api/entity/cross-device-settings:

@@ -135,6 +135,12 @@ export default function SettingsScreen() {
         {/* More */}
         <List.Section>
           <List.Item
+            title={t('settings.card_holder', 'Card Holder')}
+            left={(props) => <List.Icon {...props} icon="card-account-details" />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            onPress={() => router.push('/card-holder')}
+          />
+          <List.Item
             title={t('settings.submit_feedback')}
             left={(props) => <List.Icon {...props} icon="message-alert" />}
             right={(props) => <List.Icon {...props} icon="chevron-right" />}

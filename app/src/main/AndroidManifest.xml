@@ -81,6 +81,12 @@
             android:parentActivityName=".SettingsActivity" />
 
         <activity
+            android:name=".CardHolderActivity"
+            android:exported="false"
+            android:label="@string/card_holder_title"
+            android:parentActivityName=".SettingsActivity" />
+
+        <activity
             android:name=".FeedbackHistoryActivity"
             android:exported="false"
             android:label="@string/feedback_history_title"

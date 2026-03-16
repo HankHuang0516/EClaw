@@ -295,14 +295,23 @@ export const deviceVarsApi = {
     apiClient.post('/api/device-vars/approve', { requestId, approved }),
 };
 
-// ── Contacts APIs ────────────────────────────────────────────
+// ── Card Holder APIs (replaces Contacts) ────────────────────
 
 export const contactsApi = {
-  list: () => apiClient.get('/api/contacts'),
-  add: (publicCode: string, name: string) =>
-    apiClient.post('/api/contacts', { publicCode, name }),
-  remove: (contactId: string) =>
-    apiClient.delete('/api/contacts', { data: { contactId } }),
+  list: (params?: { pinned?: boolean; category?: string; limit?: number; offset?: number }) =>
+    apiClient.get('/api/contacts', { params }),
+  add: (publicCode: string) =>
+    apiClient.post('/api/contacts', { publicCode }),
+  remove: (publicCode: string) =>
+    apiClient.delete('/api/contacts', { data: { publicCode } }),
+  getDetail: (publicCode: string) =>
+    apiClient.get(`/api/contacts/${publicCode}`),
+  update: (publicCode: string, data: { notes?: string; pinned?: boolean; category?: string | null }) =>
+    apiClient.patch(`/api/contacts/${publicCode}`, data),
+  refresh: (publicCode: string) =>
+    apiClient.post(`/api/contacts/${publicCode}/refresh`),
+  search: (q: string) =>
+    apiClient.get('/api/contacts/search', { params: { q } }),
   crossSpeak: (toPublicCode: string, message: string) =>
     apiClient.post('/api/client/cross-speak', { toPublicCode, message }),
 };

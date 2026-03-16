@@ -44,6 +44,7 @@ export default function RootLayout() {
           <Stack.Screen name="ai-chat" options={{ presentation: 'card' }} />
           <Stack.Screen name="official-borrow" options={{ presentation: 'card' }} />
           <Stack.Screen name="feedback" options={{ presentation: 'card' }} />
+          <Stack.Screen name="card-holder" options={{ presentation: 'card' }} />
         </Stack>
       </PaperProvider>
     </SafeAreaProvider>
