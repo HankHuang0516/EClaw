@@ -1,3 +1,10 @@
+## [1.96.1](https://github.com/HankHuang0516/EClaw/compare/v1.96.0...v1.96.1) (2026-03-16)
+
+
+### Bug Fixes
+
+* **test:** fix E2EE test lookup param and cleanup auth ([bfc8f25](https://github.com/HankHuang0516/EClaw/commit/bfc8f2560b24c2ef05c50d89d6edfb3b2a411d94))
+
 # [1.96.0](https://github.com/HankHuang0516/EClaw/compare/v1.95.2...v1.96.0) (2026-03-16)
 
 
