@@ -1,4 +1,4 @@
-// E-Claw Portal - Site Footer (public + authenticated)
+// EClawbot Portal - Site Footer (public + authenticated)
 
 function renderFooter() {
     const t = (key, fallback) => typeof i18n !== 'undefined' ? i18n.t(key) : fallback;
@@ -11,7 +11,7 @@ function renderFooter() {
                 <div class="footer-col">
                     <div class="footer-brand">
                         <span class="footer-logo">🦞</span>
-                        <span class="footer-brand-text">E-Claw</span>
+                        <span class="footer-brand-text">EClawbot</span>
                     </div>
                     <p class="footer-desc" data-i18n="footer_desc">${t('footer_desc', 'AI-dedicated platform for Android live wallpaper.')}</p>
                 </div>
@@ -30,7 +30,7 @@ function renderFooter() {
                 </div>
             </div>
             <div class="footer-bottom">
-                &copy; ${new Date().getFullYear()} E-Claw &middot; HankHuang0516
+                &copy; ${new Date().getFullYear()} EClawbot &middot; HankHuang0516
             </div>
         </div>
     `;

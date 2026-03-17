@@ -212,9 +212,9 @@ describe('GET /api/version', () => {
 // / (root)
 // ════════════════════════════════════════════════════════════════
 describe('GET /', () => {
-    it('redirects to /portal/', async () => {
+    it('serves landing page', async () => {
         const res = await request(app).get('/');
-        expect(res.status).toBe(302);
-        expect(res.headers.location).toBe('/portal/');
+        expect(res.status).toBe(200);
+        expect(res.text).toContain('EClawbot');
     });
 });

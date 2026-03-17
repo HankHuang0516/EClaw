@@ -1,12 +1,16 @@
-# EClaw - robots.txt
+# EClawbot - robots.txt
 # https://eclawbot.com
 
 User-agent: *
 
 # Public pages
+Allow: /
+Allow: /landing
 Allow: /portal/$
 Allow: /portal/index.html
 Allow: /api/docs
+Allow: /llms.txt
+Allow: /assets/
 
 # Authenticated portal pages — not useful to crawlers
 Disallow: /portal/dashboard.html
@@ -21,12 +25,17 @@ Disallow: /portal/admin.html
 Disallow: /portal/info.html
 Disallow: /portal/screen-control.html
 Disallow: /portal/delete-account.html
+Disallow: /portal/card-holder.html
 
 # API endpoints
 Disallow: /api/
 
-# Allow health and version for monitoring tools
+# Allow health, version, docs, and agent card for monitoring/discovery
 Allow: /api/health
 Allow: /api/version
+Allow: /api/docs
+
+# A2A agent discovery
+Allow: /.well-known/agent.json
 
 Sitemap: https://eclawbot.com/sitemap.xml

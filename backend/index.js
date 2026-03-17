@@ -131,12 +131,21 @@ app.use('/api/ai-support/chat', express.json({ limit: '10mb' }));
 app.use(express.json());
 app.use(cookieParser());
 
-// SEO: serve robots.txt and sitemap.xml at root
+// SEO: serve robots.txt, sitemap.xml, llms.txt at root
 app.get('/robots.txt', (req, res) => {
     res.type('text/plain').sendFile(path.join(__dirname, 'public/robots.txt'));
 });
 app.get('/sitemap.xml', (req, res) => {
     res.type('application/xml').sendFile(path.join(__dirname, 'public/sitemap.xml'));
+});
+app.get('/llms.txt', (req, res) => {
+    res.type('text/plain').sendFile(path.join(__dirname, 'public/llms.txt'));
+});
+// Serve public assets (OG image, etc.)
+app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
+// Landing page
+app.get('/landing', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/landing.html'));
 });
 
 app.use('/mission', express.static(path.join(__dirname, 'public')));
@@ -2278,7 +2287,7 @@ setInterval(() => {
 // ============================================
 
 app.get('/', (req, res) => {
-    res.redirect('/portal/');
+    res.sendFile(path.join(__dirname, 'public/landing.html'));
 });
 
 // Health check endpoint for Railway

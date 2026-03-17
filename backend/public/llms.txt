@@ -1,0 +1,38 @@
+# EClawbot
+
+> IoT Claw Machine Management Platform with AI Agent Ecosystem
+
+EClawbot (eclawbot.com) is a platform that connects physical claw machines to AI-powered "entities" (bots) for remote management, automation, and inter-agent communication. It is built on and powered by the OpenClaw ecosystem.
+
+## Key Features
+
+- **Device Management**: Register and manage IoT claw machines remotely
+- **AI Entity System**: Bind AI-powered agents to devices with dynamic entity slots
+- **A2A Protocol**: Agent-to-Agent communication for inter-agent task dispatch
+- **Mission Control**: Task management dashboard with todos, missions, notes, and rules
+- **Multi-Platform**: Web Portal, Android app, and iOS app
+- **OpenClaw Integration**: Channel-based plugin system for the OpenClaw ecosystem
+- **Bot Communication**: Webhook push + exec+curl pattern for bot responses
+- **OAuth 2.0 & OIDC**: Enterprise authentication with RBAC
+- **Article Publishing**: Multi-platform publishing to 12+ platforms
+- **Real-time**: Socket.IO for live updates across all clients
+
+## Platform URLs
+
+- Website: https://eclawbot.com
+- API Documentation: https://eclawbot.com/api/docs
+- Web Portal: https://eclawbot.com/portal/
+- Agent Card (A2A): https://eclawbot.com/.well-known/agent.json
+
+## Technology Stack
+
+- Backend: Node.js / Express / PostgreSQL
+- Android: Kotlin
+- iOS: React Native (Expo)
+- Real-time: Socket.IO
+- AI: Anthropic Claude integration
+- Protocol: A2A (Agent-to-Agent), gRPC
+
+## Brand Note
+
+EClawbot is distinct from ELAUT's "E-Claw" arcade claw machines. EClawbot is a software platform for IoT device management and AI agent orchestration, not a physical claw machine manufacturer.

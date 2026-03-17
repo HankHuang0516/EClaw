@@ -4,19 +4,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="portal_login_title">EClaw - IoT Claw Machine Management Platform</title>
-    <meta name="description" content="EClaw connects physical claw machines to AI-powered agents. Manage devices, entities, and missions from a unified web portal.">
+    <title data-i18n="portal_login_title">EClawbot - IoT Claw Machine Management Platform</title>
+    <meta name="description" content="EClawbot connects physical claw machines to AI-powered agents. Manage devices, entities, and missions from a unified web portal. Powered by OpenClaw.">
     <link rel="canonical" href="https://eclawbot.com/portal/">
     <!-- Open Graph -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="EClaw - IoT Claw Machine Management Platform">
-    <meta property="og:description" content="EClaw connects physical claw machines to AI-powered agents. Manage devices, entities, and missions from a unified web portal.">
+    <meta property="og:title" content="EClawbot - IoT Claw Machine Management Platform">
+    <meta property="og:description" content="EClawbot connects physical claw machines to AI-powered agents. Manage devices, entities, and missions from a unified web portal. Powered by OpenClaw.">
     <meta property="og:url" content="https://eclawbot.com/portal/">
-    <meta property="og:site_name" content="EClaw">
+    <meta property="og:site_name" content="EClawbot">
+    <meta property="og:image" content="https://eclawbot.com/assets/og-image.png">
+    <meta property="og:image:width" content="512">
+    <meta property="og:image:height" content="512">
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="EClaw - IoT Claw Machine Management Platform">
-    <meta name="twitter:description" content="EClaw connects physical claw machines to AI-powered agents. Manage devices, entities, and missions from a unified web portal.">
+    <meta name="twitter:title" content="EClawbot - IoT Claw Machine Management Platform">
+    <meta name="twitter:description" content="EClawbot connects physical claw machines to AI-powered agents. Manage devices, entities, and missions from a unified web portal. Powered by OpenClaw.">
+    <meta name="twitter:image" content="https://eclawbot.com/assets/og-image.png">
     <!-- Preconnect to external origins -->
     <link rel="preconnect" href="https://accounts.google.com" crossorigin>
     <link rel="dns-prefetch" href="https://connect.facebook.net">
@@ -148,16 +152,29 @@
             .terms-footer { padding: 12px 16px; flex-direction: column; }
         }
     </style>
-    <!-- JSON-LD Organization schema -->
+    <!-- JSON-LD Organization + SoftwareApplication schema -->
     <script type="application/ld+json">
+    [{
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "EClawbot",
+        "alternateName": ["EClaw", "E-Claw by OpenClaw"],
+        "url": "https://eclawbot.com",
+        "logo": "https://eclawbot.com/assets/og-image.png",
+        "description": "EClawbot is an IoT claw machine management platform with an AI agent ecosystem, powered by OpenClaw.",
+        "sameAs": [
+            "https://github.com/HankHuang0516/realbot"
+        ]
+    },
     {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
-        "name": "EClaw",
+        "name": "EClawbot",
         "url": "https://eclawbot.com",
         "applicationCategory": "BusinessApplication",
         "operatingSystem": "Web, Android, iOS",
-        "description": "IoT claw machine management platform with AI-powered agent ecosystem. Connect physical claw machines to AI entities for remote management and automation.",
+        "description": "IoT claw machine management platform with AI-powered agent ecosystem. Connect physical claw machines to AI entities for remote management, automation, and A2A protocol communication.",
+        "image": "https://eclawbot.com/assets/og-image.png",
         "offers": {
             "@type": "Offer",
             "price": "0",
@@ -165,10 +182,10 @@
         },
         "publisher": {
             "@type": "Organization",
-            "name": "EClaw",
+            "name": "EClawbot",
             "url": "https://eclawbot.com"
         }
-    }
+    }]
     </script>
 </head>
 
@@ -183,7 +200,7 @@
             </div>
             <div class="terms-content" id="termsContent">
                 <h3 data-i18n="terms_section_tos">Terms of Service</h3>
-                <p data-i18n="terms_tos_welcome">Welcome to E-Claw. By creating an account and using our services, you agree to the following terms:</p>
+                <p data-i18n="terms_tos_welcome">Welcome to EClawbot. By creating an account and using our services, you agree to the following terms:</p>
                 <ul>
                     <li data-i18n="terms_tos_1">You must be at least 13 years old to create an account.</li>
                     <li data-i18n="terms_tos_2">You are responsible for maintaining the security of your account credentials.</li>
@@ -205,7 +222,7 @@
 
                 <h3 data-i18n="terms_section_use">How We Use Your Information</h3>
                 <ul>
-                    <li data-i18n="terms_use_1">To provide and maintain the E-Claw service.</li>
+                    <li data-i18n="terms_use_1">To provide and maintain the EClawbot service.</li>
                     <li data-i18n="terms_use_2">To communicate important service updates and notices.</li>
                     <li data-i18n="terms_use_3">To improve and personalize your experience.</li>
                     <li data-i18n="terms_use_4">To prevent fraud and ensure platform security.</li>
@@ -220,7 +237,7 @@
                 </ul>
 
                 <h3 data-i18n="terms_section_liability">Limitation of Liability</h3>
-                <p data-i18n="terms_liability_text">To the maximum extent permitted by law, E-Claw and its operators shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the service, including but not limited to loss of data, service interruption, or unauthorized access to your account.</p>
+                <p data-i18n="terms_liability_text">To the maximum extent permitted by law, EClawbot and its operators shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the service, including but not limited to loss of data, service interruption, or unauthorized access to your account.</p>
 
                 <h3 data-i18n="terms_section_contact">Contact</h3>
                 <p data-i18n="terms_contact_text">If you have any questions about these terms or our privacy practices, please contact us through the app's support channel.</p>
@@ -234,7 +251,7 @@
 
     <div class="auth-container">
         <div class="auth-logo">
-            <h1 data-i18n="portal_app_title">EClaw</h1>
+            <h1 data-i18n="portal_app_title">EClawbot</h1>
         </div>
 
         <!-- Tabs -->
