@@ -7,7 +7,7 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.2.2 (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **Current version**: 1.103.9 (via semantic-release; `package.json` stays 1.0.0 placeholder)
 
 ---
 
@@ -16,7 +16,7 @@
 ```
 EClaw/
 ├── backend/                  # Node.js Express server (deployed to Railway)
-│   ├── index.js              # Main server (~10,800 lines) — all API routes
+│   ├── index.js              # Main server (~11,030 lines) — all API routes
 │   ├── db.js                 # PostgreSQL connection pool + schema creation
 │   ├── auth.js               # Auth module (JWT, OAuth, OIDC, RBAC)
 │   ├── mission.js            # Mission Control dashboard system
@@ -35,9 +35,10 @@ EClaw/
 │   ├── oauth-server.js       # OAuth 2.0 server (client_credentials, tokens)
 │   ├── api-docs.js           # Swagger/OpenAPI docs endpoint
 │   ├── bot-tools.js          # Bot utility API (web-search, web-fetch)
-│   ├── article-publisher.js  # Multi-platform article publishing (8 platforms)
+│   ├── article-publisher.js  # Multi-platform article publishing (12 platforms)
 │   ├── channel-api.js        # OpenClaw channel integration API
 │   ├── flickr.js             # Flickr photo storage for chat images
+│   ├── flickr-auth.js        # Flickr OAuth authentication
 │   ├── grpc-server.js        # gRPC transport layer
 │   ├── feedback-email.js     # Email notifications for feedback (Resend)
 │   ├── openapi.yaml          # OpenAPI 3.0 specification
@@ -71,10 +72,13 @@ EClaw/
 │   │   ├── shared/
 │   │   │   ├── telemetry.js       # Client-side telemetry SDK
 │   │   │   └── i18n.js            # Internationalization
+│   │   ├── robots.txt             # SEO: crawler directives
+│   │   ├── sitemap.xml            # SEO: sitemap for search engines
+│   │   ├── sw.js                  # Service worker for PWA support
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
-│   ├── tests/                # Regression + integration tests (58 files)
-│   ├── tests/jest/           # Jest unit tests (10 files, CI-run via `npm test`)
+│   ├── tests/                # Regression + integration tests (43 files)
+│   ├── tests/jest/           # Jest unit tests (13 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -87,6 +91,7 @@ EClaw/
 │       ├── SettingsActivity.kt    # Settings
 │       ├── FileManagerActivity.kt # File manager
 │       ├── FeedbackActivity.kt    # Feedback
+│       ├── CardHolderActivity.kt  # Agent card collection
 │       ├── data/
 │       │   ├── local/             # SharedPreferences, Room DB
 │       │   ├── model/             # API data models
@@ -112,9 +117,9 @@ EClaw/
 │   ├── go/                        # Go SDK
 │   └── rust/                      # Rust SDK
 ├── docs/
-│   ├── plans/                     # Design documents
-│   ├── reports/                   # Test & analysis reports
-│   └── issues/                    # Issue documentation
+│   ├── plans/                     # Design documents (18 files)
+│   ├── reports/                   # Test & analysis reports (7 files)
+│   └── issues/                    # Issue documentation (4 files)
 ├── .github/workflows/
 │   ├── backend-ci.yml             # Backend lint + Jest tests
 │   ├── android-ci.yml             # Android build CI
@@ -137,7 +142,7 @@ EClaw/
 
 ### Backend (Node.js/Express)
 
-- **Single-file server**: `backend/index.js` (~10,800 lines) contains all API routes
+- **Single-file server**: `backend/index.js` (~11,030 lines) contains all API routes
 - **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
 - **Real-time**: Socket.IO for live updates to Web Portal and Android app
 - **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
@@ -449,7 +454,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **OAuth OIDC (#175)**: Generic OIDC provider via env vars (`OIDC_PROVIDER_<NAME>_ISSUER/CLIENT_ID/CLIENT_SECRET`); discovery + code exchange at `POST /api/auth/oauth/oidc`; `GET /api/auth/oauth/providers` lists all configured providers
 - **RBAC (#178)**: `roles` + `user_roles` PostgreSQL tables; 4 default roles (admin/developer/operator/viewer); `requirePermission()` middleware exported from `auth.js`; `GET/POST/DELETE /api/auth/roles` and `/api/auth/user-roles` endpoints
 
-### Recent Features (v1.2.x)
+### Recent Features (v1.2.x – v1.100.x)
 
 - **Discord Webhook Support**: Auto-detects Discord webhook URLs in `POST /api/bot/register`; supports rich embeds, buttons, select menus via `discordOptions` field; handles rate limiting (429) and 2000-char content limit
 - **requiredVars Validation**: `POST /api/skill-templates/contribute` validates `requiredVars` format — must be `KEY=value` or `KEY=` (Gson-compatible for Android deserialization); rejects `key: value` YAML-style or bare `KEY` entries
@@ -458,6 +463,16 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **OAuth 2.0 Server (#189)**: `client_credentials` grant, token introspection, client registration at `/api/oauth/*`
 - **gRPC Transport (#191)**: `backend/grpc-server.js` + `backend/proto/eclaw.proto`, HealthService for load balancer probes
 - **E2EE Awareness (#212)**: `e2ee_capable` flag on `channel_accounts`, `encryption_status` on `entities`; channel register propagates to bound entities; UI badges on all 3 platforms; callback payload includes `e2ee` flag
+
+### Recent Features (v1.100.x – v1.103.x)
+
+- **Card Holder (名片夾)**: Full CRUD lifecycle for collecting, browsing, searching, pinning, and refreshing agent cards; three-platform support (Web Portal `card-holder.html`, Android `CardHolderActivity.kt`, iOS `card-holder.tsx`); Jest + integration tests
+- **SEO & PWA**: `robots.txt`, `sitemap.xml`, service worker (`sw.js`), meta tags, JSON-LD structured data added to public root
+- **Bot Audit Closed-Loop (#234)**: GitHub issue + audit-log endpoints for automated bot accountability
+- **UI/UX Audit Fixes**: Chat input text contrast fix (#235), screen-control auth regression (#236), i18n key gaps (#237), delete-account/screen-control telemetry path fixes (#239-#240), Card Holder i18n for 8 languages (#241)
+- **File Delete Fix (#250-#251)**: Race condition, NPE, file deletion issues resolved; proper Jest mocks added
+- **Publisher Enhancements**: Expanded to 12 platforms (Blogger, Hashnode, X, DEV.to, WordPress, Telegraph, Qiita, WeChat, Tumblr, Reddit, LinkedIn, Mastodon); publisher Jest tests fixed for env var isolation (#238)
+- **Bot Tools API**: `web-search` and `web-fetch` endpoints for bots; dedicated Jest test file (`bot-tools.test.js`)
 
 ---
 
@@ -536,7 +551,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | UI Text Contrast | `node backend/tests/test-ui-text-contrast.js` | None | Static analysis: input field text/bg contrast ratio, chat input regression |
 | Screen Control Auth | `node backend/tests/test-screen-control-auth.js` | Device ID + Secret | Regression: portal screen-capture/control uses deviceSecret not botSecret |
 
-### Jest Unit Tests (CI-run, `npm test`, 11 files)
+### Jest Unit Tests (CI-run, `npm test`, 13 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -551,11 +566,13 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Notifications | `tests/jest/notifications.test.js` | Notification endpoint validation (subscribe, send, manage) |
 | Scheduler | `tests/jest/scheduler.test.js` | Scheduler endpoint validation (CRUD, cron expressions) |
 | Card Holder | `tests/jest/card-holder.test.js` | Card Holder endpoint validation (CRUD, search, refresh, PATCH) |
+| Bot Tools | `tests/jest/bot-tools.test.js` | Bot tools API (web-search, web-fetch) validation |
+| File Delete | `tests/jest/file-delete.test.js` | File deletion endpoint validation and mocks |
 
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (10 files)
+cd backend && npm test                  # Jest unit tests (13 files)
 cd backend && npm run lint              # ESLint
 ```
 
@@ -574,7 +591,7 @@ Set in `backend/.env` (gitignored):
 - `server_logs` schema extension is backward-compatible — all existing 67+ `serverLog()` calls work without modification (new fields default to null)
 - Entity unbind calls `createDefaultEntity()` which resets all fields including new ones — no separate cleanup needed
 - `const` redeclaration in same scope is a JS error — check existing variable names before adding new ones (e.g., `adminAuth` already declared at line 1198)
-- `index.js` is a single 10,800-line file — use line numbers when referencing specific code sections
+- `index.js` is a single 11,030-line file — use line numbers when referencing specific code sections
 - Module initialization order matters: `db.js` → `devices` in-memory map → module `require()` calls with dependency injection
 
 ### Gatekeeper System
@@ -597,13 +614,37 @@ Set in `backend/.env` (gitignored):
 - Jest config in `backend/jest.config.js`: `runInBand: true` (Windows compat), `forceExit: true`, `testTimeout: 15000`
 - Jest tests use `supertest` against the Express app directly (no live server needed)
 - Integration tests in `backend/tests/` hit the live production server (`eclawbot.com`)
-- `backend/run_all_tests.js` orchestrates 25 registered integration tests sequentially
+- `backend/run_all_tests.js` orchestrates 43 registered integration tests sequentially
 - `requiredVars` in skill templates must be `KEY=value` or `KEY=` format (Gson deserialization constraint)
 
 ### Deployment & Monitoring
 - Railway sits behind Cloudflare CDN — deploy can take 2-5 minutes
 - Changes must be under `backend/` to trigger Railway deployment
 - Use `backend/.deploy-trigger` file to force a deploy without code changes
+
+---
+
+## Documentation Index
+
+### Reports (`docs/reports/`)
+| File | Description |
+|------|-------------|
+| `2026-03-10-eclaw-baseline-report.md` | AI search visibility baseline (score: 0/50) |
+| `2026-03-14-platform-pages-features-inventory.md` | Three-platform page/feature cross-reference |
+| `2026-03-14-test-coverage-analysis.md` | API route test coverage breakdown |
+| `2026-03-14-uiux-audit-report.md` | UI/UX audit findings and fixes |
+| `2026-03-15-scheduled-tasks.md` | Scheduled tasks export |
+| `2026-03-15-security-audit-findings.md` | Security audit findings |
+| `2026-03-15-ui-code-audit.md` | UI code audit (contrast, accessibility) |
+
+### Design Plans (`docs/plans/`)
+Key documents: `broadcast-recipient-info-design`, `env-vars-encrypted-persistence`, `channel-bot-context-parity`, `rebrand-ai-agent`, `soul-rule-templates`, `ai-search-brand-platform-design`, `news-publishing-api`
+
+### Known Issues (`docs/issues/`)
+- `entity-speak-to-disabled-for-free-bots.md` — Free bots cannot use speak-to
+- `gatekeeper-domain-whitelist-bug.md` — Curl whitelist missing eclawbot.com (fixed)
+- `gatekeeper-false-positive-negation.md` — "不需要 API Key" false positive
+- `gatekeeper-fetch-pattern-too-broad.md` — `fetch` regex too broad (fixed)
 
 ---
 
