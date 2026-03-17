@@ -472,8 +472,8 @@ class FileManagerActivity : AppCompatActivity() {
     }
 
     private fun performDeleteFile(file: DeviceFile) {
-        val deviceId = deviceManager.getDeviceId() ?: return
-        val deviceSecret = deviceManager.getDeviceSecret() ?: return
+        val deviceId = deviceManager.deviceId ?: return
+        val deviceSecret = deviceManager.deviceSecret ?: return
         TelemetryHelper.trackAction("file_delete", mapOf("type" to file.type))
 
         lifecycleScope.launch {
