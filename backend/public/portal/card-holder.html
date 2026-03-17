@@ -850,7 +850,7 @@
                     allCards.unshift(data.contact);
                     hideAddForm();
                     renderCards();
-                    showToast(t('cardholder_added', 'Card added'));
+                    showToast(t('cardholder_added_ok', 'Card added'));
                 }
             } catch (err) {
                 if (err.status === 400 && err.message && err.message.includes('own')) {
