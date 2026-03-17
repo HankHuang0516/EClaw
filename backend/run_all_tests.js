@@ -104,6 +104,7 @@ const TEST_FILES = [
     'test-a2a-compat.js',           // A2A: .well-known/agent.json, tasks/send
     'test-a2a-task-dispatch.js',    // A2A: official agent sends structured task to entity
     'test-schedule-cron-update.js', // Schedule: cron update NOT NULL violation regression
+    'test-scheduled-chat-visibility.js', // Schedule: scheduled messages visible in chat history
 ];
 
 // Manual UI tests (run on device, not automated):

@@ -1021,29 +1021,35 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private suspend fun pollEntityMessages() {
-        var lastSyncTimestamp = System.currentTimeMillis() - 60_000
+        // First poll uses NO time filter so scheduled/cross-platform messages from
+        // between sessions are picked up (mirrors web portal behaviour).
+        // Subsequent polls use incremental timestamp for efficiency.
+        var lastSyncTimestamp: Long? = null
         while (true) {
             try {
                 val response = api.getChatHistory(
                     deviceId = deviceManager.deviceId,
                     deviceSecret = deviceManager.deviceSecret,
                     since = lastSyncTimestamp,
-                    limit = 50
+                    limit = if (lastSyncTimestamp == null) 100 else 50
                 )
-                if (response.success && response.messages.isNotEmpty()) {
-                    val addedCount = chatRepository.syncFromBackend(response.messages)
-                    if (addedCount > 0) {
-                        Timber.d("ChatActivity: Synced $addedCount new messages from backend")
+                if (response.success) {
+                    if (response.messages.isNotEmpty()) {
+                        val addedCount = chatRepository.syncFromBackend(response.messages)
+                        if (addedCount > 0) {
+                            Timber.d("ChatActivity: Synced $addedCount new messages from backend")
+                        }
+                        // Data layer integrity check (non-blocking)
+                        val localMessages = chatRepository.getRecentMessagesSync(200)
+                        ChatIntegrityValidator.validateDataLayer(
+                            localMessages = localMessages,
+                            backendMessages = response.messages,
+                            deviceId = deviceManager.deviceId,
+                            deviceSecret = deviceManager.deviceSecret
+                        )
                     }
+                    // Advance timestamp after successful poll (even if empty)
                     lastSyncTimestamp = System.currentTimeMillis()
-                    // Data layer integrity check (non-blocking)
-                    val localMessages = chatRepository.getRecentMessagesSync(200)
-                    ChatIntegrityValidator.validateDataLayer(
-                        localMessages = localMessages,
-                        backendMessages = response.messages,
-                        deviceId = deviceManager.deviceId,
-                        deviceSecret = deviceManager.deviceSecret
-                    )
                 }
             } catch (e: Exception) {
                 Timber.e(e, "ChatActivity: Error polling backend chat history")

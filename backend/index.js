@@ -9502,6 +9502,8 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
                 is_from_bot: isFromBot || false,
                 media_type: mediaType,
                 media_url: mediaUrl,
+                schedule_id: scheduleId || null,
+                schedule_label: scheduleLabel || null,
                 created_at: Date.now()
             });
         }
