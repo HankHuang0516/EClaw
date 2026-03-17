@@ -1,3 +1,10 @@
+## [1.105.1](https://github.com/HankHuang0516/EClaw/compare/v1.105.0...v1.105.1) (2026-03-17)
+
+
+### Bug Fixes
+
+* resolve Kotlin compile errors and prepare v1.0.48 ([#268](https://github.com/HankHuang0516/EClaw/issues/268)) ([1fea5c1](https://github.com/HankHuang0516/EClaw/commit/1fea5c1f7d62bb8d43be4963c09d487407ff1da5))
+
 # [1.105.0](https://github.com/HankHuang0516/EClaw/compare/v1.104.1...v1.105.0) (2026-03-17)
 
 
