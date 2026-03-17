@@ -1,3 +1,10 @@
+# [1.104.0](https://github.com/HankHuang0516/EClaw/compare/v1.103.9...v1.104.0) (2026-03-17)
+
+
+### Features
+
+* **android:** refactor AiChatBottomSheet to use AiChatViewModel ([#248](https://github.com/HankHuang0516/EClaw/issues/248)) ([#253](https://github.com/HankHuang0516/EClaw/issues/253)) ([dcc0860](https://github.com/HankHuang0516/EClaw/commit/dcc086092f651d31fe28d25a86115ec47ba124f6))
+
 ## [1.103.9](https://github.com/HankHuang0516/EClaw/compare/v1.103.8...v1.103.9) (2026-03-17)
 
 
