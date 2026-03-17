@@ -1,3 +1,10 @@
+## [1.103.9](https://github.com/HankHuang0516/EClaw/compare/v1.103.8...v1.103.9) (2026-03-17)
+
+
+### Bug Fixes
+
+* add proper mocks to file-delete Jest test to fix CI ([#251](https://github.com/HankHuang0516/EClaw/issues/251)) ([969efb1](https://github.com/HankHuang0516/EClaw/commit/969efb1dd157ffc4f64f75b68764c674e1bf2786))
+
 ## [1.103.8](https://github.com/HankHuang0516/EClaw/compare/v1.103.7...v1.103.8) (2026-03-17)
 
 
