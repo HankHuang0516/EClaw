@@ -550,6 +550,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Card Holder | `node backend/tests/test-card-holder.js` | Device ID + Secret | Card Holder CRUD lifecycle, search, refresh, pin, category, notes |
 | UI Text Contrast | `node backend/tests/test-ui-text-contrast.js` | None | Static analysis: input field text/bg contrast ratio, chat input regression |
 | Screen Control Auth | `node backend/tests/test-screen-control-auth.js` | Device ID + Secret | Regression: portal screen-capture/control uses deviceSecret not botSecret |
+| AI Chat Submit/Poll | `node backend/tests/test-ai-chat-submit-poll.js` | Device ID + Secret | AI chat async submit/poll pattern, validation, auth, idempotency, completion (Issue #248) |
 
 ### Jest Unit Tests (CI-run, `npm test`, 13 files)
 
@@ -568,6 +569,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Card Holder | `tests/jest/card-holder.test.js` | Card Holder endpoint validation (CRUD, search, refresh, PATCH) |
 | Bot Tools | `tests/jest/bot-tools.test.js` | Bot tools API (web-search, web-fetch) validation |
 | File Delete | `tests/jest/file-delete.test.js` | File deletion endpoint validation and mocks |
+| AI Support Chat | `tests/jest/ai-support.test.js` | AI chat submit/poll endpoint validation, auth rejection (Issue #248) |
 
 ### Running All Tests
 ```bash
