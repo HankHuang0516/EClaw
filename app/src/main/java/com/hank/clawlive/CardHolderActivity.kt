@@ -278,7 +278,7 @@ class CardHolderActivity : AppCompatActivity() {
                     allCards.add(0, resp.contact)
                     applyFilter()
                     Toast.makeText(this@CardHolderActivity, R.string.card_holder_added, Toast.LENGTH_SHORT).show()
-                    TelemetryHelper.trackAction(this@CardHolderActivity, "card_holder_add", mapOf("code" to code))
+                    TelemetryHelper.trackAction("card_holder_add", mapOf("code" to code))
                 }
             } catch (e: Exception) {
                 Toast.makeText(this@CardHolderActivity, e.message ?: "Error", Toast.LENGTH_SHORT).show()
