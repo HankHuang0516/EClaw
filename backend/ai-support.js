@@ -1336,12 +1336,12 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
             // Use per-event idle timeout instead of a fixed 130s hard limit.
             // If the proxy is actively streaming events, the timer resets each time.
             // Only abort if no event arrives for IDLE_TIMEOUT_MS (AI appears stuck).
-            const IDLE_TIMEOUT_MS = 60000;
+            const IDLE_TIMEOUT_MS = 90000;
             const controller = new AbortController();
-            let eventTimer = setTimeout(() => controller.abort(new Error('Idle timeout: no event for 60s')), IDLE_TIMEOUT_MS);
+            let eventTimer = setTimeout(() => controller.abort(new Error('Idle timeout: no event for 90s')), IDLE_TIMEOUT_MS);
             const resetTimer = () => {
                 clearTimeout(eventTimer);
-                eventTimer = setTimeout(() => controller.abort(new Error('Idle timeout: no event for 60s')), IDLE_TIMEOUT_MS);
+                eventTimer = setTimeout(() => controller.abort(new Error('Idle timeout: no event for 90s')), IDLE_TIMEOUT_MS);
             };
 
             // CLI proxy doesn't support image vision — strip images and include a text note

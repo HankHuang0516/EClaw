@@ -66,6 +66,7 @@ const TEST_FILES = [
     'test-publisher-platforms.js',  // Publisher platforms listing + input validation (8 platforms)
     'test-card-holder.js',          // Card Holder CRUD lifecycle, search, refresh, pin, category, notes
     'test-screen-control-auth.js',  // Screen control portal auth: deviceSecret instead of botSecret
+    'test-ai-chat-submit-poll.js',  // AI chat submit/poll async pattern (Issue #248)
 ];
 
 // Manual UI tests (run on device, not automated):
