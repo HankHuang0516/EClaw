@@ -1,3 +1,10 @@
+## [1.103.8](https://github.com/HankHuang0516/EClaw/compare/v1.103.7...v1.103.8) (2026-03-17)
+
+
+### Bug Fixes
+
+* resolve 7 open issues — race condition, NPE, file delete, auto-save ([#250](https://github.com/HankHuang0516/EClaw/issues/250)) ([e076e04](https://github.com/HankHuang0516/EClaw/commit/e076e041a8330ce67c4b270a1b43df18d880bd38))
+
 ## [1.103.7](https://github.com/HankHuang0516/EClaw/compare/v1.103.6...v1.103.7) (2026-03-17)
 
 
