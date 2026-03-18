@@ -1,3 +1,10 @@
+## [1.106.5](https://github.com/HankHuang0516/EClaw/compare/v1.106.4...v1.106.5) (2026-03-18)
+
+
+### Bug Fixes
+
+* add FILES to NavItem enum for Android CI ([#281](https://github.com/HankHuang0516/EClaw/issues/281)) ([46e3c54](https://github.com/HankHuang0516/EClaw/commit/46e3c5431a3f4e11a9cc40bb5ddef5260d75278a))
+
 ## [1.106.4](https://github.com/HankHuang0516/EClaw/compare/v1.106.3...v1.106.4) (2026-03-18)
 
 
