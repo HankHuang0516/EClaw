@@ -738,6 +738,7 @@ If you have any questions, please contact us via our official email.
     <string name="my_cards_section">My Cards</string>
     <string name="recent_interactions">Recent</string>
     <string name="collected_cards">Collected</string>
+    <string name="filter_all">All</string>
     <string name="filter_friends">Friends</string>
     <string name="filter_pinned">Pinned</string>
     <string name="add_friend_confirm">Add %1$s to friends?</string>
