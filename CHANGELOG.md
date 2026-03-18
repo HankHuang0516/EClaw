@@ -1,3 +1,10 @@
+## [1.106.2](https://github.com/HankHuang0516/EClaw/compare/v1.106.1...v1.106.2) (2026-03-18)
+
+
+### Bug Fixes
+
+* remove duplicate `let currentUser` in card-holder.html that broke My Cards tab ([#273](https://github.com/HankHuang0516/EClaw/issues/273)) ([22a1c78](https://github.com/HankHuang0516/EClaw/commit/22a1c78059cc63578a8c2834f594daae56ef5e73))
+
 ## [1.106.1](https://github.com/HankHuang0516/EClaw/compare/v1.106.0...v1.106.1) (2026-03-18)
 
 
