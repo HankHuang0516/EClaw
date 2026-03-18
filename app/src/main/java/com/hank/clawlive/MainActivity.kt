@@ -10,6 +10,10 @@ import android.net.Uri
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.text.InputType
+import android.view.Gravity
+import android.view.ViewGroup
+import android.widget.EditText
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.GridLayout
@@ -1058,19 +1062,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showAgentCardEditDialog(entityId: Int, card: com.hank.clawlive.data.model.AgentCard?) {
-        val dp = { px: Int -> (px * resources.displayMetrics.density).toInt() }
-
         val scrollView = android.widget.ScrollView(this).apply {
             setPadding(dp(16), dp(8), dp(16), dp(8))
         }
         val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         scrollView.addView(layout)
 
-        fun addField(hint: String, value: String?, inputType: Int = android.text.InputType.TYPE_CLASS_TEXT, helper: String? = null, maxLength: Int = 0): com.google.android.material.textfield.TextInputEditText {
+        fun addField(hint: String, value: String?, inputType: Int = android.text.InputType.TYPE_CLASS_TEXT,
+                     maxLength: Int = 0): com.google.android.material.textfield.TextInputEditText {
             val til = com.google.android.material.textfield.TextInputLayout(this).apply {
                 this.hint = hint
                 boxBackgroundMode = com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE
-                if (helper != null) helperText = helper
                 if (maxLength > 0) { counterMaxLength = maxLength; isCounterEnabled = true }
             }
             val et = com.google.android.material.textfield.TextInputEditText(this).apply {
@@ -1084,47 +1086,253 @@ class MainActivity : AppCompatActivity() {
             return et
         }
 
+        // ── Basic Info ──
         val descEdit = addField("Description", card?.description,
             android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE,
             maxLength = 500)
-        val capsEdit = addField("Capabilities (comma-separated)", card?.capabilities?.joinToString(", ") { it.name },
-            helper = "e.g. chat, search, translate")
-        val protosEdit = addField("Protocols (comma-separated)", card?.protocols?.joinToString(", "),
-            helper = "e.g. A2A, REST, gRPC")
-        val tagsEdit = addField("Tags (comma-separated)", card?.tags?.joinToString(", "),
-            helper = "e.g. IoT, claw-machine")
         val versionEdit = addField("Version", card?.version)
         val websiteEdit = addField("Website", card?.website,
             android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_URI)
         val emailEdit = addField("Contact Email", card?.contactEmail,
             android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS)
 
+        // ── Capabilities (dynamic rows) ──
+        layout.addView(dialogSectionTitle(getString(R.string.card_holder_capabilities)))
+        val capsContainer = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        (card?.capabilities ?: emptyList()).forEach { cap ->
+            capsContainer.addView(buildCapabilityRowForDialog(cap.name, cap.description, capsContainer))
+        }
+        layout.addView(capsContainer)
+        layout.addView(TextView(this).apply {
+            text = "+ ${getString(R.string.card_holder_add_capability)}"
+            setTextColor(android.graphics.Color.parseColor("#6C63FF"))
+            textSize = 13f
+            setPadding(0, dp(4), 0, dp(8))
+            setOnClickListener {
+                if (capsContainer.childCount < 10) {
+                    capsContainer.addView(buildCapabilityRowForDialog("", "", capsContainer))
+                } else {
+                    Toast.makeText(this@MainActivity, "Maximum 10 capabilities", Toast.LENGTH_SHORT).show()
+                }
+            }
+        })
+
+        // ── Protocols (chip UI) ──
+        layout.addView(dialogSectionTitle(getString(R.string.card_holder_protocols)))
+        val protosChipContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        }
+        val protosFlow = android.widget.HorizontalScrollView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            isHorizontalScrollBarEnabled = false
+        }
+        protosFlow.addView(protosChipContainer)
+        (card?.protocols ?: emptyList()).forEach { p ->
+            protosChipContainer.addView(makeChipForDialog(p, protosChipContainer))
+        }
+        layout.addView(protosFlow)
+        layout.addView(makeChipInputForDialog(protosChipContainer, 10))
+
+        // ── Tags (chip UI) ──
+        layout.addView(dialogSectionTitle(getString(R.string.card_holder_tags)))
+        val tagsChipContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        }
+        val tagsFlow = android.widget.HorizontalScrollView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            isHorizontalScrollBarEnabled = false
+        }
+        tagsFlow.addView(tagsChipContainer)
+        (card?.tags ?: emptyList()).forEach { t ->
+            tagsChipContainer.addView(makeChipForDialog(t, tagsChipContainer))
+        }
+        layout.addView(tagsFlow)
+        layout.addView(makeChipInputForDialog(tagsChipContainer, 20))
+
         MaterialAlertDialogBuilder(this)
             .setTitle("Agent Card — Entity #$entityId")
             .setView(scrollView)
             .setPositiveButton("Save") { _, _ ->
                 saveAgentCard(entityId,
-                    descEdit.text.toString().trim(), capsEdit.text.toString().trim(),
-                    protosEdit.text.toString().trim(), tagsEdit.text.toString().trim(),
-                    versionEdit.text.toString().trim(), websiteEdit.text.toString().trim(),
+                    descEdit.text.toString().trim(),
+                    collectCapabilitiesFromDialog(capsContainer),
+                    collectChipsFromDialog(protosChipContainer),
+                    collectChipsFromDialog(tagsChipContainer),
+                    versionEdit.text.toString().trim(),
+                    websiteEdit.text.toString().trim(),
                     emailEdit.text.toString().trim())
             }
             .setNegativeButton("Cancel", null)
-            .setNeutralButton("Delete") { _, _ -> deleteAgentCard(entityId) }
+            .setNeutralButton("Delete") { _, _ ->
+                MaterialAlertDialogBuilder(this)
+                    .setTitle("Delete Agent Card?")
+                    .setMessage("This action cannot be undone.")
+                    .setPositiveButton("Delete") { _, _ -> deleteAgentCard(entityId) }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            }
             .show()
     }
 
-    private fun saveAgentCard(entityId: Int, description: String, capsText: String,
-                              protosText: String, tagsText: String, version: String,
-                              website: String, email: String) {
+    private fun dialogSectionTitle(text: String): TextView {
+        return TextView(this).apply {
+            this.text = text
+            setTextColor(android.graphics.Color.parseColor("#AAAAAA"))
+            textSize = 12f
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            setPadding(0, dp(4), 0, dp(4))
+        }
+    }
+
+    private fun buildCapabilityRowForDialog(name: String, desc: String,
+                                             container: LinearLayout): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            lp.setMargins(0, dp(4), 0, 0)
+            layoutParams = lp
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(android.graphics.Color.parseColor("#252540"))
+                cornerRadius = dp(6).toFloat()
+                setStroke(1, android.graphics.Color.parseColor("#333355"))
+            }
+            setPadding(dp(8), dp(6), dp(8), dp(6))
+
+            val nameField = EditText(this@MainActivity).apply {
+                setText(name)
+                hint = "Name"
+                setTextColor(android.graphics.Color.WHITE)
+                setHintTextColor(android.graphics.Color.parseColor("#555555"))
+                textSize = 12f
+                maxLines = 1
+                inputType = InputType.TYPE_CLASS_TEXT
+                background = null
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            val descField = EditText(this@MainActivity).apply {
+                setText(desc)
+                hint = "Description"
+                setTextColor(android.graphics.Color.parseColor("#AAAAAA"))
+                setHintTextColor(android.graphics.Color.parseColor("#555555"))
+                textSize = 12f
+                maxLines = 1
+                inputType = InputType.TYPE_CLASS_TEXT
+                background = null
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            val removeBtn = TextView(this@MainActivity).apply {
+                text = "\u00D7"
+                setTextColor(android.graphics.Color.parseColor("#F44336"))
+                textSize = 16f
+                setPadding(dp(6), 0, dp(2), 0)
+                setOnClickListener { container.removeView(this@apply.parent as? View) }
+            }
+            addView(nameField)
+            addView(descField)
+            addView(removeBtn)
+        }
+    }
+
+    private fun makeChipForDialog(text: String, container: LinearLayout): TextView {
+        return TextView(this).apply {
+            this.text = "$text \u00D7"
+            setTextColor(android.graphics.Color.WHITE)
+            textSize = 12f
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(android.graphics.Color.parseColor("#333355"))
+                cornerRadius = dp(12).toFloat()
+            }
+            setPadding(dp(10), dp(4), dp(10), dp(4))
+            val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            lp.setMargins(0, dp(2), dp(4), dp(2))
+            layoutParams = lp
+            tag = text
+            setOnClickListener { container.removeView(this) }
+        }
+    }
+
+    private fun makeChipInputForDialog(chipContainer: LinearLayout, maxItems: Int): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            lp.setMargins(0, dp(4), 0, dp(8))
+            layoutParams = lp
+
+            val input = EditText(this@MainActivity).apply {
+                hint = getString(R.string.card_holder_tags_hint)
+                setTextColor(android.graphics.Color.WHITE)
+                setHintTextColor(android.graphics.Color.parseColor("#555555"))
+                textSize = 12f
+                maxLines = 1
+                inputType = InputType.TYPE_CLASS_TEXT
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    setColor(android.graphics.Color.parseColor("#252540"))
+                    cornerRadius = dp(6).toFloat()
+                    setStroke(1, android.graphics.Color.parseColor("#333355"))
+                }
+                setPadding(dp(10), dp(6), dp(10), dp(6))
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            val addBtn = TextView(this@MainActivity).apply {
+                text = "+"
+                setTextColor(android.graphics.Color.parseColor("#6C63FF"))
+                textSize = 16f
+                typeface = android.graphics.Typeface.DEFAULT_BOLD
+                gravity = Gravity.CENTER
+                setPadding(dp(10), dp(4), dp(10), dp(4))
+                setOnClickListener {
+                    val v = input.text.toString().trim()
+                    if (v.isEmpty()) return@setOnClickListener
+                    if (chipContainer.childCount >= maxItems) {
+                        Toast.makeText(this@MainActivity, "Maximum $maxItems items", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+                    chipContainer.addView(makeChipForDialog(v, chipContainer))
+                    input.text.clear()
+                }
+            }
+            addView(input)
+            addView(addBtn)
+        }
+    }
+
+    private fun collectCapabilitiesFromDialog(container: LinearLayout): List<Map<String, String>> {
+        val caps = mutableListOf<Map<String, String>>()
+        for (i in 0 until container.childCount) {
+            val row = container.getChildAt(i) as? LinearLayout ?: continue
+            val name = (row.getChildAt(0) as? EditText)?.text?.toString()?.trim() ?: ""
+            val desc = (row.getChildAt(1) as? EditText)?.text?.toString()?.trim() ?: ""
+            if (name.isNotEmpty()) {
+                caps.add(mapOf("id" to name.lowercase().replace(" ", "-"), "name" to name, "description" to desc))
+            }
+        }
+        return caps
+    }
+
+    private fun collectChipsFromDialog(container: LinearLayout): List<String> {
+        val items = mutableListOf<String>()
+        for (i in 0 until container.childCount) {
+            val chip = container.getChildAt(i)
+            val t = chip.tag as? String
+            if (!t.isNullOrEmpty()) items.add(t)
+        }
+        return items
+    }
+
+    private fun saveAgentCard(entityId: Int, description: String,
+                              capabilities: List<Map<String, String>>, protocols: List<String>,
+                              tags: List<String>, version: String, website: String, email: String) {
         if (description.isEmpty()) {
             Toast.makeText(this, "Description is required", Toast.LENGTH_SHORT).show()
             return
         }
-        val capabilities = capsText.split(",").map { it.trim() }.filter { it.isNotEmpty() }.take(10)
-            .map { mapOf("id" to it.lowercase().replace(" ", "-"), "name" to it, "description" to "") }
-        val protocols = protosText.split(",").map { it.trim() }.filter { it.isNotEmpty() }.take(10)
-        val tags = tagsText.split(",").map { it.trim() }.filter { it.isNotEmpty() }.take(20)
 
         lifecycleScope.launch {
             try {
@@ -1316,5 +1524,7 @@ After binding, use these tools:
         val clip = ClipData.newPlainText("OpenClaw Command", text)
         clipboard.setPrimaryClip(clip)
     }
+
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
 }
