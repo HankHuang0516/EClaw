@@ -761,7 +761,8 @@ data class AiChatPollResponse(
     val busy: Boolean = false,
     val retry_after: Int? = null,
     val error: String? = null,
-    val latency_ms: Long? = null
+    val latency_ms: Long? = null,
+    val progress: Map<String, Any?>? = null
 )
 
 // ============ Version Check ============
