@@ -16,7 +16,7 @@ import com.hank.clawlive.R
 import com.hank.clawlive.SettingsActivity
 
 enum class NavItem {
-    HOME, MISSION, CHAT, CARDS, SETTINGS
+    HOME, MISSION, CHAT, CARDS, SETTINGS, FILES
 }
 
 object BottomNavHelper {
