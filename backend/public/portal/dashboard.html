@@ -2174,6 +2174,7 @@
         // --- Avatar Emoji Picker ---
         function openAvatarPicker(entityId) {
             const currentAvatar = getAvatarForEntity(entityId);
+            const hasPhotoAvatar = isAvatarUrl(currentAvatar);
 
             const overlay = document.createElement('div');
             overlay.className = 'avatar-picker-overlay';
@@ -2181,27 +2182,30 @@
             let gridHtml = '';
             for (let i = 0; i < AVATAR_OPTIONS.length; i++) {
                 const emoji = AVATAR_OPTIONS[i];
-                const selectedClass = emoji === currentAvatar ? ' selected' : '';
+                const selectedClass = (!hasPhotoAvatar && emoji === currentAvatar) ? ' selected' : '';
                 gridHtml += '<div class="avatar-option' + selectedClass + '" data-emoji="' + emoji + '">' + emoji + '</div>';
             }
 
-            // Show current image avatar preview if applicable
-            var currentPreview = '';
-            if (isAvatarUrl(currentAvatar)) {
-                currentPreview = '<div style="text-align:center;margin-bottom:12px;">' +
-                    '<img src="' + currentAvatar + '" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);">' +
-                    '</div>';
-            }
+            // Remove-photo link (only when current avatar is a photo)
+            var removeLink = hasPhotoAvatar
+                ? '<div class="avatar-remove-link" id="avatarRemoveLink">&#x2715; ' + (i18n.t('dash_avatar_remove') || 'Remove photo') + '</div>'
+                : '';
 
             overlay.innerHTML =
                 '<div class="avatar-picker">' +
                 '<div class="avatar-picker-title" data-i18n="dash_avatar_title">' + i18n.t('dash_avatar_title') + '</div>' +
                 '<div class="avatar-picker-desc" data-i18n="dash_avatar_desc">' + i18n.t('dash_avatar_desc') + '</div>' +
-                currentPreview +
-                '<div class="avatar-upload-btn" id="avatarUploadBtn">' +
-                '&#x1F4F7; ' + (i18n.t('dash_avatar_upload') || 'Upload Photo') +
+                '<div class="avatar-upload-area" id="avatarUploadArea">' +
+                    '<div class="avatar-upload-placeholder" id="avatarPlaceholder">' +
+                        (hasPhotoAvatar
+                            ? '<img src="' + currentAvatar + '" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);">'
+                            : '<div class="upload-icon">&#x1F4F7;</div>') +
+                        '<div class="upload-text">' + (i18n.t('dash_avatar_upload') || 'Upload Photo') + '</div>' +
+                        '<div class="upload-hint">' + (i18n.t('dash_avatar_drop_hint') || 'Click or drag image here') + '</div>' +
+                    '</div>' +
                 '</div>' +
                 '<input type="file" id="avatarFileInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none">' +
+                removeLink +
                 '<div class="avatar-grid">' + gridHtml + '</div>' +
                 '<div class="avatar-picker-actions">' +
                 '<button class="btn btn-outline btn-sm" data-i18n="mc_dlg_cancel">' + i18n.t('mc_dlg_cancel') + '</button>' +
@@ -2210,19 +2214,97 @@
 
             document.body.appendChild(overlay);
 
-            // Handle photo upload
-            var uploadBtn = overlay.querySelector('#avatarUploadBtn');
+            var uploadArea = overlay.querySelector('#avatarUploadArea');
             var fileInput = overlay.querySelector('#avatarFileInput');
-            uploadBtn.addEventListener('click', function() { fileInput.click(); });
-            fileInput.addEventListener('change', async function() {
+            var isPreviewActive = false;
+            var allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+            // Click to select file (guarded by preview state)
+            uploadArea.addEventListener('click', function() {
+                if (!isPreviewActive) fileInput.click();
+            });
+
+            // Drag-and-drop
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                if (!isPreviewActive) uploadArea.classList.add('dragover');
+            });
+            uploadArea.addEventListener('dragleave', function() {
+                uploadArea.classList.remove('dragover');
+            });
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                if (isPreviewActive) return;
+                var file = e.dataTransfer.files[0];
+                if (file && allowedTypes.indexOf(file.type) !== -1) {
+                    showAvatarPreview(file);
+                }
+            });
+
+            // File input change → show preview
+            fileInput.addEventListener('change', function() {
                 var file = fileInput.files[0];
-                if (!file) return;
+                if (file) showAvatarPreview(file);
+            });
+
+            // Show preview with confirm/cancel before uploading
+            function showAvatarPreview(file) {
                 if (file.size > 5 * 1024 * 1024) {
                     showToast(i18n.t('dash_avatar_too_large') || 'Image must be under 5MB', 'error');
                     return;
                 }
-                uploadBtn.classList.add('uploading');
-                uploadBtn.innerHTML = '&#x23F3; ' + (i18n.t('dash_avatar_uploading') || 'Uploading...');
+                isPreviewActive = true;
+                uploadArea.style.cursor = 'default';
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    uploadArea.innerHTML =
+                        '<div class="avatar-upload-preview">' +
+                            '<img src="' + ev.target.result + '" alt="preview">' +
+                            '<div class="preview-actions">' +
+                                '<button class="btn btn-primary btn-sm" id="avatarConfirmBtn">' + (i18n.t('dash_avatar_confirm') || 'Use this photo') + '</button>' +
+                                '<button class="btn btn-outline btn-sm" id="avatarCancelPreview">' + i18n.t('mc_dlg_cancel') + '</button>' +
+                            '</div>' +
+                        '</div>';
+
+                    overlay.querySelector('#avatarConfirmBtn').addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        doUpload(file);
+                    });
+                    overlay.querySelector('#avatarCancelPreview').addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        resetUploadArea();
+                    });
+                };
+                reader.onerror = function() {
+                    showToast('Failed to read file', 'error');
+                    isPreviewActive = false;
+                    uploadArea.style.cursor = 'pointer';
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // Reset upload area to placeholder state
+            function resetUploadArea() {
+                isPreviewActive = false;
+                uploadArea.innerHTML =
+                    '<div class="avatar-upload-placeholder">' +
+                        (hasPhotoAvatar
+                            ? '<img src="' + currentAvatar + '" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);">'
+                            : '<div class="upload-icon">&#x1F4F7;</div>') +
+                        '<div class="upload-text">' + (i18n.t('dash_avatar_upload') || 'Upload Photo') + '</div>' +
+                        '<div class="upload-hint">' + (i18n.t('dash_avatar_drop_hint') || 'Click or drag image here') + '</div>' +
+                    '</div>';
+                uploadArea.style.cursor = 'pointer';
+                fileInput.value = '';
+            }
+
+            // Actual upload to Flickr
+            async function doUpload(file) {
+                uploadArea.classList.add('uploading');
+                var spinner = document.createElement('div');
+                spinner.className = 'avatar-upload-spinner';
+                uploadArea.appendChild(spinner);
                 try {
                     var formData = new FormData();
                     formData.append('file', file);
@@ -2240,15 +2322,29 @@
                         showToast(i18n.t('dash_avatar_uploaded') || 'Avatar updated!', 'success');
                     } else {
                         showToast(data.message || 'Upload failed', 'error');
-                        uploadBtn.classList.remove('uploading');
-                        uploadBtn.innerHTML = '&#x1F4F7; ' + (i18n.t('dash_avatar_upload') || 'Upload Photo');
+                        uploadArea.classList.remove('uploading');
+                        spinner.remove();
+                        fileInput.value = '';
                     }
                 } catch (err) {
                     showToast(err.message || 'Upload error', 'error');
-                    uploadBtn.classList.remove('uploading');
-                    uploadBtn.innerHTML = '&#x1F4F7; ' + (i18n.t('dash_avatar_upload') || 'Upload Photo');
+                    uploadArea.classList.remove('uploading');
+                    spinner.remove();
+                    fileInput.value = '';
                 }
-            });
+            }
+
+            // Remove photo avatar → revert to default emoji
+            var removeBtn = overlay.querySelector('#avatarRemoveLink');
+            if (removeBtn) {
+                removeBtn.addEventListener('click', function() {
+                    var defaultEmoji = AVATAR_OPTIONS[entityId % AVATAR_OPTIONS.length];
+                    saveAvatarForEntity(entityId, defaultEmoji);
+                    overlay.remove();
+                    renderEntities();
+                    showToast(i18n.t('dash_avatar_removed') || 'Photo removed', 'success');
+                });
+            }
 
             // Handle emoji selection
             overlay.querySelectorAll('.avatar-option').forEach(opt => {
