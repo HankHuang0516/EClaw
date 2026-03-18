@@ -95,6 +95,8 @@ class AiChatBottomSheet : BottomSheetDialogFragment() {
         setupListeners()
         observeState()
 
+        viewModel.ensureActiveState()
+
         if (pageName.isNotEmpty()) {
             tvContextTag.text = "\uD83D\uDCCD $pageName"
             tvContextTag.visibility = View.VISIBLE

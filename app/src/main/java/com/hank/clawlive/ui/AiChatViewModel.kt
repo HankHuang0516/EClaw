@@ -93,6 +93,20 @@ class AiChatViewModel(application: Application) : AndroidViewModel(application) 
         savePendingRequestId(null)
     }
 
+    fun ensureActiveState() {
+        if (!_uiState.value.isLoading) return
+        val pollingActive = pollingJob?.isActive == true
+        val statusActive = statusJob?.isActive == true
+        if (!pollingActive && !statusActive) {
+            val pendingId = loadPendingRequestId()
+            if (pendingId != null) {
+                resumePendingIfNeeded()
+            } else {
+                _uiState.update { it.copy(isLoading = false, typingText = null) }
+            }
+        }
+    }
+
     // ── Submit + Poll ────────────────────
 
     private suspend fun submitAndPoll(body: MutableMap<String, Any>, busyAttempt: Int) {
@@ -139,13 +153,20 @@ class AiChatViewModel(application: Application) : AndroidViewModel(application) 
                             deviceManager.deviceId,
                             deviceManager.deviceSecret
                         )
+                        // Update typing text from server progress
+                        val progressText = progressToText(poll.progress)
+                        if (progressText != null) {
+                            statusJob?.cancel()
+                            _uiState.update { it.copy(typingText = progressText) }
+                        }
                         when (poll.status) {
                             "completed", "failed", "expired" -> {
                                 pollResult = poll
                                 break
                             }
                         }
-                    } catch (_: Exception) {
+                    } catch (e: Exception) {
+                        if (e is kotlinx.coroutines.CancellationException) throw e
                         // Transient network error — keep polling
                     }
                 }
@@ -286,7 +307,9 @@ class AiChatViewModel(application: Application) : AndroidViewModel(application) 
                         when (poll.status) {
                             "completed", "failed", "expired" -> { pollResult = poll; break }
                         }
-                    } catch (_: Exception) {}
+                    } catch (e: Exception) {
+                        if (e is kotlinx.coroutines.CancellationException) throw e
+                    }
                 }
 
                 when {
@@ -317,6 +340,32 @@ class AiChatViewModel(application: Application) : AndroidViewModel(application) 
             } finally {
                 savePendingRequestId(null)
             }
+        }
+    }
+
+    // ── Progress Text ─────────────────────
+
+    private fun progressToText(progress: Map<String, Any?>?): String? {
+        if (progress == null) return null
+        val turn = (progress["turn"] as? Number)?.toInt() ?: 0
+        val suffix = if (turn > 0) " (Step $turn/15)" else ""
+        return when (progress["event"]) {
+            "tool_use" -> {
+                val tool = progress["tool"] as? String ?: "Processing"
+                val label = when (tool) {
+                    "Read" -> "Reading file"
+                    "Grep" -> "Searching code"
+                    "Glob" -> "Finding files"
+                    "Bash" -> "Running analysis"
+                    "Edit" -> "Editing file"
+                    "Write" -> "Writing file"
+                    else -> tool
+                }
+                "$label…$suffix"
+            }
+            "thinking" -> "Analyzing…$suffix"
+            "tool_result" -> "Processing result…$suffix"
+            else -> null
         }
     }
 

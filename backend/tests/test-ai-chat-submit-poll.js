@@ -194,15 +194,23 @@ async function testPollNonExistent() {
 }
 
 async function testPollCompletion(requestId) {
-    console.log('\n[7] Poll — wait for completion');
+    console.log('\n[7] Poll — wait for completion (with progress field check)');
 
     const POLL_INTERVAL = 3000;
     const MAX_ATTEMPTS = 50;
 
     let finalStatus = null;
+    let sawProgressField = false;
     for (let i = 1; i <= MAX_ATTEMPTS; i++) {
         await new Promise(r => setTimeout(r, POLL_INTERVAL));
         const r = await get(`/api/ai-support/chat/poll/${requestId}?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`);
+
+        // Verify progress field is always present (even if null) — regression for #248
+        if ('progress' in r.data) sawProgressField = true;
+        if (r.data.progress != null) {
+            console.log(`    (Progress event: ${JSON.stringify(r.data.progress)})`);
+        }
+
         if (r.data.status === 'completed' || r.data.status === 'failed' || r.data.status === 'expired') {
             finalStatus = r.data;
             console.log(`    (Completed after ${i} polls, ${i * POLL_INTERVAL / 1000}s)`);
@@ -214,12 +222,38 @@ async function testPollCompletion(requestId) {
     }
 
     ok(finalStatus !== null, 'Poll terminates within 150s');
+    ok(sawProgressField, 'Poll response includes progress field (Issue #248)');
     if (finalStatus) {
         ok(finalStatus.status === 'completed', `Final status: ${finalStatus.status}`);
         if (finalStatus.status === 'completed') {
             ok(typeof finalStatus.response === 'string' && finalStatus.response.length > 0, 'Response is non-empty string');
             ok(!finalStatus.busy, 'Not busy');
         }
+    }
+}
+
+async function testPollResponseSchema() {
+    console.log('\n[8] Poll — response schema validation (Issue #248)');
+
+    // Submit a request, then verify poll response has all expected fields
+    const requestId = randomUUID();
+    const r = await post('/api/ai-support/chat/submit', {
+        requestId,
+        deviceId: DEVICE_ID,
+        deviceSecret: DEVICE_SECRET,
+        message: 'Reply with: OK',
+        page: 'test_schema'
+    });
+    ok(r.status === 200, 'Submit for schema test → 200');
+
+    // Wait briefly then poll
+    await new Promise(r => setTimeout(r, 1000));
+    const poll = await get(`/api/ai-support/chat/poll/${requestId}?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`);
+    ok(poll.status === 200, 'Poll returns 200');
+
+    const expectedFields = ['success', 'status', 'response', 'busy', 'retry_after', 'error', 'latency_ms', 'progress'];
+    for (const field of expectedFields) {
+        ok(field in poll.data, `Poll response has '${field}' field`);
     }
 }
 
@@ -237,6 +271,7 @@ async function main() {
     await testPollAuth();
     await testPollNonExistent();
     await testPollCompletion(requestId);
+    await testPollResponseSchema();
 
     console.log(`\n${'='.repeat(50)}`);
     console.log(`Results: ${passed} passed, ${failed} failed out of ${passed + failed}`);
