@@ -1,3 +1,10 @@
+## [1.107.1](https://github.com/HankHuang0516/EClaw/compare/v1.107.0...v1.107.1) (2026-03-18)
+
+
+### Bug Fixes
+
+* card holder edit UX + dashboard-style agent card editor + nav i18n ([#286](https://github.com/HankHuang0516/EClaw/issues/286)) ([e8dba13](https://github.com/HankHuang0516/EClaw/commit/e8dba1331ca5ad8036b38b5d07b85cbf75b4a7c4))
+
 # [1.107.0](https://github.com/HankHuang0516/EClaw/compare/v1.106.8...v1.107.0) (2026-03-18)
 
 
