@@ -1,3 +1,10 @@
+## [1.110.1](https://github.com/HankHuang0516/EClaw/compare/v1.110.0...v1.110.1) (2026-03-18)
+
+
+### Bug Fixes
+
+* make /api/health build tag and startedAt dynamic for deploy detection ([#294](https://github.com/HankHuang0516/EClaw/issues/294)) ([d975900](https://github.com/HankHuang0516/EClaw/commit/d975900ad3fcec914f03d7650abccadf8cca14f0))
+
 # [1.110.0](https://github.com/HankHuang0516/EClaw/compare/v1.109.2...v1.110.0) (2026-03-18)
 
 
