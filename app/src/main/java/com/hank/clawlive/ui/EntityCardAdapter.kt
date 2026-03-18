@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
@@ -111,10 +112,25 @@ class EntityCardAdapter(
 
         private val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
+        private val imgEntityAvatar: ImageView = itemView.findViewById(R.id.imgEntityAvatar)
+        private val avatarContainer: FrameLayout = itemView.findViewById(R.id.avatarContainer)
+
         fun bind(entity: EntityStatus) {
-            // Avatar
-            tvEntityIcon.text = getAvatar(entity.entityId)
-            tvEntityIcon.setOnClickListener { onAvatarClick(entity, tvEntityIcon) }
+            // Avatar — image URL or emoji
+            val avatarValue = getAvatar(entity.entityId)
+            if (avatarValue.startsWith("https://")) {
+                tvEntityIcon.visibility = android.view.View.GONE
+                imgEntityAvatar.visibility = android.view.View.VISIBLE
+                com.bumptech.glide.Glide.with(itemView.context)
+                    .load(avatarValue)
+                    .circleCrop()
+                    .into(imgEntityAvatar)
+            } else {
+                tvEntityIcon.visibility = android.view.View.VISIBLE
+                imgEntityAvatar.visibility = android.view.View.GONE
+                tvEntityIcon.text = avatarValue
+            }
+            avatarContainer.setOnClickListener { onAvatarClick(entity, tvEntityIcon) }
 
             // Name
             tvEntityName.text = getEntityLabel(entity)

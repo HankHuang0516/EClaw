@@ -52,6 +52,27 @@ function getEntityDisplayName(entityId) {
 }
 
 /**
+ * Check if an avatar value is an image URL (not an emoji).
+ */
+function isAvatarUrl(avatar) {
+    return avatar && typeof avatar === 'string' && avatar.startsWith('https://');
+}
+
+/**
+ * Render an avatar as HTML. Returns an <img> tag for URLs, or emoji text for emoji avatars.
+ * @param {string} avatar - emoji string or image URL
+ * @param {number} [size=48] - size in px (for image avatars)
+ */
+function renderAvatarHtml(avatar, size) {
+    size = size || 48;
+    if (isAvatarUrl(avatar)) {
+        return '<img src="' + avatar + '" class="entity-avatar-img" ' +
+            'style="width:' + size + 'px;height:' + size + 'px;" alt="avatar" loading="lazy">';
+    }
+    return avatar || '\u{1F99E}';
+}
+
+/**
  * Get a full label like "🦞 Lobster (#4)" for an entity.
  * Uses the page's local escapeHtml/esc function if available.
  */
@@ -62,5 +83,9 @@ function getEntityLabel(entityId) {
     const escapeFn = typeof escapeHtml === 'function' ? escapeHtml
         : typeof esc === 'function' ? esc
         : (s) => s;
+    // For image URL avatars, skip the emoji prefix in text-only contexts
+    if (isAvatarUrl(avatar)) {
+        return `${escapeFn(name)} (#${entityId})`;
+    }
     return `${avatar} ${escapeFn(name)} (#${entityId})`;
 }

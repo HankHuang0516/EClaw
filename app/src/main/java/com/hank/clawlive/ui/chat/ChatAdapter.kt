@@ -342,6 +342,7 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
         private val btnPlay: ImageButton = itemView.findViewById(R.id.btnPlay)
         private val progressVoice: ProgressBar = itemView.findViewById(R.id.progressVoice)
         private val tvDuration: TextView = itemView.findViewById(R.id.tvDuration)
+        private val imgAvatar: ImageView? = itemView.findViewById(R.id.imgAvatar)
         private val layoutLinkPreview: LinearLayout = itemView.findViewById(R.id.layoutLinkPreview)
         private val ivLinkPreview: ImageView = itemView.findViewById(R.id.ivLinkPreview)
         private val tvLinkTitle: TextView = itemView.findViewById(R.id.tvLinkTitle)
@@ -377,7 +378,19 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
                 tvEntityName.text = adapter.getXDeviceLabel(message.fromPublicCode)
             } else {
                 val entityId = message.fromEntityId ?: 0
-                tvAvatar.text = avatarManager.getAvatar(entityId)
+                val avatarValue = avatarManager.getAvatar(entityId)
+                if (avatarValue.startsWith("https://") && imgAvatar != null) {
+                    tvAvatar.visibility = android.view.View.GONE
+                    imgAvatar.visibility = android.view.View.VISIBLE
+                    com.bumptech.glide.Glide.with(itemView.context)
+                        .load(avatarValue)
+                        .circleCrop()
+                        .into(imgAvatar)
+                } else {
+                    tvAvatar.visibility = android.view.View.VISIBLE
+                    imgAvatar?.visibility = android.view.View.GONE
+                    tvAvatar.text = avatarValue
+                }
                 tvEntityName.text = adapter.getEntityDisplayName(entityId)
             }
 

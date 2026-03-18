@@ -227,6 +227,10 @@
     <!-- Bot Avatar -->
     <string name="bot_avatar">Bot Avatar</string>
     <string name="avatar_subtitle">Entity %d</string>
+    <string name="avatar_upload_photo">Upload Photo</string>
+    <string name="avatar_uploading">Uploading…</string>
+    <string name="avatar_upload_failed">Upload failed</string>
+    <string name="avatar_upload_success">Avatar updated!</string>
 
     <!-- Entity Management -->
     <string name="remove_entity">Remove</string>

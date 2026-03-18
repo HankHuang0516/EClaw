@@ -79,6 +79,16 @@ interface ClawApiService {
     @PUT("api/device/entity/avatar")
     suspend fun updateEntityAvatar(@Body request: UpdateAvatarRequest): GenericResponse
 
+    // Upload photo as entity avatar (stored on Flickr)
+    @Multipart
+    @POST("api/device/entity/avatar/upload")
+    suspend fun uploadEntityAvatar(
+        @Part file: MultipartBody.Part,
+        @Part("deviceId") deviceId: RequestBody,
+        @Part("deviceSecret") deviceSecret: RequestBody,
+        @Part("entityId") entityId: RequestBody
+    ): AvatarUploadResponse
+
     // Agent Card CRUD
     @GET("api/entity/agent-card")
     suspend fun getAgentCard(

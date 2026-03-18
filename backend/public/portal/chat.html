@@ -1410,7 +1410,7 @@
                 label.className = 'target-check target-entity-check';
                 const e2eeBadge = e.encryptionStatus === 'e2ee' ? ' 🔒' : '';
                 label.innerHTML = `<input type="checkbox" data-entity="${e.entityId}" ${isChecked ? 'checked' : ''} onchange="updateTargetAll()">
-                    <span>${avatar} ${escapeHtml(name)} (#${e.entityId})${e2eeBadge}</span>`;
+                    <span>${renderAvatarHtml(avatar, 20)} ${escapeHtml(name)} (#${e.entityId})${e2eeBadge}</span>`;
                 bar.appendChild(label);
             });
 
@@ -1658,7 +1658,7 @@
                 const avatar = getAvatarForEntity(id);
                 const existing = group.querySelector(`[data-filter="entity-${id}"]`);
                 if (existing) {
-                    existing.textContent = `${avatar} ${getEntityDisplayName(id)} (#${id})`;
+                    existing.innerHTML = `${renderAvatarHtml(avatar, 18)} ${getEntityDisplayName(id)} (#${id})`;
                     return;
                 }
 
@@ -1666,7 +1666,7 @@
                 chip.className = `filter-chip filter-chip-entity${currentFilter === 'entity-' + id ? ' active' : ''}`;
                 chip.dataset.filter = `entity-${id}`;
                 chip.onclick = () => setFilter(`entity-${id}`);
-                chip.textContent = `${avatar} ${getEntityDisplayName(id)} (#${id})`;
+                chip.innerHTML = `${renderAvatarHtml(avatar, 18)} ${getEntityDisplayName(id)} (#${id})`;
                 group.insertBefore(chip, myChip);
             });
 

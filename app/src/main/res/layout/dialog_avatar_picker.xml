@@ -27,6 +27,27 @@
         android:textColor="?android:attr/textColorSecondary"
         android:layout_marginBottom="20dp" />
 
+    <!-- Upload Photo Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnUploadAvatar"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:text="@string/avatar_upload_photo"
+        app:icon="@android:drawable/ic_menu_camera"
+        app:iconGravity="textStart" />
+
+    <!-- Current image avatar preview (hidden by default) -->
+    <ImageView
+        android:id="@+id/imgCurrentAvatar"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="12dp"
+        android:visibility="gone"
+        android:scaleType="centerCrop" />
+
     <!-- Avatar Grid -->
     <GridLayout
         android:id="@+id/avatarGrid"

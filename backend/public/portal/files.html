@@ -576,7 +576,7 @@
                 const name = e.name || (getEntityDisplayName(e.entityId) + ' #' + e.entityId);
                 const isActive = currentEntityFilter === e.entityId;
                 return '<div class="filter-chip' + (isActive ? ' active' : '') + '" data-entity="' + e.entityId + '" onclick="setEntityFilter(' + e.entityId + ')">' +
-                    avatar + ' ' + escapeHtml(name) +
+                    renderAvatarHtml(avatar, 20) + ' ' + escapeHtml(name) +
                     '</div>';
             }).join('');
         }
@@ -700,7 +700,7 @@
             let badges = '<div class="entity-badges">';
             eIds.forEach(eid => {
                 const avatar = getAvatarForEntity(eid);
-                badges += '<span class="entity-badge">' + avatar + '</span>';
+                badges += '<span class="entity-badge">' + renderAvatarHtml(avatar, 20) + '</span>';
             });
             badges += '</div>';
 
@@ -715,7 +715,7 @@
             const eIds = file.entityIds || [file.entityId];
             return eIds.map(eid => {
                 const avatar = getAvatarForEntity(eid);
-                return avatar + ' ' + escapeHtml(getEntityName(eid));
+                return renderAvatarHtml(avatar, 18) + ' ' + escapeHtml(getEntityName(eid));
             }).join(', ');
         }
 

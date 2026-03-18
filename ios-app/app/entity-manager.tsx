@@ -71,15 +71,15 @@ export default function EntityManagerScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.5,
-      base64: true,
       allowsEditing: true,
       aspect: [1, 1],
     });
-    if (!result.canceled && result.assets[0].base64) {
-      const base64 = `data:image/jpeg;base64,${result.assets[0].base64}`;
+    if (!result.canceled && result.assets[0].uri) {
       try {
-        await deviceApi.updateAvatar(entity.entityId, base64);
-        updateEntity(entity.entityId, { avatarUrl: result.assets[0].uri });
+        const response = await deviceApi.uploadAvatar(entity.entityId, result.assets[0].uri);
+        if (response.data?.avatar) {
+          updateEntity(entity.entityId, { avatarUrl: response.data.avatar });
+        }
         setSnack(t('common.success'));
       } catch {
         setSnack(t('errors.server'));

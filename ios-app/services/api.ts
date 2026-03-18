@@ -62,9 +62,23 @@ export const deviceApi = {
   renameEntity: (entityId: string, name: string) =>
     apiClient.put('/api/device/entity/name', { entityId, name }),
 
-  /** Update entity avatar (base64 image) */
-  updateAvatar: (entityId: string, avatarBase64: string) =>
-    apiClient.put('/api/device/entity/avatar', { entityId, avatar: avatarBase64 }),
+  /** Update entity avatar (emoji string or URL) */
+  updateAvatar: (entityId: string, avatar: string) =>
+    apiClient.put('/api/device/entity/avatar', { entityId, avatar }),
+
+  /** Upload photo as entity avatar (stored on Flickr) */
+  uploadAvatar: (entityId: string, imageUri: string) => {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: imageUri,
+      type: 'image/jpeg',
+      name: 'avatar.jpg',
+    } as any);
+    formData.append('entityId', entityId);
+    return apiClient.post('/api/device/entity/avatar/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 
   /** Remove/unbind an entity */
   removeEntity: (entityId: string) =>

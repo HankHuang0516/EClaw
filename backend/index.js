@@ -3707,9 +3707,16 @@ app.put('/api/device/entity/avatar', async (req, res) => {
         return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
-    // Validate avatar: must be a short emoji string (1-8 chars to support compound emojis)
-    if (!avatar || typeof avatar !== 'string' || avatar.length > 8) {
-        return res.status(400).json({ success: false, message: "Invalid avatar (must be 1-8 chars)" });
+    // Validate avatar: emoji (1-8 chars) or image URL (https://)
+    if (!avatar || typeof avatar !== 'string') {
+        return res.status(400).json({ success: false, message: "Invalid avatar" });
+    }
+    const isAvatarUrl = avatar.startsWith('https://');
+    if (!isAvatarUrl && avatar.length > 8) {
+        return res.status(400).json({ success: false, message: "Invalid avatar (emoji must be 1-8 chars)" });
+    }
+    if (isAvatarUrl && avatar.length > 500) {
+        return res.status(400).json({ success: false, message: "Avatar URL too long" });
     }
 
     const device = devices[deviceId];
@@ -3732,6 +3739,88 @@ app.put('/api/device/entity/avatar', async (req, res) => {
     await saveData();
 
     res.json({ success: true, avatar, entityId: eId });
+});
+
+/**
+ * POST /api/device/entity/avatar/upload
+ * Upload a photo to Flickr and set it as the entity's avatar.
+ * Body (multipart): file (image), deviceId, deviceSecret, entityId
+ * Max file size: 5MB
+ */
+const avatarUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+    fileFilter: (req, file, cb) => {
+        const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (!allowed.includes(file.mimetype)) {
+            cb(new Error('Unsupported image type: ' + file.mimetype));
+        } else {
+            cb(null, true);
+        }
+    }
+});
+
+app.post('/api/device/entity/avatar/upload', avatarUpload.single('file'), async (req, res) => {
+    let { deviceId, deviceSecret, entityId } = req.body || {};
+
+    // Fallback: use cookie-based auth (web portal)
+    if ((!deviceId || !deviceSecret) && req.cookies && req.cookies.eclaw_session) {
+        try {
+            const jwt = require('jsonwebtoken');
+            const decoded = jwt.verify(req.cookies.eclaw_session, process.env.JWT_SECRET || 'dev-secret-change-in-production');
+            if (decoded && decoded.deviceId && decoded.deviceSecret) {
+                deviceId = decoded.deviceId;
+                deviceSecret = decoded.deviceSecret;
+            }
+        } catch (e) { /* invalid token, fall through */ }
+    }
+
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, message: "deviceId and deviceSecret required" });
+    }
+
+    const eId = parseInt(entityId);
+    if (isNaN(eId) || eId < 0) {
+        return res.status(400).json({ success: false, message: "Invalid entityId" });
+    }
+
+    if (!req.file) {
+        return res.status(400).json({ success: false, message: "No image file uploaded" });
+    }
+
+    const device = devices[deviceId];
+    if (!device) {
+        return res.status(404).json({ success: false, message: "Device not found" });
+    }
+
+    if (device.deviceSecret !== deviceSecret) {
+        return res.status(403).json({ success: false, message: "Invalid deviceSecret" });
+    }
+
+    const entity = device.entities[eId];
+    if (!entity) {
+        return res.status(400).json({ success: false, message: `Entity ${eId} not found` });
+    }
+
+    if (!flickr.isAvailable()) {
+        return res.status(503).json({ success: false, message: "Photo upload service unavailable" });
+    }
+
+    try {
+        const result = await flickr.uploadPhoto(req.file.buffer, req.file.originalname || 'avatar.jpg');
+        if (!result.success) {
+            return res.status(500).json({ success: false, message: "Flickr upload failed: " + result.error });
+        }
+
+        entity.avatar = result.url;
+        entity.lastUpdated = Date.now();
+        await saveData();
+
+        res.json({ success: true, avatar: result.url, entityId: eId });
+    } catch (err) {
+        console.error('[Avatar Upload] Error:', err);
+        res.status(500).json({ success: false, message: "Upload failed: " + err.message });
+    }
 });
 
 // ============================================

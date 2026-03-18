@@ -507,6 +507,38 @@ a:hover { text-decoration: underline; }
     box-shadow: 0 0 12px rgba(108, 99, 255, 0.3);
 }
 
+.entity-avatar-img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.avatar-upload-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 12px;
+    border: 2px dashed var(--border-color);
+    border-radius: 10px;
+    background: var(--input-bg);
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+}
+.avatar-upload-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.avatar-upload-btn.uploading {
+    opacity: 0.6;
+    cursor: wait;
+}
+
 .entity-info { flex: 1; min-width: 0; }
 .entity-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .entity-message {

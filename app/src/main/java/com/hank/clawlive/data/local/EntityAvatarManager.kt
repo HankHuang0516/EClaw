@@ -58,4 +58,7 @@ class EntityAvatarManager private constructor(context: Context) {
     fun setAvatar(entityId: Int, avatar: String) {
         prefs.edit().putString("emoji_$entityId", avatar).apply()
     }
+
+    /** Check if an avatar value is an image URL (not an emoji). */
+    fun isImageUrl(avatar: String): Boolean = avatar.startsWith("https://")
 }

@@ -673,7 +673,7 @@
             boundEntities.forEach(e => {
                 const avatar = getAvatarForEntity(e.entityId);
                 const name = getEntityDisplayName(e.entityId);
-                opts.push({ value: String(e.entityId), label: `${avatar} ${name} (#${e.entityId})` });
+                opts.push({ value: String(e.entityId), label: `${renderAvatarHtml(avatar, 18)} ${name} (#${e.entityId})` });
             });
             return opts;
         }
@@ -1701,7 +1701,7 @@
                 const checked = isEdit && (skill.assignedEntities || []).includes(String(e.entityId)) ? 'checked' : '';
                 return `<label>
                     <input type="checkbox" class="skill-entity-cb" value="${e.entityId}" ${checked}>
-                    ${avatar} ${esc(name)} (#${e.entityId})
+                    ${renderAvatarHtml(avatar, 18)} ${esc(name)} (#${e.entityId})
                 </label>`;
             }).join('');
 
@@ -1821,7 +1821,7 @@
                 const checked = isEdit && (rule.assignedEntities || []).includes(String(e.entityId)) ? 'checked' : '';
                 return `<label>
                     <input type="checkbox" class="rule-entity-cb" value="${e.entityId}" ${checked}>
-                    ${avatar} ${esc(name)} (#${e.entityId})
+                    ${renderAvatarHtml(avatar, 18)} ${esc(name)} (#${e.entityId})
                 </label>`;
             }).join('');
 
@@ -2020,7 +2020,7 @@
                 const checked = isEdit && (soul.assignedEntities || []).includes(String(e.entityId)) ? 'checked' : '';
                 return `<label>
                     <input type="checkbox" class="soul-entity-cb" value="${e.entityId}" ${checked}>
-                    ${avatar} ${esc(name)} (#${e.entityId})
+                    ${renderAvatarHtml(avatar, 18)} ${esc(name)} (#${e.entityId})
                 </label>`;
             }).join('');
 

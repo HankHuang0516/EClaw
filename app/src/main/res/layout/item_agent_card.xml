@@ -35,16 +35,29 @@
                 app:tint="@color/text_disabled"/>
 
             <!-- Entity Avatar (tap to change) -->
-            <TextView
-                android:id="@+id/tvEntityIcon"
+            <FrameLayout
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:text="🦞"
-                android:textSize="32sp"
-                android:gravity="center"
                 android:clickable="true"
                 android:focusable="true"
-                android:background="?attr/selectableItemBackgroundBorderless" />
+                android:id="@+id/avatarContainer">
+
+                <TextView
+                    android:id="@+id/tvEntityIcon"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:text="🦞"
+                    android:textSize="32sp"
+                    android:gravity="center"
+                    android:background="?attr/selectableItemBackgroundBorderless" />
+
+                <ImageView
+                    android:id="@+id/imgEntityAvatar"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:scaleType="centerCrop"
+                    android:visibility="gone" />
+            </FrameLayout>
 
             <!-- Name + ID -->
             <LinearLayout

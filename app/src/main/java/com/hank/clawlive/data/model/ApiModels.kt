@@ -68,6 +68,14 @@ data class GenericResponse(
     @SerializedName("message") val message: String? = null
 )
 
+// Avatar upload response (includes Flickr URL)
+data class AvatarUploadResponse(
+    @SerializedName("success") val success: Boolean = false,
+    @SerializedName("avatar") val avatar: String? = null,
+    @SerializedName("entityId") val entityId: Int = -1,
+    @SerializedName("message") val message: String? = null
+)
+
 // Agent Card models
 data class AgentCardCapability(
     @SerializedName("id") val id: String = "",

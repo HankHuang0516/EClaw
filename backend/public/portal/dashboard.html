@@ -1550,7 +1550,7 @@
                 return '<div class="entity-card card" data-entity-id="' + entity.entityId + '"' + (isEditMode ? ' draggable="true"' : '') + '>' +
                     '<div class="entity-card-body">' +
                     '<div class="drag-handle" title="' + i18n.t('dash_drag_to_reorder') + '">&#9776;</div>' +
-                    '<div class="entity-avatar" onclick="openAvatarPicker(' + entity.entityId + ')">' + avatar + '</div>' +
+                    '<div class="entity-avatar" onclick="openAvatarPicker(' + entity.entityId + ')">' + renderAvatarHtml(avatar) + '</div>' +
                     '<div class="entity-info">' +
                     '<div class="entity-name" onclick="openRenamePicker(' + entity.entityId + ', \'' + escapedName + '\')" title="' + i18n.t('dash_rename_title') + '">' + escapeHtml(displayName) + '</div>' +
                     '<div class="entity-badges">' +
@@ -2184,10 +2184,23 @@
                 gridHtml += '<div class="avatar-option' + selectedClass + '" data-emoji="' + emoji + '">' + emoji + '</div>';
             }
 
+            // Show current image avatar preview if applicable
+            var currentPreview = '';
+            if (isAvatarUrl(currentAvatar)) {
+                currentPreview = '<div style="text-align:center;margin-bottom:12px;">' +
+                    '<img src="' + currentAvatar + '" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);">' +
+                    '</div>';
+            }
+
             overlay.innerHTML =
                 '<div class="avatar-picker">' +
                 '<div class="avatar-picker-title" data-i18n="dash_avatar_title">' + i18n.t('dash_avatar_title') + '</div>' +
                 '<div class="avatar-picker-desc" data-i18n="dash_avatar_desc">' + i18n.t('dash_avatar_desc') + '</div>' +
+                currentPreview +
+                '<div class="avatar-upload-btn" id="avatarUploadBtn">' +
+                '&#x1F4F7; ' + (i18n.t('dash_avatar_upload') || 'Upload Photo') +
+                '</div>' +
+                '<input type="file" id="avatarFileInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none">' +
                 '<div class="avatar-grid">' + gridHtml + '</div>' +
                 '<div class="avatar-picker-actions">' +
                 '<button class="btn btn-outline btn-sm" data-i18n="mc_dlg_cancel">' + i18n.t('mc_dlg_cancel') + '</button>' +
@@ -2195,6 +2208,46 @@
                 '</div>';
 
             document.body.appendChild(overlay);
+
+            // Handle photo upload
+            var uploadBtn = overlay.querySelector('#avatarUploadBtn');
+            var fileInput = overlay.querySelector('#avatarFileInput');
+            uploadBtn.addEventListener('click', function() { fileInput.click(); });
+            fileInput.addEventListener('change', async function() {
+                var file = fileInput.files[0];
+                if (!file) return;
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast(i18n.t('dash_avatar_too_large') || 'Image must be under 5MB', 'error');
+                    return;
+                }
+                uploadBtn.classList.add('uploading');
+                uploadBtn.innerHTML = '&#x23F3; ' + (i18n.t('dash_avatar_uploading') || 'Uploading...');
+                try {
+                    var formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('entityId', entityId);
+                    var resp = await fetch('/api/device/entity/avatar/upload', {
+                        method: 'POST',
+                        credentials: 'include',
+                        body: formData
+                    });
+                    var data = await resp.json();
+                    if (data.success && data.avatar) {
+                        saveAvatarForEntity(entityId, data.avatar);
+                        overlay.remove();
+                        renderEntities();
+                        showToast(i18n.t('dash_avatar_uploaded') || 'Avatar updated!', 'success');
+                    } else {
+                        showToast(data.message || 'Upload failed', 'error');
+                        uploadBtn.classList.remove('uploading');
+                        uploadBtn.innerHTML = '&#x1F4F7; ' + (i18n.t('dash_avatar_upload') || 'Upload Photo');
+                    }
+                } catch (err) {
+                    showToast(err.message || 'Upload error', 'error');
+                    uploadBtn.classList.remove('uploading');
+                    uploadBtn.innerHTML = '&#x1F4F7; ' + (i18n.t('dash_avatar_upload') || 'Upload Photo');
+                }
+            });
 
             // Handle emoji selection
             overlay.querySelectorAll('.avatar-option').forEach(opt => {
@@ -2729,7 +2782,7 @@
 
                 return '<div class="binding-item">' +
                     '<div class="binding-info">' +
-                    '<span class="binding-emoji">' + avatar + '</span>' +
+                    '<span class="binding-emoji">' + renderAvatarHtml(avatar, 32) + '</span>' +
                     '<div class="binding-details">' +
                     '<span class="binding-entity-name">Entity ' + b.entityId + '</span>' +
                     '<span class="binding-type"><span class="badge ' + typeBadgeClass + '">' + typeText + '</span></span>' +

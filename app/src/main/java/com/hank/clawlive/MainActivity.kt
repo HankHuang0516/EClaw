@@ -45,6 +45,7 @@ import com.hank.clawlive.data.local.EntityAvatarManager
 import com.hank.clawlive.fcm.ClawFcmService
 import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.local.UsageManager
+import com.hank.clawlive.data.model.AvatarUploadResponse
 import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.data.model.UpdateAvatarRequest
 import com.hank.clawlive.data.remote.NetworkModule
@@ -84,6 +85,18 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         Timber.d("[FCM] POST_NOTIFICATIONS permission granted=$granted")
+    }
+
+    // Avatar photo picker state
+    private var avatarPickerEntityId: Int = -1
+    private var avatarPickerIconView: TextView? = null
+
+    private val avatarPhotoLauncher = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null && avatarPickerEntityId >= 0) {
+            uploadAvatarPhoto(uri, avatarPickerEntityId, avatarPickerIconView)
+        }
     }
 
     // UI elements
@@ -747,6 +760,25 @@ class MainActivity : AppCompatActivity() {
 
         val currentAvatar = avatarManager.getAvatar(entityId)
 
+        // Show current image avatar preview if applicable
+        val imgPreview = dialogView.findViewById<ImageView>(R.id.imgCurrentAvatar)
+        if (avatarManager.isImageUrl(currentAvatar)) {
+            imgPreview.visibility = android.view.View.VISIBLE
+            com.bumptech.glide.Glide.with(this)
+                .load(currentAvatar)
+                .circleCrop()
+                .into(imgPreview)
+        }
+
+        // Upload photo button
+        val uploadBtn = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnUploadAvatar)
+        uploadBtn.setOnClickListener {
+            avatarPickerEntityId = entityId
+            avatarPickerIconView = iconView
+            dialog.dismiss()
+            avatarPhotoLauncher.launch("image/*")
+        }
+
         EntityAvatarManager.AVATAR_OPTIONS.forEach { avatar ->
             val tv = TextView(this).apply {
                 text = avatar
@@ -784,6 +816,40 @@ class MainActivity : AppCompatActivity() {
         }
 
         dialog.show()
+    }
+
+    private fun uploadAvatarPhoto(uri: android.net.Uri, entityId: Int, iconView: TextView?) {
+        lifecycleScope.launch {
+            try {
+                val inputStream = contentResolver.openInputStream(uri) ?: return@launch
+                val bytes = inputStream.readBytes()
+                inputStream.close()
+
+                val requestFile = okhttp3.RequestBody.create(
+                    okhttp3.MediaType.parse("image/jpeg"), bytes
+                )
+                val filePart = okhttp3.MultipartBody.Part.createFormData("file", "avatar.jpg", requestFile)
+                val deviceIdPart = okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), deviceManager.deviceId)
+                val secretPart = okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), deviceManager.deviceSecret)
+                val entityIdPart = okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain"), entityId.toString())
+
+                val response = withContext(Dispatchers.IO) {
+                    api.uploadEntityAvatar(filePart, deviceIdPart, secretPart, entityIdPart)
+                }
+
+                if (response.success && response.avatar != null) {
+                    avatarManager.setAvatar(entityId, response.avatar)
+                    android.widget.Toast.makeText(this@MainActivity, R.string.avatar_upload_success, android.widget.Toast.LENGTH_SHORT).show()
+                    // Refresh UI
+                    viewModel.loadEntities(deviceManager.deviceId, deviceManager.deviceSecret)
+                } else {
+                    android.widget.Toast.makeText(this@MainActivity, R.string.avatar_upload_failed, android.widget.Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "[Avatar] Upload failed")
+                android.widget.Toast.makeText(this@MainActivity, R.string.avatar_upload_failed, android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun showRenameDialog(entity: EntityStatus) {
