@@ -48,6 +48,9 @@ jest.mock('../../db', () => ({
     removeCard: jest.fn().mockResolvedValue(true),
     getCardCount: jest.fn().mockResolvedValue(0),
     incrementInteraction: jest.fn().mockResolvedValue(undefined),
+    getRecentInteractions: jest.fn().mockResolvedValue([]),
+    upsertRecentInteraction: jest.fn().mockResolvedValue(null),
+    isBlocked: jest.fn().mockResolvedValue(false),
     // Legacy aliases
     getContacts: jest.fn().mockResolvedValue([]),
     addContact: jest.fn().mockResolvedValue(null),
@@ -309,6 +312,57 @@ describe('Card Holder API', () => {
             const res = await post('/api/contacts/abc123/refresh').send({});
             expect(res.status).toBe(400);
             expect(res.body.error).toMatch(/deviceId/i);
+        });
+    });
+
+    // ── New APIs (Card Holder Redesign) ──
+
+    describe('GET /api/contacts/my-cards', () => {
+        it('returns 400 without credentials', async () => {
+            const res = await get('/api/contacts/my-cards');
+            expect(res.status).toBe(400);
+            expect(res.body.error).toBeTruthy();
+        });
+
+        it('returns 401 with invalid credentials', async () => {
+            const res = await get('/api/contacts/my-cards?deviceId=test&deviceSecret=wrong');
+            expect(res.status).toBe(401);
+        });
+    });
+
+    describe('GET /api/contacts/recent', () => {
+        it('returns 400 without credentials', async () => {
+            const res = await get('/api/contacts/recent');
+            expect(res.status).toBe(400);
+            expect(res.body.error).toBeTruthy();
+        });
+
+        it('returns 401 with invalid credentials', async () => {
+            const res = await get('/api/contacts/recent?deviceId=test&deviceSecret=wrong');
+            expect(res.status).toBe(401);
+        });
+    });
+
+    describe('GET /api/chat/history-by-code', () => {
+        it('returns 400 without deviceId', async () => {
+            const res = await get('/api/chat/history-by-code?publicCode=abc123');
+            expect(res.status).toBe(400);
+        });
+
+        it('returns 400 without publicCode', async () => {
+            const res = await get('/api/chat/history-by-code?deviceId=test&deviceSecret=test');
+            expect(res.status).toBe(400);
+        });
+    });
+
+    describe('PATCH /api/contacts/:publicCode (blocked field)', () => {
+        it('returns 401 when setting blocked without valid credentials', async () => {
+            const res = await patch('/api/contacts/abc123').send({
+                deviceId: 'test',
+                deviceSecret: 'wrong',
+                blocked: true,
+            });
+            expect(res.status).toBe(401);
         });
     });
 });

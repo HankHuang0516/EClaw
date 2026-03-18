@@ -49,6 +49,41 @@
 
         .search-bar input::placeholder { color: var(--text-muted); }
 
+        /* Section tabs */
+        .section-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 16px;
+            border-bottom: 2px solid var(--card-border);
+        }
+
+        .section-tab {
+            padding: 10px 18px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .section-tab:hover { color: var(--text); }
+        .section-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+        .section-tab .tab-count {
+            font-size: 11px;
+            background: var(--input-bg);
+            padding: 1px 6px;
+            border-radius: 8px;
+            margin-left: 4px;
+        }
+
+        .section-tab.active .tab-count {
+            background: rgba(var(--primary-rgb), 0.15);
+            color: var(--primary);
+        }
+
         .filter-bar {
             display: flex;
             gap: 8px;
@@ -100,9 +135,8 @@
             transform: translateY(-2px);
         }
 
-        .agent-card.pinned {
-            border-color: var(--accent-gold);
-        }
+        .agent-card.pinned { border-color: var(--accent-gold); }
+        .agent-card.blocked { opacity: 0.5; border-color: var(--danger); }
 
         .agent-card-header {
             display: flex;
@@ -153,9 +187,18 @@
             font-size: 14px;
         }
 
-        .agent-card-body {
-            padding: 10px 16px;
+        .block-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 12px;
+            background: var(--danger);
+            color: #fff;
+            padding: 1px 6px;
+            border-radius: 4px;
         }
+
+        .agent-card-body { padding: 10px 16px; }
 
         .agent-desc {
             font-size: 13px;
@@ -202,8 +245,71 @@
         .exchange-badge.manual { background: rgba(var(--primary-rgb), 0.15); color: var(--primary); }
         .exchange-badge.auto_speak { background: var(--status-active); color: var(--status-active-text); }
         .exchange-badge.auto_a2a { background: var(--cat-feature-bg); color: var(--cat-feature-text); }
+        .exchange-badge.incoming { background: rgba(var(--primary-rgb), 0.10); color: var(--text-secondary); }
 
         .interaction-count { font-weight: 500; }
+
+        /* My Cards section */
+        .my-cards-row {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .my-card-item {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 14px;
+            min-width: 200px;
+            flex-shrink: 0;
+            text-align: center;
+        }
+
+        .my-card-item .agent-avatar { font-size: 36px; display: block; margin-bottom: 6px; }
+        .my-card-item .agent-name { font-size: 14px; font-weight: 600; }
+        .my-card-item .agent-code { font-size: 11px; color: var(--text-muted); font-family: monospace; }
+
+        .copy-code-btn {
+            background: none;
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            margin-top: 4px;
+        }
+        .copy-code-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* Recent section */
+        .recent-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .recent-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .recent-item:hover { border-color: var(--primary); }
+
+        .recent-item .agent-avatar { font-size: 28px; }
+        .recent-item .agent-meta { flex: 1; min-width: 0; }
+        .recent-item .agent-name { font-size: 14px; }
+        .recent-item .time-ago { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
 
         /* Detail modal */
         .modal-overlay {
@@ -225,7 +331,7 @@
             border: 1px solid var(--card-border);
             border-radius: var(--radius);
             width: 100%;
-            max-width: 520px;
+            max-width: 560px;
             animation: slideUp 0.2s ease-out;
         }
 
@@ -340,10 +446,7 @@
             min-height: 60px;
         }
 
-        .notes-textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
+        .notes-textarea:focus { outline: none; border-color: var(--primary); }
 
         .category-input {
             width: 100%;
@@ -365,7 +468,47 @@
             flex-wrap: wrap;
         }
 
-        .modal-actions .btn { flex: 1; min-width: 100px; }
+        .modal-actions .btn { flex: 1; min-width: 80px; }
+
+        /* Chat history in modal */
+        .chat-history-list {
+            max-height: 250px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .chat-msg {
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            line-height: 1.4;
+            max-width: 85%;
+        }
+
+        .chat-msg.sent {
+            background: rgba(var(--primary-rgb), 0.15);
+            align-self: flex-end;
+        }
+
+        .chat-msg.received {
+            background: var(--input-bg);
+            align-self: flex-start;
+        }
+
+        .chat-msg .chat-time {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .chat-empty {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+            padding: 20px;
+        }
 
         .empty-state {
             text-align: center;
@@ -401,6 +544,19 @@
             color: var(--text-secondary);
         }
 
+        /* Unified search results */
+        .search-results-section {
+            margin-bottom: 16px;
+        }
+
+        .search-results-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
         /* Toast */
         .toast {
             position: fixed;
@@ -419,10 +575,9 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         @media (max-width: 600px) {
-            .card-grid {
-                grid-template-columns: 1fr;
-            }
+            .card-grid { grid-template-columns: 1fr; }
             .search-bar input { width: 120px; }
+            .section-tab { padding: 8px 12px; font-size: 13px; }
         }
     </style>
 </head>
@@ -449,18 +604,59 @@
             </div>
         </div>
 
-        <div class="filter-bar" id="filterBar">
-            <span class="filter-chip active" data-filter="all" onclick="setFilter('all')" data-i18n="cardholder_filter_all">All</span>
-            <span class="filter-chip" data-filter="pinned" onclick="setFilter('pinned')" data-i18n="cardholder_filter_pinned">Pinned</span>
-            <span class="card-count" id="cardCount"></span>
+        <!-- Section Tabs -->
+        <div class="section-tabs" id="sectionTabs">
+            <div class="section-tab active" data-section="my-cards" onclick="switchSection('my-cards')" data-i18n="cardholder_my_cards">My Cards</div>
+            <div class="section-tab" data-section="recent" onclick="switchSection('recent')" data-i18n="cardholder_recent">Recent</div>
+            <div class="section-tab" data-section="collected" onclick="switchSection('collected')" data-i18n="cardholder_collected">Collected<span class="tab-count" id="collectedCount">0</span></div>
         </div>
 
-        <div class="card-grid" id="cardGrid"></div>
+        <!-- My Cards Section -->
+        <div id="sectionMyCards" class="section-content">
+            <div class="my-cards-row" id="myCardsRow"></div>
+            <div class="empty-state" id="myCardsEmpty" style="display:none;">
+                <div class="empty-state-icon">&#x1F4CB;</div>
+                <div class="empty-state-text" data-i18n="cardholder_my_cards_empty">No agent cards configured</div>
+                <div class="empty-state-sub" data-i18n="cardholder_my_cards_empty_sub">Set up agent cards on your entities to share them</div>
+            </div>
+        </div>
 
-        <div class="empty-state" id="emptyState" style="display:none;">
-            <div class="empty-state-icon">&#x1F4C7;</div>
-            <div class="empty-state-text" data-i18n="cardholder_empty">No cards yet</div>
-            <div class="empty-state-sub" data-i18n="cardholder_empty_sub">Add agents by their public code or chat cross-device to auto-collect</div>
+        <!-- Recent Section -->
+        <div id="sectionRecent" class="section-content" style="display:none;">
+            <div class="recent-list" id="recentList"></div>
+            <div class="empty-state" id="recentEmpty" style="display:none;">
+                <div class="empty-state-icon">&#x1F552;</div>
+                <div class="empty-state-text" data-i18n="cardholder_recent_empty">No recent interactions</div>
+                <div class="empty-state-sub" data-i18n="cardholder_recent_empty_sub">Cards you interact with will appear here</div>
+            </div>
+        </div>
+
+        <!-- Collected Section -->
+        <div id="sectionCollected" class="section-content" style="display:none;">
+            <div class="filter-bar" id="filterBar">
+                <span class="filter-chip active" data-filter="all" onclick="setFilter('all')" data-i18n="cardholder_filter_all">All</span>
+                <span class="filter-chip" data-filter="pinned" onclick="setFilter('pinned')" data-i18n="cardholder_filter_pinned">Pinned</span>
+                <span class="filter-chip" data-filter="blocked" onclick="setFilter('blocked')" data-i18n="cardholder_filter_blocked">Blocked</span>
+                <span class="card-count" id="cardCount"></span>
+            </div>
+            <div class="card-grid" id="cardGrid"></div>
+            <div class="empty-state" id="emptyState" style="display:none;">
+                <div class="empty-state-icon">&#x1F4C7;</div>
+                <div class="empty-state-text" data-i18n="cardholder_empty">No cards yet</div>
+                <div class="empty-state-sub" data-i18n="cardholder_empty_sub">Add agents by their public code or chat cross-device to auto-collect</div>
+            </div>
+        </div>
+
+        <!-- Search Results Section (shown when searching) -->
+        <div id="searchResultsSection" style="display:none;">
+            <div class="search-results-section" id="savedResults">
+                <div class="search-results-title" data-i18n="cardholder_search_saved">Saved</div>
+                <div class="card-grid" id="savedGrid"></div>
+            </div>
+            <div class="search-results-section" id="externalResults" style="display:none;">
+                <div class="search-results-title" data-i18n="cardholder_search_external">Online Agents</div>
+                <div class="card-grid" id="externalGrid"></div>
+            </div>
         </div>
     </div>
 
@@ -481,7 +677,10 @@
     <script>
         let currentUser = null;
         let allCards = [];
+        let myCards = [];
+        let recentCards = [];
         let currentFilter = 'all';
+        let currentSection = 'my-cards';
         let searchDebounce = null;
         let categories = new Set();
 
@@ -490,22 +689,120 @@
             renderNav('card-holder');
             document.getElementById('navEmail').textContent = user.email || '';
             if (typeof initAiChat === 'function') initAiChat(user);
-            loadCards();
+            loadAllData();
         });
 
         // ── Data ──
+        async function loadAllData() {
+            await Promise.all([loadMyCards(), loadRecent(), loadCards()]);
+        }
+
+        async function loadMyCards() {
+            try {
+                const data = await apiCall('GET', `/api/contacts/my-cards?deviceId=${currentUser.deviceId}&deviceSecret=${currentUser.deviceSecret}`);
+                myCards = data.cards || [];
+                renderMyCards();
+            } catch (err) {
+                console.error('Failed to load my cards:', err);
+            }
+        }
+
+        async function loadRecent() {
+            try {
+                const data = await apiCall('GET', `/api/contacts/recent?deviceId=${currentUser.deviceId}&deviceSecret=${currentUser.deviceSecret}&limit=20`);
+                recentCards = data.contacts || [];
+                renderRecent();
+            } catch (err) {
+                console.error('Failed to load recent:', err);
+            }
+        }
+
         async function loadCards() {
             try {
-                const data = await apiCall('GET', `/api/contacts?deviceId=${currentUser.deviceId}`);
+                const data = await apiCall('GET', `/api/contacts?deviceId=${currentUser.deviceId}&includeBlocked=true`);
                 allCards = data.contacts || [];
-                // Collect unique categories
                 categories.clear();
                 allCards.forEach(c => { if (c.category) categories.add(c.category); });
                 renderFilterBar();
                 renderCards();
+                document.getElementById('collectedCount').textContent = allCards.filter(c => !c.blocked).length;
             } catch (err) {
                 console.error('Failed to load cards:', err);
             }
+        }
+
+        // ── Section Tabs ──
+        function switchSection(section) {
+            currentSection = section;
+            document.querySelectorAll('.section-tab').forEach(el => {
+                el.classList.toggle('active', el.dataset.section === section);
+            });
+            document.getElementById('sectionMyCards').style.display = section === 'my-cards' ? '' : 'none';
+            document.getElementById('sectionRecent').style.display = section === 'recent' ? '' : 'none';
+            document.getElementById('sectionCollected').style.display = section === 'collected' ? '' : 'none';
+        }
+
+        // ── My Cards ──
+        function renderMyCards() {
+            const row = document.getElementById('myCardsRow');
+            const empty = document.getElementById('myCardsEmpty');
+            if (myCards.length === 0) {
+                row.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
+            row.innerHTML = myCards.map(c => {
+                const avatar = c.avatar || '\u{1F99E}';
+                return `
+                <div class="my-card-item">
+                    <span class="agent-avatar">${avatar}</span>
+                    <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
+                    <div class="agent-code">${escapeHtml(c.publicCode)}</div>
+                    <button class="copy-code-btn" onclick="copyCode('${escapeAttr(c.publicCode)}')">${t('cardholder_copy_code', 'Copy')}</button>
+                </div>`;
+            }).join('');
+        }
+
+        function copyCode(code) {
+            navigator.clipboard.writeText(code).then(() => showToast(t('common_copied', 'Copied')));
+        }
+
+        // ── Recent ──
+        function renderRecent() {
+            const list = document.getElementById('recentList');
+            const empty = document.getElementById('recentEmpty');
+            if (recentCards.length === 0) {
+                list.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
+            list.innerHTML = recentCards.map(c => {
+                const avatar = c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
+                const timeAgo = c.lastInteractedAt ? formatTimeAgo(c.lastInteractedAt) : '';
+                return `
+                <div class="recent-item" onclick="openDetail('${escapeAttr(c.publicCode)}')">
+                    <span class="agent-avatar">${avatar}</span>
+                    <div class="agent-meta">
+                        <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
+                        <div class="agent-code">${escapeHtml(c.publicCode)}</div>
+                    </div>
+                    <span class="agent-status ${c.online ? 'online' : 'offline'}"></span>
+                    <span class="time-ago">${timeAgo}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function formatTimeAgo(ts) {
+            const diff = Date.now() - ts;
+            const mins = Math.floor(diff / 60000);
+            if (mins < 1) return t('cardholder_just_now', 'just now');
+            if (mins < 60) return `${mins}m`;
+            const hrs = Math.floor(mins / 60);
+            if (hrs < 24) return `${hrs}h`;
+            const days = Math.floor(hrs / 24);
+            return `${days}d`;
         }
 
         // ── Filters ──
@@ -519,7 +816,6 @@
 
         function renderFilterBar() {
             const bar = document.getElementById('filterBar');
-            // Keep "All" and "Pinned", add dynamic category chips
             const existing = bar.querySelectorAll('[data-filter-cat]');
             existing.forEach(el => el.remove());
 
@@ -534,44 +830,34 @@
             });
         }
 
-        // ── Render ──
+        // ── Render Collected ──
         function renderCards() {
             const grid = document.getElementById('cardGrid');
             const empty = document.getElementById('emptyState');
             const countEl = document.getElementById('cardCount');
-            const query = (document.getElementById('searchInput').value || '').toLowerCase();
 
             let filtered = allCards;
 
-            // Apply filter
             if (currentFilter === 'pinned') {
                 filtered = filtered.filter(c => c.pinned);
+            } else if (currentFilter === 'blocked') {
+                filtered = filtered.filter(c => c.blocked);
             } else if (currentFilter.startsWith('cat:')) {
                 const cat = currentFilter.slice(4);
                 filtered = filtered.filter(c => c.category === cat);
-            }
-
-            // Apply search
-            if (query) {
-                filtered = filtered.filter(c => {
-                    const snap = c.cardSnapshot || {};
-                    const searchable = [
-                        c.name, c.publicCode, c.notes, c.category,
-                        snap.description,
-                        ...(snap.tags || []),
-                        ...(snap.protocols || []),
-                        ...(snap.capabilities || []).map(cap => cap.name + ' ' + (cap.description || ''))
-                    ].filter(Boolean).join(' ').toLowerCase();
-                    return searchable.includes(query);
-                });
+            } else {
+                filtered = filtered.filter(c => !c.blocked);
             }
 
             countEl.textContent = `${filtered.length} / ${allCards.length}`;
 
             if (filtered.length === 0) {
                 grid.innerHTML = '';
-                empty.style.display = allCards.length === 0 ? 'block' : 'block';
-                if (allCards.length > 0) {
+                empty.style.display = 'block';
+                if (currentFilter === 'blocked') {
+                    empty.querySelector('.empty-state-text').textContent = t('cardholder_no_blocked', 'No blocked cards');
+                    empty.querySelector('.empty-state-sub').textContent = '';
+                } else if (allCards.length > 0) {
                     empty.querySelector('.empty-state-text').textContent = t('cardholder_no_match', 'No matching cards');
                     empty.querySelector('.empty-state-sub').textContent = '';
                 }
@@ -579,39 +865,43 @@
             }
             empty.style.display = 'none';
 
-            grid.innerHTML = filtered.map(c => {
-                const snap = c.cardSnapshot || {};
-                const avatar = c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
-                const desc = snap.description || '';
-                const tags = (snap.tags || []).slice(0, 4);
-                const exchangeLabel = c.exchangeType || 'manual';
-                const dateStr = c.addedAt ? new Date(c.addedAt).toLocaleDateString() : '';
+            grid.innerHTML = filtered.map(c => renderCardHtml(c)).join('');
+        }
 
-                return `
-                <div class="agent-card ${c.pinned ? 'pinned' : ''}" onclick="openDetail('${escapeAttr(c.publicCode)}')">
-                    ${c.pinned ? '<span class="pin-badge">&#x1F4CC;</span>' : ''}
-                    <div class="agent-card-header">
-                        <span class="agent-avatar">${avatar}</span>
-                        <div class="agent-meta">
-                            <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
-                            <div class="agent-code">${escapeHtml(c.publicCode)}</div>
-                        </div>
-                        <span class="agent-status ${c.online ? 'online' : 'offline'}" title="${c.online ? 'Online' : 'Offline'}"></span>
+        function renderCardHtml(c) {
+            const snap = c.cardSnapshot || {};
+            const avatar = c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
+            const desc = snap.description || '';
+            const tags = (snap.tags || []).slice(0, 4);
+            const exchangeLabel = c.exchangeType || 'manual';
+            const dateStr = c.addedAt ? new Date(c.addedAt).toLocaleDateString() : '';
+
+            return `
+            <div class="agent-card ${c.pinned ? 'pinned' : ''} ${c.blocked ? 'blocked' : ''}" onclick="openDetail('${escapeAttr(c.publicCode)}')">
+                ${c.pinned && !c.blocked ? '<span class="pin-badge">&#x1F4CC;</span>' : ''}
+                ${c.blocked ? '<span class="block-badge">' + t('cardholder_blocked_label', 'Blocked') + '</span>' : ''}
+                <div class="agent-card-header">
+                    <span class="agent-avatar">${avatar}</span>
+                    <div class="agent-meta">
+                        <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
+                        <div class="agent-code">${escapeHtml(c.publicCode)}</div>
                     </div>
-                    ${desc ? `<div class="agent-card-body"><div class="agent-desc">${escapeHtml(desc)}</div></div>` : ''}
-                    ${tags.length ? `<div class="agent-tags">${tags.map(t => `<span class="agent-tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
-                    <div class="agent-card-footer">
-                        <span class="exchange-badge ${exchangeLabel}">${exchangeLabel.replace('_', ' ')}</span>
-                        ${c.interactionCount ? `<span class="interaction-count">${c.interactionCount} interactions</span>` : ''}
-                        <span>${dateStr}</span>
-                    </div>
-                </div>`;
-            }).join('');
+                    <span class="agent-status ${c.online ? 'online' : 'offline'}" title="${c.online ? 'Online' : 'Offline'}"></span>
+                </div>
+                ${desc ? `<div class="agent-card-body"><div class="agent-desc">${escapeHtml(desc)}</div></div>` : ''}
+                ${tags.length ? `<div class="agent-tags">${tags.map(tg => `<span class="agent-tag">${escapeHtml(tg)}</span>`).join('')}</div>` : ''}
+                <div class="agent-card-footer">
+                    <span class="exchange-badge ${exchangeLabel}">${exchangeLabel.replace('_', ' ')}</span>
+                    ${c.interactionCount ? `<span class="interaction-count">${c.interactionCount} interactions</span>` : ''}
+                    <span>${dateStr}</span>
+                </div>
+            </div>`;
         }
 
         // ── Detail Modal ──
         function openDetail(publicCode) {
-            const card = allCards.find(c => c.publicCode === publicCode);
+            const card = allCards.find(c => c.publicCode === publicCode)
+                      || recentCards.find(c => c.publicCode === publicCode);
             if (!card) return;
 
             const snap = card.cardSnapshot || {};
@@ -628,6 +918,7 @@
                         <h3>${escapeHtml(card.name || card.publicCode)}</h3>
                         <span class="agent-code">${escapeHtml(card.publicCode)}</span>
                         <span class="agent-status ${card.online ? 'online' : 'offline'}" style="display:inline-block; margin-left:8px; vertical-align:middle;"></span>
+                        ${card.blocked ? `<span class="block-badge" style="display:inline-block; margin-left:8px; vertical-align:middle;">${t('cardholder_blocked_label', 'Blocked')}</span>` : ''}
                     </div>
                     <button class="modal-close" onclick="closeDetail()">&#x2715;</button>
                 </div>
@@ -642,7 +933,7 @@
                 <div class="modal-section">
                     <div class="modal-section-title" data-i18n="cardholder_capabilities">Capabilities</div>
                     <div class="cap-list">
-                        ${caps.map(c => `<div class="cap-item"><div class="cap-name">${escapeHtml(c.name)}</div>${c.description ? `<div class="cap-desc">${escapeHtml(c.description)}</div>` : ''}</div>`).join('')}
+                        ${caps.map(cp => `<div class="cap-item"><div class="cap-name">${escapeHtml(cp.name)}</div>${cp.description ? `<div class="cap-desc">${escapeHtml(cp.description)}</div>` : ''}</div>`).join('')}
                     </div>
                 </div>` : ''}
 
@@ -655,7 +946,7 @@
                 ${tags.length ? `
                 <div class="modal-section">
                     <div class="modal-section-title" data-i18n="cardholder_tags">Tags</div>
-                    <div class="tag-list">${tags.map(t => `<span class="tag-badge">#${escapeHtml(t)}</span>`).join('')}</div>
+                    <div class="tag-list">${tags.map(tg => `<span class="tag-badge">#${escapeHtml(tg)}</span>`).join('')}</div>
                 </div>` : ''}
 
                 <div class="modal-section">
@@ -676,9 +967,17 @@
                         <span class="detail-label" data-i18n="cardholder_interactions">Interactions</span>
                         <span class="detail-value">${card.interactionCount || 0}</span>
                     </div>
+                    ${card.lastInteractedAt ? `<div class="detail-row"><span class="detail-label" data-i18n="cardholder_last_interaction">Last Interaction</span><span class="detail-value">${new Date(card.lastInteractedAt).toLocaleString()}</span></div>` : ''}
                     ${snap.version ? `<div class="detail-row"><span class="detail-label">Version</span><span class="detail-value">${escapeHtml(snap.version)}</span></div>` : ''}
                     ${snap.website ? `<div class="detail-row"><span class="detail-label">Website</span><span class="detail-value"><a href="${escapeAttr(snap.website)}" target="_blank" rel="noopener">${escapeHtml(snap.website)}</a></span></div>` : ''}
                     ${snap.contactEmail ? `<div class="detail-row"><span class="detail-label">Email</span><span class="detail-value"><a href="mailto:${escapeAttr(snap.contactEmail)}">${escapeHtml(snap.contactEmail)}</a></span></div>` : ''}
+                </div>
+
+                <div class="modal-section">
+                    <div class="modal-section-title" data-i18n="cardholder_chat_history">Chat History</div>
+                    <div class="chat-history-list" id="chatHistoryList">
+                        <div class="chat-empty">${t('common_loading', 'Loading...')}</div>
+                    </div>
                 </div>
 
                 <div class="modal-section">
@@ -695,6 +994,9 @@
                     <button class="btn btn-outline btn-sm" onclick="togglePin('${escapeAttr(card.publicCode)}')">
                         ${card.pinned ? t('cardholder_unpin', 'Unpin') : t('cardholder_pin', 'Pin')}
                     </button>
+                    <button class="btn btn-outline btn-sm" onclick="toggleBlock('${escapeAttr(card.publicCode)}')" style="${card.blocked ? 'color:var(--success);border-color:var(--success);' : 'color:var(--danger);border-color:var(--danger);'}">
+                        ${card.blocked ? t('cardholder_unblock', 'Unblock') : t('cardholder_block', 'Block')}
+                    </button>
                     <button class="btn btn-primary btn-sm" onclick="refreshCard('${escapeAttr(card.publicCode)}')">
                         ${t('cardholder_refresh', 'Refresh')}
                     </button>
@@ -708,10 +1010,34 @@
             `;
 
             document.getElementById('detailModal').classList.add('open');
+            loadChatHistory(card.publicCode);
         }
 
         function closeDetail() {
             document.getElementById('detailModal').classList.remove('open');
+        }
+
+        // ── Chat History ──
+        async function loadChatHistory(publicCode) {
+            const container = document.getElementById('chatHistoryList');
+            try {
+                const data = await apiCall('GET', `/api/chat/history-by-code?deviceId=${currentUser.deviceId}&deviceSecret=${currentUser.deviceSecret}&publicCode=${publicCode}&limit=30`);
+                const messages = data.messages || [];
+                if (messages.length === 0) {
+                    container.innerHTML = `<div class="chat-empty">${t('cardholder_no_chat_history', 'No chat history')}</div>`;
+                    return;
+                }
+                container.innerHTML = messages.map(m => {
+                    const isSent = m.direction === 'outgoing' || m.fromDevice === currentUser.deviceId;
+                    const time = m.timestamp ? new Date(m.timestamp).toLocaleString() : '';
+                    return `<div class="chat-msg ${isSent ? 'sent' : 'received'}">
+                        <div>${escapeHtml(m.content || m.message || '')}</div>
+                        <div class="chat-time">${time}</div>
+                    </div>`;
+                }).join('');
+            } catch (err) {
+                container.innerHTML = `<div class="chat-empty">${t('cardholder_chat_history_error', 'Could not load chat history')}</div>`;
+            }
         }
 
         // ── Actions ──
@@ -725,7 +1051,6 @@
                     notes,
                     category: category || null
                 });
-                // Update local data
                 const card = allCards.find(c => c.publicCode === publicCode);
                 if (card) { card.notes = notes; card.category = category || null; }
                 if (category) categories.add(category);
@@ -754,13 +1079,33 @@
             }
         }
 
+        async function toggleBlock(publicCode) {
+            const card = allCards.find(c => c.publicCode === publicCode);
+            if (!card) return;
+            const newBlocked = !card.blocked;
+            if (newBlocked && !confirm(t('cardholder_block_confirm', 'Block this agent? They will not be able to send you messages.'))) return;
+            try {
+                await apiCall('PATCH', `/api/contacts/${publicCode}`, {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    blocked: newBlocked
+                });
+                card.blocked = newBlocked;
+                renderCards();
+                document.getElementById('collectedCount').textContent = allCards.filter(c => !c.blocked).length;
+                openDetail(publicCode);
+                showToast(newBlocked ? t('cardholder_blocked_ok', 'Agent blocked') : t('cardholder_unblocked_ok', 'Agent unblocked'));
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
         async function refreshCard(publicCode) {
             try {
                 const data = await apiCall('POST', `/api/contacts/${publicCode}/refresh`, {
                     deviceId: currentUser.deviceId,
                     deviceSecret: currentUser.deviceSecret
                 });
-                // Update local data
                 const card = allCards.find(c => c.publicCode === publicCode);
                 if (card && data.card) {
                     card.cardSnapshot = data.card.cardSnapshot;
@@ -787,6 +1132,7 @@
                 allCards = allCards.filter(c => c.publicCode !== publicCode);
                 closeDetail();
                 renderCards();
+                document.getElementById('collectedCount').textContent = allCards.filter(c => !c.blocked).length;
                 showToast(t('cardholder_removed', 'Card removed'));
             } catch (err) {
                 showToast(err.message, 'error');
@@ -850,6 +1196,7 @@
                     allCards.unshift(data.contact);
                     hideAddForm();
                     renderCards();
+                    document.getElementById('collectedCount').textContent = allCards.filter(c => !c.blocked).length;
                     showToast(t('cardholder_added_ok', 'Card added'));
                 }
             } catch (err) {
@@ -863,11 +1210,100 @@
             }
         }
 
-        // ── Search ──
+        // ── Unified Search ──
         document.getElementById('searchInput').addEventListener('input', function() {
             clearTimeout(searchDebounce);
-            searchDebounce = setTimeout(renderCards, 200);
+            const query = this.value.trim();
+            if (!query) {
+                // Restore normal view
+                document.getElementById('searchResultsSection').style.display = 'none';
+                document.getElementById('sectionTabs').style.display = '';
+                document.querySelectorAll('.section-content').forEach(el => {
+                    el.style.display = el.id === `section${currentSection === 'my-cards' ? 'MyCards' : currentSection === 'recent' ? 'Recent' : 'Collected'}` ? '' : 'none';
+                });
+                return;
+            }
+            searchDebounce = setTimeout(() => unifiedSearch(query), 300);
         });
+
+        async function unifiedSearch(query) {
+            // Hide tabs and sections, show search results
+            document.getElementById('sectionTabs').style.display = 'none';
+            document.querySelectorAll('.section-content').forEach(el => el.style.display = 'none');
+            document.getElementById('searchResultsSection').style.display = '';
+
+            try {
+                const data = await apiCall('GET', `/api/contacts/search?deviceId=${currentUser.deviceId}&q=${encodeURIComponent(query)}`);
+                const saved = data.saved || data.cards || [];
+                const external = data.external || [];
+
+                const savedGrid = document.getElementById('savedGrid');
+                const externalSection = document.getElementById('externalResults');
+                const externalGrid = document.getElementById('externalGrid');
+
+                if (saved.length === 0 && external.length === 0) {
+                    savedGrid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">&#x1F50D;</div><div class="empty-state-text">${t('cardholder_no_match', 'No matching cards')}</div></div>`;
+                    externalSection.style.display = 'none';
+                    return;
+                }
+
+                savedGrid.innerHTML = saved.length > 0
+                    ? saved.map(c => renderCardHtml(c)).join('')
+                    : `<div style="color:var(--text-muted); font-size:13px; padding:12px;">${t('cardholder_no_saved_match', 'No saved cards match')}</div>`;
+
+                if (external.length > 0) {
+                    externalSection.style.display = '';
+                    externalGrid.innerHTML = external.map(c => {
+                        const snap = c.agentCard || {};
+                        const avatar = c.avatar || '\u{1F99E}';
+                        const desc = snap.description || '';
+                        return `
+                        <div class="agent-card" onclick="addExternalCard('${escapeAttr(c.publicCode)}')">
+                            <div class="agent-card-header">
+                                <span class="agent-avatar">${avatar}</span>
+                                <div class="agent-meta">
+                                    <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
+                                    <div class="agent-code">${escapeHtml(c.publicCode)}</div>
+                                </div>
+                                <span class="agent-status online"></span>
+                            </div>
+                            ${desc ? `<div class="agent-card-body"><div class="agent-desc">${escapeHtml(desc)}</div></div>` : ''}
+                            <div class="agent-card-footer">
+                                <span style="color:var(--primary);">${t('cardholder_add_friend', 'Add')}</span>
+                            </div>
+                        </div>`;
+                    }).join('');
+                } else {
+                    externalSection.style.display = 'none';
+                }
+            } catch (err) {
+                console.error('Search error:', err);
+            }
+        }
+
+        async function addExternalCard(publicCode) {
+            try {
+                const data = await apiCall('POST', '/api/contacts', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    publicCode
+                });
+                if (data.success) {
+                    allCards.unshift(data.contact);
+                    document.getElementById('collectedCount').textContent = allCards.filter(c => !c.blocked).length;
+                    showToast(t('cardholder_added_ok', 'Card added'));
+                    // Re-search
+                    const query = document.getElementById('searchInput').value.trim();
+                    if (query) unifiedSearch(query);
+                }
+            } catch (err) {
+                if (err.status === 409) {
+                    showToast(t('cardholder_duplicate', 'Already in card holder'), 'error');
+                } else {
+                    showToast(err.message || t('common_error', 'Error'), 'error');
+                }
+            }
+        }
 
         // ── Helpers ──
         function escapeHtml(s) {

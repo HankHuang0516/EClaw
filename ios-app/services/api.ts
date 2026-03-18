@@ -300,7 +300,7 @@ export const deviceVarsApi = {
 // ── Card Holder APIs (replaces Contacts) ────────────────────
 
 export const contactsApi = {
-  list: (params?: { pinned?: boolean; category?: string; limit?: number; offset?: number }) =>
+  list: (params?: { pinned?: boolean; category?: string; limit?: number; offset?: number; includeBlocked?: boolean }) =>
     apiClient.get('/api/contacts', { params }),
   add: (publicCode: string) =>
     apiClient.post('/api/contacts', { publicCode }),
@@ -308,7 +308,7 @@ export const contactsApi = {
     apiClient.delete('/api/contacts', { data: { publicCode } }),
   getDetail: (publicCode: string) =>
     apiClient.get(`/api/contacts/${publicCode}`),
-  update: (publicCode: string, data: { notes?: string; pinned?: boolean; category?: string | null }) =>
+  update: (publicCode: string, data: { notes?: string; pinned?: boolean; category?: string | null; blocked?: boolean }) =>
     apiClient.patch(`/api/contacts/${publicCode}`, data),
   refresh: (publicCode: string) =>
     apiClient.post(`/api/contacts/${publicCode}/refresh`),
@@ -316,6 +316,12 @@ export const contactsApi = {
     apiClient.get('/api/contacts/search', { params: { q } }),
   crossSpeak: (toPublicCode: string, message: string) =>
     apiClient.post('/api/client/cross-speak', { toPublicCode, message }),
+  myCards: () =>
+    apiClient.get('/api/contacts/my-cards'),
+  recent: (limit = 20) =>
+    apiClient.get('/api/contacts/recent', { params: { limit } }),
+  chatHistoryByCode: (publicCode: string, limit = 30) =>
+    apiClient.get('/api/chat/history-by-code', { params: { publicCode, limit } }),
 };
 
 // ── Misc APIs ────────────────────────────────────────────────

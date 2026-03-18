@@ -62,6 +62,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="cards"
+        options={{
+          title: t('tabs.cards'),
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name={focused ? 'card-account-details' : 'card-account-details-outline'} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: t('tabs.settings'),

@@ -85,6 +85,7 @@ const TEST_FILES = [
     'test-agent-card.js',           // Agent Card: PUT/GET/DELETE lifecycle
     'test-publisher-platforms.js',  // Publisher platforms listing + input validation (12 platforms)
     'test-card-holder.js',          // Card Holder CRUD lifecycle, search, refresh, pin, category, notes
+    'test-card-holder-redesign.js', // Card Holder Redesign: my-cards, recent, block/unblock, unified search, chat history
     'test-screen-control-auth.js',  // Screen control portal auth: deviceSecret instead of botSecret
     'test-ai-chat-submit-poll.js',  // AI chat submit/poll async pattern (Issue #248)
     'test-audit-logging.js',        // Audit logging: GET /api/logs format, category filter

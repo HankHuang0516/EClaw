@@ -4,7 +4,6 @@ function renderNav(activePage) {
     const pages = [
         { id: 'dashboard', i18nKey: 'nav_dashboard', label: 'Dashboard', href: 'dashboard.html', icon: '📊' },
         { id: 'chat', i18nKey: 'nav_chat', label: 'Chat', href: 'chat.html', icon: '💬' },
-        { id: 'files', i18nKey: 'nav_files', label: 'Files', href: 'files.html', icon: '📁' },
         { id: 'mission', i18nKey: 'nav_mission', label: 'Mission', href: 'mission.html', icon: '🚀' },
         { id: 'card-holder', i18nKey: 'nav_card_holder', label: 'Cards', href: 'card-holder.html', icon: '🗂️' },
         { id: 'settings', i18nKey: 'nav_settings', label: 'Settings', href: 'settings.html', icon: '⚙️' },
