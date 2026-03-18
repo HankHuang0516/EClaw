@@ -25,6 +25,9 @@ const app = express();
 app.set('trust proxy', 1); // Railway reverse proxy — makes req.ip, req.protocol accurate
 const httpServer = http.createServer(app);
 const port = process.env.PORT || 3000;
+const SERVER_STARTED_AT = new Date();
+const SERVER_BUILD_TAG = `v5.6-${SERVER_STARTED_AT.toISOString().slice(0, 10).replace(/-/g, '')}`;
+
 
 // ============================================
 // SOCKET.IO SERVER
@@ -2299,7 +2302,7 @@ app.get('/', (req, res) => {
 
 // Health check endpoint for Railway
 app.get('/api/health', (req, res) => {
-    res.status(200).json({ status: 'ok', timestamp: Date.now(), build: 'v5.6-20260302', uptime: process.uptime() });
+    res.status(200).json({ status: 'ok', timestamp: Date.now(), build: SERVER_BUILD_TAG, uptime: process.uptime(), startedAt: SERVER_STARTED_AT.toISOString() });
 });
 
 

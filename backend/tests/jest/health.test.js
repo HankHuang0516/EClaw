@@ -183,6 +183,24 @@ describe('GET /api/health', () => {
         expect(res.body.timestamp).toBeGreaterThanOrEqual(before);
         expect(res.body.timestamp).toBeLessThanOrEqual(Date.now());
     });
+
+    it('includes a dynamic build tag with date', async () => {
+        const res = await request(app).get('/api/health');
+        expect(res.body.build).toMatch(/^v5\.6-\d{8}$/);
+    });
+
+    it('includes startedAt as a valid ISO timestamp', async () => {
+        const res = await request(app).get('/api/health');
+        expect(res.body.startedAt).toBeDefined();
+        const parsed = new Date(res.body.startedAt);
+        expect(parsed.getTime()).not.toBeNaN();
+    });
+
+    it('includes uptime as a positive number', async () => {
+        const res = await request(app).get('/api/health');
+        expect(typeof res.body.uptime).toBe('number');
+        expect(res.body.uptime).toBeGreaterThanOrEqual(0);
+    });
 });
 
 // ════════════════════════════════════════════════════════════════

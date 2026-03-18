@@ -346,7 +346,7 @@ When implementing or modifying any feature on one platform, ensure the other pla
 - Changes to root files do NOT trigger deployment — must change files under `backend/`
 - Railway sits behind Cloudflare CDN — deploy can take 2-5 minutes
 - Use `/api/auth/oauth/providers` or `/api/audit-logs` as deploy canary endpoints
-- `/api/health` build string is hardcoded, not useful for detecting deploys — check uptime or new endpoint availability instead
+- `/api/health` returns dynamic `startedAt` ISO timestamp and `uptime` — compare `startedAt` to detect new deploys
 
 ---
 
