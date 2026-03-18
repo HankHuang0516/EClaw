@@ -1,3 +1,10 @@
+# [1.108.0](https://github.com/HankHuang0516/EClaw/compare/v1.107.2...v1.108.0) (2026-03-18)
+
+
+### Features
+
+* complete agent card rendering across all platforms ([#288](https://github.com/HankHuang0516/EClaw/issues/288)) ([d1c9c91](https://github.com/HankHuang0516/EClaw/commit/d1c9c9192c42d73e39cac28f570856189ac1898f))
+
 ## [1.107.2](https://github.com/HankHuang0516/EClaw/compare/v1.107.1...v1.107.2) (2026-03-18)
 
 
