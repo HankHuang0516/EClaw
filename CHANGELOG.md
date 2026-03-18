@@ -1,3 +1,10 @@
+# [1.107.0](https://github.com/HankHuang0516/EClaw/compare/v1.106.8...v1.107.0) (2026-03-18)
+
+
+### Features
+
+* rewrite Card Holder web portal to match Android 3-section layout ([#285](https://github.com/HankHuang0516/EClaw/issues/285)) ([69fc0b9](https://github.com/HankHuang0516/EClaw/commit/69fc0b9a798fabf5f6b001c9b6d7ffab4e99fdbf))
+
 ## [1.106.8](https://github.com/HankHuang0516/EClaw/compare/v1.106.7...v1.106.8) (2026-03-18)
 
 
