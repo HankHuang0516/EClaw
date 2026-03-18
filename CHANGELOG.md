@@ -1,3 +1,10 @@
+## [1.111.1](https://github.com/HankHuang0516/EClaw/compare/v1.111.0...v1.111.1) (2026-03-18)
+
+
+### Bug Fixes
+
+* relax publisher-integration test assertions for CI environment ([#298](https://github.com/HankHuang0516/EClaw/issues/298)) ([de6a723](https://github.com/HankHuang0516/EClaw/commit/de6a7232dbb8cb203796e5bfcbbd336376514c6f))
+
 # [1.111.0](https://github.com/HankHuang0516/EClaw/compare/v1.110.1...v1.111.0) (2026-03-18)
 
 
