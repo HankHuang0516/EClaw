@@ -590,7 +590,7 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
                         title = skill.title,
                         priority = 0,
                         entityIds = skill.assignedEntities,
-                        url = skill.url
+                        url = skill.url ?: ""
                     )
                 )
             }
