@@ -1,3 +1,10 @@
+# [1.106.0](https://github.com/HankHuang0516/EClaw/compare/v1.105.1...v1.106.0) (2026-03-18)
+
+
+### Features
+
+* card-holder redesign — 3 sections, block/unblock, chat history ([#269](https://github.com/HankHuang0516/EClaw/issues/269)) ([89026af](https://github.com/HankHuang0516/EClaw/commit/89026afc0785b43f66e98f48517f32eb535ece9f))
+
 ## [1.105.1](https://github.com/HankHuang0516/EClaw/compare/v1.105.0...v1.105.1) (2026-03-17)
 
 
