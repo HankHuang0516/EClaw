@@ -18,7 +18,7 @@ jest.mock('pg', () => ({
 }));
 
 jest.mock('../../db', () => ({
-    initDatabase: jest.fn().mockResolvedValue(false),
+    initDatabase: jest.fn().mockResolvedValue(true),
     saveDeviceData: jest.fn().mockResolvedValue(true),
     saveAllDevices: jest.fn().mockResolvedValue(true),
     loadAllDevices: jest.fn().mockResolvedValue({}),

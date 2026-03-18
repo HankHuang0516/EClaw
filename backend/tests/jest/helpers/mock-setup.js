@@ -1,11 +1,13 @@
 /**
- * Card Holder API tests (Jest + Supertest)
+ * Shared mock setup for Jest tests against index.js (Express app).
  *
- * Validates card holder endpoints: PATCH, refresh, search, GET detail.
- * Also validates input validation for existing endpoints with new card holder fields.
+ * Usage — at the TOP of each test file, before any require():
+ *   require('./helpers/mock-setup');
+ *
+ * This installs all jest.mock() calls needed to load index.js
+ * without real DB, Flickr, scheduler, etc.
  */
 
-// ── Mocks (same pattern as mutations.test.js) ──
 jest.mock('pg', () => ({
     Pool: jest.fn().mockImplementation(() => ({
         query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
@@ -17,7 +19,7 @@ jest.mock('pg', () => ({
     })),
 }));
 
-jest.mock('../../db', () => ({
+jest.mock('../../../db', () => ({
     initDatabase: jest.fn().mockResolvedValue(true),
     saveDeviceData: jest.fn().mockResolvedValue(true),
     saveAllDevices: jest.fn().mockResolvedValue(true),
@@ -38,7 +40,6 @@ jest.mock('../../db', () => ({
     getPaidBorrowSlots: jest.fn().mockResolvedValue(0),
     incrementPaidBorrowSlots: jest.fn().mockResolvedValue(true),
     saveFeedback: jest.fn().mockResolvedValue({ id: 1 }),
-    // Card holder
     getCardHolder: jest.fn().mockResolvedValue([]),
     addCard: jest.fn().mockResolvedValue(null),
     updateCard: jest.fn().mockResolvedValue(null),
@@ -51,20 +52,24 @@ jest.mock('../../db', () => ({
     getRecentInteractions: jest.fn().mockResolvedValue([]),
     upsertRecentInteraction: jest.fn().mockResolvedValue(null),
     isBlocked: jest.fn().mockResolvedValue(false),
-    // Legacy aliases
     getContacts: jest.fn().mockResolvedValue([]),
     addContact: jest.fn().mockResolvedValue(null),
     removeContact: jest.fn().mockResolvedValue(true),
     getContactCount: jest.fn().mockResolvedValue(0),
+    deleteEntity: jest.fn().mockResolvedValue(true),
+    getSkillContributions: jest.fn().mockResolvedValue([]),
+    getSoulContributions: jest.fn().mockResolvedValue([]),
+    getRuleContributions: jest.fn().mockResolvedValue([]),
+    getApprovedSkillContributions: jest.fn().mockResolvedValue([]),
 }));
 
-jest.mock('../../flickr', () => ({
+jest.mock('../../../flickr', () => ({
     initFlickr: jest.fn(),
     uploadPhoto: jest.fn().mockResolvedValue(null),
     isAvailable: jest.fn().mockReturnValue(false),
 }));
 
-jest.mock('../../scheduler', () => ({
+jest.mock('../../../scheduler', () => ({
     init: jest.fn(),
     createSchedule: jest.fn().mockResolvedValue({ id: 1 }),
     updateSchedule: jest.fn().mockResolvedValue(true),
@@ -72,9 +77,12 @@ jest.mock('../../scheduler', () => ({
     getSchedules: jest.fn().mockResolvedValue([]),
     getSchedule: jest.fn().mockResolvedValue(null),
     getSchedulesForBot: jest.fn().mockResolvedValue([]),
+    togglePause: jest.fn().mockResolvedValue({ id: 1, is_paused: true }),
+    getExecutions: jest.fn().mockResolvedValue([]),
+    getExecutionContext: jest.fn().mockResolvedValue(null),
 }));
 
-jest.mock('../../device-telemetry', () => ({
+jest.mock('../../../device-telemetry', () => ({
     initTelemetryTable: jest.fn().mockResolvedValue(undefined),
     appendEntries: jest.fn().mockResolvedValue(undefined),
     captureApiCall: jest.fn().mockResolvedValue(undefined),
@@ -87,7 +95,7 @@ jest.mock('../../device-telemetry', () => ({
     MAX_ENTRIES: 500,
 }));
 
-jest.mock('../../device-feedback', () => ({
+jest.mock('../../../device-feedback', () => ({
     initFeedbackTable: jest.fn().mockResolvedValue(undefined),
     initFeedbackPhotosTable: jest.fn().mockResolvedValue(undefined),
     captureLogSnapshot: jest.fn().mockResolvedValue([]),
@@ -114,7 +122,7 @@ jest.mock('../../device-feedback', () => ({
     cleanupResolvedFeedbackPhotos: jest.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock('../../gatekeeper', () => ({
+jest.mock('../../../gatekeeper', () => ({
     detectMaliciousMessage: jest.fn().mockReturnValue({ isMalicious: false }),
     detectAndMaskLeaks: jest.fn().mockImplementation((text) => text),
     initGatekeeperTable: jest.fn().mockResolvedValue(undefined),
@@ -130,16 +138,18 @@ jest.mock('../../gatekeeper', () => ({
     FREE_BOT_TOS_VERSION: '1.0',
 }));
 
-jest.mock('../../notifications', () => {
+jest.mock('../../../notifications', () => {
     const express = jest.requireActual('express');
     return {
         init: jest.fn(),
         router: express.Router(),
         initNotificationTables: jest.fn().mockResolvedValue(undefined),
+        savePushSubscription: jest.fn().mockResolvedValue(true),
+        removePushSubscription: jest.fn().mockResolvedValue(true),
     };
 });
 
-jest.mock('../../chat-integrity', () => ({
+jest.mock('../../../chat-integrity', () => ({
     init: jest.fn().mockReturnValue({
         verify: jest.fn().mockReturnValue({ valid: true }),
         sign: jest.fn().mockReturnValue('sig'),
@@ -147,12 +157,12 @@ jest.mock('../../chat-integrity', () => ({
     initIntegrityTable: jest.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock('../../device-preferences', () => ({
+jest.mock('../../../device-preferences', () => ({
     init: jest.fn(),
     initTable: jest.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock('../../entity-cross-device-settings', () => {
+jest.mock('../../../entity-cross-device-settings', () => {
     const express = jest.requireActual('express');
     return {
         init: jest.fn(),
@@ -161,7 +171,7 @@ jest.mock('../../entity-cross-device-settings', () => {
     };
 });
 
-jest.mock('../../article-publisher', () => {
+jest.mock('../../../article-publisher', () => {
     const express = jest.requireActual('express');
     return {
         router: express.Router(),
@@ -169,7 +179,7 @@ jest.mock('../../article-publisher', () => {
     };
 });
 
-jest.mock('../../mission', () => {
+jest.mock('../../../mission', () => {
     const express = jest.requireActual('express');
     return jest.fn().mockReturnValue({
         router: express.Router(),
@@ -180,7 +190,7 @@ jest.mock('../../mission', () => {
     });
 });
 
-jest.mock('../../auth', () => {
+jest.mock('../../../auth', () => {
     const express = jest.requireActual('express');
     const noop = (_req, _res, next) => next();
     return jest.fn().mockReturnValue({
@@ -195,174 +205,10 @@ jest.mock('../../auth', () => {
     });
 });
 
-jest.mock('../../subscription', () => {
+jest.mock('../../../subscription', () => {
     const express = jest.requireActual('express');
     return jest.fn().mockReturnValue({
         router: express.Router(),
         loadPremiumStatus: jest.fn().mockResolvedValue(undefined),
-    });
-});
-
-const request = require('supertest');
-
-let app;
-const get = (path) => request(app).get(path).set('Host', 'localhost');
-const post = (path) => request(app).post(path).set('Host', 'localhost');
-const patch = (path) => request(app).patch(path).set('Host', 'localhost');
-const del = (path) => request(app).delete(path).set('Host', 'localhost');
-
-beforeAll(() => {
-    process.env.JWT_SECRET = 'test-secret';
-    process.env.WEBHOOK_SECRET = 'test-webhook-secret';
-    process.env.SEAL_KEY = '0'.repeat(64);
-    app = require('../../index');
-});
-
-// ── Tests ──
-
-describe('Card Holder API', () => {
-
-    describe('GET /api/contacts', () => {
-        it('returns 400 without deviceId', async () => {
-            const res = await get('/api/contacts');
-            expect(res.status).toBe(400);
-            expect(res.body.error).toMatch(/deviceId/i);
-        });
-    });
-
-    describe('POST /api/contacts', () => {
-        it('returns 400 without publicCode', async () => {
-            const res = await post('/api/contacts').send({ deviceId: 'test' });
-            expect(res.status).toBe(400);
-            expect(res.body.error).toMatch(/publicCode/i);
-        });
-
-        it('returns 401 with invalid credentials before format check', async () => {
-            const res = await post('/api/contacts').send({
-                deviceId: 'test',
-                deviceSecret: 'test-secret',
-                publicCode: '!!invalid!!'
-            });
-            // Device auth fails before format validation (device doesn't exist)
-            expect(res.status).toBe(401);
-        });
-    });
-
-    describe('DELETE /api/contacts', () => {
-        it('returns 400 without publicCode', async () => {
-            const res = await del('/api/contacts').send({ deviceId: 'test' });
-            expect(res.status).toBe(400);
-            expect(res.body.error).toMatch(/publicCode/i);
-        });
-    });
-
-    describe('GET /api/contacts/search', () => {
-        it('returns 400 without deviceId', async () => {
-            const res = await get('/api/contacts/search?q=test');
-            expect(res.status).toBe(400);
-            expect(res.body.error).toMatch(/deviceId/i);
-        });
-
-        it('returns 400 without search query', async () => {
-            const res = await get('/api/contacts/search?deviceId=test');
-            expect(res.status).toBe(400);
-            expect(res.body.error).toMatch(/query/i);
-        });
-
-        it('returns 400 with query too long', async () => {
-            const longQ = 'a'.repeat(101);
-            const res = await get(`/api/contacts/search?deviceId=test&q=${longQ}`);
-            expect(res.status).toBe(400);
-            expect(res.body.error).toMatch(/long/i);
-        });
-    });
-
-    describe('GET /api/contacts/:publicCode', () => {
-        it('returns 400 without deviceId', async () => {
-            const res = await get('/api/contacts/abc123');
-            expect(res.status).toBe(400);
-            expect(res.body.error).toMatch(/deviceId/i);
-        });
-
-        it('returns 404 for non-existent card', async () => {
-            const res = await get('/api/contacts/abc123?deviceId=test');
-            expect(res.status).toBe(404);
-        });
-    });
-
-    describe('PATCH /api/contacts/:publicCode', () => {
-        it('returns 400 without deviceId', async () => {
-            const res = await patch('/api/contacts/abc123').send({ notes: 'test' });
-            expect(res.status).toBe(400);
-            expect(res.body.error).toMatch(/deviceId/i);
-        });
-
-        it('returns 401 with invalid credentials before field check', async () => {
-            const res = await patch('/api/contacts/abc123').send({
-                deviceId: 'test',
-                deviceSecret: 'test-secret',
-            });
-            // Device auth fails before field validation (device doesn't exist)
-            expect(res.status).toBe(401);
-        });
-    });
-
-    describe('POST /api/contacts/:publicCode/refresh', () => {
-        it('returns 400 without deviceId', async () => {
-            const res = await post('/api/contacts/abc123/refresh').send({});
-            expect(res.status).toBe(400);
-            expect(res.body.error).toMatch(/deviceId/i);
-        });
-    });
-
-    // ── New APIs (Card Holder Redesign) ──
-
-    describe('GET /api/contacts/my-cards', () => {
-        it('returns 400 without credentials', async () => {
-            const res = await get('/api/contacts/my-cards');
-            expect(res.status).toBe(400);
-            expect(res.body.error).toBeTruthy();
-        });
-
-        it('returns 401 with invalid credentials', async () => {
-            const res = await get('/api/contacts/my-cards?deviceId=test&deviceSecret=wrong');
-            expect(res.status).toBe(401);
-        });
-    });
-
-    describe('GET /api/contacts/recent', () => {
-        it('returns 400 without credentials', async () => {
-            const res = await get('/api/contacts/recent');
-            expect(res.status).toBe(400);
-            expect(res.body.error).toBeTruthy();
-        });
-
-        it('returns 401 with invalid credentials', async () => {
-            const res = await get('/api/contacts/recent?deviceId=test&deviceSecret=wrong');
-            expect(res.status).toBe(401);
-        });
-    });
-
-    describe('GET /api/chat/history-by-code', () => {
-        it('returns 400 without deviceId', async () => {
-            const res = await get('/api/chat/history-by-code?publicCode=abc123');
-            expect(res.status).toBe(400);
-        });
-
-        it('returns 400 without publicCode', async () => {
-            const res = await get('/api/chat/history-by-code?deviceId=test&deviceSecret=test');
-            expect(res.status).toBe(400);
-        });
-    });
-
-    describe('PATCH /api/contacts/:publicCode (blocked field)', () => {
-        it('returns 401 when setting blocked without valid credentials', async () => {
-            const res = await patch('/api/contacts/abc123').send({
-                deviceId: 'test',
-                deviceSecret: 'wrong',
-                blocked: true,
-            });
-            expect(res.status).toBe(401);
-        });
     });
 });

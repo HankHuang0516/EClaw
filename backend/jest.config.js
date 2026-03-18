@@ -13,4 +13,8 @@ module.exports = {
     restoreMocks: true,
     // Verbose output for CI readability
     verbose: true,
+    // Coverage reporting
+    collectCoverage: !!process.env.CI,
+    coverageDirectory: 'coverage',
+    coverageReporters: ['text-summary', 'lcov'],
 };
