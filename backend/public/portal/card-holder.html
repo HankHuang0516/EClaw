@@ -1029,6 +1029,11 @@
                         <div style="font-size:14px;"><a href="${escapeAttr(snap.website)}" target="_blank" rel="noopener" style="color:var(--primary);">${escapeHtml(snap.website)}</a></div>
                     </div>` : ''}
 
+                    ${snap.version ? `<div class="modal-section">
+                        <div class="modal-section-title">Version</div>
+                        <div style="font-size:14px; color:var(--text-secondary);">${escapeHtml(snap.version)}</div>
+                    </div>` : ''}
+
                     ${caps.length ? `<div class="modal-section">
                         <div class="modal-section-title">${t('cardholder_capabilities', 'Capabilities')}</div>
                         <div class="cap-list">

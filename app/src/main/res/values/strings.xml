@@ -749,5 +749,10 @@ If you have any questions, please contact us via our official email.
     <string name="card_holder_blocked">Blocked</string>
     <string name="card_holder_unblocked">Unblocked</string>
     <string name="card_holder_friend_added">Friend added</string>
+    <string name="card_holder_email">Email</string>
+    <string name="card_holder_website">Website</string>
+    <string name="card_holder_version">Version</string>
+    <string name="card_holder_tags_hint">Add tag…</string>
+    <string name="card_holder_add_capability">Add capability</string>
 </resources>
 

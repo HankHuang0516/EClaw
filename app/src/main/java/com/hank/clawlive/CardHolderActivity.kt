@@ -477,16 +477,76 @@ class CardHolderActivity : AppCompatActivity() {
 
         editLayout.addView(sectionTitle("Edit Agent Card"))
 
-        val descInput = makeEditField("Description", card.agentCard?.description ?: "")
-        val emailInput = makeEditField("Contact Email", card.agentCard?.contactEmail ?: card.contactEmail ?: "")
-        val websiteInput = makeEditField("Website", card.agentCard?.website ?: card.website ?: "")
+        val ac = card.agentCard
+        val descInput = makeEditField(getString(R.string.card_holder_description), ac?.description ?: "")
+        val emailInput = makeEditField(getString(R.string.card_holder_email), ac?.contactEmail ?: card.contactEmail ?: "")
+        val websiteInput = makeEditField(getString(R.string.card_holder_website), ac?.website ?: card.website ?: "")
+        val versionInput = makeEditField(getString(R.string.card_holder_version), ac?.version ?: "")
 
         editLayout.addView(descInput)
         editLayout.addView(emailInput)
         editLayout.addView(websiteInput)
+        editLayout.addView(versionInput)
+
+        // Capabilities editor
+        editLayout.addView(sectionTitle(getString(R.string.card_holder_capabilities)))
+        val capsContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            tag = "capsContainer"
+        }
+        (ac?.capabilities ?: emptyList()).forEach { cap ->
+            capsContainer.addView(buildCapabilityRow(cap.name, cap.description))
+        }
+        editLayout.addView(capsContainer)
+        editLayout.addView(makeAddButton(getString(R.string.card_holder_add_capability)) {
+            capsContainer.addView(buildCapabilityRow("", ""))
+        })
+
+        // Protocols editor
+        editLayout.addView(sectionTitle(getString(R.string.card_holder_protocols)))
+        val protosContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            setPadding(0, dp(4), 0, 0)
+        }
+        val protosWrap = object : LinearLayout(this@CardHolderActivity) {
+            init {
+                orientation = VERTICAL
+                tag = "protosContainer"
+            }
+        }
+        val protosChips = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
+        val protosFlow = android.widget.FrameLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
+        val protosTagsLayout = makeTagsLayout()
+        (ac?.protocols ?: emptyList()).forEach { p -> protosTagsLayout.addView(makeTagChip(p, protosTagsLayout)) }
+        protosFlow.addView(protosTagsLayout)
+        protosWrap.addView(protosFlow)
+        protosWrap.addView(makeTagInput(protosTagsLayout))
+        editLayout.addView(protosWrap)
+
+        // Tags editor
+        editLayout.addView(sectionTitle(getString(R.string.card_holder_tags)))
+        val tagsWrap = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            tag = "tagsContainer"
+        }
+        val tagsFlow = android.widget.FrameLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
+        val tagsLayout = makeTagsLayout()
+        (ac?.tags ?: emptyList()).forEach { t -> tagsLayout.addView(makeTagChip(t, tagsLayout)) }
+        tagsFlow.addView(tagsLayout)
+        tagsWrap.addView(tagsFlow)
+        tagsWrap.addView(makeTagInput(tagsLayout))
+        editLayout.addView(tagsWrap)
 
         val saveBtn = TextView(this).apply {
-            text = "Save"
+            text = getString(R.string.card_holder_save)
             setTextColor(Color.parseColor("#0D0D1A"))
             textSize = 13f
             typeface = Typeface.DEFAULT_BOLD
@@ -497,20 +557,174 @@ class CardHolderActivity : AppCompatActivity() {
             }
             setPadding(dp(16), dp(8), dp(16), dp(8))
             val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            lp.setMargins(0, dp(8), 0, 0)
+            lp.setMargins(0, dp(12), 0, 0)
             lp.gravity = Gravity.END
             layoutParams = lp
             setOnClickListener {
+                val caps = collectCapabilities(capsContainer)
+                val protos = collectTags(protosTagsLayout)
+                val tagsList = collectTags(tagsLayout)
                 saveAgentCard(
                     card.publicCode!!,
                     (descInput.getChildAt(1) as EditText).text.toString(),
                     (emailInput.getChildAt(1) as EditText).text.toString(),
-                    (websiteInput.getChildAt(1) as EditText).text.toString()
+                    (websiteInput.getChildAt(1) as EditText).text.toString(),
+                    (versionInput.getChildAt(1) as EditText).text.toString(),
+                    caps, protos, tagsList
                 )
             }
         }
         editLayout.addView(saveBtn)
         return editLayout
+    }
+
+    private fun buildCapabilityRow(name: String, desc: String): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            lp.setMargins(0, dp(4), 0, 0)
+            layoutParams = lp
+            background = GradientDrawable().apply {
+                setColor(Color.parseColor("#252540"))
+                cornerRadius = dp(6).toFloat()
+                setStroke(1, Color.parseColor("#333355"))
+            }
+            setPadding(dp(8), dp(6), dp(8), dp(6))
+
+            val nameField = EditText(this@CardHolderActivity).apply {
+                setText(name)
+                hint = "Name"
+                setTextColor(Color.WHITE)
+                setHintTextColor(Color.parseColor("#555555"))
+                textSize = 12f
+                maxLines = 1
+                inputType = InputType.TYPE_CLASS_TEXT
+                background = null
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            val descField = EditText(this@CardHolderActivity).apply {
+                setText(desc)
+                hint = "Description"
+                setTextColor(Color.parseColor("#AAAAAA"))
+                setHintTextColor(Color.parseColor("#555555"))
+                textSize = 12f
+                maxLines = 1
+                inputType = InputType.TYPE_CLASS_TEXT
+                background = null
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            val removeBtn = TextView(this@CardHolderActivity).apply {
+                text = "\u00D7"
+                setTextColor(Color.parseColor("#F44336"))
+                textSize = 16f
+                setPadding(dp(6), 0, dp(2), 0)
+                setOnClickListener { (this@apply.parent as? ViewGroup)?.let { row -> (row.parent as? ViewGroup)?.removeView(row) } }
+            }
+            addView(nameField)
+            addView(descField)
+            addView(removeBtn)
+        }
+    }
+
+    private fun makeTagsLayout(): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            // Simulate wrap by using a FlowLayout-like approach: horizontal with wrapping via custom measure
+            // For simplicity, use a horizontal scrollable list
+        }
+    }
+
+    private fun makeTagChip(text: String, container: LinearLayout): TextView {
+        return TextView(this).apply {
+            this.text = "$text \u00D7"
+            setTextColor(Color.WHITE)
+            textSize = 12f
+            background = GradientDrawable().apply {
+                setColor(Color.parseColor("#333355"))
+                cornerRadius = dp(12).toFloat()
+            }
+            setPadding(dp(10), dp(4), dp(10), dp(4))
+            val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            lp.setMargins(0, dp(2), dp(4), dp(2))
+            layoutParams = lp
+            tag = text
+            setOnClickListener { container.removeView(this) }
+        }
+    }
+
+    private fun makeTagInput(tagsLayout: LinearLayout): LinearLayout {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            lp.setMargins(0, dp(4), 0, 0)
+            layoutParams = lp
+
+            val input = EditText(this@CardHolderActivity).apply {
+                hint = getString(R.string.card_holder_tags_hint)
+                setTextColor(Color.WHITE)
+                setHintTextColor(Color.parseColor("#555555"))
+                textSize = 12f
+                maxLines = 1
+                inputType = InputType.TYPE_CLASS_TEXT
+                background = GradientDrawable().apply {
+                    setColor(Color.parseColor("#252540"))
+                    cornerRadius = dp(6).toFloat()
+                    setStroke(1, Color.parseColor("#333355"))
+                }
+                setPadding(dp(10), dp(6), dp(10), dp(6))
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            val addBtn = TextView(this@CardHolderActivity).apply {
+                text = "+"
+                setTextColor(Color.parseColor("#6C63FF"))
+                textSize = 16f
+                typeface = Typeface.DEFAULT_BOLD
+                gravity = Gravity.CENTER
+                setPadding(dp(10), dp(4), dp(10), dp(4))
+                setOnClickListener {
+                    val v = input.text.toString().trim()
+                    if (v.isNotEmpty()) {
+                        tagsLayout.addView(makeTagChip(v, tagsLayout))
+                        input.text.clear()
+                    }
+                }
+            }
+            addView(input)
+            addView(addBtn)
+        }
+    }
+
+    private fun makeAddButton(label: String, onClick: () -> Unit): TextView {
+        return TextView(this).apply {
+            text = "+ $label"
+            setTextColor(Color.parseColor("#6C63FF"))
+            textSize = 12f
+            setPadding(0, dp(4), 0, dp(4))
+            setOnClickListener { onClick() }
+        }
+    }
+
+    private fun collectCapabilities(container: LinearLayout): List<Map<String, String>> {
+        val caps = mutableListOf<Map<String, String>>()
+        for (i in 0 until container.childCount) {
+            val row = container.getChildAt(i) as? LinearLayout ?: continue
+            val name = (row.getChildAt(0) as? EditText)?.text?.toString()?.trim() ?: ""
+            val desc = (row.getChildAt(1) as? EditText)?.text?.toString()?.trim() ?: ""
+            if (name.isNotEmpty()) caps.add(mapOf("name" to name, "description" to desc))
+        }
+        return caps
+    }
+
+    private fun collectTags(tagsLayout: LinearLayout): List<String> {
+        val tags = mutableListOf<String>()
+        for (i in 0 until tagsLayout.childCount) {
+            val chip = tagsLayout.getChildAt(i)
+            val t = chip.tag as? String
+            if (!t.isNullOrEmpty()) tags.add(t)
+        }
+        return tags
     }
 
     private fun makeEditField(label: String, value: String): LinearLayout {
@@ -543,18 +757,27 @@ class CardHolderActivity : AppCompatActivity() {
         }
     }
 
-    private fun saveAgentCard(publicCode: String, description: String, email: String, website: String) {
+    private fun saveAgentCard(
+        publicCode: String, description: String, email: String, website: String,
+        version: String, capabilities: List<Map<String, String>>,
+        protocols: List<String>, tags: List<String>
+    ) {
         val deviceId = deviceManager.deviceId ?: return
         val deviceSecret = deviceManager.deviceSecret ?: return
         lifecycleScope.launch {
             try {
-                NetworkModule.api.updateCard(publicCode, mapOf(
+                val body = mutableMapOf<String, Any>(
                     "deviceId" to deviceId,
                     "deviceSecret" to deviceSecret,
                     "description" to description,
                     "contactEmail" to email,
-                    "website" to website
-                ))
+                    "website" to website,
+                    "version" to version,
+                    "capabilities" to capabilities,
+                    "protocols" to protocols,
+                    "tags" to tags
+                )
+                NetworkModule.api.updateCard(publicCode, body)
                 Toast.makeText(this@CardHolderActivity, R.string.card_holder_saved, Toast.LENGTH_SHORT).show()
                 loadAllData()
             } catch (e: Exception) {
@@ -925,26 +1148,29 @@ class CardHolderActivity : AppCompatActivity() {
             addDialogSection(layout, getString(R.string.card_holder_description), card.description)
         }
         if (!card.contactEmail.isNullOrEmpty()) {
-            addDialogSection(layout, "Email", card.contactEmail)
+            addDialogSection(layout, getString(R.string.card_holder_email), card.contactEmail)
         }
         if (!card.website.isNullOrEmpty()) {
-            addDialogSection(layout, "Website", card.website)
+            addDialogSection(layout, getString(R.string.card_holder_website), card.website)
         }
 
         val ac = card.agentCard
         if (ac != null) {
+            if (!ac.version.isNullOrEmpty()) {
+                addDialogSection(layout, getString(R.string.card_holder_version), ac.version)
+            }
             val caps = ac.capabilities ?: emptyList()
             if (caps.isNotEmpty()) {
                 addDialogSection(layout, getString(R.string.card_holder_capabilities),
                     caps.joinToString("\n") { "\u2022 ${it.name}${if (it.description.isNotEmpty()) " - ${it.description}" else ""}" })
             }
-            val tags = ac.tags ?: emptyList()
-            if (tags.isNotEmpty()) {
-                addDialogSection(layout, getString(R.string.card_holder_tags), tags.joinToString(", ") { "#$it" })
-            }
             val protocols = ac.protocols ?: emptyList()
             if (protocols.isNotEmpty()) {
                 addDialogSection(layout, getString(R.string.card_holder_protocols), protocols.joinToString(", "))
+            }
+            val tags = ac.tags ?: emptyList()
+            if (tags.isNotEmpty()) {
+                addDialogSection(layout, getString(R.string.card_holder_tags), tags.joinToString(", ") { "#$it" })
             }
         }
 
@@ -1054,15 +1280,22 @@ class CardHolderActivity : AppCompatActivity() {
             addDialogSection(detailsPanel, getString(R.string.card_holder_description), snap!!.description!!)
         }
         if (!snap?.contactEmail.isNullOrEmpty()) {
-            addDialogSection(detailsPanel, "Email", snap!!.contactEmail!!)
+            addDialogSection(detailsPanel, getString(R.string.card_holder_email), snap!!.contactEmail!!)
         }
         if (!snap?.website.isNullOrEmpty()) {
-            addDialogSection(detailsPanel, "Website", snap!!.website!!)
+            addDialogSection(detailsPanel, getString(R.string.card_holder_website), snap!!.website!!)
+        }
+        if (!snap?.version.isNullOrEmpty()) {
+            addDialogSection(detailsPanel, getString(R.string.card_holder_version), snap!!.version!!)
         }
         val caps = snap?.capabilities ?: emptyList()
         if (caps.isNotEmpty()) {
             addDialogSection(detailsPanel, getString(R.string.card_holder_capabilities),
                 caps.joinToString("\n") { "\u2022 ${it.name}${if (it.description.isNotEmpty()) " - ${it.description}" else ""}" })
+        }
+        val protocols = snap?.protocols ?: emptyList()
+        if (protocols.isNotEmpty()) {
+            addDialogSection(detailsPanel, getString(R.string.card_holder_protocols), protocols.joinToString(", "))
         }
         val tags = snap?.tags ?: emptyList()
         if (tags.isNotEmpty()) {

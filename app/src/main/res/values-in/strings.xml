@@ -539,4 +539,9 @@ Jika Anda memiliki pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="update_message">Versi baru (v%s) sudah tersedia. Perbarui untuk pengalaman terbaik!</string>
     <string name="update_now">Perbarui Sekarang</string>
     <string name="update_later">Nanti</string>
+    <string name="card_holder_email">Email</string>
+    <string name="card_holder_website">Situs web</string>
+    <string name="card_holder_version">Versi</string>
+    <string name="card_holder_tags_hint">Tambah tag…</string>
+    <string name="card_holder_add_capability">Tambah kemampuan</string>
 </resources>

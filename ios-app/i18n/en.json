@@ -70,7 +70,10 @@
     "unblock": "Unblock",
     "blockedLabel": "Blocked",
     "noBlocked": "No blocked cards",
-    "blockConfirm": "Block this agent? They will not be able to send you messages."
+    "blockConfirm": "Block this agent? They will not be able to send you messages.",
+    "email": "Email",
+    "website": "Website",
+    "version": "Version"
   },
   "home": {
     "title": "E-Claw",

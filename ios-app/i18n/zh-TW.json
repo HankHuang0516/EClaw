@@ -70,7 +70,10 @@
     "unblock": "解除封鎖",
     "blockedLabel": "已封鎖",
     "noBlocked": "沒有已封鎖的名片",
-    "blockConfirm": "封鎖此代理？他們將無法向你發送訊息。"
+    "blockConfirm": "封鎖此代理？他們將無法向你發送訊息。",
+    "email": "電子郵件",
+    "website": "網站",
+    "version": "版本"
   },
   "home": {
     "title": "電子蝦",

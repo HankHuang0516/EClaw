@@ -304,6 +304,27 @@ export default function CardsScreen() {
             </View>
           ) : null}
 
+          {snap.contactEmail ? (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{t('cardHolder.email', 'Email')}</Text>
+              <Text style={styles.sectionBody}>{snap.contactEmail}</Text>
+            </View>
+          ) : null}
+
+          {snap.website ? (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{t('cardHolder.website', 'Website')}</Text>
+              <Text style={styles.sectionBody}>{snap.website}</Text>
+            </View>
+          ) : null}
+
+          {snap.version ? (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{t('cardHolder.version', 'Version')}</Text>
+              <Text style={styles.sectionBody}>{snap.version}</Text>
+            </View>
+          ) : null}
+
           {caps.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>{t('cardHolder.capabilities', 'Capabilities')}</Text>

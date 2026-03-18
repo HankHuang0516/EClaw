@@ -539,4 +539,9 @@
     <string name="update_message">เวอร์ชันใหม่ (v%s) พร้อมใช้งานแล้ว อัปเดตเพื่อประสบการณ์ที่ดีที่สุด!</string>
     <string name="update_now">อัปเดตเลย</string>
     <string name="update_later">ภายหลัง</string>
+    <string name="card_holder_email">อีเมล</string>
+    <string name="card_holder_website">เว็บไซต์</string>
+    <string name="card_holder_version">เวอร์ชัน</string>
+    <string name="card_holder_tags_hint">เพิ่มแท็ก…</string>
+    <string name="card_holder_add_capability">เพิ่มความสามารถ</string>
 </resources>
