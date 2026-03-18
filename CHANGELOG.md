@@ -1,3 +1,10 @@
+## [1.111.3](https://github.com/HankHuang0516/EClaw/compare/v1.111.2...v1.111.3) (2026-03-18)
+
+
+### Bug Fixes
+
+* render avatar URL as image across all Card Holder pages ([#296](https://github.com/HankHuang0516/EClaw/issues/296)) ([74d186c](https://github.com/HankHuang0516/EClaw/commit/74d186c20de5f9ffdc4e3cb7674c5bf60f6aa135))
+
 ## [1.111.2](https://github.com/HankHuang0516/EClaw/compare/v1.111.1...v1.111.2) (2026-03-18)
 
 
