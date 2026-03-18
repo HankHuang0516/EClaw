@@ -50,8 +50,7 @@ object BottomNavHelper {
             navView?.setOnClickListener {
                 if (navItem != currentItem) {
                     val intent = Intent(activity, targetClass)
-                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                            Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    intent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
                     activity.startActivity(intent)
                     @Suppress("DEPRECATION")
                     activity.overridePendingTransition(0, 0)
