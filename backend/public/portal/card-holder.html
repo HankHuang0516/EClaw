@@ -8,11 +8,12 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦞</text></svg>">
     <link rel="stylesheet" href="shared/style.css">
     <style>
+        /* ── Toolbar ── */
         .page-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
             flex-wrap: wrap;
             gap: 10px;
         }
@@ -28,6 +29,21 @@
             align-items: center;
         }
 
+        .edit-toggle {
+            background: none;
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .edit-toggle:hover { border-color: var(--primary); color: var(--text); }
+        .edit-toggle.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        /* ── Search bar ── */
         .search-bar {
             display: flex;
             gap: 8px;
@@ -44,46 +60,12 @@
             outline: none;
             color: var(--text);
             font-size: 14px;
-            width: 160px;
+            width: 180px;
         }
 
         .search-bar input::placeholder { color: var(--text-muted); }
 
-        /* Section tabs */
-        .section-tabs {
-            display: flex;
-            gap: 0;
-            margin-bottom: 16px;
-            border-bottom: 2px solid var(--card-border);
-        }
-
-        .section-tab {
-            padding: 10px 18px;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-muted);
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
-            transition: color 0.2s, border-color 0.2s;
-        }
-
-        .section-tab:hover { color: var(--text); }
-        .section-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
-
-        .section-tab .tab-count {
-            font-size: 11px;
-            background: var(--input-bg);
-            padding: 1px 6px;
-            border-radius: 8px;
-            margin-left: 4px;
-        }
-
-        .section-tab.active .tab-count {
-            background: rgba(var(--primary-rgb), 0.15);
-            color: var(--primary);
-        }
-
+        /* ── Filter chips ── */
         .filter-bar {
             display: flex;
             gap: 8px;
@@ -106,48 +88,51 @@
         .filter-chip:hover { border-color: var(--primary); color: var(--text); }
         .filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
-        .card-count {
+        /* ── Section headers ── */
+        .section-header {
             font-size: 13px;
-            color: var(--text-muted);
-            margin-left: auto;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px 0 8px;
         }
 
-        /* Card grid */
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 14px;
-            margin-bottom: 20px;
-        }
-
-        .agent-card {
+        /* ── Card shared styles ── */
+        .card-item {
             background: var(--card);
             border: 1px solid var(--card-border);
             border-radius: var(--radius);
-            overflow: hidden;
+            padding: 14px;
+            margin-bottom: 8px;
             transition: border-color 0.2s, transform 0.15s;
             cursor: pointer;
-            position: relative;
         }
 
-        .agent-card:hover {
+        .card-item:hover {
             border-color: var(--primary);
-            transform: translateY(-2px);
+            transform: translateY(-1px);
         }
 
-        .agent-card.pinned { border-color: var(--accent-gold); }
-        .agent-card.blocked { opacity: 0.5; border-color: var(--danger); }
+        .card-item.pinned { border-color: var(--accent-gold); }
+        .card-item.blocked { opacity: 0.5; border-color: var(--danger); }
 
-        .agent-card-header {
+        .card-row {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 16px 16px 0;
         }
 
         .agent-avatar {
             font-size: 32px;
             line-height: 1;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--input-bg);
+            border-radius: 50%;
             flex-shrink: 0;
         }
 
@@ -165,10 +150,17 @@
         }
 
         .agent-code {
+            display: inline-block;
             font-size: 11px;
-            color: var(--text-muted);
-            font-family: 'Courier New', monospace;
+            color: var(--primary);
+            font-family: monospace;
+            background: rgba(var(--primary-rgb), 0.1);
+            padding: 1px 6px;
+            border-radius: 4px;
+            cursor: pointer;
         }
+
+        .agent-code:hover { background: rgba(var(--primary-rgb), 0.25); }
 
         .agent-status {
             width: 8px;
@@ -180,138 +172,114 @@
         .agent-status.online { background: var(--success); }
         .agent-status.offline { background: var(--text-muted); }
 
-        .pin-badge {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            font-size: 14px;
-        }
-
-        .block-badge {
-            position: absolute;
-            top: 8px;
-            right: 8px;
+        .card-info-line {
             font-size: 12px;
-            background: var(--danger);
-            color: #fff;
-            padding: 1px 6px;
-            border-radius: 4px;
-        }
-
-        .agent-card-body { padding: 10px 16px; }
-
-        .agent-desc {
-            font-size: 13px;
-            color: var(--text-secondary);
-            line-height: 1.4;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .agent-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            padding: 0 16px 8px;
-        }
-
-        .agent-tag {
-            font-size: 11px;
-            padding: 2px 8px;
-            border-radius: var(--radius-pill);
-            background: rgba(var(--primary-rgb), 0.15);
-            color: var(--primary);
-        }
-
-        .agent-card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 16px;
-            border-top: 1px solid var(--card-border);
-            font-size: 11px;
             color: var(--text-muted);
+            margin-top: 2px;
         }
 
-        .exchange-badge {
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: 600;
+        .card-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .exchange-badge.manual { background: rgba(var(--primary-rgb), 0.15); color: var(--primary); }
-        .exchange-badge.auto_speak { background: var(--status-active); color: var(--status-active-text); }
-        .exchange-badge.auto_a2a { background: var(--cat-feature-bg); color: var(--cat-feature-text); }
-        .exchange-badge.incoming { background: rgba(var(--primary-rgb), 0.10); color: var(--text-secondary); }
-
-        .interaction-count { font-weight: 500; }
-
-        /* My Cards section */
-        .my-cards-row {
+        /* ── Action buttons on Recent items ── */
+        .card-actions {
             display: flex;
-            gap: 14px;
-            margin-bottom: 20px;
-            overflow-x: auto;
-            padding-bottom: 4px;
-        }
-
-        .my-card-item {
-            background: var(--card);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius);
-            padding: 14px;
-            min-width: 200px;
+            gap: 4px;
             flex-shrink: 0;
-            text-align: center;
         }
 
-        .my-card-item .agent-avatar { font-size: 36px; display: block; margin-bottom: 6px; }
-        .my-card-item .agent-name { font-size: 14px; font-weight: 600; }
-        .my-card-item .agent-code { font-size: 11px; color: var(--text-muted); font-family: monospace; }
-
-        .copy-code-btn {
+        .card-action-btn {
             background: none;
             border: 1px solid var(--card-border);
             color: var(--text-muted);
-            padding: 2px 8px;
-            border-radius: 4px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .card-action-btn.add-friend:hover { border-color: var(--success); color: var(--success); }
+        .card-action-btn.block-btn:hover { border-color: var(--danger); color: var(--danger); }
+        .card-action-btn.block-btn.blocked { border-color: var(--danger); color: var(--danger); }
+
+        /* ── Edit mode ── */
+        .edit-section {
+            border-top: 1px solid var(--card-border);
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+
+        .edit-section-title {
             font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .edit-field {
+            margin-bottom: 6px;
+        }
+
+        .edit-field label {
+            display: block;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+
+        .edit-field input, .edit-field textarea {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            color: var(--text);
+            padding: 6px 10px;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+
+        .edit-field input:focus, .edit-field textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .edit-save-btn {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 6px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 6px;
+        }
+
+        .edit-save-btn:hover { background: var(--primary-hover); }
+
+        /* ── External card (search results) ── */
+        .add-card-btn {
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 600;
             cursor: pointer;
             margin-top: 4px;
         }
-        .copy-code-btn:hover { border-color: var(--primary); color: var(--primary); }
 
-        /* Recent section */
-        .recent-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
+        .add-card-btn:hover { text-decoration: underline; }
 
-        .recent-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 14px;
-            background: var(--card);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius);
-            cursor: pointer;
-            transition: border-color 0.2s;
-        }
-
-        .recent-item:hover { border-color: var(--primary); }
-
-        .recent-item .agent-avatar { font-size: 28px; }
-        .recent-item .agent-meta { flex: 1; min-width: 0; }
-        .recent-item .agent-name { font-size: 14px; }
-        .recent-item .time-ago { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
-
-        /* Detail modal */
+        /* ── Detail modal ── */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -348,7 +316,7 @@
             border-bottom: 1px solid var(--card-border);
         }
 
-        .modal-header .agent-avatar { font-size: 40px; }
+        .modal-header .agent-avatar { font-size: 40px; width: 56px; height: 56px; }
 
         .modal-header-info { flex: 1; }
 
@@ -367,6 +335,34 @@
         }
 
         .modal-close:hover { color: var(--text); }
+
+        /* Modal tabs (Details / Chat History) */
+        .modal-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .modal-tab {
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            background: var(--input-bg);
+            color: var(--text-secondary);
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .modal-tab.active {
+            background: var(--primary);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .modal-panel { display: none; }
+        .modal-panel.active { display: block; }
 
         .modal-section {
             padding: 16px 20px;
@@ -434,45 +430,9 @@
         .detail-label { font-size: 13px; color: var(--text-secondary); }
         .detail-value { font-size: 13px; font-weight: 500; }
 
-        .notes-textarea {
-            width: 100%;
-            background: var(--input-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-sm);
-            color: var(--text);
-            padding: 10px;
-            font-size: 13px;
-            resize: vertical;
-            min-height: 60px;
-        }
-
-        .notes-textarea:focus { outline: none; border-color: var(--primary); }
-
-        .category-input {
-            width: 100%;
-            background: var(--input-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-sm);
-            color: var(--text);
-            padding: 8px 10px;
-            font-size: 13px;
-        }
-
-        .category-input:focus { outline: none; border-color: var(--primary); }
-
-        .modal-actions {
-            display: flex;
-            gap: 8px;
-            padding: 16px 20px;
-            border-top: 1px solid var(--card-border);
-            flex-wrap: wrap;
-        }
-
-        .modal-actions .btn { flex: 1; min-width: 80px; }
-
         /* Chat history in modal */
         .chat-history-list {
-            max-height: 250px;
+            max-height: 300px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -488,7 +448,7 @@
         }
 
         .chat-msg.sent {
-            background: rgba(var(--primary-rgb), 0.15);
+            background: rgba(26, 42, 26, 0.8);
             align-self: flex-end;
         }
 
@@ -501,6 +461,7 @@
             font-size: 10px;
             color: var(--text-muted);
             margin-top: 2px;
+            text-align: right;
         }
 
         .chat-empty {
@@ -510,51 +471,33 @@
             padding: 20px;
         }
 
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            padding: 16px 20px;
+            border-top: 1px solid var(--card-border);
+            flex-wrap: wrap;
+        }
+
+        .modal-actions .btn { flex: 1; min-width: 80px; }
+
+        /* Empty state */
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
+            padding: 40px 20px;
             color: var(--text-muted);
         }
 
         .empty-state-icon { font-size: 48px; margin-bottom: 12px; }
         .empty-state-text { font-size: 15px; }
-        .empty-state-sub { font-size: 13px; margin-top: 6px; }
 
-        /* Add card form */
-        .add-form {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .add-form input {
-            background: var(--input-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-sm);
-            color: var(--text);
-            padding: 8px 12px;
-            font-size: 14px;
-            width: 140px;
-        }
-
-        .add-form input:focus { outline: none; border-color: var(--primary); }
-
-        .add-preview {
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        /* Unified search results */
-        .search-results-section {
-            margin-bottom: 16px;
-        }
-
+        /* Search results sections */
         .search-results-title {
             font-size: 12px;
             font-weight: 600;
             color: var(--text-muted);
             text-transform: uppercase;
-            margin-bottom: 8px;
+            margin: 16px 0 8px;
         }
 
         /* Toast */
@@ -575,15 +518,14 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         @media (max-width: 600px) {
-            .card-grid { grid-template-columns: 1fr; }
             .search-bar input { width: 120px; }
-            .section-tab { padding: 8px 12px; font-size: 13px; }
         }
     </style>
 </head>
 
 <body>
     <div class="container">
+        <!-- Toolbar -->
         <div class="page-header">
             <h2 data-i18n="cardholder_heading">Card Holder</h2>
             <div class="header-actions">
@@ -591,73 +533,22 @@
                     <span>&#x1F50D;</span>
                     <input type="text" id="searchInput" placeholder="Search cards..." data-i18n-placeholder="cardholder_search">
                 </div>
-                <button class="btn btn-primary btn-sm" onclick="showAddForm()" data-i18n="cardholder_add">+ Add</button>
+                <button class="edit-toggle" id="editToggle" onclick="toggleEditMode()" title="Edit Mode">&#x270F;</button>
             </div>
         </div>
 
-        <div id="addFormContainer" style="display:none; margin-bottom: 16px;">
-            <div class="add-form" style="background: var(--card); padding: 14px; border-radius: var(--radius); border: 1px solid var(--card-border);">
-                <input type="text" id="addCodeInput" maxlength="8" placeholder="Public code" data-i18n-placeholder="cardholder_code_placeholder">
-                <span id="addPreview" class="add-preview"></span>
-                <button class="btn btn-primary btn-sm" id="addBtn" onclick="addCard()" disabled data-i18n="common_add">Add</button>
-                <button class="btn btn-outline btn-sm" onclick="hideAddForm()" data-i18n="common_cancel">Cancel</button>
-            </div>
+        <!-- Filter chips -->
+        <div class="filter-bar" id="filterBar">
+            <span class="filter-chip active" data-filter="all" onclick="setFilter('all')" data-i18n="cardholder_filter_all">All</span>
+            <span class="filter-chip" data-filter="friends" onclick="setFilter('friends')" data-i18n="cardholder_filter_friends">Friends</span>
+            <span class="filter-chip" data-filter="pinned" onclick="setFilter('pinned')" data-i18n="cardholder_filter_pinned">Pinned</span>
         </div>
 
-        <!-- Section Tabs -->
-        <div class="section-tabs" id="sectionTabs">
-            <div class="section-tab active" data-section="my-cards" onclick="switchSection('my-cards')" data-i18n="cardholder_my_cards">My Cards</div>
-            <div class="section-tab" data-section="recent" onclick="switchSection('recent')" data-i18n="cardholder_recent">Recent</div>
-            <div class="section-tab" data-section="collected" onclick="switchSection('collected')" data-i18n="cardholder_collected">Collected<span class="tab-count" id="collectedCount">0</span></div>
-        </div>
+        <!-- Main scrollable content (3 sections) -->
+        <div id="mainContent"></div>
 
-        <!-- My Cards Section -->
-        <div id="sectionMyCards" class="section-content">
-            <div class="my-cards-row" id="myCardsRow"></div>
-            <div class="empty-state" id="myCardsEmpty" style="display:none;">
-                <div class="empty-state-icon">&#x1F4CB;</div>
-                <div class="empty-state-text" data-i18n="cardholder_my_cards_empty">No agent cards configured</div>
-                <div class="empty-state-sub" data-i18n="cardholder_my_cards_empty_sub">Set up agent cards on your entities to share them</div>
-            </div>
-        </div>
-
-        <!-- Recent Section -->
-        <div id="sectionRecent" class="section-content" style="display:none;">
-            <div class="recent-list" id="recentList"></div>
-            <div class="empty-state" id="recentEmpty" style="display:none;">
-                <div class="empty-state-icon">&#x1F552;</div>
-                <div class="empty-state-text" data-i18n="cardholder_recent_empty">No recent interactions</div>
-                <div class="empty-state-sub" data-i18n="cardholder_recent_empty_sub">Cards you interact with will appear here</div>
-            </div>
-        </div>
-
-        <!-- Collected Section -->
-        <div id="sectionCollected" class="section-content" style="display:none;">
-            <div class="filter-bar" id="filterBar">
-                <span class="filter-chip active" data-filter="all" onclick="setFilter('all')" data-i18n="cardholder_filter_all">All</span>
-                <span class="filter-chip" data-filter="pinned" onclick="setFilter('pinned')" data-i18n="cardholder_filter_pinned">Pinned</span>
-                <span class="filter-chip" data-filter="blocked" onclick="setFilter('blocked')" data-i18n="cardholder_filter_blocked">Blocked</span>
-                <span class="card-count" id="cardCount"></span>
-            </div>
-            <div class="card-grid" id="cardGrid"></div>
-            <div class="empty-state" id="emptyState" style="display:none;">
-                <div class="empty-state-icon">&#x1F4C7;</div>
-                <div class="empty-state-text" data-i18n="cardholder_empty">No cards yet</div>
-                <div class="empty-state-sub" data-i18n="cardholder_empty_sub">Add agents by their public code or chat cross-device to auto-collect</div>
-            </div>
-        </div>
-
-        <!-- Search Results Section (shown when searching) -->
-        <div id="searchResultsSection" style="display:none;">
-            <div class="search-results-section" id="savedResults">
-                <div class="search-results-title" data-i18n="cardholder_search_saved">Saved</div>
-                <div class="card-grid" id="savedGrid"></div>
-            </div>
-            <div class="search-results-section" id="externalResults" style="display:none;">
-                <div class="search-results-title" data-i18n="cardholder_search_external">Online Agents</div>
-                <div class="card-grid" id="externalGrid"></div>
-            </div>
-        </div>
+        <!-- Search results (shown when searching) -->
+        <div id="searchResults" style="display:none;"></div>
     </div>
 
     <!-- Detail Modal -->
@@ -675,14 +566,18 @@
     <script src="shared/footer.js"></script>
     <script src="shared/ai-chat.js"></script>
     <script>
-        let allCards = [];
+        // ── State ──
         let myCards = [];
         let recentCards = [];
+        let collectedCards = [];
         let currentFilter = 'all';
-        let currentSection = 'my-cards';
+        let editMode = false;
+        let isSearching = false;
+        let searchSaved = [];
+        let searchExternal = [];
         let searchDebounce = null;
-        let categories = new Set();
 
+        // ── Init ──
         window.addEventListener('DOMContentLoaded', async () => {
             renderNav('card-holder');
             if (typeof renderFooter === 'function') renderFooter();
@@ -693,16 +588,16 @@
             loadAllData();
         });
 
-        // ── Data ──
+        // ── Data loading ──
         async function loadAllData() {
-            await Promise.all([loadMyCards(), loadRecent(), loadCards()]);
+            await Promise.all([loadMyCards(), loadRecent(), loadCollected()]);
+            rebuildContent();
         }
 
         async function loadMyCards() {
             try {
                 const data = await apiCall('GET', `/api/contacts/my-cards?deviceId=${currentUser.deviceId}&deviceSecret=${currentUser.deviceSecret}`);
                 myCards = data.cards || [];
-                renderMyCards();
             } catch (err) {
                 console.error('Failed to load my cards:', err);
             }
@@ -712,204 +607,270 @@
             try {
                 const data = await apiCall('GET', `/api/contacts/recent?deviceId=${currentUser.deviceId}&deviceSecret=${currentUser.deviceSecret}&limit=20`);
                 recentCards = data.contacts || [];
-                renderRecent();
             } catch (err) {
                 console.error('Failed to load recent:', err);
             }
         }
 
-        async function loadCards() {
+        async function loadCollected() {
             try {
                 const data = await apiCall('GET', `/api/contacts?deviceId=${currentUser.deviceId}&includeBlocked=true`);
-                allCards = data.contacts || [];
-                categories.clear();
-                allCards.forEach(c => { if (c.category) categories.add(c.category); });
-                renderFilterBar();
-                renderCards();
-                document.getElementById('collectedCount').textContent = allCards.filter(c => !c.blocked).length;
+                collectedCards = data.contacts || [];
             } catch (err) {
-                console.error('Failed to load cards:', err);
+                console.error('Failed to load collected:', err);
             }
         }
 
-        // ── Section Tabs ──
-        function switchSection(section) {
-            currentSection = section;
-            document.querySelectorAll('.section-tab').forEach(el => {
-                el.classList.toggle('active', el.dataset.section === section);
-            });
-            document.getElementById('sectionMyCards').style.display = section === 'my-cards' ? '' : 'none';
-            document.getElementById('sectionRecent').style.display = section === 'recent' ? '' : 'none';
-            document.getElementById('sectionCollected').style.display = section === 'collected' ? '' : 'none';
-        }
-
-        // ── My Cards ──
-        function renderMyCards() {
-            const row = document.getElementById('myCardsRow');
-            const empty = document.getElementById('myCardsEmpty');
-            if (myCards.length === 0) {
-                row.innerHTML = '';
-                empty.style.display = 'block';
-                return;
-            }
-            empty.style.display = 'none';
-            row.innerHTML = myCards.map(c => {
-                const avatar = c.avatar || '\u{1F99E}';
-                return `
-                <div class="my-card-item">
-                    <span class="agent-avatar">${avatar}</span>
-                    <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
-                    <div class="agent-code">${escapeHtml(c.publicCode)}</div>
-                    <button class="copy-code-btn" onclick="copyCode('${escapeAttr(c.publicCode)}')">${t('cardholder_copy_code', 'Copy')}</button>
-                </div>`;
-            }).join('');
-        }
-
-        function copyCode(code) {
-            navigator.clipboard.writeText(code).then(() => showToast(t('common_copied', 'Copied')));
-        }
-
-        // ── Recent ──
-        function renderRecent() {
-            const list = document.getElementById('recentList');
-            const empty = document.getElementById('recentEmpty');
-            if (recentCards.length === 0) {
-                list.innerHTML = '';
-                empty.style.display = 'block';
-                return;
-            }
-            empty.style.display = 'none';
-            list.innerHTML = recentCards.map(c => {
-                const avatar = c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
-                const timeAgo = c.lastInteractedAt ? formatTimeAgo(c.lastInteractedAt) : '';
-                return `
-                <div class="recent-item" onclick="openDetail('${escapeAttr(c.publicCode)}')">
-                    <span class="agent-avatar">${avatar}</span>
-                    <div class="agent-meta">
-                        <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
-                        <div class="agent-code">${escapeHtml(c.publicCode)}</div>
-                    </div>
-                    <span class="agent-status ${c.online ? 'online' : 'offline'}"></span>
-                    <span class="time-ago">${timeAgo}</span>
-                </div>`;
-            }).join('');
-        }
-
-        function formatTimeAgo(ts) {
-            const diff = Date.now() - ts;
-            const mins = Math.floor(diff / 60000);
-            if (mins < 1) return t('cardholder_just_now', 'just now');
-            if (mins < 60) return `${mins}m`;
-            const hrs = Math.floor(mins / 60);
-            if (hrs < 24) return `${hrs}h`;
-            const days = Math.floor(hrs / 24);
-            return `${days}d`;
-        }
-
-        // ── Filters ──
+        // ── Filter ──
         function setFilter(filter) {
             currentFilter = filter;
             document.querySelectorAll('.filter-chip').forEach(el => {
                 el.classList.toggle('active', el.dataset.filter === filter);
             });
-            renderCards();
+            rebuildContent();
         }
 
-        function renderFilterBar() {
-            const bar = document.getElementById('filterBar');
-            const existing = bar.querySelectorAll('[data-filter-cat]');
-            existing.forEach(el => el.remove());
+        // ── Edit mode ──
+        function toggleEditMode() {
+            editMode = !editMode;
+            document.getElementById('editToggle').classList.toggle('active', editMode);
+            rebuildContent();
+        }
 
-            categories.forEach(cat => {
-                const chip = document.createElement('span');
-                chip.className = 'filter-chip' + (currentFilter === `cat:${cat}` ? ' active' : '');
-                chip.dataset.filter = `cat:${cat}`;
-                chip.dataset.filterCat = cat;
-                chip.textContent = cat;
-                chip.onclick = () => setFilter(`cat:${cat}`);
-                bar.insertBefore(chip, document.getElementById('cardCount'));
+        // ── Filter logic (matches Android) ──
+        function applyContactFilter(contacts) {
+            const sorted = [...contacts].sort((a, b) => {
+                if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+                const aTime = a.lastInteractedAt || a.addedAt || 0;
+                const bTime = b.lastInteractedAt || b.addedAt || 0;
+                return bTime - aTime;
             });
+            switch (currentFilter) {
+                case 'friends': return sorted.filter(c => !c.blocked && c.exchangeType);
+                case 'pinned': return sorted.filter(c => c.pinned);
+                default: return sorted;
+            }
         }
 
-        // ── Render Collected ──
-        function renderCards() {
-            const grid = document.getElementById('cardGrid');
-            const empty = document.getElementById('emptyState');
-            const countEl = document.getElementById('cardCount');
-
-            let filtered = allCards;
-
-            if (currentFilter === 'pinned') {
-                filtered = filtered.filter(c => c.pinned);
-            } else if (currentFilter === 'blocked') {
-                filtered = filtered.filter(c => c.blocked);
-            } else if (currentFilter.startsWith('cat:')) {
-                const cat = currentFilter.slice(4);
-                filtered = filtered.filter(c => c.category === cat);
-            } else {
-                filtered = filtered.filter(c => !c.blocked);
-            }
-
-            countEl.textContent = `${filtered.length} / ${allCards.length}`;
-
-            if (filtered.length === 0) {
-                grid.innerHTML = '';
-                empty.style.display = 'block';
-                if (currentFilter === 'blocked') {
-                    empty.querySelector('.empty-state-text').textContent = t('cardholder_no_blocked', 'No blocked cards');
-                    empty.querySelector('.empty-state-sub').textContent = '';
-                } else if (allCards.length > 0) {
-                    empty.querySelector('.empty-state-text').textContent = t('cardholder_no_match', 'No matching cards');
-                    empty.querySelector('.empty-state-sub').textContent = '';
-                }
+        // ── Main render ──
+        function rebuildContent() {
+            if (isSearching) {
+                document.getElementById('mainContent').style.display = 'none';
+                document.getElementById('searchResults').style.display = '';
+                renderSearchResults();
                 return;
             }
-            empty.style.display = 'none';
 
-            grid.innerHTML = filtered.map(c => renderCardHtml(c)).join('');
+            document.getElementById('mainContent').style.display = '';
+            document.getElementById('searchResults').style.display = 'none';
+
+            const container = document.getElementById('mainContent');
+            let html = '';
+
+            // Section 1: My Cards
+            if (myCards.length > 0) {
+                html += `<div class="section-header">${t('cardholder_my_cards', 'My Cards')}</div>`;
+                html += myCards.map(c => renderMyCardHtml(c)).join('');
+            }
+
+            // Section 2: Recent
+            const filteredRecent = applyContactFilter(recentCards);
+            if (filteredRecent.length > 0) {
+                html += `<div class="section-header">${t('cardholder_recent', 'Recent')}</div>`;
+                html += filteredRecent.map(c => renderRecentHtml(c)).join('');
+            }
+
+            // Section 3: Collected
+            const filteredCollected = applyContactFilter(collectedCards);
+            if (filteredCollected.length > 0) {
+                html += `<div class="section-header">${t('cardholder_collected', 'Collected')}</div>`;
+                html += filteredCollected.map(c => renderCollectedHtml(c)).join('');
+            }
+
+            // Empty state
+            if (myCards.length === 0 && filteredRecent.length === 0 && filteredCollected.length === 0) {
+                html = `<div class="empty-state">
+                    <div class="empty-state-icon">&#x1F4C7;</div>
+                    <div class="empty-state-text">${t('cardholder_empty', 'No cards yet')}</div>
+                </div>`;
+            }
+
+            container.innerHTML = html;
         }
 
-        function renderCardHtml(c) {
-            const snap = c.cardSnapshot || {};
-            const avatar = c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
-            const desc = snap.description || '';
-            const tags = (snap.tags || []).slice(0, 4);
-            const exchangeLabel = c.exchangeType || 'manual';
-            const dateStr = c.addedAt ? new Date(c.addedAt).toLocaleDateString() : '';
-
-            return `
-            <div class="agent-card ${c.pinned ? 'pinned' : ''} ${c.blocked ? 'blocked' : ''}" onclick="openDetail('${escapeAttr(c.publicCode)}')">
-                ${c.pinned && !c.blocked ? '<span class="pin-badge">&#x1F4CC;</span>' : ''}
-                ${c.blocked ? '<span class="block-badge">' + t('cardholder_blocked_label', 'Blocked') + '</span>' : ''}
-                <div class="agent-card-header">
+        // ── My Card rendering ──
+        function renderMyCardHtml(c) {
+            const avatar = c.avatar || '\u{1F99E}';
+            const ac = c.agentCard || {};
+            let html = `<div class="card-item" onclick="showMyCardDetail('${escapeAttr(c.publicCode)}')">
+                <div class="card-row">
                     <span class="agent-avatar">${avatar}</span>
                     <div class="agent-meta">
                         <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
-                        <div class="agent-code">${escapeHtml(c.publicCode)}</div>
+                        <span class="agent-code" onclick="event.stopPropagation(); copyCode('${escapeAttr(c.publicCode)}')" title="Click to copy">${escapeHtml(c.publicCode)}</span>
                     </div>
-                    <span class="agent-status ${c.online ? 'online' : 'offline'}" title="${c.online ? 'Online' : 'Offline'}"></span>
-                </div>
-                ${desc ? `<div class="agent-card-body"><div class="agent-desc">${escapeHtml(desc)}</div></div>` : ''}
-                ${tags.length ? `<div class="agent-tags">${tags.map(tg => `<span class="agent-tag">${escapeHtml(tg)}</span>`).join('')}</div>` : ''}
-                <div class="agent-card-footer">
-                    <span class="exchange-badge ${exchangeLabel}">${exchangeLabel.replace('_', ' ')}</span>
-                    ${c.interactionCount ? `<span class="interaction-count">${c.interactionCount} interactions</span>` : ''}
-                    <span>${dateStr}</span>
-                </div>
-            </div>`;
+                </div>`;
+
+            // Contact info lines
+            if (c.contactEmail || ac.contactEmail) {
+                html += `<div class="card-info-line">\u2709 ${escapeHtml(c.contactEmail || ac.contactEmail)}</div>`;
+            }
+            if (c.website || ac.website) {
+                html += `<div class="card-info-line">\uD83C\uDF10 ${escapeHtml(c.website || ac.website)}</div>`;
+            }
+            if (c.description || ac.description) {
+                html += `<div class="card-desc">${escapeHtml(c.description || ac.description)}</div>`;
+            }
+
+            // Edit mode inline fields
+            if (editMode && c.publicCode) {
+                html += `<div class="edit-section" onclick="event.stopPropagation()">
+                    <div class="edit-section-title">${t('cardholder_edit_agent_card', 'Edit Agent Card')}</div>
+                    <div class="edit-field">
+                        <label>${t('cardholder_description', 'Description')}</label>
+                        <input type="text" id="edit-desc-${c.publicCode}" value="${escapeAttr(ac.description || '')}" maxlength="500">
+                    </div>
+                    <div class="edit-field">
+                        <label>Email</label>
+                        <input type="text" id="edit-email-${c.publicCode}" value="${escapeAttr(ac.contactEmail || c.contactEmail || '')}" maxlength="255">
+                    </div>
+                    <div class="edit-field">
+                        <label>Website</label>
+                        <input type="text" id="edit-web-${c.publicCode}" value="${escapeAttr(ac.website || c.website || '')}" maxlength="500">
+                    </div>
+                    <button class="edit-save-btn" onclick="saveAgentCard('${escapeAttr(c.publicCode)}')">${t('common_save', 'Save')}</button>
+                </div>`;
+            }
+
+            html += '</div>';
+            return html;
         }
 
-        // ── Detail Modal ──
-        function openDetail(publicCode) {
-            const card = allCards.find(c => c.publicCode === publicCode)
-                      || recentCards.find(c => c.publicCode === publicCode);
+        // ── Recent rendering ──
+        function renderRecentHtml(c) {
+            const avatar = c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
+            const snap = c.cardSnapshot || {};
+            let html = `<div class="card-item" onclick="openDetail('${escapeAttr(c.publicCode)}')">
+                <div class="card-row">
+                    <span class="agent-avatar">${avatar}</span>
+                    <div class="agent-meta">
+                        <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
+                        <span class="agent-code" onclick="event.stopPropagation(); copyCode('${escapeAttr(c.publicCode)}')">${escapeHtml(c.publicCode)}</span>
+                    </div>
+                    <span class="agent-status ${c.online ? 'online' : 'offline'}"></span>
+                    <div class="card-actions" onclick="event.stopPropagation()">
+                        <button class="card-action-btn add-friend" onclick="confirmAddFriend('${escapeAttr(c.publicCode)}', '${escapeAttr(c.name || c.publicCode)}')" title="${t('cardholder_add_friend', 'Add Friend')}">&#x2B;</button>
+                        <button class="card-action-btn block-btn ${c.blocked ? 'blocked' : ''}" onclick="toggleBlockFromList('${escapeAttr(c.publicCode)}', ${!!c.blocked})" title="${c.blocked ? t('cardholder_unblock', 'Unblock') : t('cardholder_block', 'Block')}">&#x1F6AB;</button>
+                    </div>
+                </div>`;
+
+            if (snap.description) html += `<div class="card-desc">${escapeHtml(snap.description)}</div>`;
+            if (snap.contactEmail) html += `<div class="card-info-line">\u2709 ${escapeHtml(snap.contactEmail)}</div>`;
+            if (snap.website) html += `<div class="card-info-line">\uD83C\uDF10 ${escapeHtml(snap.website)}</div>`;
+
+            html += '</div>';
+            return html;
+        }
+
+        // ── Collected rendering ──
+        function renderCollectedHtml(c) {
+            const avatar = c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
+            const snap = c.cardSnapshot || {};
+            let html = `<div class="card-item ${c.pinned ? 'pinned' : ''} ${c.blocked ? 'blocked' : ''}" onclick="openDetail('${escapeAttr(c.publicCode)}')">
+                <div class="card-row">
+                    <span class="agent-avatar">${avatar}</span>
+                    <div class="agent-meta">
+                        <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
+                        <span class="agent-code" onclick="event.stopPropagation(); copyCode('${escapeAttr(c.publicCode)}')">${escapeHtml(c.publicCode)}</span>
+                    </div>
+                    <span class="agent-status ${c.online ? 'online' : 'offline'}"></span>
+                </div>`;
+
+            if (snap.description) html += `<div class="card-desc">${escapeHtml(snap.description)}</div>`;
+            if (snap.contactEmail) html += `<div class="card-info-line">\u2709 ${escapeHtml(snap.contactEmail)}</div>`;
+            if (snap.website) html += `<div class="card-info-line">\uD83C\uDF10 ${escapeHtml(snap.website)}</div>`;
+
+            html += '</div>';
+            return html;
+        }
+
+        // ── Search ──
+        document.getElementById('searchInput').addEventListener('input', function() {
+            clearTimeout(searchDebounce);
+            const query = this.value.trim();
+            if (!query) {
+                isSearching = false;
+                searchSaved = [];
+                searchExternal = [];
+                rebuildContent();
+                return;
+            }
+            if (query.length < 2) return;
+            searchDebounce = setTimeout(() => performSearch(query), 300);
+        });
+
+        async function performSearch(query) {
+            try {
+                const data = await apiCall('GET', `/api/contacts/search?deviceId=${currentUser.deviceId}&q=${encodeURIComponent(query)}`);
+                searchSaved = data.saved || data.cards || [];
+                searchExternal = data.external || [];
+                isSearching = true;
+                rebuildContent();
+            } catch (err) {
+                console.error('Search error:', err);
+            }
+        }
+
+        function renderSearchResults() {
+            const container = document.getElementById('searchResults');
+            let html = '';
+
+            if (searchSaved.length > 0) {
+                html += `<div class="search-results-title">${t('cardholder_search_saved', 'Saved')}</div>`;
+                html += searchSaved.map(c => renderCollectedHtml(c)).join('');
+            }
+
+            if (searchExternal.length > 0) {
+                html += `<div class="search-results-title">${t('cardholder_search_external', 'Online Agents')}</div>`;
+                html += searchExternal.map(c => {
+                    const avatar = c.avatar || '\u{1F99E}';
+                    const snap = c.agentCard || {};
+                    return `<div class="card-item">
+                        <div class="card-row">
+                            <span class="agent-avatar">${avatar}</span>
+                            <div class="agent-meta">
+                                <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
+                                <span class="agent-code">${escapeHtml(c.publicCode)}</span>
+                            </div>
+                            <span class="agent-status online"></span>
+                        </div>
+                        ${snap.description ? `<div class="card-desc">${escapeHtml(snap.description)}</div>` : ''}
+                        <div class="add-card-btn" onclick="addCard('${escapeAttr(c.publicCode)}')">+ ${t('cardholder_add_friend', 'Add')}</div>
+                    </div>`;
+                }).join('');
+            }
+
+            if (searchSaved.length === 0 && searchExternal.length === 0) {
+                html = `<div class="empty-state">
+                    <div class="empty-state-icon">&#x1F50D;</div>
+                    <div class="empty-state-text">${t('cardholder_no_match', 'No matching cards')}</div>
+                </div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // ── My Card Detail dialog ──
+        function showMyCardDetail(publicCode) {
+            if (editMode) return; // Don't open detail in edit mode
+            const card = myCards.find(c => c.publicCode === publicCode);
             if (!card) return;
 
-            const snap = card.cardSnapshot || {};
-            const avatar = card.avatar || (card.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
-            const caps = snap.capabilities || [];
-            const protocols = snap.protocols || [];
-            const tags = snap.tags || [];
+            const ac = card.agentCard || {};
+            const avatar = card.avatar || '\u{1F99E}';
+            const caps = ac.capabilities || [];
+            const tags = ac.tags || [];
+            const protocols = ac.protocols || [];
 
             const content = document.getElementById('detailContent');
             content.innerHTML = `
@@ -917,78 +878,136 @@
                     <span class="agent-avatar">${avatar}</span>
                     <div class="modal-header-info">
                         <h3>${escapeHtml(card.name || card.publicCode)}</h3>
-                        <span class="agent-code">${escapeHtml(card.publicCode)}</span>
-                        <span class="agent-status ${card.online ? 'online' : 'offline'}" style="display:inline-block; margin-left:8px; vertical-align:middle;"></span>
-                        ${card.blocked ? `<span class="block-badge" style="display:inline-block; margin-left:8px; vertical-align:middle;">${t('cardholder_blocked_label', 'Blocked')}</span>` : ''}
+                        <span class="agent-code" onclick="copyCode('${escapeAttr(card.publicCode)}')">${escapeHtml(card.publicCode)}</span>
                     </div>
                     <button class="modal-close" onclick="closeDetail()">&#x2715;</button>
                 </div>
 
-                ${snap.description ? `
-                <div class="modal-section">
-                    <div class="modal-section-title" data-i18n="cardholder_description">Description</div>
-                    <div style="font-size:14px; line-height:1.5; color:var(--text-secondary);">${escapeHtml(snap.description)}</div>
+                ${ac.description ? `<div class="modal-section">
+                    <div class="modal-section-title">${t('cardholder_description', 'Description')}</div>
+                    <div style="font-size:14px; line-height:1.5; color:var(--text-secondary);">${escapeHtml(ac.description)}</div>
                 </div>` : ''}
 
-                ${caps.length ? `
-                <div class="modal-section">
-                    <div class="modal-section-title" data-i18n="cardholder_capabilities">Capabilities</div>
+                ${ac.contactEmail ? `<div class="modal-section">
+                    <div class="modal-section-title">Email</div>
+                    <div style="font-size:14px;"><a href="mailto:${escapeAttr(ac.contactEmail)}" style="color:var(--primary);">${escapeHtml(ac.contactEmail)}</a></div>
+                </div>` : ''}
+
+                ${ac.website ? `<div class="modal-section">
+                    <div class="modal-section-title">Website</div>
+                    <div style="font-size:14px;"><a href="${escapeAttr(ac.website)}" target="_blank" rel="noopener" style="color:var(--primary);">${escapeHtml(ac.website)}</a></div>
+                </div>` : ''}
+
+                ${caps.length ? `<div class="modal-section">
+                    <div class="modal-section-title">${t('cardholder_capabilities', 'Capabilities')}</div>
                     <div class="cap-list">
                         ${caps.map(cp => `<div class="cap-item"><div class="cap-name">${escapeHtml(cp.name)}</div>${cp.description ? `<div class="cap-desc">${escapeHtml(cp.description)}</div>` : ''}</div>`).join('')}
                     </div>
                 </div>` : ''}
 
-                ${protocols.length ? `
-                <div class="modal-section">
-                    <div class="modal-section-title" data-i18n="cardholder_protocols">Protocols</div>
-                    <div class="protocol-list">${protocols.map(p => `<span class="protocol-badge">${escapeHtml(p)}</span>`).join('')}</div>
-                </div>` : ''}
-
-                ${tags.length ? `
-                <div class="modal-section">
-                    <div class="modal-section-title" data-i18n="cardholder_tags">Tags</div>
+                ${tags.length ? `<div class="modal-section">
+                    <div class="modal-section-title">${t('cardholder_tags', 'Tags')}</div>
                     <div class="tag-list">${tags.map(tg => `<span class="tag-badge">#${escapeHtml(tg)}</span>`).join('')}</div>
                 </div>` : ''}
 
-                <div class="modal-section">
-                    <div class="modal-section-title" data-i18n="cardholder_details">Details</div>
-                    <div class="detail-row">
-                        <span class="detail-label" data-i18n="cardholder_exchange_type">Exchange Type</span>
-                        <span class="detail-value"><span class="exchange-badge ${card.exchangeType || 'manual'}">${(card.exchangeType || 'manual').replace('_', ' ')}</span></span>
+                ${protocols.length ? `<div class="modal-section">
+                    <div class="modal-section-title">${t('cardholder_protocols', 'Protocols')}</div>
+                    <div class="protocol-list">${protocols.map(p => `<span class="protocol-badge">${escapeHtml(p)}</span>`).join('')}</div>
+                </div>` : ''}
+
+                <div class="modal-actions">
+                    <button class="btn btn-primary btn-sm" onclick="closeDetail()">${t('common_ok', 'OK')}</button>
+                </div>`;
+
+            document.getElementById('detailModal').classList.add('open');
+        }
+
+        // ── Contact Detail dialog (with Details / Chat History tabs) ──
+        function openDetail(publicCode) {
+            const card = collectedCards.find(c => c.publicCode === publicCode)
+                      || recentCards.find(c => c.publicCode === publicCode);
+            if (!card) return;
+
+            const snap = card.cardSnapshot || {};
+            const avatar = card.avatar || (card.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
+            const caps = snap.capabilities || [];
+            const tags = snap.tags || [];
+            const protocols = snap.protocols || [];
+
+            const content = document.getElementById('detailContent');
+            content.innerHTML = `
+                <div class="modal-header">
+                    <span class="agent-avatar">${avatar}</span>
+                    <div class="modal-header-info">
+                        <h3>${escapeHtml(card.name || card.publicCode)}</h3>
+                        <span class="agent-code" onclick="copyCode('${escapeAttr(card.publicCode)}')">${escapeHtml(card.publicCode)}</span>
+                        <span class="agent-status ${card.online ? 'online' : 'offline'}" style="display:inline-block; margin-left:8px; vertical-align:middle;"></span>
+                        ${card.blocked ? `<span style="display:inline-block; margin-left:8px; font-size:12px; background:var(--danger); color:#fff; padding:1px 6px; border-radius:4px;">${t('cardholder_blocked_label', 'Blocked')}</span>` : ''}
                     </div>
-                    <div class="detail-row">
-                        <span class="detail-label" data-i18n="cardholder_added">Added</span>
-                        <span class="detail-value">${card.addedAt ? new Date(card.addedAt).toLocaleString() : '-'}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label" data-i18n="cardholder_refreshed">Last Refreshed</span>
-                        <span class="detail-value">${card.lastRefreshed ? new Date(card.lastRefreshed).toLocaleString() : '-'}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label" data-i18n="cardholder_interactions">Interactions</span>
-                        <span class="detail-value">${card.interactionCount || 0}</span>
-                    </div>
-                    ${card.lastInteractedAt ? `<div class="detail-row"><span class="detail-label" data-i18n="cardholder_last_interaction">Last Interaction</span><span class="detail-value">${new Date(card.lastInteractedAt).toLocaleString()}</span></div>` : ''}
-                    ${snap.version ? `<div class="detail-row"><span class="detail-label">Version</span><span class="detail-value">${escapeHtml(snap.version)}</span></div>` : ''}
-                    ${snap.website ? `<div class="detail-row"><span class="detail-label">Website</span><span class="detail-value"><a href="${escapeAttr(snap.website)}" target="_blank" rel="noopener">${escapeHtml(snap.website)}</a></span></div>` : ''}
-                    ${snap.contactEmail ? `<div class="detail-row"><span class="detail-label">Email</span><span class="detail-value"><a href="mailto:${escapeAttr(snap.contactEmail)}">${escapeHtml(snap.contactEmail)}</a></span></div>` : ''}
+                    <button class="modal-close" onclick="closeDetail()">&#x2715;</button>
                 </div>
 
-                <div class="modal-section">
-                    <div class="modal-section-title" data-i18n="cardholder_chat_history">Chat History</div>
-                    <div class="chat-history-list" id="chatHistoryList">
-                        <div class="chat-empty">${t('common_loading', 'Loading...')}</div>
+                <div class="modal-tabs">
+                    <button class="modal-tab active" onclick="switchModalTab(this, 'detailsPanel')">Details</button>
+                    <button class="modal-tab" onclick="switchModalTab(this, 'chatPanel'); loadChatHistory('${escapeAttr(card.publicCode)}')">Chat History</button>
+                </div>
+
+                <div id="detailsPanel" class="modal-panel active">
+                    ${snap.description ? `<div class="modal-section">
+                        <div class="modal-section-title">${t('cardholder_description', 'Description')}</div>
+                        <div style="font-size:14px; line-height:1.5; color:var(--text-secondary);">${escapeHtml(snap.description)}</div>
+                    </div>` : ''}
+
+                    ${snap.contactEmail ? `<div class="modal-section">
+                        <div class="modal-section-title">Email</div>
+                        <div style="font-size:14px;"><a href="mailto:${escapeAttr(snap.contactEmail)}" style="color:var(--primary);">${escapeHtml(snap.contactEmail)}</a></div>
+                    </div>` : ''}
+
+                    ${snap.website ? `<div class="modal-section">
+                        <div class="modal-section-title">Website</div>
+                        <div style="font-size:14px;"><a href="${escapeAttr(snap.website)}" target="_blank" rel="noopener" style="color:var(--primary);">${escapeHtml(snap.website)}</a></div>
+                    </div>` : ''}
+
+                    ${caps.length ? `<div class="modal-section">
+                        <div class="modal-section-title">${t('cardholder_capabilities', 'Capabilities')}</div>
+                        <div class="cap-list">
+                            ${caps.map(cp => `<div class="cap-item"><div class="cap-name">${escapeHtml(cp.name)}</div>${cp.description ? `<div class="cap-desc">${escapeHtml(cp.description)}</div>` : ''}</div>`).join('')}
+                        </div>
+                    </div>` : ''}
+
+                    ${tags.length ? `<div class="modal-section">
+                        <div class="modal-section-title">${t('cardholder_tags', 'Tags')}</div>
+                        <div class="tag-list">${tags.map(tg => `<span class="tag-badge">#${escapeHtml(tg)}</span>`).join('')}</div>
+                    </div>` : ''}
+
+                    ${protocols.length ? `<div class="modal-section">
+                        <div class="modal-section-title">${t('cardholder_protocols', 'Protocols')}</div>
+                        <div class="protocol-list">${protocols.map(p => `<span class="protocol-badge">${escapeHtml(p)}</span>`).join('')}</div>
+                    </div>` : ''}
+
+                    <div class="modal-section">
+                        <div class="modal-section-title">${t('cardholder_details', 'Details')}</div>
+                        <div class="detail-row">
+                            <span class="detail-label">${t('cardholder_exchange_type', 'Exchange Type')}</span>
+                            <span class="detail-value">${(card.exchangeType || 'manual').replace('_', ' ')}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">${t('cardholder_interactions', 'Interactions')}</span>
+                            <span class="detail-value">${card.interactionCount || 0}</span>
+                        </div>
+                        ${card.addedAt ? `<div class="detail-row">
+                            <span class="detail-label">${t('cardholder_added', 'Added')}</span>
+                            <span class="detail-value">${new Date(card.addedAt).toLocaleDateString()}</span>
+                        </div>` : ''}
                     </div>
                 </div>
 
-                <div class="modal-section">
-                    <div class="modal-section-title" data-i18n="cardholder_notes">Notes</div>
-                    <textarea class="notes-textarea" id="detailNotes" maxlength="500" placeholder="${t('cardholder_notes_placeholder', 'Add your notes...')}">${escapeHtml(card.notes || '')}</textarea>
-                </div>
-
-                <div class="modal-section">
-                    <div class="modal-section-title" data-i18n="cardholder_category">Category</div>
-                    <input class="category-input" id="detailCategory" maxlength="50" placeholder="${t('cardholder_category_placeholder', 'e.g. tools, social, dev')}" value="${escapeAttr(card.category || '')}">
+                <div id="chatPanel" class="modal-panel">
+                    <div class="modal-section">
+                        <div class="chat-history-list" id="chatHistoryList">
+                            <div class="chat-empty">${t('common_loading', 'Loading...')}</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="modal-actions">
@@ -1001,17 +1020,19 @@
                     <button class="btn btn-primary btn-sm" onclick="refreshCard('${escapeAttr(card.publicCode)}')">
                         ${t('cardholder_refresh', 'Refresh')}
                     </button>
-                    <button class="btn btn-primary btn-sm" onclick="saveNotes('${escapeAttr(card.publicCode)}')">
-                        ${t('common_save', 'Save')}
-                    </button>
                     <button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger);" onclick="removeCard('${escapeAttr(card.publicCode)}')">
                         ${t('common_remove', 'Remove')}
                     </button>
-                </div>
-            `;
+                </div>`;
 
             document.getElementById('detailModal').classList.add('open');
-            loadChatHistory(card.publicCode);
+        }
+
+        function switchModalTab(tabEl, panelId) {
+            tabEl.parentElement.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+            tabEl.classList.add('active');
+            tabEl.closest('.modal-card').querySelectorAll('.modal-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(panelId).classList.add('active');
         }
 
         function closeDetail() {
@@ -1042,28 +1063,76 @@
         }
 
         // ── Actions ──
-        async function saveNotes(publicCode) {
-            const notes = document.getElementById('detailNotes').value;
-            const category = document.getElementById('detailCategory').value.trim();
+        async function saveAgentCard(publicCode) {
+            const desc = document.getElementById(`edit-desc-${publicCode}`).value.trim();
+            const email = document.getElementById(`edit-email-${publicCode}`).value.trim();
+            const website = document.getElementById(`edit-web-${publicCode}`).value.trim();
+            try {
+                await apiCall('PUT', '/api/entity/agent-card', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    publicCode,
+                    description: desc,
+                    contactEmail: email || undefined,
+                    website: website || undefined
+                });
+                showToast(t('common_saved', 'Saved'));
+                await loadMyCards();
+                rebuildContent();
+            } catch (err) {
+                showToast(err.message || 'Error', 'error');
+            }
+        }
+
+        function confirmAddFriend(publicCode, name) {
+            if (confirm(`${t('cardholder_add_friend', 'Add Friend')}: ${name}?`)) {
+                addCard(publicCode);
+            }
+        }
+
+        async function addCard(publicCode) {
+            try {
+                const data = await apiCall('POST', '/api/contacts', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    publicCode
+                });
+                if (data.success) {
+                    collectedCards.unshift(data.contact);
+                    showToast(t('cardholder_added_ok', 'Card added'));
+                    rebuildContent();
+                }
+            } catch (err) {
+                if (err.status === 409) {
+                    showToast(t('cardholder_duplicate', 'Already in card holder'), 'error');
+                } else if (err.status === 400 && err.message && err.message.includes('own')) {
+                    showToast(t('cardholder_self', 'Cannot add your own entity'), 'error');
+                } else {
+                    showToast(err.message || t('common_error', 'Error'), 'error');
+                }
+            }
+        }
+
+        async function toggleBlockFromList(publicCode, currentlyBlocked) {
+            if (!currentlyBlocked && !confirm(t('cardholder_block_confirm', 'Block this agent? They will not be able to send you messages.'))) return;
             try {
                 await apiCall('PATCH', `/api/contacts/${publicCode}`, {
                     deviceId: currentUser.deviceId,
                     deviceSecret: currentUser.deviceSecret,
-                    notes,
-                    category: category || null
+                    blocked: !currentlyBlocked
                 });
-                const card = allCards.find(c => c.publicCode === publicCode);
-                if (card) { card.notes = notes; card.category = category || null; }
-                if (category) categories.add(category);
-                renderFilterBar();
-                showToast(t('common_saved', 'Saved'));
+                showToast(!currentlyBlocked ? t('cardholder_blocked_ok', 'Agent blocked') : t('cardholder_unblocked_ok', 'Agent unblocked'));
+                // Update local state
+                const c = recentCards.find(r => r.publicCode === publicCode) || collectedCards.find(r => r.publicCode === publicCode);
+                if (c) c.blocked = !currentlyBlocked;
+                rebuildContent();
             } catch (err) {
-                showToast(err.message, 'error');
+                showToast(err.message || 'Error', 'error');
             }
         }
 
         async function togglePin(publicCode) {
-            const card = allCards.find(c => c.publicCode === publicCode);
+            const card = collectedCards.find(c => c.publicCode === publicCode);
             if (!card) return;
             try {
                 await apiCall('PATCH', `/api/contacts/${publicCode}`, {
@@ -1072,7 +1141,7 @@
                     pinned: !card.pinned
                 });
                 card.pinned = !card.pinned;
-                renderCards();
+                rebuildContent();
                 openDetail(publicCode);
                 showToast(card.pinned ? t('cardholder_pinned', 'Pinned') : t('cardholder_unpinned', 'Unpinned'));
             } catch (err) {
@@ -1081,10 +1150,10 @@
         }
 
         async function toggleBlock(publicCode) {
-            const card = allCards.find(c => c.publicCode === publicCode);
+            const card = collectedCards.find(c => c.publicCode === publicCode);
             if (!card) return;
             const newBlocked = !card.blocked;
-            if (newBlocked && !confirm(t('cardholder_block_confirm', 'Block this agent? They will not be able to send you messages.'))) return;
+            if (newBlocked && !confirm(t('cardholder_block_confirm', 'Block this agent?'))) return;
             try {
                 await apiCall('PATCH', `/api/contacts/${publicCode}`, {
                     deviceId: currentUser.deviceId,
@@ -1092,8 +1161,7 @@
                     blocked: newBlocked
                 });
                 card.blocked = newBlocked;
-                renderCards();
-                document.getElementById('collectedCount').textContent = allCards.filter(c => !c.blocked).length;
+                rebuildContent();
                 openDetail(publicCode);
                 showToast(newBlocked ? t('cardholder_blocked_ok', 'Agent blocked') : t('cardholder_unblocked_ok', 'Agent unblocked'));
             } catch (err) {
@@ -1107,12 +1175,12 @@
                     deviceId: currentUser.deviceId,
                     deviceSecret: currentUser.deviceSecret
                 });
-                const card = allCards.find(c => c.publicCode === publicCode);
+                const card = collectedCards.find(c => c.publicCode === publicCode);
                 if (card && data.card) {
                     card.cardSnapshot = data.card.cardSnapshot;
                     card.lastRefreshed = data.card.lastRefreshed;
                 }
-                renderCards();
+                rebuildContent();
                 openDetail(publicCode);
                 showToast(t('cardholder_refreshed_ok', 'Card refreshed'));
             } catch (err) {
@@ -1121,7 +1189,7 @@
         }
 
         async function removeCard(publicCode) {
-            const card = allCards.find(c => c.publicCode === publicCode);
+            const card = collectedCards.find(c => c.publicCode === publicCode);
             const name = card ? (card.name || card.publicCode) : publicCode;
             if (!confirm(t('cardholder_remove_confirm', `Remove ${name} from card holder?`).replace('{name}', name))) return;
             try {
@@ -1130,180 +1198,17 @@
                     deviceSecret: currentUser.deviceSecret,
                     publicCode
                 });
-                allCards = allCards.filter(c => c.publicCode !== publicCode);
+                collectedCards = collectedCards.filter(c => c.publicCode !== publicCode);
                 closeDetail();
-                renderCards();
-                document.getElementById('collectedCount').textContent = allCards.filter(c => !c.blocked).length;
+                rebuildContent();
                 showToast(t('cardholder_removed', 'Card removed'));
             } catch (err) {
                 showToast(err.message, 'error');
             }
         }
 
-        // ── Add card ──
-        let lookupDebounce = null;
-        function showAddForm() {
-            document.getElementById('addFormContainer').style.display = 'block';
-            document.getElementById('addCodeInput').focus();
-        }
-
-        function hideAddForm() {
-            document.getElementById('addFormContainer').style.display = 'none';
-            document.getElementById('addCodeInput').value = '';
-            document.getElementById('addPreview').textContent = '';
-            document.getElementById('addBtn').disabled = true;
-        }
-
-        document.getElementById('addCodeInput').addEventListener('input', function() {
-            const code = this.value.trim().toLowerCase();
-            const preview = document.getElementById('addPreview');
-            const btn = document.getElementById('addBtn');
-            btn.disabled = true;
-            preview.textContent = '';
-
-            if (code.length < 3) return;
-
-            clearTimeout(lookupDebounce);
-            lookupDebounce = setTimeout(async () => {
-                try {
-                    const data = await apiCall('GET', `/api/entity/lookup?code=${code}`);
-                    if (data.success && data.entity) {
-                        const avatar = data.entity.avatar || (data.entity.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
-                        preview.textContent = `${avatar} ${data.entity.name || data.entity.character || code}`;
-                        preview.style.color = 'var(--success)';
-                        btn.disabled = false;
-                        btn.dataset.code = code;
-                    } else {
-                        preview.textContent = t('cardholder_not_found', 'Not found');
-                        preview.style.color = 'var(--danger)';
-                    }
-                } catch (_) {
-                    preview.textContent = t('cardholder_not_found', 'Not found');
-                    preview.style.color = 'var(--danger)';
-                }
-            }, 400);
-        });
-
-        async function addCard() {
-            const code = document.getElementById('addBtn').dataset.code;
-            if (!code) return;
-            try {
-                const data = await apiCall('POST', '/api/contacts', {
-                    deviceId: currentUser.deviceId,
-                    deviceSecret: currentUser.deviceSecret,
-                    publicCode: code
-                });
-                if (data.success) {
-                    allCards.unshift(data.contact);
-                    hideAddForm();
-                    renderCards();
-                    document.getElementById('collectedCount').textContent = allCards.filter(c => !c.blocked).length;
-                    showToast(t('cardholder_added_ok', 'Card added'));
-                }
-            } catch (err) {
-                if (err.status === 400 && err.message && err.message.includes('own')) {
-                    showToast(t('cardholder_self', 'Cannot add your own entity'), 'error');
-                } else if (err.status === 409) {
-                    showToast(t('cardholder_duplicate', 'Already in card holder'), 'error');
-                } else {
-                    showToast(err.message || t('common_error', 'Error'), 'error');
-                }
-            }
-        }
-
-        // ── Unified Search ──
-        document.getElementById('searchInput').addEventListener('input', function() {
-            clearTimeout(searchDebounce);
-            const query = this.value.trim();
-            if (!query) {
-                // Restore normal view
-                document.getElementById('searchResultsSection').style.display = 'none';
-                document.getElementById('sectionTabs').style.display = '';
-                document.querySelectorAll('.section-content').forEach(el => {
-                    el.style.display = el.id === `section${currentSection === 'my-cards' ? 'MyCards' : currentSection === 'recent' ? 'Recent' : 'Collected'}` ? '' : 'none';
-                });
-                return;
-            }
-            searchDebounce = setTimeout(() => unifiedSearch(query), 300);
-        });
-
-        async function unifiedSearch(query) {
-            // Hide tabs and sections, show search results
-            document.getElementById('sectionTabs').style.display = 'none';
-            document.querySelectorAll('.section-content').forEach(el => el.style.display = 'none');
-            document.getElementById('searchResultsSection').style.display = '';
-
-            try {
-                const data = await apiCall('GET', `/api/contacts/search?deviceId=${currentUser.deviceId}&q=${encodeURIComponent(query)}`);
-                const saved = data.saved || data.cards || [];
-                const external = data.external || [];
-
-                const savedGrid = document.getElementById('savedGrid');
-                const externalSection = document.getElementById('externalResults');
-                const externalGrid = document.getElementById('externalGrid');
-
-                if (saved.length === 0 && external.length === 0) {
-                    savedGrid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">&#x1F50D;</div><div class="empty-state-text">${t('cardholder_no_match', 'No matching cards')}</div></div>`;
-                    externalSection.style.display = 'none';
-                    return;
-                }
-
-                savedGrid.innerHTML = saved.length > 0
-                    ? saved.map(c => renderCardHtml(c)).join('')
-                    : `<div style="color:var(--text-muted); font-size:13px; padding:12px;">${t('cardholder_no_saved_match', 'No saved cards match')}</div>`;
-
-                if (external.length > 0) {
-                    externalSection.style.display = '';
-                    externalGrid.innerHTML = external.map(c => {
-                        const snap = c.agentCard || {};
-                        const avatar = c.avatar || '\u{1F99E}';
-                        const desc = snap.description || '';
-                        return `
-                        <div class="agent-card" onclick="addExternalCard('${escapeAttr(c.publicCode)}')">
-                            <div class="agent-card-header">
-                                <span class="agent-avatar">${avatar}</span>
-                                <div class="agent-meta">
-                                    <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
-                                    <div class="agent-code">${escapeHtml(c.publicCode)}</div>
-                                </div>
-                                <span class="agent-status online"></span>
-                            </div>
-                            ${desc ? `<div class="agent-card-body"><div class="agent-desc">${escapeHtml(desc)}</div></div>` : ''}
-                            <div class="agent-card-footer">
-                                <span style="color:var(--primary);">${t('cardholder_add_friend', 'Add')}</span>
-                            </div>
-                        </div>`;
-                    }).join('');
-                } else {
-                    externalSection.style.display = 'none';
-                }
-            } catch (err) {
-                console.error('Search error:', err);
-            }
-        }
-
-        async function addExternalCard(publicCode) {
-            try {
-                const data = await apiCall('POST', '/api/contacts', {
-                    deviceId: currentUser.deviceId,
-                    deviceSecret: currentUser.deviceSecret,
-                    publicCode
-                });
-                if (data.success) {
-                    allCards.unshift(data.contact);
-                    document.getElementById('collectedCount').textContent = allCards.filter(c => !c.blocked).length;
-                    showToast(t('cardholder_added_ok', 'Card added'));
-                    // Re-search
-                    const query = document.getElementById('searchInput').value.trim();
-                    if (query) unifiedSearch(query);
-                }
-            } catch (err) {
-                if (err.status === 409) {
-                    showToast(t('cardholder_duplicate', 'Already in card holder'), 'error');
-                } else {
-                    showToast(err.message || t('common_error', 'Error'), 'error');
-                }
-            }
+        function copyCode(code) {
+            navigator.clipboard.writeText(code).then(() => showToast(t('common_copied', 'Copied')));
         }
 
         // ── Helpers ──
@@ -1312,9 +1217,7 @@
             return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
-        function escapeAttr(s) {
-            return escapeHtml(s);
-        }
+        function escapeAttr(s) { return escapeHtml(s); }
 
         function t(key, fallback) {
             return typeof i18n !== 'undefined' ? i18n.t(key) : fallback;
