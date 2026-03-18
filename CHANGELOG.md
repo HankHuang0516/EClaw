@@ -1,3 +1,10 @@
+# [1.109.0](https://github.com/HankHuang0516/EClaw/compare/v1.108.1...v1.109.0) (2026-03-18)
+
+
+### Features
+
+* add avatar photo upload to Flickr for all platforms ([378545f](https://github.com/HankHuang0516/EClaw/commit/378545f3438c3f3dfced37cce7cfed281d35f830))
+
 ## [1.108.1](https://github.com/HankHuang0516/EClaw/compare/v1.108.0...v1.108.1) (2026-03-18)
 
 
