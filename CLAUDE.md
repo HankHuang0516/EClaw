@@ -310,6 +310,8 @@ EClaw/
 
 ---
 
+13. **EClaw Skill Template Sync** — 所有與實體（entity）相關的新 API，都**必須**同步收錄到 `backend/data/skill-templates.json` 的 `eclaw-a2a-toolkit` skill template 中，讓 bot 能透過 skill 得知並使用這些 API。**例外**：Article Publisher 相關的 API（`/api/publisher/*`）不需收錄。
+
 ## Git Workflow
 
 - **PR then merge**: When work is complete, push the feature branch, create a PR via GitHub API, then merge it to `main` yourself (squash merge). After merging, check that the CI actions on `main` have not failed.
