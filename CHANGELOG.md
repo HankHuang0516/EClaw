@@ -1,3 +1,10 @@
+## [1.106.1](https://github.com/HankHuang0516/EClaw/compare/v1.106.0...v1.106.1) (2026-03-18)
+
+
+### Bug Fixes
+
+* remove WordPress from schedules and fix Health Check auth ([#272](https://github.com/HankHuang0516/EClaw/issues/272)) ([4abfc71](https://github.com/HankHuang0516/EClaw/commit/4abfc71cdbe73fe210e5273e46887059b267fbd6)), closes [#27](https://github.com/HankHuang0516/EClaw/issues/27) [#40](https://github.com/HankHuang0516/EClaw/issues/40) [#42](https://github.com/HankHuang0516/EClaw/issues/42) [#43](https://github.com/HankHuang0516/EClaw/issues/43) [#53](https://github.com/HankHuang0516/EClaw/issues/53)
+
 # [1.106.0](https://github.com/HankHuang0516/EClaw/compare/v1.105.1...v1.106.0) (2026-03-18)
 
 
