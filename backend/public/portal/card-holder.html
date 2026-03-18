@@ -575,6 +575,8 @@
     <script src="shared/api.js"></script>
     <script src="shared/nav.js"></script>
     <script src="shared/auth.js"></script>
+    <script src="shared/entity-utils.js"></script>
+    <script>if(typeof renderAvatarHtml==='undefined'){window.renderAvatarHtml=function(a){return a||'\u{1F99E}'};window.isAvatarUrl=function(){return false}}</script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -712,7 +714,7 @@
             const ac = c.agentCard || {};
             let html = `<div class="card-item" onclick="showMyCardDetail('${escapeAttr(c.publicCode)}')">
                 <div class="card-row">
-                    <span class="agent-avatar">${avatar}</span>
+                    <span class="agent-avatar">${renderAvatarHtml(avatar, 48)}</span>
                     <div class="agent-meta">
                         <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
                         <span class="agent-code" onclick="event.stopPropagation(); copyCode('${escapeAttr(c.publicCode)}')" title="Click to copy">${escapeHtml(c.publicCode)}</span>
@@ -739,7 +741,7 @@
             const snap = c.cardSnapshot || {};
             let html = `<div class="card-item" onclick="openDetail('${escapeAttr(c.publicCode)}')">
                 <div class="card-row">
-                    <span class="agent-avatar">${avatar}</span>
+                    <span class="agent-avatar">${renderAvatarHtml(avatar, 48)}</span>
                     <div class="agent-meta">
                         <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
                         <span class="agent-code" onclick="event.stopPropagation(); copyCode('${escapeAttr(c.publicCode)}')">${escapeHtml(c.publicCode)}</span>
@@ -765,7 +767,7 @@
             const snap = c.cardSnapshot || {};
             let html = `<div class="card-item ${c.pinned ? 'pinned' : ''} ${c.blocked ? 'blocked' : ''}" onclick="openDetail('${escapeAttr(c.publicCode)}')">
                 <div class="card-row">
-                    <span class="agent-avatar">${avatar}</span>
+                    <span class="agent-avatar">${renderAvatarHtml(avatar, 48)}</span>
                     <div class="agent-meta">
                         <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
                         <span class="agent-code" onclick="event.stopPropagation(); copyCode('${escapeAttr(c.publicCode)}')">${escapeHtml(c.publicCode)}</span>
@@ -824,7 +826,7 @@
                     const snap = c.agentCard || {};
                     return `<div class="card-item">
                         <div class="card-row">
-                            <span class="agent-avatar">${avatar}</span>
+                            <span class="agent-avatar">${renderAvatarHtml(avatar, 48)}</span>
                             <div class="agent-meta">
                                 <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
                                 <span class="agent-code">${escapeHtml(c.publicCode)}</span>
@@ -858,7 +860,7 @@
             const content = document.getElementById('detailContent');
             content.innerHTML = `
                 <div class="modal-header">
-                    <span class="agent-avatar">${avatar}</span>
+                    <span class="agent-avatar">${renderAvatarHtml(avatar, 48)}</span>
                     <div class="modal-header-info">
                         <h3>${escapeHtml(card.name || card.publicCode)}</h3>
                         <span class="agent-code" onclick="copyCode('${escapeAttr(card.publicCode)}')">${escapeHtml(card.publicCode)}</span>
@@ -998,7 +1000,7 @@
             const content = document.getElementById('detailContent');
             content.innerHTML = `
                 <div class="modal-header">
-                    <span class="agent-avatar">${avatar}</span>
+                    <span class="agent-avatar">${renderAvatarHtml(avatar, 48)}</span>
                     <div class="modal-header-info">
                         <h3>${escapeHtml(card.name || card.publicCode)}</h3>
                         <span class="agent-code" onclick="copyCode('${escapeAttr(card.publicCode)}')">${escapeHtml(card.publicCode)}</span>

@@ -995,16 +995,28 @@ class CardHolderActivity : AppCompatActivity() {
 
     private fun buildAvatar(avatar: String?, character: String?): View {
         val size = dp(64)
+        val resolvedAvatar = avatar ?: if (character == "PIG") "\uD83D\uDC37" else "\uD83E\uDD9E"
+        val ovalBg = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(Color.parseColor("#252540"))
+        }
+        if (resolvedAvatar.startsWith("https://")) {
+            return ImageView(this).apply {
+                layoutParams = LinearLayout.LayoutParams(size, size)
+                scaleType = ImageView.ScaleType.CENTER_CROP
+                background = ovalBg
+                com.bumptech.glide.Glide.with(this@CardHolderActivity)
+                    .load(resolvedAvatar)
+                    .circleCrop()
+                    .into(this)
+            }
+        }
         return TextView(this).apply {
-            val emoji = avatar ?: if (character == "PIG") "\uD83D\uDC37" else "\uD83E\uDD9E"
-            text = emoji
+            text = resolvedAvatar
             textSize = 28f
             gravity = Gravity.CENTER
             layoutParams = LinearLayout.LayoutParams(size, size)
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setColor(Color.parseColor("#252540"))
-            }
+            background = ovalBg
         }
     }
 

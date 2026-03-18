@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   FlatList,
   TouchableOpacity,
@@ -93,8 +94,16 @@ export default function CardHolderScreen() {
       return (b.addedAt || 0) - (a.addedAt || 0);
     });
 
-  const getAvatar = (c: CardEntry) =>
+  const getAvatarValue = (c: CardEntry) =>
     c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
+
+  const renderAvatar = (c: CardEntry, size: number = 48, fontSize: number = 28) => {
+    const val = getAvatarValue(c);
+    if (val.startsWith('https://')) {
+      return <Image source={{ uri: val }} style={{ width: size, height: size, borderRadius: size / 2 }} />;
+    }
+    return <Text style={{ fontSize }}>{val}</Text>;
+  };
 
   const showAddDialog = () => {
     Alert.prompt(
@@ -208,7 +217,7 @@ export default function CardHolderScreen() {
       >
         {c.pinned && <Text style={styles.pinBadge}>{'\u{1F4CC}'}</Text>}
         <View style={styles.cardHeader}>
-          <Text style={styles.avatar}>{getAvatar(c)}</Text>
+          {renderAvatar(c, 48, 28)}
           <View style={styles.cardMeta}>
             <Text style={styles.cardName} numberOfLines={1}>{c.name || c.publicCode}</Text>
             <Text style={styles.cardCode}>{c.publicCode}</Text>
@@ -245,7 +254,7 @@ export default function CardHolderScreen() {
       <SafeAreaView style={styles.container}>
         <ScrollView style={styles.detailScroll}>
           <View style={styles.detailHeader}>
-            <Text style={styles.detailAvatar}>{getAvatar(selectedCard)}</Text>
+            {renderAvatar(selectedCard, 56, 40)}
             <View style={{ flex: 1 }}>
               <Text style={styles.detailName}>{selectedCard.name || selectedCard.publicCode}</Text>
               <Text style={styles.cardCode}>{selectedCard.publicCode}</Text>

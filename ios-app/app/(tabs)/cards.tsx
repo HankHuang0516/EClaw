@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   FlatList,
   TouchableOpacity,
@@ -117,8 +118,16 @@ export default function CardsScreen() {
     setRefreshing(false);
   };
 
-  const getAvatar = (c: { avatar?: string; character?: string }) =>
+  const getAvatarValue = (c: { avatar?: string; character?: string }) =>
     c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
+
+  const renderAvatar = (c: { avatar?: string; character?: string }, size: number = 48, fontSize: number = 28) => {
+    const val = getAvatarValue(c);
+    if (val.startsWith('https://')) {
+      return <Image source={{ uri: val }} style={{ width: size, height: size, borderRadius: size / 2 }} />;
+    }
+    return <Text style={{ fontSize }}>{val}</Text>;
+  };
 
   const formatTimeAgo = (ts: number) => {
     const diff = Date.now() - ts;
@@ -283,7 +292,7 @@ export default function CardsScreen() {
       <SafeAreaView style={styles.container} edges={['bottom']}>
         <ScrollView style={styles.detailScroll}>
           <View style={styles.detailHeader}>
-            <Text style={styles.detailAvatar}>{getAvatar(selectedCard)}</Text>
+            {renderAvatar(selectedCard, 56, 40)}
             <View style={{ flex: 1 }}>
               <Text style={styles.detailName}>{selectedCard.name || selectedCard.publicCode}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -447,7 +456,7 @@ export default function CardsScreen() {
         {c.pinned && !c.blocked && <Text style={styles.pinBadge}>{'\u{1F4CC}'}</Text>}
         {c.blocked && <Text style={styles.blockedCardBadge}>{t('cardHolder.blockedLabel', 'Blocked')}</Text>}
         <View style={styles.cardHeader}>
-          <Text style={styles.avatar}>{getAvatar(c)}</Text>
+          {renderAvatar(c, 48, 28)}
           <View style={styles.cardMeta}>
             <Text style={styles.cardName} numberOfLines={1}>{c.name || c.publicCode}</Text>
             <Text style={styles.cardCode}>{c.publicCode}</Text>
@@ -508,7 +517,7 @@ export default function CardsScreen() {
             <View style={styles.myCardsRow}>
               {myCards.map(c => (
                 <View key={c.publicCode} style={styles.myCardItem}>
-                  <Text style={styles.myCardAvatar}>{c.avatar || '\u{1F99E}'}</Text>
+                  {renderAvatar(c, 56, 36)}
                   <Text style={styles.myCardName}>{c.name || c.publicCode}</Text>
                   <Text style={styles.cardCode}>{c.publicCode}</Text>
                   <TouchableOpacity
@@ -542,7 +551,7 @@ export default function CardsScreen() {
           ) : (
             recentCards.map(c => (
               <TouchableOpacity key={c.publicCode} style={styles.recentItem} onPress={() => openDetail(c)}>
-                <Text style={styles.avatar}>{getAvatar(c)}</Text>
+                {renderAvatar(c, 48, 28)}
                 <View style={{ flex: 1 }}>
                   <Text style={styles.cardName}>{c.name || c.publicCode}</Text>
                   <Text style={styles.cardCode}>{c.publicCode}</Text>
