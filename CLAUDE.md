@@ -282,6 +282,8 @@ EClaw/
 
 10. **Chinese Summary on Completion** — 每次任務完成後，用**繁體中文**回報總結，包含：修改了哪些檔案、做了什麼改動、有無需要注意的事項。
 
+12. **UI/UX Simplify Review** — 任何與 UI/UX 渲染相關的修復或改動，在 commit 之前**必須**先執行 `simplify` skill（代碼複用、品質、效率三項審查），根據審查結果修正問題後才能 commit。
+
 11. **Post-Push Production Verification** — push 到 main 後**必須**驗證 production：
     - 等 Railway 部署完成（檢查 `/api/health` 的 build 版本或 uptime 重置）
     - 跑所有 regression tests 對 live server（`test-bot-api-response.js`, `test-broadcast.js`, `test-cross-device-settings.js`, `test-edit-mode-public-code.js` 及新增的 feature tests）
