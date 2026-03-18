@@ -59,7 +59,7 @@ describe('GET /api/publisher/platforms', () => {
 describe('Publish endpoints reject without platform API keys', () => {
     const publishEndpoints = [
         { method: 'post', path: '/api/publisher/devto/publish', body: { title: 'T', body: 'B' }, name: 'DEV.to' },
-        { method: 'post', path: '/api/publisher/telegraph/publish', body: { title: 'T', content: 'C' }, name: 'Telegraph' },
+        // Telegraph excluded — auto-creates account without API key, returns 200
         { method: 'post', path: '/api/publisher/qiita/publish', body: { title: 'T', body: 'B' }, name: 'Qiita' },
         { method: 'post', path: '/api/publisher/x/tweet', body: { text: 'hello' }, name: 'X/Twitter' },
         { method: 'post', path: '/api/publisher/hashnode/publish', body: { title: 'T', content: 'C' }, name: 'Hashnode' },
