@@ -1,3 +1,10 @@
+## [1.106.3](https://github.com/HankHuang0516/EClaw/compare/v1.106.2...v1.106.3) (2026-03-18)
+
+
+### Bug Fixes
+
+* resolve AI chat message loss and freeze on reopen ([#248](https://github.com/HankHuang0516/EClaw/issues/248)) ([#279](https://github.com/HankHuang0516/EClaw/issues/279)) ([a7e0aa1](https://github.com/HankHuang0516/EClaw/commit/a7e0aa1e4a8c759082781aae9a39dc08d5fd69d8))
+
 ## [1.106.2](https://github.com/HankHuang0516/EClaw/compare/v1.106.1...v1.106.2) (2026-03-18)
 
 
