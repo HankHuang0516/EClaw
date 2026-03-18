@@ -1,3 +1,10 @@
+# [1.110.0](https://github.com/HankHuang0516/EClaw/compare/v1.109.2...v1.110.0) (2026-03-18)
+
+
+### Features
+
+* avatar photo upload via Flickr with improved UX ([#293](https://github.com/HankHuang0516/EClaw/issues/293)) ([45925ec](https://github.com/HankHuang0516/EClaw/commit/45925ec4ed771aa4174676bf7632998faf708274))
+
 ## [1.109.2](https://github.com/HankHuang0516/EClaw/compare/v1.109.1...v1.109.2) (2026-03-18)
 
 
