@@ -683,9 +683,11 @@
         let searchDebounce = null;
         let categories = new Set();
 
-        onAuth(user => {
-            currentUser = user;
+        window.addEventListener('DOMContentLoaded', async () => {
             renderNav('card-holder');
+            if (typeof renderFooter === 'function') renderFooter();
+            const user = await checkAuth();
+            if (!user) return;
             document.getElementById('navEmail').textContent = user.email || '';
             if (typeof initAiChat === 'function') initAiChat(user);
             loadAllData();
