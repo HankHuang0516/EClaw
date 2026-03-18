@@ -1,3 +1,10 @@
+## [1.111.2](https://github.com/HankHuang0516/EClaw/compare/v1.111.1...v1.111.2) (2026-03-18)
+
+
+### Bug Fixes
+
+* exclude Telegraph from publish auth test ([#299](https://github.com/HankHuang0516/EClaw/issues/299)) ([ab735ca](https://github.com/HankHuang0516/EClaw/commit/ab735caaf2aecd667398a62a5e8be08e09192ff4))
+
 ## [1.111.1](https://github.com/HankHuang0516/EClaw/compare/v1.111.0...v1.111.1) (2026-03-18)
 
 
