@@ -1,3 +1,10 @@
+## [1.113.2](https://github.com/HankHuang0516/EClaw/compare/v1.113.1...v1.113.2) (2026-03-18)
+
+
+### Bug Fixes
+
+* render image avatars in chat bubble labels via getEntityLabel() ([#306](https://github.com/HankHuang0516/EClaw/issues/306)) ([4f28e2a](https://github.com/HankHuang0516/EClaw/commit/4f28e2a88a68eff2f372489098475e6ceac173ba))
+
 ## [1.113.1](https://github.com/HankHuang0516/EClaw/compare/v1.113.0...v1.113.1) (2026-03-18)
 
 
