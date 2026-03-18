@@ -66,6 +66,7 @@ const TEST_FILES = [
     'test-grpc-transport.js',       // gRPC: Proto loading, gRPC server, HealthService
     'test-skill-templates.js',      // Skill templates: CRUD, requiredVars format, Gson compat
     'test-ui-text-contrast.js',     // UI: input field text/bg contrast ratio
+    'test-portal-duplicate-vars.js', // Portal: no duplicate let/const vs shared scripts
     'test-ux-static-audit.js',      // UX Layer 1: static audit (i18n, form, error, loading, empty, auth, telemetry, a11y, script order)
     'test-ux-parity.js',            // UX Layer 2: cross-platform API-UI parity (Web/Android/iOS)
     'test-ux-live-validation.js',   // UX Layer 3: live endpoint validation (portal pages, auth, API smoke)
