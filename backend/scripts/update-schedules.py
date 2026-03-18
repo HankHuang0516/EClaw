@@ -156,9 +156,9 @@ exec: curl -s -o /dev/null -w "%{http_code} %{time_total}s" "https://eclawbot.co
 Expected: all return 200.
 
 == STEP 2: Auth-required endpoints (3 endpoints) ==
-exec: curl -s -o /dev/null -w "%{http_code} %{time_total}s" "https://eclawbot.com/api/entities?deviceId=DEVICE_ID&deviceSecret=BOT_SECRET"
-exec: curl -s -o /dev/null -w "%{http_code} %{time_total}s" "https://eclawbot.com/api/schedules?deviceId=DEVICE_ID&deviceSecret=BOT_SECRET"
-exec: curl -s -o /dev/null -w "%{http_code} %{time_total}s" "https://eclawbot.com/api/mission/dashboard?deviceId=DEVICE_ID&deviceSecret=BOT_SECRET"
+exec: curl -s -o /dev/null -w "%{http_code} %{time_total}s" "https://eclawbot.com/api/entities?deviceId=DEVICE_ID"
+exec: curl -s -o /dev/null -w "%{http_code} %{time_total}s" "https://eclawbot.com/api/status?deviceId=DEVICE_ID&botSecret=BOT_SECRET&entityId=2"
+exec: curl -s -o /dev/null -w "%{http_code} %{time_total}s" "https://eclawbot.com/api/mission/dashboard?deviceId=DEVICE_ID&botSecret=BOT_SECRET&entityId=2"
 
 Expected: all return 200.
 
