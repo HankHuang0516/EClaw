@@ -80,10 +80,6 @@ export const deviceApi = {
     });
   },
 
-  /** Remove/unbind an entity */
-  removeEntity: (entityId: string) =>
-    apiClient.delete('/api/device/entity', { data: { entityId } }),
-
   /** Add a new entity slot (dynamic entity system) */
   addEntity: () =>
     apiClient.post('/api/device/add-entity', {}),

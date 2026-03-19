@@ -87,29 +87,6 @@ export default function EntityManagerScreen() {
     }
   };
 
-  const handleRemove = (entity: Entity) => {
-    Alert.alert(
-      t('entity.remove'),
-      t('entity.remove_confirm', { name: entity.name }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deviceApi.removeEntity(entity.entityId);
-              removeEntity(entity.entityId);
-              setSnack(t('home.unbind_success'));
-            } catch {
-              setSnack(t('errors.server'));
-            }
-          },
-        },
-      ]
-    );
-  };
-
   const handleAddEntity = async () => {
     setIsLoading(true);
     try {
@@ -123,24 +100,24 @@ export default function EntityManagerScreen() {
     }
   };
 
-  const handlePermanentDelete = (entity: Entity) => {
+  const handleDelete = (entity: Entity) => {
     if (entities.length <= 1) {
       setSnack('Cannot delete the last entity');
       return;
     }
     Alert.alert(
-      'Permanently Delete Entity',
-      `This will permanently remove Entity #${entity.entityIndex} (${entity.name || 'unnamed'}). Chat history will be preserved but the slot will be gone forever.`,
+      t('entity.remove'),
+      t('entity.remove_confirm', { name: entity.name }),
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Delete Permanently',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
               await deviceApi.deleteEntityPermanent(entity.entityIndex);
               removeEntity(entity.entityId);
-              setSnack('Entity permanently deleted');
+              setSnack(t('entity.deleted'));
             } catch {
               setSnack(t('errors.server'));
             }
@@ -276,15 +253,10 @@ export default function EntityManagerScreen() {
                   }}
                 />
                 <IconButton
-                  icon="link-off"
-                  size={20}
-                  onPress={() => handleRemove(item)}
-                />
-                <IconButton
                   icon="delete-forever"
                   size={20}
                   iconColor={theme.colors.error}
-                  onPress={() => handlePermanentDelete(item)}
+                  onPress={() => handleDelete(item)}
                   disabled={entities.length <= 1}
                 />
               </View>
