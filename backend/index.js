@@ -3298,6 +3298,224 @@ app.post('/api/device/add-entity', async (req, res) => {
 });
 
 /**
+ * compactEntitySlots — Renumber all entity slots to sequential IDs starting from 0.
+ * Handles: in-memory entities, publicCodeIndex, officialBindingsCache,
+ *          DB (entities, official_bot_bindings, chat_messages, scheduled_messages, official_bots),
+ *          and bot notifications (fire-and-forget).
+ * Returns: { compacted: true, mapping: [{from, to}] } or { compacted: false } if already compact.
+ */
+async function compactEntitySlots(device, deviceId) {
+    const existingIds = Object.keys(device.entities).map(Number).sort((a, b) => a - b);
+    const totalEntities = existingIds.length;
+
+    // Build mapping: existingIds[i] → i
+    const mapping = []; // { from: oldId, to: newId }
+    const movedSlots = []; // only slots that actually changed
+    for (let i = 0; i < totalEntities; i++) {
+        mapping.push({ from: existingIds[i], to: i });
+        if (existingIds[i] !== i) {
+            movedSlots.push({ oldSlot: existingIds[i], newSlot: i });
+        }
+    }
+
+    // Nothing to compact
+    if (movedSlots.length === 0) {
+        return { compacted: false };
+    }
+
+    console.log(`[Compact] Starting compaction for device ${deviceId}: ${movedSlots.map(s => `#${s.oldSlot}→#${s.newSlot}`).join(', ')}`);
+
+    // Step 1: Snapshot current entities and bindings
+    const oldEntities = {};
+    const oldBindings = {};
+    for (const eid of existingIds) {
+        oldEntities[eid] = device.entities[eid] ? { ...device.entities[eid] } : createDefaultEntity(eid);
+        const cacheKey = getBindingCacheKey(deviceId, eid);
+        if (officialBindingsCache[cacheKey]) {
+            oldBindings[eid] = { ...officialBindingsCache[cacheKey] };
+        }
+    }
+
+    // Step 2: Build new entity map and update in-memory references
+    const botsToNotify = [];
+    const newEntities = {};
+
+    for (let i = 0; i < totalEntities; i++) {
+        const sourceId = existingIds[i];
+        const targetId = i;
+        const entity = { ...oldEntities[sourceId] };
+        entity.entityId = targetId;
+        newEntities[targetId] = entity;
+
+        // Update official binding cache
+        const newCacheKey = getBindingCacheKey(deviceId, targetId);
+        const oldBinding = oldBindings[sourceId];
+        if (oldBinding) {
+            officialBindingsCache[newCacheKey] = { ...oldBinding, entity_id: targetId };
+        } else if (sourceId !== targetId) {
+            delete officialBindingsCache[newCacheKey];
+        }
+
+        // Clean up old binding cache entry if ID changed
+        if (sourceId !== targetId) {
+            const oldCacheKey = getBindingCacheKey(deviceId, sourceId);
+            delete officialBindingsCache[oldCacheKey];
+        }
+
+        // Track bots that need notification
+        if (sourceId !== targetId && entity.isBound && (entity.webhook || entity.bindingType === 'channel')) {
+            botsToNotify.push({
+                entity,
+                oldSlot: sourceId,
+                newSlot: targetId,
+                binding: oldBinding
+            });
+        }
+    }
+
+    // Apply new entities to device
+    device.entities = newEntities;
+    device.nextEntityId = totalEntities;
+
+    // Rebuild publicCodeIndex for this device
+    for (const eid of Object.keys(device.entities).map(Number)) {
+        const entity = device.entities[eid];
+        if (entity && entity.isBound && entity.publicCode) {
+            publicCodeIndex[entity.publicCode] = { deviceId, entityId: eid };
+        }
+    }
+
+    // Step 3: Persist to DB
+    if (usePostgreSQL && movedSlots.length > 0) {
+        try {
+            const client = await chatPool.connect();
+            try {
+                await client.query('BEGIN');
+
+                // 3a: Delete old entity rows that moved, then saveData will re-insert at new IDs
+                for (const s of movedSlots) {
+                    await client.query('DELETE FROM entities WHERE device_id = $1 AND entity_id = $2', [deviceId, s.oldSlot]);
+                }
+
+                // 3b: Remove old bindings and re-insert with new entity IDs
+                for (const eid of existingIds) {
+                    await client.query('DELETE FROM official_bot_bindings WHERE device_id = $1 AND entity_id = $2', [deviceId, eid]);
+                }
+                for (const newEid of Object.keys(newEntities).map(Number)) {
+                    const cacheKey = getBindingCacheKey(deviceId, newEid);
+                    const binding = officialBindingsCache[cacheKey];
+                    if (binding) {
+                        await client.query(
+                            `INSERT INTO official_bot_bindings (bot_id, device_id, entity_id, session_key, bound_at, subscription_verified_at)
+                             VALUES ($1, $2, $3, $4, $5, $6)
+                             ON CONFLICT (device_id, entity_id)
+                             DO UPDATE SET bot_id = $1, session_key = $4, bound_at = $5, subscription_verified_at = $6`,
+                            [binding.bot_id, binding.device_id, binding.entity_id,
+                             binding.session_key, binding.bound_at || Date.now(), binding.subscription_verified_at || Date.now()]
+                        );
+                    }
+                }
+
+                // 3c: Migrate chat_messages entity_id
+                const caseClauses = movedSlots.map(s => `WHEN ${s.oldSlot} THEN ${s.newSlot}`).join(' ');
+                const affectedOldSlots = movedSlots.map(s => s.oldSlot);
+                await client.query(
+                    `UPDATE chat_messages
+                     SET entity_id = CASE entity_id ${caseClauses} ELSE entity_id END
+                     WHERE device_id = $1 AND entity_id = ANY($2)`,
+                    [deviceId, affectedOldSlots]
+                );
+
+                // 3d: Migrate scheduled_messages entity_id
+                await client.query(
+                    `UPDATE scheduled_messages
+                     SET entity_id = CASE entity_id ${caseClauses} ELSE entity_id END
+                     WHERE device_id = $1 AND entity_id = ANY($2) AND status IN ('pending', 'active')`,
+                    [deviceId, affectedOldSlots]
+                );
+
+                // 3e: Update personal bot assignments
+                for (const info of botsToNotify) {
+                    if (info.binding) {
+                        const bot = officialBots[info.binding.bot_id];
+                        if (bot && bot.bot_type === 'personal' && bot.assigned_device_id === deviceId) {
+                            bot.assigned_entity_id = info.newSlot;
+                            await client.query(
+                                'UPDATE official_bots SET assigned_entity_id = $1 WHERE bot_id = $2',
+                                [info.newSlot, bot.bot_id]
+                            );
+                        }
+                    }
+                }
+
+                await client.query('COMMIT');
+                console.log(`[Compact] DB transaction committed (${movedSlots.length} slots moved)`);
+            } catch (dbErr) {
+                await client.query('ROLLBACK').catch(() => {});
+                console.error(`[Compact] DB transaction failed, rolled back:`, dbErr.message);
+            } finally {
+                client.release();
+            }
+        } catch (poolErr) {
+            console.error(`[Compact] Failed to get DB connection:`, poolErr.message);
+        }
+    }
+
+    await saveData();
+
+    // Step 4: Notify bots of their new entity IDs (fire-and-forget)
+    for (const info of botsToNotify) {
+        const { entity, oldSlot, newSlot } = info;
+        const apiBase = 'https://eclawbot.com';
+        const notifyMsg = `[SYSTEM:ENTITY_MOVED] Your entity slot has been compacted from #${oldSlot} to #${newSlot}.
+
+UPDATED CREDENTIALS:
+- entityId: ${newSlot} (was ${oldSlot})
+- deviceId: ${deviceId}
+- botSecret: ${entity.botSecret}
+
+⚠️ IMPORTANT: Update your entityId in ALL future API calls:
+exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${newSlot},"botSecret":"${entity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'`;
+
+        if (entity.bindingType === 'channel') {
+            channelModule.pushToChannelCallback(deviceId, newSlot, {
+                event: 'message',
+                from: 'system',
+                text: notifyMsg,
+                eclaw_context: { expectsReply: false, silentToken: '[SILENT]', missionHints: '' }
+            }, entity.channelAccountId)
+                .then(r => {
+                    if (r.pushed) console.log(`[Compact] ✓ Notified channel bot at entity ${newSlot} (was ${oldSlot})`);
+                    else console.warn(`[Compact] ✗ Failed to notify channel bot: ${r.reason}`);
+                })
+                .catch(e => console.warn(`[Compact] ✗ Error notifying channel bot: ${e.message}`));
+        } else if (entity.webhook) {
+            sendToSession(entity.webhook.url, entity.webhook.token, entity.webhook.sessionKey, notifyMsg)
+                .then(r => {
+                    if (r.success) console.log(`[Compact] ✓ Notified bot at entity ${newSlot} (was ${oldSlot})`);
+                    else console.warn(`[Compact] ✗ Failed to notify bot: ${r.error}`);
+                })
+                .catch(e => console.warn(`[Compact] ✗ Error notifying bot: ${e.message}`));
+        }
+    }
+
+    // Notify connected clients
+    io.to(deviceId).emit('entitiesCompacted', {
+        mapping: movedSlots.map(s => ({ from: s.oldSlot, to: s.newSlot })),
+        entityIds: Object.keys(device.entities).map(Number),
+        totalSlots: entityCount(device)
+    });
+
+    console.log(`[Compact] ✓ Device ${deviceId} compaction complete: ${movedSlots.length} slots moved, nextEntityId=${device.nextEntityId}`);
+    serverLog('info', 'entity_compact', `Compacted ${movedSlots.length} slots`, {
+        deviceId,
+        metadata: { mapping: movedSlots.map(s => `${s.oldSlot}→${s.newSlot}`) }
+    });
+
+    return { compacted: true, mapping: movedSlots.map(s => ({ from: s.oldSlot, to: s.newSlot })) };
+}
+
+/**
  * DELETE /api/device/entity/:entityId/permanent
  * Permanently delete an entity slot from a device (not just unbind — removes the slot entirely).
  * Body: { deviceId, deviceSecret }
@@ -3382,48 +3600,54 @@ app.delete('/api/device/entity/:entityId/permanent', async (req, res) => {
         await db.deleteEntity(deviceId, eId);
     }
 
-    // Compact: if only 1 unbound entity remains with ID > 0, move it to slot #0
-    let compactedFrom = null;
-    const remainingIds = Object.keys(device.entities).map(Number);
-    if (remainingIds.length === 1 && remainingIds[0] > 0) {
-        const oldId = remainingIds[0];
-        const remainingEntity = device.entities[oldId];
-        if (!remainingEntity.isBound) {
-            // Move entity from oldId to 0
-            remainingEntity.entityId = 0;
-            device.entities[0] = remainingEntity;
-            delete device.entities[oldId];
-            device.nextEntityId = 1;
-
-            // Update DB: delete old row, saveData will create new row at id 0
-            if (usePostgreSQL) {
-                await db.deleteEntity(deviceId, oldId);
-            }
-
-            compactedFrom = oldId;
-            console.log(`[DynamicEntity] Compacted: deviceId=${deviceId}, moved entity #${oldId} → #0, reset nextEntityId=1`);
-            serverLog('info', 'entity_compact', `Entity #${oldId} compacted to #0`, { deviceId, fromEntityId: oldId });
-        }
-    }
-
-    // Save device state (updated entities + nextEntityId)
-    await saveData();
-
     console.log(`[DynamicEntity] Permanent delete complete: deviceId=${deviceId}, entityId=${eId}, totalSlotsAfter=${entityCount(device)}`);
     serverLog('info', 'entity_delete', `Entity #${eId} permanently deleted`, { deviceId, entityId: eId });
 
     // Notify clients
     io.to(deviceId).emit('entityDeleted', { entityId: eId, totalSlots: entityCount(device) });
-    if (compactedFrom !== null) {
-        io.to(deviceId).emit('entityCompacted', { fromEntityId: compactedFrom, toEntityId: 0, totalSlots: entityCount(device) });
-    }
+
+    // Auto-compact: renumber remaining entities to sequential 0, 1, 2, ...
+    const compactResult = await compactEntitySlots(device, deviceId);
 
     res.json({
         success: true,
         deletedEntityId: eId,
         remainingEntities: entityCount(device),
         entityIds: Object.keys(device.entities).map(Number),
-        compacted: compactedFrom !== null ? { from: compactedFrom, to: 0 } : undefined
+        compacted: compactResult.compacted ? compactResult.mapping : undefined
+    });
+});
+
+/**
+ * POST /api/device/compact-entities
+ * Renumber all entity slots to sequential IDs starting from 0.
+ * Use when entity IDs have become sparse (e.g., after many deletes).
+ * Body: { deviceId, deviceSecret }
+ */
+app.post('/api/device/compact-entities', async (req, res) => {
+    const { deviceId, deviceSecret } = req.body;
+
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid device credentials' });
+    }
+
+    const result = await compactEntitySlots(device, deviceId);
+
+    if (!result.compacted) {
+        return res.json({ success: true, message: 'Already compact', entityIds: Object.keys(device.entities).map(Number) });
+    }
+
+    res.json({
+        success: true,
+        message: `Compacted ${result.mapping.length} slots`,
+        mapping: result.mapping,
+        entityIds: Object.keys(device.entities).map(Number),
+        nextEntityId: device.nextEntityId
     });
 });
 
