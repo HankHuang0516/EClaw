@@ -1,3 +1,10 @@
+# [1.114.0](https://github.com/HankHuang0516/EClaw/compare/v1.113.2...v1.114.0) (2026-03-19)
+
+
+### Features
+
+* entity trash + fix tests deleting real entities ([#313](https://github.com/HankHuang0516/EClaw/issues/313)) ([685228e](https://github.com/HankHuang0516/EClaw/commit/685228e303b8d95c0f95630f4cea331545cf25f1))
+
 ## [1.113.2](https://github.com/HankHuang0516/EClaw/compare/v1.113.1...v1.113.2) (2026-03-18)
 
 
