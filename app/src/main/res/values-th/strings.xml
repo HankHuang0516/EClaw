@@ -544,4 +544,16 @@
     <string name="card_holder_version">เวอร์ชัน</string>
     <string name="card_holder_tags_hint">เพิ่มแท็ก…</string>
     <string name="card_holder_add_capability">เพิ่มความสามารถ</string>
+    <!-- Debug Logs -->
+    <string name="debug_logs_title">บันทึกดีบัก</string>
+    <string name="debug_logs_empty">ไม่มีบันทึกดีบัก\nบันทึกจะปรากฏที่นี่เมื่อแอปทำงาน</string>
+    <string name="debug_log_filter_all">ทั้งหมด</string>
+    <string name="debug_log_share">แชร์</string>
+    <string name="debug_log_clear">ล้าง</string>
+    <string name="debug_log_clear_confirm">ล้างบันทึกดีบักทั้งหมด?</string>
+    <string name="debug_log_cleared">ล้างบันทึกดีบักแล้ว</string>
+    <string name="debug_log_line_count">%d บรรทัด</string>
+    <string name="debug_log_search_hint">ค้นหาบันทึก…</string>
+    <string name="debug_log_copy">คัดลอก</string>
+    <string name="debug_log_copied">คัดลอกบันทึกไปยังคลิปบอร์ดแล้ว</string>
 </resources>

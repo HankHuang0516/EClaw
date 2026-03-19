@@ -544,4 +544,16 @@ Jika Anda memiliki pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="card_holder_version">Versi</string>
     <string name="card_holder_tags_hint">Tambah tag…</string>
     <string name="card_holder_add_capability">Tambah kemampuan</string>
+    <!-- Debug Logs -->
+    <string name="debug_logs_title">Log Debug</string>
+    <string name="debug_logs_empty">Belum ada log debug.\nLog akan muncul di sini saat aplikasi berjalan.</string>
+    <string name="debug_log_filter_all">Semua</string>
+    <string name="debug_log_share">Bagikan</string>
+    <string name="debug_log_clear">Hapus</string>
+    <string name="debug_log_clear_confirm">Hapus semua log debug?</string>
+    <string name="debug_log_cleared">Log debug dihapus</string>
+    <string name="debug_log_line_count">%d baris</string>
+    <string name="debug_log_search_hint">Cari log…</string>
+    <string name="debug_log_copy">Salin</string>
+    <string name="debug_log_copied">Log disalin ke clipboard</string>
 </resources>

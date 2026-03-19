@@ -955,6 +955,22 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                 }
             } catch (_) { /* non-fatal */ }
 
+            // Fetch user roles — non-fatal
+            let roles = [];
+            try {
+                const userIdResult = await pool.query(
+                    'SELECT id FROM user_accounts WHERE device_id = $1',
+                    [deviceId]
+                );
+                if (userIdResult.rows.length > 0) {
+                    const rolesResult = await pool.query(
+                        'SELECT r.id FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.user_id = $1',
+                        [userIdResult.rows[0].id]
+                    );
+                    roles = rolesResult.rows.map(r => r.id);
+                }
+            } catch (_) { /* non-fatal */ }
+
             res.json({
                 success: true,
                 bound: true,
@@ -965,7 +981,8 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                 displayName: user.display_name || null,
                 language: user.language || 'en',
                 channelApiKey,
-                channelApiSecret
+                channelApiSecret,
+                roles
             });
         } catch (error) {
             console.error('[Auth] Bind-email status error:', error);

@@ -544,4 +544,16 @@ Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ qua email chín
     <string name="card_holder_version">Phiên bản</string>
     <string name="card_holder_tags_hint">Thêm thẻ…</string>
     <string name="card_holder_add_capability">Thêm khả năng</string>
+    <!-- Debug Logs -->
+    <string name="debug_logs_title">Nhật ký gỡ lỗi</string>
+    <string name="debug_logs_empty">Chưa có nhật ký gỡ lỗi.\nNhật ký sẽ được ghi khi ứng dụng chạy.</string>
+    <string name="debug_log_filter_all">Tất cả</string>
+    <string name="debug_log_share">Chia sẻ</string>
+    <string name="debug_log_clear">Xóa</string>
+    <string name="debug_log_clear_confirm">Xóa tất cả nhật ký gỡ lỗi?</string>
+    <string name="debug_log_cleared">Đã xóa nhật ký gỡ lỗi</string>
+    <string name="debug_log_line_count">%d dòng</string>
+    <string name="debug_log_search_hint">Tìm kiếm nhật ký…</string>
+    <string name="debug_log_copy">Sao chép</string>
+    <string name="debug_log_copied">Đã sao chép nhật ký vào clipboard</string>
 </resources>

@@ -674,6 +674,7 @@ data class BindEmailStatusResponse(
     val language: String? = null,
     val channelApiKey: String? = null,
     val channelApiSecret: String? = null,
+    val roles: List<String>? = null,
     val error: String? = null
 )
 
