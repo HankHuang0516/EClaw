@@ -535,4 +535,106 @@ router.post('/audit-log', authBotPost, async (req, res) => {
     console.log(`[BotTools] audit-log: type=${type}, severity=${sev}, findings=${findings.length}, issues=${issueFindings.length} (device: ${deviceId.slice(0, 8)}…)`);
 });
 
+// ── GET /api/bot/web-image-search ────────────────────────────
+// Search for free-to-use images via Pexels API
+// Returns direct image URLs that bots can embed in Markdown/HTML articles
+router.get('/web-image-search', authBot, async (req, res) => {
+    const { q, count, orientation } = req.query;
+    const { deviceId } = req.botAuth;
+
+    if (!q || !q.trim()) {
+        return res.status(400).json({ error: 'q (search query) is required' });
+    }
+    if (q.length > 200) {
+        return res.status(400).json({ error: 'q must be 200 chars or less' });
+    }
+
+    const apiKey = process.env.PEXELS_API_KEY;
+    if (!apiKey) {
+        return res.status(501).json({
+            error: 'PEXELS_API_KEY not configured',
+            hint: 'Get a free API key at https://www.pexels.com/api/ and set PEXELS_API_KEY env var'
+        });
+    }
+
+    if (!checkRateLimit(deviceId)) {
+        return res.status(429).json({ error: 'Rate limit exceeded (10/min)' });
+    }
+
+    const perPage = Math.min(Math.max(parseInt(count) || 3, 1), 10);
+    const validOrientations = ['landscape', 'portrait', 'square'];
+    const orient = validOrientations.includes(orientation) ? orientation : 'landscape';
+
+    // Check cache
+    const cacheKey = `img:${q}:${perPage}:${orient}`;
+    const cached = searchCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < 10 * 60 * 1000) {
+        return res.json({ ...cached.data, cached: true });
+    }
+
+    try {
+        const params = new URLSearchParams({
+            query: q.trim(),
+            per_page: String(perPage),
+            orientation: orient
+        });
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+
+        const response = await fetch(`https://api.pexels.com/v1/search?${params}`, {
+            headers: { Authorization: apiKey },
+            signal: controller.signal
+        });
+        clearTimeout(timeout);
+
+        if (!response.ok) {
+            const errText = await response.text().catch(() => '');
+            console.error(`[BotTools] Pexels API error ${response.status}: ${errText.slice(0, 200)}`);
+            return res.status(502).json({ error: `Pexels API returned ${response.status}` });
+        }
+
+        const data = await response.json();
+        const images = (data.photos || []).map(photo => ({
+            url: photo.src.large,
+            thumbnail: photo.src.medium,
+            original: photo.src.original,
+            alt: photo.alt || q.trim(),
+            width: photo.width,
+            height: photo.height,
+            credit: photo.photographer,
+            creditUrl: photo.photographer_url,
+            pexelsUrl: photo.url,
+            // Pre-built markdown for easy embedding
+            markdown: `![${(photo.alt || q.trim()).replace(/[[\]]/g, '')}](${photo.src.large})`,
+            attribution: `Photo by [${photo.photographer}](${photo.photographer_url}) on [Pexels](${photo.url})`
+        }));
+
+        const result = {
+            query: q.trim(),
+            images,
+            resultCount: images.length,
+            totalAvailable: data.total_results || 0,
+            source: 'pexels',
+            license: 'Free to use (Pexels License)',
+            cached: false
+        };
+
+        // Cache result
+        if (searchCache.size > 200) {
+            const oldest = searchCache.keys().next().value;
+            searchCache.delete(oldest);
+        }
+        searchCache.set(cacheKey, { data: result, ts: Date.now() });
+
+        res.json(result);
+        console.log(`[BotTools] image-search: q="${q.trim()}", results=${images.length} (device: ${deviceId.slice(0, 8)}…)`);
+    } catch (err) {
+        if (err.name === 'AbortError') {
+            return res.status(504).json({ error: 'Image search timed out' });
+        }
+        console.error('[BotTools] image-search error:', err.message);
+        res.status(500).json({ error: 'Image search failed' });
+    }
+});
+
 module.exports = { router };
