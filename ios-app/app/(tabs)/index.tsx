@@ -20,7 +20,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEntities } from '../../hooks/useEntities';
-import { useEntityStore } from '../../store/entityStore';
+import { useEntityStore, Entity } from '../../store/entityStore';
 import { useAuthStore } from '../../store/authStore';
 import { deviceApi } from '../../services/api';
 import EntityCard from '../../components/EntityCard';
@@ -30,7 +30,7 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
   const { entities, isLoading, refetch } = useEntities();
-  const { bindingCodes, setBindingCode, clearBindingCode } = useEntityStore();
+  const { bindingCodes, setBindingCode, clearBindingCode, removeEntity } = useEntityStore();
   const { deviceId } = useAuthStore();
 
   const [broadcastVisible, setBroadcastVisible] = useState(false);
@@ -90,28 +90,29 @@ export default function HomeScreen() {
     }
   };
 
-  const handleEntityLongPress = (entityId: string, entityName: string) => {
-    Alert.alert(entityName, undefined, [
+  const handleEntityLongPress = (entity: Entity) => {
+    if (entities.length <= 1) return;
+    Alert.alert(entity.name, undefined, [
       { text: t('common.cancel'), style: 'cancel' },
       {
-        text: t('home.unbind_title'),
+        text: t('entity.remove'),
         style: 'destructive',
-        onPress: () => handleUnbind(entityId, entityName),
+        onPress: () => handleDelete(entity),
       },
     ]);
   };
 
-  const handleUnbind = async (entityId: string, name: string) => {
-    Alert.alert(t('home.unbind_title'), t('home.unbind_message', { name }), [
+  const handleDelete = async (entity: Entity) => {
+    Alert.alert(t('entity.remove'), t('entity.remove_confirm', { name: entity.name }), [
       { text: t('common.cancel'), style: 'cancel' },
       {
-        text: t('home.unbind_title'),
+        text: t('common.delete'),
         style: 'destructive',
         onPress: async () => {
           try {
-            await deviceApi.removeEntity(entityId);
-            await refetch();
-            showSnack(t('home.unbind_success'));
+            await deviceApi.deleteEntityPermanent(entity.entityIndex);
+            removeEntity(entity.entityId);
+            showSnack(t('entity.deleted'));
           } catch {
             showSnack(t('errors.server'));
           }
@@ -157,7 +158,7 @@ export default function HomeScreen() {
           renderItem={({ item }) => (
             <EntityCard
               entity={item}
-              onLongPress={() => handleEntityLongPress(item.entityId, item.name)}
+              onLongPress={() => handleEntityLongPress(item)}
             />
           )}
           refreshControl={

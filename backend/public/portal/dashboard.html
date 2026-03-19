@@ -1579,8 +1579,7 @@
                     '<button class="btn btn-sm btn-outline" onclick="refreshEntity(' + entity.entityId + ', this)">&#x1F504; ' + i18n.t('dash_btn_refresh') + '</button>' +
                     '<button class="xd-settings-toggle" id="xdToggle' + entity.entityId + '" onclick="toggleXdSettings(' + entity.entityId + ')">' + i18n.t('dash_xd_settings') + '</button>' +
                     '<button class="ac-settings-toggle" id="acToggle' + entity.entityId + '" onclick="toggleAgentCard(' + entity.entityId + ')">&#x1F4C7; Agent Card</button>' +
-                    '<button class="btn btn-sm btn-danger" onclick="confirmRemove(' + entity.entityId + ', \'' + escapedName + '\')">' + i18n.t('dash_btn_remove') + '</button>' +
-                    '<button class="btn btn-sm btn-delete-permanent"' + (entities.length <= 1 ? ' disabled title="Cannot delete the last entity"' : '') + ' onclick="confirmDeletePermanent(' + entity.entityId + ', \'' + escapedName + '\')">&#x1F5D1; Delete Permanently</button>' +
+                    '<button class="btn btn-sm btn-delete-permanent"' + (entities.length <= 1 ? ' disabled title="' + i18n.t('dash_remove_title') + '"' : '') + ' onclick="confirmRemove(' + entity.entityId + ', \'' + escapedName + '\')">' + i18n.t('dash_btn_remove') + '</button>' +
                     '</div>' +
                     '<div class="xd-settings-panel" id="xdPanel' + entity.entityId + '">' +
                     '<h4>' + i18n.t('dash_xd_title') + '</h4>' +
@@ -2651,58 +2650,6 @@
         }
 
         function confirmRemove(entityId, displayName) {
-            const overlay = document.createElement('div');
-            overlay.className = 'confirm-overlay';
-            overlay.innerHTML =
-                '<div class="dialog">' +
-                '<div class="dialog-title">' + i18n.t('dash_remove_title') + '</div>' +
-                '<p style="color:var(--text-secondary);font-size:14px;">' +
-                i18n.t('dash_remove_desc', { name: escapeHtml(displayName), id: entityId }) +
-                '</p>' +
-                '<div class="dialog-actions">' +
-                '<button class="btn btn-outline" onclick="this.closest(\'.confirm-overlay\').remove()">' + i18n.t('mc_dlg_cancel') + '</button>' +
-                '<button class="btn btn-danger" id="btnConfirmRemove" onclick="removeEntity(' + entityId + ', this)">' + i18n.t('dash_btn_remove') + '</button>' +
-                '</div>' +
-                '</div>';
-            document.body.appendChild(overlay);
-
-            // Close on background click
-            overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) overlay.remove();
-            });
-        }
-
-        async function removeEntity(entityId, btnEl) {
-            btnEl.disabled = true;
-            btnEl.textContent = 'Removing...';
-
-            try {
-                await apiCall('DELETE', '/api/device/entity', {
-                    deviceId: currentUser.deviceId,
-                    deviceSecret: currentUser.deviceSecret,
-                    entityId: entityId
-                });
-
-                // Close dialog
-                const overlay = btnEl.closest('.confirm-overlay');
-                if (overlay) overlay.remove();
-
-                showToast('Entity removed successfully', 'success');
-
-                // Exit edit mode before refreshing so loadEntities doesn't skip
-                if (isEditMode) toggleEditMode();
-
-                // Refresh entities
-                await loadEntities();
-            } catch (e) {
-                showToast('Failed to remove: ' + e.message, 'error');
-                btnEl.disabled = false;
-                btnEl.textContent = i18n.t('dash_btn_remove');
-            }
-        }
-
-        // --- Delete Permanently ---
-        function confirmDeletePermanent(entityId, displayName) {
             if (entities.length <= 1) {
                 showToast('Cannot delete the last entity', 'error');
                 return;
@@ -2711,40 +2658,44 @@
             overlay.className = 'confirm-overlay';
             overlay.innerHTML =
                 '<div class="dialog">' +
-                '<div class="dialog-title" style="color:#dc2626;">&#x26A0; Delete Entity Permanently</div>' +
+                '<div class="dialog-title" style="color:#dc2626;">' + i18n.t('dash_remove_title') + '</div>' +
                 '<p style="color:var(--text-secondary);font-size:14px;">' +
-                'This will <strong>permanently delete</strong> entity <strong>' + escapeHtml(displayName) + '</strong> (ID: ' + entityId + '). ' +
-                'The entity slot will be removed and cannot be recovered.' +
+                i18n.t('dash_remove_desc', { name: escapeHtml(displayName), id: entityId }) +
                 '</p>' +
                 '<div class="dialog-actions">' +
-                '<button class="btn btn-outline" onclick="this.closest(\'.confirm-overlay\').remove()">Cancel</button>' +
-                '<button class="btn btn-delete-permanent" id="btnConfirmDeletePerm" onclick="deletePermanent(' + entityId + ', this)">Delete Permanently</button>' +
+                '<button class="btn btn-outline" onclick="this.closest(\'.confirm-overlay\').remove()">' + i18n.t('mc_dlg_cancel') + '</button>' +
+                '<button class="btn btn-delete-permanent" id="btnConfirmRemove" onclick="removeEntity(' + entityId + ', this)">' + i18n.t('dash_btn_remove') + '</button>' +
                 '</div>' +
                 '</div>';
             document.body.appendChild(overlay);
+
             overlay.addEventListener('click', (e) => {
                 if (e.target === overlay) overlay.remove();
             });
         }
 
-        async function deletePermanent(entityId, btnEl) {
+        async function removeEntity(entityId, btnEl) {
             btnEl.disabled = true;
             btnEl.textContent = 'Deleting...';
+
             try {
                 await apiCall('DELETE', '/api/device/entity/' + entityId + '/permanent', {
                     deviceId: currentUser.deviceId,
                     deviceSecret: currentUser.deviceSecret
                 });
+
                 const overlay = btnEl.closest('.confirm-overlay');
                 if (overlay) overlay.remove();
-                showToast('Entity permanently deleted', 'success');
+
+                showToast('Entity deleted', 'success');
                 if (window.telemetry) telemetry.trackAction('entity_delete_permanent', { entityId: entityId });
+
                 if (isEditMode) toggleEditMode();
                 await loadEntities();
             } catch (e) {
                 showToast('Failed to delete: ' + e.message, 'error');
                 btnEl.disabled = false;
-                btnEl.textContent = 'Delete Permanently';
+                btnEl.textContent = i18n.t('dash_btn_remove');
             }
         }
 

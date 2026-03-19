@@ -1402,14 +1402,13 @@ class MainActivity : AppCompatActivity() {
     private fun removeEntity(entity: EntityStatus) {
         lifecycleScope.launch {
             try {
-                val body = mapOf<String, Any>(
+                val body = mapOf(
                     "deviceId" to deviceManager.deviceId,
-                    "deviceSecret" to deviceManager.deviceSecret,
-                    "entityId" to entity.entityId
+                    "deviceSecret" to deviceManager.deviceSecret
                 )
-                val response = api.removeEntityByDevice(body)
+                val response = api.deleteEntityPermanent(entity.entityId, body)
 
-                if (response.success) {
+                if (response.isSuccessful) {
                     layoutPrefs.removeRegisteredEntity(entity.entityId)
                     val displayName = entity.name ?: getString(R.string.entity_format, entity.entityId)
                     Toast.makeText(
@@ -1420,14 +1419,15 @@ class MainActivity : AppCompatActivity() {
                     delay(500)
                     loadBoundEntities()
                 } else {
+                    val errorBody = response.errorBody()?.string() ?: "Unknown error"
                     Toast.makeText(
                         this@MainActivity,
-                        getString(R.string.failed_format, response.message),
+                        getString(R.string.failed_format, errorBody),
                         Toast.LENGTH_SHORT
                     ).show()
                 }
             } catch (e: Exception) {
-                Timber.e(e, "Failed to remove entity")
+                Timber.e(e, "Failed to delete entity")
                 Toast.makeText(
                     this@MainActivity,
                     getString(R.string.failed_format, e.message),

@@ -67,9 +67,6 @@ interface ClawApiService {
     @HTTP(method = "DELETE", path = "api/entity", hasBody = true)
     suspend fun removeEntity(@Body body: Map<String, String>): ApiResponse
 
-    // Remove entity by device owner (requires deviceSecret)
-    @HTTP(method = "DELETE", path = "api/device/entity", hasBody = true)
-    suspend fun removeEntityByDevice(@Body body: Map<String, @JvmSuppressWildcards Any>): ApiResponse
 
     // Rename entity by device owner (requires deviceSecret)
     @PUT("api/device/entity/name")
