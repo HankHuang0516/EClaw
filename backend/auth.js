@@ -650,13 +650,30 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                      FROM channel_accounts WHERE device_id = $1 ORDER BY created_at ASC`,
                     [user.device_id]
                 );
+                // Build a map of channelAccountId → bound entities
+                const device = devices[user.device_id];
+                const boundEntitiesMap = {};
+                if (device) {
+                    for (const [eid, entity] of Object.entries(device.entities)) {
+                        if (entity.channelAccountId) {
+                            if (!boundEntitiesMap[entity.channelAccountId]) boundEntitiesMap[entity.channelAccountId] = [];
+                            boundEntitiesMap[entity.channelAccountId].push({
+                                entityId: parseInt(eid),
+                                name: entity.name || null,
+                                avatar: entity.avatar || null
+                            });
+                        }
+                    }
+                }
+
                 channelAccounts = channelResult.rows.map(r => ({
                     id: r.id,
                     channel_api_key: r.channel_api_key,
                     channel_api_secret: r.channel_api_secret,
                     has_callback: !!r.callback_url,
                     status: r.status,
-                    created_at: parseInt(r.created_at)
+                    created_at: parseInt(r.created_at),
+                    boundEntities: boundEntitiesMap[r.id] || []
                 }));
             } catch (chErr) {
                 console.error('[Auth] Failed to query channel accounts:', chErr.message);
