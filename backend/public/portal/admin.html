@@ -139,6 +139,16 @@
             color: var(--text-secondary);
         }
 
+        .data-table .mono.bot-id-cell {
+            max-width: 180px;
+            overflow-x: auto;
+            white-space: nowrap;
+            display: block;
+            scrollbar-width: thin;
+            cursor: text;
+            user-select: all;
+        }
+
         /* Pagination */
         .pagination-bar {
             display: flex;
@@ -852,6 +862,10 @@
         let contribData = null;
         let soulContribData = null;
         let ruleContribData = null;
+        let contribPage = 0;
+        let soulContribPage = 0;
+        let ruleContribPage = 0;
+        const CONTRIB_PAGE_SIZE = 20;
 
         async function init() {
             renderNav('admin');
@@ -1034,7 +1048,7 @@
                     const users24hCell = b.botType === 'free' ? String(b.uniqueUsers24h) : '-';
                     const usersAvg5hCell = b.botType === 'free' ? String(b.avgUsersPer5h) : '-';
                     html += '<tr>' +
-                        '<td class="mono">' + escapeHtml(b.botId).substring(0, 12) + '...</td>' +
+                        '<td><span class="mono bot-id-cell">' + escapeHtml(b.botId) + '</span></td>' +
                         '<td><span class="type-badge ' + typeCls + '">' + escapeHtml(b.botType) + '</span></td>' +
                         '<td><span class="type-badge ' + statusCls + '">' + escapeHtml(b.status) + '</span></td>' +
                         '<td class="mono">' + assignedCell + '</td>' +
@@ -1063,7 +1077,7 @@
                 for (const b of bindingsData.bindings) {
                     const typeCls = b.botType === 'free' ? 'type-free' : 'type-personal';
                     html += '<tr>' +
-                        '<td class="mono">' + escapeHtml(b.botId).substring(0, 12) + '...</td>' +
+                        '<td><span class="mono bot-id-cell">' + escapeHtml(b.botId) + '</span></td>' +
                         '<td><span class="type-badge ' + typeCls + '">' + escapeHtml(b.botType) + '</span></td>' +
                         '<td class="mono">' + escapeHtml(b.deviceId).substring(0, 8) + '...</td>' +
                         '<td>Entity ' + b.entityId + '</td>' +
@@ -1130,6 +1144,9 @@
 
             // Skill Contributions section
             const contribs = (contribData && contribData.contributions) ? contribData.contributions : [];
+            const contribTotalPages = Math.max(1, Math.ceil(contribs.length / CONTRIB_PAGE_SIZE));
+            if (contribPage >= contribTotalPages) contribPage = contribTotalPages - 1;
+            const pageContribs = contribs.slice(contribPage * CONTRIB_PAGE_SIZE, (contribPage + 1) * CONTRIB_PAGE_SIZE);
             html += '<div class="section-card">';
             html += '<div class="section-title">' + i18n.t('skill_contrib_tab') + ' (' + contribs.length + ')</div>';
             if (contribs.length === 0) {
@@ -1138,7 +1155,7 @@
                 html += '<div class="table-scroll"><table class="data-table"><thead><tr>' +
                     '<th>ID</th><th>' + i18n.t('skill_contrib_col_title') + '</th><th>' + i18n.t('contrib_col_by') + '</th><th>' + i18n.t('skill_contrib_col_status') + '</th><th>GitHub</th><th>' + i18n.t('contrib_col_date') + '</th><th></th>' +
                     '</tr></thead><tbody>';
-                contribs.forEach(function(c) {
+                pageContribs.forEach(function(c) {
                     const statusIcon = c.status === 'approved' ? '✅' : c.status === 'rejected' ? '❌' : '⏳';
                     const statusLabel = statusIcon + ' ' + i18n.t('skill_contrib_status_' + c.status, c.status);
                     const ghInfo = c.verificationResult
@@ -1162,11 +1179,15 @@
                         '</tr>';
                 });
                 html += '</tbody></table></div>';
+                html += renderPaginationBar('contribPage', contribPage, contribTotalPages);
             }
             html += '</div>';
 
             // Soul Contributions section
             const soulContribs = (soulContribData && soulContribData.contributions) ? soulContribData.contributions : [];
+            const soulTotalPages = Math.max(1, Math.ceil(soulContribs.length / CONTRIB_PAGE_SIZE));
+            if (soulContribPage >= soulTotalPages) soulContribPage = soulTotalPages - 1;
+            const pageSoulContribs = soulContribs.slice(soulContribPage * CONTRIB_PAGE_SIZE, (soulContribPage + 1) * CONTRIB_PAGE_SIZE);
             html += '<div class="section-card">';
             html += '<div class="section-title">' + i18n.t('soul_contrib_tab') + ' (' + soulContribs.length + ')</div>';
             if (soulContribs.length === 0) {
@@ -1178,7 +1199,7 @@
                     '<th>' + i18n.t('soul_contrib_col_description') + '</th>' +
                     '<th>' + i18n.t('contrib_col_date') + '</th><th></th>' +
                     '</tr></thead><tbody>';
-                soulContribs.forEach(function(c) {
+                pageSoulContribs.forEach(function(c) {
                     const descPreview = escapeHtml((c.description || '').slice(0, 120)) + (c.description && c.description.length > 120 ? '…' : '');
                     const byStr = escapeHtml((c.submittedBy && c.submittedBy.entityName) || ('entity_' + (c.submittedBy && c.submittedBy.entityId)));
                     const dateStr = c.submittedAt ? formatDateTime(c.submittedAt) : '—';
@@ -1193,11 +1214,15 @@
                         '</tr>';
                 });
                 html += '</tbody></table></div>';
+                html += renderPaginationBar('soulContribPage', soulContribPage, soulTotalPages);
             }
             html += '</div>';
 
             // Rule Contributions section
             const ruleContribs = (ruleContribData && ruleContribData.contributions) ? ruleContribData.contributions : [];
+            const ruleTotalPages = Math.max(1, Math.ceil(ruleContribs.length / CONTRIB_PAGE_SIZE));
+            if (ruleContribPage >= ruleTotalPages) ruleContribPage = ruleTotalPages - 1;
+            const pageRuleContribs = ruleContribs.slice(ruleContribPage * CONTRIB_PAGE_SIZE, (ruleContribPage + 1) * CONTRIB_PAGE_SIZE);
             html += '<div class="section-card">';
             html += '<div class="section-title">' + i18n.t('rule_contrib_tab') + ' (' + ruleContribs.length + ')</div>';
             if (ruleContribs.length === 0) {
@@ -1210,7 +1235,7 @@
                     '<th>' + i18n.t('rule_contrib_col_description') + '</th>' +
                     '<th>' + i18n.t('contrib_col_date') + '</th><th></th>' +
                     '</tr></thead><tbody>';
-                ruleContribs.forEach(function(c) {
+                pageRuleContribs.forEach(function(c) {
                     const descPreview = escapeHtml((c.description || '').slice(0, 120)) + (c.description && c.description.length > 120 ? '…' : '');
                     const byStr = escapeHtml((c.submittedBy && c.submittedBy.entityName) || ('entity_' + (c.submittedBy && c.submittedBy.entityId)));
                     const dateStr = c.submittedAt ? formatDateTime(c.submittedAt) : '—';
@@ -1226,6 +1251,7 @@
                         '</tr>';
                 });
                 html += '</tbody></table></div>';
+                html += renderPaginationBar('ruleContribPage', ruleContribPage, ruleTotalPages);
             }
             html += '</div>';
 
@@ -1263,6 +1289,15 @@
             } catch (e) {
                 alert('Error: ' + e.message);
             }
+        }
+
+        function renderPaginationBar(pageVarName, currentPage, totalPages) {
+            if (totalPages <= 1) return '';
+            return '<div class="pagination-bar">' +
+                '<button class="btn-pagination" onclick="' + pageVarName + '--;render()" ' + (currentPage === 0 ? 'disabled' : '') + '>&#8249;</button>' +
+                '<span class="pagination-info">' + (currentPage + 1) + ' / ' + totalPages + '</span>' +
+                '<button class="btn-pagination" onclick="' + pageVarName + '++;render()" ' + (currentPage >= totalPages - 1 ? 'disabled' : '') + '>&#8250;</button>' +
+                '</div>';
         }
 
         function statCard(value, label, colorClass) {

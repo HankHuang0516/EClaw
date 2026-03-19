@@ -1622,20 +1622,28 @@ app.get('/api/admin/bindings', adminAuth, adminCheck, async (req, res) => {
                    u.email as user_email
             FROM official_bot_bindings b
             JOIN official_bots o ON b.bot_id = o.bot_id
-            LEFT JOIN user_accounts u ON b.device_id = u.device_id
+            JOIN user_accounts u ON b.device_id = u.device_id AND u.email_verified = true
             ORDER BY b.bound_at DESC
         `);
 
-        const allBindings = result.rows.map(r => ({
-            botId: r.bot_id,
-            botType: r.bot_type,
-            deviceId: r.device_id,
-            entityId: r.entity_id != null ? parseInt(r.entity_id) : null,
-            userEmail: r.user_email || '(APP user)',
-            boundAt: r.bound_at ? parseInt(r.bound_at) : null,
-            subscriptionVerifiedAt: r.subscription_verified_at ? parseInt(r.subscription_verified_at) : null,
-            botStatus: r.bot_status
-        }));
+        const allBindings = result.rows
+            .filter(r => {
+                // Only include bindings where the entity is still actively bound
+                const dev = devices[r.device_id];
+                if (!dev) return false;
+                const entity = dev.entities && dev.entities[r.entity_id];
+                return entity && entity.isBound;
+            })
+            .map(r => ({
+                botId: r.bot_id,
+                botType: r.bot_type,
+                deviceId: r.device_id,
+                entityId: r.entity_id != null ? parseInt(r.entity_id) : null,
+                userEmail: r.user_email || '(APP user)',
+                boundAt: r.bound_at ? parseInt(r.bound_at) : null,
+                subscriptionVerifiedAt: r.subscription_verified_at ? parseInt(r.subscription_verified_at) : null,
+                botStatus: r.bot_status
+            }));
         // Filter out test device bindings
         const realBindings = allBindings.filter(b => !isTestDeviceCheck(b.deviceId, devices[b.deviceId]));
         res.json({
