@@ -282,9 +282,15 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             const account = await channelAuth(req, res);
             if (!account) return;
 
-            const { callback_url, callback_token, callback_username, callback_password, e2ee_capable } = req.body;
+            let { callback_url, callback_token, callback_username, callback_password, e2ee_capable } = req.body;
             if (!callback_url) {
                 return res.status(400).json({ success: false, message: 'callback_url required' });
+            }
+
+            // Auto-upgrade HTTP to HTTPS for non-localhost URLs to avoid
+            // 301/302 redirects that convert POST→GET and lose the request body
+            if (callback_url.startsWith('http://') && !callback_url.includes('localhost') && !callback_url.includes('127.0.0.1')) {
+                callback_url = callback_url.replace('http://', 'https://');
             }
 
             if (process.env.DEBUG === 'true') serverLog('info', 'bind', `[BIND] /register callback_url=${callback_url}`, { deviceId: account.device_id });
@@ -653,30 +659,49 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 headers['Authorization'] = `Bearer ${account.callback_token}`;
             }
 
-            const response = await fetch(account.callback_url, {
+            const bodyStr = JSON.stringify({
+                event: payload.event || 'message',
+                deviceId,
+                entityId,
+                conversationId: `${deviceId}:${entityId}`,
+                from: payload.from || 'client',
+                text: payload.text || '',
+                mediaType: payload.mediaType || null,
+                mediaUrl: payload.mediaUrl || null,
+                backupUrl: payload.backupUrl || null,
+                timestamp: Date.now(),
+                isBroadcast: payload.isBroadcast || false,
+                broadcastRecipients: payload.broadcastRecipients || null,
+                fromEntityId: payload.fromEntityId,
+                fromCharacter: payload.fromCharacter,
+                fromPublicCode: payload.fromPublicCode,
+                eclaw_context: payload.eclaw_context || null,
+                e2ee: !!account.e2ee_capable
+            });
+
+            // Use redirect: 'manual' to preserve POST method on 301/302/303 redirects.
+            // Default fetch behavior converts POST→GET on these status codes, losing the body.
+            let response = await fetch(account.callback_url, {
                 method: 'POST',
                 headers,
-                body: JSON.stringify({
-                    event: payload.event || 'message',
-                    deviceId,
-                    entityId,
-                    conversationId: `${deviceId}:${entityId}`,
-                    from: payload.from || 'client',
-                    text: payload.text || '',
-                    mediaType: payload.mediaType || null,
-                    mediaUrl: payload.mediaUrl || null,
-                    backupUrl: payload.backupUrl || null,
-                    timestamp: Date.now(),
-                    isBroadcast: payload.isBroadcast || false,
-                    broadcastRecipients: payload.broadcastRecipients || null,
-                    fromEntityId: payload.fromEntityId,
-                    fromCharacter: payload.fromCharacter,
-                    fromPublicCode: payload.fromPublicCode,
-                    eclaw_context: payload.eclaw_context || null,
-                    e2ee: !!account.e2ee_capable
-                }),
+                body: bodyStr,
+                redirect: 'manual',
                 signal: AbortSignal.timeout(10000)
             });
+
+            // Follow redirect manually, preserving POST method and body
+            if (response.status >= 300 && response.status < 400) {
+                const location = response.headers.get('location');
+                if (location) {
+                    response = await fetch(location, {
+                        method: 'POST',
+                        headers,
+                        body: bodyStr,
+                        redirect: 'manual',
+                        signal: AbortSignal.timeout(10000)
+                    });
+                }
+            }
 
             if (response.ok) {
                 serverLog('info', 'channel', `Callback push OK for Entity ${entityId}`, { deviceId, entityId });

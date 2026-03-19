@@ -66,7 +66,6 @@ export const eclawOnboardingAdapter = {
             [accountId]: {
               apiKey: String(apiKey).trim(),
               apiBase: resolved.apiBase || 'https://eclawbot.com',
-              entityId: resolved.entityId,  // keep existing if re-configuring, else undefined = auto-assign
               botName: String(botName).trim() || undefined,
               webhookUrl: String(webhookUrl).trim() || undefined,
               enabled: true,

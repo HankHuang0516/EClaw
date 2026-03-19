@@ -15,7 +15,6 @@ import { dispatchWebhook } from './webhook-registry.js';
  *         default:
  *           apiKey: "eck_..."
  *           apiBase: "https://eclawbot.com"
- *           entityId: 0
  *           botName: "My Bot"
  *           webhookUrl: "https://your-openclaw-domain.com"
  *
@@ -24,9 +23,17 @@ import { dispatchWebhook } from './webhook-registry.js';
  * (e.g. https://eclaw2.zeabur.app) so E-Claw knows where to push messages.
  */
 
-/** Parse JSON body from a raw incoming request */
+/** Parse JSON body from a raw incoming request.
+ *  If the gateway framework already parsed the body (e.g. Express json middleware),
+ *  skip re-reading the consumed stream to avoid overwriting req.body with {}.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseBody(req: any): Promise<void> {
+  // Gateway already parsed the body — don't overwrite it
+  if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) {
+    return Promise.resolve();
+  }
+
   return new Promise((resolve) => {
     let body = '';
     req.on('data', (chunk: Buffer) => { body += chunk.toString(); });
@@ -34,7 +41,10 @@ function parseBody(req: any): Promise<void> {
       try {
         req.body = JSON.parse(body);
       } catch {
-        req.body = {};
+        // Only set empty fallback if body wasn't pre-parsed
+        if (!req.body || typeof req.body !== 'object') {
+          req.body = {};
+        }
       }
       resolve();
     });
