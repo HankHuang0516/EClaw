@@ -277,6 +277,19 @@
     <string name="crash_log_deleted">已刪除閃退紀錄</string>
     <string name="crash_logs_all_deleted">已刪除 %d 筆閃退紀錄</string>
 
+    <!-- Debug Logs -->
+    <string name="debug_logs_title">除錯日誌</string>
+    <string name="debug_logs_empty">尚無除錯日誌。\n應用程式運行時日誌將自動記錄於此。</string>
+    <string name="debug_log_filter_all">全部</string>
+    <string name="debug_log_share">分享</string>
+    <string name="debug_log_clear">清除</string>
+    <string name="debug_log_clear_confirm">確定清除所有除錯日誌？</string>
+    <string name="debug_log_cleared">已清除除錯日誌</string>
+    <string name="debug_log_line_count">%d 行</string>
+    <string name="debug_log_search_hint">搜尋日誌…</string>
+    <string name="debug_log_copy">複製</string>
+    <string name="debug_log_copied">已複製日誌到剪貼簿</string>
+
     <!-- Free Bot TOS -->
     <string name="tos_agree">我同意</string>
     <string name="tos_decline">不同意</string>

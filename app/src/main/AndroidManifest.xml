@@ -99,6 +99,12 @@
             android:parentActivityName=".SettingsActivity" />
 
         <activity
+            android:name=".DebugLogViewerActivity"
+            android:exported="false"
+            android:label="@string/debug_logs_title"
+            android:parentActivityName=".SettingsActivity" />
+
+        <activity
             android:name=".WallpaperPreviewActivity"
             android:exported="false"
             android:label="Wallpaper Preview"

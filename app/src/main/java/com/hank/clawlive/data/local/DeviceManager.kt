@@ -119,6 +119,23 @@ class DeviceManager private constructor(context: Context) {
     }
 
     /**
+     * Store user roles fetched from bind-email/status
+     */
+    var roles: List<String>
+        get() {
+            val raw = prefs.getString(KEY_ROLES, null) ?: return emptyList()
+            return raw.split(",").filter { it.isNotEmpty() }
+        }
+        set(value) = prefs.edit().putString(KEY_ROLES, value.joinToString(",")).apply()
+
+    /**
+     * Check if current user has admin or developer role
+     */
+    fun isDeveloperOrAdmin(): Boolean {
+        return roles.any { it == "admin" || it == "developer" }
+    }
+
+    /**
      * Reset device credentials (for re-binding)
      */
     fun reset() {
@@ -128,6 +145,7 @@ class DeviceManager private constructor(context: Context) {
             .remove(KEY_IS_BOUND)
             .remove(KEY_BINDING_CODE)
             .remove(KEY_BINDING_EXPIRY)
+            .remove(KEY_ROLES)
             .apply()
     }
 
@@ -138,6 +156,7 @@ class DeviceManager private constructor(context: Context) {
         private const val KEY_IS_BOUND = "is_bound"
         private const val KEY_BINDING_CODE = "binding_code"
         private const val KEY_BINDING_EXPIRY = "binding_expiry"
+        private const val KEY_ROLES = "user_roles"
 
         @Volatile
         private var instance: DeviceManager? = null

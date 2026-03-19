@@ -264,6 +264,19 @@
     <string name="crash_log_deleted">已删除闪退记录</string>
     <string name="crash_logs_all_deleted">已删除 %d 条闪退记录</string>
 
+    <!-- Debug Logs -->
+    <string name="debug_logs_title">调试日志</string>
+    <string name="debug_logs_empty">暂无调试日志。\n应用运行时日志将自动记录于此。</string>
+    <string name="debug_log_filter_all">全部</string>
+    <string name="debug_log_share">分享</string>
+    <string name="debug_log_clear">清除</string>
+    <string name="debug_log_clear_confirm">确定清除所有调试日志？</string>
+    <string name="debug_log_cleared">已清除调试日志</string>
+    <string name="debug_log_line_count">%d 行</string>
+    <string name="debug_log_search_hint">搜索日志…</string>
+    <string name="debug_log_copy">复制</string>
+    <string name="debug_log_copied">已复制日志到剪贴板</string>
+
     <string name="official_borrow">官方机器人租赁</string>
     <string name="official_borrow_title">官方机器人租赁</string>
     <string name="borrow_beta_label">测试版</string>

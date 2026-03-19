@@ -685,6 +685,23 @@
                 app:strokeWidth="1dp"
                 style="@style/Widget.Material3.Button.TonalButton"/>
 
+            <!-- Debug Logs Button (admin/developer only) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDebugLogs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/debug_logs_title"
+                android:textColor="@color/text_white_80"
+                app:backgroundTint="@color/surface_input"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_feedback"
+                app:iconTint="@color/text_white_80"
+                app:strokeColor="@color/text_dark"
+                app:strokeWidth="1dp"
+                style="@style/Widget.Material3.Button.TonalButton"/>
+
             <!-- Set Wallpaper Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSetWallpaper"

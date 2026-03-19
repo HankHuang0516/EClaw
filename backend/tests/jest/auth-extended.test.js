@@ -235,7 +235,7 @@ jest.mock('../../auth', () => {
         if (!deviceId || !deviceSecret) {
             return res.status(400).json({ success: false, error: 'deviceId and deviceSecret are required' });
         }
-        return res.json({ success: true, hasBoundEmail: false });
+        return res.json({ success: true, hasBoundEmail: false, roles: [] });
     });
 
     // POST /app-login
@@ -515,6 +515,13 @@ describe('GET /api/auth/bind-email/status', () => {
         const res = await get('/api/auth/bind-email/status?deviceId=d&deviceSecret=s');
         expect(res.status).toBe(200);
         expect(res.body).toHaveProperty('hasBoundEmail');
+    });
+
+    it('returns roles array in response', async () => {
+        const res = await get('/api/auth/bind-email/status?deviceId=d&deviceSecret=s');
+        expect(res.status).toBe(200);
+        expect(res.body).toHaveProperty('roles');
+        expect(Array.isArray(res.body.roles)).toBe(true);
     });
 });
 

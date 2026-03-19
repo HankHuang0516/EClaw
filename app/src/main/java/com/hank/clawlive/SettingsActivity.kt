@@ -73,6 +73,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var btnPrivacyPolicy: MaterialButton
     private lateinit var btnDeleteAccount: MaterialButton
     private lateinit var btnCrashLogs: MaterialButton
+    private lateinit var btnDebugLogs: MaterialButton
     // Account Status Card views
     private lateinit var cardAccountStatus: MaterialCardView
     private lateinit var accountStatusLoading: LinearLayout
@@ -219,6 +220,7 @@ class SettingsActivity : AppCompatActivity() {
         btnPrivacyPolicy = findViewById(R.id.btnPrivacyPolicy)
         btnDeleteAccount = findViewById(R.id.btnDeleteAccount)
         btnCrashLogs = findViewById(R.id.btnCrashLogs)
+        btnDebugLogs = findViewById(R.id.btnDebugLogs)
         cardAccountStatus = findViewById(R.id.cardAccountStatus)
         accountStatusLoading = findViewById(R.id.accountStatusLoading)
         accountBoundLayout = findViewById(R.id.accountBoundLayout)
@@ -264,6 +266,11 @@ class SettingsActivity : AppCompatActivity() {
             btnDebugEntityLimit.visibility = View.VISIBLE
             updateDebugEntityLimitButton()
         }
+
+        // Show debug logs button from cached roles (will be updated by network call)
+        if (deviceManager.isDeveloperOrAdmin()) {
+            btnDebugLogs.visibility = View.VISIBLE
+        }
     }
 
     private fun setupClickListeners() {
@@ -294,6 +301,10 @@ class SettingsActivity : AppCompatActivity() {
 
         btnCrashLogs.setOnClickListener {
             startActivity(Intent(this, CrashLogViewerActivity::class.java))
+        }
+
+        btnDebugLogs.setOnClickListener {
+            startActivity(Intent(this, DebugLogViewerActivity::class.java))
         }
 
         // Account Status Card listeners
@@ -512,6 +523,9 @@ class SettingsActivity : AppCompatActivity() {
                 } else {
                     showAccountUnboundState()
                 }
+                // Save roles and show debug logs button for admin/developer
+                status.roles?.let { deviceManager.roles = it }
+                btnDebugLogs.visibility = if (deviceManager.isDeveloperOrAdmin()) View.VISIBLE else View.GONE
                 updateChannelApiDisplay(status.channelApiKey, status.channelApiSecret)
                 loadChannelEntitySlotStatus()
             } catch (e: Exception) {
