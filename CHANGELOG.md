@@ -1,3 +1,10 @@
+# [1.118.0](https://github.com/HankHuang0516/EClaw/compare/v1.117.2...v1.118.0) (2026-03-19)
+
+
+### Features
+
+* add debug log viewer for admin/developer users ([#328](https://github.com/HankHuang0516/EClaw/issues/328)) ([a1fbbdd](https://github.com/HankHuang0516/EClaw/commit/a1fbbdde20bb386784a9f5fdfa91b8c290010b4d))
+
 ## [1.117.2](https://github.com/HankHuang0516/EClaw/compare/v1.117.1...v1.117.2) (2026-03-19)
 
 
