@@ -1,3 +1,10 @@
+## [1.117.2](https://github.com/HankHuang0516/EClaw/compare/v1.117.1...v1.117.2) (2026-03-19)
+
+
+### Bug Fixes
+
+* admin panel bot ID display, active bindings logic, and contribution pagination ([#325](https://github.com/HankHuang0516/EClaw/issues/325)) ([547ae35](https://github.com/HankHuang0516/EClaw/commit/547ae35ba12e99a707d4f78e80f28aedb378fdb4))
+
 ## [1.117.1](https://github.com/HankHuang0516/EClaw/compare/v1.117.0...v1.117.1) (2026-03-19)
 
 
