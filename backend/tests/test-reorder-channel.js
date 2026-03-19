@@ -88,12 +88,14 @@ async function run() {
     const DEVICE_SECRET = env.BROADCAST_TEST_DEVICE_SECRET;
     if (!DEVICE_ID) { console.error('Missing BROADCAST_TEST_DEVICE_ID in .env'); process.exit(1); }
 
-    // Query actual entity slot IDs from device (may be unbound)
-    const entitiesRes = await get(`${API_BASE}/api/entities?deviceId=${DEVICE_ID}`);
-    const availableIds = entitiesRes.data?.entityIds || [];
-    if (availableIds.length < 2) { console.error(`Need at least 2 entity slots, found: ${availableIds}`); process.exit(1); }
-    ENTITY_CH = availableIds[0];
-    SWAP_WITH = availableIds[1];
+    // SAFETY: Create new entity slots instead of reusing existing ones
+    const addA = await post(`${API_BASE}/api/device/add-entity`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET });
+    const addB = await post(`${API_BASE}/api/device/add-entity`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET });
+    if (addA.status !== 200 || addB.status !== 200 || addA.data?.entityId === undefined || addB.data?.entityId === undefined) {
+        console.error('Failed to create test entity slots'); process.exit(1);
+    }
+    ENTITY_CH = addA.data.entityId;
+    SWAP_WITH = addB.data.entityId;
 
     const SINK     = `${API_BASE}/api/channel/test-sink`;
     const SLOT     = `reorder-ch-${Date.now()}`;
@@ -120,11 +122,7 @@ async function run() {
     assert(reg.status === 200, 'Register callback to test-sink OK');
 
     // ── 2. Bind entity 6 as channel bot ──────────────────────────────────────
-    console.log(`\n── 2. Bind entity ${ENTITY_CH} as channel, also clear slot ${SWAP_WITH} ──`);
-    // Clear both slots first
-    await del(`${API_BASE}/api/device/entity`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, entityId: ENTITY_CH });
-    await del(`${API_BASE}/api/device/entity`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, entityId: SWAP_WITH });
-    await new Promise(x => setTimeout(x, 500));
+    console.log(`\n── 2. Bind entity ${ENTITY_CH} as channel (swap target: ${SWAP_WITH}) ──`);
 
     const bind = await post(`${API_BASE}/api/channel/bind`, {
         channel_api_key: apiKey, channel_api_secret: apiSecret,
@@ -188,7 +186,7 @@ async function run() {
         }
     }
 
-    // ── 5. Cleanup (restore order first, then unbind) ─────────────────────────
+    // ── 5. Cleanup (restore order first, then unbind + delete test slots) ──────
     console.log('\n── Cleanup ──');
     // Restore original order (the original allEntityIds is the un-swapped order)
     await post(`${API_BASE}/api/device/reorder-entities`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, order: allEntityIds });
@@ -196,7 +194,10 @@ async function run() {
     // Now entity is back at slot ENTITY_CH — unbind it
     await del(`${API_BASE}/api/device/entity`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, entityId: ENTITY_CH });
     await del(`${API_BASE}/api/channel/register`, { channel_api_key: apiKey, channel_api_secret: apiSecret });
-    console.log(`  Order restored, entity ${ENTITY_CH} unbound, channel account unregistered`);
+    // Permanently delete test-created entity slots to restore device state
+    await del(`${API_BASE}/api/device/entity/${ENTITY_CH}/permanent`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET });
+    await del(`${API_BASE}/api/device/entity/${SWAP_WITH}/permanent`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET });
+    console.log(`  Order restored, entity ${ENTITY_CH} unbound, test slots deleted, channel unregistered`);
 
     // ── Summary ───────────────────────────────────────────────────────────────
     console.log('\n' + '═'.repeat(60));

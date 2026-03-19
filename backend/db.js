@@ -353,6 +353,31 @@ async function createTables() {
         `);
         await client.query(`CREATE INDEX IF NOT EXISTS idx_rule_contrib_status ON rule_contributions(status)`);
 
+        // Entity trash (soft-delete recovery, 7-day retention)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS entity_trash (
+                id              SERIAL PRIMARY KEY,
+                device_id       TEXT NOT NULL,
+                entity_id       INTEGER NOT NULL,
+                character       TEXT,
+                name            TEXT,
+                state           TEXT,
+                message         TEXT,
+                webhook         JSONB,
+                bot_secret      TEXT,
+                public_code     TEXT,
+                xp              INTEGER DEFAULT 0,
+                avatar          TEXT,
+                agent_card      JSONB,
+                encryption_status TEXT,
+                deleted_at      TIMESTAMPTZ DEFAULT NOW(),
+                expires_at      TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '7 days'),
+                FOREIGN KEY (device_id) REFERENCES devices(device_id) ON DELETE CASCADE
+            )
+        `);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_entity_trash_device ON entity_trash(device_id)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_entity_trash_expires ON entity_trash(expires_at)`);
+
         console.log('[DB] Database tables ready');
         client.release();
     } catch (err) {
@@ -1480,6 +1505,57 @@ async function getApprovedRuleContributions() {
     return result.rows;
 }
 
+// ── Entity Trash (soft-delete recovery) ──────────────────────────────────
+
+async function saveEntityToTrash(deviceId, entityId, entityData) {
+    if (!pool) return;
+    await pool.query(
+        `INSERT INTO entity_trash (device_id, entity_id, character, name, state, message, webhook, bot_secret, public_code, xp, avatar, agent_card, encryption_status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+        [deviceId, entityId,
+         entityData.character || null,
+         entityData.name || null,
+         entityData.state || null,
+         entityData.message || null,
+         entityData.webhook ? JSON.stringify(entityData.webhook) : null,
+         entityData.botSecret || null,
+         entityData.publicCode || null,
+         entityData.xp || 0,
+         entityData.avatar || null,
+         entityData.agentCard ? JSON.stringify(entityData.agentCard) : null,
+         entityData.encryptionStatus || null]
+    );
+}
+
+async function getEntityTrash(deviceId) {
+    if (!pool) return [];
+    const result = await pool.query(
+        `SELECT * FROM entity_trash WHERE device_id = $1 AND expires_at > NOW() ORDER BY deleted_at DESC`,
+        [deviceId]
+    );
+    return result.rows;
+}
+
+async function getEntityTrashItem(trashId) {
+    if (!pool) return null;
+    const result = await pool.query(
+        `SELECT * FROM entity_trash WHERE id = $1 AND expires_at > NOW()`,
+        [trashId]
+    );
+    return result.rows[0] || null;
+}
+
+async function deleteEntityTrashItem(trashId) {
+    if (!pool) return;
+    await pool.query(`DELETE FROM entity_trash WHERE id = $1`, [trashId]);
+}
+
+async function cleanupExpiredTrash() {
+    if (!pool) return 0;
+    const result = await pool.query(`DELETE FROM entity_trash WHERE expires_at <= NOW()`);
+    return result.rowCount;
+}
+
 module.exports = {
     initDatabase,
     saveDeviceData,
@@ -1551,5 +1627,11 @@ module.exports = {
     // Rule contributions
     insertRuleContribution,
     getRuleContributions,
-    getApprovedRuleContributions
+    getApprovedRuleContributions,
+    // Entity trash (soft-delete recovery)
+    saveEntityToTrash,
+    getEntityTrash,
+    getEntityTrashItem,
+    deleteEntityTrashItem,
+    cleanupExpiredTrash
 };

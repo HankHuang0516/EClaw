@@ -39,9 +39,9 @@ const args    = process.argv.slice(2);
 const isLocal = args.includes('--local');
 const API_BASE = isLocal ? 'http://localhost:3000' : 'https://eclawbot.com';
 
-// Entity slots used by this test (high numbers to avoid collision with real entities)
-const ENTITY_A = 6;
-const ENTITY_B = 7;
+// Entity slots determined dynamically at runtime (avoids deleting pre-existing entities)
+let ENTITY_A;
+let ENTITY_B;
 
 const POLL_INTERVAL_MS = 1500;
 const MAX_WAIT_MS      = 20000;
@@ -133,7 +133,6 @@ async function runTests() {
 
     console.log(`\n🔬 Channel API E2E — ${API_BASE}`);
     console.log(`   Device: ${DEVICE_ID.substring(0, 8)}...`);
-    console.log(`   Entities: slot ${ENTITY_A} (Plugin A), slot ${ENTITY_B} (Plugin B)`);
     console.log('');
 
     let apiKeyA, apiSecretA, accountIdA;
@@ -193,12 +192,18 @@ async function runTests() {
     assert(regB.data?.accountId === accountIdB, 'Plugin B: response accountId matches');
 
     // ──────────────────────────────────────────────────────────────────────────
-    section(`4. Bind entities (A→${ENTITY_A}, B→${ENTITY_B})`);
+    section('4. Create test entity slots + bind entities');
 
-    // Ensure entities are free first (unbind if somehow stuck from a previous test run)
-    await deleteJSON(`${API_BASE}/api/entity/${ENTITY_A}`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET });
-    await deleteJSON(`${API_BASE}/api/entity/${ENTITY_B}`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET });
-    await new Promise(r => setTimeout(r, 500));
+    // SAFETY: Create new entity slots instead of reusing/overwriting existing ones
+    const addA = await postJSON(`${API_BASE}/api/device/add-entity`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET });
+    assert(addA.status === 200 && addA.data?.entityId !== undefined, 'Created entity slot A');
+    ENTITY_A = addA.data?.entityId;
+
+    const addB = await postJSON(`${API_BASE}/api/device/add-entity`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET });
+    assert(addB.status === 200 && addB.data?.entityId !== undefined, 'Created entity slot B');
+    ENTITY_B = addB.data?.entityId;
+
+    console.log(`   Test entity slots: A=${ENTITY_A}, B=${ENTITY_B}`);
 
     const bindA = await postJSON(`${API_BASE}/api/channel/bind`, {
         channel_api_key:    apiKeyA,
@@ -353,8 +358,9 @@ async function runTests() {
     assert(entityB_after?.isBound === true, `Entity ${ENTITY_B}: still bound after Plugin A revoke`);
 
     // ──────────────────────────────────────────────────────────────────────────
-    section('11. Cleanup: unbind entity B + unregister Plugin B');
+    section('11. Cleanup: unbind entities + delete test slots + unregister Plugin B');
 
+    // Unbind entity B
     await deleteJSON(`${API_BASE}/api/entity/${ENTITY_B}`, {
         deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET
     });
@@ -365,6 +371,20 @@ async function runTests() {
     const cleanCheck = await getJSON(`${API_BASE}/api/entities?deviceId=${DEVICE_ID}`);
     const entityB_clean = (cleanCheck.data?.entities || []).find(e => e.entityId === ENTITY_B);
     assert(entityB_clean?.isBound === false, `Entity ${ENTITY_B}: unbound after cleanup`);
+
+    // Permanently delete test-created entity slots to restore device state
+    if (ENTITY_A !== undefined) {
+        await deleteJSON(`${API_BASE}/api/device/entity/${ENTITY_A}/permanent`, {
+            deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET
+        });
+        console.log(`  Entity slot ${ENTITY_A} permanently deleted`);
+    }
+    if (ENTITY_B !== undefined) {
+        await deleteJSON(`${API_BASE}/api/device/entity/${ENTITY_B}/permanent`, {
+            deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET
+        });
+        console.log(`  Entity slot ${ENTITY_B} permanently deleted`);
+    }
 
     // ──────────────────────────────────────────────────────────────────────────
     // Summary

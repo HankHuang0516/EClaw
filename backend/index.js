@@ -3014,6 +3014,20 @@ app.post('/api/transform', (req, res) => {
 // POST /api/wakeup - REMOVED (client-side wakeup retained without push)
 
 /**
+ * Save bound entity data to trash before unbind/delete (7-day recovery).
+ * Only saves if entity is bound (has meaningful data to preserve).
+ */
+async function saveToEntityTrash(deviceId, entityId, entity) {
+    if (!usePostgreSQL || !entity || !entity.isBound) return;
+    try {
+        await db.saveEntityToTrash(deviceId, entityId, entity);
+        console.log(`[Trash] Entity #${entityId} on device ${deviceId} saved to trash`);
+    } catch (err) {
+        console.error(`[Trash] Failed to save entity #${entityId} to trash:`, err.message);
+    }
+}
+
+/**
  * DELETE /api/entity
  * Remove/unbind an entity.
  * Body/Query: { deviceId, entityId, botSecret }
@@ -3086,6 +3100,9 @@ app.delete('/api/entity', async (req, res) => {
             console.log(`[Remove] Official binding cleaned up for device ${deviceId} entity ${eId}`);
         }
     }
+
+    // Save entity data to trash before unbinding
+    await saveToEntityTrash(deviceId, eId, entity);
 
     // Clean up public code index
     if (entity.publicCode) delete publicCodeIndex[entity.publicCode];
@@ -3201,6 +3218,9 @@ app.delete('/api/device/entity', async (req, res) => {
         }
     }
 
+    // Save entity data to trash before unbinding
+    await saveToEntityTrash(deviceId, eId, entity);
+
     // Clean up public code index
     if (entity.publicCode) delete publicCodeIndex[entity.publicCode];
 
@@ -3301,6 +3321,9 @@ app.delete('/api/device/entity/:entityId/permanent', async (req, res) => {
     const entity = device.entities[eId];
     console.log(`[DynamicEntity] Permanent delete: deviceId=${deviceId}, entityId=${eId}, isBound=${entity.isBound}, totalSlotsBefore=${entityCount(device)}`);
 
+    // Save entity data to trash before permanent deletion
+    await saveToEntityTrash(deviceId, eId, entity);
+
     // If bound, perform full unbind cleanup
     if (entity.isBound) {
         // Clean up public code index
@@ -3364,6 +3387,187 @@ app.delete('/api/device/entity/:entityId/permanent', async (req, res) => {
         remainingEntities: entityCount(device),
         entityIds: Object.keys(device.entities).map(Number)
     });
+});
+
+/**
+ * GET /api/device/entity-trash
+ * List trashed (soft-deleted) entities for a device. Items expire after 7 days.
+ * Query: { deviceId, deviceSecret }
+ */
+app.get('/api/device/entity-trash', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query;
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid device credentials' });
+    }
+    if (!usePostgreSQL) {
+        return res.json({ success: true, items: [] });
+    }
+    try {
+        const items = await db.getEntityTrash(deviceId);
+        res.json({
+            success: true,
+            items: items.map(row => ({
+                id: row.id,
+                entityId: row.entity_id,
+                character: row.character,
+                name: row.name,
+                state: row.state,
+                webhook: row.webhook,
+                publicCode: row.public_code,
+                xp: row.xp,
+                avatar: row.avatar,
+                agentCard: row.agent_card,
+                encryptionStatus: row.encryption_status,
+                deletedAt: row.deleted_at,
+                expiresAt: row.expires_at
+            }))
+        });
+    } catch (err) {
+        console.error('[Trash] Error listing trash:', err.message);
+        res.status(500).json({ success: false, error: 'Failed to list trash' });
+    }
+});
+
+/**
+ * POST /api/device/entity-trash/:trashId/restore
+ * Restore a trashed entity to an available slot on the device.
+ * Body: { deviceId, deviceSecret, entityId? (optional, auto-selects unbound slot) }
+ */
+app.post('/api/device/entity-trash/:trashId/restore', async (req, res) => {
+    const trashId = parseInt(req.params.trashId);
+    const { deviceId, deviceSecret, entityId: targetEntityId } = req.body;
+
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    if (isNaN(trashId)) {
+        return res.status(400).json({ success: false, error: 'Invalid trashId' });
+    }
+
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid device credentials' });
+    }
+
+    if (!usePostgreSQL) {
+        return res.status(400).json({ success: false, error: 'PostgreSQL required for trash recovery' });
+    }
+
+    try {
+        const trashItem = await db.getEntityTrashItem(trashId);
+        if (!trashItem || trashItem.device_id !== deviceId) {
+            return res.status(404).json({ success: false, error: 'Trash item not found or expired' });
+        }
+
+        // Find target entity slot: explicit entityId, or first unbound slot, or create new
+        let slotId;
+        if (targetEntityId !== undefined) {
+            slotId = parseInt(targetEntityId);
+            if (!isValidEntityId(device, slotId)) {
+                return res.status(400).json({ success: false, error: `Entity slot #${slotId} does not exist` });
+            }
+            if (device.entities[slotId].isBound) {
+                return res.status(400).json({ success: false, error: `Entity slot #${slotId} is already bound` });
+            }
+        } else {
+            // Find first unbound slot
+            const allIds = Object.keys(device.entities).map(Number);
+            slotId = allIds.find(id => !device.entities[id].isBound);
+            if (slotId === undefined) {
+                // Create a new slot
+                const nextId = device.nextEntityId || (Math.max(...allIds) + 1);
+                device.entities[nextId] = createDefaultEntity(nextId);
+                device.nextEntityId = nextId + 1;
+                slotId = nextId;
+                console.log(`[Trash] Auto-created new slot #${slotId} for restore`);
+            }
+        }
+
+        // Restore entity data to the target slot
+        const entity = device.entities[slotId];
+        entity.isBound = true;
+        entity.character = trashItem.character || 'restored-bot';
+        entity.name = trashItem.name || null;
+        entity.state = trashItem.state || 'IDLE';
+        entity.message = trashItem.message || '';
+        entity.webhook = trashItem.webhook || null;
+        entity.botSecret = trashItem.bot_secret || `restored-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        entity.publicCode = trashItem.public_code || null;
+        entity.xp = trashItem.xp || 0;
+        entity.avatar = trashItem.avatar || null;
+        entity.agentCard = trashItem.agent_card || null;
+        entity.encryptionStatus = trashItem.encryption_status || null;
+
+        // Rebuild public code index
+        if (entity.publicCode) {
+            publicCodeIndex[entity.publicCode] = { deviceId, entityId: slotId };
+        }
+
+        // Remove from trash
+        await db.deleteEntityTrashItem(trashId);
+
+        // Save device state
+        await saveData();
+
+        serverLog('info', 'entity_restore', `Entity #${slotId} restored from trash (original #${trashItem.entity_id}, name=${entity.name})`, { deviceId, entityId: slotId });
+
+        // Notify clients
+        io.to(deviceId).emit('entityRestored', { entityId: slotId });
+
+        res.json({
+            success: true,
+            entityId: slotId,
+            name: entity.name,
+            character: entity.character,
+            message: `Entity restored to slot #${slotId}`
+        });
+    } catch (err) {
+        console.error('[Trash] Error restoring entity:', err.message);
+        res.status(500).json({ success: false, error: 'Failed to restore entity' });
+    }
+});
+
+/**
+ * DELETE /api/device/entity-trash/:trashId
+ * Permanently delete a trashed entity (no recovery).
+ * Body: { deviceId, deviceSecret }
+ */
+app.delete('/api/device/entity-trash/:trashId', async (req, res) => {
+    const trashId = parseInt(req.params.trashId);
+    const { deviceId, deviceSecret } = req.body;
+
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    if (isNaN(trashId)) {
+        return res.status(400).json({ success: false, error: 'Invalid trashId' });
+    }
+
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(403).json({ success: false, error: 'Invalid device credentials' });
+    }
+
+    if (!usePostgreSQL) {
+        return res.status(400).json({ success: false, error: 'PostgreSQL required' });
+    }
+
+    try {
+        const trashItem = await db.getEntityTrashItem(trashId);
+        if (!trashItem || trashItem.device_id !== deviceId) {
+            return res.status(404).json({ success: false, error: 'Trash item not found or expired' });
+        }
+
+        await db.deleteEntityTrashItem(trashId);
+        res.json({ success: true, message: `Trash item #${trashId} permanently deleted` });
+    } catch (err) {
+        console.error('[Trash] Error deleting trash item:', err.message);
+        res.status(500).json({ success: false, error: 'Failed to delete trash item' });
+    }
 });
 
 /**
@@ -11069,6 +11273,18 @@ if (require.main === module) {
             grpcModule.startGrpcServer(grpcPort);
         } catch (err) {
             console.error('[gRPC] Failed to initialize:', err.message);
+        }
+
+        // Entity trash cleanup: purge expired items every 6 hours
+        if (usePostgreSQL) {
+            setInterval(async () => {
+                try {
+                    const count = await db.cleanupExpiredTrash();
+                    if (count > 0) console.log(`[Trash] Cleaned up ${count} expired trash items`);
+                } catch (err) {
+                    console.error('[Trash] Cleanup error:', err.message);
+                }
+            }, 6 * 60 * 60 * 1000);
         }
     });
 }
