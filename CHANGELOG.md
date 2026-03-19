@@ -1,3 +1,10 @@
+## [1.115.1](https://github.com/HankHuang0516/EClaw/compare/v1.115.0...v1.115.1) (2026-03-19)
+
+
+### Bug Fixes
+
+* sync channel API key state between web and app, show bound entities ([#320](https://github.com/HankHuang0516/EClaw/issues/320)) ([f9b4fb0](https://github.com/HankHuang0516/EClaw/commit/f9b4fb0c64ef6722e1fe84c8bb200ca0350d6628))
+
 # [1.115.0](https://github.com/HankHuang0516/EClaw/compare/v1.114.2...v1.115.0) (2026-03-19)
 
 
