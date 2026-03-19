@@ -1,3 +1,10 @@
+## [1.114.2](https://github.com/HankHuang0516/EClaw/compare/v1.114.1...v1.114.2) (2026-03-19)
+
+
+### Bug Fixes
+
+* full entity slot compaction — renumber all slots to 0,1,2,... ([#314](https://github.com/HankHuang0516/EClaw/issues/314)) ([0239421](https://github.com/HankHuang0516/EClaw/commit/0239421ef5dcfa94ec07dbdc00cc17840a765b23))
+
 ## [1.114.1](https://github.com/HankHuang0516/EClaw/compare/v1.114.0...v1.114.1) (2026-03-19)
 
 
