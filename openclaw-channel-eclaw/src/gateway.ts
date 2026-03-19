@@ -24,7 +24,6 @@ function resolveAccountFromCtx(ctx: any): EClawAccountConfig {
       apiKey: ctx.account.apiKey,
       apiSecret: ctx.account.apiSecret,
       apiBase: (ctx.account.apiBase ?? 'https://eclawbot.com').replace(/\/$/, ''),
-      entityId: ctx.account.entityId,  // undefined = auto-select
       botName: ctx.account.botName,
       webhookUrl: ctx.account.webhookUrl,
     };
@@ -90,22 +89,21 @@ export async function startAccount(ctx: any): Promise<void> {
   console.log(`[E-Claw] Webhook registered at: ${callbackUrl}`);
 
   try {
-    // Detect WEB_PASSWORD / SETUP_PASSWORD for Railway Basic Auth
-    const webPassword = process.env.WEB_PASSWORD || process.env.SETUP_PASSWORD;
-    const callbackUsername = webPassword ? 'admin' : undefined;
-    const callbackPassword = webPassword || undefined;
-
     // Register callback with E-Claw backend
-    const regData = await client.registerCallback(callbackUrl, callbackToken, callbackUsername, callbackPassword);
+    const regData = await client.registerCallback(callbackUrl, callbackToken);
     console.log(`[E-Claw] Registered with E-Claw. Device: ${regData.deviceId}, Entities: ${regData.entities.length}`);
 
-    // Bind entity via channel API.
-    // /api/channel/bind is idempotent for the same channel account:
+    // Debug: log entity slot status
+    for (const e of regData.entities) {
+      console.log(`[E-Claw]   slot ${e.entityId}: ${e.character}${e.name ? ` "${e.name}"` : ''} bound=${e.isBound} bindingType=${e.bindingType ?? 'none'}`);
+    }
+
+    // Bind entity via channel API (always auto-select — server picks first free slot).
+    // entityId is NOT stored in config because slots are dynamic.
+    // /api/channel/bind without entityId is idempotent:
     //   - Not bound → binds fresh, returns new botSecret
     //   - Already bound via this channel account → returns existing botSecret (reconnect)
-    //   - Bound via different method → throws error (user must unbind first)
-    // entityId is omitted here so the server auto-selects the best slot
-    const bindData = await client.bindEntity(account.entityId, account.botName);
+    const bindData = await client.bindEntity(undefined, account.botName);
     const assignedEntityId = bindData.entityId;
     const entityInfo = regData.entities.find(e => e.entityId === assignedEntityId);
     const wasAlreadyBound = entityInfo?.isBound ?? false;

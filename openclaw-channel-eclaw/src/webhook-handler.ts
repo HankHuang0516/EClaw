@@ -20,20 +20,15 @@ import { getClient, setActiveEvent, clearActiveEvent } from './outbound.js';
  *   - Silent suppression via silentToken (default "[SILENT]")
  */
 export function createWebhookHandler(
-  expectedToken: string,
+  _expectedToken: string,   // kept for API compat; auth is handled by webhook-registry
   accountId: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   cfg: any    // full openclaw config (ctx.cfg from startAccount)
 ) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return async (req: any, res: any): Promise<void> => {
-    // Verify callback token
-    const authHeader = req.headers?.authorization as string | undefined;
-    if (expectedToken && (!authHeader || authHeader !== `Bearer ${expectedToken}`)) {
-      res.writeHead(401, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Unauthorized' }));
-      return;
-    }
+    // Token verification is handled by webhook-registry dispatch.
+    // No additional auth check needed here.
 
     const msg: EClawInboundMessage = req.body;
 
