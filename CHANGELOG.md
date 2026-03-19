@@ -1,3 +1,10 @@
+# [1.115.0](https://github.com/HankHuang0516/EClaw/compare/v1.114.2...v1.115.0) (2026-03-19)
+
+
+### Features
+
+* consolidate entity delete — merge remove and permanent delete into single action ([#316](https://github.com/HankHuang0516/EClaw/issues/316)) ([dd86c00](https://github.com/HankHuang0516/EClaw/commit/dd86c00c5cd58b19fc2c083485c05d8b1ebfa527))
+
 ## [1.114.2](https://github.com/HankHuang0516/EClaw/compare/v1.114.1...v1.114.2) (2026-03-19)
 
 
