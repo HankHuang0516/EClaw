@@ -362,3 +362,54 @@ describe('POST /api/bot/audit-log', () => {
         }
     });
 });
+
+// ════════════════════════════════════════════════════════════════
+// GET /api/bot/web-image-search
+// ════════════════════════════════════════════════════════════════
+
+const get = (path) => request(app).get(path).set('Host', 'localhost');
+
+describe('GET /api/bot/web-image-search', () => {
+    it('rejects missing auth', async () => {
+        const res = await get('/api/bot/web-image-search?q=technology');
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/deviceId/);
+    });
+
+    it('rejects missing query', async () => {
+        const res = await get('/api/bot/web-image-search?deviceId=test&botSecret=secret');
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/q/);
+    });
+
+    it('rejects empty query', async () => {
+        const res = await get('/api/bot/web-image-search?q=+&deviceId=test&botSecret=secret');
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/q/);
+    });
+
+    it('rejects query over 200 chars', async () => {
+        const longQ = 'x'.repeat(201);
+        const res = await get(`/api/bot/web-image-search?q=${longQ}&deviceId=test&botSecret=secret`);
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/200/);
+    });
+
+    it('returns 501 when PEXELS_API_KEY not set', async () => {
+        const orig = process.env.PEXELS_API_KEY;
+        delete process.env.PEXELS_API_KEY;
+
+        const res = await get('/api/bot/web-image-search?q=technology&deviceId=test&botSecret=secret');
+        expect(res.status).toBe(501);
+        expect(res.body.error).toMatch(/PEXELS_API_KEY/);
+        expect(res.body.hint).toMatch(/pexels\.com/);
+
+        if (orig) process.env.PEXELS_API_KEY = orig;
+    });
+
+    it('accepts botSecret auth', async () => {
+        const res = await get('/api/bot/web-image-search?q=test&deviceId=test&botSecret=secret');
+        // Should pass auth validation (will get 501 without PEXELS_API_KEY)
+        expect(res.status).not.toBe(400);
+    });
+});
