@@ -908,6 +908,7 @@
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="../shared/entity-utils.js"></script>
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
     <script src="shared/ai-chat.js"></script>
@@ -1066,13 +1067,33 @@
                     ? '<span style="font-size:11px;color:var(--success);margin-left:6px;">● callback active</span>'
                     : '<span style="font-size:11px;color:var(--text-muted);margin-left:6px;">○ no callback</span>';
                 const safeKey = encodeURIComponent(a.channel_api_key);
+
+                // Render bound entities
+                let entitiesHtml = '';
+                if (a.boundEntities && a.boundEntities.length > 0) {
+                    const chips = a.boundEntities.map(e => {
+                        const avatarHtml = typeof renderAvatarHtml === 'function'
+                            ? renderAvatarHtml(e.avatar, 18)
+                            : '<span style="font-size:14px;">' + (e.avatar || '🦞') + '</span>';
+                        const name = e.name ? escapeHtml(e.name) : '#' + e.entityId;
+                        return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--bg-secondary, #2a2a3a);padding:2px 8px;border-radius:12px;font-size:12px;">' +
+                            avatarHtml + name + '</span>';
+                    }).join(' ');
+                    entitiesHtml = '<div style="margin-top:4px;">' + chips + '</div>';
+                } else {
+                    entitiesHtml = '<div style="margin-top:4px;font-size:11px;color:var(--text-muted);">' + i18n.t('dash_channel_no_entities') + '</div>';
+                }
+
                 return `
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);" data-ch-id="${a.id}">
-                    <div>
-                        <span class="mono" style="font-size:13px;">${keyPartial}</span>
-                        ${badge}
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);" data-ch-id="${a.id}">
+                    <div style="min-width:0;">
+                        <div>
+                            <span class="mono" style="font-size:13px;">${keyPartial}</span>
+                            ${badge}
+                        </div>
+                        ${entitiesHtml}
                     </div>
-                    <div style="display:flex;gap:6px;flex-shrink:0;">
+                    <div style="display:flex;gap:6px;flex-shrink:0;margin-top:2px;">
                         <button class="btn btn-sm btn-outline" onclick="copyAccountKeys('${safeKey}')">Copy</button>
                         <button class="btn btn-sm btn-danger" onclick="deleteChannelAccount(${a.id})">Delete</button>
                     </div>
@@ -1088,25 +1109,9 @@
                 const data = await apiCall('POST', '/api/channel/provision');
                 document.getElementById('newKeyValue').textContent = data.channel_api_key;
                 document.getElementById('newKeyReveal').style.display = '';
-                document.getElementById('channelNoAccounts').style.display = 'none';
 
-                // Append new row to list immediately (without secret, just partial key)
-                const list = document.getElementById('channelAccountList');
-                const keyPartial = data.channel_api_key.substring(0, 12) + '…' + data.channel_api_key.slice(-6);
-                const safeKey = encodeURIComponent(data.channel_api_key);
-                const div = document.createElement('div');
-                div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);';
-                div.dataset.chId = data.id;
-                div.innerHTML = `
-                    <div>
-                        <span class="mono" style="font-size:13px;">${keyPartial}</span>
-                        <span style="font-size:11px;color:var(--text-muted);margin-left:6px;">○ no callback</span>
-                    </div>
-                    <div style="display:flex;gap:6px;flex-shrink:0;">
-                        <button class="btn btn-sm btn-outline" onclick="copyAccountKeys('${safeKey}')">Copy</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteChannelAccount(${data.id})">Delete</button>
-                    </div>`;
-                list.appendChild(div);
+                // Re-fetch to get consistent rendering with entity info
+                await refreshChannelAccounts();
             } catch (e) {
                 alert('Failed to generate API key: ' + e.message);
             } finally {
@@ -1142,14 +1147,27 @@
             if (!confirm('Delete this channel API key? Any bound entities will be unbound.')) return;
             try {
                 await apiCall('DELETE', `/api/channel/account/${id}`);
-                const row = document.querySelector(`[data-ch-id="${id}"]`);
-                if (row) row.remove();
-                if (!document.querySelector('#channelAccountList [data-ch-id]')) {
-                    document.getElementById('channelNoAccounts').style.display = '';
-                }
+                // Re-fetch fresh user data to sync channel accounts
+                await refreshChannelAccounts();
             } catch (e) {
                 alert('Failed to delete: ' + e.message);
             }
+        }
+
+        async function refreshChannelAccounts() {
+            try {
+                const user = await apiCall('GET', '/api/auth/me');
+                renderChannelAccounts(user.channelAccounts || []);
+            } catch (e) {
+                console.error('Failed to refresh channel accounts:', e);
+            }
+        }
+
+        // Socket.IO handler: another client changed channel accounts (debounced)
+        let _channelRefreshTimer = null;
+        function onSocketChannelAccountsUpdated() {
+            clearTimeout(_channelRefreshTimer);
+            _channelRefreshTimer = setTimeout(() => refreshChannelAccounts(), 500);
         }
 
         function showCopyToast() {

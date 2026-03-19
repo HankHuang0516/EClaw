@@ -121,6 +121,9 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
 
             serverLog('info', 'channel', `Channel account provisioned (id=${account.id})`, { deviceId });
 
+            // Notify all connected clients for this device
+            io.to(deviceId).emit('channelAccountsUpdated');
+
             res.json({
                 success: true,
                 id: account.id,
@@ -171,6 +174,9 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
 
             await db.deleteChannelAccount(accountId);
             serverLog('info', 'channel', `Channel account ${accountId} revoked`, { deviceId });
+
+            // Notify all connected clients for this device
+            io.to(deviceId).emit('channelAccountsUpdated');
 
             res.json({ success: true });
         } catch (err) {

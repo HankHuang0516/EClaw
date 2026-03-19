@@ -54,6 +54,10 @@ function initPortalSocket() {
         showVarsApprovalDialog(data);
     });
 
+    portalSocket.on('channelAccountsUpdated', () => {
+        if (typeof onSocketChannelAccountsUpdated === 'function') onSocketChannelAccountsUpdated();
+    });
+
     portalSocket.on('disconnect', () => {
         console.log('[Socket] Disconnected');
     });
