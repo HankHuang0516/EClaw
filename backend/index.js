@@ -4542,7 +4542,7 @@ app.post('/api/client/speak', async (req, res) => {
             if (pushResult.pushed) {
                 messageObj.delivered = true;
                 console.log(`[Push] ✓ Channel callback OK for Device ${deviceId} Entity ${eId}`);
-                serverLog('info', 'client_push', `Entity ${eId} channel push OK`, { deviceId, entityId: eId, metadata: { source, mode: 'channel' } });
+                serverLog('info', 'client_push', `Entity ${eId} channel push OK`, { deviceId, entityId: eId, metadata: { source, mode: 'channel', webhookUrl: entity.webhook?.url } });
             } else {
                 console.warn(`[Push] ✗ Channel callback failed for Device ${deviceId} Entity ${eId}: ${pushResult.reason}`);
                 serverLog('warn', 'client_push', `Entity ${eId} channel push failed: ${pushResult.reason}`, { deviceId, entityId: eId });
@@ -4597,10 +4597,10 @@ app.post('/api/client/speak', async (req, res) => {
             if (pushResult.pushed) {
                 messageObj.delivered = true;
                 console.log(`[Push] ✓ Successfully pushed to Device ${deviceId} Entity ${eId}`);
-                serverLog('info', 'client_push', `Entity ${eId} push OK`, { deviceId, entityId: eId, metadata: { source } });
+                serverLog('info', 'client_push', `Entity ${eId} push OK`, { deviceId, entityId: eId, metadata: { source, webhookUrl: entity.webhook.url } });
             } else {
                 console.warn(`[Push] ✗ Failed to push to Device ${deviceId} Entity ${eId}: ${pushResult.reason}`);
-                serverLog('warn', 'client_push', `Entity ${eId} push failed: ${pushResult.reason}`, { deviceId, entityId: eId });
+                serverLog('warn', 'client_push', `Entity ${eId} push failed: ${pushResult.reason}`, { deviceId, entityId: eId, metadata: { webhookUrl: entity.webhook?.url } });
             }
         } else if (entity.isBound) {
             console.warn(`[Push] ✗ No webhook registered for Device ${deviceId} Entity ${eId} - client will show dialog`);
@@ -6316,6 +6316,33 @@ app.get('/api/debug/devices', (req, res) => {
         pendingBindings: Object.keys(pendingBindings).length,
         devices: result
     });
+});
+
+/**
+ * GET /api/debug/webhooks
+ * Show webhook URLs for all entities of a device (for debugging).
+ * Requires deviceSecret for authentication.
+ */
+app.get('/api/debug/webhooks', (req, res) => {
+    const { deviceId, deviceSecret } = req.query;
+    if (!deviceId || !deviceSecret) return res.status(400).json({ error: 'deviceId and deviceSecret required' });
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) return res.status(401).json({ error: 'Invalid credentials' });
+    const entities = [];
+    for (const i of Object.keys(device.entities).map(Number)) {
+        const e = device.entities[i];
+        if (!e) continue;
+        entities.push({
+            entityId: i,
+            isBound: e.isBound,
+            name: e.name,
+            webhookUrl: e.webhook?.url || null,
+            webhookType: e.webhook?.type || null,
+            bindingType: e.bindingType || null,
+            channelAccountId: e.channelAccountId || null
+        });
+    }
+    res.json({ deviceId, entities });
 });
 
 /**
