@@ -23,7 +23,8 @@ const fs   = require('fs');
 const args    = process.argv.slice(2);
 const API_BASE = args.includes('--local') ? 'http://localhost:3000' : 'https://eclawbot.com';
 
-const ENTITY_CH = 6;   // channel-bound entity
+// ENTITY_CH determined dynamically at runtime (avoids deleting pre-existing entities)
+let ENTITY_CH;
 const POLL_MS   = 1500;
 const WAIT_MS   = 15000;
 
@@ -83,8 +84,7 @@ async function run() {
     const CALLBACK = `${SINK}?slot=${SLOT}`;
 
     console.log(`\n🧪  Mission Notify → Channel Bot Test — ${API_BASE}`);
-    console.log(`    Device: ${DEVICE_ID.slice(0, 8)}...`);
-    console.log(`    Entity ${ENTITY_CH} will be channel-bound\n`);
+    console.log(`    Device: ${DEVICE_ID.slice(0, 8)}...\n`);
 
     let apiKey, apiSecret;
 
@@ -101,10 +101,22 @@ async function run() {
     });
     assert(reg.status === 200, 'Register callback to test-sink OK');
 
-    // ── 2. Bind entity ────────────────────────────────────────────────────────
-    console.log('\n── 2. Bind entity 6 as channel ──');
-    await del(`${API_BASE}/api/device/entity`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, entityId: ENTITY_CH });
-    await new Promise(x => setTimeout(x, 500));
+    // ── 2. Create a fresh entity slot + bind as channel ──────────────────────
+    console.log('\n── 2. Create test entity slot + bind as channel ──');
+    // SAFETY: Create a new entity slot instead of reusing/overwriting existing ones
+    const addRes = await post(`${API_BASE}/api/device/add-entity`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET });
+    if (addRes.status === 200 && addRes.data?.entityId !== undefined) {
+        ENTITY_CH = addRes.data.entityId;
+        console.log(`    Created new entity slot: ${ENTITY_CH}`);
+    } else {
+        // Fallback: find first unbound slot
+        const entRes = await get(`${API_BASE}/api/entities?deviceId=${DEVICE_ID}`);
+        const allIds = entRes.data?.entityIds || [];
+        const boundIds = new Set((entRes.data?.entities || []).filter(e => e.isBound || e.bound).map(e => e.entityId));
+        ENTITY_CH = allIds.find(id => !boundIds.has(id));
+        console.log(`    Using existing unbound slot: ${ENTITY_CH}`);
+    }
+    assert(ENTITY_CH !== undefined, `Got entity slot for test (slot=${ENTITY_CH})`);
 
     const bind = await post(`${API_BASE}/api/channel/bind`, {
         channel_api_key: apiKey, channel_api_secret: apiSecret,
@@ -172,8 +184,10 @@ async function run() {
     // ── 5. Cleanup ─────────────────────────────────────────────────────────────
     console.log('\n── Cleanup ──');
     await del(`${API_BASE}/api/device/entity`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, entityId: ENTITY_CH });
+    // Permanently delete the test-created entity slot to restore device state
+    await del(`${API_BASE}/api/device/entity/${ENTITY_CH}/permanent`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET });
     await del(`${API_BASE}/api/channel/register`, { channel_api_key: apiKey, channel_api_secret: apiSecret });
-    console.log('  Entity 6 unbound, channel account unregistered');
+    console.log(`  Entity ${ENTITY_CH} unbound + deleted, channel account unregistered`);
 
     // ── Summary ───────────────────────────────────────────────────────────────
     console.log('\n' + '═'.repeat(60));

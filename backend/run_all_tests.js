@@ -107,6 +107,7 @@ const TEST_FILES = [
     'test-a2a-task-dispatch.js',    // A2A: official agent sends structured task to entity
     'test-schedule-cron-update.js', // Schedule: cron update NOT NULL violation regression
     'test-scheduled-chat-visibility.js', // Schedule: scheduled messages visible in chat history
+    'test-entity-trash.js',         // Entity trash: soft-delete recovery, 7-day retention
 ];
 
 // Manual UI tests (run on device, not automated):

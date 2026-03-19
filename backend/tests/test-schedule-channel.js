@@ -77,11 +77,12 @@ async function run() {
     const DEVICE_SECRET = env.BROADCAST_TEST_DEVICE_SECRET;
     if (!DEVICE_ID) { console.error('Missing BROADCAST_TEST_DEVICE_ID in .env'); process.exit(1); }
 
-    // Query actual entity slot IDs from device (may be unbound)
-    const entitiesRes = await get(`${API_BASE}/api/entities?deviceId=${DEVICE_ID}`);
-    const availableIds = entitiesRes.data?.entityIds || [];
-    if (availableIds.length < 1) { console.error(`Need at least 1 entity slot, found: ${availableIds}`); process.exit(1); }
-    ENTITY_CH = availableIds[0];
+    // SAFETY: Create a new entity slot instead of reusing existing ones
+    const addRes = await post(`${API_BASE}/api/device/add-entity`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET });
+    if (addRes.status !== 200 || addRes.data?.entityId === undefined) {
+        console.error('Failed to create test entity slot'); process.exit(1);
+    }
+    ENTITY_CH = addRes.data.entityId;
 
     const SINK     = `${API_BASE}/api/channel/test-sink`;
     const SLOT     = `schedule-ch-${Date.now()}`;
@@ -110,8 +111,6 @@ async function run() {
 
     // ── 2. Bind entity ────────────────────────────────────────────────────────
     console.log(`\n── 2. Bind entity ${ENTITY_CH} as channel ──`);
-    await del(`${API_BASE}/api/device/entity`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, entityId: ENTITY_CH });
-    await new Promise(x => setTimeout(x, 500));
 
     const bind = await post(`${API_BASE}/api/channel/bind`, {
         channel_api_key: apiKey, channel_api_secret: apiSecret,
@@ -185,8 +184,9 @@ async function run() {
         await del(`${API_BASE}/api/schedules/${scheduleId}?deviceId=${encodeURIComponent(DEVICE_ID)}&deviceSecret=${encodeURIComponent(DEVICE_SECRET)}`);
     }
     await del(`${API_BASE}/api/device/entity`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, entityId: ENTITY_CH });
+    await del(`${API_BASE}/api/device/entity/${ENTITY_CH}/permanent`, { deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET });
     await del(`${API_BASE}/api/channel/register`, { channel_api_key: apiKey, channel_api_secret: apiSecret });
-    console.log(`  Schedule deleted, entity ${ENTITY_CH} unbound, channel account unregistered`);
+    console.log(`  Schedule deleted, entity ${ENTITY_CH} unbound + deleted, channel account unregistered`);
 
     // ── Summary ───────────────────────────────────────────────────────────────
     console.log('\n' + '═'.repeat(60));

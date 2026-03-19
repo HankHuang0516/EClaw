@@ -378,18 +378,24 @@ async function main() {
         check('11. GET returns all 20+ entities', false, err.message);
     }
 
-    // Test 12: Delete middle entities (#5, #10, #15 by index) — verify sparse IDs
+    // Test 12: Delete middle entities from test-created IDs — verify sparse IDs
+    // SAFETY: Only delete entities we created, never touch initial entities
     const deleteTargets = [];
-    if (allEntityIds.length >= 16) {
-        // Pick entities at indices 5, 10, 15 from the sorted list
-        const sorted = [...allEntityIds].sort((a, b) => a - b);
-        deleteTargets.push(sorted[5], sorted[10], sorted[15]);
+    if (createdEntityIds.length >= 3) {
+        // Pick 3 spread-out entities from our created list
+        const sorted = [...createdEntityIds].sort((a, b) => a - b);
+        const step = Math.floor(sorted.length / 4);
+        deleteTargets.push(sorted[step], sorted[step * 2], sorted[step * 3]);
     }
-    console.log(`${TAG} Will delete middle entities: [${deleteTargets.join(', ')}]`);
+    console.log(`${TAG} Will delete test-created entities: [${deleteTargets.join(', ')}]`);
 
     let sparseDeleteOk = true;
     for (const eid of deleteTargets) {
-        // Skip if this entity is bound
+        // Skip if this entity is bound or is an initial entity
+        if (initialEntityIds.includes(eid)) {
+            console.log(`${TAG} Skipping delete of initial entity ${eid}`);
+            continue;
+        }
         try {
             const { data: entData } = await getEntities(deviceId, deviceSecret);
             const entities = entData.entities || entData;
@@ -431,12 +437,12 @@ async function main() {
         check('13. entityIds after sparse delete', false, err.message);
     }
 
-    // Test 14: Delete down to 1 entity, verify protection on last one
+    // Test 14: Delete test-created entities down to verify protection on last one
+    // SAFETY: Only delete entities we created, never touch initial entities
     try {
         const { data: beforeData } = await getEntities(deviceId, deviceSecret);
-        let currentIds = beforeData.entityIds || [];
         const entities = beforeData.entities || beforeData;
-        console.log(`${TAG} Deleting down to 1 entity from ${currentIds.length} entities...`);
+        console.log(`${TAG} Deleting test-created entities to test last-entity protection...`);
 
         // Find which ones are bound (can't delete those)
         const boundIds = new Set();
@@ -446,36 +452,48 @@ async function main() {
             });
         }
         console.log(`${TAG} Bound entity IDs (cannot delete): [${[...boundIds].join(', ')}]`);
+        console.log(`${TAG} Initial entity IDs (protected): [${initialEntityIds.join(', ')}]`);
 
-        // Delete all unbound except one
-        const unboundIds = currentIds.filter(id => !boundIds.has(id));
-        const toDelete = unboundIds.slice(0, unboundIds.length - (boundIds.size > 0 ? 0 : 1));
-        console.log(`${TAG} Will delete ${toDelete.length} unbound entities`);
+        // Only delete entities we created (not initial, not bound)
+        const safeToDelete = createdEntityIds.filter(id =>
+            !initialEntityIds.includes(id) && !boundIds.has(id));
+        console.log(`${TAG} Will delete ${safeToDelete.length} test-created entities`);
 
-        for (const eid of toDelete) {
+        for (const eid of safeToDelete) {
+            const { data: checkData } = await getEntities(deviceId, deviceSecret);
+            const remaining = checkData.entityIds || [];
+            if (remaining.length <= 1) {
+                // Try deleting the last one to verify protection
+                const lastRes = await deleteEntity(deviceId, deviceSecret, remaining[0]);
+                check('14. Delete protection on last entity (400)',
+                    lastRes.status === 400,
+                    `status=${lastRes.status}`);
+                break;
+            }
             const res = await deleteEntity(deviceId, deviceSecret, eid);
             if (res.status === 200) {
                 const idx = createdEntityIds.indexOf(eid);
                 if (idx >= 0) createdEntityIds.splice(idx, 1);
             }
-            if (toDelete.indexOf(eid) % 5 === 4) await sleep(200);
+            if (safeToDelete.indexOf(eid) % 5 === 4) await sleep(200);
         }
 
-        // Now try to get current state
+        // Verify state after deletion
         const { data: afterDel } = await getEntities(deviceId, deviceSecret);
         const remainingIds = afterDel.entityIds || [];
         console.log(`${TAG} Remaining entities: [${remainingIds.join(', ')}]`);
 
-        if (remainingIds.length === 1) {
-            // Try deleting the last one
-            const lastRes = await deleteEntity(deviceId, deviceSecret, remainingIds[0]);
-            check('14. Delete protection on last entity (400)',
-                lastRes.status === 400,
-                `status=${lastRes.status}`);
+        // Verify all initial entities survived
+        const initialSurvived = initialEntityIds.every(id => remainingIds.includes(id));
+        if (!initialSurvived) {
+            check('14. Initial entities preserved during deletion', false,
+                `initial=[${initialEntityIds.join(', ')}] remaining=[${remainingIds.join(', ')}]`);
+        } else if (remainingIds.length === 1) {
+            // Already tested protection above
         } else {
             check('14. Delete protection on last entity',
                 true,
-                `remaining=${remainingIds.length} (includes ${boundIds.size} bound, protection tested via constraint)`);
+                `remaining=${remainingIds.length} (initial entities preserved, protection tested via constraint)`);
         }
     } catch (err) {
         check('14. Delete protection on last entity', false, err.message);
@@ -533,35 +551,44 @@ async function main() {
         check('15. New entity IDs never reuse deleted IDs', false, err.message);
     }
 
-    // Test 16: Delete entity #0 (earliest), remaining entities unaffected
+    // Test 16: Delete earliest test-created entity, remaining entities unaffected
+    // SAFETY: Only delete a test-created entity, never touch initial entities
     try {
         const { data: beforeData } = await getEntities(deviceId, deviceSecret);
         const beforeIds = beforeData.entityIds || [];
-        const entities = beforeData.entities || beforeData;
-        const entity0 = Array.isArray(entities) ? entities.find(e => (e.entityId !== undefined ? e.entityId : e.id) === 0) : null;
 
-        if (entity0 && !entity0.bound && beforeIds.includes(0)) {
-            const delRes = await deleteEntity(deviceId, deviceSecret, 0);
+        // Find the earliest test-created entity (not initial, not bound)
+        const entities = beforeData.entities || beforeData;
+        const boundIds = new Set();
+        if (Array.isArray(entities)) {
+            entities.forEach(e => {
+                if (e.bound) boundIds.add(e.entityId !== undefined ? e.entityId : e.id);
+            });
+        }
+        const testCreatedOnDevice = createdEntityIds
+            .filter(id => beforeIds.includes(id) && !boundIds.has(id))
+            .sort((a, b) => a - b);
+
+        if (testCreatedOnDevice.length > 0) {
+            const targetId = testCreatedOnDevice[0];
+            const delRes = await deleteEntity(deviceId, deviceSecret, targetId);
             const { data: afterData } = await getEntities(deviceId, deviceSecret);
             const afterIds = afterData.entityIds || [];
 
-            const zeroRemoved = !afterIds.includes(0);
-            const othersIntact = beforeIds.filter(id => id !== 0).every(id => afterIds.includes(id));
-            check('16. Delete entity #0, remaining entities unaffected',
-                delRes.status === 200 && zeroRemoved && othersIntact,
-                `before=[${beforeIds.join(', ')}] after=[${afterIds.join(', ')}]`);
+            const targetRemoved = !afterIds.includes(targetId);
+            const othersIntact = beforeIds.filter(id => id !== targetId).every(id => afterIds.includes(id));
+            check('16. Delete earliest test-created entity, remaining unaffected',
+                delRes.status === 200 && targetRemoved && othersIntact,
+                `deleted=${targetId} before=[${beforeIds.join(', ')}] after=[${afterIds.join(', ')}]`);
 
-            const idx = createdEntityIds.indexOf(0);
+            const idx = createdEntityIds.indexOf(targetId);
             if (idx >= 0) createdEntityIds.splice(idx, 1);
-        } else if (entity0 && entity0.bound) {
-            check('16. Delete entity #0 (skipped: entity #0 is bound)',
-                true, 'entity #0 is bound, cannot safely delete');
         } else {
-            check('16. Delete entity #0 (skipped: entity #0 does not exist)',
-                true, `entityIds=[${beforeIds.join(', ')}]`);
+            check('16. Delete earliest test-created entity (skipped: none available)',
+                true, `createdEntityIds=[${createdEntityIds.join(', ')}] beforeIds=[${beforeIds.join(', ')}]`);
         }
     } catch (err) {
-        check('16. Delete entity #0', false, err.message);
+        check('16. Delete earliest entity', false, err.message);
     }
 
     // Test 17: Alternating add/delete cycle — verify final IDs all unique and increasing
