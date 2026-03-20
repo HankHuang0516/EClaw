@@ -767,8 +767,10 @@ authModule.setOnEmailVerified(async (deviceId) => {
             if (toEntity.webhook) {
                 const apiBase = 'https://eclawbot.com';
                 let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API. Your text reply is DISCARDED.\n`;
-                pushMsg += `To reply:\nexec: curl -s -X POST "${apiBase}/api/entity/cross-speak" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","fromEntityId":${target.entityId},"botSecret":"${toEntity.botSecret}","targetCode":"owner","text":"YOUR_REPLY_HERE"}'\n\n`;
+                pushMsg += `To update your wallpaper status:\n`;
+                pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","entityId":${target.entityId},"botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
                 pushMsg += `[CROSS-DEVICE MESSAGE from New User]\nContent: ${msg.text}`;
+                pushMsg += getMissionApiHints(apiBase, target.deviceId, target.entityId, toEntity.botSecret);
                 pushToBot(toEntity, target.deviceId, 'cross_device_message', { message: pushMsg }).catch(() => {});
             }
         } catch (err) {
@@ -6012,7 +6014,7 @@ app.post('/api/client/cross-speak', async (req, res) => {
     }
 
     const fromId = parseInt(fromEntityId);
-    if (isNaN(fromId) || fromId < 0) {
+    if (isNaN(fromId) || fromId < -1) {
         return res.status(400).json({ success: false, message: "Invalid fromEntityId" });
     }
 
@@ -6021,9 +6023,14 @@ app.post('/api/client/cross-speak', async (req, res) => {
         return res.status(404).json({ success: false, message: "Sender device not found" });
     }
 
-    const fromEntity = senderDevice.entities[fromId];
-    if (!fromEntity || !fromEntity.isBound) {
-        return res.status(400).json({ success: false, message: `Sender entity ${fromId} is not bound` });
+    // Owner mode: fromEntityId=-1 means device owner sending as themselves (no entity intermediary)
+    const isOwnerMode = fromId === -1;
+    let fromEntity = null;
+    if (!isOwnerMode) {
+        fromEntity = senderDevice.entities[fromId];
+        if (!fromEntity || !fromEntity.isBound) {
+            return res.status(400).json({ success: false, message: `Sender entity ${fromId} is not bound` });
+        }
     }
 
     // Resolve target
@@ -6042,13 +6049,13 @@ app.post('/api/client/cross-speak', async (req, res) => {
         return res.status(400).json({ success: false, message: "Target entity is not bound" });
     }
 
-    if (fromEntity.publicCode === targetCode) {
+    if (!isOwnerMode && fromEntity.publicCode === targetCode) {
         return res.status(400).json({ success: false, message: "Cannot send cross-device message to yourself" });
     }
 
     // --- Cross-device settings enforcement (target entity's owner rules) ---
     const xdSettingsClient = await crossDeviceSettings.getSettings(target.deviceId, target.entityId);
-    const senderCodeClient = fromEntity.publicCode;
+    const senderCodeClient = isOwnerMode ? `owner:${deviceId}` : fromEntity.publicCode;
 
     // Card Holder block check (target device blocked the sender)
     if (await db.isBlocked(target.deviceId, senderCodeClient)) {
@@ -6091,40 +6098,46 @@ app.post('/api/client/cross-speak', async (req, res) => {
     // Reset b2b counter on human message (same as /api/client/speak)
     resetBotToBotCounter(deviceId);
 
-    const sourceLabel = `xdevice:${fromEntity.publicCode}:${fromEntity.character}`;
+    const senderName = isOwnerMode ? (req.user && req.user.email ? req.user.email.split('@')[0] : 'User') : (fromEntity.name || fromEntity.publicCode);
+    const sourceLabel = isOwnerMode ? `xdevice:${deviceId}:owner` : `xdevice:${fromEntity.publicCode}:${fromEntity.character}`;
 
     const messageObj = {
         text: text,
         from: sourceLabel,
         fromEntityId: fromId,
-        fromCharacter: fromEntity.character,
-        fromPublicCode: fromEntity.publicCode,
+        fromCharacter: isOwnerMode ? null : fromEntity.character,
+        fromPublicCode: isOwnerMode ? null : fromEntity.publicCode,
         fromDeviceId: deviceId,
         timestamp: Date.now(),
         read: false,
         mediaType: mediaType || null,
         mediaUrl: mediaUrl || null,
-        crossDevice: true
+        crossDevice: !isOwnerMode || deviceId !== target.deviceId // false only when owner sends to own entity
     };
     toEntity.messageQueue.push(messageObj);
 
-    // Save on both devices
+    // Save chat message
     const chatMsgId = await saveChatMessage(target.deviceId, target.entityId, text, `${sourceLabel}->${targetCode}`, true, false, mediaType || null, mediaUrl || null);
-    await saveChatMessage(deviceId, fromId, text, `${sourceLabel}->${targetCode}`, true, false, mediaType || null, mediaUrl || null);
+    if (!isOwnerMode) {
+        await saveChatMessage(deviceId, fromId, text, `${sourceLabel}->${targetCode}`, true, false, mediaType || null, mediaUrl || null);
+    }
 
-    toEntity.message = `xdevice:${fromEntity.publicCode}:${fromEntity.character}: ${text}`;
+    toEntity.message = isOwnerMode ? `xdevice:owner: ${text}` : `xdevice:${fromEntity.publicCode}:${fromEntity.character}: ${text}`;
     toEntity.lastUpdated = Date.now();
 
-    // Notify target device
-    notifyDevice(target.deviceId, {
-        type: 'chat', category: 'cross_speak',
-        title: `${fromEntity.name || fromEntity.publicCode} (cross-device)`,
-        body: (text || '').slice(0, 100),
-        link: 'chat.html',
-        metadata: { fromPublicCode: fromEntity.publicCode, targetCode }
-    }).catch(() => {});
+    // Notify target device (skip if same device in owner mode)
+    if (!isOwnerMode || deviceId !== target.deviceId) {
+        notifyDevice(target.deviceId, {
+            type: 'chat', category: 'cross_speak',
+            title: `${senderName} (cross-device)`,
+            body: (text || '').slice(0, 100),
+            link: 'chat.html',
+            metadata: { fromPublicCode: isOwnerMode ? null : fromEntity.publicCode, targetCode }
+        }).catch(() => {});
+    }
 
-    console.log(`[ClientCrossSpeak] ${deviceId}:${fromId} (${fromEntity.publicCode}) -> ${target.deviceId}:${target.entityId} (${targetCode}): "${text}"`);
+    const senderLabel = isOwnerMode ? `owner:${deviceId}` : fromEntity.publicCode;
+    console.log(`[ClientCrossSpeak] ${deviceId}:${fromId} (${senderLabel}) -> ${target.deviceId}:${target.entityId} (${targetCode}): "${text}"`);
 
     // Push to target bot
     const hasWebhook = !!toEntity.webhook;
@@ -6133,13 +6146,16 @@ app.post('/api/client/cross-speak', async (req, res) => {
         let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API. Your text reply is DISCARDED.\n`;
         pushMsg += `To update your wallpaper status:\n`;
         pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","entityId":${target.entityId},"botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
-        pushMsg += `To reply to this cross-device message:\n`;
-        pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/cross-speak" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","fromEntityId":${target.entityId},"botSecret":"${toEntity.botSecret}","targetCode":"${fromEntity.publicCode}","text":"YOUR_REPLY_HERE"}'\n\n`;
+        if (!isOwnerMode) {
+            pushMsg += `To reply to this cross-device message:\n`;
+            pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/cross-speak" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","fromEntityId":${target.entityId},"botSecret":"${toEntity.botSecret}","targetCode":"${fromEntity.publicCode}","text":"YOUR_REPLY_HERE"}'\n\n`;
+        }
         if (xdSettingsClient.pre_inject) {
             pushMsg += `[DEVICE OWNER INSTRUCTION]\n${xdSettingsClient.pre_inject}\n\n`;
         }
-        pushMsg += `[CROSS-DEVICE MESSAGE from Human User] From: ${fromEntity.name || 'User'} (code: ${fromEntity.publicCode})\n`;
-        pushMsg += `Content: ${text}`;
+        pushMsg += isOwnerMode
+            ? `[MESSAGE from Device Owner] ${senderName}\nContent: ${text}`
+            : `[CROSS-DEVICE MESSAGE from Human User] From: ${fromEntity.name || 'User'} (code: ${fromEntity.publicCode})\nContent: ${text}`;
         if (mediaType === 'photo') {
             pushMsg += `\n[Attachment: Photo]\nmedia_type: photo\nmedia_url: ${mediaUrl}`;
             const bkUrl = getBackupUrl(mediaUrl);
@@ -6156,24 +6172,26 @@ app.post('/api/client/cross-speak', async (req, res) => {
             if (pushResult.pushed) {
                 messageObj.delivered = true;
                 markChatMessageDelivered(chatMsgId, String(target.entityId));
-                serverLog('info', 'cross_speak_push', `Client ${fromEntity.publicCode} -> ${targetCode} push OK`, { deviceId, entityId: fromId });
+                serverLog('info', 'cross_speak_push', `Client ${senderLabel} -> ${targetCode} push OK`, { deviceId, entityId: fromId });
+                if (!isOwnerMode) {
                     // Auto-collect: sender collects target's card, target collects sender's card
                     autoCollectCard(deviceId, targetCode, toEntity, 'auto_speak');
                     autoCollectCard(target.deviceId, fromEntity.publicCode, fromEntity, 'auto_speak');
                     // Record recent interaction on both sides
                     db.upsertRecentInteraction(target.deviceId, fromEntity.publicCode, { name: fromEntity.name, character: fromEntity.character, avatar: fromEntity.avatar, cardSnapshot: fromEntity.agentCard }).catch(() => {});
                     db.upsertRecentInteraction(deviceId, targetCode, { name: toEntity.name, character: toEntity.character, avatar: toEntity.avatar, cardSnapshot: toEntity.agentCard }).catch(() => {});
+                }
             }
         }).catch(err => {
             console.error(`[ClientCrossSpeak] Push failed: ${err.message}`);
-            serverLog('error', 'push_error', `ClientCrossSpeak ${fromEntity.publicCode} -> ${targetCode} FAILED: ${err.message}`, { deviceId, entityId: fromId });
+            serverLog('error', 'push_error', `ClientCrossSpeak ${senderLabel} -> ${targetCode} FAILED: ${err.message}`, { deviceId, entityId: fromId });
         });
     }
 
     res.json({
         success: true,
         message: `Cross-device message sent`,
-        from: { publicCode: fromEntity.publicCode, character: fromEntity.character },
+        from: isOwnerMode ? { owner: true } : { publicCode: fromEntity.publicCode, character: fromEntity.character },
         to: { publicCode: targetCode, character: toEntity.character },
         pushed: hasWebhook ? "pending" : false
     });

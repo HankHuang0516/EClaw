@@ -556,4 +556,14 @@
     <string name="debug_log_search_hint">ค้นหาบันทึก…</string>
     <string name="debug_log_copy">คัดลอก</string>
     <string name="debug_log_copied">คัดลอกบันทึกไปยังคลิปบอร์ดแล้ว</string>
+
+    <!-- Share Chat Link -->
+    <string name="sc_share_chat_link">แชร์ลิงก์แชท</string>
+    <string name="sc_copy">คัดลอก</string>
+    <string name="sc_copy_qr">คัดลอก QR</string>
+    <string name="sc_download_qr">ดาวน์โหลด QR</string>
+    <string name="sc_link_copied">คัดลอกลิงก์แล้ว!</string>
+    <string name="sc_qr_copied">คัดลอก QR แล้ว!</string>
+    <string name="sc_copy_failed">คัดลอกไม่สำเร็จ</string>
+    <string name="sc_share_chat_title">แชร์ลิงก์แชท</string>
 </resources>

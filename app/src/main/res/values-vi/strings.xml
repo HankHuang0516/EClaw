@@ -556,4 +556,14 @@ Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ qua email chín
     <string name="debug_log_search_hint">Tìm kiếm nhật ký…</string>
     <string name="debug_log_copy">Sao chép</string>
     <string name="debug_log_copied">Đã sao chép nhật ký vào clipboard</string>
+
+    <!-- Share Chat Link -->
+    <string name="sc_share_chat_link">Chia sẻ liên kết trò chuyện</string>
+    <string name="sc_copy">Sao chép</string>
+    <string name="sc_copy_qr">Sao chép QR</string>
+    <string name="sc_download_qr">Tải QR</string>
+    <string name="sc_link_copied">Đã sao chép liên kết!</string>
+    <string name="sc_qr_copied">Đã sao chép QR!</string>
+    <string name="sc_copy_failed">Sao chép thất bại</string>
+    <string name="sc_share_chat_title">Chia sẻ liên kết trò chuyện</string>
 </resources>

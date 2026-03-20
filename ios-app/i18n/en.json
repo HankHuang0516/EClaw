@@ -289,6 +289,16 @@
     "unknown": "An unexpected error occurred.",
     "camera_denied": "Camera permission denied. Please enable it in Settings.",
     "sharing_not_available": "Sharing is not available on this device."
+  },
+  "shareChat": {
+    "shareChatLink": "Share Chat Link",
+    "copy": "Copy",
+    "copyQr": "Copy QR",
+    "downloadQr": "Download QR",
+    "linkCopied": "Link copied!",
+    "qrCopied": "QR copied!",
+    "copyFailed": "Copy failed",
+    "shareChatTitle": "Share chat link"
   }
 }
 

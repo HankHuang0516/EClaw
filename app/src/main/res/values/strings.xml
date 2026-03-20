@@ -763,5 +763,15 @@ If you have any questions, please contact us via our official email.
     <string name="card_holder_version">Version</string>
     <string name="card_holder_tags_hint">Add tag…</string>
     <string name="card_holder_add_capability">Add capability</string>
+
+    <!-- Share Chat Link -->
+    <string name="sc_share_chat_link">Share Chat Link</string>
+    <string name="sc_copy">Copy</string>
+    <string name="sc_copy_qr">Copy QR</string>
+    <string name="sc_download_qr">Download QR</string>
+    <string name="sc_link_copied">Link copied!</string>
+    <string name="sc_qr_copied">QR copied!</string>
+    <string name="sc_copy_failed">Copy failed</string>
+    <string name="sc_share_chat_title">Share chat link</string>
 </resources>
 

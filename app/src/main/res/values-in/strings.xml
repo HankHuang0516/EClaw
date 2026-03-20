@@ -556,4 +556,14 @@ Jika Anda memiliki pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="debug_log_search_hint">Cari log…</string>
     <string name="debug_log_copy">Salin</string>
     <string name="debug_log_copied">Log disalin ke clipboard</string>
+
+    <!-- Share Chat Link -->
+    <string name="sc_share_chat_link">Bagikan Tautan Obrolan</string>
+    <string name="sc_copy">Salin</string>
+    <string name="sc_copy_qr">Salin QR</string>
+    <string name="sc_download_qr">Unduh QR</string>
+    <string name="sc_link_copied">Tautan disalin!</string>
+    <string name="sc_qr_copied">QR disalin!</string>
+    <string name="sc_copy_failed">Gagal menyalin</string>
+    <string name="sc_share_chat_title">Bagikan tautan obrolan</string>
 </resources>

@@ -588,17 +588,17 @@
     <!-- Share Modal -->
     <div class="modal-overlay" id="shareModal" style="display:none" onclick="if(event.target===this)closeShareModal()">
         <div class="modal-card share-modal-content">
-            <h3>&#x1F517; Share Chat Link</h3>
+            <h3>&#x1F517; <span data-i18n="sc_share_chat_link">Share Chat Link</span></h3>
             <div class="share-url-row">
                 <input type="text" id="shareUrl" readonly>
-                <button onclick="copyShareUrl()">Copy</button>
+                <button onclick="copyShareUrl()" data-i18n="sc_copy">Copy</button>
             </div>
             <div class="share-qr-wrap">
                 <canvas id="shareQrCanvas" width="200" height="200"></canvas>
             </div>
             <div class="share-qr-actions">
-                <button onclick="copyQrImage()">Copy QR</button>
-                <button onclick="downloadQr()">Download QR</button>
+                <button onclick="copyQrImage()" data-i18n="sc_copy_qr">Copy QR</button>
+                <button onclick="downloadQr()" data-i18n="sc_download_qr">Download QR</button>
             </div>
         </div>
     </div>
@@ -750,7 +750,7 @@
                         <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
                         <span class="agent-code" onclick="event.stopPropagation(); copyCode('${escapeAttr(c.publicCode)}')" title="Click to copy">${escapeHtml(c.publicCode)}</span>
                     </div>
-                    <button class="share-btn" onclick="event.stopPropagation(); openShareModal('${escapeAttr(c.publicCode)}', '${escapeAttr(c.name || c.publicCode)}')" title="Share chat link">&#x1F517;</button>
+                    <button class="share-btn" onclick="event.stopPropagation(); openShareModal('${escapeAttr(c.publicCode)}', '${escapeAttr(c.name || c.publicCode)}')" title="${t('sc_share_chat_title', 'Share chat link')}">&#x1F517;</button>
                 </div>`;
 
             if (c.contactEmail || ac.contactEmail) {
@@ -933,17 +933,17 @@
                     </div>
 
                     <div class="edit-field">
-                        <label>Version</label>
+                        <label>${t('cardholder_version_label', 'Version')}</label>
                         <input type="text" id="edit-version" value="${escapeAttr(ac.version || '')}" maxlength="50" placeholder="1.0.0">
                     </div>
 
                     <div class="edit-field">
-                        <label>Website</label>
+                        <label>${t('cardholder_website_label', 'Website')}</label>
                         <input type="url" id="edit-website" value="${escapeAttr(ac.website || '')}" maxlength="500" placeholder="https://...">
                     </div>
 
                     <div class="edit-field">
-                        <label>Email</label>
+                        <label>${t('cardholder_email_label', 'Email')}</label>
                         <input type="email" id="edit-email" value="${escapeAttr(ac.contactEmail || '')}" maxlength="255" placeholder="contact@example.com">
                     </div>
                 </div>
@@ -982,7 +982,7 @@
         function addEditCapability() {
             const container = document.getElementById('editCaps');
             if (container.children.length >= 10) {
-                showToast('Maximum 10 capabilities', 'error');
+                showToast(t('cardholder_max_capabilities', 'Maximum 10 capabilities'), 'error');
                 return;
             }
             appendEditCapability('', '');
@@ -1006,7 +1006,7 @@
             const val = (input.value || '').trim();
             if (!val) return;
             if (container.children.length >= maxCount) {
-                showToast('Maximum ' + maxCount + ' items', 'error');
+                showToast(t('cardholder_max_items', 'Maximum {n} items').replace('{n}', maxCount), 'error');
                 return;
             }
             const span = document.createElement('span');
@@ -1043,8 +1043,8 @@
                 </div>
 
                 <div class="modal-tabs">
-                    <button class="modal-tab active" onclick="switchModalTab(this, 'detailsPanel')">Details</button>
-                    <button class="modal-tab" onclick="switchModalTab(this, 'chatPanel'); loadChatHistory('${escapeAttr(card.publicCode)}')">Chat History</button>
+                    <button class="modal-tab active" onclick="switchModalTab(this, 'detailsPanel')">${t('cardholder_details_tab', 'Details')}</button>
+                    <button class="modal-tab" onclick="switchModalTab(this, 'chatPanel'); loadChatHistory('${escapeAttr(card.publicCode)}')">${t('cardholder_chat_history_tab', 'Chat History')}</button>
                 </div>
 
                 <div id="detailsPanel" class="modal-panel active">
@@ -1054,17 +1054,17 @@
                     </div>` : ''}
 
                     ${snap.contactEmail ? `<div class="modal-section">
-                        <div class="modal-section-title">Email</div>
+                        <div class="modal-section-title">${t('cardholder_email_label', 'Email')}</div>
                         <div style="font-size:14px;"><a href="mailto:${escapeAttr(snap.contactEmail)}" style="color:var(--primary);">${escapeHtml(snap.contactEmail)}</a></div>
                     </div>` : ''}
 
                     ${snap.website ? `<div class="modal-section">
-                        <div class="modal-section-title">Website</div>
+                        <div class="modal-section-title">${t('cardholder_website_label', 'Website')}</div>
                         <div style="font-size:14px;"><a href="${escapeAttr(snap.website)}" target="_blank" rel="noopener" style="color:var(--primary);">${escapeHtml(snap.website)}</a></div>
                     </div>` : ''}
 
                     ${snap.version ? `<div class="modal-section">
-                        <div class="modal-section-title">Version</div>
+                        <div class="modal-section-title">${t('cardholder_version_label', 'Version')}</div>
                         <div style="font-size:14px; color:var(--text-secondary);">${escapeHtml(snap.version)}</div>
                     </div>` : ''}
 
@@ -1383,15 +1383,15 @@
         }
         function copyShareUrl() {
             const input = document.getElementById('shareUrl');
-            navigator.clipboard.writeText(input.value).then(() => toast('Link copied!', 'toast-success')).catch(() => {
-                input.select(); document.execCommand('copy'); toast('Link copied!', 'toast-success');
+            navigator.clipboard.writeText(input.value).then(() => showToast(t('sc_link_copied', 'Link copied!'))).catch(() => {
+                input.select(); document.execCommand('copy'); showToast(t('sc_link_copied', 'Link copied!'));
             });
         }
         function copyQrImage() {
             const canvas = document.getElementById('shareQrCanvas');
             canvas.toBlob(blob => {
                 if (!blob) return;
-                navigator.clipboard.write([new ClipboardItem({'image/png': blob})]).then(() => toast('QR copied!', 'toast-success')).catch(() => toast('Copy failed', 'toast-error'));
+                navigator.clipboard.write([new ClipboardItem({'image/png': blob})]).then(() => showToast(t('sc_qr_copied', 'QR copied!'))).catch(() => showToast(t('sc_copy_failed', 'Copy failed'), 'error'));
             });
         }
         function downloadQr() {
@@ -1407,8 +1407,8 @@
         function generateQR(text) {
             const canvas = document.getElementById('shareQrCanvas');
             const ctx = canvas.getContext('2d');
-            // Use external tiny QR lib loaded inline below
-            if (typeof QRCode === 'undefined') {
+            // qrcode-generator exports as lowercase `qrcode`
+            if (typeof qrcode === 'undefined') {
                 ctx.fillStyle = '#fff'; ctx.fillRect(0,0,200,200);
                 ctx.fillStyle = '#666'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
                 ctx.fillText('QR loading...', 100, 100);
@@ -1417,11 +1417,12 @@
                     const s = document.createElement('script');
                     s.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js';
                     s.onload = () => generateQR(text);
+                    s.onerror = () => { ctx.fillStyle = '#fff'; ctx.fillRect(0,0,200,200); ctx.fillStyle = '#c00'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('QR failed to load', 100, 100); };
                     document.head.appendChild(s);
                 }
                 return;
             }
-            const qr = QRCode(0, 'M');
+            const qr = qrcode(0, 'M');
             qr.addData(text);
             qr.make();
             const size = 200;
