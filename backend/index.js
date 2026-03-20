@@ -5361,6 +5361,10 @@ app.put('/api/entity/agent-card', (req, res) => {
     if (!entity.identity) entity.identity = {};
     entity.identity.public = card;
     entity.lastUpdated = Date.now();
+    // Persist identity sync to DB
+    if (typeof db.saveDeviceData === 'function') {
+        db.saveDeviceData(deviceId, device).catch(err => console.error('[AgentCard] DB save error:', err.message));
+    }
     res.json({ success: true, agentCard: card });
 });
 
@@ -5435,6 +5439,10 @@ app.delete('/api/entity/agent-card', (req, res) => {
         if (Object.keys(entity.identity).length === 0) entity.identity = null;
     }
     entity.lastUpdated = Date.now();
+    // Persist identity sync to DB
+    if (typeof db.saveDeviceData === 'function') {
+        db.saveDeviceData(deviceId, device).catch(err => console.error('[AgentCard] DB save error:', err.message));
+    }
     res.json({ success: true });
 });
 
