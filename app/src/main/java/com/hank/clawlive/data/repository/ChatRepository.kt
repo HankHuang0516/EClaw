@@ -234,7 +234,8 @@ class ChatRepository private constructor(
      */
     private fun parseEntityMessage(message: String): Pair<MessageType, String> {
         // Check for entity-to-entity pattern: "entity:0:LOBSTER: Hello"
-        val entityPattern = Regex("^entity:(\\d+):([A-Z]+):\\s*(.*)$")
+        // Use DOT_MATCHES_ALL so .* matches multi-line messages; [^:]+ for any character name
+        val entityPattern = Regex("^entity:(\\d+):([^:]+):\\s*(.*)$", RegexOption.DOT_MATCHES_ALL)
         val match = entityPattern.find(message)
 
         return if (match != null) {
@@ -383,11 +384,11 @@ class ChatRepository private constructor(
             }
 
             // Detect entity-to-entity pattern: "entity:0:LOBSTER->1" or "entity:0:LOBSTER->1,2,3"
-            val entityPattern = Regex("^entity:(\\d+):([A-Z]+)->(\\S+)$")
+            val entityPattern = Regex("^entity:(\\d+):([^:]+)->(\\S+)$")
             val entityMatch = entityPattern.find(msg.source)
 
             // Detect cross-device pattern: "xdevice:ABC123:LOBSTER->XYZ789"
-            val xdevicePattern = Regex("^xdevice:([A-Za-z0-9]+):([A-Z]+)->([A-Za-z0-9]+)$")
+            val xdevicePattern = Regex("^xdevice:([A-Za-z0-9]+):([^:]+)->([A-Za-z0-9]+)$")
             val xdeviceMatch = xdevicePattern.find(msg.source)
 
             val message = if (msg.source == "scheduled") {

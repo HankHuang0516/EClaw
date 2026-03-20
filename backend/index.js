@@ -2755,7 +2755,16 @@ app.get('/api/entities', (req, res) => {
                     level: entity.level || 1,
                     publicCode: entity.publicCode || null,
                     bindingType: entity.bindingType || null,
-                    encryptionStatus: entity.encryptionStatus || null
+                    encryptionStatus: entity.encryptionStatus || null,
+                    messageQueue: (entity.messageQueue || []).map(m => ({
+                        text: m.text,
+                        from: m.from,
+                        fromEntityId: m.fromEntityId,
+                        fromCharacter: m.fromCharacter,
+                        timestamp: m.timestamp,
+                        read: m.read || false,
+                        delivered: m.delivered || false
+                    }))
                 });
             }
         }
@@ -4752,7 +4761,9 @@ app.post('/api/entity/speak-to', async (req, res) => {
     // Create message source identifier
     const sourceLabel = `entity:${fromId}:${fromEntity.character}`;
 
-    toEntity.message = `From Entity ${fromId}: "${speakToText}"`;
+    // Update entity.message so Android app can display it
+    // Format must match Android's parseEntityMessage regex: "entity:{ID}:{CHARACTER}: {message}"
+    toEntity.message = `entity:${fromId}:${fromEntity.character}: ${speakToText}`;
     toEntity.lastUpdated = Date.now();
 
     const messageObj = {
@@ -4786,11 +4797,6 @@ app.post('/api/entity/speak-to', async (req, res) => {
     }).catch(() => {});
 
     console.log(`[Entity] Device ${deviceId} Entity ${fromId} -> Entity ${toId}: "${speakToText}" (b2b remaining: ${b2bRemaining})`);
-
-    // Update entity.message so Android app can display it
-    // Format must match Android's parseEntityMessage regex: "entity:{ID}:{CHARACTER}: {message}"
-    toEntity.message = `entity:${fromId}:${fromEntity.character}: ${speakToText}`;
-    toEntity.lastUpdated = Date.now();
 
     // Fire-and-forget: push to target bot — channel callback or traditional webhook
     const isChannelBound = toEntity.bindingType === 'channel';
