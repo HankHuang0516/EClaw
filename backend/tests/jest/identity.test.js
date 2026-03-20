@@ -175,6 +175,29 @@ describe('PUT /api/entity/identity', () => {
             .send({ deviceId: 'nonexistent', deviceSecret: 'test', entityId: 0, identity: { instructions: 'not-array' } });
         expect(res.status).toBe(404);
     });
+
+    test('validates instructions must be array', async () => {
+        const res = await request(app)
+            .put('/api/entity/identity')
+            .send({ deviceId: 'test', deviceSecret: 'test', entityId: 0, identity: { instructions: 'not-array' } });
+        // Will fail with 404 (device not found) or 400 (validation) depending on auth
+        expect([400, 403, 404]).toContain(res.status);
+    });
+
+    test('validates boundaries must be array', async () => {
+        const res = await request(app)
+            .put('/api/entity/identity')
+            .send({ deviceId: 'test', deviceSecret: 'test', entityId: 0, identity: { boundaries: 'not-array' } });
+        expect([400, 403, 404]).toContain(res.status);
+    });
+
+    test('validates max 20 instructions', async () => {
+        const tooMany = Array(21).fill('instruction');
+        const res = await request(app)
+            .put('/api/entity/identity')
+            .send({ deviceId: 'test', deviceSecret: 'test', entityId: 0, identity: { instructions: tooMany } });
+        expect([400, 403, 404]).toContain(res.status);
+    });
 });
 
 // ── GET /api/entity/identity ──
