@@ -14,6 +14,7 @@ import com.hank.clawlive.MainActivity
 import com.hank.clawlive.MissionControlActivity
 import com.hank.clawlive.R
 import com.hank.clawlive.SettingsActivity
+import timber.log.Timber
 
 enum class NavItem {
     HOME, MISSION, CHAT, CARDS, SETTINGS
@@ -22,7 +23,15 @@ enum class NavItem {
 object BottomNavHelper {
 
     fun setup(activity: Activity, currentItem: NavItem) {
-        val bottomNav = activity.findViewById<LinearLayout>(R.id.bottomNav) ?: return
+        Timber.d("BOTTOMNAV_DEBUG setup called for activity=${activity.javaClass.simpleName}, currentItem=$currentItem")
+        val bottomNav = activity.findViewById<LinearLayout>(R.id.bottomNav)
+        if (bottomNav == null) {
+            Timber.w("BOTTOMNAV_DEBUG bottomNav NOT FOUND in ${activity.javaClass.simpleName}! Returning early.")
+            return
+        }
+        Timber.d("BOTTOMNAV_DEBUG bottomNav found: parent=${bottomNav.parent?.javaClass?.simpleName}, lp=${bottomNav.layoutParams?.javaClass?.simpleName}")
+        Timber.d("BOTTOMNAV_DEBUG bottomNav visibility=${bottomNav.visibility}, w=${bottomNav.width}, h=${bottomNav.height}")
+        Timber.d("BOTTOMNAV_DEBUG bottomNav parent chain: parent=${bottomNav.parent?.javaClass?.simpleName} -> grandparent=${(bottomNav.parent as? android.view.View)?.parent?.javaClass?.simpleName}")
 
         // Edge-to-edge bottom insets with minimum padding to avoid HOME button conflict
         val minBottomPadding = (12 * activity.resources.displayMetrics.density).toInt()
@@ -30,6 +39,7 @@ object BottomNavHelper {
             val sys = insets.getInsets(
                 WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
             )
+            Timber.d("BOTTOMNAV_DEBUG insets applied: bottom=${sys.bottom}, minBottomPadding=$minBottomPadding, finalPadding=${maxOf(sys.bottom, minBottomPadding)}")
             v.updatePadding(bottom = maxOf(sys.bottom, minBottomPadding))
             insets
         }

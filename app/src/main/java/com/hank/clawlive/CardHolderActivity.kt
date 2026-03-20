@@ -72,6 +72,7 @@ class CardHolderActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Timber.d("CARDHOLDER_DEBUG onCreate START")
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = Color.parseColor("#0D0D1A")
         window.navigationBarColor = Color.parseColor("#0D0D1A")
@@ -83,6 +84,7 @@ class CardHolderActivity : AppCompatActivity() {
             )
             setBackgroundColor(Color.parseColor("#0D0D1A"))
         }
+        Timber.d("CARDHOLDER_DEBUG rootLayout created: type=${rootLayout.javaClass.simpleName}, id=${rootLayout.id}")
 
         val mainColumn = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -91,10 +93,12 @@ class CardHolderActivity : AppCompatActivity() {
                 FrameLayout.LayoutParams.MATCH_PARENT
             )
         }
+        Timber.d("CARDHOLDER_DEBUG mainColumn created: type=${mainColumn.javaClass.simpleName}, orientation=${mainColumn.orientation}, lp=${mainColumn.layoutParams.javaClass.simpleName}")
 
         // Edge-to-edge insets
         ViewCompat.setOnApplyWindowInsetsListener(mainColumn) { v, insets ->
             val sys = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            Timber.d("CARDHOLDER_DEBUG mainColumn insets applied: top=${sys.top}, bottom=${sys.bottom}, left=${sys.left}, right=${sys.right}")
             v.updatePadding(top = sys.top)
             insets
         }
@@ -194,15 +198,68 @@ class CardHolderActivity : AppCompatActivity() {
         mainColumn.addView(scrollView)
 
         rootLayout.addView(mainColumn)
+        Timber.d("CARDHOLDER_DEBUG mainColumn added to rootLayout, rootLayout.childCount=${rootLayout.childCount}")
 
         // -- Bottom nav (inflate XML layout) --
-        layoutInflater.inflate(R.layout.layout_bottom_nav, rootLayout)
-        rootLayout.findViewById<LinearLayout>(R.id.bottomNav)?.let {
-            (it.layoutParams as? FrameLayout.LayoutParams)?.gravity = Gravity.BOTTOM
+        Timber.d("CARDHOLDER_DEBUG about to inflate layout_bottom_nav into rootLayout (FrameLayout)")
+        val inflatedNav = layoutInflater.inflate(R.layout.layout_bottom_nav, rootLayout)
+        Timber.d("CARDHOLDER_DEBUG inflate returned: type=${inflatedNav.javaClass.simpleName}, id=${inflatedNav.id}, rootLayout.childCount=${rootLayout.childCount}")
+
+        val bottomNavView = rootLayout.findViewById<LinearLayout>(R.id.bottomNav)
+        Timber.d("CARDHOLDER_DEBUG bottomNavView found: ${bottomNavView != null}")
+        if (bottomNavView != null) {
+            val lp = bottomNavView.layoutParams
+            Timber.d("CARDHOLDER_DEBUG bottomNav layoutParams type: ${lp?.javaClass?.name}")
+            Timber.d("CARDHOLDER_DEBUG bottomNav layoutParams width=${lp?.width}, height=${lp?.height}")
+            val isFrameLP = lp is FrameLayout.LayoutParams
+            Timber.d("CARDHOLDER_DEBUG bottomNav is FrameLayout.LayoutParams: $isFrameLP")
+            if (isFrameLP) {
+                val flp = lp as FrameLayout.LayoutParams
+                Timber.d("CARDHOLDER_DEBUG bottomNav gravity BEFORE set: ${flp.gravity}")
+                flp.gravity = Gravity.BOTTOM
+                Timber.d("CARDHOLDER_DEBUG bottomNav gravity AFTER set: ${flp.gravity}")
+            } else {
+                Timber.w("CARDHOLDER_DEBUG bottomNav layoutParams is NOT FrameLayout.LayoutParams! Actual: ${lp?.javaClass?.name}")
+            }
+            Timber.d("CARDHOLDER_DEBUG bottomNav parent: ${bottomNavView.parent?.javaClass?.simpleName}, parent==rootLayout: ${bottomNavView.parent === rootLayout}")
+            Timber.d("CARDHOLDER_DEBUG bottomNav visibility: ${bottomNavView.visibility}, measuredH: ${bottomNavView.measuredHeight}")
+        }
+
+        // Log all children of rootLayout
+        for (i in 0 until rootLayout.childCount) {
+            val child = rootLayout.getChildAt(i)
+            val childLp = child.layoutParams as? FrameLayout.LayoutParams
+            Timber.d("CARDHOLDER_DEBUG rootLayout child[$i]: type=${child.javaClass.simpleName}, id=${child.id}, gravity=${childLp?.gravity}, w=${childLp?.width}, h=${childLp?.height}")
         }
 
         setContentView(rootLayout)
+        Timber.d("CARDHOLDER_DEBUG setContentView called")
+
         BottomNavHelper.setup(this, NavItem.CARDS)
+        Timber.d("CARDHOLDER_DEBUG BottomNavHelper.setup completed")
+
+        // Post a delayed check to see actual measured sizes after layout
+        rootLayout.post {
+            Timber.d("CARDHOLDER_DEBUG POST-LAYOUT rootLayout: w=${rootLayout.width}, h=${rootLayout.height}")
+            Timber.d("CARDHOLDER_DEBUG POST-LAYOUT mainColumn: w=${mainColumn.width}, h=${mainColumn.height}, top=${mainColumn.top}, bottom=${mainColumn.bottom}")
+            if (bottomNavView != null) {
+                Timber.d("CARDHOLDER_DEBUG POST-LAYOUT bottomNav: w=${bottomNavView.width}, h=${bottomNavView.height}, top=${bottomNavView.top}, bottom=${bottomNavView.bottom}")
+                val flp = bottomNavView.layoutParams as? FrameLayout.LayoutParams
+                Timber.d("CARDHOLDER_DEBUG POST-LAYOUT bottomNav gravity=${flp?.gravity}, visibility=${bottomNavView.visibility}")
+                Timber.d("CARDHOLDER_DEBUG POST-LAYOUT bottomNav parent: ${bottomNavView.parent?.javaClass?.simpleName}")
+                Timber.d("CARDHOLDER_DEBUG POST-LAYOUT bottomNav translationY=${bottomNavView.translationY}")
+            }
+            // Check if scrollView bottom padding is correct
+            Timber.d("CARDHOLDER_DEBUG POST-LAYOUT contentLayout paddingBottom=${contentLayout.paddingBottom}")
+            Timber.d("CARDHOLDER_DEBUG POST-LAYOUT scrollView: h=${scrollView.height}, top=${scrollView.top}, bottom=${scrollView.bottom}")
+
+            // Check all children positions
+            for (i in 0 until rootLayout.childCount) {
+                val child = rootLayout.getChildAt(i)
+                val childLp = child.layoutParams as? FrameLayout.LayoutParams
+                Timber.d("CARDHOLDER_DEBUG POST-LAYOUT rootLayout child[$i]: type=${child.javaClass.simpleName}, top=${child.top}, bottom=${child.bottom}, h=${child.height}, gravity=${childLp?.gravity}")
+            }
+        }
 
         loadAllData()
         TelemetryHelper.trackPageView(this, "card_holder")
