@@ -5663,7 +5663,6 @@ app.delete('/api/entity/identity', async (req, res) => {
         if (Object.keys(entity.identity).length === 0) entity.identity = null;
     }
     entity.lastUpdated = Date.now();
-<<<<<<< HEAD
 
     if (typeof db.saveDeviceData === 'function') {
         db.saveDeviceData(deviceId, device).catch(err => console.error('[Identity] DB save error:', err.message));
@@ -5671,16 +5670,51 @@ app.delete('/api/entity/identity', async (req, res) => {
 
     io.to(deviceId).emit('entity:identity-updated', { entityId: parseInt(entityId), identity: null });
     serverLog('info', 'identity', `Entity ${entityId} identity cleared`, { deviceId, entityId: parseInt(entityId) });
-=======
-    // Persist identity sync to DB
-    if (typeof db.saveDeviceData === 'function') {
-        db.saveDeviceData(deviceId, device).catch(err => console.error('[AgentCard] DB save error:', err.message));
-    }
->>>>>>> f12ba08 (fix: persist identity sync in agent-card PUT/DELETE endpoints)
     res.json({ success: true });
 });
 
 // ── Bot Identity Layer ──
+
+/**
+ * Dual-auth helper: deviceSecret (owner) or botSecret (bot self-access).
+ * Returns { entity, error, status } — if error is set, respond with it.
+ */
+function authEntityAccess(device, deviceSecret, botSecret, entityId) {
+    const eid = parseInt(entityId);
+    if (deviceSecret) {
+        if (device.deviceSecret !== deviceSecret) {
+            return { error: 'Invalid deviceSecret', status: 403 };
+        }
+    } else {
+        const e = device.entities[eid];
+        if (!e || !e.isBound || e.botSecret !== botSecret) {
+            return { error: 'Invalid botSecret', status: 403 };
+        }
+    }
+    const entity = device.entities[eid];
+    if (!entity) {
+        return { error: 'Entity not found', status: 404 };
+    }
+    return { entity, eid };
+}
+
+/** Atomically set agent card and sync identity.public */
+function syncEntityCard(entity, card) {
+    entity.agentCard = card;
+    if (!entity.identity) entity.identity = {};
+    entity.identity.public = card;
+    entity.lastUpdated = Date.now();
+}
+
+/** Atomically clear agent card and identity.public */
+function clearEntityCard(entity) {
+    entity.agentCard = null;
+    if (entity.identity) {
+        delete entity.identity.public;
+        if (Object.keys(entity.identity).length === 0) entity.identity = null;
+    }
+    entity.lastUpdated = Date.now();
+}
 
 /**
  * Validate and clean identity object.
@@ -5755,21 +5789,10 @@ app.put('/api/entity/identity', async (req, res) => {
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    if (deviceSecret) {
-        if (device.deviceSecret !== deviceSecret) {
-            return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
-        }
-    } else {
-        const e = device.entities[entityId];
-        if (!e || !e.isBound || e.botSecret !== botSecret) {
-            return res.status(403).json({ success: false, error: 'Invalid botSecret' });
-        }
-    }
-
-    const entity = device.entities[entityId];
-    if (!entity || !entity.isBound) {
-        return res.status(404).json({ success: false, error: 'Entity not found or not bound' });
-    }
+    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    const entity = auth.entity;
+    if (!entity.isBound) return res.status(404).json({ success: false, error: 'Entity not bound' });
 
     const { valid, identity: cleaned, error } = validateIdentity(identity);
     if (!valid) return res.status(400).json({ success: false, error });
@@ -5819,23 +5842,9 @@ app.get('/api/entity/identity', (req, res) => {
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    const eid = parseInt(entityId);
-    if (deviceSecret) {
-        if (device.deviceSecret !== deviceSecret) {
-            return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
-        }
-    } else {
-        const e = device.entities[eid];
-        if (!e || !e.isBound || e.botSecret !== botSecret) {
-            return res.status(403).json({ success: false, error: 'Invalid botSecret' });
-        }
-    }
-
-    const entity = device.entities[eid];
-    if (!entity) {
-        return res.status(404).json({ success: false, error: 'Entity not found' });
-    }
-    res.json({ success: true, identity: entity.identity || null });
+    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    res.json({ success: true, identity: auth.entity.identity || null });
 });
 
 /**
@@ -5853,21 +5862,9 @@ app.delete('/api/entity/identity', async (req, res) => {
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    if (deviceSecret) {
-        if (device.deviceSecret !== deviceSecret) {
-            return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
-        }
-    } else {
-        const e = device.entities[entityId];
-        if (!e || !e.isBound || e.botSecret !== botSecret) {
-            return res.status(403).json({ success: false, error: 'Invalid botSecret' });
-        }
-    }
-
-    const entity = device.entities[entityId];
-    if (!entity) {
-        return res.status(404).json({ success: false, error: 'Entity not found' });
-    }
+    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    const entity = auth.entity;
     entity.identity = null;
     entity.agentCard = null;
     entity.lastUpdated = Date.now();
