@@ -1578,7 +1578,7 @@
                     '<div class="entity-edit-actions">' +
                     '<button class="btn btn-sm btn-outline" onclick="refreshEntity(' + entity.entityId + ', this)">&#x1F504; ' + i18n.t('dash_btn_refresh') + '</button>' +
                     '<button class="xd-settings-toggle" id="xdToggle' + entity.entityId + '" onclick="toggleXdSettings(' + entity.entityId + ')">' + i18n.t('dash_xd_settings') + '</button>' +
-                    '<button class="ac-settings-toggle" id="acToggle' + entity.entityId + '" onclick="toggleIdentityPanel(' + entity.entityId + ')">&#x1F3AD; Identity</button>' +
+                    '<button class="ac-settings-toggle" id="acToggle' + entity.entityId + '" onclick="toggleIdentityPanel(' + entity.entityId + ')">&#x1F3AD; ' + i18n.t('dash_id_btn') + '</button>' +
                     '<button class="btn btn-sm btn-delete-permanent"' + (entities.length <= 1 ? ' disabled title="' + i18n.t('dash_remove_title') + '"' : '') + ' onclick="confirmRemove(' + entity.entityId + ', \'' + escapedName + '\')">' + i18n.t('dash_btn_remove') + '</button>' +
                     '</div>' +
                     '<div class="xd-settings-panel" id="xdPanel' + entity.entityId + '">' +
@@ -1629,39 +1629,39 @@
                     '</div>' +
                     /* ── Identity Panel ── */
                     '<div class="ac-panel" id="acPanel' + entity.entityId + '">' +
-                    '<h4>&#x1F3AD; Bot Identity</h4>' +
+                    '<h4>&#x1F3AD; ' + i18n.t('dash_id_title') + '</h4>' +
                     /* Internal behavior section */
                     '<div class="xd-field">' +
-                        '<label>Role</label>' +
-                        '<input type="text" id="idRole' + entity.entityId + '" maxlength="100" placeholder="e.g. Customer Support Agent">' +
+                        '<label>' + i18n.t('dash_id_role') + '</label>' +
+                        '<input type="text" id="idRole' + entity.entityId + '" maxlength="100" placeholder="' + i18n.t('dash_id_role_hint') + '">' +
                     '</div>' +
                     '<div class="xd-field">' +
-                        '<label>Description</label>' +
-                        '<textarea id="idDesc' + entity.entityId + '" maxlength="500" placeholder="Describe this bot\'s responsibilities..." rows="2"></textarea>' +
+                        '<label>' + i18n.t('dash_id_desc') + '</label>' +
+                        '<textarea id="idDesc' + entity.entityId + '" maxlength="500" placeholder="' + i18n.t('dash_id_desc_hint') + '" rows="2"></textarea>' +
                     '</div>' +
                     '<div class="xd-field">' +
-                        '<label>Instructions</label>' +
+                        '<label>' + i18n.t('dash_id_instructions') + '</label>' +
                         '<div class="ac-tags" id="idInstructions' + entity.entityId + '"></div>' +
-                        '<div class="ac-tag-input"><input type="text" id="idInstrInput' + entity.entityId + '" maxlength="200" placeholder="Add an instruction..."><button class="btn btn-sm btn-outline" onclick="addTag(\'idInstructions\',' + entity.entityId + ',\'idInstrInput\',20)">+</button></div>' +
+                        '<div class="ac-tag-input"><input type="text" id="idInstrInput' + entity.entityId + '" maxlength="200" placeholder="' + i18n.t('dash_id_instr_hint') + '"><button class="btn btn-sm btn-outline" onclick="addTag(\'idInstructions\',' + entity.entityId + ',\'idInstrInput\',20)">+</button></div>' +
                     '</div>' +
                     '<div class="xd-field">' +
-                        '<label>Boundaries</label>' +
+                        '<label>' + i18n.t('dash_id_boundaries') + '</label>' +
                         '<div class="ac-tags" id="idBoundaries' + entity.entityId + '"></div>' +
-                        '<div class="ac-tag-input"><input type="text" id="idBoundInput' + entity.entityId + '" maxlength="200" placeholder="Add a boundary..."><button class="btn btn-sm btn-outline" onclick="addTag(\'idBoundaries\',' + entity.entityId + ',\'idBoundInput\',20)">+</button></div>' +
+                        '<div class="ac-tag-input"><input type="text" id="idBoundInput' + entity.entityId + '" maxlength="200" placeholder="' + i18n.t('dash_id_bound_hint') + '"><button class="btn btn-sm btn-outline" onclick="addTag(\'idBoundaries\',' + entity.entityId + ',\'idBoundInput\',20)">+</button></div>' +
                     '</div>' +
                     '<div class="xd-field">' +
-                        '<label>Tone</label>' +
-                        '<input type="text" id="idTone' + entity.entityId + '" maxlength="50" placeholder="e.g. friendly, professional, casual">' +
+                        '<label>' + i18n.t('dash_id_tone') + '</label>' +
+                        '<input type="text" id="idTone' + entity.entityId + '" maxlength="50" placeholder="' + i18n.t('dash_id_tone_hint') + '">' +
                     '</div>' +
                     '<div class="xd-field">' +
-                        '<label>Language</label>' +
-                        '<input type="text" id="idLang' + entity.entityId + '" maxlength="10" placeholder="e.g. zh-TW, en">' +
+                        '<label>' + i18n.t('dash_id_language') + '</label>' +
+                        '<input type="text" id="idLang' + entity.entityId + '" maxlength="10" placeholder="' + i18n.t('dash_id_lang_hint') + '">' +
                     '</div>' +
                     /* Public profile section (Agent Card) */
-                    '<h4 style="margin-top:16px;border-top:1px solid var(--card-border);padding-top:12px;">&#x1F4C7; Public Profile (Agent Card)</h4>' +
+                    '<h4 style="margin-top:16px;border-top:1px solid var(--card-border);padding-top:12px;">&#x1F4C7; ' + i18n.t('dash_id_public_title') + '</h4>' +
                     '<div class="xd-field">' +
-                        '<label>Public Description</label>' +
-                        '<textarea id="acDesc' + entity.entityId + '" maxlength="500" placeholder="Public description for agent card..." rows="2"></textarea>' +
+                        '<label>' + i18n.t('dash_id_public_desc') + '</label>' +
+                        '<textarea id="acDesc' + entity.entityId + '" maxlength="500" placeholder="' + i18n.t('dash_id_public_desc_hint') + '" rows="2"></textarea>' +
                     '</div>' +
                     '<div class="xd-field">' +
                         '<label>Capabilities</label>' +
@@ -1691,8 +1691,8 @@
                         '<input type="text" id="acEmail' + entity.entityId + '" maxlength="255" placeholder="contact@example.com">' +
                     '</div>' +
                     '<div class="xd-actions">' +
-                        '<button class="btn btn-sm btn-primary" onclick="saveIdentity(' + entity.entityId + ')">Save Identity</button>' +
-                        '<button class="btn btn-sm btn-outline" onclick="deleteIdentity(' + entity.entityId + ')">Clear</button>' +
+                        '<button class="btn btn-sm btn-primary" onclick="saveIdentity(' + entity.entityId + ')">' + i18n.t('dash_id_save') + '</button>' +
+                        '<button class="btn btn-sm btn-outline" onclick="deleteIdentity(' + entity.entityId + ')">' + i18n.t('dash_id_clear') + '</button>' +
                     '</div>' +
                     '</div>' +
                     '</div>';
@@ -1973,7 +1973,7 @@
         async function saveIdentity(entityId) {
             var identity = collectIdentity(entityId);
             if (!identity.role && !identity.description && !identity.public) {
-                showToast('At least role, description, or public profile is required', 'warning');
+                showToast(i18n.t('dash_id_validation'), 'warning');
                 return;
             }
             try {
@@ -1984,7 +1984,7 @@
                     identity: identity
                 });
                 if (data.success) {
-                    showToast('Identity saved', 'success');
+                    showToast(i18n.t('dash_id_saved'), 'success');
                 } else {
                     showToast(data.error || 'Error saving', 'error');
                 }
@@ -1995,7 +1995,7 @@
         }
 
         async function deleteIdentity(entityId) {
-            if (!confirm('Clear identity for Entity #' + entityId + '?')) return;
+            if (!confirm(i18n.t('dash_id_clear_confirm') + entityId + '?')) return;
             try {
                 var data = await apiCall('DELETE', '/api/entity/identity', {
                     deviceId: currentUser.deviceId,
@@ -2003,7 +2003,7 @@
                     entityId: entityId
                 });
                 if (data.success) {
-                    showToast('Identity cleared', 'success');
+                    showToast(i18n.t('dash_id_cleared'), 'success');
                     loadIdentity(entityId);
                 } else {
                     showToast(data.error || 'Error', 'error');
