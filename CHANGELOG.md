@@ -1,3 +1,10 @@
+# [1.121.0](https://github.com/HankHuang0516/EClaw/compare/v1.120.3...v1.121.0) (2026-03-20)
+
+
+### Features
+
+* add DELETE /api/feedback/:id endpoint and test cleanup ([#352](https://github.com/HankHuang0516/EClaw/issues/352)) ([7f50d20](https://github.com/HankHuang0516/EClaw/commit/7f50d20f83e016fa62657719f085bd52a8039bf5)), closes [#345](https://github.com/HankHuang0516/EClaw/issues/345) [#274](https://github.com/HankHuang0516/EClaw/issues/274) [#256](https://github.com/HankHuang0516/EClaw/issues/256) [#258](https://github.com/HankHuang0516/EClaw/issues/258) [#259](https://github.com/HankHuang0516/EClaw/issues/259) [#274](https://github.com/HankHuang0516/EClaw/issues/274) [#276](https://github.com/HankHuang0516/EClaw/issues/276) [#258](https://github.com/HankHuang0516/EClaw/issues/258) [#276](https://github.com/HankHuang0516/EClaw/issues/276) [#256](https://github.com/HankHuang0516/EClaw/issues/256) [#326](https://github.com/HankHuang0516/EClaw/issues/326) [#327](https://github.com/HankHuang0516/EClaw/issues/327) [#330](https://github.com/HankHuang0516/EClaw/issues/330) [#331](https://github.com/HankHuang0516/EClaw/issues/331) [#326](https://github.com/HankHuang0516/EClaw/issues/326) [#327](https://github.com/HankHuang0516/EClaw/issues/327) [#330](https://github.com/HankHuang0516/EClaw/issues/330) [#331](https://github.com/HankHuang0516/EClaw/issues/331) [#284](https://github.com/HankHuang0516/EClaw/issues/284)
+
 ## [1.120.3](https://github.com/HankHuang0516/EClaw/compare/v1.120.2...v1.120.3) (2026-03-20)
 
 
