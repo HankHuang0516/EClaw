@@ -1,3 +1,10 @@
+## [1.120.1](https://github.com/HankHuang0516/EClaw/compare/v1.120.0...v1.120.1) (2026-03-20)
+
+
+### Bug Fixes
+
+* channel-bound entities accumulate XP via /channel/message ([#345](https://github.com/HankHuang0516/EClaw/issues/345)) ([#348](https://github.com/HankHuang0516/EClaw/issues/348)) ([e3d446c](https://github.com/HankHuang0516/EClaw/commit/e3d446c311c055174987ddbb50322d5b805e3051))
+
 # [1.120.0](https://github.com/HankHuang0516/EClaw/compare/v1.119.3...v1.120.0) (2026-03-20)
 
 
