@@ -1914,6 +1914,16 @@
             input.value = '';
         }
 
+        /** Collect tag text values from a .ac-tag container */
+        function collectTags(prefix, entityId) {
+            var result = [];
+            document.querySelectorAll('#' + prefix + entityId + ' .ac-tag').forEach(function(tag) {
+                var t = tag.firstChild.textContent.trim();
+                if (t) result.push(t);
+            });
+            return result;
+        }
+
         function collectAgentCard(entityId) {
             var el = function(id) { return document.getElementById(id); };
             var caps = [];
@@ -1923,23 +1933,11 @@
                 if (name) caps.push({ id: name.toLowerCase().replace(/\s+/g, '-'), name: name, description: desc });
             });
 
-            var protos = [];
-            document.querySelectorAll('#acProtos' + entityId + ' .ac-tag').forEach(function(tag) {
-                var t = tag.firstChild.textContent.trim();
-                if (t) protos.push(t);
-            });
-
-            var tags = [];
-            document.querySelectorAll('#acTags' + entityId + ' .ac-tag').forEach(function(tag) {
-                var t = tag.firstChild.textContent.trim();
-                if (t) tags.push(t);
-            });
-
             return {
                 description: el('acDesc' + entityId).value.trim(),
                 capabilities: caps,
-                protocols: protos,
-                tags: tags,
+                protocols: collectTags('acProtos', entityId),
+                tags: collectTags('acTags', entityId),
                 version: el('acVersion' + entityId).value.trim(),
                 website: el('acWebsite' + entityId).value.trim(),
                 contactEmail: el('acEmail' + entityId).value.trim()
@@ -1960,18 +1958,9 @@
             var lang = el('idLang' + entityId).value.trim();
             if (lang) identity.language = lang;
 
-            var instructions = [];
-            document.querySelectorAll('#idInstructions' + entityId + ' .ac-tag').forEach(function(tag) {
-                var t = tag.firstChild.textContent.trim();
-                if (t) instructions.push(t);
-            });
+            var instructions = collectTags('idInstructions', entityId);
             if (instructions.length) identity.instructions = instructions;
-
-            var boundaries = [];
-            document.querySelectorAll('#idBoundaries' + entityId + ' .ac-tag').forEach(function(tag) {
-                var t = tag.firstChild.textContent.trim();
-                if (t) boundaries.push(t);
-            });
+            var boundaries = collectTags('idBoundaries', entityId);
             if (boundaries.length) identity.boundaries = boundaries;
 
             // Public profile (agent card)

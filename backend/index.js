@@ -2721,8 +2721,8 @@ app.post('/api/bind', async (req, res) => {
         availableResources: {
             soulTemplates: 'GET /api/soul-templates',
             ruleTemplates: 'GET /api/rule-templates',
-            schedules: `GET /api/schedules?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}`,
-            missionDashboard: `GET /api/mission/dashboard?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}`,
+            schedules: 'GET /api/schedules',
+            missionDashboard: 'GET /api/mission/dashboard',
             setIdentity: 'PUT /api/entity/identity'
         }
     });
@@ -5543,13 +5543,15 @@ app.put('/api/entity/identity', async (req, res) => {
     // Partial merge: only update provided fields
     const existing = entity.identity || {};
     const merged = { ...existing, ...cleaned };
-    // Handle public sub-object merge
+    // Handle public sub-object: deep merge when existing, otherwise the spread above already set it
     if (cleaned.public !== undefined) {
         if (cleaned.public === null) {
             delete merged.public;
         } else if (existing.public && typeof existing.public === 'object') {
+            // Deep merge only when both old and new public exist
             merged.public = { ...existing.public, ...cleaned.public };
         }
+        // else: no existing public — the { ...existing, ...cleaned } spread already set merged.public = cleaned.public
     }
     entity.identity = merged;
     // Sync agentCard from identity.public for backward compat
