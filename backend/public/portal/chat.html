@@ -1127,18 +1127,7 @@
                 if (isFirstLoad) return;
                 setTimeout(() => {
                     try {
-                        const backendIds = new Set(backendMessages.map(m => String(m.id)));
-                        const localIds = new Set(allMessages.map(m => String(m.id)));
-                        // Check missing messages
-                        const missing = [...backendIds].filter(id => !localIds.has(id));
-                        if (missing.length > 2) {
-                            _send({ layer: 'data', checkType: 'message_count',
-                                description: `Local missing ${missing.length} messages from backend`,
-                                expected: { count: backendIds.size },
-                                actual: { count: localIds.size, missingIds: missing.slice(0, 5) },
-                                affectedIds: missing.slice(0, 5) });
-                            return;
-                        }
+                        // message_count check removed — too many false positives
                         // Check content + fields for last 50
                         for (const bMsg of backendMessages.slice(-50)) {
                             const lMsg = allMessages.find(m => String(m.id) === String(bMsg.id));

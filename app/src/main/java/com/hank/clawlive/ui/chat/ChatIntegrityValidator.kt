@@ -53,19 +53,8 @@ object ChatIntegrityValidator {
             .filter { !(it.is_from_user && it.source in androidLocalSources) }
             .map { "backend_${it.id}" }
 
-        // CHECK 1: Missing messages
-        val missingKeys = backendKeys.filter { it !in localDedupKeys }
-        if (missingKeys.size > 2) {
-            sendReport(deviceId, deviceSecret, mapOf(
-                "layer" to "data",
-                "checkType" to "message_count",
-                "description" to "Local DB missing ${missingKeys.size} messages from backend",
-                "expected" to mapOf("count" to backendKeys.size),
-                "actual" to mapOf("count" to localDedupKeys.size, "missingCount" to missingKeys.size),
-                "affectedIds" to missingKeys.take(5)
-            ))
-            return
-        }
+        // CHECK 1 (message_count) removed — too many false positives due to
+        // local DB window vs backend history mismatch.
 
         // CHECK 2 & 3: Content + field consistency for last 50
         for (bMsg in backendMessages.takeLast(50)) {

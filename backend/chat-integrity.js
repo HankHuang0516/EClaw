@@ -2,13 +2,12 @@
  * Chat Integrity Validation Module
  *
  * Receives mismatch reports from Web/Android clients,
- * deduplicates them, logs via serverLog(), and auto-creates GitHub issues.
+ * deduplicates them, logs via serverLog(), and persists to DB.
  *
  * Flow:
  *   1. Client detects display/data inconsistency after render
  *   2. POST /api/chat/integrity-report → report()
  *   3. serverLog() + DB persist
- *   4. If new fingerprint → createGithubIssue()
  */
 
 // ── DB Setup ──────────────────────────────────────────────────────────────────
@@ -38,7 +37,7 @@ async function initIntegrityTable(pool) {
 }
 
 // ── In-memory dedup ───────────────────────────────────────────────────────────
-// fingerprint → { count, firstSeenMs, issueUrl }
+// fingerprint → { count, firstSeenMs }
 const _seen = new Map();
 const DEDUP_TTL_MS = 60 * 60 * 1000; // 1 hour per unique fingerprint
 
@@ -79,11 +78,11 @@ async function report(pool, mismatch, { serverLog }) {
             `[${platform}] ${layer}:${checkType} repeat #${existing.count} — ${description || ''}`,
             { deviceId, metadata: { fingerprint, count: existing.count } }
         );
-        return { logged: true, githubIssue: existing.issueUrl || null, suppressed: true };
+        return { logged: true, githubIssue: null, suppressed: true };
     }
 
     // First time seeing this fingerprint
-    _seen.set(fingerprint, { count: 1, firstSeenMs: now, issueUrl: null });
+    _seen.set(fingerprint, { count: 1, firstSeenMs: now });
 
     // Always log
     serverLog('warn', 'chat_integrity',
@@ -108,78 +107,10 @@ async function report(pool, mismatch, { serverLog }) {
         }
     }
 
-    // Auto-create GitHub issue (direct API call)
-    let githubIssue = null;
-    const token = process.env.GITHUB_TOKEN;
-    const repo = process.env.GITHUB_REPO;
-    if (token && repo) {
-        const title = `[ChatIntegrity] ${platform}/${layer}:${checkType} — ${(description || '').substring(0, 60)}`;
-        const body = [
-            `## Chat Integrity Mismatch`,
-            '',
-            `| Field | Value |`,
-            `|---|---|`,
-            `| **Device** | \`${deviceId}\` |`,
-            `| **Platform** | ${platform} |`,
-            `| **Layer** | ${layer} |`,
-            `| **Check** | \`${checkType}\` |`,
-            `| **App Version** | ${appVersion || 'N/A'} |`,
-            `| **Time** | ${new Date(now).toISOString()} |`,
-            `| **Report ID** | ${savedId || 'N/A'} |`,
-            '',
-            `### Description`,
-            description || '_No description_',
-            '',
-            `### Expected`,
-            '```json',
-            JSON.stringify(expected, null, 2),
-            '```',
-            '',
-            `### Actual`,
-            '```json',
-            JSON.stringify(actual, null, 2),
-            '```',
-            '',
-            `### Affected Message IDs`,
-            affectedIds.length > 0 ? affectedIds.map(id => `- \`${id}\``).join('\n') : '_None_',
-            '',
-            '---',
-            '_Auto-detected by ChatIntegrityValidator_'
-        ].join('\n');
+    // GitHub issue auto-creation removed — too many false positives from message_count checks.
+    // Reports are still logged via serverLog() and persisted to DB for manual review.
 
-        const labels = ['bug', 'chat-integrity', `platform:${platform}`, `layer:${layer}`];
-
-        try {
-            const res = await fetch(`https://api.github.com/repos/${repo}/issues`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `token ${token}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ title, body, labels })
-            });
-            if (res.ok) {
-                const data = await res.json();
-                githubIssue = { url: data.html_url, number: data.number };
-                _seen.get(fingerprint).issueUrl = githubIssue.url;
-                if (pool && savedId) {
-                    await pool.query(
-                        `UPDATE chat_integrity_reports SET github_issue_url = $1 WHERE id = $2`,
-                        [githubIssue.url, savedId]
-                    ).catch(() => {});
-                }
-                console.log(`[ChatIntegrity] GitHub issue created: ${githubIssue.url}`);
-            } else {
-                const err = await res.text();
-                console.error(`[ChatIntegrity] GitHub issue failed (${res.status}):`, err);
-            }
-        } catch (err) {
-            console.error('[ChatIntegrity] GitHub API error:', err.message);
-        }
-    }
-
-    return { logged: true, githubIssue: githubIssue?.url || null, suppressed: false };
+    return { logged: true, githubIssue: null, suppressed: false };
 }
 
 module.exports = { initIntegrityTable, report };
