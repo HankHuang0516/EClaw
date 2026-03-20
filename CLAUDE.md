@@ -301,6 +301,11 @@ EClaw/
 
 12. **UI/UX Simplify Review** — 任何與 UI/UX 渲染相關的修復或改動，在 commit 之前**必須**先執行 `simplify` skill（代碼複用、品質、效率三項審查），根據審查結果修正問題後才能 commit。
 
+13. **UI/UX I18n Audit** — 任何與 UI/UX 相關的改動，除了執行 `simplify` skill 外，還**必須**確認 i18n 做確實：
+    - 所有使用者可見的文字（按鈕、標題、提示、錯誤訊息、placeholder）都使用 `data-i18n` 屬性或 `i18n.t()` 呼叫
+    - 新增的 i18n key 必須同步加入所有語言檔案（Web `i18n.js`、Android `strings.xml`、iOS `i18n/`）
+    - 不可有 hardcoded 文字殘留在 HTML/Kotlin/React 中
+
 11. **Post-Push Production Verification** — push 到 main 後**必須**驗證 production：
     - 等 Railway 部署完成（檢查 `/api/health` 的 build 版本或 uptime 重置）
     - 跑所有 regression tests 對 live server（`test-bot-api-response.js`, `test-broadcast.js`, `test-cross-device-settings.js`, `test-edit-mode-public-code.js` 及新增的 feature tests）
@@ -310,7 +315,7 @@ EClaw/
 
 ---
 
-13. **EClaw Skill Template Sync** — 所有與實體（entity）相關的新 API，都**必須**同步收錄到 `backend/data/skill-templates.json` 的 `eclaw-a2a-toolkit` skill template 中，讓 bot 能透過 skill 得知並使用這些 API。**例外**：Article Publisher 相關的 API（`/api/publisher/*`）不需收錄。
+14. **EClaw Skill Template Sync** — 所有與實體（entity）相關的新 API，都**必須**同步收錄到 `backend/data/skill-templates.json` 的 `eclaw-a2a-toolkit` skill template 中，讓 bot 能透過 skill 得知並使用這些 API。**例外**：Article Publisher 相關的 API（`/api/publisher/*`）不需收錄。
 
 ## Git Workflow
 
