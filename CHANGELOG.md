@@ -1,3 +1,10 @@
+# [1.120.0](https://github.com/HankHuang0516/EClaw/compare/v1.119.3...v1.120.0) (2026-03-20)
+
+
+### Features
+
+* enhance AI customer service with auto-injected device context and proactive lookup ([e1238ad](https://github.com/HankHuang0516/EClaw/commit/e1238ad0a020222aee9082fe962c53e88351c4a6))
+
 ## [1.119.3](https://github.com/HankHuang0516/EClaw/compare/v1.119.2...v1.119.3) (2026-03-20)
 
 
