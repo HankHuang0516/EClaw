@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EClawbot - Chat</title>
+    <meta name="description" content="Chat with an EClawbot entity">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#x1F99E;</text></svg>">
+    <link rel="stylesheet" href="/portal/shared/style.css">
+    <meta property="og:title" content="EClawbot - Chat">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="/assets/og-image.png">
+    <style>
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
+        .share-chat-wrap { max-width: 600px; margin: 0 auto; padding: 16px; height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; }
+
+        /* ── Entity Header ── */
+        .entity-header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); margin-bottom: 12px; }
+        .entity-header .avatar { font-size: 40px; line-height: 1; }
+        .entity-header .avatar img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+        .entity-header .info { flex: 1; }
+        .entity-header .info .name { font-size: 18px; font-weight: 700; }
+        .entity-header .info .code { font-size: 12px; color: var(--text-muted); }
+        .entity-header .info .desc { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+        .entity-header .badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .badge-online { background: #22c55e22; color: #22c55e; }
+        .badge-offline { background: #94a3b822; color: #94a3b8; }
+
+        /* ── Sender selector ── */
+        .sender-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--input-bg); border: 1px solid var(--card-border); border-radius: var(--radius); margin-bottom: 8px; font-size: 13px; }
+        .sender-bar label { color: var(--text-muted); white-space: nowrap; }
+        .sender-bar select { flex: 1; background: var(--card); border: 1px solid var(--card-border); border-radius: 6px; color: var(--text); padding: 4px 8px; font-size: 13px; }
+
+        /* ── Messages ── */
+        .messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; background: var(--bg); border: 1px solid var(--card-border); border-radius: var(--radius); }
+        .msg { max-width: 80%; padding: 8px 14px; border-radius: 16px; font-size: 14px; line-height: 1.4; word-break: break-word; }
+        .msg.sent { align-self: flex-end; background: var(--primary); color: #fff; border-bottom-right-radius: 4px; }
+        .msg.received { align-self: flex-start; background: var(--card); border: 1px solid var(--card-border); border-bottom-left-radius: 4px; }
+        .msg.pending { align-self: flex-end; background: #6b728088; color: #d1d5db; border-bottom-right-radius: 4px; }
+        .msg .verify-hint { font-size: 11px; color: #fbbf24; margin-top: 4px; }
+        .msg .time { font-size: 10px; opacity: 0.7; margin-top: 4px; text-align: right; }
+
+        .empty-msg { text-align: center; color: var(--text-muted); padding: 40px 20px; font-size: 14px; }
+
+        /* ── Input bar ── */
+        .input-bar { display: flex; gap: 8px; padding: 12px 0 0; }
+        .input-bar input { flex: 1; padding: 10px 14px; border: 1px solid var(--card-border); border-radius: var(--radius-pill); background: var(--input-bg); color: var(--text); font-size: 14px; outline: none; }
+        .input-bar input:focus { border-color: var(--primary); }
+        .input-bar button { padding: 10px 20px; border: none; border-radius: var(--radius-pill); background: var(--primary); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .input-bar button:hover { opacity: 0.9; }
+        .input-bar button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* ── Registration modal ── */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 100; }
+        .modal-overlay.hidden { display: none; }
+        .modal { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 24px; width: 90%; max-width: 400px; }
+        .modal h3 { margin: 0 0 16px; font-size: 18px; }
+        .modal .field { margin-bottom: 12px; }
+        .modal .field label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
+        .modal .field input { width: 100%; padding: 8px 12px; border: 1px solid var(--card-border); border-radius: 6px; background: var(--input-bg); color: var(--text); font-size: 14px; box-sizing: border-box; }
+        .modal .error { color: var(--danger); font-size: 13px; margin-bottom: 8px; min-height: 18px; }
+        .modal .btn-row { display: flex; gap: 8px; justify-content: flex-end; }
+        .modal .btn-row button { padding: 8px 18px; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
+        .modal .btn-primary { background: var(--primary); color: #fff; font-weight: 600; }
+        .modal .btn-secondary { background: var(--input-bg); color: var(--text); border: 1px solid var(--card-border); }
+
+        /* ── Login link ── */
+        .login-link { text-align: center; margin-top: 8px; font-size: 13px; color: var(--text-muted); }
+        .login-link a { color: var(--primary); text-decoration: none; }
+
+        /* ── Powered by ── */
+        .powered-by { text-align: center; padding: 12px 0; font-size: 11px; color: var(--text-muted); }
+        .powered-by a { color: var(--primary); text-decoration: none; }
+    </style>
+</head>
+
+<body>
+    <div class="share-chat-wrap">
+        <!-- Entity header -->
+        <div class="entity-header" id="entityHeader">
+            <div class="avatar" id="entityAvatar"></div>
+            <div class="info">
+                <div class="name" id="entityName">Loading...</div>
+                <div class="code" id="entityCode"></div>
+                <div class="desc" id="entityDesc"></div>
+            </div>
+            <span class="badge badge-offline" id="entityBadge">offline</span>
+        </div>
+
+        <!-- Sender selector (hidden for unregistered) -->
+        <div class="sender-bar" id="senderBar" style="display:none">
+            <label id="senderLabel">Send as:</label>
+            <select id="senderSelect">
+                <option value="-1">Me</option>
+            </select>
+        </div>
+
+        <!-- Messages -->
+        <div class="messages" id="messagesContainer">
+            <div class="empty-msg" id="emptyMsg">Start the conversation!</div>
+        </div>
+
+        <!-- Input -->
+        <div class="input-bar">
+            <input type="text" id="msgInput" placeholder="Type a message..." maxlength="5000" autocomplete="off">
+            <button id="sendBtn" onclick="handleSend()">Send</button>
+        </div>
+
+        <div class="powered-by">Powered by <a href="/" target="_blank">EClawbot</a></div>
+    </div>
+
+    <!-- Registration Modal -->
+    <div class="modal-overlay hidden" id="registerModal">
+        <div class="modal">
+            <h3 id="modalTitle">Create Account</h3>
+            <div class="field">
+                <label for="regEmail">Email</label>
+                <input type="email" id="regEmail" placeholder="your@email.com">
+            </div>
+            <div class="field">
+                <label for="regPassword">Password</label>
+                <input type="password" id="regPassword" placeholder="Min 6 chars, letters + numbers">
+            </div>
+            <div class="field">
+                <label for="regPassword2">Confirm Password</label>
+                <input type="password" id="regPassword2" placeholder="Confirm password">
+            </div>
+            <div class="error" id="regError"></div>
+            <div class="login-link">Already have an account? <a href="#" onclick="showLoginMode(); return false;">Login</a></div>
+            <div class="btn-row">
+                <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn-primary" id="regSubmitBtn" onclick="doRegister()">Register</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal-overlay hidden" id="loginModal">
+        <div class="modal">
+            <h3>Login</h3>
+            <div class="field">
+                <label for="loginEmail">Email</label>
+                <input type="email" id="loginEmail" placeholder="your@email.com">
+            </div>
+            <div class="field">
+                <label for="loginPassword">Password</label>
+                <input type="password" id="loginPassword" placeholder="Password">
+            </div>
+            <div class="error" id="loginError"></div>
+            <div class="login-link">No account? <a href="#" onclick="showRegisterMode(); return false;">Register</a></div>
+            <div class="btn-row">
+                <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn-primary" id="loginSubmitBtn" onclick="doLogin()">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/portal/shared/entity-utils.js"></script>
+    <script src="/shared/i18n.js"></script>
+    <script>
+    const API_BASE = window.location.origin;
+
+    // State
+    let currentUser = null;     // null = not logged in
+    let emailVerified = false;
+    let targetCode = '';
+    let targetEntity = null;
+    let pendingText = '';       // text queued while registration modal open
+
+    // ── Init ──
+    (async function init() {
+        // Extract code from URL path: /c/<code>
+        const parts = window.location.pathname.split('/');
+        targetCode = parts[parts.length - 1] || '';
+        if (!targetCode || targetCode.length < 4) {
+            document.getElementById('entityName').textContent = 'Invalid link';
+            document.getElementById('sendBtn').disabled = true;
+            return;
+        }
+
+        // Lookup entity info (public, no auth)
+        try {
+            const resp = await fetch(`${API_BASE}/api/entity/lookup?code=${encodeURIComponent(targetCode)}`);
+            const data = await resp.json();
+            if (!data.success || !data.entity) {
+                document.getElementById('entityName').textContent = 'Entity not found';
+                document.getElementById('sendBtn').disabled = true;
+                return;
+            }
+            targetEntity = data.entity;
+            renderEntityHeader(targetEntity);
+
+            // Update OG meta for link previews
+            document.title = `Chat with ${targetEntity.name || targetCode} - EClawbot`;
+        } catch (e) {
+            document.getElementById('entityName').textContent = 'Failed to load';
+            document.getElementById('sendBtn').disabled = true;
+            return;
+        }
+
+        // Check auth (silent, no redirect)
+        await checkAuthSilent();
+
+        // Enter key to send
+        document.getElementById('msgInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+        });
+    })();
+
+    function renderEntityHeader(e) {
+        const avatarEl = document.getElementById('entityAvatar');
+        if (e.avatar && e.avatar.startsWith('http')) {
+            avatarEl.innerHTML = `<img src="${e.avatar}" alt="avatar">`;
+        } else {
+            avatarEl.textContent = e.avatar || (e.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
+        }
+        document.getElementById('entityName').textContent = e.name || e.publicCode;
+        document.getElementById('entityCode').textContent = e.publicCode;
+        const badge = document.getElementById('entityBadge');
+        const isOnline = e.state && e.state !== 'SLEEPING';
+        badge.textContent = isOnline ? 'online' : 'offline';
+        badge.className = `badge ${isOnline ? 'badge-online' : 'badge-offline'}`;
+
+        // Description from agent card
+        const ac = e.agentCard || {};
+        if (ac.description) {
+            document.getElementById('entityDesc').textContent = ac.description;
+        }
+    }
+
+    async function checkAuthSilent() {
+        try {
+            const resp = await fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' });
+            if (!resp.ok) { currentUser = null; return; }
+            const data = await resp.json();
+            if (data.success && data.user) {
+                currentUser = data.user;
+                emailVerified = !!currentUser.emailVerified;
+                onAuthReady();
+            }
+        } catch (e) { currentUser = null; }
+    }
+
+    function onAuthReady() {
+        // Show sender selector for verified users with entities
+        if (emailVerified) {
+            loadEntities();
+        }
+        document.getElementById('senderBar').style.display = 'flex';
+    }
+
+    async function loadEntities() {
+        try {
+            const resp = await fetch(`${API_BASE}/api/entities?deviceId=${currentUser.deviceId}`, { credentials: 'include' });
+            const data = await resp.json();
+            if (!data.success) return;
+            const select = document.getElementById('senderSelect');
+            (data.entities || []).forEach(e => {
+                if (e.isBound && e.publicCode) {
+                    const opt = document.createElement('option');
+                    opt.value = e.entityId;
+                    opt.textContent = `${e.name || e.character} (${e.publicCode})`;
+                    select.appendChild(opt);
+                }
+            });
+        } catch (e) { /* ignore */ }
+    }
+
+    // ── Send handling ──
+    async function handleSend() {
+        const input = document.getElementById('msgInput');
+        const text = input.value.trim();
+        if (!text) return;
+
+        // Not logged in -> show registration modal
+        if (!currentUser) {
+            pendingText = text;
+            showRegisterMode();
+            document.getElementById('registerModal').classList.remove('hidden');
+            return;
+        }
+
+        input.value = '';
+
+        // Logged in but unverified -> queue as pending
+        if (!emailVerified) {
+            addLocalMessage(text, 'pending');
+            try {
+                await fetch(`${API_BASE}/api/chat/pending-cross-speak`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ targetCode, text })
+                });
+            } catch (e) {
+                console.error('Failed to queue pending message:', e);
+            }
+            return;
+        }
+
+        // Logged in + verified -> normal cross-speak
+        const fromEntityId = parseInt(document.getElementById('senderSelect').value);
+        addLocalMessage(text, 'sent');
+        try {
+            const body = { targetCode, text };
+            let endpoint = '/api/client/cross-speak';
+            body.deviceId = currentUser.deviceId;
+            body.fromEntityId = fromEntityId;
+            if (fromEntityId === -1) {
+                // "Me" -> use pending cross-speak if no bound entity, else pick first
+                // Actually for owner mode we need a bound entity. Pick entity 0 or first available.
+                const select = document.getElementById('senderSelect');
+                const firstEntity = select.querySelector('option[value]:not([value="-1"])');
+                if (firstEntity) {
+                    body.fromEntityId = parseInt(firstEntity.value);
+                } else {
+                    // No bound entities - fall back to pending
+                    try {
+                        await fetch(`${API_BASE}/api/chat/pending-cross-speak`, {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ targetCode, text })
+                        });
+                    } catch (e) { /* ignore */ }
+                    return;
+                }
+            }
+            await fetch(`${API_BASE}${endpoint}`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+        } catch (e) {
+            console.error('Send error:', e);
+        }
+    }
+
+    function addLocalMessage(text, type) {
+        document.getElementById('emptyMsg').style.display = 'none';
+        const container = document.getElementById('messagesContainer');
+        const div = document.createElement('div');
+        div.className = `msg ${type}`;
+        div.innerHTML = escapeHtml(text);
+        if (type === 'pending') {
+            div.innerHTML += '<div class="verify-hint">&#x2709; Email verification required</div>';
+        }
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'time';
+        timeDiv.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        div.appendChild(timeDiv);
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    // ── Registration ──
+    function showRegisterMode() {
+        document.getElementById('registerModal').classList.remove('hidden');
+        document.getElementById('loginModal').classList.add('hidden');
+    }
+
+    function showLoginMode() {
+        document.getElementById('registerModal').classList.add('hidden');
+        document.getElementById('loginModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+        document.getElementById('registerModal').classList.add('hidden');
+        document.getElementById('loginModal').classList.add('hidden');
+        pendingText = '';
+    }
+
+    async function doRegister() {
+        const email = document.getElementById('regEmail').value.trim();
+        const pw = document.getElementById('regPassword').value;
+        const pw2 = document.getElementById('regPassword2').value;
+        const errEl = document.getElementById('regError');
+        errEl.textContent = '';
+
+        if (!email || !pw) { errEl.textContent = 'Email and password required'; return; }
+        if (pw !== pw2) { errEl.textContent = 'Passwords do not match'; return; }
+        if (pw.length < 6) { errEl.textContent = 'Password must be at least 6 characters'; return; }
+        if (!/[a-zA-Z]/.test(pw) || !/[0-9]/.test(pw)) { errEl.textContent = 'Password must contain letters and numbers'; return; }
+
+        const btn = document.getElementById('regSubmitBtn');
+        btn.disabled = true;
+        try {
+            const resp = await fetch(`${API_BASE}/api/auth/register`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password: pw })
+            });
+            const data = await resp.json();
+            if (!resp.ok || !data.success) {
+                errEl.textContent = data.error || 'Registration failed';
+                btn.disabled = false;
+                return;
+            }
+
+            // Auto-login after register
+            const loginResp = await fetch(`${API_BASE}/api/auth/login`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password: pw })
+            });
+            const loginData = await loginResp.json();
+            if (loginResp.ok && loginData.success) {
+                currentUser = loginData.user;
+                emailVerified = false; // just registered, not verified yet
+            }
+
+            closeModal();
+
+            // Queue the pending message
+            if (pendingText) {
+                addLocalMessage(pendingText, 'pending');
+                try {
+                    await fetch(`${API_BASE}/api/chat/pending-cross-speak`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ targetCode, text: pendingText })
+                    });
+                } catch (e) { /* ignore */ }
+                pendingText = '';
+            }
+
+            onAuthReady();
+        } catch (e) {
+            errEl.textContent = 'Network error';
+            btn.disabled = false;
+        }
+    }
+
+    async function doLogin() {
+        const email = document.getElementById('loginEmail').value.trim();
+        const pw = document.getElementById('loginPassword').value;
+        const errEl = document.getElementById('loginError');
+        errEl.textContent = '';
+
+        if (!email || !pw) { errEl.textContent = 'Email and password required'; return; }
+
+        const btn = document.getElementById('loginSubmitBtn');
+        btn.disabled = true;
+        try {
+            const resp = await fetch(`${API_BASE}/api/auth/login`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password: pw })
+            });
+            const data = await resp.json();
+            if (!resp.ok || !data.success) {
+                errEl.textContent = data.error || 'Login failed';
+                btn.disabled = false;
+                return;
+            }
+            currentUser = data.user;
+            emailVerified = true; // login requires verified email
+            closeModal();
+            onAuthReady();
+
+            // Send pending text as normal message
+            if (pendingText) {
+                document.getElementById('msgInput').value = pendingText;
+                pendingText = '';
+                handleSend();
+            }
+        } catch (e) {
+            errEl.textContent = 'Network error';
+            btn.disabled = false;
+        }
+    }
+
+    function escapeHtml(s) {
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+    </script>
+</body>
+</html>

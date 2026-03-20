@@ -134,6 +134,7 @@ jest.mock('../../auth', () => {
         softAuthMiddleware: noop,
         adminMiddleware: noop,
         initAuthDatabase: jest.fn().mockResolvedValue(undefined),
+        setOnEmailVerified: jest.fn(),
         pool: {
             query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
         },
