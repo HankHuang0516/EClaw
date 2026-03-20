@@ -126,6 +126,14 @@ async function createTables() {
         // E2EE awareness (Issue #212): per-entity encryption status derived from channel
         await client.query(`ALTER TABLE entities ADD COLUMN IF NOT EXISTS encryption_status TEXT`);
 
+        // Bot Identity Layer: unified identity JSONB (role, instructions, boundaries, public profile)
+        await client.query(`ALTER TABLE entities ADD COLUMN IF NOT EXISTS identity JSONB`);
+        // Migrate existing agent_card data into identity.public
+        await client.query(`
+            UPDATE entities SET identity = jsonb_build_object('public', agent_card)
+            WHERE agent_card IS NOT NULL AND identity IS NULL
+        `);
+
         // Allow multiple channel accounts per device (each plugin gets its own account)
         // Drop the UNIQUE(device_id) constraint if it still exists from the original schema
         await client.query(`
@@ -369,6 +377,7 @@ async function createTables() {
                 xp              INTEGER DEFAULT 0,
                 avatar          TEXT,
                 agent_card      JSONB,
+                identity        JSONB,
                 encryption_status TEXT,
                 deleted_at      TIMESTAMPTZ DEFAULT NOW(),
                 expires_at      TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '7 days'),
@@ -377,6 +386,8 @@ async function createTables() {
         `);
         await client.query(`CREATE INDEX IF NOT EXISTS idx_entity_trash_device ON entity_trash(device_id)`);
         await client.query(`CREATE INDEX IF NOT EXISTS idx_entity_trash_expires ON entity_trash(expires_at)`);
+        // Migration: add identity column to entity_trash for existing deployments
+        await client.query(`ALTER TABLE entity_trash ADD COLUMN IF NOT EXISTS identity JSONB`);
 
         console.log('[DB] Database tables ready');
         client.release();
@@ -441,15 +452,16 @@ async function saveDeviceData(deviceId, deviceData) {
                     entity.bindingType || null,
                     entity.channelAccountId || null,
                     entity.agentCard ? JSON.stringify(entity.agentCard) : null,
-                    entity.encryptionStatus || null
+                    entity.encryptionStatus || null,
+                    entity.identity ? JSON.stringify(entity.identity) : null
                 ];
                 const entitySql = `INSERT INTO entities (
                         device_id, entity_id, bot_secret, is_bound, name,
                         character, state, message, parts,
                         last_updated, message_queue, webhook, app_version,
                         xp, level, avatar, public_code, binding_type, channel_account_id, agent_card,
-                        encryption_status
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+                        encryption_status, identity
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
                     ON CONFLICT (device_id, entity_id)
                     DO UPDATE SET
                         bot_secret = $3,
@@ -470,7 +482,8 @@ async function saveDeviceData(deviceId, deviceData) {
                         binding_type = $18,
                         channel_account_id = $19,
                         agent_card = $20,
-                        encryption_status = $21`;
+                        encryption_status = $21,
+                        identity = $22`;
 
                 await client.query(`SAVEPOINT entity_${i}`);
                 try {
@@ -599,7 +612,8 @@ async function loadAllDevices() {
                 bindingType: row.binding_type || null,
                 channelAccountId: row.channel_account_id ? parseInt(row.channel_account_id) : null,
                 agentCard: row.agent_card ? (typeof row.agent_card === 'string' ? JSON.parse(row.agent_card) : row.agent_card) : null,
-                encryptionStatus: row.encryption_status || null
+                encryptionStatus: row.encryption_status || null,
+                identity: row.identity ? (typeof row.identity === 'string' ? JSON.parse(row.identity) : row.identity) : null
             };
         }
 
@@ -1510,8 +1524,8 @@ async function getApprovedRuleContributions() {
 async function saveEntityToTrash(deviceId, entityId, entityData) {
     if (!pool) return;
     await pool.query(
-        `INSERT INTO entity_trash (device_id, entity_id, character, name, state, message, webhook, bot_secret, public_code, xp, avatar, agent_card, encryption_status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+        `INSERT INTO entity_trash (device_id, entity_id, character, name, state, message, webhook, bot_secret, public_code, xp, avatar, agent_card, identity, encryption_status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
         [deviceId, entityId,
          entityData.character || null,
          entityData.name || null,
@@ -1523,6 +1537,7 @@ async function saveEntityToTrash(deviceId, entityId, entityData) {
          entityData.xp || 0,
          entityData.avatar || null,
          entityData.agentCard ? JSON.stringify(entityData.agentCard) : null,
+         entityData.identity ? JSON.stringify(entityData.identity) : null,
          entityData.encryptionStatus || null]
     );
 }

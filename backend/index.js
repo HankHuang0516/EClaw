@@ -2049,7 +2049,8 @@ function createDefaultEntity(entityId) {
         pushStatus: null, // { ok: bool, reason?: string, at: number }
         bindingType: null,
         channelAccountId: null,
-        agentCard: null, // A2A capability discovery (Issue #174)
+        agentCard: null, // derived from identity.public for backward compat
+        identity: null, // Bot Identity Layer: unified role/instructions/boundaries + public profile
         encryptionStatus: null // "e2ee" | "transport" | null (Issue #212)
     };
 }
@@ -2715,7 +2716,15 @@ app.post('/api/bind', async (req, res) => {
         },
         versionInfo: getVersionInfo(deviceAppVersion),
         skills_documentation_url: "https://raw.githubusercontent.com/HankHuang0516/realbot/main/backend/E-claw_mcp_skill.md",
-        skills_documentation: "Fetch the skills_documentation_url above to read the full E-claw MCP Skills guide."
+        skills_documentation: "Fetch the skills_documentation_url above to read the full E-claw MCP Skills guide.",
+        identitySetupRequired: !entity.identity,
+        availableResources: {
+            soulTemplates: 'GET /api/soul-templates',
+            ruleTemplates: 'GET /api/rule-templates',
+            schedules: 'GET /api/schedules',
+            missionDashboard: 'GET /api/mission/dashboard',
+            setIdentity: 'PUT /api/entity/identity'
+        }
     });
 });
 
@@ -3762,6 +3771,7 @@ app.post('/api/device/entity-trash/:trashId/restore', async (req, res) => {
         entity.xp = trashItem.xp || 0;
         entity.avatar = trashItem.avatar || null;
         entity.agentCard = trashItem.agent_card || null;
+        entity.identity = trashItem.identity || null;
         entity.encryptionStatus = trashItem.encryption_status || null;
 
         // Rebuild public code index
@@ -4588,6 +4598,7 @@ app.post('/api/client/speak', async (req, res) => {
                 else if (mediaType === 'video') pushMsg += `\n[Attachment: Video]\nmedia_type: video\nmedia_url: ${mediaUrl}`;
                 else if (mediaType === 'file') pushMsg += `\n[Attachment: File]\nmedia_type: file\nmedia_url: ${mediaUrl}`;
                 pushMsg += getMissionApiHints(apiBase, deviceId, eId, entity.botSecret);
+                pushMsg += buildIdentitySetupHint(entity, apiBase, deviceId, eId, entity.botSecret);
 
                 pushResult = await pushToBot(entity, deviceId, "new_message", {
                     message: pushMsg
@@ -4834,7 +4845,8 @@ app.post('/api/entity/speak-to', async (req, res) => {
                 b2bMax: BOT2BOT_MAX_MESSAGES,
                 expectsReply,
                 missionHints: getMissionApiHints('https://eclawbot.com', deviceId, toId, toEntity.botSecret),
-                silentToken: '[SILENT]'
+                silentToken: '[SILENT]',
+                identitySetupRequired: !toEntity.identity
             }
         }, toEntity.channelAccountId).then(pushResult => {
             if (pushResult.pushed) {
@@ -4877,6 +4889,7 @@ app.post('/api/entity/speak-to', async (req, res) => {
             else if (mediaType === 'video') pushMsg += `\n[Attachment: Video]\nmedia_type: video\nmedia_url: ${mediaUrl}`;
             else if (mediaType === 'file') pushMsg += `\n[Attachment: File]\nmedia_type: file\nmedia_url: ${mediaUrl}`;
         pushMsg += getMissionApiHints(apiBase, deviceId, toId, toEntity.botSecret);
+        pushMsg += buildIdentitySetupHint(toEntity, apiBase, deviceId, toId, toEntity.botSecret);
         pushToBot(toEntity, deviceId, "entity_message", {
             message: pushMsg
         }).then(pushResult => {
@@ -5216,6 +5229,7 @@ app.post('/api/entity/cross-speak', async (req, res) => {
         else if (mediaType === 'video') pushMsg += `\n[Attachment: Video]\nmedia_type: video\nmedia_url: ${mediaUrl}`;
         else if (mediaType === 'file') pushMsg += `\n[Attachment: File]\nmedia_type: file\nmedia_url: ${mediaUrl}`;
         pushMsg += getMissionApiHints(apiBase, target.deviceId, target.entityId, toEntity.botSecret);
+        pushMsg += buildIdentitySetupHint(toEntity, apiBase, target.deviceId, target.entityId, toEntity.botSecret);
 
         pushToBot(toEntity, target.deviceId, "cross_device_message", {
             message: pushMsg
@@ -5285,6 +5299,13 @@ app.get('/api/entity/lookup', (req, res) => {
             avatar: entity.avatar,
             level: entity.level,
             agentCard: entity.agentCard || null,
+            identity: entity.identity ? {
+                role: entity.identity.role || null,
+                description: entity.identity.description || null,
+                tone: entity.identity.tone || null,
+                language: entity.identity.language || null,
+                public: entity.identity.public || null
+            } : null,
             encryptionStatus: entity.encryptionStatus || null
         }
     });
@@ -5324,26 +5345,18 @@ app.put('/api/entity/agent-card', (req, res) => {
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    // Dual auth: deviceSecret (owner) or botSecret (bot self-update)
-    if (deviceSecret) {
-        if (device.deviceSecret !== deviceSecret) {
-            return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
-        }
-    } else {
-        const entity = device.entities[entityId];
-        if (!entity || !entity.isBound || entity.botSecret !== botSecret) {
-            return res.status(403).json({ success: false, error: 'Invalid botSecret' });
-        }
-    }
+    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    const entity = auth.entity;
+    if (!entity.isBound) return res.status(404).json({ success: false, error: 'Entity not bound' });
 
-    const entity = device.entities[entityId];
-    if (!entity || !entity.isBound) {
-        return res.status(404).json({ success: false, error: 'Entity not found or not bound' });
-    }
     const { valid, card, error } = validateAgentCard(agentCard);
     if (!valid) return res.status(400).json({ success: false, error });
-    entity.agentCard = card;
-    entity.lastUpdated = Date.now();
+    syncEntityCard(entity, card);
+    // Persist to DB
+    if (typeof db.saveDeviceData === 'function') {
+        db.saveDeviceData(deviceId, device).catch(err => console.error('[AgentCard] DB save error:', err.message));
+    }
     res.json({ success: true, agentCard: card });
 });
 
@@ -5362,23 +5375,9 @@ app.get('/api/entity/agent-card', (req, res) => {
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    const eid = parseInt(entityId);
-    if (deviceSecret) {
-        if (device.deviceSecret !== deviceSecret) {
-            return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
-        }
-    } else {
-        const e = device.entities[eid];
-        if (!e || !e.isBound || e.botSecret !== botSecret) {
-            return res.status(403).json({ success: false, error: 'Invalid botSecret' });
-        }
-    }
-
-    const entity = device.entities[eid];
-    if (!entity) {
-        return res.status(404).json({ success: false, error: 'Entity not found' });
-    }
-    res.json({ success: true, agentCard: entity.agentCard || null });
+    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    res.json({ success: true, agentCard: auth.entity.agentCard || null });
 });
 
 /**
@@ -5396,23 +5395,218 @@ app.delete('/api/entity/agent-card', (req, res) => {
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
+    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    clearEntityCard(auth.entity);
+    // Persist to DB
+    if (typeof db.saveDeviceData === 'function') {
+        db.saveDeviceData(deviceId, device).catch(err => console.error('[AgentCard] DB save error:', err.message));
+    }
+    res.json({ success: true });
+});
+
+// ── Bot Identity Layer ──
+
+/**
+ * Dual-auth helper: deviceSecret (owner) or botSecret (bot self-access).
+ * Returns { entity, error, status } — if error is set, respond with it.
+ */
+function authEntityAccess(device, deviceSecret, botSecret, entityId) {
+    const eid = parseInt(entityId);
     if (deviceSecret) {
         if (device.deviceSecret !== deviceSecret) {
-            return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
+            return { error: 'Invalid deviceSecret', status: 403 };
         }
     } else {
-        const e = device.entities[entityId];
+        const e = device.entities[eid];
         if (!e || !e.isBound || e.botSecret !== botSecret) {
-            return res.status(403).json({ success: false, error: 'Invalid botSecret' });
+            return { error: 'Invalid botSecret', status: 403 };
+        }
+    }
+    const entity = device.entities[eid];
+    if (!entity) {
+        return { error: 'Entity not found', status: 404 };
+    }
+    return { entity, eid };
+}
+
+/** Atomically set agent card and sync identity.public */
+function syncEntityCard(entity, card) {
+    entity.agentCard = card;
+    if (!entity.identity) entity.identity = {};
+    entity.identity.public = card;
+    entity.lastUpdated = Date.now();
+}
+
+/** Atomically clear agent card and identity.public */
+function clearEntityCard(entity) {
+    entity.agentCard = null;
+    if (entity.identity) {
+        delete entity.identity.public;
+        if (Object.keys(entity.identity).length === 0) entity.identity = null;
+    }
+    entity.lastUpdated = Date.now();
+}
+
+/**
+ * Validate and clean identity object.
+ * Supports partial updates — only validates fields that are present.
+ */
+function validateIdentity(identity) {
+    if (!identity || typeof identity !== 'object') {
+        return { valid: false, error: 'identity must be an object' };
+    }
+    const cleaned = {};
+
+    // Internal behavior fields
+    if (identity.role !== undefined) {
+        cleaned.role = String(identity.role).substring(0, 100);
+    }
+    if (identity.description !== undefined) {
+        cleaned.description = String(identity.description).substring(0, 500);
+    }
+    if (identity.instructions !== undefined) {
+        if (!Array.isArray(identity.instructions)) return { valid: false, error: 'instructions must be an array' };
+        if (identity.instructions.length > 20) return { valid: false, error: 'Maximum 20 instructions allowed' };
+        cleaned.instructions = identity.instructions.slice(0, 20).map(s => String(s).substring(0, 200));
+    }
+    if (identity.boundaries !== undefined) {
+        if (!Array.isArray(identity.boundaries)) return { valid: false, error: 'boundaries must be an array' };
+        if (identity.boundaries.length > 20) return { valid: false, error: 'Maximum 20 boundaries allowed' };
+        cleaned.boundaries = identity.boundaries.slice(0, 20).map(s => String(s).substring(0, 200));
+    }
+    if (identity.tone !== undefined) {
+        cleaned.tone = String(identity.tone).substring(0, 50);
+    }
+    if (identity.language !== undefined) {
+        cleaned.language = String(identity.language).substring(0, 10);
+    }
+    if (identity.soulTemplateId !== undefined) {
+        cleaned.soulTemplateId = identity.soulTemplateId ? String(identity.soulTemplateId).substring(0, 64) : null;
+    }
+    if (identity.ruleTemplateIds !== undefined) {
+        if (!Array.isArray(identity.ruleTemplateIds)) return { valid: false, error: 'ruleTemplateIds must be an array' };
+        cleaned.ruleTemplateIds = identity.ruleTemplateIds.slice(0, 20).map(s => String(s).substring(0, 64));
+    }
+
+    // Public profile (agent card)
+    if (identity.public !== undefined) {
+        if (identity.public === null) {
+            cleaned.public = null;
+        } else {
+            const { valid: cardValid, card, error: cardError } = validateAgentCard(identity.public);
+            if (!cardValid) return { valid: false, error: `public: ${cardError}` };
+            cleaned.public = card;
         }
     }
 
-    const entity = device.entities[entityId];
-    if (!entity) {
-        return res.status(404).json({ success: false, error: 'Entity not found' });
+    return { valid: true, identity: cleaned };
+}
+
+/**
+ * PUT /api/entity/identity — Create or update bot identity (partial merge)
+ * Auth: deviceSecret (owner) OR botSecret (bot self-update)
+ */
+app.put('/api/entity/identity', async (req, res) => {
+    const { deviceId, deviceSecret, botSecret, entityId, identity } = req.body;
+    if (!deviceId || entityId === undefined || entityId === null) {
+        return res.status(400).json({ success: false, error: 'deviceId, entityId required' });
     }
+    if (!identity) {
+        return res.status(400).json({ success: false, error: 'identity object required' });
+    }
+    if (!deviceSecret && !botSecret) {
+        return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+
+    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    const entity = auth.entity;
+    if (!entity.isBound) return res.status(404).json({ success: false, error: 'Entity not bound' });
+
+    const { valid, identity: cleaned, error } = validateIdentity(identity);
+    if (!valid) return res.status(400).json({ success: false, error });
+
+    // Partial merge: only update provided fields
+    const existing = entity.identity || {};
+    const merged = { ...existing, ...cleaned };
+    // Handle public sub-object: deep merge when existing, otherwise the spread above already set it
+    if (cleaned.public !== undefined) {
+        if (cleaned.public === null) {
+            delete merged.public;
+        } else if (existing.public && typeof existing.public === 'object') {
+            // Deep merge only when both old and new public exist
+            merged.public = { ...existing.public, ...cleaned.public };
+        }
+        // else: no existing public — the { ...existing, ...cleaned } spread already set merged.public = cleaned.public
+    }
+    entity.identity = merged;
+    // Sync agentCard from identity.public for backward compat
+    entity.agentCard = merged.public || null;
+    entity.lastUpdated = Date.now();
+
+    // Persist
+    if (typeof db.saveDeviceData === 'function') {
+        db.saveDeviceData(deviceId, device).catch(err => console.error('[Identity] DB save error:', err.message));
+    }
+
+    // Socket.IO notification
+    io.to(deviceId).emit('entity:identity-updated', { entityId: parseInt(entityId), identity: entity.identity });
+
+    serverLog('info', 'identity', `Entity ${entityId} identity updated`, { deviceId, entityId: parseInt(entityId) });
+    res.json({ success: true, identity: entity.identity });
+});
+
+/**
+ * GET /api/entity/identity — Read bot identity
+ * Auth: deviceSecret (owner) OR botSecret (bot self-read)
+ */
+app.get('/api/entity/identity', (req, res) => {
+    const { deviceId, deviceSecret, botSecret, entityId } = req.query;
+    if (!deviceId || entityId === undefined) {
+        return res.status(400).json({ success: false, error: 'deviceId, entityId required' });
+    }
+    if (!deviceSecret && !botSecret) {
+        return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+
+    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    res.json({ success: true, identity: auth.entity.identity || null });
+});
+
+/**
+ * DELETE /api/entity/identity — Clear bot identity
+ * Auth: deviceSecret (owner) OR botSecret (bot self-delete)
+ */
+app.delete('/api/entity/identity', async (req, res) => {
+    const { deviceId, deviceSecret, botSecret, entityId } = req.body;
+    if (!deviceId || entityId === undefined) {
+        return res.status(400).json({ success: false, error: 'deviceId, entityId required' });
+    }
+    if (!deviceSecret && !botSecret) {
+        return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+
+    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    const entity = auth.entity;
+    entity.identity = null;
     entity.agentCard = null;
     entity.lastUpdated = Date.now();
+
+    if (typeof db.saveDeviceData === 'function') {
+        db.saveDeviceData(deviceId, device).catch(err => console.error('[Identity] DB save error:', err.message));
+    }
+
+    io.to(deviceId).emit('entity:identity-updated', { entityId: parseInt(entityId), identity: null });
+    serverLog('info', 'identity', `Entity ${entityId} identity cleared`, { deviceId, entityId: parseInt(entityId) });
     res.json({ success: true });
 });
 
@@ -5896,6 +6090,7 @@ app.post('/api/client/cross-speak', async (req, res) => {
         else if (mediaType === 'video') pushMsg += `\n[Attachment: Video]\nmedia_type: video\nmedia_url: ${mediaUrl}`;
         else if (mediaType === 'file') pushMsg += `\n[Attachment: File]\nmedia_type: file\nmedia_url: ${mediaUrl}`;
         pushMsg += getMissionApiHints(apiBase, target.deviceId, target.entityId, toEntity.botSecret);
+        pushMsg += buildIdentitySetupHint(toEntity, apiBase, target.deviceId, target.entityId, toEntity.botSecret);
 
         pushToBot(toEntity, target.deviceId, "cross_device_message", {
             message: pushMsg
@@ -6123,7 +6318,8 @@ app.post('/api/entity/broadcast', async (req, res) => {
                     b2bMax: BOT2BOT_MAX_MESSAGES,
                     expectsReply: expectsReplyBcast,
                     missionHints: getMissionApiHints('https://eclawbot.com', deviceId, toId, toEntity.botSecret),
-                    silentToken: '[SILENT]'
+                    silentToken: '[SILENT]',
+                    identitySetupRequired: !toEntity.identity
                 }
             }, toEntity.channelAccountId).then(pushResult => {
                 if (pushResult.pushed) {
@@ -6171,6 +6367,7 @@ app.post('/api/entity/broadcast', async (req, res) => {
             else if (mediaType === 'video') pushMsg += `\n[Attachment: Video]\nmedia_type: video\nmedia_url: ${mediaUrl}`;
             else if (mediaType === 'file') pushMsg += `\n[Attachment: File]\nmedia_type: file\nmedia_url: ${mediaUrl}`;
             pushMsg += getMissionApiHints(apiBase, deviceId, toId, toEntity.botSecret);
+            pushMsg += buildIdentitySetupHint(toEntity, apiBase, deviceId, toId, toEntity.botSecret);
             pushToBot(toEntity, deviceId, "entity_broadcast", {
                 message: pushMsg
             }).then(pushResult => {
@@ -8539,6 +8736,27 @@ function getMissionApiHints(apiBase, deviceId, entityId, botSecret) {
 }
 
 /**
+ * Helper: Build IDENTITY_SETUP_REQUIRED hint for bots without identity.
+ * Only returns content when entity.identity is null — once identity is set, this disappears.
+ * Delivers at most 3 times per session to avoid bloating every push message.
+ */
+function buildIdentitySetupHint(entity, apiBase, deviceId, entityId, botSecret) {
+    if (entity.identity) return '';
+    const count = entity._identityHintCount || 0;
+    if (count >= 3) return '';
+    entity._identityHintCount = count + 1;
+    let hint = `\n\n[IDENTITY_SETUP_REQUIRED]\n`;
+    hint += `You have no identity configured yet. Set your identity (role, instructions, boundaries) via:\n`;
+    hint += `exec: curl -s -X PUT "${apiBase}/api/entity/identity" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","identity":{"role":"YOUR_ROLE","description":"WHAT_YOU_DO","instructions":["instruction1","instruction2"],"tone":"friendly","language":"zh-TW","public":{"description":"PUBLIC_DESCRIPTION_FOR_AGENT_CARD"}}}'\n`;
+    hint += `Available resources to review before setting up:\n`;
+    hint += `- Soul templates: exec: curl -s "${apiBase}/api/soul-templates"\n`;
+    hint += `- Rule templates: exec: curl -s "${apiBase}/api/rule-templates"\n`;
+    hint += `- Your dashboard: exec: curl -s "${apiBase}/api/mission/dashboard?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}"\n`;
+    hint += `[/IDENTITY_SETUP_REQUIRED]\n`;
+    return hint;
+}
+
+/**
  * Helper: Push notification to bot webhook
  * Supports OpenClaw format: POST to /tools/invoke with tool invocation payload
  */
@@ -9967,7 +10185,8 @@ async function executeScheduledMessage(schedule) {
             eclaw_context: {
                 expectsReply: true,
                 silentToken: '[SILENT]',
-                missionHints: missionHintsText
+                missionHints: missionHintsText,
+                identitySetupRequired: !entity.identity
             }
         }, entity.channelAccountId);
         if (pushResult.pushed) {
@@ -9982,6 +10201,7 @@ async function executeScheduledMessage(schedule) {
         pushMsg += `From: scheduled\n`;
         pushMsg += `Content: ${message}`;
         pushMsg += getMissionApiHints(apiBase, deviceId, entityId, entity.botSecret);
+        pushMsg += buildIdentitySetupHint(entity, apiBase, deviceId, entityId, entity.botSecret);
 
         pushResult = await pushToBot(entity, deviceId, 'new_message', {
             message: pushMsg
