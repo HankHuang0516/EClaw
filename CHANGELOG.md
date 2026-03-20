@@ -1,3 +1,10 @@
+## [1.120.3](https://github.com/HankHuang0516/EClaw/compare/v1.120.2...v1.120.3) (2026-03-20)
+
+
+### Bug Fixes
+
+* ChatIntegrityValidator direction check false positives ([#350](https://github.com/HankHuang0516/EClaw/issues/350)) ([98a0feb](https://github.com/HankHuang0516/EClaw/commit/98a0feb1cea51448aec7263a56e60b21749b0b1d)), closes [#345](https://github.com/HankHuang0516/EClaw/issues/345) [#274](https://github.com/HankHuang0516/EClaw/issues/274) [#256](https://github.com/HankHuang0516/EClaw/issues/256) [#258](https://github.com/HankHuang0516/EClaw/issues/258) [#259](https://github.com/HankHuang0516/EClaw/issues/259) [#274](https://github.com/HankHuang0516/EClaw/issues/274) [#276](https://github.com/HankHuang0516/EClaw/issues/276) [#258](https://github.com/HankHuang0516/EClaw/issues/258) [#276](https://github.com/HankHuang0516/EClaw/issues/276) [#256](https://github.com/HankHuang0516/EClaw/issues/256) [#326](https://github.com/HankHuang0516/EClaw/issues/326) [#327](https://github.com/HankHuang0516/EClaw/issues/327) [#330](https://github.com/HankHuang0516/EClaw/issues/330) [#331](https://github.com/HankHuang0516/EClaw/issues/331) [#326](https://github.com/HankHuang0516/EClaw/issues/326) [#327](https://github.com/HankHuang0516/EClaw/issues/327) [#330](https://github.com/HankHuang0516/EClaw/issues/330) [#331](https://github.com/HankHuang0516/EClaw/issues/331)
+
 ## [1.120.2](https://github.com/HankHuang0516/EClaw/compare/v1.120.1...v1.120.2) (2026-03-20)
 
 
