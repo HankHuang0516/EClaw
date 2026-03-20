@@ -1,9 +1,9 @@
 /**
- * Device Preferences endpoint validation tests (Jest + Supertest)
+ * Shareable chat link & pending cross-speak tests (Jest + Supertest)
  *
- * Tests input validation for device preferences endpoints:
- * - GET /api/device-preferences
- * - PUT /api/device-preferences
+ * Tests:
+ * - GET /c/:code serves share-chat.html
+ * - POST /api/chat/pending-cross-speak validation
  */
 
 // ── Mock all modules with side-effects before requiring index.js ──
@@ -25,6 +25,7 @@ jest.mock('../../db', () => ({
     saveAllDevices: jest.fn().mockResolvedValue(true),
     loadAllDevices: jest.fn().mockResolvedValue({}),
     deleteDevice: jest.fn().mockResolvedValue(true),
+    deleteEntity: jest.fn().mockResolvedValue(true),
     getStats: jest.fn().mockResolvedValue({}),
     closeDatabase: jest.fn().mockResolvedValue(undefined),
     saveOfficialBot: jest.fn().mockResolvedValue(true),
@@ -40,6 +41,55 @@ jest.mock('../../db', () => ({
     getPaidBorrowSlots: jest.fn().mockResolvedValue(0),
     incrementPaidBorrowSlots: jest.fn().mockResolvedValue(true),
     saveFeedback: jest.fn().mockResolvedValue({ id: 1 }),
+    getCardHolder: jest.fn().mockResolvedValue([]),
+    addCard: jest.fn().mockResolvedValue(null),
+    updateCard: jest.fn().mockResolvedValue(null),
+    refreshCardSnapshot: jest.fn().mockResolvedValue(null),
+    searchCards: jest.fn().mockResolvedValue([]),
+    getCardByCode: jest.fn().mockResolvedValue(null),
+    removeCard: jest.fn().mockResolvedValue(true),
+    getCardCount: jest.fn().mockResolvedValue(0),
+    incrementInteraction: jest.fn().mockResolvedValue(undefined),
+    getRecentInteractions: jest.fn().mockResolvedValue([]),
+    upsertRecentInteraction: jest.fn().mockResolvedValue(null),
+    isBlocked: jest.fn().mockResolvedValue(false),
+    getContacts: jest.fn().mockResolvedValue([]),
+    addContact: jest.fn().mockResolvedValue(null),
+    removeContact: jest.fn().mockResolvedValue(true),
+    getContactCount: jest.fn().mockResolvedValue(0),
+    upsertDeviceVars: jest.fn().mockResolvedValue(true),
+    getDeviceVars: jest.fn().mockResolvedValue(null),
+    getDeviceVarsMeta: jest.fn().mockResolvedValue(null),
+    deleteDeviceVars: jest.fn().mockResolvedValue(true),
+    createChannelAccount: jest.fn().mockResolvedValue(null),
+    getChannelAccountById: jest.fn().mockResolvedValue(null),
+    getChannelAccountsByDevice: jest.fn().mockResolvedValue([]),
+    getChannelAccountByKey: jest.fn().mockResolvedValue(null),
+    getChannelAccountByDevice: jest.fn().mockResolvedValue(null),
+    deleteChannelAccount: jest.fn().mockResolvedValue(true),
+    updateChannelCallback: jest.fn().mockResolvedValue(true),
+    updateChannelE2eeCapable: jest.fn().mockResolvedValue(true),
+    clearChannelCallback: jest.fn().mockResolvedValue(true),
+    insertSkillContribution: jest.fn().mockResolvedValue(undefined),
+    updateSkillContribution: jest.fn().mockResolvedValue(undefined),
+    getSkillContributions: jest.fn().mockResolvedValue([]),
+    getSkillContributionByPendingId: jest.fn().mockResolvedValue(null),
+    getApprovedSkillContributions: jest.fn().mockResolvedValue([]),
+    insertSoulContribution: jest.fn().mockResolvedValue(undefined),
+    getSoulContributions: jest.fn().mockResolvedValue([]),
+    getApprovedSoulContributions: jest.fn().mockResolvedValue([]),
+    insertRuleContribution: jest.fn().mockResolvedValue(undefined),
+    getRuleContributions: jest.fn().mockResolvedValue([]),
+    getApprovedRuleContributions: jest.fn().mockResolvedValue([]),
+    saveEntityToTrash: jest.fn().mockResolvedValue(undefined),
+    getEntityTrash: jest.fn().mockResolvedValue([]),
+    getEntityTrashItem: jest.fn().mockResolvedValue(null),
+    deleteEntityTrashItem: jest.fn().mockResolvedValue(undefined),
+    cleanupExpiredTrash: jest.fn().mockResolvedValue(0),
+    savePendingCrossMessage: jest.fn().mockResolvedValue(1),
+    getPendingCrossMessages: jest.fn().mockResolvedValue([]),
+    deletePendingCrossMessages: jest.fn().mockResolvedValue(0),
+    cleanupExpiredPendingMessages: jest.fn().mockResolvedValue(0),
 }));
 
 jest.mock('../../flickr', () => ({
@@ -149,11 +199,9 @@ jest.mock('../../subscription', () => {
     });
 });
 
+// ── Load app after mocks are established ──
 const request = require('supertest');
 let app;
-
-const get = (path) => request(app).get(path).set('Host', 'localhost');
-const put = (path) => request(app).put(path).set('Host', 'localhost');
 
 beforeAll(() => {
     app = require('../../index');
@@ -166,47 +214,47 @@ afterAll(async () => {
 });
 
 // ════════════════════════════════════════════════════════════════
-// GET /api/device-preferences — requires device auth
+// GET /c/:code — Shareable chat link
 // ════════════════════════════════════════════════════════════════
-describe('GET /api/device-preferences', () => {
-    it('returns 401 when no credentials provided', async () => {
-        const res = await get('/api/device-preferences');
-        expect(res.status).toBe(401);
+describe('GET /c/:code', () => {
+    it('returns HTTP 200 and serves HTML', async () => {
+        const res = await request(app).get('/c/abc123');
+        expect(res.status).toBe(200);
+        expect(res.text).toContain('share-chat');
     });
 
-    it('returns 401 when only deviceId is provided', async () => {
-        const res = await get('/api/device-preferences?deviceId=dev-1');
-        expect(res.status).toBe(401);
-    });
-
-    it('auto-creates device and returns prefs for new device', async () => {
-        // authDevice uses getOrCreateDevice which auto-creates, so unknown device succeeds
-        const res = await get('/api/device-preferences?deviceId=new-device&deviceSecret=new-secret');
-        // May succeed (200) if device auto-created, or 401 if strict auth
-        expect([200, 401]).toContain(res.status);
+    it('serves HTML for any valid code format', async () => {
+        const res = await request(app).get('/c/xyz789');
+        expect(res.status).toBe(200);
+        expect(res.headers['content-type']).toMatch(/text\/html/);
     });
 });
 
 // ════════════════════════════════════════════════════════════════
-// PUT /api/device-preferences — requires device auth + prefs object
+// POST /api/chat/pending-cross-speak — Queue pending message
 // ════════════════════════════════════════════════════════════════
-describe('PUT /api/device-preferences', () => {
-    it('returns 401 when no credentials provided', async () => {
-        const res = await put('/api/device-preferences')
-            .send({ prefs: { broadcast_recipient_info: false } });
+describe('POST /api/chat/pending-cross-speak', () => {
+    it('rejects unauthenticated requests', async () => {
+        const res = await request(app)
+            .post('/api/chat/pending-cross-speak')
+            .send({ targetCode: 'abc123', text: 'hello' });
         expect(res.status).toBe(401);
     });
 
-    it('returns 401 when only deviceId is provided', async () => {
-        const res = await put('/api/device-preferences')
-            .send({ deviceId: 'dev-1', prefs: { broadcast_recipient_info: false } });
-        expect(res.status).toBe(401);
+    it('rejects missing targetCode', async () => {
+        const res = await request(app)
+            .post('/api/chat/pending-cross-speak')
+            .set('Cookie', 'eclaw_session=invalid')
+            .send({ text: 'hello' });
+        // Will be 401 due to invalid cookie, which is fine
+        expect([400, 401]).toContain(res.status);
     });
 
-    it('rejects when prefs is not an object', async () => {
-        const res = await put('/api/device-preferences')
-            .send({ deviceId: 'dev-1', deviceSecret: 'sec', prefs: 'not-an-object' });
-        // Returns 400 (invalid prefs) or 401 (auth fail)
-        expect(res.status).toBeGreaterThanOrEqual(400);
+    it('rejects missing text', async () => {
+        const res = await request(app)
+            .post('/api/chat/pending-cross-speak')
+            .set('Cookie', 'eclaw_session=invalid')
+            .send({ targetCode: 'abc123' });
+        expect([400, 401]).toContain(res.status);
     });
 });

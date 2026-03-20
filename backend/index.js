@@ -137,6 +137,11 @@ app.get('/landing', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/landing.html'));
 });
 
+// Shareable chat link: /c/<publicCode>
+app.get('/c/:code', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/portal/share-chat.html'));
+});
+
 app.use('/mission', express.static(path.join(__dirname, 'public')));
 app.use('/portal', express.static(path.join(__dirname, 'public/portal'), {
     setHeaders: (res, filePath) => {
@@ -720,6 +725,59 @@ const authModule = require('./auth')(devices, getOrCreateDevice, serverLog);
 app.use(authModule.softAuthMiddleware); // Populate req.user from cookie on ALL requests
 app.use('/api/auth', authModule.router);
 authModule.initAuthDatabase();
+
+// Wire up pending message flush on email verification
+authModule.setOnEmailVerified(async (deviceId) => {
+    const pending = await db.getPendingCrossMessages(deviceId);
+    if (pending.length === 0) return;
+    console.log(`[PendingFlush] Flushing ${pending.length} pending cross-speak messages for device ${deviceId}`);
+
+    const senderDevice = devices[deviceId];
+    if (!senderDevice) return;
+
+    for (const msg of pending) {
+        try {
+            const target = publicCodeIndex[msg.target_code];
+            if (!target) continue;
+            const targetDevice = devices[target.deviceId];
+            if (!targetDevice) continue;
+            const toEntity = targetDevice.entities[target.entityId];
+            if (!toEntity || !toEntity.isBound) continue;
+
+            const sourceLabel = `xdevice:${deviceId}:owner`;
+            const messageObj = {
+                text: msg.text,
+                from: sourceLabel,
+                fromEntityId: -1,
+                fromPublicCode: null,
+                fromDeviceId: deviceId,
+                timestamp: msg.created_at,
+                read: false,
+                mediaType: msg.media_type || null,
+                mediaUrl: msg.media_url || null,
+                crossDevice: true
+            };
+            toEntity.messageQueue.push(messageObj);
+
+            await saveChatMessage(target.deviceId, target.entityId, msg.text, `${sourceLabel}->${msg.target_code}`, true, false, msg.media_type || null, msg.media_url || null);
+
+            toEntity.message = `xdevice:owner: ${msg.text}`;
+            toEntity.lastUpdated = Date.now();
+
+            if (toEntity.webhook) {
+                const apiBase = 'https://eclawbot.com';
+                let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API. Your text reply is DISCARDED.\n`;
+                pushMsg += `To reply:\nexec: curl -s -X POST "${apiBase}/api/entity/cross-speak" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","fromEntityId":${target.entityId},"botSecret":"${toEntity.botSecret}","targetCode":"owner","text":"YOUR_REPLY_HERE"}'\n\n`;
+                pushMsg += `[CROSS-DEVICE MESSAGE from New User]\nContent: ${msg.text}`;
+                pushToBot(toEntity, target.deviceId, 'cross_device_message', { message: pushMsg }).catch(() => {});
+            }
+        } catch (err) {
+            console.error(`[PendingFlush] Error flushing message ${msg.id}:`, err.message);
+        }
+    }
+    await db.deletePendingCrossMessages(deviceId);
+    serverLog('info', 'pending_flush', `Flushed ${pending.length} pending messages for device ${deviceId}`, { deviceId });
+});
 
 // ============================================
 // SUBSCRIPTION & TAPPAY (PostgreSQL)
@@ -6119,6 +6177,49 @@ app.post('/api/client/cross-speak', async (req, res) => {
         to: { publicCode: targetCode, character: toEntity.character },
         pushed: hasWebhook ? "pending" : false
     });
+});
+
+/**
+ * POST /api/chat/pending-cross-speak
+ * Queue a cross-device message from an unverified user. Messages are flushed on email verification.
+ * Requires JWT cookie (registered but unverified OK).
+ * Body: { targetCode, text, mediaType?, mediaUrl? }
+ */
+app.post('/api/chat/pending-cross-speak', async (req, res) => {
+    // softAuthMiddleware already populates req.user from JWT cookie
+    if (!req.user || !req.user.deviceId) {
+        return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+
+    const { targetCode, text, mediaType, mediaUrl } = req.body;
+    if (!targetCode || !text) {
+        return res.status(400).json({ success: false, error: 'targetCode and text are required' });
+    }
+    if (typeof text !== 'string' || text.length > 5000) {
+        return res.status(400).json({ success: false, error: 'text must be a string under 5000 characters' });
+    }
+
+    // Validate target exists
+    const target = publicCodeIndex[targetCode];
+    if (!target) {
+        return res.status(404).json({ success: false, error: 'Target entity not found' });
+    }
+
+    // Limit pending messages per user (prevent abuse)
+    const existing = await db.getPendingCrossMessages(req.user.deviceId);
+    if (existing.length >= 50) {
+        return res.status(429).json({ success: false, error: 'Too many pending messages. Please verify your email first.' });
+    }
+
+    // Save pending message
+    const pendingId = await db.savePendingCrossMessage(req.user.deviceId, -1, targetCode, text, mediaType, mediaUrl);
+    if (!pendingId) {
+        return res.status(500).json({ success: false, error: 'Failed to queue message' });
+    }
+
+    serverLog('info', 'pending_cross_speak', `Pending cross-speak queued: ${req.user.deviceId} -> ${targetCode}`, { deviceId: req.user.deviceId });
+
+    res.json({ success: true, pendingId, status: 'pending_verification' });
 });
 
 /**
@@ -11946,6 +12047,16 @@ if (require.main === module) {
                     if (count > 0) console.log(`[Trash] Cleaned up ${count} expired trash items`);
                 } catch (err) {
                     console.error('[Trash] Cleanup error:', err.message);
+                }
+            }, 6 * 60 * 60 * 1000);
+
+            // Cleanup orphaned pending cross-device messages older than 7 days
+            setInterval(async () => {
+                try {
+                    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+                    await db.cleanupExpiredPendingMessages(cutoff);
+                } catch (err) {
+                    console.error('[PendingCleanup] Error:', err.message);
                 }
             }, 6 * 60 * 60 * 1000);
         }

@@ -389,6 +389,21 @@ async function createTables() {
         // Migration: add identity column to entity_trash for existing deployments
         await client.query(`ALTER TABLE entity_trash ADD COLUMN IF NOT EXISTS identity JSONB`);
 
+        // Pending cross-device messages (queued until email verification)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS pending_cross_messages (
+                id SERIAL PRIMARY KEY,
+                sender_device_id TEXT NOT NULL,
+                sender_entity_id INTEGER DEFAULT -1,
+                target_code VARCHAR(8) NOT NULL,
+                text TEXT NOT NULL,
+                media_type TEXT,
+                media_url TEXT,
+                created_at BIGINT NOT NULL
+            )
+        `);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_pending_cross_sender ON pending_cross_messages(sender_device_id)`);
+
         console.log('[DB] Database tables ready');
         client.release();
     } catch (err) {
@@ -1571,6 +1586,68 @@ async function cleanupExpiredTrash() {
     return result.rowCount;
 }
 
+// ── Pending Cross-Device Messages ──────────────────────────────────
+
+async function savePendingCrossMessage(senderDeviceId, senderEntityId, targetCode, text, mediaType, mediaUrl) {
+    if (!pool) return null;
+    try {
+        const result = await pool.query(
+            `INSERT INTO pending_cross_messages (sender_device_id, sender_entity_id, target_code, text, media_type, media_url, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+            [senderDeviceId, senderEntityId, targetCode, text, mediaType || null, mediaUrl || null, Date.now()]
+        );
+        return result.rows[0].id;
+    } catch (err) {
+        console.error('[DB] Failed to save pending cross message:', err.message);
+        return null;
+    }
+}
+
+async function getPendingCrossMessages(senderDeviceId) {
+    if (!pool) return [];
+    try {
+        const result = await pool.query(
+            `SELECT * FROM pending_cross_messages WHERE sender_device_id = $1 ORDER BY created_at ASC`,
+            [senderDeviceId]
+        );
+        return result.rows;
+    } catch (err) {
+        console.error('[DB] Failed to get pending cross messages:', err.message);
+        return [];
+    }
+}
+
+async function deletePendingCrossMessages(senderDeviceId) {
+    if (!pool) return 0;
+    try {
+        const result = await pool.query(
+            `DELETE FROM pending_cross_messages WHERE sender_device_id = $1`,
+            [senderDeviceId]
+        );
+        return result.rowCount;
+    } catch (err) {
+        console.error('[DB] Failed to delete pending cross messages:', err.message);
+        return 0;
+    }
+}
+
+async function cleanupExpiredPendingMessages(cutoffTimestamp) {
+    if (!pool) return 0;
+    try {
+        const result = await pool.query(
+            `DELETE FROM pending_cross_messages WHERE created_at < $1`,
+            [cutoffTimestamp]
+        );
+        if (result.rowCount > 0) {
+            console.log(`[DB] Cleaned up ${result.rowCount} expired pending cross messages`);
+        }
+        return result.rowCount;
+    } catch (err) {
+        console.error('[DB] Failed to cleanup pending messages:', err.message);
+        return 0;
+    }
+}
+
 module.exports = {
     initDatabase,
     saveDeviceData,
@@ -1648,5 +1725,10 @@ module.exports = {
     getEntityTrash,
     getEntityTrashItem,
     deleteEntityTrashItem,
-    cleanupExpiredTrash
+    cleanupExpiredTrash,
+    // Pending cross-device messages
+    savePendingCrossMessage,
+    getPendingCrossMessages,
+    deletePendingCrossMessages,
+    cleanupExpiredPendingMessages
 };
