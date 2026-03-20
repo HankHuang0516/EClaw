@@ -72,6 +72,7 @@ const TEST_FILES = [
     'test-ux-live-validation.js',   // UX Layer 3: live endpoint validation (portal pages, auth, API smoke)
 
     // ── Credential-based tests (require .env with test device credentials) ──
+    'test-channel-xp.js',           // Channel XP accumulation: channel-bound entities earn XP via /channel/message (#345)
     'test-channel-e2ee.js',         // Channel E2EE awareness: e2ee_capable flag, encryptionStatus propagation
     'test-broadcast.js',            // Broadcast delivery + delivered_to append (needs BROADCAST_TEST_DEVICE_ID)
     'test-reorder-channel.js',      // Reorder → ENTITY_MOVED channel push (needs BROADCAST_TEST_DEVICE_ID)

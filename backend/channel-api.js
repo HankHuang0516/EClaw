@@ -18,7 +18,7 @@ const express = require('express');
 const crypto = require('crypto');
 const db = require('./db');
 
-module.exports = function (devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase }) {
+module.exports = function (devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase, awardEntityXP, XP_AMOUNTS }) {
     const router = express.Router();
 
     // ── In-memory test sink (for self-testing without ngrok) ──
@@ -599,6 +599,16 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             // Save to chat history
             if (message) {
                 saveChatMessage(deviceId, eId, message, 'bot', false, true, mediaType || null, mediaUrl || null);
+
+                // XP: Award for channel bot reply (same logic as /api/transform)
+                if (awardEntityXP && XP_AMOUNTS) {
+                    const now = Date.now();
+                    const replyXpCooldown = 30000; // 30 seconds
+                    if (!entity._lastReplyXpAt || now - entity._lastReplyXpAt > replyXpCooldown) {
+                        entity._lastReplyXpAt = now;
+                        awardEntityXP(deviceId, eId, XP_AMOUNTS.BOT_REPLY, 'channel_bot_reply');
+                    }
+                }
             }
 
             // Emit real-time update via Socket.IO
