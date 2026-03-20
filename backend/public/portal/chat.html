@@ -1948,7 +1948,7 @@
         function parseEntitySource(source) {
             if (!source) return null;
             // Cross-device: xdevice:code:CHARACTER->targetCode
-            const xmatch = source.match(/^xdevice:([a-z0-9]+):([A-Z]+)->(.+)$/);
+            const xmatch = source.match(/^xdevice:([a-z0-9]+):([^:]+)->(.+)$/);
             if (xmatch) {
                 return {
                     fromPublicCode: xmatch[1],
@@ -1958,7 +1958,7 @@
                 };
             }
             // Same-device: entity:ID:CHARACTER->targets
-            const match = source.match(/^entity:(\d+):([A-Z]+)->(.+)$/);
+            const match = source.match(/^entity:(\d+):([^:]+)->(.+)$/);
             if (!match) return null;
             return {
                 fromEntityId: parseInt(match[1]),

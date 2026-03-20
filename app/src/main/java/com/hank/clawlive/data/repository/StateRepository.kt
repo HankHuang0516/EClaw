@@ -183,6 +183,10 @@ class StateRepository(
      * Add broadcast messages to chat history
      */
     private suspend fun processMessageQueue(entity: EntityStatus) {
+        val mqSize = entity.messageQueue?.size ?: 0
+        if (mqSize > 0) {
+            Timber.d("[A2A_MQ_RECV] Entity${entity.entityId} has $mqSize messageQueue items from API")
+        }
         entity.messageQueue?.forEach { queueItem ->
             try {
                 // Detect entity-to-entity speak-to: sender differs from this entity (the receiver)

@@ -2755,7 +2755,16 @@ app.get('/api/entities', (req, res) => {
                     level: entity.level || 1,
                     publicCode: entity.publicCode || null,
                     bindingType: entity.bindingType || null,
-                    encryptionStatus: entity.encryptionStatus || null
+                    encryptionStatus: entity.encryptionStatus || null,
+                    messageQueue: (entity.messageQueue || []).map(m => ({
+                        text: m.text,
+                        from: m.from,
+                        fromEntityId: m.fromEntityId,
+                        fromCharacter: m.fromCharacter,
+                        timestamp: m.timestamp,
+                        read: m.read || false,
+                        delivered: m.delivered || false
+                    }))
                 });
             }
         }
@@ -2941,6 +2950,15 @@ app.post('/api/transform', (req, res) => {
     if (finalMessage) {
         saveChatMessage(deviceId, eId, finalMessage, entity.name || `Entity ${eId}`, false, true);
         markMessagesAsRead(deviceId, eId);
+
+        // [A2A_BOT_REPLY] — detect if this transform is in response to an A2A speak-to
+        const pendingA2A = entity.messageQueue && entity.messageQueue.find(m => m.from && m.from.startsWith('entity:'));
+        if (pendingA2A) {
+            serverLog('info', 'speakto_push', `[A2A_BOT_REPLY] Entity ${eId} responded via transform after A2A from ${pendingA2A.from}: "${(finalMessage || '').slice(0, 60)}" | mqLen=${entity.messageQueue.length}`, {
+                deviceId, entityId: eId,
+                metadata: { tag: 'A2A_BOT_REPLY', fromEntity: pendingA2A.fromEntityId, mqLen: entity.messageQueue.length }
+            });
+        }
 
         // XP: Award +10 for correctly replying to a user message
         const hasPendingUserMsg = entity.messageQueue && entity.messageQueue.some(m => m.from && m.from !== 'system');
@@ -4752,8 +4770,14 @@ app.post('/api/entity/speak-to', async (req, res) => {
     // Create message source identifier
     const sourceLabel = `entity:${fromId}:${fromEntity.character}`;
 
-    toEntity.message = `From Entity ${fromId}: "${speakToText}"`;
+    // Update entity.message so Android app can display it
+    // Format must match Android's parseEntityMessage regex: "entity:{ID}:{CHARACTER}: {message}"
+    toEntity.message = `entity:${fromId}:${fromEntity.character}: ${speakToText}`;
     toEntity.lastUpdated = Date.now();
+    serverLog('info', 'speakto_push', `[A2A_MSG_SET] Entity ${toId}.message = "entity:${fromId}:${fromEntity.character}: ${(speakToText || '').slice(0, 40)}..."`, {
+        deviceId, entityId: toId,
+        metadata: { tag: 'A2A_MSG_SET', fromEntityId: fromId, toEntityId: toId, character: fromEntity.character, msgLen: (speakToText || '').length }
+    });
 
     const messageObj = {
         text: speakToText,
@@ -4766,6 +4790,10 @@ app.post('/api/entity/speak-to', async (req, res) => {
         mediaUrl: mediaUrl || null
     };
     toEntity.messageQueue.push(messageObj);
+    serverLog('info', 'speakto_push', `[A2A_MQ_PUSH] Entity ${toId}.messageQueue += item from Entity ${fromId} | mqLen=${toEntity.messageQueue.length}`, {
+        deviceId, entityId: toId,
+        metadata: { tag: 'A2A_MQ_PUSH', fromEntityId: fromId, toEntityId: toId, mqLen: toEntity.messageQueue.length }
+    });
     const chatMsgId = await saveChatMessage(deviceId, fromId, speakToText, `${sourceLabel}->${toId}`, false, true, mediaType || null, mediaUrl || null);
     markMessagesAsRead(deviceId, toId);
 
@@ -4786,11 +4814,6 @@ app.post('/api/entity/speak-to', async (req, res) => {
     }).catch(() => {});
 
     console.log(`[Entity] Device ${deviceId} Entity ${fromId} -> Entity ${toId}: "${speakToText}" (b2b remaining: ${b2bRemaining})`);
-
-    // Update entity.message so Android app can display it
-    // Format must match Android's parseEntityMessage regex: "entity:{ID}:{CHARACTER}: {message}"
-    toEntity.message = `entity:${fromId}:${fromEntity.character}: ${speakToText}`;
-    toEntity.lastUpdated = Date.now();
 
     // Fire-and-forget: push to target bot — channel callback or traditional webhook
     const isChannelBound = toEntity.bindingType === 'channel';
@@ -4817,12 +4840,13 @@ app.post('/api/entity/speak-to', async (req, res) => {
             if (pushResult.pushed) {
                 messageObj.delivered = true;
                 markChatMessageDelivered(chatMsgId, String(toId));
-                serverLog('info', 'speakto_push', `Entity ${fromId} -> ${toId} channel push OK`, { deviceId, entityId: fromId, metadata: { toId, mode: 'channel' } });
+                serverLog('info', 'speakto_push', `[A2A_PUSH_RESULT] Entity ${fromId} -> ${toId} channel push OK | delivered=true`, { deviceId, entityId: fromId, metadata: { tag: 'A2A_PUSH_RESULT', toId, mode: 'channel', pushed: true } });
             } else {
-                serverLog('warn', 'speakto_push', `Entity ${fromId} -> ${toId} channel push failed: ${pushResult.reason}`, { deviceId, entityId: fromId, metadata: { toId } });
+                serverLog('warn', 'speakto_push', `[A2A_PUSH_RESULT] Entity ${fromId} -> ${toId} channel push FAILED: ${pushResult.reason}`, { deviceId, entityId: fromId, metadata: { tag: 'A2A_PUSH_RESULT', toId, mode: 'channel', pushed: false, reason: pushResult.reason } });
             }
         }).catch(err => {
             console.error(`[SpeakTo] Channel push failed: ${err.message}`);
+            serverLog('error', 'speakto_push', `[A2A_PUSH_RESULT] Entity ${fromId} -> ${toId} channel push ERROR: ${err.message}`, { deviceId, entityId: fromId, metadata: { tag: 'A2A_PUSH_RESULT', toId, mode: 'channel', error: err.message } });
         });
     } else if (hasWebhook) {
         // Instruction-first push format with pre-filled curl templates
@@ -4859,17 +4883,17 @@ app.post('/api/entity/speak-to', async (req, res) => {
             if (pushResult.pushed) {
                 messageObj.delivered = true;
                 markChatMessageDelivered(chatMsgId, String(toId));
-                serverLog('info', 'speakto_push', `Entity ${fromId} -> ${toId} push OK`, { deviceId, entityId: fromId, metadata: { toId } });
+                serverLog('info', 'speakto_push', `[A2A_PUSH_RESULT] Entity ${fromId} -> ${toId} webhook push OK | delivered=true`, { deviceId, entityId: fromId, metadata: { tag: 'A2A_PUSH_RESULT', toId, mode: 'webhook', pushed: true } });
             } else {
-                serverLog('warn', 'speakto_push', `Entity ${fromId} -> ${toId} not-pushed: ${pushResult.reason || 'unknown'}`, { deviceId, entityId: fromId, metadata: { toId } });
+                serverLog('warn', 'speakto_push', `[A2A_PUSH_RESULT] Entity ${fromId} -> ${toId} webhook not-pushed: ${pushResult.reason || 'unknown'}`, { deviceId, entityId: fromId, metadata: { tag: 'A2A_PUSH_RESULT', toId, mode: 'webhook', pushed: false, reason: pushResult.reason } });
             }
         }).catch(err => {
             console.error(`[SpeakTo] Background push failed: ${err.message}`);
-            serverLog('error', 'speakto_push', `Entity ${fromId} -> ${toId} FAILED: ${err.message}`, { deviceId, entityId: fromId, metadata: { toId } });
+            serverLog('error', 'speakto_push', `[A2A_PUSH_RESULT] Entity ${fromId} -> ${toId} webhook FAILED: ${err.message}`, { deviceId, entityId: fromId, metadata: { tag: 'A2A_PUSH_RESULT', toId, mode: 'webhook', error: err.message } });
         });
     } else if (toEntity.isBound) {
         console.warn(`[Push] ✗ No webhook registered for Device ${deviceId} Entity ${toId} - client will show dialog`);
-        serverLog('warn', 'speakto_push', `Entity ${toId} no webhook (polling)`, { deviceId, entityId: toId });
+        serverLog('warn', 'speakto_push', `[A2A_PUSH_RESULT] Entity ${toId} no webhook — polling only`, { deviceId, entityId: toId, metadata: { tag: 'A2A_PUSH_RESULT', toId, mode: 'polling' } });
     }
 
     // Determine binding type
