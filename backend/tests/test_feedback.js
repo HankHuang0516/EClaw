@@ -282,6 +282,32 @@ async function testErrorCases() {
 }
 
 // ==============================
+// Cleanup: Delete test feedback
+// ==============================
+
+async function cleanup() {
+    console.log('--- Cleanup: Delete test feedback ---\n');
+
+    if (!feedbackId) {
+        console.log('  SKIP: no feedbackId to clean up\n');
+        return;
+    }
+
+    const { status, data } = await api('DELETE', `/api/feedback/${feedbackId}`, {
+        deviceId: TEST_DEVICE_ID,
+        deviceSecret: TEST_DEVICE_SECRET
+    });
+    assert('Delete feedback returns 200', status === 200, { status });
+    assert('Feedback deleted successfully', data.success === true, data);
+
+    // Verify it's gone
+    const verify = await api('GET',
+        `/api/feedback/${feedbackId}?deviceId=${TEST_DEVICE_ID}&deviceSecret=${TEST_DEVICE_SECRET}`
+    );
+    assert('Deleted feedback returns 404', verify.status === 404, { status: verify.status });
+}
+
+// ==============================
 // Test: Log / Telemetry API Verification
 // ==============================
 
@@ -328,6 +354,7 @@ async function main() {
         await testUpdateFeedback();
         await testErrorCases();
         await testLogApiVerification();
+        await cleanup();
     } catch (e) {
         console.error('\nFATAL:', e.message);
         console.error(e.stack);

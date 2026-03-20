@@ -802,6 +802,22 @@ async function cleanupResolvedFeedbackPhotos(pool) {
     }
 }
 
+/**
+ * Delete a feedback entry and its associated photos.
+ * @returns {boolean} true if deleted
+ */
+async function deleteFeedback(pool, feedbackId) {
+    if (!pool) return false;
+    try {
+        await deleteFeedbackPhotos(pool, feedbackId);
+        const result = await pool.query('DELETE FROM feedback WHERE id = $1', [feedbackId]);
+        return result.rowCount > 0;
+    } catch (err) {
+        console.error('[Feedback] Delete feedback error:', err.message);
+        return false;
+    }
+}
+
 // ============================================
 // EXPORTS
 // ============================================
@@ -832,5 +848,6 @@ module.exports = {
     getFeedbackPhotos,
     getFeedbackPhoto,
     deleteFeedbackPhotos,
-    cleanupResolvedFeedbackPhotos
+    cleanupResolvedFeedbackPhotos,
+    deleteFeedback
 };

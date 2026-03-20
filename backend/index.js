@@ -9152,6 +9152,32 @@ app.patch('/api/feedback/:id', async (req, res) => {
     res.json({ success: updated, message: updated ? "Updated" : "No changes", photosDeleted });
 });
 
+// DELETE /api/feedback/:id — Delete a feedback entry
+app.delete('/api/feedback/:id', async (req, res) => {
+    const { deviceId, deviceSecret } = req.body;
+
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, message: "deviceId and deviceSecret required" });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(401).json({ success: false, message: "Invalid credentials" });
+    }
+
+    const fb = await feedbackModule.getFeedbackById(chatPool, parseInt(req.params.id));
+    if (!fb) {
+        return res.status(404).json({ success: false, message: "Feedback not found" });
+    }
+
+    // Only the device owner can delete their own feedback
+    if (fb.device_id !== deviceId) {
+        return res.status(403).json({ success: false, message: "Not authorized to delete this feedback" });
+    }
+
+    const deleted = await feedbackModule.deleteFeedback(chatPool, fb.id);
+    res.json({ success: deleted, message: deleted ? "Deleted" : "Delete failed" });
+});
+
 // ============================================
 // FEEDBACK PHOTOS
 // ============================================
