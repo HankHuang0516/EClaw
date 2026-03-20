@@ -185,17 +185,25 @@ class StateRepository(
     private suspend fun processMessageQueue(entity: EntityStatus) {
         entity.messageQueue?.forEach { queueItem ->
             try {
-                // Add to chat repository
+                // Detect entity-to-entity speak-to: sender differs from this entity (the receiver)
+                val isA2A = queueItem.fromEntityId != entity.entityId
+                val targetId = if (isA2A) entity.entityId else null
+
                 chatRepository.addMessageQueueItem(
                     text = queueItem.text,
                     fromEntityId = queueItem.fromEntityId,
                     fromCharacter = queueItem.fromCharacter,
-                    timestamp = queueItem.timestamp
+                    timestamp = queueItem.timestamp,
+                    targetEntityId = targetId
                 )
-                
-                Timber.d("Processed entity broadcast: ${queueItem.text}")
+
+                if (isA2A) {
+                    Timber.d("[A2A_PROCESS_MQ] Entity${queueItem.fromEntityId} -> Entity${entity.entityId}: ${queueItem.text.take(60)}")
+                } else {
+                    Timber.d("[A2A_PROCESS_MQ] Broadcast from Entity${queueItem.fromEntityId}: ${queueItem.text.take(60)}")
+                }
             } catch (e: Exception) {
-                Timber.e(e, "Error processing message queue item")
+                Timber.e(e, "[A2A_PROCESS_MQ] Error processing message queue item")
             }
         }
     }

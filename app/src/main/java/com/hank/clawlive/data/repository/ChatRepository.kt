@@ -183,6 +183,7 @@ class ChatRepository private constructor(
         // The actual message is already tracked via syncFromBackend() as a single record
         // under the SENDER entity with correct fromEntityId and delivery tracking.
         if (entity.message.matches(Regex("^entity:\\d+:[A-Z]+:.*"))) {
+            Timber.d("[A2A_POLL_ENTITY_SKIP] Skipping entity-to-entity msg on Entity${entity.entityId}: ${entity.message.take(60)}")
             return
         }
 
@@ -290,36 +291,45 @@ class ChatRepository private constructor(
     }
 
     /**
-     * Add message queue item (entity broadcast) to chat history
+     * Add message queue item (entity broadcast or entity-to-entity) to chat history.
+     * When [targetEntityId] is provided and differs from [fromEntityId], the message
+     * is treated as an entity-to-entity speak-to (ENTITY_TO_ENTITY type).
      */
     suspend fun addMessageQueueItem(
         text: String,
         fromEntityId: Int,
         fromCharacter: String,
-        timestamp: Long
+        timestamp: Long,
+        targetEntityId: Int? = null
     ) {
         // Create deduplication key
         val deduplicationKey = "mq_${fromEntityId}_${timestamp}"
-        
+
         // Check if already exists
         if (chatDao.existsByDeduplicationKey(deduplicationKey)) {
             return
         }
 
+        // Determine message type: entity-to-entity speak-to vs broadcast
+        val isEntityToEntity = targetEntityId != null && targetEntityId != fromEntityId
+        val msgType = if (isEntityToEntity) MessageType.ENTITY_TO_ENTITY else MessageType.ENTITY_BROADCAST
+        val targets = if (isEntityToEntity) targetEntityId.toString() else null
+
         val message = ChatMessage(
             text = text,
             timestamp = timestamp,
             isFromUser = false,
-            messageType = MessageType.ENTITY_BROADCAST,
+            messageType = msgType,
             fromEntityId = fromEntityId,
             fromEntityCharacter = fromCharacter,
+            targetEntityIds = targets,
             deduplicationKey = deduplicationKey,
             isSynced = true
         )
 
         chatDao.insert(message)
-        Timber.d("Saved messageQueue item from Entity $fromEntityId: ${text.take(30)}...")
-        
+        Timber.d("[A2A_MSG_QUEUE] type=$msgType from=Entity$fromEntityId target=${targets ?: "broadcast"} text=${text.take(60)}")
+
         pruneOldMessages()
     }
 
@@ -366,7 +376,7 @@ class ChatRepository private constructor(
                     // Update backendId AND deduplicationKey so ChatIntegrityValidator can find
                     // this message by its backend key ("backend_${id}") and reactions work.
                     chatDao.setBackendIdByContentMatch(msg.entity_id, msg.text, sinceTimestamp, msg.id, "backend_${msg.id}")
-                    Timber.d("Skipping backend message (already stored from entity polling): Entity ${msg.entity_id}")
+                    Timber.d("[A2A_DEDUP_CROSS] Skipping backend message (already stored from entity polling/mq): entity_id=${msg.entity_id} source=${msg.source} text=${msg.text.take(60)}")
                     continue
                 }
             }
@@ -447,6 +457,8 @@ class ChatRepository private constructor(
                 val senderCharacter = entityMatch.groupValues[2]
                 val targets = entityMatch.groupValues[3] // "1" or "1,2,3"
                 val msgType = if (targets.contains(",")) MessageType.ENTITY_BROADCAST else MessageType.ENTITY_TO_ENTITY
+
+                Timber.d("[A2A_SYNC_BACKEND] type=$msgType from=Entity$senderEntityId($senderCharacter) targets=$targets source=${msg.source} backendId=${msg.id} delivered=${msg.is_delivered} deliveredTo=${msg.delivered_to} text=${msg.text.take(60)}")
 
                 ChatMessage(
                     text = msg.text,
@@ -611,9 +623,18 @@ class ChatRepository private constructor(
             } else {
                 var addedCount = 0
                 response.messages.forEach { msg ->
+                    // Skip entity-to-entity messages: these are handled by processMessageQueue
+                    // and syncFromBackend with correct sender/target/type information.
+                    // pollBotMessages polls by TARGET entity, so fromEntityId != entityId
+                    // means this is a speak-to from another entity — not a direct bot response.
+                    if (msg.fromEntityId != entityId) {
+                        Timber.d("[A2A_POLL_SKIP] Skipping entity-to-entity msg in pollBotMessages: from=Entity${msg.fromEntityId} polled=Entity$entityId text=${msg.text.take(60)}")
+                        return@forEach
+                    }
+
                     // Create deduplication key
                     val deduplicationKey = "bot_${entityId}_${msg.timestamp}"
-                    
+
                     if (!chatDao.existsByDeduplicationKey(deduplicationKey)) {
                         val message = ChatMessage(
                             text = msg.text,
@@ -629,7 +650,7 @@ class ChatRepository private constructor(
                         )
                         chatDao.insert(message)
                         addedCount++
-                        Timber.d("Saved bot message from Entity $entityId: ${msg.text.take(30)}...")
+                        Timber.d("[A2A_POLL_BOT] Saved bot response from Entity $entityId: ${msg.text.take(30)}...")
                     }
                 }
                 

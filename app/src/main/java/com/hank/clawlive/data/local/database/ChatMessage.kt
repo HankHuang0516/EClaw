@@ -14,7 +14,10 @@ enum class MessageType {
     ENTITY_BROADCAST,    // Entity broadcast via messageQueue (LEFT side)
     CROSS_DEVICE_SENT,   // User sent cross-device message (RIGHT side)
     CROSS_DEVICE_RECEIVED, // Received cross-device message (LEFT side)
-    PLATFORM_RESPONSE    // Platform slash command response (LEFT side, centered)
+    PLATFORM_RESPONSE;   // Platform slash command response (LEFT side, centered)
+
+    /** True for entity-to-entity speak-to or broadcast messages (A2A communication) */
+    val isA2A: Boolean get() = this == ENTITY_TO_ENTITY || this == ENTITY_BROADCAST
 }
 
 /**

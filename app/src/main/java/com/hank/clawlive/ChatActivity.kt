@@ -1086,6 +1086,15 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun updateMessageList(messages: List<ChatMessage>) {
+        // [A2A_FILTER] Debug: log A2A messages in the list before filtering
+        if (messages.any { it.messageType.isA2A }) {
+            val a2aMessages = messages.filter { it.messageType.isA2A }
+            Timber.d("[A2A_FILTER] total=${messages.size} a2a=${a2aMessages.size} showAll=$showAll filterIds=$filterEntityIds")
+            a2aMessages.forEach { m ->
+                Timber.d("[A2A_FILTER]   id=${m.id} type=${m.messageType} from=Entity${m.fromEntityId} targets=${m.targetEntityIds} isFromUser=${m.isFromUser} text=${m.text.take(60)}")
+            }
+        }
+
         val filtered = if (showAll) {
             messages
         } else if (showOnlyMyMessages) {

@@ -23,6 +23,7 @@ import com.hank.clawlive.R
 import com.hank.clawlive.data.local.EntityAvatarManager
 import com.hank.clawlive.data.local.database.ChatMessage
 import com.hank.clawlive.data.local.database.MessageType
+import timber.log.Timber
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -82,6 +83,10 @@ class ChatAdapter : ListAdapter<ChatMessage, RecyclerView.ViewHolder>(ChatDiffCa
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val message = getItem(position)
+        // [A2A_RENDER] Debug: log rendering decisions for entity-to-entity messages
+        if (message.messageType.isA2A) {
+            Timber.d("[A2A_RENDER] pos=$position type=${message.messageType} isFromUser=${message.isFromUser} from=Entity${message.fromEntityId} targets=${message.targetEntityIds} viewType=${if (message.isFromUser) "SENT" else "RECEIVED"} text=${message.text.take(60)}")
+        }
         when (holder) {
             is SentMessageViewHolder -> holder.bind(message, this)
             is ReceivedMessageViewHolder -> holder.bind(message, this)

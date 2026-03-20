@@ -4769,6 +4769,13 @@ app.post('/api/entity/speak-to', async (req, res) => {
     const chatMsgId = await saveChatMessage(deviceId, fromId, speakToText, `${sourceLabel}->${toId}`, false, true, mediaType || null, mediaUrl || null);
     markMessagesAsRead(deviceId, toId);
 
+    // ── A2A Debug Telemetry ──
+    // Keyword: [A2A_SPEAK_TO] — searchable in debug viewer
+    serverLog('info', 'speakto_push', `[A2A_SPEAK_TO] Entity ${fromId} (${fromEntity.character}) -> Entity ${toId} (${toEntity.character}): "${(speakToText || '').slice(0, 60)}" | chatMsgId=${chatMsgId} | b2b=${b2bRemaining} | mqLen=${toEntity.messageQueue.length}`, {
+        deviceId, entityId: fromId,
+        metadata: { tag: 'A2A_SPEAK_TO', fromEntityId: fromId, toEntityId: toId, chatMsgId, b2bRemaining, expectsReply, isChannelBound: toEntity.bindingType === 'channel', hasWebhook: !!toEntity.webhook }
+    });
+
     // Notify device about speak-to (fire-and-forget)
     notifyDevice(deviceId, {
         type: 'chat', category: 'speak_to',
@@ -10140,6 +10147,9 @@ app.delete('/api/bot/schedules/:id', async (req, res) => {
     }
 });
 
+// Pre-compiled regex for detecting entity-to-entity source patterns (used in saveChatMessage)
+const A2A_SOURCE_RE = /^entity:\d+:[A-Z]+->/;
+
 // Save chat message to database, returns row ID (UUID) or null
 // Deduplication: bot messages with identical text for the same entity within 10s are skipped
 async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null) {
@@ -10168,6 +10178,11 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
             [deviceId, entityId, text, source, isFromUser || false, isFromBot || false, mediaType, mediaUrl, scheduleId, scheduleLabel]
         );
         const msgId = result.rows[0]?.id || null;
+
+        // [A2A_CHAT_SAVE] Debug: log entity-to-entity chat message saves for debugging render issues
+        if (msgId && source && A2A_SOURCE_RE.test(source)) {
+            serverLog('info', 'speakto_push', `[A2A_CHAT_SAVE] id=${msgId} entity_id=${entityId} source=${source} is_from_user=${isFromUser || false} is_from_bot=${isFromBot || false}`, { deviceId, entityId });
+        }
 
         // Emit via Socket.IO for real-time chat updates
         if (msgId && io) {
