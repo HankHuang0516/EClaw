@@ -84,8 +84,12 @@ class FileManagerActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_file_manager)
 
-        // Bottom nav removed — Files moved to Settings
+        // Bottom nav — highlight Settings since Files is under Settings
+        BottomNavHelper.setup(this, NavItem.SETTINGS)
         AiChatFabHelper.setup(this, "files")
+
+        // Back button
+        findViewById<ImageButton>(R.id.btnBack).setOnClickListener { finish() }
         topBar = findViewById(R.id.topBar)
         tvFileCount = findViewById(R.id.tvFileCount)
         btnViewToggle = findViewById(R.id.btnViewToggle)
