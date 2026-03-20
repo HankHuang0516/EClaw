@@ -668,6 +668,133 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         return ctx;
     }
 
+    // ── Customer Service Tool Handlers ────────────
+    // These handlers are passed to chatWithClaude() so Claude can call them via tool_use.
+
+    function buildToolHandlers() {
+        return {
+            async lookup_device({ device_id }) {
+                const device = devices[device_id];
+                if (!device) {
+                    return { found: false, error: 'Device not found or not currently registered' };
+                }
+
+                const entities = [];
+                const ents = device.entities || [];
+                const entArray = Array.isArray(ents) ? ents : Object.values(ents);
+                for (let i = 0; i < entArray.length; i++) {
+                    const e = entArray[i];
+                    if (!e) continue;
+                    entities.push({
+                        slot: i,
+                        type: i % 2 === 0 ? 'LOBSTER' : 'PIG',
+                        bound: e.isBound || false,
+                        name: e.name || null,
+                        hasWebhook: !!e.webhookUrl,
+                        publicCode: e.publicCode || null,
+                        encryptionStatus: e.encryptionStatus || null
+                    });
+                }
+
+                return {
+                    found: true,
+                    deviceId: device_id,
+                    deviceSecret: device.deviceSecret || null,
+                    platform: device.lastPlatform || null,
+                    appVersion: device.appVersion || null,
+                    entityCount: entities.length,
+                    entities
+                };
+            },
+
+            async query_device_logs({ device_id, category, level, hours, limit: maxRows }) {
+                const device = devices[device_id];
+                if (!device) {
+                    return { found: false, error: 'Device not found' };
+                }
+
+                const queryHours = Math.min(hours || 24, 72);
+                const queryLimit = Math.min(maxRows || 30, 100);
+
+                const conditions = ['device_id = $1', `created_at > NOW() - INTERVAL '${queryHours} hours'`];
+                const params = [device_id];
+                let paramIdx = 2;
+
+                if (category) {
+                    conditions.push(`category = $${paramIdx}`);
+                    params.push(category);
+                    paramIdx++;
+                }
+                if (level) {
+                    conditions.push(`level = $${paramIdx}`);
+                    params.push(level);
+                    paramIdx++;
+                }
+
+                try {
+                    const result = await chatPool.query(
+                        `SELECT level, category, message, entity_id, metadata, created_at
+                         FROM server_logs
+                         WHERE ${conditions.join(' AND ')}
+                         ORDER BY created_at DESC LIMIT ${queryLimit}`,
+                        params
+                    );
+
+                    return {
+                        found: true,
+                        deviceId: device_id,
+                        logCount: result.rows.length,
+                        logs: result.rows.map(r => ({
+                            time: new Date(r.created_at).toISOString(),
+                            level: r.level,
+                            category: r.category,
+                            entityId: r.entity_id,
+                            message: r.message,
+                            metadata: r.metadata
+                        }))
+                    };
+                } catch (err) {
+                    return { found: false, error: `Database query failed: ${err.message}` };
+                }
+            },
+
+            async lookup_user_by_email({ email }) {
+                try {
+                    const result = await chatPool.query(
+                        `SELECT id, email, device_id, device_secret, is_admin, created_at
+                         FROM user_accounts
+                         WHERE LOWER(email) = LOWER($1)
+                         LIMIT 1`,
+                        [email]
+                    );
+
+                    if (result.rows.length === 0) {
+                        return { found: false, error: 'No user account found with this email' };
+                    }
+
+                    const user = result.rows[0];
+                    const deviceId = user.device_id;
+                    const device = deviceId ? devices[deviceId] : null;
+
+                    return {
+                        found: true,
+                        userId: user.id,
+                        email: user.email,
+                        isAdmin: user.is_admin || false,
+                        createdAt: user.created_at,
+                        deviceId: deviceId || null,
+                        deviceSecret: user.device_secret || (device ? device.deviceSecret : null),
+                        deviceOnline: !!device
+                    };
+                } catch (err) {
+                    return { found: false, error: `Database query failed: ${err.message}` };
+                }
+            }
+        };
+    }
+
+    const toolHandlers = buildToolHandlers();
+
     // ── Sanitize raw Claude CLI session JSON ─────
     // The proxy sometimes returns raw Claude CLI session output (e.g. {"type":"result","subtype":"error_max_turns",...})
     // instead of clean text. Detect and replace with user-friendly message.
@@ -1078,17 +1205,20 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         if (anthropic) {
             const startTime = Date.now();
             try {
+                const device = req.user.deviceId ? devices[req.user.deviceId] : null;
                 const result = await anthropic.chatWithClaude({
                     message: messageForAI,
                     history: (history || []).slice(-20),
                     images: validImages.length > 0 ? validImages : undefined,
                     deviceContext: {
                         deviceId: req.user.deviceId,
+                        deviceSecret: device ? device.deviceSecret : null,
                         page: page || 'unknown',
                         role: isAdmin ? 'admin' : 'user',
                         email: req.user.email
                     },
-                    deviceDiagnostics: deviceDiag
+                    deviceDiagnostics: deviceDiag,
+                    toolHandlers
                 });
                 const latencyMs = Date.now() - startTime;
 
@@ -1287,12 +1417,19 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         const anthropic = getAnthropicClient();
         if (anthropic) {
             try {
+                // Enrich context with deviceSecret for tool use
+                const device = ctx.deviceId ? devices[ctx.deviceId] : null;
+                if (device && !ctx.deviceSecret) {
+                    ctx.deviceSecret = device.deviceSecret;
+                }
+
                 const result = await anthropic.chatWithClaude({
                     message: row.message,
                     history,
                     images: images.length > 0 ? images : undefined,
                     deviceContext: ctx,
-                    deviceDiagnostics: deviceDiag
+                    deviceDiagnostics: deviceDiag,
+                    toolHandlers
                 });
 
                 const latencyMs = Date.now() - startTime;
@@ -1518,7 +1655,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                 [requestId, req.user.userId, isAdmin, page || null, message.trim(),
                  JSON.stringify((history || []).slice(-20)),
                  validImages.length > 0 ? JSON.stringify(validImages) : null,
-                 JSON.stringify({ deviceId: req.user.deviceId, page, role: isAdmin ? 'admin' : 'user', email: req.user.email })]
+                 JSON.stringify({ deviceId: req.user.deviceId, deviceSecret: req.user.deviceId ? (devices[req.user.deviceId]?.deviceSecret || null) : null, page, role: isAdmin ? 'admin' : 'user', email: req.user.email })]
             );
         } catch (err) {
             console.error('[AI Chat] Submit insert error:', err.message);

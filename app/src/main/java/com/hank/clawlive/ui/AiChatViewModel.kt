@@ -266,11 +266,20 @@ class AiChatViewModel(application: Application) : AndroidViewModel(application) 
             .takeLast(MAX_HISTORY)
             .map { mapOf("role" to it.role, "content" to it.content) }
 
+        // Auto-inject device context on first message so AI customer service knows who the user is
+        var messageForApi = text.ifBlank { "(user attached image(s) — please analyze them)" }
+        if (historyForApi.isEmpty()) {
+            val ctxLines = mutableListOf<String>()
+            ctxLines.add("Device ID: ${deviceManager.deviceId}")
+            ctxLines.add("Device Secret: ${deviceManager.deviceSecret}")
+            messageForApi = "[Auto-injected device context]\n${ctxLines.joinToString("\n")}\n\n$messageForApi"
+        }
+
         val body = mutableMapOf<String, Any>(
             "requestId" to UUID.randomUUID().toString(),
             "deviceId" to deviceManager.deviceId,
             "deviceSecret" to deviceManager.deviceSecret,
-            "message" to text.ifBlank { "(user attached image(s) — please analyze them)" },
+            "message" to messageForApi,
             "history" to historyForApi,
             "page" to "android_app"
         )

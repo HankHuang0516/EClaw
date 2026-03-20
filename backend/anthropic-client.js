@@ -32,6 +32,19 @@ Your behavior:
 - Respond in the same language the user writes in (Chinese or English)
 - Do NOT fabricate API endpoints or features that don't exist
 
+Customer Service Tools:
+You have device lookup tools to help diagnose user issues:
+- lookup_device: Look up device info (entities, platform, version, webhook status) by deviceId. Returns deviceSecret too.
+- query_device_logs: Query recent server logs for a device (with optional category/level filters)
+- lookup_user_by_email: Find a user account and their associated device (deviceId + deviceSecret) by email address
+
+IMPORTANT — Proactive Device Lookup:
+- The current user's device credentials (deviceId + deviceSecret) are included in the session context below.
+- On the FIRST message of a new conversation, ALWAYS call lookup_device with the user's deviceId to get their full device state (entities, webhook status, recent errors).
+- When a user describes a problem, immediately use query_device_logs to check recent errors — don't ask for details you can look up.
+- If a user identifies themselves by email, use lookup_user_by_email to find their device.
+- Always reference the user's deviceId and deviceSecret in your responses when relevant (e.g., for API troubleshooting), so the user can copy-paste them.
+
 GitHub Issue Management (CRITICAL):
 You have TWO GitHub tools: create_github_issue and close_github_issue.
 - create_github_issue: use when a user reports a bug or suggests a feature
@@ -90,6 +103,51 @@ const GITHUB_TOOLS = [
                 comment: { type: 'string', description: 'Optional comment explaining why the issue is being closed' }
             },
             required: ['issue_number']
+        }
+    }
+];
+
+// ── Customer Service Tools ──────────────────
+const CUSTOMER_SERVICE_TOOLS = [
+    {
+        name: 'lookup_device',
+        description: 'Look up device information including entities, platform, app version, and webhook status. Use this to check device state when troubleshooting.',
+        input_schema: {
+            type: 'object',
+            properties: {
+                device_id: { type: 'string', description: 'The device ID to look up' }
+            },
+            required: ['device_id']
+        }
+    },
+    {
+        name: 'query_device_logs',
+        description: 'Query recent server logs for a device. Returns logs filtered by category, level, and time range.',
+        input_schema: {
+            type: 'object',
+            properties: {
+                device_id: { type: 'string', description: 'The device ID to query logs for' },
+                category: {
+                    type: 'string',
+                    description: 'Log category filter: bind, unbind, transform, broadcast, broadcast_push, speakto_push, client_push, push_error',
+                    enum: ['bind', 'unbind', 'transform', 'broadcast', 'broadcast_push', 'speakto_push', 'client_push', 'push_error']
+                },
+                level: { type: 'string', description: 'Log level filter', enum: ['info', 'warn', 'error'] },
+                hours: { type: 'number', description: 'How many hours back to query (default: 24, max: 72)' },
+                limit: { type: 'integer', description: 'Max number of log entries (default: 30, max: 100)' }
+            },
+            required: ['device_id']
+        }
+    },
+    {
+        name: 'lookup_user_by_email',
+        description: 'Find a user account and their associated device by email address. Useful when a user identifies themselves by email.',
+        input_schema: {
+            type: 'object',
+            properties: {
+                email: { type: 'string', description: 'The email address to look up' }
+            },
+            required: ['email']
         }
     }
 ];
@@ -303,14 +361,16 @@ function formatDiagnostics(diag) {
  * @param {Object} [opts.deviceDiagnostics] - Full device diagnostic snapshot from fetchDeviceContext()
  * @returns {Promise<{response: string, actions: Array|null}>}
  */
-async function chatWithClaude({ message, history, images, deviceContext, deviceDiagnostics }) {
+async function chatWithClaude({ message, history, images, deviceContext, deviceDiagnostics, toolHandlers }) {
     // Build context-enriched system prompt
     let system = CHAT_SYSTEM_PROMPT;
     if (deviceContext) {
         const ctx = [];
-        if (deviceContext.deviceId) ctx.push(`Device: ${deviceContext.deviceId}`);
+        if (deviceContext.deviceId) ctx.push(`Device ID: ${deviceContext.deviceId}`);
+        if (deviceContext.deviceSecret) ctx.push(`Device Secret: ${deviceContext.deviceSecret}`);
         if (deviceContext.page) ctx.push(`Page: ${deviceContext.page}`);
         if (deviceContext.role) ctx.push(`User role: ${deviceContext.role}`);
+        if (deviceContext.email) ctx.push(`Email: ${deviceContext.email}`);
         if (ctx.length > 0) {
             system += `\n\nCurrent session context:\n${ctx.join('\n')}`;
         }
@@ -322,13 +382,75 @@ async function chatWithClaude({ message, history, images, deviceContext, deviceD
         system += `\n\nDevice diagnostics snapshot:\n${diagText}`;
     }
 
+    // Combine all tools: GitHub + customer service (when handlers are provided)
+    const allTools = [...GITHUB_TOOLS];
+    if (toolHandlers) {
+        allTools.push(...CUSTOMER_SERVICE_TOOLS);
+    }
+
     // Build messages array
     const messages = convertHistory(history || []);
     const userContent = buildUserContent(message, images);
     messages.push({ role: 'user', content: userContent });
 
-    const result = await callAnthropic(system, messages, GITHUB_TOOLS);
-    return parseResponse(result);
+    // Tool use loop: max 5 rounds to prevent infinite loops
+    const MAX_TOOL_ROUNDS = 5;
+    for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+        const result = await callAnthropic(system, messages, allTools);
+
+        // Check if Claude wants to use tools
+        const toolUseBlocks = (result.content || []).filter(b => b.type === 'tool_use');
+        const csToolUses = toolHandlers
+            ? toolUseBlocks.filter(b => CUSTOMER_SERVICE_TOOLS.some(t => t.name === b.name))
+            : [];
+
+        if (csToolUses.length === 0) {
+            // No customer service tool calls — return final response
+            return parseResponse(result);
+        }
+
+        // Execute customer service tools and feed results back
+        // Add assistant message with all content blocks
+        messages.push({ role: 'assistant', content: result.content });
+
+        // Execute each tool and collect results
+        const toolResults = [];
+        for (const toolUse of csToolUses) {
+            let toolResult;
+            try {
+                const handler = toolHandlers[toolUse.name];
+                if (handler) {
+                    toolResult = await handler(toolUse.input);
+                } else {
+                    toolResult = { error: `Unknown tool: ${toolUse.name}` };
+                }
+            } catch (err) {
+                toolResult = { error: `Tool execution failed: ${err.message}` };
+            }
+            toolResults.push({
+                type: 'tool_result',
+                tool_use_id: toolUse.id,
+                content: typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult)
+            });
+        }
+
+        // Also handle GitHub tool calls as "not executed here" so Claude doesn't hang
+        const ghToolUses = toolUseBlocks.filter(b => GITHUB_TOOLS.some(t => t.name === b.name));
+        for (const ghTool of ghToolUses) {
+            toolResults.push({
+                type: 'tool_result',
+                tool_use_id: ghTool.id,
+                content: JSON.stringify({ status: 'deferred', message: 'GitHub action will be executed after response' })
+            });
+        }
+
+        messages.push({ role: 'user', content: toolResults });
+        console.log(`[Anthropic] Tool use round ${round + 1}: executed ${csToolUses.length} CS tool(s)`);
+    }
+
+    // If we exhausted rounds, return the last response
+    const finalResult = await callAnthropic(system, messages, allTools);
+    return parseResponse(finalResult);
 }
 
 /**
@@ -384,4 +506,4 @@ async function analyzeWithClaude({ problemDescription, errorMessages, logs, hand
     };
 }
 
-module.exports = { chatWithClaude, analyzeWithClaude, formatDiagnostics };
+module.exports = { chatWithClaude, analyzeWithClaude, formatDiagnostics, CUSTOMER_SERVICE_TOOLS };

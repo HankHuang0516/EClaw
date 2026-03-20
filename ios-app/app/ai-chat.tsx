@@ -23,6 +23,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { aiSupportApi } from '../services/api';
+import { useAuthStore } from '../store/authStore';
 
 interface AiMessage {
   id: string;
@@ -37,6 +38,7 @@ export default function AiChatScreen() {
   const theme = useTheme();
   const navigation = useNavigation();
   const flatListRef = useRef<FlatList>(null);
+  const { deviceId, deviceSecret } = useAuthStore();
 
   const [messages, setMessages] = useState<AiMessage[]>([]);
   const [inputText, setInputText] = useState('');
@@ -106,8 +108,16 @@ export default function AiChatScreen() {
     // Build history for API
     const history = messages.map((m) => ({ role: m.role, content: m.content }));
 
+    // Auto-inject device context on first message so AI customer service knows who the user is
+    let messageForApi = text;
+    if (history.length === 0 && deviceId) {
+      const ctxParts = [`Device ID: ${deviceId}`];
+      if (deviceSecret) ctxParts.push(`Device Secret: ${deviceSecret}`);
+      messageForApi = `[Auto-injected device context]\n${ctxParts.join('\n')}\n\n${text}`;
+    }
+
     try {
-      const res = await aiSupportApi.chat(text, history, userMsg.images);
+      const res = await aiSupportApi.chat(messageForApi, history, userMsg.images);
       const reply: AiMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
