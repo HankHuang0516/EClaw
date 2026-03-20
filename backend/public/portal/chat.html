@@ -1183,13 +1183,16 @@
                         for (let i = 0; i < bubbles.length; i++) {
                             const msg = displayMessages[i];
                             const el = bubbles[i];
-                            // Direction
-                            const expClass = msg.is_from_user ? 'sent' : 'received';
+                            // Direction — must account for 'platform' class (non-user, non-bot)
+                            const isPlatform = !msg.is_from_user && !msg.is_from_bot && msg.source === 'platform';
+                            const expClass = msg.is_from_user ? 'sent' : isPlatform ? 'platform' : 'received';
                             if (!el.classList.contains(expClass)) {
+                                const actualClass = el.classList.contains('sent') ? 'sent'
+                                    : el.classList.contains('platform') ? 'platform' : 'received';
                                 _send({ layer: 'display', checkType: 'direction',
                                     description: `Bubble ${i} wrong direction`,
                                     expected: { class: expClass },
-                                    actual: { class: el.classList.contains('sent') ? 'sent' : 'received' },
+                                    actual: { class: actualClass },
                                     affectedIds: msg.id ? [String(msg.id)] : [] });
                                 break;
                             }

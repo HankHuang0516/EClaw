@@ -7500,14 +7500,15 @@ app.post('/api/bot/register', async (req, res) => {
         return res.status(403).json({ success: false, message: "Invalid botSecret" });
     }
 
-    // Discord webhooks don't need token or session_key — the URL itself contains the auth token
+    // Discord/Google Chat webhooks don't need token or session_key — the URL itself contains auth
     const isDiscord = isDiscordWebhook(webhook_url || '');
+    const isGoogleChat = isGoogleChatWebhook(webhook_url || '');
 
-    // Validate required fields (Discord webhooks only need webhook_url)
+    // Validate required fields (Discord/Google Chat webhooks only need webhook_url)
     if (!webhook_url) {
         return res.status(400).json({ success: false, message: "Missing required field: webhook_url" });
     }
-    if (!isDiscord && (!token || !session_key)) {
+    if (!isDiscord && !isGoogleChat && (!token || !session_key)) {
         return res.status(400).json({
             success: false,
             message: "Missing required fields: webhook_url, token, session_key"
@@ -7537,10 +7538,10 @@ app.post('/api/bot/register', async (req, res) => {
         });
     }
 
-    // Reject placeholder/unresolved token values (skip for Discord — no token needed)
+    // Reject placeholder/unresolved token values (skip for Discord/Google Chat — no token needed)
     const tokenStr = (token || '').trim();
     const placeholderPattern = /^\[.*\]$|^\{.*\}$|^\$\{.*\}$|^<.*>$|^__.*__$|^process\.env\.|^your[-_]|^xxx|^test$/i;
-    if (!isDiscord && (placeholderPattern.test(tokenStr) || tokenStr.includes('gateway token') || tokenStr.includes('your-') || tokenStr.includes('TOKEN_HERE') || tokenStr.includes('REDACTED') || tokenStr.includes('PLACEHOLDER'))) {
+    if (!isDiscord && !isGoogleChat && (placeholderPattern.test(tokenStr) || tokenStr.includes('gateway token') || tokenStr.includes('your-') || tokenStr.includes('TOKEN_HERE') || tokenStr.includes('REDACTED') || tokenStr.includes('PLACEHOLDER'))) {
         console.warn(`[Bot Register] Rejected placeholder token: "${tokenStr}"`);
         return res.status(400).json({
             success: false,
@@ -7555,7 +7556,7 @@ app.post('/api/bot/register', async (req, res) => {
     // Clean token: Remove "Bearer " prefix if present (case-insensitive)
     // This prevents "Bearer Bearer xyz" issue when backend adds Bearer prefix during push
     let cleanToken = tokenStr;
-    if (!isDiscord) {
+    if (!isDiscord && !isGoogleChat) {
         if (cleanToken.toLowerCase().startsWith('bearer ')) {
             cleanToken = cleanToken.substring(7).trim(); // Remove "Bearer " (7 chars)
             console.log(`[Bot Register] Cleaned token: removed "Bearer " prefix`);
@@ -7625,6 +7626,64 @@ app.post('/api/bot/register', async (req, res) => {
             webhook_type: 'discord',
             push_mode: 'discord',
             push_status_hint: "Discord webhooks are stateless — no polling needed."
+        });
+    }
+
+    // ── Google Chat webhook: simplified registration (no session key, no OpenClaw handshake) ──
+    if (isGoogleChat) {
+        console.log(`[Bot Register] Google Chat webhook detected: ${finalUrl}`);
+
+        // Handshake: send a test message to Google Chat
+        try {
+            const testResponse = await googleChatPush(finalUrl, `✅ EClaw webhook connected! (Device ${deviceId} Entity ${eId})`);
+
+            if (!testResponse.ok) {
+                const errText = await testResponse.text().catch(() => '');
+                console.error(`[Bot Register] ✗ Google Chat handshake FAILED: HTTP ${testResponse.status}`);
+                serverLog('error', 'handshake', `Google Chat handshake HTTP ${testResponse.status}`, { deviceId, entityId: eId, metadata: { error: errText.substring(0, 300) } });
+                return res.status(400).json({
+                    success: false,
+                    error_type: `google_chat_http_${testResponse.status}`,
+                    message: `Google Chat webhook handshake failed (HTTP ${testResponse.status}). ` +
+                        (testResponse.status === 404 ? 'Webhook URL is invalid or space not found.' :
+                         testResponse.status === 401 || testResponse.status === 403 ? 'Webhook key or token is invalid.' :
+                         testResponse.status === 429 ? 'Google Chat rate limit hit. Try again later.' :
+                         `Google Chat responded: ${errText.substring(0, 200)}`),
+                    debug: { url: finalUrl, httpStatus: testResponse.status }
+                });
+            }
+
+            console.log(`[Bot Register] ✓ Google Chat handshake OK (HTTP ${testResponse.status})`);
+        } catch (err) {
+            console.error(`[Bot Register] ✗ Google Chat handshake error:`, err.message);
+            return res.status(400).json({
+                success: false,
+                error_type: 'google_chat_connection_failed',
+                message: `Cannot reach Google Chat webhook: ${err.message}`
+            });
+        }
+
+        // Store Google Chat webhook
+        entity.webhook = {
+            url: finalUrl,
+            token: null,
+            sessionKey: null,
+            type: 'google-chat',
+            registeredAt: Date.now()
+        };
+        entity.pushStatus = { ok: true, at: Date.now() };
+        serverLog('info', 'bind', `Google Chat webhook registered for Entity ${eId}`, { deviceId, entityId: eId });
+
+        // Persist
+        db.saveEntity(deviceId, eId, entity);
+        io.to(`device:${deviceId}`).emit('entity:update', { deviceId, entityId: eId, name: entity.name, character: entity.character, state: entity.state, message: entity.message });
+
+        return res.json({
+            success: true,
+            message: "Google Chat webhook registered successfully",
+            webhook_type: 'google-chat',
+            push_mode: 'google-chat',
+            push_status_hint: "Google Chat webhooks are stateless — no polling needed."
         });
     }
 
@@ -8266,6 +8325,46 @@ async function discordPush(url, messageContent, discordOptions = {}) {
     return fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(DEFAULT_TIMEOUT)
+    });
+}
+
+/**
+ * Helper: Detect if a webhook URL is a Google Chat webhook.
+ * Google Chat webhooks follow: https://chat.googleapis.com/v1/spaces/{spaceId}/messages?key=...&token=...
+ */
+function isGoogleChatWebhook(url) {
+    try {
+        const u = new URL(url);
+        return u.hostname === 'chat.googleapis.com' &&
+               u.pathname.startsWith('/v1/spaces/');
+    } catch { return false; }
+}
+
+/**
+ * Helper: Push a message to a Google Chat webhook.
+ * Google Chat webhooks accept POST with JSON body.
+ * Supports plain text and cardsV2 rich message format.
+ * Docs: https://developers.google.com/workspace/chat/api/reference/rest/v1/spaces.messages#Message
+ */
+async function googleChatPush(url, messageContent, googleChatOptions = {}) {
+    const body = { text: messageContent };
+
+    // Merge rich message options (cardsV2) if provided
+    if (googleChatOptions.cardsV2 && Array.isArray(googleChatOptions.cardsV2)) {
+        body.cardsV2 = googleChatOptions.cardsV2;
+    }
+
+    // Google Chat has a 4096 char limit for text
+    if (body.text && body.text.length > 4096) {
+        body.text = body.text.substring(0, 4093) + '...';
+    }
+
+    const DEFAULT_TIMEOUT = 15000;
+    return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=UTF-8' },
         body: JSON.stringify(body),
         signal: AbortSignal.timeout(DEFAULT_TIMEOUT)
     });
