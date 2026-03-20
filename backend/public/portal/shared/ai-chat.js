@@ -472,13 +472,27 @@
             localStorage.setItem(PENDING_KEY, JSON.stringify({ requestId, sentAt: Date.now() }));
         } catch (_) {}
 
+        // Auto-inject device context on first message (empty history) so AI knows who the user is
+        let messageForApi = text || '(user attached image(s) \u2014 please analyze them)';
+        const historyForApi = chatHistory.slice(-MAX_HISTORY).map(m => ({
+            role: m.role,
+            content: m.content
+        }));
+        if (historyForApi.length <= 1 && window.currentUser) {
+            const u = window.currentUser;
+            const ctxParts = [];
+            if (u.deviceId) ctxParts.push('Device ID: ' + u.deviceId);
+            if (u.deviceSecret) ctxParts.push('Device Secret: ' + u.deviceSecret);
+            if (u.email) ctxParts.push('Email: ' + u.email);
+            if (ctxParts.length > 0) {
+                messageForApi = '[Auto-injected device context]\n' + ctxParts.join('\n') + '\n\n' + messageForApi;
+            }
+        }
+
         const body = {
             requestId,
-            message: text || '(user attached image(s) \u2014 please analyze them)',
-            history: chatHistory.slice(-MAX_HISTORY).map(m => ({
-                role: m.role,
-                content: m.content
-            })),
+            message: messageForApi,
+            history: historyForApi,
             page: getCurrentPage()
         };
         if (images) {

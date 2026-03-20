@@ -761,7 +761,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
             async lookup_user_by_email({ email }) {
                 try {
                     const result = await chatPool.query(
-                        `SELECT id, email, virtual_device_id, is_admin, created_at
+                        `SELECT id, email, device_id, device_secret, is_admin, created_at
                          FROM user_accounts
                          WHERE LOWER(email) = LOWER($1)
                          LIMIT 1`,
@@ -773,7 +773,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                     }
 
                     const user = result.rows[0];
-                    const deviceId = user.virtual_device_id;
+                    const deviceId = user.device_id;
                     const device = deviceId ? devices[deviceId] : null;
 
                     return {
@@ -783,7 +783,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                         isAdmin: user.is_admin || false,
                         createdAt: user.created_at,
                         deviceId: deviceId || null,
-                        deviceSecret: device ? device.deviceSecret : null,
+                        deviceSecret: user.device_secret || (device ? device.deviceSecret : null),
                         deviceOnline: !!device
                     };
                 } catch (err) {

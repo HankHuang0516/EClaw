@@ -89,6 +89,7 @@ const TEST_FILES = [
     'test-card-holder-redesign.js', // Card Holder Redesign: my-cards, recent, block/unblock, unified search, chat history
     'test-screen-control-auth.js',  // Screen control portal auth: deviceSecret instead of botSecret
     'test-ai-chat-submit-poll.js',  // AI chat submit/poll async pattern (Issue #248)
+    'test-customer-service-api.js', // Customer service AI tools: submit, poll, auth, idempotency
     'test-audit-logging.js',        // Audit logging: GET /api/logs format, category filter
     'test-cross-device-settings.js', // Cross-device settings: CRUD lifecycle, validation, merge
     'test-edit-mode-public-code.js', // Public code: survives entity reorder
