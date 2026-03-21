@@ -1602,23 +1602,41 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
             debug('USER', `email=${email} deviceId=${deviceId}`);
 
             // Helper to delete from a table with debug logging
+            // Uses SAVEPOINT so table-not-found (42P01) doesn't abort the transaction
             const safeDelete = async (table, whereClause, params, label) => {
                 const stepLabel = label || `DELETE ${table}`;
+                const sp = `sp_${table.replace(/[^a-z0-9_]/gi, '_')}`;
                 try {
+                    await client.query(`SAVEPOINT ${sp}`);
                     const r = await client.query(`DELETE FROM ${table} WHERE ${whereClause}`, params);
+                    await client.query(`RELEASE SAVEPOINT ${sp}`);
                     debug(stepLabel, `deleted ${r.rowCount} rows`);
                 } catch (e) {
+                    await client.query(`ROLLBACK TO SAVEPOINT ${sp}`);
+                    if (e.code === '42P01') {
+                        debug(stepLabel, `SKIPPED (table does not exist)`);
+                        return;
+                    }
                     debug(`${stepLabel} ERROR`, `${e.code || 'UNKNOWN'}: ${e.message}`);
                     throw e;
                 }
             };
 
             // Helper to update with debug logging
+            // Uses SAVEPOINT so table-not-found (42P01) doesn't abort the transaction
             const safeUpdate = async (sql, params, label) => {
+                const sp = `sp_upd_${Date.now()}`;
                 try {
+                    await client.query(`SAVEPOINT ${sp}`);
                     const r = await client.query(sql, params);
+                    await client.query(`RELEASE SAVEPOINT ${sp}`);
                     debug(label, `affected ${r.rowCount} rows`);
                 } catch (e) {
+                    await client.query(`ROLLBACK TO SAVEPOINT ${sp}`);
+                    if (e.code === '42P01') {
+                        debug(label, `SKIPPED (table does not exist)`);
+                        return;
+                    }
                     debug(`${label} ERROR`, `${e.code || 'UNKNOWN'}: ${e.message}`);
                     throw e;
                 }
