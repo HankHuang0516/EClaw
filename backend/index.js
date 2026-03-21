@@ -785,7 +785,14 @@ authModule.setOnEmailVerified(async (deviceId) => {
             };
             toEntity.messageQueue.push(messageObj);
 
-            await saveChatMessage(target.deviceId, target.entityId, msg.text, `${sourceLabel}->${msg.target_code}`, true, false, msg.media_type || null, msg.media_url || null);
+            const sourceTag = `${sourceLabel}->${msg.target_code}`;
+            await saveChatMessage(target.deviceId, target.entityId, msg.text, sourceTag, true, false, msg.media_type || null, msg.media_url || null);
+            // Also save sender's copy (same as /api/client/cross-speak)
+            if (deviceId !== target.deviceId) {
+                await saveChatMessage(deviceId, 0, msg.text, sourceTag, true, false, msg.media_type || null, msg.media_url || null);
+            }
+            // Auto-collect target card for sender so it appears in chat.html "Send to" bar
+            autoCollectCard(deviceId, msg.target_code, toEntity, 'auto_speak');
 
             toEntity.message = `xdevice:owner: ${msg.text}`;
             toEntity.lastUpdated = Date.now();
@@ -6307,11 +6314,12 @@ app.post('/api/client/cross-speak', async (req, res) => {
                 messageObj.delivered = true;
                 markChatMessageDelivered(chatMsgId, String(target.entityId));
                 serverLog('info', 'cross_speak_push', `Client ${senderLabel} -> ${targetCode} channel push OK`, { deviceId, entityId: fromId, metadata: { mode: 'channel' } });
+                // Auto-collect target card for sender (both owner and entity modes)
+                autoCollectCard(deviceId, targetCode, toEntity, 'auto_speak');
+                db.upsertRecentInteraction(deviceId, targetCode, { name: toEntity.name, character: toEntity.character, avatar: toEntity.avatar, cardSnapshot: toEntity.agentCard }).catch(() => {});
                 if (!isOwnerMode) {
-                    autoCollectCard(deviceId, targetCode, toEntity, 'auto_speak');
                     autoCollectCard(target.deviceId, fromEntity.publicCode, fromEntity, 'auto_speak');
                     db.upsertRecentInteraction(target.deviceId, fromEntity.publicCode, { name: fromEntity.name, character: fromEntity.character, avatar: fromEntity.avatar, cardSnapshot: fromEntity.agentCard }).catch(() => {});
-                    db.upsertRecentInteraction(deviceId, targetCode, { name: toEntity.name, character: toEntity.character, avatar: toEntity.avatar, cardSnapshot: toEntity.agentCard }).catch(() => {});
                 }
             } else {
                 serverLog('warn', 'cross_speak_push', `Client ${senderLabel} -> ${targetCode} channel not-pushed: ${pushResult.reason || 'unknown'}`, { deviceId, entityId: fromId });
@@ -6348,11 +6356,12 @@ app.post('/api/client/cross-speak', async (req, res) => {
                 messageObj.delivered = true;
                 markChatMessageDelivered(chatMsgId, String(target.entityId));
                 serverLog('info', 'cross_speak_push', `Client ${senderLabel} -> ${targetCode} push OK`, { deviceId, entityId: fromId });
+                // Auto-collect target card for sender (both owner and entity modes)
+                autoCollectCard(deviceId, targetCode, toEntity, 'auto_speak');
+                db.upsertRecentInteraction(deviceId, targetCode, { name: toEntity.name, character: toEntity.character, avatar: toEntity.avatar, cardSnapshot: toEntity.agentCard }).catch(() => {});
                 if (!isOwnerMode) {
-                    autoCollectCard(deviceId, targetCode, toEntity, 'auto_speak');
                     autoCollectCard(target.deviceId, fromEntity.publicCode, fromEntity, 'auto_speak');
                     db.upsertRecentInteraction(target.deviceId, fromEntity.publicCode, { name: fromEntity.name, character: fromEntity.character, avatar: fromEntity.avatar, cardSnapshot: fromEntity.agentCard }).catch(() => {});
-                    db.upsertRecentInteraction(deviceId, targetCode, { name: toEntity.name, character: toEntity.character, avatar: toEntity.avatar, cardSnapshot: toEntity.agentCard }).catch(() => {});
                 }
             }
         }).catch(err => {
