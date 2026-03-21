@@ -556,7 +556,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
     // ============================================
     router.post('/message', async (req, res) => {
         try {
-            const { channel_api_key, deviceId, entityId, botSecret, message, state, mediaType, mediaUrl } = req.body;
+            const { channel_api_key, deviceId, entityId, botSecret, message, state, mediaType, mediaUrl, targetDeviceId } = req.body;
 
             if (process.env.DEBUG === 'true') serverLog('info', 'client_push', `[PUSH] /channel/message called, state=${state}, hasMsg=${!!message}`, { deviceId, entityId: parseInt(entityId) });
 
@@ -618,8 +618,30 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 }
             }
 
-            // [CROSS-DEVICE AUTO-ROUTE] — if pending message was cross-device, save reply to sender device
-            if (hasCrossRoute) {
+            // [CROSS-DEVICE ROUTING] — explicit targetDeviceId OR auto-route from pending cross-device message
+            if (targetDeviceId && message) {
+                // Explicit routing — bot specifies which device to route reply to
+                const targetDev = devices[targetDeviceId];
+                if (targetDev) {
+                    const replySource = `xdevice:${entity.publicCode}:${entity.character}->${targetDeviceId}`;
+                    saveChatMessage(targetDeviceId, 0, message, replySource, false, true);
+                    serverLog('info', 'cross_speak_push', `[EXPLICIT_ROUTE] Channel routed reply to ${targetDeviceId}`, {
+                        deviceId, entityId: eId,
+                        metadata: { targetDeviceId, fromPublicCode: entity.publicCode }
+                    });
+                    if (notifyDevice) {
+                        notifyDevice(targetDeviceId, {
+                            type: 'chat', category: 'cross_speak',
+                            title: `${entity.name || entity.publicCode || `Entity ${eId}`} replied`,
+                            body: (message || '').slice(0, 100),
+                            link: 'chat.html',
+                            metadata: { fromPublicCode: entity.publicCode, entityId: 0 }
+                        }).catch(() => {});
+                    }
+                } else {
+                    serverLog('warn', 'cross_speak_push', `[EXPLICIT_ROUTE] targetDeviceId ${targetDeviceId} not found`, { deviceId, entityId: eId });
+                }
+            } else if (hasCrossRoute) {
                 const replySource = `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`;
                 const senderEntityId = pendingCross.fromEntityId >= 0 ? pendingCross.fromEntityId : 0;
                 saveChatMessage(pendingCross.fromDeviceId, senderEntityId, message, replySource, false, true);
@@ -638,6 +660,10 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                         metadata: { fromPublicCode: entity.publicCode, entityId: senderEntityId }
                     }).catch(() => {});
                 }
+
+                // Consume the cross-device message so it doesn't trigger again
+                const crossIdx = entity.messageQueue.findLastIndex(m => m.crossDevice);
+                if (crossIdx >= 0) entity.messageQueue.splice(crossIdx, 1);
             }
 
             // Emit real-time update via Socket.IO

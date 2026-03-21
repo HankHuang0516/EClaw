@@ -2963,7 +2963,7 @@ app.get('/api/status', (req, res) => {
  * REQUIRES botSecret for authentication!
  */
 app.post('/api/transform', (req, res) => {
-    const { deviceId, entityId, botSecret, name, character, state, message, parts } = req.body;
+    const { deviceId, entityId, botSecret, name, character, state, message, parts, targetDeviceId } = req.body;
 
     if (!deviceId) {
         return res.status(400).json({ success: false, message: "deviceId required" });
@@ -3055,25 +3055,52 @@ app.post('/api/transform', (req, res) => {
             });
         }
 
-        // [CROSS-DEVICE AUTO-ROUTE] — if pending message was cross-device, save reply to sender device
-        const pendingCross = entity.messageQueue && entity.messageQueue.findLast(m => m.crossDevice);
-        if (pendingCross && pendingCross.fromDeviceId) {
-            const replySource = `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`;
-            const senderEntityId = pendingCross.fromEntityId >= 0 ? pendingCross.fromEntityId : 0;
-            saveChatMessage(pendingCross.fromDeviceId, senderEntityId, finalMessage, replySource, false, true);
-            serverLog('info', 'cross_speak_push', `[CROSS_ROUTE] Transform auto-routed reply to sender ${pendingCross.fromDeviceId}:${senderEntityId}`, {
-                deviceId, entityId: eId,
-                metadata: { senderDeviceId: pendingCross.fromDeviceId, senderEntityId, fromPublicCode: pendingCross.fromPublicCode }
-            });
+        // [CROSS-DEVICE ROUTING] — explicit targetDeviceId OR auto-route from pending cross-device message
+        if (targetDeviceId) {
+            // Explicit routing — bot specifies which device to route reply to
+            const targetDev = devices[targetDeviceId];
+            if (targetDev) {
+                const replySource = `xdevice:${entity.publicCode}:${entity.character}->${targetDeviceId}`;
+                saveChatMessage(targetDeviceId, 0, finalMessage, replySource, false, true);
+                serverLog('info', 'cross_speak_push', `[EXPLICIT_ROUTE] Transform routed reply to ${targetDeviceId}`, {
+                    deviceId, entityId: eId,
+                    metadata: { targetDeviceId, fromPublicCode: entity.publicCode }
+                });
+                notifyDevice(targetDeviceId, {
+                    type: 'chat', category: 'cross_speak',
+                    title: `${entity.name || entity.publicCode || `Entity ${eId}`} replied`,
+                    body: (finalMessage || '').slice(0, 100),
+                    link: 'chat.html',
+                    metadata: { fromPublicCode: entity.publicCode, entityId: 0 }
+                }).catch(() => {});
+            } else {
+                serverLog('warn', 'cross_speak_push', `[EXPLICIT_ROUTE] targetDeviceId ${targetDeviceId} not found`, { deviceId, entityId: eId });
+            }
+        } else {
+            // Auto-route — find pending cross-device message and consume it
+            const pendingCross = entity.messageQueue && entity.messageQueue.findLast(m => m.crossDevice);
+            if (pendingCross && pendingCross.fromDeviceId) {
+                const replySource = `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`;
+                const senderEntityId = pendingCross.fromEntityId >= 0 ? pendingCross.fromEntityId : 0;
+                saveChatMessage(pendingCross.fromDeviceId, senderEntityId, finalMessage, replySource, false, true);
+                serverLog('info', 'cross_speak_push', `[CROSS_ROUTE] Transform auto-routed reply to sender ${pendingCross.fromDeviceId}:${senderEntityId}`, {
+                    deviceId, entityId: eId,
+                    metadata: { senderDeviceId: pendingCross.fromDeviceId, senderEntityId, fromPublicCode: pendingCross.fromPublicCode }
+                });
 
-            // Notify sender device about the reply
-            notifyDevice(pendingCross.fromDeviceId, {
-                type: 'chat', category: 'cross_speak',
-                title: `${entity.name || entity.publicCode || `Entity ${eId}`} replied`,
-                body: (finalMessage || '').slice(0, 100),
-                link: 'chat.html',
-                metadata: { fromPublicCode: entity.publicCode, entityId: senderEntityId }
-            }).catch(() => {});
+                // Notify sender device about the reply
+                notifyDevice(pendingCross.fromDeviceId, {
+                    type: 'chat', category: 'cross_speak',
+                    title: `${entity.name || entity.publicCode || `Entity ${eId}`} replied`,
+                    body: (finalMessage || '').slice(0, 100),
+                    link: 'chat.html',
+                    metadata: { fromPublicCode: entity.publicCode, entityId: senderEntityId }
+                }).catch(() => {});
+
+                // Consume the cross-device message so it doesn't trigger again
+                const crossIdx = entity.messageQueue.findLastIndex(m => m.crossDevice);
+                if (crossIdx >= 0) entity.messageQueue.splice(crossIdx, 1);
+            }
         }
 
         // XP: Award +10 for correctly replying to a user message
@@ -5324,6 +5351,7 @@ app.post('/api/entity/cross-speak', async (req, res) => {
             fromEntityId: fromId,
             fromPublicCode: fromEntity.publicCode,
             fromCharacter: fromEntity.character,
+            fromDeviceId: deviceId,
             eclaw_context: {
                 csRemaining: getCrossSpeakRemaining(target.deviceId, target.entityId),
                 csMax: CROSS_SPEAK_MAX_MESSAGES,

@@ -89,6 +89,84 @@ describe('POST /api/transform — cross-device auto-route', () => {
         expect(res.body.success).toBe(true);
     });
 
+    it('consumes cross-device message after auto-routing (no repeat forwarding)', async () => {
+        const { devices } = require('../../index');
+        const targetEntity = devices[targetDeviceId].entities[0];
+        targetEntity.messageQueue = [];
+        targetEntity.messageQueue.push({
+            text: 'cross msg',
+            from: 'xdevice:SENDER_CODE:🐢',
+            fromEntityId: 0,
+            fromPublicCode: 'SENDER_CODE',
+            fromDeviceId: senderDeviceId,
+            timestamp: Date.now(),
+            read: false,
+            crossDevice: true
+        });
+
+        // First reply — should auto-route and consume
+        const res1 = await post('/api/transform').send({
+            deviceId: targetDeviceId, entityId: 0, botSecret: targetBotSecret,
+            state: 'IDLE', message: 'first reply'
+        });
+        expect(res1.status).toBe(200);
+
+        // Cross-device message should be consumed from queue
+        const crossRemaining = targetEntity.messageQueue.filter(m => m.crossDevice);
+        expect(crossRemaining.length).toBe(0);
+
+        // Second reply — should NOT trigger auto-route (no cross-device message left)
+        const res2 = await post('/api/transform').send({
+            deviceId: targetDeviceId, entityId: 0, botSecret: targetBotSecret,
+            state: 'IDLE', message: 'second reply (local only)'
+        });
+        expect(res2.status).toBe(200);
+    });
+
+    it('routes to explicit targetDeviceId when provided', async () => {
+        const { devices } = require('../../index');
+        const targetEntity = devices[targetDeviceId].entities[0];
+        targetEntity.messageQueue = [];
+
+        // Inject a cross-device message from senderDevice
+        targetEntity.messageQueue.push({
+            text: 'cross msg',
+            from: 'xdevice:SENDER_CODE:🐢',
+            fromEntityId: 0,
+            fromPublicCode: 'SENDER_CODE',
+            fromDeviceId: senderDeviceId,
+            timestamp: Date.now(),
+            read: false,
+            crossDevice: true
+        });
+
+        // Reply with explicit targetDeviceId — should use explicit route, NOT auto-route
+        const res = await post('/api/transform').send({
+            deviceId: targetDeviceId, entityId: 0, botSecret: targetBotSecret,
+            state: 'IDLE', message: 'explicit route reply',
+            targetDeviceId: senderDeviceId
+        });
+        expect(res.status).toBe(200);
+
+        // Cross-device message should NOT be consumed (explicit routing is independent)
+        const crossRemaining = targetEntity.messageQueue.filter(m => m.crossDevice);
+        expect(crossRemaining.length).toBe(1);
+    });
+
+    it('ignores targetDeviceId when device does not exist', async () => {
+        const { devices } = require('../../index');
+        const targetEntity = devices[targetDeviceId].entities[0];
+        targetEntity.messageQueue = [];
+
+        const res = await post('/api/transform').send({
+            deviceId: targetDeviceId, entityId: 0, botSecret: targetBotSecret,
+            state: 'IDLE', message: 'route to nonexistent',
+            targetDeviceId: 'nonexistent-device-999'
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+
     it('does not crash when messageQueue has no crossDevice message', async () => {
         const { devices } = require('../../index');
         const targetEntity = devices[targetDeviceId].entities[0];
@@ -134,7 +212,7 @@ describe('POST /api/transform — cross-device auto-route', () => {
         expect(res.body.success).toBe(true);
     });
 
-    it('picks the latest crossDevice message when multiple are queued', async () => {
+    it('picks and consumes only the latest crossDevice message when multiple are queued', async () => {
         const { devices } = require('../../index');
         const targetEntity = devices[targetDeviceId].entities[0];
         targetEntity.messageQueue = [
@@ -168,6 +246,11 @@ describe('POST /api/transform — cross-device auto-route', () => {
 
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
+
+        // Only the latest (SENDER_CODE) should be consumed; OLD_CODE remains
+        const crossRemaining = targetEntity.messageQueue.filter(m => m.crossDevice);
+        expect(crossRemaining.length).toBe(1);
+        expect(crossRemaining[0].fromPublicCode).toBe('OLD_CODE');
     });
 
     it('does not route when transform has no message (state-only update)', async () => {
