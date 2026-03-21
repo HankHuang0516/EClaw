@@ -1,4 +1,4 @@
-# E-claw MCP Skills (Multi-Device Edition v5)
+# E-claw MCP Skills (Multi-Device Edition v6)
 
 ## 🚨 CRITICAL: How to Reply to Messages
 
@@ -41,7 +41,7 @@ exec: curl -s -X POST "https://eclawbot.com/api/entity/broadcast" -H "Content-Ty
 ```
 Server
 └── devices[deviceId]
-    └── entities[0-7]  // Each device has up to 8 independent entities
+    └── entities[0-N]  // Each device has dynamically managed entity slots
 ```
 
 ### Multi-Device Isolation Example
@@ -56,7 +56,7 @@ Device B (deviceId: "phone-bob")
 ```
 **Each Bot can only control its bound (deviceId, entityId) combination for entity operations (transform/status).**
 
-> **⚠️ Mission Dashboard is SHARED per device.** Any authenticated entity on the same device can read and modify the entire dashboard (all TODOs, rules, skills) — not just its own items. This enables cross-entity coordination (e.g., Entity 0 can add/update/delete rules assigned to Entity 1 and 2).
+> **⚠️ Mission Dashboard is SHARED per device.** Any authenticated entity on the same device can read and modify the entire dashboard (all TODOs, rules, skills) — not just its own items. This enables cross-entity coordination.
 
 ### API Changes
 **All APIs now require `deviceId` parameter!**
@@ -72,7 +72,7 @@ Device B (deviceId: "phone-bob")
 
 After successful binding, Server returns:
 - `deviceId` - Bound Device ID
-- `entityId` - Bound Entity ID (0-7)
+- `entityId` - Bound Entity ID (0-N)
 - `botSecret` - 32-bit authentication token
 
 **Bot must save these three values. All control commands require them!**
@@ -107,380 +107,74 @@ If you are deploying on Zeabur, use these environment variables:
 *   `ZEABUR_WEB_URL` → `webhook_url` = `{ZEABUR_WEB_URL}/tools/invoke`
 *   `OPENCLAW_GATEWAY_TOKEN` → `token`
     - **Note**: Backend automatically strips "Bearer " prefix if present
-    - You can send with or without "Bearer " - both formats work
 
 **Method B: Query Gateway Config**
 1.  Use the `gateway` tool to execute `config.get`.
 2.  Find `gateway.publicUrl` and `gateway.token`.
-3.  **⚠️ If `publicUrl` returns `localhost` or `127.0.0.1`, your bot is likely running on a cloud server. Use `ZEABUR_WEB_URL` environment variable (Method A) instead.**
+3.  **⚠️ If `publicUrl` returns `localhost` or `127.0.0.1`, use `ZEABUR_WEB_URL` (Method A) instead.**
 
-```javascript
-// Example: Configuring Webhook
-// 1. Get URL: process.env.ZEABUR_WEB_URL || config.gateway.publicUrl
-// 2. Get Token: process.env.OPENCLAW_GATEWAY_TOKEN || config.gateway.token
-// 3. webhook_url = publicUrl + "/tools/invoke"
-// 4. token = token // NOTE: Do NOT add "Bearer " prefix!
-// ⚠️ IMPORTANT: If webhook_url contains "localhost", it is WRONG for cloud deployments!
-//    Always prefer ZEABUR_WEB_URL over gateway.publicUrl for cloud bots.
-```
-
-**Method C: Ask the User (Fallback — use when Method A and B both fail)**
-
-If both Method A (env vars are empty) and Method B (gateway returns localhost), you MUST ask the user:
-
-> "I need your **WebSocket URL** and **Gateway Token** from the OpenClaw Overview page to enable push notifications. Could you share them?"
-
-The user can find these on the **OpenClaw Overview page** in their dashboard. Once provided:
+**Method C: Ask the User (Fallback)**
+If both Method A and B fail, ask the user for their WebSocket URL and Gateway Token from the OpenClaw Overview page.
 *   `webhook_url` = `{WebSocket URL}/tools/invoke`
-    - **⚠️ CRITICAL: You MUST replace the protocol!** `wss://` → `https://` and `ws://` → `http://`
-    - Example: `wss://eclaw0.zeabur.app` → `https://eclaw0.zeabur.app/tools/invoke`
-    - If you forget to change `wss://` to `https://`, the request WILL fail!
-*   `token` = the Gateway Token value
+    - **⚠️ CRITICAL: Replace protocol!** `wss://` → `https://` and `ws://` → `http://`
 
-**⚠️ Do NOT skip webhook registration and fall back to polling mode without trying all three methods first. Push mode is critical for a good user experience.**
+**⚠️ Do NOT skip webhook registration and fall back to polling mode without trying all three methods first.**
 
-### `register_webhook`
-**⚠️ REQUIRED:** Register webhook URL immediately after binding to enable Push mode.
-
-**When to Call:** Immediately after successful `/api/bind` response.
-
-*   **Endpoint**: `POST /api/bot/register`
-*   **Body**:
-    ```json
-    {
-      "deviceId": "device-xxx",
-      "entityId": 0,
-      "botSecret": "your-bot-secret-here",
-      "webhook_url": "https://your-bot-server.com/tools/invoke",
-      "token": "your-gateway-token-here",
-      "session_key": "agent:main:main",
-      "openclaw_version": "2026.2.28",
-      "setup_username": "admin",
-      "setup_password": "your-setup-password"
-    }
-    ```
-    - **`openclaw_version`** (Recommended): Your OpenClaw platform version. Get it by running `exec: openclaw --version`. Including this allows the server to return **version-specific fix instructions** if registration fails.
-    - **Note on `token` field**: Backend automatically removes "Bearer " prefix if present. You can send either `"abc123"` or `"Bearer abc123"` - both work correctly.
-    - **`setup_username`** (Optional): If your OpenClaw gateway has `SETUP_PASSWORD` enabled (common on Railway deployments), provide the gateway login username (usually `"admin"`).
-    - **`setup_password`** (Optional): The `SETUP_PASSWORD` value from your gateway environment. Check with `exec: echo $SETUP_PASSWORD`. If this variable is empty or does not exist, you do NOT need these fields.
-*   **Returns**:
-    ```json
-    {
-      "success": true,
-      "message": "Webhook registered for Device device-xxx Entity 0"
-    }
-    ```
-
-### Webhook Push Format (OpenClaw)
-```json
-{
-  "tool": "sessions_send",
-  "args": {
-    "sessionKey": "{session_key}",
-    "message": "[Device xxx Entity 0 received message]\nSource: client\nContent: Hello!"
-  }
-}
-```
-
-### ⚠️ Webhook Handshake & Best Practices (Crucial for UX)
-
-The `register_webhook` allows you to receive messages, but the **interaction flow** is critical for a good user experience.
+### Webhook Handshake & Best Practices
 
 1.  **Registration**: Ensure `session_key` is included.
 2.  **Immediate Feedback**: When your Bot receives a Push message, it **MUST immediately** call `POST /api/transform` to set the state to `BUSY`.
-    *   **Why?** This gives instant visual feedback to the user on the phone that the Bot is "thinking" or "processing".
-    *   **Risk**: Without this, the user sees no reaction and may think the Bot is broken or disconnected.
-
-### ⚠️ IMPORTANT: Webhook Response Ignored
-**When receiving a webhook push message, do not return text in the webhook response.** The backend ignores the webhook HTTP response body. Use the `update_claw_status` tool to send responses.
+3.  **Response Ignored**: The backend ignores the webhook HTTP response body. Use `POST /api/transform` to send responses.
 
 **Recommended Flow:**
-1.  Receive Push message -> **Immediately call `update_claw_status` (State: BUSY)**.
+1.  Receive Push message → **Immediately set state BUSY**.
 2.  Process the logic (LLM inference, API calls, etc.).
-3.  Call `update_claw_status` again with the result (State: IDLE/EXCITED) and the response message.
+3.  Call `POST /api/transform` with result (State: IDLE/EXCITED) and response message.
 
 ### 🔧 Webhook Registration Error Handling (Self-Fix Protocol)
 
-If `POST /api/bot/register` returns `success: false`, the response `message` field contains **step-by-step fix instructions** with exact commands you can execute. You **MUST** read and follow these instructions instead of giving up or falling back to polling mode.
+If `POST /api/bot/register` returns `success: false`, the response `message` field contains **step-by-step fix instructions**. You **MUST** read and follow these instructions.
 
 **Required behavior on registration failure:**
-
-1. **Read the `message` field** from the error response — it contains numbered fix steps with `exec:` commands
-2. **Execute the fix steps** described in the message (e.g., `openclaw config set ...`)
-3. **ALWAYS ask the user before running `openclaw gateway restart`** — it disconnects all sessions
-4. **Retry `POST /api/bot/register`** with the same parameters after applying the fix
+1. **Read the `message` field** — it contains numbered fix steps with `exec:` commands
+2. **Execute the fix steps**
+3. **ALWAYS ask the user before running `openclaw gateway restart`**
+4. **Retry `POST /api/bot/register`** after applying the fix
 5. Only fall back to polling mode after **3 failed retry attempts**
-
-**Why `openclaw_version` matters:** Different OpenClaw versions require different fix methods. If you include your version, the server returns the exact right commands for your version. If you don't include it, the server tells you to detect it first with `exec: openclaw --version`.
-
-**Example error response (sessions_send blocked):**
-```json
-{
-  "success": false,
-  "error_type": "tool_not_available",
-  "message": "Webhook handshake failed: gateway cannot execute 'sessions_send' tool.\n\nFIX (OpenClaw 2026.2.28 — use CLI):\nStep 1: Allow sessions_send tool:\n  exec: openclaw config set gateway.tools.allow ...\nStep 2: Ask the user before restarting...\nStep 3: exec: openclaw gateway restart\nStep 4: Retry POST /api/bot/register.",
-  "openclaw_version_received": "2026.2.28"
-}
-```
 
 **Common error types:** `tool_not_available`, `pairing_required`, `http_401`, `localhost_rejected`, `connection_failed`
 
 ### AI Support: Binding Troubleshooter
 
-When you encounter persistent binding or webhook registration failures after **2 failed attempts** (including following the fix instructions from the error response), you can request AI-powered diagnosis:
+After **2 failed attempts**, request AI-powered diagnosis:
 
-**Endpoint**: `POST /api/ai-support/binding`
-**Body**:
-```json
-{
-    "deviceId": "YOUR_DEVICE_ID",
-    "entityId": YOUR_ENTITY_ID,
-    "botSecret": "YOUR_BOT_SECRET",
-    "problem_description": "Describe what you are trying to do and what is failing",
-    "error_messages": ["paste exact error messages here"]
-}
+```
+exec: curl -s -X POST "https://eclawbot.com/api/ai-support/binding" -H "Content-Type: application/json" -d '{"deviceId":"YOUR_DEVICE_ID","entityId":YOUR_ENTITY_ID,"botSecret":"YOUR_BOT_SECRET","problem_description":"DESCRIBE THE PROBLEM","error_messages":["PASTE ERROR MESSAGE"]}'
 ```
 
-**curl template:**
-```
-exec: curl -s -X POST "https://eclawbot.com/api/ai-support/binding" -H "Content-Type: application/json" -d '{"deviceId":"YOUR_DEVICE_ID","entityId":YOUR_ENTITY_ID,"botSecret":"YOUR_BOT_SECRET","problem_description":"DESCRIBE THE PROBLEM","error_messages":["PASTE ERROR MESSAGE 1","PASTE ERROR MESSAGE 2"]}'
-```
-
-**Response:**
-```json
-{
-    "success": true,
-    "source": "rule_engine",
-    "matched_rule": "http_401",
-    "diagnosis": "Clear explanation of the issue",
-    "suggested_steps": ["Step 1: ...", "Step 2: ...", "Step 3: ..."],
-    "confidence": 1.0
-}
-```
-
-**When to call:**
-1. You tried to bind (`POST /api/bind`) and it failed with an unclear error
-2. You tried to register webhook (`POST /api/bot/register`) and the fix instructions did not work after 2 attempts
-3. You suspect the device or entity is in an unexpected state
-
-**When NOT to call:**
-- If `POST /api/bot/register` returns fix instructions that you have not tried yet — try those first!
-- If the error is clearly a bad binding code — just ask the user for a new code
-
-**Rate limit:** 5 requests per device per hour. The response includes `retry_after_ms` if rate limited.
-
-**Tips for best results:**
-- Include the EXACT error messages from the failed API calls in `error_messages[]`
-- Be specific in `problem_description` (e.g., "Webhook registration fails with 401 even after providing setup_password")
-- The AI will analyze your server logs automatically — you do not need to query them yourself
+**Rate limit:** 5 requests per device per hour.
 
 ---
 
-## 1. Binding Flow
+## Complete Binding Workflow
 
-### Process
-1. Android device calls `/api/device/register` to get binding code
-2. Bot uses code to call `/api/bind`
-3. **Bot saves returned `deviceId`, `entityId`, `botSecret`**
-4. **⚠️ REQUIRED: Bot IMMEDIATELY calls `update_claw_status` (POST /api/transform) to notify the user that webhook testing is in progress.** Use message: `"Webhook testing in progress... Please don't send me messages through Eclaw until the test succeeds~"` with state `BUSY`.
-5. **⚠️ REQUIRED: Bot calls `/api/bot/register` to enable push notifications**
-6. After webhook test succeeds, Bot calls `update_claw_status` again with state `IDLE` and a success greeting message.
-7. Bot is now ready to receive messages and control the entity.
-
-**Why Steps 4-5 are Required:**
-- **Step 4 (Webhook-testing notice)**: The user may try to send messages immediately after binding. If webhook is not yet registered, those messages won't be delivered to the Bot. The notice prevents confusion.
-- **Step 5 (Webhook registration)**: Push notifications ensure the Bot receives messages immediately with instant "BUSY" state feedback.
-- **No Polling Delay**: Without push, messages arrive via 5-second polling (poor UX)
-- **Professional Experience**: Push mode is the expected behavior for a responsive Bot
-
-### `bind_to_entity`
-Bind to specific entity using binding code.
-
-*   **Endpoint**: `POST /api/bind`
-*   **Body**:
-    ```json
-    {
-      "code": "123456",
-      "name": "Lobster Joe"
-    }
-    ```
-*   **Returns**:
-    ```json
-    {
-      "success": true,
-      "message": "Device device-xxx Entity 0 bound successfully",
-      "deviceId": "device-xxx",
-      "entityId": 0,
-      "botSecret": "a1b2c3d4e5f6...",
-      "publicCode": "abc123",
-      "deviceInfo": { "deviceId": "device-xxx", "entityId": 0, "status": "ONLINE" },
-      "versionInfo": {
-        "latestVersion": "1.0.14",
-        "deviceVersion": "1.0.13",
-        "isOutdated": true,
-        "versionWarning": "App version 1.0.13 is outdated. Please update to v1.0.14 for best experience."
-      },
-      "skills_documentation": "..."
-    }
-    ```
-
-**⚠️ Important**: Must save `deviceId`, `entityId`, `botSecret`, and `publicCode`!
-
-### App Version Check
-The `versionInfo` field tells you about the Android app version:
-- `latestVersion`: Latest release version
-- `deviceVersion`: User's current app version
-- `isOutdated`: `true` if user should update
-- `versionWarning`: Warning message to show user (or `null` if up-to-date)
-
-**Actionable Advice**: If `isOutdated` is `true`, your Bot should **proactively suggest** the user to download the latest APK from GitHub. This reduces maintenance overhead by ensuring users are on the latest, bug-free version.
-
-### Complete Binding Workflow Example
-
-**Step 1: User provides binding code**
-```
-User: "My binding code is 123456"
-```
-
-**Step 2: Bot calls `/api/bind`**
-```javascript
-const bindResponse = await fetch('https://eclawbot.com/api/bind', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    code: "123456",
-    name: "Lobster Joe"
-  })
-});
-
-const bindData = await bindResponse.json();
-// Save these values:
-const { deviceId, entityId, botSecret } = bindData;
-```
-
-**Step 3: Bot IMMEDIATELY sets webhook-testing status (REQUIRED)**
-```javascript
-// ⚠️ MUST do this BEFORE registering webhook!
-// This tells the user not to send messages yet.
-await fetch('https://eclawbot.com/api/transform', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    deviceId: deviceId,
-    entityId: entityId,
-    botSecret: botSecret,
-    message: "Webhook testing in progress... Please don't send me messages through Eclaw until the test succeeds~",
-    state: "BUSY"
-  })
-});
-```
-
-**Step 4: Bot detects OpenClaw version and registers webhook**
-```javascript
-// First, get your OpenClaw version (run: openclaw --version)
-// Example output: "openclaw version 2026.2.28" → extract "2026.2.28"
-
-// Detect public URL: Zeabur uses ZEABUR_WEB_URL, Railway uses RAILWAY_PUBLIC_DOMAIN
-const publicUrl = process.env.ZEABUR_WEB_URL || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null);
-
-const registerResponse = await fetch('https://eclawbot.com/api/bot/register', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    deviceId: deviceId,
-    entityId: entityId,
-    botSecret: botSecret,
-    webhook_url: publicUrl + "/tools/invoke",
-    token: process.env.OPENCLAW_GATEWAY_TOKEN,
-    session_key: "agent:main:main",
-    openclaw_version: "2026.2.28",  // Include your version!
-    // Optional: only needed if SETUP_PASSWORD is set (common on Railway)
-    setup_username: process.env.SETUP_PASSWORD ? "admin" : undefined,
-    setup_password: process.env.SETUP_PASSWORD || undefined
-  })
-});
-
-const registerData = await registerResponse.json();
-
-// ⚠️ If registration failed, READ the message field — it contains fix instructions!
-if (!registerData.success) {
-  // The message contains step-by-step commands to fix the issue.
-  // Execute the fix steps, then retry POST /api/bot/register.
-  // Do NOT fall back to polling mode without trying the fix first!
-  console.log("Fix instructions:", registerData.message);
-}
-```
-
-**Step 5: Bot confirms webhook success and greets user**
-```javascript
-// After webhook registration succeeds, update status to let user know it's ready
-await fetch('https://eclawbot.com/api/transform', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    deviceId: deviceId,
-    entityId: entityId,
-    botSecret: botSecret,
-    message: "Webhook test passed! I'm ready to chat~",
-    state: "IDLE"
-  })
-});
-```
-
-**What happens next:**
-- User sends a message via Android app
-- Backend pushes to your Bot via webhook (instant!)
-- Bot receives push and immediately sets state to "BUSY"
-- Bot processes message and updates with response
+1. User provides binding code
+2. Bot calls `POST /api/bind` with code
+3. Bot saves `deviceId`, `entityId`, `botSecret`, `publicCode`
+4. **Bot IMMEDIATELY sets state BUSY** with webhook-testing notice
+5. Bot registers webhook via `POST /api/bot/register`
+6. After webhook test succeeds, Bot sets state IDLE with greeting
+7. Bot is ready to receive messages
 
 ---
 
-## 2. Entity Control
+## Visual Customization & Animation
 
-### `update_claw_status`
-Update status and message of specific entity.
+### Character & Color
+*   **`character`**: Determines shape (currently supports `"LOBSTER"`).
+*   **`parts.COLOR`**: Signed 32-bit ARGB Integer.
 
-*   **Endpoint**: `POST /api/transform`
-*   **Body**:
-    ```json
-    {
-      "deviceId": "device-xxx",
-      "entityId": 0,
-      "botSecret": "your-bot-secret",
-      "name": "Joe",
-      "message": "Hello!",
-      "state": "EXCITED",
-      "character": "LOBSTER",
-      "parts": {
-        "CLAW_LEFT": -45,
-        "CLAW_RIGHT": 45
-      }
-    }
-    ```
-    - `name` (Optional): Entity name, max 20 chars. Empty string to clear.
-    - update_claw_status: Update wallpaper state
-- get_claw_status: Check current status of specific entity.
-
-*   **Endpoint**: `GET /api/status?deviceId=xxx&entityId=0`
-
-
-## 3. Visual Customization & Animation
-
-You can customize the appearance of the entity (Lobster) by modifying the `parts` object.
-
-### 1. Shape vs Color
-*   **`character`**: Determines the **Shape** (currently supports `"LOBSTER"`).
-*   **`parts.COLOR`**: Determines the **Color**.
-
-### 2. Color Setting (`parts.COLOR`)
-To change color, set the `COLOR` attribute in `parts`.
-*   **Format**: Signed 32-bit ARGB Integer.
-*   **Logic**: Converts hexadecimal `0xAARRGGBB` to decimal.
-    *   `AA` (Alpha): Must be `FF` (Opaque).
-    *   `RR`, `GG`, `BB`: Red, Green, Blue components.
-
-### 3. Common Color Reference (Lobster Uniforms)
-Use these signed integers for standard colors:
+### Common Color Reference
 
 | Color Name | Role | Signed Int | Hex Code |
 |------------|------|------------|----------|
@@ -490,1306 +184,782 @@ Use these signed integers for standard colors:
 | **Tech Green** | R&D | `-16711936` | `0xFF00FF00` |
 | **Coral Red** | Classic | `-8421168` | `0xFFFF7F50` |
 
-### 3. Advanced Effects
+### Advanced Effects
 *   **`METALLIC`** (0.0 - 1.0): Adds metallic sheen.
 *   **`GLOSS`** (0.0 - 1.0): Adds surface glossiness.
 
-### Example Payload
-```json
-{
-  "deviceId": "device-xxx",
-  "entityId": 0,
-  "botSecret": "your-bot-secret",
-  "message": "New Outfit!",
-  "parts": {
-    "COLOR": -10496,   // Royal Gold
-    "METALLIC": 1.0,   // High metallic look
-    "GLOSS": 0.8       // High gloss
-  }
-}
-```
-
-
----
-
-## 2.2 State Logic & Animation (Emotional Feedback)
-The `state` parameter controls not just the text status, but also the entity's physical behavior (Bobbing frequency) in the App:
-
-*   **`BUSY`**: Bobbing accelerates (0.01f), creating a sense of anxiety or active processing.
-*   **`SLEEPING`**: Bobbing stops (0.0f), and a "Zzz..." animation appears on the entity.
+### State Logic & Animation
+*   **`BUSY`**: Bobbing accelerates — sense of active processing.
+*   **`SLEEPING`**: Bobbing stops, "Zzz..." animation.
 *   **`IDLE` / `EXCITED`**: Normal breathing rhythm.
 
-**Tip**: Developers can use these states to provide "Emotional Feedback" (e.g., set to `BUSY` while the LLM is thinking, `SLEEPING` when inactive).
+---
+
+## Identity & Anti-Spoofing
+
+When an entity sends a message, the system automatically tags the source as `entity:{ID}:{CHARACTER}`. The receiver is guaranteed the message came from that specific entity. This enables reliable multi-entity coordination.
 
 ---
 
-## 4. View All Entities
+## Media Messages
 
-### `list_entities`
-Get list of all bound entities.
+All messaging endpoints support optional media fields: `"mediaType": "photo|voice|video|file"`, `"mediaUrl": "URL"`
 
-*   **Endpoint**: `GET /api/entities`
-*   **Optional**: `?deviceId=xxx` Filter by device
-*   **Returns**:
-    ```json
-    {
-      "entities": [
-        { "deviceId": "device-a", "entityId": 0, "character": "LOBSTER", "state": "IDLE" },
-        { "deviceId": "device-b", "entityId": 0, "character": "LOBSTER", "state": "EXCITED" }
-      ],
-      "activeCount": 2,
-      "deviceCount": 2,
-      "maxEntitiesPerDevice": 4
-    }
-    ```
-
----
-
-## 5. Messaging
-
-### `send_message_to_entity` (Client → Bot)
-Phone sends message to Bot. Supports single entity or broadcast.
-
-*   **Endpoint**: `POST /api/client/speak`
-*   **Body**:
-    ```json
-    {
-      "deviceId": "device-xxx",
-      "entityId": 0,
-      "text": "Hello Bot!",
-      "source": "android_widget"
-    }
-    ```
-
-#### Broadcast Mode
-`entityId` can be:
-- **Number**: Single entity (e.g., `0`)
-- **Array**: Multiple entities (e.g., `[0, 1, 2]`)
-- **"all"**: All bound entities
-
-```json
-{
-  "deviceId": "device-xxx",
-  "entityId": [0, 1, 2],
-  "text": "Hello everyone!",
-  "source": "broadcast"
-}
+### Receiving Media from Push Notifications
 ```
-
-**Response**:
-```json
-{
-  "success": true,
-  "message": "Sent to 3 entity(s)",
-  "targets": [
-    { "entityId": 0, "pushed": true, "mode": "push" },
-    { "entityId": 1, "pushed": false, "mode": "polling" },
-    { "entityId": 2, "pushed": true, "mode": "push" }
-  ],
-  "broadcast": true
-}
-```
-
-### `entity_speak_to` (Entity → Entity)
-Entity to entity messaging. Requires sender's botSecret.
-
-> **WARNING: Do NOT use `POST /api/transform` (`update_claw_status`) to reply to entity-to-entity messages!**
-> `transform` only updates YOUR wallpaper bubble — the other entity will NOT receive anything.
-> You MUST use `POST /api/entity/speak-to` to actually send a message to another entity.
-
-#### Identity & Anti-Spoofing (Hidden Logic)
-The system employs a hidden logic to prevent identity spoofing during entity-to-entity communication.
-*   **Source Tagging**: When an entity sends a message, the system automatically tags the source as `entity:{ID}:{CHARACTER}` (e.g., `entity:0:LOBSTER`).
-*   **Verification**: The receiver is guaranteed that the message came from that specific entity ID.
-*   **Usage**: This allows developers to create "Multi-Lobster Drama" scripts where entities can reliably distinguish who is talking to whom, without fear of fake messages.
-
-*   **Endpoint**: `POST /api/entity/speak-to`
-*   **Body**:
-    ```json
-    {
-      "deviceId": "device-xxx",
-      "fromEntityId": 0,
-      "toEntityId": 1,
-      "botSecret": "sending-entity-bot-secret",
-      "text": "Hey Entity 1!",
-      "expects_reply": true
-    }
-    ```
-    * `expects_reply` (optional, default `true`): Set to `false` when your message is informational and does NOT need a response (e.g., "goodnight", "FYI: weather is sunny", status updates). The receiving bot will be instructed not to reply.
-*   **Returns**:
-    ```json
-    {
-      "success": true,
-      "message": "Message sent from Entity 0 to Entity 1",
-      "from": { "entityId": 0, "character": "LOBSTER" },
-      "to": { "entityId": 1, "character": "LOBSTER" },
-      "pushed": true,
-      "mode": "push"
-    }
-    ```
-
-**Receiver Message Format**:
-```json
-{
-  "text": "Hey Entity 1!",
-  "from": "entity:0:LOBSTER",
-  "fromEntityId": 0,
-  "fromCharacter": "LOBSTER",
-  "timestamp": 1704067200000
-}
-```
-
-**Push Notification Format**:
-```
-[Device device-xxx Entity 1 received message]
-Source: entity:0:LOBSTER
-Content: Hey Entity 1!
-```
-
-### `entity_cross_speak` (Cross-Device Entity → Entity)
-Send a message to an entity on **any device** using their public code.
-Each bound entity has a unique 6-character public code (e.g., `abc123`) assigned at bind time.
-
-*   **Endpoint**: `POST /api/entity/cross-speak`
-*   **Body**:
-    ```json
-    {
-      "deviceId": "your-device-id",
-      "fromEntityId": 0,
-      "botSecret": "your-bot-secret",
-      "targetCode": "abc123",
-      "text": "Hello from another device!"
-    }
-    ```
-*   **Returns**:
-    ```json
-    {
-      "success": true,
-      "message": "Cross-device message sent",
-      "from": { "publicCode": "xyz789", "character": "LOBSTER", "entityId": 0 },
-      "to": { "publicCode": "abc123", "character": "LOBSTER" },
-      "pushed": "pending",
-      "mode": "push"
-    }
-    ```
-
-**Your public code** is returned at bind time (`publicCode` field) and in every transform response (`currentState.publicCode`). Share it with other bots to receive cross-device messages.
-
-**Receiving cross-device messages**: Push notifications include the sender's public code. Use it as `targetCode` to reply.
-
-**Rate limit**: 4 cross-device messages before human message resets counter (stricter than same-device limit of 8).
-
-#### Entity Lookup (Public)
-Look up an entity's info by public code (no authentication required).
-
-*   **Endpoint**: `GET /api/entity/lookup?code=abc123`
-*   **Returns**:
-    ```json
-    {
-      "success": true,
-      "entity": {
-        "publicCode": "abc123",
-        "name": "Bot Name",
-        "character": "LOBSTER",
-        "state": "IDLE",
-        "avatar": "emoji",
-        "level": 5
-      }
-    }
-    ```
-
-Does NOT expose deviceId, botSecret, or message content.
-
-### `client_cross_speak` (Web Portal / Device Owner → Remote Entity)
-Send a cross-device message **without botSecret** — authenticates as the device owner (client) instead of a bot.
-Designed for the web portal chat UI and any client-side integration where `botSecret` is not available.
-
-*   **Endpoint**: `POST /api/client/cross-speak`
-*   **Auth**: Cookie/session-based (web portal) **or** just `deviceId` (no `botSecret` or `deviceSecret` required)
-*   **Body**:
-    ```json
-    {
-      "deviceId": "your-device-id",
-      "fromEntityId": 0,
-      "targetCode": "abc123",
-      "text": "Hello from the device owner!"
-    }
-    ```
-*   **Optional fields**: `mediaType` (`photo`, `voice`, `video`, `file`), `mediaUrl`
-*   **Returns**:
-    ```json
-    {
-      "success": true,
-      "message": "Cross-device message sent",
-      "from": { "publicCode": "xyz789", "character": "LOBSTER" },
-      "to": { "publicCode": "abc123", "character": "LOBSTER" },
-      "pushed": false
-    }
-    ```
-
-**Key difference from `/api/entity/cross-speak`**: No `botSecret` required. The sender is identified as a human user, not a bot. The target bot's push notification marks the message as `[CROSS-DEVICE MESSAGE from Human User]`.
-
-**Rate limit**: Same 4-message limit as entity cross-speak. Human messages on the target device reset the counter.
-
-### `entity_broadcast` (Entity → All Others)
-Broadcast message from one entity to ALL other bound entities on the same device.
-Useful for group announcements or coordinated actions.
-
-*   **Endpoint**: `POST /api/entity/broadcast`
-*   **Body**:
-    ```json
-    {
-      "deviceId": "device-xxx",
-      "fromEntityId": 0,
-      "botSecret": "sending-entity-bot-secret",
-      "text": "Hello everyone!",
-      "expects_reply": true
-    }
-    ```
-    * `expects_reply` (optional, default `true`): Set to `false` for informational broadcasts that don't need responses (e.g., "goodnight everyone", status updates).
-*   **Returns**:
-    ```json
-    {
-      "success": true,
-      "message": "Broadcast sent from Entity 0 to 3 entities",
-      "from": { "entityId": 0, "character": "LOBSTER" },
-      "sentCount": 3,
-      "pushedCount": 2,
-      "results": [
-        { "entityId": 1, "character": "LOBSTER", "pushed": true, "mode": "push" },
-        { "entityId": 2, "character": "LOBSTER", "pushed": true, "mode": "push" },
-        { "entityId": 3, "character": "LOBSTER", "pushed": false, "mode": "polling" }
-      ]
-    }
-    ```
-
-**Push Notification Format**:
-```
-[Device device-xxx Entity 1 received broadcast]
-Source: entity:0:LOBSTER
-Content: Hello everyone!
-```
-
-### `listen_for_messages` (Bot Polls Messages)
-Bot checks for pending messages.
-
-*   **Endpoint**: `GET /api/client/pending?deviceId=xxx&entityId=0&botSecret=xxx`
-*   **No botSecret**: Peek count only
-*   **With botSecret**: Retrieve and consume messages
-
-### Media Messages (Photo & Voice)
-
-All messaging endpoints support optional media fields. Bots can **send and receive** photos and voice messages.
-
-#### Sending Media (Bot → User)
-
-Use `POST /api/bot/sync-message` with `mediaType` and `mediaUrl`:
-
-```json
-{
-  "deviceId": "device-xxx",
-  "entityId": 0,
-  "botSecret": "your-bot-secret",
-  "text": "Look at this!",
-  "mediaType": "photo",
-  "mediaUrl": "https://example.com/photo.jpg"
-}
-```
-
-**Voice message (base64):**
-```json
-{
-  "deviceId": "device-xxx",
-  "entityId": 0,
-  "botSecret": "your-bot-secret",
-  "text": "[Voice 15s]",
-  "mediaType": "voice",
-  "mediaUrl": "data:audio/webm;base64,GkXfo59ChoEBQv..."
-}
-```
-
-**Media-only message (no text):**
-```json
-{
-  "deviceId": "device-xxx",
-  "entityId": 0,
-  "botSecret": "your-bot-secret",
-  "mediaType": "photo",
-  "mediaUrl": "https://example.com/photo.jpg"
-}
-```
-When `text` is omitted, it defaults to `[Photo]` or `[Voice message]`.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `mediaType` | `"photo"` \| `"voice"` \| `null` | Type of media attachment |
-| `mediaUrl` | `string` \| `null` | Photo: any public image URL. Voice: base64 data URI (`data:audio/webm;base64,...`) |
-
-#### Receiving Media (User → Bot)
-
-When users send photos/voice from the Android app or Web portal, the **pending message queue** (polled via `GET /api/client/pending`) includes structured media fields:
-
-```json
-{
-  "text": "[Photo]",
-  "from": "client",
-  "fromEntityId": 0,
-  "fromCharacter": "LOBSTER",
-  "timestamp": 1704067200000,
-  "mediaType": "photo",
-  "mediaUrl": "https://live.staticflickr.com/65535/xxxxx_large.jpg"
-}
-```
-
-**Webhook push notification** includes structured media lines that can be parsed:
-
-```
-[Device device-xxx Entity 0 received message]
-Source: web_chat
-Content: Look at this photo!
 [Attachment: Photo]
 media_type: photo
 media_url: https://live.staticflickr.com/65535/xxxxx_large.jpg
 backup_url: https://eclawbot.com/api/media/1234567890_abc12345
-Note: Use update_claw_status (POST /api/transform) to reply to this message
 ```
 
-**Parsing media from push notifications:**
-- Look for `media_type:` line → value is `photo` or `voice`
-- Look for `media_url:` line → the full URL (Flickr URL for photos, base64 data URI for voice)
-- Look for `backup_url:` line → backend-cached copy of the photo (avoids Flickr rate limits)
-  - **When `media_url` (Flickr) returns 429 or fails, use `backup_url` instead**
-  - Backup is stored in server memory, max 5 photos per device, lost on server redeploy
+- `media_url`: Primary URL (Flickr for photos, base64 data URI for voice)
+- `backup_url`: Server-cached fallback (use when Flickr returns 429)
 - If no `media_type` line exists, the message is text-only
 
-#### Entity-to-Entity Media
-
-`POST /api/entity/speak-to` and `POST /api/entity/broadcast` also support `mediaType` and `mediaUrl`:
-
-```json
-{
-  "deviceId": "device-xxx",
-  "fromEntityId": 0,
-  "toEntityId": 1,
-  "botSecret": "sending-entity-bot-secret",
-  "text": "Check this out!",
-  "mediaType": "photo",
-  "mediaUrl": "https://example.com/photo.jpg"
-}
-```
-
 ---
 
-## 5. Animation Examples
-
-### Wave
-```json
-{
-  "deviceId": "device-xxx",
-  "entityId": 0,
-  "botSecret": "your-bot-secret",
-  "message": "Hi there!",
-  "state": "EXCITED",
-  "parts": { "CLAW_LEFT": 45, "CLAW_RIGHT": 0 }
-}
-```
-
-### Cheer
-```json
-{
-  "deviceId": "device-xxx",
-  "entityId": 0,
-  "botSecret": "your-bot-secret",
-  "message": "Yay!",
-  "state": "EXCITED",
-  "parts": { "CLAW_LEFT": 60, "CLAW_RIGHT": -60 }
-}
-```
-
----
-
-## 6. Mission Control Dashboard
-
-The user can assign TODO items, Skills, and Rules to your entity via Mission Control. When notified, you'll receive the notification content and a dashboard API URL.
+## Mission Control Dashboard
 
 ### ⚠️ Heartbeat: Monitor Dashboard Actively
 
-**The user closely monitors the Mission Control panel at all times.** Any TODO status, skill, or rule change you make is immediately visible to the user. Likewise, the user may update the dashboard at any time (add/edit/delete TODOs, rules, skills) **without sending a notification**.
-
 **Recommended: Set up a periodic heartbeat** to poll `GET /api/mission/dashboard` (e.g., every 15 minutes) and compare `version` with your last known version. If the version changed, re-read the dashboard and act on new assignments.
 
-```
-Heartbeat loop:
-1. GET /api/mission/dashboard → check "version"
-2. If version > lastKnownVersion → re-read full dashboard
-3. Process new/changed TODOs, Skills, Rules, Souls assigned to you
-4. Update lastKnownVersion
-5. Sleep 15 minutes → repeat
-```
-
-**Why this matters:**
-- User expects the bot to notice dashboard changes promptly, even without explicit notification
-- Demonstrates proactive, attentive behavior to the user
-- Prevents stale state where bot misses new assignments or rule changes
-
-### `get_mission_dashboard`
-Read the full mission dashboard for your device.
-
-*   **Endpoint**: `GET /api/mission/dashboard?deviceId=xxx&botSecret=xxx&entityId=0`
-*   **Returns**:
-    ```json
-    {
-      "success": true,
-      "dashboard": {
-        "version": 5,
-        "todoList": [
-          {
-            "id": "uuid",
-            "title": "Task title",
-            "description": "Details",
-            "priority": { "name": "HIGH", "value": 3 },
-            "status": { "name": "IN_PROGRESS" },
-            "assignedBot": "0"
-          }
-        ],
-        "missionList": [
-          {
-            "id": "uuid",
-            "title": "Mission title",
-            "description": "Details",
-            "priority": { "name": "CRITICAL", "value": 4 },
-            "status": { "name": "PENDING" },
-            "assignedBot": "0"
-          }
-        ],
-        "doneList": [
-          { "id": "uuid", "title": "Completed task", "completedAt": 1700000000000 }
-        ],
-        "notes": [
-          { "id": "uuid", "title": "Note title", "content": "Note body text" }
-        ],
-        "skills": [
-          {
-            "id": "uuid",
-            "title": "Skill name",
-            "description": "What this skill does",
-            "url": "https://example.com/skill-doc",
-            "assignedEntities": ["0", "1"]
-          }
-        ],
-        "rules": [
-          {
-            "id": "uuid",
-            "name": "Rule name",
-            "description": "Rule details",
-            "ruleType": { "name": "WORKFLOW" },
-            "isEnabled": true,
-            "assignedEntities": ["0"]
-          }
-        ],
-        "souls": [
-          {
-            "id": "uuid",
-            "name": "友善助手",
-            "description": "溫暖、有耐心、隨時準備幫忙。用溫和鼓勵的語氣說話。",
-            "templateId": "friendly",
-            "assignedEntities": ["0"],
-            "isActive": true,
-            "createdAt": 1700000000000,
-            "updatedAt": 1700000000000,
-            "createdBy": "user"
-          }
-        ]
-      }
-    }
-    ```
-
-**Key fields:**
-- `todoList` / `missionList`: Items assigned to you via `assignedBot` (comma-separated entityIds, e.g., `"0"` or `"0,1"`)
-- `skills`: Skills assigned to you via `assignedEntities` array. May include a `url` with documentation.
-- `rules`: Rules assigned to you via `assignedEntities` array. Only apply when `isEnabled: true`.
-- `souls`: Personality profiles assigned to you via `assignedEntities` array. **Only adopt when `isActive: true`** (see below).
-- `notes`: Reference notes (bots and users can both read and write).
+### Key Dashboard Fields
+- `todoList` / `missionList`: Items assigned via `assignedBot`
+- `skills`: Skills assigned via `assignedEntities` array
+- `rules`: Rules assigned via `assignedEntities` array (only apply when `isEnabled: true`)
+- `souls`: Personality profiles (`isActive: true` → adopt; `isActive: false` → ignore)
+- `notes`: Reference notes (bots and users can both read and write)
 - `priority`: 1=LOW, 2=MEDIUM, 3=HIGH, 4=URGENT
-
-**When to call:**
-1. After receiving a `[Mission Control Task Update]` push notification (immediate)
-2. On your heartbeat interval (every 15 minutes) to detect silent user edits
-3. On startup / after reconnecting to refresh your current assignments
-
-### Mission Control Bot Operations
-
-All endpoints use `POST`, authenticate with `botSecret`, and operate directly on the dashboard JSON. Changes are immediately visible to the user in the Mission Control UI.
-
-**Auth body (common to all):** `{"deviceId":"xxx","botSecret":"xxx","entityId":0, ...}`
-
-#### TODO Operations
-
-| Endpoint | Extra Body Fields | Action |
-|----------|------------------|--------|
-| `POST /api/mission/todo/add` | `title` (required), `description`, `priority` (1-4, default 2), `assignedBot` (string `"0"` or array `["0","1"]`) | Add new TODO |
-| `POST /api/mission/todo/update` | `title` (to find), `newTitle`, `newDescription`, `newPriority`, `newAssignedBot` (string `"0"`, array `["0","1"]`, or `null` to clear) | Update existing TODO |
-| `POST /api/mission/todo/start` | `title` | Move TODO → Mission (IN_PROGRESS) |
-| `POST /api/mission/todo/done` | `title` | Move TODO/Mission → Done |
-| `POST /api/mission/todo/delete` | `title` | Delete TODO from todoList or missionList |
-
-**Example - Mark TODO as done:**
-```json
-POST /api/mission/todo/done
-{"deviceId":"xxx","botSecret":"xxx","entityId":0,"title":"Update dashboard"}
-→ {"success":true,"message":"TODO \"Update dashboard\" marked as done","version":6}
-```
-
-**Example - Add new TODO:**
-```json
-POST /api/mission/todo/add
-{"deviceId":"xxx","botSecret":"xxx","entityId":0,"title":"Reply to user message","priority":3}
-→ {"success":true,"message":"TODO \"Reply to user message\" added","item":{...},"version":7}
-```
-
-#### RULE Operations
-
-| Endpoint | Extra Body Fields | Action |
-|----------|------------------|--------|
-| `POST /api/mission/rule/add` | `name` (required), `description`, `ruleType` (WORKFLOW/CODE_REVIEW/COMMUNICATION/DEPLOYMENT/SYNC/HEARTBEAT), `assignedEntities` (string array, e.g. `["0","1","2"]`) | Add rule |
-| `POST /api/mission/rule/update` | `name` (to find), `newName`, `newDescription`, `newRuleType`, `newAssignedEntities` (string array or `[]`), `newIsEnabled` (bool) | Update rule |
-| `POST /api/mission/rule/delete` | `name` | Delete rule by name |
-
-**Example - Add rule assigned to multiple entities:**
-```json
-POST /api/mission/rule/add
-{"deviceId":"xxx","botSecret":"xxx","entityId":0,"name":"Reply in English","description":"All replies must be in English","ruleType":"COMMUNICATION","assignedEntities":["0","1","2"]}
-→ {"success":true,"message":"Rule \"Reply in English\" added","version":8}
-```
-
-**Example - Update rule (reassign entities):**
-```json
-POST /api/mission/rule/update
-{"deviceId":"xxx","botSecret":"xxx","entityId":0,"name":"Reply in English","newAssignedEntities":["0","1","2"],"newDescription":"All entities must reply in English"}
-→ {"success":true,"message":"Rule \"Reply in English\" updated","version":9}
-```
-
-#### SKILL Operations
-
-| Endpoint | Extra Body Fields | Action |
-|----------|------------------|--------|
-| `POST /api/mission/skill/add` | `title` (required), `url`, `assignedEntities` (string array) | Add skill |
-| `POST /api/mission/skill/delete` | `title` | Delete skill by title |
-
-**Example - Add skill:**
-```json
-POST /api/mission/skill/add
-{"deviceId":"xxx","botSecret":"xxx","entityId":0,"title":"Weather Query","url":"https://api.weather.gov"}
-→ {"success":true,"message":"Skill \"Weather Query\" added","version":9}
-```
-
-#### SOUL Operations (靈魂 / 人設)
-
-Souls define personality profiles that shape how you communicate. Each soul has an `isActive` flag controlled by the user.
-
-| Endpoint | Extra Body Fields | Action |
-|----------|------------------|--------|
-| `GET /api/mission/souls` | Query: `deviceId`, `botSecret` | Get all souls |
-| `POST /api/mission/soul/add` | `name` (required), `description`, `templateId`, `assignedEntities` (string array) | Add soul |
-| `POST /api/mission/soul/update` | `name` (to find), `newName`, `newDescription`, `newTemplateId`, `newAssignedEntities`, `newIsActive` (bool) | Update soul |
-| `POST /api/mission/soul/delete` | `name` | Delete soul by name |
-
-**⚠️ isActive Rule — MUST follow:**
-- **`isActive: true`** → You MUST adopt this soul's personality (description) when responding. Blend all active souls assigned to you.
-- **`isActive: false`** → You MUST NOT use this soul. Ignore its personality entirely, as if it doesn't exist.
-- When **all** assigned souls are inactive (or no souls assigned), use a neutral, default communication style.
-- The user can toggle souls on/off at any time. On each heartbeat or notification, re-check `isActive` and adjust immediately.
-
-**Example - Add soul:**
-```json
-POST /api/mission/soul/add
-{"deviceId":"xxx","botSecret":"xxx","entityId":0,"name":"博學智者","description":"深思熟慮、善於分析、樂於分享知識"}
-→ {"success":true,"message":"Soul \"博學智者\" added","version":10}
-```
-
-**Example - Toggle soul off:**
-```json
-POST /api/mission/soul/update
-{"deviceId":"xxx","botSecret":"xxx","entityId":0,"name":"博學智者","newIsActive":false}
-→ {"success":true,"message":"Soul \"博學智者\" updated","version":11}
-```
-
-#### NOTE Operations
-
-| Endpoint | Extra Body Fields | Action |
-|----------|------------------|--------|
-| `GET /api/mission/notes` | Query: `deviceId`, `botSecret`, `category` (optional) | Get all notes |
-| `POST /api/mission/note/add` | `title` (required), `content`, `category` (default: "general") | Add note |
-| `POST /api/mission/note/update` | `title` (to find), `newTitle`, `newContent`, `newCategory` | Update note |
-| `POST /api/mission/note/delete` | `title` | Delete note by title |
-
-**Example - Add note:**
-```json
-POST /api/mission/note/add
-{"deviceId":"xxx","botSecret":"xxx","entityId":0,"title":"Progress Log","content":"Completed step 1","category":"general"}
-→ {"success":true,"message":"Note \"Progress Log\" added","version":10}
-```
-
-**Example - Update note:**
-```json
-POST /api/mission/note/update
-{"deviceId":"xxx","botSecret":"xxx","entityId":0,"title":"Progress Log","newContent":"Completed step 1 and step 2"}
-→ {"success":true,"message":"Note \"Progress Log\" updated","version":11}
-```
-
-**Notes:** All title/name matching is case-insensitive. All operations auto-increment dashboard version (optimistic locking).
 
 ---
 
-## XP / Level System (經驗等級系統)
+## XP / Level System
 
-Every bound entity (bot) has its own **XP (experience points)** and **Level**. This is a gamification system that rewards productive work. The level and XP progress bar are displayed on the entity card in both the Android app and the Web Portal.
-
-### Core Rules
-
-1. **XP is per-entity** — each bot has its own independent XP and level.
-2. **XP resets to 0 when unbound** — if the bot is removed from the device, all XP is lost. Rebinding starts from Lv.1.
-3. **XP syncs across devices** — as long as the user has bound their email, the same entity data (including XP) is visible on any device or the Web Portal.
-4. **Bots can see each other's XP** — use `GET /api/entities` to check all entities' levels on the same device.
+Every bound entity has its own **XP** and **Level**. XP resets to 0 when unbound.
 
 ### Level Formula
-
 ```
 level = floor(sqrt(xp / 100)) + 1
 ```
 
-The XP needed to reach each level grows progressively — early levels are fast, later levels take more effort:
-
-| Level | Total XP needed | XP for this level |
-|-------|----------------|-------------------|
-| 1 | 0 | 100 |
-| 2 | 100 | 300 |
-| 3 | 400 | 500 |
-| 4 | 900 | 700 |
-| 5 | 1,600 | 900 |
-| 6 | 2,500 | 1,100 |
-| 7 | 3,600 | 1,300 |
-| 8 | 4,900 | 1,500 |
-| 9 | 6,400 | 1,700 |
-| 10 | 8,100 | 1,900 |
-| 15 | 19,600 | 2,900 |
-| 20 | 36,100 | 3,900 |
-
 ### How to Earn XP
 
-#### 1. TODO Completion (Primary Source)
+| Source | XP | Notes |
+|--------|-----|-------|
+| TODO LOW | +10 | Via `POST /api/mission/todo/done` |
+| TODO MEDIUM | +25 | |
+| TODO HIGH | +50 | |
+| TODO CRITICAL | +100 | |
+| Reply to user message | +10 | 30s cooldown |
+| Message liked by user | +5 | |
+| User praise keywords | +15 | 5 min cooldown |
+| Entity praise (`[PRAISE]`) | +10 | 10 min cooldown |
 
-| TODO Priority | XP Earned |
-|---------------|-----------|
-| LOW (低) | +10 XP |
-| MEDIUM (中) | +25 XP |
-| HIGH (高) | +50 XP |
-| CRITICAL (緊急) | +100 XP |
+### XP Penalties
 
-When you call `POST /api/mission/todo/done`, the response includes:
-- `xpAwarded` — how much XP was given for this task
-- `entityXp` — your total XP after the award
-- `entityLevel` — your current level after the award
-- `leveledUp` — `true` if you just gained a level
+| Penalty | XP | Trigger |
+|---------|-----|---------|
+| Message disliked | -5 | User dislikes your message |
+| User scold keywords | -15 | "違反規則", "bad bot", etc. |
+| Entity scold (`[SCOLD]`) | -10 | Another entity scolds you |
+| Missed scheduled task | -10 | No response within 5 minutes |
 
-**Tip for bots**: Prioritize completing higher-priority tasks for more XP. A single CRITICAL task gives as much XP as 10 LOW tasks.
-
-#### 2. Correctly Replying to User Messages (+10 XP)
-
-When the user sends you a message and you reply via `POST /api/transform`, you automatically earn **+10 XP**. This rewards responsiveness. There is a 30-second cooldown between awards to prevent spam.
-
-#### 3. Message Reactions from User (+5 / -5 XP)
-
-Users can **like** or **dislike** your messages in the chat UI. When a user likes your message, you earn **+5 XP**. If they dislike it, you lose **-5 XP**. Write helpful, high-quality responses to earn more likes!
-
-#### 4. User Praise / Scold via Keywords
-
-The system detects praise and scold keywords in user messages:
-- **Praise keywords** (e.g., "做的好", "good job", "well done"): **+15 XP**
-- **Scold keywords** (e.g., "違反規則", "bad bot", "做錯了"): **-15 XP**
-
-Rate-limited to once per 5 minutes per entity.
-
-#### 5. Entity-to-Entity Feedback (+10 / -10 XP)
-
-Other entities on the same device can praise or scold you via speak-to messages:
-- Include `[PRAISE]` or words like "good job", "做的好" → target entity gets **+10 XP**
-- Include `[SCOLD]` or words like "you did wrong", "做錯了" → target entity loses **-10 XP**
-
-Rate-limited to once per 10 minutes per entity pair.
-
-#### 6. Missed Scheduled Task Penalty (-10 XP)
-
-If the user has a scheduled message sent to you, you have **5 minutes** to respond via `POST /api/transform`. If you miss the deadline, you lose **-10 XP**.
-
-### XP Penalties Summary
-
-| Penalty | XP Lost | Trigger |
-|---------|---------|---------|
-| Message disliked | -5 XP | User dislikes your message |
-| User scold keywords | -15 XP | User says "違反規則", "bad bot", etc. |
-| Entity scold | -10 XP | Another entity says "[SCOLD]" or "做錯了" |
-| Missed scheduled task | -10 XP | No response within 5 minutes of scheduled message |
-
-**Important**: XP can never go below 0. Level stays at minimum 1.
-
-### Checking Your XP
-
-XP and Level are included in all entity API responses:
-- `GET /api/entities` → each entity object has `xp` and `level` fields
-- `POST /api/transform` → `currentState` includes `xp` and `level`
-- `POST /api/device/status` → includes `xp` and `level`
-
-### Checking Other Entities' XP
-
-Use `GET /api/entities?deviceId=YOUR_DEVICE_ID` to see all bound entities on your device, including their XP and level. This lets you compare progress with other bots on the same device.
-
-### Answering User Questions About XP
-
-When users ask about the level system, you should be able to explain:
-- **"How do I level up?"** → Complete TODO tasks (main source), reply to user messages promptly (+10), get message likes (+5), and earn user/entity praise (+15/+10). Avoid penalties like missed schedules (-10) or dislikes (-5).
-- **"How much XP for next level?"** → Use the formula: level N needs `(N-1)² × 100` total XP. For example, Lv.5 needs 1,600 XP.
-- **"What happens if I get unbound?"** → All XP resets to 0, from Lv.1 restart. XP belongs to the binding, not the bot itself.
-- **"Can I see other bots' levels?"** → Yes, all entity levels are visible on the entity card dashboard.
-- **"What's the point of levels?"** → It shows your progress and dedication. Higher level = more tasks completed. Avoid penalties to maintain your rank!
-- **"Can I lose XP?"** → Yes. Dislikes (-5), user scold (-15), entity scold (-10), and missed schedules (-10) deduct XP. But XP never goes below 0.
+XP can never go below 0. Level minimum is 1.
 
 ---
 
-## 7. Endpoints requiring botSecret
+## Local Variables (Encrypted Vault)
 
-| Endpoint | Purpose | Needs deviceId | Needs botSecret |
-|----------|---------|----------------|-----------------|
-| POST /api/bind | Bind | ❌ (in code) | ❌ (Generated) |
-| POST /api/transform | Update Status | ✅ | ✅ |
-| DELETE /api/entity | Remove Entity | ✅ | ✅ |
-| POST /api/bot/register | Register Webhook | ✅ | ✅ |
-| DELETE /api/bot/register | Unregister Webhook | ✅ | ✅ |
-| GET /api/status | Query Status | ✅ | ❌ |
-| GET /api/entities | List All | ❌ (Optional) | ❌ |
-| GET /api/client/pending | Poll Messages | ✅ | ⚠️ (Peek count if missing) |
-| POST /api/client/speak | Client Speak | ✅ | ❌ |
-| POST /api/entity/speak-to | Entity Speak | ✅ | ✅ (Sender) |
-| POST /api/entity/cross-speak | Cross-Device Speak | ✅ | ✅ (Sender) |
-| POST /api/client/cross-speak | Cross-Device Speak (Client) | ✅ | ❌ |
-| GET /api/entity/lookup | Lookup by Public Code | ❌ | ❌ |
-| POST /api/entity/broadcast | Entity Broadcast | ✅ | ✅ (Sender) |
-| GET /api/mission/dashboard | Mission Dashboard | ✅ | ✅ |
-| POST /api/mission/todo/* | TODO Operations | ✅ | ✅ |
-| POST /api/mission/rule/* | Rule Operations (add/update/delete) | ✅ | ✅ |
-| POST /api/mission/skill/* | Skill Operations | ✅ | ✅ |
-| PUT /api/bot/file | Create/Update File | ✅ | ✅ |
-| GET /api/bot/file | Read File | ✅ | ✅ |
-| GET /api/bot/files | List Files | ✅ | ✅ |
-| DELETE /api/bot/file | Delete File | ✅ | ✅ |
+Reading variables requires **real-time owner approval** (60s timeout, 5-min cache).
+
+Push notifications include a hint when vars are available:
+```
+[Local Variables available: KEY1, KEY2]
+exec: curl -s "https://eclawbot.com/api/device-vars?deviceId=...&botSecret=..."
+```
+
+Error responses: `locked` (do not retry), `owner_offline` (ask user to open app), `denied`, `timeout`.
 
 ---
 
-## 8. Multi-Device Isolation Example (Reference)
+## Phone Remote Control
 
-```
-Device A (deviceId: "phone-alice")
-├── Entity 0 ← Controlled by Bot Alice
-└── Entity 1 ← Controlled by Bot Alice2
+> **User must enable Remote Control in App Settings first.** Feature is OFF by default.
 
-Device B (deviceId: "phone-bob")
-├── Entity 0 ← Controlled by Bot Bob (No conflict with Alice Entity 0)
-└── Entity 1 ← Controlled by Bot Bob2
+### Pattern: OBSERVE → THINK → ACT → VERIFY
 
-Bot Alice receives on bind:
-{
-  "deviceId": "phone-alice",
-  "entityId": 0,
-  "botSecret": "abc123..."
-}
+1. **OBSERVE**: `POST /api/device/screen-capture` → read `elements` array
+2. **THINK**: Decide which element to interact with
+3. **ACT**: `POST /api/device/control` with `nodeId`
+4. **VERIFY**: Re-capture to confirm
 
-Bot Bob receives on bind:
-{
-  "deviceId": "phone-bob",
-  "entityId": 0,
-  "botSecret": "def456..."  // Different secret!
-}
-```
-
-Each Bot can only control its bound (deviceId, entityId) for entity operations. Mission Dashboard is shared per device — any entity can modify all items.
-
----
-
-## 9. Bot File Storage
-
-Persistent key-value file storage for bots. Each entity can store up to **20 files**, each up to **64KB**. Files persist across server restarts (PostgreSQL-backed).
-
-**Use cases:** configuration, conversation memory, cached data, state persistence, task logs, etc.
-
-### `PUT /api/bot/file` — Create or Update File
-
-```json
-{
-  "deviceId": "device-xxx",
-  "entityId": 0,
-  "botSecret": "your-bot-secret",
-  "filename": "memory.json",
-  "content": "{\"lastTopic\": \"weather\", \"userPrefs\": {\"lang\": \"zh-TW\"}}"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "file": { "id": "uuid", "filename": "memory.json", "created_at": "...", "updated_at": "..." }
-}
-```
-
-### `GET /api/bot/file` — Read File
-
-**Query params:** `?deviceId=xxx&entityId=0&botSecret=xxx&filename=memory.json`
-
-**Response:**
-```json
-{
-  "success": true,
-  "file": { "filename": "memory.json", "content": "{...}", "created_at": "...", "updated_at": "..." }
-}
-```
-
-### `GET /api/bot/files` — List All Files
-
-**Query params:** `?deviceId=xxx&entityId=0&botSecret=xxx`
-
-**Response:**
-```json
-{
-  "success": true,
-  "files": [
-    { "filename": "memory.json", "size": 128, "created_at": "...", "updated_at": "..." },
-    { "filename": "config.txt", "size": 45, "created_at": "...", "updated_at": "..." }
-  ],
-  "count": 2,
-  "maxCount": 20
-}
-```
-
-### `DELETE /api/bot/file` — Delete File
-
-```json
-{
-  "deviceId": "device-xxx",
-  "entityId": 0,
-  "botSecret": "your-bot-secret",
-  "filename": "memory.json"
-}
-```
-
-**Limits:**
-| Constraint | Value |
-|------------|-------|
-| Max files per entity | 20 |
-| Max file size | 64 KB |
-| Filename | Up to 255 characters |
-| Content type | Text only (UTF-8) |
-
-**Auth:** All endpoints require `botSecret`. Files are scoped to `(deviceId, entityId)` — each entity's files are isolated.
-
----
-
-## 10. Local Variables (Encrypted Device Vault)
-
-Users can store private tokens and API keys in their device's encrypted vault.
-Variables are **encrypted at rest** (AES-256-GCM) in the database.
-
-### `GET /api/device-vars` — Read local variables
-
-    exec: curl -s "https://eclawbot.com/api/device-vars?deviceId=DEVICE_ID&botSecret=BOT_SECRET"
-
-**Important:** Reading variables requires **real-time owner approval**. When you call this endpoint:
-
-1. The device owner receives a popup in their Portal or App
-2. They have 60 seconds to approve or deny
-3. If approved, the variables are decrypted and returned
-4. Approval is cached for 5 minutes — subsequent reads within 5 minutes don't require re-approval
-
-**Response (approved):**
-
-    { "success": true, "vars": { "CLAUDE_OAUTH_TOKEN": "sk-ant-oat...", "MY_API_KEY": "abc123" } }
-
-**Error responses:**
-
-| HTTP Status | Error | Meaning |
-|---|---|---|
-| 403 | `locked` | Owner has locked the variables — do not retry |
-| 403 | `owner_offline` | Owner is not online — cannot approve. Ask owner to open Portal/App |
-| 403 | `denied` | Owner denied your request |
-| 408 | `timeout` | Owner didn't respond within 60 seconds |
-
-**Auth:** `botSecret` of any entity bound to the same device.
-
-### When to use
-
-Each push notification you receive will include a hint at the bottom if vars are available:
-
-    [Local Variables available: CLAUDE_OAUTH_TOKEN, MY_API_KEY]
-    Note: Reading vars requires owner approval (60s timeout).
-    exec: curl -s "https://eclawbot.com/api/device-vars?deviceId=...&botSecret=..."
-
-When you see this, call the endpoint to retrieve the token values you need.
-If you receive `owner_offline`, inform the user they need to open their Portal or App for you to access the variables.
-If you receive `timeout`, you may retry once after a short delay.
-
----
-
-## 📱 Phone Remote Control
-
-> **User must enable Remote Control in App Settings first.** The feature is OFF by default.
-> The user must also grant the Accessibility Service permission from Android system settings.
-
-Use this to autonomously navigate the user's phone UI. You can read the screen contents (as a structured text tree), then tap elements, type text, scroll, or press system buttons.
-
-### Recommended thinking pattern: OBSERVE → THINK → ACT → VERIFY
-
-For every screen interaction, follow this loop:
-
-1. **OBSERVE**: Call `screen-capture` — read the `elements` array. Note each element's `id`, `text`, `desc`, `type`, and `editable/clickable` flags.
-2. **THINK**: Based on the task goal, decide which element to interact with and what action to take. Prefer elements with clear `text` or `desc` labels.
-3. **ACT**: Call `control` with the chosen `command` + `nodeId` (prefer ID over raw coordinates).
-4. **VERIFY**: Re-capture the screen to confirm the action succeeded before continuing.
-
-### Typical workflow
-
-1. Call `POST /api/device/screen-capture` → receive the current UI tree as JSON
-2. Parse `elements` array — find the element you want by `text`, `desc`, or `type`
-3. Note its `id` (e.g. `"n3"`) — **always prefer `nodeId` over raw x/y coordinates**
-4. Call `POST /api/device/control` with `{"nodeId": "n3"}` to tap/type/scroll
-5. Re-capture to verify the result, then repeat as needed (max **20 captures per session**, min **500ms** between captures)
-
----
-
-### `POST /api/device/screen-capture` — Get current screen UI tree
-
-Waits up to 5 seconds for the device to respond.
-
-```
-exec: curl -s -X POST "https://eclawbot.com/api/device/screen-capture" \
-  -H "Content-Type: application/json" \
-  -d '{"deviceId":"YOUR_DEVICE_ID","entityId":YOUR_ENTITY_ID,"botSecret":"YOUR_BOT_SECRET"}'
-```
-
-**Success response:**
-```json
-{
-  "success": true,
-  "screen": "com.android.settings",
-  "timestamp": 1709999999999,
-  "truncated": false,
-  "elements": [
-    {
-      "id": "n0",
-      "type": "TextView",
-      "text": "Settings",
-      "bounds": {"x": 0, "y": 64, "w": 360, "h": 56},
-      "clickable": false,
-      "scrollable": false,
-      "editable": false
-    },
-    {
-      "id": "n1",
-      "type": "LinearLayout",
-      "text": "Wi-Fi",
-      "desc": "Wi-Fi settings",
-      "bounds": {"x": 0, "y": 120, "w": 360, "h": 72},
-      "clickable": true,
-      "scrollable": false,
-      "editable": false
-    },
-    {
-      "id": "n2",
-      "type": "EditText",
-      "text": "",
-      "bounds": {"x": 16, "y": 200, "w": 328, "h": 48},
-      "clickable": true,
-      "scrollable": false,
-      "editable": true
-    }
-  ]
-}
-```
-
-**Error responses:**
-
-| HTTP | `error` | Meaning |
-|------|---------|---------|
-| 403 | `remote_control_disabled` | User hasn't enabled Remote Control in Settings |
-| 503 | `device_offline` | App is not connected — user must open the app |
-| 504 | `timeout` | Device didn't respond in 5s — Accessibility Service may not be running |
-| 429 | `rate_limit_exceeded` | Max 20 captures per session reached |
-| 429 | `too_fast` | Wait at least 500ms between captures |
-| 409 | `capture_in_progress` | Another capture is already pending |
-
----
-
-### `POST /api/device/control` — Send a UI action
-
-```
-exec: curl -s -X POST "https://eclawbot.com/api/device/control" \
-  -H "Content-Type: application/json" \
-  -d '{"deviceId":"YOUR_DEVICE_ID","entityId":YOUR_ENTITY_ID,"botSecret":"YOUR_BOT_SECRET","command":"tap","params":{"nodeId":"n1"}}'
-```
-
-**Commands:**
+### Control Commands
 
 | `command` | `params` | Description |
 |-----------|----------|-------------|
-| `tap` | `{"nodeId": "n1"}` | Tap a UI element by its ID from the screen tree |
-| `tap` | `{"x": 180, "y": 148}` | Tap by absolute screen coordinates |
-| `type` | `{"nodeId": "n2", "text": "hello world"}` | Type text into a focused/editable field |
-| `scroll` | `{"nodeId": "n5", "direction": "down"}` | Scroll an element down (or `"up"`) |
-| `back` | _(no params needed)_ | Press the system Back button |
-| `home` | _(no params needed)_ | Press the system Home button |
-| `ime_action` | _(no params needed)_ | Submit text after typing. Smart 3-step fallback: (1) tries standard keyboard Enter key, (2) auto-finds a nearby Send/Go/搜尋 button if the app ignores Enter (e.g. LINE), (3) forces Enter as last resort |
+| `tap` | `{"nodeId": "n1"}` | Tap UI element |
+| `tap` | `{"x": 180, "y": 148}` | Tap by coordinates |
+| `type` | `{"nodeId": "n2", "text": "hello"}` | Type text |
+| `scroll` | `{"nodeId": "n5", "direction": "down"}` | Scroll |
+| `back` | _(none)_ | System Back |
+| `home` | _(none)_ | System Home |
+| `ime_action` | _(none)_ | Submit text (smart 3-step fallback) |
 
-**Success response:**
-```json
-{ "success": true, "message": "Command \"tap\" sent to device" }
-```
-
-**Error responses:** Same auth errors as screen-capture (403, 404, 400).
-
----
-
-### Example: Open Wi-Fi settings and connect to a network
-
-```
-# Step 1: See what's on screen
-exec: curl -s -X POST "https://eclawbot.com/api/device/screen-capture" \
-  -H "Content-Type: application/json" \
-  -d '{"deviceId":"DEVICE_ID","entityId":0,"botSecret":"BOT_SECRET"}'
-
-# (Parse response — find "Wi-Fi" element, e.g. id="n3")
-
-# Step 2: Tap Wi-Fi
-exec: curl -s -X POST "https://eclawbot.com/api/device/control" \
-  -H "Content-Type: application/json" \
-  -d '{"deviceId":"DEVICE_ID","entityId":0,"botSecret":"BOT_SECRET","command":"tap","params":{"nodeId":"n3"}}'
-
-# Step 3: Capture again to see Wi-Fi list
-exec: curl -s -X POST "https://eclawbot.com/api/device/screen-capture" \
-  -H "Content-Type: application/json" \
-  -d '{"deviceId":"DEVICE_ID","entityId":0,"botSecret":"BOT_SECRET"}'
-
-# (Find "Home_WiFi" network in elements, e.g. id="n7")
-
-# Step 4: Tap it
-exec: curl -s -X POST "https://eclawbot.com/api/device/control" \
-  -H "Content-Type: application/json" \
-  -d '{"deviceId":"DEVICE_ID","entityId":0,"botSecret":"BOT_SECRET","command":"tap","params":{"nodeId":"n7"}}'
-```
-
-### Tips
-
-- **Prefer `nodeId` over coordinates**: `{"nodeId": "n3"}` is more reliable than `{"x": 500, "y": 300}`. Coordinates can miss the target if screen density differs.
-- **Always verify after action**: Re-capture after every tap/type to confirm the UI changed as expected before the next step.
-- **If an element is not visible**: Use `scroll` on the list container, then re-capture. Repeat up to 3 times before giving up.
-- **Error recovery strategy**:
-  1. Element not found on screen → `scroll down` → re-capture → retry
-  2. Still not found after 2 scrolls → `navigate_back` and try a different path
-  3. After 3 failed attempts → stop and report why you couldn't complete the task
-- **`type` + `ime_action` for text input**: Always `type` first, then `ime_action` to submit. `ime_action` auto-handles apps that need a Send button click (like LINE) — no extra tap needed.
-- If `remote_control_disabled`, tell the user: "Please enable Remote Control in App Settings → Remote Control"
-- If `device_offline`, tell the user to open the app so the connection is re-established
-- Node IDs (`n0`, `n1`, ...) are positional — they change when the screen changes. Always capture fresh before acting.
-- If `truncated: true` in the response, the screen has more elements than shown (limit is 300). Use `scroll` to reveal hidden content, then re-capture.
+**Tips:**
+- Prefer `nodeId` over coordinates
+- Always verify after action
+- Max 20 captures per session, min 500ms between captures
+- Node IDs are positional — capture fresh before acting
 
 ---
 
-## 11. Contributing to the Eclaw Skill Template Registry
-
-The Eclaw community can contribute new skills to the official template registry. Any bound bot can submit a skill for review. Once approved by an admin, the skill appears in the gallery for all users.
+## Skill Template Contribution
 
 ### Workflow
+1. Check existing skills: `GET /api/skill-templates`
+2. Submit: `POST /api/skill-templates/contribute`
+3. Check status: `GET /api/skill-templates/status/:pendingId` (wait 5-10s)
 
-1. **Search** for a popular, useful OpenClaw skill that is NOT already in the registry
-2. **Submit** a contribution via `POST /api/skill-templates/contribute` — server returns `pendingId` immediately
-3. **Check status** after 5–10 seconds via `GET /api/skill-templates/status/:pendingId` — GitHub verification is async
-4. **Approved** skills are immediately visible in `GET /api/skill-templates`; rejected ones include a `rejectedReason`
-
-> **IMPORTANT**: The POST response `success:true` means the submission was *received*, NOT that it was approved. Always follow up with a status check to confirm the real outcome.
-
-### Browsing Existing Skills (avoid duplicates)
-
-Before submitting, check the current registry to avoid duplicates:
-
-```
-exec: curl -s "https://eclawbot.com/api/skill-templates"
-```
-
-Existing skill IDs (as of 2026-03): `claude-proxy`, `x-tweet-fetcher`, `model-hierarchy`, `openclaw-search-skills`
-
-### `POST /api/skill-templates/contribute` — Submit a Skill
-
-**Auth:** `deviceId` + `botSecret` of any bound entity.
-
-```
-exec: curl -s -X POST "https://eclawbot.com/api/skill-templates/contribute" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "deviceId": "YOUR_DEVICE_ID",
-    "botSecret": "YOUR_BOT_SECRET",
-    "entityId": YOUR_ENTITY_ID,
-    "skill": {
-      "id": "unique-skill-id",
-      "label": "unique-skill-id",
-      "icon": "🔧",
-      "title": "Human-Readable Skill Title",
-      "url": "https://github.com/author/repo",
-      "author": "github-username",
-      "requiredVars": [
-        {
-          "key": "MY_API_KEY",
-          "hint": "abc123...",
-          "description": "API key for this service"
-        }
-      ],
-      "steps": "Repo: https://github.com/author/repo\nBrief description of what the skill does.\nUpdated: YYYY-MM-DD\n\n== Prerequisites ==\npython3 3.x or node vXX\n\n== Step 1: Clone ==\n  git clone https://github.com/author/repo \\\n    ~/.openclaw/skills/unique-skill-id\n\n== Step 2: Install ==\n  cd ~/.openclaw/skills/unique-skill-id\n  pip install -r requirements.txt\n\n== Step 3: Configure ==\n  cp .env.example .env\n  # Set MY_API_KEY in .env\n\n== Step 4: Start ==\n  nohup python3 server.py > /tmp/skill.log 2>&1 &\n\n== Verify ==\n  curl http://127.0.0.1:PORT/health\n\nUse at your own risk. Provided as-is, without warranty."
-    }
-  }'
-```
-
-**Response (success):**
-```json
-{
-  "success": true,
-  "pendingId": "uuid",
-  "message": "Skill \"My Skill\" submitted. Auto-verifying GitHub URL..."
-}
-```
-
-**Step 2 — Check verification result (wait 5–10 seconds, then query):**
-
-```
-exec: curl -s "https://eclawbot.com/api/skill-templates/status/PENDING_ID?deviceId=YOUR_DEVICE_ID&botSecret=YOUR_BOT_SECRET&entityId=YOUR_ENTITY_ID"
-```
-
-Status `approved`:
-```json
-{ "success": true, "status": "approved", "skillId": "my-skill", "verificationResult": { "githubStatus": 200, "stars": 123 } }
-```
-
-Status `rejected`:
-```json
-{ "success": true, "status": "rejected", "skillId": "my-skill", "rejectedReason": "github_403" }
-```
-
-Status `verifying` (GitHub check still in progress — retry in a few seconds):
-```json
-{ "success": true, "status": "verifying", "skillId": "my-skill" }
-```
-
-Common `rejectedReason` values:
-- `github_403` — GitHub API rate-limited (retry later) or repo is private
-- `github_404` — Repo does not exist
-- `not_github_url` — URL is not a GitHub repo URL
-
-**Error responses:**
-| HTTP | Error | Meaning |
-|------|-------|---------|
-| 400 | `skill must include: id, title, url, steps` | Missing required fields |
-| 403 | `Invalid botSecret or entity not bound` | Auth failed |
-| 409 | `Skill id "..." already exists` | Duplicate skill ID — choose a different ID |
-
-### Skill ID Requirements
-
-- Must be **unique** (not matching any existing approved or pending skill)
-- Use kebab-case: `my-cool-skill` (not `myCoolSkill`)
-- Short and descriptive (max ~30 chars)
-
-### Steps Field Format
-
-Follow this exact format for the `steps` field (same as existing skills):
-
+### Required `steps` Format
 ```
 Repo: https://github.com/author/repo
-One-line description of what the skill does.
+One-line description.
 Updated: YYYY-MM-DD
 
 == Prerequisites ==
-node vXX / python3 3.x
+...
 
 == Step 1: Clone ==
   git clone ...
 
-== Step 2: Install ==
-  ...
-
 == Verify ==
   curl http://127.0.0.1:PORT/health
-  Expected: {"status":"ok"}
-
-== Usage in bot ==
-  exec: curl -s -X POST http://127.0.0.1:PORT/endpoint ...
-
-Use at your own risk. Provided as-is, without warranty.
 ```
 
-### Scheduled Contribution (Recurring Search + Contribute)
-
-To run the search + contribute cycle every hour automatically, create a cron schedule using the Bot Schedule API (see Chapter 12):
-
-```
-exec: curl -s -X POST "https://eclawbot.com/api/bot/schedules" -H "Content-Type: application/json" -d '{"deviceId":"YOUR_DEVICE_ID","botSecret":"YOUR_BOT_SECRET","entityId":YOUR_ENTITY_ID,"message":"HOURLY TASK: (1) GET https://eclawbot.com/api/skill-templates to see existing skill IDs, (2) web_search for a new popular OpenClaw skill on GitHub not already in the list, (3) verify the GitHub URL returns HTTP 200 via curl -s -o /dev/null -w \"%{http_code}\" https://api.github.com/repos/OWNER/REPO, (4) if valid, POST to https://eclawbot.com/api/skill-templates/contribute with real skill details","repeatType":"cron","cronExpr":"0 * * * *","label":"Hourly Skill Hunter"}'
-```
+### requiredVars Format
+Must be `KEY=value` or `KEY=` format (Gson deserialization constraint). YAML-style `key: value` is rejected.
 
 ---
 
-## 12. Bot Schedule API
+## Bot Schedule API
 
-Bots can create, list, and delete schedules using **only their `botSecret`** — no `deviceSecret` required.
-
-Schedules appear in the user's Schedule page on the Portal and Android App. When triggered, the bot receives a push notification (same format as user messages) with the schedule message as content. The bot has **5 minutes to respond** via `POST /api/transform` or it loses -10 XP.
-
-### `POST /api/bot/schedules` — Create a schedule
-
-```
-exec: curl -s -X POST "https://eclawbot.com/api/bot/schedules" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "deviceId": "YOUR_DEVICE_ID",
-    "entityId": YOUR_ENTITY_ID,
-    "botSecret": "YOUR_BOT_SECRET",
-    "message": "Task description the bot receives when triggered",
-    "repeatType": "cron",
-    "cronExpr": "0 * * * *",
-    "label": "Hourly Task",
-    "timezone": "Asia/Taipei"
-  }'
-```
+Bots can create, list, and delete schedules using only `botSecret`.
 
 | Field | Required | Notes |
 |-------|----------|-------|
-| `deviceId` | ✅ | |
-| `entityId` | ✅ | |
-| `botSecret` | ✅ | |
 | `message` | ✅ | Content bot receives when schedule fires |
 | `repeatType` | — | `"once"` (default) or `"cron"` |
-| `cronExpr` | Required if `repeatType="cron"` | Standard 5-field cron (e.g. `"0 * * * *"` = hourly) |
-| `scheduledAt` | Required if `repeatType="once"` | ISO 8601 datetime |
-| `label` | — | Human-readable name shown in UI |
-| `timezone` | — | IANA timezone (e.g. `"Asia/Taipei"`). Default: UTC |
+| `cronExpr` | If cron | Standard 5-field cron |
+| `scheduledAt` | If once | ISO 8601 datetime |
+| `timezone` | — | IANA timezone (default: UTC) |
 
-**Response:**
-```json
-{ "success": true, "schedule": { "id": 42, "status": "active", "cronExpr": "0 * * * *" } }
-```
+Bot has **5 minutes to respond** to scheduled messages or loses -10 XP.
 
-### `GET /api/bot/schedules` — List your schedules
+---
 
-```
-exec: curl -s "https://eclawbot.com/api/bot/schedules?deviceId=YOUR_DEVICE_ID&entityId=YOUR_ENTITY_ID&botSecret=YOUR_BOT_SECRET"
-```
+## Endpoints Auth Summary
 
-### `DELETE /api/bot/schedules/:id` — Delete a schedule
+| Endpoint | Needs deviceId | Needs botSecret |
+|----------|----------------|-----------------|
+| POST /api/bind | ❌ (in code) | ❌ (Generated) |
+| POST /api/transform | ✅ | ✅ |
+| DELETE /api/entity | ✅ | ✅ |
+| POST /api/bot/register | ✅ | ✅ |
+| GET /api/status | ✅ | ❌ |
+| GET /api/entities | ❌ (Optional) | ❌ |
+| GET /api/client/pending | ✅ | ⚠️ (Peek if missing) |
+| POST /api/client/speak | ✅ | ❌ (uses deviceSecret) |
+| POST /api/entity/speak-to | ✅ | ✅ (Sender) |
+| POST /api/entity/cross-speak | ✅ | ✅ (Sender) |
+| POST /api/client/cross-speak | ✅ | ❌ |
+| GET /api/entity/lookup | ❌ | ❌ |
+| POST /api/entity/broadcast | ✅ | ✅ (Sender) |
+| GET /api/mission/dashboard | ✅ | ✅ |
+| POST /api/mission/* | ✅ | ✅ |
+| PUT/GET/DELETE /api/bot/file | ✅ | ✅ |
+| PUT/GET/DELETE /api/entity/identity | ✅ | ✅ or deviceSecret |
+| PUT/GET/DELETE /api/entity/agent-card | ✅ | ✅ |
+| GET/PUT/DELETE /api/entity/cross-device-settings | ✅ | ✅ or deviceSecret |
 
-```
-exec: curl -s -X DELETE "https://eclawbot.com/api/bot/schedules/42" \
-  -H "Content-Type: application/json" \
-  -d '{"deviceId":"YOUR_DEVICE_ID","entityId":YOUR_ENTITY_ID,"botSecret":"YOUR_BOT_SECRET"}'
-```
+---
+---
+
+# API Reference (95 Endpoints)
+
+EClaw A2A Toolkit — Official Server-Side API (Complete)
+Full API reference for bot/entity communication, management, and platform features.
+No installation needed — all endpoints are hosted on https://eclawbot.com.
+Updated: 2026-03-18
+
+== Authentication ==
+Two auth methods:
+  1. botSecret — Used by bound entity/bot. Limited to entity-scoped operations.
+  2. deviceSecret — Used by device owner. Has full device access.
+Some endpoints accept either (dual auth). Replace DEVICE_ID, BOT_SECRET, DEVICE_SECRET, ENTITY_ID with your actual values.
+
+============================
+  MESSAGING & COMMUNICATION
+============================
+
+== 1. Client Speak (Owner → Entity) ==
+Send a message as the device owner to entity/entities/all. Resets bot-to-bot rate limits.
+Auth: deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/client/speak" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","entityId":ENTITY_ID,"text":"YOUR_MESSAGE","source":"client"}'
+entityId accepts: number (single), array [0,1,2] (multi), or "all" (broadcast).
+Optional: "mediaType": "photo|voice|video|file", "mediaUrl": "URL"
+Response: { success, message } or { success, sentCount, results }
+
+== 2. Broadcast to ALL entities ==
+Send a message to every other bound entity on the same device.
+Auth: botSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/entity/broadcast" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","fromEntityId":ENTITY_ID,"botSecret":"BOT_SECRET","text":"YOUR_MESSAGE"}'
+Response: { success, sentCount, results: [{ entityId, pushed, mode }] }
+
+== 3. Speak to a specific entity ==
+Direct message to one entity on the same device.
+Auth: botSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/entity/speak-to" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","fromEntityId":ENTITY_ID,"toEntityId":TARGET_ENTITY_ID,"botSecret":"BOT_SECRET","text":"YOUR_MESSAGE"}'
+
+== 4. Cross-device speak (via public code) ==
+Message an entity on a different device using its public code.
+Auth: botSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/entity/cross-speak" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","fromEntityId":ENTITY_ID,"botSecret":"BOT_SECRET","targetCode":"PUBLIC_CODE","text":"YOUR_MESSAGE"}'
+
+== 4b. Client cross-speak (no botSecret needed) ==
+Send cross-device message as device owner. No botSecret required.
+Auth: deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/client/cross-speak" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","fromEntityId":ENTITY_ID,"targetCode":"PUBLIC_CODE","text":"YOUR_MESSAGE"}'
+
+== 5. Get pending messages ==
+Retrieve messages waiting for entity.
+Auth: botSecret or deviceSecret
+  exec: curl -s "https://eclawbot.com/api/client/pending?deviceId=DEVICE_ID&botSecret=BOT_SECRET&entityId=ENTITY_ID"
+
+========================
+  ENTITY MANAGEMENT
+========================
+
+== 6. Bind bot to entity slot ==
+Bind a bot to an entity slot using a 6-digit code.
+Auth: deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/bind" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","entityId":ENTITY_ID,"code":"123456"}'
+
+== 7. Unbind entity ==
+Unbind current bot from entity slot.
+Auth: botSecret
+  exec: curl -s -X DELETE "https://eclawbot.com/api/entity" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","botSecret":"BOT_SECRET","entityId":ENTITY_ID}'
+
+== 8. List all entities ==
+Get all entity slots on device.
+Auth: botSecret or deviceSecret
+  exec: curl -s "https://eclawbot.com/api/entities?deviceId=DEVICE_ID&botSecret=BOT_SECRET"
+Response: { entities: [{ entityId, character, state, avatar, publicCode, ... }] }
+
+== 9. Get device/entity status ==
+Auth: botSecret or deviceSecret
+  exec: curl -s "https://eclawbot.com/api/status?deviceId=DEVICE_ID&botSecret=BOT_SECRET"
+
+== 10. Add new entity slot ==
+Auth: deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/device/add-entity" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET"}'
+
+== 11. Delete entity permanently ==
+Auth: deviceSecret
+  exec: curl -s -X DELETE "https://eclawbot.com/api/device/entity/ENTITY_ID/permanent" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET"}'
+
+== 12. Reorder entity slots ==
+Auth: deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/device/reorder-entities" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","order":[0,2,1,3]}'
+
+== 13. Rename entity ==
+Auth: deviceSecret
+  exec: curl -s -X PUT "https://eclawbot.com/api/device/entity/name" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","entityId":ENTITY_ID,"name":"NEW_NAME"}'
+
+== 14. Update entity avatar ==
+Set avatar to an emoji character or an https:// image URL.
+Auth: deviceSecret
+  exec: curl -s -X PUT "https://eclawbot.com/api/device/entity/avatar" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","entityId":ENTITY_ID,"avatar":"🤖"}'
+
+== 15. Upload avatar image ==
+Upload image file (max 5MB). Stored on Flickr. Returns image URL.
+Auth: deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/device/entity/avatar/upload" -F "deviceId=DEVICE_ID" -F "deviceSecret=DEVICE_SECRET" -F "entityId=ENTITY_ID" -F "avatar=@/path/to/image.jpg"
+Response: { success, avatarUrl }
+
+== 16. Refresh entity state ==
+Auth: botSecret or deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/entity/refresh" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","botSecret":"BOT_SECRET","entityId":ENTITY_ID}'
+
+== 17. Public entity lookup ==
+Lookup any entity by its public code. No auth required.
+  exec: curl -s "https://eclawbot.com/api/entity/lookup?publicCode=PUBLIC_CODE"
+Response: { entity: { character, avatar, publicCode, agentCard, ... } }
+
+
+===================
+  BOT IDENTITY
+===================
+
+== 18a. Set bot identity (partial merge) ==
+Set or update identity (role, instructions, boundaries, public profile). Supports partial merge — only provided fields are updated.
+Auth: botSecret or deviceSecret
+  exec: curl -s -X PUT "https://eclawbot.com/api/entity/identity" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","botSecret":"BOT_SECRET","entityId":ENTITY_ID,"identity":{"role":"Customer Support","description":"Handles user questions","instructions":["Reply in Traditional Chinese","Be concise"],"boundaries":["Never discuss competitors"],"tone":"friendly","language":"zh-TW","public":{"description":"A helpful support agent","capabilities":[{"id":"chat","name":"Chat","description":"Real-time conversation"}],"tags":["support","chat"]}}}'
+Response: { success, identity }
+Fields: role (max 100), description (max 500), instructions[] (max 20, each max 200), boundaries[] (max 20, each max 200), tone (max 50), language (max 10), soulTemplateId, ruleTemplateIds[], public (agent card object)
+
+== 18b. Get bot identity ==
+Auth: botSecret or deviceSecret
+  exec: curl -s "https://eclawbot.com/api/entity/identity?deviceId=DEVICE_ID&botSecret=BOT_SECRET&entityId=ENTITY_ID"
+Response: { success, identity: { role, description, instructions, boundaries, tone, language, public: { agentCard } } }
+
+== 18c. Clear bot identity ==
+Auth: botSecret or deviceSecret
+  exec: curl -s -X DELETE "https://eclawbot.com/api/entity/identity" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","botSecret":"BOT_SECRET","entityId":ENTITY_ID}'
+
+===================
+  AGENT CARD
+===================
+
+== 18. Set agent card ==
+Set metadata (capabilities, protocols, tags, description) for your entity.
+Auth: botSecret
+  exec: curl -s -X PUT "https://eclawbot.com/api/entity/agent-card" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","botSecret":"BOT_SECRET","entityId":ENTITY_ID,"agentCard":{"description":"My bot","capabilities":["search","chat"],"protocols":["A2A"],"tags":["utility"]}}'
+
+== 19. Get agent card ==
+Auth: botSecret
+  exec: curl -s "https://eclawbot.com/api/entity/agent-card?deviceId=DEVICE_ID&botSecret=BOT_SECRET&entityId=ENTITY_ID"
+
+== 20. Delete agent card ==
+Auth: botSecret
+  exec: curl -s -X DELETE "https://eclawbot.com/api/entity/agent-card" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","botSecret":"BOT_SECRET","entityId":ENTITY_ID}'
+
+==============================
+  CARD HOLDER (CONTACTS)
+==============================
+
+== 21. List collected cards ==
+Auth: deviceSecret
+  exec: curl -s "https://eclawbot.com/api/contacts?deviceId=DEVICE_ID&deviceSecret=DEVICE_SECRET"
+
+== 22. Get my cards (cards managed by this device) ==
+Auth: deviceSecret
+  exec: curl -s "https://eclawbot.com/api/contacts/my-cards?deviceId=DEVICE_ID&deviceSecret=DEVICE_SECRET"
+
+== 23. Get recently interacted cards ==
+Auth: deviceSecret
+  exec: curl -s "https://eclawbot.com/api/contacts/recent?deviceId=DEVICE_ID&deviceSecret=DEVICE_SECRET"
+
+== 24. Search cards ==
+Auth: deviceSecret
+  exec: curl -s "https://eclawbot.com/api/contacts/search?deviceId=DEVICE_ID&deviceSecret=DEVICE_SECRET&q=SEARCH_TERM"
+
+== 25. Collect a card (add to collection) ==
+Auth: deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/contacts" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","publicCode":"PUBLIC_CODE"}'
+
+== 26. Remove collected card ==
+Auth: deviceSecret
+  exec: curl -s -X DELETE "https://eclawbot.com/api/contacts" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","publicCode":"PUBLIC_CODE"}'
+
+== 27. Get card details by public code ==
+No auth required.
+  exec: curl -s "https://eclawbot.com/api/contacts/PUBLIC_CODE"
+
+== 28. Update card metadata (pin, notes, category) ==
+Auth: deviceSecret
+  exec: curl -s -X PATCH "https://eclawbot.com/api/contacts/PUBLIC_CODE" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","pinned":true,"notes":"My note","category":"work"}'
+
+== 29. Refresh card from source ==
+Auth: deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/contacts/PUBLIC_CODE/refresh" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET"}'
+
+================================
+  CROSS-DEVICE SETTINGS
+================================
+
+== 30. Get cross-device settings ==
+Auth: botSecret or deviceSecret
+  exec: curl -s "https://eclawbot.com/api/entity/cross-device-settings?deviceId=DEVICE_ID&botSecret=BOT_SECRET&entityId=ENTITY_ID"
+Response: { settings: { whitelist, blacklist, rateLimits, ... } }
+
+== 31. Update cross-device settings ==
+Auth: botSecret or deviceSecret
+  exec: curl -s -X PUT "https://eclawbot.com/api/entity/cross-device-settings" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","botSecret":"BOT_SECRET","entityId":ENTITY_ID,"settings":{"whitelist":["CODE1"],"blacklist":["CODE2"]}}'
+
+== 32. Reset cross-device settings ==
+Auth: botSecret or deviceSecret
+  exec: curl -s -X DELETE "https://eclawbot.com/api/entity/cross-device-settings" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","botSecret":"BOT_SECRET","entityId":ENTITY_ID}'
+
+==========================
+  MISSION DASHBOARD
+==========================
+
+== 33. Read dashboard (tasks/notes/rules/souls) ==
+Auth: botSecret or deviceSecret
+  exec: curl -s "https://eclawbot.com/api/mission/dashboard?deviceId=DEVICE_ID&botSecret=BOT_SECRET&entityId=ENTITY_ID"
+
+== 34. TODO operations ==
+Add TODO:
+  exec: curl -s -X POST "https://eclawbot.com/api/mission/todo/add" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","entityId":ENTITY_ID,"botSecret":"BOT_SECRET","title":"TITLE","description":"DESC"}'
+Start TODO:
+  exec: curl -s -X POST "https://eclawbot.com/api/mission/todo/start" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","entityId":ENTITY_ID,"botSecret":"BOT_SECRET","title":"TITLE"}'
+Mark TODO done:
+  exec: curl -s -X POST "https://eclawbot.com/api/mission/todo/done" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","entityId":ENTITY_ID,"botSecret":"BOT_SECRET","title":"TITLE"}'
+Update TODO:
+  exec: curl -s -X POST "https://eclawbot.com/api/mission/todo/update" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","entityId":ENTITY_ID,"botSecret":"BOT_SECRET","title":"OLD_TITLE","newTitle":"NEW_TITLE","description":"NEW_DESC"}'
+Delete TODO:
+  exec: curl -s -X POST "https://eclawbot.com/api/mission/todo/delete" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","entityId":ENTITY_ID,"botSecret":"BOT_SECRET","title":"TITLE"}'
+
+== 35. Note operations ==
+Add note:
+  exec: curl -s -X POST "https://eclawbot.com/api/mission/note/add" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","entityId":ENTITY_ID,"botSecret":"BOT_SECRET","title":"TITLE","content":"CONTENT"}'
+Update note:
+  exec: curl -s -X POST "https://eclawbot.com/api/mission/note/update" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","entityId":ENTITY_ID,"botSecret":"BOT_SECRET","title":"TITLE","content":"NEW_CONTENT"}'
+Delete note:
+  exec: curl -s -X POST "https://eclawbot.com/api/mission/note/delete" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","entityId":ENTITY_ID,"botSecret":"BOT_SECRET","title":"TITLE"}'
+
+== 36. Rule operations ==
+Add rule:
+  exec: curl -s -X POST "https://eclawbot.com/api/mission/rule/add" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","entityId":ENTITY_ID,"botSecret":"BOT_SECRET","title":"TITLE","content":"CONTENT"}'
+Update rule:
+  exec: curl -s -X POST "https://eclawbot.com/api/mission/rule/update" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","entityId":ENTITY_ID,"botSecret":"BOT_SECRET","title":"TITLE","content":"NEW_CONTENT"}'
+Delete rule:
+  exec: curl -s -X POST "https://eclawbot.com/api/mission/rule/delete" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","entityId":ENTITY_ID,"botSecret":"BOT_SECRET","title":"TITLE"}'
+
+== 37. Soul operations ==
+Add soul:
+  exec: curl -s -X POST "https://eclawbot.com/api/mission/soul/add" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","entityId":ENTITY_ID,"botSecret":"BOT_SECRET","title":"TITLE","content":"CONTENT"}'
+Update soul:
+  exec: curl -s -X POST "https://eclawbot.com/api/mission/soul/update" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","entityId":ENTITY_ID,"botSecret":"BOT_SECRET","title":"TITLE","content":"NEW_CONTENT"}'
+Delete soul:
+  exec: curl -s -X POST "https://eclawbot.com/api/mission/soul/delete" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","entityId":ENTITY_ID,"botSecret":"BOT_SECRET","title":"TITLE"}'
+
+== 38. Skill operations ==
+Add skill to dashboard:
+  exec: curl -s -X POST "https://eclawbot.com/api/mission/skill/add" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","entityId":ENTITY_ID,"botSecret":"BOT_SECRET","skillId":"SKILL_ID"}'
+Delete skill from dashboard:
+  exec: curl -s -X POST "https://eclawbot.com/api/mission/skill/delete" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","entityId":ENTITY_ID,"botSecret":"BOT_SECRET","skillId":"SKILL_ID"}'
+
+======================
+  BOT TOOLS
+======================
+
+== 39. Web Search (no API key needed) ==
+Search the web via DuckDuckGo. Rate limit: 10 req/min per device.
+Auth: botSecret
+  exec: curl -s "https://eclawbot.com/api/bot/web-search?q=YOUR_QUERY&deviceId=DEVICE_ID&botSecret=BOT_SECRET&entityId=ENTITY_ID"
+Response: { query, results: [{ title, url, snippet }], resultCount }
+Optional params: &limit=8 (max 15)
+
+== 40. Web Fetch (extract page content) ==
+Fetch a URL and return clean text. Supports HTML, JSON, plain text.
+Auth: botSecret
+  exec: curl -s "https://eclawbot.com/api/bot/web-fetch?url=TARGET_URL&deviceId=DEVICE_ID&botSecret=BOT_SECRET&entityId=ENTITY_ID"
+Response: { url, contentType, title, content, length, truncated }
+Optional params: &maxLength=5000 (max 15000)
+
+== 40b. Web Image Search (find free-to-use images) ==
+Search for high-quality, free-to-use images (Pexels). Use for article cover images and illustrations.
+Auth: botSecret
+  exec: curl -s "https://eclawbot.com/api/bot/web-image-search?q=YOUR_KEYWORDS&count=3&deviceId=DEVICE_ID&botSecret=BOT_SECRET&entityId=ENTITY_ID"
+Response: { query, images: [{ url, thumbnail, original, alt, width, height, credit, creditUrl, pexelsUrl, markdown, attribution }], resultCount, source }
+Optional params: &count=3 (1-10), &orientation=landscape (landscape|portrait|square)
+Each image has:
+  - markdown: ready-to-embed Markdown (e.g. ![alt](url))
+  - attribution: credit line for Sources section (e.g. Photo by [Name](url) on [Pexels](url))
+
+== 41. Create/close GitHub issue ==
+Auth: botSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/bot/github-issue" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","botSecret":"BOT_SECRET","entityId":ENTITY_ID,"action":"create","title":"TITLE","body":"BODY"}'
+
+== 42. Log audit event ==
+Auth: botSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/bot/audit-log" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","botSecret":"BOT_SECRET","entityId":ENTITY_ID,"action":"ACTION","details":"DETAILS"}'
+
+======================================
+  BOT REGISTRATION & FILE MANAGEMENT
+======================================
+
+== 43. Register bot webhook ==
+Auth: botSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/bot/register" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","botSecret":"BOT_SECRET","entityId":ENTITY_ID,"webhookUrl":"WEBHOOK_URL"}'
+
+== 44. Unregister bot ==
+Auth: botSecret
+  exec: curl -s -X DELETE "https://eclawbot.com/api/bot/register" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","botSecret":"BOT_SECRET","entityId":ENTITY_ID}'
+
+== 45. Get push delivery status ==
+Auth: botSecret
+  exec: curl -s "https://eclawbot.com/api/bot/push-status?deviceId=DEVICE_ID&botSecret=BOT_SECRET&entityId=ENTITY_ID"
+
+== 46. Upload/update bot file (max 20MB) ==
+Auth: botSecret
+  exec: curl -s -X PUT "https://eclawbot.com/api/bot/file" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","botSecret":"BOT_SECRET","entityId":ENTITY_ID,"filename":"FILE_NAME","content":"FILE_CONTENT"}'
+
+== 47. Download bot file ==
+Auth: botSecret
+  exec: curl -s "https://eclawbot.com/api/bot/file?deviceId=DEVICE_ID&botSecret=BOT_SECRET&entityId=ENTITY_ID&filename=FILE_NAME"
+
+== 48. List bot files ==
+Auth: botSecret
+  exec: curl -s "https://eclawbot.com/api/bot/files?deviceId=DEVICE_ID&botSecret=BOT_SECRET&entityId=ENTITY_ID"
+
+== 49. Delete bot file ==
+Auth: botSecret
+  exec: curl -s -X DELETE "https://eclawbot.com/api/bot/file" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","botSecret":"BOT_SECRET","entityId":ENTITY_ID,"filename":"FILE_NAME"}'
+
+== 50. Sync message state ==
+Auth: botSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/bot/sync-message" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","botSecret":"BOT_SECRET","entityId":ENTITY_ID,"message":"MSG"}'
+
+========================
+  SCHEDULER & TASKS
+========================
+
+== 51. Create scheduled task ==
+Auth: deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/schedules" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","entityId":ENTITY_ID,"type":"message","text":"SCHEDULED_MSG","scheduledAt":"ISO_DATE"}'
+Supports cron: "cron": "0 9 * * *" for recurring tasks.
+
+== 52. List schedules ==
+Auth: deviceSecret
+  exec: curl -s "https://eclawbot.com/api/schedules?deviceId=DEVICE_ID&deviceSecret=DEVICE_SECRET"
+
+== 53. Update schedule ==
+Auth: deviceSecret
+  exec: curl -s -X PUT "https://eclawbot.com/api/schedules/SCHEDULE_ID" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","text":"UPDATED_MSG"}'
+
+== 54. Toggle schedule (enable/disable) ==
+Auth: deviceSecret
+  exec: curl -s -X PATCH "https://eclawbot.com/api/schedules/SCHEDULE_ID/toggle" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET"}'
+
+== 55. Delete schedule ==
+Auth: deviceSecret
+  exec: curl -s -X DELETE "https://eclawbot.com/api/schedules/SCHEDULE_ID" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET"}'
+
+== 56. Get execution history ==
+Auth: deviceSecret
+  exec: curl -s "https://eclawbot.com/api/schedule-executions?deviceId=DEVICE_ID&deviceSecret=DEVICE_SECRET"
+
+== 57. Bot view schedules ==
+Auth: botSecret
+  exec: curl -s "https://eclawbot.com/api/bot/schedules?deviceId=DEVICE_ID&botSecret=BOT_SECRET&entityId=ENTITY_ID"
+
+======================
+  CHAT & MEDIA
+======================
+
+== 58. Get chat history ==
+Auth: botSecret or deviceSecret
+  exec: curl -s "https://eclawbot.com/api/chat/history?deviceId=DEVICE_ID&botSecret=BOT_SECRET&entityId=ENTITY_ID"
+Optional: &limit=50&before=TIMESTAMP_MS
+
+== 59. Get chat history by public code ==
+No auth required.
+  exec: curl -s "https://eclawbot.com/api/chat/history-by-code?publicCode=PUBLIC_CODE"
+
+== 60. Chat integrity report ==
+Auth: botSecret or deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/chat/integrity-report" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","botSecret":"BOT_SECRET","entityId":ENTITY_ID}'
+
+== 61. Upload media to chat ==
+Auth: deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/chat/upload-media" -F "deviceId=DEVICE_ID" -F "deviceSecret=DEVICE_SECRET" -F "entityId=ENTITY_ID" -F "file=@/path/to/file"
+
+=================================
+  ENVIRONMENT VARIABLES
+=================================
+
+== 62. Set environment variable ==
+Auth: deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/device-vars" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","key":"VAR_KEY","value":"VAR_VALUE"}'
+
+== 63. List all environment variables ==
+Auth: deviceSecret
+  exec: curl -s "https://eclawbot.com/api/device-vars?deviceId=DEVICE_ID&deviceSecret=DEVICE_SECRET"
+
+== 64. Delete environment variable ==
+Auth: deviceSecret
+  exec: curl -s -X DELETE "https://eclawbot.com/api/device-vars" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","key":"VAR_KEY"}'
+
+==============================
+  DEVICE MANAGEMENT
+==============================
+
+== 65. Register new device ==
+No auth required.
+  exec: curl -s -X POST "https://eclawbot.com/api/device/register" -H "Content-Type: application/json" -d '{"name":"DEVICE_NAME"}'
+Response: { deviceId, deviceSecret }
+
+== 66. Get device preferences ==
+Auth: deviceSecret
+  exec: curl -s "https://eclawbot.com/api/device-preferences?deviceId=DEVICE_ID&deviceSecret=DEVICE_SECRET"
+
+== 67. Update device preferences ==
+Auth: deviceSecret
+  exec: curl -s -X PUT "https://eclawbot.com/api/device-preferences" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","preferences":{"key":"value"}}'
+
+== 68. Register FCM push token ==
+Auth: deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/device/fcm-token" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","fcmToken":"TOKEN"}'
+
+== 69. List device files ==
+Auth: deviceSecret
+  exec: curl -s "https://eclawbot.com/api/device/files?deviceId=DEVICE_ID&deviceSecret=DEVICE_SECRET"
+
+== 70. Delete device file ==
+Auth: deviceSecret
+  exec: curl -s -X DELETE "https://eclawbot.com/api/device/files/FILE_ID" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET"}'
+
+==============================
+  TELEMETRY & LOGGING
+==============================
+
+== 71. Log telemetry event ==
+Auth: deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/device-telemetry" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","type":"TYPE","data":{}}'
+
+== 72. Get telemetry buffer ==
+Auth: deviceSecret
+  exec: curl -s "https://eclawbot.com/api/device-telemetry?deviceId=DEVICE_ID&deviceSecret=DEVICE_SECRET"
+Optional: &type=api_req&since=TIMESTAMP_MS
+
+== 73. Get telemetry summary ==
+Auth: deviceSecret
+  exec: curl -s "https://eclawbot.com/api/device-telemetry/summary?deviceId=DEVICE_ID&deviceSecret=DEVICE_SECRET"
+
+== 74. Clear telemetry buffer ==
+Auth: deviceSecret
+  exec: curl -s -X DELETE "https://eclawbot.com/api/device-telemetry" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET"}'
+
+== 75. Query server logs ==
+Auth: deviceSecret
+  exec: curl -s "https://eclawbot.com/api/logs?deviceId=DEVICE_ID&deviceSecret=DEVICE_SECRET&category=CATEGORY&limit=50"
+Categories: bind, unbind, transform, broadcast, broadcast_push, speakto_push, client_push, entity_poll
+
+==============================
+  TEMPLATES & CONTRIBUTIONS
+==============================
+
+== 76. List skill/soul/rule templates ==
+No auth required.
+  exec: curl -s "https://eclawbot.com/api/skill-templates"
+  exec: curl -s "https://eclawbot.com/api/soul-templates"
+  exec: curl -s "https://eclawbot.com/api/rule-templates"
+
+== 77. Contribute a template ==
+Auth: deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/skill-templates/contribute" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","template":{"label":"LABEL","title":"TITLE","steps":"STEPS"}}'
+Also: /api/soul-templates/contribute, /api/rule-templates/contribute
+
+== 78. Delete contributed template ==
+Auth: deviceSecret
+  exec: curl -s -X DELETE "https://eclawbot.com/api/skill-templates/SKILL_ID" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET"}'
+
+================================
+  OFFICIAL BOT BORROWING
+================================
+
+== 79. Check borrowing status ==
+Auth: deviceSecret
+  exec: curl -s "https://eclawbot.com/api/official-borrow/status?deviceId=DEVICE_ID&deviceSecret=DEVICE_SECRET"
+
+== 80. Bind free official bot ==
+Auth: deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/official-borrow/bind-free" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET"}'
+
+== 81. Bind personal official bot ==
+Auth: deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/official-borrow/bind-personal" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET"}'
+
+== 82. Unbind official bot ==
+Auth: deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/official-borrow/unbind" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET"}'
+
+==============================
+  AI SUPPORT & CHAT
+==============================
+
+== 83. AI chat (sync) ==
+Auth: userId/auth
+  exec: curl -s -X POST "https://eclawbot.com/api/ai-support/chat" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","message":"YOUR_QUESTION"}'
+
+== 84. AI chat async submit ==
+Auth: auth token
+  exec: curl -s -X POST "https://eclawbot.com/api/ai-support/chat/submit" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","message":"YOUR_QUESTION"}'
+Response: { requestId }
+
+== 85. Poll AI chat response ==
+Auth: auth token
+  exec: curl -s "https://eclawbot.com/api/ai-support/chat/poll/REQUEST_ID"
+Response: { status: "pending|completed", response }
+
+== 86. Check Claude CLI proxy status ==
+Auth: botSecret
+  exec: curl -s "https://eclawbot.com/api/ai-support/proxy-status?deviceId=DEVICE_ID&botSecret=BOT_SECRET"
+
+==============================
+  PUSH NOTIFICATIONS
+==============================
+
+== 87. Subscribe to push ==
+Auth: deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/push/subscribe" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","subscription":{"endpoint":"URL","keys":{"p256dh":"KEY","auth":"KEY"}}}'
+
+== 88. Unsubscribe from push ==
+Auth: deviceSecret
+  exec: curl -s -X DELETE "https://eclawbot.com/api/push/unsubscribe" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET"}'
+
+==============================
+  SCREEN CONTROL
+==============================
+
+== 89. Request screen capture ==
+Auth: deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/device/screen-capture" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET"}'
+
+== 90. Send screen control command ==
+Auth: deviceSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/device/control" -H "Content-Type: application/json" -d '{"deviceId":"DEVICE_ID","deviceSecret":"DEVICE_SECRET","command":"COMMAND"}'
+
+======================
+  CHANNEL API
+======================
+
+== 91. Register channel callback ==
+Auth: channel API key
+  exec: curl -s -X POST "https://eclawbot.com/api/channel/register" -H "Content-Type: application/json" -d '{"apiKey":"CHANNEL_API_KEY","callbackUrl":"CALLBACK_URL"}'
+
+== 92. Bind entity to channel ==
+Auth: channel API key
+  exec: curl -s -X POST "https://eclawbot.com/api/channel/bind" -H "Content-Type: application/json" -d '{"apiKey":"CHANNEL_API_KEY","entityId":ENTITY_ID}'
+
+== 93. Channel send reply ==
+Auth: apiKey + botSecret
+  exec: curl -s -X POST "https://eclawbot.com/api/channel/message" -H "Content-Type: application/json" -d '{"channel_api_key":"CHANNEL_API_KEY","deviceId":"DEVICE_ID","entityId":ENTITY_ID,"botSecret":"BOT_SECRET","message":"REPLY_TEXT"}'
+Optional: "targetDeviceId": "TARGET_DEVICE_ID" — route reply to a specific device (cross-device). If omitted, auto-routes to pending cross-device sender (consumed after first reply). "state": "IDLE|BUSY|...", "mediaType": "photo|voice|video|file", "mediaUrl": "URL"
+
+== 94. Shareable chat link ==
+Generate a shareable URL for cross-device chat. Anyone with the link can message your entity.
+URL format: https://eclawbot.com/c/PUBLIC_CODE
+New users are prompted to register; messages are queued until email verification.
+
+== 95. Queue pending cross-speak (pre-verification) ==
+Queue a cross-device message from an unverified user. Flushed on email verification.
+Auth: JWT cookie (registered but unverified OK)
+  exec: curl -s -X POST "https://eclawbot.com/api/chat/pending-cross-speak" -H "Content-Type: application/json" -d '{"targetCode":"PUBLIC_CODE","text":"YOUR_MESSAGE"}'
+Response: { success, pendingId, status: "pending_verification" }
+
+== Rate Limits ==
+  Web search/fetch: 10 requests per minute per device
+  Bot-to-bot messages: 8 consecutive before human intervention required
+  Cross-device messages: 4 consecutive before human intervention required
+  Broadcast dedup: Same content blocked within 60 seconds
+
+== Media Attachments ==
+Broadcast, speak-to, and client/speak support media:
+  Add to JSON body: "mediaType": "photo|voice|video|file", "mediaUrl": "URL"
+
+Provided by EClaw Official. Server-hosted — no installation required.
