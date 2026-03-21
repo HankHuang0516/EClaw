@@ -1,3 +1,108 @@
+## [1.126.1](https://github.com/HankHuang0516/EClaw/compare/v1.126.0...v1.126.1) (2026-03-21)
+
+
+### Bug Fixes
+
+* **chat:** correct cross-device message direction rendering ([#366](https://github.com/HankHuang0516/EClaw/issues/366)) ([df1b669](https://github.com/HankHuang0516/EClaw/commit/df1b66967a0e4162594435f9066d0f8af15f4b00))
+
+# [1.126.0](https://github.com/HankHuang0516/EClaw/compare/v1.125.0...v1.126.0) (2026-03-21)
+
+
+### Features
+
+* **transform:** auto-route cross-device replies to sender ([#365](https://github.com/HankHuang0516/EClaw/issues/365)) ([21487d0](https://github.com/HankHuang0516/EClaw/commit/21487d00b5e30d80477b6c9bb5587b0aafbf6eea))
+
+# [1.125.0](https://github.com/HankHuang0516/EClaw/compare/v1.124.3...v1.125.0) (2026-03-21)
+
+
+### Features
+
+* **share-chat:** add reply visibility and delivery status ([#364](https://github.com/HankHuang0516/EClaw/issues/364)) ([82a9de4](https://github.com/HankHuang0516/EClaw/commit/82a9de47572587bc19920fd3fe91d0212a77ebf3))
+
+## [1.124.3](https://github.com/HankHuang0516/EClaw/compare/v1.124.2...v1.124.3) (2026-03-21)
+
+
+### Bug Fixes
+
+* **channel:** add channel push support to cross-speak and pending-flush endpoints ([#362](https://github.com/HankHuang0516/EClaw/issues/362)) ([e1acf43](https://github.com/HankHuang0516/EClaw/commit/e1acf432daec9884e78751a3e004e29d9fdbbfd6))
+
+## [1.124.2](https://github.com/HankHuang0516/EClaw/compare/v1.124.1...v1.124.2) (2026-03-21)
+
+
+### Bug Fixes
+
+* **scheduler:** allow deleting completed/expired schedules ([#361](https://github.com/HankHuang0516/EClaw/issues/361)) ([2317041](https://github.com/HankHuang0516/EClaw/commit/2317041f002a9e81bc04913905827fdee2732c03))
+
+## [1.124.1](https://github.com/HankHuang0516/EClaw/compare/v1.124.0...v1.124.1) (2026-03-21)
+
+
+### Bug Fixes
+
+* **ui:** WCAG contrast, CSS vars, i18n gaps ([#360](https://github.com/HankHuang0516/EClaw/issues/360)) ([8a12e6f](https://github.com/HankHuang0516/EClaw/commit/8a12e6f49eb20d77c57e94bb9e4e07ec4ed87398)), closes [#777](https://github.com/HankHuang0516/EClaw/issues/777) [#999](https://github.com/HankHuang0516/EClaw/issues/999) [text_hint/#777](https://github.com/HankHuang0516/EClaw/issues/777) [text_disabled/#666](https://github.com/HankHuang0516/EClaw/issues/666) [#64B5F6](https://github.com/HankHuang0516/EClaw/issues/64B5F6)
+
+# [1.124.0](https://github.com/HankHuang0516/EClaw/compare/v1.123.3...v1.124.0) (2026-03-21)
+
+
+### Features
+
+* expand Jest test coverage from 65% to 75% ([#359](https://github.com/HankHuang0516/EClaw/issues/359)) ([eeb341a](https://github.com/HankHuang0516/EClaw/commit/eeb341a9c07e5a2bf2a899f5962fad3f9026d81c))
+
+## [1.123.3](https://github.com/HankHuang0516/EClaw/compare/v1.123.2...v1.123.3) (2026-03-21)
+
+
+### Bug Fixes
+
+* share-chat i18n + debug logging for cross-speak ([#357](https://github.com/HankHuang0516/EClaw/issues/357)) ([5192f96](https://github.com/HankHuang0516/EClaw/commit/5192f963d0fcbef40c7236ee24a3ef71e5d21bfa))
+
+## [1.123.2](https://github.com/HankHuang0516/EClaw/compare/v1.123.1...v1.123.2) (2026-03-21)
+
+
+### Bug Fixes
+
+* rebrand EClawbot from "IoT claw machine" to "A2A communication platform" ([#356](https://github.com/HankHuang0516/EClaw/issues/356)) ([a7d478e](https://github.com/HankHuang0516/EClaw/commit/a7d478ec4760b06de9f2c1161aba7da86b8b7f8b))
+
+## [1.123.1](https://github.com/HankHuang0516/EClaw/compare/v1.123.0...v1.123.1) (2026-03-21)
+
+
+### Bug Fixes
+
+* share-chat cross-speak owner mode, i18n, QR code, pending message bugs ([#355](https://github.com/HankHuang0516/EClaw/issues/355)) ([25b0e70](https://github.com/HankHuang0516/EClaw/commit/25b0e70bfad8823ba19bb4bd91b3d71afcb1c01f))
+
+# [1.123.0](https://github.com/HankHuang0516/EClaw/compare/v1.122.0...v1.123.0) (2026-03-20)
+
+
+### Features
+
+* **i18n:** add Identity Panel translations for all 8 languages ([#354](https://github.com/HankHuang0516/EClaw/issues/354)) ([396e834](https://github.com/HankHuang0516/EClaw/commit/396e83466899b1000cbda4b00e6f43f9bed1d2e1)), closes [#5](https://github.com/HankHuang0516/EClaw/issues/5) [#7](https://github.com/HankHuang0516/EClaw/issues/7) [#8](https://github.com/HankHuang0516/EClaw/issues/8) [#10](https://github.com/HankHuang0516/EClaw/issues/10) [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#3](https://github.com/HankHuang0516/EClaw/issues/3) [#4](https://github.com/HankHuang0516/EClaw/issues/4) [#6](https://github.com/HankHuang0516/EClaw/issues/6) [#9](https://github.com/HankHuang0516/EClaw/issues/9)
+
+# [1.122.0](https://github.com/HankHuang0516/EClaw/compare/v1.121.0...v1.122.0) (2026-03-20)
+
+
+### Features
+
+* add shareable chat link with QR code for Card Holder entities ([#353](https://github.com/HankHuang0516/EClaw/issues/353)) ([ba346ba](https://github.com/HankHuang0516/EClaw/commit/ba346ba9f5f8a80f54fc131bd8eca0909a8396a2))
+
+# [1.121.0](https://github.com/HankHuang0516/EClaw/compare/v1.120.3...v1.121.0) (2026-03-20)
+
+
+### Features
+
+* add DELETE /api/feedback/:id endpoint and test cleanup ([#352](https://github.com/HankHuang0516/EClaw/issues/352)) ([7f50d20](https://github.com/HankHuang0516/EClaw/commit/7f50d20f83e016fa62657719f085bd52a8039bf5)), closes [#345](https://github.com/HankHuang0516/EClaw/issues/345) [#274](https://github.com/HankHuang0516/EClaw/issues/274) [#256](https://github.com/HankHuang0516/EClaw/issues/256) [#258](https://github.com/HankHuang0516/EClaw/issues/258) [#259](https://github.com/HankHuang0516/EClaw/issues/259) [#274](https://github.com/HankHuang0516/EClaw/issues/274) [#276](https://github.com/HankHuang0516/EClaw/issues/276) [#258](https://github.com/HankHuang0516/EClaw/issues/258) [#276](https://github.com/HankHuang0516/EClaw/issues/276) [#256](https://github.com/HankHuang0516/EClaw/issues/256) [#326](https://github.com/HankHuang0516/EClaw/issues/326) [#327](https://github.com/HankHuang0516/EClaw/issues/327) [#330](https://github.com/HankHuang0516/EClaw/issues/330) [#331](https://github.com/HankHuang0516/EClaw/issues/331) [#326](https://github.com/HankHuang0516/EClaw/issues/326) [#327](https://github.com/HankHuang0516/EClaw/issues/327) [#330](https://github.com/HankHuang0516/EClaw/issues/330) [#331](https://github.com/HankHuang0516/EClaw/issues/331) [#284](https://github.com/HankHuang0516/EClaw/issues/284)
+
+## [1.120.3](https://github.com/HankHuang0516/EClaw/compare/v1.120.2...v1.120.3) (2026-03-20)
+
+
+### Bug Fixes
+
+* ChatIntegrityValidator direction check false positives ([#350](https://github.com/HankHuang0516/EClaw/issues/350)) ([98a0feb](https://github.com/HankHuang0516/EClaw/commit/98a0feb1cea51448aec7263a56e60b21749b0b1d)), closes [#345](https://github.com/HankHuang0516/EClaw/issues/345) [#274](https://github.com/HankHuang0516/EClaw/issues/274) [#256](https://github.com/HankHuang0516/EClaw/issues/256) [#258](https://github.com/HankHuang0516/EClaw/issues/258) [#259](https://github.com/HankHuang0516/EClaw/issues/259) [#274](https://github.com/HankHuang0516/EClaw/issues/274) [#276](https://github.com/HankHuang0516/EClaw/issues/276) [#258](https://github.com/HankHuang0516/EClaw/issues/258) [#276](https://github.com/HankHuang0516/EClaw/issues/276) [#256](https://github.com/HankHuang0516/EClaw/issues/256) [#326](https://github.com/HankHuang0516/EClaw/issues/326) [#327](https://github.com/HankHuang0516/EClaw/issues/327) [#330](https://github.com/HankHuang0516/EClaw/issues/330) [#331](https://github.com/HankHuang0516/EClaw/issues/331) [#326](https://github.com/HankHuang0516/EClaw/issues/326) [#327](https://github.com/HankHuang0516/EClaw/issues/327) [#330](https://github.com/HankHuang0516/EClaw/issues/330) [#331](https://github.com/HankHuang0516/EClaw/issues/331)
+
+## [1.120.2](https://github.com/HankHuang0516/EClaw/compare/v1.120.1...v1.120.2) (2026-03-20)
+
+
+### Bug Fixes
+
+* fix A2A message rendering and add full closed-loop debug logging ([#349](https://github.com/HankHuang0516/EClaw/issues/349)) ([091e166](https://github.com/HankHuang0516/EClaw/commit/091e166ae6f96ce5308937865d5564eac115932c))
+
 ## [1.120.1](https://github.com/HankHuang0516/EClaw/compare/v1.120.0...v1.120.1) (2026-03-20)
 
 

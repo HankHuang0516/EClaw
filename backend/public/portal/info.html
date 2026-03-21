@@ -343,9 +343,9 @@
             vertical-align: middle;
         }
 
-        .mc-label-user { background: rgba(21, 101, 192, 0.2); color: #64B5F6; }
-        .mc-label-bot { background: rgba(198, 40, 40, 0.2); color: #EF9A9A; }
-        .mc-label-shared { background: rgba(230, 81, 0, 0.2); color: #FFB74D; }
+        .mc-label-user { background: rgba(21, 101, 192, 0.2); color: var(--accent-cyan); }
+        .mc-label-bot { background: rgba(198, 40, 40, 0.2); color: var(--entity-lobster); }
+        .mc-label-shared { background: rgba(230, 81, 0, 0.2); color: var(--warning); }
 
         /* ── Guide: Screenshot ── */
         .guide-content .mc-screenshot {
@@ -1211,7 +1211,7 @@ git push origin main</div>
                     <div class="guide-panel" id="guide-remotecontrol">
                         <header>
                             <h1 data-i18n="guide_remote_title">遠端控制 (Remote Control)</h1>
-                            <p class="meta" data-i18n="guide_remote_meta">任務中心 &gt; 遠端控制 <span class="mc-label" style="background:rgba(244,67,54,0.15);color:#F44336;">User 啟用 / Bot 執行</span></p>
+                            <p class="meta" data-i18n="guide_remote_meta">任務中心 &gt; 遠端控制 <span class="mc-label" style="background:var(--status-error);color:var(--danger);">User 啟用 / Bot 執行</span></p>
                         </header>
                         <p data-i18n="guide_remote_p_1">讓 Bot 自主操控你的手機 UI。Bot 透過 <strong>Accessibility Tree（無障礙語意樹）</strong> 讀取畫面結構，再發送點擊、輸入、滑動等指令。整個過程不截圖，Bot 只看到文字元素，不會擷取敏感視覺內容。</p>
                         <div class="note" data-i18n="guide_remote_note_1">此功能預設關閉，需在 App Settings → Remote Control 手動開啟並授予無障礙服務權限。</div>

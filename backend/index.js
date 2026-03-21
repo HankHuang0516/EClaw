@@ -137,6 +137,11 @@ app.get('/landing', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/landing.html'));
 });
 
+// Shareable chat link: /c/<publicCode>
+app.get('/c/:code', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/portal/share-chat.html'));
+});
+
 app.use('/mission', express.static(path.join(__dirname, 'public')));
 app.use('/portal', express.static(path.join(__dirname, 'public/portal'), {
     setHeaders: (res, filePath) => {
@@ -720,6 +725,78 @@ const authModule = require('./auth')(devices, getOrCreateDevice, serverLog);
 app.use(authModule.softAuthMiddleware); // Populate req.user from cookie on ALL requests
 app.use('/api/auth', authModule.router);
 authModule.initAuthDatabase();
+
+// Wire up pending message flush on email verification
+authModule.setOnEmailVerified(async (deviceId) => {
+    const pending = await db.getPendingCrossMessages(deviceId);
+    if (pending.length === 0) return;
+    console.log(`[PendingFlush] Flushing ${pending.length} pending cross-speak messages for device ${deviceId}`);
+
+    const senderDevice = devices[deviceId];
+    if (!senderDevice) return;
+
+    for (const msg of pending) {
+        try {
+            const target = publicCodeIndex[msg.target_code];
+            if (!target) continue;
+            const targetDevice = devices[target.deviceId];
+            if (!targetDevice) continue;
+            const toEntity = targetDevice.entities[target.entityId];
+            if (!toEntity || !toEntity.isBound) continue;
+
+            const sourceLabel = `xdevice:${deviceId}:owner`;
+            const messageObj = {
+                text: msg.text,
+                from: sourceLabel,
+                fromEntityId: -1,
+                fromPublicCode: null,
+                fromDeviceId: deviceId,
+                timestamp: msg.created_at,
+                read: false,
+                mediaType: msg.media_type || null,
+                mediaUrl: msg.media_url || null,
+                crossDevice: true
+            };
+            toEntity.messageQueue.push(messageObj);
+
+            await saveChatMessage(target.deviceId, target.entityId, msg.text, `${sourceLabel}->${msg.target_code}`, true, false, msg.media_type || null, msg.media_url || null);
+
+            toEntity.message = `xdevice:owner: ${msg.text}`;
+            toEntity.lastUpdated = Date.now();
+
+            if (toEntity.bindingType === 'channel') {
+                // Channel plugin: send structured JSON
+                channelModule.pushToChannelCallback(target.deviceId, target.entityId, {
+                    event: 'cross_device_message',
+                    from: `New User (${deviceId})`,
+                    text: msg.text,
+                    mediaType: msg.media_type || null,
+                    mediaUrl: msg.media_url || null,
+                    fromEntityId: -1,
+                    fromPublicCode: null,
+                    isOwnerMode: true,
+                    eclaw_context: {
+                        missionHints: getMissionApiHints('https://eclawbot.com', target.deviceId, target.entityId, toEntity.botSecret),
+                        silentToken: '[SILENT]',
+                        identitySetupRequired: !toEntity.identity
+                    }
+                }, toEntity.channelAccountId).catch(() => {});
+            } else if (toEntity.webhook) {
+                const apiBase = 'https://eclawbot.com';
+                let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API. Your text reply is DISCARDED.\n`;
+                pushMsg += `To update your wallpaper status:\n`;
+                pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","entityId":${target.entityId},"botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
+                pushMsg += `[CROSS-DEVICE MESSAGE from New User]\nContent: ${msg.text}`;
+                pushMsg += getMissionApiHints(apiBase, target.deviceId, target.entityId, toEntity.botSecret);
+                pushToBot(toEntity, target.deviceId, 'cross_device_message', { message: pushMsg }).catch(() => {});
+            }
+        } catch (err) {
+            console.error(`[PendingFlush] Error flushing message ${msg.id}:`, err.message);
+        }
+    }
+    await db.deletePendingCrossMessages(deviceId);
+    serverLog('info', 'pending_flush', `Flushed ${pending.length} pending messages for device ${deviceId}`, { deviceId });
+});
 
 // ============================================
 // SUBSCRIPTION & TAPPAY (PostgreSQL)
@@ -2049,7 +2126,8 @@ function createDefaultEntity(entityId) {
         pushStatus: null, // { ok: bool, reason?: string, at: number }
         bindingType: null,
         channelAccountId: null,
-        agentCard: null, // A2A capability discovery (Issue #174)
+        agentCard: null, // derived from identity.public for backward compat
+        identity: null, // Bot Identity Layer: unified role/instructions/boundaries + public profile
         encryptionStatus: null // "e2ee" | "transport" | null (Issue #212)
     };
 }
@@ -2715,7 +2793,15 @@ app.post('/api/bind', async (req, res) => {
         },
         versionInfo: getVersionInfo(deviceAppVersion),
         skills_documentation_url: "https://raw.githubusercontent.com/HankHuang0516/realbot/main/backend/E-claw_mcp_skill.md",
-        skills_documentation: "Fetch the skills_documentation_url above to read the full E-claw MCP Skills guide."
+        skills_documentation: "Fetch the skills_documentation_url above to read the full E-claw MCP Skills guide.",
+        identitySetupRequired: !entity.identity,
+        availableResources: {
+            soulTemplates: 'GET /api/soul-templates',
+            ruleTemplates: 'GET /api/rule-templates',
+            schedules: 'GET /api/schedules',
+            missionDashboard: 'GET /api/mission/dashboard',
+            setIdentity: 'PUT /api/entity/identity'
+        }
     });
 });
 
@@ -2958,6 +3044,27 @@ app.post('/api/transform', (req, res) => {
                 deviceId, entityId: eId,
                 metadata: { tag: 'A2A_BOT_REPLY', fromEntity: pendingA2A.fromEntityId, mqLen: entity.messageQueue.length }
             });
+        }
+
+        // [CROSS-DEVICE AUTO-ROUTE] — if pending message was cross-device, save reply to sender device
+        const pendingCross = entity.messageQueue && entity.messageQueue.findLast(m => m.crossDevice);
+        if (pendingCross && pendingCross.fromDeviceId) {
+            const replySource = `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`;
+            const senderEntityId = pendingCross.fromEntityId >= 0 ? pendingCross.fromEntityId : 0;
+            saveChatMessage(pendingCross.fromDeviceId, senderEntityId, finalMessage, replySource, false, true);
+            serverLog('info', 'cross_speak_push', `[CROSS_ROUTE] Transform auto-routed reply to sender ${pendingCross.fromDeviceId}:${senderEntityId}`, {
+                deviceId, entityId: eId,
+                metadata: { senderDeviceId: pendingCross.fromDeviceId, senderEntityId, fromPublicCode: pendingCross.fromPublicCode }
+            });
+
+            // Notify sender device about the reply
+            notifyDevice(pendingCross.fromDeviceId, {
+                type: 'chat', category: 'cross_speak',
+                title: `${entity.name || entity.publicCode || `Entity ${eId}`} replied`,
+                body: (finalMessage || '').slice(0, 100),
+                link: 'chat.html',
+                metadata: { fromPublicCode: entity.publicCode, entityId: senderEntityId }
+            }).catch(() => {});
         }
 
         // XP: Award +10 for correctly replying to a user message
@@ -3762,6 +3869,7 @@ app.post('/api/device/entity-trash/:trashId/restore', async (req, res) => {
         entity.xp = trashItem.xp || 0;
         entity.avatar = trashItem.avatar || null;
         entity.agentCard = trashItem.agent_card || null;
+        entity.identity = trashItem.identity || null;
         entity.encryptionStatus = trashItem.encryption_status || null;
 
         // Rebuild public code index
@@ -4588,6 +4696,7 @@ app.post('/api/client/speak', async (req, res) => {
                 else if (mediaType === 'video') pushMsg += `\n[Attachment: Video]\nmedia_type: video\nmedia_url: ${mediaUrl}`;
                 else if (mediaType === 'file') pushMsg += `\n[Attachment: File]\nmedia_type: file\nmedia_url: ${mediaUrl}`;
                 pushMsg += getMissionApiHints(apiBase, deviceId, eId, entity.botSecret);
+                pushMsg += buildIdentitySetupHint(entity, apiBase, deviceId, eId, entity.botSecret);
 
                 pushResult = await pushToBot(entity, deviceId, "new_message", {
                     message: pushMsg
@@ -4834,7 +4943,8 @@ app.post('/api/entity/speak-to', async (req, res) => {
                 b2bMax: BOT2BOT_MAX_MESSAGES,
                 expectsReply,
                 missionHints: getMissionApiHints('https://eclawbot.com', deviceId, toId, toEntity.botSecret),
-                silentToken: '[SILENT]'
+                silentToken: '[SILENT]',
+                identitySetupRequired: !toEntity.identity
             }
         }, toEntity.channelAccountId).then(pushResult => {
             if (pushResult.pushed) {
@@ -4877,6 +4987,7 @@ app.post('/api/entity/speak-to', async (req, res) => {
             else if (mediaType === 'video') pushMsg += `\n[Attachment: Video]\nmedia_type: video\nmedia_url: ${mediaUrl}`;
             else if (mediaType === 'file') pushMsg += `\n[Attachment: File]\nmedia_type: file\nmedia_url: ${mediaUrl}`;
         pushMsg += getMissionApiHints(apiBase, deviceId, toId, toEntity.botSecret);
+        pushMsg += buildIdentitySetupHint(toEntity, apiBase, deviceId, toId, toEntity.botSecret);
         pushToBot(toEntity, deviceId, "entity_message", {
             message: pushMsg
         }).then(pushResult => {
@@ -5189,20 +5300,50 @@ app.post('/api/entity/cross-speak', async (req, res) => {
 
     console.log(`[CrossSpeak] ${deviceId}:${fromId} (${fromEntity.publicCode}) -> ${target.deviceId}:${target.entityId} (${targetCode}): "${crossText}"`);
 
-    // Push to target bot webhook
+    // Push to target bot — channel callback or traditional webhook
+    const isChannelBound = toEntity.bindingType === 'channel';
     const hasWebhook = !!toEntity.webhook;
-    if (hasWebhook) {
+    if (isChannelBound) {
+        // Channel plugin: send structured JSON
+        channelModule.pushToChannelCallback(target.deviceId, target.entityId, {
+            event: 'cross_device_message',
+            from: `${fromEntity.name || 'Entity'} (${fromEntity.publicCode})`,
+            text: crossText,
+            mediaType: mediaType || null,
+            mediaUrl: mediaUrl || null,
+            backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
+            fromEntityId: fromId,
+            fromPublicCode: fromEntity.publicCode,
+            fromCharacter: fromEntity.character,
+            eclaw_context: {
+                csRemaining: getCrossSpeakRemaining(target.deviceId, target.entityId),
+                csMax: CROSS_SPEAK_MAX_MESSAGES,
+                missionHints: getMissionApiHints('https://eclawbot.com', target.deviceId, target.entityId, toEntity.botSecret),
+                silentToken: '[SILENT]',
+                identitySetupRequired: !toEntity.identity,
+                preInject: xdSettings.pre_inject || null
+            }
+        }, toEntity.channelAccountId).then(pushResult => {
+            if (pushResult.pushed) {
+                messageObj.delivered = true;
+                markChatMessageDelivered(chatMsgId, String(target.entityId));
+                serverLog('info', 'cross_speak_push', `${fromEntity.publicCode} -> ${targetCode} channel push OK`, { deviceId, entityId: fromId, metadata: { targetCode, targetDeviceId: target.deviceId, mode: 'channel' } });
+                autoCollectCard(deviceId, targetCode, toEntity, 'auto_speak');
+                autoCollectCard(target.deviceId, fromEntity.publicCode, fromEntity, 'auto_speak');
+                db.upsertRecentInteraction(target.deviceId, fromEntity.publicCode, { name: fromEntity.name, character: fromEntity.character, avatar: fromEntity.avatar, cardSnapshot: fromEntity.agentCard }).catch(() => {});
+                db.upsertRecentInteraction(deviceId, targetCode, { name: toEntity.name, character: toEntity.character, avatar: toEntity.avatar, cardSnapshot: toEntity.agentCard }).catch(() => {});
+            } else {
+                serverLog('warn', 'cross_speak_push', `${fromEntity.publicCode} -> ${targetCode} channel not-pushed: ${pushResult.reason || 'unknown'}`, { deviceId, entityId: fromId });
+            }
+        }).catch(err => {
+            console.error(`[CrossSpeak] Channel push failed: ${err.message}`);
+            serverLog('error', 'cross_speak_push', `${fromEntity.publicCode} -> ${targetCode} channel FAILED: ${err.message}`, { deviceId, entityId: fromId });
+        });
+    } else if (hasWebhook) {
         const apiBase = 'https://eclawbot.com';
-        const csRemaining = getCrossSpeakRemaining(target.deviceId, target.entityId);
         let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API. Your text reply is DISCARDED.\n`;
-        pushMsg += `To update your mood/emoji on wallpaper (do NOT repeat or narrate the message — the user can already see it in chat):\n`;
+        pushMsg += `To reply (your reply will be automatically delivered to the sender):\n`;
         pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","entityId":${target.entityId},"botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
-        pushMsg += `To reply to this cross-device message:\n`;
-        pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/cross-speak" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","fromEntityId":${target.entityId},"botSecret":"${toEntity.botSecret}","targetCode":"${fromEntity.publicCode}","text":"YOUR_REPLY_HERE"}'\n\n`;
-        pushMsg += `[CROSS-DEVICE] Remaining quota: ${csRemaining}/${CROSS_SPEAK_MAX_MESSAGES}. If the message is just repeating emotions with no new info, do NOT reply — just update your wallpaper status.`;
-        if (csRemaining <= 1) {
-            pushMsg += ` WARNING: Quota almost exhausted, do NOT auto-reply.`;
-        }
         if (xdSettings.pre_inject) {
             pushMsg += `\n\n[DEVICE OWNER INSTRUCTION]\n${xdSettings.pre_inject}`;
         }
@@ -5216,6 +5357,7 @@ app.post('/api/entity/cross-speak', async (req, res) => {
         else if (mediaType === 'video') pushMsg += `\n[Attachment: Video]\nmedia_type: video\nmedia_url: ${mediaUrl}`;
         else if (mediaType === 'file') pushMsg += `\n[Attachment: File]\nmedia_type: file\nmedia_url: ${mediaUrl}`;
         pushMsg += getMissionApiHints(apiBase, target.deviceId, target.entityId, toEntity.botSecret);
+        pushMsg += buildIdentitySetupHint(toEntity, apiBase, target.deviceId, target.entityId, toEntity.botSecret);
 
         pushToBot(toEntity, target.deviceId, "cross_device_message", {
             message: pushMsg
@@ -5224,12 +5366,10 @@ app.post('/api/entity/cross-speak', async (req, res) => {
                 messageObj.delivered = true;
                 markChatMessageDelivered(chatMsgId, String(target.entityId));
                 serverLog('info', 'cross_speak_push', `${fromEntity.publicCode} -> ${targetCode} push OK`, { deviceId, entityId: fromId, metadata: { targetCode, targetDeviceId: target.deviceId } });
-                    // Auto-collect: sender collects target's card, target collects sender's card
-                    autoCollectCard(deviceId, targetCode, toEntity, 'auto_speak');
-                    autoCollectCard(target.deviceId, fromEntity.publicCode, fromEntity, 'auto_speak');
-                    // Record recent interaction on both sides
-                    db.upsertRecentInteraction(target.deviceId, fromEntity.publicCode, { name: fromEntity.name, character: fromEntity.character, avatar: fromEntity.avatar, cardSnapshot: fromEntity.agentCard }).catch(() => {});
-                    db.upsertRecentInteraction(deviceId, targetCode, { name: toEntity.name, character: toEntity.character, avatar: toEntity.avatar, cardSnapshot: toEntity.agentCard }).catch(() => {});
+                autoCollectCard(deviceId, targetCode, toEntity, 'auto_speak');
+                autoCollectCard(target.deviceId, fromEntity.publicCode, fromEntity, 'auto_speak');
+                db.upsertRecentInteraction(target.deviceId, fromEntity.publicCode, { name: fromEntity.name, character: fromEntity.character, avatar: fromEntity.avatar, cardSnapshot: fromEntity.agentCard }).catch(() => {});
+                db.upsertRecentInteraction(deviceId, targetCode, { name: toEntity.name, character: toEntity.character, avatar: toEntity.avatar, cardSnapshot: toEntity.agentCard }).catch(() => {});
             } else {
                 serverLog('warn', 'cross_speak_push', `${fromEntity.publicCode} -> ${targetCode} not-pushed: ${pushResult.reason || 'unknown'}`, { deviceId, entityId: fromId });
             }
@@ -5244,8 +5384,8 @@ app.post('/api/entity/cross-speak', async (req, res) => {
         message: `Cross-device message sent`,
         from: { publicCode: fromEntity.publicCode, character: fromEntity.character, entityId: fromId },
         to: { publicCode: targetCode, character: toEntity.character },
-        pushed: hasWebhook ? "pending" : false,
-        mode: hasWebhook ? "push" : "polling"
+        pushed: isChannelBound || hasWebhook ? "pending" : false,
+        mode: isChannelBound ? "channel" : (hasWebhook ? "push" : "polling")
     });
 });
 
@@ -5285,6 +5425,13 @@ app.get('/api/entity/lookup', (req, res) => {
             avatar: entity.avatar,
             level: entity.level,
             agentCard: entity.agentCard || null,
+            identity: entity.identity ? {
+                role: entity.identity.role || null,
+                description: entity.identity.description || null,
+                tone: entity.identity.tone || null,
+                language: entity.identity.language || null,
+                public: entity.identity.public || null
+            } : null,
             encryptionStatus: entity.encryptionStatus || null
         }
     });
@@ -5324,26 +5471,18 @@ app.put('/api/entity/agent-card', (req, res) => {
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    // Dual auth: deviceSecret (owner) or botSecret (bot self-update)
-    if (deviceSecret) {
-        if (device.deviceSecret !== deviceSecret) {
-            return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
-        }
-    } else {
-        const entity = device.entities[entityId];
-        if (!entity || !entity.isBound || entity.botSecret !== botSecret) {
-            return res.status(403).json({ success: false, error: 'Invalid botSecret' });
-        }
-    }
+    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    const entity = auth.entity;
+    if (!entity.isBound) return res.status(404).json({ success: false, error: 'Entity not bound' });
 
-    const entity = device.entities[entityId];
-    if (!entity || !entity.isBound) {
-        return res.status(404).json({ success: false, error: 'Entity not found or not bound' });
-    }
     const { valid, card, error } = validateAgentCard(agentCard);
     if (!valid) return res.status(400).json({ success: false, error });
-    entity.agentCard = card;
-    entity.lastUpdated = Date.now();
+    syncEntityCard(entity, card);
+    // Persist to DB
+    if (typeof db.saveDeviceData === 'function') {
+        db.saveDeviceData(deviceId, device).catch(err => console.error('[AgentCard] DB save error:', err.message));
+    }
     res.json({ success: true, agentCard: card });
 });
 
@@ -5362,23 +5501,9 @@ app.get('/api/entity/agent-card', (req, res) => {
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    const eid = parseInt(entityId);
-    if (deviceSecret) {
-        if (device.deviceSecret !== deviceSecret) {
-            return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
-        }
-    } else {
-        const e = device.entities[eid];
-        if (!e || !e.isBound || e.botSecret !== botSecret) {
-            return res.status(403).json({ success: false, error: 'Invalid botSecret' });
-        }
-    }
-
-    const entity = device.entities[eid];
-    if (!entity) {
-        return res.status(404).json({ success: false, error: 'Entity not found' });
-    }
-    res.json({ success: true, agentCard: entity.agentCard || null });
+    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    res.json({ success: true, agentCard: auth.entity.agentCard || null });
 });
 
 /**
@@ -5396,23 +5521,218 @@ app.delete('/api/entity/agent-card', (req, res) => {
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
+    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    clearEntityCard(auth.entity);
+    // Persist to DB
+    if (typeof db.saveDeviceData === 'function') {
+        db.saveDeviceData(deviceId, device).catch(err => console.error('[AgentCard] DB save error:', err.message));
+    }
+    res.json({ success: true });
+});
+
+// ── Bot Identity Layer ──
+
+/**
+ * Dual-auth helper: deviceSecret (owner) or botSecret (bot self-access).
+ * Returns { entity, error, status } — if error is set, respond with it.
+ */
+function authEntityAccess(device, deviceSecret, botSecret, entityId) {
+    const eid = parseInt(entityId);
     if (deviceSecret) {
         if (device.deviceSecret !== deviceSecret) {
-            return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
+            return { error: 'Invalid deviceSecret', status: 403 };
         }
     } else {
-        const e = device.entities[entityId];
+        const e = device.entities[eid];
         if (!e || !e.isBound || e.botSecret !== botSecret) {
-            return res.status(403).json({ success: false, error: 'Invalid botSecret' });
+            return { error: 'Invalid botSecret', status: 403 };
+        }
+    }
+    const entity = device.entities[eid];
+    if (!entity) {
+        return { error: 'Entity not found', status: 404 };
+    }
+    return { entity, eid };
+}
+
+/** Atomically set agent card and sync identity.public */
+function syncEntityCard(entity, card) {
+    entity.agentCard = card;
+    if (!entity.identity) entity.identity = {};
+    entity.identity.public = card;
+    entity.lastUpdated = Date.now();
+}
+
+/** Atomically clear agent card and identity.public */
+function clearEntityCard(entity) {
+    entity.agentCard = null;
+    if (entity.identity) {
+        delete entity.identity.public;
+        if (Object.keys(entity.identity).length === 0) entity.identity = null;
+    }
+    entity.lastUpdated = Date.now();
+}
+
+/**
+ * Validate and clean identity object.
+ * Supports partial updates — only validates fields that are present.
+ */
+function validateIdentity(identity) {
+    if (!identity || typeof identity !== 'object') {
+        return { valid: false, error: 'identity must be an object' };
+    }
+    const cleaned = {};
+
+    // Internal behavior fields
+    if (identity.role !== undefined) {
+        cleaned.role = String(identity.role).substring(0, 100);
+    }
+    if (identity.description !== undefined) {
+        cleaned.description = String(identity.description).substring(0, 500);
+    }
+    if (identity.instructions !== undefined) {
+        if (!Array.isArray(identity.instructions)) return { valid: false, error: 'instructions must be an array' };
+        if (identity.instructions.length > 20) return { valid: false, error: 'Maximum 20 instructions allowed' };
+        cleaned.instructions = identity.instructions.slice(0, 20).map(s => String(s).substring(0, 200));
+    }
+    if (identity.boundaries !== undefined) {
+        if (!Array.isArray(identity.boundaries)) return { valid: false, error: 'boundaries must be an array' };
+        if (identity.boundaries.length > 20) return { valid: false, error: 'Maximum 20 boundaries allowed' };
+        cleaned.boundaries = identity.boundaries.slice(0, 20).map(s => String(s).substring(0, 200));
+    }
+    if (identity.tone !== undefined) {
+        cleaned.tone = String(identity.tone).substring(0, 50);
+    }
+    if (identity.language !== undefined) {
+        cleaned.language = String(identity.language).substring(0, 10);
+    }
+    if (identity.soulTemplateId !== undefined) {
+        cleaned.soulTemplateId = identity.soulTemplateId ? String(identity.soulTemplateId).substring(0, 64) : null;
+    }
+    if (identity.ruleTemplateIds !== undefined) {
+        if (!Array.isArray(identity.ruleTemplateIds)) return { valid: false, error: 'ruleTemplateIds must be an array' };
+        cleaned.ruleTemplateIds = identity.ruleTemplateIds.slice(0, 20).map(s => String(s).substring(0, 64));
+    }
+
+    // Public profile (agent card)
+    if (identity.public !== undefined) {
+        if (identity.public === null) {
+            cleaned.public = null;
+        } else {
+            const { valid: cardValid, card, error: cardError } = validateAgentCard(identity.public);
+            if (!cardValid) return { valid: false, error: `public: ${cardError}` };
+            cleaned.public = card;
         }
     }
 
-    const entity = device.entities[entityId];
-    if (!entity) {
-        return res.status(404).json({ success: false, error: 'Entity not found' });
+    return { valid: true, identity: cleaned };
+}
+
+/**
+ * PUT /api/entity/identity — Create or update bot identity (partial merge)
+ * Auth: deviceSecret (owner) OR botSecret (bot self-update)
+ */
+app.put('/api/entity/identity', async (req, res) => {
+    const { deviceId, deviceSecret, botSecret, entityId, identity } = req.body;
+    if (!deviceId || entityId === undefined || entityId === null) {
+        return res.status(400).json({ success: false, error: 'deviceId, entityId required' });
     }
+    if (!identity) {
+        return res.status(400).json({ success: false, error: 'identity object required' });
+    }
+    if (!deviceSecret && !botSecret) {
+        return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+
+    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    const entity = auth.entity;
+    if (!entity.isBound) return res.status(404).json({ success: false, error: 'Entity not bound' });
+
+    const { valid, identity: cleaned, error } = validateIdentity(identity);
+    if (!valid) return res.status(400).json({ success: false, error });
+
+    // Partial merge: only update provided fields
+    const existing = entity.identity || {};
+    const merged = { ...existing, ...cleaned };
+    // Handle public sub-object: deep merge when existing, otherwise the spread above already set it
+    if (cleaned.public !== undefined) {
+        if (cleaned.public === null) {
+            delete merged.public;
+        } else if (existing.public && typeof existing.public === 'object') {
+            // Deep merge only when both old and new public exist
+            merged.public = { ...existing.public, ...cleaned.public };
+        }
+        // else: no existing public — the { ...existing, ...cleaned } spread already set merged.public = cleaned.public
+    }
+    entity.identity = merged;
+    // Sync agentCard from identity.public for backward compat
+    entity.agentCard = merged.public || null;
+    entity.lastUpdated = Date.now();
+
+    // Persist
+    if (typeof db.saveDeviceData === 'function') {
+        db.saveDeviceData(deviceId, device).catch(err => console.error('[Identity] DB save error:', err.message));
+    }
+
+    // Socket.IO notification
+    io.to(deviceId).emit('entity:identity-updated', { entityId: parseInt(entityId), identity: entity.identity });
+
+    serverLog('info', 'identity', `Entity ${entityId} identity updated`, { deviceId, entityId: parseInt(entityId) });
+    res.json({ success: true, identity: entity.identity });
+});
+
+/**
+ * GET /api/entity/identity — Read bot identity
+ * Auth: deviceSecret (owner) OR botSecret (bot self-read)
+ */
+app.get('/api/entity/identity', (req, res) => {
+    const { deviceId, deviceSecret, botSecret, entityId } = req.query;
+    if (!deviceId || entityId === undefined) {
+        return res.status(400).json({ success: false, error: 'deviceId, entityId required' });
+    }
+    if (!deviceSecret && !botSecret) {
+        return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+
+    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    res.json({ success: true, identity: auth.entity.identity || null });
+});
+
+/**
+ * DELETE /api/entity/identity — Clear bot identity
+ * Auth: deviceSecret (owner) OR botSecret (bot self-delete)
+ */
+app.delete('/api/entity/identity', async (req, res) => {
+    const { deviceId, deviceSecret, botSecret, entityId } = req.body;
+    if (!deviceId || entityId === undefined) {
+        return res.status(400).json({ success: false, error: 'deviceId, entityId required' });
+    }
+    if (!deviceSecret && !botSecret) {
+        return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+
+    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    const entity = auth.entity;
+    entity.identity = null;
     entity.agentCard = null;
     entity.lastUpdated = Date.now();
+
+    if (typeof db.saveDeviceData === 'function') {
+        db.saveDeviceData(deviceId, device).catch(err => console.error('[Identity] DB save error:', err.message));
+    }
+
+    io.to(deviceId).emit('entity:identity-updated', { entityId: parseInt(entityId), identity: null });
+    serverLog('info', 'identity', `Entity ${entityId} identity cleared`, { deviceId, entityId: parseInt(entityId) });
     res.json({ success: true });
 });
 
@@ -5743,24 +6063,34 @@ app.post('/api/contacts/:publicCode/refresh', async (req, res) => {
 app.post('/api/client/cross-speak', async (req, res) => {
     let { deviceId, fromEntityId, targetCode, text, mediaType, mediaUrl } = req.body;
 
+    console.log(`[ClientCrossSpeak:DEBUG] Received request: deviceId=${deviceId}, fromEntityId=${fromEntityId}, targetCode=${targetCode}, text="${(text||'').slice(0,30)}", hasUser=${!!req.user}, hasCookie=${!!(req.cookies && req.cookies.eclaw_session)}`);
+
     // Cookie-based auth fallback
     if (!deviceId && req.user) {
         deviceId = req.user.deviceId;
+        console.log(`[ClientCrossSpeak:DEBUG] Resolved deviceId from req.user: ${deviceId}`);
     }
     if (!deviceId && req.cookies && req.cookies.eclaw_session) {
         try {
             const jwt = require('jsonwebtoken');
             const decoded = jwt.verify(req.cookies.eclaw_session, process.env.JWT_SECRET || 'dev-secret-change-in-production');
-            if (decoded && decoded.deviceId) deviceId = decoded.deviceId;
-        } catch (e) { /* invalid token */ }
+            if (decoded && decoded.deviceId) {
+                deviceId = decoded.deviceId;
+                console.log(`[ClientCrossSpeak:DEBUG] Resolved deviceId from cookie: ${deviceId}`);
+            }
+        } catch (e) {
+            console.log(`[ClientCrossSpeak:DEBUG] Cookie auth failed: ${e.message}`);
+        }
     }
 
     if (!deviceId || fromEntityId === undefined || !targetCode || !text) {
+        console.log(`[ClientCrossSpeak:DEBUG] Validation failed: deviceId=${!!deviceId}, fromEntityId=${fromEntityId}, targetCode=${!!targetCode}, text=${!!text}`);
         return res.status(400).json({ success: false, message: "deviceId, fromEntityId, targetCode, and text are required" });
     }
 
     const fromId = parseInt(fromEntityId);
-    if (isNaN(fromId) || fromId < 0) {
+    if (isNaN(fromId) || fromId < -1) {
+        console.log(`[ClientCrossSpeak:DEBUG] Invalid fromEntityId: ${fromEntityId}`);
         return res.status(400).json({ success: false, message: "Invalid fromEntityId" });
     }
 
@@ -5769,9 +6099,14 @@ app.post('/api/client/cross-speak', async (req, res) => {
         return res.status(404).json({ success: false, message: "Sender device not found" });
     }
 
-    const fromEntity = senderDevice.entities[fromId];
-    if (!fromEntity || !fromEntity.isBound) {
-        return res.status(400).json({ success: false, message: `Sender entity ${fromId} is not bound` });
+    // Owner mode: fromEntityId=-1 means device owner sending as themselves (no entity intermediary)
+    const isOwnerMode = fromId === -1;
+    let fromEntity = null;
+    if (!isOwnerMode) {
+        fromEntity = senderDevice.entities[fromId];
+        if (!fromEntity || !fromEntity.isBound) {
+            return res.status(400).json({ success: false, message: `Sender entity ${fromId} is not bound` });
+        }
     }
 
     // Resolve target
@@ -5790,13 +6125,13 @@ app.post('/api/client/cross-speak', async (req, res) => {
         return res.status(400).json({ success: false, message: "Target entity is not bound" });
     }
 
-    if (fromEntity.publicCode === targetCode) {
+    if (!isOwnerMode && fromEntity.publicCode === targetCode) {
         return res.status(400).json({ success: false, message: "Cannot send cross-device message to yourself" });
     }
 
     // --- Cross-device settings enforcement (target entity's owner rules) ---
     const xdSettingsClient = await crossDeviceSettings.getSettings(target.deviceId, target.entityId);
-    const senderCodeClient = fromEntity.publicCode;
+    const senderCodeClient = isOwnerMode ? `owner:${deviceId}` : fromEntity.publicCode;
 
     // Card Holder block check (target device blocked the sender)
     if (await db.isBlocked(target.deviceId, senderCodeClient)) {
@@ -5839,55 +6174,99 @@ app.post('/api/client/cross-speak', async (req, res) => {
     // Reset b2b counter on human message (same as /api/client/speak)
     resetBotToBotCounter(deviceId);
 
-    const sourceLabel = `xdevice:${fromEntity.publicCode}:${fromEntity.character}`;
+    const senderName = isOwnerMode ? (req.user && req.user.email ? req.user.email.split('@')[0] : 'User') : (fromEntity.name || fromEntity.publicCode);
+    const sourceLabel = isOwnerMode ? `xdevice:${deviceId}:owner` : `xdevice:${fromEntity.publicCode}:${fromEntity.character}`;
 
     const messageObj = {
         text: text,
         from: sourceLabel,
         fromEntityId: fromId,
-        fromCharacter: fromEntity.character,
-        fromPublicCode: fromEntity.publicCode,
+        fromCharacter: isOwnerMode ? null : fromEntity.character,
+        fromPublicCode: isOwnerMode ? null : fromEntity.publicCode,
         fromDeviceId: deviceId,
         timestamp: Date.now(),
         read: false,
         mediaType: mediaType || null,
         mediaUrl: mediaUrl || null,
-        crossDevice: true
+        crossDevice: !isOwnerMode || deviceId !== target.deviceId // false only when owner sends to own entity
     };
     toEntity.messageQueue.push(messageObj);
 
-    // Save on both devices
+    // Save chat message
     const chatMsgId = await saveChatMessage(target.deviceId, target.entityId, text, `${sourceLabel}->${targetCode}`, true, false, mediaType || null, mediaUrl || null);
-    await saveChatMessage(deviceId, fromId, text, `${sourceLabel}->${targetCode}`, true, false, mediaType || null, mediaUrl || null);
+    if (!isOwnerMode) {
+        await saveChatMessage(deviceId, fromId, text, `${sourceLabel}->${targetCode}`, true, false, mediaType || null, mediaUrl || null);
+    }
 
-    toEntity.message = `xdevice:${fromEntity.publicCode}:${fromEntity.character}: ${text}`;
+    toEntity.message = isOwnerMode ? `xdevice:owner: ${text}` : `xdevice:${fromEntity.publicCode}:${fromEntity.character}: ${text}`;
     toEntity.lastUpdated = Date.now();
 
-    // Notify target device
-    notifyDevice(target.deviceId, {
-        type: 'chat', category: 'cross_speak',
-        title: `${fromEntity.name || fromEntity.publicCode} (cross-device)`,
-        body: (text || '').slice(0, 100),
-        link: 'chat.html',
-        metadata: { fromPublicCode: fromEntity.publicCode, targetCode }
-    }).catch(() => {});
+    // Notify target device (skip if same device in owner mode)
+    if (!isOwnerMode || deviceId !== target.deviceId) {
+        notifyDevice(target.deviceId, {
+            type: 'chat', category: 'cross_speak',
+            title: `${senderName} (cross-device)`,
+            body: (text || '').slice(0, 100),
+            link: 'chat.html',
+            metadata: { fromPublicCode: isOwnerMode ? null : fromEntity.publicCode, targetCode }
+        }).catch(() => {});
+    }
 
-    console.log(`[ClientCrossSpeak] ${deviceId}:${fromId} (${fromEntity.publicCode}) -> ${target.deviceId}:${target.entityId} (${targetCode}): "${text}"`);
+    const senderLabel = isOwnerMode ? `owner:${deviceId}` : fromEntity.publicCode;
+    console.log(`[ClientCrossSpeak] ${deviceId}:${fromId} (${senderLabel}) -> ${target.deviceId}:${target.entityId} (${targetCode}): "${text}"`);
+    serverLog('info', 'cross_speak', `[DEBUG] ClientCrossSpeak ${senderLabel} -> ${targetCode}: queued=${!!messageObj}, chatMsgId=${chatMsgId}`, { deviceId, entityId: fromId, metadata: { targetCode, targetDeviceId: target.deviceId, isOwnerMode, hasWebhook: !!toEntity.webhook } });
 
-    // Push to target bot
+    // Push to target bot — channel callback or traditional webhook
+    const isChannelBound = toEntity.bindingType === 'channel';
     const hasWebhook = !!toEntity.webhook;
-    if (hasWebhook) {
+    console.log(`[ClientCrossSpeak:DEBUG] isChannelBound=${isChannelBound}, hasWebhook=${hasWebhook}, webhookUrl=${toEntity.webhook ? toEntity.webhook.slice(0, 40) + '...' : 'null'}`);
+    if (isChannelBound) {
+        // Channel plugin: send structured JSON
+        channelModule.pushToChannelCallback(target.deviceId, target.entityId, {
+            event: 'cross_device_message',
+            from: isOwnerMode ? `Device Owner (${senderName})` : `${fromEntity.name || 'User'} (${fromEntity.publicCode})`,
+            text,
+            mediaType: mediaType || null,
+            mediaUrl: mediaUrl || null,
+            backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
+            fromEntityId: isOwnerMode ? -1 : fromId,
+            fromPublicCode: isOwnerMode ? null : fromEntity.publicCode,
+            isOwnerMode,
+            eclaw_context: {
+                missionHints: getMissionApiHints('https://eclawbot.com', target.deviceId, target.entityId, toEntity.botSecret),
+                silentToken: '[SILENT]',
+                identitySetupRequired: !toEntity.identity,
+                preInject: xdSettingsClient.pre_inject || null
+            }
+        }, toEntity.channelAccountId).then(pushResult => {
+            if (pushResult.pushed) {
+                messageObj.delivered = true;
+                markChatMessageDelivered(chatMsgId, String(target.entityId));
+                serverLog('info', 'cross_speak_push', `Client ${senderLabel} -> ${targetCode} channel push OK`, { deviceId, entityId: fromId, metadata: { mode: 'channel' } });
+                if (!isOwnerMode) {
+                    autoCollectCard(deviceId, targetCode, toEntity, 'auto_speak');
+                    autoCollectCard(target.deviceId, fromEntity.publicCode, fromEntity, 'auto_speak');
+                    db.upsertRecentInteraction(target.deviceId, fromEntity.publicCode, { name: fromEntity.name, character: fromEntity.character, avatar: fromEntity.avatar, cardSnapshot: fromEntity.agentCard }).catch(() => {});
+                    db.upsertRecentInteraction(deviceId, targetCode, { name: toEntity.name, character: toEntity.character, avatar: toEntity.avatar, cardSnapshot: toEntity.agentCard }).catch(() => {});
+                }
+            } else {
+                serverLog('warn', 'cross_speak_push', `Client ${senderLabel} -> ${targetCode} channel not-pushed: ${pushResult.reason || 'unknown'}`, { deviceId, entityId: fromId });
+            }
+        }).catch(err => {
+            console.error(`[ClientCrossSpeak] Channel push failed: ${err.message}`);
+            serverLog('error', 'cross_speak_push', `ClientCrossSpeak ${senderLabel} -> ${targetCode} channel FAILED: ${err.message}`, { deviceId, entityId: fromId });
+        });
+    } else if (hasWebhook) {
         const apiBase = 'https://eclawbot.com';
         let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API. Your text reply is DISCARDED.\n`;
-        pushMsg += `To update your wallpaper status:\n`;
+        pushMsg += `To reply (your reply will be automatically delivered to the sender):\n`;
         pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","entityId":${target.entityId},"botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
-        pushMsg += `To reply to this cross-device message:\n`;
-        pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/cross-speak" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","fromEntityId":${target.entityId},"botSecret":"${toEntity.botSecret}","targetCode":"${fromEntity.publicCode}","text":"YOUR_REPLY_HERE"}'\n\n`;
         if (xdSettingsClient.pre_inject) {
             pushMsg += `[DEVICE OWNER INSTRUCTION]\n${xdSettingsClient.pre_inject}\n\n`;
         }
-        pushMsg += `[CROSS-DEVICE MESSAGE from Human User] From: ${fromEntity.name || 'User'} (code: ${fromEntity.publicCode})\n`;
-        pushMsg += `Content: ${text}`;
+        pushMsg += isOwnerMode
+            ? `[MESSAGE from Device Owner] ${senderName}\nContent: ${text}`
+            : `[CROSS-DEVICE MESSAGE from Human User] From: ${fromEntity.name || 'User'} (code: ${fromEntity.publicCode})\nContent: ${text}`;
         if (mediaType === 'photo') {
             pushMsg += `\n[Attachment: Photo]\nmedia_type: photo\nmedia_url: ${mediaUrl}`;
             const bkUrl = getBackupUrl(mediaUrl);
@@ -5896,6 +6275,7 @@ app.post('/api/client/cross-speak', async (req, res) => {
         else if (mediaType === 'video') pushMsg += `\n[Attachment: Video]\nmedia_type: video\nmedia_url: ${mediaUrl}`;
         else if (mediaType === 'file') pushMsg += `\n[Attachment: File]\nmedia_type: file\nmedia_url: ${mediaUrl}`;
         pushMsg += getMissionApiHints(apiBase, target.deviceId, target.entityId, toEntity.botSecret);
+        pushMsg += buildIdentitySetupHint(toEntity, apiBase, target.deviceId, target.entityId, toEntity.botSecret);
 
         pushToBot(toEntity, target.deviceId, "cross_device_message", {
             message: pushMsg
@@ -5903,27 +6283,76 @@ app.post('/api/client/cross-speak', async (req, res) => {
             if (pushResult.pushed) {
                 messageObj.delivered = true;
                 markChatMessageDelivered(chatMsgId, String(target.entityId));
-                serverLog('info', 'cross_speak_push', `Client ${fromEntity.publicCode} -> ${targetCode} push OK`, { deviceId, entityId: fromId });
-                    // Auto-collect: sender collects target's card, target collects sender's card
+                serverLog('info', 'cross_speak_push', `Client ${senderLabel} -> ${targetCode} push OK`, { deviceId, entityId: fromId });
+                if (!isOwnerMode) {
                     autoCollectCard(deviceId, targetCode, toEntity, 'auto_speak');
                     autoCollectCard(target.deviceId, fromEntity.publicCode, fromEntity, 'auto_speak');
-                    // Record recent interaction on both sides
                     db.upsertRecentInteraction(target.deviceId, fromEntity.publicCode, { name: fromEntity.name, character: fromEntity.character, avatar: fromEntity.avatar, cardSnapshot: fromEntity.agentCard }).catch(() => {});
                     db.upsertRecentInteraction(deviceId, targetCode, { name: toEntity.name, character: toEntity.character, avatar: toEntity.avatar, cardSnapshot: toEntity.agentCard }).catch(() => {});
+                }
             }
         }).catch(err => {
             console.error(`[ClientCrossSpeak] Push failed: ${err.message}`);
-            serverLog('error', 'push_error', `ClientCrossSpeak ${fromEntity.publicCode} -> ${targetCode} FAILED: ${err.message}`, { deviceId, entityId: fromId });
+            serverLog('error', 'cross_speak_push', `ClientCrossSpeak ${senderLabel} -> ${targetCode} FAILED: ${err.message}`, { deviceId, entityId: fromId });
         });
+    } else {
+        console.log(`[ClientCrossSpeak:DEBUG] No webhook on target entity ${targetCode} — message queued but NOT pushed`);
+        serverLog('warn', 'cross_speak', `[DEBUG] ${senderLabel} -> ${targetCode}: no webhook, message NOT pushed`, { deviceId, entityId: fromId, metadata: { targetCode, targetDeviceId: target.deviceId } });
     }
 
-    res.json({
+    const responsePayload = {
         success: true,
         message: `Cross-device message sent`,
-        from: { publicCode: fromEntity.publicCode, character: fromEntity.character },
+        from: isOwnerMode ? { owner: true } : { publicCode: fromEntity.publicCode, character: fromEntity.character },
         to: { publicCode: targetCode, character: toEntity.character },
-        pushed: hasWebhook ? "pending" : false
-    });
+        pushed: isChannelBound || hasWebhook ? "pending" : false,
+        _debug: { senderDeviceId: deviceId, targetDeviceId: target.deviceId, targetEntityId: target.entityId, isOwnerMode, isChannelBound, hasWebhook, chatMsgId }
+    };
+    console.log(`[ClientCrossSpeak:DEBUG] Response:`, JSON.stringify(responsePayload));
+    res.json(responsePayload);
+});
+
+/**
+ * POST /api/chat/pending-cross-speak
+ * Queue a cross-device message from an unverified user. Messages are flushed on email verification.
+ * Requires JWT cookie (registered but unverified OK).
+ * Body: { targetCode, text, mediaType?, mediaUrl? }
+ */
+app.post('/api/chat/pending-cross-speak', async (req, res) => {
+    // softAuthMiddleware already populates req.user from JWT cookie
+    if (!req.user || !req.user.deviceId) {
+        return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+
+    const { targetCode, text, mediaType, mediaUrl } = req.body;
+    if (!targetCode || !text) {
+        return res.status(400).json({ success: false, error: 'targetCode and text are required' });
+    }
+    if (typeof text !== 'string' || text.length > 5000) {
+        return res.status(400).json({ success: false, error: 'text must be a string under 5000 characters' });
+    }
+
+    // Validate target exists
+    const target = publicCodeIndex[targetCode];
+    if (!target) {
+        return res.status(404).json({ success: false, error: 'Target entity not found' });
+    }
+
+    // Limit pending messages per user (prevent abuse)
+    const existing = await db.getPendingCrossMessages(req.user.deviceId);
+    if (existing.length >= 50) {
+        return res.status(429).json({ success: false, error: 'Too many pending messages. Please verify your email first.' });
+    }
+
+    // Save pending message
+    const pendingId = await db.savePendingCrossMessage(req.user.deviceId, -1, targetCode, text, mediaType, mediaUrl);
+    if (!pendingId) {
+        return res.status(500).json({ success: false, error: 'Failed to queue message' });
+    }
+
+    serverLog('info', 'pending_cross_speak', `Pending cross-speak queued: ${req.user.deviceId} -> ${targetCode}`, { deviceId: req.user.deviceId });
+
+    res.json({ success: true, pendingId, status: 'pending_verification' });
 });
 
 /**
@@ -6123,7 +6552,8 @@ app.post('/api/entity/broadcast', async (req, res) => {
                     b2bMax: BOT2BOT_MAX_MESSAGES,
                     expectsReply: expectsReplyBcast,
                     missionHints: getMissionApiHints('https://eclawbot.com', deviceId, toId, toEntity.botSecret),
-                    silentToken: '[SILENT]'
+                    silentToken: '[SILENT]',
+                    identitySetupRequired: !toEntity.identity
                 }
             }, toEntity.channelAccountId).then(pushResult => {
                 if (pushResult.pushed) {
@@ -6171,6 +6601,7 @@ app.post('/api/entity/broadcast', async (req, res) => {
             else if (mediaType === 'video') pushMsg += `\n[Attachment: Video]\nmedia_type: video\nmedia_url: ${mediaUrl}`;
             else if (mediaType === 'file') pushMsg += `\n[Attachment: File]\nmedia_type: file\nmedia_url: ${mediaUrl}`;
             pushMsg += getMissionApiHints(apiBase, deviceId, toId, toEntity.botSecret);
+            pushMsg += buildIdentitySetupHint(toEntity, apiBase, deviceId, toId, toEntity.botSecret);
             pushToBot(toEntity, deviceId, "entity_broadcast", {
                 message: pushMsg
             }).then(pushResult => {
@@ -7500,14 +7931,15 @@ app.post('/api/bot/register', async (req, res) => {
         return res.status(403).json({ success: false, message: "Invalid botSecret" });
     }
 
-    // Discord webhooks don't need token or session_key — the URL itself contains the auth token
+    // Discord/Google Chat webhooks don't need token or session_key — the URL itself contains auth
     const isDiscord = isDiscordWebhook(webhook_url || '');
+    const isGoogleChat = isGoogleChatWebhook(webhook_url || '');
 
-    // Validate required fields (Discord webhooks only need webhook_url)
+    // Validate required fields (Discord/Google Chat webhooks only need webhook_url)
     if (!webhook_url) {
         return res.status(400).json({ success: false, message: "Missing required field: webhook_url" });
     }
-    if (!isDiscord && (!token || !session_key)) {
+    if (!isDiscord && !isGoogleChat && (!token || !session_key)) {
         return res.status(400).json({
             success: false,
             message: "Missing required fields: webhook_url, token, session_key"
@@ -7537,10 +7969,10 @@ app.post('/api/bot/register', async (req, res) => {
         });
     }
 
-    // Reject placeholder/unresolved token values (skip for Discord — no token needed)
+    // Reject placeholder/unresolved token values (skip for Discord/Google Chat — no token needed)
     const tokenStr = (token || '').trim();
     const placeholderPattern = /^\[.*\]$|^\{.*\}$|^\$\{.*\}$|^<.*>$|^__.*__$|^process\.env\.|^your[-_]|^xxx|^test$/i;
-    if (!isDiscord && (placeholderPattern.test(tokenStr) || tokenStr.includes('gateway token') || tokenStr.includes('your-') || tokenStr.includes('TOKEN_HERE') || tokenStr.includes('REDACTED') || tokenStr.includes('PLACEHOLDER'))) {
+    if (!isDiscord && !isGoogleChat && (placeholderPattern.test(tokenStr) || tokenStr.includes('gateway token') || tokenStr.includes('your-') || tokenStr.includes('TOKEN_HERE') || tokenStr.includes('REDACTED') || tokenStr.includes('PLACEHOLDER'))) {
         console.warn(`[Bot Register] Rejected placeholder token: "${tokenStr}"`);
         return res.status(400).json({
             success: false,
@@ -7555,7 +7987,7 @@ app.post('/api/bot/register', async (req, res) => {
     // Clean token: Remove "Bearer " prefix if present (case-insensitive)
     // This prevents "Bearer Bearer xyz" issue when backend adds Bearer prefix during push
     let cleanToken = tokenStr;
-    if (!isDiscord) {
+    if (!isDiscord && !isGoogleChat) {
         if (cleanToken.toLowerCase().startsWith('bearer ')) {
             cleanToken = cleanToken.substring(7).trim(); // Remove "Bearer " (7 chars)
             console.log(`[Bot Register] Cleaned token: removed "Bearer " prefix`);
@@ -7625,6 +8057,64 @@ app.post('/api/bot/register', async (req, res) => {
             webhook_type: 'discord',
             push_mode: 'discord',
             push_status_hint: "Discord webhooks are stateless — no polling needed."
+        });
+    }
+
+    // ── Google Chat webhook: simplified registration (no session key, no OpenClaw handshake) ──
+    if (isGoogleChat) {
+        console.log(`[Bot Register] Google Chat webhook detected: ${finalUrl}`);
+
+        // Handshake: send a test message to Google Chat
+        try {
+            const testResponse = await googleChatPush(finalUrl, `✅ EClaw webhook connected! (Device ${deviceId} Entity ${eId})`);
+
+            if (!testResponse.ok) {
+                const errText = await testResponse.text().catch(() => '');
+                console.error(`[Bot Register] ✗ Google Chat handshake FAILED: HTTP ${testResponse.status}`);
+                serverLog('error', 'handshake', `Google Chat handshake HTTP ${testResponse.status}`, { deviceId, entityId: eId, metadata: { error: errText.substring(0, 300) } });
+                return res.status(400).json({
+                    success: false,
+                    error_type: `google_chat_http_${testResponse.status}`,
+                    message: `Google Chat webhook handshake failed (HTTP ${testResponse.status}). ` +
+                        (testResponse.status === 404 ? 'Webhook URL is invalid or space not found.' :
+                         testResponse.status === 401 || testResponse.status === 403 ? 'Webhook key or token is invalid.' :
+                         testResponse.status === 429 ? 'Google Chat rate limit hit. Try again later.' :
+                         `Google Chat responded: ${errText.substring(0, 200)}`),
+                    debug: { url: finalUrl, httpStatus: testResponse.status }
+                });
+            }
+
+            console.log(`[Bot Register] ✓ Google Chat handshake OK (HTTP ${testResponse.status})`);
+        } catch (err) {
+            console.error(`[Bot Register] ✗ Google Chat handshake error:`, err.message);
+            return res.status(400).json({
+                success: false,
+                error_type: 'google_chat_connection_failed',
+                message: `Cannot reach Google Chat webhook: ${err.message}`
+            });
+        }
+
+        // Store Google Chat webhook
+        entity.webhook = {
+            url: finalUrl,
+            token: null,
+            sessionKey: null,
+            type: 'google-chat',
+            registeredAt: Date.now()
+        };
+        entity.pushStatus = { ok: true, at: Date.now() };
+        serverLog('info', 'bind', `Google Chat webhook registered for Entity ${eId}`, { deviceId, entityId: eId });
+
+        // Persist
+        db.saveEntity(deviceId, eId, entity);
+        io.to(`device:${deviceId}`).emit('entity:update', { deviceId, entityId: eId, name: entity.name, character: entity.character, state: entity.state, message: entity.message });
+
+        return res.json({
+            success: true,
+            message: "Google Chat webhook registered successfully",
+            webhook_type: 'google-chat',
+            push_mode: 'google-chat',
+            push_status_hint: "Google Chat webhooks are stateless — no polling needed."
         });
     }
 
@@ -8271,6 +8761,46 @@ async function discordPush(url, messageContent, discordOptions = {}) {
     });
 }
 
+/**
+ * Helper: Detect if a webhook URL is a Google Chat webhook.
+ * Google Chat webhooks follow: https://chat.googleapis.com/v1/spaces/{spaceId}/messages?key=...&token=...
+ */
+function isGoogleChatWebhook(url) {
+    try {
+        const u = new URL(url);
+        return u.hostname === 'chat.googleapis.com' &&
+               u.pathname.startsWith('/v1/spaces/');
+    } catch { return false; }
+}
+
+/**
+ * Helper: Push a message to a Google Chat webhook.
+ * Google Chat webhooks accept POST with JSON body.
+ * Supports plain text and cardsV2 rich message format.
+ * Docs: https://developers.google.com/workspace/chat/api/reference/rest/v1/spaces.messages#Message
+ */
+async function googleChatPush(url, messageContent, googleChatOptions = {}) {
+    const body = { text: messageContent };
+
+    // Merge rich message options (cardsV2) if provided
+    if (googleChatOptions.cardsV2 && Array.isArray(googleChatOptions.cardsV2)) {
+        body.cardsV2 = googleChatOptions.cardsV2;
+    }
+
+    // Google Chat has a 4096 char limit for text
+    if (body.text && body.text.length > 4096) {
+        body.text = body.text.substring(0, 4093) + '...';
+    }
+
+    const DEFAULT_TIMEOUT = 15000;
+    return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(DEFAULT_TIMEOUT)
+    });
+}
+
 async function gatewayFetch(url, token, body, options = {}) {
     const { setupUsername, setupPassword, timeout, signal } = options;
 
@@ -8437,6 +8967,27 @@ function getMissionApiHints(apiBase, deviceId, entityId, botSecret) {
     hints += `Mark TODO done: exec: curl -s -X POST "${apiBase}/api/mission/todo/done" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","title":"TASK_TITLE"}'\n`;
     hints += `Add note: exec: curl -s -X POST "${apiBase}/api/mission/note/add" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","title":"TITLE","content":"CONTENT"}'\n`;
     return hints;
+}
+
+/**
+ * Helper: Build IDENTITY_SETUP_REQUIRED hint for bots without identity.
+ * Only returns content when entity.identity is null — once identity is set, this disappears.
+ * Delivers at most 3 times per session to avoid bloating every push message.
+ */
+function buildIdentitySetupHint(entity, apiBase, deviceId, entityId, botSecret) {
+    if (entity.identity) return '';
+    const count = entity._identityHintCount || 0;
+    if (count >= 3) return '';
+    entity._identityHintCount = count + 1;
+    let hint = `\n\n[IDENTITY_SETUP_REQUIRED]\n`;
+    hint += `You have no identity configured yet. Set your identity (role, instructions, boundaries) via:\n`;
+    hint += `exec: curl -s -X PUT "${apiBase}/api/entity/identity" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","identity":{"role":"YOUR_ROLE","description":"WHAT_YOU_DO","instructions":["instruction1","instruction2"],"tone":"friendly","language":"zh-TW","public":{"description":"PUBLIC_DESCRIPTION_FOR_AGENT_CARD"}}}'\n`;
+    hint += `Available resources to review before setting up:\n`;
+    hint += `- Soul templates: exec: curl -s "${apiBase}/api/soul-templates"\n`;
+    hint += `- Rule templates: exec: curl -s "${apiBase}/api/rule-templates"\n`;
+    hint += `- Your dashboard: exec: curl -s "${apiBase}/api/mission/dashboard?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}"\n`;
+    hint += `[/IDENTITY_SETUP_REQUIRED]\n`;
+    return hint;
 }
 
 /**
@@ -9075,6 +9626,32 @@ app.patch('/api/feedback/:id', async (req, res) => {
     }
 
     res.json({ success: updated, message: updated ? "Updated" : "No changes", photosDeleted });
+});
+
+// DELETE /api/feedback/:id — Delete a feedback entry
+app.delete('/api/feedback/:id', async (req, res) => {
+    const { deviceId, deviceSecret } = req.body;
+
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, message: "deviceId and deviceSecret required" });
+    }
+    const device = devices[deviceId];
+    if (!device || device.deviceSecret !== deviceSecret) {
+        return res.status(401).json({ success: false, message: "Invalid credentials" });
+    }
+
+    const fb = await feedbackModule.getFeedbackById(chatPool, parseInt(req.params.id));
+    if (!fb) {
+        return res.status(404).json({ success: false, message: "Feedback not found" });
+    }
+
+    // Only the device owner can delete their own feedback
+    if (fb.device_id !== deviceId) {
+        return res.status(403).json({ success: false, message: "Not authorized to delete this feedback" });
+    }
+
+    const deleted = await feedbackModule.deleteFeedback(chatPool, fb.id);
+    res.json({ success: deleted, message: deleted ? "Deleted" : "Delete failed" });
 });
 
 // ============================================
@@ -9842,7 +10419,8 @@ async function executeScheduledMessage(schedule) {
             eclaw_context: {
                 expectsReply: true,
                 silentToken: '[SILENT]',
-                missionHints: missionHintsText
+                missionHints: missionHintsText,
+                identitySetupRequired: !entity.identity
             }
         }, entity.channelAccountId);
         if (pushResult.pushed) {
@@ -9857,6 +10435,7 @@ async function executeScheduledMessage(schedule) {
         pushMsg += `From: scheduled\n`;
         pushMsg += `Content: ${message}`;
         pushMsg += getMissionApiHints(apiBase, deviceId, entityId, entity.botSecret);
+        pushMsg += buildIdentitySetupHint(entity, apiBase, deviceId, entityId, entity.botSecret);
 
         pushResult = await pushToBot(entity, deviceId, 'new_message', {
             message: pushMsg
@@ -10870,6 +11449,72 @@ app.get('/api/chat/history-by-code', async (req, res) => {
     }
 });
 
+/**
+ * GET /api/chat/share-history — Get cross-speak conversation for shareable chat link
+ * Returns messages between the authenticated sender and the target entity (by publicCode).
+ * Queries the TARGET device's chat history for cross-device messages involving this sender.
+ * Auth: JWT cookie (eclaw_session) required.
+ * Query: ?code=ABC123&limit=50&since=TIMESTAMP_MS
+ */
+app.get('/api/chat/share-history', async (req, res) => {
+    if (!req.user || !req.user.deviceId) {
+        return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+
+    const { code, limit, since } = req.query;
+    if (!code) {
+        return res.status(400).json({ success: false, error: 'code parameter required' });
+    }
+
+    // Resolve target entity by publicCode
+    const target = publicCodeIndex[code];
+    if (!target) {
+        return res.status(404).json({ success: false, error: 'Entity not found' });
+    }
+
+    const maxLimit = Math.min(parseInt(limit) || 50, 200);
+    const senderDeviceId = req.user.deviceId;
+
+    try {
+        // Bot replies via /api/transform don't carry sender correlation, so we constrain
+        // them to only those after this sender's first message to avoid leaking other conversations
+        const senderPattern = `%${senderDeviceId}%`;
+        let query, params;
+        if (since) {
+            const sinceTs = new Date(parseInt(since));
+            query = `SELECT id, text, source, is_from_user, is_from_bot, media_type, media_url, created_at, is_delivered
+                     FROM chat_messages
+                     WHERE device_id = $1 AND entity_id = $2
+                     AND (source ILIKE $3 OR is_from_bot = true)
+                     AND created_at > $5
+                     ORDER BY created_at ASC LIMIT $4`;
+            params = [target.deviceId, target.entityId, senderPattern, maxLimit, sinceTs];
+        } else {
+            query = `SELECT id, text, source, is_from_user, is_from_bot, media_type, media_url, created_at, is_delivered
+                     FROM chat_messages
+                     WHERE device_id = $1 AND entity_id = $2
+                     AND (
+                         source ILIKE $3
+                         OR (is_from_bot = true AND created_at >= (
+                             SELECT COALESCE(MIN(created_at), NOW())
+                             FROM chat_messages
+                             WHERE device_id = $1 AND entity_id = $2 AND source ILIKE $3
+                         ))
+                     )
+                     ORDER BY created_at ASC LIMIT $4`;
+            params = [target.deviceId, target.entityId, senderPattern, maxLimit];
+        }
+
+        const result = await chatPool.query(query, params);
+        const messages = result.rows;
+
+        res.json({ success: true, messages });
+    } catch (error) {
+        console.error('[Chat] Share-history error:', error);
+        res.status(500).json({ success: false, error: 'Failed to get chat history' });
+    }
+});
+
 // ============================================
 // MESSAGE REACTIONS (Like / Dislike)
 // ============================================
@@ -11603,6 +12248,16 @@ if (require.main === module) {
                     console.error('[Trash] Cleanup error:', err.message);
                 }
             }, 6 * 60 * 60 * 1000);
+
+            // Cleanup orphaned pending cross-device messages older than 7 days
+            setInterval(async () => {
+                try {
+                    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+                    await db.cleanupExpiredPendingMessages(cutoff);
+                } catch (err) {
+                    console.error('[PendingCleanup] Error:', err.message);
+                }
+            }, 6 * 60 * 60 * 1000);
         }
     });
 }
@@ -11715,3 +12370,4 @@ app.get('/api/bot/pending-messages', (req, res) => {
 module.exports = app;
 module.exports.httpServer = httpServer;
 module.exports.io = io;
+module.exports.devices = devices;

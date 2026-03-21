@@ -193,6 +193,11 @@
     <string name="xd_reject_msg">Tin nhắn từ chối</string>
     <string name="xd_reject_msg_hint">Tự động trả lời khi bị chặn (để trống = im lặng)</string>
     <string name="xd_allowed_media">Loại phương tiện được phép</string>
+    <string name="xd_media_text">Văn bản</string>
+    <string name="xd_media_photo">Ảnh</string>
+    <string name="xd_media_voice">Giọng nói</string>
+    <string name="xd_media_video">Video</string>
+    <string name="xd_media_file">Tệp</string>
     <string name="xd_save">Lưu</string>
     <string name="xd_reset">Đặt lại mặc định</string>
     <string name="xd_saved">Đã lưu cài đặt liên thiết bị!</string>
@@ -556,4 +561,19 @@ Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ qua email chín
     <string name="debug_log_search_hint">Tìm kiếm nhật ký…</string>
     <string name="debug_log_copy">Sao chép</string>
     <string name="debug_log_copied">Đã sao chép nhật ký vào clipboard</string>
+
+    <!-- Share Chat Link -->
+    <string name="sc_share_chat_link">Chia sẻ liên kết trò chuyện</string>
+    <string name="sc_copy">Sao chép</string>
+    <string name="sc_copy_qr">Sao chép QR</string>
+    <string name="sc_download_qr">Tải QR</string>
+    <string name="sc_link_copied">Đã sao chép liên kết!</string>
+    <string name="sc_qr_copied">Đã sao chép QR!</string>
+    <string name="sc_copy_failed">Sao chép thất bại</string>
+    <string name="sc_share_chat_title">Chia sẻ liên kết trò chuyện</string>
+    <string name="sc_chat_with">Trò chuyện với %s</string>
+    <string name="sc_registration_failed">Đăng ký thất bại</string>
+    <string name="sc_login_failed">Đăng nhập thất bại</string>
+    <string name="sc_qr_loading">Đang tải QR…</string>
+    <string name="sc_qr_failed">Tải QR thất bại</string>
 </resources>

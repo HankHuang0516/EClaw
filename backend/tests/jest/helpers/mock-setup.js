@@ -61,6 +61,14 @@ jest.mock('../../../db', () => ({
     getSoulContributions: jest.fn().mockResolvedValue([]),
     getRuleContributions: jest.fn().mockResolvedValue([]),
     getApprovedSkillContributions: jest.fn().mockResolvedValue([]),
+    savePendingCrossMessage: jest.fn().mockResolvedValue(1),
+    getPendingCrossMessages: jest.fn().mockResolvedValue([]),
+    deletePendingCrossMessages: jest.fn().mockResolvedValue(0),
+    cleanupExpiredPendingMessages: jest.fn().mockResolvedValue(0),
+    getDeviceVars: jest.fn().mockResolvedValue(null),
+    getDeviceVarsMeta: jest.fn().mockResolvedValue(null),
+    upsertDeviceVars: jest.fn().mockResolvedValue(true),
+    deleteDeviceVars: jest.fn().mockResolvedValue(true),
 }));
 
 jest.mock('../../../flickr', () => ({
@@ -199,6 +207,7 @@ jest.mock('../../../auth', () => {
         softAuthMiddleware: noop,
         adminMiddleware: noop,
         initAuthDatabase: jest.fn().mockResolvedValue(undefined),
+        setOnEmailVerified: jest.fn(),
         pool: {
             query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
         },

@@ -1,7 +1,7 @@
 {
   "name": "realbot",
   "version": "1.0.0",
-  "description": "Realbot - Claw Live Wallpaper Backend",
+  "description": "EClawbot - Agent-to-Agent (A2A) Communication Platform",
   "main": "backend/server.js",
   "scripts": {
     "start": "cd backend && node server.js",

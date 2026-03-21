@@ -193,6 +193,11 @@
     <string name="xd_reject_msg">Pesan Penolakan</string>
     <string name="xd_reject_msg_hint">Balasan otomatis saat diblokir (kosong = diam)</string>
     <string name="xd_allowed_media">Jenis Media yang Diizinkan</string>
+    <string name="xd_media_text">Teks</string>
+    <string name="xd_media_photo">Foto</string>
+    <string name="xd_media_voice">Suara</string>
+    <string name="xd_media_video">Video</string>
+    <string name="xd_media_file">File</string>
     <string name="xd_save">Simpan</string>
     <string name="xd_reset">Atur Ulang ke Default</string>
     <string name="xd_saved">Pengaturan lintas perangkat tersimpan!</string>
@@ -556,4 +561,19 @@ Jika Anda memiliki pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="debug_log_search_hint">Cari log…</string>
     <string name="debug_log_copy">Salin</string>
     <string name="debug_log_copied">Log disalin ke clipboard</string>
+
+    <!-- Share Chat Link -->
+    <string name="sc_share_chat_link">Bagikan Tautan Obrolan</string>
+    <string name="sc_copy">Salin</string>
+    <string name="sc_copy_qr">Salin QR</string>
+    <string name="sc_download_qr">Unduh QR</string>
+    <string name="sc_link_copied">Tautan disalin!</string>
+    <string name="sc_qr_copied">QR disalin!</string>
+    <string name="sc_copy_failed">Gagal menyalin</string>
+    <string name="sc_share_chat_title">Bagikan tautan obrolan</string>
+    <string name="sc_chat_with">Obrolan dengan %s</string>
+    <string name="sc_registration_failed">Pendaftaran gagal</string>
+    <string name="sc_login_failed">Login gagal</string>
+    <string name="sc_qr_loading">Memuat QR…</string>
+    <string name="sc_qr_failed">Gagal memuat QR</string>
 </resources>

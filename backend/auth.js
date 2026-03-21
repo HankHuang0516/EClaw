@@ -106,6 +106,8 @@ async function initAuthDatabase() {
 module.exports = function(devices, getOrCreateDevice, serverLog) {
     // Audit helper (no-op if serverLog not provided for backward compat)
     const audit = serverLog || (() => {});
+    // Callback invoked after email verification (set by index.js to flush pending messages)
+    let _onEmailVerified = null;
     const router = express.Router();
 
     // ============================================
@@ -464,6 +466,15 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                 'UPDATE user_accounts SET email_verified = TRUE, verify_token = NULL, verify_token_expires = NULL WHERE id = $1',
                 [user.id]
             );
+
+            // Flush pending cross-device messages (queued before verification)
+            if (_onEmailVerified && user.device_id) {
+                try {
+                    await _onEmailVerified(user.device_id);
+                } catch (flushErr) {
+                    console.error('[Auth] Pending message flush error:', flushErr.message);
+                }
+            }
 
             // Redirect to portal login page
             res.redirect(`${BASE_URL}/portal/index.html?verified=true`);
@@ -1757,5 +1768,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
         }
     });
 
-    return { router, authMiddleware, softAuthMiddleware, adminMiddleware, requirePermission, initAuthDatabase, pool: pool };
+    function setOnEmailVerified(cb) { _onEmailVerified = cb; }
+
+    return { router, authMiddleware, softAuthMiddleware, adminMiddleware, requirePermission, initAuthDatabase, pool: pool, setOnEmailVerified };
 };

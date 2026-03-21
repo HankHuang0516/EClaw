@@ -24,8 +24,8 @@
     <color name="text_primary">#FFFFFF</color>
     <color name="text_primary_87">#DDFFFFFF</color>
     <color name="text_secondary">#AAAAAA</color>
-    <color name="text_hint">#777777</color>
-    <color name="text_disabled">#666666</color>
+    <color name="text_hint">#999999</color>
+    <color name="text_disabled">#999999</color>
     <color name="text_on_surface">#CCCCCC</color>
     <color name="text_on_dark">#999999</color>
     <color name="text_dark">#333333</color>

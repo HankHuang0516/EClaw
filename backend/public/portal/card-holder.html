@@ -537,6 +537,19 @@
         @media (max-width: 600px) {
             .search-bar input { width: 120px; }
         }
+        /* ── Share modal ── */
+        .share-modal-content { padding: 20px; max-width: 380px; }
+        .share-modal-content h3 { margin: 0 0 16px; font-size: 18px; font-weight: 700; }
+        .share-url-row { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; }
+        .share-url-row input { flex: 1; padding: 8px 12px; border: 1px solid var(--card-border); border-radius: 6px; background: var(--input-bg); color: var(--text); font-size: 13px; }
+        .share-url-row button { padding: 8px 14px; border: none; border-radius: 6px; background: var(--primary); color: #fff; font-size: 13px; cursor: pointer; white-space: nowrap; }
+        .share-qr-wrap { text-align: center; margin-bottom: 16px; }
+        .share-qr-wrap canvas { border: 8px solid #fff; border-radius: 8px; }
+        .share-qr-actions { display: flex; gap: 8px; justify-content: center; }
+        .share-qr-actions button { padding: 6px 14px; border: 1px solid var(--card-border); border-radius: 6px; background: var(--input-bg); color: var(--text); font-size: 12px; cursor: pointer; }
+        .share-qr-actions button:hover { border-color: var(--primary); color: var(--primary); }
+        .share-btn { background: none; border: 1px solid var(--card-border); color: var(--text-muted); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; transition: all 0.2s; flex-shrink: 0; }
+        .share-btn:hover { border-color: var(--primary); color: var(--primary); }
     </style>
 </head>
 
@@ -570,6 +583,24 @@
     <!-- Detail Modal -->
     <div class="modal-overlay" id="detailModal" onclick="if(event.target===this)closeDetail()">
         <div class="modal-card" id="detailContent"></div>
+    </div>
+
+    <!-- Share Modal -->
+    <div class="modal-overlay" id="shareModal" style="display:none" onclick="if(event.target===this)closeShareModal()">
+        <div class="modal-card share-modal-content">
+            <h3>&#x1F517; <span data-i18n="sc_share_chat_link">Share Chat Link</span></h3>
+            <div class="share-url-row">
+                <input type="text" id="shareUrl" readonly>
+                <button onclick="copyShareUrl()" data-i18n="sc_copy">Copy</button>
+            </div>
+            <div class="share-qr-wrap">
+                <canvas id="shareQrCanvas" width="200" height="200"></canvas>
+            </div>
+            <div class="share-qr-actions">
+                <button onclick="copyQrImage()" data-i18n="sc_copy_qr">Copy QR</button>
+                <button onclick="downloadQr()" data-i18n="sc_download_qr">Download QR</button>
+            </div>
+        </div>
     </div>
 
     <script src="shared/api.js"></script>
@@ -719,6 +750,7 @@
                         <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
                         <span class="agent-code" onclick="event.stopPropagation(); copyCode('${escapeAttr(c.publicCode)}')" title="Click to copy">${escapeHtml(c.publicCode)}</span>
                     </div>
+                    <button class="share-btn" onclick="event.stopPropagation(); openShareModal('${escapeAttr(c.publicCode)}', '${escapeAttr(c.name || c.publicCode)}')" title="${t('sc_share_chat_title', 'Share chat link')}">&#x1F517;</button>
                 </div>`;
 
             if (c.contactEmail || ac.contactEmail) {
@@ -886,7 +918,7 @@
                         <label>${t('cardholder_protocols', 'Protocols')}</label>
                         <div class="ac-tags" id="editProtos"></div>
                         <div class="ac-tag-input">
-                            <input type="text" id="editProtoInput" placeholder="e.g. A2A, REST, gRPC" maxlength="64">
+                            <input type="text" id="editProtoInput" placeholder="${t('cardholder_proto_placeholder', 'e.g. A2A, REST, gRPC')}" maxlength="64">
                             <button class="btn btn-sm btn-outline" onclick="addEditTag('editProtos', 'editProtoInput', 10)">+</button>
                         </div>
                     </div>
@@ -901,17 +933,17 @@
                     </div>
 
                     <div class="edit-field">
-                        <label>Version</label>
+                        <label>${t('cardholder_version_label', 'Version')}</label>
                         <input type="text" id="edit-version" value="${escapeAttr(ac.version || '')}" maxlength="50" placeholder="1.0.0">
                     </div>
 
                     <div class="edit-field">
-                        <label>Website</label>
+                        <label>${t('cardholder_website_label', 'Website')}</label>
                         <input type="url" id="edit-website" value="${escapeAttr(ac.website || '')}" maxlength="500" placeholder="https://...">
                     </div>
 
                     <div class="edit-field">
-                        <label>Email</label>
+                        <label>${t('cardholder_email_label', 'Email')}</label>
                         <input type="email" id="edit-email" value="${escapeAttr(ac.contactEmail || '')}" maxlength="255" placeholder="contact@example.com">
                     </div>
                 </div>
@@ -940,8 +972,8 @@
             const container = document.getElementById('editCaps');
             const row = document.createElement('div');
             row.className = 'ac-cap-item';
-            row.innerHTML = '<input type="text" placeholder="Name" value="' + escapeHtml(name) + '" class="ac-cap-name" style="padding:6px 8px;border:1px solid var(--card-border);border-radius:4px;background:var(--input-bg);color:var(--text);font-size:12px;">' +
-                '<input type="text" placeholder="Description" value="' + escapeHtml(desc) + '" class="ac-cap-desc" style="padding:6px 8px;border:1px solid var(--card-border);border-radius:4px;background:var(--input-bg);color:var(--text);font-size:12px;">' +
+            row.innerHTML = '<input type="text" placeholder="' + escapeHtml(t('cardholder_cap_name', 'Name')) + '" value="' + escapeHtml(name) + '" class="ac-cap-name" style="padding:6px 8px;border:1px solid var(--card-border);border-radius:4px;background:var(--input-bg);color:var(--text);font-size:12px;">' +
+                '<input type="text" placeholder="' + escapeHtml(t('cardholder_cap_desc', 'Description')) + '" value="' + escapeHtml(desc) + '" class="ac-cap-desc" style="padding:6px 8px;border:1px solid var(--card-border);border-radius:4px;background:var(--input-bg);color:var(--text);font-size:12px;">' +
                 '<button class="ac-cap-remove" title="Remove">&times;</button>';
             row.querySelector('.ac-cap-remove').onclick = function() { row.remove(); };
             container.appendChild(row);
@@ -950,7 +982,7 @@
         function addEditCapability() {
             const container = document.getElementById('editCaps');
             if (container.children.length >= 10) {
-                showToast('Maximum 10 capabilities', 'error');
+                showToast(t('cardholder_max_capabilities', 'Maximum 10 capabilities'), 'error');
                 return;
             }
             appendEditCapability('', '');
@@ -974,7 +1006,7 @@
             const val = (input.value || '').trim();
             if (!val) return;
             if (container.children.length >= maxCount) {
-                showToast('Maximum ' + maxCount + ' items', 'error');
+                showToast(t('cardholder_max_items', 'Maximum {n} items').replace('{n}', maxCount), 'error');
                 return;
             }
             const span = document.createElement('span');
@@ -1011,8 +1043,8 @@
                 </div>
 
                 <div class="modal-tabs">
-                    <button class="modal-tab active" onclick="switchModalTab(this, 'detailsPanel')">Details</button>
-                    <button class="modal-tab" onclick="switchModalTab(this, 'chatPanel'); loadChatHistory('${escapeAttr(card.publicCode)}')">Chat History</button>
+                    <button class="modal-tab active" onclick="switchModalTab(this, 'detailsPanel')">${t('cardholder_details_tab', 'Details')}</button>
+                    <button class="modal-tab" onclick="switchModalTab(this, 'chatPanel'); loadChatHistory('${escapeAttr(card.publicCode)}')">${t('cardholder_chat_history_tab', 'Chat History')}</button>
                 </div>
 
                 <div id="detailsPanel" class="modal-panel active">
@@ -1022,17 +1054,17 @@
                     </div>` : ''}
 
                     ${snap.contactEmail ? `<div class="modal-section">
-                        <div class="modal-section-title">Email</div>
+                        <div class="modal-section-title">${t('cardholder_email_label', 'Email')}</div>
                         <div style="font-size:14px;"><a href="mailto:${escapeAttr(snap.contactEmail)}" style="color:var(--primary);">${escapeHtml(snap.contactEmail)}</a></div>
                     </div>` : ''}
 
                     ${snap.website ? `<div class="modal-section">
-                        <div class="modal-section-title">Website</div>
+                        <div class="modal-section-title">${t('cardholder_website_label', 'Website')}</div>
                         <div style="font-size:14px;"><a href="${escapeAttr(snap.website)}" target="_blank" rel="noopener" style="color:var(--primary);">${escapeHtml(snap.website)}</a></div>
                     </div>` : ''}
 
                     ${snap.version ? `<div class="modal-section">
-                        <div class="modal-section-title">Version</div>
+                        <div class="modal-section-title">${t('cardholder_version_label', 'Version')}</div>
                         <div style="font-size:14px; color:var(--text-secondary);">${escapeHtml(snap.version)}</div>
                     </div>` : ''}
 
@@ -1336,8 +1368,77 @@
 
         // Keyboard shortcuts
         document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') closeDetail();
+            if (e.key === 'Escape') { closeDetail(); closeShareModal(); }
         });
+
+        // ── Share Modal + QR Code ──
+        function openShareModal(code, name) {
+            const url = `${window.location.origin}/c/${code}`;
+            document.getElementById('shareUrl').value = url;
+            document.getElementById('shareModal').style.display = 'flex';
+            generateQR(url);
+        }
+        function closeShareModal() {
+            document.getElementById('shareModal').style.display = 'none';
+        }
+        function copyShareUrl() {
+            const input = document.getElementById('shareUrl');
+            navigator.clipboard.writeText(input.value).then(() => showToast(t('sc_link_copied', 'Link copied!'))).catch(() => {
+                input.select(); document.execCommand('copy'); showToast(t('sc_link_copied', 'Link copied!'));
+            });
+        }
+        function copyQrImage() {
+            const canvas = document.getElementById('shareQrCanvas');
+            canvas.toBlob(blob => {
+                if (!blob) return;
+                navigator.clipboard.write([new ClipboardItem({'image/png': blob})]).then(() => showToast(t('sc_qr_copied', 'QR copied!'))).catch(() => showToast(t('sc_copy_failed', 'Copy failed'), 'error'));
+            });
+        }
+        function downloadQr() {
+            const canvas = document.getElementById('shareQrCanvas');
+            const a = document.createElement('a');
+            a.download = 'eclaw-chat-qr.png';
+            a.href = canvas.toDataURL('image/png');
+            a.click();
+        }
+
+        // Minimal QR code generator (adapted from qr-creator, MIT license)
+        let _qrLoading = false;
+        function generateQR(text) {
+            const canvas = document.getElementById('shareQrCanvas');
+            const ctx = canvas.getContext('2d');
+            // qrcode-generator exports as lowercase `qrcode`
+            if (typeof qrcode === 'undefined') {
+                ctx.fillStyle = '#fff'; ctx.fillRect(0,0,200,200);
+                ctx.fillStyle = '#666'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText(t('sc_qr_loading', 'QR loading...'), 100, 100);
+                if (!_qrLoading) {
+                    _qrLoading = true;
+                    const s = document.createElement('script');
+                    s.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js';
+                    s.onload = () => generateQR(text);
+                    s.onerror = () => { ctx.fillStyle = '#fff'; ctx.fillRect(0,0,200,200); ctx.fillStyle = '#c00'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(t('sc_qr_failed', 'QR failed to load'), 100, 100); };
+                    document.head.appendChild(s);
+                }
+                return;
+            }
+            const qr = qrcode(0, 'M');
+            qr.addData(text);
+            qr.make();
+            const size = 200;
+            const modules = qr.getModuleCount();
+            const cellSize = size / modules;
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, size, size);
+            ctx.fillStyle = '#000';
+            for (let r = 0; r < modules; r++) {
+                for (let c = 0; c < modules; c++) {
+                    if (qr.isDark(r, c)) {
+                        ctx.fillRect(c * cellSize, r * cellSize, cellSize + 0.5, cellSize + 0.5);
+                    }
+                }
+            }
+        }
     </script>
 </body>
 

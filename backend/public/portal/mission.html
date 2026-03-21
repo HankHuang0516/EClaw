@@ -1417,11 +1417,11 @@
 
             return `<div class="dialog-overlay" onclick="if(event.target===this)_restoreSkillDialog()">
                 <div class="dialog" style="max-width:480px;">
-                    <div class="dialog-title">瀏覽官方模板 (${templates.length})</div>
-                    <input id="tpl_gallery_search" type="text" placeholder="搜尋…" oninput="filterGallery(this.value)" style="margin-bottom:12px;" />
+                    <div class="dialog-title">${esc(i18n.t('mc_browse_official_tpl'))} (${templates.length})</div>
+                    <input id="tpl_gallery_search" type="text" placeholder="${esc(i18n.t('mc_search_placeholder') || 'Search...')}" oninput="filterGallery(this.value)" style="margin-bottom:12px;" />
                     <div id="tpl_gallery_list" style="max-height:380px;overflow-y:auto;">${cards}</div>
                     <div class="dialog-actions">
-                        <button class="btn btn-outline" onclick="_restoreSkillDialog()">取消</button>
+                        <button class="btn btn-outline" onclick="_restoreSkillDialog()">${esc(i18n.t('mc_dlg_cancel'))}</button>
                     </div>
                 </div>
             </div>`;
@@ -1578,11 +1578,11 @@
             document.body.insertAdjacentHTML('beforeend',
                 `<div id="rule_gallery_overlay" class="dialog-overlay" onclick="if(event.target===this)document.getElementById('rule_gallery_overlay').remove()">
                     <div class="dialog" style="max-width:480px;">
-                        <div class="dialog-title">規則模板 (${ruleTemplates.length})</div>
-                        <input type="text" placeholder="搜尋…" oninput="filterRuleGallery(this.value)" style="margin-bottom:12px;" />
+                        <div class="dialog-title">${esc(i18n.t('mc_rule_template_title'))} (${ruleTemplates.length})</div>
+                        <input type="text" placeholder="${esc(i18n.t('mc_search_placeholder') || 'Search...')}" oninput="filterRuleGallery(this.value)" style="margin-bottom:12px;" />
                         <div id="rule_gallery_list" style="max-height:380px;overflow-y:auto;">${cards}</div>
                         <div class="dialog-actions">
-                            <button class="btn btn-outline" onclick="document.getElementById('rule_gallery_overlay').remove()">取消</button>
+                            <button class="btn btn-outline" onclick="document.getElementById('rule_gallery_overlay').remove()">${esc(i18n.t('mc_dlg_cancel'))}</button>
                         </div>
                     </div>
                 </div>`
@@ -1718,16 +1718,16 @@
                     <div class="dialog-field-label">官方模板</div>
                     <div id="dlg_tpl_selected" style="display:none;" class="tpl-selected-row">
                         <span class="tpl-selected-label" id="dlg_tpl_selected_label"></span>
-                        <button class="btn btn-outline" style="font-size:11px;padding:3px 8px;" onclick="showTemplateGallery()">更換</button>
+                        <button class="btn btn-outline" style="font-size:11px;padding:3px 8px;" onclick="showTemplateGallery()">${esc(i18n.t('mc_skill_change'))}</button>
                     </div>
-                    <button class="btn btn-outline" id="dlg_browse_tpl_btn" style="width:100%;margin-bottom:8px;" onclick="showTemplateGallery()">瀏覽官方模板${skillTemplates.length ? ` (${skillTemplates.length})` : '…'}</button>
-                    <div class="dialog-field-label" style="margin-top:10px;">技能名稱</div>
-                    <input id="dlg_skill_title" placeholder="例：Google 搜尋" value="${esc(skill?.title || '')}" />
-                    <div class="dialog-field-label">相關網址 (選填)</div>
+                    <button class="btn btn-outline" id="dlg_browse_tpl_btn" style="width:100%;margin-bottom:8px;" onclick="showTemplateGallery()">${esc(i18n.t('mc_browse_official_tpl'))}${skillTemplates.length ? ` (${skillTemplates.length})` : '…'}</button>
+                    <div class="dialog-field-label" style="margin-top:10px;">${esc(i18n.t('mc_skill_name_label'))}</div>
+                    <input id="dlg_skill_title" placeholder="${esc(i18n.t('mc_skill_name_placeholder'))}" value="${esc(skill?.title || '')}" />
+                    <div class="dialog-field-label">${esc(i18n.t('mc_skill_url_label'))}</div>
                     <input id="dlg_skill_url" placeholder="https://..." value="${esc(skill?.url || '')}" />
-                    <div class="dialog-field-label">安裝步驟 (選填)</div>
-                    <textarea id="dlg_skill_steps" placeholder="詳細安裝與設定步驟...">${esc(skill?.steps || '')}</textarea>
-                    <div class="dialog-field-label">指派實體 (可多選)</div>
+                    <div class="dialog-field-label">${esc(i18n.t('mc_skill_steps_label'))}</div>
+                    <textarea id="dlg_skill_steps" placeholder="${esc(i18n.t('mc_skill_steps_placeholder'))}">${esc(skill?.steps || '')}</textarea>
+                    <div class="dialog-field-label">${esc(i18n.t('mc_skill_assign_entity'))}</div>
                     <div class="entity-checkbox-grid" id="dlg_skill_entities">${entityCheckboxes}</div>
                     <div class="dialog-actions">
                         <button class="btn btn-outline" onclick="closeDialog()">${i18n.t('mc_dlg_cancel')}</button>

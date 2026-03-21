@@ -1731,7 +1731,7 @@
                         statusEl.textContent = '';
                     } catch (photoErr) {
                         statusEl.textContent = 'Photo upload failed: ' + photoErr.message;
-                        statusEl.style.color = '#F44336';
+                        statusEl.style.color = 'var(--danger)';
                     }
                 }
 
@@ -1741,11 +1741,11 @@
 
                 const resultEl = document.getElementById('feedbackResult');
                 const logs = result.logsCaptured || {};
-                const sevColor = { critical: '#F44336', high: '#FF9800', medium: '#FFC107', low: '#4CAF50' }[result.severity] || '#4CAF50';
+                const sevColor = { critical: 'var(--danger)', high: 'var(--warning-hover)', medium: 'var(--warning)', low: 'var(--success)' }[result.severity] || 'var(--success)';
 
                 let html = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">`;
-                html += `<span style="color:#4CAF50;font-size:18px;font-weight:bold;">✓</span>`;
-                html += `<span style="color:#4CAF50;font-size:15px;font-weight:600;">${i18n.t('feedback_result_title').replace('%d', result.feedbackId || '?')}</span>`;
+                html += `<span style="color:var(--success);font-size:18px;font-weight:bold;">✓</span>`;
+                html += `<span style="color:var(--success);font-size:15px;font-weight:600;">${i18n.t('feedback_result_title').replace('%d', result.feedbackId || '?')}</span>`;
                 html += `</div>`;
                 html += `<div style="color:${sevColor};margin-bottom:4px;">${i18n.t('feedback_result_severity').replace('%s', result.severity || '?')}</div>`;
                 html += `<div style="color:var(--text-secondary);margin-bottom:4px;">${i18n.t('feedback_result_logs').replace('%d', logs.telemetry || 0).replace('%d', logs.serverLogs || 0)}</div>`;

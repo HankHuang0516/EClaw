@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <title data-i18n="dash_title">EClawbot - Dashboard</title>
-    <meta name="description" content="EClawbot device dashboard — manage entities, monitor status, and control your claw machines.">
+    <meta name="description" content="EClawbot dashboard — manage AI agents, monitor entity status, and coordinate inter-agent collaboration.">
     <link rel="preconnect" href="https://js.tappaysdk.com">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦞</text></svg>">
     <link rel="stylesheet" href="shared/style.css">
@@ -105,13 +105,13 @@
         }
 
         .badge-e2ee {
-            background: #1a2a3a;
-            color: #60a5fa;
+            background: var(--bg-secondary);
+            color: var(--accent-cyan);
             font-size: 11px;
             padding: 2px 8px;
             border-radius: 10px;
             font-weight: 600;
-            border: 1px solid #2d4a6a;
+            border: 1px solid var(--card-border);
         }
 
         .entity-public-code {
@@ -306,7 +306,7 @@
         }
 
         .btn-delete-permanent {
-            background: #dc2626 !important;
+            background: var(--danger) !important;
             color: #fff !important;
             border: none !important;
         }
@@ -1176,7 +1176,7 @@
                             <li data-i18n="borrow_free_feat_shared">Shared memory with all free users</li>
                             <li data-i18n="borrow_free_feat_limit">15 messages/day limit (free bot only)</li>
                         </ul>
-                        <div style="background:rgba(33,150,243,0.1);border:1px solid rgba(33,150,243,0.3);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#64B5F6;">
+                        <div style="background:var(--cat-feature-bg);border:1px solid rgba(33,150,243,0.3);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:var(--info);">
                             <span data-i18n="borrow_free_limit_hint">Each device can only bind one free bot</span>
                         </div>
                         <button class="btn btn-primary btn-block btn-sm" id="btnBindFree" onclick="bindFree()" disabled
@@ -1263,7 +1263,7 @@
                     <div class="tappay-field-input" id="tappay-ccv"></div>
                 </div>
             </div>
-            <div class="card-error" id="tpCardError" style="color:#F44336;font-size:12px;min-height:18px;"></div>
+            <div class="card-error" id="tpCardError" style="color:var(--danger);font-size:12px;min-height:18px;"></div>
             <div class="dialog-actions" style="margin-top:12px;">
                 <button class="btn btn-outline" onclick="closeTapPayDialog()" data-i18n="mc_dlg_cancel">Cancel</button>
                 <button class="btn btn-success" id="btnTpPay" disabled data-i18n="borrow_btn_pay">Pay NT$288</button>
@@ -1578,7 +1578,7 @@
                     '<div class="entity-edit-actions">' +
                     '<button class="btn btn-sm btn-outline" onclick="refreshEntity(' + entity.entityId + ', this)">&#x1F504; ' + i18n.t('dash_btn_refresh') + '</button>' +
                     '<button class="xd-settings-toggle" id="xdToggle' + entity.entityId + '" onclick="toggleXdSettings(' + entity.entityId + ')">' + i18n.t('dash_xd_settings') + '</button>' +
-                    '<button class="ac-settings-toggle" id="acToggle' + entity.entityId + '" onclick="toggleAgentCard(' + entity.entityId + ')">&#x1F4C7; Agent Card</button>' +
+                    '<button class="ac-settings-toggle" id="acToggle' + entity.entityId + '" onclick="toggleIdentityPanel(' + entity.entityId + ')">&#x1F3AD; ' + i18n.t('dash_id_btn') + '</button>' +
                     '<button class="btn btn-sm btn-delete-permanent"' + (entities.length <= 1 ? ' disabled title="' + i18n.t('dash_remove_title') + '"' : '') + ' onclick="confirmRemove(' + entity.entityId + ', \'' + escapedName + '\')">' + i18n.t('dash_btn_remove') + '</button>' +
                     '</div>' +
                     '<div class="xd-settings-panel" id="xdPanel' + entity.entityId + '">' +
@@ -1627,12 +1627,41 @@
                         '<button class="btn btn-sm btn-outline" onclick="resetXdSettings(' + entity.entityId + ')">' + i18n.t('dash_xd_reset') + '</button>' +
                     '</div>' +
                     '</div>' +
-                    /* ── Agent Card Panel ── */
+                    /* ── Identity Panel ── */
                     '<div class="ac-panel" id="acPanel' + entity.entityId + '">' +
-                    '<h4>&#x1F4C7; A2A Agent Card</h4>' +
+                    '<h4>&#x1F3AD; ' + i18n.t('dash_id_title') + '</h4>' +
+                    /* Internal behavior section */
                     '<div class="xd-field">' +
-                        '<label>Description</label>' +
-                        '<textarea id="acDesc' + entity.entityId + '" maxlength="500" placeholder="Describe this entity\'s purpose and capabilities..." rows="3"></textarea>' +
+                        '<label>' + i18n.t('dash_id_role') + '</label>' +
+                        '<input type="text" id="idRole' + entity.entityId + '" maxlength="100" placeholder="' + i18n.t('dash_id_role_hint') + '">' +
+                    '</div>' +
+                    '<div class="xd-field">' +
+                        '<label>' + i18n.t('dash_id_desc') + '</label>' +
+                        '<textarea id="idDesc' + entity.entityId + '" maxlength="500" placeholder="' + i18n.t('dash_id_desc_hint') + '" rows="2"></textarea>' +
+                    '</div>' +
+                    '<div class="xd-field">' +
+                        '<label>' + i18n.t('dash_id_instructions') + '</label>' +
+                        '<div class="ac-tags" id="idInstructions' + entity.entityId + '"></div>' +
+                        '<div class="ac-tag-input"><input type="text" id="idInstrInput' + entity.entityId + '" maxlength="200" placeholder="' + i18n.t('dash_id_instr_hint') + '"><button class="btn btn-sm btn-outline" onclick="addTag(\'idInstructions\',' + entity.entityId + ',\'idInstrInput\',20)">+</button></div>' +
+                    '</div>' +
+                    '<div class="xd-field">' +
+                        '<label>' + i18n.t('dash_id_boundaries') + '</label>' +
+                        '<div class="ac-tags" id="idBoundaries' + entity.entityId + '"></div>' +
+                        '<div class="ac-tag-input"><input type="text" id="idBoundInput' + entity.entityId + '" maxlength="200" placeholder="' + i18n.t('dash_id_bound_hint') + '"><button class="btn btn-sm btn-outline" onclick="addTag(\'idBoundaries\',' + entity.entityId + ',\'idBoundInput\',20)">+</button></div>' +
+                    '</div>' +
+                    '<div class="xd-field">' +
+                        '<label>' + i18n.t('dash_id_tone') + '</label>' +
+                        '<input type="text" id="idTone' + entity.entityId + '" maxlength="50" placeholder="' + i18n.t('dash_id_tone_hint') + '">' +
+                    '</div>' +
+                    '<div class="xd-field">' +
+                        '<label>' + i18n.t('dash_id_language') + '</label>' +
+                        '<input type="text" id="idLang' + entity.entityId + '" maxlength="10" placeholder="' + i18n.t('dash_id_lang_hint') + '">' +
+                    '</div>' +
+                    /* Public profile section (Agent Card) */
+                    '<h4 style="margin-top:16px;border-top:1px solid var(--card-border);padding-top:12px;">&#x1F4C7; ' + i18n.t('dash_id_public_title') + '</h4>' +
+                    '<div class="xd-field">' +
+                        '<label>' + i18n.t('dash_id_public_desc') + '</label>' +
+                        '<textarea id="acDesc' + entity.entityId + '" maxlength="500" placeholder="' + i18n.t('dash_id_public_desc_hint') + '" rows="2"></textarea>' +
                     '</div>' +
                     '<div class="xd-field">' +
                         '<label>Capabilities</label>' +
@@ -1662,8 +1691,8 @@
                         '<input type="text" id="acEmail' + entity.entityId + '" maxlength="255" placeholder="contact@example.com">' +
                     '</div>' +
                     '<div class="xd-actions">' +
-                        '<button class="btn btn-sm btn-primary" onclick="saveAgentCard(' + entity.entityId + ')">Save</button>' +
-                        '<button class="btn btn-sm btn-outline" onclick="deleteAgentCard(' + entity.entityId + ')">Delete</button>' +
+                        '<button class="btn btn-sm btn-primary" onclick="saveIdentity(' + entity.entityId + ')">' + i18n.t('dash_id_save') + '</button>' +
+                        '<button class="btn btn-sm btn-outline" onclick="deleteIdentity(' + entity.entityId + ')">' + i18n.t('dash_id_clear') + '</button>' +
                     '</div>' +
                     '</div>' +
                     '</div>';
@@ -1793,41 +1822,46 @@
             if (window.telemetry) telemetry.trackAction('xd_settings_reset', { entityId: entityId });
         }
 
-        // --- Agent Card Functions ---
-        function toggleAgentCard(entityId) {
+        // --- Identity Panel Functions ---
+        function toggleIdentityPanel(entityId) {
             var panel = document.getElementById('acPanel' + entityId);
             var btn = document.getElementById('acToggle' + entityId);
             if (!panel) return;
             var isOpen = panel.classList.toggle('open');
             btn.classList.toggle('active', isOpen);
-            if (isOpen) loadAgentCard(entityId);
-            if (window.telemetry) telemetry.trackAction(isOpen ? 'agent_card_open' : 'agent_card_close', { entityId: entityId });
+            if (isOpen) loadIdentity(entityId);
+            if (window.telemetry) telemetry.trackAction(isOpen ? 'identity_open' : 'identity_close', { entityId: entityId });
         }
 
-        async function loadAgentCard(entityId) {
+        async function loadIdentity(entityId) {
             try {
-                var data = await apiCall('GET', '/api/entity/agent-card?deviceId=' + currentUser.deviceId + '&deviceSecret=' + encodeURIComponent(currentUser.deviceSecret) + '&entityId=' + entityId);
-                var card = (data.success && data.agentCard) ? data.agentCard : {};
+                var data = await apiCall('GET', '/api/entity/identity?deviceId=' + currentUser.deviceId + '&deviceSecret=' + encodeURIComponent(currentUser.deviceSecret) + '&entityId=' + entityId);
+                var identity = (data.success && data.identity) ? data.identity : {};
+                var pub = identity.public || {};
                 var el = function(id) { return document.getElementById(id); };
-                el('acDesc' + entityId).value = card.description || '';
-                el('acVersion' + entityId).value = card.version || '';
-                el('acWebsite' + entityId).value = card.website || '';
-                el('acEmail' + entityId).value = card.contactEmail || '';
 
-                // Render capabilities
+                // Internal behavior fields
+                el('idRole' + entityId).value = identity.role || '';
+                el('idDesc' + entityId).value = identity.description || '';
+                el('idTone' + entityId).value = identity.tone || '';
+                el('idLang' + entityId).value = identity.language || '';
+                renderTags('idInstructions', entityId, identity.instructions || []);
+                renderTags('idBoundaries', entityId, identity.boundaries || []);
+
+                // Public profile fields (agent card)
+                el('acDesc' + entityId).value = pub.description || '';
+                el('acVersion' + entityId).value = pub.version || '';
+                el('acWebsite' + entityId).value = pub.website || '';
+                el('acEmail' + entityId).value = pub.contactEmail || '';
                 var capsEl = el('acCaps' + entityId);
                 capsEl.innerHTML = '';
-                (card.capabilities || []).forEach(function(cap) {
+                (pub.capabilities || []).forEach(function(cap) {
                     appendCapabilityRow(entityId, cap.name || '', cap.description || '');
                 });
-
-                // Render protocols
-                renderTags('acProtos', entityId, card.protocols || []);
-
-                // Render tags
-                renderTags('acTags', entityId, card.tags || []);
+                renderTags('acProtos', entityId, pub.protocols || []);
+                renderTags('acTags', entityId, pub.tags || []);
             } catch (err) {
-                console.error('[Agent Card] Load error:', err);
+                console.error('[Identity] Load error:', err);
             }
         }
 
@@ -1880,6 +1914,16 @@
             input.value = '';
         }
 
+        /** Collect tag text values from a .ac-tag container */
+        function collectTags(prefix, entityId) {
+            var result = [];
+            document.querySelectorAll('#' + prefix + entityId + ' .ac-tag').forEach(function(tag) {
+                var t = tag.firstChild.textContent.trim();
+                if (t) result.push(t);
+            });
+            return result;
+        }
+
         function collectAgentCard(entityId) {
             var el = function(id) { return document.getElementById(id); };
             var caps = [];
@@ -1889,71 +1933,85 @@
                 if (name) caps.push({ id: name.toLowerCase().replace(/\s+/g, '-'), name: name, description: desc });
             });
 
-            var protos = [];
-            document.querySelectorAll('#acProtos' + entityId + ' .ac-tag').forEach(function(tag) {
-                var t = tag.firstChild.textContent.trim();
-                if (t) protos.push(t);
-            });
-
-            var tags = [];
-            document.querySelectorAll('#acTags' + entityId + ' .ac-tag').forEach(function(tag) {
-                var t = tag.firstChild.textContent.trim();
-                if (t) tags.push(t);
-            });
-
             return {
                 description: el('acDesc' + entityId).value.trim(),
                 capabilities: caps,
-                protocols: protos,
-                tags: tags,
+                protocols: collectTags('acProtos', entityId),
+                tags: collectTags('acTags', entityId),
                 version: el('acVersion' + entityId).value.trim(),
                 website: el('acWebsite' + entityId).value.trim(),
                 contactEmail: el('acEmail' + entityId).value.trim()
             };
         }
 
-        async function saveAgentCard(entityId) {
-            var card = collectAgentCard(entityId);
-            if (!card.description) {
-                showToast('Description is required', 'warning');
+        function collectIdentity(entityId) {
+            var el = function(id) { return document.getElementById(id); };
+            var identity = {};
+
+            // Internal behavior
+            var role = el('idRole' + entityId).value.trim();
+            if (role) identity.role = role;
+            var desc = el('idDesc' + entityId).value.trim();
+            if (desc) identity.description = desc;
+            var tone = el('idTone' + entityId).value.trim();
+            if (tone) identity.tone = tone;
+            var lang = el('idLang' + entityId).value.trim();
+            if (lang) identity.language = lang;
+
+            var instructions = collectTags('idInstructions', entityId);
+            if (instructions.length) identity.instructions = instructions;
+            var boundaries = collectTags('idBoundaries', entityId);
+            if (boundaries.length) identity.boundaries = boundaries;
+
+            // Public profile (agent card)
+            var pub = collectAgentCard(entityId);
+            if (pub.description) identity.public = pub;
+
+            return identity;
+        }
+
+        async function saveIdentity(entityId) {
+            var identity = collectIdentity(entityId);
+            if (!identity.role && !identity.description && !identity.public) {
+                showToast(i18n.t('dash_id_validation'), 'warning');
                 return;
             }
             try {
-                var data = await apiCall('PUT', '/api/entity/agent-card', {
+                var data = await apiCall('PUT', '/api/entity/identity', {
                     deviceId: currentUser.deviceId,
                     deviceSecret: currentUser.deviceSecret,
                     entityId: entityId,
-                    agentCard: card
+                    identity: identity
                 });
                 if (data.success) {
-                    showToast('Agent Card saved', 'success');
+                    showToast(i18n.t('dash_id_saved'), 'success');
                 } else {
-                    showToast(data.message || 'Error saving', 'error');
+                    showToast(data.error || 'Error saving', 'error');
                 }
             } catch (err) {
                 showToast('Save failed: ' + err.message, 'error');
             }
-            if (window.telemetry) telemetry.trackAction('agent_card_save', { entityId: entityId });
+            if (window.telemetry) telemetry.trackAction('identity_save', { entityId: entityId });
         }
 
-        async function deleteAgentCard(entityId) {
-            if (!confirm('Delete Agent Card for Entity #' + entityId + '?')) return;
+        async function deleteIdentity(entityId) {
+            if (!confirm(i18n.t('dash_id_clear_confirm') + entityId + '?')) return;
             try {
-                var data = await apiCall('DELETE', '/api/entity/agent-card', {
+                var data = await apiCall('DELETE', '/api/entity/identity', {
                     deviceId: currentUser.deviceId,
                     deviceSecret: currentUser.deviceSecret,
                     entityId: entityId
                 });
                 if (data.success) {
-                    showToast('Agent Card deleted', 'success');
-                    loadAgentCard(entityId);
+                    showToast(i18n.t('dash_id_cleared'), 'success');
+                    loadIdentity(entityId);
                 } else {
-                    showToast(data.message || 'Error', 'error');
+                    showToast(data.error || 'Error', 'error');
                 }
             } catch (err) {
-                showToast('Delete failed: ' + err.message, 'error');
+                showToast('Clear failed: ' + err.message, 'error');
             }
-            if (window.telemetry) telemetry.trackAction('agent_card_delete', { entityId: entityId });
+            if (window.telemetry) telemetry.trackAction('identity_delete', { entityId: entityId });
         }
 
         // --- Drag to Reorder ---
@@ -2658,7 +2716,7 @@
             overlay.className = 'confirm-overlay';
             overlay.innerHTML =
                 '<div class="dialog">' +
-                '<div class="dialog-title" style="color:#dc2626;">' + i18n.t('dash_remove_title') + '</div>' +
+                '<div class="dialog-title" style="color:var(--danger);">' + i18n.t('dash_remove_title') + '</div>' +
                 '<p style="color:var(--text-secondary);font-size:14px;">' +
                 i18n.t('dash_remove_desc', { name: escapeHtml(displayName), id: entityId }) +
                 '</p>' +
@@ -2869,7 +2927,7 @@
                     content.innerHTML = html;
                 }
             } catch (e) {
-                content.innerHTML = '<div style="color:#F44336;">Failed to load TOS content.</div>';
+                content.innerHTML = '<div style="color:var(--danger);" data-i18n="dash_tos_load_error">Failed to load TOS content.</div>';
             }
 
             return new Promise(resolve => { tosResolve = resolve; });

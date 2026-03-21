@@ -193,6 +193,11 @@
     <string name="xd_reject_msg">ข้อความปฏิเสธ</string>
     <string name="xd_reject_msg_hint">ตอบกลับอัตโนมัติเมื่อถูกบล็อก (ว่าง = เงียบ)</string>
     <string name="xd_allowed_media">ประเภทสื่อที่อนุญาต</string>
+    <string name="xd_media_text">ข้อความ</string>
+    <string name="xd_media_photo">รูปภาพ</string>
+    <string name="xd_media_voice">เสียง</string>
+    <string name="xd_media_video">วิดีโอ</string>
+    <string name="xd_media_file">ไฟล์</string>
     <string name="xd_save">บันทึก</string>
     <string name="xd_reset">รีเซ็ตเป็นค่าเริ่มต้น</string>
     <string name="xd_saved">บันทึกการตั้งค่าข้ามอุปกรณ์แล้ว!</string>
@@ -556,4 +561,19 @@
     <string name="debug_log_search_hint">ค้นหาบันทึก…</string>
     <string name="debug_log_copy">คัดลอก</string>
     <string name="debug_log_copied">คัดลอกบันทึกไปยังคลิปบอร์ดแล้ว</string>
+
+    <!-- Share Chat Link -->
+    <string name="sc_share_chat_link">แชร์ลิงก์แชท</string>
+    <string name="sc_copy">คัดลอก</string>
+    <string name="sc_copy_qr">คัดลอก QR</string>
+    <string name="sc_download_qr">ดาวน์โหลด QR</string>
+    <string name="sc_link_copied">คัดลอกลิงก์แล้ว!</string>
+    <string name="sc_qr_copied">คัดลอก QR แล้ว!</string>
+    <string name="sc_copy_failed">คัดลอกไม่สำเร็จ</string>
+    <string name="sc_share_chat_title">แชร์ลิงก์แชท</string>
+    <string name="sc_chat_with">แชทกับ %s</string>
+    <string name="sc_registration_failed">ลงทะเบียนไม่สำเร็จ</string>
+    <string name="sc_login_failed">เข้าสู่ระบบไม่สำเร็จ</string>
+    <string name="sc_qr_loading">กำลังโหลด QR…</string>
+    <string name="sc_qr_failed">โหลด QR ไม่สำเร็จ</string>
 </resources>

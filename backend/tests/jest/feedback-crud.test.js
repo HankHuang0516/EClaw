@@ -96,6 +96,7 @@ jest.mock('../../device-feedback', () => ({
     getFeedbackPhoto: jest.fn().mockResolvedValue(null),
     deleteFeedbackPhotos: jest.fn().mockResolvedValue(undefined),
     cleanupResolvedFeedbackPhotos: jest.fn().mockResolvedValue(undefined),
+    deleteFeedback: jest.fn().mockResolvedValue(true),
 }));
 
 jest.mock('../../gatekeeper', () => ({
@@ -134,6 +135,7 @@ jest.mock('../../auth', () => {
         softAuthMiddleware: noop,
         adminMiddleware: noop,
         initAuthDatabase: jest.fn().mockResolvedValue(undefined),
+        setOnEmailVerified: jest.fn(),
         pool: {
             query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
         },
@@ -154,6 +156,7 @@ let app;
 const get = (path) => request(app).get(path).set('Host', 'localhost');
 const post = (path) => request(app).post(path).set('Host', 'localhost');
 const patch = (path) => request(app).patch(path).set('Host', 'localhost');
+const del = (path) => request(app).delete(path).set('Host', 'localhost');
 
 beforeAll(() => {
     app = require('../../index');
@@ -303,6 +306,22 @@ describe('GET /api/feedback/:id/photos', () => {
 
     it('rejects for nonexistent device', async () => {
         const res = await get('/api/feedback/1/photos?deviceId=nonexistent&deviceSecret=wrong');
+        expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
+// DELETE /api/feedback/:id — delete feedback
+// ════════════════════════════════════════════════════════════════
+describe('DELETE /api/feedback/:id', () => {
+    it('rejects when deviceId is missing', async () => {
+        const res = await del('/api/feedback/1').send({});
+        expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+
+    it('rejects for nonexistent device', async () => {
+        const res = await del('/api/feedback/1')
+            .send({ deviceId: 'nonexistent', deviceSecret: 'wrong' });
         expect(res.status).toBeGreaterThanOrEqual(400);
     });
 });

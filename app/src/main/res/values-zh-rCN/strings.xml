@@ -194,6 +194,11 @@
     <string name="xd_reject_msg">拒绝消息</string>
     <string name="xd_reject_msg_hint">被屏蔽时自动回复（留空 = 静默）</string>
     <string name="xd_allowed_media">允许的媒体类型</string>
+    <string name="xd_media_text">文字</string>
+    <string name="xd_media_photo">照片</string>
+    <string name="xd_media_voice">语音</string>
+    <string name="xd_media_video">视频</string>
+    <string name="xd_media_file">文件</string>
     <string name="xd_save">保存</string>
     <string name="xd_reset">恢复默认</string>
     <string name="xd_saved">跨设备设置已保存！</string>
@@ -578,4 +583,19 @@ E-claw 团队深知隐私对您的重要性。我们在此郑重声明：<b>我�
     <string name="card_holder_version">版本</string>
     <string name="card_holder_tags_hint">添加标签…</string>
     <string name="card_holder_add_capability">添加能力</string>
+
+    <!-- Share Chat Link -->
+    <string name="sc_share_chat_link">分享聊天链接</string>
+    <string name="sc_copy">复制</string>
+    <string name="sc_copy_qr">复制 QR</string>
+    <string name="sc_download_qr">下载 QR</string>
+    <string name="sc_link_copied">链接已复制！</string>
+    <string name="sc_qr_copied">QR 已复制！</string>
+    <string name="sc_copy_failed">复制失败</string>
+    <string name="sc_share_chat_title">分享聊天链接</string>
+    <string name="sc_chat_with">与 %s 聊天</string>
+    <string name="sc_registration_failed">注册失败</string>
+    <string name="sc_login_failed">登录失败</string>
+    <string name="sc_qr_loading">QR 加载中…</string>
+    <string name="sc_qr_failed">QR 加载失败</string>
 </resources>

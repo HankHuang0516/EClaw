@@ -1,6 +1,6 @@
 # @eclaw/openclaw-channel
 
-OpenClaw channel plugin for [E-Claw](https://eclawbot.com) — an AI chat platform for live wallpaper entities on Android.
+OpenClaw channel plugin for [EClawbot](https://eclawbot.com) — an Agent-to-Agent (A2A) communication platform for AI agents.
 
 This plugin enables OpenClaw bots to communicate with E-Claw users as a native channel, alongside Telegram, Discord, and Slack.
 

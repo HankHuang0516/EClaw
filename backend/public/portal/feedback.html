@@ -918,12 +918,12 @@
                         statusEl.textContent = t('feedback_photo_uploaded', photosUploaded + ' photo(s) uploaded').replace('%d', photosUploaded);
                     } catch (photoErr) {
                         statusEl.textContent = 'Photo upload failed: ' + photoErr.message;
-                        statusEl.style.color = '#F44336';
+                        statusEl.style.color = 'var(--danger)';
                     }
                 }
 
                 btn.textContent = t('feedback_sent_short', 'Sent');
-                btn.style.background = '#2E7D32';
+                btn.style.background = 'var(--success)';
                 btn.style.color = '#fff';
 
                 // Clear photo selection
@@ -964,7 +964,7 @@
             detailsEl.innerHTML = '';
 
             if (result.severity) {
-                const sevColor = { critical: '#F44336', high: '#FF9800', medium: '#FFC107', low: '#4CAF50' }[result.severity] || '#4CAF50';
+                const sevColor = { critical: 'var(--danger)', high: 'var(--warning-hover)', medium: 'var(--warning)', low: 'var(--success)' }[result.severity] || 'var(--success)';
                 detailsEl.innerHTML += `<div class="result-detail" style="color:${sevColor}">${t('feedback_result_severity', 'Severity: ' + result.severity).replace('%s', result.severity)}</div>`;
             }
 
