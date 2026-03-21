@@ -1344,7 +1344,10 @@
             }
             try {
                 const data = await apiCall('GET', `/api/entities?deviceId=${currentUser.deviceId}`);
-                boundEntities = (data.entities || []).filter(e => e.isBound);
+                const allEntities = data.entities || [];
+                // Use bound entities for target bar; fall back to all entities if none are bound
+                boundEntities = allEntities.filter(e => e.isBound);
+                if (boundEntities.length === 0) boundEntities = allEntities;
                 boundEntityIds = new Set(boundEntities.map(e => e.entityId));
                 updateEntityMaps(boundEntities);
                 // Build publicCode -> label map for own device
@@ -1647,7 +1650,7 @@
         async function loadMessages() {
             try {
                 const data = await apiCall('GET',
-                    `/api/chat/history?deviceId=${currentUser.deviceId}&deviceSecret=${currentUser.deviceSecret}&limit=100`
+                    `/api/chat/history?deviceId=${currentUser.deviceId}&deviceSecret=${currentUser.deviceSecret}&limit=500`
                 );
 
                 if (data.success && data.messages) {
@@ -2120,7 +2123,8 @@
                     return `${senderHtml} &rarr; ${i18n.t('chat_sent_to')}${targetLabels.join(', ')}`;
                 }
 
-                return entityHtml;
+                // Regular bot response (transform) — show "Entity → You"
+                return `${entityHtml} &rarr; You`;
             }
 
             // Platform command response

@@ -555,6 +555,7 @@
         const container = document.getElementById('messagesContainer');
         const div = document.createElement('div');
         div.className = `msg ${type}`;
+        div.dataset.localText = text;  // marker for dedup with DB messages
         div.innerHTML = escapeHtml(text);
         if (type === 'pending') {
             div.innerHTML += `<div class="verify-hint">&#x2709; ${t('sc_email_verification_required', 'Email verification required')}</div>`;
@@ -576,6 +577,18 @@
     function renderHistoryMessage(msg) {
         if (renderedMsgIds.has(msg.id)) return;
         renderedMsgIds.add(msg.id);
+
+        // Remove local optimistic message that matches this DB message (dedup)
+        if (!msg.is_from_bot) {
+            const locals = document.querySelectorAll('.msg.sent[data-local-text]');
+            for (const el of locals) {
+                if (el.dataset.localText === (msg.text || '')) {
+                    el.remove();
+                    dbg('info', 'Removed local optimistic message (replaced by DB version)');
+                    break;
+                }
+            }
+        }
 
         document.getElementById('emptyMsg').style.display = 'none';
         const container = document.getElementById('messagesContainer');
