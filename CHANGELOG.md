@@ -1,3 +1,10 @@
+## [1.128.1](https://github.com/HankHuang0516/EClaw/compare/v1.128.0...v1.128.1) (2026-03-21)
+
+
+### Bug Fixes
+
+* render contact checkboxes for zero-entity users in chat target bar ([#378](https://github.com/HankHuang0516/EClaw/issues/378)) ([08c2e29](https://github.com/HankHuang0516/EClaw/commit/08c2e296f88c025058fb1847a9d2f0eca7823d2e))
+
 # [1.128.0](https://github.com/HankHuang0516/EClaw/compare/v1.127.4...v1.128.0) (2026-03-21)
 
 
