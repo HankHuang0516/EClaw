@@ -73,7 +73,7 @@
         /* ── Registration modal ── */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 100; }
         .modal-overlay.hidden { display: none; }
-        .modal { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 24px; width: 90%; max-width: 400px; }
+        .modal { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 24px; width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto; }
         .modal h3 { margin: 0 0 16px; font-size: 18px; }
         .modal .field { margin-bottom: 12px; }
         .modal .field label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
@@ -85,9 +85,36 @@
         .modal .btn-primary { background: var(--primary); color: #fff; font-weight: 600; }
         .modal .btn-secondary { background: var(--input-bg); color: var(--text); border: 1px solid var(--card-border); }
 
+        /* ── Social login ── */
+        .social-divider { display: flex; align-items: center; gap: 12px; margin: 16px 0 12px; }
+        .social-divider .line { flex: 1; height: 1px; background: var(--card-border); }
+        .social-divider span { color: var(--text-secondary); font-size: 13px; }
+        .social-btn { width: 100%; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--card); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 14px; margin-bottom: 8px; }
+        .social-btn:hover { background: var(--input-bg); }
+
         /* ── Login link ── */
         .login-link { text-align: center; margin: 12px 0; font-size: 13px; color: var(--text-muted); }
         .login-link a { color: var(--primary); text-decoration: none; }
+
+        /* ── Terms dialog (in modal) ── */
+        .terms-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 200; animation: fadeIn 0.2s ease; }
+        .terms-overlay.hidden { display: none; }
+        .terms-dialog { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); width: 90vw; max-width: 520px; max-height: 85vh; display: flex; flex-direction: column; animation: slideUp 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .terms-header { padding: 20px 24px 12px; border-bottom: 1px solid var(--card-border); flex-shrink: 0; }
+        .terms-header h2 { font-size: 18px; font-weight: 700; margin: 0; }
+        .terms-header p { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+        .terms-content { flex: 1; overflow-y: auto; padding: 16px 24px; font-size: 13px; line-height: 1.7; color: var(--text-secondary); }
+        .terms-content h3 { font-size: 14px; font-weight: 600; color: var(--text); margin: 16px 0 8px; }
+        .terms-content h3:first-child { margin-top: 0; }
+        .terms-content p { margin-bottom: 8px; }
+        .terms-content ul { margin: 8px 0; padding-left: 20px; }
+        .terms-content li { margin-bottom: 4px; }
+        .terms-footer { padding: 16px 24px; border-top: 1px solid var(--card-border); display: flex; gap: 10px; flex-shrink: 0; }
+        .terms-footer button { flex: 1; padding: 10px 16px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .terms-footer .btn-decline { background: var(--input-bg); color: var(--text); border: 1px solid var(--card-border); }
+        .terms-footer .btn-agree { background: var(--primary); color: #fff; }
 
         /* ── Powered by ── */
         .powered-by { text-align: center; padding: 12px 0; font-size: 11px; color: var(--text-muted); }
@@ -147,11 +174,24 @@
                 <input type="password" id="regPassword2" data-i18n-placeholder="sc_confirm_password_hint" placeholder="Confirm password">
             </div>
             <div class="error" id="regError"></div>
-            <div class="login-link"><span data-i18n="sc_already_have_account">Already have an account?</span> <a href="#" onclick="showLoginMode(); return false;" data-i18n="sc_login">Login</a></div>
             <div class="btn-row">
                 <button class="btn-secondary" onclick="closeModal()" data-i18n="sc_cancel">Cancel</button>
-                <button class="btn-primary" id="regSubmitBtn" onclick="doRegister()" data-i18n="sc_register">Register</button>
+                <button class="btn-primary" id="regSubmitBtn" onclick="handleRegisterClick()" data-i18n="sc_register">Register</button>
             </div>
+            <div class="social-divider">
+                <div class="line"></div>
+                <span data-i18n="login_or">or</span>
+                <div class="line"></div>
+            </div>
+            <button class="social-btn" onclick="doGoogleLogin()">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                <span data-i18n="login_btn_google">Sign in with Google</span>
+            </button>
+            <button class="social-btn" onclick="doFacebookLogin()">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#1877F2" d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12c0 5.99 4.388 10.954 10.125 11.854V15.47H7.078V12h3.047V9.356c0-3.007 1.792-4.668 4.533-4.668 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874V12h3.328l-.532 3.47h-2.796v8.385C19.612 22.954 24 17.99 24 12z"/></svg>
+                <span data-i18n="login_btn_facebook">Sign in with Facebook</span>
+            </button>
+            <div class="login-link"><span data-i18n="sc_already_have_account">Already have an account?</span> <a href="#" onclick="showLoginMode(); return false;" data-i18n="sc_login">Login</a></div>
         </div>
     </div>
 
@@ -168,10 +208,75 @@
                 <input type="password" id="loginPassword" data-i18n-placeholder="sc_password" placeholder="Password">
             </div>
             <div class="error" id="loginError"></div>
-            <div class="login-link"><span data-i18n="sc_no_account">No account?</span> <a href="#" onclick="showRegisterMode(); return false;" data-i18n="sc_register">Register</a></div>
             <div class="btn-row">
                 <button class="btn-secondary" onclick="closeModal()" data-i18n="sc_cancel">Cancel</button>
                 <button class="btn-primary" id="loginSubmitBtn" onclick="doLogin()" data-i18n="sc_login">Login</button>
+            </div>
+            <div class="social-divider">
+                <div class="line"></div>
+                <span data-i18n="login_or">or</span>
+                <div class="line"></div>
+            </div>
+            <button class="social-btn" onclick="doGoogleLogin()">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                <span data-i18n="login_btn_google">Sign in with Google</span>
+            </button>
+            <button class="social-btn" onclick="doFacebookLogin()">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#1877F2" d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12c0 5.99 4.388 10.954 10.125 11.854V15.47H7.078V12h3.047V9.356c0-3.007 1.792-4.668 4.533-4.668 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874V12h3.328l-.532 3.47h-2.796v8.385C19.612 22.954 24 17.99 24 12z"/></svg>
+                <span data-i18n="login_btn_facebook">Sign in with Facebook</span>
+            </button>
+            <div class="login-link"><span data-i18n="sc_no_account">No account?</span> <a href="#" onclick="showRegisterMode(); return false;" data-i18n="sc_register">Register</a></div>
+        </div>
+    </div>
+
+    <!-- Terms & Privacy Dialog -->
+    <div class="terms-overlay hidden" id="termsOverlay">
+        <div class="terms-dialog">
+            <div class="terms-header">
+                <h2 data-i18n="terms_title">Terms of Service & Privacy Policy</h2>
+                <p data-i18n="terms_subtitle">Please read and agree before creating an account</p>
+            </div>
+            <div class="terms-content" id="termsContent">
+                <h3 data-i18n="terms_section_tos">Terms of Service</h3>
+                <p data-i18n="terms_tos_welcome">Welcome to EClawbot. By creating an account and using our services, you agree to the following terms:</p>
+                <ul>
+                    <li data-i18n="terms_tos_1">You must be at least 13 years old to create an account.</li>
+                    <li data-i18n="terms_tos_2">You are responsible for maintaining the security of your account credentials.</li>
+                    <li data-i18n="terms_tos_3">You agree not to use the service for any unlawful or prohibited activities.</li>
+                    <li data-i18n="terms_tos_4">We reserve the right to suspend or terminate accounts that violate these terms.</li>
+                    <li data-i18n="terms_tos_5">The service is provided "as is" without warranty of any kind.</li>
+                    <li data-i18n="terms_tos_6">We may modify the service or these terms at any time with prior notice.</li>
+                </ul>
+                <h3 data-i18n="terms_section_privacy">Privacy Policy</h3>
+                <p data-i18n="terms_privacy_intro">We take your privacy seriously. This policy describes how we collect, use, and protect your personal information:</p>
+                <h3 data-i18n="terms_section_collect">Information We Collect</h3>
+                <ul>
+                    <li data-i18n="terms_collect_1">Account information: email address and encrypted password.</li>
+                    <li data-i18n="terms_collect_2">Device information: device identifiers for service binding.</li>
+                    <li data-i18n="terms_collect_3">Usage data: interaction logs to improve service quality.</li>
+                </ul>
+                <h3 data-i18n="terms_section_use">How We Use Your Information</h3>
+                <ul>
+                    <li data-i18n="terms_use_1">To provide and maintain the EClawbot service.</li>
+                    <li data-i18n="terms_use_2">To communicate important service updates and notices.</li>
+                    <li data-i18n="terms_use_3">To improve and personalize your experience.</li>
+                    <li data-i18n="terms_use_4">To prevent fraud and ensure platform security.</li>
+                </ul>
+                <h3 data-i18n="terms_section_protect">Data Protection</h3>
+                <ul>
+                    <li data-i18n="terms_protect_1">Your password is stored using industry-standard encryption.</li>
+                    <li data-i18n="terms_protect_2">We do not sell or share your personal information with third parties for marketing purposes.</li>
+                    <li data-i18n="terms_protect_3">You may request deletion of your account and associated data at any time.</li>
+                    <li data-i18n="terms_protect_4">We implement reasonable security measures to protect your data from unauthorized access.</li>
+                </ul>
+                <h3 data-i18n="terms_section_liability">Limitation of Liability</h3>
+                <p data-i18n="terms_liability_text">To the maximum extent permitted by law, EClawbot and its operators shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the service, including but not limited to loss of data, service interruption, or unauthorized access to your account.</p>
+                <h3 data-i18n="terms_section_contact">Contact</h3>
+                <p data-i18n="terms_contact_text">If you have any questions about these terms or our privacy practices, please contact us through the app's support channel.</p>
+            </div>
+            <div class="terms-footer">
+                <button class="btn-decline" onclick="declineTerms()" data-i18n="terms_btn_decline">Decline</button>
+                <button class="btn-agree" onclick="acceptTerms()" data-i18n="terms_btn_agree">I Agree</button>
             </div>
         </div>
     </div>
@@ -224,6 +329,9 @@
     let targetCode = '';
     let targetEntity = null;
     let pendingText = '';       // text queued while registration modal open
+    let termsAccepted = false;
+    let googleClientId = null;
+    let facebookAppId = null;
 
     // ── Init ──
     (async function init() {
@@ -547,15 +655,170 @@
     });
     window.addEventListener('beforeunload', stopPolling);
 
+    // ── OAuth config (lazy-loaded when modal opens) ──
+    let oauthLoaded = false;
+    async function ensureOAuthConfig() {
+        if (oauthLoaded) return;
+        oauthLoaded = true;
+        try {
+            const resp = await fetch(`${API_BASE}/api/auth/oauth/config`);
+            const data = await resp.json();
+            googleClientId = data.googleClientId || null;
+            facebookAppId = data.facebookAppId || null;
+            if (googleClientId) loadGoogleSdk();
+            if (facebookAppId) loadFacebookSdk();
+            dbg('info', 'OAuth config loaded', { google: !!googleClientId, facebook: !!facebookAppId });
+        } catch (e) {
+            dbg('warn', `OAuth config not available: ${e.message}`);
+        }
+    }
+
+    function loadGoogleSdk() {
+        if (document.querySelector('script[src*="accounts.google.com/gsi/client"]')) return;
+        const s = document.createElement('script');
+        s.src = 'https://accounts.google.com/gsi/client';
+        s.async = true;
+        s.defer = true;
+        document.body.appendChild(s);
+    }
+
+    function loadFacebookSdk() {
+        if (document.querySelector('script[src*="connect.facebook.net"]')) return;
+        window.fbAsyncInit = function () {
+            FB.init({ appId: facebookAppId, cookie: true, xfbml: false, version: 'v19.0' });
+        };
+        const s = document.createElement('script');
+        s.src = 'https://connect.facebook.net/en_US/sdk.js';
+        s.async = true;
+        s.defer = true;
+        document.body.appendChild(s);
+    }
+
+    async function doGoogleLogin() {
+        if (!googleClientId) { showToast(t('sc_google_not_configured', 'Google login not configured'), 'error'); return; }
+        if (typeof google === 'undefined') { showToast(t('sc_sdk_loading', 'Loading...'), 'warn'); return; }
+        try {
+            const client = google.accounts.oauth2.initTokenClient({
+                client_id: googleClientId,
+                scope: 'openid email profile',
+                callback: async (resp) => {
+                    if (resp.error) { showToast(resp.error, 'error'); return; }
+                    try {
+                        const apiResp = await fetch(`${API_BASE}/api/auth/oauth/google`, {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ accessToken: resp.access_token })
+                        });
+                        const data = await apiResp.json();
+                        if (!apiResp.ok || !data.success) { showToast(data.error || 'Google login failed', 'error'); return; }
+                        currentUser = data.user;
+                        emailVerified = true;
+                        handleSocialLoginSuccess();
+                    } catch (e) { showToast(e.message || 'Google login failed', 'error'); }
+                }
+            });
+            client.requestAccessToken();
+        } catch (e) { showToast(e.message || 'Google login failed', 'error'); }
+    }
+
+    async function doFacebookLogin() {
+        if (!facebookAppId) { showToast(t('sc_facebook_not_configured', 'Facebook login not configured'), 'error'); return; }
+        if (typeof FB === 'undefined') { showToast(t('sc_sdk_loading', 'Loading...'), 'warn'); return; }
+        FB.login(function (response) {
+            if (response.authResponse) {
+                fetch(`${API_BASE}/api/auth/oauth/facebook`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ accessToken: response.authResponse.accessToken })
+                }).then(r => r.json()).then(data => {
+                    if (!data.success) { showToast(data.error || 'Facebook login failed', 'error'); return; }
+                    currentUser = data.user;
+                    emailVerified = true;
+                    handleSocialLoginSuccess();
+                }).catch(e => showToast(e.message || 'Facebook login failed', 'error'));
+            }
+        }, { scope: 'email,public_profile' });
+    }
+
+    async function handleSocialLoginSuccess() {
+        dbg('info', 'Social login success', { email: currentUser.email });
+        const saved = pendingText;
+        closeModal();
+        dispatchPendingAndRedirect(saved, true);
+    }
+
+    // ── Terms ──
+    function showTermsDialog() {
+        document.getElementById('termsOverlay').classList.remove('hidden');
+        document.getElementById('termsContent').scrollTop = 0;
+    }
+
+    function declineTerms() {
+        document.getElementById('termsOverlay').classList.add('hidden');
+        termsAccepted = false;
+    }
+
+    function acceptTerms() {
+        termsAccepted = true;
+        document.getElementById('termsOverlay').classList.add('hidden');
+        doRegister();
+    }
+
+    function handleRegisterClick() {
+        // Validate fields first before showing terms
+        const email = document.getElementById('regEmail').value.trim();
+        const pw = document.getElementById('regPassword').value;
+        const pw2 = document.getElementById('regPassword2').value;
+        const errEl = document.getElementById('regError');
+        errEl.textContent = '';
+
+        if (!email || !pw) { errEl.textContent = t('sc_email_password_required', 'Email and password required'); return; }
+        if (pw !== pw2) { errEl.textContent = t('sc_passwords_no_match', 'Passwords do not match'); return; }
+        if (pw.length < 6) { errEl.textContent = t('sc_password_min_length', 'Password must be at least 6 characters'); return; }
+        if (!/[a-zA-Z]/.test(pw) || !/[0-9]/.test(pw)) { errEl.textContent = t('sc_password_format', 'Password must contain letters and numbers'); return; }
+
+        if (!termsAccepted) {
+            showTermsDialog();
+            return;
+        }
+        doRegister();
+    }
+
+    // ── Shared post-auth redirect ──
+    async function dispatchPendingAndRedirect(savedPendingText, verified) {
+        if (savedPendingText) {
+            try {
+                if (verified) {
+                    await fetch(`${API_BASE}/api/client/cross-speak`, {
+                        method: 'POST', credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ deviceId: currentUser.deviceId, fromEntityId: -1, targetCode, text: savedPendingText })
+                    });
+                } else {
+                    await fetch(`${API_BASE}/api/chat/pending-cross-speak`, {
+                        method: 'POST', credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ targetCode, text: savedPendingText })
+                    });
+                }
+            } catch (_) { /* redirect anyway */ }
+        }
+        window.location.href = `/portal/chat.html?contact=${encodeURIComponent(targetCode)}`;
+    }
+
     // ── Registration ──
     function showRegisterMode() {
         document.getElementById('registerModal').classList.remove('hidden');
         document.getElementById('loginModal').classList.add('hidden');
+        ensureOAuthConfig();
     }
 
     function showLoginMode() {
         document.getElementById('registerModal').classList.add('hidden');
         document.getElementById('loginModal').classList.remove('hidden');
+        ensureOAuthConfig();
     }
 
     function closeModal() {
@@ -568,14 +831,7 @@
         dbg('info', 'doRegister called');
         const email = document.getElementById('regEmail').value.trim();
         const pw = document.getElementById('regPassword').value;
-        const pw2 = document.getElementById('regPassword2').value;
         const errEl = document.getElementById('regError');
-        errEl.textContent = '';
-
-        if (!email || !pw) { errEl.textContent = t('sc_email_password_required', 'Email and password required'); return; }
-        if (pw !== pw2) { errEl.textContent = t('sc_passwords_no_match', 'Passwords do not match'); return; }
-        if (pw.length < 6) { errEl.textContent = t('sc_password_min_length', 'Password must be at least 6 characters'); return; }
-        if (!/[a-zA-Z]/.test(pw) || !/[0-9]/.test(pw)) { errEl.textContent = t('sc_password_format', 'Password must contain letters and numbers'); return; }
 
         const btn = document.getElementById('regSubmitBtn');
         btn.disabled = true;
@@ -606,24 +862,9 @@
                 emailVerified = false; // just registered, not verified yet
             }
 
-            // Save pendingText before closeModal clears it
-            const savedPendingText = pendingText;
+            const saved = pendingText;
             closeModal();
-
-            // Queue the pending message
-            if (savedPendingText) {
-                try {
-                    await fetch(`${API_BASE}/api/chat/pending-cross-speak`, {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ targetCode, text: savedPendingText })
-                    });
-                } catch (_) { /* redirect anyway */ }
-            }
-
-            // Redirect to full chat page with contact filter
-            window.location.href = `/portal/chat.html?contact=${encodeURIComponent(targetCode)}`;
+            dispatchPendingAndRedirect(saved, false);
         } catch (e) {
             errEl.textContent = t('sc_network_error', 'Network error');
             btn.disabled = false;
@@ -655,29 +896,10 @@
                 return;
             }
             currentUser = data.user;
-            emailVerified = true; // login requires verified email
-            const savedPendingText = pendingText;
+            emailVerified = true;
+            const saved = pendingText;
             closeModal();
-
-            // Send pending text before redirect (verified user)
-            if (savedPendingText) {
-                try {
-                    await fetch(`${API_BASE}/api/client/cross-speak`, {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            deviceId: currentUser.deviceId,
-                            fromEntityId: -1,
-                            targetCode,
-                            text: savedPendingText
-                        })
-                    });
-                } catch (_) { /* redirect anyway */ }
-            }
-
-            // Redirect to full chat page with contact filter
-            window.location.href = `/portal/chat.html?contact=${encodeURIComponent(targetCode)}`;
+            dispatchPendingAndRedirect(saved, true);
         } catch (e) {
             errEl.textContent = t('sc_network_error', 'Network error');
             btn.disabled = false;
