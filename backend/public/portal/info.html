@@ -584,6 +584,173 @@
         @media (max-width: 480px) {
             .faq-hero-title, .rn-hero-title, .cmp-hero-title { font-size: 20px; }
             .guide-content header h1 { font-size: 18px; }
+            .flow-diagram { flex-direction: column; align-items: center; }
+            .flow-arrow { transform: rotate(90deg); }
+        }
+
+        /* ── Guide: Flow Diagram ── */
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 20px 0 28px;
+            flex-wrap: wrap;
+        }
+        .flow-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 14px 16px;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            min-width: 110px;
+            max-width: 140px;
+            text-align: center;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .flow-step:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 1px rgba(108, 99, 255, 0.2);
+        }
+        .flow-step .flow-icon { font-size: 28px; }
+        .flow-step .flow-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.3;
+        }
+        .flow-step .flow-sub {
+            font-size: 10px;
+            color: var(--text-muted);
+            line-height: 1.3;
+        }
+        .flow-arrow {
+            font-size: 18px;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+        .flow-step--primary { border-color: rgba(108, 99, 255, 0.3); }
+        .flow-step--success { border-color: rgba(76, 175, 80, 0.3); }
+        .flow-step--warning { border-color: rgba(255, 210, 63, 0.3); }
+        .config-val--success { color: var(--success); font-weight: 600; }
+
+        /* ── Guide: Mockup Card ── */
+        .mockup-card {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+        .mockup-card .mockup-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--card-border);
+            margin-bottom: 12px;
+        }
+        .mockup-card .mockup-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), rgba(108,99,255,0.6));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .mockup-card .mockup-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .mockup-card .mockup-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .mockup-card .mockup-body {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        .mockup-card .mockup-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .mockup-card .mockup-tag {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: rgba(108,99,255,0.12);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .mockup-card .mockup-field {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .mockup-card .mockup-field-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            min-width: 80px;
+            flex-shrink: 0;
+        }
+        .mockup-card .mockup-field-value {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* ── Guide: Config Preview ── */
+        .config-preview {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin: 16px 0;
+        }
+        .config-preview .config-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: var(--input-bg);
+            border-bottom: 1px solid var(--card-border);
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+        .config-preview .config-bar .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .config-preview .config-body {
+            padding: 14px 16px;
+        }
+        .config-preview .config-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 0;
+            font-size: 13px;
+        }
+        .config-preview .config-key {
+            color: var(--primary);
+            font-weight: 600;
+            min-width: 100px;
+        }
+        .config-preview .config-val {
+            color: var(--text-secondary);
         }
     </style>
 </head>
@@ -632,6 +799,9 @@
                     <div class="guide-sub-nav" id="usecaseSubNav">
                         <button class="guide-sub-btn" data-guide="usecase-claude-openclaw" data-i18n="guide_nav_usecase_claude">用 Claude 指揮 OpenClaw</button>
                         <button class="guide-sub-btn" data-guide="usecase-proxy-window" data-i18n="guide_nav_usecase_proxy">尹代理窗口</button>
+                        <button class="guide-sub-btn" data-guide="detail-identity" data-i18n="guide_nav_detail_identity">身份設定</button>
+                        <button class="guide-sub-btn" data-guide="detail-agentcard" data-i18n="guide_nav_detail_agentcard">Agent Card</button>
+                        <button class="guide-sub-btn" data-guide="detail-crossdevice" data-i18n="guide_nav_detail_crossdevice">跨裝置訊息</button>
                     </div>
                 </div>
 
@@ -1556,6 +1726,33 @@ Claude 主動查詢執行結果
 
                         <h2 data-i18n="guide_proxy_h2_steps">設定步驟</h2>
 
+                        <!-- Flow Diagram -->
+                        <div class="flow-diagram">
+                            <div class="flow-step">
+                                <div class="flow-icon">🪪</div>
+                                <div class="flow-label" data-i18n="guide_proxy_flow1">Identity</div>
+                                <div class="flow-sub" data-i18n="guide_proxy_flow1_sub">角色與指示</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step">
+                                <div class="flow-icon">📇</div>
+                                <div class="flow-label" data-i18n="guide_proxy_flow2">Agent Card</div>
+                                <div class="flow-sub" data-i18n="guide_proxy_flow2_sub">名片與能力</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step">
+                                <div class="flow-icon">🔗</div>
+                                <div class="flow-label" data-i18n="guide_proxy_flow3">Cross-Device</div>
+                                <div class="flow-sub" data-i18n="guide_proxy_flow3_sub">跨裝置同步</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step">
+                                <div class="flow-icon">🌐</div>
+                                <div class="flow-label" data-i18n="guide_proxy_flow4">Share Link</div>
+                                <div class="flow-sub" data-i18n="guide_proxy_flow4_sub">分享連結</div>
+                            </div>
+                        </div>
+
                         <h3 class="step-heading" data-i18n="guide_proxy_step1_title">Step 1：設定代理身份（Identity）</h3>
                         <p data-i18n="guide_proxy_step1_desc">在 Dashboard 中選擇你的實體，點擊身份編輯器，設定代理的角色、指示、語調、邊界等。這決定了代理如何回應客戶。</p>
                         <ul class="tips-list">
@@ -1565,6 +1762,17 @@ Claude 主動查詢執行結果
                             <li data-i18n="guide_proxy_step1_li4">✅ <strong>邊界（Boundaries）</strong>：代理不應處理的事項</li>
                         </ul>
                         <p data-i18n="guide_proxy_step1_nav">前往：<strong>Dashboard → 選擇實體 → 身份編輯器</strong>，或使用 API <code>PUT /api/entity/identity</code></p>
+
+                        <!-- Identity Config Preview -->
+                        <div class="config-preview">
+                            <div class="config-bar"><div class="dot" style="background:var(--primary)"></div> Identity Editor</div>
+                            <div class="config-body">
+                                <div class="config-row"><span class="config-key">Role</span><span class="config-val" data-i18n="guide_proxy_preview1_role">電商客服專員</span></div>
+                                <div class="config-row"><span class="config-key">Tone</span><span class="config-val" data-i18n="guide_proxy_preview1_tone">友善、專業</span></div>
+                                <div class="config-row"><span class="config-key">Language</span><span class="config-val">zh-TW</span></div>
+                                <div class="config-row"><span class="config-key">Boundaries</span><span class="config-val" data-i18n="guide_proxy_preview1_boundaries">不處理退款、不洩漏內部資訊</span></div>
+                            </div>
+                        </div>
 
                         <hr>
 
@@ -1578,6 +1786,24 @@ Claude 主動查詢執行結果
                         </ul>
                         <p data-i18n="guide_proxy_step2_nav">前往：<strong>Dashboard → 選擇實體 → Agent Card</strong>，或使用 API <code>PUT /api/entity/agent-card</code></p>
 
+                        <!-- Agent Card Mockup -->
+                        <div class="mockup-card">
+                            <div class="mockup-header">
+                                <div class="mockup-avatar">🤖</div>
+                                <div>
+                                    <div class="mockup-title" data-i18n="guide_proxy_preview2_name">ShopBot Pro</div>
+                                    <div class="mockup-subtitle" data-i18n="guide_proxy_preview2_desc">24/7 智能購物助手</div>
+                                </div>
+                            </div>
+                            <div class="mockup-body" data-i18n="guide_proxy_preview2_body">可查詢商品庫存、追蹤訂單物流、推薦相關商品、處理常見問題。</div>
+                            <div class="mockup-tags">
+                                <span class="mockup-tag" data-i18n="guide_proxy_preview2_tag1">訂單查詢</span>
+                                <span class="mockup-tag" data-i18n="guide_proxy_preview2_tag2">商品推薦</span>
+                                <span class="mockup-tag" data-i18n="guide_proxy_preview2_tag3">物流追蹤</span>
+                                <span class="mockup-tag">A2A</span>
+                            </div>
+                        </div>
+
                         <hr>
 
                         <h3 class="step-heading" data-i18n="guide_proxy_step3_title">Step 3：設定跨裝置訊息（Cross-Device Settings）</h3>
@@ -1587,6 +1813,27 @@ Claude 主動查詢執行結果
                             <li data-i18n="guide_proxy_step3_li2">✅ 設定訊息同步規則與優先順序</li>
                         </ul>
                         <p data-i18n="guide_proxy_step3_nav">前往：<strong>Settings → Cross-Device</strong>，或使用 API <code>PUT /api/entity/cross-device-settings</code></p>
+
+                        <!-- Cross-Device Flow -->
+                        <div class="flow-diagram">
+                            <div class="flow-step flow-step--primary">
+                                <div class="flow-icon">📱</div>
+                                <div class="flow-label">Device A</div>
+                                <div class="flow-sub" data-i18n="guide_proxy_preview3_a">主控裝置</div>
+                            </div>
+                            <div class="flow-arrow">⇄</div>
+                            <div class="flow-step flow-step--success">
+                                <div class="flow-icon">🖥️</div>
+                                <div class="flow-label">Device B</div>
+                                <div class="flow-sub" data-i18n="guide_proxy_preview3_b">Web Portal</div>
+                            </div>
+                            <div class="flow-arrow">⇄</div>
+                            <div class="flow-step flow-step--warning">
+                                <div class="flow-icon">👤</div>
+                                <div class="flow-label" data-i18n="guide_proxy_preview3_c">Client</div>
+                                <div class="flow-sub" data-i18n="guide_proxy_preview3_c_sub">代理窗口</div>
+                            </div>
+                        </div>
 
                         <hr>
 
@@ -1618,10 +1865,350 @@ Claude 主動查詢執行結果
                         <h2 data-i18n="guide_proxy_h2_detail">詳細設定指南</h2>
                         <p data-i18n="guide_proxy_p_detail">點擊以下連結查看各項設定的完整說明：</p>
                         <ul class="tips-list">
-                            <li><a href="#guide/features" data-i18n="guide_proxy_link_identity">🔹 身份設定（Identity）詳情</a></li>
-                            <li><a href="#guide/features" data-i18n="guide_proxy_link_agentcard">🔹 Agent Card 設定詳情</a></li>
-                            <li><a href="#guide/features" data-i18n="guide_proxy_link_crossdevice">🔹 跨裝置訊息設定詳情</a></li>
+                            <li><a href="#guide/detail-identity" data-i18n="guide_proxy_link_identity">🔹 身份設定（Identity）詳情</a></li>
+                            <li><a href="#guide/detail-agentcard" data-i18n="guide_proxy_link_agentcard">🔹 Agent Card 設定詳情</a></li>
+                            <li><a href="#guide/detail-crossdevice" data-i18n="guide_proxy_link_crossdevice">🔹 跨裝置訊息設定詳情</a></li>
                         </ul>
+                    </div>
+
+                    <!-- ── 身份設定（Identity）詳情 ── -->
+                    <div class="guide-panel" id="guide-detail-identity">
+                        <header>
+                            <h1 data-i18n="guide_identity_title">身份設定（Identity）— 完整指南</h1>
+                            <p class="meta" data-i18n="guide_identity_meta">定義代理的角色、行為準則與溝通風格，讓 AI 精準扮演你需要的角色</p>
+                        </header>
+
+                        <h2 data-i18n="guide_identity_h2_what">什麼是 Identity？</h2>
+                        <p data-i18n="guide_identity_p_what">Identity 是每個實體（Entity）的統一身份結構，包含角色定位、行為指示、語調風格、邊界限制等設定。它決定了你的 AI 代理「是誰」以及「如何行動」。當外部用戶透過代理窗口互動時，Identity 就是代理表現的核心依據。</p>
+
+                        <div class="note" data-i18n="guide_identity_note_analogy">💡 把 Identity 想像成一份「職位說明書」——清楚定義代理的職責範圍、工作方式、禁區，讓 AI 不會偏離你的期望。</div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_identity_h2_fields">Identity 欄位說明</h2>
+
+                        <table class="feature-table">
+                            <thead><tr><th data-i18n="guide_identity_th_field">欄位</th><th data-i18n="guide_identity_th_desc">說明</th><th data-i18n="guide_identity_th_example">範例</th></tr></thead>
+                            <tbody>
+                                <tr><td>role</td><td data-i18n="guide_identity_field_role">代理扮演的角色名稱</td><td data-i18n="guide_identity_ex_role">電商客服專員、旅遊顧問、IT 維運助手</td></tr>
+                                <tr><td>instructions</td><td data-i18n="guide_identity_field_instructions">行為指示與工作流程（最多 2000 字）</td><td data-i18n="guide_identity_ex_instructions">收到訂單查詢時，先確認訂單編號，再查詢物流狀態...</td></tr>
+                                <tr><td>boundaries</td><td data-i18n="guide_identity_field_boundaries">代理不應處理的事項清單</td><td data-i18n="guide_identity_ex_boundaries">不處理退款、不洩漏內部定價策略</td></tr>
+                                <tr><td>tone</td><td data-i18n="guide_identity_field_tone">溝通語調</td><td data-i18n="guide_identity_ex_tone">友善、專業、簡潔</td></tr>
+                                <tr><td>language</td><td data-i18n="guide_identity_field_language">預設回應語言</td><td>zh-TW, en, ja</td></tr>
+                                <tr><td>soulTemplateId</td><td data-i18n="guide_identity_field_soul">套用的靈魂模板 ID</td><td>helpful-assistant</td></tr>
+                                <tr><td>ruleTemplateIds</td><td data-i18n="guide_identity_field_rules">套用的規則模板 ID 清單</td><td>["no-politics", "safe-content"]</td></tr>
+                                <tr><td>publicProfile</td><td data-i18n="guide_identity_field_profile">公開顯示的簡介（名片上可見）</td><td data-i18n="guide_identity_ex_profile">專業電商客服，24 小時在線服務</td></tr>
+                            </tbody>
+                        </table>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_identity_h2_howto">如何設定</h2>
+
+                        <h3 class="step-heading" data-i18n="guide_identity_h3_web">Web Portal 設定方式</h3>
+                        <ol class="tips-list">
+                            <li data-i18n="guide_identity_web_li1">前往 <strong>Dashboard</strong> 頁面</li>
+                            <li data-i18n="guide_identity_web_li2">選擇要設定的實體卡片</li>
+                            <li data-i18n="guide_identity_web_li3">點擊 <strong>Identity 編輯器</strong>（🪪 圖示）</li>
+                            <li data-i18n="guide_identity_web_li4">填入各欄位後按 <strong>Save</strong></li>
+                        </ol>
+
+                        <!-- Web Portal Identity Editor Preview -->
+                        <div class="config-preview">
+                            <div class="config-bar"><div class="dot" style="background:var(--primary)"></div> Identity Editor — Dashboard</div>
+                            <div class="config-body">
+                                <div class="config-row"><span class="config-key">Role</span><span class="config-val" data-i18n="guide_identity_preview_role">旅遊行程規劃師</span></div>
+                                <div class="config-row"><span class="config-key">Instructions</span><span class="config-val" data-i18n="guide_identity_preview_instructions">根據客戶預算、時間、偏好推薦行程...</span></div>
+                                <div class="config-row"><span class="config-key">Tone</span><span class="config-val" data-i18n="guide_identity_preview_tone">熱情、有耐心、注重細節</span></div>
+                                <div class="config-row"><span class="config-key">Boundaries</span><span class="config-val" data-i18n="guide_identity_preview_boundaries">不代訂機票、不處理簽證問題</span></div>
+                                <div class="config-row"><span class="config-key">Language</span><span class="config-val">zh-TW</span></div>
+                            </div>
+                        </div>
+
+                        <h3 class="step-heading" data-i18n="guide_identity_h3_api">API 設定方式</h3>
+                        <div class="code-block">PUT /api/entity/identity
+Content-Type: application/json
+
+{
+  "deviceId": "YOUR_DEVICE_ID",
+  "entityId": 0,
+  "identity": {
+    "role": "電商客服專員",
+    "instructions": "收到訂單查詢時...",
+    "boundaries": "不處理退款",
+    "tone": "友善、專業",
+    "language": "zh-TW"
+  }
+}</div>
+                        <p data-i18n="guide_identity_api_auth">認證方式：Header <code>x-device-secret</code> 或 <code>x-bot-secret</code></p>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_identity_h2_templates">搭配模板使用</h2>
+                        <p data-i18n="guide_identity_p_templates">你可以搭配 <strong>Soul Template</strong>（靈魂模板）和 <strong>Rule Template</strong>（規則模板）快速設定 Identity，不必從零開始。</p>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_identity_tmpl_li1">前往 <strong>Mission → Skills/Soul/Rules</strong> 瀏覽可用模板</li>
+                            <li data-i18n="guide_identity_tmpl_li2">選擇合適的模板後，會自動填入 <code>soulTemplateId</code> 和 <code>ruleTemplateIds</code></li>
+                            <li data-i18n="guide_identity_tmpl_li3">你仍可自訂 <code>role</code>、<code>instructions</code> 等欄位覆蓋模板預設值</li>
+                        </ul>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_identity_h2_tips">最佳實踐</h2>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_identity_tip_li1">✅ <strong>角色要具體</strong>：「電商客服專員」比「助手」更能讓 AI 聚焦</li>
+                            <li data-i18n="guide_identity_tip_li2">✅ <strong>指示要有流程</strong>：描述「收到 X 時做 Y」，而不只是「要友善」</li>
+                            <li data-i18n="guide_identity_tip_li3">✅ <strong>邊界要明確</strong>：列出代理「不做」的事，避免越權</li>
+                            <li data-i18n="guide_identity_tip_li4">✅ <strong>語調要一致</strong>：配合品牌形象選擇語調</li>
+                            <li data-i18n="guide_identity_tip_li5">✅ <strong>定期更新</strong>：根據客戶回饋調整 Identity 設定</li>
+                        </ul>
+
+                        <div class="note" data-i18n="guide_identity_note_back">← <a href="#guide/usecase-proxy-window">返回尹代理窗口指南</a></div>
+                    </div>
+
+                    <!-- ── Agent Card 設定詳情 ── -->
+                    <div class="guide-panel" id="guide-detail-agentcard">
+                        <header>
+                            <h1 data-i18n="guide_agentcard_title">Agent Card 設定 — 完整指南</h1>
+                            <p class="meta" data-i18n="guide_agentcard_meta">建立代理的數位名片，讓客戶一眼了解你的服務能力</p>
+                        </header>
+
+                        <h2 data-i18n="guide_agentcard_h2_what">什麼是 Agent Card？</h2>
+                        <p data-i18n="guide_agentcard_p_what">Agent Card 是每個實體的「數位名片」。它包含代理的名稱、描述、能力標籤、支援的通訊協定等資訊。當外部用戶透過代理窗口或名片夾瀏覽你的代理時，Agent Card 就是他們看到的第一印象。</p>
+
+                        <div class="note" data-i18n="guide_agentcard_note_a2a">💡 Agent Card 遵循 A2A（Agent-to-Agent）協議標準，讓其他 AI 代理也能讀懂你的代理能力，實現自動化協作。</div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_agentcard_h2_fields">Agent Card 欄位說明</h2>
+
+                        <table class="feature-table">
+                            <thead><tr><th data-i18n="guide_agentcard_th_field">欄位</th><th data-i18n="guide_agentcard_th_desc">說明</th><th data-i18n="guide_agentcard_th_required">必填</th></tr></thead>
+                            <tbody>
+                                <tr><td>name</td><td data-i18n="guide_agentcard_field_name">代理顯示名稱</td><td>✅</td></tr>
+                                <tr><td>description</td><td data-i18n="guide_agentcard_field_desc">代理用途的簡短描述</td><td>✅</td></tr>
+                                <tr><td>url</td><td data-i18n="guide_agentcard_field_url">代理的服務網址（可選）</td><td>—</td></tr>
+                                <tr><td>capabilities</td><td data-i18n="guide_agentcard_field_capabilities">代理能做的事情列表</td><td>—</td></tr>
+                                <tr><td>protocols</td><td data-i18n="guide_agentcard_field_protocols">支援的通訊協定（如 A2A、webhook）</td><td>—</td></tr>
+                                <tr><td>tags</td><td data-i18n="guide_agentcard_field_tags">標籤，方便搜尋與分類</td><td>—</td></tr>
+                                <tr><td>provider</td><td data-i18n="guide_agentcard_field_provider">提供者/組織名稱</td><td>—</td></tr>
+                                <tr><td>version</td><td data-i18n="guide_agentcard_field_version">版本號</td><td>—</td></tr>
+                            </tbody>
+                        </table>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_agentcard_h2_preview">名片效果預覽</h2>
+                        <p data-i18n="guide_agentcard_p_preview">以下是一張完整填寫的 Agent Card 在代理窗口中的顯示效果：</p>
+
+                        <!-- Agent Card Full Mockup -->
+                        <div class="mockup-card">
+                            <div class="mockup-header">
+                                <div class="mockup-avatar">🧳</div>
+                                <div>
+                                    <div class="mockup-title" data-i18n="guide_agentcard_mock_name">TravelBot Asia</div>
+                                    <div class="mockup-subtitle" data-i18n="guide_agentcard_mock_desc">亞洲旅遊行程規劃專家</div>
+                                </div>
+                            </div>
+                            <div class="mockup-body">
+                                <div class="mockup-field">
+                                    <span class="mockup-field-label" data-i18n="guide_agentcard_mock_cap_label">Capabilities</span>
+                                    <span class="mockup-field-value" data-i18n="guide_agentcard_mock_cap_val">行程規劃、景點推薦、住宿比價、交通安排</span>
+                                </div>
+                                <div class="mockup-field">
+                                    <span class="mockup-field-label" data-i18n="guide_agentcard_mock_proto_label">Protocols</span>
+                                    <span class="mockup-field-value">A2A, webhook, cross-device</span>
+                                </div>
+                                <div class="mockup-field">
+                                    <span class="mockup-field-label" data-i18n="guide_agentcard_mock_provider_label">Provider</span>
+                                    <span class="mockup-field-value">EClawbot Travel</span>
+                                </div>
+                            </div>
+                            <div class="mockup-tags">
+                                <span class="mockup-tag" data-i18n="guide_agentcard_mock_tag1">旅遊</span>
+                                <span class="mockup-tag" data-i18n="guide_agentcard_mock_tag2">亞洲</span>
+                                <span class="mockup-tag" data-i18n="guide_agentcard_mock_tag3">行程規劃</span>
+                                <span class="mockup-tag">AI</span>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_agentcard_h2_howto">如何設定</h2>
+
+                        <h3 class="step-heading" data-i18n="guide_agentcard_h3_web">Web Portal 設定方式</h3>
+                        <ol class="tips-list">
+                            <li data-i18n="guide_agentcard_web_li1">前往 <strong>Dashboard</strong> 頁面</li>
+                            <li data-i18n="guide_agentcard_web_li2">選擇要設定的實體卡片</li>
+                            <li data-i18n="guide_agentcard_web_li3">點擊 <strong>Agent Card</strong> 按鈕（📇 圖示）</li>
+                            <li data-i18n="guide_agentcard_web_li4">填入名稱、描述等欄位，加入能力和標籤</li>
+                            <li data-i18n="guide_agentcard_web_li5">按 <strong>Save</strong> 儲存</li>
+                        </ol>
+
+                        <h3 class="step-heading" data-i18n="guide_agentcard_h3_api">API 設定方式</h3>
+                        <div class="code-block">PUT /api/entity/agent-card
+Content-Type: application/json
+
+{
+  "deviceId": "YOUR_DEVICE_ID",
+  "entityId": 0,
+  "agentCard": {
+    "name": "ShopBot Pro",
+    "description": "24/7 智能購物助手",
+    "capabilities": ["訂單查詢", "商品推薦", "物流追蹤"],
+    "protocols": ["A2A", "webhook"],
+    "tags": ["電商", "客服", "AI"],
+    "provider": "My Company"
+  }
+}</div>
+                        <p data-i18n="guide_agentcard_api_auth">認證方式：Header <code>x-device-secret</code> 或 <code>x-bot-secret</code></p>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_agentcard_h2_cardholder">名片夾（Card Holder）整合</h2>
+                        <p data-i18n="guide_agentcard_p_cardholder">設定好 Agent Card 後，你的代理名片會出現在名片夾中。其他用戶可以：</p>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_agentcard_ch_li1">✅ 透過 <strong>Public Code</strong> 搜尋你的代理</li>
+                            <li data-i18n="guide_agentcard_ch_li2">✅ 收藏你的名片到他們的名片夾</li>
+                            <li data-i18n="guide_agentcard_ch_li3">✅ 透過名片上的連結直接與代理對話</li>
+                            <li data-i18n="guide_agentcard_ch_li4">✅ 查看代理的能力、協定和標籤</li>
+                        </ul>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_agentcard_h2_tips">最佳實踐</h2>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_agentcard_tip_li1">✅ <strong>名稱要吸引人</strong>：取一個好記又能體現功能的名字</li>
+                            <li data-i18n="guide_agentcard_tip_li2">✅ <strong>描述要精準</strong>：用一句話說清代理能做什麼</li>
+                            <li data-i18n="guide_agentcard_tip_li3">✅ <strong>能力要完整</strong>：列出所有主要功能，幫助用戶判斷是否符合需求</li>
+                            <li data-i18n="guide_agentcard_tip_li4">✅ <strong>標籤要準確</strong>：方便搜尋發現，使用常見關鍵字</li>
+                            <li data-i18n="guide_agentcard_tip_li5">✅ <strong>定期更新</strong>：代理能力擴展後同步更新名片</li>
+                        </ul>
+
+                        <div class="note" data-i18n="guide_agentcard_note_back">← <a href="#guide/usecase-proxy-window">返回尹代理窗口指南</a></div>
+                    </div>
+
+                    <!-- ── 跨裝置訊息設定詳情 ── -->
+                    <div class="guide-panel" id="guide-detail-crossdevice">
+                        <header>
+                            <h1 data-i18n="guide_crossdevice_title">跨裝置訊息設定 — 完整指南</h1>
+                            <p class="meta" data-i18n="guide_crossdevice_meta">讓你的代理在多個裝置間無縫同步，客戶訊息不遺漏</p>
+                        </header>
+
+                        <h2 data-i18n="guide_crossdevice_h2_what">什麼是跨裝置訊息？</h2>
+                        <p data-i18n="guide_crossdevice_p_what">跨裝置訊息（Cross-Device Messaging）允許你的代理在不同裝置之間同步通訊。當客戶透過代理窗口發送訊息時，你可以在手機 App、Web Portal、或其他已連結的裝置上接收並回應。</p>
+
+                        <div class="note" data-i18n="guide_crossdevice_note_scenario">💡 適用場景：團隊協作（多人在不同裝置監控同一代理）、移動辦公（手機和電腦無縫切換）、備援機制（主裝置離線時備援接手）。</div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_crossdevice_h2_how">運作原理</h2>
+
+                        <!-- Cross-Device Architecture Diagram -->
+                        <div class="flow-diagram">
+                            <div class="flow-step">
+                                <div class="flow-icon">👤</div>
+                                <div class="flow-label" data-i18n="guide_crossdevice_flow_client">客戶</div>
+                                <div class="flow-sub" data-i18n="guide_crossdevice_flow_client_sub">代理窗口</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step flow-step--primary">
+                                <div class="flow-icon">🦞</div>
+                                <div class="flow-label">EClawbot</div>
+                                <div class="flow-sub" data-i18n="guide_crossdevice_flow_server_sub">訊息路由</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step">
+                                <div class="flow-icon">📱🖥️</div>
+                                <div class="flow-label" data-i18n="guide_crossdevice_flow_devices">所有裝置</div>
+                                <div class="flow-sub" data-i18n="guide_crossdevice_flow_devices_sub">即時同步</div>
+                            </div>
+                        </div>
+
+                        <p data-i18n="guide_crossdevice_p_how">EClawbot 伺服器作為訊息中樞，將客戶訊息路由到所有已連結的裝置。每個裝置都能看到完整的對話歷史，並可即時回應。</p>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_crossdevice_h2_settings">設定項目</h2>
+
+                        <table class="feature-table">
+                            <thead><tr><th data-i18n="guide_crossdevice_th_setting">設定</th><th data-i18n="guide_crossdevice_th_desc">說明</th></tr></thead>
+                            <tbody>
+                                <tr><td data-i18n="guide_crossdevice_set_enable">啟用跨裝置</td><td data-i18n="guide_crossdevice_set_enable_desc">開啟後，實體的訊息會同步到已連結的其他裝置</td></tr>
+                                <tr><td data-i18n="guide_crossdevice_set_target">目標裝置</td><td data-i18n="guide_crossdevice_set_target_desc">指定要同步到哪些裝置（透過 Device ID）</td></tr>
+                                <tr><td data-i18n="guide_crossdevice_set_direction">同步方向</td><td data-i18n="guide_crossdevice_set_direction_desc">單向推送或雙向同步</td></tr>
+                            </tbody>
+                        </table>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_crossdevice_h2_howto">如何設定</h2>
+
+                        <h3 class="step-heading" data-i18n="guide_crossdevice_h3_web">Web Portal 設定方式</h3>
+                        <ol class="tips-list">
+                            <li data-i18n="guide_crossdevice_web_li1">前往 <strong>Settings</strong> 頁面</li>
+                            <li data-i18n="guide_crossdevice_web_li2">找到 <strong>Cross-Device Settings</strong> 區塊</li>
+                            <li data-i18n="guide_crossdevice_web_li3">選擇要啟用跨裝置訊息的實體</li>
+                            <li data-i18n="guide_crossdevice_web_li4">輸入目標裝置的 Device ID</li>
+                            <li data-i18n="guide_crossdevice_web_li5">按 <strong>Save</strong> 儲存設定</li>
+                        </ol>
+
+                        <!-- Settings Preview -->
+                        <div class="config-preview">
+                            <div class="config-bar"><div class="dot" style="background:var(--success)"></div> Cross-Device Settings</div>
+                            <div class="config-body">
+                                <div class="config-row"><span class="config-key" data-i18n="guide_crossdevice_preview_status">狀態</span><span class="config-val config-val--success" data-i18n="guide_crossdevice_preview_enabled">✅ 已啟用</span></div>
+                                <div class="config-row"><span class="config-key" data-i18n="guide_crossdevice_preview_target">目標裝置</span><span class="config-val">device_abc123</span></div>
+                                <div class="config-row"><span class="config-key" data-i18n="guide_crossdevice_preview_entity">同步實體</span><span class="config-val">Entity #0 (ShopBot)</span></div>
+                                <div class="config-row"><span class="config-key" data-i18n="guide_crossdevice_preview_direction">方向</span><span class="config-val" data-i18n="guide_crossdevice_preview_bidirectional">雙向同步</span></div>
+                            </div>
+                        </div>
+
+                        <h3 class="step-heading" data-i18n="guide_crossdevice_h3_api">API 設定方式</h3>
+                        <div class="code-block">PUT /api/entity/cross-device-settings
+Content-Type: application/json
+
+{
+  "deviceId": "YOUR_DEVICE_ID",
+  "entityId": 0,
+  "settings": {
+    "enabled": true,
+    "targetDeviceId": "device_abc123",
+    "syncDirection": "bidirectional"
+  }
+}</div>
+                        <p data-i18n="guide_crossdevice_api_auth">認證方式：Header <code>x-device-secret</code></p>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_crossdevice_h2_usecases">應用情境</h2>
+
+                        <div class="why-eclaw-card">
+                            <div class="pain-point" data-i18n="guide_crossdevice_uc1_title">🏢 團隊客服</div>
+                            <div class="solution-desc" data-i18n="guide_crossdevice_uc1_desc">多位客服人員在不同裝置上監控同一代理，客戶訊息即時同步，避免重複回覆或遺漏。</div>
+                        </div>
+                        <div class="why-eclaw-card">
+                            <div class="pain-point" data-i18n="guide_crossdevice_uc2_title">📱 移動辦公</div>
+                            <div class="solution-desc" data-i18n="guide_crossdevice_uc2_desc">白天用電腦處理客戶訊息，外出時切換到手機 App 繼續，對話歷史完整保留。</div>
+                        </div>
+                        <div class="why-eclaw-card">
+                            <div class="pain-point" data-i18n="guide_crossdevice_uc3_title">🔄 備援機制</div>
+                            <div class="solution-desc" data-i18n="guide_crossdevice_uc3_desc">主裝置離線或故障時，備援裝置自動接收訊息，確保服務不中斷。</div>
+                        </div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_crossdevice_h2_tips">最佳實踐</h2>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_crossdevice_tip_li1">✅ <strong>限制同步範圍</strong>：只同步需要的實體，避免資訊過載</li>
+                            <li data-i18n="guide_crossdevice_tip_li2">✅ <strong>注意權限</strong>：確保目標裝置有適當的存取權限</li>
+                            <li data-i18n="guide_crossdevice_tip_li3">✅ <strong>測試連線</strong>：設定後先用測試訊息確認同步正常</li>
+                            <li data-i18n="guide_crossdevice_tip_li4">✅ <strong>監控延遲</strong>：跨裝置訊息通常在 1-3 秒內同步</li>
+                        </ul>
+
+                        <div class="warning" data-i18n="guide_crossdevice_warn">⚠️ 跨裝置訊息需要兩個裝置都在線（Socket.IO 連線中）才能即時同步。離線裝置會在重新上線後收到待處理訊息。</div>
+
+                        <div class="note" data-i18n="guide_crossdevice_note_back">← <a href="#guide/usecase-proxy-window">返回尹代理窗口指南</a></div>
                     </div>
 
                 </div><!-- /guide-content -->
