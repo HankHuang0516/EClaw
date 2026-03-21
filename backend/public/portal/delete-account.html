@@ -180,9 +180,15 @@
             btn.disabled = true;
             btn.textContent = i18n.t('delete_account_deleting');
             showDeleteMsg('', '');
+            hideDebugLog();
 
             try {
-                await apiCall('DELETE', '/api/auth/account');
+                const resp = await fetch('/api/auth/account', { method: 'DELETE', credentials: 'include' });
+                const data = await resp.json();
+                if (data.debugLog) showDebugLog(data.debugLog);
+                if (!resp.ok || !data.success) {
+                    throw new Error(data.error || 'Deletion failed');
+                }
                 document.getElementById('stepConfirm').style.display = 'none';
                 document.getElementById('stepDone').style.display = 'block';
             } catch (e) {
@@ -190,6 +196,23 @@
                 btn.textContent = i18n.t('delete_account_btn');
                 showDeleteMsg(e.message || 'Deletion failed. Please try again.', 'error');
             }
+        }
+
+        function showDebugLog(logs) {
+            let el = document.getElementById('debugLog');
+            if (!el) {
+                el = document.createElement('pre');
+                el.id = 'debugLog';
+                el.style.cssText = 'background:#1a1a2e;color:#0f0;font-size:11px;padding:12px;border-radius:8px;margin-top:16px;max-height:300px;overflow:auto;white-space:pre-wrap;word-break:break-all;';
+                document.getElementById('stepConfirm').appendChild(el);
+            }
+            el.style.display = 'block';
+            el.textContent = logs.join('\n');
+        }
+
+        function hideDebugLog() {
+            const el = document.getElementById('debugLog');
+            if (el) el.style.display = 'none';
         }
 
         function cancelDelete() {

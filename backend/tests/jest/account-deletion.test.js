@@ -127,8 +127,10 @@ describe('DELETE /api/auth/account', () => {
         // Verify device-scoped tables are cleaned
         expect(queries).toEqual(expect.arrayContaining([
             expect.stringContaining('DELETE FROM chat_messages'),
+            expect.stringContaining('DELETE FROM chat_uploads'),
             expect.stringContaining('DELETE FROM mission_dashboard'),
             expect.stringContaining('DELETE FROM official_bot_bindings'),
+            expect.stringContaining('DELETE FROM handshake_failures'),
             expect.stringContaining('DELETE FROM message_reactions'),
             expect.stringContaining('DELETE FROM device_vars'),
             expect.stringContaining('DELETE FROM device_telemetry'),
@@ -142,11 +144,20 @@ describe('DELETE /api/auth/account', () => {
             expect.stringContaining('DELETE FROM usage_tracking'),
             expect.stringContaining('DELETE FROM server_logs'),
             expect.stringContaining('DELETE FROM pending_cross_messages'),
+            expect.stringContaining('DELETE FROM cross_device_contacts'),
+            expect.stringContaining('DELETE FROM oauth_tokens'),
+            expect.stringContaining('DELETE FROM oauth_authorization_codes'),
+            expect.stringContaining('DELETE FROM oauth_clients'),
         ]));
 
-        // Verify entities are unbound (not deleted)
+        // Verify entities are deleted (account is being destroyed)
         expect(queries).toEqual(expect.arrayContaining([
-            expect.stringContaining('UPDATE entities SET is_bound = FALSE'),
+            expect.stringContaining('DELETE FROM entities'),
+        ]));
+
+        // Verify device record itself is deleted
+        expect(queries).toEqual(expect.arrayContaining([
+            expect.stringContaining('DELETE FROM devices'),
         ]));
 
         // Verify user-scoped FK tables are cleaned (regression: tappay_transactions)
@@ -165,10 +176,13 @@ describe('DELETE /api/auth/account', () => {
     });
 
     it('rolls back on database error', async () => {
+        const dbError = new Error('DB connection lost');
+        dbError.code = '08006';
         mockClientQuery
             .mockResolvedValueOnce({}) // BEGIN
             .mockResolvedValueOnce({ rows: [{ device_id: 'dev-123', email: 'test@example.com' }] }) // SELECT
-            .mockRejectedValueOnce(new Error('DB connection lost')); // first DELETE fails
+            .mockRejectedValueOnce(dbError) // first DELETE fails
+            .mockResolvedValue({ rows: [], rowCount: 0 }); // ROLLBACK + any further calls
 
         const res = await request(app)
             .delete('/api/auth/account')
@@ -176,9 +190,9 @@ describe('DELETE /api/auth/account', () => {
 
         expect(res.status).toBe(500);
         expect(res.body.error).toMatch(/Failed to delete account/);
-
-        const queries = mockClientQuery.mock.calls.map(c => c[0]);
-        expect(queries).toEqual(expect.arrayContaining(['ROLLBACK']));
+        expect(res.body.debugLog).toBeDefined();
+        expect(res.body.errorDetail).toBeDefined();
+        expect(res.body.errorDetail.code).toBe('08006');
     });
 
     it('skips device cleanup when user has no linked device', async () => {
