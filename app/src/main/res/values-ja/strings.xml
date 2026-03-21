@@ -193,6 +193,11 @@
     <string name="xd_reject_msg">拒否メッセージ</string>
     <string name="xd_reject_msg_hint">ブロック時の自動返信（空 = サイレント）</string>
     <string name="xd_allowed_media">許可されたメディアタイプ</string>
+    <string name="xd_media_text">テキスト</string>
+    <string name="xd_media_photo">写真</string>
+    <string name="xd_media_voice">音声</string>
+    <string name="xd_media_video">動画</string>
+    <string name="xd_media_file">ファイル</string>
     <string name="xd_save">保存</string>
     <string name="xd_reset">デフォルトに戻す</string>
     <string name="xd_saved">クロスデバイス設定を保存しました！</string>

@@ -194,6 +194,11 @@
     <string name="xd_reject_msg">拒绝消息</string>
     <string name="xd_reject_msg_hint">被屏蔽时自动回复（留空 = 静默）</string>
     <string name="xd_allowed_media">允许的媒体类型</string>
+    <string name="xd_media_text">文字</string>
+    <string name="xd_media_photo">照片</string>
+    <string name="xd_media_voice">语音</string>
+    <string name="xd_media_video">视频</string>
+    <string name="xd_media_file">文件</string>
     <string name="xd_save">保存</string>
     <string name="xd_reset">恢复默认</string>
     <string name="xd_saved">跨设备设置已保存！</string>

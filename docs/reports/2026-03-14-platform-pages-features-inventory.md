@@ -1,7 +1,7 @@
 # EClaw 三平台頁面與功能渲染邏輯整理
 
 > 建立日期：2026-03-14
-> 最後更新：2026-03-15（清理完成 + UI 審查修復）
+> 最後更新：2026-03-21（UIUX 審查第二輪：對比度修復、i18n 補全、CSS 變數統一）
 > 涵蓋範圍：Web Portal、Android App、iOS/React Native App
 
 ---
@@ -406,7 +406,29 @@
 - **P2**：Web focus-visible 補齊、iOS dialog TextInput dense、Web dark theme 修復、Android top bar padding 統一
 - **P3**：Web z-index 層級重整
 
-### 7.6 Web Portal — 無其他可清除頁面
+### 7.6 UIUX 審查第二輪 — ✅ 已完成 (2026-03-21)
+
+**對比度修復（WCAG AA 合規）：**
+- Web `--text-muted` 由 `#777777` 提升至 `#999999`（全局生效，對比度 ~5.3:1 → 通過 WCAG AA）
+- Android `text_hint`/`text_disabled` 由 `#777777`/`#666666` 提升至 `#999999`
+- Chat 已讀回條：`opacity:0.5` → `color:var(--text-muted)`（修復 ~2.1:1 對比度問題）
+- Chat 發送目標：`opacity:0.7` → `color:var(--text-secondary)`
+- Dashboard 資訊框：`#64B5F6` 改為 `var(--info)` + `var(--cat-feature-bg)`（修復 ~2.1:1 對比度）
+
+**CSS 變數統一（消除硬編碼顏色）：**
+- Dashboard：`.badge-e2ee`、`.btn-delete-permanent`、TapPay 錯誤、刪除確認對話框
+- Chat：已讀回條狀態
+- Feedback / Settings：嚴重性顏色映射（`--danger`/`--warning-hover`/`--warning`/`--success`）
+- Info：`.mc-label-*` 標籤、遠端控制標記
+- Admin：AI 訊息連結、Screen Control：可編輯標記
+
+**i18n 補全：**
+- Mission：14 個新 key（官方模板瀏覽、規則模板、技能表單欄位），全 8 語言
+- Card Holder：3 個新 key（協議 placeholder、能力名稱/描述）
+- Dashboard：TOS 載入錯誤訊息
+- Android XD Settings：5 個媒體類型 checkbox（Text/Photo/Voice/Video/File）→ `@string/` 資源，全 8 語言
+
+### 7.7 Web Portal — 無其他可清除頁面
 
 Web Portal 13 個頁面全部活躍。
 

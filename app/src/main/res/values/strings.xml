@@ -261,6 +261,11 @@
     <string name="xd_reject_msg">Reject Message</string>
     <string name="xd_reject_msg_hint">Auto-reply when blocked (empty = silent)</string>
     <string name="xd_allowed_media">Allowed Media Types</string>
+    <string name="xd_media_text">Text</string>
+    <string name="xd_media_photo">Photo</string>
+    <string name="xd_media_voice">Voice</string>
+    <string name="xd_media_video">Video</string>
+    <string name="xd_media_file">File</string>
     <string name="xd_save">Save</string>
     <string name="xd_reset">Reset to Default</string>
     <string name="xd_saved">Cross-device settings saved!</string>

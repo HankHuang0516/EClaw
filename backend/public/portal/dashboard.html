@@ -105,13 +105,13 @@
         }
 
         .badge-e2ee {
-            background: #1a2a3a;
-            color: #60a5fa;
+            background: var(--bg-secondary);
+            color: var(--accent-cyan);
             font-size: 11px;
             padding: 2px 8px;
             border-radius: 10px;
             font-weight: 600;
-            border: 1px solid #2d4a6a;
+            border: 1px solid var(--card-border);
         }
 
         .entity-public-code {
@@ -306,7 +306,7 @@
         }
 
         .btn-delete-permanent {
-            background: #dc2626 !important;
+            background: var(--danger) !important;
             color: #fff !important;
             border: none !important;
         }
@@ -1176,7 +1176,7 @@
                             <li data-i18n="borrow_free_feat_shared">Shared memory with all free users</li>
                             <li data-i18n="borrow_free_feat_limit">15 messages/day limit (free bot only)</li>
                         </ul>
-                        <div style="background:rgba(33,150,243,0.1);border:1px solid rgba(33,150,243,0.3);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#64B5F6;">
+                        <div style="background:var(--cat-feature-bg);border:1px solid rgba(33,150,243,0.3);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:var(--info);">
                             <span data-i18n="borrow_free_limit_hint">Each device can only bind one free bot</span>
                         </div>
                         <button class="btn btn-primary btn-block btn-sm" id="btnBindFree" onclick="bindFree()" disabled
@@ -1263,7 +1263,7 @@
                     <div class="tappay-field-input" id="tappay-ccv"></div>
                 </div>
             </div>
-            <div class="card-error" id="tpCardError" style="color:#F44336;font-size:12px;min-height:18px;"></div>
+            <div class="card-error" id="tpCardError" style="color:var(--danger);font-size:12px;min-height:18px;"></div>
             <div class="dialog-actions" style="margin-top:12px;">
                 <button class="btn btn-outline" onclick="closeTapPayDialog()" data-i18n="mc_dlg_cancel">Cancel</button>
                 <button class="btn btn-success" id="btnTpPay" disabled data-i18n="borrow_btn_pay">Pay NT$288</button>
@@ -2716,7 +2716,7 @@
             overlay.className = 'confirm-overlay';
             overlay.innerHTML =
                 '<div class="dialog">' +
-                '<div class="dialog-title" style="color:#dc2626;">' + i18n.t('dash_remove_title') + '</div>' +
+                '<div class="dialog-title" style="color:var(--danger);">' + i18n.t('dash_remove_title') + '</div>' +
                 '<p style="color:var(--text-secondary);font-size:14px;">' +
                 i18n.t('dash_remove_desc', { name: escapeHtml(displayName), id: entityId }) +
                 '</p>' +
@@ -2927,7 +2927,7 @@
                     content.innerHTML = html;
                 }
             } catch (e) {
-                content.innerHTML = '<div style="color:#F44336;">Failed to load TOS content.</div>';
+                content.innerHTML = '<div style="color:var(--danger);" data-i18n="dash_tos_load_error">Failed to load TOS content.</div>';
             }
 
             return new Promise(resolve => { tosResolve = resolve; });

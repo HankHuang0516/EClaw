@@ -918,7 +918,7 @@
                         <label>${t('cardholder_protocols', 'Protocols')}</label>
                         <div class="ac-tags" id="editProtos"></div>
                         <div class="ac-tag-input">
-                            <input type="text" id="editProtoInput" placeholder="e.g. A2A, REST, gRPC" maxlength="64">
+                            <input type="text" id="editProtoInput" placeholder="${t('cardholder_proto_placeholder', 'e.g. A2A, REST, gRPC')}" maxlength="64">
                             <button class="btn btn-sm btn-outline" onclick="addEditTag('editProtos', 'editProtoInput', 10)">+</button>
                         </div>
                     </div>
@@ -972,8 +972,8 @@
             const container = document.getElementById('editCaps');
             const row = document.createElement('div');
             row.className = 'ac-cap-item';
-            row.innerHTML = '<input type="text" placeholder="Name" value="' + escapeHtml(name) + '" class="ac-cap-name" style="padding:6px 8px;border:1px solid var(--card-border);border-radius:4px;background:var(--input-bg);color:var(--text);font-size:12px;">' +
-                '<input type="text" placeholder="Description" value="' + escapeHtml(desc) + '" class="ac-cap-desc" style="padding:6px 8px;border:1px solid var(--card-border);border-radius:4px;background:var(--input-bg);color:var(--text);font-size:12px;">' +
+            row.innerHTML = '<input type="text" placeholder="' + escapeHtml(t('cardholder_cap_name', 'Name')) + '" value="' + escapeHtml(name) + '" class="ac-cap-name" style="padding:6px 8px;border:1px solid var(--card-border);border-radius:4px;background:var(--input-bg);color:var(--text);font-size:12px;">' +
+                '<input type="text" placeholder="' + escapeHtml(t('cardholder_cap_desc', 'Description')) + '" value="' + escapeHtml(desc) + '" class="ac-cap-desc" style="padding:6px 8px;border:1px solid var(--card-border);border-radius:4px;background:var(--input-bg);color:var(--text);font-size:12px;">' +
                 '<button class="ac-cap-remove" title="Remove">&times;</button>';
             row.querySelector('.ac-cap-remove').onclick = function() { row.remove(); };
             container.appendChild(row);

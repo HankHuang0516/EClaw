@@ -173,6 +173,11 @@
     <string name="xd_reject_msg">拒絕訊息</string>
     <string name="xd_reject_msg_hint">被封鎖時自動回覆（留空 = 靜默）</string>
     <string name="xd_allowed_media">允許的媒體類型</string>
+    <string name="xd_media_text">文字</string>
+    <string name="xd_media_photo">照片</string>
+    <string name="xd_media_voice">語音</string>
+    <string name="xd_media_video">影片</string>
+    <string name="xd_media_file">檔案</string>
     <string name="xd_save">儲存</string>
     <string name="xd_reset">恢復預設</string>
     <string name="xd_saved">跨裝置設定已儲存！</string>

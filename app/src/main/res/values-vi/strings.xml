@@ -193,6 +193,11 @@
     <string name="xd_reject_msg">Tin nhắn từ chối</string>
     <string name="xd_reject_msg_hint">Tự động trả lời khi bị chặn (để trống = im lặng)</string>
     <string name="xd_allowed_media">Loại phương tiện được phép</string>
+    <string name="xd_media_text">Văn bản</string>
+    <string name="xd_media_photo">Ảnh</string>
+    <string name="xd_media_voice">Giọng nói</string>
+    <string name="xd_media_video">Video</string>
+    <string name="xd_media_file">Tệp</string>
     <string name="xd_save">Lưu</string>
     <string name="xd_reset">Đặt lại mặc định</string>
     <string name="xd_saved">Đã lưu cài đặt liên thiết bị!</string>

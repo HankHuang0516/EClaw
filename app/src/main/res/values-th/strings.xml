@@ -193,6 +193,11 @@
     <string name="xd_reject_msg">ข้อความปฏิเสธ</string>
     <string name="xd_reject_msg_hint">ตอบกลับอัตโนมัติเมื่อถูกบล็อก (ว่าง = เงียบ)</string>
     <string name="xd_allowed_media">ประเภทสื่อที่อนุญาต</string>
+    <string name="xd_media_text">ข้อความ</string>
+    <string name="xd_media_photo">รูปภาพ</string>
+    <string name="xd_media_voice">เสียง</string>
+    <string name="xd_media_video">วิดีโอ</string>
+    <string name="xd_media_file">ไฟล์</string>
     <string name="xd_save">บันทึก</string>
     <string name="xd_reset">รีเซ็ตเป็นค่าเริ่มต้น</string>
     <string name="xd_saved">บันทึกการตั้งค่าข้ามอุปกรณ์แล้ว!</string>

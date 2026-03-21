@@ -1875,9 +1875,9 @@
                         const statusBadges = targetIds.map(id =>
                             deliveredIds.has(String(id))
                                 ? `<span class="read-receipt">${getEntityLabel(id)} \u2713 ${i18n.t('chat_read_label')}</span>`
-                                : `<span class="read-receipt" style="opacity:0.5">${getEntityLabel(id)} ...</span>`
+                                : `<span class="read-receipt" style="color:var(--text-muted)">${getEntityLabel(id)} ...</span>`
                         ).join(' ');
-                        receipt = (sendTo ? `<div style="opacity:0.7;margin-bottom:2px">${sendTo}</div>` : '')
+                        receipt = (sendTo ? `<div style="color:var(--text-secondary);margin-bottom:2px">${sendTo}</div>` : '')
                             + `<div>${statusBadges}</div>`;
                     } else if (msg._groupedMessages && msg._groupedMessages.length > 1) {
                         // Grouped broadcast: show per-entity delivery status
@@ -1893,7 +1893,7 @@
                                 const label = getEntityLabel(m.entity_id);
                                 return (m.is_delivered || m.read_at)
                                     ? `<span class="read-receipt">${label} \u2713 ${i18n.t('chat_read_label')}</span>`
-                                    : `<span class="read-receipt" style="opacity:0.5">${label} ${i18n.t('chat_delivered_label')}</span>`;
+                                    : `<span class="read-receipt" style="color:var(--text-muted)">${label} ${i18n.t('chat_delivered_label')}</span>`;
                             }).join(' ');
                         }
                     } else if (msg.read_at) {
