@@ -1,3 +1,10 @@
+## [1.129.1](https://github.com/HankHuang0516/EClaw/compare/v1.129.0...v1.129.1) (2026-03-21)
+
+
+### Bug Fixes
+
+* resolve chat duplicate messages, missing labels, and entity selection issues ([#384](https://github.com/HankHuang0516/EClaw/issues/384)) ([69c39ba](https://github.com/HankHuang0516/EClaw/commit/69c39ba4cb3be850b6b7f536f61abc020d484684))
+
 # [1.129.0](https://github.com/HankHuang0516/EClaw/compare/v1.128.5...v1.129.0) (2026-03-21)
 
 
