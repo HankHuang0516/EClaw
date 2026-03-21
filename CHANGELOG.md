@@ -1,3 +1,10 @@
+## [1.127.1](https://github.com/HankHuang0516/EClaw/compare/v1.127.0...v1.127.1) (2026-03-21)
+
+
+### Bug Fixes
+
+* **cross-device:** consume messages after auto-route, add targetDeviceId ([#372](https://github.com/HankHuang0516/EClaw/issues/372)) ([f90ef68](https://github.com/HankHuang0516/EClaw/commit/f90ef681b544be8f2e2ddcfee44a1ed12942e787))
+
 # [1.127.0](https://github.com/HankHuang0516/EClaw/compare/v1.126.5...v1.127.0) (2026-03-21)
 
 
