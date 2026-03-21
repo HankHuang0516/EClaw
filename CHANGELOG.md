@@ -1,3 +1,10 @@
+# [1.124.0](https://github.com/HankHuang0516/EClaw/compare/v1.123.3...v1.124.0) (2026-03-21)
+
+
+### Features
+
+* expand Jest test coverage from 65% to 75% ([#359](https://github.com/HankHuang0516/EClaw/issues/359)) ([eeb341a](https://github.com/HankHuang0516/EClaw/commit/eeb341a9c07e5a2bf2a899f5962fad3f9026d81c))
+
 ## [1.123.3](https://github.com/HankHuang0516/EClaw/compare/v1.123.2...v1.123.3) (2026-03-21)
 
 
