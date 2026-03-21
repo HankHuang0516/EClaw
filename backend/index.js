@@ -138,7 +138,12 @@ app.get('/landing', (req, res) => {
 });
 
 // Shareable chat link: /c/<publicCode>
+// Logged-in users → redirect to chat.html with contact filter
+// Not logged-in → serve read-only share-chat.html
 app.get('/c/:code', (req, res) => {
+    if (req.user && req.user.deviceId) {
+        return res.redirect(`/portal/chat.html?contact=${encodeURIComponent(req.params.code)}`);
+    }
     res.sendFile(path.join(__dirname, 'public/portal/share-chat.html'));
 });
 

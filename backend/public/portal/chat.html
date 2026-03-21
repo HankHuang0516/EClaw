@@ -1368,8 +1368,18 @@
                 contactsLoaded = true;
                 contacts.forEach(c => {
                     const avatar = c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
-                    xdeviceLabelCache[c.publicCode] = `${avatar} ${escapeHtml(c.name || c.character || c.publicCode)}`;
+                    xdeviceLabelCache[c.publicCode] = `${renderAvatarHtml(avatar, 20)} ${escapeHtml(c.name || c.character || c.publicCode)}`;
                 });
+
+                // Handle ?contact=CODE from shareable link (/c/:code)
+                const urlContact = new URLSearchParams(window.location.search).get('contact');
+                if (urlContact) {
+                    const code = urlContact.trim().toLowerCase();
+                    await ensureContactAndFilter(code);
+                    // Clean URL without reloading
+                    window.history.replaceState({}, '', window.location.pathname);
+                }
+
                 renderTargetBar();
             } catch (e) {
                 console.warn('Failed to load contacts:', e.message);
@@ -1571,6 +1581,43 @@
             }
         }
 
+        /**
+         * Ensure a contact exists (auto-add if needed), select it in target bar, and set filter.
+         * Used when arriving via /c/:code shareable link.
+         */
+        async function ensureContactAndFilter(code) {
+            // Already in contacts?
+            const existing = contacts.find(c => c.publicCode === code);
+            if (!existing) {
+                // Auto-add to contacts
+                try {
+                    const data = await apiCall('POST', '/api/contacts', {
+                        deviceId: currentUser.deviceId,
+                        deviceSecret: currentUser.deviceSecret,
+                        publicCode: code
+                    });
+                    if (data.success && data.contact) {
+                        contacts.push(data.contact);
+                        const c = data.contact;
+                        const avatar = c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
+                        xdeviceLabelCache[c.publicCode] = `${renderAvatarHtml(avatar, 20)} ${escapeHtml(c.name || c.character || c.publicCode)}`;
+                    }
+                } catch (err) {
+                    // 409 = already exists (race), 400 = own entity — both OK to continue
+                    if (err.status !== 409 && err.status !== 400) {
+                        console.warn('Failed to auto-add contact:', err.message);
+                        return;
+                    }
+                }
+            }
+
+            // Auto-check this contact in target bar
+            localStorage.setItem('chat_last_contact_targets', code);
+
+            // Set filter to show this contact's conversation
+            currentFilter = `xdevice-${code}`;
+        }
+
         async function removeContact(publicCode, event) {
             if (event) event.stopPropagation();
             const contact = contacts.find(c => c.publicCode === publicCode);
@@ -1644,6 +1691,11 @@
                     }
                 }
             });
+
+            // If current filter targets a contact with no messages yet, ensure its chip exists
+            if (currentFilter.startsWith('xdevice-')) {
+                xdeviceCodesWithMessages.add(currentFilter.substring(8));
+            }
 
             // Insert entity chips before "My Messages" chip
             const myChip = group.querySelector('[data-filter="my"]');
