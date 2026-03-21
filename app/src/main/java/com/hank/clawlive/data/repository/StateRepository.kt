@@ -196,6 +196,18 @@ class StateRepository(
                     return@forEach
                 }
 
+                // Skip user/scheduled messages — they lack fromCharacter because the backend
+                // only sets fromEntityId+fromCharacter on entity-to-entity messages.
+                // User messages (from: "android_chat", "web_chat", "scheduled", etc.) are
+                // already saved locally via saveOutgoingMessage() + syncFromBackend().
+                // Without this check, Gson defaults fromEntityId to 0 and the message
+                // renders as a left-aligned "shadow" duplicate of the user's own message.
+                @Suppress("SENSELESS_COMPARISON")
+                if (queueItem.fromCharacter == null || queueItem.fromCharacter.isBlank()) {
+                    Timber.d("[A2A_PROCESS_MQ] Skipping non-entity queue item on Entity${entity.entityId}: from=${queueItem.from}")
+                    return@forEach
+                }
+
                 // Detect entity-to-entity speak-to: sender differs from this entity (the receiver)
                 val isA2A = queueItem.fromEntityId != entity.entityId
                 val targetId = if (isA2A) entity.entityId else null

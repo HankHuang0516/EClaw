@@ -137,6 +137,64 @@ describe('POST /api/message/:messageId/react', () => {
 });
 
 // ════════════════════════════════════════════════════════════════
+// Regression: user message shadow (messageQueue lacks fromEntityId/fromCharacter)
+// When a user sends via /api/client/speak, the backend pushes the message into
+// entity.messageQueue WITHOUT fromEntityId/fromCharacter. Android clients must
+// skip these items to avoid rendering a "shadow" duplicate of the user's message
+// as a left-aligned entity message.
+// ════════════════════════════════════════════════════════════════
+describe('client/speak messageQueue structure (shadow bug regression)', () => {
+    it('user message in messageQueue should NOT have fromEntityId or fromCharacter', async () => {
+        const deviceSecret = await registerDevice('test-shadow-mq');
+
+        // Bind entity 0
+        await post('/api/bind').send({
+            deviceId: 'test-shadow-mq', entityId: 0,
+            name: 'TestBot', character: '🤖', webhook: ''
+        });
+
+        // Send a user message
+        await post('/api/client/speak').send({
+            deviceId: 'test-shadow-mq', deviceSecret,
+            entityId: 0, text: 'Hello shadow test', source: 'android_chat'
+        });
+
+        // Check entity status — messageQueue item should lack entity fields
+        const statusRes = await get(`/api/status?deviceId=test-shadow-mq`);
+        expect(statusRes.status).toBe(200);
+
+        const entity0 = statusRes.body.entities?.find(e => e.entityId === 0);
+        if (entity0 && entity0.messageQueue && entity0.messageQueue.length > 0) {
+            const userMsg = entity0.messageQueue.find(m => m.text === 'Hello shadow test');
+            if (userMsg) {
+                // User messages must NOT have fromEntityId or fromCharacter set
+                // (these fields are only set for entity-to-entity messages)
+                expect(userMsg.fromEntityId).toBeUndefined();
+                expect(userMsg.fromCharacter).toBeUndefined();
+                expect(userMsg.from).toBe('android_chat');
+            }
+        }
+    });
+
+    it('client/speak response preserves source field for Android dedup', async () => {
+        const deviceSecret = await registerDevice('test-shadow-source');
+
+        await post('/api/bind').send({
+            deviceId: 'test-shadow-source', entityId: 0,
+            name: 'TestBot', character: '🤖', webhook: ''
+        });
+
+        const res = await post('/api/client/speak').send({
+            deviceId: 'test-shadow-source', deviceSecret,
+            entityId: 0, text: 'Dedup test', source: 'android_chat'
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
 // POST /api/chat/upload-media
 // ════════════════════════════════════════════════════════════════
 describe('POST /api/chat/upload-media', () => {
