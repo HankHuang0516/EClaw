@@ -3046,6 +3046,27 @@ app.post('/api/transform', (req, res) => {
             });
         }
 
+        // [CROSS-DEVICE AUTO-ROUTE] — if pending message was cross-device, save reply to sender device
+        const pendingCross = entity.messageQueue && entity.messageQueue.findLast(m => m.crossDevice);
+        if (pendingCross && pendingCross.fromDeviceId) {
+            const replySource = `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`;
+            const senderEntityId = pendingCross.fromEntityId >= 0 ? pendingCross.fromEntityId : 0;
+            saveChatMessage(pendingCross.fromDeviceId, senderEntityId, finalMessage, replySource, false, true);
+            serverLog('info', 'cross_speak_push', `[CROSS_ROUTE] Transform auto-routed reply to sender ${pendingCross.fromDeviceId}:${senderEntityId}`, {
+                deviceId, entityId: eId,
+                metadata: { senderDeviceId: pendingCross.fromDeviceId, senderEntityId, fromPublicCode: pendingCross.fromPublicCode }
+            });
+
+            // Notify sender device about the reply
+            notifyDevice(pendingCross.fromDeviceId, {
+                type: 'chat', category: 'cross_speak',
+                title: `${entity.name || entity.publicCode || `Entity ${eId}`} replied`,
+                body: (finalMessage || '').slice(0, 100),
+                link: 'chat.html',
+                metadata: { fromPublicCode: entity.publicCode, entityId: senderEntityId }
+            }).catch(() => {});
+        }
+
         // XP: Award +10 for correctly replying to a user message
         const hasPendingUserMsg = entity.messageQueue && entity.messageQueue.some(m => m.from && m.from !== 'system');
         const now = Date.now();
@@ -5320,16 +5341,9 @@ app.post('/api/entity/cross-speak', async (req, res) => {
         });
     } else if (hasWebhook) {
         const apiBase = 'https://eclawbot.com';
-        const csRemaining = getCrossSpeakRemaining(target.deviceId, target.entityId);
         let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API. Your text reply is DISCARDED.\n`;
-        pushMsg += `To update your mood/emoji on wallpaper (do NOT repeat or narrate the message — the user can already see it in chat):\n`;
+        pushMsg += `To reply (your reply will be automatically delivered to the sender):\n`;
         pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","entityId":${target.entityId},"botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
-        pushMsg += `To reply to this cross-device message:\n`;
-        pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/cross-speak" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","fromEntityId":${target.entityId},"botSecret":"${toEntity.botSecret}","targetCode":"${fromEntity.publicCode}","text":"YOUR_REPLY_HERE"}'\n\n`;
-        pushMsg += `[CROSS-DEVICE] Remaining quota: ${csRemaining}/${CROSS_SPEAK_MAX_MESSAGES}. If the message is just repeating emotions with no new info, do NOT reply — just update your wallpaper status.`;
-        if (csRemaining <= 1) {
-            pushMsg += ` WARNING: Quota almost exhausted, do NOT auto-reply.`;
-        }
         if (xdSettings.pre_inject) {
             pushMsg += `\n\n[DEVICE OWNER INSTRUCTION]\n${xdSettings.pre_inject}`;
         }
@@ -6245,12 +6259,8 @@ app.post('/api/client/cross-speak', async (req, res) => {
     } else if (hasWebhook) {
         const apiBase = 'https://eclawbot.com';
         let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API. Your text reply is DISCARDED.\n`;
-        pushMsg += `To update your wallpaper status:\n`;
+        pushMsg += `To reply (your reply will be automatically delivered to the sender):\n`;
         pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","entityId":${target.entityId},"botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
-        if (!isOwnerMode) {
-            pushMsg += `To reply to this cross-device message:\n`;
-            pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/cross-speak" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","fromEntityId":${target.entityId},"botSecret":"${toEntity.botSecret}","targetCode":"${fromEntity.publicCode}","text":"YOUR_REPLY_HERE"}'\n\n`;
-        }
         if (xdSettingsClient.pre_inject) {
             pushMsg += `[DEVICE OWNER INSTRUCTION]\n${xdSettingsClient.pre_inject}\n\n`;
         }
