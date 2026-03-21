@@ -65,6 +65,10 @@ jest.mock('../../../db', () => ({
     getPendingCrossMessages: jest.fn().mockResolvedValue([]),
     deletePendingCrossMessages: jest.fn().mockResolvedValue(0),
     cleanupExpiredPendingMessages: jest.fn().mockResolvedValue(0),
+    getDeviceVars: jest.fn().mockResolvedValue(null),
+    getDeviceVarsMeta: jest.fn().mockResolvedValue(null),
+    upsertDeviceVars: jest.fn().mockResolvedValue(true),
+    deleteDeviceVars: jest.fn().mockResolvedValue(true),
 }));
 
 jest.mock('../../../flickr', () => ({

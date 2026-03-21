@@ -95,7 +95,7 @@ EClaw/
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
 │   ├── tests/                # Regression + integration tests (54 files)
-│   ├── tests/jest/           # Jest unit tests (35 files, CI-run via `npm test`)
+│   ├── tests/jest/           # Jest unit tests (43 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -546,20 +546,20 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 
 ## Test Coverage Summary
 
-**~296 total API routes** across all modules, **~65% covered** (~192 routes tested).
+**~308 total API routes** across all modules, **~75% covered** (~231 routes tested).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
 | OAuth Server | 100% (8/8) | Full lifecycle tested |
 | A2A Compat | 100% (6/6) | |
-| Channel API | 100% (3/3) | |
+| Channel API | 100% (11/11) | Full CRUD + test-sink + Jest unit tests |
 | Entity Cross-Device Settings | 100% (3/3) | |
 | Auth | 92% (22/24) | Extended: device-login, verify-email, forgot-password, reset-password, bind-email, app-login, OAuth, RBAC, account deletion |
 | Subscription | 100% (5/5) | Status, TapPay, cancel, Google Play, usage |
 | Official Borrow | 100% (6/6) | All 6 endpoints tested |
 | Article Publisher | ~75% (37/49) | Extended: Blogger, Hashnode, X/Twitter, Tumblr, Reddit, LinkedIn, Mastodon |
 | Mission | 54% (14/26) | Missing: reorder, move, archive |
-| Core API (index.js) | ~65% (96/148) | Device preferences added |
+| Core API (index.js) | ~75% (111/148) | +screen control, telemetry, logs, vars, cross-speak, link preview |
 
 Full analysis: `docs/reports/2026-03-14-test-coverage-analysis.md`
 
@@ -633,7 +633,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Customer Service API | `node backend/tests/test-customer-service-api.js` | Device ID + Secret | Customer service AI tool handlers |
 | Entity Trash | `node backend/tests/test-entity-trash.js` | Device ID + Secret | Entity soft-delete, restore, 7-day retention |
 
-### Jest Unit Tests (CI-run, `npm test`, 35 files)
+### Jest Unit Tests (CI-run, `npm test`, 43 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -672,11 +672,19 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Publisher Integration | `tests/jest/publisher-integration.test.js` | Publisher integration flow tests |
 | Share Chat | `tests/jest/share-chat.test.js` | Shareable chat link validation |
 | Templates | `tests/jest/templates.test.js` | Skill/soul/rule template CRUD validation |
+| Screen Control | `tests/jest/screen-control.test.js` | Screen capture, result, control endpoints — auth, rate limit, command validation, feature gate |
+| Device Telemetry | `tests/jest/device-telemetry.test.js` | Telemetry POST/GET/summary/DELETE — auth, input validation, buffer management |
+| Server Logs | `tests/jest/server-logs.test.js` | GET /api/logs and GET /api/audit-logs — auth, query filters, limit enforcement |
+| Channel API | `tests/jest/channel-api.test.js` | Channel provision, register, bind, message, test-sink — auth, CRUD lifecycle |
+| OAuth Server | `tests/jest/oauth-server.test.js` | OAuth client registration, token endpoint, revoke (RFC 7009), introspect (RFC 7662) |
+| Device Vars | `tests/jest/device-vars.test.js` | Environment variables POST/GET/DELETE — auth, encryption, bot access |
+| Cross-Speak | `tests/jest/cross-speak.test.js` | Cross-device entity messaging, client cross-speak, pending queue — auth, validation |
+| Link Preview | `tests/jest/link-preview.test.js` | Link preview OG tag extraction, URL validation, SSRF protection, timeout handling |
 
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (35 files)
+cd backend && npm test                  # Jest unit tests (43 files)
 cd backend && npm run lint              # ESLint
 ```
 
