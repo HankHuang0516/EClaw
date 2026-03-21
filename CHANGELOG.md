@@ -1,3 +1,10 @@
+## [1.127.3](https://github.com/HankHuang0516/EClaw/compare/v1.127.2...v1.127.3) (2026-03-21)
+
+
+### Bug Fixes
+
+* add debug logging to account deletion + clean up 7 missing tables ([#374](https://github.com/HankHuang0516/EClaw/issues/374)) ([fcb9b97](https://github.com/HankHuang0516/EClaw/commit/fcb9b978087e14db25d5f55ef82f1f6f0aadf332))
+
 ## [1.127.2](https://github.com/HankHuang0516/EClaw/compare/v1.127.1...v1.127.2) (2026-03-21)
 
 
