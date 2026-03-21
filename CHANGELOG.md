@@ -1,3 +1,10 @@
+## [1.127.4](https://github.com/HankHuang0516/EClaw/compare/v1.127.3...v1.127.4) (2026-03-21)
+
+
+### Bug Fixes
+
+* use SAVEPOINT to skip non-existent tables during account deletion ([#375](https://github.com/HankHuang0516/EClaw/issues/375)) ([66ab927](https://github.com/HankHuang0516/EClaw/commit/66ab927b552fea94a5e6e0fbc7f24c667d3c0adb))
+
 ## [1.127.3](https://github.com/HankHuang0516/EClaw/compare/v1.127.2...v1.127.3) (2026-03-21)
 
 
