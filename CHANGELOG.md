@@ -1,3 +1,10 @@
+## [1.124.2](https://github.com/HankHuang0516/EClaw/compare/v1.124.1...v1.124.2) (2026-03-21)
+
+
+### Bug Fixes
+
+* **scheduler:** allow deleting completed/expired schedules ([#361](https://github.com/HankHuang0516/EClaw/issues/361)) ([2317041](https://github.com/HankHuang0516/EClaw/commit/2317041f002a9e81bc04913905827fdee2732c03))
+
 ## [1.124.1](https://github.com/HankHuang0516/EClaw/compare/v1.124.0...v1.124.1) (2026-03-21)
 
 
