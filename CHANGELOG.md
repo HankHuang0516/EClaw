@@ -1,3 +1,10 @@
+## [1.126.4](https://github.com/HankHuang0516/EClaw/compare/v1.126.3...v1.126.4) (2026-03-21)
+
+
+### Bug Fixes
+
+* cross-device chat rendering bugs (5 issues) ([#369](https://github.com/HankHuang0516/EClaw/issues/369)) ([1e46c3a](https://github.com/HankHuang0516/EClaw/commit/1e46c3a0af82757e4b8a1b647df873b091997f34))
+
 ## [1.126.3](https://github.com/HankHuang0516/EClaw/compare/v1.126.2...v1.126.3) (2026-03-21)
 
 
