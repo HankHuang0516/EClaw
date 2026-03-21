@@ -1,3 +1,10 @@
+# [1.130.0](https://github.com/HankHuang0516/EClaw/compare/v1.129.1...v1.130.0) (2026-03-21)
+
+
+### Features
+
+* **portal:** add Proxy Window enterprise guide to Info Hub ([#385](https://github.com/HankHuang0516/EClaw/issues/385)) ([43db0d5](https://github.com/HankHuang0516/EClaw/commit/43db0d58f5cc4243d27b22876e0f39b0bf38a826))
+
 ## [1.129.1](https://github.com/HankHuang0516/EClaw/compare/v1.129.0...v1.129.1) (2026-03-21)
 
 
