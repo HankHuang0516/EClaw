@@ -344,7 +344,8 @@ class ChatActivity : AppCompatActivity() {
                 }
                 boundEntityPublicCodes = publicCodeMap
 
-                if (boundIds.size <= 1 && contacts.isEmpty()) {
+                // When 0 entities, keep visible so contacts can appear after loadContacts()
+                if (boundIds.size == 1 && contacts.isEmpty()) {
                     chipGroupTargets.visibility = View.GONE
                 }
             } catch (e: Exception) {

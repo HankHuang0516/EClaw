@@ -1397,11 +1397,6 @@
             // Remove old dynamic elements
             bar.querySelectorAll('.target-entity-check, .target-loading-hint, .target-separator, .target-contact-check, .btn-add-contact, .contact-add-inline').forEach(el => el.remove());
 
-            if (boundEntities.length === 0) {
-                allLabel.style.display = 'none';
-                return;
-            }
-
             // Show "All" only if more than 1 entity
             allLabel.style.display = boundEntities.length > 1 ? '' : 'none';
 
@@ -1423,9 +1418,11 @@
 
             // ── Contacts section ──
             if (contacts.length > 0 || contactsLoaded) {
-                const sep = document.createElement('span');
-                sep.className = 'target-separator';
-                bar.appendChild(sep);
+                if (boundEntities.length > 0) {
+                    const sep = document.createElement('span');
+                    sep.className = 'target-separator';
+                    bar.appendChild(sep);
+                }
 
                 const savedContacts = localStorage.getItem('chat_last_contact_targets');
                 const savedContactSet = savedContacts ? new Set(savedContacts.split(',')) : new Set();

@@ -251,3 +251,31 @@ describe('POST /api/chat/pending-cross-speak', () => {
         expect(res.body.success).toBe(false);
     });
 });
+
+// ════════════════════════════════════════════════════════════════
+// Regression: renderTargetBar must render contacts when entities=0
+// ════════════════════════════════════════════════════════════════
+describe('chat.html renderTargetBar regression', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const chatHtml = fs.readFileSync(
+        path.resolve(__dirname, '../../public/portal/chat.html'), 'utf8'
+    );
+
+    // Extract renderTargetBar body once for all tests
+    const fnMatch = chatHtml.match(/function renderTargetBar\(\)\s*\{([\s\S]*?)(?=\n {8}function\b)/);
+    const fnBody = fnMatch ? fnMatch[1] : '';
+
+    it('renderTargetBar does not early-return when boundEntities is empty', () => {
+        expect(fnMatch).toBeTruthy();
+        // Must NOT have early return when boundEntities.length === 0
+        const earlyReturnPattern = /if\s*\(\s*boundEntities\.length\s*===?\s*0\s*\)\s*\{[^}]*return;?\s*\}/;
+        expect(fnBody).not.toMatch(earlyReturnPattern);
+    });
+
+    it('contacts section is rendered regardless of boundEntities count', () => {
+        expect(fnMatch).toBeTruthy();
+        expect(fnBody).toMatch(/target-contact-check/);
+        expect(fnBody).toMatch(/Contacts section/);
+    });
+});
