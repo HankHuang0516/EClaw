@@ -153,7 +153,7 @@ Requires `TEST_DEVICE_ID` / `BROADCAST_TEST_DEVICE_ID` + `BROADCAST_TEST_DEVICE_
 
 - [Privacy Policy](PRIVACY_POLICY.md)
 - [Backend API Reference](backend/README.md)
-- [MCP Skill Guide](backend/E-claw_mcp_skill.md)
+- [MCP Skill Guide](https://eclawbot.com/api/skill-doc)
 - [Release History](RELEASE_HISTORY.md)
 
 ---

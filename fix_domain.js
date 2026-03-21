@@ -4,7 +4,7 @@ const OLD = 'realbot-production.up.railway.app';
 const NEW = 'eclawbot.com';
 
 const files = [
-  'backend/E-claw_mcp_skill.md',
+  // 'backend/E-claw_mcp_skill.md', // removed: content merged into eclaw-a2a-toolkit
   'backend/monitor_messages.js',
   'backend/TEST-README.md',
   'backend/tests/test_device_isolation.js',

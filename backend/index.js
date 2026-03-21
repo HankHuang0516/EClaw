@@ -649,12 +649,11 @@ initPersistence().catch(err => {
 });
 
 // ============================================
-// SKILL DOCUMENTATION (serve eclaw-a2a-toolkit + E-claw_mcp_skill.md as HTML)
+// SKILL DOCUMENTATION (serve eclaw-a2a-toolkit as HTML)
 // ============================================
 app.get('/api/skill-doc', (req, res) => {
     try {
         // Primary source: eclaw-a2a-toolkit from skill-templates.json
-        // Fallback: E-claw_mcp_skill.md
         let mdContent;
         let title = 'EClaw A2A Toolkit — Official API';
         try {
@@ -665,11 +664,9 @@ app.get('/api/skill-doc', (req, res) => {
                 mdContent = `# ${toolkit.title || 'EClaw A2A Toolkit'}\n\n${toolkit.steps}`;
                 title = toolkit.title || title;
             }
-        } catch (_) { /* fall through to md file */ }
+        } catch (_) { /* fall through */ }
         if (!mdContent) {
-            const mdPath = path.join(__dirname, 'E-claw_mcp_skill.md');
-            mdContent = fs.readFileSync(mdPath, 'utf8');
-            title = 'E-Claw MCP Skills Documentation';
+            return res.status(500).json({ error: 'eclaw-a2a-toolkit not found in skill-templates.json' });
         }
 
         // ?format=text returns raw text (for bots/agents)
@@ -2354,14 +2351,15 @@ ${skillDoc}`;
         });
 }
 
-// Helper: Load MCP skill documentation
+// Helper: Load MCP skill documentation from eclaw-a2a-toolkit
 function loadSkillDoc() {
     try {
-        const docPath = path.join(__dirname, 'E-claw_mcp_skill.md');
-        return fs.readFileSync(docPath, 'utf8');
-    } catch (err) {
-        return "MCP Skill documentation not found.";
-    }
+        const templatesPath = path.join(__dirname, 'data', 'skill-templates.json');
+        const templates = JSON.parse(fs.readFileSync(templatesPath, 'utf8'));
+        const toolkit = templates.find(t => t.id === 'eclaw-a2a-toolkit');
+        if (toolkit && toolkit.steps) return toolkit.steps;
+    } catch (_) { /* fall through */ }
+    return "MCP Skill documentation not found.";
 }
 
 // Auto-decay loop for ALL devices' entities
@@ -2823,8 +2821,8 @@ app.post('/api/bind', async (req, res) => {
             status: "ONLINE"
         },
         versionInfo: getVersionInfo(deviceAppVersion),
-        skills_documentation_url: "https://raw.githubusercontent.com/HankHuang0516/realbot/main/backend/E-claw_mcp_skill.md",
-        skills_documentation: "Fetch the skills_documentation_url above to read the full E-claw MCP Skills guide.",
+        skills_documentation_url: "https://eclawbot.com/api/skill-doc?format=text",
+        skills_documentation: "Fetch the skills_documentation_url above to read the full EClaw A2A Toolkit API guide.",
         identitySetupRequired: !entity.identity,
         availableResources: {
             soulTemplates: 'GET /api/soul-templates',

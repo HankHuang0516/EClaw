@@ -46,14 +46,15 @@ function generateBindingCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Helper: Load MCP skill documentation
+// Helper: Load MCP skill documentation from eclaw-a2a-toolkit
 function loadSkillDoc() {
     try {
-        const docPath = path.join(__dirname, 'E-claw_mcp_skill.md');
-        return fs.readFileSync(docPath, 'utf8');
-    } catch (err) {
-        return "MCP Skill documentation not found.";
-    }
+        const templatesPath = path.join(__dirname, 'data', 'skill-templates.json');
+        const templates = JSON.parse(fs.readFileSync(templatesPath, 'utf8'));
+        const toolkit = templates.find(t => t.id === 'eclaw-a2a-toolkit');
+        if (toolkit && toolkit.steps) return toolkit.steps;
+    } catch (_) { /* fall through */ }
+    return "MCP Skill documentation not found.";
 }
 
 // Auto-decay loop for ALL entities
