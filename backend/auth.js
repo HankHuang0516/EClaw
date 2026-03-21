@@ -1567,66 +1567,147 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
     // DELETE /account — Permanently delete user account and all associated data
     // ============================================
     router.delete('/account', authMiddleware, async (req, res) => {
+        const debugLog = [];
+        const debug = (step, detail) => {
+            const entry = `[DeleteAccount] ${step}: ${detail}`;
+            console.log(entry);
+            debugLog.push(entry);
+        };
+
+        debug('START', `userId=${req.user.userId} deviceId=${req.user.deviceId}`);
+
         if (!req.user.userId) {
-            return res.status(403).json({ success: false, error: 'Device-only sessions cannot delete accounts. Please sign in with Google or email.' });
+            debug('REJECT', 'No userId in session — device-only session');
+            return res.status(403).json({ success: false, error: 'Device-only sessions cannot delete accounts. Please sign in with Google or email.', debugLog });
         }
 
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
+            debug('TX', 'BEGIN');
 
             const userResult = await client.query(
                 'SELECT device_id, email FROM user_accounts WHERE id = $1',
                 [req.user.userId]
             );
+            debug('LOOKUP', `user_accounts rows=${userResult.rows.length}`);
             if (!userResult.rows.length) {
                 await client.query('ROLLBACK');
-                return res.status(404).json({ success: false, error: 'Account not found' });
+                debug('REJECT', 'Account not found in DB');
+                return res.status(404).json({ success: false, error: 'Account not found', debugLog });
             }
 
             const deviceId = userResult.rows[0].device_id;
             const email = userResult.rows[0].email;
+            debug('USER', `email=${email} deviceId=${deviceId}`);
+
+            // Helper to delete from a table with debug logging
+            const safeDelete = async (table, whereClause, params, label) => {
+                const stepLabel = label || `DELETE ${table}`;
+                try {
+                    const r = await client.query(`DELETE FROM ${table} WHERE ${whereClause}`, params);
+                    debug(stepLabel, `deleted ${r.rowCount} rows`);
+                } catch (e) {
+                    debug(`${stepLabel} ERROR`, `${e.code || 'UNKNOWN'}: ${e.message}`);
+                    throw e;
+                }
+            };
+
+            // Helper to update with debug logging
+            const safeUpdate = async (sql, params, label) => {
+                try {
+                    const r = await client.query(sql, params);
+                    debug(label, `affected ${r.rowCount} rows`);
+                } catch (e) {
+                    debug(`${label} ERROR`, `${e.code || 'UNKNOWN'}: ${e.message}`);
+                    throw e;
+                }
+            };
 
             if (deviceId) {
-                // Delete all device-scoped data
-                await client.query('DELETE FROM chat_messages WHERE device_id = $1', [deviceId]);
-                await client.query('DELETE FROM mission_dashboard WHERE device_id = $1', [deviceId]);
-                await client.query('DELETE FROM official_bot_bindings WHERE device_id = $1', [deviceId]);
-                await client.query('DELETE FROM message_reactions WHERE device_id = $1', [deviceId]);
-                await client.query('DELETE FROM device_vars WHERE device_id = $1', [deviceId]);
-                await client.query('DELETE FROM device_telemetry WHERE device_id = $1', [deviceId]);
-                await client.query('DELETE FROM schedules WHERE device_id = $1', [deviceId]);
-                await client.query('DELETE FROM agent_card_holder WHERE device_id = $1', [deviceId]);
-                await client.query('DELETE FROM entity_trash WHERE device_id = $1', [deviceId]);
-                await client.query('DELETE FROM channel_accounts WHERE device_id = $1', [deviceId]);
-                await client.query('DELETE FROM bot_files WHERE device_id = $1', [deviceId]);
-                await client.query('DELETE FROM feedback WHERE device_id = $1', [deviceId]);
-                await client.query('DELETE FROM push_subscriptions WHERE device_id = $1', [deviceId]);
-                await client.query('DELETE FROM usage_tracking WHERE device_id = $1', [deviceId]);
-                await client.query('DELETE FROM server_logs WHERE device_id = $1', [deviceId]);
-                await client.query('DELETE FROM pending_cross_messages WHERE sender_device_id = $1', [deviceId]);
-                // Unbind all entities (don't delete — entity slots may be reused)
-                await client.query(
-                    `UPDATE entities SET is_bound = FALSE, bot_secret = NULL, name = NULL
-                     WHERE device_id = $1`,
-                    [deviceId]
+                debug('DEVICE_CLEANUP', `Starting device-scoped cleanup for ${deviceId}`);
+
+                // --- Device-scoped tables (no FK CASCADE) ---
+                await safeDelete('chat_messages', 'device_id = $1', [deviceId]);
+                await safeDelete('chat_uploads', 'device_id = $1', [deviceId]);
+                await safeDelete('message_reactions', 'device_id = $1', [deviceId]);
+                await safeDelete('official_bot_bindings', 'device_id = $1', [deviceId]);
+                await safeDelete('handshake_failures', 'device_id = $1', [deviceId]);
+                await safeDelete('usage_tracking', 'device_id = $1', [deviceId]);
+                await safeDelete('feedback', 'device_id = $1', [deviceId]);
+                await safeDelete('server_logs', 'device_id = $1', [deviceId]);
+                await safeDelete('pending_cross_messages', 'sender_device_id = $1', [deviceId]);
+
+                // --- Device-scoped tables (have FK CASCADE to devices, but delete explicitly for safety) ---
+                await safeDelete('mission_dashboard', 'device_id = $1', [deviceId], 'DELETE mission_dashboard (cascades mission_items/notes/rules)');
+                await safeDelete('device_vars', 'device_id = $1', [deviceId]);
+                await safeDelete('device_telemetry', 'device_id = $1', [deviceId]);
+                await safeDelete('schedules', 'device_id = $1', [deviceId]);
+                await safeDelete('agent_card_holder', 'device_id = $1', [deviceId]);
+                await safeDelete('entity_trash', 'device_id = $1', [deviceId]);
+                await safeDelete('channel_accounts', 'device_id = $1', [deviceId]);
+                await safeDelete('bot_files', 'device_id = $1', [deviceId]);
+                await safeDelete('push_subscriptions', 'device_id = $1', [deviceId]);
+                await safeDelete('cross_device_contacts', 'device_id = $1', [deviceId]);
+
+                // --- OAuth data owned by this device ---
+                await safeDelete('oauth_tokens', 'device_id = $1', [deviceId]);
+                await safeDelete('oauth_authorization_codes', 'device_id = $1', [deviceId]);
+                await safeDelete('oauth_clients', 'owner_device_id = $1', [deviceId]);
+
+                // --- Official bots: unassign if assigned to this device ---
+                await safeUpdate(
+                    `UPDATE official_bots SET assigned_device_id = NULL, assigned_entity_id = NULL, assigned_at = NULL, status = 'available' WHERE assigned_device_id = $1`,
+                    [deviceId],
+                    'UPDATE official_bots (unassign)'
                 );
+
+                // --- Entities: delete (not just unbind) since account is being destroyed ---
+                await safeDelete('entities', 'device_id = $1', [deviceId]);
+
+                // --- Device record itself ---
+                await safeDelete('devices', 'device_id = $1', [deviceId]);
+
+                debug('DEVICE_CLEANUP', 'Complete');
+            } else {
+                debug('DEVICE_CLEANUP', 'SKIPPED — no deviceId associated');
             }
 
-            // Clean up user-scoped FK references before deleting account
-            await client.query('DELETE FROM tappay_transactions WHERE user_account_id = $1', [req.user.userId]);
-            await client.query('UPDATE user_roles SET granted_by = NULL WHERE granted_by = $1', [req.user.userId]);
-            await client.query('DELETE FROM user_roles WHERE user_id = $1', [req.user.userId]);
-            await client.query('DELETE FROM user_accounts WHERE id = $1', [req.user.userId]);
+            // --- User-scoped FK references ---
+            debug('USER_CLEANUP', 'Starting user-scoped cleanup');
+            await safeDelete('tappay_transactions', 'user_account_id = $1', [req.user.userId]);
+            await safeUpdate(
+                'UPDATE user_roles SET granted_by = NULL WHERE granted_by = $1',
+                [req.user.userId],
+                'UPDATE user_roles.granted_by NULL'
+            );
+            await safeDelete('user_roles', 'user_id = $1', [req.user.userId]);
+            // Also clean server_logs by user_id (audit trail)
+            await safeDelete('server_logs', 'user_id = $1::uuid', [req.user.userId], 'DELETE server_logs (by user_id)');
+            await safeDelete('user_accounts', 'id = $1', [req.user.userId]);
+
             await client.query('COMMIT');
+            debug('TX', 'COMMIT OK');
 
             res.clearCookie('eclaw_session', { path: '/' });
             console.log(`[Auth] Account deleted: userId=${req.user.userId} email=${email} deviceId=${deviceId}`);
-            res.json({ success: true });
+            res.json({ success: true, debugLog });
         } catch (error) {
-            await client.query('ROLLBACK');
+            await client.query('ROLLBACK').catch(() => {});
+            debug('TX', `ROLLBACK due to error`);
+            debug('ERROR', `${error.code || 'UNKNOWN'} | table=${error.table || '?'} | constraint=${error.constraint || '?'} | detail=${error.detail || error.message}`);
             console.error('[Auth] Account deletion error:', error);
-            res.status(500).json({ success: false, error: 'Failed to delete account. Please try again.' });
+            res.status(500).json({
+                success: false,
+                error: 'Failed to delete account. Please try again.',
+                debugLog,
+                errorDetail: {
+                    code: error.code,
+                    table: error.table,
+                    constraint: error.constraint,
+                    message: error.message
+                }
+            });
         } finally {
             client.release();
         }
