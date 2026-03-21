@@ -1,3 +1,10 @@
+## [1.126.1](https://github.com/HankHuang0516/EClaw/compare/v1.126.0...v1.126.1) (2026-03-21)
+
+
+### Bug Fixes
+
+* **chat:** correct cross-device message direction rendering ([#366](https://github.com/HankHuang0516/EClaw/issues/366)) ([df1b669](https://github.com/HankHuang0516/EClaw/commit/df1b66967a0e4162594435f9066d0f8af15f4b00))
+
 # [1.126.0](https://github.com/HankHuang0516/EClaw/compare/v1.125.0...v1.126.0) (2026-03-21)
 
 
