@@ -1596,6 +1596,15 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                 await client.query('DELETE FROM device_vars WHERE device_id = $1', [deviceId]);
                 await client.query('DELETE FROM device_telemetry WHERE device_id = $1', [deviceId]);
                 await client.query('DELETE FROM schedules WHERE device_id = $1', [deviceId]);
+                await client.query('DELETE FROM agent_card_holder WHERE device_id = $1', [deviceId]);
+                await client.query('DELETE FROM entity_trash WHERE device_id = $1', [deviceId]);
+                await client.query('DELETE FROM channel_accounts WHERE device_id = $1', [deviceId]);
+                await client.query('DELETE FROM bot_files WHERE device_id = $1', [deviceId]);
+                await client.query('DELETE FROM feedback WHERE device_id = $1', [deviceId]);
+                await client.query('DELETE FROM push_subscriptions WHERE device_id = $1', [deviceId]);
+                await client.query('DELETE FROM usage_tracking WHERE device_id = $1', [deviceId]);
+                await client.query('DELETE FROM server_logs WHERE device_id = $1', [deviceId]);
+                await client.query('DELETE FROM pending_cross_messages WHERE sender_device_id = $1', [deviceId]);
                 // Unbind all entities (don't delete — entity slots may be reused)
                 await client.query(
                     `UPDATE entities SET is_bound = FALSE, bot_secret = NULL, name = NULL
@@ -1604,6 +1613,10 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                 );
             }
 
+            // Clean up user-scoped FK references before deleting account
+            await client.query('DELETE FROM tappay_transactions WHERE user_account_id = $1', [req.user.userId]);
+            await client.query('UPDATE user_roles SET granted_by = NULL WHERE granted_by = $1', [req.user.userId]);
+            await client.query('DELETE FROM user_roles WHERE user_id = $1', [req.user.userId]);
             await client.query('DELETE FROM user_accounts WHERE id = $1', [req.user.userId]);
             await client.query('COMMIT');
 
