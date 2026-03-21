@@ -1368,8 +1368,18 @@
                 contactsLoaded = true;
                 contacts.forEach(c => {
                     const avatar = c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
-                    xdeviceLabelCache[c.publicCode] = `${avatar} ${escapeHtml(c.name || c.character || c.publicCode)}`;
+                    xdeviceLabelCache[c.publicCode] = `${renderAvatarHtml(avatar, 20)} ${escapeHtml(c.name || c.character || c.publicCode)}`;
                 });
+
+                // Handle ?contact=CODE from shareable link (/c/:code)
+                const urlContact = new URLSearchParams(window.location.search).get('contact');
+                if (urlContact) {
+                    const code = urlContact.trim().toLowerCase();
+                    await ensureContactAndFilter(code);
+                    // Clean URL without reloading
+                    window.history.replaceState({}, '', window.location.pathname);
+                }
+
                 renderTargetBar();
             } catch (e) {
                 console.warn('Failed to load contacts:', e.message);
@@ -1418,6 +1428,7 @@
 
                 contacts.forEach(c => {
                     const avatar = c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
+                    const avatarHtml = renderAvatarHtml(avatar, 20);
                     const name = c.name || c.character || c.publicCode;
                     const isOffline = !c.online;
                     const isChecked = savedContactSet.has(c.publicCode);
@@ -1425,7 +1436,7 @@
                     const chip = document.createElement('label');
                     chip.className = `target-check target-contact-check contact-chip${isOffline ? ' offline' : ''}`;
                     chip.innerHTML = `<input type="checkbox" data-contact-code="${escapeHtml(c.publicCode)}" ${isChecked ? 'checked' : ''}>
-                        <span>${avatar} ${escapeHtml(name)}</span>
+                        <span>${avatarHtml} ${escapeHtml(name)}</span>
                         ${isOffline ? `<span class="contact-offline-tag">${i18n.t('chat_contacts_offline')}</span>` : ''}
                         <button class="btn-remove-contact" onclick="removeContact('${escapeHtml(c.publicCode)}', event)" title="${i18n.t('common_remove')}">&#x2715;</button>`;
                     bar.appendChild(chip);
@@ -1463,13 +1474,14 @@
             document.querySelectorAll('.target-entity-check input[type="checkbox"]').forEach(cb => {
                 if (cb.checked) local.push(parseInt(cb.dataset.entity));
             });
-            if (local.length === 0 && boundEntities.length > 0) {
-                boundEntities.forEach(e => local.push(e.entityId));
-            }
             const contactCodes = [];
             document.querySelectorAll('.target-contact-check input[type="checkbox"]').forEach(cb => {
                 if (cb.checked) contactCodes.push(cb.dataset.contactCode);
             });
+            // Only fall back to all entities when no contacts are selected either
+            if (local.length === 0 && contactCodes.length === 0 && boundEntities.length > 0) {
+                boundEntities.forEach(e => local.push(e.entityId));
+            }
             return { local, contacts: contactCodes };
         }
 
@@ -1569,6 +1581,43 @@
             }
         }
 
+        /**
+         * Ensure a contact exists (auto-add if needed), select it in target bar, and set filter.
+         * Used when arriving via /c/:code shareable link.
+         */
+        async function ensureContactAndFilter(code) {
+            // Already in contacts?
+            const existing = contacts.find(c => c.publicCode === code);
+            if (!existing) {
+                // Auto-add to contacts
+                try {
+                    const data = await apiCall('POST', '/api/contacts', {
+                        deviceId: currentUser.deviceId,
+                        deviceSecret: currentUser.deviceSecret,
+                        publicCode: code
+                    });
+                    if (data.success && data.contact) {
+                        contacts.push(data.contact);
+                        const c = data.contact;
+                        const avatar = c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
+                        xdeviceLabelCache[c.publicCode] = `${renderAvatarHtml(avatar, 20)} ${escapeHtml(c.name || c.character || c.publicCode)}`;
+                    }
+                } catch (err) {
+                    // 409 = already exists (race), 400 = own entity — both OK to continue
+                    if (err.status !== 409 && err.status !== 400) {
+                        console.warn('Failed to auto-add contact:', err.message);
+                        return;
+                    }
+                }
+            }
+
+            // Auto-check this contact in target bar
+            localStorage.setItem('chat_last_contact_targets', code);
+
+            // Set filter to show this contact's conversation
+            currentFilter = `xdevice-${code}`;
+        }
+
         async function removeContact(publicCode, event) {
             if (event) event.stopPropagation();
             const contact = contacts.find(c => c.publicCode === publicCode);
@@ -1644,6 +1693,11 @@
                 }
             });
 
+            // If current filter targets a contact with no messages yet, ensure its chip exists
+            if (currentFilter.startsWith('xdevice-')) {
+                xdeviceCodesWithMessages.add(currentFilter.substring(8));
+            }
+
             // Insert entity chips before "My Messages" chip
             const myChip = group.querySelector('[data-filter="my"]');
 
@@ -1673,7 +1727,7 @@
                 chip.className = `filter-chip filter-chip-entity filter-chip-contact${currentFilter === 'xdevice-' + code ? ' active' : ''}`;
                 chip.dataset.filter = `xdevice-${code}`;
                 chip.onclick = () => setFilter(`xdevice-${code}`);
-                chip.textContent = label;
+                chip.innerHTML = label;
                 group.insertBefore(chip, myChip);
             });
         }
@@ -1790,7 +1844,7 @@
                     if (data.success && data.entity) {
                         const e = data.entity;
                         const avatar = e.avatar || (e.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
-                        xdeviceLabelCache[code] = `${avatar} ${escapeHtml(e.name || e.character)}`;
+                        xdeviceLabelCache[code] = `${renderAvatarHtml(avatar, 20)} ${escapeHtml(e.name || e.character)}`;
                     }
                 } catch (_) { /* silent — will show raw code as fallback */ }
             });
@@ -2226,19 +2280,16 @@
 
                 // ── Cross-device contacts ──
                 if (targets.contacts.length > 0 && text) {
-                    // Sender: first checked local entity, or boundEntities[0]
-                    const senderEntity = targets.local.length > 0
+                    // If user explicitly selected a local entity, use it as sender; otherwise owner mode (-1)
+                    const explicitLocal = targets.local.length > 0
                         ? boundEntities.find(e => e.entityId === targets.local[0])
-                        : boundEntities[0];
-                    if (!senderEntity) {
-                        showToast(i18n.t('chat_no_bound_entities'), 'error');
-                        throw new Error('No sender entity');
-                    }
+                        : null;
+                    const fromEntityId = explicitLocal ? explicitLocal.entityId : -1;
                     const crossSpeakPromises = targets.contacts.map(async (code) => {
                         try {
                             await apiCall('POST', '/api/client/cross-speak', {
                                 deviceId: currentUser.deviceId,
-                                fromEntityId: senderEntity.entityId,
+                                fromEntityId: fromEntityId,
                                 targetCode: code,
                                 text: text,
                                 source: 'web_chat'

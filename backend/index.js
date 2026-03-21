@@ -138,7 +138,12 @@ app.get('/landing', (req, res) => {
 });
 
 // Shareable chat link: /c/<publicCode>
+// Logged-in users → redirect to chat.html with contact filter
+// Not logged-in → serve read-only share-chat.html
 app.get('/c/:code', (req, res) => {
+    if (req.user && req.user.deviceId) {
+        return res.redirect(`/portal/chat.html?contact=${encodeURIComponent(req.params.code)}`);
+    }
     res.sendFile(path.join(__dirname, 'public/portal/share-chat.html'));
 });
 
@@ -6214,12 +6219,13 @@ app.post('/api/client/cross-speak', async (req, res) => {
 
     const senderLabel = isOwnerMode ? `owner:${deviceId}` : fromEntity.publicCode;
     console.log(`[ClientCrossSpeak] ${deviceId}:${fromId} (${senderLabel}) -> ${target.deviceId}:${target.entityId} (${targetCode}): "${text}"`);
-    serverLog('info', 'cross_speak', `[DEBUG] ClientCrossSpeak ${senderLabel} -> ${targetCode}: queued=${!!messageObj}, chatMsgId=${chatMsgId}`, { deviceId, entityId: fromId, metadata: { targetCode, targetDeviceId: target.deviceId, isOwnerMode, hasWebhook: !!toEntity.webhook } });
+    serverLog('info', 'cross_speak', `[DEBUG] ClientCrossSpeak ${senderLabel} -> ${targetCode}: queued=${!!messageObj}, chatMsgId=${chatMsgId}`, { deviceId, entityId: fromId, metadata: { targetCode, targetDeviceId: target.deviceId, isOwnerMode, hasWebhook: !!toEntity.webhook, isChannelBound: toEntity.bindingType === 'channel' } });
 
     // Push to target bot — channel callback or traditional webhook
     const isChannelBound = toEntity.bindingType === 'channel';
     const hasWebhook = !!toEntity.webhook;
-    console.log(`[ClientCrossSpeak:DEBUG] isChannelBound=${isChannelBound}, hasWebhook=${hasWebhook}, webhookUrl=${toEntity.webhook ? toEntity.webhook.slice(0, 40) + '...' : 'null'}`);
+    const webhookUrl = hasWebhook ? (typeof toEntity.webhook === 'object' ? toEntity.webhook.url : toEntity.webhook) : null;
+    console.log(`[ClientCrossSpeak:DEBUG] isChannelBound=${isChannelBound}, hasWebhook=${hasWebhook}, webhookUrl=${webhookUrl ? String(webhookUrl).slice(0, 40) + '...' : 'null'}`);
     if (isChannelBound) {
         // Channel plugin: send structured JSON
         channelModule.pushToChannelCallback(target.deviceId, target.entityId, {
@@ -6296,8 +6302,8 @@ app.post('/api/client/cross-speak', async (req, res) => {
             serverLog('error', 'cross_speak_push', `ClientCrossSpeak ${senderLabel} -> ${targetCode} FAILED: ${err.message}`, { deviceId, entityId: fromId });
         });
     } else {
-        console.log(`[ClientCrossSpeak:DEBUG] No webhook on target entity ${targetCode} — message queued but NOT pushed`);
-        serverLog('warn', 'cross_speak', `[DEBUG] ${senderLabel} -> ${targetCode}: no webhook, message NOT pushed`, { deviceId, entityId: fromId, metadata: { targetCode, targetDeviceId: target.deviceId } });
+        console.log(`[ClientCrossSpeak:DEBUG] No webhook/channel on target entity ${targetCode} — message queued but NOT pushed (bindingType=${toEntity.bindingType})`);
+        serverLog('warn', 'cross_speak', `[DEBUG] ${senderLabel} -> ${targetCode}: no webhook/channel, message NOT pushed`, { deviceId, entityId: fromId, metadata: { targetCode, targetDeviceId: target.deviceId, bindingType: toEntity.bindingType || null } });
     }
 
     const responsePayload = {
@@ -9855,7 +9861,8 @@ const channelModule = require('./channel-api')(devices, {
     createDefaultEntity,
     apiBase: process.env.API_BASE || 'https://eclawbot.com',
     awardEntityXP,
-    XP_AMOUNTS
+    XP_AMOUNTS,
+    notifyDevice
 });
 app.use('/api/channel', channelModule.router);
 // Wire channel push into mission module (Bot Push Parity Rule — must be after channelModule init)

@@ -18,7 +18,7 @@ const express = require('express');
 const crypto = require('crypto');
 const db = require('./db');
 
-module.exports = function (devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase, awardEntityXP, XP_AMOUNTS }) {
+module.exports = function (devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase, awardEntityXP, XP_AMOUNTS, notifyDevice }) {
     const router = express.Router();
 
     // ── In-memory test sink (for self-testing without ngrok) ──
@@ -607,6 +607,31 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                     if (!entity._lastReplyXpAt || now - entity._lastReplyXpAt > replyXpCooldown) {
                         entity._lastReplyXpAt = now;
                         awardEntityXP(deviceId, eId, XP_AMOUNTS.BOT_REPLY, 'channel_bot_reply');
+                    }
+                }
+            }
+
+            // [CROSS-DEVICE AUTO-ROUTE] — if pending message was cross-device, save reply to sender device
+            if (message) {
+                const pendingCross = entity.messageQueue && entity.messageQueue.findLast(m => m.crossDevice);
+                if (pendingCross && pendingCross.fromDeviceId) {
+                    const replySource = `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`;
+                    const senderEntityId = pendingCross.fromEntityId >= 0 ? pendingCross.fromEntityId : 0;
+                    saveChatMessage(pendingCross.fromDeviceId, senderEntityId, message, replySource, false, true);
+                    serverLog('info', 'cross_speak_push', `[CROSS_ROUTE] Channel auto-routed reply to sender ${pendingCross.fromDeviceId}:${senderEntityId}`, {
+                        deviceId, entityId: eId,
+                        metadata: { senderDeviceId: pendingCross.fromDeviceId, senderEntityId, fromPublicCode: pendingCross.fromPublicCode }
+                    });
+
+                    // Notify sender device about the reply
+                    if (notifyDevice) {
+                        notifyDevice(pendingCross.fromDeviceId, {
+                            type: 'chat', category: 'cross_speak',
+                            title: `${entity.name || entity.publicCode || `Entity ${eId}`} replied`,
+                            body: (message || '').slice(0, 100),
+                            link: 'chat.html',
+                            metadata: { fromPublicCode: entity.publicCode, entityId: senderEntityId }
+                        }).catch(() => {});
                     }
                 }
             }

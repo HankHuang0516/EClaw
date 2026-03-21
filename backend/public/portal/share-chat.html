@@ -612,7 +612,6 @@
 
             // Queue the pending message
             if (savedPendingText) {
-                addLocalMessage(savedPendingText, 'pending');
                 try {
                     await fetch(`${API_BASE}/api/chat/pending-cross-speak`, {
                         method: 'POST',
@@ -620,10 +619,11 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ targetCode, text: savedPendingText })
                     });
-                } catch (e) { /* ignore */ }
+                } catch (_) { /* redirect anyway */ }
             }
 
-            onAuthReady();
+            // Redirect to full chat page with contact filter
+            window.location.href = `/portal/chat.html?contact=${encodeURIComponent(targetCode)}`;
         } catch (e) {
             errEl.textContent = t('sc_network_error', 'Network error');
             btn.disabled = false;
@@ -658,13 +658,26 @@
             emailVerified = true; // login requires verified email
             const savedPendingText = pendingText;
             closeModal();
-            onAuthReady();
 
-            // Send pending text as normal message (verified user)
+            // Send pending text before redirect (verified user)
             if (savedPendingText) {
-                document.getElementById('msgInput').value = savedPendingText;
-                handleSend();
+                try {
+                    await fetch(`${API_BASE}/api/client/cross-speak`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            deviceId: currentUser.deviceId,
+                            fromEntityId: -1,
+                            targetCode,
+                            text: savedPendingText
+                        })
+                    });
+                } catch (_) { /* redirect anyway */ }
             }
+
+            // Redirect to full chat page with contact filter
+            window.location.href = `/portal/chat.html?contact=${encodeURIComponent(targetCode)}`;
         } catch (e) {
             errEl.textContent = t('sc_network_error', 'Network error');
             btn.disabled = false;
