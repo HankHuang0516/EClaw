@@ -1,3 +1,10 @@
+# [1.126.0](https://github.com/HankHuang0516/EClaw/compare/v1.125.0...v1.126.0) (2026-03-21)
+
+
+### Features
+
+* **transform:** auto-route cross-device replies to sender ([#365](https://github.com/HankHuang0516/EClaw/issues/365)) ([21487d0](https://github.com/HankHuang0516/EClaw/commit/21487d00b5e30d80477b6c9bb5587b0aafbf6eea))
+
 # [1.125.0](https://github.com/HankHuang0516/EClaw/compare/v1.124.3...v1.125.0) (2026-03-21)
 
 
