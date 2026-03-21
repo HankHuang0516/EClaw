@@ -1,3 +1,10 @@
+# [1.131.0](https://github.com/HankHuang0516/EClaw/compare/v1.130.1...v1.131.0) (2026-03-21)
+
+
+### Features
+
+* **portal:** add Identity, Agent Card, Cross-Device detail guides with visual illustrations ([#387](https://github.com/HankHuang0516/EClaw/issues/387)) ([6b91a7e](https://github.com/HankHuang0516/EClaw/commit/6b91a7ea4fb021178daeada045eabd682535cd77))
+
 ## [1.130.1](https://github.com/HankHuang0516/EClaw/compare/v1.130.0...v1.130.1) (2026-03-21)
 
 
