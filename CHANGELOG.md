@@ -1,3 +1,10 @@
+## [1.123.3](https://github.com/HankHuang0516/EClaw/compare/v1.123.2...v1.123.3) (2026-03-21)
+
+
+### Bug Fixes
+
+* share-chat i18n + debug logging for cross-speak ([#357](https://github.com/HankHuang0516/EClaw/issues/357)) ([5192f96](https://github.com/HankHuang0516/EClaw/commit/5192f963d0fcbef40c7236ee24a3ef71e5d21bfa))
+
 ## [1.123.2](https://github.com/HankHuang0516/EClaw/compare/v1.123.1...v1.123.2) (2026-03-21)
 
 
