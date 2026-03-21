@@ -325,9 +325,9 @@ describe('share-chat registration flow (static analysis)', () => {
     it('startVerificationPolling function exists and polls /api/auth/me', () => {
         expect(html).toContain('function startVerificationPolling()');
         expect(html).toContain('/api/auth/me');
-        // Should upgrade pending messages when verified
-        expect(html).toContain("el.classList.remove('pending')");
-        expect(html).toContain("el.classList.add('sent')");
+        // Should remove local messages before history reload to avoid duplicates
+        expect(html).toContain('.msg.pending, .msg.sent');
+        expect(html).toContain('el.remove()');
     });
 
     it('i18n keys sc_email_verified, sc_message_queued, sc_queue_failed exist in all languages', () => {

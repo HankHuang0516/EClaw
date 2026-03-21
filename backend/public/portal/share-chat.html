@@ -971,13 +971,11 @@
                     emailVerified = true;
                     currentUser = data.user;
 
-                    // Upgrade pending messages in DOM
-                    document.querySelectorAll('.msg.pending').forEach(el => {
-                        el.classList.remove('pending');
-                        el.classList.add('sent');
-                        const hint = el.querySelector('.verify-hint');
-                        if (hint) hint.remove();
-                        dbg('info', 'Upgraded pending message to sent');
+                    // Remove locally-added messages — onAuthReady→loadChatHistory
+                    // will re-render them from DB to avoid duplicates
+                    document.querySelectorAll('.msg.pending, .msg.sent').forEach(el => {
+                        el.remove();
+                        dbg('info', 'Removed local message before history reload');
                     });
 
                     onAuthReady();
