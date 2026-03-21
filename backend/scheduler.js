@@ -224,9 +224,13 @@ async function updateSchedule(id, updates) {
 async function deleteSchedule(id, deviceId) {
     if (!_pool) throw new Error('Scheduler not initialized');
 
-    // Verify ownership
-    const schedule = schedules[id];
-    if (!schedule) throw new Error('Schedule not found');
+    // Check in-memory first, then fall back to DB (for completed/expired schedules)
+    let schedule = schedules[id];
+    if (!schedule) {
+        const { rows } = await _pool.query(`SELECT * FROM scheduled_messages WHERE id = $1`, [id]);
+        if (rows.length === 0) throw new Error('Schedule not found');
+        schedule = rowToSchedule(rows[0]);
+    }
     if (deviceId && schedule.deviceId !== deviceId) throw new Error('Not authorized');
 
     disarmCronJob(id);
