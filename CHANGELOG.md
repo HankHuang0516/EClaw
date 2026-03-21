@@ -1,3 +1,10 @@
+## [1.128.2](https://github.com/HankHuang0516/EClaw/compare/v1.128.1...v1.128.2) (2026-03-21)
+
+
+### Bug Fixes
+
+* stay on share-chat page after registration instead of redirecting to login ([#379](https://github.com/HankHuang0516/EClaw/issues/379)) ([f55d477](https://github.com/HankHuang0516/EClaw/commit/f55d47745ed2e9f47690b4f1093a8ecd126d4c25))
+
 ## [1.128.1](https://github.com/HankHuang0516/EClaw/compare/v1.128.0...v1.128.1) (2026-03-21)
 
 
