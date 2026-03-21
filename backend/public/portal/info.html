@@ -631,6 +631,7 @@
                     <button class="guide-sidebar-btn" id="usecaseToggle" data-i18n="guide_nav_usecases">實用案例 <span class="expand-arrow">&#9654;</span></button>
                     <div class="guide-sub-nav" id="usecaseSubNav">
                         <button class="guide-sub-btn" data-guide="usecase-claude-openclaw" data-i18n="guide_nav_usecase_claude">用 Claude 指揮 OpenClaw</button>
+                        <button class="guide-sub-btn" data-guide="usecase-proxy-window" data-i18n="guide_nav_usecase_proxy">尹代理窗口</button>
                     </div>
                 </div>
 
@@ -1537,6 +1538,90 @@ Claude 主動查詢執行結果
 
                         <p data-i18n="guide_usecase_faq_3"><strong>Q: Claude 下的指令 bot 沒有反應？</strong><br>
                         A: 確認 bot 已綁定（isBound: true）、Device Secret 正確、OpenClaw 在線。</p>
+                    </div>
+
+                    <!-- ── 尹代理窗口 ── -->
+                    <div class="guide-panel" id="guide-usecase-proxy-window">
+                        <header>
+                            <h1 data-i18n="guide_proxy_title">尹代理窗口 — 企業級代理服務入口</h1>
+                            <p class="meta" data-i18n="guide_proxy_meta">讓你的 AI 代理擁有專屬對外窗口，客戶可直接對話、下單、查詢</p>
+                        </header>
+
+                        <h2 data-i18n="guide_proxy_h2_what">什麼是「尹代理」窗口？</h2>
+                        <p data-i18n="guide_proxy_p_what">「尹代理」窗口是名片夾（Card Holder）中每個實體的專屬連結網址。透過這個連結，外部用戶無需安裝 App，即可在瀏覽器中直接與你的 AI 代理對話，完成下單購買、地點定位、行程安排、文章發布、後台維護等各種任務。</p>
+
+                        <div class="note" data-i18n="guide_proxy_note_scenario">💡 適用場景：電商客服、旅遊顧問、內容行銷代理、IT 維運助手、預約排程服務等。只要分享連結，客戶就能與你的代理即時互動。</div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_proxy_h2_steps">設定步驟</h2>
+
+                        <h3 class="step-heading" data-i18n="guide_proxy_step1_title">Step 1：設定代理身份（Identity）</h3>
+                        <p data-i18n="guide_proxy_step1_desc">在 Dashboard 中選擇你的實體，點擊身份編輯器，設定代理的角色、指示、語調、邊界等。這決定了代理如何回應客戶。</p>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_proxy_step1_li1">✅ <strong>角色（Role）</strong>：例如「電商客服專員」、「旅遊行程規劃師」</li>
+                            <li data-i18n="guide_proxy_step1_li2">✅ <strong>指示（Instructions）</strong>：代理的行為守則與工作流程</li>
+                            <li data-i18n="guide_proxy_step1_li3">✅ <strong>語調（Tone）</strong>：正式、友善、專業等</li>
+                            <li data-i18n="guide_proxy_step1_li4">✅ <strong>邊界（Boundaries）</strong>：代理不應處理的事項</li>
+                        </ul>
+                        <p data-i18n="guide_proxy_step1_nav">前往：<strong>Dashboard → 選擇實體 → 身份編輯器</strong>，或使用 API <code>PUT /api/entity/identity</code></p>
+
+                        <hr>
+
+                        <h3 class="step-heading" data-i18n="guide_proxy_step2_title">Step 2：設定 Agent Card（名片）</h3>
+                        <p data-i18n="guide_proxy_step2_desc">為代理建立一張名片，包含名稱、描述、能力、支援的協定與標籤。這張名片會顯示在代理窗口的頂部，讓客戶一目了然。</p>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_proxy_step2_li1">✅ <strong>名稱與描述</strong>：清楚說明代理提供什麼服務</li>
+                            <li data-i18n="guide_proxy_step2_li2">✅ <strong>能力（Capabilities）</strong>：列出代理能做的事，如「訂單查詢」、「行程規劃」</li>
+                            <li data-i18n="guide_proxy_step2_li3">✅ <strong>協定（Protocols）</strong>：標記支援的通訊協定</li>
+                            <li data-i18n="guide_proxy_step2_li4">✅ <strong>標籤（Tags）</strong>：方便搜尋與分類</li>
+                        </ul>
+                        <p data-i18n="guide_proxy_step2_nav">前往：<strong>Dashboard → 選擇實體 → Agent Card</strong>，或使用 API <code>PUT /api/entity/agent-card</code></p>
+
+                        <hr>
+
+                        <h3 class="step-heading" data-i18n="guide_proxy_step3_title">Step 3：設定跨裝置訊息（Cross-Device Settings）</h3>
+                        <p data-i18n="guide_proxy_step3_desc">啟用跨裝置訊息功能，讓不同裝置上的用戶都能透過同一個代理窗口溝通，訊息跨裝置同步。</p>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_proxy_step3_li1">✅ 在 Settings 頁面啟用 Cross-Device Messaging</li>
+                            <li data-i18n="guide_proxy_step3_li2">✅ 設定訊息同步規則與優先順序</li>
+                        </ul>
+                        <p data-i18n="guide_proxy_step3_nav">前往：<strong>Settings → Cross-Device</strong>，或使用 API <code>PUT /api/entity/cross-device-settings</code></p>
+
+                        <hr>
+
+                        <h3 class="step-heading" data-i18n="guide_proxy_step4_title">Step 4：取得並分享代理窗口連結</h3>
+                        <p data-i18n="guide_proxy_step4_desc">每個設定好的實體都有一個專屬的 Public Code。透過名片夾的分享功能，生成一個可直接開啟的對話連結。</p>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_proxy_step4_li1">✅ 前往 <strong>Card Holder</strong>（名片夾）找到你的代理名片</li>
+                            <li data-i18n="guide_proxy_step4_li2">✅ 點擊分享按鈕，取得連結格式：<code>https://eclawbot.com/c/你的PublicCode</code></li>
+                            <li data-i18n="guide_proxy_step4_li3">✅ 將連結分享給客戶、嵌入官網、或印在實體名片上</li>
+                        </ul>
+                        <div class="note" data-i18n="guide_proxy_step4_note">📌 客戶點開連結後，會看到代理的名片資訊與對話介面，可直接開始對話。未註冊的用戶也能以訪客身份互動。</div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_proxy_h2_use">實際應用範例</h2>
+                        <table class="feature-table">
+                            <thead><tr><th data-i18n="guide_proxy_th_scenario">場景</th><th data-i18n="guide_proxy_th_desc">代理用途</th></tr></thead>
+                            <tbody>
+                                <tr><td data-i18n="guide_proxy_ex1a">電商客服</td><td data-i18n="guide_proxy_ex1b">客戶透過連結詢問商品、下單、追蹤物流</td></tr>
+                                <tr><td data-i18n="guide_proxy_ex2a">旅遊顧問</td><td data-i18n="guide_proxy_ex2b">提供行程建議、景點推薦、代訂住宿</td></tr>
+                                <tr><td data-i18n="guide_proxy_ex3a">內容行銷</td><td data-i18n="guide_proxy_ex3b">代理自動撰寫並發布文章到多個平台</td></tr>
+                                <tr><td data-i18n="guide_proxy_ex4a">IT 維運</td><td data-i18n="guide_proxy_ex4b">監控後台狀態、自動處理告警、生成報告</td></tr>
+                                <tr><td data-i18n="guide_proxy_ex5a">預約服務</td><td data-i18n="guide_proxy_ex5b">客戶直接透過對話完成預約與排程</td></tr>
+                            </tbody>
+                        </table>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_proxy_h2_detail">詳細設定指南</h2>
+                        <p data-i18n="guide_proxy_p_detail">點擊以下連結查看各項設定的完整說明：</p>
+                        <ul class="tips-list">
+                            <li><a href="#guide/features" data-i18n="guide_proxy_link_identity">🔹 身份設定（Identity）詳情</a></li>
+                            <li><a href="#guide/features" data-i18n="guide_proxy_link_agentcard">🔹 Agent Card 設定詳情</a></li>
+                            <li><a href="#guide/features" data-i18n="guide_proxy_link_crossdevice">🔹 跨裝置訊息設定詳情</a></li>
+                        </ul>
                     </div>
 
                 </div><!-- /guide-content -->
