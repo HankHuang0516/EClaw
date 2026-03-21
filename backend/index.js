@@ -11439,6 +11439,72 @@ app.get('/api/chat/history-by-code', async (req, res) => {
     }
 });
 
+/**
+ * GET /api/chat/share-history — Get cross-speak conversation for shareable chat link
+ * Returns messages between the authenticated sender and the target entity (by publicCode).
+ * Queries the TARGET device's chat history for cross-device messages involving this sender.
+ * Auth: JWT cookie (eclaw_session) required.
+ * Query: ?code=ABC123&limit=50&since=TIMESTAMP_MS
+ */
+app.get('/api/chat/share-history', async (req, res) => {
+    if (!req.user || !req.user.deviceId) {
+        return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+
+    const { code, limit, since } = req.query;
+    if (!code) {
+        return res.status(400).json({ success: false, error: 'code parameter required' });
+    }
+
+    // Resolve target entity by publicCode
+    const target = publicCodeIndex[code];
+    if (!target) {
+        return res.status(404).json({ success: false, error: 'Entity not found' });
+    }
+
+    const maxLimit = Math.min(parseInt(limit) || 50, 200);
+    const senderDeviceId = req.user.deviceId;
+
+    try {
+        // Bot replies via /api/transform don't carry sender correlation, so we constrain
+        // them to only those after this sender's first message to avoid leaking other conversations
+        const senderPattern = `%${senderDeviceId}%`;
+        let query, params;
+        if (since) {
+            const sinceTs = new Date(parseInt(since));
+            query = `SELECT id, text, source, is_from_user, is_from_bot, media_type, media_url, created_at, is_delivered
+                     FROM chat_messages
+                     WHERE device_id = $1 AND entity_id = $2
+                     AND (source ILIKE $3 OR is_from_bot = true)
+                     AND created_at > $5
+                     ORDER BY created_at ASC LIMIT $4`;
+            params = [target.deviceId, target.entityId, senderPattern, maxLimit, sinceTs];
+        } else {
+            query = `SELECT id, text, source, is_from_user, is_from_bot, media_type, media_url, created_at, is_delivered
+                     FROM chat_messages
+                     WHERE device_id = $1 AND entity_id = $2
+                     AND (
+                         source ILIKE $3
+                         OR (is_from_bot = true AND created_at >= (
+                             SELECT COALESCE(MIN(created_at), NOW())
+                             FROM chat_messages
+                             WHERE device_id = $1 AND entity_id = $2 AND source ILIKE $3
+                         ))
+                     )
+                     ORDER BY created_at ASC LIMIT $4`;
+            params = [target.deviceId, target.entityId, senderPattern, maxLimit];
+        }
+
+        const result = await chatPool.query(query, params);
+        const messages = result.rows;
+
+        res.json({ success: true, messages });
+    } catch (error) {
+        console.error('[Chat] Share-history error:', error);
+        res.status(500).json({ success: false, error: 'Failed to get chat history' });
+    }
+});
+
 // ============================================
 // MESSAGE REACTIONS (Like / Dislike)
 // ============================================

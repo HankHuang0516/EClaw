@@ -40,6 +40,9 @@
         .msg.pending { align-self: flex-end; background: #6b728088; color: #d1d5db; border-bottom-right-radius: 4px; }
         .msg .verify-hint { font-size: 11px; color: #fbbf24; margin-top: 4px; }
         .msg .time { font-size: 10px; opacity: 0.7; margin-top: 4px; text-align: right; }
+        .msg .read-receipt { font-size: 10px; color: var(--text-muted); margin-top: 2px; text-align: right; }
+        .msg.sent .read-receipt { color: rgba(255,255,255,0.6); }
+        .msg .entity-label { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; font-weight: 600; }
 
         .empty-msg { text-align: center; color: var(--text-muted); padding: 40px 20px; font-size: 14px; }
 
@@ -328,6 +331,8 @@
         if (emailVerified) {
             loadEntities();
             document.getElementById('senderBar').style.display = 'flex';
+            // Load existing conversation and start polling for replies
+            loadChatHistory().then(() => startPolling());
         }
     }
 
@@ -409,19 +414,19 @@
                 dbg('info', `Send OK`, data);
                 if (data.pushed === false) {
                     dbg('warn', 'Message saved but NOT pushed — target entity has no webhook');
-                    showToast('Sent (target bot has no webhook — may not respond)', 'warn');
-                } else if (data.pushed === 'pending') {
-                    dbg('info', 'Message pushed to target bot — waiting for response');
-                    showToast('Sent!', 'success');
-                } else {
-                    showToast('Sent!', 'success');
                 }
+                // Start polling for replies if not already
+                startPolling();
             }
         } catch (e) {
             dbg('error', `Send network error: ${e.message}`);
             showToast(`Network error: ${e.message}`, 'error');
         }
     }
+
+    let lastMessageTs = 0;   // track latest message timestamp for polling
+    let pollTimer = null;
+    const renderedMsgIds = new Set();
 
     function addLocalMessage(text, type) {
         document.getElementById('emptyMsg').style.display = 'none';
@@ -436,9 +441,111 @@
         timeDiv.className = 'time';
         timeDiv.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         div.appendChild(timeDiv);
+        if (type === 'sent') {
+            const receiptDiv = document.createElement('div');
+            receiptDiv.className = 'read-receipt';
+            receiptDiv.textContent = t('chat_sent', '已送出');
+            div.appendChild(receiptDiv);
+        }
         container.appendChild(div);
         container.scrollTop = container.scrollHeight;
     }
+
+    function renderHistoryMessage(msg) {
+        if (renderedMsgIds.has(msg.id)) return;
+        renderedMsgIds.add(msg.id);
+
+        document.getElementById('emptyMsg').style.display = 'none';
+        const container = document.getElementById('messagesContainer');
+        const div = document.createElement('div');
+        const isBotReply = msg.is_from_bot;
+        div.className = `msg ${isBotReply ? 'received' : 'sent'}`;
+
+        if (isBotReply && targetEntity) {
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'entity-label';
+            labelDiv.textContent = targetEntity.name || targetCode;
+            div.appendChild(labelDiv);
+        }
+
+        const textSpan = document.createElement('span');
+        textSpan.innerHTML = escapeHtml(msg.text || '');
+        div.appendChild(textSpan);
+
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'time';
+        const ts = new Date(msg.created_at);
+        timeDiv.textContent = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        div.appendChild(timeDiv);
+
+        if (!isBotReply) {
+            const receiptDiv = document.createElement('div');
+            receiptDiv.className = 'read-receipt';
+            receiptDiv.textContent = msg.is_delivered ? t('chat_read', '已讀') : t('chat_sent', '已送出');
+            div.appendChild(receiptDiv);
+        }
+
+        container.appendChild(div);
+
+        const msgTs = new Date(msg.created_at).getTime();
+        if (msgTs > lastMessageTs) lastMessageTs = msgTs;
+    }
+
+    async function loadChatHistory() {
+        if (!currentUser || !emailVerified) return;
+        dbg('info', 'Loading chat history...');
+        try {
+            const url = lastMessageTs
+                ? `${API_BASE}/api/chat/share-history?code=${encodeURIComponent(targetCode)}&since=${lastMessageTs + 1}`
+                : `${API_BASE}/api/chat/share-history?code=${encodeURIComponent(targetCode)}&limit=50`;
+            const resp = await fetch(url, { credentials: 'include' });
+            if (!resp.ok) {
+                dbg('warn', `History load failed: ${resp.status}`);
+                return;
+            }
+            const data = await resp.json();
+            if (!data.success || !data.messages || data.messages.length === 0) return;
+            dbg('info', `Loaded ${data.messages.length} messages`, { since: lastMessageTs });
+            const wasAtBottom = isScrolledToBottom();
+            data.messages.forEach(msg => renderHistoryMessage(msg));
+            // Bound dedup set to prevent unbounded growth in long sessions
+            if (renderedMsgIds.size > 500) {
+                const keep = [...renderedMsgIds].slice(-300);
+                renderedMsgIds.clear();
+                keep.forEach(id => renderedMsgIds.add(id));
+            }
+            if (wasAtBottom) scrollToBottom();
+        } catch (e) {
+            dbg('error', `History load error: ${e.message}`);
+        }
+    }
+
+    function isScrolledToBottom() {
+        const c = document.getElementById('messagesContainer');
+        return c.scrollHeight - c.scrollTop - c.clientHeight < 50;
+    }
+
+    function scrollToBottom() {
+        const c = document.getElementById('messagesContainer');
+        c.scrollTop = c.scrollHeight;
+    }
+
+    function startPolling() {
+        if (pollTimer) return;
+        pollTimer = setInterval(() => loadChatHistory(), 3000);
+        dbg('info', 'Polling started (3s interval)');
+    }
+
+    function stopPolling() {
+        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    }
+
+    // Pause polling when tab is hidden, resume when visible
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) stopPolling();
+        else if (currentUser && emailVerified) startPolling();
+    });
+    window.addEventListener('beforeunload', stopPolling);
 
     // ── Registration ──
     function showRegisterMode() {
