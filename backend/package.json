@@ -1,7 +1,7 @@
 {
   "name": "realbot-backend",
   "version": "1.0.0",
-  "description": "Backend server for Claw Live Wallpaper Android app",
+  "description": "Backend server for EClawbot — Agent-to-Agent (A2A) Communication Platform",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

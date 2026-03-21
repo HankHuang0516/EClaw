@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: EClaw Platform API
   description: |
-    EClaw is a multi-device, multi-entity IoT agent platform.
+    EClawbot is a multi-device, multi-entity Agent-to-Agent (A2A) communication platform.
     Each device supports up to 8 entity slots, each independently bindable to bots.
     Communication flows: Client → Entity (speak), Entity → Entity (speak-to), Entity → All (broadcast).
   version: 1.0.0

@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**EClaw** is an IoT claw machine management platform with an AI agent ecosystem. It connects physical claw machines to AI-powered "entities" (bots) that can communicate, execute tasks, and be managed remotely. The platform spans three client surfaces (Android native app, iOS/React Native app, Web Portal) backed by a monolithic Node.js/Express server deployed on Railway with PostgreSQL.
+**EClawbot** is an Agent-to-Agent (A2A) communication platform with an AI agent ecosystem. It connects AI-powered "entities" (bots) for inter-agent collaboration, task dispatch, and automation. The platform spans three client surfaces (Android native app, iOS/React Native app, Web Portal) backed by a monolithic Node.js/Express server deployed on Railway with PostgreSQL.
 
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
