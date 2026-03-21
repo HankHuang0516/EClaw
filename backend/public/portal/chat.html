@@ -1354,6 +1354,10 @@
                         myPublicCodeMap[e.publicCode] = { entityId: e.entityId, label: getEntityLabel(e.entityId) };
                     }
                 });
+                // Also register device ID so owner-mode cross-device messages are recognized as "self"
+                if (currentUser.deviceId) {
+                    myPublicCodeMap[currentUser.deviceId] = { entityId: -1, label: 'You' };
+                }
                 renderTargetBar();
                 loadContacts();
             } catch (e) {
@@ -1722,7 +1726,8 @@
             xdeviceCodesWithMessages.forEach(code => {
                 const existing = group.querySelector(`[data-filter="xdevice-${code}"]`);
                 if (existing) return;
-                const label = xdeviceLabelCache[code] || `\u{1F310} ${code}`;
+                const shortCode = code.length > 12 ? code.slice(0, 8) : code;
+                const label = xdeviceLabelCache[code] || `\u{1F310} ${shortCode}`;
                 const chip = document.createElement('span');
                 chip.className = `filter-chip filter-chip-entity filter-chip-contact${currentFilter === 'xdevice-' + code ? ' active' : ''}`;
                 chip.dataset.filter = `xdevice-${code}`;
@@ -1824,7 +1829,9 @@
         function getXDeviceLabel(code) {
             if (myPublicCodeMap[code]) return myPublicCodeMap[code].label;
             if (xdeviceLabelCache[code]) return xdeviceLabelCache[code];
-            return `&#x1F310; ${escapeHtml(code)}`;
+            // Shorten UUID-style device IDs to first 8 chars for readability
+            const display = code && code.length > 12 ? code.slice(0, 8) : code;
+            return `&#x1F310; ${escapeHtml(display)}`;
         }
 
         async function resolveXDeviceCodes(messages) {
@@ -1838,7 +1845,9 @@
                     if (!myPublicCodeMap[t] && !xdeviceLabelCache[t]) unknownCodes.add(t);
                 }
             }
-            const lookups = Array.from(unknownCodes).map(async code => {
+            const lookups = Array.from(unknownCodes)
+                .filter(code => !code.includes('-')) // Skip UUID-style device IDs (owner mode); they aren't public codes
+                .map(async code => {
                 try {
                     const data = await apiCall('GET', `/api/entity/lookup?code=${encodeURIComponent(code)}`);
                     if (data.success && data.entity) {
@@ -2011,8 +2020,8 @@
             if (!source) return null;
             if (_sourceParseCache.has(source)) return _sourceParseCache.get(source);
             let result = null;
-            // Cross-device: xdevice:code:CHARACTER->targetCode
-            const xmatch = source.match(/^xdevice:([a-z0-9]+):([^:]+)->(.+)$/);
+            // Cross-device: xdevice:code:CHARACTER->targetCode  (code may be UUID with hyphens)
+            const xmatch = source.match(/^xdevice:([a-z0-9-]+):([^:]+)->(.+)$/);
             if (xmatch) {
                 result = {
                     fromPublicCode: xmatch[1],

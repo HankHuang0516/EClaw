@@ -597,8 +597,15 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             entity.lastUpdated = Date.now();
 
             // Save to chat history
+            // Check for pending cross-device context first, so local copy also shows routing direction
+            const pendingCross = message ? (entity.messageQueue && entity.messageQueue.findLast(m => m.crossDevice)) : null;
+            const hasCrossRoute = !!(pendingCross && pendingCross.fromDeviceId);
             if (message) {
-                saveChatMessage(deviceId, eId, message, 'bot', false, true, mediaType || null, mediaUrl || null);
+                // If replying to a cross-device message, tag local copy with routing info
+                const localSource = hasCrossRoute
+                    ? `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`
+                    : 'bot';
+                saveChatMessage(deviceId, eId, message, localSource, false, true, mediaType || null, mediaUrl || null);
 
                 // XP: Award for channel bot reply (same logic as /api/transform)
                 if (awardEntityXP && XP_AMOUNTS) {
@@ -612,27 +619,24 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             }
 
             // [CROSS-DEVICE AUTO-ROUTE] — if pending message was cross-device, save reply to sender device
-            if (message) {
-                const pendingCross = entity.messageQueue && entity.messageQueue.findLast(m => m.crossDevice);
-                if (pendingCross && pendingCross.fromDeviceId) {
-                    const replySource = `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`;
-                    const senderEntityId = pendingCross.fromEntityId >= 0 ? pendingCross.fromEntityId : 0;
-                    saveChatMessage(pendingCross.fromDeviceId, senderEntityId, message, replySource, false, true);
-                    serverLog('info', 'cross_speak_push', `[CROSS_ROUTE] Channel auto-routed reply to sender ${pendingCross.fromDeviceId}:${senderEntityId}`, {
-                        deviceId, entityId: eId,
-                        metadata: { senderDeviceId: pendingCross.fromDeviceId, senderEntityId, fromPublicCode: pendingCross.fromPublicCode }
-                    });
+            if (hasCrossRoute) {
+                const replySource = `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`;
+                const senderEntityId = pendingCross.fromEntityId >= 0 ? pendingCross.fromEntityId : 0;
+                saveChatMessage(pendingCross.fromDeviceId, senderEntityId, message, replySource, false, true);
+                serverLog('info', 'cross_speak_push', `[CROSS_ROUTE] Channel auto-routed reply to sender ${pendingCross.fromDeviceId}:${senderEntityId}`, {
+                    deviceId, entityId: eId,
+                    metadata: { senderDeviceId: pendingCross.fromDeviceId, senderEntityId, fromPublicCode: pendingCross.fromPublicCode }
+                });
 
-                    // Notify sender device about the reply
-                    if (notifyDevice) {
-                        notifyDevice(pendingCross.fromDeviceId, {
-                            type: 'chat', category: 'cross_speak',
-                            title: `${entity.name || entity.publicCode || `Entity ${eId}`} replied`,
-                            body: (message || '').slice(0, 100),
-                            link: 'chat.html',
-                            metadata: { fromPublicCode: entity.publicCode, entityId: senderEntityId }
-                        }).catch(() => {});
-                    }
+                // Notify sender device about the reply
+                if (notifyDevice) {
+                    notifyDevice(pendingCross.fromDeviceId, {
+                        type: 'chat', category: 'cross_speak',
+                        title: `${entity.name || entity.publicCode || `Entity ${eId}`} replied`,
+                        body: (message || '').slice(0, 100),
+                        link: 'chat.html',
+                        metadata: { fromPublicCode: entity.publicCode, entityId: senderEntityId }
+                    }).catch(() => {});
                 }
             }
 

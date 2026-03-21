@@ -6197,10 +6197,13 @@ app.post('/api/client/cross-speak', async (req, res) => {
     };
     toEntity.messageQueue.push(messageObj);
 
-    // Save chat message
-    const chatMsgId = await saveChatMessage(target.deviceId, target.entityId, text, `${sourceLabel}->${targetCode}`, true, false, mediaType || null, mediaUrl || null);
-    if (!isOwnerMode) {
-        await saveChatMessage(deviceId, fromId, text, `${sourceLabel}->${targetCode}`, true, false, mediaType || null, mediaUrl || null);
+    // Save chat message — always save to both sender and target devices
+    const sourceTag = `${sourceLabel}->${targetCode}`;
+    const chatMsgId = await saveChatMessage(target.deviceId, target.entityId, text, sourceTag, true, false, mediaType || null, mediaUrl || null);
+    // Also save sender's copy: in owner mode use entity 0; in entity mode use fromId
+    const senderEntityId = isOwnerMode ? 0 : fromId;
+    if (deviceId !== target.deviceId || senderEntityId !== target.entityId) {
+        await saveChatMessage(deviceId, senderEntityId, text, sourceTag, true, false, mediaType || null, mediaUrl || null);
     }
 
     toEntity.message = isOwnerMode ? `xdevice:owner: ${text}` : `xdevice:${fromEntity.publicCode}:${fromEntity.character}: ${text}`;
@@ -6237,6 +6240,7 @@ app.post('/api/client/cross-speak', async (req, res) => {
             backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
             fromEntityId: isOwnerMode ? -1 : fromId,
             fromPublicCode: isOwnerMode ? null : fromEntity.publicCode,
+            fromDeviceId: deviceId,
             isOwnerMode,
             eclaw_context: {
                 missionHints: getMissionApiHints('https://eclawbot.com', target.deviceId, target.entityId, toEntity.botSecret),
@@ -6271,8 +6275,8 @@ app.post('/api/client/cross-speak', async (req, res) => {
             pushMsg += `[DEVICE OWNER INSTRUCTION]\n${xdSettingsClient.pre_inject}\n\n`;
         }
         pushMsg += isOwnerMode
-            ? `[MESSAGE from Device Owner] ${senderName}\nContent: ${text}`
-            : `[CROSS-DEVICE MESSAGE from Human User] From: ${fromEntity.name || 'User'} (code: ${fromEntity.publicCode})\nContent: ${text}`;
+            ? `[MESSAGE from Device Owner] ${senderName} (device: ${deviceId})\nContent: ${text}`
+            : `[CROSS-DEVICE MESSAGE from Human User] From: ${fromEntity.name || 'User'} (code: ${fromEntity.publicCode}, device: ${deviceId})\nContent: ${text}`;
         if (mediaType === 'photo') {
             pushMsg += `\n[Attachment: Photo]\nmedia_type: photo\nmedia_url: ${mediaUrl}`;
             const bkUrl = getBackupUrl(mediaUrl);
