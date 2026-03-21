@@ -1,3 +1,10 @@
+# [1.129.0](https://github.com/HankHuang0516/EClaw/compare/v1.128.5...v1.129.0) (2026-03-21)
+
+
+### Features
+
+* add full i18n support to delete-account.html (8 languages) ([#383](https://github.com/HankHuang0516/EClaw/issues/383)) ([f12b6d4](https://github.com/HankHuang0516/EClaw/commit/f12b6d496ce6b3b597eaf9b115c634973c05c0d7))
+
 ## [1.128.5](https://github.com/HankHuang0516/EClaw/compare/v1.128.4...v1.128.5) (2026-03-21)
 
 
