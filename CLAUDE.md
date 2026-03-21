@@ -7,7 +7,8 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.110.0 (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **Current version**: 1.110.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **App version constant**: 1.0.53 (in `index.js`)
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
 ---
@@ -17,7 +18,7 @@
 ```
 EClaw/
 ├── backend/                  # Node.js Express server (deployed to Railway)
-│   ├── index.js              # Main server (~11,279 lines) — all API routes
+│   ├── index.js              # Main server (~12,209 lines) — all API routes
 │   ├── db.js                 # PostgreSQL connection pool + schema creation
 │   ├── auth.js               # Auth module (JWT, OAuth, OIDC, RBAC)
 │   ├── mission.js            # Mission Control dashboard system
@@ -67,16 +68,23 @@ EClaw/
 │   │   │   ├── info.html          # Device info
 │   │   │   ├── screen-control.html # Remote screen control
 │   │   │   ├── delete-account.html # Account deletion
+│   │   │   ├── share-chat.html    # Shareable read-only chat view
 │   │   │   ├── compare-channels.html # Channel comparison
 │   │   │   ├── faq.html           # FAQ page
 │   │   │   └── release-notes.html # Release notes
+│   │   │   ├── shared/            # Portal-specific shared modules
+│   │   │   │   ├── ai-chat.js     # AI chat component
+│   │   │   │   ├── api.js         # API wrapper utilities
+│   │   │   │   ├── auth.js        # Auth utilities
+│   │   │   │   ├── entity-utils.js # Avatar rendering helpers (renderAvatarHtml, isAvatarUrl)
+│   │   │   │   ├── footer.js      # Shared footer
+│   │   │   │   ├── nav.js         # Shared navigation bar
+│   │   │   │   ├── public-nav.js  # Public pages navigation
+│   │   │   │   ├── socket.js      # WebSocket client
+│   │   │   │   └── style.css      # Shared styles (agent card, avatar, etc.)
 │   │   ├── shared/
 │   │   │   ├── telemetry.js       # Client-side telemetry SDK
-│   │   │   ├── i18n.js            # Internationalization
-│   │   │   ├── entity-utils.js    # Avatar rendering helpers (renderAvatarHtml, isAvatarUrl)
-│   │   │   ├── nav.js             # Shared navigation bar
-│   │   │   ├── footer.js          # Shared footer
-│   │   │   └── style.css          # Shared styles (agent card, avatar, etc.)
+│   │   │   └── i18n.js            # Internationalization
 │   │   ├── landing.html           # EClawbot brand landing page (SEO, JSON-LD)
 │   │   ├── llms.txt               # AI search engine discovery file
 │   │   ├── robots.txt             # SEO: crawler directives
@@ -86,8 +94,8 @@ EClaw/
 │   │   │   └── og-image.png       # Open Graph social sharing image
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
-│   ├── tests/                # Regression + integration tests (50 files)
-│   ├── tests/jest/           # Jest unit tests (20 files, CI-run via `npm test`)
+│   ├── tests/                # Regression + integration tests (54 files)
+│   ├── tests/jest/           # Jest unit tests (35 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -126,8 +134,8 @@ EClaw/
 │   ├── go/                        # Go SDK
 │   └── rust/                      # Rust SDK
 ├── docs/
-│   ├── plans/                     # Design documents (20 files)
-│   ├── reports/                   # Test & analysis reports (7 files)
+│   ├── plans/                     # Design documents (23 files)
+│   ├── reports/                   # Test & analysis reports (8 files)
 │   └── issues/                    # Issue documentation (4 files)
 ├── .github/workflows/
 │   ├── backend-ci.yml             # Backend lint + Jest tests
@@ -151,7 +159,7 @@ EClaw/
 
 ### Backend (Node.js/Express)
 
-- **Single-file server**: `backend/index.js` (~11,279 lines) contains all API routes
+- **Single-file server**: `backend/index.js` (~12,209 lines) contains all API routes
 - **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
 - **Real-time**: Socket.IO for live updates to Web Portal and Android app
 - **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
@@ -164,7 +172,7 @@ EClaw/
 | Table | Purpose |
 |-------|---------|
 | `devices` | Registered devices (device_id, device_secret) |
-| `entities` | Entity slots per device (character, state, message, webhook, xp, avatar, public_code, agent_card, encryption_status) |
+| `entities` | Entity slots per device (character, state, message, webhook, xp, avatar, public_code, agent_card, encryption_status, identity) |
 | `user_accounts` | Web portal user accounts (email, password, virtual device mapping) |
 | `official_bots` | Registry of official bots available for borrowing |
 | `official_bot_bindings` | Current official bot binding assignments |
@@ -183,6 +191,9 @@ EClaw/
 | `user_roles` | User-to-role assignments |
 | `oauth_clients` | OAuth 2.0 client registrations |
 | `oauth_tokens` | OAuth 2.0 access/refresh tokens |
+| `entity_trash` | Soft-deleted entity recovery (7-day retention) |
+| `message_reactions` | Chat message like/dislike tracking |
+| `pending_cross_messages` | Cross-device message queue |
 
 ### API Route Groups
 
@@ -219,7 +230,13 @@ EClaw/
 | `/api/rule-templates` | index.js | Rule template CRUD |
 | `/api/official-borrow/*` | index.js | Official bot borrowing system |
 | `/api/device/entity/avatar/upload` | index.js + flickr.js | Avatar photo upload (multipart, 5MB, Flickr storage) |
+| `/api/device/entity-trash` | index.js | Entity trash: list, restore, permanent delete (7-day retention) |
+| `/api/device/compact-entities` | index.js | Entity slot compaction (renumber sparse IDs) |
+| `/api/entity/identity` | index.js | Bot identity CRUD (role, instructions, boundaries, tone) |
+| `/api/message/:messageId/react` | index.js | Chat message reactions (like/dislike, XP awards) |
+| `/api/link-preview` | index.js | URL link preview extraction (Open Graph/Twitter meta) |
 | `/api/health`, `/api/version` | index.js | Health check and version |
+| `/c/:code` | index.js | Shareable chat link (read-only view) |
 | `/`, `/landing`, `/llms.txt` | index.js | Landing page, SEO, AI search discovery |
 
 ### Web Portal Pages
@@ -240,6 +257,7 @@ EClaw/
 | Info | `/portal/info.html` | Device info |
 | Screen Control | `/portal/screen-control.html` | Remote screen capture/control |
 | Delete Account | `/portal/delete-account.html` | Account deletion |
+| Share Chat | `/portal/share-chat.html` | Shareable read-only chat view |
 | Landing | `/` (root) | EClawbot brand landing page (public, SEO) |
 
 ### Android App (Kotlin)
@@ -253,7 +271,7 @@ EClaw/
 - Billing: Google Play Billing (`BillingManager.kt`)
 - AI Chat: `AiChatViewModel.kt` manages state (fixes message loss, typing race condition)
 - Bottom nav: FILES tab renamed to CARDS (Card Holder); Files link moved to Settings
-- App version: 1.0.50
+- App version: 1.0.53
 
 ### iOS/React Native App (Expo)
 
@@ -513,6 +531,17 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **CDN Cache Fix (v1.109.1)**: Cache-control headers for `.js` files to prevent stale `entity-utils.js`
 - **Dialog Spam-Click Fix (v1.109.2)**: Template gallery buttons debounced to prevent multiple dialogs
 
+### Recent Features (v1.110.x+)
+
+- **Entity Trash System**: Soft-delete recovery on unbind/permanent delete; `entity_trash` table with 7-day retention; `GET/POST/DELETE /api/device/entity-trash`; auto-compaction on permanent delete
+- **Entity Slot Compaction**: `POST /api/device/compact-entities` renumbers sparse entity IDs to sequential 0, 1, 2, ...; auto-triggered on permanent entity deletion
+- **Bot Identity Layer**: Unified identity structure (role, instructions, boundaries, tone, language, soulTemplateId, ruleTemplateIds, public profile); `PUT/GET/DELETE /api/entity/identity` CRUD; `identity` JSONB column on `entities` table; dashboard identity editor UI
+- **Chat Message Reactions**: `POST /api/message/:messageId/react` for like/dislike; `message_reactions` table; XP awards (+5 like, -5 dislike); real-time Socket.IO `chat:reaction` events; `like_count`/`dislike_count` columns on `chat_messages`
+- **Link Preview**: `GET /api/link-preview` extracts Open Graph/Twitter meta tags; in-memory LRU cache with TTL; rendered in chat messages
+- **Shareable Chat Links**: `GET /c/:code` serves read-only chat view; `share-chat.html` portal page; share modal in card-holder
+- **Customer Service AI Tools**: Device context injection in AI support; tool handlers (`lookup_device`, `query_device_logs`, `lookup_user_by_email`) for Claude-powered customer service
+- **Portal Shared Modules Expansion**: Added `ai-chat.js`, `api.js`, `auth.js`, `socket.js`, `public-nav.js` to `portal/shared/` for cross-page reuse
+
 ---
 
 ## Test Coverage Summary
@@ -599,8 +628,12 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | UX Parity | `node backend/tests/test-ux-parity.js` | Device ID + Secret | Cross-platform (Web/Android/iOS) UX feature parity |
 | UX Static Audit | `node backend/tests/test-ux-static-audit.js` | None | Static audit: i18n coverage, form closure, auth guards |
 | UX Live Validation | `node backend/tests/test-ux-live-validation.js` | None | Live server validation: page reachability, security headers, static assets |
+| Channel Push Text | `node backend/tests/test-channel-push-text.js` | Device ID + Secret | Channel push text format verification |
+| Channel XP | `node backend/tests/test-channel-xp.js` | Device ID + Secret | Channel XP tracking and propagation |
+| Customer Service API | `node backend/tests/test-customer-service-api.js` | Device ID + Secret | Customer service AI tool handlers |
+| Entity Trash | `node backend/tests/test-entity-trash.js` | Device ID + Secret | Entity soft-delete, restore, 7-day retention |
 
-### Jest Unit Tests (CI-run, `npm test`, 20 files)
+### Jest Unit Tests (CI-run, `npm test`, 35 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -624,11 +657,26 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Device Preferences | `tests/jest/device-preferences.test.js` | Device preference GET/PUT, auth validation |
 | Publisher Extended | `tests/jest/publisher-extended.test.js` | Blogger, Hashnode, X/Twitter, Tumblr, Reddit, LinkedIn, Mastodon publish/delete/me validation |
 | Avatar Upload | `tests/jest/avatar-upload.test.js` | Avatar photo upload endpoint validation (multipart, size limit, auth) |
+| A2A Message Rendering | `tests/jest/a2a-message-rendering.test.js` | A2A message rendering format validation |
+| Admin Operations | `tests/jest/admin-operations.test.js` | Admin panel operations (device management, logs) |
+| AI Support Extended | `tests/jest/ai-support-extended.test.js` | Extended AI support chat validation |
+| Bot Registration | `tests/jest/bot-registration.test.js` | Bot registration endpoint validation |
+| Chat | `tests/jest/chat.test.js` | Chat history, file upload, message reactions |
+| Customer Service Tools | `tests/jest/customer-service-tools.test.js` | Customer service AI tool handler validation |
+| Entity Management | `tests/jest/entity-management.test.js` | Entity CRUD, reorder, refresh validation |
+| Entity Slot Compact | `tests/jest/entity-slot-compact.test.js` | Slot compaction renumbering validation |
+| Entity Trash | `tests/jest/entity-trash.test.js` | Entity soft-delete/restore lifecycle |
+| Identity | `tests/jest/identity.test.js` | Bot identity CRUD validation |
+| Mission | `tests/jest/mission.test.js` | Mission dashboard endpoint validation |
+| Push Notifications | `tests/jest/push-notifications.test.js` | Push notification delivery validation |
+| Publisher Integration | `tests/jest/publisher-integration.test.js` | Publisher integration flow tests |
+| Share Chat | `tests/jest/share-chat.test.js` | Shareable chat link validation |
+| Templates | `tests/jest/templates.test.js` | Skill/soul/rule template CRUD validation |
 
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (20 files)
+cd backend && npm test                  # Jest unit tests (35 files)
 cd backend && npm run lint              # ESLint
 ```
 
@@ -647,7 +695,7 @@ Set in `backend/.env` (gitignored):
 - `server_logs` schema extension is backward-compatible — all existing 67+ `serverLog()` calls work without modification (new fields default to null)
 - Entity unbind calls `createDefaultEntity()` which resets all fields including new ones — no separate cleanup needed
 - `const` redeclaration in same scope is a JS error — check existing variable names before adding new ones (e.g., `adminAuth` already declared at line 1198)
-- `index.js` is a single 11,279-line file — use line numbers when referencing specific code sections
+- `index.js` is a single 12,209-line file — use line numbers when referencing specific code sections
 - Module initialization order matters: `db.js` → `devices` in-memory map → module `require()` calls with dependency injection
 
 ### Gatekeeper System
@@ -670,7 +718,7 @@ Set in `backend/.env` (gitignored):
 - Jest config in `backend/jest.config.js`: `runInBand: true` (Windows compat), `forceExit: true`, `testTimeout: 15000`
 - Jest tests use `supertest` against the Express app directly (no live server needed)
 - Integration tests in `backend/tests/` hit the live production server (`eclawbot.com`)
-- `backend/run_all_tests.js` orchestrates 50 registered integration tests sequentially
+- `backend/run_all_tests.js` orchestrates 54 registered integration tests sequentially
 - `requiredVars` in skill templates must be `KEY=value` or `KEY=` format (Gson deserialization constraint)
 
 ### Avatar & Entity Utils
@@ -691,6 +739,24 @@ Set in `backend/.env` (gitignored):
 - After updating shared JS files (entity-utils.js, nav.js), verify CDN serves fresh version
 - CDN cache mismatch caused entity loading failures in v1.109.1
 
+### Entity Trash & Slot Compaction
+- Unbind and permanent delete move entities to `entity_trash` table with 7-day retention
+- `compactEntitySlots()` renumbers sparse IDs to sequential 0, 1, 2, ... — auto-triggered on permanent delete
+- Entity trash preserves `identity` JSONB field for recovery
+- Restore from trash re-creates the entity with original data
+
+### Bot Identity Layer
+- `identity` JSONB column on `entities` table stores unified bot identity
+- Structure: `{ role, instructions, boundaries, tone, language, soulTemplateId, ruleTemplateIds, publicProfile }`
+- `validateIdentity()` enforces field types and length limits
+- Socket.IO `entity:identity-updated` event broadcasts changes in real-time
+
+### Chat Reactions
+- `message_reactions` table tracks per-user reactions per message
+- Like awards +5 XP, dislike deducts -5 XP (atomic with reaction toggle)
+- Socket.IO `chat:reaction` event for real-time UI updates
+- `like_count`/`dislike_count` columns on `chat_messages` for aggregates
+
 ### Deployment & Monitoring
 - Railway sits behind Cloudflare CDN — deploy can take 2-5 minutes
 - Changes must be under `backend/` to trigger Railway deployment
@@ -710,9 +776,10 @@ Set in `backend/.env` (gitignored):
 | `2026-03-15-scheduled-tasks.md` | Scheduled tasks export |
 | `2026-03-15-security-audit-findings.md` | Security audit findings |
 | `2026-03-15-ui-code-audit.md` | UI code audit (contrast, accessibility) |
+| `2026-03-18-test-coverage-gap-analysis.md` | Test coverage gap analysis |
 
 ### Design Plans (`docs/plans/`)
-Key documents: `broadcast-recipient-info-design`, `env-vars-encrypted-persistence`, `channel-bot-context-parity`, `rebrand-ai-agent`, `soul-rule-templates`, `ai-search-brand-platform-design`, `news-publishing-api`, `ai-chat-viewmodel-refactor`, `eclawbot-seo-implementation`
+Key documents: `broadcast-recipient-info-design`, `env-vars-encrypted-persistence`, `channel-bot-context-parity`, `rebrand-ai-agent`, `soul-rule-templates`, `ai-search-brand-platform-design`, `news-publishing-api`, `ai-chat-viewmodel-refactor`, `eclawbot-seo-implementation`, `rich-message-unified-plan`, `bot-identity-layer`, `shareable-chat-link-qr`
 
 ### Known Issues (`docs/issues/`)
 - `entity-speak-to-disabled-for-free-bots.md` — Free bots cannot use speak-to
