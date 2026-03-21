@@ -297,6 +297,11 @@
     "linkCopied": "連結已複製！",
     "qrCopied": "QR 已複製！",
     "copyFailed": "複製失敗",
-    "shareChatTitle": "分享聊天連結"
+    "shareChatTitle": "分享聊天連結",
+    "chatWith": "與 {{name}} 聊天",
+    "registrationFailed": "註冊失敗",
+    "loginFailed": "登入失敗",
+    "qrLoading": "QR 載入中...",
+    "qrFailed": "QR 載入失敗"
   }
 }

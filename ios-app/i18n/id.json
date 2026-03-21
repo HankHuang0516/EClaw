@@ -289,6 +289,11 @@
     "linkCopied": "Tautan disalin!",
     "qrCopied": "QR disalin!",
     "copyFailed": "Gagal menyalin",
-    "shareChatTitle": "Bagikan tautan obrolan"
+    "shareChatTitle": "Bagikan tautan obrolan",
+    "chatWith": "Obrolan dengan {{name}}",
+    "registrationFailed": "Pendaftaran gagal",
+    "loginFailed": "Login gagal",
+    "qrLoading": "Memuat QR...",
+    "qrFailed": "Gagal memuat QR"
   }
 }

@@ -298,7 +298,12 @@
     "linkCopied": "Link copied!",
     "qrCopied": "QR copied!",
     "copyFailed": "Copy failed",
-    "shareChatTitle": "Share chat link"
+    "shareChatTitle": "Share chat link",
+    "chatWith": "Chat with {{name}}",
+    "registrationFailed": "Registration failed",
+    "loginFailed": "Login failed",
+    "qrLoading": "QR loading...",
+    "qrFailed": "QR failed to load"
   }
 }
 

@@ -289,6 +289,11 @@
     "linkCopied": "링크가 복사되었습니다!",
     "qrCopied": "QR이 복사되었습니다!",
     "copyFailed": "복사 실패",
-    "shareChatTitle": "채팅 링크 공유"
+    "shareChatTitle": "채팅 링크 공유",
+    "chatWith": "{{name}} 님과 채팅",
+    "registrationFailed": "회원가입 실패",
+    "loginFailed": "로그인 실패",
+    "qrLoading": "QR 로딩 중...",
+    "qrFailed": "QR 로드 실패"
   }
 }

@@ -289,6 +289,11 @@
     "linkCopied": "リンクをコピーしました！",
     "qrCopied": "QRをコピーしました！",
     "copyFailed": "コピーに失敗しました",
-    "shareChatTitle": "チャットリンクを共有"
+    "shareChatTitle": "チャットリンクを共有",
+    "chatWith": "{{name}} とチャット",
+    "registrationFailed": "登録に失敗しました",
+    "loginFailed": "ログインに失敗しました",
+    "qrLoading": "QR 読み込み中...",
+    "qrFailed": "QR の読み込みに失敗しました"
   }
 }

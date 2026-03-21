@@ -1411,13 +1411,13 @@
             if (typeof qrcode === 'undefined') {
                 ctx.fillStyle = '#fff'; ctx.fillRect(0,0,200,200);
                 ctx.fillStyle = '#666'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
-                ctx.fillText('QR loading...', 100, 100);
+                ctx.fillText(t('sc_qr_loading', 'QR loading...'), 100, 100);
                 if (!_qrLoading) {
                     _qrLoading = true;
                     const s = document.createElement('script');
                     s.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js';
                     s.onload = () => generateQR(text);
-                    s.onerror = () => { ctx.fillStyle = '#fff'; ctx.fillRect(0,0,200,200); ctx.fillStyle = '#c00'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('QR failed to load', 100, 100); };
+                    s.onerror = () => { ctx.fillStyle = '#fff'; ctx.fillRect(0,0,200,200); ctx.fillStyle = '#c00'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(t('sc_qr_failed', 'QR failed to load'), 100, 100); };
                     document.head.appendChild(s);
                 }
                 return;

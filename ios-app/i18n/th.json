@@ -289,6 +289,11 @@
     "linkCopied": "คัดลอกลิงก์แล้ว!",
     "qrCopied": "คัดลอก QR แล้ว!",
     "copyFailed": "คัดลอกไม่สำเร็จ",
-    "shareChatTitle": "แชร์ลิงก์แชท"
+    "shareChatTitle": "แชร์ลิงก์แชท",
+    "chatWith": "แชทกับ {{name}}",
+    "registrationFailed": "ลงทะเบียนไม่สำเร็จ",
+    "loginFailed": "เข้าสู่ระบบไม่สำเร็จ",
+    "qrLoading": "กำลังโหลด QR...",
+    "qrFailed": "โหลด QR ไม่สำเร็จ"
   }
 }

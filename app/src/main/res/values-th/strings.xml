@@ -566,4 +566,9 @@
     <string name="sc_qr_copied">คัดลอก QR แล้ว!</string>
     <string name="sc_copy_failed">คัดลอกไม่สำเร็จ</string>
     <string name="sc_share_chat_title">แชร์ลิงก์แชท</string>
+    <string name="sc_chat_with">แชทกับ %s</string>
+    <string name="sc_registration_failed">ลงทะเบียนไม่สำเร็จ</string>
+    <string name="sc_login_failed">เข้าสู่ระบบไม่สำเร็จ</string>
+    <string name="sc_qr_loading">กำลังโหลด QR…</string>
+    <string name="sc_qr_failed">โหลด QR ไม่สำเร็จ</string>
 </resources>

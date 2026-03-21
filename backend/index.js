@@ -5997,24 +5997,34 @@ app.post('/api/contacts/:publicCode/refresh', async (req, res) => {
 app.post('/api/client/cross-speak', async (req, res) => {
     let { deviceId, fromEntityId, targetCode, text, mediaType, mediaUrl } = req.body;
 
+    console.log(`[ClientCrossSpeak:DEBUG] Received request: deviceId=${deviceId}, fromEntityId=${fromEntityId}, targetCode=${targetCode}, text="${(text||'').slice(0,30)}", hasUser=${!!req.user}, hasCookie=${!!(req.cookies && req.cookies.eclaw_session)}`);
+
     // Cookie-based auth fallback
     if (!deviceId && req.user) {
         deviceId = req.user.deviceId;
+        console.log(`[ClientCrossSpeak:DEBUG] Resolved deviceId from req.user: ${deviceId}`);
     }
     if (!deviceId && req.cookies && req.cookies.eclaw_session) {
         try {
             const jwt = require('jsonwebtoken');
             const decoded = jwt.verify(req.cookies.eclaw_session, process.env.JWT_SECRET || 'dev-secret-change-in-production');
-            if (decoded && decoded.deviceId) deviceId = decoded.deviceId;
-        } catch (e) { /* invalid token */ }
+            if (decoded && decoded.deviceId) {
+                deviceId = decoded.deviceId;
+                console.log(`[ClientCrossSpeak:DEBUG] Resolved deviceId from cookie: ${deviceId}`);
+            }
+        } catch (e) {
+            console.log(`[ClientCrossSpeak:DEBUG] Cookie auth failed: ${e.message}`);
+        }
     }
 
     if (!deviceId || fromEntityId === undefined || !targetCode || !text) {
+        console.log(`[ClientCrossSpeak:DEBUG] Validation failed: deviceId=${!!deviceId}, fromEntityId=${fromEntityId}, targetCode=${!!targetCode}, text=${!!text}`);
         return res.status(400).json({ success: false, message: "deviceId, fromEntityId, targetCode, and text are required" });
     }
 
     const fromId = parseInt(fromEntityId);
     if (isNaN(fromId) || fromId < -1) {
+        console.log(`[ClientCrossSpeak:DEBUG] Invalid fromEntityId: ${fromEntityId}`);
         return res.status(400).json({ success: false, message: "Invalid fromEntityId" });
     }
 
@@ -6138,9 +6148,11 @@ app.post('/api/client/cross-speak', async (req, res) => {
 
     const senderLabel = isOwnerMode ? `owner:${deviceId}` : fromEntity.publicCode;
     console.log(`[ClientCrossSpeak] ${deviceId}:${fromId} (${senderLabel}) -> ${target.deviceId}:${target.entityId} (${targetCode}): "${text}"`);
+    serverLog('info', 'cross_speak', `[DEBUG] ClientCrossSpeak ${senderLabel} -> ${targetCode}: queued=${!!messageObj}, chatMsgId=${chatMsgId}`, { deviceId, entityId: fromId, metadata: { targetCode, targetDeviceId: target.deviceId, isOwnerMode, hasWebhook: !!toEntity.webhook } });
 
     // Push to target bot
     const hasWebhook = !!toEntity.webhook;
+    console.log(`[ClientCrossSpeak:DEBUG] hasWebhook=${hasWebhook}, webhookUrl=${toEntity.webhook ? toEntity.webhook.slice(0, 40) + '...' : 'null'}`);
     if (hasWebhook) {
         const apiBase = 'https://eclawbot.com';
         let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API. Your text reply is DISCARDED.\n`;
@@ -6186,15 +6198,21 @@ app.post('/api/client/cross-speak', async (req, res) => {
             console.error(`[ClientCrossSpeak] Push failed: ${err.message}`);
             serverLog('error', 'push_error', `ClientCrossSpeak ${senderLabel} -> ${targetCode} FAILED: ${err.message}`, { deviceId, entityId: fromId });
         });
+    } else {
+        console.log(`[ClientCrossSpeak:DEBUG] No webhook on target entity ${targetCode} — message queued but NOT pushed`);
+        serverLog('warn', 'cross_speak', `[DEBUG] ${senderLabel} -> ${targetCode}: no webhook, message NOT pushed`, { deviceId, entityId: fromId, metadata: { targetCode, targetDeviceId: target.deviceId } });
     }
 
-    res.json({
+    const responsePayload = {
         success: true,
         message: `Cross-device message sent`,
         from: isOwnerMode ? { owner: true } : { publicCode: fromEntity.publicCode, character: fromEntity.character },
         to: { publicCode: targetCode, character: toEntity.character },
-        pushed: hasWebhook ? "pending" : false
-    });
+        pushed: hasWebhook ? "pending" : false,
+        _debug: { senderDeviceId: deviceId, targetDeviceId: target.deviceId, targetEntityId: target.entityId, isOwnerMode, hasWebhook, chatMsgId }
+    };
+    console.log(`[ClientCrossSpeak:DEBUG] Response:`, JSON.stringify(responsePayload));
+    res.json(responsePayload);
 });
 
 /**

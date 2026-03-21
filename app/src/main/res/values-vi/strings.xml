@@ -566,4 +566,9 @@ Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ qua email chín
     <string name="sc_qr_copied">Đã sao chép QR!</string>
     <string name="sc_copy_failed">Sao chép thất bại</string>
     <string name="sc_share_chat_title">Chia sẻ liên kết trò chuyện</string>
+    <string name="sc_chat_with">Trò chuyện với %s</string>
+    <string name="sc_registration_failed">Đăng ký thất bại</string>
+    <string name="sc_login_failed">Đăng nhập thất bại</string>
+    <string name="sc_qr_loading">Đang tải QR…</string>
+    <string name="sc_qr_failed">Tải QR thất bại</string>
 </resources>

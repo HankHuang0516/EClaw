@@ -773,5 +773,10 @@ If you have any questions, please contact us via our official email.
     <string name="sc_qr_copied">QR copied!</string>
     <string name="sc_copy_failed">Copy failed</string>
     <string name="sc_share_chat_title">Share chat link</string>
+    <string name="sc_chat_with">Chat with %s</string>
+    <string name="sc_registration_failed">Registration failed</string>
+    <string name="sc_login_failed">Login failed</string>
+    <string name="sc_qr_loading">QR loading…</string>
+    <string name="sc_qr_failed">QR failed to load</string>
 </resources>
 

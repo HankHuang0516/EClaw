@@ -43,6 +43,22 @@
 
         .empty-msg { text-align: center; color: var(--text-muted); padding: 40px 20px; font-size: 14px; }
 
+        /* ── Debug panel ── */
+        .debug-panel { position: fixed; bottom: 0; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: #111827; color: #10b981; font-family: monospace; font-size: 11px; padding: 8px; z-index: 200; border-top: 2px solid #10b981; display: none; }
+        .debug-panel.visible { display: block; }
+        .debug-panel .debug-entry { margin: 2px 0; white-space: pre-wrap; word-break: break-all; }
+        .debug-panel .debug-entry.error { color: #ef4444; }
+        .debug-panel .debug-entry.warn { color: #f59e0b; }
+        .debug-panel .debug-entry.info { color: #60a5fa; }
+        .debug-toggle { position: fixed; bottom: 8px; right: 8px; z-index: 201; background: #111827; color: #10b981; border: 1px solid #10b981; border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; font-family: monospace; }
+
+        /* ── Toast ── */
+        .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; z-index: 300; animation: fadeInOut 3s ease; pointer-events: none; }
+        .toast.success { background: #22c55e; color: #fff; }
+        .toast.error { background: #ef4444; color: #fff; }
+        .toast.warn { background: #f59e0b; color: #000; }
+        @keyframes fadeInOut { 0%{opacity:0;transform:translateX(-50%) translateY(-10px)} 10%{opacity:1;transform:translateX(-50%) translateY(0)} 80%{opacity:1} 100%{opacity:0} }
+
         /* ── Input bar ── */
         .input-bar { display: flex; gap: 8px; padding: 12px 0 0; }
         .input-bar input { flex: 1; padding: 10px 14px; border: 1px solid var(--card-border); border-radius: var(--radius-pill); background: var(--input-bg); color: var(--text); font-size: 14px; outline: none; }
@@ -157,10 +173,42 @@
         </div>
     </div>
 
+    <!-- Debug panel -->
+    <div class="debug-panel" id="debugPanel"></div>
+    <button class="debug-toggle" id="debugToggle" onclick="toggleDebug()">DEBUG</button>
+
     <script src="/portal/shared/entity-utils.js"></script>
     <script src="/shared/i18n.js"></script>
     <script>
     const API_BASE = window.location.origin;
+
+    // ── Debug infrastructure ──
+    const _debugLog = [];
+    function dbg(level, msg, data) {
+        const ts = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const entry = `[${ts}] [${level.toUpperCase()}] ${msg}`;
+        _debugLog.push({ level, text: entry, data });
+        console.log(`[ShareChat] ${entry}`, data || '');
+        const panel = document.getElementById('debugPanel');
+        if (panel) {
+            const div = document.createElement('div');
+            div.className = `debug-entry ${level}`;
+            div.textContent = entry + (data ? ' | ' + JSON.stringify(data) : '');
+            panel.appendChild(div);
+            panel.scrollTop = panel.scrollHeight;
+        }
+    }
+    function toggleDebug() {
+        const panel = document.getElementById('debugPanel');
+        panel.classList.toggle('visible');
+    }
+    function showToast(msg, type = 'success') {
+        const el = document.createElement('div');
+        el.className = `toast ${type}`;
+        el.textContent = msg;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 3200);
+    }
 
     // i18n helper
     function t(key, fallback) {
@@ -176,10 +224,15 @@
 
     // ── Init ──
     (async function init() {
+        dbg('info', 'Init started', { url: window.location.href, origin: API_BASE });
+
         // Extract code from URL path: /c/<code>
         const parts = window.location.pathname.split('/');
         targetCode = parts[parts.length - 1] || '';
+        dbg('info', `Target code extracted: "${targetCode}"`, { pathParts: parts });
+
         if (!targetCode || targetCode.length < 4) {
+            dbg('error', 'Invalid target code — too short or empty');
             document.getElementById('entityName').textContent = t('sc_invalid_link', 'Invalid link');
             document.getElementById('sendBtn').disabled = true;
             return;
@@ -187,9 +240,12 @@
 
         // Lookup entity info (public, no auth)
         try {
+            dbg('info', `Looking up entity: ${targetCode}`);
             const resp = await fetch(`${API_BASE}/api/entity/lookup?code=${encodeURIComponent(targetCode)}`);
             const data = await resp.json();
+            dbg('info', `Lookup response: ${resp.status}`, { success: data.success, entityName: data.entity?.name, entityState: data.entity?.state });
             if (!data.success || !data.entity) {
+                dbg('error', 'Entity not found', data);
                 document.getElementById('entityName').textContent = t('sc_entity_not_found', 'Entity not found');
                 document.getElementById('sendBtn').disabled = true;
                 return;
@@ -198,8 +254,9 @@
             renderEntityHeader(targetEntity);
 
             // Update OG meta for link previews
-            document.title = `Chat with ${targetEntity.name || targetCode} - EClawbot`;
+            document.title = t('sc_chat_with', 'Chat with {name}').replace('{name}', targetEntity.name || targetCode) + ' - EClawbot';
         } catch (e) {
+            dbg('error', `Lookup failed: ${e.message}`);
             document.getElementById('entityName').textContent = t('sc_failed_to_load', 'Failed to load');
             document.getElementById('sendBtn').disabled = true;
             return;
@@ -236,16 +293,34 @@
     }
 
     async function checkAuthSilent() {
+        dbg('info', 'Checking auth (silent)...');
         try {
             const resp = await fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' });
-            if (!resp.ok) { currentUser = null; return; }
+            dbg('info', `Auth /me response: ${resp.status}`);
+            if (!resp.ok) {
+                dbg('warn', `Auth failed (${resp.status}) — user not logged in`);
+                currentUser = null;
+                return;
+            }
             const data = await resp.json();
             if (data.success && data.user) {
                 currentUser = data.user;
                 emailVerified = !!currentUser.emailVerified;
+                dbg('info', 'Auth OK', {
+                    email: currentUser.email,
+                    deviceId: currentUser.deviceId,
+                    emailVerified,
+                    userId: currentUser.id
+                });
                 onAuthReady();
+            } else {
+                dbg('warn', 'Auth response not successful', data);
+                currentUser = null;
             }
-        } catch (e) { currentUser = null; }
+        } catch (e) {
+            dbg('error', `Auth check error: ${e.message}`);
+            currentUser = null;
+        }
     }
 
     function onAuthReady() {
@@ -279,8 +354,11 @@
         const text = input.value.trim();
         if (!text) return;
 
+        dbg('info', `handleSend called`, { text: text.slice(0, 50), currentUser: !!currentUser, emailVerified, targetCode });
+
         // Not logged in -> show registration modal
         if (!currentUser) {
+            dbg('warn', 'Not logged in — showing registration modal');
             pendingText = text;
             showRegisterMode();
             document.getElementById('registerModal').classList.remove('hidden');
@@ -291,37 +369,57 @@
 
         // Logged in but unverified -> queue as pending
         if (!emailVerified) {
+            dbg('warn', 'Email not verified — queuing as pending');
             addLocalMessage(text, 'pending');
             try {
-                await fetch(`${API_BASE}/api/chat/pending-cross-speak`, {
+                const pendResp = await fetch(`${API_BASE}/api/chat/pending-cross-speak`, {
                     method: 'POST',
                     credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ targetCode, text })
                 });
+                const pendData = await pendResp.json().catch(() => ({}));
+                dbg('info', `Pending queue response: ${pendResp.status}`, pendData);
+                showToast('Message queued (email verification required)', 'warn');
             } catch (e) {
-                console.error('Failed to queue pending message:', e);
+                dbg('error', `Failed to queue pending: ${e.message}`);
+                showToast('Failed to queue message', 'error');
             }
             return;
         }
 
         // Logged in + verified -> normal cross-speak (fromEntityId=-1 = owner mode)
         const fromEntityId = parseInt(document.getElementById('senderSelect').value);
+        const body = { targetCode, text, deviceId: currentUser.deviceId, fromEntityId };
+        dbg('info', 'Sending cross-speak', body);
         addLocalMessage(text, 'sent');
+
         try {
-            const body = { targetCode, text, deviceId: currentUser.deviceId, fromEntityId };
             const resp = await fetch(`${API_BASE}/api/client/cross-speak`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             });
+            const data = await resp.json().catch(() => ({}));
             if (!resp.ok) {
-                const err = await resp.json().catch(() => ({}));
-                console.error('Send failed:', err.message || resp.status);
+                dbg('error', `Send FAILED: ${resp.status}`, data);
+                showToast(`Send failed: ${data.message || resp.status}`, 'error');
+            } else {
+                dbg('info', `Send OK`, data);
+                if (data.pushed === false) {
+                    dbg('warn', 'Message saved but NOT pushed — target entity has no webhook');
+                    showToast('Sent (target bot has no webhook — may not respond)', 'warn');
+                } else if (data.pushed === 'pending') {
+                    dbg('info', 'Message pushed to target bot — waiting for response');
+                    showToast('Sent!', 'success');
+                } else {
+                    showToast('Sent!', 'success');
+                }
             }
         } catch (e) {
-            console.error('Send error:', e);
+            dbg('error', `Send network error: ${e.message}`);
+            showToast(`Network error: ${e.message}`, 'error');
         }
     }
 
@@ -360,6 +458,7 @@
     }
 
     async function doRegister() {
+        dbg('info', 'doRegister called');
         const email = document.getElementById('regEmail').value.trim();
         const pw = document.getElementById('regPassword').value;
         const pw2 = document.getElementById('regPassword2').value;
@@ -382,7 +481,7 @@
             });
             const data = await resp.json();
             if (!resp.ok || !data.success) {
-                errEl.textContent = data.error || 'Registration failed';
+                errEl.textContent = data.error || t('sc_registration_failed', 'Registration failed');
                 btn.disabled = false;
                 return;
             }
@@ -425,6 +524,7 @@
     }
 
     async function doLogin() {
+        dbg('info', 'doLogin called');
         const email = document.getElementById('loginEmail').value.trim();
         const pw = document.getElementById('loginPassword').value;
         const errEl = document.getElementById('loginError');
@@ -443,7 +543,7 @@
             });
             const data = await resp.json();
             if (!resp.ok || !data.success) {
-                errEl.textContent = data.error || 'Login failed';
+                errEl.textContent = data.error || t('sc_login_failed', 'Login failed');
                 btn.disabled = false;
                 return;
             }

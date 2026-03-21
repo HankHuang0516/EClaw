@@ -566,4 +566,9 @@ Jika Anda memiliki pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="sc_qr_copied">QR disalin!</string>
     <string name="sc_copy_failed">Gagal menyalin</string>
     <string name="sc_share_chat_title">Bagikan tautan obrolan</string>
+    <string name="sc_chat_with">Obrolan dengan %s</string>
+    <string name="sc_registration_failed">Pendaftaran gagal</string>
+    <string name="sc_login_failed">Login gagal</string>
+    <string name="sc_qr_loading">Memuat QR…</string>
+    <string name="sc_qr_failed">Gagal memuat QR</string>
 </resources>
