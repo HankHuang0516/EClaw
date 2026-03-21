@@ -301,6 +301,13 @@ describe('share-chat registration flow (static analysis)', () => {
         expect(count).toBeGreaterThanOrEqual(langs.length);
     });
 
+    it('doRegister does NOT call /api/auth/login (session cookie set by register)', () => {
+        const match = html.match(/async function doRegister\(\)\s*\{([\s\S]*?)^\s{4}\}/m);
+        expect(match).toBeTruthy();
+        const body = match[1];
+        expect(body).not.toContain('/api/auth/login');
+    });
+
     it('doRegister saves pending message to DB via pending-cross-speak API', () => {
         const match = html.match(/async function doRegister\(\)\s*\{([\s\S]*?)^\s{4}\}/m);
         expect(match).toBeTruthy();

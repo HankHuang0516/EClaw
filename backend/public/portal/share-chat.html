@@ -865,21 +865,14 @@
                 return;
             }
 
-            // Auto-login after register
-            dbg('info', 'Calling POST /api/auth/login (auto-login after register)');
-            const loginResp = await fetch(`${API_BASE}/api/auth/login`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password: pw })
-            });
-            const loginData = await loginResp.json();
-            dbg('info', `Auto-login response: ${loginResp.status}`, { success: loginData.success, deviceId: loginData.user?.deviceId, emailVerified: loginData.user?.emailVerified });
-            if (loginResp.ok && loginData.success) {
-                currentUser = loginData.user;
+            // Register now sets session cookie directly — no separate login needed
+            if (data.user) {
+                currentUser = data.user;
                 emailVerified = false;
+                dbg('info', 'Session established from register response', { deviceId: currentUser.deviceId, email: currentUser.email });
             } else {
-                dbg('warn', 'Auto-login failed after register — no session cookie', loginData);
+                dbg('warn', 'Register succeeded but no user object in response — trying /api/auth/me');
+                await checkAuthSilent();
             }
 
             // Save pending message to DB so it survives page reload

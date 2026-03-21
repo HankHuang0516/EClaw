@@ -263,10 +263,27 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
 
             audit('info', 'auth', 'Account registered', { userId: user.id, deviceId, ipAddress: req.ip, action: 'register', resource: 'account', result: 'success' });
 
+            // Set session cookie so client can queue pending messages before verification
+            const token = signToken(user);
+            res.cookie('eclaw_session', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                maxAge: 7 * 24 * 60 * 60 * 1000,
+                path: '/'
+            });
+            console.log('[Auth] Register: session cookie set for unverified user', user.id);
+
             res.json({
                 success: true,
                 message: 'Account created. Please check your email to verify.',
-                userId: user.id
+                userId: user.id,
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    deviceId: user.device_id,
+                    emailVerified: false
+                }
             });
         } catch (error) {
             console.error('[Auth] Register error:', error);
