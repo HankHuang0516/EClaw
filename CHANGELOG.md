@@ -1,3 +1,10 @@
+## [1.126.5](https://github.com/HankHuang0516/EClaw/compare/v1.126.4...v1.126.5) (2026-03-21)
+
+
+### Bug Fixes
+
+* add missing fields to pending flush channel push payload ([#370](https://github.com/HankHuang0516/EClaw/issues/370)) ([1c605ff](https://github.com/HankHuang0516/EClaw/commit/1c605ff5189c2ef729f13b44917457c6ef1a45ec))
+
 ## [1.126.4](https://github.com/HankHuang0516/EClaw/compare/v1.126.3...v1.126.4) (2026-03-21)
 
 
