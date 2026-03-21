@@ -66,7 +66,7 @@ data class EntityStatus(
  * Message queue item from entity broadcasts
  */
 data class MessageQueueItem(
-    val text: String,
+    val text: String?,
     val from: String,
     val fromEntityId: Int,
     val fromCharacter: String,

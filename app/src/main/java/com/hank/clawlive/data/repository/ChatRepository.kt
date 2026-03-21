@@ -305,13 +305,13 @@ class ChatRepository private constructor(
         fromCharacter: String,
         timestamp: Long,
         targetEntityId: Int? = null
-    ) {
+    ): Boolean {
         // Create deduplication key
         val deduplicationKey = "mq_${fromEntityId}_${timestamp}"
 
         // Check if already exists
         if (chatDao.existsByDeduplicationKey(deduplicationKey)) {
-            return
+            return false
         }
 
         // Determine message type: entity-to-entity speak-to vs broadcast
@@ -335,6 +335,7 @@ class ChatRepository private constructor(
         Timber.d("[A2A_MSG_QUEUE] type=$msgType from=Entity$fromEntityId target=${targets ?: "broadcast"} text=${text.take(60)}")
 
         pruneOldMessages()
+        return true
     }
 
     // ============================================

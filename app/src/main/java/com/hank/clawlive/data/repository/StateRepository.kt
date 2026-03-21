@@ -189,22 +189,32 @@ class StateRepository(
         }
         entity.messageQueue?.forEach { queueItem ->
             try {
+                // Skip messages with null text (Gson can bypass Kotlin null safety)
+                val messageText = queueItem.text
+                if (messageText == null) {
+                    Timber.w("[A2A_PROCESS_MQ] Skipping message with null text from Entity${queueItem.fromEntityId}")
+                    return@forEach
+                }
+
                 // Detect entity-to-entity speak-to: sender differs from this entity (the receiver)
                 val isA2A = queueItem.fromEntityId != entity.entityId
                 val targetId = if (isA2A) entity.entityId else null
 
-                chatRepository.addMessageQueueItem(
-                    text = queueItem.text,
+                val isNew = chatRepository.addMessageQueueItem(
+                    text = messageText,
                     fromEntityId = queueItem.fromEntityId,
                     fromCharacter = queueItem.fromCharacter,
                     timestamp = queueItem.timestamp,
                     targetEntityId = targetId
                 )
 
-                if (isA2A) {
-                    Timber.d("[A2A_PROCESS_MQ] Entity${queueItem.fromEntityId} -> Entity${entity.entityId}: ${queueItem.text.take(60)}")
-                } else {
-                    Timber.d("[A2A_PROCESS_MQ] Broadcast from Entity${queueItem.fromEntityId}: ${queueItem.text.take(60)}")
+                // Only log genuinely new messages to avoid flooding debug log with old history
+                if (isNew) {
+                    if (isA2A) {
+                        Timber.d("[A2A_PROCESS_MQ] Entity${queueItem.fromEntityId} -> Entity${entity.entityId}: ${messageText.take(60)}")
+                    } else {
+                        Timber.d("[A2A_PROCESS_MQ] Broadcast from Entity${queueItem.fromEntityId}: ${messageText.take(60)}")
+                    }
                 }
             } catch (e: Exception) {
                 Timber.e(e, "[A2A_PROCESS_MQ] Error processing message queue item")
