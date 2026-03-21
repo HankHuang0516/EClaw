@@ -1,3 +1,10 @@
+## [1.123.1](https://github.com/HankHuang0516/EClaw/compare/v1.123.0...v1.123.1) (2026-03-21)
+
+
+### Bug Fixes
+
+* share-chat cross-speak owner mode, i18n, QR code, pending message bugs ([#355](https://github.com/HankHuang0516/EClaw/issues/355)) ([25b0e70](https://github.com/HankHuang0516/EClaw/commit/25b0e70bfad8823ba19bb4bd91b3d71afcb1c01f))
+
 # [1.123.0](https://github.com/HankHuang0516/EClaw/compare/v1.122.0...v1.123.0) (2026-03-20)
 
 
