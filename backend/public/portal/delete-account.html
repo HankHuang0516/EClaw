@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>EClawbot — Delete Account</title>
+    <title data-i18n="delete_account_page_title">EClawbot — Delete Account</title>
     <meta name="description" content="Delete your EClawbot account and associated data.">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦞</text></svg>">
     <link rel="stylesheet" href="shared/style.css">
@@ -49,37 +49,37 @@
     <div class="container">
         <div class="logo">
             <div class="logo-icon">🦞</div>
-            <div class="logo-name">E-Claw</div>
+            <div class="logo-name" data-i18n="portal_app_title">EClawbot</div>
         </div>
 
         <!-- Step 1: Sign in -->
         <div class="card" id="stepSign">
             <h1 data-i18n="delete_account_title">Delete Account</h1>
-            <p class="subtitle">Sign in with your Google account to verify your identity and permanently delete your E-Claw account.</p>
+            <p class="subtitle" data-i18n="delete_account_subtitle">Sign in with your Google account to verify your identity and permanently delete your EClawbot account.</p>
 
             <div class="data-list">
-                <p>Data that will be deleted:</p>
+                <p data-i18n="delete_account_data_label">Data that will be deleted:</p>
                 <ul>
-                    <li>Account info (email, name, profile)</li>
-                    <li>Chat history with all entities</li>
-                    <li>Mission Control data (tasks, notes, rules, soul)</li>
-                    <li>Schedules and execution history</li>
-                    <li>Encrypted environment variables</li>
-                    <li>Bot bindings and entity configurations</li>
-                    <li>Device telemetry data</li>
+                    <li data-i18n="delete_account_data_account">Account info (email, name, profile)</li>
+                    <li data-i18n="delete_account_data_chat">Chat history with all entities</li>
+                    <li data-i18n="delete_account_data_mission">Mission Control data (tasks, notes, rules, soul)</li>
+                    <li data-i18n="delete_account_data_schedules">Schedules and execution history</li>
+                    <li data-i18n="delete_account_data_vars">Encrypted environment variables</li>
+                    <li data-i18n="delete_account_data_bots">Bot bindings and entity configurations</li>
+                    <li data-i18n="delete_account_data_telemetry">Device telemetry data</li>
                 </ul>
             </div>
 
             <button class="btn btn-google" onclick="signInWithGoogle()">
                 <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/><path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/><path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/></svg>
-                Continue with Google
+                <span data-i18n="delete_account_google_btn">Continue with Google</span>
             </button>
             <div class="msg error" id="signMsg"></div>
         </div>
 
         <!-- Step 2: Confirm deletion -->
         <div class="card" id="stepConfirm">
-            <h1>Confirm Deletion</h1>
+            <h1 data-i18n="delete_account_confirm_title">Confirm Deletion</h1>
             <div class="user-info">
                 <div class="user-avatar" id="userAvatar">🦞</div>
                 <div>
@@ -88,27 +88,27 @@
                 </div>
             </div>
 
-            <div class="warning-box">
+            <div class="warning-box" data-i18n="delete_account_warning">
                 ⚠ This action is permanent and cannot be undone. All your data will be deleted immediately.
             </div>
 
             <div class="confirm-checkbox">
                 <input type="checkbox" id="confirmCheck" onchange="updateDeleteBtn()">
-                <label for="confirmCheck">I understand that deleting my account is permanent and all my data will be erased.</label>
+                <label for="confirmCheck" data-i18n="delete_account_confirm_label">I understand that deleting my account is permanent and all my data will be erased.</label>
             </div>
 
             <button class="btn btn-delete" id="deleteBtn" onclick="deleteAccount()" disabled data-i18n="delete_account_btn">Delete My Account</button>
-            <button class="btn btn-cancel" onclick="cancelDelete()" data-i18n="delete_account_cancel">Cancel</button>
+            <button class="btn btn-cancel" onclick="cancelDelete()" data-i18n="common_cancel">Cancel</button>
             <div class="msg" id="deleteMsg"></div>
         </div>
 
         <!-- Step 3: Done -->
         <div class="card" id="stepDone">
             <div class="success-icon">✅</div>
-            <h1 style="text-align:center;">Account Deleted</h1>
-            <p class="subtitle" style="text-align:center;">Your E-Claw account and all associated data have been permanently deleted. You will no longer receive any communications from us.</p>
+            <h1 style="text-align:center;" data-i18n="delete_account_done_title">Account Deleted</h1>
+            <p class="subtitle" style="text-align:center;" data-i18n="delete_account_done_msg">Your EClawbot account and all associated data have been permanently deleted. You will no longer receive any communications from us.</p>
             <div class="divider"></div>
-            <p style="font-size:13px;color:var(--text-secondary);text-align:center;">If you change your mind, you can always create a new account in the E-Claw App.</p>
+            <p style="font-size:13px;color:var(--text-secondary);text-align:center;" data-i18n="delete_account_done_hint">If you change your mind, you can always create a new account in the EClawbot App.</p>
         </div>
     </div>
 
@@ -129,8 +129,8 @@
         }
 
         async function signInWithGoogle() {
-            if (!googleClientId) return showSignMsg('Google sign-in not configured.');
-            if (typeof google === 'undefined') return showSignMsg('Google SDK loading, please retry.');
+            if (!googleClientId) return showSignMsg(i18n.t('delete_account_err_no_google'));
+            if (typeof google === 'undefined') return showSignMsg(i18n.t('delete_account_err_sdk_loading'));
 
             try {
                 const client = google.accounts.oauth2.initTokenClient({
@@ -144,7 +144,7 @@
                 });
                 client.requestAccessToken();
             } catch (e) {
-                showSignMsg(e.message || 'Google sign-in failed');
+                showSignMsg(e.message || i18n.t('delete_account_err_signin_failed'));
             }
         }
 
@@ -166,7 +166,7 @@
                 document.getElementById('stepSign').style.display = 'none';
                 document.getElementById('stepConfirm').style.display = 'block';
             } catch (e) {
-                showSignMsg(e.message || 'Sign-in failed. Please try again.');
+                showSignMsg(e.message || i18n.t('delete_account_err_signin_failed'));
             }
         }
 
@@ -194,7 +194,7 @@
             } catch (e) {
                 btn.disabled = false;
                 btn.textContent = i18n.t('delete_account_btn');
-                showDeleteMsg(e.message || 'Deletion failed. Please try again.', 'error');
+                showDeleteMsg(e.message || i18n.t('delete_account_err_delete_failed'), 'error');
             }
         }
 

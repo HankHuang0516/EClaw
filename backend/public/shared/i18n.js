@@ -89,7 +89,7 @@ const TRANSLATIONS = {
 
         // Portal Shared
         "portal_login_title": "E-Claw - Login",
-        "portal_app_title": "E-Claw",
+        "portal_app_title": "EClawbot",
         "portal_app_subtitle": "Live Wallpaper Companion",
         "nav_dashboard": "Dashboard",
         "nav_chat": "Chat",
@@ -1654,9 +1654,29 @@ const TRANSLATIONS = {
 
         // Delete Account (delete-account.html)
         "delete_account_title": "Delete Account",
-        "delete_account_cancel": "Cancel",
+        "delete_account_page_title": "EClawbot — Delete Account",
+        "delete_account_subtitle": "Sign in with your Google account to verify your identity and permanently delete your EClawbot account.",
+        "delete_account_data_label": "Data that will be deleted:",
+        "delete_account_data_account": "Account info (email, name, profile)",
+        "delete_account_data_chat": "Chat history with all entities",
+        "delete_account_data_mission": "Mission Control data (tasks, notes, rules, soul)",
+        "delete_account_data_schedules": "Schedules and execution history",
+        "delete_account_data_vars": "Encrypted environment variables",
+        "delete_account_data_bots": "Bot bindings and entity configurations",
+        "delete_account_data_telemetry": "Device telemetry data",
+        "delete_account_google_btn": "Continue with Google",
+        "delete_account_confirm_title": "Confirm Deletion",
+        "delete_account_warning": "⚠ This action is permanent and cannot be undone. All your data will be deleted immediately.",
+        "delete_account_confirm_label": "I understand that deleting my account is permanent and all my data will be erased.",
         "delete_account_deleting": "Deleting...",
         "delete_account_btn": "Delete My Account",
+        "delete_account_done_title": "Account Deleted",
+        "delete_account_done_msg": "Your EClawbot account and all associated data have been permanently deleted. You will no longer receive any communications from us.",
+        "delete_account_done_hint": "If you change your mind, you can always create a new account in the EClawbot App.",
+        "delete_account_err_no_google": "Google sign-in not configured.",
+        "delete_account_err_sdk_loading": "Google SDK loading, please retry.",
+        "delete_account_err_signin_failed": "Sign-in failed. Please try again.",
+        "delete_account_err_delete_failed": "Deletion failed. Please try again.",
 
         // Screen Control (screen-control.html)
         "screen_ctrl_title": "Remote Control",
@@ -1807,7 +1827,7 @@ const TRANSLATIONS = {
 
         // Portal Shared
         "portal_login_title": "E-Claw - 登入",
-        "portal_app_title": "E-Claw",
+        "portal_app_title": "EClawbot",
         "portal_app_subtitle": "動態桌布小幫手",
         "nav_dashboard": "儀表板",
         "nav_chat": "聊天",
@@ -3366,9 +3386,29 @@ const TRANSLATIONS = {
 
         // Delete Account (delete-account.html)
         "delete_account_title": "刪除帳號",
-        "delete_account_cancel": "取消",
+        "delete_account_page_title": "EClawbot — 刪除帳號",
+        "delete_account_subtitle": "使用您的 Google 帳號登入以驗證身份，並永久刪除您的 EClawbot 帳號。",
+        "delete_account_data_label": "將被刪除的資料：",
+        "delete_account_data_account": "帳號資訊（電子郵件、姓名、個人檔案）",
+        "delete_account_data_chat": "與所有實體的聊天記錄",
+        "delete_account_data_mission": "任務控制資料（任務、筆記、規則、靈魂）",
+        "delete_account_data_schedules": "排程與執行歷史",
+        "delete_account_data_vars": "加密環境變數",
+        "delete_account_data_bots": "Bot 綁定與實體配置",
+        "delete_account_data_telemetry": "裝置遙測資料",
+        "delete_account_google_btn": "使用 Google 繼續",
+        "delete_account_confirm_title": "確認刪除",
+        "delete_account_warning": "⚠ 此操作是永久性的，無法復原。您的所有資料將立即被刪除。",
+        "delete_account_confirm_label": "我了解刪除帳號是永久性的，我的所有資料將被清除。",
         "delete_account_deleting": "刪除中...",
         "delete_account_btn": "刪除我的帳號",
+        "delete_account_done_title": "帳號已刪除",
+        "delete_account_done_msg": "您的 EClawbot 帳號及所有相關資料已被永久刪除。您將不再收到我們的任何通訊。",
+        "delete_account_done_hint": "如果您改變主意，可以隨時在 EClawbot App 中建立新帳號。",
+        "delete_account_err_no_google": "Google 登入未設定。",
+        "delete_account_err_sdk_loading": "Google SDK 載入中，請重試。",
+        "delete_account_err_signin_failed": "登入失敗，請重試。",
+        "delete_account_err_delete_failed": "刪除失敗，請重試。",
 
         // Screen Control (screen-control.html)
         "screen_ctrl_title": "遠端控制",
@@ -3518,7 +3558,7 @@ const TRANSLATIONS = {
 
         // Portal Shared
         "portal_login_title": "E-Claw - 登录",
-        "portal_app_title": "E-Claw",
+        "portal_app_title": "EClawbot",
         "portal_app_subtitle": "动态壁纸小助手",
         "nav_dashboard": "仪表盘",
         "nav_chat": "聊天",
@@ -4835,9 +4875,29 @@ const TRANSLATIONS = {
 
         // Delete Account (delete-account.html)
         "delete_account_title": "删除账号",
-        "delete_account_cancel": "取消",
+        "delete_account_page_title": "EClawbot — 删除账号",
+        "delete_account_subtitle": "使用您的 Google 账号登录以验证身份，并永久删除您的 EClawbot 账号。",
+        "delete_account_data_label": "将被删除的数据：",
+        "delete_account_data_account": "账号信息（电子邮件、姓名、个人资料）",
+        "delete_account_data_chat": "与所有实体的聊天记录",
+        "delete_account_data_mission": "任务控制数据（任务、笔记、规则、灵魂）",
+        "delete_account_data_schedules": "排程与执行历史",
+        "delete_account_data_vars": "加密环境变量",
+        "delete_account_data_bots": "Bot 绑定与实体配置",
+        "delete_account_data_telemetry": "设备遥测数据",
+        "delete_account_google_btn": "使用 Google 继续",
+        "delete_account_confirm_title": "确认删除",
+        "delete_account_warning": "⚠ 此操作是永久性的，无法撤销。您的所有数据将立即被删除。",
+        "delete_account_confirm_label": "我了解删除账号是永久性的，我的所有数据将被清除。",
         "delete_account_deleting": "删除中...",
         "delete_account_btn": "删除我的账号",
+        "delete_account_done_title": "账号已删除",
+        "delete_account_done_msg": "您的 EClawbot 账号及所有相关数据已被永久删除。您将不再收到我们的任何通讯。",
+        "delete_account_done_hint": "如果您改变主意，可以随时在 EClawbot App 中创建新账号。",
+        "delete_account_err_no_google": "Google 登录未配置。",
+        "delete_account_err_sdk_loading": "Google SDK 加载中，请重试。",
+        "delete_account_err_signin_failed": "登录失败，请重试。",
+        "delete_account_err_delete_failed": "删除失败，请重试。",
 
         // Screen Control (screen-control.html)
         "screen_ctrl_title": "远程控制",
@@ -5196,7 +5256,7 @@ const TRANSLATIONS = {
 
         // Portal Shared
         "portal_login_title": "E-Claw - ログイン",
-        "portal_app_title": "E-Claw",
+        "portal_app_title": "EClawbot",
         "portal_app_subtitle": "ライブ壁紙コンパニオン",
         "nav_dashboard": "ダッシュボード",
         "nav_chat": "チャット",
@@ -6564,9 +6624,29 @@ const TRANSLATIONS = {
 
         // Delete Account (delete-account.html)
         "delete_account_title": "アカウント削除",
-        "delete_account_cancel": "キャンセル",
+        "delete_account_page_title": "EClawbot — アカウント削除",
+        "delete_account_subtitle": "Google アカウントでサインインして本人確認を行い、EClawbot アカウントを完全に削除します。",
+        "delete_account_data_label": "削除されるデータ：",
+        "delete_account_data_account": "アカウント情報（メール、名前、プロフィール）",
+        "delete_account_data_chat": "すべてのエンティティとのチャット履歴",
+        "delete_account_data_mission": "ミッションコントロールデータ（タスク、ノート、ルール、ソウル）",
+        "delete_account_data_schedules": "スケジュールと実行履歴",
+        "delete_account_data_vars": "暗号化された環境変数",
+        "delete_account_data_bots": "Bot バインディングとエンティティ設定",
+        "delete_account_data_telemetry": "デバイステレメトリデータ",
+        "delete_account_google_btn": "Google で続行",
+        "delete_account_confirm_title": "削除の確認",
+        "delete_account_warning": "⚠ この操作は永久的で元に戻せません。すべてのデータが即座に削除されます。",
+        "delete_account_confirm_label": "アカウントの削除は永久的であり、すべてのデータが消去されることを理解しています。",
         "delete_account_deleting": "削除中...",
         "delete_account_btn": "アカウントを削除",
+        "delete_account_done_title": "アカウント削除完了",
+        "delete_account_done_msg": "EClawbot アカウントおよびすべての関連データが完全に削除されました。今後、当社からの連絡は届きません。",
+        "delete_account_done_hint": "気が変わった場合は、EClawbot アプリでいつでも新しいアカウントを作成できます。",
+        "delete_account_err_no_google": "Google サインインが設定されていません。",
+        "delete_account_err_sdk_loading": "Google SDK を読み込み中です。もう一度お試しください。",
+        "delete_account_err_signin_failed": "サインインに失敗しました。もう一度お試しください。",
+        "delete_account_err_delete_failed": "削除に失敗しました。もう一度お試しください。",
 
         // Screen Control (screen-control.html)
         "screen_ctrl_title": "リモートコントロール",
@@ -6881,7 +6961,7 @@ const TRANSLATIONS = {
 
         // Portal Shared
         "portal_login_title": "E-Claw - 로그인",
-        "portal_app_title": "E-Claw",
+        "portal_app_title": "EClawbot",
         "portal_app_subtitle": "라이브 배경화면 컴패니언",
         "nav_dashboard": "대시보드",
         "nav_chat": "채팅",
@@ -8249,9 +8329,29 @@ const TRANSLATIONS = {
 
         // Delete Account (delete-account.html)
         "delete_account_title": "계정 삭제",
-        "delete_account_cancel": "취소",
+        "delete_account_page_title": "EClawbot — 계정 삭제",
+        "delete_account_subtitle": "Google 계정으로 로그인하여 본인 확인 후 EClawbot 계정을 영구적으로 삭제합니다.",
+        "delete_account_data_label": "삭제될 데이터:",
+        "delete_account_data_account": "계정 정보 (이메일, 이름, 프로필)",
+        "delete_account_data_chat": "모든 엔티티와의 채팅 기록",
+        "delete_account_data_mission": "미션 컨트롤 데이터 (작업, 메모, 규칙, 소울)",
+        "delete_account_data_schedules": "일정 및 실행 기록",
+        "delete_account_data_vars": "암호화된 환경 변수",
+        "delete_account_data_bots": "봇 바인딩 및 엔티티 구성",
+        "delete_account_data_telemetry": "디바이스 텔레메트리 데이터",
+        "delete_account_google_btn": "Google로 계속",
+        "delete_account_confirm_title": "삭제 확인",
+        "delete_account_warning": "⚠ 이 작업은 영구적이며 되돌릴 수 없습니다. 모든 데이터가 즉시 삭제됩니다.",
+        "delete_account_confirm_label": "계정 삭제가 영구적이며 모든 데이터가 삭제된다는 것을 이해합니다.",
         "delete_account_deleting": "삭제 중...",
         "delete_account_btn": "내 계정 삭제",
+        "delete_account_done_title": "계정 삭제 완료",
+        "delete_account_done_msg": "EClawbot 계정 및 모든 관련 데이터가 영구적으로 삭제되었습니다. 더 이상 저희로부터 연락을 받지 않습니다.",
+        "delete_account_done_hint": "마음이 바뀌면 EClawbot 앱에서 언제든지 새 계정을 만들 수 있습니다.",
+        "delete_account_err_no_google": "Google 로그인이 구성되지 않았습니다.",
+        "delete_account_err_sdk_loading": "Google SDK 로딩 중, 다시 시도해주세요.",
+        "delete_account_err_signin_failed": "로그인에 실패했습니다. 다시 시도해주세요.",
+        "delete_account_err_delete_failed": "삭제에 실패했습니다. 다시 시도해주세요.",
 
         // Screen Control (screen-control.html)
         "screen_ctrl_title": "원격 제어",
@@ -8567,7 +8667,7 @@ const TRANSLATIONS = {
 
         // Portal Shared
         "portal_login_title": "E-Claw - เข้าสู่ระบบ",
-        "portal_app_title": "E-Claw",
+        "portal_app_title": "EClawbot",
         "portal_app_subtitle": "คู่หูวอลเปเปอร์สด",
         "nav_dashboard": "แดชบอร์ด",
         "nav_chat": "แชท",
@@ -9940,9 +10040,29 @@ const TRANSLATIONS = {
 
         // Delete Account (delete-account.html)
         "delete_account_title": "ลบบัญชี",
-        "delete_account_cancel": "ยกเลิก",
+        "delete_account_page_title": "EClawbot — ลบบัญชี",
+        "delete_account_subtitle": "ลงชื่อเข้าใช้ด้วยบัญชี Google เพื่อยืนยันตัวตนและลบบัญชี EClawbot ของคุณอย่างถาวร",
+        "delete_account_data_label": "ข้อมูลที่จะถูกลบ:",
+        "delete_account_data_account": "ข้อมูลบัญชี (อีเมล, ชื่อ, โปรไฟล์)",
+        "delete_account_data_chat": "ประวัติแชทกับเอนทิตีทั้งหมด",
+        "delete_account_data_mission": "ข้อมูล Mission Control (งาน, บันทึก, กฎ, วิญญาณ)",
+        "delete_account_data_schedules": "ตารางเวลาและประวัติการดำเนินการ",
+        "delete_account_data_vars": "ตัวแปรสภาพแวดล้อมที่เข้ารหัส",
+        "delete_account_data_bots": "การเชื่อมต่อบอทและการกำหนดค่าเอนทิตี",
+        "delete_account_data_telemetry": "ข้อมูลเทเลเมทรีของอุปกรณ์",
+        "delete_account_google_btn": "ดำเนินการต่อด้วย Google",
+        "delete_account_confirm_title": "ยืนยันการลบ",
+        "delete_account_warning": "⚠ การดำเนินการนี้เป็นการถาวรและไม่สามารถย้อนกลับได้ ข้อมูลทั้งหมดของคุณจะถูกลบทันที",
+        "delete_account_confirm_label": "ฉันเข้าใจว่าการลบบัญชีเป็นการถาวรและข้อมูลทั้งหมดของฉันจะถูกลบ",
         "delete_account_deleting": "กำลังลบ...",
         "delete_account_btn": "ลบบัญชีของฉัน",
+        "delete_account_done_title": "ลบบัญชีแล้ว",
+        "delete_account_done_msg": "บัญชี EClawbot ของคุณและข้อมูลที่เกี่ยวข้องทั้งหมดถูกลบอย่างถาวรแล้ว คุณจะไม่ได้รับการติดต่อจากเราอีก",
+        "delete_account_done_hint": "หากคุณเปลี่ยนใจ คุณสามารถสร้างบัญชีใหม่ได้ในแอป EClawbot",
+        "delete_account_err_no_google": "ยังไม่ได้ตั้งค่าการลงชื่อเข้าใช้ Google",
+        "delete_account_err_sdk_loading": "กำลังโหลด Google SDK โปรดลองอีกครั้ง",
+        "delete_account_err_signin_failed": "ลงชื่อเข้าใช้ไม่สำเร็จ โปรดลองอีกครั้ง",
+        "delete_account_err_delete_failed": "ลบไม่สำเร็จ โปรดลองอีกครั้ง",
 
         // Screen Control (screen-control.html)
         "screen_ctrl_title": "ควบคุมระยะไกล",
@@ -10252,7 +10372,7 @@ const TRANSLATIONS = {
 
         // Portal Shared
         "portal_login_title": "E-Claw - Đăng nhập",
-        "portal_app_title": "E-Claw",
+        "portal_app_title": "EClawbot",
         "portal_app_subtitle": "Đồng hành Hình nền Động",
         "nav_dashboard": "Bảng điều khiển",
         "nav_chat": "Trò chuyện",
@@ -11625,9 +11745,29 @@ const TRANSLATIONS = {
 
         // Delete Account (delete-account.html)
         "delete_account_title": "Xóa tài khoản",
-        "delete_account_cancel": "Hủy",
+        "delete_account_page_title": "EClawbot — Xóa tài khoản",
+        "delete_account_subtitle": "Đăng nhập bằng tài khoản Google để xác minh danh tính và xóa vĩnh viễn tài khoản EClawbot của bạn.",
+        "delete_account_data_label": "Dữ liệu sẽ bị xóa:",
+        "delete_account_data_account": "Thông tin tài khoản (email, tên, hồ sơ)",
+        "delete_account_data_chat": "Lịch sử trò chuyện với tất cả thực thể",
+        "delete_account_data_mission": "Dữ liệu Mission Control (nhiệm vụ, ghi chú, quy tắc, linh hồn)",
+        "delete_account_data_schedules": "Lịch trình và lịch sử thực thi",
+        "delete_account_data_vars": "Biến môi trường đã mã hóa",
+        "delete_account_data_bots": "Liên kết bot và cấu hình thực thể",
+        "delete_account_data_telemetry": "Dữ liệu đo lường thiết bị",
+        "delete_account_google_btn": "Tiếp tục với Google",
+        "delete_account_confirm_title": "Xác nhận xóa",
+        "delete_account_warning": "⚠ Hành động này là vĩnh viễn và không thể hoàn tác. Tất cả dữ liệu của bạn sẽ bị xóa ngay lập tức.",
+        "delete_account_confirm_label": "Tôi hiểu rằng việc xóa tài khoản là vĩnh viễn và tất cả dữ liệu của tôi sẽ bị xóa.",
         "delete_account_deleting": "Đang xóa...",
         "delete_account_btn": "Xóa tài khoản của tôi",
+        "delete_account_done_title": "Tài khoản đã xóa",
+        "delete_account_done_msg": "Tài khoản EClawbot của bạn và tất cả dữ liệu liên quan đã bị xóa vĩnh viễn. Bạn sẽ không nhận được bất kỳ liên lạc nào từ chúng tôi.",
+        "delete_account_done_hint": "Nếu bạn đổi ý, bạn có thể tạo tài khoản mới bất cứ lúc nào trong ứng dụng EClawbot.",
+        "delete_account_err_no_google": "Đăng nhập Google chưa được cấu hình.",
+        "delete_account_err_sdk_loading": "Google SDK đang tải, vui lòng thử lại.",
+        "delete_account_err_signin_failed": "Đăng nhập thất bại. Vui lòng thử lại.",
+        "delete_account_err_delete_failed": "Xóa thất bại. Vui lòng thử lại.",
 
         // Screen Control (screen-control.html)
         "screen_ctrl_title": "Điều khiển từ xa",
@@ -11937,7 +12077,7 @@ const TRANSLATIONS = {
 
         // Portal Shared
         "portal_login_title": "E-Claw - Masuk",
-        "portal_app_title": "E-Claw",
+        "portal_app_title": "EClawbot",
         "portal_app_subtitle": "Pendamping Wallpaper Hidup",
         "nav_dashboard": "Dasbor",
         "nav_chat": "Obrolan",
@@ -13310,9 +13450,29 @@ const TRANSLATIONS = {
 
         // Delete Account (delete-account.html)
         "delete_account_title": "Hapus Akun",
-        "delete_account_cancel": "Batal",
+        "delete_account_page_title": "EClawbot — Hapus Akun",
+        "delete_account_subtitle": "Masuk dengan akun Google Anda untuk memverifikasi identitas dan menghapus akun EClawbot Anda secara permanen.",
+        "delete_account_data_label": "Data yang akan dihapus:",
+        "delete_account_data_account": "Info akun (email, nama, profil)",
+        "delete_account_data_chat": "Riwayat obrolan dengan semua entitas",
+        "delete_account_data_mission": "Data Mission Control (tugas, catatan, aturan, jiwa)",
+        "delete_account_data_schedules": "Jadwal dan riwayat eksekusi",
+        "delete_account_data_vars": "Variabel lingkungan terenkripsi",
+        "delete_account_data_bots": "Pengikatan bot dan konfigurasi entitas",
+        "delete_account_data_telemetry": "Data telemetri perangkat",
+        "delete_account_google_btn": "Lanjutkan dengan Google",
+        "delete_account_confirm_title": "Konfirmasi Penghapusan",
+        "delete_account_warning": "⚠ Tindakan ini bersifat permanen dan tidak dapat dibatalkan. Semua data Anda akan segera dihapus.",
+        "delete_account_confirm_label": "Saya memahami bahwa menghapus akun saya bersifat permanen dan semua data saya akan dihapus.",
         "delete_account_deleting": "Menghapus...",
         "delete_account_btn": "Hapus Akun Saya",
+        "delete_account_done_title": "Akun Dihapus",
+        "delete_account_done_msg": "Akun EClawbot Anda dan semua data terkait telah dihapus secara permanen. Anda tidak akan menerima komunikasi apa pun dari kami.",
+        "delete_account_done_hint": "Jika Anda berubah pikiran, Anda dapat membuat akun baru kapan saja di aplikasi EClawbot.",
+        "delete_account_err_no_google": "Login Google belum dikonfigurasi.",
+        "delete_account_err_sdk_loading": "Google SDK sedang dimuat, silakan coba lagi.",
+        "delete_account_err_signin_failed": "Login gagal. Silakan coba lagi.",
+        "delete_account_err_delete_failed": "Penghapusan gagal. Silakan coba lagi.",
 
         // Screen Control (screen-control.html)
         "screen_ctrl_title": "Kontrol Jarak Jauh",
