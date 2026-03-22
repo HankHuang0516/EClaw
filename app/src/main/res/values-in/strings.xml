@@ -576,4 +576,19 @@ Jika Anda memiliki pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="sc_login_failed">Login gagal</string>
     <string name="sc_qr_loading">Memuat QR…</string>
     <string name="sc_qr_failed">Gagal memuat QR</string>
+
+    <!-- Note Pages (Webview) -->
+    <string name="note_page_viewer">Halaman Catatan</string>
+    <string name="note_page_draw">Gambar</string>
+    <string name="note_page_edit">Edit HTML</string>
+    <string name="note_page_eraser">Penghapus</string>
+    <string name="note_page_clear">Hapus</string>
+    <string name="note_page_clear_confirm">Hapus semua gambar?</string>
+    <string name="note_page_save_draw">Simpan</string>
+    <string name="note_page_draw_saved">Gambar tersimpan</string>
+    <string name="note_page_saved">Halaman tersimpan</string>
+    <string name="note_page_empty">Belum ada konten halaman.</string>
+    <string name="note_page_html_hint">Masukkan konten HTML…</string>
+    <string name="note_page_open">Buka Halaman</string>
+    <string name="error_generic">Terjadi kesalahan</string>
 </resources>

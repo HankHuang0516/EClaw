@@ -118,6 +118,24 @@ data class MissionSoul(
 )
 
 /**
+ * 筆記靜態頁面 (Webview)
+ */
+data class NotePage(
+    val noteId: String,
+    val htmlContent: String = "",
+    val drawingData: String? = null,
+    val updatedAt: String? = null
+)
+
+/**
+ * 筆記頁面列表項
+ */
+data class NotePageListItem(
+    val noteId: String,
+    val updatedAt: String? = null
+)
+
+/**
  * Dashboard 完整快照
  */
 data class MissionDashboardSnapshot(

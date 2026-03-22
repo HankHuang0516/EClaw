@@ -800,5 +800,20 @@ If you have any questions, please contact us via our official email.
     <string name="sc_login_failed">Login failed</string>
     <string name="sc_qr_loading">QR loading…</string>
     <string name="sc_qr_failed">QR failed to load</string>
+
+    <!-- Note Pages (Webview) -->
+    <string name="note_page_viewer">Note Page</string>
+    <string name="note_page_draw">Draw</string>
+    <string name="note_page_edit">Edit HTML</string>
+    <string name="note_page_eraser">Eraser</string>
+    <string name="note_page_clear">Clear</string>
+    <string name="note_page_clear_confirm">Clear all drawings?</string>
+    <string name="note_page_save_draw">Save</string>
+    <string name="note_page_draw_saved">Drawing saved</string>
+    <string name="note_page_saved">Page saved</string>
+    <string name="note_page_empty">No page content yet.</string>
+    <string name="note_page_html_hint">Enter HTML content…</string>
+    <string name="note_page_open">Open Page</string>
+    <string name="error_generic">An error occurred</string>
 </resources>
 

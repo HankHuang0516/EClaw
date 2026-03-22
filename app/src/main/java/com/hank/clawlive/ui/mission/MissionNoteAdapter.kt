@@ -13,10 +13,18 @@ import io.noties.markwon.Markwon
 
 class MissionNoteAdapter(
     private val onNoteClick: (MissionNote) -> Unit,
-    private val onNoteLongClick: (MissionNote) -> Unit
+    private val onNoteLongClick: (MissionNote) -> Unit,
+    private val onPageBadgeClick: (MissionNote) -> Unit = {}
 ) : ListAdapter<MissionNote, MissionNoteAdapter.ViewHolder>(DiffCallback()) {
 
     private var markwon: Markwon? = null
+    var notePageIds: Set<String> = emptySet()
+        set(value) {
+            if (field != value) {
+                field = value
+                notifyDataSetChanged()
+            }
+        }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         if (markwon == null) markwon = Markwon.create(parent.context)
@@ -33,11 +41,16 @@ class MissionNoteAdapter(
         private val tvTitle: TextView = itemView.findViewById(R.id.tvTitle)
         private val tvContent: TextView = itemView.findViewById(R.id.tvContent)
         private val tvCategory: TextView = itemView.findViewById(R.id.tvCategory)
+        private val tvPageBadge: TextView = itemView.findViewById(R.id.tvPageBadge)
 
         fun bind(note: MissionNote) {
             tvTitle.text = note.title
             markwon?.setMarkdown(tvContent, note.content) ?: run { tvContent.text = note.content }
             tvCategory.text = note.category ?: ""
+
+            val hasPage = notePageIds.contains(note.id)
+            tvPageBadge.visibility = if (hasPage) View.VISIBLE else View.GONE
+            tvPageBadge.setOnClickListener { onPageBadgeClick(note) }
 
             itemView.setOnClickListener { onNoteClick(note) }
             itemView.setOnLongClickListener {

@@ -704,6 +704,189 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
     });
 
     // ============================================
+    // Note Pages API (Webview static pages)
+    // ============================================
+
+    const NOTE_PAGE_HTML_MAX = 512 * 1024; // 500KB
+    const NOTE_PAGE_DRAWING_MAX = 2 * 1024 * 1024; // 2MB
+
+    /**
+     * Helper: resolve noteId from body/query (supports noteId or title lookup)
+     */
+    async function resolveNoteId(deviceId, params) {
+        if (params.noteId) {
+            if (typeof params.noteId !== 'string' || params.noteId.length > 128) return null;
+            return params.noteId;
+        }
+        if (!params.title) return null;
+
+        const dash = await pool.query(
+            'SELECT notes FROM mission_dashboard WHERE device_id = $1', [deviceId]
+        );
+        if (dash.rows.length === 0) return null;
+        const notes = dash.rows[0].notes || [];
+        const titleLower = params.title.trim().toLowerCase();
+        const found = notes.find(n => n.title && n.title.trim().toLowerCase() === titleLower);
+        return found ? found.id : null;
+    }
+
+    /**
+     * PUT /note/page
+     * Create or update a note's static HTML page
+     * Body: { deviceId, noteId (or title), htmlContent }
+     */
+    router.put('/note/page', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId, htmlContent } = req.body;
+
+        if (!htmlContent && htmlContent !== '') {
+            return res.status(400).json({ success: false, error: 'Missing htmlContent' });
+        }
+        if (typeof htmlContent === 'string' && htmlContent.length > NOTE_PAGE_HTML_MAX) {
+            return res.status(400).json({ success: false, error: `htmlContent exceeds ${NOTE_PAGE_HTML_MAX} bytes` });
+        }
+
+        const noteId = await resolveNoteId(deviceId, req.body);
+        if (!noteId) {
+            return res.status(400).json({ success: false, error: 'Missing or invalid noteId/title' });
+        }
+
+        try {
+            const result = await pool.query(`
+                INSERT INTO note_pages (device_id, note_id, html_content)
+                VALUES ($1, $2, $3)
+                ON CONFLICT (device_id, note_id)
+                DO UPDATE SET html_content = $3, updated_at = NOW()
+                RETURNING id, updated_at
+            `, [deviceId, noteId, htmlContent]);
+
+            if (serverLog) serverLog('info', 'mission', `[Mission] Note page updated: ${noteId}, device ${deviceId}`, { deviceId });
+            res.json({ success: true, message: 'Page saved', id: result.rows[0].id, noteId, updatedAt: result.rows[0].updated_at });
+        } catch (error) {
+            console.error('[Mission] Error saving note page:', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    });
+
+    /**
+     * GET /note/page
+     * Read a note's static HTML page
+     * Query: deviceId, noteId (or title)
+     */
+    router.get('/note/page', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId } = req.query;
+
+        const noteId = await resolveNoteId(deviceId, req.query);
+        if (!noteId) {
+            return res.status(400).json({ success: false, error: 'Missing or invalid noteId/title' });
+        }
+
+        try {
+            const result = await pool.query(
+                'SELECT html_content, drawing_data, updated_at FROM note_pages WHERE device_id = $1 AND note_id = $2',
+                [deviceId, noteId]
+            );
+            if (result.rows.length === 0) {
+                return res.status(404).json({ success: false, error: 'Page not found' });
+            }
+            const row = result.rows[0];
+            res.json({ success: true, noteId, htmlContent: row.html_content, drawingData: row.drawing_data, updatedAt: row.updated_at });
+        } catch (error) {
+            console.error('[Mission] Error fetching note page:', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    });
+
+    /**
+     * GET /note/pages
+     * List all noteIds that have pages for a device
+     * Query: deviceId
+     */
+    router.get('/note/pages', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId } = req.query;
+
+        try {
+            const result = await pool.query(
+                'SELECT note_id, updated_at FROM note_pages WHERE device_id = $1 ORDER BY updated_at DESC',
+                [deviceId]
+            );
+            res.json({ success: true, pages: result.rows.map(r => ({ noteId: r.note_id, updatedAt: r.updated_at })) });
+        } catch (error) {
+            console.error('[Mission] Error listing note pages:', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    });
+
+    /**
+     * DELETE /note/page
+     * Delete a note's static HTML page
+     * Body: { deviceId, noteId (or title) }
+     */
+    router.delete('/note/page', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId } = req.body;
+
+        const noteId = await resolveNoteId(deviceId, req.body);
+        if (!noteId) {
+            return res.status(400).json({ success: false, error: 'Missing or invalid noteId/title' });
+        }
+
+        try {
+            const result = await pool.query(
+                'DELETE FROM note_pages WHERE device_id = $1 AND note_id = $2',
+                [deviceId, noteId]
+            );
+            if (result.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'Page not found' });
+            }
+            if (serverLog) serverLog('info', 'mission', `[Mission] Note page deleted: ${noteId}, device ${deviceId}`, { deviceId });
+            res.json({ success: true, message: 'Page deleted' });
+        } catch (error) {
+            console.error('[Mission] Error deleting note page:', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    });
+
+    /**
+     * PUT /note/page/drawing
+     * Save drawing data for a note's page
+     * Body: { deviceId, noteId (or title), drawingData }
+     */
+    router.put('/note/page/drawing', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId, drawingData } = req.body;
+
+        if (drawingData === undefined) {
+            return res.status(400).json({ success: false, error: 'Missing drawingData' });
+        }
+        const dataStr = typeof drawingData === 'string' ? drawingData : JSON.stringify(drawingData);
+        if (dataStr.length > NOTE_PAGE_DRAWING_MAX) {
+            return res.status(400).json({ success: false, error: `drawingData exceeds ${NOTE_PAGE_DRAWING_MAX} bytes` });
+        }
+
+        const noteId = await resolveNoteId(deviceId, req.body);
+        if (!noteId) {
+            return res.status(400).json({ success: false, error: 'Missing or invalid noteId/title' });
+        }
+
+        try {
+            const result = await pool.query(
+                'UPDATE note_pages SET drawing_data = $3, updated_at = NOW() WHERE device_id = $1 AND note_id = $2',
+                [deviceId, noteId, dataStr]
+            );
+            if (result.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'Page not found. Create page first with PUT /note/page' });
+            }
+            res.json({ success: true, message: 'Drawing saved' });
+        } catch (error) {
+            console.error('[Mission] Error saving drawing:', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    });
+
+    // ============================================
     // Rules API
     // ============================================
 

@@ -145,6 +145,7 @@ class MissionControlActivity : AppCompatActivity() {
         RecordingIndicatorHelper.attach(this)
         // Re-download dashboard to pick up changes made by bots or web portal
         viewModel.downloadDashboard()
+        viewModel.loadNotePages()
         loadEntityOptions()
         renderVars()
         syncVarsToServer() // fire-and-forget: push local vars to server in-memory cache
@@ -251,7 +252,8 @@ class MissionControlActivity : AppCompatActivity() {
         )
         noteAdapter = MissionNoteAdapter(
             onNoteClick = { showEditNoteDialog(it) },
-            onNoteLongClick = { }
+            onNoteLongClick = { },
+            onPageBadgeClick = { openNotePageViewer(it) }
         )
         ruleAdapter = MissionRuleAdapter(
             onRuleClick = { showEditRuleDialog(it) },
@@ -330,6 +332,7 @@ class MissionControlActivity : AppCompatActivity() {
             { it.category }, { showEditItemDialog(it, ListMode.DONE) }, { })
         renderCategorizedNotes("notes", state.notes, state.categoryOrder,
             findViewById(R.id.containerNotes), noteAdapter)
+        noteAdapter.notePageIds = state.notePageIds
         renderCategorizedSkills("skills", state.skills, state.categoryOrder,
             findViewById(R.id.containerSkills), skillAdapter)
         renderCategorizedSouls("souls", state.souls, state.categoryOrder,
@@ -549,6 +552,14 @@ class MissionControlActivity : AppCompatActivity() {
         dialog.getButton(AlertDialog.BUTTON_NEUTRAL)?.setTextColor(
             android.graphics.Color.parseColor("#F44336")
         )
+    }
+
+    private fun openNotePageViewer(note: MissionNote) {
+        val intent = Intent(this, NotePageViewerActivity::class.java).apply {
+            putExtra(NotePageViewerActivity.EXTRA_NOTE_ID, note.id)
+            putExtra(NotePageViewerActivity.EXTRA_NOTE_TITLE, note.title)
+        }
+        startActivity(intent)
     }
 
     private fun showAddRuleDialog() {

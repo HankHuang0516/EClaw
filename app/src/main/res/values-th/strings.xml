@@ -576,4 +576,19 @@
     <string name="sc_login_failed">เข้าสู่ระบบไม่สำเร็จ</string>
     <string name="sc_qr_loading">กำลังโหลด QR…</string>
     <string name="sc_qr_failed">โหลด QR ไม่สำเร็จ</string>
+
+    <!-- Note Pages (Webview) -->
+    <string name="note_page_viewer">หน้าโน้ต</string>
+    <string name="note_page_draw">วาด</string>
+    <string name="note_page_edit">แก้ไข HTML</string>
+    <string name="note_page_eraser">ยางลบ</string>
+    <string name="note_page_clear">ล้าง</string>
+    <string name="note_page_clear_confirm">ล้างภาพวาดทั้งหมด?</string>
+    <string name="note_page_save_draw">บันทึก</string>
+    <string name="note_page_draw_saved">บันทึกภาพวาดแล้ว</string>
+    <string name="note_page_saved">บันทึกหน้าแล้ว</string>
+    <string name="note_page_empty">ยังไม่มีเนื้อหาหน้า</string>
+    <string name="note_page_html_hint">ใส่เนื้อหา HTML…</string>
+    <string name="note_page_open">เปิดหน้า</string>
+    <string name="error_generic">เกิดข้อผิดพลาด</string>
 </resources>

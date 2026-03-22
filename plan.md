@@ -1,237 +1,83 @@
-# Plan: Android Chat → WebView Migration
+# Plan: Webview Static Pages for Notes
 
 ## 目標
-將 Android 原生 ChatActivity（~3,100 行 Kotlin）替換為 WebView 載入 Web Portal 的 `chat.html`，一勞永逸解決訊息渲染邏輯不一致的問題。
+為筆記系統增加可選的 webview 靜態頁面功能：
+- Bot 可用 API 寫入/更新 HTML 靜態頁面（綁定到特定筆記）
+- 筆記之間的靜態頁面可互相跳轉（內部連結 `eclaw://note/<noteId>`）
+- 筆記列表顯示 webview 圖示，點擊打開全版面 webview viewer
+- 全版面 viewer 上方有畫筆工具列，可在頁面上塗鴉
+- 塗鴉可儲存（存為 drawing data 附加到筆記頁面）
 
-## 架構設計
+## Step 1: Database — 新增 `note_pages` 表
 
-### 核心策略
-- **ChatActivity.kt** 改為只包含：WebView + 底部導航列（BottomNavHelper）
-- **WebView** 載入 `https://eclawbot.com/portal/chat.html`（production URL）
-- **JS Bridge** (`window.AndroidBridge`) 處理原生功能：Widget 更新、Toast、Telemetry
-- **認證**：透過 JS Bridge 提供 deviceId/deviceSecret，chat.html 偵測 WebView 環境後自動以 device credentials 認證
-
-### 保留 vs. 移除
-
-| 元素 | 動作 | 理由 |
-|------|------|------|
-| BottomNavHelper | **保留** | 底部導航是全 App 共用 |
-| AiChatFabHelper | **保留** | AI 聊天浮動按鈕 |
-| ChatAdapter.kt | **移除** | 渲染由 WebView 處理 |
-| ChatRepository.kt | **保留但降級** | Widget 仍需讀取最後訊息；移除 syncFromBackend/processEntityMessage 等複雜邏輯 |
-| ChatDatabase/Room | **保留但降級** | Widget 用；但不再做即時同步 |
-| EntityChipHelper | **移除** | 實體選擇由 Web UI 處理 |
-| SlashCommandRegistry | **移除** | 斜線指令由 Web UI 處理 |
-| ChatIntegrityValidator | **移除** | 不再需要雙層驗證 |
-| ChatPreferences | **部分保留** | Widget 需要的欄位保留 |
-| StateRepository 中的 chat 邏輯 | **移除** | processEntityMessage、processMessageQueue 不再需要 |
-
-## 實作步驟
-
-### Step 1: 建立 WebView 基礎設施
-**檔案**: 新增 `app/.../ui/chat/ChatWebViewManager.kt` (~150 行)
-
-- WebView 設定：
-  - `javaScriptEnabled = true`
-  - `domStorageEnabled = true`（localStorage 支援）
-  - `mediaPlaybackRequiresUserGesture = false`（語音播放）
-  - `mixedContentMode = MIXED_CONTENT_ALWAYS_ALLOW`
-  - `allowFileAccess = true`
-- WebChromeClient：
-  - `onShowFileChooser()` — 系統檔案選擇器（相機、圖庫、通用檔案）
-  - `onPermissionRequest()` — 麥克風權限轉交
-  - `onConsoleMessage()` — 轉發到 Timber log
-- WebViewClient：
-  - `onPageFinished()` — 隱藏載入動畫
-  - `onReceivedError()` — 顯示重試畫面
-  - `shouldOverrideUrlLoading()` — 外部連結用系統瀏覽器開啟
-- Cookie 管理：
-  - `CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true)`
-  - 確保 session cookie 在 App 重啟後持久化
-
-### Step 2: JS Bridge 介面
-**檔案**: 新增 `app/.../ui/chat/ChatJsBridge.kt` (~80 行)
-
-```kotlin
-class ChatJsBridge(private val activity: ChatActivity) {
-    @JavascriptInterface
-    fun updateWidget(lastMessage: String)  // 更新首頁 Widget
-
-    @JavascriptInterface
-    fun showToast(message: String)  // 原生 Toast
-
-    @JavascriptInterface
-    fun getDeviceId(): String  // 提供認證資訊
-
-    @JavascriptInterface
-    fun getDeviceSecret(): String  // 提供認證資訊
-
-    @JavascriptInterface
-    fun log(level: String, message: String)  // Timber 日誌
-
-    @JavascriptInterface
-    fun getAppVersion(): String  // 版本資訊
-}
+在 `mission_schema.sql` 新增：
+```sql
+CREATE TABLE IF NOT EXISTS note_pages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    device_id VARCHAR(64) NOT NULL,
+    note_id VARCHAR(128) NOT NULL,
+    html_content TEXT NOT NULL DEFAULT '',
+    drawing_data TEXT DEFAULT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(device_id, note_id)
+);
+CREATE INDEX IF NOT EXISTS idx_note_pages_device ON note_pages(device_id);
 ```
 
-### Step 3: 改造 ChatActivity.kt
-**檔案**: `app/.../ChatActivity.kt` (從 1,411 行精簡到 ~200 行)
+在 `db.js` 的 schema init 中加入 CREATE TABLE。
 
-**新的 onCreate 流程**：
-1. setContentView (新 layout：WebView + 載入動畫 + 底部導航)
-2. 初始化 BottomNavHelper、AiChatFabHelper
-3. 初始化 WebView + 注入 JS Bridge
-4. 載入 `https://eclawbot.com/portal/chat.html`
-5. 處理 Intent extras（深連結、指定實體等）
+## Step 2: Backend API — `mission.js` 新增 5 個端點
 
-**保留的原生能力**：
-- `onBackPressed` → WebView.canGoBack() 優先
-- `onActivityResult` → 轉交 WebChromeClient 的檔案選擇結果
-- 權限處理（CAMERA、RECORD_AUDIO）
-- 底部導航切換
-- AI Chat FAB
+| Method | Path | Purpose |
+|--------|------|---------|
+| PUT | `/api/mission/note/page` | 寫入/更新筆記靜態頁面 HTML |
+| GET | `/api/mission/note/page` | 讀取單一筆記靜態頁面 |
+| GET | `/api/mission/note/pages` | 列出 device 所有有 page 的 noteId |
+| DELETE | `/api/mission/note/page` | 刪除筆記靜態頁面 |
+| PUT | `/api/mission/note/page/drawing` | 儲存畫筆資料 |
 
-**刪除**（~1,200 行）：
-- RecyclerView/ChatAdapter 初始化
-- Entity chip 載入邏輯
-- 訊息發送流程
-- 語音錄製邏輯
-- 檔案選擇邏輯
-- 斜線指令自動完成
-- pollEntityMessages 輪詢
-- 訊息過濾 UI
-- Contact 管理 UI
+## Step 3: Frontend — mission.html
 
-### Step 4: 新增 WebView 專用 Layout
-**檔案**: 新增/修改 `app/.../res/layout/activity_chat.xml`
+### 3a: Note item 顯示 webview 圖示
+- `renderNoteItemHtml()` 若筆記有 page → 顯示 🌐 圖示按鈕
+- 點擊圖示打開全版面 viewer
 
-```xml
-<FrameLayout>
-    <!-- WebView 佔滿整個畫面 -->
-    <WebView android:id="@+id/webViewChat"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+### 3b: 全版面 Webview Viewer（overlay）
+- Fixed position overlay 覆蓋整個視窗
+- 頂部工具列：返回、標題、畫筆 toggle、色彩/粗細、橡皮擦、清除、儲存、關閉
+- `<iframe sandbox="allow-same-origin">` 顯示靜態 HTML
+- 覆蓋 `<canvas>` 用於畫筆
 
-    <!-- 載入動畫（WebView 載入完成後隱藏）-->
-    <ProgressBar android:id="@+id/loadingIndicator"
-        android:layout_gravity="center" />
+### 3c: 畫筆 Canvas
+- 透明 canvas overlay 在 iframe 之上
+- 工具：自由畫筆、5 色選擇、3 級粗細、橡皮擦、清除
+- 畫筆模式 toggle：開啟時 canvas 接收 pointer events，關閉時 iframe 可互動
+- 儲存為 JSON strokes → PUT drawing API
 
-    <!-- 離線錯誤畫面 -->
-    <LinearLayout android:id="@+id/offlineView"
-        android:visibility="gone">
-        <TextView text="@string/chat_offline_message" />
-        <Button text="@string/retry" />
-    </LinearLayout>
+### 3d: 內部連結
+- `eclaw://note/<noteId>` 攔截，切換到目標筆記頁面
+- 也支援 `eclaw://note-title/<TITLE>` 按標題跳轉
 
-    <!-- AI Chat FAB -->
-    <FloatingActionButton android:id="@+id/fabAiChat" />
+### 3e: 編輯筆記 dialog 新增 page 操作
+- 「管理網頁」按鈕 → 打開 HTML editor (textarea)
 
-    <!-- 底部導航 -->
-    <BottomNavigationView android:id="@+id/bottomNav" />
-</FrameLayout>
-```
+## Step 4: Skill Template 更新
+在 `eclaw-a2a-toolkit` 中新增 page API 文件
 
-### Step 5: Web Portal chat.html 適配
-**檔案**: `backend/public/portal/chat.html` (+50 行)
+## Step 5: i18n（8 語言）
+新增約 10 個 keys
 
-在 chat.html 頂部新增 WebView 偵測與適配邏輯：
+## Step 6: Jest + Integration Tests
 
-```javascript
-const isAndroidWebView = typeof AndroidBridge !== 'undefined';
-
-if (isAndroidWebView) {
-    // 1. 隱藏 Web 導航列和 footer（Android 有自己的）
-    document.addEventListener('DOMContentLoaded', () => {
-        document.querySelector('.navbar')?.remove();
-        document.querySelector('footer')?.remove();
-        // 調整 body padding（移除 nav 佔用的空間）
-        document.body.style.paddingTop = '0';
-        document.body.style.paddingBottom = '0';
-    });
-
-    // 2. 認證 — 用 Bridge 取得 device credentials
-    window._androidDeviceId = AndroidBridge.getDeviceId();
-    window._androidDeviceSecret = AndroidBridge.getDeviceSecret();
-
-    // 3. 覆寫 sendMessage 成功 callback，通知 Widget
-    const _origSend = window.sendMessage;
-    window.sendMessage = async function(...args) {
-        const result = await _origSend.apply(this, args);
-        try { AndroidBridge.updateWidget(args[0]); } catch(e) {}
-        return result;
-    };
-}
-```
-
-在 `auth.js` 中新增 WebView 認證路徑：
-```javascript
-// 若是 Android WebView 且無 session cookie，
-// 用 Bridge 提供的 device credentials 做 device-login
-if (isAndroidWebView && !currentUser) {
-    const deviceId = window._androidDeviceId;
-    const deviceSecret = window._androidDeviceSecret;
-    // POST /api/auth/device-login 取得 session
-}
-```
-
-### Step 6: 清理移除的程式碼
-
-**可刪除的檔案**：
-- `app/.../ui/chat/ChatAdapter.kt` (667 行)
-- `app/.../ui/chat/SlashCommandRegistry.kt`
-- `app/.../ui/chat/EntityChipHelper.kt`
-- `app/.../ui/chat/ChatIntegrityValidator.kt`
-- `app/.../ui/chat/LinkPreviewHelper.kt`
-- `app/.../ui/chat/RecordingIndicatorHelper.kt`
-
-**簡化的檔案**：
-- `ChatRepository.kt`：移除 syncFromBackend()、processEntityMessage() 等（~500 行）
-- `StateRepository.kt`：移除 processMessageQueue()、chat 相關邏輯
-- `ChatPreferences.kt`：只保留 Widget 需要的欄位
-
-### Step 7: 測試驗證
-
-**功能測試清單**：
-- [ ] WebView 載入 chat.html 成功
-- [ ] 自動認證（device credentials）
-- [ ] 發送文字訊息
-- [ ] 接收即時訊息（Socket.IO）
-- [ ] 圖片上傳（相機 + 圖庫）
-- [ ] 語音錄製與播放
-- [ ] 檔案上傳
-- [ ] 訊息反應（like/dislike）
-- [ ] 實體選擇（tab bar）
-- [ ] 斜線指令
-- [ ] 連結預覽
-- [ ] Widget 更新
-- [ ] 離線處理
-- [ ] 返回鍵行為
-- [ ] 螢幕旋轉保持狀態
-- [ ] 底部導航切換
-- [ ] 深連結開啟
-- [ ] i18n 語言同步
-
-## 風險與緩解
-
-| 風險 | 影響 | 緩解措施 |
-|------|------|----------|
-| WebView 載入慢 | UX 降級 | 載入動畫 + 後續可做 Service Worker 快取 |
-| 離線無法使用 | 功能中斷 | 離線提示 + 重試按鈕（原生 chat 也需要網路） |
-| Cookie 過期 | 認證失敗 | JS Bridge 自動重新注入 credentials |
-| 語音錄製 | Web Audio API 可能不支援 | Android WebView 自 Chrome 53+ 支援 getUserMedia |
-| 相機選擇器 | File input 不好用 | WebChromeClient.onShowFileChooser 提供原生選擇器 |
-
-## 預估改動量
-
-| 操作 | 行數 |
-|------|------|
-| 新增 ChatWebViewManager.kt | +150 行 |
-| 新增 ChatJsBridge.kt | +80 行 |
-| 新增/修改 activity_chat.xml | +40 行 |
-| 改造 ChatActivity.kt | -1,200 行 / +100 行 |
-| 修改 chat.html (WebView 適配) | +50 行 |
-| 修改 auth.js (WebView 認證) | +20 行 |
-| 刪除 ChatAdapter.kt 等 UI helpers | -967 行 |
-| 簡化 ChatRepository.kt | -500 行 |
-| 簡化 StateRepository.kt | -50 行 |
-| **淨減少** | **~2,300 行 Kotlin** |
+## 預計修改檔案
+| File | Change |
+|------|--------|
+| `backend/mission_schema.sql` | Add `note_pages` table |
+| `backend/db.js` | Add CREATE TABLE |
+| `backend/mission.js` | Add 5 API endpoints |
+| `backend/public/portal/mission.html` | Viewer overlay, canvas, note badge |
+| `backend/public/shared/i18n.js` | Add i18n keys × 8 languages |
+| `backend/data/skill-templates.json` | Add page API to toolkit |
+| `backend/tests/jest/note-pages.test.js` | Jest tests |
+| `backend/tests/test-note-pages.js` | Integration tests |

@@ -29,6 +29,7 @@ data class MissionUiState(
     val skills: List<MissionSkill> = emptyList(),
     val souls: List<MissionSoul> = emptyList(),
     val categoryOrder: Map<String, List<String>> = emptyMap(),
+    val notePageIds: Set<String> = emptySet(),
     val version: Int = 1,
     val lastSyncedAt: Long? = null,
     val error: String? = null,
@@ -798,5 +799,86 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
             }
         }
         saveToLocal()
+    }
+
+    // ============================================
+    // Note Pages (Webview static pages)
+    // ============================================
+
+    fun loadNotePages() {
+        val deviceId = deviceManager.getDeviceId() ?: return
+        val deviceSecret = deviceManager.getDeviceSecret() ?: return
+        viewModelScope.launch {
+            try {
+                val response = api.getNotePages(deviceId, deviceSecret)
+                if (response.success) {
+                    _uiState.update { it.copy(notePageIds = response.pages.map { p -> p.noteId }.toSet()) }
+                }
+            } catch (e: Exception) {
+                Timber.w(e, "[MISSION] loadNotePages failed: ${e.message}")
+            }
+        }
+    }
+
+    suspend fun getNotePage(noteId: String): com.hank.clawlive.data.remote.NotePageContentResponse? {
+        val deviceId = deviceManager.getDeviceId() ?: return null
+        val deviceSecret = deviceManager.getDeviceSecret() ?: return null
+        return try {
+            val response = api.getNotePage(deviceId, deviceSecret, noteId)
+            if (response.success) response else null
+        } catch (e: Exception) {
+            Timber.w(e, "[MISSION] getNotePage failed: ${e.message}")
+            null
+        }
+    }
+
+    suspend fun saveNotePage(noteId: String, htmlContent: String): Boolean {
+        val deviceId = deviceManager.getDeviceId() ?: return false
+        val deviceSecret = deviceManager.getDeviceSecret() ?: return false
+        return try {
+            val response = api.putNotePage(mapOf(
+                "deviceId" to deviceId, "deviceSecret" to deviceSecret,
+                "noteId" to noteId, "htmlContent" to htmlContent
+            ))
+            if (response.success) {
+                _uiState.update { it.copy(notePageIds = it.notePageIds + noteId) }
+            }
+            response.success
+        } catch (e: Exception) {
+            Timber.w(e, "[MISSION] saveNotePage failed: ${e.message}")
+            false
+        }
+    }
+
+    suspend fun deleteNotePage(noteId: String): Boolean {
+        val deviceId = deviceManager.getDeviceId() ?: return false
+        val deviceSecret = deviceManager.getDeviceSecret() ?: return false
+        return try {
+            val response = api.deleteNotePage(mapOf(
+                "deviceId" to deviceId, "deviceSecret" to deviceSecret, "noteId" to noteId
+            ))
+            if (response.success) {
+                _uiState.update { it.copy(notePageIds = it.notePageIds - noteId) }
+            }
+            response.success
+        } catch (e: Exception) {
+            Timber.w(e, "[MISSION] deleteNotePage failed: ${e.message}")
+            false
+        }
+    }
+
+    suspend fun saveDrawing(noteId: String, drawingData: String): Boolean {
+        val deviceId = deviceManager.getDeviceId() ?: return false
+        val deviceSecret = deviceManager.getDeviceSecret() ?: return false
+        return try {
+            val response = api.putNotePageDrawing(mapOf(
+                "deviceId" to deviceId, "deviceSecret" to deviceSecret,
+                "noteId" to noteId, "drawingData" to drawingData
+            ))
+            response.success
+        } catch (e: Exception) {
+            Timber.w(e, "[MISSION] saveDrawing failed: ${e.message}")
+            false
+        }
     }
 }

@@ -331,6 +331,32 @@ interface ClawApiService {
     ): MissionNotifyResponse
 
     // ============================================
+    // NOTE PAGES (Webview static pages)
+    // ============================================
+
+    @PUT("api/mission/note/page")
+    suspend fun putNotePage(@Body body: Map<String, @JvmSuppressWildcards Any>): NotePageResponse
+
+    @GET("api/mission/note/page")
+    suspend fun getNotePage(
+        @Query("deviceId") deviceId: String,
+        @Query("deviceSecret") deviceSecret: String,
+        @Query("noteId") noteId: String
+    ): NotePageContentResponse
+
+    @GET("api/mission/note/pages")
+    suspend fun getNotePages(
+        @Query("deviceId") deviceId: String,
+        @Query("deviceSecret") deviceSecret: String
+    ): NotePagesListResponse
+
+    @HTTP(method = "DELETE", path = "api/mission/note/page", hasBody = true)
+    suspend fun deleteNotePage(@Body body: Map<String, String>): NotePageResponse
+
+    @PUT("api/mission/note/page/drawing")
+    suspend fun putNotePageDrawing(@Body body: Map<String, @JvmSuppressWildcards Any>): NotePageResponse
+
+    // ============================================
     // AUTH - BIND EMAIL
     // ============================================
 
@@ -575,6 +601,35 @@ data class MissionNotifyResponse(
     val total: Int? = null,
     val error: String? = null
 )
+
+// ============ Note Pages Response Models ============
+
+data class NotePageResponse(
+    val success: Boolean,
+    val message: String? = null,
+    val noteId: String? = null,
+    val error: String? = null
+)
+
+data class NotePageContentResponse(
+    val success: Boolean,
+    val noteId: String? = null,
+    val htmlContent: String? = null,
+    val drawingData: String? = null,
+    val updatedAt: String? = null,
+    val error: String? = null
+)
+
+data class NotePagesListResponse(
+    val success: Boolean,
+    val pages: List<NotePageListItem> = emptyList(),
+    val error: String? = null
+) {
+    data class NotePageListItem(
+        val noteId: String,
+        val updatedAt: String? = null
+    )
+}
 
 // ============ Chat History Response Models ============
 

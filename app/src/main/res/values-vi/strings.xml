@@ -576,4 +576,19 @@ Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ qua email chín
     <string name="sc_login_failed">Đăng nhập thất bại</string>
     <string name="sc_qr_loading">Đang tải QR…</string>
     <string name="sc_qr_failed">Tải QR thất bại</string>
+
+    <!-- Note Pages (Webview) -->
+    <string name="note_page_viewer">Trang ghi chú</string>
+    <string name="note_page_draw">Vẽ</string>
+    <string name="note_page_edit">Sửa HTML</string>
+    <string name="note_page_eraser">Tẩy</string>
+    <string name="note_page_clear">Xóa</string>
+    <string name="note_page_clear_confirm">Xóa tất cả bản vẽ?</string>
+    <string name="note_page_save_draw">Lưu</string>
+    <string name="note_page_draw_saved">Đã lưu bản vẽ</string>
+    <string name="note_page_saved">Đã lưu trang</string>
+    <string name="note_page_empty">Chưa có nội dung trang.</string>
+    <string name="note_page_html_hint">Nhập nội dung HTML…</string>
+    <string name="note_page_open">Mở trang</string>
+    <string name="error_generic">Đã xảy ra lỗi</string>
 </resources>
