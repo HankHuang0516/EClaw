@@ -241,13 +241,13 @@
     <div class="container">
         <!-- Page Header -->
         <div class="page-header">
-            <h1 class="page-title">🔐 Env Variables</h1>
+            <h1 class="page-title" data-i18n="env_title">🔐 Env Variables</h1>
             <div class="header-actions">
                 <button class="lock-btn unlocked" id="lockBtn" onclick="toggleLock()">
                     <span id="lockIcon">🔓</span>
-                    <span id="lockLabel">Bot 可讀取</span>
+                    <span id="lockLabel" data-i18n="env_lock_readable">Bot 可讀取</span>
                 </button>
-                <button class="btn btn-outline btn-sm" id="addVarBtn" onclick="showVarDialog(null)">+ Add</button>
+                <button class="btn btn-outline btn-sm" id="addVarBtn" onclick="showVarDialog(null)" data-i18n="env_btn_add">+ Add</button>
             </div>
         </div>
 
@@ -255,14 +255,14 @@
         <div class="sub-tabs">
             <a class="sub-tab" href="mission.html">🎯 <span data-i18n="mc_title">Mission Control</span></a>
             <a class="sub-tab" href="schedule.html">📅 <span data-i18n="nav_schedule">Schedule</span></a>
-            <a class="sub-tab active" href="env-vars.html">🔐 Env Variables</a>
-            <a class="sub-tab" href="screen-control.html">📱 Remote Control</a>
+            <a class="sub-tab active" href="env-vars.html">🔐 <span data-i18n="nav_env_vars">Env Variables</span></a>
+            <a class="sub-tab" href="screen-control.html">📱 <span data-i18n="nav_remote_control">Remote Control</span></a>
         </div>
 
         <!-- Loading State -->
         <div class="loading-center" id="loadingState" style="text-align:center;padding:40px 0;">
             <div class="spinner" style="margin:0 auto 12px;"></div>
-            <div style="color:var(--text-secondary);">Loading...</div>
+            <div style="color:var(--text-secondary);" data-i18n="common_loading">Loading...</div>
         </div>
 
         <!-- Content -->
@@ -270,24 +270,23 @@
 
             <!-- Locked banner -->
             <div class="vars-locked-banner" id="lockedBanner">
-                🔒 已鎖定 — Bot 無法讀取任何變數
+                <span data-i18n="env_locked_banner">🔒 Locked — Bot cannot read any variables</span>
             </div>
 
             <!-- Vars card -->
             <div class="card vars-card" id="varsCard">
-                <div class="vars-notice">⚠️ 值僅儲存於此裝置，不寫入雲端資料庫。開啟此頁或 App 時自動同步至 Bot Session。</div>
+                <div class="vars-notice" data-i18n="env_notice">⚠️ Values are stored locally and synced to Bot session on page load. Not saved to cloud database.</div>
                 <div id="varsList"></div>
                 <div class="vars-add-row">
-                    <button class="btn btn-outline btn-sm" style="width:100%" onclick="showVarDialog(null)">+ 新增變數</button>
+                    <button class="btn btn-outline btn-sm" style="width:100%" onclick="showVarDialog(null)" data-i18n="env_btn_add_var">+ Add Variable</button>
                 </div>
             </div>
 
             <!-- How bots read -->
             <div class="card" style="margin-top:12px;">
-                <div style="font-size:13px;font-weight:600;margin-bottom:8px;">🤖 Bot 讀取方式</div>
-                <div style="font-size:12px;color:var(--text-secondary);line-height:1.8;">
-                    Bot 收到訊息時，push 通知底部會列出可用的 key 名稱（值不會出現）。<br>
-                    Bot 主動呼叫以下指令取得實際值：
+                <div style="font-size:13px;font-weight:600;margin-bottom:8px;" data-i18n="env_bot_read_title">🤖 How Bots Read Variables</div>
+                <div style="font-size:12px;color:var(--text-secondary);line-height:1.8;" data-i18n="env_bot_read_desc">
+                    When receiving messages, the push notification lists available key names (values are hidden). Bots call this command to get actual values:
                 </div>
                 <div style="position:relative;">
                     <div id="botCurlHint" style="margin-top:8px;padding:10px 12px;background:var(--input-bg);border-radius:var(--radius-sm);font-family:monospace;font-size:11px;color:var(--text-secondary);word-break:break-all;">
@@ -295,7 +294,7 @@
                     </div>
                     <button id="btnRevealCurlId" onclick="toggleCurlHintReveal()"
                         style="position:absolute;top:4px;right:6px;background:none;border:none;cursor:pointer;font-size:13px;padding:2px;opacity:0.55;"
-                        title="顯示/隱藏 Device ID">👁</button>
+                        data-i18n-title="env_toggle_device_id" title="Show/Hide Device ID">👁</button>
                 </div>
             </div>
 
@@ -352,14 +351,14 @@
             if (locked) {
                 btn.className = 'lock-btn locked';
                 icon.textContent = '🔒';
-                label.textContent = 'Bot 無法讀取';
+                label.textContent = i18n.t('env_lock_unreadable');
                 banner.classList.add('visible');
                 card.classList.add('locked-state');
                 addBtn.disabled = true;
             } else {
                 btn.className = 'lock-btn unlocked';
                 icon.textContent = '🔓';
-                label.textContent = 'Bot 可讀取';
+                label.textContent = i18n.t('env_lock_readable');
                 banner.classList.remove('visible');
                 card.classList.remove('locked-state');
                 addBtn.disabled = false;
@@ -371,7 +370,7 @@
             const vars = loadLocalVars();
             const keys = Object.keys(vars).sort();
             if (!keys.length) {
-                el.innerHTML = '<div class="mc-empty">尚無變數</div>';
+                el.innerHTML = '<div class="mc-empty">' + i18n.t('env_no_vars') + '</div>';
                 return;
             }
             el.innerHTML = keys.map(k => `
@@ -401,7 +400,7 @@
         }
 
         function deleteVar(key) {
-            if (!confirm(`刪除變數「${key}」？`)) return;
+            if (!confirm(i18n.t('env_confirm_delete').replace('{key}', key))) return;
             const vars = loadLocalVars();
             delete vars[key];
             saveLocalVars(vars);
@@ -414,7 +413,7 @@
             const c = document.getElementById('dialogContainer');
             c.innerHTML = `<div class="dialog-overlay" onclick="if(event.target===this)closeDialog()">
                 <div class="dialog">
-                    <div class="dialog-title">${isEdit ? '編輯變數' : '新增變數'}</div>
+                    <div class="dialog-title">${isEdit ? i18n.t('env_dialog_edit') : i18n.t('env_dialog_add')}</div>
                     <div class="dialog-field-label">Key</div>
                     <input id="dlg_var_key" placeholder="${i18n.t('env_placeholder_key')}"
                         value="${esc(editKey || '')}"
@@ -430,8 +429,8 @@
                             style="position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;font-size:14px;color:var(--text-muted)">👁</button>
                     </div>
                     <div class="dialog-actions">
-                        <button class="btn btn-outline" onclick="closeDialog()">取消</button>
-                        <button class="btn btn-primary" id="dlgVarSaveBtn">儲存</button>
+                        <button class="btn btn-outline" onclick="closeDialog()">${i18n.t('common_cancel')}</button>
+                        <button class="btn btn-primary" id="dlgVarSaveBtn">${i18n.t('common_save')}</button>
                     </div>
                 </div>
             </div>`;

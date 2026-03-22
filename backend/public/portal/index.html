@@ -374,7 +374,7 @@
                 Enter your new password.
             </p>
             <div class="form-group">
-                <label class="form-label" for="resetPassword">New Password</label>
+                <label class="form-label" for="resetPassword" data-i18n="login_label_new_password">New Password</label>
                 <input type="password" class="form-input" id="resetPassword" data-i18n="login_placeholder_reg_password"
                     placeholder="At least 6 characters">
                 <div class="password-hint" data-i18n="login_hint_password">Must contain both letters and numbers</div>
@@ -429,7 +429,7 @@
 
             if (params.get('verified') === 'true') {
                 showTab('login');
-                showMsg('loginError', 'Email verified! You can now log in.', 'success');
+                showMsg('loginError', i18n.t('login_msg_email_verified'), 'success');
             }
 
             if (params.get('reset')) {
@@ -506,9 +506,9 @@
         }
 
         function validatePassword(pw) {
-            if (pw.length < 6) return 'Password must be at least 6 characters';
-            if (!/[a-zA-Z]/.test(pw)) return 'Password must contain letters';
-            if (!/[0-9]/.test(pw)) return 'Password must contain numbers';
+            if (pw.length < 6) return i18n.t('login_err_pw_length');
+            if (!/[a-zA-Z]/.test(pw)) return i18n.t('login_err_pw_letters');
+            if (!/[0-9]/.test(pw)) return i18n.t('login_err_pw_numbers');
             return null;
         }
 
@@ -542,7 +542,7 @@
                 showMsg('loginError', e.message);
                 if (e.message.includes('not verified')) {
                     document.getElementById('loginError').innerHTML +=
-                        ' <a href="#" onclick="resendVerification(\'' + email + '\');return false;">Resend</a>';
+                        ' <a href="#" onclick="resendVerification(\'' + email + '\');return false;">' + i18n.t('login_link_resend') + '</a>';
                 }
             } finally {
                 btn.disabled = false;
@@ -588,14 +588,14 @@
 
         async function doForgot() {
             const email = document.getElementById('forgotEmail').value.trim();
-            if (!email) return showMsg('forgotMsg', 'Please enter your email');
+            if (!email) return showMsg('forgotMsg', i18n.t('login_msg_enter_email'));
 
             const btn = document.getElementById('forgotBtn');
             btn.disabled = true;
 
             try {
                 await apiCall('POST', '/api/auth/forgot-password', { email });
-                showMsg('forgotMsg', 'If the email exists, a reset link has been sent. Check your inbox.', 'success');
+                showMsg('forgotMsg', i18n.t('login_msg_reset_sent'), 'success');
             } catch (e) {
                 showMsg('forgotMsg', e.message);
             } finally {
@@ -617,7 +617,7 @@
 
             try {
                 await apiCall('POST', '/api/auth/reset-password', { token: resetToken, newPassword: password });
-                showMsg('resetMsg', 'Password reset! You can now log in.', 'success');
+                showMsg('resetMsg', i18n.t('login_msg_reset_done'), 'success');
                 setTimeout(() => { showTab('login'); }, 2000);
             } catch (e) {
                 showMsg('resetMsg', e.message);
@@ -654,7 +654,7 @@
         async function resendVerification(email) {
             try {
                 await apiCall('POST', '/api/auth/resend-verification', { email });
-                showMsg('loginError', 'Verification email sent! Check your inbox.', 'success');
+                showMsg('loginError', i18n.t('login_msg_verification_sent'), 'success');
             } catch (e) {
                 showMsg('loginError', e.message);
             }
@@ -688,8 +688,8 @@
         }
 
         async function doGoogleLogin() {
-            if (!googleClientId) return showMsg('loginError', 'Google login not configured');
-            if (typeof google === 'undefined') return showMsg('loginError', 'Google SDK loading...');
+            if (!googleClientId) return showMsg('loginError', i18n.t('login_err_google_not_configured'));
+            if (typeof google === 'undefined') return showMsg('loginError', i18n.t('login_err_sdk_loading'));
 
             try {
                 const client = google.accounts.oauth2.initTokenClient({
@@ -715,8 +715,8 @@
         }
 
         async function doFacebookLogin() {
-            if (!facebookAppId) return showMsg('loginError', 'Facebook login not configured');
-            if (typeof FB === 'undefined') return showMsg('loginError', 'Facebook SDK loading...');
+            if (!facebookAppId) return showMsg('loginError', i18n.t('login_err_facebook_not_configured'));
+            if (typeof FB === 'undefined') return showMsg('loginError', i18n.t('login_err_sdk_loading'));
 
             FB.login(function (response) {
                 if (response.authResponse) {

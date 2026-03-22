@@ -156,7 +156,7 @@
                 const user = meData.user;
 
                 // Populate confirm step
-                document.getElementById('userName').textContent = user.displayName || user.email || 'Unknown';
+                document.getElementById('userName').textContent = user.displayName || user.email || i18n.t('common_unknown');
                 document.getElementById('userEmail').textContent = user.email || '';
                 const avatarEl = document.getElementById('userAvatar');
                 if (user.avatarUrl) {
@@ -187,7 +187,7 @@
                 const data = await resp.json();
                 if (data.debugLog) showDebugLog(data.debugLog);
                 if (!resp.ok || !data.success) {
-                    throw new Error(data.error || 'Deletion failed');
+                    throw new Error(data.error || i18n.t('delete_account_err_delete_failed'));
                 }
                 document.getElementById('stepConfirm').style.display = 'none';
                 document.getElementById('stepDone').style.display = 'block';
