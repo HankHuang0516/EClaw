@@ -1,3 +1,10 @@
+## [1.144.2](https://github.com/HankHuang0516/EClaw/compare/v1.144.1...v1.144.2) (2026-03-22)
+
+
+### Bug Fixes
+
+* add targetDeviceId to all curl templates for explicit cross-device routing ([#426](https://github.com/HankHuang0516/EClaw/issues/426)) ([637f732](https://github.com/HankHuang0516/EClaw/commit/637f732f510ef3406ca882d1c68b73c62471ed7b))
+
 ## [1.144.1](https://github.com/HankHuang0516/EClaw/compare/v1.144.0...v1.144.1) (2026-03-22)
 
 
