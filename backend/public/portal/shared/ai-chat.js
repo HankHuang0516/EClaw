@@ -6,6 +6,65 @@
 (function () {
     'use strict';
 
+    // ── Debug helper: logs to console + AndroidBridge.log + collects for API report ──
+    const _debugLogs = [];
+    function dbg(msg) {
+        const line = '[AI Chat DBG] ' + msg;
+        console.log(line);
+        _debugLogs.push({ t: Date.now(), m: msg });
+        try { if (typeof AndroidBridge !== 'undefined') AndroidBridge.log('DEBUG', line); } catch (_) {}
+    }
+    // Send collected debug logs to server as a telemetry entry + create GitHub issue
+    function flushDebugToServer() {
+        if (_debugLogs.length === 0) return;
+        const report = _debugLogs.map(l => '[' + new Date(l.t).toISOString() + '] ' + l.m).join('\n');
+        const payload = {
+            type: 'ai_chat_debug',
+            data: {
+                report: report,
+                userAgent: navigator.userAgent,
+                url: window.location.href,
+                hasBridge: typeof AndroidBridge !== 'undefined',
+                fabExists: !!document.getElementById('aiChatFab'),
+                panelExists: !!document.getElementById('aiChatPanel'),
+                timestamp: new Date().toISOString()
+            }
+        };
+        // Send via telemetry API (needs deviceId/deviceSecret from currentUser or AndroidBridge)
+        let deviceId, deviceSecret;
+        try {
+            if (typeof AndroidBridge !== 'undefined') {
+                deviceId = AndroidBridge.getDeviceId();
+                deviceSecret = AndroidBridge.getDeviceSecret();
+            } else if (window.currentUser) {
+                deviceId = window.currentUser.deviceId;
+                deviceSecret = window.currentUser.deviceSecret;
+            }
+        } catch (_) {}
+        if (deviceId && deviceSecret) {
+            fetch('/api/device-telemetry', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ deviceId, deviceSecret, entries: [payload] })
+            }).catch(() => {});
+        }
+        // Also show a visible marker on the page for quick identification
+        try {
+            const marker = document.createElement('div');
+            marker.id = 'aiChatDebugMarker';
+            marker.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;z-index:999999;padding:6px 12px;font-size:12px;font-family:monospace;max-height:40vh;overflow:auto;white-space:pre-wrap;';
+            marker.textContent = '🔴 AI-CHAT DEBUG REPORT (tap to dismiss)\n' + report;
+            marker.addEventListener('click', () => marker.remove());
+            document.body.appendChild(marker);
+        } catch (_) {}
+    }
+
+    dbg('=== ai-chat.js IIFE executing ===');
+    dbg('typeof AndroidBridge: ' + (typeof AndroidBridge));
+    dbg('UA: ' + (navigator.userAgent || '').substring(0, 250));
+    dbg('Location: ' + window.location.href);
+    dbg('typeof currentUser: ' + (typeof window.currentUser));
+
     const STORAGE_KEY = 'eclaw_ai_chat_history';
     const PENDING_KEY = 'eclaw_ai_chat_pending';
     const MAX_HISTORY = 20;
@@ -135,6 +194,7 @@
 
     // ── Build DOM ─────────────────────────────
     function createWidget() {
+        dbg('createWidget() called');
         // FAB
         const fab = document.createElement('button');
         fab.id = 'aiChatFab';
@@ -746,24 +806,59 @@
 
     // ── Init ──────────────────────────────────
     function isAndroidWebView() {
-        return typeof AndroidBridge !== 'undefined' ||
-            /EClawAndroid/i.test(navigator.userAgent);
+        const hasBridge = typeof AndroidBridge !== 'undefined';
+        const ua = navigator.userAgent || '';
+        const hasUaTag = /EClawAndroid/i.test(ua);
+        const hasWv = /\bwv\b/.test(ua);
+        const hasAndroid = /Android/i.test(ua);
+        const result = hasBridge || hasUaTag;
+        dbg('isAndroidWebView()=' + result + ' | bridge=' + hasBridge + ' uaTag=' + hasUaTag + ' wv=' + hasWv + ' android=' + hasAndroid);
+        return result;
     }
 
     function init() {
-        // Skip AI chat widget in Android WebView — the app has its own AI chat
-        if (isAndroidWebView()) return;
+        dbg('init() called readyState=' + document.readyState);
+        dbg('typeof AndroidBridge=' + (typeof AndroidBridge));
 
+        // Skip AI chat widget in Android WebView — the app has its own AI chat
+        if (isAndroidWebView()) {
+            dbg('BLOCKED at init() — WebView detected');
+            flushDebugToServer();
+            return;
+        }
+        dbg('NOT blocked at init() — waiting for currentUser');
+
+        let checkCount = 0;
         const check = setInterval(() => {
+            checkCount++;
             if (window.currentUser) {
                 clearInterval(check);
-                if (isAndroidWebView()) return; // re-check after wait
+                dbg('currentUser found after ' + checkCount + ' checks (' + (checkCount * 200) + 'ms)');
+                dbg('Re-checking isAndroidWebView...');
+                if (isAndroidWebView()) {
+                    dbg('BLOCKED at currentUser check — late WebView detect');
+                    flushDebugToServer();
+                    return;
+                }
+                dbg('NOT blocked — creating widget. Existing fab=' + !!document.getElementById('aiChatFab'));
                 loadHistory();
                 createWidget();
+                dbg('Widget created. fab=' + !!document.getElementById('aiChatFab'));
+                // Flush debug report so we can see it even when widget IS created (the problem case)
+                flushDebugToServer();
                 resumePendingRequest();
             }
+            if (checkCount % 25 === 0) {
+                dbg('Still waiting for currentUser... check #' + checkCount);
+            }
         }, 200);
-        setTimeout(() => clearInterval(check), 10000);
+        setTimeout(() => {
+            clearInterval(check);
+            if (checkCount > 0 && !window.currentUser) {
+                dbg('Gave up waiting for currentUser after 10s');
+                flushDebugToServer();
+            }
+        }, 10000);
     }
 
     // ── Public API ────────────────────────────
