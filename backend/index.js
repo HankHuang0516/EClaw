@@ -340,9 +340,10 @@ app.get('/c/:code', (req, res) => {
 app.use('/mission', express.static(path.join(__dirname, 'public')));
 app.use('/portal', express.static(path.join(__dirname, 'public/portal'), {
     setHeaders: (res, filePath) => {
-        // Prevent CDN from serving stale JS after deploys (fixes entity-utils.js cache mismatch)
-        if (filePath.endsWith('.js')) {
-            res.set('Cache-Control', 'no-cache');
+        // Prevent CDN/WebView from caching stale HTML or JS after deploys
+        // no-store: prohibits any cache (CDN + browser); fixes #419 duplicate AI widget
+        if (filePath.endsWith('.html') || filePath.endsWith('.js')) {
+            res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
         }
     }
 }));

@@ -99,4 +99,19 @@ describe('AI Chat Widget WebView Guard (#419)', () => {
         expect(aiChatCode).toMatch(/AndroidBridge/);
         expect(aiChatCode).toMatch(/EClawAndroid/);
     });
+
+    test('ai-chat.js does NOT have visible debug banner (silent telemetry only)', () => {
+        const aiChatCode = fs.readFileSync(AI_CHAT_JS, 'utf-8');
+        // No visible debug elements — all debugging via silent telemetry API
+        expect(aiChatCode).not.toMatch(/background:\s*red/);
+        expect(aiChatCode).not.toMatch(/AI-CHAT DEBUG REPORT/);
+        expect(aiChatCode).toMatch(/Silent debug/);
+    });
+
+    test('ai-chat.js sends comprehensive debug data via telemetry', () => {
+        const aiChatCode = fs.readFileSync(AI_CHAT_JS, 'utf-8');
+        expect(aiChatCode).toMatch(/hasBlockFlag/);
+        expect(aiChatCode).toMatch(/scriptTags/);
+        expect(aiChatCode).toMatch(/readyState/);
+    });
 });

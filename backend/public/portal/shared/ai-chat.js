@@ -14,19 +14,28 @@
         _debugLogs.push({ t: Date.now(), m: msg });
         try { if (typeof AndroidBridge !== 'undefined') AndroidBridge.log('DEBUG', line); } catch (_) {}
     }
-    // Send collected debug logs to server as a telemetry entry + create GitHub issue
+    // Send collected debug logs silently to telemetry API (no visible UI)
     function flushDebugToServer() {
         if (_debugLogs.length === 0) return;
         const report = _debugLogs.map(l => '[' + new Date(l.t).toISOString() + '] ' + l.m).join('\n');
+        // Collect comprehensive environment snapshot for remote diagnosis
+        var scriptTags = [];
+        try { document.querySelectorAll('script[src]').forEach(function(s) { scriptTags.push(s.src); }); } catch (_) {}
         const payload = {
             type: 'ai_chat_debug',
             data: {
                 report: report,
                 userAgent: navigator.userAgent,
                 url: window.location.href,
+                referrer: document.referrer || '',
                 hasBridge: typeof AndroidBridge !== 'undefined',
+                hasBlockFlag: !!window.__blockAiChatWidget,
                 fabExists: !!document.getElementById('aiChatFab'),
                 panelExists: !!document.getElementById('aiChatPanel'),
+                debugMarkerExists: !!document.getElementById('aiChatDebugMarker'),
+                readyState: document.readyState,
+                scriptTags: scriptTags,
+                cookieLen: (document.cookie || '').length,
                 timestamp: new Date().toISOString()
             }
         };
@@ -48,15 +57,7 @@
                 body: JSON.stringify({ deviceId, deviceSecret, entries: [payload] })
             }).catch(() => {});
         }
-        // Also show a visible marker on the page for quick identification
-        try {
-            const marker = document.createElement('div');
-            marker.id = 'aiChatDebugMarker';
-            marker.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;z-index:999999;padding:6px 12px;font-size:12px;font-family:monospace;max-height:40vh;overflow:auto;white-space:pre-wrap;';
-            marker.textContent = '🔴 AI-CHAT DEBUG REPORT (tap to dismiss)\n' + report;
-            marker.addEventListener('click', () => marker.remove());
-            document.body.appendChild(marker);
-        } catch (_) {}
+        // Silent debug — no visible UI elements (telemetry only)
     }
 
     // Early exit if inline guard already detected Android WebView
