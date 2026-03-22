@@ -1,3 +1,10 @@
+## [1.145.2](https://github.com/HankHuang0516/EClaw/compare/v1.145.1...v1.145.2) (2026-03-22)
+
+
+### Bug Fixes
+
+* comprehensive audit — security, i18n, SEO, chat integrity ([#430](https://github.com/HankHuang0516/EClaw/issues/430)) ([b933349](https://github.com/HankHuang0516/EClaw/commit/b933349076f20edd32f97f253c304a82f4e19492))
+
 ## [1.145.1](https://github.com/HankHuang0516/EClaw/compare/v1.145.0...v1.145.1) (2026-03-22)
 
 
