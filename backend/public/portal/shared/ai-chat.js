@@ -746,6 +746,9 @@
 
     // ── Init ──────────────────────────────────
     function init() {
+        // Skip AI chat widget in Android WebView — the app has its own AI chat
+        if (typeof AndroidBridge !== 'undefined') return;
+
         const check = setInterval(() => {
             if (window.currentUser) {
                 clearInterval(check);
