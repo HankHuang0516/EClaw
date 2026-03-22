@@ -257,6 +257,57 @@ describe('Cross-device filter chip logic', () => {
     });
 });
 
+describe('Chat integrity validator direction check', () => {
+    /**
+     * Regression: chat.html integrity validator at line 1221 did NOT call isIncomingCrossDevice(),
+     * so it expected "sent" class for incoming cross-device messages that render as "received".
+     * This caused 19 false-positive "wrong direction" warnings in production.
+     * Fix: integrity validator now uses same isSent logic as rendering.
+     */
+    function computeExpectedClass(msg, myPublicCodeMap) {
+        const isPlatform = !msg.is_from_user && !msg.is_from_bot && msg.source === 'platform';
+        const isSent = computeIsSent(msg, myPublicCodeMap);
+        return isSent ? 'sent' : isPlatform ? 'platform' : 'received';
+    }
+
+    const myMap = { abc123: true };
+
+    it('incoming cross-device message expects "received" class (not "sent")', () => {
+        const msg = {
+            is_from_user: true,
+            is_from_bot: false,
+            source: 'xdevice:xyz789:LOBSTER->entity:0:CRAB',
+            text: 'Hello from another device'
+        };
+        expect(computeExpectedClass(msg, myMap)).toBe('received');
+    });
+
+    it('outgoing cross-device message expects "sent" class', () => {
+        const msg = {
+            is_from_user: true,
+            is_from_bot: false,
+            source: 'xdevice:abc123:CRAB->entity:0:LOBSTER',
+            text: 'Hello to another device'
+        };
+        expect(computeExpectedClass(msg, myMap)).toBe('sent');
+    });
+
+    it('normal user message expects "sent" class', () => {
+        const msg = { is_from_user: true, is_from_bot: false, source: 'entity:0:CRAB->1', text: 'hi' };
+        expect(computeExpectedClass(msg, myMap)).toBe('sent');
+    });
+
+    it('bot message expects "received" class', () => {
+        const msg = { is_from_user: false, is_from_bot: true, source: null, text: 'reply' };
+        expect(computeExpectedClass(msg, myMap)).toBe('received');
+    });
+
+    it('platform message expects "platform" class', () => {
+        const msg = { is_from_user: false, is_from_bot: false, source: 'platform', text: 'system msg' };
+        expect(computeExpectedClass(msg, myMap)).toBe('platform');
+    });
+});
+
 describe('Message isolation between devices', () => {
     it('chat history is per-device (no cross-device leakage)', () => {
         // This is a design verification: chat_messages are stored with device_id

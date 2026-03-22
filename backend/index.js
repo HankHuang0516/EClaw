@@ -13,6 +13,8 @@ const gatekeeper = require('./gatekeeper');
 const telemetry = require('./device-telemetry');
 const feedbackModule = require('./device-feedback');
 const chatIntegrity = require('./chat-integrity');
+// JWT secret: fail-safe random per process if env var is missing (tokens signed in one process won't verify in another)
+const JWT_SECRET_FALLBACK = process.env.JWT_SECRET || require('crypto').randomBytes(32).toString('hex');
 const scheduler = require('./scheduler');
 const notifModule = require('./notifications');
 const devicePrefs = require('./device-preferences');
@@ -59,7 +61,7 @@ io.use((socket, next) => {
         const tokenMatch = cookies.match(/token=([^;]+)/);
         if (tokenMatch) {
             try {
-                const decoded = jwt.verify(tokenMatch[1], process.env.JWT_SECRET || 'dev-secret');
+                const decoded = jwt.verify(tokenMatch[1], JWT_SECRET_FALLBACK);
                 socket.deviceId = decoded.deviceId;
                 socket.userId = decoded.userId;
                 return next();
@@ -115,7 +117,24 @@ app.use((req, res, next) => {
 });
 
 const cookieParser = require('cookie-parser');
-app.use(cors({ origin: true, credentials: true }));
+const ALLOWED_ORIGINS = [
+    'https://eclawbot.com',
+    'https://www.eclawbot.com',
+    'https://eclaw.up.railway.app'
+];
+app.use(cors({
+    origin: (origin, cb) => {
+        // Allow requests with no origin (mobile apps, curl, server-to-server)
+        if (!origin) return cb(null, true);
+        // Allow local development
+        if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) return cb(null, origin);
+        // Allow known production origins (credentials allowed)
+        if (ALLOWED_ORIGINS.includes(origin)) return cb(null, origin);
+        // Other origins: allow without credentials (Access-Control-Allow-Origin: * without Credentials header)
+        cb(null, false);
+    },
+    credentials: true
+}));
 app.use('/api/ai-support/chat', express.json({ limit: '10mb' }));
 app.use(express.json());
 app.use(cookieParser());
@@ -2713,6 +2732,11 @@ app.get('/api/link-preview', async (req, res) => {
         return res.status(400).json({ error: 'Invalid URL' });
     }
 
+    // SSRF protection: block private/internal IP ranges
+    if (isPrivateHost(parsedUrl.hostname)) {
+        return res.status(400).json({ error: 'Private/internal URLs are not allowed' });
+    }
+
     // Check cache
     const cached = linkPreviewCache.get(url);
     if (cached && (Date.now() - cached.ts < LINK_PREVIEW_CACHE_TTL)) {
@@ -3521,7 +3545,7 @@ app.delete('/api/device/entity', async (req, res) => {
     if ((!deviceId || !deviceSecret) && req.cookies && req.cookies.eclaw_session) {
         try {
             const jwt = require('jsonwebtoken');
-            const decoded = jwt.verify(req.cookies.eclaw_session, process.env.JWT_SECRET || 'dev-secret-change-in-production');
+            const decoded = jwt.verify(req.cookies.eclaw_session, JWT_SECRET_FALLBACK);
             if (decoded && decoded.deviceId && decoded.deviceSecret) {
                 deviceId = decoded.deviceId;
                 deviceSecret = decoded.deviceSecret;
@@ -4437,7 +4461,7 @@ app.put('/api/device/entity/name', async (req, res) => {
     if ((!deviceId || !deviceSecret) && req.cookies && req.cookies.eclaw_session) {
         try {
             const jwt = require('jsonwebtoken');
-            const decoded = jwt.verify(req.cookies.eclaw_session, process.env.JWT_SECRET || 'dev-secret-change-in-production');
+            const decoded = jwt.verify(req.cookies.eclaw_session, JWT_SECRET_FALLBACK);
             if (decoded && decoded.deviceId && decoded.deviceSecret) {
                 deviceId = decoded.deviceId;
                 deviceSecret = decoded.deviceSecret;
@@ -4525,7 +4549,7 @@ app.put('/api/device/entity/avatar', async (req, res) => {
     if ((!deviceId || !deviceSecret) && req.cookies && req.cookies.eclaw_session) {
         try {
             const jwt = require('jsonwebtoken');
-            const decoded = jwt.verify(req.cookies.eclaw_session, process.env.JWT_SECRET || 'dev-secret-change-in-production');
+            const decoded = jwt.verify(req.cookies.eclaw_session, JWT_SECRET_FALLBACK);
             if (decoded && decoded.deviceId && decoded.deviceSecret) {
                 deviceId = decoded.deviceId;
                 deviceSecret = decoded.deviceSecret;
@@ -4602,7 +4626,7 @@ app.post('/api/device/entity/avatar/upload', avatarUpload.single('file'), async 
     if ((!deviceId || !deviceSecret) && req.cookies && req.cookies.eclaw_session) {
         try {
             const jwt = require('jsonwebtoken');
-            const decoded = jwt.verify(req.cookies.eclaw_session, process.env.JWT_SECRET || 'dev-secret-change-in-production');
+            const decoded = jwt.verify(req.cookies.eclaw_session, JWT_SECRET_FALLBACK);
             if (decoded && decoded.deviceId && decoded.deviceSecret) {
                 deviceId = decoded.deviceId;
                 deviceSecret = decoded.deviceSecret;
@@ -6344,7 +6368,7 @@ app.post('/api/client/cross-speak', async (req, res) => {
     if (!deviceId && req.cookies && req.cookies.eclaw_session) {
         try {
             const jwt = require('jsonwebtoken');
-            const decoded = jwt.verify(req.cookies.eclaw_session, process.env.JWT_SECRET || 'dev-secret-change-in-production');
+            const decoded = jwt.verify(req.cookies.eclaw_session, JWT_SECRET_FALLBACK);
             if (decoded && decoded.deviceId) {
                 deviceId = decoded.deviceId;
                 console.log(`[ClientCrossSpeak:DEBUG] Resolved deviceId from cookie: ${deviceId}`);
@@ -11691,7 +11715,7 @@ app.get('/api/chat/history', async (req, res) => {
         const token = req.cookies && req.cookies.eclaw_session;
         if (token) {
             try {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret-change-in-production');
+                const decoded = jwt.verify(token, JWT_SECRET_FALLBACK);
                 if (decoded.deviceId !== deviceId) {
                     return res.status(401).json({ success: false, error: 'Invalid credentials' });
                 }
@@ -12021,7 +12045,7 @@ app.get('/api/device/files', async (req, res) => {
         const token = req.cookies && req.cookies.eclaw_session;
         if (token) {
             try {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret-change-in-production');
+                const decoded = jwt.verify(token, JWT_SECRET_FALLBACK);
                 if (decoded.deviceId !== deviceId) {
                     return res.status(401).json({ success: false, error: 'Invalid credentials' });
                 }
@@ -12139,7 +12163,7 @@ app.delete('/api/device/files/:fileId', async (req, res) => {
         const token = req.cookies && req.cookies.eclaw_session;
         if (token) {
             try {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret-change-in-production');
+                const decoded = jwt.verify(token, JWT_SECRET_FALLBACK);
                 if (decoded.deviceId !== deviceId) {
                     return res.status(401).json({ success: false, error: 'Invalid credentials' });
                 }

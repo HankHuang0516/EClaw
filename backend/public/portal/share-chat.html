@@ -8,6 +8,7 @@
     <meta name="description" content="Chat with an EClawbot entity">
     <link rel="icon" type="image/png" href="assets/favicon-32.png">
     <link rel="stylesheet" href="/portal/shared/style.css">
+    <link rel="canonical" href="https://eclawbot.com/portal/share-chat.html">
     <meta property="og:title" content="EClawbot - Chat">
     <meta property="og:type" content="website">
     <meta property="og:image" content="/assets/og-image.png">
@@ -123,6 +124,7 @@
 </head>
 
 <body>
+    <main>
     <div class="share-chat-wrap">
         <!-- Entity header -->
         <div class="entity-header" id="entityHeader">
@@ -531,7 +533,7 @@
             const data = await resp.json().catch(() => ({}));
             if (!resp.ok) {
                 dbg('error', `Send FAILED: ${resp.status}`, data);
-                showToast(`Send failed: ${data.message || resp.status}`, 'error');
+                showToast(`${t('sc_send_failed', 'Send failed')}: ${data.message || resp.status}`, 'error');
             } else {
                 dbg('info', `Send OK`, data);
                 if (data.pushed === false) {
@@ -542,7 +544,7 @@
             }
         } catch (e) {
             dbg('error', `Send network error: ${e.message}`);
-            showToast(`Network error: ${e.message}`, 'error');
+            showToast(`${t('sc_network_error', 'Network error')}: ${e.message}`, 'error');
         }
     }
 
@@ -738,15 +740,15 @@
                             body: JSON.stringify({ accessToken: resp.access_token })
                         });
                         const data = await apiResp.json();
-                        if (!apiResp.ok || !data.success) { showToast(data.error || 'Google login failed', 'error'); return; }
+                        if (!apiResp.ok || !data.success) { showToast(data.error || t('sc_google_login_failed', 'Google login failed'), 'error'); return; }
                         currentUser = data.user;
                         emailVerified = true;
                         handleSocialLoginSuccess();
-                    } catch (e) { showToast(e.message || 'Google login failed', 'error'); }
+                    } catch (e) { showToast(e.message || t('sc_google_login_failed', 'Google login failed'), 'error'); }
                 }
             });
             client.requestAccessToken();
-        } catch (e) { showToast(e.message || 'Google login failed', 'error'); }
+        } catch (e) { showToast(e.message || t('sc_google_login_failed', 'Google login failed'), 'error'); }
     }
 
     async function doFacebookLogin() {
@@ -760,11 +762,11 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ accessToken: response.authResponse.accessToken })
                 }).then(r => r.json()).then(data => {
-                    if (!data.success) { showToast(data.error || 'Facebook login failed', 'error'); return; }
+                    if (!data.success) { showToast(data.error || t('sc_facebook_login_failed', 'Facebook login failed'), 'error'); return; }
                     currentUser = data.user;
                     emailVerified = true;
                     handleSocialLoginSuccess();
-                }).catch(e => showToast(e.message || 'Facebook login failed', 'error'));
+                }).catch(e => showToast(e.message || t('sc_facebook_login_failed', 'Facebook login failed'), 'error'));
             }
         }, { scope: 'email,public_profile' });
     }
@@ -1006,5 +1008,6 @@
         return d.innerHTML;
     }
     </script>
+    </main>
 </body>
 </html>

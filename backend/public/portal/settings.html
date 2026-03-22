@@ -613,9 +613,11 @@
             }
         }
     </style>
+    <link rel="canonical" href="https://eclawbot.com/portal/settings.html">
 </head>
 
 <body>
+    <main>
     <div class="container" id="pageContent" style="display:none">
         <h1 class="page-title" data-i18n="settings_title">Settings</h1>
 
@@ -1114,7 +1116,7 @@
                 // Re-fetch to get consistent rendering with entity info
                 await refreshChannelAccounts();
             } catch (e) {
-                alert('Failed to generate API key: ' + e.message);
+                alert(i18n.t('toast_generate_key_failed') + ': ' + e.message);
             } finally {
                 btn.disabled = false;
                 btn.textContent = '+ New Key';
@@ -1145,13 +1147,13 @@
         }
 
         async function deleteChannelAccount(id) {
-            if (!confirm('Delete this channel API key? Any bound entities will be unbound.')) return;
+            if (!confirm(i18n.t('toast_delete_channel_confirm'))) return;
             try {
                 await apiCall('DELETE', `/api/channel/account/${id}`);
                 // Re-fetch fresh user data to sync channel accounts
                 await refreshChannelAccounts();
             } catch (e) {
-                alert('Failed to delete: ' + e.message);
+                alert(i18n.t('toast_delete_failed') + ': ' + e.message);
             }
         }
 
@@ -1335,13 +1337,13 @@
 
                 try {
                     await apiCall('POST', '/api/subscription/tappay/pay', { prime: result.card.prime });
-                    showToast('Premium subscription activated!', 'success');
+                    showToast(i18n.t('toast_subscription_activated'), 'success');
                     await loadSubscriptionStatus();
                     document.getElementById('tappaySection').classList.remove('visible');
                     document.getElementById('btnShowCard').textContent = i18n.t('settings_btn_subscribe');
                 } catch (e) {
-                    cardError.textContent = e.message || 'Payment failed';
-                    showToast('Payment failed: ' + e.message, 'error');
+                    cardError.textContent = e.message || i18n.t('toast_payment_failed');
+                    showToast(i18n.t('toast_payment_failed') + ': ' + e.message, 'error');
                 } finally {
                     btnPay.disabled = !canGetPrime;
                     btnPay.style.display = '';
@@ -1368,11 +1370,11 @@
 
             try {
                 await apiCall('POST', '/api/subscription/cancel');
-                showToast('Subscription cancelled. Access continues until period end.', 'info');
+                showToast(i18n.t('toast_subscription_cancelled'), 'info');
                 closeCancelDialog();
                 await loadSubscriptionStatus();
             } catch (e) {
-                showToast('Failed to cancel: ' + e.message, 'error');
+                showToast(i18n.t('toast_cancel_failed') + ': ' + e.message, 'error');
             } finally {
                 btn.disabled = false;
                 btn.textContent = i18n.t('settings_btn_cancel');
@@ -1472,7 +1474,7 @@
                 if (key === 'feedback_resolved') prefs['feedback_reply'] = enabled;
                 await apiCall('PUT', '/api/notification-preferences', { prefs });
             } catch (e) {
-                showToast('Failed to update preference', 'error');
+                showToast(i18n.t('toast_preference_update_failed'), 'error');
             }
         }
 
@@ -1496,7 +1498,7 @@
                 prefs[key] = enabled;
                 await apiCall('PUT', '/api/device-preferences', { prefs });
             } catch (e) {
-                showToast('Failed to update preference', 'error');
+                showToast(i18n.t('toast_preference_update_failed'), 'error');
             }
         }
 
@@ -1555,13 +1557,13 @@
                 } else {
                     const vapidRes = await apiCall('GET', '/api/push/vapid-public-key');
                     if (!vapidRes.publicKey) {
-                        showToast('Push not configured on server', 'error');
+                        showToast(i18n.t('toast_push_not_configured'), 'error');
                         return;
                     }
 
                     const permission = await Notification.requestPermission();
                     if (permission !== 'granted') {
-                        showToast('Notification permission denied', 'error');
+                        showToast(i18n.t('toast_notification_denied'), 'error');
                         return;
                     }
 
@@ -1573,7 +1575,7 @@
                     showToast(typeof i18n !== 'undefined' ? i18n.t('notif_push_enabled') : 'Push enabled', 'success');
                 }
             } catch (e) {
-                showToast('Failed: ' + e.message, 'error');
+                showToast(i18n.t('toast_error') + ': ' + e.message, 'error');
             } finally {
                 btn.disabled = false;
                 updatePushToggle();
@@ -1695,7 +1697,7 @@
                 document.getElementById('btnMark').textContent = 'Marked';
                 setTimeout(() => { document.getElementById('btnMark').textContent = 'Mark'; }, 5000);
             } catch (e) {
-                showToast('Mark failed: ' + e.message, 'error');
+                showToast(i18n.t('toast_mark_failed') + ': ' + e.message, 'error');
             }
         }
 
@@ -1794,6 +1796,7 @@
             }
         });
     </script>
+    </main>
 </body>
 
 </html>

@@ -1049,9 +1049,11 @@
         .ac-tag-input input { flex: 1; }
         .ac-tag-input button { flex-shrink: 0; }
     </style>
+    <link rel="canonical" href="https://eclawbot.com/portal/dashboard.html">
 </head>
 
 <body>
+    <main>
     <div class="container">
         <!-- Page Header -->
         <div class="page-header">
@@ -1477,11 +1479,11 @@
                     deviceId: currentUser.deviceId,
                     deviceSecret: currentUser.deviceSecret
                 });
-                showToast('New entity slot created', 'success');
+                showToast(i18n.t('toast_slot_created'), 'success');
                 if (window.telemetry) telemetry.trackAction('add_entity_slot');
                 await loadEntities();
             } catch (e) {
-                showToast('Failed to add slot: ' + e.message, 'error');
+                showToast(i18n.t('toast_slot_create_failed') + ': ' + e.message, 'error');
             }
         }
 
@@ -1795,10 +1797,10 @@
                 if (data.success) {
                     showToast(i18n.t('dash_xd_saved'), 'success');
                 } else {
-                    showToast(data.message || 'Error', 'error');
+                    showToast(data.message || i18n.t('toast_error'), 'error');
                 }
             } catch (err) {
-                showToast('Save failed: ' + err.message, 'error');
+                showToast(i18n.t('toast_save_failed') + ': ' + err.message, 'error');
             }
             if (window.telemetry) telemetry.trackAction('xd_settings_save', { entityId: entityId });
         }
@@ -1815,10 +1817,10 @@
                     showToast(i18n.t('dash_xd_reset_done'), 'success');
                     loadXdSettings(entityId);
                 } else {
-                    showToast(data.message || 'Error', 'error');
+                    showToast(data.message || i18n.t('toast_error'), 'error');
                 }
             } catch (err) {
-                showToast('Reset failed: ' + err.message, 'error');
+                showToast(i18n.t('toast_reset_failed') + ': ' + err.message, 'error');
             }
             if (window.telemetry) telemetry.trackAction('xd_settings_reset', { entityId: entityId });
         }
@@ -1880,7 +1882,7 @@
         function addCapability(entityId) {
             var container = document.getElementById('acCaps' + entityId);
             if (container.children.length >= 10) {
-                showToast('Maximum 10 capabilities', 'warning');
+                showToast(i18n.t('toast_max_capabilities'), 'warning');
                 return;
             }
             appendCapabilityRow(entityId, '', '');
@@ -1904,7 +1906,7 @@
             var val = (input.value || '').trim();
             if (!val) return;
             if (container.children.length >= maxCount) {
-                showToast('Maximum ' + maxCount + ' items', 'warning');
+                showToast(i18n.t('toast_max_items').replace('{count}', maxCount), 'warning');
                 return;
             }
             var span = document.createElement('span');
@@ -1987,10 +1989,10 @@
                 if (data.success) {
                     showToast(i18n.t('dash_id_saved'), 'success');
                 } else {
-                    showToast(data.error || 'Error saving', 'error');
+                    showToast(data.error || i18n.t('toast_error'), 'error');
                 }
             } catch (err) {
-                showToast('Save failed: ' + err.message, 'error');
+                showToast(i18n.t('toast_save_failed') + ': ' + err.message, 'error');
             }
             if (window.telemetry) telemetry.trackAction('identity_save', { entityId: entityId });
         }
@@ -2007,10 +2009,10 @@
                     showToast(i18n.t('dash_id_cleared'), 'success');
                     loadIdentity(entityId);
                 } else {
-                    showToast(data.error || 'Error', 'error');
+                    showToast(data.error || i18n.t('toast_error'), 'error');
                 }
             } catch (err) {
-                showToast('Clear failed: ' + err.message, 'error');
+                showToast(i18n.t('toast_clear_failed') + ': ' + err.message, 'error');
             }
             if (window.telemetry) telemetry.trackAction('identity_delete', { entityId: entityId });
         }
@@ -2185,7 +2187,7 @@
                 } else if (result.webhookBroken) {
                     showWebhookBrokenDialog(entityId, result.error);
                 } else {
-                    showToast(result.error || 'Refresh failed', 'error');
+                    showToast(result.error || i18n.t('toast_refresh_failed'), 'error');
                 }
             } catch (e) {
                 if (e.status === 429) {
@@ -2193,7 +2195,7 @@
                     showToast(i18n.t('dash_refresh_cooldown', { s: remaining }), 'error');
                 } else {
                     if (window.telemetry) telemetry.trackError(e, { action: 'refresh_entity' });
-                    showToast(e.message || 'Refresh failed', 'error');
+                    showToast(e.message || i18n.t('toast_refresh_failed'), 'error');
                 }
             } finally {
                 btnEl.disabled = false;
@@ -2335,7 +2337,7 @@
                     });
                 };
                 reader.onerror = function() {
-                    showToast('Failed to read file', 'error');
+                    showToast(i18n.t('toast_read_file_failed'), 'error');
                     isPreviewActive = false;
                     uploadArea.style.cursor = 'pointer';
                 };
@@ -2379,13 +2381,13 @@
                         renderEntities();
                         showToast(i18n.t('dash_avatar_uploaded') || 'Avatar updated!', 'success');
                     } else {
-                        showToast(data.message || 'Upload failed', 'error');
+                        showToast(data.message || i18n.t('toast_upload_failed'), 'error');
                         uploadArea.classList.remove('uploading');
                         spinner.remove();
                         fileInput.value = '';
                     }
                 } catch (err) {
-                    showToast(err.message || 'Upload error', 'error');
+                    showToast(err.message || i18n.t('toast_upload_failed'), 'error');
                     uploadArea.classList.remove('uploading');
                     spinner.remove();
                     fileInput.value = '';
@@ -2469,10 +2471,10 @@
                         renderEntities();
                         showToast(i18n.t('dash_rename_success'), 'success');
                     } else {
-                        showToast(data.message || 'Failed', 'error');
+                        showToast(data.message || i18n.t('toast_error'), 'error');
                     }
                 } catch (err) {
-                    showToast(err.message || 'Error', 'error');
+                    showToast(err.message || i18n.t('toast_error'), 'error');
                 } finally {
                     overlay.remove();
                 }
@@ -2531,7 +2533,7 @@
             const btn = document.getElementById('btnGenerate');
 
             if (selectedSlot === null) {
-                showToast('No available slot selected. Add a new slot first.', 'error');
+                showToast(i18n.t('toast_no_slot_selected'), 'error');
                 return;
             }
 
@@ -2630,7 +2632,7 @@
 
         function copyCommand() {
             if (!currentCode) {
-                showToast('No active code to copy', 'error');
+                showToast(i18n.t('toast_no_code_to_copy'), 'error');
                 return;
             }
 
@@ -2647,7 +2649,7 @@
 
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(command).then(() => {
-                    showToast('Command copied to clipboard!', 'success');
+                    showToast(i18n.t('toast_copied_clipboard'), 'success');
                 }).catch(() => {
                     fallbackCopy(command);
                 });
@@ -2665,9 +2667,9 @@
             ta.select();
             try {
                 document.execCommand('copy');
-                showToast('Command copied to clipboard!', 'success');
+                showToast(i18n.t('toast_copied_clipboard'), 'success');
             } catch (e) {
-                showToast('Failed to copy - please copy manually', 'error');
+                showToast(i18n.t('toast_copy_failed'), 'error');
             }
             document.body.removeChild(ta);
         }
@@ -2710,7 +2712,7 @@
 
         function confirmRemove(entityId, displayName) {
             if (entities.length <= 1) {
-                showToast('Cannot delete the last entity', 'error');
+                showToast(i18n.t('toast_cannot_delete_last'), 'error');
                 return;
             }
             const overlay = document.createElement('div');
@@ -2746,13 +2748,13 @@
                 const overlay = btnEl.closest('.confirm-overlay');
                 if (overlay) overlay.remove();
 
-                showToast('Entity deleted', 'success');
+                showToast(i18n.t('toast_entity_deleted'), 'success');
                 if (window.telemetry) telemetry.trackAction('entity_delete_permanent', { entityId: entityId });
 
                 if (isEditMode) toggleEditMode();
                 await loadEntities();
             } catch (e) {
-                showToast('Failed to delete: ' + e.message, 'error');
+                showToast(i18n.t('toast_delete_failed') + ': ' + e.message, 'error');
                 btnEl.disabled = false;
                 btnEl.textContent = i18n.t('dash_btn_remove');
             }
@@ -2956,7 +2958,7 @@
                     });
                     borrowStatus.tosAgreed = true;
                 } catch (e) {
-                    showToast('Failed to record agreement: ' + e.message, 'error');
+                    showToast(i18n.t('toast_agreement_failed') + ': ' + e.message, 'error');
                     return;
                 }
             }
@@ -2980,12 +2982,12 @@
                     await loadBorrowStatus();
                     await loadEntities();
                 } else {
-                    showToast(result.error || result.message || 'Bind failed', 'error');
+                    showToast(result.error || result.message || i18n.t('toast_bind_failed'), 'error');
                     btn.disabled = false;
                     updateBorrowButtons();
                 }
             } catch (e) {
-                showToast(e.message || 'Bind failed', 'error');
+                showToast(e.message || i18n.t('toast_bind_failed'), 'error');
                 btn.disabled = false;
                 updateBorrowButtons();
             }
@@ -3116,14 +3118,14 @@
                         await loadBorrowStatus();
                         await loadEntities();
                     } else {
-                        const errorMsg = bindResult.error === 'sold_out' ? i18n.t('borrow_personal_sold_out') : (bindResult.error || bindResult.message || 'Bind failed');
+                        const errorMsg = bindResult.error === 'sold_out' ? i18n.t('borrow_personal_sold_out') : (bindResult.error || bindResult.message || i18n.t('toast_bind_failed'));
                         errEl.textContent = errorMsg;
                         btnPay.disabled = false;
                         btnPay.style.display = '';
                         loading.style.display = 'none';
                     }
                 } catch (e) {
-                    errEl.textContent = e.message || 'Payment failed';
+                    errEl.textContent = e.message || i18n.t('toast_payment_failed');
                     btnPay.disabled = !canGetPrime;
                     btnPay.style.display = '';
                     loading.style.display = 'none';
@@ -3154,7 +3156,7 @@
                     return;
                 }
                 // Other error
-                showToast(result.error || result.message || 'Bind failed', 'error');
+                showToast(result.error || result.message || i18n.t('toast_bind_failed'), 'error');
                 btn.disabled = false;
                 updateBorrowButtons();
             } catch (e) {
@@ -3162,7 +3164,7 @@
                     // No available paid slots - show TapPay dialog for payment
                     showTapPayDialog();
                 } else {
-                    showToast(e.message || 'Bind failed', 'error');
+                    showToast(e.message || i18n.t('toast_bind_failed'), 'error');
                 }
                 btn.disabled = false;
                 updateBorrowButtons();
@@ -3249,10 +3251,10 @@
                     await loadBorrowStatus();
                     await loadEntities();
                 } else {
-                    showToast(result.message || 'Unbind failed', 'error');
+                    showToast(result.message || i18n.t('toast_unbind_failed'), 'error');
                 }
             } catch (e) {
-                showToast(e.message || 'Unbind failed', 'error');
+                showToast(e.message || i18n.t('toast_unbind_failed'), 'error');
             }
         }
 
@@ -3262,6 +3264,7 @@
             if (refreshInterval) clearInterval(refreshInterval);
         });
     </script>
+    </main>
 </body>
 
 </html>
