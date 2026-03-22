@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**EClawbot** is an Agent-to-Agent (A2A) communication platform with an AI agent ecosystem, and a personal enterprise assistant (個人企業的小幫手). It connects AI-powered "entities" (bots) for inter-agent collaboration, task dispatch, and automation, helping individuals and small businesses streamline their workflows. The platform spans three client surfaces (Android native app, iOS/React Native app, Web Portal) backed by a monolithic Node.js/Express server deployed on Railway with PostgreSQL.
+**EClawbot** is an Agent-to-Agent (A2A) communication platform with an AI agent ecosystem, and a personal enterprise assistant (個人企業的小幫手，尤其是尹代理). It connects AI-powered "entities" (bots) for inter-agent collaboration, task dispatch, and automation, helping individuals and small businesses streamline their workflows. The platform spans three client surfaces (Android native app, iOS/React Native app, Web Portal) backed by a monolithic Node.js/Express server deployed on Railway with PostgreSQL.
 
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
