@@ -610,6 +610,111 @@
                 justify-content: center;
             }
         }
+
+        /* ===== Webview Page Viewer Overlay ===== */
+        .wv-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: var(--bg, #1a1a2e);
+            display: flex;
+            flex-direction: column;
+        }
+        .wv-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: var(--card-bg, #22223a);
+            border-bottom: 1px solid var(--card-border);
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+        .wv-toolbar button {
+            border: none;
+            background: var(--input-bg);
+            color: var(--text);
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.15s;
+        }
+        .wv-toolbar button:hover { background: var(--card-border); }
+        .wv-toolbar button.active { background: var(--primary); color: #fff; }
+        .wv-toolbar-title {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
+        }
+        .wv-toolbar-sep { width: 1px; height: 20px; background: var(--card-border); flex-shrink: 0; }
+        .wv-body {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        .wv-body iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #fff;
+        }
+        .wv-body canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .wv-body canvas.drawing {
+            pointer-events: auto;
+            cursor: crosshair;
+        }
+        .wv-color-picker {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .wv-color-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: border-color 0.15s;
+        }
+        .wv-color-dot.active { border-color: #fff; }
+        .wv-size-picker {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .wv-size-dot {
+            border-radius: 50%;
+            background: var(--text);
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.15s;
+        }
+        .wv-size-dot.active { border-color: var(--primary); }
+
+        /* Note page badge */
+        .note-page-btn {
+            flex-shrink: 0;
+            border: none;
+            background: transparent;
+            color: var(--primary);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: var(--radius-sm);
+            transition: background 0.15s;
+        }
+        .note-page-btn:hover { background: var(--input-bg); }
     </style>
 </head>
 
@@ -726,6 +831,28 @@
         </div>
     </div>
 
+    <!-- Webview Page Viewer Overlay -->
+    <div id="wvOverlay" class="wv-overlay" style="display:none">
+        <div class="wv-toolbar">
+            <button onclick="closePageViewer()" title="Back">←</button>
+            <span class="wv-toolbar-title" id="wvTitle"></span>
+            <div class="wv-toolbar-sep"></div>
+            <button id="wvDrawToggle" onclick="toggleDrawMode()" data-i18n="mc_note_draw">Draw</button>
+            <div class="wv-color-picker" id="wvColors" style="display:none"></div>
+            <div class="wv-size-picker" id="wvSizes" style="display:none"></div>
+            <button id="wvEraserBtn" style="display:none" onclick="toggleEraser()" data-i18n="mc_note_draw_eraser">Eraser</button>
+            <button id="wvClearBtn" style="display:none" onclick="clearDrawing()" data-i18n="mc_note_draw_clear">Clear</button>
+            <button id="wvSaveDrawBtn" style="display:none" onclick="saveDrawing()" data-i18n="mc_note_draw_save">Save</button>
+            <div class="wv-toolbar-sep"></div>
+            <button id="wvEditHtmlBtn" onclick="editPageHtml()" data-i18n="mc_note_edit_page">Edit HTML</button>
+            <button onclick="closePageViewer()" data-i18n="mc_note_page_close">Close</button>
+        </div>
+        <div class="wv-body">
+            <iframe id="wvIframe" sandbox="allow-same-origin allow-scripts"></iframe>
+            <canvas id="wvCanvas"></canvas>
+        </div>
+    </div>
+
     <!-- Dialog container -->
     <div id="dialogContainer"></div>
     <!-- Context menu container -->
@@ -753,6 +880,7 @@
         let autoSaveTimer = null;
         let refreshTimer = null;
         let boundEntities = [];
+        let notePageIds = new Set(); // noteIds that have webview pages
 
         // ENTITY_CHARS_DEFAULT, getAvatarForEntity, getEntityDisplayName, getEntityLabel
         // are provided by shared/entity-utils.js
@@ -866,6 +994,7 @@
             loadSoulTemplates();
             loadRuleTemplates();
             await downloadDashboard();
+            loadNotePages(); // load which notes have webview pages (async, non-blocking)
             syncVarsToServer(); // auto-sync local vars to server in-memory on load
 
             document.getElementById('loadingState').style.display = 'none';
@@ -1471,12 +1600,14 @@
         }
 
         function renderNoteItemHtml(n) {
+            const hasPage = notePageIds.has(n.id);
             return `
             <div class="mc-item" draggable="true" data-item-id="${n.id}"
                  ondragstart="onItemDragStart(event,'${n.id}','notes')" ondragend="onItemDragEnd(event)"
                  onclick="showEditNote('${n.id}')" oncontextmenu="showNoteMenu(event,'${n.id}')">
                 <div class="item-row">
                     <span class="item-title">${esc(n.title)}</span>
+                    ${hasPage ? `<button class="note-page-btn" onclick="event.stopPropagation();openPageViewer('${n.id}')" title="${i18n.t('mc_note_open_page')}">🌐</button>` : ''}
                     <button class="item-delete" onclick="event.stopPropagation();deleteNote('${n.id}')" title="${i18n.t('common_delete')}">&times;</button>
                 </div>
                 <div class="item-detail">${esc((n.content || '').slice(0, 80))}</div>
@@ -1747,6 +1878,28 @@
                 markChanged();
                 renderNotes();
             });
+
+            // Inject "Manage Page" button into dialog
+            const actions = document.querySelector('#dialogContainer .dialog-actions');
+            if (actions) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = 'btn btn-outline';
+                pageBtn.textContent = i18n.t('mc_note_edit_page');
+                pageBtn.onclick = () => { closeDialog(); showPageEditorDialog(id, note.title, ''); editPageHtmlForNote(id); };
+                actions.insertBefore(pageBtn, actions.firstChild);
+            }
+        }
+
+        function editPageHtmlForNote(noteId) {
+            const note = dashboard.notes.find(n => n.id === noteId);
+            if (!note) return;
+            apiCall('GET',
+                `/api/mission/note/page?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}&noteId=${encodeURIComponent(noteId)}`
+            ).then(data => {
+                showPageEditorDialog(noteId, note.title, data.success ? data.htmlContent : '');
+            }).catch(() => {
+                showPageEditorDialog(noteId, note.title, '');
+            });
         }
 
         function deleteNote(id) {
@@ -1775,6 +1928,354 @@
             };
 
             setTimeout(() => document.addEventListener('click', () => menu.style.display = 'none', { once: true }), 10);
+        }
+
+        // ========== Note Pages (Webview) ==========
+        async function loadNotePages() {
+            try {
+                const data = await apiCall('GET',
+                    `/api/mission/note/pages?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`
+                );
+                if (data.success) {
+                    notePageIds = new Set(data.pages.map(p => p.noteId));
+                    renderNotes();
+                }
+            } catch (e) { console.warn('Failed to load note pages:', e); }
+        }
+
+        // --- Viewer state ---
+        let viewerNoteId = null;
+        let drawMode = false;
+        let eraserMode = false;
+        let drawColor = '#ff0000';
+        let drawSize = 3;
+        let drawStrokes = []; // [{color, size, eraser, points:[{x,y}]}]
+        let currentStroke = null;
+        const DRAW_COLORS = ['#ff0000', '#0066ff', '#00cc44', '#ff9900', '#ffffff'];
+        const DRAW_SIZES = [2, 4, 8];
+
+        async function openPageViewer(noteId) {
+            const note = dashboard.notes.find(n => n.id === noteId);
+            if (!note) return;
+            viewerNoteId = noteId;
+            drawStrokes = [];
+            currentStroke = null;
+            drawMode = false;
+            eraserMode = false;
+
+            document.getElementById('wvTitle').textContent = note.title;
+            document.getElementById('wvOverlay').style.display = 'flex';
+            showDrawTools(false);
+
+            // Load page content
+            try {
+                const data = await apiCall('GET',
+                    `/api/mission/note/page?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}&noteId=${encodeURIComponent(noteId)}`
+                );
+                if (data.success) {
+                    renderPageIframe(data.htmlContent);
+                    if (data.drawingData) {
+                        try { drawStrokes = JSON.parse(data.drawingData); } catch (e) { drawStrokes = []; }
+                    }
+                    resizeCanvas();
+                    redrawCanvas();
+                }
+            } catch (e) {
+                renderPageIframe(`<html><body style="padding:20px;font-family:sans-serif;color:#888"><p>${i18n.t('mc_note_page_empty') || 'No page content yet.'}</p></body></html>`);
+                resizeCanvas();
+            }
+        }
+
+        function renderPageIframe(html) {
+            const iframe = document.getElementById('wvIframe');
+            // Inject a script that intercepts eclaw:// links via postMessage (safe, no XSS)
+            const linkInterceptScript = `<script>
+                document.addEventListener('click', function(e) {
+                    var a = e.target.closest('a[href]');
+                    if (!a) return;
+                    var href = a.getAttribute('href');
+                    if (href && href.startsWith('eclaw://')) {
+                        e.preventDefault();
+                        parent.postMessage({ type: 'eclaw-navigate', href: href }, '*');
+                    }
+                });
+            <\/script>`;
+            iframe.srcdoc = html + linkInterceptScript;
+        }
+
+        // Handle eclaw:// navigation via postMessage from iframe
+        window.addEventListener('message', function(e) {
+            if (!e.data || e.data.type !== 'eclaw-navigate') return;
+            const href = e.data.href || '';
+            const noteMatch = href.match(/^eclaw:\/\/note\/(.+)$/);
+            if (noteMatch) {
+                const noteId = decodeURIComponent(noteMatch[1]);
+                const note = dashboard.notes.find(n => n.id === noteId);
+                if (note && notePageIds.has(noteId)) openPageViewer(noteId);
+                return;
+            }
+            const titleMatch = href.match(/^eclaw:\/\/note-title\/(.+)$/);
+            if (titleMatch) {
+                const titleLower = decodeURIComponent(titleMatch[1]).toLowerCase();
+                const note = dashboard.notes.find(n => n.title && n.title.toLowerCase() === titleLower);
+                if (note && notePageIds.has(note.id)) openPageViewer(note.id);
+            }
+        });
+
+        function closePageViewer() {
+            document.getElementById('wvOverlay').style.display = 'none';
+            document.getElementById('wvIframe').srcdoc = '';
+            viewerNoteId = null;
+        }
+
+        // --- Drawing ---
+        function applyStrokeStyle(ctx, stroke) {
+            if (stroke.eraser) {
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.strokeStyle = 'rgba(0,0,0,1)';
+            } else {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.strokeStyle = stroke.color;
+            }
+            ctx.lineWidth = stroke.size;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+        }
+
+        function showDrawTools(show) {
+            const display = show ? '' : 'none';
+            document.getElementById('wvColors').style.display = show ? 'flex' : 'none';
+            document.getElementById('wvSizes').style.display = show ? 'flex' : 'none';
+            document.getElementById('wvEraserBtn').style.display = display;
+            document.getElementById('wvClearBtn').style.display = display;
+            document.getElementById('wvSaveDrawBtn').style.display = display;
+            if (show) {
+                initColorPicker();
+                initSizePicker();
+            }
+        }
+
+        function initColorPicker() {
+            const container = document.getElementById('wvColors');
+            container.innerHTML = DRAW_COLORS.map(c =>
+                `<div class="wv-color-dot ${c === drawColor ? 'active' : ''}" style="background:${c}" onclick="setDrawColor('${c}')"></div>`
+            ).join('');
+        }
+
+        function initSizePicker() {
+            const container = document.getElementById('wvSizes');
+            container.innerHTML = DRAW_SIZES.map(s =>
+                `<div class="wv-size-dot ${s === drawSize ? 'active' : ''}" style="width:${s + 8}px;height:${s + 8}px" onclick="setDrawSize(${s})"></div>`
+            ).join('');
+        }
+
+        function setDrawColor(c) {
+            drawColor = c;
+            eraserMode = false;
+            document.getElementById('wvEraserBtn').classList.remove('active');
+            initColorPicker();
+        }
+
+        function setDrawSize(s) {
+            drawSize = s;
+            initSizePicker();
+        }
+
+        function toggleDrawMode() {
+            drawMode = !drawMode;
+            const canvas = document.getElementById('wvCanvas');
+            const btn = document.getElementById('wvDrawToggle');
+            if (drawMode) {
+                canvas.classList.add('drawing');
+                btn.classList.add('active');
+                showDrawTools(true);
+            } else {
+                canvas.classList.remove('drawing');
+                btn.classList.remove('active');
+                showDrawTools(false);
+            }
+        }
+
+        function toggleEraser() {
+            eraserMode = !eraserMode;
+            document.getElementById('wvEraserBtn').classList.toggle('active', eraserMode);
+        }
+
+        function clearDrawing() {
+            if (!confirm(i18n.t('mc_note_draw_clear_confirm') || 'Clear all drawings?')) return;
+            drawStrokes = [];
+            redrawCanvas();
+        }
+
+        function resizeCanvas() {
+            const canvas = document.getElementById('wvCanvas');
+            const body = canvas.parentElement;
+            canvas.width = body.clientWidth;
+            canvas.height = body.clientHeight;
+        }
+
+        function redrawCanvas() {
+            const canvas = document.getElementById('wvCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (const stroke of drawStrokes) {
+                if (!stroke.points || stroke.points.length < 2) continue;
+                ctx.beginPath();
+                applyStrokeStyle(ctx, stroke);
+                ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+                for (let i = 1; i < stroke.points.length; i++) {
+                    ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+                }
+                ctx.stroke();
+            }
+            ctx.globalCompositeOperation = 'source-over';
+        }
+
+        // Canvas pointer events
+        (function initCanvasEvents() {
+            const canvas = document.getElementById('wvCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let drawing = false;
+
+            function getPos(e) {
+                const rect = canvas.getBoundingClientRect();
+                const touch = e.touches ? e.touches[0] : e;
+                return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+            }
+
+            function startDraw(e) {
+                if (!drawMode) return;
+                e.preventDefault();
+                drawing = true;
+                const pos = getPos(e);
+                currentStroke = { color: drawColor, size: drawSize, eraser: eraserMode, points: [pos] };
+            }
+
+            function moveDraw(e) {
+                if (!drawing || !currentStroke) return;
+                e.preventDefault();
+                currentStroke.points.push(getPos(e));
+                const pts = currentStroke.points;
+                if (pts.length < 2) return;
+                ctx.beginPath();
+                applyStrokeStyle(ctx, currentStroke);
+                ctx.moveTo(pts[pts.length - 2].x, pts[pts.length - 2].y);
+                ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+                ctx.stroke();
+                ctx.globalCompositeOperation = 'source-over';
+            }
+
+            function endDraw() {
+                if (!drawing || !currentStroke) return;
+                drawing = false;
+                if (currentStroke.points.length > 1) {
+                    drawStrokes.push(currentStroke);
+                }
+                currentStroke = null;
+            }
+
+            canvas.addEventListener('pointerdown', startDraw);
+            canvas.addEventListener('pointermove', moveDraw);
+            canvas.addEventListener('pointerup', endDraw);
+            canvas.addEventListener('pointerleave', endDraw);
+
+            // Debounced resize handler
+            let resizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    if (viewerNoteId) { resizeCanvas(); redrawCanvas(); }
+                }, 150);
+            });
+        })();
+
+        async function saveDrawing() {
+            if (!viewerNoteId) return;
+            try {
+                await apiCall('PUT', '/api/mission/note/page/drawing', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    noteId: viewerNoteId,
+                    drawingData: JSON.stringify(drawStrokes)
+                });
+                showToast(i18n.t('mc_note_draw_saved') || 'Drawing saved', 'success');
+            } catch (e) {
+                showToast('Failed to save drawing: ' + e.message, 'error');
+            }
+        }
+
+        function editPageHtml() {
+            if (!viewerNoteId) return;
+            const note = dashboard.notes.find(n => n.id === viewerNoteId);
+            if (!note) return;
+
+            // Fetch current HTML
+            apiCall('GET',
+                `/api/mission/note/page?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}&noteId=${encodeURIComponent(viewerNoteId)}`
+            ).then(data => {
+                const currentHtml = data.success ? data.htmlContent : '';
+                showPageEditorDialog(viewerNoteId, note.title, currentHtml);
+            }).catch(() => {
+                showPageEditorDialog(viewerNoteId, note.title, '');
+            });
+        }
+
+        function showPageEditorDialog(noteId, noteTitle, currentHtml) {
+            const c = document.getElementById('dialogContainer');
+            c.innerHTML = `<div class="dialog-overlay">
+                <div class="dialog" style="max-width:700px;width:95%;">
+                    <div class="dialog-title">${i18n.t('mc_note_edit_page')} — ${esc(noteTitle)}</div>
+                    <div class="dialog-field-label">HTML</div>
+                    <textarea id="dlg_page_html" style="min-height:300px;font-family:monospace;font-size:12px;white-space:pre;resize:vertical;" placeholder="${i18n.t('mc_note_page_placeholder')}">${esc(currentHtml)}</textarea>
+                    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">
+                        ${i18n.t('mc_note_page_link_hint') || 'Internal links: &lt;a href="eclaw://note/NOTE_ID"&gt;...&lt;/a&gt;'}
+                    </div>
+                    <div class="dialog-actions">
+                        <button class="btn btn-outline" onclick="closeDialog()">${i18n.t('mc_dlg_cancel')}</button>
+                        ${notePageIds.has(noteId) ? `<button class="btn btn-outline" style="color:var(--danger)" onclick="deleteNotePage('${noteId}')">${i18n.t('common_delete')}</button>` : ''}
+                        <button class="btn btn-primary" id="dlgSavePageBtn">${i18n.t('mc_dlg_save')}</button>
+                    </div>
+                </div>
+            </div>`;
+
+            document.getElementById('dlgSavePageBtn').onclick = async () => {
+                const html = document.getElementById('dlg_page_html').value;
+                try {
+                    await apiCall('PUT', '/api/mission/note/page', {
+                        deviceId: currentUser.deviceId,
+                        deviceSecret: currentUser.deviceSecret,
+                        noteId: noteId,
+                        htmlContent: html
+                    });
+                    notePageIds.add(noteId);
+                    renderNotes();
+                    closeDialog();
+                    if (viewerNoteId === noteId) renderPageIframe(html);
+                    showToast(i18n.t('mc_note_page_saved') || 'Page saved', 'success');
+                } catch (e) {
+                    showToast('Failed to save page: ' + e.message, 'error');
+                }
+            };
+            setTimeout(() => document.getElementById('dlg_page_html')?.focus(), 50);
+        }
+
+        async function deleteNotePage(noteId) {
+            if (!confirm(i18n.t('mc_confirm_delete'))) return;
+            try {
+                await apiCall('DELETE', '/api/mission/note/page', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    noteId: noteId
+                });
+                notePageIds.delete(noteId);
+                renderNotes();
+                closeDialog();
+                if (viewerNoteId === noteId) closePageViewer();
+                showToast('Page deleted', 'success');
+            } catch (e) {
+                showToast('Failed to delete page: ' + e.message, 'error');
+            }
         }
 
         // ========== Skills ==========

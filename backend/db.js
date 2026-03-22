@@ -404,6 +404,21 @@ async function createTables() {
         `);
         await client.query(`CREATE INDEX IF NOT EXISTS idx_pending_cross_sender ON pending_cross_messages(sender_device_id)`);
 
+        // Note Pages table (webview static pages for mission notes)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS note_pages (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                device_id VARCHAR(64) NOT NULL,
+                note_id VARCHAR(128) NOT NULL,
+                html_content TEXT NOT NULL DEFAULT '',
+                drawing_data TEXT DEFAULT NULL,
+                created_at TIMESTAMPTZ DEFAULT NOW(),
+                updated_at TIMESTAMPTZ DEFAULT NOW(),
+                UNIQUE(device_id, note_id)
+            )
+        `);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_note_pages_device ON note_pages(device_id)`);
+
         console.log('[DB] Database tables ready');
         client.release();
     } catch (err) {

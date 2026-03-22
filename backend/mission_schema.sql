@@ -218,6 +218,23 @@ CREATE TABLE IF NOT EXISTS bot_files (
 CREATE INDEX IF NOT EXISTS idx_bot_files_device_entity
 ON bot_files(device_id, entity_id);
 
+-- ============================================
+-- Note Pages Table (Webview static pages for notes)
+-- ============================================
+CREATE TABLE IF NOT EXISTS note_pages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    device_id VARCHAR(64) NOT NULL,
+    note_id VARCHAR(128) NOT NULL,
+    html_content TEXT NOT NULL DEFAULT '',
+    drawing_data TEXT DEFAULT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(device_id, note_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_note_pages_device
+ON note_pages(device_id);
+
 -- Grant execute to app user (adjust as needed)
 -- GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO app_user;
 -- GRANT ALL ON ALL TABLES IN SCHEMA public TO app_user;
