@@ -1386,6 +1386,12 @@
             return opts;
         }
 
+        function renderCategorySelectHtml(section, currentCategory) {
+            return getCategoryOptions(section).map(o =>
+                `<option value="${esc(o.value)}" ${o.value === (currentCategory || '') ? 'selected' : ''}>${esc(o.label)}</option>`
+            ).join('');
+        }
+
         // ========== Rendering ==========
         function renderAll() {
             renderTodo();
@@ -2177,7 +2183,7 @@
                     <textarea id="dlg_skill_steps" placeholder="${esc(i18n.t('mc_skill_steps_placeholder'))}">${esc(skill?.steps || '')}</textarea>
                     <div class="dialog-field-label">${esc(i18n.t('mc_dlg_category'))}</div>
                     <select id="dlg_skill_category">
-                        ${getCategoryOptions('skills').map(o => `<option value="${esc(o.value)}" ${o.value === (skill?.category || '') ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}
+                        ${renderCategorySelectHtml('skills', skill?.category)}
                     </select>
                     <div class="dialog-field-label">${esc(i18n.t('mc_skill_assign_entity'))}</div>
                     <div class="entity-checkbox-grid" id="dlg_skill_entities">${entityCheckboxes}</div>
@@ -2299,7 +2305,7 @@
                     <select id="dlg_rule_type">${typeOptions}</select>
                     <div class="dialog-field-label">${i18n.t('mc_dlg_category')}</div>
                     <select id="dlg_rule_category">
-                        ${getCategoryOptions('rules').map(o => `<option value="${esc(o.value)}" ${o.value === (rule?.category || '') ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}
+                        ${renderCategorySelectHtml('rules', rule?.category)}
                     </select>
                     <div class="dialog-field-label">指派實體 (可多選)</div>
                     <div class="entity-checkbox-grid" id="dlg_rule_entities">${entityCheckboxes}</div>
@@ -2512,7 +2518,7 @@
                     <textarea id="dlg_soul_desc" placeholder="${i18n.t('mc_dlg_soul_desc_hint')}">${esc(soul?.description || '')}</textarea>
                     <div class="dialog-field-label">${i18n.t('mc_dlg_category')}</div>
                     <select id="dlg_soul_category">
-                        ${getCategoryOptions('souls').map(o => `<option value="${esc(o.value)}" ${o.value === (soul?.category || '') ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}
+                        ${renderCategorySelectHtml('souls', soul?.category)}
                     </select>
                     <div class="dialog-field-label">${i18n.t('mc_dlg_assign') || '指派實體'} (${i18n.t('mc_dlg_soul_multi') || '可多選'})</div>
                     <div class="entity-checkbox-grid" id="dlg_soul_entities">${entityCheckboxes}</div>
