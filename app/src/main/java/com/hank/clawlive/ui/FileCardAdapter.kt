@@ -37,6 +37,9 @@ class FileCardAdapter(
             }
         }
 
+    /** Optional long-press handler for file folder assignment. */
+    var onFileLongClick: ((DeviceFile) -> Unit)? = null
+
     fun setFiles(newFiles: List<DeviceFile>) {
         files.clear()
         files.addAll(newFiles)
@@ -157,6 +160,10 @@ class FileCardAdapter(
 
             // Click
             itemView.setOnClickListener { onFileClick(file, position) }
+            itemView.setOnLongClickListener {
+                onFileLongClick?.invoke(file)
+                onFileLongClick != null
+            }
         }
 
         private fun formatDate(isoDate: String): String {

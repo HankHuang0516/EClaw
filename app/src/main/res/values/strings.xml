@@ -558,6 +558,18 @@ If you have any questions, please contact us via our official email.
     <string name="file_time_month">This month</string>
     <string name="file_broadcast">Broadcast</string>
 
+    <!-- File Folders -->
+    <string name="file_folder_all">All</string>
+    <string name="file_folder_add">+ Folder</string>
+    <string name="file_folder_add_title">Add Folder</string>
+    <string name="file_folder_name_hint">Folder name</string>
+    <string name="file_folder_already_exists">Folder \"%1$s\" already exists</string>
+    <string name="file_folder_move_to">Move to Folder</string>
+    <string name="file_folder_remove_from">Remove from Folder</string>
+    <string name="file_folder_delete_title">Delete Folder</string>
+    <string name="file_folder_delete_confirm">Delete folder \"%1$s\"? Files will not be deleted.</string>
+    <string name="file_folder_uncategorized">Unfiled</string>
+
     <!-- Gatekeeper -->
     <string name="gatekeeper_blocked_message">⚠️ %1$s（%2$d/%3$d）</string>
     <string name="gatekeeper_blocked_permanent">⚠️ %1$s</string>

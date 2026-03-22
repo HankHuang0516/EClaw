@@ -11,6 +11,7 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
+import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -30,6 +31,9 @@ import com.bumptech.glide.Glide
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.EntityAvatarManager
 import com.hank.clawlive.data.remote.DeviceFile
@@ -79,6 +83,40 @@ class FileManagerActivity : AppCompatActivity() {
     private var isLoading = false
     private var mediaPlayer: MediaPlayer? = null
 
+    // Folder management (client-side, SharedPreferences)
+    private val folderPrefs: SharedPreferences by lazy {
+        getSharedPreferences("eclaw_file_folders", MODE_PRIVATE)
+    }
+    private val gson = Gson()
+    private var currentFolder: String? = null // null = all, "" = unfiled, else = folder name
+    private lateinit var chipGroupFolder: ChipGroup
+    private lateinit var btnAddFolder: MaterialButton
+
+    /** Returns the list of user-created folder names. */
+    private fun getFolders(): List<String> {
+        val json = folderPrefs.getString("folders", null) ?: return emptyList()
+        return try {
+            gson.fromJson(json, object : TypeToken<List<String>>() {}.type) ?: emptyList()
+        } catch (_: Exception) { emptyList() }
+    }
+
+    private fun saveFolders(folders: List<String>) {
+        folderPrefs.edit().putString("folders", gson.toJson(folders)).apply()
+    }
+
+    /** Returns the folder assignment for a file (null if not assigned). */
+    private fun getFileFolder(fileId: String): String? {
+        return folderPrefs.getString("file_$fileId", null)
+    }
+
+    private fun setFileFolder(fileId: String, folder: String?) {
+        if (folder == null) {
+            folderPrefs.edit().remove("file_$fileId").apply()
+        } else {
+            folderPrefs.edit().putString("file_$fileId", folder).apply()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -117,11 +155,6 @@ class FileManagerActivity : AppCompatActivity() {
         // Restore view mode
         isListMode = prefs.getBoolean("is_list_mode", false)
 
-        // Setup RecyclerView
-        adapter = FileCardAdapter(this) { file, _ -> previewFile(file) }
-        adapter.isListMode = isListMode
-        applyLayoutManager()
-
         // View toggle
         updateViewToggleIcon()
         btnViewToggle.setOnClickListener {
@@ -152,6 +185,25 @@ class FileManagerActivity : AppCompatActivity() {
             }
             loadFiles(append = false)
         }
+
+        // Folder chips
+        chipGroupFolder = findViewById(R.id.chipGroupFolder)
+        btnAddFolder = findViewById(R.id.btnAddFolder)
+        btnAddFolder.setOnClickListener { showAddFolderDialog() }
+        chipGroupFolder.setOnCheckedStateChangeListener { _, checkedIds ->
+            currentFolder = when {
+                checkedIds.isEmpty() || checkedIds.contains(R.id.chipFolderAll) -> null
+                else -> chipGroupFolder.findViewById<Chip>(checkedIds[0])?.tag as? String
+            }
+            applyFolderFilter()
+        }
+        rebuildFolderChips()
+
+        // Long-press on file to move to folder
+        adapter = FileCardAdapter(this) { file, _ -> previewFile(file) }
+        adapter.onFileLongClick = { file -> showFileFolderMenu(file) }
+        adapter.isListMode = isListMode
+        applyLayoutManager()
 
         // Load more
         btnLoadMore.setOnClickListener { loadFiles(append = true) }
@@ -261,13 +313,17 @@ class FileManagerActivity : AppCompatActivity() {
 
                     if (append) {
                         allFiles.addAll(response.files)
-                        adapter.addFiles(response.files)
                     } else {
                         allFiles.clear()
                         allFiles.addAll(response.files)
-                        adapter.setFiles(allFiles)
                     }
 
+                    // Apply folder filter if active
+                    if (currentFolder != null) {
+                        applyFolderFilter()
+                    } else {
+                        adapter.setFiles(allFiles)
+                    }
                     updateUI()
                 } else {
                     if (!append) {
@@ -301,7 +357,8 @@ class FileManagerActivity : AppCompatActivity() {
         btnLoadMore.visibility = if (hasMore) View.VISIBLE else View.GONE
 
         // Update count
-        tvFileCount.text = "${allFiles.size} ${getString(R.string.file_stats_total)}"
+        val displayCount = if (currentFolder != null) adapter.itemCount else allFiles.size
+        tvFileCount.text = "$displayCount ${getString(R.string.file_stats_total)}"
     }
 
     private fun showEmpty() {
@@ -499,6 +556,143 @@ class FileManagerActivity : AppCompatActivity() {
                     getString(R.string.unknown_error), Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    // ============================================
+    // Folder Management
+    // ============================================
+
+    private fun rebuildFolderChips() {
+        // Remove all chips except the "All" chip
+        val allChip = chipGroupFolder.findViewById<Chip>(R.id.chipFolderAll)
+        chipGroupFolder.removeAllViews()
+        chipGroupFolder.addView(allChip)
+
+        val folders = getFolders()
+        for (folder in folders) {
+            val chip = Chip(this).apply {
+                text = folder
+                tag = folder
+                isCheckable = true
+                isCloseIconVisible = true
+                setOnCloseIconClickListener { showDeleteFolderDialog(folder) }
+                chipGroupFolder.generateViewId().also { id = it }
+            }
+            chipGroupFolder.addView(chip)
+        }
+
+        // Restore selection
+        if (currentFolder != null) {
+            for (i in 0 until chipGroupFolder.childCount) {
+                val chip = chipGroupFolder.getChildAt(i) as? Chip ?: continue
+                if (chip.tag == currentFolder) {
+                    chip.isChecked = true
+                    break
+                }
+            }
+        } else {
+            allChip.isChecked = true
+        }
+    }
+
+    private fun applyFolderFilter() {
+        if (currentFolder == null) {
+            // Show all files
+            adapter.setFiles(allFiles)
+        } else {
+            // Show only files in this folder
+            val filtered = allFiles.filter { getFileFolder(it.id) == currentFolder }
+            adapter.setFiles(filtered)
+        }
+        updateUI()
+    }
+
+    private fun showAddFolderDialog() {
+        val input = EditText(this).apply {
+            hint = getString(R.string.file_folder_name_hint)
+            setPadding(48, 24, 48, 8)
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.file_folder_add_title))
+            .setView(input)
+            .setPositiveButton(R.string.send) { _, _ ->
+                val name = input.text.toString().trim().take(50)
+                if (name.isNotEmpty()) {
+                    val folders = getFolders().toMutableList()
+                    if (folders.contains(name)) {
+                        Toast.makeText(this, getString(R.string.file_folder_already_exists, name), Toast.LENGTH_SHORT).show()
+                    } else {
+                        folders.add(name)
+                        saveFolders(folders)
+                        rebuildFolderChips()
+                    }
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun showDeleteFolderDialog(folder: String) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.file_folder_delete_title))
+            .setMessage(getString(R.string.file_folder_delete_confirm, folder))
+            .setPositiveButton(R.string.delete) { _, _ ->
+                // Remove folder and unassign all files in it
+                val folders = getFolders().toMutableList()
+                folders.remove(folder)
+                saveFolders(folders)
+                // Remove folder assignments for all files
+                allFiles.forEach { file ->
+                    if (getFileFolder(file.id) == folder) {
+                        setFileFolder(file.id, null)
+                    }
+                }
+                if (currentFolder == folder) currentFolder = null
+                rebuildFolderChips()
+                applyFolderFilter()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun showFileFolderMenu(file: DeviceFile) {
+        val folders = getFolders()
+        if (folders.isEmpty()) {
+            // No folders yet — prompt to create one
+            showAddFolderDialog()
+            return
+        }
+
+        val currentFileFolder = getFileFolder(file.id)
+        val options = mutableListOf<String>()
+        val actions = mutableListOf<() -> Unit>()
+
+        // If file is in a folder, show "Remove from folder"
+        if (currentFileFolder != null) {
+            options.add(getString(R.string.file_folder_remove_from))
+            actions.add {
+                setFileFolder(file.id, null)
+                applyFolderFilter()
+                Toast.makeText(this, getString(R.string.file_folder_uncategorized), Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // Show all folders to move to
+        for (folder in folders) {
+            if (folder != currentFileFolder) {
+                options.add("📁 $folder")
+                actions.add {
+                    setFileFolder(file.id, folder)
+                    applyFolderFilter()
+                }
+            }
+        }
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.file_folder_move_to))
+            .setItems(options.toTypedArray()) { _, which -> actions[which]() }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun parseTimestamp(isoDate: String): Long? {
