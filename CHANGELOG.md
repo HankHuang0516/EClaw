@@ -1,3 +1,10 @@
+# [1.139.0](https://github.com/HankHuang0516/EClaw/compare/v1.138.3...v1.139.0) (2026-03-22)
+
+
+### Features
+
+* add 🔗 icon to cross-device message labels in chat ([#408](https://github.com/HankHuang0516/EClaw/issues/408)) ([d5d272c](https://github.com/HankHuang0516/EClaw/commit/d5d272cffb93350b428ff92bb7546d6cdb41ee3f))
+
 ## [1.138.3](https://github.com/HankHuang0516/EClaw/compare/v1.138.2...v1.138.3) (2026-03-22)
 
 
