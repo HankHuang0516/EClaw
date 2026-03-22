@@ -1,3 +1,10 @@
+## [1.143.1](https://github.com/HankHuang0516/EClaw/compare/v1.143.0...v1.143.1) (2026-03-22)
+
+
+### Bug Fixes
+
+* **android:** use View.generateViewId() in FileManagerActivity ([#418](https://github.com/HankHuang0516/EClaw/issues/418)) ([1dabf05](https://github.com/HankHuang0516/EClaw/commit/1dabf055db3c208a8d7d19d4b516eeefee44615b))
+
 # [1.143.0](https://github.com/HankHuang0516/EClaw/compare/v1.142.1...v1.143.0) (2026-03-22)
 
 
