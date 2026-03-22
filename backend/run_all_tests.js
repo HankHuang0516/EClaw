@@ -98,6 +98,7 @@ const TEST_FILES = [
     'test-vars-merge.js',           // ENV vars: cross-platform merge, conflict splitting
     'test-ws-auth.js',              // WebSocket: Socket.IO authentication
     'test-ai-chat-image.js',        // AI chat: image support
+    'test-ai-chat-webview-guard.js', // AI chat: WebView guard prevents duplicate widget (#419)
     'test-ai-diagnostics.js',       // AI diagnostics: context formatting, injection
     'test-dynamic-entities.js',     // Dynamic entities: add/delete, 20-entity extreme, sparse IDs
     'test-entity-management.js',    // Entity management: refresh cooldown, reorder validation
