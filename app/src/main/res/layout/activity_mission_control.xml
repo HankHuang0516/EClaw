@@ -124,14 +124,33 @@
                     android:orientation="vertical"
                     android:padding="12dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/mission_tab_todo"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/white"
-                        android:layout_marginBottom="8dp" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="8dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/mission_tab_todo"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/white" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnAddCatTodo"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/category_add"
+                            android:textSize="11sp"
+                            android:minHeight="0dp"
+                            android:paddingVertical="4dp"
+                            style="@style/Widget.Material3.Button.TextButton" />
+
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tvTodoEmpty"
@@ -143,6 +162,12 @@
                         android:gravity="center"
                         android:padding="16dp"
                         android:visibility="gone" />
+
+                    <LinearLayout
+                        android:id="@+id/containerTodo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rvTodo"
@@ -178,14 +203,33 @@
                     android:orientation="vertical"
                     android:padding="12dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/mission_tab_missions"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/white"
-                        android:layout_marginBottom="8dp" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="8dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/mission_tab_missions"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/white" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnAddCatMission"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/category_add"
+                            android:textSize="11sp"
+                            android:minHeight="0dp"
+                            android:paddingVertical="4dp"
+                            style="@style/Widget.Material3.Button.TextButton" />
+
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tvMissionEmpty"
@@ -197,6 +241,12 @@
                         android:gravity="center"
                         android:padding="16dp"
                         android:visibility="gone" />
+
+                    <LinearLayout
+                        android:id="@+id/containerMission"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rvMission"
@@ -224,14 +274,33 @@
                     android:orientation="vertical"
                     android:padding="12dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/mission_tab_done"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/white"
-                        android:layout_marginBottom="8dp" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="8dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/mission_tab_done"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/white" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnAddCatDone"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/category_add"
+                            android:textSize="11sp"
+                            android:minHeight="0dp"
+                            android:paddingVertical="4dp"
+                            style="@style/Widget.Material3.Button.TextButton" />
+
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tvDoneEmpty"
@@ -243,6 +312,12 @@
                         android:gravity="center"
                         android:padding="16dp"
                         android:visibility="gone" />
+
+                    <LinearLayout
+                        android:id="@+id/containerDone"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rvDone"
@@ -270,14 +345,33 @@
                     android:orientation="vertical"
                     android:padding="12dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/mission_tab_notes"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/white"
-                        android:layout_marginBottom="8dp" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="8dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/mission_tab_notes"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/white" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnAddCatNotes"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/category_add"
+                            android:textSize="11sp"
+                            android:minHeight="0dp"
+                            android:paddingVertical="4dp"
+                            style="@style/Widget.Material3.Button.TextButton" />
+
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tvNotesEmpty"
@@ -289,6 +383,12 @@
                         android:gravity="center"
                         android:padding="16dp"
                         android:visibility="gone" />
+
+                    <LinearLayout
+                        android:id="@+id/containerNotes"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rvNotes"
@@ -324,14 +424,33 @@
                     android:orientation="vertical"
                     android:padding="12dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/mission_tab_skills"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/white"
-                        android:layout_marginBottom="8dp" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="8dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/mission_tab_skills"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/white" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnAddCatSkills"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/category_add"
+                            android:textSize="11sp"
+                            android:minHeight="0dp"
+                            android:paddingVertical="4dp"
+                            style="@style/Widget.Material3.Button.TextButton" />
+
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tvSkillsEmpty"
@@ -343,6 +462,12 @@
                         android:gravity="center"
                         android:padding="16dp"
                         android:visibility="gone" />
+
+                    <LinearLayout
+                        android:id="@+id/containerSkills"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rvSkills"
@@ -457,14 +582,33 @@
                     android:orientation="vertical"
                     android:padding="12dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/mission_tab_souls"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/white"
-                        android:layout_marginBottom="8dp" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="8dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/mission_tab_souls"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/white" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnAddCatSouls"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/category_add"
+                            android:textSize="11sp"
+                            android:minHeight="0dp"
+                            android:paddingVertical="4dp"
+                            style="@style/Widget.Material3.Button.TextButton" />
+
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tvSoulsEmpty"
@@ -476,6 +620,12 @@
                         android:gravity="center"
                         android:padding="16dp"
                         android:visibility="gone" />
+
+                    <LinearLayout
+                        android:id="@+id/containerSouls"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rvSouls"
@@ -511,14 +661,33 @@
                     android:orientation="vertical"
                     android:padding="12dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/mission_tab_rules"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/white"
-                        android:layout_marginBottom="8dp" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="8dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/mission_tab_rules"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/white" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnAddCatRules"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/category_add"
+                            android:textSize="11sp"
+                            android:minHeight="0dp"
+                            android:paddingVertical="4dp"
+                            style="@style/Widget.Material3.Button.TextButton" />
+
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tvRulesEmpty"
@@ -530,6 +699,12 @@
                         android:gravity="center"
                         android:padding="16dp"
                         android:visibility="gone" />
+
+                    <LinearLayout
+                        android:id="@+id/containerRules"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
 
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rvRules"

@@ -22,11 +22,16 @@
         android:minLines="4"
         android:layout_marginBottom="12dp" />
 
-    <EditText
-        android:id="@+id/etCategory"
-        android:layout_width="match_parent"
+    <TextView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:hint="分類 (預設: general)"
-        android:inputType="text" />
+        android:text="@string/category_label"
+        android:textSize="12sp"
+        android:layout_marginBottom="4dp" />
+
+    <Spinner
+        android:id="@+id/spinnerCategory"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 
 </LinearLayout>

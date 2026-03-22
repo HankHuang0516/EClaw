@@ -679,6 +679,21 @@ If you have any questions, please contact us via our official email.
     <string name="mission_tab_souls">🧠 Souls</string>
     <string name="mission_tab_rules">📜 Rules (Workflow)</string>
 
+    <!-- Category Management -->
+    <string name="category_add">+ Category</string>
+    <string name="category_add_title">Add Category</string>
+    <string name="category_name_hint">Category name</string>
+    <string name="category_rename">Rename Category</string>
+    <string name="category_rename_title">Rename Category</string>
+    <string name="category_delete_title">Delete Category</string>
+    <string name="category_delete_confirm">Delete category \"%1$s\"? Items will become uncategorized.</string>
+    <string name="category_clear_title">Clear Category</string>
+    <string name="category_clear_confirm">Clear all items in \"%1$s\"?</string>
+    <string name="category_uncategorized">Uncategorized</string>
+    <string name="category_label">Category</string>
+    <string name="category_none">(No category)</string>
+    <string name="category_already_exists">Category \"%1$s\" already exists</string>
+
     <!-- Common Buttons -->
     <string name="common_add">+ Add</string>
     <string name="common_show">Show</string>

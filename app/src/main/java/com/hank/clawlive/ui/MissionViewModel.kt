@@ -28,6 +28,7 @@ data class MissionUiState(
     val rules: List<MissionRule> = emptyList(),
     val skills: List<MissionSkill> = emptyList(),
     val souls: List<MissionSoul> = emptyList(),
+    val categoryOrder: Map<String, List<String>> = emptyMap(),
     val version: Int = 1,
     val lastSyncedAt: Long? = null,
     val error: String? = null,
@@ -93,6 +94,7 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
                 rules = snapshot.rules ?: emptyList(),
                 skills = snapshot.skills ?: emptyList(),
                 souls = snapshot.souls ?: emptyList(),
+                categoryOrder = snapshot.categoryOrder ?: emptyMap(),
                 version = snapshot.version,
                 lastSyncedAt = snapshot.lastSyncedAt
             )
@@ -122,6 +124,7 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
                             rules = d.rules ?: emptyList(),
                             skills = d.skills ?: emptyList(),
                             souls = d.souls ?: emptyList(),
+                            categoryOrder = d.categoryOrder ?: emptyMap(),
                             version = d.version,
                             lastSyncedAt = d.lastSyncedAt,
                             hasLocalChanges = false
@@ -136,6 +139,7 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
                         rules = d.rules ?: emptyList(),
                         skills = d.skills ?: emptyList(),
                         souls = d.souls ?: emptyList(),
+                        categoryOrder = d.categoryOrder ?: emptyMap(),
                         version = d.version,
                         lastSyncedAt = d.lastSyncedAt ?: System.currentTimeMillis()
                     )
@@ -169,7 +173,8 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
                         "notes" to state.notes,
                         "rules" to state.rules,
                         "skills" to state.skills,
-                        "souls" to state.souls
+                        "souls" to state.souls,
+                        "categoryOrder" to state.categoryOrder
                     )
                 )
                 val response = api.uploadMissionDashboard(body)
@@ -217,6 +222,7 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
                 rules = state.rules,
                 skills = state.skills,
                 souls = state.souls,
+                categoryOrder = state.categoryOrder,
                 version = state.version,
                 lastSyncedAt = state.lastSyncedAt ?: System.currentTimeMillis()
             )
@@ -251,6 +257,7 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
             rules = s.rules.map { it.copy() },
             skills = s.skills.map { it.copy() },
             souls = s.souls.map { it.copy() },
+            categoryOrder = s.categoryOrder.toMap(),
             version = s.version,
             lastSyncedAt = s.lastSyncedAt ?: System.currentTimeMillis()
         )
@@ -260,12 +267,13 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
     // TODO List CRUD
     // ============================================
 
-    fun addTodoItem(title: String, description: String = "", priority: Priority = Priority.MEDIUM, assignedBot: String? = null) {
+    fun addTodoItem(title: String, description: String = "", priority: Priority = Priority.MEDIUM, assignedBot: String? = null, category: String? = null) {
         val item = MissionItem(
             title = title,
             description = description,
             priority = priority,
-            assignedBot = assignedBot
+            assignedBot = assignedBot,
+            category = category
         )
         _uiState.update {
             it.copy(
@@ -276,14 +284,14 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
         saveToLocal()
     }
 
-    fun editItem(itemId: String, title: String, description: String, priority: Priority, assignedBot: String? = null) {
+    fun editItem(itemId: String, title: String, description: String, priority: Priority, assignedBot: String? = null, category: String? = null) {
         _uiState.update { state ->
             state.copy(
                 todoList = state.todoList.map {
-                    if (it.id == itemId) it.copy(title = title, description = description, priority = priority, assignedBot = assignedBot, updatedAt = System.currentTimeMillis()) else it
+                    if (it.id == itemId) it.copy(title = title, description = description, priority = priority, assignedBot = assignedBot, category = category, updatedAt = System.currentTimeMillis()) else it
                 },
                 missionList = state.missionList.map {
-                    if (it.id == itemId) it.copy(title = title, description = description, priority = priority, assignedBot = assignedBot, updatedAt = System.currentTimeMillis()) else it
+                    if (it.id == itemId) it.copy(title = title, description = description, priority = priority, assignedBot = assignedBot, category = category, updatedAt = System.currentTimeMillis()) else it
                 },
                 hasLocalChanges = true
             )
@@ -378,19 +386,19 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
     // Rules CRUD
     // ============================================
 
-    fun addRule(name: String, description: String, ruleType: RuleType, assignedEntities: List<String> = emptyList()) {
-        val rule = MissionRule(name = name, description = description, ruleType = ruleType, assignedEntities = assignedEntities)
+    fun addRule(name: String, description: String, ruleType: RuleType, assignedEntities: List<String> = emptyList(), category: String? = null) {
+        val rule = MissionRule(name = name, description = description, ruleType = ruleType, assignedEntities = assignedEntities, category = category)
         _uiState.update {
             it.copy(rules = it.rules + rule, hasLocalChanges = true)
         }
         saveToLocal()
     }
 
-    fun editRule(ruleId: String, name: String, description: String, ruleType: RuleType, assignedEntities: List<String> = emptyList()) {
+    fun editRule(ruleId: String, name: String, description: String, ruleType: RuleType, assignedEntities: List<String> = emptyList(), category: String? = null) {
         _uiState.update { state ->
             state.copy(
                 rules = state.rules.map {
-                    if (it.id == ruleId) it.copy(name = name, description = description, ruleType = ruleType, assignedEntities = assignedEntities, updatedAt = System.currentTimeMillis()) else it
+                    if (it.id == ruleId) it.copy(name = name, description = description, ruleType = ruleType, assignedEntities = assignedEntities, category = category, updatedAt = System.currentTimeMillis()) else it
                 },
                 hasLocalChanges = true
             )
@@ -424,19 +432,19 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
     // Skills CRUD
     // ============================================
 
-    fun addSkill(title: String, url: String = "", steps: String = "", assignedEntities: List<String> = emptyList()) {
-        val skill = MissionSkill(title = title, url = url, steps = steps, assignedEntities = assignedEntities)
+    fun addSkill(title: String, url: String = "", steps: String = "", assignedEntities: List<String> = emptyList(), category: String? = null) {
+        val skill = MissionSkill(title = title, url = url, steps = steps, assignedEntities = assignedEntities, category = category)
         _uiState.update {
             it.copy(skills = it.skills + skill, hasLocalChanges = true)
         }
         saveToLocal()
     }
 
-    fun editSkill(skillId: String, title: String, url: String, steps: String, assignedEntities: List<String>) {
+    fun editSkill(skillId: String, title: String, url: String, steps: String, assignedEntities: List<String>, category: String? = null) {
         _uiState.update { state ->
             state.copy(
                 skills = state.skills.map {
-                    if (it.id == skillId) it.copy(title = title, url = url, steps = steps, assignedEntities = assignedEntities, updatedAt = System.currentTimeMillis()) else it
+                    if (it.id == skillId) it.copy(title = title, url = url, steps = steps, assignedEntities = assignedEntities, category = category, updatedAt = System.currentTimeMillis()) else it
                 },
                 hasLocalChanges = true
             )
@@ -458,19 +466,19 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
     // Souls CRUD
     // ============================================
 
-    fun addSoul(name: String, description: String = "", templateId: String? = null, assignedEntities: List<String> = emptyList()) {
-        val soul = MissionSoul(name = name, description = description, templateId = templateId, assignedEntities = assignedEntities)
+    fun addSoul(name: String, description: String = "", templateId: String? = null, assignedEntities: List<String> = emptyList(), category: String? = null) {
+        val soul = MissionSoul(name = name, description = description, templateId = templateId, assignedEntities = assignedEntities, category = category)
         _uiState.update {
             it.copy(souls = it.souls + soul, hasLocalChanges = true)
         }
         saveToLocal()
     }
 
-    fun editSoul(soulId: String, name: String, description: String, templateId: String?, assignedEntities: List<String>) {
+    fun editSoul(soulId: String, name: String, description: String, templateId: String?, assignedEntities: List<String>, category: String? = null) {
         _uiState.update { state ->
             state.copy(
                 souls = state.souls.map {
-                    if (it.id == soulId) it.copy(name = name, description = description, templateId = templateId, assignedEntities = assignedEntities, updatedAt = System.currentTimeMillis()) else it
+                    if (it.id == soulId) it.copy(name = name, description = description, templateId = templateId, assignedEntities = assignedEntities, category = category, updatedAt = System.currentTimeMillis()) else it
                 },
                 hasLocalChanges = true
             )
@@ -515,6 +523,7 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
             rules = s.rules.map { it.copy() },
             skills = s.skills.map { it.copy() },
             souls = s.souls.map { it.copy() },
+            categoryOrder = s.categoryOrder.toMap(),
             version = s.version,
             lastSyncedAt = s.lastSyncedAt ?: System.currentTimeMillis()
         )
@@ -680,5 +689,114 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
                 Timber.w(e, "[MISSION] fetchRuleTemplates failed: ${e.message}")
             }
         }
+    }
+
+    // ============================================
+    // Category Management
+    // ============================================
+
+    fun getCategoryOrder(section: String): List<String> {
+        return _uiState.value.categoryOrder[section] ?: emptyList()
+    }
+
+    fun addCategory(section: String, name: String) {
+        _uiState.update { state ->
+            val order = state.categoryOrder.toMutableMap()
+            val list = (order[section] ?: emptyList()).toMutableList()
+            if (!list.contains(name)) {
+                list.add(name)
+                order[section] = list
+            }
+            state.copy(categoryOrder = order, hasLocalChanges = true)
+        }
+        saveToLocal()
+    }
+
+    fun renameCategory(section: String, oldName: String, newName: String) {
+        _uiState.update { state ->
+            val order = state.categoryOrder.toMutableMap()
+            val list = (order[section] ?: emptyList()).toMutableList()
+            val idx = list.indexOf(oldName)
+            if (idx >= 0) list[idx] = newName
+            order[section] = list
+
+            // Rename category in all items of this section
+            fun renameInItems(items: List<MissionItem>) = items.map {
+                if (it.category == oldName) it.copy(category = newName, updatedAt = System.currentTimeMillis()) else it
+            }
+            fun renameInNotes(items: List<MissionNote>) = items.map {
+                if (it.category == oldName) it.copy(category = newName, updatedAt = System.currentTimeMillis()) else it
+            }
+
+            when (section) {
+                "todo" -> state.copy(categoryOrder = order, todoList = renameInItems(state.todoList), hasLocalChanges = true)
+                "mission" -> state.copy(categoryOrder = order, missionList = renameInItems(state.missionList), hasLocalChanges = true)
+                "done" -> state.copy(categoryOrder = order, doneList = renameInItems(state.doneList), hasLocalChanges = true)
+                "notes" -> state.copy(categoryOrder = order, notes = renameInNotes(state.notes), hasLocalChanges = true)
+                "skills" -> state.copy(categoryOrder = order, skills = state.skills.map {
+                    if (it.category == oldName) it.copy(category = newName, updatedAt = System.currentTimeMillis()) else it
+                }, hasLocalChanges = true)
+                "souls" -> state.copy(categoryOrder = order, souls = state.souls.map {
+                    if (it.category == oldName) it.copy(category = newName, updatedAt = System.currentTimeMillis()) else it
+                }, hasLocalChanges = true)
+                "rules" -> state.copy(categoryOrder = order, rules = state.rules.map {
+                    if (it.category == oldName) it.copy(category = newName, updatedAt = System.currentTimeMillis()) else it
+                }, hasLocalChanges = true)
+                else -> state.copy(categoryOrder = order, hasLocalChanges = true)
+            }
+        }
+        saveToLocal()
+    }
+
+    fun deleteCategory(section: String, name: String) {
+        _uiState.update { state ->
+            val order = state.categoryOrder.toMutableMap()
+            val list = (order[section] ?: emptyList()).toMutableList()
+            list.remove(name)
+            order[section] = list
+
+            // Uncategorize items
+            fun uncatItems(items: List<MissionItem>) = items.map {
+                if (it.category == name) it.copy(category = null, updatedAt = System.currentTimeMillis()) else it
+            }
+            fun uncatNotes(items: List<MissionNote>) = items.map {
+                if (it.category == name) it.copy(category = null, updatedAt = System.currentTimeMillis()) else it
+            }
+
+            when (section) {
+                "todo" -> state.copy(categoryOrder = order, todoList = uncatItems(state.todoList), hasLocalChanges = true)
+                "mission" -> state.copy(categoryOrder = order, missionList = uncatItems(state.missionList), hasLocalChanges = true)
+                "done" -> state.copy(categoryOrder = order, doneList = uncatItems(state.doneList), hasLocalChanges = true)
+                "notes" -> state.copy(categoryOrder = order, notes = uncatNotes(state.notes), hasLocalChanges = true)
+                "skills" -> state.copy(categoryOrder = order, skills = state.skills.map {
+                    if (it.category == name) it.copy(category = null, updatedAt = System.currentTimeMillis()) else it
+                }, hasLocalChanges = true)
+                "souls" -> state.copy(categoryOrder = order, souls = state.souls.map {
+                    if (it.category == name) it.copy(category = null, updatedAt = System.currentTimeMillis()) else it
+                }, hasLocalChanges = true)
+                "rules" -> state.copy(categoryOrder = order, rules = state.rules.map {
+                    if (it.category == name) it.copy(category = null, updatedAt = System.currentTimeMillis()) else it
+                }, hasLocalChanges = true)
+                else -> state.copy(categoryOrder = order, hasLocalChanges = true)
+            }
+        }
+        saveToLocal()
+    }
+
+    fun clearCategory(section: String, name: String) {
+        _uiState.update { state ->
+            // Remove all items in this category (keep category in order)
+            when (section) {
+                "todo" -> state.copy(todoList = state.todoList.filter { it.category != name }, hasLocalChanges = true)
+                "mission" -> state.copy(missionList = state.missionList.filter { it.category != name }, hasLocalChanges = true)
+                "done" -> state.copy(doneList = state.doneList.filter { it.category != name }, hasLocalChanges = true)
+                "notes" -> state.copy(notes = state.notes.filter { it.category != name }, hasLocalChanges = true)
+                "skills" -> state.copy(skills = state.skills.filter { it.category != name }, hasLocalChanges = true)
+                "souls" -> state.copy(souls = state.souls.filter { it.category != name }, hasLocalChanges = true)
+                "rules" -> state.copy(rules = state.rules.filter { it.category != name }, hasLocalChanges = true)
+                else -> state
+            }
+        }
+        saveToLocal()
     }
 }

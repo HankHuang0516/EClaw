@@ -42,7 +42,8 @@ data class MissionItem(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val completedAt: Long? = null,
-    val createdBy: String? = null
+    val createdBy: String? = null,
+    val category: String? = null
 )
 
 /**
@@ -71,7 +72,8 @@ data class MissionRule(
     val config: Map<String, Any> = emptyMap(),
     val assignedEntities: List<String> = emptyList(),
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
+    val updatedAt: Long = System.currentTimeMillis(),
+    val category: String? = null
 )
 
 enum class RuleType {
@@ -95,7 +97,8 @@ data class MissionSkill(
     val isSystem: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
-    val createdBy: String? = null
+    val createdBy: String? = null,
+    val category: String? = null
 )
 
 /**
@@ -110,7 +113,8 @@ data class MissionSoul(
     val isActive: Boolean = true,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
-    val createdBy: String? = null
+    val createdBy: String? = null,
+    val category: String? = null
 )
 
 /**
@@ -124,6 +128,7 @@ data class MissionDashboardSnapshot(
     val rules: List<MissionRule>,
     val skills: List<MissionSkill> = emptyList(),
     val souls: List<MissionSoul> = emptyList(),
+    val categoryOrder: Map<String, List<String>> = emptyMap(),
     val version: Int = 1,
     val lastSyncedAt: Long = System.currentTimeMillis()
 )

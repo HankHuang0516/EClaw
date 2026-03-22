@@ -1,12 +1,15 @@
 package com.hank.clawlive
 
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
@@ -82,6 +85,20 @@ class MissionControlActivity : AppCompatActivity() {
         SoulTemplate("adventurer",   "⚔️"),
         SoulTemplate("poet",         "🌸")
     )
+
+    /** Category expand/collapse state stored in SharedPreferences. */
+    private val categoryStatePrefs: SharedPreferences by lazy {
+        getSharedPreferences("mission_cat_state_${deviceManager.deviceId}", Context.MODE_PRIVATE)
+    }
+
+    private fun isCategoryExpanded(section: String, category: String): Boolean {
+        return categoryStatePrefs.getBoolean("$section:$category", true)
+    }
+
+    private fun toggleCategoryExpanded(section: String, category: String) {
+        val current = isCategoryExpanded(section, category)
+        categoryStatePrefs.edit().putBoolean("$section:$category", !current).apply()
+    }
 
     private fun getTemplateDisplayName(tpl: SoulTemplate): String {
         val resId = resources.getIdentifier("soul_name_${tpl.id}", "string", packageName)
@@ -272,6 +289,15 @@ class MissionControlActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.btnAddRule).setOnClickListener { showAddRuleDialog() }
         findViewById<MaterialButton>(R.id.btnAddVar).setOnClickListener { showVarDialog(null) }
         findViewById<MaterialButton>(R.id.btnSyncVars).setOnClickListener { syncVarsToServer() }
+
+        // Category add buttons
+        findViewById<MaterialButton>(R.id.btnAddCatTodo).setOnClickListener { showAddCategoryDialog("todo") }
+        findViewById<MaterialButton>(R.id.btnAddCatMission).setOnClickListener { showAddCategoryDialog("mission") }
+        findViewById<MaterialButton>(R.id.btnAddCatDone).setOnClickListener { showAddCategoryDialog("done") }
+        findViewById<MaterialButton>(R.id.btnAddCatNotes).setOnClickListener { showAddCategoryDialog("notes") }
+        findViewById<MaterialButton>(R.id.btnAddCatSkills).setOnClickListener { showAddCategoryDialog("skills") }
+        findViewById<MaterialButton>(R.id.btnAddCatSouls).setOnClickListener { showAddCategoryDialog("souls") }
+        findViewById<MaterialButton>(R.id.btnAddCatRules).setOnClickListener { showAddCategoryDialog("rules") }
     }
 
     private fun observeState() {
@@ -292,14 +318,24 @@ class MissionControlActivity : AppCompatActivity() {
         btnUpload.isEnabled = !state.isSyncing
         btnUpload.text = getString(R.string.publish_notification)
 
-        // Lists
-        todoAdapter.submitList(state.todoList)
-        missionAdapter.submitList(state.missionList)
-        doneAdapter.submitList(state.doneList)
-        noteAdapter.submitList(state.notes)
-        skillAdapter.submitList(state.skills)
-        soulAdapter.submitList(state.souls)
-        ruleAdapter.submitList(state.rules)
+        // Lists — render categorized items into containers, uncategorized into RecyclerViews
+        renderCategorizedItems("todo", state.todoList, state.categoryOrder,
+            findViewById(R.id.containerTodo), todoAdapter,
+            { it.category }, { showEditItemDialog(it, ListMode.TODO) }, { showItemActionMenu(it, ListMode.TODO) })
+        renderCategorizedItems("mission", state.missionList, state.categoryOrder,
+            findViewById(R.id.containerMission), missionAdapter,
+            { it.category }, { showEditItemDialog(it, ListMode.MISSION) }, { showItemActionMenu(it, ListMode.MISSION) })
+        renderCategorizedItems("done", state.doneList, state.categoryOrder,
+            findViewById(R.id.containerDone), doneAdapter,
+            { it.category }, { showEditItemDialog(it, ListMode.DONE) }, { })
+        renderCategorizedNotes("notes", state.notes, state.categoryOrder,
+            findViewById(R.id.containerNotes), noteAdapter)
+        renderCategorizedSkills("skills", state.skills, state.categoryOrder,
+            findViewById(R.id.containerSkills), skillAdapter)
+        renderCategorizedSouls("souls", state.souls, state.categoryOrder,
+            findViewById(R.id.containerSouls), soulAdapter)
+        renderCategorizedRules("rules", state.rules, state.categoryOrder,
+            findViewById(R.id.containerRules), ruleAdapter)
 
         // Empty states
         findViewById<View>(R.id.tvTodoEmpty).visibility =
@@ -342,6 +378,7 @@ class MissionControlActivity : AppCompatActivity() {
         val etTitle = view.findViewById<EditText>(R.id.etTitle)
         val etDescription = view.findViewById<EditText>(R.id.etDescription)
         val spinnerPriority = view.findViewById<Spinner>(R.id.spinnerPriority)
+        val spinnerCategory = view.findViewById<Spinner>(R.id.spinnerCategory)
         val container = view.findViewById<LinearLayout>(R.id.entityCheckboxContainer)
 
         val priorities = Priority.values()
@@ -350,6 +387,7 @@ class MissionControlActivity : AppCompatActivity() {
             priorities.map { it.label })
         spinnerPriority.setSelection(1) // MEDIUM
 
+        buildCategorySpinner(spinnerCategory, "todo")
         val checkboxes = buildEntityCheckboxes(container, emptyList())
 
         MaterialAlertDialogBuilder(this)
@@ -363,7 +401,8 @@ class MissionControlActivity : AppCompatActivity() {
                         title = title,
                         description = etDescription.text.toString().trim(),
                         priority = priorities[spinnerPriority.selectedItemPosition],
-                        assignedBot = selectedEntities.joinToString(",").ifEmpty { null }
+                        assignedBot = selectedEntities.joinToString(",").ifEmpty { null },
+                        category = getSelectedCategory(spinnerCategory)
                     )
                 }
             }
@@ -376,6 +415,7 @@ class MissionControlActivity : AppCompatActivity() {
         val etTitle = view.findViewById<EditText>(R.id.etTitle)
         val etDescription = view.findViewById<EditText>(R.id.etDescription)
         val spinnerPriority = view.findViewById<Spinner>(R.id.spinnerPriority)
+        val spinnerCategory = view.findViewById<Spinner>(R.id.spinnerCategory)
         val container = view.findViewById<LinearLayout>(R.id.entityCheckboxContainer)
 
         val priorities = Priority.values()
@@ -386,6 +426,13 @@ class MissionControlActivity : AppCompatActivity() {
         etTitle.setText(item.title)
         etDescription.setText(item.description ?: "")
         spinnerPriority.setSelection(priorities.indexOf(item.priority ?: Priority.MEDIUM))
+
+        val section = when (mode) {
+            ListMode.TODO -> "todo"
+            ListMode.MISSION -> "mission"
+            ListMode.DONE -> "done"
+        }
+        buildCategorySpinner(spinnerCategory, section, item.category)
 
         val selectedEntities = item.assignedBot?.split(",")?.map { it.trim() } ?: emptyList()
         val checkboxes = buildEntityCheckboxes(container, selectedEntities)
@@ -402,7 +449,8 @@ class MissionControlActivity : AppCompatActivity() {
                         title = title,
                         description = etDescription.text.toString().trim(),
                         priority = priorities[spinnerPriority.selectedItemPosition],
-                        assignedBot = selected.joinToString(",").ifEmpty { null }
+                        assignedBot = selected.joinToString(",").ifEmpty { null },
+                        category = getSelectedCategory(spinnerCategory)
                     )
                 }
             }
@@ -445,7 +493,9 @@ class MissionControlActivity : AppCompatActivity() {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_mission_note, null)
         val etTitle = view.findViewById<EditText>(R.id.etTitle)
         val etContent = view.findViewById<EditText>(R.id.etContent)
-        val etCategory = view.findViewById<EditText>(R.id.etCategory)
+        val spinnerCategory = view.findViewById<Spinner>(R.id.spinnerCategory)
+
+        buildCategorySpinner(spinnerCategory, "notes")
 
         MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.add_note))
@@ -457,7 +507,7 @@ class MissionControlActivity : AppCompatActivity() {
                     viewModel.addNote(
                         title = title,
                         content = content,
-                        category = etCategory.text.toString().trim().ifEmpty { "general" }
+                        category = getSelectedCategory(spinnerCategory) ?: "general"
                     )
                 }
             }
@@ -469,11 +519,11 @@ class MissionControlActivity : AppCompatActivity() {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_mission_note, null)
         val etTitle = view.findViewById<EditText>(R.id.etTitle)
         val etContent = view.findViewById<EditText>(R.id.etContent)
-        val etCategory = view.findViewById<EditText>(R.id.etCategory)
+        val spinnerCategory = view.findViewById<Spinner>(R.id.spinnerCategory)
 
         etTitle.setText(note.title)
         etContent.setText(note.content)
-        etCategory.setText(note.category ?: "")
+        buildCategorySpinner(spinnerCategory, "notes", note.category)
 
         val dialog = MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.edit))
@@ -485,7 +535,7 @@ class MissionControlActivity : AppCompatActivity() {
                         noteId = note.id,
                         title = title,
                         content = etContent.text.toString().trim(),
-                        category = etCategory.text.toString().trim().ifEmpty { "general" }
+                        category = getSelectedCategory(spinnerCategory) ?: "general"
                     )
                 }
             }
@@ -507,12 +557,14 @@ class MissionControlActivity : AppCompatActivity() {
         val etName = view.findViewById<EditText>(R.id.etName)
         val etDescription = view.findViewById<EditText>(R.id.etDescription)
         val spinnerType = view.findViewById<Spinner>(R.id.spinnerRuleType)
+        val spinnerCategory = view.findViewById<Spinner>(R.id.spinnerCategory)
         val container = view.findViewById<LinearLayout>(R.id.entityCheckboxContainer)
 
         val types = RuleType.values()
         spinnerType.adapter = ArrayAdapter(this,
             android.R.layout.simple_spinner_dropdown_item,
             types.map { it.name })
+        buildCategorySpinner(spinnerCategory, "rules")
 
         // Wire up server-side rule gallery button
         btnChooseRuleTemplate.setOnClickListener {
@@ -544,7 +596,8 @@ class MissionControlActivity : AppCompatActivity() {
                         name = name,
                         description = etDescription.text.toString().trim(),
                         ruleType = types[spinnerType.selectedItemPosition],
-                        assignedEntities = checkboxes.filter { it.second.isChecked }.map { it.first }
+                        assignedEntities = checkboxes.filter { it.second.isChecked }.map { it.first },
+                        category = getSelectedCategory(spinnerCategory)
                     )
                 }
             }
@@ -557,6 +610,7 @@ class MissionControlActivity : AppCompatActivity() {
         val etName = view.findViewById<EditText>(R.id.etName)
         val etDescription = view.findViewById<EditText>(R.id.etDescription)
         val spinnerType = view.findViewById<Spinner>(R.id.spinnerRuleType)
+        val spinnerCategory = view.findViewById<Spinner>(R.id.spinnerCategory)
         val container = view.findViewById<LinearLayout>(R.id.entityCheckboxContainer)
 
         val types = RuleType.values()
@@ -567,6 +621,7 @@ class MissionControlActivity : AppCompatActivity() {
         etName.setText(rule.name)
         etDescription.setText(rule.description)
         spinnerType.setSelection(types.indexOf(rule.ruleType))
+        buildCategorySpinner(spinnerCategory, "rules", rule.category)
 
         val checkboxes = buildEntityCheckboxes(container, rule.assignedEntities)
 
@@ -581,7 +636,8 @@ class MissionControlActivity : AppCompatActivity() {
                         name = name,
                         description = etDescription.text.toString().trim(),
                         ruleType = types[spinnerType.selectedItemPosition],
-                        assignedEntities = checkboxes.filter { it.second.isChecked }.map { it.first }
+                        assignedEntities = checkboxes.filter { it.second.isChecked }.map { it.first },
+                        category = getSelectedCategory(spinnerCategory)
                     )
                 }
             }
@@ -637,7 +693,9 @@ class MissionControlActivity : AppCompatActivity() {
         val etTitle = view.findViewById<EditText>(R.id.etTitle)
         val etUrl = view.findViewById<EditText>(R.id.etUrl)
         val etSteps = view.findViewById<EditText>(R.id.etSteps)
+        val spinnerCategory = view.findViewById<Spinner>(R.id.spinnerCategory)
         val container = view.findViewById<LinearLayout>(R.id.entityCheckboxContainer)
+        buildCategorySpinner(spinnerCategory, "skills", skill?.category)
         val layoutRequiredVarsWarning = view.findViewById<LinearLayout>(R.id.layoutRequiredVarsWarning)
         val tvRequiredVarsList = view.findViewById<TextView>(R.id.tvRequiredVarsList)
         val btnGoToEnvVars = view.findViewById<MaterialButton>(R.id.btnGoToEnvVars)
@@ -697,10 +755,11 @@ class MissionControlActivity : AppCompatActivity() {
                     val url = etUrl.text.toString().trim()
                     val steps = etSteps.text.toString().trim()
                     val selectedEntities = checkboxes.filter { it.second.isChecked }.map { it.first }
+                    val cat = getSelectedCategory(spinnerCategory)
                     if (skill != null) {
-                        viewModel.editSkill(skill.id, title, url, steps, selectedEntities)
+                        viewModel.editSkill(skill.id, title, url, steps, selectedEntities, cat)
                     } else {
-                        viewModel.addSkill(title, url, steps, selectedEntities)
+                        viewModel.addSkill(title, url, steps, selectedEntities, cat)
                     }
                 }
             }
@@ -863,7 +922,9 @@ class MissionControlActivity : AppCompatActivity() {
         val btnChooseSoulTemplate = view.findViewById<MaterialButton>(R.id.btnChooseSoulTemplate)
         val etName = view.findViewById<EditText>(R.id.etName)
         val etDescription = view.findViewById<EditText>(R.id.etDescription)
+        val spinnerCategory = view.findViewById<Spinner>(R.id.spinnerCategory)
         val container = view.findViewById<LinearLayout>(R.id.entityCheckboxContainer)
+        buildCategorySpinner(spinnerCategory, "souls", soul?.category)
 
         // Track currently selected template ID
         var selectedTemplateId: String? = soul?.templateId
@@ -921,10 +982,11 @@ class MissionControlActivity : AppCompatActivity() {
                 if (name.isNotEmpty()) {
                     val description = etDescription.text.toString().trim()
                     val selectedEntities = checkboxes.filter { it.second.isChecked }.map { it.first }
+                    val cat = getSelectedCategory(spinnerCategory)
                     if (soul != null) {
-                        viewModel.editSoul(soul.id, name, description, selectedTemplateId, selectedEntities)
+                        viewModel.editSoul(soul.id, name, description, selectedTemplateId, selectedEntities, cat)
                     } else {
-                        viewModel.addSoul(name, description, selectedTemplateId, selectedEntities)
+                        viewModel.addSoul(name, description, selectedTemplateId, selectedEntities, cat)
                     }
                 }
             }
@@ -1004,6 +1066,352 @@ class MissionControlActivity : AppCompatActivity() {
                 viewModel.updateNotifiedSnapshot()
             }
             .show()
+    }
+
+    // ============================================
+    // Category Rendering
+    // ============================================
+
+    /** Render a category header into a container, returning the body LinearLayout. */
+    private fun inflateCategoryHeader(
+        container: LinearLayout,
+        section: String,
+        category: String,
+        count: Int
+    ): LinearLayout {
+        val headerView = LayoutInflater.from(this).inflate(R.layout.item_category_header, container, false)
+        val expanded = isCategoryExpanded(section, category)
+
+        headerView.findViewById<TextView>(R.id.tvChevron).text = if (expanded) "▼" else "▶"
+        headerView.findViewById<TextView>(R.id.tvCategoryName).text = category
+        headerView.findViewById<TextView>(R.id.tvCategoryCount).text = "($count)"
+
+        val bodyLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            visibility = if (expanded) View.VISIBLE else View.GONE
+            setPadding(16, 0, 0, 0)
+        }
+
+        headerView.findViewById<View>(R.id.categoryHeader).setOnClickListener {
+            toggleCategoryExpanded(section, category)
+            val nowExpanded = isCategoryExpanded(section, category)
+            headerView.findViewById<TextView>(R.id.tvChevron).text = if (nowExpanded) "▼" else "▶"
+            bodyLayout.visibility = if (nowExpanded) View.VISIBLE else View.GONE
+        }
+
+        headerView.findViewById<ImageButton>(R.id.btnRename).setOnClickListener {
+            showRenameCategoryDialog(section, category)
+        }
+        headerView.findViewById<ImageButton>(R.id.btnDelete).setOnClickListener {
+            showDeleteCategoryDialog(section, category)
+        }
+
+        container.addView(headerView)
+        container.addView(bodyLayout)
+        return bodyLayout
+    }
+
+    /** Generic category rendering for MissionItem lists (TODO, Mission, Done). */
+    private fun <T> renderCategorizedItems(
+        section: String,
+        items: List<T>,
+        categoryOrder: Map<String, List<String>>,
+        container: LinearLayout,
+        adapter: RecyclerView.Adapter<*>,
+        getCategory: (T) -> String?,
+        onClick: (T) -> Unit,
+        onLongClick: (T) -> Unit
+    ) {
+        container.removeAllViews()
+        val order = categoryOrder[section] ?: emptyList()
+        if (order.isEmpty()) {
+            // No categories — use adapter directly (backward compat)
+            @Suppress("UNCHECKED_CAST")
+            (adapter as? MissionItemAdapter)?.submitList(items as? List<MissionItem>)
+            return
+        }
+
+        val grouped = items.groupBy { getCategory(it) }
+        val categorizedIds = mutableSetOf<String>()
+
+        for (cat in order) {
+            val catItems = grouped[cat] ?: emptyList()
+            val body = inflateCategoryHeader(container, section, cat, catItems.size)
+            for (item in catItems) {
+                val itemView = createMissionItemView(item as MissionItem, onClick as (MissionItem) -> Unit, onLongClick as (MissionItem) -> Unit)
+                body.addView(itemView)
+            }
+            catItems.forEach { categorizedIds.add((it as MissionItem).id) }
+        }
+
+        // Uncategorized items go to the RecyclerView adapter
+        val uncategorized = items.filterIsInstance<MissionItem>().filter { it.id !in categorizedIds && getCategory(it as T) == null }
+        @Suppress("UNCHECKED_CAST")
+        (adapter as? MissionItemAdapter)?.submitList(uncategorized)
+    }
+
+    private fun createMissionItemView(item: MissionItem, onClick: (MissionItem) -> Unit, onLongClick: (MissionItem) -> Unit): View {
+        val view = LayoutInflater.from(this).inflate(R.layout.item_mission, null)
+        view.findViewById<TextView>(R.id.tvPriority).text = (item.priority?.label ?: "🟡 中").take(2)
+        view.findViewById<TextView>(R.id.tvTitle).text = item.title
+        view.findViewById<TextView>(R.id.tvStatus).text = item.status?.label ?: "待處理"
+        val tvDesc = view.findViewById<TextView>(R.id.tvDescription)
+        if (!item.description.isNullOrBlank()) {
+            tvDesc.text = item.description
+            tvDesc.visibility = View.VISIBLE
+        } else {
+            tvDesc.visibility = View.GONE
+        }
+        view.findViewById<View>(R.id.detailsRow).visibility = View.GONE
+        view.findViewById<View>(R.id.tvCompletedAt).visibility = View.GONE
+        view.setOnClickListener { onClick(item) }
+        view.setOnLongClickListener { onLongClick(item); true }
+        val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        lp.bottomMargin = 6
+        view.layoutParams = lp
+        return view
+    }
+
+    private fun renderCategorizedNotes(
+        section: String,
+        items: List<MissionNote>,
+        categoryOrder: Map<String, List<String>>,
+        container: LinearLayout,
+        adapter: MissionNoteAdapter
+    ) {
+        container.removeAllViews()
+        val order = categoryOrder[section] ?: emptyList()
+        if (order.isEmpty()) {
+            adapter.submitList(items)
+            return
+        }
+
+        val grouped = items.groupBy { it.category }
+        val categorizedIds = mutableSetOf<String>()
+
+        for (cat in order) {
+            val catItems = grouped[cat] ?: emptyList()
+            val body = inflateCategoryHeader(container, section, cat, catItems.size)
+            for (note in catItems) {
+                val view = createNoteItemView(note)
+                body.addView(view)
+            }
+            catItems.forEach { categorizedIds.add(it.id) }
+        }
+
+        adapter.submitList(items.filter { it.id !in categorizedIds && it.category == null })
+    }
+
+    private fun createNoteItemView(note: MissionNote): View {
+        val view = LayoutInflater.from(this).inflate(R.layout.item_mission_note, null)
+        view.findViewById<TextView>(R.id.tvTitle).text = note.title
+        view.findViewById<TextView>(R.id.tvContent).text = note.content
+        view.findViewById<TextView>(R.id.tvCategory).text = note.category ?: ""
+        view.setOnClickListener { showEditNoteDialog(note) }
+        val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        lp.bottomMargin = 6
+        view.layoutParams = lp
+        return view
+    }
+
+    private fun renderCategorizedSkills(
+        section: String,
+        items: List<MissionSkill>,
+        categoryOrder: Map<String, List<String>>,
+        container: LinearLayout,
+        adapter: MissionSkillAdapter
+    ) {
+        container.removeAllViews()
+        val order = categoryOrder[section] ?: emptyList()
+        if (order.isEmpty()) {
+            adapter.submitList(items)
+            return
+        }
+
+        val grouped = items.groupBy { it.category }
+        val categorizedIds = mutableSetOf<String>()
+
+        for (cat in order) {
+            val catItems = grouped[cat] ?: emptyList()
+            val body = inflateCategoryHeader(container, section, cat, catItems.size)
+            for (skill in catItems) {
+                val view = createSkillItemView(skill)
+                body.addView(view)
+            }
+            catItems.forEach { categorizedIds.add(it.id) }
+        }
+
+        adapter.submitList(items.filter { it.id !in categorizedIds && it.category == null })
+    }
+
+    private fun createSkillItemView(skill: MissionSkill): View {
+        val view = LayoutInflater.from(this).inflate(R.layout.item_mission_skill, null)
+        view.findViewById<TextView>(R.id.tvTitle).text = if (skill.isSystem) "\uD83D\uDD12 ${skill.title}" else skill.title
+        val tvEntities = view.findViewById<TextView>(R.id.tvEntities)
+        if (skill.assignedEntities.isNotEmpty()) {
+            tvEntities.text = skill.assignedEntities.joinToString(", ")
+            tvEntities.visibility = View.VISIBLE
+        } else {
+            tvEntities.visibility = View.GONE
+        }
+        val tvUrl = view.findViewById<TextView>(R.id.tvUrl)
+        if (!skill.url.isNullOrBlank()) {
+            tvUrl.text = skill.url
+            tvUrl.visibility = View.VISIBLE
+        } else {
+            tvUrl.visibility = View.GONE
+        }
+        view.setOnClickListener { showEditSkillDialog(skill) }
+        val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+        lp.bottomMargin = 6
+        view.layoutParams = lp
+        return view
+    }
+
+    private fun renderCategorizedSouls(
+        section: String,
+        items: List<MissionSoul>,
+        categoryOrder: Map<String, List<String>>,
+        container: LinearLayout,
+        adapter: MissionSoulAdapter
+    ) {
+        container.removeAllViews()
+        val order = categoryOrder[section] ?: emptyList()
+        if (order.isEmpty()) {
+            adapter.submitList(items)
+            return
+        }
+
+        val grouped = items.groupBy { it.category }
+        val categorizedIds = mutableSetOf<String>()
+
+        for (cat in order) {
+            val catItems = grouped[cat] ?: emptyList()
+            val body = inflateCategoryHeader(container, section, cat, catItems.size)
+            for (soul in catItems) {
+                val tv = TextView(this).apply {
+                    text = "${soul.name}${if (soul.isActive) "" else " (inactive)"}"
+                    textSize = 14f
+                    setTextColor(0xFFFFFFFF.toInt())
+                    setPadding(8, 8, 8, 8)
+                    setOnClickListener { showEditSoulDialog(soul) }
+                }
+                body.addView(tv)
+            }
+            catItems.forEach { categorizedIds.add(it.id) }
+        }
+
+        adapter.submitList(items.filter { it.id !in categorizedIds && it.category == null })
+    }
+
+    private fun renderCategorizedRules(
+        section: String,
+        items: List<MissionRule>,
+        categoryOrder: Map<String, List<String>>,
+        container: LinearLayout,
+        adapter: MissionRuleAdapter
+    ) {
+        container.removeAllViews()
+        val order = categoryOrder[section] ?: emptyList()
+        if (order.isEmpty()) {
+            adapter.submitList(items)
+            return
+        }
+
+        val grouped = items.groupBy { it.category }
+        val categorizedIds = mutableSetOf<String>()
+
+        for (cat in order) {
+            val catItems = grouped[cat] ?: emptyList()
+            val body = inflateCategoryHeader(container, section, cat, catItems.size)
+            for (rule in catItems) {
+                val tv = TextView(this).apply {
+                    text = "${rule.name} [${rule.ruleType.name}]${if (rule.isEnabled) "" else " (disabled)"}"
+                    textSize = 14f
+                    setTextColor(0xFFFFFFFF.toInt())
+                    setPadding(8, 8, 8, 8)
+                    setOnClickListener { showEditRuleDialog(rule) }
+                }
+                body.addView(tv)
+            }
+            catItems.forEach { categorizedIds.add(it.id) }
+        }
+
+        adapter.submitList(items.filter { it.id !in categorizedIds && it.category == null })
+    }
+
+    // ============================================
+    // Category Dialogs
+    // ============================================
+
+    private fun showAddCategoryDialog(section: String) {
+        val input = EditText(this).apply {
+            hint = getString(R.string.category_name_hint)
+            setPadding(48, 24, 48, 8)
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.category_add_title))
+            .setView(input)
+            .setPositiveButton(R.string.send) { _, _ ->
+                val name = input.text.toString().trim().take(50)
+                if (name.isNotEmpty()) {
+                    val existing = viewModel.getCategoryOrder(section)
+                    if (existing.contains(name)) {
+                        Toast.makeText(this, getString(R.string.category_already_exists, name), Toast.LENGTH_SHORT).show()
+                    } else {
+                        viewModel.addCategory(section, name)
+                    }
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun showRenameCategoryDialog(section: String, oldName: String) {
+        val input = EditText(this).apply {
+            setText(oldName)
+            setPadding(48, 24, 48, 8)
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.category_rename_title))
+            .setView(input)
+            .setPositiveButton(R.string.done) { _, _ ->
+                val newName = input.text.toString().trim().take(50)
+                if (newName.isNotEmpty() && newName != oldName) {
+                    viewModel.renameCategory(section, oldName, newName)
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun showDeleteCategoryDialog(section: String, category: String) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.category_delete_title))
+            .setMessage(getString(R.string.category_delete_confirm, category))
+            .setPositiveButton(R.string.delete) { _, _ ->
+                viewModel.deleteCategory(section, category)
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    /** Build a category Spinner for a dialog. Returns the Spinner. */
+    private fun buildCategorySpinner(spinner: Spinner, section: String, currentCategory: String? = null) {
+        val categories = viewModel.getCategoryOrder(section)
+        val options = mutableListOf(getString(R.string.category_none))
+        options.addAll(categories)
+        spinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, options)
+        if (currentCategory != null) {
+            val idx = categories.indexOf(currentCategory)
+            if (idx >= 0) spinner.setSelection(idx + 1) // +1 for "No category" option
+        }
+    }
+
+    /** Get the selected category from a Spinner (null if "No category" selected). */
+    private fun getSelectedCategory(spinner: Spinner): String? {
+        return if (spinner.selectedItemPosition == 0) null
+        else spinner.selectedItem?.toString()
     }
 
     private fun showDeleteConfirm(name: String, onConfirm: () -> Unit) {
