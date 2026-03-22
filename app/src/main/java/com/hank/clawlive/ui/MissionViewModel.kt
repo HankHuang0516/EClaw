@@ -806,11 +806,9 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
     // ============================================
 
     fun loadNotePages() {
-        val deviceId = deviceManager.getDeviceId() ?: return
-        val deviceSecret = deviceManager.getDeviceSecret() ?: return
         viewModelScope.launch {
             try {
-                val response = api.getNotePages(deviceId, deviceSecret)
+                val response = api.getNotePages(deviceManager.deviceId, deviceManager.deviceSecret)
                 if (response.success) {
                     _uiState.update { it.copy(notePageIds = response.pages.map { p -> p.noteId }.toSet()) }
                 }
@@ -821,10 +819,8 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
     }
 
     suspend fun getNotePage(noteId: String): com.hank.clawlive.data.remote.NotePageContentResponse? {
-        val deviceId = deviceManager.getDeviceId() ?: return null
-        val deviceSecret = deviceManager.getDeviceSecret() ?: return null
         return try {
-            val response = api.getNotePage(deviceId, deviceSecret, noteId)
+            val response = api.getNotePage(deviceManager.deviceId, deviceManager.deviceSecret, noteId)
             if (response.success) response else null
         } catch (e: Exception) {
             Timber.w(e, "[MISSION] getNotePage failed: ${e.message}")
@@ -833,11 +829,9 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
     }
 
     suspend fun saveNotePage(noteId: String, htmlContent: String): Boolean {
-        val deviceId = deviceManager.getDeviceId() ?: return false
-        val deviceSecret = deviceManager.getDeviceSecret() ?: return false
         return try {
             val response = api.putNotePage(mapOf(
-                "deviceId" to deviceId, "deviceSecret" to deviceSecret,
+                "deviceId" to deviceManager.deviceId, "deviceSecret" to deviceManager.deviceSecret,
                 "noteId" to noteId, "htmlContent" to htmlContent
             ))
             if (response.success) {
@@ -851,11 +845,9 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
     }
 
     suspend fun deleteNotePage(noteId: String): Boolean {
-        val deviceId = deviceManager.getDeviceId() ?: return false
-        val deviceSecret = deviceManager.getDeviceSecret() ?: return false
         return try {
             val response = api.deleteNotePage(mapOf(
-                "deviceId" to deviceId, "deviceSecret" to deviceSecret, "noteId" to noteId
+                "deviceId" to deviceManager.deviceId, "deviceSecret" to deviceManager.deviceSecret, "noteId" to noteId
             ))
             if (response.success) {
                 _uiState.update { it.copy(notePageIds = it.notePageIds - noteId) }
@@ -868,11 +860,9 @@ class MissionViewModel(application: Application) : AndroidViewModel(application)
     }
 
     suspend fun saveDrawing(noteId: String, drawingData: String): Boolean {
-        val deviceId = deviceManager.getDeviceId() ?: return false
-        val deviceSecret = deviceManager.getDeviceSecret() ?: return false
         return try {
             val response = api.putNotePageDrawing(mapOf(
-                "deviceId" to deviceId, "deviceSecret" to deviceSecret,
+                "deviceId" to deviceManager.deviceId, "deviceSecret" to deviceManager.deviceSecret,
                 "noteId" to noteId, "drawingData" to drawingData
             ))
             response.success

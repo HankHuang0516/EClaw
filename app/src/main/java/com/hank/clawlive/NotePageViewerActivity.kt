@@ -118,19 +118,22 @@ class NotePageViewerActivity : AppCompatActivity() {
     }
 
     private fun setupColorPicker() {
-        for (i in colors.indices) {
-            val v = findViewById<View>(colorViewIds[i])
+        val localColors = colors
+        val localViewIds = colorViewIds
+        for (i in localColors.indices) {
+            val c = localColors[i]
+            val v = findViewById<View>(localViewIds[i])
             val bg = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
-                setColor(colors[i])
-                setStroke(if (colors[i] == currentColor) 3 else 0, Color.WHITE)
+                setColor(c)
+                setStroke(if (c == currentColor) 3 else 0, Color.WHITE)
             }
             v.background = bg
             v.setOnClickListener {
-                currentColor = colors[i]
+                currentColor = c
                 drawingCanvas.drawColor = currentColor
                 drawingCanvas.isEraser = false
-                setupColorPicker() // refresh selection
+                setupColorPicker()
             }
         }
     }
