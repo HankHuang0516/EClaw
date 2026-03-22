@@ -1,3 +1,10 @@
+## [1.145.1](https://github.com/HankHuang0516/EClaw/compare/v1.145.0...v1.145.1) (2026-03-22)
+
+
+### Bug Fixes
+
+* canvas drawing only produces small stroke — add pointer capture and touch-action ([f76a66a](https://github.com/HankHuang0516/EClaw/commit/f76a66a0fd14efb520ff9c92a4ec704e2dc63360))
+
 # [1.145.0](https://github.com/HankHuang0516/EClaw/compare/v1.144.2...v1.145.0) (2026-03-22)
 
 
