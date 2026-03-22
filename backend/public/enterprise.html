@@ -165,10 +165,149 @@
             max-width: 960px;
             margin: 0 auto;
         }
+        /* Demo Section */
+        .ent-demo {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+        .ent-demo-setup {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .ent-demo-setup input[type="url"] {
+            flex: 1;
+            padding: 10px 14px;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .ent-demo-setup input[type="url"]:focus { border-color: var(--primary); }
+        .ent-demo-setup input[type="url"]::placeholder { color: var(--text-muted); }
+        .ent-demo-file {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .ent-demo-file label {
+            cursor: pointer;
+            padding: 8px 16px;
+            background: var(--input-bg);
+            border: 1px dashed var(--card-border);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--text-secondary);
+            transition: border-color 0.2s;
+        }
+        .ent-demo-file label:hover { border-color: var(--primary); color: var(--text); }
+        .ent-demo-file input[type="file"] { display: none; }
+        .ent-demo-file-name {
+            font-size: 13px;
+            color: var(--text-muted);
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .ent-demo-status {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            min-height: 18px;
+        }
+        .ent-demo-status.success { color: #4CAF50; }
+        .ent-demo-status.error { color: #F44336; }
+        .ent-demo-chat {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        .ent-demo-messages {
+            height: 320px;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .ent-demo-msg {
+            max-width: 85%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        .ent-demo-msg.user {
+            align-self: flex-end;
+            background: var(--primary);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        .ent-demo-msg.bot {
+            align-self: flex-start;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-bottom-left-radius: 4px;
+        }
+        .ent-demo-msg.typing {
+            align-self: flex-start;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-bottom-left-radius: 4px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+        .ent-demo-welcome {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 14px;
+            padding: 40px 20px;
+        }
+        .ent-demo-input {
+            display: flex;
+            border-top: 1px solid var(--card-border);
+        }
+        .ent-demo-input input {
+            flex: 1;
+            padding: 12px 16px;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+        }
+        .ent-demo-input input::placeholder { color: var(--text-muted); }
+        .ent-demo-input button {
+            padding: 12px 20px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .ent-demo-input button:hover { background: var(--primary-hover); }
+        .ent-demo-input button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .ent-demo-hint {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
         @media (max-width: 600px) {
             .ent-hero h1 { font-size: 1.8rem; }
             .ent-hero p { font-size: 1rem; }
             .ent-section-title { font-size: 1.4rem; }
+            .ent-demo-setup { flex-direction: column; }
         }
     </style>
 </head>
@@ -292,6 +431,34 @@
 
         <hr class="ent-divider">
 
+        <!-- Live Demo -->
+        <section class="ent-demo" id="demo">
+            <h2 class="ent-section-title" data-i18n="ent_demo_title">Try It Now</h2>
+            <p class="ent-section-subtitle" data-i18n="ent_demo_subtitle">Enter your website or upload a document. Our AI agent will learn your business and start chatting.</p>
+            <div class="ent-demo-setup">
+                <input type="url" id="demoUrl" placeholder="https://your-company.com">
+                <button class="btn btn-primary" id="demoLoadBtn" data-i18n="ent_demo_load">Load</button>
+            </div>
+            <div class="ent-demo-file">
+                <label for="demoFile" data-i18n="ent_demo_upload">Upload File</label>
+                <input type="file" id="demoFile" accept=".txt,.md,.csv,.json,.html,.pdf">
+                <span class="ent-demo-file-name" id="demoFileName"></span>
+            </div>
+            <div class="ent-demo-status" id="demoStatus"></div>
+            <div class="ent-demo-chat">
+                <div class="ent-demo-messages" id="demoMessages">
+                    <div class="ent-demo-welcome" data-i18n="ent_demo_welcome">Enter your website URL or upload a file, then start chatting with the AI agent.</div>
+                </div>
+                <div class="ent-demo-input">
+                    <input type="text" id="demoInput" placeholder="Ask something about your business..." maxlength="500">
+                    <button id="demoSendBtn" data-i18n="ent_demo_send">Send</button>
+                </div>
+            </div>
+            <p class="ent-demo-hint" data-i18n="ent_demo_hint">Free demo — 10 messages per hour. No login required.</p>
+        </section>
+
+        <hr class="ent-divider">
+
         <!-- CTA -->
         <section class="ent-cta">
             <h2 data-i18n="ent_cta_title">Ready to Get Started?</h2>
@@ -312,6 +479,153 @@
     <script>
         renderPublicNav('enterprise');
         renderFooter();
+    </script>
+    <script>
+    (function() {
+        const t = (key, fallback) => typeof i18n !== 'undefined' ? i18n.t(key) : fallback;
+        const msgBox = document.getElementById('demoMessages');
+        const input = document.getElementById('demoInput');
+        const sendBtn = document.getElementById('demoSendBtn');
+        const loadBtn = document.getElementById('demoLoadBtn');
+        const urlInput = document.getElementById('demoUrl');
+        const fileInput = document.getElementById('demoFile');
+        const fileNameEl = document.getElementById('demoFileName');
+        const statusEl = document.getElementById('demoStatus');
+        let websiteUrl = '';
+        let fileContent = '';
+        let fileName = '';
+        let history = [];
+        let busy = false;
+
+        function setStatus(msg, type) {
+            statusEl.textContent = msg;
+            statusEl.className = 'ent-demo-status' + (type ? ' ' + type : '');
+        }
+
+        function addMsg(text, role) {
+            const welcome = msgBox.querySelector('.ent-demo-welcome');
+            if (welcome) welcome.remove();
+            const div = document.createElement('div');
+            div.className = 'ent-demo-msg ' + role;
+            div.textContent = text;
+            msgBox.appendChild(div);
+            msgBox.scrollTop = msgBox.scrollHeight;
+            return div;
+        }
+
+        function showTyping() {
+            const div = document.createElement('div');
+            div.className = 'ent-demo-msg typing';
+            div.id = 'demoTyping';
+            div.textContent = t('ent_demo_thinking', 'Thinking...');
+            msgBox.appendChild(div);
+            msgBox.scrollTop = msgBox.scrollHeight;
+        }
+
+        function hideTyping() {
+            const el = document.getElementById('demoTyping');
+            if (el) el.remove();
+        }
+
+        function demoFetch(body) {
+            return fetch('/api/enterprise-demo/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+                signal: AbortSignal.timeout(25000)
+            }).then(r => r.json());
+        }
+
+        loadBtn.addEventListener('click', function() {
+            const url = urlInput.value.trim();
+            if (!url) return;
+            try { new URL(url); } catch { setStatus(t('ent_demo_invalid_url', 'Please enter a valid URL'), 'error'); return; }
+            setStatus(t('ent_demo_loading', 'Loading website...'), '');
+            loadBtn.disabled = true;
+            demoFetch({
+                message: t('ent_demo_greet_prompt', 'Introduce yourself as this business\'s AI assistant. Briefly describe what the business does based on the website content.'),
+                websiteUrl: url
+            })
+            .then(data => {
+                loadBtn.disabled = false;
+                if (data.error) { setStatus(data.message || data.error, 'error'); return; }
+                websiteUrl = url;
+                setStatus(t('ent_demo_loaded', 'Website loaded') + ' ✓', 'success');
+                history = [];
+                msgBox.innerHTML = '';
+                addMsg(data.response, 'bot');
+                history.push({ role: 'assistant', content: data.response });
+            })
+            .catch(() => { loadBtn.disabled = false; setStatus(t('ent_demo_fetch_error', 'Failed to load website'), 'error'); });
+        });
+
+        fileInput.addEventListener('change', function() {
+            const file = fileInput.files[0];
+            if (!file) return;
+            if (file.size > 500000) { setStatus(t('ent_demo_file_too_large', 'File too large (max 500KB)'), 'error'); return; }
+            fileName = file.name;
+            fileNameEl.textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                fileContent = e.target.result.substring(0, 8000);
+                setStatus(t('ent_demo_file_loaded', 'File loaded') + ': ' + file.name + ' ✓', 'success');
+                demoFetch({
+                    message: t('ent_demo_greet_prompt', 'Introduce yourself as this business\'s AI assistant. Briefly describe what the business does based on the file content.'),
+                    fileContent: fileContent,
+                    fileName: fileName
+                })
+                .then(data => {
+                    if (data.error) { setStatus(data.message || data.error, 'error'); return; }
+                    history = [];
+                    msgBox.innerHTML = '';
+                    addMsg(data.response, 'bot');
+                    history.push({ role: 'assistant', content: data.response });
+                })
+                .catch(() => { setStatus(t('ent_demo_fetch_error', 'Failed to process file'), 'error'); });
+            };
+            reader.readAsText(file);
+        });
+
+        async function sendMessage() {
+            const msg = input.value.trim();
+            if (!msg || busy) return;
+            busy = true;
+            sendBtn.disabled = true;
+            input.value = '';
+            addMsg(msg, 'user');
+            history.push({ role: 'user', content: msg });
+            showTyping();
+
+            try {
+                const data = await demoFetch({
+                    message: msg,
+                    history: history.slice(0, -1),
+                    websiteUrl: websiteUrl || undefined,
+                    fileContent: fileContent || undefined,
+                    fileName: fileName || undefined
+                });
+                hideTyping();
+                if (data.error) {
+                    addMsg(data.message || data.error, 'bot');
+                } else {
+                    addMsg(data.response, 'bot');
+                    history.push({ role: 'assistant', content: data.response });
+                }
+            } catch {
+                hideTyping();
+                addMsg(t('ent_demo_error', 'Connection error. Please try again.'), 'bot');
+            }
+            busy = false;
+            sendBtn.disabled = false;
+            input.focus();
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        input.addEventListener('keydown', function(e) { if (e.key === 'Enter') sendMessage(); });
+
+        // Enter key on URL input triggers load
+        urlInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') loadBtn.click(); });
+    })();
     </script>
 </body>
 </html>

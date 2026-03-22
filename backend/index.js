@@ -142,6 +142,191 @@ app.get('/enterprise', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/enterprise.html'));
 });
 
+// ── Enterprise Demo Chat ─────────────────────────────────────
+// Public endpoint — no auth required, rate-limited by IP
+const entDemoRateMap = new Map();
+const entDemoWebCache = new Map(); // { url -> { text, ts } }
+const ENT_DEMO_LIMIT = 10;
+const ENT_DEMO_WINDOW = 3600000;
+const ENT_DEMO_MAX_CONTEXT = 8000;
+const ENT_DEMO_MAX_HISTORY = 10;
+const ENT_DEMO_RATE_MAP_CAP = 10000;
+const ENT_DEMO_WEB_CACHE_TTL = 300000; // 5 min
+
+function entDemoHtmlToText(html) {
+    return html
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+        .replace(/\s+/g, ' ').trim();
+}
+
+function isPrivateHost(hostname) {
+    if (hostname === 'localhost' || hostname === '0.0.0.0' || hostname === '::1') return true;
+    if (hostname === '127.0.0.1' || hostname.startsWith('10.') || hostname.startsWith('192.168.')) return true;
+    // 172.16.0.0 – 172.31.255.255
+    const m172 = hostname.match(/^172\.(\d+)\./);
+    if (m172 && +m172[1] >= 16 && +m172[1] <= 31) return true;
+    // Link-local (AWS/GCP metadata)
+    if (hostname.startsWith('169.254.')) return true;
+    // IPv6 private
+    if (hostname.startsWith('[') && (hostname.includes('::1') || hostname.toLowerCase().startsWith('[fc') || hostname.toLowerCase().startsWith('[fd') || hostname.toLowerCase().startsWith('[fe80'))) return true;
+    return false;
+}
+
+async function entDemoFetchWebsite(url) {
+    const cached = entDemoWebCache.get(url);
+    if (cached && Date.now() - cached.ts < ENT_DEMO_WEB_CACHE_TTL) return cached.text;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const fetchRes = await fetch(url, {
+        signal: controller.signal,
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; EClawbot-Demo/1.0; +https://eclawbot.com)', 'Accept': 'text/html' },
+        redirect: 'follow'
+    });
+    clearTimeout(timeout);
+    if (!fetchRes.ok) return null;
+
+    const html = (await fetchRes.text()).substring(0, 100000);
+    const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+    const title = titleMatch ? titleMatch[1].trim() : '';
+    const mainMatch = html.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
+    const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
+    const body = mainMatch ? mainMatch[1] : (articleMatch ? articleMatch[1] : html.match(/<body[^>]*>([\s\S]*?)<\/body>/i)?.[1] || html);
+    const text = `--- Website Content (${url}) ---\nTitle: ${title}\n${entDemoHtmlToText(body).substring(0, ENT_DEMO_MAX_CONTEXT)}\n--- End Website Content ---`;
+    entDemoWebCache.set(url, { text, ts: Date.now() });
+    return text;
+}
+
+app.post('/api/enterprise-demo/chat', async (req, res) => {
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+    let bucket = entDemoRateMap.get(ip);
+    if (!bucket || now - bucket.start > ENT_DEMO_WINDOW) {
+        bucket = { start: now, count: 0 };
+        if (entDemoRateMap.size < ENT_DEMO_RATE_MAP_CAP) {
+            entDemoRateMap.set(ip, bucket);
+        }
+    }
+    bucket.count++;
+    if (bucket.count > ENT_DEMO_LIMIT) {
+        return res.status(429).json({ error: 'rate_limited', message: 'Demo limit reached. Please try again later.' });
+    }
+
+    const { message, history, websiteUrl, fileContent, fileName } = req.body;
+    if (!message || typeof message !== 'string' || !message.trim()) {
+        return res.status(400).json({ error: 'message is required' });
+    }
+
+    let contextBlock = '';
+    if (websiteUrl && typeof websiteUrl === 'string') {
+        try {
+            const parsed = new URL(websiteUrl);
+            if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('bad protocol');
+            if (isPrivateHost(parsed.hostname)) {
+                return res.status(400).json({ error: 'Internal URLs not allowed' });
+            }
+            const webText = await entDemoFetchWebsite(websiteUrl);
+            if (webText) contextBlock = '\n\n' + webText;
+        } catch (err) {
+            contextBlock = err.name === 'AbortError'
+                ? `\n\n[Website fetch timed out for ${websiteUrl}]`
+                : `\n\n[Could not fetch website: ${err.message}]`;
+        }
+    }
+    if (fileContent && typeof fileContent === 'string') {
+        const truncated = fileContent.substring(0, ENT_DEMO_MAX_CONTEXT);
+        const label = fileName || 'uploaded file';
+        contextBlock += `\n\n--- File Content (${label}) ---\n${truncated}\n--- End File Content ---`;
+    }
+
+    const systemPrompt = `You are an EClawbot enterprise demo assistant. You are showcasing the capabilities of EClawbot's AI agent platform to a potential business customer.
+
+Your role: Act as if you are an AI agent deployed by the business. Based on the website or file content provided, demonstrate how an EClawbot agent can:
+1. Understand the business context (products, services, FAQ, company info)
+2. Answer customer questions about the business
+3. Handle common customer service scenarios
+4. Show how automation, scheduling, and multi-agent collaboration could help
+
+Behavior:
+- Be professional, friendly, and concise
+- Reference specific details from the provided website/file content
+- If no context is provided, explain what you could do with their website or docs
+- Respond in the same language the user writes in
+- Keep responses under 300 words
+- Mention EClawbot features naturally (Proxy Window, Mission Control, A2A, multi-platform)
+- Do NOT make up information about the business — only use what's in the provided context${contextBlock}`;
+
+    try {
+        const apiKey = process.env.ANTHROPIC_API_KEY;
+        if (!apiKey) {
+            return res.status(503).json({ error: 'Demo temporarily unavailable' });
+        }
+
+        const msgs = [];
+        if (Array.isArray(history)) {
+            for (const h of history.slice(-ENT_DEMO_MAX_HISTORY)) {
+                if (h && h.role && h.content) {
+                    msgs.push({ role: h.role === 'user' ? 'user' : 'assistant', content: String(h.content) });
+                }
+            }
+        }
+        msgs.push({ role: 'user', content: message.substring(0, 2000) });
+
+        const cleaned = [];
+        for (const m of msgs) {
+            if (cleaned.length > 0 && cleaned[cleaned.length - 1].role === m.role) {
+                cleaned[cleaned.length - 1].content += '\n' + m.content;
+            } else {
+                cleaned.push(m);
+            }
+        }
+        while (cleaned.length > 0 && cleaned[0].role !== 'user') cleaned.shift();
+
+        const apiRes = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 1024,
+                system: systemPrompt,
+                messages: cleaned
+            }),
+            signal: AbortSignal.timeout(20000)
+        });
+
+        if (!apiRes.ok) {
+            console.error(`[EntDemo] Anthropic ${apiRes.status}`);
+            return res.status(502).json({ error: 'AI service error' });
+        }
+
+        const result = await apiRes.json();
+        const text = (result.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+        res.json({ success: true, response: text || 'No response generated.' });
+    } catch (err) {
+        console.error('[EntDemo] Error:', err.message);
+        res.status(500).json({ error: 'Demo chat failed' });
+    }
+});
+
+setInterval(() => {
+    const now = Date.now();
+    for (const [ip, bucket] of entDemoRateMap) {
+        if (now - bucket.start > ENT_DEMO_WINDOW) entDemoRateMap.delete(ip);
+    }
+    for (const [url, entry] of entDemoWebCache) {
+        if (now - entry.ts > ENT_DEMO_WEB_CACHE_TTL) entDemoWebCache.delete(url);
+    }
+}, 1800000).unref();
+
 // Shareable chat link: /c/<publicCode>
 // Logged-in users → redirect to chat.html with contact filter
 // Not logged-in → serve read-only share-chat.html
