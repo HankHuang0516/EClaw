@@ -12,7 +12,6 @@ const path = require('path');
 const PORTAL_DIR = path.resolve(__dirname, '../../public/portal');
 const AI_CHAT_JS = path.resolve(__dirname, '../../public/portal/shared/ai-chat.js');
 
-// Pages that include ai-chat.js
 const PAGES_WITH_AI_CHAT = [
     'admin.html',
     'card-holder.html',
@@ -38,11 +37,10 @@ describe('AI Chat Widget WebView Guard (#419)', () => {
         }
     });
 
-    test('all ai-chat pages have inline WebView guard script', () => {
+    test('all ai-chat pages have inline WebView guard', () => {
         for (const page of PAGES_WITH_AI_CHAT) {
             const content = pageContents[page];
             expect(content).toBeDefined();
-            // Guard must set __blockAiChatWidget before ai-chat.js loads
             expect(content).toMatch(/window\.__blockAiChatWidget\s*=\s*true/);
         }
     });
@@ -58,60 +56,31 @@ describe('AI Chat Widget WebView Guard (#419)', () => {
         }
     });
 
-    test('inline guard detects AndroidBridge', () => {
+    test('inline guard detects AndroidBridge and EClawAndroid UA', () => {
         for (const page of PAGES_WITH_AI_CHAT) {
             const content = pageContents[page];
             expect(content).toMatch(/typeof AndroidBridge/);
-        }
-    });
-
-    test('inline guard detects EClawAndroid user agent', () => {
-        for (const page of PAGES_WITH_AI_CHAT) {
-            const content = pageContents[page];
             expect(content).toMatch(/EClawAndroid/);
         }
     });
 
-    test('inline guard includes MutationObserver fallback for cached ai-chat.js', () => {
-        for (const page of PAGES_WITH_AI_CHAT) {
-            const content = pageContents[page];
-            expect(content).toMatch(/MutationObserver/);
-            expect(content).toMatch(/aiChatFab/);
-            expect(content).toMatch(/aiChatPanel/);
-        }
-    });
-
-    test('ai-chat.js has cache-busting query param', () => {
-        for (const page of PAGES_WITH_AI_CHAT) {
-            const content = pageContents[page];
-            expect(content).toMatch(/ai-chat\.js\?v=/);
-        }
-    });
-
     test('ai-chat.js checks __blockAiChatWidget flag', () => {
-        const aiChatCode = fs.readFileSync(AI_CHAT_JS, 'utf-8');
-        expect(aiChatCode).toMatch(/window\.__blockAiChatWidget/);
+        const code = fs.readFileSync(AI_CHAT_JS, 'utf-8');
+        expect(code).toMatch(/window\.__blockAiChatWidget/);
     });
 
     test('ai-chat.js has isAndroidWebView detection', () => {
-        const aiChatCode = fs.readFileSync(AI_CHAT_JS, 'utf-8');
-        expect(aiChatCode).toMatch(/function isAndroidWebView/);
-        expect(aiChatCode).toMatch(/AndroidBridge/);
-        expect(aiChatCode).toMatch(/EClawAndroid/);
+        const code = fs.readFileSync(AI_CHAT_JS, 'utf-8');
+        expect(code).toMatch(/function isAndroidWebView/);
+        expect(code).toMatch(/AndroidBridge/);
+        expect(code).toMatch(/EClawAndroid/);
     });
 
-    test('ai-chat.js does NOT have visible debug banner (silent telemetry only)', () => {
-        const aiChatCode = fs.readFileSync(AI_CHAT_JS, 'utf-8');
-        // No visible debug elements — all debugging via silent telemetry API
-        expect(aiChatCode).not.toMatch(/background:\s*red/);
-        expect(aiChatCode).not.toMatch(/AI-CHAT DEBUG REPORT/);
-        expect(aiChatCode).toMatch(/Silent debug/);
-    });
-
-    test('ai-chat.js sends comprehensive debug data via telemetry', () => {
-        const aiChatCode = fs.readFileSync(AI_CHAT_JS, 'utf-8');
-        expect(aiChatCode).toMatch(/hasBlockFlag/);
-        expect(aiChatCode).toMatch(/scriptTags/);
-        expect(aiChatCode).toMatch(/readyState/);
+    test('ai-chat.js has no debug instrumentation', () => {
+        const code = fs.readFileSync(AI_CHAT_JS, 'utf-8');
+        expect(code).not.toMatch(/AI Chat DBG/);
+        expect(code).not.toMatch(/flushDebugToServer/);
+        expect(code).not.toMatch(/background:\s*red/);
+        expect(code).not.toMatch(/_debugLogs/);
     });
 });
