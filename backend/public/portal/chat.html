@@ -2069,6 +2069,10 @@
             return !!(parsed && parsed.crossDevice && !myPublicCodeMap[parsed.fromPublicCode]);
         }
 
+        function crossDeviceLabel(leftHtml, rightHtml) {
+            return `🔗 ${leftHtml} &rarr; ${rightHtml} (${i18n.t('chat_cross_device')})`;
+        }
+
         function buildSourceLabel(msg) {
             const entityId = msg.entity_id;
             const entityHtml = `<span class="entity-label" data-entity="${entityId}">${getEntityLabel(entityId)}</span>`;
@@ -2078,10 +2082,10 @@
                 if (parsed && parsed.crossDevice) {
                     if (isIncomingCrossDevice(msg)) {
                         const senderLabel = getXDeviceLabel(parsed.fromPublicCode);
-                        return `${senderLabel} &rarr; ${entityHtml} (${i18n.t('chat_cross_device_label')})`;
+                        return crossDeviceLabel(senderLabel, entityHtml);
                     }
                     const targetLabel = getXDeviceLabel(parsed.targets[0]);
-                    return `You &rarr; ${targetLabel} (${i18n.t('chat_cross_device_label')})`;
+                    return crossDeviceLabel('You', targetLabel);
                 }
                 // Mission notify: consolidated notification bubble
                 if (msg.source && msg.source.startsWith('mission_notify')) {
@@ -2122,7 +2126,7 @@
                         const senderHtml = `<span class="entity-label" style="color:var(--primary);">${senderLabel}</span>`;
                         const targetLabel = getXDeviceLabel(parsed.targets[0]);
                         const targetHtml = `<span class="entity-label" style="color:var(--primary);">${targetLabel}</span>`;
-                        return `${senderHtml} &rarr; ${targetHtml} (${i18n.t('chat_cross_device_label')})`;
+                        return crossDeviceLabel(senderHtml, targetHtml);
                     }
 
                     const senderHtml = `<span class="entity-label" data-entity="${parsed.fromEntityId}">${getEntityLabel(parsed.fromEntityId)}</span>`;
