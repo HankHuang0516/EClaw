@@ -29,6 +29,25 @@ async function checkAuth() {
 
         return currentUser;
     } catch (e) {
+        // Android WebView: auto-login with device credentials from JS Bridge
+        if (typeof AndroidBridge !== 'undefined') {
+            try {
+                const deviceId = AndroidBridge.getDeviceId();
+                const deviceSecret = AndroidBridge.getDeviceSecret();
+                const loginData = await apiCall('POST', '/api/auth/device-login', { deviceId, deviceSecret });
+                if (loginData.success && loginData.user) {
+                    currentUser = loginData.user;
+                    // device-login may not return deviceSecret in user object
+                    if (!currentUser.deviceSecret) currentUser.deviceSecret = deviceSecret;
+                    if (!currentUser.deviceId) currentUser.deviceId = deviceId;
+                    window.currentUser = currentUser;
+                    return currentUser;
+                }
+            } catch (bridgeErr) {
+                console.error('[Auth] Android Bridge device-login failed:', bridgeErr);
+            }
+        }
+
         window.location.href = 'index.html';
         return null;
     }

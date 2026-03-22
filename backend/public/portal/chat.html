@@ -1237,10 +1237,27 @@
         // ENTITY_CHARS, getEntityDisplayName, getEntityLabel, getAvatarForEntity
         // are provided by shared/entity-utils.js
 
+        // ── Android WebView Detection ──
+        const isAndroidWebView = typeof AndroidBridge !== 'undefined';
+
         // ── Init ──
         window.addEventListener('DOMContentLoaded', async () => {
-            renderNav('chat');
-            if (typeof renderFooter === 'function') renderFooter();
+            if (isAndroidWebView) {
+                // Hide web nav/footer — Android has its own bottom navigation
+                document.querySelector('.navbar')?.remove();
+                const footer = document.querySelector('footer');
+                if (footer) footer.remove();
+                // Remove extra top/bottom padding from body
+                document.body.style.paddingTop = '0';
+                document.body.style.paddingBottom = '0';
+                // Adjust chat container height for full viewport
+                const chatContainer = document.querySelector('.chat-container');
+                if (chatContainer) chatContainer.style.height = '100vh';
+            } else {
+                renderNav('chat');
+                if (typeof renderFooter === 'function') renderFooter();
+            }
+
             const user = await checkAuth();
             if (!user) return;
             initPortalSocket();
@@ -2327,6 +2344,11 @@
                     const msgCount = hasFiles ? readyFiles.length : 1;
                     currentUser.usageToday += msgCount * (targets.local.length + targets.contacts.length);
                     updateUsageBadge();
+                }
+
+                // Notify Android widget
+                if (isAndroidWebView && text) {
+                    try { AndroidBridge.updateWidget(text); } catch(e) { /* ignore */ }
                 }
 
                 // Reload and scroll

@@ -19,8 +19,9 @@ async function apiCall(method, path, body = null) {
     const data = await response.json();
 
     if (response.status === 401) {
-        // Not authenticated - redirect to login (skip public pages that handle 401 gracefully)
-        if (!window.location.pathname.includes('index.html') && !window.location.pathname.endsWith('/portal/') && !window.location.pathname.includes('info.html')) {
+        // Not authenticated - redirect to login (skip public pages, info page, and Android WebView)
+        const isAndroidWebView = typeof AndroidBridge !== 'undefined';
+        if (!isAndroidWebView && !window.location.pathname.includes('index.html') && !window.location.pathname.endsWith('/portal/') && !window.location.pathname.includes('info.html')) {
             window.location.href = 'index.html';
         }
         throw new Error(data.error || 'Not authenticated');

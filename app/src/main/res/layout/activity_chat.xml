@@ -1,277 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="@color/surface_dim">
 
-    <!-- Top Bar -->
+    <!-- WebView fills the screen above the bottom nav -->
     <LinearLayout
-        android:id="@+id/topBar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/lobster_orange"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="12dp"
-        android:paddingBottom="8dp">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/chat_history"
-            android:textColor="@android:color/white"
-            android:textSize="24sp"
-            android:textStyle="bold" />
-
-    </LinearLayout>
-
-    <!-- Filter Chips -->
-    <HorizontalScrollView
-        android:id="@+id/filterScroll"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:scrollbars="none">
-
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/chipGroupFilter"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="6dp"
-            app:selectionRequired="false"
-            app:singleSelection="false">
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipAll"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checked="true"
-                android:text="@string/filter_all" />
-
-            <!-- Entity filter chips inserted dynamically by EntityChipHelper -->
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipMyMessages"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/filter_my_messages" />
-
-        </com.google.android.material.chip.ChipGroup>
-
-    </HorizontalScrollView>
-
-    <!-- Chat Messages + Empty State -->
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerChat"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:paddingBottom="8dp"
-            tools:listitem="@layout/item_message_received" />
-
-        <!-- Empty State -->
-        <LinearLayout
-            android:id="@+id/layoutEmpty"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:visibility="gone"
-            tools:visibility="visible">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🦞"
-                android:textSize="48sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/no_messages_yet"
-                android:textColor="@color/text_disabled"
-                android:textSize="14sp" />
-
-        </LinearLayout>
-
-    </FrameLayout>
-
-    <!-- Input Section -->
-    <LinearLayout
-        android:id="@+id/inputSection"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/surface"
-        android:elevation="4dp"
+        android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- Slash Command Suggestions (hidden by default) -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerSlashCommands"
+        <!-- Top status bar spacer (edge-to-edge) -->
+        <View
+            android:id="@+id/statusBarSpacer"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/surface"
-            android:maxHeight="200dp"
-            android:visibility="gone" />
+            android:layout_height="0dp"
+            android:background="@color/lobster_orange" />
 
-        <!-- Entity Selection Chips -->
-        <HorizontalScrollView
+        <!-- Chat WebView -->
+        <WebView
+            android:id="@+id/webViewChat"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="8dp"
-            android:paddingTop="4dp"
-            android:scrollbars="none">
+            android:layout_height="0dp"
+            android:layout_weight="1" />
 
-            <!-- Target chips populated dynamically by EntityChipHelper -->
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/chipGroupTargets"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:selectionRequired="false"
-                app:singleSelection="false"/>
+        <!-- Bottom Navigation -->
+        <include layout="@layout/layout_bottom_nav" />
 
-        </HorizontalScrollView>
-
-        <!-- Voice Recording Panel (hidden by default) -->
-        <LinearLayout
-            android:id="@+id/voiceRecordingPanel"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@color/surface_alert"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:paddingHorizontal="16dp"
-            android:visibility="gone">
-
-            <View
-                android:id="@+id/recordingDot"
-                android:layout_width="10dp"
-                android:layout_height="10dp"
-                android:background="@color/lobster_orange" />
-
-            <TextView
-                android:id="@+id/tvRecordingTime"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="0:00"
-                android:textColor="#FF5722"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnCancelRecord"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/cancel"
-                android:textColor="@color/text_on_dark" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSendVoice"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/send_voice" />
-        </LinearLayout>
-
-        <!-- File Preview Bar (multi-file, hidden by default) -->
-        <HorizontalScrollView
-            android:id="@+id/filePreviewScroll"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/surface_warning"
-            android:scrollbars="none"
-            android:visibility="gone">
-
-            <LinearLayout
-                android:id="@+id/filePreviewContainer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="8dp"
-                android:gravity="center_vertical" />
-
-        </HorizontalScrollView>
-
-        <!-- Input Bar -->
-        <LinearLayout
-            android:id="@+id/inputBar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="8dp">
-
-            <!-- Attach (+) button -->
-            <ImageButton
-                android:id="@+id/btnAttach"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:padding="6dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/attach"
-                android:src="@drawable/ic_add_circle"
-                app:tint="@color/lobster_orange" />
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editMessage"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginHorizontal="4dp"
-                android:background="@drawable/bg_chat_input"
-                android:hint="@string/type_message"
-                android:textColor="@color/text_primary"
-                android:textColorHint="@color/text_hint"
-                android:inputType="textCapSentences|textMultiLine"
-                android:maxLines="4"
-                android:padding="12dp"
-                android:textSize="14sp" />
-
-            <!-- Voice record button -->
-            <ImageButton
-                android:id="@+id/btnVoice"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:padding="6dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Record voice"
-                android:src="@android:drawable/ic_btn_speak_now"
-                app:tint="@color/lobster_orange" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSend"
-                style="@style/Widget.Material3.Button.IconButton.Filled"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:layout_marginStart="4dp"
-                android:contentDescription="Send"
-                app:icon="@android:drawable/ic_menu_send"
-                app:iconTint="@android:color/white" />
-
-        </LinearLayout>
     </LinearLayout>
 
-    <!-- Bottom Navigation -->
-    <include layout="@layout/layout_bottom_nav"/>
+    <!-- Loading Indicator (shown while WebView loads) -->
+    <ProgressBar
+        android:id="@+id/loadingIndicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="visible" />
 
-</LinearLayout>
+    <!-- Offline Error View (shown when network fails) -->
+    <LinearLayout
+        android:id="@+id/offlineView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/surface_dim"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🦞"
+            android:textSize="48sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/chat_offline_message"
+            android:textAlignment="center"
+            android:textColor="@color/text_secondary"
+            android:textSize="16sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRetry"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/retry" />
+
+    </LinearLayout>
+
+</FrameLayout>

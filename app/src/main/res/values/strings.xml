@@ -121,6 +121,8 @@
 
     <!-- Chat -->
     <string name="chat_history">Chat</string>
+    <string name="chat_offline_message">Unable to connect. Please check your internet connection.</string>
+    <string name="retry">Retry</string>
     <string name="filter_all">All</string>
     <string name="filter_my_messages">My Messages</string>
     <string name="type_message">Type a message…</string>
