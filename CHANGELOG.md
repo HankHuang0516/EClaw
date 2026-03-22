@@ -1,3 +1,10 @@
+# [1.132.0](https://github.com/HankHuang0516/EClaw/compare/v1.131.0...v1.132.0) (2026-03-22)
+
+
+### Features
+
+* replace Android native chat with WebView ([#389](https://github.com/HankHuang0516/EClaw/issues/389)) ([0bbadbd](https://github.com/HankHuang0516/EClaw/commit/0bbadbd44305ea011ba8a376d52eeb803f430fc9))
+
 # [1.131.0](https://github.com/HankHuang0516/EClaw/compare/v1.130.1...v1.131.0) (2026-03-21)
 
 
