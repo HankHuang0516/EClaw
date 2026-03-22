@@ -5,9 +5,10 @@ Track git commits for each release to enable changelog generation via `git diff`
 ---
 
 ## Latest
-v1.0.55 | 843a242f | 2026-03-21
+v1.0.57 | 3203df62 | 2026-03-22
 
 ## Recent
+v1.0.55 | 843a242f | 2026-03-21
 v1.0.54 | 104d0b02 | 2026-03-21
 v1.0.53 | 7c87bf33 | 2026-03-20
 
