@@ -1,3 +1,10 @@
+## [1.143.3](https://github.com/HankHuang0516/EClaw/compare/v1.143.2...v1.143.3) (2026-03-22)
+
+
+### Bug Fixes
+
+* remove visible debug banner, fix HTML caching for WebView ([#419](https://github.com/HankHuang0516/EClaw/issues/419)) ([#421](https://github.com/HankHuang0516/EClaw/issues/421)) ([3b9a809](https://github.com/HankHuang0516/EClaw/commit/3b9a809f163d8961ab933d64318a54af83cdcd99))
+
 ## [1.143.2](https://github.com/HankHuang0516/EClaw/compare/v1.143.1...v1.143.2) (2026-03-22)
 
 
