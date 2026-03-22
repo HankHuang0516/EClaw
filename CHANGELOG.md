@@ -1,3 +1,10 @@
+# [1.137.0](https://github.com/HankHuang0516/EClaw/compare/v1.136.0...v1.137.0) (2026-03-22)
+
+
+### Features
+
+* **enterprise:** add interactive AI demo chat section ([#399](https://github.com/HankHuang0516/EClaw/issues/399)) ([4ebde7b](https://github.com/HankHuang0516/EClaw/commit/4ebde7b0bfc11a6be836c91753d65fbe5125406d))
+
 # [1.136.0](https://github.com/HankHuang0516/EClaw/compare/v1.135.0...v1.136.0) (2026-03-22)
 
 
