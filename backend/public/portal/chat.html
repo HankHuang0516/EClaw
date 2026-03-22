@@ -62,6 +62,13 @@
             display: flex;
             gap: 6px;
             flex-wrap: wrap;
+            overflow: hidden;
+            max-height: 34px;
+            transition: max-height 0.25s ease;
+        }
+
+        .chip-group.expanded {
+            max-height: none;
         }
 
         .filter-chip {
@@ -86,6 +93,24 @@
             background: var(--primary);
             border-color: var(--primary);
             color: var(--text);
+        }
+
+        .filter-chip-toggle {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            background: var(--card);
+            border: 1px dashed var(--card-border);
+            color: var(--text-secondary);
+            white-space: nowrap;
+            user-select: none;
+            transition: all 0.2s;
+        }
+
+        .filter-chip-toggle:hover {
+            border-color: var(--primary);
+            color: var(--primary);
         }
 
         /* ── Messages Area ── */
@@ -810,10 +835,16 @@
 
             .chip-group {
                 gap: 4px;
+                max-height: 30px;
             }
 
             .filter-chip {
                 padding: 4px 10px;
+                font-size: 11px;
+            }
+
+            .filter-chip-toggle {
+                padding: 4px 8px;
                 font-size: 11px;
             }
 
@@ -985,6 +1016,7 @@
                     <span class="filter-chip active" data-filter="all" onclick="setFilter('all')" data-i18n="chat_filter_all">All</span>
                     <!-- Entity chips injected dynamically -->
                     <span class="filter-chip" data-filter="my" onclick="setFilter('my')" data-i18n="chat_filter_my">My Messages</span>
+                    <span class="filter-chip-toggle" id="filterToggle" onclick="toggleFilterExpand()" style="display:none;"></span>
                 </div>
             </div>
 
@@ -1754,15 +1786,79 @@
                 chip.innerHTML = label;
                 group.insertBefore(chip, myChip);
             });
+
+            // Update expand/collapse toggle visibility
+            requestAnimationFrame(() => updateFilterToggle());
         }
+
+        function updateFilterToggle() {
+            const group = document.getElementById('filterChips');
+            const toggle = document.getElementById('filterToggle');
+            if (!group || !toggle) return;
+
+            toggle.style.display = 'none';
+            const wasExpanded = group.classList.contains('expanded');
+            group.classList.add('expanded');
+
+            const chips = group.querySelectorAll('.filter-chip');
+            if (chips.length === 0) {
+                group.classList.toggle('expanded', wasExpanded);
+                return;
+            }
+
+            const firstTop = chips[0].offsetTop;
+            let hiddenCount = 0;
+            chips.forEach(chip => { if (chip.offsetTop > firstTop) hiddenCount++; });
+
+            group.classList.toggle('expanded', wasExpanded);
+
+            if (hiddenCount > 0) {
+                toggle.style.display = '';
+                toggle.textContent = wasExpanded ? '\u25B2' : '\u25BC +' + hiddenCount;
+            }
+        }
+
+        function ensureActiveChipVisible() {
+            const group = document.getElementById('filterChips');
+            if (!group || group.classList.contains('expanded')) return;
+            const activeChip = group.querySelector('.filter-chip.active');
+            const firstChip = group.querySelector('.filter-chip');
+            if (activeChip && firstChip && activeChip.offsetTop > firstChip.offsetTop) {
+                group.classList.add('expanded');
+                const toggle = document.getElementById('filterToggle');
+                if (toggle) toggle.textContent = '\u25B2';
+            }
+        }
+
+        function toggleFilterExpand() {
+            const group = document.getElementById('filterChips');
+            const toggle = document.getElementById('filterToggle');
+            if (!group || !toggle) return;
+
+            const expanding = !group.classList.contains('expanded');
+            group.classList.toggle('expanded', expanding);
+
+            if (expanding) {
+                toggle.textContent = '\u25B2';
+            } else {
+                updateFilterToggle();
+            }
+        }
+
+        let _resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(_resizeTimer);
+            _resizeTimer = setTimeout(updateFilterToggle, 150);
+        });
 
         function setFilter(filter) {
             currentFilter = filter;
 
-            // Update active state on all chips
             document.querySelectorAll('#filterChips .filter-chip').forEach(chip => {
                 chip.classList.toggle('active', chip.dataset.filter === filter);
             });
+
+            ensureActiveChipVisible();
 
             renderMessages(false);
         }
