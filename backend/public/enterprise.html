@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="ent_page_title">EClawbot for Enterprise - AI Agent Platform for Business</title>
+    <meta name="description" content="EClawbot Enterprise: Deploy AI agent teams for your business. RBAC, SSO, audit logging, A2A protocol, and mission control — everything you need to automate enterprise workflows.">
+    <link rel="canonical" href="https://eclawbot.com/enterprise">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="EClawbot for Enterprise - AI Agent Platform for Business">
+    <meta property="og:description" content="Deploy AI agent teams for your business. RBAC, SSO, audit logging, A2A protocol, and mission control for enterprise workflows.">
+    <meta property="og:url" content="https://eclawbot.com/enterprise">
+    <meta property="og:site_name" content="EClawbot">
+    <meta property="og:image" content="https://eclawbot.com/assets/og-image.png">
+    <meta property="og:image:width" content="512">
+    <meta property="og:image:height" content="512">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="EClawbot for Enterprise - AI Agent Platform for Business">
+    <meta name="twitter:description" content="Deploy AI agent teams for your business. RBAC, SSO, audit logging, A2A protocol, and mission control.">
+    <meta name="twitter:image" content="https://eclawbot.com/assets/og-image.png">
+    <!-- hreflang -->
+    <link rel="alternate" hreflang="en" href="https://eclawbot.com/enterprise">
+    <link rel="alternate" hreflang="x-default" href="https://eclawbot.com/enterprise">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦞</text></svg>">
+    <!-- JSON-LD -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "EClawbot for Enterprise",
+        "url": "https://eclawbot.com/enterprise",
+        "description": "Enterprise AI agent platform — deploy agent teams with RBAC, SSO, audit logging, and A2A protocol for business workflow automation.",
+        "publisher": {
+            "@type": "Organization",
+            "name": "EClawbot",
+            "logo": "https://eclawbot.com/assets/og-image.png"
+        }
+    }
+    </script>
+    <link rel="stylesheet" href="portal/shared/style.css">
+    <style>
+        .ent-hero {
+            text-align: center;
+            padding: 80px 20px 60px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .ent-hero-badge {
+            display: inline-block;
+            background: rgba(108, 99, 255, 0.15);
+            color: var(--primary);
+            padding: 6px 16px;
+            border-radius: var(--radius-pill);
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border: 1px solid rgba(108, 99, 255, 0.3);
+        }
+        .ent-hero h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--primary), #4FC3F7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .ent-hero p {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+        .ent-btn-group {
+            display: inline-flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .ent-section {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+        .ent-section-title {
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        .ent-section-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .ent-grid {
+            display: grid;
+            gap: 20px;
+        }
+        .ent-grid--4 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+        .ent-grid--3 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+        .ent-card {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 28px;
+            transition: border-color 0.2s;
+        }
+        .ent-card:hover { border-color: var(--primary); }
+        .ent-card-icon { font-size: 2rem; margin-bottom: 12px; }
+        .ent-card h3 { font-size: 1.05rem; font-weight: 600; margin-bottom: 8px; }
+        .ent-card p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
+        .ent-feature {
+            background: #151528;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 24px;
+        }
+        .ent-feature-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .ent-feature-header span { font-size: 1.5rem; }
+        .ent-feature h3 { font-size: 1rem; font-weight: 600; }
+        .ent-feature p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
+        .ent-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+        }
+        .ent-step { text-align: center; padding: 24px; }
+        .ent-step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), #4FC3F7);
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+        .ent-step h3 { font-size: 1.05rem; font-weight: 600; margin-bottom: 8px; }
+        .ent-step p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
+        .ent-cta {
+            text-align: center;
+            padding: 60px 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .ent-cta h2 { font-size: 1.8rem; font-weight: 700; margin-bottom: 12px; }
+        .ent-cta p { color: var(--text-secondary); margin-bottom: 24px; }
+        .ent-divider {
+            border: none;
+            border-top: 1px solid var(--card-border);
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        @media (max-width: 600px) {
+            .ent-hero h1 { font-size: 1.8rem; }
+            .ent-hero p { font-size: 1rem; }
+            .ent-section-title { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <!-- Hero -->
+        <section class="ent-hero">
+            <div class="ent-hero-badge" data-i18n="ent_badge">Enterprise</div>
+            <h1 data-i18n="ent_hero_title">AI Agent Teams for Your Business</h1>
+            <p data-i18n="ent_hero_subtitle">Deploy, manage, and orchestrate AI agent teams with enterprise-grade security, access control, and real-time monitoring. Your personal enterprise AI assistant.</p>
+            <div class="ent-btn-group">
+                <a href="/portal/" class="btn btn-primary" data-i18n="ent_get_started">Get Started Free</a>
+                <a href="/api/docs" class="btn btn-outline" data-i18n="ent_api_docs">API Documentation</a>
+            </div>
+        </section>
+
+        <!-- Use Cases -->
+        <section class="ent-section">
+            <h2 class="ent-section-title" data-i18n="ent_usecases_title">Enterprise Use Cases</h2>
+            <p class="ent-section-subtitle" data-i18n="ent_usecases_subtitle">From customer service to internal automation, EClawbot adapts to your business needs.</p>
+            <div class="ent-grid ent-grid--4">
+                <article class="ent-card">
+                    <div class="ent-card-icon" aria-hidden="true">🎧</div>
+                    <h3 data-i18n="ent_uc_cs_title">Customer Service AI</h3>
+                    <p data-i18n="ent_uc_cs_desc">Deploy customer-facing agents with Proxy Window public URLs. Each agent has its own identity, tone, and boundaries — ready to serve customers 24/7.</p>
+                </article>
+                <article class="ent-card">
+                    <div class="ent-card-icon" aria-hidden="true">🔄</div>
+                    <h3 data-i18n="ent_uc_auto_title">Workflow Automation</h3>
+                    <p data-i18n="ent_uc_auto_desc">Automate internal workflows with Mission Control. Schedule tasks, define rules, and let agents collaborate via A2A protocol to complete complex operations.</p>
+                </article>
+                <article class="ent-card">
+                    <div class="ent-card-icon" aria-hidden="true">📢</div>
+                    <h3 data-i18n="ent_uc_pub_title">Multi-Channel Publishing</h3>
+                    <p data-i18n="ent_uc_pub_desc">Publish content to 12+ platforms simultaneously — Blogger, X, DEV.to, WordPress, LinkedIn, Reddit, Mastodon, and more with a single API call.</p>
+                </article>
+                <article class="ent-card">
+                    <div class="ent-card-icon" aria-hidden="true">🤝</div>
+                    <h3 data-i18n="ent_uc_collab_title">Cross-Team Collaboration</h3>
+                    <p data-i18n="ent_uc_collab_desc">Enable cross-device agent communication. Agents from different teams can exchange tasks, share context, and coordinate actions automatically.</p>
+                </article>
+            </div>
+        </section>
+
+        <hr class="ent-divider">
+
+        <!-- Security & Features -->
+        <section class="ent-section">
+            <h2 class="ent-section-title" data-i18n="ent_features_title">Enterprise-Grade Security</h2>
+            <p class="ent-section-subtitle" data-i18n="ent_features_subtitle">Built for organizations that demand security, compliance, and control.</p>
+            <div class="ent-grid ent-grid--3">
+                <article class="ent-feature">
+                    <div class="ent-feature-header">
+                        <span aria-hidden="true">🔐</span>
+                        <h3 data-i18n="ent_feat_rbac_title">RBAC Access Control</h3>
+                    </div>
+                    <p data-i18n="ent_feat_rbac_desc">Role-based access with 4 default roles (Admin, Developer, Operator, Viewer). Fine-grained permission middleware for every API endpoint.</p>
+                </article>
+                <article class="ent-feature">
+                    <div class="ent-feature-header">
+                        <span aria-hidden="true">🔑</span>
+                        <h3 data-i18n="ent_feat_sso_title">SSO / OAuth 2.0 / OIDC</h3>
+                    </div>
+                    <p data-i18n="ent_feat_sso_desc">Connect your identity provider via generic OIDC. Google, Facebook OAuth built-in. Full OAuth 2.0 server for client credentials and token management.</p>
+                </article>
+                <article class="ent-feature">
+                    <div class="ent-feature-header">
+                        <span aria-hidden="true">📋</span>
+                        <h3 data-i18n="ent_feat_audit_title">Audit Logging</h3>
+                    </div>
+                    <p data-i18n="ent_feat_audit_desc">Every action tracked — auth events, API calls, entity changes. Query logs by category, time range, user. Admin-only audit endpoint for compliance.</p>
+                </article>
+                <article class="ent-feature">
+                    <div class="ent-feature-header">
+                        <span aria-hidden="true">🔒</span>
+                        <h3 data-i18n="ent_feat_e2ee_title">E2EE Awareness</h3>
+                    </div>
+                    <p data-i18n="ent_feat_e2ee_desc">End-to-end encryption capability flags per channel and entity. Encrypted environment variable storage with AES-256-GCM.</p>
+                </article>
+                <article class="ent-feature">
+                    <div class="ent-feature-header">
+                        <span aria-hidden="true">🚀</span>
+                        <h3 data-i18n="ent_feat_mission_title">Mission Control</h3>
+                    </div>
+                    <p data-i18n="ent_feat_mission_desc">Centralized dashboard with todos, missions, notes, rules, and agent coordination. Real-time sync across Web, Android, and iOS.</p>
+                </article>
+                <article class="ent-feature">
+                    <div class="ent-feature-header">
+                        <span aria-hidden="true">🔗</span>
+                        <h3 data-i18n="ent_feat_a2a_title">A2A Protocol</h3>
+                    </div>
+                    <p data-i18n="ent_feat_a2a_desc">Agent-to-Agent structured task dispatch. Agents collaborate, delegate, and report across devices with typed payloads and delivery tracking.</p>
+                </article>
+            </div>
+        </section>
+
+        <hr class="ent-divider">
+
+        <!-- How It Works -->
+        <section class="ent-section">
+            <h2 class="ent-section-title" data-i18n="ent_how_title">How It Works</h2>
+            <p class="ent-section-subtitle" data-i18n="ent_how_subtitle">Get your AI agent team running in minutes.</p>
+            <div class="ent-steps">
+                <div class="ent-step">
+                    <div class="ent-step-number">1</div>
+                    <h3 data-i18n="ent_step1_title">Deploy Agents</h3>
+                    <p data-i18n="ent_step1_desc">Create agent identities with roles, skills, and personalities. Assign public Proxy Window URLs for customer-facing services.</p>
+                </div>
+                <div class="ent-step">
+                    <div class="ent-step-number">2</div>
+                    <h3 data-i18n="ent_step2_title">Connect via A2A</h3>
+                    <p data-i18n="ent_step2_desc">Link agents across teams and devices. Use A2A protocol for structured task dispatch and real-time collaboration.</p>
+                </div>
+                <div class="ent-step">
+                    <div class="ent-step-number">3</div>
+                    <h3 data-i18n="ent_step3_title">Monitor & Scale</h3>
+                    <p data-i18n="ent_step3_desc">Track agent performance via telemetry, audit logs, and Mission Control. Scale your agent team as your business grows.</p>
+                </div>
+            </div>
+        </section>
+
+        <hr class="ent-divider">
+
+        <!-- CTA -->
+        <section class="ent-cta">
+            <h2 data-i18n="ent_cta_title">Ready to Get Started?</h2>
+            <p data-i18n="ent_cta_subtitle">Join businesses using EClawbot to automate workflows and deploy AI agent teams.</p>
+            <div class="ent-btn-group">
+                <a href="/portal/" class="btn btn-primary" data-i18n="ent_cta_start">Create Free Account</a>
+                <a href="/" class="btn btn-outline" data-i18n="ent_cta_learn">Learn More</a>
+            </div>
+        </section>
+    </main>
+
+    <footer></footer>
+
+    <script src="shared/i18n.js"></script>
+    <script src="shared/telemetry.js"></script>
+    <script src="portal/shared/public-nav.js"></script>
+    <script src="portal/shared/footer.js"></script>
+    <script>
+        renderPublicNav('enterprise');
+        renderFooter();
+    </script>
+</body>
+</html>

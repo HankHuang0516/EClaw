@@ -21,6 +21,11 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://eclawbot.com/enterprise</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://eclawbot.com/llms.txt</loc>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>

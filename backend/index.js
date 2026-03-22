@@ -136,6 +136,11 @@ app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
 app.get('/landing', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/landing.html'));
 });
+// Enterprise page
+app.get('/enterprise', (req, res) => {
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'public/enterprise.html'));
+});
 
 // Shareable chat link: /c/<publicCode>
 // Logged-in users → redirect to chat.html with contact filter

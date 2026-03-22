@@ -2,6 +2,7 @@
 
 function renderPublicNav(activePage) {
     const pages = [
+        { id: 'enterprise', i18nKey: 'nav_enterprise', label: 'Enterprise', href: '/enterprise' },
         { id: 'info', i18nKey: 'nav_info', label: 'Info', href: 'info.html' }
     ];
 
