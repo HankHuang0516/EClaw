@@ -1,6 +1,8 @@
 /** @type {import('jest').Config} */
 module.exports = {
     testEnvironment: 'node',
+    // Set required env vars before any test module loads
+    setupFiles: ['./tests/jest/helpers/env-setup.js'],
     testMatch: ['**/tests/jest/**/*.test.js'],
     testTimeout: 15000,
     // Prevent open handles from keeping Jest alive

@@ -8,6 +8,9 @@
  * without real DB, Flickr, scheduler, etc.
  */
 
+// Ensure JWT_SECRET is set for auth module (fail-fast guard)
+if (!process.env.JWT_SECRET) process.env.JWT_SECRET = 'test-jwt-secret-for-jest';
+
 jest.mock('pg', () => ({
     Pool: jest.fn().mockImplementation(() => ({
         query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
