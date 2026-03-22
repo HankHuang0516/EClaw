@@ -7,8 +7,8 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.131.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
-- **App version constant**: 1.0.53 (in `index.js`)
+- **Current version**: 1.145.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **App version constant**: 1.0.57 (in `index.js`)
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
 ---
@@ -259,6 +259,7 @@ EClaw/
 | Delete Account | `/portal/delete-account.html` | Account deletion |
 | Share Chat | `/portal/share-chat.html` | Shareable read-only chat view |
 | Landing | `/` (root) | EClawbot brand landing page (public, SEO) |
+| Enterprise | `/enterprise` | Enterprise landing page (public, SEO, JSON-LD) |
 
 ### Android App (Kotlin)
 
@@ -271,7 +272,7 @@ EClaw/
 - Billing: Google Play Billing (`BillingManager.kt`)
 - AI Chat: `AiChatViewModel.kt` manages state (fixes message loss, typing race condition)
 - Bottom nav: FILES tab renamed to CARDS (Card Holder); Files link moved to Settings
-- App version: 1.0.53
+- App version: 1.0.57
 
 ### iOS/React Native App (Expo)
 
@@ -553,6 +554,22 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Pending Flush Fix (v1.130)**: Sender copy saved in pending flush; auto-collect contacts in owner mode
 - **Info Hub Guides (v1.130–v1.131)**: Proxy Window enterprise guide; Identity, Agent Card, Cross-Device detail guides with visual illustrations
 
+### Recent Features (v1.132.x – v1.145.x)
+
+- **Enterprise Landing Page (v1.132–v1.138)**: `/enterprise` public page with hero, use cases, FAQ, JSON-LD schema, 8-language hreflang; Beta tag on demo section; duplicate usecases fix; nav logo replaced with app icon
+- **Share-Chat Security (v1.137)**: Prevent message leakage in share-history; fix pending flush sender copy
+- **Comprehensive i18n Audit (v1.137)**: Two rounds of missing translation fixes for all 8 languages
+- **Speak-To Error Diagnostics (v1.138)**: Improved error messages for speak-to and client/speak failures
+- **Cross-Device Routing (v1.139–v1.144)**: 🔗 icon on cross-device labels; `targetDeviceId` added to all curl templates for explicit routing
+- **AI Chat WebView Guard (v1.139–v1.143)**: Hide AI chat widget in Android WebView to prevent duplicate AI service; User-Agent fallback detection; debug instrumentation added then removed; HTML caching fix
+- **Mission Control Categories (v1.140)**: Category folder structure for Android Mission Control
+- **Unified Icons (v1.141)**: All website icons updated to circular `ic_launcher_round`
+- **WebView Static Pages (v1.142)**: Mission notes rendered as static HTML for Android WebView
+- **File Manager Folders (v1.143–v1.144)**: Folder structure for both Android and Web Portal file managers; `View.generateViewId()` fix for Android
+- **Chat Filter Chips (v1.145)**: Collapsible filter chip group in Web Portal chat
+- **Canvas Drawing Fix (v1.145.1)**: Pointer capture and touch-action CSS for proper stroke drawing
+- **App version**: Updated to 1.0.57
+
 ---
 
 ## Test Coverage Summary
@@ -785,6 +802,20 @@ Set in `backend/.env` (gitignored):
 - Railway sits behind Cloudflare CDN — deploy can take 2-5 minutes
 - Changes must be under `backend/` to trigger Railway deployment
 - Use `backend/.deploy-trigger` file to force a deploy without code changes
+
+### Telemetry Buffer
+- Device telemetry buffer has ~1 MB cap — can fill up and drop new entries
+- `DELETE /api/device-telemetry` requires JSON body (`req.body`), not query params
+- Flush periodically to prevent stale data accumulation
+
+### Cross-Device Messages
+- Chat integrity validator must use `isIncomingCrossDevice(msg)` to match rendering logic
+- `is_from_user=true` does NOT always mean "sent by this device" — cross-device messages from other devices also have `is_from_user=true`
+- `myPublicCodeMap` must be populated before integrity checks run
+
+### Issue #409 (bind-email 409)
+- HTTP 409 on `/api/auth/bind-email` is expected when device already has a linked account (e.g., via social login)
+- Not a bug — the Android UI should hide the bind-email button when `bound=true`
 
 ---
 

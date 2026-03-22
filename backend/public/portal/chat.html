@@ -999,9 +999,11 @@
             opacity: 0.8;
         }
     </style>
+    <link rel="canonical" href="https://eclawbot.com/portal/chat.html">
 </head>
 
 <body>
+    <main>
     <div class="container">
         <div class="chat-container">
             <!-- Chat Header -->
@@ -1216,9 +1218,10 @@
                         for (let i = 0; i < bubbles.length; i++) {
                             const msg = displayMessages[i];
                             const el = bubbles[i];
-                            // Direction — must account for 'platform' class (non-user, non-bot)
+                            // Direction — must account for 'platform' class and cross-device messages
                             const isPlatform = !msg.is_from_user && !msg.is_from_bot && msg.source === 'platform';
-                            const expClass = msg.is_from_user ? 'sent' : isPlatform ? 'platform' : 'received';
+                            const isSent = msg.is_from_user && !isIncomingCrossDevice(msg);
+                            const expClass = isSent ? 'sent' : isPlatform ? 'platform' : 'received';
                             if (!el.classList.contains(expClass)) {
                                 const actualClass = el.classList.contains('sent') ? 'sent'
                                     : el.classList.contains('platform') ? 'platform' : 'received';
@@ -2906,6 +2909,7 @@
             }
         });
     </script>
+    </main>
 </body>
 
 </html>

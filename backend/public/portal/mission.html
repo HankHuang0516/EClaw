@@ -717,9 +717,11 @@
         }
         .note-page-btn:hover { background: var(--input-bg); }
     </style>
+    <link rel="canonical" href="https://eclawbot.com/portal/mission.html">
 </head>
 
 <body>
+    <main>
     <div class="container">
         <!-- Page Header -->
         <div class="page-header">
@@ -1027,7 +1029,7 @@
                 console.error('Refresh failed:', e);
                 // Only show error on first load
                 if (document.getElementById('loadingState').style.display !== 'none') {
-                    showToast('Failed to load dashboard: ' + e.message, 'error');
+                    showToast(i18n.t('toast_load_failed') + ': ' + e.message, 'error');
                 }
             }
         }
@@ -1062,14 +1064,14 @@
                         }
                         return;
                     } else {
-                        showToast('Upload failed: ' + (data.error || 'Unknown'), 'error');
+                        showToast(i18n.t('toast_upload_failed') + ': ' + (data.error || 'Unknown'), 'error');
                         isSyncing = false;
                         renderSyncBar();
                         btn.disabled = false;
                         return;
                     }
                 } catch (e) {
-                    showToast('Error: ' + e.message, 'error');
+                    showToast(i18n.t('toast_error') + ': ' + e.message, 'error');
                     isSyncing = false;
                     renderSyncBar();
                     btn.disabled = false;
@@ -2207,7 +2209,7 @@
                 });
                 showToast(i18n.t('mc_note_draw_saved') || 'Drawing saved', 'success');
             } catch (e) {
-                showToast('Failed to save drawing: ' + e.message, 'error');
+                showToast(i18n.t('toast_drawing_save_failed') + ': ' + e.message, 'error');
             }
         }
 
@@ -2260,7 +2262,7 @@
                     if (viewerNoteId === noteId) renderPageIframe(html);
                     showToast(i18n.t('mc_note_page_saved') || 'Page saved', 'success');
                 } catch (e) {
-                    showToast('Failed to save page: ' + e.message, 'error');
+                    showToast(i18n.t('toast_page_save_failed') + ': ' + e.message, 'error');
                 }
             };
             setTimeout(() => document.getElementById('dlg_page_html')?.focus(), 50);
@@ -2278,9 +2280,9 @@
                 renderNotes();
                 closeDialog();
                 if (viewerNoteId === noteId) closePageViewer();
-                showToast('Page deleted', 'success');
+                showToast(i18n.t('toast_page_deleted'), 'success');
             } catch (e) {
-                showToast('Failed to delete page: ' + e.message, 'error');
+                showToast(i18n.t('toast_page_delete_failed') + ': ' + e.message, 'error');
             }
         }
 
@@ -3180,6 +3182,7 @@
             }
         });
     </script>
+    </main>
 </body>
 
 </html>

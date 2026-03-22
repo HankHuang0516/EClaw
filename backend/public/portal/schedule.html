@@ -400,9 +400,11 @@
             }
         }
     </style>
+    <link rel="canonical" href="https://eclawbot.com/portal/schedule.html">
 </head>
 
 <body>
+    <main>
     <div class="container">
         <!-- Page Header -->
         <div class="page-header">
@@ -733,7 +735,7 @@
                 c.innerHTML = html;
             } catch (err) {
                 closeDialog();
-                showToast(err.message || 'Failed to load', 'error');
+                showToast(err.message || i18n.t('toast_load_failed'), 'error');
             }
         }
 
@@ -940,7 +942,7 @@
                 showToast(i18n.t('sched_created_ok') || 'Schedule created!', 'success');
                 await loadSchedules();
             } catch (e) {
-                showToast(e.message || 'Failed to create schedule', 'error');
+                showToast(e.message || i18n.t('toast_create_failed'), 'error');
                 btn.disabled = false;
                 btn.textContent = i18n.t('sched_btn_create') || 'Create';
             }
@@ -950,7 +952,7 @@
         function showEditDialog(scheduleId) {
             const schedule = allSchedules.find(s => s.id === scheduleId);
             if (!schedule) {
-                showToast('Schedule not found', 'error');
+                showToast(i18n.t('toast_not_found'), 'error');
                 return;
             }
 
@@ -1119,7 +1121,7 @@
                 showToast(i18n.t('sched_updated_ok') || 'Schedule updated!', 'success');
                 await loadSchedules();
             } catch (e) {
-                showToast(e.message || 'Failed to update schedule', 'error');
+                showToast(e.message || i18n.t('toast_update_failed'), 'error');
                 btn.disabled = false;
                 btn.textContent = i18n.t('sched_btn_save') || 'Save';
             }
@@ -1138,7 +1140,7 @@
                 closeDialog();
                 await loadSchedules();
             } catch (e) {
-                showToast(e.message || 'Failed to update schedule', 'error');
+                showToast(e.message || i18n.t('toast_update_failed'), 'error');
                 if (btn) btn.disabled = false;
             }
         }
@@ -1156,7 +1158,7 @@
                 showToast(i18n.t('sched_deleted') || 'Schedule deleted', 'success');
                 await loadSchedules();
             } catch (e) {
-                showToast(e.message || 'Failed to delete', 'error');
+                showToast(e.message || i18n.t('toast_delete_failed'), 'error');
             }
         }
 
@@ -1170,6 +1172,7 @@
             if (refreshTimer) clearInterval(refreshTimer);
         });
     </script>
+    </main>
 </body>
 
 </html>
