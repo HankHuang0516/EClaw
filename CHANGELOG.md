@@ -1,3 +1,10 @@
+# [1.145.0](https://github.com/HankHuang0516/EClaw/compare/v1.144.2...v1.145.0) (2026-03-22)
+
+
+### Features
+
+* **portal:** add collapsible filter chip group in chat ([#427](https://github.com/HankHuang0516/EClaw/issues/427)) ([a59db07](https://github.com/HankHuang0516/EClaw/commit/a59db076d51dcccd07124f657ae2ffcd66bb3a54))
+
 ## [1.144.2](https://github.com/HankHuang0516/EClaw/compare/v1.144.1...v1.144.2) (2026-03-22)
 
 
