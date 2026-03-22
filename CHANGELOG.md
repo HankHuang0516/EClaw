@@ -1,3 +1,10 @@
+## [1.139.2](https://github.com/HankHuang0516/EClaw/compare/v1.139.1...v1.139.2) (2026-03-22)
+
+
+### Bug Fixes
+
+* add User-Agent fallback for WebView AI widget detection ([#411](https://github.com/HankHuang0516/EClaw/issues/411)) ([6e558a7](https://github.com/HankHuang0516/EClaw/commit/6e558a7cdac3d72e7fd1438cca3efbae9b98f1c7))
+
 ## [1.139.1](https://github.com/HankHuang0516/EClaw/compare/v1.139.0...v1.139.1) (2026-03-22)
 
 
