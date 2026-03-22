@@ -378,6 +378,162 @@
         .vars-sync-status.ok { color: var(--success, #4caf50); }
         .vars-sync-status.err { color: var(--danger, #f44336); }
 
+        /* Category folder */
+        .cat-folder {
+            margin-bottom: 8px;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+
+        .cat-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s;
+        }
+
+        .cat-header:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .cat-chevron {
+            font-size: 10px;
+            color: var(--text-muted);
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+
+        .cat-chevron.open {
+            transform: rotate(90deg);
+        }
+
+        .cat-name {
+            flex: 1;
+            font-size: 13px;
+            font-weight: 600;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .cat-name-input {
+            flex: 1;
+            font-size: 13px;
+            font-weight: 600;
+            background: var(--input-bg);
+            border: 1px solid var(--primary);
+            border-radius: 3px;
+            color: var(--text);
+            padding: 2px 6px;
+            outline: none;
+        }
+
+        .cat-count {
+            font-size: 11px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+
+        .cat-actions {
+            display: flex;
+            gap: 2px;
+            flex-shrink: 0;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        .cat-header:hover .cat-actions {
+            opacity: 1;
+        }
+
+        .cat-action-btn {
+            width: 22px;
+            height: 22px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+
+        .cat-action-btn:hover {
+            background: var(--card-border);
+            color: var(--text);
+        }
+
+        .cat-action-btn.danger:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .cat-body {
+            padding: 4px 8px 8px;
+        }
+
+        .cat-body.collapsed {
+            display: none;
+        }
+
+        /* Drag-and-drop */
+        .mc-item[draggable="true"] {
+            cursor: grab;
+        }
+
+        .mc-item[draggable="true"]:active {
+            cursor: grabbing;
+        }
+
+        .mc-item.dragging {
+            opacity: 0.4;
+        }
+
+        .cat-folder.drag-over .cat-header {
+            background: rgba(108, 92, 231, 0.15);
+            border-color: var(--primary);
+        }
+
+        .cat-uncategorized-drop.drag-over {
+            background: rgba(108, 92, 231, 0.1);
+            border-radius: var(--radius-sm);
+        }
+
+        /* Add category button */
+        .add-cat-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--text-muted);
+            background: none;
+            border: 1px dashed var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 4px 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .add-cat-btn:hover {
+            color: var(--text);
+            border-color: var(--text-muted);
+        }
+
+        .section-header-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
         /* Inline delete button on sub-items */
         .item-delete {
             flex-shrink: 0;
@@ -490,7 +646,10 @@
             <div class="card">
                 <div class="card-header">
                     <h2>📋 <span data-i18n="mc_todo_title">TODO</span></h2>
-                    <button class="btn btn-outline btn-sm" onclick="showAddItem('todo')" data-i18n="mc_btn_add">+ Add</button>
+                    <div class="section-header-actions">
+                        <button class="add-cat-btn" onclick="addCategory('todo')" data-i18n="mc_add_category">+ Category</button>
+                        <button class="btn btn-outline btn-sm" onclick="showAddItem('todo')" data-i18n="mc_btn_add">+ Add</button>
+                    </div>
                 </div>
                 <div id="todoList"></div>
             </div>
@@ -499,6 +658,9 @@
             <div class="card">
                 <div class="card-header">
                     <h2>🎯 <span data-i18n="mc_mission_title">Mission</span></h2>
+                    <div class="section-header-actions">
+                        <button class="add-cat-btn" onclick="addCategory('mission')" data-i18n="mc_add_category">+ Category</button>
+                    </div>
                 </div>
                 <div id="missionList"></div>
             </div>
@@ -507,6 +669,9 @@
             <div class="card">
                 <div class="card-header">
                     <h2>✅ <span data-i18n="mc_done_title">Done</span></h2>
+                    <div class="section-header-actions">
+                        <button class="add-cat-btn" onclick="addCategory('done')" data-i18n="mc_add_category">+ Category</button>
+                    </div>
                 </div>
                 <div id="doneList"></div>
             </div>
@@ -515,7 +680,10 @@
             <div class="card">
                 <div class="card-header">
                     <h2>📝 <span data-i18n="mc_notes_title">Notes</span></h2>
-                    <button class="btn btn-outline btn-sm" onclick="showAddNote()" data-i18n="mc_btn_add">+ Add</button>
+                    <div class="section-header-actions">
+                        <button class="add-cat-btn" onclick="addCategory('notes')" data-i18n="mc_add_category">+ Category</button>
+                        <button class="btn btn-outline btn-sm" onclick="showAddNote()" data-i18n="mc_btn_add">+ Add</button>
+                    </div>
                 </div>
                 <div id="notesList"></div>
             </div>
@@ -524,7 +692,10 @@
             <div class="card">
                 <div class="card-header">
                     <h2>🔧 Skills</h2>
-                    <button class="btn btn-outline btn-sm" onclick="showAddSkill()">+ Add</button>
+                    <div class="section-header-actions">
+                        <button class="add-cat-btn" onclick="addCategory('skills')" data-i18n="mc_add_category">+ Category</button>
+                        <button class="btn btn-outline btn-sm" onclick="showAddSkill()">+ Add</button>
+                    </div>
                 </div>
                 <div id="skillsList"></div>
             </div>
@@ -533,7 +704,10 @@
             <div class="card">
                 <div class="card-header">
                     <h2>🧠 <span data-i18n="mc_souls_title">Souls</span></h2>
-                    <button class="btn btn-outline btn-sm" onclick="showAddSoul()" data-i18n="mc_btn_add">+ Add</button>
+                    <div class="section-header-actions">
+                        <button class="add-cat-btn" onclick="addCategory('souls')" data-i18n="mc_add_category">+ Category</button>
+                        <button class="btn btn-outline btn-sm" onclick="showAddSoul()" data-i18n="mc_btn_add">+ Add</button>
+                    </div>
                 </div>
                 <div id="soulsList"></div>
             </div>
@@ -542,7 +716,10 @@
             <div class="card">
                 <div class="card-header">
                     <h2>📏 <span data-i18n="mc_rules_title">Rules</span></h2>
-                    <button class="btn btn-outline btn-sm" onclick="showAddRule()" data-i18n="mc_btn_add">+ Add</button>
+                    <div class="section-header-actions">
+                        <button class="add-cat-btn" onclick="addCategory('rules')" data-i18n="mc_add_category">+ Category</button>
+                        <button class="btn btn-outline btn-sm" onclick="showAddRule()" data-i18n="mc_btn_add">+ Add</button>
+                    </div>
                 </div>
                 <div id="rulesList"></div>
             </div>
@@ -570,7 +747,7 @@
     <script>if(typeof renderAvatarHtml==='undefined'){window.renderAvatarHtml=function(a){return a||'\u{1F99E}'};window.isAvatarUrl=function(){return false}}</script>
     <script>
         // --- State ---
-        let dashboard = { todoList: [], missionList: [], doneList: [], notes: [], rules: [], skills: [], souls: [] };
+        let dashboard = { todoList: [], missionList: [], doneList: [], notes: [], rules: [], skills: [], souls: [], categoryOrder: {} };
         let lastSavedDashboard = null; // snapshot for auto-save conflict detection
         let lastNotifiedDashboard = null; // snapshot for notification diff (updated only on notify/skip)
         let version = 1;
@@ -686,6 +863,7 @@
             if (!user) return;
             initPortalSocket();
 
+            _categoryState = loadCategoryState();
             await loadBoundEntities();
             await loadSkillTemplates();
             loadSoulTemplates();
@@ -936,13 +1114,276 @@
                 notes: d.notes || [],
                 rules: d.rules || [],
                 skills: d.skills || [],
-                souls: d.souls || []
+                souls: d.souls || [],
+                categoryOrder: d.categoryOrder || {}
             };
             version = d.version || 1;
             hasChanges = false;
             lastSavedDashboard = JSON.parse(JSON.stringify(dashboard));
             if (!lastNotifiedDashboard) lastNotifiedDashboard = JSON.parse(JSON.stringify(dashboard));
             renderAll();
+        }
+
+        // ========== Category Helpers ==========
+        const SECTION_LIST_KEY = {
+            todo: 'todoList', mission: 'missionList', done: 'doneList',
+            notes: 'notes', skills: 'skills', souls: 'souls', rules: 'rules'
+        };
+
+        const SECTION_RENDER_FN = {
+            todo: () => renderTodo(), mission: () => renderMission(), done: () => renderDone(),
+            notes: () => renderNotes(), skills: () => renderSkills(), souls: () => renderSouls(), rules: () => renderRules()
+        };
+
+        function getListForSection(section) {
+            const key = SECTION_LIST_KEY[section];
+            return key ? dashboard[key] : [];
+        }
+
+        function getCategoryOrder(section) {
+            return dashboard.categoryOrder[section] || [];
+        }
+
+        function setCategoryOrder(section, order) {
+            if (!dashboard.categoryOrder) dashboard.categoryOrder = {};
+            dashboard.categoryOrder[section] = order;
+        }
+
+        // categoryState stored in localStorage (UI-only, not persisted to server)
+        const _catStateKey = () => `mc_catState_${currentUser.deviceId}`;
+
+        function loadCategoryState() {
+            try {
+                return JSON.parse(localStorage.getItem(_catStateKey()) || '{}');
+            } catch { return {}; }
+        }
+
+        function saveCategoryState(state) {
+            try { localStorage.setItem(_catStateKey(), JSON.stringify(state)); } catch {}
+        }
+
+        let _categoryState = {};
+
+        function isCategoryExpanded(section, cat) {
+            return _categoryState[`${section}:${cat}`] !== false;
+        }
+
+        function toggleCategoryState(section, cat) {
+            _categoryState[`${section}:${cat}`] = !isCategoryExpanded(section, cat);
+            saveCategoryState(_categoryState);
+            const renderFn = SECTION_RENDER_FN[section];
+            if (renderFn) renderFn();
+        }
+
+        function groupByCategory(items, section) {
+            const order = getCategoryOrder(section);
+            const groups = {};
+            const uncategorized = [];
+
+            items.forEach(item => {
+                const cat = item.category;
+                if (cat) {
+                    if (!groups[cat]) groups[cat] = [];
+                    groups[cat].push(item);
+                } else {
+                    uncategorized.push(item);
+                }
+            });
+
+            const result = [];
+            const seen = new Set();
+            order.forEach(cat => {
+                seen.add(cat);
+                result.push({ category: cat, items: groups[cat] || [] });
+            });
+            // Auto-register new categories found in items
+            let orderChanged = false;
+            Object.keys(groups).forEach(cat => {
+                if (!seen.has(cat)) {
+                    result.push({ category: cat, items: groups[cat] });
+                    order.push(cat);
+                    orderChanged = true;
+                }
+            });
+            if (orderChanged) setCategoryOrder(section, order);
+
+            return { categorized: result, uncategorized };
+        }
+
+        function renderCategoryFolder(section, cat, itemsHtml, count) {
+            const expanded = isCategoryExpanded(section, cat);
+            const catAttr = esc(cat);
+            return `<div class="cat-folder" data-section="${section}" data-category="${catAttr}"
+                        ondragover="onDropZoneDragOver(event)" ondragleave="onDropZoneDragLeave(event)" ondrop="onCatDrop(event)">
+                <div class="cat-header" onclick="handleCatHeaderClick(this)">
+                    <span class="cat-chevron ${expanded ? 'open' : ''}">&#9654;</span>
+                    <span class="cat-name">${esc(cat)}</span>
+                    <span class="cat-count">(${count})</span>
+                    <div class="cat-actions" onclick="event.stopPropagation()">
+                        <button class="cat-action-btn" onclick="handleCatAction(this,'rename')" title="${i18n.t('mc_rename_category')}">&#9998;</button>
+                        <button class="cat-action-btn danger" onclick="handleCatAction(this,'clear')" title="${i18n.t('mc_clear_category')}">&#8709;</button>
+                        <button class="cat-action-btn danger" onclick="handleCatAction(this,'delete')" title="${i18n.t('mc_delete_category')}">&times;</button>
+                    </div>
+                </div>
+                <div class="cat-body ${expanded ? '' : 'collapsed'}">${itemsHtml}</div>
+            </div>`;
+        }
+
+        // Read section/category from data attributes (avoids XSS via inline string interpolation)
+        function getCatFolderData(el) {
+            const folder = el.closest('.cat-folder');
+            return { section: folder.dataset.section, category: folder.dataset.category };
+        }
+
+        function handleCatHeaderClick(headerEl) {
+            const { section, category } = getCatFolderData(headerEl);
+            toggleCategoryState(section, category);
+        }
+
+        function handleCatAction(btnEl, action) {
+            const { section, category } = getCatFolderData(btnEl);
+            if (action === 'rename') renameCategory(section, category);
+            else if (action === 'clear') clearCategory(section, category);
+            else if (action === 'delete') deleteCategory(section, category);
+        }
+
+        function addCategory(section) {
+            const name = prompt(i18n.t('mc_prompt_category_name') || 'Category name:');
+            if (!name || !name.trim()) return;
+            const trimmed = name.trim().slice(0, 50);
+            const order = getCategoryOrder(section);
+            if (order.includes(trimmed)) {
+                showToast(i18n.t('mc_category_exists') || 'Category already exists', 'info');
+                return;
+            }
+            order.push(trimmed);
+            setCategoryOrder(section, order);
+            markChanged();
+            renderAll();
+        }
+
+        function renameCategory(section, oldName) {
+            const newName = prompt(i18n.t('mc_prompt_rename_category') || 'New category name:', oldName);
+            if (!newName || !newName.trim() || newName.trim() === oldName) return;
+            const trimmed = newName.trim().slice(0, 50);
+
+            const order = getCategoryOrder(section);
+            const idx = order.indexOf(oldName);
+            if (idx >= 0) order[idx] = trimmed;
+            setCategoryOrder(section, order);
+
+            // Migrate localStorage state
+            const oldKey = `${section}:${oldName}`;
+            const newKey = `${section}:${trimmed}`;
+            if (_categoryState[oldKey] !== undefined) {
+                _categoryState[newKey] = _categoryState[oldKey];
+                delete _categoryState[oldKey];
+                saveCategoryState(_categoryState);
+            }
+
+            const list = getListForSection(section);
+            list.forEach(item => {
+                if (item.category === oldName) item.category = trimmed;
+            });
+
+            markChanged();
+            renderAll();
+        }
+
+        function clearCategory(section, cat) {
+            if (!confirm(i18n.t('mc_confirm_clear_category') || `Clear all items in "${cat}"?`)) return;
+            const key = SECTION_LIST_KEY[section];
+            if (key) dashboard[key] = dashboard[key].filter(item => item.category !== cat);
+            markChanged();
+            renderAll();
+        }
+
+        function deleteCategory(section, cat) {
+            if (!confirm(i18n.t('mc_confirm_delete_category') || `Delete category "${cat}"? Items will become uncategorized.`)) return;
+
+            const order = getCategoryOrder(section);
+            const idx = order.indexOf(cat);
+            if (idx >= 0) order.splice(idx, 1);
+            setCategoryOrder(section, order);
+
+            delete _categoryState[`${section}:${cat}`];
+            saveCategoryState(_categoryState);
+
+            const list = getListForSection(section);
+            list.forEach(item => {
+                if (item.category === cat) item.category = null;
+            });
+
+            markChanged();
+            renderAll();
+        }
+
+        // Drag-and-drop handlers
+        let draggedItemId = null;
+        let draggedSection = null;
+
+        function onItemDragStart(e, itemId, section) {
+            draggedItemId = itemId;
+            draggedSection = section;
+            e.dataTransfer.effectAllowed = 'move';
+            e.target.classList.add('dragging');
+        }
+
+        function onItemDragEnd(e) {
+            e.target.classList.remove('dragging');
+            draggedItemId = null;
+            draggedSection = null;
+            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        }
+
+        function onDropZoneDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function onDropZoneDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function onCatDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            const folder = e.currentTarget.closest('.cat-folder');
+            const section = folder ? folder.dataset.section : null;
+            const targetCat = folder ? folder.dataset.category : null;
+            if (!draggedItemId || !section || draggedSection !== section) return;
+
+            const list = getListForSection(section);
+            const item = list.find(i => i.id === draggedItemId);
+            if (item) {
+                item.category = targetCat || null;
+                item.updatedAt = Date.now();
+                markChanged();
+                renderAll();
+            }
+        }
+
+        function onUncatDrop(e, section) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            if (!draggedItemId || draggedSection !== section) return;
+
+            const list = getListForSection(section);
+            const item = list.find(i => i.id === draggedItemId);
+            if (item) {
+                item.category = null;
+                item.updatedAt = Date.now();
+                markChanged();
+                renderAll();
+            }
+        }
+
+        function getCategoryOptions(section) {
+            const order = getCategoryOrder(section);
+            const opts = [{ value: '', label: i18n.t('mc_uncategorized') || '-- Uncategorized --' }];
+            order.forEach(cat => opts.push({ value: cat, label: cat }));
+            return opts;
         }
 
         // ========== Rendering ==========
@@ -957,113 +1398,116 @@
             renderSyncBar();
         }
 
-        function renderTodo() {
-            const el = document.getElementById('todoList');
-            if (!dashboard.todoList.length) {
-                el.innerHTML = `<div class="mc-empty">${i18n.t('mc_empty_todo')}</div>`;
+        function renderTaskItemHtml(item, listType) {
+            const assignLabel = item.assignedBot != null && item.assignedBot !== ''
+                ? String(item.assignedBot).split(',').map(id => getEntityLabel(parseInt(id.trim()))).join(', ')
+                : '';
+            return `
+            <div class="mc-item" draggable="true" data-item-id="${item.id}"
+                 ondragstart="onItemDragStart(event,'${item.id}','${listType}')" ondragend="onItemDragEnd(event)"
+                 onclick="showEditItem('${item.id}','${listType}')" oncontextmenu="showItemMenu(event,'${item.id}','${listType}')">
+                <div class="item-row">
+                    <span class="item-priority">${(getPriorityLabel(item.priority?.value || item.priority)).slice(0, 2)}</span>
+                    <span class="item-title">${esc(item.title)}</span>
+                    ${assignLabel ? `<span class="item-badge">${assignLabel}</span>` : ''}
+                    <span class="item-badge">${getStatusLabel(item.status?.name || item.status)}</span>
+                    <button class="item-delete" onclick="event.stopPropagation();deleteItem('${item.id}','${listType}')" title="${i18n.t('common_delete')}">&times;</button>
+                </div>
+                ${item.description ? `<div class="item-detail">${esc(item.description)}</div>` : ''}
+            </div>`;
+        }
+
+        function renderCategorizedList(el, items, section, listType, renderItemFn, emptyKey) {
+            if (!items.length && !getCategoryOrder(section).length) {
+                el.innerHTML = `<div class="mc-empty">${i18n.t(emptyKey)}</div>`;
                 return;
             }
-            el.innerHTML = dashboard.todoList.map(item => {
-                const assignLabel = item.assignedBot != null && item.assignedBot !== ''
-                    ? String(item.assignedBot).split(',').map(id => getEntityLabel(parseInt(id.trim()))).join(', ')
-                    : '';
-                return `
-                <div class="mc-item" onclick="showEditItem('${item.id}','todo')" oncontextmenu="showItemMenu(event,'${item.id}','todo')">
-                    <div class="item-row">
-                        <span class="item-priority">${(getPriorityLabel(item.priority?.value || item.priority)).slice(0, 2)}</span>
-                        <span class="item-title">${esc(item.title)}</span>
-                        ${assignLabel ? `<span class="item-badge">${assignLabel}</span>` : ''}
-                        <span class="item-badge">${getStatusLabel(item.status?.name || item.status)}</span>
-                        <button class="item-delete" onclick="event.stopPropagation();deleteItem('${item.id}','todo')" title="${i18n.t('common_delete')}">&times;</button>
-                    </div>
-                    ${item.description ? `<div class="item-detail">${esc(item.description)}</div>` : ''}
-                </div>`;
-            }).join('');
+            const { categorized, uncategorized } = groupByCategory(items, section);
+            let html = '';
+            categorized.forEach(g => {
+                const itemsHtml = g.items.map(item => renderItemFn(item, listType)).join('');
+                html += renderCategoryFolder(section, g.category, itemsHtml || `<div class="mc-empty" style="padding:8px;">${i18n.t('mc_empty_category')}</div>`, g.items.length);
+            });
+            if (uncategorized.length) {
+                html += `<div class="cat-uncategorized-drop" ondragover="onDropZoneDragOver(event)" ondragleave="onDropZoneDragLeave(event)" ondrop="onUncatDrop(event,'${section}')">`;
+                html += uncategorized.map(item => renderItemFn(item, listType)).join('');
+                html += '</div>';
+            } else if (categorized.length) {
+                html += `<div class="cat-uncategorized-drop" ondragover="onDropZoneDragOver(event)" ondragleave="onDropZoneDragLeave(event)" ondrop="onUncatDrop(event,'${section}')" style="min-height:20px;"></div>`;
+            }
+            el.innerHTML = html;
+        }
+
+        function renderTodo() {
+            const el = document.getElementById('todoList');
+            renderCategorizedList(el, dashboard.todoList, 'todo', 'todo', renderTaskItemHtml, 'mc_empty_todo');
         }
 
         function renderMission() {
             const el = document.getElementById('missionList');
-            if (!dashboard.missionList.length) {
-                el.innerHTML = `<div class="mc-empty">${i18n.t('mc_empty_mission')}</div>`;
-                return;
-            }
-            el.innerHTML = dashboard.missionList.map(item => {
-                const assignLabel = item.assignedBot != null && item.assignedBot !== ''
-                    ? String(item.assignedBot).split(',').map(id => getEntityLabel(parseInt(id.trim()))).join(', ')
-                    : '';
-                return `
-                <div class="mc-item" onclick="showEditItem('${item.id}','mission')" oncontextmenu="showItemMenu(event,'${item.id}','mission')">
-                    <div class="item-row">
-                        <span class="item-priority">${(getPriorityLabel(item.priority?.value || item.priority)).slice(0, 2)}</span>
-                        <span class="item-title">${esc(item.title)}</span>
-                        ${assignLabel ? `<span class="item-badge">${assignLabel}</span>` : ''}
-                        <span class="item-badge">${getStatusLabel(item.status?.name || item.status)}</span>
-                        <button class="item-delete" onclick="event.stopPropagation();deleteItem('${item.id}','mission')" title="${i18n.t('common_delete')}">&times;</button>
-                    </div>
-                    ${item.description ? `<div class="item-detail">${esc(item.description)}</div>` : ''}
-                </div>`;
-            }).join('');
+            renderCategorizedList(el, dashboard.missionList, 'mission', 'mission', renderTaskItemHtml, 'mc_empty_mission');
+        }
+
+        function renderDoneItemHtml(item) {
+            return `
+            <div class="mc-item" draggable="true" data-item-id="${item.id}"
+                 ondragstart="onItemDragStart(event,'${item.id}','done')" ondragend="onItemDragEnd(event)"
+                 oncontextmenu="showItemMenu(event,'${item.id}','done')">
+                <div class="item-row">
+                    <span class="item-title">${esc(item.title)}</span>
+                    ${item.completedAt ? `<span class="item-badge" style="color:var(--success);">${fmtDate(item.completedAt)}</span>` : ''}
+                    <button class="item-delete" onclick="event.stopPropagation();deleteItem('${item.id}','done')" title="${i18n.t('common_delete')}">&times;</button>
+                </div>
+                ${item.description ? `<div class="item-detail">${esc(item.description)}</div>` : ''}
+            </div>`;
         }
 
         function renderDone() {
             const el = document.getElementById('doneList');
-            if (!dashboard.doneList.length) {
-                el.innerHTML = `<div class="mc-empty">${i18n.t('mc_empty_done')}</div>`;
-                return;
-            }
-            el.innerHTML = dashboard.doneList.map(item => `
-                <div class="mc-item" oncontextmenu="showItemMenu(event,'${item.id}','done')">
-                    <div class="item-row">
-                        <span class="item-title">${esc(item.title)}</span>
-                        ${item.completedAt ? `<span class="item-badge" style="color:var(--success);">${fmtDate(item.completedAt)}</span>` : ''}
-                        <button class="item-delete" onclick="event.stopPropagation();deleteItem('${item.id}','done')" title="${i18n.t('common_delete')}">&times;</button>
-                    </div>
-                    ${item.description ? `<div class="item-detail">${esc(item.description)}</div>` : ''}
+            renderCategorizedList(el, dashboard.doneList, 'done', 'done', renderDoneItemHtml, 'mc_empty_done');
+        }
+
+        function renderNoteItemHtml(n) {
+            return `
+            <div class="mc-item" draggable="true" data-item-id="${n.id}"
+                 ondragstart="onItemDragStart(event,'${n.id}','notes')" ondragend="onItemDragEnd(event)"
+                 onclick="showEditNote('${n.id}')" oncontextmenu="showNoteMenu(event,'${n.id}')">
+                <div class="item-row">
+                    <span class="item-title">${esc(n.title)}</span>
+                    <button class="item-delete" onclick="event.stopPropagation();deleteNote('${n.id}')" title="${i18n.t('common_delete')}">&times;</button>
                 </div>
-            `).join('');
+                <div class="item-detail">${esc((n.content || '').slice(0, 80))}</div>
+            </div>`;
         }
 
         function renderNotes() {
             const el = document.getElementById('notesList');
-            if (!dashboard.notes.length) {
-                el.innerHTML = `<div class="mc-empty">${i18n.t('mc_empty_notes')}</div>`;
-                return;
-            }
-            el.innerHTML = dashboard.notes.map(n => `
-                <div class="mc-item" onclick="showEditNote('${n.id}')" oncontextmenu="showNoteMenu(event,'${n.id}')">
-                    <div class="item-row">
-                        <span class="item-title">${esc(n.title)}</span>
-                        <span class="item-badge">${esc(n.category || 'general')}</span>
-                        <button class="item-delete" onclick="event.stopPropagation();deleteNote('${n.id}')" title="${i18n.t('common_delete')}">&times;</button>
-                    </div>
-                    <div class="item-detail">${esc((n.content || '').slice(0, 80))}</div>
+            renderCategorizedList(el, dashboard.notes, 'notes', 'notes', renderNoteItemHtml, 'mc_empty_notes');
+        }
+
+        function renderRuleItemHtml(r) {
+            const entities = (r.assignedEntities || []).map(id => getEntityLabel(parseInt(id))).join(', ');
+            return `
+            <div class="mc-item" draggable="true" data-item-id="${r.id}"
+                 ondragstart="onItemDragStart(event,'${r.id}','rules')" ondragend="onItemDragEnd(event)"
+                 onclick="showEditRule('${r.id}')" oncontextmenu="showRuleMenu(event,'${r.id}')">
+                <div class="item-row">
+                    <span class="item-title">${esc(r.name)}</span>
+                    <span class="item-badge">${esc(r.ruleType?.name || r.ruleType || '')}</span>
+                    ${entities ? `<span class="item-badge">${entities}</span>` : ''}
+                    <label class="switch" onclick="event.stopPropagation()">
+                        <input type="checkbox" ${r.isEnabled !== false ? 'checked' : ''} onchange="toggleRule('${r.id}')">
+                        <span class="slider"></span>
+                    </label>
+                    <button class="item-delete" onclick="event.stopPropagation();deleteRule('${r.id}')" title="${i18n.t('common_delete')}">&times;</button>
                 </div>
-            `).join('');
+                ${r.description ? `<div class="item-detail">${esc(r.description)}</div>` : ''}
+            </div>`;
         }
 
         function renderRules() {
             const el = document.getElementById('rulesList');
-            if (!dashboard.rules.length) {
-                el.innerHTML = `<div class="mc-empty">${i18n.t('mc_empty_rules')}</div>`;
-                return;
-            }
-            el.innerHTML = dashboard.rules.map(r => {
-                const entities = (r.assignedEntities || []).map(id => getEntityLabel(parseInt(id))).join(', ');
-                return `
-                <div class="mc-item" onclick="showEditRule('${r.id}')" oncontextmenu="showRuleMenu(event,'${r.id}')">
-                    <div class="item-row">
-                        <span class="item-title">${esc(r.name)}</span>
-                        <span class="item-badge">${esc(r.ruleType?.name || r.ruleType || '')}</span>
-                        ${entities ? `<span class="item-badge">${entities}</span>` : ''}
-                        <label class="switch" onclick="event.stopPropagation()">
-                            <input type="checkbox" ${r.isEnabled !== false ? 'checked' : ''} onchange="toggleRule('${r.id}')">
-                            <span class="slider"></span>
-                        </label>
-                        <button class="item-delete" onclick="event.stopPropagation();deleteRule('${r.id}')" title="${i18n.t('common_delete')}">&times;</button>
-                    </div>
-                    ${r.description ? `<div class="item-detail">${esc(r.description)}</div>` : ''}
-                </div>`;
-            }).join('');
+            renderCategorizedList(el, dashboard.rules, 'rules', 'rules', renderRuleItemHtml, 'mc_empty_rules');
         }
 
         function renderSyncBar() {
@@ -1143,6 +1587,7 @@
                 { key: 'title', label: i18n.t('mc_dlg_title'), value: '' },
                 { key: 'description', label: i18n.t('mc_dlg_desc'), type: 'textarea', value: '' },
                 { key: 'priority', label: i18n.t('mc_dlg_priority'), type: 'select', value: 2, options: priorityOpts },
+                { key: 'category', label: i18n.t('mc_dlg_category'), type: 'select', value: '', options: getCategoryOptions('todo') },
                 { key: 'assignedEntity', label: i18n.t('mc_dlg_assign') || '指派實體', type: 'multiselect', value: '', options: getEntityOptions() }
             ], vals => {
                 if (!vals.title.trim()) return;
@@ -1152,6 +1597,7 @@
                     description: vals.description.trim(),
                     priority: parseInt(vals.priority),
                     status: 'PENDING',
+                    category: vals.category || null,
                     createdAt: Date.now(),
                     updatedAt: Date.now(),
                     createdBy: 'user'
@@ -1182,12 +1628,14 @@
                 { key: 'title', label: i18n.t('mc_dlg_title'), value: item.title },
                 { key: 'description', label: i18n.t('mc_dlg_desc'), type: 'textarea', value: item.description },
                 { key: 'priority', label: i18n.t('mc_dlg_priority'), type: 'select', value: pv, options: priorityOpts },
+                { key: 'category', label: i18n.t('mc_dlg_category'), type: 'select', value: item.category || '', options: getCategoryOptions(list) },
                 { key: 'assignedEntity', label: i18n.t('mc_dlg_assign') || '指派實體', type: 'multiselect', value: item.assignedBot || '', options: getEntityOptions() }
             ], vals => {
                 if (!vals.title.trim()) return;
                 item.title = vals.title.trim();
                 item.description = vals.description.trim();
                 item.priority = parseInt(vals.priority);
+                item.category = vals.category || null;
                 item.assignedBot = vals.assignedEntity || null;
                 item.updatedAt = Date.now();
                 markChanged();
@@ -1262,14 +1710,14 @@
             showDialog(i18n.t('mc_dlg_add_note'), [
                 { key: 'title', label: i18n.t('mc_dlg_title'), value: '' },
                 { key: 'content', label: i18n.t('mc_dlg_content'), type: 'textarea', value: '' },
-                { key: 'category', label: i18n.t('mc_dlg_category'), value: 'general' }
+                { key: 'category', label: i18n.t('mc_dlg_category'), type: 'select', value: '', options: getCategoryOptions('notes') }
             ], vals => {
                 if (!vals.title.trim()) return;
                 dashboard.notes.push({
                     id: genId(),
                     title: vals.title.trim(),
                     content: vals.content.trim(),
-                    category: vals.category.trim() || 'general',
+                    category: vals.category || null,
                     createdAt: Date.now(),
                     updatedAt: Date.now(),
                     createdBy: 'user'
@@ -1286,12 +1734,12 @@
             showDialog(i18n.t('mc_dlg_edit_note'), [
                 { key: 'title', label: i18n.t('mc_dlg_title'), value: note.title },
                 { key: 'content', label: i18n.t('mc_dlg_content'), type: 'textarea', value: note.content },
-                { key: 'category', label: i18n.t('mc_dlg_category'), value: note.category }
+                { key: 'category', label: i18n.t('mc_dlg_category'), type: 'select', value: note.category || '', options: getCategoryOptions('notes') }
             ], vals => {
                 if (!vals.title.trim()) return;
                 note.title = vals.title.trim();
                 note.content = vals.content.trim();
-                note.category = vals.category.trim() || 'general';
+                note.category = vals.category || null;
                 note.updatedAt = Date.now();
                 markChanged();
                 renderNotes();
@@ -1665,24 +2113,24 @@
             }, 50);
         }
 
+        function renderSkillItemHtml(s) {
+            const entities = (s.assignedEntities || []).map(id => getEntityLabel(parseInt(id))).join(', ');
+            return `
+            <div class="mc-item" draggable="true" data-item-id="${s.id}"
+                 ondragstart="onItemDragStart(event,'${s.id}','skills')" ondragend="onItemDragEnd(event)"
+                 onclick="showEditSkill('${s.id}')" oncontextmenu="showSkillMenu(event,'${s.id}')">
+                <div class="item-row">
+                    <span class="item-title">${esc(s.title)}</span>
+                    ${entities ? `<span class="item-badge">${entities}</span>` : ''}
+                    <button class="item-delete" onclick="event.stopPropagation();deleteSkill('${s.id}')" title="${i18n.t('common_delete')}">&times;</button>
+                </div>
+                ${s.url ? `<div class="item-detail">${esc(s.url)}</div>` : ''}
+            </div>`;
+        }
+
         function renderSkills() {
             const el = document.getElementById('skillsList');
-            if (!dashboard.skills.length) {
-                el.innerHTML = `<div class="mc-empty">${i18n.t('mc_empty_skills') || 'No skills'}</div>`;
-                return;
-            }
-            el.innerHTML = dashboard.skills.map(s => {
-                const entities = (s.assignedEntities || []).map(id => getEntityLabel(parseInt(id))).join(', ');
-                return `
-                <div class="mc-item" onclick="showEditSkill('${s.id}')" oncontextmenu="showSkillMenu(event,'${s.id}')">
-                    <div class="item-row">
-                        <span class="item-title">${esc(s.title)}</span>
-                        ${entities ? `<span class="item-badge">${entities}</span>` : ''}
-                        <button class="item-delete" onclick="event.stopPropagation();deleteSkill('${s.id}')" title="${i18n.t('common_delete')}">&times;</button>
-                    </div>
-                    ${s.url ? `<div class="item-detail">${esc(s.url)}</div>` : ''}
-                </div>`;
-            }).join('');
+            renderCategorizedList(el, dashboard.skills, 'skills', 'skills', renderSkillItemHtml, 'mc_empty_skills');
         }
 
         function showAddSkill() {
@@ -1727,6 +2175,10 @@
                     <input id="dlg_skill_url" placeholder="https://..." value="${esc(skill?.url || '')}" />
                     <div class="dialog-field-label">${esc(i18n.t('mc_skill_steps_label'))}</div>
                     <textarea id="dlg_skill_steps" placeholder="${esc(i18n.t('mc_skill_steps_placeholder'))}">${esc(skill?.steps || '')}</textarea>
+                    <div class="dialog-field-label">${esc(i18n.t('mc_dlg_category'))}</div>
+                    <select id="dlg_skill_category">
+                        ${getCategoryOptions('skills').map(o => `<option value="${esc(o.value)}" ${o.value === (skill?.category || '') ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}
+                    </select>
                     <div class="dialog-field-label">${esc(i18n.t('mc_skill_assign_entity'))}</div>
                     <div class="entity-checkbox-grid" id="dlg_skill_entities">${entityCheckboxes}</div>
                     <div class="dialog-actions">
@@ -1744,12 +2196,14 @@
                 const url = document.getElementById('dlg_skill_url').value.trim();
                 const steps = document.getElementById('dlg_skill_steps').value.trim();
                 const selectedEntities = Array.from(document.querySelectorAll('.skill-entity-cb:checked')).map(cb => cb.value);
+                const category = document.getElementById('dlg_skill_category').value || null;
 
                 if (isEdit) {
                     skill.title = title;
                     skill.url = url;
                     skill.steps = steps;
                     skill.assignedEntities = selectedEntities;
+                    skill.category = category;
                     skill.updatedAt = Date.now();
                 } else {
                     dashboard.skills.push({
@@ -1758,6 +2212,7 @@
                         url,
                         steps,
                         assignedEntities: selectedEntities,
+                        category,
                         createdAt: Date.now(),
                         updatedAt: Date.now(),
                         createdBy: 'user'
@@ -1842,6 +2297,10 @@
                     <textarea id="dlg_rule_desc" placeholder="${i18n.t('mc_dlg_desc')}">${esc(rule?.description || '')}</textarea>
                     <div class="dialog-field-label">規則類型</div>
                     <select id="dlg_rule_type">${typeOptions}</select>
+                    <div class="dialog-field-label">${i18n.t('mc_dlg_category')}</div>
+                    <select id="dlg_rule_category">
+                        ${getCategoryOptions('rules').map(o => `<option value="${esc(o.value)}" ${o.value === (rule?.category || '') ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}
+                    </select>
                     <div class="dialog-field-label">指派實體 (可多選)</div>
                     <div class="entity-checkbox-grid" id="dlg_rule_entities">${entityCheckboxes}</div>
                     <div class="dialog-actions">
@@ -1859,12 +2318,14 @@
                 const description = document.getElementById('dlg_rule_desc').value.trim();
                 const ruleType = document.getElementById('dlg_rule_type').value;
                 const selectedEntities = Array.from(document.querySelectorAll('.rule-entity-cb:checked')).map(cb => cb.value);
+                const category = document.getElementById('dlg_rule_category').value || null;
 
                 if (isEdit) {
                     rule.name = name;
                     rule.description = description;
                     rule.ruleType = ruleType;
                     rule.assignedEntities = selectedEntities;
+                    rule.category = category;
                     rule.updatedAt = Date.now();
                 } else {
                     dashboard.rules.push({
@@ -1876,6 +2337,7 @@
                         isEnabled: true,
                         priority: 0,
                         config: {},
+                        category,
                         createdAt: Date.now(),
                         updatedAt: Date.now()
                     });
@@ -1978,31 +2440,31 @@
             return i18n.lang === 'zh' ? tpl.desc.zh : tpl.desc.en;
         }
 
+        function renderSoulItemHtml(s) {
+            const entities = (s.assignedEntities || []).map(id => getEntityLabel(parseInt(id))).join(', ');
+            const tpl = s.templateId ? SOUL_TEMPLATES.find(t => t.id === s.templateId) : null;
+            const tplBadge = tpl ? getSoulTemplateName(tpl) : '';
+            return `
+            <div class="mc-item" draggable="true" data-item-id="${s.id}"
+                 ondragstart="onItemDragStart(event,'${s.id}','souls')" ondragend="onItemDragEnd(event)"
+                 onclick="showEditSoul('${s.id}')" oncontextmenu="showSoulMenu(event,'${s.id}')">
+                <div class="item-row">
+                    <span class="item-title">${esc(s.name)}</span>
+                    ${tplBadge ? `<span class="item-badge">${esc(tplBadge)}</span>` : ''}
+                    ${entities ? `<span class="item-badge">${entities}</span>` : ''}
+                    <label class="switch" onclick="event.stopPropagation()">
+                        <input type="checkbox" ${s.isActive !== false ? 'checked' : ''} onchange="toggleSoul('${s.id}')">
+                        <span class="slider"></span>
+                    </label>
+                    <button class="item-delete" onclick="event.stopPropagation();deleteSoul('${s.id}')" title="${i18n.t('mc_menu_delete')}">&times;</button>
+                </div>
+                ${s.description ? `<div class="item-detail">${esc(s.description.slice(0, 100))}</div>` : ''}
+            </div>`;
+        }
+
         function renderSouls() {
             const el = document.getElementById('soulsList');
-            if (!dashboard.souls.length) {
-                el.innerHTML = `<div class="mc-empty">${i18n.t('mc_empty_souls')}</div>`;
-                return;
-            }
-            el.innerHTML = dashboard.souls.map(s => {
-                const entities = (s.assignedEntities || []).map(id => getEntityLabel(parseInt(id))).join(', ');
-                const tpl = s.templateId ? SOUL_TEMPLATES.find(t => t.id === s.templateId) : null;
-                const tplBadge = tpl ? getSoulTemplateName(tpl) : '';
-                return `
-                <div class="mc-item" onclick="showEditSoul('${s.id}')" oncontextmenu="showSoulMenu(event,'${s.id}')">
-                    <div class="item-row">
-                        <span class="item-title">${esc(s.name)}</span>
-                        ${tplBadge ? `<span class="item-badge">${esc(tplBadge)}</span>` : ''}
-                        ${entities ? `<span class="item-badge">${entities}</span>` : ''}
-                        <label class="switch" onclick="event.stopPropagation()">
-                            <input type="checkbox" ${s.isActive !== false ? 'checked' : ''} onchange="toggleSoul('${s.id}')">
-                            <span class="slider"></span>
-                        </label>
-                        <button class="item-delete" onclick="event.stopPropagation();deleteSoul('${s.id}')" title="${i18n.t('mc_menu_delete')}">&times;</button>
-                    </div>
-                    ${s.description ? `<div class="item-detail">${esc(s.description.slice(0, 100))}</div>` : ''}
-                </div>`;
-            }).join('');
+            renderCategorizedList(el, dashboard.souls || [], 'souls', 'souls', renderSoulItemHtml, 'mc_empty_souls');
         }
 
         function showAddSoul() {
@@ -2048,6 +2510,10 @@
                     <input id="dlg_soul_name" placeholder="${i18n.t('mc_dlg_soul_name')}" value="${esc(soul?.name || '')}" />
                     <div class="dialog-field-label">${i18n.t('mc_dlg_soul_desc')}</div>
                     <textarea id="dlg_soul_desc" placeholder="${i18n.t('mc_dlg_soul_desc_hint')}">${esc(soul?.description || '')}</textarea>
+                    <div class="dialog-field-label">${i18n.t('mc_dlg_category')}</div>
+                    <select id="dlg_soul_category">
+                        ${getCategoryOptions('souls').map(o => `<option value="${esc(o.value)}" ${o.value === (soul?.category || '') ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}
+                    </select>
                     <div class="dialog-field-label">${i18n.t('mc_dlg_assign') || '指派實體'} (${i18n.t('mc_dlg_soul_multi') || '可多選'})</div>
                     <div class="entity-checkbox-grid" id="dlg_soul_entities">${entityCheckboxes}</div>
                     <div class="dialog-actions">
@@ -2065,12 +2531,14 @@
                 const description = document.getElementById('dlg_soul_desc').value.trim();
                 const templateId = document.getElementById('dlg_soul_template_id').value || null;
                 const selectedEntities = Array.from(document.querySelectorAll('.soul-entity-cb:checked')).map(cb => cb.value);
+                const category = document.getElementById('dlg_soul_category').value || null;
 
                 if (isEdit) {
                     soul.name = name;
                     soul.description = description;
                     soul.templateId = templateId;
                     soul.assignedEntities = selectedEntities;
+                    soul.category = category;
                     soul.updatedAt = Date.now();
                 } else {
                     dashboard.souls.push({
@@ -2080,6 +2548,7 @@
                         templateId,
                         assignedEntities: selectedEntities,
                         isActive: true,
+                        category,
                         createdAt: Date.now(),
                         updatedAt: Date.now(),
                         createdBy: 'user'

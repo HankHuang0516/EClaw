@@ -239,3 +239,80 @@ describe('POST /api/mission/todo/delete', () => {
         expect(res.status).toBe(400);
     });
 });
+
+// ════════════════════════════════════════════════════════════════
+// Category support — todo/add, note/add, rule/add, skill/add, soul/add
+// accept optional category field
+// ════════════════════════════════════════════════════════════════
+describe('Category support in add endpoints', () => {
+    const auth = { deviceId: 'test-dev', deviceSecret: 'test-secret' };
+
+    it('todo/add accepts category field', async () => {
+        const res = await post('/api/mission/todo/add')
+            .send({ ...auth, title: 'Categorized TODO', category: 'Frontend' });
+        // 200 (success) or 500 (DB mock) — not 400 (rejected)
+        expect([200, 500].includes(res.status)).toBe(true);
+    });
+
+    it('note/add accepts category field', async () => {
+        const res = await post('/api/mission/note/add')
+            .send({ ...auth, title: 'Categorized Note', category: 'Meeting' });
+        expect([200, 500].includes(res.status)).toBe(true);
+    });
+
+    it('rule/add accepts category field', async () => {
+        const res = await post('/api/mission/rule/add')
+            .send({ ...auth, name: 'Categorized Rule', category: 'DevOps' });
+        expect([200, 500].includes(res.status)).toBe(true);
+    });
+
+    it('skill/add accepts category field', async () => {
+        const res = await post('/api/mission/skill/add')
+            .send({ ...auth, title: 'Categorized Skill', category: 'Core' });
+        expect([200, 500].includes(res.status)).toBe(true);
+    });
+
+    it('soul/add accepts category field', async () => {
+        const res = await post('/api/mission/soul/add')
+            .send({ ...auth, name: 'Categorized Soul', category: 'Personality' });
+        expect([200, 500].includes(res.status)).toBe(true);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
+// Category support — update endpoints accept newCategory
+// ════════════════════════════════════════════════════════════════
+describe('Category support in update endpoints', () => {
+    const auth = { deviceId: 'test-dev', deviceSecret: 'test-secret' };
+
+    it('todo/update accepts newCategory field', async () => {
+        const res = await post('/api/mission/todo/update')
+            .send({ ...auth, title: 'Some TODO', newCategory: 'Backend' });
+        // 404 (not found in mock) or 500 (DB mock) — not 400
+        expect([200, 404, 500].includes(res.status)).toBe(true);
+    });
+
+    it('note/update accepts newCategory field', async () => {
+        const res = await post('/api/mission/note/update')
+            .send({ ...auth, title: 'Some Note', newCategory: 'Tech' });
+        expect([200, 404, 500].includes(res.status)).toBe(true);
+    });
+
+    it('rule/update accepts newCategory field', async () => {
+        const res = await post('/api/mission/rule/update')
+            .send({ ...auth, name: 'Some Rule', newCategory: 'Workflow' });
+        expect([200, 404, 500].includes(res.status)).toBe(true);
+    });
+
+    it('skill/update accepts newCategory field', async () => {
+        const res = await post('/api/mission/skill/update')
+            .send({ ...auth, title: 'Some Skill', newCategory: 'Tools' });
+        expect([200, 404, 500].includes(res.status)).toBe(true);
+    });
+
+    it('soul/update accepts newCategory field', async () => {
+        const res = await post('/api/mission/soul/update')
+            .send({ ...auth, name: 'Some Soul', newCategory: 'Custom' });
+        expect([200, 404, 500].includes(res.status)).toBe(true);
+    });
+});

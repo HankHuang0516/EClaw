@@ -838,29 +838,31 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
             if (types.has('TODO')) {
                 apiHints.push(`標記完成: POST /api/mission/todo/done {${auth},"title":"<標題>"}`);
                 apiHints.push(`標記進行中: POST /api/mission/todo/start {${auth},"title":"<標題>"}`);
-                apiHints.push(`新增TODO: POST /api/mission/todo/add {${auth},"title":"<標題>","priority":2}`);
-                apiHints.push(`更新TODO: POST /api/mission/todo/update {${auth},"title":"<原標題>","newTitle":"<新標題>"}`);
+                apiHints.push(`新增TODO: POST /api/mission/todo/add {${auth},"title":"<標題>","priority":2,"category":"<類別(可選)>"}`);
+                apiHints.push(`更新TODO: POST /api/mission/todo/update {${auth},"title":"<原標題>","newTitle":"<新標題>","newCategory":"<新類別>"}`);
                 apiHints.push(`刪除TODO: POST /api/mission/todo/delete {${auth},"title":"<標題>"}`);
             }
             if (types.has('RULE')) {
-                apiHints.push(`新增規則: POST /api/mission/rule/add {${auth},"name":"<規則名>","description":"<說明>","ruleType":"WORKFLOW"}`);
+                apiHints.push(`新增規則: POST /api/mission/rule/add {${auth},"name":"<規則名>","description":"<說明>","ruleType":"WORKFLOW","category":"<類別(可選)>"}`);
+                apiHints.push(`更新規則: POST /api/mission/rule/update {${auth},"name":"<原名>","newCategory":"<新類別>"}`);
                 apiHints.push(`刪除規則: POST /api/mission/rule/delete {${auth},"name":"<規則名>"}`);
             }
             if (types.has('SKILL')) {
-                apiHints.push(`新增技能: POST /api/mission/skill/add {${auth},"title":"<技能名>","url":"<連結>"}`);
+                apiHints.push(`新增技能: POST /api/mission/skill/add {${auth},"title":"<技能名>","url":"<連結>","category":"<類別(可選)>"}`);
+                apiHints.push(`更新技能: POST /api/mission/skill/update {${auth},"title":"<原標題>","newCategory":"<新類別>"}`);
                 apiHints.push(`刪除技能: POST /api/mission/skill/delete {${auth},"title":"<技能名>"}`);
             }
             if (types.has('SOUL')) {
-                apiHints.push(`新增靈魂: POST /api/mission/soul/add {${auth},"name":"<靈魂名>","description":"<描述>"}`);
-                apiHints.push(`更新靈魂: POST /api/mission/soul/update {${auth},"name":"<原名>","newDescription":"<新描述>"}`);
+                apiHints.push(`新增靈魂: POST /api/mission/soul/add {${auth},"name":"<靈魂名>","description":"<描述>","category":"<類別(可選)>"}`);
+                apiHints.push(`更新靈魂: POST /api/mission/soul/update {${auth},"name":"<原名>","newDescription":"<新描述>","newCategory":"<新類別>"}`);
                 apiHints.push(`切換靈魂啟用: POST /api/mission/soul/update {${auth},"name":"<靈魂名>","newIsActive":true/false}`);
                 apiHints.push(`刪除靈魂: POST /api/mission/soul/delete {${auth},"name":"<靈魂名>"}`);
                 apiHints.push(`⚠️ 靈魂規則: isActive=true 的靈魂才需要採用其人設風格回覆，isActive=false 的靈魂請完全忽略`);
             }
             // Notes: bots always have read-write access
             apiHints.push(`取得筆記: GET /api/mission/notes?deviceId=${deviceId}&botSecret=${botSecret}&category=<可選>`);
-            apiHints.push(`新增筆記: POST /api/mission/note/add {${auth},"title":"<標題>","content":"<內容>","category":"general"}`);
-            apiHints.push(`更新筆記: POST /api/mission/note/update {${auth},"title":"<原標題>","newTitle":"<新標題>","newContent":"<新內容>"}`);
+            apiHints.push(`新增筆記: POST /api/mission/note/add {${auth},"title":"<標題>","content":"<內容>","category":"<類別>"}`);
+            apiHints.push(`更新筆記: POST /api/mission/note/update {${auth},"title":"<原標題>","newTitle":"<新標題>","newContent":"<新內容>","newCategory":"<新類別>"}`);
             apiHints.push(`刪除筆記: POST /api/mission/note/delete {${auth},"title":"<標題>"}`);
 
             const pushMessage = `[Mission Control 任務更新]\n${lines.join('\n')}\n\n可用操作:\n${apiHints.join('\n')}`;
@@ -1026,7 +1028,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
     // ============================================
     router.post('/todo/add', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const { deviceId, entityId, title, description, priority, assignedBot: assignedBotParam } = req.body;
+        const { deviceId, entityId, title, description, priority, assignedBot: assignedBotParam, category } = req.body;
 
         if (!title) {
             return res.status(400).json({ success: false, error: 'Missing title' });
@@ -1053,6 +1055,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
                 assignedBot: assignedBotParam != null
                     ? (Array.isArray(assignedBotParam) ? assignedBotParam.map(String).join(',') : String(assignedBotParam))
                     : (entityId != null ? String(entityId) : null),
+                category: category ? category.trim() : null,
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
                 createdBy: entityId != null ? `entity_${entityId}` : 'bot'
@@ -1084,7 +1087,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
     // ============================================
     router.post('/todo/update', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const { deviceId, title, newTitle, newDescription, newPriority, newAssignedBot } = req.body;
+        const { deviceId, title, newTitle, newDescription, newPriority, newAssignedBot, newCategory } = req.body;
 
         if (!title) {
             return res.status(400).json({ success: false, error: 'Missing title' });
@@ -1131,6 +1134,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
                     item.assignedBot = String(newAssignedBot);
                 }
             }
+            if (newCategory !== undefined) item.category = newCategory ? newCategory.trim() : null;
             item.updatedAt = Date.now();
 
             const updateResult = await client.query(
@@ -1284,7 +1288,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
     // ============================================
     router.post('/rule/add', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const { deviceId, entityId, name, description, ruleType, assignedEntities } = req.body;
+        const { deviceId, entityId, name, description, ruleType, assignedEntities, category } = req.body;
 
         if (!name) {
             return res.status(400).json({ success: false, error: 'Missing name' });
@@ -1312,6 +1316,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
                 isEnabled: true,
                 priority: 0,
                 config: {},
+                category: category ? category.trim() : null,
                 createdAt: Date.now(),
                 updatedAt: Date.now()
             };
@@ -1342,7 +1347,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
     // ============================================
     router.post('/rule/update', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const { deviceId, name, newName, newDescription, newRuleType, newAssignedEntities, newIsEnabled } = req.body;
+        const { deviceId, name, newName, newDescription, newRuleType, newAssignedEntities, newIsEnabled, newCategory } = req.body;
 
         if (!name) {
             return res.status(400).json({ success: false, error: 'Missing name' });
@@ -1375,6 +1380,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
             if (newRuleType) rule.ruleType = newRuleType;
             if (newAssignedEntities !== undefined) rule.assignedEntities = newAssignedEntities;
             if (newIsEnabled !== undefined) rule.isEnabled = newIsEnabled;
+            if (newCategory !== undefined) rule.category = newCategory ? newCategory.trim() : null;
             rule.updatedAt = Date.now();
 
             const updateResult = await client.query(
@@ -1457,7 +1463,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
     // ============================================
     router.post('/skill/add', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const { deviceId, entityId, title, url, assignedEntities } = req.body;
+        const { deviceId, entityId, title, url, assignedEntities, category } = req.body;
 
         if (!title) {
             return res.status(400).json({ success: false, error: 'Missing title' });
@@ -1481,6 +1487,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
                 title: title.trim(),
                 url: (url || '').trim(),
                 assignedEntities: entities,
+                category: category ? category.trim() : null,
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
                 createdBy: entityId != null ? `entity_${entityId}` : 'bot'
@@ -1568,6 +1575,65 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
     });
 
     // ============================================
+    // POST /skill/update
+    // Bot updates a skill by title
+    // ============================================
+    router.post('/skill/update', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId, title, newTitle, newUrl, newAssignedEntities, newCategory } = req.body;
+
+        if (!title) {
+            return res.status(400).json({ success: false, error: 'Missing title' });
+        }
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const result = await client.query(
+                'SELECT * FROM mission_dashboard WHERE device_id = $1 FOR UPDATE',
+                [deviceId]
+            );
+            if (result.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ success: false, error: 'Dashboard not found' });
+            }
+
+            const row = result.rows[0];
+            const skills = row.skills || [];
+            const titleLower = title.trim().toLowerCase();
+            const skill = skills.find(s => s.title && s.title.trim().toLowerCase() === titleLower);
+
+            if (!skill) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ success: false, error: `Skill not found: "${title}"` });
+            }
+
+            if (newTitle) skill.title = newTitle.trim();
+            if (newUrl !== undefined) skill.url = (newUrl || '').trim();
+            if (newAssignedEntities !== undefined) skill.assignedEntities = newAssignedEntities;
+            if (newCategory !== undefined) skill.category = newCategory ? newCategory.trim() : null;
+            skill.updatedAt = Date.now();
+
+            const updateResult = await client.query(
+                `UPDATE mission_dashboard SET skills = $2, last_synced_at = NOW()
+                 WHERE device_id = $1 RETURNING version`,
+                [deviceId, JSON.stringify(skills)]
+            );
+            await client.query('COMMIT');
+
+            if (process.env.DEBUG === 'true') console.log(`[Mission] Skill updated: "${skill.title}", device ${deviceId}`);
+            if (serverLog) serverLog('info', 'mission', `[Mission] Skill updated: "${skill.title}", device ${deviceId}`, { deviceId });
+            res.json({ success: true, message: `Skill "${skill.title}" updated`, item: skill, version: updateResult.rows[0].version });
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('[Mission] Error updating skill:', error);
+            res.status(500).json({ success: false, error: error.message });
+        } finally {
+            client.release();
+        }
+    });
+
+    // ============================================
     // Soul API
     // ============================================
 
@@ -1598,7 +1664,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
     // ============================================
     router.post('/soul/add', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const { deviceId, entityId, name, description, templateId, assignedEntities } = req.body;
+        const { deviceId, entityId, name, description, templateId, assignedEntities, category } = req.body;
 
         if (!name) {
             return res.status(400).json({ success: false, error: 'Missing name' });
@@ -1624,6 +1690,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
                 templateId: templateId || null,
                 assignedEntities: entities,
                 isActive: true,
+                category: category ? category.trim() : null,
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
                 createdBy: entityId != null ? `entity_${entityId}` : 'bot'
@@ -1655,7 +1722,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
     // ============================================
     router.post('/soul/update', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const { deviceId, name, newName, newDescription, newTemplateId, newAssignedEntities, newIsActive } = req.body;
+        const { deviceId, name, newName, newDescription, newTemplateId, newAssignedEntities, newIsActive, newCategory } = req.body;
 
         if (!name) {
             return res.status(400).json({ success: false, error: 'Missing name' });
@@ -1688,6 +1755,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
             if (newTemplateId !== undefined) soul.templateId = newTemplateId;
             if (newAssignedEntities !== undefined) soul.assignedEntities = newAssignedEntities;
             if (newIsActive !== undefined) soul.isActive = newIsActive;
+            if (newCategory !== undefined) soul.category = newCategory ? newCategory.trim() : null;
             soul.updatedAt = Date.now();
 
             const updateResult = await client.query(
