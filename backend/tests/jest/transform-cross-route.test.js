@@ -281,6 +281,63 @@ describe('POST /api/transform — cross-device auto-route', () => {
 });
 
 // ════════════════════════════════════════════════════════════════
+// targetDeviceId === deviceId (same-device) — must NOT trigger cross-device routing
+// ════════════════════════════════════════════════════════════════
+describe('POST /api/transform — targetDeviceId equals deviceId (same-device)', () => {
+    it('skips cross-device routing when targetDeviceId matches deviceId', async () => {
+        const { devices } = require('../../index');
+        const targetEntity = devices['xroute-target'].entities[0];
+        // Inject a cross-device message — should be consumed via auto-route fallback
+        targetEntity.messageQueue = [{
+            text: 'cross msg',
+            from: 'xdevice:SENDER_CODE:🐢',
+            fromEntityId: 0,
+            fromPublicCode: 'SENDER_CODE',
+            fromDeviceId: 'xroute-sender',
+            timestamp: Date.now(),
+            read: false,
+            crossDevice: true
+        }];
+
+        // Bot replies with targetDeviceId === deviceId (same-device curl template)
+        const res = await post('/api/transform').send({
+            deviceId: 'xroute-target',
+            entityId: 0,
+            botSecret: targetEntity.botSecret,
+            targetDeviceId: 'xroute-target', // same as deviceId — should NOT trigger explicit routing
+            state: 'IDLE',
+            message: 'same-device reply'
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+
+        // The cross-device message should still be consumed by auto-route (not explicit route)
+        const crossRemaining = targetEntity.messageQueue.filter(m => m.crossDevice);
+        expect(crossRemaining.length).toBe(0);
+    });
+
+    it('does not double-save chat when targetDeviceId equals deviceId', async () => {
+        const { devices } = require('../../index');
+        const targetEntity = devices['xroute-target'].entities[0];
+        targetEntity.messageQueue = [];
+
+        // No cross-device messages — simple same-device reply with targetDeviceId === deviceId
+        const res = await post('/api/transform').send({
+            deviceId: 'xroute-target',
+            entityId: 0,
+            botSecret: targetEntity.botSecret,
+            targetDeviceId: 'xroute-target',
+            state: 'IDLE',
+            message: 'normal reply with targetDeviceId'
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
 // Transform without crossDevice — normal behavior unchanged
 // ════════════════════════════════════════════════════════════════
 describe('POST /api/transform — normal (non-cross-device)', () => {

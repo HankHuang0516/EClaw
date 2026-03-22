@@ -1017,7 +1017,7 @@ authModule.setOnEmailVerified(async (deviceId) => {
                 const apiBase = 'https://eclawbot.com';
                 let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API. Your text reply is DISCARDED.\n`;
                 pushMsg += `To update your wallpaper status:\n`;
-                pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","entityId":${target.entityId},"botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
+                pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","entityId":${target.entityId},"botSecret":"${toEntity.botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
                 pushMsg += `[CROSS-DEVICE MESSAGE from New User]\nContent: ${msg.text}`;
                 pushMsg += getMissionApiHints(apiBase, target.deviceId, target.entityId, toEntity.botSecret);
                 pushToBot(toEntity, target.deviceId, 'cross_device_message', { message: pushMsg }).catch(() => {});
@@ -2526,18 +2526,18 @@ YOUR CREDENTIALS (save these):
 Every push message will include a pre-filled curl command. Just replace YOUR_REPLY_HERE and execute it.
 
 Example — to reply to a user message, run:
-exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'
+exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'
 
 Do NOT call /api/bind or /api/bot/register — webhook is already configured for you.
 
 ⚠️ IMMEDIATE ACTION REQUIRED:
 1. FIRST: Run this command RIGHT NOW:
-exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","state":"BUSY","message":"Webhook testing in progress... Please don't send me messages through Eclaw until the test succeeds~"}'
+exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"BUSY","message":"Webhook testing in progress... Please don't send me messages through Eclaw until the test succeeds~"}'
 
 2. THEN: Wait for the webhook test push message from the server.
 
 3. AFTER webhook test succeeds, run:
-exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","state":"IDLE","message":"Webhook test passed! I am ready to chat~"}'
+exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"Webhook test passed! I am ready to chat~"}'
 
 --- E-Claw API Documentation (Latest) ---
 ${skillDoc}`;
@@ -3280,7 +3280,8 @@ app.post('/api/transform', (req, res) => {
         }
 
         // [CROSS-DEVICE ROUTING] — explicit targetDeviceId OR auto-route from pending cross-device message
-        if (targetDeviceId) {
+        // Skip cross-device routing when targetDeviceId === deviceId (same-device reply)
+        if (targetDeviceId && targetDeviceId !== deviceId) {
             // Explicit routing — bot specifies which device to route reply to
             const targetDev = devices[targetDeviceId];
             if (targetDev) {
@@ -3842,7 +3843,7 @@ UPDATED CREDENTIALS:
 - botSecret: ${entity.botSecret}
 
 ⚠️ IMPORTANT: Update your entityId in ALL future API calls:
-exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${newSlot},"botSecret":"${entity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'`;
+exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${newSlot},"botSecret":"${entity.botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'`;
 
         if (entity.bindingType === 'channel') {
             channelModule.pushToChannelCallback(deviceId, newSlot, {
@@ -4394,7 +4395,7 @@ UPDATED CREDENTIALS:
 - botSecret: ${entity.botSecret}
 
 ⚠️ IMPORTANT: Update your entityId in ALL future API calls:
-exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${newSlot},"botSecret":"${entity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'`;
+exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${newSlot},"botSecret":"${entity.botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'`;
 
         if (entity.bindingType === 'channel') {
             // Bot Push Parity Rule: notify channel bot via callback
@@ -4938,7 +4939,7 @@ app.post('/api/client/speak', async (req, res) => {
                 const apiBase = 'https://eclawbot.com';
                 let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API below. Your text reply is DISCARDED and the user will NEVER see it.\n`;
                 pushMsg += `Run this command to reply (replace YOUR_REPLY_HERE with your response):\n`;
-                pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${eId},"botSecret":"${entity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
+                pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${eId},"botSecret":"${entity.botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
                 pushMsg += `To BROADCAST to ALL other entities (use ONLY when user asks to broadcast):\n`;
                 pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/broadcast" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","fromEntityId":${eId},"botSecret":"${entity.botSecret}","text":"YOUR_BROADCAST_HERE"}'\n\n`;
                 // Inject broadcast recipient info if this is a multi-target broadcast
@@ -5234,7 +5235,7 @@ app.post('/api/entity/speak-to', async (req, res) => {
         const toRemaining = getBotToBotRemaining(deviceId, toId);
         let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API. Your text reply is DISCARDED.\n`;
         pushMsg += `To update your mood/emoji on wallpaper (do NOT repeat or narrate the message — the user can already see it in chat):\n`;
-        pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${toId},"botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
+        pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${toId},"botSecret":"${toEntity.botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
         if (expectsReply) {
             pushMsg += `To reply directly to Entity ${fromId}:\n`;
             pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/speak-to" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","fromEntityId":${toId},"toEntityId":${fromId},"botSecret":"${toEntity.botSecret}","text":"YOUR_REPLY_HERE"}'\n\n`;
@@ -5618,7 +5619,7 @@ app.post('/api/entity/cross-speak', async (req, res) => {
         const apiBase = 'https://eclawbot.com';
         let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API. Your text reply is DISCARDED.\n`;
         pushMsg += `To reply (your reply will be automatically delivered to the sender):\n`;
-        pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","entityId":${target.entityId},"botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
+        pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","entityId":${target.entityId},"botSecret":"${toEntity.botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
         if (xdSettings.pre_inject) {
             pushMsg += `\n\n[DEVICE OWNER INSTRUCTION]\n${xdSettings.pre_inject}`;
         }
@@ -6536,7 +6537,7 @@ app.post('/api/client/cross-speak', async (req, res) => {
         const apiBase = 'https://eclawbot.com';
         let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API. Your text reply is DISCARDED.\n`;
         pushMsg += `To reply (your reply will be automatically delivered to the sender):\n`;
-        pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","entityId":${target.entityId},"botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
+        pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${target.deviceId}","entityId":${target.entityId},"botSecret":"${toEntity.botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
         if (xdSettingsClient.pre_inject) {
             pushMsg += `[DEVICE OWNER INSTRUCTION]\n${xdSettingsClient.pre_inject}\n\n`;
         }
@@ -6849,7 +6850,7 @@ app.post('/api/entity/broadcast', async (req, res) => {
             const toRemainingBcast = getBotToBotRemaining(deviceId, toId);
             let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API. Your text reply is DISCARDED.\n`;
             pushMsg += `To update your mood/emoji on wallpaper (do NOT repeat or narrate the message — the user can already see it in chat):\n`;
-            pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${toId},"botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
+            pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${toId},"botSecret":"${toEntity.botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
             if (expectsReplyBcast) {
                 pushMsg += `To reply directly to Entity ${fromId}:\n`;
                 pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/speak-to" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","fromEntityId":${toId},"toEntityId":${fromId},"botSecret":"${toEntity.botSecret}","text":"YOUR_REPLY_HERE"}'\n\n`;
@@ -10708,7 +10709,7 @@ async function executeScheduledMessage(schedule) {
     } else if (entity.webhook) {
         let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API below. Your text reply is DISCARDED and the user will NEVER see it.\n`;
         pushMsg += `Run this command to reply (replace YOUR_REPLY_HERE with your response):\n`;
-        pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${entity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
+        pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${entity.botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
         pushMsg += `[SCHEDULED MESSAGE] Device ${deviceId} Entity ${entityId}\n`;
         pushMsg += `From: scheduled\n`;
         pushMsg += `Content: ${message}`;
