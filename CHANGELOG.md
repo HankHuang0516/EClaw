@@ -1,3 +1,10 @@
+## [1.143.2](https://github.com/HankHuang0516/EClaw/compare/v1.143.1...v1.143.2) (2026-03-22)
+
+
+### Bug Fixes
+
+* block duplicate AI chat widget in Android WebView ([#419](https://github.com/HankHuang0516/EClaw/issues/419)) ([#420](https://github.com/HankHuang0516/EClaw/issues/420)) ([5a379eb](https://github.com/HankHuang0516/EClaw/commit/5a379eb66b8fe4571bae25856a955634d494a4d1))
+
 ## [1.143.1](https://github.com/HankHuang0516/EClaw/compare/v1.143.0...v1.143.1) (2026-03-22)
 
 
