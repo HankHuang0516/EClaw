@@ -6,6 +6,13 @@
 (function () {
     'use strict';
 
+    console.log('[AI Chat DEBUG] === ai-chat.js IIFE executing ===');
+    console.log('[AI Chat DEBUG] Time:', new Date().toISOString());
+    console.log('[AI Chat DEBUG] typeof AndroidBridge:', typeof AndroidBridge);
+    console.log('[AI Chat DEBUG] UA:', (navigator.userAgent || '').substring(0, 200));
+    console.log('[AI Chat DEBUG] Location:', window.location.href);
+    console.log('[AI Chat DEBUG] typeof window.currentUser:', typeof window.currentUser);
+
     const STORAGE_KEY = 'eclaw_ai_chat_history';
     const PENDING_KEY = 'eclaw_ai_chat_pending';
     const MAX_HISTORY = 20;
@@ -135,6 +142,8 @@
 
     // ── Build DOM ─────────────────────────────
     function createWidget() {
+        console.log('[AI Chat DEBUG] createWidget() called');
+        console.log('[AI Chat DEBUG] Stack trace:', new Error().stack);
         // FAB
         const fab = document.createElement('button');
         fab.id = 'aiChatFab';
@@ -746,24 +755,64 @@
 
     // ── Init ──────────────────────────────────
     function isAndroidWebView() {
-        return typeof AndroidBridge !== 'undefined' ||
-            /EClawAndroid/i.test(navigator.userAgent);
+        const hasBridge = typeof AndroidBridge !== 'undefined';
+        const ua = navigator.userAgent || '';
+        const hasUaTag = /EClawAndroid/i.test(ua);
+        // Additional heuristics: Android WebView typically includes 'wv' in UA
+        const hasWv = /\bwv\b/.test(ua);
+        const hasAndroid = /Android/i.test(ua);
+        const result = hasBridge || hasUaTag;
+        console.log('[AI Chat DEBUG] isAndroidWebView():', result,
+            '| hasBridge:', hasBridge,
+            '| hasUaTag:', hasUaTag,
+            '| hasWv:', hasWv,
+            '| hasAndroid:', hasAndroid,
+            '| UA:', ua.substring(0, 200));
+        return result;
     }
 
     function init() {
-        // Skip AI chat widget in Android WebView — the app has its own AI chat
-        if (isAndroidWebView()) return;
+        console.log('[AI Chat DEBUG] init() called at', new Date().toISOString());
+        console.log('[AI Chat DEBUG] document.readyState:', document.readyState);
+        console.log('[AI Chat DEBUG] window.AndroidBridge type:', typeof AndroidBridge);
+        console.log('[AI Chat DEBUG] navigator.userAgent:', navigator.userAgent);
 
+        // Skip AI chat widget in Android WebView — the app has its own AI chat
+        if (isAndroidWebView()) {
+            console.log('[AI Chat DEBUG] ✅ BLOCKED at init() — Android WebView detected, widget will NOT load');
+            return;
+        }
+        console.log('[AI Chat DEBUG] ❌ NOT blocked at init() — proceeding to wait for currentUser');
+
+        let checkCount = 0;
         const check = setInterval(() => {
+            checkCount++;
             if (window.currentUser) {
                 clearInterval(check);
-                if (isAndroidWebView()) return; // re-check after wait
+                console.log('[AI Chat DEBUG] currentUser found after', checkCount, 'checks (' + (checkCount * 200) + 'ms)');
+                console.log('[AI Chat DEBUG] Re-checking isAndroidWebView before createWidget...');
+                if (isAndroidWebView()) {
+                    console.log('[AI Chat DEBUG] ✅ BLOCKED at currentUser check — Android WebView detected late');
+                    return;
+                }
+                console.log('[AI Chat DEBUG] ❌ NOT blocked at currentUser check — creating widget NOW');
+                console.log('[AI Chat DEBUG] Existing #aiChatFab:', !!document.getElementById('aiChatFab'));
+                console.log('[AI Chat DEBUG] Existing #aiChatPanel:', !!document.getElementById('aiChatPanel'));
                 loadHistory();
                 createWidget();
+                console.log('[AI Chat DEBUG] Widget created. #aiChatFab:', !!document.getElementById('aiChatFab'));
                 resumePendingRequest();
             }
+            if (checkCount % 25 === 0) {
+                console.log('[AI Chat DEBUG] Still waiting for currentUser... check #' + checkCount);
+            }
         }, 200);
-        setTimeout(() => clearInterval(check), 10000);
+        setTimeout(() => {
+            clearInterval(check);
+            if (checkCount > 0 && !window.currentUser) {
+                console.log('[AI Chat DEBUG] Gave up waiting for currentUser after 10s (' + checkCount + ' checks)');
+            }
+        }, 10000);
     }
 
     // ── Public API ────────────────────────────
