@@ -1,3 +1,10 @@
+# [1.142.0](https://github.com/HankHuang0516/EClaw/compare/v1.141.0...v1.142.0) (2026-03-22)
+
+
+### Features
+
+* add webview static pages for mission notes + Android alignment ([#414](https://github.com/HankHuang0516/EClaw/issues/414)) ([ef68835](https://github.com/HankHuang0516/EClaw/commit/ef688353c72fed1221b77abe1ba88d7ec97ad257))
+
 # [1.141.0](https://github.com/HankHuang0516/EClaw/compare/v1.140.0...v1.141.0) (2026-03-22)
 
 
