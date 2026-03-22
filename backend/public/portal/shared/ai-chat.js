@@ -59,6 +59,13 @@
         } catch (_) {}
     }
 
+    // Early exit if inline guard already detected Android WebView
+    if (window.__blockAiChatWidget) {
+        dbg('=== ai-chat.js BLOCKED by inline guard ===');
+        flushDebugToServer();
+        return;
+    }
+
     dbg('=== ai-chat.js IIFE executing ===');
     dbg('typeof AndroidBridge: ' + (typeof AndroidBridge));
     dbg('UA: ' + (navigator.userAgent || '').substring(0, 250));

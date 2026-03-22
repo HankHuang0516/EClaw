@@ -1302,7 +1302,18 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
-    <script src="shared/ai-chat.js"></script>
+    <script>
+    // Block AI chat widget in Android WebView (native app has its own AI chat)
+    if (typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent)) {
+        window.__blockAiChatWidget = true;
+        new MutationObserver(function(m, obs) {
+            var f = document.getElementById('aiChatFab'), p = document.getElementById('aiChatPanel');
+            if (f) f.remove(); if (p) p.remove();
+            if (f || p) obs.disconnect();
+        }).observe(document.documentElement, { childList: true, subtree: true });
+    }
+    </script>
+    <script src="shared/ai-chat.js?v=419"></script>
     <script>if(typeof renderAvatarHtml==='undefined'){window.renderAvatarHtml=function(a){return a||'\u{1F99E}'};window.isAvatarUrl=function(){return false}}</script>
     <script>
         // --- Constants ---
