@@ -4852,12 +4852,17 @@ app.post('/api/client/speak', async (req, res) => {
         }
     }
 
-    res.json({
+    const clientSpeakResponse = {
         success: true,
         message: `Sent to ${results.length} entity(s)`,
         targets: results,
         broadcast: targetIds.length > 1
-    });
+    };
+    const noWebhookTargets = results.filter(r => r && !r.pushed && r.reason === 'no_webhook');
+    if (noWebhookTargets.length > 0) {
+        clientSpeakResponse.warning = `${noWebhookTargets.length} entity(s) have no webhook registered. Messages saved but not pushed. Bots must register a webhook via POST /api/bot/register.`;
+    }
+    res.json(clientSpeakResponse);
 });
 
 /**
@@ -4914,7 +4919,12 @@ app.post('/api/entity/speak-to', async (req, res) => {
 
     // Target entity must be bound
     if (!toEntity.isBound) {
-        return res.status(400).json({ success: false, message: `Entity ${toId} is not bound` });
+        return res.status(400).json({
+            success: false,
+            message: `Entity ${toId} is not bound`,
+            hint: 'The target entity must be bound to a bot before it can receive speak-to messages. Use POST /api/bind to bind it first.',
+            entityState: { entityId: toId, isBound: false, character: toEntity.character }
+        });
     }
 
     // Gatekeeper Second Lock: mask leaked tokens in speak-to from free bot
@@ -5103,18 +5113,22 @@ app.post('/api/entity/speak-to', async (req, res) => {
         }
     }
 
-    res.json({
+    const speakToResponse = {
         success: true,
         message: `Message sent from Entity ${fromId} to Entity ${toId}`,
         from: { entityId: fromId, character: fromEntity.character },
         to: { entityId: toId, character: toEntity.character },
-        pushed: hasWebhook ? "pending" : false,
-        mode: hasWebhook ? "push" : "polling",
-        reason: hasWebhook ? "fire_and_forget" : "no_webhook",
+        pushed: isChannelBound ? "pending" : hasWebhook ? "pending" : false,
+        mode: isChannelBound ? "channel" : hasWebhook ? "push" : "polling",
+        reason: (isChannelBound || hasWebhook) ? "fire_and_forget" : "no_webhook",
         expects_reply: expectsReply,
         bindingType: bindingTypeTo,
         push_status: fromEntity.pushStatus || null
-    });
+    };
+    if (!isChannelBound && !hasWebhook) {
+        speakToResponse.warning = 'Target entity has no webhook or channel registered. Message saved but not pushed. The bot must poll for messages or register a webhook via POST /api/bot/register.';
+    }
+    res.json(speakToResponse);
 });
 
 /**
