@@ -12,8 +12,8 @@ function renderPublicNav(activePage) {
     nav.className = 'nav';
     nav.innerHTML = `
         <a href="index.html" class="nav-brand">
-            <span class="nav-logo">🦞</span>
-            <span class="nav-logo-text">E-Claw</span>
+            <img class="nav-logo" src="portal/assets/ic_launcher.png" alt="EClawbot" style="width:28px;height:28px;border-radius:6px;">
+            <span class="nav-logo-text">EClawbot</span>
         </a>
         <button class="nav-hamburger" id="navHamburger" onclick="togglePublicMobileNav()" aria-label="Menu">
             <span></span><span></span><span></span>

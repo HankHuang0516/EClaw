@@ -98,7 +98,9 @@ a:hover { text-decoration: underline; }
 .nav-brand:hover { text-decoration: none; }
 
 .nav-logo {
-    font-size: 24px;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
     filter: drop-shadow(0 0 6px rgba(108, 99, 255, 0.5));
     animation: logoPulse 3s ease-in-out infinite;
 }

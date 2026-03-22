@@ -37,8 +37,8 @@ function renderNav(activePage) {
     nav.setAttribute('aria-label', 'Main navigation');
     nav.innerHTML = `
         <a href="dashboard.html" class="nav-brand">
-            <span class="nav-logo">🦞</span>
-            <span class="nav-logo-text">E-Claw</span>
+            <img class="nav-logo" src="assets/ic_launcher.png" alt="EClawbot" style="width:28px;height:28px;border-radius:6px;">
+            <span class="nav-logo-text">EClawbot</span>
         </a>
         <button class="nav-hamburger" id="navHamburger" onclick="toggleMobileNav()" aria-label="Menu">
             <span></span><span></span><span></span>
