@@ -1,3 +1,10 @@
+# [1.135.0](https://github.com/HankHuang0516/EClaw/compare/v1.134.0...v1.135.0) (2026-03-22)
+
+
+### Features
+
+* **mission:** add category folder structure for task organization ([#397](https://github.com/HankHuang0516/EClaw/issues/397)) ([9c87a84](https://github.com/HankHuang0516/EClaw/commit/9c87a84b7d65bb87e061f08c6e5b6a4a4da50689))
+
 # [1.134.0](https://github.com/HankHuang0516/EClaw/compare/v1.133.1...v1.134.0) (2026-03-22)
 
 
