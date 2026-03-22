@@ -6,72 +6,8 @@
 (function () {
     'use strict';
 
-    // ── Debug helper: logs to console + AndroidBridge.log + collects for API report ──
-    const _debugLogs = [];
-    function dbg(msg) {
-        const line = '[AI Chat DBG] ' + msg;
-        console.log(line);
-        _debugLogs.push({ t: Date.now(), m: msg });
-        try { if (typeof AndroidBridge !== 'undefined') AndroidBridge.log('DEBUG', line); } catch (_) {}
-    }
-    // Send collected debug logs silently to telemetry API (no visible UI)
-    function flushDebugToServer() {
-        if (_debugLogs.length === 0) return;
-        const report = _debugLogs.map(l => '[' + new Date(l.t).toISOString() + '] ' + l.m).join('\n');
-        // Collect comprehensive environment snapshot for remote diagnosis
-        var scriptTags = [];
-        try { document.querySelectorAll('script[src]').forEach(function(s) { scriptTags.push(s.src); }); } catch (_) {}
-        const payload = {
-            type: 'ai_chat_debug',
-            data: {
-                report: report,
-                userAgent: navigator.userAgent,
-                url: window.location.href,
-                referrer: document.referrer || '',
-                hasBridge: typeof AndroidBridge !== 'undefined',
-                hasBlockFlag: !!window.__blockAiChatWidget,
-                fabExists: !!document.getElementById('aiChatFab'),
-                panelExists: !!document.getElementById('aiChatPanel'),
-                debugMarkerExists: !!document.getElementById('aiChatDebugMarker'),
-                readyState: document.readyState,
-                scriptTags: scriptTags,
-                cookieLen: (document.cookie || '').length,
-                timestamp: new Date().toISOString()
-            }
-        };
-        // Send via telemetry API (needs deviceId/deviceSecret from currentUser or AndroidBridge)
-        let deviceId, deviceSecret;
-        try {
-            if (typeof AndroidBridge !== 'undefined') {
-                deviceId = AndroidBridge.getDeviceId();
-                deviceSecret = AndroidBridge.getDeviceSecret();
-            } else if (window.currentUser) {
-                deviceId = window.currentUser.deviceId;
-                deviceSecret = window.currentUser.deviceSecret;
-            }
-        } catch (_) {}
-        if (deviceId && deviceSecret) {
-            fetch('/api/device-telemetry', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ deviceId, deviceSecret, entries: [payload] })
-            }).catch(() => {});
-        }
-        // Silent debug — no visible UI elements (telemetry only)
-    }
-
-    // Early exit if inline guard already detected Android WebView
-    if (window.__blockAiChatWidget) {
-        dbg('=== ai-chat.js BLOCKED by inline guard ===');
-        flushDebugToServer();
-        return;
-    }
-
-    dbg('=== ai-chat.js IIFE executing ===');
-    dbg('typeof AndroidBridge: ' + (typeof AndroidBridge));
-    dbg('UA: ' + (navigator.userAgent || '').substring(0, 250));
-    dbg('Location: ' + window.location.href);
-    dbg('typeof currentUser: ' + (typeof window.currentUser));
+    // Skip if inline guard already blocked (Android WebView detected before this script loaded)
+    if (window.__blockAiChatWidget) return;
 
     const STORAGE_KEY = 'eclaw_ai_chat_history';
     const PENDING_KEY = 'eclaw_ai_chat_pending';
@@ -814,59 +750,25 @@
 
     // ── Init ──────────────────────────────────
     function isAndroidWebView() {
-        const hasBridge = typeof AndroidBridge !== 'undefined';
-        const ua = navigator.userAgent || '';
-        const hasUaTag = /EClawAndroid/i.test(ua);
-        const hasWv = /\bwv\b/.test(ua);
-        const hasAndroid = /Android/i.test(ua);
-        const result = hasBridge || hasUaTag;
-        dbg('isAndroidWebView()=' + result + ' | bridge=' + hasBridge + ' uaTag=' + hasUaTag + ' wv=' + hasWv + ' android=' + hasAndroid);
-        return result;
+        return typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent || '');
     }
 
     function init() {
-        dbg('init() called readyState=' + document.readyState);
-        dbg('typeof AndroidBridge=' + (typeof AndroidBridge));
-
         // Skip AI chat widget in Android WebView — the app has its own AI chat
-        if (isAndroidWebView()) {
-            dbg('BLOCKED at init() — WebView detected');
-            flushDebugToServer();
-            return;
-        }
-        dbg('NOT blocked at init() — waiting for currentUser');
+        if (isAndroidWebView()) return;
 
         let checkCount = 0;
         const check = setInterval(() => {
             checkCount++;
             if (window.currentUser) {
                 clearInterval(check);
-                dbg('currentUser found after ' + checkCount + ' checks (' + (checkCount * 200) + 'ms)');
-                dbg('Re-checking isAndroidWebView...');
-                if (isAndroidWebView()) {
-                    dbg('BLOCKED at currentUser check — late WebView detect');
-                    flushDebugToServer();
-                    return;
-                }
-                dbg('NOT blocked — creating widget. Existing fab=' + !!document.getElementById('aiChatFab'));
+                if (isAndroidWebView()) return; // late-binding bridge check
                 loadHistory();
                 createWidget();
-                dbg('Widget created. fab=' + !!document.getElementById('aiChatFab'));
-                // Flush debug report so we can see it even when widget IS created (the problem case)
-                flushDebugToServer();
                 resumePendingRequest();
             }
-            if (checkCount % 25 === 0) {
-                dbg('Still waiting for currentUser... check #' + checkCount);
-            }
         }, 200);
-        setTimeout(() => {
-            clearInterval(check);
-            if (checkCount > 0 && !window.currentUser) {
-                dbg('Gave up waiting for currentUser after 10s');
-                flushDebugToServer();
-            }
-        }, 10000);
+        setTimeout(() => { clearInterval(check); }, 10000);
     }
 
     // ── Public API ────────────────────────────
