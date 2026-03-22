@@ -745,13 +745,19 @@
     }
 
     // ── Init ──────────────────────────────────
+    function isAndroidWebView() {
+        return typeof AndroidBridge !== 'undefined' ||
+            /EClawAndroid/i.test(navigator.userAgent);
+    }
+
     function init() {
         // Skip AI chat widget in Android WebView — the app has its own AI chat
-        if (typeof AndroidBridge !== 'undefined') return;
+        if (isAndroidWebView()) return;
 
         const check = setInterval(() => {
             if (window.currentUser) {
                 clearInterval(check);
+                if (isAndroidWebView()) return; // re-check after wait
                 loadHistory();
                 createWidget();
                 resumePendingRequest();
