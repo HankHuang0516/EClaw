@@ -117,6 +117,71 @@
             color: var(--primary);
         }
 
+        /* Folder filter row */
+        .folder-filter-bar {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            align-items: center;
+        }
+
+        .folder-chip {
+            padding: 4px 12px;
+            border-radius: var(--radius);
+            font-size: 11px;
+            cursor: pointer;
+            background: transparent;
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            transition: all 0.2s;
+            white-space: nowrap;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .folder-chip:hover {
+            border-color: var(--text-secondary);
+            color: var(--text-secondary);
+        }
+
+        .folder-chip.active {
+            background: rgba(108, 99, 255, 0.15);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .folder-chip .folder-close {
+            font-size: 10px;
+            opacity: 0.5;
+            cursor: pointer;
+            margin-left: 2px;
+        }
+
+        .folder-chip .folder-close:hover {
+            opacity: 1;
+            color: var(--error, #e53e3e);
+        }
+
+        .folder-add-btn {
+            padding: 4px 12px;
+            border-radius: var(--radius);
+            font-size: 11px;
+            cursor: pointer;
+            background: transparent;
+            border: 1px dashed var(--card-border);
+            color: var(--text-muted);
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .folder-add-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
         /* File stats */
         .file-stats {
             font-size: 13px;
@@ -474,6 +539,12 @@
             <div class="time-chip" data-time="month" onclick="setTimeFilter('month')" data-i18n="files_time_month">This month</div>
         </div>
 
+        <!-- Folder Filter Bar -->
+        <div class="folder-filter-bar" id="folderFilterBar">
+            <div class="folder-chip active" data-folder="all" onclick="setFolderFilter('all')" data-i18n="files_folder_all">All</div>
+            <!-- dynamic folder chips + add button rendered by JS -->
+        </div>
+
         <!-- Stats -->
         <div class="file-stats" id="fileStats">
             <div class="spinner" style="width:14px;height:14px;border-width:2px;vertical-align:middle;display:inline-block;"></div>
@@ -522,11 +593,105 @@
         let currentTypeFilter = 'all';
         let currentEntityFilter = null; // null = all
         let currentTimeFilter = 'all';
+        let currentFolderFilter = null; // null = all
         let currentViewMode = localStorage.getItem('eclaw_file_view') || 'grid';
         let entities = [];
         let isLoading = false;
         let hasMore = false;
         let oldestTimestamp = null;
+
+        // --- Folder Management (localStorage) ---
+        function getFileFolders() {
+            try { return JSON.parse(localStorage.getItem('eclaw_file_folders') || '[]'); }
+            catch (_) { return []; }
+        }
+        function saveFileFolders(folders) {
+            localStorage.setItem('eclaw_file_folders', JSON.stringify(folders));
+        }
+        function getFileFolder(fileId) {
+            return localStorage.getItem('eclaw_file_folder_' + fileId);
+        }
+        function setFileFolder(fileId, folder) {
+            if (folder === null) {
+                localStorage.removeItem('eclaw_file_folder_' + fileId);
+            } else {
+                localStorage.setItem('eclaw_file_folder_' + fileId, folder);
+            }
+        }
+
+        function renderFolderChips() {
+            const bar = document.getElementById('folderFilterBar');
+            const folders = getFileFolders();
+            let html = '<div class="folder-chip' + (currentFolderFilter === null ? ' active' : '') + '" data-folder="all" onclick="setFolderFilter(\'all\')" data-i18n="files_folder_all">' + i18n.t('files_folder_all') + '</div>';
+            folders.forEach(f => {
+                const isActive = currentFolderFilter === f;
+                html += '<div class="folder-chip' + (isActive ? ' active' : '') + '" data-folder="' + escapeHtml(f) + '" onclick="setFolderFilter(\'' + escapeHtml(f).replace(/'/g, "\\'") + '\')">' +
+                    '📁 ' + escapeHtml(f) +
+                    '<span class="folder-close" onclick="event.stopPropagation();deleteFolder(\'' + escapeHtml(f).replace(/'/g, "\\'") + '\')">&times;</span>' +
+                    '</div>';
+            });
+            html += '<div class="folder-add-btn" onclick="addFolder()" data-i18n="files_folder_add">' + i18n.t('files_folder_add') + '</div>';
+            bar.innerHTML = html;
+        }
+
+        function setFolderFilter(folder) {
+            currentFolderFilter = folder === 'all' ? null : folder;
+            renderFolderChips();
+            renderFiles();
+            updateStats();
+        }
+
+        function addFolder() {
+            const name = prompt(i18n.t('files_folder_name_hint'));
+            if (!name || !name.trim()) return;
+            const trimmed = name.trim().substring(0, 50);
+            const folders = getFileFolders();
+            if (folders.includes(trimmed)) {
+                showToast(i18n.t('files_folder_already_exists').replace('%1$s', trimmed), 'error');
+                return;
+            }
+            folders.push(trimmed);
+            saveFileFolders(folders);
+            renderFolderChips();
+        }
+
+        function deleteFolder(name) {
+            if (!confirm(i18n.t('files_folder_delete_confirm').replace('%1$s', name))) return;
+            const folders = getFileFolders().filter(f => f !== name);
+            saveFileFolders(folders);
+            // Remove folder assignments
+            allFiles.forEach(f => { if (getFileFolder(f.id) === name) setFileFolder(f.id, null); });
+            if (currentFolderFilter === name) currentFolderFilter = null;
+            renderFolderChips();
+            renderFiles();
+            updateStats();
+        }
+
+        function moveFileToFolder(idx) {
+            const file = allFiles[idx];
+            if (!file) return;
+            const folders = getFileFolders();
+            if (folders.length === 0) { addFolder(); return; }
+            const currentFileFolder = getFileFolder(file.id);
+            const options = [];
+            if (currentFileFolder) options.push(i18n.t('files_folder_remove_from'));
+            folders.forEach(f => { if (f !== currentFileFolder) options.push('📁 ' + f); });
+            if (options.length === 0) return;
+            // Use a simple select menu
+            const choice = prompt(i18n.t('files_folder_move_to') + '\n\n' + options.map((o, i) => (i + 1) + '. ' + o).join('\n') + '\n\n' + i18n.t('files_folder_enter_number'));
+            if (!choice) return;
+            const num = parseInt(choice, 10);
+            if (isNaN(num) || num < 1 || num > options.length) return;
+            const selected = options[num - 1];
+            if (selected === i18n.t('files_folder_remove_from')) {
+                setFileFolder(file.id, null);
+            } else {
+                const folderName = selected.replace(/^📁 /, '');
+                setFileFolder(file.id, folderName);
+            }
+            renderFiles();
+            updateStats();
+        }
 
         // --- Init ---
         window.addEventListener('DOMContentLoaded', async () => {
@@ -539,6 +704,7 @@
             // Restore view mode
             setViewMode(currentViewMode, true);
 
+            renderFolderChips();
             await loadEntities();
             await loadFiles();
         });
@@ -729,7 +895,13 @@
             // Re-apply view mode class
             grid.classList.toggle('list-view', currentViewMode === 'list');
 
-            if (allFiles.length === 0) {
+            // Apply folder filter
+            let displayFiles = allFiles;
+            if (currentFolderFilter !== null) {
+                displayFiles = allFiles.filter(f => getFileFolder(f.id) === currentFolderFilter);
+            }
+
+            if (displayFiles.length === 0) {
                 grid.innerHTML = '';
                 emptyState.style.display = '';
                 loadMoreContainer.style.display = 'none';
@@ -739,15 +911,16 @@
             emptyState.style.display = 'none';
             loadMoreContainer.style.display = hasMore ? '' : 'none';
 
-            grid.innerHTML = allFiles.map((file, idx) => {
+            grid.innerHTML = displayFiles.map((file, idx) => {
+                const realIdx = allFiles.indexOf(file);
                 const date = formatFileDate(file.createdAt);
                 const sourceLabel = file.isFromUser ? i18n.t('files_from_you') : (file.source || 'bot');
                 const entityBadgesHtml = renderEntityBadges(file);
                 const entityNamesHtml = renderEntityNames(file);
 
-                const deleteBtn = '<button class="file-delete-btn" onclick="event.stopPropagation();deleteFile(' + idx + ')" title="Delete">&#x2715;</button>';
+                const deleteBtn = '<button class="file-delete-btn" onclick="event.stopPropagation();deleteFile(' + realIdx + ')" title="Delete">&#x2715;</button>';
                 if (file.type === 'photo') {
-                    return '<div class="file-card" onclick="previewFile(' + idx + ')">' +
+                    return '<div class="file-card" onclick="previewFile(' + realIdx + ')" oncontextmenu="event.preventDefault();moveFileToFolder(' + realIdx + ')">' +
                         deleteBtn +
                         '<div class="file-thumb">' +
                         '<img src="' + escapeHtml(file.url) + '" alt="photo" loading="lazy" onerror="this.parentElement.innerHTML=\'<div class=file-thumb-icon>🖼️</div>\'">' +
@@ -761,7 +934,7 @@
                         '<div class="file-date">' + date + '</div>' +
                         '</div></div>';
                 } else {
-                    return '<div class="file-card" onclick="previewFile(' + idx + ')">' +
+                    return '<div class="file-card" onclick="previewFile(' + realIdx + ')" oncontextmenu="event.preventDefault();moveFileToFolder(' + realIdx + ')">' +
                         deleteBtn +
                         '<div class="file-thumb">' +
                         '<div class="file-thumb-icon">🎙️</div>' +
@@ -784,9 +957,13 @@
 
         function updateStats() {
             const stats = document.getElementById('fileStats');
-            const photoCount = allFiles.filter(f => f.type === 'photo').length;
-            const voiceCount = allFiles.filter(f => f.type === 'voice').length;
-            stats.innerHTML = '<strong>' + allFiles.length + '</strong> ' + i18n.t('files_stats_total') +
+            let displayFiles = allFiles;
+            if (currentFolderFilter !== null) {
+                displayFiles = allFiles.filter(f => getFileFolder(f.id) === currentFolderFilter);
+            }
+            const photoCount = displayFiles.filter(f => f.type === 'photo').length;
+            const voiceCount = displayFiles.filter(f => f.type === 'voice').length;
+            stats.innerHTML = '<strong>' + displayFiles.length + '</strong> ' + i18n.t('files_stats_total') +
                 ' — ' + photoCount + ' ' + i18n.t('files_type_photo') +
                 ', ' + voiceCount + ' ' + i18n.t('files_type_voice');
         }
