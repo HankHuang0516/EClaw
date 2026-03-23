@@ -1,3 +1,10 @@
+# [1.146.0](https://github.com/HankHuang0516/EClaw/compare/v1.145.4...v1.146.0) (2026-03-23)
+
+
+### Features
+
+* **portal:** add public note pages route GET /p/:code/:noteId ([#439](https://github.com/HankHuang0516/EClaw/issues/439)) ([70e2dfb](https://github.com/HankHuang0516/EClaw/commit/70e2dfb123ccd6792ab40c2848f50a2e488bfc58))
+
 ## [1.145.4](https://github.com/HankHuang0516/EClaw/compare/v1.145.3...v1.145.4) (2026-03-23)
 
 
