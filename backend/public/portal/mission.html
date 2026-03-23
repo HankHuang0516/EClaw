@@ -1957,8 +1957,10 @@
         let eraserMode = false;
         let drawColor = '#ff0000';
         let drawSize = 3;
-        let drawStrokes = []; // [{color, size, eraser, points:[{x,y}]}]
+        let drawStrokes = []; // [{color, size, eraser, points:[{x,y}]}] — points use absolute coordinates (viewport + iframe scroll)
         let currentStroke = null;
+        let iframeScrollX = 0;
+        let iframeScrollY = 0;
         const DRAW_COLORS = ['#ff0000', '#0066ff', '#00cc44', '#ff9900', '#ffffff'];
         const DRAW_SIZES = [2, 4, 8];
 
@@ -1970,6 +1972,8 @@
             currentStroke = null;
             drawMode = false;
             eraserMode = false;
+            iframeScrollX = 0;
+            iframeScrollY = 0;
 
             document.getElementById('wvTitle').textContent = note.title;
             document.getElementById('wvOverlay').style.display = 'flex';
@@ -1996,7 +2000,7 @@
 
         function renderPageIframe(html) {
             const iframe = document.getElementById('wvIframe');
-            // Inject a script that intercepts eclaw:// links via postMessage (safe, no XSS)
+            // Inject scripts: eclaw:// link interception + scroll tracking for drawing sync
             const linkInterceptScript = `<script>
                 document.addEventListener('click', function(e) {
                     var a = e.target.closest('a[href]');
@@ -2007,13 +2011,32 @@
                         parent.postMessage({ type: 'eclaw-navigate', href: href }, '*');
                     }
                 });
+                var _scrollRaf = false;
+                window.addEventListener('scroll', function() {
+                    if (_scrollRaf) return;
+                    _scrollRaf = true;
+                    requestAnimationFrame(function() {
+                        parent.postMessage({ type: 'eclaw-scroll', scrollX: window.scrollX, scrollY: window.scrollY }, '*');
+                        _scrollRaf = false;
+                    });
+                });
             <\/script>`;
             iframe.srcdoc = html + linkInterceptScript;
         }
 
-        // Handle eclaw:// navigation via postMessage from iframe
+        // Handle postMessages from iframe (navigation + scroll tracking)
         window.addEventListener('message', function(e) {
-            if (!e.data || e.data.type !== 'eclaw-navigate') return;
+            if (!e.data) return;
+            if (e.data.type === 'eclaw-scroll') {
+                const sx = e.data.scrollX || 0;
+                const sy = e.data.scrollY || 0;
+                if (sx === iframeScrollX && sy === iframeScrollY) return;
+                iframeScrollX = sx;
+                iframeScrollY = sy;
+                requestAnimationFrame(redrawCanvas);
+                return;
+            }
+            if (e.data.type !== 'eclaw-navigate') return;
             const href = e.data.href || '';
             const noteMatch = href.match(/^eclaw:\/\/note\/(.+)$/);
             if (noteMatch) {
@@ -2126,13 +2149,16 @@
             const canvas = document.getElementById('wvCanvas');
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Offset strokes by current iframe scroll to keep drawings aligned with content
+            const ox = iframeScrollX;
+            const oy = iframeScrollY;
             for (const stroke of drawStrokes) {
                 if (!stroke.points || stroke.points.length < 2) continue;
                 ctx.beginPath();
                 applyStrokeStyle(ctx, stroke);
-                ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+                ctx.moveTo(stroke.points[0].x - ox, stroke.points[0].y - oy);
                 for (let i = 1; i < stroke.points.length; i++) {
-                    ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+                    ctx.lineTo(stroke.points[i].x - ox, stroke.points[i].y - oy);
                 }
                 ctx.stroke();
             }
@@ -2149,7 +2175,8 @@
             function getPos(e) {
                 const rect = canvas.getBoundingClientRect();
                 const touch = e.touches ? e.touches[0] : e;
-                return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+                // Store absolute coordinates: canvas-relative + iframe scroll offset
+                return { x: (touch.clientX - rect.left) + iframeScrollX, y: (touch.clientY - rect.top) + iframeScrollY };
             }
 
             function startDraw(e) {
@@ -2167,10 +2194,13 @@
                 currentStroke.points.push(getPos(e));
                 const pts = currentStroke.points;
                 if (pts.length < 2) return;
+                // Apply scroll offset so live stroke aligns with content
+                const ox = iframeScrollX;
+                const oy = iframeScrollY;
                 ctx.beginPath();
                 applyStrokeStyle(ctx, currentStroke);
-                ctx.moveTo(pts[pts.length - 2].x, pts[pts.length - 2].y);
-                ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+                ctx.moveTo(pts[pts.length - 2].x - ox, pts[pts.length - 2].y - oy);
+                ctx.lineTo(pts[pts.length - 1].x - ox, pts[pts.length - 1].y - oy);
                 ctx.stroke();
                 ctx.globalCompositeOperation = 'source-over';
             }
@@ -2202,15 +2232,61 @@
             });
         })();
 
+        function generateDrawingSnapshot() {
+            if (!drawStrokes.length) return null;
+            // Find max extent of all strokes to determine snapshot dimensions
+            let maxX = 0, maxY = 0;
+            for (const stroke of drawStrokes) {
+                if (!stroke.points) continue;
+                for (const p of stroke.points) {
+                    if (p.x > maxX) maxX = p.x;
+                    if (p.y > maxY) maxY = p.y;
+                }
+            }
+            const padding = 20;
+            const canvas = document.getElementById('wvCanvas');
+            const w = Math.max(maxX + padding, canvas.width);
+            const h = Math.max(maxY + padding, canvas.height);
+
+            const offscreen = document.createElement('canvas');
+            offscreen.width = w;
+            offscreen.height = h;
+            const ctx = offscreen.getContext('2d');
+            ctx.clearRect(0, 0, w, h);
+            for (const stroke of drawStrokes) {
+                if (!stroke.points || stroke.points.length < 2) continue;
+                if (stroke.eraser) continue; // skip eraser strokes in snapshot
+                ctx.beginPath();
+                ctx.strokeStyle = stroke.color;
+                ctx.lineWidth = stroke.size;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+                for (let i = 1; i < stroke.points.length; i++) {
+                    ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+                }
+                ctx.stroke();
+            }
+            try {
+                return offscreen.toDataURL('image/png');
+            } catch (e) {
+                console.warn('Failed to generate drawing snapshot:', e);
+                return null;
+            }
+        }
+
         async function saveDrawing() {
             if (!viewerNoteId) return;
             try {
-                await apiCall('PUT', '/api/mission/note/page/drawing', {
+                const payload = {
                     deviceId: currentUser.deviceId,
                     deviceSecret: currentUser.deviceSecret,
                     noteId: viewerNoteId,
                     drawingData: JSON.stringify(drawStrokes)
-                });
+                };
+                const snapshot = generateDrawingSnapshot();
+                if (snapshot) payload.drawingSnapshot = snapshot;
+                await apiCall('PUT', '/api/mission/note/page/drawing', payload);
                 showToast(i18n.t('mc_note_draw_saved') || 'Drawing saved', 'success');
             } catch (e) {
                 showToast(i18n.t('toast_drawing_save_failed') + ': ' + e.message, 'error');
