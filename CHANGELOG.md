@@ -1,3 +1,10 @@
+# [1.153.0](https://github.com/HankHuang0516/EClaw/compare/v1.152.0...v1.153.0) (2026-03-23)
+
+
+### Features
+
+* add Markdown rendering support for Note Pages ([52e09eb](https://github.com/HankHuang0516/EClaw/commit/52e09ebfe21d5e40deaccdc4564c08a4296b3edb))
+
 # [1.152.0](https://github.com/HankHuang0516/EClaw/compare/v1.151.0...v1.152.0) (2026-03-23)
 
 
