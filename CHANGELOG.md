@@ -1,3 +1,10 @@
+# [1.157.0](https://github.com/HankHuang0516/EClaw/compare/v1.156.0...v1.157.0) (2026-03-23)
+
+
+### Features
+
+* **chat:** Rich Message Protocol — product cards, carousel, action buttons ([202d9be](https://github.com/HankHuang0516/EClaw/commit/202d9beee35c6b85a5d76bfba1e207ef6eda30da))
+
 # [1.156.0](https://github.com/HankHuang0516/EClaw/compare/v1.155.1...v1.156.0) (2026-03-23)
 
 
