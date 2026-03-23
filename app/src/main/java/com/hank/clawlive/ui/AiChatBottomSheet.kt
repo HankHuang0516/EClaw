@@ -30,7 +30,11 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import com.hank.clawlive.R
+import com.hank.clawlive.data.local.ChatPreferences
 import com.hank.clawlive.data.remote.TelemetryHelper
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
@@ -97,6 +101,11 @@ class AiChatBottomSheet : BottomSheetDialogFragment() {
 
         viewModel.ensureActiveState()
 
+        // Restore unsent draft
+        ChatPreferences.getInstance(requireContext()).aiChatDraft?.let { draft ->
+            if (draft.isNotEmpty()) editMessage.setText(draft)
+        }
+
         if (pageName.isNotEmpty()) {
             tvContextTag.text = "\uD83D\uDCCD $pageName"
             tvContextTag.visibility = View.VISIBLE
@@ -144,10 +153,14 @@ class AiChatBottomSheet : BottomSheetDialogFragment() {
                 .show()
         }
 
+        val chatPrefs = ChatPreferences.getInstance(requireContext())
         editMessage.addTextChangedListener(object : android.text.TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: android.text.Editable?) { updateSendButton() }
+            override fun afterTextChanged(s: android.text.Editable?) {
+                updateSendButton()
+                chatPrefs.aiChatDraft = s?.toString()
+            }
         })
 
         btnSend.setOnClickListener {
@@ -157,6 +170,7 @@ class AiChatBottomSheet : BottomSheetDialogFragment() {
             val images = if (pendingImages.isNotEmpty()) pendingImages.toList() else null
             viewModel.sendMessage(text, images)
 
+            chatPrefs.aiChatDraft = null
             editMessage.setText("")
             pendingImages.clear()
             renderImagePreview()
@@ -346,6 +360,14 @@ class AiChatBottomSheet : BottomSheetDialogFragment() {
                     } else {
                         container.visibility = View.GONE
                     }
+                }
+
+                // Long-press to copy message text
+                tvMessage.setOnLongClickListener {
+                    val clipboard = it.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    clipboard.setPrimaryClip(ClipData.newPlainText("message", msg.content))
+                    Toast.makeText(it.context, R.string.message_copied, Toast.LENGTH_SHORT).show()
+                    true
                 }
             }
 

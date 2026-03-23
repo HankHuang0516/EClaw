@@ -104,6 +104,7 @@
     <string name="ai_chat_clear_title">清除記錄</string>
     <string name="ai_chat_clear_message">確定清除所有聊天記錄？</string>
     <string name="ai_chat_clear_confirm">清除</string>
+    <string name="message_copied">已複製</string>
     <string name="ai_chat_busy_retry">AI 忙碌中，%1$d 秒後重試… (%2$d/%3$d)</string>
     <string name="ai_chat_busy_exhausted">AI 目前正在處理其他請求，請稍後再試。</string>
     <string name="ai_chat_uploading">正在上傳圖片…</string>

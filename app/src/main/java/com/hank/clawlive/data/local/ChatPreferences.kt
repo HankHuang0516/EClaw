@@ -71,11 +71,22 @@ class ChatPreferences private constructor(context: Context) {
             .apply()
     }
 
+    /**
+     * Unsent draft for AI chat input
+     */
+    var aiChatDraft: String?
+        get() = prefs.getString(KEY_AI_CHAT_DRAFT, null)
+        set(value) {
+            if (value.isNullOrEmpty()) prefs.edit().remove(KEY_AI_CHAT_DRAFT).apply()
+            else prefs.edit().putString(KEY_AI_CHAT_DRAFT, value).apply()
+        }
+
     companion object {
         private const val PREFS_NAME = "chat_prefs"
         private const val KEY_LAST_MESSAGE = "last_message"
         private const val KEY_LAST_TIMESTAMP = "last_timestamp"
         private const val KEY_LAST_ENTITY_IDS = "last_entity_ids"
+        private const val KEY_AI_CHAT_DRAFT = "ai_chat_draft"
         const val DEFAULT_PLACEHOLDER = "Tap to chat with entities..."
 
         @Volatile
