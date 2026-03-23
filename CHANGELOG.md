@@ -1,3 +1,10 @@
+## [1.153.1](https://github.com/HankHuang0516/EClaw/compare/v1.153.0...v1.153.1) (2026-03-23)
+
+
+### Bug Fixes
+
+* AI widget coverage, draft auto-save, long-press copy ([#442](https://github.com/HankHuang0516/EClaw/issues/442) [#435](https://github.com/HankHuang0516/EClaw/issues/435) [#438](https://github.com/HankHuang0516/EClaw/issues/438)) ([aa61b79](https://github.com/HankHuang0516/EClaw/commit/aa61b797240a03bf246be6da945f5fd91b46bc63)), closes [#437](https://github.com/HankHuang0516/EClaw/issues/437) [#434](https://github.com/HankHuang0516/EClaw/issues/434) [#429](https://github.com/HankHuang0516/EClaw/issues/429)
+
 # [1.153.0](https://github.com/HankHuang0516/EClaw/compare/v1.152.0...v1.153.0) (2026-03-23)
 
 
