@@ -1,3 +1,10 @@
+# [1.147.0](https://github.com/HankHuang0516/EClaw/compare/v1.146.0...v1.147.0) (2026-03-23)
+
+
+### Features
+
+* **enterprise:** add live e-commerce AI customer service demo section ([7445c79](https://github.com/HankHuang0516/EClaw/commit/7445c79e28bed9a32349c4b0db89c7b001bc4865)), closes [#2](https://github.com/HankHuang0516/EClaw/issues/2)
+
 # [1.146.0](https://github.com/HankHuang0516/EClaw/compare/v1.145.4...v1.146.0) (2026-03-23)
 
 
