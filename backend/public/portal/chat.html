@@ -1331,6 +1331,19 @@
                 renderSlashSuggestions(savedDraft);
             }
 
+            // Reload messages when page becomes visible (Android WebView background→foreground)
+            let _lastHiddenAt = 0;
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'hidden') {
+                    _lastHiddenAt = Date.now();
+                } else if (document.visibilityState === 'visible' && !isFirstLoad) {
+                    const hiddenMs = Date.now() - _lastHiddenAt;
+                    if (hiddenMs > 10000) { // only if hidden for >10s
+                        loadMessages().catch(() => {});
+                    }
+                }
+            });
+
             // Socket.IO real-time chat handler
             window.onSocketChatMessage = async function(msg) {
                 const exists = allMessages.some(m => m.id === msg.id);
