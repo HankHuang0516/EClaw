@@ -737,14 +737,18 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
      */
     router.put('/note/page', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const { deviceId, htmlContent } = req.body;
+        const { deviceId, htmlContent, markdownContent } = req.body;
         const isPublic = req.body.isPublic === true || req.body.isPublic === 'true';
 
-        if (!htmlContent && htmlContent !== '') {
-            return res.status(400).json({ success: false, error: 'Missing htmlContent' });
+        if (!htmlContent && htmlContent !== '' && !markdownContent) {
+            return res.status(400).json({ success: false, error: 'Missing htmlContent or markdownContent' });
         }
-        if (typeof htmlContent === 'string' && htmlContent.length > NOTE_PAGE_HTML_MAX) {
+        const content = htmlContent || '';
+        if (typeof content === 'string' && content.length > NOTE_PAGE_HTML_MAX) {
             return res.status(400).json({ success: false, error: `htmlContent exceeds ${NOTE_PAGE_HTML_MAX} bytes` });
+        }
+        if (markdownContent && typeof markdownContent === 'string' && markdownContent.length > NOTE_PAGE_HTML_MAX) {
+            return res.status(400).json({ success: false, error: `markdownContent exceeds ${NOTE_PAGE_HTML_MAX} bytes` });
         }
 
         const noteId = await resolveNoteId(deviceId, req.body);
@@ -754,12 +758,12 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
 
         try {
             const result = await pool.query(`
-                INSERT INTO note_pages (device_id, note_id, html_content, is_public)
-                VALUES ($1, $2, $3, $4)
+                INSERT INTO note_pages (device_id, note_id, html_content, is_public, markdown_content)
+                VALUES ($1, $2, $3, $4, $5)
                 ON CONFLICT (device_id, note_id)
-                DO UPDATE SET html_content = $3, is_public = $4, updated_at = NOW()
+                DO UPDATE SET html_content = $3, is_public = $4, markdown_content = $5, updated_at = NOW()
                 RETURNING id, updated_at, is_public
-            `, [deviceId, noteId, htmlContent, isPublic]);
+            `, [deviceId, noteId, content, isPublic, markdownContent || null]);
 
             if (serverLog) serverLog('info', 'mission', `[Mission] Note page updated: ${noteId}, device ${deviceId}, public: ${isPublic}`, { deviceId });
             res.json({ success: true, message: 'Page saved', id: result.rows[0].id, noteId, isPublic: result.rows[0].is_public, updatedAt: result.rows[0].updated_at });
@@ -785,14 +789,14 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
 
         try {
             const result = await pool.query(
-                'SELECT html_content, drawing_data, drawing_snapshot, is_public, updated_at FROM note_pages WHERE device_id = $1 AND note_id = $2',
+                'SELECT html_content, drawing_data, drawing_snapshot, is_public, markdown_content, updated_at FROM note_pages WHERE device_id = $1 AND note_id = $2',
                 [deviceId, noteId]
             );
             if (result.rows.length === 0) {
                 return res.status(404).json({ success: false, error: 'Page not found' });
             }
             const row = result.rows[0];
-            res.json({ success: true, noteId, htmlContent: row.html_content, drawingData: row.drawing_data, drawingSnapshot: row.drawing_snapshot, isPublic: row.is_public, updatedAt: row.updated_at });
+            res.json({ success: true, noteId, htmlContent: row.html_content, drawingData: row.drawing_data, drawingSnapshot: row.drawing_snapshot, isPublic: row.is_public, markdownContent: row.markdown_content, updatedAt: row.updated_at });
         } catch (error) {
             console.error('[Mission] Error fetching note page:', error);
             res.status(500).json({ success: false, error: 'Internal server error' });

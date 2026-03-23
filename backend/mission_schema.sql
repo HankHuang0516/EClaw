@@ -240,6 +240,9 @@ ON note_pages(device_id);
 -- Add is_public column for public page sharing (default false)
 ALTER TABLE note_pages ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT FALSE;
 
+-- Add markdown_content column for Markdown-based pages
+ALTER TABLE note_pages ADD COLUMN IF NOT EXISTS markdown_content TEXT DEFAULT NULL;
+
 -- Migration: add drawing_snapshot column for bot-readable PNG snapshots
 ALTER TABLE note_pages ADD COLUMN IF NOT EXISTS drawing_snapshot TEXT DEFAULT NULL;
 

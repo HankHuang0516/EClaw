@@ -1015,7 +1015,7 @@ app.get('/p/:code/:noteId', async (req, res) => {
         // Fetch current page + all sibling public pages in parallel
         const [pageResult, siblingsResult] = await Promise.all([
             pgPool.query(
-                'SELECT np.html_content, np.updated_at, mi.title FROM note_pages np LEFT JOIN mission_items mi ON mi.id::text = np.note_id AND mi.device_id = np.device_id WHERE np.device_id = $1 AND np.note_id = $2 AND np.is_public = true',
+                'SELECT np.html_content, np.markdown_content, np.updated_at, mi.title FROM note_pages np LEFT JOIN mission_items mi ON mi.id::text = np.note_id AND mi.device_id = np.device_id WHERE np.device_id = $1 AND np.note_id = $2 AND np.is_public = true',
                 [target.deviceId, noteId]
             ),
             pgPool.query(
@@ -1030,7 +1030,10 @@ app.get('/p/:code/:noteId', async (req, res) => {
 
         const row = pageResult.rows[0];
         const pageTitle = row.title || 'EClaw Page';
-        const htmlContent = sanitizePublicHtml(row.html_content || '');
+        const hasMarkdown = !!row.markdown_content;
+        const htmlContent = hasMarkdown
+            ? `<div id="md-content"></div><script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"><\/script><script>document.getElementById('md-content').innerHTML=marked.parse(${JSON.stringify(row.markdown_content)});<\/script>`
+            : sanitizePublicHtml(row.html_content || '');
 
         const device = devices[target.deviceId];
         const entity = device && device.entities && device.entities[target.entityId];
