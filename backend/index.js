@@ -87,7 +87,9 @@ io.on('connection', (socket) => {
 app.use((req, res, next) => {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
+    // Allow same-origin framing for /c/ (proxy window) and /p/ (public pages) routes used in enterprise demo
+    const frameable = req.path.startsWith('/c/') || req.path.startsWith('/p/');
+    res.setHeader('X-Frame-Options', frameable ? 'SAMEORIGIN' : 'DENY');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     next();
 });
