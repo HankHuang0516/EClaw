@@ -502,7 +502,7 @@ function ensureOneEmptySlot(device) {
 
 // Latest app version - update this with each release
 // Bot will warn users if their app version is older than this
-const LATEST_APP_VERSION = "1.0.58";
+const LATEST_APP_VERSION = "1.0.59";
 const FORCE_UPDATE_BELOW = null; // Set to version string (e.g. "1.0.30") to force-update anything below
 const APP_RELEASE_NOTES = process.env.APP_RELEASE_NOTES || null;
 
@@ -10850,6 +10850,18 @@ async function executeScheduledMessage(schedule) {
         pushResult = await pushToBot(entity, deviceId, 'new_message', {
             message: pushMsg
         });
+
+        // Retry once after 30s for 502/timeout (cold-start gateways on Zeabur)
+        if (!pushResult.pushed && (pushResult.reason === 'http_502' || (pushResult.reason || '').includes('timeout'))) {
+            serverLog('warn', 'scheduler', `[Scheduler] Schedule #${schedule.id} got ${pushResult.reason}, retrying in 30s`, { deviceId, entityId });
+            await new Promise(r => setTimeout(r, 30000));
+            pushResult = await pushToBot(entity, deviceId, 'new_message', { message: pushMsg });
+            if (pushResult.pushed) {
+                serverLog('info', 'scheduler', `[Scheduler] Schedule #${schedule.id} retry succeeded`, { deviceId, entityId });
+            } else {
+                serverLog('warn', 'scheduler', `[Scheduler] Schedule #${schedule.id} retry also failed: ${pushResult.reason}`, { deviceId, entityId });
+            }
+        }
 
         if (pushResult.pushed) {
             messageObj.delivered = true;
