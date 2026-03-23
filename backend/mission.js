@@ -785,14 +785,14 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
 
         try {
             const result = await pool.query(
-                'SELECT html_content, drawing_data, is_public, updated_at FROM note_pages WHERE device_id = $1 AND note_id = $2',
+                'SELECT html_content, drawing_data, drawing_snapshot, is_public, updated_at FROM note_pages WHERE device_id = $1 AND note_id = $2',
                 [deviceId, noteId]
             );
             if (result.rows.length === 0) {
                 return res.status(404).json({ success: false, error: 'Page not found' });
             }
             const row = result.rows[0];
-            res.json({ success: true, noteId, htmlContent: row.html_content, drawingData: row.drawing_data, isPublic: row.is_public, updatedAt: row.updated_at });
+            res.json({ success: true, noteId, htmlContent: row.html_content, drawingData: row.drawing_data, drawingSnapshot: row.drawing_snapshot, isPublic: row.is_public, updatedAt: row.updated_at });
         } catch (error) {
             console.error('[Mission] Error fetching note page:', error);
             res.status(500).json({ success: false, error: 'Internal server error' });
@@ -888,7 +888,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
      */
     router.put('/note/page/drawing', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const { deviceId, drawingData } = req.body;
+        const { deviceId, drawingData, drawingSnapshot } = req.body;
 
         if (drawingData === undefined) {
             return res.status(400).json({ success: false, error: 'Missing drawingData' });
@@ -898,6 +898,18 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
             return res.status(400).json({ success: false, error: `drawingData exceeds ${NOTE_PAGE_DRAWING_MAX} bytes` });
         }
 
+        // Validate snapshot if provided (must be a data:image/png;base64 string, max 2MB)
+        let snapshotStr = null;
+        if (drawingSnapshot) {
+            snapshotStr = typeof drawingSnapshot === 'string' ? drawingSnapshot : null;
+            if (snapshotStr && !snapshotStr.startsWith('data:image/png;base64,')) {
+                return res.status(400).json({ success: false, error: 'drawingSnapshot must be a PNG data URL' });
+            }
+            if (snapshotStr && snapshotStr.length > NOTE_PAGE_DRAWING_MAX) {
+                return res.status(400).json({ success: false, error: `drawingSnapshot exceeds ${NOTE_PAGE_DRAWING_MAX} bytes` });
+            }
+        }
+
         const noteId = await resolveNoteId(deviceId, req.body);
         if (!noteId) {
             return res.status(400).json({ success: false, error: 'Missing or invalid noteId/title' });
@@ -905,8 +917,8 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
 
         try {
             const result = await pool.query(
-                'UPDATE note_pages SET drawing_data = $3, updated_at = NOW() WHERE device_id = $1 AND note_id = $2',
-                [deviceId, noteId, dataStr]
+                'UPDATE note_pages SET drawing_data = $3, drawing_snapshot = $4, updated_at = NOW() WHERE device_id = $1 AND note_id = $2',
+                [deviceId, noteId, dataStr, snapshotStr]
             );
             if (result.rowCount === 0) {
                 return res.status(404).json({ success: false, error: 'Page not found. Create page first with PUT /note/page' });

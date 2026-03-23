@@ -227,6 +227,8 @@ CREATE TABLE IF NOT EXISTS note_pages (
     note_id VARCHAR(128) NOT NULL,
     html_content TEXT NOT NULL DEFAULT '',
     drawing_data TEXT DEFAULT NULL,
+    drawing_snapshot TEXT DEFAULT NULL,
+    is_public BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(device_id, note_id)
@@ -237,6 +239,9 @@ ON note_pages(device_id);
 
 -- Add is_public column for public page sharing (default false)
 ALTER TABLE note_pages ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Migration: add drawing_snapshot column for bot-readable PNG snapshots
+ALTER TABLE note_pages ADD COLUMN IF NOT EXISTS drawing_snapshot TEXT DEFAULT NULL;
 
 -- Grant execute to app user (adjust as needed)
 -- GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO app_user;
