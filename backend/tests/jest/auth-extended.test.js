@@ -695,3 +695,30 @@ describe('GET /api/auth/user-roles', () => {
         expect(res.status).toBe(401);
     });
 });
+
+// ════════════════════════════════════════════════════════════════
+// Security: JWT payload must NOT contain deviceSecret
+// ════════════════════════════════════════════════════════════════
+describe('JWT security — no deviceSecret in token payload', () => {
+    it('device-login cookie JWT does not contain deviceSecret', async () => {
+        const deviceId = 'jwt-sec-test';
+        const deviceSecret = `secret-${deviceId}`;
+        await post('/api/device/register')
+            .send({ deviceId, deviceSecret, entityId: 0 });
+
+        const res = await post('/api/auth/device-login')
+            .send({ deviceId, deviceSecret });
+
+        // Extract eclaw_session cookie
+        const cookies = res.headers['set-cookie'] || [];
+        const sessionCookie = cookies.find(c => c.startsWith('eclaw_session='));
+        if (sessionCookie) {
+            const tokenValue = sessionCookie.split('=')[1].split(';')[0];
+            // Decode JWT payload (base64url, no verification needed)
+            const payloadB64 = tokenValue.split('.')[1];
+            const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString());
+            expect(payload).not.toHaveProperty('deviceSecret');
+            expect(payload).toHaveProperty('deviceId', deviceId);
+        }
+    });
+});

@@ -282,7 +282,11 @@ module.exports = function (devices, { serverLog } = {}) {
 
     try {
       const clientResult = await pool.query('SELECT * FROM oauth_clients WHERE client_id = $1', [authClientId]);
-      if (clientResult.rows.length === 0 || clientResult.rows[0].client_secret !== authClientSecret) {
+      const storedSecret = clientResult.rows.length > 0 ? clientResult.rows[0].client_secret : '';
+      // Use timing-safe comparison to prevent timing attacks
+      const secretMatch = storedSecret.length === authClientSecret.length &&
+        crypto.timingSafeEqual(Buffer.from(storedSecret), Buffer.from(authClientSecret));
+      if (clientResult.rows.length === 0 || !secretMatch) {
         return res.status(401).json({ error: 'invalid_client' });
       }
 
