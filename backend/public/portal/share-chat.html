@@ -72,6 +72,23 @@
         .md-content img { max-width: 100%; border-radius: 8px; margin: 4px 0; }
         .md-content hr { border: none; border-top: 1px solid rgba(255,255,255,0.15); margin: 8px 0; }
 
+        /* ── Rich Message Cards ── */
+        .rich-card { margin-top: 8px; border: 1px solid var(--card-border); border-radius: 12px; overflow: hidden; background: var(--card); }
+        .rich-card-img { width: 100%; height: 120px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.2); font-size: 48px; }
+        .rich-card-img img { width: 100%; height: 120px; object-fit: cover; }
+        .rich-card-body { padding: 12px; }
+        .rich-card-title { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+        .rich-card-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+        .rich-card-price { font-size: 16px; font-weight: 700; color: var(--primary); }
+        .rich-card-price .original { text-decoration: line-through; color: var(--text-muted); font-size: 12px; font-weight: 400; margin-left: 6px; }
+        .rich-card-actions { display: flex; gap: 6px; margin-top: 8px; }
+        .rich-card-btn { flex: 1; padding: 8px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; transition: opacity 0.2s; }
+        .rich-card-btn:hover { opacity: 0.85; }
+        .rich-card-btn.primary { background: var(--primary); color: #fff; }
+        .rich-card-btn.secondary { background: rgba(255,255,255,0.1); color: var(--text); }
+        .rich-carousel { display: flex; gap: 8px; overflow-x: auto; padding: 8px 0; scroll-snap-type: x mandatory; }
+        .rich-carousel .rich-card { min-width: 200px; max-width: 220px; flex-shrink: 0; scroll-snap-align: start; }
+
         .empty-msg { text-align: center; color: var(--text-muted); padding: 40px 20px; font-size: 14px; }
 
         /* ── Debug panel ── */
@@ -634,15 +651,35 @@
 
         const textSpan = document.createElement('span');
         const msgText = msg.text || '';
-        if (isBotReply && typeof marked !== 'undefined') {
-            // Bot messages: render as Markdown
-            textSpan.innerHTML = sanitizeHtml(marked.parse(msgText));
-            textSpan.className = 'md-content';
-        } else {
-            // User messages: plain text with links
-            textSpan.innerHTML = renderMessageContent(escapeHtml(msgText));
+
+        // Check for Rich Message blocks: <!--eclaw:{...}-->
+        const richPattern = /<!--eclaw:([\s\S]*?)-->/g;
+        const richBlocks = [];
+        let cleanText = msgText;
+        let richMatch;
+        while ((richMatch = richPattern.exec(msgText)) !== null) {
+            try {
+                richBlocks.push(JSON.parse(richMatch[1]));
+            } catch (_) {}
+            cleanText = cleanText.replace(richMatch[0], '');
         }
-        div.appendChild(textSpan);
+        cleanText = cleanText.trim();
+
+        // Render text portion
+        if (cleanText) {
+            if (isBotReply && typeof marked !== 'undefined') {
+                textSpan.innerHTML = sanitizeHtml(marked.parse(cleanText));
+                textSpan.className = 'md-content';
+            } else {
+                textSpan.innerHTML = renderMessageContent(escapeHtml(cleanText));
+            }
+            div.appendChild(textSpan);
+        }
+
+        // Render Rich Message cards
+        for (const block of richBlocks) {
+            div.appendChild(renderRichBlock(block));
+        }
 
         // Detect eclaw://note/ links and /p/ public page URLs → render iframe preview
         const notePatterns = [
@@ -1064,6 +1101,100 @@
                 dbg('error', `Verification poll error: ${e.message}`);
             }
         }, 5000);
+    }
+
+    // Rich Message renderer
+    function renderRichBlock(block) {
+        const wrap = document.createElement('div');
+        const type = block.type || 'unknown';
+
+        if (type === 'product-card') {
+            wrap.className = 'rich-card';
+            const imgDiv = document.createElement('div');
+            imgDiv.className = 'rich-card-img';
+            if (block.image && block.image.startsWith('http')) {
+                imgDiv.innerHTML = '<img src="' + escapeHtml(block.image) + '" alt="product">';
+            } else {
+                imgDiv.textContent = block.image || block.emoji || '🛍️';
+            }
+            wrap.appendChild(imgDiv);
+            const body = document.createElement('div');
+            body.className = 'rich-card-body';
+            body.innerHTML = '<div class="rich-card-title">' + escapeHtml(block.name || block.title || '') + '</div>'
+                + (block.description ? '<div class="rich-card-desc">' + escapeHtml(block.description) + '</div>' : '')
+                + '<div class="rich-card-price">' + escapeHtml(block.price || '')
+                + (block.originalPrice ? ' <span class="original">' + escapeHtml(block.originalPrice) + '</span>' : '') + '</div>';
+            const actions = document.createElement('div');
+            actions.className = 'rich-card-actions';
+            (block.actions || [{ label: '🛒 購買', type: 'primary', action: 'order' }]).forEach(a => {
+                const btn = document.createElement('button');
+                btn.className = 'rich-card-btn ' + (a.type || 'primary');
+                btn.textContent = a.label || 'Action';
+                btn.onclick = () => handleRichAction(a, block);
+                actions.appendChild(btn);
+            });
+            body.appendChild(actions);
+            wrap.appendChild(body);
+
+        } else if (type === 'carousel') {
+            wrap.className = 'rich-carousel';
+            (block.items || []).forEach(item => {
+                item.type = item.type || 'product-card';
+                wrap.appendChild(renderRichBlock(item));
+            });
+
+        } else if (type === 'action-buttons') {
+            wrap.className = 'rich-card-actions';
+            wrap.style.marginTop = '8px';
+            (block.buttons || []).forEach(b => {
+                const btn = document.createElement('button');
+                btn.className = 'rich-card-btn ' + (b.type || 'secondary');
+                btn.textContent = b.label || '';
+                btn.onclick = () => handleRichAction(b, block);
+                wrap.appendChild(btn);
+            });
+
+        } else if (type === 'image-card') {
+            wrap.className = 'rich-card';
+            if (block.image) {
+                const img = document.createElement('img');
+                img.src = block.image;
+                img.style.cssText = 'width:100%;border-radius:12px;';
+                wrap.appendChild(img);
+            }
+            if (block.caption) {
+                const cap = document.createElement('div');
+                cap.className = 'rich-card-body';
+                cap.innerHTML = '<div class="rich-card-desc">' + escapeHtml(block.caption) + '</div>';
+                wrap.appendChild(cap);
+            }
+        }
+        return wrap;
+    }
+
+    // Handle rich card actions (order, link, send message)
+    function handleRichAction(action, block) {
+        if (action.action === 'link' && action.url) {
+            window.open(action.url, '_blank');
+        } else if (action.action === 'order' || action.action === 'buy') {
+            // Auto-send a message to the bot about this product
+            const input = document.getElementById('messageInput');
+            const name = block.name || block.title || '商品';
+            if (input) {
+                input.value = '我想購買：' + name;
+                input.dispatchEvent(new Event('input'));
+                const form = input.closest('form') || document.querySelector('form');
+                if (form) form.dispatchEvent(new Event('submit'));
+            }
+        } else if (action.action === 'send' && action.text) {
+            const input = document.getElementById('messageInput');
+            if (input) {
+                input.value = action.text;
+                input.dispatchEvent(new Event('input'));
+                const form = input.closest('form') || document.querySelector('form');
+                if (form) form.dispatchEvent(new Event('submit'));
+            }
+        }
     }
 
     function escapeHtml(s) {
