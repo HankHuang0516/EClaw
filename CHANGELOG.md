@@ -1,3 +1,10 @@
+# [1.151.0](https://github.com/HankHuang0516/EClaw/compare/v1.150.0...v1.151.0) (2026-03-23)
+
+
+### Features
+
+* add page navigation bar to public note pages ([4c5ecfa](https://github.com/HankHuang0516/EClaw/commit/4c5ecfa9fd2af94b85106c79aa64e37d60d8ed72))
+
 # [1.150.0](https://github.com/HankHuang0516/EClaw/compare/v1.149.0...v1.150.0) (2026-03-23)
 
 
