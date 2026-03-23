@@ -1150,6 +1150,7 @@ function renderPublicPageShell(title, content, opts = {}) {
     ${navHtml}
     <div class="page-content">${content}</div>
     ${footerInfo}
+    ${content.includes('data-eclaw-form') ? '<script src="/assets/eclaw-forms.js"></script>' : ''}
 </body>
 </html>`;
 }

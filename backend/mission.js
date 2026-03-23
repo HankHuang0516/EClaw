@@ -987,6 +987,105 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
         }
     });
 
+    // ============================================
+    // FORM SUBMISSIONS (public, no auth)
+    // ============================================
+    router.post('/note/page/form-submit', async (req, res) => {
+        const { publicCode, noteId, formData } = req.body;
+        if (!publicCode || !noteId || !formData) {
+            return res.status(400).json({ success: false, error: 'Missing publicCode, noteId, or formData' });
+        }
+        if (typeof formData !== 'object' || Array.isArray(formData)) {
+            return res.status(400).json({ success: false, error: 'formData must be an object' });
+        }
+        // Rate limit: max 10 submissions per IP per hour
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+        try {
+            const rateCheck = await pool.query(
+                "SELECT COUNT(*) as cnt FROM form_submissions WHERE visitor_ip = $1 AND created_at > NOW() - INTERVAL '1 hour'",
+                [ip]
+            );
+            if (parseInt(rateCheck.rows[0].cnt) >= 10) {
+                return res.status(429).json({ success: false, error: 'Too many submissions. Try again later.' });
+            }
+
+            // Look up device from publicCode (use internal index via devices)
+            let deviceId = null;
+            let entityId = null;
+            for (const [dId, dev] of Object.entries(devices)) {
+                if (dev.entities) {
+                    for (const [eId, ent] of Object.entries(dev.entities)) {
+                        if (ent.publicCode === publicCode) {
+                            deviceId = dId;
+                            entityId = parseInt(eId);
+                            break;
+                        }
+                    }
+                }
+                if (deviceId) break;
+            }
+            if (!deviceId) {
+                return res.status(404).json({ success: false, error: 'Entity not found' });
+            }
+
+            // Store submission
+            const result = await pool.query(
+                'INSERT INTO form_submissions (device_id, note_id, public_code, form_data, visitor_ip) VALUES ($1, $2, $3, $4, $5) RETURNING id, created_at',
+                [deviceId, noteId, publicCode, JSON.stringify(formData), ip]
+            );
+
+            // Notify entity via cross-speak (fire and forget)
+            const formSummary = Object.entries(formData).map(([k, v]) => `${k}: ${v}`).join('\n');
+            const notifyText = `📝 新表單提交 (${publicCode}/${noteId})\n${formSummary}`;
+            try {
+                // Use the cross-speak endpoint to notify
+                const { default: fetch } = await import('node-fetch');
+                await fetch(`http://localhost:${process.env.PORT || 3000}/api/transform`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        deviceId,
+                        entityId,
+                        botSecret: null, // internal call needs different auth
+                        targetDeviceId: deviceId,
+                        message: notifyText,
+                        source: 'form_submission'
+                    })
+                }).catch(() => {});
+            } catch (_) {}
+
+            res.json({
+                success: true,
+                message: 'Form submitted successfully',
+                submissionId: result.rows[0].id,
+                submittedAt: result.rows[0].created_at
+            });
+        } catch (error) {
+            console.error('[Mission] Form submission error:', error);
+            res.status(500).json({ success: false, error: 'Failed to submit form' });
+        }
+    });
+
+    // Get form submissions (authenticated)
+    router.get('/note/page/form-submissions', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId, noteId } = req.query;
+        const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+        try {
+            const where = noteId
+                ? 'WHERE device_id = $1 AND note_id = $2'
+                : 'WHERE device_id = $1';
+            const params = noteId ? [deviceId, noteId] : [deviceId];
+            const result = await pool.query(
+                `SELECT id, note_id, public_code, form_data, status, created_at FROM form_submissions ${where} ORDER BY created_at DESC LIMIT ${limit}`,
+                params
+            );
+            res.json({ success: true, submissions: result.rows });
+        } catch (error) {
+            res.status(500).json({ success: false, error: 'Failed to fetch submissions' });
+        }
+    });
+
     router.put('/note/page/drawing', async (req, res) => {
         if (!authenticate(req, res)) return;
         const { deviceId, drawingData, drawingSnapshot } = req.body;

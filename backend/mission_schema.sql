@@ -270,6 +270,19 @@ CREATE TABLE IF NOT EXISTS custom_domains (
 CREATE INDEX IF NOT EXISTS idx_custom_domains_domain ON custom_domains (domain);
 CREATE INDEX IF NOT EXISTS idx_custom_domains_device ON custom_domains (device_id);
 
+-- Form submissions from public Note Pages
+CREATE TABLE IF NOT EXISTS form_submissions (
+    id SERIAL PRIMARY KEY,
+    device_id TEXT NOT NULL,
+    note_id TEXT NOT NULL,
+    public_code TEXT NOT NULL,
+    form_data JSONB NOT NULL DEFAULT '{}',
+    visitor_ip TEXT,
+    status TEXT DEFAULT 'pending',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_form_submissions_device ON form_submissions (device_id, created_at DESC);
+
 -- Migration: add drawing_snapshot column for bot-readable PNG snapshots
 ALTER TABLE note_pages ADD COLUMN IF NOT EXISTS drawing_snapshot TEXT DEFAULT NULL;
 
