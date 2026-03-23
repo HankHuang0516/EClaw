@@ -1,3 +1,10 @@
+# [1.149.0](https://github.com/HankHuang0516/EClaw/compare/v1.148.0...v1.149.0) (2026-03-23)
+
+
+### Features
+
+* **chat:** detect eclaw://note/ and /p/ links → iframe preview in messages ([bc85c49](https://github.com/HankHuang0516/EClaw/commit/bc85c49f08007ca56df5351895b56ffe36f58ff7))
+
 # [1.148.0](https://github.com/HankHuang0516/EClaw/compare/v1.147.2...v1.148.0) (2026-03-23)
 
 
