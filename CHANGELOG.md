@@ -1,3 +1,10 @@
+# [1.158.0](https://github.com/HankHuang0516/EClaw/compare/v1.157.0...v1.158.0) (2026-03-23)
+
+
+### Features
+
+* **chat:** order flow with TapPay integration (B2) ([8955ce7](https://github.com/HankHuang0516/EClaw/commit/8955ce73ce66506ecae6785874c30343aacd87ed))
+
 # [1.157.0](https://github.com/HankHuang0516/EClaw/compare/v1.156.0...v1.157.0) (2026-03-23)
 
 
