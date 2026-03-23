@@ -920,6 +920,82 @@ const missionModule = require('./mission')(devices, { awardEntityXP, serverLog }
 app.use('/api/mission', missionModule.router);
 
 // ============================================
+// PUBLIC ENTITY HOME: /p/<publicCode>
+// ============================================
+app.get('/p/:code', async (req, res) => {
+    const { code } = req.params;
+    const target = publicCodeIndex[code];
+    if (!target) {
+        return res.status(404).send(renderPublicPageShell('Not Found', '<p>This entity does not exist.</p>'));
+    }
+
+    try {
+        const pgPool = missionModule._pool;
+        if (!pgPool) return res.status(500).send(renderPublicPageShell('Error', '<p>Service unavailable.</p>'));
+
+        // Get all public pages for this entity's device
+        const result = await pgPool.query(
+            `SELECT np.note_id, np.updated_at, mi.title
+             FROM note_pages np
+             LEFT JOIN mission_items mi ON mi.id::text = np.note_id AND mi.device_id = np.device_id
+             WHERE np.device_id = $1 AND np.is_public = true
+             ORDER BY np.updated_at DESC`,
+            [target.deviceId]
+        );
+
+        const device = devices[target.deviceId];
+        const entity = device && device.entities && device.entities[target.entityId];
+        const entityName = (entity && entity.name) || `Entity #${target.entityId}`;
+        const entityAvatar = entity && entity.avatar;
+        const entityDesc = entity && entity.identity && entity.identity.public && entity.identity.public.description;
+        const agentCard = entity && entity.agentCard;
+
+        // Build page cards HTML
+        let cardsHtml = '';
+        if (result.rows.length === 0) {
+            cardsHtml = '<p style="color:var(--text-muted);text-align:center;padding:40px 0;">No public pages yet.</p>';
+        } else {
+            cardsHtml = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:24px;">';
+            for (const row of result.rows) {
+                const title = (row.title || 'Untitled Page').replace(/</g, '&lt;');
+                const date = new Date(row.updated_at).toLocaleDateString();
+                cardsHtml += `<a href="/p/${code}/${row.note_id}" style="text-decoration:none;">
+                    <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:20px;transition:transform 0.2s,border-color 0.2s;cursor:pointer;"
+                         onmouseover="this.style.borderColor='var(--accent)';this.style.transform='translateY(-2px)'"
+                         onmouseout="this.style.borderColor='var(--border)';this.style.transform='none'">
+                        <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:6px;">📄 ${title}</div>
+                        <div style="font-size:12px;color:var(--text-muted);">Updated ${date}</div>
+                    </div>
+                </a>`;
+            }
+            cardsHtml += '</div>';
+        }
+
+        // Build profile header
+        const avatarHtml = entityAvatar
+            ? (entityAvatar.startsWith('http') ? `<img src="${entityAvatar.replace(/"/g,'&quot;')}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;">` : `<span style="font-size:48px;">${entityAvatar}</span>`)
+            : '<span style="font-size:48px;">🦞</span>';
+        const descHtml = (entityDesc || (agentCard && agentCard.description) || '').replace(/</g, '&lt;');
+
+        const content = `
+            <div style="text-align:center;margin-bottom:24px;">
+                <div style="margin-bottom:12px;">${avatarHtml}</div>
+                <h1 style="font-size:24px;margin:0 0 6px;">${entityName.replace(/</g,'&lt;')}</h1>
+                ${descHtml ? `<p style="color:var(--text-muted);font-size:14px;max-width:500px;margin:0 auto;">${descHtml}</p>` : ''}
+                <a href="/c/${code}" style="display:inline-block;margin-top:12px;color:var(--accent);font-size:13px;text-decoration:none;">💬 Chat</a>
+            </div>
+            <h2 style="font-size:18px;margin-bottom:4px;">Public Pages</h2>
+            <p style="color:var(--text-muted);font-size:13px;">${result.rows.length} page${result.rows.length !== 1 ? 's' : ''}</p>
+            ${cardsHtml}`;
+
+        res.send(renderPublicPageShell(entityName + ' — Pages', content, { entityName, publicCode: code }));
+    } catch (error) {
+        console.error('[PublicPage] Error serving entity home:', error);
+        res.status(500).send(renderPublicPageShell('Error', '<p>Something went wrong.</p>'));
+    }
+});
+
+// ============================================
 // PUBLIC NOTE PAGES: /p/<publicCode>/<noteId>
 // ============================================
 app.get('/p/:code/:noteId', async (req, res) => {
