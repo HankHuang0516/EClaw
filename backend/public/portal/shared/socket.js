@@ -61,6 +61,14 @@ function initPortalSocket() {
     portalSocket.on('connect_error', (err) => {
         console.warn('[Socket] Connect error:', err.message);
     });
+
+    // Reconnect when page becomes visible again (Android WebView background→foreground)
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && portalSocket && !portalSocket.connected) {
+            console.log('[Socket] Page visible — reconnecting...');
+            portalSocket.connect();
+        }
+    });
 }
 
 // ============================================
