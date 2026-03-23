@@ -1170,6 +1170,21 @@ class CardHolderActivity : AppCompatActivity() {
         }
     }
 
+    private fun refreshCard(publicCode: String, onSuccess: () -> Unit) {
+        val deviceId = deviceManager.deviceId ?: return
+        val deviceSecret = deviceManager.deviceSecret ?: return
+        lifecycleScope.launch {
+            try {
+                NetworkModule.api.refreshCard(publicCode, mapOf("deviceId" to deviceId, "deviceSecret" to deviceSecret))
+                Toast.makeText(this@CardHolderActivity, R.string.card_holder_refreshed, Toast.LENGTH_SHORT).show()
+                loadAllData()
+                onSuccess()
+            } catch (e: Exception) {
+                Toast.makeText(this@CardHolderActivity, e.message ?: "Error", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     private fun addCard(code: String) {
         val deviceId = deviceManager.deviceId ?: return
         val deviceSecret = deviceManager.deviceSecret ?: return
@@ -1346,6 +1361,15 @@ class CardHolderActivity : AppCompatActivity() {
                 }
         })
         tabHost.addView(tabRow)
+
+        // Refresh button
+        tabHost.addView(TextView(this).apply {
+            text = "↻ ${getString(R.string.card_holder_refresh)}"
+            textSize = 12f
+            setTextColor(Color.parseColor("#6C63FF"))
+            setPadding(0, dp(4), 0, dp(8))
+            setOnClickListener { refreshCard(contact.publicCode) {} }
+        })
 
         // Details content
         if (!snap?.description.isNullOrEmpty()) {
