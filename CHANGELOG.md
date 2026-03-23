@@ -1,3 +1,10 @@
+## [1.154.1](https://github.com/HankHuang0516/EClaw/compare/v1.154.0...v1.154.1) (2026-03-23)
+
+
+### Bug Fixes
+
+* Android Card Holder manual refresh button ([#444](https://github.com/HankHuang0516/EClaw/issues/444) [#443](https://github.com/HankHuang0516/EClaw/issues/443)) ([4d99a82](https://github.com/HankHuang0516/EClaw/commit/4d99a82b9b1f333c3a579942e23c43dfdd447136))
+
 # [1.154.0](https://github.com/HankHuang0516/EClaw/compare/v1.153.1...v1.154.0) (2026-03-23)
 
 
