@@ -1,3 +1,11 @@
+# [1.148.0](https://github.com/HankHuang0516/EClaw/compare/v1.147.2...v1.148.0) (2026-03-23)
+
+
+### Features
+
+* **enterprise:** add demo GIF above live chat section ([66f6705](https://github.com/HankHuang0516/EClaw/commit/66f67057a0ac1b743e00ff143aac54a283e401da))
+* add e-commerce demo GIF for enterprise page and GitHub README ([c696ddd](https://github.com/HankHuang0516/EClaw/commit/c696dddee4706f443d11c50d9348e1230475ccb6))
+
 ## [1.147.2](https://github.com/HankHuang0516/EClaw/compare/v1.147.1...v1.147.2) (2026-03-23)
 
 
