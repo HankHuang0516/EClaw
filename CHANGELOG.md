@@ -1,3 +1,10 @@
+# [1.155.0](https://github.com/HankHuang0516/EClaw/compare/v1.154.1...v1.155.0) (2026-03-23)
+
+
+### Features
+
+* add interactive forms for Note Pages (P6) ([eb0c004](https://github.com/HankHuang0516/EClaw/commit/eb0c0044a5190394e188c74310178a29d0b32995))
+
 ## [1.154.1](https://github.com/HankHuang0516/EClaw/compare/v1.154.0...v1.154.1) (2026-03-23)
 
 
