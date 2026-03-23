@@ -1177,15 +1177,7 @@
         if (action.action === 'link' && action.url) {
             window.open(action.url, '_blank');
         } else if (action.action === 'order' || action.action === 'buy') {
-            // Auto-send a message to the bot about this product
-            const input = document.getElementById('messageInput');
-            const name = block.name || block.title || '商品';
-            if (input) {
-                input.value = '我想購買：' + name;
-                input.dispatchEvent(new Event('input'));
-                const form = input.closest('form') || document.querySelector('form');
-                if (form) form.dispatchEvent(new Event('submit'));
-            }
+            showOrderDialog(block);
         } else if (action.action === 'send' && action.text) {
             const input = document.getElementById('messageInput');
             if (input) {
@@ -1195,6 +1187,72 @@
                 if (form) form.dispatchEvent(new Event('submit'));
             }
         }
+    }
+
+    // Order dialog for collecting shipping info
+    function showOrderDialog(product) {
+        const existing = document.getElementById('orderDialog');
+        if (existing) existing.remove();
+        const name = product.name || product.title || '商品';
+        const price = product.price || 'NT$ 0';
+        const dialog = document.createElement('div');
+        dialog.id = 'orderDialog';
+        dialog.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:999;display:flex;align-items:center;justify-content:center;padding:16px';
+        dialog.innerHTML = `<div style="background:var(--card);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:24px;max-width:380px;width:100%">
+            <h3 style="margin:0 0 4px">🛒 ${escapeHtml(name)}</h3>
+            <p style="color:var(--primary);font-weight:700;margin:0 0 16px">${escapeHtml(price)}</p>
+            <input id="od-name" placeholder="姓名" style="width:100%;padding:10px;margin:4px 0;background:var(--bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px" required>
+            <input id="od-phone" placeholder="電話" style="width:100%;padding:10px;margin:4px 0;background:var(--bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px" required>
+            <input id="od-email" placeholder="Email" type="email" style="width:100%;padding:10px;margin:4px 0;background:var(--bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px">
+            <input id="od-addr" placeholder="配送地址" style="width:100%;padding:10px;margin:4px 0;background:var(--bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px">
+            <div style="display:flex;gap:8px;margin-top:12px">
+                <button onclick="document.getElementById('orderDialog').remove()" style="flex:1;padding:10px;background:rgba(255,255,255,0.1);color:var(--text);border:none;border-radius:8px;cursor:pointer">取消</button>
+                <button id="od-submit" onclick="submitOrder(this)" style="flex:1;padding:10px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">確認下單</button>
+            </div>
+        </div>`;
+        dialog.dataset.product = JSON.stringify(product);
+        document.body.appendChild(dialog);
+        document.getElementById('od-name').focus();
+    }
+
+    async function submitOrder(btn) {
+        btn.disabled = true; btn.textContent = '⏳ 處理中...';
+        const dialog = document.getElementById('orderDialog');
+        const product = JSON.parse(dialog.dataset.product);
+        const priceStr = (product.price || '').replace(/[^0-9.]/g, '');
+        try {
+            const resp = await fetch('/api/mission/order/create', {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({
+                    publicCode: targetCode,
+                    productName: product.name || product.title,
+                    productPrice: parseFloat(priceStr) || 0,
+                    quantity: 1,
+                    shipping: {
+                        name: document.getElementById('od-name').value,
+                        phone: document.getElementById('od-phone').value,
+                        email: document.getElementById('od-email').value,
+                        address: document.getElementById('od-addr').value
+                    }
+                })
+            });
+            const result = await resp.json();
+            if (result.success) {
+                dialog.remove();
+                window.open(result.paymentUrl, '_blank');
+                // Also tell the bot
+                const input = document.getElementById('messageInput');
+                if (input) {
+                    input.value = '我已下單：' + (product.name || '商品') + ' (訂單 ' + result.orderId + ')';
+                    input.dispatchEvent(new Event('input'));
+                    const form = input.closest('form') || document.querySelector('form');
+                    if (form) form.dispatchEvent(new Event('submit'));
+                }
+            } else {
+                alert(result.error || '下單失敗');
+            }
+        } catch (e) { alert('錯誤：' + e.message); }
+        btn.disabled = false; btn.textContent = '確認下單';
     }
 
     function escapeHtml(s) {

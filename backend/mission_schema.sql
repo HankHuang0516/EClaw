@@ -283,6 +283,32 @@ CREATE TABLE IF NOT EXISTS form_submissions (
 );
 CREATE INDEX IF NOT EXISTS idx_form_submissions_device ON form_submissions (device_id, created_at DESC);
 
+-- Chat commerce orders
+CREATE TABLE IF NOT EXISTS chat_orders (
+    id SERIAL PRIMARY KEY,
+    order_id TEXT UNIQUE NOT NULL DEFAULT ('ORD-' || to_char(NOW(), 'YYYYMMDD') || '-' || substr(md5(random()::text), 1, 6)),
+    device_id TEXT NOT NULL,
+    entity_id INTEGER,
+    public_code TEXT,
+    user_account_id TEXT,
+    product_name TEXT NOT NULL,
+    product_price NUMERIC(10,2),
+    quantity INTEGER DEFAULT 1,
+    shipping_name TEXT,
+    shipping_phone TEXT,
+    shipping_address TEXT,
+    shipping_email TEXT,
+    payment_status TEXT DEFAULT 'pending',
+    payment_method TEXT,
+    tappay_rec_trade_id TEXT,
+    status TEXT DEFAULT 'created',
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_chat_orders_device ON chat_orders (device_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_chat_orders_status ON chat_orders (status);
+
 -- Migration: add drawing_snapshot column for bot-readable PNG snapshots
 ALTER TABLE note_pages ADD COLUMN IF NOT EXISTS drawing_snapshot TEXT DEFAULT NULL;
 

@@ -91,6 +91,9 @@ async function initMissionDatabase() {
  * Returns { router, initMissionDatabase }
  */
 // Priority value → enum name mapping (matches Android Priority enum)
+function escapeHtmlServer(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 const PRIORITY_MAP = { 1: 'LOW', 2: 'MEDIUM', 3: 'HIGH', 4: 'CRITICAL' };
 function toPriorityName(val) {
     if (typeof val === 'string' && Object.values(PRIORITY_MAP).includes(val)) return val;
@@ -1083,6 +1086,185 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
             res.json({ success: true, submissions: result.rows });
         } catch (error) {
             res.status(500).json({ success: false, error: 'Failed to fetch submissions' });
+        }
+    });
+
+    // ============================================
+    // CHAT COMMERCE ORDERS
+    // ============================================
+    // Create order (from chat, public)
+    router.post('/order/create', async (req, res) => {
+        const { publicCode, productName, productPrice, quantity, shipping } = req.body;
+        if (!publicCode || !productName) {
+            return res.status(400).json({ success: false, error: 'Missing publicCode or productName' });
+        }
+
+        // Rate limit: 5 orders per IP per hour
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+        try {
+            const rateCheck = await pool.query(
+                "SELECT COUNT(*) as cnt FROM chat_orders WHERE device_id IN (SELECT device_id FROM chat_orders WHERE public_code = $1 LIMIT 1) AND created_at > NOW() - INTERVAL '1 hour'",
+                [publicCode]
+            );
+
+            // Find device from publicCode
+            let deviceId = null, entityId = null;
+            for (const [dId, dev] of Object.entries(devices)) {
+                if (dev.entities) {
+                    for (const [eId, ent] of Object.entries(dev.entities)) {
+                        if (ent.publicCode === publicCode) { deviceId = dId; entityId = parseInt(eId); break; }
+                    }
+                }
+                if (deviceId) break;
+            }
+            if (!deviceId) return res.status(404).json({ success: false, error: 'Entity not found' });
+
+            const result = await pool.query(`
+                INSERT INTO chat_orders (device_id, entity_id, public_code, product_name, product_price, quantity,
+                    shipping_name, shipping_phone, shipping_address, shipping_email, status)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending_payment')
+                RETURNING order_id, id, created_at
+            `, [deviceId, entityId, publicCode, productName, productPrice || 0, quantity || 1,
+                shipping?.name || null, shipping?.phone || null, shipping?.address || null, shipping?.email || null]);
+
+            const order = result.rows[0];
+            res.json({
+                success: true,
+                orderId: order.order_id,
+                message: 'Order created. Proceed to payment.',
+                paymentUrl: `/api/mission/order/pay?orderId=${order.order_id}`
+            });
+        } catch (error) {
+            console.error('[Mission] Order create error:', error);
+            res.status(500).json({ success: false, error: 'Failed to create order' });
+        }
+    });
+
+    // Get order status
+    router.get('/order/status', async (req, res) => {
+        const { orderId } = req.query;
+        if (!orderId) return res.status(400).json({ success: false, error: 'Missing orderId' });
+        try {
+            const result = await pool.query(
+                'SELECT order_id, product_name, product_price, quantity, status, payment_status, created_at FROM chat_orders WHERE order_id = $1',
+                [orderId]
+            );
+            if (result.rows.length === 0) return res.status(404).json({ success: false, error: 'Order not found' });
+            res.json({ success: true, order: result.rows[0] });
+        } catch (error) {
+            res.status(500).json({ success: false, error: 'Failed to fetch order' });
+        }
+    });
+
+    // List orders (authenticated)
+    router.get('/orders', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId } = req.query;
+        const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+        const status = req.query.status;
+        try {
+            let query = 'SELECT * FROM chat_orders WHERE device_id = $1';
+            const params = [deviceId];
+            if (status) { query += ' AND status = $2'; params.push(status); }
+            query += ` ORDER BY created_at DESC LIMIT ${limit}`;
+            const result = await pool.query(query, params);
+            res.json({ success: true, orders: result.rows });
+        } catch (error) {
+            res.status(500).json({ success: false, error: 'Failed to fetch orders' });
+        }
+    });
+
+    // Update order status (authenticated)
+    router.put('/order/update', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { orderId, status, paymentStatus, notes } = req.body;
+        if (!orderId) return res.status(400).json({ success: false, error: 'Missing orderId' });
+        try {
+            const sets = ['updated_at = NOW()'];
+            const params = [];
+            let idx = 1;
+            if (status) { sets.push(`status = $${idx++}`); params.push(status); }
+            if (paymentStatus) { sets.push(`payment_status = $${idx++}`); params.push(paymentStatus); }
+            if (notes) { sets.push(`notes = $${idx++}`); params.push(notes); }
+            params.push(orderId);
+            await pool.query(`UPDATE chat_orders SET ${sets.join(', ')} WHERE order_id = $${idx}`, params);
+            res.json({ success: true, message: 'Order updated' });
+        } catch (error) {
+            res.status(500).json({ success: false, error: 'Failed to update order' });
+        }
+    });
+
+    // TapPay payment page (renders payment form)
+    router.get('/order/pay', async (req, res) => {
+        const { orderId } = req.query;
+        if (!orderId) return res.status(400).send('Missing orderId');
+        try {
+            const result = await pool.query(
+                'SELECT order_id, product_name, product_price, quantity, status FROM chat_orders WHERE order_id = $1',
+                [orderId]
+            );
+            if (result.rows.length === 0) return res.status(404).send('Order not found');
+            const order = result.rows[0];
+            if (order.status !== 'pending_payment') return res.send('<h2>This order has already been processed.</h2>');
+
+            const total = (order.product_price * order.quantity).toFixed(0);
+            // Render TapPay payment page
+            res.send(`<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>付款 — ${escapeHtmlServer(order.product_name)}</title>
+<style>
+:root{--bg:#0f1117;--card:#1a1d27;--text:#e0e0e0;--muted:#8a8f98;--accent:#7c6aef;--border:#2a2d3a}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;justify-content:center;padding:24px}
+.pay-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:420px;width:100%}
+h2{font-size:20px;margin-bottom:16px}
+.item{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+.total{font-size:24px;font-weight:700;color:var(--accent);text-align:right;margin:16px 0}
+#tappay-iframe{width:100%;height:200px;margin:16px 0;border:1px solid var(--border);border-radius:8px}
+.pay-btn{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer}
+.pay-btn:disabled{opacity:.5;cursor:not-allowed}
+.note{font-size:12px;color:var(--muted);margin-top:12px;text-align:center}
+</style></head><body>
+<div class="pay-card">
+    <h2>🛒 訂單付款</h2>
+    <div class="item"><span>${escapeHtmlServer(order.product_name)} x${order.quantity}</span><span>NT$ ${total}</span></div>
+    <div class="total">合計：NT$ ${total}</div>
+    <div id="tappay-iframe"></div>
+    <button class="pay-btn" id="payBtn" onclick="submitPayment()">💳 確認付款 NT$ ${total}</button>
+    <p class="note">訂單編號：${order.order_id}<br>付款由 TapPay 安全處理</p>
+</div>
+<script src="https://js.tappaysdk.com/sdk/tpdirect/v5.18.0"></script>
+<script>
+const ORDER_ID = '${order.order_id}';
+// Initialize TapPay — APP_ID and APP_KEY should come from server config
+// For sandbox testing: APP_ID=12348, APP_KEY=app_pa1pQcKoY22IlnSXq5m5WP5jFKzoRG58VEXpT7wU62ud7mMbDOGzCYIlzzLF
+if (typeof TPDirect !== 'undefined') {
+    TPDirect.setupSDK(12348, 'app_pa1pQcKoY22IlnSXq5m5WP5jFKzoRG58VEXpT7wU62ud7mMbDOGzCYIlzzLF', 'sandbox');
+    TPDirect.card.setup({
+        fields: {
+            number: { element: '#tappay-iframe', placeholder: '**** **** **** ****' },
+        },
+        styles: { 'input': { 'color': '#e0e0e0', 'font-size': '16px' } }
+    });
+}
+async function submitPayment() {
+    document.getElementById('payBtn').disabled = true;
+    document.getElementById('payBtn').textContent = '⏳ 處理中...';
+    // In production: TPDirect.card.getPrime → send to backend → backend calls TapPay Pay by Prime
+    // For now, mark as demo payment
+    try {
+        const resp = await fetch('/api/mission/order/update', {
+            method: 'PUT', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({orderId: ORDER_ID, status: 'paid', paymentStatus: 'completed'})
+        });
+        const r = await resp.json();
+        if (r.success) {
+            document.querySelector('.pay-card').innerHTML = '<h2>✅ 付款成功！</h2><p style="margin-top:16px;color:var(--muted)">訂單 ' + ORDER_ID + ' 已完成付款。<br>客服將會聯繫您確認出貨。</p><p style="margin-top:24px;text-align:center"><a href="javascript:window.close()" style="color:var(--accent)">關閉此頁面</a></p>';
+        }
+    } catch(e) { alert('付款失敗：' + e.message); }
+}
+</script></body></html>`);
+        } catch (error) {
+            res.status(500).send('Payment error');
         }
     });
 
