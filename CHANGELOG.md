@@ -1,3 +1,10 @@
+## [1.155.1](https://github.com/HankHuang0516/EClaw/compare/v1.155.0...v1.155.1) (2026-03-23)
+
+
+### Bug Fixes
+
+* chat page auto-refresh on Android WebView foreground ([#448](https://github.com/HankHuang0516/EClaw/issues/448)) ([#450](https://github.com/HankHuang0516/EClaw/issues/450)) ([5fe8983](https://github.com/HankHuang0516/EClaw/commit/5fe8983526ccf0ec3ec9d541a06814e39bb0986d))
+
 # [1.155.0](https://github.com/HankHuang0516/EClaw/compare/v1.154.1...v1.155.0) (2026-03-23)
 
 
