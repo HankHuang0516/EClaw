@@ -1076,7 +1076,7 @@
                     <button class="btn-media" id="btnVoice" onclick="toggleRecording()">&#x1F3A4;</button>
                     <input type="text" class="chat-input" id="messageInput"
                         data-i18n="chat_input_placeholder" placeholder="Type a message..."
-                        oninput="renderSlashSuggestions(this.value)"
+                        oninput="renderSlashSuggestions(this.value); localStorage.setItem('chat_draft', this.value)"
                         onkeydown="if(event.key==='Enter')sendMessage()">
                     <button class="btn btn-primary btn-send" id="btnSend" onclick="sendMessage()"
                         data-i18n="chat_btn_send" title="Send">&#10148;</button>
@@ -1307,6 +1307,14 @@
             await loadBoundEntities();
             await loadMessages();
             isFirstLoad = false;
+
+            // Restore unsent draft
+            const savedDraft = localStorage.getItem('chat_draft');
+            if (savedDraft) {
+                const inputEl = document.getElementById('messageInput');
+                inputEl.value = savedDraft;
+                renderSlashSuggestions(savedDraft);
+            }
 
             // Socket.IO real-time chat handler
             window.onSocketChatMessage = async function(msg) {
@@ -2370,6 +2378,7 @@
             btn.disabled = true;
             const savedContent = input.value;
             input.value = '';
+            localStorage.removeItem('chat_draft');
 
             try {
                 // ── Local broadcast ──

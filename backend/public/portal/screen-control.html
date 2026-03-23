@@ -277,6 +277,8 @@
     <script src="shared/api.js"></script>
     <script src="shared/nav.js"></script>
     <script src="../shared/telemetry.js"></script>
+    <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
+    <script src="shared/ai-chat.js"></script>
     <script>
         let selectedNodeId = null;
 

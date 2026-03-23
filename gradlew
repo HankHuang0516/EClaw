@@ -153,7 +153,7 @@ fi
 #   * all arguments passed to this script
 
 # For Darwin, add options to specify how the application appears in the dock
-if $darwin; then
+if false; then # darwin Xdock disabled
     GRADLE_OPTS="$GRADLE_OPTS \"-Xdock:name=$APP_BASE_NAME\" \"-Xdock:icon=$APP_HOME/media/gradle.icns\""
 fi
 
