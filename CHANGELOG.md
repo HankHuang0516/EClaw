@@ -1,3 +1,10 @@
+## [1.145.4](https://github.com/HankHuang0516/EClaw/compare/v1.145.3...v1.145.4) (2026-03-23)
+
+
+### Bug Fixes
+
+* move filter chip toggle button outside overflow-hidden container ([#432](https://github.com/HankHuang0516/EClaw/issues/432)) ([4d455bd](https://github.com/HankHuang0516/EClaw/commit/4d455bd3829d93715c8c3ec7d15ea49e9de3419c))
+
 ## [1.145.3](https://github.com/HankHuang0516/EClaw/compare/v1.145.2...v1.145.3) (2026-03-23)
 
 
