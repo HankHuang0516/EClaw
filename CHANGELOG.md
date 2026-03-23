@@ -1,3 +1,10 @@
+# [1.154.0](https://github.com/HankHuang0516/EClaw/compare/v1.153.1...v1.154.0) (2026-03-23)
+
+
+### Features
+
+* add visitor analytics + custom domain APIs for Note Pages ([ad81935](https://github.com/HankHuang0516/EClaw/commit/ad819358d15ddb9f8bc3f95b0b7a2c7b5cb0a56a))
+
 ## [1.153.1](https://github.com/HankHuang0516/EClaw/compare/v1.153.0...v1.153.1) (2026-03-23)
 
 
