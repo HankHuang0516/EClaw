@@ -45,6 +45,13 @@
         .msg.sent .read-receipt { color: rgba(255,255,255,0.6); }
         .msg .entity-label { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; font-weight: 600; }
 
+        /* ── Note Page Embed ── */
+        .note-embed { margin-top: 8px; border: 1px solid var(--card-border); border-radius: 8px; overflow: hidden; background: var(--bg); }
+        .note-embed-header { font-size: 11px; padding: 6px 10px; background: var(--card); color: var(--text-muted); border-bottom: 1px solid var(--card-border); }
+        .note-embed-iframe { width: 100%; height: 200px; border: none; background: var(--bg); }
+        .note-embed-link { display: block; font-size: 11px; padding: 6px 10px; color: var(--primary); text-decoration: none; border-top: 1px solid var(--card-border); text-align: center; }
+        .note-embed-link:hover { background: var(--card); }
+
         .empty-msg { text-align: center; color: var(--text-muted); padding: 40px 20px; font-size: 14px; }
 
         /* ── Debug panel ── */
@@ -606,8 +613,38 @@
         }
 
         const textSpan = document.createElement('span');
-        textSpan.innerHTML = escapeHtml(msg.text || '');
+        const msgText = msg.text || '';
+        textSpan.innerHTML = renderMessageContent(escapeHtml(msgText));
         div.appendChild(textSpan);
+
+        // Detect eclaw://note/ links and /p/ public page URLs → render iframe preview
+        const notePatterns = [
+            /eclaw:\/\/note\/([a-f0-9-]{36})/gi,
+            /eclaw:\/\/note-title\/([^\s<"]+)/gi,
+            /(?:https?:\/\/[^/]+)?\/p\/([a-z0-9]+)\/([a-f0-9-]{36})/gi
+        ];
+        let hasNoteEmbed = false;
+        for (const pattern of notePatterns) {
+            let match;
+            while ((match = pattern.exec(msgText)) !== null) {
+                hasNoteEmbed = true;
+                const embedDiv = document.createElement('div');
+                embedDiv.className = 'note-embed';
+                let embedUrl;
+                if (match[0].startsWith('eclaw://note/')) {
+                    // Internal note link — use current entity's public code
+                    embedUrl = '/p/' + (targetCode || '') + '/' + match[1];
+                } else if (match[0].includes('/p/')) {
+                    embedUrl = '/p/' + match[1] + '/' + match[2];
+                }
+                if (embedUrl) {
+                    embedDiv.innerHTML = '<div class="note-embed-header">📄 ' + escapeHtml(t('sc_note_preview', '頁面預覽')) + '</div>'
+                        + '<iframe src="' + escapeHtml(embedUrl) + '" class="note-embed-iframe" loading="lazy" sandbox="allow-same-origin allow-popups"></iframe>'
+                        + '<a href="' + escapeHtml(embedUrl) + '" target="_blank" class="note-embed-link">' + escapeHtml(t('sc_open_page', '在新分頁開啟')) + ' ↗</a>';
+                    div.appendChild(embedDiv);
+                }
+            }
+        }
 
         const timeDiv = document.createElement('div');
         timeDiv.className = 'time';
@@ -1006,6 +1043,12 @@
         const d = document.createElement('div');
         d.textContent = s;
         return d.innerHTML;
+    }
+
+    // Convert URLs in escaped text to clickable links, and highlight eclaw:// links
+    function renderMessageContent(escapedHtml) {
+        // Convert https:// URLs to clickable links
+        return escapedHtml.replace(/(https?:\/\/[^\s<&]+)/g, '<a href="$1" target="_blank" style="color:var(--primary)">$1</a>');
     }
     </script>
     </main>
