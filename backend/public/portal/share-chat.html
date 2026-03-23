@@ -8,6 +8,7 @@
     <meta name="description" content="Chat with an EClawbot entity">
     <link rel="icon" type="image/png" href="assets/favicon-32.png">
     <link rel="stylesheet" href="/portal/shared/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="canonical" href="https://eclawbot.com/portal/share-chat.html">
     <meta property="og:title" content="EClawbot - Chat">
     <meta property="og:type" content="website">
@@ -51,6 +52,25 @@
         .note-embed-iframe { width: 100%; height: 200px; border: none; background: var(--bg); }
         .note-embed-link { display: block; font-size: 11px; padding: 6px 10px; color: var(--primary); text-decoration: none; border-top: 1px solid var(--card-border); text-align: center; }
         .note-embed-link:hover { background: var(--card); }
+
+        /* ── Markdown in Messages ── */
+        .md-content { display: block; }
+        .md-content p { margin: 0 0 6px; }
+        .md-content p:last-child { margin-bottom: 0; }
+        .md-content ul, .md-content ol { margin: 4px 0; padding-left: 20px; }
+        .md-content li { margin: 2px 0; }
+        .md-content code { background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 4px; font-size: 0.9em; }
+        .md-content pre { background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px; overflow-x: auto; margin: 6px 0; }
+        .md-content pre code { background: none; padding: 0; }
+        .md-content strong { font-weight: 700; }
+        .md-content a { color: var(--primary); text-decoration: underline; }
+        .md-content h1, .md-content h2, .md-content h3 { margin: 8px 0 4px; font-size: 1.1em; }
+        .md-content table { border-collapse: collapse; width: 100%; margin: 6px 0; font-size: 13px; }
+        .md-content th, .md-content td { border: 1px solid rgba(255,255,255,0.15); padding: 4px 8px; text-align: left; }
+        .md-content th { background: rgba(255,255,255,0.05); }
+        .md-content blockquote { border-left: 3px solid var(--primary); margin: 6px 0; padding: 4px 12px; opacity: 0.85; }
+        .md-content img { max-width: 100%; border-radius: 8px; margin: 4px 0; }
+        .md-content hr { border: none; border-top: 1px solid rgba(255,255,255,0.15); margin: 8px 0; }
 
         .empty-msg { text-align: center; color: var(--text-muted); padding: 40px 20px; font-size: 14px; }
 
@@ -614,7 +634,14 @@
 
         const textSpan = document.createElement('span');
         const msgText = msg.text || '';
-        textSpan.innerHTML = renderMessageContent(escapeHtml(msgText));
+        if (isBotReply && typeof marked !== 'undefined') {
+            // Bot messages: render as Markdown
+            textSpan.innerHTML = sanitizeHtml(marked.parse(msgText));
+            textSpan.className = 'md-content';
+        } else {
+            // User messages: plain text with links
+            textSpan.innerHTML = renderMessageContent(escapeHtml(msgText));
+        }
         div.appendChild(textSpan);
 
         // Detect eclaw://note/ links and /p/ public page URLs → render iframe preview
@@ -1045,10 +1072,17 @@
         return d.innerHTML;
     }
 
-    // Convert URLs in escaped text to clickable links, and highlight eclaw:// links
+    // Convert URLs in escaped text to clickable links
     function renderMessageContent(escapedHtml) {
-        // Convert https:// URLs to clickable links
         return escapedHtml.replace(/(https?:\/\/[^\s<&]+)/g, '<a href="$1" target="_blank" style="color:var(--primary)">$1</a>');
+    }
+
+    // Sanitize HTML from Markdown output (strip dangerous tags/attributes)
+    function sanitizeHtml(html) {
+        return html
+            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+            .replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+            .replace(/href\s*=\s*["']?\s*javascript\s*:/gi, 'href="');
     }
     </script>
     </main>
