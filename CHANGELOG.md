@@ -1,3 +1,10 @@
+## [1.145.3](https://github.com/HankHuang0516/EClaw/compare/v1.145.2...v1.145.3) (2026-03-23)
+
+
+### Bug Fixes
+
+* **security:** remove deviceSecret from JWT, add timing-safe OAuth ([#431](https://github.com/HankHuang0516/EClaw/issues/431)) ([0cc3222](https://github.com/HankHuang0516/EClaw/commit/0cc322252dff2e5349802c7fa482d73a51ff1c3c))
+
 ## [1.145.2](https://github.com/HankHuang0516/EClaw/compare/v1.145.1...v1.145.2) (2026-03-22)
 
 
