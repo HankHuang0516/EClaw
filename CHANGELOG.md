@@ -1,3 +1,10 @@
+# [1.150.0](https://github.com/HankHuang0516/EClaw/compare/v1.149.0...v1.150.0) (2026-03-23)
+
+
+### Features
+
+* add entity public home page GET /p/:publicCode ([933b22b](https://github.com/HankHuang0516/EClaw/commit/933b22b3c1599eb62a1b09870a9fc8be17337991))
+
 # [1.149.0](https://github.com/HankHuang0516/EClaw/compare/v1.148.0...v1.149.0) (2026-03-23)
 
 
