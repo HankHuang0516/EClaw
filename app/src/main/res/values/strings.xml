@@ -104,7 +104,6 @@
     <string name="ai_chat_clear_title">Clear History</string>
     <string name="ai_chat_clear_message">Clear all chat history?</string>
     <string name="ai_chat_clear_confirm">Clear</string>
-    <string name="message_copied">Copied</string>
     <string name="ai_chat_busy_retry">AI is busy, retrying in %1$ds… (%2$d/%3$d)</string>
     <string name="ai_chat_busy_exhausted">AI is currently busy with other requests. Please try again in a moment.</string>
     <string name="ai_chat_uploading">Uploading image(s)…</string>
@@ -798,6 +797,8 @@ If you have any questions, please contact us via our official email.
     <string name="card_holder_version">Version</string>
     <string name="card_holder_tags_hint">Add tag…</string>
     <string name="card_holder_add_capability">Add capability</string>
+    <string name="card_holder_refresh">Refresh Card</string>
+    <string name="card_holder_refreshed">Card refreshed</string>
 
     <!-- Share Chat Link -->
     <string name="sc_share_chat_link">Share Chat Link</string>
