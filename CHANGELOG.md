@@ -1,3 +1,10 @@
+## [1.147.1](https://github.com/HankHuang0516/EClaw/compare/v1.147.0...v1.147.1) (2026-03-23)
+
+
+### Bug Fixes
+
+* i18n missing keys, mission scroll, scheduler 502 retry ([#437](https://github.com/HankHuang0516/EClaw/issues/437) [#434](https://github.com/HankHuang0516/EClaw/issues/434) [#429](https://github.com/HankHuang0516/EClaw/issues/429)) ([bc5abf4](https://github.com/HankHuang0516/EClaw/commit/bc5abf44b460a0d644560ddecc7458fb354a249a))
+
 # [1.147.0](https://github.com/HankHuang0516/EClaw/compare/v1.146.0...v1.147.0) (2026-03-23)
 
 
