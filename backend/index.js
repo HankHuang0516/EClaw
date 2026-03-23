@@ -918,6 +918,109 @@ const missionModule = require('./mission')(devices, { awardEntityXP, serverLog }
 app.use('/api/mission', missionModule.router);
 
 // ============================================
+// PUBLIC NOTE PAGES: /p/<publicCode>/<noteId>
+// ============================================
+app.get('/p/:code/:noteId', async (req, res) => {
+    const { code, noteId } = req.params;
+
+    const target = publicCodeIndex[code];
+    if (!target) {
+        return res.status(404).send(renderPublicPageShell('Page Not Found', '<p>This page does not exist.</p>'));
+    }
+
+    try {
+        const pgPool = missionModule._pool;
+        if (!pgPool) {
+            return res.status(500).send(renderPublicPageShell('Error', '<p>Service unavailable.</p>'));
+        }
+
+        const result = await pgPool.query(
+            'SELECT np.html_content, np.updated_at, mi.title FROM note_pages np LEFT JOIN mission_items mi ON mi.id::text = np.note_id AND mi.device_id = np.device_id WHERE np.device_id = $1 AND np.note_id = $2 AND np.is_public = true',
+            [target.deviceId, noteId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).send(renderPublicPageShell('Page Not Found', '<p>This page is not available.</p>'));
+        }
+
+        const row = result.rows[0];
+        const pageTitle = row.title || 'EClaw Page';
+        const htmlContent = sanitizePublicHtml(row.html_content || '');
+
+        const device = devices[target.deviceId];
+        const entity = device && device.entities && device.entities[target.entityId];
+        const entityName = (entity && entity.name) || `Entity #${target.entityId}`;
+
+        res.send(renderPublicPageShell(pageTitle, htmlContent, {
+            entityName,
+            publicCode: code,
+            updatedAt: row.updated_at
+        }));
+    } catch (error) {
+        console.error('[PublicPage] Error serving public page:', error);
+        res.status(500).send(renderPublicPageShell('Error', '<p>Something went wrong.</p>'));
+    }
+});
+
+function sanitizePublicHtml(html) {
+    if (!html) return '';
+    return html
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+        .replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+        .replace(/href\s*=\s*["']?\s*javascript\s*:/gi, 'href="')
+        .replace(/src\s*=\s*["']?\s*data\s*:\s*text\/html/gi, 'src="');
+}
+
+function renderPublicPageShell(title, content, opts = {}) {
+    const { entityName, publicCode, updatedAt } = opts;
+    const safeTitle = (title || '').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+    const footerInfo = entityName
+        ? `<div class="page-footer">
+            <span>Published by <strong>${(entityName || '').replace(/</g, '&lt;')}</strong></span>
+            ${publicCode ? ` · <a href="/c/${publicCode}">Chat</a>` : ''}
+            ${updatedAt ? ` · Updated ${new Date(updatedAt).toLocaleDateString()}` : ''}
+           </div>`
+        : '';
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${safeTitle} — EClawbot</title>
+    <meta name="description" content="${safeTitle} — Published on EClawbot">
+    <meta property="og:title" content="${safeTitle}">
+    <meta property="og:site_name" content="EClawbot">
+    <style>
+        :root { --bg:#0f1117; --card-bg:#1a1d27; --text:#e0e0e0; --text-muted:#8a8f98; --accent:#7c6aef; --border:#2a2d3a; }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+        .page-header{background:var(--card-bg);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px}
+        .page-header a{color:var(--accent);text-decoration:none;font-weight:600;font-size:16px}
+        .page-header a:hover{text-decoration:underline}
+        .page-content{max-width:900px;margin:0 auto;padding:32px 24px}
+        .page-content img{max-width:100%;height:auto;border-radius:8px}
+        .page-content a{color:var(--accent)}
+        .page-content table{border-collapse:collapse;width:100%;margin:16px 0}
+        .page-content th,.page-content td{border:1px solid var(--border);padding:8px 12px;text-align:left}
+        .page-content th{background:var(--card-bg)}
+        .page-content pre{background:var(--card-bg);padding:16px;border-radius:8px;overflow-x:auto}
+        .page-content code{background:var(--card-bg);padding:2px 6px;border-radius:4px;font-size:0.9em}
+        .page-content h1,.page-content h2,.page-content h3{margin:24px 0 12px}
+        .page-footer{max-width:900px;margin:40px auto 20px;padding:16px 24px;border-top:1px solid var(--border);color:var(--text-muted);font-size:13px;text-align:center}
+        .page-footer a{color:var(--accent);text-decoration:none}
+        .page-footer a:hover{text-decoration:underline}
+    </style>
+</head>
+<body>
+    <div class="page-header"><a href="https://eclawbot.com">EClawbot</a></div>
+    <div class="page-content">${content}</div>
+    ${footerInfo}
+</body>
+</html>`;
+}
+
+// ============================================
 // A2A PROTOCOL COMPATIBILITY LAYER
 // ============================================
 const a2aCompat = require('./a2a-compat')(devices, { publicCodeIndex, serverLog, missionPool: require('pg').Pool ? new (require('pg').Pool)({ connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot' }) : null });

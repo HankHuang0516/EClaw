@@ -235,6 +235,9 @@ CREATE TABLE IF NOT EXISTS note_pages (
 CREATE INDEX IF NOT EXISTS idx_note_pages_device
 ON note_pages(device_id);
 
+-- Add is_public column for public page sharing (default false)
+ALTER TABLE note_pages ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT FALSE;
+
 -- Grant execute to app user (adjust as needed)
 -- GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO app_user;
 -- GRANT ALL ON ALL TABLES IN SCHEMA public TO app_user;

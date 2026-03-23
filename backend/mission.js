@@ -738,6 +738,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
     router.put('/note/page', async (req, res) => {
         if (!authenticate(req, res)) return;
         const { deviceId, htmlContent } = req.body;
+        const isPublic = req.body.isPublic === true || req.body.isPublic === 'true';
 
         if (!htmlContent && htmlContent !== '') {
             return res.status(400).json({ success: false, error: 'Missing htmlContent' });
@@ -753,15 +754,15 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
 
         try {
             const result = await pool.query(`
-                INSERT INTO note_pages (device_id, note_id, html_content)
-                VALUES ($1, $2, $3)
+                INSERT INTO note_pages (device_id, note_id, html_content, is_public)
+                VALUES ($1, $2, $3, $4)
                 ON CONFLICT (device_id, note_id)
-                DO UPDATE SET html_content = $3, updated_at = NOW()
-                RETURNING id, updated_at
-            `, [deviceId, noteId, htmlContent]);
+                DO UPDATE SET html_content = $3, is_public = $4, updated_at = NOW()
+                RETURNING id, updated_at, is_public
+            `, [deviceId, noteId, htmlContent, isPublic]);
 
-            if (serverLog) serverLog('info', 'mission', `[Mission] Note page updated: ${noteId}, device ${deviceId}`, { deviceId });
-            res.json({ success: true, message: 'Page saved', id: result.rows[0].id, noteId, updatedAt: result.rows[0].updated_at });
+            if (serverLog) serverLog('info', 'mission', `[Mission] Note page updated: ${noteId}, device ${deviceId}, public: ${isPublic}`, { deviceId });
+            res.json({ success: true, message: 'Page saved', id: result.rows[0].id, noteId, isPublic: result.rows[0].is_public, updatedAt: result.rows[0].updated_at });
         } catch (error) {
             console.error('[Mission] Error saving note page:', error);
             res.status(500).json({ success: false, error: 'Internal server error' });
@@ -784,14 +785,14 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
 
         try {
             const result = await pool.query(
-                'SELECT html_content, drawing_data, updated_at FROM note_pages WHERE device_id = $1 AND note_id = $2',
+                'SELECT html_content, drawing_data, is_public, updated_at FROM note_pages WHERE device_id = $1 AND note_id = $2',
                 [deviceId, noteId]
             );
             if (result.rows.length === 0) {
                 return res.status(404).json({ success: false, error: 'Page not found' });
             }
             const row = result.rows[0];
-            res.json({ success: true, noteId, htmlContent: row.html_content, drawingData: row.drawing_data, updatedAt: row.updated_at });
+            res.json({ success: true, noteId, htmlContent: row.html_content, drawingData: row.drawing_data, isPublic: row.is_public, updatedAt: row.updated_at });
         } catch (error) {
             console.error('[Mission] Error fetching note page:', error);
             res.status(500).json({ success: false, error: 'Internal server error' });
@@ -809,10 +810,10 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
 
         try {
             const result = await pool.query(
-                'SELECT note_id, updated_at FROM note_pages WHERE device_id = $1 ORDER BY updated_at DESC',
+                'SELECT note_id, is_public, updated_at FROM note_pages WHERE device_id = $1 ORDER BY updated_at DESC',
                 [deviceId]
             );
-            res.json({ success: true, pages: result.rows.map(r => ({ noteId: r.note_id, updatedAt: r.updated_at })) });
+            res.json({ success: true, pages: result.rows.map(r => ({ noteId: r.note_id, isPublic: r.is_public, updatedAt: r.updated_at })) });
         } catch (error) {
             console.error('[Mission] Error listing note pages:', error);
             res.status(500).json({ success: false, error: 'Internal server error' });
@@ -845,6 +846,37 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
             res.json({ success: true, message: 'Page deleted' });
         } catch (error) {
             console.error('[Mission] Error deleting note page:', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    });
+
+    /**
+     * PATCH /note/page/public
+     * Toggle is_public flag for a note page
+     * Body: { deviceId, noteId (or title), isPublic: boolean }
+     */
+    router.patch('/note/page/public', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId } = req.body;
+        const isPublic = req.body.isPublic === true || req.body.isPublic === 'true';
+
+        const noteId = await resolveNoteId(deviceId, req.body);
+        if (!noteId) {
+            return res.status(400).json({ success: false, error: 'Missing or invalid noteId/title' });
+        }
+
+        try {
+            const result = await pool.query(
+                'UPDATE note_pages SET is_public = $3, updated_at = NOW() WHERE device_id = $1 AND note_id = $2 RETURNING is_public, updated_at',
+                [deviceId, noteId, isPublic]
+            );
+            if (result.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'Page not found' });
+            }
+            if (serverLog) serverLog('info', 'mission', `[Mission] Note page public toggled: ${noteId}, public: ${isPublic}, device ${deviceId}`, { deviceId });
+            res.json({ success: true, message: isPublic ? 'Page is now public' : 'Page is now private', noteId, isPublic: result.rows[0].is_public, updatedAt: result.rows[0].updated_at });
+        } catch (error) {
+            console.error('[Mission] Error toggling note page public:', error);
             res.status(500).json({ success: false, error: 'Internal server error' });
         }
     });
@@ -2027,5 +2059,5 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
     let _pushToChannelCallback = null;
     function setPushToChannelCallback(fn) { _pushToChannelCallback = fn; }
 
-    return { router, initMissionDatabase, setNotifyCallback, setPushToBot, setPushToChannelCallback };
+    return { router, initMissionDatabase, setNotifyCallback, setPushToBot, setPushToChannelCallback, _pool: pool };
 };

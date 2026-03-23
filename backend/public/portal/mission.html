@@ -1900,9 +1900,9 @@
             apiCall('GET',
                 `/api/mission/note/page?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}&noteId=${encodeURIComponent(noteId)}`
             ).then(data => {
-                showPageEditorDialog(noteId, note.title, data.success ? data.htmlContent : '');
+                showPageEditorDialog(noteId, note.title, data.success ? data.htmlContent : '', data.success ? data.isPublic : false);
             }).catch(() => {
-                showPageEditorDialog(noteId, note.title, '');
+                showPageEditorDialog(noteId, note.title, '', false);
             });
         }
 
@@ -1942,6 +1942,8 @@
                 );
                 if (data.success) {
                     notePageIds = new Set(data.pages.map(p => p.noteId));
+                    notePagePublic = {};
+                    data.pages.forEach(p => { if (p.isPublic) notePagePublic[p.noteId] = true; });
                     renderNotes();
                 }
             } catch (e) { console.warn('Failed to load note pages:', e); }
@@ -2223,14 +2225,18 @@
                 `/api/mission/note/page?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}&noteId=${encodeURIComponent(viewerNoteId)}`
             ).then(data => {
                 const currentHtml = data.success ? data.htmlContent : '';
-                showPageEditorDialog(viewerNoteId, note.title, currentHtml);
+                showPageEditorDialog(viewerNoteId, note.title, currentHtml, data.success ? data.isPublic : false);
             }).catch(() => {
-                showPageEditorDialog(viewerNoteId, note.title, '');
+                showPageEditorDialog(viewerNoteId, note.title, '', false);
             });
         }
 
-        function showPageEditorDialog(noteId, noteTitle, currentHtml) {
+        // Track which note pages are public
+        let notePagePublic = {}; // noteId -> boolean
+
+        function showPageEditorDialog(noteId, noteTitle, currentHtml, isPublic) {
             const c = document.getElementById('dialogContainer');
+            const checkedAttr = isPublic ? 'checked' : '';
             c.innerHTML = `<div class="dialog-overlay">
                 <div class="dialog" style="max-width:700px;width:95%;">
                     <div class="dialog-title">${i18n.t('mc_note_edit_page')} — ${esc(noteTitle)}</div>
@@ -2238,6 +2244,13 @@
                     <textarea id="dlg_page_html" style="min-height:300px;font-family:monospace;font-size:12px;white-space:pre;resize:vertical;" placeholder="${i18n.t('mc_note_page_placeholder')}">${esc(currentHtml)}</textarea>
                     <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">
                         ${i18n.t('mc_note_page_link_hint') || 'Internal links: &lt;a href="eclaw://note/NOTE_ID"&gt;...&lt;/a&gt;'}
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+                            <input type="checkbox" id="dlg_page_public" ${checkedAttr}>
+                            🌐 ${i18n.t('mc_note_page_public') || 'Make page public'}
+                        </label>
+                        <span style="font-size:11px;color:var(--text-muted);">${i18n.t('mc_note_page_public_hint') || 'Public pages can be viewed without login'}</span>
                     </div>
                     <div class="dialog-actions">
                         <button class="btn btn-outline" onclick="closeDialog()">${i18n.t('mc_dlg_cancel')}</button>
@@ -2249,12 +2262,14 @@
 
             document.getElementById('dlgSavePageBtn').onclick = async () => {
                 const html = document.getElementById('dlg_page_html').value;
+                const pageIsPublic = document.getElementById('dlg_page_public').checked;
                 try {
                     await apiCall('PUT', '/api/mission/note/page', {
                         deviceId: currentUser.deviceId,
                         deviceSecret: currentUser.deviceSecret,
                         noteId: noteId,
-                        htmlContent: html
+                        htmlContent: html,
+                        isPublic: pageIsPublic
                     });
                     notePageIds.add(noteId);
                     renderNotes();
