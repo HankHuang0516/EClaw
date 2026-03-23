@@ -1012,16 +1012,23 @@ app.get('/p/:code/:noteId', async (req, res) => {
             return res.status(500).send(renderPublicPageShell('Error', '<p>Service unavailable.</p>'));
         }
 
-        const result = await pgPool.query(
-            'SELECT np.html_content, np.updated_at, mi.title FROM note_pages np LEFT JOIN mission_items mi ON mi.id::text = np.note_id AND mi.device_id = np.device_id WHERE np.device_id = $1 AND np.note_id = $2 AND np.is_public = true',
-            [target.deviceId, noteId]
-        );
+        // Fetch current page + all sibling public pages in parallel
+        const [pageResult, siblingsResult] = await Promise.all([
+            pgPool.query(
+                'SELECT np.html_content, np.updated_at, mi.title FROM note_pages np LEFT JOIN mission_items mi ON mi.id::text = np.note_id AND mi.device_id = np.device_id WHERE np.device_id = $1 AND np.note_id = $2 AND np.is_public = true',
+                [target.deviceId, noteId]
+            ),
+            pgPool.query(
+                'SELECT np.note_id, mi.title, np.updated_at FROM note_pages np LEFT JOIN mission_items mi ON mi.id::text = np.note_id AND mi.device_id = np.device_id WHERE np.device_id = $1 AND np.is_public = true ORDER BY np.updated_at DESC',
+                [target.deviceId]
+            )
+        ]);
 
-        if (result.rows.length === 0) {
+        if (pageResult.rows.length === 0) {
             return res.status(404).send(renderPublicPageShell('Page Not Found', '<p>This page is not available.</p>'));
         }
 
-        const row = result.rows[0];
+        const row = pageResult.rows[0];
         const pageTitle = row.title || 'EClaw Page';
         const htmlContent = sanitizePublicHtml(row.html_content || '');
 
@@ -1029,10 +1036,18 @@ app.get('/p/:code/:noteId', async (req, res) => {
         const entity = device && device.entities && device.entities[target.entityId];
         const entityName = (entity && entity.name) || `Entity #${target.entityId}`;
 
+        // Build sibling pages for navigation
+        const siblingPages = siblingsResult.rows.map(r => ({
+            noteId: r.note_id,
+            title: r.title || 'Untitled',
+            isCurrent: r.note_id === noteId
+        }));
+
         res.send(renderPublicPageShell(pageTitle, htmlContent, {
             entityName,
             publicCode: code,
-            updatedAt: row.updated_at
+            updatedAt: row.updated_at,
+            siblingPages
         }));
     } catch (error) {
         console.error('[PublicPage] Error serving public page:', error);
@@ -1050,7 +1065,7 @@ function sanitizePublicHtml(html) {
 }
 
 function renderPublicPageShell(title, content, opts = {}) {
-    const { entityName, publicCode, updatedAt } = opts;
+    const { entityName, publicCode, updatedAt, siblingPages } = opts;
     const safeTitle = (title || '').replace(/</g, '&lt;').replace(/"/g, '&quot;');
     const footerInfo = entityName
         ? `<div class="page-footer">
@@ -1059,6 +1074,18 @@ function renderPublicPageShell(title, content, opts = {}) {
             ${updatedAt ? ` · Updated ${new Date(updatedAt).toLocaleDateString()}` : ''}
            </div>`
         : '';
+
+    // Build navigation HTML if sibling pages exist
+    let navHtml = '';
+    if (siblingPages && siblingPages.length > 1 && publicCode) {
+        const navItems = siblingPages.map(p => {
+            const t = (p.title || 'Untitled').replace(/</g, '&lt;');
+            return p.isCurrent
+                ? `<span class="page-nav-item active">📄 ${t}</span>`
+                : `<a href="/p/${publicCode}/${p.noteId}" class="page-nav-item">📄 ${t}</a>`;
+        }).join('');
+        navHtml = `<nav class="page-nav"><a href="/p/${publicCode}" class="page-nav-home">🏠</a>${navItems}</nav>`;
+    }
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -1076,6 +1103,12 @@ function renderPublicPageShell(title, content, opts = {}) {
         .page-header{background:var(--card-bg);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px}
         .page-header a{color:var(--accent);text-decoration:none;font-weight:600;font-size:16px}
         .page-header a:hover{text-decoration:underline}
+        .page-nav{background:var(--card-bg);border-bottom:1px solid var(--border);padding:8px 24px;display:flex;align-items:center;gap:4px;overflow-x:auto;white-space:nowrap}
+        .page-nav-home{color:var(--accent);text-decoration:none;font-size:16px;padding:4px 8px;border-radius:6px}
+        .page-nav-home:hover{background:var(--bg)}
+        .page-nav-item{color:var(--text-muted);text-decoration:none;font-size:12px;padding:4px 10px;border-radius:6px;display:inline-block}
+        a.page-nav-item:hover{background:var(--bg);color:var(--text)}
+        .page-nav-item.active{background:var(--accent);color:white;font-weight:600}
         .page-content{max-width:900px;margin:0 auto;padding:32px 24px}
         .page-content img{max-width:100%;height:auto;border-radius:8px}
         .page-content a{color:var(--accent)}
@@ -1092,6 +1125,7 @@ function renderPublicPageShell(title, content, opts = {}) {
 </head>
 <body>
     <div class="page-header"><a href="https://eclawbot.com">EClawbot</a></div>
+    ${navHtml}
     <div class="page-content">${content}</div>
     ${footerInfo}
 </body>
