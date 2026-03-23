@@ -1,3 +1,10 @@
+# [1.152.0](https://github.com/HankHuang0516/EClaw/compare/v1.151.0...v1.152.0) (2026-03-23)
+
+
+### Features
+
+* drawing scroll sync + bot-readable PNG snapshot ([#445](https://github.com/HankHuang0516/EClaw/issues/445)) ([0e8deda](https://github.com/HankHuang0516/EClaw/commit/0e8dedaeb214f69f97ca19d52ee5e24c17470aae))
+
 # [1.151.0](https://github.com/HankHuang0516/EClaw/compare/v1.150.0...v1.151.0) (2026-03-23)
 
 
