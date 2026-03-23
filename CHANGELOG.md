@@ -1,3 +1,10 @@
+## [1.147.2](https://github.com/HankHuang0516/EClaw/compare/v1.147.1...v1.147.2) (2026-03-23)
+
+
+### Bug Fixes
+
+* allow same-origin iframe embedding for /c/ and /p/ routes ([c8dbcec](https://github.com/HankHuang0516/EClaw/commit/c8dbcecda12a81e6df7111537bef541f17d9ccc8))
+
 ## [1.147.1](https://github.com/HankHuang0516/EClaw/compare/v1.147.0...v1.147.1) (2026-03-23)
 
 
