@@ -920,6 +920,23 @@ const missionModule = require('./mission')(devices, { awardEntityXP, serverLog }
 app.use('/api/mission', missionModule.router);
 
 // ============================================
+// PAGE VIEW TRACKING (fire-and-forget)
+// ============================================
+function trackPageView(req, deviceId, publicCode, noteId) {
+    try {
+        const pgPool = missionModule._pool;
+        if (!pgPool) return;
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+        const ua = (req.headers['user-agent'] || '').slice(0, 256);
+        const referer = (req.headers['referer'] || '').slice(0, 512);
+        pgPool.query(
+            'INSERT INTO page_views (device_id, note_id, public_code, visitor_ip, visitor_ua, referer) VALUES ($1, $2, $3, $4, $5, $6)',
+            [deviceId, noteId || null, publicCode, ip, ua, referer]
+        ).catch(() => {});
+    } catch (_) {}
+}
+
+// ============================================
 // PUBLIC ENTITY HOME: /p/<publicCode>
 // ============================================
 app.get('/p/:code', async (req, res) => {
@@ -928,6 +945,7 @@ app.get('/p/:code', async (req, res) => {
     if (!target) {
         return res.status(404).send(renderPublicPageShell('Not Found', '<p>This entity does not exist.</p>'));
     }
+    trackPageView(req, target.deviceId, code, null);
 
     try {
         const pgPool = missionModule._pool;
@@ -1005,6 +1023,7 @@ app.get('/p/:code/:noteId', async (req, res) => {
     if (!target) {
         return res.status(404).send(renderPublicPageShell('Page Not Found', '<p>This page does not exist.</p>'));
     }
+    trackPageView(req, target.deviceId, code, noteId);
 
     try {
         const pgPool = missionModule._pool;

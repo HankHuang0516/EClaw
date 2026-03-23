@@ -890,6 +890,103 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
      * Save drawing data for a note's page
      * Body: { deviceId, noteId (or title), drawingData }
      */
+    // ============================================
+    // PAGE ANALYTICS
+    // ============================================
+    router.get('/note/page/analytics', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId } = req.query;
+        const noteId = req.query.noteId || null;
+        const days = Math.min(parseInt(req.query.days) || 30, 90);
+
+        try {
+            const since = new Date(Date.now() - days * 86400000).toISOString();
+
+            // Total views + unique IPs
+            const baseWhere = noteId
+                ? 'device_id = $1 AND note_id = $2 AND created_at >= $3'
+                : 'device_id = $1 AND created_at >= $2';
+            const params = noteId ? [deviceId, noteId, since] : [deviceId, since];
+
+            const [totalResult, uniqueResult, dailyResult, topPagesResult] = await Promise.all([
+                pool.query(`SELECT COUNT(*) as total FROM page_views WHERE ${baseWhere}`, params),
+                pool.query(`SELECT COUNT(DISTINCT visitor_ip) as unique_visitors FROM page_views WHERE ${baseWhere}`, params),
+                pool.query(`SELECT DATE(created_at) as day, COUNT(*) as views FROM page_views WHERE ${baseWhere} GROUP BY DATE(created_at) ORDER BY day DESC LIMIT ${days}`, params),
+                noteId ? Promise.resolve({ rows: [] }) :
+                    pool.query(`SELECT note_id, COUNT(*) as views FROM page_views WHERE device_id = $1 AND note_id IS NOT NULL AND created_at >= $2 GROUP BY note_id ORDER BY views DESC LIMIT 20`, [deviceId, since])
+            ]);
+
+            res.json({
+                success: true,
+                period: { days, since },
+                totalViews: parseInt(totalResult.rows[0].total),
+                uniqueVisitors: parseInt(uniqueResult.rows[0].unique_visitors),
+                daily: dailyResult.rows,
+                topPages: topPagesResult.rows
+            });
+        } catch (error) {
+            console.error('[Mission] Analytics error:', error);
+            res.status(500).json({ success: false, error: 'Failed to fetch analytics' });
+        }
+    });
+
+    // ============================================
+    // CUSTOM DOMAINS
+    // ============================================
+    router.get('/custom-domain', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId } = req.query;
+        try {
+            const result = await pool.query('SELECT domain, public_code, verified, created_at FROM custom_domains WHERE device_id = $1 ORDER BY created_at DESC', [deviceId]);
+            res.json({ success: true, domains: result.rows });
+        } catch (error) {
+            res.status(500).json({ success: false, error: 'Failed to fetch domains' });
+        }
+    });
+
+    router.put('/custom-domain', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId, domain, publicCode } = req.body;
+        if (!domain || !publicCode) return res.status(400).json({ success: false, error: 'Missing domain or publicCode' });
+
+        // Basic domain validation
+        const domainRegex = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*\.[a-z]{2,}$/i;
+        if (!domainRegex.test(domain)) return res.status(400).json({ success: false, error: 'Invalid domain format' });
+
+        try {
+            const result = await pool.query(`
+                INSERT INTO custom_domains (device_id, public_code, domain)
+                VALUES ($1, $2, $3)
+                ON CONFLICT (domain)
+                DO UPDATE SET public_code = $2, updated_at = NOW()
+                RETURNING id, verified
+            `, [deviceId, publicCode, domain.toLowerCase()]);
+
+            res.json({
+                success: true,
+                message: 'Domain registered. Add a CNAME record pointing to eclawbot.com to verify.',
+                domain: domain.toLowerCase(),
+                verified: result.rows[0].verified,
+                cname: 'eclawbot.com'
+            });
+        } catch (error) {
+            console.error('[Mission] Custom domain error:', error);
+            res.status(500).json({ success: false, error: 'Failed to register domain' });
+        }
+    });
+
+    router.delete('/custom-domain', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId, domain } = req.body;
+        if (!domain) return res.status(400).json({ success: false, error: 'Missing domain' });
+        try {
+            await pool.query('DELETE FROM custom_domains WHERE device_id = $1 AND domain = $2', [deviceId, domain.toLowerCase()]);
+            res.json({ success: true, message: 'Domain removed' });
+        } catch (error) {
+            res.status(500).json({ success: false, error: 'Failed to remove domain' });
+        }
+    });
+
     router.put('/note/page/drawing', async (req, res) => {
         if (!authenticate(req, res)) return;
         const { deviceId, drawingData, drawingSnapshot } = req.body;

@@ -243,6 +243,33 @@ ALTER TABLE note_pages ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAU
 -- Add markdown_content column for Markdown-based pages
 ALTER TABLE note_pages ADD COLUMN IF NOT EXISTS markdown_content TEXT DEFAULT NULL;
 
+-- Page view tracking for visitor analytics
+CREATE TABLE IF NOT EXISTS page_views (
+    id SERIAL PRIMARY KEY,
+    device_id TEXT NOT NULL,
+    note_id TEXT,
+    public_code TEXT NOT NULL,
+    visitor_ip TEXT,
+    visitor_ua TEXT,
+    referer TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_page_views_device ON page_views (device_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_page_views_note ON page_views (device_id, note_id, created_at DESC);
+
+-- Custom domain mapping
+CREATE TABLE IF NOT EXISTS custom_domains (
+    id SERIAL PRIMARY KEY,
+    device_id TEXT NOT NULL,
+    public_code TEXT NOT NULL,
+    domain TEXT NOT NULL UNIQUE,
+    verified BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_custom_domains_domain ON custom_domains (domain);
+CREATE INDEX IF NOT EXISTS idx_custom_domains_device ON custom_domains (device_id);
+
 -- Migration: add drawing_snapshot column for bot-readable PNG snapshots
 ALTER TABLE note_pages ADD COLUMN IF NOT EXISTS drawing_snapshot TEXT DEFAULT NULL;
 
