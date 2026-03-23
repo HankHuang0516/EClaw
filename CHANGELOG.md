@@ -1,3 +1,10 @@
+# [1.156.0](https://github.com/HankHuang0516/EClaw/compare/v1.155.1...v1.156.0) (2026-03-23)
+
+
+### Features
+
+* **chat:** Markdown rendering for bot messages via marked.js ([be29baf](https://github.com/HankHuang0516/EClaw/commit/be29baf2158dd4f11ec3632005de4ed90dfd8504))
+
 ## [1.155.1](https://github.com/HankHuang0516/EClaw/compare/v1.155.0...v1.155.1) (2026-03-23)
 
 
