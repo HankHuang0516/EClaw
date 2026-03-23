@@ -266,3 +266,30 @@ describe('POST /api/oauth/introspect', () => {
         expect(res.body.active).toBe(false);
     });
 });
+
+// ════════════════════════════════════════════════════════════════
+// Security: OAuth client_secret comparison is timing-safe
+// ════════════════════════════════════════════════════════════════
+describe('OAuth token endpoint — client_secret validation', () => {
+    it('rejects wrong client_secret with invalid_client (timing-safe comparison)', async () => {
+        const res = await post('/api/oauth/token')
+            .send({
+                grant_type: 'client_credentials',
+                client_id: 'nonexistent',
+                client_secret: 'wrong-secret'
+            });
+        expect(res.status).toBe(401);
+        expect(res.body.error).toBe('invalid_client');
+    });
+
+    it('rejects mismatched-length client_secret', async () => {
+        const res = await post('/api/oauth/token')
+            .send({
+                grant_type: 'client_credentials',
+                client_id: 'nonexistent',
+                client_secret: 'x'
+            });
+        expect(res.status).toBe(401);
+        expect(res.body.error).toBe('invalid_client');
+    });
+});

@@ -117,7 +117,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
 
     function signToken(user) {
         return jwt.sign(
-            { userId: user.id, deviceId: user.device_id, deviceSecret: user.device_secret },
+            { userId: user.id, deviceId: user.device_id },
             JWT_SECRET,
             { expiresIn: JWT_EXPIRY }
         );
@@ -140,6 +140,10 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
         const decoded = verifyToken(token);
         if (!decoded) {
             return res.status(401).json({ success: false, error: 'Invalid or expired session' });
+        }
+        // Enrich with deviceSecret from in-memory devices map (no longer stored in JWT)
+        if (decoded.deviceId && devices[decoded.deviceId]) {
+            decoded.deviceSecret = devices[decoded.deviceId].deviceSecret;
         }
         req.user = decoded;
         next();
@@ -435,7 +439,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
             if (result.rows.length > 0) {
                 // Existing user account
                 const user = result.rows[0];
-                tokenPayload = { userId: user.id, deviceId: user.device_id, deviceSecret: user.device_secret };
+                tokenPayload = { userId: user.id, deviceId: user.device_id };
                 userInfo = {
                     id: user.id,
                     email: user.email,
@@ -445,7 +449,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                 };
             } else {
                 // No user account — create a session with device credentials only
-                tokenPayload = { userId: null, deviceId, deviceSecret };
+                tokenPayload = { userId: null, deviceId };
                 userInfo = {
                     id: null,
                     email: null,
@@ -669,7 +673,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                         id: null,
                         email: null,
                         deviceId: deviceId,
-                        deviceSecret: req.user.deviceSecret,
+                        deviceSecret: (devices[deviceId] && devices[deviceId].deviceSecret) || null,
                         subscriptionStatus: isPremium ? 'premium' : 'free',
                         subscriptionExpiresAt: null,
                         language: 'en',
@@ -1793,7 +1797,13 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
         const token = req.cookies && req.cookies.eclaw_session;
         if (token) {
             const decoded = verifyToken(token);
-            if (decoded) req.user = decoded;
+            if (decoded) {
+                // Enrich with deviceSecret from in-memory devices map (no longer stored in JWT)
+                if (decoded.deviceId && devices[decoded.deviceId]) {
+                    decoded.deviceSecret = devices[decoded.deviceId].deviceSecret;
+                }
+                req.user = decoded;
+            }
         }
         next();
     }

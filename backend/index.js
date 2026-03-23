@@ -3546,9 +3546,10 @@ app.delete('/api/device/entity', async (req, res) => {
         try {
             const jwt = require('jsonwebtoken');
             const decoded = jwt.verify(req.cookies.eclaw_session, JWT_SECRET_FALLBACK);
-            if (decoded && decoded.deviceId && decoded.deviceSecret) {
+            if (decoded && decoded.deviceId) {
                 deviceId = decoded.deviceId;
-                deviceSecret = decoded.deviceSecret;
+                const dev = devices[decoded.deviceId];
+                if (dev) deviceSecret = dev.deviceSecret;
                 if (!entityId && req.body) entityId = req.body.entityId;
             }
         } catch (e) { /* invalid token, fall through */ }
@@ -4462,9 +4463,10 @@ app.put('/api/device/entity/name', async (req, res) => {
         try {
             const jwt = require('jsonwebtoken');
             const decoded = jwt.verify(req.cookies.eclaw_session, JWT_SECRET_FALLBACK);
-            if (decoded && decoded.deviceId && decoded.deviceSecret) {
+            if (decoded && decoded.deviceId) {
                 deviceId = decoded.deviceId;
-                deviceSecret = decoded.deviceSecret;
+                const dev = devices[decoded.deviceId];
+                if (dev) deviceSecret = dev.deviceSecret;
             }
         } catch (e) { /* invalid token, fall through */ }
     }
@@ -4550,9 +4552,10 @@ app.put('/api/device/entity/avatar', async (req, res) => {
         try {
             const jwt = require('jsonwebtoken');
             const decoded = jwt.verify(req.cookies.eclaw_session, JWT_SECRET_FALLBACK);
-            if (decoded && decoded.deviceId && decoded.deviceSecret) {
+            if (decoded && decoded.deviceId) {
                 deviceId = decoded.deviceId;
-                deviceSecret = decoded.deviceSecret;
+                const dev = devices[decoded.deviceId];
+                if (dev) deviceSecret = dev.deviceSecret;
             }
         } catch (e) { /* invalid token, fall through */ }
     }
@@ -4627,9 +4630,10 @@ app.post('/api/device/entity/avatar/upload', avatarUpload.single('file'), async 
         try {
             const jwt = require('jsonwebtoken');
             const decoded = jwt.verify(req.cookies.eclaw_session, JWT_SECRET_FALLBACK);
-            if (decoded && decoded.deviceId && decoded.deviceSecret) {
+            if (decoded && decoded.deviceId) {
                 deviceId = decoded.deviceId;
-                deviceSecret = decoded.deviceSecret;
+                const dev = devices[decoded.deviceId];
+                if (dev) deviceSecret = dev.deviceSecret;
             }
         } catch (e) { /* invalid token, fall through */ }
     }
