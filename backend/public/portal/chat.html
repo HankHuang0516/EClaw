@@ -58,6 +58,12 @@
         .usage-badge.unlimited { color: var(--success); }
 
         /* ── Filter Chips ── */
+        .chip-group-wrapper {
+            display: flex;
+            gap: 6px;
+            align-items: flex-start;
+        }
+
         .chip-group {
             display: flex;
             gap: 6px;
@@ -65,6 +71,8 @@
             overflow: hidden;
             max-height: 34px;
             transition: max-height 0.25s ease;
+            flex: 1;
+            min-width: 0;
         }
 
         .chip-group.expanded {
@@ -106,6 +114,7 @@
             white-space: nowrap;
             user-select: none;
             transition: all 0.2s;
+            flex-shrink: 0;
         }
 
         .filter-chip-toggle:hover {
@@ -833,6 +842,10 @@
                 gap: 8px;
             }
 
+            .chip-group-wrapper {
+                gap: 4px;
+            }
+
             .chip-group {
                 gap: 4px;
                 max-height: 30px;
@@ -1014,10 +1027,12 @@
                         <span class="spinner" style="width:12px;height:12px;border-width:2px;"></span>
                     </span>
                 </div>
-                <div class="chip-group" id="filterChips">
-                    <span class="filter-chip active" data-filter="all" onclick="setFilter('all')" data-i18n="chat_filter_all">All</span>
-                    <!-- Entity chips injected dynamically -->
-                    <span class="filter-chip" data-filter="my" onclick="setFilter('my')" data-i18n="chat_filter_my">My Messages</span>
+                <div class="chip-group-wrapper">
+                    <div class="chip-group" id="filterChips">
+                        <span class="filter-chip active" data-filter="all" onclick="setFilter('all')" data-i18n="chat_filter_all">All</span>
+                        <!-- Entity chips injected dynamically -->
+                        <span class="filter-chip" data-filter="my" onclick="setFilter('my')" data-i18n="chat_filter_my">My Messages</span>
+                    </div>
                     <span class="filter-chip-toggle" id="filterToggle" onclick="toggleFilterExpand()" style="display:none;"></span>
                 </div>
             </div>
