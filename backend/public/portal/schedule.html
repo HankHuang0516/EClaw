@@ -637,9 +637,9 @@
                 return '<div class="sched-item status-' + statusClass + (s.isPaused ? ' is-paused' : '') + '"' + clickAttr + '>' +
                     '<div class="sched-row">' +
                     '<span class="sched-time">' + timeStr + '</span>' +
-                    '<span class="sched-entity">' + esc(entityLabel) + '</span>' +
+                    '<span class="sched-entity">' + entityLabel + '</span>' +
                     repeatBadge +
-                    '<span class="sched-message">' + esc(s.message) + '</span>' +
+                    '<span class="sched-message">' + esc((s.message || '').replace(/<img[^>]*>/gi, '').replace(/class="[^"]*"/gi, '').replace(/style="[^"]*"/gi, '')) + '</span>' +
                     '<span class="sched-status ' + statusClass + '">' + statusLabel + '</span>' +
                     '</div>' +
                     '<div class="sched-detail">' + detailHtml + '</div>' +

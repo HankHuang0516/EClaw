@@ -73,7 +73,22 @@ function renderAvatarHtml(avatar, size) {
 }
 
 /**
- * Get a full label like "🦞 Lobster (#4)" for an entity.
+ * Get an avatar as plain text (emoji only, no HTML).
+ * For URL avatars, returns the default emoji fallback.
+ */
+function getAvatarText(entityId) {
+    const avatar = getAvatarForEntity(entityId);
+    if (isAvatarUrl(avatar)) {
+        // URL avatar → use default emoji fallback
+        const char = ENTITY_CHARS_DEFAULT[entityId] || ENTITY_CHARS_DEFAULT[entityId % 4];
+        return char?.emoji || '\u{1F99E}';
+    }
+    return avatar || '\u{1F99E}';
+}
+
+/**
+ * Get a full label like "🦞 Lobster (#4)" for an entity — HTML version.
+ * Contains <img> tags for URL avatars. Use in innerHTML contexts only.
  * Uses the page's local escapeHtml/esc function if available.
  */
 function getEntityLabel(entityId) {
@@ -84,4 +99,14 @@ function getEntityLabel(entityId) {
         : typeof esc === 'function' ? esc
         : (s) => s;
     return `${renderAvatarHtml(avatar, 20)} ${escapeFn(name)} (#${entityId})`;
+}
+
+/**
+ * Get a full label like "🦞 Lobster (#4)" as plain text (no HTML).
+ * Safe for use in text fields, schedule messages, task descriptions, etc.
+ */
+function getEntityLabelText(entityId) {
+    const emoji = getAvatarText(entityId);
+    const name = getEntityDisplayName(entityId);
+    return `${emoji} ${name} (#${entityId})`;
 }
