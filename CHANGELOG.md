@@ -1,3 +1,10 @@
+## [1.159.1](https://github.com/HankHuang0516/EClaw/compare/v1.159.0...v1.159.1) (2026-03-24)
+
+
+### Bug Fixes
+
+* security audit P0/P1, Discord integration, Android UX ([#457](https://github.com/HankHuang0516/EClaw/issues/457)) ([94bff5e](https://github.com/HankHuang0516/EClaw/commit/94bff5e1dcb403dff6f7880f86c30e93242a0494)), closes [#451](https://github.com/HankHuang0516/EClaw/issues/451) [#439](https://github.com/HankHuang0516/EClaw/issues/439) [#440](https://github.com/HankHuang0516/EClaw/issues/440) [#453](https://github.com/HankHuang0516/EClaw/issues/453) [#454](https://github.com/HankHuang0516/EClaw/issues/454) [#455](https://github.com/HankHuang0516/EClaw/issues/455)
+
 # [1.159.0](https://github.com/HankHuang0516/EClaw/compare/v1.158.0...v1.159.0) (2026-03-24)
 
 
