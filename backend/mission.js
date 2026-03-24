@@ -100,6 +100,24 @@ function toPriorityName(val) {
     return PRIORITY_MAP[parseInt(val)] || 'MEDIUM';
 }
 
+// Normalized Levenshtein similarity [0, 1]
+function strSimilarity(a, b) {
+    a = (a || '').trim();
+    b = (b || '').trim();
+    if (a === b) return 1;
+    if (!a || !b) return 0;
+    const m = a.length, n = b.length;
+    const dp = Array.from({ length: m + 1 }, (_, i) =>
+        Array.from({ length: n + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
+    );
+    for (let i = 1; i <= m; i++)
+        for (let j = 1; j <= n; j++)
+            dp[i][j] = a[i - 1] === b[j - 1]
+                ? dp[i - 1][j - 1]
+                : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+    return 1 - dp[m][n] / Math.max(m, n);
+}
+
 module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
     const router = express.Router();
 
@@ -1916,20 +1934,35 @@ async function submitPayment() {
             const rules = row.rules || [];
 
             const entities = assignedEntities || (entityId != null ? [String(entityId)] : []);
-            const newRule = {
-                id: crypto.randomUUID(),
-                name: name.trim(),
-                description: (description || '').trim(),
-                ruleType: ruleType || 'WORKFLOW',
-                assignedEntities: entities,
-                isEnabled: true,
-                priority: 0,
-                config: {},
-                category: category ? category.trim() : null,
-                createdAt: Date.now(),
-                updatedAt: Date.now()
-            };
-            rules.push(newRule);
+            const nameNorm = name.trim().toLowerCase();
+            const descNorm = (description || '').trim();
+            const existing = rules.find(r =>
+                r.name && r.name.trim().toLowerCase() === nameNorm &&
+                strSimilarity(r.description || '', descNorm) >= 0.85
+            );
+
+            let resultRule;
+            if (existing) {
+                // Merge assignedEntities to avoid duplicates across multi-entity notify
+                existing.assignedEntities = [...new Set([...(existing.assignedEntities || []), ...entities])];
+                existing.updatedAt = Date.now();
+                resultRule = existing;
+            } else {
+                resultRule = {
+                    id: crypto.randomUUID(),
+                    name: name.trim(),
+                    description: descNorm,
+                    ruleType: ruleType || 'WORKFLOW',
+                    assignedEntities: entities,
+                    isEnabled: true,
+                    priority: 0,
+                    config: {},
+                    category: category ? category.trim() : null,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now()
+                };
+                rules.push(resultRule);
+            }
 
             const updateResult = await client.query(
                 `UPDATE mission_dashboard SET rules = $2, last_synced_at = NOW()
@@ -1938,9 +1971,10 @@ async function submitPayment() {
             );
             await client.query('COMMIT');
 
-            if (process.env.DEBUG === 'true') console.log(`[Mission] Rule added: "${newRule.name}" by bot, device ${deviceId}`);
-            if (serverLog) serverLog('info', 'mission', `[Mission] Rule added: "${newRule.name}" by bot, device ${deviceId}`, { deviceId });
-            res.json({ success: true, message: `Rule "${newRule.name}" added`, item: newRule, version: updateResult.rows[0].version });
+            const ruleAction = existing ? 'merged' : 'added';
+            if (process.env.DEBUG === 'true') console.log(`[Mission] Rule ${ruleAction}: "${resultRule.name}" by bot, device ${deviceId}`);
+            if (serverLog) serverLog('info', 'mission', `[Mission] Rule ${ruleAction}: "${resultRule.name}" by bot, device ${deviceId}`, { deviceId });
+            res.json({ success: true, message: `Rule "${resultRule.name}" ${ruleAction}`, item: resultRule, version: updateResult.rows[0].version });
         } catch (error) {
             await client.query('ROLLBACK');
             console.error('[Mission] Error adding rule:', error);
@@ -2091,17 +2125,32 @@ async function submitPayment() {
             const skills = row.skills || [];
 
             const entities = assignedEntities || (entityId != null ? [String(entityId)] : []);
-            const newSkill = {
-                id: crypto.randomUUID(),
-                title: title.trim(),
-                url: (url || '').trim(),
-                assignedEntities: entities,
-                category: category ? category.trim() : null,
-                createdAt: Date.now(),
-                updatedAt: Date.now(),
-                createdBy: entityId != null ? `entity_${entityId}` : 'bot'
-            };
-            skills.push(newSkill);
+            const titleNorm = title.trim().toLowerCase();
+            const urlNorm = (url || '').trim();
+            const existing = skills.find(s =>
+                s.title && s.title.trim().toLowerCase() === titleNorm &&
+                (s.url || '').trim() === urlNorm
+            );
+
+            let resultSkill;
+            if (existing) {
+                // Merge assignedEntities to avoid duplicates across multi-entity notify
+                existing.assignedEntities = [...new Set([...(existing.assignedEntities || []), ...entities])];
+                existing.updatedAt = Date.now();
+                resultSkill = existing;
+            } else {
+                resultSkill = {
+                    id: crypto.randomUUID(),
+                    title: title.trim(),
+                    url: urlNorm,
+                    assignedEntities: entities,
+                    category: category ? category.trim() : null,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                    createdBy: entityId != null ? `entity_${entityId}` : 'bot'
+                };
+                skills.push(resultSkill);
+            }
 
             const updateResult = await client.query(
                 `UPDATE mission_dashboard SET skills = $2, last_synced_at = NOW()
@@ -2110,9 +2159,10 @@ async function submitPayment() {
             );
             await client.query('COMMIT');
 
-            if (process.env.DEBUG === 'true') console.log(`[Mission] Skill added: "${newSkill.title}" by bot, device ${deviceId}`);
-            if (serverLog) serverLog('info', 'mission', `[Mission] Skill added: "${newSkill.title}" by bot, device ${deviceId}`, { deviceId });
-            res.json({ success: true, message: `Skill "${newSkill.title}" added`, item: newSkill, version: updateResult.rows[0].version });
+            const skillAction = existing ? 'merged' : 'added';
+            if (process.env.DEBUG === 'true') console.log(`[Mission] Skill ${skillAction}: "${resultSkill.title}" by bot, device ${deviceId}`);
+            if (serverLog) serverLog('info', 'mission', `[Mission] Skill ${skillAction}: "${resultSkill.title}" by bot, device ${deviceId}`, { deviceId });
+            res.json({ success: true, message: `Skill "${resultSkill.title}" ${skillAction}`, item: resultSkill, version: updateResult.rows[0].version });
         } catch (error) {
             await client.query('ROLLBACK');
             console.error('[Mission] Error adding skill:', error);

@@ -7271,8 +7271,10 @@ app.get('/api/client/pending', (req, res) => {
 /**
  * GET /api/debug/devices
  * Show all devices and their entities (for debugging).
+ * Requires admin auth — never expose unauthenticated.
  */
 app.get('/api/debug/devices', (req, res) => {
+    if (!verifyAdmin(req, res)) return;
     const result = [];
     for (const deviceId in devices) {
         const device = devices[deviceId];
