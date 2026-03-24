@@ -1,3 +1,10 @@
+# [1.162.0](https://github.com/HankHuang0516/EClaw/compare/v1.161.2...v1.162.0) (2026-03-24)
+
+
+### Features
+
+* add Note Pages + Chat demo GIFs and mockup HTML for enterprise page ([64b6b09](https://github.com/HankHuang0516/EClaw/commit/64b6b09d3e817ba1e8181775d976bff4e85925ff))
+
 ## [1.161.2](https://github.com/HankHuang0516/EClaw/compare/v1.161.1...v1.161.2) (2026-03-24)
 
 
