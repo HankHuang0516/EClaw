@@ -1,3 +1,10 @@
+# [1.159.0](https://github.com/HankHuang0516/EClaw/compare/v1.158.0...v1.159.0) (2026-03-24)
+
+
+### Features
+
+* Note Page public/private UX - badge in list + toggle in viewer ([73c8d13](https://github.com/HankHuang0516/EClaw/commit/73c8d1314e50b39b2c82e42839f4111712cb4070))
+
 # [1.158.0](https://github.com/HankHuang0516/EClaw/compare/v1.157.0...v1.158.0) (2026-03-23)
 
 
