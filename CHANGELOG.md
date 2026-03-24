@@ -1,3 +1,10 @@
+## [1.162.1](https://github.com/HankHuang0516/EClaw/compare/v1.162.0...v1.162.1) (2026-03-24)
+
+
+### Bug Fixes
+
+* prevent Enter from sending message during IME composition (Mac Chinese input) ([2b91a46](https://github.com/HankHuang0516/EClaw/commit/2b91a46563e41730b8dddb503816b995b6a5c371))
+
 # [1.162.0](https://github.com/HankHuang0516/EClaw/compare/v1.161.2...v1.162.0) (2026-03-24)
 
 
