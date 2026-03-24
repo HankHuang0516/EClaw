@@ -2926,6 +2926,44 @@ app.get('/', (req, res) => {
 });
 
 // Health check endpoint for Railway
+/**
+ * GET /api/whoami — Identify the calling bot entity
+ * Auth: botSecret (query param). Searches all devices to find the matching entity.
+ * Optional: entityId (if botSecret is shared across multiple entities on same device)
+ * Response: { success, entityId, deviceId, name, character, state, level, xp, publicCode, agentCard }
+ */
+app.get('/api/whoami', (req, res) => {
+    const { botSecret, entityId } = req.query;
+    if (!botSecret) {
+        return res.status(400).json({ success: false, error: 'botSecret query parameter required' });
+    }
+
+    // Search all devices for matching botSecret
+    const targetEntityId = entityId !== undefined ? parseInt(entityId) : null;
+    for (const [deviceId, device] of Object.entries(devices)) {
+        for (const [eid, entity] of Object.entries(device.entities)) {
+            if (!entity || !entity.isBound) continue;
+            if (!safeEqual(entity.botSecret, botSecret)) continue;
+            if (targetEntityId !== null && parseInt(eid) !== targetEntityId) continue;
+
+            return res.json({
+                success: true,
+                entityId: parseInt(eid),
+                deviceId,
+                name: entity.name || null,
+                character: entity.character || null,
+                state: entity.state || 'IDLE',
+                level: entity.level || 1,
+                xp: entity.xp || 0,
+                publicCode: entity.publicCode || null,
+                agentCard: entity.agentCard || null
+            });
+        }
+    }
+
+    return res.status(401).json({ success: false, error: 'Invalid botSecret' });
+});
+
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: Date.now(), build: SERVER_BUILD_TAG, uptime: process.uptime(), startedAt: SERVER_STARTED_AT.toISOString() });
 });
