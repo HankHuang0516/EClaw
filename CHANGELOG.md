@@ -1,3 +1,10 @@
+# [1.163.0](https://github.com/HankHuang0516/EClaw/compare/v1.162.1...v1.163.0) (2026-03-24)
+
+
+### Features
+
+* add GET /api/whoami endpoint for bot self-identification ([3f225d3](https://github.com/HankHuang0516/EClaw/commit/3f225d396c505f2900768732de41304af65ec7dd))
+
 ## [1.162.1](https://github.com/HankHuang0516/EClaw/compare/v1.162.0...v1.162.1) (2026-03-24)
 
 
