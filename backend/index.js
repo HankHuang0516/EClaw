@@ -1097,6 +1097,7 @@ app.get('/p/:code/:noteId', async (req, res) => {
         res.send(renderPublicPageShell(pageTitle, htmlContent, {
             entityName,
             publicCode: code,
+            noteId,
             updatedAt: row.updated_at,
             siblingPages
         }));
@@ -1116,7 +1117,7 @@ function sanitizePublicHtml(html) {
 }
 
 function renderPublicPageShell(title, content, opts = {}) {
-    const { entityName, publicCode, updatedAt, siblingPages } = opts;
+    const { entityName, publicCode, noteId, updatedAt, siblingPages } = opts;
     const safeTitle = (title || '').replace(/</g, '&lt;').replace(/"/g, '&quot;');
     const footerInfo = entityName
         ? `<div class="page-footer">
@@ -1172,11 +1173,21 @@ function renderPublicPageShell(title, content, opts = {}) {
         .page-footer{max-width:900px;margin:40px auto 20px;padding:16px 24px;border-top:1px solid var(--border);color:var(--text-muted);font-size:13px;text-align:center}
         .page-footer a{color:var(--accent);text-decoration:none}
         .page-footer a:hover{text-decoration:underline}
+        .url-bar{max-width:900px;margin:16px auto 0;padding:0 24px}
+        .url-bar-inner{display:flex;align-items:center;gap:8px;background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:8px 12px;transition:border-color .2s}
+        .url-bar-inner:hover{border-color:var(--accent)}
+        .url-bar-icon{color:var(--text-muted);font-size:14px;flex-shrink:0}
+        .url-bar-text{flex:1;color:var(--text);font-size:13px;font-family:'SF Mono',Monaco,Consolas,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;user-select:all}
+        .url-bar-copy{background:var(--accent);color:white;border:none;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;flex-shrink:0}
+        .url-bar-copy:hover{opacity:.85;transform:scale(1.03)}
+        .url-bar-copy:active{transform:scale(.97)}
+        .url-bar-copy.copied{background:#22c55e}
     </style>
 </head>
 <body>
     <div class="page-header"><a href="https://eclawbot.com">EClawbot</a></div>
     ${navHtml}
+    ${publicCode && noteId ? `<div class="url-bar"><div class="url-bar-inner"><span class="url-bar-icon">🔗</span><span class="url-bar-text" id="page-url">https://eclawbot.com/p/${publicCode}/${noteId}</span><button class="url-bar-copy" id="copy-url-btn" onclick="copyPageUrl()">複製</button></div></div><script>function copyPageUrl(){var u=document.getElementById('page-url').textContent,b=document.getElementById('copy-url-btn');navigator.clipboard.writeText(u).then(function(){b.textContent='已複製 ✓';b.classList.add('copied');setTimeout(function(){b.textContent='複製';b.classList.remove('copied')},2000)}).catch(function(){var t=document.createElement('textarea');t.value=u;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);b.textContent='已複製 ✓';b.classList.add('copied');setTimeout(function(){b.textContent='複製';b.classList.remove('copied')},2000)})}<\/script>` : ''}
     <div class="page-content">${content}</div>
     ${footerInfo}
     ${content.includes('data-eclaw-form') ? '<script src="/assets/eclaw-forms.js"></script>' : ''}
