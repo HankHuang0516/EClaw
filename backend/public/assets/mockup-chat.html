@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a2e; color:#e0e0e0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; overflow:hidden; }
+.container { width:800px; height:500px; margin:20px auto; position:relative; }
+
+.chat-window { background:#16213e; border-radius:12px; width:520px; margin:0 auto; height:460px; display:flex; flex-direction:column; overflow:hidden; }
+.chat-header { background:#0f1629; padding:12px 16px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #2a2a4e; }
+.chat-avatar { width:32px; height:32px; background:#7c83ff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; }
+.chat-name { font-weight:600; font-size:14px; }
+.chat-status { font-size:11px; color:#4ade80; }
+.chat-tabs { display:flex; gap:4px; padding:8px 12px; background:#0f1629; }
+.chat-tab { padding:4px 12px; border-radius:12px; font-size:11px; cursor:pointer; background:#1a1a2e; border:1px solid #2a2a4e; }
+.chat-tab.active { background:#7c83ff; color:white; border-color:#7c83ff; }
+
+.messages { flex:1; padding:16px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
+.msg { max-width:75%; padding:10px 14px; border-radius:12px; font-size:13px; line-height:1.5; }
+.msg-bot { background:#2a2a4e; align-self:flex-start; border-bottom-left-radius:4px; }
+.msg-user { background:#7c83ff; color:white; align-self:flex-end; border-bottom-right-radius:4px; }
+.msg-time { font-size:9px; color:#666; margin-top:4px; }
+
+/* Product card */
+.product-card { background:#1e293b; border:1px solid #334155; border-radius:10px; overflow:hidden; max-width:280px; align-self:flex-start; }
+.product-img { height:100px; background:linear-gradient(135deg,#7c83ff,#ff6b9d); display:flex; align-items:center; justify-content:center; font-size:40px; }
+.product-info { padding:10px; }
+.product-name { font-weight:600; font-size:13px; margin-bottom:4px; }
+.product-price { color:#4ade80; font-weight:700; font-size:14px; }
+.product-btn { background:#7c83ff; color:white; border:none; padding:6px 16px; border-radius:6px; font-size:11px; cursor:pointer; margin-top:6px; width:100%; }
+
+/* Note preview iframe */
+.note-preview { background:#0d1117; border:1px solid #334155; border-radius:8px; overflow:hidden; max-width:300px; align-self:flex-start; }
+.note-preview-header { background:#161b22; padding:6px 10px; font-size:10px; color:#8b949e; display:flex; align-items:center; gap:6px; }
+.note-preview-body { padding:10px; font-size:12px; color:#c9d1d9; line-height:1.5; }
+.note-link { color:#58a6ff; font-size:11px; text-decoration:none; }
+
+/* Paste indicator */
+.paste-indicator { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(124,131,255,0.9); color:white; padding:12px 24px; border-radius:8px; font-size:14px; font-weight:600; display:none; z-index:10; }
+
+.input-bar { padding:10px; background:#0f1629; display:flex; align-items:center; gap:8px; border-top:1px solid #2a2a4e; }
+.input-field { flex:1; background:#1a1a2e; border:1px solid #2a2a4e; border-radius:8px; padding:8px 12px; color:#e0e0e0; font-size:13px; }
+.send-btn { background:#7c83ff; color:white; border:none; padding:8px 16px; border-radius:8px; font-size:13px; cursor:pointer; }
+.attach-btn { background:transparent; border:1px solid #2a2a4e; color:#8b949e; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:14px; }
+
+.frame-indicator { position:absolute; bottom:10px; right:10px; font-size:10px; color:#666; background:#1a1a2e; padding:4px 8px; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="chat-window">
+    <div class="chat-header">
+      <div class="chat-avatar">🛒</div>
+      <div>
+        <div class="chat-name">小蝦客服 (#2)</div>
+        <div class="chat-status">● Online</div>
+      </div>
+    </div>
+    <div class="chat-tabs">
+      <div class="chat-tab">🦞 EClaw 小助手</div>
+      <div class="chat-tab active">🛒 小蝦客服</div>
+      <div class="chat-tab">🦞 Railway_Claude主管</div>
+    </div>
+    <div class="messages" id="messages">
+      <div class="msg msg-user">Hi! I'm looking for shrimp products</div>
+      <div class="msg msg-bot">Welcome! 🦐 Here's our best seller:</div>
+
+      <!-- Product Card -->
+      <div class="product-card" id="productCard">
+        <div class="product-img">🦐</div>
+        <div class="product-info">
+          <div class="product-name">Premium Shrimp Bundle</div>
+          <div class="product-price">$29.99</div>
+          <button class="product-btn">🛒 Add to Cart</button>
+        </div>
+      </div>
+
+      <div class="msg msg-bot">Check out our full catalog:</div>
+
+      <!-- Note Preview -->
+      <div class="note-preview" id="notePreview">
+        <div class="note-preview-header">📄 eclaw://note/product-catalog</div>
+        <div class="note-preview-body">
+          <strong>Product Catalog</strong><br>
+          🦐 Fresh Shrimp Bundle - $29.99<br>
+          🎣 Fishing Starter Kit - $49.99<br>
+          <a class="note-link" href="#">Open full page →</a>
+        </div>
+      </div>
+
+      <div class="msg msg-user">Looks great! I'll take the shrimp bundle</div>
+      <div class="msg msg-bot">Order confirmed! 🎉 You'll receive a confirmation shortly.</div>
+    </div>
+    <div class="input-bar">
+      <button class="attach-btn">+</button>
+      <input class="input-field" placeholder="Type a message..." value="">
+      <button class="send-btn">Send</button>
+    </div>
+  </div>
+  <div class="frame-indicator">Frame 1/4</div>
+</div>
+</body>
+</html>
