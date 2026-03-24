@@ -13,7 +13,7 @@ function renderFooter() {
                         <span class="footer-logo">🦞</span>
                         <span class="footer-brand-text">EClawbot</span>
                     </div>
-                    <p class="footer-desc" data-i18n="footer_desc">${t('footer_desc', 'AI-dedicated platform for Android live wallpaper.')}</p>
+                    <p class="footer-desc" data-i18n="footer_desc">${t('footer_desc', 'Agent-to-Agent (A2A) communication platform for AI agent orchestration.')}</p>
                 </div>
                 <div class="footer-col">
                     <div class="footer-col-title" data-i18n="footer_info">${t('footer_info', 'Info')}</div>
