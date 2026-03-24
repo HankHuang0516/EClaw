@@ -718,6 +718,22 @@
             transition: background 0.15s;
         }
         .note-page-btn:hover { background: var(--input-bg); }
+        .note-public-tag, .note-private-tag {
+            flex-shrink: 0;
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 8px;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+        .note-public-tag {
+            background: rgba(76, 175, 80, 0.15);
+            color: #4CAF50;
+        }
+        .note-private-tag {
+            background: rgba(158, 158, 158, 0.15);
+            color: #9E9E9E;
+        }
     </style>
     <link rel="canonical" href="https://eclawbot.com/portal/mission.html">
 </head>
@@ -849,6 +865,7 @@
             <button id="wvClearBtn" style="display:none" onclick="clearDrawing()" data-i18n="mc_note_draw_clear">Clear</button>
             <button id="wvSaveDrawBtn" style="display:none" onclick="saveDrawing()" data-i18n="mc_note_draw_save">Save</button>
             <div class="wv-toolbar-sep"></div>
+            <button id="wvPublicToggle" onclick="togglePagePublic()" style="font-size:12px;"></button>
             <button id="wvEditHtmlBtn" onclick="editPageHtml()" data-i18n="mc_note_edit_page">Edit HTML</button>
             <button onclick="closePageViewer()" data-i18n="mc_note_page_close">Close</button>
         </div>
@@ -1613,7 +1630,7 @@
                  onclick="showEditNote('${n.id}')" oncontextmenu="showNoteMenu(event,'${n.id}')">
                 <div class="item-row">
                     <span class="item-title">${esc(n.title)}</span>
-                    ${hasPage ? `<button class="note-page-btn" onclick="event.stopPropagation();openPageViewer('${n.id}')" title="${i18n.t('mc_note_open_page')}">🌐</button>` : ''}
+                    ${hasPage ? `<span class="${notePagePublic[n.id] ? 'note-public-tag' : 'note-private-tag'}">${notePagePublic[n.id] ? '🌐 ' + (i18n.t('mc_note_public_label') || 'Public') : '🔒 ' + (i18n.t('mc_note_private_label') || 'Private')}</span><button class="note-page-btn" onclick="event.stopPropagation();openPageViewer('${n.id}')" title="${i18n.t('mc_note_open_page')}">🌐</button>` : ''}
                     <button class="item-delete" onclick="event.stopPropagation();deleteNote('${n.id}')" title="${i18n.t('common_delete')}">&times;</button>
                 </div>
                 <div class="item-detail">${esc((n.content || '').slice(0, 80))}</div>
@@ -1977,6 +1994,7 @@
 
             document.getElementById('wvTitle').textContent = note.title;
             document.getElementById('wvOverlay').style.display = 'flex';
+            updatePublicToggleBtn(noteId);
             showDrawTools(false);
 
             // Load page content
@@ -2057,6 +2075,42 @@
             document.getElementById('wvOverlay').style.display = 'none';
             document.getElementById('wvIframe').srcdoc = '';
             viewerNoteId = null;
+        }
+
+        function updatePublicToggleBtn(noteId) {
+            const btn = document.getElementById('wvPublicToggle');
+            if (!btn) return;
+            const isPublic = !!notePagePublic[noteId];
+            btn.textContent = isPublic ? '🌐 ' + (i18n.t('mc_note_public_label') || 'Public') : '🔒 ' + (i18n.t('mc_note_private_label') || 'Private');
+            btn.style.color = isPublic ? '#4CAF50' : '#9E9E9E';
+        }
+
+        async function togglePagePublic() {
+            if (!viewerNoteId) return;
+            const isCurrentlyPublic = !!notePagePublic[viewerNoteId];
+            const newPublic = !isCurrentlyPublic;
+            if (newPublic) {
+                const msg = i18n.t('mc_note_confirm_public') || 'This page will be visible to everyone without login. Are you sure you want to make it public?';
+                if (!confirm(msg)) return;
+            }
+            try {
+                await apiCall('PATCH', '/api/mission/note/page/public', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    noteId: viewerNoteId,
+                    isPublic: newPublic
+                });
+                if (newPublic) {
+                    notePagePublic[viewerNoteId] = true;
+                } else {
+                    delete notePagePublic[viewerNoteId];
+                }
+                updatePublicToggleBtn(viewerNoteId);
+                renderNotes();
+                showToast(newPublic ? (i18n.t('mc_note_now_public') || 'Page is now public') : (i18n.t('mc_note_now_private') || 'Page is now private'), 'success');
+            } catch (e) {
+                showToast((i18n.t('toast_toggle_public_failed') || 'Failed to update') + ': ' + e.message, 'error');
+            }
         }
 
         // --- Drawing ---
