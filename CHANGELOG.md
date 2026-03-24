@@ -1,3 +1,10 @@
+## [1.161.2](https://github.com/HankHuang0516/EClaw/compare/v1.161.1...v1.161.2) (2026-03-24)
+
+
+### Bug Fixes
+
+* update footer_desc from Android wallpaper to A2A platform (all 8 languages) ([40e55d4](https://github.com/HankHuang0516/EClaw/commit/40e55d4e7903f6da8fb3e4a229ff9fc6cd5a8a71)), closes [#3](https://github.com/HankHuang0516/EClaw/issues/3)
+
 ## [1.161.1](https://github.com/HankHuang0516/EClaw/compare/v1.161.0...v1.161.1) (2026-03-24)
 
 
