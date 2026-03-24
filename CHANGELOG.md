@@ -1,3 +1,10 @@
+## [1.161.1](https://github.com/HankHuang0516/EClaw/compare/v1.161.0...v1.161.1) (2026-03-24)
+
+
+### Bug Fixes
+
+* avatar HTML appearing as raw text in schedule display (#hardcoded-avatar) ([39efcfd](https://github.com/HankHuang0516/EClaw/commit/39efcfd92fb3497ddf61b3eb853a2cf0f975fd84)), closes [#hardcoded-avatar](https://github.com/HankHuang0516/EClaw/issues/hardcoded-avatar)
+
 # [1.161.0](https://github.com/HankHuang0516/EClaw/compare/v1.160.1...v1.161.0) (2026-03-24)
 
 
