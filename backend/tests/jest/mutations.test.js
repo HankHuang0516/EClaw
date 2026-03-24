@@ -263,16 +263,21 @@ describe('POST /api/feedback — input validation', () => {
 // GET /api/entities — entity listing
 // ════════════════════════════════════════════════════════════════
 describe('GET /api/entities — input validation', () => {
-    it('returns a response when deviceId is missing', async () => {
+    it('returns 400 when deviceId is missing', async () => {
         const res = await get('/api/entities');
-        // Server returns 400 (missing param) or 200 (empty response)
-        expect([200, 400].includes(res.status)).toBe(true);
+        expect(res.status).toBe(400);
     });
 
-    it('returns a response for nonexistent device', async () => {
-        const res = await get('/api/entities?deviceId=nonexistent');
-        // Server auto-creates device or returns 404
-        expect([200, 404].includes(res.status)).toBe(true);
+    it('returns 404 for nonexistent device', async () => {
+        const res = await get('/api/entities?deviceId=nonexistent&deviceSecret=wrong');
+        expect(res.status).toBe(404);
+    });
+
+    it('returns 403 for wrong deviceSecret', async () => {
+        // Register a device first
+        await post('/api/device/register').send({ deviceId: 'ent-auth-test', deviceSecret: 'correct', entityId: 0 });
+        const res = await get('/api/entities?deviceId=ent-auth-test&deviceSecret=wrong');
+        expect(res.status).toBe(403);
     });
 });
 

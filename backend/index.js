@@ -1,4 +1,4 @@
-﻿// Claw Live Wallpaper Backend - Multi-Device Multi-Entity Support (v5.6)
+// Claw Live Wallpaper Backend - Multi-Device Multi-Entity Support (v5.6)
 // Each device has its own 4-8 entity slots (matrix architecture)
 // v5.6 Changes: Enterprise features (TLS, Audit, Agent Card, OIDC, RBAC)
 const express = require('express');
@@ -23,6 +23,9 @@ const feedbackEmail = require('./feedback-email');
 const multer = require('multer');
 const crypto = require('crypto');
 const WebSocket = require('ws');
+
+const safeEqual = require('./safe-equal');
+
 const app = express();
 app.set('trust proxy', 1); // Railway reverse proxy — makes req.ip, req.protocol accurate
 const httpServer = http.createServer(app);
@@ -49,7 +52,7 @@ io.use((socket, next) => {
     const deviceSecret = socket.handshake.auth?.deviceSecret || socket.handshake.query?.deviceSecret;
     if (deviceId && deviceSecret) {
         const device = devices[deviceId];
-        if (device && device.deviceSecret === deviceSecret) {
+        if (device && safeEqual(device.deviceSecret, deviceSecret)) {
             socket.deviceId = deviceId;
             return next();
         }
@@ -91,6 +94,8 @@ app.use((req, res, next) => {
     const frameable = req.path.startsWith('/c/') || req.path.startsWith('/p/');
     res.setHeader('X-Frame-Options', frameable ? 'SAMEORIGIN' : 'DENY');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    // CSP: allow inline scripts/styles for portal pages, restrict external sources
+    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdn.socket.io; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: https: blob:; connect-src 'self' wss: https:; frame-src 'self' https:; frame-ancestors 'self'");
     next();
 });
 
@@ -138,7 +143,14 @@ app.use(cors({
     credentials: true
 }));
 app.use('/api/ai-support/chat', express.json({ limit: '10mb' }));
-app.use(express.json());
+app.use(express.json({
+    verify: (req, _res, buf) => {
+        // Capture raw body for Discord signature verification
+        if (req.url && req.url.startsWith('/api/discord/interactions')) {
+            req.rawBody = buf;
+        }
+    }
+}));
 app.use(cookieParser());
 
 // SEO: serve robots.txt, sitemap.xml, llms.txt at root
@@ -162,6 +174,11 @@ app.get('/enterprise', (req, res) => {
     res.set('Cache-Control', 'public, max-age=3600');
     res.sendFile(path.join(__dirname, 'public/enterprise.html'));
 });
+// Info Hub page
+app.get('/info', (req, res) => {
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'public/portal/info.html'));
+});
 
 // ── Enterprise Demo Chat ─────────────────────────────────────
 // Public endpoint — no auth required, rate-limited by IP
@@ -183,6 +200,18 @@ function entDemoHtmlToText(html) {
         .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
         .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
         .replace(/\s+/g, ' ').trim();
+}
+
+function isPrivateIp(ip) {
+    if (!ip) return false;
+    if (ip === '127.0.0.1' || ip === '0.0.0.0' || ip === '::1') return true;
+    if (ip.startsWith('10.') || ip.startsWith('192.168.')) return true;
+    const m172 = ip.match(/^172\.(\d+)\./);
+    if (m172 && +m172[1] >= 16 && +m172[1] <= 31) return true;
+    if (ip.startsWith('169.254.')) return true;
+    const lower = ip.toLowerCase();
+    if (lower.startsWith('fc') || lower.startsWith('fd') || lower.startsWith('fe80')) return true;
+    return false;
 }
 
 function isPrivateHost(hostname) {
@@ -1437,13 +1466,13 @@ app.post('/api/skill-templates/contribute', async (req, res) => {
     // Find entity: try explicit entityId first, then search all slots by botSecret
     let eId = parseInt(entityId);
     let entity = !isNaN(eId) && device.entities[eId];
-    if (!entity || !entity.isBound || entity.botSecret !== botSecret) {
+    if (!entity || !entity.isBound || !safeEqual(entity.botSecret, botSecret)) {
         // Search all entity slots for matching botSecret
         eId = -1;
         entity = null;
         for (const i of Object.keys(device.entities).map(Number)) {
             const e = device.entities[i];
-            if (e && e.isBound && e.botSecret === botSecret) {
+            if (e && e.isBound && safeEqual(e.botSecret, botSecret)) {
                 eId = i;
                 entity = e;
                 break;
@@ -1588,7 +1617,7 @@ app.get('/api/skill-templates/status/:pendingId', async (req, res) => {
 
     const eId = parseInt(entityId) || 0;
     const entity = device.entities[eId];
-    if (!entity || !entity.isBound || entity.botSecret !== botSecret)
+    if (!entity || !entity.isBound || !safeEqual(entity.botSecret, botSecret))
         return res.status(403).json({ success: false, error: 'Invalid botSecret or entity not bound' });
 
     try {
@@ -1676,12 +1705,12 @@ app.post('/api/soul-templates/contribute', async (req, res) => {
     // Find entity: try explicit entityId first, then search all slots by botSecret
     let eId = parseInt(entityId);
     let entity = !isNaN(eId) && device.entities[eId];
-    if (!entity || !entity.isBound || entity.botSecret !== botSecret) {
+    if (!entity || !entity.isBound || !safeEqual(entity.botSecret, botSecret)) {
         eId = -1;
         entity = null;
         for (const i of Object.keys(device.entities).map(Number)) {
             const e = device.entities[i];
-            if (e && e.isBound && e.botSecret === botSecret) {
+            if (e && e.isBound && safeEqual(e.botSecret, botSecret)) {
                 eId = i;
                 entity = e;
                 break;
@@ -1762,12 +1791,12 @@ app.post('/api/rule-templates/contribute', async (req, res) => {
     // Find entity: try explicit entityId first, then search all slots by botSecret
     let eId = parseInt(entityId);
     let entity = !isNaN(eId) && device.entities[eId];
-    if (!entity || !entity.isBound || entity.botSecret !== botSecret) {
+    if (!entity || !entity.isBound || !safeEqual(entity.botSecret, botSecret)) {
         eId = -1;
         entity = null;
         for (const i of Object.keys(device.entities).map(Number)) {
             const e = device.entities[i];
-            if (e && e.isBound && e.botSecret === botSecret) {
+            if (e && e.isBound && safeEqual(e.botSecret, botSecret)) {
                 eId = i;
                 entity = e;
                 break;
@@ -1849,7 +1878,7 @@ app.post('/api/free-bot-tos/agree', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
     const device = devices[deviceId];
-    if (!device || (device.deviceSecret && device.deviceSecret !== deviceSecret)) {
+    if (!device || (device.deviceSecret && !safeEqual(device.deviceSecret, deviceSecret))) {
         return res.status(403).json({ success: false, error: 'Invalid credentials' });
     }
     if (tosVersion !== gatekeeper.FREE_BOT_TOS_VERSION) {
@@ -1965,7 +1994,7 @@ app.post('/api/gatekeeper/appeal', async (req, res) => {
     if (!deviceId || !deviceSecret) return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
 
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid credentials' });
     }
 
@@ -1991,7 +2020,7 @@ app.get('/api/admin/gatekeeper/debug', async (req, res) => {
     const { deviceId, deviceSecret } = req.query;
     if (!deviceId || !deviceSecret) return res.status(400).json({ error: 'deviceId and deviceSecret required' });
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) return res.status(403).json({ error: 'Invalid credentials' });
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) return res.status(403).json({ error: 'Invalid credentials' });
     // Query DB for is_admin
     let dbAdmin = null;
     try {
@@ -2133,7 +2162,7 @@ app.get('/api/platform-stats', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
     try {
@@ -2952,10 +2981,27 @@ const pendingScreenRequests = {};
 const screenCaptureRateLimits = {}; // deviceId -> { lastAt }
 const SCREEN_CAPTURE_MIN_INTERVAL_MS = 500;
 
-
+// Link preview rate limiter: per-IP, 30 req/min
+const linkPreviewRateLimits = new Map();
+function checkLinkPreviewRateLimit(ip) {
+    const now = Date.now();
+    const entry = linkPreviewRateLimits.get(ip);
+    if (!entry || now - entry.windowStart > 60000) {
+        linkPreviewRateLimits.set(ip, { windowStart: now, count: 1 });
+        return true;
+    }
+    if (entry.count >= 30) return false;
+    entry.count++;
+    return true;
+}
 
 /* global AbortController, TextDecoder */
 app.get('/api/link-preview', async (req, res) => {
+    // Rate limit: 30 req/min per IP
+    if (!checkLinkPreviewRateLimit(req.ip)) {
+        return res.status(429).json({ error: 'Rate limit exceeded. Try again later.' });
+    }
+
     const { url } = req.query;
     if (!url) return res.status(400).json({ error: 'url parameter required' });
 
@@ -2970,9 +3016,22 @@ app.get('/api/link-preview', async (req, res) => {
         return res.status(400).json({ error: 'Invalid URL' });
     }
 
-    // SSRF protection: block private/internal IP ranges
+    // SSRF protection: block private/internal IP ranges (hostname check)
     if (isPrivateHost(parsedUrl.hostname)) {
         return res.status(400).json({ error: 'Private/internal URLs are not allowed' });
+    }
+
+    // DNS rebinding protection: resolve hostname and check resolved IP
+    try {
+        const dns = require('dns');
+        const { promisify } = require('util');
+        const lookup = promisify(dns.lookup);
+        const { address } = await lookup(parsedUrl.hostname);
+        if (isPrivateIp(address)) {
+            return res.status(400).json({ error: 'Private/internal URLs are not allowed' });
+        }
+    } catch {
+        return res.status(400).json({ error: 'Could not resolve hostname' });
     }
 
     // Check cache
@@ -3101,7 +3160,7 @@ app.post('/api/device/register', (req, res) => {
     }
 
     // Verify device secret if device already exists
-    if (device.deviceSecret && device.deviceSecret !== deviceSecret) {
+    if (device.deviceSecret && !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({
             success: false,
             message: "Invalid deviceSecret for this device"
@@ -3154,7 +3213,7 @@ app.post('/api/device/status', (req, res) => {
     const device = getOrCreateDevice(deviceId, deviceSecret);
 
     // Verify device secret
-    if (device.deviceSecret && device.deviceSecret !== deviceSecret) {
+    if (device.deviceSecret && !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, message: "Unauthorized" });
     }
 
@@ -3306,15 +3365,34 @@ app.post('/api/bind', async (req, res) => {
 
 /**
  * GET /api/entities
- * Get all bound entities across all devices.
- * Query: ?deviceId=xxx (optional, filter by device)
+ * Get bound entities for a specific device.
+ * Auth: deviceId+deviceSecret OR JWT cookie (web portal)
  */
 app.get('/api/entities', (req, res) => {
     const filterDeviceId = req.query.deviceId;
+    const deviceSecret = req.query.deviceSecret;
+
+    // Auth: deviceId+deviceSecret OR JWT cookie
+    const jwtDeviceId = req.user && req.user.deviceId;
+    const authedDeviceId = (filterDeviceId && deviceSecret && devices[filterDeviceId] && safeEqual(devices[filterDeviceId].deviceSecret, deviceSecret))
+        ? filterDeviceId
+        : (jwtDeviceId && (!filterDeviceId || filterDeviceId === jwtDeviceId)) ? jwtDeviceId : null;
+
+    if (!filterDeviceId && !jwtDeviceId) {
+        return res.status(400).json({ success: false, message: 'deviceId required' });
+    }
+    const effectiveDeviceId = filterDeviceId || jwtDeviceId;
+    if (!devices[effectiveDeviceId]) {
+        return res.status(404).json({ success: false, message: 'Device not found' });
+    }
+    if (!authedDeviceId) {
+        return res.status(403).json({ success: false, message: 'Invalid credentials' });
+    }
+
     const entities = [];
 
     for (const deviceId in devices) {
-        if (filterDeviceId && deviceId !== filterDeviceId) continue;
+        if (deviceId !== authedDeviceId) continue;
 
         const device = devices[deviceId];
         for (const i of Object.keys(device.entities).map(Number)) {
@@ -3352,8 +3430,8 @@ app.get('/api/entities', (req, res) => {
     }
 
     // Log entity count changes for device-filtered requests (#48 diagnosis)
-    if (filterDeviceId && devices[filterDeviceId]) {
-        const device = devices[filterDeviceId];
+    {
+        const device = devices[authedDeviceId];
         const allSlotStates = [];
         for (const i of Object.keys(device.entities).map(Number)) {
             const e = device.entities[i];
@@ -3362,25 +3440,22 @@ app.get('/api/entities', (req, res) => {
         }
 
         if (entities.length === 0) {
-            // Log when a device-filtered request returns no entities but the device exists
-            // This helps diagnose transient empty responses that cause client-side card disappearing (#16)
-            serverLog('warn', 'entity_poll', `Device ${filterDeviceId} returned 0 bound entities (device exists, slots: ${allSlotStates.join(',')})`, {
-                deviceId: filterDeviceId,
+            serverLog('warn', 'entity_poll', `Device ${authedDeviceId} returned 0 bound entities (device exists, slots: ${allSlotStates.join(',')})`, {
+                deviceId: authedDeviceId,
                 metadata: { totalDeviceSlots: Object.keys(device.entities).length, persistenceReady, slots: allSlotStates }
             });
         } else if (entities.length < Object.keys(device.entities).length) {
-            // Log partial entity count (some bound, some not) — helps diagnose #48
-            serverLog('info', 'entity_poll', `Device ${filterDeviceId} returned ${entities.length}/${Object.keys(device.entities).length} bound entities (slots: ${allSlotStates.join(',')})`, {
-                deviceId: filterDeviceId,
+            serverLog('info', 'entity_poll', `Device ${authedDeviceId} returned ${entities.length}/${Object.keys(device.entities).length} bound entities (slots: ${allSlotStates.join(',')})`, {
+                deviceId: authedDeviceId,
                 metadata: { boundCount: entities.length, slots: allSlotStates }
             });
         }
     }
 
     // Warn clients if persistence hasn't loaded yet (entities may appear empty transiently)
-    if (!persistenceReady && filterDeviceId && entities.length === 0) {
-        serverLog('warn', 'entity_poll', `Serving empty entities for ${filterDeviceId} while persistence is still loading`, {
-            deviceId: filterDeviceId
+    if (!persistenceReady && entities.length === 0) {
+        serverLog('warn', 'entity_poll', `Serving empty entities for ${authedDeviceId} while persistence is still loading`, {
+            deviceId: authedDeviceId
         });
     }
 
@@ -3388,8 +3463,8 @@ app.get('/api/entities', (req, res) => {
         entities: entities,
         activeCount: entities.length,
         deviceCount: Object.keys(devices).length,
-        totalSlots: filterDeviceId ? entityCount(devices[filterDeviceId]) : undefined,
-        entityIds: filterDeviceId && devices[filterDeviceId] ? Object.keys(devices[filterDeviceId].entities).map(Number) : undefined,
+        totalSlots: entityCount(devices[authedDeviceId]),
+        entityIds: Object.keys(devices[authedDeviceId].entities).map(Number),
         serverReady: persistenceReady
     });
 });
@@ -3397,14 +3472,21 @@ app.get('/api/entities', (req, res) => {
 /**
  * GET /api/status
  * Get status for specific device + entity.
- * Query: ?deviceId=xxx&entityId=0&appVersion=1.0.3
+ * Auth: deviceId+deviceSecret OR JWT cookie
  */
 app.get('/api/status', (req, res) => {
     const deviceId = req.query.deviceId;
+    const deviceSecret = req.query.deviceSecret;
     const eId = parseInt(req.query.entityId) || 0;
     const appVersion = req.query.appVersion;
 
-    if (!deviceId) {
+    // Auth: deviceId+deviceSecret OR JWT cookie
+    const jwtDeviceId = req.user && req.user.deviceId;
+    const authedDeviceId = (deviceId && deviceSecret && devices[deviceId] && safeEqual(devices[deviceId].deviceSecret, deviceSecret))
+        ? deviceId
+        : (jwtDeviceId && (!deviceId || deviceId === jwtDeviceId)) ? jwtDeviceId : null;
+
+    if (!deviceId && !jwtDeviceId) {
         return res.status(400).json({ success: false, message: "deviceId required" });
     }
 
@@ -3412,9 +3494,14 @@ app.get('/api/status', (req, res) => {
         return res.status(400).json({ success: false, message: "Invalid entityId" });
     }
 
-    const device = devices[deviceId];
+    const effectiveDeviceId = deviceId || jwtDeviceId;
+    const device = devices[effectiveDeviceId];
     if (!device) {
         return res.status(404).json({ success: false, message: "Device not found" });
+    }
+
+    if (!authedDeviceId) {
+        return res.status(403).json({ success: false, message: "Invalid credentials" });
     }
 
     if (!isValidEntityId(device, eId)) {
@@ -3481,7 +3568,7 @@ app.post('/api/transform', (req, res) => {
     }
 
     // Verify botSecret
-    if (!botSecret || botSecret !== entity.botSecret) {
+    if (!botSecret || !safeEqual(botSecret, entity.botSecret)) {
         return res.status(403).json({
             success: false,
             message: "Invalid or missing botSecret"
@@ -3629,6 +3716,11 @@ app.post('/api/transform', (req, res) => {
             link: 'chat.html',
             metadata: { entityId: eId, character: entity.character }
         }).catch(() => {});
+
+        // Discord followup: if a pending interaction exists for this entity, send the reply
+        if (typeof discordModule !== 'undefined' && discordModule.handleTransformFollowup) {
+            discordModule.handleTransformFollowup(deviceId, eId, finalMessage, entity.name).catch(() => {});
+        }
     }
 
     res.json({
@@ -3702,7 +3794,7 @@ app.delete('/api/entity', async (req, res) => {
     }
 
     // Verify botSecret
-    if (!botSecret || botSecret !== entity.botSecret) {
+    if (!botSecret || !safeEqual(botSecret, entity.botSecret)) {
         return res.status(403).json({ success: false, message: "Invalid botSecret" });
     }
 
@@ -3808,7 +3900,7 @@ app.delete('/api/device/entity', async (req, res) => {
     }
 
     // Verify deviceSecret
-    if (device.deviceSecret !== deviceSecret) {
+    if (!safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, message: "Invalid deviceSecret" });
     }
 
@@ -3893,7 +3985,7 @@ app.post('/api/device/add-entity', async (req, res) => {
     }
 
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid device credentials' });
     }
 
@@ -4164,7 +4256,7 @@ app.delete('/api/device/entity/:entityId/permanent', async (req, res) => {
     }
 
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid device credentials' });
     }
 
@@ -4263,7 +4355,7 @@ app.post('/api/device/compact-entities', async (req, res) => {
     }
 
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid device credentials' });
     }
 
@@ -4293,7 +4385,7 @@ app.get('/api/device/entity-trash', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid device credentials' });
     }
     if (!usePostgreSQL) {
@@ -4342,7 +4434,7 @@ app.post('/api/device/entity-trash/:trashId/restore', async (req, res) => {
     }
 
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid device credentials' });
     }
 
@@ -4442,7 +4534,7 @@ app.delete('/api/device/entity-trash/:trashId', async (req, res) => {
     }
 
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid device credentials' });
     }
 
@@ -4479,7 +4571,7 @@ app.post('/api/device/reorder-entities', async (req, res) => {
     }
 
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid device credentials' });
     }
 
@@ -4727,7 +4819,7 @@ app.put('/api/device/entity/name', async (req, res) => {
         return res.status(404).json({ success: false, message: "Device not found" });
     }
 
-    if (device.deviceSecret !== deviceSecret) {
+    if (!safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, message: "Invalid deviceSecret" });
     }
 
@@ -4824,7 +4916,7 @@ app.put('/api/device/entity/avatar', async (req, res) => {
         return res.status(404).json({ success: false, message: "Device not found" });
     }
 
-    if (device.deviceSecret !== deviceSecret) {
+    if (!safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, message: "Invalid deviceSecret" });
     }
 
@@ -4894,7 +4986,7 @@ app.post('/api/device/entity/avatar/upload', avatarUpload.single('file'), async 
         return res.status(404).json({ success: false, message: "Device not found" });
     }
 
-    if (device.deviceSecret !== deviceSecret) {
+    if (!safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, message: "Invalid deviceSecret" });
     }
 
@@ -4953,9 +5045,9 @@ app.post('/api/client/speak', async (req, res) => {
     }
 
     // Developer exemption: admin-owned devices with valid deviceSecret skip Gatekeeper First Lock
-    const isDeveloper = deviceSecret && device.deviceSecret === deviceSecret && developerDeviceIds.has(deviceId);
+    const isDeveloper = deviceSecret && safeEqual(device.deviceSecret, deviceSecret) && developerDeviceIds.has(deviceId);
     if (deviceSecret) {
-        console.log(`[Gatekeeper Debug] deviceId=${deviceId}, secretMatch=${device.deviceSecret === deviceSecret}, inDevSet=${developerDeviceIds.has(deviceId)}, devSetSize=${developerDeviceIds.size}, isDeveloper=${isDeveloper}`);
+        console.log(`[Gatekeeper Debug] deviceId=${deviceId}, secretMatch=${safeEqual(device.deviceSecret, deviceSecret)}, inDevSet=${developerDeviceIds.has(deviceId)}, devSetSize=${developerDeviceIds.size}, isDeveloper=${isDeveloper}`);
     }
 
     // Usage enforcement — apply to all non-premium devices
@@ -5375,7 +5467,7 @@ app.post('/api/entity/speak-to', async (req, res) => {
     }
 
     // Verify botSecret of sending entity
-    if (!fromEntity.isBound || fromEntity.botSecret !== botSecret) {
+    if (!fromEntity.isBound || !safeEqual(fromEntity.botSecret, botSecret)) {
         return res.status(403).json({ success: false, message: "Invalid botSecret for sending entity" });
     }
 
@@ -5604,7 +5696,7 @@ app.get('/api/entity/cross-device-settings', async (req, res) => {
         return res.status(400).json({ success: false, message: 'deviceId, deviceSecret, entityId required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
     const eid = parseInt(entityId, 10);
@@ -5631,7 +5723,7 @@ app.put('/api/entity/cross-device-settings', async (req, res) => {
         return res.status(400).json({ success: false, message: 'deviceId, deviceSecret, entityId, settings required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
     const eid = parseInt(entityId, 10);
@@ -5659,7 +5751,7 @@ app.delete('/api/entity/cross-device-settings', async (req, res) => {
         return res.status(400).json({ success: false, message: 'deviceId, deviceSecret, entityId required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
     const eid = parseInt(entityId, 10);
@@ -5702,7 +5794,7 @@ app.post('/api/entity/cross-speak', async (req, res) => {
         return res.status(400).json({ success: false, message: `Sender entity ${fromId} is not bound` });
     }
 
-    if (fromEntity.botSecret !== botSecret) {
+    if (!safeEqual(fromEntity.botSecret, botSecret)) {
         return res.status(403).json({ success: false, message: "Invalid botSecret" });
     }
 
@@ -6082,7 +6174,7 @@ app.delete('/api/entity/agent-card', (req, res) => {
 function authEntityAccess(device, deviceSecret, botSecret, entityId) {
     const eid = parseInt(entityId);
     if (deviceSecret) {
-        if (device.deviceSecret !== deviceSecret) {
+        if (!safeEqual(device.deviceSecret, deviceSecret)) {
             return { error: 'Invalid deviceSecret', status: 403 };
         }
     } else {
@@ -6343,7 +6435,7 @@ app.post('/api/contacts', async (req, res) => {
 
     // Auth check
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         if (!req.user || req.user.deviceId !== deviceId) {
             return res.status(401).json({ success: false, error: 'Unauthorized' });
         }
@@ -6393,7 +6485,7 @@ app.delete('/api/contacts', async (req, res) => {
     if (!deviceId || !publicCode) return res.status(400).json({ success: false, error: 'Missing deviceId or publicCode' });
 
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         if (!req.user || req.user.deviceId !== deviceId) {
             return res.status(401).json({ success: false, error: 'Unauthorized' });
         }
@@ -6415,7 +6507,7 @@ app.get('/api/contacts/my-cards', async (req, res) => {
     if (!deviceId || !deviceSecret) return res.status(400).json({ success: false, error: 'Missing credentials' });
 
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         if (!req.user || req.user.deviceId !== deviceId) {
             return res.status(401).json({ success: false, error: 'Unauthorized' });
         }
@@ -6453,7 +6545,7 @@ app.get('/api/contacts/recent', async (req, res) => {
     if (!deviceId || !deviceSecret) return res.status(400).json({ success: false, error: 'Missing credentials' });
 
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         if (!req.user || req.user.deviceId !== deviceId) {
             return res.status(401).json({ success: false, error: 'Unauthorized' });
         }
@@ -6534,7 +6626,7 @@ app.patch('/api/contacts/:publicCode', async (req, res) => {
     if (!deviceId) return res.status(400).json({ success: false, error: 'Missing deviceId' });
 
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         if (!req.user || req.user.deviceId !== deviceId) {
             return res.status(401).json({ success: false, error: 'Unauthorized' });
         }
@@ -6567,7 +6659,7 @@ app.post('/api/contacts/:publicCode/refresh', async (req, res) => {
     if (!deviceId) return res.status(400).json({ success: false, error: 'Missing deviceId' });
 
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         if (!req.user || req.user.deviceId !== deviceId) {
             return res.status(401).json({ success: false, error: 'Unauthorized' });
         }
@@ -6957,7 +7049,7 @@ app.post('/api/entity/broadcast', async (req, res) => {
     }
 
     // Verify botSecret of sending entity
-    if (!fromEntity.isBound || fromEntity.botSecret !== botSecret) {
+    if (!fromEntity.isBound || !safeEqual(fromEntity.botSecret, botSecret)) {
         return res.status(403).json({ success: false, message: "Invalid botSecret for sending entity" });
     }
 
@@ -7240,7 +7332,7 @@ app.get('/api/client/pending', (req, res) => {
     }
 
     // Verify botSecret matches
-    if (entity.botSecret !== botSecret) {
+    if (!safeEqual(entity.botSecret, botSecret)) {
         return res.status(403).json({
             success: false,
             message: "Invalid botSecret for this entity"
@@ -7317,7 +7409,7 @@ app.get('/api/debug/webhooks', (req, res) => {
     const { deviceId, deviceSecret } = req.query;
     if (!deviceId || !deviceSecret) return res.status(400).json({ error: 'deviceId and deviceSecret required' });
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) return res.status(401).json({ error: 'Invalid credentials' });
     const entities = [];
     for (const i of Object.keys(device.entities).map(Number)) {
         const e = device.entities[i];
@@ -7341,12 +7433,12 @@ app.get('/api/debug/webhooks', (req, res) => {
  */
 app.post('/api/debug/reset', (req, res) => {
     const adminToken = req.headers['x-admin-token'] || req.body.adminToken;
-    const expectedToken = process.env.ADMIN_SECRET || 'dev-only-localhost';
+    const expectedToken = process.env.ADMIN_SECRET;
 
     // Only allow from localhost or with correct token
     const isLocalhost = req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
 
-    if (!isLocalhost && adminToken !== expectedToken) {
+    if (!isLocalhost && (!expectedToken || !adminToken || !safeEqual(adminToken, expectedToken))) {
         return res.status(403).json({ success: false, error: 'Forbidden: admin token required' });
     }
 
@@ -7370,7 +7462,7 @@ app.post('/api/debug/set-entity-xp', (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId, deviceSecret, entityId, xp required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid credentials' });
     }
     if (!device.isTestDevice) {
@@ -7397,9 +7489,12 @@ app.post('/api/debug/set-entity-xp', (req, res) => {
 
 function verifyAdmin(req) {
     const adminToken = req.headers['x-admin-token'] || req.body.adminToken;
-    const expectedToken = process.env.ADMIN_SECRET || 'dev-only-localhost';
+    const expectedToken = process.env.ADMIN_SECRET;
     const isLocalhost = req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
-    return isLocalhost || adminToken === expectedToken;
+    // Require ADMIN_SECRET to be set for non-localhost; timing-safe compare
+    if (isLocalhost) return true;
+    if (!expectedToken || !adminToken) return false;
+    return safeEqual(adminToken, expectedToken);
 }
 
 /**
@@ -7710,7 +7805,7 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
     // Auto-create device if missing (e.g. after server redeploy)
     const device = getOrCreateDevice(deviceId, deviceSecret);
 
-    if (device.deviceSecret && device.deviceSecret !== deviceSecret) {
+    if (device.deviceSecret && !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
     }
 
@@ -7858,7 +7953,7 @@ app.post('/api/official-borrow/bind-personal', async (req, res) => {
     // Auto-create device if missing (e.g. after server redeploy)
     const device = getOrCreateDevice(deviceId, deviceSecret);
 
-    if (device.deviceSecret && device.deviceSecret !== deviceSecret) {
+    if (device.deviceSecret && !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
     }
 
@@ -8008,7 +8103,7 @@ app.post('/api/official-borrow/add-paid-slot', async (req, res) => {
     }
 
     const device = getOrCreateDevice(deviceId, deviceSecret);
-    if (device.deviceSecret && device.deviceSecret !== deviceSecret) {
+    if (device.deviceSecret && !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
     }
 
@@ -8056,7 +8151,7 @@ app.post('/api/official-borrow/unbind', async (req, res) => {
     // Auto-create device if missing (e.g. after server redeploy)
     const device = getOrCreateDevice(deviceId, deviceSecret);
 
-    if (device.deviceSecret && device.deviceSecret !== deviceSecret) {
+    if (device.deviceSecret && !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
     }
 
@@ -8132,7 +8227,7 @@ app.post('/api/official-borrow/verify-subscription', async (req, res) => {
 
     const eId = parseInt(entityId);
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid device credentials' });
     }
 
@@ -8177,7 +8272,7 @@ app.post('/api/entity/refresh', async (req, res) => {
     }
 
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid device credentials' });
     }
 
@@ -8473,7 +8568,7 @@ app.post('/api/bot/register', async (req, res) => {
     }
 
     // Verify botSecret
-    if (!botSecret || botSecret !== entity.botSecret) {
+    if (!botSecret || !safeEqual(botSecret, entity.botSecret)) {
         return res.status(403).json({ success: false, message: "Invalid botSecret" });
     }
 
@@ -8889,7 +8984,7 @@ app.delete('/api/bot/register', (req, res) => {
 
     const entity = device.entities[eId];
 
-    if (!botSecret || botSecret !== entity.botSecret) {
+    if (!botSecret || !safeEqual(botSecret, entity.botSecret)) {
         return res.status(403).json({ success: false, message: "Invalid botSecret" });
     }
 
@@ -8933,7 +9028,7 @@ app.get('/api/bot/push-status', (req, res) => {
 
     const entity = device.entities[eId];
 
-    if (!botSecret || botSecret !== entity.botSecret) {
+    if (!botSecret || !safeEqual(botSecret, entity.botSecret)) {
         return res.status(403).json({ success: false, message: "Invalid botSecret" });
     }
 
@@ -8984,7 +9079,7 @@ app.post('/api/bot/pending-messages', async (req, res) => {
     const entity = device.entities[eId];
 
     // botSecret required for authentication
-    if (!botSecret || botSecret !== entity.botSecret) {
+    if (!botSecret || !safeEqual(botSecret, entity.botSecret)) {
         return res.status(403).json({ success: false, message: "Invalid botSecret" });
     }
 
@@ -9842,11 +9937,11 @@ app.post('/api/admin/transfer-device', async (req, res) => {
 
     // Validate both devices
     const sourceDevice = devices[sourceDeviceId];
-    if (!sourceDevice || sourceDevice.deviceSecret !== sourceDeviceSecret) {
+    if (!sourceDevice || !safeEqual(sourceDevice.deviceSecret, sourceDeviceSecret)) {
         return res.status(401).json({ success: false, message: "Invalid source device credentials" });
     }
     const targetDevice = getOrCreateDevice(targetDeviceId, targetDeviceSecret);
-    if (targetDevice.deviceSecret && targetDevice.deviceSecret !== targetDeviceSecret) {
+    if (targetDevice.deviceSecret && !safeEqual(targetDevice.deviceSecret, targetDeviceSecret)) {
         return res.status(401).json({ success: false, message: "Invalid target device credentials" });
     }
     if (!targetDevice.deviceSecret) targetDevice.deviceSecret = targetDeviceSecret;
@@ -9978,7 +10073,7 @@ app.get('/api/feedback/pending-debug', async (req, res) => {
         return res.status(400).json({ success: false, message: "deviceId and deviceSecret required" });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
@@ -9993,7 +10088,7 @@ app.post('/api/feedback/:id/debug-result', async (req, res) => {
         return res.status(400).json({ success: false, message: "deviceId and deviceSecret required" });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
@@ -10019,7 +10114,7 @@ app.get('/api/feedback', async (req, res) => {
         return res.status(400).json({ success: false, message: "deviceId and deviceSecret required" });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
@@ -10037,7 +10132,7 @@ app.get('/api/feedback/:id', async (req, res) => {
         return res.status(400).json({ success: false, message: "deviceId and deviceSecret required" });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
@@ -10059,7 +10154,7 @@ app.get('/api/feedback/:id/ai-prompt', async (req, res) => {
         return res.status(400).json({ success: false, message: "deviceId and deviceSecret required" });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
@@ -10084,7 +10179,7 @@ app.post('/api/feedback/:id/create-issue', async (req, res) => {
         return res.status(400).json({ success: false, message: "deviceId and deviceSecret required" });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
@@ -10121,7 +10216,7 @@ app.patch('/api/feedback/:id', async (req, res) => {
         return res.status(400).json({ success: false, message: "deviceId and deviceSecret required" });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
@@ -10182,7 +10277,7 @@ app.delete('/api/feedback/:id', async (req, res) => {
         return res.status(400).json({ success: false, message: "deviceId and deviceSecret required" });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
@@ -10225,7 +10320,7 @@ app.post('/api/feedback/:id/photos', feedbackPhotoUpload.array('photos', feedbac
             return res.status(400).json({ success: false, message: "deviceId and deviceSecret required" });
         }
         const device = devices[deviceId];
-        if (!device || device.deviceSecret !== deviceSecret) {
+        if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
             return res.status(401).json({ success: false, message: "Invalid credentials" });
         }
 
@@ -10270,7 +10365,7 @@ app.get('/api/feedback/:id/photos', async (req, res) => {
         return res.status(400).json({ success: false, message: "deviceId and deviceSecret required" });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
@@ -10408,11 +10503,23 @@ app.use('/api/channel', channelModule.router);
 // Wire channel push into mission module (Bot Push Parity Rule — must be after channelModule init)
 missionModule.setPushToChannelCallback(channelModule.pushToChannelCallback.bind(channelModule));
 
+// ============================================
+// DISCORD INTEGRATION — Slash Commands
+// ============================================
+const discordModule = require('./discord-integration')(devices, {
+    db,
+    authMiddleware: authModule.authMiddleware,
+    serverLog,
+    pushToBot,
+    apiBase: process.env.API_BASE || 'https://eclawbot.com'
+});
+app.use('/api/discord', discordModule.router);
+
 // Close GitHub issue (device-authenticated)
 app.patch('/api/github/issues/:number', async (req, res) => {
     const { deviceId, deviceSecret } = req.body;
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
     const issueNumber = parseInt(req.params.number);
@@ -10479,7 +10586,7 @@ function authDevice(req) {
     const deviceSecret = req.query.deviceSecret || req.body.deviceSecret;
     if (deviceId && deviceSecret) {
         const device = devices[deviceId];
-        if (device && device.deviceSecret === deviceSecret) return deviceId;
+        if (device && safeEqual(device.deviceSecret, deviceSecret)) return deviceId;
     }
     // Fallback: JWT cookie (web portal)
     if (req.user && req.user.deviceId) return req.user.deviceId;
@@ -10602,13 +10709,13 @@ app.post('/api/device/screen-capture', async (req, res) => {
     }
 
     // Auth: device owner (portal) OR bot
-    const isOwner = deviceSecret && device.deviceSecret && deviceSecret === device.deviceSecret;
+    const isOwner = deviceSecret && device.deviceSecret && safeEqual(deviceSecret, device.deviceSecret);
     const entity = device.entities[eId];
     if (!isOwner) {
         if (!entity || !entity.isBound) {
             return res.status(400).json({ success: false, error: 'Entity not bound' });
         }
-        if (!botSecret || botSecret !== entity.botSecret) {
+        if (!botSecret || !safeEqual(botSecret, entity.botSecret)) {
             return res.status(403).json({ success: false, error: 'Invalid botSecret' });
         }
     }
@@ -10722,13 +10829,13 @@ app.post('/api/device/control', async (req, res) => {
     }
 
     // Auth: device owner (portal) OR bot
-    const isOwner = deviceSecret && device.deviceSecret && deviceSecret === device.deviceSecret;
+    const isOwner = deviceSecret && device.deviceSecret && safeEqual(deviceSecret, device.deviceSecret);
     if (!isOwner) {
         const entity = device.entities[eId];
         if (!entity || !entity.isBound) {
             return res.status(400).json({ success: false, error: 'Entity not bound' });
         }
-        if (!botSecret || botSecret !== entity.botSecret) {
+        if (!botSecret || !safeEqual(botSecret, entity.botSecret)) {
             return res.status(403).json({ success: false, error: 'Invalid botSecret' });
         }
     }
@@ -10846,7 +10953,7 @@ app.post('/api/device/fcm-token', (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId, deviceSecret, and token (or fcmToken) required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
@@ -11045,7 +11152,7 @@ app.get('/api/schedules', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid credentials' });
     }
     try {
@@ -11067,7 +11174,7 @@ app.get('/api/schedule-executions', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid credentials' });
     }
     try {
@@ -11089,7 +11196,7 @@ app.get('/api/schedule-executions/:executionId/context', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid credentials' });
     }
     try {
@@ -11157,7 +11264,7 @@ app.post('/api/schedules', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid credentials' });
     }
     const eIdParsed = parseInt(entityId);
@@ -11181,7 +11288,7 @@ app.put('/api/schedules/:id', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid credentials' });
     }
     try {
@@ -11203,7 +11310,7 @@ app.patch('/api/schedules/:id/toggle', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid credentials' });
     }
     try {
@@ -11227,7 +11334,7 @@ app.delete('/api/schedules/:id', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
     const device = devices[qDeviceId];
-    if (!device || device.deviceSecret !== qDeviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, qDeviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid credentials' });
     }
     try {
@@ -11250,8 +11357,8 @@ app.get('/api/bot/schedules', async (req, res) => {
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
     const eId = parseInt(entityId);
     const entity = device.entities[eId];
-    const authOk = (deviceSecret && device.deviceSecret === deviceSecret) ||
-                   (botSecret && entity && entity.isBound && entity.botSecret === botSecret);
+    const authOk = (deviceSecret && safeEqual(device.deviceSecret, deviceSecret)) ||
+                   (botSecret && entity && entity.isBound && safeEqual(entity.botSecret, botSecret));
     if (!entity || !entity.isBound || !authOk) {
         return res.status(403).json({ success: false, error: 'Invalid credentials' });
     }
@@ -11273,8 +11380,8 @@ app.post('/api/bot/schedules', async (req, res) => {
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
     const eId = parseInt(entityId);
     const entity = device.entities[eId];
-    const authOk = (deviceSecret && device.deviceSecret === deviceSecret) ||
-                   (botSecret && entity && entity.isBound && entity.botSecret === botSecret);
+    const authOk = (deviceSecret && safeEqual(device.deviceSecret, deviceSecret)) ||
+                   (botSecret && entity && entity.isBound && safeEqual(entity.botSecret, botSecret));
     if (!entity || !entity.isBound || !authOk) {
         return res.status(403).json({ success: false, error: 'Invalid credentials' });
     }
@@ -11298,8 +11405,8 @@ app.delete('/api/bot/schedules/:id', async (req, res) => {
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
     const eId = parseInt(entityId);
     const entity = device.entities[eId];
-    const authOk = (deviceSecret && device.deviceSecret === deviceSecret) ||
-                   (botSecret && entity && entity.isBound && entity.botSecret === botSecret);
+    const authOk = (deviceSecret && safeEqual(device.deviceSecret, deviceSecret)) ||
+                   (botSecret && entity && entity.isBound && safeEqual(entity.botSecret, botSecret));
     if (!entity || !entity.isBound || !authOk) {
         return res.status(403).json({ success: false, error: 'Invalid credentials' });
     }
@@ -11518,7 +11625,7 @@ app.post('/api/device-vars', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid credentials' });
     }
     if (vars !== null && typeof vars !== 'object') {
@@ -11664,7 +11771,7 @@ app.get('/api/device-vars', async (req, res) => {
 
     // Authenticate bot
     const allEntities = Object.values(device.entities || {});
-    const botEntity = allEntities.find(e => e.isBound && e.botSecret === botSecret);
+    const botEntity = allEntities.find(e => e.isBound && safeEqual(e.botSecret, botSecret));
     if (!botEntity) {
         return res.status(403).json({ success: false, error: 'Invalid botSecret' });
     }
@@ -11699,7 +11806,7 @@ app.delete('/api/device-vars/:key', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId, deviceSecret, and key required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid credentials' });
     }
     if (!SEAL_KEY_HEX) {
@@ -11741,7 +11848,7 @@ app.delete('/api/device-vars', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid credentials' });
     }
     await db.deleteDeviceVars(deviceId);
@@ -11758,7 +11865,7 @@ app.get('/api/logs', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
@@ -11825,7 +11932,7 @@ app.get('/api/handshake-failures', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
@@ -11871,7 +11978,7 @@ app.post('/api/device-telemetry', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
     if (!Array.isArray(entries) || entries.length === 0) {
@@ -11907,7 +12014,7 @@ app.get('/api/device-telemetry', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
     const entries = await telemetry.getEntries(chatPool, deviceId, { type, page, action, since, until, limit });
@@ -11921,7 +12028,7 @@ app.get('/api/device-telemetry/summary', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
     const summary = await telemetry.getSummary(chatPool, deviceId);
@@ -11935,7 +12042,7 @@ app.delete('/api/device-telemetry', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
     await telemetry.clearEntries(chatPool, deviceId);
@@ -11965,7 +12072,7 @@ app.get('/api/chat/history', async (req, res) => {
     }
 
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         // Also check JWT cookie
         const jwt = require('jsonwebtoken');
         const token = req.cookies && req.cookies.eclaw_session;
@@ -12026,7 +12133,7 @@ app.get('/api/chat/history-by-code', async (req, res) => {
     }
 
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         if (!req.user || req.user.deviceId !== deviceId) {
             return res.status(401).json({ success: false, error: 'Unauthorized' });
         }
@@ -12139,7 +12246,7 @@ app.get('/api/chat/share-history', async (req, res) => {
 app.post('/api/chat/integrity-report', async (req, res) => {
     const { deviceId, deviceSecret } = req.body;
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
     try {
@@ -12165,7 +12272,7 @@ app.post('/api/message/:messageId/react', async (req, res) => {
     }
 
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
@@ -12296,7 +12403,7 @@ app.get('/api/device/files', async (req, res) => {
 
     // Auth: deviceSecret or JWT cookie
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         const jwt = require('jsonwebtoken');
         const token = req.cookies && req.cookies.eclaw_session;
         if (token) {
@@ -12414,7 +12521,7 @@ app.delete('/api/device/files/:fileId', async (req, res) => {
     }
 
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         const jwt = require('jsonwebtoken');
         const token = req.cookies && req.cookies.eclaw_session;
         if (token) {
@@ -12630,7 +12737,7 @@ app.post('/api/chat/upload-media', mediaUpload.single('file'), async (req, res) 
     }
 
     const device = devices[deviceId];
-    if (!device || device.deviceSecret !== deviceSecret) {
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
@@ -12708,7 +12815,7 @@ function authenticateBot(deviceId, entityId, botSecret) {
     const device = devices[deviceId];
     if (!device) return false;
     const entity = (device.entities || {})[entityId];
-    return entity && entity.botSecret === botSecret;
+    return entity && safeEqual(entity.botSecret, botSecret);
 }
 
 /**
@@ -12904,7 +13011,7 @@ app.post('/api/bot/sync-message', async (req, res) => {
     }
 
     // Verify botSecret
-    if (entity.botSecret !== botSecret) {
+    if (!safeEqual(entity.botSecret, botSecret)) {
         return res.status(403).json({ success: false, error: "Invalid botSecret" });
     }
 
@@ -12982,3 +13089,4 @@ module.exports = app;
 module.exports.httpServer = httpServer;
 module.exports.io = io;
 module.exports.devices = devices;
+module.exports.safeEqual = safeEqual;

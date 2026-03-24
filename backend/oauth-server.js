@@ -1,5 +1,7 @@
 'use strict';
 
+const safeEqual = require('./safe-equal');
+
 /**
  * OAuth 2.0 Authorization Server
  * Issue #190
@@ -84,7 +86,7 @@ module.exports = function (devices, { serverLog } = {}) {
     const { deviceId, deviceSecret } = params;
     if (deviceId && deviceSecret) {
       const device = devices[deviceId];
-      if (device && device.deviceSecret === deviceSecret) {
+      if (device && safeEqual(device.deviceSecret, deviceSecret)) {
         return { deviceId, device };
       }
     }

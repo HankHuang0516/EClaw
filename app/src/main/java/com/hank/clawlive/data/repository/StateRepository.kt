@@ -31,6 +31,7 @@ class StateRepository(
             try {
                 val status = api.getAgentStatus(
                     deviceId = deviceManager.deviceId,
+                    deviceSecret = deviceManager.deviceSecret ?: "",
                     entityId = 0,
                     appVersion = deviceManager.appVersion
                 )
@@ -58,7 +59,7 @@ class StateRepository(
         while (true) {
             try {
                 // v5: Filter by deviceId on server side
-                val response = api.getAllEntities(deviceId = deviceManager.deviceId)
+                val response = api.getAllEntities(deviceId = deviceManager.deviceId, deviceSecret = deviceManager.deviceSecret ?: "")
 
                 // Additional client-side filter for registered entities
                 // Auto-sync: if server has bound entities not in local registry, add them

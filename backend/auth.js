@@ -23,6 +23,7 @@ const fs = require('fs');
 const path = require('path');
 
 const { OAuth2Client } = require('google-auth-library');
+const safeEqual = require('./safe-equal');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
@@ -423,7 +424,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
 
             // Verify device credentials
             const device = devices[deviceId];
-            if (!device || device.deviceSecret !== deviceSecret) {
+            if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
                 return res.status(401).json({ success: false, error: 'Invalid device credentials' });
             }
 
@@ -794,7 +795,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
             let userId = null;
             if (deviceId && deviceSecret) {
                 const device = devices[deviceId];
-                if (!device || device.deviceSecret !== deviceSecret) {
+                if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
                     return res.status(401).json({ success: false, error: 'Invalid device credentials' });
                 }
                 const result = await pool.query(
@@ -894,7 +895,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
 
             // Verify device credentials
             const device = devices[deviceId];
-            if (!device || device.deviceSecret !== deviceSecret) {
+            if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
                 return res.status(401).json({ success: false, error: 'Invalid device credentials' });
             }
 
@@ -998,7 +999,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
 
             // Verify device credentials
             const device = devices[deviceId];
-            if (!device || device.deviceSecret !== deviceSecret) {
+            if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
                 return res.status(401).json({ success: false, error: 'Invalid device credentials' });
             }
 
@@ -1215,7 +1216,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
         // Step 3: Check if deviceId+deviceSecret provided and has existing user row
         if (deviceId && deviceSecret) {
             const device = devices[deviceId];
-            if (device && device.deviceSecret === deviceSecret) {
+            if (device && safeEqual(device.deviceSecret, deviceSecret)) {
                 const byDevice = await pool.query(
                     'SELECT * FROM user_accounts WHERE device_id = $1',
                     [deviceId]
@@ -1251,7 +1252,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
         }
 
         // Step 4: Create new account
-        const creds = (deviceId && deviceSecret && devices[deviceId] && devices[deviceId].deviceSecret === deviceSecret)
+        const creds = (deviceId && deviceSecret && devices[deviceId] && safeEqual(devices[deviceId].deviceSecret, deviceSecret))
             ? { deviceId, deviceSecret }
             : generateDeviceCredentials();
 
@@ -1592,7 +1593,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
             // Link device credentials if provided
             if (deviceId && deviceSecret && deviceId !== user.device_id) {
                 const existingDevice = devices[deviceId];
-                if (existingDevice && existingDevice.deviceSecret === deviceSecret) {
+                if (existingDevice && safeEqual(existingDevice.deviceSecret, deviceSecret)) {
                     // Already has a device — keep the provided one if no data on account device
                     // (simplified: always use the account's virtual device)
                 }

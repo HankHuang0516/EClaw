@@ -408,7 +408,7 @@ class MainActivity : AppCompatActivity() {
     private fun loadBoundEntities() {
         lifecycleScope.launch {
             try {
-                val response = api.getAllEntities(deviceId = deviceManager.deviceId)
+                val response = api.getAllEntities(deviceId = deviceManager.deviceId, deviceSecret = deviceManager.deviceSecret ?: "")
                 val newEntities = response.entities.filter { it.isBound }
 
                 // #72 fix: Sync serverEntityLimit from API response

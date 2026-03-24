@@ -96,7 +96,7 @@ describe('POST /api/entity/cross-speak — channel push parity', () => {
 
         // Get target entity's publicCode
         const statusRes = await request(app)
-            .get('/api/entities?deviceId=chan-cs-target')
+            .get('/api/entities?deviceId=chan-cs-target&deviceSecret=secret-chan-cs-target')
             .set('Host', 'localhost');
         const entities = statusRes.body.entities || statusRes.body;
         const targetEntity = Array.isArray(entities)
@@ -194,7 +194,7 @@ describe('POST /api/client/cross-speak — channel push parity', () => {
 
         // Get target entity's publicCode
         const statusRes = await request(app)
-            .get('/api/entities?deviceId=chan-cc-target')
+            .get('/api/entities?deviceId=chan-cc-target&deviceSecret=secret-chan-cc-target')
             .set('Host', 'localhost');
         const entities = statusRes.body.entities || statusRes.body;
         const targetEntity = Array.isArray(entities)

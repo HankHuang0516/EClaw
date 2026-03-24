@@ -26,6 +26,7 @@ interface ClawApiService {
     @GET("api/status")
     suspend fun getAgentStatus(
         @Query("deviceId") deviceId: String,
+        @Query("deviceSecret") deviceSecret: String,
         @Query("entityId") entityId: Int = 0,
         @Query("appVersion") appVersion: String? = null
     ): AgentStatus
@@ -51,9 +52,12 @@ interface ClawApiService {
     // MULTI-ENTITY ENDPOINTS
     // ============================================
 
-    // Get all active entities (optionally filter by deviceId)
+    // Get all active entities (requires deviceId + deviceSecret)
     @GET("api/entities")
-    suspend fun getAllEntities(@Query("deviceId") deviceId: String? = null): MultiEntityResponse
+    suspend fun getAllEntities(
+        @Query("deviceId") deviceId: String,
+        @Query("deviceSecret") deviceSecret: String
+    ): MultiEntityResponse
 
     // Add a new entity slot to the device
     @POST("api/device/add-entity")

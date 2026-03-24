@@ -160,7 +160,7 @@ describe('client/speak messageQueue structure (shadow bug regression)', () => {
         });
 
         // Check entity status — messageQueue item should lack entity fields
-        const statusRes = await get(`/api/status?deviceId=test-shadow-mq`);
+        const statusRes = await get(`/api/status?deviceId=test-shadow-mq&deviceSecret=${deviceSecret}`);
         expect(statusRes.status).toBe(200);
 
         const entity0 = statusRes.body.entities?.find(e => e.entityId === 0);

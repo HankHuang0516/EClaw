@@ -4,6 +4,7 @@
 // Universal chat: Sonnet with repo access for users & admins
 // ============================================
 const express = require('express');
+const safeEqual = require('./safe-equal');
 
 // Lazy-load Anthropic client (only when ANTHROPIC_API_KEY is set)
 let _anthropicClient = null;
@@ -872,7 +873,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         if (!entity || !entity.isBound) {
             return res.status(400).json({ success: false, error: 'not_bound', message: 'Entity not bound' });
         }
-        if (botSecret !== entity.botSecret) {
+        if (!safeEqual(botSecret, entity.botSecret)) {
             return res.status(403).json({ success: false, error: 'invalid_secret', message: 'Invalid botSecret' });
         }
 
@@ -1124,7 +1125,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
             const { deviceId, deviceSecret } = req.body;
             if (deviceId && deviceSecret) {
                 const dev = devices[deviceId];
-                if (dev && dev.deviceSecret === deviceSecret) {
+                if (dev && safeEqual(dev.deviceSecret, deviceSecret)) {
                     req.user = { userId: `device_${deviceId}`, deviceId, email: null };
                 } else {
                     return res.status(401).json({ success: false, error: 'invalid_credentials', message: 'Invalid device credentials. Please restart the app to re-register.' });
@@ -1598,7 +1599,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
             const { deviceId, deviceSecret } = req.body;
             if (deviceId && deviceSecret) {
                 const dev = devices[deviceId];
-                if (dev && dev.deviceSecret === deviceSecret) {
+                if (dev && safeEqual(dev.deviceSecret, deviceSecret)) {
                     req.user = { userId: `device_${deviceId}`, deviceId, email: null };
                 } else {
                     return res.status(401).json({ success: false, error: 'invalid_credentials', message: 'Invalid device credentials. Please restart the app to re-register.' });
@@ -1678,7 +1679,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
             const { deviceId, deviceSecret } = req.query;
             if (deviceId && deviceSecret) {
                 const dev = devices[deviceId];
-                if (dev && dev.deviceSecret === deviceSecret) {
+                if (dev && safeEqual(dev.deviceSecret, deviceSecret)) {
                     req.user = { userId: `device_${deviceId}`, deviceId, email: null };
                 } else {
                     return res.status(401).json({ success: false, error: 'Not authenticated' });

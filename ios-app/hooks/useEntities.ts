@@ -8,22 +8,22 @@ import { EntityUpdate } from '../services/socketService';
 const POLL_INTERVAL = 5000; // 5 seconds, same as Android Wallpaper Service
 
 export function useEntities() {
-  const { deviceId } = useAuthStore();
+  const { deviceId, deviceSecret } = useAuthStore();
   const { entities, isLoading, setEntities, updateEntity, setLoading } = useEntityStore();
 
   const fetchEntities = useCallback(async () => {
-    if (!deviceId) return;
+    if (!deviceId || !deviceSecret) return;
     try {
-      const res = await deviceApi.getEntities(deviceId);
+      const res = await deviceApi.getEntities(deviceId, deviceSecret);
       setEntities(res.data.entities ?? []);
     } catch (error) {
       console.error('[ENTITY] Failed to fetch entities:', error);
     }
-  }, [deviceId, setEntities]);
+  }, [deviceId, deviceSecret, setEntities]);
 
   // Initial fetch + polling (matches Android's 5s interval)
   useEffect(() => {
-    if (!deviceId) return;
+    if (!deviceId || !deviceSecret) return;
 
     setLoading(true);
     fetchEntities().finally(() => setLoading(false));

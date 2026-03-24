@@ -482,7 +482,7 @@ class SettingsActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                val response = NetworkModule.api.getAllEntities(deviceId = deviceManager.deviceId)
+                val response = NetworkModule.api.getAllEntities(deviceId = deviceManager.deviceId, deviceSecret = deviceManager.deviceSecret ?: "")
                 val boundCount = response.entities.size
                 // #69: Save server entity limit so it refreshes immediately after payment
                 layoutPrefs.serverEntityLimit = response.totalSlots
@@ -1368,7 +1368,7 @@ class SettingsActivity : AppCompatActivity() {
     private fun loadChannelEntitySlotStatus() {
         lifecycleScope.launch {
             try {
-                val response = NetworkModule.api.getAllEntities(deviceId = deviceManager.deviceId)
+                val response = NetworkModule.api.getAllEntities(deviceId = deviceManager.deviceId, deviceSecret = deviceManager.deviceSecret ?: "")
                 val channelEntities = response.entities.filter { it.bindingType == "channel" }
                 if (channelEntities.isNotEmpty()) {
                     val slots = channelEntities.joinToString("  ") { "⚡ #${it.entityId}" }

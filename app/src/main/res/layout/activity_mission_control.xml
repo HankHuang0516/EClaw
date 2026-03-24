@@ -425,11 +425,21 @@
                     android:padding="12dp">
 
                     <LinearLayout
+                        android:id="@+id/headerSkills"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
                         android:layout_marginBottom="8dp">
+
+                        <ImageView
+                            android:id="@+id/arrowSkills"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_expand_more"
+                            android:layout_marginEnd="4dp"
+                            android:contentDescription="@string/expand"
+                            android:rotation="0" />
 
                         <TextView
                             android:layout_width="0dp"
@@ -452,36 +462,45 @@
 
                     </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/tvSkillsEmpty"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/mission_no_skills"
-                        android:textColor="@color/text_disabled"
-                        android:textSize="13sp"
-                        android:gravity="center"
-                        android:padding="16dp"
-                        android:visibility="gone" />
-
                     <LinearLayout
-                        android:id="@+id/containerSkills"
+                        android:id="@+id/contentSkills"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical" />
+                        android:orientation="vertical"
+                        android:visibility="gone">
 
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/rvSkills"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:nestedScrollingEnabled="false" />
+                        <TextView
+                            android:id="@+id/tvSkillsEmpty"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/mission_no_skills"
+                            android:textColor="@color/text_disabled"
+                            android:textSize="13sp"
+                            android:gravity="center"
+                            android:padding="16dp"
+                            android:visibility="gone" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnAddSkill"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/mission_add_skill"
-                        android:layout_marginTop="4dp"
-                        style="@style/Widget.Material3.Button.OutlinedButton" />
+                        <LinearLayout
+                            android:id="@+id/containerSkills"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvSkills"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnAddSkill"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/mission_add_skill"
+                            android:layout_marginTop="4dp"
+                            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -504,11 +523,21 @@
                     android:padding="12dp">
 
                     <LinearLayout
+                        android:id="@+id/headerVars"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
                         android:layout_marginBottom="4dp">
+
+                        <ImageView
+                            android:id="@+id/arrowVars"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_expand_more"
+                            android:layout_marginEnd="4dp"
+                            android:contentDescription="@string/expand"
+                            android:rotation="0" />
 
                         <TextView
                             android:layout_width="0dp"
@@ -529,38 +558,47 @@
 
                     </LinearLayout>
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/mission_vars_local_only"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="11sp"
-                        android:layout_marginBottom="8dp" />
-
                     <LinearLayout
-                        android:id="@+id/varsContainer"
+                        android:id="@+id/contentVars"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical" />
+                        android:orientation="vertical"
+                        android:visibility="gone">
 
-                    <TextView
-                        android:id="@+id/tvVarsEmpty"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/mission_no_variables"
-                        android:textColor="@color/text_disabled"
-                        android:textSize="13sp"
-                        android:gravity="center"
-                        android:padding="16dp"
-                        android:visibility="gone" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/mission_vars_local_only"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp"
+                            android:layout_marginBottom="8dp" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnSyncVars"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/mission_sync_to_bot"
-                        android:layout_marginTop="6dp"
-                        style="@style/Widget.Material3.Button.OutlinedButton" />
+                        <LinearLayout
+                            android:id="@+id/varsContainer"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical" />
+
+                        <TextView
+                            android:id="@+id/tvVarsEmpty"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/mission_no_variables"
+                            android:textColor="@color/text_disabled"
+                            android:textSize="13sp"
+                            android:gravity="center"
+                            android:padding="16dp"
+                            android:visibility="gone" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnSyncVars"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/mission_sync_to_bot"
+                            android:layout_marginTop="6dp"
+                            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -583,11 +621,21 @@
                     android:padding="12dp">
 
                     <LinearLayout
+                        android:id="@+id/headerSouls"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
                         android:layout_marginBottom="8dp">
+
+                        <ImageView
+                            android:id="@+id/arrowSouls"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_expand_more"
+                            android:layout_marginEnd="4dp"
+                            android:contentDescription="@string/expand"
+                            android:rotation="0" />
 
                         <TextView
                             android:layout_width="0dp"
@@ -610,36 +658,45 @@
 
                     </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/tvSoulsEmpty"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/no_souls"
-                        android:textColor="@color/text_disabled"
-                        android:textSize="13sp"
-                        android:gravity="center"
-                        android:padding="16dp"
-                        android:visibility="gone" />
-
                     <LinearLayout
-                        android:id="@+id/containerSouls"
+                        android:id="@+id/contentSouls"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical" />
+                        android:orientation="vertical"
+                        android:visibility="gone">
 
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/rvSouls"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:nestedScrollingEnabled="false" />
+                        <TextView
+                            android:id="@+id/tvSoulsEmpty"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/no_souls"
+                            android:textColor="@color/text_disabled"
+                            android:textSize="13sp"
+                            android:gravity="center"
+                            android:padding="16dp"
+                            android:visibility="gone" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnAddSoul"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/add_soul"
-                        android:layout_marginTop="4dp"
-                        style="@style/Widget.Material3.Button.OutlinedButton" />
+                        <LinearLayout
+                            android:id="@+id/containerSouls"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvSouls"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnAddSoul"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/add_soul"
+                            android:layout_marginTop="4dp"
+                            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -662,11 +719,21 @@
                     android:padding="12dp">
 
                     <LinearLayout
+                        android:id="@+id/headerRules"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
                         android:layout_marginBottom="8dp">
+
+                        <ImageView
+                            android:id="@+id/arrowRules"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_expand_more"
+                            android:layout_marginEnd="4dp"
+                            android:contentDescription="@string/expand"
+                            android:rotation="0" />
 
                         <TextView
                             android:layout_width="0dp"
@@ -689,36 +756,45 @@
 
                     </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/tvRulesEmpty"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/no_rules"
-                        android:textColor="@color/text_disabled"
-                        android:textSize="13sp"
-                        android:gravity="center"
-                        android:padding="16dp"
-                        android:visibility="gone" />
-
                     <LinearLayout
-                        android:id="@+id/containerRules"
+                        android:id="@+id/contentRules"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical" />
+                        android:orientation="vertical"
+                        android:visibility="gone">
 
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/rvRules"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:nestedScrollingEnabled="false" />
+                        <TextView
+                            android:id="@+id/tvRulesEmpty"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/no_rules"
+                            android:textColor="@color/text_disabled"
+                            android:textSize="13sp"
+                            android:gravity="center"
+                            android:padding="16dp"
+                            android:visibility="gone" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnAddRule"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/add_rule"
-                        android:layout_marginTop="4dp"
-                        style="@style/Widget.Material3.Button.OutlinedButton" />
+                        <LinearLayout
+                            android:id="@+id/containerRules"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvRules"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnAddRule"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/add_rule"
+                            android:layout_marginTop="4dp"
+                            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

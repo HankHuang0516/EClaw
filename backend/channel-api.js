@@ -1,3 +1,5 @@
+const safeEqual = require('./safe-equal');
+
 /**
  * Channel API Module — OpenClaw Channel Plugin Integration
  *
@@ -34,7 +36,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             return null;
         }
         const device = devices[deviceId];
-        if (!device || device.deviceSecret !== deviceSecret) {
+        if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
             res.status(403).json({ success: false, message: 'Invalid device credentials' });
             return null;
         }
@@ -586,7 +588,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             }
 
             // Verify botSecret
-            if (!entity.botSecret || botSecret !== entity.botSecret) {
+            if (!entity.botSecret || !safeEqual(botSecret, entity.botSecret)) {
                 return res.status(403).json({ success: false, message: 'Invalid botSecret' });
             }
 

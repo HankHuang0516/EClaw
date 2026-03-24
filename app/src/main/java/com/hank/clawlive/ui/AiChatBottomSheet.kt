@@ -362,8 +362,8 @@ class AiChatBottomSheet : BottomSheetDialogFragment() {
                     }
                 }
 
-                // Long-press to copy message text
-                tvMessage.setOnLongClickListener {
+                // Long-press to copy message text (use itemView to avoid LinkMovementMethod consuming touch)
+                itemView.setOnLongClickListener {
                     val clipboard = it.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                     clipboard.setPrimaryClip(ClipData.newPlainText("message", msg.content))
                     Toast.makeText(it.context, R.string.message_copied, Toast.LENGTH_SHORT).show()
