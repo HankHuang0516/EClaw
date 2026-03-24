@@ -1,5 +1,7 @@
 'use strict';
 
+const safeEqual = require('./safe-equal');
+
 /**
  * A2A Protocol Compatibility Layer
  * Issue #187
@@ -42,12 +44,12 @@ module.exports = function (devices, { publicCodeIndex, serverLog, missionPool })
   function authenticateBearer(token) {
     // Try as deviceSecret: iterate devices
     for (const [deviceId, device] of Object.entries(devices)) {
-      if (device.deviceSecret === token) {
+      if (safeEqual(device.deviceSecret, token)) {
         return { type: 'device', deviceId, device };
       }
       // Try as botSecret: iterate entities
       for (const [eid, entity] of Object.entries(device.entities || {})) {
-        if (entity.botSecret === token) {
+        if (safeEqual(entity.botSecret, token)) {
           return { type: 'bot', deviceId, entityId: parseInt(eid), entity };
         }
       }
@@ -62,7 +64,7 @@ module.exports = function (devices, { publicCodeIndex, serverLog, missionPool })
     }
     if (auth.deviceSecret && auth.deviceId) {
       const device = devices[auth.deviceId];
-      if (device && device.deviceSecret === auth.deviceSecret) {
+      if (device && safeEqual(device.deviceSecret, auth.deviceSecret)) {
         return { type: 'device', deviceId: auth.deviceId, device };
       }
     }
@@ -71,7 +73,7 @@ module.exports = function (devices, { publicCodeIndex, serverLog, missionPool })
       const device = devices[auth.deviceId];
       if (device) {
         const entity = (device.entities || {})[eid];
-        if (entity && entity.botSecret === auth.botSecret) {
+        if (entity && safeEqual(entity.botSecret, auth.botSecret)) {
           return { type: 'bot', deviceId: auth.deviceId, entityId: eid, entity };
         }
       }

@@ -524,7 +524,7 @@ class OfficialBorrowActivity : AppCompatActivity() {
         for (i in 1..maxAttempts) {
             delay(1000)
             try {
-                val status = api.getAgentStatus(deviceManager.deviceId, entityId)
+                val status = api.getAgentStatus(deviceManager.deviceId, deviceManager.deviceSecret ?: "", entityId)
                 Timber.d("Webhook poll #$i: state=${status.state}, isBound=${status.isBound}")
 
                 if (status.state == com.hank.clawlive.data.model.CharacterState.BUSY) {

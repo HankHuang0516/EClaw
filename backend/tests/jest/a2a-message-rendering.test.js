@@ -50,8 +50,12 @@ const app = require('../../index');
 // ── Test: GET /api/entities includes messageQueue ──
 describe('GET /api/entities - messageQueue inclusion', () => {
     it('should return entities array (messageQueue included for bound entities)', async () => {
+        // Register a device first (endpoint now requires deviceId + deviceSecret)
+        await request(app).post('/api/device/register')
+            .send({ deviceId: 'a2a-msg-test', deviceSecret: 'a2a-msg-secret', entityId: 0 });
+
         const entRes = await request(app)
-            .get('/api/entities');
+            .get('/api/entities?deviceId=a2a-msg-test&deviceSecret=a2a-msg-secret');
         expect(entRes.status).toBe(200);
         // Response is an array of entities (may be empty in test env)
         expect(Array.isArray(entRes.body.entities || entRes.body)).toBe(true);

@@ -224,23 +224,23 @@ module.exports = function discordIntegration(devices, { db, authMiddleware, serv
     });
 
     // ── POST /api/discord/interactions — Discord sends all interactions here ─
-    // IMPORTANT: Must read raw body for signature verification BEFORE JSON parsing.
-    router.post('/interactions', express.raw({ type: 'application/json' }), async (req, res) => {
+    // Note: express.json() already parsed the body in index.js.
+    // We use req.rawBody (set by verify callback) or re-serialize for sig verification.
+    router.post('/interactions', async (req, res) => {
         const signature = req.headers['x-signature-ed25519'];
         const timestamp = req.headers['x-signature-timestamp'];
-        const rawBody = req.body; // Buffer (express.raw)
 
         if (!signature || !timestamp) {
             return res.status(401).json({ error: 'Missing signature headers' });
         }
 
-        // Parse body to get application_id for key lookup
-        let interaction;
-        try {
-            interaction = JSON.parse(rawBody.toString());
-        } catch {
-            return res.status(400).json({ error: 'Invalid JSON' });
+        const interaction = req.body;
+        if (!interaction || !interaction.application_id) {
+            return res.status(400).json({ error: 'Invalid request body' });
         }
+
+        // Re-serialize for signature verification (Discord signs the raw JSON body)
+        const rawBody = req.rawBody || JSON.stringify(interaction);
 
         // Look up the app config by application_id
         const appConfig = appIndex.get(interaction.application_id);

@@ -99,7 +99,7 @@ class MessageActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 // v5: Filter by this device's ID
-                val response = api.getAllEntities(deviceId = deviceManager.deviceId)
+                val response = api.getAllEntities(deviceId = deviceManager.deviceId, deviceSecret = deviceManager.deviceSecret ?: "")
                 val boundIds = response.entities.map { it.entityId }.toSet()
 
                 // Update chip states based on bound entities

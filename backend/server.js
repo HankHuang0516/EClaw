@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const safeEqual = require('./safe-equal');
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -159,7 +160,7 @@ app.post('/api/device/status', (req, res) => {
     const entity = entitySlots[eId];
 
     // Verify device owns this entity (skip if no device registered yet)
-    if (entity.deviceId && (entity.deviceId !== deviceId || entity.deviceSecret !== deviceSecret)) {
+    if (entity.deviceId && (entity.deviceId !== deviceId || !safeEqual(entity.deviceSecret, deviceSecret))) {
         return res.status(403).json({ success: false, message: "Unauthorized" });
     }
 

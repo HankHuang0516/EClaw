@@ -419,6 +419,22 @@ async function createTables() {
         `);
         await client.query(`CREATE INDEX IF NOT EXISTS idx_note_pages_device ON note_pages(device_id)`);
 
+        // Discord bot integrations per entity
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS discord_bots (
+                id SERIAL PRIMARY KEY,
+                device_id VARCHAR(64) NOT NULL,
+                entity_id INTEGER NOT NULL,
+                application_id VARCHAR(64) NOT NULL,
+                public_key VARCHAR(128) NOT NULL,
+                bot_token TEXT NOT NULL,
+                guild_id VARCHAR(64) DEFAULT NULL,
+                created_at TIMESTAMPTZ DEFAULT NOW(),
+                UNIQUE(device_id, entity_id)
+            )
+        `);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_discord_bots_app ON discord_bots(application_id)`);
+
         console.log('[DB] Database tables ready');
         client.release();
     } catch (err) {

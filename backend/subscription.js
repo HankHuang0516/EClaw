@@ -1,3 +1,5 @@
+const safeEqual = require('./safe-equal');
+
 /**
  * Subscription Management Module
  *
@@ -268,7 +270,7 @@ module.exports = function (devices, authMiddleware, _unused, serverLog) {
 
             // Verify device credentials
             const device = devices[deviceId];
-            if (!device || device.deviceSecret !== deviceSecret) {
+            if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
                 return res.status(401).json({ success: false, error: 'Invalid credentials' });
             }
 
@@ -317,7 +319,7 @@ module.exports = function (devices, authMiddleware, _unused, serverLog) {
             }
 
             const device = devices[deviceId];
-            if (!device || device.deviceSecret !== deviceSecret) {
+            if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
                 return res.status(401).json({ success: false, error: 'Invalid credentials' });
             }
 

@@ -228,7 +228,7 @@ class WallpaperPreviewActivity : AppCompatActivity() {
     private fun loadBoundEntities() {
         lifecycleScope.launch {
             try {
-                val response = api.getAllEntities(deviceId = deviceManager.deviceId)
+                val response = api.getAllEntities(deviceId = deviceManager.deviceId, deviceSecret = deviceManager.deviceSecret ?: "")
 
                 // Filter to only bound entities
                 val boundEntities = response.entities.filter { it.isBound }

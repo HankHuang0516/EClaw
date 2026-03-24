@@ -237,6 +237,25 @@ router.get('/web-fetch', authBot, async (req, res) => {
         return res.status(403).json({ error: 'Internal URLs not allowed' });
     }
 
+    // DNS rebinding protection: resolve hostname and check resolved IP
+    try {
+        const dns = require('dns');
+        const { promisify } = require('util');
+        const lookup = promisify(dns.lookup);
+        const { address } = await lookup(hostname);
+        const resolvedPrivate = (
+            address === '127.0.0.1' || address === '0.0.0.0' || address === '::1' ||
+            address.startsWith('10.') || address.startsWith('192.168.') || address.startsWith('169.254.') ||
+            /^172\.(1[6-9]|2\d|3[01])\./.test(address) ||
+            address.toLowerCase().startsWith('fc') || address.toLowerCase().startsWith('fd') || address.toLowerCase().startsWith('fe80')
+        );
+        if (resolvedPrivate) {
+            return res.status(403).json({ error: 'Internal URLs not allowed' });
+        }
+    } catch {
+        return res.status(400).json({ error: 'Could not resolve hostname' });
+    }
+
     const contentLimit = Math.min(parseInt(maxLength) || 5000, 15000);
 
     // Check cache

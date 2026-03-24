@@ -29,6 +29,7 @@ const { Pool } = require('pg');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const safeEqual = require('./safe-equal');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
@@ -132,7 +133,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
         const device = devices[deviceId];
         if (!device) return null;
         const entity = (device.entities || {})[entityId];
-        if (!entity || entity.botSecret !== botSecret) return null;
+        if (!entity || !safeEqual(entity.botSecret, botSecret)) return null;
         return entity;
     }
 
@@ -141,7 +142,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
      */
     function findDeviceByCredentials(deviceId, deviceSecret) {
         const device = devices[deviceId];
-        if (!device || device.deviceSecret !== deviceSecret) return null;
+        if (!device || !safeEqual(device.deviceSecret, deviceSecret)) return null;
         return device;
     }
 

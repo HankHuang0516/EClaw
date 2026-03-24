@@ -51,12 +51,12 @@ export const deviceApi = {
     apiClient.post('/api/device/register', { entityIndex }),
 
   /** Get all bound entities for this device */
-  getEntities: (deviceId: string) =>
-    apiClient.get('/api/entities', { params: { deviceId } }),
+  getEntities: (deviceId: string, deviceSecret: string) =>
+    apiClient.get('/api/entities', { params: { deviceId, deviceSecret } }),
 
   /** Get single entity status */
-  getStatus: (deviceId: string, entityIndex: number) =>
-    apiClient.get('/api/status', { params: { deviceId, entityIndex } }),
+  getStatus: (deviceId: string, deviceSecret: string, entityIndex: number) =>
+    apiClient.get('/api/status', { params: { deviceId, deviceSecret, entityIndex } }),
 
   /** Rename an entity */
   renameEntity: (entityId: string, name: string) =>

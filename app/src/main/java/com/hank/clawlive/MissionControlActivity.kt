@@ -10,6 +10,7 @@ import android.widget.ArrayAdapter
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Spinner
 import android.widget.TextView
@@ -188,13 +189,15 @@ class MissionControlActivity : AppCompatActivity() {
             val vmBusy = viewModel.uiState.value.isLoading || viewModel.uiState.value.isSyncing
             if (!vmBusy) progressBar.visibility = View.VISIBLE
             try {
-                val response = api.getAllEntities(deviceId = deviceManager.deviceId)
+                val response = api.getAllEntities(deviceId = deviceManager.deviceId, deviceSecret = deviceManager.deviceSecret ?: "")
                 val opts = mutableListOf("" to getString(R.string.common_not_specified))
                 val nameMap = mutableMapOf<String, String>()
                 response.entities.forEach { entity ->
                     val avatar = avatarManager.getAvatar(entity.entityId)
                     val name = entity.name ?: "Entity ${entity.entityId}"
-                    val label = "$avatar $name (#${entity.entityId})"
+                    // Don't include URL avatars in text labels — show emoji placeholder instead
+                    val displayAvatar = if (avatar.startsWith("https://")) "🤖" else avatar
+                    val label = "$displayAvatar $name (#${entity.entityId})"
                     opts.add(entity.entityId.toString() to label)
                     nameMap[entity.entityId.toString()] = label
                 }
@@ -300,6 +303,29 @@ class MissionControlActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.btnAddCatSkills).setOnClickListener { showAddCategoryDialog("skills") }
         findViewById<MaterialButton>(R.id.btnAddCatSouls).setOnClickListener { showAddCategoryDialog("souls") }
         findViewById<MaterialButton>(R.id.btnAddCatRules).setOnClickListener { showAddCategoryDialog("rules") }
+
+        // Collapsible sections: Skills, Variables, Souls, Rules
+        setupCollapsible(R.id.headerSkills, R.id.contentSkills, R.id.arrowSkills, "section_skills")
+        setupCollapsible(R.id.headerVars, R.id.contentVars, R.id.arrowVars, "section_vars")
+        setupCollapsible(R.id.headerSouls, R.id.contentSouls, R.id.arrowSouls, "section_souls")
+        setupCollapsible(R.id.headerRules, R.id.contentRules, R.id.arrowRules, "section_rules")
+    }
+
+    /** Wire up a collapsible section: header click toggles content visibility. State persisted in SharedPreferences. */
+    private fun setupCollapsible(headerId: Int, contentId: Int, arrowId: Int, prefKey: String) {
+        val header = findViewById<View>(headerId)
+        val content = findViewById<View>(contentId)
+        val arrow = findViewById<ImageView>(arrowId)
+        val prefs = getSharedPreferences("mission_collapse", Context.MODE_PRIVATE)
+        val expanded = prefs.getBoolean(prefKey, false)
+        content.visibility = if (expanded) View.VISIBLE else View.GONE
+        arrow.rotation = if (expanded) 180f else 0f
+        header.setOnClickListener {
+            val isExpanded = content.visibility == View.VISIBLE
+            content.visibility = if (isExpanded) View.GONE else View.VISIBLE
+            arrow.animate().rotation(if (isExpanded) 0f else 180f).setDuration(200).start()
+            prefs.edit().putBoolean(prefKey, !isExpanded).apply()
+        }
     }
 
     private fun observeState() {

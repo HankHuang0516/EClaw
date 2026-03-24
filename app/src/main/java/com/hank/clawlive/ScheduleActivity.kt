@@ -112,7 +112,7 @@ class ScheduleActivity : AppCompatActivity() {
 
     private suspend fun loadEntities() {
         try {
-            val response = api.getAllEntities(deviceId = deviceManager.deviceId)
+            val response = api.getAllEntities(deviceId = deviceManager.deviceId, deviceSecret = deviceManager.deviceSecret ?: "")
             val opts = mutableListOf<Pair<Int, String>>()
             val nameMap = mutableMapOf<Int, String>()
             val avatarMap = mutableMapOf<Int, String>()

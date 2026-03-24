@@ -1,5 +1,7 @@
 'use strict';
 
+const safeEqual = require('./safe-equal');
+
 /**
  * gRPC Transport Layer
  * Issue #191
@@ -60,7 +62,7 @@ module.exports = function (devices, { serverLog } = {}) {
     getStatus(call, callback) {
       const { deviceId, deviceSecret, entityId } = call.request;
       const device = devices[deviceId];
-      if (!device || device.deviceSecret !== deviceSecret) {
+      if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return callback({ code: grpc.status.PERMISSION_DENIED, message: 'Invalid credentials' });
       }
       const entity = (device.entities || {})[entityId];
@@ -120,7 +122,7 @@ module.exports = function (devices, { serverLog } = {}) {
     renameEntity(call, callback) {
       const { deviceId, deviceSecret, entityId, name } = call.request;
       const device = devices[deviceId];
-      if (!device || device.deviceSecret !== deviceSecret) {
+      if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return callback({ code: grpc.status.PERMISSION_DENIED, message: 'Invalid credentials' });
       }
       const entity = (device.entities || {})[entityId];
@@ -166,7 +168,7 @@ module.exports = function (devices, { serverLog } = {}) {
     speak(call, callback) {
       const { deviceId, deviceSecret, entityId, text } = call.request;
       const device = devices[deviceId];
-      if (!device || device.deviceSecret !== deviceSecret) {
+      if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return callback({ code: grpc.status.PERMISSION_DENIED, message: 'Invalid credentials' });
       }
       // Simplified: queue message for entity
@@ -196,7 +198,7 @@ module.exports = function (devices, { serverLog } = {}) {
         return callback({ code: grpc.status.NOT_FOUND, message: 'Device not found' });
       }
       const fromEntity = (device.entities || {})[fromEntityId];
-      if (!fromEntity || fromEntity.botSecret !== botSecret) {
+      if (!fromEntity || !safeEqual(fromEntity.botSecret, botSecret)) {
         return callback({ code: grpc.status.PERMISSION_DENIED, message: 'Invalid bot credentials' });
       }
       const toEntity = (device.entities || {})[toEntityId];
@@ -220,7 +222,7 @@ module.exports = function (devices, { serverLog } = {}) {
         return callback({ code: grpc.status.NOT_FOUND, message: 'Device not found' });
       }
       const fromEntity = (device.entities || {})[fromEntityId];
-      if (!fromEntity || fromEntity.botSecret !== botSecret) {
+      if (!fromEntity || !safeEqual(fromEntity.botSecret, botSecret)) {
         return callback({ code: grpc.status.PERMISSION_DENIED, message: 'Invalid bot credentials' });
       }
       let sentCount = 0;
@@ -269,7 +271,7 @@ module.exports = function (devices, { serverLog } = {}) {
         return callback({ code: grpc.status.NOT_FOUND, message: 'Device not found' });
       }
       const entity = (device.entities || {})[entityId];
-      if (!entity || entity.botSecret !== botSecret) {
+      if (!entity || !safeEqual(entity.botSecret, botSecret)) {
         return callback({ code: grpc.status.PERMISSION_DENIED, message: 'Invalid bot credentials' });
       }
       if (state) entity.state = state;
@@ -285,7 +287,7 @@ module.exports = function (devices, { serverLog } = {}) {
         return callback({ code: grpc.status.NOT_FOUND, message: 'Device not found' });
       }
       const entity = (device.entities || {})[entityId];
-      if (!entity || entity.botSecret !== botSecret) {
+      if (!entity || !safeEqual(entity.botSecret, botSecret)) {
         return callback({ code: grpc.status.PERMISSION_DENIED, message: 'Invalid bot credentials' });
       }
       const messages = entity.pendingMessages || [];

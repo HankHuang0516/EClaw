@@ -8,6 +8,18 @@
 require('./helpers/mock-setup');
 const request = require('supertest');
 
+// Mock dns module to return a public IP for all test domains (avoids DNS rebinding check)
+jest.mock('dns', () => {
+    const actual = jest.requireActual('dns');
+    return {
+        ...actual,
+        lookup: jest.fn((hostname, opts, cb) => {
+            const callback = typeof opts === 'function' ? opts : cb;
+            callback(null, '93.184.216.34', 4);
+        })
+    };
+});
+
 let app;
 const get = (path) => request(app).get(path).set('Host', 'localhost');
 
