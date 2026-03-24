@@ -1,3 +1,10 @@
+# [1.160.0](https://github.com/HankHuang0516/EClaw/compare/v1.159.1...v1.160.0) (2026-03-24)
+
+
+### Features
+
+* add URL bar with copy button to public note pages ([0e58440](https://github.com/HankHuang0516/EClaw/commit/0e5844022c342e5c1834b764adb8e32cfa50321d))
+
 ## [1.159.1](https://github.com/HankHuang0516/EClaw/compare/v1.159.0...v1.159.1) (2026-03-24)
 
 
