@@ -1092,7 +1092,7 @@
                     <input type="text" class="chat-input" id="messageInput"
                         data-i18n="chat_input_placeholder" placeholder="Type a message..."
                         oninput="renderSlashSuggestions(this.value); localStorage.setItem('chat_draft', this.value)"
-                        onkeydown="if(event.key==='Enter')sendMessage()">
+                        onkeydown="if(event.key==='Enter'&&!event.isComposing&&event.keyCode!==229)sendMessage()">
                     <button class="btn btn-primary btn-send" id="btnSend" onclick="sendMessage()"
                         data-i18n="chat_btn_send" title="Send">&#10148;</button>
                 </div>
