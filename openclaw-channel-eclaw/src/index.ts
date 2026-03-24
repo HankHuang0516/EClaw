@@ -67,6 +67,7 @@ const plugin = {
     // registers its own handler keyed by a random per-session Bearer token.
     api.registerHttpRoute({
       path: '/eclaw-webhook',
+      auth: 'none', // Plugin handles its own Bearer-token auth in dispatchWebhook()
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       handler: async (req: any, res: any) => {
         await parseBody(req);
