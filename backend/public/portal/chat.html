@@ -1318,6 +1318,26 @@
                 document.getElementById('slashSuggestions').classList.remove('visible');
             });
 
+            // Paste image from clipboard (desktop Ctrl+V / Cmd+V)
+            document.getElementById('messageInput').addEventListener('paste', (e) => {
+                const items = e.clipboardData && e.clipboardData.items;
+                if (!items) return;
+                const imageFiles = [];
+                for (const item of items) {
+                    if (item.type.startsWith('image/')) {
+                        const file = item.getAsFile();
+                        if (file) imageFiles.push(file);
+                    }
+                }
+                if (imageFiles.length > 0) {
+                    e.preventDefault();
+                    const dt = new DataTransfer();
+                    imageFiles.forEach(f => dt.items.add(f));
+                    const fakeInput = { files: dt.files, value: '' };
+                    handleFilesSelected(fakeInput, 'photo');
+                }
+            });
+
             updateUsageBadge();
             await loadBoundEntities();
             await loadMessages();
