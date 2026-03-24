@@ -41,6 +41,7 @@ EClaw/
 │   ├── channel-api.js        # OpenClaw channel integration API
 │   ├── flickr.js             # Flickr photo storage for chat images
 │   ├── flickr-auth.js        # Flickr OAuth authentication
+│   ├── discord-integration.js # Native Discord slash command integration
 │   ├── grpc-server.js        # gRPC transport layer
 │   ├── feedback-email.js     # Email notifications for feedback (Resend)
 │   ├── openapi.yaml          # OpenAPI 3.0 specification
@@ -194,6 +195,7 @@ EClaw/
 | `entity_trash` | Soft-deleted entity recovery (7-day retention) |
 | `message_reactions` | Chat message like/dislike tracking |
 | `pending_cross_messages` | Cross-device message queue |
+| `discord_bots` | Discord application registrations per entity |
 
 ### API Route Groups
 
@@ -215,6 +217,7 @@ EClaw/
 | `/api/auth/*` | auth.js | Login, register, OAuth, OIDC, RBAC |
 | `/api/oauth/*` | oauth-server.js | OAuth 2.0 server (clients, tokens) |
 | `/api/a2a/*` | a2a-compat.js | A2A protocol compatibility |
+| `/api/discord/*` | discord-integration.js | Native Discord slash command integration |
 | `/api/feedback/*` | index.js + device-feedback.js | Feedback system |
 | `/api/schedules` | index.js + scheduler.js | Task scheduling |
 | `/api/notifications/*` | notifications.js | Push notification management |
@@ -570,6 +573,22 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Canvas Drawing Fix (v1.145.1)**: Pointer capture and touch-action CSS for proper stroke drawing
 - **App version**: Updated to 1.0.57
 
+### Recent Features (v1.146.x – v1.154.x)
+
+- **Entity Public Home Page (v1.149)**: `GET /p/:publicCode` serves entity profile page with agent card, identity, chat preview
+- **Note Page Links in Chat (v1.148)**: Auto-detect `eclaw://note/` and `/p/` links, render iframe preview in messages
+- **Enterprise Demo GIF (v1.148)**: E-commerce demo GIF on enterprise page and GitHub README
+- **Page Navigation Bar (v1.150)**: Navigation bar component for public note pages
+- **Drawing Scroll Sync (v1.151)**: Canvas drawing scroll synchronization + bot-readable PNG snapshot
+- **Markdown Rendering for Notes (v1.152)**: Note pages support full Markdown rendering
+- **AI Widget Coverage Fix (v1.153)**: AI chat widget visibility, draft auto-save, long-press copy fixes
+- **Visitor Analytics + Custom Domain (v1.153.1)**: Visitor analytics and custom domain APIs for Note Pages
+- **Chat Auto-Refresh (v1.154)**: Auto-refresh chat on Android WebView foreground; Card Holder manual refresh button
+- **AI Chat Draft Persistence (v1.0.59)**: AI chat draft text persisted across sessions
+- **Mission Skill/Rule Deduplication**: Concurrent multi-entity mission-notify no longer creates duplicate skills/rules; fuzzy matching (85% similarity) merges instead
+- **Discord Integration Module**: Native Discord slash command integration (`/ask`, `/status`, `/mission`); Ed25519 signature verification; deferred response pattern
+- **Agent Message Rendering Spec**: `docs/specs/agent-message-rendering-spec.md` — authoritative specification for chat message rendering across all platforms
+
 ---
 
 ## Test Coverage Summary
@@ -713,6 +732,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Channel Cross-Route | `tests/jest/channel-cross-route.test.js` | Channel message cross-device routing, auto-route consumption |
 | Cross-Speak Rendering | `tests/jest/cross-speak-chat-rendering.test.js` | Cross-device message direction rendering in chat.html |
 | Transform Cross-Route | `tests/jest/transform-cross-route.test.js` | Transform auto-route bot replies to sender device |
+| Mission Skill/Rule Dedup | `tests/jest/mission-skill-rule-dedup.test.js` | Skill/add and rule/add deduplication on concurrent multi-entity notify |
 
 ### Running All Tests
 ```bash

@@ -5,7 +5,7 @@ User-agent: *
 
 # Public pages
 Allow: /
-Allow: /portal/$
+Allow: /portal/
 Allow: /portal/index.html
 Allow: /api/docs
 Allow: /llms.txt
@@ -25,6 +25,7 @@ Disallow: /portal/info.html
 Disallow: /portal/screen-control.html
 Disallow: /portal/delete-account.html
 Disallow: /portal/card-holder.html
+Disallow: /portal/share-chat.html
 
 # API endpoints
 Disallow: /api/

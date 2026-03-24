@@ -219,9 +219,21 @@ router.get('/web-fetch', authBot, async (req, res) => {
         return res.status(400).json({ error: 'Invalid URL' });
     }
 
-    // Block internal/private IPs
-    const hostname = parsedUrl.hostname;
-    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname === '0.0.0.0') {
+    // Block internal/private IPs (RFC 1918, link-local, loopback, IPv6 private)
+    const hostname = parsedUrl.hostname.replace(/^\[|\]$/g, ''); // strip IPv6 brackets
+    const isPrivate = (
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname === '0.0.0.0' ||
+        hostname === '::1' ||
+        hostname.startsWith('192.168.') ||
+        hostname.startsWith('10.') ||
+        hostname.startsWith('169.254.') ||
+        hostname.startsWith('fc00:') || hostname.startsWith('fd') ||
+        hostname.startsWith('fe80:') ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(hostname)
+    );
+    if (isPrivate) {
         return res.status(403).json({ error: 'Internal URLs not allowed' });
     }
 
