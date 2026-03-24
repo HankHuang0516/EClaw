@@ -1,3 +1,10 @@
+# [1.161.0](https://github.com/HankHuang0516/EClaw/compare/v1.160.1...v1.161.0) (2026-03-24)
+
+
+### Features
+
+* paste image from clipboard in desktop chat (Ctrl+V / Cmd+V) ([75853ac](https://github.com/HankHuang0516/EClaw/commit/75853aca067fd89f7b3cca5eb9f1361462de3a41))
+
 ## [1.160.1](https://github.com/HankHuang0516/EClaw/compare/v1.160.0...v1.160.1) (2026-03-24)
 
 
