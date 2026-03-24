@@ -1,3 +1,10 @@
+## [1.160.1](https://github.com/HankHuang0516/EClaw/compare/v1.160.0...v1.160.1) (2026-03-24)
+
+
+### Bug Fixes
+
+* security hardening (DNS rebinding, timing-safe) + landing.html i18n ([#458](https://github.com/HankHuang0516/EClaw/issues/458)) ([70a08da](https://github.com/HankHuang0516/EClaw/commit/70a08daf4ff36540623b77b009c698031b0ccbf6))
+
 # [1.160.0](https://github.com/HankHuang0516/EClaw/compare/v1.159.1...v1.160.0) (2026-03-24)
 
 
