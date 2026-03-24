@@ -3,7 +3,7 @@
 function renderPublicNav(activePage) {
     const pages = [
         { id: 'enterprise', i18nKey: 'nav_enterprise', label: 'Enterprise', href: '/enterprise' },
-        { id: 'info', i18nKey: 'nav_info', label: 'Info', href: 'info.html' }
+        { id: 'info', i18nKey: 'nav_info', label: 'Info', href: '/info' }
     ];
 
     const t = (key, fallback) => typeof i18n !== 'undefined' ? i18n.t(key) : fallback;

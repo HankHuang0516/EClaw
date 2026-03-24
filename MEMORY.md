@@ -4,6 +4,15 @@ Cross-session notes for Claude Code. Add new entries at the top of each section.
 
 ---
 
+## Roadmap
+
+### Pending roadmap from 2026-03-24 audit
+> File: `.claude/projects/.../memory/project_roadmap_2026_03_24.md`
+
+5 items: share-chat rendering refactor, DNS rebinding expansion, deviceSecret timing-safe, Entity 2 push 502, landing.html i18n. See Issue #451.
+
+---
+
 ## Environment
 
 ### New Mac development environment setup (2026-03-23)

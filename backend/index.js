@@ -214,6 +214,23 @@ function isPrivateIp(ip) {
     return false;
 }
 
+/** DNS rebinding guard: resolve hostname, reject if it points to a private IP. Results cached 1 hour. */
+const dnsLookup = require('util').promisify(require('dns').lookup);
+const dnsResolveCache = new Map();
+const DNS_RESOLVE_CACHE_TTL = 3600000;
+async function assertPublicResolvedIp(hostname) {
+    if (isPrivateHost(hostname)) throw new Error('Internal URLs not allowed');
+    const cached = dnsResolveCache.get(hostname);
+    if (cached && Date.now() - cached.ts < DNS_RESOLVE_CACHE_TTL) {
+        if (cached.priv) throw new Error('Internal URLs not allowed');
+        return;
+    }
+    const { address } = await dnsLookup(hostname);
+    const priv = isPrivateIp(address);
+    dnsResolveCache.set(hostname, { priv, ts: Date.now() });
+    if (priv) throw new Error('Internal URLs not allowed');
+}
+
 function isPrivateHost(hostname) {
     if (hostname === 'localhost' || hostname === '0.0.0.0' || hostname === '::1') return true;
     if (hostname === '127.0.0.1' || hostname.startsWith('10.') || hostname.startsWith('192.168.')) return true;
@@ -230,6 +247,9 @@ function isPrivateHost(hostname) {
 async function entDemoFetchWebsite(url) {
     const cached = entDemoWebCache.get(url);
     if (cached && Date.now() - cached.ts < ENT_DEMO_WEB_CACHE_TTL) return cached.text;
+
+    // DNS rebinding protection: resolve hostname and verify resolved IP is not private
+    await assertPublicResolvedIp(new URL(url).hostname);
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
@@ -374,6 +394,9 @@ setInterval(() => {
     }
     for (const [url, entry] of entDemoWebCache) {
         if (now - entry.ts > ENT_DEMO_WEB_CACHE_TTL) entDemoWebCache.delete(url);
+    }
+    for (const [h, entry] of dnsResolveCache) {
+        if (now - entry.ts > DNS_RESOLVE_CACHE_TTL) dnsResolveCache.delete(h);
     }
 }, 1800000).unref();
 
@@ -6179,7 +6202,7 @@ function authEntityAccess(device, deviceSecret, botSecret, entityId) {
         }
     } else {
         const e = device.entities[eid];
-        if (!e || !e.isBound || e.botSecret !== botSecret) {
+        if (!e || !e.isBound || !safeEqual(e.botSecret, botSecret)) {
             return { error: 'Invalid botSecret', status: 403 };
         }
     }
@@ -8603,7 +8626,17 @@ app.post('/api/bot/register', async (req, res) => {
                 openclaw_version_received: openclaw_version || null
             });
         }
+        // DNS rebinding protection: resolve hostname and verify resolved IP is not private
+        await assertPublicResolvedIp(hn);
     } catch (e) {
+        if (e.message === 'Internal URLs not allowed') {
+            console.warn(`[Bot Register] DNS rebinding rejected: ${webhook_url}`);
+            return res.status(400).json({
+                success: false,
+                error_type: 'dns_rebinding_blocked',
+                message: `Webhook registration failed: webhook_url resolves to a private/internal IP address.`
+            });
+        }
         return res.status(400).json({
             success: false,
             message: "Invalid webhook_url format"
@@ -9444,6 +9477,9 @@ async function googleChatPush(url, messageContent, googleChatOptions = {}) {
 
 async function gatewayFetch(url, token, body, options = {}) {
     const { setupUsername, setupPassword, timeout, signal } = options;
+
+    // DNS rebinding protection: verify resolved IP is not private
+    await assertPublicResolvedIp(new URL(url).hostname);
 
     if (setupUsername && setupPassword) {
         // WebSocket transport for gateways with SETUP_PASSWORD
