@@ -419,6 +419,12 @@
             font-size: 14px;
             outline: none;
             transition: border-color 0.2s;
+            resize: none;
+            overflow-y: auto;
+            min-height: 40px;
+            max-height: 120px;
+            line-height: 1.4;
+            font-family: inherit;
         }
 
         .chat-input:focus { border-color: var(--primary); }
@@ -1117,10 +1123,10 @@
                         </div>
                     </div>
                     <button class="btn-media" id="btnVoice" onclick="toggleRecording()">&#x1F3A4;</button>
-                    <input type="text" class="chat-input" id="messageInput"
+                    <textarea class="chat-input" id="messageInput" rows="1"
                         data-i18n="chat_input_placeholder" placeholder="Type a message..."
-                        oninput="renderSlashSuggestions(this.value); localStorage.setItem('chat_draft', this.value)"
-                        onkeydown="if(event.key==='Enter'&&!event.isComposing&&event.keyCode!==229)sendMessage()">
+                        oninput="renderSlashSuggestions(this.value); localStorage.setItem('chat_draft', this.value); this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,120)+'px'"
+                        onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing&&event.keyCode!==229){event.preventDefault();sendMessage()}"></textarea>
                     <button class="btn btn-primary btn-send" id="btnSend" onclick="sendMessage()"
                         data-i18n="chat_btn_send" title="Send">&#10148;</button>
                 </div>
@@ -1400,6 +1406,8 @@
             if (savedDraft) {
                 const inputEl = document.getElementById('messageInput');
                 inputEl.value = savedDraft;
+                inputEl.style.height = 'auto';
+                inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
                 renderSlashSuggestions(savedDraft);
             }
 
@@ -2478,6 +2486,7 @@
             btn.disabled = true;
             const savedContent = input.value;
             input.value = '';
+            input.style.height = 'auto';
             localStorage.removeItem('chat_draft');
 
             try {
@@ -2593,6 +2602,8 @@
                     showToast(i18n.t('chat_send_failed') + ': ' + e.message, 'error');
                 }
                 input.value = savedContent;
+                input.style.height = 'auto';
+                input.style.height = Math.min(input.scrollHeight, 120) + 'px';
             } finally {
                 btn.disabled = false;
                 input.focus();
