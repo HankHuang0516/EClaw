@@ -13283,6 +13283,123 @@ app.post('/api/bot/sync-message', async (req, res) => {
  * GET /api/bot/pending-messages
  * Device polls this to get messages from the Bot
  */
+// ============================================
+// DEVICE GPS LOCATION
+// ============================================
+
+/**
+ * POST /api/device/location/request
+ * Bot/API requests the device's current GPS location.
+ * Server notifies the App via Socket.IO; App then calls POST /api/device/location.
+ * Auth: deviceId + deviceSecret OR deviceId + botSecret
+ */
+app.post('/api/device/location/request', (req, res) => {
+    const { deviceId, deviceSecret, botSecret } = req.body;
+    if (!deviceId) return res.status(400).json({ success: false, error: 'deviceId required' });
+
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+
+    // Auth: deviceSecret or botSecret
+    const secretOk = deviceSecret && device.deviceSecret && safeEqual(device.deviceSecret, deviceSecret);
+    const botOk = botSecret && Object.values(device.entities || {}).some(e => e.botSecret && safeEqual(e.botSecret, botSecret));
+    if (!secretOk && !botOk) return res.status(403).json({ success: false, error: 'Invalid credentials' });
+
+    // Create a pending request
+    const requestId = `loc_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    if (!device._locationRequests) device._locationRequests = {};
+    device._locationRequests[requestId] = { requestedAt: Date.now(), status: 'pending' };
+
+    // Notify App via Socket.IO
+    io.to(`device:${deviceId}`).emit('location_request', { requestId });
+
+    // Also send FCM if available
+    if (typeof sendFcm === 'function') {
+        sendFcm(deviceId, {
+            type: 'location_request',
+            title: 'Location Request',
+            body: 'An entity is requesting your device location.',
+            metadata: JSON.stringify({ requestId })
+        }).catch(() => {});
+    }
+
+    res.json({
+        success: true,
+        requestId,
+        message: 'Location request sent to device. Poll GET /api/device/location to retrieve.',
+        currentLocation: device._lastLocation || null
+    });
+});
+
+/**
+ * POST /api/device/location
+ * App reports its current GPS location (called after receiving location_request).
+ * Auth: deviceId + deviceSecret
+ */
+app.post('/api/device/location', (req, res) => {
+    const { deviceId, deviceSecret, latitude, longitude, accuracy, altitude, speed, bearing, provider, requestId } = req.body;
+    if (!deviceId || !deviceSecret) return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    if (latitude === undefined || longitude === undefined) return res.status(400).json({ success: false, error: 'latitude and longitude required' });
+
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+    if (!safeEqual(device.deviceSecret, deviceSecret)) return res.status(403).json({ success: false, error: 'Invalid credentials' });
+
+    // Validate coordinates
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+    if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        return res.status(400).json({ success: false, error: 'Invalid coordinates' });
+    }
+
+    // Store location
+    device._lastLocation = {
+        latitude: lat,
+        longitude: lng,
+        accuracy: accuracy != null ? parseFloat(accuracy) : null,
+        altitude: altitude != null ? parseFloat(altitude) : null,
+        speed: speed != null ? parseFloat(speed) : null,
+        bearing: bearing != null ? parseFloat(bearing) : null,
+        provider: provider || null,
+        updatedAt: Date.now()
+    };
+
+    // Mark request as fulfilled
+    if (requestId && device._locationRequests && device._locationRequests[requestId]) {
+        device._locationRequests[requestId].status = 'fulfilled';
+        device._locationRequests[requestId].fulfilledAt = Date.now();
+    }
+
+    // Notify listeners via Socket.IO
+    io.to(`device:${deviceId}`).emit('location_update', device._lastLocation);
+
+    res.json({ success: true, location: device._lastLocation });
+});
+
+/**
+ * GET /api/device/location
+ * Retrieve the device's last known GPS location.
+ * Auth: deviceId + deviceSecret OR deviceId + botSecret
+ */
+app.get('/api/device/location', (req, res) => {
+    const { deviceId, deviceSecret, botSecret } = req.query;
+    if (!deviceId) return res.status(400).json({ success: false, error: 'deviceId required' });
+
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+
+    // Auth: deviceSecret or botSecret
+    const secretOk = deviceSecret && device.deviceSecret && safeEqual(device.deviceSecret, deviceSecret);
+    const botOk = botSecret && Object.values(device.entities || {}).some(e => e.botSecret && safeEqual(e.botSecret, botSecret));
+    if (!secretOk && !botOk) return res.status(403).json({ success: false, error: 'Invalid credentials' });
+
+    if (!device._lastLocation) {
+        return res.json({ success: true, location: null, message: 'No location data. Call POST /api/device/location/request to request from device.' });
+    }
+
+    res.json({ success: true, location: device._lastLocation });
+});
+
 app.get('/api/bot/pending-messages', (req, res) => {
     const { deviceId, entityId } = req.query;
 
