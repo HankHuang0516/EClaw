@@ -2880,3 +2880,81 @@ paths:
                     type: string
                   url:
                     type: string
+
+  /api/device/tts:
+    post:
+      summary: Send TTS (text-to-speech) command to device
+      description: |
+        Bot sends a text-to-speech command. The Android app speaks the text aloud
+        using the built-in TextToSpeech engine, even when the app is in the background.
+        Delivered via Socket.IO with FCM fallback.
+      tags:
+        - Device
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - deviceId
+                - text
+              properties:
+                deviceId:
+                  type: string
+                  description: Target device ID
+                entityId:
+                  type: integer
+                  description: Entity ID (default 0)
+                  default: 0
+                botSecret:
+                  type: string
+                  description: Bot secret for authentication
+                deviceSecret:
+                  type: string
+                  description: Device secret (alternative auth for portal)
+                text:
+                  type: string
+                  description: Text to speak aloud (max 500 chars)
+                  maxLength: 500
+                lang:
+                  type: string
+                  description: "BCP-47 language tag (default: zh-TW)"
+                  default: zh-TW
+                  example: zh-TW
+                speed:
+                  type: number
+                  description: "Speech rate 0.5-2.0 (default: 1.0)"
+                  minimum: 0.5
+                  maximum: 2.0
+                  default: 1.0
+                pitch:
+                  type: number
+                  description: "Speech pitch 0.5-2.0 (default: 1.0)"
+                  minimum: 0.5
+                  maximum: 2.0
+                  default: 1.0
+      responses:
+        '200':
+          description: TTS command sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  lang:
+                    type: string
+                  speed:
+                    type: number
+                  pitch:
+                    type: number
+        '400':
+          description: Missing or invalid parameters
+        '403':
+          description: Invalid botSecret
+        '404':
+          description: Device not found

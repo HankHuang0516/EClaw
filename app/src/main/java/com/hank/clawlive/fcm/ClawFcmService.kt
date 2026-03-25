@@ -79,6 +79,20 @@ class ClawFcmService : FirebaseMessagingService() {
         val body = data["body"] ?: message.notification?.body ?: ""
         val category = data["category"] ?: "system"
 
+        // TTS category: start TtsService to speak aloud instead of showing notification
+        if (category == "tts") {
+            val ttsIntent = Intent(this, com.hank.clawlive.service.TtsService::class.java).apply {
+                putExtra("tts_text", body)
+                putExtra("tts_entity_name", title)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(ttsIntent)
+            } else {
+                startService(ttsIntent)
+            }
+            return  // Don't show a notification for TTS
+        }
+
         val channelId = when (category) {
             "bot_reply", "broadcast", "speak_to" -> CHANNEL_CHAT
             "feedback_reply", "feedback_resolved" -> CHANNEL_FEEDBACK

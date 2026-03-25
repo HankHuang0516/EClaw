@@ -11093,6 +11093,94 @@ app.post('/api/device/control', async (req, res) => {
     res.json({ success: true, message: `Command "${command}" sent to device` });
 });
 
+/**
+ * POST /api/device/tts
+ * Bot sends a text-to-speech command. Relayed to App via Socket.IO.
+ * The Android app uses the built-in TextToSpeech engine to speak the text aloud,
+ * even when the app is in the background (via a foreground service).
+ *
+ * Body (bot auth):
+ *   { deviceId, entityId, botSecret, text, lang?, speed?, pitch? }
+ * Body (device owner auth):
+ *   { deviceId, entityId, deviceSecret, text, lang?, speed?, pitch? }
+ *
+ * Parameters:
+ *   text   - (required) The text to speak aloud (max 500 chars)
+ *   lang   - (optional) BCP-47 language tag, default "zh-TW"
+ *   speed  - (optional) Speech rate 0.5–2.0, default 1.0
+ *   pitch  - (optional) Speech pitch 0.5–2.0, default 1.0
+ */
+app.post('/api/device/tts', async (req, res) => {
+    const { deviceId, entityId, botSecret, deviceSecret, text, lang, speed, pitch } = req.body;
+
+    if (!deviceId || !text) {
+        return res.status(400).json({ success: false, error: 'deviceId and text are required' });
+    }
+
+    if (typeof text !== 'string' || text.length > 500) {
+        return res.status(400).json({ success: false, error: 'text must be a string of 500 characters or less' });
+    }
+
+    const eId = parseInt(entityId) || 0;
+    if (eId < 0) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+
+    // Auth: device owner (portal) OR bot
+    const isOwner = deviceSecret && device.deviceSecret && safeEqual(deviceSecret, device.deviceSecret);
+    if (!isOwner) {
+        const entity = device.entities[eId];
+        if (!entity || !entity.isBound) {
+            return res.status(400).json({ success: false, error: 'Entity not bound' });
+        }
+        if (!botSecret || !safeEqual(botSecret, entity.botSecret)) {
+            return res.status(403).json({ success: false, error: 'Invalid botSecret' });
+        }
+    }
+
+    // Validate optional params
+    const ttsLang = (typeof lang === 'string' && lang.length <= 10) ? lang : 'zh-TW';
+    const ttsSpeed = (typeof speed === 'number' && speed >= 0.5 && speed <= 2.0) ? speed : 1.0;
+    const ttsPitch = (typeof pitch === 'number' && pitch >= 0.5 && pitch <= 2.0) ? pitch : 1.0;
+
+    const ttsEntity = device.entities[eId];
+    const entityName = ttsEntity?.name || `Bot ${eId + 1}`;
+
+    serverLog('info', 'tts', `TTS command: "${text.slice(0, 80)}" lang=${ttsLang} speed=${ttsSpeed} pitch=${ttsPitch}`, {
+        deviceId, entityId: eId,
+        metadata: { lang: ttsLang, speed: ttsSpeed, pitch: ttsPitch, textLen: text.length }
+    });
+
+    // Emit via Socket.IO to the device
+    io.to(`device:${deviceId}`).emit('device:tts', {
+        text,
+        lang: ttsLang,
+        speed: ttsSpeed,
+        pitch: ttsPitch,
+        entityId: eId,
+        entityName
+    });
+
+    // Also send FCM data message as fallback (in case Socket.IO is disconnected)
+    if (typeof sendFcm === 'function') {
+        sendFcm(deviceId, {
+            title: entityName,
+            body: text,
+            category: 'tts',
+            link: ''
+        }).catch(() => {});
+    }
+
+    res.json({ success: true, message: `TTS command sent to device`, lang: ttsLang, speed: ttsSpeed, pitch: ttsPitch });
+});
+
 // Prune old notifications daily
 setInterval(() => notifModule.pruneOldNotifications(), 24 * 60 * 60 * 1000);
 
