@@ -1,3 +1,10 @@
+## [1.164.11](https://github.com/HankHuang0516/EClaw/compare/v1.164.10...v1.164.11) (2026-03-25)
+
+
+### Bug Fixes
+
+* **security,ux:** harden CSP/CORS/sanitizer + remove usage denominator ([#465](https://github.com/HankHuang0516/EClaw/issues/465), [#463](https://github.com/HankHuang0516/EClaw/issues/463)) ([#475](https://github.com/HankHuang0516/EClaw/issues/475)) ([9bdd3d1](https://github.com/HankHuang0516/EClaw/commit/9bdd3d144afed2506966f002dbea627870300f0b))
+
 ## [1.164.10](https://github.com/HankHuang0516/EClaw/compare/v1.164.9...v1.164.10) (2026-03-25)
 
 
