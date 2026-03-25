@@ -955,12 +955,77 @@ app.get('/api/skill-doc', (req, res) => {
             return res.status(500).json({ error: 'eclaw-a2a-toolkit not found in skill-templates.json' });
         }
 
-        // ?format=text returns raw text (for bots/agents)
-        if (req.query.format === 'text') {
+        const format = (req.query.format || 'html').toLowerCase();
+
+        // ?format=text — raw plain text (for bots/agents, legacy)
+        if (format === 'text') {
             return res.type('text').send(mdContent);
         }
 
-        // Serve as HTML page with marked.js CDN for client-side rendering
+        // ?format=markdown or ?format=md — raw Markdown source
+        if (format === 'markdown' || format === 'md') {
+            res.setHeader('Content-Disposition', 'inline; filename="eclaw-api-skill.md"');
+            return res.type('text/markdown; charset=utf-8').send(mdContent);
+        }
+
+        // ?format=json — structured JSON with metadata
+        if (format === 'json') {
+            // Parse markdown into sections for structured consumption
+            const sections = [];
+            const lines = mdContent.split('\n');
+            let currentSection = null;
+
+            for (const line of lines) {
+                const h2Match = line.match(/^## (.+)/);
+                const h3Match = line.match(/^### (.+)/);
+                if (h2Match) {
+                    currentSection = { heading: h2Match[1], level: 2, content: '', subsections: [] };
+                    sections.push(currentSection);
+                } else if (h3Match && currentSection) {
+                    const sub = { heading: h3Match[1], level: 3, content: '' };
+                    currentSection.subsections.push(sub);
+                } else if (currentSection) {
+                    const target = currentSection.subsections.length > 0
+                        ? currentSection.subsections[currentSection.subsections.length - 1]
+                        : currentSection;
+                    target.content += line + '\n';
+                }
+            }
+
+            // Trim trailing whitespace from all content fields
+            for (const sec of sections) {
+                sec.content = sec.content.trim();
+                for (const sub of sec.subsections) {
+                    sub.content = sub.content.trim();
+                }
+            }
+
+            // Extract API endpoints from markdown (lines matching pattern)
+            const endpoints = [];
+            const endpointRegex = /^(GET|POST|PUT|PATCH|DELETE)\s+(`?)(\S+)\2/;
+            for (const line of lines) {
+                const m = line.match(endpointRegex);
+                if (m) {
+                    endpoints.push({ method: m[1], path: m[3].replace(/`/g, '') });
+                }
+            }
+
+            return res.json({
+                success: true,
+                title,
+                format: 'json',
+                endpoints_count: endpoints.length,
+                endpoints,
+                sections: sections.map(s => ({
+                    heading: s.heading,
+                    subsections: s.subsections.map(sub => sub.heading)
+                })),
+                full_markdown: mdContent,
+                content_length: mdContent.length
+            });
+        }
+
+        // Default: ?format=html — rendered HTML page with marked.js
         res.type('html').send(`<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
