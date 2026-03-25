@@ -6361,6 +6361,188 @@ app.delete('/api/entity/agent-card', (req, res) => {
     res.json({ success: true });
 });
 
+// ============================================
+// BOT PLAZA: Community Directory
+// ============================================
+
+/**
+ * PATCH /api/entity/agent-card/visibility — Toggle public listing
+ * Auth: deviceSecret (owner only — bots cannot self-publish)
+ * Body: { deviceId, deviceSecret, entityId, public: true/false }
+ */
+app.patch('/api/entity/agent-card/visibility', async (req, res) => {
+    const { deviceId, deviceSecret, entityId } = req.body;
+    const isPublic = req.body.public;
+
+    if (!deviceId || entityId === undefined || typeof isPublic !== 'boolean') {
+        return res.status(400).json({ success: false, error: 'deviceId, deviceSecret, entityId, and public (boolean) required' });
+    }
+    if (!deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceSecret required (owner only)' });
+    }
+
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+    if (!safeEqual(device.deviceSecret, deviceSecret)) {
+        return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
+    }
+
+    const eId = parseInt(entityId);
+    const entity = device.entities[eId];
+    if (!entity || !entity.isBound) {
+        return res.status(404).json({ success: false, error: 'Entity not found or not bound' });
+    }
+
+    // Must have an agent card to publish
+    if (isPublic && !entity.agentCard) {
+        return res.status(400).json({ success: false, error: 'Entity must have an agent card before publishing' });
+    }
+
+    const ok = await db.setEntityPublic(deviceId, eId, isPublic);
+    if (!ok) return res.status(500).json({ success: false, error: 'Database error' });
+
+    serverLog('info', 'bot_plaza', `Entity ${eId} visibility: ${isPublic ? 'PUBLIC' : 'PRIVATE'}`, { deviceId, entityId: eId });
+
+    res.json({
+        success: true,
+        public: isPublic,
+        publicCode: entity.publicCode,
+        message: isPublic ? 'Agent card is now publicly listed' : 'Agent card removed from public listing'
+    });
+});
+
+/**
+ * GET /api/community/search — Search public agent cards
+ * No auth required (public directory)
+ * Query: ?q=keyword&tag=ecommerce&capability=translation&limit=20&offset=0&sort=newest|rating
+ */
+app.get('/api/community/search', async (req, res) => {
+    const { q, tag, capability, limit, offset, sort } = req.query;
+
+    const results = await db.searchPublicCards({
+        q, tag, capability,
+        limit: parseInt(limit) || 20,
+        offset: parseInt(offset) || 0,
+        sort: sort || 'newest'
+    });
+
+    res.json({
+        success: true,
+        count: results.length,
+        results
+    });
+});
+
+/**
+ * GET /api/community/card/:publicCode — Public card detail + messages
+ * No auth required
+ */
+app.get('/api/community/card/:publicCode', async (req, res) => {
+    const { publicCode } = req.params;
+    const card = await db.getPublicCardDetail(publicCode);
+    if (!card) return res.status(404).json({ success: false, error: 'Card not found or not public' });
+
+    const limit = Math.min(parseInt(req.query.messageLimit) || 50, 100);
+    const messages = await db.getCommunityMessages(publicCode, limit, 0);
+
+    res.json({
+        success: true,
+        card,
+        messages
+    });
+});
+
+/**
+ * POST /api/community/card/:publicCode/message — Leave a comment
+ * Auth: deviceSecret (user) OR botSecret (bot)
+ * Body: { text, replyTo?, deviceId, deviceSecret } or { text, replyTo?, deviceId, entityId, botSecret }
+ */
+app.post('/api/community/card/:publicCode/message', async (req, res) => {
+    const { publicCode } = req.params;
+    const { text, replyTo, deviceId, deviceSecret, botSecret, entityId } = req.body;
+
+    if (!text || typeof text !== 'string' || text.length < 1 || text.length > 500) {
+        return res.status(400).json({ success: false, error: 'text required (1-500 chars)' });
+    }
+    if (!deviceId) {
+        return res.status(400).json({ success: false, error: 'deviceId required' });
+    }
+
+    // Verify card exists and is public
+    const card = await db.getPublicCardDetail(publicCode);
+    if (!card) return res.status(404).json({ success: false, error: 'Card not found or not public' });
+
+    let authorType, authorId, authorName;
+
+    if (botSecret) {
+        // Bot auth
+        const eId = parseInt(entityId) || 0;
+        const device = devices[deviceId];
+        if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+        const entity = device.entities[eId];
+        if (!entity || !entity.isBound || !safeEqual(entity.botSecret, botSecret)) {
+            return res.status(403).json({ success: false, error: 'Invalid botSecret' });
+        }
+        authorType = 'bot';
+        authorId = `${deviceId}:${eId}`;
+        authorName = entity.name || `Entity ${eId}`;
+    } else if (deviceSecret) {
+        // User auth
+        const device = devices[deviceId];
+        if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+        if (!safeEqual(device.deviceSecret, deviceSecret)) {
+            return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
+        }
+        authorType = 'user';
+        authorId = deviceId;
+        authorName = 'Device Owner';
+    } else {
+        return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
+    }
+
+    const msg = await db.addCommunityMessage(publicCode, authorType, authorId, authorName, text, replyTo);
+    if (!msg) return res.status(500).json({ success: false, error: 'Failed to save message' });
+
+    res.json({ success: true, message: msg });
+});
+
+/**
+ * POST /api/community/card/:publicCode/rate — Rate a public card
+ * Auth: deviceSecret only (one rating per device per card)
+ * Body: { stars: 1-5, deviceId, deviceSecret }
+ */
+app.post('/api/community/card/:publicCode/rate', async (req, res) => {
+    const { publicCode } = req.params;
+    const { stars, deviceId, deviceSecret } = req.body;
+
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    if (!Number.isInteger(stars) || stars < 1 || stars > 5) {
+        return res.status(400).json({ success: false, error: 'stars must be integer 1-5' });
+    }
+
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+    if (!safeEqual(device.deviceSecret, deviceSecret)) {
+        return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
+    }
+
+    // Verify card exists and is public
+    const card = await db.getPublicCardDetail(publicCode);
+    if (!card) return res.status(404).json({ success: false, error: 'Card not found or not public' });
+
+    const result = await db.upsertCommunityRating(publicCode, deviceId, stars);
+    if (!result) return res.status(500).json({ success: false, error: 'Failed to save rating' });
+
+    res.json({
+        success: true,
+        stars,
+        avgRating: result.avgRating,
+        ratingCount: result.ratingCount
+    });
+});
+
 // ── Bot Identity Layer ──
 
 /**

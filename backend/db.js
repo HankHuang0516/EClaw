@@ -262,6 +262,44 @@ async function createTables() {
             ON CONFLICT (device_id, public_code) DO NOTHING
         `);
 
+        // ── Bot Plaza: Community tables ──
+        // Agent card visibility (public listing)
+        await client.query(`ALTER TABLE entities ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT false`);
+        await client.query(`ALTER TABLE entities ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ`);
+        await client.query(`ALTER TABLE entities ADD COLUMN IF NOT EXISTS avg_rating NUMERIC(2,1) DEFAULT 0`);
+        await client.query(`ALTER TABLE entities ADD COLUMN IF NOT EXISTS rating_count INTEGER DEFAULT 0`);
+        await client.query(`ALTER TABLE entities ADD COLUMN IF NOT EXISTS community_message_count INTEGER DEFAULT 0`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_entities_public ON entities(is_public) WHERE is_public = true`);
+
+        // Community messages (comments on public agent cards)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS community_messages (
+                id              SERIAL PRIMARY KEY,
+                card_public_code VARCHAR(8) NOT NULL,
+                author_type     VARCHAR(10) NOT NULL CHECK (author_type IN ('bot', 'user')),
+                author_id       TEXT NOT NULL,
+                author_name     TEXT,
+                text            TEXT NOT NULL,
+                reply_to        INTEGER REFERENCES community_messages(id) ON DELETE SET NULL,
+                created_at      TIMESTAMPTZ DEFAULT NOW()
+            )
+        `);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_community_msg_card ON community_messages(card_public_code, created_at DESC)`);
+
+        // Community ratings (one per device per card)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS community_ratings (
+                id              SERIAL PRIMARY KEY,
+                card_public_code VARCHAR(8) NOT NULL,
+                device_id       TEXT NOT NULL,
+                stars           INTEGER NOT NULL CHECK (stars >= 1 AND stars <= 5),
+                created_at      TIMESTAMPTZ DEFAULT NOW(),
+                updated_at      TIMESTAMPTZ DEFAULT NOW(),
+                UNIQUE(card_public_code, device_id)
+            )
+        `);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_community_rating_card ON community_ratings(card_public_code)`);
+
         // Encrypted device variables (env vars vault)
         await client.query(`
             CREATE TABLE IF NOT EXISTS device_vars (
@@ -1684,6 +1722,179 @@ async function cleanupExpiredPendingMessages(cutoffTimestamp) {
     }
 }
 
+// ── Bot Plaza: Community functions ──
+
+async function setEntityPublic(deviceId, entityId, isPublic) {
+    try {
+        const now = isPublic ? new Date().toISOString() : null;
+        await chatPool.query(
+            `UPDATE entities SET is_public = $1, published_at = CASE WHEN $1 THEN COALESCE(published_at, $2::timestamptz) ELSE published_at END
+             WHERE device_id = $3 AND entity_id = $4`,
+            [isPublic, now, deviceId, entityId]
+        );
+        return true;
+    } catch (err) {
+        console.error('[DB] setEntityPublic error:', err.message);
+        return false;
+    }
+}
+
+async function searchPublicCards({ q, tag, capability, limit = 20, offset = 0, sort = 'newest' }) {
+    try {
+        const conditions = [`e.is_public = true`, `e.bot_secret IS NOT NULL`];
+        const params = [];
+        let paramIdx = 1;
+
+        if (q) {
+            conditions.push(`(e.name ILIKE $${paramIdx} OR e.agent_card->>'description' ILIKE $${paramIdx})`);
+            params.push(`%${q}%`);
+            paramIdx++;
+        }
+        if (tag) {
+            conditions.push(`e.agent_card->'tags' ? $${paramIdx}`);
+            params.push(tag);
+            paramIdx++;
+        }
+        if (capability) {
+            conditions.push(`EXISTS (SELECT 1 FROM jsonb_array_elements(e.agent_card->'capabilities') cap WHERE cap->>'id' ILIKE $${paramIdx} OR cap->>'name' ILIKE $${paramIdx})`);
+            params.push(`%${capability}%`);
+            paramIdx++;
+        }
+
+        const orderBy = sort === 'rating' ? 'e.avg_rating DESC, e.rating_count DESC' : 'e.published_at DESC NULLS LAST';
+        const safeLimit = Math.min(Math.max(parseInt(limit) || 20, 1), 50);
+        const safeOffset = Math.max(parseInt(offset) || 0, 0);
+
+        params.push(safeLimit, safeOffset);
+        const sql = `
+            SELECT e.public_code, e.name, e.character, e.avatar, e.agent_card,
+                   e.avg_rating, e.rating_count, e.community_message_count,
+                   e.published_at, e.level, e.xp
+            FROM entities e
+            WHERE ${conditions.join(' AND ')}
+            ORDER BY ${orderBy}
+            LIMIT $${paramIdx} OFFSET $${paramIdx + 1}
+        `;
+
+        const result = await chatPool.query(sql, params);
+        return result.rows.map(r => ({
+            publicCode: r.public_code,
+            name: r.name,
+            character: r.character,
+            avatar: r.avatar,
+            description: r.agent_card?.description || null,
+            capabilities: r.agent_card?.capabilities || [],
+            tags: r.agent_card?.tags || [],
+            avgRating: parseFloat(r.avg_rating) || 0,
+            ratingCount: parseInt(r.rating_count) || 0,
+            messageCount: parseInt(r.community_message_count) || 0,
+            publishedAt: r.published_at,
+            level: r.level || 1,
+            xp: r.xp || 0
+        }));
+    } catch (err) {
+        console.error('[DB] searchPublicCards error:', err.message);
+        return [];
+    }
+}
+
+async function getPublicCardDetail(publicCode) {
+    try {
+        const result = await chatPool.query(
+            `SELECT e.public_code, e.name, e.character, e.avatar, e.agent_card,
+                    e.avg_rating, e.rating_count, e.community_message_count,
+                    e.published_at, e.level, e.xp, e.state
+             FROM entities e
+             WHERE e.public_code = $1 AND e.is_public = true`,
+            [publicCode]
+        );
+        if (result.rows.length === 0) return null;
+        const r = result.rows[0];
+        return {
+            publicCode: r.public_code,
+            name: r.name,
+            character: r.character,
+            avatar: r.avatar,
+            agentCard: r.agent_card || null,
+            avgRating: parseFloat(r.avg_rating) || 0,
+            ratingCount: parseInt(r.rating_count) || 0,
+            messageCount: parseInt(r.community_message_count) || 0,
+            publishedAt: r.published_at,
+            level: r.level || 1,
+            xp: r.xp || 0,
+            state: r.state || 'IDLE'
+        };
+    } catch (err) {
+        console.error('[DB] getPublicCardDetail error:', err.message);
+        return null;
+    }
+}
+
+async function getCommunityMessages(publicCode, limit = 50, offset = 0) {
+    try {
+        const result = await chatPool.query(
+            `SELECT id, card_public_code, author_type, author_id, author_name, text, reply_to, created_at
+             FROM community_messages
+             WHERE card_public_code = $1
+             ORDER BY created_at DESC
+             LIMIT $2 OFFSET $3`,
+            [publicCode, Math.min(limit, 100), Math.max(offset, 0)]
+        );
+        return result.rows;
+    } catch (err) {
+        console.error('[DB] getCommunityMessages error:', err.message);
+        return [];
+    }
+}
+
+async function addCommunityMessage(publicCode, authorType, authorId, authorName, text, replyTo) {
+    try {
+        const result = await chatPool.query(
+            `INSERT INTO community_messages (card_public_code, author_type, author_id, author_name, text, reply_to)
+             VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+            [publicCode, authorType, authorId, authorName, text, replyTo || null]
+        );
+        // Increment message count on entity
+        await chatPool.query(
+            `UPDATE entities SET community_message_count = community_message_count + 1
+             WHERE public_code = $1`,
+            [publicCode]
+        );
+        return result.rows[0];
+    } catch (err) {
+        console.error('[DB] addCommunityMessage error:', err.message);
+        return null;
+    }
+}
+
+async function upsertCommunityRating(publicCode, deviceId, stars) {
+    try {
+        await chatPool.query(
+            `INSERT INTO community_ratings (card_public_code, device_id, stars)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (card_public_code, device_id)
+             DO UPDATE SET stars = $3, updated_at = NOW()`,
+            [publicCode, deviceId, stars]
+        );
+        // Recalculate average
+        const result = await chatPool.query(
+            `SELECT AVG(stars)::numeric(2,1) AS avg, COUNT(*)::integer AS cnt
+             FROM community_ratings WHERE card_public_code = $1`,
+            [publicCode]
+        );
+        const avg = parseFloat(result.rows[0].avg) || 0;
+        const cnt = parseInt(result.rows[0].cnt) || 0;
+        await chatPool.query(
+            `UPDATE entities SET avg_rating = $1, rating_count = $2 WHERE public_code = $3`,
+            [avg, cnt, publicCode]
+        );
+        return { avgRating: avg, ratingCount: cnt };
+    } catch (err) {
+        console.error('[DB] upsertCommunityRating error:', err.message);
+        return null;
+    }
+}
+
 module.exports = {
     initDatabase,
     saveDeviceData,
@@ -1766,5 +1977,12 @@ module.exports = {
     savePendingCrossMessage,
     getPendingCrossMessages,
     deletePendingCrossMessages,
-    cleanupExpiredPendingMessages
+    cleanupExpiredPendingMessages,
+    // Bot Plaza: Community
+    setEntityPublic,
+    searchPublicCards,
+    getPublicCardDetail,
+    getCommunityMessages,
+    addCommunityMessage,
+    upsertCommunityRating
 };
