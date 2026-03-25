@@ -11,6 +11,14 @@
     <link rel="stylesheet" href="shared/style.css">
     <style>
         /* ── Chat Layout ── */
+        .chat-messages-wrapper {
+            position: relative;
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
         .chat-container {
             display: flex;
             flex-direction: column;
@@ -127,6 +135,7 @@
             flex: 1;
             overflow-y: auto;
             padding: 16px;
+            padding-right: 32px;
             display: flex;
             flex-direction: column;
             gap: 14px;
@@ -279,10 +288,7 @@
             padding: 8px 16px;
             background: var(--input-bg);
             border-top: 1px solid var(--card-border);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
+            position: relative;
         }
 
         .target-label {
@@ -841,6 +847,130 @@
             word-break: break-all;
         }
 
+        /* ── Scroll Navigator (side drag) ── */
+        .scroll-nav {
+            position: absolute;
+            right: 2px;
+            top: 0;
+            bottom: 0;
+            width: 28px;
+            z-index: 50;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.25s;
+        }
+
+        .scroll-nav.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .scroll-nav-track {
+            position: absolute;
+            right: 6px;
+            top: 12px;
+            bottom: 12px;
+            width: 4px;
+            background: var(--card-border);
+            border-radius: 2px;
+            opacity: 0.5;
+        }
+
+        .scroll-nav-thumb {
+            position: absolute;
+            right: 2px;
+            width: 16px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 8px;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            transition: background 0.15s, transform 0.15s;
+            touch-action: none;
+        }
+
+        .scroll-nav-thumb:hover {
+            background: var(--primary-hover, var(--primary));
+            transform: scaleX(1.15);
+        }
+
+        .scroll-nav-thumb.dragging {
+            cursor: grabbing;
+            background: var(--primary-hover, var(--primary));
+            transform: scaleX(1.3);
+        }
+
+        .scroll-nav-thumb::after {
+            content: '';
+            width: 6px;
+            height: 14px;
+            border-top: 2px solid rgba(255,255,255,0.6);
+            border-bottom: 2px solid rgba(255,255,255,0.6);
+        }
+
+        /* ── Target Bar Expand Upward ── */
+        .target-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: nowrap;
+            overflow: hidden;
+            max-height: 34px;
+        }
+
+        .target-bar-overflow {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-bottom: none;
+            border-radius: var(--radius, 8px) var(--radius, 8px) 0 0;
+            padding: 8px 16px;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+            z-index: 60;
+            flex-wrap: wrap;
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .target-bar-overflow.open {
+            display: flex;
+        }
+
+        .target-bar-toggle {
+            flex-shrink: 0;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            cursor: pointer;
+            background: var(--card);
+            border: 1px dashed var(--primary);
+            color: var(--primary);
+            white-space: nowrap;
+            user-select: none;
+            transition: all 0.2s;
+            margin-left: auto;
+        }
+
+        .target-bar-toggle:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        /* ── Reduced Motion ── */
+        @media (prefers-reduced-motion: reduce) {
+            .scroll-nav { transition: none; }
+            .scroll-nav-thumb { transition: none; }
+            .target-bar-toggle { transition: none; }
+        }
+
         /* ── Responsive ── */
         @media (max-width: 640px) {
             .chat-header-row {
@@ -869,6 +999,11 @@
 
             .target-bar {
                 padding: 6px 12px;
+            }
+
+            .scroll-nav-thumb {
+                width: 14px;
+                height: 32px;
             }
 
             .chat-input-bar {
@@ -1072,20 +1207,30 @@
             </div>
 
             <!-- Messages Area -->
-            <div class="chat-messages" id="chatMessages">
-                <div class="chat-loading" id="chatLoading">
-                    <div class="spinner"></div>
-                    <span data-i18n="chat_loading">Loading...</span>
+            <div class="chat-messages-wrapper">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-loading" id="chatLoading">
+                        <div class="spinner"></div>
+                        <span data-i18n="chat_loading">Loading...</span>
+                    </div>
+                </div>
+                <!-- Side Scroll Navigator -->
+                <div class="scroll-nav" id="scrollNav">
+                    <div class="scroll-nav-track"></div>
+                    <div class="scroll-nav-thumb" id="scrollNavThumb"></div>
                 </div>
             </div>
 
             <!-- Target Bar (checkboxes) -->
             <div class="target-bar" id="targetBar">
-                <span class="target-label" data-i18n="chat_send_to">Send to:</span>
-                <label class="target-check" id="targetAll" style="display:none;">
-                    <input type="checkbox" checked onchange="toggleTargetAll(this)">
-                    <span data-i18n="chat_filter_all">All</span>
-                </label>
+                <div class="target-bar-overflow" id="targetBarOverflow"></div>
+                <div class="target-bar-row" id="targetBarRow">
+                    <span class="target-label" data-i18n="chat_send_to">Send to:</span>
+                    <label class="target-check" id="targetAll" style="display:none;">
+                        <input type="checkbox" checked onchange="toggleTargetAll(this)">
+                        <span data-i18n="chat_filter_all">All</span>
+                    </label>
+                </div>
             </div>
 
             <!-- Input Bar -->
@@ -1563,11 +1708,14 @@
         }
 
         function renderTargetBar() {
-            const bar = document.getElementById('targetBar');
+            const row = document.getElementById('targetBarRow');
+            const overflow = document.getElementById('targetBarOverflow');
             const allLabel = document.getElementById('targetAll');
 
-            // Remove old dynamic elements
-            bar.querySelectorAll('.target-entity-check, .target-loading-hint, .target-separator, .target-contact-check, .btn-add-contact, .contact-add-inline').forEach(el => el.remove());
+            // Remove old dynamic elements from both row and overflow
+            row.querySelectorAll('.target-entity-check, .target-loading-hint, .target-separator, .target-contact-check, .btn-add-contact, .contact-add-inline, .target-bar-toggle').forEach(el => el.remove());
+            overflow.innerHTML = '';
+            overflow.classList.remove('open');
 
             // Show "All" only if more than 1 entity
             allLabel.style.display = boundEntities.length > 1 ? '' : 'none';
@@ -1575,6 +1723,9 @@
             // Restore last selected targets
             const saved = localStorage.getItem('chat_last_targets');
             const savedTargets = saved ? new Set(saved.split(',').map(Number)) : null;
+
+            // Collect all target elements
+            const allItems = [];
 
             boundEntities.forEach(e => {
                 const avatar = getAvatarForEntity(e.entityId);
@@ -1585,7 +1736,7 @@
                 const e2eeBadge = e.encryptionStatus === 'e2ee' ? ' 🔒' : '';
                 label.innerHTML = `<input type="checkbox" data-entity="${e.entityId}" ${isChecked ? 'checked' : ''} onchange="updateTargetAll()">
                     <span>${renderAvatarHtml(avatar, 20)} ${escapeHtml(name)} (#${e.entityId})${e2eeBadge}</span>`;
-                bar.appendChild(label);
+                allItems.push({ el: label, type: 'entity' });
             });
 
             // ── Contacts section ──
@@ -1593,7 +1744,7 @@
                 if (boundEntities.length > 0) {
                     const sep = document.createElement('span');
                     sep.className = 'target-separator';
-                    bar.appendChild(sep);
+                    allItems.push({ el: sep, type: 'sep' });
                 }
 
                 const savedContacts = localStorage.getItem('chat_last_contact_targets');
@@ -1612,7 +1763,7 @@
                         <span>${avatarHtml} ${escapeHtml(name)}</span>
                         ${isOffline ? `<span class="contact-offline-tag">${i18n.t('chat_contacts_offline')}</span>` : ''}
                         <button class="btn-remove-contact" onclick="removeContact('${escapeHtml(c.publicCode)}', event)" title="${i18n.t('common_remove')}">&#x2715;</button>`;
-                    bar.appendChild(chip);
+                    allItems.push({ el: chip, type: 'contact' });
                 });
 
                 const addBtn = document.createElement('button');
@@ -1620,11 +1771,46 @@
                 addBtn.textContent = '\u2795';
                 addBtn.title = i18n.t('chat_contacts_add');
                 addBtn.onclick = () => showAddContactForm();
-                bar.appendChild(addBtn);
+                allItems.push({ el: addBtn, type: 'add' });
             }
 
-            // Sync "All" checkbox state
-            updateTargetAll();
+            // Add all items to row first for measurement
+            allItems.forEach(item => row.appendChild(item.el));
+
+            // After layout, check which items overflow the first row
+            requestAnimationFrame(() => {
+                const rowRect = row.getBoundingClientRect();
+                const maxBottom = rowRect.top + 38; // ~one row height
+                const overflowItems = [];
+
+                allItems.forEach(item => {
+                    const elRect = item.el.getBoundingClientRect();
+                    if (elRect.top >= maxBottom) {
+                        overflowItems.push(item);
+                    }
+                });
+
+                if (overflowItems.length > 0) {
+                    // Move overflow items to the upward-expanding panel
+                    overflowItems.forEach(item => {
+                        row.removeChild(item.el);
+                        overflow.appendChild(item.el);
+                    });
+
+                    // Add toggle button to the row
+                    const toggle = document.createElement('button');
+                    toggle.className = 'target-bar-toggle';
+                    toggle.textContent = `▲ +${overflowItems.length}`;
+                    toggle.setAttribute('data-i18n-title', 'chat_target_expand');
+                    toggle.onclick = () => {
+                        const isOpen = overflow.classList.toggle('open');
+                        toggle.textContent = isOpen ? '▼ ' + (i18n.t('chat_target_collapse') || 'Collapse') : `▲ +${overflowItems.length}`;
+                    };
+                    row.appendChild(toggle);
+                }
+
+                updateTargetAll();
+            });
         }
 
         function toggleTargetAll(checkbox) {
@@ -1660,9 +1846,12 @@
 
         // ── Contacts Management ──
         function showAddContactForm() {
-            const bar = document.getElementById('targetBar');
+            const bar = document.getElementById('targetBarRow');
+            const overflow = document.getElementById('targetBarOverflow');
             bar.querySelectorAll('.contact-add-inline').forEach(el => el.remove());
             bar.querySelectorAll('.btn-add-contact').forEach(el => el.remove());
+            overflow.querySelectorAll('.contact-add-inline').forEach(el => el.remove());
+            overflow.querySelectorAll('.btn-add-contact').forEach(el => el.remove());
 
             const form = document.createElement('span');
             form.className = 'contact-add-inline';
@@ -2697,6 +2886,16 @@
             if (wrapper && !wrapper.contains(e.target)) {
                 document.getElementById('attachMenu').classList.remove('active');
             }
+            // Close target bar overflow when clicking outside
+            const targetBar = document.getElementById('targetBar');
+            if (targetBar && !targetBar.contains(e.target)) {
+                document.getElementById('targetBarOverflow').classList.remove('open');
+                const toggle = targetBar.querySelector('.target-bar-toggle');
+                if (toggle) {
+                    const count = document.getElementById('targetBarOverflow').children.length;
+                    toggle.textContent = `▲ +${count}`;
+                }
+            }
         });
 
         // ── Multi-File Upload ──
@@ -3028,6 +3227,83 @@
         function hasNoWebhookWarning(resp) {
             return resp && resp.warning && resp.warning.includes('no webhook');
         }
+
+        // ── Scroll Navigator ──
+        (() => {
+            const nav = document.getElementById('scrollNav');
+            const thumb = document.getElementById('scrollNavThumb');
+            const container = document.getElementById('chatMessages');
+            if (!nav || !thumb || !container) return;
+
+            let isDragging = false;
+            let hideTimer = null;
+            const TRACK_PAD = 12; // matches CSS top/bottom
+
+            function updateThumbPosition() {
+                const { scrollTop, scrollHeight, clientHeight } = container;
+                if (scrollHeight <= clientHeight) { nav.classList.remove('visible'); return; }
+                const trackHeight = nav.offsetHeight - TRACK_PAD * 2 - thumb.offsetHeight;
+                const ratio = scrollTop / (scrollHeight - clientHeight);
+                thumb.style.top = (TRACK_PAD + ratio * trackHeight) + 'px';
+            }
+
+            function showNav() {
+                nav.classList.add('visible');
+                clearTimeout(hideTimer);
+                hideTimer = setTimeout(() => { if (!isDragging) nav.classList.remove('visible'); }, 1500);
+            }
+
+            container.addEventListener('scroll', () => {
+                updateThumbPosition();
+                showNav();
+            }, { passive: true });
+
+            // Show on hover over messages area
+            container.addEventListener('mouseenter', showNav);
+
+            function startDrag(e) {
+                e.preventDefault();
+                isDragging = true;
+                thumb.classList.add('dragging');
+                nav.classList.add('visible');
+                clearTimeout(hideTimer);
+            }
+
+            function doDrag(clientY) {
+                if (!isDragging) return;
+                const rect = nav.getBoundingClientRect();
+                const trackHeight = rect.height - TRACK_PAD * 2 - thumb.offsetHeight;
+                const relY = clientY - rect.top - TRACK_PAD - thumb.offsetHeight / 2;
+                const ratio = Math.max(0, Math.min(1, relY / trackHeight));
+                const { scrollHeight, clientHeight } = container;
+                container.scrollTop = ratio * (scrollHeight - clientHeight);
+            }
+
+            function endDrag() {
+                if (!isDragging) return;
+                isDragging = false;
+                thumb.classList.remove('dragging');
+                hideTimer = setTimeout(() => nav.classList.remove('visible'), 1500);
+            }
+
+            // Mouse events
+            thumb.addEventListener('mousedown', startDrag);
+            document.addEventListener('mousemove', (e) => doDrag(e.clientY));
+            document.addEventListener('mouseup', endDrag);
+
+            // Touch events
+            thumb.addEventListener('touchstart', (e) => { startDrag(e); }, { passive: false });
+            document.addEventListener('touchmove', (e) => {
+                if (isDragging && e.touches[0]) doDrag(e.touches[0].clientY);
+            }, { passive: true });
+            document.addEventListener('touchend', endDrag);
+
+            // Click on track to jump
+            nav.addEventListener('click', (e) => {
+                if (e.target === thumb) return;
+                doDrag(e.clientY);
+            });
+        })();
 
         // ── Cleanup ──
         window.addEventListener('beforeunload', () => {
