@@ -1,3 +1,10 @@
+## [1.164.3](https://github.com/HankHuang0516/EClaw/compare/v1.164.2...v1.164.3) (2026-03-25)
+
+
+### Bug Fixes
+
+* admin editBot() call loadAll() instead of undefined loadAdminData() ([2090f7b](https://github.com/HankHuang0516/EClaw/commit/2090f7b19c118ed5f1288a51834991f2493e456a))
+
 ## [1.164.2](https://github.com/HankHuang0516/EClaw/compare/v1.164.1...v1.164.2) (2026-03-25)
 
 
