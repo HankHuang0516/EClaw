@@ -1,3 +1,10 @@
+## [1.170.2](https://github.com/HankHuang0516/EClaw/compare/v1.170.1...v1.170.2) (2026-03-25)
+
+
+### Bug Fixes
+
+* **chat:** loading hint stuck on screen in target bar ([#488](https://github.com/HankHuang0516/EClaw/issues/488)) ([e0f1bdd](https://github.com/HankHuang0516/EClaw/commit/e0f1bdd95c89eb27d5855d64da9c48b69baa98ba)), closes [#targetBar](https://github.com/HankHuang0516/EClaw/issues/targetBar)
+
 ## [1.170.1](https://github.com/HankHuang0516/EClaw/compare/v1.170.0...v1.170.1) (2026-03-25)
 
 
