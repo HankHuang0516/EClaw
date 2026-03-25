@@ -1,3 +1,10 @@
+## [1.164.10](https://github.com/HankHuang0516/EClaw/compare/v1.164.9...v1.164.10) (2026-03-25)
+
+
+### Bug Fixes
+
+* redirect /info to /portal/info.html for correct asset resolution ([#474](https://github.com/HankHuang0516/EClaw/issues/474)) ([8855df9](https://github.com/HankHuang0516/EClaw/commit/8855df9748579512f13b87b459388a1f6708a77a))
+
 ## [1.164.9](https://github.com/HankHuang0516/EClaw/compare/v1.164.8...v1.164.9) (2026-03-25)
 
 
