@@ -5050,24 +5050,41 @@ app.put('/api/device/entity/name', async (req, res) => {
     // Bot Push Parity Rule: channel bots receive immediate notification (no pending queue)
     if (entity.bindingType === 'channel' && entity.channelAccountId) {
         const { oldName: oN, newName: nN } = entity.pendingRename;
-        channelModule.pushToChannelCallback(deviceId, eId, {
+        // Fire-and-forget with timeout — don't block the response
+        const pushPromise = channelModule.pushToChannelCallback(deviceId, eId, {
             event: 'message',
             from: 'system',
             text: `[SYSTEM:NAME_CHANGED] 你的名字已從「${oN}」更改為「${nN}」。請記住你現在的名字是「${nN}」。`,
             eclaw_context: { expectsReply: false, silentToken: '[SILENT]', missionHints: '' }
-        }, entity.channelAccountId)
+        }, entity.channelAccountId);
+        // 5s timeout guard — never block rename response
+        Promise.race([
+            pushPromise,
+            new Promise(resolve => setTimeout(() => resolve({ pushed: false, reason: 'timeout' }), 5000))
+        ])
             .then(r => console.log(`[Rename] Channel push to entity ${eId}: ${r.pushed ? 'OK' : r.reason}`))
             .catch(e => console.error(`[Rename] Channel push error: ${e.message}`));
         entity.pendingRename = null; // clear — already delivered
     }
 
-    await saveData();
-
+    // Respond immediately, persist in background (don't block on full saveData)
     res.json({
         success: true,
         name: newName,
-        entityId: eId
+        entityId: eId,
+        changed: true
     });
+
+    // Persist single device data in background (much faster than saveAllDevices)
+    if (typeof db.saveDeviceData === 'function') {
+        db.saveDeviceData(deviceId, device).catch(err =>
+            console.error(`[Rename] DB save error: ${err.message}`)
+        );
+    } else {
+        saveData().catch(err =>
+            console.error(`[Rename] saveData error: ${err.message}`)
+        );
+    }
 });
 
 /**
