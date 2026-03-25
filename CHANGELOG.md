@@ -1,3 +1,10 @@
+## [1.164.4](https://github.com/HankHuang0516/EClaw/compare/v1.164.3...v1.164.4) (2026-03-25)
+
+
+### Bug Fixes
+
+* **portal:** settings entity-utils.js 404 + add missing i18n keys ([#469](https://github.com/HankHuang0516/EClaw/issues/469)) ([0323d3e](https://github.com/HankHuang0516/EClaw/commit/0323d3e4dee5631a0988af73342142dac736a4bd))
+
 ## [1.164.3](https://github.com/HankHuang0516/EClaw/compare/v1.164.2...v1.164.3) (2026-03-25)
 
 
