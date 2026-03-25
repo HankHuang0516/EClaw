@@ -1,3 +1,10 @@
+## [1.164.8](https://github.com/HankHuang0516/EClaw/compare/v1.164.7...v1.164.8) (2026-03-25)
+
+
+### Bug Fixes
+
+* **portal:** chat input Enter sends instead of newline — switch to textarea with Shift+Enter ([#472](https://github.com/HankHuang0516/EClaw/issues/472)) ([161bcf8](https://github.com/HankHuang0516/EClaw/commit/161bcf88004ce95c933b1701a2fa65c8cc2977da))
+
 ## [1.164.7](https://github.com/HankHuang0516/EClaw/compare/v1.164.6...v1.164.7) (2026-03-25)
 
 
