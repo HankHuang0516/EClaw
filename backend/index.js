@@ -1125,7 +1125,7 @@ app.get('/p/:code/:noteId', async (req, res) => {
         const pageTitle = row.title || 'EClaw Page';
         const hasMarkdown = !!row.markdown_content;
         const htmlContent = hasMarkdown
-            ? `<div id="md-content"></div><script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"><\/script><script>document.getElementById('md-content').innerHTML=marked.parse(${JSON.stringify(row.markdown_content)});<\/script>`
+            ? `<div id="md-content"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js"><\/script><script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"><\/script><script>document.getElementById('md-content').innerHTML=DOMPurify.sanitize(marked.parse(${JSON.stringify(row.markdown_content)}));<\/script>`
             : sanitizePublicHtml(row.html_content || '');
 
         const device = devices[target.deviceId];
@@ -2078,11 +2078,10 @@ app.post('/api/gatekeeper/appeal', async (req, res) => {
 });
 
 // GET /api/admin/gatekeeper/debug - Debug developer device cache
-app.get('/api/admin/gatekeeper/debug', async (req, res) => {
-    const { deviceId, deviceSecret } = req.query;
-    if (!deviceId || !deviceSecret) return res.status(400).json({ error: 'deviceId and deviceSecret required' });
+app.get('/api/admin/gatekeeper/debug', adminAuth, adminCheck, async (req, res) => {
+    const { deviceId } = req.query;
+    if (!deviceId) return res.status(400).json({ error: 'deviceId required' });
     const device = devices[deviceId];
-    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) return res.status(403).json({ error: 'Invalid credentials' });
     // Query DB for is_admin
     let dbAdmin = null;
     try {
