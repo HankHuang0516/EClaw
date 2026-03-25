@@ -1,3 +1,10 @@
+# [1.168.0](https://github.com/HankHuang0516/EClaw/compare/v1.167.0...v1.168.0) (2026-03-25)
+
+
+### Features
+
+* add TTS (text-to-speech) API for bot voice commands ([#480](https://github.com/HankHuang0516/EClaw/issues/480)) ([b6e8fe3](https://github.com/HankHuang0516/EClaw/commit/b6e8fe3d61dd69ebcfd4328627f01f9037403a13))
+
 # [1.167.0](https://github.com/HankHuang0516/EClaw/compare/v1.166.0...v1.167.0) (2026-03-25)
 
 
