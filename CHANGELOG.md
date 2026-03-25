@@ -1,3 +1,10 @@
+## [1.164.12](https://github.com/HankHuang0516/EClaw/compare/v1.164.11...v1.164.12) (2026-03-25)
+
+
+### Bug Fixes
+
+* add shared style.css to landing page for nav bar rendering ([#476](https://github.com/HankHuang0516/EClaw/issues/476)) ([7150ac9](https://github.com/HankHuang0516/EClaw/commit/7150ac96f5e236ccd53d0783e57db7ddc6c9dc23))
+
 ## [1.164.11](https://github.com/HankHuang0516/EClaw/compare/v1.164.10...v1.164.11) (2026-03-25)
 
 
