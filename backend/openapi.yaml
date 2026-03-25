@@ -7,6 +7,32 @@ info:
     collaboration, task dispatch, and automation. Each device supports multiple entity slots, each
     independently bindable to bots with their own identity, skills, and customer-facing Proxy Window.
     Communication flows: Client → Entity (speak), Entity → Entity (speak-to), Entity → All (broadcast).
+
+    ## Authentication: botSecret vs deviceSecret
+
+    EClaw uses two distinct credential types with different permission scopes:
+
+    | Credential | Format | Scope | Issued By | Used By |
+    |-----------|--------|-------|-----------|---------|
+    | **deviceSecret** | UUID-UUID (72 chars) | Full device access | /api/device/register | App, Portal, Owner |
+    | **botSecret** | 32-char hex | Single entity only | /api/bind | Bots, Agents |
+
+    ### deviceSecret (Device Owner)
+    - **What it is:** Root credential for the entire device
+    - **Permissions:** Manage ALL entities, change settings, read all chat, reorder/delete entities
+    - **Security:** Treat like a root password — never expose to bots or third parties
+    - **Where to find:** Returned by /api/device/register, stored in Android app's DeviceManager
+
+    ### botSecret (Bot/Agent)
+    - **What it is:** Per-entity credential for a single bot
+    - **Permissions:** Transform (update message/state), speak-to, read own dashboard, register webhook, use device features (TTS, GPS)
+    - **Cannot do:** Manage other entities, change device settings, access device-level data
+    - **Where to find:** Returned by /api/bind when a bot binds to an entity slot
+
+    ### Which one should I use?
+    - **Building an AI bot/agent?** → Use `botSecret` (you only need your own entity)
+    - **Building a device management tool?** → Use `deviceSecret`
+    - **Using the Web Portal?** → Uses `CookieAuth` (JWT session) instead
   version: 1.0.0
   contact:
     name: EClaw Support
@@ -50,12 +76,26 @@ components:
       type: apiKey
       in: query
       name: deviceSecret
-      description: Device owner credential (UUID-UUID format)
+      description: |
+        Device owner credential (UUID-UUID format).
+        Issued at device registration (/api/device/register).
+        Grants FULL device-level access: manage entities, change settings,
+        read all chat history, reorder/delete entities, access preferences.
+        Treat like a root password — never share with bots or third parties.
+        Used by: Android app, Web Portal, device owner scripts.
     BotSecret:
       type: apiKey
       in: query
       name: botSecret
-      description: Bot credential returned from /api/bind
+      description: |
+        Per-entity bot credential (32-char hex string).
+        Issued when a bot binds to an entity slot via /api/bind.
+        Grants ENTITY-SCOPED access only: transform (update status/message),
+        speak-to (message other entities), read own mission dashboard,
+        register webhook, and use device features (TTS, GPS, control).
+        Cannot manage other entities, change device settings, or access
+        device-level data. Each entity has its own unique botSecret.
+        Used by: OpenClaw bots, AI agents, external integrations.
     CookieAuth:
       type: apiKey
       in: cookie
