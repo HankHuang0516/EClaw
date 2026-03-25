@@ -1,3 +1,10 @@
+## [1.164.7](https://github.com/HankHuang0516/EClaw/compare/v1.164.6...v1.164.7) (2026-03-25)
+
+
+### Bug Fixes
+
+* prevent WEBHOOK_ERROR from overwriting successful bot transform responses ([#471](https://github.com/HankHuang0516/EClaw/issues/471)) ([5b13a9d](https://github.com/HankHuang0516/EClaw/commit/5b13a9d5d778a5747e31e8ffbae78dff2bc01ec8))
+
 ## [1.164.6](https://github.com/HankHuang0516/EClaw/compare/v1.164.5...v1.164.6) (2026-03-25)
 
 
