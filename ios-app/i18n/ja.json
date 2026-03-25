@@ -269,7 +269,9 @@
     "sold_out": "売り切れ",
     "webhook_testing": "接続テスト中...",
     "webhook_success": "接続成功",
-    "iap_coming_soon": "Apple IAP 決済は近日公開予定"
+    "iap_coming_soon": "Apple IAP 決済は近日公開予定",
+    "select_bot": "Botを選択：",
+    "active_users": "利用中ユーザー数"
   },
   "errors": {
     "network": "ネットワークエラー。接続を確認してください。",

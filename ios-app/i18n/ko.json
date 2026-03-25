@@ -269,7 +269,9 @@
     "sold_out": "매진",
     "webhook_testing": "연결 테스트 중...",
     "webhook_success": "연결 성공",
-    "iap_coming_soon": "Apple IAP 결제 곧 출시 예정"
+    "iap_coming_soon": "Apple IAP 결제 곧 출시 예정",
+    "select_bot": "봇 선택:",
+    "active_users": "사용 중인 사용자"
   },
   "errors": {
     "network": "네트워크 오류. 연결을 확인하세요.",

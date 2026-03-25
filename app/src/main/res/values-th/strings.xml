@@ -591,4 +591,6 @@
     <string name="note_page_html_hint">ใส่เนื้อหา HTML…</string>
     <string name="note_page_open">เปิดหน้า</string>
     <string name="error_generic">เกิดข้อผิดพลาด</string>
+    <string name="select_bot">เลือกบอท:</string>
+    <string name="active_users">ผู้ใช้งานอยู่</string>
 </resources>

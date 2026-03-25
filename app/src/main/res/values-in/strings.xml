@@ -591,4 +591,6 @@ Jika Anda memiliki pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="note_page_html_hint">Masukkan konten HTML…</string>
     <string name="note_page_open">Buka Halaman</string>
     <string name="error_generic">Terjadi kesalahan</string>
+    <string name="select_bot">Pilih bot:</string>
+    <string name="active_users">Pengguna aktif</string>
 </resources>

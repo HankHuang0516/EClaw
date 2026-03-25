@@ -24,6 +24,13 @@ interface BorrowStatus {
   boundEntities: Array<{ entityId: string; tier: 'free' | 'paid'; boundSince: number }>;
 }
 
+interface FreeBotItem {
+  botId: string;
+  displayName: string;
+  activeBindings: number;
+  status: string;
+}
+
 export default function OfficialBorrowScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -34,7 +41,9 @@ export default function OfficialBorrowScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [tosAgreed, setTosAgreed] = useState(false);
   const [snack, setSnack] = useState('');
-  const [isBorrowing, setIsBorrowing] = useState<string | null>(null); // entityId being borrowed
+  const [isBorrowing, setIsBorrowing] = useState<string | null>(null);
+  const [freeBots, setFreeBots] = useState<FreeBotItem[]>([]);
+  const [selectedBotId, setSelectedBotId] = useState<string | null>(null);
 
   React.useLayoutEffect(() => {
     navigation.setOptions({ title: t('official_borrow.title'), headerShown: true });
@@ -45,10 +54,24 @@ export default function OfficialBorrowScreen() {
     try {
       const res = await officialBorrowApi.getStatus();
       setStatus(res.data);
+      loadFreeBots();
     } catch {
       setSnack(t('errors.server'));
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadFreeBots = async () => {
+    try {
+      const res = await officialBorrowApi.getFreeBots();
+      const bots: FreeBotItem[] = res.data?.bots ?? [];
+      setFreeBots(bots);
+      if (bots.length > 0 && !selectedBotId) {
+        setSelectedBotId(bots[0].botId);
+      }
+    } catch {
+      // silent
     }
   };
 
@@ -63,7 +86,7 @@ export default function OfficialBorrowScreen() {
     }
     setIsBorrowing(entityId);
     try {
-      await officialBorrowApi.bindFree(entityId);
+      await officialBorrowApi.bindFree(entityId, selectedBotId ?? undefined);
       await loadStatus();
       setSnack('✓ ' + t('official_borrow.webhook_success'));
     } catch {
@@ -148,6 +171,40 @@ export default function OfficialBorrowScreen() {
               </Card.Content>
             </Card>
 
+            {/* Free Bot Selector */}
+            {freeBots.length > 0 && !status?.boundEntities.some((b) => b.tier === 'free') && (
+              <Card style={styles.card}>
+                <Card.Content>
+                  <Text variant="titleSmall" style={{ marginBottom: 8 }}>
+                    {t('official_borrow.select_bot')}
+                  </Text>
+                  {freeBots.map((bot) => (
+                    <View
+                      key={bot.botId}
+                      style={[
+                        styles.botRow,
+                        {
+                          borderColor: selectedBotId === bot.botId ? theme.colors.primary : theme.colors.outlineVariant,
+                          backgroundColor: selectedBotId === bot.botId ? theme.colors.primaryContainer + '22' : 'transparent',
+                        },
+                      ]}
+                    >
+                      <Checkbox
+                        status={selectedBotId === bot.botId ? 'checked' : 'unchecked'}
+                        onPress={() => setSelectedBotId(bot.botId)}
+                      />
+                      <View style={{ flex: 1 }}>
+                        <Text variant="bodyMedium">{bot.displayName}</Text>
+                        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                          {t('official_borrow.active_users')}: {bot.activeBindings}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+                </Card.Content>
+              </Card>
+            )}
+
             {/* Entity list */}
             {entities.map((entity) => {
               const bound = isBound(entity.entityId);
@@ -230,4 +287,5 @@ const styles = StyleSheet.create({
   slotItem: { flex: 1, alignItems: 'center', gap: 4 },
   checkRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   entityRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  botRow: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: 10, padding: 8, marginBottom: 6 },
 });

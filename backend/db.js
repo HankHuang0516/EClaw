@@ -158,6 +158,9 @@ async function createTables() {
         await client.query(`ALTER TABLE official_bots ADD COLUMN IF NOT EXISTS setup_username TEXT`);
         await client.query(`ALTER TABLE official_bots ADD COLUMN IF NOT EXISTS setup_password TEXT`);
 
+        // Add display_name column for user-facing bot selection
+        await client.query(`ALTER TABLE official_bots ADD COLUMN IF NOT EXISTS display_name TEXT`);
+
         // Add paid_borrow_slots column to devices table (tracks how many personal bots a device has paid for)
         await client.query(`
             ALTER TABLE devices ADD COLUMN IF NOT EXISTS paid_borrow_slots INTEGER DEFAULT 0
@@ -747,11 +750,11 @@ async function saveOfficialBot(bot) {
     try {
         const client = await pool.connect();
         await client.query(
-            `INSERT INTO official_bots (bot_id, bot_type, webhook_url, token, bot_secret, session_key_template, status, assigned_device_id, assigned_entity_id, assigned_at, created_at, setup_username, setup_password)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            `INSERT INTO official_bots (bot_id, bot_type, webhook_url, token, bot_secret, session_key_template, status, assigned_device_id, assigned_entity_id, assigned_at, created_at, setup_username, setup_password, display_name)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
              ON CONFLICT (bot_id)
-             DO UPDATE SET webhook_url = $3, token = $4, bot_secret = $5, session_key_template = $6, status = $7, assigned_device_id = $8, assigned_entity_id = $9, assigned_at = $10, setup_username = $12, setup_password = $13`,
-            [bot.bot_id, bot.bot_type, bot.webhook_url, bot.token, bot.bot_secret || null, bot.session_key_template || null, bot.status || 'available', bot.assigned_device_id || null, bot.assigned_entity_id ?? null, bot.assigned_at || null, bot.created_at || Date.now(), bot.setup_username || null, bot.setup_password || null]
+             DO UPDATE SET webhook_url = $3, token = $4, bot_secret = $5, session_key_template = $6, status = $7, assigned_device_id = $8, assigned_entity_id = $9, assigned_at = $10, setup_username = $12, setup_password = $13, display_name = $14`,
+            [bot.bot_id, bot.bot_type, bot.webhook_url, bot.token, bot.bot_secret || null, bot.session_key_template || null, bot.status || 'available', bot.assigned_device_id || null, bot.assigned_entity_id ?? null, bot.assigned_at || null, bot.created_at || Date.now(), bot.setup_username || null, bot.setup_password || null, bot.display_name || null]
         );
         client.release();
         return true;
@@ -782,7 +785,8 @@ async function loadOfficialBots() {
                 assigned_at: row.assigned_at ? parseInt(row.assigned_at) : null,
                 created_at: parseInt(row.created_at),
                 setup_username: row.setup_username || null,
-                setup_password: row.setup_password || null
+                setup_password: row.setup_password || null,
+                display_name: row.display_name || null
             };
         }
         console.log(`[DB] Loaded ${Object.keys(bots).length} official bots`);

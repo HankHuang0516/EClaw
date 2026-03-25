@@ -178,6 +178,25 @@
                         android:padding="8dp"
                         android:layout_marginBottom="16dp" />
 
+                    <!-- Free Bot Selector -->
+                    <TextView
+                        android:id="@+id/tvSelectBotLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/select_bot"
+                        android:textSize="13sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginBottom="6dp"
+                        android:visibility="gone" />
+
+                    <RadioGroup
+                        android:id="@+id/rgFreeBots"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginBottom="12dp"
+                        android:visibility="gone" />
+
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnBindFree"
                         android:layout_width="match_parent"

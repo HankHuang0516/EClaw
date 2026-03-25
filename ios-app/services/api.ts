@@ -279,8 +279,9 @@ export const subscriptionApi = {
 
 export const officialBorrowApi = {
   getStatus: () => apiClient.get('/api/official-borrow/status'),
-  bindFree: (entityId: string) =>
-    apiClient.post('/api/official-borrow/bind-free', { entityId }),
+  getFreeBots: () => apiClient.get('/api/official-borrow/free-bots'),
+  bindFree: (entityId: string, botId?: string) =>
+    apiClient.post('/api/official-borrow/bind-free', { entityId, ...(botId ? { botId } : {}) }),
   bindPersonal: (entityId: string, receiptData?: string) =>
     apiClient.post('/api/official-borrow/bind-personal', { entityId, receiptData }),
   unbind: (entityId: string) =>

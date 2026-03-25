@@ -277,7 +277,9 @@
     "sold_out": "已售完",
     "webhook_testing": "測試連線中...",
     "webhook_success": "連線成功",
-    "iap_coming_soon": "Apple IAP 訂閱即將推出"
+    "iap_coming_soon": "Apple IAP 訂閱即將推出",
+    "select_bot": "選擇機器人：",
+    "active_users": "使用中人數"
   },
   "errors": {
     "network": "網路錯誤，請檢查您的連線。",

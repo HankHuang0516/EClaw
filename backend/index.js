@@ -163,8 +163,17 @@ app.get('/sitemap.xml', (req, res) => {
 app.get('/llms.txt', (req, res) => {
     res.type('text/plain').sendFile(path.join(__dirname, 'public/llms.txt'));
 });
-// Serve public assets (OG image, etc.)
-app.use('/assets', express.static(path.join(__dirname, 'public/assets')));
+// Serve public assets (OG image, etc.) — cache aggressively to reduce egress
+app.use('/assets', express.static(path.join(__dirname, 'public/assets'), {
+    maxAge: '7d',
+    immutable: false,
+    setHeaders: (res, filePath) => {
+        // Images/GIFs: cache 7 days; JS: no-cache for freshness
+        if (filePath.endsWith('.js')) {
+            res.set('Cache-Control', 'no-cache');
+        }
+    }
+}));
 // Landing page
 app.get('/landing', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/landing.html'));
@@ -7796,12 +7805,41 @@ app.get('/api/official-borrow/status', async (req, res) => {
 });
 
 /**
+ * GET /api/official-borrow/free-bots
+ * List available free bots with active binding counts for user selection.
+ */
+app.get('/api/official-borrow/free-bots', (req, res) => {
+    const freeBots = Object.values(officialBots).filter(b => b.bot_type === 'free' && b.status !== 'disabled');
+
+    const bots = freeBots.map(bot => {
+        // Count active bindings for this bot (only where entity is still bound)
+        let activeBindings = 0;
+        for (const binding of Object.values(officialBindingsCache)) {
+            if (binding.bot_id !== bot.bot_id) continue;
+            const device = devices[binding.device_id];
+            const entity = device?.entities?.[binding.entity_id];
+            if (entity && entity.isBound) {
+                activeBindings++;
+            }
+        }
+        return {
+            botId: bot.bot_id,
+            displayName: bot.display_name || bot.bot_id,
+            activeBindings,
+            status: bot.status
+        };
+    });
+
+    res.json({ success: true, bots });
+});
+
+/**
  * POST /api/official-borrow/bind-free
  * Bind a free official bot to a device entity.
- * Body: { deviceId, deviceSecret, entityId }
+ * Body: { deviceId, deviceSecret, entityId, botId? }
  */
 app.post('/api/official-borrow/bind-free', async (req, res) => {
-    const { deviceId, deviceSecret, entityId } = req.body;
+    const { deviceId, deviceSecret, entityId, botId } = req.body;
 
     if (!deviceId || !deviceSecret) {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
@@ -7875,8 +7913,19 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
         return res.status(400).json({ success: false, error: `每個裝置僅限借用一個免費版 (已綁定 Entity #${existingFreeBinding.entity_id})` });
     }
 
-    // Find a free bot
-    const freeBot = Object.values(officialBots).find(b => b.bot_type === 'free' && b.status !== 'disabled');
+    // Find a free bot (user-selected or auto-assign)
+    let freeBot;
+    if (botId) {
+        freeBot = officialBots[botId];
+        if (!freeBot || freeBot.bot_type !== 'free') {
+            return res.status(400).json({ success: false, error: 'Invalid botId: not a free bot' });
+        }
+        if (freeBot.status === 'disabled') {
+            return res.status(400).json({ success: false, error: 'This bot is currently disabled' });
+        }
+    } else {
+        freeBot = Object.values(officialBots).find(b => b.bot_type === 'free' && b.status !== 'disabled');
+    }
     if (!freeBot) {
         return res.status(404).json({ success: false, error: 'No free bot available' });
     }
@@ -8260,6 +8309,9 @@ app.post('/api/official-borrow/verify-subscription', async (req, res) => {
     }
 
     const eId = parseInt(entityId);
+    if (isNaN(eId)) {
+        return res.status(400).json({ success: false, error: 'Valid entityId required' });
+    }
     const device = devices[deviceId];
     if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid device credentials' });

@@ -589,6 +589,16 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Discord Integration Module**: Native Discord slash command integration (`/ask`, `/status`, `/mission`); Ed25519 signature verification; deferred response pattern
 - **Agent Message Rendering Spec**: `docs/specs/agent-message-rendering-spec.md` — authoritative specification for chat message rendering across all platforms
 
+### Recent Features (v1.155.x – v1.161.x)
+
+- **Security Hardening (v1.160)**: DNS rebinding protection, timing-safe secret comparison, landing.html i18n fixes
+- **Public Note URL Bar (v1.160)**: URL bar with copy button on public note pages
+- **Note Page Public/Private Toggle (v1.159)**: Badge in list + toggle in viewer for note visibility
+- **Clipboard Image Paste (v1.161)**: Paste image from clipboard (Ctrl+V / Cmd+V) in desktop chat
+- **Avatar HTML Fix (v1.161)**: Fix avatar HTML appearing as raw text in schedule display
+- **Free Bot Selector**: `GET /api/official-borrow/free-bots` endpoint; users can choose which free bot to bind; three-platform support (Web/Android/iOS); `display_name` column on `official_bots` table
+- **Whoami Endpoint**: `GET /api/whoami` for bot self-identification
+
 ---
 
 ## Test Coverage Summary
