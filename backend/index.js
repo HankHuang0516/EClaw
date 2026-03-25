@@ -2874,12 +2874,40 @@ exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/j
 --- E-Claw API Documentation (Latest) ---
 ${skillDoc}`;
 
-    sendToSession(webhookUrl, webhookToken, sessionKey, msg, authOpts)
-        .then(result => {
+    // Use longer timeout (60s) for skill doc delivery — Claude CLI proxy bots need more time
+    sendToSession(webhookUrl, webhookToken, sessionKey, msg, authOpts, { timeout: 60000 })
+        .then(async result => {
             if (result.success) {
                 console.log(`[Borrow] ✓ Sent credentials + skill doc to bot (device ${deviceId} entity ${entityId})`);
             } else {
                 console.warn(`[Borrow] ✗ Failed to send skill doc to bot: ${result.error || 'unknown'}`);
+                // Retry with credentials only (no skill doc) — smaller payload, more likely to succeed
+                console.log(`[Borrow] Retrying with credentials only (no skill doc)...`);
+                const shortMsg = `[SYSTEM:BIND_COMPLETE] Official borrow binding established.
+
+YOUR CREDENTIALS (save these):
+- deviceId: ${deviceId}
+- entityId: ${entityId}
+- botSecret: ${botSecret}
+- botType: ${botType}
+- API Base: https://eclawbot.com
+
+🚨 CRITICAL RULE: When you receive a push message from a user, you MUST use the exec tool with curl to call the E-claw API. Your text reply to the webhook is DISCARDED — the user will NEVER see it.
+
+Every push message will include a pre-filled curl command. Just replace YOUR_REPLY_HERE and execute it.
+
+⚠️ IMMEDIATE ACTION REQUIRED — Run this command RIGHT NOW to confirm you're online:
+exec: curl -s -X POST "https://eclawbot.com/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"Webhook test passed! I am ready to chat~"}'`;
+                try {
+                    const retryResult = await sendToSession(webhookUrl, webhookToken, sessionKey, shortMsg, authOpts, { timeout: 30000 });
+                    if (retryResult.success) {
+                        console.log(`[Borrow] ✓ Retry succeeded — sent credentials without skill doc (device ${deviceId} entity ${entityId})`);
+                    } else {
+                        console.warn(`[Borrow] ✗ Retry also failed: ${retryResult.error || 'unknown'}`);
+                    }
+                } catch (retryErr) {
+                    console.warn(`[Borrow] ✗ Retry error: ${retryErr.message}`);
+                }
             }
         })
         .catch(err => {
@@ -9705,12 +9733,14 @@ async function handshakeWithBot(url, token, preferredSessionKey, deviceId, entit
 /**
  * Helper: Send a message to a specific session and parse the response.
  */
-async function sendToSession(url, token, sessionKey, message, authOpts = {}) {
+async function sendToSession(url, token, sessionKey, message, authOpts = {}, options = {}) {
     try {
+        const fetchOpts = { ...authOpts };
+        if (options.timeout) fetchOpts.timeout = options.timeout;
         const response = await gatewayFetch(url, token, {
             tool: "sessions_send",
             args: { sessionKey, message }
-        }, authOpts);
+        }, fetchOpts);
 
         const text = await response.text().catch(() => '');
 
@@ -9867,6 +9897,9 @@ async function pushToBot(entity, deviceId, eventType, payload) {
     }
 
     // ── OpenClaw webhook: sessions_send format ──
+    // Record entity state before push so we can detect if bot responded via transform during the push
+    const pushStartedAt = entity.lastUpdated || 0;
+
     const requestPayload = {
         tool: "sessions_send",
         args: {
@@ -9970,9 +10003,14 @@ async function pushToBot(entity, deviceId, eventType, payload) {
             }
 
             // Notify device about webhook failure via entity message
-            entity.message = `[SYSTEM:WEBHOOK_ERROR] Push failed (HTTP ${response.status}).${debugHint}`;
-            entity.lastUpdated = Date.now();
-            console.log(`[Push] Set WEBHOOK_ERROR system message for Device ${deviceId} Entity ${entity.entityId}`);
+            // BUT skip if bot already responded via /api/transform during the push (lastUpdated changed)
+            if (entity.lastUpdated && entity.lastUpdated > pushStartedAt) {
+                console.log(`[Push] Skipping WEBHOOK_ERROR — bot already responded via transform during push (Device ${deviceId} Entity ${entity.entityId})`);
+            } else {
+                entity.message = `[SYSTEM:WEBHOOK_ERROR] Push failed (HTTP ${response.status}).${debugHint}`;
+                entity.lastUpdated = Date.now();
+                console.log(`[Push] Set WEBHOOK_ERROR system message for Device ${deviceId} Entity ${entity.entityId}`);
+            }
 
             entity.pushStatus = { ok: false, reason: `http_${response.status}`, at: Date.now() };
             return { pushed: false, reason: `http_${response.status}`, error: errorText, debug: { url, tokenLength: token.length, status: response.status, hint: debugHint.trim() } };
@@ -9983,9 +10021,14 @@ async function pushToBot(entity, deviceId, eventType, payload) {
         serverLog('error', 'push_error', `Entity ${entity.entityId} push exception: ${err.message}`, { deviceId, entityId: entity.entityId });
 
         // Notify device about webhook failure via entity message
-        entity.message = `[SYSTEM:WEBHOOK_ERROR] Push connection failed: ${err.message}`;
-        entity.lastUpdated = Date.now();
-        console.log(`[Push] Set WEBHOOK_ERROR system message for Device ${deviceId} Entity ${entity.entityId}`);
+        // BUT skip if bot already responded via /api/transform during the push (lastUpdated changed)
+        if (entity.lastUpdated && entity.lastUpdated > pushStartedAt) {
+            console.log(`[Push] Skipping WEBHOOK_ERROR — bot already responded via transform during push (Device ${deviceId} Entity ${entity.entityId})`);
+        } else {
+            entity.message = `[SYSTEM:WEBHOOK_ERROR] Push connection failed: ${err.message}`;
+            entity.lastUpdated = Date.now();
+            console.log(`[Push] Set WEBHOOK_ERROR system message for Device ${deviceId} Entity ${entity.entityId}`);
+        }
 
         entity.pushStatus = { ok: false, reason: err.message, at: Date.now() };
         return { pushed: false, reason: err.message };
