@@ -1,3 +1,10 @@
+## [1.165.1](https://github.com/HankHuang0516/EClaw/compare/v1.165.0...v1.165.1) (2026-03-25)
+
+
+### Bug Fixes
+
+* show Play Store app name on delete-account page for Google Play compliance ([3acdf81](https://github.com/HankHuang0516/EClaw/commit/3acdf81a9631274c23ff9590bebfb55498921e4f))
+
 # [1.165.0](https://github.com/HankHuang0516/EClaw/compare/v1.164.12...v1.165.0) (2026-03-25)
 
 
