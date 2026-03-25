@@ -1,3 +1,10 @@
+# [1.166.0](https://github.com/HankHuang0516/EClaw/compare/v1.165.1...v1.166.0) (2026-03-25)
+
+
+### Features
+
+* add GPS location sharing demo to info.html features section ([#479](https://github.com/HankHuang0516/EClaw/issues/479)) ([666b9d8](https://github.com/HankHuang0516/EClaw/commit/666b9d8c226387b7956f192bccd28f8935036e8c)), closes [#4](https://github.com/HankHuang0516/EClaw/issues/4)
+
 ## [1.165.1](https://github.com/HankHuang0516/EClaw/compare/v1.165.0...v1.165.1) (2026-03-25)
 
 
