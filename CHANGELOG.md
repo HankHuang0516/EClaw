@@ -1,3 +1,10 @@
+# [1.170.0](https://github.com/HankHuang0516/EClaw/compare/v1.169.2...v1.170.0) (2026-03-25)
+
+
+### Features
+
+* add markdown and json format options to /api/skill-doc ([#484](https://github.com/HankHuang0516/EClaw/issues/484)) ([8cbe533](https://github.com/HankHuang0516/EClaw/commit/8cbe533fc308ff87d5a19e89595bac62609925bc))
+
 ## [1.169.2](https://github.com/HankHuang0516/EClaw/compare/v1.169.1...v1.169.2) (2026-03-25)
 
 
