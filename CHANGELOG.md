@@ -1,3 +1,10 @@
+# [1.167.0](https://github.com/HankHuang0516/EClaw/compare/v1.166.0...v1.167.0) (2026-03-25)
+
+
+### Features
+
+* **android:** add GPS location support — listen, fetch, report ([4b0da1e](https://github.com/HankHuang0516/EClaw/commit/4b0da1e6f6c7c12b6d15e3b493090a2dd9576c85))
+
 # [1.166.0](https://github.com/HankHuang0516/EClaw/compare/v1.165.1...v1.166.0) (2026-03-25)
 
 
