@@ -1,3 +1,10 @@
+## [1.164.6](https://github.com/HankHuang0516/EClaw/compare/v1.164.5...v1.164.6) (2026-03-25)
+
+
+### Bug Fixes
+
+* add Google & Facebook domains to CSP script-src whitelist ([0d6d1f9](https://github.com/HankHuang0516/EClaw/commit/0d6d1f97461108bc89194f2d7bc9e5b44c1b40d3))
+
 ## [1.164.5](https://github.com/HankHuang0516/EClaw/compare/v1.164.4...v1.164.5) (2026-03-25)
 
 
