@@ -113,6 +113,7 @@ dependencies {
 
     // Facebook Login
     implementation(libs.facebook.login)
+    implementation(libs.play.services.location)
 
     // Unit test dependencies
     testImplementation("junit:junit:4.13.2")

@@ -515,6 +515,11 @@ interface ClawApiService {
     @GET("api/rule-templates")
     suspend fun getRuleTemplates(): SkillTemplatesResponse
 
+    // ============ Device GPS Location ============
+
+    @POST("api/device/location")
+    suspend fun reportDeviceLocation(@Body body: Map<String, @JvmSuppressWildcards Any>): LocationReportResponse
+
     // ============ Local Variables (device-only vault) ============
 
     @POST("api/device-vars")
@@ -868,4 +873,23 @@ data class CrossDeviceSettingsResponse(
     val success: Boolean,
     val settings: CrossDeviceSettings? = null,
     val message: String? = null
+)
+
+// ============ Device Location Models ============
+
+data class LocationReportResponse(
+    val success: Boolean,
+    val location: DeviceLocation? = null,
+    val error: String? = null
+)
+
+data class DeviceLocation(
+    val latitude: Double,
+    val longitude: Double,
+    val accuracy: Double? = null,
+    val altitude: Double? = null,
+    val speed: Double? = null,
+    val bearing: Double? = null,
+    val provider: String? = null,
+    val updatedAt: Long = 0
 )
