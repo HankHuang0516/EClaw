@@ -145,6 +145,9 @@ class MainActivity : AppCompatActivity() {
         // Connect Socket.IO for real-time updates
         com.hank.clawlive.data.remote.SocketManager.connect(this)
 
+        // Listen for location requests from server (Bot requesting device GPS)
+        observeLocationRequests()
+
         // FCM: Create notification channels + request permission (Android 13+)
         ClawFcmService.createChannels(this)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -180,6 +183,18 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         RecordingIndicatorHelper.detach()
+    }
+
+    private fun observeLocationRequests() {
+        lifecycleScope.launch {
+            com.hank.clawlive.data.remote.SocketManager.locationRequestFlow.collect { json ->
+                val requestId = json.optString("requestId", null)
+                timber.log.Timber.d("[Location] Socket location_request, requestId=$requestId")
+                com.hank.clawlive.location.LocationHelper.fetchAndReportAsync(
+                    applicationContext, requestId
+                )
+            }
+        }
     }
 
     private fun startEntityPolling() {

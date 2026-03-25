@@ -16,6 +16,7 @@ import com.hank.clawlive.MainActivity
 import com.hank.clawlive.R
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.remote.NetworkModule
+import com.hank.clawlive.location.LocationHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -63,6 +64,17 @@ class ClawFcmService : FirebaseMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
         val data = message.data
+
+        // Handle location request silently — no notification, just fetch and report GPS
+        if (data["type"] == "location_request" || data["category"] == "location_request") {
+            val requestId = try {
+                org.json.JSONObject(data["metadata"] ?: "{}").optString("requestId", null)
+            } catch (_: Exception) { null }
+            Timber.d("[FCM] Location request received, requestId=$requestId")
+            LocationHelper.fetchAndReportAsync(applicationContext, requestId)
+            return
+        }
+
         val title = data["title"] ?: message.notification?.title ?: "E-Claw"
         val body = data["body"] ?: message.notification?.body ?: ""
         val category = data["category"] ?: "system"

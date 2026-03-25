@@ -21,6 +21,7 @@ googleServices = "4.4.2"
 credentialManager = "1.5.0-beta01"
 googleId = "1.1.1"
 facebookSdk = "17.0.0"
+playServicesLocation = "21.3.0"
 
 [libraries]
 billing = { group = "com.android.billingclient", name = "billing-ktx", version.ref = "billing" }
@@ -67,6 +68,9 @@ google-id = { group = "com.google.android.libraries.identity.googleid", name = "
 
 # Facebook Login
 facebook-login = { group = "com.facebook.android", name = "facebook-login", version.ref = "facebookSdk" }
+
+# Google Play Services Location
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
