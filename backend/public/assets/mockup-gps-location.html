@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,16 +18,11 @@ body { background:#0D0D1A; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .msg.bot { align-self:flex-start; background:#1e1e3e; border:1px solid #2a2a4a; border-bottom-left-radius:4px; }
 .msg .time { font-size:10px; color:rgba(255,255,255,0.4); margin-top:4px; text-align:right; }
 .bot .time { color:rgba(255,255,255,0.3); }
-
-/* Location pulse */
 .loc-pulse { display:inline-flex; align-items:center; gap:6px; }
 .pulse-dot { width:10px; height:10px; background:#FF6584; border-radius:50%; animation:pulse 1.2s infinite; }
 @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(255,101,132,0.6)} 70%{box-shadow:0 0 0 10px rgba(255,101,132,0)} 100%{box-shadow:0 0 0 0 rgba(255,101,132,0)} }
-
-/* Map card */
 .map-card { background:#1a1a3a; border:1px solid #2a2a4a; border-radius:12px; overflow:hidden; margin-top:6px; }
 .map-visual { height:100px; background:linear-gradient(135deg,#0a1628,#132240); position:relative; overflow:hidden; }
-.map-grid { position:absolute; inset:0; }
 .map-grid .road { position:absolute; background:rgba(108,99,255,0.15); }
 .map-grid .road.h { height:1px; width:100%; }
 .map-grid .road.v { width:1px; height:100%; }
@@ -35,8 +30,6 @@ body { background:#0D0D1A; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .map-pin-pulse { position:absolute; top:40%; left:50%; transform:translate(-50%,-50%); width:20px; height:20px; background:rgba(255,101,132,0.3); border-radius:50%; animation:pulse 1.5s infinite; }
 .map-info { padding:8px 12px; font-size:11px; color:#aaa; display:flex; justify-content:space-between; }
 .map-info .coord { color:#6C63FF; font-family:monospace; }
-
-/* Restaurant cards */
 .resto-card { background:#1a1a3a; border:1px solid #2a2a4a; border-radius:10px; padding:10px 12px; margin-top:6px; display:flex; gap:10px; align-items:center; }
 .resto-img { width:48px; height:48px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:28px; flex-shrink:0; }
 .resto-info { flex:1; }
@@ -45,8 +38,6 @@ body { background:#0D0D1A; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .resto-meta .stars { color:#FFD23F; }
 .resto-meta .dist { color:#6C63FF; margin-left:6px; }
 .resto-price { font-size:11px; color:#aaa; margin-top:2px; }
-
-/* Detail card */
 .detail-card { background:#1a1a3a; border:1px solid #2a2a4a; border-radius:12px; overflow:hidden; margin-top:6px; }
 .detail-header { padding:10px 12px; border-bottom:1px solid #2a2a4a; }
 .detail-header .dname { font-size:14px; font-weight:700; }
@@ -55,7 +46,6 @@ body { background:#0D0D1A; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 .detail-row { display:flex; gap:6px; margin-bottom:4px; color:#bbb; }
 .detail-row .icon { width:16px; text-align:center; }
 .nav-btn { display:inline-block; margin-top:8px; background:#6C63FF; color:#fff; padding:6px 16px; border-radius:20px; font-size:12px; font-weight:600; text-decoration:none; }
-
 .hidden { display:none !important; }
 </style>
 </head>
@@ -64,26 +54,21 @@ body { background:#0D0D1A; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
   <div class="phone-header">
     <div class="avatar">🦞</div>
     <div>
-      <div class="name">EClaw 小助手</div>
-      <div class="status">● 在線</div>
+      <div class="name">EClaw Assistant</div>
+      <div class="status">● Online</div>
     </div>
   </div>
   <div class="chat" id="chat">
-    <!-- Frame 1: User asks -->
     <div class="msg user frame frame1">
-      附近有什麼好吃的？🍜
+      Any good food nearby? 🍜
       <div class="time">20:15</div>
     </div>
-
-    <!-- Frame 2: Bot locating -->
     <div class="msg bot frame frame2 hidden">
-      <div class="loc-pulse"><span class="pulse-dot"></span> 正在取得你的位置...</div>
+      <div class="loc-pulse"><span class="pulse-dot"></span> Getting your location...</div>
       <div class="time">20:15</div>
     </div>
-
-    <!-- Frame 3: Map card -->
     <div class="msg bot frame frame3 hidden" style="padding:6px;">
-      <div style="padding:4px 8px; font-size:12px; margin-bottom:4px;">📍 已取得你的位置</div>
+      <div style="padding:4px 8px; font-size:12px; margin-bottom:4px;">📍 Location acquired</div>
       <div class="map-card">
         <div class="map-visual">
           <div class="map-grid">
@@ -98,80 +83,69 @@ body { background:#0D0D1A; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
           <div class="map-pin">📍</div>
         </div>
         <div class="map-info">
-          <span>台北市中正區</span>
+          <span>Zhongzheng District, Taipei</span>
           <span class="coord">25.033, 121.565</span>
         </div>
       </div>
       <div class="time">20:15</div>
     </div>
-
-    <!-- Frame 4: Restaurant recommendations -->
     <div class="msg bot frame frame4 hidden" style="padding:8px;">
-      <div style="font-size:12px; margin-bottom:4px;">🔥 附近 500m 推薦餐廳：</div>
+      <div style="font-size:12px; margin-bottom:4px;">🔥 Top picks within 500m:</div>
       <div class="resto-card">
         <div class="resto-img" style="background:#2a1a1a;">🥟</div>
         <div class="resto-info">
-          <div class="resto-name">鼎泰豐（信義店）</div>
+          <div class="resto-name">Din Tai Fung (Xinyi)</div>
           <div class="resto-meta"><span class="stars">★★★★★</span> 4.8 <span class="dist">📍 320m</span></div>
-          <div class="resto-price">$$$ · 小籠包 · 台菜</div>
+          <div class="resto-price">$$$ · Dumplings · Taiwanese</div>
         </div>
       </div>
       <div class="resto-card">
         <div class="resto-img" style="background:#1a2a1a;">🍛</div>
         <div class="resto-info">
-          <div class="resto-name">CoCo 壱番屋</div>
+          <div class="resto-name">CoCo Ichibanya</div>
           <div class="resto-meta"><span class="stars">★★★★</span> 4.3 <span class="dist">📍 180m</span></div>
-          <div class="resto-price">$$ · 咖哩飯 · 日式</div>
+          <div class="resto-price">$$ · Curry Rice · Japanese</div>
         </div>
       </div>
       <div class="resto-card">
         <div class="resto-img" style="background:#1a1a2a;">🍜</div>
         <div class="resto-info">
-          <div class="resto-name">林東芳牛肉麵</div>
+          <div class="resto-name">Lin Dong Fang Beef Noodle</div>
           <div class="resto-meta"><span class="stars">★★★★★</span> 4.7 <span class="dist">📍 450m</span></div>
-          <div class="resto-price">$ · 牛肉麵 · 台菜</div>
+          <div class="resto-price">$ · Beef Noodle · Local</div>
         </div>
       </div>
       <div class="time">20:16</div>
     </div>
-
-    <!-- Frame 5: User asks detail + bot responds -->
     <div class="msg user frame frame5 hidden">
-      鼎泰豐怎麼去？
+      How do I get to Din Tai Fung?
       <div class="time">20:16</div>
     </div>
     <div class="msg bot frame frame5 hidden" style="padding:6px;">
       <div class="detail-card">
         <div class="detail-header">
-          <div class="dname">🥟 鼎泰豐（信義店）</div>
-          <div class="drating">★★★★★ 4.8 · 2,847 則評論</div>
+          <div class="dname">🥟 Din Tai Fung (Xinyi)</div>
+          <div class="drating">★★★★★ 4.8 · 2,847 reviews</div>
         </div>
         <div class="detail-body">
-          <div class="detail-row"><span class="icon">📍</span> 台北市大安區信義路二段194號</div>
-          <div class="detail-row"><span class="icon">🕐</span> 營業中 · 10:00 - 21:00</div>
-          <div class="detail-row"><span class="icon">🚶</span> 步行約 4 分鐘（320m）</div>
+          <div class="detail-row"><span class="icon">📍</span> No. 194, Sec. 2, Xinyi Rd, Da'an</div>
+          <div class="detail-row"><span class="icon">🕐</span> Open · 10:00 AM - 9:00 PM</div>
+          <div class="detail-row"><span class="icon">🚶</span> Walk ~4 min (320m)</div>
           <div class="detail-row"><span class="icon">📞</span> 02-2321-8928</div>
-          <a class="nav-btn">🧭 開始導航</a>
+          <a class="nav-btn">🧭 Start Navigation</a>
         </div>
       </div>
       <div class="time">20:16</div>
     </div>
   </div>
 </div>
-
 <script>
-// Frame control for Puppeteer: call showFrame(n) to reveal frames 1..n
 function showFrame(n) {
   document.querySelectorAll('.frame').forEach(el => {
-    const classes = [...el.classList];
-    const frameNum = classes.find(c => /^frame\d+$/.test(c));
-    if (frameNum) {
-      const num = parseInt(frameNum.replace('frame',''));
-      el.classList.toggle('hidden', num > n);
-    }
+    const cls = [...el.classList].find(c => /^frame\d+$/.test(c));
+    if (cls) el.classList.toggle('hidden', parseInt(cls.replace('frame','')) > n);
   });
 }
-// Default: show frame 1
 showFrame(1);
 </script>
 </body>
