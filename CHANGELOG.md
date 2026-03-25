@@ -1,3 +1,10 @@
+## [1.169.2](https://github.com/HankHuang0516/EClaw/compare/v1.169.1...v1.169.2) (2026-03-25)
+
+
+### Bug Fixes
+
+* **chat:** fix target bar overflow detection not working ([#483](https://github.com/HankHuang0516/EClaw/issues/483)) ([e0cbffc](https://github.com/HankHuang0516/EClaw/commit/e0cbffc3322d56cf57ffd8a0abaabd7b36a5edfc))
+
 ## [1.169.1](https://github.com/HankHuang0516/EClaw/compare/v1.169.0...v1.169.1) (2026-03-25)
 
 
