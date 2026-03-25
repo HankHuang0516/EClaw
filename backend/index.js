@@ -183,10 +183,9 @@ app.get('/enterprise', (req, res) => {
     res.set('Cache-Control', 'public, max-age=3600');
     res.sendFile(path.join(__dirname, 'public/enterprise.html'));
 });
-// Info Hub page
+// Info Hub page — redirect to /portal/info.html so relative asset paths resolve correctly
 app.get('/info', (req, res) => {
-    res.set('Cache-Control', 'public, max-age=3600');
-    res.sendFile(path.join(__dirname, 'public/portal/info.html'));
+    res.redirect(301, '/portal/info.html');
 });
 
 // ── Enterprise Demo Chat ─────────────────────────────────────
