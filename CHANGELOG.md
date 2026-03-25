@@ -1,3 +1,10 @@
+## [1.164.2](https://github.com/HankHuang0516/EClaw/compare/v1.164.1...v1.164.2) (2026-03-25)
+
+
+### Bug Fixes
+
+* admin bot edit auth — use cookie JWT instead of x-admin-token ([8011d5b](https://github.com/HankHuang0516/EClaw/commit/8011d5b2382feb0d05fa0c992ab8bafc35994abd))
+
 ## [1.164.1](https://github.com/HankHuang0516/EClaw/compare/v1.164.0...v1.164.1) (2026-03-25)
 
 
