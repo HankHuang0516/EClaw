@@ -1026,7 +1026,7 @@
             html += '<div class="section-title" style="justify-content:space-between;">' + i18n.t('admin_sec_bots') + ' (' + (botsData.bots || []).length + ') <button class="add-bot-btn" onclick="showCreateBotDialog()">' + i18n.t('admin_btn_add_bot') + '</button></div>';
             html += '<div class="table-scroll">';
             html += '<table class="data-table">';
-            html += '<thead><tr><th>' + i18n.t('admin_col_bot_id') + '</th><th>' + i18n.t('admin_col_type') + '</th><th>' + i18n.t('admin_col_status') + '</th><th>' + i18n.t('admin_col_assigned') + '</th><th>' + i18n.t('admin_col_user') + '</th><th>' + i18n.t('admin_col_assigned_at') + '</th><th>' + i18n.t('admin_col_conv_24h') + '</th><th>' + i18n.t('admin_col_conv_avg5h') + '</th><th>' + i18n.t('admin_col_users_24h') + '</th><th>' + i18n.t('admin_col_users_avg5h') + '</th><th>' + i18n.t('admin_col_actions') + '</th></tr></thead>';
+            html += '<thead><tr><th>' + i18n.t('admin_col_bot_id') + '</th><th>' + i18n.t('admin_col_display_name') + '</th><th>' + i18n.t('admin_col_type') + '</th><th>' + i18n.t('admin_col_status') + '</th><th>' + i18n.t('admin_col_assigned') + '</th><th>' + i18n.t('admin_col_user') + '</th><th>' + i18n.t('admin_col_assigned_at') + '</th><th>' + i18n.t('admin_col_conv_24h') + '</th><th>' + i18n.t('admin_col_conv_avg5h') + '</th><th>' + i18n.t('admin_col_users_24h') + '</th><th>' + i18n.t('admin_col_users_avg5h') + '</th><th>' + i18n.t('admin_col_actions') + '</th></tr></thead>';
             html += '<tbody>';
             if (botsData.bots && botsData.bots.length > 0) {
                 for (const b of botsData.bots) {
@@ -1050,8 +1050,12 @@
                     // Unique user columns (only meaningful for free bots)
                     const users24hCell = b.botType === 'free' ? String(b.uniqueUsers24h) : '-';
                     const usersAvg5hCell = b.botType === 'free' ? String(b.avgUsersPer5h) : '-';
+                    const displayNameCell = b.displayName
+                        ? '<span class="bot-display-name">' + escapeHtml(b.displayName) + '</span>'
+                        : '<span style="color:var(--text-secondary);font-style:italic;">-</span>';
                     html += '<tr>' +
                         '<td><span class="mono bot-id-cell">' + escapeHtml(b.botId) + '</span></td>' +
+                        '<td>' + displayNameCell + '</td>' +
                         '<td><span class="type-badge ' + typeCls + '">' + escapeHtml(b.botType) + '</span></td>' +
                         '<td><span class="type-badge ' + statusCls + '">' + escapeHtml(b.status) + '</span></td>' +
                         '<td class="mono">' + assignedCell + '</td>' +
@@ -1061,11 +1065,14 @@
                         '<td>' + b.avgConvPer5h + '</td>' +
                         '<td>' + users24hCell + '</td>' +
                         '<td>' + usersAvg5hCell + '</td>' +
-                        '<td><button class="btn btn-danger" onclick="confirmRemoveBot(\'' + escapeHtml(b.botId) + '\', \'' + escapeHtml(b.status) + '\')">' + i18n.t('admin_btn_remove_bot') + '</button></td>' +
+                        '<td style="display:flex;gap:4px;flex-wrap:wrap;">' +
+                            '<button class="btn btn-sm" onclick="editBot(\'' + escapeHtml(b.botId) + '\')" style="font-size:11px;">' + i18n.t('admin_btn_edit_bot') + '</button>' +
+                            '<button class="btn btn-danger btn-sm" onclick="confirmRemoveBot(\'' + escapeHtml(b.botId) + '\', \'' + escapeHtml(b.status) + '\')" style="font-size:11px;">' + i18n.t('admin_btn_remove_bot') + '</button>' +
+                        '</td>' +
                         '</tr>';
                 }
             } else {
-                html += '<tr><td colspan="11" style="text-align:center;color:var(--text-secondary);">' + i18n.t('admin_no_bots') + '</td></tr>';
+                html += '<tr><td colspan="12" style="text-align:center;color:var(--text-secondary);">' + i18n.t('admin_no_bots') + '</td></tr>';
             }
             html += '</tbody></table></div></div>';
 
@@ -1444,6 +1451,55 @@
             }
             html += '</div>';
             return html;
+        }
+
+        function editBot(botId) {
+            const bot = (botsData && botsData.bots || []).find(b => b.botId === botId);
+            if (!bot) return;
+            const inputStyle = 'width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-primary);font-size:14px;margin-bottom:12px;box-sizing:border-box;';
+            const labelStyle = 'display:block;font-size:12px;color:var(--text-secondary);margin-bottom:4px;';
+            const overlay = document.createElement('div');
+            overlay.className = 'create-bot-overlay';
+            overlay.innerHTML =
+                '<div class="create-bot-dialog">' +
+                '<h3>' + i18n.t('admin_dlg_edit_bot_title') + '</h3>' +
+                '<p style="color:var(--text-secondary);font-size:14px;margin:0 0 12px 0;">' +
+                i18n.t('admin_dlg_edit_bot_desc', { botId: botId }) +
+                '</p>' +
+                '<label style="' + labelStyle + '">' + i18n.t('admin_col_display_name') + '</label>' +
+                '<input type="text" id="editBotName" value="' + escapeHtml(bot.displayName || '') + '" placeholder="' + i18n.t('admin_dlg_rename_bot_placeholder') + '" style="' + inputStyle + '" />' +
+                '<label style="' + labelStyle + '">Webhook URL</label>' +
+                '<input type="text" id="editBotWebhook" value="' + escapeHtml(bot.webhookUrl || '') + '" placeholder="https://..." style="' + inputStyle + '" />' +
+                '<label style="' + labelStyle + '">Token</label>' +
+                '<input type="text" id="editBotToken" value="' + escapeHtml(bot.token || '') + '" placeholder="Bot token" style="' + inputStyle + '" />' +
+                '<div class="dialog-actions">' +
+                '<button class="btn btn-outline" onclick="this.closest(\'.create-bot-overlay\').remove()">' + i18n.t('admin_dlg_cancel') + '</button>' +
+                '<button class="btn btn-primary" id="btnConfirmEdit">' + i18n.t('admin_dlg_edit_bot_confirm') + '</button>' +
+                '</div></div>';
+            document.body.appendChild(overlay);
+            document.getElementById('editBotName').focus();
+            document.getElementById('btnConfirmEdit').addEventListener('click', async function() {
+                const body = {};
+                const newName = document.getElementById('editBotName').value.trim();
+                const newWebhook = document.getElementById('editBotWebhook').value.trim();
+                const newToken = document.getElementById('editBotToken').value.trim();
+                if (newName !== (bot.displayName || '')) body.displayName = newName || null;
+                if (newWebhook && newWebhook !== (bot.webhookUrl || '')) body.webhookUrl = newWebhook;
+                if (newToken && newToken !== (bot.token || '')) body.token = newToken;
+                if (Object.keys(body).length === 0) { overlay.remove(); return; }
+                this.disabled = true;
+                this.textContent = '...';
+                try {
+                    await apiCall('PUT', '/api/admin/official-bot/' + encodeURIComponent(botId), body);
+                    overlay.remove();
+                    showToast(i18n.t('admin_toast_edit_success'), 'success');
+                    loadAdminData();
+                } catch (e) {
+                    showToast(e.message || i18n.t('admin_toast_edit_failed'), 'error');
+                    this.disabled = false;
+                    this.textContent = i18n.t('admin_dlg_edit_bot_confirm');
+                }
+            });
         }
 
         function confirmRemoveBot(botId, status) {
