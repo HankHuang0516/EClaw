@@ -1493,7 +1493,7 @@
                     await apiCall('PUT', '/api/admin/official-bot/' + encodeURIComponent(botId), body);
                     overlay.remove();
                     showToast(i18n.t('admin_toast_edit_success'), 'success');
-                    loadAdminData();
+                    loadAll();
                 } catch (e) {
                     showToast(e.message || i18n.t('admin_toast_edit_failed'), 'error');
                     this.disabled = false;
