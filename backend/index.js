@@ -23,6 +23,7 @@ const feedbackEmail = require('./feedback-email');
 const multer = require('multer');
 const crypto = require('crypto');
 const WebSocket = require('ws');
+const sanitizeHtml = require('sanitize-html');
 
 const safeEqual = require('./safe-equal');
 
@@ -38,7 +39,15 @@ const SERVER_BUILD_TAG = `v5.6-${SERVER_STARTED_AT.toISOString().slice(0, 10).re
 // SOCKET.IO SERVER
 // ============================================
 const io = new SocketIO(httpServer, {
-    cors: { origin: true, credentials: true },
+    cors: {
+        origin: (origin, cb) => {
+            if (!origin) return cb(null, true);
+            if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) return cb(null, true);
+            if (['https://eclawbot.com', 'https://www.eclawbot.com', 'https://eclaw.up.railway.app'].includes(origin)) return cb(null, true);
+            cb(null, false);
+        },
+        credentials: true
+    },
     path: '/socket.io',
     allowEIO3: true, // backward compat with Android socket.io-client v2.1.0
     pingTimeout: 60000,
@@ -95,7 +104,7 @@ app.use((req, res, next) => {
     res.setHeader('X-Frame-Options', frameable ? 'SAMEORIGIN' : 'DENY');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     // CSP: allow inline scripts/styles for portal pages, restrict external sources
-    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdn.socket.io https://accounts.google.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: https: blob:; connect-src 'self' wss: https:; frame-src 'self' https:; frame-ancestors 'self'");
+    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.socket.io https://accounts.google.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: https: blob:; connect-src 'self' wss: https:; frame-src 'self' https:; frame-ancestors 'self'");
     next();
 });
 
@@ -1140,11 +1149,17 @@ app.get('/p/:code/:noteId', async (req, res) => {
 
 function sanitizePublicHtml(html) {
     if (!html) return '';
-    return html
-        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-        .replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-        .replace(/href\s*=\s*["']?\s*javascript\s*:/gi, 'href="')
-        .replace(/src\s*=\s*["']?\s*data\s*:\s*text\/html/gi, 'src="');
+    return sanitizeHtml(html, {
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'span', 'details', 'summary', 'mark', 'del', 'ins', 'sub', 'sup']),
+        allowedAttributes: {
+            ...sanitizeHtml.defaults.allowedAttributes,
+            img: ['src', 'alt', 'width', 'height', 'loading'],
+            a: ['href', 'target', 'rel'],
+            '*': ['class', 'id', 'style']
+        },
+        allowedSchemes: ['http', 'https', 'mailto'],
+        allowedStyles: { '*': { 'color': [/.*/], 'text-align': [/.*/], 'font-size': [/.*/], 'background-color': [/.*/] } }
+    });
 }
 
 function renderPublicPageShell(title, content, opts = {}) {
@@ -7700,8 +7715,28 @@ app.put('/api/admin/official-bot/:botId', adminAuth, adminCheck, async (req, res
 
     if (usePostgreSQL) await db.saveOfficialBot(bot);
 
+    // Propagate webhook/token changes to all currently bound entities
+    let syncCount = 0;
+    if (webhookUrl || token || setupUsername !== undefined || setupPassword !== undefined) {
+        for (const binding of Object.values(officialBindingsCache)) {
+            if (binding.bot_id !== botId) continue;
+            const device = devices[binding.device_id];
+            const entity = device?.entities?.[binding.entity_id];
+            if (!entity?.webhook) continue;
+            if (webhookUrl) entity.webhook.url = bot.webhook_url;
+            if (token) entity.webhook.token = bot.token;
+            if (setupUsername !== undefined) entity.webhook.setupUsername = bot.setup_username;
+            if (setupPassword !== undefined) entity.webhook.setupPassword = bot.setup_password;
+            syncCount++;
+        }
+        if (syncCount > 0) {
+            await saveData();
+            console.log(`[Admin] Synced webhook/token to ${syncCount} bound entities for bot: ${botId}`);
+        }
+    }
+
     console.log(`[Admin] Updated official bot: ${botId}`);
-    res.json({ success: true, bot: { bot_id: bot.bot_id, bot_type: bot.bot_type, status: bot.status } });
+    res.json({ success: true, bot: { bot_id: bot.bot_id, bot_type: bot.bot_type, status: bot.status }, syncedEntities: syncCount });
 });
 
 /**

@@ -1217,7 +1217,7 @@
                 usageProgress.style.width = '0%';
                 usageProgress.style.background = 'var(--warning)';
             } else {
-                usageCount.textContent = i18n.t('settings_usage_limit', { used, limit });
+                usageCount.textContent = i18n.t('settings_usage_limit', { used });
                 const pct = Math.min((used / limit) * 100, 100);
                 usageProgress.style.width = pct + '%';
                 usageProgress.style.background = pct >= 80 ? 'var(--danger)' : 'var(--warning)';

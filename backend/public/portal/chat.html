@@ -1457,7 +1457,7 @@
                 badge.textContent = i18n.t('chat_usage_unlimited') || 'Unlimited';
                 badge.className = 'usage-badge unlimited';
             } else {
-                badge.textContent = `${used}/${limit}`;
+                badge.textContent = i18n.t('chat_usage_count', { used }) || `${used}`;
                 if (used >= limit) {
                     badge.className = 'usage-badge danger';
                 } else if (used >= limit * 0.8) {

@@ -13,10 +13,10 @@ data class SubscriptionState(
     val borrowSubscriptionPrice: String = ""
 ) {
     /**
-     * Usage display string (e.g., "5/25" or "∞")
+     * Usage display string (e.g., "5" or "∞")
      */
     val usageDisplay: String
-        get() = if (isPremium) "∞" else "$usageToday/$usageLimit"
+        get() = if (isPremium) "∞" else "$usageToday"
 
     /**
      * Usage progress for progress bar (0.0 to 1.0)

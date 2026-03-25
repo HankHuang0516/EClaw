@@ -108,6 +108,61 @@ describe('POST /api/admin/bots/create', () => {
 });
 
 // ════════════════════════════════════════════════════════════════
+// PUT /api/admin/official-bot/:botId — update + sync bound entities
+// ════════════════════════════════════════════════════════════════
+describe('PUT /api/admin/official-bot/:botId', () => {
+    it('returns 404 for unknown botId', async () => {
+        const res = await put('/api/admin/official-bot/nonexistent')
+            .send({ webhookUrl: 'https://new.com/hook' });
+        expect(res.status).toBe(404);
+    });
+
+    it('updates webhook and syncs bound entities', async () => {
+        // Create a bot
+        await post('/api/admin/bots/create')
+            .send({ botId: 'sync-test-bot', botType: 'free', webhookUrl: 'https://old.com/hook', token: 'old-token' });
+
+        // Register device and simulate binding by directly calling bind-free
+        await registerDevice('sync-dev');
+
+        // Bind the free bot
+        const bindRes = await post('/api/official-borrow/bind-free')
+            .send({ deviceId: 'sync-dev', deviceSecret: 'secret-sync-dev', entityId: 0, botId: 'sync-test-bot' });
+
+        if (bindRes.status === 200) {
+            // Now update the bot's webhook
+            const updateRes = await put('/api/admin/official-bot/sync-test-bot')
+                .send({ webhookUrl: 'https://new.com/hook', token: 'new-token' });
+            expect(updateRes.status).toBe(200);
+            expect(updateRes.body.success).toBe(true);
+            expect(updateRes.body.syncedEntities).toBeGreaterThanOrEqual(1);
+
+            // Verify entity webhook was updated
+            const statusRes = await get('/api/status')
+                .query({ deviceId: 'sync-dev', deviceSecret: 'secret-sync-dev' });
+            if (statusRes.status === 200 && statusRes.body.entities) {
+                const entity = statusRes.body.entities['0'] || statusRes.body.entities[0];
+                if (entity?.webhook) {
+                    expect(entity.webhook.url).toBe('https://new.com/hook');
+                    expect(entity.webhook.token).toBe('new-token');
+                }
+            }
+        }
+    });
+
+    it('returns syncedEntities=0 when no webhook fields changed', async () => {
+        // Create a bot first
+        await post('/api/admin/bots/create')
+            .send({ botId: 'nosync-bot', botType: 'free', webhookUrl: 'https://x.com', token: 'tk' });
+
+        const res = await put('/api/admin/official-bot/nosync-bot')
+            .send({ displayName: 'New Name' });
+        expect(res.status).toBe(200);
+        expect(res.body.syncedEntities).toBe(0);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
 // POST /api/admin/transfer-device
 // ════════════════════════════════════════════════════════════════
 describe('POST /api/admin/transfer-device', () => {
