@@ -1,3 +1,10 @@
+## [1.164.5](https://github.com/HankHuang0516/EClaw/compare/v1.164.4...v1.164.5) (2026-03-25)
+
+
+### Bug Fixes
+
+* Google login stuck on "SDK loading" — dynamic load with retry ([c38ae21](https://github.com/HankHuang0516/EClaw/commit/c38ae2169f2bfe5dcaa3d978060607e14642ecd9))
+
 ## [1.164.4](https://github.com/HankHuang0516/EClaw/compare/v1.164.3...v1.164.4) (2026-03-25)
 
 
