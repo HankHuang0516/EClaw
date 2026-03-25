@@ -1,3 +1,10 @@
+## [1.170.1](https://github.com/HankHuang0516/EClaw/compare/v1.170.0...v1.170.1) (2026-03-25)
+
+
+### Bug Fixes
+
+* skip NAME_CHANGED notification when entity name is unchanged ([#487](https://github.com/HankHuang0516/EClaw/issues/487)) ([29e1f63](https://github.com/HankHuang0516/EClaw/commit/29e1f633bbcdc1106925b2ea9cd60176948fd1a5))
+
 # [1.170.0](https://github.com/HankHuang0516/EClaw/compare/v1.169.2...v1.170.0) (2026-03-25)
 
 
