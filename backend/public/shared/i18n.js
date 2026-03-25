@@ -17854,6 +17854,14 @@ class I18n {
             }
         });
 
+        // Translate placeholder attributes
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.getAttribute('data-i18n-placeholder');
+            if (key) {
+                el.placeholder = this.t(key);
+            }
+        });
+
         // Update html lang attribute
         const langMap = { 'zh': 'zh-TW', 'zh-CN': 'zh-CN', 'ja': 'ja', 'ko': 'ko', 'th': 'th', 'vi': 'vi', 'id': 'id' };
         document.documentElement.lang = langMap[this.lang] || 'en';
