@@ -2363,7 +2363,7 @@ app.get('/api/admin/bots', adminAuth, adminCheck, async (req, res) => {
     try {
         const pg = authModule.pool;
         const result = await pg.query(`
-            SELECT o.bot_id, o.bot_type, o.status, o.assigned_device_id, o.assigned_entity_id, o.assigned_at, o.created_at,
+            SELECT o.bot_id, o.bot_type, o.status, o.assigned_device_id, o.assigned_entity_id, o.assigned_at, o.created_at, o.display_name, o.webhook_url, o.token,
                    u.email as assigned_user_email
             FROM official_bots o
             LEFT JOIN user_accounts u ON o.assigned_device_id = u.device_id
@@ -2443,6 +2443,9 @@ app.get('/api/admin/bots', adminAuth, adminCheck, async (req, res) => {
                 const avgUsersPer5h = conv.uniqueUsers24h > 0 ? Math.round(conv.uniqueUsers24h / 4.8 * 10) / 10 : 0;
                 return {
                     botId: r.bot_id,
+                    displayName: r.display_name || null,
+                    webhookUrl: r.webhook_url || null,
+                    token: r.token || null,
                     botType: r.bot_type,
                     status: r.status,
                     assignedDeviceId: r.assigned_device_id,
@@ -7663,13 +7666,14 @@ app.put('/api/admin/official-bot/:botId', async (req, res) => {
         return res.status(404).json({ success: false, error: 'Bot not found' });
     }
 
-    const { webhookUrl, token, sessionKeyTemplate, status, setupUsername, setupPassword } = req.body;
+    const { webhookUrl, token, sessionKeyTemplate, status, setupUsername, setupPassword, displayName } = req.body;
     if (webhookUrl) bot.webhook_url = webhookUrl;
     if (token) bot.token = token;
     if (sessionKeyTemplate !== undefined) bot.session_key_template = sessionKeyTemplate;
     if (status && ['available', 'assigned', 'disabled'].includes(status)) bot.status = status;
     if (setupUsername !== undefined) bot.setup_username = setupUsername || null;
     if (setupPassword !== undefined) bot.setup_password = setupPassword || null;
+    if (displayName !== undefined) bot.display_name = displayName || null;
 
     if (usePostgreSQL) await db.saveOfficialBot(bot);
 
@@ -7888,6 +7892,7 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
         return res.status(400).json({ success: false, error: 'Invalid entityId' });
     }
 
+    try {
     // Gatekeeper: check if device is blocked from free bot usage
     if (gatekeeper.isDeviceBlocked(deviceId)) {
         const strikeInfo = gatekeeper.getStrikeInfo(deviceId);
@@ -8052,6 +8057,12 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
         newSlotCreated: newSlotFree,
         message: 'Free bot bound successfully'
     });
+    } catch (err) {
+        console.error(`[Borrow] bind-free error for device ${deviceId}:`, err.message || err);
+        if (!res.headersSent) {
+            res.status(500).json({ success: false, error: 'Internal error during free bot binding', detail: err.message });
+        }
+    }
 });
 
 /**
@@ -8070,6 +8081,8 @@ app.post('/api/official-borrow/bind-personal', async (req, res) => {
     if (isNaN(eId) || eId < 0) {
         return res.status(400).json({ success: false, error: 'Invalid entityId' });
     }
+
+    try {
 
     // Auto-create device if missing (e.g. after server redeploy)
     const device = getOrCreateDevice(deviceId, deviceSecret);
@@ -8208,6 +8221,12 @@ app.post('/api/official-borrow/bind-personal', async (req, res) => {
         newSlotCreated: newSlotPersonal,
         message: usedSlot ? 'Personal bot bound using existing paid slot' : 'Personal bot bound successfully'
     });
+    } catch (err) {
+        console.error(`[Borrow] bind-personal error for device ${deviceId}:`, err.message || err);
+        if (!res.headersSent) {
+            res.status(500).json({ success: false, error: 'Internal error during personal bot binding', detail: err.message });
+        }
+    }
 });
 
 /**

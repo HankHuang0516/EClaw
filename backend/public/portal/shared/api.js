@@ -16,6 +16,13 @@ async function apiCall(method, path, body = null) {
 
     const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
     const response = await fetch(url, options);
+
+    // Guard against non-JSON responses (e.g. HTML error pages)
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(`Server returned non-JSON response (HTTP ${response.status})`);
+    }
     const data = await response.json();
 
     if (response.status === 401) {
