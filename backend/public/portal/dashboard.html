@@ -1437,7 +1437,7 @@
 
         function updateEntityCount() {
             document.getElementById('entityCount').innerHTML =
-                '<strong>' + entities.length + '</strong> bound / ' + totalSlots + ' total';
+                '<strong>' + entities.length + '</strong> ' + (i18n.t('dashboard_entities_bound') || 'entities bound');
             // Show edit button only when there are entities
             var editBtn = document.getElementById('btnEditMode');
             if (editBtn) editBtn.style.display = entities.length > 0 ? 'inline-flex' : 'none';

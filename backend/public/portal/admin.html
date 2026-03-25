@@ -1490,9 +1490,10 @@
                 this.disabled = true;
                 this.textContent = '...';
                 try {
-                    await apiCall('PUT', '/api/admin/official-bot/' + encodeURIComponent(botId), body);
+                    const result = await apiCall('PUT', '/api/admin/official-bot/' + encodeURIComponent(botId), body);
                     overlay.remove();
-                    showToast(i18n.t('admin_toast_edit_success'), 'success');
+                    const syncMsg = result.syncedEntities > 0 ? ` (synced ${result.syncedEntities} bound entities)` : '';
+                    showToast(i18n.t('admin_toast_edit_success') + syncMsg, 'success');
                     loadAll();
                 } catch (e) {
                     showToast(e.message || i18n.t('admin_toast_edit_failed'), 'error');
