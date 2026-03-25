@@ -1,3 +1,10 @@
+## [1.163.1](https://github.com/HankHuang0516/EClaw/compare/v1.163.0...v1.163.1) (2026-03-25)
+
+
+### Bug Fixes
+
+* prevent HTML error response on bind-free/bind-personal failure ([#467](https://github.com/HankHuang0516/EClaw/issues/467)) ([749c4b5](https://github.com/HankHuang0516/EClaw/commit/749c4b5bc1629dca3d22f4ba9b1c62b4970681d9))
+
 # [1.163.0](https://github.com/HankHuang0516/EClaw/compare/v1.162.1...v1.163.0) (2026-03-24)
 
 
