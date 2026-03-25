@@ -5030,6 +5030,12 @@ app.put('/api/device/entity/name', async (req, res) => {
 
     const oldName = entity.name;
     const newName = (name && name.trim()) ? name.trim() : null;
+
+    // Skip if name didn't actually change
+    if (oldName === newName || ((!oldName && !newName))) {
+        return res.json({ success: true, name: newName, entityId: eId, changed: false });
+    }
+
     entity.name = newName;
     entity.lastUpdated = Date.now();
 
