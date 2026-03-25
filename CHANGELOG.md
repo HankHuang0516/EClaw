@@ -1,3 +1,10 @@
+## [1.169.1](https://github.com/HankHuang0516/EClaw/compare/v1.169.0...v1.169.1) (2026-03-25)
+
+
+### Bug Fixes
+
+* add GPS i18n keys + remake GIF in English to avoid CJK mojibake ([#482](https://github.com/HankHuang0516/EClaw/issues/482)) ([27a8b81](https://github.com/HankHuang0516/EClaw/commit/27a8b81af5d39bdcd05079161999c23a3a9ae5f0))
+
 # [1.169.0](https://github.com/HankHuang0516/EClaw/compare/v1.168.0...v1.169.0) (2026-03-25)
 
 
