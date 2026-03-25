@@ -918,7 +918,7 @@
             gap: 10px;
             flex-wrap: nowrap;
             overflow: hidden;
-            max-height: 34px;
+            min-height: 34px;
         }
 
         .target-bar-overflow {
@@ -1774,21 +1774,28 @@
                 allItems.push({ el: addBtn, type: 'add' });
             }
 
-            // Add all items to row first for measurement
+            // Step 1: measure with wrap enabled to detect overflow
+            row.style.flexWrap = 'wrap';
+            row.style.overflow = 'visible';
             allItems.forEach(item => row.appendChild(item.el));
 
-            // After layout, check which items overflow the first row
+            // Step 2: after layout, detect which items go beyond first row
             requestAnimationFrame(() => {
-                const rowRect = row.getBoundingClientRect();
-                const maxBottom = rowRect.top + 38; // ~one row height
+                const firstItemTop = allItems.length > 0 ? allItems[0].el.getBoundingClientRect().top : 0;
+                const ROW_TOLERANCE = 8; // px tolerance for alignment differences
                 const overflowItems = [];
 
-                allItems.forEach(item => {
-                    const elRect = item.el.getBoundingClientRect();
-                    if (elRect.top >= maxBottom) {
+                allItems.forEach((item, idx) => {
+                    if (idx === 0) return; // always keep first item (label)
+                    const rect = item.el.getBoundingClientRect();
+                    if (rect.top > firstItemTop + ROW_TOLERANCE) {
                         overflowItems.push(item);
                     }
                 });
+
+                // Step 3: restore single-row layout
+                row.style.flexWrap = 'nowrap';
+                row.style.overflow = 'hidden';
 
                 if (overflowItems.length > 0) {
                     // Move overflow items to the upward-expanding panel
@@ -1801,10 +1808,11 @@
                     const toggle = document.createElement('button');
                     toggle.className = 'target-bar-toggle';
                     toggle.textContent = `▲ +${overflowItems.length}`;
-                    toggle.setAttribute('data-i18n-title', 'chat_target_expand');
                     toggle.onclick = () => {
                         const isOpen = overflow.classList.toggle('open');
-                        toggle.textContent = isOpen ? '▼ ' + (i18n.t('chat_target_collapse') || 'Collapse') : `▲ +${overflowItems.length}`;
+                        toggle.textContent = isOpen
+                            ? '▼ ' + (i18n.t('chat_target_collapse') || 'Collapse')
+                            : `▲ +${overflowItems.length}`;
                     };
                     row.appendChild(toggle);
                 }
