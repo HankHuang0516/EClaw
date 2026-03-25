@@ -7655,11 +7655,7 @@ app.get('/api/admin/official-bots', (req, res) => {
  * PUT /api/admin/official-bot/:botId
  * Update an official bot's webhook/token/status.
  */
-app.put('/api/admin/official-bot/:botId', async (req, res) => {
-    if (!verifyAdmin(req)) {
-        return res.status(403).json({ success: false, error: 'Forbidden: admin token required' });
-    }
-
+app.put('/api/admin/official-bot/:botId', adminAuth, adminCheck, async (req, res) => {
     const { botId } = req.params;
     const bot = officialBots[botId];
     if (!bot) {
