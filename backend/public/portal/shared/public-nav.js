@@ -11,8 +11,8 @@ function renderPublicNav(activePage) {
     const nav = document.createElement('nav');
     nav.className = 'nav';
     nav.innerHTML = `
-        <a href="index.html" class="nav-brand">
-            <img class="nav-logo" src="portal/assets/ic_launcher.png" alt="EClawbot" style="width:28px;height:28px;border-radius:6px;">
+        <a href="/portal/" class="nav-brand">
+            <img class="nav-logo" src="/portal/assets/ic_launcher.png" alt="EClawbot" style="width:28px;height:28px;border-radius:6px;">
             <span class="nav-logo-text">EClawbot</span>
         </a>
         <button class="nav-hamburger" id="navHamburger" onclick="togglePublicMobileNav()" aria-label="Menu">
@@ -28,7 +28,7 @@ function renderPublicNav(activePage) {
             `).join('')}
         </div>
         <div class="nav-user" id="navUser">
-            <a href="index.html" class="btn btn-primary btn-sm" data-i18n="nav_login">${t('nav_login', 'Login')}</a>
+            <a href="/portal/" class="btn btn-primary btn-sm" data-i18n="nav_login">${t('nav_login', 'Login')}</a>
         </div>
     `;
 
