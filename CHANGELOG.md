@@ -1,3 +1,10 @@
+# [1.164.0](https://github.com/HankHuang0516/EClaw/compare/v1.163.1...v1.164.0) (2026-03-25)
+
+
+### Features
+
+* admin bot edit dialog — rename, webhook URL, token ([#468](https://github.com/HankHuang0516/EClaw/issues/468)) ([96ff9e5](https://github.com/HankHuang0516/EClaw/commit/96ff9e55a28fe15fc4453ada732cfedde0d141f7))
+
 ## [1.163.1](https://github.com/HankHuang0516/EClaw/compare/v1.163.0...v1.163.1) (2026-03-25)
 
 
