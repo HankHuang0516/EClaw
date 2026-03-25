@@ -928,6 +928,34 @@
             min-width: 120px;
         }
 
+        /* ── Webhook Troubleshooting Modal ── */
+        #webhookTroubleModal .modal-box {
+            max-width: 520px;
+            text-align: left;
+        }
+
+        #webhookTroubleModal .modal-icon,
+        #webhookTroubleModal .modal-title,
+        #webhookTroubleModal .modal-actions {
+            text-align: center;
+        }
+
+        #webhookTroubleModal .modal-message {
+            max-height: 55vh;
+            overflow-y: auto;
+        }
+
+        #webhookTroubleModal .modal-message ol {
+            padding-left: 20px;
+            margin: 12px 0;
+            line-height: 2;
+        }
+
+        #webhookTroubleModal .modal-message .doc-link {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
         /* ── Link Preview Card ── */
         .link-preview {
             display: flex;
@@ -1117,6 +1145,30 @@
             <div class="modal-actions">
                 <button class="btn" onclick="closeUsageLimitModal()" data-i18n="chat_limit_close">Close</button>
                 <button class="btn btn-primary" onclick="window.location.href='settings.html'" data-i18n="chat_limit_upgrade">Upgrade</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Webhook Troubleshooting Modal -->
+    <div class="modal-overlay" id="webhookTroubleModal">
+        <div class="modal-box">
+            <div class="modal-icon">&#x1F6E0;&#xFE0F;</div>
+            <div class="modal-title" data-i18n="chat_webhook_title">Webhook Not Registered</div>
+            <div class="modal-message">
+                <p data-i18n="chat_webhook_desc">Your message was saved but could not be pushed to the bot. The bot has no webhook URL registered. Follow the checklist below to troubleshoot:</p>
+                <ol>
+                    <li data-i18n="chat_webhook_step1">Confirm the OpenClaw channel plugin is installed: <code>ls ~/.openclaw/extensions/openclaw-channel/</code></li>
+                    <li data-i18n="chat_webhook_step2">Confirm the gateway is running: <code>openclaw gateway status</code></li>
+                    <li data-i18n="chat_webhook_step3">Retrieve credentials from the gateway log: <code>cat /tmp/openclaw/openclaw-*.log | grep -i "eclaw.*bound"</code></li>
+                    <li data-i18n="chat_webhook_step4">Verify credentials: <code>curl "https://eclawbot.com/api/mission/dashboard?deviceId=ID&amp;botSecret=SECRET&amp;entityId=N"</code></li>
+                    <li data-i18n="chat_webhook_step5">Allow gateway tools: <code>openclaw config set gateway.tools.allow '["sessions_send","sessions_spawn","session_status"]'</code></li>
+                    <li data-i18n="chat_webhook_step6">Register webhook (use <code>/tools/invoke</code> path): <code>POST /api/bot/register</code> with <code>webhook_url</code>, <code>token</code>, <code>session_key</code></li>
+                    <li data-i18n="chat_webhook_step7">Test push: send a message from the EClaw app and confirm the bot receives it.</li>
+                </ol>
+                <p class="doc-link" data-i18n="chat_webhook_doc_link">Full guide: <a href="/docs/webhook-troubleshooting.md" target="_blank" style="color:var(--primary);">webhook-troubleshooting.md</a></p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" onclick="closeWebhookTroubleModal()" data-i18n="chat_webhook_close">Close</button>
             </div>
         </div>
     </div>
@@ -2436,7 +2488,7 @@
                         for (let i = 0; i < readyFiles.length; i++) {
                             const f = readyFiles[i];
                             const msgText = (i === 0 && text) ? text : (f.type === 'photo' ? '[Photo]' : f.type === 'video' ? '[Video]' : `[File] ${f.fileName}`);
-                            await apiCall('POST', '/api/client/speak', {
+                            const fileResp = await apiCall('POST', '/api/client/speak', {
                                 deviceId: currentUser.deviceId,
                                 deviceSecret: currentUser.deviceSecret,
                                 entityId: entityId,
@@ -2445,6 +2497,10 @@
                                 mediaType: f.type,
                                 mediaUrl: f.mediaUrl
                             });
+                            if (hasNoWebhookWarning(fileResp)) {
+                                showWebhookTroubleModal();
+                                break;
+                            }
                         }
                     } else {
                         const speakBody = {
@@ -2463,6 +2519,9 @@
                         // Track confirmation state from platform commands
                         if (speakResp && speakResp.needsConfirmation && speakResp.confirmCommand) {
                             pendingConfirmCommand = speakResp.confirmCommand;
+                        }
+                        if (hasNoWebhookWarning(speakResp)) {
+                            showWebhookTroubleModal();
                         }
                     }
                 }
@@ -2947,13 +3006,16 @@
             if (e.key === 'Escape') closeLightbox();
         });
 
-        // ── Usage Limit Modal ──
-        function showUsageLimitModal() {
-            document.getElementById('usageLimitModal').classList.add('active');
-        }
+        // ── Modal helpers ──
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        function showUsageLimitModal() { openModal('usageLimitModal'); }
+        function closeUsageLimitModal() { closeModal('usageLimitModal'); }
+        function showWebhookTroubleModal() { openModal('webhookTroubleModal'); }
+        function closeWebhookTroubleModal() { closeModal('webhookTroubleModal'); }
 
-        function closeUsageLimitModal() {
-            document.getElementById('usageLimitModal').classList.remove('active');
+        function hasNoWebhookWarning(resp) {
+            return resp && resp.warning && resp.warning.includes('no webhook');
         }
 
         // ── Cleanup ──

@@ -665,15 +665,29 @@
         let facebookAppId = null;
 
         // Fetch OAuth config from backend
+        let googleSdkState = 'idle'; // idle | loading | loaded | failed
+
         async function loadOAuthConfig() {
             try {
                 const data = await apiCall('GET', '/api/auth/oauth/config');
                 googleClientId = data.googleClientId || null;
                 facebookAppId = data.facebookAppId || null;
+                if (googleClientId) loadGoogleSdk();
                 if (facebookAppId) initFacebookSdk();
             } catch (e) {
                 console.warn('[OAuth] Config not available:', e.message);
             }
+        }
+
+        function loadGoogleSdk() {
+            if (googleSdkState === 'loaded' || googleSdkState === 'loading') return;
+            googleSdkState = 'loading';
+            const s = document.createElement('script');
+            s.src = 'https://accounts.google.com/gsi/client';
+            s.async = true;
+            s.onload = () => { googleSdkState = 'loaded'; };
+            s.onerror = () => { googleSdkState = 'failed'; console.warn('[OAuth] Google GSI script failed to load'); };
+            document.head.appendChild(s);
         }
 
         function initFacebookSdk() {
@@ -689,6 +703,12 @@
 
         async function doGoogleLogin() {
             if (!googleClientId) return showMsg('loginError', i18n.t('login_err_google_not_configured'));
+            if (googleSdkState === 'failed') {
+                showMsg('loginError', i18n.t('login_err_sdk_failed'));
+                googleSdkState = 'idle';
+                loadGoogleSdk();
+                return;
+            }
             if (typeof google === 'undefined') return showMsg('loginError', i18n.t('login_err_sdk_loading'));
 
             try {
@@ -735,7 +755,6 @@
         // Load OAuth config on page load
         loadOAuthConfig();
     </script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     </main>
 </body>
 
