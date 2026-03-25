@@ -1,8 +1,9 @@
 /**
  * Official Bot Borrowing endpoint validation tests (Jest + Supertest)
  *
- * Tests input validation for all 6 official-borrow endpoints:
+ * Tests input validation for all 7 official-borrow endpoints:
  * - GET /api/official-borrow/status
+ * - GET /api/official-borrow/free-bots
  * - POST /api/official-borrow/bind-free
  * - POST /api/official-borrow/bind-personal
  * - POST /api/official-borrow/add-paid-slot
@@ -187,6 +188,29 @@ describe('GET /api/official-borrow/status', () => {
 });
 
 // ════════════════════════════════════════════════════════════════
+// GET /api/official-borrow/free-bots
+// ════════════════════════════════════════════════════════════════
+describe('GET /api/official-borrow/free-bots', () => {
+    it('returns 200 with bots array', async () => {
+        const res = await get('/api/official-borrow/free-bots');
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(Array.isArray(res.body.bots)).toBe(true);
+    });
+
+    it('each bot has required fields', async () => {
+        const res = await get('/api/official-borrow/free-bots');
+        expect(res.status).toBe(200);
+        for (const bot of res.body.bots) {
+            expect(bot).toHaveProperty('botId');
+            expect(bot).toHaveProperty('displayName');
+            expect(typeof bot.activeBindings).toBe('number');
+            expect(bot).toHaveProperty('status');
+        }
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
 // POST /api/official-borrow/bind-free
 // ════════════════════════════════════════════════════════════════
 describe('POST /api/official-borrow/bind-free', () => {
@@ -218,6 +242,13 @@ describe('POST /api/official-borrow/bind-free', () => {
     it('rejects for nonexistent device (gatekeeper or auth fail)', async () => {
         const res = await post('/api/official-borrow/bind-free')
             .send({ deviceId: 'nonexistent', deviceSecret: 'wrong', entityId: 0 });
+        expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+
+    it('rejects invalid botId (not a free bot)', async () => {
+        const res = await post('/api/official-borrow/bind-free')
+            .send({ deviceId: 'dev-1', deviceSecret: 'sec', entityId: 0, botId: 'nonexistent-bot' });
+        // Should fail at gatekeeper/TOS/auth or bot validation
         expect(res.status).toBeGreaterThanOrEqual(400);
     });
 });
@@ -318,5 +349,28 @@ describe('POST /api/official-borrow/verify-subscription', () => {
         const res = await post('/api/official-borrow/verify-subscription')
             .send({ deviceId: 'dev-1', deviceSecret: 'sec', entityId: 'abc' });
         expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
+// GET /api/official-borrow/free-bots
+// ════════════════════════════════════════════════════════════════
+describe('GET /api/official-borrow/free-bots', () => {
+    it('returns success with bots array', async () => {
+        const res = await get('/api/official-borrow/free-bots');
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(Array.isArray(res.body.bots)).toBe(true);
+    });
+
+    it('each bot has expected fields', async () => {
+        const res = await get('/api/official-borrow/free-bots');
+        if (res.body.bots.length > 0) {
+            const bot = res.body.bots[0];
+            expect(bot).toHaveProperty('botId');
+            expect(bot).toHaveProperty('displayName');
+            expect(bot).toHaveProperty('activeBindings');
+            expect(bot).toHaveProperty('status');
+        }
     });
 });

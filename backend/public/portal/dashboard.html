@@ -1181,6 +1181,11 @@
                         <div style="background:var(--cat-feature-bg);border:1px solid rgba(33,150,243,0.3);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:var(--info);">
                             <span data-i18n="borrow_free_limit_hint">Each device can only bind one free bot</span>
                         </div>
+                        <!-- Free Bot Selector -->
+                        <div id="freeBotSelector" style="margin-bottom:12px;display:none;">
+                            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;" data-i18n="borrow_select_bot">Select a bot:</div>
+                            <div id="freeBotList" style="display:flex;flex-direction:column;gap:6px;"></div>
+                        </div>
                         <button class="btn btn-primary btn-block btn-sm" id="btnBindFree" onclick="bindFree()" disabled
                             data-i18n="borrow_btn_bind_free">Use Free Version</button>
                     </div>
@@ -2779,14 +2784,71 @@
             }
         }
 
+        let freeBotsList = [];
+        let selectedFreeBotId = null;
+
         async function loadBorrowStatus() {
             try {
                 borrowStatus = await apiCall('GET', '/api/official-borrow/status?deviceId=' + currentUser.deviceId);
                 updateBorrowButtons();
                 renderBindingsList();
+                // Load free bot list for selection
+                loadFreeBots();
             } catch (e) {
                 console.warn('Failed to load borrow status:', e.message);
             }
+        }
+
+        async function loadFreeBots() {
+            try {
+                const res = await apiCall('GET', '/api/official-borrow/free-bots');
+                freeBotsList = res.bots || [];
+                renderFreeBotSelector();
+            } catch (e) {
+                console.warn('Failed to load free bots:', e.message);
+            }
+        }
+
+        function renderFreeBotSelector() {
+            const container = document.getElementById('freeBotSelector');
+            const list = document.getElementById('freeBotList');
+            if (!container || !list) return;
+
+            // Hide if already bound free or no bots available
+            const hasFreeBound = (borrowStatus?.bindings || []).find(b => b.botType === 'free');
+            if (hasFreeBound || freeBotsList.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+            list.innerHTML = '';
+
+            // Auto-select first bot if none selected
+            if (!selectedFreeBotId && freeBotsList.length > 0) {
+                selectedFreeBotId = freeBotsList[0].botId;
+            }
+
+            freeBotsList.forEach(bot => {
+                const isSelected = bot.botId === selectedFreeBotId;
+                const item = document.createElement('label');
+                item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;cursor:pointer;border:1px solid ' + (isSelected ? 'var(--primary)' : 'var(--border)') + ';background:' + (isSelected ? 'rgba(33,150,243,0.08)' : 'transparent') + ';transition:all 0.2s;';
+                item.innerHTML = `
+                    <input type="radio" name="freeBotSelect" value="${escapeHtml(bot.botId)}" ${isSelected ? 'checked' : ''} style="accent-color:var(--primary);">
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${escapeHtml(bot.displayName)}</div>
+                        <div style="font-size:11px;color:var(--text-secondary);">
+                            <span data-i18n="borrow_active_users">Active users</span>: ${parseInt(bot.activeBindings) || 0}
+                        </div>
+                    </div>
+                `;
+                item.querySelector('input').addEventListener('change', () => {
+                    selectedFreeBotId = bot.botId;
+                    renderFreeBotSelector();
+                });
+                list.appendChild(item);
+            });
+            if (typeof i18n !== 'undefined') i18n.applyPage();
         }
 
         function updateBorrowButtons() {
@@ -2970,11 +3032,13 @@
             btn.textContent = i18n.t('borrow_btn_handshaking');
 
             try {
-                const result = await apiCall('POST', '/api/official-borrow/bind-free', {
+                const bindBody = {
                     deviceId: currentUser.deviceId,
                     deviceSecret: currentUser.deviceSecret,
                     entityId: selectedSlot
-                });
+                };
+                if (selectedFreeBotId) bindBody.botId = selectedFreeBotId;
+                const result = await apiCall('POST', '/api/official-borrow/bind-free', bindBody);
 
                 if (result.success) {
                     btn.textContent = i18n.t('borrow_btn_connected');

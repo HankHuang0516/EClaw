@@ -269,7 +269,9 @@
     "sold_out": "已售完",
     "webhook_testing": "测试连接中...",
     "webhook_success": "连接成功",
-    "iap_coming_soon": "Apple IAP 订阅即将推出"
+    "iap_coming_soon": "Apple IAP 订阅即将推出",
+    "select_bot": "选择机器人：",
+    "active_users": "使用中人数"
   },
   "errors": {
     "network": "网络错误，请检查您的连接。",

@@ -269,7 +269,9 @@
     "sold_out": "หมดแล้ว",
     "webhook_testing": "กำลังทดสอบการเชื่อมต่อ...",
     "webhook_success": "เชื่อมต่อสำเร็จ",
-    "iap_coming_soon": "Apple IAP จะเปิดให้บริการเร็วๆ นี้"
+    "iap_coming_soon": "Apple IAP จะเปิดให้บริการเร็วๆ นี้",
+    "select_bot": "เลือกบอท:",
+    "active_users": "ผู้ใช้งานอยู่"
   },
   "errors": {
     "network": "ข้อผิดพลาดเครือข่าย โปรดตรวจสอบการเชื่อมต่อของคุณ",

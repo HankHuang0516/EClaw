@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.view.View
 import android.widget.ImageButton
 import android.widget.ProgressBar
+import android.widget.RadioButton
+import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -22,6 +24,7 @@ import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.ui.EntityChipHelper
 import com.hank.clawlive.data.model.BorrowBinding
+import com.hank.clawlive.data.model.FreeBotInfo
 import com.hank.clawlive.data.model.OfficialBorrowStatusResponse
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
@@ -49,7 +52,12 @@ class OfficialBorrowActivity : AppCompatActivity() {
     private lateinit var cardFree: View
     private lateinit var cardPersonal: View
 
+    private lateinit var rgFreeBots: RadioGroup
+    private lateinit var tvSelectBotLabel: TextView
+
     private var selectedEntityId = 0
+    private var selectedFreeBotId: String? = null
+    private var freeBotsList: List<FreeBotInfo> = emptyList()
     private var borrowStatus: OfficialBorrowStatusResponse? = null
     private var pendingBindEntityId: Int? = null
 
@@ -105,6 +113,8 @@ class OfficialBorrowActivity : AppCompatActivity() {
         tvPersonalPrice = findViewById(R.id.tvPersonalPrice)
         cardFree = findViewById(R.id.cardFree)
         cardPersonal = findViewById(R.id.cardPersonal)
+        rgFreeBots = findViewById(R.id.rgFreeBots)
+        tvSelectBotLabel = findViewById(R.id.tvSelectBotLabel)
 
         // Entity chip selection
         chipGroupEntity.setOnCheckedStateChangeListener { _, checkedIds ->
@@ -164,11 +174,58 @@ class OfficialBorrowActivity : AppCompatActivity() {
 
                 hideLoading()
                 updateButtonStates()
+                loadFreeBots()
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load borrow status")
                 Toast.makeText(this@OfficialBorrowActivity, getString(R.string.failed_format, e.message), Toast.LENGTH_SHORT).show()
                 hideLoading()
             }
+        }
+    }
+
+    private fun loadFreeBots() {
+        lifecycleScope.launch {
+            try {
+                val res = api.getFreeBots()
+                freeBotsList = res.bots
+                renderFreeBotSelector()
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to load free bots list")
+            }
+        }
+    }
+
+    private fun renderFreeBotSelector() {
+        val hasFreeBound = borrowStatus?.bindings?.any { it.botType == "free" } == true
+        if (hasFreeBound || freeBotsList.isEmpty()) {
+            tvSelectBotLabel.visibility = View.GONE
+            rgFreeBots.visibility = View.GONE
+            return
+        }
+
+        tvSelectBotLabel.visibility = View.VISIBLE
+        rgFreeBots.visibility = View.VISIBLE
+        rgFreeBots.removeAllViews()
+
+        if (selectedFreeBotId == null && freeBotsList.isNotEmpty()) {
+            selectedFreeBotId = freeBotsList[0].botId
+        }
+
+        freeBotsList.forEach { bot ->
+            val rb = RadioButton(this).apply {
+                id = View.generateViewId()
+                text = "${bot.displayName}  (${getString(R.string.active_users)}: ${bot.activeBindings})"
+                textSize = 14f
+                setTextColor(0xFFE0E0E0.toInt())
+                isChecked = bot.botId == selectedFreeBotId
+                tag = bot.botId
+            }
+            rgFreeBots.addView(rb)
+        }
+
+        rgFreeBots.setOnCheckedChangeListener { group, checkedId ->
+            val selected = group.findViewById<RadioButton>(checkedId)
+            selectedFreeBotId = selected?.tag as? String
         }
     }
 
@@ -293,11 +350,13 @@ class OfficialBorrowActivity : AppCompatActivity() {
             try {
                 tvLoadingStatus.text = getString(R.string.handshaking_bot)
 
-                val response = api.bindFreeBorrow(mapOf(
+                val bindBody = mutableMapOf<String, Any>(
                     "deviceId" to deviceManager.deviceId,
                     "deviceSecret" to deviceManager.deviceSecret,
                     "entityId" to selectedEntityId
-                ))
+                )
+                selectedFreeBotId?.let { bindBody["botId"] = it }
+                val response = api.bindFreeBorrow(bindBody)
 
                 if (response.success) {
                     layoutPrefs.addRegisteredEntity(selectedEntityId)

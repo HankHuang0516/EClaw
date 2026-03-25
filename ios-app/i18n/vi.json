@@ -269,7 +269,9 @@
     "sold_out": "Hết hàng",
     "webhook_testing": "Đang kiểm tra kết nối...",
     "webhook_success": "Kết nối thành công",
-    "iap_coming_soon": "Apple IAP sẽ sớm ra mắt"
+    "iap_coming_soon": "Apple IAP sẽ sớm ra mắt",
+    "select_bot": "Chọn bot:",
+    "active_users": "Người dùng đang hoạt động"
   },
   "errors": {
     "network": "Lỗi mạng. Vui lòng kiểm tra kết nối.",

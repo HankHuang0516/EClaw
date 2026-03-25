@@ -278,7 +278,9 @@
     "sold_out": "Sold Out",
     "webhook_testing": "Testing connection...",
     "webhook_success": "Connection successful",
-    "iap_coming_soon": "Apple IAP subscription coming soon"
+    "iap_coming_soon": "Apple IAP subscription coming soon",
+    "select_bot": "Select a bot:",
+    "active_users": "Active users"
   },
   "errors": {
     "network": "Network error. Please check your connection.",

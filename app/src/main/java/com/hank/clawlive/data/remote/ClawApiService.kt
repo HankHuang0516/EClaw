@@ -153,6 +153,9 @@ interface ClawApiService {
         @Query("deviceId") deviceId: String
     ): OfficialBorrowStatusResponse
 
+    @GET("api/official-borrow/free-bots")
+    suspend fun getFreeBots(): FreeBotListResponse
+
     @POST("api/official-borrow/bind-free")
     suspend fun bindFreeBorrow(@Body body: Map<String, @JvmSuppressWildcards Any>): OfficialBindResponse
 

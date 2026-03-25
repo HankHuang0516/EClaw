@@ -48,6 +48,18 @@ data class AddPaidSlotResponse(
     val message: String? = null
 )
 
+data class FreeBotListResponse(
+    val success: Boolean = false,
+    val bots: List<FreeBotInfo> = emptyList()
+)
+
+data class FreeBotInfo(
+    val botId: String = "",
+    val displayName: String = "",
+    val activeBindings: Int = 0,
+    val status: String = "available"
+)
+
 data class FreeBotTosResponse(
     val success: Boolean = false,
     val tos: FreeBotTos? = null,
