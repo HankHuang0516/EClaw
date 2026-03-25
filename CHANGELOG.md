@@ -1,3 +1,10 @@
+## [1.170.3](https://github.com/HankHuang0516/EClaw/compare/v1.170.2...v1.170.3) (2026-03-25)
+
+
+### Bug Fixes
+
+* security + SEO + i18n audit fixes ([#489](https://github.com/HankHuang0516/EClaw/issues/489)) ([cdaddd4](https://github.com/HankHuang0516/EClaw/commit/cdaddd44aed1ea3488b7f10155d0a221cd6385a0))
+
 ## [1.170.2](https://github.com/HankHuang0516/EClaw/compare/v1.170.1...v1.170.2) (2026-03-25)
 
 
