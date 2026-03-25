@@ -1648,13 +1648,13 @@
 
         // ── Entities ──
         async function loadBoundEntities() {
-            const bar = document.getElementById('targetBar');
-            if (bar && boundEntities.length === 0) {
+            const row = document.getElementById('targetBarRow');
+            if (row && boundEntities.length === 0) {
                 const hint = document.createElement('span');
                 hint.className = 'target-loading-hint';
                 hint.style.cssText = 'color:var(--text-muted);font-size:12px;';
                 hint.textContent = i18n.t('chat_loading_entities');
-                bar.appendChild(hint);
+                row.appendChild(hint);
             }
             try {
                 const data = await apiCall('GET', `/api/entities?deviceId=${currentUser.deviceId}`);
