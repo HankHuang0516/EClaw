@@ -1,3 +1,10 @@
+## [1.164.1](https://github.com/HankHuang0516/EClaw/compare/v1.164.0...v1.164.1) (2026-03-25)
+
+
+### Performance Improvements
+
+* optimistic UI for entity rename, delete, reorder — instant feedback ([22cbc63](https://github.com/HankHuang0516/EClaw/commit/22cbc63e2a7601e5b9d246a74508486a4028f6dc))
+
 # [1.164.0](https://github.com/HankHuang0516/EClaw/compare/v1.163.1...v1.164.0) (2026-03-25)
 
 
