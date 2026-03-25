@@ -1,3 +1,10 @@
+## [1.170.4](https://github.com/HankHuang0516/EClaw/compare/v1.170.3...v1.170.4) (2026-03-25)
+
+
+### Bug Fixes
+
+* rename API timeout — respond before DB save, add push timeout guard ([#494](https://github.com/HankHuang0516/EClaw/issues/494)) ([e31336d](https://github.com/HankHuang0516/EClaw/commit/e31336d656dd3ac34a53b6c7d9bd8baba6438f02))
+
 ## [1.170.3](https://github.com/HankHuang0516/EClaw/compare/v1.170.2...v1.170.3) (2026-03-25)
 
 
