@@ -1,3 +1,10 @@
+# [1.165.0](https://github.com/HankHuang0516/EClaw/compare/v1.164.12...v1.165.0) (2026-03-25)
+
+
+### Features
+
+* add device GPS location API (request/report/query) ([#477](https://github.com/HankHuang0516/EClaw/issues/477)) ([9816353](https://github.com/HankHuang0516/EClaw/commit/9816353fc3f6d7ff336163054118bbb46728fd9c))
+
 ## [1.164.12](https://github.com/HankHuang0516/EClaw/compare/v1.164.11...v1.164.12) (2026-03-25)
 
 
