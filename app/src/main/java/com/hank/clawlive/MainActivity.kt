@@ -650,8 +650,8 @@ class MainActivity : AppCompatActivity() {
 
                     entityAdapter.markOrderSaved()
                     Toast.makeText(this@MainActivity, getString(R.string.reorder_success), Toast.LENGTH_SHORT).show()
-                    delay(500)
-                    loadBoundEntities()
+                    // Skip full reload — drag UI already reflects new order
+                    // Next poll cycle will sync from server
                 } else {
                     Toast.makeText(this@MainActivity, getString(R.string.reorder_failed), Toast.LENGTH_SHORT).show()
                     loadBoundEntities() // reload to reset visual order
@@ -687,7 +687,6 @@ class MainActivity : AppCompatActivity() {
                         getString(R.string.refresh_success),
                         Toast.LENGTH_SHORT
                     ).show()
-                    delay(500)
                     loadBoundEntities()
                 } else if (response.webhookBroken) {
                     // Webhook is broken — offer to rebind
@@ -884,12 +883,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun renameEntity(entity: EntityStatus, newName: String) {
-        val loadingDialog = android.app.AlertDialog.Builder(this)
-            .setMessage(getString(R.string.rename_saving))
-            .setCancelable(false)
-            .create()
-        loadingDialog.show()
+        val oldName = entity.name
 
+        // Optimistic UI: update local list immediately
+        boundEntities = boundEntities.map {
+            if (it.entityId == entity.entityId) it.copy(name = newName) else it
+        }
+        updateAgentCards()
+        Toast.makeText(this, getString(R.string.rename_success), Toast.LENGTH_SHORT).show()
+
+        // Fire API in background
         lifecycleScope.launch {
             try {
                 val body = mapOf<String, Any>(
@@ -900,14 +903,12 @@ class MainActivity : AppCompatActivity() {
                 )
                 val response = api.renameEntity(body)
 
-                if (response.success) {
-                    Toast.makeText(
-                        this@MainActivity,
-                        getString(R.string.rename_success),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    loadBoundEntities()
-                } else {
+                if (!response.success) {
+                    // Rollback on server rejection
+                    boundEntities = boundEntities.map {
+                        if (it.entityId == entity.entityId) it.copy(name = oldName) else it
+                    }
+                    updateAgentCards()
                     Toast.makeText(
                         this@MainActivity,
                         getString(R.string.failed_format, response.message),
@@ -916,13 +917,16 @@ class MainActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to rename entity")
+                // Rollback on network error
+                boundEntities = boundEntities.map {
+                    if (it.entityId == entity.entityId) it.copy(name = oldName) else it
+                }
+                updateAgentCards()
                 Toast.makeText(
                     this@MainActivity,
                     getString(R.string.failed_format, e.message),
                     Toast.LENGTH_LONG
                 ).show()
-            } finally {
-                loadingDialog.dismiss()
             }
         }
     }
@@ -1400,6 +1404,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun removeEntity(entity: EntityStatus) {
+        val displayName = entity.name ?: getString(R.string.entity_format, entity.entityId)
+
+        // Optimistic UI: remove from local list immediately
+        val snapshot = boundEntities
+        boundEntities = boundEntities.filter { it.entityId != entity.entityId }
+        layoutPrefs.removeRegisteredEntity(entity.entityId)
+        updateAgentCards()
+        Toast.makeText(this, getString(R.string.entity_removed, displayName), Toast.LENGTH_SHORT).show()
+
+        // Fire API in background
         lifecycleScope.launch {
             try {
                 val body = mapOf(
@@ -1408,18 +1422,12 @@ class MainActivity : AppCompatActivity() {
                 )
                 val response = api.deleteEntityPermanent(entity.entityId, body)
 
-                if (response.isSuccessful) {
-                    layoutPrefs.removeRegisteredEntity(entity.entityId)
-                    val displayName = entity.name ?: getString(R.string.entity_format, entity.entityId)
-                    Toast.makeText(
-                        this@MainActivity,
-                        getString(R.string.entity_removed, displayName),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    delay(500)
-                    loadBoundEntities()
-                } else {
+                if (!response.isSuccessful) {
+                    // Rollback on server rejection
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                    boundEntities = snapshot
+                    layoutPrefs.addRegisteredEntity(entity.entityId)
+                    updateAgentCards()
                     Toast.makeText(
                         this@MainActivity,
                         getString(R.string.failed_format, errorBody),
@@ -1428,6 +1436,10 @@ class MainActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to delete entity")
+                // Rollback on network error
+                boundEntities = snapshot
+                layoutPrefs.addRegisteredEntity(entity.entityId)
+                updateAgentCards()
                 Toast.makeText(
                     this@MainActivity,
                     getString(R.string.failed_format, e.message),
