@@ -1,3 +1,10 @@
+## [1.164.9](https://github.com/HankHuang0516/EClaw/compare/v1.164.8...v1.164.9) (2026-03-25)
+
+
+### Bug Fixes
+
+* use absolute paths in public-nav.js for logo and login links ([#473](https://github.com/HankHuang0516/EClaw/issues/473)) ([888411c](https://github.com/HankHuang0516/EClaw/commit/888411c2193a4767fb798557394990b4bbb1fa26))
+
 ## [1.164.8](https://github.com/HankHuang0516/EClaw/compare/v1.164.7...v1.164.8) (2026-03-25)
 
 
