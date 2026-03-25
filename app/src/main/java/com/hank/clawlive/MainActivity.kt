@@ -145,6 +145,14 @@ class MainActivity : AppCompatActivity() {
         // Connect Socket.IO for real-time updates
         com.hank.clawlive.data.remote.SocketManager.connect(this)
 
+        // Start TTS foreground service for bot voice commands
+        val ttsIntent = android.content.Intent(this, com.hank.clawlive.service.TtsService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(ttsIntent)
+        } else {
+            startService(ttsIntent)
+        }
+
         // Listen for location requests from server (Bot requesting device GPS)
         observeLocationRequests()
 

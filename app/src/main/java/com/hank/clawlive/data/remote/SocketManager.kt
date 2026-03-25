@@ -38,6 +38,9 @@ object SocketManager {
     private val _controlCommandFlow = MutableSharedFlow<JSONObject>(extraBufferCapacity = 16)
     val controlCommandFlow: SharedFlow<JSONObject> = _controlCommandFlow
 
+    private val _ttsFlow = MutableSharedFlow<JSONObject>(extraBufferCapacity = 8)
+    val ttsFlow: SharedFlow<JSONObject> = _ttsFlow
+
     private val _locationRequestFlow = MutableSharedFlow<JSONObject>(extraBufferCapacity = 4)
     val locationRequestFlow: SharedFlow<JSONObject> = _locationRequestFlow
 
@@ -107,6 +110,12 @@ object SocketManager {
                     val json = args.firstOrNull() as? JSONObject ?: return@on
                     Timber.d("[Socket] device:control-command: $json")
                     _controlCommandFlow.tryEmit(json)
+                }
+
+                on("device:tts") { args ->
+                    val json = args.firstOrNull() as? JSONObject ?: return@on
+                    Timber.d("[Socket] device:tts: $json")
+                    _ttsFlow.tryEmit(json)
                 }
 
                 on("location_request") { args ->
