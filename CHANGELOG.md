@@ -1,3 +1,10 @@
+# [1.169.0](https://github.com/HankHuang0516/EClaw/compare/v1.168.0...v1.169.0) (2026-03-25)
+
+
+### Features
+
+* **chat:** add side scroll navigator and target bar upward expand ([#481](https://github.com/HankHuang0516/EClaw/issues/481)) ([f58aaf2](https://github.com/HankHuang0516/EClaw/commit/f58aaf2f5ceabe1927ee1374055f433fb608f70c))
+
 # [1.168.0](https://github.com/HankHuang0516/EClaw/compare/v1.167.0...v1.168.0) (2026-03-25)
 
 
