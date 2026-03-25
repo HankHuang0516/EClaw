@@ -197,6 +197,11 @@ app.get('/info', (req, res) => {
     res.redirect(301, '/portal/info.html');
 });
 
+// Account deletion page — clean URL for Google Play Data Safety form
+app.get('/delete-account', (req, res) => {
+    res.redirect(301, '/portal/delete-account.html');
+});
+
 // ── Enterprise Demo Chat ─────────────────────────────────────
 // Public endpoint — no auth required, rate-limited by IP
 const entDemoRateMap = new Map();
