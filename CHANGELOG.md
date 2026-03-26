@@ -1,3 +1,10 @@
+## [1.187.5](https://github.com/HankHuang0516/EClaw/compare/v1.187.4...v1.187.5) (2026-03-26)
+
+
+### Bug Fixes
+
+* **kanban:** CREATE TABLE skipped by comment filter — root cause of 503 ([#542](https://github.com/HankHuang0516/EClaw/issues/542)) ([e9cbfbe](https://github.com/HankHuang0516/EClaw/commit/e9cbfbe45e91e25428925ac2feb4385968ebbcca))
+
 ## [1.187.4](https://github.com/HankHuang0516/EClaw/compare/v1.187.3...v1.187.4) (2026-03-26)
 
 
