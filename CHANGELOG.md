@@ -1,3 +1,10 @@
+## [1.176.2](https://github.com/HankHuang0516/EClaw/compare/v1.176.1...v1.176.2) (2026-03-26)
+
+
+### Bug Fixes
+
+* add debug/paths endpoint + GET fallback for community/publish ([#506](https://github.com/HankHuang0516/EClaw/issues/506)) ([6c3da58](https://github.com/HankHuang0516/EClaw/commit/6c3da58fda99cffcb756f154c328c12efc767214))
+
 ## [1.176.1](https://github.com/HankHuang0516/EClaw/compare/v1.176.0...v1.176.1) (2026-03-26)
 
 
