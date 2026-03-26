@@ -1,3 +1,10 @@
+## [1.195.4](https://github.com/HankHuang0516/EClaw/compare/v1.195.3...v1.195.4) (2026-03-26)
+
+
+### Bug Fixes
+
+* **note-page:** preserve <style> tags in public note page sanitizer ([#560](https://github.com/HankHuang0516/EClaw/issues/560)) ([6a6e678](https://github.com/HankHuang0516/EClaw/commit/6a6e6780e8fc2f1713f65a231fdc69a7d9aaa5f6))
+
 ## [1.195.3](https://github.com/HankHuang0516/EClaw/compare/v1.195.2...v1.195.3) (2026-03-26)
 
 
