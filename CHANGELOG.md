@@ -1,3 +1,10 @@
+## [1.190.1](https://github.com/HankHuang0516/EClaw/compare/v1.190.0...v1.190.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* **kanban:** wire up pushToChannelCallback for bot notifications ([#550](https://github.com/HankHuang0516/EClaw/issues/550)) ([68fe47c](https://github.com/HankHuang0516/EClaw/commit/68fe47cd32f321d3d396acdab3b81ce8ba547c11))
+
 # [1.190.0](https://github.com/HankHuang0516/EClaw/compare/v1.189.1...v1.190.0) (2026-03-26)
 
 
