@@ -1,3 +1,10 @@
+# [1.197.0](https://github.com/HankHuang0516/EClaw/compare/v1.196.0...v1.197.0) (2026-03-26)
+
+
+### Features
+
+* **settings:** move split view toggle to Settings page ([#563](https://github.com/HankHuang0516/EClaw/issues/563)) ([c4f2699](https://github.com/HankHuang0516/EClaw/commit/c4f2699774ab6b7ca952d5b804715f4a02dd6314))
+
 # [1.196.0](https://github.com/HankHuang0516/EClaw/compare/v1.195.6...v1.196.0) (2026-03-26)
 
 
