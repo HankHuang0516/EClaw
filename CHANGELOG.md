@@ -1,3 +1,10 @@
+# [1.192.0](https://github.com/HankHuang0516/EClaw/compare/v1.191.0...v1.192.0) (2026-03-26)
+
+
+### Features
+
+* **kanban:** ⚡ automation collapse section + auto-card badge + create toggle ([#551](https://github.com/HankHuang0516/EClaw/issues/551)) ([2105e6c](https://github.com/HankHuang0516/EClaw/commit/2105e6cfd204281416939b4f4c4ab1c257b1fb2f))
+
 # [1.191.0](https://github.com/HankHuang0516/EClaw/compare/v1.190.1...v1.191.0) (2026-03-26)
 
 
