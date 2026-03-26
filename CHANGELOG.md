@@ -1,3 +1,10 @@
+## [1.195.6](https://github.com/HankHuang0516/EClaw/compare/v1.195.5...v1.195.6) (2026-03-26)
+
+
+### Bug Fixes
+
+* **info:** move 5 usecase/detail panels from Advanced tab to User Guide tab ([84cb426](https://github.com/HankHuang0516/EClaw/commit/84cb426953f8e2f0f8bd13b06fba477ea94eb9dc)), closes [#panel-guide](https://github.com/HankHuang0516/EClaw/issues/panel-guide) [#panel-advanced](https://github.com/HankHuang0516/EClaw/issues/panel-advanced)
+
 ## [1.195.5](https://github.com/HankHuang0516/EClaw/compare/v1.195.4...v1.195.5) (2026-03-26)
 
 
