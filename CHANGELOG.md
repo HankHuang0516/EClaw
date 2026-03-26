@@ -1,3 +1,10 @@
+## [1.187.4](https://github.com/HankHuang0516/EClaw/compare/v1.187.3...v1.187.4) (2026-03-26)
+
+
+### Bug Fixes
+
+* kanban module crash resilience — optional cron-parser ([#540](https://github.com/HankHuang0516/EClaw/issues/540)) ([513a6e3](https://github.com/HankHuang0516/EClaw/commit/513a6e3692bde5e1b641cff1cb2ebad21cc1efd5))
+
 ## [1.187.3](https://github.com/HankHuang0516/EClaw/compare/v1.187.2...v1.187.3) (2026-03-26)
 
 
