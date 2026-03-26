@@ -18948,12 +18948,16 @@ class I18n {
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
             if (key) {
+                const translated = this.t(key);
+                // Skip if translation returns the key itself (no translation found)
+                // This preserves the original HTML content as fallback
+                if (translated === key) return;
                 if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
                     if (el.hasAttribute('placeholder')) {
-                        el.placeholder = this.t(key);
+                        el.placeholder = translated;
                     }
                 } else {
-                    el.innerHTML = this.t(key);
+                    el.innerHTML = translated;
                 }
             }
         });
