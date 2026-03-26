@@ -9,6 +9,7 @@
     <string name="binding_code">Mã liên kết</string>
     <string name="code_placeholder">------</string>
     <string name="tap_to_generate_code">Nhấn để tạo mã</string>
+    <string name="channel_bind_warning">Phiên bản 2026-03 trở lên khuyến nghị sử dụng EClaw Channel để liên kết nhằm tránh lỗi liên kết.</string>
     <string name="generate">Tạo mã</string>
     <string name="regenerate">Tạo lại</string>
     <string name="channel_promo">Thử EClaw Channel? Tích hợp gốc hơn, nhanh hơn</string>

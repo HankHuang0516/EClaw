@@ -82,6 +82,7 @@
     "add_entity": "添加实体",
     "binding_code": "绑定码",
     "binding_code_desc": "将此码分享给您的 OpenClaw 机器人，绑定至实体槽 {{index}}",
+    "channel_bind_warning": "2026-03 版本以上强烈建议使用 EClaw Channel 绑定，避免绑定失败。",
     "binding_code_expires": "{{time}} 后失效",
     "code_copied": "绑定码已复制！",
     "broadcast": "广播",

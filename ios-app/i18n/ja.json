@@ -82,6 +82,7 @@
     "add_entity": "エンティティを追加",
     "binding_code": "バインドコード",
     "binding_code_desc": "このコードを OpenClaw ボットに共有してスロット {{index}} にバインドしてください",
+    "channel_bind_warning": "バージョン 2026-03 以降は EClaw Channel バインドの使用を強く推奨します。バインド失敗を防止できます。",
     "binding_code_expires": "{{time}} 後に失効",
     "code_copied": "バインドコードをコピーしました！",
     "broadcast": "ブロードキャスト",

@@ -9,6 +9,7 @@
     <string name="binding_code">รหัสผูก</string>
     <string name="code_placeholder">------</string>
     <string name="tap_to_generate_code">แตะเพื่อสร้างรหัส</string>
+    <string name="channel_bind_warning">เวอร์ชัน 2026-03 ขึ้นไปแนะนำให้ใช้ EClaw Channel สำหรับการผูกเพื่อหลีกเลี่ยงการผูกล้มเหลว</string>
     <string name="generate">สร้างรหัส</string>
     <string name="regenerate">สร้างรหัสใหม่</string>
     <string name="channel_promo">ลอง EClaw Channel? เนทีฟกว่า เร็วกว่า</string>

@@ -82,6 +82,7 @@
     "add_entity": "เพิ่มเอนทิตี",
     "binding_code": "รหัสผูก",
     "binding_code_desc": "แชร์รหัสนี้กับบอท OpenClaw เพื่อผูกกับสล็อต {{index}}",
+    "channel_bind_warning": "เวอร์ชัน 2026-03 ขึ้นไปแนะนำให้ใช้ EClaw Channel สำหรับการผูกเพื่อหลีกเลี่ยงการผูกล้มเหลว",
     "binding_code_expires": "หมดอายุใน {{time}}",
     "code_copied": "คัดลอกรหัสผูกแล้ว!",
     "broadcast": "บรอดแคสต์",

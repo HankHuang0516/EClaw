@@ -82,6 +82,7 @@
     "add_entity": "Add Entity",
     "binding_code": "Binding Code",
     "binding_code_desc": "Share this code with your OpenClaw bot to bind it to entity slot {{index}}",
+    "channel_bind_warning": "Version 2026-03+ strongly recommends using EClaw Channel binding to avoid binding failures.",
     "binding_code_expires": "Expires in {{time}}",
     "code_copied": "Binding code copied!",
     "broadcast": "Broadcast",

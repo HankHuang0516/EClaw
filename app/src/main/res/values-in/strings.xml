@@ -9,6 +9,7 @@
     <string name="binding_code">Kode Pengikat</string>
     <string name="code_placeholder">------</string>
     <string name="tap_to_generate_code">Ketuk untuk membuat kode</string>
+    <string name="channel_bind_warning">Versi 2026-03 ke atas sangat disarankan menggunakan EClaw Channel untuk menghindari kegagalan binding.</string>
     <string name="generate">Buat</string>
     <string name="regenerate">Buat Ulang</string>
     <string name="channel_promo">Coba EClaw Channel? Lebih native, lebih cepat</string>

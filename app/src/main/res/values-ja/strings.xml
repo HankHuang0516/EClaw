@@ -9,6 +9,7 @@
     <string name="binding_code">バインドコード</string>
     <string name="code_placeholder">------</string>
     <string name="tap_to_generate_code">タップしてコードを生成</string>
+    <string name="channel_bind_warning">バージョン 2026-03 以降は EClaw Channel バインドの使用を強く推奨します。バインド失敗を防止できます。</string>
     <string name="generate">生成</string>
     <string name="regenerate">再生成</string>
     <string name="channel_promo">EClaw Channel を試してみませんか？よりネイティブ、より高速</string>

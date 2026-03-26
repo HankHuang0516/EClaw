@@ -51,6 +51,13 @@ export default function BindingCodeCard({
           {t('home.binding_code_desc', { index: entityIndex + 1 })}
         </Text>
 
+        <View style={styles.warningBanner}>
+          <Text style={styles.warningIcon}>⚠️</Text>
+          <Text variant="bodySmall" style={styles.warningText}>
+            {t('home.channel_bind_warning')}
+          </Text>
+        </View>
+
         <View style={styles.buttons}>
           <Button
             mode="contained"
@@ -79,6 +86,25 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginVertical: 16,
     fontWeight: 'bold',
+  },
+  warningBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(255, 193, 7, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 193, 7, 0.4)',
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 12,
+    gap: 8,
+  },
+  warningIcon: {
+    fontSize: 16,
+  },
+  warningText: {
+    flex: 1,
+    color: '#E0C050',
+    lineHeight: 18,
   },
   buttons: {
     flexDirection: 'row',

@@ -12,6 +12,7 @@
     <string name="binding_code">綁定碼</string>
     <string name="code_placeholder">------</string>
     <string name="tap_to_generate_code">點擊產生綁定碼</string>
+    <string name="channel_bind_warning">2026-03 版本以上強烈建議使用 EClaw Channel 綁定，避免綁定失敗。</string>
     <string name="generate">產生</string>
     <string name="regenerate">重新產生</string>
     <string name="channel_promo">試試 EClaw Channel？更原生、更快速</string>

@@ -234,6 +234,25 @@
             display: block;
         }
 
+        /* Channel binding warning */
+        .channel-bind-warning {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            background: rgba(255, 193, 7, 0.12);
+            border: 1px solid rgba(255, 193, 7, 0.4);
+            border-radius: 8px;
+            font-size: 13px;
+            color: #e0c050;
+            line-height: 1.4;
+        }
+        .channel-bind-warning-icon {
+            flex-shrink: 0;
+            font-size: 16px;
+        }
+
         /* Slot selector */
         .slot-selector {
             display: flex;
@@ -1096,6 +1115,12 @@
                 <label class="form-label" data-i18n="dash_label_select_slot">Select Entity Slot</label>
                 <div class="slot-selector" id="slotSelector">
                     <!-- Populated dynamically by renderSlotSelector() -->
+                </div>
+
+                <!-- Channel Binding Warning -->
+                <div class="channel-bind-warning">
+                    <span class="channel-bind-warning-icon">⚠️</span>
+                    <span data-i18n="dash_channel_bind_warning">Version 2026-03+ strongly recommends using EClaw Channel binding to avoid binding failures.</span>
                 </div>
 
                 <!-- Generate Code Button -->
