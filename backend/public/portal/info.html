@@ -1652,10 +1652,10 @@ Content-Type: application/json
                 </div>
                 <div class="faq-chips">
                     <button class="faq-chip active" data-faq-cat="all" onclick="setFaqCat('all',this)" data-i18n="faq_chip_all">全部</button>
-                    <button class="faq-chip" data-faq-cat="general" onclick="setFaqCat('general',this)">💡 General</button>
-                    <button class="faq-chip" data-faq-cat="setup" onclick="setFaqCat('setup',this)">⚙️ Setup</button>
-                    <button class="faq-chip" data-faq-cat="features" onclick="setFaqCat('features',this)">✨ Features</button>
-                    <button class="faq-chip" data-faq-cat="dev" onclick="setFaqCat('dev',this)">🔧 Dev</button>
+                    <button class="faq-chip" data-faq-cat="general" onclick="setFaqCat('general',this)" data-i18n="faq_chip_general">💡 General</button>
+                    <button class="faq-chip" data-faq-cat="setup" onclick="setFaqCat('setup',this)" data-i18n="faq_chip_setup">⚙️ Setup</button>
+                    <button class="faq-chip" data-faq-cat="features" onclick="setFaqCat('features',this)" data-i18n="faq_chip_features">✨ Features</button>
+                    <button class="faq-chip" data-faq-cat="dev" onclick="setFaqCat('dev',this)" data-i18n="faq_chip_dev">🔧 Dev</button>
                 </div>
             </div>
             <div class="faq-no-results" id="faqNoResults"><span class="emoji">🔍</span><span data-i18n="faq_no_results">找不到符合的問題</span></div>
@@ -1737,17 +1737,17 @@ Content-Type: application/json
                 <div class="rn-hero-title" data-i18n="rn_hero_title">Release Notes</div>
                 <div class="rn-hero-subtitle" data-i18n="rn_hero_subtitle">What's new in EClawbot — features, improvements, and fixes across the platform.</div>
                 <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                    <input type="text" id="rnSearch" placeholder="Search versions..." style="padding:8px 12px;border-radius:8px;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text);font-size:13px;width:200px;">
+                    <input type="text" id="rnSearch" data-i18n="rn_search_placeholder" placeholder="Search versions..." style="padding:8px 12px;border-radius:8px;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text);font-size:13px;width:200px;">
                     <select id="rnFilter" style="padding:8px 12px;border-radius:8px;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text);font-size:13px;">
-                        <option value="all">All</option>
-                        <option value="Features">Features</option>
-                        <option value="Bug Fixes">Bug Fixes</option>
+                        <option value="all" data-i18n="rn_filter_all">All</option>
+                        <option value="Features" data-i18n="rn_filter_features">Features</option>
+                        <option value="Bug Fixes" data-i18n="rn_filter_bugfixes">Bug Fixes</option>
                     </select>
                     <span id="rnCount" style="color:var(--text-secondary);font-size:13px;"></span>
                 </div>
             </div>
             <div id="rnContainer" style="margin-top:16px;">
-                <div style="text-align:center;padding:40px;color:var(--text-secondary);">Loading release notes...</div>
+                <div style="text-align:center;padding:40px;color:var(--text-secondary);" data-i18n="rn_loading">Loading release notes...</div>
             </div>
         </div><!-- /panel-release-notes -->
 
