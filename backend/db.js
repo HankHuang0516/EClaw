@@ -1988,6 +1988,8 @@ module.exports = {
     getPendingCrossMessages,
     deletePendingCrossMessages,
     cleanupExpiredPendingMessages,
+    // Debug helper
+    _getPool: () => pool,
     // Bot Plaza: Community
     setEntityPublic,
     searchPublicCards,
