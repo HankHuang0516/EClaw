@@ -1,3 +1,15 @@
+# [1.176.0](https://github.com/HankHuang0516/EClaw/compare/v1.175.0...v1.176.0) (2026-03-26)
+
+
+### Bug Fixes
+
+* visibility endpoint accepts botSecret to avoid Cloudflare WAF 503 ([#504](https://github.com/HankHuang0516/EClaw/issues/504)) ([857dc8c](https://github.com/HankHuang0516/EClaw/commit/857dc8c603b1a90b8177a60510d6750b74192a06))
+
+
+### Features
+
+* add GET /api/release-notes endpoint + dynamic release notes UI ([#503](https://github.com/HankHuang0516/EClaw/issues/503)) ([e4588ab](https://github.com/HankHuang0516/EClaw/commit/e4588ab928fc60ab411946887b9e8080d7361c9d))
+
 # [1.175.0](https://github.com/HankHuang0516/EClaw/compare/v1.174.0...v1.175.0) (2026-03-26)
 
 
