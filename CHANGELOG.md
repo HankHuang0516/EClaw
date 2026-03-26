@@ -1,3 +1,10 @@
+# [1.189.0](https://github.com/HankHuang0516/EClaw/compare/v1.188.1...v1.189.0) (2026-03-26)
+
+
+### Features
+
+* [Android] MissionControlActivity 加看板 tab ([a26650b](https://github.com/HankHuang0516/EClaw/commit/a26650b226e9a2c0e67070538a2c4c2377b19bac))
+
 ## [1.188.1](https://github.com/HankHuang0516/EClaw/compare/v1.188.0...v1.188.1) (2026-03-26)
 
 
