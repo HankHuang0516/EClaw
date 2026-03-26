@@ -2525,8 +2525,9 @@
                     </div>`;
             }).join('');
 
-            // Auto-scroll
-            if (isFirstLoad || hasNewMessages || wasAtBottom) {
+            // Auto-scroll — skip when smart filter is locked on a specific entity/contact
+            const isFilteredView = currentFilter !== 'all';
+            if (isFirstLoad || (hasNewMessages && !isFilteredView) || wasAtBottom) {
                 container.scrollTop = container.scrollHeight;
             }
 
