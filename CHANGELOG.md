@@ -1,3 +1,10 @@
+# [1.175.0](https://github.com/HankHuang0516/EClaw/compare/v1.174.0...v1.175.0) (2026-03-26)
+
+
+### Features
+
+* extract Compare to independent compare.html ([#502](https://github.com/HankHuang0516/EClaw/issues/502)) ([3106028](https://github.com/HankHuang0516/EClaw/commit/3106028c1bb8fb896af76fda9d2b78e5abd0d0bc))
+
 # [1.174.0](https://github.com/HankHuang0516/EClaw/compare/v1.173.0...v1.174.0) (2026-03-26)
 
 
