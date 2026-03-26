@@ -3,7 +3,7 @@ nixPkgs = ["nodejs_20"]
 
 [phases.install]
 dependsOn = ["setup"]
-cmds = ["cd backend && npm install"]
+cmds = ["cp CHANGELOG.md backend/ 2>/dev/null || true", "cd backend && npm install"]
 
 [start]
 cmd = "cd backend && node index.js"
