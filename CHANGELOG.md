@@ -1,3 +1,10 @@
+# [1.181.0](https://github.com/HankHuang0516/EClaw/compare/v1.180.0...v1.181.0) (2026-03-26)
+
+
+### Features
+
+* **chat:** typing indicator when bot is BUSY + code highlight ([#524](https://github.com/HankHuang0516/EClaw/issues/524)) ([539b703](https://github.com/HankHuang0516/EClaw/commit/539b70395bf8be3866831d1566b7d1ceab6e2012))
+
 # [1.180.0](https://github.com/HankHuang0516/EClaw/compare/v1.179.1...v1.180.0) (2026-03-26)
 
 
