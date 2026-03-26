@@ -679,14 +679,68 @@
             flex: 1;
             color: var(--text-muted);
             font-size: 14px;
-            gap: 8px;
+            gap: 10px;
             margin: auto;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .chat-empty-icon {
+            font-size: 56px;
+            margin-bottom: 8px;
+            opacity: 0.4;
+        }
+        .chat-empty-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .chat-empty-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            max-width: 280px;
+            line-height: 1.5;
         }
 
-        .chat-empty-icon {
-            font-size: 48px;
-            margin-bottom: 4px;
-            opacity: 0.5;
+        /* Bubble time tooltip */
+        .chat-bubble[data-full-time] {
+            position: relative;
+        }
+        .chat-bubble[data-full-time]:hover::after {
+            content: attr(data-full-time);
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            color: #e0e0e0;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* Unread separator */
+        .chat-unread-sep {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 14px 0;
+            padding: 0 8px;
+        }
+        .chat-unread-sep::before,
+        .chat-unread-sep::after {
+            content: '';
+            flex: 1;
+            border-top: 1px solid #ef4444;
+            opacity: 0.4;
+        }
+        .chat-unread-sep span {
+            font-size: 11px;
+            color: #ef4444;
+            font-weight: 600;
+            white-space: nowrap;
         }
 
         /* ── Loading ── */
@@ -792,20 +846,46 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.85);
+            background: rgba(0,0,0,0.9);
             z-index: 9999;
             align-items: center;
             justify-content: center;
             cursor: zoom-out;
         }
-
         .lightbox.active { display: flex; }
-
         .lightbox img {
             max-width: 90vw;
             max-height: 90vh;
             border-radius: 8px;
             object-fit: contain;
+            transition: transform 0.2s;
+        }
+        .lightbox img.zoomed { transform: scale(2); cursor: grab; }
+        .lightbox-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #fff;
+            font-size: 28px;
+            padding: 12px 16px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.2s;
+            z-index: 10000;
+        }
+        .lightbox-arrow:hover { background: rgba(255,255,255,0.2); }
+        .lightbox-arrow.prev { left: 16px; }
+        .lightbox-arrow.next { right: 16px; }
+        .lightbox-counter {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.6);
+            font-size: 13px;
+            z-index: 10000;
         }
 
         /* ── Media Buttons in Input Bar ── */
@@ -1482,8 +1562,11 @@
     </div>
 
     <!-- Photo Lightbox -->
-    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-        <img id="lightboxImg" src="" alt="">
+    <div class="lightbox" id="lightbox" onclick="if(event.target===this)closeLightbox()">
+        <button class="lightbox-arrow prev" onclick="event.stopPropagation();lightboxNav(-1)">&#8249;</button>
+        <img id="lightboxImg" src="" alt="" onclick="event.stopPropagation();toggleLightboxZoom()">
+        <button class="lightbox-arrow next" onclick="event.stopPropagation();lightboxNav(1)">&#8250;</button>
+        <div class="lightbox-counter" id="lightboxCounter"></div>
     </div>
 
     <!-- Usage Limit Modal -->
@@ -2590,9 +2673,9 @@
             if (filtered.length === 0) {
                 container.innerHTML = `
                     <div class="chat-empty">
-                        <div class="chat-empty-icon">&#x1F4AC;</div>
-                        <div data-i18n="chat_empty">${escapeHtml(i18n.t('chat_empty'))}</div>
-                        <div style="font-size:12px;" data-i18n="chat_empty_sub">${escapeHtml(i18n.t('chat_empty_sub'))}</div>
+                        <div class="chat-empty-icon">💬</div>
+                        <div class="chat-empty-title" data-i18n="chat_empty">${escapeHtml(i18n.t('chat_empty') || 'No messages yet')}</div>
+                        <div class="chat-empty-hint" data-i18n="chat_empty_hint">${escapeHtml(i18n.t('chat_empty_hint') || 'Send a message to start a conversation with your AI agents. Try saying hello! 👋')}</div>
                     </div>`;
                 return;
             }
@@ -2758,10 +2841,19 @@
                         </div>`;
                 }
 
-                return `${dateSep}
+                // Full time for tooltip
+                const fullTime = msg.created_at ? new Date(msg.created_at).toLocaleString() : '';
+
+                // Unread separator: insert before first unread msg
+                let unreadSep = '';
+                if (!isSent && msg.is_from_bot && !msg.read_at && prev && (prev.read_at || prev.is_from_user)) {
+                    unreadSep = '<div class="chat-unread-sep"><span>' + (i18n.t('chat_unread_sep') || '── New messages ──') + '</span></div>';
+                }
+
+                return `${dateSep}${unreadSep}
                     <div class="chat-msg ${msgClass}${isGrouped ? ' grouped' : ''}">
                         <div class="chat-source">${sourceLabel}</div>
-                        <div class="chat-bubble${isMdRendered ? ' md-rendered' : ''}">${textHtml}${mediaHtml}${inlineImgHtml}</div>
+                        <div class="chat-bubble${isMdRendered ? ' md-rendered' : ''}" data-full-time="${escapeHtml(fullTime)}">${textHtml}${mediaHtml}${inlineImgHtml}</div>
                         ${previewId ? `<div class="link-preview-slot" id="${previewId}" data-url="${escapeHtml(firstUrl)}"></div>` : ''}
                         ${reactionsHtml}
                         <div class="chat-meta">${time}</div>
@@ -3552,19 +3644,53 @@
             currentAudio.currentTime = ratio * currentAudio.duration;
         }
 
-        // ── Photo Lightbox ──
+        // ── Photo Lightbox with navigation ──
+        let lightboxImages = [];
+        let lightboxIdx = 0;
+
+        function collectLightboxImages() {
+            lightboxImages = [];
+            document.querySelectorAll('.chat-photo, .chat-inline-img').forEach(img => {
+                if (img.src && img.offsetParent !== null) lightboxImages.push(img.src);
+            });
+        }
+
         function openLightbox(url) {
-            document.getElementById('lightboxImg').src = url;
+            collectLightboxImages();
+            lightboxIdx = lightboxImages.indexOf(url);
+            if (lightboxIdx < 0) { lightboxImages = [url]; lightboxIdx = 0; }
+            showLightboxImage();
             document.getElementById('lightbox').classList.add('active');
+        }
+
+        function showLightboxImage() {
+            const img = document.getElementById('lightboxImg');
+            img.src = lightboxImages[lightboxIdx] || '';
+            img.classList.remove('zoomed');
+            const counter = document.getElementById('lightboxCounter');
+            counter.textContent = lightboxImages.length > 1 ? `${lightboxIdx+1} / ${lightboxImages.length}` : '';
+        }
+
+        function lightboxNav(dir) {
+            if (lightboxImages.length <= 1) return;
+            lightboxIdx = (lightboxIdx + dir + lightboxImages.length) % lightboxImages.length;
+            showLightboxImage();
+        }
+
+        function toggleLightboxZoom() {
+            document.getElementById('lightboxImg').classList.toggle('zoomed');
         }
 
         function closeLightbox() {
             document.getElementById('lightbox').classList.remove('active');
             document.getElementById('lightboxImg').src = '';
+            document.getElementById('lightboxImg').classList.remove('zoomed');
         }
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') closeLightbox();
+            if (e.key === 'ArrowLeft') lightboxNav(-1);
+            if (e.key === 'ArrowRight') lightboxNav(1);
         });
 
         // ── Modal helpers ──
