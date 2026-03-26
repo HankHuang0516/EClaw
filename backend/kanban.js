@@ -93,6 +93,9 @@ async function initKanbanDatabase() {
 module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } = {}) {
     const router = express.Router();
 
+    // Health check
+    router.get("/kanban-health", (req, res) => res.json({ ok: true, module: "kanban", cron: !!CronExpressionParser }));
+
     // ── Auth helpers (same as mission.js) ──
     function findEntityByCredentials(deviceId, entityId, botSecret) {
         const device = devices[deviceId];
