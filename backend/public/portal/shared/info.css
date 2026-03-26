@@ -404,6 +404,18 @@
     border: 1px solid var(--card-border);
 }
 
+.guide-content .arch-mermaid {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin: 16px 0;
+    overflow-x: auto;
+}
+.guide-content .arch-mermaid .mermaid {
+    display: flex;
+    justify-content: center;
+}
 .guide-content .arch-diagram,
 .guide-content .file-tree {
     background: var(--card);

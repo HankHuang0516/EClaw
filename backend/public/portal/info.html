@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="shared/style.css">
     <link rel="canonical" href="https://eclawbot.com/portal/info.html">
     <link rel="stylesheet" href="shared/info.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: { primaryColor: '#7c3aed', primaryTextColor: '#fff', lineColor: '#555', fontSize: '13px' } });</script>
 </head>
 
 <body>
@@ -335,37 +337,45 @@
                         <h2 data-i18n="guide_arch_overview">架構總覽</h2>
                         <p data-i18n="guide_arch_overview_desc">EClawbot 由三個主要部分組成：Android App、後端服務（Railway）、以及 OpenClaw AI 平台（Zeabur）。</p>
 
-                        <div class="arch-diagram">┌─────────────────────┐     ┌──────────────────────┐
-│   Android App       │     │   Web Portal         │
-│   (Kotlin)          │     │   (HTML/JS)          │
-│                     │     │                      │
-│  Live Wallpaper     │     │  Entity Management   │
-│  Chat UI            │◄────►  Bot Config          │
-│  Push Receiver      │     │  Telemetry Viewer    │
-└─────────┬───────────┘     └────────┬─────────────┘
-          │                          │
-          │    HTTPS / REST API      │
-          ▼                          ▼
-┌─────────────────────────────────────────────────┐
-│              Backend (Railway)                   │
-│              Node.js + Express                   │
-│                                                  │
-│  /api/bind      /api/broadcast   /api/transform  │
-│  /api/chat      /api/logs        /api/telemetry  │
-│                                                  │
-│         PostgreSQL (persistent store)            │
-└────────────────┬───────────────────┬────────────────┘
-                 │  Webhook mode      │  Channel mode
-                 │  push + exec+curl  │  /api/channel/*
-                 ▼                    ▼
-      ┌──────────────────────────────────────┐
-      │         OpenClaw Platform            │
-      │    (Zeabur / Railway / self-host)    │
-      │                                      │
-      │  AI Bot Instances (Webhook binding)  │
-      │  Channel Plugin   (Channel binding)  │
-      │  (free: 4 slots / paid: 8 slots)     │
-      └──────────────────────────────────────┘</div>
+                        <div class="arch-mermaid"><pre class="mermaid">
+graph TB
+    subgraph Clients["🖥️ Client Layer"]
+        direction LR
+        APP["📱 Android App<br/><small>Kotlin · Live Wallpaper<br/>Chat UI · Push Receiver</small>"]
+        WEB["🌐 Web Portal<br/><small>HTML/JS · Entity Management<br/>Bot Config · Telemetry</small>"]
+        IOS["🍎 iOS App<br/><small>Swift · Chat · Push</small>"]
+    end
+
+    subgraph Backend["⚙️ Backend · Railway"]
+        direction LR
+        API["REST API<br/><small>/api/bind · /api/broadcast<br/>/api/transform · /api/chat<br/>/api/mission · /api/kanban</small>"]
+        DB[("🗄️ PostgreSQL<br/><small>Persistent Store</small>")]
+        API --- DB
+    end
+
+    subgraph OpenClaw["🤖 OpenClaw Platform"]
+        direction LR
+        WH["Webhook Mode<br/><small>push + exec curl</small>"]
+        CH["Channel Mode<br/><small>/api/channel/*</small>"]
+    end
+
+    APP -- "HTTPS / REST" --> API
+    WEB -- "HTTPS / REST" --> API
+    IOS -- "HTTPS / REST" --> API
+    API -- "Webhook" --> WH
+    API -- "Channel Plugin" --> CH
+
+    style Clients fill:#1a1a2e,stroke:#7c3aed,color:#fff
+    style Backend fill:#1a1a2e,stroke:#4FC3F7,color:#fff
+    style OpenClaw fill:#1a1a2e,stroke:#4ade80,color:#fff
+    style APP fill:#2d1b69,stroke:#7c3aed,color:#fff
+    style WEB fill:#2d1b69,stroke:#7c3aed,color:#fff
+    style IOS fill:#2d1b69,stroke:#7c3aed,color:#fff
+    style API fill:#0d3b66,stroke:#4FC3F7,color:#fff
+    style DB fill:#0d3b66,stroke:#4FC3F7,color:#fff
+    style WH fill:#1a3a2e,stroke:#4ade80,color:#fff
+    style CH fill:#1a3a2e,stroke:#4ade80,color:#fff
+</pre></div>
 
                         <h2 data-i18n="guide_arch_core_design">核心設計</h2>
                         <ul class="content-list">
