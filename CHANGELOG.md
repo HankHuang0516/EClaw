@@ -1,3 +1,10 @@
+# [1.185.0](https://github.com/HankHuang0516/EClaw/compare/v1.184.0...v1.185.0) (2026-03-26)
+
+
+### Features
+
+* **kanban:** card schedule system — once/recurring + unified background timer ([#534](https://github.com/HankHuang0516/EClaw/issues/534)) ([55cc077](https://github.com/HankHuang0516/EClaw/commit/55cc077a6d2a531f7451da04c743de281afb9f50)), closes [#531](https://github.com/HankHuang0516/EClaw/issues/531)
+
 # [1.184.0](https://github.com/HankHuang0516/EClaw/compare/v1.183.1...v1.184.0) (2026-03-26)
 
 
