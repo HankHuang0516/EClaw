@@ -578,7 +578,7 @@ function ensureOneEmptySlot(device) {
 
 // Latest app version - update this with each release
 // Bot will warn users if their app version is older than this
-const LATEST_APP_VERSION = "1.0.60";
+const LATEST_APP_VERSION = "1.0.61";
 const FORCE_UPDATE_BELOW = null; // Set to version string (e.g. "1.0.30") to force-update anything below
 const APP_RELEASE_NOTES = process.env.APP_RELEASE_NOTES || null;
 
@@ -591,10 +591,11 @@ let persistenceReady = false;
 // Pending binding codes (code -> { deviceId, entityId, expires })
 const pendingBindings = {};
 
-// Bot-to-bot loop prevention: counter resets ONLY when a human message arrives
-// Key: "deviceId:entityId" -> count of bot-to-bot messages since last human message
+// Bot-to-bot loop prevention: token-bucket style — regenerates 1 token per minute, cap = BOT2BOT_MAX_MESSAGES
+// Key: "deviceId:entityId" -> { count, lastRegenAt }
 const botToBotCounter = {};
-const BOT2BOT_MAX_MESSAGES = 8; // max bot-to-bot messages before human must intervene
+const BOT2BOT_MAX_MESSAGES = 8; // max bot-to-bot messages (bucket capacity)
+const BOT2BOT_REGEN_INTERVAL_MS = 60 * 1000; // regenerate 1 token every 60 seconds
 const recentBroadcasts = {}; // deviceId -> [{fromEntityId, text, timestamp}] for dedup
 
 // Cross-device messaging
@@ -603,27 +604,39 @@ const crossSpeakCounter = {};
 const crossDeviceOwnerRateLimit = {}; // owner-defined per-sender rate limit timestamps
 const CROSS_SPEAK_MAX_MESSAGES = 4; // stricter limit for cross-device messages
 
+function _regenBotToBotTokens(bucket) {
+    const now = Date.now();
+    const elapsed = now - bucket.lastRegenAt;
+    const tokensToRegen = Math.floor(elapsed / BOT2BOT_REGEN_INTERVAL_MS);
+    if (tokensToRegen > 0) {
+        bucket.count = Math.max(0, bucket.count - tokensToRegen);
+        bucket.lastRegenAt += tokensToRegen * BOT2BOT_REGEN_INTERVAL_MS;
+    }
+}
+
 function checkBotToBotRateLimit(deviceId, entityId) {
     const key = `${deviceId}:${entityId}`;
-    if (!botToBotCounter[key]) botToBotCounter[key] = 0;
-    if (botToBotCounter[key] >= BOT2BOT_MAX_MESSAGES) {
-        return false; // rate limited - needs human message to reset
+    if (!botToBotCounter[key]) botToBotCounter[key] = { count: 0, lastRegenAt: Date.now() };
+    _regenBotToBotTokens(botToBotCounter[key]);
+    if (botToBotCounter[key].count >= BOT2BOT_MAX_MESSAGES) {
+        return false; // rate limited
     }
-    botToBotCounter[key]++;
+    botToBotCounter[key].count++;
     return true; // allowed
 }
 
 function getBotToBotRemaining(deviceId, entityId) {
     const key = `${deviceId}:${entityId}`;
-    const used = botToBotCounter[key] || 0;
-    return Math.max(0, BOT2BOT_MAX_MESSAGES - used);
+    if (!botToBotCounter[key]) return BOT2BOT_MAX_MESSAGES;
+    _regenBotToBotTokens(botToBotCounter[key]);
+    return Math.max(0, BOT2BOT_MAX_MESSAGES - botToBotCounter[key].count);
 }
 
 // Reset bot-to-bot counter when human sends a message (called from /api/client/speak)
 function resetBotToBotCounter(deviceId) {
     const prefix = `${deviceId}:`;
     for (const key of Object.keys(botToBotCounter)) {
-        if (key.startsWith(prefix)) botToBotCounter[key] = 0;
+        if (key.startsWith(prefix)) botToBotCounter[key] = { count: 0, lastRegenAt: Date.now() };
     }
     for (const key of Object.keys(crossSpeakCounter)) {
         if (key.startsWith(prefix)) crossSpeakCounter[key] = 0;
