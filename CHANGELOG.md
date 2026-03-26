@@ -1,3 +1,10 @@
+## [1.188.1](https://github.com/HankHuang0516/EClaw/compare/v1.188.0...v1.188.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* **kanban:** assigned bot display — camelCase + entity names ([#544](https://github.com/HankHuang0516/EClaw/issues/544)) ([b7bcc98](https://github.com/HankHuang0516/EClaw/commit/b7bcc98270a2ed67f3025610517a37b0fd0212f3)), closes [#id](https://github.com/HankHuang0516/EClaw/issues/id)
+
 # [1.188.0](https://github.com/HankHuang0516/EClaw/compare/v1.187.5...v1.188.0) (2026-03-26)
 
 
