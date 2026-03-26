@@ -67,10 +67,11 @@
         .kb-card-priority[data-p="P2"] { background:rgba(59,130,246,0.15); color:#3b82f6; }
         .kb-card-priority[data-p="P3"] { background:rgba(107,114,128,0.15); color:#6b7280; }
         .kb-card-assigned { font-size:10px; color:var(--text-muted); display:flex; align-items:center; gap:4px; }
-        .kb-card-avatars { display:flex; gap:-4px; }
-        .kb-card-avatar { width:18px; height:18px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:11px; background:var(--input-bg); border:1px solid var(--card-border); margin-left:-4px; }
-        .kb-card-avatar:first-child { margin-left:0; }
-        .kb-card-avatar img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
+        .kb-card-avatars { display:flex; gap:4px; flex-wrap:wrap; }
+        .kb-card-avatar-chip { display:inline-flex; align-items:center; gap:3px; background:var(--input-bg); border:1px solid var(--card-border); border-radius:12px; padding:1px 6px 1px 1px; font-size:10px; }
+        .kb-card-avatar-chip span:first-child { width:16px; height:16px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:10px; flex-shrink:0; }
+        .kb-card-avatar-chip img { width:16px; height:16px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+        .kb-card-avatar-name { color:var(--text-secondary); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px; }
 
         .kb-card-title { font-size:13px; font-weight:600; color:var(--text); margin-bottom:4px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
         .kb-card-desc { font-size:11px; color:var(--text-secondary); line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin-bottom:8px; }
@@ -532,14 +533,14 @@
 
         // Render avatar badges for assigned bots
         function renderAssignedAvatars(botIds) {
-            if (!botIds || !botIds.length) return '<span>' + t('kb_unassigned','Unassigned') + '</span>';
+            if (!botIds || !botIds.length) return '';
             return '<span class="kb-card-avatars">' + botIds.map(id => {
                 const avatar = typeof getAvatarForEntity === 'function' ? getAvatarForEntity(id) : '🦞';
                 const name = typeof getEntityDisplayName === 'function' ? getEntityDisplayName(id) : '#'+id;
-                const inner = (typeof isAvatarUrl === 'function' && isAvatarUrl(avatar))
-                    ? `<img src="${avatar}" alt="${name}" title="${name}">`
-                    : `<span title="${escapeHtml(name)}">${avatar}</span>`;
-                return `<span class="kb-card-avatar">${inner}</span>`;
+                const avatarHtml = (typeof isAvatarUrl === 'function' && isAvatarUrl(avatar))
+                    ? `<img src="${avatar}" alt="${name}">`
+                    : `<span>${avatar}</span>`;
+                return `<span class="kb-card-avatar-chip">${avatarHtml}<span class="kb-card-avatar-name">${escapeHtml(name)}</span></span>`;
             }).join('') + '</span>';
         }
 
