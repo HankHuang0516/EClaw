@@ -224,15 +224,54 @@
             font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
         }
         .chat-bubble.md-rendered pre {
-            background: rgba(0,0,0,0.3);
-            padding: 0.6em 0.8em;
-            border-radius: 6px;
-            overflow-x: auto;
-            margin: 0.4em 0;
+            background: #0d1117;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 0.5em 0;
+            padding: 0;
+            position: relative;
         }
         .chat-bubble.md-rendered pre code {
             background: none;
-            padding: 0;
+            padding: 0.7em 0.9em;
+            display: block;
+            overflow-x: auto;
+            max-height: 400px;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        /* Code block header: language label + copy button */
+        .code-block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.06);
+            padding: 4px 10px;
+            font-size: 11px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .code-lang-label {
+            color: var(--text-muted, #8b949e);
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            text-transform: lowercase;
+        }
+        .code-copy-btn {
+            background: none;
+            border: 1px solid rgba(255,255,255,0.12);
+            color: var(--text-muted, #8b949e);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .code-copy-btn:hover {
+            color: var(--text, #e0e0e0);
+            border-color: rgba(255,255,255,0.25);
+        }
+        .code-copy-btn.copied {
+            color: #4ade80;
+            border-color: rgba(74,222,128,0.3);
         }
         .chat-bubble.md-rendered table {
             border-collapse: collapse;
@@ -1265,6 +1304,8 @@
     <link rel="canonical" href="https://eclawbot.com/portal/chat.html">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js"></script>
 </head>
 
 <body>
@@ -1576,6 +1617,57 @@
 
         // ── Android WebView Detection ──
         const isAndroidWebView = typeof AndroidBridge !== 'undefined';
+
+        // ── Marked.js custom renderer for code blocks ──
+        (function configureMarked() {
+            if (typeof marked === 'undefined') return;
+            const renderer = new marked.Renderer();
+            renderer.code = function({ text, lang }) {
+                const language = (lang || '').trim().toLowerCase();
+                let highlighted;
+                if (typeof hljs !== 'undefined' && language && hljs.getLanguage(language)) {
+                    try {
+                        highlighted = hljs.highlight(text, { language }).value;
+                    } catch (e) { highlighted = null; }
+                }
+                if (!highlighted) {
+                    if (typeof hljs !== 'undefined') {
+                        try { highlighted = hljs.highlightAuto(text).value; } catch (e) { highlighted = null; }
+                    }
+                }
+                const codeHtml = highlighted || text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                const langLabel = language || 'code';
+                const escaped = text.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+                return `<pre><div class="code-block-header"><span class="code-lang-label">${langLabel}</span><button class="code-copy-btn" onclick="copyCodeBlock(this)" data-code="${escaped}">📋 Copy</button></div><code class="hljs${language ? ' language-' + language : ''}">${codeHtml}</code></pre>`;
+            };
+            marked.setOptions({ renderer: renderer, breaks: true });
+        })();
+
+        // Copy code block handler
+        function copyCodeBlock(btn) {
+            const code = btn.getAttribute('data-code').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+            navigator.clipboard.writeText(code).then(() => {
+                btn.classList.add('copied');
+                btn.textContent = '✓ Copied';
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.textContent = '📋 Copy';
+                }, 2000);
+            }).catch(() => {
+                // Fallback for older browsers
+                const ta = document.createElement('textarea');
+                ta.value = code;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                btn.classList.add('copied');
+                btn.textContent = '✓ Copied';
+                setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '📋 Copy'; }, 2000);
+            });
+        }
 
         // ── Init ──
         window.addEventListener('DOMContentLoaded', async () => {
@@ -2439,7 +2531,10 @@
                 if (!isPlaceholder && rawText) {
                     if (msg.is_from_bot && typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
                         // Bot messages: render Markdown
-                        textHtml = DOMPurify.sanitize(marked.parse(rawText));
+                        textHtml = DOMPurify.sanitize(marked.parse(rawText), {
+                            ADD_ATTR: ['data-code', 'onclick'],
+                            ADD_TAGS: ['button']
+                        });
                         isMdRendered = true;
                         // Extract first URL for link preview
                         const urlMatch = rawText.match(/https?:\/\/[^\s<>\])"']+/);
