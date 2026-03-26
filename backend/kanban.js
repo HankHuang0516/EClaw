@@ -101,7 +101,7 @@ async function initKanbanDatabase() {
 /**
  * Factory: receives in-memory devices object from index.js
  */
-module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } = {}) {
+module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pushToChannelCallback } = {}) {
     const router = express.Router();
 
     // Health check
@@ -171,14 +171,39 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
         );
     }
 
-    // ── Helper: push notification to entity (non-blocking) ──
+    // ── Helper: push notification to entity via channel callback + save to chat ──
     async function notifyEntities(deviceId, entityIds, message) {
-        if (!pushToEntity) return;
+        if (!pushToChannelCallback && !pushToEntity) {
+            console.warn('[Kanban] No push callback available — notifications will not be delivered');
+            return;
+        }
         for (const eid of entityIds) {
             try {
-                await pushToEntity(deviceId, eid, message);
+                const device = devices[deviceId];
+                const entity = device?.entities?.[eid];
+                if (!entity) {
+                    console.warn(`[Kanban] Entity ${eid} not found on device ${deviceId}`);
+                    continue;
+                }
+
+                // Push via channel callback (same as client/speak)
+                if (entity.bindingType === 'channel' && pushToChannelCallback) {
+                    const result = await pushToChannelCallback(deviceId, eid, {
+                        event: 'kanban_notification',
+                        from: 'kanban',
+                        text: message,
+                        eclaw_context: {
+                            silentToken: '[SILENT]',
+                            missionHints: `\n[AVAILABLE TOOLS — Kanban Board]\nRead board: exec: curl -s "https://eclawbot.com/api/mission/cards?deviceId=${deviceId}&botSecret=${entity.botSecret}&entityId=${eid}"\nMove card: exec: curl -s -X POST "https://eclawbot.com/api/mission/card/CARD_ID/move" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${entity.botSecret}","entityId":${eid},"newStatus":"STATUS","assignedBots":[BOT_IDS]}'\nAdd comment: exec: curl -s -X POST "https://eclawbot.com/api/mission/card/CARD_ID/comment" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${entity.botSecret}","entityId":${eid},"text":"YOUR_COMMENT"}'\n`
+                        }
+                    }, entity.channelAccountId);
+                    console.log(`[Kanban] Push to entity ${eid}: ${result.pushed ? 'OK' : result.reason}`);
+                } else if (pushToEntity) {
+                    await pushToEntity(deviceId, eid, message);
+                    console.log(`[Kanban] Legacy push to entity ${eid}`);
+                }
             } catch (e) {
-                console.warn(`[Kanban] Failed to push to entity ${eid}:`, e.message);
+                console.error(`[Kanban] Failed to push to entity ${eid}:`, e.message);
             }
         }
     }
