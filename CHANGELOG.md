@@ -1,3 +1,10 @@
+## [1.187.1](https://github.com/HankHuang0516/EClaw/compare/v1.187.0...v1.187.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* **kanban:** borderless fullwidth + complete i18n (44 tags) + visual polish ([#536](https://github.com/HankHuang0516/EClaw/issues/536)) ([13b6185](https://github.com/HankHuang0516/EClaw/commit/13b6185f887ce60b3382feee8c90951bf26b8361))
+
 # [1.187.0](https://github.com/HankHuang0516/EClaw/compare/v1.186.0...v1.187.0) (2026-03-26)
 
 
