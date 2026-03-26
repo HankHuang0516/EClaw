@@ -3192,25 +3192,41 @@ app.get('/api/release-notes', (req, res) => {
 // Debug: check entities.is_public state in DB
 app.get('/api/debug/public-entities', async (req, res) => {
     try {
-        const all = await chatPool.query(
-            `SELECT device_id, entity_id, name, public_code, is_public, published_at, agent_card IS NOT NULL as has_card, bot_secret IS NOT NULL as has_bot
-             FROM entities WHERE bot_secret IS NOT NULL LIMIT 20`
+        const targetDevice = req.query.deviceId || '480def4c-2183-4d8e-afd0-b131ae89adcc';
+        // Query using db.js pool (same pool as saveDeviceData)
+        const all = await db._getPool().query(
+            `SELECT device_id, entity_id, name, public_code, is_public, published_at,
+                    agent_card IS NOT NULL as has_card, bot_secret IS NOT NULL as has_bot
+             FROM entities WHERE device_id = $1 ORDER BY entity_id`,
+            [targetDevice]
         );
-        const publicOnly = await chatPool.query(
+        const publicOnly = await db._getPool().query(
             `SELECT device_id, entity_id, name, public_code, is_public, published_at
              FROM entities WHERE is_public = true`
         );
-        // Also check column exists
-        const cols = await chatPool.query(
+        const deviceRow = await db._getPool().query(
+            `SELECT device_id, created_at, updated_at FROM devices WHERE device_id = $1`,
+            [targetDevice]
+        );
+        const cols = await db._getPool().query(
             `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'entities' AND column_name IN ('is_public','published_at','avg_rating','rating_count','community_message_count')`
         );
+        // Also check in-memory
+        const memDevice = devices[targetDevice];
+        const memEntities = memDevice ? Object.entries(memDevice.entities).map(([id, e]) => ({
+            id, isBound: e?.isBound, name: e?.name, publicCode: e?.publicCode,
+            hasBotSecret: !!e?.botSecret, hasCard: !!e?.agentCard, isPublic: !!e?.isPublic
+        })) : [];
         res.json({
-            allBoundEntities: all.rows,
+            deviceInDB: deviceRow.rows[0] || null,
+            entitiesInDB: all.rows,
             publicEntities: publicOnly.rows,
-            communityColumns: cols.rows
+            communityColumns: cols.rows,
+            inMemoryEntities: memEntities,
+            poolType: db._getPool() === chatPool ? 'same_pool' : 'different_pool'
         });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: err.message, stack: err.stack?.split('\n').slice(0,3) });
     }
 });
 
