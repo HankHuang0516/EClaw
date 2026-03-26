@@ -1,3 +1,10 @@
+# [1.173.0](https://github.com/HankHuang0516/EClaw/compare/v1.172.3...v1.173.0) (2026-03-26)
+
+
+### Features
+
+* restructure info.html — 4 tabs → 5 tabs (Quick Start/User Guide/Advanced/FAQ/Releases) ([#500](https://github.com/HankHuang0516/EClaw/issues/500)) ([8203421](https://github.com/HankHuang0516/EClaw/commit/820342158332a2559786009df9fb29c563689227))
+
 ## [1.172.3](https://github.com/HankHuang0516/EClaw/compare/v1.172.2...v1.172.3) (2026-03-26)
 
 
