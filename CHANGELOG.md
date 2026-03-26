@@ -1,3 +1,10 @@
+## [1.177.2](https://github.com/HankHuang0516/EClaw/compare/v1.177.1...v1.177.2) (2026-03-26)
+
+
+### Bug Fixes
+
+* community search finds 0 — saveDeviceData before setEntityPublic ([#512](https://github.com/HankHuang0516/EClaw/issues/512)) ([0ea2fd7](https://github.com/HankHuang0516/EClaw/commit/0ea2fd796157a84c10ac31c7f14d74b4ede59658))
+
 ## [1.177.1](https://github.com/HankHuang0516/EClaw/compare/v1.177.0...v1.177.1) (2026-03-26)
 
 
