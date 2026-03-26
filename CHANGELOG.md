@@ -1,3 +1,10 @@
+## [1.187.3](https://github.com/HankHuang0516/EClaw/compare/v1.187.2...v1.187.3) (2026-03-26)
+
+
+### Bug Fixes
+
+* **i18n:** Nav unified + kanban/community/cardholder full translations ([#539](https://github.com/HankHuang0516/EClaw/issues/539)) ([282cebe](https://github.com/HankHuang0516/EClaw/commit/282cebecb388e4e727d5cd5fbb5feb76a07999e3))
+
 ## [1.187.2](https://github.com/HankHuang0516/EClaw/compare/v1.187.1...v1.187.2) (2026-03-26)
 
 
