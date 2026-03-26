@@ -1,3 +1,10 @@
+## [1.193.2](https://github.com/HankHuang0516/EClaw/compare/v1.193.1...v1.193.2) (2026-03-26)
+
+
+### Bug Fixes
+
+* **kanban:** avatar + name chip for assigned bots ([#555](https://github.com/HankHuang0516/EClaw/issues/555)) ([1b2af2c](https://github.com/HankHuang0516/EClaw/commit/1b2af2c6417f930e3a0ca0c07ff07ff3929fb9cf))
+
 ## [1.193.1](https://github.com/HankHuang0516/EClaw/compare/v1.193.0...v1.193.1) (2026-03-26)
 
 
