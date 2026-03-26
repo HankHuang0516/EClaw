@@ -1,3 +1,10 @@
+# [1.195.0](https://github.com/HankHuang0516/EClaw/compare/v1.194.0...v1.195.0) (2026-03-26)
+
+
+### Features
+
+* **info:** Mermaid architecture diagram ([#557](https://github.com/HankHuang0516/EClaw/issues/557)) ([64ed330](https://github.com/HankHuang0516/EClaw/commit/64ed330e1959fd1ae4678b55ee75ef56f6f24e83))
+
 # [1.194.0](https://github.com/HankHuang0516/EClaw/compare/v1.193.3...v1.194.0) (2026-03-26)
 
 
