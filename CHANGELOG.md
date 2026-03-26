@@ -1,3 +1,10 @@
+# [1.196.0](https://github.com/HankHuang0516/EClaw/compare/v1.195.6...v1.196.0) (2026-03-26)
+
+
+### Features
+
+* **portal:** add split-view dual-pane workspace mode ([#562](https://github.com/HankHuang0516/EClaw/issues/562)) ([49ec35f](https://github.com/HankHuang0516/EClaw/commit/49ec35ff22f6cea3b673fbe4f3186ebf34ea1ad0))
+
 ## [1.195.6](https://github.com/HankHuang0516/EClaw/compare/v1.195.5...v1.195.6) (2026-03-26)
 
 
