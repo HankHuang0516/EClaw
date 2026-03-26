@@ -1244,7 +1244,8 @@ app.get('/p/:code/:noteId', async (req, res) => {
 function sanitizePublicHtml(html) {
     if (!html) return '';
     return sanitizeHtml(html, {
-        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'span', 'details', 'summary', 'mark', 'del', 'ins', 'sub', 'sup']),
+        allowVulnerableTags: true,
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'span', 'details', 'summary', 'mark', 'del', 'ins', 'sub', 'sup', 'style']),
         allowedAttributes: {
             ...sanitizeHtml.defaults.allowedAttributes,
             img: ['src', 'alt', 'width', 'height', 'loading'],
