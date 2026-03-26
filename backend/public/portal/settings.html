@@ -742,6 +742,23 @@
             </div>
         </div>
 
+        <!-- Display Card -->
+        <div class="card" id="displayCard">
+            <div class="card-title">
+                <span>🖥️ <span data-i18n="settings_display">Display</span></span>
+            </div>
+            <div class="setting-row">
+                <div class="setting-row-label">
+                    <span data-i18n="settings_view_mode">View Mode</span>
+                    <small style="color:var(--text-muted);font-size:11px;" data-i18n="settings_view_mode_desc">Desktop only (≥1200px)</small>
+                </div>
+                <div style="display:flex;gap:6px;">
+                    <button class="chip" id="viewModeSingle" onclick="setViewMode('single')" data-i18n="settings_view_single">Single Page</button>
+                    <button class="chip" id="viewModeSplit" onclick="setViewMode('split')" data-i18n="settings_view_split">Split View</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Notifications Card -->
         <div class="card">
             <div class="notif-header" onclick="toggleNotifSection()">
@@ -940,6 +957,7 @@
             populateChannelApi(user);
             await loadSubscriptionStatus();
             loadLanguagePreference();
+            loadViewModePreference();
             loadNotifPreferences();
             loadDevicePreferences();
             updatePushToggle();
@@ -1413,6 +1431,26 @@
             Object.entries(chips).forEach(([id, l]) => {
                 document.getElementById(id).classList.toggle('active', lang === l);
             });
+        }
+
+        // ============================================
+        // View Mode (Single / Split)
+        // ============================================
+        function loadViewModePreference() {
+            const mode = localStorage.getItem('eclaw-view-mode') || 'single';
+            document.getElementById('viewModeSingle').classList.toggle('active', mode === 'single');
+            document.getElementById('viewModeSplit').classList.toggle('active', mode === 'split');
+            // Hide display card on narrow screens
+            if (window.innerWidth < 1200) {
+                const card = document.getElementById('displayCard');
+                if (card) card.style.display = 'none';
+            }
+        }
+
+        function setViewMode(mode) {
+            localStorage.setItem('eclaw-view-mode', mode);
+            document.getElementById('viewModeSingle').classList.toggle('active', mode === 'single');
+            document.getElementById('viewModeSplit').classList.toggle('active', mode === 'split');
         }
 
         // ============================================
