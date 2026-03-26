@@ -1,3 +1,10 @@
+# [1.187.0](https://github.com/HankHuang0516/EClaw/compare/v1.186.0...v1.187.0) (2026-03-26)
+
+
+### Features
+
+* **chat:** P3-1 tooltip + lightbox nav + unread sep + empty state ([#535](https://github.com/HankHuang0516/EClaw/issues/535)) ([039de0c](https://github.com/HankHuang0516/EClaw/commit/039de0c4ba2d70ca4ca2b6e8f687322fca2d8672))
+
 # [1.186.0](https://github.com/HankHuang0516/EClaw/compare/v1.185.0...v1.186.0) (2026-03-26)
 
 
