@@ -1,3 +1,10 @@
+## [1.195.5](https://github.com/HankHuang0516/EClaw/compare/v1.195.4...v1.195.5) (2026-03-26)
+
+
+### Bug Fixes
+
+* **info:** restore Chinese guide panels — remove 314 orphan i18n tags ([#561](https://github.com/HankHuang0516/EClaw/issues/561)) ([f288302](https://github.com/HankHuang0516/EClaw/commit/f288302842c3aea86765f204fa19d96cd3ca402e))
+
 ## [1.195.4](https://github.com/HankHuang0516/EClaw/compare/v1.195.3...v1.195.4) (2026-03-26)
 
 
