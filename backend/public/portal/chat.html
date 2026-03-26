@@ -312,6 +312,49 @@
             background: rgba(0,0,0,0.25);
         }
 
+        /* Typing indicator */
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            padding: 4px 0;
+        }
+        .typing-indicator.show {
+            display: block;
+        }
+        .typing-indicator .typing-bubble {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--input-bg, #1e1f36);
+            border: 1px solid var(--card-border, rgba(255,255,255,0.08));
+            border-radius: 12px;
+            border-bottom-left-radius: 4px;
+            padding: 10px 16px;
+        }
+        .typing-indicator .typing-name {
+            font-size: 11px;
+            color: var(--text-muted, #888);
+            margin-bottom: 2px;
+        }
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .typing-dots span {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--text-muted, #888);
+            animation: typingBounce 1.4s infinite ease-in-out;
+        }
+        .typing-dots span:nth-child(2) { animation-delay: 0.16s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.32s; }
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-5px); opacity: 1; }
+        }
+
         .chat-msg.platform {
             align-self: center;
             align-items: center;
@@ -1337,6 +1380,15 @@
                         <div class="spinner"></div>
                         <span data-i18n="chat_loading">Loading...</span>
                     </div>
+                    <!-- Typing indicator (shown when bot is BUSY) -->
+                    <div class="typing-indicator" id="typingIndicator">
+                        <div class="typing-name" id="typingName"></div>
+                        <div class="typing-bubble">
+                            <div class="typing-dots">
+                                <span></span><span></span><span></span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <!-- Side Scroll Navigator -->
                 <div class="scroll-nav" id="scrollNav">
@@ -1752,6 +1804,20 @@
                     await resolveXDeviceCodes([msg]);
                     renderFilterChips();
                     renderMessages(true);
+                    // Hide typing indicator when new message arrives from a bot
+                    if (msg.is_from_bot) hideTypingIndicator();
+                }
+            };
+
+            // Socket.IO entity state handler — typing indicator
+            window.onSocketEntityUpdate = function(data) {
+                if (!data) return;
+                const entityId = data.entityId ?? data.entity_id;
+                const state = (data.state || '').toUpperCase();
+                if (state === 'BUSY') {
+                    showTypingIndicator(entityId);
+                } else {
+                    hideTypingIndicator();
                 }
             };
 
@@ -2467,6 +2533,31 @@
         }
 
         // ── Render Messages ──
+        // ── Typing Indicator ──
+        let typingTimeout = null;
+        function showTypingIndicator(entityId) {
+            const el = document.getElementById('typingIndicator');
+            const nameEl = document.getElementById('typingName');
+            if (!el) return;
+            const name = typeof getEntityDisplayName === 'function' ? getEntityDisplayName(entityId) : ('Entity #' + entityId);
+            nameEl.textContent = name + ' is typing...';
+            el.classList.add('show');
+            // Auto scroll to bottom
+            const container = document.getElementById('chatMessages');
+            if (container) {
+                const atBottom = (container.scrollHeight - container.scrollTop - container.clientHeight) < 80;
+                if (atBottom) setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
+            }
+            // Safety timeout: hide after 30s (in case IDLE event is missed)
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(hideTypingIndicator, 30000);
+        }
+        function hideTypingIndicator() {
+            const el = document.getElementById('typingIndicator');
+            if (el) el.classList.remove('show');
+            clearTimeout(typingTimeout);
+        }
+
         function renderMessages(hasNewMessages) {
             _renderVersion++;
             const container = document.getElementById('chatMessages');
