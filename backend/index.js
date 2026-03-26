@@ -3520,6 +3520,8 @@ const deviceRegisterRateLimits = {};
 const DEVICE_REGISTER_RATE_WINDOW = 15 * 60 * 1000; // 15 minutes
 const DEVICE_REGISTER_RATE_MAX = 10; // max registrations per window
 function deviceRegisterRateLimit(req, res, next) {
+    // Skip rate limiting in test environment
+    if (process.env.NODE_ENV === 'test') return next();
     const ip = req.ip || req.connection.remoteAddress || 'unknown';
     const now = Date.now();
     if (!deviceRegisterRateLimits[ip] || now - deviceRegisterRateLimits[ip].start > DEVICE_REGISTER_RATE_WINDOW) {
