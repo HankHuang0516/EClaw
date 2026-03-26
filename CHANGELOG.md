@@ -1,3 +1,10 @@
+# [1.184.0](https://github.com/HankHuang0516/EClaw/compare/v1.183.1...v1.184.0) (2026-03-26)
+
+
+### Features
+
+* **kanban:** Mission v2 Kanban Card CRUD + move + comments/notes/files API ([#530](https://github.com/HankHuang0516/EClaw/issues/530)) ([123cb1e](https://github.com/HankHuang0516/EClaw/commit/123cb1e939a08f3e5427e6a20b892547b4ee3e7c))
+
 ## [1.183.1](https://github.com/HankHuang0516/EClaw/compare/v1.183.0...v1.183.1) (2026-03-26)
 
 
