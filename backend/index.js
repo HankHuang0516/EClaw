@@ -3094,9 +3094,16 @@ app.get('/api/whoami', (req, res) => {
  */
 app.get('/api/release-notes', (req, res) => {
     try {
-        const changelogPath = path.join(__dirname, '..', 'CHANGELOG.md');
-        if (!fs.existsSync(changelogPath)) {
-            return res.status(404).json({ success: false, error: 'CHANGELOG.md not found' });
+        // Try multiple paths — Railway cwd may differ from __dirname parent
+        const candidates = [
+            path.join(__dirname, '..', 'CHANGELOG.md'),
+            path.join(process.cwd(), 'CHANGELOG.md'),
+            path.join(process.cwd(), '..', 'CHANGELOG.md'),
+            '/app/CHANGELOG.md'  // Railway default app root
+        ];
+        const changelogPath = candidates.find(p => fs.existsSync(p));
+        if (!changelogPath) {
+            return res.status(404).json({ success: false, error: 'CHANGELOG.md not found', tried: candidates });
         }
 
         const raw = fs.readFileSync(changelogPath, 'utf8');
@@ -6488,7 +6495,8 @@ app.delete('/api/entity/agent-card', (req, res) => {
  * Auth: deviceSecret (owner only — bots cannot self-publish)
  * Body: { deviceId, deviceSecret, entityId, public: true/false }
  */
-app.post('/api/entity/agent-card/visibility', async (req, res) => {
+// Two routes: original path + alias to avoid Cloudflare WAF blocking "agent-card/visibility"
+async function handleVisibility(req, res) {
     const { deviceId, deviceSecret, botSecret, entityId } = req.body;
     const isPublic = req.body.public;
 
@@ -6551,7 +6559,9 @@ app.post('/api/entity/agent-card/visibility', async (req, res) => {
         publicCode: entity.publicCode,
         message: isPublic ? 'Agent card is now publicly listed' : 'Agent card removed from public listing'
     });
-});
+}
+app.post('/api/entity/agent-card/visibility', handleVisibility);
+app.post('/api/community/publish', handleVisibility);
 
 /**
  * GET /api/community/search — Search public agent cards
