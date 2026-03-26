@@ -123,10 +123,6 @@
     function initWorkspace() {
         renderNav('workspace');
 
-        // Highlight split view button as active
-        const splitBtn = document.getElementById('navSplitToggle');
-        if (splitBtn) splitBtn.classList.add('active');
-
         // Read initial state from URL params
         const params = new URLSearchParams(window.location.search);
         const leftPage = params.get('left') || 'dashboard';
@@ -293,6 +289,14 @@
         // Initial check
         if (!mq.matches && state.right) handleWidth(mq);
     }
+
+    // ── Listen for view mode change from settings iframe ──
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'eclaw-view-mode' && e.newValue === 'single') {
+            // User switched to single mode in settings — exit workspace
+            window.location.href = (state.left || 'dashboard') + '.html';
+        }
+    });
 
     // ── Boot ──
     document.addEventListener('DOMContentLoaded', initWorkspace);

@@ -175,28 +175,6 @@ a:hover { text-decoration: underline; }
     display: none;
 }
 
-/* Split View toggle button */
-.nav-split-toggle {
-    display: none; /* hidden by default, shown on desktop >= 1200px */
-    align-items: center;
-    justify-content: center;
-    background: none;
-    border: 1px solid var(--card-border, #2a2a3e);
-    border-radius: 6px;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: 4px 8px;
-    margin-left: auto;
-    margin-right: 8px;
-    transition: all 0.2s;
-    flex-shrink: 0;
-}
-.nav-split-toggle:hover { border-color: var(--accent, #7c6aef); color: var(--accent, #7c6aef); }
-.nav-split-toggle.active { background: var(--accent, #7c6aef); color: #fff; border-color: var(--accent, #7c6aef); }
-@media (min-width: 1200px) {
-    .nav-split-toggle { display: flex; }
-}
-
 .nav-user {
     display: flex;
     align-items: center;
