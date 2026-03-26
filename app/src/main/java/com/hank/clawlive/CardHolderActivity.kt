@@ -1,11 +1,13 @@
 package com.hank.clawlive
 
+import android.annotation.SuppressLint
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
@@ -13,6 +15,10 @@ import android.text.TextWatcher
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
@@ -31,6 +37,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import com.google.android.material.tabs.TabLayout
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.model.AgentCard
 import com.hank.clawlive.data.model.ChatHistoryMessage
@@ -46,6 +53,10 @@ import timber.log.Timber
 
 class CardHolderActivity : AppCompatActivity() {
 
+    companion object {
+        private const val COMMUNITY_URL = "https://eclawbot.com/portal/community.html"
+    }
+
     private val deviceManager: DeviceManager by lazy { DeviceManager.getInstance(this) }
 
     // Data
@@ -60,7 +71,14 @@ class CardHolderActivity : AppCompatActivity() {
     // Edit mode
     private var editMode = false
 
-    // Main content container (rebuilt on data change)
+    // Tab views
+    private lateinit var tabLayout: TabLayout
+    private lateinit var cardsContainer: LinearLayout   // Tab 1 content wrapper
+    private lateinit var plazaContainer: FrameLayout     // Tab 2 content wrapper
+    private var plazaWebView: WebView? = null
+    private var plazaLoaded = false
+
+    // Card holder content (Tab 1)
     private lateinit var contentLayout: LinearLayout
     private lateinit var searchInput: EditText
     private lateinit var scrollView: ScrollView
@@ -84,7 +102,6 @@ class CardHolderActivity : AppCompatActivity() {
             )
             setBackgroundColor(Color.parseColor("#0D0D1A"))
         }
-        Timber.d("CARDHOLDER_DEBUG rootLayout created: type=${rootLayout.javaClass.simpleName}, id=${rootLayout.id}")
 
         val mainColumn = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -93,12 +110,10 @@ class CardHolderActivity : AppCompatActivity() {
                 FrameLayout.LayoutParams.MATCH_PARENT
             )
         }
-        Timber.d("CARDHOLDER_DEBUG mainColumn created: type=${mainColumn.javaClass.simpleName}, orientation=${mainColumn.orientation}, lp=${mainColumn.layoutParams.javaClass.simpleName}")
 
         // Edge-to-edge insets
         ViewCompat.setOnApplyWindowInsetsListener(mainColumn) { v, insets ->
             val sys = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            Timber.d("CARDHOLDER_DEBUG mainColumn insets applied: top=${sys.top}, bottom=${sys.bottom}, left=${sys.left}, right=${sys.right}")
             v.updatePadding(top = sys.top)
             insets
         }
@@ -132,6 +147,86 @@ class CardHolderActivity : AppCompatActivity() {
         toolbar.addView(editBtn)
         mainColumn.addView(toolbar)
 
+        // -- Tab Layout --
+        tabLayout = TabLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            setBackgroundColor(Color.parseColor("#0D0D1A"))
+            setSelectedTabIndicatorColor(Color.parseColor("#6C63FF"))
+            setTabTextColors(Color.parseColor("#777777"), Color.WHITE)
+            tabMode = TabLayout.MODE_FIXED
+            tabGravity = TabLayout.GRAVITY_FILL
+        }
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.tab_my_cards))
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.tab_bot_plaza))
+        mainColumn.addView(tabLayout)
+
+        // -- Tab 1: Cards container --
+        cardsContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f
+            )
+        }
+        buildCardsTab(cardsContainer)
+        mainColumn.addView(cardsContainer)
+
+        // -- Tab 2: Bot Plaza container (hidden initially) --
+        plazaContainer = FrameLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f
+            )
+            visibility = View.GONE
+        }
+        mainColumn.addView(plazaContainer)
+
+        // Tab switching
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                when (tab.position) {
+                    0 -> {
+                        cardsContainer.visibility = View.VISIBLE
+                        plazaContainer.visibility = View.GONE
+                        editBtn.visibility = View.VISIBLE
+                    }
+                    1 -> {
+                        cardsContainer.visibility = View.GONE
+                        plazaContainer.visibility = View.VISIBLE
+                        editBtn.visibility = View.GONE
+                        if (!plazaLoaded) {
+                            initPlazaWebView()
+                        }
+                    }
+                }
+            }
+            override fun onTabUnselected(tab: TabLayout.Tab) {}
+            override fun onTabReselected(tab: TabLayout.Tab) {}
+        })
+
+        rootLayout.addView(mainColumn)
+
+        // -- Bottom nav (inflate XML layout) --
+        layoutInflater.inflate(R.layout.layout_bottom_nav, rootLayout)
+        val bottomNavView = rootLayout.findViewById<LinearLayout>(R.id.bottomNav)
+        if (bottomNavView != null) {
+            val lp = bottomNavView.layoutParams
+            if (lp is FrameLayout.LayoutParams) {
+                lp.gravity = Gravity.BOTTOM
+            }
+        }
+
+        setContentView(rootLayout)
+        BottomNavHelper.setup(this, NavItem.CARDS)
+
+        loadAllData()
+        TelemetryHelper.trackPageView(this, "card_holder")
+    }
+
+    // ── Build Tab 1 content (existing card holder) ──
+
+    private fun buildCardsTab(container: LinearLayout) {
         // -- Search bar --
         searchInput = EditText(this).apply {
             hint = getString(R.string.card_holder_search)
@@ -163,7 +258,7 @@ class CardHolderActivity : AppCompatActivity() {
                 }
             })
         }
-        mainColumn.addView(searchInput)
+        container.addView(searchInput)
 
         // -- Filter chips --
         val chipScroll = HorizontalScrollView(this).apply {
@@ -183,7 +278,7 @@ class CardHolderActivity : AppCompatActivity() {
         chipGroup.addView(chipFriends)
         chipGroup.addView(chipPinned)
         chipScroll.addView(chipGroup)
-        mainColumn.addView(chipScroll)
+        container.addView(chipScroll)
 
         // -- Scrollable content --
         scrollView = ScrollView(this).apply {
@@ -192,77 +287,83 @@ class CardHolderActivity : AppCompatActivity() {
         }
         contentLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(12), 0, dp(12), dp(80)) // bottom padding for bottom nav
+            setPadding(dp(12), 0, dp(12), dp(80))
         }
         scrollView.addView(contentLayout)
-        mainColumn.addView(scrollView)
+        container.addView(scrollView)
+    }
 
-        rootLayout.addView(mainColumn)
-        Timber.d("CARDHOLDER_DEBUG mainColumn added to rootLayout, rootLayout.childCount=${rootLayout.childCount}")
+    // ── Build Tab 2: Bot Plaza WebView ──
 
-        // -- Bottom nav (inflate XML layout) --
-        Timber.d("CARDHOLDER_DEBUG about to inflate layout_bottom_nav into rootLayout (FrameLayout)")
-        val inflatedNav = layoutInflater.inflate(R.layout.layout_bottom_nav, rootLayout)
-        Timber.d("CARDHOLDER_DEBUG inflate returned: type=${inflatedNav.javaClass.simpleName}, id=${inflatedNav.id}, rootLayout.childCount=${rootLayout.childCount}")
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun initPlazaWebView() {
+        if (plazaWebView != null) return
 
-        val bottomNavView = rootLayout.findViewById<LinearLayout>(R.id.bottomNav)
-        Timber.d("CARDHOLDER_DEBUG bottomNavView found: ${bottomNavView != null}")
-        if (bottomNavView != null) {
-            val lp = bottomNavView.layoutParams
-            Timber.d("CARDHOLDER_DEBUG bottomNav layoutParams type: ${lp?.javaClass?.name}")
-            Timber.d("CARDHOLDER_DEBUG bottomNav layoutParams width=${lp?.width}, height=${lp?.height}")
-            val isFrameLP = lp is FrameLayout.LayoutParams
-            Timber.d("CARDHOLDER_DEBUG bottomNav is FrameLayout.LayoutParams: $isFrameLP")
-            if (isFrameLP) {
-                val flp = lp as FrameLayout.LayoutParams
-                Timber.d("CARDHOLDER_DEBUG bottomNav gravity BEFORE set: ${flp.gravity}")
-                flp.gravity = Gravity.BOTTOM
-                Timber.d("CARDHOLDER_DEBUG bottomNav gravity AFTER set: ${flp.gravity}")
-            } else {
-                Timber.w("CARDHOLDER_DEBUG bottomNav layoutParams is NOT FrameLayout.LayoutParams! Actual: ${lp?.javaClass?.name}")
+        val webView = WebView(this).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+            setBackgroundColor(Color.parseColor("#0D0D1A"))
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            settings.loadWithOverviewMode = true
+            settings.useWideViewPort = true
+
+            webViewClient = object : WebViewClient() {
+                override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                    val url = request?.url?.toString() ?: return false
+                    // Keep community.html navigation inside the WebView
+                    if (url.contains("eclawbot.com")) return false
+                    // Open external links in browser
+                    try {
+                        startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(url)))
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to open external URL: $url")
+                    }
+                    return true
+                }
+
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    Timber.d("CARDHOLDER_DEBUG Bot Plaza page loaded: $url")
+                    // Inject device credentials for authenticated API calls
+                    injectCredentials(view)
+                }
             }
-            Timber.d("CARDHOLDER_DEBUG bottomNav parent: ${bottomNavView.parent?.javaClass?.simpleName}, parent==rootLayout: ${bottomNavView.parent === rootLayout}")
-            Timber.d("CARDHOLDER_DEBUG bottomNav visibility: ${bottomNavView.visibility}, measuredH: ${bottomNavView.measuredHeight}")
+            webChromeClient = WebChromeClient()
         }
 
-        // Log all children of rootLayout
-        for (i in 0 until rootLayout.childCount) {
-            val child = rootLayout.getChildAt(i)
-            val childLp = child.layoutParams as? FrameLayout.LayoutParams
-            Timber.d("CARDHOLDER_DEBUG rootLayout child[$i]: type=${child.javaClass.simpleName}, id=${child.id}, gravity=${childLp?.gravity}, w=${childLp?.width}, h=${childLp?.height}")
+        // Build URL with device credentials as query params for initial auth
+        val deviceId = deviceManager.deviceId
+        val deviceSecret = deviceManager.deviceSecret
+        val url = if (deviceId != null && deviceSecret != null) {
+            "$COMMUNITY_URL?deviceId=$deviceId&deviceSecret=$deviceSecret"
+        } else {
+            COMMUNITY_URL
         }
 
-        setContentView(rootLayout)
-        Timber.d("CARDHOLDER_DEBUG setContentView called")
+        plazaContainer.addView(webView)
+        webView.loadUrl(url)
+        plazaWebView = webView
+        plazaLoaded = true
+        Timber.d("CARDHOLDER_DEBUG Bot Plaza WebView initialized, loading: $url")
+    }
 
-        BottomNavHelper.setup(this, NavItem.CARDS)
-        Timber.d("CARDHOLDER_DEBUG BottomNavHelper.setup completed")
-
-        // Post a delayed check to see actual measured sizes after layout
-        rootLayout.post {
-            Timber.d("CARDHOLDER_DEBUG POST-LAYOUT rootLayout: w=${rootLayout.width}, h=${rootLayout.height}")
-            Timber.d("CARDHOLDER_DEBUG POST-LAYOUT mainColumn: w=${mainColumn.width}, h=${mainColumn.height}, top=${mainColumn.top}, bottom=${mainColumn.bottom}")
-            if (bottomNavView != null) {
-                Timber.d("CARDHOLDER_DEBUG POST-LAYOUT bottomNav: w=${bottomNavView.width}, h=${bottomNavView.height}, top=${bottomNavView.top}, bottom=${bottomNavView.bottom}")
-                val flp = bottomNavView.layoutParams as? FrameLayout.LayoutParams
-                Timber.d("CARDHOLDER_DEBUG POST-LAYOUT bottomNav gravity=${flp?.gravity}, visibility=${bottomNavView.visibility}")
-                Timber.d("CARDHOLDER_DEBUG POST-LAYOUT bottomNav parent: ${bottomNavView.parent?.javaClass?.simpleName}")
-                Timber.d("CARDHOLDER_DEBUG POST-LAYOUT bottomNav translationY=${bottomNavView.translationY}")
-            }
-            // Check if scrollView bottom padding is correct
-            Timber.d("CARDHOLDER_DEBUG POST-LAYOUT contentLayout paddingBottom=${contentLayout.paddingBottom}")
-            Timber.d("CARDHOLDER_DEBUG POST-LAYOUT scrollView: h=${scrollView.height}, top=${scrollView.top}, bottom=${scrollView.bottom}")
-
-            // Check all children positions
-            for (i in 0 until rootLayout.childCount) {
-                val child = rootLayout.getChildAt(i)
-                val childLp = child.layoutParams as? FrameLayout.LayoutParams
-                Timber.d("CARDHOLDER_DEBUG POST-LAYOUT rootLayout child[$i]: type=${child.javaClass.simpleName}, top=${child.top}, bottom=${child.bottom}, h=${child.height}, gravity=${childLp?.gravity}")
-            }
-        }
-
-        loadAllData()
-        TelemetryHelper.trackPageView(this, "card_holder")
+    private fun injectCredentials(webView: WebView?) {
+        val deviceId = deviceManager.deviceId ?: return
+        val deviceSecret = deviceManager.deviceSecret ?: return
+        val js = """
+            (function() {
+                try {
+                    if (!localStorage.getItem('deviceId')) {
+                        localStorage.setItem('deviceId', '$deviceId');
+                        localStorage.setItem('deviceSecret', '$deviceSecret');
+                    }
+                } catch(e) {}
+            })();
+        """.trimIndent()
+        webView?.evaluateJavascript(js, null)
     }
 
     // ── Filter chip factory ──
@@ -285,8 +386,15 @@ class CardHolderActivity : AppCompatActivity() {
     private fun setFilter(mode: FilterMode) {
         currentFilter = mode
         // Update chip visuals
-        val chipGroup = (scrollView.parent as? LinearLayout)?.let { parent ->
-            val scrollHost = parent.getChildAt(3) as? HorizontalScrollView
+        val chipGroup = (searchInput.parent as? LinearLayout)?.let { parent ->
+            var scrollHost: HorizontalScrollView? = null
+            for (i in 0 until parent.childCount) {
+                val child = parent.getChildAt(i)
+                if (child is HorizontalScrollView) {
+                    scrollHost = child
+                    break
+                }
+            }
             scrollHost?.getChildAt(0) as? ChipGroup
         }
         chipGroup?.let { group ->
@@ -564,20 +672,11 @@ class CardHolderActivity : AppCompatActivity() {
 
         // Protocols editor
         editLayout.addView(sectionTitle(getString(R.string.card_holder_protocols)))
-        val protosContainer = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            setPadding(0, dp(4), 0, 0)
-        }
         val protosWrap = object : LinearLayout(this@CardHolderActivity) {
             init {
                 orientation = VERTICAL
                 tag = "protosContainer"
             }
-        }
-        val protosChips = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         }
         val protosFlow = android.widget.FrameLayout(this).apply {
             layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
@@ -691,8 +790,6 @@ class CardHolderActivity : AppCompatActivity() {
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            // Simulate wrap by using a FlowLayout-like approach: horizontal with wrapping via custom measure
-            // For simplicity, use a horizontal scrollable list
         }
     }
 
@@ -1549,4 +1646,21 @@ class CardHolderActivity : AppCompatActivity() {
     // ── Utility ──
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+
+    override fun onDestroy() {
+        plazaWebView?.destroy()
+        plazaWebView = null
+        super.onDestroy()
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        // If on Bot Plaza tab and WebView can go back, navigate back in WebView
+        if (tabLayout.selectedTabPosition == 1 && plazaWebView?.canGoBack() == true) {
+            plazaWebView?.goBack()
+            return
+        }
+        @Suppress("DEPRECATION")
+        super.onBackPressed()
+    }
 }

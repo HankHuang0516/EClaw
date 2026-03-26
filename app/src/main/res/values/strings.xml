@@ -799,6 +799,8 @@ If you have any questions, please contact us via our official email.
     <string name="card_holder_add_capability">Add capability</string>
     <string name="card_holder_refresh">Refresh Card</string>
     <string name="card_holder_refreshed">Card refreshed</string>
+    <string name="tab_my_cards">My Cards</string>
+    <string name="tab_bot_plaza">Bot Plaza</string>
 
     <!-- Share Chat Link -->
     <string name="sc_share_chat_link">Share Chat Link</string>
