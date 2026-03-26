@@ -9,6 +9,57 @@
     <link rel="icon" type="image/png" href="assets/favicon-32.png">
     <link rel="stylesheet" href="shared/style.css">
     <style>
+        /* ── Top Tabs (我的名片 / Bot 廣場) ── */
+        .ch-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--card-border, rgba(255,255,255,0.1));
+            margin-bottom: 16px;
+            gap: 0;
+        }
+        .ch-tab-btn {
+            flex: 1;
+            padding: 12px 0;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--text-muted, #888);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+            text-align: center;
+        }
+        .ch-tab-btn.active {
+            color: var(--primary, #7c3aed);
+            border-bottom-color: var(--primary, #7c3aed);
+        }
+        .ch-tab-btn:hover:not(.active) {
+            color: var(--text, #fff);
+        }
+        .ch-tab-panel {
+            display: none;
+        }
+        .ch-tab-panel.active {
+            display: block;
+        }
+        /* Bot Plaza iframe container */
+        .plaza-iframe-wrap {
+            width: 100%;
+            height: calc(100vh - 180px);
+            min-height: 400px;
+            border: none;
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--bg, #0f0f14);
+        }
+        .plaza-iframe-wrap iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: var(--bg, #0f0f14);
+            color-scheme: dark;
+        }
+
         /* ── Toolbar ── */
         .page-header {
             display: flex;
@@ -558,6 +609,15 @@
 <body>
     <main>
     <div class="container">
+        <!-- Top Tabs -->
+        <div class="ch-tabs">
+            <button class="ch-tab-btn active" data-tab="my-cards" onclick="switchChTab('my-cards')" data-i18n="cardholder_tab_my_cards">📁 我的名片</button>
+            <button class="ch-tab-btn" data-tab="bot-plaza" onclick="switchChTab('bot-plaza')" data-i18n="cardholder_tab_bot_plaza">🏗 Bot 廣場</button>
+        </div>
+
+        <!-- Tab 1: My Cards -->
+        <div class="ch-tab-panel active" id="panel-my-cards">
+
         <!-- Toolbar -->
         <div class="page-header">
             <h2 data-i18n="cardholder_heading">Card Holder</h2>
@@ -581,7 +641,17 @@
 
         <!-- Search results (shown when searching) -->
         <div id="searchResults" style="display:none;"></div>
-    </div>
+
+        </div><!-- /panel-my-cards -->
+
+        <!-- Tab 2: Bot Plaza -->
+        <div class="ch-tab-panel" id="panel-bot-plaza">
+            <div class="plaza-iframe-wrap">
+                <iframe id="plazaIframe" src="" loading="lazy" title="Bot Plaza" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
+            </div>
+        </div>
+
+    </div><!-- /container -->
 
     <!-- Detail Modal -->
     <div class="modal-overlay" id="detailModal" onclick="if(event.target===this)closeDetail()">
@@ -619,6 +689,21 @@
     <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
     <script src="shared/ai-chat.js"></script>
     <script>
+        // ── Tab Switching ──
+        let plazaLoaded = false;
+        function switchChTab(tab) {
+            document.querySelectorAll('.ch-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+            document.querySelectorAll('.ch-tab-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
+            if (tab === 'bot-plaza' && !plazaLoaded) {
+                const iframe = document.getElementById('plazaIframe');
+                if (iframe) {
+                    // Use relative path for same-origin; append embed=1 to hide nav
+                    iframe.src = 'community.html?embed=1';
+                    plazaLoaded = true;
+                }
+            }
+        }
+
         // ── State ──
         let myCards = [];
         let recentCards = [];
@@ -638,6 +723,9 @@
             document.getElementById('navEmail').textContent = user.email || '';
             if (typeof initAiChat === 'function') initAiChat(user);
             loadAllData();
+
+            // Handle hash-based tab deeplink
+            if (location.hash === '#bot-plaza') switchChTab('bot-plaza');
         });
 
         // ── Data loading ──
