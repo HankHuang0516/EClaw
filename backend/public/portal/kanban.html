@@ -165,6 +165,40 @@
         .kb-toast.show { display:block; }
         .kb-toast.error { background:#ef4444; color:#fff; }
 
+        /* ══════════════ Automation Collapse Section ══════════════ */
+        .kb-automation { margin-bottom:16px; background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius); overflow:hidden; }
+        .kb-auto-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer; user-select:none; transition:background 0.2s; }
+        .kb-auto-header:hover { background:rgba(255,255,255,0.03); }
+        .kb-auto-header h3 { font-size:14px; font-weight:700; display:flex; align-items:center; gap:6px; }
+        .kb-auto-count { font-size:11px; color:var(--text-muted); background:var(--input-bg); padding:2px 8px; border-radius:10px; }
+        .kb-auto-toggle { font-size:12px; color:var(--text-muted); transition:transform 0.2s; }
+        .kb-auto-header.open .kb-auto-toggle { transform:rotate(180deg); }
+        .kb-auto-body { display:none; padding:0 16px 16px; }
+        .kb-auto-body.open { display:block; }
+        .kb-auto-grid { display:flex; gap:10px; overflow-x:auto; padding:4px 0; }
+        .kb-auto-card { flex:0 0 200px; background:var(--input-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:12px; cursor:pointer; transition:border-color 0.2s; border-left:3px solid #fbbf24; }
+        .kb-auto-card:hover { border-color:var(--primary); }
+        .kb-auto-card-title { font-size:12px; font-weight:600; margin-bottom:4px; display:flex; align-items:center; gap:4px; }
+        .kb-auto-card-cron { font-size:11px; color:var(--text-muted); margin-bottom:4px; }
+        .kb-auto-card-next { font-size:10px; color:var(--text-secondary); }
+        .kb-auto-card-result { font-size:10px; margin-top:4px; }
+        .kb-auto-card-result.ok { color:#4ade80; }
+        .kb-auto-card-result.fail { color:#ef4444; }
+        .kb-auto-card-active { font-size:10px; color:#fbbf24; margin-top:2px; }
+
+        /* ⚡ Badge on auto-generated cards */
+        .kb-card .kb-auto-badge { position:absolute; top:6px; left:6px; font-size:11px; background:rgba(251,191,36,0.15); color:#fbbf24; padding:1px 5px; border-radius:4px; font-weight:700; z-index:2; pointer-events:none; }
+
+        /* Automation toggle in new card form */
+        .kb-auto-toggle-row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; }
+        .kb-auto-toggle-label { font-size:13px; display:flex; align-items:center; gap:6px; }
+        .kb-auto-fields { display:none; margin-top:8px; }
+        .kb-auto-fields.show { display:block; }
+        .kb-cron-chips { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+        .kb-cron-chip { padding:4px 10px; border-radius:var(--radius-pill); font-size:11px; cursor:pointer; border:1px solid var(--card-border); background:none; color:var(--text-secondary); transition:all 0.2s; }
+        .kb-cron-chip.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .kb-cron-chip:hover:not(.active) { border-color:var(--text-muted); }
+
         /* ══════════════ Responsive ══════════════ */
         @media (max-width: 768px) {
             .kb-board { display:none; }
@@ -195,6 +229,10 @@
             /* Toolbar compact */
             .kb-toolbar { flex-direction:column; align-items:stretch; }
             .kb-toolbar-actions { justify-content:space-between; }
+
+            /* Automation: stack on mobile */
+            .kb-auto-grid { flex-wrap:nowrap; }
+            .kb-auto-card { flex:0 0 180px; }
         }
         @media (min-width: 769px) {
             .kb-mobile-list { display:none; }
@@ -222,6 +260,17 @@
                     <button class="kb-chip" data-filter="mine" data-i18n="kb_filter_mine" onclick="filterCards('mine')">My Cards</button>
                 </div>
                 <button class="btn btn-primary" data-i18n="kb_new_card_btn" onclick="openNewCard()">+ New Card</button>
+            </div>
+        </div>
+
+        <!-- ⚡ Automation Collapse Section -->
+        <div class="kb-automation" id="kbAutomation" style="display:none">
+            <div class="kb-auto-header" id="autoHeader" onclick="toggleAutomation()">
+                <h3>⚡ <span data-i18n="kb_auto_title">Automations</span> <span class="kb-auto-count" id="autoCount">0</span></h3>
+                <span class="kb-auto-toggle">▼</span>
+            </div>
+            <div class="kb-auto-body" id="autoBody">
+                <div class="kb-auto-grid" id="autoGrid"></div>
             </div>
         </div>
 
@@ -313,6 +362,21 @@
                 <label class="kb-form-label" data-i18n="kb_label_assign">Assign To</label>
                 <div id="newAssignees"></div>
             </div>
+            <div class="kb-form-group">
+                <div class="kb-auto-toggle-row">
+                    <label class="kb-auto-toggle-label"><input type="checkbox" id="newIsAutomation" onchange="toggleAutoFields()"> ⚡ <span data-i18n="kb_label_automation">Set as Automation</span></label>
+                </div>
+                <div class="kb-auto-fields" id="autoFields">
+                    <label class="kb-form-label" data-i18n="kb_label_schedule">Schedule</label>
+                    <div class="kb-cron-chips" id="cronChips">
+                        <button type="button" class="kb-cron-chip" data-cron="0 * * * *" onclick="selectCron(this)" data-i18n="kb_cron_hourly">Every hour</button>
+                        <button type="button" class="kb-cron-chip active" data-cron="0 */4 * * *" onclick="selectCron(this)" data-i18n="kb_cron_4h">Every 4 hours</button>
+                        <button type="button" class="kb-cron-chip" data-cron="0 9 * * *" onclick="selectCron(this)" data-i18n="kb_cron_daily">Daily 9AM</button>
+                        <button type="button" class="kb-cron-chip" data-cron="0 9 * * 1" onclick="selectCron(this)" data-i18n="kb_cron_weekly">Weekly Mon</button>
+                    </div>
+                    <input class="kb-form-input" id="newCronCustom" style="margin-top:8px" placeholder="Custom cron: */30 * * * *" data-i18n-placeholder="kb_placeholder_cron">
+                </div>
+            </div>
             <div class="kb-form-actions">
                 <button class="btn btn-outline" data-i18n="kb_btn_cancel" onclick="closeNewCard()">Cancel</button>
                 <button class="btn btn-primary" data-i18n="kb_btn_create" onclick="createCard()">Create</button>
@@ -378,12 +442,17 @@
             setInterval(loadCards, 15000);
         });
 
+        let automationCards = [];
+        let autoCollapsed = true;
+
         // ── API ──
         async function loadCards() {
             try {
                 const data = await apiCall('GET', `/api/mission/cards?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
-                if (data.cards) { allCards = data.cards; renderBoard(); }
-            } catch(e) { console.error('[Kanban] loadCards:', e); }
+                if (data.cards) { allCards = data.cards.filter(c => !c.isAutomation); renderBoard(); }
+                console.log('[Kanban] loadCards:', (data.cards||[]).length, 'total cards');
+            } catch(e) { console.error('[Kanban] loadCards failed:', e.message, e.stack); }
+            await loadAutomations();
         }
 
         async function apiCreateCard(body) {
@@ -482,8 +551,10 @@
             const fileCount = card.file_count || 0;
             const countdown = staleCountdown(card);
             const timeAgo = relativeTime(card.created_at);
+            const autoBadge = card.isAutoGenerated ? '<span class="kb-auto-badge">⚡</span>' : '';
             return `<div class="kb-card${isStale}" data-id="${card.id}" data-priority="${card.priority}" draggable="true"
                          ondragstart="onDragStart(event)" onclick="openDetail('${card.id}')">
+                ${autoBadge}
                 <div class="kb-card-top">
                     <span class="kb-card-priority" data-p="${card.priority}">${card.priority}</span>
                     <span class="kb-card-assigned">${renderAssignedAvatars(card.assignedBots)}</span>
@@ -694,6 +765,60 @@
         }
 
         // ── New Card ──
+        // ── Automation ──
+        async function loadAutomations() {
+            try {
+                const data = await apiCall('GET', `/api/mission/cards?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}&automation=true`);
+                automationCards = data.cards || [];
+                console.log('[Kanban] loadAutomations:', automationCards.length, 'automation cards');
+                renderAutomationSection();
+            } catch(e) { console.error('[Kanban] loadAutomations failed:', e.message); }
+        }
+
+        function renderAutomationSection() {
+            const section = document.getElementById('kbAutomation');
+            const grid = document.getElementById('autoGrid');
+            const countEl = document.getElementById('autoCount');
+            if (!section || !grid) return;
+            const active = automationCards.filter(c => c.activeChildId);
+            countEl.textContent = active.length + ' active';
+            section.style.display = automationCards.length ? '' : 'none';
+            grid.innerHTML = automationCards.map(c => {
+                const cronDesc = c.schedule?.cron || '—';
+                const nextRun = c.schedule?.nextRunAt ? formatTime(c.schedule.nextRunAt) : '—';
+                const lastResult = c.lastRunResult;
+                const resultClass = lastResult ? (lastResult.startsWith('✅') ? 'ok' : 'fail') : '';
+                const activeChild = c.activeChildId ? `<div class="kb-auto-card-active">▶ ${t('kb_auto_running','Running...')}</div>` : '';
+                return `<div class="kb-auto-card" onclick="openDetail('${c.id}')">
+                    <div class="kb-auto-card-title">⚡ ${escapeHtml(c.title)}</div>
+                    <div class="kb-auto-card-cron">↻ ${escapeHtml(cronDesc)}</div>
+                    <div class="kb-auto-card-next" data-i18n="kb_auto_next">Next: ${escapeHtml(nextRun)}</div>
+                    ${lastResult ? '<div class="kb-auto-card-result '+resultClass+'">'+escapeHtml(lastResult)+'</div>' : ''}
+                    ${activeChild}
+                </div>`;
+            }).join('') || `<div class="kb-empty">${t('kb_auto_none','No automations yet')}</div>`;
+        }
+
+        function toggleAutomation() {
+            autoCollapsed = !autoCollapsed;
+            document.getElementById('autoHeader').classList.toggle('open', !autoCollapsed);
+            document.getElementById('autoBody').classList.toggle('open', !autoCollapsed);
+            console.log('[Kanban] toggleAutomation:', autoCollapsed ? 'collapsed' : 'expanded');
+        }
+
+        function toggleAutoFields() {
+            const checked = document.getElementById('newIsAutomation').checked;
+            document.getElementById('autoFields').classList.toggle('show', checked);
+            console.log('[Kanban] toggleAutoFields:', checked);
+        }
+
+        function selectCron(btn) {
+            document.querySelectorAll('#cronChips .kb-cron-chip').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('newCronCustom').value = '';
+        }
+
+        // ── New Card ──
         function openNewCard() {
             const container = document.getElementById('newAssignees');
             container.innerHTML = boundEntities.map(e =>
@@ -710,22 +835,38 @@
 
         async function createCard() {
             const title = document.getElementById('newTitle').value.trim();
-            if (!title) { showToast('Title is required', true); return; }
+            if (!title) { showToast(t('kb_err_title','Title is required'), true); return; }
             const assignedBots = [...document.querySelectorAll('#newAssignees input:checked')].map(cb => Number(cb.value));
+            const isAutomation = document.getElementById('newIsAutomation').checked;
+            const body = {
+                title,
+                description: document.getElementById('newDesc').value.trim(),
+                priority: document.getElementById('newPriority').value,
+                status: isAutomation ? 'backlog' : document.getElementById('newStatus').value,
+                assignedBots
+            };
+            if (isAutomation) {
+                const customCron = document.getElementById('newCronCustom').value.trim();
+                const selectedChip = document.querySelector('#cronChips .kb-cron-chip.active');
+                const cron = customCron || (selectedChip ? selectedChip.dataset.cron : '0 */4 * * *');
+                body.isAutomation = true;
+                body.schedule = { type: 'recurring', cron };
+                console.log('[Kanban] createCard: automation, cron=', cron);
+            }
+            console.log('[Kanban] createCard:', JSON.stringify(body));
             try {
-                await apiCreateCard({
-                    title,
-                    description: document.getElementById('newDesc').value.trim(),
-                    priority: document.getElementById('newPriority').value,
-                    status: document.getElementById('newStatus').value,
-                    assignedBots
-                });
-                showToast('Card created');
+                await apiCreateCard(body);
+                showToast(isAutomation ? t('kb_auto_created','Automation created') : t('kb_card_created','Card created'));
                 closeNewCard();
                 document.getElementById('newTitle').value = '';
                 document.getElementById('newDesc').value = '';
+                document.getElementById('newIsAutomation').checked = false;
+                toggleAutoFields();
                 await loadCards();
-            } catch(e) { showToast('Failed to create card', true); }
+            } catch(e) {
+                console.error('[Kanban] createCard failed:', e.message);
+                showToast(t('kb_err_create','Failed to create card'), true);
+            }
         }
 
         // ── Utils ──
