@@ -489,7 +489,12 @@
         .rn-hero-subtitle { font-size: 13px; color: var(--text-secondary); max-width: 480px; margin: 0 auto; line-height: 1.6; }
         .rn-entry { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; }
         .rn-entry.latest { border-color: rgba(108, 99, 255, 0.4); }
-        .rn-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+        .rn-entry summary { cursor: pointer; list-style: none; }
+        .rn-entry summary::-webkit-details-marker { display: none; }
+        .rn-entry .rn-changes { margin-top: 12px; }
+        .rn-entry:not([open]) .rn-changes { display: none; }
+        .rn-change-count { font-size: 11px; color: var(--text-muted); margin-left: auto; }
+        .rn-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .rn-version { font-size: 17px; font-weight: 800; }
         .rn-date { font-size: 12px; color: var(--text-muted); }
         .rn-badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; }
@@ -2393,395 +2398,18 @@ Content-Type: application/json
             <div class="rn-hero">
                 <div class="rn-hero-title" data-i18n="rn_hero_title">Release Notes</div>
                 <div class="rn-hero-subtitle" data-i18n="rn_hero_subtitle">What's new in EClawbot — features, improvements, and fixes across the platform.</div>
-            </div>
-
-            <div class="rn-entry latest">
-                <div class="rn-header">
-                    <span class="rn-version">v1.0.47</span>
-                    <span class="rn-badge rn-badge-latest" data-i18n="rn_badge_latest">Latest</span>
-                    <span class="rn-date">2026-03</span>
-                </div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1047_1">Multi-Platform Publisher — publish articles to 12 platforms including WordPress, Tumblr, Reddit, LinkedIn, Mastodon, Qiita, and more</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1047_2">Dynamic Unlimited Entities — no more 8-slot limit, devices auto-expand entity slots as needed</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1047_3">Agent Card UI — create, edit, and view A2A Agent Cards across Web, Android, and iOS</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1047_4">Discord Webhook Support — auto-detect Discord webhooks with rich embeds, buttons, and select menus</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1047_5">Comprehensive UI Audit — 40+ UI/UX fixes across all platforms including dark theme, card layout, and badge contrast</span></li>
-                </ul>
-                <div class="rn-platforms"><span class="rn-platform">Backend</span><span class="rn-platform">Android</span><span class="rn-platform">iOS</span><span class="rn-platform">Portal</span></div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header">
-                    <span class="rn-version">v1.0.46</span>
-                    <span class="rn-date">2026-03</span>
-                </div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1046_1">X (Twitter) Publisher — OAuth 1.0a integration to post articles and threads directly from bot sessions</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1046_2">Mission Dashboard Auto-Save — dashboard saves automatically on every edit; save and notify are now separate actions</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1046_3">Webhook Multi-Entity Push Fix — entity push no longer silently skipped in multi-entity broadcast (#181)</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1046_4">Entity Reorder publicCode Fix — publicCode is preserved correctly after reordering entities</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1046_5">X Publisher Diagnostics — detailed error headers on X publish failures for easier debugging</span></li>
-                </ul>
-                <div class="rn-platforms"><span class="rn-platform">Backend</span><span class="rn-platform">Portal</span></div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header">
-                    <span class="rn-version">v1.0.45</span>
-                    <span class="rn-date">2026-03</span>
-                </div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1045_1">Skill Template Search — live search bar in gallery to filter templates by name or author</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1045_2">Template Count Badge — browse button and gallery title now show the total number of available templates</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1045_3">Template Gallery Empty Fix — gallery no longer shows blank when opened before API finishes loading</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1045_4">Enterprise Security — IP allowlist, geo-blocking, rate limiting, audit logging, and RBAC access control</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1045_5">Backend Stability — cron schedule NOT NULL fix and health-check HTTPS redirect bypass</span></li>
-                </ul>
-                <div class="rn-platforms"><span class="rn-platform">Android</span><span class="rn-platform">Portal</span><span class="rn-platform">Backend</span></div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header">
-                    <span class="rn-version">v1.0.44</span>
-                    <span class="rn-date">2026-03</span>
-                </div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1044_1">Cross-Device Message Management — new Android interface to browse and manage messages across all bound devices</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1044_2">Bot Tools API — web-search &amp; web-fetch proxy endpoints for OpenClaw bots to query the web without leaving the platform</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1044_3">Article Publisher Module — Blogger OAuth flow &amp; Hashnode API integration for publishing content directly from bot sessions</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1044_4">Chat &amp; Entity UI Fixes — chat bubble text selection, entity public code display, and edit-mode swap bugs resolved (Android)</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1044_5">Gatekeeper Hardening — false positives for credential detection fixed; eclawbot.com whitelisted; self-unblock API added</span></li>
-                </ul>
-                <div class="rn-platforms"><span class="rn-platform">Android</span><span class="rn-platform">Backend</span><span class="rn-platform">DevOps</span></div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header">
-                    <span class="rn-version">v1.0.43</span>
-                    <span class="rn-date">2026-03</span>
-                </div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1043_1">iOS App — React Native Expo iOS app launched with full feature parity to Android version</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1043_2">Channel Bot Ready Push — bots receive ECLAW_READY notification instantly after binding for immediate setup confirmation</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1043_3">Taiwan Time in Scheduler — scheduled messages now include current Taiwan time in mission hints for better bot time-awareness</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1043_4">Soul Gallery Unified with Icons — built-in and community soul templates merged into one gallery with emoji icons</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1043_5">XP &amp; Level Preservation — entity XP and level are now correctly kept across all unbind/rebind paths</span></li>
-                    <li><span class="rn-tag rn-tag-improve">improve</span> <span data-i18n="rn_1043_6">i18n &amp; Tests — 160+ missing translation keys added; regression test suite expanded from 14 to 21 tests</span></li>
-                </ul>
-                <div class="rn-platforms"><span class="rn-platform">iOS</span><span class="rn-platform">Android</span><span class="rn-platform">Backend</span></div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header">
-                    <span class="rn-version">v1.0.42</span>
-                    <span class="rn-date">2026-03</span>
-                </div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1042_1">Soul &amp; Rule Gallery Unified — template selection merged into Gallery in Mission Control; dropdown removed</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1042_2">Community Template Contributions — bots can contribute soul and rule templates via API with async verification</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1042_3">Schedule Dual Authentication — schedule endpoints now accept deviceSecret for additional auth</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1042_4">Language Cross-Device Sync — language preference persists to server and syncs across all your devices</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1042_5">AI Chat &amp; Plugin Stability — false network error on chat close fixed; Channel Plugin auto-reconnect with exponential backoff</span></li>
-                    <li><span class="rn-tag rn-tag-improve">improve</span> <span data-i18n="rn_1042_6">Admin &amp; API Improvements — paginated user list, API auth auto-detection, admin UI improvements</span></li>
-                </ul>
-                <div class="rn-platforms"><span class="rn-platform">Web Portal</span><span class="rn-platform">Android</span><span class="rn-platform">Backend</span></div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header">
-                    <span class="rn-version">v1.0.41</span>
-                    <span class="rn-date">2026-03</span>
-                </div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1041_1">Soul &amp; Rule Template Gallery — browse and apply AI agent soul and rule templates directly from Mission Control</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1041_2">Device Secret Display — reveal, copy, and export all credentials from the Settings screen</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1041_3">Info Hub Enhancements — deep links to guide sub-sections + Claude × OpenClaw real-world case studies</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1041_4">Required Variables Warning — skill templates now warn before applying if required env vars are missing</span></li>
-                    <li><span class="rn-tag rn-tag-improve">improve</span> <span data-i18n="rn_1041_5">AI Agent Collaboration — updated app content and branding to reflect AI agent collaboration positioning</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1041_6">Backend Fixes — binding race condition resolved; bot-to-bot rate counter resets on rebind</span></li>
-                </ul>
-                <div class="rn-platforms"><span class="rn-platform">Web Portal</span><span class="rn-platform">Android</span><span class="rn-platform">Backend</span></div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header">
-                    <span class="rn-version">v1.0.40</span>
-                    <span class="rn-date">2026-03</span>
-                </div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1040_1">Chat Image Preview — image URLs now display as inline previews in the chat window</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1040_2">Remote Control Improvements — screen elements limit increased to 300, smarter keyboard input handling</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1040_3">Entity Crash Fix — critical crash fixed when a bot sends non-numeric data to the wallpaper parts field (caused all entity slots to go blank)</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1040_4">Chat Stability — ChatIntegrity false-positive detections and LinkPreview crash resolved</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1040_5">Screenshot Reliability — 5 MB upload limit, improved error reporting and canTakeScreenshot guard</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1040_6">Claude CLI Proxy — Docker startup fixed, log output improved, warmup interval optimized</span></li>
-                </ul>
-                <div class="rn-platforms">
-                    <span class="rn-platform">Backend</span>
-                    <span class="rn-platform">Web Portal</span>
-                    <span class="rn-platform">Android</span>
+                <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    <input type="text" id="rnSearch" placeholder="Search versions..." style="padding:8px 12px;border-radius:8px;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text);font-size:13px;width:200px;">
+                    <select id="rnFilter" style="padding:8px 12px;border-radius:8px;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text);font-size:13px;">
+                        <option value="all">All</option>
+                        <option value="Features">Features</option>
+                        <option value="Bug Fixes">Bug Fixes</option>
+                    </select>
+                    <span id="rnCount" style="color:var(--text-secondary);font-size:13px;"></span>
                 </div>
             </div>
-
-            <div class="rn-entry">
-                <div class="rn-header">
-                    <span class="rn-version">v1.0.39</span>
-                    <span class="rn-date">2026-03</span>
-                </div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span>Channel Binding Indicators — Portal and Android now display how each entity is bound (Channel plugin vs Webhook)</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span>Multi-Plugin Channel — one Channel API key can independently bind multiple entity slots</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span>Channel Self-Test — built-in provision-device endpoint to verify channel connectivity before binding</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span>Remote Control ime_action — keyboard submit (Enter) without needing an on-screen confirm button</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span>Remote Control Entity Label — entity name indicator replaces colored border on screen overlay</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span>Multi-account portal UI polish + auth.js regression fixes</span></li>
-                </ul>
-                <div class="rn-platforms">
-                    <span class="rn-platform">Backend</span>
-                    <span class="rn-platform">Web Portal</span>
-                    <span class="rn-platform">Android</span>
-                </div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header">
-                    <span class="rn-version">v1.0.38</span>
-                    <span class="rn-date">2026-03</span>
-                </div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1038_1">Channel API Key Display — view and copy OpenClaw Channel API credentials directly in Settings</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1038_2">Delete Account — full account deletion page and API for Google Play Data Safety compliance</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1038_3">AI Chat Persistence — requestId survives Activity recreation (screen rotate, app restart)</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1038_4">Link Preview Crash Fixed — chat coroutine lifecycle issues resolved</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1038_5">Claude CLI Proxy — Docker build fixed with requirements.txt</span></li>
-                </ul>
-                <div class="rn-platforms">
-                    <span class="rn-platform">Backend</span>
-                    <span class="rn-platform">Web Portal</span>
-                    <span class="rn-platform">Android</span>
-                </div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header">
-                    <span class="rn-version">v1.0.36</span>
-                    <span class="rn-date">2026-03</span>
-                </div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1036_1">Phone Remote Control — AI can control your Android phone via Accessibility API commands</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1036_2">Encrypted Variables Vault + JIT Approval — real-time owner approval dialog for bot secrets</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1036_3">OpenClaw Channel Plugin — direct channel integration without webhook configuration</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1036_4">Auto-provisioned Channel API Key — channel key created automatically on device registration</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1036_5">Screen Control Stability — HTTP transport reverted, latency optimized, session limits removed</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1036_6">Crash Fixes + Debug Logging — entity iteration crash fixed, crash reports sent to logs</span></li>
-                </ul>
-                <div class="rn-platforms">
-                    <span class="rn-platform">Backend</span>
-                    <span class="rn-platform">Web Portal</span>
-                    <span class="rn-platform">Android</span>
-                </div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header">
-                    <span class="rn-version">v1.0.35</span>
-                    <span class="rn-date">2026-03</span>
-                </div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1035_1">Broadcast Recipient Info — bots can see who else received the same broadcast</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1035_2">Device Preferences — configurable broadcast recipient info toggle per device</span></li>
-                    <li><span class="rn-tag rn-tag-improve">improve</span> <span data-i18n="rn_1035_3">Mission Control Delete UX — tap to edit, delete inside dialog for consistency</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1035_4">Chat Reaction Buttons — like/dislike reactions wired to backend</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1035_5">Local Variables Vault — secure key-value storage for bots</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1035_6">Real-Time AI Progress Indicator — live status updates during AI processing</span></li>
-                </ul>
-                <div class="rn-platforms">
-                    <span class="rn-platform">Backend</span>
-                    <span class="rn-platform">Web Portal</span>
-                    <span class="rn-platform">Android</span>
-                </div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header">
-                    <span class="rn-version">v1.0.34</span>
-                    <span class="rn-date">2026-03</span>
-                </div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1034_1">In-App Update Dialog — check for updates on launch with optional or force update</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1034_2">Admin Update Push — send update notifications to all devices from admin dashboard</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1034_3">AI GitHub Actions — AI assistant can now close GitHub issues automatically</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1034_4">AI Support DB Access — Claude CLI proxy connects to Postgres for direct queries</span></li>
-                    <li><span class="rn-tag rn-tag-improve">improve</span> <span data-i18n="rn_1034_5">Unified entity selection UX — bot rental reuses Add Entity slot selector</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1034_6">7 GitHub issues resolved, AD_ID permission removed, i18n cache fix</span></li>
-                </ul>
-                <div class="rn-platforms">
-                    <span class="rn-platform">Backend</span>
-                    <span class="rn-platform">Web Portal</span>
-                    <span class="rn-platform">Android</span>
-                </div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header">
-                    <span class="rn-version">v1.0.33</span>
-                    <span class="rn-date">2026-03</span>
-                </div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1033_1">Social Login — sign in with Google or Facebook on Android and web portal</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1033_2">Floating AI Chat — draggable assistant on all pages with background processing and image support</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1033_3">Cross-Device Contacts — chat between entities on different devices with unified target bar</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1033_4">AI Feedback to GitHub — AI assistant automatically creates issues for bug reports</span></li>
-                    <li><span class="rn-tag rn-tag-improve">improve</span> <span data-i18n="rn_1033_5">Bot communication with expects_reply field and mood-only emoji updates</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1033_6">Chat dedup now correctly preserves user messages, entity rendering with EYE_LID/EYE_ANGLE</span></li>
-                </ul>
-                <div class="rn-platforms">
-                    <span class="rn-platform">Backend</span>
-                    <span class="rn-platform">Web Portal</span>
-                    <span class="rn-platform">Android</span>
-                </div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header">
-                    <span class="rn-version">v1.0.32</span>
-                    <span class="rn-date">2026-02</span>
-                </div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1032_1">AI-powered binding troubleshooter — automatic 3-stage diagnosis for bot connection issues</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1032_2">WebSocket transport for OpenClaw gateways with SETUP_PASSWORD support</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1032_3">XP system expanded with 8 new channels + message like/dislike reactions</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1032_4">Dashboard entity cards edit mode on Web portal</span></li>
-                    <li><span class="rn-tag rn-tag-improve">improve</span> <span data-i18n="rn_1032_5">Usage limit now applies to all bound entities for fair resource allocation</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1032_6">Telemetry captures sub-router paths correctly, improved duration tracking</span></li>
-                </ul>
-                <div class="rn-platforms">
-                    <span class="rn-platform">Backend</span>
-                    <span class="rn-platform">Web Portal</span>
-                    <span class="rn-platform">Android</span>
-                </div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header">
-                    <span class="rn-version">v1.0.31</span>
-                    <span class="rn-date">2026-02</span>
-                </div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1031_1">Bot gateway disconnection detection — detect "pairing required" errors and notify users in real-time</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1031_2">Handshake failure recording — all handshake failures logged to database for analysis</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1031_3">Push health tracking — monitor bot push delivery status</span></li>
-                    <li><span class="rn-tag rn-tag-improve">improve</span> <span data-i18n="rn_1031_4">Skill doc optimization — replace inline 44KB doc with URL-based fetch for faster binding</span></li>
-                    <li><span class="rn-tag rn-tag-improve">improve</span> <span data-i18n="rn_1031_5">Improved error guidance — better error messages referencing official docs</span></li>
-                </ul>
-                <div class="rn-platforms">
-                    <span class="rn-platform">Backend</span>
-                </div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header">
-                    <span class="rn-version">v1.13.0</span>
-                    <span class="rn-date">2026-02</span>
-                </div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1130_1">Unified avatar sync — changing avatar on dashboard now updates chat, broadcast, and all pages instantly</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1130_2">Premium entity slots 4-7 now show proper avatars and colors instead of "?"</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1130_3">Schedule editing — existing scheduled tasks can now be modified with pre-populated edit dialog</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1130_4">Bots can now read Mission Dashboard tasks/notes via improved push notification hints</span></li>
-                </ul>
-                <div class="rn-platforms">
-                    <span class="rn-platform">Web Portal</span>
-                    <span class="rn-platform">Android</span>
-                    <span class="rn-platform">Backend</span>
-                </div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header">
-                    <span class="rn-version">v1.12.0</span>
-                    <span class="rn-date">2026-02</span>
-                </div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1120_1">XP/Level gamification — entities earn XP by completing TODOs, level progress bar on entity cards</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1120_2">Unified Info Hub — User Guide, FAQ, Release Notes & Comparison in one tabbed page</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1120_3">EClawbot vs Telegram comparison — 12-category side-by-side with infographic</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1120_4">Domain migration to eclawbot.com, auth redirect loop fix, dark theme corrections</span></li>
-                </ul>
-                <div class="rn-platforms">
-                    <span class="rn-platform">Web Portal</span>
-                    <span class="rn-platform">Android</span>
-                    <span class="rn-platform">Backend</span>
-                </div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header">
-                    <span class="rn-version">v1.11.0</span>
-                    <span class="rn-date">2026-02</span>
-                </div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1110_1">Real-time notification system — Socket.IO live updates, Web Push, and notification center with bell icon</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1110_2">Firebase Cloud Messaging (FCM) — Android push notifications even when app is closed</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1110_3">Per-category notification preferences — toggle bot replies, broadcasts, feedback, and more</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1110_4">Public navigation bar with FAQ, Release Notes, and User Guide pages</span></li>
-                </ul>
-                <div class="rn-platforms">
-                    <span class="rn-platform">Web Portal</span>
-                    <span class="rn-platform">Android</span>
-                    <span class="rn-platform">Backend</span>
-                </div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header"><span class="rn-version">v1.10.0</span><span class="rn-date">2025-01</span></div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1100_1">Channel comparison page — EClawbot vs Telegram side-by-side feature comparison</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1100_2">Payment maintenance notice for TapPay features on Web Portal</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_1100_3">Mission Control & Chat Attachments comparison rows</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_1100_4">Multi-Entity max corrected to 8 slots, Setup description improved</span></li>
-                </ul>
-                <div class="rn-platforms"><span class="rn-platform">Web Portal</span></div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header"><span class="rn-version">v1.9.0</span><span class="rn-date">2025-01</span></div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_190_1">Multi-language support — 8 languages for Web Portal and Android (EN, 繁中, 简中, 日本語, 한국어, ไทย, Tiếng Việt, Indonesia)</span></li>
-                </ul>
-                <div class="rn-platforms"><span class="rn-platform">Web Portal</span><span class="rn-platform">Android</span></div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header"><span class="rn-version">v1.8.0</span><span class="rn-date">2024-12</span></div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_180_1">Schedule execution history and chat annotation</span></li>
-                    <li><span class="rn-tag rn-tag-improve">improve</span> <span data-i18n="rn_180_2">Task saved toast notification</span></li>
-                    <li><span class="rn-tag rn-tag-improve">improve</span> <span data-i18n="rn_180_3">Mission Control UI improvements</span></li>
-                </ul>
-                <div class="rn-platforms"><span class="rn-platform">Web Portal</span><span class="rn-platform">Android</span></div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header"><span class="rn-version">v1.7.0</span><span class="rn-date">2024-12</span></div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_170_1">Multi-file upload in chat (up to 100 MB per file)</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_170_2">Replaced chat photo icon with + button for multi-attachment</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_170_3">File Manager page with entity/type filtering and delivery tracking</span></li>
-                </ul>
-                <div class="rn-platforms"><span class="rn-platform">Web Portal</span><span class="rn-platform">Android</span></div>
-            </div>
-
-            <div class="rn-entry">
-                <div class="rn-header"><span class="rn-version">v1.6.0 – v1.6.2</span><span class="rn-date">2024-11</span></div>
-                <ul class="rn-changes">
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_160_1">Per-device entity limit (free: 4, premium: 8)</span></li>
-                    <li><span class="rn-tag rn-tag-feat">feat</span> <span data-i18n="rn_160_2">Schedule card and schedule management page</span></li>
-                    <li><span class="rn-tag rn-tag-improve">improve</span> <span data-i18n="rn_160_3">Full-screen dark style refactor for Chat on Android</span></li>
-                    <li><span class="rn-tag rn-tag-fix">fix</span> <span data-i18n="rn_160_4">Bottom navigation position consistency and edge padding</span></li>
-                </ul>
-                <div class="rn-platforms"><span class="rn-platform">Web Portal</span><span class="rn-platform">Android</span><span class="rn-platform">Backend</span></div>
+            <div id="rnContainer" style="margin-top:16px;">
+                <div style="text-align:center;padding:40px;color:var(--text-secondary);">Loading release notes...</div>
             </div>
         </div><!-- /panel-release-notes -->
 
@@ -3034,6 +2662,71 @@ Content-Type: application/json
                 setTimeout(() => { feedback.style.display = 'none'; }, 3000);
             }
         }
+    </script>
+    <script>
+    // ── Release Notes dynamic rendering ──
+    (function() {
+        let rnData = [];
+        const API = window.location.origin;
+
+        async function loadReleaseNotes() {
+            try {
+                const res = await fetch(API + '/api/release-notes?limit=50');
+                const data = await res.json();
+                if (data.success) {
+                    rnData = data.releases;
+                    document.getElementById('rnCount').textContent = data.total + ' releases total';
+                    renderRN(rnData);
+                }
+            } catch(e) {
+                document.getElementById('rnContainer').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);">Failed to load release notes.</div>';
+            }
+        }
+
+        function renderRN(releases) {
+            const c = document.getElementById('rnContainer');
+            if (!releases.length) { c.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);">No releases found.</div>'; return; }
+            c.innerHTML = releases.map((r, i) => {
+                const isLatest = i === 0;
+                const badge = isLatest ? '<span class="rn-badge rn-badge-latest">Latest</span>' : '';
+                const changesHtml = r.changes.map(ch => {
+                    const tag = ch.type === 'Features' ? 'feat' : ch.type === 'Bug Fixes' ? 'fix' : 'chore';
+                    const tagClass = tag === 'feat' ? 'rn-tag-feat' : tag === 'fix' ? 'rn-tag-fix' : 'rn-tag-chore';
+                    const scope = ch.scope ? '<strong>' + ch.scope + ':</strong> ' : '';
+                    return '<li><span class="rn-tag ' + tagClass + '">' + tag + '</span> ' + scope + escHtml(ch.description) + '</li>';
+                }).join('');
+                const openAttr = isLatest ? 'open' : '';
+                return '<details class="rn-entry' + (isLatest ? ' latest' : '') + '" ' + openAttr + '>' +
+                    '<summary class="rn-header"><span class="rn-version">v' + r.version + '</span>' + badge + '<span class="rn-date">' + r.date + '</span><span class="rn-change-count">' + r.changes.length + ' changes</span></summary>' +
+                    '<ul class="rn-changes">' + changesHtml + '</ul></details>';
+            }).join('');
+        }
+
+        function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+        // Search + filter
+        document.getElementById('rnSearch')?.addEventListener('input', applyFilters);
+        document.getElementById('rnFilter')?.addEventListener('change', applyFilters);
+
+        function applyFilters() {
+            const q = (document.getElementById('rnSearch')?.value || '').toLowerCase();
+            const f = document.getElementById('rnFilter')?.value || 'all';
+            let filtered = rnData;
+            if (q) filtered = filtered.filter(r => r.version.includes(q) || r.changes.some(c => c.description.toLowerCase().includes(q)));
+            if (f !== 'all') filtered = filtered.map(r => ({...r, changes: r.changes.filter(c => c.type === f)})).filter(r => r.changes.length > 0);
+            renderRN(filtered);
+        }
+
+        // Load when tab is shown
+        const observer = new MutationObserver(() => {
+            const panel = document.getElementById('panel-release-notes');
+            if (panel && panel.classList.contains('active') && !rnData.length) loadReleaseNotes();
+        });
+        const panel = document.getElementById('panel-release-notes');
+        if (panel) observer.observe(panel, { attributes: true, attributeFilter: ['class'] });
+        // Also load if already active
+        if (panel && panel.classList.contains('active')) loadReleaseNotes();
+    })();
     </script>
     <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
     <script src="shared/ai-chat.js"></script>
