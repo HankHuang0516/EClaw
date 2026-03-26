@@ -14,16 +14,50 @@
         .workspace-pane {
             border: none;
             height: 100%;
-            min-width: 0;
+            min-width: 200px;
             background: var(--bg);
         }
-        .workspace-pane.left { flex: 1 1 50%; }
-        .workspace-pane.right {
-            flex: 1 1 50%;
-            border-left: 2px solid var(--card-border, #2a2a3e);
-        }
-        .workspace-container.single-pane .workspace-pane.left { flex: 1 1 100%; }
+        .workspace-container.single-pane .workspace-pane.left { width: 100%; }
         .workspace-container.single-pane .workspace-pane.right { display: none; }
+        .workspace-container.single-pane .workspace-divider { display: none; }
+
+        /* Draggable divider */
+        .workspace-divider {
+            width: 6px;
+            cursor: col-resize;
+            background: var(--card-border, #2a2a3e);
+            flex-shrink: 0;
+            position: relative;
+            transition: background 0.15s;
+            z-index: 10;
+        }
+        .workspace-divider:hover,
+        .workspace-divider.dragging {
+            background: var(--accent, #7c6aef);
+        }
+        .workspace-divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 2px;
+            height: 32px;
+            border-radius: 1px;
+            background: var(--text-muted, #666);
+            opacity: 0.5;
+        }
+        .workspace-divider:hover::after,
+        .workspace-divider.dragging::after { opacity: 1; background: #fff; }
+
+        /* Overlay to capture mouse events over iframes during drag */
+        .drag-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 9;
+            cursor: col-resize;
+        }
 
         /* Pane label tabs */
         .pane-labels {
@@ -81,9 +115,11 @@
 <body>
     <div class="pane-labels" id="paneLabels"></div>
     <div class="workspace-container single-pane" id="workspaceContainer">
-        <iframe class="workspace-pane left" id="paneLeft" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
-        <iframe class="workspace-pane right" id="paneRight" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
+        <iframe class="workspace-pane left" id="paneLeft"></iframe>
+        <div class="workspace-divider" id="divider"></div>
+        <iframe class="workspace-pane right" id="paneRight"></iframe>
     </div>
+    <div class="drag-overlay" id="dragOverlay"></div>
     <div class="narrow-notice" id="narrowNotice" data-i18n="workspace_narrow_notice">Split view requires a wider screen</div>
 
     <script src="../shared/i18n.js"></script>
@@ -107,6 +143,7 @@
 
     // ── State ──
     let state = { left: null, right: null };
+    let splitRatio = 0.5; // 0..1, left pane width ratio
 
     function pageIdFromHref(href) {
         for (const [id, p] of Object.entries(PAGES)) {
@@ -131,6 +168,10 @@
         state.left = leftPage;
         state.right = rightPage;
 
+        // Restore split ratio from localStorage
+        const savedRatio = parseFloat(localStorage.getItem('eclaw-split-ratio'));
+        if (!isNaN(savedRatio) && savedRatio > 0.15 && savedRatio < 0.85) splitRatio = savedRatio;
+
         // Intercept nav link clicks
         document.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', (e) => {
@@ -142,6 +183,7 @@
         });
 
         applyState();
+        setupDividerDrag();
         setupWidthGuard();
 
         if (typeof telemetry !== 'undefined') {
@@ -156,24 +198,16 @@
         if (state.right) {
             // Dual-pane mode
             if (pageId === state.left) {
-                // Collapse left — right becomes single
                 state = { left: state.right, right: null };
             } else if (pageId === state.right) {
-                // Collapse right — left stays single
                 state = { left: state.left, right: null };
             } else {
-                // New tab: push left→right, new goes left
                 state = { left: pageId, right: state.left };
             }
         } else {
             // Single-pane mode
-            if (pageId === state.left) {
-                // Same tab — no action
-                return;
-            } else {
-                // Open dual-pane: new on left, current on right
-                state = { left: pageId, right: state.left };
-            }
+            if (pageId === state.left) return;
+            state = { left: pageId, right: state.left };
         }
 
         applyState();
@@ -187,6 +221,21 @@
         const isDual = !!state.right;
 
         container.className = 'workspace-container ' + (isDual ? 'dual-pane' : 'single-pane');
+
+        // Set pane widths based on split ratio
+        if (isDual) {
+            const leftPct = (splitRatio * 100).toFixed(1);
+            const rightPct = ((1 - splitRatio) * 100).toFixed(1);
+            leftIframe.style.width = leftPct + '%';
+            leftIframe.style.flex = 'none';
+            rightIframe.style.width = rightPct + '%';
+            rightIframe.style.flex = 'none';
+        } else {
+            leftIframe.style.width = '100%';
+            leftIframe.style.flex = '';
+            rightIframe.style.width = '';
+            rightIframe.style.flex = '';
+        }
 
         // Load iframes (only change src if different to avoid reload)
         const leftSrc = state.left ? PAGES[state.left]?.href + '?embed=1' : '';
@@ -215,7 +264,6 @@
             if (pid === state.right) link.classList.add('active-right');
         });
 
-        // Update pane label bar
         renderPaneLabels();
 
         // Update URL
@@ -224,8 +272,45 @@
         if (state.right) urlParams.set('right', state.right);
         history.replaceState(null, '', 'workspace.html?' + urlParams.toString());
 
-        // Persist to localStorage
         localStorage.setItem('eclaw-workspace-state', JSON.stringify(state));
+    }
+
+    // ── Draggable divider ──
+    function setupDividerDrag() {
+        const divider = document.getElementById('divider');
+        const overlay = document.getElementById('dragOverlay');
+        const container = document.getElementById('workspaceContainer');
+        let isDragging = false;
+
+        divider.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            isDragging = true;
+            divider.classList.add('dragging');
+            overlay.style.display = 'block';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const rect = container.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const dividerWidth = 6;
+            let ratio = (x - dividerWidth / 2) / (rect.width - dividerWidth);
+            ratio = Math.max(0.15, Math.min(0.85, ratio));
+            splitRatio = ratio;
+
+            const leftIframe = document.getElementById('paneLeft');
+            const rightIframe = document.getElementById('paneRight');
+            leftIframe.style.width = (ratio * 100).toFixed(1) + '%';
+            rightIframe.style.width = ((1 - ratio) * 100).toFixed(1) + '%';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            divider.classList.remove('dragging');
+            overlay.style.display = 'none';
+            localStorage.setItem('eclaw-split-ratio', splitRatio.toFixed(3));
+        });
     }
 
     // ── Pane label bar ──
@@ -272,13 +357,11 @@
         function handleWidth(e) {
             const notice = document.getElementById('narrowNotice');
             if (!e.matches && state.right) {
-                // Screen too narrow — collapse to single pane
                 savedRight = state.right;
                 state.right = null;
                 applyState();
                 if (notice) { notice.style.display = 'block'; setTimeout(() => notice.style.display = 'none', 3000); }
             } else if (e.matches && savedRight && !state.right) {
-                // Screen wide enough — restore dual pane
                 state.right = savedRight;
                 savedRight = null;
                 applyState();
@@ -286,14 +369,12 @@
         }
 
         mq.addEventListener('change', handleWidth);
-        // Initial check
         if (!mq.matches && state.right) handleWidth(mq);
     }
 
     // ── Listen for view mode change from settings iframe ──
     window.addEventListener('storage', (e) => {
         if (e.key === 'eclaw-view-mode' && e.newValue === 'single') {
-            // User switched to single mode in settings — exit workspace
             window.location.href = (state.left || 'dashboard') + '.html';
         }
     });
