@@ -66,12 +66,20 @@
         .kb-card-priority[data-p="P1"] { background:rgba(249,115,22,0.15); color:#f97316; }
         .kb-card-priority[data-p="P2"] { background:rgba(59,130,246,0.15); color:#3b82f6; }
         .kb-card-priority[data-p="P3"] { background:rgba(107,114,128,0.15); color:#6b7280; }
-        .kb-card-assigned { font-size:10px; color:var(--text-muted); }
+        .kb-card-assigned { font-size:10px; color:var(--text-muted); display:flex; align-items:center; gap:4px; }
+        .kb-card-avatars { display:flex; gap:-4px; }
+        .kb-card-avatar { width:18px; height:18px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:11px; background:var(--input-bg); border:1px solid var(--card-border); margin-left:-4px; }
+        .kb-card-avatar:first-child { margin-left:0; }
+        .kb-card-avatar img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
 
         .kb-card-title { font-size:13px; font-weight:600; color:var(--text); margin-bottom:4px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
         .kb-card-desc { font-size:11px; color:var(--text-secondary); line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin-bottom:8px; }
-        .kb-card-footer { display:flex; gap:10px; font-size:10px; color:var(--text-muted); }
+        .kb-card-footer { display:flex; gap:8px; font-size:10px; color:var(--text-muted); flex-wrap:wrap; align-items:center; }
         .kb-card-footer span { display:flex; align-items:center; gap:2px; }
+        .kb-card-countdown { font-weight:600; }
+        .kb-card-countdown.urgent { color:#ef4444; }
+        .kb-card-countdown.warning { color:#fbbf24; }
+        .kb-card-time { color:var(--text-muted); font-size:10px; margin-left:auto; }
 
         /* Stale indicator */
         .kb-card.stale { border-color:#fbbf24; }
@@ -100,12 +108,19 @@
         .kb-modal-panel { display:none; padding:16px 24px; }
         .kb-modal-panel.active { display:block; }
 
-        /* Comments */
-        .kb-comment { padding:10px 0; border-bottom:1px solid var(--card-border); }
-        .kb-comment:last-child { border-bottom:none; }
-        .kb-comment-header { display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); margin-bottom:4px; }
-        .kb-comment-text { font-size:13px; color:var(--text); line-height:1.6; }
-        .kb-comment-text.system { color:var(--text-secondary); font-style:italic; }
+        /* Comments — chat bubble style */
+        .kb-comments-list { display:flex; flex-direction:column; gap:8px; max-height:400px; overflow-y:auto; padding:4px 0; }
+        .kb-comment { max-width:85%; display:flex; flex-direction:column; }
+        .kb-comment.sent { align-self:flex-end; align-items:flex-end; }
+        .kb-comment.received { align-self:flex-start; align-items:flex-start; }
+        .kb-comment.system-msg { align-self:center; max-width:90%; }
+        .kb-comment-source { font-size:11px; color:var(--text-muted); margin-bottom:2px; display:flex; align-items:center; gap:4px; }
+        .kb-comment-source .comment-avatar { font-size:13px; }
+        .kb-comment-bubble { padding:8px 12px; border-radius:12px; font-size:13px; color:var(--text); line-height:1.55; word-break:break-word; }
+        .kb-comment.sent .kb-comment-bubble { background:var(--primary); color:#fff; border-bottom-right-radius:4px; }
+        .kb-comment.received .kb-comment-bubble { background:var(--input-bg); border:1px solid var(--card-border); border-bottom-left-radius:4px; }
+        .kb-comment.system-msg .kb-comment-bubble { background:none; color:var(--text-secondary); font-style:italic; font-size:12px; text-align:center; padding:4px 0; }
+        .kb-comment-time { font-size:10px; color:var(--text-muted); margin-top:2px; }
         .kb-comment-input { display:flex; gap:8px; margin-top:12px; }
         .kb-comment-input textarea { flex:1; background:var(--input-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text); font-size:13px; resize:vertical; min-height:60px; font-family:inherit; }
         .kb-comment-input button { align-self:flex-end; }
@@ -156,6 +171,30 @@
             .kb-mobile-tabs { display:flex; }
             .kb-mobile-list { display:flex; flex-direction:column; gap:8px; }
             .kb-column { display:none; flex:0 0 260px; min-width:260px; }
+
+            /* Modal: near full-screen */
+            .kb-modal-overlay { padding:0; align-items:stretch; }
+            .kb-modal { max-width:100%; max-height:100vh; border-radius:0; display:flex; flex-direction:column; }
+            .kb-modal-header { padding:16px; }
+            .kb-modal-header h3 { font-size:16px; }
+            .kb-modal-meta { padding:10px 16px; flex-wrap:wrap; gap:8px; }
+            .kb-modal-tabs { padding:0 12px; }
+            .kb-modal-tab { padding:8px 12px; font-size:12px; }
+            .kb-modal-panel { padding:12px 16px; flex:1; overflow-y:auto; }
+
+            /* Comments: adaptive bubble width + sticky input */
+            .kb-comments-list { max-height:none; flex:1; }
+            .kb-comment { max-width:90%; }
+            .kb-comment-input { position:sticky; bottom:0; background:var(--card); padding:8px 0 0; margin-top:auto; }
+            .kb-comment-input textarea { min-height:44px; }
+
+            /* Move bar: wrap */
+            .kb-move-bar { padding:10px 16px; flex-wrap:wrap; gap:6px; }
+            .kb-move-btn { padding:6px 10px; font-size:11px; flex:1 1 auto; text-align:center; min-width:0; }
+
+            /* Toolbar compact */
+            .kb-toolbar { flex-direction:column; align-items:stretch; }
+            .kb-toolbar-actions { justify-content:space-between; }
         }
         @media (min-width: 769px) {
             .kb-mobile-list { display:none; }
@@ -396,20 +435,58 @@
             renderMobileList();
         }
 
+        // Relative time helper
+        function relativeTime(ts) {
+            if (!ts) return '';
+            const diff = Date.now() - new Date(ts).getTime();
+            const mins = Math.floor(diff / 60000);
+            if (mins < 1) return t('kb_time_now', 'just now');
+            if (mins < 60) return mins + t('kb_time_min', 'm ago');
+            const hrs = Math.floor(mins / 60);
+            if (hrs < 24) return hrs + t('kb_time_hr', 'h ago');
+            const days = Math.floor(hrs / 24);
+            return days + t('kb_time_day', 'd ago');
+        }
+
+        // Stale countdown helper
+        function staleCountdown(card) {
+            if (!card.status_changed_at || !card.stale_threshold_ms) return '';
+            if (card.status === 'backlog' || card.status === 'done') return '';
+            const deadline = new Date(card.status_changed_at).getTime() + (card.stale_threshold_ms || 10800000);
+            const remaining = deadline - Date.now();
+            if (remaining <= 0) return `<span class="kb-card-countdown urgent" data-i18n="kb_stale_overdue">⏰ ${t('kb_stale_overdue','Overdue')}</span>`;
+            const hrs = Math.floor(remaining / 3600000);
+            const mins = Math.floor((remaining % 3600000) / 60000);
+            const urgentClass = remaining < 1800000 ? ' urgent' : remaining < 3600000 ? ' warning' : '';
+            return `<span class="kb-card-countdown${urgentClass}">⏰ ${hrs}h ${mins}m</span>`;
+        }
+
+        // Render avatar badges for assigned bots
+        function renderAssignedAvatars(botIds) {
+            if (!botIds || !botIds.length) return '<span>' + t('kb_unassigned','Unassigned') + '</span>';
+            return '<span class="kb-card-avatars">' + botIds.map(id => {
+                const avatar = typeof getAvatarForEntity === 'function' ? getAvatarForEntity(id) : '🦞';
+                const name = typeof getEntityDisplayName === 'function' ? getEntityDisplayName(id) : '#'+id;
+                const inner = (typeof isAvatarUrl === 'function' && isAvatarUrl(avatar))
+                    ? `<img src="${avatar}" alt="${name}" title="${name}">`
+                    : `<span title="${escapeHtml(name)}">${avatar}</span>`;
+                return `<span class="kb-card-avatar">${inner}</span>`;
+            }).join('') + '</span>';
+        }
+
         function renderCard(card) {
-            const bots = (card.assignedBots||[]).map(id => {
-                const ent = boundEntities.find(e => e.entityId === id);
-                return ent ? (ent.name || ent.character || `#${id}`) : `#${id}`;
-            }).join(', ');
+            console.log('[Kanban] renderCard:', card.id, card.title, 'assigned:', card.assignedBots);
             const isStale = card.is_stale ? ' stale' : '';
             const commentCount = card.comment_count || 0;
             const noteCount = card.note_count || 0;
             const fileCount = card.file_count || 0;
+            const countdown = staleCountdown(card);
+            const timeAgo = relativeTime(card.created_at);
             return `<div class="kb-card${isStale}" data-id="${card.id}" data-priority="${card.priority}" draggable="true"
                          ondragstart="onDragStart(event)" onclick="openDetail('${card.id}')">
                 <div class="kb-card-top">
                     <span class="kb-card-priority" data-p="${card.priority}">${card.priority}</span>
-                    <span class="kb-card-assigned">${escapeHtml(bots)}</span>
+                    <span class="kb-card-assigned">${renderAssignedAvatars(card.assignedBots)}</span>
                 </div>
                 <div class="kb-card-title">${escapeHtml(card.title)}</div>
                 ${card.description ? '<div class="kb-card-desc">'+escapeHtml(card.description)+'</div>' : ''}
@@ -417,6 +494,8 @@
                     ${commentCount ? '<span>💬 '+commentCount+'</span>' : ''}
                     ${noteCount ? '<span>📝 '+noteCount+'</span>' : ''}
                     ${fileCount ? '<span>📎 '+fileCount+'</span>' : ''}
+                    ${countdown}
+                    ${timeAgo ? '<span class="kb-card-time">' + timeAgo + '</span>' : ''}
                 </div>
             </div>`;
         }
@@ -519,25 +598,48 @@
         }
 
         async function loadComments() {
+            console.log('[Kanban] loadComments for card:', openCardId);
             const panel = document.getElementById('panel-comments');
             try {
                 const data = await apiGetComments(openCardId);
                 const comments = data.comments || [];
-                panel.innerHTML = comments.map(c => `
-                    <div class="kb-comment">
-                        <div class="kb-comment-header">
-                            <span>${c.from_entity_id != null ? '#'+c.from_entity_id : 'System'}</span>
-                            <span>${formatTime(c.created_at)}</span>
-                        </div>
-                        <div class="kb-comment-text${c.is_system ? ' system' : ''}">${escapeHtml(c.text)}</div>
-                    </div>
-                `).join('') + `
+                console.log('[Kanban] loadComments:', comments.length, 'comments loaded');
+
+                const card = allCards.find(c => c.id === openCardId);
+                const myEntityIds = new Set(boundEntities.map(e => e.entityId));
+
+                const commentsHtml = comments.map(c => {
+                    if (c.is_system) {
+                        return `<div class="kb-comment system-msg">
+                            <div class="kb-comment-bubble">${escapeHtml(c.text)}</div>
+                            <div class="kb-comment-time">${formatTime(c.created_at)}</div>
+                        </div>`;
+                    }
+                    const isSent = c.from_entity_id != null && myEntityIds.has(c.from_entity_id);
+                    const avatar = typeof getAvatarForEntity === 'function' ? getAvatarForEntity(c.from_entity_id) : '🦞';
+                    const name = typeof getEntityDisplayName === 'function' ? getEntityDisplayName(c.from_entity_id) : '#'+(c.from_entity_id??'?');
+                    const avatarHtml = typeof renderAvatarHtml === 'function' ? renderAvatarHtml(avatar, 16) : avatar;
+                    return `<div class="kb-comment ${isSent ? 'sent' : 'received'}">
+                        <div class="kb-comment-source"><span class="comment-avatar">${avatarHtml}</span> ${escapeHtml(name)}</div>
+                        <div class="kb-comment-bubble">${escapeHtml(c.text)}</div>
+                        <div class="kb-comment-time">${formatTime(c.created_at)}</div>
+                    </div>`;
+                }).join('');
+
+                panel.innerHTML = `
+                    <div class="kb-comments-list">${commentsHtml || '<div class="kb-empty">' + t('kb_no_comments','No comments yet') + '</div>'}</div>
                     <div class="kb-comment-input">
-                        <textarea id="commentText" data-i18n-placeholder="kb_placeholder_comment" placeholder="Add a comment..."></textarea>
-                        <button class="btn btn-primary" data-i18n="kb_btn_send" onclick="postComment()">Send</button>
+                        <textarea id="commentText" data-i18n-placeholder="kb_placeholder_comment" placeholder="${t('kb_placeholder_comment','Add a comment...')}"></textarea>
+                        <button class="btn btn-primary" data-i18n="kb_btn_send" onclick="postComment()">${t('kb_btn_send','Send')}</button>
                     </div>
                 `;
-            } catch(e) { panel.innerHTML = '<div class="kb-empty">Failed to load comments</div>'; }
+                // Auto-scroll comments to bottom
+                const list = panel.querySelector('.kb-comments-list');
+                if (list) list.scrollTop = list.scrollHeight;
+            } catch(e) {
+                console.error('[Kanban] loadComments failed:', e.message, e.stack);
+                panel.innerHTML = '<div class="kb-empty">' + t('kb_load_failed','Failed to load comments') + '</div>';
+            }
         }
 
         async function postComment() {
