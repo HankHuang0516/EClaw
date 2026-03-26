@@ -1,3 +1,10 @@
+## [1.172.1](https://github.com/HankHuang0516/EClaw/compare/v1.172.0...v1.172.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* change visibility endpoint from PATCH to POST (Railway proxy blocks PATCH) ([#497](https://github.com/HankHuang0516/EClaw/issues/497)) ([5121d5f](https://github.com/HankHuang0516/EClaw/commit/5121d5fc587e029bafc6156f46cb6eb325dffd6d))
+
 # [1.172.0](https://github.com/HankHuang0516/EClaw/compare/v1.171.0...v1.172.0) (2026-03-26)
 
 
