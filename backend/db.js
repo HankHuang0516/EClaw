@@ -1727,7 +1727,7 @@ async function cleanupExpiredPendingMessages(cutoffTimestamp) {
 async function setEntityPublic(deviceId, entityId, isPublic) {
     try {
         const now = isPublic ? new Date().toISOString() : null;
-        const result = await chatPool.query(
+        const result = await pool.query(
             `UPDATE entities SET is_public = $1, published_at = CASE WHEN $1 THEN COALESCE(published_at, $2::timestamptz) ELSE published_at END
              WHERE device_id = $3 AND entity_id = $4`,
             [isPublic, now, deviceId, entityId]
@@ -1735,7 +1735,7 @@ async function setEntityPublic(deviceId, entityId, isPublic) {
         // If entity row doesn't exist yet, INSERT it (saveDeviceData may not have run)
         if (result.rowCount === 0) {
             console.warn(`[DB] setEntityPublic: entity ${deviceId}:${entityId} not in DB yet, inserting`);
-            await chatPool.query(
+            await pool.query(
                 `INSERT INTO entities (device_id, entity_id, is_public, published_at, is_bound)
                  VALUES ($1, $2, $3, $4, true)
                  ON CONFLICT (device_id, entity_id) DO UPDATE SET is_public = $3, published_at = COALESCE(EXCLUDED.published_at, entities.published_at)`,
@@ -1786,7 +1786,7 @@ async function searchPublicCards({ q, tag, capability, limit = 20, offset = 0, s
             LIMIT $${paramIdx} OFFSET $${paramIdx + 1}
         `;
 
-        const result = await chatPool.query(sql, params);
+        const result = await pool.query(sql, params);
         return result.rows.map(r => ({
             publicCode: r.public_code,
             name: r.name,
@@ -1810,7 +1810,7 @@ async function searchPublicCards({ q, tag, capability, limit = 20, offset = 0, s
 
 async function getPublicCardDetail(publicCode) {
     try {
-        const result = await chatPool.query(
+        const result = await pool.query(
             `SELECT e.public_code, e.name, e.character, e.avatar, e.agent_card,
                     e.avg_rating, e.rating_count, e.community_message_count,
                     e.published_at, e.level, e.xp, e.state
@@ -1842,7 +1842,7 @@ async function getPublicCardDetail(publicCode) {
 
 async function getCommunityMessages(publicCode, limit = 50, offset = 0) {
     try {
-        const result = await chatPool.query(
+        const result = await pool.query(
             `SELECT id, card_public_code, author_type, author_id, author_name, text, reply_to, created_at
              FROM community_messages
              WHERE card_public_code = $1
@@ -1859,13 +1859,13 @@ async function getCommunityMessages(publicCode, limit = 50, offset = 0) {
 
 async function addCommunityMessage(publicCode, authorType, authorId, authorName, text, replyTo) {
     try {
-        const result = await chatPool.query(
+        const result = await pool.query(
             `INSERT INTO community_messages (card_public_code, author_type, author_id, author_name, text, reply_to)
              VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
             [publicCode, authorType, authorId, authorName, text, replyTo || null]
         );
         // Increment message count on entity
-        await chatPool.query(
+        await pool.query(
             `UPDATE entities SET community_message_count = community_message_count + 1
              WHERE public_code = $1`,
             [publicCode]
@@ -1879,7 +1879,7 @@ async function addCommunityMessage(publicCode, authorType, authorId, authorName,
 
 async function upsertCommunityRating(publicCode, deviceId, stars) {
     try {
-        await chatPool.query(
+        await pool.query(
             `INSERT INTO community_ratings (card_public_code, device_id, stars)
              VALUES ($1, $2, $3)
              ON CONFLICT (card_public_code, device_id)
@@ -1887,14 +1887,14 @@ async function upsertCommunityRating(publicCode, deviceId, stars) {
             [publicCode, deviceId, stars]
         );
         // Recalculate average
-        const result = await chatPool.query(
+        const result = await pool.query(
             `SELECT AVG(stars)::numeric(2,1) AS avg, COUNT(*)::integer AS cnt
              FROM community_ratings WHERE card_public_code = $1`,
             [publicCode]
         );
         const avg = parseFloat(result.rows[0].avg) || 0;
         const cnt = parseInt(result.rows[0].cnt) || 0;
-        await chatPool.query(
+        await pool.query(
             `UPDATE entities SET avg_rating = $1, rating_count = $2 WHERE public_code = $3`,
             [avg, cnt, publicCode]
         );
