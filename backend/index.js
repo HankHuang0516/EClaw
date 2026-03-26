@@ -6454,11 +6454,20 @@ app.put('/api/entity/agent-card', (req, res) => {
     const { valid, card, error } = validateAgentCard(agentCard);
     if (!valid) return res.status(400).json({ success: false, error });
     syncEntityCard(entity, card);
+
+    // Optional: set public visibility (for Bot Plaza)
+    const isPublic = req.body.public;
+    if (isPublic !== undefined) {
+        entity.isPublic = !!isPublic;
+        entity.publishedAt = isPublic ? (entity.publishedAt || Date.now()) : null;
+        serverLog('info', 'bot_plaza', `Entity ${entityId} visibility: ${isPublic ? 'PUBLIC' : 'PRIVATE'}`, { deviceId, entityId });
+    }
+
     // Persist to DB
     if (typeof db.saveDeviceData === 'function') {
         db.saveDeviceData(deviceId, device).catch(err => console.error('[AgentCard] DB save error:', err.message));
     }
-    res.json({ success: true, agentCard: card });
+    res.json({ success: true, agentCard: card, isPublic: !!entity.isPublic });
 });
 
 /**
