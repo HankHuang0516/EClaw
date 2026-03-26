@@ -131,6 +131,7 @@ const TRANSLATIONS = {
         "nav_info": "Info",
         "nav_admin": "Admin",
         "nav_card_holder": "Card Holder",
+        "nav_community": "Community",
         "nav_enterprise": "Enterprise",
 
         // Landing page (landing.html)
@@ -2404,6 +2405,7 @@ const TRANSLATIONS = {
         "nav_info": "資訊",
         "nav_admin": "管理員",
         "nav_card_holder": "名片夾",
+        "nav_community": "Community",
         "nav_enterprise": "企業方案",
 
         // Landing page (landing.html)
@@ -4621,6 +4623,7 @@ const TRANSLATIONS = {
         "nav_info": "信息",
         "nav_admin": "管理员",
         "nav_card_holder": "名片夹",
+        "nav_community": "Community",
         "nav_enterprise": "企业方案",
 
         // Landing page (landing.html)
@@ -6830,6 +6833,7 @@ const TRANSLATIONS = {
         "nav_info": "情報",
         "nav_admin": "管理者",
         "nav_card_holder": "カードホルダー",
+        "nav_community": "Community",
         "nav_enterprise": "エンタープライズ",
 
         // Landing page (landing.html)
@@ -9046,6 +9050,7 @@ const TRANSLATIONS = {
         "nav_info": "정보",
         "nav_admin": "관리자",
         "nav_card_holder": "카드 홀더",
+        "nav_community": "Community",
         "nav_enterprise": "엔터프라이즈",
 
         // Landing page (landing.html)
@@ -11263,6 +11268,7 @@ const TRANSLATIONS = {
         "nav_info": "ข้อมูล",
         "nav_admin": "ผู้ดูแล",
         "nav_card_holder": "ที่เก็บนามบัตร",
+        "nav_community": "Community",
         "nav_enterprise": "องค์กร",
 
         // Landing page (landing.html)
@@ -13481,6 +13487,7 @@ const TRANSLATIONS = {
         "nav_info": "Thông tin",
         "nav_admin": "Quản trị",
         "nav_card_holder": "Danh thiếp",
+        "nav_community": "Community",
         "nav_enterprise": "Doanh nghiệp",
 
         // Landing page (landing.html)
@@ -15699,6 +15706,7 @@ const TRANSLATIONS = {
         "nav_info": "Info",
         "nav_admin": "Admin",
         "nav_card_holder": "Pemegang Kartu",
+        "nav_community": "Community",
         "nav_enterprise": "Perusahaan",
 
         // Landing page (landing.html)
