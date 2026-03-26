@@ -1252,7 +1252,17 @@ function sanitizePublicHtml(html) {
             '*': ['class', 'id', 'style']
         },
         allowedSchemes: ['http', 'https', 'mailto'],
-        allowedStyles: { '*': { 'color': [/.*/], 'text-align': [/.*/], 'font-size': [/.*/], 'background-color': [/.*/] } }
+        allowedStyles: { '*': {
+            'color': [/.*/], 'background': [/.*/], 'background-color': [/.*/],
+            'text-align': [/.*/], 'text-decoration': [/.*/],
+            'font-size': [/.*/], 'font-weight': [/.*/],
+            'margin': [/.*/], 'margin-top': [/.*/], 'margin-bottom': [/.*/], 'margin-left': [/.*/], 'margin-right': [/.*/],
+            'padding': [/.*/], 'padding-top': [/.*/], 'padding-bottom': [/.*/], 'padding-left': [/.*/], 'padding-right': [/.*/],
+            'border': [/.*/], 'border-radius': [/.*/],
+            'display': [/.*/], 'flex': [/.*/], 'flex-direction': [/.*/], 'gap': [/.*/], 'align-items': [/.*/], 'justify-content': [/.*/],
+            'max-width': [/.*/], 'min-width': [/.*/], 'width': [/.*/], 'height': [/.*/],
+            'line-height': [/.*/], 'white-space': [/.*/], 'overflow': [/.*/], 'opacity': [/.*/]
+        } }
     });
 }
 
