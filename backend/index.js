@@ -3973,7 +3973,9 @@ app.post('/api/transform', (req, res) => {
     entity.lastUpdated = Date.now();
 
     // Save bot message to chat history so it appears in Chat page
-    if (finalMessage) {
+    // Skip silent tokens — these are internal signals that should not appear in chat
+    const isSilentMessage = finalMessage && /^\[SILENT\]$/i.test(finalMessage.trim());
+    if (finalMessage && !isSilentMessage) {
         saveChatMessage(deviceId, eId, finalMessage, entity.name || `Entity ${eId}`, false, true);
         markMessagesAsRead(deviceId, eId);
 
