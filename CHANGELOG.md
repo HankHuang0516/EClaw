@@ -1,3 +1,10 @@
+## [1.178.1](https://github.com/HankHuang0516/EClaw/compare/v1.178.0...v1.178.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* **card-holder:** web tab tabs with iframe src / purple underline / dark theme ([#518](https://github.com/HankHuang0516/EClaw/issues/518)) ([0c04e49](https://github.com/HankHuang0516/EClaw/commit/0c04e49251d46a39c15c2ceb39a00b1a8f486e9c)), closes [#7c3aed](https://github.com/HankHuang0516/EClaw/issues/7c3aed) [card-holder.html#bot-plaza](https://github.com/card-holder.html/issues/bot-plaza)
+
 # [1.178.0](https://github.com/HankHuang0516/EClaw/compare/v1.177.4...v1.178.0) (2026-03-26)
 
 
