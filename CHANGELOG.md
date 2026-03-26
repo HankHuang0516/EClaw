@@ -1,3 +1,15 @@
+# [1.186.0](https://github.com/HankHuang0516/EClaw/compare/v1.185.0...v1.186.0) (2026-03-26)
+
+
+### Bug Fixes
+
+* **info:** P3-3 dark theme + spacing + WCAG AA contrast ([#527](https://github.com/HankHuang0516/EClaw/issues/527)) ([4da403f](https://github.com/HankHuang0516/EClaw/commit/4da403f7937d9136b260466ea9966f6b7da6e3df)), closes [#b0b0b0](https://github.com/HankHuang0516/EClaw/issues/b0b0b0) [#0D0D1A](https://github.com/HankHuang0516/EClaw/issues/0D0D1A) [#b8b8b8](https://github.com/HankHuang0516/EClaw/issues/b8b8b8) [#0D0D1A](https://github.com/HankHuang0516/EClaw/issues/0D0D1A) [#b8b8b8](https://github.com/HankHuang0516/EClaw/issues/b8b8b8)
+
+
+### Features
+
+* **kanban:** Kanban Board UI — 五欄看板 + Drag & Drop + Detail Modal ([#533](https://github.com/HankHuang0516/EClaw/issues/533)) ([834c05c](https://github.com/HankHuang0516/EClaw/commit/834c05c4f0591810e1f615a8581942b2afb71437))
+
 # [1.185.0](https://github.com/HankHuang0516/EClaw/compare/v1.184.0...v1.185.0) (2026-03-26)
 
 
