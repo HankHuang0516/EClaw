@@ -602,7 +602,9 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             // Check for pending cross-device context first, so local copy also shows routing direction
             const pendingCross = message ? (entity.messageQueue && entity.messageQueue.findLast(m => m.crossDevice)) : null;
             const hasCrossRoute = !!(pendingCross && pendingCross.fromDeviceId);
-            if (message) {
+            // Skip silent tokens — internal signals should not appear in chat
+            const isSilentMsg = message && /^\[SILENT\]$/i.test(message.trim());
+            if (message && !isSilentMsg) {
                 // If replying to a cross-device message, tag local copy with routing info
                 const localSource = hasCrossRoute
                     ? `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`
