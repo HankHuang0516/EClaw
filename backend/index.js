@@ -3087,6 +3087,101 @@ app.get('/api/whoami', (req, res) => {
     return res.status(401).json({ success: false, error: 'Invalid botSecret' });
 });
 
+/**
+ * GET /api/release-notes — Parse CHANGELOG.md and return structured release notes
+ * Query: ?limit=10&since=1.168.0
+ * No auth required (public endpoint)
+ */
+app.get('/api/release-notes', (req, res) => {
+    try {
+        const changelogPath = path.join(__dirname, '..', 'CHANGELOG.md');
+        if (!fs.existsSync(changelogPath)) {
+            return res.status(404).json({ success: false, error: 'CHANGELOG.md not found' });
+        }
+
+        const raw = fs.readFileSync(changelogPath, 'utf8');
+        const releases = [];
+
+        // Parse semantic-release CHANGELOG format:
+        // ## [1.172.1](url) (2026-03-26)
+        // ### Bug Fixes / ### Features
+        // * description ([#PR](url)) ([hash](url))
+        const versionRegex = /^##?\s+\[(\d+\.\d+\.\d+)\]\([^)]*\)\s+\((\d{4}-\d{2}-\d{2})\)/;
+        const sectionRegex = /^###\s+(.+)/;
+        const itemRegex = /^\*\s+(?:\*\*([^*]+)\*\*:\s*)?(.+)/;
+
+        let currentRelease = null;
+        let currentSection = null;
+
+        for (const line of raw.split('\n')) {
+            const vMatch = line.match(versionRegex);
+            if (vMatch) {
+                if (currentRelease) releases.push(currentRelease);
+                currentRelease = {
+                    version: vMatch[1],
+                    date: vMatch[2],
+                    sections: {},
+                    changes: []
+                };
+                currentSection = null;
+                continue;
+            }
+
+            if (!currentRelease) continue;
+
+            const sMatch = line.match(sectionRegex);
+            if (sMatch) {
+                currentSection = sMatch[1].trim();
+                if (!currentRelease.sections[currentSection]) {
+                    currentRelease.sections[currentSection] = [];
+                }
+                continue;
+            }
+
+            const iMatch = line.match(itemRegex);
+            if (iMatch && currentSection) {
+                // Clean up: remove commit hash links
+                let desc = iMatch[2].replace(/\s*\(\[[a-f0-9]+\]\([^)]+\)\)\s*$/, '').trim();
+                // Remove trailing PR link duplicates
+                desc = desc.replace(/,\s*closes\s+\[#[^\]]+\]\([^)]+\)\s*$/, '').trim();
+                const scope = iMatch[1] || null;
+                const item = { description: desc, scope };
+                currentRelease.sections[currentSection].push(item);
+                currentRelease.changes.push({
+                    type: currentSection,
+                    scope,
+                    description: desc
+                });
+            }
+        }
+        if (currentRelease) releases.push(currentRelease);
+
+        // Apply filters
+        let filtered = releases;
+
+        const since = req.query.since;
+        if (since) {
+            const sinceIdx = filtered.findIndex(r => r.version === since);
+            if (sinceIdx >= 0) {
+                filtered = filtered.slice(0, sinceIdx);
+            }
+        }
+
+        const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+        filtered = filtered.slice(0, limit);
+
+        res.json({
+            success: true,
+            count: filtered.length,
+            total: releases.length,
+            releases: filtered
+        });
+    } catch (err) {
+        console.error('[ReleaseNotes] Error:', err.message);
+        res.status(500).json({ success: false, error: 'Failed to parse release notes' });
+    }
+});
+
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: Date.now(), build: SERVER_BUILD_TAG, uptime: process.uptime(), startedAt: SERVER_STARTED_AT.toISOString() });
 });
