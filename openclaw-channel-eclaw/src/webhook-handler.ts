@@ -61,7 +61,18 @@ export function createWebhookHandler(
         : undefined;
 
       // Build body — enrich with event context for bot-to-bot and broadcast
+      // Append media URL to body so text-based agents can see/analyze images
       let body = msg.text || '';
+      if (msg.mediaUrl && msg.mediaType) {
+        const mediaLabel = msg.mediaType === 'photo' ? 'Image'
+          : msg.mediaType === 'voice' ? 'Voice'
+          : msg.mediaType === 'video' ? 'Video'
+          : 'File';
+        const urlToAppend = msg.backupUrl || msg.mediaUrl;
+        body = body
+          ? `${body}\n[${mediaLabel}: ${urlToAppend}]`
+          : `[${mediaLabel}: ${urlToAppend}]`;
+      }
       if ((event === 'entity_message' || event === 'broadcast') && fromEntityId !== undefined) {
         const senderLabel = fromCharacter
           ? `Entity ${fromEntityId} (${fromCharacter})`
