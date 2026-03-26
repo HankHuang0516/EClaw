@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0f0f14; color:#e0e0e0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; overflow:hidden; }
+.container { width:778px; height:500px; margin:0 auto; position:relative; display:flex; gap:20px; align-items:center; justify-content:center; padding:20px; }
+
+/* Left: Settings panel */
+.proxy-settings { background:#16172a; border-radius:12px; width:340px; border:1px solid #2a2b40; padding:20px; flex-shrink:0; }
+.proxy-header { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
+.proxy-header h3 { font-size:15px; font-weight:700; }
+.form-group { margin-bottom:12px; }
+.form-label { display:block; font-size:11px; color:#aaa; margin-bottom:3px; font-weight:500; }
+.form-input { width:100%; background:#0f0f14; border:1px solid #2a2b40; border-radius:6px; padding:7px 10px; color:#e0e0e0; font-size:12px; }
+.form-input.url { font-family:'SFMono-Regular',Consolas,monospace; color:#7c83ff; font-size:11px; }
+.toggle-row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; }
+.toggle-label { font-size:12px; }
+.toggle { width:36px; height:20px; border-radius:10px; background:#4ade80; position:relative; cursor:pointer; }
+.toggle::after { content:''; position:absolute; width:16px; height:16px; border-radius:50%; background:#fff; top:2px; right:2px; }
+.toggle.off { background:#555; }
+.toggle.off::after { right:auto; left:2px; }
+.btn-copy { background:#2a2b40; color:#ccc; border:none; padding:5px 12px; border-radius:5px; font-size:11px; cursor:pointer; margin-top:4px; }
+.btn-primary { background:#7c3aed; color:#fff; border:none; padding:7px 16px; border-radius:6px; font-size:12px; cursor:pointer; font-weight:600; }
+.share-section { border-top:1px solid #2a2b40; margin-top:12px; padding-top:12px; }
+.qr-placeholder { width:80px; height:80px; background:#1a1a2e; border:1px solid #2a2b40; border-radius:8px; display:flex; align-items:center; justify-content:center; margin:8px auto; }
+.qr-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:1px; width:56px; height:56px; }
+.qr-cell { border-radius:1px; }
+.qr-cell.dark { background:#e0e0e0; }
+.qr-cell.light { background:transparent; }
+
+/* Right: Preview window */
+.proxy-preview { background:#16172a; border-radius:12px; flex:1; border:1px solid #2a2b40; overflow:hidden; display:flex; flex-direction:column; height:440px; }
+.preview-bar { background:#1e1f36; padding:10px 14px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #2a2b40; }
+.preview-avatar { width:32px; height:32px; border-radius:50%; background:#7c3aed; display:flex; align-items:center; justify-content:center; font-size:16px; }
+.preview-name { font-weight:600; font-size:13px; }
+.preview-badge { font-size:10px; color:#4ade80; background:rgba(74,222,128,0.1); padding:2px 8px; border-radius:8px; }
+.preview-messages { flex:1; padding:14px; display:flex; flex-direction:column; gap:8px; overflow-y:auto; }
+.msg { max-width:80%; padding:8px 12px; border-radius:10px; font-size:12px; line-height:1.5; }
+.msg-bot { background:#2a2b40; align-self:flex-start; border-bottom-left-radius:3px; }
+.msg-user { background:#7c3aed; color:#fff; align-self:flex-end; border-bottom-right-radius:3px; }
+.msg-time { font-size:9px; color:#666; margin-top:3px; }
+.preview-input { padding:8px 10px; background:#1e1f36; display:flex; gap:6px; align-items:center; border-top:1px solid #2a2b40; }
+.preview-input input { flex:1; background:#0f0f14; border:1px solid #2a2b40; border-radius:6px; padding:6px 10px; color:#e0e0e0; font-size:12px; }
+.preview-input button { background:#7c3aed; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:12px; cursor:pointer; }
+.typing { display:flex; gap:4px; align-items:center; padding:8px 12px; }
+.typing-dot { width:6px; height:6px; border-radius:50%; background:#888; animation:blink 1.4s infinite; }
+.typing-dot:nth-child(2) { animation-delay:0.2s; }
+.typing-dot:nth-child(3) { animation-delay:0.4s; }
+@keyframes blink { 0%,80%,100%{opacity:0.3} 40%{opacity:1} }
+
+/* Frame overlay */
+.arrow-label { position:absolute; background:rgba(124,58,237,0.9); color:#fff; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:600; display:none; z-index:5; }
+.frame-indicator { position:absolute; bottom:6px; right:10px; font-size:10px; color:#555; background:#16172a; padding:3px 8px; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="container" id="root">
+    <!-- Left: Proxy Settings -->
+    <div class="proxy-settings">
+        <div class="proxy-header">
+            <span style="font-size:20px">🔗</span>
+            <h3>Proxy Window Setup</h3>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Agent</label>
+            <input class="form-input" value="ShopBot Pro" readonly>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Public URL</label>
+            <input class="form-input url" id="publicUrl" value="https://eclawbot.com/chat/s/e1swiy" readonly>
+            <button class="btn-copy" id="btnCopy">📋 Copy Link</button>
+        </div>
+        <div class="toggle-row">
+            <span class="toggle-label">Public Access</span>
+            <div class="toggle" id="togglePublic"></div>
+        </div>
+        <div class="toggle-row">
+            <span class="toggle-label">Collect User Info</span>
+            <div class="toggle off"></div>
+        </div>
+        <div class="toggle-row">
+            <span class="toggle-label">Show Agent Card</span>
+            <div class="toggle"></div>
+        </div>
+
+        <div class="share-section">
+            <label class="form-label">Share QR Code</label>
+            <div class="qr-placeholder">
+                <div class="qr-grid" id="qr"></div>
+            </div>
+            <div style="text-align:center">
+                <button class="btn-primary" id="btnShare">📤 Share</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Live Preview -->
+    <div class="proxy-preview" id="preview">
+        <div class="preview-bar">
+            <div class="preview-avatar">🛒</div>
+            <div>
+                <div class="preview-name">ShopBot Pro</div>
+                <span class="preview-badge">● Online</span>
+            </div>
+        </div>
+        <div class="preview-messages" id="messages">
+            <div class="msg msg-bot">
+                👋 Welcome! I'm ShopBot Pro, your 24/7 shopping assistant. How can I help you today?
+                <div class="msg-time">12:00</div>
+            </div>
+        </div>
+        <div class="preview-input">
+            <input id="inputField" placeholder="Type a message..." value="">
+            <button id="btnSend">Send</button>
+        </div>
+    </div>
+
+    <div class="arrow-label" id="arrow1" style="top:80px;left:330px">→ Live Preview</div>
+    <div class="arrow-label" id="arrow2" style="bottom:100px;left:20px">Share with customers</div>
+    <div class="frame-indicator" id="frameLabel"></div>
+</div>
+
+<script>
+// Generate fake QR
+const qr = document.getElementById('qr');
+const pattern = [1,1,1,0,1,0,1,1, 1,0,1,0,0,1,0,1, 1,1,1,0,1,1,1,0, 0,0,0,1,0,0,1,1, 1,0,1,1,0,1,0,0, 0,1,0,0,1,1,1,1, 1,0,1,0,1,0,0,1, 1,1,1,0,0,1,1,1];
+pattern.forEach(v => { const d=document.createElement('div'); d.className='qr-cell '+(v?'dark':'light'); qr.appendChild(d); });
+</script>
+</body>
+</html>
