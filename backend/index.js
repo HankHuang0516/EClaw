@@ -6460,7 +6460,7 @@ function validateAgentCard(card) {
  * PUT /api/entity/agent-card — Create or update agent card
  * Auth: deviceSecret (owner) OR botSecret (bot self-update)
  */
-app.put('/api/entity/agent-card', (req, res) => {
+app.put('/api/entity/agent-card', async (req, res) => {
     const { deviceId, deviceSecret, botSecret, entityId, agentCard } = req.body;
     if (!deviceId || entityId === undefined || entityId === null) {
         return res.status(400).json({ success: false, error: 'deviceId, entityId required' });
@@ -6488,14 +6488,22 @@ app.put('/api/entity/agent-card', (req, res) => {
         serverLog('info', 'bot_plaza', `Entity ${entityId} visibility: ${isPublic ? 'PUBLIC' : 'PRIVATE'}`, { deviceId, entityId });
     }
 
-    // Persist to DB — saveDeviceData FIRST (ensures entity row exists), then setEntityPublic
-    if (typeof db.saveDeviceData === 'function') {
-        db.saveDeviceData(deviceId, device).then(() => {
-            if (isPublic !== undefined) {
-                return db.setEntityPublic(deviceId, parseInt(entityId), !!isPublic);
-            }
-        }).catch(err => console.error('[AgentCard] DB save error:', err.message));
+    // Persist to DB — await saveDeviceData FIRST (ensures device+entity rows exist),
+    // THEN setEntityPublic (updates the is_public column that search queries)
+    try {
+        if (typeof db.saveDeviceData === 'function') {
+            await db.saveDeviceData(deviceId, device);
+            console.log(`[AgentCard] saveDeviceData OK for ${deviceId}`);
+        }
+        if (isPublic !== undefined) {
+            await db.setEntityPublic(deviceId, parseInt(entityId), !!isPublic);
+            console.log(`[AgentCard] setEntityPublic OK for ${deviceId}:${entityId} → ${!!isPublic}`);
+        }
+    } catch (err) {
+        console.error('[AgentCard] DB persist error:', err.message);
+        // Non-blocking — in-memory is already updated, DB will catch up
     }
+
     res.json({ success: true, agentCard: card, isPublic: !!entity.isPublic });
 });
 
