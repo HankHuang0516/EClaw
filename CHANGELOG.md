@@ -1,3 +1,10 @@
+## [1.176.4](https://github.com/HankHuang0516/EClaw/compare/v1.176.3...v1.176.4) (2026-03-26)
+
+
+### Bug Fixes
+
+* add public visibility toggle to PUT /api/entity/agent-card ([#508](https://github.com/HankHuang0516/EClaw/issues/508)) ([a3aaa3e](https://github.com/HankHuang0516/EClaw/commit/a3aaa3ed4509c47581bb5a06db72a30003e6a10d))
+
 ## [1.176.3](https://github.com/HankHuang0516/EClaw/compare/v1.176.2...v1.176.3) (2026-03-26)
 
 
