@@ -152,6 +152,29 @@
             display: flex;
             flex-direction: column;
         }
+        /* Grouped messages: tighter spacing, hide source/time */
+        .chat-msg.grouped {
+            margin-top: 2px;
+        }
+        .chat-msg.grouped .chat-source {
+            display: none;
+        }
+        .chat-msg.grouped .chat-meta {
+            display: none;
+        }
+        /* Date separator */
+        .chat-date-sep {
+            align-self: center;
+            text-align: center;
+            padding: 8px 16px;
+            margin: 12px 0;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted, #888);
+            background: var(--input-bg, #1e1f36);
+            border-radius: 12px;
+            letter-spacing: 0.3px;
+        }
 
         .chat-msg.sent {
             align-self: flex-end;
@@ -2575,7 +2598,42 @@
             }
 
             const displayMessages = groupBroadcastMessages(filtered);
-            container.innerHTML = displayMessages.map(msg => {
+
+            // Helper: get sender key for grouping
+            function senderKey(m) {
+                if (m.is_from_user && !isIncomingCrossDevice(m)) return 'user';
+                if (m.is_from_bot) return 'bot:' + (m.entity_id ?? '');
+                return 'other:' + (m.source || '');
+            }
+
+            // Helper: date separator label
+            function dateSepLabel(ts) {
+                const d = new Date(ts);
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+                const msgDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                if (msgDay.getTime() === today.getTime()) return i18n.t('chat_date_today') || 'Today';
+                if (msgDay.getTime() === yesterday.getTime()) return i18n.t('chat_date_yesterday') || 'Yesterday';
+                return d.toLocaleDateString([], { month: 'numeric', day: 'numeric' });
+            }
+
+            container.innerHTML = displayMessages.map((msg, idx) => {
+                const prev = idx > 0 ? displayMessages[idx - 1] : null;
+                const currTime = new Date(msg.created_at).getTime();
+                const prevTime = prev ? new Date(prev.created_at).getTime() : 0;
+                const gap = currTime - prevTime;
+                const FIVE_MIN = 5 * 60 * 1000;
+
+                // Date separator: new day or first message
+                let dateSep = '';
+                if (!prev || new Date(msg.created_at).toDateString() !== new Date(prev.created_at).toDateString()) {
+                    dateSep = `<div class="chat-date-sep">${dateSepLabel(msg.created_at)}</div>`;
+                }
+
+                // Grouped: same sender + within 5 minutes + no date break
+                const isGrouped = prev && !dateSep && gap < FIVE_MIN && senderKey(msg) === senderKey(prev);
+
                 // Received cross-device messages align left despite is_from_user=true
                 const isSent = msg.is_from_user && !isIncomingCrossDevice(msg);
                 const isPlatform = !msg.is_from_user && !msg.is_from_bot && msg.source === 'platform';
@@ -2700,8 +2758,8 @@
                         </div>`;
                 }
 
-                return `
-                    <div class="chat-msg ${msgClass}">
+                return `${dateSep}
+                    <div class="chat-msg ${msgClass}${isGrouped ? ' grouped' : ''}">
                         <div class="chat-source">${sourceLabel}</div>
                         <div class="chat-bubble${isMdRendered ? ' md-rendered' : ''}">${textHtml}${mediaHtml}${inlineImgHtml}</div>
                         ${previewId ? `<div class="link-preview-slot" id="${previewId}" data-url="${escapeHtml(firstUrl)}"></div>` : ''}
