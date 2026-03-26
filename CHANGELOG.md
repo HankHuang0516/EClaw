@@ -1,3 +1,10 @@
+## [1.189.1](https://github.com/HankHuang0516/EClaw/compare/v1.189.0...v1.189.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* **i18n:** 7 missing chat_ keys — en/zh/zh-CN ([#546](https://github.com/HankHuang0516/EClaw/issues/546)) ([3ab5e3c](https://github.com/HankHuang0516/EClaw/commit/3ab5e3cb35b018a26a5e2fcde9121cba557b6397))
+
 # [1.189.0](https://github.com/HankHuang0516/EClaw/compare/v1.188.1...v1.189.0) (2026-03-26)
 
 
