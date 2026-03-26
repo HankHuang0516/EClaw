@@ -1127,7 +1127,7 @@
                 + (block.originalPrice ? ' <span class="original">' + escapeHtml(block.originalPrice) + '</span>' : '') + '</div>';
             const actions = document.createElement('div');
             actions.className = 'rich-card-actions';
-            (block.actions || [{ label: '🛒 購買', type: 'primary', action: 'order' }]).forEach(a => {
+            (block.actions || [{ label: (typeof i18n !== 'undefined' && i18n.t) ? i18n.t('sc_order_buy') : '🛒 Buy', type: 'primary', action: 'order' }]).forEach(a => {
                 const btn = document.createElement('button');
                 btn.className = 'rich-card-btn ' + (a.type || 'primary');
                 btn.textContent = a.label || 'Action';
@@ -1194,7 +1194,7 @@
     function showOrderDialog(product) {
         const existing = document.getElementById('orderDialog');
         if (existing) existing.remove();
-        const name = product.name || product.title || '商品';
+        const name = product.name || product.title || ((typeof i18n !== 'undefined' && i18n.t) ? i18n.t('sc_order_product') : 'Product');
         const price = product.price || 'NT$ 0';
         const dialog = document.createElement('div');
         dialog.id = 'orderDialog';
@@ -1202,22 +1202,23 @@
         dialog.innerHTML = `<div style="background:var(--card);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:24px;max-width:380px;width:100%">
             <h3 style="margin:0 0 4px">🛒 ${escapeHtml(name)}</h3>
             <p style="color:var(--primary);font-weight:700;margin:0 0 16px">${escapeHtml(price)}</p>
-            <input id="od-name" placeholder="姓名" style="width:100%;padding:10px;margin:4px 0;background:var(--bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px" required>
-            <input id="od-phone" placeholder="電話" style="width:100%;padding:10px;margin:4px 0;background:var(--bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px" required>
+            <input id="od-name" data-i18n-placeholder="sc_order_name" placeholder="Name" style="width:100%;padding:10px;margin:4px 0;background:var(--bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px" required>
+            <input id="od-phone" data-i18n-placeholder="sc_order_phone" placeholder="Phone" style="width:100%;padding:10px;margin:4px 0;background:var(--bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px" required>
             <input id="od-email" placeholder="Email" type="email" style="width:100%;padding:10px;margin:4px 0;background:var(--bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px">
-            <input id="od-addr" placeholder="配送地址" style="width:100%;padding:10px;margin:4px 0;background:var(--bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px">
+            <input id="od-addr" data-i18n-placeholder="sc_order_address" placeholder="Shipping address" style="width:100%;padding:10px;margin:4px 0;background:var(--bg);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:8px">
             <div style="display:flex;gap:8px;margin-top:12px">
-                <button onclick="document.getElementById('orderDialog').remove()" style="flex:1;padding:10px;background:rgba(255,255,255,0.1);color:var(--text);border:none;border-radius:8px;cursor:pointer">取消</button>
-                <button id="od-submit" onclick="submitOrder(this)" style="flex:1;padding:10px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">確認下單</button>
+                <button onclick="document.getElementById('orderDialog').remove()" data-i18n="sc_order_cancel" style="flex:1;padding:10px;background:rgba(255,255,255,0.1);color:var(--text);border:none;border-radius:8px;cursor:pointer">Cancel</button>
+                <button id="od-submit" onclick="submitOrder(this)" data-i18n="sc_order_confirm" style="flex:1;padding:10px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">Confirm Order</button>
             </div>
         </div>`;
         dialog.dataset.product = JSON.stringify(product);
         document.body.appendChild(dialog);
+        if (typeof i18n !== 'undefined' && i18n.apply) i18n.apply();
         document.getElementById('od-name').focus();
     }
 
     async function submitOrder(btn) {
-        btn.disabled = true; btn.textContent = '⏳ 處理中...';
+        btn.disabled = true; btn.textContent = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t('sc_order_processing') : '⏳ Processing...';
         const dialog = document.getElementById('orderDialog');
         const product = JSON.parse(dialog.dataset.product);
         const priceStr = (product.price || '').replace(/[^0-9.]/g, '');
@@ -1244,16 +1245,16 @@
                 // Also tell the bot
                 const input = document.getElementById('messageInput');
                 if (input) {
-                    input.value = '我已下單：' + (product.name || '商品') + ' (訂單 ' + result.orderId + ')';
+                    input.value = ((typeof i18n !== 'undefined' && i18n.t) ? i18n.t('sc_order_placed') : 'I ordered: ') + (product.name || ((typeof i18n !== 'undefined' && i18n.t) ? i18n.t('sc_order_product') : 'Product')) + ' (' + ((typeof i18n !== 'undefined' && i18n.t) ? i18n.t('sc_order_id_prefix') : 'Order ') + result.orderId + ')';
                     input.dispatchEvent(new Event('input'));
                     const form = input.closest('form') || document.querySelector('form');
                     if (form) form.dispatchEvent(new Event('submit'));
                 }
             } else {
-                alert(result.error || '下單失敗');
+                alert(result.error || ((typeof i18n !== 'undefined' && i18n.t) ? i18n.t('sc_order_failed') : 'Order failed'));
             }
-        } catch (e) { alert('錯誤：' + e.message); }
-        btn.disabled = false; btn.textContent = '確認下單';
+        } catch (e) { alert(((typeof i18n !== 'undefined' && i18n.t) ? i18n.t('sc_order_error') : 'Error: ') + e.message); }
+        btn.disabled = false; btn.textContent = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t('sc_order_confirm') : 'Confirm Order';
     }
 
     function escapeHtml(s) {

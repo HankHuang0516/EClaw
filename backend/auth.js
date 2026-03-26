@@ -674,7 +674,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                         id: null,
                         email: null,
                         deviceId: deviceId,
-                        deviceSecret: (devices[deviceId] && devices[deviceId].deviceSecret) || null,
+                        // deviceSecret removed (Issue #490: avoid leaking secrets in response body)
                         subscriptionStatus: isPremium ? 'premium' : 'free',
                         subscriptionExpiresAt: null,
                         language: 'en',
@@ -758,7 +758,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                     id: user.id,
                     email: user.email,
                     deviceId: user.device_id,
-                    deviceSecret: user.device_secret,
+                    // deviceSecret removed (Issue #490: avoid leaking secrets in response body)
                     subscriptionStatus: user.subscription_status,
                     subscriptionExpiresAt: user.subscription_expires_at,
                     language: user.language,
@@ -1166,7 +1166,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                 success: true,
                 user: {
                     id: user.id, email: user.email,
-                    deviceId: user.device_id, deviceSecret: user.device_secret,
+                    deviceId: user.device_id,
                     displayName: displayName || user.display_name,
                     avatarUrl: avatarUrl || user.avatar_url,
                     isNewAccount: false,
@@ -1201,7 +1201,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                     success: true,
                     user: {
                         id: user.id, email: user.email,
-                        deviceId: user.device_id, deviceSecret: user.device_secret,
+                        deviceId: user.device_id,
                         displayName: displayName || user.display_name,
                         avatarUrl: avatarUrl || user.avatar_url,
                         isNewAccount: false,
@@ -1238,7 +1238,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                         success: true,
                         user: {
                             id: user.id, email: email || user.email,
-                            deviceId: user.device_id, deviceSecret: user.device_secret,
+                            deviceId: user.device_id,
                             displayName: displayName || user.display_name,
                             avatarUrl: avatarUrl || user.avatar_url,
                             isNewAccount: false,
@@ -1278,7 +1278,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
             success: true,
             user: {
                 id: newUser.id, email: newUser.email,
-                deviceId: newUser.device_id, deviceSecret: newUser.device_secret,
+                deviceId: newUser.device_id,
                 displayName, avatarUrl,
                 isNewAccount: true,
                 subscriptionStatus: 'free',
@@ -1611,7 +1611,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                 success: true,
                 user: {
                     id: user.id, email: user.email,
-                    deviceId: user.device_id, deviceSecret: user.device_secret,
+                    deviceId: user.device_id,
                     displayName: displayName || user.display_name,
                     avatarUrl: avatarUrl || user.avatar_url,
                     isNewAccount,

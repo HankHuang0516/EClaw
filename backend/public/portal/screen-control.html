@@ -174,14 +174,14 @@
         <div class="sub-tabs">
             <a class="sub-tab" href="mission.html">🎯 <span data-i18n="mc_title">Mission Control</span></a>
             <a class="sub-tab" href="schedule.html">📅 <span data-i18n="nav_schedule">Schedule</span></a>
-            <a class="sub-tab" href="env-vars.html">🔐 Env Variables</a>
-            <a class="sub-tab active" href="screen-control.html">📱 Remote Control</a>
+            <a class="sub-tab" href="env-vars.html">🔐 <span data-i18n="screen_ctrl_tab_env_vars">Env Variables</span></a>
+            <a class="sub-tab active" href="screen-control.html">📱 <span data-i18n="screen_ctrl_tab_remote">Remote Control</span></a>
         </div>
 
         <!-- Loading State -->
         <div class="loading-center" id="loadingState" style="text-align:center;padding:40px 0;">
             <div class="spinner" style="margin:0 auto 12px;"></div>
-            <div style="color:var(--text-secondary);">Loading...</div>
+            <div style="color:var(--text-secondary);" data-i18n="screen_ctrl_loading">Loading...</div>
         </div>
 
         <!-- Content -->
@@ -192,9 +192,9 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
                     <div>
                         <div class="section-title" style="margin-bottom:4px;" data-i18n="screen_ctrl_feature_status">Feature Status</div>
-                        <span id="statusBadge" class="status-badge disabled">⚠ Disabled</span>
+                        <span id="statusBadge" class="status-badge disabled" data-i18n="screen_ctrl_status_disabled">⚠ Disabled</span>
                     </div>
-                    <div style="font-size:12px;color:var(--text-secondary);max-width:320px;">
+                    <div style="font-size:12px;color:var(--text-secondary);max-width:320px;" data-i18n="screen_ctrl_enable_instruction">
                         Enable Remote Control in the App (Settings → Remote Control), then grant the Accessibility Service permission.
                     </div>
                 </div>
@@ -202,22 +202,22 @@
 
             <!-- Security Info Card -->
             <div class="card" style="margin-bottom:16px;">
-                <div class="section-title" style="margin-bottom:12px;">Security & Privacy</div>
+                <div class="section-title" style="margin-bottom:12px;" data-i18n="screen_ctrl_security_title">Security & Privacy</div>
                 <div style="display:grid;gap:10px;font-size:13px;color:var(--text-secondary);line-height:1.6;">
                     <div style="display:flex;gap:10px;align-items:flex-start;">
                         <span style="font-size:16px;flex-shrink:0;">🔑</span>
-                        <div><strong style="color:var(--text);">Per-binding secret key</strong><br>
-                        Each bot binding generates a unique <code>botSecret</code> scoped to your device. Even if multiple users share the same bot, each bot session can only access the device it was bound to — using another user's credentials will result in a 403 error.</div>
+                        <div><strong style="color:var(--text);" data-i18n="screen_ctrl_sec1_title">Per-binding secret key</strong><br>
+                        <span data-i18n="screen_ctrl_sec1_desc">Each bot binding generates a unique botSecret scoped to your device. Even if multiple users share the same bot, each bot session can only access the device it was bound to — using another user's credentials will result in a 403 error.</span></div>
                     </div>
                     <div style="display:flex;gap:10px;align-items:flex-start;">
                         <span style="font-size:16px;flex-shrink:0;">📋</span>
-                        <div><strong style="color:var(--text);">Accessibility Tree only — no screenshots</strong><br>
-                        The bot sees a structured list of UI elements (text, buttons, input fields) — not a screenshot of your screen. Sensitive visuals (images, videos, drawing canvas) are never captured.</div>
+                        <div><strong style="color:var(--text);" data-i18n="screen_ctrl_sec2_title">Accessibility Tree only — no screenshots</strong><br>
+                        <span data-i18n="screen_ctrl_sec2_desc">The bot sees a structured list of UI elements (text, buttons, input fields) — not a screenshot of your screen. Sensitive visuals (images, videos, drawing canvas) are never captured.</span></div>
                     </div>
                     <div style="display:flex;gap:10px;align-items:flex-start;">
                         <span style="font-size:16px;flex-shrink:0;">🛑</span>
-                        <div><strong style="color:var(--text);">You stay in control</strong><br>
-                        Remote Control is <strong>off by default</strong>. You can disable it at any time in App Settings → Remote Control. Revoking the bot binding immediately invalidates its <code>botSecret</code>.</div>
+                        <div><strong style="color:var(--text);" data-i18n="screen_ctrl_sec3_title">You stay in control</strong><br>
+                        <span data-i18n="screen_ctrl_sec3_desc">Remote Control is off by default. You can disable it at any time in App Settings → Remote Control. Revoking the bot binding immediately invalidates its botSecret.</span></div>
                     </div>
                 </div>
             </div>
@@ -228,11 +228,11 @@
                     <div class="section-title" style="margin-bottom:0;" data-i18n="screen_ctrl_screen_state">Screen State</div>
                     <div style="display:flex;align-items:center;gap:8px;">
                         <span id="screenMeta" style="font-size:12px;color:var(--text-secondary);"></span>
-                        <button class="btn btn-primary btn-sm" onclick="captureScreen()" id="captureBtn">Capture Screen</button>
+                        <button class="btn btn-primary btn-sm" onclick="captureScreen()" id="captureBtn" data-i18n="screen_ctrl_btn_capture">Capture Screen</button>
                     </div>
                 </div>
                 <div id="screenTreeContainer">
-                    <div class="empty-state">Click "Capture Screen" to see the current UI tree from the device.</div>
+                    <div class="empty-state" data-i18n="screen_ctrl_empty_state">Click "Capture Screen" to see the current UI tree from the device.</div>
                 </div>
             </div>
 
@@ -241,28 +241,28 @@
                 <div class="section-title" style="margin-bottom:12px;" data-i18n="screen_ctrl_send_command">Send Command</div>
                 <div class="command-form">
                     <div>
-                        <label>Command</label>
+                        <label data-i18n="screen_ctrl_label_command">Command</label>
                         <select id="commandType" onchange="onCommandTypeChange()">
-                            <option value="tap">tap — Tap an element or coordinate</option>
-                            <option value="type">type — Type text into a field</option>
-                            <option value="scroll">scroll — Scroll an element</option>
-                            <option value="back">back — System Back button</option>
-                            <option value="home">home — System Home button</option>
+                            <option value="tap" data-i18n="screen_ctrl_opt_tap">tap — Tap an element or coordinate</option>
+                            <option value="type" data-i18n="screen_ctrl_opt_type">type — Type text into a field</option>
+                            <option value="scroll" data-i18n="screen_ctrl_opt_scroll">scroll — Scroll an element</option>
+                            <option value="back" data-i18n="screen_ctrl_opt_back">back — System Back button</option>
+                            <option value="home" data-i18n="screen_ctrl_opt_home">home — System Home button</option>
                         </select>
                     </div>
                     <div id="paramsGroup">
-                        <label>Node ID (from tree above, e.g. <code>n3</code>)</label>
+                        <label data-i18n="screen_ctrl_label_node_id">Node ID (from tree above, e.g. n3)</label>
                         <input type="text" id="paramNodeId" placeholder="n0">
                     </div>
                     <div id="textGroup" style="display:none;">
-                        <label>Text to type</label>
-                        <input type="text" id="paramText" placeholder="Enter text...">
+                        <label data-i18n="screen_ctrl_label_text">Text to type</label>
+                        <input type="text" id="paramText" data-i18n-placeholder="screen_ctrl_placeholder_text" placeholder="Enter text...">
                     </div>
                     <div id="scrollDirGroup" style="display:none;">
-                        <label>Scroll direction</label>
+                        <label data-i18n="screen_ctrl_label_scroll_dir">Scroll direction</label>
                         <select id="paramScrollDir">
-                            <option value="down">down</option>
-                            <option value="up">up</option>
+                            <option value="down" data-i18n="screen_ctrl_opt_down">down</option>
+                            <option value="up" data-i18n="screen_ctrl_opt_up">up</option>
                         </select>
                     </div>
                     <button class="btn btn-primary" onclick="sendCommand()" id="sendBtn" data-i18n="screen_ctrl_btn_send_command">Send Command</button>
@@ -273,6 +273,7 @@
         </div>
     </div>
 
+    <script src="../shared/i18n.js"></script>
     <script src="shared/auth.js"></script>
     <script src="shared/api.js"></script>
     <script src="shared/nav.js"></script>
@@ -298,10 +299,10 @@
                 const badge = document.getElementById('statusBadge');
                 if (enabled) {
                     badge.className = 'status-badge enabled';
-                    badge.textContent = '✓ Enabled';
+                    badge.textContent = i18n.t('screen_ctrl_status_enabled');
                 } else {
                     badge.className = 'status-badge disabled';
-                    badge.textContent = '⚠ Disabled — enable in App Settings';
+                    badge.textContent = i18n.t('screen_ctrl_status_disabled');
                 }
             } catch (e) {
                 console.error('Failed to load status', e);
@@ -311,7 +312,7 @@
         async function captureScreen() {
             const btn = document.getElementById('captureBtn');
             btn.disabled = true;
-            btn.textContent = 'Capturing...';
+            btn.textContent = i18n.t('screen_ctrl_capturing');
             document.getElementById('screenMeta').textContent = '';
 
             try {
@@ -327,14 +328,14 @@
                         `${data.screen || ''} · ${(data.elements || []).length} elements · ${new Date(data.timestamp).toLocaleTimeString()}`;
                     telemetry.trackAction('screen_capture_success');
                 } else {
-                    showTreeError(data.message || data.error || 'Capture failed');
+                    showTreeError(data.message || data.error || i18n.t('screen_ctrl_capture_failed'));
                 }
             } catch (e) {
-                showTreeError(e.message || 'Request failed');
+                showTreeError(e.message || i18n.t('screen_ctrl_request_failed'));
                 telemetry.trackError('screen_capture_failed', { error: e.message });
             } finally {
                 btn.disabled = false;
-                btn.textContent = 'Capture Screen';
+                btn.textContent = i18n.t('screen_ctrl_btn_capture');
             }
         }
 
@@ -342,7 +343,7 @@
             const container = document.getElementById('screenTreeContainer');
             const elements = data.elements || [];
             if (elements.length === 0) {
-                container.innerHTML = '<div class="empty-state">No interactive elements found on screen.</div>';
+                container.innerHTML = '<div class="empty-state">' + escapeHtml(i18n.t('screen_ctrl_no_elements')) + '</div>';
                 return;
             }
 

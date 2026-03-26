@@ -2830,7 +2830,7 @@
                     } else if (msg.read_at) {
                         receipt = `<span class="read-receipt">${escapeHtml(i18n.t('chat_read') || '\u2713 Read')}</span>`;
                     } else if (msg.is_delivered) {
-                        receipt = `<span class="read-receipt">${escapeHtml(i18n.t('chat_read') || '\u2713 Read')}</span>`;
+                        receipt = `<span class="read-receipt">${escapeHtml(i18n.t('chat_delivered') || '\u2713 Delivered')}</span>`;
                     } else {
                         receipt = `<span class="read-receipt">${escapeHtml(i18n.t('chat_sent') || '\u2713 Sent')}</span>`;
                     }
