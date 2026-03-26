@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="nav_split_view">EClawbot - Split View</title>
+    <link rel="stylesheet" href="shared/style.css">
+    <style>
+        .workspace-container {
+            display: flex;
+            height: calc(100vh - 56px);
+            overflow: hidden;
+        }
+        .workspace-pane {
+            border: none;
+            height: 100%;
+            min-width: 0;
+            background: var(--bg);
+        }
+        .workspace-pane.left { flex: 1 1 50%; }
+        .workspace-pane.right {
+            flex: 1 1 50%;
+            border-left: 2px solid var(--card-border, #2a2a3e);
+        }
+        .workspace-container.single-pane .workspace-pane.left { flex: 1 1 100%; }
+        .workspace-container.single-pane .workspace-pane.right { display: none; }
+
+        /* Pane label tabs */
+        .pane-labels {
+            display: flex;
+            height: 32px;
+            background: var(--card-bg, #1a1a2e);
+            border-bottom: 1px solid var(--card-border, #2a2a3e);
+            align-items: center;
+            padding: 0 8px;
+            gap: 4px;
+            font-size: 12px;
+        }
+        .pane-label {
+            padding: 4px 12px;
+            border-radius: 6px;
+            color: var(--text-muted, #888);
+            cursor: default;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .pane-label.active {
+            background: var(--accent, #7c6aef);
+            color: #fff;
+        }
+        .pane-label .pane-close {
+            cursor: pointer;
+            opacity: 0.6;
+            font-size: 14px;
+            line-height: 1;
+        }
+        .pane-label .pane-close:hover { opacity: 1; }
+
+        /* Active tab highlights in nav */
+        .nav-link.active-left { border-bottom: 2px solid var(--accent, #7c6aef); }
+        .nav-link.active-right { border-bottom: 2px solid #4CAF50; }
+
+        /* Narrow screen notice */
+        .narrow-notice {
+            display: none;
+            position: fixed;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--card-bg, #1a1a2e);
+            border: 1px solid var(--card-border, #2a2a3e);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--text-muted, #888);
+            z-index: 200;
+        }
+    </style>
+</head>
+<body>
+    <div class="pane-labels" id="paneLabels"></div>
+    <div class="workspace-container single-pane" id="workspaceContainer">
+        <iframe class="workspace-pane left" id="paneLeft" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
+        <iframe class="workspace-pane right" id="paneRight" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
+    </div>
+    <div class="narrow-notice" id="narrowNotice" data-i18n="workspace_narrow_notice">Split view requires a wider screen</div>
+
+    <script src="../shared/i18n.js"></script>
+    <script src="shared/api.js"></script>
+    <script src="shared/nav.js"></script>
+    <script src="shared/auth.js"></script>
+    <script src="shared/footer.js"></script>
+    <script src="../shared/telemetry.js"></script>
+    <script>
+    // ── Page definitions ──
+    const PAGES = {
+        'dashboard': { href: 'dashboard.html', icon: '📊', label: 'Dashboard', i18nKey: 'nav_dashboard' },
+        'chat':      { href: 'chat.html',      icon: '💬', label: 'Chat',      i18nKey: 'nav_chat' },
+        'mission':   { href: 'mission.html',    icon: '🚀', label: 'Mission',   i18nKey: 'nav_mission' },
+        'card-holder': { href: 'card-holder.html', icon: '🗂️', label: 'Cards', i18nKey: 'nav_card_holder' },
+        'community': { href: 'community.html',  icon: '🏪', label: 'Community', i18nKey: 'nav_community' },
+        'settings':  { href: 'settings.html',   icon: '⚙️', label: 'Settings', i18nKey: 'nav_settings' },
+        'info':      { href: 'info.html',       icon: '📖', label: 'Info',      i18nKey: 'nav_info' },
+        'admin':     { href: 'admin.html',      icon: '🔒', label: 'Admin',     i18nKey: 'nav_admin' }
+    };
+
+    // ── State ──
+    let state = { left: null, right: null };
+
+    function pageIdFromHref(href) {
+        for (const [id, p] of Object.entries(PAGES)) {
+            if (p.href === href) return id;
+        }
+        return href.replace('.html', '');
+    }
+
+    function t(key, fallback) {
+        return typeof i18n !== 'undefined' ? i18n.t(key) : fallback;
+    }
+
+    // ── Initialize ──
+    function initWorkspace() {
+        renderNav('workspace');
+
+        // Highlight split view button as active
+        const splitBtn = document.getElementById('navSplitToggle');
+        if (splitBtn) splitBtn.classList.add('active');
+
+        // Read initial state from URL params
+        const params = new URLSearchParams(window.location.search);
+        const leftPage = params.get('left') || 'dashboard';
+        const rightPage = params.get('right') || null;
+
+        state.left = leftPage;
+        state.right = rightPage;
+
+        // Intercept nav link clicks
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const href = link.getAttribute('href');
+                const pageId = pageIdFromHref(href);
+                handlePaneNavigation(pageId);
+            });
+        });
+
+        applyState();
+        setupWidthGuard();
+
+        if (typeof telemetry !== 'undefined') {
+            telemetry.trackPageView('workspace');
+        }
+    }
+
+    // ── Navigation state machine ──
+    function handlePaneNavigation(pageId) {
+        if (!PAGES[pageId]) return;
+
+        if (state.right) {
+            // Dual-pane mode
+            if (pageId === state.left) {
+                // Collapse left — right becomes single
+                state = { left: state.right, right: null };
+            } else if (pageId === state.right) {
+                // Collapse right — left stays single
+                state = { left: state.left, right: null };
+            } else {
+                // New tab: push left→right, new goes left
+                state = { left: pageId, right: state.left };
+            }
+        } else {
+            // Single-pane mode
+            if (pageId === state.left) {
+                // Same tab — no action
+                return;
+            } else {
+                // Open dual-pane: new on left, current on right
+                state = { left: pageId, right: state.left };
+            }
+        }
+
+        applyState();
+    }
+
+    // ── Apply state to DOM ──
+    function applyState() {
+        const container = document.getElementById('workspaceContainer');
+        const leftIframe = document.getElementById('paneLeft');
+        const rightIframe = document.getElementById('paneRight');
+        const isDual = !!state.right;
+
+        container.className = 'workspace-container ' + (isDual ? 'dual-pane' : 'single-pane');
+
+        // Load iframes (only change src if different to avoid reload)
+        const leftSrc = state.left ? PAGES[state.left]?.href + '?embed=1' : '';
+        const rightSrc = state.right ? PAGES[state.right]?.href + '?embed=1' : '';
+
+        if (leftIframe.getAttribute('data-page') !== state.left) {
+            leftIframe.src = leftSrc;
+            leftIframe.setAttribute('data-page', state.left || '');
+        }
+        if (isDual && rightIframe.getAttribute('data-page') !== state.right) {
+            rightIframe.src = rightSrc;
+            rightIframe.setAttribute('data-page', state.right || '');
+        }
+        if (!isDual) {
+            rightIframe.src = 'about:blank';
+            rightIframe.setAttribute('data-page', '');
+        }
+
+        // Update nav highlights
+        document.querySelectorAll('.nav-link').forEach(link => {
+            const href = link.getAttribute('href');
+            if (!href) return;
+            const pid = pageIdFromHref(href);
+            link.classList.remove('active', 'active-left', 'active-right');
+            if (pid === state.left) link.classList.add('active', 'active-left');
+            if (pid === state.right) link.classList.add('active-right');
+        });
+
+        // Update pane label bar
+        renderPaneLabels();
+
+        // Update URL
+        const urlParams = new URLSearchParams();
+        if (state.left) urlParams.set('left', state.left);
+        if (state.right) urlParams.set('right', state.right);
+        history.replaceState(null, '', 'workspace.html?' + urlParams.toString());
+
+        // Persist to localStorage
+        localStorage.setItem('eclaw-workspace-state', JSON.stringify(state));
+    }
+
+    // ── Pane label bar ──
+    function renderPaneLabels() {
+        const container = document.getElementById('paneLabels');
+        const isDual = !!state.right;
+        let html = '';
+
+        if (state.left) {
+            const p = PAGES[state.left];
+            const label = p ? (t(p.i18nKey, p.label)) : state.left;
+            const icon = p ? p.icon : '';
+            html += `<span class="pane-label active">${icon} ${label}`;
+            if (isDual) html += ` <span class="pane-close" onclick="closePane('left')" title="${t('workspace_close_pane', 'Close Pane')}">&times;</span>`;
+            html += `</span>`;
+        }
+        if (state.right) {
+            const p = PAGES[state.right];
+            const label = p ? (t(p.i18nKey, p.label)) : state.right;
+            const icon = p ? p.icon : '';
+            html += `<span class="pane-label" style="background:#2a3a2a;color:#4CAF50;">${icon} ${label}`;
+            html += ` <span class="pane-close" onclick="closePane('right')" title="${t('workspace_close_pane', 'Close Pane')}">&times;</span>`;
+            html += `</span>`;
+        }
+
+        container.innerHTML = html;
+        container.style.display = isDual ? 'flex' : 'none';
+    }
+
+    function closePane(side) {
+        if (side === 'left') {
+            state = { left: state.right, right: null };
+        } else {
+            state = { left: state.left, right: null };
+        }
+        applyState();
+    }
+
+    // ── Width guard: auto-collapse on narrow screens ──
+    function setupWidthGuard() {
+        const mq = window.matchMedia('(min-width: 1200px)');
+        let savedRight = null;
+
+        function handleWidth(e) {
+            const notice = document.getElementById('narrowNotice');
+            if (!e.matches && state.right) {
+                // Screen too narrow — collapse to single pane
+                savedRight = state.right;
+                state.right = null;
+                applyState();
+                if (notice) { notice.style.display = 'block'; setTimeout(() => notice.style.display = 'none', 3000); }
+            } else if (e.matches && savedRight && !state.right) {
+                // Screen wide enough — restore dual pane
+                state.right = savedRight;
+                savedRight = null;
+                applyState();
+            }
+        }
+
+        mq.addEventListener('change', handleWidth);
+        // Initial check
+        if (!mq.matches && state.right) handleWidth(mq);
+    }
+
+    // ── Boot ──
+    document.addEventListener('DOMContentLoaded', initWorkspace);
+    </script>
+</body>
+</html>
