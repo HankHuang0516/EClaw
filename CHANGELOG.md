@@ -1,3 +1,10 @@
+# [1.198.0](https://github.com/HankHuang0516/EClaw/compare/v1.197.1...v1.198.0) (2026-03-26)
+
+
+### Features
+
+* **workspace:** unlimited panes with draggable tab reorder ([#565](https://github.com/HankHuang0516/EClaw/issues/565)) ([5692e08](https://github.com/HankHuang0516/EClaw/commit/5692e08f27470ce524f70c9c10250aab84879aac))
+
 ## [1.197.1](https://github.com/HankHuang0516/EClaw/compare/v1.197.0...v1.197.1) (2026-03-26)
 
 
