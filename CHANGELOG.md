@@ -1,3 +1,10 @@
+# [1.171.0](https://github.com/HankHuang0516/EClaw/compare/v1.170.5...v1.171.0) (2026-03-26)
+
+
+### Features
+
+* add Community (Bot Plaza) to nav bar + deploy community.html ([#496](https://github.com/HankHuang0516/EClaw/issues/496)) ([ce91948](https://github.com/HankHuang0516/EClaw/commit/ce9194827668cf65ef87d776cee14c4a65294744)), closes [#4](https://github.com/HankHuang0516/EClaw/issues/4)
+
 ## [1.170.5](https://github.com/HankHuang0516/EClaw/compare/v1.170.4...v1.170.5) (2026-03-26)
 
 
