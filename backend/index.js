@@ -5461,7 +5461,8 @@ app.post('/api/client/speak', async (req, res) => {
             mediaUrl: mediaUrl || null
         };
         entity.messageQueue.push(messageObj);
-        saveChatMessage(deviceId, eId, text, source, true, false, mediaType || null, mediaUrl || null);
+        const chatBackupUrl = mediaType === 'photo' ? getBackupUrl(mediaUrl) : null;
+        saveChatMessage(deviceId, eId, text, source, true, false, mediaType || null, mediaUrl || null, null, null, chatBackupUrl);
 
         // Reset bot-to-bot counter: human message breaks the loop
         resetBotToBotCounter(deviceId);
@@ -10769,6 +10770,7 @@ chatPool.query(`
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS schedule_label TEXT DEFAULT NULL;
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS like_count INTEGER DEFAULT 0;
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS dislike_count INTEGER DEFAULT 0;
+    ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS backup_url TEXT DEFAULT NULL;
 `).catch(() => {});
 
 // Auto-migrate: create message_reactions table (message_id must be UUID to match chat_messages.id)
@@ -11832,7 +11834,7 @@ const A2A_SOURCE_RE = /^entity:\d+:[A-Z]+->/;
 
 // Save chat message to database, returns row ID (UUID) or null
 // Deduplication: bot messages with identical text for the same entity within 10s are skipped
-async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null) {
+async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null, backupUrl = null) {
     try {
         // Dedup: skip if the same BOT message was already saved recently
         // Bot dedup: prevents echo when bot calls multiple endpoints (broadcast + sync-message + transform)
@@ -11853,9 +11855,9 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
         }
 
         const result = await chatPool.query(
-            `INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot, media_type, media_url, schedule_id, schedule_label)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
-            [deviceId, entityId, text, source, isFromUser || false, isFromBot || false, mediaType, mediaUrl, scheduleId, scheduleLabel]
+            `INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot, media_type, media_url, schedule_id, schedule_label, backup_url)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
+            [deviceId, entityId, text, source, isFromUser || false, isFromBot || false, mediaType, mediaUrl, scheduleId, scheduleLabel, backupUrl]
         );
         const msgId = result.rows[0]?.id || null;
 
@@ -11875,6 +11877,7 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
                 is_from_bot: isFromBot || false,
                 media_type: mediaType,
                 media_url: mediaUrl,
+                backup_url: backupUrl,
                 schedule_id: scheduleId || null,
                 schedule_label: scheduleLabel || null,
                 created_at: Date.now()
