@@ -1,3 +1,10 @@
+## [1.176.3](https://github.com/HankHuang0516/EClaw/compare/v1.176.2...v1.176.3) (2026-03-26)
+
+
+### Bug Fixes
+
+* copy CHANGELOG.md to backend/ in nixpacks + visibility accepts X-Bot-Secret header ([#507](https://github.com/HankHuang0516/EClaw/issues/507)) ([331b369](https://github.com/HankHuang0516/EClaw/commit/331b36907df29c394b84220124db4d15b52104b0))
+
 ## [1.176.2](https://github.com/HankHuang0516/EClaw/compare/v1.176.1...v1.176.2) (2026-03-26)
 
 
