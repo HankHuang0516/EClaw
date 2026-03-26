@@ -1,3 +1,10 @@
+## [1.195.1](https://github.com/HankHuang0516/EClaw/compare/v1.195.0...v1.195.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* **assets:** add cache-busting query to demo GIFs for CDN refresh ([40a623d](https://github.com/HankHuang0516/EClaw/commit/40a623d9163f3306d7c1380116b0ccbf18d10894))
+
 # [1.195.0](https://github.com/HankHuang0516/EClaw/compare/v1.194.0...v1.195.0) (2026-03-26)
 
 
