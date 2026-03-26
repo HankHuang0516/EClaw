@@ -1,3 +1,10 @@
+## [1.193.1](https://github.com/HankHuang0516/EClaw/compare/v1.193.0...v1.193.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* **enterprise:** correct product catalog note page link ([#554](https://github.com/HankHuang0516/EClaw/issues/554)) ([fdf6065](https://github.com/HankHuang0516/EClaw/commit/fdf606592932efdf1a70e6b919da5a2d305fa9fd))
+
 # [1.193.0](https://github.com/HankHuang0516/EClaw/compare/v1.192.1...v1.193.0) (2026-03-26)
 
 
