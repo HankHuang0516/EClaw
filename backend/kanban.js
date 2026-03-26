@@ -893,5 +893,127 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
         }
     });
 
-    return { router, initKanbanDatabase };
+    // ============================================
+    // Background Timers: Stale Nudge + Auto-Archive
+    // ============================================
+
+    let staleTimer = null;
+    let archiveTimer = null;
+    const STALE_CHECK_INTERVAL = 5 * 60 * 1000;    // Check every 5 minutes
+    const ARCHIVE_CHECK_INTERVAL = 15 * 60 * 1000;  // Check every 15 minutes
+    const MIN_NUDGE_GAP_MS = 60 * 60 * 1000;        // Minimum 1 hour between nudges
+
+    /**
+     * Scan for stale cards (TODO / In Progress / Review) that exceeded staleThresholdMs.
+     * Push nudge to assigned bots + system comment. Respects min 1hr nudge gap.
+     */
+    async function checkStaleCards() {
+        try {
+            // Find cards that are stale: active status, not archived,
+            // time since status_changed_at > stale_threshold_ms,
+            // and either never nudged or last nudge > 1 hour ago
+            const result = await pool.query(`
+                SELECT * FROM kanban_cards
+                WHERE archived = false
+                  AND status IN ('todo', 'in_progress', 'review')
+                  AND EXTRACT(EPOCH FROM (NOW() - status_changed_at)) * 1000 > stale_threshold_ms
+                  AND (last_stale_nudge_at IS NULL 
+                       OR EXTRACT(EPOCH FROM (NOW() - last_stale_nudge_at)) * 1000 > $1)
+            `, [MIN_NUDGE_GAP_MS]);
+
+            if (result.rows.length === 0) return;
+
+            console.log(`[Kanban] Stale check: ${result.rows.length} card(s) need nudging`);
+
+            for (const card of result.rows) {
+                const bots = card.assigned_bots || [];
+                const statusLabel = STATUS_LABELS[card.status] || card.status;
+                const elapsedMs = Date.now() - new Date(card.status_changed_at).getTime();
+                const elapsedHrs = Math.round(elapsedMs / 3600000 * 10) / 10;
+
+                // System comment on the card
+                await addSystemComment(card.id, card.device_id,
+                    `⏰ 催促：此卡片已在「${statusLabel}」停留 ${elapsedHrs} 小時，請 ${bots.map(b => `#${b}`).join(', ') || '負責人'} 繼續推進`);
+
+                // Update last_stale_nudge_at
+                await pool.query(
+                    `UPDATE kanban_cards SET last_stale_nudge_at = NOW() WHERE id = $1`,
+                    [card.id]
+                );
+
+                // Push notify assigned bots
+                if (bots.length > 0) {
+                    const msg = `⏰ 任務催促：[${card.title}]\n已在「${statusLabel}」停留 ${elapsedHrs} 小時，請繼續推進`;
+                    notifyEntities(card.device_id, bots, msg);
+                }
+
+                console.log(`[Kanban] Nudged card ${card.id} (${card.title}) — ${elapsedHrs}h in ${statusLabel}`);
+            }
+        } catch (err) {
+            console.error('[Kanban] Stale check error:', err.message);
+        }
+    }
+
+    /**
+     * Scan for Done cards that exceeded doneRetentionMs → auto-archive.
+     */
+    async function checkDoneAutoArchive() {
+        try {
+            const result = await pool.query(`
+                SELECT * FROM kanban_cards
+                WHERE archived = false
+                  AND status = 'done'
+                  AND EXTRACT(EPOCH FROM (NOW() - status_changed_at)) * 1000 > done_retention_ms
+            `);
+
+            if (result.rows.length === 0) return;
+
+            console.log(`[Kanban] Auto-archive: ${result.rows.length} done card(s) expired`);
+
+            for (const card of result.rows) {
+                await pool.query(
+                    `UPDATE kanban_cards SET archived = true, archived_at = NOW(), updated_at = NOW()
+                     WHERE id = $1`,
+                    [card.id]
+                );
+
+                await addSystemComment(card.id, card.device_id,
+                    `🗄️ 自動歸檔 — Done 超過保留時間（${Math.round(parseInt(card.done_retention_ms) / 3600000)}h）`);
+
+                try { await bumpVersion(card.device_id); } catch (e) { /* ignore */ }
+
+                console.log(`[Kanban] Auto-archived card ${card.id} (${card.title})`);
+            }
+        } catch (err) {
+            console.error('[Kanban] Auto-archive check error:', err.message);
+        }
+    }
+
+    /**
+     * Start background timers. Call after DB init.
+     */
+    function startBackgroundTimers() {
+        if (staleTimer) return; // Already running
+
+        // Run initial checks after 30s (let server fully start)
+        setTimeout(() => {
+            checkStaleCards();
+            checkDoneAutoArchive();
+        }, 30000);
+
+        staleTimer = setInterval(checkStaleCards, STALE_CHECK_INTERVAL);
+        archiveTimer = setInterval(checkDoneAutoArchive, ARCHIVE_CHECK_INTERVAL);
+        console.log(`[Kanban] Background timers started (stale: ${STALE_CHECK_INTERVAL / 1000}s, archive: ${ARCHIVE_CHECK_INTERVAL / 1000}s)`);
+    }
+
+    /**
+     * Stop background timers (for graceful shutdown).
+     */
+    function stopBackgroundTimers() {
+        if (staleTimer) { clearInterval(staleTimer); staleTimer = null; }
+        if (archiveTimer) { clearInterval(archiveTimer); archiveTimer = null; }
+        console.log('[Kanban] Background timers stopped');
+    }
+
+    return { router, initKanbanDatabase, startBackgroundTimers, stopBackgroundTimers };
 };
