@@ -4557,6 +4557,15 @@ const TRANSLATIONS = {
         // Navigation
         "nav_env_vars": "環境變數",
         "nav_remote_control": "遠端控制",
+
+        // Chat missing keys
+        "chat_date_today": "今天",
+        "chat_date_yesterday": "昨天",
+        "chat_empty_hint": "傳送訊息開始聊天",
+        "chat_mic_denied": "麥克風權限被拒絕",
+        "chat_playback_failed": "播放失敗",
+        "chat_unread_sep": "── 新訊息 ──",
+        "chat_voice_upload_failed": "語音上傳失敗",
         // 看板 (kanban.html)
         "kanban_tab": "看板",
         "kanban_title": "看板",
@@ -6351,6 +6360,15 @@ const TRANSLATIONS = {
         "admin_chart_bot_activity": "各 Bot 活跃度（24h）",
         "admin_chart_users": "位用户",
         "nav_admin": "管理员",
+
+        // Chat missing keys
+        "chat_date_today": "今天",
+        "chat_date_yesterday": "昨天",
+        "chat_empty_hint": "发送消息开始聊天",
+        "chat_mic_denied": "麦克风权限被拒绝",
+        "chat_playback_failed": "播放失败",
+        "chat_unread_sep": "── 新消息 ──",
+        "chat_voice_upload_failed": "语音上传失败",
         "nav_schedule": "定时",
         "sched_title": "定时任务",
         "sched_btn_add": "+ 新增定时",
