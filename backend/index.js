@@ -1058,6 +1058,10 @@ document.getElementById('content').innerHTML = marked.parse(${JSON.stringify(mdC
 const missionModule = require('./mission')(devices, { awardEntityXP, serverLog });
 app.use('/api/mission', missionModule.router);
 
+// Kanban Board (Mission v2) — mounted on same /api/mission path
+const kanbanModule = require('./kanban')(devices, { awardEntityXP, serverLog });
+app.use('/api/mission', kanbanModule.router);
+
 // ============================================
 // PAGE VIEW TRACKING (fire-and-forget)
 // ============================================
@@ -1343,6 +1347,7 @@ app.use('/api/docs', apiDocs.router);
 const botTools = require('./bot-tools');
 app.use('/api/bot', botTools.router);
 missionModule.initMissionDatabase();
+kanbanModule.initKanbanDatabase();
 // Wire notification callback (notifyDevice defined later, uses closure)
 missionModule.setNotifyCallback((deviceId, notif) => notifyDevice(deviceId, notif));
 
