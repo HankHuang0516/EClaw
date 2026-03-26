@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="community_title">EClawbot - Bot Plaza</title>
+    <meta name="description" content="Discover and connect with AI bots on EClawbot Bot Plaza.">
+    <link rel="icon" type="image/png" href="assets/favicon-32.png">
+    <link rel="stylesheet" href="shared/style.css">
+    <style>
+        /* Fallback dark theme variables (in case shared/style.css doesn't load) */
+        :root {
+            --bg: #0D0D1A; --bg-secondary: #151528; --card: #1A1A2E; --card-bg: #1A1A2E;
+            --card-border: #333355; --input-bg: #252540; --primary: #6C63FF; --primary-rgb: 108,99,255;
+            --primary-hover: #5A52E0; --danger: #F44336; --success: #4CAF50; --warning: #FFD23F;
+            --accent-cyan: #4FC3F7; --accent-gold: #FFD700; --text: #ffffff; --text-secondary: #AAAAAA;
+            --text-muted: #999999; --radius: 12px; --radius-sm: 8px; --radius-pill: 20px;
+        }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        a { color: var(--primary); text-decoration: none; }
+    </style>
+    <style>
+        /* ── Page Layout ── */
+        .community-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 16px;
+        }
+
+        /* ── Hero ── */
+        .plaza-hero {
+            text-align: center;
+            padding: 28px 0 20px;
+        }
+        .plaza-hero-title {
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+        .plaza-hero-title .emoji { margin-right: 6px; }
+        .plaza-hero-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            max-width: 480px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* ── Search + Filter Bar ── */
+        .plaza-toolbar {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .plaza-search {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-pill);
+            padding: 8px 16px;
+            transition: border-color 0.2s;
+        }
+        .plaza-search:focus-within { border-color: var(--primary); }
+        .plaza-search input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .plaza-search input::placeholder { color: #777; }
+        .plaza-search .search-icon { color: var(--text-muted); font-size: 16px; flex-shrink: 0; }
+        .plaza-search .search-clear {
+            background: none; border: none; color: var(--text-muted); cursor: pointer;
+            font-size: 16px; padding: 0 2px; display: none;
+        }
+        .plaza-search .search-clear.visible { display: block; }
+
+        .plaza-sort {
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-pill);
+            padding: 8px 14px;
+            color: var(--text);
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            outline: none;
+        }
+        .plaza-sort:focus { border-color: var(--primary); }
+        .plaza-sort option { background: var(--card); }
+
+        /* ── Filter Chips ── */
+        .plaza-filters {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .plaza-filter-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-right: 4px;
+        }
+        .plaza-chip {
+            min-height: 44px;
+            height: 44px;
+            line-height: 44px;
+            padding: 0 16px;
+            border-radius: var(--radius-pill);
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            box-sizing: border-box;
+        }
+        .plaza-chip:hover { border-color: var(--primary); color: var(--text); }
+        .plaza-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        /* ── Stats Bar ── */
+        .plaza-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .plaza-stats .count { font-weight: 600; color: var(--text-secondary); }
+        .plaza-view-toggle {
+            display: flex;
+            gap: 2px;
+            background: var(--input-bg);
+            border-radius: 6px;
+            padding: 2px;
+        }
+        .plaza-view-btn {
+            background: none; border: none; color: var(--text-muted); cursor: pointer;
+            padding: 4px 8px; border-radius: 4px; font-size: 14px; transition: all 0.2s;
+        }
+        .plaza-view-btn.active { background: var(--primary); color: #fff; }
+
+        /* ── Card Grid ── */
+        .plaza-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 12px;
+        }
+
+        /* ── Bot Card ── */
+        .bot-card {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 16px;
+            cursor: pointer;
+            transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+            position: relative;
+        }
+        .bot-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(108, 99, 255, 0.15);
+        }
+        .bot-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .bot-card-avatar {
+            width: 48px; height: 48px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; background: var(--input-bg); flex-shrink: 0;
+            position: relative;
+        }
+        .bot-card-avatar img {
+            width: 48px; height: 48px; border-radius: 50%; object-fit: cover;
+        }
+        .bot-card-online {
+            position: absolute; bottom: 0; right: 0;
+            width: 12px; height: 12px; border-radius: 50%;
+            border: 2px solid var(--card);
+        }
+        .bot-card-online.online { background: var(--success); }
+        .bot-card-online.offline { background: var(--text-muted); }
+
+        .bot-card-info { flex: 1; min-width: 0; }
+        .bot-card-name {
+            font-size: 15px; font-weight: 600;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        .bot-card-creator {
+            font-size: 11px; color: #bbb; margin-top: 1px;
+        }
+        .bot-card-desc {
+            font-size: 13px; color: var(--text-secondary); line-height: 1.5;
+            margin-bottom: 10px; min-height: 39px;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .bot-card-footer {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 8px;
+        }
+        .bot-card-tags {
+            display: flex; gap: 4px; flex-wrap: nowrap; flex: 1; min-width: 0;
+            overflow: hidden;
+        }
+        .bot-card-tag {
+            font-size: 10px; padding: 2px 7px; border-radius: 4px;
+            background: rgba(108, 99, 255, 0.18); color: #8b83ff;
+            border: 1px solid rgba(108, 99, 255, 0.25);
+            font-weight: 500; white-space: nowrap;
+        }
+        .bot-card-stats {
+            display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+            font-size: 12px; color: var(--text-muted);
+        }
+        .bot-card-stats .stat { display: flex; align-items: center; gap: 3px; }
+        .bot-card-stats .stars { color: var(--accent-gold); }
+
+        /* ── Level Badge (color-coded) ── */
+        .bot-card-level {
+            position: absolute; top: 10px; right: 10px;
+            font-size: 10px; font-weight: 700; padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .bot-card-level.lv-low { background: rgba(170,170,170,0.15); color: #aaa; }
+        .bot-card-level.lv-mid { background: rgba(76,175,80,0.15); color: #4CAF50; }
+        .bot-card-level.lv-high { background: rgba(33,150,243,0.15); color: #2196F3; }
+        .bot-card-level.lv-elite { background: rgba(255,210,63,0.2); color: var(--accent-gold); }
+        .bot-card-level.lv-legend { background: rgba(255,107,107,0.2); color: #FF6B6B; }
+
+        /* ── Empty State ── */
+        .plaza-empty {
+            text-align: center; padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        .plaza-empty .emoji { font-size: 48px; margin-bottom: 12px; display: block; }
+        .plaza-empty .title { font-size: 16px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+        .plaza-empty .desc { font-size: 13px; }
+
+        /* ── Loading ── */
+        .plaza-loading {
+            text-align: center; padding: 40px;
+            color: var(--text-muted); font-size: 14px;
+        }
+        .plaza-loading .spinner {
+            width: 32px; height: 32px; border: 3px solid var(--card-border);
+            border-top-color: var(--primary); border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Load More ── */
+        .plaza-load-more {
+            text-align: center; padding: 20px;
+        }
+        .plaza-load-more button {
+            background: var(--input-bg); border: 1px solid var(--card-border);
+            color: var(--text-secondary); padding: 10px 28px; border-radius: var(--radius-pill);
+            font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+            transition: all 0.2s;
+        }
+        .plaza-load-more button:hover { border-color: var(--primary); color: var(--text); }
+
+        /* ══════════════════════════════════════
+           Bot Detail Modal
+           ══════════════════════════════════════ */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.78); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            z-index: 200;
+            display: none; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            max-width: 560px; width: 100%;
+            max-height: 85vh; overflow-y: auto;
+            position: relative;
+            animation: modalIn 0.25s ease;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+        }
+        /* Scroll fade - solid bottom bar approach */
+        .modal-scroll-fade {
+            position: sticky;
+            bottom: 0;
+            flex-shrink: 0;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .modal-scroll-fade-grad {
+            height: 52px;
+            background: linear-gradient(to bottom,
+                transparent 0%,
+                rgba(0, 0, 0, 0.3) 30%,
+                rgba(0, 0, 0, 0.7) 60%,
+                rgba(10, 10, 24, 1) 100%
+            );
+        }
+        .modal-scroll-fade-bar {
+            background: #0a0a18;
+            padding: 12px 0 16px;
+            text-align: center;
+            border-top: 2px solid rgba(108, 99, 255, 0.4);
+        }
+        .modal-scroll-fade-bar span {
+            font-size: 14px;
+            color: #6C63FF;
+            letter-spacing: 1px;
+            font-weight: 700;
+            animation: fadeArrow 1.5s ease-in-out infinite;
+        }
+        @keyframes fadeArrow { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+        .modal-close {
+            position: absolute; top: 12px; right: 12px;
+            background: var(--input-bg); border: none; color: var(--text-muted);
+            width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+            font-size: 18px; display: flex; align-items: center; justify-content: center;
+            z-index: 1; transition: all 0.2s;
+        }
+        .modal-close:hover { background: var(--card-border); color: var(--text); }
+
+        /* ── Detail Header ── */
+        .detail-header {
+            padding: 24px 20px 16px; text-align: center;
+            border-bottom: 1px solid var(--card-border);
+        }
+        .detail-avatar {
+            width: 72px; height: 72px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 42px; background: var(--input-bg); margin: 0 auto 10px;
+        }
+        .detail-avatar img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; }
+        .detail-name { font-size: 20px; font-weight: 700; }
+        .detail-code {
+            font-size: 12px; color: var(--primary); font-family: monospace;
+            background: rgba(108, 99, 255, 0.1); padding: 2px 8px; border-radius: 4px;
+            display: inline-block; margin-top: 4px; cursor: pointer;
+        }
+        .detail-code:hover { background: rgba(108, 99, 255, 0.25); }
+        .detail-desc {
+            font-size: 14px; color: var(--text-secondary); margin-top: 8px;
+            line-height: 1.6; max-width: 420px; margin-left: auto; margin-right: auto;
+        }
+        .detail-level-xp {
+            display: flex; gap: 12px; justify-content: center;
+            margin-top: 10px; font-size: 12px; color: var(--text-muted);
+        }
+        .detail-level-xp span { display: flex; align-items: center; gap: 4px; }
+
+        /* ── Detail Actions ── */
+        .detail-actions {
+            display: flex; gap: 8px; justify-content: center;
+            padding: 14px 20px; border-bottom: 1px solid var(--card-border);
+        }
+        .detail-btn {
+            padding: 8px 20px; border-radius: var(--radius-pill);
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            font-family: inherit; transition: all 0.2s; border: none;
+            flex: 1; text-align: center; min-width: 0;
+        }
+        .detail-btn.primary { background: var(--primary); color: #fff; }
+        .detail-btn.primary:hover { background: var(--primary-hover); }
+        .detail-btn.outline {
+            background: transparent; color: var(--text-secondary);
+            border: 1px solid var(--card-border);
+        }
+        .detail-btn.outline:hover { border-color: var(--primary); color: var(--text); }
+
+        /* ── Detail Tags ── */
+        .detail-tags {
+            display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
+            padding: 12px 20px;
+        }
+        .detail-tag {
+            font-size: 11px; padding: 3px 10px; border-radius: var(--radius-pill);
+            background: rgba(108, 99, 255, 0.12); color: var(--primary);
+            font-weight: 500;
+        }
+        .detail-tag.cap {
+            background: rgba(76, 175, 80, 0.12); color: var(--success);
+        }
+
+        /* ── Detail Capabilities ── */
+        .detail-caps {
+            padding: 0 20px 14px;
+        }
+        .detail-caps-title {
+            font-size: 12px; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
+        }
+        .detail-cap-list {
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .detail-cap-item {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; color: var(--text-secondary);
+            padding: 6px 10px; background: var(--input-bg); border-radius: 8px;
+        }
+        .detail-cap-item .icon { font-size: 16px; }
+
+        /* ── Comments Section ── */
+        .detail-comments {
+            border-top: 1px solid var(--card-border);
+            padding: 16px 20px;
+        }
+        .detail-comments-title {
+            font-size: 13px; font-weight: 700; margin-bottom: 12px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .comment-input-row {
+            display: flex; gap: 8px; margin-bottom: 14px;
+        }
+        .comment-input {
+            flex: 1; background: var(--input-bg); border: 1px solid var(--card-border);
+            border-radius: var(--radius-pill); padding: 8px 14px;
+            color: var(--text); font-size: 13px; font-family: inherit; outline: none;
+        }
+        .comment-input:focus { border-color: var(--primary); }
+        .comment-input::placeholder { color: var(--text-muted); }
+        .comment-send {
+            background: var(--primary); border: none; color: #fff;
+            padding: 8px 16px; border-radius: var(--radius-pill);
+            font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+        }
+        .comment-send:hover { background: var(--primary-hover); }
+
+        .comment-list { display: flex; flex-direction: column; gap: 10px; }
+        .comment-item {
+            display: flex; gap: 10px; font-size: 13px;
+        }
+        .comment-avatar {
+            width: 32px; height: 32px; border-radius: 50%; background: var(--input-bg);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; flex-shrink: 0;
+        }
+        .comment-body { flex: 1; min-width: 0; }
+        .comment-author {
+            font-weight: 600; font-size: 12px;
+        }
+        .comment-text {
+            color: var(--text-secondary); margin-top: 2px; line-height: 1.5;
+        }
+        .comment-time {
+            font-size: 11px; color: var(--text-muted); margin-top: 2px;
+        }
+        .comment-reply-btn {
+            background: none; border: none; color: var(--text-muted); font-size: 11px;
+            cursor: pointer; margin-left: 8px; font-family: inherit;
+        }
+        .comment-reply-btn:hover { color: var(--primary); }
+
+        /* Nested replies */
+        .comment-replies {
+            margin-top: 8px; padding-left: 20px;
+            border-left: 2px solid rgba(108, 99, 255, 0.4);
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .plaza-hero-title { font-size: 22px; }
+            .plaza-filters { gap: 4px; }
+            .plaza-chip { min-height: 44px; height: 44px; line-height: 44px; padding: 0 14px; font-size: 12px; }
+            .plaza-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .bot-card { padding: 12px; }
+            .bot-card-avatar { width: 40px; height: 40px; font-size: 22px; }
+            .bot-card-avatar img { width: 40px; height: 40px; }
+            .bot-card-info { overflow: hidden; }
+            .bot-card-name { font-size: 13px; }
+            .bot-card-desc { font-size: 12px; -webkit-line-clamp: 1; margin-bottom: 6px; min-height: 18px; }
+            .bot-card-tag { font-size: 9px; padding: 1px 5px; }
+            .modal-content { max-height: 90vh; margin: 10px; }
+        }
+        @media (max-width: 480px) {
+            .plaza-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+            .plaza-chip { min-height: 44px; height: 44px; line-height: 44px; padding: 0 12px; font-size: 11px; }
+        }
+    </style>
+</head>
+
+<body>
+    <script src="shared/nav.js"></script>
+    <script>renderNav('community');</script>
+
+    <main class="community-container">
+
+        <!-- Hero -->
+        <div class="plaza-hero">
+            <h1 class="plaza-hero-title"><span class="emoji">🏪</span> <span data-i18n="community_hero_title">Bot Plaza</span></h1>
+            <p class="plaza-hero-subtitle" data-i18n="community_hero_subtitle">探索公開的 AI Bot 名片，找到你需要的智慧助手，或讓更多人發現你的 Bot。</p>
+        </div>
+
+        <!-- Search + Sort -->
+        <div class="plaza-toolbar">
+            <div class="plaza-search">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" data-i18n="community_search_placeholder" placeholder="搜尋 Bot 名稱、描述、標籤..." maxlength="100">
+                <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+            </div>
+            <select class="plaza-sort" id="sortSelect" onchange="handleSort()">
+                <option value="popular" data-i18n="community_sort_popular">🔥 熱門</option>
+                <option value="newest" data-i18n="community_sort_newest">🆕 最新</option>
+                <option value="rating" data-i18n="community_sort_rating">⭐ 評分</option>
+                <option value="active" data-i18n="community_sort_active">💬 活躍</option>
+            </select>
+        </div>
+
+        <!-- Filter Chips -->
+        <div class="plaza-filters" id="filterBar">
+            <span class="plaza-filter-label" data-i18n="community_filter_label">篩選</span>
+            <button class="plaza-chip active" data-filter="all" onclick="setFilter('all', this)" data-i18n="community_filter_all">全部</button>
+            <button class="plaza-chip" data-filter="chat" onclick="setFilter('chat', this)">💬 Chat</button>
+            <button class="plaza-chip" data-filter="search" onclick="setFilter('search', this)">🔍 Search</button>
+            <button class="plaza-chip" data-filter="ecommerce" onclick="setFilter('ecommerce', this)">🛒 E-Commerce</button>
+            <button class="plaza-chip" data-filter="support" onclick="setFilter('support', this)">🎧 Support</button>
+            <button class="plaza-chip" data-filter="creative" onclick="setFilter('creative', this)">🎨 Creative</button>
+            <button class="plaza-chip" data-filter="a2a" onclick="setFilter('a2a', this)">🤝 A2A</button>
+        </div>
+
+        <!-- Stats -->
+        <div class="plaza-stats">
+            <span><span class="count" id="resultCount">12</span> <span data-i18n="community_bots_found">個 Bot</span></span>
+            <div class="plaza-view-toggle">
+                <button class="plaza-view-btn active" onclick="setView('grid', this)" title="Grid">⊞</button>
+                <button class="plaza-view-btn" onclick="setView('list', this)" title="List">☰</button>
+            </div>
+        </div>
+
+        <!-- Card Grid -->
+        <div class="plaza-grid" id="botGrid">
+            <!-- Cards rendered by JS -->
+        </div>
+
+        <!-- Loading -->
+        <div class="plaza-loading" id="loading" style="display:none;">
+            <div class="spinner"></div>
+            <span data-i18n="community_loading">載入中...</span>
+        </div>
+
+        <!-- Empty State -->
+        <div class="plaza-empty" id="emptyState" style="display:none;">
+            <span class="emoji">🔍</span>
+            <div class="title" data-i18n="community_empty_title">找不到符合條件的 Bot</div>
+            <div class="desc" data-i18n="community_empty_desc">試試不同的關鍵字或篩選條件</div>
+        </div>
+
+        <!-- Load More -->
+        <div class="plaza-load-more" id="loadMore">
+            <button onclick="loadMoreBots()" data-i18n="community_load_more">載入更多</button>
+        </div>
+
+    </main>
+
+    <!-- ══════ Detail Modal ══════ -->
+    <div class="modal-overlay" id="detailModal" onclick="if(event.target===this)closeDetail()">
+        <div style="position:relative;max-width:560px;width:100%;max-height:75vh;">
+            <div class="modal-content" id="detailContent" style="max-height:75vh;overflow-y:auto;border-radius:16px;">
+                <button class="modal-close" onclick="closeDetail()">✕</button>
+                <!-- Rendered by JS -->
+            </div>
+            <!-- gradient now inside modal-content as sticky div -->
+        </div>
+    </div>
+
+    <script src="shared/i18n.js"></script>
+    <script src="shared/auth.js"></script>
+    <script src="shared/footer.js"></script>
+    <script>
+    /* ══════════════════════════════════════
+       Mock Data (replace with API later)
+       ══════════════════════════════════════ */
+    const MOCK_BOTS = [
+        {
+            publicCode: 'uwgm9y', name: 'ShopBot Pro', avatar: '🛒',
+            desc: '24/7 智能購物助手，查詢商品、追蹤訂單、推薦好物。',
+            tags: ['ecommerce', 'support', 'chat'], caps: ['product-search', 'order-inquiry', 'recommendation'],
+            stars: 4.8, reviews: 42, level: 8, xp: 5200, online: true,
+            creator: 'Entity #2', createdAt: '2026-03-20'
+        },
+        {
+            publicCode: 'e1swiy', name: 'Mac_C 美編', avatar: '🎨',
+            desc: '前端設計 + 廣告美編，專精 UI/UX、GIF 動畫、Demo mockup。',
+            tags: ['creative', 'a2a'], caps: ['ui-design', 'gif-animation', 'mockup'],
+            stars: 4.9, reviews: 18, level: 6, xp: 3100, online: true,
+            creator: 'Entity #4', createdAt: '2026-03-25'
+        },
+        {
+            publicCode: 'abc123', name: 'TravelBot Asia', avatar: '🧳',
+            desc: '亞洲旅遊行程規劃專家，機票比價、景點推薦、在地美食。',
+            tags: ['search', 'chat'], caps: ['itinerary-planning', 'price-compare', 'local-guide'],
+            stars: 4.5, reviews: 67, level: 10, xp: 8500, online: true,
+            creator: 'TravelCo', createdAt: '2026-02-15'
+        },
+        {
+            publicCode: 'def456', name: 'CodeHelper', avatar: '💻',
+            desc: '程式碼審查助手，支援 Python/JS/Go，即時 debug 建議。',
+            tags: ['creative', 'chat', 'a2a'], caps: ['code-review', 'debugging', 'refactor'],
+            stars: 4.7, reviews: 89, level: 12, xp: 12000, online: false,
+            creator: 'DevTeam', createdAt: '2026-01-10'
+        },
+        {
+            publicCode: 'ghi789', name: '健康顧問小蜜', avatar: '🏥',
+            desc: '健康諮詢助手，運動建議、營養分析、睡眠追蹤。',
+            tags: ['support', 'chat'], caps: ['health-advice', 'nutrition', 'fitness'],
+            stars: 4.3, reviews: 31, level: 5, xp: 2200, online: true,
+            creator: 'HealthLab', createdAt: '2026-03-01'
+        },
+        {
+            publicCode: 'jkl012', name: '翻譯大師', avatar: '🌐',
+            desc: '即時多語翻譯，支援 30+ 語言，語境理解、術語對照。',
+            tags: ['chat', 'a2a'], caps: ['translation', 'language-detect', 'glossary'],
+            stars: 4.6, reviews: 124, level: 15, xp: 18000, online: true,
+            creator: 'LangPro', createdAt: '2025-12-20'
+        },
+        {
+            publicCode: 'mno345', name: '財務小管家', avatar: '💰',
+            desc: '個人記帳、預算管理、消費分析，幫你管好每一塊錢。',
+            tags: ['support', 'chat'], caps: ['bookkeeping', 'budget', 'analytics'],
+            stars: 4.4, reviews: 55, level: 7, xp: 4100, online: false,
+            creator: 'FinBot', createdAt: '2026-02-28'
+        },
+        {
+            publicCode: 'pqr678', name: 'NewsDigest', avatar: '📰',
+            desc: '每日新聞摘要，科技、財經、國際大事，3 分鐘掌握重點。',
+            tags: ['search', 'chat'], caps: ['news-digest', 'summarize', 'topic-track'],
+            stars: 4.2, reviews: 38, level: 9, xp: 6800, online: true,
+            creator: 'MediaBot', createdAt: '2026-03-15'
+        },
+        {
+            publicCode: 'stu901', name: '食譜達人', avatar: '👨‍🍳',
+            desc: '輸入食材，推薦食譜。支援中西日韓料理，營養標示一目了然。',
+            tags: ['search', 'creative'], caps: ['recipe-search', 'nutrition-calc', 'meal-plan'],
+            stars: 4.7, reviews: 72, level: 8, xp: 5500, online: true,
+            creator: 'FoodieAI', createdAt: '2026-03-08'
+        },
+        {
+            publicCode: 'vwx234', name: 'MusicMix Bot', avatar: '🎵',
+            desc: '音樂推薦引擎，根據心情、場景、喜好生成播放清單。',
+            tags: ['creative', 'chat'], caps: ['music-recommend', 'playlist', 'mood-detect'],
+            stars: 4.1, reviews: 22, level: 4, xp: 1500, online: false,
+            creator: 'SoundLab', createdAt: '2026-03-18'
+        },
+        {
+            publicCode: 'yz5678', name: '法律諮詢助手', avatar: '⚖️',
+            desc: '基礎法律問題解答，合約審閱、勞動法規、消費爭議。',
+            tags: ['support', 'chat'], caps: ['legal-qa', 'contract-review', 'dispute'],
+            stars: 4.5, reviews: 48, level: 7, xp: 4300, online: true,
+            creator: 'LawBot', createdAt: '2026-02-10'
+        },
+        {
+            publicCode: 'ab9012', name: 'GPS 探索家', avatar: '📍',
+            desc: '附近美食、停車場、景點搜尋，GPS 定位即時推薦。',
+            tags: ['search', 'chat', 'a2a'], caps: ['gps-location', 'nearby-search', 'navigation'],
+            stars: 4.6, reviews: 15, level: 3, xp: 800, online: true,
+            creator: 'Entity #4', createdAt: '2026-03-25'
+        }
+    ];
+
+    const MOCK_COMMENTS = [
+        { author: 'User123', avatar: '👤', text: '很好用！商品查詢速度很快。', time: '2 小時前', replies: [
+            { author: 'ShopBot Pro', avatar: '🛒', text: '謝謝你的支持！有任何問題歡迎隨時問我 😊', time: '1 小時前' }
+        ]},
+        { author: 'Alice', avatar: '👩', text: '希望可以支援更多付款方式。', time: '1 天前', replies: [] },
+        { author: 'Bob', avatar: '👨', text: '跟朋友推薦了，他們都覺得很方便。', time: '3 天前', replies: [] },
+        { author: 'Charlie', avatar: '🧑', text: '客服回覆速度超快，讚！', time: '5 天前', replies: [] },
+        { author: 'Diana', avatar: '👩‍💻', text: '介面很直覺，第一次用就上手了。', time: '1 週前', replies: [
+            { author: 'ShopBot Pro', avatar: '🛒', text: '感謝回饋！我們會繼續優化體驗。', time: '6 天前' }
+        ]},
+        { author: 'Eve', avatar: '👧', text: '能加入收藏功能嗎？想記住喜歡的商品。', time: '2 週前', replies: [] }
+    ];
+
+    /* ══════ State ══════ */
+    let currentFilter = 'all';
+    let currentSort = 'popular';
+    let searchQuery = '';
+
+    /* ══════ Render ══════ */
+    function renderGrid(bots) {
+        const grid = document.getElementById('botGrid');
+        const empty = document.getElementById('emptyState');
+        const loadMore = document.getElementById('loadMore');
+
+        if (!bots.length) {
+            grid.innerHTML = '';
+            empty.style.display = 'block';
+            loadMore.style.display = 'none';
+            document.getElementById('resultCount').textContent = '0';
+            return;
+        }
+
+        empty.style.display = 'none';
+        loadMore.style.display = bots.length >= 12 ? 'block' : 'none';
+        document.getElementById('resultCount').textContent = bots.length;
+
+        grid.innerHTML = bots.map(bot => `
+            <div class="bot-card" onclick="openDetail('${bot.publicCode}')">
+                <span class="bot-card-level ${lvClass(bot.level)}">Lv.${bot.level}</span>
+                <div class="bot-card-header">
+                    <div class="bot-card-avatar">
+                        ${bot.avatar.startsWith('http') ? `<img src="${bot.avatar}" alt="">` : bot.avatar}
+                        <span class="bot-card-online ${bot.online ? 'online' : 'offline'}"></span>
+                    </div>
+                    <div class="bot-card-info">
+                        <div class="bot-card-name">${esc(bot.name)}</div>
+                        <div class="bot-card-creator">${esc(bot.creator)}</div>
+                    </div>
+                </div>
+                <div class="bot-card-desc">${esc(bot.desc)}</div>
+                <div class="bot-card-footer">
+                    <div class="bot-card-tags">
+                        ${bot.tags.slice(0, 2).map(t => `<span class="bot-card-tag">${esc(t)}</span>`).join('')}
+                    </div>
+                    <div class="bot-card-stats">
+                        <span class="stat"><span class="stars">★</span> ${bot.stars}</span>
+                        <span class="stat">💬 ${bot.reviews}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function filterAndSort() {
+        let bots = [...MOCK_BOTS];
+
+        // Filter
+        if (currentFilter !== 'all') {
+            bots = bots.filter(b => b.tags.includes(currentFilter));
+        }
+
+        // Search
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            bots = bots.filter(b =>
+                b.name.toLowerCase().includes(q) ||
+                b.desc.toLowerCase().includes(q) ||
+                b.tags.some(t => t.includes(q)) ||
+                b.caps.some(c => c.includes(q))
+            );
+        }
+
+        // Sort
+        switch (currentSort) {
+            case 'popular': bots.sort((a, b) => b.reviews - a.reviews); break;
+            case 'newest': bots.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); break;
+            case 'rating': bots.sort((a, b) => b.stars - a.stars); break;
+            case 'active': bots.sort((a, b) => (b.online ? 1 : 0) - (a.online ? 1 : 0) || b.reviews - a.reviews); break;
+        }
+
+        renderGrid(bots);
+    }
+
+    /* ══════ Interactions ══════ */
+    function setFilter(filter, el) {
+        currentFilter = filter;
+        document.querySelectorAll('.plaza-chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        filterAndSort();
+    }
+
+    function handleSort() {
+        currentSort = document.getElementById('sortSelect').value;
+        filterAndSort();
+    }
+
+    function clearSearch() {
+        document.getElementById('searchInput').value = '';
+        searchQuery = '';
+        document.getElementById('searchClear').classList.remove('visible');
+        filterAndSort();
+    }
+
+    function setView(view, el) {
+        document.querySelectorAll('.plaza-view-btn').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+        const grid = document.getElementById('botGrid');
+        if (view === 'list') {
+            grid.style.gridTemplateColumns = '1fr';
+        } else {
+            grid.style.gridTemplateColumns = '';
+        }
+    }
+
+    function loadMoreBots() {
+        // Mock: just hide the button
+        document.getElementById('loadMore').style.display = 'none';
+    }
+
+    /* ══════ Detail Modal ══════ */
+    function openDetail(code) {
+        const bot = MOCK_BOTS.find(b => b.publicCode === code);
+        if (!bot) return;
+
+        const modal = document.getElementById('detailModal');
+        const content = document.getElementById('detailContent');
+
+        content.innerHTML = `
+            <button class="modal-close" onclick="closeDetail()">✕</button>
+
+            <div class="detail-header">
+                <div class="detail-avatar">
+                    ${bot.avatar.startsWith('http') ? `<img src="${bot.avatar}" alt="">` : bot.avatar}
+                </div>
+                <div class="detail-name">${esc(bot.name)}</div>
+                <div class="detail-code" onclick="navigator.clipboard.writeText('${bot.publicCode}')" title="Copy code">${bot.publicCode}</div>
+                <div class="detail-desc">${esc(bot.desc)}</div>
+                <div class="detail-level-xp">
+                    <span>🏆 Lv.${bot.level}</span>
+                    <span>⚡ ${bot.xp.toLocaleString()} XP</span>
+                    <span class="stars">★ ${bot.stars}</span>
+                    <span>💬 ${bot.reviews}</span>
+                </div>
+            </div>
+
+            <div class="detail-actions">
+                <button class="detail-btn primary" onclick="window.open('/c/${bot.publicCode}','_blank')">
+                    💬 <span data-i18n="community_detail_chat">開始對話</span>
+                </button>
+                <button class="detail-btn outline">
+                    📥 <span data-i18n="community_detail_save">收藏</span>
+                </button>
+                <button class="detail-btn outline" onclick="navigator.clipboard.writeText(location.origin+'/c/${bot.publicCode}')">
+                    🔗 <span data-i18n="community_detail_share">分享</span>
+                </button>
+            </div>
+
+            <div class="detail-tags">
+                ${bot.tags.map(t => `<span class="detail-tag">${esc(t)}</span>`).join('')}
+            </div>
+
+            ${bot.caps.length ? `
+            <div class="detail-caps">
+                <div class="detail-caps-title" data-i18n="community_detail_caps">Capabilities</div>
+                <div class="detail-cap-list">
+                    ${bot.caps.map(c => `<div class="detail-cap-item"><span class="icon">⚡</span> ${esc(c)}</div>`).join('')}
+                </div>
+            </div>` : ''}
+
+            <div class="detail-comments">
+                <div class="detail-comments-title">
+                    💬 <span data-i18n="community_detail_comments">留言板</span>
+                    <span style="color:var(--text-muted);font-weight:400;">(${MOCK_COMMENTS.length})</span>
+                </div>
+                <div class="comment-input-row">
+                    <input class="comment-input" type="text" data-i18n="community_comment_placeholder" placeholder="留下你的評價..." maxlength="200">
+                    <button class="comment-send" data-i18n="community_comment_send">送出</button>
+                </div>
+                <div class="comment-list">
+                    ${MOCK_COMMENTS.map(c => renderComment(c)).join('')}
+                </div>
+            </div>
+            <div class="modal-scroll-fade">
+                <div class="modal-scroll-fade-grad"></div>
+                <div class="modal-scroll-fade-bar"><span>↓ 向下滑動查看更多</span></div>
+            </div>
+        `;
+
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        setTimeout(checkModalScroll, 100);
+    }
+
+    function renderComment(c) {
+        return `
+            <div class="comment-item">
+                <div class="comment-avatar">${c.avatar}</div>
+                <div class="comment-body">
+                    <div class="comment-author">${esc(c.author)}</div>
+                    <div class="comment-text">${esc(c.text)}</div>
+                    <div class="comment-time">${c.time}<button class="comment-reply-btn" data-i18n="community_comment_reply">回覆</button></div>
+                    ${c.replies && c.replies.length ? `
+                        <div class="comment-replies">
+                            ${c.replies.map(r => `
+                                <div class="comment-item">
+                                    <div class="comment-avatar">${r.avatar}</div>
+                                    <div class="comment-body">
+                                        <div class="comment-author">${esc(r.author)}</div>
+                                        <div class="comment-text">${esc(r.text)}</div>
+                                        <div class="comment-time">${r.time}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    function closeDetail() {
+        document.getElementById('detailModal').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    /* ══════ Utilities ══════ */
+    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    function lvClass(lv) {
+        if (lv >= 15) return 'lv-legend';
+        if (lv >= 10) return 'lv-elite';
+        if (lv >= 7) return 'lv-high';
+        if (lv >= 4) return 'lv-mid';
+        return 'lv-low';
+    }
+
+    /* ══════ Init ══════ */
+    document.getElementById('searchInput').addEventListener('input', function() {
+        searchQuery = this.value.trim();
+        document.getElementById('searchClear').classList.toggle('visible', !!searchQuery);
+        filterAndSort();
+    });
+
+    // ESC to close modal
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
+
+    // Scroll fade: add class when content overflows
+    function checkModalScroll() {
+        const mc = document.getElementById('detailContent');
+        if (mc && mc.scrollHeight > mc.clientHeight) {
+            mc.classList.add('has-scroll');
+        }
+    }
+
+    // Initial render
+    filterAndSort();
+    </script>
+</body>
+
+</html>

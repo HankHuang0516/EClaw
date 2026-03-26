@@ -3,6 +3,7 @@
 function renderPublicNav(activePage) {
     const pages = [
         { id: 'enterprise', i18nKey: 'nav_enterprise', label: 'Enterprise', href: '/enterprise' },
+        { id: 'community', i18nKey: 'nav_community', label: 'Community', href: '/portal/community.html' },
         { id: 'info', i18nKey: 'nav_info', label: 'Info', href: '/info' }
     ];
 
