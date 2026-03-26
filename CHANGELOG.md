@@ -1,3 +1,10 @@
+## [1.177.1](https://github.com/HankHuang0516/EClaw/compare/v1.177.0...v1.177.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* persist is_public to DB when set via PUT agent-card ([#510](https://github.com/HankHuang0516/EClaw/issues/510)) ([dd8eab4](https://github.com/HankHuang0516/EClaw/commit/dd8eab4a1756d702bc0c83bb9b2748f054fc1928))
+
 # [1.177.0](https://github.com/HankHuang0516/EClaw/compare/v1.176.4...v1.177.0) (2026-03-26)
 
 
