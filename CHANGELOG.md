@@ -1,3 +1,10 @@
+## [1.193.3](https://github.com/HankHuang0516/EClaw/compare/v1.193.2...v1.193.3) (2026-03-26)
+
+
+### Bug Fixes
+
+* **i18n:** add missing info.html keys — FAQ chips, release notes, proxy window across all 8 languages ([e4e4421](https://github.com/HankHuang0516/EClaw/commit/e4e44211999913f9a0d8f730cfe64de016168cf4))
+
 ## [1.193.2](https://github.com/HankHuang0516/EClaw/compare/v1.193.1...v1.193.2) (2026-03-26)
 
 
