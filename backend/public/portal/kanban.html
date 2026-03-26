@@ -381,7 +381,7 @@
         // ── Render Board ──
         function renderBoard() {
             const filtered = currentFilter === 'mine'
-                ? allCards.filter(c => (c.assigned_bots||[]).some(id => boundEntities.some(e => e.entityId === id)))
+                ? allCards.filter(c => (c.assignedBots||[]).some(id => boundEntities.some(e => e.entityId === id)))
                 : allCards;
 
             STATUSES.forEach(status => {
@@ -397,7 +397,10 @@
         }
 
         function renderCard(card) {
-            const bots = (card.assigned_bots||[]).map(id => '#'+id).join(', ') || 'Unassigned';
+            const bots = (card.assignedBots||[]).map(id => {
+                const ent = boundEntities.find(e => e.entityId === id);
+                return ent ? (ent.name || ent.character || `#${id}`) : `#${id}`;
+            }).join(', ');
             const isStale = card.is_stale ? ' stale' : '';
             const commentCount = card.comment_count || 0;
             const noteCount = card.note_count || 0;
@@ -429,7 +432,7 @@
             const list = document.getElementById('kbMobileList');
             if (!list) return;
             const filtered = currentFilter === 'mine'
-                ? allCards.filter(c => (c.assigned_bots||[]).some(id => boundEntities.some(e => e.entityId === id)))
+                ? allCards.filter(c => (c.assignedBots||[]).some(id => boundEntities.some(e => e.entityId === id)))
                 : allCards;
             const cards = filtered.filter(c => c.status === mobileTab);
             const label = t(STATUS_I18N[mobileTab], STATUS_LABELS[mobileTab]);
@@ -457,7 +460,7 @@
                     if (!card || card.status === newStatus) { dragCard = null; return; }
                     if (card.status === 'done') { showToast('Cannot move Done cards', true); dragCard = null; return; }
                     try {
-                        await apiMoveCard(dragCard, newStatus, card.assigned_bots || []);
+                        await apiMoveCard(dragCard, newStatus, card.assignedBots || []);
                         showToast('Moved to ' + STATUS_LABELS[newStatus]);
                         await loadCards();
                     } catch(err) { showToast('Move failed: ' + (err.message||err), true); }
@@ -483,7 +486,7 @@
             meta.innerHTML = `
                 <span class="meta-item"><span class="kb-card-priority" data-p="${card.priority}">${card.priority}</span></span>
                 <span class="meta-item">📌 ${STATUS_LABELS[card.status]}</span>
-                <span class="meta-item">👤 ${(card.assigned_bots||[]).map(id=>'#'+id).join(', ')||'Unassigned'}</span>
+                <span class="meta-item">👤 ${(card.assignedBots||[]).map(id=>{ const e=boundEntities.find(x=>x.entityId===id); return e?(e.name||e.character||'#'+id):'#'+id; }).join(', ')}</span>
                 <span class="meta-item">🕐 ${formatTime(card.created_at)}</span>
                 ${card.description ? '<div style="width:100%;font-size:13px;color:var(--text-secondary);margin-top:4px">'+escapeHtml(card.description)+'</div>' : ''}
             `;
@@ -581,7 +584,7 @@
             if (!card || card.status === newStatus) return;
             if (card.status === 'done') { showToast('Cannot move Done cards', true); return; }
             try {
-                await apiMoveCard(cardId, newStatus, card.assigned_bots || []);
+                await apiMoveCard(cardId, newStatus, card.assignedBots || []);
                 showToast('Moved to ' + STATUS_LABELS[newStatus]);
                 await loadCards();
                 if (openCardId === cardId) openDetail(cardId);
