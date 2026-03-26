@@ -6394,23 +6394,47 @@ app.delete('/api/entity/agent-card', (req, res) => {
  * Body: { deviceId, deviceSecret, entityId, public: true/false }
  */
 app.post('/api/entity/agent-card/visibility', async (req, res) => {
-    const { deviceId, deviceSecret, entityId } = req.body;
+    const { deviceId, deviceSecret, botSecret, entityId } = req.body;
     const isPublic = req.body.public;
 
-    if (!deviceId || entityId === undefined || typeof isPublic !== 'boolean') {
-        return res.status(400).json({ success: false, error: 'deviceId, deviceSecret, entityId, and public (boolean) required' });
+    if (!deviceId || typeof isPublic !== 'boolean') {
+        return res.status(400).json({ success: false, error: 'deviceId and public (boolean) required' });
     }
-    if (!deviceSecret) {
-        return res.status(400).json({ success: false, error: 'deviceSecret required (owner only)' });
+    if (!deviceSecret && !botSecret) {
+        return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
     }
 
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
-    if (!safeEqual(device.deviceSecret, deviceSecret)) {
-        return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
+
+    let eId;
+
+    if (botSecret) {
+        // Bot auth: find entity by botSecret, can only change own visibility
+        let found = false;
+        for (const [eid, entity] of Object.entries(device.entities)) {
+            if (entity && entity.isBound && entity.botSecret && safeEqual(entity.botSecret, botSecret)) {
+                eId = parseInt(eid);
+                found = true;
+                break;
+            }
+        }
+        if (!found) return res.status(403).json({ success: false, error: 'Invalid botSecret' });
+        // If entityId provided, must match
+        if (entityId !== undefined && parseInt(entityId) !== eId) {
+            return res.status(403).json({ success: false, error: 'botSecret does not match entityId' });
+        }
+    } else {
+        // Owner auth
+        if (!safeEqual(device.deviceSecret, deviceSecret)) {
+            return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
+        }
+        eId = parseInt(entityId);
+        if (entityId === undefined || isNaN(eId)) {
+            return res.status(400).json({ success: false, error: 'entityId required for deviceSecret auth' });
+        }
     }
 
-    const eId = parseInt(entityId);
     const entity = device.entities[eId];
     if (!entity || !entity.isBound) {
         return res.status(404).json({ success: false, error: 'Entity not found or not bound' });
