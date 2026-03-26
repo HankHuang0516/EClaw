@@ -1,3 +1,10 @@
+## [1.197.1](https://github.com/HankHuang0516/EClaw/compare/v1.197.0...v1.197.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* **workspace:** add draggable divider + fix duplicate nav in iframes ([#564](https://github.com/HankHuang0516/EClaw/issues/564)) ([c3e4ceb](https://github.com/HankHuang0516/EClaw/commit/c3e4ceb7da650f31f6eca3dfac7429067ec73845))
+
 # [1.197.0](https://github.com/HankHuang0516/EClaw/compare/v1.196.0...v1.197.0) (2026-03-26)
 
 
