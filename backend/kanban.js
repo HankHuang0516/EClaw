@@ -73,17 +73,26 @@ async function initKanbanDatabase() {
             .split(';')
             .map(s => s.trim())
             .filter(s => s.length > 5);
-        for (const stmt of statements) {
+        console.log(`[Kanban] Schema init: ${statements.length} statements to execute`);
+        let ok = 0, skipped = 0, failed = 0;
+        for (let i = 0; i < statements.length; i++) {
+            const stmt = statements[i];
+            const preview = stmt.split('\n')[0].trim().substring(0, 60);
             try {
                 await pool.query(stmt);
+                ok++;
+                console.log(`[Kanban] Schema [${i+1}/${statements.length}] OK: ${preview}`);
             } catch (err) {
-                if (!err.message.includes('already exists') &&
-                    !err.message.includes('duplicate key')) {
-                    console.warn('[Kanban] Schema warning:', err.message);
+                if (err.message.includes('already exists') || err.message.includes('duplicate key')) {
+                    skipped++;
+                } else {
+                    failed++;
+                    console.error(`[Kanban] Schema [${i+1}/${statements.length}] FAILED: ${preview}`);
+                    console.error(`[Kanban]   Error: ${err.message}`);
                 }
             }
         }
-        console.log('[Kanban] Database initialized');
+        console.log(`[Kanban] Database initialized: ${ok} OK, ${skipped} skipped (already exist), ${failed} failed`);
     } catch (error) {
         console.error('[Kanban] Failed to init database:', error);
     }
@@ -135,6 +144,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
         if (!deviceSecret && !botSecret) {
             res.status(400).json({ success: false, error: 'Missing deviceSecret or botSecret' });
         } else {
+            console.warn('[Kanban] Auth failed:', { deviceId, hasDeviceSecret: !!deviceSecret, hasBotSecret: !!botSecret, entityId });
             res.status(401).json({ success: false, error: 'Invalid credentials' });
         }
         return false;
@@ -228,6 +238,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
     // ============================================
     router.post('/card', async (req, res) => {
         if (!authenticate(req, res)) return;
+        const _p = { ...req.query, ...req.body }; console.log('[Kanban] POST /card called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId, title, description, priority, status, assignedBots, entityId } = req.body;
 
         if (!title || !title.trim()) {
@@ -275,6 +286,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
     // ============================================
     router.get('/cards', async (req, res) => {
         if (!authenticate(req, res)) return;
+        const _p = { ...req.query, ...req.body }; console.log('[Kanban] GET /cards called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId } = { ...req.query, ...req.body };
         const { status: filterStatus, assignedBot, priority: filterPriority } = req.query;
 
@@ -336,6 +348,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
     // ============================================
     router.get('/cards/archived', async (req, res) => {
         if (!authenticate(req, res)) return;
+        const _p = { ...req.query, ...req.body }; console.log('[Kanban] GET /cards/archived called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId } = { ...req.query, ...req.body };
         const page = Math.max(1, parseInt(req.query.page) || 1);
         const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
@@ -381,6 +394,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
     // ============================================
     router.get('/card/:id', async (req, res) => {
         if (!authenticate(req, res)) return;
+        const _p = { ...req.query, ...req.body }; console.log('[Kanban] GET /card/:id called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId } = { ...req.query, ...req.body };
         const cardId = req.params.id;
 
@@ -458,6 +472,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
     // ============================================
     router.put('/card/:id', async (req, res) => {
         if (!authenticate(req, res)) return;
+        const _p = { ...req.query, ...req.body }; console.log('[Kanban] PUT /card/:id called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId, title, description, priority, assignedBots } = req.body;
         const cardId = req.params.id;
 
@@ -520,6 +535,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
     // ============================================
     router.delete('/card/:id', async (req, res) => {
         if (!authenticate(req, res)) return;
+        const _p = { ...req.query, ...req.body }; console.log('[Kanban] DELETE /card/:id called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId } = { ...req.query, ...req.body };
         const cardId = req.params.id;
 
@@ -550,6 +566,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
     // ============================================
     router.post('/card/:id/move', async (req, res) => {
         if (!authenticate(req, res)) return;
+        const _p = { ...req.query, ...req.body }; console.log('[Kanban] POST /card/:id/move called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId, newStatus, assignedBots } = req.body;
         const cardId = req.params.id;
 
@@ -625,6 +642,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
     // ============================================
     router.get('/card/:id/comments', async (req, res) => {
         if (!authenticate(req, res)) return;
+        const _p = { ...req.query, ...req.body }; console.log('[Kanban] GET /card/:id/comments called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId } = { ...req.query, ...req.body };
         const cardId = req.params.id;
         const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
@@ -665,6 +683,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
     // ============================================
     router.post('/card/:id/comment', async (req, res) => {
         if (!authenticate(req, res)) return;
+        const _p = { ...req.query, ...req.body }; console.log('[Kanban] POST /card/:id/comment called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId, text, entityId, fromEntityId } = req.body;
         const cardId = req.params.id;
         const eId = parseInt(fromEntityId ?? entityId ?? 0);
@@ -711,6 +730,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
     // ============================================
     router.get('/card/:id/notes', async (req, res) => {
         if (!authenticate(req, res)) return;
+        const _p = { ...req.query, ...req.body }; console.log('[Kanban] GET /card/:id/notes called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId } = { ...req.query, ...req.body };
         const cardId = req.params.id;
 
@@ -749,6 +769,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
     // ============================================
     router.post('/card/:id/note', async (req, res) => {
         if (!authenticate(req, res)) return;
+        const _p = { ...req.query, ...req.body }; console.log('[Kanban] POST /card/:id/note called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId, title, content, entityId, fromEntityId } = req.body;
         const cardId = req.params.id;
         const eId = parseInt(fromEntityId ?? entityId ?? 0);
@@ -795,6 +816,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
     // ============================================
     router.get('/card/:id/files', async (req, res) => {
         if (!authenticate(req, res)) return;
+        const _p = { ...req.query, ...req.body }; console.log('[Kanban] GET /card/:id/files called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId } = { ...req.query, ...req.body };
         const cardId = req.params.id;
 
@@ -834,6 +856,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
     // ============================================
     router.post('/card/:id/file', async (req, res) => {
         if (!authenticate(req, res)) return;
+        const _p = { ...req.query, ...req.body }; console.log('[Kanban] POST /card/:id/file called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId, filename, url, mimeType, fileSize, entityId } = req.body;
         const cardId = req.params.id;
         const uploadedBy = parseInt(entityId || 0);
@@ -881,6 +904,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
     // ============================================
     router.put('/card/:id/config', async (req, res) => {
         if (!authenticate(req, res)) return;
+        const _p = { ...req.query, ...req.body }; console.log('[Kanban] PUT /card/:id/config called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId, staleThresholdMs, doneRetentionMs } = req.body;
         const cardId = req.params.id;
 
@@ -937,6 +961,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
     // ============================================
     router.put('/card/:id/schedule', async (req, res) => {
         if (!authenticate(req, res)) return;
+        const _p = { ...req.query, ...req.body }; console.log('[Kanban] PUT /card/:id/schedule called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId, enabled, type, cronExpression, runAt, timezone } = req.body;
         const cardId = req.params.id;
 
