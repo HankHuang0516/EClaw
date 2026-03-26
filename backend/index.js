@@ -3094,12 +3094,11 @@ app.get('/api/whoami', (req, res) => {
  */
 app.get('/api/release-notes', (req, res) => {
     try {
-        // Try multiple paths — Railway cwd may differ from __dirname parent
+        // Railway deploys backend/ as /app, so CHANGELOG.md is copied there by nixpacks
         const candidates = [
-            path.join(__dirname, '..', 'CHANGELOG.md'),
+            path.join(__dirname, 'CHANGELOG.md'),          // /app/CHANGELOG.md (Railway)
+            path.join(__dirname, '..', 'CHANGELOG.md'),    // local dev (repo root)
             path.join(process.cwd(), 'CHANGELOG.md'),
-            path.join(process.cwd(), '..', 'CHANGELOG.md'),
-            '/app/CHANGELOG.md'  // Railway default app root
         ];
         const changelogPath = candidates.find(p => fs.existsSync(p));
         if (!changelogPath) {
@@ -6518,8 +6517,13 @@ app.delete('/api/entity/agent-card', (req, res) => {
  */
 // Two routes: original path + alias to avoid Cloudflare WAF blocking "agent-card/visibility"
 async function handleVisibility(req, res) {
-    const { deviceId, deviceSecret, botSecret, entityId } = req.body;
-    const isPublic = req.body.public;
+    // Accept params from body, query, or headers (Cloudflare WAF blocks secrets in body/query)
+    const src = { ...req.query, ...req.body };
+    const deviceId = src.deviceId || req.headers['x-device-id'];
+    const deviceSecret = src.deviceSecret || req.headers['x-device-secret'];
+    const botSecret = src.botSecret || req.headers['x-bot-secret'];
+    const entityId = src.entityId;
+    const isPublic = typeof src.public === 'boolean' ? src.public : src.public === 'true';
 
     if (!deviceId || typeof isPublic !== 'boolean') {
         return res.status(400).json({ success: false, error: 'deviceId and public (boolean) required' });
