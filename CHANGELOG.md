@@ -1,3 +1,10 @@
+## [1.198.1](https://github.com/HankHuang0516/EClaw/compare/v1.198.0...v1.198.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* **settings:** show Display card inside workspace iframe ([#566](https://github.com/HankHuang0516/EClaw/issues/566)) ([5261dd5](https://github.com/HankHuang0516/EClaw/commit/5261dd5b9eb25ff54202137c7cb69cdea1ef33b9))
+
 # [1.198.0](https://github.com/HankHuang0516/EClaw/compare/v1.197.1...v1.198.0) (2026-03-26)
 
 
