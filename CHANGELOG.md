@@ -1,3 +1,10 @@
+## [1.198.3](https://github.com/HankHuang0516/EClaw/compare/v1.198.2...v1.198.3) (2026-03-26)
+
+
+### Bug Fixes
+
+* **test:** skip device register rate limiter in test environment ([08e2923](https://github.com/HankHuang0516/EClaw/commit/08e29233f10634a63a77d45b89235d80cbf5171c)), closes [#491](https://github.com/HankHuang0516/EClaw/issues/491)
+
 ## [1.198.2](https://github.com/HankHuang0516/EClaw/compare/v1.198.1...v1.198.2) (2026-03-26)
 
 
