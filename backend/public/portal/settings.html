@@ -1440,8 +1440,10 @@
             const mode = localStorage.getItem('eclaw-view-mode') || 'single';
             document.getElementById('viewModeSingle').classList.toggle('active', mode === 'single');
             document.getElementById('viewModeSplit').classList.toggle('active', mode === 'split');
-            // Hide display card on narrow screens
-            if (window.innerWidth < 1200) {
+            // Hide display card on narrow screens (use top window width, not iframe width)
+            let screenWidth = window.innerWidth;
+            try { if (window.top !== window.self) screenWidth = window.top.innerWidth; } catch (e) {}
+            if (screenWidth < 1200) {
                 const card = document.getElementById('displayCard');
                 if (card) card.style.display = 'none';
             }
