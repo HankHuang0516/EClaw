@@ -6460,6 +6460,10 @@ app.put('/api/entity/agent-card', (req, res) => {
     if (isPublic !== undefined) {
         entity.isPublic = !!isPublic;
         entity.publishedAt = isPublic ? (entity.publishedAt || Date.now()) : null;
+        // Persist is_public to DB (separate column, not part of saveDeviceData)
+        db.setEntityPublic(deviceId, parseInt(entityId), !!isPublic).catch(err =>
+            console.error('[AgentCard] setEntityPublic error:', err.message)
+        );
         serverLog('info', 'bot_plaza', `Entity ${entityId} visibility: ${isPublic ? 'PUBLIC' : 'PRIVATE'}`, { deviceId, entityId });
     }
 
