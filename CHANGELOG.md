@@ -1,3 +1,10 @@
+## [1.170.5](https://github.com/HankHuang0516/EClaw/compare/v1.170.4...v1.170.5) (2026-03-26)
+
+
+### Bug Fixes
+
+* chat photo display — add Flickr fallback to backup URL + onerror handler ([#495](https://github.com/HankHuang0516/EClaw/issues/495)) ([3eb12df](https://github.com/HankHuang0516/EClaw/commit/3eb12dfc3627c6a58e283d4da97c7846f7ccda0d))
+
 ## [1.170.4](https://github.com/HankHuang0516/EClaw/compare/v1.170.3...v1.170.4) (2026-03-25)
 
 
