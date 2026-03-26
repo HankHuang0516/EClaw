@@ -1,3 +1,10 @@
+## [1.195.3](https://github.com/HankHuang0516/EClaw/compare/v1.195.2...v1.195.3) (2026-03-26)
+
+
+### Bug Fixes
+
+* **i18n:** preserve original HTML when no translation found ([#559](https://github.com/HankHuang0516/EClaw/issues/559)) ([7f2570d](https://github.com/HankHuang0516/EClaw/commit/7f2570d4099c82cfd8847d0ee40425a3115c26f4))
+
 ## [1.195.2](https://github.com/HankHuang0516/EClaw/compare/v1.195.1...v1.195.2) (2026-03-26)
 
 
