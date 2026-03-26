@@ -1,3 +1,10 @@
+## [1.187.2](https://github.com/HankHuang0516/EClaw/compare/v1.187.1...v1.187.2) (2026-03-26)
+
+
+### Bug Fixes
+
+* **i18n:** add 49 zh-TW + 36 zh-CN missing translations ([#538](https://github.com/HankHuang0516/EClaw/issues/538)) ([2def840](https://github.com/HankHuang0516/EClaw/commit/2def840a406d9678ebcb89ad29ccede139cdf096)), closes [#targetBar](https://github.com/HankHuang0516/EClaw/issues/targetBar)
+
 ## [1.187.1](https://github.com/HankHuang0516/EClaw/compare/v1.187.0...v1.187.1) (2026-03-26)
 
 
