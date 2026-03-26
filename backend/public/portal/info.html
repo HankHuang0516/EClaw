@@ -330,6 +330,74 @@
             text-decoration: underline;
         }
 
+        /* ── Guide: Demo Cards (P3-2) ── */
+        .demo-showcase {
+            margin: 28px 0;
+        }
+        .demo-showcase-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .demo-card {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            background: var(--card, #1e1f36);
+            border: 1px solid var(--card-border, rgba(255,255,255,0.08));
+            border-radius: var(--radius, 10px);
+            padding: 24px;
+            margin-bottom: 16px;
+            transition: border-color 0.2s;
+        }
+        .demo-card:hover {
+            border-color: var(--primary, #7c3aed);
+        }
+        .demo-card:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+        .demo-card-media {
+            flex-shrink: 0;
+            width: 320px;
+        }
+        .demo-card-media img {
+            width: 100%;
+            border-radius: 12px;
+            border: 1px solid var(--card-border, rgba(255,255,255,0.08));
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        }
+        .demo-card-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .demo-card-info h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text, #e0e0e0);
+        }
+        .demo-card-info p {
+            font-size: 0.9rem;
+            color: var(--text-secondary, #aaa);
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+        .demo-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .demo-tag {
+            background: rgba(124, 58, 237, 0.12);
+            color: var(--primary, #7c3aed);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            border: 1px solid rgba(124, 58, 237, 0.2);
+        }
+
         /* ── Guide: Code / diagram blocks ── */
         .guide-content .code-block {
             background: var(--card);
@@ -827,6 +895,9 @@
             .qs-steps { grid-template-columns: 1fr; }
             .qs-demo-grid { grid-template-columns: 1fr; }
             .feat-grid { grid-template-columns: 1fr; }
+            .demo-card,
+            .demo-card:nth-child(even) { flex-direction: column; }
+            .demo-card-media { width: 100%; }
         }
 
         @media (max-width: 480px) {
@@ -1223,19 +1294,61 @@
                             <p class="solution-desc" data-i18n="guide_features_why3_desc">Web Portal、Android App、iOS App 共用同一後端，資料即時同步。在電腦上設定的任務，手機上也能即時看到。</p>
                         </div>
 
-                        <h2 data-i18n="guide_features_gps_title">📍 GPS 地理位置分享</h2>
-                        <p data-i18n="guide_features_gps_desc">Bot 可主動請求用戶的 GPS 位置，實現情境式互動服務。當用戶詢問「附近有什麼好吃的？」，Bot 自動取得座標並推薦結果。</p>
+                        <!-- Demo Showcase (P3-2) -->
+                        <h2 data-i18n="guide_features_demo_title">🎬 Demo 展示</h2>
+                        <div class="demo-showcase">
 
-                        <div style="text-align:center;margin:16px 0;">
-                            <img src="/assets/eclaw-gps-location-demo.gif" alt="GPS Location Demo"
-                                 style="max-width:380px;width:100%;border-radius:16px;border:1px solid var(--card-border);box-shadow:0 4px 24px rgba(0,0,0,0.3);"
-                                 loading="lazy">
-                        </div>
+                            <!-- Chat Demo -->
+                            <div class="demo-card">
+                                <div class="demo-card-media">
+                                    <img src="/assets/eclaw-chat-demo.gif" alt="Chat Demo" loading="lazy">
+                                </div>
+                                <div class="demo-card-info">
+                                    <h3 data-i18n="demo_chat_title">💬 Smart Chat</h3>
+                                    <p data-i18n="demo_chat_desc">Real-time multi-agent conversation with Markdown rendering, voice messages, image sharing, and product recommendation cards — all in one unified chat interface.</p>
+                                    <div class="demo-tags">
+                                        <span class="demo-tag" data-i18n="demo_tag_realtime">Real-time</span>
+                                        <span class="demo-tag" data-i18n="demo_tag_multiagent">Multi-agent</span>
+                                        <span class="demo-tag" data-i18n="demo_tag_markdown">Markdown</span>
+                                        <span class="demo-tag" data-i18n="demo_tag_voice">Voice</span>
+                                    </div>
+                                </div>
+                            </div>
 
-                        <div class="why-eclaw-card">
-                            <p class="pain-point" data-i18n="guide_features_gps_scenarios">使用場景</p>
-                            <p class="solution-desc" data-i18n="guide_features_gps_list">🍜 附近美食推薦 · 🅿️ 停車場搜尋 · 👥 朋友位置分享 · 🚕 叫車與導航 · 🏥 最近醫院藥局</p>
-                        </div>
+                            <!-- GPS Demo -->
+                            <div class="demo-card">
+                                <div class="demo-card-media">
+                                    <img src="/assets/eclaw-gps-location-demo.gif" alt="GPS Location Demo" loading="lazy">
+                                </div>
+                                <div class="demo-card-info">
+                                    <h3 data-i18n="demo_gps_title">📍 GPS Location Sharing</h3>
+                                    <p data-i18n="demo_gps_desc">Bot requests your GPS location for context-aware services. Ask "what's good to eat nearby?" and get instant personalized recommendations based on your coordinates.</p>
+                                    <div class="demo-tags">
+                                        <span class="demo-tag" data-i18n="demo_tag_location">Location</span>
+                                        <span class="demo-tag" data-i18n="demo_tag_food">Food</span>
+                                        <span class="demo-tag" data-i18n="demo_tag_parking">Parking</span>
+                                        <span class="demo-tag" data-i18n="demo_tag_navigation">Navigation</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Note Pages Demo -->
+                            <div class="demo-card">
+                                <div class="demo-card-media">
+                                    <img src="/assets/eclaw-notepages-demo.gif" alt="Note Pages Demo" loading="lazy">
+                                </div>
+                                <div class="demo-card-info">
+                                    <h3 data-i18n="demo_notes_title">📝 Note Pages</h3>
+                                    <p data-i18n="demo_notes_desc">Rich note pages with full HTML rendering — bots create beautiful documents, reports, and interactive content that users can view as standalone web pages.</p>
+                                    <div class="demo-tags">
+                                        <span class="demo-tag" data-i18n="demo_tag_rich">Rich Content</span>
+                                        <span class="demo-tag" data-i18n="demo_tag_html">HTML</span>
+                                        <span class="demo-tag" data-i18n="demo_tag_shareable">Shareable</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div><!-- /demo-showcase -->
 
                         <div class="cta-links">
                             <h3 data-i18n="guide_features_cta_title">立即體驗</h3>
