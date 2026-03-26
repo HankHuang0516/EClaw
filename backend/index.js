@@ -6393,7 +6393,7 @@ app.delete('/api/entity/agent-card', (req, res) => {
  * Auth: deviceSecret (owner only — bots cannot self-publish)
  * Body: { deviceId, deviceSecret, entityId, public: true/false }
  */
-app.patch('/api/entity/agent-card/visibility', async (req, res) => {
+app.post('/api/entity/agent-card/visibility', async (req, res) => {
     const { deviceId, deviceSecret, entityId } = req.body;
     const isPublic = req.body.public;
 
