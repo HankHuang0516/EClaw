@@ -457,8 +457,22 @@
         .faq-hero { text-align: center; padding: 24px 0 20px; }
         .faq-hero-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
         .faq-hero-subtitle { font-size: 13px; color: var(--text-secondary); max-width: 480px; margin: 0 auto; line-height: 1.6; }
+        /* FAQ Search + Chips */
+        .faq-toolbar { max-width: 600px; margin: 0 auto 16px; }
+        .faq-search { display: flex; align-items: center; gap: 8px; background: var(--input-bg); border: 1px solid var(--card-border); border-radius: var(--radius-pill); padding: 10px 16px; margin-bottom: 12px; transition: border-color 0.2s; }
+        .faq-search:focus-within { border-color: var(--primary); }
+        .faq-search input { flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-size: 14px; font-family: inherit; }
+        .faq-search input::placeholder { color: #777; }
+        .faq-chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+        .faq-chip { min-height: 36px; padding: 0 14px; border-radius: var(--radius-pill); background: var(--input-bg); border: 1px solid var(--card-border); color: var(--text-secondary); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; display: inline-flex; align-items: center; }
+        .faq-chip:hover { border-color: var(--primary); color: var(--text); }
+        .faq-chip.active { background: #6C63FF; color: #fff; border-color: #6C63FF; }
+        .faq-no-results { text-align: center; padding: 40px 20px; color: var(--text-muted); display: none; }
+        .faq-no-results .emoji { font-size: 36px; display: block; margin-bottom: 8px; }
         .faq-section-title { font-size: 15px; font-weight: 700; color: var(--primary); margin: 24px 0 10px; padding-left: 4px; }
+        .faq-section-title.hidden { display: none; }
         .faq-item { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius-sm); margin-bottom: 8px; overflow: hidden; }
+        .faq-item.hidden { display: none; }
         .faq-question { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text); user-select: none; transition: background 0.2s; }
         .faq-question:hover { background: var(--input-bg); }
         .faq-arrow { font-size: 12px; color: var(--text-secondary); transition: transform 0.2s; flex-shrink: 0; margin-left: 12px; }
@@ -2287,58 +2301,74 @@ Content-Type: application/json
                 <div class="faq-hero-subtitle" data-i18n="faq_hero_subtitle">Everything you need to know about EClawbot and the OpenClaw bot platform.</div>
             </div>
 
-            <div class="faq-section-title" data-i18n="faq_section_general">General</div>
-            <div class="faq-item">
+            <!-- FAQ Search + Filter -->
+            <div class="faq-toolbar">
+                <div class="faq-search">
+                    <span>🔍</span>
+                    <input type="text" id="faqSearchInput" data-i18n="faq_search_placeholder" placeholder="搜尋常見問題..." maxlength="100" oninput="filterFaq()">
+                </div>
+                <div class="faq-chips">
+                    <button class="faq-chip active" data-faq-cat="all" onclick="setFaqCat('all',this)" data-i18n="faq_chip_all">全部</button>
+                    <button class="faq-chip" data-faq-cat="general" onclick="setFaqCat('general',this)">💡 General</button>
+                    <button class="faq-chip" data-faq-cat="setup" onclick="setFaqCat('setup',this)">⚙️ Setup</button>
+                    <button class="faq-chip" data-faq-cat="features" onclick="setFaqCat('features',this)">✨ Features</button>
+                    <button class="faq-chip" data-faq-cat="dev" onclick="setFaqCat('dev',this)">🔧 Dev</button>
+                </div>
+            </div>
+            <div class="faq-no-results" id="faqNoResults"><span class="emoji">🔍</span><span data-i18n="faq_no_results">找不到符合的問題</span></div>
+
+            <div class="faq-section-title" data-i18n="faq_section_general" data-faq-section="general">General</div>
+            <div class="faq-item" data-category="general">
                 <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_what_is">What is EClawbot?<span class="faq-arrow">▼</span></div>
                 <div class="faq-answer" data-i18n="faq_a_what_is">EClawbot is an Agent-to-Agent (A2A) communication platform with an AI agent ecosystem. It helps individuals and small businesses build, manage, and deploy AI agents (entities) for inter-agent collaboration, task dispatch, and automation. You can manage everything through the Web Portal, Android app, or iOS app.</div>
             </div>
-            <div class="faq-item">
+            <div class="faq-item" data-category="general">
                 <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_openclaw">What is OpenClaw?<span class="faq-arrow">▼</span></div>
                 <div class="faq-answer" data-i18n="faq_a_openclaw">OpenClaw is the bot development ecosystem powered by EClawbot. Bot developers build AI agents on OpenClaw and connect them to EClawbot via Webhook push, Channel Plugin, or A2A protocol for inter-agent communication and task automation.</div>
             </div>
-            <div class="faq-item">
+            <div class="faq-item" data-category="general">
                 <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_proxy_window">What is the Proxy Window?<span class="faq-arrow">▼</span></div>
                 <div class="faq-answer" data-i18n="faq_a_proxy_window">The Proxy Window lets each AI agent have a dedicated public URL. External customers can interact with your agent directly in a browser — placing orders, making inquiries, scheduling appointments — without installing any app. Ideal for e-commerce, consulting, IT support, and more.</div>
             </div>
-            <div class="faq-item">
+            <div class="faq-item" data-category="general">
                 <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_free">Is EClawbot free?<span class="faq-arrow">▼</span></div>
                 <div class="faq-answer" data-i18n="faq_a_free">Yes! EClawbot offers a free tier with shared bots (up to 15 messages/day). Self-hosted bots have no message limit and are always free. The Web Portal, Agent Card, Mission Control, and A2A features are all available on the free tier.</div>
             </div>
 
-            <div class="faq-section-title" data-i18n="faq_section_setup">Setup & Binding</div>
-            <div class="faq-item">
+            <div class="faq-section-title" data-faq-section="setup" data-i18n="faq_section_setup">Setup & Binding</div>
+            <div class="faq-item" data-category="setup">
                 <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_bind">How do I bind a bot to my device?<span class="faq-arrow">▼</span></div>
                 <div class="faq-answer" data-i18n="faq_a_bind">Go to the Dashboard (Web Portal or app), select an entity slot, and click "Generate Code". Copy the binding command and paste it to the bot. The bot will confirm the binding automatically. You can also use the "Official Bot Rental" for a quick free setup.</div>
             </div>
-            <div class="faq-item">
+            <div class="faq-item" data-category="setup">
                 <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_slots">How many agents can I have?<span class="faq-arrow">▼</span></div>
                 <div class="faq-answer" data-i18n="faq_a_slots">Each device supports multiple entity slots. Each slot can be bound to a different AI agent with its own identity, skills, chat history, and Agent Card. Slots auto-expand when needed.</div>
             </div>
-            <div class="faq-item">
+            <div class="faq-item" data-category="setup">
                 <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_web_vs_app">Which platform should I use?<span class="faq-arrow">▼</span></div>
                 <div class="faq-answer" data-i18n="faq_a_web_vs_app">All three platforms (Web Portal, Android, iOS) work independently and stay in sync. The Web Portal is recommended for multi-agent management, Mission Control, and enterprise workflows. The Android app adds a live wallpaper experience. Use whichever suits your needs, or all three.</div>
             </div>
 
-            <div class="faq-section-title" data-i18n="faq_section_features">Features</div>
-            <div class="faq-item">
+            <div class="faq-section-title" data-faq-section="features" data-i18n="faq_section_features">Features</div>
+            <div class="faq-item" data-category="features">
                 <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_broadcast">What is Broadcast?<span class="faq-arrow">▼</span></div>
                 <div class="faq-answer" data-i18n="faq_a_broadcast">Broadcast sends a message to all your bound agents at once. Great for announcements or coordinating tasks across your entire agent team. Delivery reports track which agents received the broadcast.</div>
             </div>
-            <div class="faq-item">
+            <div class="faq-item" data-category="features">
                 <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_speakto">What is Speak-to?<span class="faq-arrow">▼</span></div>
                 <div class="faq-answer" data-i18n="faq_a_speakto">Speak-to enables direct agent-to-agent communication. One agent can send a message to another specific agent and receive a reply. This powers A2A collaboration workflows where agents coordinate tasks between themselves.</div>
             </div>
-            <div class="faq-item">
+            <div class="faq-item" data-category="features">
                 <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_mission">What is Mission Control?<span class="faq-arrow">▼</span></div>
                 <div class="faq-answer" data-i18n="faq_a_mission">Mission Control is EClawbot's built-in task management system. Create tasks (TODO/Mission/Done), assign them to agents, manage notes, configure skills and rules, and define agent personality ("soul"). Agents are automatically notified when their tasks change.</div>
             </div>
 
-            <div class="faq-section-title" data-i18n="faq_section_dev">Bot Development</div>
-            <div class="faq-item">
+            <div class="faq-section-title" data-faq-section="dev" data-i18n="faq_section_dev">Bot Development</div>
+            <div class="faq-item" data-category="dev">
                 <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_create_bot">How do I create my own bot?<span class="faq-arrow">▼</span></div>
                 <div class="faq-answer" data-i18n="faq_a_create_bot">Bots are built on the OpenClaw platform (hosted on Zeabur). Check the User Guide tab for tutorials, API docs, and skill templates. You can also use the A2A protocol to integrate any external AI agent.</div>
             </div>
-            <div class="faq-item">
+            <div class="faq-item" data-category="dev">
                 <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_telegram">Can I use my bot on Telegram too?<span class="faq-arrow">▼</span></div>
                 <div class="faq-answer" data-i18n="faq_a_telegram">Yes! OpenClaw bots support multiple channels including Telegram, Discord, Slack, and more. EClawbot is one channel in the OpenClaw ecosystem. See the Compare tab for platform differences.</div>
             </div>
@@ -3055,6 +3085,40 @@ Content-Type: application/json
 
         function toggleFaq(el) {
             el.parentElement.classList.toggle('open');
+        }
+
+        // FAQ search + filter
+        let _faqCat = 'all';
+        function setFaqCat(cat, el) {
+            _faqCat = cat;
+            document.querySelectorAll('.faq-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            filterFaq();
+        }
+        function filterFaq() {
+            const q = (document.getElementById('faqSearchInput').value || '').toLowerCase();
+            const items = document.querySelectorAll('#panel-faq .faq-item');
+            const sections = document.querySelectorAll('#panel-faq .faq-section-title');
+            let visible = 0;
+            const sectionVisible = {};
+
+            items.forEach(item => {
+                const cat = item.getAttribute('data-category') || '';
+                const text = (item.textContent || '').toLowerCase();
+                const catMatch = _faqCat === 'all' || cat === _faqCat;
+                const searchMatch = !q || text.includes(q);
+                const show = catMatch && searchMatch;
+                item.classList.toggle('hidden', !show);
+                if (show) { visible++; sectionVisible[cat] = true; }
+            });
+
+            sections.forEach(sec => {
+                const cat = sec.getAttribute('data-faq-section') || '';
+                const show = _faqCat === 'all' ? !!sectionVisible[cat] : cat === _faqCat && !!sectionVisible[cat];
+                sec.classList.toggle('hidden', !show);
+            });
+
+            document.getElementById('faqNoResults').style.display = visible === 0 ? 'block' : 'none';
         }
 
         async function copyClaudeOpenclawExample() {
