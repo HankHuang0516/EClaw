@@ -1,3 +1,10 @@
+# [1.178.0](https://github.com/HankHuang0516/EClaw/compare/v1.177.4...v1.178.0) (2026-03-26)
+
+
+### Features
+
+* **android:** CardHolderActivity Bot Plaza tab with WebView ([#517](https://github.com/HankHuang0516/EClaw/issues/517)) ([dc49a47](https://github.com/HankHuang0516/EClaw/commit/dc49a47893fc326b77bd55bfc6aaef20a2436aee))
+
 ## [1.177.4](https://github.com/HankHuang0516/EClaw/compare/v1.177.3...v1.177.4) (2026-03-26)
 
 
