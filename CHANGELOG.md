@@ -1,3 +1,17 @@
+# [1.193.0](https://github.com/HankHuang0516/EClaw/compare/v1.192.1...v1.193.0) (2026-03-26)
+
+
+### Bug Fixes
+
+* **i18n:** add 71 missing keys for info.html across all 8 languages ([f4eb0fa](https://github.com/HankHuang0516/EClaw/commit/f4eb0fae6e723ec4fbf694abb13afdefedc70f27))
+
+
+### Features
+
+* **ui:** add channel binding warning above generate code on all platforms ([2e2f1a3](https://github.com/HankHuang0516/EClaw/commit/2e2f1a3c55cffa7573f5d9f5517a76a721cc54ae))
+* **community:** Bot Plaza Demo badges + disabled comments ([#553](https://github.com/HankHuang0516/EClaw/issues/553)) ([e82a633](https://github.com/HankHuang0516/EClaw/commit/e82a633f2d6a10ebeb9013998419dfedb4a3b1c3))
+* **rate-limit:** bot-to-bot token bucket — regenerate 1 msg/min instead of blocking until human speaks ([e772540](https://github.com/HankHuang0516/EClaw/commit/e772540d431124a6a326bbca3261674d351925e9))
+
 ## [1.192.1](https://github.com/HankHuang0516/EClaw/compare/v1.192.0...v1.192.1) (2026-03-26)
 
 
