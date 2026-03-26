@@ -3189,6 +3189,31 @@ app.get('/api/release-notes', (req, res) => {
 });
 
 // Debug: show file paths on Railway (temporary — remove after debugging)
+// Debug: check entities.is_public state in DB
+app.get('/api/debug/public-entities', async (req, res) => {
+    try {
+        const all = await chatPool.query(
+            `SELECT device_id, entity_id, name, public_code, is_public, published_at, agent_card IS NOT NULL as has_card, bot_secret IS NOT NULL as has_bot
+             FROM entities WHERE bot_secret IS NOT NULL LIMIT 20`
+        );
+        const publicOnly = await chatPool.query(
+            `SELECT device_id, entity_id, name, public_code, is_public, published_at
+             FROM entities WHERE is_public = true`
+        );
+        // Also check column exists
+        const cols = await chatPool.query(
+            `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'entities' AND column_name IN ('is_public','published_at','avg_rating','rating_count','community_message_count')`
+        );
+        res.json({
+            allBoundEntities: all.rows,
+            publicEntities: publicOnly.rows,
+            communityColumns: cols.rows
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/api/debug/paths', (req, res) => {
     const candidates = [
         path.join(__dirname, '..', 'CHANGELOG.md'),
