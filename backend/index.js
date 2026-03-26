@@ -1348,6 +1348,7 @@ const botTools = require('./bot-tools');
 app.use('/api/bot', botTools.router);
 missionModule.initMissionDatabase();
 kanbanModule.initKanbanDatabase();
+kanbanModule.startBackgroundTimers();
 // Wire notification callback (notifyDevice defined later, uses closure)
 missionModule.setNotifyCallback((deviceId, notif) => notifyDevice(deviceId, notif));
 
