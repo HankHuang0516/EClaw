@@ -1,3 +1,10 @@
+# [1.188.0](https://github.com/HankHuang0516/EClaw/compare/v1.187.5...v1.188.0) (2026-03-26)
+
+
+### Features
+
+* **kanban:** comprehensive debug logging — 53 log points ([#543](https://github.com/HankHuang0516/EClaw/issues/543)) ([f46542e](https://github.com/HankHuang0516/EClaw/commit/f46542e064cfb6ed0bbef452e450272e688890cd))
+
 ## [1.187.5](https://github.com/HankHuang0516/EClaw/compare/v1.187.4...v1.187.5) (2026-03-26)
 
 
