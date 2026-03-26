@@ -1,3 +1,10 @@
+## [1.177.3](https://github.com/HankHuang0516/EClaw/compare/v1.177.2...v1.177.3) (2026-03-26)
+
+
+### Bug Fixes
+
+* await saveDeviceData before setEntityPublic in PUT agent-card ([#513](https://github.com/HankHuang0516/EClaw/issues/513)) ([56d3570](https://github.com/HankHuang0516/EClaw/commit/56d357060c753fd469ec4fc40684f5ab6b01c764))
+
 ## [1.177.2](https://github.com/HankHuang0516/EClaw/compare/v1.177.1...v1.177.2) (2026-03-26)
 
 
