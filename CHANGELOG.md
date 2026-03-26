@@ -1,3 +1,10 @@
+## [1.176.1](https://github.com/HankHuang0516/EClaw/compare/v1.176.0...v1.176.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* release-notes path fallback + visibility alias /api/community/publish ([#505](https://github.com/HankHuang0516/EClaw/issues/505)) ([c31b66b](https://github.com/HankHuang0516/EClaw/commit/c31b66b1469c6fc97bb040d86d39d2149df260aa))
+
 # [1.176.0](https://github.com/HankHuang0516/EClaw/compare/v1.175.0...v1.176.0) (2026-03-26)
 
 
