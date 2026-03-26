@@ -1,3 +1,10 @@
+# [1.183.0](https://github.com/HankHuang0516/EClaw/compare/v1.182.0...v1.183.0) (2026-03-26)
+
+
+### Features
+
+* **info:** P3-2 demo cards unified format ([#525](https://github.com/HankHuang0516/EClaw/issues/525)) ([a4a4584](https://github.com/HankHuang0516/EClaw/commit/a4a45842d7c25bf27e896a26d5ff581a51c8c2c9))
+
 # [1.182.0](https://github.com/HankHuang0516/EClaw/compare/v1.181.0...v1.182.0) (2026-03-26)
 
 
