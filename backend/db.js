@@ -1727,11 +1727,21 @@ async function cleanupExpiredPendingMessages(cutoffTimestamp) {
 async function setEntityPublic(deviceId, entityId, isPublic) {
     try {
         const now = isPublic ? new Date().toISOString() : null;
-        await chatPool.query(
+        const result = await chatPool.query(
             `UPDATE entities SET is_public = $1, published_at = CASE WHEN $1 THEN COALESCE(published_at, $2::timestamptz) ELSE published_at END
              WHERE device_id = $3 AND entity_id = $4`,
             [isPublic, now, deviceId, entityId]
         );
+        // If entity row doesn't exist yet, INSERT it (saveDeviceData may not have run)
+        if (result.rowCount === 0) {
+            console.warn(`[DB] setEntityPublic: entity ${deviceId}:${entityId} not in DB yet, inserting`);
+            await chatPool.query(
+                `INSERT INTO entities (device_id, entity_id, is_public, published_at, is_bound)
+                 VALUES ($1, $2, $3, $4, true)
+                 ON CONFLICT (device_id, entity_id) DO UPDATE SET is_public = $3, published_at = COALESCE(EXCLUDED.published_at, entities.published_at)`,
+                [deviceId, entityId, isPublic, now]
+            );
+        }
         return true;
     } catch (err) {
         console.error('[DB] setEntityPublic error:', err.message);
