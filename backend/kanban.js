@@ -38,6 +38,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const safeEqual = require('./safe-equal');
+const { CronExpressionParser } = require('cron-parser');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
@@ -161,9 +162,20 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
         }
     }
 
+    // ── Helper: compute next cron run time ──
+    function computeNextRun(cronExpression, timezone) {
+        try {
+            const expr = CronExpressionParser.parse(cronExpression, { tz: timezone || 'Asia/Taipei' });
+            return expr.next().toDate();
+        } catch (e) {
+            console.warn('[Kanban] Invalid cron expression:', cronExpression, e.message);
+            return null;
+        }
+    }
+
     // ── Helper: serialize card row to API response ──
     function serializeCard(row) {
-        return {
+        const card = {
             id: row.id,
             title: row.title,
             description: row.description || '',
@@ -182,6 +194,21 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
             noteCount: parseInt(row.note_count) || 0,
             fileCount: parseInt(row.file_count) || 0,
         };
+
+        // Schedule fields
+        if (row.schedule_enabled) {
+            card.schedule = {
+                enabled: row.schedule_enabled,
+                type: row.schedule_type,
+                cronExpression: row.schedule_cron || null,
+                runAt: row.schedule_run_at ? new Date(row.schedule_run_at).getTime() : null,
+                timezone: row.schedule_timezone || 'Asia/Taipei',
+                lastRunAt: row.schedule_last_run_at ? new Date(row.schedule_last_run_at).getTime() : null,
+                nextRunAt: row.schedule_next_run_at ? new Date(row.schedule_next_run_at).getTime() : null,
+            };
+        }
+
+        return card;
     }
 
     // ============================================
@@ -894,14 +921,108 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
     });
 
     // ============================================
-    // Background Timers: Stale Nudge + Auto-Archive
+    // PUT /card/:id/schedule — Set schedule
+    // ============================================
+    router.put('/card/:id/schedule', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId, enabled, type, cronExpression, runAt, timezone } = req.body;
+        const cardId = req.params.id;
+
+        try {
+            const existing = await pool.query(
+                `SELECT * FROM kanban_cards WHERE id = $1 AND device_id = $2`,
+                [cardId, deviceId]
+            );
+            if (existing.rows.length === 0) {
+                return res.status(404).json({ success: false, error: 'Card not found' });
+            }
+
+            const schedEnabled = enabled !== false;
+            const schedType = (type === 'once' || type === 'recurring') ? type : null;
+            const tz = timezone || 'Asia/Taipei';
+
+            if (schedEnabled && !schedType) {
+                return res.status(400).json({ success: false, error: 'Schedule type must be "once" or "recurring"' });
+            }
+
+            let nextRunAt = null;
+
+            if (schedEnabled && schedType === 'once') {
+                if (!runAt) {
+                    return res.status(400).json({ success: false, error: 'Missing runAt for once schedule' });
+                }
+                nextRunAt = new Date(runAt);
+                if (isNaN(nextRunAt.getTime())) {
+                    return res.status(400).json({ success: false, error: 'Invalid runAt timestamp' });
+                }
+            }
+
+            if (schedEnabled && schedType === 'recurring') {
+                if (!cronExpression) {
+                    return res.status(400).json({ success: false, error: 'Missing cronExpression for recurring schedule' });
+                }
+                // Validate cron expression
+                nextRunAt = computeNextRun(cronExpression, tz);
+                if (!nextRunAt) {
+                    return res.status(400).json({ success: false, error: 'Invalid cronExpression' });
+                }
+            }
+
+            const result = await pool.query(
+                `UPDATE kanban_cards SET 
+                    schedule_enabled = $1,
+                    schedule_type = $2,
+                    schedule_cron = $3,
+                    schedule_run_at = $4,
+                    schedule_timezone = $5,
+                    schedule_next_run_at = $6,
+                    updated_at = NOW()
+                 WHERE id = $7 AND device_id = $8
+                 RETURNING *`,
+                [
+                    schedEnabled,
+                    schedType,
+                    schedType === 'recurring' ? cronExpression : null,
+                    schedType === 'once' ? nextRunAt : null,
+                    tz,
+                    nextRunAt,
+                    cardId,
+                    deviceId
+                ]
+            );
+
+            const card = serializeCard(result.rows[0]);
+            await bumpVersion(deviceId);
+
+            const schedLabel = schedType === 'once'
+                ? `一次性排程：${nextRunAt.toISOString()}`
+                : `重複排程：${cronExpression} (${tz})`;
+            await addSystemComment(cardId, deviceId,
+                `🗓️ ${schedEnabled ? '排程已設定' : '排程已停用'} — ${schedEnabled ? schedLabel : ''}`);
+
+            res.json({ success: true, card });
+        } catch (err) {
+            console.error('[Kanban] Schedule card error:', err);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ============================================
+    // Background Timers: Stale Nudge + Auto-Archive + Schedule
     // ============================================
 
-    let staleTimer = null;
-    let archiveTimer = null;
-    const STALE_CHECK_INTERVAL = 5 * 60 * 1000;    // Check every 5 minutes
-    const ARCHIVE_CHECK_INTERVAL = 15 * 60 * 1000;  // Check every 15 minutes
+    let bgTimer = null;
+    const BG_CHECK_INTERVAL = 5 * 60 * 1000;        // Unified check every 5 minutes
     const MIN_NUDGE_GAP_MS = 60 * 60 * 1000;        // Minimum 1 hour between nudges
+
+    /**
+     * Unified background tick: stale nudge + auto-archive + schedule triggers.
+     */
+    async function backgroundTick() {
+        await checkStaleCards();
+        await checkDoneAutoArchive();
+        await checkScheduleTriggers();
+    }
 
     /**
      * Scan for stale cards (TODO / In Progress / Review) that exceeded staleThresholdMs.
@@ -909,9 +1030,6 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
      */
     async function checkStaleCards() {
         try {
-            // Find cards that are stale: active status, not archived,
-            // time since status_changed_at > stale_threshold_ms,
-            // and either never nudged or last nudge > 1 hour ago
             const result = await pool.query(`
                 SELECT * FROM kanban_cards
                 WHERE archived = false
@@ -931,17 +1049,14 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
                 const elapsedMs = Date.now() - new Date(card.status_changed_at).getTime();
                 const elapsedHrs = Math.round(elapsedMs / 3600000 * 10) / 10;
 
-                // System comment on the card
                 await addSystemComment(card.id, card.device_id,
                     `⏰ 催促：此卡片已在「${statusLabel}」停留 ${elapsedHrs} 小時，請 ${bots.map(b => `#${b}`).join(', ') || '負責人'} 繼續推進`);
 
-                // Update last_stale_nudge_at
                 await pool.query(
                     `UPDATE kanban_cards SET last_stale_nudge_at = NOW() WHERE id = $1`,
                     [card.id]
                 );
 
-                // Push notify assigned bots
                 if (bots.length > 0) {
                     const msg = `⏰ 任務催促：[${card.title}]\n已在「${statusLabel}」停留 ${elapsedHrs} 小時，請繼續推進`;
                     notifyEntities(card.device_id, bots, msg);
@@ -956,6 +1071,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
 
     /**
      * Scan for Done cards that exceeded doneRetentionMs → auto-archive.
+     * Recurring schedule cards in Done are NOT auto-archived (they restart on next trigger).
      */
     async function checkDoneAutoArchive() {
         try {
@@ -964,6 +1080,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
                 WHERE archived = false
                   AND status = 'done'
                   AND EXTRACT(EPOCH FROM (NOW() - status_changed_at)) * 1000 > done_retention_ms
+                  AND (schedule_enabled = false OR schedule_type != 'recurring' OR schedule_enabled IS NULL)
             `);
 
             if (result.rows.length === 0) return;
@@ -990,29 +1107,113 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
     }
 
     /**
-     * Start background timers. Call after DB init.
+     * Scan for schedule-enabled cards whose next_run_at has passed → trigger them.
+     * - once: push notify + move to in_progress, then disable schedule
+     * - recurring: push notify + system comment, move Done→TODO if needed, compute next run
      */
-    function startBackgroundTimers() {
-        if (staleTimer) return; // Already running
+    async function checkScheduleTriggers() {
+        try {
+            const result = await pool.query(`
+                SELECT * FROM kanban_cards
+                WHERE archived = false
+                  AND schedule_enabled = true
+                  AND schedule_next_run_at IS NOT NULL
+                  AND schedule_next_run_at <= NOW()
+            `);
 
-        // Run initial checks after 30s (let server fully start)
-        setTimeout(() => {
-            checkStaleCards();
-            checkDoneAutoArchive();
-        }, 30000);
+            if (result.rows.length === 0) return;
 
-        staleTimer = setInterval(checkStaleCards, STALE_CHECK_INTERVAL);
-        archiveTimer = setInterval(checkDoneAutoArchive, ARCHIVE_CHECK_INTERVAL);
-        console.log(`[Kanban] Background timers started (stale: ${STALE_CHECK_INTERVAL / 1000}s, archive: ${ARCHIVE_CHECK_INTERVAL / 1000}s)`);
+            console.log(`[Kanban] Schedule triggers: ${result.rows.length} card(s) due`);
+
+            for (const card of result.rows) {
+                const bots = card.assigned_bots || [];
+                const schedType = card.schedule_type;
+
+                if (schedType === 'once') {
+                    // One-time: move to in_progress if in backlog/todo, notify, disable schedule
+                    let newStatus = card.status;
+                    if (card.status === 'backlog' || card.status === 'todo') {
+                        newStatus = 'in_progress';
+                    }
+
+                    await pool.query(
+                        `UPDATE kanban_cards SET 
+                            status = $1, status_changed_at = NOW(),
+                            schedule_enabled = false, schedule_last_run_at = NOW(),
+                            last_stale_nudge_at = NULL, updated_at = NOW()
+                         WHERE id = $2`,
+                        [newStatus, card.id]
+                    );
+
+                    await addSystemComment(card.id, card.device_id,
+                        `🗓️ 排程觸發（一次性）— 狀態: ${STATUS_LABELS[card.status]} → ${STATUS_LABELS[newStatus]}`);
+
+                    if (bots.length > 0) {
+                        const msg = `🗓️ 排程觸發：[${card.title}]\n請開始執行此任務`;
+                        notifyEntities(card.device_id, bots, msg);
+                    }
+
+                    try { await bumpVersion(card.device_id); } catch (e) { /* ignore */ }
+                    console.log(`[Kanban] Once-trigger: ${card.id} (${card.title}) → ${newStatus}`);
+
+                } else if (schedType === 'recurring') {
+                    // Recurring: if Done, move back to TODO; notify; compute next run
+                    let newStatus = card.status;
+                    if (card.status === 'done') {
+                        newStatus = 'todo';
+                    }
+
+                    // Compute next run
+                    const nextRun = computeNextRun(card.schedule_cron, card.schedule_timezone);
+
+                    await pool.query(
+                        `UPDATE kanban_cards SET 
+                            status = $1, status_changed_at = NOW(),
+                            schedule_last_run_at = NOW(), schedule_next_run_at = $2,
+                            last_stale_nudge_at = NULL, updated_at = NOW()
+                         WHERE id = $3`,
+                        [newStatus, nextRun, card.id]
+                    );
+
+                    const statusMsg = card.status !== newStatus
+                        ? `狀態: ${STATUS_LABELS[card.status]} → ${STATUS_LABELS[newStatus]}，`
+                        : '';
+                    await addSystemComment(card.id, card.device_id,
+                        `🗓️ 排程觸發（重複）— ${statusMsg}下次執行: ${nextRun ? nextRun.toISOString() : '未知'}`);
+
+                    if (bots.length > 0) {
+                        const msg = `🗓️ 排程觸發：[${card.title}]\n${statusMsg}請繼續推進此任務`;
+                        notifyEntities(card.device_id, bots, msg);
+                    }
+
+                    try { await bumpVersion(card.device_id); } catch (e) { /* ignore */ }
+                    console.log(`[Kanban] Recurring-trigger: ${card.id} (${card.title}) → ${newStatus}, next: ${nextRun?.toISOString()}`);
+                }
+            }
+        } catch (err) {
+            console.error('[Kanban] Schedule trigger error:', err.message);
+        }
     }
 
     /**
-     * Stop background timers (for graceful shutdown).
+     * Start background timer (unified). Call after DB init.
+     */
+    function startBackgroundTimers() {
+        if (bgTimer) return; // Already running
+
+        // Run initial check after 30s (let server fully start)
+        setTimeout(backgroundTick, 30000);
+
+        bgTimer = setInterval(backgroundTick, BG_CHECK_INTERVAL);
+        console.log(`[Kanban] Background timer started (interval: ${BG_CHECK_INTERVAL / 1000}s — stale + archive + schedule)`);
+    }
+
+    /**
+     * Stop background timer (for graceful shutdown).
      */
     function stopBackgroundTimers() {
-        if (staleTimer) { clearInterval(staleTimer); staleTimer = null; }
-        if (archiveTimer) { clearInterval(archiveTimer); archiveTimer = null; }
-        console.log('[Kanban] Background timers stopped');
+        if (bgTimer) { clearInterval(bgTimer); bgTimer = null; }
+        console.log('[Kanban] Background timer stopped');
     }
 
     return { router, initKanbanDatabase, startBackgroundTimers, stopBackgroundTimers };

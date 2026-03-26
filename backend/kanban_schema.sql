@@ -28,6 +28,20 @@ CREATE INDEX IF NOT EXISTS idx_kanban_cards_status ON kanban_cards(device_id, st
 CREATE INDEX IF NOT EXISTS idx_kanban_cards_archived ON kanban_cards(device_id, archived);
 
 -- ============================================
+-- Migration: Schedule fields
+-- ============================================
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS schedule_enabled BOOLEAN DEFAULT FALSE;
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS schedule_type VARCHAR(16) DEFAULT NULL;          -- 'once' or 'recurring'
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS schedule_cron VARCHAR(128) DEFAULT NULL;          -- cron expression
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS schedule_run_at TIMESTAMPTZ DEFAULT NULL;         -- one-time trigger
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS schedule_timezone VARCHAR(64) DEFAULT 'Asia/Taipei';
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS schedule_last_run_at TIMESTAMPTZ DEFAULT NULL;
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS schedule_next_run_at TIMESTAMPTZ DEFAULT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_kanban_cards_schedule ON kanban_cards(schedule_enabled, schedule_next_run_at)
+    WHERE schedule_enabled = true;
+
+-- ============================================
 -- Kanban Comments Table (留言板)
 -- ============================================
 CREATE TABLE IF NOT EXISTS kanban_comments (
