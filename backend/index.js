@@ -1059,8 +1059,15 @@ const missionModule = require('./mission')(devices, { awardEntityXP, serverLog }
 app.use('/api/mission', missionModule.router);
 
 // Kanban Board (Mission v2) — mounted on same /api/mission path
-const kanbanModule = require('./kanban')(devices, { awardEntityXP, serverLog });
-app.use('/api/mission', kanbanModule.router);
+let kanbanModule;
+try {
+    kanbanModule = require('./kanban')(devices, { awardEntityXP, serverLog });
+    app.use('/api/mission', kanbanModule.router);
+    console.log('[Kanban] Module loaded successfully');
+} catch (err) {
+    console.error('[Kanban] Failed to load module:', err.message);
+    kanbanModule = { initKanbanDatabase: () => {}, startBackgroundTimers: () => {} };
+}
 
 // ============================================
 // PAGE VIEW TRACKING (fire-and-forget)
