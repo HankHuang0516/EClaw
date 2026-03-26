@@ -1,3 +1,10 @@
+## [1.198.2](https://github.com/HankHuang0516/EClaw/compare/v1.198.1...v1.198.2) (2026-03-26)
+
+
+### Bug Fixes
+
+* webhook payload, i18n coverage, chat receipt, security hardening ([#490](https://github.com/HankHuang0516/EClaw/issues/490) [#491](https://github.com/HankHuang0516/EClaw/issues/491) [#492](https://github.com/HankHuang0516/EClaw/issues/492) [#493](https://github.com/HankHuang0516/EClaw/issues/493) [#547](https://github.com/HankHuang0516/EClaw/issues/547)) ([#567](https://github.com/HankHuang0516/EClaw/issues/567)) ([cfc9497](https://github.com/HankHuang0516/EClaw/commit/cfc94974721bed322ef6c5a358e3c91703a33874))
+
 ## [1.198.1](https://github.com/HankHuang0516/EClaw/compare/v1.198.0...v1.198.1) (2026-03-26)
 
 
