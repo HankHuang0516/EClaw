@@ -1,3 +1,11 @@
+## [1.192.1](https://github.com/HankHuang0516/EClaw/compare/v1.192.0...v1.192.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* **i18n:** add 10 kanban automation keys — en/zh/zh-CN ([#552](https://github.com/HankHuang0516/EClaw/issues/552)) ([bb17594](https://github.com/HankHuang0516/EClaw/commit/bb17594c9805a4c922eea5d8f95e31d89e357bea))
+* **assets:** regenerate demo GIFs with proper emoji rendering ([2d624be](https://github.com/HankHuang0516/EClaw/commit/2d624be594df53f15bd7282e9c57c1b0cbc5db51))
+
 # [1.192.0](https://github.com/HankHuang0516/EClaw/compare/v1.191.0...v1.192.0) (2026-03-26)
 
 
