@@ -1,3 +1,10 @@
+# [1.174.0](https://github.com/HankHuang0516/EClaw/compare/v1.173.0...v1.174.0) (2026-03-26)
+
+
+### Features
+
+* FAQ accordion with search + category chips ([#501](https://github.com/HankHuang0516/EClaw/issues/501)) ([c2e782f](https://github.com/HankHuang0516/EClaw/commit/c2e782fd2d9d6967f7d2b5c476e4e83d33b7447a))
+
 # [1.173.0](https://github.com/HankHuang0516/EClaw/compare/v1.172.3...v1.173.0) (2026-03-26)
 
 
