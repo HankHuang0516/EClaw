@@ -23,6 +23,10 @@
             display: flex;
             flex-direction: column;
             height: calc(100vh - 120px);
+        }
+        /* When embedded in workspace split view (no nav/footer) */
+        body.embed-mode .chat-container {
+            height: calc(100vh - 16px);
             background: var(--card);
             border: 1px solid var(--card-border);
             border-radius: var(--radius);
@@ -1829,6 +1833,11 @@
 
         // ── Init ──
         window.addEventListener('DOMContentLoaded', async () => {
+            // Detect embed mode (workspace split view)
+            if (new URLSearchParams(window.location.search).get('embed') === '1') {
+                document.body.classList.add('embed-mode');
+            }
+
             if (isAndroidWebView) {
                 // Hide web nav/footer — Android has its own bottom navigation
                 document.querySelector('.navbar')?.remove();

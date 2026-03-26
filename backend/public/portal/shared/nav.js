@@ -1,6 +1,9 @@
 // E-Claw Portal - Navigation Bar
 
 function renderNav(activePage) {
+    // Skip nav rendering when embedded in workspace iframe
+    if (new URLSearchParams(window.location.search).get('embed') === '1') return;
+
     const pages = [
         { id: 'dashboard', i18nKey: 'nav_dashboard', label: 'Dashboard', href: 'dashboard.html', icon: '📊' },
         { id: 'chat', i18nKey: 'nav_chat', label: 'Chat', href: 'chat.html', icon: '💬' },
@@ -53,6 +56,9 @@ function renderNav(activePage) {
                 </a>
             `).join('')}
         </div>
+        <button class="nav-split-toggle" id="navSplitToggle" onclick="toggleSplitView('${activePage}')" title="${t('nav_split_view', 'Split View')}" data-i18n-title="nav_split_view">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+        </button>
         <div class="nav-user" id="navUser">
             <div class="notif-bell" id="notifBell" onclick="toggleNotifDropdown(event)" role="button" tabindex="0" aria-label="${t('notif_title', 'Notifications')}" title="${t('notif_title', 'Notifications')}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleNotifDropdown(event)}">
                 <svg class="bell-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -108,3 +114,17 @@ async function logout() {
 
 // Alias for pages that call doLogout()
 function doLogout() { logout(); }
+
+// Split View toggle — navigate to/from workspace.html
+function toggleSplitView(currentPage) {
+    const isWorkspace = window.location.pathname.includes('workspace.html');
+    if (isWorkspace) {
+        // Exit split view — go to left pane's page
+        const params = new URLSearchParams(window.location.search);
+        const page = params.get('left') || 'dashboard';
+        window.location.href = page + '.html';
+    } else {
+        // Enter split view
+        window.location.href = 'workspace.html?left=' + encodeURIComponent(currentPage || 'dashboard');
+    }
+}
