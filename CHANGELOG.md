@@ -1,3 +1,10 @@
+# [1.190.0](https://github.com/HankHuang0516/EClaw/compare/v1.189.1...v1.190.0) (2026-03-26)
+
+
+### Features
+
+* **kanban:** avatars + countdown + relative time + chat-style comments + mobile ([#545](https://github.com/HankHuang0516/EClaw/issues/545)) ([95af8c6](https://github.com/HankHuang0516/EClaw/commit/95af8c6636927eae31aa09d347b479ef3142be46))
+
 ## [1.189.1](https://github.com/HankHuang0516/EClaw/compare/v1.189.0...v1.189.1) (2026-03-26)
 
 
