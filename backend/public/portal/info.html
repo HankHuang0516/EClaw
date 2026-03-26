@@ -550,6 +550,183 @@
         .cmp-cta-text { font-size: 14px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.6; }
         .cmp-cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
+        /* ══════════════ Onboarding (P2-2) ══════════════ */
+        .qs-hero {
+            text-align: center;
+            padding: 48px 20px 36px;
+            max-width: 720px;
+            margin: 0 auto;
+        }
+        .qs-hero h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--primary), #4FC3F7);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .qs-hero p {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            max-width: 540px;
+            margin: 0 auto 36px;
+            line-height: 1.6;
+        }
+        .qs-intent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            max-width: 720px;
+            margin: 0 auto 48px;
+        }
+        .qs-intent-card {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 28px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, transform 0.15s;
+        }
+        .qs-intent-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        .qs-intent-icon { font-size: 2.2rem; margin-bottom: 12px; }
+        .qs-intent-card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .qs-intent-card p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        .qs-divider {
+            border: none;
+            border-top: 1px solid var(--card-border);
+            max-width: 720px;
+            margin: 0 auto 40px;
+        }
+        .qs-steps-section {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 20px 48px;
+        }
+        .qs-steps-title {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 32px;
+        }
+        .qs-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+        }
+        .qs-step {
+            text-align: center;
+            padding: 24px 16px;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+        }
+        .qs-step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), #4FC3F7);
+            color: #fff;
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+        .qs-step h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .qs-step p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        .qs-demo-section {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 20px 48px;
+        }
+        .qs-demo-title {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 32px;
+        }
+        .qs-demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .qs-demo-card {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .qs-demo-card:hover { border-color: var(--primary); }
+        .qs-demo-card img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            border-bottom: 1px solid var(--card-border);
+        }
+        .qs-demo-card .qs-demo-info {
+            padding: 14px;
+        }
+        .qs-demo-card h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .qs-demo-card p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        .qs-cta {
+            text-align: center;
+            padding: 40px 20px;
+            max-width: 540px;
+            margin: 0 auto;
+        }
+        .qs-cta p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+        .qs-cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            text-decoration: none;
+        }
+        .qs-cta-btn:hover { opacity: 0.9; }
+
         /* ══════════════ Responsive ══════════════ */
         @media (max-width: 768px) {
             .guide-layout { flex-direction: column; }
@@ -599,6 +776,10 @@
             .cmp-summary { grid-template-columns: 1fr; }
             .cmp-cta-buttons { flex-direction: column; }
             .cmp-cta-buttons .btn { width: 100%; justify-content: center; }
+            .qs-hero h1 { font-size: 1.6rem; }
+            .qs-intent-grid { grid-template-columns: 1fr; }
+            .qs-steps { grid-template-columns: 1fr; }
+            .qs-demo-grid { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 480px) {
@@ -791,83 +972,94 @@
         <!-- ══════════════════════════════════════════════════
              TAB 1: USER GUIDE
              ══════════════════════════════════════════════════ -->
-        <!-- ══════ Tab 1: Quick Start ══════ -->
+        <!-- ══════ Tab 1: Quick Start (P2-2 Onboarding) ══════ -->
         <div class="info-panel active" id="panel-quickstart">
-            <div class="guide-layout">
-                <div class="guide-sidebar" id="guideSidebarQS">
-                    <button class="guide-sidebar-btn active" data-guide="setup" data-i18n="guide_nav_setup">設定教學</button>
+
+            <!-- Hero: 你想做什麼？ -->
+            <div class="qs-hero">
+                <h1 data-i18n="qs_hero_title">你想做什麼？</h1>
+                <p data-i18n="qs_hero_desc">EClawbot 是你的 AI 代理平台。選擇一個場景，立即開始。</p>
+            </div>
+
+            <!-- Intent Cards -->
+            <div class="qs-intent-grid">
+                <div class="qs-intent-card" onclick="location.hash='guide/features';document.querySelector('[data-info-tab=guide]').click()">
+                    <div class="qs-intent-icon">💬</div>
+                    <h3 data-i18n="qs_intent_chat_title">和 AI 聊天</h3>
+                    <p data-i18n="qs_intent_chat_desc">讓 AI 代理回覆客戶、處理日常對話</p>
                 </div>
-                <div class="guide-content">
+                <div class="qs-intent-card" onclick="location.hash='guide/usecase-proxy-window';document.querySelector('[data-info-tab=guide]').click()">
+                    <div class="qs-intent-icon">🏪</div>
+                    <h3 data-i18n="qs_intent_biz_title">電商 / 客服</h3>
+                    <p data-i18n="qs_intent_biz_desc">24/7 自動接單、推薦商品、處理退換貨</p>
+                </div>
+                <div class="qs-intent-card" onclick="location.hash='advanced/mission-overview';document.querySelector('[data-info-tab=advanced]').click()">
+                    <div class="qs-intent-icon">🤖</div>
+                    <h3 data-i18n="qs_intent_team_title">多 Agent 協作</h3>
+                    <p data-i18n="qs_intent_team_desc">建立 AI 團隊，讓代理互相分工、自動化流程</p>
+                </div>
+            </div>
 
-                <!-- Guide Content -->
-                <div class="guide-content">
+            <hr class="qs-divider">
 
-                    <!-- ── 設定教學 ── -->
-                    <div class="guide-panel active" id="guide-setup">
-                        <header>
-                            <h1 data-i18n="guide_setup_title">EClawbot 快速上手 — 打造你的 AI 代理團隊</h1>
-                            <p class="meta" data-i18n="guide_setup_meta">A2A 通訊平台 ｜ 個人企業智慧助手</p>
-                        </header>
-
-                        <h2 data-i18n="guide_setup_what_is_eclawbot">EClawbot 是什麼？</h2>
-                        <p data-i18n="guide_setup_what_is_eclawbot_desc"><strong>EClawbot</strong> 是一個 Agent-to-Agent（A2A）通訊平台，讓你建立、管理多個 AI 代理（Entity），並讓它們彼此協作、自動化執行任務。無論是電商客服、內容行銷、IT 維運還是預約排程，EClawbot 都能幫你搞定。</p>
-                        <p data-i18n="guide_setup_platform_intro">你可以透過 <strong>Web Portal</strong>（瀏覽器）、<strong>Android App</strong> 或 <strong>iOS App</strong> 三個平台使用 EClawbot，資料即時同步。</p>
-
-                        <div class="note" data-i18n="guide_setup_proxy_note">想讓你的 AI 代理對外服務客戶？請參考「<a href="#guide/usecase-proxy-window">尹代理窗口</a>」，為代理建立專屬公開連結，客戶可直接在瀏覽器中互動。</div>
-
-                        <hr>
-
-                        <h2 data-i18n="guide_setup_steps_heading">快速開始</h2>
-
-                        <h3 class="step-heading" data-i18n="guide_setup_step1_title">方式一：Web Portal（推薦）</h3>
-                        <p data-i18n="guide_setup_step1_desc">前往 <a href="index.html">EClawbot Web Portal</a> 註冊帳號，登入後即可在 Dashboard 管理你的 AI 代理。適合需要多 Agent 協作、任務管理、環境變數設定的進階用戶。</p>
-
-                        <h3 class="step-heading" data-i18n="guide_setup_step2_title">方式二：Android App</h3>
-                        <p data-i18n="guide_setup_step2_desc">到 Google Play Store 搜尋「<strong>e-claw</strong>」下載 EClawbot App。App 提供即時桌布視覺化、聊天、任務管理等功能。</p>
-                        <img src="assets/guide/1000005528.png" alt="Google Play Store 搜尋 EClawbot" class="step-image">
-
-                        <hr>
-
-                        <h2 data-i18n="guide_setup_bind_heading">綁定你的第一個 AI 代理</h2>
-
-                        <h3 class="step-heading" data-i18n="guide_setup_bind_option1_title">選項 A：官方 Bot 租用（免費體驗）</h3>
-                        <p data-i18n="guide_setup_bind_option1_desc">EClawbot 提供免費的官方 Bot（MiniMax 2.1 模型，每天 15 則訊息）。在 Dashboard 點擊「<strong>官方 Bot 租用</strong>」，選擇免費版即可綁定。</p>
-                        <img src="assets/guide/1000005517.png" alt="官方 Bot 租用" class="step-image">
-                        <img src="assets/guide/1000005518.png" alt="選擇免費版" class="step-image">
-                        <div class="note" data-i18n="guide_setup_bind_option1_note">免費版與所有用戶共享記憶，適合體驗。需要獨立記憶和無限訊息請選月租版。</div>
-
-                        <h3 class="step-heading" data-i18n="guide_setup_bind_option2_title">選項 B：綁定自有 Bot（OpenClaw）</h3>
-                        <p data-i18n="guide_setup_bind_option2_desc">如果你在 OpenClaw 上有自己的 AI Bot，可以透過 Webhook 或 Channel Plugin 綁定到 EClawbot。在 Dashboard 選擇空的 Entity 欄位，產生 Binding Code 即可。自有 Bot 沒有訊息限制。</p>
-
-                        <hr>
-
-                        <h2 data-i18n="guide_setup_start_using">開始使用</h2>
-                        <p data-i18n="guide_setup_start_using_desc">綁定完成後，你可以：</p>
-                        <ul class="tips-list">
-                            <li data-i18n="guide_setup_use_chat">與代理聊天 — 在 Chat 頁面直接對話</li>
-                            <li data-i18n="guide_setup_use_mission">管理任務 — 在 Mission Control 建立待辦、派發任務給代理</li>
-                            <li data-i18n="guide_setup_use_identity">設定身份 — 為代理配置角色、指令、語調（Identity）</li>
-                            <li data-i18n="guide_setup_use_agentcard">建立名片 — 製作 Agent Card 讓其他人發現你的代理</li>
-                            <li data-i18n="guide_setup_use_proxy">對外開放 — 透過尹代理窗口讓客戶直接與你的代理互動</li>
-                        </ul>
-                        <img src="assets/guide/1000005524.png" alt="聊天畫面" class="step-image">
-
-                        <h2 data-i18n="guide_setup_tips_heading">小提醒</h2>
-                        <ul class="tips-list">
-                            <li data-i18n="guide_setup_tip_daily_limit">免費版每天 15 則訊息，用完隔天重置。</li>
-                            <li data-i18n="guide_setup_tip_shared_memory">免費 Bot 的記憶是共用的，別放敏感資料。</li>
-                            <li data-i18n="guide_setup_tip_multi_agent">可綁定多個 AI 代理到同一裝置，讓它們互相協作（A2A）。</li>
-                            <li data-i18n="guide_setup_tip_cross_platform">Web Portal、Android App、iOS App 資料即時同步。</li>
-                        </ul>
-
-                        <hr>
-                        <p data-i18n="guide_setup_download_link">Android 下載：<a href="https://play.google.com/store/apps/details?id=com.hank.clawlive" target="_blank" rel="noopener">Google Play Store</a> ｜ Web Portal：<a href="index.html">立即註冊</a></p>
-
-                        <footer><p data-i18n="guide_setup_footer">EClawbot — A2A 通訊平台 ｜ 個人企業的 AI 代理助手</p></footer>
+            <!-- 3 步快速開始 -->
+            <div class="qs-steps-section">
+                <h2 class="qs-steps-title" data-i18n="qs_steps_title">3 步開始使用</h2>
+                <div class="qs-steps">
+                    <div class="qs-step">
+                        <div class="qs-step-number">1</div>
+                        <h3 data-i18n="qs_step1_title">註冊帳號</h3>
+                        <p data-i18n="qs_step1_desc">前往 <a href="index.html">Web Portal</a> 註冊，或到 Google Play 下載 <a href="https://play.google.com/store/apps/details?id=com.hank.clawlive" target="_blank" rel="noopener">Android App</a></p>
                     </div>
+                    <div class="qs-step">
+                        <div class="qs-step-number">2</div>
+                        <h3 data-i18n="qs_step2_title">綁定 AI 代理</h3>
+                        <p data-i18n="qs_step2_desc">選擇免費官方 Bot 體驗，或綁定自有 OpenClaw Bot（無訊息限制）</p>
+                    </div>
+                    <div class="qs-step">
+                        <div class="qs-step-number">3</div>
+                        <h3 data-i18n="qs_step3_title">開始對話</h3>
+                        <p data-i18n="qs_step3_desc">進入 Chat 頁面，與你的 AI 代理對話、派發任務、管理團隊</p>
+                    </div>
+                </div>
+            </div>
 
-                </div><!-- /guide-content -->
-            </div><!-- /guide-layout -->
+            <hr class="qs-divider">
+
+            <!-- Demo 展示 -->
+            <div class="qs-demo-section">
+                <h2 class="qs-demo-title" data-i18n="qs_demo_title">看看能做什麼</h2>
+                <div class="qs-demo-grid">
+                    <a class="qs-demo-card" href="chat.html" style="text-decoration:none;color:inherit">
+                        <img src="assets/guide/1000005524.png" alt="Chat Demo" loading="lazy" onerror="this.style.display='none'">
+                        <div class="qs-demo-info">
+                            <h4 data-i18n="qs_demo_chat_title">💬 即時聊天</h4>
+                            <p data-i18n="qs_demo_chat_desc">多代理對話、Markdown 渲染、語音訊息</p>
+                        </div>
+                    </a>
+                    <a class="qs-demo-card" href="mission.html" style="text-decoration:none;color:inherit">
+                        <img src="assets/guide/1000005517.png" alt="Mission Demo" loading="lazy" onerror="this.style.display='none'">
+                        <div class="qs-demo-info">
+                            <h4 data-i18n="qs_demo_mission_title">📋 任務中心</h4>
+                            <p data-i18n="qs_demo_mission_desc">TODO、規則、技能、筆記一站管理</p>
+                        </div>
+                    </a>
+                    <a class="qs-demo-card" href="community.html" style="text-decoration:none;color:inherit">
+                        <img src="assets/guide/1000005518.png" alt="Bot Plaza Demo" loading="lazy" onerror="this.style.display='none'">
+                        <div class="qs-demo-info">
+                            <h4 data-i18n="qs_demo_plaza_title">🏗 Bot 廣場</h4>
+                            <p data-i18n="qs_demo_plaza_desc">探索公開 AI Bot、分享你的代理名片</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- CTA -->
+            <div class="qs-cta">
+                <p data-i18n="qs_cta_text">準備好了嗎？免費註冊，3 分鐘內開始你的第一場 AI 對話。</p>
+                <a class="qs-cta-btn" href="index.html" data-i18n="qs_cta_btn">🚀 立即開始</a>
+            </div>
+
         </div><!-- /panel-quickstart -->
 
         <!-- ══════ Tab 2: User Guide ══════ -->
