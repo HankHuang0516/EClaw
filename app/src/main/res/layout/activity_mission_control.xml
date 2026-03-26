@@ -46,8 +46,21 @@
         android:indeterminate="true"
         android:visibility="gone" />
 
-    <!-- Main Content -->
+    <!-- Tab Layout: Mission Center + Kanban -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/surface_dim"
+        app:tabIndicatorColor="#6C63FF"
+        app:tabSelectedTextColor="@android:color/white"
+        app:tabTextColor="#777777"
+        app:tabMode="fixed"
+        app:tabGravity="fill" />
+
+    <!-- Tab 1: Mission Center (existing content) -->
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/missionContent"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
@@ -813,6 +826,14 @@
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
+    <!-- Tab 2: Kanban Board (WebView, hidden by default) -->
+    <FrameLayout
+        android:id="@+id/kanbanContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:visibility="gone" />
 
     <!-- Bottom Navigation -->
     <include layout="@layout/layout_bottom_nav"/>

@@ -1,14 +1,21 @@
 package com.hank.clawlive
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.ArrayAdapter
 import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -28,6 +35,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.tabs.TabLayout
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.EntityAvatarManager
 import com.hank.clawlive.data.local.LocalVarsManager
@@ -70,6 +78,10 @@ class MissionControlActivity : AppCompatActivity() {
     private lateinit var skillAdapter: MissionSkillAdapter
     private lateinit var soulAdapter: MissionSoulAdapter
     private lateinit var ruleAdapter: MissionRuleAdapter
+
+    // Kanban WebView
+    private var kanbanWebView: WebView? = null
+    private var kanbanLoaded = false
 
     /** Official skill templates loaded from server */
     private var skillTemplates: List<SkillTemplate> = emptyList()
@@ -119,6 +131,7 @@ class MissionControlActivity : AppCompatActivity() {
         BottomNavHelper.setup(this, NavItem.MISSION)
         AiChatFabHelper.setup(this, "mission")
         setupWindowInsets()
+        setupTabs()
         setupAdapters()
         setupRecyclerViews()
         setupButtons()
@@ -229,6 +242,112 @@ class MissionControlActivity : AppCompatActivity() {
             v.setPadding(v.paddingLeft, systemBars.top + 12, v.paddingRight, v.paddingBottom)
             insets
         }
+    }
+
+    private fun setupTabs() {
+        Timber.d("[Mission] setupTabs: initializing TabLayout")
+        val tabLayout = findViewById<TabLayout>(R.id.tabLayout)
+        val missionContent = findViewById<View>(R.id.missionContent)
+        val kanbanContainer = findViewById<FrameLayout>(R.id.kanbanContainer)
+
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.tab_mission_center))
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.tab_kanban))
+
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                Timber.d("[Mission] Tab selected: position=${tab.position}")
+                when (tab.position) {
+                    0 -> {
+                        missionContent.visibility = View.VISIBLE
+                        kanbanContainer.visibility = View.GONE
+                    }
+                    1 -> {
+                        missionContent.visibility = View.GONE
+                        kanbanContainer.visibility = View.VISIBLE
+                        if (!kanbanLoaded) {
+                            Timber.d("[Mission] Kanban tab first load, initializing WebView")
+                            initKanbanWebView()
+                        }
+                    }
+                }
+            }
+            override fun onTabUnselected(tab: TabLayout.Tab) {}
+            override fun onTabReselected(tab: TabLayout.Tab) {}
+        })
+
+        Timber.d("[Mission] setupTabs: complete, 2 tabs added")
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun initKanbanWebView() {
+        if (kanbanWebView != null) return
+
+        val container = findViewById<FrameLayout>(R.id.kanbanContainer)
+        Timber.d("[Mission] initKanbanWebView: creating WebView")
+
+        val webView = WebView(this).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+            setBackgroundColor(android.graphics.Color.parseColor("#0D0D1A"))
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            settings.loadWithOverviewMode = true
+            settings.useWideViewPort = true
+
+            webViewClient = object : WebViewClient() {
+                override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                    val url = request?.url?.toString() ?: return false
+                    if (url.contains("eclawbot.com")) return false
+                    try {
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                    } catch (e: Exception) {
+                        Timber.e(e, "[Mission] Failed to open external URL: $url")
+                    }
+                    return true
+                }
+
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    Timber.d("[Mission] Kanban WebView page loaded: $url")
+                    injectKanbanCredentials(view)
+                }
+            }
+            webChromeClient = WebChromeClient()
+        }
+
+        val deviceId = deviceManager.deviceId
+        val deviceSecret = deviceManager.deviceSecret
+        val baseUrl = "https://eclawbot.com/portal/kanban.html"
+        val url = if (deviceId != null && deviceSecret != null) {
+            "$baseUrl?deviceId=$deviceId&deviceSecret=$deviceSecret"
+        } else {
+            baseUrl
+        }
+
+        container.addView(webView)
+        webView.loadUrl(url)
+        kanbanWebView = webView
+        kanbanLoaded = true
+        Timber.d("[Mission] initKanbanWebView: loading $baseUrl (credentials=${deviceId != null})")
+    }
+
+    private fun injectKanbanCredentials(webView: WebView?) {
+        val deviceId = deviceManager.deviceId ?: return
+        val deviceSecret = deviceManager.deviceSecret ?: return
+        val js = """
+            (function() {
+                try {
+                    if (!localStorage.getItem('deviceId')) {
+                        localStorage.setItem('deviceId', '$deviceId');
+                        localStorage.setItem('deviceSecret', '$deviceSecret');
+                    }
+                } catch(e) {}
+            })();
+        """.trimIndent()
+        webView?.evaluateJavascript(js, null)
+        Timber.d("[Mission] Kanban credentials injected for deviceId=$deviceId")
     }
 
     private fun setupAdapters() {
@@ -1577,6 +1696,24 @@ class MissionControlActivity : AppCompatActivity() {
                 Timber.w(e, "[Vars] Failed to sync local vars to server")
             }
         }
+    }
+
+    override fun onDestroy() {
+        kanbanWebView?.destroy()
+        kanbanWebView = null
+        Timber.d("[Mission] onDestroy: WebView cleaned up")
+        super.onDestroy()
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        val tabLayout = findViewById<TabLayout>(R.id.tabLayout)
+        if (tabLayout.selectedTabPosition == 1 && kanbanWebView?.canGoBack() == true) {
+            kanbanWebView?.goBack()
+            return
+        }
+        @Suppress("DEPRECATION")
+        super.onBackPressed()
     }
 
 }

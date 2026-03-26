@@ -163,6 +163,8 @@
     <!-- Mission Control -->
     <!-- Mission Control -->
     <string name="mission_control">Mission Control</string>
+    <string name="tab_mission_center">Mission Center</string>
+    <string name="tab_kanban">Kanban</string>
     <string name="upload">Upload</string>
     <string name="uploading">Uploading…</string>
     <string name="save">Save</string>
