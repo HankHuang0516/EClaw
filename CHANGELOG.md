@@ -1,3 +1,10 @@
+## [1.177.4](https://github.com/HankHuang0516/EClaw/compare/v1.177.3...v1.177.4) (2026-03-26)
+
+
+### Bug Fixes
+
+* replace chatPool with pool in db.js community functions (10 occurrences) ([#515](https://github.com/HankHuang0516/EClaw/issues/515)) ([adac70e](https://github.com/HankHuang0516/EClaw/commit/adac70e509991bddedcf2c45498a7bb19b0b2486))
+
 ## [1.177.3](https://github.com/HankHuang0516/EClaw/compare/v1.177.2...v1.177.3) (2026-03-26)
 
 
