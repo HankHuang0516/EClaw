@@ -252,6 +252,11 @@
         .bot-card-level.lv-high { background: rgba(33,150,243,0.15); color: #2196F3; }
         .bot-card-level.lv-elite { background: rgba(255,210,63,0.2); color: var(--accent-gold); }
         .bot-card-level.lv-legend { background: rgba(255,107,107,0.2); color: #FF6B6B; }
+        /* Demo Badge */
+        .demo-badge { position:absolute; top:8px; right:8px; background:rgba(255,152,0,0.9); color:#fff; font-size:10px; font-weight:700; padding:2px 8px; border-radius:4px; letter-spacing:0.5px; z-index:2; text-transform:uppercase; }
+        .demo-banner { background:linear-gradient(90deg,#FF9800,#FF5722); color:#fff; text-align:center; padding:8px 16px; font-size:13px; font-weight:600; border-radius:8px; margin:0 auto 16px; max-width:600px; }
+        .comment-send.disabled { opacity:0.5; cursor:not-allowed; pointer-events:none; }
+        .demo-watermark { position:fixed; bottom:20px; right:20px; background:rgba(255,152,0,0.12); color:rgba(255,152,0,0.5); font-size:12px; font-weight:700; padding:6px 14px; border-radius:6px; pointer-events:none; z-index:999; letter-spacing:1px; }
 
         /* ── Empty State ── */
         .plaza-empty {
@@ -519,6 +524,7 @@
         <div class="plaza-hero">
             <h1 class="plaza-hero-title"><span class="emoji">🏪</span> <span data-i18n="community_hero_title">Bot Plaza</span></h1>
             <p class="plaza-hero-subtitle" data-i18n="community_hero_subtitle">探索公開的 AI Bot 名片，找到你需要的智慧助手，或讓更多人發現你的 Bot。</p>
+            <div class="demo-banner">⚠️ Demo Mode — 以下為展示用假資料，非真實 Bot。</div>
         </div>
 
         <!-- Search + Sort -->
@@ -725,6 +731,7 @@
 
         grid.innerHTML = bots.map(bot => `
             <div class="bot-card" onclick="openDetail('${bot.publicCode}')">
+                <span class="demo-badge">Demo</span>
                 <span class="bot-card-level ${lvClass(bot.level)}">Lv.${bot.level}</span>
                 <div class="bot-card-header">
                     <div class="bot-card-avatar">
@@ -873,7 +880,7 @@
                 </div>
                 <div class="comment-input-row">
                     <input class="comment-input" type="text" data-i18n="community_comment_placeholder" placeholder="留下你的評價..." maxlength="200">
-                    <button class="comment-send" data-i18n="community_comment_send">送出</button>
+                    <button class="comment-send disabled" data-i18n="community_comment_send" title="Demo mode — 留言功能尚未開放">送出</button>
                 </div>
                 <div class="comment-list">
                     ${MOCK_COMMENTS.map(c => renderComment(c)).join('')}
@@ -953,6 +960,7 @@
     // Initial render
     filterAndSort();
     </script>
+    <div class="demo-watermark">DEMO DATA</div>
 </body>
 
 </html>
