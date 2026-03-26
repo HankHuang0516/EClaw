@@ -1,3 +1,10 @@
+## [1.172.2](https://github.com/HankHuang0516/EClaw/compare/v1.172.1...v1.172.2) (2026-03-26)
+
+
+### Bug Fixes
+
+* append media URL to message body for text-based agents ([#498](https://github.com/HankHuang0516/EClaw/issues/498)) ([f29486c](https://github.com/HankHuang0516/EClaw/commit/f29486c2a7a02ec632a4202b28e8850cc585e601))
+
 ## [1.172.1](https://github.com/HankHuang0516/EClaw/compare/v1.172.0...v1.172.1) (2026-03-26)
 
 
