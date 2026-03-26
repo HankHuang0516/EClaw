@@ -1,3 +1,10 @@
+## [1.179.1](https://github.com/HankHuang0516/EClaw/compare/v1.179.0...v1.179.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* **chat:** 智慧過濾鎖定時不自動捲動到新訊息 ([#521](https://github.com/HankHuang0516/EClaw/issues/521)) ([cd8f96e](https://github.com/HankHuang0516/EClaw/commit/cd8f96e1f69e9e99411b0e5f38ff54f8f5de03fb))
+
 # [1.179.0](https://github.com/HankHuang0516/EClaw/compare/v1.178.1...v1.179.0) (2026-03-26)
 
 
