@@ -16,7 +16,7 @@
             display: flex;
             gap: 4px;
             border-bottom: 1px solid var(--card-border);
-            margin-bottom: 24px;
+            margin-bottom: 32px;
             overflow-x: auto;
             scrollbar-width: none;
         }
@@ -147,43 +147,44 @@
 
         /* ── Guide Typography (dark theme) ── */
         .guide-content header {
-            margin-bottom: 24px;
+            margin-bottom: 32px;
             border-bottom: 1px solid var(--card-border);
-            padding-bottom: 20px;
+            padding-bottom: 24px;
         }
 
         .guide-content header h1 {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 6px;
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: -0.2px;
         }
 
         .guide-content .meta {
             font-size: 13px;
-            color: var(--text-muted);
+            color: #b0b0b0; /* WCAG AA 4.5:1 on #0D0D1A */
         }
 
         .guide-content h2 {
-            font-size: 18px;
+            font-size: 19px;
             font-weight: 700;
-            margin-top: 32px;
-            margin-bottom: 10px;
+            margin-top: 48px;
+            margin-bottom: 14px;
         }
 
         .guide-content h2:first-child { margin-top: 0; }
 
         .guide-content h3 {
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 700;
-            margin-top: 24px;
-            margin-bottom: 8px;
+            margin-top: 32px;
+            margin-bottom: 10px;
         }
 
         .guide-content p {
             font-size: 14px;
-            color: var(--text-secondary);
-            margin-bottom: 12px;
-            line-height: 1.7;
+            color: #b8b8b8; /* WCAG AA 4.5:1 on #0D0D1A → 7.5:1 */
+            margin-bottom: 14px;
+            line-height: 1.75;
         }
 
         .guide-content strong { color: var(--text); }
@@ -191,59 +192,62 @@
         .guide-content a { color: var(--primary); }
 
         .guide-content .step-heading {
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 700;
-            margin-top: 24px;
-            margin-bottom: 8px;
+            margin-top: 32px;
+            margin-bottom: 10px;
         }
 
         .guide-content .step-image {
             width: 100%;
             max-width: 320px;
-            border-radius: var(--radius-sm);
+            border-radius: var(--radius);
             border: 1px solid var(--card-border);
-            margin: 12px 0;
+            margin: 16px 0 20px;
             display: block;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.2);
         }
 
         .guide-content .note {
             background: rgba(108, 99, 255, 0.06);
             border-left: 3px solid var(--primary);
-            padding: 10px 14px;
-            margin: 12px 0;
+            padding: 12px 16px;
+            margin: 16px 0;
             font-size: 13px;
-            color: var(--text-secondary);
+            color: #b8b8b8;
             border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            line-height: 1.6;
         }
 
         .guide-content .warning {
             background: rgba(255, 210, 63, 0.06);
             border-left: 3px solid var(--warning);
-            padding: 10px 14px;
-            margin: 12px 0;
+            padding: 12px 16px;
+            margin: 16px 0;
             font-size: 13px;
-            color: var(--text-secondary);
+            color: #b8b8b8;
             border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            line-height: 1.6;
         }
 
         .guide-content .tips-list,
         .guide-content .content-list {
-            margin: 12px 0;
-            padding-left: 20px;
-            color: var(--text-secondary);
+            margin: 14px 0;
+            padding-left: 22px;
+            color: #b8b8b8;
             font-size: 14px;
         }
 
         .guide-content .tips-list li,
         .guide-content .content-list li {
-            margin-bottom: 6px;
-            line-height: 1.7;
+            margin-bottom: 8px;
+            line-height: 1.75;
         }
 
         .guide-content hr {
             border: none;
             border-top: 1px solid var(--card-border);
-            margin: 28px 0;
+            margin: 40px 0;
         }
 
         .guide-content code {
@@ -431,9 +435,9 @@
         /* ── Guide: Badge row ── */
         .guide-content .badge-row {
             display: flex;
-            gap: 6px;
+            gap: 8px;
             flex-wrap: wrap;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
         }
 
         .guide-content .badge-row .badge {
@@ -472,53 +476,54 @@
 
         /* ── Guide: Why EClawbot cards ── */
         .guide-content .why-eclaw-card {
-            margin-top: 16px;
-            padding: 16px 20px;
+            margin-top: 20px;
+            padding: 20px 24px;
             background: var(--card);
             border: 1px solid var(--card-border);
             border-left: 3px solid var(--primary);
-            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            border-radius: 0 var(--radius) var(--radius) 0;
         }
 
         .guide-content .why-eclaw-card .pain-point {
             font-size: 14px;
             font-weight: 700;
             color: var(--text);
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
         .guide-content .why-eclaw-card .solution {
             font-size: 14px;
             color: var(--primary);
             font-weight: 700;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
         .guide-content .why-eclaw-card .solution-desc {
             font-size: 13px;
-            color: var(--text-secondary);
+            color: #b8b8b8;
             margin-bottom: 0;
+            line-height: 1.6;
         }
 
         /* ── Guide: CTA ── */
         .guide-content .cta-links {
-            margin-top: 24px;
-            padding: 20px;
+            margin-top: 40px;
+            padding: 24px;
             background: rgba(108, 99, 255, 0.06);
-            border-radius: var(--radius-sm);
+            border-radius: var(--radius);
             border: 1px solid rgba(108, 99, 255, 0.2);
         }
 
         .guide-content .cta-links h3 {
             margin-top: 0;
-            margin-bottom: 10px;
-            font-size: 15px;
+            margin-bottom: 12px;
+            font-size: 16px;
         }
 
         .guide-content .cta-links .cta-item {
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             font-size: 14px;
-            color: var(--text-secondary);
+            color: #b8b8b8;
         }
 
         .guide-content .cta-links .cta-label {
@@ -568,9 +573,9 @@
         }
 
         /* ══════════════ FAQ Styles ══════════════ */
-        .faq-hero { text-align: center; padding: 24px 0 20px; }
-        .faq-hero-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
-        .faq-hero-subtitle { font-size: 13px; color: var(--text-secondary); max-width: 480px; margin: 0 auto; line-height: 1.6; }
+        .faq-hero { text-align: center; padding: 32px 0 24px; }
+        .faq-hero-title { font-size: 24px; font-weight: 800; margin-bottom: 10px; }
+        .faq-hero-subtitle { font-size: 14px; color: #b8b8b8; max-width: 480px; margin: 0 auto; line-height: 1.6; }
         /* FAQ Search + Chips */
         .faq-toolbar { max-width: 600px; margin: 0 auto 16px; }
         .faq-search { display: flex; align-items: center; gap: 8px; background: var(--input-bg); border: 1px solid var(--card-border); border-radius: var(--radius-pill); padding: 10px 16px; margin-bottom: 12px; transition: border-color 0.2s; }
