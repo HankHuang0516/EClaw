@@ -122,6 +122,66 @@ function strSimilarity(a, b) {
 module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
     const router = express.Router();
 
+    // ── Notification Debounce (per-device, 5s window) ──
+    const _notifyQueue = new Map();  // deviceId -> { timer, notifications: [], res: null }
+    const DEBOUNCE_MS = 5000;
+
+    /**
+     * Queue a notification for debounced delivery.
+     * Collects notifications per device for DEBOUNCE_MS, then fires one consolidated push.
+     * First caller gets immediate ACK; batched notifications fire after 5s of quiet.
+     */
+    function queueNotification(deviceId, notifications, req, res) {
+        let entry = _notifyQueue.get(deviceId);
+        if (entry) {
+            entry.notifications.push(...notifications);
+            clearTimeout(entry.timer);
+        } else {
+            entry = { notifications: [...notifications], req };
+            _notifyQueue.set(deviceId, entry);
+        }
+
+        // Always ACK immediately
+        if (!res.headersSent) {
+            res.json({ success: true, debounced: true, queued: entry.notifications.length, message: `Notification queued, will batch-send after ${DEBOUNCE_MS / 1000}s of inactivity` });
+        }
+
+        entry.timer = setTimeout(async () => {
+            const queued = _notifyQueue.get(deviceId);
+            _notifyQueue.delete(deviceId);
+            if (queued && queued.notifications.length > 0) {
+                // Deduplicate: same type+title = keep only latest
+                const seen = new Map();
+                for (const n of queued.notifications) {
+                    const key = `${n.type}:${n.title}`;
+                    seen.set(key, n);
+                }
+                const deduped = [...seen.values()];
+                console.log(`[Mission] Debounce flush for ${deviceId}: ${queued.notifications.length} queued → ${deduped.length} after dedup`);
+
+                // Use the same /notify endpoint via internal fetch
+                try {
+                    const body = {
+                        deviceId,
+                        deviceSecret: queued.req.body.deviceSecret,
+                        botSecret: queued.req.body.botSecret,
+                        notifications: deduped,
+                        immediate: true
+                    };
+                    // Self-invoke: POST to own /api/mission/notify
+                    const port = process.env.PORT || 3000;
+                    await fetch(`http://localhost:${port}/api/mission/notify`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                    });
+                } catch (err) {
+                    console.error(`[Mission] Debounce flush error for ${deviceId}:`, err.message);
+                }
+            }
+        }, DEBOUNCE_MS);
+    }
+
     // ============================================
     // Auth Helpers
     // ============================================
@@ -1378,7 +1438,7 @@ async function submitPayment() {
      */
     router.post('/notify', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const { deviceId, notifications } = req.body;
+        const { deviceId, notifications, immediate } = req.body;
 
         if (!notifications || !Array.isArray(notifications) || notifications.length === 0) {
             return res.status(400).json({ success: false, error: 'Missing notifications' });
@@ -1387,6 +1447,12 @@ async function submitPayment() {
         const device = devices[deviceId];
         if (!device) {
             return res.status(404).json({ success: false, error: 'Device not found' });
+        }
+
+        // Debounce: queue notifications and batch-send after 5s of inactivity
+        // Pass immediate=true to bypass debounce (e.g. manual trigger)
+        if (!immediate) {
+            return queueNotification(deviceId, notifications, req, res);
         }
 
         // Build consolidated notification lines with entity labels
