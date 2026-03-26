@@ -1,3 +1,10 @@
+# [1.172.0](https://github.com/HankHuang0516/EClaw/compare/v1.171.0...v1.172.0) (2026-03-26)
+
+
+### Features
+
+* Bot Plaza P1 — community directory APIs (#bot-plaza) ([#486](https://github.com/HankHuang0516/EClaw/issues/486)) ([b6b73e2](https://github.com/HankHuang0516/EClaw/commit/b6b73e27e22ff29494ce2e1a06586d4a197ba10e)), closes [#bot-plaza](https://github.com/HankHuang0516/EClaw/issues/bot-plaza)
+
 # [1.171.0](https://github.com/HankHuang0516/EClaw/compare/v1.170.5...v1.171.0) (2026-03-26)
 
 
