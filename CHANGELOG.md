@@ -1,3 +1,10 @@
+# [1.177.0](https://github.com/HankHuang0516/EClaw/compare/v1.176.4...v1.177.0) (2026-03-26)
+
+
+### Features
+
+* add 5s per-device debounce to mission notify endpoint ([#509](https://github.com/HankHuang0516/EClaw/issues/509)) ([2fb854c](https://github.com/HankHuang0516/EClaw/commit/2fb854cae54e1b33ead84a1205ff31153584e11c))
+
 ## [1.176.4](https://github.com/HankHuang0516/EClaw/compare/v1.176.3...v1.176.4) (2026-03-26)
 
 
