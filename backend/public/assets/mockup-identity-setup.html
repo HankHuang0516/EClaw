@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0f0f14; color:#e0e0e0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; overflow:hidden; }
+.container { width:778px; height:500px; margin:0 auto; display:flex; align-items:center; justify-content:center; }
+
+.settings-panel { background:#16172a; border-radius:12px; width:640px; border:1px solid #2a2b40; overflow:hidden; }
+.settings-header { background:#1e1f36; padding:16px 24px; border-bottom:1px solid #2a2b40; display:flex; align-items:center; gap:12px; }
+.settings-header h2 { font-size:16px; font-weight:700; }
+.settings-tabs { display:flex; gap:2px; padding:0 24px; background:#1e1f36; }
+.settings-tab { padding:10px 16px; font-size:13px; color:#888; cursor:pointer; border-bottom:2px solid transparent; }
+.settings-tab.active { color:#7c3aed; border-bottom-color:#7c3aed; }
+
+.settings-body { padding:24px; display:flex; gap:24px; }
+.settings-left { flex:1; }
+.settings-right { width:200px; text-align:center; }
+
+.form-group { margin-bottom:16px; }
+.form-label { display:block; font-size:12px; color:#aaa; margin-bottom:4px; font-weight:500; }
+.form-input { width:100%; background:#0f0f14; border:1px solid #2a2b40; border-radius:6px; padding:8px 12px; color:#e0e0e0; font-size:13px; }
+.form-textarea { width:100%; background:#0f0f14; border:1px solid #2a2b40; border-radius:6px; padding:8px 12px; color:#e0e0e0; font-size:13px; min-height:60px; resize:vertical; font-family:inherit; }
+.form-select { width:100%; background:#0f0f14; border:1px solid #2a2b40; border-radius:6px; padding:8px 12px; color:#e0e0e0; font-size:13px; appearance:auto; }
+
+.avatar-preview { width:96px; height:96px; border-radius:50%; background:#2d1b69; display:flex; align-items:center; justify-content:center; font-size:48px; margin:0 auto 12px; border:3px solid #7c3aed; }
+.avatar-label { font-size:11px; color:#888; margin-bottom:8px; }
+.btn-upload { background:#2a2b40; color:#ccc; border:none; padding:6px 14px; border-radius:6px; font-size:12px; cursor:pointer; }
+
+.tag-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.tag-chip { background:rgba(124,58,237,0.15); color:#7c3aed; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:500; border:1px solid rgba(124,58,237,0.3); }
+
+.soul-badge { display:inline-block; background:rgba(74,222,128,0.1); color:#4ade80; padding:3px 10px; border-radius:10px; font-size:11px; border:1px solid rgba(74,222,128,0.2); margin-top:8px; }
+
+.btn-save { background:#7c3aed; color:#fff; border:none; padding:8px 24px; border-radius:8px; font-size:13px; cursor:pointer; font-weight:600; float:right; }
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="settings-panel">
+        <div class="settings-header">
+            <span style="font-size:24px">⚙️</span>
+            <h2>Entity Settings — ContentPro</h2>
+        </div>
+        <div class="settings-tabs">
+            <div class="settings-tab active">Identity</div>
+            <div class="settings-tab">Soul</div>
+            <div class="settings-tab">Rules</div>
+            <div class="settings-tab">Skills</div>
+            <div class="settings-tab">Variables</div>
+        </div>
+        <div class="settings-body">
+            <div class="settings-left">
+                <div class="form-group">
+                    <label class="form-label">Display Name</label>
+                    <input class="form-input" value="ContentPro">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Soul (Personality)</label>
+                    <select class="form-select">
+                        <option>Friendly Helper 友善助手</option>
+                        <option selected>Professional 冷酷專業</option>
+                        <option>Bold Adventurer 大膽冒險家</option>
+                        <option>Custom...</option>
+                    </select>
+                    <span class="soul-badge">✓ Active</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">System Prompt</label>
+                    <textarea class="form-textarea">You are ContentPro, an AI content marketing specialist. You write SEO-optimized blog posts, social media content, and channel comparison articles. Always respond in professional English with data-driven insights.</textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tags</label>
+                    <div class="tag-chips">
+                        <span class="tag-chip">content</span>
+                        <span class="tag-chip">seo</span>
+                        <span class="tag-chip">marketing</span>
+                        <span class="tag-chip">writing</span>
+                    </div>
+                </div>
+                <button class="btn-save">💾 Save Changes</button>
+            </div>
+            <div class="settings-right">
+                <div class="avatar-preview">✍️</div>
+                <div class="avatar-label">Agent Avatar</div>
+                <button class="btn-upload">📷 Upload</button>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
