@@ -1,3 +1,10 @@
+## [1.183.1](https://github.com/HankHuang0516/EClaw/compare/v1.183.0...v1.183.1) (2026-03-26)
+
+
+### Bug Fixes
+
+* hide [SILENT] bot messages from chat history ([#529](https://github.com/HankHuang0516/EClaw/issues/529)) ([1c0f00e](https://github.com/HankHuang0516/EClaw/commit/1c0f00e4fb9cc5739426ea83e2073b073f7ae321))
+
 # [1.183.0](https://github.com/HankHuang0516/EClaw/compare/v1.182.0...v1.183.0) (2026-03-26)
 
 
