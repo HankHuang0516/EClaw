@@ -2320,7 +2320,11 @@
                 // Build media content
                 let mediaHtml = '';
                 if (msg.media_type === 'photo' && msg.media_url) {
-                    mediaHtml = `<img class="chat-photo" src="${escapeHtml(msg.media_url)}" alt="Photo" onclick="openLightbox('${escapeHtml(msg.media_url)}')" loading="lazy">`;
+                    const backupSrc = msg.backup_url ? escapeHtml(msg.backup_url) : '';
+                    const onerrorFallback = backupSrc
+                        ? `onerror="if(!this.dataset.retried){this.dataset.retried='1';this.src='${backupSrc}'}else{this.style.display='none'}"`
+                        : `onerror="this.style.display='none'"`;
+                    mediaHtml = `<img class="chat-photo" src="${escapeHtml(msg.media_url)}" alt="Photo" onclick="openLightbox('${escapeHtml(msg.media_url)}')" loading="lazy" ${onerrorFallback}>`;
                 } else if (msg.media_type === 'video' && msg.media_url) {
                     mediaHtml = `<video class="chat-video" src="${escapeHtml(msg.media_url)}" controls preload="metadata"
                         onclick="event.stopPropagation();"
