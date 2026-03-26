@@ -1,3 +1,11 @@
+# [1.182.0](https://github.com/HankHuang0516/EClaw/compare/v1.181.0...v1.182.0) (2026-03-26)
+
+
+### Features
+
+* **chat:** message grouping + date separators + timestamp optimization ([#526](https://github.com/HankHuang0516/EClaw/issues/526)) ([bd944e2](https://github.com/HankHuang0516/EClaw/commit/bd944e24db3d2f54362348d0035144fd021f0656))
+* **info:** P3-1 feature card grid layout ([#523](https://github.com/HankHuang0516/EClaw/issues/523)) ([c2bce47](https://github.com/HankHuang0516/EClaw/commit/c2bce471a3f97f56a0107365ed49dc1fa6a41359))
+
 # [1.181.0](https://github.com/HankHuang0516/EClaw/compare/v1.180.0...v1.181.0) (2026-03-26)
 
 
