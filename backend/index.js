@@ -3515,6 +3515,31 @@ app.get('/api/link-preview', async (req, res) => {
 // DEVICE REGISTRATION (Android App)
 // ============================================
 
+// ── Device register rate limiter (in-memory, per IP) ──
+const deviceRegisterRateLimits = {};
+const DEVICE_REGISTER_RATE_WINDOW = 15 * 60 * 1000; // 15 minutes
+const DEVICE_REGISTER_RATE_MAX = 10; // max registrations per window
+function deviceRegisterRateLimit(req, res, next) {
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+    if (!deviceRegisterRateLimits[ip] || now - deviceRegisterRateLimits[ip].start > DEVICE_REGISTER_RATE_WINDOW) {
+        deviceRegisterRateLimits[ip] = { start: now, count: 1 };
+    } else {
+        deviceRegisterRateLimits[ip].count++;
+    }
+    if (deviceRegisterRateLimits[ip].count > DEVICE_REGISTER_RATE_MAX) {
+        return res.status(429).json({ success: false, error: 'Too many registration attempts, please try again later' });
+    }
+    next();
+}
+// Clean up stale entries every 30 minutes
+setInterval(() => {
+    const now = Date.now();
+    for (const ip in deviceRegisterRateLimits) {
+        if (now - deviceRegisterRateLimits[ip].start > DEVICE_REGISTER_RATE_WINDOW) delete deviceRegisterRateLimits[ip];
+    }
+}, 30 * 60 * 1000).unref();
+
 /**
  * POST /api/device/register
  * Android app registers a specific entity slot and gets binding code.
@@ -3522,7 +3547,7 @@ app.get('/api/link-preview', async (req, res) => {
  *
  * NEW: Each device now has its own 4 entity slots!
  */
-app.post('/api/device/register', (req, res) => {
+app.post('/api/device/register', deviceRegisterRateLimit, (req, res) => {
     const { entityId, deviceId, deviceSecret, appVersion, isTestDevice } = req.body;
 
     // Validate entityId
@@ -10482,7 +10507,9 @@ async function pushToBot(entity, deviceId, eventType, payload) {
         args: {
             sessionKey: effectiveSessionKey,
             message: messageContent
-        }
+        },
+        deviceId: deviceId,
+        entityId: entity.entityId
     };
 
     try {

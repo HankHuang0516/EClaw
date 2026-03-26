@@ -95,8 +95,8 @@ EClaw/
 │   │   │   └── og-image.png       # Open Graph social sharing image
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
-│   ├── tests/                # Regression + integration tests (54 files)
-│   ├── tests/jest/           # Jest unit tests (48 files, CI-run via `npm test`)
+│   ├── tests/                # Regression + integration tests (56 files)
+│   ├── tests/jest/           # Jest unit tests (53 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -599,6 +599,20 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Free Bot Selector**: `GET /api/official-borrow/free-bots` endpoint; users can choose which free bot to bind; three-platform support (Web/Android/iOS); `display_name` column on `official_bots` table
 - **Whoami Endpoint**: `GET /api/whoami` for bot self-identification
 
+### Recent Features (v1.162.x – v1.198.x)
+
+- **Workspace Split-View (v1.193–v1.198)**: Multi-pane workspace mode with draggable tab reorder, draggable divider, Display card inside iframe; Settings page toggle
+- **Info Page Improvements (v1.193–v1.195)**: Mermaid architecture diagram, i18n preserve-original-HTML fix, restored Chinese guide panels, removed 314 orphan i18n tags
+- **Note Page Sanitizer (v1.194)**: Expanded allowed CSS styles and preserved `<style>` tags in public note page sanitizer
+- **Kanban Avatar Chips (v1.192)**: Avatar + name chip for assigned bots in kanban board
+- **Enterprise Page Fixes (v1.191)**: Corrected product catalog note page link, cache-busting for demo GIFs
+- **Webhook Payload Fix (#547)**: Added `deviceId` and `entityId` as structured fields in webhook push payload
+- **Device Register Rate Limiting (#491)**: Per-IP rate limiter (10 req/15min) on `POST /api/device/register`
+- **OAuth deviceSecret Leak Fix (#490)**: Removed `deviceSecret` from all OAuth, OIDC, and `/me` response bodies
+- **Screen Control i18n (#492)**: Full 8-language i18n coverage for screen-control.html (~31 new keys)
+- **Share-Chat Order Dialog i18n (#493)**: All hardcoded Chinese strings in order dialog replaced with i18n keys
+- **Chat Delivered Receipt**: Fixed `is_delivered` showing "Read" instead of "Delivered" in chat receipts
+
 ---
 
 ## Test Coverage Summary
@@ -689,8 +703,10 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Channel XP | `node backend/tests/test-channel-xp.js` | Device ID + Secret | Channel XP tracking and propagation |
 | Customer Service API | `node backend/tests/test-customer-service-api.js` | Device ID + Secret | Customer service AI tool handlers |
 | Entity Trash | `node backend/tests/test-entity-trash.js` | Device ID + Secret | Entity soft-delete, restore, 7-day retention |
+| Note Pages | `node backend/tests/test-note-pages.js` | Device ID + Secret | Note page public/private toggle, visitor analytics, custom domain |
+| AI Chat WebView Guard | `node backend/tests/test-ai-chat-webview-guard.js` | Device ID + Secret | AI chat widget hidden in Android WebView contexts |
 
-### Jest Unit Tests (CI-run, `npm test`, 48 files)
+### Jest Unit Tests (CI-run, `npm test`, 53 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -743,11 +759,16 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Cross-Speak Rendering | `tests/jest/cross-speak-chat-rendering.test.js` | Cross-device message direction rendering in chat.html |
 | Transform Cross-Route | `tests/jest/transform-cross-route.test.js` | Transform auto-route bot replies to sender device |
 | Mission Skill/Rule Dedup | `tests/jest/mission-skill-rule-dedup.test.js` | Skill/add and rule/add deduplication on concurrent multi-entity notify |
+| AI Chat Widget Guard | `tests/jest/ai-chat-widget-guard.test.js` | AI chat widget visibility guard in WebView contexts |
+| Discord Integration | `tests/jest/discord-integration.test.js` | Discord slash command integration, signature verification |
+| Note Pages | `tests/jest/note-pages.test.js` | Note page CRUD, public/private toggle, visitor analytics |
+| Speak-To Delivery | `tests/jest/speak-to-delivery.test.js` | Entity speak-to message delivery validation |
+| Cross-Speak Channel | `tests/jest/cross-speak-channel.test.js` | Cross-speak channel push parity — entity/client cross-speak channel-bound delivery |
 
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (48 files)
+cd backend && npm test                  # Jest unit tests (53 files)
 cd backend && npm run lint              # ESLint
 ```
 
@@ -789,7 +810,7 @@ Set in `backend/.env` (gitignored):
 - Jest config in `backend/jest.config.js`: `runInBand: true` (Windows compat), `forceExit: true`, `testTimeout: 15000`
 - Jest tests use `supertest` against the Express app directly (no live server needed)
 - Integration tests in `backend/tests/` hit the live production server (`eclawbot.com`)
-- `backend/run_all_tests.js` orchestrates 54 registered integration tests sequentially
+- `backend/run_all_tests.js` orchestrates 56 registered integration tests sequentially
 - `requiredVars` in skill templates must be `KEY=value` or `KEY=` format (Gson deserialization constraint)
 
 ### Avatar & Entity Utils
