@@ -67,10 +67,12 @@ async function initKanbanDatabase() {
     try {
         const schemaPath = path.join(__dirname, 'kanban_schema.sql');
         const schema = fs.readFileSync(schemaPath, 'utf8');
-        const statements = schema
+        // Remove SQL comments before splitting (-- line comments and block separators)
+        const cleaned = schema.replace(/--[^\n]*/g, '').replace(/\n\s*\n/g, '\n');
+        const statements = cleaned
             .split(';')
             .map(s => s.trim())
-            .filter(s => s && !s.startsWith('--'));
+            .filter(s => s.length > 5);
         for (const stmt of statements) {
             try {
                 await pool.query(stmt);
