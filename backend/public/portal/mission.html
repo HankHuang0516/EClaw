@@ -867,6 +867,7 @@
             <button id="wvSaveDrawBtn" style="display:none" onclick="saveDrawing()" data-i18n="mc_note_draw_save">Save</button>
             <div class="wv-toolbar-sep"></div>
             <button id="wvPublicToggle" onclick="togglePagePublic()" style="font-size:12px;"></button>
+            <button id="wvCopyLinkBtn" onclick="copyNotePageLink()" style="display:none;font-size:12px;" data-i18n="mc_note_copy_link">Copy Link</button>
             <button id="wvEditHtmlBtn" onclick="editPageHtml()" data-i18n="mc_note_edit_page">Edit HTML</button>
             <button onclick="closePageViewer()" data-i18n="mc_note_page_close">Close</button>
         </div>
@@ -2084,6 +2085,27 @@
             const isPublic = !!notePagePublic[noteId];
             btn.textContent = isPublic ? '🌐 ' + (i18n.t('mc_note_public_label') || 'Public') : '🔒 ' + (i18n.t('mc_note_private_label') || 'Private');
             btn.style.color = isPublic ? '#4CAF50' : '#9E9E9E';
+            // Show/hide copy link button based on public status
+            const copyBtn = document.getElementById('wvCopyLinkBtn');
+            if (copyBtn) copyBtn.style.display = isPublic ? '' : 'none';
+        }
+
+        function copyNotePageLink() {
+            if (!viewerNoteId) return;
+            const pc = (boundEntities.find(e => e.publicCode) || {}).publicCode;
+            if (!pc) { showToast(i18n.t('mc_note_no_public_code') || 'No public code available', 'error'); return; }
+            const url = `https://eclawbot.com/p/${pc}/${viewerNoteId}`;
+            const btn = document.getElementById('wvCopyLinkBtn');
+            navigator.clipboard.writeText(url).then(() => {
+                btn.textContent = i18n.t('mc_note_link_copied') || 'Copied!';
+                btn.style.background = '#22c55e';
+                setTimeout(() => { btn.textContent = i18n.t('mc_note_copy_link') || 'Copy Link'; btn.style.background = ''; }, 2000);
+            }).catch(() => {
+                const t = document.createElement('textarea'); t.value = url; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t);
+                btn.textContent = i18n.t('mc_note_link_copied') || 'Copied!';
+                btn.style.background = '#22c55e';
+                setTimeout(() => { btn.textContent = i18n.t('mc_note_copy_link') || 'Copy Link'; btn.style.background = ''; }, 2000);
+            });
         }
 
         async function togglePagePublic() {
