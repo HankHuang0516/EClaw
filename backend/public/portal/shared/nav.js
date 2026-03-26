@@ -3,6 +3,8 @@
 function renderNav(activePage) {
     // Skip nav rendering when embedded in workspace iframe
     if (new URLSearchParams(window.location.search).get('embed') === '1') return;
+    // Also skip if inside any iframe (fallback for CDN-cached pages without ?embed=1)
+    if (window.self !== window.top) return;
 
     const pages = [
         { id: 'dashboard', i18nKey: 'nav_dashboard', label: 'Dashboard', href: 'dashboard.html', icon: '📊' },

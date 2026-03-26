@@ -3,6 +3,7 @@
 function renderFooter() {
     // Skip footer rendering when embedded in workspace iframe
     if (new URLSearchParams(window.location.search).get('embed') === '1') return;
+    if (window.self !== window.top) return;
 
     const t = (key, fallback) => typeof i18n !== 'undefined' ? i18n.t(key) : fallback;
 
