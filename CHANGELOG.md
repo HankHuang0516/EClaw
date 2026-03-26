@@ -1,3 +1,10 @@
+# [1.191.0](https://github.com/HankHuang0516/EClaw/compare/v1.190.1...v1.191.0) (2026-03-26)
+
+
+### Features
+
+* **kanban:** automation parent/child card mechanism ([#549](https://github.com/HankHuang0516/EClaw/issues/549)) ([6711124](https://github.com/HankHuang0516/EClaw/commit/6711124261020664561095bc2fea5ae553f3aff1))
+
 ## [1.190.1](https://github.com/HankHuang0516/EClaw/compare/v1.190.0...v1.190.1) (2026-03-26)
 
 
