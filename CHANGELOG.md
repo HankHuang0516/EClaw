@@ -1,3 +1,10 @@
+## [1.172.3](https://github.com/HankHuang0516/EClaw/compare/v1.172.2...v1.172.3) (2026-03-26)
+
+
+### Bug Fixes
+
+* replace GPS demo GIF with English version (no CJK mojibake) ([#499](https://github.com/HankHuang0516/EClaw/issues/499)) ([c81d3ed](https://github.com/HankHuang0516/EClaw/commit/c81d3edb8c6e6e0a5d2b6fc6074a1edfb3bb9f87))
+
 ## [1.172.2](https://github.com/HankHuang0516/EClaw/compare/v1.172.1...v1.172.2) (2026-03-26)
 
 
