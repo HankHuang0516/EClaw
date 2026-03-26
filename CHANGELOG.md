@@ -1,3 +1,10 @@
+## [1.195.2](https://github.com/HankHuang0516/EClaw/compare/v1.195.1...v1.195.2) (2026-03-26)
+
+
+### Bug Fixes
+
+* **note-page:** expand allowed CSS styles in public note page sanitizer ([#558](https://github.com/HankHuang0516/EClaw/issues/558)) ([fb602c0](https://github.com/HankHuang0516/EClaw/commit/fb602c0022195b4a0dadde12cecdd170ade8d8e5))
+
 ## [1.195.1](https://github.com/HankHuang0516/EClaw/compare/v1.195.0...v1.195.1) (2026-03-26)
 
 
