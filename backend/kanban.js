@@ -38,7 +38,13 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const safeEqual = require('./safe-equal');
-const { CronExpressionParser } = require('cron-parser');
+let CronExpressionParser;
+try {
+    ({ CronExpressionParser } = require('cron-parser'));
+} catch (e) {
+    console.warn('[Kanban] cron-parser not available — schedule features disabled');
+    CronExpressionParser = null;
+}
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
@@ -165,6 +171,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity } =
     // ── Helper: compute next cron run time ──
     function computeNextRun(cronExpression, timezone) {
         try {
+            if (!CronExpressionParser) return null;
             const expr = CronExpressionParser.parse(cronExpression, { tz: timezone || 'Asia/Taipei' });
             return expr.next().toDate();
         } catch (e) {
