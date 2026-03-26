@@ -6485,16 +6485,16 @@ app.put('/api/entity/agent-card', (req, res) => {
     if (isPublic !== undefined) {
         entity.isPublic = !!isPublic;
         entity.publishedAt = isPublic ? (entity.publishedAt || Date.now()) : null;
-        // Persist is_public to DB (separate column, not part of saveDeviceData)
-        db.setEntityPublic(deviceId, parseInt(entityId), !!isPublic).catch(err =>
-            console.error('[AgentCard] setEntityPublic error:', err.message)
-        );
         serverLog('info', 'bot_plaza', `Entity ${entityId} visibility: ${isPublic ? 'PUBLIC' : 'PRIVATE'}`, { deviceId, entityId });
     }
 
-    // Persist to DB
+    // Persist to DB — saveDeviceData FIRST (ensures entity row exists), then setEntityPublic
     if (typeof db.saveDeviceData === 'function') {
-        db.saveDeviceData(deviceId, device).catch(err => console.error('[AgentCard] DB save error:', err.message));
+        db.saveDeviceData(deviceId, device).then(() => {
+            if (isPublic !== undefined) {
+                return db.setEntityPublic(deviceId, parseInt(entityId), !!isPublic);
+            }
+        }).catch(err => console.error('[AgentCard] DB save error:', err.message));
     }
     res.json({ success: true, agentCard: card, isPublic: !!entity.isPublic });
 });
