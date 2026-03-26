@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title data-i18n="kanban_title">EClawbot - Kanban Board</title>
+    <link rel="icon" type="image/png" href="assets/favicon-32.png">
+    <link rel="stylesheet" href="shared/style.css">
+    <style>
+        /* ══════════════ Sub-tabs (same as mission.html) ══════════════ */
+        .sub-tabs { display:flex; gap:0; margin-bottom:20px; border-bottom:1px solid var(--card-border); }
+        .sub-tab { padding:10px 18px; color:var(--text-secondary); text-decoration:none; font-size:14px; font-weight:600; border-bottom:2px solid transparent; transition:all 0.2s; white-space:nowrap; }
+        .sub-tab:hover { color:var(--text); }
+        .sub-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+
+        /* ══════════════ Toolbar ══════════════ */
+        .kb-toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
+        .kb-toolbar h2 { font-size:20px; font-weight:700; }
+        .kb-toolbar-actions { display:flex; gap:8px; align-items:center; }
+        .kb-filter-chips { display:flex; gap:6px; flex-wrap:wrap; }
+        .kb-chip { padding:4px 12px; border-radius:var(--radius-pill); font-size:12px; font-weight:500; cursor:pointer; border:1px solid var(--card-border); background:none; color:var(--text-secondary); transition:all 0.2s; }
+        .kb-chip.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .kb-chip:hover:not(.active) { border-color:var(--text-muted); color:var(--text); }
+
+        /* ══════════════ Board (Desktop) ══════════════ */
+        .kb-board { display:flex; gap:12px; overflow-x:auto; padding-bottom:12px; min-height:calc(100vh - 240px); }
+        .kb-column { flex:0 0 260px; min-width:260px; background:var(--input-bg); border-radius:var(--radius); padding:12px; display:flex; flex-direction:column; }
+        .kb-col-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding:0 4px; }
+        .kb-col-title { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+        .kb-col-count { font-size:11px; color:var(--text-muted); background:var(--card-border); padding:2px 8px; border-radius:10px; }
+        .kb-col-cards { flex:1; display:flex; flex-direction:column; gap:8px; min-height:60px; }
+
+        /* Column colors */
+        .kb-column[data-status="backlog"] .kb-col-title { color:#888; }
+        .kb-column[data-status="todo"] .kb-col-title { color:#60a5fa; }
+        .kb-column[data-status="in_progress"] .kb-col-title { color:#fbbf24; }
+        .kb-column[data-status="review"] .kb-col-title { color:#fb923c; }
+        .kb-column[data-status="done"] .kb-col-title { color:#4ade80; }
+
+        /* Drop zone */
+        .kb-col-cards.drag-over { background:rgba(108,99,255,0.08); border-radius:var(--radius-sm); }
+
+        /* ══════════════ Card ══════════════ */
+        .kb-card { background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:12px; cursor:pointer; transition:border-color 0.2s, transform 0.1s, box-shadow 0.2s; position:relative; border-left:3px solid transparent; }
+        .kb-card:hover { border-color:var(--primary); transform:translateY(-1px); box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+        .kb-card.dragging { opacity:0.5; transform:rotate(2deg); }
+        .kb-card[data-priority="P0"] { border-left-color:#ef4444; }
+        .kb-card[data-priority="P1"] { border-left-color:#f97316; }
+        .kb-card[data-priority="P2"] { border-left-color:#3b82f6; }
+        .kb-card[data-priority="P3"] { border-left-color:#6b7280; }
+
+        .kb-card-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+        .kb-card-priority { font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px; }
+        .kb-card-priority[data-p="P0"] { background:rgba(239,68,68,0.15); color:#ef4444; }
+        .kb-card-priority[data-p="P1"] { background:rgba(249,115,22,0.15); color:#f97316; }
+        .kb-card-priority[data-p="P2"] { background:rgba(59,130,246,0.15); color:#3b82f6; }
+        .kb-card-priority[data-p="P3"] { background:rgba(107,114,128,0.15); color:#6b7280; }
+        .kb-card-assigned { font-size:10px; color:var(--text-muted); }
+
+        .kb-card-title { font-size:13px; font-weight:600; color:var(--text); margin-bottom:4px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .kb-card-desc { font-size:11px; color:var(--text-secondary); line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin-bottom:8px; }
+        .kb-card-footer { display:flex; gap:10px; font-size:10px; color:var(--text-muted); }
+        .kb-card-footer span { display:flex; align-items:center; gap:2px; }
+
+        /* Stale indicator */
+        .kb-card.stale { border-color:#fbbf24; }
+        .kb-card.stale::after { content:'⏰'; position:absolute; top:8px; right:8px; font-size:12px; }
+
+        /* ══════════════ Mobile Tabs ══════════════ */
+        .kb-mobile-tabs { display:none; overflow-x:auto; gap:0; border-bottom:1px solid var(--card-border); margin-bottom:12px; scrollbar-width:none; }
+        .kb-mobile-tabs::-webkit-scrollbar { display:none; }
+        .kb-mobile-tab { padding:8px 14px; font-size:12px; font-weight:600; color:var(--text-secondary); background:none; border:none; border-bottom:2px solid transparent; cursor:pointer; white-space:nowrap; }
+        .kb-mobile-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+
+        /* ══════════════ Detail Modal ══════════════ */
+        .kb-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); display:none; align-items:flex-start; justify-content:center; z-index:100; padding:40px 16px; overflow-y:auto; }
+        .kb-modal-overlay.show { display:flex; }
+        .kb-modal { background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius); width:100%; max-width:640px; max-height:85vh; overflow-y:auto; }
+        .kb-modal-header { padding:20px 24px 16px; border-bottom:1px solid var(--card-border); display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+        .kb-modal-header h3 { font-size:18px; font-weight:700; flex:1; }
+        .kb-modal-close { background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; padding:4px; }
+        .kb-modal-meta { padding:12px 24px; display:flex; gap:12px; flex-wrap:wrap; font-size:12px; color:var(--text-secondary); border-bottom:1px solid var(--card-border); }
+        .kb-modal-meta .meta-item { display:flex; align-items:center; gap:4px; }
+
+        /* Modal tabs */
+        .kb-modal-tabs { display:flex; gap:0; padding:0 24px; border-bottom:1px solid var(--card-border); }
+        .kb-modal-tab { padding:10px 16px; font-size:13px; font-weight:600; color:var(--text-secondary); background:none; border:none; border-bottom:2px solid transparent; cursor:pointer; }
+        .kb-modal-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+        .kb-modal-panel { display:none; padding:16px 24px; }
+        .kb-modal-panel.active { display:block; }
+
+        /* Comments */
+        .kb-comment { padding:10px 0; border-bottom:1px solid var(--card-border); }
+        .kb-comment:last-child { border-bottom:none; }
+        .kb-comment-header { display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); margin-bottom:4px; }
+        .kb-comment-text { font-size:13px; color:var(--text); line-height:1.6; }
+        .kb-comment-text.system { color:var(--text-secondary); font-style:italic; }
+        .kb-comment-input { display:flex; gap:8px; margin-top:12px; }
+        .kb-comment-input textarea { flex:1; background:var(--input-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text); font-size:13px; resize:vertical; min-height:60px; font-family:inherit; }
+        .kb-comment-input button { align-self:flex-end; }
+
+        /* Notes list */
+        .kb-note { padding:10px 0; border-bottom:1px solid var(--card-border); }
+        .kb-note:last-child { border-bottom:none; }
+        .kb-note-title { font-size:13px; font-weight:600; margin-bottom:4px; }
+        .kb-note-content { font-size:12px; color:var(--text-secondary); line-height:1.5; white-space:pre-wrap; }
+        .kb-note-meta { font-size:10px; color:var(--text-muted); margin-top:4px; }
+
+        /* Files list */
+        .kb-file { display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--card-border); }
+        .kb-file:last-child { border-bottom:none; }
+        .kb-file-icon { font-size:18px; }
+        .kb-file-name { font-size:13px; color:var(--primary); text-decoration:none; }
+        .kb-file-name:hover { text-decoration:underline; }
+
+        /* Move actions */
+        .kb-move-bar { padding:12px 24px; border-top:1px solid var(--card-border); display:flex; gap:8px; flex-wrap:wrap; }
+        .kb-move-btn { padding:6px 14px; border-radius:var(--radius-sm); font-size:12px; font-weight:600; cursor:pointer; border:1px solid var(--card-border); background:none; color:var(--text-secondary); transition:all 0.2s; }
+        .kb-move-btn:hover { border-color:var(--primary); color:var(--text); }
+        .kb-move-btn.current { background:var(--primary); color:#fff; border-color:var(--primary); cursor:default; }
+
+        /* ══════════════ New Card Form ══════════════ */
+        .kb-new-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; z-index:100; }
+        .kb-new-overlay.show { display:flex; }
+        .kb-new-form { background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius); padding:24px; width:100%; max-width:440px; }
+        .kb-new-form h3 { font-size:16px; font-weight:700; margin-bottom:16px; }
+        .kb-form-group { margin-bottom:12px; }
+        .kb-form-label { display:block; font-size:12px; color:var(--text-secondary); margin-bottom:4px; font-weight:500; }
+        .kb-form-input { width:100%; background:var(--input-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text); font-size:13px; font-family:inherit; }
+        .kb-form-select { width:100%; background:var(--input-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text); font-size:13px; appearance:auto; }
+        .kb-form-textarea { width:100%; background:var(--input-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text); font-size:13px; min-height:60px; resize:vertical; font-family:inherit; }
+        .kb-form-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:16px; }
+
+        /* ══════════════ Empty state ══════════════ */
+        .kb-empty { text-align:center; padding:40px 20px; color:var(--text-muted); font-size:13px; }
+
+        /* ══════════════ Toast ══════════════ */
+        .kb-toast { position:fixed; bottom:24px; right:24px; background:#4ade80; color:#000; padding:10px 20px; border-radius:var(--radius-sm); font-size:13px; font-weight:600; z-index:200; display:none; }
+        .kb-toast.show { display:block; }
+        .kb-toast.error { background:#ef4444; color:#fff; }
+
+        /* ══════════════ Responsive ══════════════ */
+        @media (max-width: 768px) {
+            .kb-board { display:none; }
+            .kb-mobile-tabs { display:flex; }
+            .kb-mobile-list { display:flex; flex-direction:column; gap:8px; }
+            .kb-column { display:none; }
+        }
+        @media (min-width: 769px) {
+            .kb-mobile-list { display:none; }
+        }
+    </style>
+</head>
+<body>
+    <main>
+    <div class="container">
+        <!-- Sub-tabs -->
+        <div class="sub-tabs">
+            <a class="sub-tab" href="mission.html">🎯 <span data-i18n="mc_title">Mission Control</span></a>
+            <a class="sub-tab active" href="kanban.html">📋 <span data-i18n="kanban_tab">Kanban Board</span></a>
+            <a class="sub-tab" href="schedule.html">📅 <span data-i18n="nav_schedule">Schedule</span></a>
+            <a class="sub-tab" href="env-vars.html">🔐 Env Variables</a>
+            <a class="sub-tab" href="screen-control.html">📱 Remote Control</a>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="kb-toolbar">
+            <h2 data-i18n="kanban_heading">📋 Kanban Board</h2>
+            <div class="kb-toolbar-actions">
+                <div class="kb-filter-chips">
+                    <button class="kb-chip active" data-filter="all" onclick="filterCards('all')">All</button>
+                    <button class="kb-chip" data-filter="mine" onclick="filterCards('mine')">My Cards</button>
+                </div>
+                <button class="btn btn-primary" onclick="openNewCard()">+ New Card</button>
+            </div>
+        </div>
+
+        <!-- Desktop: 5-column board -->
+        <div class="kb-board" id="kbBoard">
+            <div class="kb-column" data-status="backlog">
+                <div class="kb-col-header"><span class="kb-col-title">Backlog</span><span class="kb-col-count" id="count-backlog">0</span></div>
+                <div class="kb-col-cards" id="col-backlog"></div>
+            </div>
+            <div class="kb-column" data-status="todo">
+                <div class="kb-col-header"><span class="kb-col-title">TODO</span><span class="kb-col-count" id="count-todo">0</span></div>
+                <div class="kb-col-cards" id="col-todo"></div>
+            </div>
+            <div class="kb-column" data-status="in_progress">
+                <div class="kb-col-header"><span class="kb-col-title">In Progress</span><span class="kb-col-count" id="count-in_progress">0</span></div>
+                <div class="kb-col-cards" id="col-in_progress"></div>
+            </div>
+            <div class="kb-column" data-status="review">
+                <div class="kb-col-header"><span class="kb-col-title">Review</span><span class="kb-col-count" id="count-review">0</span></div>
+                <div class="kb-col-cards" id="col-review"></div>
+            </div>
+            <div class="kb-column" data-status="done">
+                <div class="kb-col-header"><span class="kb-col-title">Done</span><span class="kb-col-count" id="count-done">0</span></div>
+                <div class="kb-col-cards" id="col-done"></div>
+            </div>
+        </div>
+
+        <!-- Mobile: tab switcher + list -->
+        <div class="kb-mobile-tabs" id="kbMobileTabs">
+            <button class="kb-mobile-tab active" data-status="backlog" onclick="switchMobileTab('backlog')">Backlog</button>
+            <button class="kb-mobile-tab" data-status="todo" onclick="switchMobileTab('todo')">TODO</button>
+            <button class="kb-mobile-tab" data-status="in_progress" onclick="switchMobileTab('in_progress')">In Progress</button>
+            <button class="kb-mobile-tab" data-status="review" onclick="switchMobileTab('review')">Review</button>
+            <button class="kb-mobile-tab" data-status="done" onclick="switchMobileTab('done')">Done</button>
+        </div>
+        <div class="kb-mobile-list" id="kbMobileList"></div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="kb-modal-overlay" id="detailModal" onclick="if(event.target===this)closeDetail()">
+        <div class="kb-modal">
+            <div class="kb-modal-header">
+                <h3 id="detailTitle"></h3>
+                <button class="kb-modal-close" onclick="closeDetail()">&times;</button>
+            </div>
+            <div class="kb-modal-meta" id="detailMeta"></div>
+            <div class="kb-modal-tabs">
+                <button class="kb-modal-tab active" onclick="switchDetailTab('comments',this)">💬 Comments</button>
+                <button class="kb-modal-tab" onclick="switchDetailTab('notes',this)">📝 Notes</button>
+                <button class="kb-modal-tab" onclick="switchDetailTab('files',this)">📎 Files</button>
+            </div>
+            <div class="kb-modal-panel active" id="panel-comments"></div>
+            <div class="kb-modal-panel" id="panel-notes"></div>
+            <div class="kb-modal-panel" id="panel-files"></div>
+            <div class="kb-move-bar" id="moveBar"></div>
+        </div>
+    </div>
+
+    <!-- New Card Modal -->
+    <div class="kb-new-overlay" id="newCardModal" onclick="if(event.target===this)closeNewCard()">
+        <div class="kb-new-form">
+            <h3>🆕 New Card</h3>
+            <div class="kb-form-group">
+                <label class="kb-form-label">Title</label>
+                <input class="kb-form-input" id="newTitle" placeholder="Card title...">
+            </div>
+            <div class="kb-form-group">
+                <label class="kb-form-label">Description</label>
+                <textarea class="kb-form-textarea" id="newDesc" placeholder="Brief description..."></textarea>
+            </div>
+            <div class="kb-form-group">
+                <label class="kb-form-label">Priority</label>
+                <select class="kb-form-select" id="newPriority">
+                    <option value="P0">🔴 P0 — Critical</option>
+                    <option value="P1">🟠 P1 — High</option>
+                    <option value="P2" selected>🔵 P2 — Medium</option>
+                    <option value="P3">⚪ P3 — Low</option>
+                </select>
+            </div>
+            <div class="kb-form-group">
+                <label class="kb-form-label">Initial Status</label>
+                <select class="kb-form-select" id="newStatus">
+                    <option value="backlog">Backlog</option>
+                    <option value="todo" selected>TODO</option>
+                    <option value="in_progress">In Progress</option>
+                </select>
+            </div>
+            <div class="kb-form-group">
+                <label class="kb-form-label">Assign To</label>
+                <div id="newAssignees"></div>
+            </div>
+            <div class="kb-form-actions">
+                <button class="btn btn-outline" onclick="closeNewCard()">Cancel</button>
+                <button class="btn btn-primary" onclick="createCard()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="kb-toast" id="kbToast"></div>
+
+    </main>
+
+    <script src="shared/api.js"></script>
+    <script src="shared/nav.js"></script>
+    <script src="shared/auth.js"></script>
+    <script src="shared/entity-utils.js"></script>
+    <script src="../shared/telemetry.js"></script>
+    <script src="../shared/i18n.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="shared/socket.js"></script>
+    <script src="shared/footer.js"></script>
+    <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
+    <script src="shared/ai-chat.js"></script>
+    <script>if(typeof renderAvatarHtml==='undefined'){window.renderAvatarHtml=function(a){return a||'🦞'};window.isAvatarUrl=function(){return false}}</script>
+    <script>
+        const STATUSES = ['backlog','todo','in_progress','review','done'];
+        const STATUS_LABELS = {backlog:'Backlog',todo:'TODO',in_progress:'In Progress',review:'Review',done:'Done'};
+        const PRIO_EMOJI = {P0:'🔴',P1:'🟠',P2:'🔵',P3:'⚪'};
+
+        let allCards = [];
+        let currentFilter = 'all';
+        let mobileTab = 'backlog';
+        let openCardId = null;
+        let boundEntities = [];
+        let dragCard = null;
+
+        // ── Init ──
+        window.addEventListener('DOMContentLoaded', async () => {
+            renderNav('mission');
+            if (typeof renderFooter === 'function') renderFooter();
+            const user = await checkAuth();
+            if (!user) return;
+            document.getElementById('navEmail').textContent = user.email || '';
+            if (typeof initAiChat === 'function') initAiChat(user);
+
+            // Load entities for assignee picker
+            try {
+                const data = await apiCall('GET', `/api/entities?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+                if (data.entities) boundEntities = data.entities;
+            } catch(e) {}
+
+            await loadCards();
+            initDragDrop();
+
+            // Poll every 15s
+            setInterval(loadCards, 15000);
+        });
+
+        // ── API ──
+        async function loadCards() {
+            try {
+                const data = await apiCall('GET', `/api/mission/cards?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+                if (data.cards) { allCards = data.cards; renderBoard(); }
+            } catch(e) { console.error('[Kanban] loadCards:', e); }
+        }
+
+        async function apiCreateCard(body) {
+            return apiCall('POST', '/api/mission/card', {
+                deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret, ...body
+            });
+        }
+
+        async function apiMoveCard(cardId, newStatus, assignedBots) {
+            return apiCall('POST', `/api/mission/card/${cardId}/move`, {
+                deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret,
+                newStatus, assignedBots
+            });
+        }
+
+        async function apiGetComments(cardId) {
+            return apiCall('GET', `/api/mission/card/${cardId}/comments?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+        }
+
+        async function apiPostComment(cardId, text) {
+            return apiCall('POST', `/api/mission/card/${cardId}/comment`, {
+                deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret, text
+            });
+        }
+
+        async function apiGetNotes(cardId) {
+            return apiCall('GET', `/api/mission/card/${cardId}/notes?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+        }
+
+        async function apiGetFiles(cardId) {
+            return apiCall('GET', `/api/mission/card/${cardId}/files?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+        }
+
+        // ── Render Board ──
+        function renderBoard() {
+            const filtered = currentFilter === 'mine'
+                ? allCards.filter(c => (c.assigned_bots||[]).some(id => boundEntities.some(e => e.entityId === id)))
+                : allCards;
+
+            STATUSES.forEach(status => {
+                const cards = filtered.filter(c => c.status === status);
+                const col = document.getElementById('col-' + status);
+                const count = document.getElementById('count-' + status);
+                if (count) count.textContent = cards.length;
+                if (col) col.innerHTML = cards.length ? cards.map(renderCard).join('') : '<div class="kb-empty">No cards</div>';
+            });
+
+            // Mobile
+            renderMobileList();
+        }
+
+        function renderCard(card) {
+            const bots = (card.assigned_bots||[]).map(id => '#'+id).join(', ') || 'Unassigned';
+            const isStale = card.is_stale ? ' stale' : '';
+            const commentCount = card.comment_count || 0;
+            const noteCount = card.note_count || 0;
+            const fileCount = card.file_count || 0;
+            return `<div class="kb-card${isStale}" data-id="${card.id}" data-priority="${card.priority}" draggable="true"
+                         ondragstart="onDragStart(event)" onclick="openDetail('${card.id}')">
+                <div class="kb-card-top">
+                    <span class="kb-card-priority" data-p="${card.priority}">${card.priority}</span>
+                    <span class="kb-card-assigned">${escapeHtml(bots)}</span>
+                </div>
+                <div class="kb-card-title">${escapeHtml(card.title)}</div>
+                ${card.description ? '<div class="kb-card-desc">'+escapeHtml(card.description)+'</div>' : ''}
+                <div class="kb-card-footer">
+                    ${commentCount ? '<span>💬 '+commentCount+'</span>' : ''}
+                    ${noteCount ? '<span>📝 '+noteCount+'</span>' : ''}
+                    ${fileCount ? '<span>📎 '+fileCount+'</span>' : ''}
+                </div>
+            </div>`;
+        }
+
+        // ── Mobile ──
+        function switchMobileTab(status) {
+            mobileTab = status;
+            document.querySelectorAll('.kb-mobile-tab').forEach(t => t.classList.toggle('active', t.dataset.status === status));
+            renderMobileList();
+        }
+
+        function renderMobileList() {
+            const list = document.getElementById('kbMobileList');
+            if (!list) return;
+            const filtered = currentFilter === 'mine'
+                ? allCards.filter(c => (c.assigned_bots||[]).some(id => boundEntities.some(e => e.entityId === id)))
+                : allCards;
+            const cards = filtered.filter(c => c.status === mobileTab);
+            list.innerHTML = cards.length ? cards.map(renderCard).join('') : '<div class="kb-empty">No cards in '+STATUS_LABELS[mobileTab]+'</div>';
+        }
+
+        // ── Filter ──
+        function filterCards(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.kb-chip').forEach(c => c.classList.toggle('active', c.dataset.filter === filter));
+            renderBoard();
+        }
+
+        // ── Drag & Drop ──
+        function initDragDrop() {
+            document.querySelectorAll('.kb-col-cards').forEach(col => {
+                col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('drag-over'); });
+                col.addEventListener('dragleave', () => col.classList.remove('drag-over'));
+                col.addEventListener('drop', async e => {
+                    e.preventDefault();
+                    col.classList.remove('drag-over');
+                    if (!dragCard) return;
+                    const newStatus = col.id.replace('col-','');
+                    const card = allCards.find(c => c.id === dragCard);
+                    if (!card || card.status === newStatus) { dragCard = null; return; }
+                    if (card.status === 'done') { showToast('Cannot move Done cards', true); dragCard = null; return; }
+                    try {
+                        await apiMoveCard(dragCard, newStatus, card.assigned_bots || []);
+                        showToast('Moved to ' + STATUS_LABELS[newStatus]);
+                        await loadCards();
+                    } catch(err) { showToast('Move failed: ' + (err.message||err), true); }
+                    dragCard = null;
+                });
+            });
+        }
+
+        function onDragStart(e) {
+            dragCard = e.target.closest('.kb-card').dataset.id;
+            e.target.classList.add('dragging');
+            setTimeout(() => e.target.classList.remove('dragging'), 0);
+        }
+
+        // ── Detail Modal ──
+        async function openDetail(cardId) {
+            openCardId = cardId;
+            const card = allCards.find(c => c.id === cardId);
+            if (!card) return;
+
+            document.getElementById('detailTitle').textContent = card.title;
+            const meta = document.getElementById('detailMeta');
+            meta.innerHTML = `
+                <span class="meta-item"><span class="kb-card-priority" data-p="${card.priority}">${card.priority}</span></span>
+                <span class="meta-item">📌 ${STATUS_LABELS[card.status]}</span>
+                <span class="meta-item">👤 ${(card.assigned_bots||[]).map(id=>'#'+id).join(', ')||'Unassigned'}</span>
+                <span class="meta-item">🕐 ${formatTime(card.created_at)}</span>
+                ${card.description ? '<div style="width:100%;font-size:13px;color:var(--text-secondary);margin-top:4px">'+escapeHtml(card.description)+'</div>' : ''}
+            `;
+
+            // Move bar
+            const moveBar = document.getElementById('moveBar');
+            moveBar.innerHTML = STATUSES.map(s =>
+                `<button class="kb-move-btn${s===card.status?' current':''}" onclick="moveCardTo('${cardId}','${s}')"${s===card.status?' disabled':''}>${STATUS_LABELS[s]}</button>`
+            ).join('');
+
+            // Load first tab
+            switchDetailTab('comments', document.querySelector('.kb-modal-tab'));
+            document.getElementById('detailModal').classList.add('show');
+        }
+
+        function closeDetail() {
+            document.getElementById('detailModal').classList.remove('show');
+            openCardId = null;
+        }
+
+        async function switchDetailTab(tab, btn) {
+            document.querySelectorAll('.kb-modal-tab').forEach(t => t.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            document.querySelectorAll('.kb-modal-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('panel-'+tab).classList.add('active');
+
+            if (tab === 'comments') await loadComments();
+            if (tab === 'notes') await loadNotes();
+            if (tab === 'files') await loadFiles();
+        }
+
+        async function loadComments() {
+            const panel = document.getElementById('panel-comments');
+            try {
+                const data = await apiGetComments(openCardId);
+                const comments = data.comments || [];
+                panel.innerHTML = comments.map(c => `
+                    <div class="kb-comment">
+                        <div class="kb-comment-header">
+                            <span>${c.from_entity_id != null ? '#'+c.from_entity_id : 'System'}</span>
+                            <span>${formatTime(c.created_at)}</span>
+                        </div>
+                        <div class="kb-comment-text${c.is_system ? ' system' : ''}">${escapeHtml(c.text)}</div>
+                    </div>
+                `).join('') + `
+                    <div class="kb-comment-input">
+                        <textarea id="commentText" placeholder="Add a comment..."></textarea>
+                        <button class="btn btn-primary" onclick="postComment()">Send</button>
+                    </div>
+                `;
+            } catch(e) { panel.innerHTML = '<div class="kb-empty">Failed to load comments</div>'; }
+        }
+
+        async function postComment() {
+            const text = document.getElementById('commentText')?.value?.trim();
+            if (!text || !openCardId) return;
+            try {
+                await apiPostComment(openCardId, text);
+                await loadComments();
+                showToast('Comment added');
+            } catch(e) { showToast('Failed to add comment', true); }
+        }
+
+        async function loadNotes() {
+            const panel = document.getElementById('panel-notes');
+            try {
+                const data = await apiGetNotes(openCardId);
+                const notes = data.notes || [];
+                panel.innerHTML = notes.length ? notes.map(n => `
+                    <div class="kb-note">
+                        <div class="kb-note-title">${escapeHtml(n.title)}</div>
+                        <div class="kb-note-content">${escapeHtml(n.content)}</div>
+                        <div class="kb-note-meta">#${n.from_entity_id ?? '?'} · ${formatTime(n.created_at)}</div>
+                    </div>
+                `).join('') : '<div class="kb-empty">No notes yet</div>';
+            } catch(e) { panel.innerHTML = '<div class="kb-empty">Failed to load notes</div>'; }
+        }
+
+        async function loadFiles() {
+            const panel = document.getElementById('panel-files');
+            try {
+                const data = await apiGetFiles(openCardId);
+                const files = data.files || [];
+                panel.innerHTML = files.length ? files.map(f => `
+                    <div class="kb-file">
+                        <span class="kb-file-icon">📄</span>
+                        <a class="kb-file-name" href="${escapeHtml(f.url)}" target="_blank" rel="noopener">${escapeHtml(f.filename)}</a>
+                    </div>
+                `).join('') : '<div class="kb-empty">No files yet</div>';
+            } catch(e) { panel.innerHTML = '<div class="kb-empty">Failed to load files</div>'; }
+        }
+
+        async function moveCardTo(cardId, newStatus) {
+            const card = allCards.find(c => c.id === cardId);
+            if (!card || card.status === newStatus) return;
+            if (card.status === 'done') { showToast('Cannot move Done cards', true); return; }
+            try {
+                await apiMoveCard(cardId, newStatus, card.assigned_bots || []);
+                showToast('Moved to ' + STATUS_LABELS[newStatus]);
+                await loadCards();
+                if (openCardId === cardId) openDetail(cardId);
+            } catch(e) { showToast('Move failed', true); }
+        }
+
+        // ── New Card ──
+        function openNewCard() {
+            const container = document.getElementById('newAssignees');
+            container.innerHTML = boundEntities.map(e =>
+                `<label style="display:flex;align-items:center;gap:6px;font-size:13px;margin:4px 0">
+                    <input type="checkbox" value="${e.entityId}"> #${e.entityId} ${escapeHtml(getEntityDisplayName?.(e.entityId)||'')}
+                </label>`
+            ).join('') || '<span style="font-size:12px;color:var(--text-muted)">No entities found</span>';
+            document.getElementById('newCardModal').classList.add('show');
+        }
+
+        function closeNewCard() {
+            document.getElementById('newCardModal').classList.remove('show');
+        }
+
+        async function createCard() {
+            const title = document.getElementById('newTitle').value.trim();
+            if (!title) { showToast('Title is required', true); return; }
+            const assignedBots = [...document.querySelectorAll('#newAssignees input:checked')].map(cb => Number(cb.value));
+            try {
+                await apiCreateCard({
+                    title,
+                    description: document.getElementById('newDesc').value.trim(),
+                    priority: document.getElementById('newPriority').value,
+                    status: document.getElementById('newStatus').value,
+                    assignedBots
+                });
+                showToast('Card created');
+                closeNewCard();
+                document.getElementById('newTitle').value = '';
+                document.getElementById('newDesc').value = '';
+                await loadCards();
+            } catch(e) { showToast('Failed to create card', true); }
+        }
+
+        // ── Utils ──
+        function showToast(msg, isError) {
+            const t = document.getElementById('kbToast');
+            t.textContent = msg;
+            t.className = 'kb-toast show' + (isError ? ' error' : '');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+    </script>
+</body>
+</html>
