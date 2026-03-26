@@ -1,3 +1,12 @@
+# [1.180.0](https://github.com/HankHuang0516/EClaw/compare/v1.179.1...v1.180.0) (2026-03-26)
+
+
+### Features
+
+* **chat:** code block syntax highlighting + copy button ([#522](https://github.com/HankHuang0516/EClaw/issues/522)) ([ac0a2ba](https://github.com/HankHuang0516/EClaw/commit/ac0a2ba53a0981c0dcd4e1d93c781a39af18462d)), closes [#0d1117](https://github.com/HankHuang0516/EClaw/issues/0d1117)
+* **info:** P2-2 Onboarding Quick Start redesign ([#519](https://github.com/HankHuang0516/EClaw/issues/519)) ([69591ad](https://github.com/HankHuang0516/EClaw/commit/69591ad12bac517d07f621bbae080c886b57714f)), closes [#4FC3F7](https://github.com/HankHuang0516/EClaw/issues/4FC3F7)
+* **assets:** P2-3 tutorial screenshots + GIF animations ([#520](https://github.com/HankHuang0516/EClaw/issues/520)) ([39d2f75](https://github.com/HankHuang0516/EClaw/commit/39d2f750b2611dbd85d61de3cbdec5502f7a1cee)), closes [#4FC3F7](https://github.com/HankHuang0516/EClaw/issues/4FC3F7)
+
 ## [1.179.1](https://github.com/HankHuang0516/EClaw/compare/v1.179.0...v1.179.1) (2026-03-26)
 
 
