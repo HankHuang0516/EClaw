@@ -3189,6 +3189,27 @@ app.get('/api/release-notes', (req, res) => {
     }
 });
 
+// Debug: show file paths on Railway (temporary — remove after debugging)
+app.get('/api/debug/paths', (req, res) => {
+    const candidates = [
+        path.join(__dirname, '..', 'CHANGELOG.md'),
+        path.join(process.cwd(), 'CHANGELOG.md'),
+        path.join(process.cwd(), '..', 'CHANGELOG.md'),
+        '/app/CHANGELOG.md'
+    ];
+    const rootFiles = [];
+    try { rootFiles.push(...fs.readdirSync(process.cwd()).slice(0, 30)); } catch(e) { rootFiles.push('ERR: ' + e.message); }
+    const parentFiles = [];
+    try { parentFiles.push(...fs.readdirSync(path.join(process.cwd(), '..')).slice(0, 30)); } catch(e) { parentFiles.push('ERR: ' + e.message); }
+    res.json({
+        __dirname,
+        cwd: process.cwd(),
+        candidates: candidates.map(p => ({ path: p, exists: fs.existsSync(p) })),
+        cwdFiles: rootFiles,
+        parentFiles
+    });
+});
+
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: Date.now(), build: SERVER_BUILD_TAG, uptime: process.uptime(), startedAt: SERVER_STARTED_AT.toISOString() });
 });
@@ -6562,6 +6583,19 @@ async function handleVisibility(req, res) {
 }
 app.post('/api/entity/agent-card/visibility', handleVisibility);
 app.post('/api/community/publish', handleVisibility);
+// GET fallback: /api/community/publish?deviceId=X&botSecret=Y&public=true
+// For cases where Cloudflare WAF blocks POST body
+app.get('/api/community/publish', async (req, res) => {
+    // Map query params to body-like structure
+    req.body = {
+        deviceId: req.query.deviceId,
+        botSecret: req.query.botSecret,
+        deviceSecret: req.query.deviceSecret,
+        entityId: req.query.entityId,
+        public: req.query.public === 'true'
+    };
+    return handleVisibility(req, res);
+});
 
 /**
  * GET /api/community/search — Search public agent cards
