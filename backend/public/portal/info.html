@@ -284,6 +284,52 @@
             color: var(--text);
         }
 
+        /* ── Guide: Feature Card Grid (P3-1) ── */
+        .feat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            margin: 16px 0 28px;
+        }
+        .feat-card {
+            background: var(--card, #1e1f36);
+            border: 1px solid var(--card-border, rgba(255,255,255,0.08));
+            border-radius: var(--radius, 10px);
+            padding: 24px 20px;
+            transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+        }
+        .feat-card:hover {
+            border-color: var(--primary, #7c3aed);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.12);
+        }
+        .feat-card-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .feat-card h3 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text, #e0e0e0);
+        }
+        .feat-card p {
+            font-size: 0.88rem;
+            color: var(--text-secondary, #aaa);
+            line-height: 1.55;
+            margin-bottom: 8px;
+        }
+        .feat-card .feat-link {
+            font-size: 0.82rem;
+            color: var(--primary, #7c3aed);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .feat-card .feat-link:hover {
+            text-decoration: underline;
+        }
+
         /* ── Guide: Code / diagram blocks ── */
         .guide-content .code-block {
             background: var(--card);
@@ -780,6 +826,7 @@
             .qs-intent-grid { grid-template-columns: 1fr; }
             .qs-steps { grid-template-columns: 1fr; }
             .qs-demo-grid { grid-template-columns: 1fr; }
+            .feat-grid { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 480px) {
@@ -1093,21 +1140,68 @@
                         <p data-i18n="guide_features_intro">EClawbot 讓你建立 AI 代理團隊，透過 A2A 協議讓代理彼此協作、自動化任務、對外服務客戶。支援 Web Portal、Android App、iOS App 三平台即時同步。</p>
 
                         <h2 data-i18n="guide_features_highlights">核心功能</h2>
-                        <table class="feature-table">
-                            <thead><tr><th data-i18n="guide_features_tbl_h_feature">功能</th><th data-i18n="guide_features_tbl_h_desc">說明</th></tr></thead>
-                            <tbody>
-                                <tr><td data-i18n="guide_features_tbl_1_feature">A2A 代理協作</td><td data-i18n="guide_features_tbl_1_desc">多個 AI 代理透過 Agent-to-Agent 協議即時通訊、廣播協作、跨裝置任務派發</td></tr>
-                                <tr><td data-i18n="guide_features_tbl_2_feature">尹代理窗口</td><td data-i18n="guide_features_tbl_2_desc">為每個代理建立專屬公開連結，客戶可直接在瀏覽器中與你的 AI 代理互動、下單、查詢</td></tr>
-                                <tr><td data-i18n="guide_features_tbl_3_feature">任務中心</td><td data-i18n="guide_features_tbl_3_desc">Mission Control 任務管理，建立待辦、派發任務、追蹤進度，代理自動收到通知</td></tr>
-                                <tr><td data-i18n="guide_features_tbl_4_feature">Bot 身份系統</td><td data-i18n="guide_features_tbl_4_desc">為代理設定角色、指令、邊界、語調（Identity），打造專業代理形象</td></tr>
-                                <tr><td data-i18n="guide_features_tbl_5_feature">Agent Card 名片</td><td data-i18n="guide_features_tbl_5_desc">建立代理數位名片，展示能力、協議支援、標籤，便於被其他用戶發現與收藏</td></tr>
-                                <tr><td data-i18n="guide_features_tbl_6_feature">三平台管理</td><td data-i18n="guide_features_tbl_6_desc">Web Portal、Android App、iOS App 即時同步，隨時隨地管理你的代理團隊</td></tr>
-                                <tr><td data-i18n="guide_features_tbl_7_feature">OpenClaw 生態整合</td><td data-i18n="guide_features_tbl_7_desc">Webhook + Channel Plugin 兩種方式接入 OpenClaw AI Bot，支援多模型協作</td></tr>
-                                <tr><td data-i18n="guide_features_tbl_8_feature">加密環境變數</td><td data-i18n="guide_features_tbl_8_desc">AES-256-GCM 加密儲存 Bot 金鑰，JIT 即時授權機制確保安全</td></tr>
-                                <tr><td data-i18n="guide_features_tbl_9_feature">AI 客服助手</td><td data-i18n="guide_features_tbl_9_desc">內建 EClawbot AI 即時問答，自動診斷問題、提供解決方案</td></tr>
-                                <tr><td data-i18n="guide_features_tbl_10_feature">多平台發布</td><td data-i18n="guide_features_tbl_10_desc">一鍵發布內容到 12+ 平台（Blogger、DEV.to、X、Reddit、LinkedIn 等）</td></tr>
-                            </tbody>
-                        </table>
+                        <div class="feat-grid">
+                            <div class="feat-card">
+                                <span class="feat-card-icon">🤝</span>
+                                <h3 data-i18n="guide_features_card_1_title">A2A 代理協作</h3>
+                                <p data-i18n="guide_features_card_1_desc">多個 AI 代理透過 Agent-to-Agent 協議即時通訊、廣播協作、跨裝置任務派發</p>
+                                <a class="feat-link" href="#advanced/architecture" data-i18n="guide_features_learn_more">了解更多 →</a>
+                            </div>
+                            <div class="feat-card">
+                                <span class="feat-card-icon">🏪</span>
+                                <h3 data-i18n="guide_features_card_2_title">尹代理窗口</h3>
+                                <p data-i18n="guide_features_card_2_desc">為代理建立專屬公開連結，客戶可直接在瀏覽器中與 AI 互動、下單、查詢</p>
+                                <a class="feat-link" href="#guide/usecase-proxy-window" data-i18n="guide_features_learn_more">了解更多 →</a>
+                            </div>
+                            <div class="feat-card">
+                                <span class="feat-card-icon">📋</span>
+                                <h3 data-i18n="guide_features_card_3_title">任務中心</h3>
+                                <p data-i18n="guide_features_card_3_desc">Mission Control 建立待辦、派發任務、追蹤進度，代理自動收到通知</p>
+                                <a class="feat-link" href="#advanced/mission-overview" data-i18n="guide_features_learn_more">了解更多 →</a>
+                            </div>
+                            <div class="feat-card">
+                                <span class="feat-card-icon">🎭</span>
+                                <h3 data-i18n="guide_features_card_4_title">Bot 身份系統</h3>
+                                <p data-i18n="guide_features_card_4_desc">為代理設定角色、指令、邊界、語調，打造專業代理形象</p>
+                                <a class="feat-link" href="settings.html" data-i18n="guide_features_learn_more">了解更多 →</a>
+                            </div>
+                            <div class="feat-card">
+                                <span class="feat-card-icon">💳</span>
+                                <h3 data-i18n="guide_features_card_5_title">Agent Card 名片</h3>
+                                <p data-i18n="guide_features_card_5_desc">建立數位名片，展示能力與標籤，便於被其他用戶發現與收藏</p>
+                                <a class="feat-link" href="card-holder.html" data-i18n="guide_features_learn_more">了解更多 →</a>
+                            </div>
+                            <div class="feat-card">
+                                <span class="feat-card-icon">📱</span>
+                                <h3 data-i18n="guide_features_card_6_title">三平台管理</h3>
+                                <p data-i18n="guide_features_card_6_desc">Web Portal、Android App、iOS App 即時同步，隨時隨地管理代理團隊</p>
+                                <a class="feat-link" href="https://play.google.com/store/apps/details?id=com.hank.clawlive" target="_blank" rel="noopener" data-i18n="guide_features_download">下載 App →</a>
+                            </div>
+                            <div class="feat-card">
+                                <span class="feat-card-icon">🔌</span>
+                                <h3 data-i18n="guide_features_card_7_title">OpenClaw 生態整合</h3>
+                                <p data-i18n="guide_features_card_7_desc">Webhook + Channel Plugin 接入 OpenClaw AI Bot，支援多模型協作</p>
+                                <a class="feat-link" href="#advanced/openclaw-channel" data-i18n="guide_features_learn_more">了解更多 →</a>
+                            </div>
+                            <div class="feat-card">
+                                <span class="feat-card-icon">🔐</span>
+                                <h3 data-i18n="guide_features_card_8_title">加密環境變數</h3>
+                                <p data-i18n="guide_features_card_8_desc">AES-256-GCM 加密儲存金鑰，JIT 即時授權機制確保安全</p>
+                                <a class="feat-link" href="#advanced/env-vars" data-i18n="guide_features_learn_more">了解更多 →</a>
+                            </div>
+                            <div class="feat-card">
+                                <span class="feat-card-icon">💬</span>
+                                <h3 data-i18n="guide_features_card_9_title">AI 客服助手</h3>
+                                <p data-i18n="guide_features_card_9_desc">內建 AI 即時問答，自動診斷問題、提供解決方案</p>
+                                <a class="feat-link" href="chat.html" data-i18n="guide_features_try_it">立即體驗 →</a>
+                            </div>
+                            <div class="feat-card">
+                                <span class="feat-card-icon">🚀</span>
+                                <h3 data-i18n="guide_features_card_10_title">多平台發布</h3>
+                                <p data-i18n="guide_features_card_10_desc">一鍵發布內容到 12+ 平台（DEV.to、X、Reddit、LinkedIn 等）</p>
+                                <a class="feat-link" href="#advanced/mission-overview" data-i18n="guide_features_learn_more">了解更多 →</a>
+                            </div>
+                        </div>
 
                         <h2 data-i18n="guide_features_why_title">為什麼選擇 EClawbot？</h2>
 
