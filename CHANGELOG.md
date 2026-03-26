@@ -1,3 +1,10 @@
+# [1.179.0](https://github.com/HankHuang0516/EClaw/compare/v1.178.1...v1.179.0) (2026-03-26)
+
+
+### Features
+
+* **chat:** bot message Markdown rendering with marked.js + DOMPurify ([#516](https://github.com/HankHuang0516/EClaw/issues/516)) ([5bb536f](https://github.com/HankHuang0516/EClaw/commit/5bb536f85d82001d0a77e813b9e1a27e9f86914f))
+
 ## [1.178.1](https://github.com/HankHuang0516/EClaw/compare/v1.178.0...v1.178.1) (2026-03-26)
 
 
