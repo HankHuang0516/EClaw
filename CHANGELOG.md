@@ -1,3 +1,10 @@
+# [1.194.0](https://github.com/HankHuang0516/EClaw/compare/v1.193.3...v1.194.0) (2026-03-26)
+
+
+### Features
+
+* **mission:** add copy public link button to note page viewer toolbar ([#556](https://github.com/HankHuang0516/EClaw/issues/556)) ([686cfd9](https://github.com/HankHuang0516/EClaw/commit/686cfd9644f248fdd544611f221fb452dae4f379))
+
 ## [1.193.3](https://github.com/HankHuang0516/EClaw/compare/v1.193.2...v1.193.3) (2026-03-26)
 
 
