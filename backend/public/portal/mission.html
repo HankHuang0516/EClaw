@@ -1007,6 +1007,7 @@
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
+            try {
             renderNav('mission');
             if (typeof renderFooter === 'function') renderFooter();
             const user = await checkAuth();
@@ -1035,6 +1036,11 @@
             i18n.onLanguageChange(() => {
                 renderAll();
             });
+            } catch (initErr) {
+                console.error('[Mission] Init error:', initErr);
+                const el = document.getElementById('loadingState');
+                if (el) el.innerHTML = '<p style="color:#f44;padding:20px;">Mission init error: ' + initErr.message + '</p>';
+            }
         });
 
         // --- API ---
