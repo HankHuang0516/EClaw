@@ -1,3 +1,10 @@
+## [1.199.1](https://github.com/HankHuang0516/EClaw/compare/v1.199.0...v1.199.1) (2026-03-27)
+
+
+### Bug Fixes
+
+* **nav:** remove auto-redirect to workspace, use direct navigation ([#571](https://github.com/HankHuang0516/EClaw/issues/571)) ([434ff56](https://github.com/HankHuang0516/EClaw/commit/434ff56aad9ed5dad3a1f926a673b829b41eb455))
+
 # [1.199.0](https://github.com/HankHuang0516/EClaw/compare/v1.198.3...v1.199.0) (2026-03-27)
 
 
