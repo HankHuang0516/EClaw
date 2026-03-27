@@ -1,3 +1,10 @@
+## [1.199.3](https://github.com/HankHuang0516/EClaw/compare/v1.199.2...v1.199.3) (2026-03-27)
+
+
+### Bug Fixes
+
+* **auth:** restore deviceSecret in /api/auth/me — fixes mission 401 ([#574](https://github.com/HankHuang0516/EClaw/issues/574)) ([b8969c2](https://github.com/HankHuang0516/EClaw/commit/b8969c2b5016470fee8ccd635894584ab910c9d2)), closes [#490](https://github.com/HankHuang0516/EClaw/issues/490)
+
 ## [1.199.2](https://github.com/HankHuang0516/EClaw/compare/v1.199.1...v1.199.2) (2026-03-27)
 
 
