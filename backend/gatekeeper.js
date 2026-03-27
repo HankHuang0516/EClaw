@@ -498,6 +498,139 @@ async function resetStrikes(deviceId) {
 }
 
 // ============================================
+// STATS
+// ============================================
+
+/**
+ * Get aggregate gatekeeper statistics (in-memory + optional DB)
+ * Used by GET /api/gatekeeper/stats for the Security Demo.
+ *
+ * @returns {Promise<{
+ *   totalDevicesTracked: number,
+ *   totalBlockedDevices: number,
+ *   totalStrikes: number,
+ *   maxStrikes: number,
+ *   strikesDistribution: { '1': number, '2': number, '3+': number },
+ *   topCategories: { category: string, count: number }[],
+ *   recentViolations: { deviceId: string, category: string, preview: string, createdAt: string }[],
+ *   violationsLast24h: number,
+ *   violationsLast7d: number,
+ *   generatedAt: string
+ * }>}
+ */
+async function getStats() {
+    console.log('[Gatekeeper] getStats() called');
+
+    // ── In-memory aggregates (always available) ──
+    const cacheEntries = Object.entries(strikeCache);
+    const totalDevicesTracked = cacheEntries.length;
+    const totalBlockedDevices = cacheEntries.filter(([, v]) => v.blocked).length;
+    const totalStrikes = cacheEntries.reduce((sum, [, v]) => sum + (v.count || 0), 0);
+
+    const strikesDistribution = { '1': 0, '2': 0, '3+': 0 };
+    for (const [, v] of cacheEntries) {
+        if (v.count === 1) strikesDistribution['1']++;
+        else if (v.count === 2) strikesDistribution['2']++;
+        else if (v.count >= 3) strikesDistribution['3+']++;
+    }
+
+    console.log('[Gatekeeper] getStats() in-memory aggregated', {
+        totalDevicesTracked,
+        totalBlockedDevices,
+        totalStrikes,
+    });
+
+    // ── DB aggregates (optional — graceful fallback if no pool) ──
+    let topCategories = [];
+    let recentViolations = [];
+    let violationsLast24h = 0;
+    let violationsLast7d = 0;
+
+    if (pool) {
+        try {
+            // Top violation categories
+            const catResult = await pool.query(`
+                SELECT category, COUNT(*) as count
+                FROM gatekeeper_violations
+                GROUP BY category
+                ORDER BY count DESC
+                LIMIT 10
+            `);
+            topCategories = catResult.rows.map(r => ({
+                category: r.category,
+                count: parseInt(r.count, 10),
+            }));
+            console.log('[Gatekeeper] getStats() topCategories loaded', { count: topCategories.length });
+        } catch (err) {
+            console.error('[Gatekeeper] getStats() topCategories query failed:', err.message, err.stack);
+        }
+
+        try {
+            // Recent violations (last 20, redacted preview)
+            const recentResult = await pool.query(`
+                SELECT device_id, category, message_preview, created_at
+                FROM gatekeeper_violations
+                ORDER BY created_at DESC
+                LIMIT 20
+            `);
+            recentViolations = recentResult.rows.map(r => ({
+                deviceId: r.device_id.substring(0, 8) + '****',  // partial redaction
+                category: r.category,
+                preview: r.message_preview ? r.message_preview.substring(0, 40) + (r.message_preview.length > 40 ? '…' : '') : null,
+                createdAt: r.created_at,
+            }));
+            console.log('[Gatekeeper] getStats() recentViolations loaded', { count: recentViolations.length });
+        } catch (err) {
+            console.error('[Gatekeeper] getStats() recentViolations query failed:', err.message, err.stack);
+        }
+
+        try {
+            // Violations in last 24h
+            const h24Result = await pool.query(`
+                SELECT COUNT(*) as count FROM gatekeeper_violations
+                WHERE created_at >= NOW() - INTERVAL '24 hours'
+            `);
+            violationsLast24h = parseInt(h24Result.rows[0].count, 10);
+
+            // Violations in last 7d
+            const d7Result = await pool.query(`
+                SELECT COUNT(*) as count FROM gatekeeper_violations
+                WHERE created_at >= NOW() - INTERVAL '7 days'
+            `);
+            violationsLast7d = parseInt(d7Result.rows[0].count, 10);
+
+            console.log('[Gatekeeper] getStats() time-window counts loaded', { violationsLast24h, violationsLast7d });
+        } catch (err) {
+            console.error('[Gatekeeper] getStats() time-window query failed:', err.message, err.stack);
+        }
+    } else {
+        console.log('[Gatekeeper] getStats() pool not available, DB stats skipped');
+    }
+
+    const result = {
+        totalDevicesTracked,
+        totalBlockedDevices,
+        totalStrikes,
+        maxStrikes: MAX_STRIKES,
+        strikesDistribution,
+        topCategories,
+        recentViolations,
+        violationsLast24h,
+        violationsLast7d,
+        generatedAt: new Date().toISOString(),
+    };
+
+    console.log('[Gatekeeper] getStats() done', {
+        totalDevicesTracked: result.totalDevicesTracked,
+        totalBlockedDevices: result.totalBlockedDevices,
+        topCategoriesCount: result.topCategories.length,
+        recentViolationsCount: result.recentViolations.length,
+    });
+
+    return result;
+}
+
+// ============================================
 // FREE BOT TOS AGREEMENT
 // ============================================
 
@@ -635,6 +768,7 @@ module.exports = {
     isDeviceBlocked,
     getStrikeInfo,
     resetStrikes,
+    getStats,
     // TOS
     getFreeBotTOS,
     hasAgreedToTOS,

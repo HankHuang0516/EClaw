@@ -2151,6 +2151,59 @@ app.post('/api/admin/gatekeeper/reset', adminAuth, adminCheck, async (req, res) 
     }
 });
 
+// GET /api/gatekeeper/stats - Gatekeeper aggregate statistics (Security Demo)
+// Auth: deviceId + botSecret (or deviceSecret)
+app.get('/api/gatekeeper/stats', async (req, res) => {
+    console.log('[GatekeeperStats] GET /api/gatekeeper/stats called', {
+        deviceId: req.query.deviceId,
+        hasBotSecret: !!req.query.botSecret,
+        hasDeviceSecret: !!req.query.deviceSecret,
+    });
+
+    const { deviceId, deviceSecret, botSecret } = req.query;
+
+    // Validate presence
+    if (!deviceId) {
+        console.log('[GatekeeperStats] Auth failed: missing deviceId');
+        return res.status(400).json({ success: false, error: 'deviceId is required' });
+    }
+
+    const device = devices[deviceId];
+    if (!device) {
+        console.log('[GatekeeperStats] Auth failed: device not found', { deviceId });
+        return res.status(404).json({ success: false, error: 'Device not found' });
+    }
+
+    // Accept deviceSecret or any valid botSecret on this device
+    const secretOk = deviceSecret && device.deviceSecret && safeEqual(device.deviceSecret, deviceSecret);
+    const botOk = botSecret && Object.values(device.entities || {}).some(
+        e => e.botSecret && safeEqual(e.botSecret, botSecret)
+    );
+
+    if (!secretOk && !botOk) {
+        console.log('[GatekeeperStats] Auth failed: invalid credentials', {
+            deviceId,
+            hasDeviceSecret: !!deviceSecret,
+            hasBotSecret: !!botSecret,
+        });
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+
+    console.log('[GatekeeperStats] Auth passed, fetching stats', { deviceId });
+
+    try {
+        const stats = await gatekeeper.getStats();
+        console.log('[GatekeeperStats] Stats fetched successfully', {
+            totalDevicesTracked: stats.totalDevicesTracked,
+            totalBlockedDevices: stats.totalBlockedDevices,
+        });
+        return res.json({ success: true, ...stats });
+    } catch (err) {
+        console.error('[GatekeeperStats] getStats() threw error:', err.message, err.stack);
+        return res.status(500).json({ success: false, error: 'Failed to fetch gatekeeper stats' });
+    }
+});
+
 // POST /api/gatekeeper/appeal - Device owner self-service unblock (once per 24h)
 const appealCooldown = {}; // deviceId -> timestamp
 app.post('/api/gatekeeper/appeal', async (req, res) => {
