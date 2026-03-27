@@ -1,3 +1,15 @@
+## [1.210.2](https://github.com/HankHuang0516/EClaw/compare/v1.210.1...v1.210.2) (2026-03-27)
+
+
+### Bug Fixes
+
+* **kanban:** notifyEntities — chat history + standard API hints ([bef029b](https://github.com/HankHuang0516/EClaw/commit/bef029b7b736d063110df2dbf2f5f656802ffc1e))
+
+
+### Performance Improvements
+
+* **cache:** add gzip compression and fix Cache-Control headers to reduce egress ([26bbe6a](https://github.com/HankHuang0516/EClaw/commit/26bbe6a2f032a3e9322bc62eb9521eaefd04ec0d))
+
 ## [1.210.1](https://github.com/HankHuang0516/EClaw/compare/v1.210.0...v1.210.1) (2026-03-27)
 
 
