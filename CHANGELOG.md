@@ -1,3 +1,10 @@
+## [1.203.2](https://github.com/HankHuang0516/EClaw/compare/v1.203.1...v1.203.2) (2026-03-27)
+
+
+### Bug Fixes
+
+* **kanban:** populate entity maps so assigned avatar chips show correct entity ([#580](https://github.com/HankHuang0516/EClaw/issues/580)) ([559c1dd](https://github.com/HankHuang0516/EClaw/commit/559c1ddde111bc60c19d9d64100f2fff5cdaa135))
+
 ## [1.203.1](https://github.com/HankHuang0516/EClaw/compare/v1.203.0...v1.203.1) (2026-03-27)
 
 
