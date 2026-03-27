@@ -1,3 +1,10 @@
+# [1.206.0](https://github.com/HankHuang0516/EClaw/compare/v1.205.0...v1.206.0) (2026-03-27)
+
+
+### Features
+
+* **backend:** [P1-3] GET /api/gatekeeper/stats — 攔截統計端點 ([b4958ba](https://github.com/HankHuang0516/EClaw/commit/b4958ba5582230b5e880fd815233ed777317301c))
+
 # [1.205.0](https://github.com/HankHuang0516/EClaw/compare/v1.204.1...v1.205.0) (2026-03-27)
 
 
