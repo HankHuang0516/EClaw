@@ -135,7 +135,8 @@
                         <button class="guide-sub-btn" data-guide="detail-identity" data-i18n="guide_nav_detail_identity">身份設定</button>
                         <button class="guide-sub-btn" data-guide="usecase-voice-tts" data-i18n="guide_nav_usecase_voice">語音對話 TTS</button>
                         <button class="guide-sub-btn" data-guide="usecase-ecommerce" data-i18n="guide_nav_usecase_ecommerce">電商 AI 客服</button>
-                        <button class="guide-sub-btn" data-guide="usecase-kanban" data-i18n="guide_nav_usecase_kanban">Kanban AI 團隊看板</button>
+                        <button class="guide-sub-btn" data-guide="usecase-kanban" data-i18n="guide_nav_usecase_kanban">Kanban AI 團隊</button>
+                        <button class="guide-sub-btn" data-guide="usecase-gps" data-i18n="guide_nav_usecase_gps">GPS 定位推薦</button>
                     </div>
                 </div>
                 <div class="guide-content">
@@ -1428,6 +1429,124 @@ POST /api/mission/card/:id/comment
                             <p class="cta-item" data-i18n="[html]guide_kanban_cta_kanban">開啟看板：<a href="kanban.html">前往 Kanban 看板</a></p>
                             <p class="cta-item" data-i18n="[html]guide_kanban_cta_mission">任務中心：<a href="mission.html">前往 Mission Control</a></p>
                             <p class="cta-item" data-i18n="[html]guide_kanban_cta_ecommerce">相關 Demo：<a href="#guide/usecase-ecommerce">電商 AI 客服 Demo</a></p>
+                        </div>
+                    </div>
+
+                    <!-- ── GPS 定位智慧推薦 Demo ── -->
+                    <div class="guide-panel" id="guide-usecase-gps">
+                        <header>
+                            <h1 data-i18n="guide_gps_title">📍 GPS 定位智慧推薦 — 位置分享 → 附近美食、停車場、景點</h1>
+                            <p class="meta" data-i18n="guide_gps_subtitle">問一句「附近哪裡吃飯？」，Bot 請求 GPS 位置，即刻推薦最近的好去處</p>
+                        </header>
+
+                        <h2 data-i18n="guide_gps_what">這是什麼？</h2>
+                        <p data-i18n="guide_gps_what_desc">EClawbot 的 <strong>GPS 位置分享</strong>功能讓 Bot 可以請求用戶的即時座標，再搭配後端推薦 API，回傳附近的餐廳、停車場、景點等資訊。對話情境感知（Context-Aware），不再猜你在哪。</p>
+
+                        <!-- GIF Demo -->
+                        <div style="text-align:center;margin:20px 0;">
+                            <img src="/assets/eclaw-gps-location-demo.gif" alt="GPS Location Demo"
+                                 style="max-width:420px;width:100%;border-radius:16px;border:1px solid var(--card-border);box-shadow:0 4px 24px rgba(0,0,0,0.3);"
+                                 loading="lazy">
+                            <p style="font-size:12px;color:var(--text-muted);margin-top:8px;" data-i18n="guide_gps_gif_label">▲ Bot 請求 GPS → 用戶授權 → 即時附近推薦 Demo</p>
+                        </div>
+
+                        <h2 data-i18n="guide_gps_how">運作流程</h2>
+                        <div class="flow-diagram">
+                            <div class="flow-step">
+                                <div class="flow-icon">💬</div>
+                                <div class="flow-label" data-i18n="guide_gps_flow_ask">用戶發問</div>
+                                <div class="flow-sub" data-i18n="guide_gps_flow_ask_sub">「附近哪裡吃飯？」</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step">
+                                <div class="flow-icon">📍</div>
+                                <div class="flow-label" data-i18n="guide_gps_flow_request">Bot 請求 GPS</div>
+                                <div class="flow-sub" data-i18n="guide_gps_flow_request_sub">POST /api/device/location/request</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step">
+                                <div class="flow-icon">📱</div>
+                                <div class="flow-label" data-i18n="guide_gps_flow_report">App 回報位置</div>
+                                <div class="flow-sub" data-i18n="guide_gps_flow_report_sub">lat / lng 座標</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step">
+                                <div class="flow-icon">🍜</div>
+                                <div class="flow-label" data-i18n="guide_gps_flow_rec">推薦結果</div>
+                                <div class="flow-sub" data-i18n="guide_gps_flow_rec_sub">附近 3 公里內</div>
+                            </div>
+                        </div>
+
+                        <h2 data-i18n="guide_gps_scenarios">三大使用場景</h2>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_gps_scenario1_title">🍽️ 附近美食推薦</p>
+                            <p class="solution-desc" data-i18n="guide_gps_scenario1_desc">用戶問「附近有什麼好吃的？」Bot 獲取 GPS 後，依距離排序回傳餐廳清單，附上評分、價位、營業時間，方便立即做決定。</p>
+                        </div>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_gps_scenario2_title">🅿️ 附近停車場</p>
+                            <p class="solution-desc" data-i18n="guide_gps_scenario2_desc">停車困難？Bot 查詢附近停車場，顯示距離、費率、剩餘車位（需串接停車場 API），讓開車族輕鬆找位。</p>
+                        </div>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_gps_scenario3_title">🗺️ 朋友位置分享</p>
+                            <p class="solution-desc" data-i18n="guide_gps_scenario3_desc">群組活動找人？Bot 請求多名用戶的 GPS 後，計算集合點並提供導航連結，一鍵解決「你在哪？我在這！」的混亂。</p>
+                        </div>
+
+                        <h2 data-i18n="guide_gps_api">API 用法</h2>
+
+                        <h3 data-i18n="guide_gps_api_request_title">1. 請求用戶位置</h3>
+                        <div class="code-block"><pre><code>POST /api/device/location/request
+{
+  "deviceId": "your-device-id",
+  "botSecret": "your-bot-secret",
+  "entityId": 4,
+  "message": "<span data-i18n='guide_gps_api_msg_example'>請分享你的位置以獲取附近推薦 📍</span>"
+}</code></pre></div>
+
+                        <h3 data-i18n="guide_gps_api_get_title">2. 取得推薦結果</h3>
+                        <div class="code-block"><pre><code>GET /api/gps/recommendations?deviceId=...&amp;botSecret=...&amp;lat=25.0330&amp;lng=121.5654&amp;categories=restaurant,parking&amp;limit=3</code></pre></div>
+
+                        <h3 data-i18n="guide_gps_api_response_title">3. 回應範例</h3>
+                        <div class="code-block"><pre><code>{
+  "success": true,
+  "recommendations": {
+    "restaurant": [
+      {
+        "name": "鼎泰豐 (信義店)",
+        "rating": 4.8,
+        "distance_m": 320,
+        "price_level": "$$$",
+        "hours": "10:00 AM – 9:00 PM"
+      }
+    ],
+    "parking": [...]
+  },
+  "query": { "lat": 25.033, "lng": 121.5654, "radius_m": 3000 }
+}</code></pre></div>
+
+                        <h2 data-i18n="guide_gps_setup">快速建置</h2>
+                        <div class="code-block"><pre><code><span data-i18n="guide_gps_setup_step1"># 步驟 1：設定 Bot Identity，告訴它位置感知服務的職責</span>
+<span data-i18n="guide_gps_setup_step2"># 步驟 2：在對話中 Bot 呼叫 POST /api/device/location/request</span>
+<span data-i18n="guide_gps_setup_step3"># 步驟 3：App 授權後回報 lat/lng</span>
+<span data-i18n="guide_gps_setup_step4"># 步驟 4：Bot 查詢 GET /api/gps/recommendations 取得附近資訊</span>
+<span data-i18n="guide_gps_setup_step5"># 步驟 5：格式化回傳，附地圖連結（Google Maps / Apple Maps）</span></code></pre></div>
+
+                        <h2 data-i18n="guide_gps_tips">最佳實踐</h2>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_gps_tip1">📍 <strong data-i18n="guide_gps_tip1_strong">先問後定位</strong>：先確認用戶需求，再請求 GPS，避免突然要求位置讓用戶感到突兀</li>
+                            <li data-i18n="guide_gps_tip2">🔒 <strong data-i18n="guide_gps_tip2_strong">隱私告知</strong>：請求前說明用途，例如「為了推薦附近餐廳，需要你的位置」</li>
+                            <li data-i18n="guide_gps_tip3">📊 <strong data-i18n="guide_gps_tip3_strong">分類篩選</strong>：用 categories 參數只查詢需要的類型，避免回傳過多無關資訊</li>
+                            <li data-i18n="guide_gps_tip4">🗺️ <strong data-i18n="guide_gps_tip4_strong">附地圖連結</strong>：搭配 Google Maps 連結（<code>https://maps.google.com/?q=lat,lng</code>）讓用戶一鍵導航</li>
+                            <li data-i18n="guide_gps_tip5">⏱️ <strong data-i18n="guide_gps_tip5_strong">位置快取</strong>：同一對話中不必每次都重新請求 GPS，使用最近一次回報的座標即可</li>
+                        </ul>
+
+                        <div class="cta-links">
+                            <h3 data-i18n="guide_gps_cta_title">立即體驗 GPS 位置服務</h3>
+                            <p class="cta-item" data-i18n="[html]guide_gps_cta_api">API 文件：<a href="https://eclawbot.com/api/skill-doc" target="_blank" rel="noopener">完整 API Skill Doc</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_gps_cta_proxy">代理窗口：<a href="#guide/usecase-proxy-window">尹代理窗口設定指南</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_gps_cta_ecommerce">相關 Demo：<a href="#guide/usecase-ecommerce">電商 AI 客服 Demo</a></p>
                         </div>
                     </div>
 
