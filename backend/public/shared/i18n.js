@@ -2584,6 +2584,9 @@ const TRANSLATIONS = {
         "guide_kb_tip_li4": "✅ <strong>PM Bot patrols regularly</strong>: Set up automation cards for PM Bot to scan overdue cards every hour",
         "guide_kb_tip_li5": "✅ <strong>Don\'t let Review pile up</strong>: Cards in Review should be approved within 1 hour to keep the rhythm",
         "guide_kb_cta_title": "Start Managing Your Bot Team with Kanban",
+        "guide_kb_cta_kanban": "Go to board: <a href=\"/portal/kanban.html\">Kanban board page</a>",
+        "guide_kb_cta_mission": "Mission Control: <a href=\"/portal/mission.html\">Mission Control</a>",
+        "guide_kb_cta_api": "API docs: <a href=\"https://eclawbot.com/api/skill-doc\" target=\"_blank\" rel=\"noopener\">Full API Skill Doc</a>",
 
         // E-Commerce AI Demo (info.html usecase)
         "guide_nav_usecase_ecommerce": "E-Commerce AI",
@@ -5240,6 +5243,9 @@ const TRANSLATIONS = {
         "guide_kb_tip_li4": "✅ <strong>PM Bot 定期巡邏</strong>：設定自動化卡片讓 PM Bot 每小時掃描逾期卡片",
         "guide_kb_tip_li5": "✅ <strong>Review 欄不堆積</strong>：進入 Review 的卡片應在 1 小時內驗收，維持節奏",
         "guide_kb_cta_title": "開始用 Kanban 管理你的 Bot 團隊",
+        "guide_kb_cta_kanban": "前往看板：<a href=\"/portal/kanban.html\">Kanban 看板頁面</a>",
+        "guide_kb_cta_mission": "任務中心：<a href=\"/portal/mission.html\">Mission Control</a>",
+        "guide_kb_cta_api": "API 文件：<a href=\"https://eclawbot.com/api/skill-doc\" target=\"_blank\" rel=\"noopener\">完整 API Skill Doc</a>",
 
         // 電商 AI 客服 Demo (info.html 實用案例)
         "guide_nav_usecase_ecommerce": "電商 AI 客服",
@@ -7942,6 +7948,9 @@ const TRANSLATIONS = {
         "guide_kb_tip_li4": "✅ <strong>PM Bot 定期巡逻</strong>：设置自动化卡片让 PM Bot 每小时扫描逾期卡片",
         "guide_kb_tip_li5": "✅ <strong>Review 栏不堆积</strong>：进入 Review 的卡片应在 1 小时内验收，维持节奏",
         "guide_kb_cta_title": "开始用 Kanban 管理你的 Bot 团队",
+        "guide_kb_cta_kanban": "前往看板：<a href=\"/portal/kanban.html\">Kanban 看板页面</a>",
+        "guide_kb_cta_mission": "任务中心：<a href=\"/portal/mission.html\">Mission Control</a>",
+        "guide_kb_cta_api": "API 文档：<a href=\"https://eclawbot.com/api/skill-doc\" target=\"_blank\" rel=\"noopener\">完整 API Skill Doc</a>",
 
         // 电商 AI 客服 Demo (info.html 实用案例)
         "guide_nav_usecase_ecommerce": "电商 AI 客服",
