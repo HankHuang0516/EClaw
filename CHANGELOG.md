@@ -1,3 +1,10 @@
+# [1.199.0](https://github.com/HankHuang0516/EClaw/compare/v1.198.3...v1.199.0) (2026-03-27)
+
+
+### Features
+
+* **info:** TTS voice demo + workspace page + i18n + nav updates ([#569](https://github.com/HankHuang0516/EClaw/issues/569)) ([3e63999](https://github.com/HankHuang0516/EClaw/commit/3e639999b201ac7cc6c9aeecc2a1a7f5ffeed31c))
+
 ## [1.198.3](https://github.com/HankHuang0516/EClaw/compare/v1.198.2...v1.198.3) (2026-03-26)
 
 
