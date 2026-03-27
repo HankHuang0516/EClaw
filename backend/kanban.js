@@ -1107,7 +1107,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     router.put('/card/:id/config', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] PUT /card/:id/config called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, staleThresholdMs, doneRetentionMs } = req.body;
+        const { deviceId, staleThresholdMs, doneRetentionMs, isAutomation } = req.body;
         const cardId = req.params.id;
 
         try {
@@ -1130,6 +1130,11 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 }
                 updates.push(`done_retention_ms = $${paramIdx++}`);
                 params.push(val);
+            }
+            if (isAutomation !== undefined) {
+                updates.push(`is_automation = $${paramIdx++}`);
+                params.push(!!isAutomation);
+                console.log(`[Kanban] Config: set is_automation=${!!isAutomation} for card ${cardId}`);
             }
 
             if (updates.length === 0) {
