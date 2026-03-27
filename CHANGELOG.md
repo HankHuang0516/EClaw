@@ -1,3 +1,10 @@
+# [1.205.0](https://github.com/HankHuang0516/EClaw/compare/v1.204.1...v1.205.0) (2026-03-27)
+
+
+### Features
+
+* **backend:** [P1-2] GET /api/gps/recommendations — GPS mock 推薦 API ([d918d17](https://github.com/HankHuang0516/EClaw/commit/d918d1717fffbaef43b87c32c8c0e2b4382647fd))
+
 ## [1.204.1](https://github.com/HankHuang0516/EClaw/compare/v1.204.0...v1.204.1) (2026-03-27)
 
 
