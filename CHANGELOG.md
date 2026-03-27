@@ -1,3 +1,10 @@
+## [1.199.4](https://github.com/HankHuang0516/EClaw/compare/v1.199.3...v1.199.4) (2026-03-27)
+
+
+### Bug Fixes
+
+* **i18n:** restore 314 data-i18n tags on 5 usecase panels + add 39 voice TTS keys ([c131953](https://github.com/HankHuang0516/EClaw/commit/c131953817f46e73981599141c6152490f3878b3))
+
 ## [1.199.3](https://github.com/HankHuang0516/EClaw/compare/v1.199.2...v1.199.3) (2026-03-27)
 
 
