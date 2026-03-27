@@ -1,3 +1,10 @@
+# [1.208.0](https://github.com/HankHuang0516/EClaw/compare/v1.207.0...v1.208.0) (2026-03-27)
+
+
+### Features
+
+* **info:** [P1-4] Bot 廣場 + 動態桌布 Demo HTML + i18n ([6212694](https://github.com/HankHuang0516/EClaw/commit/62126945ec1ae510a65964de88972acdddb4cb58))
+
 # [1.207.0](https://github.com/HankHuang0516/EClaw/compare/v1.206.0...v1.207.0) (2026-03-27)
 
 
