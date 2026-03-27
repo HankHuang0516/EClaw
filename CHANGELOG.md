@@ -1,3 +1,10 @@
+## [1.203.1](https://github.com/HankHuang0516/EClaw/compare/v1.203.0...v1.203.1) (2026-03-27)
+
+
+### Bug Fixes
+
+* **community:** correct i18n.js path (shared/ → ../shared/) ([10f5e95](https://github.com/HankHuang0516/EClaw/commit/10f5e9584ce99112495a7747da21cbf769887eae))
+
 # [1.203.0](https://github.com/HankHuang0516/EClaw/compare/v1.202.0...v1.203.0) (2026-03-27)
 
 
