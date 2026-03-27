@@ -242,11 +242,11 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             fileCount: parseInt(row.file_count) || 0,
         };
 
-        // Schedule fields
-        if (row.schedule_enabled) {
+        // Schedule fields — always include if schedule was ever configured
+        if (row.schedule_enabled || row.schedule_type || row.schedule_last_run_at) {
             card.schedule = {
-                enabled: row.schedule_enabled,
-                type: row.schedule_type,
+                enabled: !!row.schedule_enabled,
+                type: row.schedule_type || null,
                 cronExpression: row.schedule_cron || null,
                 runAt: row.schedule_run_at ? new Date(row.schedule_run_at).getTime() : null,
                 timezone: row.schedule_timezone || 'Asia/Taipei',
