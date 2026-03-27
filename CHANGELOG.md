@@ -1,3 +1,10 @@
+# [1.210.0](https://github.com/HankHuang0516/EClaw/compare/v1.209.0...v1.210.0) (2026-03-27)
+
+
+### Features
+
+* **info:** [P1-5] Gatekeeper 安全 + 多平台同步 Demo + i18n (P1 COMPLETE) ([ef8240b](https://github.com/HankHuang0516/EClaw/commit/ef8240bae9baa3438a909b666155d2d5385c83f0))
+
 # [1.209.0](https://github.com/HankHuang0516/EClaw/compare/v1.208.0...v1.209.0) (2026-03-27)
 
 
