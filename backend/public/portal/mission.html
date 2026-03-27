@@ -119,6 +119,20 @@
             white-space: nowrap;
         }
 
+        .item-due {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .item-due.overdue {
+            color: var(--danger);
+        }
+
+        .item-due .item-due-countdown {
+            margin-left: 8px;
+        }
+
         .item-done {
             color: var(--success);
             font-size: 11px;
@@ -979,6 +993,26 @@
             return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
         }
 
+        function toLocalDatetimeStr(ts) {
+            const d = new Date(ts);
+            const pad = n => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+
+        function fmtCountdown(dueTs) {
+            if (!dueTs || isNaN(dueTs)) return '';
+            const diff = dueTs - Date.now();
+            if (diff <= 0) return i18n.t('mc_countdown_overdue');
+            const mins = Math.floor(diff / 60000);
+            if (mins < 60) return `${mins} ${i18n.t('mc_countdown_min')}`;
+            const hrs = Math.floor(mins / 60);
+            const remMins = mins % 60;
+            if (hrs < 24) return `${hrs} ${i18n.t('mc_countdown_hr')} ${remMins} ${i18n.t('mc_countdown_min')}`;
+            const days = Math.floor(hrs / 24);
+            const remHrs = hrs % 24;
+            return `${days} ${i18n.t('mc_countdown_day')} ${remHrs} ${i18n.t('mc_countdown_hr')}`;
+        }
+
         function esc(s) {
             const d = document.createElement('div');
             d.textContent = s || '';
@@ -1067,6 +1101,17 @@
             refreshTimer = setInterval(() => {
                 const dialogOpen = document.getElementById('dialogContainer').innerHTML.trim() !== '';
                 if (!hasChanges && !isSyncing && !dialogOpen) downloadDashboard();
+            }, 30000);
+
+            // Live countdown update every 30s
+            setInterval(() => {
+                document.querySelectorAll('.item-due[data-due]').forEach(el => {
+                    const dueTs = parseInt(el.dataset.due, 10);
+                    if (!dueTs) return;
+                    el.classList.toggle('overdue', dueTs <= Date.now());
+                    const cdEl = el.querySelector('.item-due-countdown');
+                    if (cdEl) cdEl.textContent = `⏳ ${i18n.t('mc_card_countdown')}: ${fmtCountdown(dueTs)}`;
+                });
             }, 30000);
 
             // Re-render on language change
@@ -1604,6 +1649,14 @@
             const assignLabel = item.assignedBot != null && item.assignedBot !== ''
                 ? String(item.assignedBot).split(',').map(id => getEntityLabel(parseInt(id.trim()))).join(', ')
                 : '';
+            let dueHtml = '';
+            if (item.dueAt) {
+                const overdueCls = item.dueAt <= Date.now() ? ' overdue' : '';
+                dueHtml = `<div class="item-due${overdueCls}" data-due="${item.dueAt}">
+                    <span>🕐 ${i18n.t('mc_card_due_at')}: ${fmtDate(item.dueAt)}</span>
+                    <span class="item-due-countdown">⏳ ${i18n.t('mc_card_countdown')}: ${fmtCountdown(item.dueAt)}</span>
+                </div>`;
+            }
             return `
             <div class="mc-item" draggable="true" data-item-id="${item.id}"
                  ondragstart="onItemDragStart(event,'${item.id}','${listType}')" ondragend="onItemDragEnd(event)"
@@ -1616,6 +1669,7 @@
                     <button class="item-delete" onclick="event.stopPropagation();deleteItem('${item.id}','${listType}')" title="${i18n.t('common_delete')}">&times;</button>
                 </div>
                 ${item.description ? `<div class="item-detail">${esc(item.description)}</div>` : ''}
+                ${dueHtml}
             </div>`;
         }
 
@@ -1739,6 +1793,8 @@
                             <input type="checkbox" data-val="${o.value}" ${selected.includes(String(o.value)) ? 'checked' : ''}> ${o.label}
                         </label>`).join('')}
                     </div>`;
+                } else if (f.type === 'datetime') {
+                    html += `<input id="dlg_${f.key}" type="datetime-local" value="${esc(f.value || '')}" />`;
                 } else if (f.type === 'select') {
                     html += `<select id="dlg_${f.key}">
                         ${f.options.map(o => `<option value="${o.value}" ${o.value == f.value ? 'selected' : ''}>${o.label}</option>`).join('')}
@@ -1793,6 +1849,7 @@
                 { key: 'title', label: i18n.t('mc_dlg_title'), value: '' },
                 { key: 'description', label: i18n.t('mc_dlg_desc'), type: 'textarea', value: '' },
                 { key: 'priority', label: i18n.t('mc_dlg_priority'), type: 'select', value: 2, options: priorityOpts },
+                { key: 'dueAt', label: i18n.t('mc_dlg_due_at'), type: 'datetime', value: '' },
                 { key: 'category', label: i18n.t('mc_dlg_category'), type: 'select', value: '', options: getCategoryOptions('todo') },
                 { key: 'assignedEntity', label: i18n.t('mc_dlg_assign') || '指派實體', type: 'multiselect', value: '', options: getEntityOptions() }
             ], vals => {
@@ -1804,6 +1861,7 @@
                     priority: parseInt(vals.priority),
                     status: 'PENDING',
                     category: vals.category || null,
+                    dueAt: vals.dueAt ? new Date(vals.dueAt).getTime() : null,
                     createdAt: Date.now(),
                     updatedAt: Date.now(),
                     createdBy: 'user'
@@ -1830,10 +1888,13 @@
             ];
             const pv = item.priority?.value || item.priority || 2;
 
+            const dueVal = item.dueAt ? toLocalDatetimeStr(item.dueAt) : '';
+
             showDialog(i18n.t('mc_dlg_edit'), [
                 { key: 'title', label: i18n.t('mc_dlg_title'), value: item.title },
                 { key: 'description', label: i18n.t('mc_dlg_desc'), type: 'textarea', value: item.description },
                 { key: 'priority', label: i18n.t('mc_dlg_priority'), type: 'select', value: pv, options: priorityOpts },
+                { key: 'dueAt', label: i18n.t('mc_dlg_due_at'), type: 'datetime', value: dueVal },
                 { key: 'category', label: i18n.t('mc_dlg_category'), type: 'select', value: item.category || '', options: getCategoryOptions(list) },
                 { key: 'assignedEntity', label: i18n.t('mc_dlg_assign') || '指派實體', type: 'multiselect', value: item.assignedBot || '', options: getEntityOptions() }
             ], vals => {
@@ -1841,6 +1902,7 @@
                 item.title = vals.title.trim();
                 item.description = vals.description.trim();
                 item.priority = parseInt(vals.priority);
+                item.dueAt = vals.dueAt ? new Date(vals.dueAt).getTime() : null;
                 item.category = vals.category || null;
                 item.assignedBot = vals.assignedEntity || null;
                 item.updatedAt = Date.now();
