@@ -239,16 +239,17 @@ describe('GET /', () => {
 });
 
 describe('Portal static cache headers', () => {
-    it('sets Cache-Control: no-store on portal JS files', async () => {
+    it('sets Cache-Control with short max-age on portal JS files', async () => {
         const res = await request(app).get('/portal/shared/entity-utils.js');
         expect(res.status).toBe(200);
-        expect(res.headers['cache-control']).toMatch(/no-store/);
+        expect(res.headers['cache-control']).toMatch(/max-age=60/);
+        expect(res.headers['cache-control']).toMatch(/must-revalidate/);
     });
 
-    it('sets Cache-Control: no-store on portal HTML files', async () => {
+    it('sets Cache-Control: no-cache on portal HTML files', async () => {
         const res = await request(app).get('/portal/index.html');
         expect(res.status).toBe(200);
-        // HTML also needs no-store to prevent Android WebView caching stale pages (#419)
-        expect(res.headers['cache-control']).toMatch(/no-store/);
+        // HTML: no-cache ensures CDN revalidates on every request (ETag/304)
+        expect(res.headers['cache-control']).toMatch(/no-cache/);
     });
 });

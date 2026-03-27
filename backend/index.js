@@ -24,11 +24,13 @@ const multer = require('multer');
 const crypto = require('crypto');
 const WebSocket = require('ws');
 const sanitizeHtml = require('sanitize-html');
+const compression = require('compression');
 
 const safeEqual = require('./safe-equal');
 
 const app = express();
 app.set('trust proxy', 1); // Railway reverse proxy — makes req.ip, req.protocol accurate
+app.use(compression());    // gzip/deflate all responses — reduces egress 60-80%
 const httpServer = http.createServer(app);
 const port = process.env.PORT || 3000;
 const SERVER_STARTED_AT = new Date();
@@ -175,16 +177,18 @@ app.get('/llms.txt', (req, res) => {
 // Serve public assets (OG image, etc.) — cache aggressively to reduce egress
 app.use('/assets', express.static(path.join(__dirname, 'public/assets'), {
     maxAge: '7d',
-    immutable: false,
+    immutable: true,
     setHeaders: (res, filePath) => {
-        // Images/GIFs: cache 7 days; JS: no-cache for freshness
+        // Images/GIFs: cache 7 days + immutable (CDN won't revalidate)
+        // JS: short cache for freshness
         if (filePath.endsWith('.js')) {
-            res.set('Cache-Control', 'no-cache');
+            res.set('Cache-Control', 'public, max-age=600, must-revalidate');
         }
     }
 }));
 // Landing page
 app.get('/landing', (req, res) => {
+    res.set('Cache-Control', 'public, max-age=3600');
     res.sendFile(path.join(__dirname, 'public/landing.html'));
 });
 // Enterprise page
@@ -432,24 +436,45 @@ app.get('/c/:code', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/portal/share-chat.html'));
 });
 
-app.use('/mission', express.static(path.join(__dirname, 'public')));
+app.use('/mission', express.static(path.join(__dirname, 'public'), {
+    etag: true,
+    lastModified: true,
+    maxAge: '10m'
+}));
 app.use('/portal', express.static(path.join(__dirname, 'public/portal'), {
+    etag: true,
+    lastModified: true,
     setHeaders: (res, filePath) => {
-        // Prevent CDN/WebView from caching stale HTML or JS after deploys
-        // no-store: prohibits any cache (CDN + browser); fixes #419 duplicate AI widget
-        if (filePath.endsWith('.html') || filePath.endsWith('.js')) {
-            res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+        if (filePath.endsWith('.html')) {
+            // HTML: always revalidate (CDN can cache but must check freshness)
+            res.set('Cache-Control', 'no-cache');
+        } else if (filePath.endsWith('.js')) {
+            // JS: short cache + must-revalidate — CDN serves 304 on unchanged files
+            res.set('Cache-Control', 'public, max-age=60, must-revalidate');
+        } else if (filePath.endsWith('.css')) {
+            // CSS: cache 1 hour, CDN + browser
+            res.set('Cache-Control', 'public, max-age=3600, must-revalidate');
         }
     }
 }));
 app.use('/shared', express.static(path.join(__dirname, 'public/shared'), {
+    etag: true,
+    lastModified: true,
     setHeaders: (res, filePath) => {
         if (filePath.endsWith('i18n.js')) {
-            res.set('Cache-Control', 'no-cache');
+            // 1.6MB file — cache 10 min, CDN serves 304 after that (saves huge egress)
+            res.set('Cache-Control', 'public, max-age=600, must-revalidate');
+        } else {
+            // telemetry.js etc. — cache 1 hour
+            res.set('Cache-Control', 'public, max-age=3600, must-revalidate');
         }
     }
 }));
-app.use('/docs', express.static(path.join(__dirname, 'public/docs')));
+app.use('/docs', express.static(path.join(__dirname, 'public/docs'), {
+    etag: true,
+    lastModified: true,
+    maxAge: '1h'
+}));
 
 // Telemetry auto-capture middleware (pool linked lazily after chatPool init)
 let _telemetryPool = null;
