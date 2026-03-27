@@ -613,6 +613,43 @@
             }
         }
 
+        /* ===== Mobile card detail dialog ===== */
+        @media (max-width: 768px) {
+            .dialog textarea {
+                min-height: 60px;
+            }
+
+            #dlg_skill_steps {
+                min-height: 100px;
+            }
+
+            .entity-checkbox-grid {
+                grid-template-columns: 1fr;
+                max-height: 160px;
+            }
+
+            .dialog input:not([type="checkbox"]):not([type="radio"]),
+            .dialog textarea,
+            .dialog select {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dialog textarea {
+                min-height: 48px;
+            }
+
+            .entity-checkbox-grid {
+                max-height: 140px;
+            }
+
+            .tpl-gallery-card {
+                padding: 10px;
+                gap: 8px;
+            }
+        }
+
         /* ===== Webview Page Viewer Overlay ===== */
         .wv-overlay {
             position: fixed;
@@ -1222,10 +1259,12 @@
             let html = `<div class="dialog-overlay" onclick="if(event.target===this)closeDialog()">
                 <div class="dialog">
                     <div class="dialog-title">${i18n.t('mc_notify_dialog_title')}</div>
+                    <div class="dialog-body">
                     <div style="color:var(--text-secondary);font-size:13px;margin-bottom:12px;">
                         ${i18n.t('mc_notify_dialog_desc')}
                     </div>
                     <div style="margin-bottom:12px;">${checkboxes}</div>
+                    </div>
                     <div class="dialog-actions">
                         <button class="btn btn-outline" onclick="updateNotifiedSnapshot(); closeDialog();">${i18n.t('mc_notify_skip')}</button>
                         <button class="btn btn-primary" id="dlgNotifyBtn">${i18n.t('mc_notify_send')}</button>
@@ -1686,7 +1725,8 @@
             const c = document.getElementById('dialogContainer');
             let html = `<div class="dialog-overlay">
                 <div class="dialog">
-                    <div class="dialog-title">${title}</div>`;
+                    <div class="dialog-title">${title}</div>
+                    <div class="dialog-body">`;
 
             fields.forEach(f => {
                 html += `<div class="dialog-field-label">${f.label}</div>`;
@@ -1708,7 +1748,8 @@
                 }
             });
 
-            html += `<div class="dialog-actions">
+            html += `</div>
+                    <div class="dialog-actions">
                         <button class="btn btn-outline" onclick="closeDialog()">${i18n.t('mc_dlg_cancel')}</button>
                         <button class="btn btn-primary" id="dlgSaveBtn">${i18n.t('mc_dlg_save')}</button>
                     </div>
@@ -2401,6 +2442,7 @@
             c.innerHTML = `<div class="dialog-overlay">
                 <div class="dialog" style="max-width:700px;width:95%;">
                     <div class="dialog-title">${i18n.t('mc_note_edit_page')} — ${esc(noteTitle)}</div>
+                    <div class="dialog-body">
                     <div class="dialog-field-label">HTML</div>
                     <textarea id="dlg_page_html" style="min-height:300px;font-family:monospace;font-size:12px;white-space:pre;resize:vertical;" placeholder="${i18n.t('mc_note_page_placeholder')}">${esc(currentHtml)}</textarea>
                     <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">
@@ -2412,6 +2454,7 @@
                             🌐 ${i18n.t('mc_note_page_public') || 'Make page public'}
                         </label>
                         <span style="font-size:11px;color:var(--text-muted);">${i18n.t('mc_note_page_public_hint') || 'Public pages can be viewed without login'}</span>
+                    </div>
                     </div>
                     <div class="dialog-actions">
                         <button class="btn btn-outline" onclick="closeDialog()">${i18n.t('mc_dlg_cancel')}</button>
@@ -2554,8 +2597,10 @@
             return `<div class="dialog-overlay" onclick="if(event.target===this)_restoreSkillDialog()">
                 <div class="dialog" style="max-width:480px;">
                     <div class="dialog-title">${esc(i18n.t('mc_browse_official_tpl'))} (${templates.length})</div>
+                    <div class="dialog-body">
                     <input id="tpl_gallery_search" type="text" placeholder="${esc(i18n.t('mc_search_placeholder') || 'Search...')}" oninput="filterGallery(this.value)" style="margin-bottom:12px;" />
-                    <div id="tpl_gallery_list" style="max-height:380px;overflow-y:auto;">${cards}</div>
+                    <div id="tpl_gallery_list">${cards}</div>
+                    </div>
                     <div class="dialog-actions">
                         <button class="btn btn-outline" onclick="_restoreSkillDialog()">${esc(i18n.t('mc_dlg_cancel'))}</button>
                     </div>
@@ -2627,8 +2672,10 @@
                 `<div id="soul_gallery_overlay" class="dialog-overlay" onclick="if(event.target===this)document.getElementById('soul_gallery_overlay').remove()">
                     <div class="dialog" style="max-width:480px;">
                         <div class="dialog-title">${esc(i18n.t('mc_dlg_soul_template'))} (${SOUL_TEMPLATES.length + soulTemplates.length})</div>
+                        <div class="dialog-body">
                         <input type="text" placeholder="${esc(i18n.t('mc_search_placeholder') || '搜尋…')}" oninput="filterSoulGallery(this.value)" style="margin-bottom:12px;" />
-                        <div id="soul_gallery_list" style="max-height:380px;overflow-y:auto;">${allCards}</div>
+                        <div id="soul_gallery_list">${allCards}</div>
+                        </div>
                         <div class="dialog-actions">
                             <button class="btn btn-outline" onclick="document.getElementById('soul_gallery_overlay').remove()">${esc(i18n.t('mc_dlg_cancel'))}</button>
                         </div>
@@ -2715,8 +2762,10 @@
                 `<div id="rule_gallery_overlay" class="dialog-overlay" onclick="if(event.target===this)document.getElementById('rule_gallery_overlay').remove()">
                     <div class="dialog" style="max-width:480px;">
                         <div class="dialog-title">${esc(i18n.t('mc_rule_template_title'))} (${ruleTemplates.length})</div>
+                        <div class="dialog-body">
                         <input type="text" placeholder="${esc(i18n.t('mc_search_placeholder') || 'Search...')}" oninput="filterRuleGallery(this.value)" style="margin-bottom:12px;" />
-                        <div id="rule_gallery_list" style="max-height:380px;overflow-y:auto;">${cards}</div>
+                        <div id="rule_gallery_list">${cards}</div>
+                        </div>
                         <div class="dialog-actions">
                             <button class="btn btn-outline" onclick="document.getElementById('rule_gallery_overlay').remove()">${esc(i18n.t('mc_dlg_cancel'))}</button>
                         </div>
@@ -2772,10 +2821,12 @@
             c.innerHTML = `<div class="dialog-overlay">
                 <div class="dialog">
                     <div class="dialog-title">Env Variables — ${esc(tpl.label)}</div>
+                    <div class="dialog-body">
                     <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;">
                         Review and set the required variables. You can rename the key or leave the value blank to keep the current value.
                     </p>
                     ${fields}
+                    </div>
                     <div class="dialog-actions">
                         <button class="btn btn-outline" onclick="_restoreSkillDialog();fillSkillTemplate(skillTemplates.find(t=>t.id==='${esc(tpl.id)}'))">Skip</button>
                         <button class="btn btn-primary" id="dlgReqVarSaveBtn">Save &amp; Continue</button>
@@ -2851,6 +2902,7 @@
             let html = `<div class="dialog-overlay">
                 <div class="dialog">
                     <div class="dialog-title">${isEdit ? '編輯技能' : '新增技能'}</div>
+                    <div class="dialog-body">
                     <div class="dialog-field-label">官方模板</div>
                     <div id="dlg_tpl_selected" style="display:none;" class="tpl-selected-row">
                         <span class="tpl-selected-label" id="dlg_tpl_selected_label"></span>
@@ -2869,6 +2921,7 @@
                     </select>
                     <div class="dialog-field-label">${esc(i18n.t('mc_skill_assign_entity'))}</div>
                     <div class="entity-checkbox-grid" id="dlg_skill_entities">${entityCheckboxes}</div>
+                    </div>
                     <div class="dialog-actions">
                         <button class="btn btn-outline" onclick="closeDialog()">${i18n.t('mc_dlg_cancel')}</button>
                         <button class="btn btn-primary" id="dlgSaveBtn">${i18n.t('mc_dlg_save')}</button>
@@ -2978,6 +3031,7 @@
             let html = `<div class="dialog-overlay">
                 <div class="dialog">
                     <div class="dialog-title">${isEdit ? i18n.t('mc_dlg_edit_rule') : i18n.t('mc_dlg_add_rule')}</div>
+                    <div class="dialog-body">
                     ${!isEdit ? `<button class="btn btn-outline" onclick="showRuleGallery()" style="margin-bottom:12px;width:100%;">📋 從模板選擇</button>` : ''}
                     <div class="dialog-field-label">規則名稱</div>
                     <input id="dlg_rule_name" placeholder="${i18n.t('mc_dlg_rule_name')}" value="${esc(rule?.name || '')}" />
@@ -2991,6 +3045,7 @@
                     </select>
                     <div class="dialog-field-label">指派實體 (可多選)</div>
                     <div class="entity-checkbox-grid" id="dlg_rule_entities">${entityCheckboxes}</div>
+                    </div>
                     <div class="dialog-actions">
                         <button class="btn btn-outline" onclick="closeDialog()">${i18n.t('mc_dlg_cancel')}</button>
                         <button class="btn btn-primary" id="dlgSaveBtn">${i18n.t('mc_dlg_save')}</button>
@@ -3192,6 +3247,7 @@
             let html = `<div class="dialog-overlay">
                 <div class="dialog">
                     <div class="dialog-title">${isEdit ? i18n.t('mc_dlg_edit_soul') : i18n.t('mc_dlg_add_soul')}</div>
+                    <div class="dialog-body">
                     <button id="dlgTemplateBtn" class="btn btn-outline" onclick="showSoulGallery()" style="margin-bottom:12px;width:100%;">${tplBtnLabel}</button>
                     <input type="hidden" id="dlg_soul_template_id" value="${esc(soul?.templateId || '')}" />
                     <div class="dialog-field-label">${i18n.t('mc_dlg_soul_name')}</div>
@@ -3204,6 +3260,7 @@
                     </select>
                     <div class="dialog-field-label">${i18n.t('mc_dlg_assign') || '指派實體'} (${i18n.t('mc_dlg_soul_multi') || '可多選'})</div>
                     <div class="entity-checkbox-grid" id="dlg_soul_entities">${entityCheckboxes}</div>
+                    </div>
                     <div class="dialog-actions">
                         <button class="btn btn-outline" onclick="closeDialog()">${i18n.t('mc_dlg_cancel')}</button>
                         <button class="btn btn-primary" id="dlgSaveBtn">${i18n.t('mc_dlg_save')}</button>

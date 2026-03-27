@@ -891,12 +891,24 @@ a:hover { text-decoration: underline; }
     min-width: 300px;
     max-width: 480px;
     width: 90vw;
+    max-height: 90vh;
+    max-height: 90dvh;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
 }
 
 .dialog-title {
     font-size: 18px;
     font-weight: 600;
     margin-bottom: 16px;
+    flex-shrink: 0;
+}
+
+.dialog-body {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
 }
 
 .dialog-actions {
@@ -904,6 +916,7 @@ a:hover { text-decoration: underline; }
     gap: 8px;
     justify-content: flex-end;
     margin-top: 20px;
+    flex-shrink: 0;
 }
 
 /* ==========================================
@@ -1052,8 +1065,9 @@ a:hover { text-decoration: underline; }
     .chat-msg { max-width: 90%; }
     .chat-input-bar { padding: 8px 12px; }
 
-    /* Dialog */
-    .dialog { padding: 16px; min-width: auto; }
+    /* Dialog — mobile bottom-sheet */
+    .dialog-overlay { align-items: flex-end; }
+    .dialog { padding: 16px; min-width: auto; max-height: 85vh; max-height: 85dvh; border-radius: var(--radius) var(--radius) 0 0; width: 100vw; max-width: 100vw; }
     .dialog-actions { flex-direction: column; }
     .dialog-actions .btn { width: 100%; justify-content: center; }
 
