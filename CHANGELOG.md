@@ -1,3 +1,10 @@
+# [1.202.0](https://github.com/HankHuang0516/EClaw/compare/v1.201.0...v1.202.0) (2026-03-27)
+
+
+### Features
+
+* **info:** 新增電商 AI 客服 Demo 實用案例 ([52bf879](https://github.com/HankHuang0516/EClaw/commit/52bf8798c3ae287a3c819b09664b5a7b2a9d225a)), closes [enterprise#ecommerce-demo](https://github.com/enterprise/issues/ecommerce-demo)
+
 # [1.201.0](https://github.com/HankHuang0516/EClaw/compare/v1.200.0...v1.201.0) (2026-03-27)
 
 
