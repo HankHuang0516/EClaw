@@ -1,3 +1,10 @@
+## [1.204.1](https://github.com/HankHuang0516/EClaw/compare/v1.204.0...v1.204.1) (2026-03-27)
+
+
+### Bug Fixes
+
+* **i18n:** add missing guide_kb_cta_* keys (3×3 langs) ([260a479](https://github.com/HankHuang0516/EClaw/commit/260a47931d7264022bed5c00834f914407210a87))
+
 # [1.204.0](https://github.com/HankHuang0516/EClaw/compare/v1.203.2...v1.204.0) (2026-03-27)
 
 
