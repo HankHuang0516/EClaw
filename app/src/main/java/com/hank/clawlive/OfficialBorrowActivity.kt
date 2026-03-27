@@ -163,6 +163,12 @@ class OfficialBorrowActivity : AppCompatActivity() {
                 val status = api.getOfficialBorrowStatus(deviceManager.deviceId)
                 borrowStatus = status
 
+                // Cache free bot entity IDs for usage limit enforcement
+                deviceManager.freeBotEntityIds = status.bindings
+                    .filter { it.botType == "free" }
+                    .map { it.entityId }
+                    .toSet()
+
                 // Update availability display
                 if (status.personal.available > 0) {
                     tvAvailability.text = getString(R.string.remaining_bots, status.personal.available)
@@ -360,6 +366,8 @@ class OfficialBorrowActivity : AppCompatActivity() {
 
                 if (response.success) {
                     layoutPrefs.addRegisteredEntity(selectedEntityId)
+                    // Update free bot cache for usage limit
+                    deviceManager.freeBotEntityIds = deviceManager.freeBotEntityIds + selectedEntityId
                     // Wait for webhook test to complete
                     waitForWebhookTest(selectedEntityId)
                 } else {

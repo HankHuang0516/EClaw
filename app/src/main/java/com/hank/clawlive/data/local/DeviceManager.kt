@@ -136,6 +136,28 @@ class DeviceManager private constructor(context: Context) {
     }
 
     /**
+     * Entity IDs that are bound to free official bots.
+     * Used to enforce the 15 free-message daily limit only for free bot targets.
+     */
+    var freeBotEntityIds: Set<Int>
+        get() {
+            val raw = prefs.getString(KEY_FREE_BOT_ENTITY_IDS, null) ?: return emptySet()
+            return raw.split(",").filter { it.isNotEmpty() }.mapNotNull { it.toIntOrNull() }.toSet()
+        }
+        set(value) = prefs.edit().putString(
+            KEY_FREE_BOT_ENTITY_IDS,
+            value.joinToString(",")
+        ).apply()
+
+    /**
+     * Check if any of the given entity IDs are bound to a free bot.
+     */
+    fun hasFreeBotTarget(entityIds: List<Int>): Boolean {
+        val freeIds = freeBotEntityIds
+        return entityIds.any { it in freeIds }
+    }
+
+    /**
      * Reset device credentials (for re-binding)
      */
     fun reset() {
@@ -157,6 +179,7 @@ class DeviceManager private constructor(context: Context) {
         private const val KEY_BINDING_CODE = "binding_code"
         private const val KEY_BINDING_EXPIRY = "binding_expiry"
         private const val KEY_ROLES = "user_roles"
+        private const val KEY_FREE_BOT_ENTITY_IDS = "free_bot_entity_ids"
 
         @Volatile
         private var instance: DeviceManager? = null

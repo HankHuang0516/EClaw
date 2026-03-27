@@ -8,12 +8,12 @@ import java.util.Locale
 
 /**
  * Manages daily message usage tracking for subscription limits.
- * Free tier: 15 sends per day
+ * Free tier: 15 sends per day (only counts messages to free borrowed bots)
  * Premium: Unlimited
- * 
+ * Personal/custom bots: Unlimited (not counted)
+ *
  * Only counts:
- * - POST /api/client/speak (user sends message to bot)
- * - POST /api/entity/speak-to (entity to entity messaging)
+ * - POST /api/client/speak (user sends message to free bot)
  */
 class UsageManager private constructor(context: Context) {
 

@@ -158,14 +158,12 @@ class MessageActivity : AppCompatActivity() {
             return
         }
 
-        // Check usage limit before sending
-        if (!usageManager.canUseMessage()) {
+        // Usage limit only applies to free bot targets (personal/custom bots are unlimited)
+        val targetsFreeBots = deviceManager.hasFreeBotTarget(selectedIds)
+        if (targetsFreeBots && !usageManager.canUseMessage()) {
             showUpgradeDialog()
             return
         }
-
-        // Increment usage immediately (optimistic)
-        usageManager.incrementUsage()
 
         // Save to preferences (for widget history - legacy)
         chatPrefs.saveLastMessage(text, selectedIds)
@@ -200,6 +198,12 @@ class MessageActivity : AppCompatActivity() {
 
                 // Mark as synced after API success
                 chatRepository.markMessageSynced(messageId)
+
+                // Increment usage only if any target was a free bot
+                val hasFreeBotInResponse = response.targets.any { it.bindingType == "free" }
+                if (hasFreeBotInResponse) {
+                    usageManager.incrementUsage()
+                }
 
                 // Log push status
                 Timber.d("Message sent to device ${deviceManager.deviceId} entities $selectedIds")

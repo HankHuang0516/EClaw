@@ -1977,7 +1977,9 @@
             const limit = currentUser.usageLimit;
             const used = currentUser.usageToday || 0;
 
-            if (!isPremium && limit !== null && limit !== undefined && used >= limit) {
+            // Only show limit warning when limit reached AND all bound entities are free bots
+            const allAreFree = boundEntities.length > 0 && boundEntities.every(e => e.botType === 'free');
+            if (!isPremium && allAreFree && limit !== null && limit !== undefined && used >= limit) {
                 document.getElementById('limitWarning').style.display = 'block';
                 document.getElementById('messageInput').disabled = true;
                 document.getElementById('btnSend').disabled = true;
@@ -3114,11 +3116,15 @@
                 return;
             }
 
-            // Client-side limit check
+            // Client-side limit check — only applies to free bot targets
             const isPremium = currentUser.subscriptionStatus === 'premium';
             const limit = currentUser.usageLimit;
             const used = currentUser.usageToday || 0;
-            if (!isPremium && limit !== null && limit !== undefined && used >= limit) {
+            const hasFreeBotTarget = targets.local.some(eid => {
+                const ent = boundEntities.find(e => e.entityId === eid);
+                return ent && ent.botType === 'free';
+            });
+            if (hasFreeBotTarget && !isPremium && limit !== null && limit !== undefined && used >= limit) {
                 showToast(i18n.t('chat_limit_reached'), 'error');
                 return;
             }
