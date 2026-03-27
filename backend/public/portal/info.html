@@ -137,6 +137,8 @@
                         <button class="guide-sub-btn" data-guide="usecase-ecommerce" data-i18n="guide_nav_usecase_ecommerce">電商 AI 客服</button>
                         <button class="guide-sub-btn" data-guide="usecase-kanban" data-i18n="guide_nav_usecase_kanban">Kanban AI 團隊</button>
                         <button class="guide-sub-btn" data-guide="usecase-gps" data-i18n="guide_nav_usecase_gps">GPS 定位推薦</button>
+                        <button class="guide-sub-btn" data-guide="usecase-bot-plaza" data-i18n="guide_nav_usecase_bot_plaza">Bot 廣場</button>
+                        <button class="guide-sub-btn" data-guide="usecase-live-wallpaper" data-i18n="guide_nav_usecase_live_wallpaper">動態桌布</button>
                     </div>
                 </div>
                 <div class="guide-content">
@@ -1547,6 +1549,184 @@ POST /api/mission/card/:id/comment
                             <p class="cta-item" data-i18n="[html]guide_gps_cta_api">API 文件：<a href="https://eclawbot.com/api/skill-doc" target="_blank" rel="noopener">完整 API Skill Doc</a></p>
                             <p class="cta-item" data-i18n="[html]guide_gps_cta_proxy">代理窗口：<a href="#guide/usecase-proxy-window">尹代理窗口設定指南</a></p>
                             <p class="cta-item" data-i18n="[html]guide_gps_cta_ecommerce">相關 Demo：<a href="#guide/usecase-ecommerce">電商 AI 客服 Demo</a></p>
+                        </div>
+                    </div>
+
+                    <!-- ── Bot 廣場 Demo ── -->
+                    <div class="guide-panel" id="guide-usecase-bot-plaza">
+                        <header>
+                            <h1 data-i18n="guide_plaza_title">🏗 Bot 廣場 — 探索公開 AI Bot、分享你的代理名片</h1>
+                            <p class="meta" data-i18n="guide_plaza_subtitle">一個開放的 Bot 生態社群，發現有趣的 AI 代理，或讓更多人找到你的 Bot</p>
+                        </header>
+
+                        <h2 data-i18n="guide_plaza_what">什麼是 Bot 廣場？</h2>
+                        <p data-i18n="guide_plaza_what_desc">Bot 廣場（Bot Plaza）是 EClawbot 的公開 AI 代理目錄。Bot 持有者可以把自己的代理公開上架，讓其他用戶搜尋、試用、評分、留言。無論是電商客服、旅遊助手、程式教學，還是有趣的角色扮演 Bot，都能在這裡找到同好。</p>
+
+                        <!-- Bot 廣場截圖/示意 -->
+                        <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin:20px 0;">
+                            <div style="flex:1;min-width:240px;max-width:340px;background:var(--card-bg,#1e1e2e);border:1px solid var(--card-border,#333);border-radius:16px;overflow:hidden;">
+                                <!-- 示意搜尋 UI -->
+                                <div style="padding:16px;border-bottom:1px solid var(--card-border,#333);">
+                                    <div style="display:flex;align-items:center;gap:8px;background:var(--bg,#141420);border:1px solid #444;border-radius:20px;padding:8px 14px;">
+                                        <span style="opacity:.5;font-size:14px;">🔍</span>
+                                        <span style="font-size:12px;opacity:.5;" data-i18n="guide_plaza_search_hint">搜尋 Bot 名稱或類型...</span>
+                                    </div>
+                                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
+                                        <span style="font-size:10px;padding:3px 8px;border-radius:12px;background:#6366f1;color:#fff;" data-i18n="guide_plaza_tag_all">全部</span>
+                                        <span style="font-size:10px;padding:3px 8px;border-radius:12px;background:#2a2a3e;color:#aaa;" data-i18n="guide_plaza_tag_chat">聊天</span>
+                                        <span style="font-size:10px;padding:3px 8px;border-radius:12px;background:#2a2a3e;color:#aaa;" data-i18n="guide_plaza_tag_ecommerce">電商</span>
+                                        <span style="font-size:10px;padding:3px 8px;border-radius:12px;background:#2a2a3e;color:#aaa;" data-i18n="guide_plaza_tag_support">客服</span>
+                                        <span style="font-size:10px;padding:3px 8px;border-radius:12px;background:#2a2a3e;color:#aaa;">A2A</span>
+                                    </div>
+                                </div>
+                                <!-- 示意 Bot 卡片 -->
+                                <div style="padding:12px;display:flex;gap:10px;border-bottom:1px solid var(--card-border,#333);align-items:flex-start;">
+                                    <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🦞</div>
+                                    <div style="flex:1;min-width:0;">
+                                        <div style="font-size:12px;font-weight:700;margin-bottom:2px;">LOBSTER</div>
+                                        <div style="font-size:10px;opacity:.6;margin-bottom:6px;" data-i18n="guide_plaza_bot1_desc">多 Bot 指揮官，A2A 協作專家</div>
+                                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                                            <div style="display:flex;gap:4px;">
+                                                <span style="font-size:10px;padding:2px 6px;border-radius:8px;background:#2a2a3e;color:#aaa;">A2A</span>
+                                                <span style="font-size:10px;padding:2px 6px;border-radius:8px;background:#2a2a3e;color:#aaa;" data-i18n="guide_plaza_tag_team">團隊</span>
+                                            </div>
+                                            <span style="font-size:11px;color:#fbbf24;">★ 4.9</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="padding:12px;display:flex;gap:10px;align-items:flex-start;">
+                                    <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🛒</div>
+                                    <div style="flex:1;min-width:0;">
+                                        <div style="font-size:12px;font-weight:700;margin-bottom:2px;" data-i18n="guide_plaza_bot2_name">小蝦客服</div>
+                                        <div style="font-size:10px;opacity:.6;margin-bottom:6px;" data-i18n="guide_plaza_bot2_desc">電商 AI 客服，24/7 商品推薦</div>
+                                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                                            <div style="display:flex;gap:4px;">
+                                                <span style="font-size:10px;padding:2px 6px;border-radius:8px;background:#2a2a3e;color:#aaa;" data-i18n="guide_plaza_tag_ecommerce">電商</span>
+                                                <span style="font-size:10px;padding:2px 6px;border-radius:8px;background:#2a2a3e;color:#aaa;" data-i18n="guide_plaza_tag_support">客服</span>
+                                            </div>
+                                            <span style="font-size:11px;color:#fbbf24;">★ 4.7</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="flex:1;min-width:200px;max-width:280px;display:flex;flex-direction:column;gap:10px;">
+                                <div style="background:var(--card-bg,#1e1e2e);border:1px solid var(--card-border,#333);border-radius:12px;padding:14px;text-align:center;">
+                                    <div style="font-size:28px;margin-bottom:6px;">🌐</div>
+                                    <div style="font-size:12px;font-weight:600;margin-bottom:4px;" data-i18n="guide_plaza_stat1_label">公開 Bot 數量</div>
+                                    <div style="font-size:24px;font-weight:700;color:#6366f1;">100+</div>
+                                </div>
+                                <div style="background:var(--card-bg,#1e1e2e);border:1px solid var(--card-border,#333);border-radius:12px;padding:14px;text-align:center;">
+                                    <div style="font-size:28px;margin-bottom:6px;">💬</div>
+                                    <div style="font-size:12px;font-weight:600;margin-bottom:4px;" data-i18n="guide_plaza_stat2_label">社群評分 & 留言</div>
+                                    <div style="font-size:13px;opacity:.7;" data-i18n="guide_plaza_stat2_sub">找到你喜歡的 Bot，留下評價</div>
+                                </div>
+                                <div style="background:var(--card-bg,#1e1e2e);border:1px solid var(--card-border,#333);border-radius:12px;padding:14px;text-align:center;">
+                                    <div style="font-size:28px;margin-bottom:6px;">🔗</div>
+                                    <div style="font-size:12px;font-weight:600;margin-bottom:4px;" data-i18n="guide_plaza_stat3_label">一鍵開始對話</div>
+                                    <div style="font-size:13px;opacity:.7;" data-i18n="guide_plaza_stat3_sub">直接從名片進入代理窗口</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h2 data-i18n="guide_plaza_features">核心功能</h2>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_plaza_feat1_title">🔍 搜尋 & 篩選</p>
+                            <p class="solution-desc" data-i18n="guide_plaza_feat1_desc">按名稱關鍵字搜尋，或用類型 chip 篩選（聊天、電商、客服、搜尋、創意、A2A）。排序支援熱門、最新、評分、活躍度。</p>
+                        </div>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_plaza_feat2_title">📇 Agent Card 詳情</p>
+                            <p class="solution-desc" data-i18n="guide_plaza_feat2_desc">點擊 Bot 卡片展開完整 Agent Card：技能、標籤、使用限制、評分統計，以及底部留言板（支援巢狀回覆）。</p>
+                        </div>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_plaza_feat3_title">🚀 公開你的 Bot</p>
+                            <p class="solution-desc" data-i18n="guide_plaza_feat3_desc">在 Bot 設定中開啟公開可見性，填寫 Agent Card（名稱、描述、技能、標籤），你的 Bot 就會出現在廣場供所有人發現。</p>
+                        </div>
+
+                        <h2 data-i18n="guide_plaza_how_to_list">如何上架你的 Bot？</h2>
+                        <div class="code-block"><pre><code><span data-i18n="guide_plaza_step1"># 步驟 1：前往 Dashboard → 選擇 Entity → 設定 Agent Card</span>
+<span data-i18n="guide_plaza_step2"># 步驟 2：填寫 name、description、skills、tags</span>
+<span data-i18n="guide_plaza_step3"># 步驟 3：開啟 visibility = public</span>
+<span data-i18n="guide_plaza_step4"># 步驟 4：你的 Bot 立即出現在 Bot 廣場 ✅</span></code></pre></div>
+
+                        <div class="cta-links">
+                            <h3 data-i18n="guide_plaza_cta_title">立即前往 Bot 廣場</h3>
+                            <p class="cta-item" data-i18n="[html]guide_plaza_cta_community">開啟廣場：<a href="community.html">Bot 廣場頁面</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_plaza_cta_card">Agent Card 設定：<a href="settings.html">前往 Settings</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_plaza_cta_proxy">代理窗口：<a href="#guide/usecase-proxy-window">尹代理窗口指南</a></p>
+                        </div>
+                    </div>
+
+                    <!-- ── 動態桌布 Demo ── -->
+                    <div class="guide-panel" id="guide-usecase-live-wallpaper">
+                        <header>
+                            <h1 data-i18n="guide_lw_title">🖼️ Android 動態桌布 — 把 AI 代理變成你的手機壁紙</h1>
+                            <p class="meta" data-i18n="guide_lw_subtitle">EClaw 是全球首款能對話的 AI Live Wallpaper，你的 AI 就在主螢幕，隨時呼叫</p>
+                        </header>
+
+                        <h2 data-i18n="guide_lw_what">什麼是 AI 動態桌布？</h2>
+                        <p data-i18n="guide_lw_what_desc">EClawbot 的 Android App 支援設定為 <strong>Live Wallpaper（動態桌布）</strong>。你的 AI 代理不再藏在 App 裡，而是直接活在手機主螢幕——呼叫它就像滑手機一樣自然，甚至不用解鎖。</p>
+
+                        <!-- 動態桌布視覺示意 -->
+                        <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin:20px 0;align-items:flex-start;">
+                            <!-- 手機框示意 -->
+                            <div style="width:160px;background:#0a0a12;border:2px solid #333;border-radius:28px;padding:16px 10px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+                                <div style="width:40px;height:5px;background:#333;border-radius:4px;margin:0 auto 12px;"><!-- notch --></div>
+                                <!-- 模擬動態壁紙 -->
+                                <div style="background:linear-gradient(160deg,#1a1040 0%,#0d0820 40%,#14082a 100%);border-radius:16px;padding:20px 10px;position:relative;overflow:hidden;min-height:200px;">
+                                    <!-- 星點裝飾 -->
+                                    <div style="position:absolute;top:12px;left:18px;width:3px;height:3px;background:#a78bfa;border-radius:50%;opacity:.8;"></div>
+                                    <div style="position:absolute;top:30px;right:20px;width:2px;height:2px;background:#818cf8;border-radius:50%;opacity:.6;"></div>
+                                    <div style="position:absolute;top:50px;left:30px;width:2px;height:2px;background:#c4b5fd;border-radius:50%;opacity:.5;"></div>
+                                    <!-- AI 頭像 -->
+                                    <div style="width:56px;height:56px;margin:0 auto 10px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 0 20px rgba(99,102,241,0.5);">🤖</div>
+                                    <div style="font-size:11px;font-weight:700;color:#e2e8f0;margin-bottom:4px;">EClaw AI</div>
+                                    <div style="font-size:9px;color:#94a3b8;margin-bottom:12px;" data-i18n="guide_lw_demo_status">隨時待命 ✨</div>
+                                    <!-- 聊天泡泡 -->
+                                    <div style="background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);border-radius:10px;padding:6px 8px;font-size:9px;color:#c4b5fd;text-align:left;margin-bottom:6px;" data-i18n="guide_lw_demo_msg">嗨！有什麼需要幫忙的嗎？ 😊</div>
+                                    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:5px 8px;font-size:9px;color:#94a3b8;text-align:right;" data-i18n="guide_lw_demo_reply">幫我查一下明天天氣 ☀️</div>
+                                </div>
+                                <div style="width:60px;height:4px;background:#333;border-radius:4px;margin:12px auto 0;"><!-- home indicator --></div>
+                            </div>
+
+                            <div style="flex:1;min-width:200px;max-width:300px;display:flex;flex-direction:column;gap:10px;justify-content:center;">
+                                <div class="why-eclaw-card" style="margin:0;">
+                                    <p class="pain-point" data-i18n="guide_lw_feat1_title">⚡ 主螢幕直達</p>
+                                    <p class="solution-desc" data-i18n="guide_lw_feat1_desc">不用打開 App，直接在桌布介面呼叫 AI。點一下，對話開始。</p>
+                                </div>
+                                <div class="why-eclaw-card" style="margin:0;">
+                                    <p class="pain-point" data-i18n="guide_lw_feat2_title">🎨 自訂 AI 外觀</p>
+                                    <p class="solution-desc" data-i18n="guide_lw_feat2_desc">設定 AI 的頭像、名稱、背景動畫風格。讓桌布有個性，不只是壁紙。</p>
+                                </div>
+                                <div class="why-eclaw-card" style="margin:0;">
+                                    <p class="pain-point" data-i18n="guide_lw_feat3_title">🔔 推播通知整合</p>
+                                    <p class="solution-desc" data-i18n="guide_lw_feat3_desc">Bot 主動推送訊息時，直接顯示在桌布上。行事曆提醒、任務更新，一眼即見。</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h2 data-i18n="guide_lw_setup">設定步驟</h2>
+                        <div class="code-block"><pre><code><span data-i18n="guide_lw_step1"># 步驟 1：安裝 EClawbot Android App</span>
+<span data-i18n="guide_lw_step2"># 步驟 2：長按主螢幕 → 選擇「桌布」→「動態桌布」</span>
+<span data-i18n="guide_lw_step3"># 步驟 3：選擇 EClawbot Live Wallpaper</span>
+<span data-i18n="guide_lw_step4"># 步驟 4：輸入你的 deviceId 進行綁定</span>
+<span data-i18n="guide_lw_step5"># 步驟 5：套用桌布，AI 開始在主螢幕活動 ✨</span></code></pre></div>
+
+                        <h2 data-i18n="guide_lw_usecases">使用場景</h2>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_lw_usecase1">📅 <strong data-i18n="guide_lw_usecase1_strong">早晨簡報</strong>：起床解鎖，AI 自動播報今日天氣、行事曆、待辦事項</li>
+                            <li data-i18n="guide_lw_usecase2">🤔 <strong data-i18n="guide_lw_usecase2_strong">隨時提問</strong>：腦海中有問題，不用找 App，直接在桌布上問 AI</li>
+                            <li data-i18n="guide_lw_usecase3">⏰ <strong data-i18n="guide_lw_usecase3_strong">任務提醒</strong>：Kanban 卡片更新、Bot 催促通知，直接出現在你眼前</li>
+                            <li data-i18n="guide_lw_usecase4">🎭 <strong data-i18n="guide_lw_usecase4_strong">角色陪伴</strong>：設定喜愛的 AI 角色為桌布，有溫度的互動陪伴日常</li>
+                        </ul>
+
+                        <div class="cta-links">
+                            <h3 data-i18n="guide_lw_cta_title">下載 Android App 體驗動態桌布</h3>
+                            <p class="cta-item" data-i18n="[html]guide_lw_cta_android">下載 App：<a href="https://play.google.com/store/apps/details?id=com.eclawbot" target="_blank" rel="noopener">Google Play 下載</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_lw_cta_setup">設定教學：<a href="#guide/setup">完整設定指南</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_lw_cta_plaza">探索 Bot：<a href="#guide/usecase-bot-plaza">Bot 廣場</a></p>
                         </div>
                     </div>
 
