@@ -137,6 +137,8 @@
                         <button class="guide-sub-btn" data-guide="usecase-ecommerce" data-i18n="guide_nav_usecase_ecommerce">電商 AI 客服</button>
                         <button class="guide-sub-btn" data-guide="usecase-kanban" data-i18n="guide_nav_usecase_kanban">Kanban AI 團隊</button>
                         <button class="guide-sub-btn" data-guide="usecase-gps" data-i18n="guide_nav_usecase_gps">GPS 定位推薦</button>
+                        <button class="guide-sub-btn" data-guide="usecase-botplaza" data-i18n="guide_nav_usecase_botplaza">Bot 廣場</button>
+                        <button class="guide-sub-btn" data-guide="usecase-wallpaper" data-i18n="guide_nav_usecase_wallpaper">動態桌布</button>
                     </div>
                 </div>
                 <div class="guide-content">
@@ -1547,6 +1549,148 @@ POST /api/mission/card/:id/comment
                             <p class="cta-item" data-i18n="[html]guide_gps_cta_api">API 文件：<a href="https://eclawbot.com/api/skill-doc" target="_blank" rel="noopener">完整 API Skill Doc</a></p>
                             <p class="cta-item" data-i18n="[html]guide_gps_cta_proxy">代理窗口：<a href="#guide/usecase-proxy-window">尹代理窗口設定指南</a></p>
                             <p class="cta-item" data-i18n="[html]guide_gps_cta_ecommerce">相關 Demo：<a href="#guide/usecase-ecommerce">電商 AI 客服 Demo</a></p>
+                        </div>
+                    </div>
+
+                    <!-- ── 實用案例：Bot 廣場 ── -->
+                    <div class="guide-panel" id="guide-usecase-botplaza">
+                        <header>
+                            <h1 data-i18n="guide_bp_title">Bot 廣場 — 發現與分享 AI 代理</h1>
+                            <p class="meta" data-i18n="guide_bp_meta">探索公開的 AI Bot 名片，找到你需要的智慧助手，或讓更多人發現你的 Bot</p>
+                        </header>
+
+                        <h2 data-i18n="guide_bp_h2_what">什麼是 Bot 廣場？</h2>
+                        <p data-i18n="guide_bp_p_what">Bot 廣場（Bot Plaza）是 EClawbot 的公開 Bot 目錄。任何用戶都可以將自己的 AI 代理「公開上架」，讓其他人透過廣場發現、收藏、直接對話。就像 App Store，但每個 App 都是一個 AI 助手。</p>
+
+                        <div class="note" data-i18n="guide_bp_note_demo">🌐 <strong>即時體驗：</strong><a href="/portal/community.html">前往 Bot 廣場</a>瀏覽公開的 Bot，或把你的 Bot 上架讓更多人發現！</div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_bp_h2_features">廣場功能</h2>
+                        <table class="feature-table">
+                            <thead><tr><th data-i18n="guide_bp_th_feature">功能</th><th data-i18n="guide_bp_th_desc">說明</th></tr></thead>
+                            <tbody>
+                                <tr><td data-i18n="guide_bp_feat_browse">🔍 瀏覽探索</td><td data-i18n="guide_bp_feat_browse_desc">按評分、最新、熱門、活躍度排序，搜尋 Bot 名稱/標籤/能力</td></tr>
+                                <tr><td data-i18n="guide_bp_feat_card">📇 Agent Card 名片</td><td data-i18n="guide_bp_feat_card_desc">每個 Bot 有專屬名片：名稱、描述、能力、標籤、評分、等級</td></tr>
+                                <tr><td data-i18n="guide_bp_feat_chat">💬 直接對話</td><td data-i18n="guide_bp_feat_chat_desc">點「開始對話」直接開啟 Bot 的代理窗口，無需安裝任何東西</td></tr>
+                                <tr><td data-i18n="guide_bp_feat_save">❤️ 收藏名片</td><td data-i18n="guide_bp_feat_save_desc">把常用的 Bot 收藏到名片夾，方便下次快速找到</td></tr>
+                                <tr><td data-i18n="guide_bp_feat_comment">💬 留言評價</td><td data-i18n="guide_bp_feat_comment_desc">對使用過的 Bot 留下評價，幫助其他用戶選擇</td></tr>
+                                <tr><td data-i18n="guide_bp_feat_level">🏆 等級系統</td><td data-i18n="guide_bp_feat_level_desc">Bot 越活躍、評分越高，等級越高；Legend 等級的 Bot 特別顯眼</td></tr>
+                            </tbody>
+                        </table>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_bp_h2_publish">如何上架你的 Bot？</h2>
+
+                        <h3 class="step-heading" data-i18n="guide_bp_step1_title">Step 1：建立 Agent Card</h3>
+                        <p data-i18n="guide_bp_step1_desc">在 Dashboard 選擇實體，點選「Agent Card」，填寫名稱、描述、能力清單、標籤。</p>
+                        <div class="config-preview">
+                            <div class="config-bar"><div class="dot" style="background:var(--primary)"></div> <span data-i18n="guide_bp_config_title">Agent Card 範例</span></div>
+                            <div class="config-body">
+                                <div class="config-row"><span class="config-key">Name</span><span class="config-val" data-i18n="guide_bp_config_name">ShopBot Pro</span></div>
+                                <div class="config-row"><span class="config-key">Desc</span><span class="config-val" data-i18n="guide_bp_config_desc">24/7 智能購物助手，查詢商品、追蹤訂單、推薦好物</span></div>
+                                <div class="config-row"><span class="config-key">Caps</span><span class="config-val" data-i18n="guide_bp_config_caps">product-search, order-inquiry, recommendation</span></div>
+                                <div class="config-row"><span class="config-key">Tags</span><span class="config-val" data-i18n="guide_bp_config_tags">ecommerce, support, chat</span></div>
+                                <div class="config-row"><span class="config-key">Public</span><span class="config-val" data-i18n="guide_bp_config_public">✅ 公開展示</span></div>
+                            </div>
+                        </div>
+
+                        <h3 class="step-heading" data-i18n="guide_bp_step2_title">Step 2：設定公開連結（Public Code）</h3>
+                        <p data-i18n="guide_bp_step2_desc">在 Card Holder 取得你的 Public Code。廣場裡的「開始對話」按鈕會直接指向 <code>https://eclawbot.com/c/你的PublicCode</code>。</p>
+
+                        <h3 class="step-heading" data-i18n="guide_bp_step3_title">Step 3：等待用戶發現你的 Bot</h3>
+                        <p data-i18n="guide_bp_step3_desc">Bot 上架後，用戶在廣場搜尋時就能找到你的 Bot。越多人互動、評分越高，排名越前面。</p>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_bp_h2_tips">上架技巧</h2>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_bp_tip_li1">✅ <strong>描述要清楚</strong>：一句話說明 Bot 能幫用戶做什麼，避免太抽象</li>
+                            <li data-i18n="guide_bp_tip_li2">✅ <strong>能力標籤要精準</strong>：填寫真實的能力，幫助用戶搜尋找到你</li>
+                            <li data-i18n="guide_bp_tip_li3">✅ <strong>保持 Bot 在線</strong>：在線的 Bot 在廣場排名更高</li>
+                            <li data-i18n="guide_bp_tip_li4">✅ <strong>鼓勵用戶留言</strong>：好評可以快速提升 Bot 等級和曝光</li>
+                        </ul>
+
+                        <div class="cta-links">
+                            <h3 data-i18n="guide_bp_cta_title">立即探索或上架你的 Bot</h3>
+                            <p class="cta-item" data-i18n="[html]guide_bp_cta_plaza">Bot 廣場：<a href="/portal/community.html">前往 Bot 廣場</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_bp_cta_card">建立名片：<a href="#guide/detail-agentcard">Agent Card 設定指南</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_bp_cta_proxy">對話連結：<a href="#guide/usecase-proxy-window">尹代理窗口設定</a></p>
+                        </div>
+                    </div>
+
+                    <!-- ── 實用案例：動態桌布 ── -->
+                    <div class="guide-panel" id="guide-usecase-wallpaper">
+                        <header>
+                            <h1 data-i18n="guide_wp_title">動態桌布 — 讓 AI 住進你的手機桌布</h1>
+                            <p class="meta" data-i18n="guide_wp_meta">EClawbot Android App 獨特功能：AI Bot 的對話介面直接成為你的手機動態桌布</p>
+                        </header>
+
+                        <h2 data-i18n="guide_wp_h2_what">什麼是動態桌布？</h2>
+                        <p data-i18n="guide_wp_p_what">EClawbot Android App 支援 <strong>Live Wallpaper（動態桌布）</strong>模式。啟用後，Bot 的對話視窗會作為手機桌布顯示，讓你在主畫面就能看到 Bot 的最新回覆，不需要開啟 App 即可隨時互動。</p>
+
+                        <div class="note" data-i18n="guide_wp_note_unique">🎨 <strong>獨家功能：</strong>這是 EClawbot 的標誌性功能，讓你的手機桌布不只是靜態圖片，而是一個隨時在線的 AI 助手。</div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_wp_h2_features">功能特色</h2>
+                        <table class="feature-table">
+                            <thead><tr><th data-i18n="guide_wp_th_feature">功能</th><th data-i18n="guide_wp_th_desc">說明</th></tr></thead>
+                            <tbody>
+                                <tr><td data-i18n="guide_wp_feat_live">🎭 即時對話介面</td><td data-i18n="guide_wp_feat_live_desc">Bot 最新訊息直接顯示在桌布上，全螢幕沉浸式體驗</td></tr>
+                                <tr><td data-i18n="guide_wp_feat_notify">🔔 推播即更新</td><td data-i18n="guide_wp_feat_notify_desc">Bot 回覆後，桌布自動更新顯示新訊息，無需開啟 App</td></tr>
+                                <tr><td data-i18n="guide_wp_feat_identity">🎨 個性化</td><td data-i18n="guide_wp_feat_identity_desc">桌布外觀跟隨 Bot 的 Soul 設定，溫暖系/專業系/科技系</td></tr>
+                                <tr><td data-i18n="guide_wp_feat_gesture">👆 手勢互動</td><td data-i18n="guide_wp_feat_gesture_desc">點擊桌布直接開啟對話介面，長按進入設定</td></tr>
+                                <tr><td data-i18n="guide_wp_feat_multi">📱 多 Bot 切換</td><td data-i18n="guide_wp_feat_multi_desc">可設定不同的 Bot 作為桌布，隨時切換你的「桌布助手」</td></tr>
+                            </tbody>
+                        </table>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_wp_h2_setup">設定步驟</h2>
+
+                        <h3 class="step-heading" data-i18n="guide_wp_step1_title">Step 1：下載 EClawbot Android App</h3>
+                        <p data-i18n="guide_wp_step1_desc">從 Google Play Store 搜尋「e-claw」下載安裝 EClawbot App。</p>
+
+                        <h3 class="step-heading" data-i18n="guide_wp_step2_title">Step 2：綁定你的 Bot</h3>
+                        <p data-i18n="guide_wp_step2_desc">開啟 App，輸入 Device ID 登入，選擇要設為桌布的 Bot Entity。</p>
+
+                        <h3 class="step-heading" data-i18n="guide_wp_step3_title">Step 3：設定為 Live Wallpaper</h3>
+                        <p data-i18n="guide_wp_step3_desc">長按手機桌布 → 選擇「桌布」→ 選擇「動態桌布」→ 找到「EClawbot」→ 套用。</p>
+                        <div class="note" data-i18n="guide_wp_note_setup">💡 也可以在 App 設定中直接選擇「設為 Live Wallpaper」，系統會自動引導你完成設定。</div>
+
+                        <h3 class="step-heading" data-i18n="guide_wp_step4_title">Step 4：享受 AI 桌布</h3>
+                        <p data-i18n="guide_wp_step4_desc">設定完成後，回到桌布就能看到 Bot 的對話介面。Bot 有新訊息時，桌布會自動顯示最新內容。</p>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_wp_h2_usecases">使用情境</h2>
+                        <table class="feature-table">
+                            <thead><tr><th data-i18n="guide_wp_uc_th_scene">情境</th><th data-i18n="guide_wp_uc_th_bot">建議 Bot 設定</th></tr></thead>
+                            <tbody>
+                                <tr><td data-i18n="guide_wp_uc_assistant">🗓️ 個人助理</td><td data-i18n="guide_wp_uc_assistant_desc">行事曆提醒 Bot，一解鎖就看到今天待辦</td></tr>
+                                <tr><td data-i18n="guide_wp_uc_news">📰 新聞摘要</td><td data-i18n="guide_wp_uc_news_desc">每天早上推播新聞摘要，桌布即時顯示</td></tr>
+                                <tr><td data-i18n="guide_wp_uc_store">🛒 電商客服</td><td data-i18n="guide_wp_uc_store_desc">店主把客服 Bot 設為桌布，第一時間看到客戶訊息</td></tr>
+                                <tr><td data-i18n="guide_wp_uc_health">💪 健康追蹤</td><td data-i18n="guide_wp_uc_health_desc">健康 Bot 每小時提醒喝水、起身活動，桌布即時提示</td></tr>
+                            </tbody>
+                        </table>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_wp_h2_tips">使用技巧</h2>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_wp_tip_li1">✅ <strong>設定 Bot 主動推播</strong>：讓 Bot 在適當時機主動發訊息，桌布才有「動態」感</li>
+                            <li data-i18n="guide_wp_tip_li2">✅ <strong>搭配 TTS 語音</strong>：Bot 在桌布顯示訊息的同時，用 TTS 語音播報，雙重提醒</li>
+                            <li data-i18n="guide_wp_tip_li3">✅ <strong>選擇輕量 Soul</strong>：桌布 Bot 的回覆要簡短有力，不適合長篇大論</li>
+                            <li data-i18n="guide_wp_tip_li4">⚠️ <strong>注意耗電</strong>：動態桌布會持續運行，建議開啟省電模式</li>
+                        </ul>
+
+                        <div class="cta-links">
+                            <h3 data-i18n="guide_wp_cta_title">開始體驗動態桌布</h3>
+                            <p class="cta-item" data-i18n="[html]guide_wp_cta_app">下載 App：<a href="https://play.google.com/store/apps/details?id=com.hank.clawlive" target="_blank" rel="noopener">Google Play — EClawbot</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_wp_cta_tts">搭配語音：<a href="#guide/usecase-voice-tts">TTS 語音對話</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_wp_cta_setup">快速設定：<a href="#guide/quickstart">快速開始指南</a></p>
                         </div>
                     </div>
 
