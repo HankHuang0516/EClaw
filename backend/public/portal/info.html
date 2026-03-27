@@ -139,6 +139,8 @@
                         <button class="guide-sub-btn" data-guide="usecase-gps" data-i18n="guide_nav_usecase_gps">GPS 定位推薦</button>
                         <button class="guide-sub-btn" data-guide="usecase-bot-plaza" data-i18n="guide_nav_usecase_bot_plaza">Bot 廣場</button>
                         <button class="guide-sub-btn" data-guide="usecase-live-wallpaper" data-i18n="guide_nav_usecase_live_wallpaper">動態桌布</button>
+                        <button class="guide-sub-btn" data-guide="usecase-gatekeeper" data-i18n="guide_nav_usecase_gatekeeper">Gatekeeper 安全</button>
+                        <button class="guide-sub-btn" data-guide="usecase-cross-platform" data-i18n="guide_nav_usecase_cross_platform">三平台同步</button>
                     </div>
                 </div>
                 <div class="guide-content">
@@ -1727,6 +1729,207 @@ POST /api/mission/card/:id/comment
                             <p class="cta-item" data-i18n="[html]guide_lw_cta_android">下載 App：<a href="https://play.google.com/store/apps/details?id=com.eclawbot" target="_blank" rel="noopener">Google Play 下載</a></p>
                             <p class="cta-item" data-i18n="[html]guide_lw_cta_setup">設定教學：<a href="#guide/setup">完整設定指南</a></p>
                             <p class="cta-item" data-i18n="[html]guide_lw_cta_plaza">探索 Bot：<a href="#guide/usecase-bot-plaza">Bot 廣場</a></p>
+                        </div>
+                    </div>
+
+                    <!-- ── Gatekeeper 安全守門員 Demo ── -->
+                    <div class="guide-panel" id="guide-usecase-gatekeeper">
+                        <header>
+                            <h1 data-i18n="guide_gk_title">🛡️ Gatekeeper 安全守門員 — 自動攔截惡意訊息、黑名單、速率限制</h1>
+                            <p class="meta" data-i18n="guide_gk_subtitle">讓 AI Bot 開放給公眾前，先設好守門員。壞人進不來，好用戶不受影響</p>
+                        </header>
+
+                        <h2 data-i18n="guide_gk_what">什麼是 Gatekeeper？</h2>
+                        <p data-i18n="guide_gk_what_desc">Gatekeeper 是 EClawbot 的內建安全層，在訊息送到 Bot 之前自動過濾。偵測 Prompt Injection、濫用請求、禁用詞，並支援黑白名單、速率限制。Bot 保持乾淨，惡意輸入先被擋下。</p>
+
+                        <!-- 統計儀表板示意 -->
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:20px 0;">
+                            <div style="background:var(--card-bg,#1e1e2e);border:1px solid var(--card-border,#333);border-radius:12px;padding:16px;text-align:center;">
+                                <div style="font-size:28px;font-weight:700;color:#ef4444;margin-bottom:4px;">1,247</div>
+                                <div style="font-size:11px;color:#888;" data-i18n="guide_gk_stat_blocked">已攔截訊息 (24h)</div>
+                            </div>
+                            <div style="background:var(--card-bg,#1e1e2e);border:1px solid var(--card-border,#333);border-radius:12px;padding:16px;text-align:center;">
+                                <div style="font-size:28px;font-weight:700;color:#fbbf24;margin-bottom:4px;">38</div>
+                                <div style="font-size:11px;color:#888;" data-i18n="guide_gk_stat_devices">已封鎖裝置</div>
+                            </div>
+                            <div style="background:var(--card-bg,#1e1e2e);border:1px solid var(--card-border,#333);border-radius:12px;padding:16px;text-align:center;">
+                                <div style="font-size:28px;font-weight:700;color:#22c55e;margin-bottom:4px;">99.2%</div>
+                                <div style="font-size:11px;color:#888;" data-i18n="guide_gk_stat_clean">正常訊息通過率</div>
+                            </div>
+                            <div style="background:var(--card-bg,#1e1e2e);border:1px solid var(--card-border,#333);border-radius:12px;padding:16px;text-align:center;">
+                                <div style="font-size:28px;font-weight:700;color:#6366f1;margin-bottom:4px;">3</div>
+                                <div style="font-size:11px;color:#888;" data-i18n="guide_gk_stat_strikes">封鎖門檻 (strikes)</div>
+                            </div>
+                        </div>
+
+                        <!-- 攔截類型分布 -->
+                        <div style="background:var(--card-bg,#1e1e2e);border:1px solid var(--card-border,#333);border-radius:12px;padding:16px;margin-bottom:20px;">
+                            <div style="font-size:12px;font-weight:600;margin-bottom:12px;" data-i18n="guide_gk_violation_title">攔截類型分布（示範數據）</div>
+                            <div style="display:flex;flex-direction:column;gap:8px;">
+                                <div>
+                                    <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span data-i18n="guide_gk_cat_injection">🔴 Prompt Injection</span><span>42%</span></div>
+                                    <div style="background:#2a2a3e;border-radius:4px;height:6px;"><div style="background:#ef4444;width:42%;height:100%;border-radius:4px;"></div></div>
+                                </div>
+                                <div>
+                                    <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span data-i18n="guide_gk_cat_spam">🟡 Spam / 濫發</span><span>31%</span></div>
+                                    <div style="background:#2a2a3e;border-radius:4px;height:6px;"><div style="background:#fbbf24;width:31%;height:100%;border-radius:4px;"></div></div>
+                                </div>
+                                <div>
+                                    <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span data-i18n="guide_gk_cat_forbidden">🟠 禁用詞</span><span>18%</span></div>
+                                    <div style="background:#2a2a3e;border-radius:4px;height:6px;"><div style="background:#f97316;width:18%;height:100%;border-radius:4px;"></div></div>
+                                </div>
+                                <div>
+                                    <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span data-i18n="guide_gk_cat_ratelimit">🔵 速率超限</span><span>9%</span></div>
+                                    <div style="background:#2a2a3e;border-radius:4px;height:6px;"><div style="background:#6366f1;width:9%;height:100%;border-radius:4px;"></div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h2 data-i18n="guide_gk_features">安全功能</h2>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_gk_feat1_title">🔴 Prompt Injection 偵測</p>
+                            <p class="solution-desc" data-i18n="guide_gk_feat1_desc">自動識別試圖「繞過系統提示」或「偽裝成管理員」的惡意輸入。Bot 收到的是乾淨訊息，你設定的規則不會被用戶覆蓋。</p>
+                        </div>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_gk_feat2_title">⏱️ 速率限制（Rate Limiting）</p>
+                            <p class="solution-desc" data-i18n="guide_gk_feat2_desc">每個裝置每分鐘/小時有訊息上限，超過自動暫停。防止濫用，也保護你的 AI API 配額不被單一用戶耗盡。</p>
+                        </div>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_gk_feat3_title">🚫 黑白名單 + 禁用詞</p>
+                            <p class="solution-desc" data-i18n="guide_gk_feat3_desc">黑名單裝置直接封鎖，白名單裝置跳過所有檢查。設定禁用詞列表，含有禁用詞的訊息自動攔截並記錄。</p>
+                        </div>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_gk_feat4_title">📊 Strike 累積系統</p>
+                            <p class="solution-desc" data-i18n="guide_gk_feat4_desc">每次違規累積 strike 點數，達到閾值（預設 3 次）自動封鎖。用戶可在冷卻期後申訴解封（24h 一次）。</p>
+                        </div>
+
+                        <h2 data-i18n="guide_gk_api">API 快速參考</h2>
+                        <div class="code-block"><pre><code><span data-i18n="guide_gk_api_comment_stats"># 取得攔截統計</span>
+GET /api/gatekeeper/stats?deviceId=...&amp;botSecret=...
+
+<span data-i18n="guide_gk_api_comment_config"># 查詢設定</span>
+GET /api/gatekeeper/config?deviceId=...&amp;botSecret=...
+
+<span data-i18n="guide_gk_api_comment_blacklist"># 封鎖 / 解封裝置</span>
+POST /api/gatekeeper/blacklist  { deviceId, botSecret, targetDeviceId }
+POST /api/gatekeeper/unblock    { deviceId, botSecret, targetDeviceId }
+
+<span data-i18n="guide_gk_api_comment_appeal"># 用戶自助申訴解封（24h 一次）</span>
+POST /api/gatekeeper/appeal     { deviceId, deviceSecret }</code></pre></div>
+
+                        <div class="cta-links">
+                            <h3 data-i18n="guide_gk_cta_title">立即啟用 Gatekeeper 保護</h3>
+                            <p class="cta-item" data-i18n="[html]guide_gk_cta_settings">前往設定：<a href="settings.html">Settings → Gatekeeper</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_gk_cta_api">API 文件：<a href="https://eclawbot.com/api/skill-doc" target="_blank" rel="noopener">完整 API Skill Doc</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_gk_cta_proxy">代理窗口：<a href="#guide/usecase-proxy-window">尹代理窗口指南</a></p>
+                        </div>
+                    </div>
+
+                    <!-- ── 三平台同步 Demo ── -->
+                    <div class="guide-panel" id="guide-usecase-cross-platform">
+                        <header>
+                            <h1 data-i18n="guide_sync_title">🔄 三平台同步 — 一個 Bot，同時服務 Signal、Telegram、LINE</h1>
+                            <p class="meta" data-i18n="guide_sync_subtitle">不需要多個帳號、不需要分別設定，同一個 AI Bot 同步所有通訊平台</p>
+                        </header>
+
+                        <h2 data-i18n="guide_sync_what">什麼是三平台同步？</h2>
+                        <p data-i18n="guide_sync_what_desc">EClawbot 支援將同一個 AI Entity 同時連接到多個通訊平台頻道（Signal、Telegram、LINE 等）。用戶在任何一個平台發訊息，Bot 都能接收並回覆。設定一次，全平台生效。</p>
+
+                        <!-- 平台同步流程視覺化 -->
+                        <div style="background:var(--card-bg,#1e1e2e);border:1px solid var(--card-border,#333);border-radius:16px;padding:20px;margin:20px 0;">
+                            <div style="text-align:center;font-size:12px;font-weight:600;margin-bottom:16px;color:#888;" data-i18n="guide_sync_diagram_title">同一個 Bot Entity 接收所有平台訊息</div>
+                            <div style="display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;">
+                                <!-- Signal -->
+                                <div style="text-align:center;">
+                                    <div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#3a76f0,#1a56d0);display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 6px;">📡</div>
+                                    <div style="font-size:11px;font-weight:600;">Signal</div>
+                                    <div style="font-size:9px;color:#22c55e;" data-i18n="guide_sync_status_connected">已連接</div>
+                                </div>
+                                <div style="font-size:18px;color:#444;">→</div>
+                                <!-- Telegram -->
+                                <div style="text-align:center;">
+                                    <div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#26a5e4,#1488cc);display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 6px;">✈️</div>
+                                    <div style="font-size:11px;font-weight:600;">Telegram</div>
+                                    <div style="font-size:9px;color:#22c55e;" data-i18n="guide_sync_status_connected">已連接</div>
+                                </div>
+                                <div style="font-size:18px;color:#444;">→</div>
+                                <!-- LINE -->
+                                <div style="text-align:center;">
+                                    <div style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#00c300,#00a000);display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 6px;">💬</div>
+                                    <div style="font-size:11px;font-weight:600;">LINE</div>
+                                    <div style="font-size:9px;color:#22c55e;" data-i18n="guide_sync_status_connected">已連接</div>
+                                </div>
+                                <div style="font-size:20px;color:#6366f1;font-weight:700;">↓</div>
+                                <!-- Bot -->
+                                <div style="text-align:center;width:100%;">
+                                    <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 6px;box-shadow:0 0 16px rgba(99,102,241,0.4);">🤖</div>
+                                    <div style="font-size:12px;font-weight:700;" data-i18n="guide_sync_bot_label">AI Bot Entity</div>
+                                    <div style="font-size:10px;color:#6366f1;" data-i18n="guide_sync_bot_sub">統一接收 · 統一回覆</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h2 data-i18n="guide_sync_how">如何運作？</h2>
+                        <div class="flow-diagram">
+                            <div class="flow-step">
+                                <div class="flow-icon">📱</div>
+                                <div class="flow-label" data-i18n="guide_sync_flow_user">用戶發訊</div>
+                                <div class="flow-sub" data-i18n="guide_sync_flow_user_sub">任一平台</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step">
+                                <div class="flow-icon">🔗</div>
+                                <div class="flow-label" data-i18n="guide_sync_flow_webhook">Webhook</div>
+                                <div class="flow-sub" data-i18n="guide_sync_flow_webhook_sub">平台轉送</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step">
+                                <div class="flow-icon">🤖</div>
+                                <div class="flow-label" data-i18n="guide_sync_flow_bot">Bot 處理</div>
+                                <div class="flow-sub" data-i18n="guide_sync_flow_bot_sub">同一 Entity</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step">
+                                <div class="flow-icon">↩️</div>
+                                <div class="flow-label" data-i18n="guide_sync_flow_reply">回傳原平台</div>
+                                <div class="flow-sub" data-i18n="guide_sync_flow_reply_sub">跨平台無縫</div>
+                            </div>
+                        </div>
+
+                        <h2 data-i18n="guide_sync_platforms">支援平台</h2>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_sync_platform_signal">📡 <strong>Signal</strong>：隱私加密，適合企業內部或高安全需求場景</li>
+                            <li data-i18n="guide_sync_platform_telegram">✈️ <strong>Telegram</strong>：Bot API 完整，支援群組、頻道、按鈕互動</li>
+                            <li data-i18n="guide_sync_platform_line">💬 <strong>LINE</strong>：台灣主流通訊，觸及最廣用戶群</li>
+                            <li data-i18n="guide_sync_platform_discord">🎮 <strong>Discord</strong>：社群 & 遊戲場景，支援 Slash 指令</li>
+                            <li data-i18n="guide_sync_platform_whatsapp">💚 <strong>WhatsApp</strong>：全球最大即時通訊，Business API 整合</li>
+                            <li data-i18n="guide_sync_platform_eclaw">🦞 <strong>EClaw（原生）</strong>：最低延遲，完整功能支援</li>
+                        </ul>
+
+                        <h2 data-i18n="guide_sync_setup">快速設定</h2>
+                        <div class="code-block"><pre><code><span data-i18n="guide_sync_step1"># 步驟 1：在 openclaw.json 設定多個頻道</span>
+channels:
+  - type: eclaw
+    deviceId: your-device-id
+  - type: telegram
+    botToken: your-telegram-token
+  - type: signal
+    phoneNumber: +886912345678
+
+<span data-i18n="guide_sync_step2"># 步驟 2：重啟 OpenClaw Gateway</span>
+openclaw gateway restart
+
+<span data-i18n="guide_sync_step3"># 步驟 3：同一個 Bot Entity 開始接收所有平台訊息 ✅</span></code></pre></div>
+
+                        <div class="cta-links">
+                            <h3 data-i18n="guide_sync_cta_title">立即設定多平台同步</h3>
+                            <p class="cta-item" data-i18n="[html]guide_sync_cta_docs">文件：<a href="https://docs.openclaw.ai" target="_blank" rel="noopener">OpenClaw 完整文件</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_sync_cta_compare">頻道比較：<a href="compare.html">EClaw vs OpenClaw 頻道比較</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_sync_cta_gatekeeper">安全防護：<a href="#guide/usecase-gatekeeper">Gatekeeper 安全守門員</a></p>
                         </div>
                     </div>
 
