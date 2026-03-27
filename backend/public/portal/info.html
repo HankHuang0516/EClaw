@@ -133,6 +133,7 @@
                         <button class="guide-sub-btn" data-guide="detail-crossdevice" data-i18n="guide_nav_detail_crossdevice">跨裝置訊息</button>
                         <button class="guide-sub-btn" data-guide="detail-agentcard" data-i18n="guide_nav_detail_agentcard">Agent Card</button>
                         <button class="guide-sub-btn" data-guide="detail-identity" data-i18n="guide_nav_detail_identity">身份設定</button>
+                        <button class="guide-sub-btn" data-guide="usecase-voice-tts" data-i18n="guide_nav_usecase_voice">語音對話 TTS</button>
                     </div>
                 </div>
                 <div class="guide-content">
@@ -964,6 +965,121 @@ Content-Type: application/json
 
                         <div class="note">← <a href="#guide/usecase-proxy-window">返回代理窗口指南</a></div>
                     </div>
+
+                    <!-- ── 實用案例：語音對話 TTS Demo ── -->
+                    <div class="guide-panel" id="guide-usecase-voice-tts">
+                        <header>
+                            <h1 data-i18n="guide_voice_title">🔊 語音對話 — Bot TTS 即時語音回覆</h1>
+                            <p class="meta" data-i18n="guide_voice_subtitle">讓你的 AI 代理「開口說話」，透過手機喇叭直接語音回覆用戶</p>
+                        </header>
+
+                        <h2 data-i18n="guide_voice_what">這是什麼？</h2>
+                        <p data-i18n="guide_voice_what_desc">EClawbot 的 <strong>TTS（Text-to-Speech）API</strong> 讓 Bot 能透過 Android 裝置的喇叭即時語音播報。即使 App 在背景運行，語音也能正常播出。適合需要語音互動的場景 —— 客服語音回覆、語音助手、無障礙輔助等。</p>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_voice_how">運作原理</p>
+                            <p class="solution-desc" data-i18n="guide_voice_how_desc">Bot 呼叫 TTS API → 伺服器轉發到 App → Android TextToSpeech 引擎朗讀 → 用戶聽到語音回覆</p>
+                        </div>
+
+                        <h2 data-i18n="guide_voice_api">API 用法</h2>
+                        <p data-i18n="guide_voice_api_desc">Bot 發送 <code>POST /api/device/tts</code> 即可讓手機朗讀文字：</p>
+
+                        <div class="code-block"><pre><code>POST /api/device/tts
+
+{
+  "deviceId": "your-device-id",
+  "entityId": 0,
+  "botSecret": "your-bot-secret",
+  "text": "您好！歡迎來到小蝦商城，今天有什麼可以幫您的？",
+  "lang": "zh-TW",
+  "speed": 1.0,
+  "pitch": 1.0
+}</code></pre></div>
+
+                        <h3 data-i18n="guide_voice_params">參數說明</h3>
+                        <table class="feature-table">
+                            <thead><tr><th data-i18n="guide_voice_param">參數</th><th data-i18n="guide_voice_required">必填</th><th data-i18n="guide_voice_desc">說明</th></tr></thead>
+                            <tbody>
+                                <tr><td><code>text</code></td><td>✅</td><td data-i18n="guide_voice_param_text">要朗讀的文字（最多 500 字）</td></tr>
+                                <tr><td><code>lang</code></td><td>—</td><td data-i18n="guide_voice_param_lang">BCP-47 語言代碼，預設 zh-TW（支援 en-US, ja-JP, ko-KR 等）</td></tr>
+                                <tr><td><code>speed</code></td><td>—</td><td data-i18n="guide_voice_param_speed">語速 0.5～2.0，預設 1.0</td></tr>
+                                <tr><td><code>pitch</code></td><td>—</td><td data-i18n="guide_voice_param_pitch">音調 0.5～2.0，預設 1.0</td></tr>
+                            </tbody>
+                        </table>
+
+                        <h2 data-i18n="guide_voice_scenarios">使用場景</h2>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_voice_scene1_title">🎧 客服語音回覆</p>
+                            <p class="solution-desc" data-i18n="guide_voice_scene1_desc">電商客服 Bot 在回覆文字的同時，透過 TTS 語音播報重點資訊。「您的訂單已出貨，預計明天到達。」讓用戶不用盯著螢幕也能接收資訊。</p>
+                        </div>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_voice_scene2_title">🗣️ 語音助手模式</p>
+                            <p class="solution-desc" data-i18n="guide_voice_scene2_desc">搭配語音輸入，打造完整的語音對話體驗。用戶說話 → Bot 理解 → TTS 語音回覆，如同 Siri / Google Assistant。</p>
+                        </div>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_voice_scene3_title">♿ 無障礙輔助</p>
+                            <p class="solution-desc" data-i18n="guide_voice_scene3_desc">視障用戶可透過語音接收 Bot 的所有回覆。支援多語言、可調語速，確保資訊無障礙傳達。</p>
+                        </div>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_voice_scene4_title">🌍 多語言播報</p>
+                            <p class="solution-desc" data-i18n="guide_voice_scene4_desc">支援繁中 / 英文 / 日文 / 韓文 / 泰文等多種語言。適合多語客服場景，Bot 自動偵測語言並以對應語音回覆。</p>
+                        </div>
+
+                        <h2 data-i18n="guide_voice_flow">完整流程</h2>
+                        <div class="code-block"><pre><code>1. 用戶發送訊息（文字或語音）
+2. Bot 處理並生成回覆
+3. Bot 呼叫 POST /api/device/tts
+4. Server 透過 Socket.IO 推送到 Android App
+5. App 的 TextToSpeech 引擎朗讀文字
+6. 用戶透過手機喇叭/耳機聽到回覆
+   （同時 Chat 頁面也會顯示文字訊息）</code></pre></div>
+
+                        <h2 data-i18n="guide_voice_example">程式碼範例</h2>
+                        <p data-i18n="guide_voice_example_desc">OpenClaw Bot 在回覆用戶時同時觸發語音：</p>
+                        <div class="code-block"><pre><code>// OpenClaw Bot 回覆 + TTS 語音
+async function replyWithVoice(message, deviceId, entityId, botSecret) {
+  // 1. 發送文字訊息
+  await fetch('https://eclawbot.com/api/transform', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ deviceId, entityId, botSecret, message })
+  });
+
+  // 2. 同時觸發語音播報
+  await fetch('https://eclawbot.com/api/device/tts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      deviceId, entityId, botSecret,
+      text: message,
+      lang: 'zh-TW',
+      speed: 1.0
+    })
+  });
+}</code></pre></div>
+
+                        <h2 data-i18n="guide_voice_features">技術特色</h2>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_voice_feat1">📱 <strong>背景播放</strong>：App 在背景或鎖屏時也能語音播報（Foreground Service）</li>
+                            <li data-i18n="guide_voice_feat2">🔔 <strong>FCM 備援</strong>：Socket.IO 斷線時透過 Firebase Cloud Messaging 觸發</li>
+                            <li data-i18n="guide_voice_feat3">🌐 <strong>多語言</strong>：支援 Android TextToSpeech 引擎支援的所有語言</li>
+                            <li data-i18n="guide_voice_feat4">⚡ <strong>低延遲</strong>：從 Bot 呼叫到用戶聽到通常 &lt;1 秒</li>
+                            <li data-i18n="guide_voice_feat5">🎛️ <strong>可調參數</strong>：語速、音調皆可自訂（0.5x～2.0x）</li>
+                        </ul>
+
+                        <div class="note" data-i18n="guide_voice_note">💡 <strong>提示：</strong>TTS 目前僅支援 Android 裝置。iOS 支援規劃中。文字長度上限 500 字，超過請分段呼叫。</div>
+
+                        <div class="cta-links">
+                            <h3 data-i18n="guide_voice_cta_title">立即試用</h3>
+                            <p class="cta-item" data-i18n="[html]guide_voice_cta_api">API 文件：<a href="https://eclawbot.com/api/skill-doc" target="_blank" rel="noopener">完整 API Skill Doc</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_voice_cta_app">Android App：<a href="https://play.google.com/store/apps/details?id=com.hank.clawlive" target="_blank" rel="noopener">Google Play 下載</a></p>
+                        </div>
+                    </div>
+
                 </div><!-- /guide-content -->
             </div><!-- /guide-layout -->
         </div><!-- /panel-guide (User Guide) -->
