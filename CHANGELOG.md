@@ -1,3 +1,10 @@
+## [1.211.2](https://github.com/HankHuang0516/EClaw/compare/v1.211.1...v1.211.2) (2026-03-27)
+
+
+### Bug Fixes
+
+* **security:** remove debug endpoints, XSS vector, add rate limit + SEO/i18n fixes ([0a67fca](https://github.com/HankHuang0516/EClaw/commit/0a67fcaf5eb51c25a072ca9de4cdfbcf0659aad1))
+
 ## [1.211.1](https://github.com/HankHuang0516/EClaw/compare/v1.211.0...v1.211.1) (2026-03-27)
 
 
