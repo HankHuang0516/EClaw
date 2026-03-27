@@ -1,3 +1,10 @@
+## [1.210.1](https://github.com/HankHuang0516/EClaw/compare/v1.210.0...v1.210.1) (2026-03-27)
+
+
+### Bug Fixes
+
+* **kanban:** expose schedule.lastRunAt after once-trigger completes ([6e46f96](https://github.com/HankHuang0516/EClaw/commit/6e46f96fefa51cab1062517457bea7f9d771ef3e))
+
 # [1.210.0](https://github.com/HankHuang0516/EClaw/compare/v1.209.0...v1.210.0) (2026-03-27)
 
 
