@@ -1,3 +1,11 @@
+# [1.207.0](https://github.com/HankHuang0516/EClaw/compare/v1.206.0...v1.207.0) (2026-03-27)
+
+
+### Features
+
+* **info:** [P1-2] Kanban AI 團隊看板 Demo HTML + i18n ([36141be](https://github.com/HankHuang0516/EClaw/commit/36141be5c00f022fc34f577b7e1226ea090e8557)), closes [#2](https://github.com/HankHuang0516/EClaw/issues/2) [#3](https://github.com/HankHuang0516/EClaw/issues/3) [#4](https://github.com/HankHuang0516/EClaw/issues/4) [#5](https://github.com/HankHuang0516/EClaw/issues/5)
+* **info:** [P1-3] GPS 定位智慧推薦 Demo HTML + i18n ([e235f34](https://github.com/HankHuang0516/EClaw/commit/e235f34ca9d1edb4ae21bcaac06dc950891837ca))
+
 # [1.206.0](https://github.com/HankHuang0516/EClaw/compare/v1.205.0...v1.206.0) (2026-03-27)
 
 
