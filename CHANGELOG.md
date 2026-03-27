@@ -1,3 +1,10 @@
+# [1.211.0](https://github.com/HankHuang0516/EClaw/compare/v1.210.2...v1.211.0) (2026-03-27)
+
+
+### Features
+
+* **kanban:** expose isAutomation in PUT /card/:id/config ([ffa265e](https://github.com/HankHuang0516/EClaw/commit/ffa265eeeb9717955ad15d9b4ec67c707993a49f))
+
 ## [1.210.2](https://github.com/HankHuang0516/EClaw/compare/v1.210.1...v1.210.2) (2026-03-27)
 
 
