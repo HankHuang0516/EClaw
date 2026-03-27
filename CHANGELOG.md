@@ -1,3 +1,10 @@
+## [1.211.1](https://github.com/HankHuang0516/EClaw/compare/v1.211.0...v1.211.1) (2026-03-27)
+
+
+### Bug Fixes
+
+* **kanban:** automation cards openable in detail modal ([a8d0865](https://github.com/HankHuang0516/EClaw/commit/a8d086575d229485fecbb525cfc654ebb8e5c111))
+
 # [1.211.0](https://github.com/HankHuang0516/EClaw/compare/v1.210.2...v1.211.0) (2026-03-27)
 
 
