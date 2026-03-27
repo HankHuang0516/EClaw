@@ -138,7 +138,6 @@
 
     // ── Build DOM ─────────────────────────────
     function createWidget() {
-        dbg('createWidget() called');
         // FAB
         const fab = document.createElement('button');
         fab.id = 'aiChatFab';

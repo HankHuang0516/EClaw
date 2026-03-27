@@ -674,7 +674,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                         id: null,
                         email: null,
                         deviceId: deviceId,
-                        // deviceSecret removed (Issue #490: avoid leaking secrets in response body)
+                        deviceSecret: req.user.deviceSecret || null,
                         subscriptionStatus: isPremium ? 'premium' : 'free',
                         subscriptionExpiresAt: null,
                         language: 'en',
@@ -758,7 +758,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                     id: user.id,
                     email: user.email,
                     deviceId: user.device_id,
-                    // deviceSecret removed (Issue #490: avoid leaking secrets in response body)
+                    deviceSecret: user.device_secret,
                     subscriptionStatus: user.subscription_status,
                     subscriptionExpiresAt: user.subscription_expires_at,
                     language: user.language,
