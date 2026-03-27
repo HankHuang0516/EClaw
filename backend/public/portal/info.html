@@ -133,6 +133,7 @@
                         <button class="guide-sub-btn" data-guide="detail-crossdevice" data-i18n="guide_nav_detail_crossdevice">跨裝置訊息</button>
                         <button class="guide-sub-btn" data-guide="detail-agentcard" data-i18n="guide_nav_detail_agentcard">Agent Card</button>
                         <button class="guide-sub-btn" data-guide="detail-identity" data-i18n="guide_nav_detail_identity">身份設定</button>
+                        <button class="guide-sub-btn" data-guide="usecase-voice-tts" data-i18n="guide_nav_usecase_voice">語音對話</button>
                     </div>
                 </div>
                 <div class="guide-content">
@@ -1638,6 +1639,158 @@ Content-Type: application/json
                         </ul>
 
                         <div class="note" data-i18n="guide_identity_note_back">← <a href="#guide/usecase-proxy-window">返回代理窗口指南</a></div>
+                    </div>
+
+                    <!-- ── 實用案例：語音對話 Demo ── -->
+                    <div class="guide-panel" id="guide-usecase-voice-tts">
+                        <header>
+                            <h1 data-i18n="guide_voice_title">語音對話 — 讓 Bot 開口說話</h1>
+                            <p class="meta" data-i18n="guide_voice_meta">透過 TTS API，Bot 可以直接在用戶手機上語音回覆，無需額外硬體</p>
+                        </header>
+
+                        <h2 data-i18n="guide_voice_h2_what">什麼是語音對話？</h2>
+                        <p data-i18n="guide_voice_p_what">EClawbot 的 TTS（Text-to-Speech）API 讓你的 AI 代理透過 Socket.IO 將語音指令推送到用戶的 Android 手機，使用系統內建的語音引擎朗讀文字。即使 App 在背景執行也能發聲。</p>
+
+                        <div class="note" data-i18n="guide_voice_note_scenario">🎯 適用場景：客服語音回覆、語音助手、無障礙服務、門市迎賓、語音通知提醒。</div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_voice_h2_arch">架構流程</h2>
+                        <div class="flow-diagram">
+                            <div class="flow-step">
+                                <div class="flow-icon">🤖</div>
+                                <div class="flow-label">Bot</div>
+                                <div class="flow-sub" data-i18n="guide_voice_flow1_sub">呼叫 TTS API</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step">
+                                <div class="flow-icon">☁️</div>
+                                <div class="flow-label">EClaw Server</div>
+                                <div class="flow-sub" data-i18n="guide_voice_flow2_sub">Socket.IO 推送</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step">
+                                <div class="flow-icon">📱</div>
+                                <div class="flow-label">Android App</div>
+                                <div class="flow-sub" data-i18n="guide_voice_flow3_sub">TTS 引擎朗讀</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step">
+                                <div class="flow-icon">🔊</div>
+                                <div class="flow-label" data-i18n="guide_voice_flow4_label">語音輸出</div>
+                                <div class="flow-sub" data-i18n="guide_voice_flow4_sub">用戶聽到回覆</div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_voice_h2_api">API 用法</h2>
+                        <div class="code-block">POST /api/device/tts
+Content-Type: application/json
+
+{
+  "deviceId": "YOUR_DEVICE_ID",
+  "entityId": 0,
+  "botSecret": "YOUR_BOT_SECRET",
+  "text": "您好！您的訂單已出貨，預計明天到達。",
+  "lang": "zh-TW",
+  "speed": 1.0,
+  "pitch": 1.0
+}</div>
+
+                        <table class="feature-table" style="margin-top:16px">
+                            <thead><tr><th data-i18n="guide_voice_th_param">參數</th><th data-i18n="guide_voice_th_type">類型</th><th data-i18n="guide_voice_th_desc">說明</th></tr></thead>
+                            <tbody>
+                                <tr><td><code>text</code></td><td>string</td><td data-i18n="guide_voice_td_text">必填，要朗讀的文字（最多 500 字元）</td></tr>
+                                <tr><td><code>lang</code></td><td>string</td><td data-i18n="guide_voice_td_lang">語言代碼，預設 <code>zh-TW</code>（支援 BCP-47 格式如 <code>en-US</code>、<code>ja-JP</code>）</td></tr>
+                                <tr><td><code>speed</code></td><td>number</td><td data-i18n="guide_voice_td_speed">語速 0.5–2.0，預設 1.0</td></tr>
+                                <tr><td><code>pitch</code></td><td>number</td><td data-i18n="guide_voice_td_pitch">音調 0.5–2.0，預設 1.0</td></tr>
+                            </tbody>
+                        </table>
+
+                        <div class="note" data-i18n="guide_voice_note_auth">🔐 認證方式：使用 <code>botSecret</code>（Bot 認證）或 <code>deviceSecret</code>（裝置擁有者認證）。</div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_voice_h2_response">回應格式</h2>
+                        <div class="code-block">{
+  "success": true,
+  "message": "TTS command sent to device",
+  "lang": "zh-TW",
+  "speed": 1.0,
+  "pitch": 1.0
+}</div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_voice_h2_usecases">應用範例</h2>
+
+                        <h3 class="step-heading" data-i18n="guide_voice_uc1_title">📞 客服語音回覆</h3>
+                        <p data-i18n="guide_voice_uc1_desc">收到客戶查詢時，Bot 先文字回覆，同時用 TTS 語音朗讀回覆內容，適合店面環境或行動中的用戶。</p>
+                        <div class="code-block">// Bot 邏輯：回覆客戶時同時觸發語音
+const reply = "您的訂單 #12345 已出貨，預計明天送達。";
+// 1. 文字回覆
+await fetch('/api/entity/speak-to', { ... });
+// 2. 語音朗讀
+await fetch('/api/device/tts', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    deviceId, entityId: 0, botSecret,
+    text: reply, lang: 'zh-TW'
+  })
+});</div>
+
+                        <h3 class="step-heading" data-i18n="guide_voice_uc2_title">🏪 門市迎賓助手</h3>
+                        <p data-i18n="guide_voice_uc2_desc">搭配跨裝置訊息，當客戶透過代理窗口互動時，門市的 Android 平板自動用語音歡迎。</p>
+                        <div class="code-block">// 客戶進入代理窗口 → 觸發迎賓
+await fetch('/api/device/tts', {
+  method: 'POST',
+  body: JSON.stringify({
+    deviceId, entityId: 0, botSecret,
+    text: "歡迎光臨！我是您的智能助手，有什麼可以幫您的嗎？",
+    lang: 'zh-TW', speed: 0.9, pitch: 1.1
+  })
+});</div>
+
+                        <h3 class="step-heading" data-i18n="guide_voice_uc3_title">♿ 無障礙語音服務</h3>
+                        <p data-i18n="guide_voice_uc3_desc">為視障或閱讀不便的用戶提供語音回覆。設定較慢的語速和適當的音調，確保訊息清晰傳達。</p>
+                        <div class="code-block">// 無障礙模式：慢速 + 高清晰度
+await fetch('/api/device/tts', {
+  method: 'POST',
+  body: JSON.stringify({
+    deviceId, entityId: 0, botSecret,
+    text: "查詢結果：明天台北天氣晴朗，氣溫 25 度。",
+    lang: 'zh-TW', speed: 0.7, pitch: 1.0
+  })
+});</div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_voice_h2_tips">使用提醒</h2>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_voice_tip_li1">✅ 文字長度限制 500 字元，建議控制在 200 字以內以獲得最佳體驗</li>
+                            <li data-i18n="guide_voice_tip_li2">✅ 支援多語言：<code>zh-TW</code>、<code>zh-CN</code>、<code>en-US</code>、<code>ja-JP</code>、<code>ko-KR</code> 等</li>
+                            <li data-i18n="guide_voice_tip_li3">✅ App 背景執行時仍可透過 Foreground Service 發聲</li>
+                            <li data-i18n="guide_voice_tip_li4">✅ FCM 推播作為 Socket.IO 斷線時的備援機制</li>
+                            <li data-i18n="guide_voice_tip_li5">⚠️ TTS 品質取決於裝置的語音引擎（Google TTS、Samsung TTS 等）</li>
+                            <li data-i18n="guide_voice_tip_li6">⚠️ 目前僅支援 Android 裝置，iOS 語音支援開發中</li>
+                        </ul>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_voice_h2_combine">搭配其他功能</h2>
+                        <table class="feature-table">
+                            <thead><tr><th data-i18n="guide_voice_th_feature">搭配功能</th><th data-i18n="guide_voice_th_effect">效果</th></tr></thead>
+                            <tbody>
+                                <tr><td data-i18n="guide_voice_combine_proxy"><a href="#guide/usecase-proxy-window">尹代理窗口</a></td><td data-i18n="guide_voice_combine_proxy_desc">客戶在瀏覽器對話，門市設備同步語音朗讀</td></tr>
+                                <tr><td data-i18n="guide_voice_combine_xd"><a href="#guide/detail-crossdevice">跨裝置訊息</a></td><td data-i18n="guide_voice_combine_xd_desc">外部訊息進入後，Bot 處理並用語音回報結果</td></tr>
+                                <tr><td data-i18n="guide_voice_combine_identity"><a href="#guide/detail-identity">身份設定</a></td><td data-i18n="guide_voice_combine_identity_desc">搭配特定語調的 Identity，語音回覆更有角色感</td></tr>
+                                <tr><td data-i18n="guide_voice_combine_soul">Soul 靈魂</td><td data-i18n="guide_voice_combine_soul_desc">人格設定影響回覆內容，TTS 則將人格化的文字變成聲音</td></tr>
+                            </tbody>
+                        </table>
+
+                        <div class="note" data-i18n="guide_voice_note_back">← <a href="#guide/features">返回功能介紹</a> ｜ <a href="#guide/usecase-proxy-window">尹代理窗口</a></div>
                     </div>
 
                 </div><!-- /guide-content -->
