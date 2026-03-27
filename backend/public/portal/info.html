@@ -303,38 +303,38 @@
                     <!-- ── 實用案例：用 Claude 指揮 OpenClaw ── -->
                     <div class="guide-panel" id="guide-usecase-claude-openclaw">
                         <header>
-                            <h1>用 Claude 透過 Eclaw 指揮 OpenClaw</h1>
-                            <p class="meta">讓 Claude AI 成為你的「AI 指揮官」，透過 Eclaw 遠端控制你的 OpenClaw bot</p>
+                            <h1 data-i18n="guide_usecase_title">用 Claude 透過 Eclaw 指揮 OpenClaw</h1>
+                            <p class="meta" data-i18n="guide_usecase_meta">讓 Claude AI 成為你的「AI 指揮官」，透過 Eclaw 遠端控制你的 OpenClaw bot</p>
                         </header>
 
-                        <h2>架構概覽</h2>
-                        <p>這個方案把三個系統串在一起：</p>
-                        <div class="code-block">你（自然語言）→ Claude（AI 指揮官）→ Eclaw API → OpenClaw Bot（執行任務）→ 回報結果</div>
+                        <h2 data-i18n="guide_usecase_h2_1">架構概覽</h2>
+                        <p data-i18n="guide_usecase_p_1">這個方案把三個系統串在一起：</p>
+                        <div class="code-block" data-i18n="guide_usecase_code_arch">你（自然語言）→ Claude（AI 指揮官）→ Eclaw API → OpenClaw Bot（執行任務）→ 回報結果</div>
 
                         <table class="feature-table" style="margin-top:16px">
-                            <thead><tr><th>角色</th><th>說明</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_usecase_th_1">角色</th><th data-i18n="guide_usecase_th_2">說明</th></tr></thead>
                             <tbody>
-                                <tr><td><strong>Eclaw</strong></td><td>中控台，管理 entity（bot 席位），提供 HTTP API</td></tr>
-                                <tr><td><strong>OpenClaw</strong></td><td>AI bot 的運行平台，執行實際任務</td></tr>
-                                <tr><td><strong>Claude</strong></td><td>你的 AI 指揮官，透過 Eclaw API 傳達指令給 OpenClaw</td></tr>
+                                <tr><td data-i18n="guide_usecase_td_1"><strong>Eclaw</strong></td><td data-i18n="guide_usecase_td_2">中控台，管理 entity（bot 席位），提供 HTTP API</td></tr>
+                                <tr><td data-i18n="guide_usecase_td_3"><strong>OpenClaw</strong></td><td data-i18n="guide_usecase_td_4">AI bot 的運行平台，執行實際任務</td></tr>
+                                <tr><td data-i18n="guide_usecase_td_5"><strong>Claude</strong></td><td data-i18n="guide_usecase_td_6">你的 AI 指揮官，透過 Eclaw API 傳達指令給 OpenClaw</td></tr>
                             </tbody>
                         </table>
 
                         <hr>
 
-                        <h2>前置準備</h2>
+                        <h2 data-i18n="guide_usecase_h2_2">前置準備</h2>
                         <ul class="tips-list">
-                            <li>✅ Eclaw 帳號 + 手機 App 或 Web Portal</li>
-                            <li>✅ 一個已在 OpenClaw 平台上運行的 AI bot，並已綁定到你的 Eclaw entity</li>
-                            <li>✅ <strong>Claude Code CLI</strong>（推薦）或 Claude.ai（含 MCP 工具）</li>
+                            <li data-i18n="guide_usecase_li_1">✅ Eclaw 帳號 + 手機 App 或 Web Portal</li>
+                            <li data-i18n="guide_usecase_li_2">✅ 一個已在 OpenClaw 平台上運行的 AI bot，並已綁定到你的 Eclaw entity</li>
+                            <li data-i18n="guide_usecase_li_3">✅ <strong>Claude Code CLI</strong>（推薦）或 Claude.ai（含 MCP 工具）</li>
                         </ul>
-                        <div class="note">⚠️ Claude.ai 標準對話介面<strong>無法直接執行 HTTP 請求</strong>，需要 <strong>Claude Code CLI</strong> 才能讓 Claude 真正幫你操作 API。</div>
+                        <div class="note" data-i18n="guide_usecase_note_1">⚠️ Claude.ai 標準對話介面<strong>無法直接執行 HTTP 請求</strong>，需要 <strong>Claude Code CLI</strong> 才能讓 Claude 真正幫你操作 API。</div>
 
                         <hr>
 
-                        <h2>完整範例</h2>
-                        <p>直接複製以下內容，貼給 Claude，它會自動讀取說明書並幫你控制 OpenClaw bot：</p>
-                        <div class="code-block">請用 WebFetch 讀取 https://eclawbot.com/api/skill-doc，然後幫我控制我的 OpenClaw bot
+                        <h2 data-i18n="guide_usecase_h2_3">完整範例</h2>
+                        <p data-i18n="guide_usecase_p_2">直接複製以下內容，貼給 Claude，它會自動讀取說明書並幫你控制 OpenClaw bot：</p>
+                        <div class="code-block" data-i18n="guide_usecase_code_example">請用 WebFetch 讀取 https://eclawbot.com/api/skill-doc，然後幫我控制我的 OpenClaw bot
 
 我的 Eclaw 設定：
 Device ID: 48xxxx4c-2183-xxxx-afd0-b131ae8xxxxc
@@ -349,42 +349,42 @@ Device Secret: xxxxdb10-2xxx-42b6-xxxx-f9d446c97ff9-7cff9697-xxxx1-415d-a282-4e8
 最終目標完畢後，你要進行審查，確定沒有失誤</div>
                         <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
                             <button class="btn btn-primary" id="copyClaudeExampleBtn" onclick="copyClaudeOpenclawExample()">
-                                📋 <span>複製範例（填入你的憑證）</span>
+                                📋 <span data-i18n="guide_copy_example_btn">複製範例（填入你的憑證）</span>
                             </button>
-                            <span id="copyClaudeExampleFeedback" style="display:none;color:var(--color-success)">已複製！</span>
+                            <span id="copyClaudeExampleFeedback" style="display:none;color:var(--color-success)" data-i18n="guide_copy_example_copied">已複製！</span>
                         </div>
-                        <p style="color:var(--text-secondary);font-size:0.9em;margin-top:8px">若你已登入，複製內容會自動帶入你的 Device ID 與 Device Secret；短期目標與最終目標欄位請自行填寫。</p>
+                        <p style="color:var(--text-secondary);font-size:0.9em;margin-top:8px" data-i18n="guide_copy_example_hint">若你已登入，複製內容會自動帶入你的 Device ID 與 Device Secret；短期目標與最終目標欄位請自行填寫。</p>
 
                         <hr>
 
-                        <h2>常用指令速查</h2>
+                        <h2 data-i18n="guide_usecase_h2_4">常用指令速查</h2>
                         <table class="feature-table">
-                            <thead><tr><th>你想做的事</th><th>說法範例</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_usecase_cmd_th_1">你想做的事</th><th data-i18n="guide_usecase_cmd_th_2">說法範例</th></tr></thead>
                             <tbody>
-                                <tr><td>查看 bot 狀態</td><td>「我的 bot 在幹嘛？」</td></tr>
-                                <tr><td>交辦任務</td><td>「叫 bot 去做 ___」</td></tr>
-                                <tr><td>更新顯示訊息</td><td>「讓 bot 顯示 '___'」</td></tr>
-                                <tr><td>設定排程</td><td>「每天/每小時讓 bot 自動做 ___」</td></tr>
-                                <tr><td>查看排程</td><td>「列出我設定的所有排程」</td></tr>
-                                <tr><td>取消排程</td><td>「取消 '___' 這個排程」</td></tr>
-                                <tr><td>查看記錄</td><td>「bot 最近說了什麼？」</td></tr>
-                                <tr><td>貢獻技能</td><td>「幫我把這個技能提交到 Eclaw 技能庫」</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmd_1a">查看 bot 狀態</td><td data-i18n="guide_usecase_cmd_1b">「我的 bot 在幹嘛？」</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmd_2a">交辦任務</td><td data-i18n="guide_usecase_cmd_2b">「叫 bot 去做 ___」</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmd_3a">更新顯示訊息</td><td data-i18n="guide_usecase_cmd_3b">「讓 bot 顯示 '___'」</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmd_4a">設定排程</td><td data-i18n="guide_usecase_cmd_4b">「每天/每小時讓 bot 自動做 ___」</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmd_5a">查看排程</td><td data-i18n="guide_usecase_cmd_5b">「列出我設定的所有排程」</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmd_6a">取消排程</td><td data-i18n="guide_usecase_cmd_6b">「取消 '___' 這個排程」</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmd_7a">查看記錄</td><td data-i18n="guide_usecase_cmd_7b">「bot 最近說了什麼？」</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmd_8a">貢獻技能</td><td data-i18n="guide_usecase_cmd_8b">「幫我把這個技能提交到 Eclaw 技能庫」</td></tr>
                             </tbody>
                         </table>
 
                         <hr>
 
-                        <h2>進階：多 Bot 協作</h2>
-                        <p>如果你有多個 entity（多個 bot），Claude 可以協調它們一起工作：</p>
-                        <div class="code-block">讓 entity 0 負責收集資料，entity 1 負責分析，兩個 bot 一起幫我做市場調查</div>
-                        <p>Claude 會分別對兩個 entity 發送任務，整合結果後回報給你。</p>
+                        <h2 data-i18n="guide_usecase_h2_5">進階：多 Bot 協作</h2>
+                        <p data-i18n="guide_usecase_p_3">如果你有多個 entity（多個 bot），Claude 可以協調它們一起工作：</p>
+                        <div class="code-block" data-i18n="guide_usecase_code_multibot">讓 entity 0 負責收集資料，entity 1 負責分析，兩個 bot 一起幫我做市場調查</div>
+                        <p data-i18n="guide_usecase_p_4">Claude 會分別對兩個 entity 發送任務，整合結果後回報給你。</p>
 
                         <hr>
 
-                        <h2>閉環驗證與自動糾錯（最關鍵的特性）</h2>
-                        <p>這是整個系統最重要的特性：<strong>你下完指令後，不需要自己進去驗證結果。</strong> Claude 會自動完成「發送 → 驗證 → 糾錯 → 再驗證」的完整閉環，直到任務真正正確完成為止。</p>
+                        <h2 data-i18n="guide_usecase_h2_6">閉環驗證與自動糾錯（最關鍵的特性）</h2>
+                        <p data-i18n="guide_usecase_p_5">這是整個系統最重要的特性：<strong>你下完指令後，不需要自己進去驗證結果。</strong> Claude 會自動完成「發送 → 驗證 → 糾錯 → 再驗證」的完整閉環，直到任務真正正確完成為止。</p>
 
-                        <div class="code-block">你下指令
+                        <div class="code-block" data-i18n="guide_usecase_code_loop">你下指令
   │
   ▼
 Claude 發送任務給 OpenClaw bot
@@ -405,299 +405,299 @@ Claude 主動查詢執行結果
         ▼
       Claude 再次驗證（重複直到正確）</div>
 
-                        <h3 class="step-heading">真實案例：排程設錯位置，Claude 自動糾正</h3>
-                        <p>你只說了一句：<strong>「幫我的 bot 設定每小時自動搜尋技能的排程」</strong></p>
-                        <p>Claude 在背後自動完成：</p>
+                        <h3 class="step-heading" data-i18n="guide_usecase_h3_1">真實案例：排程設錯位置，Claude 自動糾正</h3>
+                        <p data-i18n="guide_usecase_p_6">你只說了一句：<strong>「幫我的 bot 設定每小時自動搜尋技能的排程」</strong></p>
+                        <p data-i18n="guide_usecase_p_7">Claude 在背後自動完成：</p>
                         <ol style="line-height:2">
-                            <li>發送排程設定指令給 bot（speak-to）</li>
-                            <li>查詢 <code>GET /api/mission/dashboard</code>，<strong>發現 bot 把排程放進了 Mission Rules（錯誤位置）</strong></li>
-                            <li>查詢 <code>GET /api/bot/schedules</code>，確認正式排程列表是空的</li>
-                            <li>發送糾錯指令：刪除錯誤 Rule + 用正確 API 建立排程</li>
-                            <li>再次驗證：Rule 已消失 ✓ 排程已出現 ✓ bot 回報「✅ 排程已設定」</li>
-                            <li><strong>最終才回報給你：完成</strong></li>
+                            <li data-i18n="guide_usecase_li_4">發送排程設定指令給 bot（speak-to）</li>
+                            <li data-i18n="guide_usecase_li_5">查詢 <code>GET /api/mission/dashboard</code>，<strong>發現 bot 把排程放進了 Mission Rules（錯誤位置）</strong></li>
+                            <li data-i18n="guide_usecase_li_6">查詢 <code>GET /api/bot/schedules</code>，確認正式排程列表是空的</li>
+                            <li data-i18n="guide_usecase_li_7">發送糾錯指令：刪除錯誤 Rule + 用正確 API 建立排程</li>
+                            <li data-i18n="guide_usecase_li_8">再次驗證：Rule 已消失 ✓ 排程已出現 ✓ bot 回報「✅ 排程已設定」</li>
+                            <li data-i18n="guide_usecase_li_9"><strong>最終才回報給你：完成</strong></li>
                         </ol>
-                        <div class="note">從頭到尾你只說了一句話。Claude 獨立完成了發送、驗證、發現錯誤、糾正、再驗證的完整流程。</div>
+                        <div class="note" data-i18n="guide_usecase_note_2">從頭到尾你只說了一句話。Claude 獨立完成了發送、驗證、發現錯誤、糾正、再驗證的完整流程。</div>
 
                         <table class="feature-table" style="margin-top:16px">
-                            <thead><tr><th>傳統做法</th><th>Claude 閉環做法</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_usecase_cmp_th_1">傳統做法</th><th data-i18n="guide_usecase_cmp_th_2">Claude 閉環做法</th></tr></thead>
                             <tbody>
-                                <tr><td>下指令 → 自己去 Portal 檢查 → 發現錯了 → 手動糾正 → 再確認</td><td>下指令 → 等結果</td></tr>
-                                <tr><td>需要了解 API 結構才能判斷對錯</td><td>Claude 自行對照 API 回應判斷</td></tr>
-                                <tr><td>容易遺漏細節（例如放錯頁面）</td><td>Claude 多點交叉驗證</td></tr>
-                                <tr><td>每次都需人工介入</td><td>只有真正完成時才通知你</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmp_1a">下指令 → 自己去 Portal 檢查 → 發現錯了 → 手動糾正 → 再確認</td><td data-i18n="guide_usecase_cmp_1b">下指令 → 等結果</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmp_2a">需要了解 API 結構才能判斷對錯</td><td data-i18n="guide_usecase_cmp_2b">Claude 自行對照 API 回應判斷</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmp_3a">容易遺漏細節（例如放錯頁面）</td><td data-i18n="guide_usecase_cmp_3b">Claude 多點交叉驗證</td></tr>
+                                <tr><td data-i18n="guide_usecase_cmp_4a">每次都需人工介入</td><td data-i18n="guide_usecase_cmp_4b">只有真正完成時才通知你</td></tr>
                             </tbody>
                         </table>
 
                         <hr>
 
-                        <h2>常見問題</h2>
-                        <p><strong>Q: Claude 說「我沒有辦法執行 HTTP 請求」怎麼辦？</strong><br>
+                        <h2 data-i18n="guide_usecase_h2_7">常見問題</h2>
+                        <p data-i18n="guide_usecase_faq_1"><strong>Q: Claude 說「我沒有辦法執行 HTTP 請求」怎麼辦？</strong><br>
                         A: 你需要使用 <strong>Claude Code CLI</strong>（有 Bash 工具），或在 Claude.ai 啟用 MCP 工具。標準對話介面只會給你指令讓你自己貼到終端機執行。</p>
 
-                        <p><strong>Q: Device Secret 在哪裡找？</strong><br>
+                        <p data-i18n="guide_usecase_faq_2"><strong>Q: Device Secret 在哪裡找？</strong><br>
                         A: Web Portal → 右上角頭像 → Settings → Device Secret 列 → 點眼睛圖示顯示 → 複製。Bot Secret 是 bot 自己的憑證，用戶不需要取得。</p>
 
-                        <p><strong>Q: Claude 下的指令 bot 沒有反應？</strong><br>
+                        <p data-i18n="guide_usecase_faq_3"><strong>Q: Claude 下的指令 bot 沒有反應？</strong><br>
                         A: 確認 bot 已綁定（isBound: true）、Device Secret 正確、OpenClaw 在線。</p>
                     </div>
 
                     <!-- ── 尹代理窗口 ── -->
                     <div class="guide-panel" id="guide-usecase-proxy-window">
                         <header>
-                            <h1>尹代理窗口 — 企業級代理服務入口</h1>
-                            <p class="meta">讓你的 AI 代理擁有專屬對外窗口，客戶可直接對話、下單、查詢</p>
+                            <h1 data-i18n="guide_proxy_title">尹代理窗口 — 企業級代理服務入口</h1>
+                            <p class="meta" data-i18n="guide_proxy_meta">讓你的 AI 代理擁有專屬對外窗口，客戶可直接對話、下單、查詢</p>
                         </header>
 
-                        <h2>什麼是「尹代理」窗口？</h2>
-                        <p>「尹代理」窗口是名片夾（Card Holder）中每個實體的專屬連結網址。透過這個連結，外部用戶無需安裝 App，即可在瀏覽器中直接與你的 AI 代理對話，完成下單購買、地點定位、行程安排、文章發布、後台維護等各種任務。</p>
+                        <h2 data-i18n="guide_proxy_h2_what">什麼是「尹代理」窗口？</h2>
+                        <p data-i18n="guide_proxy_p_what">「尹代理」窗口是名片夾（Card Holder）中每個實體的專屬連結網址。透過這個連結，外部用戶無需安裝 App，即可在瀏覽器中直接與你的 AI 代理對話，完成下單購買、地點定位、行程安排、文章發布、後台維護等各種任務。</p>
 
-                        <div class="note">💡 適用場景：電商客服、旅遊顧問、內容行銷代理、IT 維運助手、預約排程服務等。只要分享連結，客戶就能與你的代理即時互動。</div>
+                        <div class="note" data-i18n="guide_proxy_note_scenario">💡 適用場景：電商客服、旅遊顧問、內容行銷代理、IT 維運助手、預約排程服務等。只要分享連結，客戶就能與你的代理即時互動。</div>
 
                         <hr>
 
-                        <h2>設定步驟</h2>
+                        <h2 data-i18n="guide_proxy_h2_steps">設定步驟</h2>
 
                         <!-- Flow Diagram -->
                         <div class="flow-diagram">
                             <div class="flow-step">
                                 <div class="flow-icon">🛡️</div>
-                                <div class="flow-label">Cross-Device</div>
-                                <div class="flow-sub">訊息閘門</div>
+                                <div class="flow-label" data-i18n="guide_proxy_flow1">Cross-Device</div>
+                                <div class="flow-sub" data-i18n="guide_proxy_flow1_sub">訊息閘門</div>
                             </div>
                             <div class="flow-arrow">→</div>
                             <div class="flow-step">
                                 <div class="flow-icon">📇</div>
-                                <div class="flow-label">Agent Card</div>
-                                <div class="flow-sub">名片與能力</div>
+                                <div class="flow-label" data-i18n="guide_proxy_flow2">Agent Card</div>
+                                <div class="flow-sub" data-i18n="guide_proxy_flow2_sub">名片與能力</div>
                             </div>
                             <div class="flow-arrow">→</div>
                             <div class="flow-step">
                                 <div class="flow-icon">🪪</div>
-                                <div class="flow-label">Identity</div>
-                                <div class="flow-sub">角色與指示</div>
+                                <div class="flow-label" data-i18n="guide_proxy_flow3">Identity</div>
+                                <div class="flow-sub" data-i18n="guide_proxy_flow3_sub">角色與指示</div>
                             </div>
                             <div class="flow-arrow">→</div>
                             <div class="flow-step">
                                 <div class="flow-icon">🌐</div>
-                                <div class="flow-label">Share Link</div>
-                                <div class="flow-sub">分享連結</div>
+                                <div class="flow-label" data-i18n="guide_proxy_flow4">Share Link</div>
+                                <div class="flow-sub" data-i18n="guide_proxy_flow4_sub">分享連結</div>
                             </div>
                         </div>
 
-                        <h3 class="step-heading">Step 1：設定跨裝置訊息閘門（Cross-Device Messaging）</h3>
-                        <p>跨裝置訊息是外部訊息進入你的 Bot 的第一道門。在這裡設定過濾規則、黑白名單、速率限制，確保只有合規的訊息能到達你的代理。</p>
+                        <h3 class="step-heading" data-i18n="guide_proxy_step1_title">Step 1：設定跨裝置訊息閘門（Cross-Device Messaging）</h3>
+                        <p data-i18n="guide_proxy_step1_desc">跨裝置訊息是外部訊息進入你的 Bot 的第一道門。在這裡設定過濾規則、黑白名單、速率限制，確保只有合規的訊息能到達你的代理。</p>
                         <ul class="tips-list">
-                            <li>✅ <strong>禁用詞（Forbidden Words）</strong>：過濾包含特定關鍵字的訊息</li>
-                            <li>✅ <strong>黑白名單（Blacklist / Whitelist）</strong>：精準控制誰能發訊息</li>
-                            <li>✅ <strong>速率限制（Rate Limit）</strong>：防止訊息轟炸</li>
-                            <li>✅ <strong>媒體類型（Allowed Media）</strong>：限制可接受的訊息格式</li>
+                            <li data-i18n="guide_proxy_step1_li1">✅ <strong>禁用詞（Forbidden Words）</strong>：過濾包含特定關鍵字的訊息</li>
+                            <li data-i18n="guide_proxy_step1_li2">✅ <strong>黑白名單（Blacklist / Whitelist）</strong>：精準控制誰能發訊息</li>
+                            <li data-i18n="guide_proxy_step1_li3">✅ <strong>速率限制（Rate Limit）</strong>：防止訊息轟炸</li>
+                            <li data-i18n="guide_proxy_step1_li4">✅ <strong>媒體類型（Allowed Media）</strong>：限制可接受的訊息格式</li>
                         </ul>
-                        <p>前往：<strong>Dashboard → 選擇實體 → 編輯 → ⚙ Cross-Device Msg</strong>，或使用 API <code>PUT /api/entity/cross-device-settings</code></p>
+                        <p data-i18n="guide_proxy_step1_nav">前往：<strong>Dashboard → 選擇實體 → 編輯 → ⚙ Cross-Device Msg</strong>，或使用 API <code>PUT /api/entity/cross-device-settings</code></p>
 
                         <!-- Cross-Device Gate Flow -->
                         <div class="flow-diagram">
                             <div class="flow-step flow-step--warning">
                                 <div class="flow-icon">👤</div>
-                                <div class="flow-label">External</div>
-                                <div class="flow-sub">外部用戶</div>
+                                <div class="flow-label" data-i18n="guide_proxy_preview1_sender">External</div>
+                                <div class="flow-sub" data-i18n="guide_proxy_preview1_sender_sub">外部用戶</div>
                             </div>
                             <div class="flow-arrow">→</div>
                             <div class="flow-step flow-step--primary">
                                 <div class="flow-icon">🛡️</div>
-                                <div class="flow-label">Gate</div>
-                                <div class="flow-sub">6 道檢查</div>
+                                <div class="flow-label" data-i18n="guide_proxy_preview1_gate">Gate</div>
+                                <div class="flow-sub" data-i18n="guide_proxy_preview1_gate_sub">6 道檢查</div>
                             </div>
                             <div class="flow-arrow">→</div>
                             <div class="flow-step flow-step--success">
                                 <div class="flow-icon">🤖</div>
                                 <div class="flow-label" data-i18n="common_bot">Bot</div>
-                                <div class="flow-sub">處理訊息</div>
+                                <div class="flow-sub" data-i18n="guide_proxy_preview1_bot_sub">處理訊息</div>
                             </div>
                         </div>
 
                         <hr>
 
-                        <h3 class="step-heading">Step 2：設定 Agent Card（名片）</h3>
-                        <p>為代理建立一張名片，包含名稱、描述、能力、支援的協定與標籤。這張名片會顯示在代理窗口的頂部，讓客戶一目了然。</p>
+                        <h3 class="step-heading" data-i18n="guide_proxy_step2_title">Step 2：設定 Agent Card（名片）</h3>
+                        <p data-i18n="guide_proxy_step2_desc">為代理建立一張名片，包含名稱、描述、能力、支援的協定與標籤。這張名片會顯示在代理窗口的頂部，讓客戶一目了然。</p>
                         <ul class="tips-list">
-                            <li>✅ <strong>名稱與描述</strong>：清楚說明代理提供什麼服務</li>
-                            <li>✅ <strong>能力（Capabilities）</strong>：列出代理能做的事，如「訂單查詢」、「行程規劃」</li>
-                            <li>✅ <strong>協定（Protocols）</strong>：標記支援的通訊協定</li>
-                            <li>✅ <strong>標籤（Tags）</strong>：方便搜尋與分類</li>
+                            <li data-i18n="guide_proxy_step2_li1">✅ <strong>名稱與描述</strong>：清楚說明代理提供什麼服務</li>
+                            <li data-i18n="guide_proxy_step2_li2">✅ <strong>能力（Capabilities）</strong>：列出代理能做的事，如「訂單查詢」、「行程規劃」</li>
+                            <li data-i18n="guide_proxy_step2_li3">✅ <strong>協定（Protocols）</strong>：標記支援的通訊協定</li>
+                            <li data-i18n="guide_proxy_step2_li4">✅ <strong>標籤（Tags）</strong>：方便搜尋與分類</li>
                         </ul>
-                        <p>前往：<strong>Dashboard → 選擇實體 → Agent Card</strong>，或使用 API <code>PUT /api/entity/agent-card</code></p>
+                        <p data-i18n="guide_proxy_step2_nav">前往：<strong>Dashboard → 選擇實體 → Agent Card</strong>，或使用 API <code>PUT /api/entity/agent-card</code></p>
 
                         <!-- Agent Card Mockup -->
                         <div class="mockup-card">
                             <div class="mockup-header">
                                 <div class="mockup-avatar">🤖</div>
                                 <div>
-                                    <div class="mockup-title">ShopBot Pro</div>
-                                    <div class="mockup-subtitle">24/7 智能購物助手</div>
+                                    <div class="mockup-title" data-i18n="guide_proxy_preview2_name">ShopBot Pro</div>
+                                    <div class="mockup-subtitle" data-i18n="guide_proxy_preview2_desc">24/7 智能購物助手</div>
                                 </div>
                             </div>
-                            <div class="mockup-body">可查詢商品庫存、追蹤訂單物流、推薦相關商品、處理常見問題。</div>
+                            <div class="mockup-body" data-i18n="guide_proxy_preview2_body">可查詢商品庫存、追蹤訂單物流、推薦相關商品、處理常見問題。</div>
                             <div class="mockup-tags">
-                                <span class="mockup-tag">訂單查詢</span>
-                                <span class="mockup-tag">商品推薦</span>
-                                <span class="mockup-tag">物流追蹤</span>
-                                <span class="mockup-tag">A2A</span>
+                                <span class="mockup-tag" data-i18n="guide_proxy_preview2_tag1">訂單查詢</span>
+                                <span class="mockup-tag" data-i18n="guide_proxy_preview2_tag2">商品推薦</span>
+                                <span class="mockup-tag" data-i18n="guide_proxy_preview2_tag3">物流追蹤</span>
+                                <span class="mockup-tag" data-i18n="guide_proxy_preview2_tag4">A2A</span>
                             </div>
                         </div>
 
                         <hr>
 
-                        <h3 class="step-heading">Step 3：設定代理身份（Identity）</h3>
-                        <p>設定代理的角色、指示、語調、邊界等。這決定了代理如何回應客戶，是 Bot 的內在定義。</p>
+                        <h3 class="step-heading" data-i18n="guide_proxy_step3_title">Step 3：設定代理身份（Identity）</h3>
+                        <p data-i18n="guide_proxy_step3_desc">設定代理的角色、指示、語調、邊界等。這決定了代理如何回應客戶，是 Bot 的內在定義。</p>
                         <ul class="tips-list">
-                            <li>✅ <strong>角色（Role）</strong>：例如「電商客服專員」、「旅遊行程規劃師」</li>
-                            <li>✅ <strong>指示（Instructions）</strong>：代理的行為守則與工作流程</li>
-                            <li>✅ <strong>語調（Tone）</strong>：正式、友善、專業等</li>
-                            <li>✅ <strong>邊界（Boundaries）</strong>：代理不應處理的事項</li>
+                            <li data-i18n="guide_proxy_step3_li1">✅ <strong>角色（Role）</strong>：例如「電商客服專員」、「旅遊行程規劃師」</li>
+                            <li data-i18n="guide_proxy_step3_li2">✅ <strong>指示（Instructions）</strong>：代理的行為守則與工作流程</li>
+                            <li data-i18n="guide_proxy_step3_li3">✅ <strong>語調（Tone）</strong>：正式、友善、專業等</li>
+                            <li data-i18n="guide_proxy_step3_li4">✅ <strong>邊界（Boundaries）</strong>：代理不應處理的事項</li>
                         </ul>
-                        <p>前往：<strong>Dashboard → 選擇實體 → 身份編輯器</strong>，或使用 API <code>PUT /api/entity/identity</code></p>
+                        <p data-i18n="guide_proxy_step3_nav">前往：<strong>Dashboard → 選擇實體 → 身份編輯器</strong>，或使用 API <code>PUT /api/entity/identity</code></p>
 
                         <!-- Identity Config Preview -->
                         <div class="config-preview">
-                            <div class="config-bar"><div class="dot" style="background:var(--primary)"></div> <span>Identity Editor</span></div>
+                            <div class="config-bar"><div class="dot" style="background:var(--primary)"></div> <span data-i18n="guide_proxy_config_identity">Identity Editor</span></div>
                             <div class="config-body">
-                                <div class="config-row"><span class="config-key">Role</span><span class="config-val">電商客服專員</span></div>
-                                <div class="config-row"><span class="config-key">Tone</span><span class="config-val">友善、專業</span></div>
+                                <div class="config-row"><span class="config-key">Role</span><span class="config-val" data-i18n="guide_proxy_preview3_role">電商客服專員</span></div>
+                                <div class="config-row"><span class="config-key">Tone</span><span class="config-val" data-i18n="guide_proxy_preview3_tone">友善、專業</span></div>
                                 <div class="config-row"><span class="config-key">Language</span><span class="config-val">zh-TW</span></div>
-                                <div class="config-row"><span class="config-key">Boundaries</span><span class="config-val">不處理退款、不洩漏內部資訊</span></div>
+                                <div class="config-row"><span class="config-key">Boundaries</span><span class="config-val" data-i18n="guide_proxy_preview3_boundaries">不處理退款、不洩漏內部資訊</span></div>
                             </div>
                         </div>
 
                         <hr>
 
-                        <h3 class="step-heading">Step 4：取得並分享代理窗口連結</h3>
-                        <p>每個設定好的實體都有一個專屬的 Public Code。透過名片夾的分享功能，生成一個可直接開啟的對話連結。</p>
+                        <h3 class="step-heading" data-i18n="guide_proxy_step4_title">Step 4：取得並分享代理窗口連結</h3>
+                        <p data-i18n="guide_proxy_step4_desc">每個設定好的實體都有一個專屬的 Public Code。透過名片夾的分享功能，生成一個可直接開啟的對話連結。</p>
                         <ul class="tips-list">
-                            <li>✅ 前往 <strong>Card Holder</strong>（名片夾）找到你的代理名片</li>
-                            <li>✅ 點擊分享按鈕，取得連結格式：<code>https://eclawbot.com/c/你的PublicCode</code></li>
-                            <li>✅ 將連結分享給客戶、嵌入官網、或印在實體名片上</li>
+                            <li data-i18n="guide_proxy_step4_li1">✅ 前往 <strong>Card Holder</strong>（名片夾）找到你的代理名片</li>
+                            <li data-i18n="guide_proxy_step4_li2">✅ 點擊分享按鈕，取得連結格式：<code>https://eclawbot.com/c/你的PublicCode</code></li>
+                            <li data-i18n="guide_proxy_step4_li3">✅ 將連結分享給客戶、嵌入官網、或印在實體名片上</li>
                         </ul>
-                        <div class="note">📌 客戶點開連結後，會看到代理的名片資訊與對話介面，可直接開始對話。未註冊的用戶也能以訪客身份互動。</div>
+                        <div class="note" data-i18n="guide_proxy_step4_note">📌 客戶點開連結後，會看到代理的名片資訊與對話介面，可直接開始對話。未註冊的用戶也能以訪客身份互動。</div>
 
                         <hr>
 
-                        <h2>實際應用範例</h2>
+                        <h2 data-i18n="guide_proxy_h2_use">實際應用範例</h2>
                         <table class="feature-table">
-                            <thead><tr><th>場景</th><th>代理用途</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_proxy_th_scenario">場景</th><th data-i18n="guide_proxy_th_desc">代理用途</th></tr></thead>
                             <tbody>
-                                <tr><td>電商客服</td><td>客戶透過連結詢問商品、下單、追蹤物流</td></tr>
-                                <tr><td>旅遊顧問</td><td>提供行程建議、景點推薦、代訂住宿</td></tr>
-                                <tr><td>內容行銷</td><td>代理自動撰寫並發布文章到多個平台</td></tr>
-                                <tr><td>IT 維運</td><td>監控後台狀態、自動處理告警、生成報告</td></tr>
-                                <tr><td>預約服務</td><td>客戶直接透過對話完成預約與排程</td></tr>
+                                <tr><td data-i18n="guide_proxy_ex1a">電商客服</td><td data-i18n="guide_proxy_ex1b">客戶透過連結詢問商品、下單、追蹤物流</td></tr>
+                                <tr><td data-i18n="guide_proxy_ex2a">旅遊顧問</td><td data-i18n="guide_proxy_ex2b">提供行程建議、景點推薦、代訂住宿</td></tr>
+                                <tr><td data-i18n="guide_proxy_ex3a">內容行銷</td><td data-i18n="guide_proxy_ex3b">代理自動撰寫並發布文章到多個平台</td></tr>
+                                <tr><td data-i18n="guide_proxy_ex4a">IT 維運</td><td data-i18n="guide_proxy_ex4b">監控後台狀態、自動處理告警、生成報告</td></tr>
+                                <tr><td data-i18n="guide_proxy_ex5a">預約服務</td><td data-i18n="guide_proxy_ex5b">客戶直接透過對話完成預約與排程</td></tr>
                             </tbody>
                         </table>
 
                         <hr>
 
-                        <h2>詳細設定指南</h2>
-                        <p>點擊以下連結查看各項設定的完整說明：</p>
+                        <h2 data-i18n="guide_proxy_h2_detail">詳細設定指南</h2>
+                        <p data-i18n="guide_proxy_p_detail">點擊以下連結查看各項設定的完整說明：</p>
                         <ul class="tips-list">
-                            <li style="list-style:none;"><a href="#guide/detail-crossdevice">🔹 跨裝置訊息（閘門設定）詳情</a></li>
-                            <li style="list-style:none;"><a href="#guide/detail-agentcard">🔹 Agent Card 設定詳情</a></li>
-                            <li style="list-style:none;"><a href="#guide/detail-identity">🔹 身份設定（Identity）詳情</a></li>
+                            <li style="list-style:none;"><a href="#guide/detail-crossdevice" data-i18n="guide_proxy_link_crossdevice">🔹 跨裝置訊息（閘門設定）詳情</a></li>
+                            <li style="list-style:none;"><a href="#guide/detail-agentcard" data-i18n="guide_proxy_link_agentcard">🔹 Agent Card 設定詳情</a></li>
+                            <li style="list-style:none;"><a href="#guide/detail-identity" data-i18n="guide_proxy_link_identity">🔹 身份設定（Identity）詳情</a></li>
                         </ul>
                     </div>
 
                     <!-- ── 跨裝置訊息詳情（第一道門）── -->
                     <div class="guide-panel" id="guide-detail-crossdevice">
                         <header>
-                            <h1>跨裝置訊息 — 完整指南</h1>
-                            <p class="meta">外部訊息進入 Bot 的第一道門：過濾、限流、黑白名單一次搞定</p>
+                            <h1 data-i18n="guide_crossdevice_title">跨裝置訊息 — 完整指南</h1>
+                            <p class="meta" data-i18n="guide_crossdevice_meta">外部訊息進入 Bot 的第一道門：過濾、限流、黑白名單一次搞定</p>
                         </header>
 
-                        <h2>什麼是跨裝置訊息？</h2>
-                        <p>跨裝置訊息（Cross-Device Messaging）是外部用戶透過 Public Code 向你的 Bot 發送訊息時的入口管控機制。它是訊息進入 Bot 之前的第一道防線，讓你精準控制誰能發訊息、什麼內容能通過、每人多久能發一次。</p>
+                        <h2 data-i18n="guide_crossdevice_h2_what">什麼是跨裝置訊息？</h2>
+                        <p data-i18n="guide_crossdevice_p_what">跨裝置訊息（Cross-Device Messaging）是外部用戶透過 Public Code 向你的 Bot 發送訊息時的入口管控機制。它是訊息進入 Bot 之前的第一道防線，讓你精準控制誰能發訊息、什麼內容能通過、每人多久能發一次。</p>
 
-                        <div class="note">💡 設定位置：<strong>儀表板 → 選擇實體 → 編輯 → ⚙ Cross-Device Msg</strong>。與身份（Identity）和 Agent Card 一起組成 Bot 對外及對內的完整定義。</div>
+                        <div class="note" data-i18n="guide_crossdevice_note_scenario">💡 設定位置：<strong>儀表板 → 選擇實體 → 編輯 → ⚙ Cross-Device Msg</strong>。與身份（Identity）和 Agent Card 一起組成 Bot 對外及對內的完整定義。</div>
 
                         <hr>
 
-                        <h2>運作原理</h2>
+                        <h2 data-i18n="guide_crossdevice_h2_how">運作原理</h2>
 
                         <!-- Gate Flow Diagram -->
                         <div class="flow-diagram">
                             <div class="flow-step flow-step--warning">
                                 <div class="flow-icon">👤</div>
-                                <div class="flow-label">外部用戶</div>
-                                <div class="flow-sub">代理窗口</div>
+                                <div class="flow-label" data-i18n="guide_crossdevice_flow_client">外部用戶</div>
+                                <div class="flow-sub" data-i18n="guide_crossdevice_flow_client_sub">代理窗口</div>
                             </div>
                             <div class="flow-arrow">→</div>
                             <div class="flow-step flow-step--primary">
                                 <div class="flow-icon">🛡️</div>
-                                <div class="flow-label">Gate</div>
-                                <div class="flow-sub">6 道檢查</div>
+                                <div class="flow-label" data-i18n="guide_crossdevice_flow_gate">Gate</div>
+                                <div class="flow-sub" data-i18n="guide_crossdevice_flow_gate_sub">6 道檢查</div>
                             </div>
                             <div class="flow-arrow">→</div>
                             <div class="flow-step flow-step--success">
                                 <div class="flow-icon">🤖</div>
                                 <div class="flow-label" data-i18n="common_bot">Bot</div>
-                                <div class="flow-sub">處理訊息</div>
+                                <div class="flow-sub" data-i18n="guide_crossdevice_flow_bot_sub">處理訊息</div>
                             </div>
                         </div>
 
-                        <p>訊息進入時依序通過 6 道檢查：名片夾封鎖 → 黑名單 → 白名單 → 禁用詞 → 媒體類型 → 速率限制。任何一關不通過，訊息即被拒絕，可回傳自訂拒絕訊息。</p>
+                        <p data-i18n="guide_crossdevice_p_how">訊息進入時依序通過 6 道檢查：名片夾封鎖 → 黑名單 → 白名單 → 禁用詞 → 媒體類型 → 速率限制。任何一關不通過，訊息即被拒絕，可回傳自訂拒絕訊息。</p>
 
                         <hr>
 
-                        <h2>設定項目詳解</h2>
+                        <h2 data-i18n="guide_crossdevice_h2_settings">設定項目詳解</h2>
 
                         <table class="feature-table">
-                            <thead><tr><th>設定</th><th>說明</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_crossdevice_th_setting">設定</th><th data-i18n="guide_crossdevice_th_desc">說明</th></tr></thead>
                             <tbody>
-                                <tr><td>預注入指令（Pre-inject）</td><td>在外部訊息推送給 Bot 之前，自動加入指定文字。用於補充情境或指示。最多 500 字元。</td></tr>
-                                <tr><td>禁用詞（Forbidden Words）</td><td>包含這些關鍵字的訊息會被直接拒絕（不分大小寫）。多個詞用逗號分隔。</td></tr>
-                                <tr><td>速率限制（Rate Limit）</td><td>每位發送者的冷卻秒數（0 = 無限制，最大 86400 秒 = 1 天）。防止訊息轟炸。</td></tr>
-                                <tr><td>黑名單（Blacklist）</td><td>列出要封鎖的 Public Code，這些來源的訊息一律拒絕。</td></tr>
-                                <tr><td>白名單模式（Whitelist Mode）</td><td>開啟後，僅允許白名單中的來源發送訊息，其他全部拒絕。</td></tr>
-                                <tr><td>白名單（Whitelist）</td><td>白名單模式啟用時，只有這些 Public Code 的訊息能通過。</td></tr>
-                                <tr><td>拒絕訊息（Reject Message）</td><td>訊息被閘門拒絕時回傳的自訂訊息（空白 = 靜默拒絕）。最多 200 字元。</td></tr>
-                                <tr><td>允許媒體（Allowed Media）</td><td>勾選允許的訊息格式：text、photo、voice、video、file。未勾選的類型會被拒絕。</td></tr>
+                                <tr><td data-i18n="guide_crossdevice_set_preinject">預注入指令（Pre-inject）</td><td data-i18n="guide_crossdevice_set_preinject_desc">在外部訊息推送給 Bot 之前，自動加入指定文字。用於補充情境或指示。最多 500 字元。</td></tr>
+                                <tr><td data-i18n="guide_crossdevice_set_forbidden">禁用詞（Forbidden Words）</td><td data-i18n="guide_crossdevice_set_forbidden_desc">包含這些關鍵字的訊息會被直接拒絕（不分大小寫）。多個詞用逗號分隔。</td></tr>
+                                <tr><td data-i18n="guide_crossdevice_set_ratelimit">速率限制（Rate Limit）</td><td data-i18n="guide_crossdevice_set_ratelimit_desc">每位發送者的冷卻秒數（0 = 無限制，最大 86400 秒 = 1 天）。防止訊息轟炸。</td></tr>
+                                <tr><td data-i18n="guide_crossdevice_set_blacklist">黑名單（Blacklist）</td><td data-i18n="guide_crossdevice_set_blacklist_desc">列出要封鎖的 Public Code，這些來源的訊息一律拒絕。</td></tr>
+                                <tr><td data-i18n="guide_crossdevice_set_whitelist_mode">白名單模式（Whitelist Mode）</td><td data-i18n="guide_crossdevice_set_whitelist_mode_desc">開啟後，僅允許白名單中的來源發送訊息，其他全部拒絕。</td></tr>
+                                <tr><td data-i18n="guide_crossdevice_set_whitelist">白名單（Whitelist）</td><td data-i18n="guide_crossdevice_set_whitelist_desc">白名單模式啟用時，只有這些 Public Code 的訊息能通過。</td></tr>
+                                <tr><td data-i18n="guide_crossdevice_set_reject">拒絕訊息（Reject Message）</td><td data-i18n="guide_crossdevice_set_reject_desc">訊息被閘門拒絕時回傳的自訂訊息（空白 = 靜默拒絕）。最多 200 字元。</td></tr>
+                                <tr><td data-i18n="guide_crossdevice_set_media">允許媒體（Allowed Media）</td><td data-i18n="guide_crossdevice_set_media_desc">勾選允許的訊息格式：text、photo、voice、video、file。未勾選的類型會被拒絕。</td></tr>
                             </tbody>
                         </table>
 
                         <hr>
 
-                        <h2>閘門檢查順序</h2>
+                        <h2 data-i18n="guide_crossdevice_h2_gate">閘門檢查順序</h2>
                         <ol class="tips-list">
-                            <li><strong>1. 名片夾封鎖</strong> — 在 Card Holder 中封鎖的來源，訊息直接丟棄</li>
-                            <li><strong>2. 黑名單</strong> — 比對 Blacklist，命中即拒絕並回傳拒絕訊息</li>
-                            <li><strong>3. 白名單</strong> — 若開啟白名單模式，不在名單內的一律拒絕</li>
-                            <li><strong>4. 禁用詞</strong> — 訊息內容包含禁用詞即拒絕（不分大小寫）</li>
-                            <li><strong>5. 媒體類型</strong> — 不在允許清單中的媒體類型被拒絕</li>
-                            <li><strong>6. 速率限制</strong> — 發送者在冷卻期內再發訊息會收到 429 錯誤</li>
+                            <li data-i18n="guide_crossdevice_gate_li1"><strong>1. 名片夾封鎖</strong> — 在 Card Holder 中封鎖的來源，訊息直接丟棄</li>
+                            <li data-i18n="guide_crossdevice_gate_li2"><strong>2. 黑名單</strong> — 比對 Blacklist，命中即拒絕並回傳拒絕訊息</li>
+                            <li data-i18n="guide_crossdevice_gate_li3"><strong>3. 白名單</strong> — 若開啟白名單模式，不在名單內的一律拒絕</li>
+                            <li data-i18n="guide_crossdevice_gate_li4"><strong>4. 禁用詞</strong> — 訊息內容包含禁用詞即拒絕（不分大小寫）</li>
+                            <li data-i18n="guide_crossdevice_gate_li5"><strong>5. 媒體類型</strong> — 不在允許清單中的媒體類型被拒絕</li>
+                            <li data-i18n="guide_crossdevice_gate_li6"><strong>6. 速率限制</strong> — 發送者在冷卻期內再發訊息會收到 429 錯誤</li>
                         </ol>
 
                         <hr>
 
-                        <h2>如何設定</h2>
+                        <h2 data-i18n="guide_crossdevice_h2_howto">如何設定</h2>
 
-                        <h3 class="step-heading">Web Portal 設定方式</h3>
+                        <h3 class="step-heading" data-i18n="guide_crossdevice_h3_web">Web Portal 設定方式</h3>
                         <ol class="tips-list">
-                            <li>前往 <strong>Dashboard</strong>（儀表板）</li>
-                            <li>選擇實體，點擊 <strong>編輯</strong></li>
-                            <li>點擊 <strong>⚙ Cross-Device Msg</strong> 按鈕展開設定面板</li>
-                            <li>填入禁用詞、黑白名單、速率限制等項目</li>
-                            <li>按 <strong>Save</strong> 儲存設定</li>
+                            <li data-i18n="guide_crossdevice_web_li1">前往 <strong>Dashboard</strong>（儀表板）</li>
+                            <li data-i18n="guide_crossdevice_web_li2">選擇實體，點擊 <strong>編輯</strong></li>
+                            <li data-i18n="guide_crossdevice_web_li3">點擊 <strong>⚙ Cross-Device Msg</strong> 按鈕展開設定面板</li>
+                            <li data-i18n="guide_crossdevice_web_li4">填入禁用詞、黑白名單、速率限制等項目</li>
+                            <li data-i18n="guide_crossdevice_web_li5">按 <strong>Save</strong> 儲存設定</li>
                         </ol>
 
                         <!-- Settings Preview -->
                         <div class="config-preview">
-                            <div class="config-bar"><div class="dot" style="background:var(--success)"></div> <span>Cross-Device Msg</span></div>
+                            <div class="config-bar"><div class="dot" style="background:var(--success)"></div> <span data-i18n="guide_crossdevice_config_title">Cross-Device Msg</span></div>
                             <div class="config-body">
-                                <div class="config-row"><span class="config-key">Pre-inject</span><span class="config-val">你是電商客服，請用繁體中文回覆</span></div>
-                                <div class="config-row"><span class="config-key">Forbidden</span><span class="config-val">spam, hack, xxx</span></div>
-                                <div class="config-row"><span class="config-key">Rate Limit</span><span class="config-val">30s</span></div>
-                                <div class="config-row"><span class="config-key">Media</span><span class="config-val">text, photo, file</span></div>
+                                <div class="config-row"><span class="config-key" data-i18n="guide_crossdevice_preview_preinject">Pre-inject</span><span class="config-val" data-i18n="guide_crossdevice_preview_preinject_val">你是電商客服，請用繁體中文回覆</span></div>
+                                <div class="config-row"><span class="config-key" data-i18n="guide_crossdevice_preview_forbidden">Forbidden</span><span class="config-val">spam, hack, xxx</span></div>
+                                <div class="config-row"><span class="config-key" data-i18n="guide_crossdevice_preview_ratelimit">Rate Limit</span><span class="config-val">30s</span></div>
+                                <div class="config-row"><span class="config-key" data-i18n="guide_crossdevice_preview_media">Media</span><span class="config-val">text, photo, file</span></div>
                             </div>
                         </div>
 
-                        <h3 class="step-heading">API 設定方式</h3>
+                        <h3 class="step-heading" data-i18n="guide_crossdevice_h3_api">API 設定方式</h3>
                         <div class="code-block">PUT /api/entity/cross-device-settings
 Content-Type: application/json
 x-device-secret: YOUR_SECRET
@@ -716,120 +716,120 @@ x-device-secret: YOUR_SECRET
     "allowed_media": ["text", "photo", "file"]
   }
 }</div>
-                        <p>認證方式：Header <code>x-device-secret</code></p>
+                        <p data-i18n="guide_crossdevice_api_auth">認證方式：Header <code>x-device-secret</code></p>
 
                         <hr>
 
-                        <h2>應用情境</h2>
+                        <h2 data-i18n="guide_crossdevice_h2_usecases">應用情境</h2>
 
                         <div class="why-eclaw-card">
-                            <div class="pain-point">🛡️ 防止騷擾</div>
-                            <div class="solution-desc">設定禁用詞過濾不當內容、啟用速率限制防止訊息轟炸、將惡意用戶加入黑名單永久封鎖。</div>
+                            <div class="pain-point" data-i18n="guide_crossdevice_uc1_title">🛡️ 防止騷擾</div>
+                            <div class="solution-desc" data-i18n="guide_crossdevice_uc1_desc">設定禁用詞過濾不當內容、啟用速率限制防止訊息轟炸、將惡意用戶加入黑名單永久封鎖。</div>
                         </div>
                         <div class="why-eclaw-card">
-                            <div class="pain-point">🔒 VIP 專屬服務</div>
-                            <div class="solution-desc">啟用白名單模式，僅允許特定客戶的 Public Code 存取代理服務，打造專屬 VIP 通道。</div>
+                            <div class="pain-point" data-i18n="guide_crossdevice_uc2_title">🔒 VIP 專屬服務</div>
+                            <div class="solution-desc" data-i18n="guide_crossdevice_uc2_desc">啟用白名單模式，僅允許特定客戶的 Public Code 存取代理服務，打造專屬 VIP 通道。</div>
                         </div>
                         <div class="why-eclaw-card">
-                            <div class="pain-point">📝 情境預設</div>
-                            <div class="solution-desc">透過預注入指令，在每則外部訊息前自動加入角色提示，例如「你是旅遊顧問，請用友善語氣回覆」。</div>
+                            <div class="pain-point" data-i18n="guide_crossdevice_uc3_title">📝 情境預設</div>
+                            <div class="solution-desc" data-i18n="guide_crossdevice_uc3_desc">透過預注入指令，在每則外部訊息前自動加入角色提示，例如「你是旅遊顧問，請用友善語氣回覆」。</div>
                         </div>
 
                         <hr>
 
-                        <h2>最佳實踐</h2>
+                        <h2 data-i18n="guide_crossdevice_h2_tips">最佳實踐</h2>
                         <ul class="tips-list">
-                            <li>✅ <strong>先鬆後緊</strong>：初期先用預設值觀察，有問題再逐步收緊</li>
-                            <li>✅ <strong>善用預注入</strong>：讓 Bot 每次收到外部訊息都帶有充分的角色情境</li>
-                            <li>✅ <strong>設定拒絕訊息</strong>：比靜默拒絕更友善，讓被擋的用戶知道原因</li>
-                            <li>✅ <strong>搭配 Card Holder</strong>：在名片夾中封鎖對象會作為閘門的第一層檢查</li>
+                            <li data-i18n="guide_crossdevice_tip_li1">✅ <strong>先鬆後緊</strong>：初期先用預設值觀察，有問題再逐步收緊</li>
+                            <li data-i18n="guide_crossdevice_tip_li2">✅ <strong>善用預注入</strong>：讓 Bot 每次收到外部訊息都帶有充分的角色情境</li>
+                            <li data-i18n="guide_crossdevice_tip_li3">✅ <strong>設定拒絕訊息</strong>：比靜默拒絕更友善，讓被擋的用戶知道原因</li>
+                            <li data-i18n="guide_crossdevice_tip_li4">✅ <strong>搭配 Card Holder</strong>：在名片夾中封鎖對象會作為閘門的第一層檢查</li>
                         </ul>
 
-                        <div class="warning">⚠️ 速率限制是記憶體內計算，伺服器重啟後會重置。黑白名單與禁用詞則永久保存在資料庫中。</div>
+                        <div class="warning" data-i18n="guide_crossdevice_warn">⚠️ 速率限制是記憶體內計算，伺服器重啟後會重置。黑白名單與禁用詞則永久保存在資料庫中。</div>
 
-                        <div class="note">← <a href="#guide/usecase-proxy-window">返回代理窗口指南</a></div>
+                        <div class="note" data-i18n="guide_crossdevice_note_back">← <a href="#guide/usecase-proxy-window">返回代理窗口指南</a></div>
                     </div>
 
                     <!-- ── Agent Card 設定詳情 ── -->
                     <div class="guide-panel" id="guide-detail-agentcard">
                         <header>
-                            <h1>Agent Card 設定 — 完整指南</h1>
-                            <p class="meta">建立代理的數位名片，讓客戶一眼了解你的服務能力</p>
+                            <h1 data-i18n="guide_agentcard_title">Agent Card 設定 — 完整指南</h1>
+                            <p class="meta" data-i18n="guide_agentcard_meta">建立代理的數位名片，讓客戶一眼了解你的服務能力</p>
                         </header>
 
-                        <h2>什麼是 Agent Card？</h2>
-                        <p>Agent Card 是每個實體的「數位名片」。它包含代理的名稱、描述、能力標籤、支援的通訊協定等資訊。當外部用戶透過代理窗口或名片夾瀏覽你的代理時，Agent Card 就是他們看到的第一印象。</p>
+                        <h2 data-i18n="guide_agentcard_h2_what">什麼是 Agent Card？</h2>
+                        <p data-i18n="guide_agentcard_p_what">Agent Card 是每個實體的「數位名片」。它包含代理的名稱、描述、能力標籤、支援的通訊協定等資訊。當外部用戶透過代理窗口或名片夾瀏覽你的代理時，Agent Card 就是他們看到的第一印象。</p>
 
-                        <div class="note">💡 Agent Card 遵循 A2A（Agent-to-Agent）協議標準，讓其他 AI 代理也能讀懂你的代理能力，實現自動化協作。</div>
+                        <div class="note" data-i18n="guide_agentcard_note_a2a">💡 Agent Card 遵循 A2A（Agent-to-Agent）協議標準，讓其他 AI 代理也能讀懂你的代理能力，實現自動化協作。</div>
 
                         <hr>
 
-                        <h2>Agent Card 欄位說明</h2>
+                        <h2 data-i18n="guide_agentcard_h2_fields">Agent Card 欄位說明</h2>
 
                         <table class="feature-table">
-                            <thead><tr><th>欄位</th><th>說明</th><th>必填</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_agentcard_th_field">欄位</th><th data-i18n="guide_agentcard_th_desc">說明</th><th data-i18n="guide_agentcard_th_required">必填</th></tr></thead>
                             <tbody>
-                                <tr><td>name</td><td>代理顯示名稱</td><td>✅</td></tr>
-                                <tr><td>description</td><td>代理用途的簡短描述</td><td>✅</td></tr>
-                                <tr><td>url</td><td>代理的服務網址（可選）</td><td>—</td></tr>
-                                <tr><td>capabilities</td><td>代理能做的事情列表</td><td>—</td></tr>
-                                <tr><td>protocols</td><td>支援的通訊協定（如 A2A、webhook）</td><td>—</td></tr>
-                                <tr><td>tags</td><td>標籤，方便搜尋與分類</td><td>—</td></tr>
-                                <tr><td>provider</td><td>提供者/組織名稱</td><td>—</td></tr>
-                                <tr><td>version</td><td>版本號</td><td>—</td></tr>
+                                <tr><td>name</td><td data-i18n="guide_agentcard_field_name">代理顯示名稱</td><td>✅</td></tr>
+                                <tr><td>description</td><td data-i18n="guide_agentcard_field_desc">代理用途的簡短描述</td><td>✅</td></tr>
+                                <tr><td>url</td><td data-i18n="guide_agentcard_field_url">代理的服務網址（可選）</td><td>—</td></tr>
+                                <tr><td>capabilities</td><td data-i18n="guide_agentcard_field_capabilities">代理能做的事情列表</td><td>—</td></tr>
+                                <tr><td>protocols</td><td data-i18n="guide_agentcard_field_protocols">支援的通訊協定（如 A2A、webhook）</td><td>—</td></tr>
+                                <tr><td>tags</td><td data-i18n="guide_agentcard_field_tags">標籤，方便搜尋與分類</td><td>—</td></tr>
+                                <tr><td>provider</td><td data-i18n="guide_agentcard_field_provider">提供者/組織名稱</td><td>—</td></tr>
+                                <tr><td>version</td><td data-i18n="guide_agentcard_field_version">版本號</td><td>—</td></tr>
                             </tbody>
                         </table>
 
                         <hr>
 
-                        <h2>名片效果預覽</h2>
-                        <p>以下是一張完整填寫的 Agent Card 在代理窗口中的顯示效果：</p>
+                        <h2 data-i18n="guide_agentcard_h2_preview">名片效果預覽</h2>
+                        <p data-i18n="guide_agentcard_p_preview">以下是一張完整填寫的 Agent Card 在代理窗口中的顯示效果：</p>
 
                         <!-- Agent Card Full Mockup -->
                         <div class="mockup-card">
                             <div class="mockup-header">
                                 <div class="mockup-avatar">🧳</div>
                                 <div>
-                                    <div class="mockup-title">TravelBot Asia</div>
-                                    <div class="mockup-subtitle">亞洲旅遊行程規劃專家</div>
+                                    <div class="mockup-title" data-i18n="guide_agentcard_mock_name">TravelBot Asia</div>
+                                    <div class="mockup-subtitle" data-i18n="guide_agentcard_mock_desc">亞洲旅遊行程規劃專家</div>
                                 </div>
                             </div>
                             <div class="mockup-body">
                                 <div class="mockup-field">
-                                    <span class="mockup-field-label">Capabilities</span>
-                                    <span class="mockup-field-value">行程規劃、景點推薦、住宿比價、交通安排</span>
+                                    <span class="mockup-field-label" data-i18n="guide_agentcard_mock_cap_label">Capabilities</span>
+                                    <span class="mockup-field-value" data-i18n="guide_agentcard_mock_cap_val">行程規劃、景點推薦、住宿比價、交通安排</span>
                                 </div>
                                 <div class="mockup-field">
-                                    <span class="mockup-field-label">Protocols</span>
+                                    <span class="mockup-field-label" data-i18n="guide_agentcard_mock_proto_label">Protocols</span>
                                     <span class="mockup-field-value">A2A, webhook, cross-device</span>
                                 </div>
                                 <div class="mockup-field">
-                                    <span class="mockup-field-label">Provider</span>
+                                    <span class="mockup-field-label" data-i18n="guide_agentcard_mock_provider_label">Provider</span>
                                     <span class="mockup-field-value">EClawbot Travel</span>
                                 </div>
                             </div>
                             <div class="mockup-tags">
-                                <span class="mockup-tag">旅遊</span>
-                                <span class="mockup-tag">亞洲</span>
-                                <span class="mockup-tag">行程規劃</span>
-                                <span class="mockup-tag">AI</span>
+                                <span class="mockup-tag" data-i18n="guide_agentcard_mock_tag1">旅遊</span>
+                                <span class="mockup-tag" data-i18n="guide_agentcard_mock_tag2">亞洲</span>
+                                <span class="mockup-tag" data-i18n="guide_agentcard_mock_tag3">行程規劃</span>
+                                <span class="mockup-tag" data-i18n="guide_agentcard_mock_tag4">AI</span>
                             </div>
                         </div>
 
                         <hr>
 
-                        <h2>如何設定</h2>
+                        <h2 data-i18n="guide_agentcard_h2_howto">如何設定</h2>
 
-                        <h3 class="step-heading">Web Portal 設定方式</h3>
+                        <h3 class="step-heading" data-i18n="guide_agentcard_h3_web">Web Portal 設定方式</h3>
                         <ol class="tips-list">
-                            <li>前往 <strong>Dashboard</strong> 頁面</li>
-                            <li>選擇要設定的實體卡片</li>
-                            <li>點擊 <strong>Agent Card</strong> 按鈕（📇 圖示）</li>
-                            <li>填入名稱、描述等欄位，加入能力和標籤</li>
-                            <li>按 <strong>Save</strong> 儲存</li>
+                            <li data-i18n="guide_agentcard_web_li1">前往 <strong>Dashboard</strong> 頁面</li>
+                            <li data-i18n="guide_agentcard_web_li2">選擇要設定的實體卡片</li>
+                            <li data-i18n="guide_agentcard_web_li3">點擊 <strong>Agent Card</strong> 按鈕（📇 圖示）</li>
+                            <li data-i18n="guide_agentcard_web_li4">填入名稱、描述等欄位，加入能力和標籤</li>
+                            <li data-i18n="guide_agentcard_web_li5">按 <strong>Save</strong> 儲存</li>
                         </ol>
 
-                        <h3 class="step-heading">API 設定方式</h3>
+                        <h3 class="step-heading" data-i18n="guide_agentcard_h3_api">API 設定方式</h3>
                         <div class="code-block">PUT /api/entity/agent-card
 Content-Type: application/json
 
@@ -845,87 +845,87 @@ Content-Type: application/json
     "provider": "My Company"
   }
 }</div>
-                        <p>認證方式：Header <code>x-device-secret</code> 或 <code>x-bot-secret</code></p>
+                        <p data-i18n="guide_agentcard_api_auth">認證方式：Header <code>x-device-secret</code> 或 <code>x-bot-secret</code></p>
 
                         <hr>
 
-                        <h2>名片夾（Card Holder）整合</h2>
-                        <p>設定好 Agent Card 後，你的代理名片會出現在名片夾中。其他用戶可以：</p>
+                        <h2 data-i18n="guide_agentcard_h2_cardholder">名片夾（Card Holder）整合</h2>
+                        <p data-i18n="guide_agentcard_p_cardholder">設定好 Agent Card 後，你的代理名片會出現在名片夾中。其他用戶可以：</p>
                         <ul class="tips-list">
-                            <li>✅ 透過 <strong>Public Code</strong> 搜尋你的代理</li>
-                            <li>✅ 收藏你的名片到他們的名片夾</li>
-                            <li>✅ 透過名片上的連結直接與代理對話</li>
-                            <li>✅ 查看代理的能力、協定和標籤</li>
+                            <li data-i18n="guide_agentcard_ch_li1">✅ 透過 <strong>Public Code</strong> 搜尋你的代理</li>
+                            <li data-i18n="guide_agentcard_ch_li2">✅ 收藏你的名片到他們的名片夾</li>
+                            <li data-i18n="guide_agentcard_ch_li3">✅ 透過名片上的連結直接與代理對話</li>
+                            <li data-i18n="guide_agentcard_ch_li4">✅ 查看代理的能力、協定和標籤</li>
                         </ul>
 
                         <hr>
 
-                        <h2>最佳實踐</h2>
+                        <h2 data-i18n="guide_agentcard_h2_tips">最佳實踐</h2>
                         <ul class="tips-list">
-                            <li>✅ <strong>名稱要吸引人</strong>：取一個好記又能體現功能的名字</li>
-                            <li>✅ <strong>描述要精準</strong>：用一句話說清代理能做什麼</li>
-                            <li>✅ <strong>能力要完整</strong>：列出所有主要功能，幫助用戶判斷是否符合需求</li>
-                            <li>✅ <strong>標籤要準確</strong>：方便搜尋發現，使用常見關鍵字</li>
-                            <li>✅ <strong>定期更新</strong>：代理能力擴展後同步更新名片</li>
+                            <li data-i18n="guide_agentcard_tip_li1">✅ <strong>名稱要吸引人</strong>：取一個好記又能體現功能的名字</li>
+                            <li data-i18n="guide_agentcard_tip_li2">✅ <strong>描述要精準</strong>：用一句話說清代理能做什麼</li>
+                            <li data-i18n="guide_agentcard_tip_li3">✅ <strong>能力要完整</strong>：列出所有主要功能，幫助用戶判斷是否符合需求</li>
+                            <li data-i18n="guide_agentcard_tip_li4">✅ <strong>標籤要準確</strong>：方便搜尋發現，使用常見關鍵字</li>
+                            <li data-i18n="guide_agentcard_tip_li5">✅ <strong>定期更新</strong>：代理能力擴展後同步更新名片</li>
                         </ul>
 
-                        <div class="note">← <a href="#guide/usecase-proxy-window">返回代理窗口指南</a></div>
+                        <div class="note" data-i18n="guide_agentcard_note_back">← <a href="#guide/usecase-proxy-window">返回代理窗口指南</a></div>
                     </div>
 
                     <!-- ── 身份設定（Identity）詳情 ── -->
                     <div class="guide-panel" id="guide-detail-identity">
                         <header>
-                            <h1>身份設定（Identity）— 完整指南</h1>
-                            <p class="meta">定義代理的角色、行為準則與溝通風格，讓 AI 精準扮演你需要的角色</p>
+                            <h1 data-i18n="guide_identity_title">身份設定（Identity）— 完整指南</h1>
+                            <p class="meta" data-i18n="guide_identity_meta">定義代理的角色、行為準則與溝通風格，讓 AI 精準扮演你需要的角色</p>
                         </header>
 
-                        <h2>什麼是 Identity？</h2>
-                        <p>Identity 是每個實體（Entity）的統一身份結構，包含角色定位、行為指示、語調風格、邊界限制等設定。它決定了你的 AI 代理「是誰」以及「如何行動」。當外部用戶透過代理窗口互動時，Identity 就是代理表現的核心依據。</p>
+                        <h2 data-i18n="guide_identity_h2_what">什麼是 Identity？</h2>
+                        <p data-i18n="guide_identity_p_what">Identity 是每個實體（Entity）的統一身份結構，包含角色定位、行為指示、語調風格、邊界限制等設定。它決定了你的 AI 代理「是誰」以及「如何行動」。當外部用戶透過代理窗口互動時，Identity 就是代理表現的核心依據。</p>
 
-                        <div class="note">💡 把 Identity 想像成一份「職位說明書」——清楚定義代理的職責範圍、工作方式、禁區，讓 AI 不會偏離你的期望。</div>
+                        <div class="note" data-i18n="guide_identity_note_analogy">💡 把 Identity 想像成一份「職位說明書」——清楚定義代理的職責範圍、工作方式、禁區，讓 AI 不會偏離你的期望。</div>
 
                         <hr>
 
-                        <h2>Identity 欄位說明</h2>
+                        <h2 data-i18n="guide_identity_h2_fields">Identity 欄位說明</h2>
 
                         <table class="feature-table">
-                            <thead><tr><th>欄位</th><th>說明</th><th>範例</th></tr></thead>
+                            <thead><tr><th data-i18n="guide_identity_th_field">欄位</th><th data-i18n="guide_identity_th_desc">說明</th><th data-i18n="guide_identity_th_example">範例</th></tr></thead>
                             <tbody>
-                                <tr><td>role</td><td>代理扮演的角色名稱</td><td>電商客服專員、旅遊顧問、IT 維運助手</td></tr>
-                                <tr><td>instructions</td><td>行為指示與工作流程（最多 2000 字）</td><td>收到訂單查詢時，先確認訂單編號，再查詢物流狀態...</td></tr>
-                                <tr><td>boundaries</td><td>代理不應處理的事項清單</td><td>不處理退款、不洩漏內部定價策略</td></tr>
-                                <tr><td>tone</td><td>溝通語調</td><td>友善、專業、簡潔</td></tr>
-                                <tr><td>language</td><td>預設回應語言</td><td>zh-TW, en, ja</td></tr>
-                                <tr><td>soulTemplateId</td><td>套用的靈魂模板 ID</td><td>helpful-assistant</td></tr>
-                                <tr><td>ruleTemplateIds</td><td>套用的規則模板 ID 清單</td><td>["no-politics", "safe-content"]</td></tr>
-                                <tr><td>publicProfile</td><td>公開顯示的簡介（名片上可見）</td><td>專業電商客服，24 小時在線服務</td></tr>
+                                <tr><td>role</td><td data-i18n="guide_identity_field_role">代理扮演的角色名稱</td><td data-i18n="guide_identity_ex_role">電商客服專員、旅遊顧問、IT 維運助手</td></tr>
+                                <tr><td>instructions</td><td data-i18n="guide_identity_field_instructions">行為指示與工作流程（最多 2000 字）</td><td data-i18n="guide_identity_ex_instructions">收到訂單查詢時，先確認訂單編號，再查詢物流狀態...</td></tr>
+                                <tr><td>boundaries</td><td data-i18n="guide_identity_field_boundaries">代理不應處理的事項清單</td><td data-i18n="guide_identity_ex_boundaries">不處理退款、不洩漏內部定價策略</td></tr>
+                                <tr><td>tone</td><td data-i18n="guide_identity_field_tone">溝通語調</td><td data-i18n="guide_identity_ex_tone">友善、專業、簡潔</td></tr>
+                                <tr><td>language</td><td data-i18n="guide_identity_field_language">預設回應語言</td><td>zh-TW, en, ja</td></tr>
+                                <tr><td>soulTemplateId</td><td data-i18n="guide_identity_field_soul">套用的靈魂模板 ID</td><td>helpful-assistant</td></tr>
+                                <tr><td>ruleTemplateIds</td><td data-i18n="guide_identity_field_rules">套用的規則模板 ID 清單</td><td>["no-politics", "safe-content"]</td></tr>
+                                <tr><td>publicProfile</td><td data-i18n="guide_identity_field_profile">公開顯示的簡介（名片上可見）</td><td data-i18n="guide_identity_ex_profile">專業電商客服，24 小時在線服務</td></tr>
                             </tbody>
                         </table>
 
                         <hr>
 
-                        <h2>如何設定</h2>
+                        <h2 data-i18n="guide_identity_h2_howto">如何設定</h2>
 
-                        <h3 class="step-heading">Web Portal 設定方式</h3>
+                        <h3 class="step-heading" data-i18n="guide_identity_h3_web">Web Portal 設定方式</h3>
                         <ol class="tips-list">
-                            <li>前往 <strong>Dashboard</strong> 頁面</li>
-                            <li>選擇要設定的實體卡片</li>
-                            <li>點擊 <strong>Identity 編輯器</strong>（🪪 圖示）</li>
-                            <li>填入各欄位後按 <strong>Save</strong></li>
+                            <li data-i18n="guide_identity_web_li1">前往 <strong>Dashboard</strong> 頁面</li>
+                            <li data-i18n="guide_identity_web_li2">選擇要設定的實體卡片</li>
+                            <li data-i18n="guide_identity_web_li3">點擊 <strong>Identity 編輯器</strong>（🪪 圖示）</li>
+                            <li data-i18n="guide_identity_web_li4">填入各欄位後按 <strong>Save</strong></li>
                         </ol>
 
                         <div class="config-preview">
-                            <div class="config-bar"><div class="dot" style="background:var(--primary)"></div> <span>Identity Editor — Dashboard</span></div>
+                            <div class="config-bar"><div class="dot" style="background:var(--primary)"></div> <span data-i18n="guide_identity_config_dashboard">Identity Editor — Dashboard</span></div>
                             <div class="config-body">
-                                <div class="config-row"><span class="config-key">Role</span><span class="config-val">旅遊行程規劃師</span></div>
-                                <div class="config-row"><span class="config-key">Instructions</span><span class="config-val">根據客戶預算、時間、偏好推薦行程...</span></div>
-                                <div class="config-row"><span class="config-key">Tone</span><span class="config-val">熱情、有耐心、注重細節</span></div>
-                                <div class="config-row"><span class="config-key">Boundaries</span><span class="config-val">不代訂機票、不處理簽證問題</span></div>
+                                <div class="config-row"><span class="config-key">Role</span><span class="config-val" data-i18n="guide_identity_preview_role">旅遊行程規劃師</span></div>
+                                <div class="config-row"><span class="config-key">Instructions</span><span class="config-val" data-i18n="guide_identity_preview_instructions">根據客戶預算、時間、偏好推薦行程...</span></div>
+                                <div class="config-row"><span class="config-key">Tone</span><span class="config-val" data-i18n="guide_identity_preview_tone">熱情、有耐心、注重細節</span></div>
+                                <div class="config-row"><span class="config-key">Boundaries</span><span class="config-val" data-i18n="guide_identity_preview_boundaries">不代訂機票、不處理簽證問題</span></div>
                                 <div class="config-row"><span class="config-key">Language</span><span class="config-val">zh-TW</span></div>
                             </div>
                         </div>
 
-                        <h3 class="step-heading">API 設定方式</h3>
+                        <h3 class="step-heading" data-i18n="guide_identity_h3_api">API 設定方式</h3>
                         <div class="code-block">PUT /api/entity/identity
 Content-Type: application/json
 
@@ -940,30 +940,30 @@ Content-Type: application/json
     "language": "zh-TW"
   }
 }</div>
-                        <p>認證方式：Header <code>x-device-secret</code> 或 <code>x-bot-secret</code></p>
+                        <p data-i18n="guide_identity_api_auth">認證方式：Header <code>x-device-secret</code> 或 <code>x-bot-secret</code></p>
 
                         <hr>
 
-                        <h2>搭配模板使用</h2>
-                        <p>你可以搭配 <strong>Soul Template</strong>（靈魂模板）和 <strong>Rule Template</strong>（規則模板）快速設定 Identity，不必從零開始。</p>
+                        <h2 data-i18n="guide_identity_h2_templates">搭配模板使用</h2>
+                        <p data-i18n="guide_identity_p_templates">你可以搭配 <strong>Soul Template</strong>（靈魂模板）和 <strong>Rule Template</strong>（規則模板）快速設定 Identity，不必從零開始。</p>
                         <ul class="tips-list">
-                            <li>前往 <strong>Mission → Skills/Soul/Rules</strong> 瀏覽可用模板</li>
-                            <li>選擇合適的模板後，會自動填入 <code>soulTemplateId</code> 和 <code>ruleTemplateIds</code></li>
-                            <li>你仍可自訂 <code>role</code>、<code>instructions</code> 等欄位覆蓋模板預設值</li>
+                            <li data-i18n="guide_identity_tmpl_li1">前往 <strong>Mission → Skills/Soul/Rules</strong> 瀏覽可用模板</li>
+                            <li data-i18n="guide_identity_tmpl_li2">選擇合適的模板後，會自動填入 <code>soulTemplateId</code> 和 <code>ruleTemplateIds</code></li>
+                            <li data-i18n="guide_identity_tmpl_li3">你仍可自訂 <code>role</code>、<code>instructions</code> 等欄位覆蓋模板預設值</li>
                         </ul>
 
                         <hr>
 
-                        <h2>最佳實踐</h2>
+                        <h2 data-i18n="guide_identity_h2_tips">最佳實踐</h2>
                         <ul class="tips-list">
-                            <li>✅ <strong>角色要具體</strong>：「電商客服專員」比「助手」更能讓 AI 聚焦</li>
-                            <li>✅ <strong>指示要有流程</strong>：描述「收到 X 時做 Y」，而不只是「要友善」</li>
-                            <li>✅ <strong>邊界要明確</strong>：列出代理「不做」的事，避免越權</li>
-                            <li>✅ <strong>語調要一致</strong>：配合品牌形象選擇語調</li>
-                            <li>✅ <strong>定期更新</strong>：根據客戶回饋調整 Identity 設定</li>
+                            <li data-i18n="guide_identity_tip_li1">✅ <strong>角色要具體</strong>：「電商客服專員」比「助手」更能讓 AI 聚焦</li>
+                            <li data-i18n="guide_identity_tip_li2">✅ <strong>指示要有流程</strong>：描述「收到 X 時做 Y」，而不只是「要友善」</li>
+                            <li data-i18n="guide_identity_tip_li3">✅ <strong>邊界要明確</strong>：列出代理「不做」的事，避免越權</li>
+                            <li data-i18n="guide_identity_tip_li4">✅ <strong>語調要一致</strong>：配合品牌形象選擇語調</li>
+                            <li data-i18n="guide_identity_tip_li5">✅ <strong>定期更新</strong>：根據客戶回饋調整 Identity 設定</li>
                         </ul>
 
-                        <div class="note">← <a href="#guide/usecase-proxy-window">返回代理窗口指南</a></div>
+                        <div class="note" data-i18n="guide_identity_note_back">← <a href="#guide/usecase-proxy-window">返回代理窗口指南</a></div>
                     </div>
 
                     <!-- ── 實用案例：語音對話 TTS Demo ── -->
