@@ -1,3 +1,10 @@
+# [1.200.0](https://github.com/HankHuang0516/EClaw/compare/v1.199.4...v1.200.0) (2026-03-27)
+
+
+### Features
+
+* **kanban:** GET /cards/summary endpoint ([#575](https://github.com/HankHuang0516/EClaw/issues/575)) ([3cfd3d1](https://github.com/HankHuang0516/EClaw/commit/3cfd3d1df2cfd2851d1a588e0e2441f78264f07e))
+
 ## [1.199.4](https://github.com/HankHuang0516/EClaw/compare/v1.199.3...v1.199.4) (2026-03-27)
 
 
