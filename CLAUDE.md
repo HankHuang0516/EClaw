@@ -7,7 +7,7 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.145.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **Current version**: 1.210.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
 - **App version constant**: 1.0.57 (in `index.js`)
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
