@@ -134,6 +134,7 @@
                         <button class="guide-sub-btn" data-guide="detail-agentcard" data-i18n="guide_nav_detail_agentcard">Agent Card</button>
                         <button class="guide-sub-btn" data-guide="detail-identity" data-i18n="guide_nav_detail_identity">身份設定</button>
                         <button class="guide-sub-btn" data-guide="usecase-voice-tts" data-i18n="guide_nav_usecase_voice">語音對話 TTS</button>
+                        <button class="guide-sub-btn" data-guide="usecase-ecommerce" data-i18n="guide_nav_usecase_ecommerce">電商 AI 客服</button>
                     </div>
                 </div>
                 <div class="guide-content">
@@ -1077,6 +1078,122 @@ async function replyWithVoice(message, deviceId, entityId, botSecret) {
                             <h3 data-i18n="guide_voice_cta_title">立即試用</h3>
                             <p class="cta-item" data-i18n="[html]guide_voice_cta_api">API 文件：<a href="https://eclawbot.com/api/skill-doc" target="_blank" rel="noopener">完整 API Skill Doc</a></p>
                             <p class="cta-item" data-i18n="[html]guide_voice_cta_app">Android App：<a href="https://play.google.com/store/apps/details?id=com.hank.clawlive" target="_blank" rel="noopener">Google Play 下載</a></p>
+                        </div>
+                    </div>
+
+                    <!-- ── 實用案例：電商 AI 客服 Demo ── -->
+                    <div class="guide-panel" id="guide-usecase-ecommerce">
+                        <header>
+                            <h1 data-i18n="guide_ec_title">🛒 電商 AI 客服 — 24/7 自動接單、推薦、退換貨</h1>
+                            <p class="meta" data-i18n="guide_ec_subtitle">讓 AI 代理成為你的全天候客服，從商品推薦到訂單追蹤一手包辦</p>
+                        </header>
+
+                        <h2 data-i18n="guide_ec_what">為什麼電商需要 AI 客服？</h2>
+                        <p data-i18n="guide_ec_what_desc">傳統電商客服面臨人力成本高、回覆時間長、非營業時間無法服務等問題。EClawbot 的 AI 代理可以 <strong>24 小時不間斷</strong>接待客戶，自動回答商品問題、推薦商品、處理退換貨申請，大幅提升客戶滿意度和轉換率。</p>
+
+                        <div style="text-align:center;margin:20px 0;">
+                            <img src="/assets/eclaw-ecommerce-demo.gif" alt="E-Commerce AI Demo"
+                                 style="max-width:420px;width:100%;border-radius:16px;border:1px solid var(--card-border);box-shadow:0 4px 24px rgba(0,0,0,0.3);"
+                                 loading="lazy">
+                            <p style="font-size:12px;color:var(--text-muted);margin-top:8px;" data-i18n="guide_ec_gif_label">▲ AI 電商客服即時對話 Demo</p>
+                        </div>
+
+                        <h2 data-i18n="guide_ec_capabilities">AI 客服能做什麼？</h2>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_ec_cap1_title">🔍 商品查詢與推薦</p>
+                            <p class="solution-desc" data-i18n="guide_ec_cap1_desc">客戶問「有沒有藍牙耳機推薦？」AI 自動搜尋商品目錄，根據價格、評價、庫存推薦最適合的商品，並附上詳細規格和購買連結。</p>
+                        </div>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_ec_cap2_title">📦 訂單追蹤與物流</p>
+                            <p class="solution-desc" data-i18n="guide_ec_cap2_desc">客戶提供訂單編號，AI 即時查詢出貨狀態、預計到貨時間，並主動推送物流更新通知。搭配 TTS 語音播報，讓客戶不用盯螢幕。</p>
+                        </div>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_ec_cap3_title">🔄 退換貨處理</p>
+                            <p class="solution-desc" data-i18n="guide_ec_cap3_desc">AI 引導客戶完成退換貨申請流程：確認商品狀態 → 選擇退換原因 → 產生退貨單號 → 提供寄回地址。全程自動化，無需人工介入。</p>
+                        </div>
+
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_ec_cap4_title">💰 促銷活動與優惠碼</p>
+                            <p class="solution-desc" data-i18n="guide_ec_cap4_desc">根據客戶的瀏覽記錄和購買偏好，AI 主動推薦適合的促銷活動和折扣碼，提升客單價和回購率。</p>
+                        </div>
+
+                        <h2 data-i18n="guide_ec_setup">10 分鐘快速建置</h2>
+                        <p data-i18n="guide_ec_setup_desc">只需要三樣東西就能啟動你的 AI 客服：</p>
+
+                        <div class="code-block"><pre><code>步驟 1️⃣  建立 Entity + 設定 Identity（角色：電商客服）
+步驟 2️⃣  上傳商品目錄到 Note Pages（AI 自動讀取）
+步驟 3️⃣  開啟尹代理窗口（Proxy Window），分享連結給客戶</code></pre></div>
+
+                        <h3 data-i18n="guide_ec_setup_identity">客服 Identity 設定範例</h3>
+                        <div class="code-block"><pre><code>你是「小蝦客服」，小蝦商城的 AI 客服助手。
+
+職責：
+- 回答商品相關問題（價格、規格、庫存）
+- 推薦適合的商品（根據客戶需求）
+- 處理退換貨申請（7天鑑賞期）
+- 查詢訂單狀態和物流資訊
+
+語調：友善、專業、有耐心
+語言：繁體中文為主，可切換英文
+
+限制：
+- 不提供醫療、法律建議
+- 價格以官方標示為準，不私下議價
+- 退換貨需保持商品全新未拆封</code></pre></div>
+
+                        <h2 data-i18n="guide_ec_live">即時體驗</h2>
+                        <p data-i18n="guide_ec_live_desc">下面是一個運行中的 AI 電商客服，你可以直接跟它對話：</p>
+
+                        <div style="max-width:480px;margin:16px auto;">
+                            <iframe src="/c/uwgm9y" style="width:100%;height:420px;border:1px solid var(--card-border);border-radius:12px;background:var(--bg);" loading="lazy"></iframe>
+                            <p style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center;" data-i18n="guide_ec_live_note">🛒 小蝦商城 AI 客服 · 10 messages/hr · Powered by EClaw</p>
+                        </div>
+
+                        <h2 data-i18n="guide_ec_architecture">系統架構</h2>
+                        <div class="flow-diagram">
+                            <div class="flow-step">
+                                <div class="flow-icon">🛒</div>
+                                <div class="flow-label" data-i18n="guide_ec_arch1">客戶</div>
+                                <div class="flow-sub" data-i18n="guide_ec_arch1_sub">瀏覽器/手機</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step">
+                                <div class="flow-icon">🔗</div>
+                                <div class="flow-label" data-i18n="guide_ec_arch2">Proxy Window</div>
+                                <div class="flow-sub" data-i18n="guide_ec_arch2_sub">尹代理窗口</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step">
+                                <div class="flow-icon">🤖</div>
+                                <div class="flow-label" data-i18n="guide_ec_arch3">AI Entity</div>
+                                <div class="flow-sub" data-i18n="guide_ec_arch3_sub">ShopBot Pro</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step">
+                                <div class="flow-icon">📦</div>
+                                <div class="flow-label" data-i18n="guide_ec_arch4">Note Pages</div>
+                                <div class="flow-sub" data-i18n="guide_ec_arch4_sub">商品目錄/FAQ</div>
+                            </div>
+                        </div>
+
+                        <h2 data-i18n="guide_ec_features">技術亮點</h2>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_ec_feat1">⏰ <strong>24/7 不間斷</strong>：AI 不需要休息，客戶隨時都能獲得服務</li>
+                            <li data-i18n="guide_ec_feat2">📝 <strong>Note Pages 商品目錄</strong>：上傳商品清單為 Note Page，AI 自動讀取回答</li>
+                            <li data-i18n="guide_ec_feat3">🔗 <strong>一鍵開放</strong>：Proxy Window 分享連結，無需安裝 App</li>
+                            <li data-i18n="guide_ec_feat4">🔊 <strong>語音客服</strong>：搭配 TTS API，AI 可語音回覆客戶</li>
+                            <li data-i18n="guide_ec_feat5">📊 <strong>對話紀錄</strong>：所有客服對話自動存檔，可在 Chat 頁面回溯</li>
+                            <li data-i18n="guide_ec_feat6">🤝 <strong>多代理協作</strong>：複雜問題可轉給專業代理（A2A speak-to）</li>
+                        </ul>
+
+                        <div class="cta-links">
+                            <h3 data-i18n="guide_ec_cta_title">立即建置你的 AI 客服</h3>
+                            <p class="cta-item" data-i18n="[html]guide_ec_cta_enterprise">企業版 Demo：<a href="/enterprise#ecommerce-demo">查看完整電商 Demo</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_ec_cta_proxy">代理窗口教學：<a href="#guide/usecase-proxy-window">尹代理窗口設定指南</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_ec_cta_start">立即開始：<a href="dashboard.html">前往 Dashboard 建立 Entity</a></p>
                         </div>
                     </div>
 
