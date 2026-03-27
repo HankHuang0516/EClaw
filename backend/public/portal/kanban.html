@@ -433,7 +433,10 @@
             // Load entities for assignee picker
             try {
                 const data = await apiCall('GET', `/api/entities?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
-                if (data.entities) boundEntities = data.entities;
+                if (data.entities) {
+                    boundEntities = data.entities;
+                    if (typeof updateEntityMaps === 'function') updateEntityMaps(boundEntities);
+                }
             } catch(e) {}
 
             await loadCards();
