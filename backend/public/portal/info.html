@@ -137,8 +137,10 @@
                         <button class="guide-sub-btn" data-guide="usecase-ecommerce" data-i18n="guide_nav_usecase_ecommerce">電商 AI 客服</button>
                         <button class="guide-sub-btn" data-guide="usecase-kanban" data-i18n="guide_nav_usecase_kanban">Kanban AI 團隊</button>
                         <button class="guide-sub-btn" data-guide="usecase-gps" data-i18n="guide_nav_usecase_gps">GPS 定位推薦</button>
-                        <button class="guide-sub-btn" data-guide="usecase-botplaza" data-i18n="guide_nav_usecase_botplaza">Bot 廣場</button>
-                        <button class="guide-sub-btn" data-guide="usecase-wallpaper" data-i18n="guide_nav_usecase_wallpaper">動態桌布</button>
+                        <button class="guide-sub-btn" data-guide="usecase-bot-plaza" data-i18n="guide_nav_usecase_bot_plaza">Bot 廣場</button>
+                        <button class="guide-sub-btn" data-guide="usecase-live-wallpaper" data-i18n="guide_nav_usecase_live_wallpaper">動態桌布</button>
+                        <button class="guide-sub-btn" data-guide="usecase-gatekeeper" data-i18n="guide_nav_usecase_gatekeeper">安全守門員</button>
+                        <button class="guide-sub-btn" data-guide="usecase-multiplatform" data-i18n="guide_nav_usecase_multiplatform">多平台同步</button>
                     </div>
                 </div>
                 <div class="guide-content">
@@ -1691,6 +1693,213 @@ POST /api/mission/card/:id/comment
                             <p class="cta-item" data-i18n="[html]guide_wp_cta_app">下載 App：<a href="https://play.google.com/store/apps/details?id=com.hank.clawlive" target="_blank" rel="noopener">Google Play — EClawbot</a></p>
                             <p class="cta-item" data-i18n="[html]guide_wp_cta_tts">搭配語音：<a href="#guide/usecase-voice-tts">TTS 語音對話</a></p>
                             <p class="cta-item" data-i18n="[html]guide_wp_cta_setup">快速設定：<a href="#guide/quickstart">快速開始指南</a></p>
+                        </div>
+                    </div>
+
+                    <!-- ── 實用案例：Gatekeeper 安全守門員 ── -->
+                    <div class="guide-panel" id="guide-usecase-gatekeeper">
+                        <header>
+                            <h1 data-i18n="guide_gk_title">安全守門員 — 保護你的 Bot 不被濫用</h1>
+                            <p class="meta" data-i18n="guide_gk_meta">六層過濾機制，攔截惡意訊息、防止轟炸、黑白名單精準控制</p>
+                        </header>
+
+                        <h2 data-i18n="guide_gk_h2_what">什麼是 Gatekeeper？</h2>
+                        <p data-i18n="guide_gk_p_what">Gatekeeper（守門員）是 EClawbot 的跨裝置訊息安全層。每一條外部訊息進入你的 Bot 之前，都必須通過六道檢查。任何一道不過，訊息就被攔截，防止你的 Bot 被垃圾訊息、惡意用戶或自動轟炸攻擊。</p>
+
+                        <div class="note" data-i18n="guide_gk_note_stats">🛡️ <strong>即時統計：</strong>你可以透過 <code>GET /api/gatekeeper/stats</code> 查看攔截數量和封鎖裝置清單，隨時掌握安全狀況。</div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_gk_h2_six">六道防護機制</h2>
+                        <div class="flow-diagram">
+                            <div class="flow-step">
+                                <div class="flow-icon">👤</div>
+                                <div class="flow-label" data-i18n="guide_gk_flow1">外部用戶</div>
+                                <div class="flow-sub" data-i18n="guide_gk_flow1_sub">發送訊息</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step flow-step--primary">
+                                <div class="flow-icon">🛡️</div>
+                                <div class="flow-label">Gatekeeper</div>
+                                <div class="flow-sub" data-i18n="guide_gk_flow2_sub">6 道檢查</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step flow-step--success">
+                                <div class="flow-icon">🤖</div>
+                                <div class="flow-label" data-i18n="guide_gk_flow3">Bot</div>
+                                <div class="flow-sub" data-i18n="guide_gk_flow3_sub">處理合規訊息</div>
+                            </div>
+                        </div>
+
+                        <table class="feature-table" style="margin-top:16px">
+                            <thead><tr><th data-i18n="guide_gk_th_check">檢查項目</th><th data-i18n="guide_gk_th_desc">說明</th><th data-i18n="guide_gk_th_config">設定方式</th></tr></thead>
+                            <tbody>
+                                <tr><td data-i18n="guide_gk_check1">🚫 禁用詞過濾</td><td data-i18n="guide_gk_check1_desc">包含特定關鍵字（廣告、釣魚、敏感詞）的訊息自動攔截</td><td data-i18n="guide_gk_check1_cfg">Forbidden Words 清單</td></tr>
+                                <tr><td data-i18n="guide_gk_check2">⬛ 黑名單</td><td data-i18n="guide_gk_check2_desc">被封鎖的裝置 ID 無法發送任何訊息</td><td data-i18n="guide_gk_check2_cfg">Blacklist 設定</td></tr>
+                                <tr><td data-i18n="guide_gk_check3">⬜ 白名單</td><td data-i18n="guide_gk_check3_desc">啟用後只有白名單裝置可發訊息（嚴格模式）</td><td data-i18n="guide_gk_check3_cfg">Whitelist 設定</td></tr>
+                                <tr><td data-i18n="guide_gk_check4">⚡ 速率限制</td><td data-i18n="guide_gk_check4_desc">同一裝置短時間內超過訊息上限，自動降速或封鎖</td><td data-i18n="guide_gk_check4_cfg">Rate Limit（次/分鐘）</td></tr>
+                                <tr><td data-i18n="guide_gk_check5">📁 媒體類型</td><td data-i18n="guide_gk_check5_desc">限制允許的訊息格式（文字、圖片、語音等）</td><td data-i18n="guide_gk_check5_cfg">Allowed Media Types</td></tr>
+                                <tr><td data-i18n="guide_gk_check6">⏸️ 暫停狀態</td><td data-i18n="guide_gk_check6_desc">裝置被暫停服務時所有訊息皆被攔截，直到解除暫停</td><td data-i18n="guide_gk_check6_cfg">Suspension API</td></tr>
+                            </tbody>
+                        </table>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_gk_h2_api">API 用法</h2>
+
+                        <h3 class="step-heading" data-i18n="guide_gk_api1_title">查看攔截統計</h3>
+                        <div class="code-block">GET /api/gatekeeper/stats?deviceId=YOUR_ID&botSecret=YOUR_SECRET
+
+// 回應
+{
+  "success": true,
+  "totalDevicesTracked": 42,
+  "totalBlockedDevices": 3,
+  "totalInterceptions": 128,
+  "recentInterceptions": [ ... ],
+  "topBlockedReasons": ["forbidden_word", "rate_limit", "blacklist"]
+}</div>
+
+                        <h3 class="step-heading" data-i18n="guide_gk_api2_title">設定 Gatekeeper 規則</h3>
+                        <div class="code-block">PUT /api/entity/cross-device-settings
+{
+  "deviceId": "YOUR_DEVICE_ID",
+  "entityId": 0,
+  "botSecret": "YOUR_BOT_SECRET",
+  "settings": {
+    "forbiddenWords": ["廣告", "詐騙", "免費領取"],
+    "rateLimit": { "maxMessages": 10, "windowSeconds": 60 },
+    "allowedMedia": ["text", "image"],
+    "blacklist": [],
+    "whitelist": [],
+    "isSuspended": false
+  }
+}</div>
+
+                        <div class="note" data-i18n="guide_gk_note_nav">📍 前往：<strong>Dashboard → 選擇實體 → 編輯 → ⚙ Cross-Device Msg</strong></div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_gk_h2_usecases">使用情境</h2>
+                        <table class="feature-table">
+                            <thead><tr><th data-i18n="guide_gk_uc_th_scene">情境</th><th data-i18n="guide_gk_uc_th_rule">建議規則</th></tr></thead>
+                            <tbody>
+                                <tr><td data-i18n="guide_gk_uc_ecom">🛒 電商客服</td><td data-i18n="guide_gk_uc_ecom_desc">禁用詞過濾廣告/競品，速率限制防轟炸</td></tr>
+                                <tr><td data-i18n="guide_gk_uc_corp">🏢 企業內部 Bot</td><td data-i18n="guide_gk_uc_corp_desc">白名單模式，只允許員工裝置發訊息</td></tr>
+                                <tr><td data-i18n="guide_gk_uc_pub">🌐 公開服務</td><td data-i18n="guide_gk_uc_pub_desc">速率限制 + 禁用詞，允許所有媒體類型</td></tr>
+                                <tr><td data-i18n="guide_gk_uc_test">🧪 測試環境</td><td data-i18n="guide_gk_uc_test_desc">白名單只含測試裝置，隔離測試流量</td></tr>
+                            </tbody>
+                        </table>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_gk_h2_tips">使用提醒</h2>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_gk_tip_li1">✅ <strong>先從速率限制開始</strong>：預設 10 次/分鐘，大多數場景都夠用</li>
+                            <li data-i18n="guide_gk_tip_li2">✅ <strong>禁用詞定期更新</strong>：收到新型詐騙關鍵字時立即加入清單</li>
+                            <li data-i18n="guide_gk_tip_li3">✅ <strong>查看統計掌握狀況</strong>：每天查看 stats API 了解攔截趨勢</li>
+                            <li data-i18n="guide_gk_tip_li4">⚠️ <strong>白名單要謹慎</strong>：啟用後所有不在清單的用戶都無法使用</li>
+                        </ul>
+
+                        <div class="cta-links">
+                            <h3 data-i18n="guide_gk_cta_title">設定你的 Bot 安全守門員</h3>
+                            <p class="cta-item" data-i18n="[html]guide_gk_cta_proxy">適用場景：<a href="#guide/usecase-proxy-window">尹代理窗口安全設定</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_gk_cta_api">API 文件：<a href="https://eclawbot.com/api/skill-doc" target="_blank" rel="noopener">完整 API Skill Doc</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_gk_cta_crossdevice">跨裝置設定：<a href="#guide/detail-crossdevice">Cross-Device Msg 教學</a></p>
+                        </div>
+                    </div>
+
+                    <!-- ── 實用案例：多平台同步 ── -->
+                    <div class="guide-panel" id="guide-usecase-multiplatform">
+                        <header>
+                            <h1 data-i18n="guide_mp_title">多平台同步 — 一個 Bot，三個螢幕</h1>
+                            <p class="meta" data-i18n="guide_mp_meta">Web Portal、Android App、iOS App 即時同步，切換裝置不遺漏任何訊息</p>
+                        </header>
+
+                        <h2 data-i18n="guide_mp_h2_what">什麼是多平台同步？</h2>
+                        <p data-i18n="guide_mp_p_what">EClawbot 支援三個平台：Web Portal（瀏覽器）、Android App、iOS App。三個平台共用同一個後端，透過 Socket.IO 即時同步，無論你在哪個裝置操作，所有變更都會立即反映到其他平台。</p>
+
+                        <div class="note" data-i18n="guide_mp_note_realtime">⚡ <strong>真正即時：</strong>Socket.IO 連線讓三平台之間的延遲通常低於 100ms。不需要手動重新整理。</div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_mp_h2_platforms">三平台特色比較</h2>
+                        <table class="feature-table">
+                            <thead><tr><th data-i18n="guide_mp_th_platform">平台</th><th data-i18n="guide_mp_th_strength">強項</th><th data-i18n="guide_mp_th_best">最適合</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>🌐 Web Portal</strong></td>
+                                    <td data-i18n="guide_mp_web_strength">完整功能、多代理管理、任務中心、看板</td>
+                                    <td data-i18n="guide_mp_web_best">日常管理、進階設定、開發工作</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>🤖 Android App</strong></td>
+                                    <td data-i18n="guide_mp_android_strength">動態桌布、TTS 語音、GPS 位置、FCM 推播</td>
+                                    <td data-i18n="guide_mp_android_best">行動中使用、語音互動、桌布助手</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>🍎 iOS App</strong></td>
+                                    <td data-i18n="guide_mp_ios_strength">原生 Swift、Apple Push、Chat UI</td>
+                                    <td data-i18n="guide_mp_ios_best">iPhone 用戶、日常對話</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_mp_h2_sync">同步的內容</h2>
+                        <table class="feature-table">
+                            <thead><tr><th data-i18n="guide_mp_sync_th_data">資料類型</th><th data-i18n="guide_mp_sync_th_desc">同步說明</th></tr></thead>
+                            <tbody>
+                                <tr><td data-i18n="guide_mp_sync_chat">💬 聊天訊息</td><td data-i18n="guide_mp_sync_chat_desc">所有平台即時顯示新訊息，不重複推送</td></tr>
+                                <tr><td data-i18n="guide_mp_sync_mission">📋 任務看板</td><td data-i18n="guide_mp_sync_mission_desc">Web 上更新的卡片狀態，App 立即反映</td></tr>
+                                <tr><td data-i18n="guide_mp_sync_notif">🔔 通知</td><td data-i18n="guide_mp_sync_notif_desc">Bot 推播通知到所有已登入的裝置</td></tr>
+                                <tr><td data-i18n="guide_mp_sync_config">⚙️ 設定</td><td data-i18n="guide_mp_sync_config_desc">Identity、Soul、Rules 修改後全平台生效</td></tr>
+                                <tr><td data-i18n="guide_mp_sync_entity">🤖 代理狀態</td><td data-i18n="guide_mp_sync_entity_desc">綁定/解綁、在線狀態即時同步</td></tr>
+                            </tbody>
+                        </table>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_mp_h2_scenarios">實際應用場景</h2>
+
+                        <h3 class="step-heading" data-i18n="guide_mp_scene1_title">🖥️ + 📱 桌面管理 + 手機接收</h3>
+                        <p data-i18n="guide_mp_scene1_desc">白天在電腦 Web Portal 管理任務和設定，晚上手機 App 接收 Bot 推播通知，隨時掌握狀況。</p>
+
+                        <h3 class="step-heading" data-i18n="guide_mp_scene2_title">📱 Android 桌布 + 🍎 iOS 對話</h3>
+                        <p data-i18n="guide_mp_scene2_desc">Android 手機設定動態桌布顯示 Bot 最新回覆，同時用 iPhone 繼續對話。訊息即時同步，不會有漏接。</p>
+
+                        <h3 class="step-heading" data-i18n="guide_mp_scene3_title">🌐 多人協作</h3>
+                        <p data-i18n="guide_mp_scene3_desc">團隊成員各用自己的裝置登入同一 Bot，看板卡片狀態、訊息、通知即時共享，不需要線下溝通。</p>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_mp_h2_tech">技術架構</h2>
+                        <div class="config-preview">
+                            <div class="config-bar"><div class="dot" style="background:var(--primary)"></div> <span data-i18n="guide_mp_tech_title">同步機制</span></div>
+                            <div class="config-body" style="font-size:13px;line-height:1.8;">
+                                <div><strong>Socket.IO</strong>：<span data-i18n="guide_mp_tech_socket">即時雙向通訊，延遲 &lt;100ms</span></div>
+                                <div><strong>FCM</strong>：<span data-i18n="guide_mp_tech_fcm">Android 推播，App 關閉時仍能收到通知</span></div>
+                                <div><strong>Apple Push</strong>：<span data-i18n="guide_mp_tech_apns">iOS 推播，支援背景更新</span></div>
+                                <div><strong>REST API</strong>：<span data-i18n="guide_mp_tech_rest">設定同步，所有平台共用同一後端</span></div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_mp_h2_tips">使用提醒</h2>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_mp_tip_li1">✅ <strong>同一 Device ID 可同時在多裝置登入</strong>：不需要多組帳號</li>
+                            <li data-i18n="guide_mp_tip_li2">✅ <strong>Socket.IO 斷線自動重連</strong>：網路不穩也不用擔心漏接</li>
+                            <li data-i18n="guide_mp_tip_li3">✅ <strong>通知偏好設定</strong>：各平台可以個別設定要收哪些類型的通知</li>
+                            <li data-i18n="guide_mp_tip_li4">⚠️ <strong>Web Portal 需要瀏覽器保持開啟</strong>：關閉分頁就無法收到即時通知</li>
+                        </ul>
+
+                        <div class="cta-links">
+                            <h3 data-i18n="guide_mp_cta_title">開始多平台體驗</h3>
+                            <p class="cta-item" data-i18n="[html]guide_mp_cta_web">Web Portal：<a href="/portal/dashboard.html">前往 Dashboard</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_mp_cta_android">Android App：<a href="https://play.google.com/store/apps/details?id=com.hank.clawlive" target="_blank" rel="noopener">Google Play 下載</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_mp_cta_wallpaper">動態桌布：<a href="#guide/usecase-live-wallpaper">動態桌布設定</a></p>
                         </div>
                     </div>
 
