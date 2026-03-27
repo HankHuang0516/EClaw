@@ -1,3 +1,10 @@
+# [1.204.0](https://github.com/HankHuang0516/EClaw/compare/v1.203.2...v1.204.0) (2026-03-27)
+
+
+### Features
+
+* **info:** [P1-2] Kanban AI 團隊看板 Demo + i18n (PR [#582](https://github.com/HankHuang0516/EClaw/issues/582)) ([c80f7f6](https://github.com/HankHuang0516/EClaw/commit/c80f7f6be081e47195295b400a1e771f3d505cae))
+
 ## [1.203.2](https://github.com/HankHuang0516/EClaw/compare/v1.203.1...v1.203.2) (2026-03-27)
 
 
