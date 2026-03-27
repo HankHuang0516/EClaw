@@ -16,15 +16,8 @@ function renderNav(activePage) {
         { id: 'info', i18nKey: 'nav_info', label: 'Info', href: 'info.html', icon: '📖' }
     ];
 
-    // Auto-redirect to workspace.html if split view mode is enabled (desktop only)
-    // Skip redirect if already on workspace.html or settings.html (so user can change the setting)
-    if (!window.location.pathname.includes('workspace.html')
-        && activePage !== 'settings'
-        && localStorage.getItem('eclaw-view-mode') === 'split'
-        && window.innerWidth >= 1200) {
-        window.location.href = 'workspace.html?left=' + encodeURIComponent(activePage || 'dashboard');
-        return;
-    }
+    // If split view mode is enabled, show a subtle indicator on nav (no auto-redirect)
+    // Users enter workspace via Settings > Display > Split View, which navigates to workspace.html
 
     // Deferred: add admin link after auth check completes
     // Use window._addAdminLink so pages can also call it directly after auth

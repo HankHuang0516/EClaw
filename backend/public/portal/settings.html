@@ -1453,6 +1453,15 @@
             localStorage.setItem('eclaw-view-mode', mode);
             document.getElementById('viewModeSingle').classList.toggle('active', mode === 'single');
             document.getElementById('viewModeSplit').classList.toggle('active', mode === 'split');
+            if (mode === 'split') {
+                // Navigate to workspace immediately
+                window.top.location.href = 'workspace.html?panes=dashboard';
+            } else if (mode === 'single') {
+                // Exit workspace if inside one
+                if (window.top !== window.self) {
+                    window.top.location.href = 'settings.html';
+                }
+            }
         }
 
         // ============================================
