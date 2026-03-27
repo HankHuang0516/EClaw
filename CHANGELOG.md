@@ -1,3 +1,10 @@
+# [1.201.0](https://github.com/HankHuang0516/EClaw/compare/v1.200.0...v1.201.0) (2026-03-27)
+
+
+### Features
+
+* **info:** ecommerce AI demo use case ([#576](https://github.com/HankHuang0516/EClaw/issues/576)) ([e341799](https://github.com/HankHuang0516/EClaw/commit/e341799cc8ab976ae3abf732c5c3da0e9b77377d))
+
 # [1.200.0](https://github.com/HankHuang0516/EClaw/compare/v1.199.4...v1.200.0) (2026-03-27)
 
 
