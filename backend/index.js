@@ -14062,6 +14062,9 @@ app.get('/api/device/location', (req, res) => {
     res.json({ success: true, location: device._lastLocation });
 });
 
+// GPS RECOMMENDATIONS
+require('./gps-recommendations')(app, { safeEqual, devices });
+
 app.get('/api/bot/pending-messages', (req, res) => {
     const { deviceId, entityId } = req.query;
 
