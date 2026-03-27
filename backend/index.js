@@ -1099,7 +1099,14 @@ app.use('/api/mission', missionModule.router);
 // Kanban Board (Mission v2) — mounted on same /api/mission path
 let kanbanModule;
 try {
-    kanbanModule = require('./kanban')(devices, { awardEntityXP, serverLog, pushToChannelCallback: (...args) => channelModule.pushToChannelCallback(...args) });
+    kanbanModule = require('./kanban')(devices, {
+        awardEntityXP,
+        serverLog,
+        pushToChannelCallback: (...args) => channelModule.pushToChannelCallback(...args),
+        saveChatMessage,
+        getMissionApiHints,
+        pushToBot,
+    });
     app.use('/api/mission', kanbanModule.router);
     console.log('[Kanban] Module loaded successfully');
 } catch (err) {
