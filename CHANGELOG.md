@@ -1,3 +1,10 @@
+# [1.203.0](https://github.com/HankHuang0516/EClaw/compare/v1.202.0...v1.203.0) (2026-03-27)
+
+
+### Features
+
+* **mission:** mobile card detail view + execution time countdown ([#578](https://github.com/HankHuang0516/EClaw/issues/578)) ([4e3da21](https://github.com/HankHuang0516/EClaw/commit/4e3da214c54da37977478701c73ab455cb5b46b8))
+
 # [1.202.0](https://github.com/HankHuang0516/EClaw/compare/v1.201.0...v1.202.0) (2026-03-27)
 
 
