@@ -26,6 +26,11 @@ async function apiCall(method, path, body = null) {
     const data = await response.json();
 
     if (response.status === 401) {
+        console.error('[API 401]', method, path, '→', JSON.stringify(data));
+        console.error('[API 401] cookies:', document.cookie ? 'present' : 'EMPTY');
+        console.error('[API 401] page:', window.location.href);
+        // Pause here so devtools console can be read before redirect
+        debugger; // Open DevTools BEFORE loading the page to catch this
         // Not authenticated - redirect to login (skip public pages, info page, and Android WebView)
         const isAndroidWebView = typeof AndroidBridge !== 'undefined';
         if (!isAndroidWebView && !window.location.pathname.includes('index.html') && !window.location.pathname.endsWith('/portal/') && !window.location.pathname.includes('info.html')) {

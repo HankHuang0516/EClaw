@@ -48,6 +48,7 @@ async function checkAuth() {
             }
         }
 
+        console.error('[Auth] checkAuth failed, redirecting to login:', e.message || e);
         window.location.href = 'index.html';
         return null;
     }
