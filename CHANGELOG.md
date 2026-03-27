@@ -1,3 +1,10 @@
+## [1.199.2](https://github.com/HankHuang0516/EClaw/compare/v1.199.1...v1.199.2) (2026-03-27)
+
+
+### Bug Fixes
+
+* **mission:** catch and display init errors instead of silent redirect ([#572](https://github.com/HankHuang0516/EClaw/issues/572)) ([6b8e20c](https://github.com/HankHuang0516/EClaw/commit/6b8e20c792f164540c761aa5030edf51a9538471))
+
 ## [1.199.1](https://github.com/HankHuang0516/EClaw/compare/v1.199.0...v1.199.1) (2026-03-27)
 
 
