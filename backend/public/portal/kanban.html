@@ -610,8 +610,9 @@
                     col.classList.remove('drag-over');
                     if (!dragCard) return;
                     const newStatus = col.id.replace('col-','');
-                    const card = allCards.find(c => c.id === dragCard);
+                    const card = findCard(dragCard);
                     if (!card || card.status === newStatus) { dragCard = null; return; }
+                    if (card.isAutomation) { showToast('自動化母卡無法手動移動', true); dragCard = null; return; }
                     if (card.status === 'done') { showToast('Cannot move Done cards', true); dragCard = null; return; }
                     try {
                         await apiMoveCard(dragCard, newStatus, card.assignedBots || []);
@@ -630,26 +631,51 @@
         }
 
         // ── Detail Modal ──
+        // ── Helper: find card in both allCards and automationCards ──
+        function findCard(cardId) {
+            return allCards.find(c => c.id === cardId) || automationCards.find(c => c.id === cardId) || null;
+        }
+
         async function openDetail(cardId) {
             openCardId = cardId;
-            const card = allCards.find(c => c.id === cardId);
+            const card = findCard(cardId);
             if (!card) return;
 
             document.getElementById('detailTitle').textContent = card.title;
             const meta = document.getElementById('detailMeta');
+
+            // Build schedule info for automation cards
+            let scheduleInfo = '';
+            if (card.isAutomation && card.schedule) {
+                const sc = card.schedule;
+                const nextRun = sc.nextRunAt ? new Date(sc.nextRunAt).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) : '—';
+                const lastRun = sc.lastRunAt ? new Date(sc.lastRunAt).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) : '未觸發';
+                scheduleInfo = `<div style="width:100%;margin-top:8px;padding:8px 10px;background:rgba(var(--accent-rgb,99,102,241),0.08);border-radius:6px;font-size:12px;color:var(--text-secondary)">` +
+                    `⚡ <strong data-i18n="kb_auto_badge">自動化</strong> &nbsp;|&nbsp; ` +
+                    `🕐 下次觸發：${nextRun} &nbsp;|&nbsp; ` +
+                    `✅ 上次觸發：${lastRun}` +
+                    (sc.cronExpression ? ` &nbsp;|&nbsp; cron: <code>${sc.cronExpression}</code>` : '') +
+                    `</div>`;
+            }
+
             meta.innerHTML = `
                 <span class="meta-item"><span class="kb-card-priority" data-p="${card.priority}">${card.priority}</span></span>
                 <span class="meta-item">📌 ${STATUS_LABELS[card.status]}</span>
                 <span class="meta-item">👤 ${(card.assignedBots||[]).map(id=>{ const e=boundEntities.find(x=>x.entityId===id); return e?(e.name||e.character||'#'+id):'#'+id; }).join(', ')}</span>
-                <span class="meta-item">🕐 ${formatTime(card.created_at)}</span>
-                ${card.description ? '<div style="width:100%;font-size:13px;color:var(--text-secondary);margin-top:4px">'+escapeHtml(card.description)+'</div>' : ''}
+                <span class="meta-item">🕐 ${formatTime(card.createdAt || card.created_at)}</span>
+                ${scheduleInfo}
+                ${card.description ? '<div style="width:100%;font-size:13px;color:var(--text-secondary);margin-top:8px;white-space:pre-wrap;word-break:break-word">'+escapeHtml(card.description)+'</div>' : ''}
             `;
 
-            // Move bar
+            // Move bar — hide for automation parent cards (managed by scheduler)
             const moveBar = document.getElementById('moveBar');
-            moveBar.innerHTML = STATUSES.map(s =>
-                `<button class="kb-move-btn${s===card.status?' current':''}" onclick="moveCardTo('${cardId}','${s}')"${s===card.status?' disabled':''}>${STATUS_LABELS[s]}</button>`
-            ).join('');
+            if (card.isAutomation) {
+                moveBar.innerHTML = `<div style="font-size:12px;color:var(--text-muted);padding:4px 0">⚡ 自動化母卡由排程管理，無法手動移動狀態</div>`;
+            } else {
+                moveBar.innerHTML = STATUSES.map(s =>
+                    `<button class="kb-move-btn${s===card.status?' current':''}" onclick="moveCardTo('${cardId}','${s}')"${s===card.status?' disabled':''}>${STATUS_LABELS[s]}</button>`
+                ).join('');
+            }
 
             // Load first tab
             switchDetailTab('comments', document.querySelector('.kb-modal-tab'));
@@ -680,7 +706,7 @@
                 const comments = data.comments || [];
                 console.log('[Kanban] loadComments:', comments.length, 'comments loaded');
 
-                const card = allCards.find(c => c.id === openCardId);
+                const card = findCard(openCardId);
                 const myEntityIds = new Set(boundEntities.map(e => e.entityId));
 
                 const commentsHtml = comments.map(c => {
@@ -757,8 +783,9 @@
         }
 
         async function moveCardTo(cardId, newStatus) {
-            const card = allCards.find(c => c.id === cardId);
+            const card = findCard(cardId);
             if (!card || card.status === newStatus) return;
+            if (card.isAutomation) { showToast('自動化母卡由排程管理，無法手動移動', true); return; }
             if (card.status === 'done') { showToast('Cannot move Done cards', true); return; }
             try {
                 await apiMoveCard(cardId, newStatus, card.assignedBots || []);
