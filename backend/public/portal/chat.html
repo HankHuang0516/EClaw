@@ -1800,7 +1800,7 @@
                 const codeHtml = highlighted || text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
                 const langLabel = language || 'code';
                 const escaped = text.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-                return `<pre><div class="code-block-header"><span class="code-lang-label">${langLabel}</span><button class="code-copy-btn" onclick="copyCodeBlock(this)" data-code="${escaped}">📋 Copy</button></div><code class="hljs${language ? ' language-' + language : ''}">${codeHtml}</code></pre>`;
+                return `<pre><div class="code-block-header"><span class="code-lang-label">${langLabel}</span><button class="code-copy-btn" data-code="${escaped}">📋 Copy</button></div><code class="hljs${language ? ' language-' + language : ''}">${codeHtml}</code></pre>`;
             };
             marked.setOptions({ renderer: renderer, breaks: true });
         })();
@@ -1830,6 +1830,11 @@
                 setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '📋 Copy'; }, 2000);
             });
         }
+        // Event delegation for code copy buttons (avoids inline onclick / XSS risk)
+        document.getElementById('chatMessages').addEventListener('click', (e) => {
+            const btn = e.target.closest('.code-copy-btn');
+            if (btn) copyCodeBlock(btn);
+        });
 
         // ── Init ──
         window.addEventListener('DOMContentLoaded', async () => {
@@ -2773,7 +2778,7 @@
                     if (msg.is_from_bot && typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
                         // Bot messages: render Markdown
                         textHtml = DOMPurify.sanitize(marked.parse(rawText), {
-                            ADD_ATTR: ['data-code', 'onclick'],
+                            ADD_ATTR: ['data-code'],
                             ADD_TAGS: ['button']
                         });
                         isMdRendered = true;

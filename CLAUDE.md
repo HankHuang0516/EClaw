@@ -18,11 +18,12 @@
 ```
 EClaw/
 ├── backend/                  # Node.js Express server (deployed to Railway)
-│   ├── index.js              # Main server (~12,373 lines) — all API routes
+│   ├── index.js              # Main server (~14,181 lines) — all API routes
 │   ├── db.js                 # PostgreSQL connection pool + schema creation
 │   ├── auth.js               # Auth module (JWT, OAuth, OIDC, RBAC)
 │   ├── mission.js            # Mission Control dashboard system
 │   ├── gatekeeper.js         # Bot message security filter
+│   ├── gps-recommendations.js # GPS-based entity recommendation API (demo)
 │   ├── ai-support.js         # AI chat support (Anthropic Claude integration)
 │   ├── anthropic-client.js   # Direct Anthropic API client
 │   ├── scheduler.js          # Cron-based task scheduler
@@ -96,7 +97,7 @@ EClaw/
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
 │   ├── tests/                # Regression + integration tests (56 files)
-│   ├── tests/jest/           # Jest unit tests (53 files, CI-run via `npm test`)
+│   ├── tests/jest/           # Jest unit tests (54 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -160,7 +161,7 @@ EClaw/
 
 ### Backend (Node.js/Express)
 
-- **Single-file server**: `backend/index.js` (~12,209 lines) contains all API routes
+- **Single-file server**: `backend/index.js` (~14,181 lines) contains all API routes
 - **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
 - **Real-time**: Socket.IO for live updates to Web Portal and Android app
 - **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
@@ -238,6 +239,9 @@ EClaw/
 | `/api/entity/identity` | index.js | Bot identity CRUD (role, instructions, boundaries, tone) |
 | `/api/message/:messageId/react` | index.js | Chat message reactions (like/dislike, XP awards) |
 | `/api/link-preview` | index.js | URL link preview extraction (Open Graph/Twitter meta) |
+| `/api/gatekeeper/stats` | index.js | Gatekeeper aggregate interception statistics |
+| `/api/gps/recommendations` | gps-recommendations.js | GPS-based entity recommendations (demo) |
+| `/api/kanban/cards/summary` | index.js | Kanban card summary endpoint |
 | `/api/health`, `/api/version` | index.js | Health check and version |
 | `/c/:code` | index.js | Shareable chat link (read-only view) |
 | `/`, `/landing`, `/llms.txt` | index.js | Landing page, SEO, AI search discovery |
@@ -613,6 +617,19 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Share-Chat Order Dialog i18n (#493)**: All hardcoded Chinese strings in order dialog replaced with i18n keys
 - **Chat Delivered Receipt**: Fixed `is_delivered` showing "Read" instead of "Delivered" in chat receipts
 
+### Recent Features (v1.199.x – v1.210.x)
+
+- **Kanban Card Summary (v1.200)**: `GET /api/kanban/cards/summary` endpoint for kanban card aggregation
+- **Info Page Use-Case Demos (v1.201–v1.210)**: Five interactive demo panels on info.html — [P1-1] E-commerce AI Customer Service, [P1-2] Kanban AI Team Board, [P1-3] GPS Smart Recommendations, [P1-4] Bot Marketplace + Live Wallpaper, [P1-5] Gatekeeper Security + Cross-Platform Sync; all with full 8-language i18n
+- **GPS Recommendations API (v1.205)**: `GET /api/gps/recommendations` mock endpoint for location-based entity discovery demo
+- **Gatekeeper Stats API (v1.206)**: `GET /api/gatekeeper/stats` endpoint for aggregate interception statistics
+- **Mission Mobile Card Detail (v1.202)**: Mobile-optimized card detail view with execution time countdown
+- **Kanban Avatar Fix (v1.203)**: Entity map population fix for assigned avatar chips rendering
+- **Gzip Compression (v1.210.1)**: Express gzip compression middleware + fixed Cache-Control headers to reduce egress bandwidth
+- **Schedule lastRunAt Fix (v1.210)**: Exposed `schedule.lastRunAt` after once-trigger completes for kanban display
+- **Auth /me Fix (v1.199.3)**: Restored `deviceSecret` in `/api/auth/me` response to fix mission 401 errors
+- **Nav Auto-Redirect Fix (v1.199.1)**: Removed auto-redirect to workspace, use direct navigation
+
 ---
 
 ## Test Coverage Summary
@@ -706,7 +723,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Note Pages | `node backend/tests/test-note-pages.js` | Device ID + Secret | Note page public/private toggle, visitor analytics, custom domain |
 | AI Chat WebView Guard | `node backend/tests/test-ai-chat-webview-guard.js` | Device ID + Secret | AI chat widget hidden in Android WebView contexts |
 
-### Jest Unit Tests (CI-run, `npm test`, 53 files)
+### Jest Unit Tests (CI-run, `npm test`, 54 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -764,11 +781,12 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Note Pages | `tests/jest/note-pages.test.js` | Note page CRUD, public/private toggle, visitor analytics |
 | Speak-To Delivery | `tests/jest/speak-to-delivery.test.js` | Entity speak-to message delivery validation |
 | Cross-Speak Channel | `tests/jest/cross-speak-channel.test.js` | Cross-speak channel push parity — entity/client cross-speak channel-bound delivery |
+| Auth /me Contract | `tests/jest/auth-me-contract.test.js` | API/frontend contract test for /api/auth/me response fields |
 
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (53 files)
+cd backend && npm test                  # Jest unit tests (54 files)
 cd backend && npm run lint              # ESLint
 ```
 
@@ -787,7 +805,7 @@ Set in `backend/.env` (gitignored):
 - `server_logs` schema extension is backward-compatible — all existing 67+ `serverLog()` calls work without modification (new fields default to null)
 - Entity unbind calls `createDefaultEntity()` which resets all fields including new ones — no separate cleanup needed
 - `const` redeclaration in same scope is a JS error — check existing variable names before adding new ones (e.g., `adminAuth` already declared at line 1198)
-- `index.js` is a single 12,209-line file — use line numbers when referencing specific code sections
+- `index.js` is a single 14,181-line file — use line numbers when referencing specific code sections
 - Module initialization order matters: `db.js` → `devices` in-memory map → module `require()` calls with dependency injection
 
 ### Gatekeeper System

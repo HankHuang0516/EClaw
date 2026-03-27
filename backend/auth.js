@@ -608,7 +608,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
     // ============================================
     // POST /reset-password
     // ============================================
-    router.post('/reset-password', async (req, res) => {
+    router.post('/reset-password', authRateLimit, async (req, res) => {
         try {
             const { token, newPassword } = req.body;
 
