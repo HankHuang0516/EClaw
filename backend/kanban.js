@@ -101,7 +101,7 @@ async function initKanbanDatabase() {
 /**
  * Factory: receives in-memory devices object from index.js
  */
-module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pushToChannelCallback } = {}) {
+module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pushToChannelCallback, saveChatMessage, getMissionApiHints, pushToBot } = {}) {
     const router = express.Router();
 
     // Health check
@@ -173,10 +173,14 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
     // ── Helper: push notification to entity via channel callback + save to chat ──
     async function notifyEntities(deviceId, entityIds, message) {
-        if (!pushToChannelCallback && !pushToEntity) {
+        if (!pushToChannelCallback && !pushToEntity && !pushToBot) {
             console.warn('[Kanban] No push callback available — notifications will not be delivered');
             return;
         }
+
+        const API_BASE = 'https://eclawbot.com';
+        const SOURCE_TAG = 'kanban_notify';
+
         for (const eid of entityIds) {
             try {
                 const device = devices[deviceId];
@@ -186,7 +190,36 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     continue;
                 }
 
-                // Push via channel callback (same as client/speak)
+                // ── 1. Save to chat history (chat.html visibility) ──
+                let chatMsgId = null;
+                if (saveChatMessage) {
+                    try {
+                        chatMsgId = await saveChatMessage(
+                            deviceId, eid, message,
+                            SOURCE_TAG,
+                            false,  // is_from_user
+                            false,  // is_from_bot (platform notification)
+                            null, null
+                        );
+                        console.log(`[Kanban] Saved kanban notify to chat history: msgId=${chatMsgId} entity=${eid}`);
+                    } catch (e) {
+                        console.error(`[Kanban] Failed to save chat message for entity ${eid}:`, e.message);
+                    }
+                }
+
+                // ── 2. Build standard Kanban API hints (same pattern as getMissionApiHints) ──
+                const kanbanHints = getMissionApiHints
+                    ? getMissionApiHints(API_BASE, deviceId, eid, entity.botSecret)
+                    : '';
+
+                const kanbanBoardHints = [
+                    `\n[AVAILABLE TOOLS — Kanban Board]`,
+                    `Read board: exec: curl -s "${API_BASE}/api/mission/cards?deviceId=${deviceId}&botSecret=${entity.botSecret}&entityId=${eid}"`,
+                    `Move card: exec: curl -s -X POST "${API_BASE}/api/mission/card/CARD_ID/move" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${entity.botSecret}","entityId":${eid},"newStatus":"STATUS"}'`,
+                    `Add comment: exec: curl -s -X POST "${API_BASE}/api/mission/card/CARD_ID/comment" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${entity.botSecret}","entityId":${eid},"text":"YOUR_COMMENT"}'`,
+                ].join('\n');
+
+                // ── 3. Push to bot (channel or webhook, with standard hints) ──
                 if (entity.bindingType === 'channel' && pushToChannelCallback) {
                     const result = await pushToChannelCallback(deviceId, eid, {
                         event: 'kanban_notification',
@@ -194,14 +227,36 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                         text: message,
                         eclaw_context: {
                             silentToken: '[SILENT]',
-                            missionHints: `\n[AVAILABLE TOOLS — Kanban Board]\nRead board: exec: curl -s "https://eclawbot.com/api/mission/cards?deviceId=${deviceId}&botSecret=${entity.botSecret}&entityId=${eid}"\nMove card: exec: curl -s -X POST "https://eclawbot.com/api/mission/card/CARD_ID/move" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${entity.botSecret}","entityId":${eid},"newStatus":"STATUS","assignedBots":[BOT_IDS]}'\nAdd comment: exec: curl -s -X POST "https://eclawbot.com/api/mission/card/CARD_ID/comment" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${entity.botSecret}","entityId":${eid},"text":"YOUR_COMMENT"}'\n`
+                            missionHints: kanbanHints + kanbanBoardHints,
                         }
                     }, entity.channelAccountId);
-                    console.log(`[Kanban] Push to entity ${eid}: ${result.pushed ? 'OK' : result.reason}`);
+                    console.log(`[Kanban] Channel push to entity ${eid}: ${result.pushed ? 'OK' : result.reason}`);
+
+                } else if (entity.webhook && pushToBot) {
+                    // Non-channel: build full push message with standard hints (same as speak-to webhook path)
+                    const pushMsg = [
+                        `[KANBAN NOTIFICATION] ${message}`,
+                        `[NOTIFICATION — NO REPLY EXPECTED] This is a Kanban task notification. Take action on the card as needed.`,
+                        kanbanBoardHints,
+                        kanbanHints,
+                    ].join('\n');
+
+                    const pushResult = await pushToBot(entity, deviceId, 'kanban_notification', { message: pushMsg });
+                    console.log(`[Kanban] Webhook push to entity ${eid}: ${pushResult.pushed ? 'OK' : pushResult.reason}`);
+
+                    // Mark delivered if push succeeded
+                    if (pushResult.pushed && chatMsgId) {
+                        // No markChatMessageDelivered reference here — just log
+                        console.log(`[Kanban] Webhook delivered to entity ${eid}, chatMsgId=${chatMsgId}`);
+                    }
+
                 } else if (pushToEntity) {
-                    await pushToEntity(deviceId, eid, message);
+                    // Legacy fallback
+                    const pushMsg = `[KANBAN NOTIFICATION] ${message}${kanbanBoardHints}${kanbanHints}`;
+                    await pushToEntity(deviceId, eid, pushMsg);
                     console.log(`[Kanban] Legacy push to entity ${eid}`);
                 }
+
             } catch (e) {
                 console.error(`[Kanban] Failed to push to entity ${eid}:`, e.message);
             }
