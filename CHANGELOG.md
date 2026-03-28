@@ -1,3 +1,10 @@
+## [1.401.1](https://github.com/HankHuang0516/EClaw/compare/v1.401.0...v1.401.1) (2026-03-28)
+
+
+### Bug Fixes
+
+* **settings:** filter language chips to valid codes only ([#838](https://github.com/HankHuang0516/EClaw/issues/838)) ([8cf48f9](https://github.com/HankHuang0516/EClaw/commit/8cf48f99089b5d6ae4586c85863ef56c15d29c4b))
+
 # [1.401.0](https://github.com/HankHuang0516/EClaw/compare/v1.400.0...v1.401.0) (2026-03-28)
 
 
