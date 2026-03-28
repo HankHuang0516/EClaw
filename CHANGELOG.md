@@ -1,3 +1,10 @@
+## [1.450.1](https://github.com/HankHuang0516/EClaw/compare/v1.450.0...v1.450.1) (2026-03-28)
+
+
+### Bug Fixes
+
+* **i18n:** remove orphaned content block from fr/es boundary ([#893](https://github.com/HankHuang0516/EClaw/issues/893)) ([87cfbfc](https://github.com/HankHuang0516/EClaw/commit/87cfbfc80cc1f3074e1a33160c60e4cefa640390)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.450.0](https://github.com/HankHuang0516/EClaw/compare/v1.449.0...v1.450.0) (2026-03-28)
 
 
