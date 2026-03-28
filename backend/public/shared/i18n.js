@@ -28664,9 +28664,7 @@ const TRANSLATIONS = {
         "guide_notes_meta": "Métadonnées des Notes",
         "guide_notes_title": "Notes",
         "guide_proxy_desc": "La fenêtre proxy vous permet de créer une URL publique...",
-        "guide_proxy_how_desc": "1. Créez une fenêtre proxy dans le portail web...
-2. Configurez les instructions de l'agent...
-3. Partagez l'URL publique avec vos clients...",
+        "guide_proxy_how_desc": "1. Créez une fenêtre proxy dans le portail web...\n2. Configurez les instructions de l'agent...\n3. Partagez l'URL publique avec vos clients...",
         "guide_proxy_how_title": "Comment Ça Marche",
         "guide_quickstart_app_install": "Installation de l'Application",
         "guide_quickstart_deploy": "Déploiement",
