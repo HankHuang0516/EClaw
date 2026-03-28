@@ -1,3 +1,10 @@
+# [1.213.0](https://github.com/HankHuang0516/EClaw/compare/v1.212.0...v1.213.0) (2026-03-28)
+
+
+### Features
+
+* **i18n:** add ms (Malay) translation for Portal Shared ([#603](https://github.com/HankHuang0516/EClaw/issues/603)) ([a381348](https://github.com/HankHuang0516/EClaw/commit/a381348ecd3d8dc4ea4819c156213e4fcd99fd41))
+
 # [1.212.0](https://github.com/HankHuang0516/EClaw/compare/v1.211.2...v1.212.0) (2026-03-28)
 
 
