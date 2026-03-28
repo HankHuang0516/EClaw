@@ -1,3 +1,10 @@
+# [1.218.0](https://github.com/HankHuang0516/EClaw/compare/v1.217.1...v1.218.0) (2026-03-28)
+
+
+### Features
+
+* **kanban:** auto-move child cards to review when bot transforms IDLE ([#611](https://github.com/HankHuang0516/EClaw/issues/611)) ([1ba3e5b](https://github.com/HankHuang0516/EClaw/commit/1ba3e5bdb3c90893cb69691c4fb0da7ec80733cd)), closes [#2](https://github.com/HankHuang0516/EClaw/issues/2)
+
 ## [1.217.1](https://github.com/HankHuang0516/EClaw/compare/v1.217.0...v1.217.1) (2026-03-28)
 
 
