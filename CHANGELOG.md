@@ -1,3 +1,12 @@
+# [1.362.0](https://github.com/HankHuang0516/EClaw/compare/v1.361.0...v1.362.0) (2026-03-28)
+
+
+### Features
+
+* **kanban:** add FLIP card movement animation and automation timeline view ([#787](https://github.com/HankHuang0516/EClaw/issues/787)) ([a5466db](https://github.com/HankHuang0516/EClaw/commit/a5466dbf8a31b8f2079200eff1dd244997ba4c3c))
+* **i18n:** add Spanish translations (batch 11) ([#786](https://github.com/HankHuang0516/EClaw/issues/786)) ([3c4be54](https://github.com/HankHuang0516/EClaw/commit/3c4be54b8d52069fe8c52bc40a3c82e4f1c21654)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add Spanish translations (batch 12) ([#788](https://github.com/HankHuang0516/EClaw/issues/788)) ([6513d13](https://github.com/HankHuang0516/EClaw/commit/6513d13ede6ef6adc56bcc0c72192a1cd5a6e75e)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.361.0](https://github.com/HankHuang0516/EClaw/compare/v1.360.0...v1.361.0) (2026-03-28)
 
 
