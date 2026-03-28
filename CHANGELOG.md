@@ -1,3 +1,10 @@
+## [1.298.1](https://github.com/HankHuang0516/EClaw/compare/v1.298.0...v1.298.1) (2026-03-28)
+
+
+### Bug Fixes
+
+* **ux:** remove toggle switches from Soul and Rule lists ([438e770](https://github.com/HankHuang0516/EClaw/commit/438e77061def3b22a478524eb89699cc0c7fcefc))
+
 # [1.298.0](https://github.com/HankHuang0516/EClaw/compare/v1.297.0...v1.298.0) (2026-03-28)
 
 
