@@ -24711,7 +24711,7 @@ const TRANSLATIONS = {
         "portal_app_subtitle": "आपका डायनामिक लाइव वॉलपेपर पार्टनर",
         "portal_app_title": "EClawbot",
         "portal_login_title": "EClawbot - लॉगिन",
-        "workspace_close_pane": "पैन बंद करें"
+        "workspace_close_pane": "पैन बंद करें",
         "admin_access_denied": "पहुंच अस्वीकृत",
         "admin_ai_chat_placeholder": "त्रुटि पेस्ट करें या समस्या बताएं...",
         "admin_app_device": "APP डिवाइस",
