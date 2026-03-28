@@ -1,3 +1,18 @@
+# [1.357.0](https://github.com/HankHuang0516/EClaw/compare/v1.356.0...v1.357.0) (2026-03-28)
+
+
+### Bug Fixes
+
+* **kanban:** keep sub-tabs visible in Android WebView for mission navigation ([#761](https://github.com/HankHuang0516/EClaw/issues/761)) ([#775](https://github.com/HankHuang0516/EClaw/issues/775)) ([9c09dc1](https://github.com/HankHuang0516/EClaw/commit/9c09dc1a4a211303ebdc1998266f9043ee962944))
+
+
+### Features
+
+* **i18n:** add French translations (batch 88) ([#776](https://github.com/HankHuang0516/EClaw/issues/776)) ([ee936aa](https://github.com/HankHuang0516/EClaw/commit/ee936aad42037a3cef45b424c49cf844b8acf759)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add French translations (batch 89) ([#777](https://github.com/HankHuang0516/EClaw/issues/777)) ([26b921d](https://github.com/HankHuang0516/EClaw/commit/26b921d32120a71f1c9c75d098ad424e6891ed9d)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add French translations (batch 90) ([#778](https://github.com/HankHuang0516/EClaw/issues/778)) ([e4e1589](https://github.com/HankHuang0516/EClaw/commit/e4e15898974aaef900586ce55717d9ff4f4726af)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add French translations (batch 91) ([#779](https://github.com/HankHuang0516/EClaw/issues/779)) ([e479ecd](https://github.com/HankHuang0516/EClaw/commit/e479ecde07d21ee82c44fc1c8bbed8db85ebec47)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.356.0](https://github.com/HankHuang0516/EClaw/compare/v1.355.0...v1.356.0) (2026-03-28)
 
 
