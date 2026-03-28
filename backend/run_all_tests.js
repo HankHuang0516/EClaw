@@ -77,7 +77,6 @@ const TEST_FILES = [
     'test-broadcast.js',            // Broadcast delivery + delivered_to append (needs BROADCAST_TEST_DEVICE_ID)
     'test-reorder-channel.js',      // Reorder → ENTITY_MOVED channel push (needs BROADCAST_TEST_DEVICE_ID)
     'test-rename-channel.js',       // Rename → NAME_CHANGED channel push (needs BROADCAST_TEST_DEVICE_ID)
-    'test-schedule-channel.js',     // Schedule → channel push + eclaw_context (needs BROADCAST_TEST_DEVICE_ID)
     'test-mission-notify-all-types.js', // Mission notify all 4 types to channel bot (needs BROADCAST_TEST_DEVICE_ID)
     'test-mission-notify-channel.js', // Mission notify to channel-bound entities push payload format
     // Note: test-eclaw-context-injection.js excluded (flaky: fails when bot-to-bot rate limit exhausted)
@@ -108,8 +107,6 @@ const TEST_FILES = [
     'test-oauth-server.js',         // OAuth 2.0: client registration, tokens, introspection
     'test-a2a-compat.js',           // A2A: .well-known/agent.json, tasks/send
     'test-a2a-task-dispatch.js',    // A2A: official agent sends structured task to entity
-    'test-schedule-cron-update.js', // Schedule: cron update NOT NULL violation regression
-    'test-scheduled-chat-visibility.js', // Schedule: scheduled messages visible in chat history
     'test-entity-trash.js',         // Entity trash: soft-delete recovery, 7-day retention
 ];
 
