@@ -1826,51 +1826,6 @@ paths:
                   currentVersion:
                     type: integer
 
-  /api/mission/todo/add:
-    post:
-      tags: [Mission]
-      summary: Add todo item
-      operationId: addTodo
-      security:
-        - DeviceSecret: []
-        - BotSecret: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [deviceId, title]
-              properties:
-                deviceId:
-                  type: string
-                deviceSecret:
-                  type: string
-                botSecret:
-                  type: string
-                entityId:
-                  type: integer
-                title:
-                  type: string
-                priority:
-                  type: integer
-                  minimum: 1
-                  maximum: 4
-                deadline:
-                  type: number
-      responses:
-        '200':
-          description: Todo created
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  todo:
-                    $ref: '#/components/schemas/TodoItem'
-
   /api/mission/note/add:
     post:
       tags: [Mission]

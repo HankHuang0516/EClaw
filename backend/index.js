@@ -3807,7 +3807,7 @@ app.post('/api/bind', async (req, res) => {
         availableResources: {
             soulTemplates: 'GET /api/soul-templates',
             ruleTemplates: 'GET /api/rule-templates',
-            schedules: 'GET /api/schedules',
+            kanbanCards: 'GET /api/mission/cards',
             missionDashboard: 'GET /api/mission/dashboard',
             setIdentity: 'PUT /api/entity/identity'
         }

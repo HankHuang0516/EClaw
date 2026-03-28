@@ -26,7 +26,6 @@ EClaw/
 │   ├── gps-recommendations.js # GPS-based entity recommendation API (demo)
 │   ├── ai-support.js         # AI chat support (Anthropic Claude integration)
 │   ├── anthropic-client.js   # Direct Anthropic API client
-│   ├── scheduler.js          # Cron-based task scheduler
 │   ├── device-telemetry.js   # AI debug buffer per device
 │   ├── device-feedback.js    # Feedback/bug report system
 │   ├── chat-integrity.js     # Chat message integrity validation
@@ -60,9 +59,8 @@ EClaw/
 │   │   │   ├── index.html         # Login/registration page
 │   │   │   ├── dashboard.html     # Main device dashboard
 │   │   │   ├── chat.html          # Chat interface
-│   │   │   ├── mission.html       # Mission control panel
+│   │   │   ├── mission.html       # Mission control (redirects to kanban)
 │   │   │   ├── settings.html      # Device settings
-│   │   │   ├── schedule.html      # Task scheduler
 │   │   │   ├── env-vars.html      # Environment variables manager
 │   │   │   ├── files.html         # File manager
 │   │   │   ├── feedback.html      # Feedback submission
@@ -96,8 +94,8 @@ EClaw/
 │   │   │   └── og-image.png       # Open Graph social sharing image
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
-│   ├── tests/                # Regression + integration tests (56 files)
-│   ├── tests/jest/           # Jest unit tests (54 files, CI-run via `npm test`)
+│   ├── tests/                # Regression + integration tests (53 files)
+│   ├── tests/jest/           # Jest unit tests (53 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -106,7 +104,6 @@ EClaw/
 │       ├── AiChatActivity.kt      # AI chat screen
 │       ├── EntityManagerActivity.kt # Entity management
 │       ├── MissionControlActivity.kt # Mission control
-│       ├── ScheduleActivity.kt    # Scheduler
 │       ├── SettingsActivity.kt    # Settings
 │       ├── FileManagerActivity.kt # File manager
 │       ├── FeedbackActivity.kt    # Feedback
@@ -185,8 +182,10 @@ EClaw/
 | `skill_contributions` | Community-contributed skill templates |
 | `soul_contributions` | Community-contributed soul templates |
 | `rule_contributions` | Community-contributed rule templates |
-| `mission_dashboard` | Mission control dashboard (todo, mission, done lists, notes, rules) |
+| `mission_dashboard` | Mission control dashboard (todo_list, mission_list, done_list are deprecated; notes, rules still active) |
 | `mission_items` | Individual mission items with priority/status |
+| `scheduled_messages` | _(legacy/deprecated)_ Scheduled message definitions |
+| `schedule_executions` | _(legacy/deprecated)_ Scheduled message execution log |
 | `server_logs` | Server-side audit/event logs |
 | `usage_tracking` | Server-side usage limits |
 | `roles` | RBAC role definitions |
@@ -214,13 +213,13 @@ EClaw/
 | `/api/contacts` | index.js | Card Holder (名片夾) — collect, browse, search, pin, refresh agent cards |
 | `/api/chat/*` | index.js | Chat history, file upload, integrity |
 | `/api/bot/*` | index.js + bot-tools.js | Bot registration, push, files, web tools |
-| `/api/mission/*` | mission.js | Mission dashboard, todos, notes, rules |
+| `/api/mission/*` | mission.js | Mission dashboard, notes, rules (legacy todo routes removed) |
 | `/api/auth/*` | auth.js | Login, register, OAuth, OIDC, RBAC |
 | `/api/oauth/*` | oauth-server.js | OAuth 2.0 server (clients, tokens) |
 | `/api/a2a/*` | a2a-compat.js | A2A protocol compatibility |
 | `/api/discord/*` | discord-integration.js | Native Discord slash command integration |
 | `/api/feedback/*` | index.js + device-feedback.js | Feedback system |
-| `/api/schedules` | index.js + scheduler.js | Task scheduling |
+| `/api/schedules` | _(deprecated, returns 410)_ | Legacy task scheduling (removed) |
 | `/api/notifications/*` | notifications.js | Push notification management |
 | `/api/device-telemetry` | device-telemetry.js | AI debug buffer |
 | `/api/device-vars` | index.js | Environment variable management |
@@ -253,9 +252,8 @@ EClaw/
 | Login | `/portal/` | Registration + login |
 | Dashboard | `/portal/dashboard.html` | Device overview, entity cards |
 | Chat | `/portal/chat.html` | Real-time chat with entities |
-| Mission | `/portal/mission.html` | Mission control panel |
+| Mission | `/portal/mission.html` | Mission control (redirects to kanban) |
 | Settings | `/portal/settings.html` | Device and account settings |
-| Schedule | `/portal/schedule.html` | Task scheduler |
 | Env Vars | `/portal/env-vars.html` | Environment variable editor |
 | Files | `/portal/files.html` | File manager |
 | Feedback | `/portal/feedback.html` | Bug reports and feedback |
@@ -704,15 +702,12 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Mission Notify Channel | `node backend/tests/test-mission-notify-channel.js` | Device ID + Secret | Mission notify to channel-bound entities push payload format |
 | Rename Channel | `node backend/tests/test-rename-channel.js` | Device ID + Secret | Entity rename pushes NAME_CHANGED to channel-bound bots |
 | Reorder Channel | `node backend/tests/test-reorder-channel.js` | Device ID + Secret | Entity reorder ENTITY_MOVED payload to channel-bound bots |
-| Schedule Channel | `node backend/tests/test-schedule-channel.js` | Device ID + Secret | Scheduler parity: channel-bound entities receive schedule push |
-| Schedule Cron Update | `node backend/tests/test-schedule-cron-update.js` | Device ID + Secret | Regression: cron schedule update NOT NULL violation on scheduled_at |
 | Card Holder | `node backend/tests/test-card-holder.js` | Device ID + Secret | Card Holder CRUD lifecycle, search, refresh, pin, category, notes |
 | UI Text Contrast | `node backend/tests/test-ui-text-contrast.js` | None | Static analysis: input field text/bg contrast ratio, chat input regression |
 | Screen Control Auth | `node backend/tests/test-screen-control-auth.js` | Device ID + Secret | Regression: portal screen-capture/control uses deviceSecret not botSecret |
 | AI Chat Submit/Poll | `node backend/tests/test-ai-chat-submit-poll.js` | Device ID + Secret | AI chat async submit/poll pattern, validation, auth, idempotency, completion (Issue #248) |
 | Card Holder Redesign | `node backend/tests/test-card-holder-redesign.js` | Device ID + Secret | Card Holder 3-section redesign (My Cards, Recent, Collected), block/unblock |
 | Portal Duplicate Vars | `node backend/tests/test-portal-duplicate-vars.js` | Device ID + Secret | Portal env-vars duplicate variable detection |
-| Scheduled Chat Visibility | `node backend/tests/test-scheduled-chat-visibility.js` | Device ID + Secret | Scheduled messages visibility regression |
 | UX Parity | `node backend/tests/test-ux-parity.js` | Device ID + Secret | Cross-platform (Web/Android/iOS) UX feature parity |
 | UX Static Audit | `node backend/tests/test-ux-static-audit.js` | None | Static audit: i18n coverage, form closure, auth guards |
 | UX Live Validation | `node backend/tests/test-ux-live-validation.js` | None | Live server validation: page reachability, security headers, static assets |
@@ -723,7 +718,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Note Pages | `node backend/tests/test-note-pages.js` | Device ID + Secret | Note page public/private toggle, visitor analytics, custom domain |
 | AI Chat WebView Guard | `node backend/tests/test-ai-chat-webview-guard.js` | Device ID + Secret | AI chat widget hidden in Android WebView contexts |
 
-### Jest Unit Tests (CI-run, `npm test`, 54 files)
+### Jest Unit Tests (CI-run, `npm test`, 53 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -736,7 +731,6 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Publisher Platforms | `tests/jest/publisher.test.js` | Platforms listing (12), input validation for all new platforms |
 | Feedback CRUD | `tests/jest/feedback-crud.test.js` | Feedback endpoint validation (submit, list, delete) |
 | Notifications | `tests/jest/notifications.test.js` | Notification endpoint validation (subscribe, send, manage) |
-| Scheduler | `tests/jest/scheduler.test.js` | Scheduler endpoint validation (CRUD, cron expressions) |
 | Card Holder | `tests/jest/card-holder.test.js` | Card Holder endpoint validation (CRUD, search, refresh, PATCH) |
 | Bot Tools | `tests/jest/bot-tools.test.js` | Bot tools API (web-search, web-fetch) validation |
 | File Delete | `tests/jest/file-delete.test.js` | File deletion endpoint validation and mocks |
@@ -786,7 +780,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (54 files)
+cd backend && npm test                  # Jest unit tests (53 files)
 cd backend && npm run lint              # ESLint
 ```
 
@@ -828,7 +822,7 @@ Set in `backend/.env` (gitignored):
 - Jest config in `backend/jest.config.js`: `runInBand: true` (Windows compat), `forceExit: true`, `testTimeout: 15000`
 - Jest tests use `supertest` against the Express app directly (no live server needed)
 - Integration tests in `backend/tests/` hit the live production server (`eclawbot.com`)
-- `backend/run_all_tests.js` orchestrates 56 registered integration tests sequentially
+- `backend/run_all_tests.js` orchestrates 53 registered integration tests sequentially
 - `requiredVars` in skill templates must be `KEY=value` or `KEY=` format (Gson deserialization constraint)
 
 ### Avatar & Entity Utils

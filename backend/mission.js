@@ -1541,11 +1541,9 @@ async function submitPayment() {
             // Build smart API hints based on notification types
             const apiHints = [`取得完整任務面板: ${dashboardApi}`];
             if (types.has('TODO')) {
-                apiHints.push(`標記完成: POST /api/mission/todo/done {${auth},"title":"<標題>"}`);
-                apiHints.push(`標記進行中: POST /api/mission/todo/start {${auth},"title":"<標題>"}`);
-                apiHints.push(`新增TODO: POST /api/mission/todo/add {${auth},"title":"<標題>","priority":2,"category":"<類別(可選)>"}`);
-                apiHints.push(`更新TODO: POST /api/mission/todo/update {${auth},"title":"<原標題>","newTitle":"<新標題>","newCategory":"<新類別>"}`);
-                apiHints.push(`刪除TODO: POST /api/mission/todo/delete {${auth},"title":"<標題>"}`);
+                apiHints.push(`建立看板卡片: POST /api/mission/card {${auth},"title":"<標題>","status":"todo","priority":"P2"}`);
+                apiHints.push(`列出看板卡片: GET /api/mission/cards?${auth}`);
+                apiHints.push(`移動卡片狀態: POST /api/mission/card/<cardId>/move {${auth},"status":"done"}`);
             }
             if (types.has('RULE')) {
                 apiHints.push(`新增規則: POST /api/mission/rule/add {${auth},"name":"<規則名>","description":"<說明>","ruleType":"WORKFLOW","category":"<類別(可選)>"}`);

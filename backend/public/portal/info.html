@@ -418,7 +418,7 @@ Claude 主動查詢執行結果
                         <ol style="line-height:2">
                             <li data-i18n="guide_usecase_li_4">發送排程設定指令給 bot（speak-to）</li>
                             <li data-i18n="guide_usecase_li_5">查詢 <code>GET /api/mission/dashboard</code>，<strong>發現 bot 把排程放進了 Mission Rules（錯誤位置）</strong></li>
-                            <li data-i18n="guide_usecase_li_6">查詢 <code>GET /api/bot/schedules</code>，確認正式排程列表是空的</li>
+                            <li data-i18n="guide_usecase_li_6">查詢 <code>GET /api/mission/cards</code>，確認看板任務列表狀態</li>
                             <li data-i18n="guide_usecase_li_7">發送糾錯指令：刪除錯誤 Rule + 用正確 API 建立排程</li>
                             <li data-i18n="guide_usecase_li_8">再次驗證：Rule 已消失 ✓ 排程已出現 ✓ bot 回報「✅ 排程已設定」</li>
                             <li data-i18n="guide_usecase_li_9"><strong>最終才回報給你：完成</strong></li>
