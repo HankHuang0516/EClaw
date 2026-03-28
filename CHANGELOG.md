@@ -1,3 +1,10 @@
+## [1.254.1](https://github.com/HankHuang0516/EClaw/compare/v1.254.0...v1.254.1) (2026-03-28)
+
+
+### Bug Fixes
+
+* regenerate GPS demo GIF to fix garbled Chinese characters ([#655](https://github.com/HankHuang0516/EClaw/issues/655)) ([45c39a5](https://github.com/HankHuang0516/EClaw/commit/45c39a5309521969c50056bfd067ea54445caebf))
+
 # [1.254.0](https://github.com/HankHuang0516/EClaw/compare/v1.253.0...v1.254.0) (2026-03-28)
 
 
