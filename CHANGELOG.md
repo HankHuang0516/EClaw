@@ -1,3 +1,10 @@
+# [1.215.0](https://github.com/HankHuang0516/EClaw/compare/v1.214.0...v1.215.0) (2026-03-28)
+
+
+### Features
+
+* **i18n:** add Malay (ms) translation (squashed) ([5c786d4](https://github.com/HankHuang0516/EClaw/commit/5c786d4ba1d86b261f78625d22db3c4df2e65236)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.214.0](https://github.com/HankHuang0516/EClaw/compare/v1.213.0...v1.214.0) (2026-03-28)
 
 
