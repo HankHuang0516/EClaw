@@ -1,3 +1,10 @@
+## [1.275.1](https://github.com/HankHuang0516/EClaw/compare/v1.275.0...v1.275.1) (2026-03-28)
+
+
+### Bug Fixes
+
+* add explicit route for /privacy-policy.html ([09b1a5d](https://github.com/HankHuang0516/EClaw/commit/09b1a5dfc31dc1bbf8464570b23d943c218ec51e))
+
 # [1.275.0](https://github.com/HankHuang0516/EClaw/compare/v1.274.0...v1.275.0) (2026-03-28)
 
 
