@@ -506,16 +506,22 @@ The E-claw team understands the importance of privacy to you. We hereby solemnly
 To provide our service, we only collect the minimum data necessary for operation:\n
 - Device ID: Used to distinguish different devices.\n
 - App Version: Used for compatibility checks.\n
-- Binding Data: Agent name and status.\n\n
+- Binding Data: Agent name and status.\n
+- GPS Location (Optional): Only when your AI Agent requests it. Stored in memory only, not persisted.\n
+- Voice Messages (Optional): Only when you press the record button in chat. Uploaded as part of chat history.\n\n
 <b>We do NOT collect:</b>\n
 - Your name, phone number, or email.\n
-- Your GPS location.\n
-- Your camera or microphone data.\n\n
+- Your camera data.\n
+- Information about other apps on your phone.\n\n
 <b>3. OpenClaw Protocol</b>\n
 We are firm supporters of the OpenClaw ecosystem. We will not build a closed "Walled Garden" and promise to maintain interoperability.\n\n
 <b>4. AI Conversation Privacy</b>\n
 Messages are sent via encrypted HTTPS to your bound AI Agent. Data flow is controlled by you.\n\n
-<b>5. Contact Us</b>\n
+<b>5. GPS and Microphone</b>\n
+GPS: On-demand only, no background tracking, data lost on server restart.\n
+Microphone: Active only while recording, no background listening.\n
+Neither is shared with third parties.\n\n
+<b>6. Contact Us</b>\n
 If you have any questions, please contact us via our official email.
     </string>
 

@@ -362,16 +362,22 @@
 Để cung cấp dịch vụ, chúng tôi chỉ thu thập dữ liệu tối thiểu cần thiết cho hoạt động:\n
 - Mã thiết bị: Dùng để phân biệt các thiết bị khác nhau.\n
 - Phiên bản ứng dụng: Dùng để kiểm tra tương thích.\n
-- Dữ liệu liên kết: Tên và trạng thái tác tử.\n\n
+- Dữ liệu liên kết: Tên và trạng thái tác tử.\n
+- Vị trí GPS (Tùy chọn): Chỉ khi Tác tử AI của bạn yêu cầu. Chỉ lưu trong bộ nhớ, không lưu trữ vĩnh viễn.\n
+- Tin nhắn thoại (Tùy chọn): Chỉ khi bạn nhấn nút ghi âm trong trò chuyện. Được tải lên như một phần lịch sử trò chuyện.\n\n
 <b>Chúng tôi KHÔNG thu thập:</b>\n
 - Tên, số điện thoại hoặc email của bạn.\n
-- Vị trí GPS của bạn.\n
-- Dữ liệu camera hoặc microphone của bạn.\n\n
+- Dữ liệu camera của bạn.\n
+- Thông tin về các ứng dụng khác trên điện thoại.\n\n
 <b>3. Giao thức OpenClaw</b>\n
 Chúng tôi là những người ủng hộ mạnh mẽ hệ sinh thái OpenClaw. Chúng tôi sẽ không xây dựng hệ thống khép kín và cam kết duy trì khả năng tương tác.\n\n
 <b>4. Quyền riêng tư cuộc trò chuyện AI</b>\n
 Tin nhắn được gửi qua HTTPS mã hóa đến Tác tử AI mà bạn đã liên kết. Luồng dữ liệu do bạn kiểm soát.\n\n
-<b>5. Liên hệ chúng tôi</b>\n
+<b>5. GPS và Microphone</b>\n
+GPS: Chỉ theo yêu cầu, không theo dõi nền, dữ liệu mất khi khởi động lại máy chủ.\n
+Microphone: Chỉ hoạt động khi ghi âm, không nghe nền.\n
+Không chia sẻ cho bên thứ ba.\n\n
+<b>6. Liên hệ chúng tôi</b>\n
 Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ qua email chính thức của chúng tôi.
     </string>
     <string name="version_conflict_title">Xung đột phiên bản</string>

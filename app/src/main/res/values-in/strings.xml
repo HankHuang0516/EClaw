@@ -362,16 +362,22 @@ Tim E-claw memahami pentingnya privasi bagi Anda. Kami dengan ini menyatakan den
 Untuk menyediakan layanan kami, kami hanya mengumpulkan data minimum yang diperlukan untuk operasi:\n
 - ID Perangkat: Digunakan untuk membedakan perangkat yang berbeda.\n
 - Versi Aplikasi: Digunakan untuk pemeriksaan kompatibilitas.\n
-- Data Pengikatan: Nama dan status agen.\n\n
+- Data Pengikatan: Nama dan status agen.\n
+- Lokasi GPS (Opsional): Hanya saat AI Agent Anda memintanya. Disimpan di memori saja, tidak disimpan secara permanen.\n
+- Pesan Suara (Opsional): Hanya saat Anda menekan tombol rekam di chat. Diunggah sebagai bagian riwayat chat.\n\n
 <b>Kami TIDAK mengumpulkan:</b>\n
 - Nama, nomor telepon, atau email Anda.\n
-- Lokasi GPS Anda.\n
-- Data kamera atau mikrofon Anda.\n\n
+- Data kamera Anda.\n
+- Informasi tentang aplikasi lain di ponsel Anda.\n\n
 <b>3. Protokol OpenClaw</b>\n
 Kami adalah pendukung setia ekosistem OpenClaw. Kami tidak akan membangun "Taman Tertutup" yang terisolasi dan berjanji untuk menjaga interoperabilitas.\n\n
 <b>4. Privasi Percakapan AI</b>\n
 Pesan dikirim melalui HTTPS terenkripsi ke Agen AI terikat Anda. Aliran data dikendalikan oleh Anda.\n\n
-<b>5. Hubungi Kami</b>\n
+<b>5. GPS dan Mikrofon</b>\n
+GPS: Hanya sesuai permintaan, tanpa pelacakan latar belakang, data hilang saat server restart.\n
+Mikrofon: Aktif hanya saat merekam, tanpa mendengarkan di latar belakang.\n
+Keduanya tidak dibagikan ke pihak ketiga.\n\n
+<b>6. Hubungi Kami</b>\n
 Jika Anda memiliki pertanyaan, silakan hubungi kami melalui email resmi kami.
     </string>
     <string name="version_conflict_title">Konflik Versi</string>
