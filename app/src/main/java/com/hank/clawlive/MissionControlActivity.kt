@@ -293,8 +293,10 @@ class MissionControlActivity : AppCompatActivity() {
             setBackgroundColor(android.graphics.Color.parseColor("#0D0D1A"))
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
-            settings.loadWithOverviewMode = true
-            settings.useWideViewPort = true
+            // Use device-width viewport so responsive CSS (@media max-width) triggers correctly
+            settings.loadWithOverviewMode = false
+            settings.useWideViewPort = false
+            settings.userAgentString = settings.userAgentString + " EClawAndroid"
 
             webViewClient = object : WebViewClient() {
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {

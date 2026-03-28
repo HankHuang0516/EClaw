@@ -200,6 +200,38 @@
         .kb-cron-chip.active { background:var(--primary); color:#fff; border-color:var(--primary); }
         .kb-cron-chip:hover:not(.active) { border-color:var(--text-muted); }
 
+        /* ══════════════ App WebView: full-frame board ══════════════ */
+        body.app-webview .nav,
+        body.app-webview nav,
+        body.app-webview .sub-tabs,
+        body.app-webview .site-footer,
+        body.app-webview footer { display:none !important; }
+        body.app-webview .container { padding-left:8px !important; padding-right:8px !important; padding-top:0 !important; }
+
+        /* App WebView detail modal: always mobile-optimized */
+        body.app-webview .kb-modal-overlay { padding:0; align-items:stretch; }
+        body.app-webview .kb-modal { max-width:100%; max-height:100vh; border-radius:0; display:flex; flex-direction:column; }
+        body.app-webview .kb-modal-header { padding:16px; }
+        body.app-webview .kb-modal-header h3 { font-size:16px; }
+        body.app-webview .kb-modal-meta { padding:10px 16px; flex-wrap:wrap; gap:8px; }
+        body.app-webview .kb-modal-tabs { padding:0 12px; }
+        body.app-webview .kb-modal-tab { padding:8px 12px; font-size:12px; }
+        body.app-webview .kb-modal-panel { padding:12px 16px; flex:1; overflow-y:auto; }
+        body.app-webview .kb-comments-list { max-height:none; flex:1; }
+        body.app-webview .kb-comment { max-width:90%; }
+        body.app-webview .kb-comment-input { position:sticky; bottom:0; background:var(--card); padding:8px 0 0; margin-top:auto; }
+        body.app-webview .kb-move-bar { padding:10px 16px; flex-wrap:wrap; gap:6px; }
+        body.app-webview .kb-move-btn { padding:6px 10px; font-size:11px; flex:1 1 auto; text-align:center; min-width:0; }
+
+        /* App WebView: force mobile layout for board */
+        body.app-webview .kb-board { display:none; }
+        body.app-webview .kb-mobile-tabs { display:flex; }
+        body.app-webview .kb-mobile-list { display:flex !important; flex-direction:column; gap:8px; }
+        body.app-webview .kb-toolbar { flex-direction:column; align-items:stretch; }
+        body.app-webview .kb-toolbar-actions { justify-content:space-between; }
+        body.app-webview .kb-auto-grid { flex-wrap:nowrap; }
+        body.app-webview .kb-auto-card { flex:0 0 180px; }
+
         /* ══════════════ Responsive ══════════════ */
         @media (max-width: 768px) {
             .kb-board { display:none; }
@@ -399,7 +431,19 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
-    <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
+    <script>
+    (function(){
+        var isApp = typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent);
+        if (isApp) {
+            window.__blockAiChatWidget = true;
+            window.__isAppWebView = true;
+            // Hide nav, sub-tabs, footer — App only needs the kanban board frame
+            document.querySelectorAll('.nav, nav, .sub-tabs, .site-footer, footer').forEach(function(el){ el.style.display = 'none'; });
+            // Add class for CSS-driven layout; hide elements + adjust padding
+            document.body.classList.add('app-webview');
+        }
+    })();
+    </script>
     <script src="shared/ai-chat.js"></script>
     <script>if(typeof renderAvatarHtml==='undefined'){window.renderAvatarHtml=function(a){return a||'🦞'};window.isAvatarUrl=function(){return false}}</script>
     <script>
