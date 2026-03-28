@@ -1,3 +1,10 @@
+## [1.362.3](https://github.com/HankHuang0516/EClaw/compare/v1.362.2...v1.362.3) (2026-03-28)
+
+
+### Bug Fixes
+
+* **kanban:** fix timeline layout — remove overflow:hidden, improve entity grouping ([#794](https://github.com/HankHuang0516/EClaw/issues/794)) ([044fda4](https://github.com/HankHuang0516/EClaw/commit/044fda47c3244d020f3f10f8281657c995dff372))
+
 ## [1.362.2](https://github.com/HankHuang0516/EClaw/compare/v1.362.1...v1.362.2) (2026-03-28)
 
 
