@@ -417,18 +417,15 @@ export default function MissionScreen() {
         </ScrollView>
       )}
 
-      {/* Add FAB */}
+      {/* Add FAB — deprecated, redirect to Kanban */}
       {(activeTab === 'todo' || activeTab === 'missions' || activeTab === 'notes') && (
         <FAB
           icon="plus"
-          style={styles.fab}
+          style={[styles.fab, { opacity: 0.5 }]}
           onPress={() => {
-            Alert.prompt(
-              t(`mission.add_${activeTab === 'todo' ? 'todo' : activeTab === 'notes' ? 'note' : 'mission'}`),
-              undefined,
-              (text) => {
-                if (text) addTodo(text);
-              }
+            Alert.alert(
+              t('mission.deprecated_title') || 'Feature Deprecated',
+              t('mission.deprecated_msg') || 'Please use the Kanban board to add new items. The Kanban board has a complete ecosystem — let bots migrate existing items there gradually.'
             );
           }}
         />

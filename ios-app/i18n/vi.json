@@ -127,6 +127,8 @@
     "variables": "Biến",
     "add_todo": "Thêm việc cần làm",
     "add_mission": "Thêm nhiệm vụ",
+    "deprecated_title": "Tính năng đã ngừng",
+    "deprecated_msg": "Vui lòng sử dụng bảng Kanban để thêm mục mới. Bảng Kanban đã có hệ sinh thái hoàn chỉnh — hãy để bot di chuyển các tác vụ hiện có dần dần.",
     "add_note": "Thêm ghi chú",
     "add_skill": "Thêm kỹ năng",
     "add_rule": "Thêm quy tắc",

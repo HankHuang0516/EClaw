@@ -192,26 +192,15 @@ describe('GET /api/schedules', () => {
 });
 
 // ════════════════════════════════════════════════════════════════
-// POST /api/schedules — create schedule
+// POST /api/schedules — deprecated (→ Kanban)
 // ════════════════════════════════════════════════════════════════
 describe('POST /api/schedules', () => {
-    it('rejects when deviceId is missing', async () => {
+    it('returns 410 deprecated', async () => {
         const res = await post('/api/schedules')
-            .send({ entityId: 0, message: 'test', scheduledAt: Date.now() + 60000 });
-        expect(res.status).toBeGreaterThanOrEqual(400);
-    });
-
-    it('rejects when message is missing', async () => {
-        const res = await post('/api/schedules')
-            .send({ deviceId: 'dev-1', deviceSecret: 'sec', entityId: 0 });
-        // Should fail auth (device not found) or validation (missing message)
-        expect(res.status).toBeGreaterThanOrEqual(400);
-    });
-
-    it('rejects when entityId is missing', async () => {
-        const res = await post('/api/schedules')
-            .send({ deviceId: 'dev-1', deviceSecret: 'sec', message: 'test' });
-        expect(res.status).toBeGreaterThanOrEqual(400);
+            .send({ deviceId: 'dev-1', deviceSecret: 'sec', entityId: 0, message: 'test' });
+        expect(res.status).toBe(410);
+        expect(res.body.deprecated).toBe(true);
+        expect(res.body.redirect).toBe('kanban');
     });
 });
 
@@ -305,10 +294,12 @@ describe('GET /api/bot/schedules', () => {
 });
 
 describe('POST /api/bot/schedules', () => {
-    it('rejects when no auth credentials provided', async () => {
+    it('returns 410 deprecated', async () => {
         const res = await post('/api/bot/schedules')
-            .send({ message: 'test', scheduledAt: Date.now() + 60000 });
-        expect(res.status).toBeGreaterThanOrEqual(400);
+            .send({ deviceId: 'dev-1', entityId: 0, botSecret: 'sec', message: 'test' });
+        expect(res.status).toBe(410);
+        expect(res.body.deprecated).toBe(true);
+        expect(res.body.redirect).toBe('kanban');
     });
 });
 

@@ -127,6 +127,8 @@
     "variables": "Variabel",
     "add_todo": "Tambah TODO",
     "add_mission": "Tambah Misi",
+    "deprecated_title": "Fitur Tidak Tersedia",
+    "deprecated_msg": "Silakan gunakan papan Kanban untuk menambahkan item baru. Papan Kanban memiliki ekosistem lengkap — biarkan bot memindahkan tugas yang ada secara bertahap.",
     "add_note": "Tambah Catatan",
     "add_skill": "Tambah Keahlian",
     "add_rule": "Tambah Aturan",

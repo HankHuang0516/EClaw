@@ -127,6 +127,8 @@
     "variables": "Variables",
     "add_todo": "Add TODO",
     "add_mission": "Add Mission",
+    "deprecated_title": "Feature Deprecated",
+    "deprecated_msg": "Please use the Kanban board to add new items. The Kanban board has a complete ecosystem — let bots migrate existing items there gradually.",
     "add_note": "Add Note",
     "add_skill": "Add Skill",
     "add_rule": "Add Rule",

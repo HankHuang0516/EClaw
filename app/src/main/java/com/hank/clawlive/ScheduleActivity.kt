@@ -100,7 +100,12 @@ class ScheduleActivity : AppCompatActivity() {
 
     private fun setupButtons() {
         findViewById<View>(R.id.btnBack).setOnClickListener { onBackPressedDispatcher.onBackPressed() }
-        findViewById<MaterialButton>(R.id.btnAdd).setOnClickListener { showCreateDialog() }
+        findViewById<MaterialButton>(R.id.btnAdd).apply {
+            alpha = 0.5f
+            setOnClickListener {
+                Toast.makeText(this@ScheduleActivity, getString(R.string.kanban_add_deprecated), Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun loadData() {

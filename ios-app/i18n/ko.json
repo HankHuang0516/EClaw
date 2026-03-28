@@ -127,6 +127,8 @@
     "variables": "변수",
     "add_todo": "할 일 추가",
     "add_mission": "미션 추가",
+    "deprecated_title": "기능 중단",
+    "deprecated_msg": "새 항목은 칸반 보드에서 추가하세요. 칸반 보드에 완전한 생태계가 갖춰져 있습니다. 봇이 기존 작업을 점진적으로 이전하도록 하세요.",
     "add_note": "노트 추가",
     "add_skill": "스킬 추가",
     "add_rule": "규칙 추가",

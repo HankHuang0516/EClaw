@@ -167,6 +167,7 @@
     <string name="mission_control">Mission Control</string>
     <string name="tab_mission_center">Mission Center</string>
     <string name="tab_kanban">Kanban</string>
+    <string name="kanban_add_deprecated">Please use the Kanban board to add new items. The Kanban board has a complete ecosystem — let bots migrate existing items there gradually.</string>
     <string name="upload">Upload</string>
     <string name="uploading">Uploading…</string>
     <string name="save">Save</string>

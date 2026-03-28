@@ -127,6 +127,8 @@
     "variables": "变量",
     "add_todo": "新增待办",
     "add_mission": "新增任务",
+    "deprecated_title": "功能已停用",
+    "deprecated_msg": "请使用看板任务添加新项目。看板任务页面已有完整生态，让 bot 将现有任务逐步迁移到看板任务页面。",
     "add_note": "新增笔记",
     "add_skill": "新增技能",
     "add_rule": "新增规则",
