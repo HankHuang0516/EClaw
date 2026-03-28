@@ -35448,6 +35448,18 @@ class I18n {
             }
         });
 
+        // Translate title attributes
+        document.querySelectorAll('[data-i18n-title]').forEach(el => {
+            const key = el.getAttribute('data-i18n-title');
+            if (key) {
+                const translated = this.t(key);
+                if (translated !== key) {
+                    el.title = translated;
+                    el.setAttribute('aria-label', translated);
+                }
+            }
+        });
+
         // Update html lang attribute
         const langMap = { 'zh': 'zh-TW', 'zh-CN': 'zh-CN', 'ja': 'ja', 'ko': 'ko', 'th': 'th', 'vi': 'vi', 'id': 'id', 'ms': 'ms' };
         document.documentElement.lang = langMap[this.lang] || 'en';
