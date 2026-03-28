@@ -1,3 +1,11 @@
+# [1.287.0](https://github.com/HankHuang0516/EClaw/compare/v1.286.0...v1.287.0) (2026-03-28)
+
+
+### Features
+
+* **i18n:** add French translations (batch 13) ([#693](https://github.com/HankHuang0516/EClaw/issues/693)) ([5838a2d](https://github.com/HankHuang0516/EClaw/commit/5838a2dd2bb46eaf6bd8ea26bf3716bf9f5d1d59)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add i18n for skill template requiredVars dialog (10 languages) ([045da20](https://github.com/HankHuang0516/EClaw/commit/045da20133c512b7ea8c7d6461f10f948c8bd625))
+
 # [1.286.0](https://github.com/HankHuang0516/EClaw/compare/v1.285.0...v1.286.0) (2026-03-28)
 
 
