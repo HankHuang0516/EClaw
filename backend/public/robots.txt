@@ -14,9 +14,8 @@ Allow: /assets/
 # Authenticated portal pages — not useful to crawlers
 Disallow: /portal/dashboard.html
 Disallow: /portal/chat.html
-Disallow: /portal/mission.html
+Disallow: /portal/kanban.html
 Disallow: /portal/settings.html
-Disallow: /portal/schedule.html
 Disallow: /portal/env-vars.html
 Disallow: /portal/files.html
 Disallow: /portal/feedback.html

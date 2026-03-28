@@ -20,8 +20,7 @@ const PAGES_WITH_AI_CHAT = [
     'env-vars.html',
     'feedback.html',
     'files.html',
-    'mission.html',
-    'schedule.html',
+    'kanban.html',
     'settings.html',
 ];
 

@@ -2765,30 +2765,6 @@ app.post('/api/admin/push-update', adminAuth, adminCheck, async (req, res) => {
     });
 });
 
-// POST /api/admin/migrate-to-kanban - One-time migration: legacy mission + schedules → kanban cards
-app.post('/api/admin/migrate-to-kanban', adminAuth, adminCheck, async (req, res) => {
-    try {
-        const { runMigration } = require('./migrate-to-kanban');
-        const stats = await runMigration(chatPool);
-        serverLog('info', 'system', `[Migration] Completed: dashboard=${stats.dashboard_items.inserted}, items=${stats.mission_items.inserted}, schedules=${stats.schedules.inserted}, errors=${stats.errors.length}`);
-        res.json({ success: true, stats });
-    } catch (err) {
-        console.error('[Migration] Error:', err);
-        res.status(500).json({ success: false, error: err.message });
-    }
-});
-
-// GET /api/admin/migrate-to-kanban/verify - Verify migration completeness
-app.get('/api/admin/migrate-to-kanban/verify', adminAuth, adminCheck, async (req, res) => {
-    try {
-        const { verifyMigration } = require('./migrate-to-kanban');
-        const report = await verifyMigration(chatPool);
-        res.json({ success: true, report });
-    } catch (err) {
-        console.error('[Migration] Verify error:', err);
-        res.status(500).json({ success: false, error: err.message });
-    }
-});
 
 // POST /api/admin/bots/create - Create new official bot (cookie-based admin auth)
 app.post('/api/admin/bots/create', adminAuth, adminCheck, async (req, res) => {
