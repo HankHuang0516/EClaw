@@ -1,3 +1,10 @@
+## [1.217.1](https://github.com/HankHuang0516/EClaw/compare/v1.217.0...v1.217.1) (2026-03-28)
+
+
+### Bug Fixes
+
+* **mission:** add collapsible Notes section + truncate note preview to 80 chars ([65da94f](https://github.com/HankHuang0516/EClaw/commit/65da94f82786a27104571252ef672d8894707359))
+
 # [1.217.0](https://github.com/HankHuang0516/EClaw/compare/v1.216.0...v1.217.0) (2026-03-28)
 
 
