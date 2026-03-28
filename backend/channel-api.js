@@ -608,7 +608,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 // If replying to a cross-device message, tag local copy with routing info
                 const localSource = hasCrossRoute
                     ? `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`
-                    : 'bot';
+                    : (entity.name || `Entity ${eId}`);
                 saveChatMessage(deviceId, eId, message, localSource, false, true, mediaType || null, mediaUrl || null);
 
                 // XP: Award for channel bot reply (same logic as /api/transform)
