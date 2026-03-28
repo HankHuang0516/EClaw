@@ -1009,8 +1009,20 @@
                     hasChanges = false;
                     lastSavedDashboard = JSON.parse(JSON.stringify(dashboard));
                 } else if (data.error === 'VERSION_CONFLICT') {
-                    // Silent conflict — will resolve on next manual refresh or auto-refresh
-                    console.warn('Auto-save version conflict, will retry on next change');
+                    // Retry with server's current version (last-writer-wins)
+                    console.warn('Auto-save version conflict, retrying with server version', data.currentVersion);
+                    version = data.currentVersion;
+                    const retry = await apiCall('POST', '/api/mission/dashboard', {
+                        deviceId: currentUser.deviceId,
+                        deviceSecret: currentUser.deviceSecret,
+                        version: version,
+                        dashboard: dashboard
+                    });
+                    if (retry.success) {
+                        version = retry.version || version + 1;
+                        hasChanges = false;
+                        lastSavedDashboard = JSON.parse(JSON.stringify(dashboard));
+                    }
                 }
             } catch (e) {
                 console.warn('Auto-save failed:', e.message);
