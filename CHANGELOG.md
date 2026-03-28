@@ -1,3 +1,15 @@
+# [1.258.0](https://github.com/HankHuang0516/EClaw/compare/v1.257.0...v1.258.0) (2026-03-28)
+
+
+### Bug Fixes
+
+* **i18n:** add missing comma in Hindi translations causing SyntaxError ([98dd3ce](https://github.com/HankHuang0516/EClaw/commit/98dd3ce68be2e54f7b67cf9b1386a91f8bbcc131)), closes [#651](https://github.com/HankHuang0516/EClaw/issues/651)
+
+
+### Features
+
+* **i18n:** add 40 Spanish translations (batch 41) ([#659](https://github.com/HankHuang0516/EClaw/issues/659)) ([2f9cd3b](https://github.com/HankHuang0516/EClaw/commit/2f9cd3b6de13ea12c17d8711d2053dd3e7bad558)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.257.0](https://github.com/HankHuang0516/EClaw/compare/v1.256.0...v1.257.0) (2026-03-28)
 
 
