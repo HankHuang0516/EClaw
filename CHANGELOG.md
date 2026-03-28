@@ -1,3 +1,10 @@
+# [1.220.0](https://github.com/HankHuang0516/EClaw/compare/v1.219.0...v1.220.0) (2026-03-28)
+
+
+### Features
+
+* **i18n:** add 8 European language translations ([#614](https://github.com/HankHuang0516/EClaw/issues/614)) ([a18e33b](https://github.com/HankHuang0516/EClaw/commit/a18e33b319335c5173ce7f87ebea284d1fe74b4c)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.219.0](https://github.com/HankHuang0516/EClaw/compare/v1.218.1...v1.219.0) (2026-03-28)
 
 
