@@ -1,3 +1,12 @@
+# [1.360.0](https://github.com/HankHuang0516/EClaw/compare/v1.359.0...v1.360.0) (2026-03-28)
+
+
+### Features
+
+* **admin:** add one-time migration from legacy mission + schedules to kanban cards ([#783](https://github.com/HankHuang0516/EClaw/issues/783)) ([3e97a44](https://github.com/HankHuang0516/EClaw/commit/3e97a44dfc1d71a87825bd4877271edc5dd5d027))
+* **i18n:** add Spanish translations (batch 8) ([#782](https://github.com/HankHuang0516/EClaw/issues/782)) ([2437822](https://github.com/HankHuang0516/EClaw/commit/2437822e6eb556f98df4f8ddaeaec497d853f65e)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add Spanish translations (batch 9) ([#784](https://github.com/HankHuang0516/EClaw/issues/784)) ([95c4b77](https://github.com/HankHuang0516/EClaw/commit/95c4b7730d08f4614f140988dd1d6ae470003484)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.359.0](https://github.com/HankHuang0516/EClaw/compare/v1.358.0...v1.359.0) (2026-03-28)
 
 
