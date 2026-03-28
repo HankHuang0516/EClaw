@@ -767,7 +767,6 @@
         <div class="sub-tabs">
             <a class="sub-tab active" href="mission.html">🎯 <span data-i18n="mc_title">Mission Control</span></a>
             <a class="sub-tab" href="kanban.html">📋 <span data-i18n="kanban_tab">Kanban Board</span></a>
-            <a class="sub-tab" href="schedule.html">📅 <span data-i18n="nav_schedule">Schedule</span></a>
             <a class="sub-tab" href="env-vars.html">🔐 Env Variables</a>
             <a class="sub-tab" href="screen-control.html">📱 Remote Control</a>
         </div>
@@ -780,40 +779,6 @@
 
         <!-- Dashboard Content (hidden until loaded) -->
         <div id="dashboardContent" style="display:none;">
-            <!-- TODO -->
-            <div class="card">
-                <div class="card-header">
-                    <h2>📋 <span data-i18n="mc_todo_title">TODO</span></h2>
-                    <div class="section-header-actions">
-                        <button class="add-cat-btn" onclick="addCategory('todo')" data-i18n="mc_add_category">+ Category</button>
-                        <button class="btn btn-outline btn-sm" onclick="showAddItem('todo')" data-i18n="mc_btn_add">+ Add</button>
-                    </div>
-                </div>
-                <div id="todoList"></div>
-            </div>
-
-            <!-- Mission -->
-            <div class="card">
-                <div class="card-header">
-                    <h2>🎯 <span data-i18n="mc_mission_title">Mission</span></h2>
-                    <div class="section-header-actions">
-                        <button class="add-cat-btn" onclick="addCategory('mission')" data-i18n="mc_add_category">+ Category</button>
-                    </div>
-                </div>
-                <div id="missionList"></div>
-            </div>
-
-            <!-- Done -->
-            <div class="card">
-                <div class="card-header">
-                    <h2>✅ <span data-i18n="mc_done_title">Done</span></h2>
-                    <div class="section-header-actions">
-                        <button class="add-cat-btn" onclick="addCategory('done')" data-i18n="mc_add_category">+ Category</button>
-                    </div>
-                </div>
-                <div id="doneList"></div>
-            </div>
-
             <!-- Notes -->
             <div class="card">
                 <div class="card-header">
@@ -910,7 +875,7 @@
     <script>if(typeof renderAvatarHtml==='undefined'){window.renderAvatarHtml=function(a){return a||'\u{1F99E}'};window.isAvatarUrl=function(){return false}}</script>
     <script>
         // --- State ---
-        let dashboard = { todoList: [], missionList: [], doneList: [], notes: [], rules: [], skills: [], souls: [], categoryOrder: {} };
+        let dashboard = { notes: [], rules: [], skills: [], souls: [], categoryOrder: {} };
         let lastSavedDashboard = null; // snapshot for auto-save conflict detection
         let lastNotifiedDashboard = null; // snapshot for notification diff (updated only on notify/skip)
         let version = 1;
@@ -1171,17 +1136,6 @@
 
         // ========== Notification Prompt ==========
         // Change detection helpers
-        function isTodoChanged(item) {
-            if (!lastNotifiedDashboard) return true;
-            const prev = lastNotifiedDashboard.todoList.find(p => p.id === item.id);
-            if (!prev) return true; // new item
-            const pCur = item.priority?.value || item.priority;
-            const pPrev = prev.priority?.value || prev.priority;
-            return item.title !== prev.title || item.description !== prev.description
-                || pCur !== pPrev || (item.assignedBot || '') !== (prev.assignedBot || '')
-                || (item.status?.name || item.status) !== (prev.status?.name || prev.status);
-        }
-
         function isSkillChanged(skill) {
             if (!lastNotifiedDashboard) return true;
             const prev = lastNotifiedDashboard.skills.find(p => p.id === skill.id);
@@ -1203,21 +1157,6 @@
 
         function getNotifiableItems() {
             const items = [];
-            // TODO items with assigned entity - only if changed
-            dashboard.todoList.forEach(item => {
-                const p = item.priority?.value || item.priority || 2;
-                if (item.assignedBot && isTodoChanged(item)) {
-                    const botIds = String(item.assignedBot).split(',').map(s => s.trim()).filter(Boolean);
-                    const botLabels = botIds.map(id => getEntityLabel(parseInt(id))).join(', ');
-                    items.push({
-                        type: 'TODO',
-                        title: item.title,
-                        priority: p,
-                        entityIds: botIds,
-                        label: `📋 ${esc(item.title)} → ${botLabels}`
-                    });
-                }
-            });
             // SKILL items with assigned entities - only if changed
             dashboard.skills.forEach(skill => {
                 if (skill.assignedEntities && skill.assignedEntities.length > 0 && isSkillChanged(skill)) {
@@ -1324,9 +1263,6 @@
 
         function applyDashboard(d) {
             dashboard = {
-                todoList: d.todoList || [],
-                missionList: d.missionList || [],
-                doneList: d.doneList || [],
                 notes: d.notes || [],
                 rules: d.rules || [],
                 skills: d.skills || [],
@@ -1342,12 +1278,10 @@
 
         // ========== Category Helpers ==========
         const SECTION_LIST_KEY = {
-            todo: 'todoList', mission: 'missionList', done: 'doneList',
             notes: 'notes', skills: 'skills', souls: 'souls', rules: 'rules'
         };
 
         const SECTION_RENDER_FN = {
-            todo: () => renderTodo(), mission: () => renderMission(), done: () => renderDone(),
             notes: () => renderNotes(), skills: () => renderSkills(), souls: () => renderSouls(), rules: () => renderRules()
         };
 
@@ -1610,42 +1544,11 @@
 
         // ========== Rendering ==========
         function renderAll() {
-            renderTodo();
-            renderMission();
-            renderDone();
             renderNotes();
             renderSkills();
             renderSouls();
             renderRules();
             renderSyncBar();
-        }
-
-        function renderTaskItemHtml(item, listType) {
-            const assignLabel = item.assignedBot != null && item.assignedBot !== ''
-                ? String(item.assignedBot).split(',').map(id => getEntityLabel(parseInt(id.trim()))).join(', ')
-                : '';
-            let dueHtml = '';
-            if (item.dueAt) {
-                const overdueCls = item.dueAt <= Date.now() ? ' overdue' : '';
-                dueHtml = `<div class="item-due${overdueCls}" data-due="${item.dueAt}">
-                    <span>🕐 ${i18n.t('mc_card_due_at')}: ${fmtDate(item.dueAt)}</span>
-                    <span class="item-due-countdown">⏳ ${i18n.t('mc_card_countdown')}: ${fmtCountdown(item.dueAt)}</span>
-                </div>`;
-            }
-            return `
-            <div class="mc-item" draggable="true" data-item-id="${item.id}"
-                 ondragstart="onItemDragStart(event,'${item.id}','${listType}')" ondragend="onItemDragEnd(event)"
-                 onclick="showEditItem('${item.id}','${listType}')" oncontextmenu="showItemMenu(event,'${item.id}','${listType}')">
-                <div class="item-row">
-                    <span class="item-priority">${(getPriorityLabel(item.priority?.value || item.priority)).slice(0, 2)}</span>
-                    <span class="item-title">${esc(item.title)}</span>
-                    ${assignLabel ? `<span class="item-badge">${assignLabel}</span>` : ''}
-                    <span class="item-badge">${getStatusLabel(item.status?.name || item.status)}</span>
-                    <button class="item-delete" onclick="event.stopPropagation();deleteItem('${item.id}','${listType}')" title="${i18n.t('common_delete')}">&times;</button>
-                </div>
-                ${item.description ? `<div class="item-detail">${esc(item.description)}</div>` : ''}
-                ${dueHtml}
-            </div>`;
         }
 
         function renderCategorizedList(el, items, section, listType, renderItemFn, emptyKey) {
@@ -1667,35 +1570,6 @@
                 html += `<div class="cat-uncategorized-drop" ondragover="onDropZoneDragOver(event)" ondragleave="onDropZoneDragLeave(event)" ondrop="onUncatDrop(event,'${section}')" style="min-height:20px;"></div>`;
             }
             el.innerHTML = html;
-        }
-
-        function renderTodo() {
-            const el = document.getElementById('todoList');
-            renderCategorizedList(el, dashboard.todoList, 'todo', 'todo', renderTaskItemHtml, 'mc_empty_todo');
-        }
-
-        function renderMission() {
-            const el = document.getElementById('missionList');
-            renderCategorizedList(el, dashboard.missionList, 'mission', 'mission', renderTaskItemHtml, 'mc_empty_mission');
-        }
-
-        function renderDoneItemHtml(item) {
-            return `
-            <div class="mc-item" draggable="true" data-item-id="${item.id}"
-                 ondragstart="onItemDragStart(event,'${item.id}','done')" ondragend="onItemDragEnd(event)"
-                 oncontextmenu="showItemMenu(event,'${item.id}','done')">
-                <div class="item-row">
-                    <span class="item-title">${esc(item.title)}</span>
-                    ${item.completedAt ? `<span class="item-badge" style="color:var(--success);">${fmtDate(item.completedAt)}</span>` : ''}
-                    <button class="item-delete" onclick="event.stopPropagation();deleteItem('${item.id}','done')" title="${i18n.t('common_delete')}">&times;</button>
-                </div>
-                ${item.description ? `<div class="item-detail">${esc(item.description)}</div>` : ''}
-            </div>`;
-        }
-
-        function renderDone() {
-            const el = document.getElementById('doneList');
-            renderCategorizedList(el, dashboard.doneList, 'done', 'done', renderDoneItemHtml, 'mc_empty_done');
         }
 
         function renderNoteItemHtml(n) {
@@ -1811,109 +1685,6 @@
         // ========== Deprecation: add → Kanban redirect ==========
         function showDeprecatedAddWarning() {
             showToast(i18n.t('mc_deprecated_add') || '請使用看板任務作為替代方案。看板任務頁面已有完整生態，請讓 bot 將現有任務逐步轉移到看板任務頁面。', 'warning');
-        }
-
-        // ========== TODO / Mission / Done Items ==========
-        function showAddItem(list) {
-            showDeprecatedAddWarning();
-        }
-
-        function showEditItem(id, list) {
-            const arr = list === 'todo' ? dashboard.todoList : list === 'mission' ? dashboard.missionList : dashboard.doneList;
-            const item = arr.find(i => i.id === id);
-            if (!item) return;
-
-            const priorityOpts = [
-                { value: 1, label: i18n.t('mc_priority_low') },
-                { value: 2, label: i18n.t('mc_priority_medium') },
-                { value: 3, label: i18n.t('mc_priority_high') },
-                { value: 4, label: i18n.t('mc_priority_urgent') }
-            ];
-            const pv = item.priority?.value || item.priority || 2;
-
-            const dueVal = item.dueAt ? toLocalDatetimeStr(item.dueAt) : '';
-
-            showDialog(i18n.t('mc_dlg_edit'), [
-                { key: 'title', label: i18n.t('mc_dlg_title'), value: item.title },
-                { key: 'description', label: i18n.t('mc_dlg_desc'), type: 'textarea', value: item.description },
-                { key: 'priority', label: i18n.t('mc_dlg_priority'), type: 'select', value: pv, options: priorityOpts },
-                { key: 'dueAt', label: i18n.t('mc_dlg_due_at'), type: 'datetime', value: dueVal },
-                { key: 'category', label: i18n.t('mc_dlg_category'), type: 'select', value: item.category || '', options: getCategoryOptions(list) },
-                { key: 'assignedEntity', label: i18n.t('mc_dlg_assign') || '指派實體', type: 'multiselect', value: item.assignedBot || '', options: getEntityOptions() }
-            ], vals => {
-                if (!vals.title.trim()) return;
-                item.title = vals.title.trim();
-                item.description = vals.description.trim();
-                item.priority = parseInt(vals.priority);
-                item.dueAt = vals.dueAt ? new Date(vals.dueAt).getTime() : null;
-                item.category = vals.category || null;
-                item.assignedBot = vals.assignedEntity || null;
-                item.updatedAt = Date.now();
-                markChanged();
-                renderAll();
-            });
-        }
-
-        function showItemMenu(e, id, list) {
-            e.preventDefault();
-            const menu = document.getElementById('contextMenu');
-            let items = [];
-
-            if (list === 'todo') {
-                items.push({ label: i18n.t('mc_menu_move_mission'), fn: () => moveItem(id, 'todo', 'mission') });
-                items.push({ label: i18n.t('mc_menu_mark_done'), fn: () => moveItem(id, 'todo', 'done') });
-            }
-            if (list === 'mission') {
-                items.push({ label: i18n.t('mc_menu_mark_done'), fn: () => moveItem(id, 'mission', 'done') });
-            }
-            items.push({ label: i18n.t('mc_menu_delete'), fn: () => deleteItem(id, list) });
-
-            menu.innerHTML = items.map(i => `<div class="context-menu-item">${i.label}</div>`).join('');
-            menu.style.display = 'block';
-            menu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
-            menu.style.top = Math.min(e.clientY, window.innerHeight - (items.length * 40)) + 'px';
-
-            menu.querySelectorAll('.context-menu-item').forEach((el, idx) => {
-                el.onclick = () => {
-                    items[idx].fn();
-                    menu.style.display = 'none';
-                };
-            });
-
-            setTimeout(() => document.addEventListener('click', () => menu.style.display = 'none', { once: true }), 10);
-        }
-
-        function moveItem(id, from, to) {
-            const fromArr = from === 'todo' ? dashboard.todoList : dashboard.missionList;
-            const idx = fromArr.findIndex(i => i.id === id);
-            if (idx < 0) return;
-
-            const item = fromArr.splice(idx, 1)[0];
-            item.updatedAt = Date.now();
-
-            if (to === 'mission') {
-                item.status = 'IN_PROGRESS';
-                dashboard.missionList.push(item);
-            }
-            if (to === 'done') {
-                item.status = 'DONE';
-                item.completedAt = Date.now();
-                dashboard.doneList.unshift(item);
-            }
-
-            markChanged();
-            renderAll();
-        }
-
-        function deleteItem(id, list) {
-            if (!confirm(i18n.t('mc_confirm_delete'))) return;
-
-            if (list === 'todo') dashboard.todoList = dashboard.todoList.filter(i => i.id !== id);
-            else if (list === 'mission') dashboard.missionList = dashboard.missionList.filter(i => i.id !== id);
-            else dashboard.doneList = dashboard.doneList.filter(i => i.id !== id);
-
-            markChanged();
-            renderAll();
         }
 
         // ========== Notes ==========
