@@ -21447,6 +21447,30 @@ const TRANSLATIONS = {
         "nav_community": "Comunidad",
         "nav_enterprise": "Empresa"
     },
+    ms: {
+        // Portal Shared
+        "portal_login_title": "EClawbot - Log Masuk",
+        "portal_app_title": "EClawbot",
+        "portal_app_subtitle": "Kawan Halaman Dinding Langit",
+        "nav_dashboard": "Papan Pemuka",
+        "nav_chat": "Sembang",
+        "nav_files": "Fail",
+        "nav_mission": "Misi",
+        "nav_settings": "Tetapan",
+        "nav_logout": "Log Keluar",
+        "nav_split_view": "Paparan Terbahagi",
+        "workspace_close_pane": "Tutup Anak Tetingkap",
+        "nav_compare": "Banding",
+        "nav_faq": "Soalan Lazim",
+        "nav_release_notes": "Nota Pelepasan",
+        "nav_user_guide": "Panduan Pengguna",
+        "nav_login": "Log Masuk",
+        "nav_info": "Maklumat",
+        "nav_admin": "Admin",
+        "nav_card_holder": "Pemegang Kad",
+        "nav_community": "Komuniti",
+        "nav_enterprise": "Usaha"
+    },
 
 };
 
@@ -21528,7 +21552,7 @@ class I18n {
         });
 
         // Update html lang attribute
-        const langMap = { 'zh': 'zh-TW', 'zh-CN': 'zh-CN', 'ja': 'ja', 'ko': 'ko', 'th': 'th', 'vi': 'vi', 'id': 'id' };
+        const langMap = { 'zh': 'zh-TW', 'zh-CN': 'zh-CN', 'ja': 'ja', 'ko': 'ko', 'th': 'th', 'vi': 'vi', 'id': 'id', 'ms': 'ms' };
         document.documentElement.lang = langMap[this.lang] || 'en';
     }
 
