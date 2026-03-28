@@ -1,3 +1,17 @@
+# [1.352.0](https://github.com/HankHuang0516/EClaw/compare/v1.351.0...v1.352.0) (2026-03-28)
+
+
+### Bug Fixes
+
+* **mission:** retry auto-save on version conflict to prevent note deletion loss ([#768](https://github.com/HankHuang0516/EClaw/issues/768)) ([cf9ff82](https://github.com/HankHuang0516/EClaw/commit/cf9ff821d30b4315f9939004d310488fb75ff41d))
+
+
+### Features
+
+* **i18n:** add French translations (batch 81) ([#767](https://github.com/HankHuang0516/EClaw/issues/767)) ([7baf93c](https://github.com/HankHuang0516/EClaw/commit/7baf93c8c0395f483c5ea5f2485f4511d3ab0825)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add French translations (batch 82) ([#769](https://github.com/HankHuang0516/EClaw/issues/769)) ([6d95d61](https://github.com/HankHuang0516/EClaw/commit/6d95d61a1debde95c04381658c66036ad1cf99c8)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add French translations (batch 83) ([#770](https://github.com/HankHuang0516/EClaw/issues/770)) ([695211c](https://github.com/HankHuang0516/EClaw/commit/695211cb8991f4bd475e0e65acda5502b015f541)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.351.0](https://github.com/HankHuang0516/EClaw/compare/v1.350.0...v1.351.0) (2026-03-28)
 
 
