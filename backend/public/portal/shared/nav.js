@@ -9,6 +9,7 @@ function renderNav(activePage) {
     const pages = [
         { id: 'dashboard', i18nKey: 'nav_dashboard', label: 'Dashboard', href: 'dashboard.html', icon: '📊' },
         { id: 'chat', i18nKey: 'nav_chat', label: 'Chat', href: 'chat.html', icon: '💬' },
+        { id: 'mission', i18nKey: 'nav_mission', label: 'Mission', href: 'mission.html', icon: '🚀' },
         { id: 'kanban', i18nKey: 'nav_kanban', label: 'Kanban', href: 'kanban.html', icon: '📋' },
         { id: 'card-holder', i18nKey: 'nav_card_holder', label: 'Cards', href: 'card-holder.html', icon: '🗂️' },
         { id: 'community', i18nKey: 'nav_community', label: 'Community', href: 'community.html', icon: '🏪' },
