@@ -1,3 +1,11 @@
+# [1.277.0](https://github.com/HankHuang0516/EClaw/compare/v1.276.0...v1.277.0) (2026-03-28)
+
+
+### Features
+
+* **privacy:** add full privacy policy link to registration terms dialog ([6f32730](https://github.com/HankHuang0516/EClaw/commit/6f327303ffc1e21b7d10f2a1c08cdc7e1f494213))
+* **privacy:** i18n privacy policy page + fix footer/info links ([58aa43b](https://github.com/HankHuang0516/EClaw/commit/58aa43b93af95d1d0dfd2d656347703f6e071201))
+
 # [1.276.0](https://github.com/HankHuang0516/EClaw/compare/v1.275.1...v1.276.0) (2026-03-28)
 
 
