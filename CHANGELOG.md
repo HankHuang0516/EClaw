@@ -1,3 +1,10 @@
+# [1.421.0](https://github.com/HankHuang0516/EClaw/compare/v1.420.0...v1.421.0) (2026-03-28)
+
+
+### Features
+
+* **i18n:** add German translations (batch 21b) ([#861](https://github.com/HankHuang0516/EClaw/issues/861)) ([47370de](https://github.com/HankHuang0516/EClaw/commit/47370de1c5aab925843bd00969b815cb7584bd6a)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.420.0](https://github.com/HankHuang0516/EClaw/compare/v1.419.0...v1.420.0) (2026-03-28)
 
 
