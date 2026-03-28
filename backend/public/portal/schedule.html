@@ -28,7 +28,11 @@
             gap: 0;
             margin-bottom: 20px;
             border-bottom: 1px solid var(--card-border);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
         }
+        .sub-tabs::-webkit-scrollbar { display: none; }
 
         .sub-tab {
             padding: 10px 20px;
@@ -42,6 +46,8 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .sub-tab:hover {
@@ -61,6 +67,7 @@
             margin-bottom: 8px;
             transition: background 0.15s;
             border-left: 3px solid transparent;
+            position: relative;
         }
 
         .sched-item[onclick]:hover {
@@ -90,10 +97,31 @@
             opacity: 0.65;
         }
 
+        .sched-entity-badge {
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            background: var(--card);
+            padding: 3px 8px 3px 4px;
+            border-radius: var(--radius-pill);
+            border: 1px solid var(--card-border);
+            line-height: 1;
+        }
+
+        .sched-entity-badge img {
+            border-radius: 50%;
+        }
+
         .sched-row {
             display: flex;
             align-items: center;
             gap: 10px;
+            padding-right: 110px;
         }
 
         .sched-time {
@@ -102,15 +130,6 @@
             font-weight: 600;
             color: var(--primary);
             min-width: 100px;
-        }
-
-        .sched-entity {
-            flex-shrink: 0;
-            font-size: 12px;
-            padding: 2px 8px;
-            border-radius: var(--radius);
-            background: var(--card);
-            color: var(--text-secondary);
         }
 
         .sched-message {
@@ -374,6 +393,10 @@
         }
 
         @media (max-width: 640px) {
+            .sub-tab {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
             .page-header {
                 flex-direction: column;
                 align-items: flex-start;
@@ -391,6 +414,12 @@
 
             .sched-row {
                 flex-wrap: wrap;
+                padding-right: 90px;
+            }
+
+            .sched-entity-badge {
+                font-size: 10px;
+                padding: 2px 6px 2px 3px;
             }
 
             .sched-message {
@@ -579,6 +608,20 @@
         function renderSchedules() {
             const upcoming = allSchedules.filter(s => s.status === 'pending' || s.status === 'active');
 
+            // Sort upcoming chronologically (earliest first)
+            upcoming.sort((a, b) => {
+                const tA = a.scheduledAt ? new Date(a.scheduledAt).getTime() : (a.cronExpr ? Infinity : 0);
+                const tB = b.scheduledAt ? new Date(b.scheduledAt).getTime() : (b.cronExpr ? Infinity : 0);
+                return tA - tB;
+            });
+
+            // Sort history by execution time (most recent first)
+            executionHistory.sort((a, b) => {
+                const tA = a.executedAt ? new Date(a.executedAt).getTime() : (a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0);
+                const tB = b.executedAt ? new Date(b.executedAt).getTime() : (b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0);
+                return tB - tA;
+            });
+
             renderList('upcomingList', upcoming, true);
             renderList('historyList', executionHistory, false);
         }
@@ -596,7 +639,8 @@
             }
 
             el.innerHTML = items.map(s => {
-                const entityLabel = renderAvatarHtml(getAvatarForEntity(s.entityId), 20) + ' ' + getEntityDisplayName(s.entityId) + ' #' + s.entityId;
+                const entityAvatar = renderAvatarHtml(getAvatarForEntity(s.entityId), 18);
+                const entityName = esc(getEntityDisplayName(s.entityId));
                 const timeStr = formatScheduleTime(s);
                 const statusClass = s.isPaused ? 'paused' : s.status;
                 const statusLabel = s.isPaused ? (i18n.t('sched_status_paused') || 'Paused') : getStatusLabel(s.status);
@@ -636,9 +680,9 @@
                         : '');
 
                 return '<div class="sched-item status-' + statusClass + (s.isPaused ? ' is-paused' : '') + '"' + clickAttr + '>' +
+                    '<div class="sched-entity-badge">' + entityAvatar + ' ' + entityName + '</div>' +
                     '<div class="sched-row">' +
                     '<span class="sched-time">' + timeStr + '</span>' +
-                    '<span class="sched-entity">' + entityLabel + '</span>' +
                     repeatBadge +
                     '<span class="sched-message">' + esc((s.message || '').replace(/<img[^>]*>/gi, '').replace(/class="[^"]*"/gi, '').replace(/style="[^"]*"/gi, '')) + '</span>' +
                     '<span class="sched-status ' + statusClass + '">' + statusLabel + '</span>' +
