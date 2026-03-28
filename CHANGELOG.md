@@ -1,3 +1,17 @@
+# [1.284.0](https://github.com/HankHuang0516/EClaw/compare/v1.283.0...v1.284.0) (2026-03-28)
+
+
+### Bug Fixes
+
+* **ux:** remove duplicate add-variable button + fix env_notice fallback text ([273aaf6](https://github.com/HankHuang0516/EClaw/commit/273aaf64de23c9f0ee895520abca55c3e928c8cc))
+
+
+### Features
+
+* **i18n:** add French translations (batch 10) ([#690](https://github.com/HankHuang0516/EClaw/issues/690)) ([b9c7d7d](https://github.com/HankHuang0516/EClaw/commit/b9c7d7d6c7da159863abad99426a6e7b73c9f5e2)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add French translations (batch 9) ([#689](https://github.com/HankHuang0516/EClaw/issues/689)) ([09dc413](https://github.com/HankHuang0516/EClaw/commit/09dc4136e102fc43bb6148d03a30f24af1d94e84)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** dynamic language UI + smart device detection + Android es ([#688](https://github.com/HankHuang0516/EClaw/issues/688)) ([16bb392](https://github.com/HankHuang0516/EClaw/commit/16bb392a6c7c67b0931484faed740fbdb0360bab))
+
 # [1.283.0](https://github.com/HankHuang0516/EClaw/compare/v1.282.0...v1.283.0) (2026-03-28)
 
 
