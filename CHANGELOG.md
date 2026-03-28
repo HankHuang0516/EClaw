@@ -1,3 +1,10 @@
+# [1.217.0](https://github.com/HankHuang0516/EClaw/compare/v1.216.0...v1.217.0) (2026-03-28)
+
+
+### Features
+
+* **i18n:** add Arabic (ar) translation (squashed) ([f6b810d](https://github.com/HankHuang0516/EClaw/commit/f6b810d056b2cd524f8c60ddc0886f0f915f7c9f)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.216.0](https://github.com/HankHuang0516/EClaw/compare/v1.215.0...v1.216.0) (2026-03-28)
 
 
