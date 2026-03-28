@@ -1,3 +1,10 @@
+# [1.260.0](https://github.com/HankHuang0516/EClaw/compare/v1.259.0...v1.260.0) (2026-03-28)
+
+
+### Features
+
+* **i18n:** add 40 Spanish translations (batch 43) ([#661](https://github.com/HankHuang0516/EClaw/issues/661)) ([7e12bba](https://github.com/HankHuang0516/EClaw/commit/7e12bba41ba77c04a75cef70b0f961ebac26b615)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.259.0](https://github.com/HankHuang0516/EClaw/compare/v1.258.0...v1.259.0) (2026-03-28)
 
 
