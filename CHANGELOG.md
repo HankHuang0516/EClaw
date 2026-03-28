@@ -1,3 +1,15 @@
+# [1.302.0](https://github.com/HankHuang0516/EClaw/compare/v1.301.0...v1.302.0) (2026-03-28)
+
+
+### Bug Fixes
+
+* **ux:** block add buttons on mission + schedule pages with Kanban redirect warning ([418b7a4](https://github.com/HankHuang0516/EClaw/commit/418b7a4c4ab624ba8b5e71d95161059819257288))
+
+
+### Features
+
+* **i18n:** add French translations (batch 29) ([#708](https://github.com/HankHuang0516/EClaw/issues/708)) ([67a5d2c](https://github.com/HankHuang0516/EClaw/commit/67a5d2c7dc93ae011da8b317df07f8962bc841c0)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.301.0](https://github.com/HankHuang0516/EClaw/compare/v1.300.0...v1.301.0) (2026-03-28)
 
 
