@@ -6847,7 +6847,9 @@ app.post('/api/community/card/:publicCode/message', async (req, res) => {
         }
         authorType = 'user';
         authorId = deviceId;
-        authorName = 'Device Owner';
+        // Try to use the first bound entity's name as author
+        const firstBound = Object.values(device.entities).find(e => e && e.isBound && e.name);
+        authorName = firstBound ? firstBound.name : 'User';
     } else {
         return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
     }
