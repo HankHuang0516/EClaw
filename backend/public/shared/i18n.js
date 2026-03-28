@@ -26493,25 +26493,37 @@ class I18n {
         if (saved && TRANSLATIONS[saved]) {
             this.lang = saved;
         } else {
-            // Auto-detect from browser language
+            // Auto-detect from browser/device language
             const browserLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
-            if (browserLang.startsWith('zh-cn') || browserLang.startsWith('zh-hans')) {
-                this.lang = 'zh-CN';
-            } else if (browserLang.startsWith('zh')) {
-                this.lang = 'zh';
-            } else if (browserLang.startsWith('ja')) {
-                this.lang = 'ja';
-            } else if (browserLang.startsWith('ko')) {
-                this.lang = 'ko';
-            } else if (browserLang.startsWith('th')) {
-                this.lang = 'th';
-            } else if (browserLang.startsWith('vi')) {
-                this.lang = 'vi';
-            } else if (browserLang.startsWith('id') || browserLang.startsWith('in')) {
-                this.lang = 'id';
-            } else {
-                this.lang = 'en';
+            const langMap = [
+                [['zh-cn', 'zh-hans', 'zh-sg'], 'zh-CN'],
+                [['zh'], 'zh'],
+                [['ja'], 'ja'],
+                [['ko'], 'ko'],
+                [['th'], 'th'],
+                [['vi'], 'vi'],
+                [['id', 'in'], 'id'],
+                [['es'], 'es'],
+                [['fr'], 'fr'],
+                [['de'], 'de'],
+                [['pt'], 'pt'],
+                [['it'], 'it'],
+                [['ru'], 'ru'],
+                [['tr'], 'tr'],
+                [['ms', 'my'], 'ms'],
+                [['hi'], 'hi'],
+                [['ar'], 'ar'],
+                [['nl'], 'nl'],
+                [['pl'], 'pl'],
+            ];
+            let detected = 'en';
+            for (const [prefixes, lang] of langMap) {
+                if (prefixes.some(p => browserLang.startsWith(p)) && TRANSLATIONS[lang]) {
+                    detected = lang;
+                    break;
+                }
             }
+            this.lang = detected;
         }
         this.observers = [];
     }
