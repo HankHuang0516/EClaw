@@ -1,3 +1,16 @@
+# [1.324.0](https://github.com/HankHuang0516/EClaw/compare/v1.323.0...v1.324.0) (2026-03-28)
+
+
+### Bug Fixes
+
+* **kanban:** add Kanban sub-tab to all sibling pages + fix null navEmail crash ([#731](https://github.com/HankHuang0516/EClaw/issues/731)) ([506088a](https://github.com/HankHuang0516/EClaw/commit/506088aae7b2ad503c195bbdc1e4c07641587595)), closes [#navEmail](https://github.com/HankHuang0516/EClaw/issues/navEmail)
+
+
+### Features
+
+* **i18n:** add French translations (batch 51) ([#730](https://github.com/HankHuang0516/EClaw/issues/730)) ([520f84c](https://github.com/HankHuang0516/EClaw/commit/520f84cbe6e4a0825c3b1f9d18a601be6d4421a4)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add French translations (batch 52) ([#732](https://github.com/HankHuang0516/EClaw/issues/732)) ([ac0f01b](https://github.com/HankHuang0516/EClaw/commit/ac0f01b5e6c29f5f1bf86b3d3c5be5cf7408869a)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.323.0](https://github.com/HankHuang0516/EClaw/compare/v1.322.0...v1.323.0) (2026-03-28)
 
 
