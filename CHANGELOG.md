@@ -1,3 +1,15 @@
+## [1.362.2](https://github.com/HankHuang0516/EClaw/compare/v1.362.1...v1.362.2) (2026-03-28)
+
+
+### Bug Fixes
+
+* **kanban:** restore timeline CSS + view toggle a11y ([#793](https://github.com/HankHuang0516/EClaw/issues/793)) ([8e2bf9c](https://github.com/HankHuang0516/EClaw/commit/8e2bf9ce05b6d75d13d2a4b98a38ae9955aa3900)), closes [#790](https://github.com/HankHuang0516/EClaw/issues/790) [#790](https://github.com/HankHuang0516/EClaw/issues/790)
+
+
+### Reverts
+
+* restore mission.html from redirect stub to full Mission Control page ([#792](https://github.com/HankHuang0516/EClaw/issues/792)) ([f7ebf4e](https://github.com/HankHuang0516/EClaw/commit/f7ebf4e2bca3dc8634f34ea2cfe01c5a854c84cf))
+
 ## [1.362.1](https://github.com/HankHuang0516/EClaw/compare/v1.362.0...v1.362.1) (2026-03-28)
 
 
