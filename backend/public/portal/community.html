@@ -524,7 +524,7 @@
         <div class="plaza-hero">
             <h1 class="plaza-hero-title"><span class="emoji">🏪</span> <span data-i18n="community_hero_title">Bot Plaza</span></h1>
             <p class="plaza-hero-subtitle" data-i18n="community_hero_subtitle">探索公開的 AI Bot 名片，找到你需要的智慧助手，或讓更多人發現你的 Bot。</p>
-            <div class="demo-banner">⚠️ Demo Mode — 以下為展示用假資料，非真實 Bot。</div>
+            <!-- Real data from API -->
         </div>
 
         <!-- Search + Sort -->
@@ -604,152 +604,77 @@
     <script src="shared/footer.js"></script>
     <script>
     /* ══════════════════════════════════════
-       Mock Data (replace with API later)
+       Real API Integration
        ══════════════════════════════════════ */
-    const MOCK_BOTS = [
-        {
-            publicCode: 'uwgm9y', name: 'ShopBot Pro', avatar: '🛒',
-            desc: '24/7 智能購物助手，查詢商品、追蹤訂單、推薦好物。',
-            tags: ['ecommerce', 'support', 'chat'], caps: ['product-search', 'order-inquiry', 'recommendation'],
-            stars: 4.8, reviews: 42, level: 8, xp: 5200, online: true,
-            creator: 'Entity #2', createdAt: '2026-03-20'
-        },
-        {
-            publicCode: 'e1swiy', name: 'Mac_C 美編', avatar: '🎨',
-            desc: '前端設計 + 廣告美編，專精 UI/UX、GIF 動畫、Demo mockup。',
-            tags: ['creative', 'a2a'], caps: ['ui-design', 'gif-animation', 'mockup'],
-            stars: 4.9, reviews: 18, level: 6, xp: 3100, online: true,
-            creator: 'Entity #4', createdAt: '2026-03-25'
-        },
-        {
-            publicCode: 'abc123', name: 'TravelBot Asia', avatar: '🧳',
-            desc: '亞洲旅遊行程規劃專家，機票比價、景點推薦、在地美食。',
-            tags: ['search', 'chat'], caps: ['itinerary-planning', 'price-compare', 'local-guide'],
-            stars: 4.5, reviews: 67, level: 10, xp: 8500, online: true,
-            creator: 'TravelCo', createdAt: '2026-02-15'
-        },
-        {
-            publicCode: 'def456', name: 'CodeHelper', avatar: '💻',
-            desc: '程式碼審查助手，支援 Python/JS/Go，即時 debug 建議。',
-            tags: ['creative', 'chat', 'a2a'], caps: ['code-review', 'debugging', 'refactor'],
-            stars: 4.7, reviews: 89, level: 12, xp: 12000, online: false,
-            creator: 'DevTeam', createdAt: '2026-01-10'
-        },
-        {
-            publicCode: 'ghi789', name: '健康顧問小蜜', avatar: '🏥',
-            desc: '健康諮詢助手，運動建議、營養分析、睡眠追蹤。',
-            tags: ['support', 'chat'], caps: ['health-advice', 'nutrition', 'fitness'],
-            stars: 4.3, reviews: 31, level: 5, xp: 2200, online: true,
-            creator: 'HealthLab', createdAt: '2026-03-01'
-        },
-        {
-            publicCode: 'jkl012', name: '翻譯大師', avatar: '🌐',
-            desc: '即時多語翻譯，支援 30+ 語言，語境理解、術語對照。',
-            tags: ['chat', 'a2a'], caps: ['translation', 'language-detect', 'glossary'],
-            stars: 4.6, reviews: 124, level: 15, xp: 18000, online: true,
-            creator: 'LangPro', createdAt: '2025-12-20'
-        },
-        {
-            publicCode: 'mno345', name: '財務小管家', avatar: '💰',
-            desc: '個人記帳、預算管理、消費分析，幫你管好每一塊錢。',
-            tags: ['support', 'chat'], caps: ['bookkeeping', 'budget', 'analytics'],
-            stars: 4.4, reviews: 55, level: 7, xp: 4100, online: false,
-            creator: 'FinBot', createdAt: '2026-02-28'
-        },
-        {
-            publicCode: 'pqr678', name: 'NewsDigest', avatar: '📰',
-            desc: '每日新聞摘要，科技、財經、國際大事，3 分鐘掌握重點。',
-            tags: ['search', 'chat'], caps: ['news-digest', 'summarize', 'topic-track'],
-            stars: 4.2, reviews: 38, level: 9, xp: 6800, online: true,
-            creator: 'MediaBot', createdAt: '2026-03-15'
-        },
-        {
-            publicCode: 'stu901', name: '食譜達人', avatar: '👨‍🍳',
-            desc: '輸入食材，推薦食譜。支援中西日韓料理，營養標示一目了然。',
-            tags: ['search', 'creative'], caps: ['recipe-search', 'nutrition-calc', 'meal-plan'],
-            stars: 4.7, reviews: 72, level: 8, xp: 5500, online: true,
-            creator: 'FoodieAI', createdAt: '2026-03-08'
-        },
-        {
-            publicCode: 'vwx234', name: 'MusicMix Bot', avatar: '🎵',
-            desc: '音樂推薦引擎，根據心情、場景、喜好生成播放清單。',
-            tags: ['creative', 'chat'], caps: ['music-recommend', 'playlist', 'mood-detect'],
-            stars: 4.1, reviews: 22, level: 4, xp: 1500, online: false,
-            creator: 'SoundLab', createdAt: '2026-03-18'
-        },
-        {
-            publicCode: 'yz5678', name: '法律諮詢助手', avatar: '⚖️',
-            desc: '基礎法律問題解答，合約審閱、勞動法規、消費爭議。',
-            tags: ['support', 'chat'], caps: ['legal-qa', 'contract-review', 'dispute'],
-            stars: 4.5, reviews: 48, level: 7, xp: 4300, online: true,
-            creator: 'LawBot', createdAt: '2026-02-10'
-        },
-        {
-            publicCode: 'ab9012', name: 'GPS 探索家', avatar: '📍',
-            desc: '附近美食、停車場、景點搜尋，GPS 定位即時推薦。',
-            tags: ['search', 'chat', 'a2a'], caps: ['gps-location', 'nearby-search', 'navigation'],
-            stars: 4.6, reviews: 15, level: 3, xp: 800, online: true,
-            creator: 'Entity #4', createdAt: '2026-03-25'
-        }
-    ];
-
-    const MOCK_COMMENTS = [
-        { author: 'User123', avatar: '👤', text: '很好用！商品查詢速度很快。', time: '2 小時前', replies: [
-            { author: 'ShopBot Pro', avatar: '🛒', text: '謝謝你的支持！有任何問題歡迎隨時問我 😊', time: '1 小時前' }
-        ]},
-        { author: 'Alice', avatar: '👩', text: '希望可以支援更多付款方式。', time: '1 天前', replies: [] },
-        { author: 'Bob', avatar: '👨', text: '跟朋友推薦了，他們都覺得很方便。', time: '3 天前', replies: [] },
-        { author: 'Charlie', avatar: '🧑', text: '客服回覆速度超快，讚！', time: '5 天前', replies: [] },
-        { author: 'Diana', avatar: '👩‍💻', text: '介面很直覺，第一次用就上手了。', time: '1 週前', replies: [
-            { author: 'ShopBot Pro', avatar: '🛒', text: '感謝回饋！我們會繼續優化體驗。', time: '6 天前' }
-        ]},
-        { author: 'Eve', avatar: '👧', text: '能加入收藏功能嗎？想記住喜歡的商品。', time: '2 週前', replies: [] }
-    ];
+    const API_BASE = location.origin;
+    let allBots = [];
+    let currentDetailCode = null;
+    let currentDetailMessages = [];
 
     /* ══════ State ══════ */
     let currentFilter = 'all';
-    let currentSort = 'popular';
+    let currentSort = 'newest';
     let searchQuery = '';
+
+    /* ══════ API ══════ */
+    async function apiFetch(path) {
+        const r = await fetch(location.origin + path);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+    }
+    async function apiPost(path, body) {
+        const r = await fetch(location.origin + path, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+        return r.json();
+    }
+
+    /* ══════ Load ══════ */
+    async function loadBots() {
+        document.getElementById('loading').style.display = 'flex';
+        try {
+            const p = new URLSearchParams({ limit:'50', sort:currentSort });
+            if (searchQuery) p.set('q', searchQuery);
+            if (currentFilter !== 'all') p.set('tag', currentFilter);
+            const data = await apiFetch('/api/community/search?' + p);
+            allBots = (data.results || []).map(r => ({
+                publicCode: r.publicCode, name: r.name || 'Unnamed', avatar: r.avatar || '🤖',
+                desc: r.description || '', tags: r.tags || [],
+                caps: (r.capabilities || []).map(c => c.name || c.id || c),
+                stars: r.avgRating || 0, reviews: r.messageCount || 0,
+                level: r.level || 1, xp: r.xp || 0
+            }));
+            renderGrid(allBots);
+        } catch (e) {
+            console.error('loadBots:', e);
+            document.getElementById('emptyState').style.display = 'block';
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
+    }
 
     /* ══════ Render ══════ */
     function renderGrid(bots) {
         const grid = document.getElementById('botGrid');
         const empty = document.getElementById('emptyState');
-        const loadMore = document.getElementById('loadMore');
-
-        if (!bots.length) {
-            grid.innerHTML = '';
-            empty.style.display = 'block';
-            loadMore.style.display = 'none';
-            document.getElementById('resultCount').textContent = '0';
-            return;
-        }
-
+        document.getElementById('loadMore').style.display = 'none';
+        if (!bots.length) { grid.innerHTML = ''; empty.style.display = 'block'; document.getElementById('resultCount').textContent = '0'; return; }
         empty.style.display = 'none';
-        loadMore.style.display = bots.length >= 12 ? 'block' : 'none';
         document.getElementById('resultCount').textContent = bots.length;
-
         grid.innerHTML = bots.map(bot => `
             <div class="bot-card" onclick="openDetail('${bot.publicCode}')">
-                <span class="demo-badge">Demo</span>
                 <span class="bot-card-level ${lvClass(bot.level)}">Lv.${bot.level}</span>
                 <div class="bot-card-header">
                     <div class="bot-card-avatar">
-                        ${bot.avatar.startsWith('http') ? `<img src="${bot.avatar}" alt="">` : bot.avatar}
-                        <span class="bot-card-online ${bot.online ? 'online' : 'offline'}"></span>
+                        ${(bot.avatar||'').startsWith('http') ? `<img src="${esc(bot.avatar)}" alt="">` : (bot.avatar||'🤖')}
                     </div>
                     <div class="bot-card-info">
                         <div class="bot-card-name">${esc(bot.name)}</div>
-                        <div class="bot-card-creator">${esc(bot.creator)}</div>
                     </div>
                 </div>
                 <div class="bot-card-desc">${esc(bot.desc)}</div>
                 <div class="bot-card-footer">
-                    <div class="bot-card-tags">
-                        ${bot.tags.slice(0, 2).map(t => `<span class="bot-card-tag">${esc(t)}</span>`).join('')}
-                    </div>
+                    <div class="bot-card-tags">${bot.tags.slice(0,2).map(t=>`<span class="bot-card-tag">${esc(t)}</span>`).join('')}</div>
                     <div class="bot-card-stats">
-                        <span class="stat"><span class="stars">★</span> ${bot.stars}</span>
+                        ${bot.stars > 0 ? `<span class="stat"><span class="stars">★</span> ${bot.stars.toFixed(1)}</span>` : ''}
                         <span class="stat">💬 ${bot.reviews}</span>
                     </div>
                 </div>
@@ -757,210 +682,113 @@
         `).join('');
     }
 
-    function filterAndSort() {
-        let bots = [...MOCK_BOTS];
-
-        // Filter
-        if (currentFilter !== 'all') {
-            bots = bots.filter(b => b.tags.includes(currentFilter));
-        }
-
-        // Search
-        if (searchQuery) {
-            const q = searchQuery.toLowerCase();
-            bots = bots.filter(b =>
-                b.name.toLowerCase().includes(q) ||
-                b.desc.toLowerCase().includes(q) ||
-                b.tags.some(t => t.includes(q)) ||
-                b.caps.some(c => c.includes(q))
-            );
-        }
-
-        // Sort
-        switch (currentSort) {
-            case 'popular': bots.sort((a, b) => b.reviews - a.reviews); break;
-            case 'newest': bots.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); break;
-            case 'rating': bots.sort((a, b) => b.stars - a.stars); break;
-            case 'active': bots.sort((a, b) => (b.online ? 1 : 0) - (a.online ? 1 : 0) || b.reviews - a.reviews); break;
-        }
-
-        renderGrid(bots);
-    }
+    function filterAndSort() { loadBots(); }
 
     /* ══════ Interactions ══════ */
-    function setFilter(filter, el) {
-        currentFilter = filter;
-        document.querySelectorAll('.plaza-chip').forEach(c => c.classList.remove('active'));
-        el.classList.add('active');
-        filterAndSort();
-    }
+    function setFilter(f, el) { currentFilter = f; document.querySelectorAll('.plaza-chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); filterAndSort(); }
+    function handleSort() { currentSort = document.getElementById('sortSelect').value; filterAndSort(); }
+    function clearSearch() { document.getElementById('searchInput').value=''; searchQuery=''; document.getElementById('searchClear').classList.remove('visible'); filterAndSort(); }
+    function setView(v, el) { document.querySelectorAll('.plaza-view-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); document.getElementById('botGrid').style.gridTemplateColumns = v==='list' ? '1fr' : ''; }
+    function loadMoreBots() { document.getElementById('loadMore').style.display='none'; }
 
-    function handleSort() {
-        currentSort = document.getElementById('sortSelect').value;
-        filterAndSort();
-    }
+    /* ══════ Detail Modal ══════ */
+    let currentDetailCode = null, currentDetailMessages = [];
 
-    function clearSearch() {
-        document.getElementById('searchInput').value = '';
-        searchQuery = '';
-        document.getElementById('searchClear').classList.remove('visible');
-        filterAndSort();
-    }
+    async function openDetail(code) {
+        const modal = document.getElementById('detailModal');
+        const content = document.getElementById('detailContent');
+        content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">載入中...</div>';
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        try {
+            const data = await apiFetch('/api/community/card/' + code);
+            if (!data.success || !data.card) throw new Error('Not found');
+            const bot = data.card;
+            currentDetailCode = code;
+            currentDetailMessages = data.messages || [];
+            const caps = bot.agentCard?.capabilities || [];
+            const tags = bot.agentCard?.tags || [];
+            const desc = bot.agentCard?.description || '';
 
-    function setView(view, el) {
-        document.querySelectorAll('.plaza-view-btn').forEach(b => b.classList.remove('active'));
-        el.classList.add('active');
-        const grid = document.getElementById('botGrid');
-        if (view === 'list') {
-            grid.style.gridTemplateColumns = '1fr';
-        } else {
-            grid.style.gridTemplateColumns = '';
+            content.innerHTML = `
+                <button class="modal-close" onclick="closeDetail()">✕</button>
+                <div class="detail-header">
+                    <div class="detail-avatar">${(bot.avatar||'🤖').startsWith('http') ? `<img src="${esc(bot.avatar)}" alt="">` : (bot.avatar||'🤖')}</div>
+                    <div class="detail-name">${esc(bot.name)}</div>
+                    <div class="detail-code" onclick="navigator.clipboard.writeText('${bot.publicCode}')" title="Copy">${bot.publicCode}</div>
+                    <div class="detail-desc">${esc(desc)}</div>
+                    <div class="detail-level-xp">
+                        <span>🏆 Lv.${bot.level||1}</span>
+                        <span>⚡ ${(bot.xp||0).toLocaleString()} XP</span>
+                        ${(bot.avgRating||0) > 0 ? `<span class="stars">★ ${(bot.avgRating||0).toFixed(1)}</span>` : ''}
+                        <span>💬 ${bot.messageCount||0}</span>
+                    </div>
+                </div>
+                <div class="detail-actions">
+                    <button class="detail-btn primary" onclick="window.open('/c/${bot.publicCode}','_blank')">💬 開始對話</button>
+                    <button class="detail-btn outline" onclick="navigator.clipboard.writeText(location.origin+'/c/${bot.publicCode}')">🔗 分享</button>
+                </div>
+                ${tags.length ? `<div class="detail-tags">${tags.map(t=>`<span class="detail-tag">${esc(t)}</span>`).join('')}</div>` : ''}
+                ${caps.length ? `<div class="detail-caps"><div class="detail-caps-title">Capabilities</div><div class="detail-cap-list">${caps.map(c=>`<div class="detail-cap-item"><span class="icon">⚡</span> ${esc(c.name||c.id||c)}</div>`).join('')}</div></div>` : ''}
+                <div class="detail-comments">
+                    <div class="detail-comments-title">💬 留言板 <span style="color:var(--text-muted);font-weight:400;">(${currentDetailMessages.length})</span></div>
+                    <div class="comment-input-row">
+                        <input class="comment-input" id="commentInput" type="text" placeholder="留下你的評價..." maxlength="500" onkeydown="if(event.key==='Enter')sendComment()">
+                        <button class="comment-send" onclick="sendComment()">送出</button>
+                    </div>
+                    <div class="comment-list" id="commentList">${renderComments(currentDetailMessages)}</div>
+                </div>`;
+            setTimeout(checkModalScroll, 100);
+        } catch (e) {
+            content.innerHTML = `<div style="text-align:center;padding:40px;color:var(--danger);">載入失敗</div>`;
         }
     }
 
-    function loadMoreBots() {
-        // Mock: just hide the button
-        document.getElementById('loadMore').style.display = 'none';
+    function renderComments(msgs) {
+        if (!msgs.length) return '<div style="color:var(--text-muted);text-align:center;padding:12px;">還沒有留言，成為第一個！</div>';
+        return msgs.map(m => {
+            const t = m.created_at ? new Date(m.created_at).toLocaleString() : '';
+            return `<div class="comment-item"><div class="comment-avatar">${m.author_type==='bot'?'🤖':'👤'}</div><div class="comment-body"><div class="comment-author">${esc(m.author_name||'Anonymous')}</div><div class="comment-text">${esc(m.text)}</div><div class="comment-time">${t}</div></div></div>`;
+        }).join('');
     }
 
-    /* ══════ Detail Modal ══════ */
-    function openDetail(code) {
-        const bot = MOCK_BOTS.find(b => b.publicCode === code);
-        if (!bot) return;
-
-        const modal = document.getElementById('detailModal');
-        const content = document.getElementById('detailContent');
-
-        content.innerHTML = `
-            <button class="modal-close" onclick="closeDetail()">✕</button>
-
-            <div class="detail-header">
-                <div class="detail-avatar">
-                    ${bot.avatar.startsWith('http') ? `<img src="${bot.avatar}" alt="">` : bot.avatar}
-                </div>
-                <div class="detail-name">${esc(bot.name)}</div>
-                <div class="detail-code" onclick="navigator.clipboard.writeText('${bot.publicCode}')" title="Copy code">${bot.publicCode}</div>
-                <div class="detail-desc">${esc(bot.desc)}</div>
-                <div class="detail-level-xp">
-                    <span>🏆 Lv.${bot.level}</span>
-                    <span>⚡ ${bot.xp.toLocaleString()} XP</span>
-                    <span class="stars">★ ${bot.stars}</span>
-                    <span>💬 ${bot.reviews}</span>
-                </div>
-            </div>
-
-            <div class="detail-actions">
-                <button class="detail-btn primary" onclick="window.open('/c/${bot.publicCode}','_blank')">
-                    💬 <span data-i18n="community_detail_chat">開始對話</span>
-                </button>
-                <button class="detail-btn outline">
-                    📥 <span data-i18n="community_detail_save">收藏</span>
-                </button>
-                <button class="detail-btn outline" onclick="navigator.clipboard.writeText(location.origin+'/c/${bot.publicCode}')">
-                    🔗 <span data-i18n="community_detail_share">分享</span>
-                </button>
-            </div>
-
-            <div class="detail-tags">
-                ${bot.tags.map(t => `<span class="detail-tag">${esc(t)}</span>`).join('')}
-            </div>
-
-            ${bot.caps.length ? `
-            <div class="detail-caps">
-                <div class="detail-caps-title" data-i18n="community_detail_caps">Capabilities</div>
-                <div class="detail-cap-list">
-                    ${bot.caps.map(c => `<div class="detail-cap-item"><span class="icon">⚡</span> ${esc(c)}</div>`).join('')}
-                </div>
-            </div>` : ''}
-
-            <div class="detail-comments">
-                <div class="detail-comments-title">
-                    💬 <span data-i18n="community_detail_comments">留言板</span>
-                    <span style="color:var(--text-muted);font-weight:400;">(${MOCK_COMMENTS.length})</span>
-                </div>
-                <div class="comment-input-row">
-                    <input class="comment-input" type="text" data-i18n="community_comment_placeholder" placeholder="留下你的評價..." maxlength="200">
-                    <button class="comment-send disabled" data-i18n="community_comment_send" title="Demo mode — 留言功能尚未開放">送出</button>
-                </div>
-                <div class="comment-list">
-                    ${MOCK_COMMENTS.map(c => renderComment(c)).join('')}
-                </div>
-            </div>
-            <div class="modal-scroll-fade">
-                <div class="modal-scroll-fade-grad"></div>
-                <div class="modal-scroll-fade-bar"><span>↓ 向下滑動查看更多</span></div>
-            </div>
-        `;
-
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-        setTimeout(checkModalScroll, 100);
+    async function sendComment() {
+        const input = document.getElementById('commentInput');
+        const text = (input?.value||'').trim();
+        if (!text || !currentDetailCode) return;
+        const deviceId = localStorage.getItem('eclaw_device_id');
+        const deviceSecret = localStorage.getItem('eclaw_device_secret');
+        if (!deviceId || !deviceSecret) { alert('請先登入才能留言'); return; }
+        input.disabled = true;
+        try {
+            const data = await apiPost('/api/community/card/' + currentDetailCode + '/message', { deviceId, deviceSecret, text });
+            if (data.success && data.message) {
+                currentDetailMessages.unshift(data.message);
+                document.getElementById('commentList').innerHTML = renderComments(currentDetailMessages);
+                input.value = '';
+            } else { alert(data.error || '留言失敗'); }
+        } catch (e) { alert('留言失敗'); }
+        finally { input.disabled = false; input.focus(); }
     }
 
-    function renderComment(c) {
-        return `
-            <div class="comment-item">
-                <div class="comment-avatar">${c.avatar}</div>
-                <div class="comment-body">
-                    <div class="comment-author">${esc(c.author)}</div>
-                    <div class="comment-text">${esc(c.text)}</div>
-                    <div class="comment-time">${c.time}<button class="comment-reply-btn" data-i18n="community_comment_reply">回覆</button></div>
-                    ${c.replies && c.replies.length ? `
-                        <div class="comment-replies">
-                            ${c.replies.map(r => `
-                                <div class="comment-item">
-                                    <div class="comment-avatar">${r.avatar}</div>
-                                    <div class="comment-body">
-                                        <div class="comment-author">${esc(r.author)}</div>
-                                        <div class="comment-text">${esc(r.text)}</div>
-                                        <div class="comment-time">${r.time}</div>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-    }
-
-    function closeDetail() {
-        document.getElementById('detailModal').classList.remove('active');
-        document.body.style.overflow = '';
-    }
+    function closeDetail() { document.getElementById('detailModal').classList.remove('active'); document.body.style.overflow=''; currentDetailCode=null; }
 
     /* ══════ Utilities ══════ */
     function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-    function lvClass(lv) {
-        if (lv >= 15) return 'lv-legend';
-        if (lv >= 10) return 'lv-elite';
-        if (lv >= 7) return 'lv-high';
-        if (lv >= 4) return 'lv-mid';
-        return 'lv-low';
-    }
+    function lvClass(lv) { return lv >= 15 ? 'lv-legend' : lv >= 10 ? 'lv-elite' : lv >= 7 ? 'lv-high' : lv >= 4 ? 'lv-mid' : 'lv-low'; }
 
     /* ══════ Init ══════ */
+    let _st;
     document.getElementById('searchInput').addEventListener('input', function() {
         searchQuery = this.value.trim();
         document.getElementById('searchClear').classList.toggle('visible', !!searchQuery);
-        filterAndSort();
+        clearTimeout(_st); _st = setTimeout(filterAndSort, 300);
     });
-
-    // ESC to close modal
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
+    function checkModalScroll() { const mc = document.getElementById('detailContent'); if (mc && mc.scrollHeight > mc.clientHeight) mc.classList.add('has-scroll'); }
 
-    // Scroll fade: add class when content overflows
-    function checkModalScroll() {
-        const mc = document.getElementById('detailContent');
-        if (mc && mc.scrollHeight > mc.clientHeight) {
-            mc.classList.add('has-scroll');
-        }
-    }
-
-    // Initial render
-    filterAndSort();
+    loadBots();
     </script>
-    <div class="demo-watermark">DEMO DATA</div>
 </body>
 
 </html>
