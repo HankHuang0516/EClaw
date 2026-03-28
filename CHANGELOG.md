@@ -1,3 +1,16 @@
+# [1.347.0](https://github.com/HankHuang0516/EClaw/compare/v1.346.0...v1.347.0) (2026-03-28)
+
+
+### Bug Fixes
+
+* **portal:** prevent Mission sub-tabs from overflowing on mobile screens ([#758](https://github.com/HankHuang0516/EClaw/issues/758)) ([feffabe](https://github.com/HankHuang0516/EClaw/commit/feffabe26b8ef960f91bdea83ab7559568dcd8e4))
+
+
+### Features
+
+* **i18n:** add French translations (batch 75) ([#759](https://github.com/HankHuang0516/EClaw/issues/759)) ([19e5a7b](https://github.com/HankHuang0516/EClaw/commit/19e5a7b912484630052e4fe61cc82a929749d66c)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add French translations (batch 76) ([#760](https://github.com/HankHuang0516/EClaw/issues/760)) ([38296b4](https://github.com/HankHuang0516/EClaw/commit/38296b4de6e9813f81bafa47c7433e0f8c9c6970)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.346.0](https://github.com/HankHuang0516/EClaw/compare/v1.345.0...v1.346.0) (2026-03-28)
 
 
