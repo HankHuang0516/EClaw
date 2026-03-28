@@ -1,3 +1,16 @@
+# [1.216.0](https://github.com/HankHuang0516/EClaw/compare/v1.215.0...v1.216.0) (2026-03-28)
+
+
+### Bug Fixes
+
+* **kanban:** App WebView guard — hide nav/footer, force mobile layout for board & detail modal ([8157771](https://github.com/HankHuang0516/EClaw/commit/81577716daddeadb1ebf76a8a009c6a431a5150b))
+
+
+### Features
+
+* **i18n:** add AI agent installation hint to all channel prompts ([b46ab46](https://github.com/HankHuang0516/EClaw/commit/b46ab46615207a0f8a3bf9982503cf4e7a3cd331))
+* **i18n:** add Hindi (hi) translation (squashed) ([24f55fd](https://github.com/HankHuang0516/EClaw/commit/24f55fd016b6cc087489829a73f62b326f46e09c))
+
 # [1.215.0](https://github.com/HankHuang0516/EClaw/compare/v1.214.0...v1.215.0) (2026-03-28)
 
 
