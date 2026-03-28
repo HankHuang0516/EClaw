@@ -2637,13 +2637,13 @@
                 if (t.requiredVars && t.requiredVars.length > 0) {
                     const allSet = t.requiredVars.every(v => vars[v.key]);
                     if (allSet) {
-                        statusHtml = `<div class="tpl-gallery-status ok">✓ All vars configured</div>`;
+                        statusHtml = `<div class="tpl-gallery-status ok">✓ ${i18n.t('env_vars_all_configured')}</div>`;
                     } else {
                         const missing = t.requiredVars.filter(v => !vars[v.key]).map(v => v.key).join(', ');
-                        statusHtml = `<div class="tpl-gallery-status warn">⚠ Needs: ${esc(missing)}</div>`;
+                        statusHtml = `<div class="tpl-gallery-status warn">⚠ ${i18n.t('env_vars_needs')}: ${esc(missing)}</div>`;
                     }
                 } else {
-                    statusHtml = `<div class="tpl-gallery-status" style="color:var(--text-muted);">No API key needed</div>`;
+                    statusHtml = `<div class="tpl-gallery-status" style="color:var(--text-muted);">${i18n.t('env_vars_no_key_needed')}</div>`;
                 }
                 return `<div class="tpl-gallery-card" data-id="${esc(t.id)}" data-label="${esc(t.label)}" data-title="${esc(t.title || '')}" data-author="${esc(t.author || '')}" onclick="selectTemplateFromGallery('${esc(t.id)}')">
                     <div class="tpl-gallery-icon">${t.icon || '📦'}</div>
@@ -2864,7 +2864,7 @@
                         <input id="dlg_reqvar_key_${i}" type="text" value="${esc(v.key)}"
                             style="flex:1;font-family:monospace;font-size:12px;padding:3px 6px;" autocomplete="off"
                             title="Variable name (editable)" />
-                        ${isSet ? `<span style="color:#4caf50;font-size:12px;white-space:nowrap;">✓ already set</span>` : `<span style="color:var(--text-muted);font-size:12px;white-space:nowrap;">not set</span>`}
+                        ${isSet ? `<span style="color:#4caf50;font-size:12px;white-space:nowrap;">✓ ${i18n.t('env_vars_already_set')}</span>` : `<span style="color:var(--text-muted);font-size:12px;white-space:nowrap;">${i18n.t('env_vars_not_set')}</span>`}
                     </div>
                     ${v.description ? `<div style="color:var(--text-muted);font-size:11px;margin-bottom:4px;">${esc(v.description)}</div>` : ''}
                     <div style="display:flex;gap:6px;align-items:center;">
@@ -2882,16 +2882,16 @@
 
             c.innerHTML = `<div class="dialog-overlay">
                 <div class="dialog">
-                    <div class="dialog-title">Env Variables — ${esc(tpl.label)}</div>
+                    <div class="dialog-title">${i18n.t('env_vars_dialog_title')} — ${esc(tpl.label)}</div>
                     <div class="dialog-body">
                     <p style="color:var(--text-muted);font-size:13px;margin:0 0 14px;">
-                        Review and set the required variables. You can rename the key or leave the value blank to keep the current value.
+                        ${i18n.t('env_vars_dialog_desc')}
                     </p>
                     ${fields}
                     </div>
                     <div class="dialog-actions">
-                        <button class="btn btn-outline" onclick="_restoreSkillDialog();fillSkillTemplate(skillTemplates.find(t=>t.id==='${esc(tpl.id)}'))">Skip</button>
-                        <button class="btn btn-primary" id="dlgReqVarSaveBtn">Save &amp; Continue</button>
+                        <button class="btn btn-outline" onclick="_restoreSkillDialog();fillSkillTemplate(skillTemplates.find(t=>t.id==='${esc(tpl.id)}'))">${i18n.t('env_vars_btn_skip')}</button>
+                        <button class="btn btn-primary" id="dlgReqVarSaveBtn">${i18n.t('env_vars_btn_save')}</button>
                     </div>
                 </div>
             </div>`;
