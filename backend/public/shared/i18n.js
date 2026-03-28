@@ -2518,6 +2518,9 @@ const TRANSLATIONS = {
         "kb_label_schedule": "Schedule",
         "kb_auto_title": "Automations",
         "kb_auto_next": "Next: {nextRun}",
+        "kb_auto_view_grid": "Grid",
+        "kb_auto_view_timeline": "Timeline",
+        "kb_auto_unassigned": "Unassigned",
         "kb_cron_hourly": "Every hour",
         "kb_cron_4h": "Every 4 hours",
         "kb_cron_daily": "Daily 9AM",
@@ -5564,6 +5567,9 @@ const TRANSLATIONS = {
         "kb_label_schedule": "排程",
         "kb_auto_title": "自動化任務",
         "kb_auto_next": "下次執行：{nextRun}",
+        "kb_auto_view_grid": "網格",
+        "kb_auto_view_timeline": "時間軸",
+        "kb_auto_unassigned": "未指派",
         "kb_cron_hourly": "每小時",
         "kb_cron_4h": "每 4 小時",
         "kb_cron_daily": "每天 9:00",
@@ -8656,6 +8662,9 @@ const TRANSLATIONS = {
         "kb_label_schedule": "排程",
         "kb_auto_title": "自动化任务",
         "kb_auto_next": "下次执行：{nextRun}",
+        "kb_auto_view_grid": "网格",
+        "kb_auto_view_timeline": "时间轴",
+        "kb_auto_unassigned": "未指派",
         "kb_cron_hourly": "每小时",
         "kb_cron_4h": "每 4 小时",
         "kb_cron_daily": "每天 9:00",
@@ -11690,7 +11699,10 @@ const TRANSLATIONS = {
         "toast_cancel_failed": "キャンセルに失敗しました",
         "toast_notification_denied": "通知の許可が拒否されました",
         "toast_mark_failed": "マークに失敗しました",
-        "toast_generate_key_failed": "APIキーの生成に失敗しました"
+        "toast_generate_key_failed": "APIキーの生成に失敗しました",
+        "kb_auto_view_grid": "グリッド",
+        "kb_auto_view_timeline": "タイムライン",
+        "kb_auto_unassigned": "未割り当て"
     },
     ko: {
         "mc_title": "EClawbot 미션 컨트롤",
@@ -14114,7 +14126,10 @@ const TRANSLATIONS = {
         "toast_cancel_failed": "취소 실패",
         "toast_notification_denied": "알림 권한이 거부되었습니다",
         "toast_mark_failed": "마크 실패",
-        "toast_generate_key_failed": "API 키 생성 실패"
+        "toast_generate_key_failed": "API 키 생성 실패",
+        "kb_auto_view_grid": "그리드",
+        "kb_auto_view_timeline": "타임라인",
+        "kb_auto_unassigned": "미할당"
     },
     th: {
         "mc_title": "EClawbot ศูนย์ควบคุมภารกิจ",
@@ -16540,7 +16555,10 @@ const TRANSLATIONS = {
         "chat_wait_upload": "กรุณารอให้การอัปโหลดเสร็จสิ้น",
         "feedback_ask_ai": "🤖 ถาม AI",
         "feedback_ask_ai_title": "ต้องการความช่วยเหลือด่วน? ถาม AI",
-        "feedback_ask_ai_desc": "รับคำตอบทันทีก่อนส่งข้อเสนอแนะ"
+        "feedback_ask_ai_desc": "รับคำตอบทันทีก่อนส่งข้อเสนอแนะ",
+        "kb_auto_view_grid": "ตาราง",
+        "kb_auto_view_timeline": "ไทม์ไลน์",
+        "kb_auto_unassigned": "ยังไม่ได้มอบหมาย"
     },
     vi: {
         "mc_title": "EClawbot Trung tâm Điều khiển",
@@ -18966,7 +18984,10 @@ const TRANSLATIONS = {
         "chat_wait_upload": "Vui lòng chờ tải lên hoàn tất",
         "feedback_ask_ai": "🤖 Hỏi AI",
         "feedback_ask_ai_title": "Cần trợ giúp nhanh? Hỏi AI",
-        "feedback_ask_ai_desc": "Nhận câu trả lời ngay trước khi gửi phản hồi"
+        "feedback_ask_ai_desc": "Nhận câu trả lời ngay trước khi gửi phản hồi",
+        "kb_auto_view_grid": "Lưới",
+        "kb_auto_view_timeline": "Dòng thời gian",
+        "kb_auto_unassigned": "Chưa gán"
     },
     id: {
         "mc_title": "EClawbot Pusat Misi",
@@ -21391,7 +21412,10 @@ const TRANSLATIONS = {
         "chat_wait_upload": "Harap tunggu unggahan selesai",
         "feedback_ask_ai": "🤖 Tanya AI",
         "feedback_ask_ai_title": "Butuh bantuan cepat? Tanya AI",
-        "feedback_ask_ai_desc": "Dapatkan jawaban instan sebelum mengirim masukan"
+        "feedback_ask_ai_desc": "Dapatkan jawaban instan sebelum mengirim masukan",
+        "kb_auto_view_grid": "Grid",
+        "kb_auto_view_timeline": "Timeline",
+        "kb_auto_unassigned": "Belum ditetapkan"
     },
     fr: {
         "common_active": "Actif",
@@ -25561,6 +25585,9 @@ const TRANSLATIONS = {
         "kb_priority_p3": "P3 - Basse",
         "kb_tab_comments": "Commentaires",
         "kb_tab_files": "Fichiers",
+        "kb_auto_view_grid": "Grille",
+        "kb_auto_view_timeline": "Chronologie",
+        "kb_auto_unassigned": "Non assigné",
         "mc_browse_official_tpl": "Parcourir les Modèles Officiels",
         "mc_dlg_add_soul": "Ajouter une Personnalité",
         "mc_dlg_edit_soul": "Modifier la Personnalité",
@@ -31649,6 +31676,9 @@ const TRANSLATIONS = {
         "guide_nav_usecase_gatekeeper": "Guardia de Seguridad...",
         "kb_auto_next": "Siguiente: {nextRun}...",
         "kb_auto_title": "Automatizaciones...",
+        "kb_auto_view_grid": "Cuadrícula",
+        "kb_auto_view_timeline": "Cronología",
+        "kb_auto_unassigned": "Sin asignar",
         "kb_cron_4h": "Cada 4 horas...",
         "kb_cron_daily": "Diariamente 9AM...",
         "kb_cron_hourly": "Cada hora...",
@@ -34264,6 +34294,10 @@ const TRANSLATIONS = {
         "footer_info": "Maklumat",
         "footer_privacy": "Dasar Privasi",
         "footer_resources": "Sumber",
+        "kb_auto_view_grid": "Grid",
+        "kb_auto_view_timeline": "Garis masa",
+        "kb_auto_unassigned": "Belum ditugaskan"
+    },
     hi: {
         "cardholder_cap_desc": "विवरण",
         "cardholder_cap_name": "नाम",
@@ -34853,6 +34887,9 @@ const TRANSLATIONS = {
         "nav_setup": "सेटअप गाइड",
         "nav_structure": "प्रोजेक्ट स्ट्रक्चर",
         "nav_testing": "परीक्षण और दस्तावेज़ीकरण",
+        "kb_auto_view_grid": "ग्रिड",
+        "kb_auto_view_timeline": "समयरेखा",
+        "kb_auto_unassigned": "असाइन नहीं किया गया"
     },
     ar: {
         "cardholder_cap_desc": "الوصف",
@@ -34995,7 +35032,10 @@ const TRANSLATIONS = {
         "portal_app_subtitle": "شريك خلفية الشاشة الحية الديناميكية",
         "portal_app_title": "EClawbot",
         "portal_login_title": "EClawbot - تسجيل الدخول",
-        "workspace_close_pane": "إغلاق اللوحة"
+        "workspace_close_pane": "إغلاق اللوحة",
+        "kb_auto_view_grid": "شبكة",
+        "kb_auto_view_timeline": "الجدول الزمني",
+        "kb_auto_unassigned": "غير معيّن"
     },
 
 };
