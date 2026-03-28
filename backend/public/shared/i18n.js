@@ -25213,7 +25213,6 @@ const TRANSLATIONS = {
         "settings_save": "Guardar Configuración",
         "settings_theme": "Tema",
         "settings_title": "Configuración",
-    },
         "guide_gk_cta_api": "API",
         "guide_gk_cta_crossdevice": "Multi-dispositivo",
         "guide_gk_cta_proxy": "Proxy",
@@ -30619,7 +30618,7 @@ const TRANSLATIONS = {
         "tech_worm": "Gusano",
         "tech_yearly": "Anual",
         "tech_zero_day": "Zero-day",
-
+    },
     de: {
         // General / Common
         "general_title": "Allgemein",
