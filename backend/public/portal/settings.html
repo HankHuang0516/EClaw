@@ -1430,15 +1430,17 @@
         };
         // Minimum key count to show as available (avoid near-empty languages)
         const MIN_KEYS_TO_SHOW = 30;
+        // Valid language codes (only show these, ignore any stray keys in TRANSLATIONS)
+        const VALID_LANG_CODES = new Set(Object.keys(LANG_LABELS));
 
         function renderLanguageChips(activeLang) {
             const container = document.getElementById('languageChips');
             // Always show en first, then sort by key count
             const available = Object.keys(typeof TRANSLATIONS !== 'undefined' ? TRANSLATIONS : {})
-                .filter(l => l !== 'en')
+                .filter(l => l !== 'en' && VALID_LANG_CODES.has(l))
                 .filter(l => {
                     const dict = TRANSLATIONS[l];
-                    return dict && Object.keys(dict).length >= MIN_KEYS_TO_SHOW;
+                    return dict && typeof dict === 'object' && Object.keys(dict).length >= MIN_KEYS_TO_SHOW;
                 })
                 .sort((a, b) => Object.keys(TRANSLATIONS[b]).length - Object.keys(TRANSLATIONS[a]).length);
 
