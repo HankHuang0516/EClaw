@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">EClawbot</string>
+    <string name="wallpaper_description">Estado en vivo de tu agente AI</string>
+    <string name="main_title">E-Claw</string>
+    <string name="no_agents_connected">No hay agentes conectados</string>
+    <string name="tap_to_add_entity">Toca \"+ Agregar Entidad\" para conectar tu primer agente</string>
+    <string name="add_entity">+ Agregar Entidad</string>
+    <string name="select_entity_slot">Seleccionar ranura de entidad</string>
+    <string name="binding_code">Código de enlace</string>
+    <string name="code_placeholder">------</string>
+    <string name="enter_binding_code">Ingresa el código de enlace de 6 dígitos</string>
+    <string name="bind_button">Enlazar</string>
+    <string name="unbind_button">Desenlazar</string>
+    <string name="settings">Configuración</string>
+    <string name="chat">Chat</string>
+    <string name="mission_control">Centro de Misiones</string>
+    <string name="card_holder">Tarjetero</string>
+    <string name="info">Información</string>
+    <string name="schedule">Horarios</string>
+    <string name="loading">Cargando...</string>
+    <string name="error_occurred">Ocurrió un error</string>
+    <string name="retry">Reintentar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="confirm">Confirmar</string>
+    <string name="save">Guardar</string>
+    <string name="delete">Eliminar</string>
+    <string name="edit">Editar</string>
+    <string name="send">Enviar</string>
+    <string name="voice_message">Mensaje de voz</string>
+    <string name="microphone_permission_denied">Permiso de micrófono denegado</string>
+    <string name="recording">Grabando...</string>
+    <string name="language">Idioma</string>
+</resources>

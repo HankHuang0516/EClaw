@@ -730,15 +730,8 @@
             <div class="card-title">
                 <span>🌐 <span data-i18n="settings_lang">Language</span></span>
             </div>
-            <div class="language-chips">
-                <div class="chip" id="chipEn" onclick="setLanguage('en')">English</div>
-                <div class="chip" id="chipZh" onclick="setLanguage('zh')">繁體中文</div>
-                <div class="chip" id="chipZhCn" onclick="setLanguage('zh-CN')">简体中文</div>
-                <div class="chip" id="chipJa" onclick="setLanguage('ja')">日本語</div>
-                <div class="chip" id="chipKo" onclick="setLanguage('ko')">한국어</div>
-                <div class="chip" id="chipTh" onclick="setLanguage('th')">ภาษาไทย</div>
-                <div class="chip" id="chipVi" onclick="setLanguage('vi')">Tiếng Việt</div>
-                <div class="chip" id="chipId" onclick="setLanguage('id')">Indonesia</div>
+            <div class="language-chips" id="languageChips">
+                <!-- Dynamically generated from TRANSLATIONS -->
             </div>
         </div>
 
@@ -1416,21 +1409,45 @@
         // ============================================
         function loadLanguagePreference() {
             const lang = localStorage.getItem('eclaw-language') || i18n.lang || 'en';
-            setLanguageChip(lang);
+            renderLanguageChips(lang);
         }
 
         function setLanguage(lang) {
             localStorage.setItem('eclaw-language', lang);
-            // Sync to server for cross-device persistence
             apiCall('PATCH', '/api/auth/language', { language: lang }).catch(() => {});
             window.location.reload();
         }
 
-        function setLanguageChip(lang) {
-            const chips = { chipEn: 'en', chipZh: 'zh', chipZhCn: 'zh-CN', chipJa: 'ja', chipKo: 'ko', chipTh: 'th', chipVi: 'vi', chipId: 'id' };
-            Object.entries(chips).forEach(([id, l]) => {
-                document.getElementById(id).classList.toggle('active', lang === l);
-            });
+        // Language display names (native script)
+        const LANG_LABELS = {
+            'en': 'English', 'zh': '繁體中文', 'zh-CN': '简体中文',
+            'ja': '日本語', 'ko': '한국어', 'th': 'ภาษาไทย',
+            'vi': 'Tiếng Việt', 'id': 'Indonesia', 'es': 'Español',
+            'fr': 'Français', 'de': 'Deutsch', 'pt': 'Português',
+            'it': 'Italiano', 'ru': 'Русский', 'tr': 'Türkçe',
+            'ms': 'Melayu', 'hi': 'हिन्दी', 'ar': 'العربية',
+            'nl': 'Nederlands', 'pl': 'Polski'
+        };
+        // Minimum key count to show as available (avoid near-empty languages)
+        const MIN_KEYS_TO_SHOW = 30;
+
+        function renderLanguageChips(activeLang) {
+            const container = document.getElementById('languageChips');
+            // Always show en first, then sort by key count
+            const available = Object.keys(typeof TRANSLATIONS !== 'undefined' ? TRANSLATIONS : {})
+                .filter(l => l !== 'en')
+                .filter(l => {
+                    const dict = TRANSLATIONS[l];
+                    return dict && Object.keys(dict).length >= MIN_KEYS_TO_SHOW;
+                })
+                .sort((a, b) => Object.keys(TRANSLATIONS[b]).length - Object.keys(TRANSLATIONS[a]).length);
+
+            const langs = ['en', ...available];
+            container.innerHTML = langs.map(l => {
+                const label = LANG_LABELS[l] || l.toUpperCase();
+                const active = l === activeLang ? ' active' : '';
+                return `<div class="chip${active}" onclick="setLanguage('${l}')">${label}</div>`;
+            }).join('');
         }
 
         // ============================================
