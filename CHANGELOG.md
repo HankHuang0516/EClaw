@@ -1,3 +1,10 @@
+# [1.212.0](https://github.com/HankHuang0516/EClaw/compare/v1.211.2...v1.212.0) (2026-03-28)
+
+
+### Features
+
+* **i18n:** add Spanish (es) translation for Mission Control keys (squashed) ([713a3cf](https://github.com/HankHuang0516/EClaw/commit/713a3cf7a1268a2a98ec91cd5362831e1447340c)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 ## [1.211.2](https://github.com/HankHuang0516/EClaw/compare/v1.211.1...v1.211.2) (2026-03-27)
 
 
