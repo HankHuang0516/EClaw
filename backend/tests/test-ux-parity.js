@@ -158,7 +158,7 @@ const FEATURES = [
     {
         name: 'Schedules',
         apis: ['/api/schedules'],
-        webPages: ['schedule.html'],
+        webPages: ['kanban.html'],
         androidActivity: 'ScheduleActivity.kt',
         iosScreen: 'schedule.tsx',
     },
@@ -187,9 +187,9 @@ const FEATURES = [
     },
     {
         name: 'Mission Dashboard',
-        // Android uses /api/mission/dashboard, iOS uses /api/device/dashboard, Web uses /api/mission/dashboard
+        // Android uses /api/mission/dashboard, iOS uses /api/device/dashboard, Web uses kanban.html
         apis: ['/api/mission/dashboard', '/api/device/dashboard'],
-        webPages: ['mission.html'],
+        webPages: ['kanban.html'],
         androidActivity: 'MissionControlActivity.kt',
         iosScreen: '(tabs)',
     },
@@ -204,7 +204,7 @@ const FEATURES = [
     {
         name: 'Templates',
         apis: ['/api/skill-templates', '/api/soul-templates', '/api/rule-templates'],
-        webPages: ['mission.html'],
+        webPages: ['kanban.html'],
         androidActivity: null,
         iosScreen: null,
     },

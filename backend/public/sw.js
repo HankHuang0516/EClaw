@@ -10,7 +10,7 @@ self.addEventListener('push', (event) => {
         'broadcast': '/portal/chat.html',
         'feedback_resolved': '/portal/feedback.html',
         'feedback_reply': '/portal/feedback.html',
-        'todo_done': '/portal/mission.html',
+        'todo_done': '/portal/kanban.html',
         'scheduled': '/portal/chat.html'
     };
     const targetUrl = link ? `/portal/${link}` : (urlMap[category] || '/portal/dashboard.html');
