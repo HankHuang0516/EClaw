@@ -122,6 +122,15 @@ function strSimilarity(a, b) {
 module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
     const router = express.Router();
 
+    // ── Deprecation: Mission add endpoints → Kanban ──
+    const KANBAN_DEPRECATION_MSG = 'This endpoint is deprecated. Please use the Kanban board instead. The Kanban board has a complete ecosystem — migrate existing items there gradually.';
+    const KANBAN_DEPRECATION_MSG_ZH = '此功能已停用，請使用看板任務作為替代方案。看板任務頁面已有完整生態，請讓 bot 將現有任務逐步轉移到看板任務頁面。';
+    function rejectDeprecatedAdd(req, res) {
+        const lang = req.headers['accept-language'] || '';
+        const msg = lang.startsWith('zh') ? KANBAN_DEPRECATION_MSG_ZH : KANBAN_DEPRECATION_MSG;
+        return res.status(410).json({ success: false, error: msg, deprecated: true, redirect: 'kanban' });
+    }
+
     // ── Notification Debounce (per-device, 5s window) ──
     const _notifyQueue = new Map();  // deviceId -> { timer, notifications: [], res: null }
     const DEBOUNCE_MS = 5000;
@@ -623,6 +632,8 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
     // Bot adds a new note to dashboard
     // ============================================
     router.post('/note/add', async (req, res) => {
+        return rejectDeprecatedAdd(req, res);
+        /* eslint-disable-next-line no-unreachable */
         if (!authenticate(req, res)) return;
         const { deviceId, entityId, title, content, category } = req.body;
 
@@ -1721,6 +1732,8 @@ async function submitPayment() {
     // Bot adds a new TODO to dashboard
     // ============================================
     router.post('/todo/add', async (req, res) => {
+        return rejectDeprecatedAdd(req, res);
+        /* eslint-disable-next-line no-unreachable */
         if (!authenticate(req, res)) return;
         const { deviceId, entityId, title, description, priority, assignedBot: assignedBotParam, category } = req.body;
 
@@ -1981,6 +1994,8 @@ async function submitPayment() {
     // Bot adds a new rule to dashboard
     // ============================================
     router.post('/rule/add', async (req, res) => {
+        return rejectDeprecatedAdd(req, res);
+        /* eslint-disable-next-line no-unreachable */
         if (!authenticate(req, res)) return;
         const { deviceId, entityId, name, description, ruleType, assignedEntities, category } = req.body;
 
@@ -2172,6 +2187,8 @@ async function submitPayment() {
     // Bot adds a new skill to dashboard
     // ============================================
     router.post('/skill/add', async (req, res) => {
+        return rejectDeprecatedAdd(req, res);
+        /* eslint-disable-next-line no-unreachable */
         if (!authenticate(req, res)) return;
         const { deviceId, entityId, title, url, assignedEntities, category } = req.body;
 
@@ -2389,6 +2406,8 @@ async function submitPayment() {
     // Bot adds a new soul to dashboard
     // ============================================
     router.post('/soul/add', async (req, res) => {
+        return rejectDeprecatedAdd(req, res);
+        /* eslint-disable-next-line no-unreachable */
         if (!authenticate(req, res)) return;
         const { deviceId, entityId, name, description, templateId, assignedEntities, category } = req.body;
 
