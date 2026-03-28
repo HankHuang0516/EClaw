@@ -9,8 +9,9 @@
     <link rel="stylesheet" href="shared/style.css">
     <style>
         /* ══════════════ Sub-tabs (same as mission.html) ══════════════ */
-        .sub-tabs { display:flex; gap:0; margin-bottom:20px; border-bottom:1px solid var(--card-border); }
-        .sub-tab { padding:10px 18px; color:var(--text-secondary); text-decoration:none; font-size:14px; font-weight:600; border-bottom:2px solid transparent; transition:all 0.2s; white-space:nowrap; }
+        .sub-tabs { display:flex; gap:0; margin-bottom:20px; border-bottom:1px solid var(--card-border); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+        .sub-tabs::-webkit-scrollbar { display:none; }
+        .sub-tab { padding:10px 18px; color:var(--text-secondary); text-decoration:none; font-size:14px; font-weight:600; border-bottom:2px solid transparent; transition:all 0.2s; white-space:nowrap; flex-shrink:0; }
         .sub-tab:hover { color:var(--text); }
         .sub-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
 
@@ -233,6 +234,9 @@
         body.app-webview .kb-auto-card { flex:0 0 180px; }
 
         /* ══════════════ Responsive ══════════════ */
+        @media (max-width: 640px) {
+            .sub-tab { padding:8px 12px; font-size:13px; }
+        }
         @media (max-width: 768px) {
             .kb-board { display:none; }
             .kb-mobile-tabs { display:flex; }
