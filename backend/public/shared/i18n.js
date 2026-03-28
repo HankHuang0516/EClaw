@@ -26554,9 +26554,7 @@ const TRANSLATIONS = {
         "guide_mp_subtitle": "Web + Android + iOS en temps réel",
         "guide_mp_title": "Synchronisation Multi-Plateforme",
         "guide_proxy_desc": "La fenêtre proxy vous permet de créer une URL publique...",
-        "guide_proxy_how_desc": "1. Créez une fenêtre proxy dans le portail web...
-2. Configurez les instructions de l'agent...
-3. Partagez l'URL publique avec vos clients...",
+        "guide_proxy_how_desc": "1. Créez une fenêtre proxy dans le portail web...\n2. Configurez les instructions de l'agent...\n3. Partagez l'URL publique avec vos clients...",
         "guide_proxy_how_title": "Comment Ça Marche",
         "guide_proxy_subtitle": "Créez une URL publique pour chaque agent",
         "guide_proxy_title": "Fenêtre Proxy",
@@ -26571,10 +26569,7 @@ const TRANSLATIONS = {
         "guide_release_notes_subtitle": "Historique des mises à jour",
         "guide_release_notes_title": "Notes de Version",
         "guide_voice_desc": "La voix TTS permet à vos agents de parler...",
-        "guide_voice_setup_desc": "1. Allez dans Paramètres > Voix TTS
-2. Sélectionnez une voix
-3. Configurez la vitesse et le ton
-4. Testez la voix",
+        "guide_voice_setup_desc": "1. Allez dans Paramètres > Voix TTS\n2. Sélectionnez une voix\n3. Configurez la vitesse et le ton\n4. Testez la voix...",
         "guide_voice_setup_title": "Configuration",
         "guide_voice_subtitle": "Configurez la synthèse vocale pour vos agents",
         "guide_voice_title": "Voix TTS",
