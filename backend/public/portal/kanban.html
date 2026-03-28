@@ -204,7 +204,6 @@
         /* ══════════════ App WebView: full-frame board ══════════════ */
         body.app-webview .nav,
         body.app-webview nav,
-        body.app-webview .sub-tabs,
         body.app-webview .site-footer,
         body.app-webview footer { display:none !important; }
         body.app-webview .container { padding-left:8px !important; padding-right:8px !important; padding-top:0 !important; }
@@ -442,7 +441,7 @@
             window.__blockAiChatWidget = true;
             window.__isAppWebView = true;
             // Hide nav, sub-tabs, footer — App only needs the kanban board frame
-            document.querySelectorAll('.nav, nav, .sub-tabs, .site-footer, footer').forEach(function(el){ el.style.display = 'none'; });
+            document.querySelectorAll('.nav, nav, .site-footer, footer').forEach(function(el){ el.style.display = 'none'; });
             // Add class for CSS-driven layout; hide elements + adjust padding
             document.body.classList.add('app-webview');
         }
