@@ -1,3 +1,18 @@
+# [1.281.0](https://github.com/HankHuang0516/EClaw/compare/v1.280.0...v1.281.0) (2026-03-28)
+
+
+### Bug Fixes
+
+* **i18n:** correct env_notice — vars ARE stored server-side (AES-256 encrypted) ([8eea909](https://github.com/HankHuang0516/EClaw/commit/8eea909d04dbc5bbc5a90aee3755a574220d9a4d))
+* **ci:** make Railway preview cleanup resilient to transient failures ([#682](https://github.com/HankHuang0516/EClaw/issues/682)) ([cc26dc7](https://github.com/HankHuang0516/EClaw/commit/cc26dc7adfbd3d346d89791563d1e39a1ccb1f02))
+
+
+### Features
+
+* **i18n:** add French translations (batch 4) ([#683](https://github.com/HankHuang0516/EClaw/issues/683)) ([aa013a8](https://github.com/HankHuang0516/EClaw/commit/aa013a87a6395e187b617eac3747f1525d96b6ef)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add French translations (batch 5) ([#684](https://github.com/HankHuang0516/EClaw/issues/684)) ([60034a4](https://github.com/HankHuang0516/EClaw/commit/60034a4b44a8c9887491efd41cd0cb546d720155)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add French translations (batch 6) ([#685](https://github.com/HankHuang0516/EClaw/issues/685)) ([5d6ebfd](https://github.com/HankHuang0516/EClaw/commit/5d6ebfdd2acfed23b8f27a8df471c264160a2ec4)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.280.0](https://github.com/HankHuang0516/EClaw/compare/v1.279.0...v1.280.0) (2026-03-28)
 
 
