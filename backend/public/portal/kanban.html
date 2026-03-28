@@ -56,6 +56,9 @@
         .kb-card { background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:12px; cursor:pointer; transition:border-color 0.2s, transform 0.15s, box-shadow 0.2s; position:relative; border-left:3px solid transparent; box-shadow:0 1px 3px rgba(0,0,0,0.12); }
         .kb-card:hover { border-color:var(--primary); transform:translateY(-2px); box-shadow:0 4px 12px rgba(108,99,255,0.15); }
         .kb-card.dragging { opacity:0.5; transform:rotate(2deg); }
+        .kb-card.flip-move { transition:transform 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease; }
+        .kb-card.flip-enter { animation:flipEnter 0.35s cubic-bezier(0.4,0,0.2,1) both; }
+        @keyframes flipEnter { from { opacity:0; transform:scale(0.92) translateY(-8px); } to { opacity:1; transform:none; } }
         .kb-card[data-priority="P0"] { border-left-color:#ef4444; }
         .kb-card[data-priority="P1"] { border-left-color:#f97316; }
         .kb-card[data-priority="P2"] { border-left-color:#3b82f6; }
@@ -302,11 +305,17 @@
         <!-- ⚡ Automation Collapse Section -->
         <div class="kb-automation" id="kbAutomation" style="display:none">
             <div class="kb-auto-header" id="autoHeader" onclick="toggleAutomation()">
-                <h3>⚡ <span data-i18n="kb_auto_title">Automations</span> <span class="kb-auto-count" id="autoCount">0</span></h3>
+                <h3>⚡ <span data-i18n="kb_auto_title">Automations</span> <span class="kb-auto-count" id="autoCount">0</span>
+                    <span class="kb-auto-view-toggle" onclick="event.stopPropagation()">
+                        <button class="kb-auto-view-btn" data-view="grid" onclick="switchAutoView('grid')">☰</button>
+                        <button class="kb-auto-view-btn active" data-view="timeline" onclick="switchAutoView('timeline')">⏱</button>
+                    </span>
+                </h3>
                 <span class="kb-auto-toggle">▼</span>
             </div>
             <div class="kb-auto-body" id="autoBody">
-                <div class="kb-auto-grid" id="autoGrid"></div>
+                <div class="kb-auto-grid" id="autoGrid" style="display:none"></div>
+                <div class="kb-auto-timeline" id="autoTimeline"></div>
             </div>
         </div>
 
@@ -496,12 +505,13 @@
 
         let automationCards = [];
         let autoCollapsed = true;
+        let autoViewMode = 'timeline';
 
         // ── API ──
         async function loadCards() {
             try {
                 const data = await apiCall('GET', `/api/mission/cards?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
-                if (data.cards) { allCards = data.cards.filter(c => !c.isAutomation); renderBoard(); }
+                if (data.cards) { const changed = allCards.length > 0; allCards = data.cards.filter(c => !c.isAutomation); renderBoard(changed); }
                 console.log('[Kanban] loadCards:', (data.cards||[]).length, 'total cards');
             } catch(e) { console.error('[Kanban] loadCards failed:', e.message, e.stack); }
             await loadAutomations();
@@ -538,8 +548,45 @@
             return apiCall('GET', `/api/mission/card/${cardId}/files?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
         }
 
+        // ── FLIP Animation Helper ──
+        function snapshotCardPositions() {
+            const positions = {};
+            document.querySelectorAll('.kb-card[data-id]').forEach(el => {
+                const rect = el.getBoundingClientRect();
+                positions[el.dataset.id] = { x: rect.left, y: rect.top, w: rect.width, h: rect.height };
+            });
+            return positions;
+        }
+
+        function animateCards(oldPositions) {
+            document.querySelectorAll('.kb-card[data-id]').forEach(el => {
+                const id = el.dataset.id;
+                const oldPos = oldPositions[id];
+                const newRect = el.getBoundingClientRect();
+                if (oldPos) {
+                    const dx = oldPos.x - newRect.left;
+                    const dy = oldPos.y - newRect.top;
+                    if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+                        el.style.transform = `translate(${dx}px, ${dy}px)`;
+                        el.classList.remove('flip-move');
+                        requestAnimationFrame(() => {
+                            el.classList.add('flip-move');
+                            el.style.transform = '';
+                            el.addEventListener('transitionend', () => el.classList.remove('flip-move'), { once: true });
+                        });
+                    }
+                } else {
+                    // New card in this column — enter animation
+                    el.classList.add('flip-enter');
+                    el.addEventListener('animationend', () => el.classList.remove('flip-enter'), { once: true });
+                }
+            });
+        }
+
         // ── Render Board ──
-        function renderBoard() {
+        function renderBoard(animate) {
+            const oldPositions = animate ? snapshotCardPositions() : null;
+
             const filtered = currentFilter === 'mine'
                 ? allCards.filter(c => (c.assignedBots||[]).some(id => boundEntities.some(e => e.entityId === id)))
                 : allCards;
@@ -551,6 +598,8 @@
                 if (count) count.textContent = cards.length;
                 if (col) col.innerHTML = cards.length ? cards.map(renderCard).join('') : '<div class="kb-empty" data-i18n="kb_empty_no_cards">' + t('kb_empty_no_cards', 'No cards') + '</div>';
             });
+
+            if (animate && oldPositions) animateCards(oldPositions);
 
             // Mobile
             renderMobileList();
@@ -645,7 +694,7 @@
         function filterCards(filter) {
             currentFilter = filter;
             document.querySelectorAll('.kb-chip').forEach(c => c.classList.toggle('active', c.dataset.filter === filter));
-            renderBoard();
+            renderBoard(true);
         }
 
         // ── Drag & Drop ──
@@ -876,6 +925,132 @@
                     ${activeChild}
                 </div>`;
             }).join('') || `<div class="kb-empty">${t('kb_auto_none','No automations yet')}</div>`;
+            if (autoViewMode === 'timeline') renderTimelineView();
+        }
+
+        function switchAutoView(mode) {
+            autoViewMode = mode;
+            document.querySelectorAll('.kb-auto-view-btn').forEach(b =>
+                b.classList.toggle('active', b.dataset.view === mode));
+            document.getElementById('autoGrid').style.display = mode === 'grid' ? '' : 'none';
+            document.getElementById('autoTimeline').style.display = mode === 'timeline' ? '' : 'none';
+            if (mode === 'timeline') renderTimelineView();
+        }
+
+        function renderTimelineView() {
+            const container = document.getElementById('autoTimeline');
+            if (!container) return;
+            if (!automationCards.length) {
+                container.innerHTML = `<div class="kb-empty" style="padding:24px;text-align:center">${t('kb_auto_none','No automations yet')}</div>`;
+                return;
+            }
+
+            const now = Date.now();
+            const windowStart = now - 3600000;       // 1h ago
+            const windowEnd = now + 23 * 3600000;    // +23h
+            const windowMs = windowEnd - windowStart; // 24h
+
+            function toPct(ts) {
+                const clamped = Math.max(windowStart, Math.min(windowEnd, ts));
+                return ((clamped - windowStart) / windowMs * 100).toFixed(2);
+            }
+
+            // Group cards by entity
+            const entityLanes = {};
+            const unassigned = [];
+            automationCards.forEach(card => {
+                const bots = card.assignedBots || [];
+                if (!bots.length) { unassigned.push(card); return; }
+                bots.forEach(botId => {
+                    if (!entityLanes[botId]) entityLanes[botId] = [];
+                    entityLanes[botId].push(card);
+                });
+            });
+
+            // Hour markers
+            const hourLabels = [];
+            const startHour = new Date(windowStart);
+            startHour.setMinutes(0, 0, 0);
+            if (startHour.getTime() < windowStart) startHour.setHours(startHour.getHours() + 1);
+            for (let h = startHour.getTime(); h <= windowEnd; h += 3600000) {
+                const pct = toPct(h);
+                const label = new Date(h).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                hourLabels.push(`<div class="kb-tl-hour" style="left:${pct}%">${label}</div>`);
+            }
+
+            const nowPct = toPct(now);
+
+            // Build a single lane
+            function buildLane(labelHtml, cards, isUnassigned) {
+                const items = [];
+                cards.forEach(card => {
+                    const nextTs = card.schedule?.nextRunAt;
+                    const lastTs = card.schedule?.lastRunAt;
+                    const isMulti = (card.assignedBots || []).length > 1;
+                    const multiCls = isMulti ? ' multi' : '';
+                    const activeCls = card.activeChildId ? ' active' : '';
+
+                    if (nextTs && nextTs >= windowStart && nextTs <= windowEnd) {
+                        const pct = toPct(nextTs);
+                        const timeStr = new Date(nextTs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        items.push(`<div class="kb-tl-card${multiCls}${activeCls}" style="left:${pct}%" onclick="openDetail('${card.id}')" title="${escapeHtml(card.title)}">` +
+                            `<span class="kb-tl-card-title">⚡ ${escapeHtml(card.title)}</span>` +
+                            `<span class="kb-tl-card-time">${timeStr}</span></div>`);
+                    } else if (nextTs && nextTs > windowEnd) {
+                        // Beyond window — pin to right edge
+                        items.push(`<div class="kb-tl-card past-edge${multiCls}" style="left:98%" onclick="openDetail('${card.id}')" title="${escapeHtml(card.title)}">` +
+                            `<span class="kb-tl-card-title">⚡ ${escapeHtml(card.title)}</span>` +
+                            `<span class="kb-tl-card-time">→ ${formatTime(nextTs)}</span></div>`);
+                    } else if (!nextTs) {
+                        // No nextRunAt — show at start with cron label
+                        const cronLabel = card.schedule?.cronExpression || card.schedule?.cron || '—';
+                        items.push(`<div class="kb-tl-card past-edge${multiCls}" style="left:2%" onclick="openDetail('${card.id}')" title="${escapeHtml(card.title)}">` +
+                            `<span class="kb-tl-card-title">⚡ ${escapeHtml(card.title)}</span>` +
+                            `<span class="kb-tl-card-time">↻ ${escapeHtml(cronLabel)}</span></div>`);
+                    }
+
+                    if (lastTs && lastTs >= windowStart && lastTs <= windowEnd) {
+                        const pct = toPct(lastTs);
+                        const icon = card.lastRunResult?.startsWith('✅') ? '✅' : '❌';
+                        items.push(`<div class="kb-tl-marker" style="left:${pct}%" title="${escapeHtml(card.title)} – ${escapeHtml(card.lastRunResult || '')}"><span>${icon}</span></div>`);
+                    }
+                });
+
+                // Now line in this lane
+                items.push(`<div class="kb-tl-now" style="left:${nowPct}%"></div>`);
+
+                const cls = isUnassigned ? ' unassigned' : '';
+                return `<div class="kb-tl-lane${cls}"><div class="kb-tl-lane-label">${labelHtml}</div><div class="kb-tl-lane-track">${items.join('')}</div></div>`;
+            }
+
+            // Sort entity lanes by ID
+            const sortedIds = Object.keys(entityLanes).map(Number).sort((a, b) => a - b);
+            let lanesHtml = sortedIds.map(eid => {
+                const avatar = typeof getAvatarForEntity === 'function' ? getAvatarForEntity(eid) : '🦞';
+                const name = typeof getEntityDisplayName === 'function' ? getEntityDisplayName(eid) : '#' + eid;
+                const avatarHtml = (typeof isAvatarUrl === 'function' && isAvatarUrl(avatar))
+                    ? `<span class="kb-tl-lane-avatar"><img src="${escapeHtml(avatar)}" alt="${escapeHtml(name)}"></span>`
+                    : `<span class="kb-tl-lane-avatar">${avatar}</span>`;
+                const labelHtml = `${avatarHtml}<span class="kb-tl-lane-name" title="${escapeHtml(name)}">${escapeHtml(name)}</span>`;
+                return buildLane(labelHtml, entityLanes[eid], false);
+            }).join('');
+
+            if (unassigned.length) {
+                const label = `<span class="kb-tl-lane-avatar">❓</span><span class="kb-tl-lane-name" data-i18n="kb_auto_unassigned">${t('kb_auto_unassigned','Unassigned')}</span>`;
+                lanesHtml += buildLane(label, unassigned, true);
+            }
+
+            container.innerHTML =
+                `<div class="kb-tl-container">` +
+                    `<div class="kb-tl-axis"><div class="kb-tl-label-spacer"></div>` +
+                        `<div class="kb-tl-hours">${hourLabels.join('')}<div class="kb-tl-now" style="left:${nowPct}%"></div></div>` +
+                    `</div>` +
+                    `<div class="kb-tl-lanes">${lanesHtml}</div>` +
+                `</div>`;
+
+            // Auto-scroll to now
+            const scrollTarget = (nowPct / 100) * 2400 - container.clientWidth / 2;
+            container.scrollLeft = Math.max(0, scrollTarget);
         }
 
         function toggleAutomation() {
