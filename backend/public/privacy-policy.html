@@ -4,25 +4,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>隱私權政策 - 電子蝦 (E-Claw)</title>
+    <title data-i18n="privacy_title">隱私權政策 - EClawbot</title>
     <style>
         body {
-            font-family: sans-serif;
-            line-height: 1.6;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.7;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
             color: #333;
+            background: #fafafa;
+        }
+
+        .lang-switcher {
+            text-align: right;
+            margin-bottom: 16px;
+        }
+
+        .lang-switcher select {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            cursor: pointer;
         }
 
         h1 {
             color: #2c3e50;
+            font-size: 1.8em;
         }
 
         h2 {
             color: #34495e;
             border-bottom: 1px solid #eee;
             padding-bottom: 10px;
+            margin-top: 32px;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .update-date {
+            color: #666;
+            font-size: 0.9em;
         }
 
         footer {
@@ -31,59 +60,404 @@
             color: #777;
             border-top: 1px solid #eee;
             padding-top: 20px;
+            text-align: center;
+        }
+
+        [data-lang] {
+            display: none;
+        }
+
+        [data-lang].active {
+            display: block;
         }
     </style>
 </head>
 
 <body>
-    <h1>隱私權政策</h1>
-    <p>最近更新日期：2026年3月28日</p>
+    <div class="lang-switcher">
+        <select id="langSelect" onchange="switchLang(this.value)">
+            <option value="zh-TW">繁體中文</option>
+            <option value="zh-CN">简体中文</option>
+            <option value="en">English</option>
+            <option value="ja">日本語</option>
+            <option value="ko">한국어</option>
+            <option value="vi">Tiếng Việt</option>
+            <option value="th">ภาษาไทย</option>
+            <option value="id">Bahasa Indonesia</option>
+        </select>
+    </div>
 
-    <p>歡迎使用「電子蝦 (E-Claw)」（以下簡稱本應用程式）。我們非常重視您的隱私，並致力於保護您的個人資訊。本隱私權政策旨在說明我們如何收集、使用、披露及保護您的資訊。</p>
+    <!-- ── 繁體中文 ── -->
+    <div data-lang="zh-TW" class="active">
+        <h1>隱私權政策</h1>
+        <p class="update-date">最近更新日期：2026年3月28日</p>
+        <p>歡迎使用 EClawbot（以下簡稱本應用程式）。我們非常重視您的隱私，並致力於保護您的個人資訊。本隱私權政策旨在說明我們如何收集、使用、披露及保護您的資訊。</p>
 
-    <h2>1. 資訊收集</h2>
-    <p>本應用程式主要功能為與 AI 驅動的機器人互動。我們可能會收集以下資訊：</p>
-    <ul>
-        <li><strong>設備資訊：</strong> 為了進行設備綁定，我們會收集您的設備唯一識別碼 (Device ID)。</li>
-        <li><strong>互動內容：</strong> 您與本應用程式中的機器人進行的對話內容，將用於提供 AI 回應服務。</li>
-        <li><strong>GPS 位置資料（選擇性）：</strong> 僅在您綁定的 AI Agent 主動請求時，才會取得您的裝置位置。位置資料僅存於伺服器記憶體，不寫入資料庫，伺服器重啟後即消失。本應用程式不會在背景持續追蹤您的位置。</li>
-        <li><strong>語音訊息（選擇性）：</strong> 當您在聊天頁面主動按下錄音按鈕時，才會啟用麥克風進行錄音。語音訊息會上傳至伺服器作為聊天記錄的一部分。本應用程式不會在背景錄音或持續監聽。</li>
-    </ul>
+        <h2>1. 資訊收集</h2>
+        <p>本應用程式主要功能為與 AI 驅動的機器人互動。我們可能會收集以下資訊：</p>
+        <ul>
+            <li><strong>設備資訊：</strong>為了進行設備綁定，我們會收集您的設備唯一識別碼 (Device ID)。</li>
+            <li><strong>互動內容：</strong>您與本應用程式中的機器人進行的對話內容，將用於提供 AI 回應服務。</li>
+            <li><strong>GPS 位置資料（選擇性）：</strong>僅在您綁定的 AI Agent 主動請求時，才會取得您的裝置位置。位置資料僅存於伺服器記憶體，不寫入資料庫，伺服器重啟後即消失。本應用程式不會在背景持續追蹤您的位置。</li>
+            <li><strong>語音訊息（選擇性）：</strong>當您在聊天頁面主動按下錄音按鈕時，才會啟用麥克風進行錄音。語音訊息會上傳至伺服器作為聊天記錄的一部分。本應用程式不會在背景錄音或持續監聽。</li>
+        </ul>
 
-    <h2>2. 資訊使用</h2>
-    <p>我們收集的資訊將用於：</p>
-    <ul>
-        <li>維持應用程式與機器人的正常運作與通訊。</li>
-        <li>改進 AI 模型的互動品質與使用者體驗。</li>
-        <li>確保服務的安全與防止濫用。</li>
-        <li>回應 AI Agent 的位置查詢請求及提供基於位置的推薦服務。</li>
-        <li>發送語音訊息給您綁定的 AI Agent 或聊天對象。</li>
-    </ul>
+        <h2>2. 資訊使用</h2>
+        <p>我們收集的資訊將用於：</p>
+        <ul>
+            <li>維持應用程式與機器人的正常運作與通訊。</li>
+            <li>改進 AI 模型的互動品質與使用者體驗。</li>
+            <li>確保服務的安全與防止濫用。</li>
+            <li>回應 AI Agent 的位置查詢請求及提供基於位置的推薦服務。</li>
+            <li>發送語音訊息給您綁定的 AI Agent 或聊天對象。</li>
+        </ul>
 
-    <h2>3. 資訊分享與披露</h2>
-    <p>我們不會將您的個人資訊出售、租賃或分享給第三方，除非：</p>
-    <ul>
-        <li>獲得您的事先同意。</li>
-        <li>符合法律法規要求或配合法律程序。</li>
-    </ul>
-    <p>GPS 位置資料和語音訊息均不會分享給任何第三方，僅在您的裝置與 EClawbot 伺服器之間透過 HTTPS 加密傳輸。</p>
+        <h2>3. 資訊分享與披露</h2>
+        <p>我們不會將您的個人資訊出售、租賃或分享給第三方，除非：</p>
+        <ul>
+            <li>獲得您的事先同意。</li>
+            <li>符合法律法規要求或配合法律程序。</li>
+        </ul>
+        <p>GPS 位置資料和語音訊息均不會分享給任何第三方，僅在您的裝置與 EClawbot 伺服器之間透過 HTTPS 加密傳輸。</p>
 
-    <h2>4. 資訊安全</h2>
-    <p>我們採用合理的技術與組織措施來保護您的資訊免受未經授權的存取、修改或洩漏。所有資料傳輸均採用業界標準的 TLS/SSL 加密技術。然而，互聯網傳輸並非百分之百安全，我們無法保證絕對的安全性。</p>
+        <h2>4. 資訊安全</h2>
+        <p>我們採用合理的技術與組織措施來保護您的資訊免受未經授權的存取、修改或洩漏。所有資料傳輸均採用業界標準的 TLS/SSL 加密技術。</p>
 
-    <h2>5. 您的權利</h2>
-    <p>您可以隨時停止使用本應用程式。如需刪除您的相關綁定資訊，請連繫我們的開發團隊。您可以隨時在 Android 系統設定中撤銷位置或麥克風權限。</p>
+        <h2>5. 您的權利</h2>
+        <p>您可以隨時停止使用本應用程式。如需刪除您的相關綁定資訊，請連繫我們的開發團隊。您可以隨時在 Android 系統設定中撤銷位置或麥克風權限。</p>
 
-    <h2>6. 修改與更新</h2>
-    <p>我們可能會不時更新本隱私權政策。建議您定期查看本頁面以了解最新變動。</p>
+        <h2>6. 修改與更新</h2>
+        <p>我們可能會不時更新本隱私權政策。建議您定期查看本頁面以了解最新變動。</p>
 
-    <h2>7. 聯繫我們</h2>
-    <p>如果您對本隱私權政策有任何疑問，請透過以下方式與我們聯繫：</p>
-    <p>電子郵件：support@twopiggyhavefun.uk</p>
+        <h2>7. 聯繫我們</h2>
+        <p>如果您對本隱私權政策有任何疑問，請透過以下方式與我們聯繫：</p>
+        <p>電子郵件：support@twopiggyhavefun.uk</p>
+    </div>
+
+    <!-- ── 简体中文 ── -->
+    <div data-lang="zh-CN">
+        <h1>隐私权政策</h1>
+        <p class="update-date">最近更新日期：2026年3月28日</p>
+        <p>欢迎使用 EClawbot（以下简称本应用程序）。我们非常重视您的隐私，并致力于保护您的个人信息。本隐私权政策旨在说明我们如何收集、使用、披露及保护您的信息。</p>
+
+        <h2>1. 信息收集</h2>
+        <p>本应用程序主要功能为与 AI 驱动的机器人互动。我们可能会收集以下信息：</p>
+        <ul>
+            <li><strong>设备信息：</strong>为了进行设备绑定，我们会收集您的设备唯一识别码 (Device ID)。</li>
+            <li><strong>互动内容：</strong>您与本应用程序中的机器人进行的对话内容，将用于提供 AI 回应服务。</li>
+            <li><strong>GPS 位置数据（可选）：</strong>仅当您绑定的 AI Agent 主动请求时，才会获取您的设备位置。位置数据仅存于服务器内存，不写入数据库，服务器重启后即消失。本应用程序不会在后台持续追踪您的位置。</li>
+            <li><strong>语音消息（可选）：</strong>当您在聊天页面主动按下录音按钮时，才会启用麦克风进行录音。语音消息会上传至服务器作为聊天记录的一部分。本应用程序不会在后台录音或持续监听。</li>
+        </ul>
+
+        <h2>2. 信息使用</h2>
+        <p>我们收集的信息将用于：</p>
+        <ul>
+            <li>维持应用程序与机器人的正常运作与通讯。</li>
+            <li>改进 AI 模型的互动品质与用户体验。</li>
+            <li>确保服务的安全与防止滥用。</li>
+            <li>响应 AI Agent 的位置查询请求及提供基于位置的推荐服务。</li>
+            <li>发送语音消息给您绑定的 AI Agent 或聊天对象。</li>
+        </ul>
+
+        <h2>3. 信息分享与披露</h2>
+        <p>我们不会将您的个人信息出售、租赁或分享给第三方，除非：</p>
+        <ul>
+            <li>获得您的事先同意。</li>
+            <li>符合法律法规要求或配合法律程序。</li>
+        </ul>
+        <p>GPS 位置数据和语音消息均不会分享给任何第三方，仅在您的设备与 EClawbot 服务器之间通过 HTTPS 加密传输。</p>
+
+        <h2>4. 信息安全</h2>
+        <p>我们采用合理的技术与组织措施来保护您的信息免受未经授权的访问、修改或泄漏。所有数据传输均采用业界标准的 TLS/SSL 加密技术。</p>
+
+        <h2>5. 您的权利</h2>
+        <p>您可以随时停止使用本应用程序。如需删除您的相关绑定信息，请联系我们的开发团队。您可以随时在 Android 系统设置中撤销位置或麦克风权限。</p>
+
+        <h2>6. 修改与更新</h2>
+        <p>我们可能会不时更新本隐私权政策。建议您定期查看本页面以了解最新变动。</p>
+
+        <h2>7. 联系我们</h2>
+        <p>如果您对本隐私权政策有任何疑问，请通过以下方式与我们联系：</p>
+        <p>电子邮件：support@twopiggyhavefun.uk</p>
+    </div>
+
+    <!-- ── English ── -->
+    <div data-lang="en">
+        <h1>Privacy Policy</h1>
+        <p class="update-date">Last updated: March 28, 2026</p>
+        <p>Welcome to EClawbot. We take your privacy seriously and are committed to protecting your personal information. This privacy policy explains how we collect, use, disclose, and protect your information.</p>
+
+        <h2>1. Information Collection</h2>
+        <p>The primary function of this app is to interact with AI-driven bots. We may collect the following information:</p>
+        <ul>
+            <li><strong>Device Information:</strong> We collect your unique Device ID for device binding.</li>
+            <li><strong>Interaction Content:</strong> Conversation content with bots in the app, used to provide AI response services.</li>
+            <li><strong>GPS Location (Optional):</strong> Only collected when your bound AI Agent actively requests it. Location data is stored in server memory only, not written to any database, and is lost on server restart. This app does not continuously track your location in the background.</li>
+            <li><strong>Voice Messages (Optional):</strong> The microphone is activated only when you press the record button on the chat page. Voice messages are uploaded to the server as part of chat history. This app does not record audio in the background or continuously listen.</li>
+        </ul>
+
+        <h2>2. Information Use</h2>
+        <p>The information we collect is used to:</p>
+        <ul>
+            <li>Maintain normal operation and communication between the app and bots.</li>
+            <li>Improve AI interaction quality and user experience.</li>
+            <li>Ensure service security and prevent abuse.</li>
+            <li>Respond to AI Agent location queries and provide location-based recommendations.</li>
+            <li>Send voice messages to your bound AI Agent or chat contacts.</li>
+        </ul>
+
+        <h2>3. Information Sharing and Disclosure</h2>
+        <p>We will not sell, lease, or share your personal information with third parties, unless:</p>
+        <ul>
+            <li>We have obtained your prior consent.</li>
+            <li>Required by law or legal process.</li>
+        </ul>
+        <p>GPS location data and voice messages are not shared with any third party. They are transmitted only between your device and the EClawbot server via HTTPS encryption.</p>
+
+        <h2>4. Information Security</h2>
+        <p>We employ reasonable technical and organizational measures to protect your information from unauthorized access, modification, or disclosure. All data transmission uses industry-standard TLS/SSL encryption.</p>
+
+        <h2>5. Your Rights</h2>
+        <p>You may stop using this app at any time. To delete your binding information, please contact our development team. You can revoke location or microphone permissions at any time in Android system settings.</p>
+
+        <h2>6. Modifications and Updates</h2>
+        <p>We may update this privacy policy from time to time. We recommend checking this page regularly for the latest changes.</p>
+
+        <h2>7. Contact Us</h2>
+        <p>If you have any questions about this privacy policy, please contact us at:</p>
+        <p>Email: support@twopiggyhavefun.uk</p>
+    </div>
+
+    <!-- ── 日本語 ── -->
+    <div data-lang="ja">
+        <h1>プライバシーポリシー</h1>
+        <p class="update-date">最終更新日：2026年3月28日</p>
+        <p>EClawbotをご利用いただきありがとうございます。私たちはお客様のプライバシーを重視し、個人情報の保護に取り組んでいます。</p>
+
+        <h2>1. 情報の収集</h2>
+        <p>本アプリの主な機能はAI搭載ボットとの対話です。以下の情報を収集する場合があります：</p>
+        <ul>
+            <li><strong>デバイス情報：</strong>デバイスバインディングのためにデバイスIDを収集します。</li>
+            <li><strong>対話内容：</strong>ボットとの会話内容はAI応答サービスの提供に使用されます。</li>
+            <li><strong>GPS位置情報（任意）：</strong>バインドされたAIエージェントがリクエストした時のみ取得します。位置データはサーバーメモリにのみ保存され、データベースには書き込まれず、サーバー再起動時に消失します。バックグラウンドでの位置追跡は行いません。</li>
+            <li><strong>ボイスメッセージ（任意）：</strong>チャットページで録音ボタンを押した時のみマイクが有効になります。ボイスメッセージはチャット履歴の一部としてサーバーにアップロードされます。バックグラウンドでの録音や常時リスニングは行いません。</li>
+        </ul>
+
+        <h2>2. 情報の使用</h2>
+        <ul>
+            <li>アプリとボットの正常な動作と通信の維持。</li>
+            <li>AIインタラクション品質とユーザー体験の改善。</li>
+            <li>サービスのセキュリティ確保と不正利用の防止。</li>
+            <li>AIエージェントの位置クエリへの応答と位置ベースの推薦サービスの提供。</li>
+            <li>バインドされたAIエージェントやチャット相手へのボイスメッセージ送信。</li>
+        </ul>
+
+        <h2>3. 情報の共有</h2>
+        <p>お客様の同意なく、または法的要件がない限り、個人情報を第三者に販売、賃貸、共有することはありません。GPS位置データとボイスメッセージは第三者と共有されず、HTTPS暗号化でのみ送信されます。</p>
+
+        <h2>4. 情報セキュリティ</h2>
+        <p>業界標準のTLS/SSL暗号化技術を使用し、合理的な技術的・組織的措置を講じています。</p>
+
+        <h2>5. お客様の権利</h2>
+        <p>いつでもアプリの使用を中止できます。バインド情報の削除については開発チームにお問い合わせください。Android設定で位置やマイクの権限をいつでも取り消せます。</p>
+
+        <h2>6. ポリシーの変更</h2>
+        <p>本ポリシーは随時更新される場合があります。定期的にご確認ください。</p>
+
+        <h2>7. お問い合わせ</h2>
+        <p>メール：support@twopiggyhavefun.uk</p>
+    </div>
+
+    <!-- ── 한국어 ── -->
+    <div data-lang="ko">
+        <h1>개인정보 보호 정책</h1>
+        <p class="update-date">최종 업데이트: 2026년 3월 28일</p>
+        <p>EClawbot을 이용해 주셔서 감사합니다. 저희는 귀하의 개인정보를 소중히 여기며 보호하기 위해 최선을 다하고 있습니다.</p>
+
+        <h2>1. 정보 수집</h2>
+        <ul>
+            <li><strong>기기 정보:</strong> 기기 바인딩을 위해 기기 ID를 수집합니다.</li>
+            <li><strong>대화 내용:</strong> 봇과의 대화 내용은 AI 응답 서비스 제공에 사용됩니다.</li>
+            <li><strong>GPS 위치 (선택):</strong> 바인딩된 AI 에이전트가 요청할 때만 수집됩니다. 서버 메모리에만 저장되며 재시작 시 삭제됩니다. 백그라운드 위치 추적은 하지 않습니다.</li>
+            <li><strong>음성 메시지 (선택):</strong> 채팅 페이지에서 녹음 버튼을 누를 때만 마이크가 활성화됩니다. 백그라운드 녹음이나 상시 청취는 하지 않습니다.</li>
+        </ul>
+
+        <h2>2. 정보 사용</h2>
+        <ul>
+            <li>앱과 봇 간 정상적인 운영 및 통신 유지.</li>
+            <li>AI 상호작용 품질 및 사용자 경험 개선.</li>
+            <li>서비스 보안 확보 및 남용 방지.</li>
+        </ul>
+
+        <h2>3. 정보 공유</h2>
+        <p>사전 동의 없이 또는 법적 요구가 없는 한 개인정보를 제3자에게 판매, 임대 또는 공유하지 않습니다. GPS 위치 데이터와 음성 메시지는 HTTPS 암호화를 통해서만 전송됩니다.</p>
+
+        <h2>4. 정보 보안</h2>
+        <p>업계 표준 TLS/SSL 암호화 기술을 사용하여 합리적인 기술적·조직적 조치를 취하고 있습니다.</p>
+
+        <h2>5. 귀하의 권리</h2>
+        <p>언제든지 앱 사용을 중단할 수 있습니다. Android 설정에서 위치 또는 마이크 권한을 언제든 철회할 수 있습니다.</p>
+
+        <h2>6. 정책 변경</h2>
+        <p>본 정책은 수시로 업데이트될 수 있습니다. 정기적으로 확인해 주세요.</p>
+
+        <h2>7. 문의</h2>
+        <p>이메일: support@twopiggyhavefun.uk</p>
+    </div>
+
+    <!-- ── Tiếng Việt ── -->
+    <div data-lang="vi">
+        <h1>Chính sách Bảo mật</h1>
+        <p class="update-date">Cập nhật lần cuối: 28 tháng 3, 2026</p>
+        <p>Chào mừng bạn đến với EClawbot. Chúng tôi coi trọng quyền riêng tư của bạn và cam kết bảo vệ thông tin cá nhân.</p>
+
+        <h2>1. Thu thập Thông tin</h2>
+        <ul>
+            <li><strong>Thông tin thiết bị:</strong> ID thiết bị để liên kết.</li>
+            <li><strong>Nội dung tương tác:</strong> Nội dung trò chuyện với bot.</li>
+            <li><strong>Vị trí GPS (Tùy chọn):</strong> Chỉ thu thập khi AI Agent yêu cầu. Lưu trong bộ nhớ máy chủ, không lưu trữ vĩnh viễn. Không theo dõi nền.</li>
+            <li><strong>Tin nhắn thoại (Tùy chọn):</strong> Micro chỉ hoạt động khi bạn nhấn nút ghi âm. Không ghi âm nền.</li>
+        </ul>
+
+        <h2>2. Sử dụng Thông tin</h2>
+        <ul>
+            <li>Duy trì hoạt động bình thường giữa ứng dụng và bot.</li>
+            <li>Cải thiện chất lượng tương tác AI và trải nghiệm người dùng.</li>
+            <li>Đảm bảo an ninh dịch vụ.</li>
+        </ul>
+
+        <h2>3. Chia sẻ Thông tin</h2>
+        <p>Chúng tôi không bán, cho thuê hoặc chia sẻ thông tin cá nhân cho bên thứ ba. Dữ liệu GPS và tin nhắn thoại chỉ được truyền qua HTTPS.</p>
+
+        <h2>4. Bảo mật</h2>
+        <p>Sử dụng mã hóa TLS/SSL tiêu chuẩn ngành.</p>
+
+        <h2>5. Quyền của bạn</h2>
+        <p>Bạn có thể ngừng sử dụng bất kỳ lúc nào. Thu hồi quyền vị trí hoặc micro trong cài đặt Android.</p>
+
+        <h2>6. Cập nhật</h2>
+        <p>Chính sách có thể được cập nhật. Vui lòng kiểm tra định kỳ.</p>
+
+        <h2>7. Liên hệ</h2>
+        <p>Email: support@twopiggyhavefun.uk</p>
+    </div>
+
+    <!-- ── ภาษาไทย ── -->
+    <div data-lang="th">
+        <h1>นโยบายความเป็นส่วนตัว</h1>
+        <p class="update-date">อัปเดตล่าสุด: 28 มีนาคม 2026</p>
+        <p>ยินดีต้อนรับสู่ EClawbot เราให้ความสำคัญกับความเป็นส่วนตัวของคุณ</p>
+
+        <h2>1. การเก็บข้อมูล</h2>
+        <ul>
+            <li><strong>ข้อมูลอุปกรณ์:</strong> รหัสอุปกรณ์สำหรับการผูก</li>
+            <li><strong>เนื้อหาการโต้ตอบ:</strong> เนื้อหาสนทนากับบอท</li>
+            <li><strong>ตำแหน่ง GPS (ทางเลือก):</strong> เก็บเฉพาะเมื่อ AI Agent ร้องขอ เก็บในหน่วยความจำเท่านั้น ไม่ติดตามในพื้นหลัง</li>
+            <li><strong>ข้อความเสียง (ทางเลือก):</strong> ไมโครโฟนทำงานเฉพาะเมื่อกดปุ่มบันทึก ไม่บันทึกเสียงในพื้นหลัง</li>
+        </ul>
+
+        <h2>2. การใช้ข้อมูล</h2>
+        <ul>
+            <li>รักษาการทำงานปกติระหว่างแอปและบอท</li>
+            <li>ปรับปรุงคุณภาพ AI และประสบการณ์ผู้ใช้</li>
+            <li>รักษาความปลอดภัยของบริการ</li>
+        </ul>
+
+        <h2>3. การแชร์ข้อมูล</h2>
+        <p>เราจะไม่ขาย ให้เช่า หรือแชร์ข้อมูลส่วนบุคคลกับบุคคลที่สาม ข้อมูล GPS และข้อความเสียงส่งผ่าน HTTPS เท่านั้น</p>
+
+        <h2>4. ความปลอดภัย</h2>
+        <p>ใช้การเข้ารหัส TLS/SSL มาตรฐานอุตสาหกรรม</p>
+
+        <h2>5. สิทธิ์ของคุณ</h2>
+        <p>คุณสามารถหยุดใช้งานได้ตลอดเวลา เพิกถอนสิทธิ์ตำแหน่งหรือไมโครโฟนในการตั้งค่า Android</p>
+
+        <h2>6. การอัปเดต</h2>
+        <p>นโยบายอาจมีการอัปเดต กรุณาตรวจสอบเป็นระยะ</p>
+
+        <h2>7. ติดต่อเรา</h2>
+        <p>อีเมล: support@twopiggyhavefun.uk</p>
+    </div>
+
+    <!-- ── Bahasa Indonesia ── -->
+    <div data-lang="id">
+        <h1>Kebijakan Privasi</h1>
+        <p class="update-date">Terakhir diperbarui: 28 Maret 2026</p>
+        <p>Selamat datang di EClawbot. Kami menghargai privasi Anda dan berkomitmen untuk melindungi informasi pribadi Anda.</p>
+
+        <h2>1. Pengumpulan Informasi</h2>
+        <ul>
+            <li><strong>Informasi Perangkat:</strong> ID perangkat untuk pengikatan.</li>
+            <li><strong>Konten Interaksi:</strong> Konten percakapan dengan bot.</li>
+            <li><strong>Lokasi GPS (Opsional):</strong> Hanya dikumpulkan saat AI Agent meminta. Disimpan di memori server saja, tidak dilacak di latar belakang.</li>
+            <li><strong>Pesan Suara (Opsional):</strong> Mikrofon aktif hanya saat Anda menekan tombol rekam. Tidak merekam di latar belakang.</li>
+        </ul>
+
+        <h2>2. Penggunaan Informasi</h2>
+        <ul>
+            <li>Menjaga operasi normal antara aplikasi dan bot.</li>
+            <li>Meningkatkan kualitas interaksi AI dan pengalaman pengguna.</li>
+            <li>Memastikan keamanan layanan.</li>
+        </ul>
+
+        <h2>3. Berbagi Informasi</h2>
+        <p>Kami tidak menjual, menyewakan, atau membagikan informasi pribadi kepada pihak ketiga. Data GPS dan pesan suara hanya dikirim melalui HTTPS.</p>
+
+        <h2>4. Keamanan</h2>
+        <p>Menggunakan enkripsi TLS/SSL standar industri.</p>
+
+        <h2>5. Hak Anda</h2>
+        <p>Anda dapat berhenti menggunakan kapan saja. Cabut izin lokasi atau mikrofon di pengaturan Android.</p>
+
+        <h2>6. Pembaruan</h2>
+        <p>Kebijakan dapat diperbarui. Silakan periksa secara berkala.</p>
+
+        <h2>7. Hubungi Kami</h2>
+        <p>Email: support@twopiggyhavefun.uk</p>
+    </div>
 
     <footer>
-        &copy; 2026 E-Claw Team. All rights reserved.
+        &copy; 2026 EClawbot Team. All rights reserved.
     </footer>
+
+    <script>
+        function switchLang(lang) {
+            document.querySelectorAll('[data-lang]').forEach(el => el.classList.remove('active'));
+            const target = document.querySelector(`[data-lang="${lang}"]`);
+            if (target) target.classList.add('active');
+            localStorage.setItem('eclaw_privacy_lang', lang);
+        }
+
+        // Auto-detect language
+        (function () {
+            const saved = localStorage.getItem('eclaw_privacy_lang');
+            const browserLang = navigator.language || '';
+            let lang = 'zh-TW';
+
+            if (saved) {
+                lang = saved;
+            } else if (browserLang.startsWith('zh-CN') || browserLang === 'zh-Hans') {
+                lang = 'zh-CN';
+            } else if (browserLang.startsWith('zh')) {
+                lang = 'zh-TW';
+            } else if (browserLang.startsWith('ja')) {
+                lang = 'ja';
+            } else if (browserLang.startsWith('ko')) {
+                lang = 'ko';
+            } else if (browserLang.startsWith('vi')) {
+                lang = 'vi';
+            } else if (browserLang.startsWith('th')) {
+                lang = 'th';
+            } else if (browserLang.startsWith('id') || browserLang.startsWith('in')) {
+                lang = 'id';
+            } else if (browserLang.startsWith('en')) {
+                lang = 'en';
+            }
+
+            document.getElementById('langSelect').value = lang;
+            switchLang(lang);
+        })();
+    </script>
 </body>
 
 </html>
