@@ -1,3 +1,10 @@
+## [1.362.1](https://github.com/HankHuang0516/EClaw/compare/v1.362.0...v1.362.1) (2026-03-28)
+
+
+### Bug Fixes
+
+* **kanban:** hide redundant h2 heading and automation section in Android WebView ([#789](https://github.com/HankHuang0516/EClaw/issues/789)) ([a1ab495](https://github.com/HankHuang0516/EClaw/commit/a1ab4954a24fbe9f6f2f7f53ec85f1738f0b00c0))
+
 # [1.362.0](https://github.com/HankHuang0516/EClaw/compare/v1.361.0...v1.362.0) (2026-03-28)
 
 
