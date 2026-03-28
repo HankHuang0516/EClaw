@@ -1,3 +1,11 @@
+# [1.245.0](https://github.com/HankHuang0516/EClaw/compare/v1.244.0...v1.245.0) (2026-03-28)
+
+
+### Features
+
+* **i18n:** add 50 Spanish translations (batch 27) ([#642](https://github.com/HankHuang0516/EClaw/issues/642)) ([1263383](https://github.com/HankHuang0516/EClaw/commit/12633832b366354971ceb71b27b8e2d624b0e357)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* deprecate mission/schedule add UI + tests — redirect to Kanban (3-platform) ([94a48a4](https://github.com/HankHuang0516/EClaw/commit/94a48a4d265a8db04ce9177f101423a04e4e06d9))
+
 # [1.244.0](https://github.com/HankHuang0516/EClaw/compare/v1.243.0...v1.244.0) (2026-03-28)
 
 
