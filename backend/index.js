@@ -604,7 +604,7 @@ function ensureOneEmptySlot(device) {
 
 // Latest app version - update this with each release
 // Bot will warn users if their app version is older than this
-const LATEST_APP_VERSION = "1.0.61";
+const LATEST_APP_VERSION = "1.0.62";
 const FORCE_UPDATE_BELOW = null; // Set to version string (e.g. "1.0.30") to force-update anything below
 const APP_RELEASE_NOTES = process.env.APP_RELEASE_NOTES || null;
 
@@ -12174,28 +12174,13 @@ app.get('/api/schedule-executions/:executionId/context', async (req, res) => {
     }
 });
 
-// POST /api/schedules - Create a new schedule
+// POST /api/schedules - Create a new schedule (DEPRECATED → Kanban)
 app.post('/api/schedules', async (req, res) => {
-    const { deviceId, deviceSecret, entityId, message, scheduledAt, repeatType, cronExpr, label, timezone } = req.body;
-    if (!deviceId || !deviceSecret) {
-        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
-    }
-    const device = devices[deviceId];
-    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
-        return res.status(403).json({ success: false, error: 'Invalid credentials' });
-    }
-    const eIdParsed = parseInt(entityId);
-    if (!isValidEntityId(device, eIdParsed)) {
-        return res.status(400).json({ success: false, error: 'Invalid entityId' });
-    }
-    try {
-        const schedule = await scheduler.createSchedule({
-            deviceId, entityId, message, scheduledAt, repeatType, cronExpr, label, timezone
-        });
-        res.json({ success: true, schedule });
-    } catch (err) {
-        res.status(400).json({ success: false, error: err.message });
-    }
+    const lang = req.headers['accept-language'] || '';
+    const msg = lang.startsWith('zh')
+        ? '此功能已停用，請使用看板任務作為替代方案。看板任務頁面已有完整生態，請讓 bot 將現有任務逐步轉移到看板任務頁面。'
+        : 'This endpoint is deprecated. Please use the Kanban board instead. The Kanban board has a complete ecosystem — migrate existing items there gradually.';
+    return res.status(410).json({ success: false, error: msg, deprecated: true, redirect: 'kanban' });
 });
 
 // PUT /api/schedules/:id - Update a schedule
@@ -12287,29 +12272,13 @@ app.get('/api/bot/schedules', async (req, res) => {
     }
 });
 
-// POST /api/bot/schedules - Bot creates a schedule
+// POST /api/bot/schedules - Bot creates a schedule (DEPRECATED → Kanban)
 app.post('/api/bot/schedules', async (req, res) => {
-    const { deviceId, entityId, botSecret, deviceSecret, message, scheduledAt, repeatType, cronExpr, label } = req.body;
-    if (!deviceId || entityId === undefined || (!botSecret && !deviceSecret)) {
-        return res.status(400).json({ success: false, error: 'deviceId, entityId, and botSecret or deviceSecret required' });
-    }
-    const device = devices[deviceId];
-    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
-    const eId = parseInt(entityId);
-    const entity = device.entities[eId];
-    const authOk = (deviceSecret && safeEqual(device.deviceSecret, deviceSecret)) ||
-                   (botSecret && entity && entity.isBound && safeEqual(entity.botSecret, botSecret));
-    if (!entity || !entity.isBound || !authOk) {
-        return res.status(403).json({ success: false, error: 'Invalid credentials' });
-    }
-    try {
-        const schedule = await scheduler.createSchedule({
-            deviceId, entityId: eId, message, scheduledAt, repeatType, cronExpr, label
-        });
-        res.json({ success: true, schedule });
-    } catch (err) {
-        res.status(400).json({ success: false, error: err.message });
-    }
+    const lang = req.headers['accept-language'] || '';
+    const msg = lang.startsWith('zh')
+        ? '此功能已停用，請使用看板任務作為替代方案。看板任務頁面已有完整生態，請讓 bot 將現有任務逐步轉移到看板任務頁面。'
+        : 'This endpoint is deprecated. Please use the Kanban board instead. The Kanban board has a complete ecosystem — migrate existing items there gradually.';
+    return res.status(410).json({ success: false, error: msg, deprecated: true, redirect: 'kanban' });
 });
 
 // DELETE /api/bot/schedules/:id - Bot deletes a schedule
