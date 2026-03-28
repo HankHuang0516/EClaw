@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">E-Claw (電子蝦)</string>
+    <string name="app_name">EClawbot</string>
     <string name="wallpaper_description">AI 에이전트의 실시간 상태</string>
     <string name="main_title">E-Claw</string>
     <string name="no_agents_connected">연결된 에이전트가 없습니다</string>

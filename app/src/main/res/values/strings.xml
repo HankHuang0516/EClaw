@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">E-Claw (電子蝦)</string>
+    <string name="app_name">EClawbot</string>
     <string name="wallpaper_description">Live status of your AI agent</string>
 
     <!-- Main Activity -->

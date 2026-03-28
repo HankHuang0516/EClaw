@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">E-Claw (電子蝦)</string>
+    <string name="app_name">EClawbot</string>
     <string name="wallpaper_description">AI 代理的即時狀態</string>
 
     <!-- Main Activity -->

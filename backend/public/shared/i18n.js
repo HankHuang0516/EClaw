@@ -2314,8 +2314,7 @@ const TRANSLATIONS = {
         "delete_account_err_sdk_loading": "Google SDK loading, please retry.",
         "delete_account_err_signin_failed": "Sign-in failed. Please try again.",
         "delete_account_err_delete_failed": "Deletion failed. Please try again.",
-        "delete_account_app_aka": "Also known as EClawbot",
-        "delete_account_dev_info": "App: E-Claw (電子蝦) · Developer: Hank Huang · Package: com.hank.clawlive",
+        "delete_account_dev_info": "App: EClawbot · Developer: Hank Huang · Package: com.hank.clawlive",
 
         // Screen Control (screen-control.html)
         "screen_ctrl_title": "Remote Control",
@@ -5384,8 +5383,7 @@ const TRANSLATIONS = {
         "delete_account_err_sdk_loading": "Google SDK 載入中，請重試。",
         "delete_account_err_signin_failed": "登入失敗，請重試。",
         "delete_account_err_delete_failed": "刪除失敗，請重試。",
-        "delete_account_app_aka": "亦稱 EClawbot",
-        "delete_account_dev_info": "應用程式：E-Claw (電子蝦) · 開發者：Hank Huang · 套件名稱：com.hank.clawlive",
+        "delete_account_dev_info": "應用程式：EClawbot · 開發者：Hank Huang · 套件名稱：com.hank.clawlive",
 
         // Screen Control (screen-control.html)
         "screen_ctrl_title": "遠端控制",
@@ -8227,8 +8225,7 @@ const TRANSLATIONS = {
         "delete_account_err_sdk_loading": "Google SDK 加载中，请重试。",
         "delete_account_err_signin_failed": "登录失败，请重试。",
         "delete_account_err_delete_failed": "删除失败，请重试。",
-        "delete_account_app_aka": "又称 EClawbot",
-        "delete_account_dev_info": "应用：E-Claw (电子虾) · 开发者：Hank Huang · 包名：com.hank.clawlive",
+        "delete_account_dev_info": "应用：EClawbot · 开发者：Hank Huang · 包名：com.hank.clawlive",
 
         // Screen Control (screen-control.html)
         "screen_ctrl_title": "远程控制",
@@ -11346,8 +11343,7 @@ const TRANSLATIONS = {
         "delete_account_err_sdk_loading": "Google SDK を読み込み中です。もう一度お試しください。",
         "delete_account_err_signin_failed": "サインインに失敗しました。もう一度お試しください。",
         "delete_account_err_delete_failed": "削除に失敗しました。もう一度お試しください。",
-        "delete_account_app_aka": "EClawbot としても知られています",
-        "delete_account_dev_info": "アプリ：E-Claw (電子蝦) · 開発者：Hank Huang · パッケージ：com.hank.clawlive",
+        "delete_account_dev_info": "アプリ：EClawbot · 開発者：Hank Huang · パッケージ：com.hank.clawlive",
 
         // Screen Control (screen-control.html)
         "screen_ctrl_title": "リモートコントロール",
@@ -13760,8 +13756,7 @@ const TRANSLATIONS = {
         "delete_account_err_sdk_loading": "Google SDK 로딩 중, 다시 시도해주세요.",
         "delete_account_err_signin_failed": "로그인에 실패했습니다. 다시 시도해주세요.",
         "delete_account_err_delete_failed": "삭제에 실패했습니다. 다시 시도해주세요.",
-        "delete_account_app_aka": "EClawbot으로도 알려져 있습니다",
-        "delete_account_dev_info": "앱: E-Claw (電子蝦) · 개발자: Hank Huang · 패키지: com.hank.clawlive",
+        "delete_account_dev_info": "앱: EClawbot · 개발자: Hank Huang · 패키지: com.hank.clawlive",
 
         // Screen Control (screen-control.html)
         "screen_ctrl_title": "원격 제어",
@@ -16227,8 +16222,7 @@ const TRANSLATIONS = {
         "delete_account_err_sdk_loading": "กำลังโหลด Google SDK โปรดลองอีกครั้ง",
         "delete_account_err_signin_failed": "ลงชื่อเข้าใช้ไม่สำเร็จ โปรดลองอีกครั้ง",
         "delete_account_err_delete_failed": "ลบไม่สำเร็จ โปรดลองอีกครั้ง",
-        "delete_account_app_aka": "หรือที่รู้จักในชื่อ EClawbot",
-        "delete_account_dev_info": "แอป: E-Claw (電子蝦) · นักพัฒนา: Hank Huang · แพ็กเกจ: com.hank.clawlive",
+        "delete_account_dev_info": "แอป: EClawbot · นักพัฒนา: Hank Huang · แพ็กเกจ: com.hank.clawlive",
 
         // Screen Control (screen-control.html)
         "screen_ctrl_title": "ควบคุมระยะไกล",
@@ -18643,8 +18637,7 @@ const TRANSLATIONS = {
         "delete_account_err_sdk_loading": "Google SDK đang tải, vui lòng thử lại.",
         "delete_account_err_signin_failed": "Đăng nhập thất bại. Vui lòng thử lại.",
         "delete_account_err_delete_failed": "Xóa thất bại. Vui lòng thử lại.",
-        "delete_account_app_aka": "Còn được gọi là EClawbot",
-        "delete_account_dev_info": "Ứng dụng: E-Claw (電子蝦) · Nhà phát triển: Hank Huang · Gói: com.hank.clawlive",
+        "delete_account_dev_info": "Ứng dụng: EClawbot · Nhà phát triển: Hank Huang · Gói: com.hank.clawlive",
 
         // Screen Control (screen-control.html)
         "screen_ctrl_title": "Điều khiển từ xa",
@@ -21058,8 +21051,7 @@ const TRANSLATIONS = {
         "delete_account_err_sdk_loading": "Google SDK sedang dimuat, silakan coba lagi.",
         "delete_account_err_signin_failed": "Login gagal. Silakan coba lagi.",
         "delete_account_err_delete_failed": "Penghapusan gagal. Silakan coba lagi.",
-        "delete_account_app_aka": "Juga dikenal sebagai EClawbot",
-        "delete_account_dev_info": "Aplikasi: E-Claw (電子蝦) · Pengembang: Hank Huang · Paket: com.hank.clawlive",
+        "delete_account_dev_info": "Aplikasi: EClawbot · Pengembang: Hank Huang · Paket: com.hank.clawlive",
 
         // Screen Control (screen-control.html)
         "screen_ctrl_title": "Kontrol Jarak Jauh",
@@ -22801,7 +22793,6 @@ const TRANSLATIONS = {
         "common_saved": "Guardado...",
         "common_unknown": "Desconocido...",
         "common_voice_msg": "Mensaje de voz...",
-        "delete_account_app_aka": "También conocido como EClawbot...",
         "delete_account_btn": "Eliminar Mi Cuenta...",
         "delete_account_confirm_label": "Entiendo que eliminar mi cuenta es permanente y todos mis datos...",
         "delete_account_confirm_title": "Confirmar Eliminación...",
@@ -22814,7 +22805,7 @@ const TRANSLATIONS = {
         "delete_account_data_telemetry": "Datos de telemetría del dispositivo...",
         "delete_account_data_vars": "Variables de entorno cifradas...",
         "delete_account_deleting": "Eliminando……..",
-        "delete_account_dev_info": "App: E-Claw (電子蝦) · Desarrollador: Hank Huang · Paquete: com.han...",
+        "delete_account_dev_info": "App: EClawbot · Desarrollador: Hank Huang · Paquete: com.hank.clawlive",
         "delete_account_done_hint": "Si cambias de opinión, siempre puedes crear una nueva cuenta...",
         "delete_account_done_msg": "Tu cuenta de EClawbot y todos los datos asociados han sido perm...",
         "delete_account_done_title": "Cuenta Eliminada...",
@@ -23966,7 +23957,6 @@ const TRANSLATIONS = {
         "dash_xd_whitelist": "Senarai Putih (kod awam)",
         "dash_xd_whitelist_mode": "Mod Senarai Putih",
         "dashboard_entities_bound": "entiti diikat",
-        "delete_account_app_aka": "Juga dikenali sebagai EClawbot",
         "delete_account_btn": "Padam Akaun Saya",
         "delete_account_confirm_label": "Saya faham bahawa memadam akaun saya adalah permanen dan semua data saya akan dipadam.",
         "delete_account_confirm_title": "Sahkan Pemadaman",
@@ -23979,7 +23969,7 @@ const TRANSLATIONS = {
         "delete_account_data_telemetry": "Data telemetry peranti",
         "delete_account_data_vars": "Pembolehubah persekitaran terenkripsi",
         "delete_account_deleting": "Memadam...",
-        "delete_account_dev_info": "App: E-Claw (電子蝦) · Pembangun: Hank Huang · Pakej: com.hank.clawlive",
+        "delete_account_dev_info": "App: EClawbot · Pembangun: Hank Huang · Pakej: com.hank.clawlive",
         "delete_account_done_hint": "Jika anda berubah fikiran, anda boleh sentiasa membuat akaun baharu dalam App EClawbot.",
         "delete_account_done_msg": "Akaun EClawbot dan semua data berkaitan anda telah dipadam secara permanen. Anda tidak akan menerima sebarang komunikasi daripada kami.",
         "delete_account_done_title": "Akaun Dipadam",

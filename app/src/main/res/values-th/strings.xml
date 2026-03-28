@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">E-Claw (電子蝦)</string>
+    <string name="app_name">EClawbot</string>
     <string name="wallpaper_description">สถานะแบบเรียลไทม์ของ AI Agent ของคุณ</string>
     <string name="main_title">E-Claw</string>
     <string name="no_agents_connected">ยังไม่มี Agent เชื่อมต่อ</string>

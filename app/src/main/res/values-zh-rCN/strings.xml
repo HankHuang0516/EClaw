@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">E-Claw (电子虾)</string>
+    <string name="app_name">EClawbot</string>
     <string name="wallpaper_description">AI 智能体的实时状态</string>
     <string name="main_title">E-Claw</string>
     <string name="no_agents_connected">尚未连接任何智能体</string>
