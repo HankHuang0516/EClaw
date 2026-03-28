@@ -1,3 +1,15 @@
+# [1.349.0](https://github.com/HankHuang0516/EClaw/compare/v1.348.0...v1.349.0) (2026-03-28)
+
+
+### Bug Fixes
+
+* **i18n:** escape newlines in guide_proxy_how_desc ([#764](https://github.com/HankHuang0516/EClaw/issues/764)) ([618259d](https://github.com/HankHuang0516/EClaw/commit/618259d932582564422976b9343f884791279de2)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
+
+### Features
+
+* **i18n:** add French translations (batch 78) ([#763](https://github.com/HankHuang0516/EClaw/issues/763)) ([9a9a500](https://github.com/HankHuang0516/EClaw/commit/9a9a5001ef1e808ca26a389ef84567b6195d5bc9)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.348.0](https://github.com/HankHuang0516/EClaw/compare/v1.347.0...v1.348.0) (2026-03-28)
 
 
