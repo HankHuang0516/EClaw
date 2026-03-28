@@ -171,7 +171,7 @@
         .kb-toast.error { background:#ef4444; color:#fff; }
 
         /* ══════════════ Automation Collapse Section ══════════════ */
-        .kb-automation { margin-bottom:16px; background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius); overflow:hidden; }
+        .kb-automation { margin-bottom:16px; background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius); }
         .kb-auto-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer; user-select:none; transition:background 0.2s; }
         .kb-auto-header:hover { background:rgba(255,255,255,0.03); }
         .kb-auto-header h3 { font-size:14px; font-weight:700; display:flex; align-items:center; gap:6px; }
@@ -1010,16 +1010,23 @@
                 return ((clamped - windowStart) / windowMs * 100).toFixed(2);
             }
 
-            // Group cards by entity
+            // Group cards by entity (assignedBots → createdBy → unassigned)
             const entityLanes = {};
             const unassigned = [];
             automationCards.forEach(card => {
                 const bots = card.assignedBots || [];
-                if (!bots.length) { unassigned.push(card); return; }
-                bots.forEach(botId => {
-                    if (!entityLanes[botId]) entityLanes[botId] = [];
-                    entityLanes[botId].push(card);
-                });
+                if (bots.length) {
+                    bots.forEach(botId => {
+                        if (!entityLanes[botId]) entityLanes[botId] = [];
+                        entityLanes[botId].push(card);
+                    });
+                } else if (card.createdBy != null) {
+                    const eid = card.createdBy;
+                    if (!entityLanes[eid]) entityLanes[eid] = [];
+                    entityLanes[eid].push(card);
+                } else {
+                    unassigned.push(card);
+                }
             });
 
             // Hour markers
@@ -1075,7 +1082,17 @@
                 return `<div class="kb-tl-lane${cls}"><div class="kb-tl-lane-label">${labelHtml}</div><div class="kb-tl-lane-track">${items.join('')}</div></div>`;
             }
 
+            // If no lanes at all, fall back to grid view
             const sortedIds = Object.keys(entityLanes).map(Number).sort((a, b) => a - b);
+            if (!sortedIds.length && !unassigned.length) {
+                // All cards lack both assignedBots and createdBy — use grid
+                autoViewMode = 'grid';
+                document.querySelectorAll('.kb-auto-view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === 'grid'));
+                document.getElementById('autoGrid').style.display = '';
+                container.style.display = 'none';
+                renderAutomationSection();
+                return;
+            }
             let lanesHtml = sortedIds.map(eid => {
                 const avatar = getAvatarForEntity(eid);
                 const name = getEntityDisplayName(eid);
