@@ -9,15 +9,12 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.hank.clawlive.R
 import com.hank.clawlive.data.model.MissionNote
-import io.noties.markwon.Markwon
-
 class MissionNoteAdapter(
     private val onNoteClick: (MissionNote) -> Unit,
     private val onNoteLongClick: (MissionNote) -> Unit,
     private val onPageBadgeClick: (MissionNote) -> Unit = {}
 ) : ListAdapter<MissionNote, MissionNoteAdapter.ViewHolder>(DiffCallback()) {
 
-    private var markwon: Markwon? = null
     var notePageIds: Set<String> = emptySet()
         set(value) {
             if (field != value) {
@@ -27,7 +24,6 @@ class MissionNoteAdapter(
         }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        if (markwon == null) markwon = Markwon.create(parent.context)
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_mission_note, parent, false)
         return ViewHolder(view)
@@ -45,7 +41,10 @@ class MissionNoteAdapter(
 
         fun bind(note: MissionNote) {
             tvTitle.text = note.title
-            markwon?.setMarkdown(tvContent, note.content) ?: run { tvContent.text = note.content }
+            // Truncate content preview to 80 chars (aligned with Web Portal)
+            val preview = (note.content ?: "").take(80)
+            tvContent.maxLines = 1
+            tvContent.text = preview
             tvCategory.text = note.category ?: ""
 
             val hasPage = notePageIds.contains(note.id)

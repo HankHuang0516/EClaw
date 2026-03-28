@@ -359,11 +359,21 @@
                     android:padding="12dp">
 
                     <LinearLayout
+                        android:id="@+id/headerNotes"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
                         android:layout_marginBottom="8dp">
+
+                        <ImageView
+                            android:id="@+id/arrowNotes"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_expand_more"
+                            android:layout_marginEnd="4dp"
+                            android:contentDescription="@string/expand"
+                            android:rotation="0" />
 
                         <TextView
                             android:layout_width="0dp"
@@ -386,36 +396,44 @@
 
                     </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/tvNotesEmpty"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/no_notes"
-                        android:textColor="@color/text_disabled"
-                        android:textSize="13sp"
-                        android:gravity="center"
-                        android:padding="16dp"
-                        android:visibility="gone" />
-
                     <LinearLayout
-                        android:id="@+id/containerNotes"
+                        android:id="@+id/contentNotes"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical" />
+                        android:orientation="vertical">
 
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/rvNotes"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:nestedScrollingEnabled="false" />
+                        <TextView
+                            android:id="@+id/tvNotesEmpty"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/no_notes"
+                            android:textColor="@color/text_disabled"
+                            android:textSize="13sp"
+                            android:gravity="center"
+                            android:padding="16dp"
+                            android:visibility="gone" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnAddNote"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/add_note"
-                        android:layout_marginTop="4dp"
-                        style="@style/Widget.Material3.Button.OutlinedButton" />
+                        <LinearLayout
+                            android:id="@+id/containerNotes"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvNotes"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnAddNote"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/add_note"
+                            android:layout_marginTop="4dp"
+                            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

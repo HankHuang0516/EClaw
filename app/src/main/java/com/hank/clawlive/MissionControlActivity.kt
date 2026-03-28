@@ -425,7 +425,8 @@ class MissionControlActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.btnAddCatSouls).setOnClickListener { showAddCategoryDialog("souls") }
         findViewById<MaterialButton>(R.id.btnAddCatRules).setOnClickListener { showAddCategoryDialog("rules") }
 
-        // Collapsible sections: Skills, Variables, Souls, Rules
+        // Collapsible sections: Notes, Skills, Variables, Souls, Rules
+        setupCollapsible(R.id.headerNotes, R.id.contentNotes, R.id.arrowNotes, "section_notes")
         setupCollapsible(R.id.headerSkills, R.id.contentSkills, R.id.arrowSkills, "section_skills")
         setupCollapsible(R.id.headerVars, R.id.contentVars, R.id.arrowVars, "section_vars")
         setupCollapsible(R.id.headerSouls, R.id.contentSouls, R.id.arrowSouls, "section_souls")
@@ -1363,7 +1364,11 @@ class MissionControlActivity : AppCompatActivity() {
     private fun createNoteItemView(note: MissionNote): View {
         val view = LayoutInflater.from(this).inflate(R.layout.item_mission_note, null)
         view.findViewById<TextView>(R.id.tvTitle).text = note.title
-        view.findViewById<TextView>(R.id.tvContent).text = note.content
+        // Truncate content preview to 80 chars (aligned with Web Portal)
+        val preview = (note.content ?: "").take(80)
+        val tvContent = view.findViewById<TextView>(R.id.tvContent)
+        tvContent.maxLines = 1
+        tvContent.text = preview
         view.findViewById<TextView>(R.id.tvCategory).text = note.category ?: ""
         view.setOnClickListener { showEditNoteDialog(note) }
         val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
