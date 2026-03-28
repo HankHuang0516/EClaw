@@ -24,9 +24,11 @@ jobs:
 
     steps:
       - name: Install Railway CLI
-        run: npm install -g @railway/cli
+        run: npm install -g @railway/cli || sleep 10 && npm install -g @railway/cli
+        continue-on-error: true
 
       - name: Delete preview environment
+        continue-on-error: true
         # `railway environment delete` removes the ephemeral pr-N environment.
         # --yes skips the interactive confirmation prompt.
         run: |
