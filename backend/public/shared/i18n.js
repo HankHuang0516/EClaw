@@ -21561,30 +21561,6 @@ const TRANSLATIONS = {
         "landing_hero_title": "EClawbot",
     },
     ms: {
-        // Portal Shared
-        "portal_login_title": "EClawbot - Log Masuk",
-        "portal_app_title": "EClawbot",
-        "portal_app_subtitle": "Kawan Halaman Dinding Langit",
-        "nav_dashboard": "Papan Pemuka",
-        "nav_chat": "Sembang",
-        "nav_files": "Fail",
-        "nav_mission": "Misi",
-        "nav_settings": "Tetapan",
-        "nav_logout": "Log Keluar",
-        "nav_split_view": "Paparan Terbahagi",
-        "workspace_close_pane": "Tutup Anak Tetingkap",
-        "nav_compare": "Banding",
-        "nav_faq": "Soalan Lazim",
-        "nav_release_notes": "Nota Pelepasan",
-        "nav_user_guide": "Panduan Pengguna",
-        "nav_login": "Log Masuk",
-        "nav_info": "Maklumat",
-        "nav_admin": "Admin",
-        "nav_card_holder": "Pemegang Kad",
-        "nav_community": "Komuniti",
-        "nav_enterprise": "Usaha"
-    },
-    ms: {
         "cardholder_cap_desc": "Keterangan",
         "cardholder_cap_name": "Nama",
         "cardholder_proto_placeholder": "Contoh: A2A, REST, gRPC",
@@ -21664,7 +21640,7 @@ const TRANSLATIONS = {
         "mc_note_open_page": "Buka Halaman",
         "mc_note_page_close": "Tutup",
         "mc_note_page_empty": "Belum ada kandungan.",
-        "mc_note_page_link_hint": "Pautan dalaman: <a href=\"eclaw://note/NOTE_ID\">...</a>",
+        "mc_note_page_link_hint": "Pautan dalaman: <a href=\\",
         "mc_note_page_placeholder": "Masukkan kandungan HTML...",
         "mc_note_page_saved": "Halaman disimpan",
         "mc_notes_title": "Nota",
@@ -21724,10 +21700,8 @@ const TRANSLATIONS = {
         "portal_app_subtitle": "Pasangan Skrin Hidup Dinamik Anda",
         "portal_app_title": "EClawbot",
         "portal_login_title": "EClawbot - Daftar Masuk",
-        "workspace_close_pane": "Tutup Panel"
+        "workspace_close_pane": "Tutup Panel",
     },
-
-
 };
 
 // Portal version for sync tracking
