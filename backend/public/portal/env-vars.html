@@ -277,11 +277,8 @@
 
             <!-- Vars card -->
             <div class="card vars-card" id="varsCard">
-                <div class="vars-notice" data-i18n="env_notice">⚠️ Values are stored locally and synced to Bot session on page load. Not saved to cloud database.</div>
+                <div class="vars-notice" data-i18n="env_notice">🔐 Values are encrypted (AES-256) and stored on the server. Bots can read these variables when invoked.</div>
                 <div id="varsList"></div>
-                <div class="vars-add-row">
-                    <button class="btn btn-outline btn-sm" style="width:100%" onclick="showVarDialog(null)" data-i18n="env_btn_add_var">+ Add Variable</button>
-                </div>
             </div>
 
             <!-- How bots read -->
