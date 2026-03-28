@@ -4174,6 +4174,13 @@ app.post('/api/transform', (req, res) => {
         }
     }
 
+    // Auto-move child cards to review when bot reports IDLE
+    if (state === 'IDLE' && kanbanModule && kanbanModule.autoReviewOnTransform) {
+        kanbanModule.autoReviewOnTransform(deviceId, eId).catch(err => {
+            console.error(`[Transform] autoReviewOnTransform failed:`, err.message);
+        });
+    }
+
     res.json({
         success: true,
         deviceId: deviceId,
