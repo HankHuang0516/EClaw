@@ -477,6 +477,11 @@ app.use('/docs', express.static(path.join(__dirname, 'public/docs'), {
     maxAge: '1h'
 }));
 
+// Privacy policy (public, root-level)
+app.get('/privacy-policy.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/privacy-policy.html'));
+});
+
 // Telemetry auto-capture middleware (pool linked lazily after chatPool init)
 let _telemetryPool = null;
 const telemetryPoolProxy = {
