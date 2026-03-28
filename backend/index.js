@@ -9920,6 +9920,37 @@ app.post('/api/bot/pending-messages', async (req, res) => {
 });
 
 /**
+ * DELETE /api/entity/queue — Clear messageQueue for an entity
+ * Auth: deviceSecret (device owner only)
+ * Body/Query: { deviceId, deviceSecret, entityId }
+ */
+app.delete('/api/entity/queue', (req, res) => {
+    const params = { ...req.query, ...req.body };
+    const { deviceId, deviceSecret } = params;
+    const eId = parseInt(params.entityId) || 0;
+
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+
+    const entity = device.entities[eId];
+    const cleared = (entity.messageQueue || []).length;
+    entity.messageQueue = [];
+
+    console.log(`[Queue] Cleared ${cleared} messages from entity ${eId} on device ${deviceId}`);
+    res.json({ success: true, cleared, entityId: eId });
+});
+
+/**
  * WebSocket connection pool for OpenClaw gateways with SETUP_PASSWORD.
  * HTTP cannot carry both Basic Auth (SETUP_PASSWORD) and Bearer Token (Gateway Token)
  * simultaneously, so we use WebSocket which separates the two auth layers:
