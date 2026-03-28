@@ -1,3 +1,10 @@
+## [1.450.2](https://github.com/HankHuang0516/EClaw/compare/v1.450.1...v1.450.2) (2026-03-28)
+
+
+### Bug Fixes
+
+* **i18n:** fix es section premature close and merge orphaned Spanish keys ([#894](https://github.com/HankHuang0516/EClaw/issues/894)) ([7b1c3c7](https://github.com/HankHuang0516/EClaw/commit/7b1c3c7817212f2496cebd006c1ed949d284e49d)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 ## [1.450.1](https://github.com/HankHuang0516/EClaw/compare/v1.450.0...v1.450.1) (2026-03-28)
 
 
