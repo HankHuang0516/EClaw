@@ -1,3 +1,10 @@
+## [1.326.1](https://github.com/HankHuang0516/EClaw/compare/v1.326.0...v1.326.1) (2026-03-28)
+
+
+### Bug Fixes
+
+* **i18n:** escape newlines in French translation strings (batch 55) ([#736](https://github.com/HankHuang0516/EClaw/issues/736)) ([49223a8](https://github.com/HankHuang0516/EClaw/commit/49223a82621e621321e1d03eb3b7b868bea9fc3d)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.326.0](https://github.com/HankHuang0516/EClaw/compare/v1.325.0...v1.326.0) (2026-03-28)
 
 
