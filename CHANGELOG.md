@@ -1,3 +1,10 @@
+## [1.362.5](https://github.com/HankHuang0516/EClaw/compare/v1.362.4...v1.362.5) (2026-03-28)
+
+
+### Bug Fixes
+
+* **i18n:** repair broken language block structure in i18n.js ([#797](https://github.com/HankHuang0516/EClaw/issues/797)) ([63156ac](https://github.com/HankHuang0516/EClaw/commit/63156ac8ee3fbc36cc3a439a1de799dad08fcdcb))
+
 ## [1.362.4](https://github.com/HankHuang0516/EClaw/compare/v1.362.3...v1.362.4) (2026-03-28)
 
 
