@@ -741,6 +741,9 @@
 
         // ── Create Dialog ──
         function showCreateDialog() {
+            showToast(i18n.t('mc_deprecated_add') || '請使用看板任務作為替代方案。看板任務頁面已有完整生態，請讓 bot 將現有任務逐步轉移到看板任務頁面。', 'warning');
+            return;
+            /* eslint-disable no-unreachable */
             if (boundEntities.length === 0) {
                 showToast(i18n.t('sched_no_entities') || 'No bound entities. Bind an entity first.', 'error');
                 return;

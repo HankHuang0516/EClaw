@@ -1786,42 +1786,14 @@
             document.getElementById('dialogContainer').innerHTML = '';
         }
 
+        // ========== Deprecation: add → Kanban redirect ==========
+        function showDeprecatedAddWarning() {
+            showToast(i18n.t('mc_deprecated_add') || '請使用看板任務作為替代方案。看板任務頁面已有完整生態，請讓 bot 將現有任務逐步轉移到看板任務頁面。', 'warning');
+        }
+
         // ========== TODO / Mission / Done Items ==========
         function showAddItem(list) {
-            const priorityOpts = [
-                { value: 1, label: i18n.t('mc_priority_low') },
-                { value: 2, label: i18n.t('mc_priority_medium') },
-                { value: 3, label: i18n.t('mc_priority_high') },
-                { value: 4, label: i18n.t('mc_priority_urgent') }
-            ];
-            showDialog(i18n.t('mc_dlg_add_todo'), [
-                { key: 'title', label: i18n.t('mc_dlg_title'), value: '' },
-                { key: 'description', label: i18n.t('mc_dlg_desc'), type: 'textarea', value: '' },
-                { key: 'priority', label: i18n.t('mc_dlg_priority'), type: 'select', value: 2, options: priorityOpts },
-                { key: 'dueAt', label: i18n.t('mc_dlg_due_at'), type: 'datetime', value: '' },
-                { key: 'category', label: i18n.t('mc_dlg_category'), type: 'select', value: '', options: getCategoryOptions('todo') },
-                { key: 'assignedEntity', label: i18n.t('mc_dlg_assign') || '指派實體', type: 'multiselect', value: '', options: getEntityOptions() }
-            ], vals => {
-                if (!vals.title.trim()) return;
-                const item = {
-                    id: genId(),
-                    title: vals.title.trim(),
-                    description: vals.description.trim(),
-                    priority: parseInt(vals.priority),
-                    status: 'PENDING',
-                    category: vals.category || null,
-                    dueAt: vals.dueAt ? new Date(vals.dueAt).getTime() : null,
-                    createdAt: Date.now(),
-                    updatedAt: Date.now(),
-                    createdBy: 'user'
-                };
-                if (vals.assignedEntity) {
-                    item.assignedBot = vals.assignedEntity;
-                }
-                dashboard.todoList.push(item);
-                markChanged();
-                renderTodo();
-            });
+            showDeprecatedAddWarning();
         }
 
         function showEditItem(id, list) {
@@ -1924,24 +1896,7 @@
 
         // ========== Notes ==========
         function showAddNote() {
-            showDialog(i18n.t('mc_dlg_add_note'), [
-                { key: 'title', label: i18n.t('mc_dlg_title'), value: '' },
-                { key: 'content', label: i18n.t('mc_dlg_content'), type: 'textarea', value: '' },
-                { key: 'category', label: i18n.t('mc_dlg_category'), type: 'select', value: '', options: getCategoryOptions('notes') }
-            ], vals => {
-                if (!vals.title.trim()) return;
-                dashboard.notes.push({
-                    id: genId(),
-                    title: vals.title.trim(),
-                    content: vals.content.trim(),
-                    category: vals.category || null,
-                    createdAt: Date.now(),
-                    updatedAt: Date.now(),
-                    createdBy: 'user'
-                });
-                markChanged();
-                renderNotes();
-            });
+            showDeprecatedAddWarning();
         }
 
         function showEditNote(id) {
@@ -2884,7 +2839,7 @@
         }
 
         function showAddSkill() {
-            showSkillDialog(null, null);
+            showDeprecatedAddWarning();
         }
 
         function showEditSkill(id) {
@@ -3008,7 +2963,7 @@
 
         // ========== Rules ==========
         function showAddRule() {
-            showRuleDialog(null, null);
+            showDeprecatedAddWarning();
         }
 
         function showEditRule(id) {
@@ -3210,7 +3165,7 @@
         }
 
         function showAddSoul() {
-            showSoulDialog(null, null);
+            showDeprecatedAddWarning();
         }
 
         function showEditSoul(id) {

@@ -771,6 +771,7 @@ a:hover { text-decoration: underline; }
 .toast-success { background: var(--success); }
 .toast-error { background: var(--danger); }
 .toast-info { background: var(--primary); }
+.toast-warning { background: #e67e22; }
 
 @keyframes slideIn {
     from { transform: translateY(20px); opacity: 0; }
