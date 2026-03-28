@@ -2,12 +2,9 @@
  * Mission Control endpoint tests (Jest + Supertest)
  *
  * Tests the mission module routes mounted at /api/mission/*.
- * Since mission.js is dependency-injected and uses its own router,
- * we test it by mocking the mission module to install real route handlers.
+ * Legacy todo/done/start/update/delete routes have been removed — only
+ * notes, rules, skills, souls, notify, and dashboard endpoints remain.
  */
-
-// We need a different approach for mission — the mission module is mocked as an
-// empty router in the standard mock-setup. Instead, we test mission.js directly.
 
 jest.mock('pg', () => ({
     Pool: jest.fn().mockImplementation(() => {
@@ -56,15 +53,9 @@ const post = (path) => request(missionApp).post(path);
 const get = (path) => request(missionApp).get(path);
 
 // ════════════════════════════════════════════════════════════════
-// Authentication — all endpoints require deviceId+deviceSecret
+// Authentication — deprecated add endpoints return 410
 // ════════════════════════════════════════════════════════════════
 describe('Mission auth validation', () => {
-    // add endpoints are deprecated (410) — auth check is bypassed
-    it('todo/add returns 410 deprecated', async () => {
-        const res = await post('/api/mission/todo/add').send({ title: 'test' });
-        expect(res.status).toBe(410);
-    });
-
     it('note/add returns 410 deprecated', async () => {
         const res = await post('/api/mission/note/add').send({ title: 'test' });
         expect(res.status).toBe(410);
@@ -88,31 +79,6 @@ describe('Mission auth validation', () => {
     it('rejects dashboard GET without deviceId (400)', async () => {
         const res = await get('/api/mission/dashboard');
         expect(res.status).toBe(400);
-    });
-
-    it('todo/add deprecated even with valid credentials', async () => {
-        const res = await post('/api/mission/todo/add')
-            .send({ deviceId: 'test-dev', deviceSecret: 'test-secret', title: 'test' });
-        expect(res.status).toBe(410);
-    });
-
-    it('todo/add deprecated even with wrong credentials', async () => {
-        const res = await post('/api/mission/todo/add')
-            .send({ deviceId: 'test-dev', deviceSecret: 'wrong', title: 'test' });
-        expect(res.status).toBe(410);
-    });
-});
-
-// ════════════════════════════════════════════════════════════════
-// POST /api/mission/todo/add — deprecated (→ Kanban)
-// ════════════════════════════════════════════════════════════════
-describe('POST /api/mission/todo/add', () => {
-    it('returns 410 deprecated', async () => {
-        const res = await post('/api/mission/todo/add')
-            .send({ deviceId: 'test-dev', deviceSecret: 'test-secret', title: 'Test TODO' });
-        expect(res.status).toBe(410);
-        expect(res.body.deprecated).toBe(true);
-        expect(res.body.redirect).toBe('kanban');
     });
 });
 
@@ -191,48 +157,10 @@ describe('GET /api/mission/dashboard', () => {
 });
 
 // ════════════════════════════════════════════════════════════════
-// POST /api/mission/todo/update — update validation
-// ════════════════════════════════════════════════════════════════
-describe('POST /api/mission/todo/update', () => {
-    it('rejects without credentials (400)', async () => {
-        const res = await post('/api/mission/todo/update').send({ id: 1, title: 'x' });
-        expect(res.status).toBe(400);
-    });
-});
-
-// ════════════════════════════════════════════════════════════════
-// POST /api/mission/todo/done — completion
-// ════════════════════════════════════════════════════════════════
-describe('POST /api/mission/todo/done', () => {
-    it('rejects without credentials (400)', async () => {
-        const res = await post('/api/mission/todo/done').send({ id: 1 });
-        expect(res.status).toBe(400);
-    });
-});
-
-// ════════════════════════════════════════════════════════════════
-// POST /api/mission/todo/delete — delete
-// ════════════════════════════════════════════════════════════════
-describe('POST /api/mission/todo/delete', () => {
-    it('rejects without credentials (400)', async () => {
-        const res = await post('/api/mission/todo/delete').send({ id: 1 });
-        expect(res.status).toBe(400);
-    });
-});
-
-// ════════════════════════════════════════════════════════════════
-// Category support — todo/add, note/add, rule/add, skill/add, soul/add
-// accept optional category field
+// Category support — deprecated add endpoints
 // ════════════════════════════════════════════════════════════════
 describe('Category support in add endpoints — deprecated', () => {
     const auth = { deviceId: 'test-dev', deviceSecret: 'test-secret' };
-
-    it('todo/add returns 410 deprecated (category ignored)', async () => {
-        const res = await post('/api/mission/todo/add')
-            .send({ ...auth, title: 'Categorized TODO', category: 'Frontend' });
-        expect(res.status).toBe(410);
-        expect(res.body.deprecated).toBe(true);
-    });
 
     it('note/add returns 410 deprecated (category ignored)', async () => {
         const res = await post('/api/mission/note/add')
@@ -264,13 +192,6 @@ describe('Category support in add endpoints — deprecated', () => {
 // ════════════════════════════════════════════════════════════════
 describe('Category support in update endpoints', () => {
     const auth = { deviceId: 'test-dev', deviceSecret: 'test-secret' };
-
-    it('todo/update accepts newCategory field', async () => {
-        const res = await post('/api/mission/todo/update')
-            .send({ ...auth, title: 'Some TODO', newCategory: 'Backend' });
-        // 404 (not found in mock) or 500 (DB mock) — not 400
-        expect([200, 404, 500].includes(res.status)).toBe(true);
-    });
 
     it('note/update accepts newCategory field', async () => {
         const res = await post('/api/mission/note/update')
