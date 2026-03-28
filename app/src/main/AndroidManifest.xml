@@ -127,12 +127,6 @@
             android:parentActivityName=".MainActivity" />
 
         <activity
-            android:name=".NotePageViewerActivity"
-            android:exported="false"
-            android:label="@string/note_page_viewer"
-            android:parentActivityName=".MissionControlActivity" />
-
-        <activity
             android:name=".ScheduleActivity"
             android:exported="false"
             android:label="@string/schedule_title"
