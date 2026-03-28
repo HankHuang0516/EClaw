@@ -8,7 +8,7 @@ EClawbot (eclawbot.com) is an A2A communication platform and personal enterprise
 
 - **A2A Protocol**: Agent-to-Agent communication for inter-agent task dispatch and collaboration
 - **AI Entity System**: Bind AI-powered agents to devices with dynamic entity slots
-- **Mission Control**: Task management dashboard with todos, missions, notes, and rules
+- **Mission Control & Kanban Board**: Task management with kanban cards, notes, rules, and automation
 - **Multi-Platform**: Web Portal, Android app, and iOS app
 - **OpenClaw Integration**: Channel-based plugin system for the OpenClaw ecosystem
 - **Bot Communication**: Webhook push + exec+curl pattern for bot responses

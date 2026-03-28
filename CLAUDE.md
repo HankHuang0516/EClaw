@@ -7,8 +7,8 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.210.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
-- **App version constant**: 1.0.57 (in `index.js`)
+- **Current version**: 1.362.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **App version constant**: 1.0.621 (in `index.js`)
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
 ---
@@ -18,10 +18,11 @@
 ```
 EClaw/
 ├── backend/                  # Node.js Express server (deployed to Railway)
-│   ├── index.js              # Main server (~14,181 lines) — all API routes
+│   ├── index.js              # Main server (~13,758 lines) — all API routes
 │   ├── db.js                 # PostgreSQL connection pool + schema creation
 │   ├── auth.js               # Auth module (JWT, OAuth, OIDC, RBAC)
 │   ├── mission.js            # Mission Control dashboard system
+│   ├── kanban.js             # Kanban Board API (Mission Center v2)
 │   ├── gatekeeper.js         # Bot message security filter
 │   ├── gps-recommendations.js # GPS-based entity recommendation API (demo)
 │   ├── ai-support.js         # AI chat support (Anthropic Claude integration)
@@ -47,6 +48,7 @@ EClaw/
 │   ├── openapi.yaml          # OpenAPI 3.0 specification
 │   ├── auth_schema.sql       # User accounts + auth SQL schema
 │   ├── mission_schema.sql    # Mission dashboard SQL schema
+│   ├── kanban_schema.sql     # Kanban Board SQL schema
 │   ├── oauth_schema.sql      # OAuth server SQL schema
 │   ├── data/
 │   │   ├── skill-templates.json   # Bot skill templates
@@ -69,9 +71,11 @@ EClaw/
 │   │   │   ├── screen-control.html # Remote screen control
 │   │   │   ├── delete-account.html # Account deletion
 │   │   │   ├── share-chat.html    # Shareable read-only chat view
-│   │   │   ├── compare-channels.html # Channel comparison
-│   │   │   ├── faq.html           # FAQ page
-│   │   │   └── release-notes.html # Release notes
+│   │   │   ├── compare.html       # Channel comparison
+│   │   │   ├── kanban.html        # Kanban board (Mission Center v2)
+│   │   │   ├── community.html     # Community template hub
+│   │   │   ├── workspace.html     # Split-view workspace mode
+│   │   │   └── schedule.html      # Legacy schedule (redirects to kanban)
 │   │   │   ├── shared/            # Portal-specific shared modules
 │   │   │   │   ├── ai-chat.js     # AI chat component
 │   │   │   │   ├── api.js         # API wrapper utilities
@@ -86,6 +90,8 @@ EClaw/
 │   │   │   ├── telemetry.js       # Client-side telemetry SDK
 │   │   │   └── i18n.js            # Internationalization
 │   │   ├── landing.html           # EClawbot brand landing page (SEO, JSON-LD)
+│   │   ├── enterprise.html        # Enterprise landing page (SEO, JSON-LD)
+│   │   ├── privacy-policy.html    # Privacy policy page (i18n, 12 languages)
 │   │   ├── llms.txt               # AI search engine discovery file
 │   │   ├── robots.txt             # SEO: crawler directives
 │   │   ├── sitemap.xml            # SEO: sitemap (5 URLs)
@@ -158,7 +164,7 @@ EClaw/
 
 ### Backend (Node.js/Express)
 
-- **Single-file server**: `backend/index.js` (~14,181 lines) contains all API routes
+- **Single-file server**: `backend/index.js` (~13,758 lines) contains all API routes
 - **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
 - **Real-time**: Socket.IO for live updates to Web Portal and Android app
 - **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
@@ -184,6 +190,10 @@ EClaw/
 | `rule_contributions` | Community-contributed rule templates |
 | `mission_dashboard` | Mission control dashboard (todo_list, mission_list, done_list are deprecated; notes, rules still active) |
 | `mission_items` | Individual mission items with priority/status |
+| `kanban_cards` | Kanban board cards (title, priority, status, assigned_bots, automation) |
+| `kanban_comments` | Card comments (留言板) |
+| `kanban_notes` | Card notes (筆記區) |
+| `kanban_files` | Card file attachments |
 | `scheduled_messages` | _(legacy/deprecated)_ Scheduled message definitions |
 | `schedule_executions` | _(legacy/deprecated)_ Scheduled message execution log |
 | `server_logs` | Server-side audit/event logs |
@@ -214,6 +224,7 @@ EClaw/
 | `/api/chat/*` | index.js | Chat history, file upload, integrity |
 | `/api/bot/*` | index.js + bot-tools.js | Bot registration, push, files, web tools |
 | `/api/mission/*` | mission.js | Mission dashboard, notes, rules (legacy todo routes removed) |
+| `/api/mission/card*` | kanban.js | Kanban board — cards CRUD, move, comments, notes, files, config |
 | `/api/auth/*` | auth.js | Login, register, OAuth, OIDC, RBAC |
 | `/api/oauth/*` | oauth-server.js | OAuth 2.0 server (clients, tokens) |
 | `/api/a2a/*` | a2a-compat.js | A2A protocol compatibility |
@@ -252,19 +263,23 @@ EClaw/
 | Login | `/portal/` | Registration + login |
 | Dashboard | `/portal/dashboard.html` | Device overview, entity cards |
 | Chat | `/portal/chat.html` | Real-time chat with entities |
-| Mission | `/portal/mission.html` | Mission control (redirects to kanban) |
+| Mission | `/portal/mission.html` | Mission control (notes, rules) |
+| Kanban | `/portal/kanban.html` | Kanban board — cards, automation, timeline |
 | Settings | `/portal/settings.html` | Device and account settings |
 | Env Vars | `/portal/env-vars.html` | Environment variable editor |
 | Files | `/portal/files.html` | File manager |
 | Feedback | `/portal/feedback.html` | Bug reports and feedback |
 | Admin | `/portal/admin.html` | Admin management panel |
 | Card Holder | `/portal/card-holder.html` | Agent card collection (3-section: My Cards, Recent, Collected) |
-| Info | `/portal/info.html` | Device info |
+| Info | `/portal/info.html` | Device info, FAQ, release notes, user guides |
+| Community | `/portal/community.html` | Community template hub (real API, comments) |
+| Workspace | `/portal/workspace.html` | Split-view multi-pane workspace |
 | Screen Control | `/portal/screen-control.html` | Remote screen capture/control |
 | Delete Account | `/portal/delete-account.html` | Account deletion |
 | Share Chat | `/portal/share-chat.html` | Shareable read-only chat view |
 | Landing | `/` (root) | EClawbot brand landing page (public, SEO) |
 | Enterprise | `/enterprise` | Enterprise landing page (public, SEO, JSON-LD) |
+| Privacy Policy | `/privacy-policy.html` | Privacy policy (public, i18n) |
 
 ### Android App (Kotlin)
 
@@ -277,7 +292,7 @@ EClaw/
 - Billing: Google Play Billing (`BillingManager.kt`)
 - AI Chat: `AiChatViewModel.kt` manages state (fixes message loss, typing race condition)
 - Bottom nav: FILES tab renamed to CARDS (Card Holder); Files link moved to Settings
-- App version: 1.0.57
+- App version: 1.0.621
 
 ### iOS/React Native App (Expo)
 
@@ -628,6 +643,18 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Auth /me Fix (v1.199.3)**: Restored `deviceSecret` in `/api/auth/me` response to fix mission 401 errors
 - **Nav Auto-Redirect Fix (v1.199.1)**: Removed auto-redirect to workspace, use direct navigation
 
+### Recent Features (v1.211.x – v1.362.x)
+
+- **Kanban Board (Mission Center v2)**: Full-featured kanban with cards CRUD, status transitions (backlog→todo→in_progress→review→done→archive), comments, notes, files, assigned entities, automation rules (auto-move on transform IDLE), FLIP card movement animation, timeline view; `kanban.js` + `kanban_schema.sql` + `kanban.html`
+- **Legacy Schedule Removal (v1.362)**: Removed all legacy schedule APIs (`/api/schedules` returns 410), `scheduler.js` is dead code, deleted `scheduler.test.js`, `test-schedule-channel.js`, `test-schedule-cron-update.js`, `test-scheduled-chat-visibility.js`, `migrate-to-kanban.js`; mission.html restored as full Mission Control page with notes/rules
+- **i18n Expansion (12 languages)**: Full translations for French (fr), Spanish (es), Malay (ms), Hindi (hi), Arabic (ar) added to existing en/zh/ja/ko/th/vi/id; dynamic language UI + smart device detection
+- **Android WebView Mission (v1.340+)**: Native Mission Center replaced with WebView host (Phase 2+3); sub-tab navigation preserved in WebView
+- **Community Hub (v1.218)**: `community.html` — replace mock data with real API + enable comments on community templates
+- **Privacy Policy Page**: `/privacy-policy.html` with full i18n support; linked from registration terms dialog
+- **Admin Kanban Migration (v1.359)**: One-time migration from legacy mission + schedules to kanban cards
+- **Kanban Auto-Move (v1.217)**: Auto-move child cards to review when bot transforms IDLE
+- **App Version**: Updated to 1.0.621 (versionCode 68)
+
 ---
 
 ## Test Coverage Summary
@@ -801,6 +828,8 @@ Set in `backend/.env` (gitignored):
 - `const` redeclaration in same scope is a JS error — check existing variable names before adding new ones (e.g., `adminAuth` already declared at line 1198)
 - `index.js` is a single 14,181-line file — use line numbers when referencing specific code sections
 - Module initialization order matters: `db.js` → `devices` in-memory map → module `require()` calls with dependency injection
+- `scheduler.js` is dead code — no longer required by any module after v1.362 legacy schedule removal
+- `kanban.js` is the replacement for the legacy schedule/todo system — mounted at `/api/mission/card*`
 
 ### Gatekeeper System
 - `backend/gatekeeper.js` filters bot messages for security
