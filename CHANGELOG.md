@@ -1,3 +1,10 @@
+## [1.362.4](https://github.com/HankHuang0516/EClaw/compare/v1.362.3...v1.362.4) (2026-03-28)
+
+
+### Bug Fixes
+
+* **nav:** restore Mission link in navigation bar alongside Kanban ([f41928a](https://github.com/HankHuang0516/EClaw/commit/f41928a97d03875034cfd3c0794959993708db60))
+
 ## [1.362.3](https://github.com/HankHuang0516/EClaw/compare/v1.362.2...v1.362.3) (2026-03-28)
 
 
