@@ -1,3 +1,15 @@
+# [1.273.0](https://github.com/HankHuang0516/EClaw/compare/v1.272.0...v1.273.0) (2026-03-28)
+
+
+### Bug Fixes
+
+* serve privacy-policy.html from public/ directory ([daa4bd7](https://github.com/HankHuang0516/EClaw/commit/daa4bd7094cc0c961b16abb33bc30b3384104f9b))
+
+
+### Features
+
+* **i18n:** add 41 Spanish translations (batch 56) ([#674](https://github.com/HankHuang0516/EClaw/issues/674)) ([5e6d81d](https://github.com/HankHuang0516/EClaw/commit/5e6d81db3575108518b5e4499abd78d00fcec21f)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.272.0](https://github.com/HankHuang0516/EClaw/compare/v1.271.0...v1.272.0) (2026-03-28)
 
 
