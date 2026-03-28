@@ -226,6 +226,10 @@
         body.app-webview .kb-move-bar { padding:10px 16px; flex-wrap:wrap; gap:6px; }
         body.app-webview .kb-move-btn { padding:6px 10px; font-size:11px; flex:1 1 auto; text-align:center; min-width:0; }
 
+        /* App WebView: hide redundant heading (sub-tabs already indicate page) */
+        body.app-webview .kb-toolbar h2 { display:none; }
+        body.app-webview .kb-automation { display:none; }
+
         /* App WebView: force mobile layout for board */
         body.app-webview .kb-board { display:none; }
         body.app-webview .kb-mobile-tabs { display:flex; }
@@ -283,9 +287,7 @@
     <div class="container">
         <!-- Sub-tabs -->
         <div class="sub-tabs">
-            <a class="sub-tab" href="mission.html">🎯 <span data-i18n="mc_title">Mission Control</span></a>
             <a class="sub-tab active" href="kanban.html">📋 <span data-i18n="kanban_tab">Kanban Board</span></a>
-            <a class="sub-tab" href="schedule.html">📅 <span data-i18n="nav_schedule">Schedule</span></a>
             <a class="sub-tab" href="env-vars.html">🔐 <span data-i18n="kb_subtab_env">Env Variables</span></a>
             <a class="sub-tab" href="screen-control.html">📱 <span data-i18n="kb_subtab_remote">Remote Control</span></a>
         </div>
@@ -911,6 +913,7 @@
             const active = automationCards.filter(c => c.activeChildId);
             countEl.textContent = active.length + ' active';
             section.style.display = automationCards.length ? '' : 'none';
+            if (autoViewMode === 'timeline') { renderTimelineView(); return; }
             grid.innerHTML = automationCards.map(c => {
                 const cronDesc = c.schedule?.cron || '—';
                 const nextRun = c.schedule?.nextRunAt ? formatTime(c.schedule.nextRunAt) : '—';
@@ -925,7 +928,6 @@
                     ${activeChild}
                 </div>`;
             }).join('') || `<div class="kb-empty">${t('kb_auto_none','No automations yet')}</div>`;
-            if (autoViewMode === 'timeline') renderTimelineView();
         }
 
         function switchAutoView(mode) {
@@ -937,6 +939,8 @@
             if (mode === 'timeline') renderTimelineView();
         }
 
+        const TL_WIDTH_PX = 2400;
+
         function renderTimelineView() {
             const container = document.getElementById('autoTimeline');
             if (!container) return;
@@ -946,9 +950,9 @@
             }
 
             const now = Date.now();
-            const windowStart = now - 3600000;       // 1h ago
-            const windowEnd = now + 23 * 3600000;    // +23h
-            const windowMs = windowEnd - windowStart; // 24h
+            const windowStart = now - 3600000;
+            const windowEnd = now + 23 * 3600000;
+            const windowMs = windowEnd - windowStart;
 
             function toPct(ts) {
                 const clamped = Math.max(windowStart, Math.min(windowEnd, ts));
@@ -980,7 +984,12 @@
 
             const nowPct = toPct(now);
 
-            // Build a single lane
+            function buildCardHtml(card, leftPct, extraCls, timeLabel) {
+                return `<div class="kb-tl-card${extraCls}" style="left:${leftPct}%" onclick="openDetail('${card.id}')" title="${escapeHtml(card.title)}">` +
+                    `<span class="kb-tl-card-title">⚡ ${escapeHtml(card.title)}</span>` +
+                    `<span class="kb-tl-card-time">${timeLabel}</span></div>`;
+            }
+
             function buildLane(labelHtml, cards, isUnassigned) {
                 const items = [];
                 cards.forEach(card => {
@@ -989,46 +998,37 @@
                     const isMulti = (card.assignedBots || []).length > 1;
                     const multiCls = isMulti ? ' multi' : '';
                     const activeCls = card.activeChildId ? ' active' : '';
+                    const baseCls = multiCls + activeCls;
 
                     if (nextTs && nextTs >= windowStart && nextTs <= windowEnd) {
-                        const pct = toPct(nextTs);
                         const timeStr = new Date(nextTs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                        items.push(`<div class="kb-tl-card${multiCls}${activeCls}" style="left:${pct}%" onclick="openDetail('${card.id}')" title="${escapeHtml(card.title)}">` +
-                            `<span class="kb-tl-card-title">⚡ ${escapeHtml(card.title)}</span>` +
-                            `<span class="kb-tl-card-time">${timeStr}</span></div>`);
+                        items.push(buildCardHtml(card, toPct(nextTs), baseCls, timeStr));
                     } else if (nextTs && nextTs > windowEnd) {
-                        // Beyond window — pin to right edge
-                        items.push(`<div class="kb-tl-card past-edge${multiCls}" style="left:98%" onclick="openDetail('${card.id}')" title="${escapeHtml(card.title)}">` +
-                            `<span class="kb-tl-card-title">⚡ ${escapeHtml(card.title)}</span>` +
-                            `<span class="kb-tl-card-time">→ ${formatTime(nextTs)}</span></div>`);
+                        items.push(buildCardHtml(card, '98', ' past-edge' + multiCls, '→ ' + formatTime(nextTs)));
+                    } else if (nextTs && nextTs < windowStart) {
+                        // Past window — pin to left edge
+                        items.push(buildCardHtml(card, '2', ' past-edge' + multiCls, '← ' + formatTime(nextTs)));
                     } else if (!nextTs) {
-                        // No nextRunAt — show at start with cron label
                         const cronLabel = card.schedule?.cronExpression || card.schedule?.cron || '—';
-                        items.push(`<div class="kb-tl-card past-edge${multiCls}" style="left:2%" onclick="openDetail('${card.id}')" title="${escapeHtml(card.title)}">` +
-                            `<span class="kb-tl-card-title">⚡ ${escapeHtml(card.title)}</span>` +
-                            `<span class="kb-tl-card-time">↻ ${escapeHtml(cronLabel)}</span></div>`);
+                        items.push(buildCardHtml(card, '2', ' past-edge' + multiCls, '↻ ' + escapeHtml(cronLabel)));
                     }
 
                     if (lastTs && lastTs >= windowStart && lastTs <= windowEnd) {
-                        const pct = toPct(lastTs);
                         const icon = card.lastRunResult?.startsWith('✅') ? '✅' : '❌';
-                        items.push(`<div class="kb-tl-marker" style="left:${pct}%" title="${escapeHtml(card.title)} – ${escapeHtml(card.lastRunResult || '')}"><span>${icon}</span></div>`);
+                        items.push(`<div class="kb-tl-marker" style="left:${toPct(lastTs)}%" title="${escapeHtml(card.title)} – ${escapeHtml(card.lastRunResult || '')}"><span>${icon}</span></div>`);
                     }
                 });
 
-                // Now line in this lane
                 items.push(`<div class="kb-tl-now" style="left:${nowPct}%"></div>`);
-
                 const cls = isUnassigned ? ' unassigned' : '';
                 return `<div class="kb-tl-lane${cls}"><div class="kb-tl-lane-label">${labelHtml}</div><div class="kb-tl-lane-track">${items.join('')}</div></div>`;
             }
 
-            // Sort entity lanes by ID
             const sortedIds = Object.keys(entityLanes).map(Number).sort((a, b) => a - b);
             let lanesHtml = sortedIds.map(eid => {
-                const avatar = typeof getAvatarForEntity === 'function' ? getAvatarForEntity(eid) : '🦞';
-                const name = typeof getEntityDisplayName === 'function' ? getEntityDisplayName(eid) : '#' + eid;
-                const avatarHtml = (typeof isAvatarUrl === 'function' && isAvatarUrl(avatar))
+                const avatar = getAvatarForEntity(eid);
+                const name = getEntityDisplayName(eid);
+                const avatarHtml = isAvatarUrl(avatar)
                     ? `<span class="kb-tl-lane-avatar"><img src="${escapeHtml(avatar)}" alt="${escapeHtml(name)}"></span>`
                     : `<span class="kb-tl-lane-avatar">${avatar}</span>`;
                 const labelHtml = `${avatarHtml}<span class="kb-tl-lane-name" title="${escapeHtml(name)}">${escapeHtml(name)}</span>`;
@@ -1040,6 +1040,8 @@
                 lanesHtml += buildLane(label, unassigned, true);
             }
 
+            // Preserve scroll position on poll refresh
+            const prevScroll = container.scrollLeft;
             container.innerHTML =
                 `<div class="kb-tl-container">` +
                     `<div class="kb-tl-axis"><div class="kb-tl-label-spacer"></div>` +
@@ -1048,9 +1050,12 @@
                     `<div class="kb-tl-lanes">${lanesHtml}</div>` +
                 `</div>`;
 
-            // Auto-scroll to now
-            const scrollTarget = (nowPct / 100) * 2400 - container.clientWidth / 2;
-            container.scrollLeft = Math.max(0, scrollTarget);
+            if (prevScroll > 0) {
+                container.scrollLeft = prevScroll;
+            } else {
+                const scrollTarget = (nowPct / 100) * TL_WIDTH_PX - container.clientWidth / 2;
+                container.scrollLeft = Math.max(0, scrollTarget);
+            }
         }
 
         function toggleAutomation() {
