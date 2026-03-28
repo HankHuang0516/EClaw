@@ -1,3 +1,10 @@
+# [1.219.0](https://github.com/HankHuang0516/EClaw/compare/v1.218.1...v1.219.0) (2026-03-28)
+
+
+### Features
+
+* **community:** replace mock data with real API + enable comments ([#613](https://github.com/HankHuang0516/EClaw/issues/613)) ([60e6736](https://github.com/HankHuang0516/EClaw/commit/60e67362f3c4bb765421e1542045327266e1e84b))
+
 ## [1.218.1](https://github.com/HankHuang0516/EClaw/compare/v1.218.0...v1.218.1) (2026-03-28)
 
 
