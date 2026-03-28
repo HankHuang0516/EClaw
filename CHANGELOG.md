@@ -1,3 +1,10 @@
+# [1.214.0](https://github.com/HankHuang0516/EClaw/compare/v1.213.0...v1.214.0) (2026-03-28)
+
+
+### Features
+
+* **i18n:** add Spanish (es) translation batch 2 (squashed) ([c9bbfb4](https://github.com/HankHuang0516/EClaw/commit/c9bbfb470c3da7a9d177aa20bc8d7c61f14e678d)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.213.0](https://github.com/HankHuang0516/EClaw/compare/v1.212.0...v1.213.0) (2026-03-28)
 
 
