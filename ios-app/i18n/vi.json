@@ -83,6 +83,7 @@
     "binding_code": "Mã liên kết",
     "binding_code_desc": "Chia sẻ mã này với bot OpenClaw để liên kết với khe {{index}}",
     "channel_bind_warning": "Phiên bản 2026-03 trở lên khuyến nghị sử dụng EClaw Channel để liên kết nhằm tránh lỗi liên kết.",
+    "channel_ai_agent_hint": "🤖 Khuyến nghị sử dụng Claude Code hoặc AI Agent khác để hỗ trợ cài đặt.",
     "binding_code_expires": "Hết hạn sau {{time}}",
     "code_copied": "Đã sao chép mã liên kết!",
     "broadcast": "Phát sóng",

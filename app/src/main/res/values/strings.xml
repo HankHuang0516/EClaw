@@ -17,6 +17,7 @@
     <string name="channel_promo">Try EClaw Channel? More native, faster</string>
     <string name="channel_step_intro">In OpenClaw terminal:</string>
     <string name="channel_step3">3  Select \"EClaw\"</string>
+    <string name="channel_ai_agent_hint">🤖 Strongly recommended to use Claude Code or other AI agents for assisted installation.</string>
     <string name="channel_learn_more">Learn more →</string>
     <string name="expand">Expand</string>
     <string name="copy">Copy</string>

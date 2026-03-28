@@ -18,6 +18,7 @@
     <string name="channel_promo">試試 EClaw Channel？更原生、更快速</string>
     <string name="channel_step_intro">在 OpenClaw 終端機中：</string>
     <string name="channel_step3">3  選擇「EClaw」</string>
+    <string name="channel_ai_agent_hint">🤖 強烈建議使用 Claude Code 等 AI Agent 進行輔助安裝。</string>
     <string name="channel_learn_more">了解更多 →</string>
     <string name="copy">複製</string>
     <string name="broadcast_to_all">廣播給全部</string>

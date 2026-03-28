@@ -83,6 +83,7 @@
     "binding_code": "Kode Pengikatan",
     "binding_code_desc": "Bagikan kode ini ke bot OpenClaw Anda untuk mengikat ke slot {{index}}",
     "channel_bind_warning": "Versi 2026-03 ke atas sangat disarankan menggunakan EClaw Channel untuk menghindari kegagalan binding.",
+    "channel_ai_agent_hint": "🤖 Sangat disarankan menggunakan Claude Code atau AI Agent lainnya untuk membantu instalasi.",
     "binding_code_expires": "Kedaluwarsa dalam {{time}}",
     "code_copied": "Kode pengikatan disalin!",
     "broadcast": "Siaran",

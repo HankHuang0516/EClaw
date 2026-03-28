@@ -15,6 +15,7 @@
     <string name="channel_promo">Thử EClaw Channel? Tích hợp gốc hơn, nhanh hơn</string>
     <string name="channel_step_intro">Trong terminal OpenClaw:</string>
     <string name="channel_step3">3  Chọn \"EClaw\"</string>
+    <string name="channel_ai_agent_hint">🤖 Khuyến nghị sử dụng Claude Code hoặc AI Agent khác để hỗ trợ cài đặt.</string>
     <string name="channel_learn_more">Tìm hiểu thêm →</string>
     <string name="copy">Sao chép</string>
     <string name="broadcast_to_all">Phát tới tất cả</string>

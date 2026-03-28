@@ -15,6 +15,7 @@
     <string name="channel_promo">EClaw Channel을 사용해 보세요! 더 네이티브하고 더 빠릅니다</string>
     <string name="channel_step_intro">OpenClaw 터미널에서:</string>
     <string name="channel_step3">3  \"EClaw\" 선택</string>
+    <string name="channel_ai_agent_hint">🤖 Claude Code 등 AI 에이전트를 사용하여 설치를 보조하는 것을 강력히 권장합니다.</string>
     <string name="channel_learn_more">자세히 보기 →</string>
     <string name="copy">복사</string>
     <string name="broadcast_to_all">전체 브로드캐스트</string>

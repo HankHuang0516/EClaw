@@ -15,6 +15,7 @@
     <string name="channel_promo">Coba EClaw Channel? Lebih native, lebih cepat</string>
     <string name="channel_step_intro">Di terminal OpenClaw:</string>
     <string name="channel_step3">3  Pilih \"EClaw\"</string>
+    <string name="channel_ai_agent_hint">🤖 Sangat disarankan menggunakan Claude Code atau AI Agent lainnya untuk membantu instalasi.</string>
     <string name="channel_learn_more">Pelajari lebih lanjut →</string>
     <string name="copy">Salin</string>
     <string name="broadcast_to_all">Siarkan ke Semua</string>
