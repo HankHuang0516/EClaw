@@ -1,3 +1,10 @@
+## [1.218.1](https://github.com/HankHuang0516/EClaw/compare/v1.218.0...v1.218.1) (2026-03-28)
+
+
+### Bug Fixes
+
+* **chat:** use entity name as source for channel bot replies ([#612](https://github.com/HankHuang0516/EClaw/issues/612)) ([cdd624a](https://github.com/HankHuang0516/EClaw/commit/cdd624ababb628a05f2c0b84cead492676860794))
+
 # [1.218.0](https://github.com/HankHuang0516/EClaw/compare/v1.217.1...v1.218.0) (2026-03-28)
 
 
