@@ -1,3 +1,10 @@
+## [1.465.1](https://github.com/HankHuang0516/EClaw/compare/v1.465.0...v1.465.1) (2026-03-29)
+
+
+### Bug Fixes
+
+* **note:** unify POST /note/add and PUT /note/page endpoints ([#914](https://github.com/HankHuang0516/EClaw/issues/914)) ([904aa19](https://github.com/HankHuang0516/EClaw/commit/904aa197126baffda175526c8316363359b2fd57))
+
 # [1.465.0](https://github.com/HankHuang0516/EClaw/compare/v1.464.0...v1.465.0) (2026-03-29)
 
 
