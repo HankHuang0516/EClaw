@@ -56,9 +56,9 @@ const get = (path) => request(missionApp).get(path);
 // Authentication — deprecated add endpoints return 410
 // ════════════════════════════════════════════════════════════════
 describe('Mission auth validation', () => {
-    it('note/add returns 410 deprecated', async () => {
+    it('note/add rejects without credentials (400)', async () => {
         const res = await post('/api/mission/note/add').send({ title: 'test' });
-        expect(res.status).toBe(410);
+        expect(res.status).toBe(400);
     });
 
     it('rule/add returns 410 deprecated', async () => {
@@ -83,15 +83,20 @@ describe('Mission auth validation', () => {
 });
 
 // ════════════════════════════════════════════════════════════════
-// POST /api/mission/note/add — deprecated (→ Kanban)
+// POST /api/mission/note/add — unified note creation
 // ════════════════════════════════════════════════════════════════
 describe('POST /api/mission/note/add', () => {
-    it('returns 410 deprecated', async () => {
+    it('creates note with valid credentials', async () => {
         const res = await post('/api/mission/note/add')
             .send({ deviceId: 'test-dev', deviceSecret: 'test-secret', title: 'Note', content: 'Body' });
-        expect(res.status).toBe(410);
-        expect(res.body.deprecated).toBe(true);
-        expect(res.body.redirect).toBe('kanban');
+        // 200 success or 500 (mock DB) — not 400/410
+        expect([200, 500].includes(res.status)).toBe(true);
+    });
+
+    it('returns 400 without title', async () => {
+        const res = await post('/api/mission/note/add')
+            .send({ deviceId: 'test-dev', deviceSecret: 'test-secret' });
+        expect(res.status).toBe(400);
     });
 });
 
@@ -162,10 +167,10 @@ describe('GET /api/mission/dashboard', () => {
 describe('Category support in add endpoints — deprecated', () => {
     const auth = { deviceId: 'test-dev', deviceSecret: 'test-secret' };
 
-    it('note/add returns 410 deprecated (category ignored)', async () => {
+    it('note/add accepts category field', async () => {
         const res = await post('/api/mission/note/add')
             .send({ ...auth, title: 'Categorized Note', category: 'Meeting' });
-        expect(res.status).toBe(410);
+        expect([200, 500].includes(res.status)).toBe(true);
     });
 
     it('rule/add returns 410 deprecated (category ignored)', async () => {

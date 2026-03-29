@@ -628,12 +628,11 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
     });
 
     // ============================================
-    // POST /note/add
-    // Bot adds a new note to dashboard
+    // POST /note/add — forwards to PUT /note/page (unified endpoint)
+    // Accepts: { deviceId, title, content, category, entityId, botSecret/deviceSecret }
+    // Creates both the dashboard note entry AND an empty note page
     // ============================================
     router.post('/note/add', async (req, res) => {
-        return rejectDeprecatedAdd(req, res);
-        /* eslint-disable-next-line no-unreachable */
         if (!authenticate(req, res)) return;
         const { deviceId, entityId, title, content, category } = req.body;
 
@@ -641,20 +640,18 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
             return res.status(400).json({ success: false, error: 'Missing title' });
         }
 
+        const noteId = crypto.randomUUID();
+        // Create dashboard note entry
         const client = await pool.connect();
         try {
             await client.query('BEGIN');
             await client.query('SELECT init_mission_dashboard($1)', [deviceId]);
-
             const result = await client.query(
-                'SELECT * FROM mission_dashboard WHERE device_id = $1 FOR UPDATE',
-                [deviceId]
+                'SELECT notes FROM mission_dashboard WHERE device_id = $1 FOR UPDATE', [deviceId]
             );
-            const row = result.rows[0];
-            const notes = row.notes || [];
-
+            const notes = (result.rows[0] && result.rows[0].notes) || [];
             const newNote = {
-                id: crypto.randomUUID(),
+                id: noteId,
                 title: title.trim(),
                 content: (content || '').trim(),
                 category: (category || 'general').trim(),
@@ -663,17 +660,21 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
                 createdBy: entityId != null ? `entity_${entityId}` : 'bot'
             };
             notes.push(newNote);
-
             const updateResult = await client.query(
-                `UPDATE mission_dashboard SET notes = $2, last_synced_at = NOW()
-                 WHERE device_id = $1 RETURNING version`,
+                'UPDATE mission_dashboard SET notes = $2, last_synced_at = NOW() WHERE device_id = $1 RETURNING version',
                 [deviceId, JSON.stringify(notes)]
             );
             await client.query('COMMIT');
 
-            if (process.env.DEBUG === 'true') console.log(`[Mission] Note added: "${newNote.title}" by bot, device ${deviceId}`);
+            // Also create a note_pages entry so PUT /note/page and GET /note/page work immediately
+            await pool.query(`
+                INSERT INTO note_pages (device_id, note_id, html_content, is_public)
+                VALUES ($1, $2, $3, false)
+                ON CONFLICT (device_id, note_id) DO NOTHING
+            `, [deviceId, noteId, content || '']);
+
             if (serverLog) serverLog('info', 'mission', `[Mission] Note added: "${newNote.title}" by bot, device ${deviceId}`, { deviceId });
-            res.json({ success: true, message: `Note "${newNote.title}" added`, item: newNote, version: updateResult.rows[0].version });
+            res.json({ success: true, message: `Note "${newNote.title}" added`, item: newNote, noteId, version: updateResult.rows[0].version });
         } catch (error) {
             await client.query('ROLLBACK');
             console.error('[Mission] Error adding note:', error);
@@ -858,9 +859,55 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
             });
         }
 
-        const noteId = await resolveNoteId(deviceId, req.body);
+        let noteId = await resolveNoteId(deviceId, req.body);
+        const { title, category, entityId } = req.body;
+
+        // Auto-create dashboard note entry if noteId not found (unified flow)
         if (!noteId) {
-            return res.status(400).json({ success: false, error: 'Missing or invalid noteId/title' });
+            if (!title && !req.body.noteId) {
+                return res.status(400).json({ success: false, error: 'Missing noteId or title' });
+            }
+            // If noteId was provided directly but doesn't exist in dashboard, use it as-is
+            if (req.body.noteId) {
+                noteId = req.body.noteId;
+            } else {
+                // Generate new noteId for title-based creation
+                noteId = crypto.randomUUID();
+            }
+
+            // Ensure dashboard note entry exists
+            const client = await pool.connect();
+            try {
+                await client.query('BEGIN');
+                await client.query('SELECT init_mission_dashboard($1)', [deviceId]);
+                const dashResult = await client.query(
+                    'SELECT notes FROM mission_dashboard WHERE device_id = $1 FOR UPDATE', [deviceId]
+                );
+                const notes = (dashResult.rows[0] && dashResult.rows[0].notes) || [];
+                const exists = notes.some(n => n.id === noteId);
+                if (!exists) {
+                    notes.push({
+                        id: noteId,
+                        title: (title || 'Untitled Page').trim(),
+                        content: '',
+                        category: (category || 'general').trim(),
+                        createdAt: Date.now(),
+                        updatedAt: Date.now(),
+                        createdBy: entityId != null ? `entity_${entityId}` : 'bot'
+                    });
+                    await client.query(
+                        'UPDATE mission_dashboard SET notes = $2, last_synced_at = NOW() WHERE device_id = $1',
+                        [deviceId, JSON.stringify(notes)]
+                    );
+                }
+                await client.query('COMMIT');
+            } catch (err) {
+                await client.query('ROLLBACK');
+                console.error('[Mission] Auto-create note entry error:', err.message);
+                // Non-fatal: page can still be saved without dashboard entry
+            } finally {
+                client.release();
+            }
         }
 
         try {
@@ -872,7 +919,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
                 RETURNING id, updated_at, is_public
             `, [deviceId, noteId, content, isPublic, markdownContent || null, hasScripts ? scriptDesc : null]);
 
-            if (serverLog) serverLog('info', 'mission', `[Mission] Note page updated: ${noteId}, device ${deviceId}, public: ${isPublic}, hasScripts: ${hasScripts}`, { deviceId });
+            if (serverLog) serverLog('info', 'mission', `[Mission] Note page saved: ${noteId}, device ${deviceId}, public: ${isPublic}, hasScripts: ${hasScripts}`, { deviceId });
             res.json({ success: true, message: 'Page saved', id: result.rows[0].id, noteId, isPublic: result.rows[0].is_public, updatedAt: result.rows[0].updated_at, hasScripts });
         } catch (error) {
             console.error('[Mission] Error saving note page:', error);
