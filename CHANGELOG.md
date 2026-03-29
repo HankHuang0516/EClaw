@@ -1,3 +1,10 @@
+# [1.545.0](https://github.com/HankHuang0516/EClaw/compare/v1.544.0...v1.545.0) (2026-03-29)
+
+
+### Features
+
+* **i18n:** add Arabic (ar) translations batch 38 (26 keys) (squashed) ([f1d9956](https://github.com/HankHuang0516/EClaw/commit/f1d99561d3d011c2ea47d8190d705964fe4ea5bf))
+
 # [1.544.0](https://github.com/HankHuang0516/EClaw/compare/v1.543.0...v1.544.0) (2026-03-29)
 
 
