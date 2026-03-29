@@ -1281,7 +1281,8 @@ app.get('/p/:code/:noteId', async (req, res) => {
 
 function sanitizePublicHtml(html) {
     if (!html) return '';
-    return sanitizeHtml(html, {
+    // Sanitize HTML (strips <script> by default)
+    const sanitized = sanitizeHtml(html, {
         allowVulnerableTags: true,
         allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'span', 'details', 'summary', 'mark', 'del', 'ins', 'sub', 'sup', 'style']),
         allowedAttributes: {
@@ -1303,6 +1304,27 @@ function sanitizePublicHtml(html) {
             'line-height': [/.*/], 'white-space': [/.*/], 'overflow': [/.*/], 'opacity': [/.*/]
         } }
     });
+
+    // If original HTML contains <script>, preserve them as blocked for consent-gated execution
+    const hasScripts = /<script[\s>]/i.test(html);
+    if (!hasScripts) return sanitized;
+
+    // Extract all <script> tags from original HTML, encode as data for deferred execution
+    const scriptBlocks = [];
+    html.replace(/<script([^>]*)>([\s\S]*?)<\/script>/gi, (match, attrs, body) => {
+        const srcMatch = attrs.match(/src=["']([^"']+)["']/i);
+        scriptBlocks.push(srcMatch ? { src: srcMatch[1] } : { inline: body });
+    });
+    if (scriptBlocks.length === 0) return sanitized;
+
+    // Embed blocked scripts as JSON data attribute for client-side consent activation
+    const encoded = Buffer.from(JSON.stringify(scriptBlocks)).toString('base64');
+    return sanitized + `<div id="eclaw-blocked-scripts" data-scripts="${encoded}" style="display:none"></div>`;
+}
+
+/** Check if rendered content has blocked scripts that need consent */
+function hasBlockedScripts(content) {
+    return content.includes('id="eclaw-blocked-scripts"');
 }
 
 function renderPublicPageShell(title, content, opts = {}) {
@@ -1371,6 +1393,16 @@ function renderPublicPageShell(title, content, opts = {}) {
         .url-bar-copy:hover{opacity:.85;transform:scale(1.03)}
         .url-bar-copy:active{transform:scale(.97)}
         .url-bar-copy.copied{background:#22c55e}
+        .script-consent{position:fixed;bottom:0;left:0;right:0;background:var(--card-bg);border-top:2px solid #f59e0b;padding:16px 24px;display:flex;align-items:center;gap:16px;z-index:9999;box-shadow:0 -4px 20px rgba(0,0,0,.4);flex-wrap:wrap}
+        .script-consent-icon{font-size:24px;flex-shrink:0}
+        .script-consent-text{flex:1;min-width:200px;font-size:14px;line-height:1.5;color:var(--text)}
+        .script-consent-text strong{color:#f59e0b}
+        .script-consent-actions{display:flex;gap:8px;flex-shrink:0}
+        .script-consent-btn{padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+        .script-consent-accept{background:#22c55e;color:white}
+        .script-consent-accept:hover{opacity:.85}
+        .script-consent-reject{background:var(--border);color:var(--text)}
+        .script-consent-reject:hover{background:var(--bg)}
     </style>
 </head>
 <body>
@@ -1379,7 +1411,19 @@ function renderPublicPageShell(title, content, opts = {}) {
     ${publicCode && noteId ? `<div class="url-bar"><div class="url-bar-inner"><span class="url-bar-icon">🔗</span><span class="url-bar-text" id="page-url">https://eclawbot.com/p/${publicCode}/${noteId}</span><button class="url-bar-copy" id="copy-url-btn" onclick="copyPageUrl()">複製</button></div></div><script>function copyPageUrl(){var u=document.getElementById('page-url').textContent,b=document.getElementById('copy-url-btn');navigator.clipboard.writeText(u).then(function(){b.textContent='已複製 ✓';b.classList.add('copied');setTimeout(function(){b.textContent='複製';b.classList.remove('copied')},2000)}).catch(function(){var t=document.createElement('textarea');t.value=u;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);b.textContent='已複製 ✓';b.classList.add('copied');setTimeout(function(){b.textContent='複製';b.classList.remove('copied')},2000)})}<\/script>` : ''}
     <div class="page-content">${content}</div>
     ${footerInfo}
-    ${content.includes('data-eclaw-form') ? '<script src="/assets/eclaw-forms.js"></script>' : ''}
+    ${content.includes('data-eclaw-form') ? '<script src="/assets/eclaw-forms.js"><\/script>' : ''}
+    ${hasBlockedScripts(content) ? `<div class="script-consent" id="scriptConsent">
+        <span class="script-consent-icon">⚠️</span>
+        <div class="script-consent-text">
+            <strong>此頁面包含自訂腳本 (JavaScript)</strong><br>
+            This page contains custom scripts authored by the page publisher. Scripts may interact with your browser.
+        </div>
+        <div class="script-consent-actions">
+            <button class="script-consent-btn script-consent-reject" onclick="document.getElementById('scriptConsent').remove()">拒絕 Decline</button>
+            <button class="script-consent-btn script-consent-accept" onclick="activateBlockedScripts()">接受並執行 Accept</button>
+        </div>
+    </div>
+    <script>function activateBlockedScripts(){var el=document.getElementById('eclaw-blocked-scripts');if(!el)return;try{var scripts=JSON.parse(atob(el.dataset.scripts));var loaded=0,total=scripts.length;function next(){if(loaded>=total){document.getElementById('scriptConsent').remove();return}var s=scripts[loaded++];var tag=document.createElement('script');if(s.src){tag.src=s.src;tag.onload=tag.onerror=next;document.body.appendChild(tag)}else{tag.textContent=s.inline;document.body.appendChild(tag);next()}}next()}catch(e){console.error('[EClawbot] Script activation error:',e);document.getElementById('scriptConsent').remove()}}<\/script>` : ''}
 </body>
 </html>`;
 }
