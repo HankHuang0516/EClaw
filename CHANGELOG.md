@@ -1,3 +1,10 @@
+## [1.465.3](https://github.com/HankHuang0516/EClaw/compare/v1.465.2...v1.465.3) (2026-03-29)
+
+
+### Bug Fixes
+
+* **csp:** relax CSP for public note pages to allow bot scripts ([#916](https://github.com/HankHuang0516/EClaw/issues/916)) ([98bdd3e](https://github.com/HankHuang0516/EClaw/commit/98bdd3ea27dd8147c287b6f379a8e9727bd7054c))
+
 ## [1.465.2](https://github.com/HankHuang0516/EClaw/compare/v1.465.1...v1.465.2) (2026-03-29)
 
 
