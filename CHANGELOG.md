@@ -1,3 +1,10 @@
+## [1.586.1](https://github.com/HankHuang0516/EClaw/compare/v1.586.0...v1.586.1) (2026-03-29)
+
+
+### Bug Fixes
+
+* **i18n:** correct French translations placement in FR section (batch 20 fix) ([aafa69d](https://github.com/HankHuang0516/EClaw/commit/aafa69dd0631fbf6420253658d007b30c593e76b))
+
 # [1.586.0](https://github.com/HankHuang0516/EClaw/compare/v1.585.0...v1.586.0) (2026-03-29)
 
 
