@@ -1,3 +1,10 @@
+## [1.465.4](https://github.com/HankHuang0516/EClaw/compare/v1.465.3...v1.465.4) (2026-03-29)
+
+
+### Bug Fixes
+
+* **skill-doc:** remove non-existent TODO/rule-add/soul-add/skill-add from API doc ([#917](https://github.com/HankHuang0516/EClaw/issues/917)) ([fbed989](https://github.com/HankHuang0516/EClaw/commit/fbed989c84eea8316868e6f23a7e23905f0296ab))
+
 ## [1.465.3](https://github.com/HankHuang0516/EClaw/compare/v1.465.2...v1.465.3) (2026-03-29)
 
 
