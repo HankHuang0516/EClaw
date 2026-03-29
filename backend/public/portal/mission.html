@@ -209,6 +209,43 @@
             border-color: var(--primary);
         }
 
+        /* Bulk operation overlay (reuses shared @keyframes spin from style.css) */
+        .bulk-op-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 500;
+        }
+        .bulk-op-overlay .bulk-op-box {
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: var(--radius); padding: 28px 36px;
+            text-align: center; min-width: 240px;
+        }
+        .bulk-op-overlay .spinner { width: 28px; height: 28px; margin: 0 auto 12px; }
+        .bulk-op-overlay .bulk-op-msg { font-size: 14px; color: var(--text); margin-bottom: 16px; }
+        .bulk-op-overlay .bulk-op-cancel {
+            padding: 6px 20px; border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm); background: transparent;
+            color: var(--text-muted); cursor: pointer; font-size: 13px;
+        }
+        .bulk-op-overlay .bulk-op-cancel:hover { background: var(--card-border); }
+
+        /* Undo toast */
+        .toast-undo {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            background: var(--card-bg); border: 1px solid var(--card-border);
+            border-radius: var(--radius); padding: 10px 20px;
+            display: flex; align-items: center; gap: 12px;
+            z-index: 600; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            font-size: 13px; color: var(--text);
+        }
+        .toast-undo button {
+            padding: 4px 14px; border: 1px solid var(--primary);
+            border-radius: var(--radius-sm); background: transparent;
+            color: var(--primary); cursor: pointer; font-weight: 600; font-size: 13px;
+        }
+        .toast-undo button:hover { background: var(--primary); color: #fff; }
+
         /* Entity checkbox grid */
         .entity-checkbox-grid {
             display: grid;
@@ -858,6 +895,7 @@
 
     <!-- Dialog container -->
     <div id="dialogContainer"></div>
+    <div id="bulkOpOverlay"></div>
     <!-- Context menu container -->
     <div id="contextMenu" class="context-menu" style="display:none"></div>
 
@@ -958,37 +996,46 @@
             autoSaveTimer = setTimeout(() => autoSave(), 2000);
         }
 
-        async function autoSave() {
-            if (!hasChanges || isSyncing) return;
-            isSyncing = true;
-            renderSyncBar();
-            try {
-                const data = await apiCall('POST', '/api/mission/dashboard', {
+        // Core save: POST dashboard to server with version-conflict retry. Throws on failure.
+        async function _saveDashboard() {
+            const data = await apiCall('POST', '/api/mission/dashboard', {
+                deviceId: currentUser.deviceId,
+                deviceSecret: currentUser.deviceSecret,
+                version: version,
+                dashboard: dashboard
+            });
+            if (data.success) {
+                version = data.version || version + 1;
+                hasChanges = false;
+                lastSavedDashboard = JSON.parse(JSON.stringify(dashboard));
+                return;
+            }
+            if (data.error === 'VERSION_CONFLICT') {
+                console.warn('Version conflict, retrying with server version', data.currentVersion);
+                version = data.currentVersion;
+                const retry = await apiCall('POST', '/api/mission/dashboard', {
                     deviceId: currentUser.deviceId,
                     deviceSecret: currentUser.deviceSecret,
                     version: version,
                     dashboard: dashboard
                 });
-                if (data.success) {
-                    version = data.version || version + 1;
+                if (retry.success) {
+                    version = retry.version || version + 1;
                     hasChanges = false;
                     lastSavedDashboard = JSON.parse(JSON.stringify(dashboard));
-                } else if (data.error === 'VERSION_CONFLICT') {
-                    // Retry with server's current version (last-writer-wins)
-                    console.warn('Auto-save version conflict, retrying with server version', data.currentVersion);
-                    version = data.currentVersion;
-                    const retry = await apiCall('POST', '/api/mission/dashboard', {
-                        deviceId: currentUser.deviceId,
-                        deviceSecret: currentUser.deviceSecret,
-                        version: version,
-                        dashboard: dashboard
-                    });
-                    if (retry.success) {
-                        version = retry.version || version + 1;
-                        hasChanges = false;
-                        lastSavedDashboard = JSON.parse(JSON.stringify(dashboard));
-                    }
+                    return;
                 }
+                throw new Error(retry.error || 'Save failed after retry');
+            }
+            throw new Error(data.error || 'Save failed');
+        }
+
+        async function autoSave() {
+            if (!hasChanges || isSyncing) return;
+            isSyncing = true;
+            renderSyncBar();
+            try {
+                await _saveDashboard();
             } catch (e) {
                 console.warn('Auto-save failed:', e.message);
             }
@@ -1440,32 +1487,122 @@
             renderAll();
         }
 
-        function clearCategory(section, cat) {
-            if (!confirm(i18n.t('mc_confirm_clear_category') || `Clear all items in "${cat}"?`)) return;
-            const key = SECTION_LIST_KEY[section];
-            if (key) dashboard[key] = dashboard[key].filter(item => item.category !== cat);
-            markChanged();
-            renderAll();
+        // --- Bulk operation helpers (immediate save with overlay + undo) ---
+        let _bulkOpCancelled = false;
+        let _undoToastTimer = null;
+
+        function dismissUndoToast() {
+            const existing = document.querySelector('.toast-undo');
+            if (existing) existing.remove();
+            if (_undoToastTimer) { clearTimeout(_undoToastTimer); _undoToastTimer = null; }
         }
 
-        function deleteCategory(section, cat) {
-            if (!confirm(i18n.t('mc_confirm_delete_category') || `Delete category "${cat}"? Items will become uncategorized.`)) return;
+        function showBulkOverlay(msg) {
+            _bulkOpCancelled = false;
+            dismissUndoToast();
+            document.getElementById('bulkOpOverlay').innerHTML = `<div class="bulk-op-overlay">
+                <div class="bulk-op-box">
+                    <div class="spinner"></div>
+                    <div class="bulk-op-msg">${esc(msg)}</div>
+                    <button class="bulk-op-cancel" onclick="cancelBulkOp()">${i18n.t('mc_bulk_cancel') || 'Cancel'}</button>
+                </div>
+            </div>`;
+        }
 
-            const order = getCategoryOrder(section);
-            const idx = order.indexOf(cat);
-            if (idx >= 0) order.splice(idx, 1);
-            setCategoryOrder(section, order);
+        function hideBulkOverlay() { document.getElementById('bulkOpOverlay').innerHTML = ''; }
 
-            delete _categoryState[`${section}:${cat}`];
-            saveCategoryState(_categoryState);
+        function cancelBulkOp() { _bulkOpCancelled = true; hideBulkOverlay(); }
 
-            const list = getListForSection(section);
-            list.forEach(item => {
-                if (item.category === cat) item.category = null;
+        function showUndoToast(msg, undoFn) {
+            dismissUndoToast();
+            const el = document.createElement('div');
+            el.className = 'toast-undo';
+            el.innerHTML = `<span>${esc(msg)}</span><button onclick="this.parentElement._undoFn()">${i18n.t('mc_bulk_undo') || 'Undo'}</button>`;
+            el._undoFn = async () => { dismissUndoToast(); await undoFn(); };
+            document.body.appendChild(el);
+            _undoToastTimer = setTimeout(() => dismissUndoToast(), 6000);
+        }
+
+        async function immediateSync() {
+            if (autoSaveTimer) { clearTimeout(autoSaveTimer); autoSaveTimer = null; }
+            isSyncing = true;
+            hasChanges = true;
+            renderSyncBar();
+            try { await _saveDashboard(); } finally { isSyncing = false; renderSyncBar(); }
+        }
+
+        // Unified bulk operation: apply mutation, save immediately, offer undo on success.
+        async function bulkOp({ confirmMsg, applyFn, restoreFn, overlayMsg, successMsg }) {
+            if (!confirm(confirmMsg)) return;
+            applyFn();
+            showBulkOverlay(overlayMsg);
+            try {
+                await immediateSync();
+                hideBulkOverlay();
+                if (_bulkOpCancelled) {
+                    restoreFn();
+                    renderAll();
+                    try { await immediateSync(); } catch (e) {
+                        showToast((i18n.t('toast_upload_failed') || 'Save failed') + ': ' + e.message, 'error');
+                    }
+                    return;
+                }
+                showUndoToast(successMsg, async () => {
+                    restoreFn();
+                    renderAll();
+                    showBulkOverlay(i18n.t('mc_bulk_restoring') || 'Restoring...');
+                    try { await immediateSync(); } finally { hideBulkOverlay(); }
+                });
+            } catch (e) {
+                hideBulkOverlay();
+                restoreFn();
+                renderAll();
+                showToast((i18n.t('toast_upload_failed') || 'Save failed') + ': ' + e.message, 'error');
+            }
+        }
+
+        async function clearCategory(section, cat) {
+            const key = SECTION_LIST_KEY[section];
+            if (!key) return;
+            const backup = JSON.parse(JSON.stringify(dashboard[key]));
+            const removedCount = dashboard[key].filter(item => item.category === cat).length;
+
+            await bulkOp({
+                confirmMsg: i18n.t('mc_confirm_clear_category') || `Clear all items in "${cat}"?`,
+                applyFn: () => { dashboard[key] = dashboard[key].filter(item => item.category !== cat); },
+                restoreFn: () => { dashboard[key] = backup; },
+                overlayMsg: i18n.t('mc_bulk_clearing') || 'Clearing...',
+                successMsg: i18n.t('mc_bulk_cleared', { count: removedCount }) || `${removedCount} items cleared`,
             });
+        }
 
-            markChanged();
-            renderAll();
+        async function deleteCategory(section, cat) {
+            const key = SECTION_LIST_KEY[section];
+            const backup = key ? JSON.parse(JSON.stringify(dashboard[key])) : null;
+            const orderBackup = [...getCategoryOrder(section)];
+            const stateKey = `${section}:${cat}`;
+            const stateBackup = _categoryState[stateKey];
+
+            await bulkOp({
+                confirmMsg: i18n.t('mc_confirm_delete_category') || `Delete category "${cat}"? Items will become uncategorized.`,
+                applyFn: () => {
+                    const order = getCategoryOrder(section);
+                    const idx = order.indexOf(cat);
+                    if (idx >= 0) order.splice(idx, 1);
+                    setCategoryOrder(section, order);
+                    delete _categoryState[stateKey];
+                    saveCategoryState(_categoryState);
+                    if (key) dashboard[key].forEach(item => { if (item.category === cat) item.category = null; });
+                },
+                restoreFn: () => {
+                    if (backup) dashboard[key] = backup;
+                    setCategoryOrder(section, orderBackup);
+                    if (stateBackup !== undefined) _categoryState[stateKey] = stateBackup;
+                    saveCategoryState(_categoryState);
+                },
+                overlayMsg: i18n.t('mc_bulk_deleting_cat') || 'Deleting category...',
+                successMsg: i18n.t('mc_bulk_cat_deleted') || 'Category deleted',
+            });
         }
 
         // Drag-and-drop handlers
