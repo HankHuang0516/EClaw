@@ -1,3 +1,10 @@
+# [1.492.0](https://github.com/HankHuang0516/EClaw/compare/v1.491.0...v1.492.0) (2026-03-29)
+
+
+### Features
+
+* **i18n:** add Hindi (hi) translations batch 12 (44 keys) (squashed) ([03ed431](https://github.com/HankHuang0516/EClaw/commit/03ed4314e846b4a445077a001f09318cf105b74b))
+
 # [1.491.0](https://github.com/HankHuang0516/EClaw/compare/v1.490.0...v1.491.0) (2026-03-29)
 
 
