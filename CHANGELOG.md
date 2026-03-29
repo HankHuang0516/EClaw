@@ -1,3 +1,10 @@
+# [1.465.0](https://github.com/HankHuang0516/EClaw/compare/v1.464.0...v1.465.0) (2026-03-29)
+
+
+### Features
+
+* **note-page:** require script description from bots, show in consent banner ([#913](https://github.com/HankHuang0516/EClaw/issues/913)) ([9b948db](https://github.com/HankHuang0516/EClaw/commit/9b948dbc7001cf1068a9712a763bac8e35df0ede))
+
 # [1.464.0](https://github.com/HankHuang0516/EClaw/compare/v1.463.0...v1.464.0) (2026-03-29)
 
 
