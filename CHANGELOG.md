@@ -1,3 +1,10 @@
+# [1.464.0](https://github.com/HankHuang0516/EClaw/compare/v1.463.0...v1.464.0) (2026-03-29)
+
+
+### Features
+
+* **note-page:** consent-gated script execution for public note pages ([#912](https://github.com/HankHuang0516/EClaw/issues/912)) ([db7faf6](https://github.com/HankHuang0516/EClaw/commit/db7faf665e4a59f7c96014b281b67973c0129173))
+
 # [1.463.0](https://github.com/HankHuang0516/EClaw/compare/v1.462.0...v1.463.0) (2026-03-29)
 
 
