@@ -1,3 +1,10 @@
+## [1.465.2](https://github.com/HankHuang0516/EClaw/compare/v1.465.1...v1.465.2) (2026-03-29)
+
+
+### Bug Fixes
+
+* **mission:** clear/delete category now saves immediately with undo UX ([#915](https://github.com/HankHuang0516/EClaw/issues/915)) ([0d4572c](https://github.com/HankHuang0516/EClaw/commit/0d4572cf9e98dbeb107ae6470e898d78452c898d))
+
 ## [1.465.1](https://github.com/HankHuang0516/EClaw/compare/v1.465.0...v1.465.1) (2026-03-29)
 
 
