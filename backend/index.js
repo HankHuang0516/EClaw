@@ -1235,7 +1235,7 @@ app.get('/p/:code/:noteId', async (req, res) => {
         // Fetch current page + all sibling public pages in parallel
         const [pageResult, siblingsResult] = await Promise.all([
             pgPool.query(
-                'SELECT np.html_content, np.markdown_content, np.updated_at, mi.title FROM note_pages np LEFT JOIN mission_items mi ON mi.id::text = np.note_id AND mi.device_id = np.device_id WHERE np.device_id = $1 AND np.note_id = $2 AND np.is_public = true',
+                'SELECT np.html_content, np.markdown_content, np.updated_at, np.script_description, mi.title FROM note_pages np LEFT JOIN mission_items mi ON mi.id::text = np.note_id AND mi.device_id = np.device_id WHERE np.device_id = $1 AND np.note_id = $2 AND np.is_public = true',
                 [target.deviceId, noteId]
             ),
             pgPool.query(
@@ -1271,7 +1271,8 @@ app.get('/p/:code/:noteId', async (req, res) => {
             publicCode: code,
             noteId,
             updatedAt: row.updated_at,
-            siblingPages
+            siblingPages,
+            scriptDescription: row.script_description || null
         }));
     } catch (error) {
         console.error('[PublicPage] Error serving public page:', error);
@@ -1328,7 +1329,7 @@ function hasBlockedScripts(content) {
 }
 
 function renderPublicPageShell(title, content, opts = {}) {
-    const { entityName, publicCode, noteId, updatedAt, siblingPages } = opts;
+    const { entityName, publicCode, noteId, updatedAt, siblingPages, scriptDescription } = opts;
     const safeTitle = (title || '').replace(/</g, '&lt;').replace(/"/g, '&quot;');
     const footerInfo = entityName
         ? `<div class="page-footer">
@@ -1416,7 +1417,8 @@ function renderPublicPageShell(title, content, opts = {}) {
         <span class="script-consent-icon">⚠️</span>
         <div class="script-consent-text">
             <strong>此頁面包含自訂腳本 (JavaScript)</strong><br>
-            This page contains custom scripts authored by the page publisher. Scripts may interact with your browser.
+            This page contains custom scripts authored by the page publisher.
+            ${scriptDescription ? `<div style="margin-top:8px;padding:10px 12px;background:var(--bg);border-radius:8px;border-left:3px solid #f59e0b;font-size:13px;line-height:1.6"><strong>📋 腳本用途說明 / Script Description:</strong><br>${scriptDescription.replace(/</g, '&lt;').replace(/\n/g, '<br>')}</div>` : ''}
         </div>
         <div class="script-consent-actions">
             <button class="script-consent-btn script-consent-reject" onclick="document.getElementById('scriptConsent').remove()">拒絕 Decline</button>
