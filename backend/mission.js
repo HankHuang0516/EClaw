@@ -830,7 +830,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
      */
     router.put('/note/page', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const { deviceId, htmlContent, markdownContent } = req.body;
+        const { deviceId, htmlContent, markdownContent, scriptDescription } = req.body;
         const isPublic = req.body.isPublic === true || req.body.isPublic === 'true';
 
         if (!htmlContent && htmlContent !== '' && !markdownContent) {
@@ -844,6 +844,20 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
             return res.status(400).json({ success: false, error: `markdownContent exceeds ${NOTE_PAGE_HTML_MAX} bytes` });
         }
 
+        // Detect <script> tags in HTML content
+        const hasScripts = /<script[\s>]/i.test(content);
+        const scriptDesc = (typeof scriptDescription === 'string' && scriptDescription.trim()) ? scriptDescription.trim() : null;
+
+        // If HTML contains <script> but no scriptDescription provided, return a hint asking bot to describe the scripts
+        if (hasScripts && !scriptDesc) {
+            return res.status(400).json({
+                success: false,
+                error: 'htmlContent contains <script> tags. Please provide a "scriptDescription" field explaining what each script does, so visitors can make an informed consent decision before execution.',
+                hint: 'Add "scriptDescription": "This page uses JavaScript to: (1) render an interactive chart using Chart.js, (2) handle form validation." to your request body.',
+                requiresField: 'scriptDescription'
+            });
+        }
+
         const noteId = await resolveNoteId(deviceId, req.body);
         if (!noteId) {
             return res.status(400).json({ success: false, error: 'Missing or invalid noteId/title' });
@@ -851,15 +865,15 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
 
         try {
             const result = await pool.query(`
-                INSERT INTO note_pages (device_id, note_id, html_content, is_public, markdown_content)
-                VALUES ($1, $2, $3, $4, $5)
+                INSERT INTO note_pages (device_id, note_id, html_content, is_public, markdown_content, script_description)
+                VALUES ($1, $2, $3, $4, $5, $6)
                 ON CONFLICT (device_id, note_id)
-                DO UPDATE SET html_content = $3, is_public = $4, markdown_content = $5, updated_at = NOW()
+                DO UPDATE SET html_content = $3, is_public = $4, markdown_content = $5, script_description = $6, updated_at = NOW()
                 RETURNING id, updated_at, is_public
-            `, [deviceId, noteId, content, isPublic, markdownContent || null]);
+            `, [deviceId, noteId, content, isPublic, markdownContent || null, hasScripts ? scriptDesc : null]);
 
-            if (serverLog) serverLog('info', 'mission', `[Mission] Note page updated: ${noteId}, device ${deviceId}, public: ${isPublic}`, { deviceId });
-            res.json({ success: true, message: 'Page saved', id: result.rows[0].id, noteId, isPublic: result.rows[0].is_public, updatedAt: result.rows[0].updated_at });
+            if (serverLog) serverLog('info', 'mission', `[Mission] Note page updated: ${noteId}, device ${deviceId}, public: ${isPublic}, hasScripts: ${hasScripts}`, { deviceId });
+            res.json({ success: true, message: 'Page saved', id: result.rows[0].id, noteId, isPublic: result.rows[0].is_public, updatedAt: result.rows[0].updated_at, hasScripts });
         } catch (error) {
             console.error('[Mission] Error saving note page:', error);
             res.status(500).json({ success: false, error: 'Internal server error' });

@@ -243,6 +243,10 @@ ALTER TABLE note_pages ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAU
 -- Add markdown_content column for Markdown-based pages
 ALTER TABLE note_pages ADD COLUMN IF NOT EXISTS markdown_content TEXT DEFAULT NULL;
 
+-- Add script_description column for consent-gated script execution
+-- When a note page contains <script> tags, this field describes what the scripts do.
+ALTER TABLE note_pages ADD COLUMN IF NOT EXISTS script_description TEXT DEFAULT NULL;
+
 -- Page view tracking for visitor analytics
 CREATE TABLE IF NOT EXISTS page_views (
     id SERIAL PRIMARY KEY,
