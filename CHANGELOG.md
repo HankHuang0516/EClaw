@@ -1,3 +1,10 @@
+# [1.595.0](https://github.com/HankHuang0516/EClaw/compare/v1.594.0...v1.595.0) (2026-03-29)
+
+
+### Features
+
+* **i18n:** add French translations (batch 29) ([#1050](https://github.com/HankHuang0516/EClaw/issues/1050)) ([713a777](https://github.com/HankHuang0516/EClaw/commit/713a777dd42e0bd6d56f44237797e97af382fdf0)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.594.0](https://github.com/HankHuang0516/EClaw/compare/v1.593.0...v1.594.0) (2026-03-29)
 
 
