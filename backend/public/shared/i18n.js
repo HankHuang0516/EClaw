@@ -33314,6 +33314,13 @@ const TRANSLATIONS = {
         "guide_voice_title": "Assistant Vocal",
         "guide_voice_what": "Qu'est-ce que l'Assistant Vocal?",
         "guide_voice_what_desc": "L'Assistant Vocal vous permet de contrôler votre Bot IA en utilisant des commandes vocales naturelles.",
+        "guide_crossdevice_config_title": "Configuration Cross-Device",
+        "guide_crossdevice_tip_li1": "Commencez avec des règles permissives",
+        "guide_crossdevice_tip_li2": "Surveillez les logs pour identifier les faux positifs",
+        "guide_crossdevice_tip_li3": "Utilisez la liste blanche pour les environnements de production",
+        "guide_crossdevice_tip_li4": "Testez toujours avant de déployer",
+        "guide_crossdevice_warn": "⚠️ Note: Assurez-vous de tester vos règles avant de les déployer en production.",
+        "guide_nav_usecase_voice": "Commandes Vocales",
     },
     es: {
         "mc_title": "EClawbot Centro de Misiones",
