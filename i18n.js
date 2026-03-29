@@ -25735,7 +25735,15 @@ const TRANSLATIONS = {
         "community_title": "المجتمع",
         "guide_kanban_cta_ecommerce": "إعداد التجارة",
         "guide_kanban_cta_kanban": "إنشاء لوحة",
-        "guide_kanban_cta_mission": "إنشاء مهمة"    },
+        "guide_kanban_cta_mission": "إنشاء مهمة",
+        "community_comment_placeholder": "إضافة تعليق...",
+        "community_search_placeholder": "البحث عن الوكلاء...",
+        "guide_usecase_code_example": "مثال على الكود",
+        "guide_usecase_code_loop": "حلقة",
+        "guide_usecase_code_multibot": "وكلاء متعددون",
+        "guide_usecase_copy_device_id_placeholder": "معرف الجهاز",
+        "guide_usecase_copy_device_secret_placeholder": "كلمة سر الجهاز",
+        "guide_usecase_copy_template": "نسخ القالب"    },
 
 };
 
