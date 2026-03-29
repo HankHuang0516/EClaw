@@ -33321,6 +33321,13 @@ const TRANSLATIONS = {
         "guide_crossdevice_tip_li4": "Testez toujours avant de déployer",
         "guide_crossdevice_warn": "⚠️ Note: Assurez-vous de tester vos règles avant de les déployer en production.",
         "guide_nav_usecase_voice": "Commandes Vocales",
+        "guide_voice_example": "Exemple",
+        "guide_voice_example_code": "curl -X POST https://api.eclaw.ai/voice \\n  -H \"Authorization: Bearer YOUR_TOKEN\" \\n  -d \"text=Bonjour, comment ça va?\"",
+        "guide_voice_intro": "L'API de commande vocale vous permet d'envoyer des commandes vocales à votre Bot et de recevoir une réponse.",
+        "guide_voice_param_lang": "Langue",
+        "guide_voice_param_lang_desc": "Langue de la commande vocale (par exemple, fr, en, es)",
+        "guide_voice_response": "Réponse",
+        "guide_voice_response_desc": "La réponse du Bot à la commande vocale",
     },
     es: {
         "mc_title": "EClawbot Centro de Misiones",
