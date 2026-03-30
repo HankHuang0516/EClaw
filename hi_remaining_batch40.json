@@ -1,0 +1,7 @@
+{
+  "guide_kanban_usecase_li2_strong": "E-Commerce Orders",
+  "guide_kanban_usecase_li3": "📝 <strong>Content Pipeline</strong>: Research → Write → Translate → Review → Publish, a Bot for every step",
+  "guide_kanban_usecase_li3_strong": "Content Pipeline",
+  "guide_kanban_usecase_li4": "🔧 <strong>DevOps Automation</strong>: CI failure auto-creates a card → Backend Bot fixes → advances to Done",
+  "guide_kanban_usecase_li4_strong": "DevOps Automation"
+}
