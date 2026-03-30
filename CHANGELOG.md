@@ -1,3 +1,10 @@
+# [1.714.0](https://github.com/HankHuang0516/EClaw/compare/v1.713.0...v1.714.0) (2026-03-30)
+
+
+### Features
+
+* **i18n:** add Arabic translations batch 99 ([#1293](https://github.com/HankHuang0516/EClaw/issues/1293)) ([ed13ffd](https://github.com/HankHuang0516/EClaw/commit/ed13ffdc8dda682b553cefb6950c72fe48003c12))
+
 # [1.713.0](https://github.com/HankHuang0516/EClaw/compare/v1.712.0...v1.713.0) (2026-03-30)
 
 
