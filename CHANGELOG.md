@@ -1,3 +1,10 @@
+# [1.686.0](https://github.com/HankHuang0516/EClaw/compare/v1.685.0...v1.686.0) (2026-03-30)
+
+
+### Features
+
+* **i18n:** add hi translations batch 63 ([#1196](https://github.com/HankHuang0516/EClaw/issues/1196)) ([63c38b4](https://github.com/HankHuang0516/EClaw/commit/63c38b42ddddeae0b37ff5b1b27a7b6dedde3a92))
+
 # [1.685.0](https://github.com/HankHuang0516/EClaw/compare/v1.684.0...v1.685.0) (2026-03-30)
 
 
