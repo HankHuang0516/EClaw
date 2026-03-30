@@ -1,3 +1,14 @@
+# [1.711.0](https://github.com/HankHuang0516/EClaw/compare/v1.710.0...v1.711.0) (2026-03-30)
+
+
+### Features
+
+* **i18n:** add Arabic translations batch 97 ([#1281](https://github.com/HankHuang0516/EClaw/issues/1281)) ([3231fbb](https://github.com/HankHuang0516/EClaw/commit/3231fbbc51ea5a9d3010a94bd9d36223afdeebb0))
+* **i18n:** add Arabic translations batch 97 ([#1289](https://github.com/HankHuang0516/EClaw/issues/1289)) ([4dae10e](https://github.com/HankHuang0516/EClaw/commit/4dae10eadc46997c67cbdb8006a772c7349886d7))
+* **i18n:** add Arabic translations batch 97 ([#1290](https://github.com/HankHuang0516/EClaw/issues/1290)) ([db198ce](https://github.com/HankHuang0516/EClaw/commit/db198cec4de4b16fcbeda83b7249ab59facd845c))
+* **i18n:** add Arabic translations batch 97 ([#1291](https://github.com/HankHuang0516/EClaw/issues/1291)) ([c672671](https://github.com/HankHuang0516/EClaw/commit/c672671903fd4db4ef8317631b142454b3707e45))
+* **i18n:** add Arabic translations batch 98 ([#1292](https://github.com/HankHuang0516/EClaw/issues/1292)) ([a7589e0](https://github.com/HankHuang0516/EClaw/commit/a7589e046cc7acaebcaa0046d17992a558dd0233))
+
 # [1.710.0](https://github.com/HankHuang0516/EClaw/compare/v1.709.0...v1.710.0) (2026-03-30)
 
 
