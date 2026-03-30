@@ -1,3 +1,19 @@
+# [1.710.0](https://github.com/HankHuang0516/EClaw/compare/v1.709.0...v1.710.0) (2026-03-30)
+
+
+### Features
+
+* **i18n:** add Arabic translations batch 93 ([#1267](https://github.com/HankHuang0516/EClaw/issues/1267)) ([275ece8](https://github.com/HankHuang0516/EClaw/commit/275ece8f1a6b5c5fc303f689dfda9ba220eaf708))
+* **i18n:** add Arabic translations batch 94 ([#1269](https://github.com/HankHuang0516/EClaw/issues/1269)) ([86d33de](https://github.com/HankHuang0516/EClaw/commit/86d33de7cb57e03a6fce20f2ab5fc2874052a42f))
+* **i18n:** add Arabic translations batch 95 ([#1271](https://github.com/HankHuang0516/EClaw/issues/1271)) ([1c206e9](https://github.com/HankHuang0516/EClaw/commit/1c206e946c7ec241850813a963384fcf970a9c6b))
+* **i18n:** add Arabic translations batch 96 ([#1273](https://github.com/HankHuang0516/EClaw/issues/1273)) ([e652352](https://github.com/HankHuang0516/EClaw/commit/e652352e5230cb3fe7354703ef20bf0ba368af37))
+* **i18n:** add Arabic translations batch 97 ([#1275](https://github.com/HankHuang0516/EClaw/issues/1275)) ([45df0d5](https://github.com/HankHuang0516/EClaw/commit/45df0d5029df3a7a64247f0643d6d0ee5d116859))
+* **i18n:** add Hindi translations batch 93 ([#1268](https://github.com/HankHuang0516/EClaw/issues/1268)) ([5a441c4](https://github.com/HankHuang0516/EClaw/commit/5a441c4191d7ca0bd094014fbade495369fb8924))
+* **i18n:** add Hindi translations batch 94 ([#1270](https://github.com/HankHuang0516/EClaw/issues/1270)) ([2ab4e71](https://github.com/HankHuang0516/EClaw/commit/2ab4e712d9f2ac259261410f6c9d9cc8c67bb65d))
+* **i18n:** add Hindi translations batch 95 ([#1272](https://github.com/HankHuang0516/EClaw/issues/1272)) ([ba707c6](https://github.com/HankHuang0516/EClaw/commit/ba707c678fbabe8224e8736803a2b86fd6b3c943))
+* **i18n:** add Hindi translations batch 96 ([#1274](https://github.com/HankHuang0516/EClaw/issues/1274)) ([1dfd712](https://github.com/HankHuang0516/EClaw/commit/1dfd7121aecc048f26b393773de0578acbf875cc))
+* **i18n:** add Hindi translations batch 97 ([#1276](https://github.com/HankHuang0516/EClaw/issues/1276)) ([bd0ced2](https://github.com/HankHuang0516/EClaw/commit/bd0ced21362d654ad3623c0acaf3baf58c04bd77))
+
 # [1.709.0](https://github.com/HankHuang0516/EClaw/compare/v1.708.0...v1.709.0) (2026-03-30)
 
 
