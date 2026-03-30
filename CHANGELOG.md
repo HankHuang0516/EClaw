@@ -1,3 +1,10 @@
+# [1.759.0](https://github.com/HankHuang0516/EClaw/compare/v1.758.0...v1.759.0) (2026-03-30)
+
+
+### Features
+
+* **i18n:** add MS translations via MyMemory API (193 keys) ([#1371](https://github.com/HankHuang0516/EClaw/issues/1371)) ([1e17677](https://github.com/HankHuang0516/EClaw/commit/1e17677920eff40c069b661ee6dca64360a62136))
+
 # [1.758.0](https://github.com/HankHuang0516/EClaw/compare/v1.757.0...v1.758.0) (2026-03-30)
 
 
