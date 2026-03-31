@@ -1,3 +1,10 @@
+# [1.796.0](https://github.com/HankHuang0516/EClaw/compare/v1.795.0...v1.796.0) (2026-03-31)
+
+
+### Features
+
+* **i18n:** add final MS translation (1 key) - MS 100% COMPLETE! ([#1414](https://github.com/HankHuang0516/EClaw/issues/1414)) ([00721ed](https://github.com/HankHuang0516/EClaw/commit/00721edc62aa6125eae90927fde4fad1668a06f7))
+
 # [1.795.0](https://github.com/HankHuang0516/EClaw/compare/v1.794.0...v1.795.0) (2026-03-31)
 
 
