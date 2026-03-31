@@ -3,6 +3,15 @@
 
 ### Features
 
+* **i18n:** add French translations for borrow and settings sections ([#1507](https://github.com/HankHuang0516/EClaw/issues/1507)) ([3222f66](https://github.com/HankHuang0516/EClaw/commit/3222f66532704718a56a802509b37ea0226a91c7)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add French translations for identity and avatar sections ([5bc7f07](https://github.com/HankHuang0516/EClaw/commit/5bc7f072ce8af1c2f66d57fb40557ddbdfcfeb64))
+* **i18n:** add French translations for slots, webhook, borrow sections ([#1506](https://github.com/HankHuang0516/EClaw/issues/1506)) ([9920a2b](https://github.com/HankHuang0516/EClaw/commit/9920a2b85ab19be1d8f27df738080ef9f837fd63))
+
+# [1.878.0](https://github.com/HankHuang0516/EClaw/compare/v1.877.0...v1.878.0) (2026-03-31)
+
+
+### Features
+
 * **i18n:** add French translations for identity and avatar sections ([5bc7f07](https://github.com/HankHuang0516/EClaw/commit/5bc7f072ce8af1c2f66d57fb40557ddbdfcfeb64))
 
 # [1.877.0](https://github.com/HankHuang0516/EClaw/compare/v1.876.0...v1.877.0) (2026-03-31)
