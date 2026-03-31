@@ -1,3 +1,10 @@
+# [1.794.0](https://github.com/HankHuang0516/EClaw/compare/v1.793.0...v1.794.0) (2026-03-31)
+
+
+### Features
+
+* **i18n:** MS translations final push ([#1412](https://github.com/HankHuang0516/EClaw/issues/1412)) ([774c34b](https://github.com/HankHuang0516/EClaw/commit/774c34bd8efbca0bd2d0f53bc3baa50e6dd9aeb3))
+
 # [1.793.0](https://github.com/HankHuang0516/EClaw/compare/v1.792.0...v1.793.0) (2026-03-31)
 
 
