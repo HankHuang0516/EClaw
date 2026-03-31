@@ -1,3 +1,10 @@
+# [1.771.0](https://github.com/HankHuang0516/EClaw/compare/v1.770.0...v1.771.0) (2026-03-31)
+
+
+### Features
+
+* **i18n:** add MS translations batch 3 (181 keys) ([#1383](https://github.com/HankHuang0516/EClaw/issues/1383)) ([2da8f91](https://github.com/HankHuang0516/EClaw/commit/2da8f91f65c096f95f349e340ec4a35346aae110))
+
 # [1.770.0](https://github.com/HankHuang0516/EClaw/compare/v1.769.0...v1.770.0) (2026-03-31)
 
 
