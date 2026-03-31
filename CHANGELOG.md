@@ -7,6 +7,22 @@
 * **i18n:** add French translations for cardholder and contacts sections ([#1513](https://github.com/HankHuang0516/EClaw/issues/1513)) ([fd03424](https://github.com/HankHuang0516/EClaw/commit/fd034248404e3f7be0c2bb98859571e105bc7bc8)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
 * **i18n:** add French translations for chat and schedule sections ([#1510](https://github.com/HankHuang0516/EClaw/issues/1510)) ([777be93](https://github.com/HankHuang0516/EClaw/commit/777be93e9605cbbc3388c6d62d6f4b2f6043cabf)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
 * **i18n:** add French translations for feedback and chat sections ([#1509](https://github.com/HankHuang0516/EClaw/issues/1509)) ([9860e93](https://github.com/HankHuang0516/EClaw/commit/9860e93221aa6ce5b8efbcd810b0635bba047bb2)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add French translations for files, guide, kanban sections ([#1515](https://github.com/HankHuang0516/EClaw/issues/1515)) ([72d1207](https://github.com/HankHuang0516/EClaw/commit/72d120753c051fae1b8133d413fc9624a3c31172)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add French translations for identity and avatar sections ([5bc7f07](https://github.com/HankHuang0516/EClaw/commit/5bc7f072ce8af1c2f66d57fb40557ddbdfcfeb64))
+* **i18n:** add French translations for sc, files sections ([#1514](https://github.com/HankHuang0516/EClaw/issues/1514)) ([dbe17d0](https://github.com/HankHuang0516/EClaw/commit/dbe17d0d11e25be5419ce04cf51cb3c5817891bf)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add French translations for schedule sections ([#1511](https://github.com/HankHuang0516/EClaw/issues/1511)) ([cc7cc44](https://github.com/HankHuang0516/EClaw/commit/cc7cc44bd2bd30e04633e8dab8cc90c21f80ac31)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add French translations for settings and notifications ([#1508](https://github.com/HankHuang0516/EClaw/issues/1508)) ([d28d201](https://github.com/HankHuang0516/EClaw/commit/d28d20198d83f109677a91d857f54ac7dd9f5277)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add French translations for slots, webhook, borrow sections ([#1506](https://github.com/HankHuang0516/EClaw/issues/1506)) ([9920a2b](https://github.com/HankHuang0516/EClaw/commit/9920a2b85ab19be1d8f27df738080ef9f837fd63))
+
+# [1.878.0](https://github.com/HankHuang0516/EClaw/compare/v1.877.0...v1.878.0) (2026-03-31)
+
+
+### Features
+
+* **i18n:** add French translations for borrow and settings sections ([#1507](https://github.com/HankHuang0516/EClaw/issues/1507)) ([3222f66](https://github.com/HankHuang0516/EClaw/commit/3222f66532704718a56a802509b37ea0226a91c7)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add French translations for cardholder and contacts sections ([#1513](https://github.com/HankHuang0516/EClaw/issues/1513)) ([fd03424](https://github.com/HankHuang0516/EClaw/commit/fd034248404e3f7be0c2bb98859571e105bc7bc8)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add French translations for chat and schedule sections ([#1510](https://github.com/HankHuang0516/EClaw/issues/1510)) ([777be93](https://github.com/HankHuang0516/EClaw/commit/777be93e9605cbbc3388c6d62d6f4b2f6043cabf)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** add French translations for feedback and chat sections ([#1509](https://github.com/HankHuang0516/EClaw/issues/1509)) ([9860e93](https://github.com/HankHuang0516/EClaw/commit/9860e93221aa6ce5b8efbcd810b0635bba047bb2)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
 * **i18n:** add French translations for identity and avatar sections ([5bc7f07](https://github.com/HankHuang0516/EClaw/commit/5bc7f072ce8af1c2f66d57fb40557ddbdfcfeb64))
 * **i18n:** add French translations for sc, files sections ([#1514](https://github.com/HankHuang0516/EClaw/issues/1514)) ([dbe17d0](https://github.com/HankHuang0516/EClaw/commit/dbe17d0d11e25be5419ce04cf51cb3c5817891bf)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
 * **i18n:** add French translations for schedule sections ([#1511](https://github.com/HankHuang0516/EClaw/issues/1511)) ([cc7cc44](https://github.com/HankHuang0516/EClaw/commit/cc7cc44bd2bd30e04633e8dab8cc90c21f80ac31)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
