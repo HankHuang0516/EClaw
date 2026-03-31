@@ -38,6 +38,20 @@ jobs:
         run: npm run lint
         working-directory: backend
 
+  # ── i18n Syntax Check ───────────────────────────────────────────────────────
+  i18n:
+    name: i18n syntax check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check i18n.js syntax
+        run: node --check backend/public/shared/i18n.js
+
   # ── Jest + Supertest ────────────────────────────────────────────────────────
   jest:
     name: Jest unit tests
