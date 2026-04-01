@@ -2265,6 +2265,62 @@ async function submitPayment() {
         }
     });
 
+    // ============================================
+    // DELETE /note/:id
+    // Delete note by ID
+    // ============================================
+    router.delete('/note/:id', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const deviceId = req.body.deviceId || req.query.deviceId;
+        const { id } = req.params;
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const result = await client.query(
+                'SELECT * FROM mission_dashboard WHERE device_id = $1 FOR UPDATE',
+                [deviceId]
+            );
+            if (result.rows.length === 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ success: false, error: 'Dashboard not found' });
+            }
+
+            const row = result.rows[0];
+            const notes = row.notes || [];
+            const foundIdx = notes.findIndex(n => n.id === id);
+
+            if (foundIdx < 0) {
+                await client.query('ROLLBACK');
+                return res.status(404).json({ success: false, error: `Note not found: "${id}"` });
+            }
+
+            const deletedTitle = notes[foundIdx].title;
+            notes.splice(foundIdx, 1);
+
+            const updateResult = await client.query(
+                `UPDATE mission_dashboard SET notes = $2, last_synced_at = NOW()
+                 WHERE device_id = $1 RETURNING version`,
+                [deviceId, JSON.stringify(notes)]
+            );
+            
+            // Delete associated note page if exists
+            await client.query('DELETE FROM note_pages WHERE device_id = $1 AND note_id = $2', [deviceId, id]);
+
+            await client.query('COMMIT');
+
+            if (process.env.DEBUG === 'true') console.log(`[Mission] Note deleted by ID: "${id}" (${deletedTitle}), device ${deviceId}`);
+            if (typeof serverLog !== 'undefined' && serverLog) serverLog('info', 'mission', `[Mission] Note deleted by ID: "${id}" (${deletedTitle}), device ${deviceId}`, { deviceId });
+            res.json({ success: true, message: `Note "${deletedTitle}" deleted`, version: updateResult.rows[0].version });
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('[Mission] Error deleting note by ID:', error);
+            res.status(500).json({ success: false, error: error.message });
+        } finally {
+            client.release();
+        }
+    });
+
     // Notification callback (set from index.js)
     let _notifyCallback = null;
     function setNotifyCallback(fn) { _notifyCallback = fn; }
