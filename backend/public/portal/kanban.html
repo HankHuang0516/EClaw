@@ -50,15 +50,17 @@
         .kb-column[data-status="done"] .kb-col-title::before { background:#4ade80; }
 
         /* Drop zone */
-        .kb-col-cards.drag-over { background:rgba(108,99,255,0.08); border-radius:var(--radius-sm); }
+        .kb-col-cards.drag-over { background:rgba(108,99,255,0.08); border-radius:var(--radius-sm); transition:background 0.3s ease; }
 
         /* ══════════════ Card ══════════════ */
         .kb-card { background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:12px; cursor:pointer; transition:border-color 0.2s, transform 0.15s, box-shadow 0.2s; position:relative; border-left:3px solid transparent; box-shadow:0 1px 3px rgba(0,0,0,0.12); }
         .kb-card:hover { border-color:var(--primary); transform:translateY(-2px); box-shadow:0 4px 12px rgba(108,99,255,0.15); }
         .kb-card.dragging { opacity:0.5; transform:rotate(2deg); }
-        .kb-card.flip-move { transition:transform 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease; }
-        .kb-card.flip-enter { animation:flipEnter 0.35s cubic-bezier(0.4,0,0.2,1) both; }
-        @keyframes flipEnter { from { opacity:0; transform:scale(0.92) translateY(-8px); } to { opacity:1; transform:none; } }
+        .kb-card.flip-move { transition:transform 0.7s cubic-bezier(0.4,0,0.2,1), opacity 0.7s ease; }
+        .kb-card.flip-enter { animation:flipEnter 0.7s cubic-bezier(0.22,1,0.36,1) both; }
+        .kb-card.flip-exit { animation:flipExit 0.4s cubic-bezier(0.4,0,1,1) both; pointer-events:none; }
+        @keyframes flipEnter { from { opacity:0; transform:scale(0.85) translateY(-16px); } to { opacity:1; transform:none; } }
+        @keyframes flipExit { from { opacity:1; transform:none; } to { opacity:0; transform:scale(0.85) translateY(12px); } }
         .kb-card[data-priority="P0"] { border-left-color:#ef4444; }
         .kb-card[data-priority="P1"] { border-left-color:#f97316; }
         .kb-card[data-priority="P2"] { border-left-color:#3b82f6; }
@@ -612,8 +614,10 @@
         }
 
         function animateCards(oldPositions) {
+            const newIds = new Set();
             document.querySelectorAll('.kb-card[data-id]').forEach(el => {
                 const id = el.dataset.id;
+                newIds.add(id);
                 const oldPos = oldPositions[id];
                 const newRect = el.getBoundingClientRect();
                 if (oldPos) {
@@ -621,10 +625,12 @@
                     const dy = oldPos.y - newRect.top;
                     if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
                         el.style.transform = `translate(${dx}px, ${dy}px)`;
+                        el.style.opacity = '0.6';
                         el.classList.remove('flip-move');
                         requestAnimationFrame(() => {
                             el.classList.add('flip-move');
                             el.style.transform = '';
+                            el.style.opacity = '';
                             el.addEventListener('transitionend', () => el.classList.remove('flip-move'), { once: true });
                         });
                     }
@@ -1164,6 +1170,7 @@
             const title = document.getElementById('newTitle').value.trim();
             if (!title) { showToast(t('kb_err_title','Title is required'), true); return; }
             const assignedBots = [...document.querySelectorAll('#newAssignees input:checked')].map(cb => Number(cb.value));
+            if (assignedBots.length === 0) { showToast(t('kb_err_no_entity','At least one entity must be assigned'), true); return; }
             const isAutomation = document.getElementById('newIsAutomation').checked;
             const body = {
                 title,
