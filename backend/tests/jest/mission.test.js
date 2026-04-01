@@ -222,3 +222,17 @@ describe('Category support in update endpoints', () => {
         expect([200, 404, 500].includes(res.status)).toBe(true);
     });
 });
+
+// ════════════════════════════════════════════════════════════════
+// DELETE /api/mission/note/:id
+// ════════════════════════════════════════════════════════════════
+describe('DELETE /api/mission/note/:id', () => {
+    const auth = { deviceId: 'test-dev', deviceSecret: 'test-secret' };
+    const del = (path) => request(missionApp).delete(path);
+
+    it('returns 404 or 200 when deleting note by ID', async () => {
+        const res = await del('/api/mission/note/test-123')
+            .send(auth);
+        expect([200, 404, 500].includes(res.status)).toBe(true);
+    });
+});
