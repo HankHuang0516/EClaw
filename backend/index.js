@@ -1430,7 +1430,7 @@ function renderPublicPageShell(title, content, opts = {}) {
             <button class="script-consent-btn script-consent-accept" onclick="activateBlockedScripts()">接受並執行 Accept</button>
         </div>
     </div>
-    <script>function activateBlockedScripts(){var el=document.getElementById('eclaw-blocked-scripts');if(!el)return;try{var scripts=JSON.parse(atob(el.dataset.scripts));var loaded=0,total=scripts.length;function next(){if(loaded>=total){document.getElementById('scriptConsent').remove();return}var s=scripts[loaded++];var tag=document.createElement('script');if(s.src){tag.src=s.src;tag.onload=tag.onerror=next;document.body.appendChild(tag)}else{tag.textContent=s.inline;document.body.appendChild(tag);next()}}next()}catch(e){console.error('[EClawbot] Script activation error:',e);document.getElementById('scriptConsent').remove()}}<\/script>` : ''}
+    <script>function activateBlockedScripts(){var el=document.getElementById('eclaw-blocked-scripts');if(!el)return;try{var b=atob(el.dataset.scripts);var bytes=new Uint8Array(b.length);for(var i=0;i<b.length;i++)bytes[i]=b.charCodeAt(i);var scripts=JSON.parse(new TextDecoder().decode(bytes));var loaded=0,total=scripts.length;function next(){if(loaded>=total){document.getElementById('scriptConsent').remove();return}var s=scripts[loaded++];var tag=document.createElement('script');if(s.src){tag.src=s.src;tag.onload=tag.onerror=next;document.body.appendChild(tag)}else{tag.textContent=s.inline;document.body.appendChild(tag);next()}}next()}catch(e){console.error('[EClawbot] Script activation error:',e);document.getElementById('scriptConsent').remove()}}<\/script>` : ''}
 </body>
 </html>`;
 }

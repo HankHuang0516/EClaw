@@ -67,6 +67,7 @@ class MissionControlActivity : AppCompatActivity() {
 
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
+            settings.defaultTextEncodingName = "UTF-8"
             settings.loadWithOverviewMode = false
             settings.useWideViewPort = false
             settings.userAgentString = settings.userAgentString + " EClawAndroid"

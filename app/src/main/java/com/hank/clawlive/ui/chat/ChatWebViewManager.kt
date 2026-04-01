@@ -40,6 +40,7 @@ class ChatWebViewManager(
         webView.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
+            defaultTextEncodingName = "UTF-8"
             mediaPlaybackRequiresUserGesture = false
             mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             allowFileAccess = true
