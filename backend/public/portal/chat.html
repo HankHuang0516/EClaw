@@ -2598,6 +2598,7 @@
                     && (prev.media_type || null) === (msg.media_type || null)
                     && (prev.media_url || null) === (msg.media_url || null)
                     && prev.source === msg.source
+                    && prev.entity_id === msg.entity_id
                     && !(prev.source && (prev.source.startsWith('mission_notify') || prev.source === 'scheduled'))
                     && Math.abs(new Date(prev.created_at).getTime() - new Date(msg.created_at).getTime()) <= 5000
                 ) {
