@@ -734,7 +734,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 entityId,
                 conversationId: `${deviceId}:${entityId}`,
                 from: payload.from || 'client',
-                text: payload.text || '',
+                text: payload.mediaUrl ? `${payload.text || ''}\n${payload.mediaUrl}`.trim() : (payload.text || ''),
                 mediaType: payload.mediaType || null,
                 mediaUrl: payload.mediaUrl || null,
                 backupUrl: payload.backupUrl || null,
