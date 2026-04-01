@@ -307,6 +307,7 @@ class CardHolderActivity : AppCompatActivity() {
             setBackgroundColor(Color.parseColor("#0D0D1A"))
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
+            settings.defaultTextEncodingName = "UTF-8"
             settings.loadWithOverviewMode = true
             settings.useWideViewPort = true
 
