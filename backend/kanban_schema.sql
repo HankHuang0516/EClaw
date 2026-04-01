@@ -50,6 +50,8 @@ ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS is_auto_generated BOOLEAN DEFA
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS last_run_result TEXT DEFAULT NULL;
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS active_child_id UUID DEFAULT NULL;
 
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS reviewer_entity_id INTEGER DEFAULT NULL;
+
 CREATE INDEX IF NOT EXISTS idx_kanban_cards_automation ON kanban_cards(device_id, is_automation)
     WHERE is_automation = true;
 CREATE INDEX IF NOT EXISTS idx_kanban_cards_parent ON kanban_cards(parent_card_id)

@@ -291,6 +291,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             archived: row.archived || false,
             createdAt: row.created_at ? new Date(row.created_at).getTime() : null,
             updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : null,
+            reviewerEntityId: row.reviewer_entity_id != null ? parseInt(row.reviewer_entity_id) : null,
             // Aggregated counts (if present from JOIN)
             commentCount: parseInt(row.comment_count) || 0,
             noteCount: parseInt(row.note_count) || 0,
@@ -326,7 +327,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     router.post('/card', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] POST /card called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, title, description, priority, status, assignedBots, entityId } = req.body;
+        const { deviceId, title, description, priority, status, assignedBots, entityId, reviewerEntityId } = req.body;
 
         if (!title || !title.trim()) {
             return res.status(400).json({ success: false, error: 'Missing title' });
@@ -336,13 +337,14 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         const cardStatus = STATUSES.includes(status) ? status : 'backlog';
         const bots = Array.isArray(assignedBots) ? assignedBots.map(Number) : [];
         const createdBy = parseInt(entityId || 0);
+        const reviewer = reviewerEntityId != null ? parseInt(reviewerEntityId) : null;
 
         try {
             const result = await pool.query(
-                `INSERT INTO kanban_cards (device_id, title, description, priority, status, assigned_bots, created_by, status_changed_at)
-                 VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, NOW())
+                `INSERT INTO kanban_cards (device_id, title, description, priority, status, assigned_bots, created_by, reviewer_entity_id, status_changed_at)
+                 VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, NOW())
                  RETURNING *`,
-                [deviceId, title.trim(), description || '', cardPriority, cardStatus, JSON.stringify(bots), createdBy]
+                [deviceId, title.trim(), description || '', cardPriority, cardStatus, JSON.stringify(bots), createdBy, reviewer]
             );
 
             const card = serializeCard(result.rows[0]);
@@ -656,7 +658,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     router.put('/card/:id', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] PUT /card/:id called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, title, description, priority, assignedBots } = req.body;
+        const { deviceId, title, description, priority, assignedBots, reviewerEntityId } = req.body;
         const cardId = req.params.id;
 
         try {
@@ -688,6 +690,10 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             if (assignedBots !== undefined && Array.isArray(assignedBots)) {
                 updates.push(`assigned_bots = $${paramIdx++}::jsonb`);
                 params.push(JSON.stringify(assignedBots.map(Number)));
+            }
+            if (reviewerEntityId !== undefined) {
+                updates.push(`reviewer_entity_id = $${paramIdx++}`);
+                params.push(reviewerEntityId != null ? parseInt(reviewerEntityId) : null);
             }
 
             if (updates.length === 0) {
@@ -1477,15 +1483,16 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     }
                     const childTitle = `[Auto] ${card.title} (${timeLabel})`;
 
-                    // Create child card
+                    // Create child card (inherit reviewerEntityId from parent)
                     const childResult = await pool.query(
                         `INSERT INTO kanban_cards (device_id, title, description, priority, status, assigned_bots, created_by,
-                            status_changed_at, stale_threshold_ms, done_retention_ms, parent_card_id, is_auto_generated)
-                         VALUES ($1, $2, $3, $4, 'todo', $5::jsonb, $6, NOW(), $7, $8, $9, true)
+                            status_changed_at, stale_threshold_ms, done_retention_ms, parent_card_id, is_auto_generated, reviewer_entity_id)
+                         VALUES ($1, $2, $3, $4, 'todo', $5::jsonb, $6, NOW(), $7, $8, $9, true, $10)
                          RETURNING *`,
                         [card.device_id, childTitle, card.description || '', card.priority,
                          JSON.stringify(bots), card.created_by,
-                         card.stale_threshold_ms, card.done_retention_ms, card.id]
+                         card.stale_threshold_ms, card.done_retention_ms, card.id,
+                         card.reviewer_entity_id || null]
                     );
                     const childCard = childResult.rows[0];
                     console.log(`[Kanban] Automation child created: ${childCard.id} (${childTitle})`);
@@ -1579,11 +1586,18 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
      * Called from index.js transform handler.
      * Only affects isAutoGenerated child cards assigned to the given entityId.
      */
-    async function autoReviewOnTransform(deviceId, entityId) {
+    /**
+     * Auto-move active child cards to "review" when Bot transforms with state=IDLE.
+     * If the card has a reviewerEntityId, notify the reviewer with the bot's reply.
+     * @param {string} deviceId
+     * @param {number} entityId - the bot that just replied
+     * @param {string} [transformMessage] - the bot's transform reply text
+     */
+    async function autoReviewOnTransform(deviceId, entityId, transformMessage) {
         try {
             // Find active child cards assigned to this entity that are in todo/in_progress
             const result = await pool.query(
-                `SELECT c.id, c.title, c.status, c.parent_card_id, c.assigned_bots
+                `SELECT c.id, c.title, c.status, c.parent_card_id, c.assigned_bots, c.reviewer_entity_id
                  FROM kanban_cards c
                  WHERE c.device_id = $1
                    AND c.is_auto_generated = true
@@ -1596,6 +1610,8 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             if (result.rows.length === 0) return;
 
             for (const card of result.rows) {
+                const reviewerId = card.reviewer_entity_id;
+
                 // Move to review
                 await pool.query(
                     `UPDATE kanban_cards 
@@ -1605,11 +1621,19 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     [card.id, deviceId]
                 );
 
-                // Add system comment
+                // Add system comment with the bot's reply
+                const msgPreview = transformMessage ? `\n回覆內容：${transformMessage.slice(0, 200)}` : '';
                 await addSystemComment(card.id, deviceId,
-                    `📋 Bot #${entityId} 已透過 transform 回報完成，自動推到待審查`);
+                    `📋 Bot #${entityId} 已回報完成，自動推到待審查${msgPreview}`);
 
-                console.log(`[Kanban] Auto-review: child card ${card.id} (${card.title}) moved to review by entity ${entityId}`);
+                console.log(`[Kanban] Auto-review: child card ${card.id} (${card.title}) moved to review by entity ${entityId}${reviewerId != null ? `, reviewer: #${reviewerId}` : ''}`);
+
+                // Notify reviewer if set
+                if (reviewerId != null) {
+                    const reviewMsg = `🔍 待審查：[${card.title}]\nBot #${entityId} 已完成並回報。${transformMessage ? `\n回覆：${transformMessage.slice(0, 300)}` : ''}\n請審查此卡片。`;
+                    notifyEntities(deviceId, [reviewerId], reviewMsg);
+                    console.log(`[Kanban] Notified reviewer #${reviewerId} for card ${card.id}`);
+                }
             }
         } catch (err) {
             console.error(`[Kanban] autoReviewOnTransform error:`, err.message);
