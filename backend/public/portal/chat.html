@@ -2914,13 +2914,17 @@
                     crossDevice: true
                 };
             } else {
-                // Same-device: entity:ID:CHARACTER->targets
+                // Same-device: entity:ID:CHARACTER->targets or entity:ID:CHARACTER->broadcast
                 const match = source.match(/^entity:(\d+):([^:]+)->(.+)$/);
                 if (match) {
+                    const targetStr = match[3];
                     result = {
                         fromEntityId: parseInt(match[1]),
                         character: match[2],
-                        targets: match[3].split(',').map(id => parseInt(id.trim()))
+                        targets: targetStr === 'broadcast'
+                            ? []
+                            : targetStr.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id)),
+                        isBroadcast: targetStr === 'broadcast'
                     };
                 }
             }
@@ -2997,6 +3001,11 @@
                     }
 
                     const senderHtml = `<span class="entity-label" data-entity="${parsed.fromEntityId}">${getEntityLabel(parsed.fromEntityId)}</span>`;
+
+                    // Broadcast message — show sender → Broadcast
+                    if (parsed.isBroadcast) {
+                        return `${senderHtml} &rarr; ${i18n.t('chat_broadcast_tag') || 'Broadcast'}`;
+                    }
 
                     // Build 發送至 with per-target 已讀 status
                     const deliveredIds = msg.delivered_to

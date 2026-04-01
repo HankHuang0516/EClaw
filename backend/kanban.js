@@ -333,9 +333,13 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             return res.status(400).json({ success: false, error: 'Missing title' });
         }
 
+        const bots = Array.isArray(assignedBots) ? assignedBots.map(Number) : [];
+        if (bots.length === 0) {
+            return res.status(400).json({ success: false, error: 'At least one entity must be assigned' });
+        }
+
         const cardPriority = PRIORITIES.includes(priority) ? priority : 'P2';
         const cardStatus = STATUSES.includes(status) ? status : 'backlog';
-        const bots = Array.isArray(assignedBots) ? assignedBots.map(Number) : [];
         const createdBy = parseInt(entityId || 0);
         const reviewer = reviewerEntityId != null ? parseInt(reviewerEntityId) : null;
 
@@ -688,6 +692,9 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 params.push(priority);
             }
             if (assignedBots !== undefined && Array.isArray(assignedBots)) {
+                if (assignedBots.length === 0) {
+                    return res.status(400).json({ success: false, error: 'At least one entity must be assigned' });
+                }
                 updates.push(`assigned_bots = $${paramIdx++}::jsonb`);
                 params.push(JSON.stringify(assignedBots.map(Number)));
             }
@@ -786,6 +793,9 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             }
 
             const bots = Array.isArray(assignedBots) ? assignedBots.map(Number) : (card.assigned_bots || []);
+            if (bots.length === 0) {
+                return res.status(400).json({ success: false, error: 'At least one entity must be assigned' });
+            }
 
             const result = await pool.query(
                 `UPDATE kanban_cards 

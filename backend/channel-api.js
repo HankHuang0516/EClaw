@@ -19,6 +19,43 @@ const safeEqual = require('./safe-equal');
 const express = require('express');
 const crypto = require('crypto');
 const db = require('./db');
+const { URL } = require('url');
+const dnsLookup = require('util').promisify(require('dns').lookup);
+
+// ── SSRF protection: reject private/internal callback URLs ──
+function isPrivateIp(ip) {
+    if (!ip) return false;
+    if (ip === '127.0.0.1' || ip === '0.0.0.0' || ip === '::1') return true;
+    if (ip.startsWith('10.') || ip.startsWith('192.168.')) return true;
+    const m172 = ip.match(/^172\.(\d+)\./);
+    if (m172 && +m172[1] >= 16 && +m172[1] <= 31) return true;
+    if (ip.startsWith('169.254.')) return true;
+    const lower = ip.toLowerCase();
+    if (lower.startsWith('fc') || lower.startsWith('fd') || lower.startsWith('fe80')) return true;
+    return false;
+}
+
+function isPrivateHost(hostname) {
+    if (hostname === 'localhost' || hostname === '0.0.0.0' || hostname === '::1') return true;
+    if (hostname === '127.0.0.1' || hostname.startsWith('10.') || hostname.startsWith('192.168.')) return true;
+    const m172 = hostname.match(/^172\.(\d+)\./);
+    if (m172 && +m172[1] >= 16 && +m172[1] <= 31) return true;
+    if (hostname.startsWith('169.254.')) return true;
+    return false;
+}
+
+async function assertPublicCallbackUrl(callbackUrl) {
+    let parsed;
+    try {
+        parsed = new URL(callbackUrl);
+    } catch {
+        throw new Error('Invalid callback URL');
+    }
+    const hostname = parsed.hostname;
+    if (isPrivateHost(hostname)) throw new Error('callback_url must not point to a private/internal address');
+    const { address } = await dnsLookup(hostname);
+    if (isPrivateIp(address)) throw new Error('callback_url must not resolve to a private/internal IP');
+}
 
 module.exports = function (devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase, awardEntityXP, XP_AMOUNTS, notifyDevice }) {
     const router = express.Router();
@@ -60,7 +97,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
         }
 
         // If secret provided, validate it (backward compat with old clients)
-        if (apiSecret && account.channel_api_secret !== apiSecret) {
+        if (apiSecret && !safeEqual(account.channel_api_secret, apiSecret)) {
             res.status(403).json({ success: false, message: 'Invalid channel credentials' });
             return null;
         }
@@ -293,6 +330,13 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             // 301/302 redirects that convert POST→GET and lose the request body
             if (callback_url.startsWith('http://') && !callback_url.includes('localhost') && !callback_url.includes('127.0.0.1')) {
                 callback_url = callback_url.replace('http://', 'https://');
+            }
+
+            // SSRF protection: reject private/internal callback URLs
+            try {
+                await assertPublicCallbackUrl(callback_url);
+            } catch (e) {
+                return res.status(400).json({ success: false, message: e.message });
             }
 
             if (process.env.DEBUG === 'true') serverLog('info', 'bind', `[BIND] /register callback_url=${callback_url}`, { deviceId: account.device_id });

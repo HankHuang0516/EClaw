@@ -108,6 +108,8 @@ const TEST_FILES = [
     'test-a2a-compat.js',           // A2A: .well-known/agent.json, tasks/send
     'test-a2a-task-dispatch.js',    // A2A: official agent sends structured task to entity
     'test-entity-trash.js',         // Entity trash: soft-delete recovery, 7-day retention
+    'test-channel-push-text.js',    // Channel push text format verification
+    'test-note-pages.js',           // Note page CRUD, public/private toggle, visitor analytics
 ];
 
 // Manual UI tests (run on device, not automated):
