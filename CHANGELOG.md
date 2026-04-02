@@ -1,3 +1,10 @@
+## [1.878.4](https://github.com/HankHuang0516/EClaw/compare/v1.878.3...v1.878.4) (2026-04-02)
+
+
+### Bug Fixes
+
+* **kanban:** auto-promote recurring schedule cards to automation + inline creation ([#1600](https://github.com/HankHuang0516/EClaw/issues/1600)) ([b23f8fd](https://github.com/HankHuang0516/EClaw/commit/b23f8fd0610b802a4cb7cb5d4df9f3cc5070ff0e))
+
 ## [1.878.3](https://github.com/HankHuang0516/EClaw/compare/v1.878.2...v1.878.3) (2026-04-02)
 
 
