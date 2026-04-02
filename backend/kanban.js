@@ -1622,10 +1622,10 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             for (const card of result.rows) {
                 const reviewerId = card.reviewer_entity_id;
 
-                // Move to review
+                // Move directly to done (not review) — avoids blocking next schedule trigger
                 await pool.query(
                     `UPDATE kanban_cards 
-                     SET status = 'review', status_changed_at = NOW(), 
+                     SET status = 'done', status_changed_at = NOW(), 
                          last_stale_nudge_at = NULL, updated_at = NOW()
                      WHERE id = $1 AND device_id = $2`,
                     [card.id, deviceId]
@@ -1634,13 +1634,18 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 // Add system comment with the bot's reply
                 const msgPreview = transformMessage ? `\n回覆內容：${transformMessage.slice(0, 200)}` : '';
                 await addSystemComment(card.id, deviceId,
-                    `📋 Bot #${entityId} 已回報完成，自動推到待審查${msgPreview}`);
+                    `✅ Bot #${entityId} 已回報完成，自動結案${msgPreview}`);
 
-                console.log(`[Kanban] Auto-review: child card ${card.id} (${card.title}) moved to review by entity ${entityId}${reviewerId != null ? `, reviewer: #${reviewerId}` : ''}`);
+                console.log(`[Kanban] Auto-done: child card ${card.id} (${card.title}) marked done by entity ${entityId}${reviewerId != null ? `, reviewer: #${reviewerId}` : ''}`);
 
-                // Notify reviewer if set
+                // Award XP for completing task
+                if (awardEntityXP) {
+                    try { await awardEntityXP(deviceId, entityId, 25); } catch (e) { /* ignore */ }
+                }
+
+                // Notify reviewer if set — send the bot's reply for review
                 if (reviewerId != null) {
-                    const reviewMsg = `🔍 待審查：[${card.title}]\nBot #${entityId} 已完成並回報。${transformMessage ? `\n回覆：${transformMessage.slice(0, 300)}` : ''}\n請審查此卡片。`;
+                    const reviewMsg = `🔍 任務完成待審：[${card.title}]\nBot #${entityId} 已完成並回報：${transformMessage ? `\n${transformMessage.slice(0, 300)}` : '（無回覆內容）'}\n如有問題請重新建卡指派。`;
                     notifyEntities(deviceId, [reviewerId], reviewMsg);
                     console.log(`[Kanban] Notified reviewer #${reviewerId} for card ${card.id}`);
                 }
