@@ -1,3 +1,10 @@
+## [1.878.1](https://github.com/HankHuang0516/EClaw/compare/v1.878.0...v1.878.1) (2026-04-02)
+
+
+### Bug Fixes
+
+* auto-review trigger on any non-BUSY transform with message ([#1597](https://github.com/HankHuang0516/EClaw/issues/1597)) ([f6d30e9](https://github.com/HankHuang0516/EClaw/commit/f6d30e90e7d3de06ea5c08c5c16f029bdbe17bf0))
+
 # [1.878.0](https://github.com/HankHuang0516/EClaw/compare/v1.877.0...v1.878.0) (2026-04-01)
 
 
