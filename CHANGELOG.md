@@ -1,3 +1,10 @@
+## [1.878.5](https://github.com/HankHuang0516/EClaw/compare/v1.878.4...v1.878.5) (2026-04-02)
+
+
+### Bug Fixes
+
+* **kanban:** include card description and missionHints in push notifications ([#1601](https://github.com/HankHuang0516/EClaw/issues/1601)) ([065ebb6](https://github.com/HankHuang0516/EClaw/commit/065ebb6019e53adc93ad547549281c0b21e2ec00)), closes [#2](https://github.com/HankHuang0516/EClaw/issues/2)
+
 ## [1.878.4](https://github.com/HankHuang0516/EClaw/compare/v1.878.3...v1.878.4) (2026-04-02)
 
 
