@@ -90,6 +90,11 @@ export function createWebhookHandler(
         body = [eventPrefix, quotaLine, missionBlock, msg.text || '']
           .filter(Boolean)
           .join('\n');
+      } else if (event === 'kanban_notification') {
+        // Kanban notifications: merge missionHints into body so channel bots
+        // can see available API tools (same as webhook path gets them inline)
+        const missionBlock = eclawCtx?.missionHints ?? '';
+        body = [msg.text || '', missionBlock].filter(Boolean).join('\n');
       }
 
       // Build context in OpenClaw's native PascalCase format
