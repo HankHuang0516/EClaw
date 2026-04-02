@@ -172,7 +172,8 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     }
 
     // ── Helper: push notification to entity via channel callback + save to chat ──
-    async function notifyEntities(deviceId, entityIds, message) {
+    async function notifyEntities(deviceId, entityIds, message, options = {}) {
+        const { description } = options;
         if (!pushToChannelCallback && !pushToEntity && !pushToBot) {
             console.warn('[Kanban] No push callback available — notifications will not be delivered');
             return;
@@ -219,12 +220,17 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     `Add comment: exec: curl -s -X POST "${API_BASE}/api/mission/card/CARD_ID/comment" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${entity.botSecret}","entityId":${eid},"text":"YOUR_COMMENT"}'`,
                 ].join('\n');
 
-                // ── 3. Push to bot (channel or webhook, with standard hints) ──
+                // ── 3. Build full message with description ──
+                const descBlock = description
+                    ? `\n\n[TASK DESCRIPTION]\n${description}\n[/TASK DESCRIPTION]`
+                    : '';
+
+                // ── 4. Push to bot (channel or webhook, with standard hints) ──
                 if (entity.bindingType === 'channel' && pushToChannelCallback) {
                     const result = await pushToChannelCallback(deviceId, eid, {
                         event: 'kanban_notification',
                         from: 'kanban',
-                        text: message,
+                        text: message + descBlock,
                         eclaw_context: {
                             silentToken: '[SILENT]',
                             missionHints: kanbanHints + kanbanBoardHints,
@@ -236,10 +242,11 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     // Non-channel: build full push message with standard hints (same as speak-to webhook path)
                     const pushMsg = [
                         `[KANBAN NOTIFICATION] ${message}`,
+                        descBlock,
                         `[NOTIFICATION — NO REPLY EXPECTED] This is a Kanban task notification. Take action on the card as needed.`,
                         kanbanBoardHints,
                         kanbanHints,
-                    ].join('\n');
+                    ].filter(Boolean).join('\n');
 
                     const pushResult = await pushToBot(entity, deviceId, 'kanban_notification', { message: pushMsg });
                     console.log(`[Kanban] Webhook push to entity ${eid}: ${pushResult.pushed ? 'OK' : pushResult.reason}`);
@@ -252,7 +259,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
                 } else if (pushToEntity) {
                     // Legacy fallback
-                    const pushMsg = `[KANBAN NOTIFICATION] ${message}${kanbanBoardHints}${kanbanHints}`;
+                    const pushMsg = `[KANBAN NOTIFICATION] ${message}${descBlock}${kanbanBoardHints}${kanbanHints}`;
                     await pushToEntity(deviceId, eid, pushMsg);
                     console.log(`[Kanban] Legacy push to entity ${eid}`);
                 }
@@ -398,7 +405,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             // Push notify assigned bots if status != backlog
             if (cardStatus !== 'backlog' && bots.length > 0) {
                 const msg = `📋 新任務指派：${PRIORITY_COLORS[cardPriority]} [${cardPriority}] ${title.trim()}\n狀態: ${STATUS_LABELS[cardStatus]}`;
-                notifyEntities(deviceId, bots, msg);
+                notifyEntities(deviceId, bots, msg, { description });
             }
 
             if (awardEntityXP) {
@@ -855,7 +862,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             if (bots.length > 0) {
                 const direction = STATUSES.indexOf(newStatus) > STATUSES.indexOf(oldStatus) ? '➡️' : '⬅️';
                 const msg = `${direction} 任務狀態變更：[${card.title}]\n${STATUS_LABELS[oldStatus]} → ${STATUS_LABELS[newStatus]}`;
-                notifyEntities(deviceId, bots, msg);
+                notifyEntities(deviceId, bots, msg, { description: card.description });
             }
 
             await bumpVersion(deviceId);
@@ -1406,7 +1413,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
                 if (bots.length > 0) {
                     const msg = `⏰ 任務催促：[${card.title}]\n已在「${statusLabel}」停留 ${elapsedHrs} 小時，請繼續推進`;
-                    notifyEntities(card.device_id, bots, msg);
+                    notifyEntities(card.device_id, bots, msg, { description: card.description });
                 }
 
                 console.log(`[Kanban] Nudged card ${card.id} (${card.title}) — ${elapsedHrs}h in ${statusLabel}`);
@@ -1497,7 +1504,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
                     if (bots.length > 0) {
                         const msg = `🗓️ 排程觸發：[${card.title}]\n請開始執行此任務`;
-                        notifyEntities(card.device_id, bots, msg);
+                        notifyEntities(card.device_id, bots, msg, { description: card.description });
                     }
 
                     try { await bumpVersion(card.device_id); } catch (e) { /* ignore */ }
@@ -1572,7 +1579,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     // Push notify assigned bots
                     if (bots.length > 0) {
                         const msg = `🗓️ 自動化觸發：[${card.title}]\n子卡已建立: ${childTitle}\n請開始執行`;
-                        notifyEntities(card.device_id, bots, msg);
+                        notifyEntities(card.device_id, bots, msg, { description: card.description });
                     }
 
                     try { await bumpVersion(card.device_id); } catch (e) { /* ignore */ }
@@ -1604,7 +1611,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
                     if (bots.length > 0) {
                         const msg = `🗓️ 排程觸發：[${card.title}]\n${statusMsg}請繼續推進此任務`;
-                        notifyEntities(card.device_id, bots, msg);
+                        notifyEntities(card.device_id, bots, msg, { description: card.description });
                     }
 
                     try { await bumpVersion(card.device_id); } catch (e) { /* ignore */ }
