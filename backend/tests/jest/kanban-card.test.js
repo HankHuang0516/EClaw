@@ -136,3 +136,146 @@ describe('POST /card/:id/move — assignedBots validation', () => {
         expect(res.body.error).toMatch(/entity.*assigned/i);
     });
 });
+
+// ════════════════════════════════════════════════════════════════
+// POST /card — Inline automation + schedule creation
+// ════════════════════════════════════════════════════════════════
+describe('POST /card — inline automation + schedule', () => {
+    const CARD_ROW = {
+        id: 'uuid-1', device_id: 'test-dev', title: 'Auto task',
+        description: '', priority: 'P2', status: 'backlog',
+        assigned_bots: [0], created_by: 0,
+        is_automation: true, schedule_enabled: true,
+        schedule_type: 'recurring', schedule_cron: '0 */4 * * *',
+        schedule_run_at: null, schedule_timezone: 'Asia/Taipei',
+        schedule_next_run_at: new Date(), schedule_last_run_at: null,
+        parent_card_id: null, is_auto_generated: false,
+        last_run_result: null, active_child_id: null,
+        created_at: new Date(), updated_at: new Date(),
+        status_changed_at: new Date(), archived: false,
+    };
+
+    it('creates automation card with recurring schedule in one step', async () => {
+        mockQuery.mockResolvedValueOnce({ rows: [CARD_ROW] }); // INSERT
+        mockQuery.mockResolvedValueOnce({ rows: [] }); // bumpVersion
+        mockQuery.mockResolvedValueOnce({ rows: [] }); // addSystemComment
+
+        const res = await post('/api/mission/card').send({
+            ...AUTH, title: 'Auto task', assignedBots: [0],
+            isAutomation: true,
+            schedule: { type: 'recurring', cron: '0 */4 * * *' },
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.card.isAutomation).toBe(true);
+        // Verify INSERT query includes automation columns
+        const insertCall = mockQuery.mock.calls[0];
+        expect(insertCall[0]).toMatch(/is_automation/);
+        expect(insertCall[0]).toMatch(/schedule_enabled/);
+    });
+
+    it('auto-promotes to automation when schedule is recurring even without isAutomation flag', async () => {
+        mockQuery.mockResolvedValueOnce({ rows: [CARD_ROW] });
+        mockQuery.mockResolvedValueOnce({ rows: [] });
+        mockQuery.mockResolvedValueOnce({ rows: [] });
+
+        const res = await post('/api/mission/card').send({
+            ...AUTH, title: 'Auto task', assignedBots: [0],
+            schedule: { type: 'recurring', cron: '0 9 * * *' },
+        });
+
+        expect(res.status).toBe(200);
+        // finalAutomation should be true due to recurring schedule
+        const insertParams = mockQuery.mock.calls[0][1];
+        expect(insertParams[8]).toBe(true); // finalAutomation param
+    });
+
+    it('rejects recurring schedule with missing cron', async () => {
+        const res = await post('/api/mission/card').send({
+            ...AUTH, title: 'Auto task', assignedBots: [0],
+            schedule: { type: 'recurring' },
+        });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/cron/i);
+    });
+
+    it('rejects once schedule with missing runAt', async () => {
+        const res = await post('/api/mission/card').send({
+            ...AUTH, title: 'Once task', assignedBots: [0],
+            schedule: { type: 'once' },
+        });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/runAt/i);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
+// PUT /card/:id/schedule — recurring auto-promotes is_automation
+// ════════════════════════════════════════════════════════════════
+describe('PUT /card/:id/schedule — auto-promote automation', () => {
+    it('sets is_automation=true when schedule_type is recurring', async () => {
+        // Mock: card exists (not yet automation)
+        mockQuery.mockResolvedValueOnce({
+            rows: [{ id: 'uuid-1', device_id: 'test-dev', is_automation: false }],
+        });
+        // Mock: UPDATE RETURNING
+        mockQuery.mockResolvedValueOnce({
+            rows: [{
+                id: 'uuid-1', device_id: 'test-dev', title: 'Task',
+                description: '', priority: 'P2', status: 'backlog',
+                assigned_bots: [0], created_by: 0, is_automation: true,
+                schedule_enabled: true, schedule_type: 'recurring',
+                schedule_cron: '0 9 * * *', schedule_run_at: null,
+                schedule_timezone: 'Asia/Taipei', schedule_next_run_at: new Date(),
+                schedule_last_run_at: null, parent_card_id: null,
+                is_auto_generated: false, last_run_result: null,
+                active_child_id: null, created_at: new Date(),
+                updated_at: new Date(), status_changed_at: new Date(),
+                archived: false,
+            }],
+        });
+        mockQuery.mockResolvedValueOnce({ rows: [] }); // bumpVersion
+        mockQuery.mockResolvedValueOnce({ rows: [] }); // addSystemComment
+
+        const res = await put('/api/mission/card/uuid-1/schedule').send({
+            ...AUTH, type: 'recurring', cronExpression: '0 9 * * *',
+        });
+
+        expect(res.status).toBe(200);
+        // Verify SQL includes is_automation = TRUE
+        const updateCall = mockQuery.mock.calls[1];
+        expect(updateCall[0]).toMatch(/is_automation\s*=\s*TRUE/i);
+    });
+
+    it('does NOT set is_automation for once-type schedule', async () => {
+        mockQuery.mockResolvedValueOnce({
+            rows: [{ id: 'uuid-2', device_id: 'test-dev', is_automation: false }],
+        });
+        mockQuery.mockResolvedValueOnce({
+            rows: [{
+                id: 'uuid-2', device_id: 'test-dev', title: 'Once',
+                description: '', priority: 'P2', status: 'backlog',
+                assigned_bots: [0], created_by: 0, is_automation: false,
+                schedule_enabled: true, schedule_type: 'once',
+                schedule_cron: null, schedule_run_at: new Date(Date.now() + 3600000),
+                schedule_timezone: 'Asia/Taipei', schedule_next_run_at: new Date(Date.now() + 3600000),
+                schedule_last_run_at: null, parent_card_id: null,
+                is_auto_generated: false, last_run_result: null,
+                active_child_id: null, created_at: new Date(),
+                updated_at: new Date(), status_changed_at: new Date(),
+                archived: false,
+            }],
+        });
+        mockQuery.mockResolvedValueOnce({ rows: [] });
+        mockQuery.mockResolvedValueOnce({ rows: [] });
+
+        const res = await put('/api/mission/card/uuid-2/schedule').send({
+            ...AUTH, type: 'once', runAt: Date.now() + 3600000,
+        });
+
+        expect(res.status).toBe(200);
+        const updateSQL = mockQuery.mock.calls[1][0];
+        expect(updateSQL).not.toMatch(/is_automation\s*=\s*TRUE/i);
+    });
+});
