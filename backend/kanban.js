@@ -1605,12 +1605,13 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
      */
     async function autoReviewOnTransform(deviceId, entityId, transformMessage) {
         try {
-            // Find active child cards assigned to this entity that are in todo/in_progress
+            // Find active cards assigned to this entity that are in todo/in_progress
+            // Supports both auto-generated child cards AND manually created cards with reviewer
             const result = await pool.query(
                 `SELECT c.id, c.title, c.status, c.parent_card_id, c.assigned_bots, c.reviewer_entity_id
                  FROM kanban_cards c
                  WHERE c.device_id = $1
-                   AND c.is_auto_generated = true
+                   AND (c.is_auto_generated = true OR c.reviewer_entity_id IS NOT NULL)
                    AND c.archived = false
                    AND c.status IN ('todo', 'in_progress')
                    AND c.assigned_bots::jsonb @> $2::jsonb`,
