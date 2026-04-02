@@ -327,7 +327,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     router.post('/card', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] POST /card called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, title, description, priority, status, assignedBots, entityId, reviewerEntityId } = req.body;
+        const { deviceId, title, description, priority, status, assignedBots, entityId, reviewerEntityId, isAutomation, schedule } = req.body;
 
         if (!title || !title.trim()) {
             return res.status(400).json({ success: false, error: 'Missing title' });
@@ -343,12 +343,50 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         const createdBy = parseInt(entityId || 0);
         const reviewer = reviewerEntityId != null ? parseInt(reviewerEntityId) : null;
 
+        // Inline automation + schedule support
+        const wantAutomation = !!isAutomation;
+        let schedEnabled = false, schedType = null, schedCron = null, schedRunAt = null, schedTz = 'Asia/Taipei', schedNextRunAt = null;
+
+        if (schedule && typeof schedule === 'object') {
+            schedType = (schedule.type === 'once' || schedule.type === 'recurring') ? schedule.type : null;
+            schedTz = schedule.timezone || 'Asia/Taipei';
+            schedEnabled = schedule.enabled !== false && !!schedType;
+
+            if (schedEnabled && schedType === 'once') {
+                if (!schedule.runAt) {
+                    return res.status(400).json({ success: false, error: 'Missing schedule.runAt for once schedule' });
+                }
+                schedRunAt = new Date(schedule.runAt);
+                if (isNaN(schedRunAt.getTime())) {
+                    return res.status(400).json({ success: false, error: 'Invalid schedule.runAt timestamp' });
+                }
+                schedNextRunAt = schedRunAt;
+            }
+
+            if (schedEnabled && schedType === 'recurring') {
+                if (!schedule.cron && !schedule.cronExpression) {
+                    return res.status(400).json({ success: false, error: 'Missing schedule.cron for recurring schedule' });
+                }
+                schedCron = schedule.cron || schedule.cronExpression;
+                schedNextRunAt = computeNextRun(schedCron, schedTz);
+                if (!schedNextRunAt) {
+                    return res.status(400).json({ success: false, error: 'Invalid cron expression' });
+                }
+            }
+        }
+
+        // recurring schedule → auto-promote to automation
+        const finalAutomation = wantAutomation || (schedEnabled && schedType === 'recurring');
+
         try {
             const result = await pool.query(
-                `INSERT INTO kanban_cards (device_id, title, description, priority, status, assigned_bots, created_by, reviewer_entity_id, status_changed_at)
-                 VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, NOW())
+                `INSERT INTO kanban_cards (device_id, title, description, priority, status, assigned_bots, created_by, reviewer_entity_id, status_changed_at,
+                    is_automation, schedule_enabled, schedule_type, schedule_cron, schedule_run_at, schedule_timezone, schedule_next_run_at)
+                 VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, NOW(),
+                    $9, $10, $11, $12, $13, $14, $15)
                  RETURNING *`,
-                [deviceId, title.trim(), description || '', cardPriority, cardStatus, JSON.stringify(bots), createdBy, reviewer]
+                [deviceId, title.trim(), description || '', cardPriority, cardStatus, JSON.stringify(bots), createdBy, reviewer,
+                    finalAutomation, schedEnabled, schedType, schedCron, schedRunAt, schedTz, schedNextRunAt]
             );
 
             const card = serializeCard(result.rows[0]);
@@ -1228,14 +1266,18 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 }
             }
 
+            // recurring schedule → auto-promote to automation card
+            const autoPromote = schedEnabled && schedType === 'recurring';
+
             const result = await pool.query(
-                `UPDATE kanban_cards SET 
+                `UPDATE kanban_cards SET
                     schedule_enabled = $1,
                     schedule_type = $2,
                     schedule_cron = $3,
                     schedule_run_at = $4,
                     schedule_timezone = $5,
                     schedule_next_run_at = $6,
+                    ${autoPromote ? 'is_automation = TRUE,' : ''}
                     updated_at = NOW()
                  WHERE id = $7 AND device_id = $8
                  RETURNING *`,
@@ -1250,6 +1292,10 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     deviceId
                 ]
             );
+
+            if (autoPromote && !existing.rows[0].is_automation) {
+                console.log(`[Kanban] Auto-promoted card ${cardId} to automation (recurring schedule)`);
+            }
 
             const card = serializeCard(result.rows[0]);
             await bumpVersion(deviceId);
