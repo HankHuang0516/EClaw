@@ -1,3 +1,10 @@
+## [1.878.3](https://github.com/HankHuang0516/EClaw/compare/v1.878.2...v1.878.3) (2026-04-02)
+
+
+### Bug Fixes
+
+* autoReview supports manual cards with reviewerEntityId ([#1599](https://github.com/HankHuang0516/EClaw/issues/1599)) ([0d55355](https://github.com/HankHuang0516/EClaw/commit/0d55355a39ca66c785626c7694fb1be62ae5582b))
+
 ## [1.878.2](https://github.com/HankHuang0516/EClaw/compare/v1.878.1...v1.878.2) (2026-04-02)
 
 
