@@ -1,3 +1,10 @@
+## [1.878.2](https://github.com/HankHuang0516/EClaw/compare/v1.878.1...v1.878.2) (2026-04-02)
+
+
+### Bug Fixes
+
+* autoReview marks card as done instead of review ([#1598](https://github.com/HankHuang0516/EClaw/issues/1598)) ([14bdb00](https://github.com/HankHuang0516/EClaw/commit/14bdb00a967d586cdb10f3dee2caac86dc4cf303))
+
 ## [1.878.1](https://github.com/HankHuang0516/EClaw/compare/v1.878.0...v1.878.1) (2026-04-02)
 
 
