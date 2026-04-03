@@ -1,3 +1,11 @@
+# [1.881.0](https://github.com/HankHuang0516/EClaw/compare/v1.880.0...v1.881.0) (2026-04-03)
+
+
+### Features
+
+* **kanban:** automation pause/resume/delete UIUX + i18n ([#1605](https://github.com/HankHuang0516/EClaw/issues/1605)) ([cbcd0e1](https://github.com/HankHuang0516/EClaw/commit/cbcd0e15d63820aeeb6bc884c22b883a936da30e))
+* **kanban:** require assigned entity, slower card animation, mission embed ([#1604](https://github.com/HankHuang0516/EClaw/issues/1604)) ([31f7119](https://github.com/HankHuang0516/EClaw/commit/31f7119fad634740c48a79d771cf3792d31e24f1))
+
 # [1.880.0](https://github.com/HankHuang0516/EClaw/compare/v1.879.0...v1.880.0) (2026-04-03)
 
 
