@@ -804,9 +804,19 @@
         <div class="sub-tabs">
             <a class="sub-tab active" href="mission.html">🎯 <span data-i18n="mc_title">Mission Control</span></a>
             <a class="sub-tab" href="kanban.html">📋 <span data-i18n="kanban_tab">Kanban Board</span></a>
-            <a class="sub-tab" href="env-vars.html">🔐 Env Variables</a>
-            <a class="sub-tab" href="screen-control.html">📱 Remote Control</a>
+            <a class="sub-tab" href="env-vars.html">🔐 <span data-i18n="kb_subtab_env">Env Variables</span></a>
+            <a class="sub-tab" href="screen-control.html">📱 <span data-i18n="kb_subtab_remote">Remote Control</span></a>
         </div>
+        <script>
+        // Preserve ?embed=1 on sub-tab links for workspace split-view
+        (function() {
+            if (new URLSearchParams(window.location.search).get('embed') !== '1') return;
+            document.querySelectorAll('.sub-tab').forEach(a => {
+                const href = a.getAttribute('href');
+                if (href && !href.includes('embed=')) a.setAttribute('href', href + '?embed=1');
+            });
+        })();
+        </script>
 
         <!-- Loading State -->
         <div class="loading-center" id="loadingState">
@@ -1066,6 +1076,13 @@
 
         window.addEventListener('DOMContentLoaded', async () => {
             try {
+            // Detect embed mode (workspace split view)
+            const _isEmbed = new URLSearchParams(window.location.search).get('embed') === '1';
+            if (_isEmbed) {
+                document.body.classList.add('embed-mode');
+                const subTabs = document.querySelector('.sub-tabs');
+                if (subTabs) subTabs.style.display = 'none';
+            }
             renderNav('mission');
             if (typeof renderFooter === 'function') renderFooter();
             const user = await checkAuth();

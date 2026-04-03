@@ -257,6 +257,16 @@
         /* ⚡ Badge on auto-generated cards */
         .kb-card .kb-auto-badge { position:absolute; top:6px; left:6px; font-size:11px; background:rgba(251,191,36,0.15); color:#fbbf24; padding:1px 5px; border-radius:4px; font-weight:700; z-index:2; pointer-events:none; }
 
+        /* Automation action buttons (pause/resume/delete) */
+        .kb-auto-actions { display:flex; gap:8px; align-items:center; padding:4px 0; }
+        .kb-auto-action-btn { padding:6px 14px; border-radius:6px; font-size:12px; font-weight:600; border:1px solid var(--card-border); cursor:pointer; transition:all 0.2s; }
+        .kb-auto-action-btn.pause { background:rgba(251,191,36,0.12); color:#fbbf24; border-color:rgba(251,191,36,0.3); }
+        .kb-auto-action-btn.pause:hover { background:rgba(251,191,36,0.25); }
+        .kb-auto-action-btn.resume { background:rgba(74,222,128,0.12); color:#4ade80; border-color:rgba(74,222,128,0.3); }
+        .kb-auto-action-btn.resume:hover { background:rgba(74,222,128,0.25); }
+        .kb-auto-action-btn.delete { background:rgba(239,68,68,0.08); color:#ef4444; border-color:rgba(239,68,68,0.2); margin-left:auto; }
+        .kb-auto-action-btn.delete:hover { background:rgba(239,68,68,0.2); }
+
         /* Automation toggle in new card form */
         .kb-auto-toggle-row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; }
         .kb-auto-toggle-label { font-size:13px; display:flex; align-items:center; gap:6px; }
@@ -354,6 +364,16 @@
             <a class="sub-tab" href="env-vars.html">🔐 <span data-i18n="kb_subtab_env">Env Variables</span></a>
             <a class="sub-tab" href="screen-control.html">📱 <span data-i18n="kb_subtab_remote">Remote Control</span></a>
         </div>
+        <script>
+        // Preserve ?embed=1 on sub-tab links for workspace split-view
+        (function() {
+            if (new URLSearchParams(window.location.search).get('embed') !== '1') return;
+            document.querySelectorAll('.sub-tab').forEach(a => {
+                const href = a.getAttribute('href');
+                if (href && !href.includes('embed=')) a.setAttribute('href', href + '?embed=1');
+            });
+        })();
+        </script>
 
         <!-- Toolbar -->
         <div class="kb-toolbar">
@@ -544,6 +564,13 @@
 
         // ── Init ──
         window.addEventListener('DOMContentLoaded', async () => {
+            // Detect embed mode (workspace split view)
+            const _isEmbed = new URLSearchParams(window.location.search).get('embed') === '1';
+            if (_isEmbed) {
+                document.body.classList.add('embed-mode');
+                const subTabs = document.querySelector('.sub-tabs');
+                if (subTabs) subTabs.style.display = 'none';
+            }
             renderNav('mission');
             if (typeof renderFooter === 'function') renderFooter();
             const user = await checkAuth();
@@ -834,10 +861,17 @@
                 ${card.description ? '<div style="width:100%;font-size:13px;color:var(--text-secondary);margin-top:8px;white-space:pre-wrap;word-break:break-word">'+escapeHtml(card.description)+'</div>' : ''}
             `;
 
-            // Move bar — hide for automation parent cards (managed by scheduler)
+            // Move bar — automation cards get pause/resume + delete; regular cards get status buttons
             const moveBar = document.getElementById('moveBar');
             if (card.isAutomation) {
-                moveBar.innerHTML = `<div style="font-size:12px;color:var(--text-muted);padding:4px 0">⚡ 自動化母卡由排程管理，無法手動移動狀態</div>`;
+                const isEnabled = card.schedule?.enabled !== false;
+                const pauseLabel = isEnabled ? `⏸ ${t('kb_auto_pause','Pause')}` : `▶ ${t('kb_auto_resume','Resume')}`;
+                const pauseCls = isEnabled ? 'kb-auto-action-btn pause' : 'kb-auto-action-btn resume';
+                moveBar.innerHTML =
+                    `<div class="kb-auto-actions">` +
+                        `<button class="${pauseCls}" onclick="toggleAutomation('${cardId}',${!isEnabled})">${pauseLabel}</button>` +
+                        `<button class="kb-auto-action-btn delete" onclick="deleteAutomation('${cardId}')" title="${t('kb_auto_delete_tip','Archive this automation')}">🗑 ${t('kb_auto_delete','Delete')}</button>` +
+                    `</div>`;
             } else {
                 moveBar.innerHTML = STATUSES.map(s =>
                     `<button class="kb-move-btn${s===card.status?' current':''}" onclick="moveCardTo('${cardId}','${s}')"${s===card.status?' disabled':''}>${STATUS_LABELS[s]}</button>`
@@ -847,6 +881,41 @@
             // Load first tab
             switchDetailTab('comments', document.querySelector('.kb-modal-tab'));
             document.getElementById('detailModal').classList.add('show');
+        }
+
+        async function toggleAutomation(cardId, enable) {
+            const card = findCard(cardId);
+            if (!card) return;
+            try {
+                const body = {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    enabled: enable,
+                    type: card.schedule?.type || 'recurring',
+                };
+                if (card.schedule?.cronExpression) body.cronExpression = card.schedule.cronExpression;
+                if (card.schedule?.runAt) body.runAt = card.schedule.runAt;
+                await apiCall('PUT', `/api/mission/card/${cardId}/schedule`, body);
+                await loadAutomations();
+                await loadCards();
+                openDetail(cardId); // refresh modal
+            } catch (e) {
+                alert(e.message || 'Failed to toggle automation');
+            }
+        }
+
+        async function deleteAutomation(cardId) {
+            const card = findCard(cardId);
+            if (!card) return;
+            if (!confirm(t('kb_auto_delete_confirm', `Delete automation "${card.title}"? This will archive the card.`))) return;
+            try {
+                await apiCall('DELETE', `/api/mission/card/${cardId}?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+                closeDetail();
+                await loadAutomations();
+                await loadCards();
+            } catch (e) {
+                alert(e.message || 'Failed to delete automation');
+            }
         }
 
         function closeDetail() {
@@ -993,8 +1062,17 @@
                 const lastResult = c.lastRunResult;
                 const resultClass = lastResult ? (lastResult.startsWith('✅') ? 'ok' : 'fail') : '';
                 const activeChild = c.activeChildId ? `<div class="kb-auto-card-active">▶ ${t('kb_auto_running','Running...')}</div>` : '';
-                return `<div class="kb-auto-card" onclick="openDetail('${c.id}')">
-                    <div class="kb-auto-card-title">⚡ ${escapeHtml(c.title)}</div>
+                const isEnabled = c.schedule?.enabled !== false;
+                const pausedBadge = !isEnabled ? `<span class="kb-auto-card-paused">⏸ ${t('kb_auto_paused','Paused')}</span>` : '';
+                return `<div class="kb-auto-card${!isEnabled ? ' paused' : ''}" onclick="openDetail('${c.id}')">
+                    <div class="kb-auto-card-header">
+                        <div class="kb-auto-card-title">⚡ ${escapeHtml(c.title)}</div>
+                        <div class="kb-auto-card-quick" onclick="event.stopPropagation()">
+                            <button class="kb-auto-quick-btn" onclick="toggleAutomation('${c.id}',${!isEnabled})" title="${isEnabled ? t('kb_auto_pause','Pause') : t('kb_auto_resume','Resume')}">${isEnabled ? '⏸' : '▶'}</button>
+                            <button class="kb-auto-quick-btn del" onclick="deleteAutomation('${c.id}')" title="${t('kb_auto_delete','Delete')}">🗑</button>
+                        </div>
+                    </div>
+                    ${pausedBadge}
                     <div class="kb-auto-card-cron">↻ ${escapeHtml(cronDesc)}</div>
                     <div class="kb-auto-card-next" data-i18n="kb_auto_next">Next: ${escapeHtml(nextRun)}</div>
                     ${lastResult ? '<div class="kb-auto-card-result '+resultClass+'">'+escapeHtml(lastResult)+'</div>' : ''}
