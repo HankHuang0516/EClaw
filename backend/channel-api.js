@@ -58,6 +58,9 @@ async function assertPublicCallbackUrl(callbackUrl) {
 }
 
 module.exports = function (devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase, awardEntityXP, XP_AMOUNTS, notifyDevice }) {
+    // Late-bound kanban auto-review hook (set after kanbanModule init)
+    let kanbanAutoReview = null;
+    function setKanbanAutoReview(fn) { kanbanAutoReview = fn; }
     const router = express.Router();
 
     // ── In-memory test sink (for self-testing without ngrok) ──
@@ -728,7 +731,14 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 level: entity.level || 1
             });
 
-            serverLog('info', 'channel', `Channel message from Entity ${eId}`, { deviceId, entityId: eId });
+            serverLog('info', 'transform', `${state || entity.state}: ${(message || '').slice(0, 100)}`, { deviceId, entityId: eId, metadata: { state: state || entity.state, via: 'channel' } });
+
+            // Auto-move kanban child cards to done (same as /api/transform)
+            if (state !== 'BUSY' && message && kanbanAutoReview) {
+                kanbanAutoReview(deviceId, eId, message).catch(err => {
+                    console.error(`[Channel] autoReviewOnTransform failed:`, err.message);
+                });
+            }
 
             res.json({
                 success: true,
@@ -832,6 +842,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
 
     return {
         router,
-        pushToChannelCallback
+        pushToChannelCallback,
+        setKanbanAutoReview
     };
 };

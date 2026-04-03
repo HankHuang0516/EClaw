@@ -11398,6 +11398,10 @@ const channelModule = require('./channel-api')(devices, {
 app.use('/api/channel', channelModule.router);
 // Wire channel push into mission module (Bot Push Parity Rule — must be after channelModule init)
 missionModule.setPushToChannelCallback(channelModule.pushToChannelCallback.bind(channelModule));
+// Wire kanban auto-review into channel module (so channel bot replies also trigger card auto-done)
+if (kanbanModule && kanbanModule.autoReviewOnTransform) {
+    channelModule.setKanbanAutoReview(kanbanModule.autoReviewOnTransform);
+}
 
 // ============================================
 // DISCORD INTEGRATION — Slash Commands
