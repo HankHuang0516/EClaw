@@ -869,7 +869,7 @@
                 const pauseCls = isEnabled ? 'kb-auto-action-btn pause' : 'kb-auto-action-btn resume';
                 moveBar.innerHTML =
                     `<div class="kb-auto-actions">` +
-                        `<button class="${pauseCls}" onclick="toggleAutomation('${cardId}',${!isEnabled})">${pauseLabel}</button>` +
+                        `<button class="${pauseCls}" onclick="toggleAutoSchedule('${cardId}',${!isEnabled})">${pauseLabel}</button>` +
                         `<button class="kb-auto-action-btn delete" onclick="deleteAutomation('${cardId}')" title="${t('kb_auto_delete_tip','Archive this automation')}">🗑 ${t('kb_auto_delete','Delete')}</button>` +
                     `</div>`;
             } else {
@@ -883,7 +883,7 @@
             document.getElementById('detailModal').classList.add('show');
         }
 
-        async function toggleAutomation(cardId, enable) {
+        async function toggleAutoSchedule(cardId, enable) {
             const card = findCard(cardId);
             if (!card) return;
             try {
@@ -1068,7 +1068,7 @@
                     <div class="kb-auto-card-header">
                         <div class="kb-auto-card-title">⚡ ${escapeHtml(c.title)}</div>
                         <div class="kb-auto-card-quick" onclick="event.stopPropagation()">
-                            <button class="kb-auto-quick-btn" onclick="toggleAutomation('${c.id}',${!isEnabled})" title="${isEnabled ? t('kb_auto_pause','Pause') : t('kb_auto_resume','Resume')}">${isEnabled ? '⏸' : '▶'}</button>
+                            <button class="kb-auto-quick-btn" onclick="toggleAutoSchedule('${c.id}',${!isEnabled})" title="${isEnabled ? t('kb_auto_pause','Pause') : t('kb_auto_resume','Resume')}">${isEnabled ? '⏸' : '▶'}</button>
                             <button class="kb-auto-quick-btn del" onclick="deleteAutomation('${c.id}')" title="${t('kb_auto_delete','Delete')}">🗑</button>
                         </div>
                     </div>
