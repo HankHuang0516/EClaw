@@ -1,3 +1,10 @@
+## [1.881.2](https://github.com/HankHuang0516/EClaw/compare/v1.881.1...v1.881.2) (2026-04-03)
+
+
+### Bug Fixes
+
+* **chat:** use full recipient set in senderKey to prevent wrong visual grouping ([f0142a1](https://github.com/HankHuang0516/EClaw/commit/f0142a1828425e8baad9a15561f12050d3aa5f2a))
+
 ## [1.881.1](https://github.com/HankHuang0516/EClaw/compare/v1.881.0...v1.881.1) (2026-04-03)
 
 
