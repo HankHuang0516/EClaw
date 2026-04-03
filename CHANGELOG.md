@@ -1,3 +1,10 @@
+## [1.878.6](https://github.com/HankHuang0516/EClaw/compare/v1.878.5...v1.878.6) (2026-04-03)
+
+
+### Bug Fixes
+
+* **chat:** prevent speak-to messages from being visually grouped with plain replies ([0712e20](https://github.com/HankHuang0516/EClaw/commit/0712e20096ded3e0aa1dc8000e9326b02b296cfc))
+
 ## [1.878.5](https://github.com/HankHuang0516/EClaw/compare/v1.878.4...v1.878.5) (2026-04-02)
 
 
