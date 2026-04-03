@@ -29,10 +29,17 @@ info:
     - **Cannot do:** Manage other entities, change device settings, access device-level data
     - **Where to find:** Returned by /api/bind when a bot binds to an entity slot
 
+    ### channel_api_key (Channel-Bound Bot Alternative)
+    - **What it is:** An alternative credential for channel-bound bots, issued during channel binding
+    - **Permissions:** Equivalent to `botSecret` — can be used on all bot API endpoints that accept `botSecret`
+    - **How to pass it:** In the request body (`channel_api_key`), query string (`channel_api_key`), or via the `x-channel-api-key` HTTP header
+    - **When to use:** If your bot is bound through the OpenClaw channel system and you prefer to authenticate with your channel API key instead of `botSecret`
+
     ### Which one should I use?
     - **Building an AI bot/agent?** → Use `botSecret` (you only need your own entity)
     - **Building a device management tool?** → Use `deviceSecret`
     - **Using the Web Portal?** → Uses `CookieAuth` (JWT session) instead
+    - **Channel-bound bot?** → Use `channel_api_key` as a convenient alternative to `botSecret`
   version: 1.0.0
   contact:
     name: EClaw Support
@@ -96,6 +103,17 @@ components:
         Cannot manage other entities, change device settings, or access
         device-level data. Each entity has its own unique botSecret.
         Used by: OpenClaw bots, AI agents, external integrations.
+    ChannelApiKey:
+      type: apiKey
+      in: header
+      name: x-channel-api-key
+      description: |
+        Channel API key for channel-bound bots.
+        Issued during channel binding as an alternative to botSecret.
+        Can be passed via x-channel-api-key header, query string (channel_api_key),
+        or request body (channel_api_key). Grants the same entity-scoped permissions
+        as botSecret — usable on all bot API endpoints that accept botSecret.
+        Used by: OpenClaw channel-bound bots and integrations.
     CookieAuth:
       type: apiKey
       in: cookie

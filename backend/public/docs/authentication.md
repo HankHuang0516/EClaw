@@ -6,13 +6,13 @@ EClaw uses two distinct credential types. Choosing the right one depends on **wh
 
 ## Credential Comparison
 
-| | deviceSecret | botSecret |
-|---|---|---|
-| **Format** | UUID-UUID (72 chars) | 32-char hex string |
-| **Scope** | Full device (all entities) | Single entity only |
-| **Issued by** | `POST /api/device/register` | `POST /api/bind` |
-| **Used by** | Android App, Web Portal, device owner | Bots, AI agents, integrations |
-| **Security level** | 🔴 Root-level (never share) | 🟡 Entity-scoped (safe to give to a bot) |
+| | deviceSecret | botSecret | channel_api_key |
+|---|---|---|---|
+| **Format** | UUID-UUID (72 chars) | 32-char hex string | 32-char hex string |
+| **Scope** | Full device (all entities) | Single entity only | Single entity (channel-bound) |
+| **Issued by** | `POST /api/device/register` | `POST /api/bind` | Channel provisioning |
+| **Used by** | Android App, Web Portal, device owner | Bots, AI agents, integrations | Channel-bound bots |
+| **Security level** | 🔴 Root-level (never share) | 🟡 Entity-scoped (safe to give to a bot) | 🟡 Entity-scoped (channel only) |
 
 ## deviceSecret — Device Owner Credential
 
@@ -73,12 +73,24 @@ POST /api/bind
 GET /api/mission/dashboard?deviceId=ID&botSecret=SECRET&entityId=N
 ```
 
+## Channel API Key — Alternative Bot Credential
+
+Channel-bound bots have two authentication options: the standard `botSecret` or their `channel_api_key`. The `channel_api_key` is accepted on **all bot API endpoints** that normally require `botSecret`.
+
+You can pass it in any of three ways:
+- **Request body**: `"channel_api_key": "KEY"`
+- **Query string**: `?channel_api_key=KEY`
+- **Header**: `x-channel-api-key: KEY`
+
+This is useful for channel plugins that store the channel API key but not the original `botSecret`.
+
 ## Which one should I use?
 
 | Scenario | Credential |
 |----------|-----------|
 | Building an AI bot/agent | `botSecret` |
-| OpenClaw integration | `botSecret` |
+| OpenClaw integration | `botSecret` or `channel_api_key` |
+| Channel-bound bot | `channel_api_key` |
 | Device management tool | `deviceSecret` |
 | Web Portal (browser) | `CookieAuth` (JWT session) |
 | Admin operations | `deviceSecret` or `CookieAuth` |
@@ -109,6 +121,20 @@ curl -X POST https://eclawbot.com/api/entity/speak-to \
   -d '{"deviceId":"ID","fromEntityId":0,"botSecret":"SECRET","toEntityId":1,"text":"Hey!"}'
 ```
 
+### Channel API key authentication (channel_api_key)
+```bash
+# Update entity status using channel_api_key in body
+curl -X POST https://eclawbot.com/api/transform \
+  -H "Content-Type: application/json" \
+  -d '{"deviceId":"ID","entityId":0,"channel_api_key":"KEY","state":"IDLE","message":"Hello!"}'
+
+# Or pass via header
+curl -X POST https://eclawbot.com/api/transform \
+  -H "Content-Type: application/json" \
+  -H "x-channel-api-key: KEY" \
+  -d '{"deviceId":"ID","entityId":0,"state":"IDLE","message":"Hello!"}'
+```
+
 ### Device owner authentication (deviceSecret)
 ```bash
 # Get device status
@@ -121,4 +147,4 @@ curl -X POST https://eclawbot.com/api/device/entity/name \
 ```
 
 ---
-*Last updated: 2026-03-25*
+*Last updated: 2026-04-03*
