@@ -1710,25 +1710,28 @@ app.get('/api/rule-templates', (req, res) => {
 app.post('/api/skill-templates/contribute', async (req, res) => {
     const { deviceId, botSecret, entityId, skill } = req.body;
 
-    if (!deviceId || !botSecret || !skill) {
-        return res.status(400).json({ success: false, error: 'deviceId, botSecret, and skill required' });
+    const hasChannelKey = !!(req.body.channel_api_key || req.headers['x-channel-api-key']);
+    if (!deviceId || (!botSecret && !hasChannelKey) || !skill) {
+        return res.status(400).json({ success: false, error: 'deviceId, botSecret (or channel_api_key), and skill required' });
     }
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    // Find entity: try explicit entityId first, then search all slots by botSecret
+    // Find entity: try explicit entityId first, then search all slots by botSecret or channel_api_key
     let eId = parseInt(entityId);
     let entity = !isNaN(eId) && device.entities[eId];
-    if (!entity || !entity.isBound || !safeEqual(entity.botSecret, botSecret)) {
+    if (!entity || !entity.isBound || !(botSecret && safeEqual(entity.botSecret, botSecret)) && !(await verifyChannelAuth(entity, req))) {
         // Search all entity slots for matching botSecret
         eId = -1;
         entity = null;
-        for (const i of Object.keys(device.entities).map(Number)) {
-            const e = device.entities[i];
-            if (e && e.isBound && safeEqual(e.botSecret, botSecret)) {
-                eId = i;
-                entity = e;
-                break;
+        if (botSecret) {
+            for (const i of Object.keys(device.entities).map(Number)) {
+                const e = device.entities[i];
+                if (e && e.isBound && safeEqual(e.botSecret, botSecret)) {
+                    eId = i;
+                    entity = e;
+                    break;
+                }
             }
         }
     }
@@ -1863,14 +1866,16 @@ app.post('/api/skill-templates/contribute', async (req, res) => {
 app.get('/api/skill-templates/status/:pendingId', async (req, res) => {
     const { pendingId } = req.params;
     const { deviceId, botSecret, entityId } = req.query;
-    if (!deviceId || !botSecret) return res.status(400).json({ success: false, error: 'deviceId and botSecret required' });
+    const hasChKey = !!(req.query.channel_api_key || req.headers['x-channel-api-key']);
+    if (!deviceId || (!botSecret && !hasChKey)) return res.status(400).json({ success: false, error: 'deviceId and botSecret (or channel_api_key) required' });
 
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
     const eId = parseInt(entityId) || 0;
     const entity = device.entities[eId];
-    if (!entity || !entity.isBound || !safeEqual(entity.botSecret, botSecret))
+    const statusBotSecretOk = botSecret && safeEqual(entity.botSecret, botSecret);
+    if (!entity || !entity.isBound || (!statusBotSecretOk && !(await verifyChannelAuth(entity, req))))
         return res.status(403).json({ success: false, error: 'Invalid botSecret or entity not bound' });
 
     try {
@@ -1949,24 +1954,27 @@ function validateRulePayload(rule) {
  */
 app.post('/api/soul-templates/contribute', async (req, res) => {
     const { deviceId, botSecret, entityId, soul } = req.body;
-    if (!deviceId || !botSecret || !soul)
-        return res.status(400).json({ success: false, error: 'deviceId, botSecret, and soul required' });
+    const hasChKeySoul = !!(req.body.channel_api_key || req.headers['x-channel-api-key']);
+    if (!deviceId || (!botSecret && !hasChKeySoul) || !soul)
+        return res.status(400).json({ success: false, error: 'deviceId, botSecret (or channel_api_key), and soul required' });
 
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    // Find entity: try explicit entityId first, then search all slots by botSecret
+    // Find entity: try explicit entityId first, then search all slots by botSecret or channel_api_key
     let eId = parseInt(entityId);
     let entity = !isNaN(eId) && device.entities[eId];
-    if (!entity || !entity.isBound || !safeEqual(entity.botSecret, botSecret)) {
+    if (!entity || !entity.isBound || !(botSecret && safeEqual(entity.botSecret, botSecret)) && !(await verifyChannelAuth(entity, req))) {
         eId = -1;
         entity = null;
-        for (const i of Object.keys(device.entities).map(Number)) {
-            const e = device.entities[i];
-            if (e && e.isBound && safeEqual(e.botSecret, botSecret)) {
-                eId = i;
-                entity = e;
-                break;
+        if (botSecret) {
+            for (const i of Object.keys(device.entities).map(Number)) {
+                const e = device.entities[i];
+                if (e && e.isBound && safeEqual(e.botSecret, botSecret)) {
+                    eId = i;
+                    entity = e;
+                    break;
+                }
             }
         }
     }
@@ -2035,24 +2043,27 @@ app.delete('/api/soul-templates/:soulId', async (req, res) => {
  */
 app.post('/api/rule-templates/contribute', async (req, res) => {
     const { deviceId, botSecret, entityId, rule } = req.body;
-    if (!deviceId || !botSecret || !rule)
-        return res.status(400).json({ success: false, error: 'deviceId, botSecret, and rule required' });
+    const hasChKeyRule = !!(req.body.channel_api_key || req.headers['x-channel-api-key']);
+    if (!deviceId || (!botSecret && !hasChKeyRule) || !rule)
+        return res.status(400).json({ success: false, error: 'deviceId, botSecret (or channel_api_key), and rule required' });
 
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    // Find entity: try explicit entityId first, then search all slots by botSecret
+    // Find entity: try explicit entityId first, then search all slots by botSecret or channel_api_key
     let eId = parseInt(entityId);
     let entity = !isNaN(eId) && device.entities[eId];
-    if (!entity || !entity.isBound || !safeEqual(entity.botSecret, botSecret)) {
+    if (!entity || !entity.isBound || !(botSecret && safeEqual(entity.botSecret, botSecret)) && !(await verifyChannelAuth(entity, req))) {
         eId = -1;
         entity = null;
-        for (const i of Object.keys(device.entities).map(Number)) {
-            const e = device.entities[i];
-            if (e && e.isBound && safeEqual(e.botSecret, botSecret)) {
-                eId = i;
-                entity = e;
-                break;
+        if (botSecret) {
+            for (const i of Object.keys(device.entities).map(Number)) {
+                const e = device.entities[i];
+                if (e && e.isBound && safeEqual(e.botSecret, botSecret)) {
+                    eId = i;
+                    entity = e;
+                    break;
+                }
             }
         }
     }
@@ -2263,13 +2274,22 @@ app.get('/api/gatekeeper/stats', async (req, res) => {
         return res.status(404).json({ success: false, error: 'Device not found' });
     }
 
-    // Accept deviceSecret or any valid botSecret on this device
+    // Accept deviceSecret, any valid botSecret, or channel_api_key on this device
     const secretOk = deviceSecret && device.deviceSecret && safeEqual(device.deviceSecret, deviceSecret);
     const botOk = botSecret && Object.values(device.entities || {}).some(
         e => e.botSecret && safeEqual(e.botSecret, botSecret)
     );
+    const channelOk = !secretOk && !botOk && await (async () => {
+        const apiKey = req.query.channel_api_key || req.headers['x-channel-api-key'];
+        if (!apiKey) return false;
+        const account = await db.getChannelAccountByKey(apiKey);
+        if (!account) return false;
+        return Object.values(device.entities || {}).some(
+            e => e.bindingType === 'channel' && e.channelAccountId === account.id
+        );
+    })();
 
-    if (!secretOk && !botOk) {
+    if (!secretOk && !botOk && !channelOk) {
         console.log('[GatekeeperStats] Auth failed: invalid credentials', {
             deviceId,
             hasDeviceSecret: !!deviceSecret,
@@ -2883,6 +2903,17 @@ function generateBotSecret() {
     return secret;
 }
 
+// Helper: Verify channel API key as alternative to botSecret for channel-bound bots.
+// Channel-bound bots already authenticated via channel_api_key during binding,
+// so they can use it in place of botSecret for all bot API calls.
+async function verifyChannelAuth(entity, req) {
+    if (!entity || entity.bindingType !== 'channel' || !entity.channelAccountId) return false;
+    const apiKey = (req.body && req.body.channel_api_key) || (req.query && req.query.channel_api_key) || req.headers['x-channel-api-key'];
+    if (!apiKey) return false;
+    const account = await db.getChannelAccountByKey(apiKey);
+    return account && account.id === entity.channelAccountId;
+}
+
 // Helper: Generate 6-char public code for cross-device messaging
 function generatePublicCode() {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -3235,10 +3266,32 @@ app.get('/', (req, res) => {
  * Optional: entityId (if botSecret is shared across multiple entities on same device)
  * Response: { success, entityId, deviceId, name, character, state, level, xp, publicCode, agentCard }
  */
-app.get('/api/whoami', (req, res) => {
-    const { botSecret, entityId } = req.query;
-    if (!botSecret) {
-        return res.status(400).json({ success: false, error: 'botSecret query parameter required' });
+app.get('/api/whoami', async (req, res) => {
+    const { botSecret, entityId, deviceId: qDeviceId } = req.query;
+    const apiKey = req.query.channel_api_key || req.headers['x-channel-api-key'];
+
+    if (!botSecret && !apiKey) {
+        return res.status(400).json({ success: false, error: 'botSecret or channel_api_key query parameter required' });
+    }
+
+    // Channel auth path: requires deviceId + entityId + channel_api_key
+    if (!botSecret && apiKey) {
+        if (!qDeviceId || entityId === undefined) {
+            return res.status(400).json({ success: false, error: 'deviceId and entityId required with channel_api_key' });
+        }
+        const device = devices[qDeviceId];
+        if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+        const eId = parseInt(entityId);
+        const entity = device.entities[eId];
+        if (!entity || !entity.isBound) return res.status(401).json({ success: false, error: 'Entity not found or not bound' });
+        if (!(await verifyChannelAuth(entity, req))) return res.status(401).json({ success: false, error: 'Invalid channel_api_key' });
+        return res.json({
+            success: true, entityId: eId, deviceId: qDeviceId,
+            name: entity.name || null, character: entity.character || null,
+            state: entity.state || 'IDLE', level: entity.level || 1,
+            xp: entity.xp || 0, publicCode: entity.publicCode || null,
+            agentCard: entity.agentCard || null
+        });
     }
 
     // Search all devices for matching botSecret
@@ -4041,7 +4094,7 @@ app.get('/api/status', (req, res) => {
  * Body: { deviceId, entityId: 0-3, botSecret, name, character, state, message, parts }
  * REQUIRES botSecret for authentication!
  */
-app.post('/api/transform', (req, res) => {
+app.post('/api/transform', async (req, res) => {
     const { deviceId, entityId, botSecret, name, character, state, message, parts, targetDeviceId } = req.body;
 
     if (!deviceId) {
@@ -4073,8 +4126,9 @@ app.post('/api/transform', (req, res) => {
         });
     }
 
-    // Verify botSecret
-    if (!botSecret || !safeEqual(botSecret, entity.botSecret)) {
+    // Verify botSecret OR channel_api_key for channel-bound bots
+    const botSecretOk = botSecret && safeEqual(botSecret, entity.botSecret);
+    if (!botSecretOk && !(await verifyChannelAuth(entity, req))) {
         return res.status(403).json({
             success: false,
             message: "Invalid or missing botSecret"
@@ -4309,8 +4363,9 @@ app.delete('/api/entity', async (req, res) => {
         return res.status(400).json({ success: false, message: `Entity ${eId} is not bound` });
     }
 
-    // Verify botSecret
-    if (!botSecret || !safeEqual(botSecret, entity.botSecret)) {
+    // Verify botSecret OR channel_api_key for channel-bound bots
+    const delBotSecretOk = botSecret && safeEqual(botSecret, entity.botSecret);
+    if (!delBotSecretOk && !(await verifyChannelAuth(entity, req))) {
         return res.status(403).json({ success: false, message: "Invalid botSecret" });
     }
 
@@ -6006,8 +6061,9 @@ app.post('/api/entity/speak-to', async (req, res) => {
         return res.status(404).json({ success: false, message: `Entity ${toId} not found` });
     }
 
-    // Verify botSecret of sending entity
-    if (!fromEntity.isBound || !safeEqual(fromEntity.botSecret, botSecret)) {
+    // Verify botSecret OR channel_api_key of sending entity
+    const speakToBotSecretOk = botSecret && safeEqual(fromEntity.botSecret, botSecret);
+    if (!fromEntity.isBound || (!speakToBotSecretOk && !(await verifyChannelAuth(fromEntity, req)))) {
         return res.status(403).json({ success: false, message: "Invalid botSecret for sending entity" });
     }
 
@@ -6315,8 +6371,9 @@ app.delete('/api/entity/cross-device-settings', async (req, res) => {
 app.post('/api/entity/cross-speak', async (req, res) => {
     const { deviceId, fromEntityId, botSecret, targetCode, text, mediaType, mediaUrl } = req.body;
 
-    if (!deviceId || fromEntityId === undefined || !botSecret || !targetCode || !text) {
-        return res.status(400).json({ success: false, message: "deviceId, fromEntityId, botSecret, targetCode, and text are required" });
+    const hasChannelKey = !!(req.body.channel_api_key || req.headers['x-channel-api-key']);
+    if (!deviceId || fromEntityId === undefined || (!botSecret && !hasChannelKey) || !targetCode || !text) {
+        return res.status(400).json({ success: false, message: "deviceId, fromEntityId, botSecret (or channel_api_key), targetCode, and text are required" });
     }
 
     const fromId = parseInt(fromEntityId);
@@ -6334,7 +6391,8 @@ app.post('/api/entity/cross-speak', async (req, res) => {
         return res.status(400).json({ success: false, message: `Sender entity ${fromId} is not bound` });
     }
 
-    if (!safeEqual(fromEntity.botSecret, botSecret)) {
+    const crossSpeakBotSecretOk = botSecret && safeEqual(fromEntity.botSecret, botSecret);
+    if (!crossSpeakBotSecretOk && !(await verifyChannelAuth(fromEntity, req))) {
         return res.status(403).json({ success: false, message: "Invalid botSecret" });
     }
 
@@ -6639,13 +6697,14 @@ app.put('/api/entity/agent-card', async (req, res) => {
     if (!deviceId || entityId === undefined || entityId === null) {
         return res.status(400).json({ success: false, error: 'deviceId, entityId required' });
     }
-    if (!deviceSecret && !botSecret) {
+    const hasChKeyAC = !!(req.body.channel_api_key || req.headers['x-channel-api-key']);
+    if (!deviceSecret && !botSecret && !hasChKeyAC) {
         return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
     }
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    const auth = await authEntityAccess(device, deviceSecret, botSecret, entityId, req);
     if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
     const entity = auth.entity;
     if (!entity.isBound) return res.status(404).json({ success: false, error: 'Entity not bound' });
@@ -6685,18 +6744,19 @@ app.put('/api/entity/agent-card', async (req, res) => {
  * GET /api/entity/agent-card — Read agent card
  * Auth: deviceSecret (owner) OR botSecret (bot self-read)
  */
-app.get('/api/entity/agent-card', (req, res) => {
+app.get('/api/entity/agent-card', async (req, res) => {
     const { deviceId, deviceSecret, botSecret, entityId } = req.query;
     if (!deviceId || entityId === undefined) {
         return res.status(400).json({ success: false, error: 'deviceId, entityId required' });
     }
-    if (!deviceSecret && !botSecret) {
+    const hasChKeyACGet = !!(req.query.channel_api_key || req.headers['x-channel-api-key']);
+    if (!deviceSecret && !botSecret && !hasChKeyACGet) {
         return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
     }
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    const auth = await authEntityAccess(device, deviceSecret, botSecret, entityId, req);
     if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
     res.json({ success: true, agentCard: auth.entity.agentCard || null });
 });
@@ -6705,18 +6765,19 @@ app.get('/api/entity/agent-card', (req, res) => {
  * DELETE /api/entity/agent-card — Remove agent card
  * Auth: deviceSecret (owner) OR botSecret (bot self-delete)
  */
-app.delete('/api/entity/agent-card', (req, res) => {
+app.delete('/api/entity/agent-card', async (req, res) => {
     const { deviceId, deviceSecret, botSecret, entityId } = req.body;
     if (!deviceId || entityId === undefined) {
         return res.status(400).json({ success: false, error: 'deviceId, entityId required' });
     }
-    if (!deviceSecret && !botSecret) {
+    const hasChKeyACDel = !!(req.body.channel_api_key || req.headers['x-channel-api-key']);
+    if (!deviceSecret && !botSecret && !hasChKeyACDel) {
         return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
     }
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    const auth = await authEntityAccess(device, deviceSecret, botSecret, entityId, req);
     if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
     clearEntityCard(auth.entity);
     // Persist to DB
@@ -6748,7 +6809,8 @@ async function handleVisibility(req, res) {
     if (!deviceId || typeof isPublic !== 'boolean') {
         return res.status(400).json({ success: false, error: 'deviceId and public (boolean) required' });
     }
-    if (!deviceSecret && !botSecret) {
+    const chApiKey = src.channel_api_key || req.headers['x-channel-api-key'];
+    if (!deviceSecret && !botSecret && !chApiKey) {
         return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
     }
 
@@ -6771,6 +6833,13 @@ async function handleVisibility(req, res) {
         // If entityId provided, must match
         if (entityId !== undefined && parseInt(entityId) !== eId) {
             return res.status(403).json({ success: false, error: 'botSecret does not match entityId' });
+        }
+    } else if (chApiKey && entityId !== undefined) {
+        // Channel auth: verify channel_api_key matches entity's channel binding
+        eId = parseInt(entityId);
+        const chEntity = device.entities[eId];
+        if (!chEntity || !chEntity.isBound || !(await verifyChannelAuth(chEntity, req))) {
+            return res.status(403).json({ success: false, error: 'Invalid channel_api_key' });
         }
     } else {
         // Owner auth
@@ -6884,13 +6953,16 @@ app.post('/api/community/card/:publicCode/message', async (req, res) => {
 
     let authorType, authorId, authorName;
 
-    if (botSecret) {
-        // Bot auth
+    const chApiKeyRate = req.body.channel_api_key || req.headers['x-channel-api-key'];
+    if (botSecret || chApiKeyRate) {
+        // Bot auth (botSecret or channel_api_key)
         const eId = parseInt(entityId) || 0;
         const device = devices[deviceId];
         if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
         const entity = device.entities[eId];
-        if (!entity || !entity.isBound || !safeEqual(entity.botSecret, botSecret)) {
+        const ratingBsOk = botSecret && entity && entity.isBound && safeEqual(entity.botSecret, botSecret);
+        const ratingChOk = !ratingBsOk && entity && (await verifyChannelAuth(entity, req));
+        if (!entity || !entity.isBound || (!ratingBsOk && !ratingChOk)) {
             return res.status(403).json({ success: false, error: 'Invalid botSecret' });
         }
         authorType = 'bot';
@@ -6961,7 +7033,7 @@ app.post('/api/community/card/:publicCode/rate', async (req, res) => {
  * Dual-auth helper: deviceSecret (owner) or botSecret (bot self-access).
  * Returns { entity, error, status } — if error is set, respond with it.
  */
-function authEntityAccess(device, deviceSecret, botSecret, entityId) {
+async function authEntityAccess(device, deviceSecret, botSecret, entityId, req) {
     const eid = parseInt(entityId);
     if (deviceSecret) {
         if (!safeEqual(device.deviceSecret, deviceSecret)) {
@@ -6969,7 +7041,9 @@ function authEntityAccess(device, deviceSecret, botSecret, entityId) {
         }
     } else {
         const e = device.entities[eid];
-        if (!e || !e.isBound || !safeEqual(e.botSecret, botSecret)) {
+        const bsOk = botSecret && e && e.isBound && safeEqual(e.botSecret, botSecret);
+        const chOk = !bsOk && req && e && (await verifyChannelAuth(e, req));
+        if (!e || !e.isBound || (!bsOk && !chOk)) {
             return { error: 'Invalid botSecret', status: 403 };
         }
     }
@@ -7065,13 +7139,14 @@ app.put('/api/entity/identity', async (req, res) => {
     if (!identity) {
         return res.status(400).json({ success: false, error: 'identity object required' });
     }
-    if (!deviceSecret && !botSecret) {
+    const hasChKeyId = !!(req.body.channel_api_key || req.headers['x-channel-api-key']);
+    if (!deviceSecret && !botSecret && !hasChKeyId) {
         return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
     }
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    const auth = await authEntityAccess(device, deviceSecret, botSecret, entityId, req);
     if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
     const entity = auth.entity;
     if (!entity.isBound) return res.status(404).json({ success: false, error: 'Entity not bound' });
@@ -7113,18 +7188,19 @@ app.put('/api/entity/identity', async (req, res) => {
  * GET /api/entity/identity — Read bot identity
  * Auth: deviceSecret (owner) OR botSecret (bot self-read)
  */
-app.get('/api/entity/identity', (req, res) => {
+app.get('/api/entity/identity', async (req, res) => {
     const { deviceId, deviceSecret, botSecret, entityId } = req.query;
     if (!deviceId || entityId === undefined) {
         return res.status(400).json({ success: false, error: 'deviceId, entityId required' });
     }
-    if (!deviceSecret && !botSecret) {
+    const hasChKeyIdGet = !!(req.query.channel_api_key || req.headers['x-channel-api-key']);
+    if (!deviceSecret && !botSecret && !hasChKeyIdGet) {
         return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
     }
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    const auth = await authEntityAccess(device, deviceSecret, botSecret, entityId, req);
     if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
     res.json({ success: true, identity: auth.entity.identity || null });
 });
@@ -7138,13 +7214,14 @@ app.delete('/api/entity/identity', async (req, res) => {
     if (!deviceId || entityId === undefined) {
         return res.status(400).json({ success: false, error: 'deviceId, entityId required' });
     }
-    if (!deviceSecret && !botSecret) {
+    const hasChKeyIdDel = !!(req.body.channel_api_key || req.headers['x-channel-api-key']);
+    if (!deviceSecret && !botSecret && !hasChKeyIdDel) {
         return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
     }
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    const auth = await authEntityAccess(device, deviceSecret, botSecret, entityId, req);
     if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
     const entity = auth.entity;
     entity.identity = null;
@@ -7838,8 +7915,9 @@ app.post('/api/entity/broadcast', async (req, res) => {
         return res.status(404).json({ success: false, message: `Entity ${fromId} not found` });
     }
 
-    // Verify botSecret of sending entity
-    if (!fromEntity.isBound || !safeEqual(fromEntity.botSecret, botSecret)) {
+    // Verify botSecret OR channel_api_key of sending entity
+    const bcastBotSecretOk = botSecret && safeEqual(fromEntity.botSecret, botSecret);
+    if (!fromEntity.isBound || (!bcastBotSecretOk && !(await verifyChannelAuth(fromEntity, req)))) {
         return res.status(403).json({ success: false, message: "Invalid botSecret for sending entity" });
     }
 
@@ -8085,7 +8163,7 @@ app.post('/api/entity/broadcast', async (req, res) => {
  * Without botSecret: returns count only (peek mode)
  * With valid botSecret: returns and consumes messages
  */
-app.get('/api/client/pending', (req, res) => {
+app.get('/api/client/pending', async (req, res) => {
     const deviceId = req.query.deviceId;
     const eId = parseInt(req.query.entityId) || 0;
     const botSecret = req.query.botSecret || req.headers['x-bot-secret'];
@@ -8110,8 +8188,9 @@ app.get('/api/client/pending', (req, res) => {
     const entity = device.entities[eId];
     const pending = entity.messageQueue.filter(m => !m.read);
 
-    // Without botSecret: peek mode (count only, don't consume)
-    if (!botSecret) {
+    // Without botSecret or channel_api_key: peek mode (count only, don't consume)
+    const chKeyPending = req.query.channel_api_key || req.headers['x-channel-api-key'];
+    if (!botSecret && !chKeyPending) {
         return res.json({
             deviceId: deviceId,
             entityId: eId,
@@ -8121,8 +8200,9 @@ app.get('/api/client/pending', (req, res) => {
         });
     }
 
-    // Verify botSecret matches
-    if (!safeEqual(entity.botSecret, botSecret)) {
+    // Verify botSecret OR channel_api_key
+    const pendingBotSecretOk = botSecret && safeEqual(entity.botSecret, botSecret);
+    if (!pendingBotSecretOk && !(await verifyChannelAuth(entity, req))) {
         return res.status(403).json({
             success: false,
             message: "Invalid botSecret for this entity"
@@ -9432,8 +9512,9 @@ app.post('/api/bot/register', async (req, res) => {
         });
     }
 
-    // Verify botSecret
-    if (!botSecret || !safeEqual(botSecret, entity.botSecret)) {
+    // Verify botSecret OR channel_api_key for channel-bound bots
+    const regBotSecretOk = botSecret && safeEqual(botSecret, entity.botSecret);
+    if (!regBotSecretOk && !(await verifyChannelAuth(entity, req))) {
         return res.status(403).json({ success: false, message: "Invalid botSecret" });
     }
 
@@ -9834,7 +9915,7 @@ app.post('/api/bot/register', async (req, res) => {
  * DELETE /api/bot/register
  * Bot unregisters its webhook (switch back to polling mode).
  */
-app.delete('/api/bot/register', (req, res) => {
+app.delete('/api/bot/register', async (req, res) => {
     const deviceId = req.body.deviceId || req.query.deviceId;
     const entityId = req.body.entityId ?? req.query.entityId;
     const botSecret = req.body.botSecret || req.query.botSecret;
@@ -9859,7 +9940,8 @@ app.delete('/api/bot/register', (req, res) => {
 
     const entity = device.entities[eId];
 
-    if (!botSecret || !safeEqual(botSecret, entity.botSecret)) {
+    const deregBsOk = botSecret && safeEqual(botSecret, entity.botSecret);
+    if (!deregBsOk && !(await verifyChannelAuth(entity, req))) {
         return res.status(403).json({ success: false, message: "Invalid botSecret" });
     }
 
@@ -9880,7 +9962,7 @@ app.delete('/api/bot/register', (req, res) => {
  * Bot checks if its push notifications are still healthy.
  * Query: ?deviceId=xxx&entityId=0&botSecret=xxx
  */
-app.get('/api/bot/push-status', (req, res) => {
+app.get('/api/bot/push-status', async (req, res) => {
     const { deviceId, entityId, botSecret } = req.query;
 
     if (!deviceId) {
@@ -9903,7 +9985,8 @@ app.get('/api/bot/push-status', (req, res) => {
 
     const entity = device.entities[eId];
 
-    if (!botSecret || !safeEqual(botSecret, entity.botSecret)) {
+    const pushStatusBsOk = botSecret && safeEqual(botSecret, entity.botSecret);
+    if (!pushStatusBsOk && !(await verifyChannelAuth(entity, req))) {
         return res.status(403).json({ success: false, message: "Invalid botSecret" });
     }
 
@@ -9953,8 +10036,9 @@ app.post('/api/bot/pending-messages', async (req, res) => {
 
     const entity = device.entities[eId];
 
-    // botSecret required for authentication
-    if (!botSecret || !safeEqual(botSecret, entity.botSecret)) {
+    // botSecret OR channel_api_key required for authentication
+    const pendingMsgBsOk = botSecret && safeEqual(botSecret, entity.botSecret);
+    if (!pendingMsgBsOk && !(await verifyChannelAuth(entity, req))) {
         return res.status(403).json({ success: false, message: "Invalid botSecret" });
     }
 
@@ -11588,7 +11672,8 @@ app.put('/api/device-preferences', async (req, res) => {
 app.post('/api/device/screen-capture', async (req, res) => {
     const { deviceId, entityId, botSecret, deviceSecret } = req.body;
 
-    if (!deviceId || (botSecret === undefined && deviceSecret === undefined)) {
+    const hasChKeySC = !!(req.body.channel_api_key || req.headers['x-channel-api-key']);
+    if (!deviceId || (botSecret === undefined && deviceSecret === undefined && !hasChKeySC)) {
         return res.status(400).json({ success: false, error: 'deviceId and botSecret (or deviceSecret) required' });
     }
 
@@ -11604,14 +11689,15 @@ app.post('/api/device/screen-capture', async (req, res) => {
         return res.status(400).json({ success: false, error: 'Invalid entityId' });
     }
 
-    // Auth: device owner (portal) OR bot
+    // Auth: device owner (portal) OR bot (botSecret or channel_api_key)
     const isOwner = deviceSecret && device.deviceSecret && safeEqual(deviceSecret, device.deviceSecret);
     const entity = device.entities[eId];
     if (!isOwner) {
         if (!entity || !entity.isBound) {
             return res.status(400).json({ success: false, error: 'Entity not bound' });
         }
-        if (!botSecret || !safeEqual(botSecret, entity.botSecret)) {
+        const scBsOk = botSecret && safeEqual(botSecret, entity.botSecret);
+        if (!scBsOk && !(await verifyChannelAuth(entity, req))) {
             return res.status(403).json({ success: false, error: 'Invalid botSecret' });
         }
     }
@@ -11724,14 +11810,15 @@ app.post('/api/device/control', async (req, res) => {
         return res.status(400).json({ success: false, error: 'Invalid entityId' });
     }
 
-    // Auth: device owner (portal) OR bot
+    // Auth: device owner (portal) OR bot (botSecret or channel_api_key)
     const isOwner = deviceSecret && device.deviceSecret && safeEqual(deviceSecret, device.deviceSecret);
     if (!isOwner) {
         const entity = device.entities[eId];
         if (!entity || !entity.isBound) {
             return res.status(400).json({ success: false, error: 'Entity not bound' });
         }
-        if (!botSecret || !safeEqual(botSecret, entity.botSecret)) {
+        const scResultBsOk = botSecret && safeEqual(botSecret, entity.botSecret);
+        if (!scResultBsOk && !(await verifyChannelAuth(entity, req))) {
             return res.status(403).json({ success: false, error: 'Invalid botSecret' });
         }
     }
@@ -11795,14 +11882,15 @@ app.post('/api/device/tts', async (req, res) => {
         return res.status(400).json({ success: false, error: 'Invalid entityId' });
     }
 
-    // Auth: device owner (portal) OR bot
+    // Auth: device owner (portal) OR bot (botSecret or channel_api_key)
     const isOwner = deviceSecret && device.deviceSecret && safeEqual(deviceSecret, device.deviceSecret);
     if (!isOwner) {
         const entity = device.entities[eId];
         if (!entity || !entity.isBound) {
             return res.status(400).json({ success: false, error: 'Entity not bound' });
         }
-        if (!botSecret || !safeEqual(botSecret, entity.botSecret)) {
+        const ttsBsOk = botSecret && safeEqual(botSecret, entity.botSecret);
+        if (!ttsBsOk && !(await verifyChannelAuth(entity, req))) {
             return res.status(403).json({ success: false, error: 'Invalid botSecret' });
         }
     }
@@ -12358,18 +12446,29 @@ app.post('/api/device-vars', async (req, res) => {
 // GET /api/device-vars — bot reads vars (botSecret auth)
 // Auth: botSecret (entity must be bound to the device)
 app.get('/api/device-vars', async (req, res) => {
-    const { deviceId, botSecret } = req.query;
-    if (!deviceId || !botSecret) {
-        return res.status(400).json({ success: false, error: 'deviceId and botSecret required' });
+    const { deviceId, botSecret, entityId: varsEntityId } = req.query;
+    const varsChKey = req.query.channel_api_key || req.headers['x-channel-api-key'];
+    if (!deviceId || (!botSecret && !varsChKey)) {
+        return res.status(400).json({ success: false, error: 'deviceId and botSecret (or channel_api_key) required' });
     }
     const device = devices[deviceId];
     if (!device) {
         return res.status(404).json({ success: false, error: 'Device not found' });
     }
 
-    // Authenticate bot
-    const allEntities = Object.values(device.entities || {});
-    const botEntity = allEntities.find(e => e.isBound && safeEqual(e.botSecret, botSecret));
+    // Authenticate bot (botSecret or channel_api_key)
+    let botEntity = null;
+    if (botSecret) {
+        const allEntities = Object.values(device.entities || {});
+        botEntity = allEntities.find(e => e.isBound && safeEqual(e.botSecret, botSecret));
+    }
+    if (!botEntity && varsChKey && varsEntityId !== undefined) {
+        const eId = parseInt(varsEntityId);
+        const e = (device.entities || {})[eId];
+        if (e && e.isBound && (await verifyChannelAuth(e, req))) {
+            botEntity = e;
+        }
+    }
     if (!botEntity) {
         return res.status(403).json({ success: false, error: 'Invalid botSecret' });
     }
@@ -13409,11 +13508,14 @@ chatPool.query(`
 const BOT_FILE_MAX_SIZE = 15 * 1024 * 1024; // 15MB per file
 const BOT_FILE_MAX_COUNT = 20;       // 20 files per entity
 
-function authenticateBot(deviceId, entityId, botSecret) {
+async function authenticateBot(deviceId, entityId, botSecret, req) {
     const device = devices[deviceId];
     if (!device) return false;
     const entity = (device.entities || {})[entityId];
-    return entity && safeEqual(entity.botSecret, botSecret);
+    if (!entity) return false;
+    if (botSecret && safeEqual(entity.botSecret, botSecret)) return true;
+    if (req) return verifyChannelAuth(entity, req);
+    return false;
 }
 
 /**
@@ -13421,10 +13523,11 @@ function authenticateBot(deviceId, entityId, botSecret) {
  */
 app.put('/api/bot/file', express.json({ limit: '20mb' }), async (req, res) => {
     const { deviceId, entityId, botSecret, filename, content } = req.body;
-    if (!deviceId || entityId == null || !botSecret || !filename) {
-        return res.status(400).json({ success: false, error: 'Missing required fields: deviceId, entityId, botSecret, filename' });
+    const hasChKeyFile = !!(req.body.channel_api_key || req.headers['x-channel-api-key']);
+    if (!deviceId || entityId == null || (!botSecret && !hasChKeyFile) || !filename) {
+        return res.status(400).json({ success: false, error: 'Missing required fields: deviceId, entityId, botSecret (or channel_api_key), filename' });
     }
-    if (!authenticateBot(deviceId, parseInt(entityId), botSecret)) {
+    if (!(await authenticateBot(deviceId, parseInt(entityId), botSecret, req))) {
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
     const fileContent = content || '';
@@ -13466,10 +13569,11 @@ app.put('/api/bot/file', express.json({ limit: '20mb' }), async (req, res) => {
  */
 app.get('/api/bot/file', async (req, res) => {
     const { deviceId, entityId, botSecret, filename } = req.query;
-    if (!deviceId || entityId == null || !botSecret || !filename) {
+    const hasChKeyFileGet = !!(req.query.channel_api_key || req.headers['x-channel-api-key']);
+    if (!deviceId || entityId == null || (!botSecret && !hasChKeyFileGet) || !filename) {
         return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
-    if (!authenticateBot(deviceId, parseInt(entityId), botSecret)) {
+    if (!(await authenticateBot(deviceId, parseInt(entityId), botSecret, req))) {
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
     try {
@@ -13492,10 +13596,11 @@ app.get('/api/bot/file', async (req, res) => {
  */
 app.get('/api/bot/files', async (req, res) => {
     const { deviceId, entityId, botSecret } = req.query;
-    if (!deviceId || entityId == null || !botSecret) {
+    const hasChKeyFiles = !!(req.query.channel_api_key || req.headers['x-channel-api-key']);
+    if (!deviceId || entityId == null || (!botSecret && !hasChKeyFiles)) {
         return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
-    if (!authenticateBot(deviceId, parseInt(entityId), botSecret)) {
+    if (!(await authenticateBot(deviceId, parseInt(entityId), botSecret, req))) {
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
     try {
@@ -13515,10 +13620,11 @@ app.get('/api/bot/files', async (req, res) => {
  */
 app.delete('/api/bot/file', async (req, res) => {
     const { deviceId, entityId, botSecret, filename } = req.body;
-    if (!deviceId || entityId == null || !botSecret || !filename) {
+    const hasChKeyFileDel = !!(req.body.channel_api_key || req.headers['x-channel-api-key']);
+    if (!deviceId || entityId == null || (!botSecret && !hasChKeyFileDel) || !filename) {
         return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
-    if (!authenticateBot(deviceId, parseInt(entityId), botSecret)) {
+    if (!(await authenticateBot(deviceId, parseInt(entityId), botSecret, req))) {
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
     try {
@@ -13591,10 +13697,11 @@ if (require.main === module) {
 app.post('/api/bot/sync-message', async (req, res) => {
     const { deviceId, entityId, botSecret, message, fromLabel, mediaType, mediaUrl } = req.body;
 
-    if (!deviceId || entityId === undefined || !botSecret || (!message && !mediaUrl)) {
+    const hasChKeySync = !!(req.body.channel_api_key || req.headers['x-channel-api-key']);
+    if (!deviceId || entityId === undefined || (!botSecret && !hasChKeySync) || (!message && !mediaUrl)) {
         return res.status(400).json({
             success: false,
-            error: "Missing required fields: deviceId, entityId, botSecret, message (or mediaUrl)"
+            error: "Missing required fields: deviceId, entityId, botSecret (or channel_api_key), message (or mediaUrl)"
         });
     }
 
@@ -13608,8 +13715,9 @@ app.post('/api/bot/sync-message', async (req, res) => {
         return res.status(404).json({ success: false, error: "Entity not bound" });
     }
 
-    // Verify botSecret
-    if (!safeEqual(entity.botSecret, botSecret)) {
+    // Verify botSecret OR channel_api_key
+    const syncBsOk = botSecret && safeEqual(entity.botSecret, botSecret);
+    if (!syncBsOk && !(await verifyChannelAuth(entity, req))) {
         return res.status(403).json({ success: false, error: "Invalid botSecret" });
     }
 
@@ -13662,17 +13770,24 @@ app.post('/api/bot/sync-message', async (req, res) => {
  * Server notifies the App via Socket.IO; App then calls POST /api/device/location.
  * Auth: deviceId + deviceSecret OR deviceId + botSecret
  */
-app.post('/api/device/location/request', (req, res) => {
+app.post('/api/device/location/request', async (req, res) => {
     const { deviceId, deviceSecret, botSecret } = req.body;
     if (!deviceId) return res.status(400).json({ success: false, error: 'deviceId required' });
 
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    // Auth: deviceSecret or botSecret
+    // Auth: deviceSecret, botSecret, or channel_api_key
     const secretOk = deviceSecret && device.deviceSecret && safeEqual(device.deviceSecret, deviceSecret);
     const botOk = botSecret && Object.values(device.entities || {}).some(e => e.botSecret && safeEqual(e.botSecret, botSecret));
-    if (!secretOk && !botOk) return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    const locChOk = !secretOk && !botOk && await (async () => {
+        const apiKey = req.body.channel_api_key || req.headers['x-channel-api-key'];
+        if (!apiKey) return false;
+        const account = await db.getChannelAccountByKey(apiKey);
+        if (!account) return false;
+        return Object.values(device.entities || {}).some(e => e.bindingType === 'channel' && e.channelAccountId === account.id);
+    })();
+    if (!secretOk && !botOk && !locChOk) return res.status(403).json({ success: false, error: 'Invalid credentials' });
 
     // Create a pending request
     const requestId = `loc_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -13750,17 +13865,24 @@ app.post('/api/device/location', (req, res) => {
  * Retrieve the device's last known GPS location.
  * Auth: deviceId + deviceSecret OR deviceId + botSecret
  */
-app.get('/api/device/location', (req, res) => {
+app.get('/api/device/location', async (req, res) => {
     const { deviceId, deviceSecret, botSecret } = req.query;
     if (!deviceId) return res.status(400).json({ success: false, error: 'deviceId required' });
 
     const device = devices[deviceId];
     if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
 
-    // Auth: deviceSecret or botSecret
+    // Auth: deviceSecret, botSecret, or channel_api_key
     const secretOk = deviceSecret && device.deviceSecret && safeEqual(device.deviceSecret, deviceSecret);
     const botOk = botSecret && Object.values(device.entities || {}).some(e => e.botSecret && safeEqual(e.botSecret, botSecret));
-    if (!secretOk && !botOk) return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    const getLocChOk = !secretOk && !botOk && await (async () => {
+        const apiKey = req.query.channel_api_key || req.headers['x-channel-api-key'];
+        if (!apiKey) return false;
+        const account = await db.getChannelAccountByKey(apiKey);
+        if (!account) return false;
+        return Object.values(device.entities || {}).some(e => e.bindingType === 'channel' && e.channelAccountId === account.id);
+    })();
+    if (!secretOk && !botOk && !getLocChOk) return res.status(403).json({ success: false, error: 'Invalid credentials' });
 
     if (!device._lastLocation) {
         return res.json({ success: true, location: null, message: 'No location data. Call POST /api/device/location/request to request from device.' });

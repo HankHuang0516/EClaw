@@ -606,11 +606,11 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
 
             if (process.env.DEBUG === 'true') serverLog('info', 'client_push', `[PUSH] /channel/message called, state=${state}, hasMsg=${!!message}`, { deviceId, entityId: parseInt(entityId) });
 
-            if (!channel_api_key || !deviceId || entityId === undefined || !botSecret) {
+            if (!channel_api_key || !deviceId || entityId === undefined) {
                 if (process.env.DEBUG === 'true') serverLog('warn', 'client_push', `[PUSH] /channel/message missing required fields`, { deviceId });
                 return res.status(400).json({
                     success: false,
-                    message: 'channel_api_key, deviceId, entityId, and botSecret required'
+                    message: 'channel_api_key, deviceId, and entityId required'
                 });
             }
 
@@ -631,9 +631,11 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 return res.status(404).json({ success: false, message: 'Entity not found' });
             }
 
-            // Verify botSecret
-            if (!entity.botSecret || !safeEqual(botSecret, entity.botSecret)) {
-                return res.status(403).json({ success: false, message: 'Invalid botSecret' });
+            // Auth: botSecret OR channel_api_key matching entity's channel binding
+            const botSecretOk = botSecret && entity.botSecret && safeEqual(botSecret, entity.botSecret);
+            const channelKeyOk = entity.bindingType === 'channel' && entity.channelAccountId === account.id;
+            if (!botSecretOk && !channelKeyOk) {
+                return res.status(403).json({ success: false, message: 'Invalid botSecret or channel_api_key does not match entity binding' });
             }
 
             // Update entity state
