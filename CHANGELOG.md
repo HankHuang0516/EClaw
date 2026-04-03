@@ -1,3 +1,10 @@
+# [1.879.0](https://github.com/HankHuang0516/EClaw/compare/v1.878.6...v1.879.0) (2026-04-03)
+
+
+### Features
+
+* **kanban:** timeline projected executions + entity workload indicators ([#1602](https://github.com/HankHuang0516/EClaw/issues/1602)) ([966dc67](https://github.com/HankHuang0516/EClaw/commit/966dc67751c8ed651ec46a8da05f7d4fd6de66d9))
+
 ## [1.878.6](https://github.com/HankHuang0516/EClaw/compare/v1.878.5...v1.878.6) (2026-04-03)
 
 
