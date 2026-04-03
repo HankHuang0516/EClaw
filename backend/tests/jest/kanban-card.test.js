@@ -279,3 +279,58 @@ describe('PUT /card/:id/schedule — auto-promote automation', () => {
         expect(updateSQL).not.toMatch(/is_automation\s*=\s*TRUE/i);
     });
 });
+
+// ════════════════════════════════════════════════════════════════
+// GET /cards/projections — Projected run times
+// ════════════════════════════════════════════════════════════════
+const get = (path) => request(app).get(path);
+
+describe('GET /cards/projections', () => {
+    it('rejects without auth (401)', async () => {
+        const res = await get('/api/mission/cards/projections')
+            .query({ deviceId: 'bad', deviceSecret: 'bad' });
+        expect(res.status).toBe(401);
+    });
+
+    it('returns projections object for automation cards', async () => {
+        // Mock: query returns one automation card with cron
+        mockQuery.mockResolvedValueOnce({
+            rows: [{
+                id: 'card-1',
+                schedule_cron: '0 */4 * * *',
+                schedule_timezone: 'Asia/Taipei',
+            }],
+        });
+
+        const res = await get('/api/mission/cards/projections')
+            .query({ ...AUTH });
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.projections).toBeDefined();
+        expect(typeof res.body.projections).toBe('object');
+        // card-1 should have an array of timestamps
+        if (res.body.projections['card-1']) {
+            expect(Array.isArray(res.body.projections['card-1'])).toBe(true);
+            // Every 4 hours in 24h = ~6 entries
+            expect(res.body.projections['card-1'].length).toBeGreaterThanOrEqual(5);
+            expect(res.body.projections['card-1'].length).toBeLessThanOrEqual(7);
+        }
+    });
+
+    it('returns empty array for cards with invalid cron', async () => {
+        mockQuery.mockResolvedValueOnce({
+            rows: [{
+                id: 'card-bad',
+                schedule_cron: 'not-a-cron',
+                schedule_timezone: 'Asia/Taipei',
+            }],
+        });
+
+        const res = await get('/api/mission/cards/projections')
+            .query({ ...AUTH });
+
+        expect(res.status).toBe(200);
+        expect(res.body.projections['card-bad']).toEqual([]);
+    });
+});

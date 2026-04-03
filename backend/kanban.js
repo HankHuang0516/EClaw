@@ -489,6 +489,56 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     });
 
     // ============================================
+    // GET /cards/projections — Projected run times for automation cards
+    // ============================================
+    router.get('/cards/projections', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId, windowHours } = { ...req.query, ...req.body };
+        const hours = Math.min(parseInt(windowHours) || 24, 72);
+        const windowStart = Date.now() - 3600000; // 1h ago
+        const windowEnd = Date.now() + (hours - 1) * 3600000;
+
+        if (!CronExpressionParser) {
+            return res.json({ success: true, projections: {} });
+        }
+
+        try {
+            const result = await pool.query(
+                `SELECT id, schedule_cron, schedule_timezone FROM kanban_cards
+                 WHERE device_id = $1 AND is_automation = true AND archived = false
+                   AND schedule_enabled = true AND schedule_cron IS NOT NULL
+                 LIMIT 100`,
+                [deviceId]
+            );
+
+            const projections = {};
+            for (const row of result.rows) {
+                try {
+                    const expr = CronExpressionParser.parse(row.schedule_cron, {
+                        tz: row.schedule_timezone || 'Asia/Taipei',
+                        currentDate: new Date(windowStart),
+                    });
+                    const times = [];
+                    let iter = 0;
+                    while (iter++ < 200) {
+                        const next = expr.next().toDate();
+                        if (next.getTime() > windowEnd) break;
+                        times.push(next.getTime());
+                    }
+                    projections[row.id] = times;
+                } catch (e) {
+                    projections[row.id] = [];
+                }
+            }
+
+            res.json({ success: true, projections });
+        } catch (err) {
+            console.error('[Kanban] Projections error:', err);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ============================================
     // GET /cards/summary — Board summary (counts + recent activity)
     // ============================================
     router.get('/cards/summary', async (req, res) => {

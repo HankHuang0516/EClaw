@@ -202,7 +202,7 @@
         .kb-auto-timeline { overflow-x:auto; overflow-y:visible; -webkit-overflow-scrolling:touch; scrollbar-width:thin; }
         .kb-tl-container { min-width:2400px; position:relative; }
         .kb-tl-axis { display:flex; align-items:flex-end; height:28px; border-bottom:1px solid var(--card-border); position:sticky; top:0; z-index:2; background:var(--card); }
-        .kb-tl-label-spacer { flex:0 0 120px; }
+        .kb-tl-label-spacer { flex:0 0 180px; }
         .kb-tl-hours { flex:1; position:relative; height:100%; }
         .kb-tl-hour { position:absolute; bottom:4px; font-size:10px; color:var(--text-muted); transform:translateX(-50%); white-space:nowrap; }
         .kb-tl-hour::before { content:''; position:absolute; top:-4px; left:50%; width:1px; height:8px; background:var(--card-border); }
@@ -215,10 +215,15 @@
         .kb-tl-lane:last-child { border-bottom:none; }
         .kb-tl-lane:hover { background:rgba(255,255,255,0.015); }
         .kb-tl-lane.unassigned { opacity:0.6; }
-        .kb-tl-lane-label { flex:0 0 120px; display:flex; align-items:center; gap:6px; padding:8px 10px; font-size:12px; font-weight:600; color:var(--text-secondary); border-right:1px solid var(--card-border); position:sticky; left:0; z-index:1; background:var(--card); }
+        .kb-tl-lane-label { flex:0 0 180px; display:flex; align-items:center; gap:6px; padding:8px 10px; font-size:12px; font-weight:600; color:var(--text-secondary); border-right:1px solid var(--card-border); position:sticky; left:0; z-index:1; background:var(--card); }
         .kb-tl-lane-avatar { width:24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
         .kb-tl-lane-avatar img { width:24px; height:24px; border-radius:50%; object-fit:cover; }
-        .kb-tl-lane-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:72px; }
+        .kb-tl-lane-info { display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+        .kb-tl-lane-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:120px; }
+        .kb-tl-lane-metrics { display:flex; align-items:center; gap:4px; font-size:9px; color:var(--text-muted); font-weight:400; margin-top:1px; cursor:default; }
+        .kb-tl-metric { white-space:nowrap; }
+        .kb-tl-metric-bar { width:36px; height:3px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden; }
+        .kb-tl-metric-bar > span { display:block; height:100%; background:linear-gradient(90deg,#4ade80,#fbbf24); border-radius:2px; transition:width 0.3s; }
 
         .kb-tl-lane-track { flex:1; position:relative; min-height:52px; }
         .kb-tl-lane-track::before { content:''; position:absolute; inset:0; background:repeating-linear-gradient(to right, rgba(255,255,255,0.03) 0, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 4.1667%); pointer-events:none; }
@@ -234,12 +239,17 @@
         .kb-tl-marker { position:absolute; top:50%; transform:translate(-50%,-50%); width:18px; height:18px; border-radius:50%; background:var(--input-bg); border:1px solid var(--card-border); display:flex; align-items:center; justify-content:center; font-size:9px; z-index:1; opacity:0.5; cursor:pointer; }
         .kb-tl-marker:hover { opacity:1; transform:translate(-50%,-50%) scale(1.3); }
 
+        .kb-tl-card.projected { opacity:0.25; border-style:dashed; border-left-color:#fbbf24; pointer-events:none; min-width:40px; max-width:56px; height:28px; z-index:0; }
+        .kb-tl-card.projected .kb-tl-card-title { display:none; }
+        .kb-tl-density-band { position:absolute; height:20px; top:16px; opacity:0.15; background:repeating-linear-gradient(90deg,#fbbf24 0 2px,transparent 2px 8px); border-radius:4px; pointer-events:none; z-index:0; }
+
         @keyframes kb-tl-pulse { 0%,100%{ box-shadow:0 0 0 0 rgba(74,222,128,0.3); } 50%{ box-shadow:0 0 0 4px rgba(74,222,128,0.1); } }
 
         @media (max-width:768px) {
             .kb-tl-container { min-width:1200px; }
-            .kb-tl-label-spacer,.kb-tl-lane-label { flex:0 0 80px; }
-            .kb-tl-lane-name { max-width:40px; }
+            .kb-tl-label-spacer,.kb-tl-lane-label { flex:0 0 100px; }
+            .kb-tl-lane-name { max-width:50px; }
+            .kb-tl-lane-metrics { display:none; }
             .kb-tl-card { min-width:70px; max-width:120px; height:34px; }
             .kb-tl-card-title { font-size:9px; }
         }
@@ -559,6 +569,7 @@
         });
 
         let automationCards = [];
+        let cardProjections = {};
         let autoCollapsed = true;
         let autoViewMode = 'timeline';
 
@@ -958,6 +969,11 @@
                 const data = await apiCall('GET', `/api/mission/cards?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}&automation=true`);
                 automationCards = data.cards || [];
                 console.log('[Kanban] loadAutomations:', automationCards.length, 'automation cards');
+                // Fetch projected run times for timeline density
+                try {
+                    const projData = await apiCall('GET', `/api/mission/cards/projections?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+                    cardProjections = projData.projections || {};
+                } catch(pe) { cardProjections = {}; }
                 renderAutomationSection();
             } catch(e) { console.error('[Kanban] loadAutomations failed:', e.message); }
         }
@@ -1081,6 +1097,21 @@
                         const icon = card.lastRunResult?.startsWith('✅') ? '✅' : '❌';
                         items.push(`<div class="kb-tl-marker" style="left:${toPct(lastTs)}%" title="${escapeHtml(card.title)} – ${escapeHtml(card.lastRunResult || '')}"><span>${icon}</span></div>`);
                     }
+
+                    // Projected future executions (ghost blocks / density band)
+                    const projTimes = (cardProjections[card.id] || []).filter(ts => ts !== nextTs && ts >= windowStart && ts <= windowEnd);
+                    if (projTimes.length > 50) {
+                        // Too dense — render as continuous density band
+                        const minPct = toPct(Math.min(...projTimes));
+                        const maxPct = toPct(Math.max(...projTimes));
+                        const widthPct = Math.max(0.5, maxPct - minPct);
+                        items.push(`<div class="kb-tl-density-band" style="left:${minPct}%;width:${widthPct}%" title="${escapeHtml(card.title)} — ${projTimes.length}x ${t('kb_auto_per_day','/day')}"></div>`);
+                    } else {
+                        projTimes.forEach(ts => {
+                            const timeStr = new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                            items.push(buildCardHtml(card, toPct(ts), baseCls + ' projected', timeStr));
+                        });
+                    }
                 });
 
                 items.push(`<div class="kb-tl-now" style="left:${nowPct}%"></div>`);
@@ -1088,10 +1119,25 @@
                 return `<div class="kb-tl-lane${cls}"><div class="kb-tl-lane-label">${labelHtml}</div><div class="kb-tl-lane-track">${items.join('')}</div></div>`;
             }
 
+            // Entity workload metrics helper
+            function computeEntityMetrics(cards) {
+                let dailyExecs = 0;
+                let estDailyTokens = 0;
+                cards.forEach(card => {
+                    const proj = cardProjections[card.id] || [];
+                    const cardExecs = proj.length;
+                    dailyExecs += cardExecs;
+                    // Token estimate per card: (desc + title chars) / 4 chars per token * 3x overhead * executions
+                    const charCount = (card.description || '').length + (card.title || '').length;
+                    const tokensPerExec = Math.ceil(charCount / 4) * 3;
+                    estDailyTokens += tokensPerExec * cardExecs;
+                });
+                return { dailyExecs, estDailyTokens: Math.round(estDailyTokens) };
+            }
+
             // If no lanes at all, fall back to grid view
             const sortedIds = Object.keys(entityLanes).map(Number).sort((a, b) => a - b);
             if (!sortedIds.length && !unassigned.length) {
-                // All cards lack both assignedBots and createdBy — use grid
                 autoViewMode = 'grid';
                 document.querySelectorAll('.kb-auto-view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === 'grid'));
                 document.getElementById('autoGrid').style.display = '';
@@ -1099,13 +1145,26 @@
                 renderAutomationSection();
                 return;
             }
+
+            // Pre-compute total daily execs for workload share
+            let totalDailyExecs = 0;
+            sortedIds.forEach(eid => { totalDailyExecs += computeEntityMetrics(entityLanes[eid]).dailyExecs; });
+
             let lanesHtml = sortedIds.map(eid => {
                 const avatar = getAvatarForEntity(eid);
                 const name = getEntityDisplayName(eid);
                 const avatarHtml = isAvatarUrl(avatar)
                     ? `<span class="kb-tl-lane-avatar"><img src="${escapeHtml(avatar)}" alt="${escapeHtml(name)}"></span>`
                     : `<span class="kb-tl-lane-avatar">${avatar}</span>`;
-                const labelHtml = `${avatarHtml}<span class="kb-tl-lane-name" title="${escapeHtml(name)}">${escapeHtml(name)}</span>`;
+                const m = computeEntityMetrics(entityLanes[eid]);
+                const share = totalDailyExecs > 0 ? Math.round(m.dailyExecs / totalDailyExecs * 100) : 0;
+                const tokenLabel = m.estDailyTokens >= 1000 ? (m.estDailyTokens / 1000).toFixed(1) + 'K' : m.estDailyTokens;
+                const tipText = `${t('kb_auto_density','Density')}: ${m.dailyExecs}x/day | ${t('kb_auto_est_cost','Est. tokens')}: ~${tokenLabel}/day | ${t('kb_auto_workload','Workload')}: ${share}%`;
+                const metricsHtml = `<span class="kb-tl-lane-metrics" title="${escapeHtml(tipText)}">` +
+                    `<span class="kb-tl-metric">${m.dailyExecs}x</span>` +
+                    `<span class="kb-tl-metric-bar"><span style="width:${Math.min(share, 100)}%"></span></span>` +
+                    `<span class="kb-tl-metric">${share}%</span></span>`;
+                const labelHtml = `${avatarHtml}<div class="kb-tl-lane-info"><span class="kb-tl-lane-name" title="${escapeHtml(name)}">${escapeHtml(name)}</span>${metricsHtml}</div>`;
                 return buildLane(labelHtml, entityLanes[eid], false);
             }).join('');
 
