@@ -2703,7 +2703,13 @@
             // Helper: get sender key for grouping
             function senderKey(m) {
                 if (m.is_from_user && !isIncomingCrossDevice(m)) return 'user:' + (m.entity_id ?? '');
-                if (m.is_from_bot) return 'bot:' + (m.entity_id ?? '');
+                if (m.is_from_bot) {
+                    // Include source in key so routed messages (speak-to, broadcast, cross-device)
+                    // are not visually grouped with plain bot replies
+                    const parsed = parseEntitySource(m.source);
+                    const routeSuffix = parsed ? ':' + (m.source || '') : '';
+                    return 'bot:' + (m.entity_id ?? '') + routeSuffix;
+                }
                 return 'other:' + (m.source || '');
             }
 
