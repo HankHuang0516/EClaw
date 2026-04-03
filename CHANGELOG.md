@@ -1,3 +1,10 @@
+## [1.881.1](https://github.com/HankHuang0516/EClaw/compare/v1.881.0...v1.881.1) (2026-04-03)
+
+
+### Bug Fixes
+
+* **kanban:** channel bot replies now trigger auto-done on child cards ([18a096d](https://github.com/HankHuang0516/EClaw/commit/18a096db24eeb6a54738ddeab16f211fd03f35d7))
+
 # [1.881.0](https://github.com/HankHuang0516/EClaw/compare/v1.880.0...v1.881.0) (2026-04-03)
 
 
