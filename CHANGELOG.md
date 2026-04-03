@@ -1,3 +1,10 @@
+# [1.880.0](https://github.com/HankHuang0516/EClaw/compare/v1.879.0...v1.880.0) (2026-04-03)
+
+
+### Features
+
+* **kanban:** timeline projections, workload indicators & mission embed mode ([#1603](https://github.com/HankHuang0516/EClaw/issues/1603)) ([b8faf35](https://github.com/HankHuang0516/EClaw/commit/b8faf35e16c042cced4408c44381afe02c7abcd0))
+
 # [1.879.0](https://github.com/HankHuang0516/EClaw/compare/v1.878.6...v1.879.0) (2026-04-03)
 
 
