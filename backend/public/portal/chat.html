@@ -2702,7 +2702,11 @@
 
             // Helper: get sender key for grouping
             function senderKey(m) {
-                if (m.is_from_user && !isIncomingCrossDevice(m)) return 'user:' + (m.entity_id ?? '');
+                if (m.is_from_user && !isIncomingCrossDevice(m)) {
+                    // Use full recipient set for grouped broadcasts so different recipient combos don't collapse
+                    const ids = m._groupedEntityIds ? m._groupedEntityIds.slice().sort().join(',') : (m.entity_id ?? '');
+                    return 'user:' + ids;
+                }
                 if (m.is_from_bot) {
                     // Include source in key so routed messages (speak-to, broadcast, cross-device)
                     // are not visually grouped with plain bot replies
