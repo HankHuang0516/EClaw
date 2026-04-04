@@ -1836,14 +1836,26 @@
             document.getElementById('dialogContainer').innerHTML = '';
         }
 
-        // ========== Deprecation: add → Kanban redirect ==========
-        function showDeprecatedAddWarning() {
-            showToast(i18n.t('mc_deprecated_add') || '請使用看板任務作為替代方案。看板任務頁面已有完整生態，請讓 bot 將現有任務逐步轉移到看板任務頁面。', 'warning');
-        }
-
         // ========== Notes ==========
         function showAddNote() {
-            showDeprecatedAddWarning();
+            showDialog(i18n.t('mc_dlg_add_note'), [
+                { key: 'title', label: i18n.t('mc_dlg_title'), value: '' },
+                { key: 'content', label: i18n.t('mc_dlg_content'), type: 'textarea', value: '' },
+                { key: 'category', label: i18n.t('mc_dlg_category'), type: 'select', value: '', options: getCategoryOptions('notes') }
+            ], vals => {
+                if (!vals.title.trim()) return;
+                dashboard.notes.push({
+                    id: genId(),
+                    title: vals.title.trim(),
+                    content: vals.content.trim(),
+                    category: vals.category || null,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                    createdBy: 'user'
+                });
+                markChanged();
+                renderNotes();
+            });
         }
 
         function showEditNote(id) {
@@ -2786,7 +2798,7 @@
         }
 
         function showAddSkill() {
-            showDeprecatedAddWarning();
+            showSkillDialog(null, null);
         }
 
         function showEditSkill(id) {
@@ -2910,7 +2922,7 @@
 
         // ========== Rules ==========
         function showAddRule() {
-            showDeprecatedAddWarning();
+            showRuleDialog(null, null);
         }
 
         function showEditRule(id) {
@@ -3112,7 +3124,7 @@
         }
 
         function showAddSoul() {
-            showDeprecatedAddWarning();
+            showSoulDialog(null, null);
         }
 
         function showEditSoul(id) {

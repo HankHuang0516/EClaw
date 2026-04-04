@@ -1,8 +1,8 @@
 /**
- * Mission skill/add and rule/add — deprecated (→ Kanban)
+ * Mission skill/add and rule/add — re-enabled
  *
- * These endpoints now return 410 Gone to redirect users to the Kanban board.
- * The deduplication logic is preserved but unreachable.
+ * These endpoints are now active again (deprecation removed).
+ * They accept valid credentials and create items (or 500 from mock DB).
  */
 
 jest.mock('pg', () => ({
@@ -38,24 +38,34 @@ beforeAll(() => {
     missionApp.use('/api/mission', router);
 });
 
-describe('POST /api/mission/skill/add — deprecated', () => {
-    test('returns 410 with kanban redirect', async () => {
+describe('POST /api/mission/skill/add — re-enabled', () => {
+    test('accepts valid input (200 or 500 mock DB)', async () => {
         const res = await request(missionApp)
             .post('/api/mission/skill/add')
             .send({ deviceId: DEVICE_ID, deviceSecret: 'secret', entityId: 0, title: 'Test' });
-        expect(res.status).toBe(410);
-        expect(res.body.deprecated).toBe(true);
-        expect(res.body.redirect).toBe('kanban');
+        expect([200, 500].includes(res.status)).toBe(true);
+    });
+
+    test('returns 400 without title', async () => {
+        const res = await request(missionApp)
+            .post('/api/mission/skill/add')
+            .send({ deviceId: DEVICE_ID, deviceSecret: 'secret', entityId: 0 });
+        expect(res.status).toBe(400);
     });
 });
 
-describe('POST /api/mission/rule/add — deprecated', () => {
-    test('returns 410 with kanban redirect', async () => {
+describe('POST /api/mission/rule/add — re-enabled', () => {
+    test('accepts valid input (200 or 500 mock DB)', async () => {
         const res = await request(missionApp)
             .post('/api/mission/rule/add')
             .send({ deviceId: DEVICE_ID, deviceSecret: 'secret', entityId: 0, name: 'Test', ruleType: 'WORKFLOW' });
-        expect(res.status).toBe(410);
-        expect(res.body.deprecated).toBe(true);
-        expect(res.body.redirect).toBe('kanban');
+        expect([200, 500].includes(res.status)).toBe(true);
+    });
+
+    test('returns 400 without name', async () => {
+        const res = await request(missionApp)
+            .post('/api/mission/rule/add')
+            .send({ deviceId: DEVICE_ID, deviceSecret: 'secret', entityId: 0, ruleType: 'WORKFLOW' });
+        expect(res.status).toBe(400);
     });
 });
