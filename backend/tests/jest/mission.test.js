@@ -53,7 +53,7 @@ const post = (path) => request(missionApp).post(path);
 const get = (path) => request(missionApp).get(path);
 
 // ════════════════════════════════════════════════════════════════
-// Authentication — deprecated add endpoints return 410
+// Authentication — add endpoints require credentials
 // ════════════════════════════════════════════════════════════════
 describe('Mission auth validation', () => {
     it('note/add rejects without credentials (400)', async () => {
@@ -61,14 +61,14 @@ describe('Mission auth validation', () => {
         expect(res.status).toBe(400);
     });
 
-    it('rule/add returns 410 deprecated', async () => {
+    it('rule/add rejects without credentials (400)', async () => {
         const res = await post('/api/mission/rule/add').send({ name: 'test' });
-        expect(res.status).toBe(410);
+        expect(res.status).toBe(400);
     });
 
-    it('soul/add returns 410 deprecated', async () => {
+    it('soul/add rejects without credentials (400)', async () => {
         const res = await post('/api/mission/soul/add').send({ name: 'test' });
-        expect(res.status).toBe(410);
+        expect(res.status).toBe(400);
     });
 
     it('rejects notify without deviceId (400)', async () => {
@@ -101,28 +101,36 @@ describe('POST /api/mission/note/add', () => {
 });
 
 // ════════════════════════════════════════════════════════════════
-// POST /api/mission/rule/add — deprecated (→ Kanban)
+// POST /api/mission/rule/add — re-enabled
 // ════════════════════════════════════════════════════════════════
 describe('POST /api/mission/rule/add', () => {
-    it('returns 410 deprecated', async () => {
+    it('accepts valid input (200 or 500 mock DB)', async () => {
         const res = await post('/api/mission/rule/add')
             .send({ deviceId: 'test-dev', deviceSecret: 'test-secret', name: 'MyRule' });
-        expect(res.status).toBe(410);
-        expect(res.body.deprecated).toBe(true);
-        expect(res.body.redirect).toBe('kanban');
+        expect([200, 500].includes(res.status)).toBe(true);
+    });
+
+    it('returns 400 without name', async () => {
+        const res = await post('/api/mission/rule/add')
+            .send({ deviceId: 'test-dev', deviceSecret: 'test-secret' });
+        expect(res.status).toBe(400);
     });
 });
 
 // ════════════════════════════════════════════════════════════════
-// POST /api/mission/soul/add — deprecated (→ Kanban)
+// POST /api/mission/soul/add — re-enabled
 // ════════════════════════════════════════════════════════════════
 describe('POST /api/mission/soul/add', () => {
-    it('returns 410 deprecated', async () => {
+    it('accepts valid input (200 or 500 mock DB)', async () => {
         const res = await post('/api/mission/soul/add')
             .send({ deviceId: 'test-dev', deviceSecret: 'test-secret', name: 'MySoul' });
-        expect(res.status).toBe(410);
-        expect(res.body.deprecated).toBe(true);
-        expect(res.body.redirect).toBe('kanban');
+        expect([200, 500].includes(res.status)).toBe(true);
+    });
+
+    it('returns 400 without name', async () => {
+        const res = await post('/api/mission/soul/add')
+            .send({ deviceId: 'test-dev', deviceSecret: 'test-secret' });
+        expect(res.status).toBe(400);
     });
 });
 
@@ -162,9 +170,9 @@ describe('GET /api/mission/dashboard', () => {
 });
 
 // ════════════════════════════════════════════════════════════════
-// Category support — deprecated add endpoints
+// Category support — add endpoints accept category
 // ════════════════════════════════════════════════════════════════
-describe('Category support in add endpoints — deprecated', () => {
+describe('Category support in add endpoints', () => {
     const auth = { deviceId: 'test-dev', deviceSecret: 'test-secret' };
 
     it('note/add accepts category field', async () => {
@@ -173,22 +181,22 @@ describe('Category support in add endpoints — deprecated', () => {
         expect([200, 500].includes(res.status)).toBe(true);
     });
 
-    it('rule/add returns 410 deprecated (category ignored)', async () => {
+    it('rule/add accepts category field', async () => {
         const res = await post('/api/mission/rule/add')
             .send({ ...auth, name: 'Categorized Rule', category: 'DevOps' });
-        expect(res.status).toBe(410);
+        expect([200, 500].includes(res.status)).toBe(true);
     });
 
-    it('skill/add returns 410 deprecated (category ignored)', async () => {
+    it('skill/add accepts category field', async () => {
         const res = await post('/api/mission/skill/add')
             .send({ ...auth, title: 'Categorized Skill', category: 'Core' });
-        expect(res.status).toBe(410);
+        expect([200, 500].includes(res.status)).toBe(true);
     });
 
-    it('soul/add returns 410 deprecated (category ignored)', async () => {
+    it('soul/add accepts category field', async () => {
         const res = await post('/api/mission/soul/add')
             .send({ ...auth, name: 'Categorized Soul', category: 'Personality' });
-        expect(res.status).toBe(410);
+        expect([200, 500].includes(res.status)).toBe(true);
     });
 });
 
