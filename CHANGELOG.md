@@ -1,3 +1,10 @@
+# [1.882.0](https://github.com/HankHuang0516/EClaw/compare/v1.881.2...v1.882.0) (2026-04-04)
+
+
+### Features
+
+* **kanban:** reviewer selector on automation parent cards ([adc0537](https://github.com/HankHuang0516/EClaw/commit/adc0537c89428f962a62eb8176dcb731eb947908))
+
 ## [1.881.2](https://github.com/HankHuang0516/EClaw/compare/v1.881.1...v1.881.2) (2026-04-03)
 
 
