@@ -1,3 +1,10 @@
+## [1.882.1](https://github.com/HankHuang0516/EClaw/compare/v1.882.0...v1.882.1) (2026-04-04)
+
+
+### Bug Fixes
+
+* **kanban:** show automation section in Android WebView ([c5ec18d](https://github.com/HankHuang0516/EClaw/commit/c5ec18dd113066ac4b8b85e6fdecdb9302bf6d3b))
+
 # [1.882.0](https://github.com/HankHuang0516/EClaw/compare/v1.881.2...v1.882.0) (2026-04-04)
 
 
