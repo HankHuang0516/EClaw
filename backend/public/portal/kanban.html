@@ -304,7 +304,10 @@
 
         /* App WebView: hide redundant heading (sub-tabs already indicate page) */
         body.app-webview .kb-toolbar h2 { display:none; }
-        body.app-webview .kb-automation { display:none; }
+        /* App WebView: compact automation section for mobile */
+        body.app-webview .kb-automation { margin-bottom:10px; }
+        body.app-webview .kb-auto-timeline { max-height:220px; }
+        body.app-webview .kb-tl-lane-metrics { display:none; }
 
         /* App WebView: force mobile layout for board */
         body.app-webview .kb-board { display:none; }
