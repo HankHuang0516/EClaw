@@ -24,6 +24,7 @@
             <button class="info-tab active" data-info-tab="quickstart" data-i18n="info_tab_quickstart">🚀 Quick Start</button>
             <button class="info-tab" data-info-tab="guide" data-i18n="info_tab_guide">📖 User Guide</button>
             <button class="info-tab" data-info-tab="advanced" data-i18n="info_tab_advanced">🔧 Advanced</button>
+            <button class="info-tab" data-info-tab="channel-plugins" data-i18n="info_tab_channel_plugins">🔌 Channel Plugins</button>
             <button class="info-tab" data-info-tab="faq" data-i18n="info_tab_faq">❓ FAQ</button>
             <button class="info-tab" data-info-tab="release-notes" data-i18n="info_tab_release_notes">📋 Releases</button>
         </div>
@@ -201,7 +202,7 @@
                                 <span class="feat-card-icon">🔌</span>
                                 <h3 data-i18n="guide_features_card_7_title">OpenClaw 生態整合</h3>
                                 <p data-i18n="guide_features_card_7_desc">Webhook + Channel Plugin 接入 OpenClaw AI Bot，支援多模型協作</p>
-                                <a class="feat-link" href="#advanced/openclaw-channel" data-i18n="guide_features_learn_more">了解更多 →</a>
+                                <a class="feat-link" href="#channel-plugins/openclaw-channel" data-i18n="guide_features_learn_more">了解更多 →</a>
                             </div>
                             <div class="feat-card">
                                 <span class="feat-card-icon">🔐</span>
@@ -1929,7 +1930,6 @@ POST /api/mission/card/:id/comment
                     <button class="guide-sidebar-btn" data-guide="envvars" data-i18n="guide_nav_envvars">環境變數</button>
                     <button class="guide-sidebar-btn" data-guide="remotecontrol" data-i18n="guide_nav_remotecontrol">遠端控制</button>
                     <button class="guide-sidebar-btn" data-guide="testing" data-i18n="guide_nav_testing">測試與文件</button>
-                    <button class="guide-sidebar-btn" data-guide="openclaw-channel" data-i18n="guide_nav_openclaw_channel">OpenClaw Channel</button>
                 </div>
                 <div class="guide-content">
                     <!-- ── 系統架構 ── -->
@@ -2477,8 +2477,22 @@ node backend/tests/test-broadcast.js</div>
                         <p data-i18n="guide_testing_p_license"><a href="https://github.com/HankHuang0516/realbot/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a> &copy; 2026 HankHuang0516</p>
                     </div>
 
+
+                </div><!-- /guide-content -->
+            </div><!-- /guide-layout -->
+        </div><!-- /panel-advanced -->
+
+        <!-- ══════ Tab: Channel Plugins ══════ -->
+        <div class="info-panel" id="panel-channel-plugins">
+            <div class="guide-layout">
+                <div class="guide-sidebar" id="guideSidebarChannelPlugins">
+                    <button class="guide-sidebar-btn active" data-guide="openclaw-channel" data-i18n="guide_nav_openclaw_channel">OpenClaw Channel</button>
+                    <button class="guide-sidebar-btn" data-guide="claude-code-channel" data-i18n="guide_nav_claude_code_channel">Claude Code Channel</button>
+                </div>
+                <div class="guide-content">
+
                     <!-- ── OpenClaw Channel 教學 ── -->
-                    <div class="guide-panel" id="guide-openclaw-channel">
+                    <div class="guide-panel active" id="guide-openclaw-channel">
                         <header>
                             <h1 data-i18n="guide_channel_title">自帶 OpenClaw Bot — Channel 綁定教學</h1>
                             <p class="meta" data-i18n="guide_channel_meta">讓你自己的 AI（例如 Claude）住進 EClawbot 角色裡</p>
@@ -2579,10 +2593,102 @@ DELETE /api/channel/register
                         <p data-i18n="guide_channel_p_source">完整 API 文件與 plugin 原始碼：<a href="https://github.com/HankHuang0516/openclaw-channel-eclaw" target="_blank" rel="noopener">github.com/HankHuang0516/openclaw-channel-eclaw</a></p>
                     </div>
 
+                    <!-- ── Claude Code Channel 教學 ── -->
+                    <div class="guide-panel" id="guide-claude-code-channel">
+                        <header>
+                            <h1 data-i18n="guide_cc_channel_title">Claude Code Channel — 將 Claude Code 接入 EClawbot</h1>
+                            <p class="meta" data-i18n="guide_cc_channel_meta">透過 fakechat WebSocket 橋接，讓 Claude Code 成為你的 EClawbot 角色</p>
+                        </header>
+
+                        <h2 data-i18n="guide_cc_channel_h2_what">這是什麼？</h2>
+                        <p data-i18n="guide_cc_channel_p_what">Claude Code Channel 是一個橋接服務，透過 <strong>fakechat WebSocket</strong> 協定連接 EClawbot 與 Claude Code。它在本機啟動一個 WebSocket 伺服器，攔截 EClawbot 推送過來的用戶訊息，轉交給 Claude Code 處理，再將 Claude Code 的回覆透過 Channel API 送回 EClawbot。</p>
+                        <p data-i18n="guide_cc_channel_p_what2">簡單來說：你可以在 EClawbot App 或 Portal 裡，直接和 Claude Code 對話，就像在用 CLI 一樣。</p>
+
+                        <div class="note" data-i18n="guide_cc_channel_note_repo">原始碼與完整文件：<a href="https://github.com/HankHuang0516/claude-code-eclaw-channel" target="_blank" rel="noopener">github.com/HankHuang0516/claude-code-eclaw-channel</a></div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_cc_channel_h2_arch">架構圖</h2>
+                        <div class="code-block">┌─────────────────┐         ┌──────────────────────┐         ┌─────────────────┐
+│   EClawbot App  │         │  Claude Code Channel │         │   Claude Code   │
+│   / Portal      │         │  (Bun + WebSocket)   │         │   (CLI / tmux)  │
+│                 │         │                      │         │                 │
+│  用戶送出訊息 ──┼── HTTP ─▶│  fakechat WS Server  │── pipe ─▶│  處理指令        │
+│                 │         │                      │         │                 │
+│  顯示 AI 回覆 ◀─┼── HTTP ─┤  Channel API Client  │◀─ pipe ─┤  產生回覆        │
+└─────────────────┘         └──────────────────────┘         └─────────────────┘
+
+流程：
+1. 用戶在 EClawbot 傳訊息
+2. EClawbot 後端透過 Channel callback 推送到本機 WebSocket
+3. Channel plugin 將訊息透過 fakechat 協定送進 Claude Code
+4. Claude Code 處理後回覆
+5. Channel plugin 呼叫 POST /api/channel/message 回傳結果
+6. EClawbot 角色狀態更新，用戶看到回覆</div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_cc_channel_h2_req">前置需求</h2>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_cc_channel_li_req1">✅ <strong>Bun</strong> 執行環境（<a href="https://bun.sh" target="_blank" rel="noopener">bun.sh</a>）</li>
+                            <li data-i18n="guide_cc_channel_li_req2">✅ <strong>Claude Code</strong> CLI 已安裝並可用（<code>claude</code> 指令）</li>
+                            <li data-i18n="guide_cc_channel_li_req3">✅ <strong>tmux</strong> 終端多工器（用於管理 Claude Code session）</li>
+                            <li data-i18n="guide_cc_channel_li_req4">✅ 已有 EClawbot 帳號並產生 Channel API Key（參考 <a href="#guide/openclaw-channel">OpenClaw Channel 教學</a> 第 1 步）</li>
+                        </ul>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_cc_channel_h2_setup">快速設定</h2>
+
+                        <h3 class="step-heading" data-i18n="guide_cc_channel_h3_step1">第 1 步：Clone 專案</h3>
+                        <div class="code-block">git clone https://github.com/HankHuang0516/claude-code-eclaw-channel.git
+cd claude-code-eclaw-channel</div>
+
+                        <h3 class="step-heading" data-i18n="guide_cc_channel_h3_step2">第 2 步：安裝相依套件</h3>
+                        <div class="code-block">bun install</div>
+
+                        <h3 class="step-heading" data-i18n="guide_cc_channel_h3_step3">第 3 步：設定環境變數</h3>
+                        <p data-i18n="guide_cc_channel_p_step3">建立 <code>.env</code> 檔案，填入你的 Channel API 憑證：</p>
+                        <div class="code-block">cp .env.example .env</div>
+                        <p data-i18n="guide_cc_channel_p_step3b">編輯 <code>.env</code>，填入以下欄位：</p>
+                        <div class="code-block">CHANNEL_API_KEY=eck_你的Key
+CHANNEL_API_SECRET=ecs_你的Secret
+ENTITY_ID=0
+ENTITY_NAME=Claude Code</div>
+
+                        <h3 class="step-heading" data-i18n="guide_cc_channel_h3_step4">第 4 步：啟動服務</h3>
+                        <div class="code-block">bun run start</div>
+                        <p data-i18n="guide_cc_channel_p_step4">啟動後，plugin 會自動：</p>
+                        <ol class="content-list">
+                            <li data-i18n="guide_cc_channel_li_step4a">向 EClawbot 後端註冊 callback URL</li>
+                            <li data-i18n="guide_cc_channel_li_step4b">綁定指定的 entity slot</li>
+                            <li data-i18n="guide_cc_channel_li_step4c">在 tmux session 中啟動 Claude Code</li>
+                            <li data-i18n="guide_cc_channel_li_step4d">開始監聽 fakechat WebSocket 訊息</li>
+                        </ol>
+
+                        <h3 class="step-heading" data-i18n="guide_cc_channel_h3_step5">第 5 步：測試連線</h3>
+                        <p data-i18n="guide_cc_channel_p_step5">回到 EClawbot App 或 Portal，在綁定的角色聊天室中傳送任意訊息。如果 Claude Code 正常回覆，代表設定成功。</p>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_cc_channel_h2_faq">常見問題</h2>
+
+                        <h3 data-i18n="guide_cc_channel_h3_faq1">Q: 啟動後角色沒有出現？</h3>
+                        <p data-i18n="guide_cc_channel_p_faq1">確認 <code>.env</code> 中的 API Key 和 Secret 正確，且 <code>ENTITY_ID</code> 沒有超出你的方案限制。檢查終端機的 log 是否有 bind 成功的訊息。</p>
+
+                        <h3 data-i18n="guide_cc_channel_h3_faq2">Q: Claude Code 沒有回覆？</h3>
+                        <p data-i18n="guide_cc_channel_p_faq2">檢查 tmux session 是否正常運作（<code>tmux ls</code>），以及 Claude Code 是否有正確啟動。也確認你的機器有網路連線，能夠存取 EClawbot API。</p>
+
+                        <h3 data-i18n="guide_cc_channel_h3_faq3">Q: 可以同時跑 OpenClaw Channel 和 Claude Code Channel 嗎？</h3>
+                        <p data-i18n="guide_cc_channel_p_faq3">可以。只要使用不同的 <code>ENTITY_ID</code> 綁定不同的角色即可，兩個 Channel plugin 互不干擾。</p>
+
+                        <hr>
+                        <p data-i18n="guide_cc_channel_p_source">完整文件與原始碼：<a href="https://github.com/HankHuang0516/claude-code-eclaw-channel" target="_blank" rel="noopener">github.com/HankHuang0516/claude-code-eclaw-channel</a></p>
+                    </div>
 
                 </div><!-- /guide-content -->
             </div><!-- /guide-layout -->
-        </div><!-- /panel-advanced -->
+        </div><!-- /panel-channel-plugins -->
 
 
         <!-- ══════════════════════════════════════════════════
