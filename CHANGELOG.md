@@ -1,3 +1,10 @@
+# [1.884.0](https://github.com/HankHuang0516/EClaw/compare/v1.883.0...v1.884.0) (2026-04-04)
+
+
+### Features
+
+* **kanban:** add title/description to automation edit modal ([#1611](https://github.com/HankHuang0516/EClaw/issues/1611)) ([b31de98](https://github.com/HankHuang0516/EClaw/commit/b31de9895435d4740c713c46fb2c966d1dcf29a6))
+
 # [1.883.0](https://github.com/HankHuang0516/EClaw/compare/v1.882.2...v1.883.0) (2026-04-04)
 
 
