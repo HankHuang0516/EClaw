@@ -270,6 +270,23 @@
         .kb-auto-reviewer label { color:var(--text-secondary); white-space:nowrap; font-weight:600; }
         .kb-auto-reviewer select { flex:1; padding:4px 8px; border-radius:6px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--text); font-size:12px; cursor:pointer; }
 
+        /* Automation quick-action buttons on grid cards */
+        .kb-auto-card-header { display:flex; align-items:center; justify-content:space-between; gap:4px; }
+        .kb-auto-card-quick { display:flex; gap:2px; }
+        .kb-auto-quick-btn { background:none; border:1px solid var(--card-border); border-radius:4px; padding:2px 6px; font-size:11px; cursor:pointer; color:var(--text-secondary); transition:all 0.2s; line-height:1; }
+        .kb-auto-quick-btn:hover { border-color:var(--primary); color:var(--text); }
+        .kb-auto-quick-btn.del:hover { border-color:#ef4444; color:#ef4444; }
+        .kb-auto-quick-btn.edit:hover { border-color:#60a5fa; color:#60a5fa; }
+        .kb-auto-card-paused { font-size:10px; color:#fbbf24; font-weight:600; margin-bottom:2px; }
+        .kb-auto-card.paused { opacity:0.6; border-left-color:var(--text-muted); }
+
+        /* Automation edit action button (detail modal) */
+        .kb-auto-action-btn.edit { background:rgba(96,165,250,0.12); color:#60a5fa; border-color:rgba(96,165,250,0.3); }
+        .kb-auto-action-btn.edit:hover { background:rgba(96,165,250,0.25); }
+
+        /* ══════════════ Edit Schedule Modal (reuses .kb-new-overlay / .kb-new-form base) ══════════════ */
+        .kb-edit-sched-overlay { z-index:150; }
+
         /* Automation toggle in new card form */
         .kb-auto-toggle-row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; }
         .kb-auto-toggle-label { font-size:13px; display:flex; align-items:center; gap:6px; }
@@ -516,6 +533,55 @@
             <div class="kb-form-actions">
                 <button class="btn btn-outline" data-i18n="kb_btn_cancel" onclick="closeNewCard()">Cancel</button>
                 <button class="btn btn-primary" data-i18n="kb_btn_create" onclick="createCard()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Schedule Modal -->
+    <div class="kb-new-overlay kb-edit-sched-overlay" id="editSchedModal" onclick="if(event.target===this)closeEditSchedule()">
+        <div class="kb-new-form">
+            <h3>✏️ <span data-i18n="kb_auto_edit_title">Edit Schedule</span></h3>
+            <input type="hidden" id="editSchedCardId">
+            <div class="kb-form-group">
+                <label class="kb-form-label" data-i18n="kb_label_sched_type">Schedule Type</label>
+                <select class="kb-form-select" id="editSchedType" onchange="toggleEditSchedFields()">
+                    <option value="recurring" data-i18n="kb_sched_recurring">Recurring (Cron)</option>
+                    <option value="once" data-i18n="kb_sched_once">One-time</option>
+                </select>
+            </div>
+            <div id="editSchedRecurring">
+                <div class="kb-form-group">
+                    <label class="kb-form-label" data-i18n="kb_label_schedule">Schedule</label>
+                    <div class="kb-cron-chips" id="editCronChips">
+                        <button type="button" class="kb-cron-chip" data-cron="0 * * * *" onclick="selectEditCron(this)" data-i18n="kb_cron_hourly">Every hour</button>
+                        <button type="button" class="kb-cron-chip" data-cron="0 */4 * * *" onclick="selectEditCron(this)" data-i18n="kb_cron_4h">Every 4 hours</button>
+                        <button type="button" class="kb-cron-chip" data-cron="0 9 * * *" onclick="selectEditCron(this)" data-i18n="kb_cron_daily">Daily 9AM</button>
+                        <button type="button" class="kb-cron-chip" data-cron="0 9 * * 1" onclick="selectEditCron(this)" data-i18n="kb_cron_weekly">Weekly Mon</button>
+                    </div>
+                    <input class="kb-form-input" id="editCronCustom" style="margin-top:8px" data-i18n-placeholder="kb_placeholder_cron" placeholder="Custom cron: */30 * * * *">
+                </div>
+            </div>
+            <div id="editSchedOnce" style="display:none">
+                <div class="kb-form-group">
+                    <label class="kb-form-label" data-i18n="kb_label_run_at">Run At</label>
+                    <input class="kb-form-input" id="editSchedRunAt" type="datetime-local">
+                </div>
+            </div>
+            <div class="kb-form-group">
+                <label class="kb-form-label" data-i18n="kb_label_timezone">Timezone</label>
+                <select class="kb-form-select" id="editSchedTz">
+                    <option value="Asia/Taipei">Asia/Taipei (UTC+8)</option>
+                    <option value="Asia/Tokyo">Asia/Tokyo (UTC+9)</option>
+                    <option value="Asia/Shanghai">Asia/Shanghai (UTC+8)</option>
+                    <option value="America/New_York">America/New_York (UTC-5)</option>
+                    <option value="America/Los_Angeles">America/Los_Angeles (UTC-8)</option>
+                    <option value="Europe/London">Europe/London (UTC+0)</option>
+                    <option value="UTC">UTC</option>
+                </select>
+            </div>
+            <div class="kb-form-actions">
+                <button class="btn btn-outline" data-i18n="kb_btn_cancel" onclick="closeEditSchedule()">Cancel</button>
+                <button class="btn btn-primary" data-i18n="kb_auto_edit_save" onclick="saveAutoSchedule()">Save</button>
             </div>
         </div>
     </div>
@@ -891,6 +957,7 @@
                 moveBar.innerHTML =
                     reviewerHtml +
                     `<div class="kb-auto-actions">` +
+                        `<button class="kb-auto-action-btn edit" onclick="editAutoSchedule('${cardId}')" title="${t('kb_auto_edit_tip','Edit schedule')}">✏️ ${t('kb_auto_edit','Edit')}</button>` +
                         `<button class="${pauseCls}" onclick="toggleAutoSchedule('${cardId}',${!isEnabled})">${pauseLabel}</button>` +
                         `<button class="kb-auto-action-btn delete" onclick="deleteAutomation('${cardId}')" title="${t('kb_auto_delete_tip','Archive this automation')}">🗑 ${t('kb_auto_delete','Delete')}</button>` +
                     `</div>`;
@@ -956,6 +1023,90 @@
                 await loadCards();
             } catch (e) {
                 alert(e.message || 'Failed to delete automation');
+            }
+        }
+
+        // ── Edit Schedule ──
+        function editAutoSchedule(cardId) {
+            const card = findCard(cardId);
+            if (!card) return;
+            document.getElementById('editSchedCardId').value = cardId;
+            const sc = card.schedule || {};
+            // Set type
+            const typeEl = document.getElementById('editSchedType');
+            typeEl.value = sc.type === 'once' ? 'once' : 'recurring';
+            toggleEditSchedFields();
+            // Set timezone
+            const tzEl = document.getElementById('editSchedTz');
+            if (sc.timezone) {
+                const opt = [...tzEl.options].find(o => o.value === sc.timezone);
+                if (opt) tzEl.value = sc.timezone;
+            }
+            // Set cron — match preset or fill custom
+            if (sc.type !== 'once') {
+                const cron = sc.cronExpression || sc.cron || '';
+                const chips = document.querySelectorAll('#editCronChips .kb-cron-chip');
+                let matched = false;
+                chips.forEach(chip => {
+                    if (chip.dataset.cron === cron) { chip.classList.add('active'); matched = true; }
+                    else chip.classList.remove('active');
+                });
+                document.getElementById('editCronCustom').value = matched ? '' : cron;
+            }
+            // Set runAt for once
+            if (sc.type === 'once' && sc.runAt) {
+                const d = new Date(sc.runAt);
+                const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                document.getElementById('editSchedRunAt').value = local;
+            }
+            document.getElementById('editSchedModal').classList.add('show');
+        }
+
+        function closeEditSchedule() {
+            document.getElementById('editSchedModal').classList.remove('show');
+        }
+
+        function toggleEditSchedFields() {
+            const isOnce = document.getElementById('editSchedType').value === 'once';
+            document.getElementById('editSchedRecurring').style.display = isOnce ? 'none' : '';
+            document.getElementById('editSchedOnce').style.display = isOnce ? '' : 'none';
+        }
+
+        // selectEditCron delegates to unified selectCronChip
+        function selectEditCron(btn) { selectCronChip(btn, 'editCronChips', 'editCronCustom'); }
+
+        async function saveAutoSchedule() {
+            const cardId = document.getElementById('editSchedCardId').value;
+            if (!cardId) return;
+            const type = document.getElementById('editSchedType').value;
+            const timezone = document.getElementById('editSchedTz').value;
+            const body = {
+                deviceId: currentUser.deviceId,
+                deviceSecret: currentUser.deviceSecret,
+                enabled: true,
+                type,
+                timezone,
+            };
+            if (type === 'recurring') {
+                const customCron = document.getElementById('editCronCustom').value.trim();
+                const selectedChip = document.querySelector('#editCronChips .kb-cron-chip.active');
+                const cron = customCron || (selectedChip ? selectedChip.dataset.cron : '');
+                if (!cron) { showToast(t('kb_auto_edit_no_cron', 'Please select or enter a cron expression'), true); return; }
+                body.cronExpression = cron;
+            } else {
+                const runAtVal = document.getElementById('editSchedRunAt').value;
+                if (!runAtVal) { showToast(t('kb_auto_edit_no_runat', 'Please set a run time'), true); return; }
+                body.runAt = new Date(runAtVal).toISOString();
+            }
+            try {
+                await apiCall('PUT', `/api/mission/card/${cardId}/schedule`, body);
+                closeEditSchedule();
+                showToast(t('kb_auto_edit_saved', 'Schedule updated'));
+                await loadAutomations();
+                await loadCards();
+                if (openCardId === cardId) openDetail(cardId);
+            } catch (e) {
+                showToast(e.message || t('kb_auto_edit_failed', 'Failed to update schedule'), true);
             }
         }
 
@@ -1109,6 +1260,7 @@
                     <div class="kb-auto-card-header">
                         <div class="kb-auto-card-title">⚡ ${escapeHtml(c.title)}</div>
                         <div class="kb-auto-card-quick" onclick="event.stopPropagation()">
+                            <button class="kb-auto-quick-btn edit" onclick="editAutoSchedule('${c.id}')" title="${t('kb_auto_edit','Edit')}">✏️</button>
                             <button class="kb-auto-quick-btn" onclick="toggleAutoSchedule('${c.id}',${!isEnabled})" title="${isEnabled ? t('kb_auto_pause','Pause') : t('kb_auto_resume','Resume')}">${isEnabled ? '⏸' : '▶'}</button>
                             <button class="kb-auto-quick-btn del" onclick="deleteAutomation('${c.id}')" title="${t('kb_auto_delete','Delete')}">🗑</button>
                         </div>
@@ -1323,11 +1475,12 @@
             console.log('[Kanban] toggleAutoFields:', checked);
         }
 
-        function selectCron(btn) {
-            document.querySelectorAll('#cronChips .kb-cron-chip').forEach(c => c.classList.remove('active'));
+        function selectCronChip(btn, chipsId, customId) {
+            document.querySelectorAll('#' + chipsId + ' .kb-cron-chip').forEach(c => c.classList.remove('active'));
             btn.classList.add('active');
-            document.getElementById('newCronCustom').value = '';
+            document.getElementById(customId).value = '';
         }
+        function selectCron(btn) { selectCronChip(btn, 'cronChips', 'newCronCustom'); }
 
         // ── New Card ──
         function openNewCard() {
