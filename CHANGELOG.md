@@ -1,3 +1,10 @@
+# [1.885.0](https://github.com/HankHuang0516/EClaw/compare/v1.884.0...v1.885.0) (2026-04-04)
+
+
+### Features
+
+* **portal:** add Channel Plugins category with Claude Code Channel guide ([#1612](https://github.com/HankHuang0516/EClaw/issues/1612)) ([608a9ed](https://github.com/HankHuang0516/EClaw/commit/608a9ed2b8a0facf70ffec40bb2a52537d350306))
+
 # [1.884.0](https://github.com/HankHuang0516/EClaw/compare/v1.883.0...v1.884.0) (2026-04-04)
 
 
