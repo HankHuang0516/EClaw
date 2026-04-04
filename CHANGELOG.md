@@ -1,3 +1,10 @@
+## [1.882.2](https://github.com/HankHuang0516/EClaw/compare/v1.882.1...v1.882.2) (2026-04-04)
+
+
+### Bug Fixes
+
+* re-enable notes/souls/skills/rules add buttons on mission page ([0d935ed](https://github.com/HankHuang0516/EClaw/commit/0d935ed8776ccc419933e696795486405fc27e7c))
+
 ## [1.882.1](https://github.com/HankHuang0516/EClaw/compare/v1.882.0...v1.882.1) (2026-04-04)
 
 
