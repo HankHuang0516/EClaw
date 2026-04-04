@@ -543,6 +543,14 @@
             <h3>✏️ <span data-i18n="kb_auto_edit_title">Edit Schedule</span></h3>
             <input type="hidden" id="editSchedCardId">
             <div class="kb-form-group">
+                <label class="kb-form-label" data-i18n="kb_label_title">Title</label>
+                <input class="kb-form-input" id="editCardTitle" data-i18n-placeholder="kb_placeholder_title" placeholder="Card title...">
+            </div>
+            <div class="kb-form-group">
+                <label class="kb-form-label" data-i18n="kb_label_description">Description</label>
+                <textarea class="kb-form-textarea" id="editCardDesc" data-i18n-placeholder="kb_placeholder_desc" placeholder="Brief description..."></textarea>
+            </div>
+            <div class="kb-form-group">
                 <label class="kb-form-label" data-i18n="kb_label_sched_type">Schedule Type</label>
                 <select class="kb-form-select" id="editSchedType" onchange="toggleEditSchedFields()">
                     <option value="recurring" data-i18n="kb_sched_recurring">Recurring (Cron)</option>
@@ -1031,6 +1039,9 @@
             const card = findCard(cardId);
             if (!card) return;
             document.getElementById('editSchedCardId').value = cardId;
+            // Populate title & description
+            document.getElementById('editCardTitle').value = card.title || '';
+            document.getElementById('editCardDesc').value = card.description || '';
             const sc = card.schedule || {};
             // Set type
             const typeEl = document.getElementById('editSchedType');
@@ -1100,6 +1111,13 @@
                 body.runAt = new Date(runAtVal).toISOString();
             }
             try {
+                // Save title/description via card update endpoint
+                const newTitle = document.getElementById('editCardTitle').value.trim();
+                const newDesc = document.getElementById('editCardDesc').value.trim();
+                if (!newTitle) { showToast(t('kb_err_title', 'Title is required'), true); return; }
+                const cardBody = { deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret, title: newTitle, description: newDesc };
+                await apiCall('PUT', `/api/mission/card/${cardId}`, cardBody);
+                // Save schedule
                 await apiCall('PUT', `/api/mission/card/${cardId}/schedule`, body);
                 closeEditSchedule();
                 showToast(t('kb_auto_edit_saved', 'Schedule updated'));
