@@ -1078,12 +1078,13 @@
         async function saveAutoSchedule() {
             const cardId = document.getElementById('editSchedCardId').value;
             if (!cardId) return;
+            const card = findCard(cardId);
             const type = document.getElementById('editSchedType').value;
             const timezone = document.getElementById('editSchedTz').value;
             const body = {
                 deviceId: currentUser.deviceId,
                 deviceSecret: currentUser.deviceSecret,
-                enabled: true,
+                enabled: card?.schedule?.enabled !== false,
                 type,
                 timezone,
             };
