@@ -30,7 +30,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ── Guide sidebar ──
-    const guideSidebarBtns = document.querySelectorAll('#guideSidebarQS .guide-sidebar-btn, #guideSidebarUG .guide-sidebar-btn, #guideSidebarAdv .guide-sidebar-btn');
+    const guideSidebarBtns = document.querySelectorAll('#guideSidebarQS .guide-sidebar-btn, #guideSidebarUG .guide-sidebar-btn, #guideSidebarAdv .guide-sidebar-btn, #guideSidebarChannelPlugins .guide-sidebar-btn');
     const guideSubBtns = document.querySelectorAll('.guide-sub-btn');
     const guidePanels = document.querySelectorAll('.guide-panel');
     const missionToggle = document.getElementById('missionToggle');
@@ -155,7 +155,21 @@ function handleHash() {
         if (window._navigateToGuide) window._navigateToGuide(guideId);
         return;
     }
-    const validTabs = ['guide', 'faq', 'release-notes', 'compare'];
+    // Deep link: #channel-plugins/sub-item (e.g. #channel-plugins/claude-code-channel)
+    if (hash.startsWith('channel-plugins/')) {
+        const guideId = hash.slice('channel-plugins/'.length);
+        const infoTabs = document.querySelectorAll('.info-tab');
+        const infoPanels = document.querySelectorAll('.info-panel');
+        infoTabs.forEach(t => t.classList.remove('active'));
+        infoPanels.forEach(p => p.classList.remove('active'));
+        const tab = document.querySelector('.info-tab[data-info-tab="channel-plugins"]');
+        const panel = document.getElementById('panel-channel-plugins');
+        if (tab) tab.classList.add('active');
+        if (panel) panel.classList.add('active');
+        if (window._navigateToGuide) window._navigateToGuide(guideId);
+        return;
+    }
+    const validTabs = ['guide', 'faq', 'release-notes', 'compare', 'advanced', 'channel-plugins'];
     if (validTabs.includes(hash)) {
         switchInfoTab(hash);
     }
