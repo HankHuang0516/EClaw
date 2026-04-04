@@ -266,6 +266,9 @@
         .kb-auto-action-btn.resume:hover { background:rgba(74,222,128,0.25); }
         .kb-auto-action-btn.delete { background:rgba(239,68,68,0.08); color:#ef4444; border-color:rgba(239,68,68,0.2); margin-left:auto; }
         .kb-auto-action-btn.delete:hover { background:rgba(239,68,68,0.2); }
+        .kb-auto-reviewer { display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:12px; }
+        .kb-auto-reviewer label { color:var(--text-secondary); white-space:nowrap; font-weight:600; }
+        .kb-auto-reviewer select { flex:1; padding:4px 8px; border-radius:6px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--text); font-size:12px; cursor:pointer; }
 
         /* Automation toggle in new card form */
         .kb-auto-toggle-row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; }
@@ -867,7 +870,23 @@
                 const isEnabled = card.schedule?.enabled !== false;
                 const pauseLabel = isEnabled ? `⏸ ${t('kb_auto_pause','Pause')}` : `▶ ${t('kb_auto_resume','Resume')}`;
                 const pauseCls = isEnabled ? 'kb-auto-action-btn pause' : 'kb-auto-action-btn resume';
+                // Reviewer selector for automation cards
+                const currentReviewer = card.reviewerEntityId;
+                const reviewerOpts = boundEntities.filter(e => e.isBound).map(e => {
+                    const sel = e.entityId === currentReviewer ? ' selected' : '';
+                    const label = e.name || e.character || `#${e.entityId}`;
+                    return `<option value="${e.entityId}"${sel}>${escapeHtml(label)}</option>`;
+                }).join('');
+                const reviewerHtml =
+                    `<div class="kb-auto-reviewer">` +
+                        `<label>🔍 ${t('kb_auto_reviewer','Reviewer')}</label>` +
+                        `<select onchange="setAutoReviewer('${cardId}',this.value)">` +
+                            `<option value="">${t('kb_auto_no_reviewer','None')}</option>` +
+                            reviewerOpts +
+                        `</select>` +
+                    `</div>`;
                 moveBar.innerHTML =
+                    reviewerHtml +
                     `<div class="kb-auto-actions">` +
                         `<button class="${pauseCls}" onclick="toggleAutoSchedule('${cardId}',${!isEnabled})">${pauseLabel}</button>` +
                         `<button class="kb-auto-action-btn delete" onclick="deleteAutomation('${cardId}')" title="${t('kb_auto_delete_tip','Archive this automation')}">🗑 ${t('kb_auto_delete','Delete')}</button>` +
@@ -881,6 +900,25 @@
             // Load first tab
             switchDetailTab('comments', document.querySelector('.kb-modal-tab'));
             document.getElementById('detailModal').classList.add('show');
+        }
+
+        async function setAutoReviewer(cardId, val) {
+            const reviewerId = val === '' ? null : parseInt(val);
+            try {
+                await apiCall('PUT', `/api/mission/card/${cardId}`, {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    reviewerEntityId: reviewerId,
+                });
+                // Update local data
+                const card = findCard(cardId);
+                if (card) card.reviewerEntityId = reviewerId;
+                await loadAutomations();
+                const reviewerName = reviewerId != null ? (boundEntities.find(e => e.entityId === reviewerId)?.name || `#${reviewerId}`) : 'None';
+                showToast(`Reviewer → ${reviewerName}`);
+            } catch (e) {
+                alert(e.message || 'Failed to set reviewer');
+            }
         }
 
         async function toggleAutoSchedule(cardId, enable) {
