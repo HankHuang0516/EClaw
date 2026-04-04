@@ -1,3 +1,10 @@
+# [1.883.0](https://github.com/HankHuang0516/EClaw/compare/v1.882.2...v1.883.0) (2026-04-04)
+
+
+### Features
+
+* **kanban:** add automation schedule editing UI ([#1610](https://github.com/HankHuang0516/EClaw/issues/1610)) ([a1570ee](https://github.com/HankHuang0516/EClaw/commit/a1570ee3ac8b930fec06f8ffa089079fb5799371))
+
 ## [1.882.2](https://github.com/HankHuang0516/EClaw/compare/v1.882.1...v1.882.2) (2026-04-04)
 
 
