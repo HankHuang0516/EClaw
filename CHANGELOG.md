@@ -1,3 +1,10 @@
+## [1.887.2](https://github.com/HankHuang0516/EClaw/compare/v1.887.1...v1.887.2) (2026-04-05)
+
+
+### Bug Fixes
+
+* **kanban:** simplify review — UX feedback, dedup, i18n, efficiency ([e2b921b](https://github.com/HankHuang0516/EClaw/commit/e2b921bbaa9b0b10c60bedb6f8f6dc72c0e9e24b))
+
 ## [1.887.1](https://github.com/HankHuang0516/EClaw/compare/v1.887.0...v1.887.1) (2026-04-05)
 
 
