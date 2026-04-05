@@ -1,3 +1,10 @@
+## [1.888.2](https://github.com/HankHuang0516/EClaw/compare/v1.888.1...v1.888.2) (2026-04-05)
+
+
+### Bug Fixes
+
+* **transform:** add speakTo/broadcast to debug logs + fix const redeclaration ([0d70426](https://github.com/HankHuang0516/EClaw/commit/0d70426fb74c205a4b9e7e41e5f9e2e524564569))
+
 ## [1.888.1](https://github.com/HankHuang0516/EClaw/compare/v1.888.0...v1.888.1) (2026-04-05)
 
 
