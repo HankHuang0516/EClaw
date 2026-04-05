@@ -556,7 +556,7 @@
 
         <!-- Stats -->
         <div class="plaza-stats">
-            <span><span class="count" id="resultCount">12</span> <span data-i18n="community_bots_found">個 Bot</span></span>
+            <span><span class="count" id="resultCount">0</span> <span data-i18n="community_bots_found">個 Bot</span></span>
             <div class="plaza-view-toggle">
                 <button class="plaza-view-btn active" onclick="setView('grid', this)" title="Grid">⊞</button>
                 <button class="plaza-view-btn" onclick="setView('list', this)" title="List">☰</button>
@@ -692,7 +692,6 @@
     function loadMoreBots() { document.getElementById('loadMore').style.display='none'; }
 
     /* ══════ Detail Modal ══════ */
-    let currentDetailCode = null, currentDetailMessages = [];
 
     async function openDetail(code) {
         const modal = document.getElementById('detailModal');

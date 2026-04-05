@@ -1067,6 +1067,32 @@
         }
         .ac-tag-input input { flex: 1; }
         .ac-tag-input button { flex-shrink: 0; }
+
+        /* ── Bot Plaza Toggle ── */
+        .plaza-toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+        }
+        .plaza-toggle-row .plaza-label {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .plaza-toggle-row .plaza-label span:first-child {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .plaza-toggle-row .plaza-label span:last-child {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
     </style>
     <link rel="canonical" href="https://eclawbot.com/portal/dashboard.html">
 </head>
@@ -1613,7 +1639,7 @@
                     '<button class="btn btn-sm btn-outline" onclick="refreshEntity(' + entity.entityId + ', this)">&#x1F504; ' + i18n.t('dash_btn_refresh') + '</button>' +
                     '<button class="xd-settings-toggle" id="xdToggle' + entity.entityId + '" onclick="toggleXdSettings(' + entity.entityId + ')">' + i18n.t('dash_xd_settings') + '</button>' +
                     '<button class="ac-settings-toggle" id="acToggle' + entity.entityId + '" onclick="toggleIdentityPanel(' + entity.entityId + ')">&#x1F3AD; ' + i18n.t('dash_id_btn') + '</button>' +
-                    '<button class="btn btn-sm btn-delete-permanent"' + (entities.length <= 1 ? ' disabled title="' + i18n.t('dash_remove_title') + '"' : '') + ' onclick="confirmRemove(' + entity.entityId + ', \'' + escapedName + '\')">' + i18n.t('dash_btn_remove') + '</button>' +
+                    '<button class="btn btn-sm btn-delete-permanent" onclick="confirmRemove(' + entity.entityId + ', \'' + escapedName + '\')">' + i18n.t('dash_btn_remove') + '</button>' +
                     '</div>' +
                     '<div class="xd-settings-panel" id="xdPanel' + entity.entityId + '">' +
                     '<h4>' + i18n.t('dash_xd_title') + '</h4>' +
@@ -1693,6 +1719,17 @@
                     '</div>' +
                     /* Public profile section (Agent Card) */
                     '<h4 style="margin-top:16px;border-top:1px solid var(--card-border);padding-top:12px;">&#x1F4C7; ' + i18n.t('dash_id_public_title') + '</h4>' +
+                    /* Bot Plaza toggle */
+                    '<div class="plaza-toggle-row">' +
+                        '<div class="plaza-label">' +
+                            '<span>' + i18n.t('dash_plaza_publish') + '</span>' +
+                            '<span>' + i18n.t('dash_plaza_publish_hint') + '</span>' +
+                        '</div>' +
+                        '<label class="toggle-switch">' +
+                            '<input type="checkbox" id="plazaToggle' + entity.entityId + '" onchange="togglePlaza(' + entity.entityId + ', this.checked)"' + (entity.isPublic ? ' checked' : '') + '>' +
+                            '<span class="toggle-slider"></span>' +
+                        '</label>' +
+                    '</div>' +
                     '<div class="xd-field">' +
                         '<label>' + i18n.t('dash_id_public_desc') + '</label>' +
                         '<textarea id="acDesc' + entity.entityId + '" maxlength="500" placeholder="' + i18n.t('dash_id_public_desc_hint') + '" rows="2"></textarea>' +
@@ -2026,6 +2063,33 @@
                 showToast(i18n.t('toast_save_failed') + ': ' + err.message, 'error');
             }
             if (window.telemetry) telemetry.trackAction('identity_save', { entityId: entityId });
+        }
+
+        async function togglePlaza(entityId, isPublic) {
+            var checkbox = document.getElementById('plazaToggle' + entityId);
+            checkbox.disabled = true;
+            try {
+                var data = await apiCall('POST', '/api/community/publish', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    entityId: entityId,
+                    public: isPublic
+                });
+                if (data.success) {
+                    var ent = entities.find(function(e) { return e.entityId === entityId; });
+                    if (ent) ent.isPublic = isPublic;
+                    showToast(i18n.t(isPublic ? 'dash_plaza_published' : 'dash_plaza_unpublished'), 'success');
+                } else {
+                    checkbox.checked = !isPublic;
+                    showToast(data.error || i18n.t('toast_error'), 'error');
+                }
+            } catch (err) {
+                checkbox.checked = !isPublic;
+                showToast(i18n.t('toast_error') + ': ' + err.message, 'error');
+            } finally {
+                checkbox.disabled = false;
+            }
+            if (window.telemetry) telemetry.trackAction('plaza_toggle', { entityId: entityId, isPublic: isPublic });
         }
 
         async function deleteIdentity(entityId) {
@@ -2742,10 +2806,6 @@
         }
 
         function confirmRemove(entityId, displayName) {
-            if (entities.length <= 1) {
-                showToast(i18n.t('toast_cannot_delete_last'), 'error');
-                return;
-            }
             const overlay = document.createElement('div');
             overlay.className = 'confirm-overlay';
             overlay.innerHTML =
@@ -2767,8 +2827,13 @@
         }
 
         async function removeEntity(entityId, btnEl) {
-            btnEl.disabled = true;
-            btnEl.textContent = 'Deleting...';
+            // Optimistic UX: close dialog immediately, run API in background
+            const overlay = btnEl.closest('.confirm-overlay');
+            if (overlay) overlay.remove();
+
+            showToast(i18n.t('toast_entity_deleting'), 'info');
+            if (window.telemetry) telemetry.trackAction('entity_delete_permanent', { entityId: entityId });
+            if (isEditMode) toggleEditMode();
 
             try {
                 await apiCall('DELETE', '/api/device/entity/' + entityId + '/permanent', {
@@ -2776,18 +2841,11 @@
                     deviceSecret: currentUser.deviceSecret
                 });
 
-                const overlay = btnEl.closest('.confirm-overlay');
-                if (overlay) overlay.remove();
-
                 showToast(i18n.t('toast_entity_deleted'), 'success');
-                if (window.telemetry) telemetry.trackAction('entity_delete_permanent', { entityId: entityId });
-
-                if (isEditMode) toggleEditMode();
                 await loadEntities();
             } catch (e) {
                 showToast(i18n.t('toast_delete_failed') + ': ' + e.message, 'error');
-                btnEl.disabled = false;
-                btnEl.textContent = i18n.t('dash_btn_remove');
+                await loadEntities();
             }
         }
 

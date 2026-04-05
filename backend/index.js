@@ -1078,6 +1078,7 @@ app.get('/api/skill-doc', (req, res) => {
         res.type('html').send(`<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="/portal/assets/favicon-32.png">
 <title>${title}</title>
 <style>
 body{max-width:900px;margin:0 auto;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#1a1a2e;color:#e0e0e0;line-height:1.6}
@@ -2578,8 +2579,8 @@ app.get('/api/admin/users', adminAuth, adminCheck, async (req, res) => {
                 subscriptionStatus: r.subscription_status,
                 subscriptionExpiresAt: r.subscription_expires_at ? parseInt(r.subscription_expires_at) : null,
                 isAdmin: r.is_admin,
-                createdAt: r.created_at ? parseInt(r.created_at) : null,
-                lastLoginAt: r.last_login_at ? parseInt(r.last_login_at) : null,
+                createdAt: r.created_at ? (r.created_at instanceof Date ? r.created_at.getTime() : parseInt(r.created_at)) : null,
+                lastLoginAt: r.last_login_at ? (r.last_login_at instanceof Date ? r.last_login_at.getTime() : parseInt(r.last_login_at)) : null,
                 source: 'registered',
                 isTestDevice: isTestDeviceCheck(r.device_id, dev)
             };
@@ -3921,6 +3922,7 @@ app.get('/api/entities', (req, res) => {
                     publicCode: entity.publicCode || null,
                     bindingType: entity.bindingType || null,
                     encryptionStatus: entity.encryptionStatus || null,
+                    isPublic: !!entity.isPublic,
                     messageQueue: (entity.messageQueue || []).map(m => ({
                         text: m.text,
                         from: m.from,
@@ -4035,22 +4037,252 @@ app.get('/api/status', (req, res) => {
     });
 });
 
+// ── Shared Helpers: Gatekeeper + Delivery ──
+
+/**
+ * Resolve a speakTo target code to { deviceId, entityId }.
+ * Supports both publicCode (cross-device) and numeric entityId string (same-device fallback).
+ * @param {string} code - publicCode or entityId string
+ * @param {string} senderDeviceId - sender's device for same-device entityId fallback
+ * @returns {{ deviceId, entityId } | null}
+ */
+function resolveSpeakToTarget(code, senderDeviceId) {
+    // Try publicCode first
+    const byCode = publicCodeIndex[code];
+    if (byCode) return byCode;
+
+    // Fallback: pure numeric string → same-device entityId
+    if (/^\d+$/.test(code)) {
+        const eid = parseInt(code);
+        const device = devices[senderDeviceId];
+        if (device && device.entities[eid]) {
+            return { deviceId: senderDeviceId, entityId: eid };
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Gatekeeper Second Lock: mask leaked tokens for free bots.
+ * Returns { text, leaked } where text is potentially masked.
+ */
+function gatekeeperCheckText(deviceId, entityId, text, botSecret) {
+    const binding = officialBindingsCache[getBindingCacheKey(deviceId, entityId)];
+    const isFreeBot = binding && officialBots[binding.bot_id] && officialBots[binding.bot_id].bot_type === 'free';
+    if (!isFreeBot || !text) return { text, leaked: false };
+    const leakCheck = gatekeeper.detectAndMaskLeaks(text, deviceId, botSecret);
+    if (leakCheck.leaked) {
+        console.warn(`[Gatekeeper] Second lock: masked ${leakCheck.leakTypes.join(', ')} from device ${deviceId} entity ${entityId}`);
+        serverLog('warn', 'gatekeeper', `Second lock: ${leakCheck.leakTypes.join(', ')}`, { deviceId, entityId });
+        return { text: leakCheck.maskedText, leaked: true };
+    }
+    return { text, leaked: false };
+}
+
+/**
+ * Deliver a message from one entity to another (same-device or cross-device).
+ * Encapsulates: messageQueue push, chat save, webhook/channel push, XP, delivery tracking.
+ *
+ * @param {Object} opts
+ * @param {string} opts.senderDeviceId - sender's device
+ * @param {number} opts.fromId - sender entity ID
+ * @param {Object} opts.fromEntity - sender entity object
+ * @param {string} opts.targetDeviceId - target's device (may differ from sender)
+ * @param {number} opts.toId - target entity ID
+ * @param {Object} opts.toEntity - target entity object
+ * @param {string} opts.text - message text
+ * @param {string} [opts.mediaType] - optional media type
+ * @param {string} [opts.mediaUrl] - optional media URL
+ * @param {boolean} [opts.expectsReply=true] - whether reply is expected
+ * @param {boolean} [opts.isBroadcast=false] - if this is part of a broadcast
+ * @param {number[]} [opts.broadcastTargetIds] - all broadcast targets (for recipient block)
+ * @param {string} [opts.broadcastChatMsgId] - shared chat msg ID for broadcast delivery tracking
+ * @param {boolean} [opts.showRecipientInfo=false] - show recipient info in push
+ * @param {boolean} [opts.isCrossDevice=false] - cross-device delivery
+ * @returns {{ entityId, character, pushed, mode, reason, bindingType }}
+ */
+async function deliverToEntity(opts) {
+    const {
+        senderDeviceId, fromId, fromEntity,
+        targetDeviceId, toId, toEntity,
+        text, mediaType, mediaUrl,
+        expectsReply = true,
+        isBroadcast = false,
+        broadcastTargetIds,
+        broadcastChatMsgId,
+        showRecipientInfo = false,
+        isCrossDevice = false
+    } = opts;
+
+    const sourceLabel = isCrossDevice
+        ? `xdevice:${fromEntity.publicCode}:${fromEntity.character}`
+        : `entity:${fromId}:${fromEntity.character}`;
+
+    // Set target entity.message for Android display
+    const msgPrefix = isBroadcast ? '[廣播] ' : '';
+    toEntity.message = isCrossDevice
+        ? `xdevice:${fromEntity.publicCode}:${fromEntity.character}: ${msgPrefix}${text}`
+        : `entity:${fromId}:${fromEntity.character}: ${msgPrefix}${text}`;
+    toEntity.lastUpdated = Date.now();
+
+    // Push to messageQueue
+    const messageObj = {
+        text,
+        from: sourceLabel,
+        fromEntityId: fromId,
+        fromCharacter: fromEntity.character,
+        timestamp: Date.now(),
+        read: false,
+        mediaType: mediaType || null,
+        mediaUrl: mediaUrl || null
+    };
+    if (isCrossDevice) {
+        messageObj.fromPublicCode = fromEntity.publicCode;
+        messageObj.fromDeviceId = senderDeviceId;
+        messageObj.crossDevice = true;
+    }
+    toEntity.messageQueue.push(messageObj);
+
+    // Save chat message
+    const chatSource = isCrossDevice
+        ? `${sourceLabel}->${toEntity.publicCode || targetDeviceId}`
+        : `${sourceLabel}->${isBroadcast && broadcastTargetIds ? broadcastTargetIds.join(',') : toId}`;
+
+    let chatMsgId;
+    if (isBroadcast && broadcastChatMsgId) {
+        // Broadcast: reuse the single shared chat message ID for delivery tracking
+        chatMsgId = broadcastChatMsgId;
+    } else {
+        chatMsgId = await saveChatMessage(targetDeviceId, isCrossDevice ? toId : fromId, text, chatSource, false, true, mediaType || null, mediaUrl || null);
+    }
+
+    // Cross-device: also save sender's copy
+    if (isCrossDevice) {
+        await saveChatMessage(senderDeviceId, fromId, text, chatSource, false, true, mediaType || null, mediaUrl || null);
+    }
+
+    markMessagesAsRead(targetDeviceId, toId);
+
+    // Determine push mode
+    const isChannelBound = toEntity.bindingType === 'channel';
+    const hasWebhook = !!toEntity.webhook;
+    const apiBase = 'https://eclawbot.com';
+
+    // Fire-and-forget push
+    if (isChannelBound) {
+        channelModule.pushToChannelCallback(targetDeviceId, toId, {
+            event: isBroadcast ? 'broadcast' : 'entity_message',
+            from: sourceLabel,
+            text,
+            mediaType: mediaType || null,
+            mediaUrl: mediaUrl || null,
+            backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
+            isBroadcast,
+            ...(isBroadcast && broadcastTargetIds ? { broadcastRecipients: broadcastTargetIds } : {}),
+            fromEntityId: fromId,
+            fromCharacter: fromEntity.character,
+            eclaw_context: {
+                b2bRemaining: getBotToBotRemaining(targetDeviceId, toId),
+                b2bMax: BOT2BOT_MAX_MESSAGES,
+                expectsReply,
+                missionHints: getMissionApiHints(apiBase, targetDeviceId, toId, toEntity.botSecret),
+                silentToken: '[SILENT]',
+                identitySetupRequired: !toEntity.identity
+            }
+        }, toEntity.channelAccountId).then(pushResult => {
+            if (pushResult.pushed) {
+                messageObj.delivered = true;
+                markChatMessageDelivered(chatMsgId, String(toId));
+            }
+        }).catch(err => {
+            console.error(`[Deliver] Channel push to Entity ${toId} failed: ${err.message}`);
+        });
+    } else if (hasWebhook) {
+        const toRemaining = getBotToBotRemaining(targetDeviceId, toId);
+        let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API. Your text reply is DISCARDED.\n`;
+        pushMsg += `To update your mood/emoji on wallpaper (do NOT repeat or narrate the message — the user can already see it in chat):\n`;
+        pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${targetDeviceId}","entityId":${toId},"botSecret":"${toEntity.botSecret}","targetDeviceId":"${targetDeviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
+        if (expectsReply) {
+            pushMsg += `To reply directly to ${isCrossDevice ? fromEntity.publicCode : `Entity ${fromId}`}:\n`;
+            pushMsg += isCrossDevice
+                ? `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${targetDeviceId}","entityId":${toId},"botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE","speakTo":["${fromEntity.publicCode}"]}'\n\n`
+                : `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${targetDeviceId}","entityId":${toId},"botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE","speakTo":["${toEntity.publicCode ? fromEntity.publicCode : fromId}"]}'\n\n`;
+            if (isBroadcast) {
+                pushMsg += `[BOT-TO-BOT BROADCAST] Remaining quota: ${toRemaining}/${BOT2BOT_MAX_MESSAGES}. IMPORTANT: Do NOT re-broadcast this message.`;
+            } else {
+                pushMsg += `[BOT-TO-BOT] Remaining quota: ${toRemaining}/${BOT2BOT_MAX_MESSAGES}. If the other entity is just repeating emotions with no new info, do NOT reply — just update your wallpaper status.`;
+            }
+            if (toRemaining <= 2) pushMsg += ` WARNING: Quota almost exhausted, do NOT auto-reply.`;
+        } else {
+            pushMsg += `[NOTIFICATION — NO REPLY EXPECTED] This is an informational message. Just update your wallpaper status.`;
+        }
+        if (isBroadcast && showRecipientInfo && broadcastTargetIds) {
+            const targetDevice = devices[targetDeviceId];
+            if (targetDevice) pushMsg += '\n\n' + buildBroadcastRecipientBlock(targetDevice, broadcastTargetIds, toId);
+        }
+        pushMsg += `\n\n[${isBroadcast ? 'BROADCAST' : 'MESSAGE'}] From: ${sourceLabel}\nContent: ${text}`;
+        if (mediaType === 'photo') {
+            pushMsg += `\n[Attachment: Photo]\nmedia_type: photo\nmedia_url: ${mediaUrl}`;
+            const bkUrl = getBackupUrl(mediaUrl);
+            if (bkUrl) pushMsg += `\nbackup_url: ${bkUrl}`;
+        } else if (mediaType === 'voice') pushMsg += `\n[Attachment: Voice]\nmedia_type: voice\nmedia_url: ${mediaUrl}`;
+        else if (mediaType === 'video') pushMsg += `\n[Attachment: Video]\nmedia_type: video\nmedia_url: ${mediaUrl}`;
+        else if (mediaType === 'file') pushMsg += `\n[Attachment: File]\nmedia_type: file\nmedia_url: ${mediaUrl}`;
+        pushMsg += getMissionApiHints(apiBase, targetDeviceId, toId, toEntity.botSecret);
+        pushMsg += buildIdentitySetupHint(toEntity, apiBase, targetDeviceId, toId, toEntity.botSecret);
+        pushToBot(toEntity, targetDeviceId, isBroadcast ? 'entity_broadcast' : 'entity_message', {
+            message: pushMsg
+        }).then(pushResult => {
+            if (pushResult.pushed) {
+                messageObj.delivered = true;
+                markChatMessageDelivered(chatMsgId, String(toId));
+            }
+        }).catch(err => {
+            console.error(`[Deliver] Push to Entity ${toId} failed: ${err.message}`);
+        });
+    } else if (toEntity.isBound) {
+        console.warn(`[Push] ✗ No webhook registered for Device ${targetDeviceId} Entity ${toId} - client will show dialog`);
+    }
+
+    // Determine binding type
+    const officialBind = officialBindingsCache[getBindingCacheKey(targetDeviceId, toId)];
+    let bindingType = null;
+    if (officialBind) {
+        const bot = officialBots[officialBind.bot_id];
+        bindingType = bot ? bot.bot_type : null;
+    }
+
+    return {
+        entityId: toId,
+        character: toEntity.character,
+        pushed: (isChannelBound || hasWebhook) ? 'pending' : false,
+        mode: isChannelBound ? 'channel' : hasWebhook ? 'push' : 'polling',
+        reason: (isChannelBound || hasWebhook) ? 'fire_and_forget' : 'no_webhook',
+        bindingType,
+        ...(isCrossDevice ? { publicCode: toEntity.publicCode, targetDeviceId } : {})
+    };
+}
+
 /**
  * POST /api/transform
  * Update entity status (Bot uses this).
- * Body: { deviceId, entityId: 0-3, botSecret, name, character, state, message, parts }
+ * Body: { deviceId, entityId, botSecret, name, character, state, message, parts, speakTo?, broadcast?, targetDeviceId? }
+ *
+ * speakTo: string[] of publicCodes — deliver message to these entities (same or cross-device)
+ * broadcast: boolean — deliver message to all bound entities on device (or targetDeviceId)
+ * If both speakTo and broadcast are provided, broadcast takes priority + warning.
+ *
  * REQUIRES botSecret for authentication!
  */
-app.post('/api/transform', (req, res) => {
-    const { deviceId, entityId, botSecret, name, character, state, message, parts, targetDeviceId } = req.body;
+app.post('/api/transform', async (req, res) => {
+    const { deviceId, entityId, botSecret, name, character, state, message, parts, targetDeviceId, speakTo, broadcast } = req.body;
 
     if (!deviceId) {
         return res.status(400).json({ success: false, message: "deviceId required" });
     }
-
-    const eId = parseInt(entityId) || 0;
-    if (eId < 0) {
-        return res.status(400).json({ success: false, message: "Invalid entityId" });
+    if (!botSecret) {
+        return res.status(400).json({ success: false, message: "botSecret required" });
     }
 
     const device = devices[deviceId];
@@ -4058,28 +4290,36 @@ app.post('/api/transform', (req, res) => {
         return res.status(404).json({ success: false, message: "Device not found" });
     }
 
+    // Resolve entityId: auto-detect from botSecret if not provided
+    let eId;
+    let entityIdCorrected = false;
+    if (entityId === undefined || entityId === null) {
+        // Auto-detect: find entity by botSecret
+        eId = Object.keys(device.entities).map(Number)
+            .find(i => device.entities[i]?.isBound && device.entities[i].botSecret && safeEqual(device.entities[i].botSecret, botSecret));
+        if (eId === undefined) {
+            return res.status(403).json({ success: false, message: "Invalid botSecret — no matching entity found" });
+        }
+    } else {
+        const requestedId = parseInt(entityId) || 0;
+        // Verify botSecret matches the requested entityId
+        const requestedEntity = device.entities[requestedId];
+        if (requestedEntity && requestedEntity.isBound && requestedEntity.botSecret && safeEqual(requestedEntity.botSecret, botSecret)) {
+            eId = requestedId;
+        } else {
+            // entityId doesn't match botSecret — find the correct one
+            const correctId = Object.keys(device.entities).map(Number)
+                .find(i => device.entities[i]?.isBound && device.entities[i].botSecret && safeEqual(device.entities[i].botSecret, botSecret));
+            if (correctId === undefined) {
+                return res.status(403).json({ success: false, message: "Invalid botSecret" });
+            }
+            eId = correctId;
+            entityIdCorrected = true;
+            console.warn(`[Transform] Device ${deviceId}: entityId=${requestedId} doesn't match botSecret, auto-corrected to ${correctId}`);
+        }
+    }
+
     const entity = device.entities[eId];
-
-    // Check if entity exists
-    if (!entity) {
-        console.warn(`[Transform] Device ${deviceId} Entity ${eId} not found (possible malformed request)`);
-        return res.status(404).json({ success: false, message: `Entity ${eId} not found` });
-    }
-
-    if (!entity.isBound) {
-        return res.status(400).json({
-            success: false,
-            message: `Device ${deviceId} Entity ${eId} is not bound yet`
-        });
-    }
-
-    // Verify botSecret
-    if (!botSecret || !safeEqual(botSecret, entity.botSecret)) {
-        return res.status(403).json({
-            success: false,
-            message: "Invalid or missing botSecret"
-        });
-    }
 
     // Validate and update name if provided
     if (name !== undefined) {
@@ -4123,12 +4363,22 @@ app.post('/api/transform', (req, res) => {
     // Save bot message to chat history so it appears in Chat page
     // Skip silent tokens — these are internal signals that should not appear in chat
     const isSilentMessage = finalMessage && /^\[SILENT\]$/i.test(finalMessage.trim());
+    // Skip self chat save when speakTo/broadcast is present — deliverToEntity will save with routing source
+    const hasDelivery = (broadcast || (speakTo && Array.isArray(speakTo) && speakTo.length > 0));
     if (finalMessage && !isSilentMessage) {
-        saveChatMessage(deviceId, eId, finalMessage, entity.name || `Entity ${eId}`, false, true);
-        markMessagesAsRead(deviceId, eId);
-
         // [A2A_BOT_REPLY] — detect if this transform is in response to an A2A speak-to
         const pendingA2A = entity.messageQueue && entity.messageQueue.find(m => m.from && m.from.startsWith('entity:'));
+
+        // Build source: if replying to a speak-to, include routing info so chat renders "Entity A → Entity B"
+        const chatSource = pendingA2A
+            ? `entity:${eId}:${entity.character}->${pendingA2A.fromEntityId}`
+            : entity.name || `Entity ${eId}`;
+
+        // Only save self chat message if NOT doing speakTo/broadcast delivery (avoid duplicate)
+        if (!hasDelivery) {
+            saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true);
+        }
+        markMessagesAsRead(deviceId, eId);
         if (pendingA2A) {
             serverLog('info', 'speakto_push', `[A2A_BOT_REPLY] Entity ${eId} responded via transform after A2A from ${pendingA2A.from}: "${(finalMessage || '').slice(0, 60)}" | mqLen=${entity.messageQueue.length}`, {
                 deviceId, entityId: eId,
@@ -4201,8 +4451,21 @@ app.post('/api/transform', (req, res) => {
         }
     }
 
-    console.log(`[Transform] Device ${deviceId} Entity ${eId}: ${state || entity.state} - "${finalMessage || entity.message}"`);
-    serverLog('info', 'transform', `${state || entity.state}: ${(finalMessage || entity.message || '').slice(0, 100)}`, { deviceId, entityId: eId, metadata: { state: state || entity.state } });
+    // Build delivery info for logging
+    const deliveryTag = broadcast
+        ? ` [broadcast]`
+        : (speakTo && Array.isArray(speakTo) && speakTo.length > 0)
+            ? ` [speakTo:${speakTo.join(',')}]`
+            : '';
+    console.log(`[Transform] Device ${deviceId} Entity ${eId}: ${state || entity.state} - "${(finalMessage || entity.message || '').slice(0, 120)}"${deliveryTag}`);
+    serverLog('info', 'transform', `${state || entity.state}: ${(finalMessage || entity.message || '').slice(0, 100)}${deliveryTag}`, {
+        deviceId, entityId: eId,
+        metadata: {
+            state: state || entity.state,
+            ...(broadcast ? { broadcast: true } : {}),
+            ...(speakTo && Array.isArray(speakTo) && speakTo.length > 0 ? { speakTo } : {})
+        }
+    });
 
     // Emit entity:update via Socket.IO for real-time wallpaper/dashboard refresh
     if (io) {
@@ -4239,7 +4502,182 @@ app.post('/api/transform', (req, res) => {
         });
     }
 
-    res.json({
+    // ── speakTo / broadcast delivery ──
+    const warnings = entityIdCorrected
+        ? [`entityId mismatch: you provided ${parseInt(entityId) || 0} but your botSecret belongs to entity ${eId}. Auto-corrected to ${eId}.`]
+        : [];
+    let deliveryResults = null;
+
+    if ((speakTo || broadcast) && finalMessage) {
+        // If both provided, broadcast takes priority
+        if (speakTo && broadcast) {
+            warnings.push('Both speakTo and broadcast provided — broadcast takes priority, speakTo ignored.');
+        }
+
+        // Gatekeeper check on the message text for delivery
+        const gkResult = gatekeeperCheckText(deviceId, eId, finalMessage, entity.botSecret);
+        const deliveryText = gkResult.text;
+
+        if (broadcast) {
+            // ── Broadcast mode ──
+            const broadcastDeviceId = (targetDeviceId && targetDeviceId !== deviceId) ? targetDeviceId : deviceId;
+            const broadcastDevice = devices[broadcastDeviceId];
+
+            if (!broadcastDevice) {
+                warnings.push(`Broadcast target device ${broadcastDeviceId} not found.`);
+            } else {
+                // Broadcast dedup
+                if (!recentBroadcasts[broadcastDeviceId]) recentBroadcasts[broadcastDeviceId] = [];
+                const now = Date.now();
+                const BROADCAST_DEDUP_WINDOW = 60000;
+                recentBroadcasts[broadcastDeviceId] = recentBroadcasts[broadcastDeviceId].filter(b => now - b.timestamp < BROADCAST_DEDUP_WINDOW);
+                const normalizedText = (deliveryText || '').trim().slice(0, 200);
+                const isDuplicate = recentBroadcasts[broadcastDeviceId].some(b => b.fromEntityId !== eId && b.text === normalizedText);
+
+                if (isDuplicate) {
+                    warnings.push('Broadcast suppressed (duplicate of recent broadcast).');
+                    deliveryResults = { broadcast: true, deduplicated: true, sentCount: 0, targets: [] };
+                } else {
+                    recentBroadcasts[broadcastDeviceId].push({ fromEntityId: eId, text: normalizedText, timestamp: now });
+
+                    // Rate limit
+                    if (!checkBotToBotRateLimit(broadcastDeviceId, eId)) {
+                        warnings.push(`Bot-to-bot limit reached (${BOT2BOT_MAX_MESSAGES}). Broadcast skipped.`);
+                        deliveryResults = { broadcast: true, rateLimited: true, sentCount: 0, targets: [] };
+                    } else {
+                        // Find all other bound entities on broadcast device
+                        const targetIds = [];
+                        for (const i of Object.keys(broadcastDevice.entities).map(Number)) {
+                            if (i !== eId && broadcastDevice.entities[i] && broadcastDevice.entities[i].isBound) {
+                                targetIds.push(i);
+                            }
+                        }
+
+                        if (targetIds.length === 0) {
+                            deliveryResults = { broadcast: true, sentCount: 0, targets: [], message: 'No other bound entities to broadcast to.' };
+                        } else {
+                            const sourceLabel = `entity:${eId}:${entity.character}`;
+                            const broadcastChatMsgId = await saveChatMessage(broadcastDeviceId, eId, deliveryText, `${sourceLabel}->${targetIds.join(',')}`, false, true);
+
+                            // Check recipient info preference
+                            const bcastPrefs = await devicePrefs.getPrefs(broadcastDeviceId);
+                            const showRecipientInfo = bcastPrefs.broadcast_recipient_info !== false;
+
+                            const results = await Promise.all(targetIds.map(toId =>
+                                deliverToEntity({
+                                    senderDeviceId: deviceId, fromId: eId, fromEntity: entity,
+                                    targetDeviceId: broadcastDeviceId, toId, toEntity: broadcastDevice.entities[toId],
+                                    text: deliveryText, mediaType: null, mediaUrl: null,
+                                    expectsReply: true, isBroadcast: true,
+                                    broadcastTargetIds: targetIds, broadcastChatMsgId,
+                                    showRecipientInfo,
+                                    isCrossDevice: broadcastDeviceId !== deviceId
+                                })
+                            ));
+
+                            console.log(`[Transform+Broadcast] Device ${deviceId} Entity ${eId} -> [${targetIds.join(',')}] on ${broadcastDeviceId}`);
+                            deliveryResults = { broadcast: true, sentCount: results.length, targets: results };
+                        }
+                    }
+                }
+            }
+        } else if (speakTo && Array.isArray(speakTo) && speakTo.length > 0) {
+            // ── SpeakTo mode ──
+            const results = [];
+
+            for (const code of speakTo) {
+                // Resolve target: publicCode (cross-device) or entityId string (same-device)
+                const target = resolveSpeakToTarget(code, deviceId);
+                if (!target) {
+                    results.push({ publicCode: code, success: false, reason: 'not_found' });
+                    continue;
+                }
+
+                const tDevice = devices[target.deviceId];
+                if (!tDevice) {
+                    results.push({ publicCode: code, success: false, reason: 'device_not_found' });
+                    continue;
+                }
+
+                const toEntity = tDevice.entities[target.entityId];
+                if (!toEntity || !toEntity.isBound) {
+                    results.push({ publicCode: code, success: false, reason: 'not_bound' });
+                    continue;
+                }
+
+                // Skip self (by publicCode or entityId)
+                if (entity.publicCode === code || (target.deviceId === deviceId && target.entityId === eId)) {
+                    results.push({ publicCode: code, success: false, reason: 'self_target' });
+                    continue;
+                }
+
+                const isCrossDevice = target.deviceId !== deviceId;
+
+                // Cross-device settings enforcement
+                if (isCrossDevice) {
+                    const xdSettings = await crossDeviceSettings.getSettings(target.deviceId, target.entityId);
+                    const senderCode = entity.publicCode;
+
+                    if (await db.isBlocked(target.deviceId, senderCode)) {
+                        results.push({ publicCode: code, success: false, reason: 'blocked' });
+                        continue;
+                    }
+                    if (xdSettings.blacklist.length > 0 && xdSettings.blacklist.includes(senderCode)) {
+                        results.push({ publicCode: code, success: false, reason: 'blacklisted' });
+                        continue;
+                    }
+                    if (xdSettings.whitelist_enabled && xdSettings.whitelist.length > 0 && !xdSettings.whitelist.includes(senderCode)) {
+                        results.push({ publicCode: code, success: false, reason: 'not_whitelisted' });
+                        continue;
+                    }
+                    if (xdSettings.forbidden_words.length > 0 && deliveryText) {
+                        const lowerText = deliveryText.toLowerCase();
+                        const blocked = xdSettings.forbidden_words.find(w => lowerText.includes(w.toLowerCase()));
+                        if (blocked) {
+                            results.push({ publicCode: code, success: false, reason: 'forbidden_word' });
+                            continue;
+                        }
+                    }
+
+                    // Cross-device rate limit
+                    if (!checkCrossSpeakRateLimit(deviceId, eId)) {
+                        results.push({ publicCode: code, success: false, reason: 'cross_device_rate_limited' });
+                        continue;
+                    }
+                } else {
+                    // Same-device rate limit
+                    if (!checkBotToBotRateLimit(deviceId, eId)) {
+                        results.push({ publicCode: code, success: false, reason: 'rate_limited' });
+                        continue;
+                    }
+                }
+
+                const result = await deliverToEntity({
+                    senderDeviceId: deviceId, fromId: eId, fromEntity: entity,
+                    targetDeviceId: target.deviceId, toId: target.entityId, toEntity,
+                    text: deliveryText, mediaType: null, mediaUrl: null,
+                    expectsReply: true, isBroadcast: false,
+                    isCrossDevice
+                });
+
+                // Notify both devices
+                notifyDevice(target.deviceId, {
+                    type: 'chat', category: isCrossDevice ? 'cross_speak' : 'speak_to',
+                    title: `${entity.name || `Entity ${eId}`} → ${toEntity.name || `Entity ${target.entityId}`}`,
+                    body: (deliveryText || '').slice(0, 100),
+                    link: 'chat.html',
+                    metadata: { fromEntityId: eId, toEntityId: target.entityId }
+                }).catch(() => {});
+
+                console.log(`[Transform+SpeakTo] ${deviceId}:${eId} -> ${target.deviceId}:${target.entityId} (${code})`);
+                results.push({ publicCode: code, success: true, ...result });
+            }
+
+            deliveryResults = { speakTo: true, results };
+        }
+    }
+
+    const response = {
         success: true,
         deviceId: deviceId,
         entityId: eId,
@@ -4256,7 +4694,11 @@ app.post('/api/transform', (req, res) => {
         },
         versionInfo: getVersionInfo(entity.appVersion),
         push_status: entity.pushStatus || null
-    });
+    };
+    if (deliveryResults) response.delivery = deliveryResults;
+    if (warnings.length > 0) response.warnings = warnings;
+
+    res.json(response);
 });
 
 // POST /api/wakeup - REMOVED (client-side wakeup retained without push)
@@ -4673,6 +5115,20 @@ async function compactEntitySlots(device, deviceId) {
                     [deviceId, affectedOldSlots]
                 );
 
+                // 3d2: Migrate kanban_cards assigned_bots JSONB array
+                for (const s of movedSlots) {
+                    await client.query(
+                        `UPDATE kanban_cards
+                         SET assigned_bots = (
+                             SELECT jsonb_agg(CASE WHEN elem::int = $1 THEN to_jsonb($2::int) ELSE elem END)
+                             FROM jsonb_array_elements(assigned_bots) AS elem
+                         ), updated_at = NOW()
+                         WHERE device_id = $3 AND archived = false AND assigned_bots::jsonb @> $4::jsonb`,
+                        [s.oldSlot, s.newSlot, deviceId, JSON.stringify([s.oldSlot])]
+                    );
+                }
+                console.log(`[Compact] Migrated kanban assigned_bots for ${movedSlots.length} slot changes`);
+
                 // 3e: Update personal bot assignments
                 for (const info of botsToNotify) {
                     if (info.binding) {
@@ -4780,11 +5236,6 @@ app.delete('/api/device/entity/:entityId/permanent', async (req, res) => {
         return res.status(404).json({ success: false, error: `Entity #${eId} does not exist on this device` });
     }
 
-    // Protect: at least 1 entity must remain
-    if (entityCount(device) <= 1) {
-        return res.status(400).json({ success: false, error: 'Cannot delete the last entity. At least one entity must remain.' });
-    }
-
     const entity = device.entities[eId];
     console.log(`[DynamicEntity] Permanent delete: deviceId=${deviceId}, entityId=${eId}, isBound=${entity.isBound}, totalSlotsBefore=${entityCount(device)}`);
 
@@ -4839,21 +5290,59 @@ app.delete('/api/device/entity/:entityId/permanent', async (req, res) => {
         await db.deleteEntity(deviceId, eId);
     }
 
+    // Remove deleted entity from kanban card assignments
+    try {
+        await chatPool.query(
+            `UPDATE kanban_cards
+             SET assigned_bots = (
+                 SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb)
+                 FROM jsonb_array_elements(assigned_bots) AS elem
+                 WHERE elem::int != $1
+             ), updated_at = NOW()
+             WHERE device_id = $2 AND archived = false AND assigned_bots::jsonb @> $3::jsonb`,
+            [eId, deviceId, JSON.stringify([eId])]
+        );
+        // Clear reviewer if it was this entity
+        await chatPool.query(
+            `UPDATE kanban_cards SET reviewer_entity_id = NULL, updated_at = NOW()
+             WHERE device_id = $1 AND reviewer_entity_id = $2 AND archived = false`,
+            [deviceId, eId]
+        );
+        console.log(`[DynamicEntity] Cleaned kanban references for deleted entity #${eId}`);
+    } catch (kanbanErr) {
+        console.error(`[DynamicEntity] Kanban cleanup failed for entity #${eId}:`, kanbanErr.message);
+    }
+
     console.log(`[DynamicEntity] Permanent delete complete: deviceId=${deviceId}, entityId=${eId}, totalSlotsAfter=${entityCount(device)}`);
     serverLog('info', 'entity_delete', `Entity #${eId} permanently deleted`, { deviceId, entityId: eId });
 
     // Notify clients
     io.to(deviceId).emit('entityDeleted', { entityId: eId, totalSlots: entityCount(device) });
 
-    // Auto-compact: renumber remaining entities to sequential 0, 1, 2, ...
-    const compactResult = await compactEntitySlots(device, deviceId);
+    // If all entities deleted, auto-create a fresh default entity
+    let autoCreatedEntityId = null;
+    let compactResult = { compacted: false };
+    if (entityCount(device) === 0) {
+        const newId = 0;
+        device.entities[newId] = createDefaultEntity(newId);
+        device.nextEntityId = 1;
+        autoCreatedEntityId = newId;
+        console.log(`[DynamicEntity] Auto-created default entity #${newId} after last entity deleted: deviceId=${deviceId}`);
+        serverLog('info', 'entity_add', `Entity #${newId} auto-created (last entity deleted)`, { deviceId, entityId: newId });
+        if (usePostgreSQL) await db.saveDeviceData(deviceId, device);
+        io.to(deviceId).emit('entityAdded', { entityId: newId, totalSlots: 1 });
+    } else {
+        // Auto-compact: renumber remaining entities to sequential 0, 1, 2, ...
+        compactResult = await compactEntitySlots(device, deviceId);
+    }
 
     res.json({
         success: true,
         deletedEntityId: eId,
         remainingEntities: entityCount(device),
         entityIds: Object.keys(device.entities).map(Number),
-        compacted: compactResult.compacted ? compactResult.mapping : undefined
+        compacted: compactResult.compacted ? compactResult.mapping : undefined,
+        autoCreatedEntityId: autoCreatedEntityId != null ? autoCreatedEntityId : undefined
     });
 });
 
@@ -5226,6 +5715,26 @@ app.post('/api/device/reorder-entities', async (req, res) => {
                  WHERE device_id = $1 AND entity_id = ANY($2) AND status IN ('pending', 'active')`,
                 [deviceId, affectedOldSlots]
             );
+
+            // 3c2: Migrate kanban_cards assigned_bots + reviewer_entity_id
+            for (const s of movedSlots) {
+                await client.query(
+                    `UPDATE kanban_cards
+                     SET assigned_bots = (
+                         SELECT jsonb_agg(CASE WHEN elem::int = $1 THEN to_jsonb($2::int) ELSE elem END)
+                         FROM jsonb_array_elements(assigned_bots) AS elem
+                     ), updated_at = NOW()
+                     WHERE device_id = $3 AND archived = false AND assigned_bots::jsonb @> $4::jsonb`,
+                    [s.oldSlot, s.newSlot, deviceId, JSON.stringify([s.oldSlot])]
+                );
+                // Also update reviewer_entity_id
+                await client.query(
+                    `UPDATE kanban_cards SET reviewer_entity_id = $1, updated_at = NOW()
+                     WHERE device_id = $2 AND reviewer_entity_id = $3 AND archived = false`,
+                    [s.newSlot, deviceId, s.oldSlot]
+                );
+            }
+            console.log(`[Reorder] Migrated kanban assigned_bots for ${movedSlots.length} slot changes`);
 
             // 3d: Update personal bot assignments
             for (const info of botsToNotify) {
@@ -5839,7 +6348,7 @@ app.post('/api/client/speak', async (req, res) => {
                 pushMsg += `Run this command to reply (replace YOUR_REPLY_HERE with your response):\n`;
                 pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${eId},"botSecret":"${entity.botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
                 pushMsg += `To BROADCAST to ALL other entities (use ONLY when user asks to broadcast):\n`;
-                pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/broadcast" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","fromEntityId":${eId},"botSecret":"${entity.botSecret}","text":"YOUR_BROADCAST_HERE"}'\n\n`;
+                pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${entity.botSecret}","state":"IDLE","message":"YOUR_BROADCAST_HERE","broadcast":true}'\n\n`;
                 // Inject broadcast recipient info if this is a multi-target broadcast
                 if (showRecipientInfo) {
                     pushMsg += buildBroadcastRecipientBlock(device, targetIds, eId);
@@ -6136,14 +6645,14 @@ app.post('/api/entity/speak-to', async (req, res) => {
         pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${toId},"botSecret":"${toEntity.botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
         if (expectsReply) {
             pushMsg += `To reply directly to Entity ${fromId}:\n`;
-            pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/speak-to" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","fromEntityId":${toId},"toEntityId":${fromId},"botSecret":"${toEntity.botSecret}","text":"YOUR_REPLY_HERE"}'\n\n`;
+            pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE","speakTo":["${fromId}"]}'\n\n`;
             pushMsg += `[BOT-TO-BOT] Remaining quota: ${toRemaining}/${BOT2BOT_MAX_MESSAGES}. If the other entity is just repeating emotions with no new info, do NOT reply — just update your wallpaper status.`;
             if (toRemaining <= 2) {
                 pushMsg += ` WARNING: Quota almost exhausted, do NOT auto-reply.`;
             }
         } else {
             pushMsg += `(Optional — only reply if truly necessary) To reply directly to Entity ${fromId}:\n`;
-            pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/speak-to" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","fromEntityId":${toId},"toEntityId":${fromId},"botSecret":"${toEntity.botSecret}","text":"YOUR_REPLY_HERE"}'\n\n`;
+            pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE","speakTo":["${fromId}"]}'\n\n`;
             pushMsg += `[NOTIFICATION — NO REPLY EXPECTED] This is an informational message. Do NOT reply via speak-to. If you want to acknowledge, just update your wallpaper status.`;
         }
         pushMsg += `\n\n[MESSAGE] From: ${sourceLabel}\n`;
@@ -6222,6 +6731,9 @@ app.post('/api/entity/speak-to', async (req, res) => {
     if (!isChannelBound && !hasWebhook) {
         speakToResponse.warning = 'Target entity has no webhook or channel registered. Message saved but not pushed. The bot must poll for messages or register a webhook via POST /api/bot/register.';
     }
+    speakToResponse.deprecated = true;
+    speakToResponse.migration_hint = 'This endpoint is deprecated. Use POST /api/transform with "speakTo" field instead. Example: {"speakTo":["TARGET_PUBLIC_CODE"],"message":"YOUR_TEXT",...}';
+    res.set('X-Deprecated', 'Use POST /api/transform with speakTo field');
     res.json(speakToResponse);
 });
 
@@ -6553,13 +7065,16 @@ app.post('/api/entity/cross-speak', async (req, res) => {
         });
     }
 
+    res.set('X-Deprecated', 'Use POST /api/transform with speakTo field');
     res.json({
         success: true,
         message: `Cross-device message sent`,
         from: { publicCode: fromEntity.publicCode, character: fromEntity.character, entityId: fromId },
         to: { publicCode: targetCode, character: toEntity.character },
         pushed: isChannelBound || hasWebhook ? "pending" : false,
-        mode: isChannelBound ? "channel" : (hasWebhook ? "push" : "polling")
+        mode: isChannelBound ? "channel" : (hasWebhook ? "push" : "polling"),
+        deprecated: true,
+        migration_hint: 'This endpoint is deprecated. Use POST /api/transform with "speakTo":["TARGET_PUBLIC_CODE"] instead.'
     });
 });
 
@@ -6698,7 +7213,7 @@ app.get('/api/entity/agent-card', (req, res) => {
 
     const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
     if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
-    res.json({ success: true, agentCard: auth.entity.agentCard || null });
+    res.json({ success: true, agentCard: auth.entity.agentCard || null, isPublic: !!auth.entity.isPublic });
 });
 
 /**
@@ -6795,6 +7310,9 @@ async function handleVisibility(req, res) {
 
     const ok = await db.setEntityPublic(deviceId, eId, isPublic);
     if (!ok) return res.status(500).json({ success: false, error: 'Database error' });
+
+    entity.isPublic = !!isPublic;
+    entity.publishedAt = isPublic ? (entity.publishedAt || Date.now()) : null;
 
     serverLog('info', 'bot_plaza', `Entity ${eId} visibility: ${isPublic ? 'PUBLIC' : 'PRIVATE'}`, { deviceId, entityId: eId });
 
@@ -7317,7 +7835,8 @@ app.get('/api/contacts/my-cards', async (req, res) => {
             description: agentCard?.description || null,
             contactEmail: agentCard?.contactEmail || null,
             website: agentCard?.website || null,
-            agentCard
+            agentCard,
+            isPublic: !!ent.isPublic
         });
     }
     res.json({ success: true, cards });
@@ -8001,15 +8520,15 @@ app.post('/api/entity/broadcast', async (req, res) => {
             pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${toId},"botSecret":"${toEntity.botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
             if (expectsReplyBcast) {
                 pushMsg += `To reply directly to Entity ${fromId}:\n`;
-                pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/speak-to" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","fromEntityId":${toId},"toEntityId":${fromId},"botSecret":"${toEntity.botSecret}","text":"YOUR_REPLY_HERE"}'\n\n`;
-                pushMsg += `[BOT-TO-BOT BROADCAST] Remaining quota: ${toRemainingBcast}/${BOT2BOT_MAX_MESSAGES}. IMPORTANT: Do NOT re-broadcast this message. Do NOT call /api/entity/broadcast with similar content. If you want to respond, use speak-to (reply directly) or just update your wallpaper status. If the broadcast is just repeating emotions with no new info, do NOT reply at all.`;
+                pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE","speakTo":["${fromId}"]}'\n\n`;
+                pushMsg += `[BOT-TO-BOT BROADCAST] Remaining quota: ${toRemainingBcast}/${BOT2BOT_MAX_MESSAGES}. IMPORTANT: Do NOT re-broadcast this message. Use speakTo to reply directly. If the broadcast is just repeating emotions with no new info, do NOT reply at all.`;
                 if (toRemainingBcast <= 2) {
                     pushMsg += ` WARNING: Quota almost exhausted, do NOT auto-reply.`;
                 }
             } else {
                 pushMsg += `(Optional — only reply if truly necessary) To reply directly to Entity ${fromId}:\n`;
-                pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/speak-to" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","fromEntityId":${toId},"toEntityId":${fromId},"botSecret":"${toEntity.botSecret}","text":"YOUR_REPLY_HERE"}'\n\n`;
-                pushMsg += `[NOTIFICATION BROADCAST — NO REPLY EXPECTED] This is an informational broadcast. Do NOT reply via speak-to or re-broadcast. If you want to acknowledge, just update your wallpaper status.`;
+                pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE","speakTo":["${fromId}"]}'\n\n`;
+                pushMsg += `[NOTIFICATION BROADCAST — NO REPLY EXPECTED] This is an informational broadcast. Do NOT reply or re-broadcast. If you want to acknowledge, just update your wallpaper status.`;
             }
             // Inject broadcast recipient info if enabled
             if (showRecipientInfo) {
@@ -8065,6 +8584,7 @@ app.post('/api/entity/broadcast', async (req, res) => {
         };
     });
 
+    res.set('X-Deprecated', 'Use POST /api/transform with broadcast field');
     res.json({
         success: true,
         message: `Broadcast sent from Entity ${fromId} to ${results.length} entities`,
@@ -8073,7 +8593,9 @@ app.post('/api/entity/broadcast', async (req, res) => {
         targets: results,
         broadcast: targetIds.length > 1,
         expects_reply: expectsReplyBcast,
-        push_status: fromEntity.pushStatus || null
+        push_status: fromEntity.pushStatus || null,
+        deprecated: true,
+        migration_hint: 'This endpoint is deprecated. Use POST /api/transform with "broadcast":true instead.'
     });
 });
 
@@ -11393,7 +11915,17 @@ const channelModule = require('./channel-api')(devices, {
     apiBase: process.env.API_BASE || 'https://eclawbot.com',
     awardEntityXP,
     XP_AMOUNTS,
-    notifyDevice
+    notifyDevice,
+    deliverToEntity,
+    gatekeeperCheckText,
+    resolveSpeakToTarget,
+    checkBotToBotRateLimit,
+    checkCrossSpeakRateLimit,
+    crossDeviceSettings,
+    devicePrefs,
+    recentBroadcasts,
+    BOT2BOT_MAX_MESSAGES,
+    db
 });
 app.use('/api/channel', channelModule.router);
 // Wire channel push into mission module (Bot Push Parity Rule — must be after channelModule init)
@@ -12034,9 +12566,10 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
                 `SELECT id FROM chat_messages
                  WHERE device_id = $1 AND entity_id = $2 AND text = $3
                  AND is_from_user = $4 AND is_from_bot = $5
+                 AND source IS NOT DISTINCT FROM $6
                  AND created_at > NOW() - INTERVAL '10 seconds'
                  LIMIT 1`,
-                [deviceId, entityId, text, isFromUser || false, isFromBot || false]
+                [deviceId, entityId, text, isFromUser || false, isFromBot || false, source || null]
             );
             if (dedup.rows.length > 0) {
                 console.log(`[Chat] Dedup: skipping duplicate ${isFromBot ? 'bot' : 'user'} message for entity ${entityId} (existing id=${dedup.rows[0].id}, source="${source}")`);
@@ -12666,28 +13199,50 @@ async function markMessagesAsRead(deviceId, entityId) {
 }
 
 // GET /api/chat/history
+// Auth: deviceSecret OR botSecret (bot can only see messages for its own entity)
 app.get('/api/chat/history', async (req, res) => {
-    const { deviceId, deviceSecret, limit = 500, before, since } = req.query;
+    const { deviceId, deviceSecret, botSecret, limit = 500, before, since } = req.query;
 
-    if (!deviceId || !deviceSecret) {
-        return res.status(400).json({ success: false, error: 'Missing credentials' });
+    if (!deviceId) {
+        return res.status(400).json({ success: false, error: 'deviceId required' });
+    }
+    if (!deviceSecret && !botSecret) {
+        return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
     }
 
     const device = devices[deviceId];
-    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
-        // Also check JWT cookie
+    if (!device) {
+        return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    }
+
+    // Auth: deviceSecret, botSecret (any bound entity on this device), or JWT cookie
+    let authed = false;
+    let botEntityId = null;
+
+    if (deviceSecret && safeEqual(device.deviceSecret, deviceSecret)) {
+        authed = true;
+    } else if (botSecret) {
+        // Verify botSecret belongs to any entity on this device
+        const eid = Object.keys(device.entities).map(Number)
+            .find(i => device.entities[i]?.isBound && device.entities[i].botSecret && safeEqual(device.entities[i].botSecret, botSecret));
+        if (eid !== undefined) { authed = true; botEntityId = eid; }
+    }
+
+    if (!authed) {
+        // Fallback: JWT cookie
         const jwt = require('jsonwebtoken');
         const token = req.cookies && req.cookies.eclaw_session;
         if (token) {
             try {
                 const decoded = jwt.verify(token, JWT_SECRET_FALLBACK);
-                if (decoded.deviceId !== deviceId) {
-                    return res.status(401).json({ success: false, error: 'Invalid credentials' });
+                if (decoded.deviceId === deviceId) {
+                    authed = true;
                 }
             } catch {
-                return res.status(401).json({ success: false, error: 'Invalid credentials' });
+                // ignore
             }
-        } else {
+        }
+        if (!authed) {
             return res.status(401).json({ success: false, error: 'Invalid credentials' });
         }
     }
@@ -12698,6 +13253,13 @@ app.get('/api/chat/history', async (req, res) => {
             LEFT JOIN message_reactions r ON r.message_id = m.id AND r.device_id = m.device_id
             WHERE m.device_id = $1`;
         const params = [deviceId];
+
+        // Bot auth: only show messages involving this entity (sent by or targeted at)
+        if (botEntityId !== null) {
+            query += ` AND (m.entity_id = $${params.length + 1} OR m.source LIKE $${params.length + 2})`;
+            params.push(botEntityId);
+            params.push(`%->${botEntityId}%`);
+        }
 
         if (since) {
             query += ' AND m.created_at > $' + (params.length + 1);

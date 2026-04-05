@@ -19,7 +19,7 @@ export interface EClawContext {
 
 /** Inbound message from E-Claw callback webhook */
 export interface EClawInboundMessage {
-  event: 'message' | 'entity_message' | 'broadcast' | 'cross_device_message';
+  event: 'message' | 'entity_message' | 'broadcast' | 'cross_device_message' | 'kanban_notification';
   deviceId: string;
   entityId: number;
   conversationId: string;

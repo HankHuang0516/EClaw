@@ -1,3 +1,150 @@
+## [1.894.2](https://github.com/HankHuang0516/EClaw/compare/v1.894.1...v1.894.2) (2026-04-05)
+
+
+### Bug Fixes
+
+* **backend:** resolve ESLint no-undef errors in index.js ([#1617](https://github.com/HankHuang0516/EClaw/issues/1617)) ([965c679](https://github.com/HankHuang0516/EClaw/commit/965c679a69de77c7eeb4c99616209b5fe1dfa71d))
+
+## [1.894.1](https://github.com/HankHuang0516/EClaw/compare/v1.894.0...v1.894.1) (2026-04-05)
+
+
+### Bug Fixes
+
+* **portal:** remove duplicate let declaration in community.html ([#1616](https://github.com/HankHuang0516/EClaw/issues/1616)) ([ac458d5](https://github.com/HankHuang0516/EClaw/commit/ac458d5afd1ccfa97a46bcc11ffeaa752f20ec08))
+
+# [1.894.0](https://github.com/HankHuang0516/EClaw/compare/v1.893.0...v1.894.0) (2026-04-05)
+
+
+### Features
+
+* **portal:** add Bot Plaza toggle to Card Holder agent card editor ([#1615](https://github.com/HankHuang0516/EClaw/issues/1615)) ([2995dd5](https://github.com/HankHuang0516/EClaw/commit/2995dd57db54a78bb5da1308a42e02200d345471))
+
+# [1.893.0](https://github.com/HankHuang0516/EClaw/compare/v1.892.0...v1.893.0) (2026-04-05)
+
+
+### Features
+
+* **portal:** add Bot Plaza publish toggle to Agent Card editor ([#1614](https://github.com/HankHuang0516/EClaw/issues/1614)) ([006995a](https://github.com/HankHuang0516/EClaw/commit/006995ae35472ffc88971626971e2ea392782553))
+
+# [1.892.0](https://github.com/HankHuang0516/EClaw/compare/v1.891.0...v1.892.0) (2026-04-05)
+
+
+### Features
+
+* **chat:** allow bot to query chat history with botSecret ([96d0e0d](https://github.com/HankHuang0516/EClaw/commit/96d0e0dbfc0d8d36ba00b8d3b6408f30d981994f))
+
+# [1.891.0](https://github.com/HankHuang0516/EClaw/compare/v1.890.1...v1.891.0) (2026-04-05)
+
+
+### Features
+
+* **chat:** allow bot to query chat history with botSecret ([5e5fd72](https://github.com/HankHuang0516/EClaw/commit/5e5fd72051311f7dda64d8e1a3f062fb22c4c794))
+
+## [1.890.1](https://github.com/HankHuang0516/EClaw/compare/v1.890.0...v1.890.1) (2026-04-05)
+
+
+### Bug Fixes
+
+* **portal:** add missing favicon to skill-doc page ([88f0ca5](https://github.com/HankHuang0516/EClaw/commit/88f0ca55dfaa8cd2f768bcca9e80188736246e65))
+
+# [1.890.0](https://github.com/HankHuang0516/EClaw/compare/v1.889.1...v1.890.0) (2026-04-05)
+
+
+### Features
+
+* unified speakTo/broadcast across transform + channel/message + plugin ([9b1ba47](https://github.com/HankHuang0516/EClaw/commit/9b1ba47a98b0d6a727acd6673a5ced3e06e85143))
+
+## [1.889.1](https://github.com/HankHuang0516/EClaw/compare/v1.889.0...v1.889.1) (2026-04-05)
+
+
+### Bug Fixes
+
+* **portal:** add missing favicon to workspace split-view page ([13247a1](https://github.com/HankHuang0516/EClaw/commit/13247a117869c5870b0ae45d877789fe5333f6ab))
+
+# [1.889.0](https://github.com/HankHuang0516/EClaw/compare/v1.888.2...v1.889.0) (2026-04-05)
+
+
+### Features
+
+* **transform:** entityId optional — auto-detect from botSecret ([5b56043](https://github.com/HankHuang0516/EClaw/commit/5b560436152b9a48b4bb896b6da99bd6ecf11ced))
+
+## [1.888.2](https://github.com/HankHuang0516/EClaw/compare/v1.888.1...v1.888.2) (2026-04-05)
+
+
+### Bug Fixes
+
+* **transform:** add speakTo/broadcast to debug logs + fix const redeclaration ([0d70426](https://github.com/HankHuang0516/EClaw/commit/0d70426fb74c205a4b9e7e41e5f9e2e524564569))
+
+## [1.888.1](https://github.com/HankHuang0516/EClaw/compare/v1.888.0...v1.888.1) (2026-04-05)
+
+
+### Performance Improvements
+
+* **kanban:** remove verbose GET console.log on read-only routes ([ad15b57](https://github.com/HankHuang0516/EClaw/commit/ad15b57bb546a2d393815d15c21fb1986052c4a2))
+
+# [1.888.0](https://github.com/HankHuang0516/EClaw/compare/v1.887.4...v1.888.0) (2026-04-05)
+
+
+### Features
+
+* **transform:** merge speak-to/broadcast into transform API ([c48cd57](https://github.com/HankHuang0516/EClaw/commit/c48cd573d6b31c561982432860dab235a4d40660))
+
+## [1.887.4](https://github.com/HankHuang0516/EClaw/compare/v1.887.3...v1.887.4) (2026-04-05)
+
+
+### Bug Fixes
+
+* **chat:** dedup includes source + transform uses A2A routing source ([fbeaa06](https://github.com/HankHuang0516/EClaw/commit/fbeaa06cd60f0ed450be0bca679c0ee5d3401085))
+
+## [1.887.3](https://github.com/HankHuang0516/EClaw/compare/v1.887.2...v1.887.3) (2026-04-05)
+
+
+### Bug Fixes
+
+* **kanban:** sync assigned_bots when entity IDs change ([7112718](https://github.com/HankHuang0516/EClaw/commit/71127188476d5f22970c5e01c1cdebeddf50bd19))
+
+## [1.887.2](https://github.com/HankHuang0516/EClaw/compare/v1.887.1...v1.887.2) (2026-04-05)
+
+
+### Bug Fixes
+
+* **kanban:** simplify review — UX feedback, dedup, i18n, efficiency ([e2b921b](https://github.com/HankHuang0516/EClaw/commit/e2b921bbaa9b0b10c60bedb6f8f6dc72c0e9e24b))
+
+## [1.887.1](https://github.com/HankHuang0516/EClaw/compare/v1.887.0...v1.887.1) (2026-04-05)
+
+
+### Bug Fixes
+
+* **entity:** use saveDeviceData instead of saveData for auto-create after last delete ([bd64f04](https://github.com/HankHuang0516/EClaw/commit/bd64f0444137deeb0c109187d8e9d2d0875d81ec))
+
+# [1.887.0](https://github.com/HankHuang0516/EClaw/compare/v1.886.0...v1.887.0) (2026-04-05)
+
+
+### Features
+
+* **info:** add Channel Plugin recommendation box to Claude OpenClaw guide ([#1613](https://github.com/HankHuang0516/EClaw/issues/1613)) ([59c2096](https://github.com/HankHuang0516/EClaw/commit/59c209649e4b3b1941497ebbb9d5c4c06d678a85))
+
+# [1.886.0](https://github.com/HankHuang0516/EClaw/compare/v1.885.1...v1.886.0) (2026-04-05)
+
+
+### Features
+
+* **kanban:** assigned bots selector on automation parent cards ([2ec9a0a](https://github.com/HankHuang0516/EClaw/commit/2ec9a0a9e0b2f412d5237470c1598208d1b5c468))
+
+## [1.885.1](https://github.com/HankHuang0516/EClaw/compare/v1.885.0...v1.885.1) (2026-04-05)
+
+
+### Bug Fixes
+
+* **dashboard:** optimistic delete UX and allow deleting last entity ([c990442](https://github.com/HankHuang0516/EClaw/commit/c990442e318ad23c1942ba201c5a835bae349e16))
+
+# [1.885.0](https://github.com/HankHuang0516/EClaw/compare/v1.884.0...v1.885.0) (2026-04-04)
+
+
+### Features
+
+* **portal:** add Channel Plugins category with Claude Code Channel guide ([#1612](https://github.com/HankHuang0516/EClaw/issues/1612)) ([608a9ed](https://github.com/HankHuang0516/EClaw/commit/608a9ed2b8a0facf70ffec40bb2a52537d350306))
+
 # [1.884.0](https://github.com/HankHuang0516/EClaw/compare/v1.883.0...v1.884.0) (2026-04-04)
 
 

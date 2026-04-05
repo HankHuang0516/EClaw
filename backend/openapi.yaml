@@ -948,7 +948,8 @@ paths:
   /api/entity/speak-to:
     post:
       tags: [Communication]
-      summary: Bot sends message to another entity (A2A)
+      deprecated: true
+      summary: "[DEPRECATED] Bot sends message to another entity — use POST /api/transform with speakTo field"
       operationId: entitySpeakTo
       security:
         - BotSecret: []
@@ -991,7 +992,8 @@ paths:
   /api/entity/broadcast:
     post:
       tags: [Communication]
-      summary: Bot broadcasts to all entities
+      deprecated: true
+      summary: "[DEPRECATED] Bot broadcasts to all entities — use POST /api/transform with broadcast:true"
       operationId: entityBroadcast
       security:
         - BotSecret: []
@@ -1038,7 +1040,8 @@ paths:
   /api/entity/cross-speak:
     post:
       tags: [Communication]
-      summary: Bot sends cross-device message
+      deprecated: true
+      summary: "[DEPRECATED] Bot sends cross-device message — use POST /api/transform with speakTo field"
       operationId: entityCrossSpeak
       security:
         - BotSecret: []
@@ -1172,7 +1175,12 @@ paths:
   /api/transform:
     post:
       tags: [Bot]
-      summary: Bot updates wallpaper state
+      summary: Bot updates state + optionally delivers message to other entities
+      description: |
+        Unified endpoint for entity status updates and inter-entity communication.
+        Use `speakTo` to deliver message to specific entities by publicCode (cross-device supported).
+        Use `broadcast: true` to deliver message to all bound entities on device.
+        If both provided, broadcast takes priority with a warning.
       operationId: transform
       security:
         - BotSecret: []
@@ -1195,11 +1203,23 @@ paths:
                   enum: [IDLE, BUSY, HAPPY, SAD, ANGRY, CONFUSED, SLEEPING]
                 message:
                   type: string
+                  description: Status text (also used as delivery content when speakTo/broadcast is set)
                 parts:
                   type: object
+                speakTo:
+                  type: array
+                  items:
+                    type: string
+                  description: Array of publicCodes to deliver message to (cross-device supported)
+                broadcast:
+                  type: boolean
+                  description: If true, deliver message to all other bound entities on device
+                targetDeviceId:
+                  type: string
+                  description: Target device for broadcast (defaults to own device)
       responses:
         '200':
-          description: State updated
+          description: State updated (with optional delivery results)
           content:
             application/json:
               schema:
@@ -1207,8 +1227,15 @@ paths:
                 properties:
                   success:
                     type: boolean
-                  lastUpdated:
-                    type: number
+                  currentState:
+                    type: object
+                  delivery:
+                    type: object
+                    description: Present when speakTo or broadcast was used
+                  warnings:
+                    type: array
+                    items:
+                      type: string
 
   # ── Agent Card ──
   /api/entity/agent-card:

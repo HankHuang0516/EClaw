@@ -700,7 +700,9 @@ async function loadAllDevices() {
                 channelAccountId: row.channel_account_id ? parseInt(row.channel_account_id) : null,
                 agentCard: row.agent_card ? (typeof row.agent_card === 'string' ? JSON.parse(row.agent_card) : row.agent_card) : null,
                 encryptionStatus: row.encryption_status || null,
-                identity: row.identity ? (typeof row.identity === 'string' ? JSON.parse(row.identity) : row.identity) : null
+                identity: row.identity ? (typeof row.identity === 'string' ? JSON.parse(row.identity) : row.identity) : null,
+                isPublic: !!row.is_public,
+                publishedAt: row.published_at ? new Date(row.published_at).getTime() : null
             };
         }
 

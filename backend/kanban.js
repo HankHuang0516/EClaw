@@ -424,7 +424,6 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     // ============================================
     router.get('/cards', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const _p = { ...req.query, ...req.body }; console.log('[Kanban] GET /cards called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId } = { ...req.query, ...req.body };
         const { status: filterStatus, assignedBot, priority: filterPriority, automation } = req.query;
 
@@ -544,7 +543,6 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     router.get('/cards/summary', async (req, res) => {
         if (!authenticate(req, res)) return;
         const { deviceId } = { ...req.query, ...req.body };
-        console.log('[Kanban] GET /cards/summary called', { deviceId });
 
         try {
             // Status counts (non-archived)
@@ -632,7 +630,6 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     // ============================================
     router.get('/cards/archived', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const _p = { ...req.query, ...req.body }; console.log('[Kanban] GET /cards/archived called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId } = { ...req.query, ...req.body };
         const page = Math.max(1, parseInt(req.query.page) || 1);
         const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
@@ -678,7 +675,6 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     // ============================================
     router.get('/card/:id', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const _p = { ...req.query, ...req.body }; console.log('[Kanban] GET /card/:id called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId } = { ...req.query, ...req.body };
         const cardId = req.params.id;
 
@@ -955,7 +951,6 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     // ============================================
     router.get('/card/:id/comments', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const _p = { ...req.query, ...req.body }; console.log('[Kanban] GET /card/:id/comments called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId } = { ...req.query, ...req.body };
         const cardId = req.params.id;
         const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
@@ -1043,7 +1038,6 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     // ============================================
     router.get('/card/:id/notes', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const _p = { ...req.query, ...req.body }; console.log('[Kanban] GET /card/:id/notes called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId } = { ...req.query, ...req.body };
         const cardId = req.params.id;
 
@@ -1129,7 +1123,6 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     // ============================================
     router.get('/card/:id/files', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const _p = { ...req.query, ...req.body }; console.log('[Kanban] GET /card/:id/files called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
         const { deviceId } = { ...req.query, ...req.body };
         const cardId = req.params.id;
 
@@ -1377,7 +1370,6 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         if (!authenticate(req, res)) return;
         const { deviceId } = { ...req.query, ...req.body };
         const parentId = req.params.id;
-        console.log('[Kanban] GET /card/:id/children called', { deviceId, parentId });
 
         try {
             const parentCheck = await pool.query(
