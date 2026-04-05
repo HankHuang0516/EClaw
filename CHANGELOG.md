@@ -1,3 +1,10 @@
+## [1.889.1](https://github.com/HankHuang0516/EClaw/compare/v1.889.0...v1.889.1) (2026-04-05)
+
+
+### Bug Fixes
+
+* **portal:** add missing favicon to workspace split-view page ([13247a1](https://github.com/HankHuang0516/EClaw/commit/13247a117869c5870b0ae45d877789fe5333f6ab))
+
 # [1.889.0](https://github.com/HankHuang0516/EClaw/compare/v1.888.2...v1.889.0) (2026-04-05)
 
 
