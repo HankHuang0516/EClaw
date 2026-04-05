@@ -1,3 +1,10 @@
+# [1.889.0](https://github.com/HankHuang0516/EClaw/compare/v1.888.2...v1.889.0) (2026-04-05)
+
+
+### Features
+
+* **transform:** entityId optional — auto-detect from botSecret ([5b56043](https://github.com/HankHuang0516/EClaw/commit/5b560436152b9a48b4bb896b6da99bd6ecf11ced))
+
 ## [1.888.2](https://github.com/HankHuang0516/EClaw/compare/v1.888.1...v1.888.2) (2026-04-05)
 
 
