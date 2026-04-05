@@ -148,7 +148,7 @@ export function createWebhookHandler(
                     : rawType === 'audio' ? 'voice'
                     : rawType === 'video' ? 'video'
                     : 'file';
-                  await client.sendMessage('', 'IDLE', mediaType, payload.mediaUrl);
+                  await client.sendMessage('', 'IDLE', { mediaType, mediaUrl: payload.mediaUrl });
                 }
               }
             },

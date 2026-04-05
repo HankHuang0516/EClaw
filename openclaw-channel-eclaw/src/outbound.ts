@@ -73,8 +73,7 @@ export async function sendMedia(ctx: any): Promise<any> {
     const result = await client.sendMessage(
       ctx.text || `[${mediaType}]`,
       'IDLE',
-      mediaType,
-      ctx.mediaUrl
+      { mediaType, mediaUrl: ctx.mediaUrl }
     );
 
     return {
