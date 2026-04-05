@@ -1,3 +1,10 @@
+## [1.885.1](https://github.com/HankHuang0516/EClaw/compare/v1.885.0...v1.885.1) (2026-04-05)
+
+
+### Bug Fixes
+
+* **dashboard:** optimistic delete UX and allow deleting last entity ([c990442](https://github.com/HankHuang0516/EClaw/commit/c990442e318ad23c1942ba201c5a835bae349e16))
+
 # [1.885.0](https://github.com/HankHuang0516/EClaw/compare/v1.884.0...v1.885.0) (2026-04-04)
 
 
