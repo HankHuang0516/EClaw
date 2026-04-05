@@ -1,3 +1,10 @@
+## [1.894.2](https://github.com/HankHuang0516/EClaw/compare/v1.894.1...v1.894.2) (2026-04-05)
+
+
+### Bug Fixes
+
+* **backend:** resolve ESLint no-undef errors in index.js ([#1617](https://github.com/HankHuang0516/EClaw/issues/1617)) ([965c679](https://github.com/HankHuang0516/EClaw/commit/965c679a69de77c7eeb4c99616209b5fe1dfa71d))
+
 ## [1.894.1](https://github.com/HankHuang0516/EClaw/compare/v1.894.0...v1.894.1) (2026-04-05)
 
 
