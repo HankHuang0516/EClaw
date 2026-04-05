@@ -3922,6 +3922,7 @@ app.get('/api/entities', (req, res) => {
                     publicCode: entity.publicCode || null,
                     bindingType: entity.bindingType || null,
                     encryptionStatus: entity.encryptionStatus || null,
+                    isPublic: !!entity.isPublic,
                     messageQueue: (entity.messageQueue || []).map(m => ({
                         text: m.text,
                         from: m.from,
@@ -7212,7 +7213,7 @@ app.get('/api/entity/agent-card', (req, res) => {
 
     const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
     if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
-    res.json({ success: true, agentCard: auth.entity.agentCard || null });
+    res.json({ success: true, agentCard: auth.entity.agentCard || null, isPublic: !!auth.entity.isPublic });
 });
 
 /**
@@ -7309,6 +7310,9 @@ async function handleVisibility(req, res) {
 
     const ok = await db.setEntityPublic(deviceId, eId, isPublic);
     if (!ok) return res.status(500).json({ success: false, error: 'Database error' });
+
+    entity.isPublic = !!isPublic;
+    entity.publishedAt = isPublic ? (entity.publishedAt || Date.now()) : null;
 
     serverLog('info', 'bot_plaza', `Entity ${eId} visibility: ${isPublic ? 'PUBLIC' : 'PRIVATE'}`, { deviceId, entityId: eId });
 
