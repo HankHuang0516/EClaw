@@ -1,3 +1,10 @@
+# [1.893.0](https://github.com/HankHuang0516/EClaw/compare/v1.892.0...v1.893.0) (2026-04-05)
+
+
+### Features
+
+* **portal:** add Bot Plaza publish toggle to Agent Card editor ([#1614](https://github.com/HankHuang0516/EClaw/issues/1614)) ([006995a](https://github.com/HankHuang0516/EClaw/commit/006995ae35472ffc88971626971e2ea392782553))
+
 # [1.892.0](https://github.com/HankHuang0516/EClaw/compare/v1.891.0...v1.892.0) (2026-04-05)
 
 
