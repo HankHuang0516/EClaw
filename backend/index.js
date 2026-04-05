@@ -4673,6 +4673,20 @@ async function compactEntitySlots(device, deviceId) {
                     [deviceId, affectedOldSlots]
                 );
 
+                // 3d2: Migrate kanban_cards assigned_bots JSONB array
+                for (const s of movedSlots) {
+                    await client.query(
+                        `UPDATE kanban_cards
+                         SET assigned_bots = (
+                             SELECT jsonb_agg(CASE WHEN elem::int = $1 THEN to_jsonb($2::int) ELSE elem END)
+                             FROM jsonb_array_elements(assigned_bots) AS elem
+                         ), updated_at = NOW()
+                         WHERE device_id = $3 AND archived = false AND assigned_bots::jsonb @> $4::jsonb`,
+                        [s.oldSlot, s.newSlot, deviceId, JSON.stringify([s.oldSlot])]
+                    );
+                }
+                console.log(`[Compact] Migrated kanban assigned_bots for ${movedSlots.length} slot changes`);
+
                 // 3e: Update personal bot assignments
                 for (const info of botsToNotify) {
                     if (info.binding) {
@@ -4832,6 +4846,29 @@ app.delete('/api/device/entity/:entityId/permanent', async (req, res) => {
     // Delete from DB
     if (usePostgreSQL) {
         await db.deleteEntity(deviceId, eId);
+    }
+
+    // Remove deleted entity from kanban card assignments
+    try {
+        await pool.query(
+            `UPDATE kanban_cards
+             SET assigned_bots = (
+                 SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb)
+                 FROM jsonb_array_elements(assigned_bots) AS elem
+                 WHERE elem::int != $1
+             ), updated_at = NOW()
+             WHERE device_id = $2 AND archived = false AND assigned_bots::jsonb @> $3::jsonb`,
+            [eId, deviceId, JSON.stringify([eId])]
+        );
+        // Clear reviewer if it was this entity
+        await pool.query(
+            `UPDATE kanban_cards SET reviewer_entity_id = NULL, updated_at = NOW()
+             WHERE device_id = $1 AND reviewer_entity_id = $2 AND archived = false`,
+            [deviceId, eId]
+        );
+        console.log(`[DynamicEntity] Cleaned kanban references for deleted entity #${eId}`);
+    } catch (kanbanErr) {
+        console.error(`[DynamicEntity] Kanban cleanup failed for entity #${eId}:`, kanbanErr.message);
     }
 
     console.log(`[DynamicEntity] Permanent delete complete: deviceId=${deviceId}, entityId=${eId}, totalSlotsAfter=${entityCount(device)}`);
@@ -5236,6 +5273,26 @@ app.post('/api/device/reorder-entities', async (req, res) => {
                  WHERE device_id = $1 AND entity_id = ANY($2) AND status IN ('pending', 'active')`,
                 [deviceId, affectedOldSlots]
             );
+
+            // 3c2: Migrate kanban_cards assigned_bots + reviewer_entity_id
+            for (const s of movedSlots) {
+                await client.query(
+                    `UPDATE kanban_cards
+                     SET assigned_bots = (
+                         SELECT jsonb_agg(CASE WHEN elem::int = $1 THEN to_jsonb($2::int) ELSE elem END)
+                         FROM jsonb_array_elements(assigned_bots) AS elem
+                     ), updated_at = NOW()
+                     WHERE device_id = $3 AND archived = false AND assigned_bots::jsonb @> $4::jsonb`,
+                    [s.oldSlot, s.newSlot, deviceId, JSON.stringify([s.oldSlot])]
+                );
+                // Also update reviewer_entity_id
+                await client.query(
+                    `UPDATE kanban_cards SET reviewer_entity_id = $1, updated_at = NOW()
+                     WHERE device_id = $2 AND reviewer_entity_id = $3 AND archived = false`,
+                    [s.newSlot, deviceId, s.oldSlot]
+                );
+            }
+            console.log(`[Reorder] Migrated kanban assigned_bots for ${movedSlots.length} slot changes`);
 
             // 3d: Update personal bot assignments
             for (const info of botsToNotify) {
