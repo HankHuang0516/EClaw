@@ -4850,7 +4850,7 @@ app.delete('/api/device/entity/:entityId/permanent', async (req, res) => {
         autoCreatedEntityId = newId;
         console.log(`[DynamicEntity] Auto-created default entity #${newId} after last entity deleted: deviceId=${deviceId}`);
         serverLog('info', 'entity_add', `Entity #${newId} auto-created (last entity deleted)`, { deviceId, entityId: newId });
-        await saveData();
+        if (usePostgreSQL) await db.saveDeviceData(deviceId, device);
         io.to(deviceId).emit('entityAdded', { entityId: newId, totalSlots: 1 });
     } else {
         // Auto-compact: renumber remaining entities to sequential 0, 1, 2, ...
