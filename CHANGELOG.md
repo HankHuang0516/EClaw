@@ -1,3 +1,10 @@
+# [1.887.0](https://github.com/HankHuang0516/EClaw/compare/v1.886.0...v1.887.0) (2026-04-05)
+
+
+### Features
+
+* **info:** add Channel Plugin recommendation box to Claude OpenClaw guide ([#1613](https://github.com/HankHuang0516/EClaw/issues/1613)) ([59c2096](https://github.com/HankHuang0516/EClaw/commit/59c209649e4b3b1941497ebbb9d5c4c06d678a85))
+
 # [1.886.0](https://github.com/HankHuang0516/EClaw/compare/v1.885.1...v1.886.0) (2026-04-05)
 
 
