@@ -1,3 +1,10 @@
+# [1.891.0](https://github.com/HankHuang0516/EClaw/compare/v1.890.1...v1.891.0) (2026-04-05)
+
+
+### Features
+
+* **chat:** allow bot to query chat history with botSecret ([5e5fd72](https://github.com/HankHuang0516/EClaw/commit/5e5fd72051311f7dda64d8e1a3f062fb22c4c794))
+
 ## [1.890.1](https://github.com/HankHuang0516/EClaw/compare/v1.890.0...v1.890.1) (2026-04-05)
 
 
