@@ -1,3 +1,10 @@
+# [1.894.0](https://github.com/HankHuang0516/EClaw/compare/v1.893.0...v1.894.0) (2026-04-05)
+
+
+### Features
+
+* **portal:** add Bot Plaza toggle to Card Holder agent card editor ([#1615](https://github.com/HankHuang0516/EClaw/issues/1615)) ([2995dd5](https://github.com/HankHuang0516/EClaw/commit/2995dd57db54a78bb5da1308a42e02200d345471))
+
 # [1.893.0](https://github.com/HankHuang0516/EClaw/compare/v1.892.0...v1.893.0) (2026-04-05)
 
 
