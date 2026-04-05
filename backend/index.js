@@ -5292,7 +5292,7 @@ app.delete('/api/device/entity/:entityId/permanent', async (req, res) => {
 
     // Remove deleted entity from kanban card assignments
     try {
-        await pool.query(
+        await chatPool.query(
             `UPDATE kanban_cards
              SET assigned_bots = (
                  SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb)
@@ -5303,7 +5303,7 @@ app.delete('/api/device/entity/:entityId/permanent', async (req, res) => {
             [eId, deviceId, JSON.stringify([eId])]
         );
         // Clear reviewer if it was this entity
-        await pool.query(
+        await chatPool.query(
             `UPDATE kanban_cards SET reviewer_entity_id = NULL, updated_at = NOW()
              WHERE device_id = $1 AND reviewer_entity_id = $2 AND archived = false`,
             [deviceId, eId]
@@ -13217,6 +13217,7 @@ app.get('/api/chat/history', async (req, res) => {
 
     // Auth: deviceSecret, botSecret (any bound entity on this device), or JWT cookie
     let authed = false;
+    let botEntityId = null;
 
     if (deviceSecret && safeEqual(device.deviceSecret, deviceSecret)) {
         authed = true;
@@ -13224,7 +13225,7 @@ app.get('/api/chat/history', async (req, res) => {
         // Verify botSecret belongs to any entity on this device
         const eid = Object.keys(device.entities).map(Number)
             .find(i => device.entities[i]?.isBound && device.entities[i].botSecret && safeEqual(device.entities[i].botSecret, botSecret));
-        if (eid !== undefined) authed = true;
+        if (eid !== undefined) { authed = true; botEntityId = eid; }
     }
 
     if (!authed) {
