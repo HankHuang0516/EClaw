@@ -316,3 +316,57 @@ describe('Transform speakTo without message', () => {
         expect(res.body.delivery).toBeUndefined();
     });
 });
+
+// ════════════════════════════════════════════════════════════════
+// 8. entityId auto-detection and correction
+// ════════════════════════════════════════════════════════════════
+describe('Transform entityId auto-detect', () => {
+    const deviceId = 'transform-autoid-test';
+    const deviceSecret = `secret-${deviceId}`;
+    let botSecret0;
+
+    beforeAll(async () => {
+        botSecret0 = await bindEntity(deviceId, deviceSecret, 0);
+        await bindEntity(deviceId, deviceSecret, 1);
+    });
+
+    it('works without entityId (auto-detect from botSecret)', async () => {
+        const res = await post('/api/transform')
+            .send({
+                deviceId,
+                botSecret: botSecret0,
+                message: 'Auto-detect test',
+                state: 'IDLE'
+            });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.entityId).toBe(0);
+    });
+
+    it('auto-corrects wrong entityId with warning', async () => {
+        const res = await post('/api/transform')
+            .send({
+                deviceId,
+                entityId: 1,  // wrong — botSecret0 belongs to entity 0
+                botSecret: botSecret0,
+                message: 'Wrong ID test',
+                state: 'IDLE'
+            });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.entityId).toBe(0); // corrected
+        expect(res.body.warnings).toBeDefined();
+        expect(res.body.warnings.some(w => w.includes('Auto-corrected'))).toBe(true);
+    });
+
+    it('rejects invalid botSecret', async () => {
+        const res = await post('/api/transform')
+            .send({
+                deviceId,
+                botSecret: 'totally-wrong-secret',
+                message: 'Bad secret',
+                state: 'IDLE'
+            });
+        expect(res.status).toBe(403);
+    });
+});

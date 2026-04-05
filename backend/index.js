@@ -4255,10 +4255,8 @@ app.post('/api/transform', async (req, res) => {
     if (!deviceId) {
         return res.status(400).json({ success: false, message: "deviceId required" });
     }
-
-    const eId = parseInt(entityId) || 0;
-    if (eId < 0) {
-        return res.status(400).json({ success: false, message: "Invalid entityId" });
+    if (!botSecret) {
+        return res.status(400).json({ success: false, message: "botSecret required" });
     }
 
     const device = devices[deviceId];
@@ -4266,28 +4264,36 @@ app.post('/api/transform', async (req, res) => {
         return res.status(404).json({ success: false, message: "Device not found" });
     }
 
+    // Resolve entityId: auto-detect from botSecret if not provided
+    let eId;
+    let entityIdCorrected = false;
+    if (entityId === undefined || entityId === null) {
+        // Auto-detect: find entity by botSecret
+        eId = Object.keys(device.entities).map(Number)
+            .find(i => device.entities[i]?.isBound && device.entities[i].botSecret && safeEqual(device.entities[i].botSecret, botSecret));
+        if (eId === undefined) {
+            return res.status(403).json({ success: false, message: "Invalid botSecret — no matching entity found" });
+        }
+    } else {
+        const requestedId = parseInt(entityId) || 0;
+        // Verify botSecret matches the requested entityId
+        const requestedEntity = device.entities[requestedId];
+        if (requestedEntity && requestedEntity.isBound && requestedEntity.botSecret && safeEqual(requestedEntity.botSecret, botSecret)) {
+            eId = requestedId;
+        } else {
+            // entityId doesn't match botSecret — find the correct one
+            const correctId = Object.keys(device.entities).map(Number)
+                .find(i => device.entities[i]?.isBound && device.entities[i].botSecret && safeEqual(device.entities[i].botSecret, botSecret));
+            if (correctId === undefined) {
+                return res.status(403).json({ success: false, message: "Invalid botSecret" });
+            }
+            eId = correctId;
+            entityIdCorrected = true;
+            console.warn(`[Transform] Device ${deviceId}: entityId=${requestedId} doesn't match botSecret, auto-corrected to ${correctId}`);
+        }
+    }
+
     const entity = device.entities[eId];
-
-    // Check if entity exists
-    if (!entity) {
-        console.warn(`[Transform] Device ${deviceId} Entity ${eId} not found (possible malformed request)`);
-        return res.status(404).json({ success: false, message: `Entity ${eId} not found` });
-    }
-
-    if (!entity.isBound) {
-        return res.status(400).json({
-            success: false,
-            message: `Device ${deviceId} Entity ${eId} is not bound yet`
-        });
-    }
-
-    // Verify botSecret
-    if (!botSecret || !safeEqual(botSecret, entity.botSecret)) {
-        return res.status(403).json({
-            success: false,
-            message: "Invalid or missing botSecret"
-        });
-    }
 
     // Validate and update name if provided
     if (name !== undefined) {
@@ -4466,7 +4472,9 @@ app.post('/api/transform', async (req, res) => {
     }
 
     // ── speakTo / broadcast delivery ──
-    const warnings = [];
+    const warnings = entityIdCorrected
+        ? [`entityId mismatch: you provided ${parseInt(entityId) || 0} but your botSecret belongs to entity ${eId}. Auto-corrected to ${eId}.`]
+        : [];
     let deliveryResults = null;
 
     if ((speakTo || broadcast) && finalMessage) {
