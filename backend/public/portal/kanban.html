@@ -266,6 +266,15 @@
         .kb-auto-action-btn.resume:hover { background:rgba(74,222,128,0.25); }
         .kb-auto-action-btn.delete { background:rgba(239,68,68,0.08); color:#ef4444; border-color:rgba(239,68,68,0.2); margin-left:auto; }
         .kb-auto-action-btn.delete:hover { background:rgba(239,68,68,0.2); }
+        .kb-auto-assign { display:flex; align-items:flex-start; gap:8px; margin-bottom:8px; font-size:12px; }
+        .kb-auto-assign > label { color:var(--text-secondary); white-space:nowrap; font-weight:600; padding-top:4px; }
+        .kb-auto-assign-chips { display:flex; flex-wrap:wrap; gap:4px; }
+        .kb-assign-chip { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:12px; border:1px solid var(--card-border); cursor:pointer; transition:all 0.15s; user-select:none; }
+        .kb-assign-chip:hover { border-color:var(--primary); }
+        .kb-assign-chip.active { background:rgba(108,99,255,0.12); border-color:rgba(108,99,255,0.4); }
+        .kb-assign-chip input { display:none; }
+        .kb-assign-avatar { width:16px; height:16px; border-radius:50%; font-size:10px; display:inline-flex; align-items:center; justify-content:center; }
+        .kb-assign-chip img.kb-assign-avatar { object-fit:cover; }
         .kb-auto-reviewer { display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:12px; }
         .kb-auto-reviewer label { color:var(--text-secondary); white-space:nowrap; font-weight:600; }
         .kb-auto-reviewer select { flex:1; padding:4px 8px; border-radius:6px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--text); font-size:12px; cursor:pointer; }
@@ -962,7 +971,24 @@
                             reviewerOpts +
                         `</select>` +
                     `</div>`;
+                // Assigned bots selector
+                const currentBots = card.assignedBots || [];
+                const assignHtml =
+                    `<div class="kb-auto-assign">` +
+                        `<label>👤 ${t('kb_auto_assigned','Assigned')}</label>` +
+                        `<div class="kb-auto-assign-chips">` +
+                        boundEntities.filter(e => e.isBound).map(e => {
+                            const checked = currentBots.includes(e.entityId) ? ' checked' : '';
+                            const label = e.name || e.character || `#${e.entityId}`;
+                            const avatar = isAvatarUrl(e.avatar) ? `<img src="${escapeHtml(e.avatar)}" class="kb-assign-avatar">` : `<span class="kb-assign-avatar">${e.avatar || '🦞'}</span>`;
+                            return `<label class="kb-assign-chip${checked ? ' active' : ''}" title="${escapeHtml(label)}">` +
+                                `<input type="checkbox" value="${e.entityId}"${checked} onchange="updateAutoAssign('${cardId}')">` +
+                                avatar + `<span>${escapeHtml(label)}</span></label>`;
+                        }).join('') +
+                        `</div>` +
+                    `</div>`;
                 moveBar.innerHTML =
+                    assignHtml +
                     reviewerHtml +
                     `<div class="kb-auto-actions">` +
                         `<button class="kb-auto-action-btn edit" onclick="editAutoSchedule('${cardId}')" title="${t('kb_auto_edit_tip','Edit schedule')}">✏️ ${t('kb_auto_edit','Edit')}</button>` +
@@ -978,6 +1004,31 @@
             // Load first tab
             switchDetailTab('comments', document.querySelector('.kb-modal-tab'));
             document.getElementById('detailModal').classList.add('show');
+        }
+
+        async function updateAutoAssign(cardId) {
+            const chips = document.querySelectorAll('.kb-auto-assign-chips input[type="checkbox"]');
+            const bots = Array.from(chips).filter(c => c.checked).map(c => parseInt(c.value));
+            if (bots.length === 0) {
+                showToast(t('kb_err_no_entity', 'At least one entity must be assigned'), true);
+                return;
+            }
+            try {
+                await apiCall('PUT', `/api/mission/card/${cardId}`, {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    assignedBots: bots,
+                });
+                const card = findCard(cardId);
+                if (card) card.assignedBots = bots;
+                await loadAutomations();
+                await loadCards();
+                // Refresh chip active state
+                chips.forEach(c => c.closest('.kb-assign-chip').classList.toggle('active', c.checked));
+                showToast(`Assigned → ${bots.map(b => '#' + b).join(', ')}`);
+            } catch (e) {
+                alert(e.message || 'Failed to update assignment');
+            }
         }
 
         async function setAutoReviewer(cardId, val) {
