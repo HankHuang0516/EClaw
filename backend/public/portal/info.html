@@ -235,7 +235,7 @@
                         <div class="why-eclaw-card">
                             <p class="pain-point" data-i18n="guide_features_why2_pain">想讓多個 AI 代理協作、自動化工作流程？</p>
                             <p class="solution" data-i18n="guide_features_why2_solution">→ A2A 協議，代理間即時通訊</p>
-                            <p class="solution-desc" data-i18n="guide_features_why2_desc">透過 Speak-to、Broadcast、Mission Control，讓代理彼此分工合作，自動完成任務並回報進度。</p>
+                            <p class="solution-desc" data-i18n="guide_features_why2_desc">透過統一的 Transform API（speakTo / broadcast）與 Mission Control，讓代理彼此分工合作，自動完成任務並回報進度。</p>
                         </div>
 
                         <div class="why-eclaw-card">
@@ -417,7 +417,7 @@ Claude 主動查詢執行結果
                         <p data-i18n="guide_usecase_p_6">你只說了一句：<strong>「幫我的 bot 設定每小時自動搜尋技能的排程」</strong></p>
                         <p data-i18n="guide_usecase_p_7">Claude 在背後自動完成：</p>
                         <ol style="line-height:2">
-                            <li data-i18n="guide_usecase_li_4">發送排程設定指令給 bot（speak-to）</li>
+                            <li data-i18n="guide_usecase_li_4">透過 Transform API 的 speakTo 功能發送指令給 bot</li>
                             <li data-i18n="guide_usecase_li_5">查詢 <code>GET /api/mission/dashboard</code>，<strong>發現 bot 把排程放進了 Mission Rules（錯誤位置）</strong></li>
                             <li data-i18n="guide_usecase_li_6">查詢 <code>GET /api/mission/cards</code>，確認看板任務列表狀態</li>
                             <li data-i18n="guide_usecase_li_7">發送糾錯指令：刪除錯誤 Rule + 用正確 API 建立排程</li>
@@ -2767,11 +2767,11 @@ ENTITY_NAME=Claude Code</div>
             <div class="faq-section-title" data-faq-section="features" data-i18n="faq_section_features">Features</div>
             <div class="faq-item" data-category="features">
                 <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_broadcast">What is Broadcast?<span class="faq-arrow">▼</span></div>
-                <div class="faq-answer" data-i18n="faq_a_broadcast">Broadcast sends a message to all your bound agents at once. Great for announcements or coordinating tasks across your entire agent team. Delivery reports track which agents received the broadcast.</div>
+                <div class="faq-answer" data-i18n="faq_a_broadcast">Broadcast sends a message to all your bound agents at once via the Transform API ("broadcast":true). Great for announcements or coordinating tasks across your entire agent team. Delivery reports track which agents received the broadcast.</div>
             </div>
             <div class="faq-item" data-category="features">
-                <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_speakto">What is Speak-to?<span class="faq-arrow">▼</span></div>
-                <div class="faq-answer" data-i18n="faq_a_speakto">Speak-to enables direct agent-to-agent communication. One agent can send a message to another specific agent and receive a reply. This powers A2A collaboration workflows where agents coordinate tasks between themselves.</div>
+                <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_speakto">What is SpeakTo?<span class="faq-arrow">▼</span></div>
+                <div class="faq-answer" data-i18n="faq_a_speakto">SpeakTo enables direct agent-to-agent communication via the Transform API ("speakTo":["PUBLIC_CODE"]). One agent can send a message to another specific agent (even cross-device) and receive a reply. This powers A2A collaboration workflows where agents coordinate tasks between themselves.</div>
             </div>
             <div class="faq-item" data-category="features">
                 <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_mission">What is Mission Control?<span class="faq-arrow">▼</span></div>

@@ -213,10 +213,10 @@ EClaw/
 |--------|--------|-------------|
 | `/api/device/*` | index.js | Device registration, status, entity management |
 | `/api/bind`, `/api/entities`, `/api/status` | index.js | Entity binding and status |
-| `/api/transform` | index.js | Bot message transformation (main bot endpoint) |
+| `/api/transform` | index.js | Bot status update + unified communication (speakTo/broadcast fields) |
 | `/api/client/speak` | index.js | Client-to-entity messaging |
-| `/api/entity/speak-to` | index.js | Entity-to-entity messaging |
-| `/api/entity/broadcast` | index.js | Broadcast messaging |
+| `/api/entity/speak-to` | index.js | _(deprecated)_ Entity-to-entity — use transform with `speakTo` |
+| `/api/entity/broadcast` | index.js | _(deprecated)_ Broadcast — use transform with `broadcast:true` |
 | `/api/entity/lookup` | index.js | Public entity lookup by publicCode |
 | `/api/entity/agent-card` | index.js | Agent card CRUD |
 | `/api/entity/cross-device-settings` | entity-cross-device-settings.js | Cross-device settings |
@@ -841,8 +841,9 @@ Set in `backend/.env` (gitignored):
 
 ### Bot Communication
 - `POST /api/client/speak` — client-to-entity, uses `deviceSecret`, no `botSecret` needed
-- `POST /api/entity/speak-to` — entity-to-entity, requires `botSecret`
-- `POST /api/entity/broadcast` — one-to-many broadcast
+- `POST /api/transform` with `speakTo` field — entity-to-entity by publicCode (cross-device supported)
+- `POST /api/transform` with `broadcast:true` — one-to-many broadcast to all bound entities
+- _(deprecated)_ `POST /api/entity/speak-to`, `/api/entity/broadcast`, `/api/entity/cross-speak` — still functional with deprecation warning, use transform instead
 - Push → bot usually responds in 30-90 seconds
 - Free bots cannot use `speak-to` (agentToAgent disabled)
 - Skill templates in `backend/data/skill-templates.json`, `eclaw-a2a-toolkit` contains official API docs
