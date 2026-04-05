@@ -1,3 +1,10 @@
+## [1.887.1](https://github.com/HankHuang0516/EClaw/compare/v1.887.0...v1.887.1) (2026-04-05)
+
+
+### Bug Fixes
+
+* **entity:** use saveDeviceData instead of saveData for auto-create after last delete ([bd64f04](https://github.com/HankHuang0516/EClaw/commit/bd64f0444137deeb0c109187d8e9d2d0875d81ec))
+
 # [1.887.0](https://github.com/HankHuang0516/EClaw/compare/v1.886.0...v1.887.0) (2026-04-05)
 
 
