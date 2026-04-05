@@ -1,3 +1,10 @@
+## [1.887.3](https://github.com/HankHuang0516/EClaw/compare/v1.887.2...v1.887.3) (2026-04-05)
+
+
+### Bug Fixes
+
+* **kanban:** sync assigned_bots when entity IDs change ([7112718](https://github.com/HankHuang0516/EClaw/commit/71127188476d5f22970c5e01c1cdebeddf50bd19))
+
 ## [1.887.2](https://github.com/HankHuang0516/EClaw/compare/v1.887.1...v1.887.2) (2026-04-05)
 
 
