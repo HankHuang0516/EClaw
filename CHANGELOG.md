@@ -1,3 +1,10 @@
+## [1.887.4](https://github.com/HankHuang0516/EClaw/compare/v1.887.3...v1.887.4) (2026-04-05)
+
+
+### Bug Fixes
+
+* **chat:** dedup includes source + transform uses A2A routing source ([fbeaa06](https://github.com/HankHuang0516/EClaw/commit/fbeaa06cd60f0ed450be0bca679c0ee5d3401085))
+
 ## [1.887.3](https://github.com/HankHuang0516/EClaw/compare/v1.887.2...v1.887.3) (2026-04-05)
 
 
