@@ -1,3 +1,10 @@
+## [1.888.1](https://github.com/HankHuang0516/EClaw/compare/v1.888.0...v1.888.1) (2026-04-05)
+
+
+### Performance Improvements
+
+* **kanban:** remove verbose GET console.log on read-only routes ([ad15b57](https://github.com/HankHuang0516/EClaw/commit/ad15b57bb546a2d393815d15c21fb1986052c4a2))
+
 # [1.888.0](https://github.com/HankHuang0516/EClaw/compare/v1.887.4...v1.888.0) (2026-04-05)
 
 
