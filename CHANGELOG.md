@@ -1,3 +1,10 @@
+# [1.888.0](https://github.com/HankHuang0516/EClaw/compare/v1.887.4...v1.888.0) (2026-04-05)
+
+
+### Features
+
+* **transform:** merge speak-to/broadcast into transform API ([c48cd57](https://github.com/HankHuang0516/EClaw/commit/c48cd573d6b31c561982432860dab235a4d40660))
+
 ## [1.887.4](https://github.com/HankHuang0516/EClaw/compare/v1.887.3...v1.887.4) (2026-04-05)
 
 
