@@ -1,3 +1,10 @@
+## [1.890.1](https://github.com/HankHuang0516/EClaw/compare/v1.890.0...v1.890.1) (2026-04-05)
+
+
+### Bug Fixes
+
+* **portal:** add missing favicon to skill-doc page ([88f0ca5](https://github.com/HankHuang0516/EClaw/commit/88f0ca55dfaa8cd2f768bcca9e80188736246e65))
+
 # [1.890.0](https://github.com/HankHuang0516/EClaw/compare/v1.889.1...v1.890.0) (2026-04-05)
 
 
