@@ -1,3 +1,10 @@
+# [1.895.0](https://github.com/HankHuang0516/EClaw/compare/v1.894.2...v1.895.0) (2026-04-05)
+
+
+### Features
+
+* **portal:** add experimental warning to Claude Code Channel guide ([#1618](https://github.com/HankHuang0516/EClaw/issues/1618)) ([c99cc74](https://github.com/HankHuang0516/EClaw/commit/c99cc744b73099f72d2a52623bc06fd49f1a5068))
+
 ## [1.894.2](https://github.com/HankHuang0516/EClaw/compare/v1.894.1...v1.894.2) (2026-04-05)
 
 
