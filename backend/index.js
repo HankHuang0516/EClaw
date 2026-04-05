@@ -4250,7 +4250,7 @@ async function deliverToEntity(opts) {
  * REQUIRES botSecret for authentication!
  */
 app.post('/api/transform', async (req, res) => {
-    const { deviceId, entityId, botSecret, name, character, state, message, parts, targetDeviceId } = req.body;
+    const { deviceId, entityId, botSecret, name, character, state, message, parts, targetDeviceId, speakTo, broadcast } = req.body;
 
     if (!deviceId) {
         return res.status(400).json({ success: false, message: "deviceId required" });
@@ -4414,8 +4414,21 @@ app.post('/api/transform', async (req, res) => {
         }
     }
 
-    console.log(`[Transform] Device ${deviceId} Entity ${eId}: ${state || entity.state} - "${finalMessage || entity.message}"`);
-    serverLog('info', 'transform', `${state || entity.state}: ${(finalMessage || entity.message || '').slice(0, 100)}`, { deviceId, entityId: eId, metadata: { state: state || entity.state } });
+    // Build delivery info for logging
+    const deliveryTag = broadcast
+        ? ` [broadcast]`
+        : (speakTo && Array.isArray(speakTo) && speakTo.length > 0)
+            ? ` [speakTo:${speakTo.join(',')}]`
+            : '';
+    console.log(`[Transform] Device ${deviceId} Entity ${eId}: ${state || entity.state} - "${(finalMessage || entity.message || '').slice(0, 120)}"${deliveryTag}`);
+    serverLog('info', 'transform', `${state || entity.state}: ${(finalMessage || entity.message || '').slice(0, 100)}${deliveryTag}`, {
+        deviceId, entityId: eId,
+        metadata: {
+            state: state || entity.state,
+            ...(broadcast ? { broadcast: true } : {}),
+            ...(speakTo && Array.isArray(speakTo) && speakTo.length > 0 ? { speakTo } : {})
+        }
+    });
 
     // Emit entity:update via Socket.IO for real-time wallpaper/dashboard refresh
     if (io) {
@@ -4453,7 +4466,6 @@ app.post('/api/transform', async (req, res) => {
     }
 
     // ── speakTo / broadcast delivery ──
-    const { speakTo, broadcast } = req.body;
     const warnings = [];
     let deliveryResults = null;
 
