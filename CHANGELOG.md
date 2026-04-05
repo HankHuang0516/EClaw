@@ -1,3 +1,10 @@
+## [1.894.1](https://github.com/HankHuang0516/EClaw/compare/v1.894.0...v1.894.1) (2026-04-05)
+
+
+### Bug Fixes
+
+* **portal:** remove duplicate let declaration in community.html ([#1616](https://github.com/HankHuang0516/EClaw/issues/1616)) ([ac458d5](https://github.com/HankHuang0516/EClaw/commit/ac458d5afd1ccfa97a46bcc11ffeaa752f20ec08))
+
 # [1.894.0](https://github.com/HankHuang0516/EClaw/compare/v1.893.0...v1.894.0) (2026-04-05)
 
 
