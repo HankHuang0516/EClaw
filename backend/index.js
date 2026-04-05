@@ -4124,11 +4124,16 @@ app.post('/api/transform', (req, res) => {
     // Skip silent tokens — these are internal signals that should not appear in chat
     const isSilentMessage = finalMessage && /^\[SILENT\]$/i.test(finalMessage.trim());
     if (finalMessage && !isSilentMessage) {
-        saveChatMessage(deviceId, eId, finalMessage, entity.name || `Entity ${eId}`, false, true);
-        markMessagesAsRead(deviceId, eId);
-
         // [A2A_BOT_REPLY] — detect if this transform is in response to an A2A speak-to
         const pendingA2A = entity.messageQueue && entity.messageQueue.find(m => m.from && m.from.startsWith('entity:'));
+
+        // Build source: if replying to a speak-to, include routing info so chat renders "Entity A → Entity B"
+        const chatSource = pendingA2A
+            ? `entity:${eId}:${entity.character}->${pendingA2A.fromEntityId}`
+            : entity.name || `Entity ${eId}`;
+
+        saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true);
+        markMessagesAsRead(deviceId, eId);
         if (pendingA2A) {
             serverLog('info', 'speakto_push', `[A2A_BOT_REPLY] Entity ${eId} responded via transform after A2A from ${pendingA2A.from}: "${(finalMessage || '').slice(0, 60)}" | mqLen=${entity.messageQueue.length}`, {
                 deviceId, entityId: eId,
@@ -12101,9 +12106,10 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
                 `SELECT id FROM chat_messages
                  WHERE device_id = $1 AND entity_id = $2 AND text = $3
                  AND is_from_user = $4 AND is_from_bot = $5
+                 AND source IS NOT DISTINCT FROM $6
                  AND created_at > NOW() - INTERVAL '10 seconds'
                  LIMIT 1`,
-                [deviceId, entityId, text, isFromUser || false, isFromBot || false]
+                [deviceId, entityId, text, isFromUser || false, isFromBot || false, source || null]
             );
             if (dedup.rows.length > 0) {
                 console.log(`[Chat] Dedup: skipping duplicate ${isFromBot ? 'bot' : 'user'} message for entity ${entityId} (existing id=${dedup.rows[0].id}, source="${source}")`);
