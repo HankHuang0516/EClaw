@@ -7,14 +7,14 @@ import { getClient, setActiveEvent, clearActiveEvent } from './outbound.js';
  *
  * Handles three event types:
  *   - 'message'        → Normal human message; reply via sendMessage()
- *   - 'entity_message' → Bot-to-bot speak-to; reply via sendMessage() + speakTo(fromEntityId)
- *   - 'broadcast'      → Broadcast from another entity; reply via sendMessage() + speakTo(fromEntityId)
+ *   - 'entity_message' → Bot-to-bot speak-to; reply via sendMessage(text, state, { speakTo })
+ *   - 'broadcast'      → Broadcast from another entity; reply via sendMessage(text, state, { speakTo })
  *
  * The `deliver` callback routes AI response to the correct E-Claw endpoint
  * based on the inbound event type.
  *
- * Channel Bot Context Parity v1.0.17:
- *   - Bot-to-bot / broadcast now calls sendMessage() to update own wallpaper AND speakTo() to reply
+ * Channel Bot Context Parity v1.0.17+:
+ *   - Bot-to-bot / broadcast uses unified sendMessage() with speakTo option (single API call)
  *   - Quota awareness via eclaw_context.b2bRemaining / b2bMax
  *   - Mission context via eclaw_context.missionHints
  *   - Silent suppression via silentToken (default "[SILENT]")
@@ -136,9 +136,8 @@ export function createWebhookHandler(
               if (!text || text === silentToken) return;
 
               if ((event === 'entity_message' || event === 'broadcast') && fromEntityId !== undefined) {
-                // Bot-to-bot / broadcast: update own wallpaper AND reply to sender
-                await client.sendMessage(text, 'IDLE');
-                await client.speakTo(fromEntityId, text, false);
+                // Bot-to-bot / broadcast: update wallpaper + deliver reply in one API call
+                await client.sendMessage(text, 'IDLE', { speakTo: [String(fromEntityId)] });
               } else {
                 // Normal human message: reply via channel message
                 if (text) {

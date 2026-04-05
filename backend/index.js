@@ -2578,8 +2578,8 @@ app.get('/api/admin/users', adminAuth, adminCheck, async (req, res) => {
                 subscriptionStatus: r.subscription_status,
                 subscriptionExpiresAt: r.subscription_expires_at ? parseInt(r.subscription_expires_at) : null,
                 isAdmin: r.is_admin,
-                createdAt: r.created_at ? parseInt(r.created_at) : null,
-                lastLoginAt: r.last_login_at ? parseInt(r.last_login_at) : null,
+                createdAt: r.created_at ? (r.created_at instanceof Date ? r.created_at.getTime() : parseInt(r.created_at)) : null,
+                lastLoginAt: r.last_login_at ? (r.last_login_at instanceof Date ? r.last_login_at.getTime() : parseInt(r.last_login_at)) : null,
                 source: 'registered',
                 isTestDevice: isTestDeviceCheck(r.device_id, dev)
             };
@@ -4038,6 +4038,30 @@ app.get('/api/status', (req, res) => {
 // ── Shared Helpers: Gatekeeper + Delivery ──
 
 /**
+ * Resolve a speakTo target code to { deviceId, entityId }.
+ * Supports both publicCode (cross-device) and numeric entityId string (same-device fallback).
+ * @param {string} code - publicCode or entityId string
+ * @param {string} senderDeviceId - sender's device for same-device entityId fallback
+ * @returns {{ deviceId, entityId } | null}
+ */
+function resolveSpeakToTarget(code, senderDeviceId) {
+    // Try publicCode first
+    const byCode = publicCodeIndex[code];
+    if (byCode) return byCode;
+
+    // Fallback: pure numeric string → same-device entityId
+    if (/^\d+$/.test(code)) {
+        const eid = parseInt(code);
+        const device = devices[senderDeviceId];
+        if (device && device.entities[eid]) {
+            return { deviceId: senderDeviceId, entityId: eid };
+        }
+    }
+
+    return null;
+}
+
+/**
  * Gatekeeper Second Lock: mask leaked tokens for free bots.
  * Returns { text, leaked } where text is potentially masked.
  */
@@ -4337,6 +4361,8 @@ app.post('/api/transform', async (req, res) => {
     // Save bot message to chat history so it appears in Chat page
     // Skip silent tokens — these are internal signals that should not appear in chat
     const isSilentMessage = finalMessage && /^\[SILENT\]$/i.test(finalMessage.trim());
+    // Skip self chat save when speakTo/broadcast is present — deliverToEntity will save with routing source
+    const hasDelivery = (broadcast || (speakTo && Array.isArray(speakTo) && speakTo.length > 0));
     if (finalMessage && !isSilentMessage) {
         // [A2A_BOT_REPLY] — detect if this transform is in response to an A2A speak-to
         const pendingA2A = entity.messageQueue && entity.messageQueue.find(m => m.from && m.from.startsWith('entity:'));
@@ -4346,7 +4372,10 @@ app.post('/api/transform', async (req, res) => {
             ? `entity:${eId}:${entity.character}->${pendingA2A.fromEntityId}`
             : entity.name || `Entity ${eId}`;
 
-        saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true);
+        // Only save self chat message if NOT doing speakTo/broadcast delivery (avoid duplicate)
+        if (!hasDelivery) {
+            saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true);
+        }
         markMessagesAsRead(deviceId, eId);
         if (pendingA2A) {
             serverLog('info', 'speakto_push', `[A2A_BOT_REPLY] Entity ${eId} responded via transform after A2A from ${pendingA2A.from}: "${(finalMessage || '').slice(0, 60)}" | mqLen=${entity.messageQueue.length}`, {
@@ -4555,8 +4584,8 @@ app.post('/api/transform', async (req, res) => {
             const results = [];
 
             for (const code of speakTo) {
-                // Look up publicCode
-                const target = publicCodeIndex[code];
+                // Resolve target: publicCode (cross-device) or entityId string (same-device)
+                const target = resolveSpeakToTarget(code, deviceId);
                 if (!target) {
                     results.push({ publicCode: code, success: false, reason: 'not_found' });
                     continue;
@@ -4574,8 +4603,8 @@ app.post('/api/transform', async (req, res) => {
                     continue;
                 }
 
-                // Skip self
-                if (entity.publicCode === code) {
+                // Skip self (by publicCode or entityId)
+                if (entity.publicCode === code || (target.deviceId === deviceId && target.entityId === eId)) {
                     results.push({ publicCode: code, success: false, reason: 'self_target' });
                     continue;
                 }
@@ -6317,7 +6346,7 @@ app.post('/api/client/speak', async (req, res) => {
                 pushMsg += `Run this command to reply (replace YOUR_REPLY_HERE with your response):\n`;
                 pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${eId},"botSecret":"${entity.botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
                 pushMsg += `To BROADCAST to ALL other entities (use ONLY when user asks to broadcast):\n`;
-                pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/broadcast" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","fromEntityId":${eId},"botSecret":"${entity.botSecret}","text":"YOUR_BROADCAST_HERE"}'\n\n`;
+                pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${entity.botSecret}","state":"IDLE","message":"YOUR_BROADCAST_HERE","broadcast":true}'\n\n`;
                 // Inject broadcast recipient info if this is a multi-target broadcast
                 if (showRecipientInfo) {
                     pushMsg += buildBroadcastRecipientBlock(device, targetIds, eId);
@@ -6614,14 +6643,14 @@ app.post('/api/entity/speak-to', async (req, res) => {
         pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${toId},"botSecret":"${toEntity.botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
         if (expectsReply) {
             pushMsg += `To reply directly to Entity ${fromId}:\n`;
-            pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/speak-to" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","fromEntityId":${toId},"toEntityId":${fromId},"botSecret":"${toEntity.botSecret}","text":"YOUR_REPLY_HERE"}'\n\n`;
+            pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE","speakTo":["${fromId}"]}'\n\n`;
             pushMsg += `[BOT-TO-BOT] Remaining quota: ${toRemaining}/${BOT2BOT_MAX_MESSAGES}. If the other entity is just repeating emotions with no new info, do NOT reply — just update your wallpaper status.`;
             if (toRemaining <= 2) {
                 pushMsg += ` WARNING: Quota almost exhausted, do NOT auto-reply.`;
             }
         } else {
             pushMsg += `(Optional — only reply if truly necessary) To reply directly to Entity ${fromId}:\n`;
-            pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/speak-to" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","fromEntityId":${toId},"toEntityId":${fromId},"botSecret":"${toEntity.botSecret}","text":"YOUR_REPLY_HERE"}'\n\n`;
+            pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE","speakTo":["${fromId}"]}'\n\n`;
             pushMsg += `[NOTIFICATION — NO REPLY EXPECTED] This is an informational message. Do NOT reply via speak-to. If you want to acknowledge, just update your wallpaper status.`;
         }
         pushMsg += `\n\n[MESSAGE] From: ${sourceLabel}\n`;
@@ -8485,15 +8514,15 @@ app.post('/api/entity/broadcast', async (req, res) => {
             pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${toId},"botSecret":"${toEntity.botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
             if (expectsReplyBcast) {
                 pushMsg += `To reply directly to Entity ${fromId}:\n`;
-                pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/speak-to" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","fromEntityId":${toId},"toEntityId":${fromId},"botSecret":"${toEntity.botSecret}","text":"YOUR_REPLY_HERE"}'\n\n`;
-                pushMsg += `[BOT-TO-BOT BROADCAST] Remaining quota: ${toRemainingBcast}/${BOT2BOT_MAX_MESSAGES}. IMPORTANT: Do NOT re-broadcast this message. Do NOT call /api/entity/broadcast with similar content. If you want to respond, use speak-to (reply directly) or just update your wallpaper status. If the broadcast is just repeating emotions with no new info, do NOT reply at all.`;
+                pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE","speakTo":["${fromId}"]}'\n\n`;
+                pushMsg += `[BOT-TO-BOT BROADCAST] Remaining quota: ${toRemainingBcast}/${BOT2BOT_MAX_MESSAGES}. IMPORTANT: Do NOT re-broadcast this message. Use speakTo to reply directly. If the broadcast is just repeating emotions with no new info, do NOT reply at all.`;
                 if (toRemainingBcast <= 2) {
                     pushMsg += ` WARNING: Quota almost exhausted, do NOT auto-reply.`;
                 }
             } else {
                 pushMsg += `(Optional — only reply if truly necessary) To reply directly to Entity ${fromId}:\n`;
-                pushMsg += `exec: curl -s -X POST "${apiBase}/api/entity/speak-to" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","fromEntityId":${toId},"toEntityId":${fromId},"botSecret":"${toEntity.botSecret}","text":"YOUR_REPLY_HERE"}'\n\n`;
-                pushMsg += `[NOTIFICATION BROADCAST — NO REPLY EXPECTED] This is an informational broadcast. Do NOT reply via speak-to or re-broadcast. If you want to acknowledge, just update your wallpaper status.`;
+                pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE","speakTo":["${fromId}"]}'\n\n`;
+                pushMsg += `[NOTIFICATION BROADCAST — NO REPLY EXPECTED] This is an informational broadcast. Do NOT reply or re-broadcast. If you want to acknowledge, just update your wallpaper status.`;
             }
             // Inject broadcast recipient info if enabled
             if (showRecipientInfo) {
@@ -11880,7 +11909,17 @@ const channelModule = require('./channel-api')(devices, {
     apiBase: process.env.API_BASE || 'https://eclawbot.com',
     awardEntityXP,
     XP_AMOUNTS,
-    notifyDevice
+    notifyDevice,
+    deliverToEntity,
+    gatekeeperCheckText,
+    resolveSpeakToTarget,
+    checkBotToBotRateLimit,
+    checkCrossSpeakRateLimit,
+    crossDeviceSettings,
+    devicePrefs,
+    recentBroadcasts,
+    BOT2BOT_MAX_MESSAGES,
+    db
 });
 app.use('/api/channel', channelModule.router);
 // Wire channel push into mission module (Bot Push Parity Rule — must be after channelModule init)

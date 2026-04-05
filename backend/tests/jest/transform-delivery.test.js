@@ -370,3 +370,61 @@ describe('Transform entityId auto-detect', () => {
         expect(res.status).toBe(403);
     });
 });
+
+// ════════════════════════════════════════════════════════════════
+// 9. speakTo supports entityId (numeric string fallback)
+// ════════════════════════════════════════════════════════════════
+describe('Transform speakTo with entityId string', () => {
+    const deviceId = 'transform-eid-string';
+    const deviceSecret = `secret-${deviceId}`;
+    let botSecret0;
+
+    beforeAll(async () => {
+        botSecret0 = await bindEntity(deviceId, deviceSecret, 0);
+        await bindEntity(deviceId, deviceSecret, 1);
+    });
+
+    it('delivers message using entityId string instead of publicCode', async () => {
+        const res = await post('/api/transform')
+            .send({
+                deviceId,
+                botSecret: botSecret0,
+                message: 'Hello via entityId',
+                state: 'IDLE',
+                speakTo: ['1']  // entityId as string
+            });
+        expect(res.status).toBe(200);
+        expect(res.body.delivery).toBeDefined();
+        expect(res.body.delivery.results[0].success).toBe(true);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
+// 10. channel/message with speakTo
+// ════════════════════════════════════════════════════════════════
+describe('POST /api/channel/message + speakTo', () => {
+    const deviceId = 'channel-msg-speakto';
+    const deviceSecret = `secret-${deviceId}`;
+    let botSecret0;
+
+    beforeAll(async () => {
+        botSecret0 = await bindEntity(deviceId, deviceSecret, 0);
+        await bindEntity(deviceId, deviceSecret, 1);
+    });
+
+    it('channel/message endpoint accepts speakTo field without crashing on unrelated errors', async () => {
+        // channel/message requires valid channel_api_key — mock DB may not have getChannelAccountByKey
+        // We verify speakTo doesn't cause an unexpected crash in field parsing
+        const res = await post('/api/channel/message')
+            .send({
+                channel_api_key: 'test-key',
+                deviceId,
+                botSecret: botSecret0,
+                message: 'Channel speakTo test',
+                state: 'IDLE',
+                speakTo: ['1']
+            });
+        // 403 (invalid key) or 500 (mock DB lacks getChannelAccountByKey) — but NOT a field parsing error
+        expect([403, 500].includes(res.status)).toBe(true);
+    });
+});

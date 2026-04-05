@@ -57,7 +57,7 @@ async function assertPublicCallbackUrl(callbackUrl) {
     if (isPrivateIp(address)) throw new Error('callback_url must not resolve to a private/internal IP');
 }
 
-module.exports = function (devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase, awardEntityXP, XP_AMOUNTS, notifyDevice }) {
+module.exports = function (devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase, awardEntityXP, XP_AMOUNTS, notifyDevice, deliverToEntity, gatekeeperCheckText, resolveSpeakToTarget, checkBotToBotRateLimit, checkCrossSpeakRateLimit, crossDeviceSettings, devicePrefs, recentBroadcasts, BOT2BOT_MAX_MESSAGES, db: dbRef }) {
     // Late-bound kanban auto-review hook (set after kanbanModule init)
     let kanbanAutoReview = null;
     function setKanbanAutoReview(fn) { kanbanAutoReview = fn; }
@@ -605,15 +605,15 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
     // ============================================
     router.post('/message', async (req, res) => {
         try {
-            const { channel_api_key, deviceId, entityId, botSecret, message, state, mediaType, mediaUrl, targetDeviceId } = req.body;
+            const { channel_api_key, deviceId, entityId, botSecret, message, state, mediaType, mediaUrl, targetDeviceId, speakTo, broadcast } = req.body;
 
-            if (process.env.DEBUG === 'true') serverLog('info', 'client_push', `[PUSH] /channel/message called, state=${state}, hasMsg=${!!message}`, { deviceId, entityId: parseInt(entityId) });
+            if (process.env.DEBUG === 'true') serverLog('info', 'client_push', `[PUSH] /channel/message called, state=${state}, hasMsg=${!!message}`, { deviceId, entityId: entityId !== undefined ? parseInt(entityId) : 'auto' });
 
-            if (!channel_api_key || !deviceId || entityId === undefined || !botSecret) {
+            if (!channel_api_key || !deviceId || !botSecret) {
                 if (process.env.DEBUG === 'true') serverLog('warn', 'client_push', `[PUSH] /channel/message missing required fields`, { deviceId });
                 return res.status(400).json({
                     success: false,
-                    message: 'channel_api_key, deviceId, entityId, and botSecret required'
+                    message: 'channel_api_key, deviceId, and botSecret required'
                 });
             }
 
@@ -623,21 +623,37 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 return res.status(403).json({ success: false, message: 'Invalid channel API key' });
             }
 
-            const eId = parseInt(entityId);
             const device = devices[deviceId];
             if (!device) {
                 return res.status(404).json({ success: false, message: 'Device not found' });
             }
 
-            const entity = device.entities[eId];
-            if (!entity) {
-                return res.status(404).json({ success: false, message: 'Entity not found' });
+            // Resolve entityId: auto-detect from botSecret if not provided
+            let eId;
+            let entityIdCorrected = false;
+            if (entityId === undefined || entityId === null) {
+                eId = Object.keys(device.entities).map(Number)
+                    .find(i => device.entities[i]?.isBound && device.entities[i].botSecret && safeEqual(device.entities[i].botSecret, botSecret));
+                if (eId === undefined) {
+                    return res.status(403).json({ success: false, message: 'Invalid botSecret — no matching entity found' });
+                }
+            } else {
+                const requestedId = parseInt(entityId) || 0;
+                const requestedEntity = device.entities[requestedId];
+                if (requestedEntity && requestedEntity.isBound && requestedEntity.botSecret && safeEqual(requestedEntity.botSecret, botSecret)) {
+                    eId = requestedId;
+                } else {
+                    const correctId = Object.keys(device.entities).map(Number)
+                        .find(i => device.entities[i]?.isBound && device.entities[i].botSecret && safeEqual(device.entities[i].botSecret, botSecret));
+                    if (correctId === undefined) {
+                        return res.status(403).json({ success: false, message: 'Invalid botSecret' });
+                    }
+                    eId = correctId;
+                    entityIdCorrected = true;
+                }
             }
 
-            // Verify botSecret
-            if (!entity.botSecret || !safeEqual(botSecret, entity.botSecret)) {
-                return res.status(403).json({ success: false, message: 'Invalid botSecret' });
-            }
+            const entity = device.entities[eId];
 
             // Update entity state
             const finalMessage = message || entity.message;
@@ -651,12 +667,16 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             const hasCrossRoute = !!(pendingCross && pendingCross.fromDeviceId);
             // Skip silent tokens — internal signals should not appear in chat
             const isSilentMsg = message && /^\[SILENT\]$/i.test(message.trim());
+            // Skip self chat save when speakTo/broadcast is present — deliverToEntity will save with routing source
+            const hasDelivery = (broadcast || (speakTo && Array.isArray(speakTo) && speakTo.length > 0));
             if (message && !isSilentMsg) {
-                // If replying to a cross-device message, tag local copy with routing info
-                const localSource = hasCrossRoute
-                    ? `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`
-                    : (entity.name || `Entity ${eId}`);
-                saveChatMessage(deviceId, eId, message, localSource, false, true, mediaType || null, mediaUrl || null);
+                if (!hasDelivery) {
+                    // If replying to a cross-device message, tag local copy with routing info
+                    const localSource = hasCrossRoute
+                        ? `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`
+                        : (entity.name || `Entity ${eId}`);
+                    saveChatMessage(deviceId, eId, message, localSource, false, true, mediaType || null, mediaUrl || null);
+                }
 
                 // XP: Award for channel bot reply (same logic as /api/transform)
                 if (awardEntityXP && XP_AMOUNTS) {
@@ -740,8 +760,93 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 });
             }
 
-            res.json({
+            // ── speakTo / broadcast delivery ──
+            const warnings = [];
+            let deliveryResults = null;
+            if (entityIdCorrected) {
+                warnings.push(`entityId mismatch: auto-corrected to ${eId}.`);
+            }
+
+            if ((speakTo || broadcast) && message && !isSilentMsg && deliverToEntity && resolveSpeakToTarget) {
+                if (speakTo && broadcast) {
+                    warnings.push('Both speakTo and broadcast provided — broadcast takes priority, speakTo ignored.');
+                }
+
+                const gkResult = gatekeeperCheckText ? gatekeeperCheckText(deviceId, eId, message, entity.botSecret) : { text: message };
+                const deliveryText = gkResult.text;
+
+                if (broadcast) {
+                    // Broadcast to all other bound entities on device (or targetDeviceId)
+                    const broadcastDeviceId = (targetDeviceId && targetDeviceId !== deviceId) ? targetDeviceId : deviceId;
+                    const broadcastDevice = devices[broadcastDeviceId];
+                    if (!broadcastDevice) {
+                        warnings.push(`Broadcast target device ${broadcastDeviceId} not found.`);
+                    } else if (!checkBotToBotRateLimit || !checkBotToBotRateLimit(broadcastDeviceId, eId)) {
+                        warnings.push('Bot-to-bot limit reached. Broadcast skipped.');
+                        deliveryResults = { broadcast: true, rateLimited: true, sentCount: 0, targets: [] };
+                    } else {
+                        const targetIds = [];
+                        for (const i of Object.keys(broadcastDevice.entities).map(Number)) {
+                            if (i !== eId && broadcastDevice.entities[i] && broadcastDevice.entities[i].isBound) {
+                                targetIds.push(i);
+                            }
+                        }
+                        if (targetIds.length === 0) {
+                            deliveryResults = { broadcast: true, sentCount: 0, targets: [] };
+                        } else {
+                            const sourceLabel = `entity:${eId}:${entity.character}`;
+                            const broadcastChatMsgId = await saveChatMessage(broadcastDeviceId, eId, deliveryText, `${sourceLabel}->${targetIds.join(',')}`, false, true);
+                            const bcastPrefs = devicePrefs ? await devicePrefs.getPrefs(broadcastDeviceId) : {};
+                            const showRecipientInfo = bcastPrefs.broadcast_recipient_info !== false;
+                            const results = await Promise.all(targetIds.map(toId =>
+                                deliverToEntity({
+                                    senderDeviceId: deviceId, fromId: eId, fromEntity: entity,
+                                    targetDeviceId: broadcastDeviceId, toId, toEntity: broadcastDevice.entities[toId],
+                                    text: deliveryText, expectsReply: true, isBroadcast: true,
+                                    broadcastTargetIds: targetIds, broadcastChatMsgId, showRecipientInfo,
+                                    isCrossDevice: broadcastDeviceId !== deviceId
+                                })
+                            ));
+                            deliveryResults = { broadcast: true, sentCount: results.length, targets: results };
+                        }
+                    }
+                } else if (speakTo && Array.isArray(speakTo) && speakTo.length > 0) {
+                    const results = [];
+                    for (const code of speakTo) {
+                        const target = resolveSpeakToTarget(code, deviceId);
+                        if (!target) { results.push({ publicCode: code, success: false, reason: 'not_found' }); continue; }
+                        const tDevice = devices[target.deviceId];
+                        if (!tDevice) { results.push({ publicCode: code, success: false, reason: 'device_not_found' }); continue; }
+                        const toEntity = tDevice.entities[target.entityId];
+                        if (!toEntity || !toEntity.isBound) { results.push({ publicCode: code, success: false, reason: 'not_bound' }); continue; }
+                        if (entity.publicCode === code || (target.deviceId === deviceId && target.entityId === eId)) {
+                            results.push({ publicCode: code, success: false, reason: 'self_target' }); continue;
+                        }
+                        const isCrossDevice = target.deviceId !== deviceId;
+                        if (isCrossDevice && crossDeviceSettings) {
+                            const xdSettings = await crossDeviceSettings.getSettings(target.deviceId, target.entityId);
+                            const senderCode = entity.publicCode;
+                            if (dbRef && await dbRef.isBlocked(target.deviceId, senderCode)) { results.push({ publicCode: code, success: false, reason: 'blocked' }); continue; }
+                            if (xdSettings.blacklist.length > 0 && xdSettings.blacklist.includes(senderCode)) { results.push({ publicCode: code, success: false, reason: 'blacklisted' }); continue; }
+                            if (xdSettings.whitelist_enabled && xdSettings.whitelist.length > 0 && !xdSettings.whitelist.includes(senderCode)) { results.push({ publicCode: code, success: false, reason: 'not_whitelisted' }); continue; }
+                            if (!checkCrossSpeakRateLimit || !checkCrossSpeakRateLimit(deviceId, eId)) { results.push({ publicCode: code, success: false, reason: 'cross_device_rate_limited' }); continue; }
+                        } else if (!isCrossDevice) {
+                            if (!checkBotToBotRateLimit || !checkBotToBotRateLimit(deviceId, eId)) { results.push({ publicCode: code, success: false, reason: 'rate_limited' }); continue; }
+                        }
+                        const result = await deliverToEntity({
+                            senderDeviceId: deviceId, fromId: eId, fromEntity: entity,
+                            targetDeviceId: target.deviceId, toId: target.entityId, toEntity,
+                            text: deliveryText, expectsReply: true, isCrossDevice
+                        });
+                        results.push({ publicCode: code, success: true, ...result });
+                    }
+                    deliveryResults = { speakTo: true, results };
+                }
+            }
+
+            const response = {
                 success: true,
+                entityId: eId,
                 currentState: {
                     name: entity.name,
                     state: entity.state,
@@ -749,7 +854,10 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                     xp: entity.xp || 0,
                     level: entity.level || 1
                 }
-            });
+            };
+            if (deliveryResults) response.delivery = deliveryResults;
+            if (warnings.length > 0) response.warnings = warnings;
+            res.json(response);
         } catch (err) {
             console.error('[Channel] Message error:', err.message);
             res.status(500).json({ success: false, message: 'Internal error' });

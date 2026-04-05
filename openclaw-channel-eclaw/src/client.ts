@@ -82,12 +82,25 @@ export class EClawClient {
     return data;
   }
 
-  /** Send bot message to user (updates own entity state on wallpaper) */
+  /**
+   * Send bot message — unified endpoint for status update + optional delivery.
+   *
+   * @param message - Text message (also used as delivery content)
+   * @param state - Entity state (IDLE, BUSY, etc.)
+   * @param opts.mediaType - Optional media type
+   * @param opts.mediaUrl - Optional media URL
+   * @param opts.speakTo - Array of target identifiers (entityId or publicCode) to deliver message to
+   * @param opts.broadcast - If true, deliver message to all other bound entities
+   */
   async sendMessage(
     message: string,
     state: string = 'IDLE',
-    mediaType?: string,
-    mediaUrl?: string
+    opts?: {
+      mediaType?: string;
+      mediaUrl?: string;
+      speakTo?: (string | number)[];
+      broadcast?: boolean;
+    }
   ): Promise<MessageResponse> {
     if (!this.deviceId || !this.botSecret) {
       throw new Error('Not bound — call bindEntity() first');
@@ -103,51 +116,30 @@ export class EClawClient {
         botSecret: this.botSecret,
         message,
         state,
-        ...(mediaType && { mediaType }),
-        ...(mediaUrl && { mediaUrl }),
+        ...(opts?.mediaType && { mediaType: opts.mediaType }),
+        ...(opts?.mediaUrl && { mediaUrl: opts.mediaUrl }),
+        ...(opts?.speakTo && { speakTo: opts.speakTo.map(String) }),
+        ...(opts?.broadcast && { broadcast: true }),
       }),
     });
 
     return await res.json() as MessageResponse;
   }
 
-  /** Send bot-to-bot message to another entity (speak-to) */
+  /**
+   * @deprecated Use sendMessage(text, state, { speakTo: [targetId] }) instead.
+   * Kept for backward compatibility — calls sendMessage internally.
+   */
   async speakTo(toEntityId: number, text: string, expectsReply: boolean = false): Promise<void> {
-    if (!this.deviceId || !this.botSecret) {
-      throw new Error('Not bound — call bindEntity() first');
-    }
-
-    await fetch(`${this.apiBase}/api/entity/speak-to`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        deviceId: this.deviceId,
-        fromEntityId: this.entityId,
-        toEntityId,
-        botSecret: this.botSecret,
-        text,
-        expects_reply: expectsReply,
-      }),
-    });
+    await this.sendMessage(text, 'IDLE', { speakTo: [String(toEntityId)] });
   }
 
-  /** Broadcast message to all other bound entities */
+  /**
+   * @deprecated Use sendMessage(text, state, { broadcast: true }) instead.
+   * Kept for backward compatibility — calls sendMessage internally.
+   */
   async broadcastToAll(text: string, expectsReply: boolean = false): Promise<void> {
-    if (!this.deviceId || !this.botSecret) {
-      throw new Error('Not bound — call bindEntity() first');
-    }
-
-    await fetch(`${this.apiBase}/api/entity/broadcast`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        deviceId: this.deviceId,
-        fromEntityId: this.entityId,
-        botSecret: this.botSecret,
-        text,
-        expects_reply: expectsReply,
-      }),
-    });
+    await this.sendMessage(text, 'IDLE', { broadcast: true });
   }
 
   /** Unregister callback on shutdown */
