@@ -1,3 +1,10 @@
+# [1.886.0](https://github.com/HankHuang0516/EClaw/compare/v1.885.1...v1.886.0) (2026-04-05)
+
+
+### Features
+
+* **kanban:** assigned bots selector on automation parent cards ([2ec9a0a](https://github.com/HankHuang0516/EClaw/commit/2ec9a0a9e0b2f412d5237470c1598208d1b5c468))
+
 ## [1.885.1](https://github.com/HankHuang0516/EClaw/compare/v1.885.0...v1.885.1) (2026-04-05)
 
 
