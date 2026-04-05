@@ -931,12 +931,13 @@
             let scheduleInfo = '';
             if (card.isAutomation && card.schedule) {
                 const sc = card.schedule;
-                const nextRun = sc.nextRunAt ? new Date(sc.nextRunAt).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) : '—';
-                const lastRun = sc.lastRunAt ? new Date(sc.lastRunAt).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) : '未觸發';
+                const dateFmt = { timeZone: 'Asia/Taipei', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false };
+                const nextRun = sc.nextRunAt ? new Date(sc.nextRunAt).toLocaleString(undefined, dateFmt) : '—';
+                const lastRun = sc.lastRunAt ? new Date(sc.lastRunAt).toLocaleString(undefined, dateFmt) : t('kb_auto_not_triggered', 'Not triggered');
                 scheduleInfo = `<div style="width:100%;margin-top:8px;padding:8px 10px;background:rgba(var(--accent-rgb,99,102,241),0.08);border-radius:6px;font-size:12px;color:var(--text-secondary)">` +
-                    `⚡ <strong data-i18n="kb_auto_badge">自動化</strong> &nbsp;|&nbsp; ` +
-                    `🕐 下次觸發：${nextRun} &nbsp;|&nbsp; ` +
-                    `✅ 上次觸發：${lastRun}` +
+                    `⚡ <strong>${t('kb_auto_badge','Automation')}</strong> &nbsp;|&nbsp; ` +
+                    `🕐 ${t('kb_auto_next_trigger','Next')}: ${nextRun} &nbsp;|&nbsp; ` +
+                    `✅ ${t('kb_auto_last_trigger','Last')}: ${lastRun}` +
                     (sc.cronExpression ? ` &nbsp;|&nbsp; cron: <code>${sc.cronExpression}</code>` : '') +
                     `</div>`;
             }
@@ -960,8 +961,7 @@
                 const currentReviewer = card.reviewerEntityId;
                 const reviewerOpts = boundEntities.filter(e => e.isBound).map(e => {
                     const sel = e.entityId === currentReviewer ? ' selected' : '';
-                    const label = e.name || e.character || `#${e.entityId}`;
-                    return `<option value="${e.entityId}"${sel}>${escapeHtml(label)}</option>`;
+                    return `<option value="${e.entityId}"${sel}>${escapeHtml(getEntityDisplayName(e.entityId))}</option>`;
                 }).join('');
                 const reviewerHtml =
                     `<div class="kb-auto-reviewer">` +
@@ -979,11 +979,11 @@
                         `<div class="kb-auto-assign-chips">` +
                         boundEntities.filter(e => e.isBound).map(e => {
                             const checked = currentBots.includes(e.entityId) ? ' checked' : '';
-                            const label = e.name || e.character || `#${e.entityId}`;
-                            const avatar = isAvatarUrl(e.avatar) ? `<img src="${escapeHtml(e.avatar)}" class="kb-assign-avatar">` : `<span class="kb-assign-avatar">${e.avatar || '🦞'}</span>`;
+                            const label = getEntityDisplayName(e.entityId);
+                            const avatarEl = typeof renderAvatarHtml === 'function' ? renderAvatarHtml(e.avatar, 16) : (e.avatar || '🦞');
                             return `<label class="kb-assign-chip${checked ? ' active' : ''}" title="${escapeHtml(label)}">` +
                                 `<input type="checkbox" value="${e.entityId}"${checked} onchange="updateAutoAssign('${cardId}')">` +
-                                avatar + `<span>${escapeHtml(label)}</span></label>`;
+                                avatarEl + `<span>${escapeHtml(label)}</span></label>`;
                         }).join('') +
                         `</div>` +
                     `</div>`;
@@ -1006,6 +1006,22 @@
             document.getElementById('detailModal').classList.add('show');
         }
 
+        // Shared helper: run automation action with loading state + error handling
+        async function withAutoAction(btn, apiFn, { refreshModal, cardId, successMsg, closeOnDone } = {}) {
+            if (btn) { btn.disabled = true; btn.dataset.origText = btn.textContent; btn.textContent = '⏳'; }
+            try {
+                await apiFn();
+                await loadCards(); // loadCards chains to loadAutomations internally
+                if (closeOnDone) closeDetail();
+                else if (refreshModal && cardId && openCardId === cardId) openDetail(cardId);
+                if (successMsg) showToast(successMsg);
+            } catch (e) {
+                showToast(e.message || t('toast_error', 'Error'), true);
+            } finally {
+                if (btn && btn.isConnected) { btn.disabled = false; btn.textContent = btn.dataset.origText; }
+            }
+        }
+
         async function updateAutoAssign(cardId) {
             const chips = document.querySelectorAll('.kb-auto-assign-chips input[type="checkbox"]');
             const bots = Array.from(chips).filter(c => c.checked).map(c => parseInt(c.value));
@@ -1013,76 +1029,39 @@
                 showToast(t('kb_err_no_entity', 'At least one entity must be assigned'), true);
                 return;
             }
-            try {
-                await apiCall('PUT', `/api/mission/card/${cardId}`, {
-                    deviceId: currentUser.deviceId,
-                    deviceSecret: currentUser.deviceSecret,
-                    assignedBots: bots,
-                });
-                const card = findCard(cardId);
-                if (card) card.assignedBots = bots;
-                await loadAutomations();
-                await loadCards();
-                // Refresh chip active state
-                chips.forEach(c => c.closest('.kb-assign-chip').classList.toggle('active', c.checked));
-                showToast(`Assigned → ${bots.map(b => '#' + b).join(', ')}`);
-            } catch (e) {
-                alert(e.message || 'Failed to update assignment');
-            }
+            await withAutoAction(null, () => apiCall('PUT', `/api/mission/card/${cardId}`, {
+                deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret, assignedBots: bots,
+            }), { refreshModal: true, cardId, successMsg: t('kb_auto_assigned', 'Assigned') + ' → ' + bots.map(b => '#' + b).join(', ') });
         }
 
         async function setAutoReviewer(cardId, val) {
             const reviewerId = val === '' ? null : parseInt(val);
-            try {
-                await apiCall('PUT', `/api/mission/card/${cardId}`, {
-                    deviceId: currentUser.deviceId,
-                    deviceSecret: currentUser.deviceSecret,
-                    reviewerEntityId: reviewerId,
-                });
-                // Update local data
-                const card = findCard(cardId);
-                if (card) card.reviewerEntityId = reviewerId;
-                await loadAutomations();
-                const reviewerName = reviewerId != null ? (boundEntities.find(e => e.entityId === reviewerId)?.name || `#${reviewerId}`) : 'None';
-                showToast(`Reviewer → ${reviewerName}`);
-            } catch (e) {
-                alert(e.message || 'Failed to set reviewer');
-            }
+            const reviewerName = reviewerId != null ? (getEntityDisplayName(reviewerId) || `#${reviewerId}`) : t('kb_auto_no_reviewer', 'None');
+            await withAutoAction(null, () => apiCall('PUT', `/api/mission/card/${cardId}`, {
+                deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret, reviewerEntityId: reviewerId,
+            }), { successMsg: t('kb_auto_reviewer', 'Reviewer') + ' → ' + reviewerName });
         }
 
         async function toggleAutoSchedule(cardId, enable) {
             const card = findCard(cardId);
             if (!card) return;
-            try {
-                const body = {
-                    deviceId: currentUser.deviceId,
-                    deviceSecret: currentUser.deviceSecret,
-                    enabled: enable,
-                    type: card.schedule?.type || 'recurring',
-                };
-                if (card.schedule?.cronExpression) body.cronExpression = card.schedule.cronExpression;
-                if (card.schedule?.runAt) body.runAt = card.schedule.runAt;
-                await apiCall('PUT', `/api/mission/card/${cardId}/schedule`, body);
-                await loadAutomations();
-                await loadCards();
-                openDetail(cardId); // refresh modal
-            } catch (e) {
-                alert(e.message || 'Failed to toggle automation');
-            }
+            const btn = document.querySelector('.kb-auto-action-btn.pause,.kb-auto-action-btn.resume');
+            const body = { deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret, enabled: enable, type: card.schedule?.type || 'recurring' };
+            if (card.schedule?.cronExpression) body.cronExpression = card.schedule.cronExpression;
+            if (card.schedule?.runAt) body.runAt = card.schedule.runAt;
+            await withAutoAction(btn, () => apiCall('PUT', `/api/mission/card/${cardId}/schedule`, body), {
+                refreshModal: true, cardId, successMsg: enable ? '▶ ' + t('kb_auto_resume', 'Resume') : '⏸ ' + t('kb_auto_pause', 'Pause'),
+            });
         }
 
         async function deleteAutomation(cardId) {
             const card = findCard(cardId);
             if (!card) return;
             if (!confirm(t('kb_auto_delete_confirm', `Delete automation "${card.title}"? This will archive the card.`))) return;
-            try {
-                await apiCall('DELETE', `/api/mission/card/${cardId}?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
-                closeDetail();
-                await loadAutomations();
-                await loadCards();
-            } catch (e) {
-                alert(e.message || 'Failed to delete automation');
-            }
+            const btn = document.querySelector('.kb-auto-action-btn.delete');
+            await withAutoAction(btn, () => apiCall('DELETE', `/api/mission/card/${cardId}?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`), {
+                closeOnDone: true, successMsg: '🗑 ' + t('toast_entity_deleted', 'Deleted'),
+            });
         }
 
         // ── Edit Schedule ──
@@ -1172,8 +1151,7 @@
                 await apiCall('PUT', `/api/mission/card/${cardId}/schedule`, body);
                 closeEditSchedule();
                 showToast(t('kb_auto_edit_saved', 'Schedule updated'));
-                await loadAutomations();
-                await loadCards();
+                await loadCards(); // chains to loadAutomations internally
                 if (openCardId === cardId) openDetail(cardId);
             } catch (e) {
                 showToast(e.message || t('kb_auto_edit_failed', 'Failed to update schedule'), true);
@@ -1297,14 +1275,15 @@
         // ── Automation ──
         async function loadAutomations() {
             try {
-                const data = await apiCall('GET', `/api/mission/cards?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}&automation=true`);
+                const authQ = `deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`;
+                // Parallel fetch: cards + projections
+                const [data, projData] = await Promise.all([
+                    apiCall('GET', `/api/mission/cards?${authQ}&automation=true`),
+                    apiCall('GET', `/api/mission/cards/projections?${authQ}`).catch(() => ({ projections: {} })),
+                ]);
                 automationCards = data.cards || [];
+                cardProjections = projData.projections || {};
                 console.log('[Kanban] loadAutomations:', automationCards.length, 'automation cards');
-                // Fetch projected run times for timeline density
-                try {
-                    const projData = await apiCall('GET', `/api/mission/cards/projections?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
-                    cardProjections = projData.projections || {};
-                } catch(pe) { cardProjections = {}; }
                 renderAutomationSection();
             } catch(e) { console.error('[Kanban] loadAutomations failed:', e.message); }
         }
