@@ -7835,7 +7835,8 @@ app.get('/api/contacts/my-cards', async (req, res) => {
             description: agentCard?.description || null,
             contactEmail: agentCard?.contactEmail || null,
             website: agentCard?.website || null,
-            agentCard
+            agentCard,
+            isPublic: !!ent.isPublic
         });
     }
     res.json({ success: true, cards });
