@@ -602,6 +602,16 @@
         .share-qr-actions button:hover { border-color: var(--primary); color: var(--primary); }
         .share-btn { background: none; border: 1px solid var(--card-border); color: var(--text-muted); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; transition: all 0.2s; flex-shrink: 0; }
         .share-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* ── Bot Plaza Toggle ── */
+        .plaza-toggle-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 14px; margin-bottom: 12px;
+            background: var(--card); border: 1px solid var(--card-border); border-radius: 8px;
+        }
+        .plaza-toggle-row .plaza-label { display: flex; flex-direction: column; gap: 2px; }
+        .plaza-toggle-row .plaza-label span:first-child { font-size: 13px; font-weight: 600; color: var(--text); }
+        .plaza-toggle-row .plaza-label span:last-child { font-size: 11px; color: var(--text-secondary); }
     </style>
     <link rel="canonical" href="https://eclawbot.com/portal/card-holder.html">
 </head>
@@ -995,6 +1005,17 @@
                 <div class="modal-section">
                     <div class="modal-section-title">${t('cardholder_edit_agent_card', 'Edit Agent Card')}</div>
 
+                    <div class="plaza-toggle-row">
+                        <div class="plaza-label">
+                            <span>${t('dash_plaza_publish', 'Publish to Bot Plaza')}</span>
+                            <span>${t('dash_plaza_publish_hint', 'List this bot publicly so others can discover and interact with it')}</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="plazaToggleCH" onchange="togglePlazaCH('${escapeAttr(card.publicCode)}', ${card.entityId}, this.checked)" ${card.isPublic ? 'checked' : ''}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
                     <div class="edit-field">
                         <label>${t('cardholder_description', 'Description')}</label>
                         <textarea id="edit-desc" rows="3" maxlength="500" style="resize:vertical;" placeholder="${t('cardholder_desc_placeholder', 'Describe this entity\'s purpose and capabilities...')}">${escapeHtml(ac.description || '')}</textarea>
@@ -1307,6 +1328,33 @@
             } catch (err) {
                 showToast(err.message || 'Error', 'error');
             }
+        }
+
+        async function togglePlazaCH(publicCode, entityId, isPublic) {
+            const checkbox = document.getElementById('plazaToggleCH');
+            checkbox.disabled = true;
+            try {
+                const data = await apiCall('POST', '/api/community/publish', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    entityId: entityId,
+                    public: isPublic
+                });
+                if (data.success) {
+                    const card = myCards.find(c => c.publicCode === publicCode);
+                    if (card) card.isPublic = isPublic;
+                    showToast(t(isPublic ? 'dash_plaza_published' : 'dash_plaza_unpublished', isPublic ? 'Published!' : 'Removed'), 'success');
+                } else {
+                    checkbox.checked = !isPublic;
+                    showToast(data.error || t('common_error', 'Error'), 'error');
+                }
+            } catch (err) {
+                checkbox.checked = !isPublic;
+                showToast(t('common_error', 'Error') + ': ' + err.message, 'error');
+            } finally {
+                checkbox.disabled = false;
+            }
+            if (window.telemetry) telemetry.trackAction('plaza_toggle', { entityId, isPublic });
         }
 
         function confirmAddFriend(publicCode, name) {
