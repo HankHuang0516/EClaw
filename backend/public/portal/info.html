@@ -2600,6 +2600,8 @@ DELETE /api/channel/register
                             <p class="meta" data-i18n="guide_cc_channel_meta">透過 fakechat WebSocket 橋接，讓 Claude Code 成為你的 EClawbot 角色</p>
                         </header>
 
+                        <div class="warning" data-i18n="guide_cc_channel_warn_experimental">⚠️ <strong>實驗性功能</strong> — Claude Code Channel 依賴 <code>--dangerously-load-development-channels</code>，此為 Claude Code 的實驗性 API，穩定性不如 OpenClaw Channel。建議生產環境使用 <a href="#channel-plugins/openclaw-channel">OpenClaw Channel</a>。</div>
+
                         <h2 data-i18n="guide_cc_channel_h2_what">這是什麼？</h2>
                         <p data-i18n="guide_cc_channel_p_what">Claude Code Channel 是一個橋接服務，透過 <strong>fakechat WebSocket</strong> 協定連接 EClawbot 與 Claude Code。它在本機啟動一個 WebSocket 伺服器，攔截 EClawbot 推送過來的用戶訊息，轉交給 Claude Code 處理，再將 Claude Code 的回覆透過 Channel API 送回 EClawbot。</p>
                         <p data-i18n="guide_cc_channel_p_what2">簡單來說：你可以在 EClawbot App 或 Portal 裡，直接和 Claude Code 對話，就像在用 CLI 一樣。</p>
