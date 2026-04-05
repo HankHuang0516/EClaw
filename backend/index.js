@@ -4035,13 +4035,221 @@ app.get('/api/status', (req, res) => {
     });
 });
 
+// ── Shared Helpers: Gatekeeper + Delivery ──
+
+/**
+ * Gatekeeper Second Lock: mask leaked tokens for free bots.
+ * Returns { text, leaked } where text is potentially masked.
+ */
+function gatekeeperCheckText(deviceId, entityId, text, botSecret) {
+    const binding = officialBindingsCache[getBindingCacheKey(deviceId, entityId)];
+    const isFreeBot = binding && officialBots[binding.bot_id] && officialBots[binding.bot_id].bot_type === 'free';
+    if (!isFreeBot || !text) return { text, leaked: false };
+    const leakCheck = gatekeeper.detectAndMaskLeaks(text, deviceId, botSecret);
+    if (leakCheck.leaked) {
+        console.warn(`[Gatekeeper] Second lock: masked ${leakCheck.leakTypes.join(', ')} from device ${deviceId} entity ${entityId}`);
+        serverLog('warn', 'gatekeeper', `Second lock: ${leakCheck.leakTypes.join(', ')}`, { deviceId, entityId });
+        return { text: leakCheck.maskedText, leaked: true };
+    }
+    return { text, leaked: false };
+}
+
+/**
+ * Deliver a message from one entity to another (same-device or cross-device).
+ * Encapsulates: messageQueue push, chat save, webhook/channel push, XP, delivery tracking.
+ *
+ * @param {Object} opts
+ * @param {string} opts.senderDeviceId - sender's device
+ * @param {number} opts.fromId - sender entity ID
+ * @param {Object} opts.fromEntity - sender entity object
+ * @param {string} opts.targetDeviceId - target's device (may differ from sender)
+ * @param {number} opts.toId - target entity ID
+ * @param {Object} opts.toEntity - target entity object
+ * @param {string} opts.text - message text
+ * @param {string} [opts.mediaType] - optional media type
+ * @param {string} [opts.mediaUrl] - optional media URL
+ * @param {boolean} [opts.expectsReply=true] - whether reply is expected
+ * @param {boolean} [opts.isBroadcast=false] - if this is part of a broadcast
+ * @param {number[]} [opts.broadcastTargetIds] - all broadcast targets (for recipient block)
+ * @param {string} [opts.broadcastChatMsgId] - shared chat msg ID for broadcast delivery tracking
+ * @param {boolean} [opts.showRecipientInfo=false] - show recipient info in push
+ * @param {boolean} [opts.isCrossDevice=false] - cross-device delivery
+ * @returns {{ entityId, character, pushed, mode, reason, bindingType }}
+ */
+async function deliverToEntity(opts) {
+    const {
+        senderDeviceId, fromId, fromEntity,
+        targetDeviceId, toId, toEntity,
+        text, mediaType, mediaUrl,
+        expectsReply = true,
+        isBroadcast = false,
+        broadcastTargetIds,
+        broadcastChatMsgId,
+        showRecipientInfo = false,
+        isCrossDevice = false
+    } = opts;
+
+    const sourceLabel = isCrossDevice
+        ? `xdevice:${fromEntity.publicCode}:${fromEntity.character}`
+        : `entity:${fromId}:${fromEntity.character}`;
+
+    // Set target entity.message for Android display
+    const msgPrefix = isBroadcast ? '[廣播] ' : '';
+    toEntity.message = isCrossDevice
+        ? `xdevice:${fromEntity.publicCode}:${fromEntity.character}: ${msgPrefix}${text}`
+        : `entity:${fromId}:${fromEntity.character}: ${msgPrefix}${text}`;
+    toEntity.lastUpdated = Date.now();
+
+    // Push to messageQueue
+    const messageObj = {
+        text,
+        from: sourceLabel,
+        fromEntityId: fromId,
+        fromCharacter: fromEntity.character,
+        timestamp: Date.now(),
+        read: false,
+        mediaType: mediaType || null,
+        mediaUrl: mediaUrl || null
+    };
+    if (isCrossDevice) {
+        messageObj.fromPublicCode = fromEntity.publicCode;
+        messageObj.fromDeviceId = senderDeviceId;
+        messageObj.crossDevice = true;
+    }
+    toEntity.messageQueue.push(messageObj);
+
+    // Save chat message
+    const chatSource = isCrossDevice
+        ? `${sourceLabel}->${toEntity.publicCode || targetDeviceId}`
+        : `${sourceLabel}->${isBroadcast && broadcastTargetIds ? broadcastTargetIds.join(',') : toId}`;
+
+    let chatMsgId;
+    if (isBroadcast && broadcastChatMsgId) {
+        // Broadcast: reuse the single shared chat message ID for delivery tracking
+        chatMsgId = broadcastChatMsgId;
+    } else {
+        chatMsgId = await saveChatMessage(targetDeviceId, isCrossDevice ? toId : fromId, text, chatSource, false, true, mediaType || null, mediaUrl || null);
+    }
+
+    // Cross-device: also save sender's copy
+    if (isCrossDevice) {
+        await saveChatMessage(senderDeviceId, fromId, text, chatSource, false, true, mediaType || null, mediaUrl || null);
+    }
+
+    markMessagesAsRead(targetDeviceId, toId);
+
+    // Determine push mode
+    const isChannelBound = toEntity.bindingType === 'channel';
+    const hasWebhook = !!toEntity.webhook;
+    const apiBase = 'https://eclawbot.com';
+
+    // Fire-and-forget push
+    if (isChannelBound) {
+        channelModule.pushToChannelCallback(targetDeviceId, toId, {
+            event: isBroadcast ? 'broadcast' : 'entity_message',
+            from: sourceLabel,
+            text,
+            mediaType: mediaType || null,
+            mediaUrl: mediaUrl || null,
+            backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
+            isBroadcast,
+            ...(isBroadcast && broadcastTargetIds ? { broadcastRecipients: broadcastTargetIds } : {}),
+            fromEntityId: fromId,
+            fromCharacter: fromEntity.character,
+            eclaw_context: {
+                b2bRemaining: getBotToBotRemaining(targetDeviceId, toId),
+                b2bMax: BOT2BOT_MAX_MESSAGES,
+                expectsReply,
+                missionHints: getMissionApiHints(apiBase, targetDeviceId, toId, toEntity.botSecret),
+                silentToken: '[SILENT]',
+                identitySetupRequired: !toEntity.identity
+            }
+        }, toEntity.channelAccountId).then(pushResult => {
+            if (pushResult.pushed) {
+                messageObj.delivered = true;
+                markChatMessageDelivered(chatMsgId, String(toId));
+            }
+        }).catch(err => {
+            console.error(`[Deliver] Channel push to Entity ${toId} failed: ${err.message}`);
+        });
+    } else if (hasWebhook) {
+        const toRemaining = getBotToBotRemaining(targetDeviceId, toId);
+        let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API. Your text reply is DISCARDED.\n`;
+        pushMsg += `To update your mood/emoji on wallpaper (do NOT repeat or narrate the message — the user can already see it in chat):\n`;
+        pushMsg += `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${targetDeviceId}","entityId":${toId},"botSecret":"${toEntity.botSecret}","targetDeviceId":"${targetDeviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'\n\n`;
+        if (expectsReply) {
+            pushMsg += `To reply directly to ${isCrossDevice ? fromEntity.publicCode : `Entity ${fromId}`}:\n`;
+            pushMsg += isCrossDevice
+                ? `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${targetDeviceId}","entityId":${toId},"botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE","speakTo":["${fromEntity.publicCode}"]}'\n\n`
+                : `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${targetDeviceId}","entityId":${toId},"botSecret":"${toEntity.botSecret}","state":"IDLE","message":"YOUR_REPLY_HERE","speakTo":["${toEntity.publicCode ? fromEntity.publicCode : fromId}"]}'\n\n`;
+            if (isBroadcast) {
+                pushMsg += `[BOT-TO-BOT BROADCAST] Remaining quota: ${toRemaining}/${BOT2BOT_MAX_MESSAGES}. IMPORTANT: Do NOT re-broadcast this message.`;
+            } else {
+                pushMsg += `[BOT-TO-BOT] Remaining quota: ${toRemaining}/${BOT2BOT_MAX_MESSAGES}. If the other entity is just repeating emotions with no new info, do NOT reply — just update your wallpaper status.`;
+            }
+            if (toRemaining <= 2) pushMsg += ` WARNING: Quota almost exhausted, do NOT auto-reply.`;
+        } else {
+            pushMsg += `[NOTIFICATION — NO REPLY EXPECTED] This is an informational message. Just update your wallpaper status.`;
+        }
+        if (isBroadcast && showRecipientInfo && broadcastTargetIds) {
+            const targetDevice = devices[targetDeviceId];
+            if (targetDevice) pushMsg += '\n\n' + buildBroadcastRecipientBlock(targetDevice, broadcastTargetIds, toId);
+        }
+        pushMsg += `\n\n[${isBroadcast ? 'BROADCAST' : 'MESSAGE'}] From: ${sourceLabel}\nContent: ${text}`;
+        if (mediaType === 'photo') {
+            pushMsg += `\n[Attachment: Photo]\nmedia_type: photo\nmedia_url: ${mediaUrl}`;
+            const bkUrl = getBackupUrl(mediaUrl);
+            if (bkUrl) pushMsg += `\nbackup_url: ${bkUrl}`;
+        } else if (mediaType === 'voice') pushMsg += `\n[Attachment: Voice]\nmedia_type: voice\nmedia_url: ${mediaUrl}`;
+        else if (mediaType === 'video') pushMsg += `\n[Attachment: Video]\nmedia_type: video\nmedia_url: ${mediaUrl}`;
+        else if (mediaType === 'file') pushMsg += `\n[Attachment: File]\nmedia_type: file\nmedia_url: ${mediaUrl}`;
+        pushMsg += getMissionApiHints(apiBase, targetDeviceId, toId, toEntity.botSecret);
+        pushMsg += buildIdentitySetupHint(toEntity, apiBase, targetDeviceId, toId, toEntity.botSecret);
+        pushToBot(toEntity, targetDeviceId, isBroadcast ? 'entity_broadcast' : 'entity_message', {
+            message: pushMsg
+        }).then(pushResult => {
+            if (pushResult.pushed) {
+                messageObj.delivered = true;
+                markChatMessageDelivered(chatMsgId, String(toId));
+            }
+        }).catch(err => {
+            console.error(`[Deliver] Push to Entity ${toId} failed: ${err.message}`);
+        });
+    } else if (toEntity.isBound) {
+        console.warn(`[Push] ✗ No webhook registered for Device ${targetDeviceId} Entity ${toId} - client will show dialog`);
+    }
+
+    // Determine binding type
+    const officialBind = officialBindingsCache[getBindingCacheKey(targetDeviceId, toId)];
+    let bindingType = null;
+    if (officialBind) {
+        const bot = officialBots[officialBind.bot_id];
+        bindingType = bot ? bot.bot_type : null;
+    }
+
+    return {
+        entityId: toId,
+        character: toEntity.character,
+        pushed: (isChannelBound || hasWebhook) ? 'pending' : false,
+        mode: isChannelBound ? 'channel' : hasWebhook ? 'push' : 'polling',
+        reason: (isChannelBound || hasWebhook) ? 'fire_and_forget' : 'no_webhook',
+        bindingType,
+        ...(isCrossDevice ? { publicCode: toEntity.publicCode, targetDeviceId } : {})
+    };
+}
+
 /**
  * POST /api/transform
  * Update entity status (Bot uses this).
- * Body: { deviceId, entityId: 0-3, botSecret, name, character, state, message, parts }
+ * Body: { deviceId, entityId, botSecret, name, character, state, message, parts, speakTo?, broadcast?, targetDeviceId? }
+ *
+ * speakTo: string[] of publicCodes — deliver message to these entities (same or cross-device)
+ * broadcast: boolean — deliver message to all bound entities on device (or targetDeviceId)
+ * If both speakTo and broadcast are provided, broadcast takes priority + warning.
+ *
  * REQUIRES botSecret for authentication!
  */
-app.post('/api/transform', (req, res) => {
+app.post('/api/transform', async (req, res) => {
     const { deviceId, entityId, botSecret, name, character, state, message, parts, targetDeviceId } = req.body;
 
     if (!deviceId) {
@@ -4244,7 +4452,181 @@ app.post('/api/transform', (req, res) => {
         });
     }
 
-    res.json({
+    // ── speakTo / broadcast delivery ──
+    const { speakTo, broadcast } = req.body;
+    const warnings = [];
+    let deliveryResults = null;
+
+    if ((speakTo || broadcast) && finalMessage) {
+        // If both provided, broadcast takes priority
+        if (speakTo && broadcast) {
+            warnings.push('Both speakTo and broadcast provided — broadcast takes priority, speakTo ignored.');
+        }
+
+        // Gatekeeper check on the message text for delivery
+        const gkResult = gatekeeperCheckText(deviceId, eId, finalMessage, entity.botSecret);
+        const deliveryText = gkResult.text;
+
+        if (broadcast) {
+            // ── Broadcast mode ──
+            const broadcastDeviceId = (targetDeviceId && targetDeviceId !== deviceId) ? targetDeviceId : deviceId;
+            const broadcastDevice = devices[broadcastDeviceId];
+
+            if (!broadcastDevice) {
+                warnings.push(`Broadcast target device ${broadcastDeviceId} not found.`);
+            } else {
+                // Broadcast dedup
+                if (!recentBroadcasts[broadcastDeviceId]) recentBroadcasts[broadcastDeviceId] = [];
+                const now = Date.now();
+                const BROADCAST_DEDUP_WINDOW = 60000;
+                recentBroadcasts[broadcastDeviceId] = recentBroadcasts[broadcastDeviceId].filter(b => now - b.timestamp < BROADCAST_DEDUP_WINDOW);
+                const normalizedText = (deliveryText || '').trim().slice(0, 200);
+                const isDuplicate = recentBroadcasts[broadcastDeviceId].some(b => b.fromEntityId !== eId && b.text === normalizedText);
+
+                if (isDuplicate) {
+                    warnings.push('Broadcast suppressed (duplicate of recent broadcast).');
+                    deliveryResults = { broadcast: true, deduplicated: true, sentCount: 0, targets: [] };
+                } else {
+                    recentBroadcasts[broadcastDeviceId].push({ fromEntityId: eId, text: normalizedText, timestamp: now });
+
+                    // Rate limit
+                    if (!checkBotToBotRateLimit(broadcastDeviceId, eId)) {
+                        warnings.push(`Bot-to-bot limit reached (${BOT2BOT_MAX_MESSAGES}). Broadcast skipped.`);
+                        deliveryResults = { broadcast: true, rateLimited: true, sentCount: 0, targets: [] };
+                    } else {
+                        // Find all other bound entities on broadcast device
+                        const targetIds = [];
+                        for (const i of Object.keys(broadcastDevice.entities).map(Number)) {
+                            if (i !== eId && broadcastDevice.entities[i] && broadcastDevice.entities[i].isBound) {
+                                targetIds.push(i);
+                            }
+                        }
+
+                        if (targetIds.length === 0) {
+                            deliveryResults = { broadcast: true, sentCount: 0, targets: [], message: 'No other bound entities to broadcast to.' };
+                        } else {
+                            const sourceLabel = `entity:${eId}:${entity.character}`;
+                            const broadcastChatMsgId = await saveChatMessage(broadcastDeviceId, eId, deliveryText, `${sourceLabel}->${targetIds.join(',')}`, false, true);
+
+                            // Check recipient info preference
+                            const bcastPrefs = await devicePrefs.getPrefs(broadcastDeviceId);
+                            const showRecipientInfo = bcastPrefs.broadcast_recipient_info !== false;
+
+                            const results = await Promise.all(targetIds.map(toId =>
+                                deliverToEntity({
+                                    senderDeviceId: deviceId, fromId: eId, fromEntity: entity,
+                                    targetDeviceId: broadcastDeviceId, toId, toEntity: broadcastDevice.entities[toId],
+                                    text: deliveryText, mediaType: null, mediaUrl: null,
+                                    expectsReply: true, isBroadcast: true,
+                                    broadcastTargetIds: targetIds, broadcastChatMsgId,
+                                    showRecipientInfo,
+                                    isCrossDevice: broadcastDeviceId !== deviceId
+                                })
+                            ));
+
+                            console.log(`[Transform+Broadcast] Device ${deviceId} Entity ${eId} -> [${targetIds.join(',')}] on ${broadcastDeviceId}`);
+                            deliveryResults = { broadcast: true, sentCount: results.length, targets: results };
+                        }
+                    }
+                }
+            }
+        } else if (speakTo && Array.isArray(speakTo) && speakTo.length > 0) {
+            // ── SpeakTo mode ──
+            const results = [];
+
+            for (const code of speakTo) {
+                // Look up publicCode
+                const target = publicCodeIndex[code];
+                if (!target) {
+                    results.push({ publicCode: code, success: false, reason: 'not_found' });
+                    continue;
+                }
+
+                const tDevice = devices[target.deviceId];
+                if (!tDevice) {
+                    results.push({ publicCode: code, success: false, reason: 'device_not_found' });
+                    continue;
+                }
+
+                const toEntity = tDevice.entities[target.entityId];
+                if (!toEntity || !toEntity.isBound) {
+                    results.push({ publicCode: code, success: false, reason: 'not_bound' });
+                    continue;
+                }
+
+                // Skip self
+                if (entity.publicCode === code) {
+                    results.push({ publicCode: code, success: false, reason: 'self_target' });
+                    continue;
+                }
+
+                const isCrossDevice = target.deviceId !== deviceId;
+
+                // Cross-device settings enforcement
+                if (isCrossDevice) {
+                    const xdSettings = await crossDeviceSettings.getSettings(target.deviceId, target.entityId);
+                    const senderCode = entity.publicCode;
+
+                    if (await db.isBlocked(target.deviceId, senderCode)) {
+                        results.push({ publicCode: code, success: false, reason: 'blocked' });
+                        continue;
+                    }
+                    if (xdSettings.blacklist.length > 0 && xdSettings.blacklist.includes(senderCode)) {
+                        results.push({ publicCode: code, success: false, reason: 'blacklisted' });
+                        continue;
+                    }
+                    if (xdSettings.whitelist_enabled && xdSettings.whitelist.length > 0 && !xdSettings.whitelist.includes(senderCode)) {
+                        results.push({ publicCode: code, success: false, reason: 'not_whitelisted' });
+                        continue;
+                    }
+                    if (xdSettings.forbidden_words.length > 0 && deliveryText) {
+                        const lowerText = deliveryText.toLowerCase();
+                        const blocked = xdSettings.forbidden_words.find(w => lowerText.includes(w.toLowerCase()));
+                        if (blocked) {
+                            results.push({ publicCode: code, success: false, reason: 'forbidden_word' });
+                            continue;
+                        }
+                    }
+
+                    // Cross-device rate limit
+                    if (!checkCrossSpeakRateLimit(deviceId, eId)) {
+                        results.push({ publicCode: code, success: false, reason: 'cross_device_rate_limited' });
+                        continue;
+                    }
+                } else {
+                    // Same-device rate limit
+                    if (!checkBotToBotRateLimit(deviceId, eId)) {
+                        results.push({ publicCode: code, success: false, reason: 'rate_limited' });
+                        continue;
+                    }
+                }
+
+                const result = await deliverToEntity({
+                    senderDeviceId: deviceId, fromId: eId, fromEntity: entity,
+                    targetDeviceId: target.deviceId, toId: target.entityId, toEntity,
+                    text: deliveryText, mediaType: null, mediaUrl: null,
+                    expectsReply: true, isBroadcast: false,
+                    isCrossDevice
+                });
+
+                // Notify both devices
+                notifyDevice(target.deviceId, {
+                    type: 'chat', category: isCrossDevice ? 'cross_speak' : 'speak_to',
+                    title: `${entity.name || `Entity ${eId}`} → ${toEntity.name || `Entity ${target.entityId}`}`,
+                    body: (deliveryText || '').slice(0, 100),
+                    link: 'chat.html',
+                    metadata: { fromEntityId: eId, toEntityId: target.entityId }
+                }).catch(() => {});
+
+                console.log(`[Transform+SpeakTo] ${deviceId}:${eId} -> ${target.deviceId}:${target.entityId} (${code})`);
+                results.push({ publicCode: code, success: true, ...result });
+            }
+
+            deliveryResults = { speakTo: true, results };
+        }
+    }
+
+    const response = {
         success: true,
         deviceId: deviceId,
         entityId: eId,
@@ -4261,7 +4643,11 @@ app.post('/api/transform', (req, res) => {
         },
         versionInfo: getVersionInfo(entity.appVersion),
         push_status: entity.pushStatus || null
-    });
+    };
+    if (deliveryResults) response.delivery = deliveryResults;
+    if (warnings.length > 0) response.warnings = warnings;
+
+    res.json(response);
 });
 
 // POST /api/wakeup - REMOVED (client-side wakeup retained without push)
@@ -6294,6 +6680,9 @@ app.post('/api/entity/speak-to', async (req, res) => {
     if (!isChannelBound && !hasWebhook) {
         speakToResponse.warning = 'Target entity has no webhook or channel registered. Message saved but not pushed. The bot must poll for messages or register a webhook via POST /api/bot/register.';
     }
+    speakToResponse.deprecated = true;
+    speakToResponse.migration_hint = 'This endpoint is deprecated. Use POST /api/transform with "speakTo" field instead. Example: {"speakTo":["TARGET_PUBLIC_CODE"],"message":"YOUR_TEXT",...}';
+    res.set('X-Deprecated', 'Use POST /api/transform with speakTo field');
     res.json(speakToResponse);
 });
 
@@ -6625,13 +7014,16 @@ app.post('/api/entity/cross-speak', async (req, res) => {
         });
     }
 
+    res.set('X-Deprecated', 'Use POST /api/transform with speakTo field');
     res.json({
         success: true,
         message: `Cross-device message sent`,
         from: { publicCode: fromEntity.publicCode, character: fromEntity.character, entityId: fromId },
         to: { publicCode: targetCode, character: toEntity.character },
         pushed: isChannelBound || hasWebhook ? "pending" : false,
-        mode: isChannelBound ? "channel" : (hasWebhook ? "push" : "polling")
+        mode: isChannelBound ? "channel" : (hasWebhook ? "push" : "polling"),
+        deprecated: true,
+        migration_hint: 'This endpoint is deprecated. Use POST /api/transform with "speakTo":["TARGET_PUBLIC_CODE"] instead.'
     });
 });
 
@@ -8137,6 +8529,7 @@ app.post('/api/entity/broadcast', async (req, res) => {
         };
     });
 
+    res.set('X-Deprecated', 'Use POST /api/transform with broadcast field');
     res.json({
         success: true,
         message: `Broadcast sent from Entity ${fromId} to ${results.length} entities`,
@@ -8145,7 +8538,9 @@ app.post('/api/entity/broadcast', async (req, res) => {
         targets: results,
         broadcast: targetIds.length > 1,
         expects_reply: expectsReplyBcast,
-        push_status: fromEntity.pushStatus || null
+        push_status: fromEntity.pushStatus || null,
+        deprecated: true,
+        migration_hint: 'This endpoint is deprecated. Use POST /api/transform with "broadcast":true instead.'
     });
 });
 

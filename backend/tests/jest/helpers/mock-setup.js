@@ -171,6 +171,7 @@ jest.mock('../../../chat-integrity', () => ({
 jest.mock('../../../device-preferences', () => ({
     init: jest.fn(),
     initTable: jest.fn().mockResolvedValue(undefined),
+    getPrefs: jest.fn().mockResolvedValue({}),
 }));
 
 jest.mock('../../../entity-cross-device-settings', () => {
@@ -179,6 +180,11 @@ jest.mock('../../../entity-cross-device-settings', () => {
         init: jest.fn(),
         initTable: jest.fn().mockResolvedValue(undefined),
         router: express.Router(),
+        getSettings: jest.fn().mockResolvedValue({
+            blacklist: [], whitelist: [], whitelist_enabled: false,
+            forbidden_words: [], allowed_media: ['text', 'photo', 'voice', 'video', 'file'],
+            rate_limit_seconds: 0, reject_message: ''
+        }),
     };
 });
 
