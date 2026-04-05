@@ -13194,28 +13194,52 @@ async function markMessagesAsRead(deviceId, entityId) {
 }
 
 // GET /api/chat/history
+// Auth: deviceSecret OR botSecret (bot can only see messages for its own entity)
 app.get('/api/chat/history', async (req, res) => {
-    const { deviceId, deviceSecret, limit = 500, before, since } = req.query;
+    const { deviceId, deviceSecret, botSecret, limit = 500, before, since } = req.query;
 
-    if (!deviceId || !deviceSecret) {
-        return res.status(400).json({ success: false, error: 'Missing credentials' });
+    if (!deviceId) {
+        return res.status(400).json({ success: false, error: 'deviceId required' });
+    }
+    if (!deviceSecret && !botSecret) {
+        return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
     }
 
     const device = devices[deviceId];
-    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
-        // Also check JWT cookie
+    if (!device) {
+        return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    }
+
+    // Determine auth mode: deviceSecret (full access) or botSecret (entity-scoped)
+    let authedByDevice = false;
+    let botEntityId = null;
+
+    if (deviceSecret && safeEqual(device.deviceSecret, deviceSecret)) {
+        authedByDevice = true;
+    } else if (botSecret) {
+        // Find entity by botSecret
+        const eid = Object.keys(device.entities).map(Number)
+            .find(i => device.entities[i]?.isBound && device.entities[i].botSecret && safeEqual(device.entities[i].botSecret, botSecret));
+        if (eid !== undefined) {
+            botEntityId = eid;
+        }
+    }
+
+    if (!authedByDevice && botEntityId === null) {
+        // Fallback: JWT cookie
         const jwt = require('jsonwebtoken');
         const token = req.cookies && req.cookies.eclaw_session;
         if (token) {
             try {
                 const decoded = jwt.verify(token, JWT_SECRET_FALLBACK);
-                if (decoded.deviceId !== deviceId) {
-                    return res.status(401).json({ success: false, error: 'Invalid credentials' });
+                if (decoded.deviceId === deviceId) {
+                    authedByDevice = true;
                 }
             } catch {
-                return res.status(401).json({ success: false, error: 'Invalid credentials' });
+                // ignore
             }
-        } else {
+        }
+        if (!authedByDevice) {
             return res.status(401).json({ success: false, error: 'Invalid credentials' });
         }
     }
@@ -13226,6 +13250,13 @@ app.get('/api/chat/history', async (req, res) => {
             LEFT JOIN message_reactions r ON r.message_id = m.id AND r.device_id = m.device_id
             WHERE m.device_id = $1`;
         const params = [deviceId];
+
+        // Bot auth: only show messages involving this entity (sent by or targeted at)
+        if (botEntityId !== null) {
+            query += ` AND (m.entity_id = $${params.length + 1} OR m.source LIKE $${params.length + 2})`;
+            params.push(botEntityId);
+            params.push(`%->${botEntityId}%`);
+        }
 
         if (since) {
             query += ' AND m.created_at > $' + (params.length + 1);
