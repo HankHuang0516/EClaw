@@ -13210,22 +13210,19 @@ app.get('/api/chat/history', async (req, res) => {
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
-    // Determine auth mode: deviceSecret (full access) or botSecret (entity-scoped)
-    let authedByDevice = false;
-    let botEntityId = null;
+    // Auth: deviceSecret, botSecret (any bound entity on this device), or JWT cookie
+    let authed = false;
 
     if (deviceSecret && safeEqual(device.deviceSecret, deviceSecret)) {
-        authedByDevice = true;
+        authed = true;
     } else if (botSecret) {
-        // Find entity by botSecret
+        // Verify botSecret belongs to any entity on this device
         const eid = Object.keys(device.entities).map(Number)
             .find(i => device.entities[i]?.isBound && device.entities[i].botSecret && safeEqual(device.entities[i].botSecret, botSecret));
-        if (eid !== undefined) {
-            botEntityId = eid;
-        }
+        if (eid !== undefined) authed = true;
     }
 
-    if (!authedByDevice && botEntityId === null) {
+    if (!authed) {
         // Fallback: JWT cookie
         const jwt = require('jsonwebtoken');
         const token = req.cookies && req.cookies.eclaw_session;
@@ -13233,13 +13230,13 @@ app.get('/api/chat/history', async (req, res) => {
             try {
                 const decoded = jwt.verify(token, JWT_SECRET_FALLBACK);
                 if (decoded.deviceId === deviceId) {
-                    authedByDevice = true;
+                    authed = true;
                 }
             } catch {
                 // ignore
             }
         }
-        if (!authedByDevice) {
+        if (!authed) {
             return res.status(401).json({ success: false, error: 'Invalid credentials' });
         }
     }
