@@ -1,3 +1,10 @@
+# [1.890.0](https://github.com/HankHuang0516/EClaw/compare/v1.889.1...v1.890.0) (2026-04-05)
+
+
+### Features
+
+* unified speakTo/broadcast across transform + channel/message + plugin ([9b1ba47](https://github.com/HankHuang0516/EClaw/commit/9b1ba47a98b0d6a727acd6673a5ced3e06e85143))
+
 ## [1.889.1](https://github.com/HankHuang0516/EClaw/compare/v1.889.0...v1.889.1) (2026-04-05)
 
 
