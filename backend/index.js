@@ -4780,11 +4780,6 @@ app.delete('/api/device/entity/:entityId/permanent', async (req, res) => {
         return res.status(404).json({ success: false, error: `Entity #${eId} does not exist on this device` });
     }
 
-    // Protect: at least 1 entity must remain
-    if (entityCount(device) <= 1) {
-        return res.status(400).json({ success: false, error: 'Cannot delete the last entity. At least one entity must remain.' });
-    }
-
     const entity = device.entities[eId];
     console.log(`[DynamicEntity] Permanent delete: deviceId=${deviceId}, entityId=${eId}, isBound=${entity.isBound}, totalSlotsBefore=${entityCount(device)}`);
 
@@ -4845,15 +4840,30 @@ app.delete('/api/device/entity/:entityId/permanent', async (req, res) => {
     // Notify clients
     io.to(deviceId).emit('entityDeleted', { entityId: eId, totalSlots: entityCount(device) });
 
-    // Auto-compact: renumber remaining entities to sequential 0, 1, 2, ...
-    const compactResult = await compactEntitySlots(device, deviceId);
+    // If all entities deleted, auto-create a fresh default entity
+    let autoCreatedEntityId = null;
+    let compactResult = { compacted: false };
+    if (entityCount(device) === 0) {
+        const newId = 0;
+        device.entities[newId] = createDefaultEntity(newId);
+        device.nextEntityId = 1;
+        autoCreatedEntityId = newId;
+        console.log(`[DynamicEntity] Auto-created default entity #${newId} after last entity deleted: deviceId=${deviceId}`);
+        serverLog('info', 'entity_add', `Entity #${newId} auto-created (last entity deleted)`, { deviceId, entityId: newId });
+        await saveData();
+        io.to(deviceId).emit('entityAdded', { entityId: newId, totalSlots: 1 });
+    } else {
+        // Auto-compact: renumber remaining entities to sequential 0, 1, 2, ...
+        compactResult = await compactEntitySlots(device, deviceId);
+    }
 
     res.json({
         success: true,
         deletedEntityId: eId,
         remainingEntities: entityCount(device),
         entityIds: Object.keys(device.entities).map(Number),
-        compacted: compactResult.compacted ? compactResult.mapping : undefined
+        compacted: compactResult.compacted ? compactResult.mapping : undefined,
+        autoCreatedEntityId: autoCreatedEntityId != null ? autoCreatedEntityId : undefined
     });
 });
 

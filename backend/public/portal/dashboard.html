@@ -1613,7 +1613,7 @@
                     '<button class="btn btn-sm btn-outline" onclick="refreshEntity(' + entity.entityId + ', this)">&#x1F504; ' + i18n.t('dash_btn_refresh') + '</button>' +
                     '<button class="xd-settings-toggle" id="xdToggle' + entity.entityId + '" onclick="toggleXdSettings(' + entity.entityId + ')">' + i18n.t('dash_xd_settings') + '</button>' +
                     '<button class="ac-settings-toggle" id="acToggle' + entity.entityId + '" onclick="toggleIdentityPanel(' + entity.entityId + ')">&#x1F3AD; ' + i18n.t('dash_id_btn') + '</button>' +
-                    '<button class="btn btn-sm btn-delete-permanent"' + (entities.length <= 1 ? ' disabled title="' + i18n.t('dash_remove_title') + '"' : '') + ' onclick="confirmRemove(' + entity.entityId + ', \'' + escapedName + '\')">' + i18n.t('dash_btn_remove') + '</button>' +
+                    '<button class="btn btn-sm btn-delete-permanent" onclick="confirmRemove(' + entity.entityId + ', \'' + escapedName + '\')">' + i18n.t('dash_btn_remove') + '</button>' +
                     '</div>' +
                     '<div class="xd-settings-panel" id="xdPanel' + entity.entityId + '">' +
                     '<h4>' + i18n.t('dash_xd_title') + '</h4>' +
@@ -2742,10 +2742,6 @@
         }
 
         function confirmRemove(entityId, displayName) {
-            if (entities.length <= 1) {
-                showToast(i18n.t('toast_cannot_delete_last'), 'error');
-                return;
-            }
             const overlay = document.createElement('div');
             overlay.className = 'confirm-overlay';
             overlay.innerHTML =
@@ -2767,8 +2763,13 @@
         }
 
         async function removeEntity(entityId, btnEl) {
-            btnEl.disabled = true;
-            btnEl.textContent = 'Deleting...';
+            // Optimistic UX: close dialog immediately, run API in background
+            const overlay = btnEl.closest('.confirm-overlay');
+            if (overlay) overlay.remove();
+
+            showToast(i18n.t('toast_entity_deleting'), 'info');
+            if (window.telemetry) telemetry.trackAction('entity_delete_permanent', { entityId: entityId });
+            if (isEditMode) toggleEditMode();
 
             try {
                 await apiCall('DELETE', '/api/device/entity/' + entityId + '/permanent', {
@@ -2776,18 +2777,11 @@
                     deviceSecret: currentUser.deviceSecret
                 });
 
-                const overlay = btnEl.closest('.confirm-overlay');
-                if (overlay) overlay.remove();
-
                 showToast(i18n.t('toast_entity_deleted'), 'success');
-                if (window.telemetry) telemetry.trackAction('entity_delete_permanent', { entityId: entityId });
-
-                if (isEditMode) toggleEditMode();
                 await loadEntities();
             } catch (e) {
                 showToast(i18n.t('toast_delete_failed') + ': ' + e.message, 'error');
-                btnEl.disabled = false;
-                btnEl.textContent = i18n.t('dash_btn_remove');
+                await loadEntities();
             }
         }
 

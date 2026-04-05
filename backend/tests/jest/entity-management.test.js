@@ -95,12 +95,14 @@ describe('DELETE /api/device/entity/:entityId/permanent', () => {
         expect(res.status).toBe(403);
     });
 
-    it('returns 400 when trying to delete the last entity', async () => {
+    it('deleting the last entity auto-creates a new default entity', async () => {
         const secret = await registerDevice('ent-del-last');
         const res = await del('/api/device/entity/0/permanent')
             .send({ deviceId: 'ent-del-last', deviceSecret: secret });
-        expect(res.status).toBe(400);
-        expect(res.body.error).toMatch(/last entity/i);
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.autoCreatedEntityId).toBe(0);
+        expect(res.body.remainingEntities).toBe(1);
     });
 
     it('deletes an entity when multiple exist', async () => {

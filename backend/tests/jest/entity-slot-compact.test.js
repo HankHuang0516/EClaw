@@ -111,10 +111,13 @@ describe('Entity slot compaction — auto after delete', () => {
         expect(res.body.entityIds).toEqual([0]);
     });
 
-    it('cannot delete the last entity', async () => {
+    it('deleting the last entity auto-creates a new default entity', async () => {
         const res = await deletePermanent(0);
-        expect(res.status).toBe(400);
-        expect(res.body.error).toMatch(/last entity/i);
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.autoCreatedEntityId).toBe(0);
+        expect(res.body.remainingEntities).toBe(1);
+        expect(res.body.entityIds).toEqual([0]);
     });
 });
 
