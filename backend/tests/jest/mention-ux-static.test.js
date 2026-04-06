@@ -15,6 +15,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..', '..');
 const chatHtml = fs.readFileSync(path.join(ROOT, 'public', 'portal', 'chat.html'), 'utf8');
 const i18nJs = fs.readFileSync(path.join(ROOT, 'public', 'shared', 'i18n.js'), 'utf8');
+const indexJs = fs.readFileSync(path.join(ROOT, 'index.js'), 'utf8');
 
 describe('Mention feature — static wiring', () => {
     test('mention-autocomplete.js and mention-render.js are present in portal/shared', () => {
@@ -100,5 +101,55 @@ describe('Mention feature — skill template sync', () => {
 
     test('skill template references <@xxxxxx> token format', () => {
         expect(skillTemplates).toContain('<@xxxxxx>');
+    });
+});
+
+describe('Mention feature — Fix A: displayText propagation (regression)', () => {
+    test('/api/client/speak derives pushText from mentionParse.displayText', () => {
+        // Regression: bot #0 received raw <@xxxxxx> token instead of @name,
+        // which confused the LLM into routing to a previous conversation
+        // partner instead of the tagged entity. The fix is to use
+        // mentionParse.displayText (tokens replaced with @name) when
+        // pushing to the bot, while still storing raw text in chat_messages
+        // so the frontend can re-render chips.
+        expect(indexJs).toMatch(/const\s+pushText\s*=\s*\(mentionParse\s*&&\s*mentionParse\.displayText\)\s*\|\|\s*text/);
+    });
+
+    test('channel push uses pushText (not raw text)', () => {
+        // Locate the pushToChannelCallback call inside /api/client/speak.
+        // The payload.text field must be pushText, not the raw `text`.
+        const speakIdx = indexJs.indexOf("app.post('/api/client/speak'");
+        expect(speakIdx).toBeGreaterThan(0);
+        const channelIdx = indexJs.indexOf('channelModule.pushToChannelCallback', speakIdx);
+        const closingParen = indexJs.indexOf(', entity.channelAccountId', channelIdx);
+        expect(channelIdx).toBeGreaterThan(speakIdx);
+        expect(closingParen).toBeGreaterThan(channelIdx);
+        const callSnippet = indexJs.slice(channelIdx, closingParen);
+        expect(callSnippet).toContain('text: pushText');
+    });
+
+    test('OpenClaw webhook pushMsg uses pushText in Content: line', () => {
+        // The instruction-first push format builds a pushMsg string that
+        // includes `Content: ${text}` — this must be updated to pushText
+        // so the LLM sees human-readable @name instead of raw tokens.
+        expect(indexJs).toContain('Content: ${pushText}');
+        // The raw `${text}` form must not appear in the OpenClaw Content line
+        expect(indexJs).not.toMatch(/pushMsg\s*\+=\s*`Content: \$\{text\}/);
+    });
+});
+
+describe('Mention feature — Fix B: imperative [MENTIONS] wording (regression)', () => {
+    const pushContextJs = fs.readFileSync(path.join(ROOT, 'push-context.js'), 'utf8');
+
+    test('buildMentionsBlock uses IMPORTANT ROUTING HINT header', () => {
+        expect(pushContextJs).toContain('[MENTIONS — IMPORTANT ROUTING HINT]');
+    });
+
+    test('buildMentionsBlock instructs MUST call speakTo', () => {
+        expect(pushContextJs).toContain('you MUST call');
+    });
+
+    test('buildMentionsBlock warns against falling back to previous partner', () => {
+        expect(pushContextJs).toContain('Do NOT fall back to a previous conversation partner');
     });
 });
