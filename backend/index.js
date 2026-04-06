@@ -6104,7 +6104,7 @@ app.post('/api/device/entity/avatar/upload', avatarUpload.single('file'), async 
  * If bot has registered webhook, push notification is sent.
  */
 app.post('/api/client/speak', async (req, res) => {
-    let { deviceId, deviceSecret, entityId, text, source = "client", mediaType, mediaUrl } = req.body;
+    const { deviceId, deviceSecret, entityId, text, source = "client", mediaType, mediaUrl } = req.body;
 
     if (!deviceId) {
         return res.status(400).json({ success: false, message: "deviceId required" });
@@ -6221,11 +6221,12 @@ app.post('/api/client/speak', async (req, res) => {
         }
     }
 
-    // ── @mention / @all parsing ──
-    // Detect <@publicCode> tokens and @all literal. If found, they override entityId routing.
-    // Same-device mentions become target entities; cross-device mentions are checked against
-    // the Card Holder block list and surfaced in the response so the frontend can call
-    // /api/client/cross-speak for non-blocked cross-device targets.
+    // ── @mention / @all parsing (C-strict: hint-only, no routing override) ──
+    // Detect <@publicCode> tokens and @all literal. The user's explicit entityId
+    // selection is authoritative; mentions are surfaced in eclaw_context and the
+    // webhook [MENTIONS] hint so the receiving bot can decide whether to relay
+    // (via /api/transform speakTo / broadcast). Cross-device mentions still get
+    // a Card Holder block check so the response can warn the frontend.
     const mentionParse = mentionParser.parseMentions(text, {
         senderDeviceId: deviceId,
         devices,
@@ -6248,28 +6249,12 @@ app.post('/api/client/speak', async (req, res) => {
         }
     }
 
-    const mentionRouting = mentionParser.decideRouting(mentionParse);
-    if (mentionRouting.mode === 'broadcast') {
-        entityId = 'all';
-    } else if (mentionRouting.mode === 'speakTo') {
-        const sameDeviceTargets = mentionRouting.targets.filter(m => !m.isCrossDevice).map(m => m.entityId);
-        const crossDeviceTargets = mentionRouting.targets.filter(m => m.isCrossDevice);
-        const blockedCross = crossDeviceTargets.filter(m => m.blocked);
-        const deliverableCross = crossDeviceTargets.filter(m => !m.blocked);
-        if (sameDeviceTargets.length > 0) {
-            entityId = sameDeviceTargets;
-        }
-        if (blockedCross.length > 0) {
-            mentionWarnings.push(`${blockedCross.length} cross-device mention(s) blocked by recipient: ${blockedCross.map(m => m.publicCode).join(', ')}`);
-        }
-        if (deliverableCross.length > 0) {
-            // Frontend should call /api/client/cross-speak for these; /api/client/speak
-            // does not currently fan out cross-device owner-mode messages.
-            mentionWarnings.push(`${deliverableCross.length} cross-device mention(s) require /api/client/cross-speak delivery: ${deliverableCross.map(m => m.publicCode).join(', ')}`);
-        }
-    }
     if (mentionParse.unresolved.length > 0) {
         mentionWarnings.push(`Unresolved mention token(s): ${mentionParse.unresolved.join(', ')}`);
+    }
+    const blockedMentions = mentionParse.mentions.filter(m => m.blocked);
+    if (blockedMentions.length > 0) {
+        mentionWarnings.push(`${blockedMentions.length} cross-device mention(s) blocked by recipient: ${blockedMentions.map(m => m.publicCode).join(', ')}`);
     }
     const mentionsContext = mentionParser.toContextPayload(mentionParse);
 
