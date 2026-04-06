@@ -1,3 +1,10 @@
+# [1.897.0](https://github.com/HankHuang0516/EClaw/compare/v1.896.0...v1.897.0) (2026-04-06)
+
+
+### Features
+
+* **channel:** centralise context inlining in backend ([#1622](https://github.com/HankHuang0516/EClaw/issues/1622)) ([4af761f](https://github.com/HankHuang0516/EClaw/commit/4af761fa9107363d38a6cba6bfa5119edb357e65))
+
 # [1.896.0](https://github.com/HankHuang0516/EClaw/compare/v1.895.0...v1.896.0) (2026-04-06)
 
 
