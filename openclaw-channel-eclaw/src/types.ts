@@ -24,6 +24,7 @@ export interface EClawInboundMessage {
   entityId: number;
   conversationId: string;
   from: string;
+  /** Prompt body. Already fully materialised when `contextInlined` is true. */
   text: string;
   mediaType?: 'photo' | 'voice' | 'video' | 'file' | null;
   mediaUrl?: string | null;
@@ -35,6 +36,12 @@ export interface EClawInboundMessage {
   fromCharacter?: string;
   fromPublicCode?: string;
   eclaw_context?: EClawContext;
+  /**
+   * When true, the plugin must NOT re-merge any fields from `eclaw_context`
+   * into `text` (avoid double-rendering). Raw `eclaw_context` is still
+   * preserved on the wire for advanced consumers.
+   */
+  contextInlined?: boolean;
 }
 
 /** Entity info returned by channel register */
