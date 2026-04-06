@@ -21,6 +21,7 @@ const crypto = require('crypto');
 const db = require('./db');
 const { URL } = require('url');
 const dnsLookup = require('util').promisify(require('dns').lookup);
+const { enrichContext, materializeChannelText } = require('./push-context');
 
 // ── SSRF protection: reject private/internal callback URLs ──
 function isPrivateIp(ip) {
@@ -57,7 +58,8 @@ async function assertPublicCallbackUrl(callbackUrl) {
     if (isPrivateIp(address)) throw new Error('callback_url must not resolve to a private/internal IP');
 }
 
-module.exports = function (devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase, awardEntityXP, XP_AMOUNTS, notifyDevice, deliverToEntity, gatekeeperCheckText, resolveSpeakToTarget, checkBotToBotRateLimit, checkCrossSpeakRateLimit, crossDeviceSettings, devicePrefs, recentBroadcasts, BOT2BOT_MAX_MESSAGES, db: dbRef }) {
+module.exports = function (devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase, awardEntityXP, XP_AMOUNTS, notifyDevice, deliverToEntity, gatekeeperCheckText, resolveSpeakToTarget, checkBotToBotRateLimit, checkCrossSpeakRateLimit, crossDeviceSettings, devicePrefs, recentBroadcasts, BOT2BOT_MAX_MESSAGES, db: dbRef, getMissionApiHints, buildIdentitySetupHint, buildBroadcastRecipientBlock }) {
+    const pushContextHelpers = { getMissionApiHints, buildIdentitySetupHint, buildBroadcastRecipientBlock };
     // Late-bound kanban auto-review hook (set after kanbanModule init)
     let kanbanAutoReview = null;
     function setKanbanAutoReview(fn) { kanbanAutoReview = fn; }
@@ -890,13 +892,29 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 headers['Authorization'] = `Bearer ${account.callback_token}`;
             }
 
+            // Centralised context inlining — see backend/push-context.js.
+            const targetDevice = devices[deviceId];
+            const targetEntity = targetDevice && targetDevice.entities
+                ? targetDevice.entities[entityId]
+                : null;
+            const enrichedCtx = enrichContext(payload.eclaw_context, {
+                helpers: pushContextHelpers,
+                apiBase,
+                targetEntity,
+                targetDevice,
+                targetDeviceId: deviceId,
+                targetEntityId: entityId,
+                broadcastRecipients: payload.broadcastRecipients,
+            });
+            const materializedText = materializeChannelText(payload, enrichedCtx);
+
             const bodyStr = JSON.stringify({
                 event: payload.event || 'message',
                 deviceId,
                 entityId,
                 conversationId: `${deviceId}:${entityId}`,
                 from: payload.from || 'client',
-                text: payload.mediaUrl ? `${payload.text || ''}\n${payload.mediaUrl}`.trim() : (payload.text || ''),
+                text: materializedText,
                 mediaType: payload.mediaType || null,
                 mediaUrl: payload.mediaUrl || null,
                 backupUrl: payload.backupUrl || null,
@@ -906,7 +924,8 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 fromEntityId: payload.fromEntityId,
                 fromCharacter: payload.fromCharacter,
                 fromPublicCode: payload.fromPublicCode,
-                eclaw_context: payload.eclaw_context || null,
+                eclaw_context: enrichedCtx,
+                contextInlined: true,
                 e2ee: !!account.e2ee_capable
             });
 

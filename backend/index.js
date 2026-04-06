@@ -11,6 +11,7 @@ const db = require('./db');
 const flickr = require('./flickr');
 const gatekeeper = require('./gatekeeper');
 const mentionParser = require('./mention-parser');
+const pushContext = require('./push-context');
 const telemetry = require('./device-telemetry');
 const feedbackModule = require('./device-feedback');
 const chatIntegrity = require('./chat-integrity');
@@ -6429,15 +6430,10 @@ app.post('/api/client/speak', async (req, res) => {
                 else if (mediaType === 'file') pushMsg += `\n[Attachment: File]\nmedia_type: file\nmedia_url: ${mediaUrl}`;
                 pushMsg += getMissionApiHints(apiBase, deviceId, eId, entity.botSecret);
                 pushMsg += buildIdentitySetupHint(entity, apiBase, deviceId, eId, entity.botSecret);
-                // Mention hint: if user @-tagged entities, expose the resolved mentions so the
-                // bot knows who the user addressed and can use speakTo if a relay is requested.
-                if (mentionsContext && (mentionsContext.mentions.length > 0 || mentionsContext.hasAll)) {
-                    pushMsg += `\n\n[MENTIONS] User tagged: ` +
-                        (mentionsContext.hasAll ? '@all (broadcast) ' : '') +
-                        mentionsContext.mentions.map(m => `@${m.name}#${m.publicCode}${m.isCrossDevice ? '(cross-device)' : ''}`).join(', ') +
-                        `\nTo relay this message to the tagged entities, use the speakTo field in /api/transform with the publicCodes: [${mentionsContext.mentions.map(m => `"${m.publicCode}"`).join(',')}]` +
-                        (mentionsContext.hasAll ? `\nOr set broadcast:true to send to every bound entity on this device.` : '');
-                }
+                // Mention hint: surface @-tags to the bot via the shared
+                // [MENTIONS] block (same renderer the channel path uses).
+                const mentionsBlock = pushContext.buildMentionsBlock(mentionsContext);
+                if (mentionsBlock) pushMsg += `\n\n${mentionsBlock}`;
 
                 pushResult = await pushToBot(entity, deviceId, "new_message", {
                     message: pushMsg
@@ -12005,7 +12001,10 @@ const channelModule = require('./channel-api')(devices, {
     devicePrefs,
     recentBroadcasts,
     BOT2BOT_MAX_MESSAGES,
-    db
+    db,
+    getMissionApiHints,
+    buildIdentitySetupHint,
+    buildBroadcastRecipientBlock
 });
 app.use('/api/channel', channelModule.router);
 // Wire channel push into mission module (Bot Push Parity Rule — must be after channelModule init)

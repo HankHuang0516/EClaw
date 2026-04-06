@@ -13,11 +13,19 @@ import { getClient, setActiveEvent, clearActiveEvent } from './outbound.js';
  * The `deliver` callback routes AI response to the correct E-Claw endpoint
  * based on the inbound event type.
  *
- * Channel Bot Context Parity v1.0.17+:
- *   - Bot-to-bot / broadcast uses unified sendMessage() with speakTo option (single API call)
- *   - Quota awareness via eclaw_context.b2bRemaining / b2bMax
- *   - Mission context via eclaw_context.missionHints
- *   - Silent suppression via silentToken (default "[SILENT]")
+ * EClaw backend v1.363+ centralised context inlining: when `msg.contextInlined`
+ * is true, `msg.text` is already fully materialised (event prefix, quota line,
+ * recipients, [MENTIONS], mission/identity hints, media labels) and we forward
+ * it as-is. The `else` branch is a compatibility shim for older EClaw backends;
+ * remove it once all consumers run v1.400+.
+ *
+ * `silentToken` is the only `eclaw_context` field still consulted locally
+ * because it governs outbound suppression in the deliver() callback below
+ * (a bot replying with this token must not actually send anything), and that
+ * decision lives in the plugin.
+ *
+ * Outbound: bot-to-bot / broadcast replies use sendMessage() with speakTo so
+ * a single API call updates the wallpaper and delivers the reply.
  */
 export function createWebhookHandler(
   _expectedToken: string,   // kept for API compat; auth is handled by webhook-registry
@@ -49,7 +57,6 @@ export function createWebhookHandler(
       const fromEntityId = msg.fromEntityId;
       const fromCharacter = msg.fromCharacter;
 
-      // Read server-injected context block (Channel Bot parity)
       const eclawCtx = msg.eclaw_context;
       const silentToken = eclawCtx?.silentToken ?? '[SILENT]';
 
@@ -60,41 +67,45 @@ export function createWebhookHandler(
         : msg.mediaType ? 'file'
         : undefined;
 
-      // Build body — enrich with event context for bot-to-bot and broadcast
-      // Append media URL to body so text-based agents can see/analyze images
-      let body = msg.text || '';
-      if (msg.mediaUrl && msg.mediaType) {
-        const mediaLabel = msg.mediaType === 'photo' ? 'Image'
-          : msg.mediaType === 'voice' ? 'Voice'
-          : msg.mediaType === 'video' ? 'Video'
-          : 'File';
-        const urlToAppend = msg.backupUrl || msg.mediaUrl;
-        body = body
-          ? `${body}\n[${mediaLabel}: ${urlToAppend}]`
-          : `[${mediaLabel}: ${urlToAppend}]`;
-      }
-      if ((event === 'entity_message' || event === 'broadcast') && fromEntityId !== undefined) {
-        const senderLabel = fromCharacter
-          ? `Entity ${fromEntityId} (${fromCharacter})`
-          : `Entity ${fromEntityId}`;
-        const eventPrefix = event === 'broadcast'
-          ? `[Broadcast from ${senderLabel}]`
-          : `[Bot-to-Bot message from ${senderLabel}]`;
+      // Body assembly. Backend v1.363+ inlines everything; legacy branch
+      // below is the pre-v1.363 fallback (TODO: remove once all consumers
+      // run v1.400+).
+      let body: string;
+      if (msg.contextInlined) {
+        body = msg.text || '';
+      } else {
+        body = msg.text || '';
+        if (msg.mediaUrl && msg.mediaType) {
+          const mediaLabel = msg.mediaType === 'photo' ? 'Image'
+            : msg.mediaType === 'voice' ? 'Voice'
+            : msg.mediaType === 'video' ? 'Video'
+            : 'File';
+          const urlToAppend = msg.backupUrl || msg.mediaUrl;
+          body = body
+            ? `${body}\n[${mediaLabel}: ${urlToAppend}]`
+            : `[${mediaLabel}: ${urlToAppend}]`;
+        }
+        if ((event === 'entity_message' || event === 'broadcast') && fromEntityId !== undefined) {
+          const senderLabel = fromCharacter
+            ? `Entity ${fromEntityId} (${fromCharacter})`
+            : `Entity ${fromEntityId}`;
+          const eventPrefix = event === 'broadcast'
+            ? `[Broadcast from ${senderLabel}]`
+            : `[Bot-to-Bot message from ${senderLabel}]`;
 
-        const quotaLine = eclawCtx?.b2bRemaining !== undefined
-          ? `[Quota: ${eclawCtx.b2bRemaining}/${eclawCtx.b2bMax ?? 8} remaining — output "${silentToken}" if no new info worth replying to]`
-          : '';
+          const quotaLine = eclawCtx?.b2bRemaining !== undefined
+            ? `[Quota: ${eclawCtx.b2bRemaining}/${eclawCtx.b2bMax ?? 8} remaining — output "${silentToken}" if no new info worth replying to]`
+            : '';
 
-        const missionBlock = eclawCtx?.missionHints ?? '';
+          const missionBlock = eclawCtx?.missionHints ?? '';
 
-        body = [eventPrefix, quotaLine, missionBlock, msg.text || '']
-          .filter(Boolean)
-          .join('\n');
-      } else if (event === 'kanban_notification') {
-        // Kanban notifications: merge missionHints into body so channel bots
-        // can see available API tools (same as webhook path gets them inline)
-        const missionBlock = eclawCtx?.missionHints ?? '';
-        body = [msg.text || '', missionBlock].filter(Boolean).join('\n');
+          body = [eventPrefix, quotaLine, missionBlock, msg.text || '']
+            .filter(Boolean)
+            .join('\n');
+        } else if (event === 'kanban_notification') {
+          const missionBlock = eclawCtx?.missionHints ?? '';
+          body = [msg.text || '', missionBlock].filter(Boolean).join('\n');
+        }
       }
 
       // Build context in OpenClaw's native PascalCase format
