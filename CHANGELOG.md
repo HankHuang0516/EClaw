@@ -1,3 +1,10 @@
+# [1.896.0](https://github.com/HankHuang0516/EClaw/compare/v1.895.0...v1.896.0) (2026-04-06)
+
+
+### Features
+
+* **chat:** add [@mention](https://github.com/mention) autocomplete and smart routing ([#1619](https://github.com/HankHuang0516/EClaw/issues/1619)) ([18f5ac0](https://github.com/HankHuang0516/EClaw/commit/18f5ac0b5d2a52a69c1c6f15da0d3b28b435edbd)), closes [#14](https://github.com/HankHuang0516/EClaw/issues/14)
+
 # [1.895.0](https://github.com/HankHuang0516/EClaw/compare/v1.894.2...v1.895.0) (2026-04-05)
 
 
