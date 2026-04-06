@@ -3253,29 +3253,13 @@
 
             const targets = getSelectedTargets();
 
-            // ── @mention routing override ──
-            // If the user typed @<publicCode> tokens or @all, use those as the
-            // authoritative target list (overriding target bar selection). The
-            // backend will also parse the tokens defensively; we do it here so
-            // the UI behaves predictably even when the checkboxes are stale.
-            const activeMentions = input._activeMentions || [];
-            const hasAllTag = window.MentionRender ? MentionRender.hasAllToken(text) : /(^|\s)@all(\s|$|[^\w])/i.test(text);
-            if (hasAllTag) {
-                // @all: broadcast to every bound same-device entity
-                targets.local = (boundEntities || []).map(e => e.entityId);
-                targets.contacts = [];
-            } else if (activeMentions.length > 0) {
-                const localMentions = activeMentions.filter(m => !m.isCrossDevice);
-                const crossMentions = activeMentions.filter(m => m.isCrossDevice);
-                if (localMentions.length > 0) {
-                    targets.local = localMentions.map(m => m.entityId).filter(id => id != null);
-                }
-                if (crossMentions.length > 0) {
-                    const crossCodes = crossMentions.map(m => m.code);
-                    // Union with any contacts the user also checked manually
-                    targets.contacts = Array.from(new Set(targets.contacts.concat(crossCodes)));
-                }
-            }
+            // C-strict mention design: @-tags inside the message are intent
+            // hints for the receiving bot, NOT routing overrides. The user's
+            // explicit target-bar selection is the sole source of truth for
+            // which entities receive the message. The backend forwards the
+            // parsed mentions in eclaw_context.mentions and the webhook push
+            // [MENTIONS] block so receiving bots can decide whether to relay
+            // via /api/transform speakTo / broadcast.
 
             if (targets.local.length === 0 && targets.contacts.length === 0) {
                 showToast(i18n.t('chat_select_entity'), 'error');

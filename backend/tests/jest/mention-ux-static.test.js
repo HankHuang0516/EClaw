@@ -51,6 +51,19 @@ describe('Mention feature — static wiring', () => {
         expect(chatHtml).toContain('.mention-chip-all');
         expect(chatHtml).toContain('.mention-chip-cross');
     });
+
+    test('chat.html does NOT override targets from mentions (C-strict)', () => {
+        // Regression: mentions must be hint-only. Target-bar selection is the
+        // sole source of truth for routing. Verify the override branch was
+        // removed and the C-strict explanation comment is present.
+        expect(chatHtml).toContain('C-strict mention design');
+        // The old override pattern must not be present anywhere in sendMessage
+        const sendMsgIdx = chatHtml.indexOf('async function sendMessage');
+        const sendMsgEnd = chatHtml.indexOf('} // sendMessage', sendMsgIdx);
+        const sendMsgBody = chatHtml.slice(sendMsgIdx, sendMsgEnd > 0 ? sendMsgEnd : sendMsgIdx + 5000);
+        expect(sendMsgBody).not.toMatch(/targets\.local\s*=\s*localMentions/);
+        expect(sendMsgBody).not.toMatch(/targets\.local\s*=\s*\(boundEntities\s*\|\|\s*\[\]\)\.map/);
+    });
 });
 
 describe('Mention feature — i18n keys', () => {
