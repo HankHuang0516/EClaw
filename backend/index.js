@@ -10,6 +10,7 @@ const { Server: SocketIO } = require('socket.io');
 const db = require('./db');
 const flickr = require('./flickr');
 const gatekeeper = require('./gatekeeper');
+const mentionParser = require('./mention-parser');
 const telemetry = require('./device-telemetry');
 const feedbackModule = require('./device-feedback');
 const chatIntegrity = require('./chat-integrity');
@@ -4276,7 +4277,7 @@ async function deliverToEntity(opts) {
  * REQUIRES botSecret for authentication!
  */
 app.post('/api/transform', async (req, res) => {
-    const { deviceId, entityId, botSecret, name, character, state, message, parts, targetDeviceId, speakTo, broadcast } = req.body;
+    let { deviceId, entityId, botSecret, name, character, state, message, parts, targetDeviceId, speakTo, broadcast } = req.body;
 
     if (!deviceId) {
         return res.status(400).json({ success: false, message: "deviceId required" });
@@ -4502,6 +4503,27 @@ app.post('/api/transform', async (req, res) => {
         });
     }
 
+    // ── @mention auto-fill ──
+    // If the bot's message contains <@publicCode> tokens or @all and speakTo/broadcast
+    // were not explicitly provided, auto-fill them from the parsed mentions so bots can
+    // naturally relay user-directed @-tags without having to rebuild the speakTo array.
+    let transformMentionContext = null;
+    if (finalMessage) {
+        const tParse = mentionParser.parseMentions(finalMessage, {
+            senderDeviceId: deviceId,
+            devices,
+            publicCodeIndex
+        });
+        transformMentionContext = mentionParser.toContextPayload(tParse);
+        if (transformMentionContext) {
+            if (tParse.hasAll && !broadcast && !(speakTo && speakTo.length > 0)) {
+                broadcast = true;
+            } else if (tParse.mentions.length > 0 && !broadcast && !(speakTo && speakTo.length > 0)) {
+                speakTo = tParse.mentions.map(m => m.publicCode);
+            }
+        }
+    }
+
     // ── speakTo / broadcast delivery ──
     const warnings = entityIdCorrected
         ? [`entityId mismatch: you provided ${parseInt(entityId) || 0} but your botSecret belongs to entity ${eId}. Auto-corrected to ${eId}.`]
@@ -4697,6 +4719,7 @@ app.post('/api/transform', async (req, res) => {
     };
     if (deliveryResults) response.delivery = deliveryResults;
     if (warnings.length > 0) response.warnings = warnings;
+    if (transformMentionContext) response.mentions = transformMentionContext;
 
     res.json(response);
 });
@@ -6081,7 +6104,7 @@ app.post('/api/device/entity/avatar/upload', avatarUpload.single('file'), async 
  * If bot has registered webhook, push notification is sent.
  */
 app.post('/api/client/speak', async (req, res) => {
-    const { deviceId, deviceSecret, entityId, text, source = "client", mediaType, mediaUrl } = req.body;
+    let { deviceId, deviceSecret, entityId, text, source = "client", mediaType, mediaUrl } = req.body;
 
     if (!deviceId) {
         return res.status(400).json({ success: false, message: "deviceId required" });
@@ -6176,7 +6199,10 @@ app.post('/api/client/speak', async (req, res) => {
         })();
 
         if (hasFreeBotTarget) {
-            const detection = gatekeeper.detectMaliciousMessage(text);
+            // Strip @mention tokens before Gatekeeper detection so token syntax
+            // (e.g. "<@abcdef>") cannot influence the regex-based malicious checks.
+            const gkText = mentionParser.stripMentionTokens(text);
+            const detection = gatekeeper.detectMaliciousMessage(gkText);
             if (detection.blocked) {
                 // Record violation and check for block
                 const strike = await gatekeeper.recordViolation(deviceId, detection.category, text);
@@ -6194,6 +6220,58 @@ app.post('/api/client/speak', async (req, res) => {
             }
         }
     }
+
+    // ── @mention / @all parsing ──
+    // Detect <@publicCode> tokens and @all literal. If found, they override entityId routing.
+    // Same-device mentions become target entities; cross-device mentions are checked against
+    // the Card Holder block list and surfaced in the response so the frontend can call
+    // /api/client/cross-speak for non-blocked cross-device targets.
+    const mentionParse = mentionParser.parseMentions(text, {
+        senderDeviceId: deviceId,
+        devices,
+        publicCodeIndex
+    });
+    const mentionWarnings = [];
+
+    // Card Holder block check for cross-device mentions (Phase 4).
+    // Sender identity is the device owner → pseudo code "owner:<deviceId>".
+    const senderOwnerCode = `owner:${deviceId}`;
+    for (const m of mentionParse.mentions) {
+        if (!m.isCrossDevice) continue;
+        try {
+            if (await db.isBlocked(m.deviceId, senderOwnerCode)) {
+                m.blocked = true;
+                m.blockReason = 'card_holder_blocked';
+            }
+        } catch (blockErr) {
+            console.warn(`[Mentions] Block check failed for ${m.publicCode}: ${blockErr.message}`);
+        }
+    }
+
+    const mentionRouting = mentionParser.decideRouting(mentionParse);
+    if (mentionRouting.mode === 'broadcast') {
+        entityId = 'all';
+    } else if (mentionRouting.mode === 'speakTo') {
+        const sameDeviceTargets = mentionRouting.targets.filter(m => !m.isCrossDevice).map(m => m.entityId);
+        const crossDeviceTargets = mentionRouting.targets.filter(m => m.isCrossDevice);
+        const blockedCross = crossDeviceTargets.filter(m => m.blocked);
+        const deliverableCross = crossDeviceTargets.filter(m => !m.blocked);
+        if (sameDeviceTargets.length > 0) {
+            entityId = sameDeviceTargets;
+        }
+        if (blockedCross.length > 0) {
+            mentionWarnings.push(`${blockedCross.length} cross-device mention(s) blocked by recipient: ${blockedCross.map(m => m.publicCode).join(', ')}`);
+        }
+        if (deliverableCross.length > 0) {
+            // Frontend should call /api/client/cross-speak for these; /api/client/speak
+            // does not currently fan out cross-device owner-mode messages.
+            mentionWarnings.push(`${deliverableCross.length} cross-device mention(s) require /api/client/cross-speak delivery: ${deliverableCross.map(m => m.publicCode).join(', ')}`);
+        }
+    }
+    if (mentionParse.unresolved.length > 0) {
+        mentionWarnings.push(`Unresolved mention token(s): ${mentionParse.unresolved.join(', ')}`);
+    }
+    const mentionsContext = mentionParser.toContextPayload(mentionParse);
 
     // Determine target entity IDs
     let targetIds = [];
@@ -6292,7 +6370,7 @@ app.post('/api/client/speak', async (req, res) => {
         };
         entity.messageQueue.push(messageObj);
         const chatBackupUrl = mediaType === 'photo' ? getBackupUrl(mediaUrl) : null;
-        saveChatMessage(deviceId, eId, text, source, true, false, mediaType || null, mediaUrl || null, null, null, chatBackupUrl);
+        saveChatMessage(deviceId, eId, text, source, true, false, mediaType || null, mediaUrl || null, null, null, chatBackupUrl, mentionsContext);
 
         // Reset bot-to-bot counter: human message breaks the loop
         resetBotToBotCounter(deviceId);
@@ -6312,7 +6390,8 @@ app.post('/api/client/speak', async (req, res) => {
                 mediaUrl: mediaUrl || null,
                 backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
                 isBroadcast: targetIds.length > 1,
-                broadcastRecipients: targetIds.length > 1 ? targetIds : null
+                broadcastRecipients: targetIds.length > 1 ? targetIds : null,
+                ...(mentionsContext ? { eclaw_context: { mentions: mentionsContext.mentions, hasAll: mentionsContext.hasAll } } : {})
             }, entity.channelAccountId);
 
             if (pushResult.pushed) {
@@ -6365,6 +6444,15 @@ app.post('/api/client/speak', async (req, res) => {
                 else if (mediaType === 'file') pushMsg += `\n[Attachment: File]\nmedia_type: file\nmedia_url: ${mediaUrl}`;
                 pushMsg += getMissionApiHints(apiBase, deviceId, eId, entity.botSecret);
                 pushMsg += buildIdentitySetupHint(entity, apiBase, deviceId, eId, entity.botSecret);
+                // Mention hint: if user @-tagged entities, expose the resolved mentions so the
+                // bot knows who the user addressed and can use speakTo if a relay is requested.
+                if (mentionsContext && (mentionsContext.mentions.length > 0 || mentionsContext.hasAll)) {
+                    pushMsg += `\n\n[MENTIONS] User tagged: ` +
+                        (mentionsContext.hasAll ? '@all (broadcast) ' : '') +
+                        mentionsContext.mentions.map(m => `@${m.name}#${m.publicCode}${m.isCrossDevice ? '(cross-device)' : ''}`).join(', ') +
+                        `\nTo relay this message to the tagged entities, use the speakTo field in /api/transform with the publicCodes: [${mentionsContext.mentions.map(m => `"${m.publicCode}"`).join(',')}]` +
+                        (mentionsContext.hasAll ? `\nOr set broadcast:true to send to every bound entity on this device.` : '');
+                }
 
                 pushResult = await pushToBot(entity, deviceId, "new_message", {
                     message: pushMsg
@@ -6464,6 +6552,12 @@ app.post('/api/client/speak', async (req, res) => {
     const noWebhookTargets = results.filter(r => r && !r.pushed && r.reason === 'no_webhook');
     if (noWebhookTargets.length > 0) {
         clientSpeakResponse.warning = `${noWebhookTargets.length} entity(s) have no webhook registered. Messages saved but not pushed. Bots must register a webhook via POST /api/bot/register.`;
+    }
+    if (mentionsContext) {
+        clientSpeakResponse.mentions = mentionsContext;
+    }
+    if (mentionWarnings.length > 0) {
+        clientSpeakResponse.warnings = (clientSpeakResponse.warnings || []).concat(mentionWarnings);
     }
     res.json(clientSpeakResponse);
 });
@@ -11866,6 +11960,7 @@ chatPool.query(`
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS like_count INTEGER DEFAULT 0;
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS dislike_count INTEGER DEFAULT 0;
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS backup_url TEXT DEFAULT NULL;
+    ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS mentions JSONB DEFAULT NULL;
 `).catch(() => {});
 
 // Auto-migrate: create message_reactions table (message_id must be UUID to match chat_messages.id)
@@ -12556,7 +12651,7 @@ const A2A_SOURCE_RE = /^entity:\d+:[A-Z]+->/;
 
 // Save chat message to database, returns row ID (UUID) or null
 // Deduplication: bot messages with identical text for the same entity within 10s are skipped
-async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null, backupUrl = null) {
+async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null, backupUrl = null, mentions = null) {
     try {
         // Dedup: skip if the same BOT message was already saved recently
         // Bot dedup: prevents echo when bot calls multiple endpoints (broadcast + sync-message + transform)
@@ -12578,9 +12673,9 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
         }
 
         const result = await chatPool.query(
-            `INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot, media_type, media_url, schedule_id, schedule_label, backup_url)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
-            [deviceId, entityId, text, source, isFromUser || false, isFromBot || false, mediaType, mediaUrl, scheduleId, scheduleLabel, backupUrl]
+            `INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot, media_type, media_url, schedule_id, schedule_label, backup_url, mentions)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
+            [deviceId, entityId, text, source, isFromUser || false, isFromBot || false, mediaType, mediaUrl, scheduleId, scheduleLabel, backupUrl, mentions ? JSON.stringify(mentions) : null]
         );
         const msgId = result.rows[0]?.id || null;
 
@@ -12603,6 +12698,7 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
                 backup_url: backupUrl,
                 schedule_id: scheduleId || null,
                 schedule_label: scheduleLabel || null,
+                mentions: mentions || null,
                 created_at: Date.now()
             });
         }

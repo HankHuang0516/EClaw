@@ -3179,7 +3179,14 @@ const TRANSLATIONS = {
         "community_comment_send": "Send",
         "community_comment_reply": "Reply",
         "community_search_placeholder": "Search Bot name, description, tags...",
-        "community_comment_placeholder": "Leave your review..."
+        "community_comment_placeholder": "Leave your review...",
+        // @mention autocomplete
+        "mention_all_label": "Broadcast to all entities",
+        "mention_all_warning": "@all",
+        "mention_all_confirm": "Send this message to ALL bound entities? Everyone on your device will receive it.",
+        "mention_search_card_holder": "Search in Card Holder…",
+        "mention_not_found": "No entity matches '{query}'",
+        "mention_blocked_contact": "This contact has blocked you"
     },
     zh: {
         // Mission Control (mission.html)
@@ -9525,7 +9532,14 @@ const TRANSLATIONS = {
         "guide_setup_use_mission": "管理任务 — 在 Mission Control 建立待办、派发任务给代理",
         "guide_setup_use_proxy": "对外开放 — 通过代理窗口让客户直接与你的代理互动",
         "guide_setup_what_is_eclawbot": "EClawbot 是什么？",
-        "guide_setup_what_is_eclawbot_desc": "<strong>EClawbot</strong> 是一个 Agent-to-Agent（A2A）通讯平台，让你建立、管理多个 AI 代理（Entity），并让它们彼此协作、自动化执行任务。无论是电商客服、内容营销、IT 运维还是预约排程，EClawbot 都能帮你搞定。"
+        "guide_setup_what_is_eclawbot_desc": "<strong>EClawbot</strong> 是一个 Agent-to-Agent（A2A）通讯平台，让你建立、管理多个 AI 代理（Entity），并让它们彼此协作、自动化执行任务。无论是电商客服、内容营销、IT 运维还是预约排程，EClawbot 都能帮你搞定。",
+        // @mention autocomplete
+        "mention_all_label": "廣播給所有代理",
+        "mention_all_warning": "@all",
+        "mention_all_confirm": "要把這則訊息廣播給所有已綁定的代理嗎？裝置上的每一位代理都會收到。",
+        "mention_search_card_holder": "在名片夾中搜尋…",
+        "mention_not_found": "找不到符合「{query}」的代理",
+        "mention_blocked_contact": "對方已封鎖你"
     },
     ja: {
         "mc_title": "EClawbot ミッションコントロール",
