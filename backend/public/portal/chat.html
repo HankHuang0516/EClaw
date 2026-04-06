@@ -1453,6 +1453,84 @@
         .chat-bubble a.msg-link:hover {
             opacity: 0.8;
         }
+
+        /* ── @mention autocomplete dropdown ── */
+        .mention-dropdown {
+            background: var(--bg-panel, #1a1a24);
+            border: 1px solid var(--border-color, #333);
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            max-height: 280px;
+            overflow-y: auto;
+            font-size: 14px;
+        }
+        .mention-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            color: var(--text-color, #e0e0e0);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .mention-item:last-child { border-bottom: none; }
+        .mention-item.active, .mention-item:hover {
+            background: rgba(99, 102, 241, 0.2);
+        }
+        .mention-item .mention-avatar {
+            width: 20px; height: 20px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 16px; flex-shrink: 0;
+        }
+        .mention-item .mention-avatar-img {
+            border-radius: 50%; object-fit: cover;
+        }
+        .mention-item .mention-name {
+            flex: 1;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .mention-item .mention-code {
+            font-size: 11px;
+            color: var(--text-muted, #888);
+            font-family: monospace;
+        }
+        .mention-item .mention-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .mention-item .mention-badge.mention-warn {
+            background: rgba(239, 68, 68, 0.25);
+            color: #fca5a5;
+        }
+        .mention-item.mention-all {
+            border-bottom: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .mention-empty {
+            padding: 10px 14px;
+            color: var(--text-muted, #888);
+            font-style: italic;
+        }
+
+        /* ── @mention chip inside message bubbles ── */
+        .mention-chip {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 10px;
+            background: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+            font-weight: 600;
+            font-size: 0.92em;
+        }
+        .mention-chip-cross {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+        }
+        .mention-chip-all {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
     </style>
     <link rel="canonical" href="https://eclawbot.com/portal/chat.html">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -1618,6 +1696,8 @@
     <script src="shared/nav.js"></script>
     <script src="shared/auth.js"></script>
     <script src="shared/entity-utils.js"></script>
+    <script src="shared/mention-autocomplete.js"></script>
+    <script src="shared/mention-render.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -1896,6 +1976,37 @@
             await loadBoundEntities();
             await loadMessages();
             isFirstLoad = false;
+
+            // Mount @mention autocomplete on the message input.
+            // Data source combines same-device bound entities + Card Holder contacts
+            // (non-blocked). getEntries is called on every @ trigger so updates
+            // (new contacts, renamed entities) are reflected without re-mount.
+            if (window.MentionAutocomplete) {
+                MentionAutocomplete.attach(document.getElementById('messageInput'), {
+                    getEntries: () => {
+                        const local = (boundEntities || []).filter(e => e.publicCode).map(e => ({
+                            code: e.publicCode,
+                            name: e.name || e.character || `Entity ${e.entityId}`,
+                            avatar: e.avatar,
+                            isCrossDevice: false,
+                            entityId: e.entityId
+                        }));
+                        const remote = (contacts || []).filter(c => !c.blocked && c.publicCode).map(c => ({
+                            code: c.publicCode,
+                            name: c.name || c.character || c.publicCode,
+                            avatar: c.avatar,
+                            isCrossDevice: true
+                        }));
+                        return local.concat(remote);
+                    },
+                    i18n: {
+                        allLabel: (i18n && i18n.t('mention_all_label')) || 'Broadcast to all',
+                        allWarning: (i18n && i18n.t('mention_all_warning')) || '@all',
+                        allConfirm: (i18n && i18n.t('mention_all_confirm')) || 'Send to ALL entities?',
+                        notFound: (i18n && i18n.t('mention_not_found')) || 'No matching entity'
+                    }
+                });
+            }
 
             // Restore unsent draft
             const savedDraft = localStorage.getItem('chat_draft');
@@ -2805,6 +2916,10 @@
                         textHtml = linkified.html;
                         firstUrl = linkified.urls[0] || '';
                     }
+                    // Render @mention tokens as chips (applies to both bot and user messages)
+                    if (window.MentionRender) {
+                        textHtml = MentionRender.renderMentionTokens(textHtml, buildMentionEntityMap(msg));
+                    }
                 }
                 const firstUrlIsImage = firstUrl && isImageUrl(firstUrl);
                 const inlineImgHtml = firstUrlIsImage
@@ -3137,6 +3252,31 @@
             }
 
             const targets = getSelectedTargets();
+
+            // ── @mention routing override ──
+            // If the user typed @<publicCode> tokens or @all, use those as the
+            // authoritative target list (overriding target bar selection). The
+            // backend will also parse the tokens defensively; we do it here so
+            // the UI behaves predictably even when the checkboxes are stale.
+            const activeMentions = input._activeMentions || [];
+            const hasAllTag = window.MentionRender ? MentionRender.hasAllToken(text) : /(^|\s)@all(\s|$|[^\w])/i.test(text);
+            if (hasAllTag) {
+                // @all: broadcast to every bound same-device entity
+                targets.local = (boundEntities || []).map(e => e.entityId);
+                targets.contacts = [];
+            } else if (activeMentions.length > 0) {
+                const localMentions = activeMentions.filter(m => !m.isCrossDevice);
+                const crossMentions = activeMentions.filter(m => m.isCrossDevice);
+                if (localMentions.length > 0) {
+                    targets.local = localMentions.map(m => m.entityId).filter(id => id != null);
+                }
+                if (crossMentions.length > 0) {
+                    const crossCodes = crossMentions.map(m => m.code);
+                    // Union with any contacts the user also checked manually
+                    targets.contacts = Array.from(new Set(targets.contacts.concat(crossCodes)));
+                }
+            }
+
             if (targets.local.length === 0 && targets.contacts.length === 0) {
                 showToast(i18n.t('chat_select_entity'), 'error');
                 return;
@@ -3155,6 +3295,7 @@
             btn.disabled = true;
             const savedContent = input.value;
             input.value = '';
+            input._activeMentions = [];
             input.style.height = 'auto';
             localStorage.removeItem('chat_draft');
 
@@ -3280,6 +3421,33 @@
         }
 
         // ── Utilities ──
+
+        /**
+         * Build a publicCode → { name, isCrossDevice } lookup map for rendering
+         * @mention chips inside message bubbles. Combines same-device bound
+         * entities with known Card Holder contacts.
+         */
+        function buildMentionEntityMap(_msg) {
+            const map = {};
+            (boundEntities || []).forEach(e => {
+                if (e.publicCode) {
+                    map[e.publicCode] = {
+                        name: e.name || e.character || `Entity ${e.entityId}`,
+                        isCrossDevice: false
+                    };
+                }
+            });
+            (contacts || []).forEach(c => {
+                if (c.publicCode && !map[c.publicCode]) {
+                    map[c.publicCode] = {
+                        name: c.name || c.character || c.publicCode,
+                        isCrossDevice: true
+                    };
+                }
+            });
+            return map;
+        }
+
         function escapeHtml(str) {
             if (!str) return '';
             const div = document.createElement('div');
