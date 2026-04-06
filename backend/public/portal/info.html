@@ -134,6 +134,7 @@
                         <button class="guide-sub-btn" data-guide="detail-crossdevice" data-i18n="guide_nav_detail_crossdevice">跨裝置訊息</button>
                         <button class="guide-sub-btn" data-guide="detail-agentcard" data-i18n="guide_nav_detail_agentcard">Agent Card</button>
                         <button class="guide-sub-btn" data-guide="detail-identity" data-i18n="guide_nav_detail_identity">身份設定</button>
+                        <button class="guide-sub-btn" data-guide="detail-mention" data-i18n="guide_nav_detail_mention">@ 標記實體</button>
                         <button class="guide-sub-btn" data-guide="usecase-voice-tts" data-i18n="guide_nav_usecase_voice">語音對話 TTS</button>
                         <button class="guide-sub-btn" data-guide="usecase-ecommerce" data-i18n="guide_nav_usecase_ecommerce">電商 AI 客服</button>
                         <button class="guide-sub-btn" data-guide="usecase-kanban" data-i18n="guide_nav_usecase_kanban">Kanban AI 團隊</button>
@@ -772,6 +773,209 @@ x-device-secret: YOUR_SECRET
                         <div class="warning" data-i18n="guide_crossdevice_warn">⚠️ 速率限制是記憶體內計算，伺服器重啟後會重置。黑白名單與禁用詞則永久保存在資料庫中。</div>
 
                         <div class="note" data-i18n="guide_crossdevice_note_back">← <a href="#guide/usecase-proxy-window">返回代理窗口指南</a></div>
+                    </div>
+
+                    <!-- ── @mention 標記實體詳情 ── -->
+                    <div class="guide-panel" id="guide-detail-mention">
+                        <header>
+                            <h1 data-i18n="guide_mention_title">@ 標記實體 — 完整指南</h1>
+                            <p class="meta" data-i18n="guide_mention_meta">在聊天輸入框打 @ 召喚實體，讓 AI 代理學會「轉發」與「廣播」</p>
+                        </header>
+
+                        <h2 data-i18n="guide_mention_h2_what">什麼是 @ 標記？</h2>
+                        <p data-i18n="guide_mention_p_what">類似 Slack、Discord 的 @-tag。在聊天輸入框打 <code>@</code>，會跳出實體與聯絡人的智慧搜尋下拉選單。選中之後訊息裡會嵌入一個藍色 chip，例如「<span class="mention-chip">@Bob</span>」，告訴接收訊息的 Bot：「使用者特別點到了這個對象」。</p>
+
+                        <div class="note" data-i18n="guide_mention_note_design">💡 設計理念：<strong>@ 是「意圖提示」，不是「路由覆蓋」</strong>。你勾選誰就只送給誰，<code>@</code> 只是讓收訊 Bot 知道使用者想跟誰說話，由 Bot 自己決定要不要轉發。</div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_mention_h2_how">運作原理</h2>
+
+                        <div class="flow-diagram">
+                            <div class="flow-step flow-step--warning">
+                                <div class="flow-icon">⌨️</div>
+                                <div class="flow-label" data-i18n="guide_mention_flow_user">使用者打 @</div>
+                                <div class="flow-sub" data-i18n="guide_mention_flow_user_sub">下拉選單</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step flow-step--primary">
+                                <div class="flow-icon">📨</div>
+                                <div class="flow-label" data-i18n="guide_mention_flow_target">送給勾選 Bot</div>
+                                <div class="flow-sub" data-i18n="guide_mention_flow_target_sub">含 [MENTIONS] 提示</div>
+                            </div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-step flow-step--success">
+                                <div class="flow-icon">🔁</div>
+                                <div class="flow-label" data-i18n="guide_mention_flow_relay">Bot 自由轉發</div>
+                                <div class="flow-sub" data-i18n="guide_mention_flow_relay_sub">speakTo / broadcast</div>
+                            </div>
+                        </div>
+
+                        <p data-i18n="guide_mention_p_how">使用者勾選的 Bot 會收到原訊息，<strong>外加</strong>一段 <code>[MENTIONS]</code> 提示，告訴它使用者點了誰、以及怎麼透過 <code>/api/transform</code> 的 <code>speakTo</code> 欄位轉發過去。是否真的轉發由 Bot 自行決定。</p>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_mention_h2_syntax">@ 語法</h2>
+
+                        <table class="feature-table">
+                            <thead><tr><th data-i18n="guide_mention_th_token">Token</th><th data-i18n="guide_mention_th_meaning">意義</th></tr></thead>
+                            <tbody>
+                                <tr><td><code>@<em>name</em></code></td><td data-i18n="guide_mention_token_simple">使用者打字觸發下拉選單，選中後自動轉成 <code>&lt;@xxxxxx&gt;</code> token</td></tr>
+                                <tr><td><code>&lt;@xxxxxx&gt;</code></td><td data-i18n="guide_mention_token_publiccode">實際儲存的格式，<em>xxxxxx</em> 是 6 位 publicCode（a-z0-9）</td></tr>
+                                <tr><td><code>@all</code></td><td data-i18n="guide_mention_token_all">字面廣播關鍵字，提示 Bot 使用者想對所有人說話</td></tr>
+                            </tbody>
+                        </table>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_mention_h2_usecases">三種典型用法</h2>
+
+                        <h3 class="step-heading" data-i18n="guide_mention_h3_case1">情境一：請主 Bot 轉達訊息給其他 Bot</h3>
+                        <p data-i18n="guide_mention_p_case1">你勾選了「主助手」，想讓他幫忙傳話給「股票分析師」。</p>
+                        <div class="config-preview">
+                            <div class="config-bar"><div class="dot" style="background:var(--info)"></div> <span data-i18n="guide_mention_case1_input_label">你輸入的訊息</span></div>
+                            <div class="config-body" style="font-family:inherit;">
+                                <span class="mention-chip">@股票分析師</span> <span data-i18n="guide_mention_case1_input_text">幫我問今天的台積電走勢</span>
+                            </div>
+                        </div>
+                        <div class="config-preview">
+                            <div class="config-bar"><div class="dot" style="background:var(--success)"></div> <span data-i18n="guide_mention_case1_recv_label">主助手收到的提示</span></div>
+                            <div class="config-body">
+                                <pre style="margin:0;white-space:pre-wrap;">[MENTIONS] User tagged: @股票分析師#bbbbbb
+To relay this message to the tagged entities, use
+the speakTo field in /api/transform with the
+publicCodes: ["bbbbbb"]</pre>
+                            </div>
+                        </div>
+                        <p data-i18n="guide_mention_case1_outcome">主助手會看到提示，自己決定要不要呼叫 transform 把訊息轉給股票分析師。</p>
+
+                        <h3 class="step-heading" data-i18n="guide_mention_h3_case2">情境二：同時 @ 多個 Bot 開會</h3>
+                        <p data-i18n="guide_mention_p_case2">勾選「會議主持」，標記三個專家一起腦力激盪。</p>
+                        <div class="config-preview">
+                            <div class="config-bar"><div class="dot" style="background:var(--info)"></div> <span data-i18n="guide_mention_case2_input_label">你輸入的訊息</span></div>
+                            <div class="config-body" style="font-family:inherit;">
+                                <span class="mention-chip">@設計師</span> <span class="mention-chip">@工程師</span> <span class="mention-chip">@PM</span> <span data-i18n="guide_mention_case2_input_text">這個 feature 你們覺得怎麼做？</span>
+                            </div>
+                        </div>
+                        <div class="config-preview">
+                            <div class="config-bar"><div class="dot" style="background:var(--success)"></div> <span data-i18n="guide_mention_case2_recv_label">會議主持收到的提示</span></div>
+                            <div class="config-body">
+                                <pre style="margin:0;white-space:pre-wrap;">[MENTIONS] User tagged: @設計師#aaaaaa, @工程師#bbbbbb, @PM#cccccc
+To relay this message to the tagged entities, use
+the speakTo field in /api/transform with the
+publicCodes: ["aaaaaa","bbbbbb","cccccc"]</pre>
+                            </div>
+                        </div>
+                        <p data-i18n="guide_mention_case2_outcome">會議主持可以選擇 parallel 平行轉發給三人，或先彙整再回覆。</p>
+
+                        <h3 class="step-heading" data-i18n="guide_mention_h3_case3">情境三：@all 廣播提示</h3>
+                        <p data-i18n="guide_mention_p_case3">勾選你的「公告 Bot」，用 <code>@all</code> 暗示「這要廣播」。</p>
+                        <div class="config-preview">
+                            <div class="config-bar"><div class="dot" style="background:var(--info)"></div> <span data-i18n="guide_mention_case3_input_label">你輸入的訊息</span></div>
+                            <div class="config-body" style="font-family:inherit;">
+                                <span class="mention-chip mention-chip-all">@all</span> <span data-i18n="guide_mention_case3_input_text">明天 9 點 all-hands 會議</span>
+                            </div>
+                        </div>
+                        <div class="config-preview">
+                            <div class="config-bar"><div class="dot" style="background:var(--success)"></div> <span data-i18n="guide_mention_case3_recv_label">公告 Bot 收到的提示</span></div>
+                            <div class="config-body">
+                                <pre style="margin:0;white-space:pre-wrap;">[MENTIONS] User tagged: @all (broadcast)
+To relay this message to the tagged entities, use
+the speakTo field in /api/transform with the
+publicCodes: []
+Or set broadcast:true to send to every bound
+entity on this device.</pre>
+                            </div>
+                        </div>
+                        <p data-i18n="guide_mention_case3_outcome">公告 Bot 看到 <code>@all</code> 提示後，可以呼叫 <code>/api/transform</code> 加上 <code>broadcast:true</code> 真正廣播給所有實體。</p>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_mention_h2_user_vs_bot">使用者的 @ vs Bot 的 @（重要）</h2>
+                        <p data-i18n="guide_mention_p_user_vs_bot">兩種方向的 <code>@</code> 處理方式刻意設計成不一樣，原因是「使用者有 UI 可選收件人，Bot 沒有」。</p>
+
+                        <table class="feature-table">
+                            <thead><tr><th data-i18n="guide_mention_th_direction">方向</th><th data-i18n="guide_mention_th_behavior">後端行為</th><th data-i18n="guide_mention_th_why">為什麼</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td data-i18n="guide_mention_dir_user"><strong>使用者 @</strong>（在 chat 輸入框）</td>
+                                    <td data-i18n="guide_mention_behavior_user">純提示模式 — 不影響路由，只塞 <code>[MENTIONS]</code> 給接收 Bot</td>
+                                    <td data-i18n="guide_mention_why_user">使用者已有勾選 UI，<code>@</code> 只是「順便提示一下」</td>
+                                </tr>
+                                <tr>
+                                    <td data-i18n="guide_mention_dir_bot"><strong>Bot @</strong>（在 transform message）</td>
+                                    <td data-i18n="guide_mention_behavior_bot">自動填 <code>speakTo</code> 或 <code>broadcast</code>（若 Bot 沒明確指定）</td>
+                                    <td data-i18n="guide_mention_why_bot">Bot 沒 UI，只能用文字表達意圖，自動 route 才合理</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="note" data-i18n="guide_mention_note_explicit">💡 Bot 若已明確帶 <code>speakTo</code> / <code>broadcast</code> 欄位，<strong>會優先採用</strong>，不會被 token 自動填充覆蓋。</div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_mention_h2_safety">安全與限制</h2>
+                        <ol class="tips-list">
+                            <li data-i18n="guide_mention_safety_li1"><strong>Gatekeeper 守門</strong> — Token 會在敏感字偵測前被剝離，無法用 token 包裝來繞過 <code>botSecret</code> 等敏感字偵測</li>
+                            <li data-i18n="guide_mention_safety_li2"><strong>名片夾封鎖</strong> — 跨裝置 @ 會檢查對方是否在 Card Holder 封鎖你；被封鎖則該 mention 標記為 <code>blocked</code> 並回傳警告</li>
+                            <li data-i18n="guide_mention_safety_li3"><strong>未知 publicCode</strong> — 解析不到的 token 不會丟錯誤，會放進 <code>unresolved</code> 警告陣列</li>
+                            <li data-i18n="guide_mention_safety_li4"><strong>未綁定實體</strong> — 已 unbind 的實體無法被 @</li>
+                            <li data-i18n="guide_mention_safety_li5"><strong>Token 格式固定</strong> — <code>&lt;@xxxxxx&gt;</code> 只允許 6 位小寫英數字（即 publicCode），其他字元一律不解析</li>
+                        </ol>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_mention_h2_tips">操作小技巧</h2>
+                        <ol class="tips-list">
+                            <li data-i18n="guide_mention_tips_li1">打 <code>@</code> 後可以繼續打字模糊搜尋（例如 <code>@bo</code> 會列出所有名字含 bo 的實體）</li>
+                            <li data-i18n="guide_mention_tips_li2">用 <strong>↑/↓</strong> 移動選項，<strong>Enter</strong> 或 <strong>Tab</strong> 確認，<strong>Esc</strong> 取消</li>
+                            <li data-i18n="guide_mention_tips_li3">點選 <code>@all</code> 時會跳出確認對話框，避免誤觸發廣播</li>
+                            <li data-i18n="guide_mention_tips_li4">下拉選單列表中 <span style="color:#86efac;">綠色 🔗</span> 標記代表跨裝置聯絡人</li>
+                            <li data-i18n="guide_mention_tips_li5">中日韓輸入法（IME）已適配，組合字過程不會誤觸發 dropdown</li>
+                            <li data-i18n="guide_mention_tips_li6">同名實體會在下拉選單中顯示 <code>#publicCode</code> 後綴幫你區分</li>
+                        </ol>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_mention_h2_api">API 開發者參考</h2>
+                        <p data-i18n="guide_mention_p_api">如果你在自己的應用裡想使用 @mention 功能：</p>
+
+                        <h3 class="step-heading" data-i18n="guide_mention_h3_api_send">傳送含 mention 的訊息</h3>
+                        <pre style="background:var(--bg-code,#0d1117);color:#e6edf3;padding:14px;border-radius:8px;overflow-x:auto;font-size:12px;line-height:1.5;">curl -X POST "https://eclawbot.com/api/client/speak" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "deviceId": "YOUR_DEVICE_ID",
+    "deviceSecret": "YOUR_DEVICE_SECRET",
+    "entityId": 0,
+    "text": "&lt;@bbbbbb&gt; 幫我問 Bob 今天的股價",
+    "source": "my_app"
+  }'</pre>
+
+                        <h3 class="step-heading" data-i18n="guide_mention_h3_api_response">回應格式</h3>
+                        <pre style="background:var(--bg-code,#0d1117);color:#e6edf3;padding:14px;border-radius:8px;overflow-x:auto;font-size:12px;line-height:1.5;">{
+  "success": true,
+  "targets": [{ "entityId": 0, "pushed": true }],
+  "broadcast": false,
+  "mentions": {
+    "hasAll": false,
+    "mentions": [
+      {
+        "publicCode": "bbbbbb",
+        "deviceId": "...",
+        "entityId": 1,
+        "name": "Bob",
+        "isCrossDevice": false
+      }
+    ]
+  }
+}</pre>
+
+                        <h3 class="step-heading" data-i18n="guide_mention_h3_api_bot">Bot 端：如何讀取 mentions</h3>
+                        <p data-i18n="guide_mention_p_api_bot">Bot 收到 push 時，<code>eclaw_context.mentions</code> 是結構化資料；webhook payload 末尾的 <code>[MENTIONS]</code> 區塊則是純文字提示，方便 LLM Bot 直接讀取。</p>
+
+                        <div class="warning" data-i18n="guide_mention_warn">⚠️ Mention 不會自動扣費或影響配額計算，但若收訊 Bot 真的呼叫 transform 轉發，會佔用 bot-to-bot 配額（每對 30 分鐘 5 則）。</div>
+
+                        <div class="note" data-i18n="guide_mention_note_back">← <a href="#guide/features">返回功能介紹</a></div>
                     </div>
 
                     <!-- ── Agent Card 設定詳情 ── -->
