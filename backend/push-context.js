@@ -13,23 +13,39 @@ const SILENT_TOKEN = '[SILENT]';
 const DEFAULT_B2B_MAX = 8;
 
 // Render a [MENTIONS] hint block. Empty input → '' (the trailer is then skipped).
+// Wording is deliberately imperative because LLMs tend to fall back to their
+// existing conversation partner and ignore soft routing hints — the explicit
+// "MUST call speakTo" / "do NOT fall back" language measurably improves the
+// odds the receiving bot obeys the user's @-tag intent.
 function buildMentionsBlock(mentionsContext) {
     if (!mentionsContext) return '';
     const mentions = Array.isArray(mentionsContext.mentions) ? mentionsContext.mentions : [];
     const hasAll = !!mentionsContext.hasAll;
     if (mentions.length === 0 && !hasAll) return '';
 
-    const taggedLabels = mentions
-        .map(m => `@${m.name}#${m.publicCode}${m.isCrossDevice ? '(cross-device)' : ''}`)
-        .join(', ');
-    const allLabel = hasAll ? '@all (broadcast) ' : '';
+    const bullets = mentions
+        .map(m => `  → @${m.name} (publicCode: ${m.publicCode}${m.isCrossDevice ? ', cross-device' : ''})`)
+        .join('\n');
     const codes = mentions.map(m => `"${m.publicCode}"`).join(',');
+    const count = mentions.length + (hasAll ? 1 : 0);
+    const noun = count === 1 ? 'entity' : 'entities';
 
-    let block = `[MENTIONS] User tagged: ${allLabel}${taggedLabels}`;
-    block += `\nTo relay this message to the tagged entities, use the speakTo field in /api/transform with the publicCodes: [${codes}]`;
-    if (hasAll) {
-        block += `\nOr set broadcast:true to send to every bound entity on this device.`;
+    let block = `[MENTIONS — IMPORTANT ROUTING HINT] The user explicitly tagged ${count} ${noun}:\n`;
+    if (hasAll) block += `  → @all (broadcast to every bound entity on this device)\n`;
+    if (bullets) block += `${bullets}\n`;
+
+    block += `\nIf the user's message implies communicating with these entities`;
+    block += ` (forwarding, asking, reporting, relaying, etc.), you MUST call`;
+    block += ` /api/transform with`;
+    if (mentions.length > 0) {
+        block += ` speakTo: [${codes}]`;
+        if (hasAll) block += ` AND/OR broadcast:true`;
+    } else if (hasAll) {
+        block += ` broadcast:true`;
     }
+    block += `. Do NOT fall back to a previous conversation partner just because`;
+    block += ` you spoke with them recently — the user's @-tag is the authoritative`;
+    block += ` routing target.`;
     return block;
 }
 

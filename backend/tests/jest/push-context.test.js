@@ -22,10 +22,14 @@ describe('buildMentionsBlock', () => {
             mentions: [{ name: 'Alice', publicCode: 'AB12CD', isCrossDevice: false }],
             hasAll: false,
         });
-        expect(block).toContain('[MENTIONS] User tagged: @Alice#AB12CD');
-        expect(block).not.toContain('(cross-device)');
+        expect(block).toContain('[MENTIONS — IMPORTANT ROUTING HINT]');
+        expect(block).toContain('tagged 1 entity');
+        expect(block).toContain('@Alice (publicCode: AB12CD)');
+        expect(block).not.toContain('cross-device');
         expect(block).toContain('"AB12CD"');
-        expect(block).toContain('speakTo field in /api/transform');
+        expect(block).toContain('speakTo');
+        expect(block).toContain('MUST call');
+        expect(block).toContain('Do NOT fall back');
         expect(block).not.toContain('broadcast:true');
     });
 
@@ -35,13 +39,15 @@ describe('buildMentionsBlock', () => {
                 { name: 'Bob', publicCode: 'XY99ZZ', isCrossDevice: true },
             ],
         });
-        expect(block).toContain('@Bob#XY99ZZ(cross-device)');
+        expect(block).toContain('@Bob (publicCode: XY99ZZ, cross-device)');
     });
 
     test('renders @all and includes broadcast hint', () => {
         const block = buildMentionsBlock({ mentions: [], hasAll: true });
-        expect(block).toContain('@all (broadcast)');
+        expect(block).toContain('tagged 1 entity');
+        expect(block).toContain('@all (broadcast to every bound entity on this device)');
         expect(block).toContain('broadcast:true');
+        expect(block).toContain('MUST call');
     });
 
     test('renders @all + explicit mentions together', () => {
@@ -49,8 +55,21 @@ describe('buildMentionsBlock', () => {
             mentions: [{ name: 'Carol', publicCode: 'PQ77RS', isCrossDevice: false }],
             hasAll: true,
         });
-        expect(block).toContain('@all (broadcast) @Carol#PQ77RS');
-        expect(block).toContain('broadcast:true');
+        expect(block).toContain('tagged 2 entities');
+        expect(block).toContain('@all (broadcast to every bound entity on this device)');
+        expect(block).toContain('@Carol (publicCode: PQ77RS)');
+        expect(block).toContain('AND/OR broadcast:true');
+    });
+
+    test('imperative wording discourages fallback to previous conversation partner', () => {
+        // Regression for the bug where bot #0 defaulted to speak-to its
+        // existing b2b partner instead of following the user's @-tag.
+        const block = buildMentionsBlock({
+            mentions: [{ name: 'Target', publicCode: 'AAAAAA', isCrossDevice: false }],
+            hasAll: false,
+        });
+        expect(block).toMatch(/do NOT fall back to a previous conversation partner/i);
+        expect(block).toMatch(/authoritative routing target/i);
     });
 });
 
@@ -166,7 +185,8 @@ describe('enrichContext', () => {
             { mentions: [{ name: 'Alice', publicCode: 'AB12CD', isCrossDevice: false }] },
             { helpers: fakeHelpers, targetEntity: fakeEntity, targetDeviceId: 'd', targetEntityId: 0 }
         );
-        expect(ctx.mentionsBlock).toContain('[MENTIONS] User tagged: @Alice#AB12CD');
+        expect(ctx.mentionsBlock).toContain('[MENTIONS — IMPORTANT ROUTING HINT]');
+        expect(ctx.mentionsBlock).toContain('@Alice (publicCode: AB12CD)');
     });
 
     test('preserves caller-supplied mentionsBlock without re-rendering', () => {
@@ -201,10 +221,10 @@ describe('materializeChannelText — wire format', () => {
             { mentionsBlock: buildMentionsBlock({ mentions: [{ name: 'Alice', publicCode: 'AB12CD', isCrossDevice: false }] }) }
         );
         const bodyIdx = out.indexOf('hey @Alice');
-        const mentionIdx = out.indexOf('[MENTIONS]');
+        const mentionIdx = out.indexOf('[MENTIONS — IMPORTANT ROUTING HINT]');
         expect(bodyIdx).toBeGreaterThanOrEqual(0);
         expect(mentionIdx).toBeGreaterThan(bodyIdx);
-        expect(out).toContain('@Alice#AB12CD');
+        expect(out).toContain('@Alice (publicCode: AB12CD)');
     });
 
     test('plain message with @all inlines the broadcast hint', () => {
@@ -212,8 +232,8 @@ describe('materializeChannelText — wire format', () => {
             { event: 'message', text: '@all heads up' },
             { mentionsBlock: buildMentionsBlock({ hasAll: true }) }
         );
-        expect(out).toContain('[MENTIONS]');
-        expect(out).toContain('@all (broadcast)');
+        expect(out).toContain('[MENTIONS — IMPORTANT ROUTING HINT]');
+        expect(out).toContain('@all (broadcast to every bound entity on this device)');
         expect(out).toContain('broadcast:true');
     });
 
@@ -337,7 +357,7 @@ describe('materializeChannelText — wire format', () => {
             prefix: out.indexOf('[Bot-to-Bot message from Entity 2 (Bob)]'),
             quota: out.indexOf('[Quota: 3/8'),
             body: out.indexOf('please relay this to @Alice'),
-            mentions: out.indexOf('[MENTIONS]'),
+            mentions: out.indexOf('[MENTIONS — IMPORTANT ROUTING HINT]'),
             mission: out.indexOf('[AVAILABLE TOOLS'),
             identity: out.indexOf('[IDENTITY_SETUP_REQUIRED]'),
         };
@@ -354,7 +374,7 @@ describe('materializeChannelText — wire format', () => {
             { event: 'message', text: '@Bob can you help' },
             { mentionsBlock: buildMentionsBlock({ mentions: [{ name: 'Bob', publicCode: 'XY99ZZ', isCrossDevice: true }] }) }
         );
-        expect(out).toContain('@Bob#XY99ZZ(cross-device)');
+        expect(out).toContain('@Bob (publicCode: XY99ZZ, cross-device)');
     });
 
     test('null context degrades gracefully to bare text', () => {

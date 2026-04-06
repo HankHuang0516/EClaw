@@ -6259,6 +6259,12 @@ app.post('/api/client/speak', async (req, res) => {
     }
     const mentionsContext = mentionParser.toContextPayload(mentionParse);
 
+    // Human-readable text for bot push: <@xxxxxx> tokens are replaced with
+    // @Name so the receiving LLM sees recognisable identifiers instead of
+    // raw publicCodes. The raw `text` variable (with tokens) is still what
+    // gets stored in chat_messages so the frontend can re-render chips.
+    const pushText = (mentionParse && mentionParse.displayText) || text;
+
     // Determine target entity IDs
     let targetIds = [];
     if (entityId === "all") {
@@ -6371,7 +6377,7 @@ app.post('/api/client/speak', async (req, res) => {
             pushResult = await channelModule.pushToChannelCallback(deviceId, eId, {
                 event: targetIds.length > 1 ? 'broadcast' : 'message',
                 from: source,
-                text,
+                text: pushText,
                 mediaType: mediaType || null,
                 mediaUrl: mediaUrl || null,
                 backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
@@ -6420,7 +6426,7 @@ app.post('/api/client/speak', async (req, res) => {
                 }
                 pushMsg += `[MESSAGE] Device ${deviceId} Entity ${eId}\n`;
                 pushMsg += `From: ${source}\n`;
-                pushMsg += `Content: ${text}`;
+                pushMsg += `Content: ${pushText}`;
                 if (mediaType === 'photo') {
                     pushMsg += `\n[Attachment: Photo]\nmedia_type: photo\nmedia_url: ${mediaUrl}`;
                     const bkUrl = getBackupUrl(mediaUrl);
