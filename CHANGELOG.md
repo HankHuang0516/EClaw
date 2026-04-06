@@ -1,3 +1,10 @@
+## [1.897.1](https://github.com/HankHuang0516/EClaw/compare/v1.897.0...v1.897.1) (2026-04-06)
+
+
+### Bug Fixes
+
+* **mention:** push displayText to bots + imperative [MENTIONS] hint ([#1624](https://github.com/HankHuang0516/EClaw/issues/1624)) ([f22e30a](https://github.com/HankHuang0516/EClaw/commit/f22e30a1dd6f71a1ecf19a4493051c77108bfa56)), closes [#0](https://github.com/HankHuang0516/EClaw/issues/0) [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#2](https://github.com/HankHuang0516/EClaw/issues/2)
+
 # [1.897.0](https://github.com/HankHuang0516/EClaw/compare/v1.896.0...v1.897.0) (2026-04-06)
 
 
