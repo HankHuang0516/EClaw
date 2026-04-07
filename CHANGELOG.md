@@ -1,3 +1,10 @@
+# [1.898.0](https://github.com/HankHuang0516/EClaw/compare/v1.897.1...v1.898.0) (2026-04-07)
+
+
+### Features
+
+* **api:** add /api/help intent-based API discovery + extend getMissionApiHints with kanban/schedule hints ([4586b37](https://github.com/HankHuang0516/EClaw/commit/4586b37bf058e35869b8cda0f850dd660b33bcd4))
+
 ## [1.897.1](https://github.com/HankHuang0516/EClaw/compare/v1.897.0...v1.897.1) (2026-04-06)
 
 
