@@ -1,3 +1,10 @@
+# [1.905.0](https://github.com/HankHuang0516/EClaw/compare/v1.904.2...v1.905.0) (2026-04-07)
+
+
+### Features
+
+* **i18n:** localize kanban bot push notifications by device owner language ([#1638](https://github.com/HankHuang0516/EClaw/issues/1638)) ([180354a](https://github.com/HankHuang0516/EClaw/commit/180354a4cd00c76604bc00d1b062b6ede0c81567))
+
 ## [1.904.2](https://github.com/HankHuang0516/EClaw/compare/v1.904.1...v1.904.2) (2026-04-07)
 
 
