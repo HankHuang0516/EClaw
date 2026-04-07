@@ -1,3 +1,10 @@
+# [1.906.0](https://github.com/HankHuang0516/EClaw/compare/v1.905.1...v1.906.0) (2026-04-07)
+
+
+### Features
+
+* **mention:** support entityId tokens (<@N>, @#N, @N) alongside publicCode ([#1640](https://github.com/HankHuang0516/EClaw/issues/1640)) ([c8404fd](https://github.com/HankHuang0516/EClaw/commit/c8404fdcca7db8a16a7c0009607200d7274f2bea)), closes [#N](https://github.com/HankHuang0516/EClaw/issues/N) [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+
 ## [1.905.1](https://github.com/HankHuang0516/EClaw/compare/v1.905.0...v1.905.1) (2026-04-07)
 
 
