@@ -146,7 +146,8 @@ const cookieParser = require('cookie-parser');
 const ALLOWED_ORIGINS = [
     'https://eclawbot.com',
     'https://www.eclawbot.com',
-    'https://eclaw.up.railway.app'
+    'https://eclaw.up.railway.app',
+    'https://minigame.eclawbot.com'
 ];
 app.use(cors({
     origin: (origin, cb) => {
