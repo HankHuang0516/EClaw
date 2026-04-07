@@ -1,3 +1,10 @@
+# [1.904.0](https://github.com/HankHuang0516/EClaw/compare/v1.903.0...v1.904.0) (2026-04-07)
+
+
+### Features
+
+* **i18n:** add MiniGame schedule SOP translations (ja, ko, fr, es, th, vi, id, ms, hi, ar) ([b8f1496](https://github.com/HankHuang0516/EClaw/commit/b8f1496b4e116c19c64e0cdb3082408d22e0f060))
+
 # [1.903.0](https://github.com/HankHuang0516/EClaw/compare/v1.902.1...v1.903.0) (2026-04-07)
 
 
