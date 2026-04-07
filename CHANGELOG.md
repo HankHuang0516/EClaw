@@ -1,3 +1,10 @@
+## [1.899.1](https://github.com/HankHuang0516/EClaw/compare/v1.899.0...v1.899.1) (2026-04-07)
+
+
+### Bug Fixes
+
+* **cors:** allow minigame.eclawbot.com origin for cross-origin requests ([a65474e](https://github.com/HankHuang0516/EClaw/commit/a65474eb4d4f27f8871de79b95bb032bd375b70a))
+
 # [1.899.0](https://github.com/HankHuang0516/EClaw/compare/v1.898.0...v1.899.0) (2026-04-07)
 
 
