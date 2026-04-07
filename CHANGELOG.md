@@ -1,3 +1,10 @@
+# [1.900.0](https://github.com/HankHuang0516/EClaw/compare/v1.899.2...v1.900.0) (2026-04-07)
+
+
+### Features
+
+* intent-based dynamic API hint injection ([#1629](https://github.com/HankHuang0516/EClaw/issues/1629)) ([9037d26](https://github.com/HankHuang0516/EClaw/commit/9037d26a16b50480d156d945038bc202dcbea97e))
+
 ## [1.899.2](https://github.com/HankHuang0516/EClaw/compare/v1.899.1...v1.899.2) (2026-04-07)
 
 
