@@ -61,6 +61,26 @@ describe('buildMentionsBlock', () => {
         expect(block).toContain('AND/OR broadcast:true');
     });
 
+    test('same-device mention bullet includes entityId so bots can use @#N or @N', () => {
+        const block = buildMentionsBlock({
+            mentions: [
+                { name: 'EClaw 小助手', publicCode: 'aaaaaa', entityId: 0, isCrossDevice: false }
+            ],
+        });
+        expect(block).toContain('@EClaw 小助手 (publicCode: aaaaaa, entityId: 0)');
+    });
+
+    test('cross-device mention bullet OMITS entityId (entityId is local-only)', () => {
+        const block = buildMentionsBlock({
+            mentions: [
+                { name: 'Remote', publicCode: 'remoot', entityId: 7, isCrossDevice: true }
+            ],
+        });
+        // entityId is meaningless across devices — should not appear
+        expect(block).toContain('@Remote (publicCode: remoot, cross-device)');
+        expect(block).not.toContain('entityId: 7');
+    });
+
     test('imperative wording discourages fallback to previous conversation partner', () => {
         // Regression for the bug where bot #0 defaulted to speak-to its
         // existing b2b partner instead of following the user's @-tag.
