@@ -11166,6 +11166,72 @@ async function sendToSession(url, token, sessionKey, message, authOpts = {}, opt
     }
 }
 
+// ── Intent Keyword Cache ───────────────────────────────────────────────────
+// Loaded from ⚙️ api-intent-keywords mission note. TTL: 5 min.
+// Format: { category: { keywords: [...], intent: "name" }, ... }
+let _intentKwCache = null;
+let _intentKwCacheAt = 0;
+const INTENT_KW_TTL = 5 * 60 * 1000;
+
+async function loadIntentKeywords(deviceId) {
+    if (_intentKwCache && Date.now() - _intentKwCacheAt < INTENT_KW_TTL) return _intentKwCache;
+    try {
+        const pool = db._getPool();
+        if (!pool) return null;
+        const res = await pool.query('SELECT notes FROM mission_dashboard WHERE device_id = $1', [deviceId]);
+        if (!res.rows[0] || !res.rows[0].notes) return null;
+        const notes = res.rows[0].notes;
+        const kwNote = Array.isArray(notes) ? notes.find(n => n.title && n.title.includes('api-intent-keywords')) : null;
+        if (!kwNote) return null;
+        _intentKwCache = JSON.parse(kwNote.content);
+        _intentKwCacheAt = Date.now();
+        return _intentKwCache;
+    } catch (e) {
+        return null;
+    }
+}
+
+function buildIntentApiHint(intent, apiBase, deviceId, entityId, botSecret) {
+    switch (intent) {
+        case 'kanban':
+            return `\n[API HINT — Kanban]\n` +
+                `Read cards: exec: curl -s "${apiBase}/api/mission/cards?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}"\n` +
+                `Create card: exec: curl -s -X POST "${apiBase}/api/mission/card" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","title":"TITLE","status":"todo","assignedBots":[${entityId}]}'\n` +
+                `Move card: exec: curl -s -X POST "${apiBase}/api/mission/card/CARD_ID/move" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${entityId},"newStatus":"STATUS"}'`;
+        case 'messaging':
+            return `\n[API HINT — Messaging]\n` +
+                `Speak to entity: exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","message":"MSG","state":"IDLE","speakTo":["PUBLIC_CODE"]}'\n` +
+                `Broadcast: exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","message":"MSG","state":"IDLE","broadcast":true}'`;
+        case 'notes':
+            return `\n[API HINT — Notes]\n` +
+                `Add note: exec: curl -s -X POST "${apiBase}/api/mission/note/add" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","title":"TITLE","content":"CONTENT"}'\n` +
+                `Update note: exec: curl -s -X POST "${apiBase}/api/mission/note/update" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${entityId},"title":"TITLE","newContent":"NEW_CONTENT"}'`;
+        case 'schedule':
+            return `\n[API HINT — Schedule]\n` +
+                `Enable recurring: exec: curl -s -X PUT "${apiBase}/api/mission/card/CARD_ID/schedule" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${entityId},"enabled":true,"type":"recurring","cronExpression":"0 9 * * *","timezone":"Asia/Taipei"}'\n` +
+                `Disable: exec: curl -s -X PUT "${apiBase}/api/mission/card/CARD_ID/schedule" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${entityId},"enabled":false}'`;
+        case 'entities':
+            return `\n[API HINT — Entities]\n` +
+                `List entities: exec: curl -s "${apiBase}/api/entities?deviceId=${deviceId}&botSecret=${botSecret}"\n` +
+                `Lookup by code: exec: curl -s "${apiBase}/api/entity/lookup?publicCode=CODE"`;
+        default:
+            return '';
+    }
+}
+
+async function detectIntentApiHints(text, apiBase, deviceId, entityId, botSecret) {
+    if (!text || typeof text !== 'string') return '';
+    const keywords = await loadIntentKeywords(deviceId);
+    if (!keywords) return '';
+    const lowerText = text.toLowerCase();
+    for (const [, config] of Object.entries(keywords)) {
+        if (config.keywords.some(kw => lowerText.includes(kw.toLowerCase()))) {
+            return buildIntentApiHint(config.intent, apiBase, deviceId, entityId, botSecret);
+        }
+    }
+    return '';
+}
+
 /**
  * Helper: Generate Mission Dashboard API hints for bot push notifications.
  * Appended to every push so the bot's LLM always has the tool signatures in context.
@@ -11248,6 +11314,18 @@ async function pushToBot(entity, deviceId, eventType, payload) {
         }
     } catch (err) {
         // Non-critical — just skip the hint
+    }
+
+    // Append intent-based API hints based on incoming message content
+    try {
+        const apiBase = process.env.API_BASE || 'https://eclawbot.com';
+        const intentHint = await detectIntentApiHints(
+            payload.message || '',
+            apiBase, deviceId, entity.entityId, entity.botSecret
+        );
+        if (intentHint) messageContent += intentHint;
+    } catch (err) {
+        // Non-critical — skip
     }
 
     // ── Discord webhook: direct POST, no session key needed ──
