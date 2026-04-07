@@ -342,6 +342,53 @@
             background: rgba(0,0,0,0.25);
         }
 
+        /* ── Reply button (shows on bubble hover) ── */
+        .chat-reply-btn {
+            position: absolute;
+            bottom: 6px;
+            right: -30px;
+            opacity: 0;
+            transition: opacity 0.15s;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-muted);
+            z-index: 2;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+        .chat-msg:hover .chat-reply-btn { opacity: 1; }
+        .chat-reply-btn:hover { color: var(--primary); border-color: var(--primary); }
+        .chat-msg.sent .chat-reply-btn { right: auto; left: -30px; }
+
+        /* ── Reply preview bar above input ── */
+        .reply-preview-bar {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            background: var(--input-bg);
+            border-left: 3px solid var(--primary);
+            border-radius: 4px;
+            margin-bottom: 6px;
+            font-size: 0.85em;
+            max-width: 100%;
+            overflow: hidden;
+        }
+        .reply-preview-bar.show { display: flex; }
+        .reply-preview-content { flex: 1; min-width: 0; }
+        .reply-preview-sender { font-weight: 600; color: var(--primary); font-size: 0.8em; margin-bottom: 1px; }
+        .reply-preview-text { color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .reply-preview-cancel { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 18px; padding: 0 2px; flex-shrink: 0; line-height: 1; }
+        .reply-preview-cancel:hover { color: var(--text); }
+
         /* Typing indicator */
         .typing-indicator {
             display: none;
@@ -1611,6 +1658,14 @@
                     </div>
                 </div>
                 <div class="file-preview-bar" id="filePreviewBar"></div>
+                <!-- Reply Preview Bar -->
+                <div class="reply-preview-bar" id="replyPreviewBar">
+                    <div class="reply-preview-content">
+                        <div class="reply-preview-sender" id="replyPreviewSender"></div>
+                        <div class="reply-preview-text" id="replyPreviewText"></div>
+                    </div>
+                    <button class="reply-preview-cancel" onclick="clearReplyContext()" data-i18n-title="chat_reply_cancel" title="Cancel reply">✕</button>
+                </div>
                 <!-- Slash Command Suggestions -->
                 <div class="slash-suggestions" id="slashSuggestions"></div>
                 <div class="input-row">
@@ -2993,10 +3048,15 @@
                     unreadSep = '<div class="chat-unread-sep"><span>' + (i18n.t('chat_unread_sep') || '── New messages ──') + '</span></div>';
                 }
 
+                const replySnippet = (rawText || '').replace(/\n/g, ' ').slice(0, 120);
+                const replySenderName = isSent ? (i18n.t('chat_reply_you') || 'You') : isPlatform ? 'Platform' : (getEntityLabel(msg.entity_id) || '');
+                const replyBtnHtml = msg.id ? `<button class="chat-reply-btn" data-msg-id="${escapeHtml(msg.id)}" data-sender="${escapeHtml(replySenderName)}" data-text="${escapeHtml(replySnippet)}" onclick="handleReplyBtn(this);event.stopPropagation()" data-i18n-title="chat_reply_btn" title="Reply">↩</button>` : '';
+
                 return `${dateSep}${unreadSep}
-                    <div class="chat-msg ${msgClass}${isGrouped ? ' grouped' : ''}">
+                    <div class="chat-msg ${msgClass}${isGrouped ? ' grouped' : ''}" style="position:relative">
                         <div class="chat-source">${sourceLabel}</div>
                         <div class="chat-bubble${isMdRendered ? ' md-rendered' : ''}" data-full-time="${escapeHtml(fullTime)}">${textHtml}${mediaHtml}${inlineImgHtml}</div>
+                        ${replyBtnHtml}
                         ${previewId ? `<div class="link-preview-slot" id="${previewId}" data-url="${escapeHtml(firstUrl)}"></div>` : ''}
                         ${reactionsHtml}
                         <div class="chat-meta">${time}</div>
@@ -3235,6 +3295,29 @@
         // ── Slash Command Confirmation State ──
         let pendingConfirmCommand = null;
 
+        // ── Quote Reply State ──
+        let replyContext = null;
+
+        function handleReplyBtn(btn) {
+            const msgId = btn.dataset.msgId;
+            const sender = btn.dataset.sender;
+            const text = btn.dataset.text;
+            setReplyContext(msgId, sender, text);
+        }
+
+        function setReplyContext(msgId, senderName, text) {
+            replyContext = { msgId, senderName, text };
+            document.getElementById('replyPreviewSender').textContent = senderName || '';
+            document.getElementById('replyPreviewText').textContent = text || (i18n.t('chat_reply_media') || '(media)');
+            document.getElementById('replyPreviewBar').classList.add('show');
+            document.getElementById('messageInput').focus();
+        }
+
+        function clearReplyContext() {
+            replyContext = null;
+            document.getElementById('replyPreviewBar').classList.remove('show');
+        }
+
         // ── Send Message ──
         async function sendMessage() {
             const input = document.getElementById('messageInput');
@@ -3244,6 +3327,16 @@
 
             // Must have text or pending files
             if (!text && !hasFiles) return;
+
+            // Prepend reply quote if active
+            let finalText = text;
+            if (replyContext && text) {
+                const excerpt = replyContext.text.length > 80 ? replyContext.text.slice(0, 80) + '…' : replyContext.text;
+                finalText = `↩ ${replyContext.senderName}: "${excerpt}"\n\n${text}`;
+                clearReplyContext();
+            } else if (replyContext) {
+                clearReplyContext();
+            }
 
             // Check if any files still uploading
             if (pendingFiles.some(f => f.status === 'uploading')) {
@@ -3290,7 +3383,7 @@
                     if (hasFiles) {
                         for (let i = 0; i < readyFiles.length; i++) {
                             const f = readyFiles[i];
-                            const msgText = (i === 0 && text) ? text : (f.type === 'photo' ? '[Photo]' : f.type === 'video' ? '[Video]' : `[File] ${f.fileName}`);
+                            const msgText = (i === 0 && finalText) ? finalText : (f.type === 'photo' ? '[Photo]' : f.type === 'video' ? '[Video]' : `[File] ${f.fileName}`);
                             const fileResp = await apiCall('POST', '/api/client/speak', {
                                 deviceId: currentUser.deviceId,
                                 deviceSecret: currentUser.deviceSecret,
@@ -3310,7 +3403,7 @@
                             deviceId: currentUser.deviceId,
                             deviceSecret: currentUser.deviceSecret,
                             entityId: entityId,
-                            text: text,
+                            text: finalText,
                             source: 'web_chat'
                         };
                         // Inject confirmation flag for slash command re-send
@@ -3330,7 +3423,7 @@
                 }
 
                 // ── Cross-device contacts ──
-                if (targets.contacts.length > 0 && text) {
+                if (targets.contacts.length > 0 && finalText) {
                     // If user explicitly selected a local entity, use it as sender; otherwise owner mode (-1)
                     const explicitLocal = targets.local.length > 0
                         ? boundEntities.find(e => e.entityId === targets.local[0])
@@ -3342,7 +3435,7 @@
                                 deviceId: currentUser.deviceId,
                                 fromEntityId: fromEntityId,
                                 targetCode: code,
-                                text: text,
+                                text: finalText,
                                 source: 'web_chat'
                             });
                         } catch (err) {
