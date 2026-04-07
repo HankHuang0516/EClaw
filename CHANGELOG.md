@@ -1,3 +1,10 @@
+# [1.902.0](https://github.com/HankHuang0516/EClaw/compare/v1.901.0...v1.902.0) (2026-04-07)
+
+
+### Features
+
+* **info:** add MiniGame automation schedule SOP section ([#1632](https://github.com/HankHuang0516/EClaw/issues/1632)) ([2a04035](https://github.com/HankHuang0516/EClaw/commit/2a040350f204c4687142e5ba0dff25c46c933a11))
+
 # [1.901.0](https://github.com/HankHuang0516/EClaw/compare/v1.900.0...v1.901.0) (2026-04-07)
 
 
