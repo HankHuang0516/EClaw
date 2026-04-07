@@ -1,3 +1,10 @@
+## [1.905.1](https://github.com/HankHuang0516/EClaw/compare/v1.905.0...v1.905.1) (2026-04-07)
+
+
+### Bug Fixes
+
+* **kanban:** drop duplicate Kanban Board hints in notifyEntities ([#1639](https://github.com/HankHuang0516/EClaw/issues/1639)) ([9afa9c9](https://github.com/HankHuang0516/EClaw/commit/9afa9c98660fbfb4b8e0e0638ccd4a543b83685d))
+
 # [1.905.0](https://github.com/HankHuang0516/EClaw/compare/v1.904.2...v1.905.0) (2026-04-07)
 
 
