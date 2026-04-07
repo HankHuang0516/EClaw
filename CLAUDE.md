@@ -329,6 +329,63 @@ EClaw/
    - 完成一項立即標記 completed，不批量更新
    - 同時只有一個 task 可以是 in_progress
 
+8a. **EClaw Progress Reporting + `/reasoning` Command** — 控制 Claude Code 在 EClaw chat 的推理可見度。
+
+   ### 狀態儲存
+   推理模式狀態存在 mission note `⚙️ claude-code-settings`（note ID: `81cad8fc-1fac-406a-84e0-9113bea1f76c`）。
+   格式：`reasoning: on` 或 `reasoning: off`（預設 `off`）。
+
+   **讀取當前狀態：**
+   ```bash
+   curl -s "https://eclawbot.com/api/mission/dashboard?deviceId=480def4c-2183-4d8e-afd0-b131ae89adcc&botSecret=944738a1eece24cf64916beab7ce2640&entityId=2" | python3 -c "import sys,json; notes=json.load(sys.stdin).get('dashboard',{}).get('notes',[]); [print(n['content']) for n in notes if 'claude-code-settings' in n.get('title','')]"
+   ```
+
+   **更新狀態：**
+   ```bash
+   curl -s -X POST "https://eclawbot.com/api/mission/note/update" \
+     -H "Content-Type: application/json" \
+     -d '{"deviceId":"480def4c-2183-4d8e-afd0-b131ae89adcc","botSecret":"944738a1eece24cf64916beab7ce2640","entityId":2,"title":"⚙️ claude-code-settings","newContent":"reasoning: on"}'
+   ```
+
+   ### `/reasoning` 指令處理
+   收到來自 EClaw chat 的訊息 `/reasoning on` 或 `/reasoning off` 時：
+   1. 呼叫上方 PUT API 更新 note 內容
+   2. 透過 `/api/transform` speakTo `31tlkr` 回覆確認（例：「✅ Reasoning mode: ON」）
+
+   ### 推理模式行為
+
+   **`reasoning: off`（預設）— 只送結論：**
+   - 任務開始送「🔧 開始：{摘要}」
+   - 任務完成送「✅ 完成：{結果}」
+   - 不送中間步驟
+
+   **`reasoning: on` — 邊推理邊送：**
+   - 每個重要思考節點立即推送進度訊息
+   - 例：「🤔 正在分析...」→「💡 發現：...」→「🔧 修復中...」→「✅ 完成」
+   - 每個推理步驟完成時立刻送出，不等全部完成
+
+   ### 推送 channel 選擇（重要）
+   不同來源的訊息需要用不同方法回推，才能讓使用者在正確介面看到：
+
+   | 訊息來源 | 推理進度推送方式 |
+   |---------|----------------|
+   | `[EClaw from web_chat]`（fakechat） | 使用 `mcp__plugin_fakechat_fakechat__reply` tool（不帶 reply_to，直接送新訊息） |
+   | EClaw portal chat / 其他 channel | 使用 `POST /api/transform` + `speakTo: ["31tlkr"]`（出現在 EClaw 通知） |
+
+   fakechat `reply` 範例（reasoning=on 時每個節點）：
+   - 呼叫 `reply` tool，`text` 填入推理步驟（如「🤔 正在分析 GAME-093 form-submit 失敗原因...」）
+   - 不需要 `reply_to`，直接送出即可
+
+   EClaw transform 範例（非 fakechat）：
+   ```bash
+   curl -s -X POST "https://eclawbot.com/api/transform" \
+     -H "Content-Type: application/json" \
+     -d '{"deviceId":"480def4c-2183-4d8e-afd0-b131ae89adcc","entityId":2,"botSecret":"944738a1eece24cf64916beab7ce2640","message":"MESSAGE_HERE","state":"IDLE","speakTo":["31tlkr"]}'
+   ```
+
+   ### Session 初始化
+   每個新 session 開始處理 EClaw 任務時，先讀取 note 取得當前 reasoning 狀態。
+
 9. **Core Principles**
    - 安全第一（不引入 OWASP Top-10 漏洞）
    - 不臆測（先讀再改）
@@ -355,6 +412,16 @@ EClaw/
 ---
 
 14. **EClaw Skill Template Sync** — 所有與實體（entity）相關的新 API，都**必須**同步收錄到 `backend/data/skill-templates.json` 的 `eclaw-a2a-toolkit` skill template 中，讓 bot 能透過 skill 得知並使用這些 API。**例外**：Article Publisher 相關的 API（`/api/publisher/*`）不需收錄。
+
+15. **Intent Keyword System** — `pushToBot()` 會依訊息內容偵測 intent 關鍵字，自動附加對應 API hint block。
+
+   - **Keyword list 位置**：mission note `⚙️ api-intent-keywords`（ID: `c76d96a3-ae74-44bc-b65d-c0cd388f56ed`）
+   - **格式**：`{ "category": { "keywords": [...], "intent": "name" }, ... }`
+   - **Cache TTL**：5 分鐘
+   - **支援 intent**：kanban / messaging / notes / schedule / entities
+   - **新增關鍵字**：讀 note → merge JSON → `POST /api/mission/note/update` with `newContent`，無需重啟 server
+   - **故障安全**：JSON parse 失敗 → 靜默跳過，不影響正常 push 流程
+   - **實作位置**：`backend/index.js` — `loadIntentKeywords()` / `detectIntentApiHints()` / `pushToBot()`
 
 ## Git Workflow
 

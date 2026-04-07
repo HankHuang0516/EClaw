@@ -2148,6 +2148,7 @@ POST /api/mission/card/:id/comment
                         <button class="guide-sub-btn" data-guide="mission-schedule" data-i18n="guide_nav_mission_schedule">排程</button>
                     </div>
                     <button class="guide-sidebar-btn" data-guide="envvars" data-i18n="guide_nav_envvars">環境變數</button>
+                    <button class="guide-sidebar-btn" data-guide="intent-api-injection" data-i18n="guide_nav_intent_api">動態 API 注入</button>
                     <button class="guide-sidebar-btn" data-guide="remotecontrol" data-i18n="guide_nav_remotecontrol">遠端控制</button>
                     <button class="guide-sidebar-btn" data-guide="testing" data-i18n="guide_nav_testing">測試與文件</button>
                 </div>
@@ -2697,6 +2698,70 @@ node backend/tests/test-broadcast.js</div>
                         <p data-i18n="guide_testing_p_license"><a href="https://github.com/HankHuang0516/realbot/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a> &copy; 2026 HankHuang0516</p>
                     </div>
 
+
+                    <!-- ── 動態 API 注入 ── -->
+                    <div class="guide-panel" id="guide-intent-api-injection">
+                        <header>
+                            <h1 data-i18n="guide_intent_title">🧠 動態 API 注入 — Intent Keyword System</h1>
+                            <p class="meta" data-i18n="guide_intent_meta">Bot 收到訊息時，依關鍵字自動附上對應的 API curl 範例，減少 token 浪費</p>
+                        </header>
+
+                        <h2 data-i18n="guide_intent_what">什麼是動態 API 注入？</h2>
+                        <p data-i18n="guide_intent_what_desc">每次 Bot 收到 push 通知時，EClawbot 後端會分析訊息內容，偵測是否包含預設的 <strong>Intent 關鍵字</strong>。若命中，系統自動在訊息末尾附加對應的 API curl 範例，讓 Bot 的 LLM 不需要記憶所有 API，也能在需要時精準使用正確的端點。</p>
+
+                        <h2 data-i18n="guide_intent_how">運作原理</h2>
+                        <div class="arch-mermaid"><pre class="mermaid">
+sequenceDiagram
+    participant U as 使用者
+    participant S as EClaw Server
+    participant N as Mission Note
+    participant B as Bot LLM
+
+    U->>S: 傳送訊息（含「建卡」等關鍵字）
+    S->>N: loadIntentKeywords（TTL 5min cache）
+    N-->>S: keyword JSON list
+    S->>S: 偵測 intent（kanban match）
+    S->>B: 原始訊息 + [API HINT — Kanban] curl 範例
+    B->>S: 執行 kanban API call
+                        </pre></div>
+
+                        <h2 data-i18n="guide_intent_categories">支援的 Intent 類別</h2>
+                        <table class="api-table">
+                            <thead><tr><th data-i18n="guide_intent_col_intent">Intent</th><th data-i18n="guide_intent_col_keywords">關鍵字範例</th><th data-i18n="guide_intent_col_apis">注入的 API</th></tr></thead>
+                            <tbody>
+                                <tr><td><code>kanban</code></td><td>建卡、指派、移動卡、查bug、todo</td><td>Read cards, Create card, Move card</td></tr>
+                                <tr><td><code>messaging</code></td><td>發訊息、廣播、speakTo、通知</td><td>Transform speak/broadcast</td></tr>
+                                <tr><td><code>notes</code></td><td>記錄、筆記、add note、存起來</td><td>Note add, Note update</td></tr>
+                                <tr><td><code>schedule</code></td><td>排程、定時、cron、自動化</td><td>Card schedule enable/disable</td></tr>
+                                <tr><td><code>entities</code></td><td>實體、entity、查詢實體</td><td>List entities, Lookup by code</td></tr>
+                            </tbody>
+                        </table>
+
+                        <h2 data-i18n="guide_intent_dynamic">動態擴充 Keyword</h2>
+                        <p data-i18n="guide_intent_dynamic_desc">Keyword list 儲存在 mission note <code>⚙️ api-intent-keywords</code>。Bot 可自行更新此 note 新增關鍵字，<strong>無需重啟 server</strong>，5 分鐘內生效。</p>
+                        <div class="code-block"><pre><code class="language-bash"># Step 1 — 讀取現有 keyword list
+curl -s "https://eclawbot.com/api/mission/dashboard?deviceId=DEVICE_ID&botSecret=BOT_SECRET&entityId=ENTITY_ID" \
+  | python3 -c "import sys,json; notes=json.load(sys.stdin)['dashboard']['notes']; [print(n['content']) for n in notes if 'api-intent-keywords' in n['title']]"
+
+# Step 2 — 新增關鍵字後寫回
+curl -s -X POST "https://eclawbot.com/api/mission/note/update" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "deviceId":"DEVICE_ID",
+    "botSecret":"BOT_SECRET",
+    "entityId":ENTITY_ID,
+    "title":"⚙️ api-intent-keywords",
+    "newContent":"{...更新後的完整 JSON...}"
+  }'</code></pre></div>
+
+                        <h2 data-i18n="guide_intent_safety">安全設計</h2>
+                        <ul>
+                            <li data-i18n="guide_intent_safety_1">JSON parse 失敗 → 靜默跳過，不影響正常 push 流程</li>
+                            <li data-i18n="guide_intent_safety_2">Cache TTL 5 分鐘 → 降低 DB 讀取壓力</li>
+                            <li data-i18n="guide_intent_safety_3">只附加 hint，不修改原始訊息內容</li>
+                            <li data-i18n="guide_intent_safety_4">只命中第一個 intent（避免 hint 過長）</li>
+                        </ul>
+                    </div>
 
                 </div><!-- /guide-content -->
             </div><!-- /guide-layout -->
