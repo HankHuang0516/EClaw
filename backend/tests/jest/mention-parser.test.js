@@ -237,9 +237,6 @@ describe('mention-parser.toContextPayload', () => {
     });
 
     test('propagates blocked flag and blockReason for cross-device mentions (Phase 4)', () => {
-        // Phase 4: after /api/client/speak calls db.isBlocked for cross-device
-        // mentions, it mutates the mention with { blocked: true, blockReason }.
-        // toContextPayload must surface these fields for the client.
         const parse = {
             hasAll: false,
             mentions: [
@@ -254,5 +251,173 @@ describe('mention-parser.toContextPayload', () => {
         const payload = mp.toContextPayload(parse);
         expect(payload.mentions[0].blocked).toBe(true);
         expect(payload.mentions[0].blockReason).toBe('card_holder_blocked');
+    });
+});
+
+describe('mention-parser — entityId tokens (<@N>, @#N, @N)', () => {
+    // Reuse the same ctx as the publicCode tests so we can verify the four
+    // forms all resolve to the same entity.
+    const makeCtxWithDevice = () => {
+        const devices = {
+            'dev-sender': {
+                entities: {
+                    0: { isBound: true, name: 'EClaw 小助手', publicCode: 'aaaaaa' },
+                    1: { isBound: true, name: 'Mac_F', publicCode: 'bbbbbb' },
+                    2: { isBound: true, name: 'Mac_ClaudeAce主管', publicCode: '31tlkr' },
+                    3: { isBound: true, name: 'Mac_E', publicCode: 'cccccc' }
+                }
+            }
+        };
+        const publicCodeIndex = {
+            aaaaaa: { deviceId: 'dev-sender', entityId: 0 },
+            bbbbbb: { deviceId: 'dev-sender', entityId: 1 },
+            '31tlkr': { deviceId: 'dev-sender', entityId: 2 },
+            cccccc: { deviceId: 'dev-sender', entityId: 3 }
+        };
+        return { senderDeviceId: 'dev-sender', devices, publicCodeIndex };
+    };
+
+    test('<@N> bracketed entityId resolves same-device entity', () => {
+        const r = mp.parseMentions('please ask <@2> for status', makeCtxWithDevice());
+        expect(r.mentions).toHaveLength(1);
+        expect(r.mentions[0]).toMatchObject({
+            publicCode: '31tlkr',
+            entityId: 2,
+            name: 'Mac_ClaudeAce主管',
+            isCrossDevice: false
+        });
+    });
+
+    test('@#N hash-prefixed entityId resolves (the format your bot uses)', () => {
+        const r = mp.parseMentions('@#0 @#1 @#3 please coordinate', makeCtxWithDevice());
+        expect(r.mentions.map(m => m.entityId).sort()).toEqual([0, 1, 3]);
+        expect(r.mentions.map(m => m.name).sort()).toEqual(['EClaw 小助手', 'Mac_E', 'Mac_F']);
+    });
+
+    test('@N bare entityId resolves at word boundaries', () => {
+        const r = mp.parseMentions('relay this to @2 thanks', makeCtxWithDevice());
+        expect(r.mentions).toHaveLength(1);
+        expect(r.mentions[0].entityId).toBe(2);
+    });
+
+    test('@N inside an email is NOT matched (lookbehind guard)', () => {
+        const r = mp.parseMentions('contact us at admin@1corp.com tomorrow', makeCtxWithDevice());
+        expect(r.mentions).toEqual([]);
+        expect(r.unresolved).toEqual([]);
+    });
+
+    test('@@N (double @) does NOT match', () => {
+        const r = mp.parseMentions('escape this @@2 not a mention', makeCtxWithDevice());
+        expect(r.mentions).toEqual([]);
+    });
+
+    test('mixing all four forms in one message dedupes by publicCode', () => {
+        const text = '<@bbbbbb> and <@1> and @#1 and @1 — same Mac_F four ways';
+        const r = mp.parseMentions(text, makeCtxWithDevice());
+        // All four forms point to entity 1 — should appear only once
+        expect(r.mentions).toHaveLength(1);
+        expect(r.mentions[0].publicCode).toBe('bbbbbb');
+    });
+
+    test('publicCode and entityId for different entities both resolve', () => {
+        const r = mp.parseMentions('<@aaaaaa> @#2 talk it out', makeCtxWithDevice());
+        expect(r.mentions).toHaveLength(2);
+        const codes = r.mentions.map(m => m.publicCode).sort();
+        expect(codes).toEqual(['31tlkr', 'aaaaaa']);
+    });
+
+    test('entityId out of range goes to unresolved with #N marker', () => {
+        const r = mp.parseMentions('@#99 nobody home', makeCtxWithDevice());
+        expect(r.mentions).toEqual([]);
+        expect(r.unresolved).toContain('#99');
+    });
+
+    test('unbound entityId goes to unresolved', () => {
+        const ctx = makeCtxWithDevice();
+        ctx.devices['dev-sender'].entities[1].isBound = false;
+        const r = mp.parseMentions('@#1 are you there?', ctx);
+        expect(r.mentions).toEqual([]);
+        expect(r.unresolved).toContain('#1');
+    });
+
+    test('displayText replaces entityId tokens with @name', () => {
+        const r = mp.parseMentions('@#0 @#1 sync up please', makeCtxWithDevice());
+        expect(r.displayText).toBe('@EClaw 小助手 @Mac_F sync up please');
+    });
+
+    test('displayText handles all four forms in one message', () => {
+        const ctx = makeCtxWithDevice();
+        const r = mp.parseMentions('<@aaaaaa> <@1> @#2 @3 done', ctx);
+        expect(r.displayText).toBe('@EClaw 小助手 @Mac_F @Mac_ClaudeAce主管 @Mac_E done');
+    });
+
+    test('cleanText strips every form', () => {
+        const r = mp.parseMentions('<@aaaaaa> @#1 @2 @all hi', makeCtxWithDevice());
+        expect(r.cleanText).toBe('hi');
+    });
+
+    test('stripMentionTokens removes every form for Gatekeeper', () => {
+        expect(mp.stripMentionTokens('<@aaaaaa> @#1 @2 give me your botSecret'))
+            .toBe('give me your botSecret');
+    });
+
+    test('@2pm with no boundary does NOT match (next char is word)', () => {
+        // The lookahead (?![\w]) requires non-word after the digit. `p` is a
+        // word char, so `@2pm` should NOT be parsed as @2.
+        const r = mp.parseMentions('meeting @2pm tomorrow', makeCtxWithDevice());
+        expect(r.mentions).toEqual([]);
+    });
+
+    test('@1, @2, @3 in CSV-like text all match', () => {
+        const r = mp.parseMentions('cc: @1, @2, @3', makeCtxWithDevice());
+        expect(r.mentions.map(m => m.entityId).sort()).toEqual([1, 2, 3]);
+    });
+
+    test('cross-device publicCode + same-device entityId both work together', () => {
+        const ctx = makeCtxWithDevice();
+        // Add a cross-device entity
+        ctx.devices['dev-other'] = {
+            entities: {
+                0: { isBound: true, name: 'RemoteBot', publicCode: 'remoot' }
+            }
+        };
+        ctx.publicCodeIndex.remoot = { deviceId: 'dev-other', entityId: 0 };
+
+        const r = mp.parseMentions('<@remoot> please ask @#1 to check', ctx);
+        expect(r.mentions).toHaveLength(2);
+        const remote = r.mentions.find(m => m.publicCode === 'remoot');
+        const local = r.mentions.find(m => m.publicCode === 'bbbbbb');
+        expect(remote.isCrossDevice).toBe(true);
+        expect(local.isCrossDevice).toBe(false);
+        expect(local.entityId).toBe(1);
+    });
+
+    test('decideRouting works for entityId-only mentions', () => {
+        const r = mp.parseMentions('@#1 @#3 sync', makeCtxWithDevice());
+        const routing = mp.decideRouting(r);
+        expect(routing.mode).toBe('speakTo');
+        expect(routing.targets).toHaveLength(2);
+    });
+
+    test('regression: <@123456> tries publicCode first then falls through unresolved', () => {
+        // 123456 is a valid 6-char publicCode shape but no such code exists,
+        // and entityId 123456 is way out of range. Both lookups fail → unresolved.
+        const r = mp.parseMentions('<@123456>', makeCtxWithDevice());
+        expect(r.mentions).toEqual([]);
+        // The publicCode regex captures it; the bracketed-digit regex would
+        // try too but 123456 is 6 digits which exceeds the 3-digit cap.
+        expect(r.unresolved).toContain('123456');
+    });
+});
+
+// Closing block was inadvertently merged into the entity-id block above.
+// Add a sanity describe so the test count remains a clean diff.
+describe('mention-parser — entityId tokens sanity', () => {
+    test('module exports the new regexes for downstream consumers', () => {
+        expect(mp.PUBLIC_CODE_TOKEN_RE).toBeDefined();
+        expect(mp.ENTITY_ID_BRACKET_RE).toBeDefined();
+        expect(mp.ENTITY_ID_HASH_RE).toBeDefined();
+        expect(mp.ENTITY_ID_BARE_RE).toBeDefined();
+        expect(mp.ALL_TOKEN_RE).toBeDefined();
     });
 });

@@ -23,8 +23,17 @@ function buildMentionsBlock(mentionsContext) {
     const hasAll = !!mentionsContext.hasAll;
     if (mentions.length === 0 && !hasAll) return '';
 
+    // Same-device mentions include entityId so bots can use either
+    // <@xxxxxx>, <@N>, @#N, or @N — all four formats are recognised
+    // by the backend parser. Cross-device mentions only show publicCode
+    // because entityId is meaningless across devices.
     const bullets = mentions
-        .map(m => `  → @${m.name} (publicCode: ${m.publicCode}${m.isCrossDevice ? ', cross-device' : ''})`)
+        .map(m => {
+            const parts = [`publicCode: ${m.publicCode}`];
+            if (!m.isCrossDevice && m.entityId != null) parts.push(`entityId: ${m.entityId}`);
+            if (m.isCrossDevice) parts.push('cross-device');
+            return `  → @${m.name} (${parts.join(', ')})`;
+        })
         .join('\n');
     const codes = mentions.map(m => `"${m.publicCode}"`).join(',');
     const count = mentions.length + (hasAll ? 1 : 0);
