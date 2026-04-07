@@ -38,6 +38,26 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const safeEqual = require('./safe-equal');
+const { tKanban, statusLabel } = require('./i18n/kanban-notifications');
+
+// Cache device→language to avoid repeated lookups
+const deviceLangCache = new Map();
+const DEVICE_LANG_TTL_MS = 60_000;
+async function getDeviceLanguage(deviceId) {
+    const cached = deviceLangCache.get(deviceId);
+    if (cached && cached.expires > Date.now()) return cached.lang;
+    try {
+        const result = await pool.query(
+            'SELECT language FROM user_accounts WHERE device_id = $1 LIMIT 1',
+            [deviceId]
+        );
+        const lang = result.rows[0]?.language || 'en';
+        deviceLangCache.set(deviceId, { lang, expires: Date.now() + DEVICE_LANG_TTL_MS });
+        return lang;
+    } catch (_) {
+        return 'en';
+    }
+}
 let CronExpressionParser;
 try {
     ({ CronExpressionParser } = require('cron-parser'));
@@ -404,7 +424,13 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
             // Push notify assigned bots if status != backlog
             if (cardStatus !== 'backlog' && bots.length > 0) {
-                const msg = `📋 新任務指派：${PRIORITY_COLORS[cardPriority]} [${cardPriority}] ${title.trim()}\n狀態: ${STATUS_LABELS[cardStatus]}`;
+                const lang = await getDeviceLanguage(deviceId);
+                const msg = tKanban(lang, 'cardCreated', {
+                    priorityIcon: PRIORITY_COLORS[cardPriority],
+                    priority: cardPriority,
+                    title: title.trim(),
+                    status: statusLabel(lang, cardStatus)
+                });
                 notifyEntities(deviceId, bots, msg, { description });
             }
 
@@ -907,7 +933,13 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             // Push notify new assigned bots
             if (bots.length > 0) {
                 const direction = STATUSES.indexOf(newStatus) > STATUSES.indexOf(oldStatus) ? '➡️' : '⬅️';
-                const msg = `${direction} 任務狀態變更：[${card.title}]\n${STATUS_LABELS[oldStatus]} → ${STATUS_LABELS[newStatus]}`;
+                const lang = await getDeviceLanguage(deviceId);
+                const msg = tKanban(lang, 'statusChanged', {
+                    direction,
+                    title: card.title,
+                    from: statusLabel(lang, oldStatus),
+                    to: statusLabel(lang, newStatus)
+                });
                 notifyEntities(deviceId, bots, msg, { description: card.description });
             }
 
@@ -1441,12 +1473,12 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
             for (const card of result.rows) {
                 const bots = card.assigned_bots || [];
-                const statusLabel = STATUS_LABELS[card.status] || card.status;
+                const cardStatusLabel = STATUS_LABELS[card.status] || card.status;
                 const elapsedMs = Date.now() - new Date(card.status_changed_at).getTime();
                 const elapsedHrs = Math.round(elapsedMs / 3600000 * 10) / 10;
 
                 await addSystemComment(card.id, card.device_id,
-                    `⏰ 催促：此卡片已在「${statusLabel}」停留 ${elapsedHrs} 小時，請 ${bots.map(b => `#${b}`).join(', ') || '負責人'} 繼續推進`);
+                    `⏰ 催促：此卡片已在「${cardStatusLabel}」停留 ${elapsedHrs} 小時，請 ${bots.map(b => `#${b}`).join(', ') || '負責人'} 繼續推進`);
 
                 await pool.query(
                     `UPDATE kanban_cards SET last_stale_nudge_at = NOW() WHERE id = $1`,
@@ -1454,7 +1486,12 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 );
 
                 if (bots.length > 0) {
-                    const msg = `⏰ 任務催促：[${card.title}]\n已在「${statusLabel}」停留 ${elapsedHrs} 小時，請繼續推進`;
+                    const lang = await getDeviceLanguage(card.device_id);
+                    const msg = tKanban(lang, 'staleNudge', {
+                        title: card.title,
+                        status: statusLabel(lang, card.status),
+                        hours: elapsedHrs
+                    });
                     notifyEntities(card.device_id, bots, msg, { description: card.description });
                 }
 
@@ -1545,7 +1582,8 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                         `🗓️ 排程觸發（一次性）— 狀態: ${STATUS_LABELS[card.status]} → ${STATUS_LABELS[newStatus]}`);
 
                     if (bots.length > 0) {
-                        const msg = `🗓️ 排程觸發：[${card.title}]\n請開始執行此任務`;
+                        const lang = await getDeviceLanguage(card.device_id);
+                        const msg = tKanban(lang, 'scheduleOnce', { title: card.title });
                         notifyEntities(card.device_id, bots, msg, { description: card.description });
                     }
 
@@ -1620,7 +1658,11 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
                     // Push notify assigned bots
                     if (bots.length > 0) {
-                        const msg = `🗓️ 自動化觸發：[${card.title}]\n子卡已建立: ${childTitle}\n請開始執行`;
+                        const lang = await getDeviceLanguage(card.device_id);
+                        const msg = tKanban(lang, 'automationTrigger', {
+                            title: card.title,
+                            childTitle
+                        });
                         notifyEntities(card.device_id, bots, msg, { description: card.description });
                     }
 
@@ -1652,7 +1694,14 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                         `🗓️ 排程觸發（重複）— ${statusMsg}下次執行: ${nextRun ? nextRun.toISOString() : '未知'}`);
 
                     if (bots.length > 0) {
-                        const msg = `🗓️ 排程觸發：[${card.title}]\n${statusMsg}請繼續推進此任務`;
+                        const lang = await getDeviceLanguage(card.device_id);
+                        const msg = card.status !== newStatus
+                            ? tKanban(lang, 'scheduleRecurringWithStatus', {
+                                title: card.title,
+                                from: statusLabel(lang, card.status),
+                                to: statusLabel(lang, newStatus)
+                            })
+                            : tKanban(lang, 'scheduleRecurring', { title: card.title });
                         notifyEntities(card.device_id, bots, msg, { description: card.description });
                     }
 
@@ -1741,7 +1790,15 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
                 // Notify reviewer if set — send the bot's reply for review
                 if (reviewerId != null) {
-                    const reviewMsg = `🔍 任務完成待審：[${card.title}]\nBot #${entityId} 已完成並回報：${transformMessage ? `\n${transformMessage.slice(0, 300)}` : '（無回覆內容）'}\n如有問題請重新建卡指派。`;
+                    const lang = await getDeviceLanguage(deviceId);
+                    const reply = transformMessage
+                        ? `\n${transformMessage.slice(0, 300)}`
+                        : tKanban(lang, 'reviewerNoReply');
+                    const reviewMsg = tKanban(lang, 'reviewerNotify', {
+                        title: card.title,
+                        entityId,
+                        reply
+                    });
                     notifyEntities(deviceId, [reviewerId], reviewMsg);
                     console.log(`[Kanban] Notified reviewer #${reviewerId} for card ${card.id}`);
                 }
