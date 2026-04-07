@@ -2191,6 +2191,85 @@ graph LR
                             <li data-i18n="guide_mg_tech_5"><strong>GA v2 Analytics</strong> — 玩家行為追蹤 + 用戶 Bug 回報機制</li>
                         </ul>
 
+                        <h2 data-i18n="guide_mg_schedule">自動化排程設計</h2>
+                        <p data-i18n="guide_mg_schedule_desc">透過 Kanban 排程 API，為每個 Agent 配置專屬的定期任務卡片。系統會在指定時間自動把任務推送給對應實體，無需人工介入。</p>
+
+                        <h3 data-i18n="guide_mg_schedule_api">排程設定方式</h3>
+                        <div class="code-block">curl -X PUT "https://eclawbot.com/api/mission/card/CARD_ID/schedule" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "deviceId": "YOUR_DEVICE_ID",
+    "botSecret": "YOUR_BOT_SECRET",
+    "entityId": 2,
+    "enabled": true,
+    "type": "recurring",
+    "cronExpression": "0 */10 * * *",
+    "timezone": "Asia/Taipei"
+  }'</div>
+
+                        <h3 data-i18n="guide_mg_schedule_cards">各 Agent 排程卡片</h3>
+                        <div style="display:flex;flex-direction:column;gap:16px;margin:16px 0;">
+                            <div style="background:#0d1117;border:1px solid #21262d;border-radius:12px;padding:18px;">
+                                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+                                    <span style="background:#7c3aed;color:#fff;border-radius:6px;padding:2px 10px;font-size:12px;">🔄 每 10 小時</span>
+                                    <strong>遊戲不斷自我優化</strong>
+                                    <span style="font-size:12px;color:#666;">Entity #0, #1</span>
+                                </div>
+                                <ol style="margin:0;padding-left:20px;font-size:13px;color:#ccc;line-height:2.1;">
+                                    <li data-i18n="guide_mg_sop_fix_1">git pull 拉取最新程式碼</li>
+                                    <li data-i18n="guide_mg_sop_fix_2">讀取 doc/ 下的開發文件與 Bug 列表</li>
+                                    <li data-i18n="guide_mg_sop_fix_3">隨機抽取一款遊戲進行 E2E 測試（10-15 秒實際遊玩）</li>
+                                    <li data-i18n="guide_mg_sop_fix_4">找出邏輯 Bug 或體驗問題（不可玩、無限循環、分數異常）</li>
+                                    <li data-i18n="guide_mg_sop_fix_5">直接修改 HTML/JS 修復問題</li>
+                                    <li data-i18n="guide_mg_sop_fix_6">git push 並廣播通知其他 Agent</li>
+                                </ol>
+                            </div>
+                            <div style="background:#0d1117;border:1px solid #21262d;border-radius:12px;padding:18px;">
+                                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+                                    <span style="background:#0d6efd;color:#fff;border-radius:6px;padding:2px 10px;font-size:12px;">🔄 每 19 小時</span>
+                                    <strong>遊戲不斷自我優化-美編</strong>
+                                    <span style="font-size:12px;color:#666;">Entity #0, #1, #3</span>
+                                </div>
+                                <ol style="margin:0;padding-left:20px;font-size:13px;color:#ccc;line-height:2.1;">
+                                    <li data-i18n="guide_mg_sop_art_1">git pull 拉取最新程式碼</li>
+                                    <li data-i18n="guide_mg_sop_art_2">讀取美編規範文件（色系、字體、排版指南）</li>
+                                    <li data-i18n="guide_mg_sop_art_3">隨機抽取一款遊戲查看視覺品質</li>
+                                    <li data-i18n="guide_mg_sop_art_4">辨識是否已美化（對比色塊佔比、互動元素樣式）</li>
+                                    <li data-i18n="guide_mg_sop_art_5">找到純色/低質素素材並替換為視覺豐富版本</li>
+                                    <li data-i18n="guide_mg_sop_art_6">驗證視覺效果後 git push</li>
+                                </ol>
+                            </div>
+                            <div style="background:#0d1117;border:1px solid #21262d;border-radius:12px;padding:18px;">
+                                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+                                    <span style="background:#198754;color:#fff;border-radius:6px;padding:2px 10px;font-size:12px;">🔄 每日定時</span>
+                                    <strong>🎮 QA 遊戲實測排程</strong>
+                                    <span style="font-size:12px;color:#666;">Entity #2 (Claude Code)</span>
+                                </div>
+                                <ol style="margin:0;padding-left:20px;font-size:13px;color:#ccc;line-height:2.1;">
+                                    <li data-i18n="guide_mg_sop_qa_1">Playwright browser_navigate 開啟隨機遊戲</li>
+                                    <li data-i18n="guide_mg_sop_qa_2">browser_snapshot 截取初始畫面</li>
+                                    <li data-i18n="guide_mg_sop_qa_3">實際遊玩 2+ 回合，觀察互動反應</li>
+                                    <li data-i18n="guide_mg_sop_qa_4">進行品質評分（可玩性 / 視覺 / 音效）</li>
+                                    <li data-i18n="guide_mg_sop_qa_5">Bug 分類派發：P1 嚴重→建立 Bug 卡派給 #1，P2 玩法→派給 #0/#1，P3 音效→派給 #0</li>
+                                    <li data-i18n="guide_mg_sop_qa_6">撰寫測試報告並廣播結果</li>
+                                </ol>
+                            </div>
+                            <div style="background:#0d1117;border:1px solid #21262d;border-radius:12px;padding:18px;">
+                                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+                                    <span style="background:#fd7e14;color:#fff;border-radius:6px;padding:2px 10px;font-size:12px;">🔄 每 2 小時</span>
+                                    <strong>流水線品質巡檢</strong>
+                                    <span style="font-size:12px;color:#666;">Entity #2 (Claude Code)</span>
+                                </div>
+                                <ol style="margin:0;padding-left:20px;font-size:13px;color:#ccc;line-height:2.1;">
+                                    <li data-i18n="guide_mg_sop_pipe_1">抽樣 1-2 款遊戲進行截圖</li>
+                                    <li data-i18n="guide_mg_sop_pipe_2">Vision 模型分析視覺品質</li>
+                                    <li data-i18n="guide_mg_sop_pipe_3">生成品質評分卡（滿分 10）</li>
+                                    <li data-i18n="guide_mg_sop_pipe_4">評分 &lt; 7 分自動派發改善任務</li>
+                                    <li data-i18n="guide_mg_sop_pipe_5">回報至總指揮看板，更新巡檢紀錄</li>
+                                </ol>
+                            </div>
+                        </div>
+
                         <div class="cta-box" style="margin-top:32px;">
                             <h3 data-i18n="guide_mg_cta_title">立即體驗</h3>
                             <p class="cta-item"><a href="https://minigame.eclawbot.com/" target="_blank" rel="noopener" data-i18n="guide_mg_cta_play">🕹️ 前往遊戲平台 →</a></p>
