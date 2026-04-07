@@ -986,6 +986,93 @@ initPersistence().catch(err => {
 });
 
 // ============================================
+// HELP API — Intent-based API discovery for bots
+// ============================================
+app.get('/api/help', (req, res) => {
+    const { deviceId, botSecret, entityId, intent = '' } = req.query;
+    const apiBase = `https://${req.hostname}`;
+
+    // Auth: validate botSecret
+    const device = devices[deviceId];
+    const eId = parseInt(entityId, 10);
+    const entity = device?.entities?.[eId];
+    if (!entity || !safeEqual(entity.botSecret, botSecret)) {
+        return res.status(403).json({ error: 'Invalid credentials' });
+    }
+
+    const q = intent.toLowerCase();
+
+    // Intent category matching — zh/en + ja/ko/th/vi/id/fr/es/ms (by @Mac_F)
+    const INTENT_MAP = {
+        messaging:  ['speakto','broadcast','發訊','reply','transform','message','send','私訊','廣播','メッセージ','送信','메시지','전송','ส่งข้อความ','ข้อความ','ส่ง','gửi tin nhắn','tin nhắn','gửi','phát sóng','kirım pesan','pesan','mengirim','envoyer message','diffusion','enviar mensaje','transmitir','hantar mesej','mesej','menghantar'],
+        kanban:     ['card','看板','任務','move','派任','assign','kanban','卡片','create task','建立任務','カード','タスク','칸반','카드','작업','กระดาน','บัตร','จัดการงาน','bảng','thẻ','quản lý công việc','papan','kartu','manajemen tugas','tableau','carte','gestion tâches','tablero','tarjeta','gestión tareas','kad','pengurusan tugas'],
+        schedule:   ['排程','schedule','暫停','pause','cron','recurring','stop schedule','disable','enable','スケジュール','予約','一時停止','크론','일정','예약','일시 중지','กำหนดการ','ตารางเวลา','หยุดชั่วคราว','lịch trình','đặt lịch','tạm dừng','jadwal','penjadwalan','jeda','planification','programmation','programación','jadual'],
+        notes:      ['note','筆記','rules','dashboard','rule','規則','儀表板','ノート','メモ','ルール','ダッシュボード','노트','메모','규칙','대시보드','บันทึก','กฎ','แดชบอร์ด','ghi chú','quy tắc','bảng điều khiển','catatan','aturan','dasbor','règles','tableau de bord','notas','reglas','panel','nota','peraturan','papan pemuka'],
+        search:     ['搜尋','search','fetch','網頁','web','query','検索','ウェブ','スクレイピング','검색','웹','스크래핑','ค้นหา','เว็บ','ดึงข้อมูล','tìm kiếm','cạo dữ liệu','pencarian','pengikisan','recherche','extraction web','búsqueda','raspado web','carian'],
+        files:      ['file','檔案','upload','download','上傳','下載','ファイル','アップロード','保存','파일','업로드','저장','ไฟล์','อัปโหลด','บันทึก','tệp','tải lên','lưu','unggah','simpan','fichier','téléchargement','enregistrer','archivo','subir','guardar','fail','muat naik'],
+        entities:   ['entity','實體','bind','綁定','status','lookup','查詢實體','エンティティ','バインディング','엔티티','연결','바인딩','เอนทิตี','การผูกมัด','thực thể','liên kết','kết nối','entitas','pengikatan','koneksi','entité','liaison','entidad','enlace','vínculo','entiti','sambungan']
+    };
+
+    const matched = Object.entries(INTENT_MAP).find(([, kws]) =>
+        kws.some(kw => q.includes(kw))
+    )?.[0] ?? 'general';
+
+    const d = `'{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${eId}`; // shared body prefix
+
+    const APIS = {
+        messaging: [
+            { title: 'Send private message (speakTo)', curl: `curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${eId},"botSecret":"${botSecret}","message":"TEXT","state":"IDLE","speakTo":["TARGET_PUBLIC_CODE"]}'` },
+            { title: 'Broadcast to all entities', curl: `curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${eId},"botSecret":"${botSecret}","message":"TEXT","state":"IDLE","broadcast":true}'` }
+        ],
+        kanban: [
+            { title: 'Read kanban board', curl: `curl -s "${apiBase}/api/mission/cards?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
+            { title: 'Move card status', curl: `curl -s -X POST "${apiBase}/api/mission/card/CARD_ID/move" -H "Content-Type: application/json" -d ${d},"newStatus":"done"}'` },
+            { title: 'Add comment to card', curl: `curl -s -X POST "${apiBase}/api/mission/card/CARD_ID/comment" -H "Content-Type: application/json" -d ${d},"text":"COMMENT"}'` },
+            { title: 'Create new card', curl: `curl -s -X POST "${apiBase}/api/mission/card" -H "Content-Type: application/json" -d ${d},"title":"TASK_TITLE","status":"todo"}'` }
+        ],
+        schedule: [
+            { title: 'Disable card schedule', curl: `curl -s -X PUT "${apiBase}/api/mission/card/CARD_ID/schedule" -H "Content-Type: application/json" -d ${d},"enabled":false}'` },
+            { title: 'Enable recurring schedule (every 20min)', curl: `curl -s -X PUT "${apiBase}/api/mission/card/CARD_ID/schedule" -H "Content-Type: application/json" -d ${d},"enabled":true,"type":"recurring","cronExpression":"*/20 * * * *","timezone":"Asia/Taipei"}'` },
+            { title: 'Enable one-time schedule', curl: `curl -s -X PUT "${apiBase}/api/mission/card/CARD_ID/schedule" -H "Content-Type: application/json" -d ${d},"enabled":true,"type":"once","runAt":UNIX_TIMESTAMP_MS}'` },
+            { title: 'List bot schedules', curl: `curl -s "${apiBase}/api/bot/schedules?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` }
+        ],
+        notes: [
+            { title: 'Read mission dashboard (notes/rules/skills)', curl: `curl -s "${apiBase}/api/mission/dashboard?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
+            { title: 'Add note', curl: `curl -s -X POST "${apiBase}/api/mission/note/add" -H "Content-Type: application/json" -d ${d},"title":"TITLE","content":"CONTENT"}'` },
+            { title: 'Update note', curl: `curl -s -X POST "${apiBase}/api/mission/note/update" -H "Content-Type: application/json" -d ${d},"title":"TITLE","content":"NEW_CONTENT"}'` }
+        ],
+        search: [
+            { title: 'Web search (DuckDuckGo)', curl: `curl -s "${apiBase}/api/bot/web-search?q=QUERY&deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
+            { title: 'Fetch web page content', curl: `curl -s "${apiBase}/api/bot/web-fetch?url=URL&deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` }
+        ],
+        files: [
+            { title: 'List bot files', curl: `curl -s "${apiBase}/api/bot/files?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
+            { title: 'Upload/update file', curl: `curl -s -X PUT "${apiBase}/api/bot/file" -H "Content-Type: application/json" -d ${d},"filename":"FILE.txt","content":"CONTENT"}'` },
+            { title: 'Download file', curl: `curl -s "${apiBase}/api/bot/file?filename=FILE.txt&deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` }
+        ],
+        entities: [
+            { title: 'List all entities', curl: `curl -s "${apiBase}/api/entities?deviceId=${deviceId}&botSecret=${botSecret}"` },
+            { title: 'Lookup entity by publicCode', curl: `curl -s "${apiBase}/api/entity/lookup?publicCode=PUBLIC_CODE"` },
+            { title: 'Get device status', curl: `curl -s "${apiBase}/api/status?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` }
+        ],
+        general: [
+            { title: 'Full API documentation', curl: `curl -s "${apiBase}/api/skill-doc?format=text"` },
+            { title: 'Read mission dashboard', curl: `curl -s "${apiBase}/api/mission/dashboard?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
+            { title: 'Read kanban board', curl: `curl -s "${apiBase}/api/mission/cards?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` }
+        ]
+    };
+
+    const apis = APIS[matched] ?? APIS.general;
+    const curlBlock = apis.map(a => `# ${a.title}\n${a.curl}`).join('\n\n');
+
+    res.json({
+        intent,
+        matched_category: matched,
+        tip: `Use ?intent=KEYWORD to discover APIs. Categories: messaging, kanban, schedule, notes, search, files, entities`,
+        curl_examples: curlBlock
+    });
+});
+
 // SKILL DOCUMENTATION (serve eclaw-a2a-toolkit as HTML)
 // ============================================
 app.get('/api/skill-doc', (req, res) => {
@@ -11090,6 +11177,13 @@ function getMissionApiHints(apiBase, deviceId, entityId, botSecret) {
     hints += `Read notes: exec: curl -s "${apiBase}/api/mission/notes?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}"\n`;
     hints += `Create kanban card: exec: curl -s -X POST "${apiBase}/api/mission/card" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","title":"TASK_TITLE","status":"todo"}'\n`;
     hints += `Add note: exec: curl -s -X POST "${apiBase}/api/mission/note/add" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","title":"TITLE","content":"CONTENT"}'\n`;
+    hints += `\n[AVAILABLE TOOLS — Kanban Board]\n`;
+    hints += `Read board: exec: curl -s "${apiBase}/api/mission/cards?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}"\n`;
+    hints += `Move card: exec: curl -s -X POST "${apiBase}/api/mission/card/CARD_ID/move" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${entityId},"newStatus":"STATUS"}'\n`;
+    hints += `Add comment: exec: curl -s -X POST "${apiBase}/api/mission/card/CARD_ID/comment" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${entityId},"text":"YOUR_COMMENT"}'\n`;
+    hints += `Disable schedule: exec: curl -s -X PUT "${apiBase}/api/mission/card/CARD_ID/schedule" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${entityId},"enabled":false}'\n`;
+    hints += `Enable schedule: exec: curl -s -X PUT "${apiBase}/api/mission/card/CARD_ID/schedule" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${entityId},"enabled":true,"type":"recurring","cronExpression":"*/20 * * * *","timezone":"Asia/Taipei"}'\n`;
+    hints += `\nDiscover more APIs: exec: curl -s "${apiBase}/api/help?intent=YOUR_INTENT&deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}"\n`;
     return hints;
 }
 
