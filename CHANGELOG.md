@@ -1,3 +1,10 @@
+## [1.899.2](https://github.com/HankHuang0516/EClaw/compare/v1.899.1...v1.899.2) (2026-04-07)
+
+
+### Bug Fixes
+
+* **form-submit:** handle sendBeacon text/plain + debug logging ([#1628](https://github.com/HankHuang0516/EClaw/issues/1628)) ([9a41b29](https://github.com/HankHuang0516/EClaw/commit/9a41b29012df63e34ee7583f605e283df162d756))
+
 ## [1.899.1](https://github.com/HankHuang0516/EClaw/compare/v1.899.0...v1.899.1) (2026-04-07)
 
 
