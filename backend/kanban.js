@@ -228,17 +228,13 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     }
                 }
 
-                // ── 2. Build standard Kanban API hints (same pattern as getMissionApiHints) ──
+                // ── 2. Build standard Mission + Kanban API hints ──
+                // Note: getMissionApiHints already embeds [AVAILABLE TOOLS — Kanban Board]
+                // (read/move/comment/disable schedule/enable schedule), so we no longer
+                // append a second Kanban Board block here.
                 const kanbanHints = getMissionApiHints
                     ? getMissionApiHints(API_BASE, deviceId, eid, entity.botSecret)
                     : '';
-
-                const kanbanBoardHints = [
-                    `\n[AVAILABLE TOOLS — Kanban Board]`,
-                    `Read board: exec: curl -s "${API_BASE}/api/mission/cards?deviceId=${deviceId}&botSecret=${entity.botSecret}&entityId=${eid}"`,
-                    `Move card: exec: curl -s -X POST "${API_BASE}/api/mission/card/CARD_ID/move" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${entity.botSecret}","entityId":${eid},"newStatus":"STATUS"}'`,
-                    `Add comment: exec: curl -s -X POST "${API_BASE}/api/mission/card/CARD_ID/comment" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${entity.botSecret}","entityId":${eid},"text":"YOUR_COMMENT"}'`,
-                ].join('\n');
 
                 // ── 3. Build full message with description ──
                 const descBlock = description
@@ -253,7 +249,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                         text: message + descBlock,
                         eclaw_context: {
                             silentToken: '[SILENT]',
-                            missionHints: kanbanHints + kanbanBoardHints,
+                            missionHints: kanbanHints,
                         }
                     }, entity.channelAccountId);
                     console.log(`[Kanban] Channel push to entity ${eid}: ${result.pushed ? 'OK' : result.reason}`);
@@ -264,7 +260,6 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                         `[KANBAN NOTIFICATION] ${message}`,
                         descBlock,
                         `[NOTIFICATION — NO REPLY EXPECTED] This is a Kanban task notification. Take action on the card as needed.`,
-                        kanbanBoardHints,
                         kanbanHints,
                     ].filter(Boolean).join('\n');
 
@@ -279,7 +274,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
                 } else if (pushToEntity) {
                     // Legacy fallback
-                    const pushMsg = `[KANBAN NOTIFICATION] ${message}${descBlock}${kanbanBoardHints}${kanbanHints}`;
+                    const pushMsg = `[KANBAN NOTIFICATION] ${message}${descBlock}${kanbanHints}`;
                     await pushToEntity(deviceId, eid, pushMsg);
                     console.log(`[Kanban] Legacy push to entity ${eid}`);
                 }
