@@ -786,7 +786,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
     router.patch('/language', async (req, res) => {
         try {
             const { language, deviceId, deviceSecret } = req.body;
-            const validLangs = ['en', 'zh', 'zh-CN', 'ja', 'ko', 'th', 'vi', 'id'];
+            const validLangs = ['en', 'zh', 'zh-CN', 'ja', 'ko', 'th', 'vi', 'id', 'es', 'fr', 'de', 'pt', 'it', 'ru', 'tr', 'ms', 'hi', 'ar', 'nl', 'pl'];
             if (!language || !validLangs.includes(language)) {
                 return res.status(400).json({ success: false, error: 'Invalid language' });
             }

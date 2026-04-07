@@ -80918,6 +80918,15 @@ class I18n {
         localStorage.setItem('eclaw-language', lang);
         this.apply();
         this.observers.forEach(cb => cb(lang));
+        // Persist to server (fire-and-forget; tolerates unauth/offline)
+        try {
+            fetch('/api/auth/language', {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ language: lang })
+            }).catch(() => {});
+        } catch (_) { /* ignore */ }
     }
 
     t(key, params = {}) {
