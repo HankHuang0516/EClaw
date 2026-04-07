@@ -2880,7 +2880,9 @@
                     const routeSuffix = parsed ? ':' + (m.source || '') : '';
                     return 'bot:' + (m.entity_id ?? '') + routeSuffix;
                 }
-                return 'other:' + (m.source || '');
+                // Include entity_id so notifications from different entities are never grouped
+                // (e.g. kanban_notify for entities #0, #1, #3 each keep their source label visible)
+                return 'other:' + (m.source || '') + ':' + (m.entity_id ?? '');
             }
 
             // Helper: date separator label
