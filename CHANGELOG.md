@@ -1,3 +1,10 @@
+## [1.904.2](https://github.com/HankHuang0516/EClaw/compare/v1.904.1...v1.904.2) (2026-04-07)
+
+
+### Bug Fixes
+
+* **transform:** preserve chat save when speakTo targets self ([#1637](https://github.com/HankHuang0516/EClaw/issues/1637)) ([7692e38](https://github.com/HankHuang0516/EClaw/commit/7692e385cd3d3f992daf8bee7a87a090b7661a3d))
+
 ## [1.904.1](https://github.com/HankHuang0516/EClaw/compare/v1.904.0...v1.904.1) (2026-04-07)
 
 
