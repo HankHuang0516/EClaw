@@ -1,3 +1,10 @@
+## [1.904.1](https://github.com/HankHuang0516/EClaw/compare/v1.904.0...v1.904.1) (2026-04-07)
+
+
+### Bug Fixes
+
+* **i18n:** repair syntax errors blocking all portal pages ([#1636](https://github.com/HankHuang0516/EClaw/issues/1636)) ([b5da5bf](https://github.com/HankHuang0516/EClaw/commit/b5da5bf8c221fa94f63684b2e0fb8af0c306956b))
+
 # [1.904.0](https://github.com/HankHuang0516/EClaw/compare/v1.903.0...v1.904.0) (2026-04-07)
 
 
