@@ -1,3 +1,10 @@
+# [1.899.0](https://github.com/HankHuang0516/EClaw/compare/v1.898.0...v1.899.0) (2026-04-07)
+
+
+### Features
+
+* **chat:** add quote-reply icon to chat bubbles ([0bcb4d0](https://github.com/HankHuang0516/EClaw/commit/0bcb4d06c9fcde30ee3ff589100a77c1909fb523))
+
 # [1.898.0](https://github.com/HankHuang0516/EClaw/compare/v1.897.1...v1.898.0) (2026-04-07)
 
 
