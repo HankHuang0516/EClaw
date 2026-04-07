@@ -1,3 +1,10 @@
+# [1.901.0](https://github.com/HankHuang0516/EClaw/compare/v1.900.0...v1.901.0) (2026-04-07)
+
+
+### Features
+
+* **info:** MiniGame Game Factory showcase panel ([#1631](https://github.com/HankHuang0516/EClaw/issues/1631)) ([b9e15c2](https://github.com/HankHuang0516/EClaw/commit/b9e15c25c42d799dbfee970e948fe3cbf79b3161))
+
 # [1.900.0](https://github.com/HankHuang0516/EClaw/compare/v1.899.2...v1.900.0) (2026-04-07)
 
 
