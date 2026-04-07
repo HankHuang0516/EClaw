@@ -6,7 +6,7 @@
  * 2. Transform with broadcast delivers to all bound entities
  * 3. broadcast + speakTo → broadcast takes priority + warning
  * 4. speakTo with invalid publicCode returns per-target error
- * 5. speakTo with self publicCode is rejected
+ * 5. speakTo with self publicCode is stripped (message saved normally to chat)
  * 6. speakTo cross-device works (different device)
  * 7. broadcast rate limiting
  * 8. Old speak-to/broadcast endpoints return deprecation warning
@@ -101,7 +101,10 @@ describe('Transform + speakTo', () => {
         expect(res.body.delivery.results[0].reason).toBe('not_found');
     });
 
-    it('rejects self-targeting', async () => {
+    it('strips self-target so message still lands in chat history', async () => {
+        // When speakTo contains only the caller's own publicCode, it is
+        // stripped before delivery. With no remaining targets the request
+        // falls back to a normal self-save (no delivery block in response).
         const code0 = await getPublicCode(deviceId, deviceSecret, 0);
         const res = await post('/api/transform')
             .send({
@@ -113,8 +116,27 @@ describe('Transform + speakTo', () => {
                 speakTo: [code0]
             });
         expect(res.status).toBe(200);
-        expect(res.body.delivery.results[0].success).toBe(false);
-        expect(res.body.delivery.results[0].reason).toBe('self_target');
+        expect(res.body.success).toBe(true);
+        // No delivery block when speakTo collapsed to empty
+        expect(res.body.delivery).toBeUndefined();
+    });
+
+    it('strips self-target but still delivers to remaining peers', async () => {
+        const code0 = await getPublicCode(deviceId, deviceSecret, 0);
+        const res = await post('/api/transform')
+            .send({
+                deviceId,
+                entityId: 0,
+                botSecret: botSecret0,
+                message: 'Mixed self + peer',
+                state: 'IDLE',
+                speakTo: [code0, code1]
+            });
+        expect(res.status).toBe(200);
+        expect(res.body.delivery).toBeDefined();
+        expect(res.body.delivery.results).toHaveLength(1);
+        expect(res.body.delivery.results[0].publicCode).toBe(code1);
+        expect(res.body.delivery.results[0].success).toBe(true);
     });
 });
 
