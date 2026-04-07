@@ -1,3 +1,10 @@
+## [1.902.1](https://github.com/HankHuang0516/EClaw/compare/v1.902.0...v1.902.1) (2026-04-07)
+
+
+### Bug Fixes
+
+* **chat:** kanban_notify bubbles from different entities no longer grouped ([#1633](https://github.com/HankHuang0516/EClaw/issues/1633)) ([da5027f](https://github.com/HankHuang0516/EClaw/commit/da5027f4d6bcf608c06697e6c3ddb5c09534d532))
+
 # [1.902.0](https://github.com/HankHuang0516/EClaw/compare/v1.901.0...v1.902.0) (2026-04-07)
 
 
