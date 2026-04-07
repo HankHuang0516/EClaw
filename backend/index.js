@@ -4450,6 +4450,19 @@ app.post('/api/transform', async (req, res) => {
 
     entity.lastUpdated = Date.now();
 
+    // Strip self-targets from speakTo BEFORE computing hasDelivery — otherwise
+    // a bot that accidentally speakTo's its own publicCode (or entityId) loses
+    // the chat message entirely: hasDelivery=true skips the self save, and the
+    // delivery loop drops it as self_target. Treat fully-self speakTo as no
+    // delivery so the message still lands in chat history.
+    if (speakTo && Array.isArray(speakTo)) {
+        const selfEidStr = String(eId);
+        speakTo = speakTo.filter(code =>
+            code !== entity.publicCode && code !== selfEidStr
+        );
+        if (speakTo.length === 0) speakTo = undefined;
+    }
+
     // Save bot message to chat history so it appears in Chat page
     // Skip silent tokens — these are internal signals that should not appear in chat
     const isSilentMessage = finalMessage && /^\[SILENT\]$/i.test(finalMessage.trim());
