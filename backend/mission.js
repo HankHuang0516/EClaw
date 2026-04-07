@@ -1135,9 +1135,18 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
     // ============================================
     // FORM SUBMISSIONS (public, no auth)
     // ============================================
-    router.post('/note/page/form-submit', async (req, res) => {
-        const { publicCode, noteId, formData } = req.body;
+    // sendBeacon with Blob(json, 'application/json') sometimes arrives as text/plain in some browsers
+    const textParser = require('express').text({ type: 'text/plain' });
+    router.post('/note/page/form-submit', textParser, async (req, res) => {
+        // Parse body: if it's a string (text/plain sendBeacon), JSON.parse it; otherwise use express.json() result
+        let parsedBody = req.body;
+        if (typeof parsedBody === 'string') {
+            try { parsedBody = JSON.parse(parsedBody); } catch(e) { parsedBody = {}; }
+        }
+        console.log('[form-submit] content-type:', req.headers['content-type'], '| body keys:', Object.keys(parsedBody || {}));
+        const { publicCode, noteId, formData } = parsedBody || {};
         if (!publicCode || !noteId || !formData) {
+            console.log('[form-submit] 400 - missing fields. parsedBody:', JSON.stringify(parsedBody).slice(0, 200));
             return res.status(400).json({ success: false, error: 'Missing publicCode, noteId, or formData' });
         }
         if (typeof formData !== 'object' || Array.isArray(formData)) {
