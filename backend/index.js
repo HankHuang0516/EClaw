@@ -8933,7 +8933,9 @@ app.get('/api/client/pending', (req, res) => {
  * Requires admin auth — never expose unauthenticated.
  */
 app.get('/api/debug/devices', (req, res) => {
-    if (!verifyAdmin(req, res)) return;
+    if (!verifyAdmin(req)) {
+        return res.status(403).json({ success: false, error: 'Forbidden: admin token required' });
+    }
     const result = [];
     for (const deviceId in devices) {
         const device = devices[deviceId];

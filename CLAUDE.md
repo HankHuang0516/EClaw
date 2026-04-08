@@ -7,8 +7,8 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.362.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
-- **App version constant**: 1.0.621 (in `index.js`)
+- **Current version**: 1.905.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **Android app version**: 1.0.63 (versionCode 69); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
 ---
@@ -18,7 +18,7 @@
 ```
 EClaw/
 ├── backend/                  # Node.js Express server (deployed to Railway)
-│   ├── index.js              # Main server (~13,758 lines) — all API routes
+│   ├── index.js              # Main server (~14,648 lines) — all API routes
 │   ├── db.js                 # PostgreSQL connection pool + schema creation
 │   ├── auth.js               # Auth module (JWT, OAuth, OIDC, RBAC)
 │   ├── mission.js            # Mission Control dashboard system
@@ -100,8 +100,8 @@ EClaw/
 │   │   │   └── og-image.png       # Open Graph social sharing image
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
-│   ├── tests/                # Regression + integration tests (53 files)
-│   ├── tests/jest/           # Jest unit tests (53 files, CI-run via `npm test`)
+│   ├── tests/                # Regression + integration tests (72 files)
+│   ├── tests/jest/           # Jest unit tests (61 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -164,7 +164,7 @@ EClaw/
 
 ### Backend (Node.js/Express)
 
-- **Single-file server**: `backend/index.js` (~13,758 lines) contains all API routes
+- **Single-file server**: `backend/index.js` (~14,648 lines) contains all API routes
 - **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
 - **Real-time**: Socket.IO for live updates to Web Portal and Android app
 - **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
@@ -292,7 +292,7 @@ EClaw/
 - Billing: Google Play Billing (`BillingManager.kt`)
 - AI Chat: `AiChatViewModel.kt` manages state (fixes message loss, typing race condition)
 - Bottom nav: FILES tab renamed to CARDS (Card Holder); Files link moved to Settings
-- App version: 1.0.621
+- App version: 1.0.63 (versionCode 69)
 
 ### iOS/React Native App (Expo)
 
@@ -396,6 +396,12 @@ EClaw/
 10. **Chinese Summary on Completion** — 每次任務完成後，用**繁體中文**回報總結，包含：修改了哪些檔案、做了什麼改動、有無需要注意的事項。
 
 12. **UI/UX Simplify Review** — 任何與 UI/UX 渲染相關的修復或改動，在 commit 之前**必須**先執行 `simplify` skill（代碼複用、品質、效率三項審查），根據審查結果修正問題後才能 commit。
+
+13a. **Smart Quote — 所有彈出視窗與卡片** — 任何新增或修改彈出視窗（modal）、側邊卡片（detail panel）、對話框（dialog）時，**必須**加入「引用到聊天」功能，並遵守以下規範：
+   - 使用 `quoteToChat(source, title, excerpt)` 函式，絕對不能直接貼入完整內容
+   - 偵測 iframe 環境：`window.self !== window.top` → 用 `postMessage`；否則 → localStorage + navigate
+   - 引用 UX 使用現有回覆列（reply bar）`setReplyContext()`，顯示 `📌 source: title: excerpt` 的摘要格式
+   - 所有 `message` 事件監聽器**必須**驗證 `e.origin === window.location.origin`，`postMessage` 目標**必須**指定 `window.location.origin`（不可用 `'*'`）
 
 13. **UI/UX I18n Audit** — 任何與 UI/UX 相關的改動，除了執行 `simplify` skill 外，還**必須**確認 i18n 做確實：
     - 所有使用者可見的文字（按鈕、標題、提示、錯誤訊息、placeholder）都使用 `data-i18n` 屬性或 `i18n.t()` 呼叫
@@ -720,7 +726,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Privacy Policy Page**: `/privacy-policy.html` with full i18n support; linked from registration terms dialog
 - **Admin Kanban Migration (v1.359)**: One-time migration from legacy mission + schedules to kanban cards
 - **Kanban Auto-Move (v1.217)**: Auto-move child cards to review when bot transforms IDLE
-- **App Version**: Updated to 1.0.621 (versionCode 68)
+- **App Version**: Updated to 1.0.63 (versionCode 69)
 
 ---
 
@@ -812,7 +818,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Note Pages | `node backend/tests/test-note-pages.js` | Device ID + Secret | Note page public/private toggle, visitor analytics, custom domain |
 | AI Chat WebView Guard | `node backend/tests/test-ai-chat-webview-guard.js` | Device ID + Secret | AI chat widget hidden in Android WebView contexts |
 
-### Jest Unit Tests (CI-run, `npm test`, 53 files)
+### Jest Unit Tests (CI-run, `npm test`, 61 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -874,7 +880,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (53 files)
+cd backend && npm test                  # Jest unit tests (61 files)
 cd backend && npm run lint              # ESLint
 ```
 
@@ -893,7 +899,7 @@ Set in `backend/.env` (gitignored):
 - `server_logs` schema extension is backward-compatible — all existing 67+ `serverLog()` calls work without modification (new fields default to null)
 - Entity unbind calls `createDefaultEntity()` which resets all fields including new ones — no separate cleanup needed
 - `const` redeclaration in same scope is a JS error — check existing variable names before adding new ones (e.g., `adminAuth` already declared at line 1198)
-- `index.js` is a single 14,181-line file — use line numbers when referencing specific code sections
+- `index.js` is a single 14,648-line file — use line numbers when referencing specific code sections
 - Module initialization order matters: `db.js` → `devices` in-memory map → module `require()` calls with dependency injection
 - `scheduler.js` is dead code — no longer required by any module after v1.362 legacy schedule removal
 - `kanban.js` is the replacement for the legacy schedule/todo system — mounted at `/api/mission/card*`
