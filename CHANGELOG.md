@@ -1,3 +1,10 @@
+# [1.910.0](https://github.com/HankHuang0516/EClaw/compare/v1.909.1...v1.910.0) (2026-04-08)
+
+
+### Features
+
+* **portal:** add 'quote to chat' button to all modals and cards ([0459b07](https://github.com/HankHuang0516/EClaw/commit/0459b077cd20870478324d8cd033736d785afc56)), closes [#messageInput](https://github.com/HankHuang0516/EClaw/issues/messageInput) [#messageInput](https://github.com/HankHuang0516/EClaw/issues/messageInput)
+
 ## [1.909.1](https://github.com/HankHuang0516/EClaw/compare/v1.909.0...v1.909.1) (2026-04-08)
 
 
