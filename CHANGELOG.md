@@ -1,3 +1,10 @@
+## [1.912.1](https://github.com/HankHuang0516/EClaw/compare/v1.912.0...v1.912.1) (2026-04-08)
+
+
+### Bug Fixes
+
+* **portal:** simplify review — origin validation + chat-pane cache ([f0a698a](https://github.com/HankHuang0516/EClaw/commit/f0a698abc67993f8ce94e114ee6b7ccb89fd4223))
+
 # [1.912.0](https://github.com/HankHuang0516/EClaw/compare/v1.911.0...v1.912.0) (2026-04-08)
 
 
