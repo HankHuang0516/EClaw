@@ -607,7 +607,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
     // ============================================
     router.post('/message', async (req, res) => {
         try {
-            const { channel_api_key, deviceId, entityId, botSecret, message, state, mediaType, mediaUrl, targetDeviceId, speakTo, broadcast } = req.body;
+            const { channel_api_key, deviceId, entityId, botSecret, message, state, mediaType, mediaUrl, targetDeviceId, speakTo, broadcast, card } = req.body;
 
             if (process.env.DEBUG === 'true') serverLog('info', 'client_push', `[PUSH] /channel/message called, state=${state}, hasMsg=${!!message}`, { deviceId, entityId: entityId !== undefined ? parseInt(entityId) : 'auto' });
 
@@ -623,6 +623,45 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             const account = await db.getChannelAccountByKey(channel_api_key);
             if (!account) {
                 return res.status(403).json({ success: false, message: 'Invalid channel API key' });
+            }
+
+            // Validate optional rich card payload (backward compatible — card is always optional)
+            // Mirrors the validation in POST /api/transform so both bot-auth paths behave identically.
+            let validatedCard = null;
+            if (card !== undefined && card !== null) {
+                if (typeof card !== 'object' || Array.isArray(card)) {
+                    return res.status(400).json({ success: false, message: 'card must be an object' });
+                }
+                if (!Array.isArray(card.buttons) || card.buttons.length === 0) {
+                    return res.status(400).json({ success: false, message: 'card.buttons must be a non-empty array' });
+                }
+                if (card.buttons.length > 10) {
+                    return res.status(400).json({ success: false, message: 'card.buttons max 10' });
+                }
+                const allowedStyles = new Set(['primary', 'secondary', 'danger']);
+                const sanitizedButtons = [];
+                const seenIds = new Set();
+                for (const btn of card.buttons) {
+                    if (!btn || typeof btn !== 'object') {
+                        return res.status(400).json({ success: false, message: 'each card button must be an object' });
+                    }
+                    const id = String(btn.id || '').trim();
+                    const label = String(btn.label || '').trim();
+                    if (!id || !label) {
+                        return res.status(400).json({ success: false, message: 'card button requires id and label' });
+                    }
+                    if (id.length > 64 || label.length > 80) {
+                        return res.status(400).json({ success: false, message: 'card button id/label too long' });
+                    }
+                    if (seenIds.has(id)) {
+                        return res.status(400).json({ success: false, message: `duplicate card button id: ${id}` });
+                    }
+                    seenIds.add(id);
+                    const style = allowedStyles.has(btn.style) ? btn.style : 'secondary';
+                    sanitizedButtons.push({ id, label, style });
+                }
+                const askId = card.ask_id ? String(card.ask_id).slice(0, 128) : require('crypto').randomUUID();
+                validatedCard = { ask_id: askId, buttons: sanitizedButtons };
             }
 
             const device = devices[deviceId];
@@ -677,7 +716,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                     const localSource = hasCrossRoute
                         ? `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`
                         : (entity.name || `Entity ${eId}`);
-                    saveChatMessage(deviceId, eId, message, localSource, false, true, mediaType || null, mediaUrl || null);
+                    saveChatMessage(deviceId, eId, message, localSource, false, true, mediaType || null, mediaUrl || null, null, null, null, null, validatedCard);
                 }
 
                 // XP: Award for channel bot reply (same logic as /api/transform)
@@ -797,7 +836,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                             deliveryResults = { broadcast: true, sentCount: 0, targets: [] };
                         } else {
                             const sourceLabel = `entity:${eId}:${entity.character}`;
-                            const broadcastChatMsgId = await saveChatMessage(broadcastDeviceId, eId, deliveryText, `${sourceLabel}->${targetIds.join(',')}`, false, true);
+                            const broadcastChatMsgId = await saveChatMessage(broadcastDeviceId, eId, deliveryText, `${sourceLabel}->${targetIds.join(',')}`, false, true, null, null, null, null, null, null, validatedCard);
                             const bcastPrefs = devicePrefs ? await devicePrefs.getPrefs(broadcastDeviceId) : {};
                             const showRecipientInfo = bcastPrefs.broadcast_recipient_info !== false;
                             const results = await Promise.all(targetIds.map(toId =>
@@ -806,7 +845,8 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                                     targetDeviceId: broadcastDeviceId, toId, toEntity: broadcastDevice.entities[toId],
                                     text: deliveryText, expectsReply: true, isBroadcast: true,
                                     broadcastTargetIds: targetIds, broadcastChatMsgId, showRecipientInfo,
-                                    isCrossDevice: broadcastDeviceId !== deviceId
+                                    isCrossDevice: broadcastDeviceId !== deviceId,
+                                    card: validatedCard
                                 })
                             ));
                             deliveryResults = { broadcast: true, sentCount: results.length, targets: results };
@@ -838,7 +878,8 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                         const result = await deliverToEntity({
                             senderDeviceId: deviceId, fromId: eId, fromEntity: entity,
                             targetDeviceId: target.deviceId, toId: target.entityId, toEntity,
-                            text: deliveryText, expectsReply: true, isCrossDevice
+                            text: deliveryText, expectsReply: true, isCrossDevice,
+                            card: validatedCard
                         });
                         results.push({ publicCode: code, success: true, ...result });
                     }
