@@ -3111,6 +3111,38 @@ ENTITY_NAME=Claude Code</div>
 
                         <hr>
 
+                        <h2 data-i18n="guide_cc_channel_h2_approval">互動式權限確認 (Interactive Permission Approval)</h2>
+                        <p data-i18n="guide_cc_channel_p_approval_problem"><strong>問題：</strong>當 Claude Code 嘗試讀寫敏感路徑（例如 <code>.claude/</code>、系統檔案）或執行需要授權的工具時，會彈出權限確認 prompt 並阻塞 tmux session。在 Channel 模式下，使用者看不到這個 prompt，整個 session 會卡住，無法繼續處理 EClawbot 訊息。</p>
+                        <p data-i18n="guide_cc_channel_p_approval_solution"><strong>解決方案：</strong>透過 Claude Code 的 <code>PreToolUse</code> hook 攔截這些工具呼叫，將權限請求打包成「富文本卡片 (rich card)」推送到 EClawbot 的對應角色聊天室。卡片內含 [✅ 同意] [✅ 全程允許] [❌ 拒絕] 三顆按鈕，使用者點擊後決定會回傳給 hook，hook 再決定放行或阻擋該工具呼叫，session 完全不需要進入互動模式。</p>
+
+                        <h3 data-i18n="guide_cc_channel_h3_approval_flow">流程圖</h3>
+                        <div class="code-block">Claude Code ──▶ PreToolUse Hook ──▶ Bridge /ask 端點
+                                                  │
+                                                  ▼
+                                    EClawbot 富文本卡片
+                                  [✅ 同意] [✅ 全程允許] [❌ 拒絕]
+                                                  │
+                                                  ▼
+                                            使用者點擊
+                                                  │
+                                                  ▼
+                                Hook 取得結果 ──▶ allow / deny / always
+                                                  │
+                                                  ▼
+                                          Claude Code 繼續執行</div>
+
+                        <h3 data-i18n="guide_cc_channel_h3_approval_setup">啟用方式</h3>
+                        <p data-i18n="guide_cc_channel_p_approval_setup">此功能需要在 <a href="https://github.com/HankHuang0516/claude-code-eclaw-channel" target="_blank" rel="noopener">claude-code-eclaw-channel</a> repo 完成兩項設定：</p>
+                        <ol class="content-list">
+                            <li data-i18n="guide_cc_channel_li_approval_setup1">執行 <code>patch-fakechat.sh</code>：對 fakechat 套件打 patch，讓 bridge 支援 <code>/ask</code> 端點以接收 hook 的權限請求並回傳使用者選擇。</li>
+                            <li data-i18n="guide_cc_channel_li_approval_setup2">設定 <code>PreToolUse</code> hook：在 Claude Code 設定中註冊 hook script，攔截工具呼叫並呼叫 bridge <code>/ask</code>，根據 EClawbot 卡片回傳的決定放行或阻擋。</li>
+                        </ol>
+                        <p data-i18n="guide_cc_channel_p_approval_link">完整安裝步驟與 hook script 範例請見：<a href="https://github.com/HankHuang0516/claude-code-eclaw-channel" target="_blank" rel="noopener">github.com/HankHuang0516/claude-code-eclaw-channel</a></p>
+
+                        <div class="note" data-i18n="guide_cc_channel_note_approval">小提示：選擇「✅ 全程允許」會把該工具/路徑加入本次 session 的白名單，後續同類請求自動放行，避免重複打擾。Session 結束後白名單會清空。</div>
+
+                        <hr>
+
                         <h2 data-i18n="guide_cc_channel_h2_faq">常見問題</h2>
 
                         <h3 data-i18n="guide_cc_channel_h3_faq1">Q: 啟動後角色沒有出現？</h3>
