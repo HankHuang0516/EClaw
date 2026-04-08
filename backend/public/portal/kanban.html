@@ -478,7 +478,7 @@
         <div class="kb-modal">
             <div class="kb-modal-header">
                 <h3 id="detailTitle"></h3>
-                <button class="kb-btn-quote-chat" onclick="quoteKanbanCardToChat()" title="引用到聊天視窗">💬 引用</button>
+                <button class="kb-btn-quote-chat" onclick="quoteKanbanCardToChat()" title="引用到聊天視窗">📌 引用</button>
                 <button class="kb-modal-close" onclick="closeDetail()">&times;</button>
             </div>
             <div class="kb-modal-meta" id="detailMeta"></div>
@@ -1186,7 +1186,7 @@
 
         function quoteToChat(source, title, excerpt) {
             if (window.self !== window.top) {
-                window.parent.postMessage({ type: 'eclaw_quote', source, title, excerpt: excerpt || '' }, '*');
+                window.parent.postMessage({ type: 'eclaw_quote', source, title, excerpt: excerpt || '' }, window.location.origin);
             } else {
                 localStorage.setItem('eclaw_pending_quote', JSON.stringify({ source, title, excerpt: excerpt || '', ts: Date.now() }));
                 window.location.href = '/portal/chat.html';

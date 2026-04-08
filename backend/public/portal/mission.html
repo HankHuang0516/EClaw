@@ -1839,7 +1839,7 @@
 
         function quoteToChat(source, title, excerpt) {
             if (window.self !== window.top) {
-                window.parent.postMessage({ type: 'eclaw_quote', source, title, excerpt: excerpt || '' }, '*');
+                window.parent.postMessage({ type: 'eclaw_quote', source, title, excerpt: excerpt || '' }, window.location.origin);
             } else {
                 localStorage.setItem('eclaw_pending_quote', JSON.stringify({ source, title, excerpt: excerpt || '', ts: Date.now() }));
                 window.location.href = '/portal/chat.html';
