@@ -1,3 +1,10 @@
+# [1.921.0](https://github.com/HankHuang0516/EClaw/compare/v1.920.1...v1.921.0) (2026-04-08)
+
+
+### Features
+
+* **files:** add R2 file upload system — POST/GET/DELETE /api/files ([5b580fc](https://github.com/HankHuang0516/EClaw/commit/5b580fc8df7f04c5c44ff37afa2aef44f3a249b2))
+
 ## [1.920.1](https://github.com/HankHuang0516/EClaw/compare/v1.920.0...v1.920.1) (2026-04-08)
 
 
