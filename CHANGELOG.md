@@ -1,3 +1,10 @@
+# [1.922.0](https://github.com/HankHuang0516/EClaw/compare/v1.921.1...v1.922.0) (2026-04-08)
+
+
+### Features
+
+* add attachments[] support to chat messages (P1) ([c92050e](https://github.com/HankHuang0516/EClaw/commit/c92050e5da95a301431165307d8976fd3d2ab1d6))
+
 ## [1.921.1](https://github.com/HankHuang0516/EClaw/compare/v1.921.0...v1.921.1) (2026-04-08)
 
 
