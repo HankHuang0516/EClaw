@@ -1557,6 +1557,19 @@ app.use('/api/docs', apiDocs.router);
 // ============================================
 const botTools = require('./bot-tools');
 app.use('/api/bot', botTools.router);
+
+// ============================================
+// FILE UPLOAD SYSTEM (Cloudflare R2)
+// ============================================
+const filesModule = require('./files')(devices);
+app.use('/api/files', filesModule.router);
+
+// Daily cleanup of expired files (runs at 03:17 server time)
+const nodeCron = require('node-cron');
+nodeCron.schedule('17 3 * * *', () => {
+    require('./files').cleanupExpiredFiles().catch(err => console.error('[Files] Cleanup cron error:', err));
+});
+
 missionModule.initMissionDatabase();
 kanbanModule.initKanbanDatabase();
 kanbanModule.startBackgroundTimers();
