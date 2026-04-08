@@ -483,10 +483,12 @@
                 <button class="kb-modal-tab active" data-i18n="kb_tab_comments" onclick="switchDetailTab('comments',this)">💬 Comments</button>
                 <button class="kb-modal-tab" data-i18n="kb_tab_notes" onclick="switchDetailTab('notes',this)">📝 Notes</button>
                 <button class="kb-modal-tab" data-i18n="kb_tab_files" onclick="switchDetailTab('files',this)">📎 Files</button>
+                <button class="kb-modal-tab" id="scheduleTab" data-i18n="kb_tab_schedule" onclick="switchDetailTab('schedule',this)" style="display:none">⚙️ Schedule</button>
             </div>
             <div class="kb-modal-panel active" id="panel-comments"></div>
             <div class="kb-modal-panel" id="panel-notes"></div>
             <div class="kb-modal-panel" id="panel-files"></div>
+            <div class="kb-modal-panel" id="panel-schedule"></div>
             <div class="kb-move-bar" id="moveBar"></div>
         </div>
     </div>
@@ -637,6 +639,18 @@
         const STATUS_LABELS = {backlog:'Backlog',todo:'TODO',in_progress:'In Progress',review:'Review',done:'Done'};
         const STATUS_I18N = {backlog:'kb_col_backlog',todo:'kb_col_todo',in_progress:'kb_col_in_progress',review:'kb_col_review',done:'kb_col_done'};
         const PRIO_EMOJI = {P0:'🔴',P1:'🟠',P2:'🔵',P3:'⚪'};
+        const CRON_PRESETS = [
+            {c:'0 * * * *',    k:'kb_cron_hourly', l:'Every hour'},
+            {c:'0 */4 * * *',  k:'kb_cron_4h',     l:'Every 4 hours'},
+            {c:'0 9 * * *',    k:'kb_cron_daily',   l:'Daily 9AM'},
+            {c:'0 9 * * 1',    k:'kb_cron_weekly',  l:'Weekly Mon'},
+        ];
+        const TIMEZONES = [
+            ['Asia/Taipei','Asia/Taipei (UTC+8)'],['Asia/Tokyo','Asia/Tokyo (UTC+9)'],
+            ['Asia/Shanghai','Asia/Shanghai (UTC+8)'],['America/New_York','America/New_York (UTC-5)'],
+            ['America/Los_Angeles','America/Los_Angeles (UTC-8)'],['Europe/London','Europe/London (UTC+0)'],
+            ['UTC','UTC'],
+        ];
 
         let allCards = [];
         let currentFilter = 'all';
@@ -1001,6 +1015,10 @@
                 ).join('');
             }
 
+            // Show/hide schedule tab for automation cards; reset panel so it re-renders for new card
+            document.getElementById('scheduleTab').style.display = card.isAutomation ? '' : 'none';
+            document.getElementById('panel-schedule').innerHTML = '';
+
             // Load first tab
             switchDetailTab('comments', document.querySelector('.kb-modal-tab'));
             document.getElementById('detailModal').classList.add('show');
@@ -1163,6 +1181,152 @@
             openCardId = null;
         }
 
+        // ── Inline Schedule Panel (detail modal tab) ──
+        function renderSchedulePanel(cardId) {
+            const card = findCard(cardId);
+            if (!card) return;
+            const panel = document.getElementById('panel-schedule');
+            const sc = card.schedule || {};
+            const currentBots = card.assignedBots || [];
+            const isOnce = sc.type === 'once';
+            const cron = sc.cronExpression || sc.cron || '';
+            const isEnabled = sc.enabled !== false;
+
+            const priorityOpts = ['P0','P1','P2','P3'].map(p =>
+                `<option value="${p}"${card.priority===p?' selected':''}>${p}</option>`
+            ).join('');
+
+            const assignChips = boundEntities.filter(e => e.isBound).map(e => {
+                const checked = currentBots.includes(e.entityId) ? ' checked' : '';
+                const label = getEntityDisplayName(e.entityId);
+                const avatarEl = typeof renderAvatarHtml === 'function' ? renderAvatarHtml(e.avatar, 16) : (e.avatar || '🦞');
+                return `<label class="kb-assign-chip${checked ? ' active' : ''}" title="${escapeHtml(label)}">` +
+                    `<input type="checkbox" value="${e.entityId}"${checked} onchange="spUpdateAssign(this)">` +
+                    avatarEl + `<span>${escapeHtml(label)}</span></label>`;
+            }).join('');
+
+            const cronChipsHtml = CRON_PRESETS.map(({c,k,l}) =>
+                `<button type="button" class="kb-cron-chip${cron===c?' active':''}" data-cron="${c}" onclick="spSelectCron(this)">${t(k,l)}</button>`
+            ).join('');
+
+            const tzOpts = TIMEZONES.map(([v,l]) =>
+                `<option value="${v}"${sc.timezone===v?' selected':''}>${l}</option>`
+            ).join('');
+
+            let runAtVal = '';
+            if (sc.runAt) {
+                const d = new Date(sc.runAt);
+                runAtVal = new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,16);
+            }
+
+            panel.innerHTML = `
+                <div class="kb-form-group">
+                    <label class="kb-form-label">${t('kb_label_title','Title')}</label>
+                    <input class="kb-form-input" id="sp-title" value="${escapeHtml(card.title||'')}">
+                </div>
+                <div class="kb-form-group">
+                    <label class="kb-form-label">${t('kb_label_description','Description')}</label>
+                    <textarea class="kb-form-textarea" id="sp-desc">${escapeHtml(card.description||'')}</textarea>
+                </div>
+                <div class="kb-form-group">
+                    <label class="kb-form-label">${t('kb_label_priority','Priority')}</label>
+                    <select class="kb-form-select" id="sp-priority">${priorityOpts}</select>
+                </div>
+                <div class="kb-form-group">
+                    <label class="kb-form-label">${t('kb_label_assign','Assign To')}</label>
+                    <div class="kb-auto-assign-chips" id="sp-assign">${assignChips}</div>
+                </div>
+                <div class="kb-form-group">
+                    <label class="kb-form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                        <input type="checkbox" id="sp-enabled"${isEnabled?' checked':''}>
+                        ${t('kb_auto_enabled','Enabled')}
+                    </label>
+                </div>
+                <div class="kb-form-group">
+                    <label class="kb-form-label">${t('kb_label_sched_type','Schedule Type')}</label>
+                    <select class="kb-form-select" id="sp-type" onchange="spToggleSchedFields()">
+                        <option value="recurring"${!isOnce?' selected':''}>${t('kb_sched_recurring','Recurring (Cron)')}</option>
+                        <option value="once"${isOnce?' selected':''}>${t('kb_sched_once','One-time')}</option>
+                    </select>
+                </div>
+                <div id="sp-recurring"${isOnce?' style="display:none"':''}>
+                    <div class="kb-form-group">
+                        <label class="kb-form-label">${t('kb_label_schedule','Schedule')}</label>
+                        <div class="kb-cron-chips" id="sp-cron-chips">${cronChipsHtml}</div>
+                        <input class="kb-form-input" id="sp-cron-custom" style="margin-top:8px"
+                            value="${CRON_PRESETS.some(p=>p.c===cron)?'':escapeHtml(cron)}"
+                            placeholder="${t('kb_placeholder_cron','Custom cron: */30 * * * *')}">
+                    </div>
+                </div>
+                <div id="sp-once"${isOnce?'':' style="display:none"'}>
+                    <div class="kb-form-group">
+                        <label class="kb-form-label">${t('kb_label_run_at','Run At')}</label>
+                        <input class="kb-form-input" id="sp-runat" type="datetime-local" value="${runAtVal}">
+                    </div>
+                </div>
+                <div class="kb-form-group">
+                    <label class="kb-form-label">${t('kb_label_timezone','Timezone')}</label>
+                    <select class="kb-form-select" id="sp-tz">${tzOpts}</select>
+                </div>
+                <div class="kb-form-actions">
+                    <button class="btn btn-primary" onclick="saveSchedulePanel('${cardId}')">${t('kb_auto_edit_save','Save')}</button>
+                </div>
+            `;
+        }
+
+        function spToggleSchedFields() {
+            const isOnce = document.getElementById('sp-type').value === 'once';
+            document.getElementById('sp-recurring').style.display = isOnce ? 'none' : '';
+            document.getElementById('sp-once').style.display = isOnce ? '' : 'none';
+        }
+
+        function spSelectCron(btn) { selectCronChip(btn, 'sp-cron-chips', 'sp-cron-custom'); }
+
+        function spUpdateAssign(cb) {
+            cb.closest('.kb-assign-chip').classList.toggle('active', cb.checked);
+        }
+
+        async function saveSchedulePanel(cardId) {
+            const title = document.getElementById('sp-title')?.value.trim();
+            const desc = document.getElementById('sp-desc')?.value.trim() || '';
+            const priority = document.getElementById('sp-priority')?.value;
+            const type = document.getElementById('sp-type')?.value;
+            const timezone = document.getElementById('sp-tz')?.value;
+            const enabled = document.getElementById('sp-enabled')?.checked !== false;
+
+            if (!title) { showToast(t('kb_err_title','Title is required'), true); return; }
+
+            const assignedBots = Array.from(document.querySelectorAll('#sp-assign input[type="checkbox"]'))
+                .filter(c => c.checked).map(c => parseInt(c.value));
+            if (!assignedBots.length) { showToast(t('kb_err_no_entity','At least one entity must be assigned'), true); return; }
+
+            const schedBody = { deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret, enabled, type, timezone };
+            if (type === 'recurring') {
+                const customCron = document.getElementById('sp-cron-custom')?.value.trim();
+                const selectedChip = document.querySelector('#sp-cron-chips .kb-cron-chip.active');
+                const cron = customCron || (selectedChip ? selectedChip.dataset.cron : '');
+                if (!cron) { showToast(t('kb_auto_edit_no_cron','Please select or enter a cron expression'), true); return; }
+                schedBody.cronExpression = cron;
+            } else {
+                const runAtVal = document.getElementById('sp-runat')?.value;
+                if (!runAtVal) { showToast(t('kb_auto_edit_no_runat','Please set a run time'), true); return; }
+                schedBody.runAt = new Date(runAtVal).toISOString();
+            }
+
+            try {
+                await apiCall('PUT', `/api/mission/card/${cardId}`, {
+                    deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret,
+                    title, description: desc, priority, assignedBots,
+                });
+                await apiCall('PUT', `/api/mission/card/${cardId}/schedule`, schedBody);
+                showToast(t('kb_auto_edit_saved','Schedule updated'));
+                await loadCards();
+                if (openCardId === cardId) openDetail(cardId);
+            } catch (e) {
+                showToast(e.message || t('kb_auto_edit_failed','Failed to update schedule'), true);
+            }
+        }
+
         async function switchDetailTab(tab, btn) {
             document.querySelectorAll('.kb-modal-tab').forEach(t => t.classList.remove('active'));
             if (btn) btn.classList.add('active');
@@ -1172,6 +1336,7 @@
             if (tab === 'comments') await loadComments();
             if (tab === 'notes') await loadNotes();
             if (tab === 'files') await loadFiles();
+            if (tab === 'schedule' && !document.getElementById('panel-schedule').innerHTML.trim()) renderSchedulePanel(openCardId);
         }
 
         async function loadComments() {
