@@ -4202,7 +4202,8 @@ async function deliverToEntity(opts) {
         broadcastTargetIds,
         broadcastChatMsgId,
         showRecipientInfo = false,
-        isCrossDevice = false
+        isCrossDevice = false,
+        card = null
     } = opts;
 
     const sourceLabel = isCrossDevice
@@ -4244,12 +4245,12 @@ async function deliverToEntity(opts) {
         // Broadcast: reuse the single shared chat message ID for delivery tracking
         chatMsgId = broadcastChatMsgId;
     } else {
-        chatMsgId = await saveChatMessage(targetDeviceId, isCrossDevice ? toId : fromId, text, chatSource, false, true, mediaType || null, mediaUrl || null);
+        chatMsgId = await saveChatMessage(targetDeviceId, isCrossDevice ? toId : fromId, text, chatSource, false, true, mediaType || null, mediaUrl || null, null, null, null, null, card);
     }
 
     // Cross-device: also save sender's copy
     if (isCrossDevice) {
-        await saveChatMessage(senderDeviceId, fromId, text, chatSource, false, true, mediaType || null, mediaUrl || null);
+        await saveChatMessage(senderDeviceId, fromId, text, chatSource, false, true, mediaType || null, mediaUrl || null, null, null, null, null, card);
     }
 
     markMessagesAsRead(targetDeviceId, toId);
@@ -4265,6 +4266,7 @@ async function deliverToEntity(opts) {
             event: isBroadcast ? 'broadcast' : 'entity_message',
             from: sourceLabel,
             text,
+            card: card || null,
             mediaType: mediaType || null,
             mediaUrl: mediaUrl || null,
             backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
@@ -4366,13 +4368,51 @@ async function deliverToEntity(opts) {
  * REQUIRES botSecret for authentication!
  */
 app.post('/api/transform', async (req, res) => {
-    let { deviceId, entityId, botSecret, name, character, state, message, parts, targetDeviceId, speakTo, broadcast } = req.body;
+    let { deviceId, entityId, botSecret, name, character, state, message, parts, targetDeviceId, speakTo, broadcast, card } = req.body;
 
     if (!deviceId) {
         return res.status(400).json({ success: false, message: "deviceId required" });
     }
     if (!botSecret) {
         return res.status(400).json({ success: false, message: "botSecret required" });
+    }
+
+    // Validate optional rich card payload (backward compatible — card is always optional)
+    let validatedCard = null;
+    if (card !== undefined && card !== null) {
+        if (typeof card !== 'object' || Array.isArray(card)) {
+            return res.status(400).json({ success: false, message: "card must be an object" });
+        }
+        if (!Array.isArray(card.buttons) || card.buttons.length === 0) {
+            return res.status(400).json({ success: false, message: "card.buttons must be a non-empty array" });
+        }
+        if (card.buttons.length > 10) {
+            return res.status(400).json({ success: false, message: "card.buttons max 10" });
+        }
+        const allowedStyles = new Set(['primary', 'secondary', 'danger']);
+        const sanitizedButtons = [];
+        const seenIds = new Set();
+        for (const btn of card.buttons) {
+            if (!btn || typeof btn !== 'object') {
+                return res.status(400).json({ success: false, message: "each card button must be an object" });
+            }
+            const id = String(btn.id || '').trim();
+            const label = String(btn.label || '').trim();
+            if (!id || !label) {
+                return res.status(400).json({ success: false, message: "card button requires id and label" });
+            }
+            if (id.length > 64 || label.length > 80) {
+                return res.status(400).json({ success: false, message: "card button id/label too long" });
+            }
+            if (seenIds.has(id)) {
+                return res.status(400).json({ success: false, message: `duplicate card button id: ${id}` });
+            }
+            seenIds.add(id);
+            const style = allowedStyles.has(btn.style) ? btn.style : 'secondary';
+            sanitizedButtons.push({ id, label, style });
+        }
+        const askId = card.ask_id ? String(card.ask_id).slice(0, 128) : require('crypto').randomUUID();
+        validatedCard = { ask_id: askId, buttons: sanitizedButtons };
     }
 
     const device = devices[deviceId];
@@ -4479,7 +4519,7 @@ app.post('/api/transform', async (req, res) => {
 
         // Only save self chat message if NOT doing speakTo/broadcast delivery (avoid duplicate)
         if (!hasDelivery) {
-            saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true);
+            saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard);
         }
         markMessagesAsRead(deviceId, eId);
         if (pendingA2A) {
@@ -4681,7 +4721,7 @@ app.post('/api/transform', async (req, res) => {
                             deliveryResults = { broadcast: true, sentCount: 0, targets: [], message: 'No other bound entities to broadcast to.' };
                         } else {
                             const sourceLabel = `entity:${eId}:${entity.character}`;
-                            const broadcastChatMsgId = await saveChatMessage(broadcastDeviceId, eId, deliveryText, `${sourceLabel}->${targetIds.join(',')}`, false, true);
+                            const broadcastChatMsgId = await saveChatMessage(broadcastDeviceId, eId, deliveryText, `${sourceLabel}->${targetIds.join(',')}`, false, true, null, null, null, null, null, null, validatedCard);
 
                             // Check recipient info preference
                             const bcastPrefs = await devicePrefs.getPrefs(broadcastDeviceId);
@@ -4695,7 +4735,8 @@ app.post('/api/transform', async (req, res) => {
                                     expectsReply: true, isBroadcast: true,
                                     broadcastTargetIds: targetIds, broadcastChatMsgId,
                                     showRecipientInfo,
-                                    isCrossDevice: broadcastDeviceId !== deviceId
+                                    isCrossDevice: broadcastDeviceId !== deviceId,
+                                    card: validatedCard
                                 })
                             ));
 
@@ -4781,7 +4822,8 @@ app.post('/api/transform', async (req, res) => {
                     targetDeviceId: target.deviceId, toId: target.entityId, toEntity,
                     text: deliveryText, mediaType: null, mediaUrl: null,
                     expectsReply: true, isBroadcast: false,
-                    isCrossDevice
+                    isCrossDevice,
+                    card: validatedCard
                 });
 
                 // Notify both devices
@@ -12134,6 +12176,9 @@ chatPool.query(`
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS dislike_count INTEGER DEFAULT 0;
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS backup_url TEXT DEFAULT NULL;
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS mentions JSONB DEFAULT NULL;
+    ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS card JSONB DEFAULT NULL;
+    ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS card_resolved_action TEXT DEFAULT NULL;
+    ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS card_resolved_at TIMESTAMP DEFAULT NULL;
 `).catch(() => {});
 
 // Auto-migrate: create message_reactions table (message_id must be UUID to match chat_messages.id)
@@ -12196,7 +12241,8 @@ const channelModule = require('./channel-api')(devices, {
     db,
     getMissionApiHints,
     buildIdentitySetupHint,
-    buildBroadcastRecipientBlock
+    buildBroadcastRecipientBlock,
+    chatPool
 });
 app.use('/api/channel', channelModule.router);
 // Wire channel push into mission module (Bot Push Parity Rule — must be after channelModule init)
@@ -12827,7 +12873,7 @@ const A2A_SOURCE_RE = /^entity:\d+:[A-Z]+->/;
 
 // Save chat message to database, returns row ID (UUID) or null
 // Deduplication: bot messages with identical text for the same entity within 10s are skipped
-async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null, backupUrl = null, mentions = null) {
+async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null, backupUrl = null, mentions = null, card = null) {
     try {
         // Dedup: skip if the same BOT message was already saved recently
         // Bot dedup: prevents echo when bot calls multiple endpoints (broadcast + sync-message + transform)
@@ -12849,9 +12895,9 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
         }
 
         const result = await chatPool.query(
-            `INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot, media_type, media_url, schedule_id, schedule_label, backup_url, mentions)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
-            [deviceId, entityId, text, source, isFromUser || false, isFromBot || false, mediaType, mediaUrl, scheduleId, scheduleLabel, backupUrl, mentions ? JSON.stringify(mentions) : null]
+            `INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot, media_type, media_url, schedule_id, schedule_label, backup_url, mentions, card)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
+            [deviceId, entityId, text, source, isFromUser || false, isFromBot || false, mediaType, mediaUrl, scheduleId, scheduleLabel, backupUrl, mentions ? JSON.stringify(mentions) : null, card ? JSON.stringify(card) : null]
         );
         const msgId = result.rows[0]?.id || null;
 
@@ -12875,6 +12921,7 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
                 schedule_id: scheduleId || null,
                 schedule_label: scheduleLabel || null,
                 mentions: mentions || null,
+                card: card || null,
                 created_at: Date.now()
             });
         }
