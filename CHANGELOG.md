@@ -1,3 +1,10 @@
+# [1.909.0](https://github.com/HankHuang0516/EClaw/compare/v1.908.0...v1.909.0) (2026-04-08)
+
+
+### Features
+
+* **channel:** rich card support for /api/channel/message ([#1643](https://github.com/HankHuang0516/EClaw/issues/1643)) ([36339ea](https://github.com/HankHuang0516/EClaw/commit/36339ea48d2c113ebb4d30e0b06fd974cc1f90e4)), closes [#1641](https://github.com/HankHuang0516/EClaw/issues/1641) [#1641](https://github.com/HankHuang0516/EClaw/issues/1641)
+
 # [1.908.0](https://github.com/HankHuang0516/EClaw/compare/v1.907.0...v1.908.0) (2026-04-08)
 
 
