@@ -1048,9 +1048,11 @@ app.get('/api/help', (req, res) => {
             { title: 'Fetch web page content', curl: `curl -s "${apiBase}/api/bot/web-fetch?url=URL&deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` }
         ],
         files: [
-            { title: 'List bot files', curl: `curl -s "${apiBase}/api/bot/files?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
-            { title: 'Upload/update file', curl: `curl -s -X PUT "${apiBase}/api/bot/file" -H "Content-Type: application/json" -d ${d},"filename":"FILE.txt","content":"CONTENT"}'` },
-            { title: 'Download file', curl: `curl -s "${apiBase}/api/bot/file?filename=FILE.txt&deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` }
+            { title: 'Upload file to R2 (multipart)', curl: `curl -s -X POST "${apiBase}/api/files/upload" -F "file=@/path/to/file.pdf" -F "deviceId=${deviceId}" -F "botSecret=${botSecret}" -F "entityId=${eId}"` },
+            { title: 'Get signed download URL', curl: `curl -s "${apiBase}/api/files/FILE_ID?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
+            { title: 'List uploaded files (with quota)', curl: `curl -s "${apiBase}/api/files/list?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
+            { title: 'Delete file', curl: `curl -s -X DELETE "${apiBase}/api/files/FILE_ID" -H "Content-Type: application/json" -d ${d}}'` },
+            { title: 'Send message with attachments via transform', curl: `curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d ${d},"message":"Please review the file","state":"IDLE","attachments":[{"fileId":"FILE_ID","filename":"report.pdf","size":204800,"mimeType":"application/pdf"}]}'` }
         ],
         entities: [
             { title: 'List all entities', curl: `curl -s "${apiBase}/api/entities?deviceId=${deviceId}&botSecret=${botSecret}"` },
@@ -4382,7 +4384,7 @@ async function deliverToEntity(opts) {
  * REQUIRES botSecret for authentication!
  */
 app.post('/api/transform', async (req, res) => {
-    let { deviceId, entityId, botSecret, name, character, state, message, parts, targetDeviceId, speakTo, broadcast, card } = req.body;
+    let { deviceId, entityId, botSecret, name, character, state, message, parts, targetDeviceId, speakTo, broadcast, card, attachments } = req.body;
 
     if (!deviceId) {
         return res.status(400).json({ success: false, message: "deviceId required" });
@@ -4427,6 +4429,21 @@ app.post('/api/transform', async (req, res) => {
         }
         const askId = card.ask_id ? String(card.ask_id).slice(0, 128) : require('crypto').randomUUID();
         validatedCard = { ask_id: askId, buttons: sanitizedButtons };
+    }
+
+    // Validate optional attachments[] (backward compatible)
+    let validatedAttachments = null;
+    if (Array.isArray(attachments) && attachments.length > 0) {
+        if (attachments.length > 10) {
+            return res.status(400).json({ success: false, message: "attachments max 10 items" });
+        }
+        validatedAttachments = attachments.map(a => ({
+            fileId: String(a.fileId || '').slice(0, 128),
+            filename: String(a.filename || '').slice(0, 255),
+            size: typeof a.size === 'number' ? a.size : 0,
+            mimeType: String(a.mimeType || 'application/octet-stream').slice(0, 128),
+        })).filter(a => a.fileId);
+        if (validatedAttachments.length === 0) validatedAttachments = null;
     }
 
     const device = devices[deviceId];
@@ -4533,7 +4550,7 @@ app.post('/api/transform', async (req, res) => {
 
         // Only save self chat message if NOT doing speakTo/broadcast delivery (avoid duplicate)
         if (!hasDelivery) {
-            saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard);
+            saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments);
         }
         markMessagesAsRead(deviceId, eId);
         if (pendingA2A) {
@@ -4735,7 +4752,7 @@ app.post('/api/transform', async (req, res) => {
                             deliveryResults = { broadcast: true, sentCount: 0, targets: [], message: 'No other bound entities to broadcast to.' };
                         } else {
                             const sourceLabel = `entity:${eId}:${entity.character}`;
-                            const broadcastChatMsgId = await saveChatMessage(broadcastDeviceId, eId, deliveryText, `${sourceLabel}->${targetIds.join(',')}`, false, true, null, null, null, null, null, null, validatedCard);
+                            const broadcastChatMsgId = await saveChatMessage(broadcastDeviceId, eId, deliveryText, `${sourceLabel}->${targetIds.join(',')}`, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments);
 
                             // Check recipient info preference
                             const bcastPrefs = await devicePrefs.getPrefs(broadcastDeviceId);
@@ -12193,6 +12210,7 @@ chatPool.query(`
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS card JSONB DEFAULT NULL;
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS card_resolved_action TEXT DEFAULT NULL;
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS card_resolved_at TIMESTAMP DEFAULT NULL;
+    ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS attachments JSONB DEFAULT NULL;
 `).catch(() => {});
 
 // Auto-migrate: create message_reactions table (message_id must be UUID to match chat_messages.id)
@@ -12887,7 +12905,7 @@ const A2A_SOURCE_RE = /^entity:\d+:[A-Z]+->/;
 
 // Save chat message to database, returns row ID (UUID) or null
 // Deduplication: bot messages with identical text for the same entity within 10s are skipped
-async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null, backupUrl = null, mentions = null, card = null) {
+async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null, backupUrl = null, mentions = null, card = null, attachments = null) {
     try {
         // Dedup: skip if the same BOT message was already saved recently
         // Bot dedup: prevents echo when bot calls multiple endpoints (broadcast + sync-message + transform)
@@ -12909,9 +12927,9 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
         }
 
         const result = await chatPool.query(
-            `INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot, media_type, media_url, schedule_id, schedule_label, backup_url, mentions, card)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
-            [deviceId, entityId, text, source, isFromUser || false, isFromBot || false, mediaType, mediaUrl, scheduleId, scheduleLabel, backupUrl, mentions ? JSON.stringify(mentions) : null, card ? JSON.stringify(card) : null]
+            `INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot, media_type, media_url, schedule_id, schedule_label, backup_url, mentions, card, attachments)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id`,
+            [deviceId, entityId, text, source, isFromUser || false, isFromBot || false, mediaType, mediaUrl, scheduleId, scheduleLabel, backupUrl, mentions ? JSON.stringify(mentions) : null, card ? JSON.stringify(card) : null, attachments ? JSON.stringify(attachments) : null]
         );
         const msgId = result.rows[0]?.id || null;
 
@@ -12936,6 +12954,7 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
                 schedule_label: scheduleLabel || null,
                 mentions: mentions || null,
                 card: card || null,
+                attachments: attachments || null,
                 created_at: Date.now()
             });
         }

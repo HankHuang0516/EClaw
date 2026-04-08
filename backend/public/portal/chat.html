@@ -1223,6 +1223,33 @@
             word-break: break-all;
         }
 
+        /* ── Attachment Cards ── */
+        .msg-attachments { margin-top: 6px; display: flex; flex-direction: column; gap: 6px; }
+        .msg-attachment {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 12px; border-radius: 10px; cursor: pointer;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+            text-decoration: none; color: inherit; font-size: 13px;
+        }
+        .chat-msg.received .msg-attachment {
+            background: var(--card); border-color: var(--card-border);
+        }
+        .msg-attachment:hover { opacity: 0.85; }
+        .msg-attachment-icon { font-size: 18px; flex-shrink: 0; }
+        .msg-attachment-info { flex: 1; min-width: 0; }
+        .msg-attachment-name { font-weight: 500; word-break: break-all; }
+        .msg-attachment-size { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+        .msg-attachment-btn {
+            flex-shrink: 0; font-size: 12px; padding: 3px 8px;
+            border-radius: 6px; background: var(--primary); color: #fff;
+            border: none; cursor: pointer; white-space: nowrap;
+        }
+        .msg-attachment-img {
+            max-width: 200px; max-height: 160px; border-radius: 8px;
+            display: block; cursor: pointer; object-fit: cover;
+        }
+
         /* ── Scroll Navigator (side drag) ── */
         .scroll-nav {
             position: absolute;
@@ -3134,6 +3161,25 @@
                     cardHtml = `<div class="chat-card${resolvedClass}" data-ask-id="${askId}">${btnsHtml}</div>${resolvedLabelHtml}`;
                 }
 
+                // Attachment cards (R2 file references)
+                let attachmentsHtml = '';
+                if (Array.isArray(msg.attachments) && msg.attachments.length > 0) {
+                    const cards = msg.attachments.map(a => {
+                        const isImage = (a.mimeType || '').startsWith('image/');
+                        const sizeStr = a.size > 0 ? (a.size >= 1048576 ? (a.size / 1048576).toFixed(1) + ' MB' : Math.round(a.size / 1024) + ' KB') : '';
+                        const icon = isImage ? '🖼️' : (a.mimeType || '').includes('pdf') ? '📄' : (a.mimeType || '').includes('video') ? '🎬' : '📎';
+                        return `<div class="msg-attachment" onclick="downloadAttachment('${escapeHtml(a.fileId)}','${escapeHtml(a.filename)}','${escapeHtml(a.mimeType||'')}')">
+                            <span class="msg-attachment-icon">${icon}</span>
+                            <div class="msg-attachment-info">
+                                <div class="msg-attachment-name">${escapeHtml(a.filename || 'file')}</div>
+                                ${sizeStr ? `<div class="msg-attachment-size">${sizeStr}</div>` : ''}
+                            </div>
+                            <button class="msg-attachment-btn" onclick="event.stopPropagation();downloadAttachment('${escapeHtml(a.fileId)}','${escapeHtml(a.filename)}','${escapeHtml(a.mimeType||'')}')">⬇ 下載</button>
+                        </div>`;
+                    }).join('');
+                    attachmentsHtml = `<div class="msg-attachments">${cards}</div>`;
+                }
+
                 // Reaction buttons (only for received/bot messages)
                 let reactionsHtml = '';
                 if (!isSent && msg.is_from_bot) {
@@ -3164,7 +3210,7 @@
                 return `${dateSep}${unreadSep}
                     <div class="chat-msg ${msgClass}${isGrouped ? ' grouped' : ''}" style="position:relative">
                         <div class="chat-source">${sourceLabel}</div>
-                        <div class="chat-bubble${isMdRendered ? ' md-rendered' : ''}" data-full-time="${escapeHtml(fullTime)}">${textHtml}${mediaHtml}${inlineImgHtml}${cardHtml}</div>
+                        <div class="chat-bubble${isMdRendered ? ' md-rendered' : ''}" data-full-time="${escapeHtml(fullTime)}">${textHtml}${mediaHtml}${inlineImgHtml}${cardHtml}${attachmentsHtml}</div>
                         ${replyBtnHtml}
                         ${previewId ? `<div class="link-preview-slot" id="${previewId}" data-url="${escapeHtml(firstUrl)}"></div>` : ''}
                         ${reactionsHtml}
@@ -3328,6 +3374,25 @@
         }
 
         // ── Message Reactions ──
+        async function downloadAttachment(fileId, filename, mimeType) {
+            if (!currentUser) return;
+            try {
+                const params = new URLSearchParams({ deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret });
+                const res = await fetch(`/api/files/${encodeURIComponent(fileId)}?${params}`);
+                const data = await res.json();
+                if (!data.success || !data.url) { showToast(data.error || 'Download failed', 'error'); return; }
+                const a = document.createElement('a');
+                a.href = data.url;
+                a.target = '_blank';
+                if (!(mimeType || '').startsWith('image/')) a.download = filename || 'file';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } catch (e) {
+                showToast('Download failed: ' + e.message, 'error');
+            }
+        }
+
         async function toggleReaction(messageId, type) {
             // Find current reaction
             const msg = allMessages.find(m => String(m.id) === String(messageId));
