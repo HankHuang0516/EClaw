@@ -1,3 +1,10 @@
+# [1.907.0](https://github.com/HankHuang0516/EClaw/compare/v1.906.0...v1.907.0) (2026-04-08)
+
+
+### Features
+
+* rich card (interactive button) support ([#1641](https://github.com/HankHuang0516/EClaw/issues/1641)) ([a019987](https://github.com/HankHuang0516/EClaw/commit/a0199878fb79f42f9f3b82633417175026fc9c55))
+
 # [1.906.0](https://github.com/HankHuang0516/EClaw/compare/v1.905.1...v1.906.0) (2026-04-07)
 
 
