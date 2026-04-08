@@ -1,3 +1,10 @@
+# [1.916.0](https://github.com/HankHuang0516/EClaw/compare/v1.915.0...v1.916.0) (2026-04-08)
+
+
+### Features
+
+* kanban card edit UI — reviewer/assign for all cards + mission tab ([8a8b458](https://github.com/HankHuang0516/EClaw/commit/8a8b458283798ec951c1b0f12e3ba91c998b17c9))
+
 # [1.915.0](https://github.com/HankHuang0516/EClaw/compare/v1.914.1...v1.915.0) (2026-04-08)
 
 
