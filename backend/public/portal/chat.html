@@ -1896,9 +1896,10 @@
 
             // Snapshot: record the first unread bot message ID when entering chat
             // Only set once; subsequent loads keep this snapshot until user leaves
+            // Messages are ascending order (oldest first), so [0] = earliest unread
             const unreadBotMsgs = allMessages.filter(m => m.is_from_bot && !m.read_at);
             if (unreadBotMsgs.length > 0 && firstUnreadMessageId === null) {
-                firstUnreadMessageId = unreadBotMsgs[unreadBotMsgs.length - 1].id;
+                firstUnreadMessageId = unreadBotMsgs[0].id;
             }
 
             // Restore unsent draft
