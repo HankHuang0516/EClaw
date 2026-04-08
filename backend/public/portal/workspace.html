@@ -380,6 +380,20 @@
         }
     });
 
+    // ── Cross-pane quote routing ──
+    // When a pane calls quoteToChat() inside an iframe, it postMessages up here.
+    // We forward to the chat pane; if no chat pane exists, fall back to localStorage.
+    window.addEventListener('message', (e) => {
+        if (!e.data || e.data.type !== 'eclaw_quote') return;
+        const chatPane = Array.from(document.querySelectorAll('iframe.workspace-pane'))
+            .find(f => f.src && f.src.includes('chat.html'));
+        if (chatPane) {
+            chatPane.contentWindow.postMessage(e.data, '*');
+        } else {
+            localStorage.setItem('eclaw_pending_quote', JSON.stringify({ ...e.data, ts: Date.now() }));
+        }
+    });
+
     document.addEventListener('DOMContentLoaded', initWorkspace);
     </script>
 </body>

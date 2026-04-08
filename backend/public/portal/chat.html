@@ -2100,6 +2100,13 @@
                 }
             } catch(e) {}
 
+            // Receive smart quote forwarded by workspace.html (split-view cross-iframe)
+            window.addEventListener('message', (e) => {
+                if (!e.data || e.data.type !== 'eclaw_quote') return;
+                const { source, title, excerpt } = e.data;
+                quoteToChat(source, title, excerpt || '');
+            });
+
             // Mount @mention autocomplete on the message input.
             // Data source combines same-device bound entities + Card Holder contacts
             // (non-blocked). getEntries is called on every @ trigger so updates

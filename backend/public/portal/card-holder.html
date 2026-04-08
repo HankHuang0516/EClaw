@@ -1254,8 +1254,12 @@
         }
 
         function quoteToChat(source, title, excerpt) {
-            localStorage.setItem('eclaw_pending_quote', JSON.stringify({ source, title, excerpt: excerpt || '', ts: Date.now() }));
-            window.location.href = '/portal/chat.html';
+            if (window.self !== window.top) {
+                window.parent.postMessage({ type: 'eclaw_quote', source, title, excerpt: excerpt || '' }, '*');
+            } else {
+                localStorage.setItem('eclaw_pending_quote', JSON.stringify({ source, title, excerpt: excerpt || '', ts: Date.now() }));
+                window.location.href = '/portal/chat.html';
+            }
         }
 
         function quoteCardToChat(publicCode, name, desc) {
