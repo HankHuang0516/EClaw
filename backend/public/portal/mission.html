@@ -1048,6 +1048,7 @@
                 await _saveDashboard();
             } catch (e) {
                 console.warn('Auto-save failed:', e.message);
+                showToast((i18n.t('toast_upload_failed') || '儲存失敗') + ': ' + e.message, 'error');
             }
             isSyncing = false;
             renderSyncBar();

@@ -163,6 +163,7 @@ app.use(cors({
     credentials: true
 }));
 app.use('/api/ai-support/chat', express.json({ limit: '10mb' }));
+app.use('/api/mission/dashboard', express.json({ limit: '5mb' }));
 app.use(express.json({
     verify: (req, _res, buf) => {
         // Capture raw body for Discord signature verification
