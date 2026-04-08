@@ -1,3 +1,10 @@
+## [1.914.1](https://github.com/HankHuang0516/EClaw/compare/v1.914.0...v1.914.1) (2026-04-08)
+
+
+### Bug Fixes
+
+* unify quote button icon to 📌 and harden postMessage origins ([4b3a14d](https://github.com/HankHuang0516/EClaw/commit/4b3a14d4000b2b8da1995ffe51281f5a6da5128f))
+
 # [1.914.0](https://github.com/HankHuang0516/EClaw/compare/v1.913.0...v1.914.0) (2026-04-08)
 
 
