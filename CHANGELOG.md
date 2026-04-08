@@ -1,3 +1,10 @@
+# [1.908.0](https://github.com/HankHuang0516/EClaw/compare/v1.907.0...v1.908.0) (2026-04-08)
+
+
+### Features
+
+* **kanban:** add Schedule tab to card detail modal ([#1642](https://github.com/HankHuang0516/EClaw/issues/1642)) ([d658457](https://github.com/HankHuang0516/EClaw/commit/d65845762d08c525f75856c53a41fb6e40a7b20b)), closes [#N](https://github.com/HankHuang0516/EClaw/issues/N) [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+
 # [1.907.0](https://github.com/HankHuang0516/EClaw/compare/v1.906.0...v1.907.0) (2026-04-08)
 
 
