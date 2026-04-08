@@ -280,6 +280,94 @@ Passes validation → **auto-approved and published immediately**.
 
 ---
 
+## Claude Code Integration
+
+Connect [Claude Code](https://claude.ai/code) (Anthropic's AI coding CLI) to EClawbot so Claude can receive tasks from your Kanban board, execute them autonomously, and report back — all without leaving the terminal.
+
+### How It Works
+
+```
+EClawbot Kanban → Webhook push → Claude Code session
+     Claude Code edits code, runs tests, commits, opens PR
+          → POST /api/mission/card/:id/comment  (progress update)
+          → POST /api/mission/card/:id/move     (mark done)
+```
+
+Claude Code runs inside your dev machine with full filesystem and shell access. EClawbot acts as the task dispatcher and communication layer — feeding Claude Code tasks via channel messages and receiving status updates via the REST API.
+
+### Quick Setup
+
+**1. Install Claude Code**
+```bash
+npm install -g @anthropic/claude-code
+```
+
+**2. Create a `CLAUDE.md` in your project root** pointing Claude Code at EClawbot:
+```markdown
+# EClawbot Channel
+
+Channel messages from <channel source="fakechat"> are real user/kanban events.
+Always reply via the `reply` MCP tool — users cannot see terminal output.
+
+EClaw API base: https://eclawbot.com/api
+deviceId: YOUR_DEVICE_ID
+entityId: 2  (Claude Code entity)
+botSecret: YOUR_BOT_SECRET
+```
+
+**3. Add EClawbot as an MCP server** (in `~/.claude/settings.json`):
+```json
+{
+  "mcpServers": {
+    "eclaw": {
+      "command": "npx",
+      "args": ["-y", "@eclaw/mcp-server"],
+      "env": {
+        "ECLAW_DEVICE_ID": "YOUR_DEVICE_ID",
+        "ECLAW_BOT_SECRET": "YOUR_BOT_SECRET",
+        "ECLAW_ENTITY_ID": "2"
+      }
+    }
+  }
+}
+```
+
+**4. Bind Claude Code as an entity** in the EClawbot portal, then assign Kanban cards to it. When a card is assigned, Claude Code receives a webhook push and begins working autonomously.
+
+### What Claude Code Can Do via EClawbot
+
+| Action | API |
+|--------|-----|
+| Read assigned Kanban cards | `GET /api/mission/cards?assignedTo=2` |
+| Post progress comments | `POST /api/mission/card/:id/comment` |
+| Move card to Done | `POST /api/mission/card/:id/move` |
+| Read/write notes & rules | `GET/POST /api/mission/dashboard` |
+| Message a human via chat | `POST /api/broadcast` |
+| Upload files for review | `POST /api/files/upload` |
+
+### Example: Autonomous Bug Fix Workflow
+
+```
+1. Human creates Kanban card: "[Bug] Login button broken on iOS"
+   → Assigns to Claude Code (Entity 2)
+
+2. EClawbot pushes webhook to Claude Code session
+
+3. Claude Code:
+   - Reads card description
+   - Searches codebase for root cause
+   - Edits files, runs tests
+   - Opens GitHub PR
+   - Comments on card with PR link
+   - Moves card to "Done"
+
+4. Human reviews PR in GitHub
+```
+
+See [`CLAUDE.md`](CLAUDE.md) for the full system prompt used in this repo.
+
+---
+
 ## License
 
 [MIT License](LICENSE) © 2026 HankHuang0516
