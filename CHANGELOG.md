@@ -1,3 +1,10 @@
+## [1.909.1](https://github.com/HankHuang0516/EClaw/compare/v1.909.0...v1.909.1) (2026-04-08)
+
+
+### Bug Fixes
+
+* **info:** correct panel IDs for Bot Plaza and Live Wallpaper ([#1644](https://github.com/HankHuang0516/EClaw/issues/1644)) ([92d9fe5](https://github.com/HankHuang0516/EClaw/commit/92d9fe54d17834d79672172d081c56ae078b9ff0)), closes [#N](https://github.com/HankHuang0516/EClaw/issues/N) [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+
 # [1.909.0](https://github.com/HankHuang0516/EClaw/compare/v1.908.0...v1.909.0) (2026-04-08)
 
 
