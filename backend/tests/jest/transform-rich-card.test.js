@@ -11,6 +11,15 @@
 
 require('./helpers/mock-setup');
 
+const CHANNEL_API_KEY = 'eck_test_richcard_channel';
+
+// Mock channel account lookup BEFORE requiring the app so channel-api uses it
+const db = require('../../db');
+db.getChannelAccountByKey = jest.fn().mockImplementation(async (key) => {
+    if (key === CHANNEL_API_KEY) return { id: 99, device_id: null, callback_url: null };
+    return null;
+});
+
 const request = require('supertest');
 let app;
 
@@ -127,6 +136,117 @@ describe('Transform + Rich Card', () => {
                 }
             });
         expect(res.status).toBe(400);
+    });
+});
+
+describe('POST /api/channel/message + Rich Card', () => {
+    const deviceId = 'channel-msg-card-test';
+    const deviceSecret = `secret-${deviceId}`;
+    let botSecret;
+
+    beforeAll(async () => {
+        botSecret = await bindEntity(deviceId, deviceSecret, 0);
+    });
+
+    const baseBody = () => ({
+        channel_api_key: CHANNEL_API_KEY,
+        deviceId,
+        entityId: 0,
+        botSecret
+    });
+
+    it('backward compat: channel/message without card still works', async () => {
+        const res = await post('/api/channel/message')
+            .send({ ...baseBody(), message: 'plain text', state: 'IDLE' });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+
+    it('accepts a valid card with buttons', async () => {
+        const res = await post('/api/channel/message')
+            .send({
+                ...baseBody(),
+                message: 'Approve rm xxx.sh?',
+                state: 'IDLE',
+                card: {
+                    ask_id: 'channel-ask-1',
+                    buttons: [
+                        { id: 'approve', label: 'Approve', style: 'primary' },
+                        { id: 'deny', label: 'Deny', style: 'danger' }
+                    ]
+                }
+            });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+
+    it('auto-generates ask_id when missing', async () => {
+        const res = await post('/api/channel/message')
+            .send({
+                ...baseBody(),
+                message: 'Auto ask id',
+                state: 'IDLE',
+                card: { buttons: [{ id: 'ok', label: 'OK', style: 'primary' }] }
+            });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+
+    it('rejects card that is not an object', async () => {
+        const res = await post('/api/channel/message')
+            .send({ ...baseBody(), message: 'Bad card', card: 'not an object' });
+        expect(res.status).toBe(400);
+        expect(res.body.success).toBe(false);
+    });
+
+    it('rejects card without buttons array', async () => {
+        const res = await post('/api/channel/message')
+            .send({ ...baseBody(), message: 'Bad card', card: { buttons: [] } });
+        expect(res.status).toBe(400);
+        expect(res.body.success).toBe(false);
+    });
+
+    it('rejects card with more than 10 buttons', async () => {
+        const buttons = Array.from({ length: 11 }, (_, i) => ({ id: `b${i}`, label: `B${i}` }));
+        const res = await post('/api/channel/message')
+            .send({ ...baseBody(), message: 'Too many', card: { buttons } });
+        expect(res.status).toBe(400);
+    });
+
+    it('rejects card button missing id or label', async () => {
+        const res = await post('/api/channel/message')
+            .send({ ...baseBody(), message: 'Bad btn', card: { buttons: [{ id: 'x' }] } });
+        expect(res.status).toBe(400);
+    });
+
+    it('rejects duplicate button ids', async () => {
+        const res = await post('/api/channel/message')
+            .send({
+                ...baseBody(),
+                message: 'Dup',
+                card: {
+                    buttons: [
+                        { id: 'same', label: 'One' },
+                        { id: 'same', label: 'Two' }
+                    ]
+                }
+            });
+        expect(res.status).toBe(400);
+    });
+
+    it('defaults unknown button style to secondary (sanitization)', async () => {
+        const res = await post('/api/channel/message')
+            .send({
+                ...baseBody(),
+                message: 'Style sanitize',
+                card: {
+                    buttons: [
+                        { id: 'weird', label: 'Weird', style: 'rainbow' }
+                    ]
+                }
+            });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
     });
 });
 
