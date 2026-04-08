@@ -1,3 +1,10 @@
+# [1.915.0](https://github.com/HankHuang0516/EClaw/compare/v1.914.1...v1.915.0) (2026-04-08)
+
+
+### Features
+
+* **i18n:** add guide_mention + guide_intent for th/vi/id [squash] ([2b90937](https://github.com/HankHuang0516/EClaw/commit/2b909370984b310e6614964d5e2437445f931a83))
+
 ## [1.914.1](https://github.com/HankHuang0516/EClaw/compare/v1.914.0...v1.914.1) (2026-04-08)
 
 
