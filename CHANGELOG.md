@@ -1,3 +1,10 @@
+## [1.921.1](https://github.com/HankHuang0516/EClaw/compare/v1.921.0...v1.921.1) (2026-04-08)
+
+
+### Bug Fixes
+
+* raise JSON body limit for mission dashboard to fix 413 save failure ([307a5be](https://github.com/HankHuang0516/EClaw/commit/307a5be2c618d57a8ba3c169460299a2a14ee199))
+
 # [1.921.0](https://github.com/HankHuang0516/EClaw/compare/v1.920.1...v1.921.0) (2026-04-08)
 
 
