@@ -1,3 +1,10 @@
+## [1.917.1](https://github.com/HankHuang0516/EClaw/compare/v1.917.0...v1.917.1) (2026-04-08)
+
+
+### Bug Fixes
+
+* **i18n:** escape inner quotes in Indonesian guide HTML strings ([#1652](https://github.com/HankHuang0516/EClaw/issues/1652)) ([ca6490c](https://github.com/HankHuang0516/EClaw/commit/ca6490c58365791c36e46fb0de51df0c602784f1))
+
 # [1.917.0](https://github.com/HankHuang0516/EClaw/compare/v1.916.0...v1.917.0) (2026-04-08)
 
 
