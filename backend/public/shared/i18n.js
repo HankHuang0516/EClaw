@@ -6619,7 +6619,7 @@ const TRANSLATIONS = {
         "toast_subscription_cancelled": "訂閱已取消。存取權限持續到期限結束。",
         "toast_unbind_failed": "解除綁定失敗",
         "toast_update_failed": "更新失敗",
-        "toast_upload_failed": "上傳失敗"
+        "toast_upload_failed": "上傳失敗",
 
         "guide_mention_title": "@標記實體 — 完整指南",
         "guide_mention_meta": "在聊天輸入框中輸入@來召喚實體。可以按年齡、性別、角色篩選AI代理。",
