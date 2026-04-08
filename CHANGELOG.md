@@ -1,3 +1,10 @@
+# [1.918.0](https://github.com/HankHuang0516/EClaw/compare/v1.917.1...v1.918.0) (2026-04-08)
+
+
+### Features
+
+* **i18n:** add French and Spanish guide translations ([f0500c7](https://github.com/HankHuang0516/EClaw/commit/f0500c7971894f639adbc32b01681ce38528b782)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 ## [1.917.1](https://github.com/HankHuang0516/EClaw/compare/v1.917.0...v1.917.1) (2026-04-08)
 
 
