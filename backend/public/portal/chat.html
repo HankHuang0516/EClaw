@@ -1630,6 +1630,7 @@
         let currentFilter = 'all';
         let refreshInterval = null;
         let isFirstLoad = true;
+        let firstUnreadMessageId = null; // snapshot of the first unread bot message when entering chat
         let contacts = [];           // from /api/contacts
         let contactsLoaded = false;
         let _renderVersion = 0;
@@ -1892,6 +1893,13 @@
             await loadBoundEntities();
             await loadMessages();
             isFirstLoad = false;
+
+            // Snapshot: record the first unread bot message ID when entering chat
+            // Only set once; subsequent loads keep this snapshot until user leaves
+            const unreadBotMsgs = allMessages.filter(m => m.is_from_bot && !m.read_at);
+            if (unreadBotMsgs.length > 0 && firstUnreadMessageId === null) {
+                firstUnreadMessageId = unreadBotMsgs[unreadBotMsgs.length - 1].id;
+            }
 
             // Restore unsent draft
             const savedDraft = localStorage.getItem('chat_draft');
@@ -2858,9 +2866,9 @@
                 // Full time for tooltip
                 const fullTime = msg.created_at ? new Date(msg.created_at).toLocaleString() : '';
 
-                // Unread separator: insert before first unread msg
+                // Unread separator: insert only before the snapshot first-unread message
                 let unreadSep = '';
-                if (!isSent && msg.is_from_bot && !msg.read_at && prev && (prev.read_at || prev.is_from_user)) {
+                if (msg.id === firstUnreadMessageId) {
                     unreadSep = '<div class="chat-unread-sep"><span>' + (i18n.t('chat_unread_sep') || '── New messages ──') + '</span></div>';
                 }
 
