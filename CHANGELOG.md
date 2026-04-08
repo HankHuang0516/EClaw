@@ -1,3 +1,10 @@
+# [1.913.0](https://github.com/HankHuang0516/EClaw/compare/v1.912.1...v1.913.0) (2026-04-08)
+
+
+### Features
+
+* **files:** add smart quote-to-chat on all file cards and preview ([311d3ac](https://github.com/HankHuang0516/EClaw/commit/311d3acc33350e562db62275424b40a8a17becfd))
+
 ## [1.912.1](https://github.com/HankHuang0516/EClaw/compare/v1.912.0...v1.912.1) (2026-04-08)
 
 
