@@ -1,3 +1,10 @@
+# [1.912.0](https://github.com/HankHuang0516/EClaw/compare/v1.911.0...v1.912.0) (2026-04-08)
+
+
+### Features
+
+* smart quote cross-iframe routing for workspace split-view ([0e937ed](https://github.com/HankHuang0516/EClaw/commit/0e937ed094ef2f08cf715783b2239254544f0367))
+
 # [1.911.0](https://github.com/HankHuang0516/EClaw/compare/v1.910.0...v1.911.0) (2026-04-08)
 
 
