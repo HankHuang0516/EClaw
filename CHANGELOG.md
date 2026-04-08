@@ -1,3 +1,10 @@
+# [1.920.0](https://github.com/HankHuang0516/EClaw/compare/v1.919.0...v1.920.0) (2026-04-08)
+
+
+### Features
+
+* **i18n:** add guide translations for Asian languages (ja/ko/th/vi/id) ([2d5391d](https://github.com/HankHuang0516/EClaw/commit/2d5391d2f7611a2a59573c7fdf7eeaf050e40982))
+
 # [1.919.0](https://github.com/HankHuang0516/EClaw/compare/v1.918.0...v1.919.0) (2026-04-08)
 
 
