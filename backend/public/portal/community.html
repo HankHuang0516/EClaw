@@ -726,7 +726,7 @@
                 <div class="detail-actions">
                     <button class="detail-btn primary" onclick="window.open('/c/${bot.publicCode}','_blank')">💬 開始對話</button>
                     <button class="detail-btn outline" onclick="navigator.clipboard.writeText(location.origin+'/c/${bot.publicCode}')">🔗 分享</button>
-                    <button class="detail-btn outline" onclick="quoteToChat('${esc(bot.name)} (${bot.publicCode})\\n${esc(desc)}', 'Bot Plaza')">📌 引用到聊天</button>
+                    <button class="detail-btn outline" onclick="quoteToChat('Bot Plaza','${esc(bot.name)} (${bot.publicCode})','${esc(desc.slice(0,80))}')">📌 引用到聊天</button>
                 </div>
                 ${tags.length ? `<div class="detail-tags">${tags.map(t=>`<span class="detail-tag">${esc(t)}</span>`).join('')}</div>` : ''}
                 ${caps.length ? `<div class="detail-caps"><div class="detail-caps-title">Capabilities</div><div class="detail-cap-list">${caps.map(c=>`<div class="detail-cap-item"><span class="icon">⚡</span> ${esc(c.name||c.id||c)}</div>`).join('')}</div></div>` : ''}
@@ -773,9 +773,8 @@
 
     function closeDetail() { document.getElementById('detailModal').classList.remove('active'); document.body.style.overflow=''; currentDetailCode=null; }
 
-    function quoteToChat(text, source) {
-        const msg = source ? `📌【${source}】\n${text}` : `📌 ${text}`;
-        localStorage.setItem('eclaw_pending_quote', JSON.stringify({ text: msg, ts: Date.now() }));
+    function quoteToChat(source, title, excerpt) {
+        localStorage.setItem('eclaw_pending_quote', JSON.stringify({ source, title, excerpt: excerpt || '', ts: Date.now() }));
         window.location.href = '/portal/chat.html';
     }
 

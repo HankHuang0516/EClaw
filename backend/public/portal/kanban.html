@@ -1184,21 +1184,15 @@
             openCardId = null;
         }
 
-        function quoteToChat(text, source) {
-            const msg = source ? `📌【${source}】\n${text}` : `📌 ${text}`;
-            if (window.location.pathname.includes('chat.html')) {
-                const input = document.getElementById('messageInput');
-                if (input) { input.value = msg; input.dispatchEvent(new Event('input')); input.focus(); }
-            } else {
-                localStorage.setItem('eclaw_pending_quote', JSON.stringify({ text: msg, ts: Date.now() }));
-                window.location.href = '/portal/chat.html';
-            }
+        function quoteToChat(source, title, excerpt) {
+            localStorage.setItem('eclaw_pending_quote', JSON.stringify({ source, title, excerpt: excerpt || '', ts: Date.now() }));
+            window.location.href = '/portal/chat.html';
         }
 
         function quoteKanbanCardToChat() {
             const title = document.getElementById('detailTitle').textContent.trim();
-            const meta = document.getElementById('detailMeta').textContent.trim().replace(/\s+/g, ' ');
-            quoteToChat(`${title}${meta ? '\n' + meta : ''}`, '看板卡片');
+            const meta = document.getElementById('detailMeta').textContent.trim().replace(/\s+/g, ' ').slice(0, 80);
+            quoteToChat('看板卡片', title, meta);
         }
 
         // ── Inline Schedule Panel (detail modal tab) ──

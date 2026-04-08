@@ -1253,15 +1253,13 @@
             document.getElementById('detailModal').classList.remove('open');
         }
 
-        function quoteToChat(text, source) {
-            const msg = source ? `📌【${source}】\n${text}` : `📌 ${text}`;
-            localStorage.setItem('eclaw_pending_quote', JSON.stringify({ text: msg, ts: Date.now() }));
+        function quoteToChat(source, title, excerpt) {
+            localStorage.setItem('eclaw_pending_quote', JSON.stringify({ source, title, excerpt: excerpt || '', ts: Date.now() }));
             window.location.href = '/portal/chat.html';
         }
 
         function quoteCardToChat(publicCode, name, desc) {
-            const text = `${name} (${publicCode})${desc ? '\n' + desc : ''}`;
-            quoteToChat(text, 'Card Holder');
+            quoteToChat('Card Holder', name + ' (' + publicCode + ')', desc ? desc.slice(0, 80) : '');
         }
 
         // ── Chat History ──

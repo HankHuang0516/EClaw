@@ -1805,6 +1805,7 @@
 
             html += `</div>
                     <div class="dialog-actions">
+                        <button class="btn btn-outline" onclick="quoteMissionDialog()" title="引用到聊天視窗">📌 引用</button>
                         <button class="btn btn-outline" onclick="closeDialog()">${i18n.t('mc_dlg_cancel')}</button>
                         <button class="btn btn-primary" id="dlgSaveBtn">${i18n.t('mc_dlg_save')}</button>
                     </div>
@@ -1834,6 +1835,24 @@
 
         function closeDialog() {
             document.getElementById('dialogContainer').innerHTML = '';
+        }
+
+        function quoteToChat(source, title, excerpt) {
+            localStorage.setItem('eclaw_pending_quote', JSON.stringify({ source, title, excerpt: excerpt || '', ts: Date.now() }));
+            window.location.href = '/portal/chat.html';
+        }
+
+        function quoteMissionDialog() {
+            const dialog = document.querySelector('#dialogContainer .dialog');
+            if (!dialog) return;
+            const source = dialog.querySelector('.dialog-title')?.textContent?.trim() || '任務';
+            // Get first non-empty text input as title, second as excerpt
+            const inputs = Array.from(dialog.querySelectorAll('input[id^="dlg_"]:not([type="hidden"]), textarea[id^="dlg_"]'))
+                .map(el => el.value.trim()).filter(Boolean);
+            if (!inputs.length) return;
+            const title = inputs[0].slice(0, 80);
+            const excerpt = inputs[1] ? inputs[1].slice(0, 80) : '';
+            quoteToChat(source, title, excerpt);
         }
 
         // ========== Notes ==========
@@ -2382,6 +2401,7 @@
                     </div>
                     </div>
                     <div class="dialog-actions">
+                        <button class="btn btn-outline" onclick="quoteToChat('筆記','${esc(noteTitle)}',document.getElementById('dlg_page_html').value.replace(/<[^>]*>/g,'').trim().slice(0,80))" title="引用到聊天視窗">📌 引用</button>
                         <button class="btn btn-outline" onclick="closeDialog()">${i18n.t('mc_dlg_cancel')}</button>
                         ${notePageIds.has(noteId) ? `<button class="btn btn-outline" style="color:var(--danger)" onclick="deleteNotePage('${noteId}')">${i18n.t('common_delete')}</button>` : ''}
                         <button class="btn btn-primary" id="dlgSavePageBtn">${i18n.t('mc_dlg_save')}</button>
@@ -2848,6 +2868,7 @@
                     <div class="entity-checkbox-grid" id="dlg_skill_entities">${entityCheckboxes}</div>
                     </div>
                     <div class="dialog-actions">
+                        <button class="btn btn-outline" onclick="quoteMissionDialog()" title="引用到聊天視窗">📌 引用</button>
                         <button class="btn btn-outline" onclick="closeDialog()">${i18n.t('mc_dlg_cancel')}</button>
                         <button class="btn btn-primary" id="dlgSaveBtn">${i18n.t('mc_dlg_save')}</button>
                     </div>
@@ -2972,6 +2993,7 @@
                     <div class="entity-checkbox-grid" id="dlg_rule_entities">${entityCheckboxes}</div>
                     </div>
                     <div class="dialog-actions">
+                        <button class="btn btn-outline" onclick="quoteMissionDialog()" title="引用到聊天視窗">📌 引用</button>
                         <button class="btn btn-outline" onclick="closeDialog()">${i18n.t('mc_dlg_cancel')}</button>
                         <button class="btn btn-primary" id="dlgSaveBtn">${i18n.t('mc_dlg_save')}</button>
                     </div>
@@ -3175,6 +3197,7 @@
                     <div class="entity-checkbox-grid" id="dlg_soul_entities">${entityCheckboxes}</div>
                     </div>
                     <div class="dialog-actions">
+                        <button class="btn btn-outline" onclick="quoteMissionDialog()" title="引用到聊天視窗">📌 引用</button>
                         <button class="btn btn-outline" onclick="closeDialog()">${i18n.t('mc_dlg_cancel')}</button>
                         <button class="btn btn-primary" id="dlgSaveBtn">${i18n.t('mc_dlg_save')}</button>
                     </div>
