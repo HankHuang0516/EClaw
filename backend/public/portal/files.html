@@ -265,6 +265,29 @@
         .file-delete-btn:hover {
             background: var(--error, #e53e3e);
         }
+        .file-quote-btn {
+            position: absolute;
+            top: 6px;
+            right: 40px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.55);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+        .file-card:hover .file-quote-btn {
+            display: flex;
+        }
+        .file-quote-btn:hover {
+            background: var(--primary, #4a90d9);
+        }
 
         /* Multi-entity badge overlay on thumbnail */
         .entity-badges {
@@ -921,9 +944,10 @@
                 const entityNamesHtml = renderEntityNames(file);
 
                 const deleteBtn = '<button class="file-delete-btn" onclick="event.stopPropagation();deleteFile(' + realIdx + ')" title="Delete">&#x2715;</button>';
+                const quoteBtn = '<button class="file-quote-btn" onclick="event.stopPropagation();quoteFileToChat(' + realIdx + ')" title="引用到聊天">📌</button>';
                 if (file.type === 'photo') {
                     return '<div class="file-card" onclick="previewFile(' + realIdx + ')" oncontextmenu="event.preventDefault();moveFileToFolder(' + realIdx + ')">' +
-                        deleteBtn +
+                        deleteBtn + quoteBtn +
                         '<div class="file-thumb">' +
                         '<img src="' + escapeHtml(file.url) + '" alt="photo" loading="lazy" onerror="this.parentElement.innerHTML=\'<div class=file-thumb-icon>🖼️</div>\'">' +
                         entityBadgesHtml +
@@ -937,7 +961,7 @@
                         '</div></div>';
                 } else {
                     return '<div class="file-card" onclick="previewFile(' + realIdx + ')" oncontextmenu="event.preventDefault();moveFileToFolder(' + realIdx + ')">' +
-                        deleteBtn +
+                        deleteBtn + quoteBtn +
                         '<div class="file-thumb">' +
                         '<div class="file-thumb-icon">🎙️</div>' +
                         entityBadgesHtml +
@@ -1001,6 +1025,7 @@
                 '<div class="preview-actions">' +
                 (file.type === 'photo' ? '<button class="btn btn-primary btn-sm" onclick="downloadFile(' + idx + ')">' + i18n.t('files_btn_download') + '</button>' : '') +
                 '<button class="btn btn-outline btn-sm" onclick="shareFile(' + idx + ')">' + i18n.t('files_btn_share') + '</button>' +
+                '<button class="btn btn-outline btn-sm" onclick="quoteFileToChat(' + idx + ')">📌 引用</button>' +
                 '<button class="btn btn-outline btn-sm" style="color:var(--error,#e53e3e);border-color:var(--error,#e53e3e)" onclick="deleteFile(' + idx + ')">' + i18n.t('files_btn_delete', 'Delete') + '</button>' +
                 '</div>';
 
@@ -1109,6 +1134,25 @@
         }
 
         // --- Helpers ---
+        function quoteToChat(source, title, excerpt) {
+            if (window.self !== window.top) {
+                window.parent.postMessage({ type: 'eclaw_quote', source, title, excerpt: excerpt || '' }, window.location.origin);
+            } else {
+                localStorage.setItem('eclaw_pending_quote', JSON.stringify({ source, title, excerpt: excerpt || '', ts: Date.now() }));
+                window.location.href = '/portal/chat.html';
+            }
+        }
+
+        function quoteFileToChat(idx) {
+            const file = allFiles[idx];
+            if (!file) return;
+            const typeLabel = file.type === 'photo' ? '📷 照片' : '🎙️ 語音';
+            const entityName = getEntityName(file.entityId || 0);
+            const title = typeLabel + ' — ' + entityName;
+            const excerpt = file.text ? file.text.slice(0, 80) : file.url.split('/').pop().slice(0, 60);
+            quoteToChat('Files', title, excerpt);
+        }
+
         function escapeHtml(str) {
             if (!str) return '';
             const div = document.createElement('div');
