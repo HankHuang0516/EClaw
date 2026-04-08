@@ -394,6 +394,7 @@
     <div class="container">
         <!-- Sub-tabs -->
         <div class="sub-tabs">
+            <a class="sub-tab" href="mission.html">🎯 <span data-i18n="mc_title">Mission Control</span></a>
             <a class="sub-tab active" href="kanban.html">📋 <span data-i18n="kanban_tab">Kanban Board</span></a>
             <a class="sub-tab" href="env-vars.html">🔐 <span data-i18n="kb_subtab_env">Env Variables</span></a>
             <a class="sub-tab" href="screen-control.html">📱 <span data-i18n="kb_subtab_remote">Remote Control</span></a>
@@ -564,6 +565,7 @@
                 <label class="kb-form-label" data-i18n="kb_label_description">Description</label>
                 <textarea class="kb-form-textarea" id="editCardDesc" data-i18n-placeholder="kb_placeholder_desc" placeholder="Brief description..."></textarea>
             </div>
+            <div id="editSchedFields">
             <div class="kb-form-group">
                 <label class="kb-form-label" data-i18n="kb_label_sched_type">Schedule Type</label>
                 <select class="kb-form-select" id="editSchedType" onchange="toggleEditSchedFields()">
@@ -601,6 +603,7 @@
                     <option value="UTC">UTC</option>
                 </select>
             </div>
+            </div><!-- /#editSchedFields -->
             <div class="kb-form-actions">
                 <button class="btn btn-outline" data-i18n="kb_btn_cancel" onclick="closeEditSchedule()">Cancel</button>
                 <button class="btn btn-primary" data-i18n="kb_auto_edit_save" onclick="saveAutoSchedule()">Save</button>
@@ -959,51 +962,51 @@
                     `</div>`;
             }
 
+            const reviewerName = card.reviewerEntityId != null ? getEntityDisplayName(card.reviewerEntityId) : '';
             meta.innerHTML = `
                 <span class="meta-item"><span class="kb-card-priority" data-p="${card.priority}">${card.priority}</span></span>
                 <span class="meta-item">📌 ${STATUS_LABELS[card.status]}</span>
                 <span class="meta-item">👤 ${(card.assignedBots||[]).map(id=>{ const e=boundEntities.find(x=>x.entityId===id); return e?(e.name||e.character||'#'+id):'#'+id; }).join(', ')}</span>
+                ${reviewerName ? `<span class="meta-item">🔍 ${escapeHtml(reviewerName)}</span>` : ''}
                 <span class="meta-item">🕐 ${formatTime(card.createdAt || card.created_at)}</span>
                 ${scheduleInfo}
                 ${card.description ? '<div style="width:100%;font-size:13px;color:var(--text-secondary);margin-top:8px;white-space:pre-wrap;word-break:break-word">'+escapeHtml(card.description)+'</div>' : ''}
             `;
 
-            // Move bar — automation cards get pause/resume + delete; regular cards get status buttons
+            // Move bar — shared assign + reviewer UI for all cards
             const moveBar = document.getElementById('moveBar');
+            const currentReviewer = card.reviewerEntityId;
+            const reviewerOpts = boundEntities.filter(e => e.isBound).map(e => {
+                const sel = e.entityId === currentReviewer ? ' selected' : '';
+                return `<option value="${e.entityId}"${sel}>${escapeHtml(getEntityDisplayName(e.entityId))}</option>`;
+            }).join('');
+            const reviewerHtml =
+                `<div class="kb-auto-reviewer">` +
+                    `<label>🔍 ${t('kb_auto_reviewer','Reviewer')}</label>` +
+                    `<select onchange="setAutoReviewer('${cardId}',this.value)">` +
+                        `<option value="">${t('kb_auto_no_reviewer','None')}</option>` +
+                        reviewerOpts +
+                    `</select>` +
+                `</div>`;
+            const currentBots = card.assignedBots || [];
+            const assignHtml =
+                `<div class="kb-auto-assign">` +
+                    `<label>👤 ${t('kb_auto_assigned','Assigned')}</label>` +
+                    `<div class="kb-auto-assign-chips">` +
+                    boundEntities.filter(e => e.isBound).map(e => {
+                        const checked = currentBots.includes(e.entityId) ? ' checked' : '';
+                        const label = getEntityDisplayName(e.entityId);
+                        const avatarEl = typeof renderAvatarHtml === 'function' ? renderAvatarHtml(e.avatar, 16) : (e.avatar || '🦞');
+                        return `<label class="kb-assign-chip${checked ? ' active' : ''}" title="${escapeHtml(label)}">` +
+                            `<input type="checkbox" value="${e.entityId}"${checked} onchange="updateAutoAssign('${cardId}')">` +
+                            avatarEl + `<span>${escapeHtml(label)}</span></label>`;
+                    }).join('') +
+                    `</div>` +
+                `</div>`;
             if (card.isAutomation) {
                 const isEnabled = card.schedule?.enabled !== false;
                 const pauseLabel = isEnabled ? `⏸ ${t('kb_auto_pause','Pause')}` : `▶ ${t('kb_auto_resume','Resume')}`;
                 const pauseCls = isEnabled ? 'kb-auto-action-btn pause' : 'kb-auto-action-btn resume';
-                // Reviewer selector for automation cards
-                const currentReviewer = card.reviewerEntityId;
-                const reviewerOpts = boundEntities.filter(e => e.isBound).map(e => {
-                    const sel = e.entityId === currentReviewer ? ' selected' : '';
-                    return `<option value="${e.entityId}"${sel}>${escapeHtml(getEntityDisplayName(e.entityId))}</option>`;
-                }).join('');
-                const reviewerHtml =
-                    `<div class="kb-auto-reviewer">` +
-                        `<label>🔍 ${t('kb_auto_reviewer','Reviewer')}</label>` +
-                        `<select onchange="setAutoReviewer('${cardId}',this.value)">` +
-                            `<option value="">${t('kb_auto_no_reviewer','None')}</option>` +
-                            reviewerOpts +
-                        `</select>` +
-                    `</div>`;
-                // Assigned bots selector
-                const currentBots = card.assignedBots || [];
-                const assignHtml =
-                    `<div class="kb-auto-assign">` +
-                        `<label>👤 ${t('kb_auto_assigned','Assigned')}</label>` +
-                        `<div class="kb-auto-assign-chips">` +
-                        boundEntities.filter(e => e.isBound).map(e => {
-                            const checked = currentBots.includes(e.entityId) ? ' checked' : '';
-                            const label = getEntityDisplayName(e.entityId);
-                            const avatarEl = typeof renderAvatarHtml === 'function' ? renderAvatarHtml(e.avatar, 16) : (e.avatar || '🦞');
-                            return `<label class="kb-assign-chip${checked ? ' active' : ''}" title="${escapeHtml(label)}">` +
-                                `<input type="checkbox" value="${e.entityId}"${checked} onchange="updateAutoAssign('${cardId}')">` +
-                                avatarEl + `<span>${escapeHtml(label)}</span></label>`;
-                        }).join('') +
-                        `</div>` +
-                    `</div>`;
                 moveBar.innerHTML =
                     assignHtml +
                     reviewerHtml +
@@ -1013,9 +1016,17 @@
                         `<button class="kb-auto-action-btn delete" onclick="deleteAutomation('${cardId}')" title="${t('kb_auto_delete_tip','Archive this automation')}">🗑 ${t('kb_auto_delete','Delete')}</button>` +
                     `</div>`;
             } else {
-                moveBar.innerHTML = STATUSES.map(s =>
-                    `<button class="kb-move-btn${s===card.status?' current':''}" onclick="moveCardTo('${cardId}','${s}')"${s===card.status?' disabled':''}>${STATUS_LABELS[s]}</button>`
-                ).join('');
+                moveBar.innerHTML =
+                    assignHtml +
+                    reviewerHtml +
+                    `<div class="kb-auto-actions">` +
+                        `<button class="kb-auto-action-btn edit" onclick="editCard('${cardId}')" title="${t('kb_auto_edit_tip','Edit card')}">✏️ ${t('kb_auto_edit','Edit')}</button>` +
+                    `</div>` +
+                    `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">` +
+                    STATUSES.map(s =>
+                        `<button class="kb-move-btn${s===card.status?' current':''}" onclick="moveCardTo('${cardId}','${s}')"${s===card.status?' disabled':''}>${STATUS_LABELS[s]}</button>`
+                    ).join('') +
+                    `</div>`;
             }
 
             // Show/hide schedule tab for automation cards; reset panel so it re-renders for new card
@@ -1085,6 +1096,17 @@
             });
         }
 
+        // ── Edit Card (regular, no schedule) ──
+        function editCard(cardId) {
+            const card = findCard(cardId);
+            if (!card) return;
+            document.getElementById('editSchedCardId').value = cardId;
+            document.getElementById('editCardTitle').value = card.title || '';
+            document.getElementById('editCardDesc').value = card.description || '';
+            document.getElementById('editSchedFields').style.display = 'none';
+            document.getElementById('editSchedModal').classList.add('show');
+        }
+
         // ── Edit Schedule ──
         function editAutoSchedule(cardId) {
             const card = findCard(cardId);
@@ -1126,6 +1148,7 @@
 
         function closeEditSchedule() {
             document.getElementById('editSchedModal').classList.remove('show');
+            document.getElementById('editSchedFields').style.display = '';
         }
 
         function toggleEditSchedFields() {
@@ -1161,6 +1184,7 @@
                 if (!runAtVal) { showToast(t('kb_auto_edit_no_runat', 'Please set a run time'), true); return; }
                 body.runAt = new Date(runAtVal).toISOString();
             }
+            const cardOnlyMode = document.getElementById('editSchedFields').style.display === 'none';
             try {
                 // Save title/description via card update endpoint
                 const newTitle = document.getElementById('editCardTitle').value.trim();
@@ -1168,14 +1192,16 @@
                 if (!newTitle) { showToast(t('kb_err_title', 'Title is required'), true); return; }
                 const cardBody = { deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret, title: newTitle, description: newDesc };
                 await apiCall('PUT', `/api/mission/card/${cardId}`, cardBody);
-                // Save schedule
-                await apiCall('PUT', `/api/mission/card/${cardId}/schedule`, body);
+                if (!cardOnlyMode) {
+                    // Save schedule (automation cards only)
+                    await apiCall('PUT', `/api/mission/card/${cardId}/schedule`, body);
+                }
                 closeEditSchedule();
-                showToast(t('kb_auto_edit_saved', 'Schedule updated'));
+                showToast(cardOnlyMode ? t('kb_auto_edit_saved', 'Card updated') : t('kb_auto_edit_saved', 'Schedule updated'));
                 await loadCards(); // chains to loadAutomations internally
                 if (openCardId === cardId) openDetail(cardId);
             } catch (e) {
-                showToast(e.message || t('kb_auto_edit_failed', 'Failed to update schedule'), true);
+                showToast(e.message || t('kb_auto_edit_failed', 'Failed to update'), true);
             }
         }
 
