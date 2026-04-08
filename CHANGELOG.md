@@ -1,3 +1,10 @@
+## [1.920.1](https://github.com/HankHuang0516/EClaw/compare/v1.920.0...v1.920.1) (2026-04-08)
+
+
+### Bug Fixes
+
+* **i18n:** add missing comma after toast_upload_failed in zh locale ([92d1acf](https://github.com/HankHuang0516/EClaw/commit/92d1acfffa848bbd2d4ef6da4ef72fbb63467eb4))
+
 # [1.920.0](https://github.com/HankHuang0516/EClaw/compare/v1.919.0...v1.920.0) (2026-04-08)
 
 
