@@ -1,3 +1,10 @@
+# [1.914.0](https://github.com/HankHuang0516/EClaw/compare/v1.913.0...v1.914.0) (2026-04-08)
+
+
+### Features
+
+* **i18n:** add guide_wp translations for ja/ko/th/vi/id [squash] ([80213a5](https://github.com/HankHuang0516/EClaw/commit/80213a5cf7ed0f2b516a6a54e8e654cecff97417))
+
 # [1.913.0](https://github.com/HankHuang0516/EClaw/compare/v1.912.1...v1.913.0) (2026-04-08)
 
 
