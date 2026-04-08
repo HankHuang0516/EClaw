@@ -287,3 +287,26 @@ describe('GET /api/audit-logs — auth required', () => {
         expect(res.status).toBe(403);
     });
 });
+
+// ════════════════════════════════════════════════════════════════
+// Debug endpoints — /api/debug/devices must always send a response
+// Regression: Issue #1595 — this route previously called
+// verifyAdmin(req, res) but the function only takes (req) and never
+// sent any body on failure, so unauthorized callers got no HTTP
+// response (hanging / empty 200) instead of a proper 403. Verify the
+// route now always resolves with a structured JSON body.
+// Note: supertest connects from 127.0.0.1 which verifyAdmin treats as
+// trusted localhost, so the body is the device list — the regression
+// we guard against is the "no response sent" bug, not the localhost
+// allow-list. Non-localhost 403 behavior is covered by integration
+// tests.
+// ════════════════════════════════════════════════════════════════
+describe('GET /api/debug/devices — no silent hang (Issue #1595)', () => {
+    it('always resolves with a JSON body', async () => {
+        const res = await get('/api/debug/devices');
+        expect([200, 403]).toContain(res.status);
+        expect(res.body).toBeDefined();
+        // A silent "return;" used to leave res.body === ''
+        expect(typeof res.body).toBe('object');
+    });
+});
