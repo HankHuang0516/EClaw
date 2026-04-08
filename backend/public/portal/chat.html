@@ -2088,6 +2088,19 @@
             await loadMessages();
             isFirstLoad = false;
 
+            // Pick up pending quote from kanban/community/card-holder pages
+            try {
+                const pq = localStorage.getItem('eclaw_pending_quote');
+                if (pq) {
+                    localStorage.removeItem('eclaw_pending_quote');
+                    const { text, ts } = JSON.parse(pq);
+                    if (Date.now() - ts < 120000) { // within 2 minutes
+                        const input = document.getElementById('messageInput');
+                        if (input) { input.value = text; input.dispatchEvent(new Event('input')); input.focus(); }
+                    }
+                }
+            } catch(e) {}
+
             // Mount @mention autocomplete on the message input.
             // Data source combines same-device bound entities + Card Holder contacts
             // (non-blocked). getEntries is called on every @ trigger so updates
@@ -3471,6 +3484,12 @@
         function clearReplyContext() {
             replyContext = null;
             document.getElementById('replyPreviewBar').classList.remove('show');
+        }
+
+        function quoteToChat(text, source) {
+            const msg = source ? `📌【${source}】\n${text}` : `📌 ${text}`;
+            const input = document.getElementById('messageInput');
+            if (input) { input.value = msg; input.dispatchEvent(new Event('input')); input.focus(); }
         }
 
         // ── Send Message ──

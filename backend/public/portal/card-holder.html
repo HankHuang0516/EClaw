@@ -1224,6 +1224,7 @@
                 </div>
 
                 <div class="modal-actions">
+                    <button class="btn btn-outline btn-sm" onclick="quoteCardToChat('${escapeAttr(card.publicCode)}', '${escapeAttr(card.name || card.publicCode)}', '${escapeAttr(card.agentCard?.description || '')}')">📌 引用到聊天</button>
                     <button class="btn btn-outline btn-sm" onclick="togglePin('${escapeAttr(card.publicCode)}')">
                         ${card.pinned ? t('cardholder_unpin', 'Unpin') : t('cardholder_pin', 'Pin')}
                     </button>
@@ -1250,6 +1251,17 @@
 
         function closeDetail() {
             document.getElementById('detailModal').classList.remove('open');
+        }
+
+        function quoteToChat(text, source) {
+            const msg = source ? `📌【${source}】\n${text}` : `📌 ${text}`;
+            localStorage.setItem('eclaw_pending_quote', JSON.stringify({ text: msg, ts: Date.now() }));
+            window.location.href = '/portal/chat.html';
+        }
+
+        function quoteCardToChat(publicCode, name, desc) {
+            const text = `${name} (${publicCode})${desc ? '\n' + desc : ''}`;
+            quoteToChat(text, 'Card Holder');
         }
 
         // ── Chat History ──
