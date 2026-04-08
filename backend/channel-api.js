@@ -58,7 +58,7 @@ async function assertPublicCallbackUrl(callbackUrl) {
     if (isPrivateIp(address)) throw new Error('callback_url must not resolve to a private/internal IP');
 }
 
-module.exports = function (devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase, awardEntityXP, XP_AMOUNTS, notifyDevice, deliverToEntity, gatekeeperCheckText, resolveSpeakToTarget, checkBotToBotRateLimit, checkCrossSpeakRateLimit, crossDeviceSettings, devicePrefs, recentBroadcasts, BOT2BOT_MAX_MESSAGES, db: dbRef, getMissionApiHints, buildIdentitySetupHint, buildBroadcastRecipientBlock }) {
+module.exports = function (devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase, awardEntityXP, XP_AMOUNTS, notifyDevice, deliverToEntity, gatekeeperCheckText, resolveSpeakToTarget, checkBotToBotRateLimit, checkCrossSpeakRateLimit, crossDeviceSettings, devicePrefs, recentBroadcasts, BOT2BOT_MAX_MESSAGES, db: dbRef, getMissionApiHints, buildIdentitySetupHint, buildBroadcastRecipientBlock, chatPool }) {
     const pushContextHelpers = { getMissionApiHints, buildIdentitySetupHint, buildBroadcastRecipientBlock };
     // Late-bound kanban auto-review hook (set after kanbanModule init)
     let kanbanAutoReview = null;
@@ -866,6 +866,160 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
         }
     });
 
+    // ── POST /api/channel/card-action ──
+    // Called by frontend (chat UI) when the user taps a rich-card button.
+    // Body: { deviceId, entityId, botSecret, ask_id, action_id }
+    // Validates auth, marks the message card as resolved, and pushes a
+    // `card_action` webhook event back to the channel callback so the bot
+    // can react to the user's choice.
+    router.post('/card-action', async (req, res) => {
+        try {
+            const { deviceId, entityId, botSecret, deviceSecret, ask_id, action_id } = req.body || {};
+            if (!deviceId || !ask_id || !action_id) {
+                return res.status(400).json({ success: false, message: 'deviceId, ask_id and action_id are required' });
+            }
+
+            const device = devices[deviceId];
+            if (!device) {
+                return res.status(404).json({ success: false, message: 'Device not found' });
+            }
+
+            // Auth: accept botSecret (per entity), deviceSecret (whole device), or JWT cookie
+            let eId;
+            let authed = false;
+            if (botSecret) {
+                if (entityId !== undefined && entityId !== null) {
+                    const requested = parseInt(entityId);
+                    const ent = device.entities[requested];
+                    if (ent && ent.isBound && ent.botSecret && safeEqual(ent.botSecret, botSecret)) {
+                        eId = requested;
+                        authed = true;
+                    }
+                }
+                if (!authed) {
+                    const found = Object.keys(device.entities).map(Number)
+                        .find(i => device.entities[i]?.isBound && device.entities[i].botSecret && safeEqual(device.entities[i].botSecret, botSecret));
+                    if (found !== undefined) { eId = found; authed = true; }
+                }
+            }
+            if (!authed && deviceSecret && device.deviceSecret && safeEqual(device.deviceSecret, deviceSecret)) {
+                authed = true;
+            }
+            if (!authed && req.user && req.user.deviceId === deviceId) {
+                authed = true;
+            }
+            if (!authed) {
+                return res.status(403).json({ success: false, message: 'Invalid credentials' });
+            }
+
+            // If eId wasn't determined via botSecret, use entityId hint or default to 0
+            if (eId === undefined) {
+                if (entityId !== undefined && entityId !== null) {
+                    const requested = parseInt(entityId);
+                    if (!isNaN(requested) && device.entities[requested]) eId = requested;
+                }
+                if (eId === undefined) {
+                    eId = Object.keys(device.entities).map(Number).find(i => device.entities[i]?.isBound);
+                    if (eId === undefined) eId = 0;
+                }
+            }
+
+            const entity = device.entities[eId];
+
+            // Look up the chat message that owns this ask_id so we can mark it resolved
+            let matchedRow = null;
+            if (chatPool) {
+                try {
+                    const result = await chatPool.query(
+                        `SELECT id, card, card_resolved_action
+                         FROM chat_messages
+                         WHERE device_id = $1 AND card IS NOT NULL
+                           AND (card->>'ask_id') = $2
+                         ORDER BY created_at DESC LIMIT 1`,
+                        [deviceId, String(ask_id)]
+                    );
+                    matchedRow = result.rows[0] || null;
+                } catch (err) {
+                    serverLog('warn', 'channel', `card-action lookup failed: ${err.message}`, { deviceId, entityId: eId });
+                }
+            }
+
+            if (!matchedRow) {
+                return res.status(404).json({ success: false, message: 'Card not found for this ask_id' });
+            }
+
+            // Validate that action_id is one of the buttons on the card
+            const buttons = (matchedRow.card && matchedRow.card.buttons) || [];
+            const button = buttons.find(b => b && b.id === action_id);
+            if (!button) {
+                return res.status(400).json({ success: false, message: 'Invalid action_id for this card' });
+            }
+
+            // Idempotent: if already resolved, return the existing resolution instead of resending webhook
+            if (matchedRow.card_resolved_action) {
+                return res.json({
+                    success: true,
+                    already_resolved: true,
+                    ask_id,
+                    action_id: matchedRow.card_resolved_action
+                });
+            }
+
+            // Mark message as resolved
+            if (chatPool) {
+                try {
+                    await chatPool.query(
+                        `UPDATE chat_messages
+                           SET card_resolved_action = $1,
+                               card_resolved_at = NOW()
+                         WHERE id = $2`,
+                        [String(action_id), matchedRow.id]
+                    );
+                } catch (err) {
+                    serverLog('warn', 'channel', `card-action persist failed: ${err.message}`, { deviceId, entityId: eId });
+                }
+            }
+
+            // Broadcast the resolution over Socket.IO so other open chat tabs
+            // disable their buttons immediately.
+            if (io) {
+                io.to(`device:${deviceId}`).emit('chat:card_resolved', {
+                    message_id: matchedRow.id,
+                    ask_id,
+                    action_id,
+                    label: button.label
+                });
+            }
+
+            // Push a card_action webhook back to the channel bot (fire-and-forget)
+            pushToChannelCallback(deviceId, eId, {
+                event: 'card_action',
+                from: 'user',
+                ask_id,
+                action_id,
+                text: `[card_action] ${button.label}`
+            }, entity.channelAccountId).catch(err => {
+                serverLog('warn', 'channel', `card-action webhook push failed: ${err.message}`, { deviceId, entityId: eId });
+            });
+
+            serverLog('info', 'channel', `Card action: ask_id=${ask_id} action_id=${action_id} entity=${eId}`, {
+                deviceId, entityId: eId,
+                metadata: { ask_id, action_id }
+            });
+
+            return res.json({
+                success: true,
+                ask_id,
+                action_id,
+                label: button.label,
+                message_id: matchedRow.id
+            });
+        } catch (err) {
+            console.error('[Channel] card-action error:', err.message);
+            return res.status(500).json({ success: false, message: 'Internal error' });
+        }
+    });
+
     // ── Helper: Push structured message to channel callback ──
     // channelAccountId: the specific account bound to this entity (preferred)
     // Falls back to device-level lookup for legacy entities without channelAccountId
@@ -915,6 +1069,9 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 conversationId: `${deviceId}:${entityId}`,
                 from: payload.from || 'client',
                 text: materializedText,
+                card: payload.card || null,
+                ask_id: payload.ask_id || (payload.card && payload.card.ask_id) || null,
+                action_id: payload.action_id || null,
                 mediaType: payload.mediaType || null,
                 mediaUrl: payload.mediaUrl || null,
                 backupUrl: payload.backupUrl || null,

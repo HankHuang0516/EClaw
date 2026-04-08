@@ -501,6 +501,62 @@
             font-weight: 600;
         }
 
+        /* ── Rich Card (Interactive Buttons) ── */
+        .chat-card {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .chat-card.resolved {
+            opacity: 0.75;
+        }
+        .chat-card-btn {
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 7px 14px;
+            min-height: 32px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: var(--input-bg);
+            color: var(--text-primary);
+        }
+        .chat-card-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        }
+        .chat-card-btn:disabled {
+            cursor: default;
+            opacity: 0.6;
+        }
+        .chat-card-btn.style-primary {
+            background: #1976d2;
+            border-color: #1976d2;
+            color: #fff;
+        }
+        .chat-card-btn.style-secondary {
+            background: var(--input-bg);
+            border-color: var(--card-border);
+            color: var(--text-primary);
+        }
+        .chat-card-btn.style-danger {
+            background: #e53935;
+            border-color: #e53935;
+            color: #fff;
+        }
+        .chat-card-btn.selected {
+            outline: 2px solid var(--text-primary);
+            outline-offset: 1px;
+        }
+        .chat-card-resolved-label {
+            margin-top: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
         /* ── Entity Label Coloring ── */
         .entity-label { font-weight: 600; }
         .entity-label[data-entity="0"],
@@ -3027,6 +3083,37 @@
                     }
                 }
 
+                // Rich card (interactive buttons) — rendered inside bot messages only
+                let cardHtml = '';
+                if (!isSent && msg.is_from_bot && msg.card && Array.isArray(msg.card.buttons) && msg.card.buttons.length > 0) {
+                    const askId = escapeHtml(msg.card.ask_id || '');
+                    const msgId = escapeHtml(String(msg.id || ''));
+                    const resolvedAction = msg.card_resolved_action || null;
+                    const resolvedClass = resolvedAction ? ' resolved' : '';
+                    const btnsHtml = msg.card.buttons.map(btn => {
+                        const style = (btn.style === 'primary' || btn.style === 'danger') ? btn.style : 'secondary';
+                        const selectedCls = resolvedAction === btn.id ? ' selected' : '';
+                        const disabledAttr = resolvedAction ? ' disabled' : '';
+                        return `<button type="button"
+                            class="chat-card-btn style-${style}${selectedCls}"
+                            data-msg-id="${msgId}"
+                            data-ask-id="${askId}"
+                            data-action-id="${escapeHtml(btn.id)}"
+                            data-label="${escapeHtml(btn.label)}"
+                            onclick="handleCardAction(this)"${disabledAttr}>${escapeHtml(btn.label)}</button>`;
+                    }).join('');
+                    let resolvedLabelHtml = '';
+                    if (resolvedAction) {
+                        const chosen = msg.card.buttons.find(b => b.id === resolvedAction);
+                        if (chosen) {
+                            const tpl = i18n.t('chat_card_selected') || 'Selected: {label}';
+                            const txt = tpl.replace('{label}', chosen.label);
+                            resolvedLabelHtml = `<div class="chat-card-resolved-label">${escapeHtml(txt)}</div>`;
+                        }
+                    }
+                    cardHtml = `<div class="chat-card${resolvedClass}" data-ask-id="${askId}">${btnsHtml}</div>${resolvedLabelHtml}`;
+                }
+
                 // Reaction buttons (only for received/bot messages)
                 let reactionsHtml = '';
                 if (!isSent && msg.is_from_bot) {
@@ -3057,7 +3144,7 @@
                 return `${dateSep}${unreadSep}
                     <div class="chat-msg ${msgClass}${isGrouped ? ' grouped' : ''}" style="position:relative">
                         <div class="chat-source">${sourceLabel}</div>
-                        <div class="chat-bubble${isMdRendered ? ' md-rendered' : ''}" data-full-time="${escapeHtml(fullTime)}">${textHtml}${mediaHtml}${inlineImgHtml}</div>
+                        <div class="chat-bubble${isMdRendered ? ' md-rendered' : ''}" data-full-time="${escapeHtml(fullTime)}">${textHtml}${mediaHtml}${inlineImgHtml}${cardHtml}</div>
                         ${replyBtnHtml}
                         ${previewId ? `<div class="link-preview-slot" id="${previewId}" data-url="${escapeHtml(firstUrl)}"></div>` : ''}
                         ${reactionsHtml}
@@ -3247,8 +3334,74 @@
             }
         }
 
+        // ── Rich Card Button Handler ──
+        async function handleCardAction(btnEl) {
+            if (!btnEl || btnEl.disabled) return;
+            const msgId = btnEl.dataset.msgId;
+            const askId = btnEl.dataset.askId;
+            const actionId = btnEl.dataset.actionId;
+            const label = btnEl.dataset.label || actionId;
+            if (!askId || !actionId) return;
+
+            // Optimistically disable all siblings in the same card
+            const card = btnEl.closest('.chat-card');
+            if (card) {
+                card.querySelectorAll('.chat-card-btn').forEach(b => {
+                    b.disabled = true;
+                    if (b === btnEl) b.classList.add('selected');
+                });
+                card.classList.add('resolved');
+                // Insert temporary selected label if missing
+                if (!card.parentElement.querySelector('.chat-card-resolved-label')) {
+                    const tpl = i18n.t('chat_card_selected') || 'Selected: {label}';
+                    const txt = tpl.replace('{label}', label);
+                    const lbl = document.createElement('div');
+                    lbl.className = 'chat-card-resolved-label';
+                    lbl.textContent = txt;
+                    card.insertAdjacentElement('afterend', lbl);
+                }
+            }
+
+            try {
+                const data = await apiCall('POST', '/api/channel/card-action', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    entityId: (function() {
+                        const m = allMessages.find(x => String(x.id) === String(msgId));
+                        return m ? m.entity_id : undefined;
+                    })(),
+                    ask_id: askId,
+                    action_id: actionId
+                });
+                if (!data || !data.success) {
+                    console.warn('[Card] action failed:', data && data.message);
+                    // Re-enable on failure
+                    if (card) {
+                        card.classList.remove('resolved');
+                        card.querySelectorAll('.chat-card-btn').forEach(b => { b.disabled = false; b.classList.remove('selected'); });
+                        const lbl = card.parentElement.querySelector('.chat-card-resolved-label');
+                        if (lbl) lbl.remove();
+                    }
+                    return;
+                }
+                // Update local state
+                const m = allMessages.find(x => String(x.id) === String(msgId));
+                if (m) m.card_resolved_action = actionId;
+            } catch (err) {
+                console.error('[Card] action error:', err);
+            }
+        }
+
         // Listen for real-time reaction updates
         if (typeof socket !== 'undefined' && socket) {
+            socket.on('chat:card_resolved', (data) => {
+                if (!data) return;
+                const msg = allMessages.find(m => String(m.id) === String(data.message_id));
+                if (msg) {
+                    msg.card_resolved_action = data.action_id;
+                    renderMessages(false);
+                }
+            });
             socket.on('chat:reaction', (data) => {
                 const msg = allMessages.find(m => m.id === data.messageId);
                 if (msg) {
