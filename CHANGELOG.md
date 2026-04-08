@@ -1,3 +1,10 @@
+# [1.919.0](https://github.com/HankHuang0516/EClaw/compare/v1.918.0...v1.919.0) (2026-04-08)
+
+
+### Features
+
+* **i18n:** add Malay, Hindi, Arabic guide_intent and guide_mention translations ([7009d09](https://github.com/HankHuang0516/EClaw/commit/7009d09ee69723b35eb659115c1340d7f1e986b8)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.918.0](https://github.com/HankHuang0516/EClaw/compare/v1.917.1...v1.918.0) (2026-04-08)
 
 
