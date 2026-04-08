@@ -1,3 +1,10 @@
+# [1.917.0](https://github.com/HankHuang0516/EClaw/compare/v1.916.0...v1.917.0) (2026-04-08)
+
+
+### Features
+
+* **i18n:** add Indonesian guide translations (ec, kb, kanban, gk, mp, wp, gps, bp, plaza, lw) ([ab3b71b](https://github.com/HankHuang0516/EClaw/commit/ab3b71bc28c963f62ae5f622164e33fa6e9494c3)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.916.0](https://github.com/HankHuang0516/EClaw/compare/v1.915.0...v1.916.0) (2026-04-08)
 
 
