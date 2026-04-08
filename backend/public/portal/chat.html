@@ -2100,8 +2100,9 @@
                 }
             } catch(e) {}
 
-            // Receive smart quote forwarded by workspace.html (split-view cross-iframe)
+            // Cross-iframe quote from workspace.html relay — only accepted from same origin
             window.addEventListener('message', (e) => {
+                if (e.origin !== window.location.origin) return;
                 if (!e.data || e.data.type !== 'eclaw_quote') return;
                 const { source, title, excerpt } = e.data;
                 quoteToChat(source, title, excerpt || '');

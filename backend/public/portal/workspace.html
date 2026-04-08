@@ -210,6 +210,7 @@
     }
 
     function renderContainer() {
+        bustChatPaneCache();
         const container = document.getElementById('workspaceContainer');
         container.innerHTML = '';
 
@@ -381,15 +382,25 @@
     });
 
     // ── Cross-pane quote routing ──
-    // When a pane calls quoteToChat() inside an iframe, it postMessages up here.
-    // We forward to the chat pane; if no chat pane exists, fall back to localStorage.
+    // Cache avoids repeated querySelector on every message; reset on re-render.
+    let _cachedChatPane = null;
+    function _getChatPane() {
+        if (_cachedChatPane && document.contains(_cachedChatPane)) return _cachedChatPane;
+        _cachedChatPane = Array.from(document.querySelectorAll('iframe.workspace-pane'))
+            .find(f => f.src && f.src.includes('chat.html')) || null;
+        return _cachedChatPane;
+    }
+    // Expose so renderContainer() can bust the cache on pane re-render.
+    function bustChatPaneCache() { _cachedChatPane = null; }
+
     window.addEventListener('message', (e) => {
+        if (e.origin !== window.location.origin) return;
         if (!e.data || e.data.type !== 'eclaw_quote') return;
-        const chatPane = Array.from(document.querySelectorAll('iframe.workspace-pane'))
-            .find(f => f.src && f.src.includes('chat.html'));
+        const chatPane = _getChatPane();
         if (chatPane) {
-            chatPane.contentWindow.postMessage(e.data, '*');
+            chatPane.contentWindow.postMessage(e.data, window.location.origin);
         } else {
+            // Fallback: chat pane not open — persist so it picks up on next open
             localStorage.setItem('eclaw_pending_quote', JSON.stringify({ ...e.data, ts: Date.now() }));
         }
     });
