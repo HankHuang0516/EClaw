@@ -1,3 +1,10 @@
+# [1.911.0](https://github.com/HankHuang0516/EClaw/compare/v1.910.0...v1.911.0) (2026-04-08)
+
+
+### Features
+
+* **portal:** smart quote-to-chat — reuse reply bar, no full-content paste ([aeab157](https://github.com/HankHuang0516/EClaw/commit/aeab1570c2916b480768076dfd9705d964d6ee6e))
+
 # [1.910.0](https://github.com/HankHuang0516/EClaw/compare/v1.909.1...v1.910.0) (2026-04-08)
 
 
