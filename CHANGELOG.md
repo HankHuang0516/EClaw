@@ -1,3 +1,10 @@
+# [1.925.0](https://github.com/HankHuang0516/EClaw/compare/v1.924.0...v1.925.0) (2026-04-09)
+
+
+### Features
+
+* **env-vars:** smart {{KEY}} reference syntax in skills/souls/rules ([205062a](https://github.com/HankHuang0516/EClaw/commit/205062a00cdbf711b94e751c69e477adb8ec5cf6))
+
 # [1.924.0](https://github.com/HankHuang0516/EClaw/compare/v1.923.0...v1.924.0) (2026-04-09)
 
 
