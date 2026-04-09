@@ -1,3 +1,10 @@
+## [1.928.3](https://github.com/HankHuang0516/EClaw/compare/v1.928.2...v1.928.3) (2026-04-09)
+
+
+### Bug Fixes
+
+* resolve Android WebView microphone permission denied error ([cf544aa](https://github.com/HankHuang0516/EClaw/commit/cf544aa9523a5f9127012df193f8196d043c6e8b))
+
 ## [1.928.2](https://github.com/HankHuang0516/EClaw/compare/v1.928.1...v1.928.2) (2026-04-09)
 
 
