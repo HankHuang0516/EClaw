@@ -273,6 +273,16 @@
             <a class="sub-tab active" href="env-vars.html">🔐 <span data-i18n="nav_env_vars">Env Variables</span></a>
             <a class="sub-tab" href="screen-control.html">📱 <span data-i18n="nav_remote_control">Remote Control</span></a>
         </div>
+        <script>
+        // Preserve ?embed=1 on sub-tab links for workspace split-view
+        (function() {
+            if (new URLSearchParams(window.location.search).get('embed') !== '1') return;
+            document.querySelectorAll('.sub-tab').forEach(a => {
+                const href = a.getAttribute('href');
+                if (href && !href.includes('embed=')) a.setAttribute('href', href + '?embed=1');
+            });
+        })();
+        </script>
 
         <!-- Loading State -->
         <div class="loading-center" id="loadingState" style="text-align:center;padding:40px 0;">
