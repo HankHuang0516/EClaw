@@ -1,3 +1,10 @@
+# [1.927.0](https://github.com/HankHuang0516/EClaw/compare/v1.926.6...v1.927.0) (2026-04-09)
+
+
+### Features
+
+* **chat:** add R2 file manager panel to + attach menu (list/upload/insert/delete) ([f5ad741](https://github.com/HankHuang0516/EClaw/commit/f5ad741dcf57512756fa79a2a4166c2826a66a67))
+
 ## [1.926.6](https://github.com/HankHuang0516/EClaw/compare/v1.926.5...v1.926.6) (2026-04-09)
 
 
