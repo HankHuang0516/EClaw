@@ -1,3 +1,10 @@
+# [1.928.0](https://github.com/HankHuang0516/EClaw/compare/v1.927.3...v1.928.0) (2026-04-09)
+
+
+### Features
+
+* **files:** split preview vs force-download for attachment cards ([fc919f5](https://github.com/HankHuang0516/EClaw/commit/fc919f501be3e1e104655f26b42efac6af19bc05))
+
 ## [1.927.3](https://github.com/HankHuang0516/EClaw/compare/v1.927.2...v1.927.3) (2026-04-09)
 
 
