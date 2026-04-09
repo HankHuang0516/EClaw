@@ -469,18 +469,26 @@ module.exports = function (devices, authMiddleware, _unused, serverLog) {
 
         // Check usage count for free-tier users
         // First check current count WITHOUT incrementing to avoid inflating the counter on denied requests
-        const checkResult = await pool.query(
-            'SELECT message_count FROM usage_tracking WHERE device_id = $1 AND date = CURRENT_DATE',
-            [deviceId]
-        );
+        const [checkResult, bonusResult] = await Promise.all([
+            pool.query(
+                'SELECT message_count FROM usage_tracking WHERE device_id = $1 AND date = CURRENT_DATE',
+                [deviceId]
+            ),
+            pool.query(
+                'SELECT bonus_messages FROM invite_rewards WHERE device_id = $1',
+                [deviceId]
+            )
+        ]);
 
         const currentCount = checkResult.rows.length > 0 ? checkResult.rows[0].message_count : 0;
-        const limit = 15;
+        const bonusMessages = bonusResult.rows.length > 0 ? bonusResult.rows[0].bonus_messages : 0;
+        const baseLimit = 15;
+        const limit = baseLimit + bonusMessages;
 
         if (currentCount >= limit) {
-            if (process.env.DEBUG === 'true') console.log(`[Usage] LIMIT HIT for ${deviceId}: ${currentCount}/${limit}`);
+            if (process.env.DEBUG === 'true') console.log(`[Usage] LIMIT HIT for ${deviceId}: ${currentCount}/${limit} (base=15, bonus=${bonusMessages})`);
             if (serverLog) serverLog('warn', 'payment', `[Usage] LIMIT HIT for ${deviceId}: ${currentCount}/${limit}`, { deviceId });
-            return { allowed: false, remaining: 0, limit: limit, used: currentCount };
+            return { allowed: false, remaining: 0, limit: limit, used: currentCount, bonus: bonusMessages };
         }
 
         // Only increment if within limit
@@ -495,7 +503,7 @@ module.exports = function (devices, authMiddleware, _unused, serverLog) {
 
         const count = usageResult.rows[0].message_count;
 
-        return { allowed: true, remaining: limit - count, limit: limit, used: count };
+        return { allowed: true, remaining: limit - count, limit: limit, used: count, bonus: bonusMessages };
     }
 
     // Load premium status for all known users on startup

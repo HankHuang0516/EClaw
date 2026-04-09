@@ -160,3 +160,27 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO user_roles (user_id, role_id, device_id)
 SELECT id, 'admin', NULL FROM user_accounts WHERE is_admin = TRUE
 ON CONFLICT DO NOTHING;
+
+-- ============================================
+-- Migration: Invite Code System
+-- ============================================
+
+-- invite_codes: one unique code per device, redeemable once
+CREATE TABLE IF NOT EXISTS invite_codes (
+    code VARCHAR(12) PRIMARY KEY,
+    owner_device_id VARCHAR(64) NOT NULL,
+    used_by_device_id VARCHAR(64),
+    used_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_invite_codes_owner ON invite_codes(owner_device_id);
+
+-- invite_rewards: persistent bonus quota that survives daily reset
+-- Does NOT go in usage_tracking (which resets daily via CURRENT_DATE)
+CREATE TABLE IF NOT EXISTS invite_rewards (
+    device_id VARCHAR(64) PRIMARY KEY,
+    bonus_messages INTEGER NOT NULL DEFAULT 0,
+    total_invited INTEGER NOT NULL DEFAULT 0,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);

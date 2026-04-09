@@ -3478,6 +3478,148 @@ app.get('/api/release-notes', (req, res) => {
 // Debug: show file paths on Railway (temporary — remove after debugging)
 // Debug endpoints removed — exposed unauthenticated DB/filesystem internals (security audit 2026-03-28)
 
+// ─────────────────────────────────────────────────────────────
+// Invite Code System
+// ─────────────────────────────────────────────────────────────
+
+// Helper: generate a random 8-char alphanumeric code
+function generateInviteCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I/O/1/0 to avoid confusion
+    let code = '';
+    for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+}
+
+// GET /api/invite/my-code — get (or auto-generate) the caller's invite code
+// Auth: deviceId + deviceSecret
+app.get('/api/invite/my-code', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query;
+    if (!deviceId || !deviceSecret) return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    if (!devices[deviceId] || !safeEqual(devices[deviceId].deviceSecret, deviceSecret)) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+
+    const pg = authModule.pool;
+    try {
+        // Return existing code if any
+        const existing = await pg.query('SELECT code FROM invite_codes WHERE owner_device_id = $1', [deviceId]);
+        if (existing.rows.length > 0) {
+            const stats = await pg.query('SELECT bonus_messages, total_invited FROM invite_rewards WHERE device_id = $1', [deviceId]);
+            return res.json({
+                success: true,
+                code: existing.rows[0].code,
+                bonus_messages: stats.rows[0]?.bonus_messages ?? 0,
+                total_invited: stats.rows[0]?.total_invited ?? 0
+            });
+        }
+
+        // Generate unique code
+        let code, attempts = 0;
+        do {
+            code = generateInviteCode();
+            attempts++;
+            if (attempts > 20) return res.status(500).json({ success: false, error: 'Could not generate unique code' });
+        } while ((await pg.query('SELECT 1 FROM invite_codes WHERE code = $1', [code])).rows.length > 0);
+
+        await pg.query('INSERT INTO invite_codes (code, owner_device_id) VALUES ($1, $2)', [code, deviceId]);
+        return res.json({ success: true, code, bonus_messages: 0, total_invited: 0 });
+    } catch (e) {
+        console.error('[Invite] my-code error:', e);
+        return res.status(500).json({ success: false, error: 'Internal error' });
+    }
+});
+
+// POST /api/invite/redeem — redeem an invite code
+// Body: { deviceId, deviceSecret, code }
+// Reward: invitee +300 bonus, inviter +50 bonus
+app.post('/api/invite/redeem', async (req, res) => {
+    const { deviceId, deviceSecret, code } = req.body;
+    if (!deviceId || !deviceSecret || !code) {
+        return res.status(400).json({ success: false, error: 'deviceId, deviceSecret, and code required' });
+    }
+    if (!devices[deviceId] || !safeEqual(devices[deviceId].deviceSecret, deviceSecret)) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+
+    const pg = authModule.pool;
+    try {
+        // Look up the code
+        const codeRow = await pg.query('SELECT owner_device_id, used_by_device_id FROM invite_codes WHERE code = $1', [code.toUpperCase()]);
+        if (codeRow.rows.length === 0) return res.status(404).json({ success: false, error: 'Invalid invite code' });
+
+        const { owner_device_id, used_by_device_id } = codeRow.rows[0];
+        if (used_by_device_id) return res.status(409).json({ success: false, error: 'Invite code already used' });
+        if (owner_device_id === deviceId) return res.status(400).json({ success: false, error: 'Cannot redeem your own invite code' });
+
+        // Check if this device already redeemed any code
+        const alreadyRedeemed = await pg.query('SELECT 1 FROM invite_codes WHERE used_by_device_id = $1', [deviceId]);
+        if (alreadyRedeemed.rows.length > 0) return res.status(409).json({ success: false, error: 'You have already redeemed an invite code' });
+
+        // Mark code as used
+        await pg.query(
+            'UPDATE invite_codes SET used_by_device_id = $1, used_at = NOW() WHERE code = $2',
+            [deviceId, code.toUpperCase()]
+        );
+
+        // Grant invitee +300 bonus
+        await pg.query(
+            `INSERT INTO invite_rewards (device_id, bonus_messages, total_invited)
+             VALUES ($1, 300, 0)
+             ON CONFLICT (device_id)
+             DO UPDATE SET bonus_messages = invite_rewards.bonus_messages + 300, updated_at = NOW()`,
+            [deviceId]
+        );
+
+        // Grant inviter +50 bonus + increment total_invited
+        await pg.query(
+            `INSERT INTO invite_rewards (device_id, bonus_messages, total_invited)
+             VALUES ($1, 50, 1)
+             ON CONFLICT (device_id)
+             DO UPDATE SET bonus_messages = invite_rewards.bonus_messages + 50,
+                           total_invited = invite_rewards.total_invited + 1,
+                           updated_at = NOW()`,
+            [owner_device_id]
+        );
+
+        return res.json({ success: true, bonus_granted: 300, message: 'Invite code redeemed! +300 bonus messages added.' });
+    } catch (e) {
+        console.error('[Invite] redeem error:', e);
+        return res.status(500).json({ success: false, error: 'Internal error' });
+    }
+});
+
+// GET /api/invite/stats — get invite stats and remaining bonus
+// Auth: deviceId + deviceSecret
+app.get('/api/invite/stats', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query;
+    if (!deviceId || !deviceSecret) return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    if (!devices[deviceId] || !safeEqual(devices[deviceId].deviceSecret, deviceSecret)) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+
+    const pg = authModule.pool;
+    try {
+        const [codeRow, rewardRow, usageRow] = await Promise.all([
+            pg.query('SELECT code FROM invite_codes WHERE owner_device_id = $1', [deviceId]),
+            pg.query('SELECT bonus_messages, total_invited FROM invite_rewards WHERE device_id = $1', [deviceId]),
+            pg.query('SELECT message_count FROM usage_tracking WHERE device_id = $1 AND date = CURRENT_DATE', [deviceId])
+        ]);
+        const bonus = rewardRow.rows[0]?.bonus_messages ?? 0;
+        const dailyUsed = usageRow.rows[0]?.message_count ?? 0;
+        return res.json({
+            success: true,
+            code: codeRow.rows[0]?.code ?? null,
+            bonus_messages: bonus,
+            total_invited: rewardRow.rows[0]?.total_invited ?? 0,
+            daily_used: dailyUsed,
+            daily_limit: 15 + bonus
+        });
+    } catch (e) {
+        console.error('[Invite] stats error:', e);
+        return res.status(500).json({ success: false, error: 'Internal error' });
+    }
+});
+
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: Date.now(), build: SERVER_BUILD_TAG, uptime: process.uptime(), startedAt: SERVER_STARTED_AT.toISOString() });
 });
