@@ -1,3 +1,10 @@
+## [1.922.4](https://github.com/HankHuang0516/EClaw/compare/v1.922.3...v1.922.4) (2026-04-09)
+
+
+### Bug Fixes
+
+* preserve ?embed=1 on sub-tab links in env-vars and screen-control ([ce6a429](https://github.com/HankHuang0516/EClaw/commit/ce6a42993781e0439be8671f6b3980355ffa21f5))
+
 ## [1.922.3](https://github.com/HankHuang0516/EClaw/compare/v1.922.2...v1.922.3) (2026-04-09)
 
 
