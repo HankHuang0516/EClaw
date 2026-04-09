@@ -133,7 +133,14 @@ function switchInfoTab(target) {
     const tab = document.querySelector(`.info-tab[data-info-tab="${target}"]`);
     const panel = document.getElementById('panel-' + target);
     if (tab) tab.classList.add('active');
-    if (panel) panel.classList.add('active');
+    if (panel) {
+        panel.classList.add('active');
+        // Render Mermaid diagrams deferred until panel is visible (avoids translate(NaN) errors)
+        const unrendered = panel.querySelectorAll('pre.mermaid:not([data-processed])');
+        if (unrendered.length && typeof mermaid !== 'undefined') {
+            mermaid.run({ nodes: unrendered });
+        }
+    }
     history.replaceState(null, '', '#' + target);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
