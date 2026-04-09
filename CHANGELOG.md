@@ -1,3 +1,10 @@
+## [1.922.2](https://github.com/HankHuang0516/EClaw/compare/v1.922.1...v1.922.2) (2026-04-09)
+
+
+### Bug Fixes
+
+* **files:** resolveDevice falls back to req.query when body lacks deviceId ([1a5417e](https://github.com/HankHuang0516/EClaw/commit/1a5417e419f2ac2914e1f566de40417c173f8853))
+
 ## [1.922.1](https://github.com/HankHuang0516/EClaw/compare/v1.922.0...v1.922.1) (2026-04-09)
 
 
