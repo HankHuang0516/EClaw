@@ -4421,7 +4421,7 @@
 
         async function uploadVoice(blob, durationSec) {
             const targets = getSelectedTargets();
-            if (targets.length === 0) {
+            if (targets.local.length === 0 && targets.contacts.length === 0) {
                 showToast(i18n.t('chat_select_entity'), 'error');
                 return;
             }
@@ -4443,19 +4443,35 @@
                 const uploadData = await uploadRes.json();
                 if (!uploadData.success) throw new Error(uploadData.error || 'Upload failed');
 
-                const entityId = targets.length === 1 ? targets[0] : targets;
-                await apiCall('POST', '/api/client/speak', {
-                    deviceId: currentUser.deviceId,
-                    deviceSecret: currentUser.deviceSecret,
-                    entityId: entityId,
-                    text: `[Voice ${durationSec}s]`,
-                    source: 'web_chat',
-                    mediaType: 'voice',
-                    mediaUrl: uploadData.mediaUrl
-                });
+                // ── Local broadcast ──
+                if (targets.local.length > 0) {
+                    const entityId = targets.local.length === 1 ? targets.local[0] : targets.local;
+                    await apiCall('POST', '/api/client/speak', {
+                        deviceId: currentUser.deviceId,
+                        deviceSecret: currentUser.deviceSecret,
+                        entityId: entityId,
+                        text: `[Voice ${durationSec}s]`,
+                        source: 'web_chat',
+                        mediaType: 'voice',
+                        mediaUrl: uploadData.mediaUrl
+                    });
+                }
+
+                // ── Contact broadcast ──
+                for (const contactCode of targets.contacts) {
+                    await apiCall('POST', '/api/client/speak', {
+                        deviceId: currentUser.deviceId,
+                        deviceSecret: currentUser.deviceSecret,
+                        speakTo: contactCode,
+                        text: `[Voice ${durationSec}s]`,
+                        source: 'web_chat',
+                        mediaType: 'voice',
+                        mediaUrl: uploadData.mediaUrl
+                    });
+                }
 
                 if (currentUser.usageToday !== undefined) {
-                    currentUser.usageToday += targets.length;
+                    currentUser.usageToday += targets.local.length + targets.contacts.length;
                     updateUsageBadge();
                 }
 
