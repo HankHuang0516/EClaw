@@ -1,3 +1,10 @@
+## [1.927.3](https://github.com/HankHuang0516/EClaw/compare/v1.927.2...v1.927.3) (2026-04-09)
+
+
+### Bug Fixes
+
+* **chat:** fix downloadAttachment popup blocker on desktop web ([770d45f](https://github.com/HankHuang0516/EClaw/commit/770d45f5614d181aaf2442f8fe67efd2338cf51f))
+
 ## [1.927.2](https://github.com/HankHuang0516/EClaw/compare/v1.927.1...v1.927.2) (2026-04-09)
 
 
