@@ -149,34 +149,76 @@ module.exports = function filesModule(devices) {
         const r2Key = `files/${deviceId}/${fileId}/${safeName}`;
         const expiresAt = new Date(Date.now() + FILE_TTL_DAYS * 24 * 60 * 60 * 1000);
 
-        // Upload to R2
-        await r2.send(new PutObjectCommand({
-            Bucket: BUCKET,
-            Key: r2Key,
-            Body: buffer,
-            ContentType: mimetype,
-            ContentLength: size,
-            Metadata: {
-                deviceId,
-                entityId: entityId != null ? String(entityId) : '',
-                originalName: originalname,
-            },
-        }));
+        try {
+            // Upload to R2
+            await r2.send(new PutObjectCommand({
+                Bucket: BUCKET,
+                Key: r2Key,
+                Body: buffer,
+                ContentType: mimetype,
+                ContentLength: size,
+                Metadata: {
+                    deviceId,
+                    entityId: entityId != null ? String(entityId) : '',
+                    originalName: originalname,
+                },
+            }));
 
-        // Save metadata to DB
-        await pool.query(
-            `INSERT INTO bot_files (file_id, device_id, entity_id, filename, size, mime_type, r2_key, expires_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-            [fileId, deviceId, entityId, originalname, size, mimetype, r2Key, expiresAt]
+            // Save metadata to DB
+            await pool.query(
+                `INSERT INTO bot_files (file_id, device_id, entity_id, filename, size, mime_type, r2_key, expires_at)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+                [fileId, deviceId, entityId, originalname, size, mimetype, r2Key, expiresAt]
+            );
+
+            return res.json({
+                success: true,
+                fileId,
+                filename: originalname,
+                size,
+                mimeType: mimetype,
+                expiresAt: expiresAt.toISOString(),
+            });
+        } catch (err) {
+            console.error('[Files] Upload error:', err.message);
+            return res.status(500).json({ success: false, error: 'Upload failed: ' + err.message });
+        }
+    });
+
+    // ─── GET /api/files/list ─────────────────────────────────────────────────
+    // NOTE: must be registered BEFORE /:fileId to avoid shadowing
+    router.get('/list', async (req, res) => {
+        const creds = resolveDevice(req);
+        if (!await authenticateDevice(pool, creds, devices)) {
+            return res.status(401).json({ success: false, error: 'Invalid credentials' });
+        }
+
+        const result = await pool.query(
+            `SELECT file_id, filename, size, mime_type, created_at, expires_at, entity_id
+             FROM bot_files WHERE device_id = $1 AND expires_at > NOW()
+             ORDER BY created_at DESC`,
+            [creds.deviceId]
         );
+
+        const totalBytes = result.rows.reduce((sum, f) => sum + parseInt(f.size), 0);
 
         return res.json({
             success: true,
-            fileId,
-            filename: originalname,
-            size,
-            mimeType: mimetype,
-            expiresAt: expiresAt.toISOString(),
+            files: result.rows.map(f => ({
+                fileId: f.file_id,
+                filename: f.filename,
+                size: f.size,
+                mimeType: f.mime_type,
+                createdAt: f.created_at,
+                expiresAt: f.expires_at,
+                entityId: f.entity_id,
+            })),
+            usage: {
+                totalBytes,
+                totalMB: Math.round(totalBytes / 1024 / 1024 * 10) / 10,
+                quotaMB: Math.round(QUOTA_SOFT_BYTES / 1024 / 1024),
+                count: result.rows.length,
+            },
         });
     });
 
@@ -236,42 +278,6 @@ module.exports = function filesModule(devices) {
         await pool.query('DELETE FROM bot_files WHERE file_id = $1', [fileId]);
 
         return res.json({ success: true, fileId, deleted: true });
-    });
-
-    // ─── GET /api/files/list ─────────────────────────────────────────────────
-    router.get('/list', async (req, res) => {
-        const creds = resolveDevice(req);
-        if (!await authenticateDevice(pool, creds, devices)) {
-            return res.status(401).json({ success: false, error: 'Invalid credentials' });
-        }
-
-        const result = await pool.query(
-            `SELECT file_id, filename, size, mime_type, created_at, expires_at, entity_id
-             FROM bot_files WHERE device_id = $1 AND expires_at > NOW()
-             ORDER BY created_at DESC`,
-            [creds.deviceId]
-        );
-
-        const totalBytes = result.rows.reduce((sum, f) => sum + parseInt(f.size), 0);
-
-        return res.json({
-            success: true,
-            files: result.rows.map(f => ({
-                fileId: f.file_id,
-                filename: f.filename,
-                size: f.size,
-                mimeType: f.mime_type,
-                createdAt: f.created_at,
-                expiresAt: f.expires_at,
-                entityId: f.entity_id,
-            })),
-            usage: {
-                totalBytes,
-                totalMB: Math.round(totalBytes / 1024 / 1024 * 10) / 10,
-                quotaMB: Math.round(QUOTA_SOFT_BYTES / 1024 / 1024),
-                count: result.rows.length,
-            },
-        });
     });
 
     return { router };
