@@ -1,3 +1,10 @@
+# [1.929.0](https://github.com/HankHuang0516/EClaw/compare/v1.928.6...v1.929.0) (2026-04-09)
+
+
+### Features
+
+* collapse input bar icons into + menu; fix overlay centering ([45750fe](https://github.com/HankHuang0516/EClaw/commit/45750feaac2ff23d1442ac3f9c4f95755c06ed72))
+
 ## [1.928.6](https://github.com/HankHuang0516/EClaw/compare/v1.928.5...v1.928.6) (2026-04-09)
 
 
