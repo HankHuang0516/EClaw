@@ -401,7 +401,7 @@
                     <div class="var-row-key">${esc(k)}</div>
                     <div class="var-row-val" id="varVal_${esc(k)}">••••••••</div>
                     <div class="var-row-actions">
-                        <button class="var-action-btn" onclick="copyVarRef('${esc(k)}')" title="Copy {{${esc(k)}}} reference">📎</button>
+                        <button class="var-action-btn" onclick="copyVarRef(this,'${esc(k)}')" title="Copy {{${esc(k)}}} reference">📎</button>
                         <button class="var-action-btn" onclick="toggleVarVal('${esc(k)}')" title="${i18n.t('common_toggle_visibility')}">👁</button>
                         <button class="var-action-btn" onclick="showVarDialog('${esc(k)}')" title="${i18n.t('common_edit')}">✏️</button>
                         <button class="var-action-btn delete" onclick="deleteVar('${esc(k)}')" title="${i18n.t('common_delete')}">×</button>
@@ -409,7 +409,7 @@
                 </div>`).join('');
         }
 
-        async function copyVarRef(key) {
+        async function copyVarRef(btn, key) {
             const ref = '{{' + key + '}}';
             try {
                 await navigator.clipboard.writeText(ref);
@@ -422,8 +422,6 @@
                 document.execCommand('copy');
                 document.body.removeChild(ta);
             }
-            // Brief visual feedback on the button
-            const btn = event.currentTarget;
             const orig = btn.textContent;
             btn.textContent = '✓';
             btn.style.color = 'var(--success, #4caf50)';

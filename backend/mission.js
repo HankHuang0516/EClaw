@@ -50,17 +50,18 @@ function decryptVarsLocal(encrypted, ivHex, authTagHex) {
     return JSON.parse(decrypted);
 }
 
-async function loadDeviceVarsForSubstitution(deviceId) {
-    try {
-        const r = await pool.query(
-            'SELECT encrypted_vars, iv, auth_tag, is_locked FROM device_vars WHERE device_id = $1',
-            [deviceId]
-        );
-        if (!r.rows.length || r.rows[0].is_locked) return null;
-        return decryptVarsLocal(r.rows[0].encrypted_vars, r.rows[0].iv, r.rows[0].auth_tag);
-    } catch {
-        return null;
-    }
+const VAR_REF_RE = /\{\{[A-Z0-9_]+\}\}/;
+
+function decryptVarsLocal(encrypted, ivHex, authTagHex) {
+    if (!SEAL_KEY_HEX) return null;
+    const key = Buffer.from(SEAL_KEY_HEX, 'hex');
+    const iv = Buffer.from(ivHex, 'hex');
+    const authTag = Buffer.from(authTagHex, 'hex');
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+    decipher.setAuthTag(authTag);
+    let decrypted = decipher.update(encrypted, 'base64', 'utf8');
+    decrypted += decipher.final('utf8');
+    return JSON.parse(decrypted);
 }
 
 function substituteEnvVars(text, vars) {
@@ -70,8 +71,17 @@ function substituteEnvVars(text, vars) {
     );
 }
 
-function applyVarSubstitution(dashboard, vars) {
+function applyVarSubstitution(dashboard, dvRow) {
+    // Skip decryption if no {{KEY}} references exist anywhere
+    const hasRefs =
+        (dashboard.skills || []).some(s => s.steps && VAR_REF_RE.test(s.steps)) ||
+        (dashboard.rules || []).some(r => r.description && VAR_REF_RE.test(r.description)) ||
+        (dashboard.souls || []).some(s => s.content && VAR_REF_RE.test(s.content));
+    if (!hasRefs || !dvRow || dvRow.dv_is_locked) return;
+
+    const vars = decryptVarsLocal(dvRow.dv_encrypted_vars, dvRow.dv_iv, dvRow.dv_auth_tag);
     if (!vars) return;
+
     for (const skill of (dashboard.skills || [])) {
         if (skill.steps) skill.steps = substituteEnvVars(skill.steps, vars);
     }
@@ -302,7 +312,14 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
 
         try {
             const result = await pool.query(
-                'SELECT * FROM mission_dashboard WHERE device_id = $1',
+                `SELECT md.*,
+                        dv.encrypted_vars AS dv_encrypted_vars,
+                        dv.iv             AS dv_iv,
+                        dv.auth_tag       AS dv_auth_tag,
+                        dv.is_locked      AS dv_is_locked
+                 FROM mission_dashboard md
+                 LEFT JOIN device_vars dv ON dv.device_id = md.device_id
+                 WHERE md.device_id = $1`,
                 [deviceId]
             );
 
@@ -365,9 +382,7 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
                 lastUpdated: new Date(row.updated_at).getTime()
             };
 
-            // Substitute {{KEY}} references in skills/rules/souls with actual device var values
-            const vars = await loadDeviceVarsForSubstitution(row.device_id);
-            applyVarSubstitution(dashboard, vars);
+            applyVarSubstitution(dashboard, row);
 
             res.json({ success: true, dashboard });
         } catch (error) {
