@@ -1,3 +1,10 @@
+## [1.928.5](https://github.com/HankHuang0516/EClaw/compare/v1.928.4...v1.928.5) (2026-04-09)
+
+
+### Bug Fixes
+
+* acquire AudioFocus before WebView mic grant to prevent NotReadableError ([19599ce](https://github.com/HankHuang0516/EClaw/commit/19599cefc4a45c45262a2a45f225df10dd82c0fe))
+
 ## [1.928.4](https://github.com/HankHuang0516/EClaw/compare/v1.928.3...v1.928.4) (2026-04-09)
 
 
