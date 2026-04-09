@@ -1,3 +1,10 @@
+# [1.924.0](https://github.com/HankHuang0516/EClaw/compare/v1.923.0...v1.924.0) (2026-04-09)
+
+
+### Features
+
+* **settings:** add invite code UI — display code, copy button, redeem form, bonus stats ([813b1f9](https://github.com/HankHuang0516/EClaw/commit/813b1f94b958f589a58c815cc35d324683d7f49c))
+
 # [1.923.0](https://github.com/HankHuang0516/EClaw/compare/v1.922.7...v1.923.0) (2026-04-09)
 
 
