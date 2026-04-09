@@ -1,3 +1,10 @@
+## [1.926.4](https://github.com/HankHuang0516/EClaw/compare/v1.926.3...v1.926.4) (2026-04-09)
+
+
+### Bug Fixes
+
+* **files:** wrap auth in try/catch, use parallel DB queries for restart fallback ([59443e0](https://github.com/HankHuang0516/EClaw/commit/59443e00768d44a6121facf8b3aec73e94f39438))
+
 ## [1.926.3](https://github.com/HankHuang0516/EClaw/compare/v1.926.2...v1.926.3) (2026-04-09)
 
 
