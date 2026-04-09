@@ -80,17 +80,16 @@ async function getJSON(url) {
 }
 
 async function uploadFile(filename, content, mimeType, extraFields = {}) {
-    const FormData = (await import('node:form-data')).default || require('form-data');
+    // Use built-in FormData (Node 18+) — no external dependencies
     const form = new FormData();
     form.append('deviceId', DEVICE_ID);
     form.append('deviceSecret', DEVICE_SECRET);
-    form.append('file', Buffer.from(content), { filename, contentType: mimeType });
+    form.append('file', new Blob([content], { type: mimeType }), filename);
     for (const [k, v] of Object.entries(extraFields)) form.append(k, String(v));
 
     const res = await fetch(`${API_BASE}/api/files/upload`, {
         method: 'POST',
         body: form,
-        headers: form.getHeaders ? form.getHeaders() : {},
     });
     const text = await res.text();
     let data;
