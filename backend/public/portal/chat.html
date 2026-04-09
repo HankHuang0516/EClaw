@@ -4061,7 +4061,7 @@
         let pendingFiles = []; // { id, file, type ('photo'|'file'), status ('uploading'|'ready'|'error'), mediaUrl, localUrl, fileName }
 
         // ── R2 File Manager ──
-        function _r2Esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+        function _r2Esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#x27;'); }
         function _r2Auth() { return new URLSearchParams({ deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret }); }
         function _r2FileIcon(mime) {
             if (!mime) return '📎';
@@ -4104,7 +4104,7 @@
                         <span class="r2-file-name" title="${_r2Esc(f.filename)}">${_r2Esc(f.filename)}</span>
                         <span class="r2-file-meta">${kb} · ${exp}</span>
                         <div class="r2-file-actions">
-                            <button onclick="insertR2File('${_r2Esc(f.fileId)}','${_r2Esc(f.filename).replace(/'/g,'\\'')}')" title="插入聊天訊息">📎</button>
+                            <button onclick="insertR2File('${_r2Esc(f.fileId)}','${_r2Esc(f.filename)}')" title="插入聊天訊息">📎</button>
                             <button onclick="deleteR2File('${_r2Esc(f.fileId)}')" title="刪除" style="color:var(--danger,#e53935);">🗑</button>
                         </div>
                     </div>`;
