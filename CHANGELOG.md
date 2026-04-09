@@ -1,3 +1,10 @@
+## [1.922.7](https://github.com/HankHuang0516/EClaw/compare/v1.922.6...v1.922.7) (2026-04-09)
+
+
+### Bug Fixes
+
+* **info:** defer Mermaid render to tab activation — avoids translate(NaN) when panel is hidden at load ([25d902b](https://github.com/HankHuang0516/EClaw/commit/25d902bd43b4ac63f30b300f4a7b65197a842f73))
+
 ## [1.922.6](https://github.com/HankHuang0516/EClaw/compare/v1.922.5...v1.922.6) (2026-04-09)
 
 
