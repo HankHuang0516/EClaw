@@ -83,7 +83,7 @@ async function authenticateDevice(pool, creds, devices) {
     if (!creds || !creds.deviceId) return false;
     // Use in-memory device store if available, else query DB
     if (devices) {
-        const dev = devices.get(creds.deviceId);
+        const dev = devices[creds.deviceId];
         if (!dev) return false;
         if (creds.deviceSecret && safeEqual(dev.deviceSecret, creds.deviceSecret)) return true;
         if (creds.botSecret && creds.entityId != null) {
