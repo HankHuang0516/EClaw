@@ -1,3 +1,10 @@
+## [1.929.2](https://github.com/HankHuang0516/EClaw/compare/v1.929.1...v1.929.2) (2026-04-09)
+
+
+### Bug Fixes
+
+* sync env vars from server on chat init so Key Reference shows in WebView ([0020b32](https://github.com/HankHuang0516/EClaw/commit/0020b32c694f70b426ce8ec3f8831c41e22352bf))
+
 ## [1.929.1](https://github.com/HankHuang0516/EClaw/compare/v1.929.0...v1.929.1) (2026-04-09)
 
 
