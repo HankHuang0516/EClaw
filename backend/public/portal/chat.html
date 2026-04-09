@@ -2150,7 +2150,9 @@
         // are provided by shared/entity-utils.js
 
         // ── Android WebView Detection ──
-        const isAndroidWebView = typeof AndroidBridge !== 'undefined';
+        // Check both the injected JS bridge and the custom User-Agent suffix so
+        // late-binding environments don't miss either signal.
+        const isAndroidWebView = typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent);
 
         // ── Marked.js custom renderer for code blocks ──
         (function configureMarked() {
@@ -3543,7 +3545,6 @@
         // Android WebView does not support window.open(); instead navigate the current
         // window to the R2 URL — shouldOverrideUrlLoading intercepts it and opens the
         // system browser, leaving chat.html in place.
-        const isAndroidWebView = navigator.userAgent.includes('EClawAndroid');
 
         // Preview: open file in new tab (PDF viewer, image viewer, etc.)
         async function previewAttachment(fileId) {
