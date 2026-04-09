@@ -1,3 +1,10 @@
+## [1.927.2](https://github.com/HankHuang0516/EClaw/compare/v1.927.1...v1.927.2) (2026-04-09)
+
+
+### Bug Fixes
+
+* **chat:** fix file link click (window.open), async-resolve filename from Content-Disposition ([3653848](https://github.com/HankHuang0516/EClaw/commit/365384830bd8497abae7c6c0f15e8d9863bebf20))
+
 ## [1.927.1](https://github.com/HankHuang0516/EClaw/compare/v1.927.0...v1.927.1) (2026-04-09)
 
 
