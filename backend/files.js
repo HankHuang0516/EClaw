@@ -87,7 +87,7 @@ async function authenticateDevice(pool, creds, devices) {
         if (!dev) return false;
         if (creds.deviceSecret && safeEqual(dev.deviceSecret, creds.deviceSecret)) return true;
         if (creds.botSecret && creds.entityId != null) {
-            const entity = dev.entities && dev.entities.find(e => e.entityId === creds.entityId);
+            const entity = dev.entities && dev.entities[creds.entityId];
             return entity && safeEqual(entity.botSecret, creds.botSecret);
         }
         return false;
