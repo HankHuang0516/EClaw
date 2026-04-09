@@ -1,3 +1,10 @@
+# [1.926.0](https://github.com/HankHuang0516/EClaw/compare/v1.925.0...v1.926.0) (2026-04-09)
+
+
+### Features
+
+* **chat:** add env var smart reference icon to chat input ([cc3c7aa](https://github.com/HankHuang0516/EClaw/commit/cc3c7aab60ed80972bd65f0757f3802874c00527))
+
 # [1.925.0](https://github.com/HankHuang0516/EClaw/compare/v1.924.0...v1.925.0) (2026-04-09)
 
 
