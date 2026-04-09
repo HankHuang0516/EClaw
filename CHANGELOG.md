@@ -1,3 +1,10 @@
+## [1.922.6](https://github.com/HankHuang0516/EClaw/compare/v1.922.5...v1.922.6) (2026-04-09)
+
+
+### Bug Fixes
+
+* **screen-control:** add missing renderNav() call — top nav bar was not rendering ([8900f96](https://github.com/HankHuang0516/EClaw/commit/8900f9697e15556a40d16d12eadb58c73621675a))
+
 ## [1.922.5](https://github.com/HankHuang0516/EClaw/compare/v1.922.4...v1.922.5) (2026-04-09)
 
 
