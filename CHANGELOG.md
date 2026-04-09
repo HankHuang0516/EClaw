@@ -1,3 +1,10 @@
+## [1.922.1](https://github.com/HankHuang0516/EClaw/compare/v1.922.0...v1.922.1) (2026-04-09)
+
+
+### Bug Fixes
+
+* **files:** add try-catch to upload handler, fix /list route order ([48c9961](https://github.com/HankHuang0516/EClaw/commit/48c996106575fd5ac47c9d9c57a5e42531c9c83d))
+
 # [1.922.0](https://github.com/HankHuang0516/EClaw/compare/v1.921.1...v1.922.0) (2026-04-08)
 
 
