@@ -1,3 +1,10 @@
+## [1.926.6](https://github.com/HankHuang0516/EClaw/compare/v1.926.5...v1.926.6) (2026-04-09)
+
+
+### Bug Fixes
+
+* **files:** rename table to r2_files to avoid schema conflict with index.js bot_files ([0199c79](https://github.com/HankHuang0516/EClaw/commit/0199c79a283abe4c2566dd98622a6e93067816ce))
+
 ## [1.926.5](https://github.com/HankHuang0516/EClaw/compare/v1.926.4...v1.926.5) (2026-04-09)
 
 
