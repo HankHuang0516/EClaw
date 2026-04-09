@@ -1,3 +1,10 @@
+## [1.929.1](https://github.com/HankHuang0516/EClaw/compare/v1.929.0...v1.929.1) (2026-04-09)
+
+
+### Bug Fixes
+
+* **chat:** remove duplicate const isAndroidWebView — SyntaxError stuck loading spinner ([e019984](https://github.com/HankHuang0516/EClaw/commit/e0199842123212722452ff9a8d184d44c4eacdc4)), closes [#chatLoading](https://github.com/HankHuang0516/EClaw/issues/chatLoading)
+
 # [1.929.0](https://github.com/HankHuang0516/EClaw/compare/v1.928.6...v1.929.0) (2026-04-09)
 
 
