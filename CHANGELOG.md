@@ -1,3 +1,10 @@
+## [1.926.2](https://github.com/HankHuang0516/EClaw/compare/v1.926.1...v1.926.2) (2026-04-09)
+
+
+### Bug Fixes
+
+* **files:** entities is a plain object not array — use entities[id] not .find() ([ccf9f67](https://github.com/HankHuang0516/EClaw/commit/ccf9f6750ef86b56b03293f74f7ae6ab5bbebb3d))
+
 ## [1.926.1](https://github.com/HankHuang0516/EClaw/compare/v1.926.0...v1.926.1) (2026-04-09)
 
 
