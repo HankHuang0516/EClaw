@@ -1,3 +1,10 @@
+## [1.922.5](https://github.com/HankHuang0516/EClaw/compare/v1.922.4...v1.922.5) (2026-04-09)
+
+
+### Bug Fixes
+
+* **i18n:** resolve merge conflict — fix unescaped quotes in id guide_bp CTA keys ([8eebdff](https://github.com/HankHuang0516/EClaw/commit/8eebdff5c992e3048bc37908324d8cc1aad8ed3c))
+
 ## [1.922.4](https://github.com/HankHuang0516/EClaw/compare/v1.922.3...v1.922.4) (2026-04-09)
 
 
