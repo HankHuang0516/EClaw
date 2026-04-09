@@ -1,3 +1,10 @@
+## [1.926.1](https://github.com/HankHuang0516/EClaw/compare/v1.926.0...v1.926.1) (2026-04-09)
+
+
+### Bug Fixes
+
+* **files:** use devices[id] instead of devices.get(id) — plain object not Map ([f5b5234](https://github.com/HankHuang0516/EClaw/commit/f5b52341b00d170b3fce561a431a9a5f0dce663c))
+
 # [1.926.0](https://github.com/HankHuang0516/EClaw/compare/v1.925.0...v1.926.0) (2026-04-09)
 
 
