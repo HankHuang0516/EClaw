@@ -1,3 +1,10 @@
+## [1.928.2](https://github.com/HankHuang0516/EClaw/compare/v1.928.1...v1.928.2) (2026-04-09)
+
+
+### Bug Fixes
+
+* **test:** use built-in FormData (Node 18+) instead of form-data package ([b05b555](https://github.com/HankHuang0516/EClaw/commit/b05b555f072986e42b7302860e45793628058a05))
+
 ## [1.928.1](https://github.com/HankHuang0516/EClaw/compare/v1.928.0...v1.928.1) (2026-04-09)
 
 
