@@ -1,3 +1,10 @@
+## [1.926.5](https://github.com/HankHuang0516/EClaw/compare/v1.926.4...v1.926.5) (2026-04-09)
+
+
+### Bug Fixes
+
+* **files:** wrap all route handlers in try/catch to prevent unhandledRejection crash ([a998cc6](https://github.com/HankHuang0516/EClaw/commit/a998cc6c0b8e13dd0382db1ba3a8a6bbb1da99fb))
+
 ## [1.926.4](https://github.com/HankHuang0516/EClaw/compare/v1.926.3...v1.926.4) (2026-04-09)
 
 
