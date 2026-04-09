@@ -1,3 +1,10 @@
+## [1.927.1](https://github.com/HankHuang0516/EClaw/compare/v1.927.0...v1.927.1) (2026-04-09)
+
+
+### Bug Fixes
+
+* **chat:** fix syntax error in R2 file manager onclick — escape single quotes via &#x27; ([e6dcc76](https://github.com/HankHuang0516/EClaw/commit/e6dcc76c51591f6bcccabbe64de7c65de3bcd357)), closes [#x27](https://github.com/HankHuang0516/EClaw/issues/x27)
+
 # [1.927.0](https://github.com/HankHuang0516/EClaw/compare/v1.926.6...v1.927.0) (2026-04-09)
 
 
