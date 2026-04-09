@@ -1,3 +1,10 @@
+## [1.928.6](https://github.com/HankHuang0516/EClaw/compare/v1.928.5...v1.928.6) (2026-04-09)
+
+
+### Bug Fixes
+
+* file preview/download blank page in Android WebView ([1c9afe3](https://github.com/HankHuang0516/EClaw/commit/1c9afe39dffa3d82cecafd2f940e9619025b8943))
+
 ## [1.928.5](https://github.com/HankHuang0516/EClaw/compare/v1.928.4...v1.928.5) (2026-04-09)
 
 
