@@ -257,7 +257,10 @@ module.exports = function filesModule(devices) {
             }
 
             const file = result.rows[0];
-            const command = new GetObjectCommand({ Bucket: BUCKET, Key: file.r2_key });
+            const dl = req.query.dl === '1';
+            const cmdParams = { Bucket: BUCKET, Key: file.r2_key };
+            if (dl) cmdParams.ResponseContentDisposition = `attachment; filename="${encodeURIComponent(file.filename)}"`;
+            const command = new GetObjectCommand(cmdParams);
             const url = await getSignedUrl(r2, command, { expiresIn: SIGNED_URL_EXPIRES });
 
             return res.json({
