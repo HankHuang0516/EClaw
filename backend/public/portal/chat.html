@@ -1089,11 +1089,7 @@
 
         .attach-menu.active { display: block; }
 
-        /* ── Env Var Reference Popup ── */
-        .env-var-btn-wrapper {
-            position: relative;
-            display: inline-block;
-        }
+        /* ── Env Var Reference Popup (anchored to .attach-menu-wrapper) ── */
         .env-var-popup {
             display: none;
             position: absolute;
@@ -1104,7 +1100,7 @@
             border-radius: 10px;
             box-shadow: 0 4px 16px rgba(0,0,0,0.15);
             padding: 8px;
-            z-index: 100;
+            z-index: 101;
             min-width: 180px;
             max-width: 260px;
         }
@@ -1893,16 +1889,17 @@
                                 <span class="menu-icon">&#x1F4C1;</span>
                                 <span>我的檔案</span>
                             </button>
+                            <button class="attach-menu-item" id="attachMenuEnvBtn" style="display:none" onclick="openEnvVarFromMenu()">
+                                <span class="menu-icon">&#x1F511;</span>
+                                <span data-i18n="chat_attach_key_ref">Key Reference</span>
+                            </button>
                         </div>
-                    </div>
-                    <button class="btn-media" id="btnVoice" onclick="toggleRecording()">&#x1F3A4;</button>
-                    <div class="env-var-btn-wrapper" id="envVarBtnWrapper" style="display:none;">
-                        <button class="btn-media" id="btnEnvVar" onclick="toggleEnvVarPopup()" title="Insert env var reference">&#x1F4CE;</button>
                         <div class="env-var-popup" id="envVarPopup">
-                            <div class="env-var-popup-label">📎 Insert {{KEY}} reference</div>
+                            <div class="env-var-popup-label">🔑 Insert {{KEY}} reference</div>
                             <div id="envVarChips"></div>
                         </div>
                     </div>
+                    <button class="btn-media" id="btnVoice" onclick="toggleRecording()">&#x1F3A4;</button>
                     <textarea class="chat-input" id="messageInput" rows="1"
                         data-i18n="chat_input_placeholder" placeholder="Type a message..."
                         oninput="renderSlashSuggestions(this.value); localStorage.setItem('chat_draft', this.value); this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,120)+'px'"
@@ -4072,11 +4069,16 @@
             const keys = Object.keys(vars);
             if (!keys.length) return;
 
-            document.getElementById('envVarBtnWrapper').style.display = '';
+            document.getElementById('attachMenuEnvBtn').style.display = '';
             const chipsEl = document.getElementById('envVarChips');
             chipsEl.innerHTML = keys.map(k =>
                 `<button class="env-var-chip" onclick="insertEnvVarRef('${k.replace(/'/g, "\\'")}')">{{${k}}}</button>`
             ).join('');
+        }
+
+        function openEnvVarFromMenu() {
+            document.getElementById('attachMenu').classList.remove('active');
+            document.getElementById('envVarPopup').classList.toggle('active');
         }
 
         function toggleEnvVarPopup() {
@@ -4098,8 +4100,7 @@
             if (wrapper && !wrapper.contains(e.target)) {
                 document.getElementById('attachMenu').classList.remove('active');
             }
-            const evWrapper = document.getElementById('envVarBtnWrapper');
-            if (evWrapper && !evWrapper.contains(e.target)) {
+            if (wrapper && !wrapper.contains(e.target)) {
                 document.getElementById('envVarPopup').classList.remove('active');
             }
             // Close target bar overflow when clicking outside
