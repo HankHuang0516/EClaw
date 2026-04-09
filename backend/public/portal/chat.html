@@ -1155,6 +1155,87 @@
             text-align: center;
         }
 
+        /* ── R2 File Manager Modal ── */
+        #r2FilesModal .modal-box {
+            max-width: 560px;
+            text-align: left;
+            padding: 20px 24px 20px;
+        }
+        .r2-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .r2-modal-header .modal-title { margin: 0; font-size: 17px; }
+        .r2-usage-bar {
+            height: 5px;
+            background: var(--card-border);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 4px 0 10px;
+        }
+        .r2-usage-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+        .r2-file-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 12px;
+        }
+        .r2-file-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            margin-bottom: 5px;
+            background: var(--input-bg);
+        }
+        .r2-file-icon { font-size: 18px; flex-shrink: 0; }
+        .r2-file-name {
+            flex: 1;
+            font-size: 13px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
+        }
+        .r2-file-meta { font-size: 11px; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; }
+        .r2-file-actions { display: flex; gap: 4px; flex-shrink: 0; }
+        .r2-file-actions button {
+            padding: 3px 7px;
+            font-size: 13px;
+            border-radius: 5px;
+            border: 1px solid var(--card-border);
+            background: var(--card);
+            cursor: pointer;
+            color: var(--text);
+            transition: background 0.15s;
+        }
+        .r2-file-actions button:hover { background: var(--input-bg); }
+        .r2-modal-footer { display: flex; gap: 8px; }
+        .r2-upload-label {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+        .r2-upload-label:hover { opacity: 0.85; }
+
         /* ── File Preview Bar (multi-file) ── */
         .file-preview-bar {
             display: none;
@@ -1808,6 +1889,10 @@
                                 <span class="menu-icon">&#x1F4CE;</span>
                                 <span data-i18n="chat_attach_file">File</span>
                             </button>
+                            <button class="attach-menu-item" onclick="openR2FilesPanel()">
+                                <span class="menu-icon">&#x1F4C1;</span>
+                                <span>我的檔案</span>
+                            </button>
                         </div>
                     </div>
                     <button class="btn-media" id="btnVoice" onclick="toggleRecording()">&#x1F3A4;</button>
@@ -1828,6 +1913,26 @@
                 <input type="file" id="photoFileInput" accept="image/jpeg,image/png,image/webp" multiple style="display:none" onchange="handleFilesSelected(this, 'photo')">
                 <input type="file" id="videoFileInput" accept="video/mp4,video/webm,video/quicktime" multiple style="display:none" onchange="handleFilesSelected(this, 'video')">
                 <input type="file" id="fileFileInput" multiple style="display:none" onchange="handleFilesSelected(this, 'file')">
+            </div>
+        </div>
+    </div>
+
+    <!-- R2 File Manager Modal -->
+    <div class="modal-overlay" id="r2FilesModal" onclick="if(event.target===this)closeR2FilesPanel()">
+        <div class="modal-box">
+            <div class="r2-modal-header">
+                <div class="modal-title">&#x1F4C1; 我的檔案</div>
+                <button onclick="closeR2FilesPanel()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);line-height:1;">&#x2715;</button>
+            </div>
+            <div id="r2UsageText" style="font-size:12px;color:var(--text-muted);">載入中...</div>
+            <div class="r2-usage-bar"><div class="r2-usage-fill" id="r2UsageFill" style="width:0%"></div></div>
+            <div class="r2-file-list" id="r2FileList"></div>
+            <div class="r2-modal-footer">
+                <label class="r2-upload-label">
+                    &#x2B06; 上傳到檔案庫
+                    <input type="file" id="r2UploadInput" style="display:none" multiple onchange="uploadToR2(this)">
+                </label>
+                <button class="btn btn-outline" onclick="closeR2FilesPanel()" style="padding:8px 16px;font-size:14px;">關閉</button>
             </div>
         </div>
     </div>
@@ -3954,6 +4059,118 @@
         // ── Multi-File Upload ──
         const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
         let pendingFiles = []; // { id, file, type ('photo'|'file'), status ('uploading'|'ready'|'error'), mediaUrl, localUrl, fileName }
+
+        // ── R2 File Manager ──
+        function _r2Esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+        function _r2Auth() { return new URLSearchParams({ deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret }); }
+        function _r2FileIcon(mime) {
+            if (!mime) return '📎';
+            if (mime.startsWith('image/')) return '🖼';
+            if (mime.startsWith('video/')) return '🎬';
+            if (mime.startsWith('audio/')) return '🎵';
+            if (mime.includes('pdf')) return '📄';
+            if (mime.includes('zip') || mime.includes('archive') || mime.includes('tar')) return '📦';
+            return '📎';
+        }
+
+        function openR2FilesPanel() {
+            document.getElementById('attachMenu').classList.remove('active');
+            document.getElementById('r2FilesModal').classList.add('active');
+            loadR2Files();
+        }
+        function closeR2FilesPanel() {
+            document.getElementById('r2FilesModal').classList.remove('active');
+        }
+        async function loadR2Files() {
+            const listEl = document.getElementById('r2FileList');
+            const usageEl = document.getElementById('r2UsageText');
+            listEl.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted);">載入中...</div>';
+            try {
+                const res = await fetch(API_BASE + '/api/files/list?' + _r2Auth());
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error);
+                const { files, usage } = data;
+                usageEl.textContent = `已使用 ${usage.totalMB} MB / ${usage.quotaMB} MB（${usage.count} 個檔案）`;
+                document.getElementById('r2UsageFill').style.width = Math.min(100, usage.totalMB / usage.quotaMB * 100) + '%';
+                if (!files.length) {
+                    listEl.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted);">尚無上傳的檔案</div>';
+                    return;
+                }
+                listEl.innerHTML = files.map(f => {
+                    const kb = f.size < 1024 * 1024 ? Math.round(f.size / 1024) + ' KB' : Math.round(f.size / 1024 / 1024 * 10) / 10 + ' MB';
+                    const exp = new Date(f.expiresAt).toLocaleDateString('zh-TW');
+                    return `<div class="r2-file-item" id="r2f-${_r2Esc(f.fileId)}">
+                        <span class="r2-file-icon">${_r2FileIcon(f.mimeType)}</span>
+                        <span class="r2-file-name" title="${_r2Esc(f.filename)}">${_r2Esc(f.filename)}</span>
+                        <span class="r2-file-meta">${kb} · ${exp}</span>
+                        <div class="r2-file-actions">
+                            <button onclick="insertR2File('${_r2Esc(f.fileId)}','${_r2Esc(f.filename).replace(/'/g,'\\'')}')" title="插入聊天訊息">📎</button>
+                            <button onclick="deleteR2File('${_r2Esc(f.fileId)}')" title="刪除" style="color:var(--danger,#e53935);">🗑</button>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch (err) {
+                listEl.innerHTML = `<div style="text-align:center;padding:24px;color:var(--danger,#e53935);">載入失敗：${_r2Esc(err.message)}</div>`;
+            }
+        }
+        async function insertR2File(fileId, filename) {
+            try {
+                const res = await fetch(API_BASE + '/api/files/' + encodeURIComponent(fileId) + '?' + _r2Auth());
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error);
+                const input = document.getElementById('messageInput');
+                const ref = '[' + filename + '](' + data.url + ')';
+                const s = input.selectionStart;
+                input.setRangeText(ref, s, input.selectionEnd, 'end');
+                input.focus();
+                closeR2FilesPanel();
+            } catch (err) {
+                showToast('取得連結失敗：' + err.message, 'error');
+            }
+        }
+        async function deleteR2File(fileId) {
+            if (!confirm('確定刪除這個檔案？（無法復原）')) return;
+            try {
+                const res = await fetch(API_BASE + '/api/files/' + encodeURIComponent(fileId), {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret }),
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error);
+                document.getElementById('r2f-' + fileId)?.remove();
+                showToast('已刪除', 'success');
+                loadR2Files();
+            } catch (err) {
+                showToast('刪除失敗：' + err.message, 'error');
+            }
+        }
+        async function uploadToR2(input) {
+            const files = Array.from(input.files);
+            input.value = '';
+            if (!files.length) return;
+            const listEl = document.getElementById('r2FileList');
+            for (const file of files) {
+                const ph = document.createElement('div');
+                ph.className = 'r2-file-item';
+                ph.innerHTML = `<span class="r2-file-icon">${_r2FileIcon(file.type)}</span><span class="r2-file-name">⬆ ${_r2Esc(file.name)}</span><span class="r2-file-meta">上傳中...</span>`;
+                listEl.prepend(ph);
+                try {
+                    const form = new FormData();
+                    form.append('file', file);
+                    form.append('deviceId', currentUser.deviceId);
+                    form.append('deviceSecret', currentUser.deviceSecret);
+                    const res = await fetch(API_BASE + '/api/files/upload', { method: 'POST', body: form });
+                    const data = await res.json();
+                    if (!data.success) throw new Error(data.error || JSON.stringify(data));
+                    showToast('上傳成功：' + file.name, 'success');
+                } catch (err) {
+                    showToast('上傳失敗：' + err.message, 'error');
+                }
+                ph.remove();
+            }
+            loadR2Files();
+        }
 
         function openPhotoPicker() {
             document.getElementById('attachMenu').classList.remove('active');
