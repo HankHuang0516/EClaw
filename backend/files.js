@@ -116,55 +116,53 @@ module.exports = function filesModule(devices) {
 
     // ─── POST /api/files/upload ──────────────────────────────────────────────
     router.post('/upload', upload.single('file'), async (req, res) => {
-        const creds = resolveDevice(req);
-        if (!await authenticateDevice(pool, creds, devices)) {
-            return res.status(401).json({ success: false, error: 'Invalid credentials' });
-        }
+        try {
+            const creds = resolveDevice(req);
+            if (!await authenticateDevice(pool, creds, devices)) {
+                return res.status(401).json({ success: false, error: 'Invalid credentials' });
+            }
 
-        if (!req.file) {
-            return res.status(400).json({ success: false, error: 'No file provided' });
-        }
+            if (!req.file) {
+                return res.status(400).json({ success: false, error: 'No file provided' });
+            }
 
-        const { deviceId, entityId } = creds;
-        const { originalname, mimetype, size, buffer } = req.file;
+            const { deviceId, entityId } = creds;
+            const { originalname, mimetype, size, buffer } = req.file;
 
-        // Check current device usage
-        const usageResult = await pool.query(
-            'SELECT COALESCE(SUM(size), 0) AS total FROM bot_files WHERE device_id = $1 AND expires_at > NOW()',
-            [deviceId]
-        );
-        const currentUsage = parseInt(usageResult.rows[0].total);
-
-        if (currentUsage + size > QUOTA_SOFT_BYTES) {
-            // Return quota exceeded with oldest files for user to review
-            const oldestFiles = await pool.query(
-                `SELECT file_id, filename, size, created_at
-                 FROM bot_files WHERE device_id = $1 AND expires_at > NOW()
-                 ORDER BY created_at ASC LIMIT 5`,
+            // Check current device usage
+            const usageResult = await pool.query(
+                'SELECT COALESCE(SUM(size), 0) AS total FROM bot_files WHERE device_id = $1 AND expires_at > NOW()',
                 [deviceId]
             );
-            return res.status(507).json({
-                success: false,
-                error: 'quota_exceeded',
-                message: `Storage quota exceeded (${Math.round(currentUsage / 1024 / 1024)}MB / ${Math.round(QUOTA_SOFT_BYTES / 1024 / 1024)}MB). Please remove some old files first.`,
-                currentUsageMB: Math.round(currentUsage / 1024 / 1024),
-                quotaMB: Math.round(QUOTA_SOFT_BYTES / 1024 / 1024),
-                oldestFiles: oldestFiles.rows.map(f => ({
-                    fileId: f.file_id,
-                    filename: f.filename,
-                    sizeMB: Math.round(f.size / 1024 / 1024 * 10) / 10,
-                    createdAt: f.created_at,
-                })),
-            });
-        }
+            const currentUsage = parseInt(usageResult.rows[0].total);
 
-        const fileId = crypto.randomUUID();
-        const safeName = originalname.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 200);
-        const r2Key = `files/${deviceId}/${fileId}/${safeName}`;
-        const expiresAt = new Date(Date.now() + FILE_TTL_DAYS * 24 * 60 * 60 * 1000);
+            if (currentUsage + size > QUOTA_SOFT_BYTES) {
+                const oldestFiles = await pool.query(
+                    `SELECT file_id, filename, size, created_at
+                     FROM bot_files WHERE device_id = $1 AND expires_at > NOW()
+                     ORDER BY created_at ASC LIMIT 5`,
+                    [deviceId]
+                );
+                return res.status(507).json({
+                    success: false,
+                    error: 'quota_exceeded',
+                    message: `Storage quota exceeded (${Math.round(currentUsage / 1024 / 1024)}MB / ${Math.round(QUOTA_SOFT_BYTES / 1024 / 1024)}MB). Please remove some old files first.`,
+                    currentUsageMB: Math.round(currentUsage / 1024 / 1024),
+                    quotaMB: Math.round(QUOTA_SOFT_BYTES / 1024 / 1024),
+                    oldestFiles: oldestFiles.rows.map(f => ({
+                        fileId: f.file_id,
+                        filename: f.filename,
+                        sizeMB: Math.round(f.size / 1024 / 1024 * 10) / 10,
+                        createdAt: f.created_at,
+                    })),
+                });
+            }
 
-        try {
-            // Upload to R2
+            const fileId = crypto.randomUUID();
+            const safeName = originalname.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 200);
+            const r2Key = `files/${deviceId}/${fileId}/${safeName}`;
+            const expiresAt = new Date(Date.now() + FILE_TTL_DAYS * 24 * 60 * 60 * 1000);
+
             await r2.send(new PutObjectCommand({
                 Bucket: BUCKET,
                 Key: r2Key,
@@ -178,7 +176,6 @@ module.exports = function filesModule(devices) {
                 },
             }));
 
-            // Save metadata to DB
             await pool.query(
                 `INSERT INTO bot_files (file_id, device_id, entity_id, filename, size, mime_type, r2_key, expires_at)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
@@ -202,96 +199,111 @@ module.exports = function filesModule(devices) {
     // ─── GET /api/files/list ─────────────────────────────────────────────────
     // NOTE: must be registered BEFORE /:fileId to avoid shadowing
     router.get('/list', async (req, res) => {
-        const creds = resolveDevice(req);
-        if (!await authenticateDevice(pool, creds, devices)) {
-            return res.status(401).json({ success: false, error: 'Invalid credentials' });
+        try {
+            const creds = resolveDevice(req);
+            if (!await authenticateDevice(pool, creds, devices)) {
+                return res.status(401).json({ success: false, error: 'Invalid credentials' });
+            }
+
+            const result = await pool.query(
+                `SELECT file_id, filename, size, mime_type, created_at, expires_at, entity_id
+                 FROM bot_files WHERE device_id = $1 AND expires_at > NOW()
+                 ORDER BY created_at DESC`,
+                [creds.deviceId]
+            );
+
+            const totalBytes = result.rows.reduce((sum, f) => sum + parseInt(f.size), 0);
+
+            return res.json({
+                success: true,
+                files: result.rows.map(f => ({
+                    fileId: f.file_id,
+                    filename: f.filename,
+                    size: f.size,
+                    mimeType: f.mime_type,
+                    createdAt: f.created_at,
+                    expiresAt: f.expires_at,
+                    entityId: f.entity_id,
+                })),
+                usage: {
+                    totalBytes,
+                    totalMB: Math.round(totalBytes / 1024 / 1024 * 10) / 10,
+                    quotaMB: Math.round(QUOTA_SOFT_BYTES / 1024 / 1024),
+                    count: result.rows.length,
+                },
+            });
+        } catch (err) {
+            console.error('[Files] List error:', err.message);
+            return res.status(500).json({ success: false, error: 'List failed: ' + err.message });
         }
-
-        const result = await pool.query(
-            `SELECT file_id, filename, size, mime_type, created_at, expires_at, entity_id
-             FROM bot_files WHERE device_id = $1 AND expires_at > NOW()
-             ORDER BY created_at DESC`,
-            [creds.deviceId]
-        );
-
-        const totalBytes = result.rows.reduce((sum, f) => sum + parseInt(f.size), 0);
-
-        return res.json({
-            success: true,
-            files: result.rows.map(f => ({
-                fileId: f.file_id,
-                filename: f.filename,
-                size: f.size,
-                mimeType: f.mime_type,
-                createdAt: f.created_at,
-                expiresAt: f.expires_at,
-                entityId: f.entity_id,
-            })),
-            usage: {
-                totalBytes,
-                totalMB: Math.round(totalBytes / 1024 / 1024 * 10) / 10,
-                quotaMB: Math.round(QUOTA_SOFT_BYTES / 1024 / 1024),
-                count: result.rows.length,
-            },
-        });
     });
 
     // ─── GET /api/files/:fileId ──────────────────────────────────────────────
     router.get('/:fileId', async (req, res) => {
-        const creds = resolveDevice(req);
-        if (!await authenticateDevice(pool, creds, devices)) {
-            return res.status(401).json({ success: false, error: 'Invalid credentials' });
+        try {
+            const creds = resolveDevice(req);
+            if (!await authenticateDevice(pool, creds, devices)) {
+                return res.status(401).json({ success: false, error: 'Invalid credentials' });
+            }
+
+            const { fileId } = req.params;
+            const result = await pool.query(
+                'SELECT * FROM bot_files WHERE file_id = $1 AND device_id = $2 AND expires_at > NOW()',
+                [fileId, creds.deviceId]
+            );
+
+            if (!result.rows.length) {
+                return res.status(404).json({ success: false, error: 'File not found or expired' });
+            }
+
+            const file = result.rows[0];
+            const command = new GetObjectCommand({ Bucket: BUCKET, Key: file.r2_key });
+            const url = await getSignedUrl(r2, command, { expiresIn: SIGNED_URL_EXPIRES });
+
+            return res.json({
+                success: true,
+                fileId: file.file_id,
+                filename: file.filename,
+                size: file.size,
+                mimeType: file.mime_type,
+                url,
+                urlExpiresIn: SIGNED_URL_EXPIRES,
+                expiresAt: file.expires_at,
+            });
+        } catch (err) {
+            console.error('[Files] Get error:', err.message);
+            return res.status(500).json({ success: false, error: 'Get failed: ' + err.message });
         }
-
-        const { fileId } = req.params;
-        const result = await pool.query(
-            'SELECT * FROM bot_files WHERE file_id = $1 AND device_id = $2 AND expires_at > NOW()',
-            [fileId, creds.deviceId]
-        );
-
-        if (!result.rows.length) {
-            return res.status(404).json({ success: false, error: 'File not found or expired' });
-        }
-
-        const file = result.rows[0];
-        const command = new GetObjectCommand({ Bucket: BUCKET, Key: file.r2_key });
-        const url = await getSignedUrl(r2, command, { expiresIn: SIGNED_URL_EXPIRES });
-
-        return res.json({
-            success: true,
-            fileId: file.file_id,
-            filename: file.filename,
-            size: file.size,
-            mimeType: file.mime_type,
-            url,
-            urlExpiresIn: SIGNED_URL_EXPIRES,
-            expiresAt: file.expires_at,
-        });
     });
 
     // ─── DELETE /api/files/:fileId ───────────────────────────────────────────
     router.delete('/:fileId', async (req, res) => {
-        const creds = resolveDevice(req);
-        if (!await authenticateDevice(pool, creds, devices)) {
-            return res.status(401).json({ success: false, error: 'Invalid credentials' });
+        try {
+            const creds = resolveDevice(req);
+            if (!await authenticateDevice(pool, creds, devices)) {
+                return res.status(401).json({ success: false, error: 'Invalid credentials' });
+            }
+
+            const { fileId } = req.params;
+            const result = await pool.query(
+                'SELECT r2_key FROM bot_files WHERE file_id = $1 AND device_id = $2',
+                [fileId, creds.deviceId]
+            );
+
+            if (!result.rows.length) {
+                return res.status(404).json({ success: false, error: 'File not found' });
+            }
+
+            const { r2_key } = result.rows[0];
+
+            await r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: r2_key }));
+            await pool.query('DELETE FROM bot_files WHERE file_id = $1', [fileId]);
+
+            return res.json({ success: true, fileId, deleted: true });
+        } catch (err) {
+            console.error('[Files] Delete error:', err.message);
+            return res.status(500).json({ success: false, error: 'Delete failed: ' + err.message });
         }
-
-        const { fileId } = req.params;
-        const result = await pool.query(
-            'SELECT r2_key FROM bot_files WHERE file_id = $1 AND device_id = $2',
-            [fileId, creds.deviceId]
-        );
-
-        if (!result.rows.length) {
-            return res.status(404).json({ success: false, error: 'File not found' });
-        }
-
-        const { r2_key } = result.rows[0];
-
-        await r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: r2_key }));
-        await pool.query('DELETE FROM bot_files WHERE file_id = $1', [fileId]);
-
-        return res.json({ success: true, fileId, deleted: true });
     });
 
     return { router };
