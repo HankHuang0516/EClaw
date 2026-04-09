@@ -1,3 +1,10 @@
+## [1.926.3](https://github.com/HankHuang0516/EClaw/compare/v1.926.2...v1.926.3) (2026-04-09)
+
+
+### Bug Fixes
+
+* **files:** fall through to DB auth when device not in memory (post-restart) ([1a62c94](https://github.com/HankHuang0516/EClaw/commit/1a62c94f28deae9b227cac25cecc061afec47827))
+
 ## [1.926.2](https://github.com/HankHuang0516/EClaw/compare/v1.926.1...v1.926.2) (2026-04-09)
 
 
