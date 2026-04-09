@@ -4328,8 +4328,27 @@
 
         async function startRecording() {
             try {
+                // Verify getUserMedia is available (may be absent in some WebView contexts)
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    showToast('此裝置不支援錄音 (getUserMedia unavailable)', 'error');
+                    return;
+                }
+
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+
+                // Pick the first supported mimeType — audio/webm;codecs=opus is not
+                // available in all Android WebView versions, so fall back gracefully.
+                const candidateMimes = [
+                    'audio/webm;codecs=opus',
+                    'audio/webm',
+                    'audio/ogg;codecs=opus',
+                    'audio/mp4',
+                ];
+                const mimeType = candidateMimes.find(t => {
+                    try { return MediaRecorder.isTypeSupported(t); } catch { return false; }
+                }) || '';
+
+                mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
                 audioChunks = [];
 
                 mediaRecorder.ondataavailable = (e) => {
@@ -4354,7 +4373,16 @@
                 }, 500);
 
             } catch (e) {
-                showToast(i18n.t('chat_mic_denied'), 'error');
+                // Show specific message by error type to aid diagnosis
+                if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+                    showToast(i18n.t('chat_mic_denied'), 'error');
+                } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
+                    showToast('找不到麥克風裝置', 'error');
+                } else {
+                    // e.g. NotSupportedError from unsupported mimeType — log actual error
+                    console.error('[Voice] startRecording failed:', e.name, e.message);
+                    showToast(i18n.t('chat_mic_denied') + ' (' + (e.name || e.message) + ')', 'error');
+                }
             }
         }
 

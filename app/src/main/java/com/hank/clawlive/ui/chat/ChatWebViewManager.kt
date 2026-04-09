@@ -1,6 +1,8 @@
 package com.hank.clawlive.ui.chat
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.webkit.ConsoleMessage
@@ -15,6 +17,7 @@ import android.webkit.WebViewClient
 import android.webkit.CookieManager
 import android.widget.ProgressBar
 import android.view.View
+import androidx.core.content.ContextCompat
 import timber.log.Timber
 
 /**
@@ -153,13 +156,20 @@ class ChatWebViewManager(
         }
 
         override fun onPermissionRequest(request: PermissionRequest?) {
-            // Grant audio/video permissions for voice recording
             request?.let {
                 val resources = it.resources
-                if (resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE) ||
-                    resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
-                ) {
-                    it.grant(resources)
+                val needsAudio = resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
+                val needsVideo = resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
+                if (needsAudio || needsVideo) {
+                    val hasAudioPermission = ContextCompat.checkSelfPermission(
+                        webView.context, Manifest.permission.RECORD_AUDIO
+                    ) == PackageManager.PERMISSION_GRANTED
+                    if (hasAudioPermission) {
+                        it.grant(resources)
+                    } else {
+                        it.deny()
+                        Timber.w("WebView requested audio capture but RECORD_AUDIO not granted — check native permission flow")
+                    }
                 } else {
                     it.deny()
                 }
