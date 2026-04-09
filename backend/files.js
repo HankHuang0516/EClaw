@@ -71,7 +71,10 @@ async function initFilesTable() {
 
 // Authenticate request (deviceSecret or botSecret)
 function resolveDevice(req) {
-    const { deviceId, deviceSecret, botSecret, entityId } = req.body || req.query;
+    // req.body may be {} (truthy) from Express JSON middleware even on GET requests;
+    // use query params as fallback when body has no deviceId.
+    const src = (req.body && req.body.deviceId) ? req.body : req.query;
+    const { deviceId, deviceSecret, botSecret, entityId } = src;
     if (!deviceId) return null;
     return { deviceId, deviceSecret, botSecret, entityId: entityId ? parseInt(entityId) : null };
 }
