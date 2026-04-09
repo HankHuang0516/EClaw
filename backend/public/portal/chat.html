@@ -3544,19 +3544,17 @@
         // ── Message Reactions ──
         async function downloadAttachment(fileId, filename, mimeType) {
             if (!currentUser) return;
+            // Open window synchronously (within user gesture) to avoid popup blockers on desktop
+            const win = window.open('', '_blank', 'noopener,noreferrer');
+            if (!win) { showToast('請允許彈出視窗後再試', 'error'); return; }
             try {
                 const params = new URLSearchParams({ deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret });
                 const res = await fetch(`/api/files/${encodeURIComponent(fileId)}?${params}`);
                 const data = await res.json();
-                if (!data.success || !data.url) { showToast(data.error || 'Download failed', 'error'); return; }
-                const a = document.createElement('a');
-                a.href = data.url;
-                a.target = '_blank';
-                if (!(mimeType || '').startsWith('image/')) a.download = filename || 'file';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
+                if (!data.success || !data.url) { win.close(); showToast(data.error || 'Download failed', 'error'); return; }
+                win.location.href = data.url;
             } catch (e) {
+                win.close();
                 showToast('Download failed: ' + e.message, 'error');
             }
         }
