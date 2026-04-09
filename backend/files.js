@@ -81,28 +81,32 @@ function resolveDevice(req) {
 
 async function authenticateDevice(pool, creds, devices) {
     if (!creds || !creds.deviceId) return false;
-    // Try in-memory device store first (fast path)
-    const dev = devices && devices[creds.deviceId];
-    if (dev) {
-        if (creds.deviceSecret && safeEqual(dev.deviceSecret, creds.deviceSecret)) return true;
-        if (creds.botSecret && creds.entityId != null) {
-            const entity = dev.entities && dev.entities[creds.entityId];
-            return !!(entity && safeEqual(entity.botSecret, creds.botSecret));
+    try {
+        // Try in-memory device store first (fast path)
+        const dev = devices && devices[creds.deviceId];
+        if (dev) {
+            if (creds.deviceSecret && safeEqual(dev.deviceSecret, creds.deviceSecret)) return true;
+            if (creds.botSecret && creds.entityId != null) {
+                const entity = dev.entities && dev.entities[creds.entityId];
+                return !!(entity && safeEqual(entity.botSecret, creds.botSecret));
+            }
+            return false;
         }
+        // Fallback: DB check (device not yet loaded in memory after restart)
+        const [devRow, entRow] = await Promise.all([
+            pool.query('SELECT device_secret FROM devices WHERE device_id = $1', [creds.deviceId]),
+            creds.botSecret && creds.entityId != null
+                ? pool.query('SELECT bot_secret FROM entities WHERE device_id = $1 AND entity_id = $2', [creds.deviceId, creds.entityId])
+                : Promise.resolve({ rows: [] })
+        ]);
+        if (!devRow.rows.length) return false;
+        if (creds.deviceSecret) return safeEqual(devRow.rows[0].device_secret, creds.deviceSecret);
+        if (creds.botSecret && entRow.rows.length) return safeEqual(entRow.rows[0].bot_secret, creds.botSecret);
+        return false;
+    } catch (err) {
+        console.error('[Files] Auth error:', err.message);
         return false;
     }
-    // Fallback: DB check (device not yet loaded in memory, e.g. after fresh restart)
-    const res = await pool.query(
-        `SELECT d.device_secret, e.bot_secret
-         FROM devices d
-         LEFT JOIN entities e ON e.device_id = d.device_id AND e.entity_id = $2
-         WHERE d.device_id = $1`,
-        [creds.deviceId, creds.entityId ?? null]
-    );
-    if (!res.rows.length) return false;
-    if (creds.deviceSecret) return safeEqual(res.rows[0].device_secret, creds.deviceSecret);
-    if (creds.botSecret) return safeEqual(res.rows[0].bot_secret, creds.botSecret);
-    return false;
 }
 
 module.exports = function filesModule(devices) {
