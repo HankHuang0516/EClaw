@@ -2236,7 +2236,7 @@
             const user = await checkAuth();
             if (!user) return;
             initPortalSocket();
-            initEnvVarBtn(user.deviceId);
+            initEnvVarBtn(user.deviceId, user.deviceSecret);
 
             // Hide slash suggestions on blur
             document.getElementById('messageInput').addEventListener('blur', () => {
@@ -4063,10 +4063,22 @@
         }
 
         // ── Env Var Reference ──
-        function initEnvVarBtn(deviceId) {
+        async function initEnvVarBtn(deviceId, deviceSecret) {
             const storageKey = `eclawLocalVars_${deviceId}`;
             let vars;
             try { vars = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { vars = {}; }
+
+            // Sync from server so WebView / new sessions pick up vars set elsewhere
+            try {
+                const data = await apiCall('POST', '/api/device-vars', {
+                    deviceId, deviceSecret, vars, source: 'web'
+                });
+                if (data && data.mergedVars) {
+                    vars = data.mergedVars;
+                    localStorage.setItem(storageKey, JSON.stringify(vars));
+                }
+            } catch { /* non-critical — fall back to local */ }
+
             const keys = Object.keys(vars);
             if (!keys.length) return;
 
