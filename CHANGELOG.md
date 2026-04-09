@@ -1,3 +1,10 @@
+## [1.928.4](https://github.com/HankHuang0516/EClaw/compare/v1.928.3...v1.928.4) (2026-04-09)
+
+
+### Bug Fixes
+
+* voice messages routing to [#0](https://github.com/HankHuang0516/EClaw/issues/0) regardless of selected targets ([9185383](https://github.com/HankHuang0516/EClaw/commit/9185383e0f7f0ee3afc06bdb238aa4a697093246))
+
 ## [1.928.3](https://github.com/HankHuang0516/EClaw/compare/v1.928.2...v1.928.3) (2026-04-09)
 
 
