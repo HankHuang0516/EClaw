@@ -1,3 +1,10 @@
+## [1.922.3](https://github.com/HankHuang0516/EClaw/compare/v1.922.2...v1.922.3) (2026-04-09)
+
+
+### Bug Fixes
+
+* restore Mission Control tab on env-vars and screen-control pages ([259a7cc](https://github.com/HankHuang0516/EClaw/commit/259a7cc02595a5443bcbae2dba67c2c0e0187e56))
+
 ## [1.922.2](https://github.com/HankHuang0516/EClaw/compare/v1.922.1...v1.922.2) (2026-04-09)
 
 
