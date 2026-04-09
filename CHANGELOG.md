@@ -1,3 +1,10 @@
+## [1.928.1](https://github.com/HankHuang0516/EClaw/compare/v1.928.0...v1.928.1) (2026-04-09)
+
+
+### Bug Fixes
+
+* **chat:** remove noopener from window.open blank — Chrome returns null with noopener causing about:blank tab ([8f47331](https://github.com/HankHuang0516/EClaw/commit/8f4733111b794f7b1f78d8a63b949344be576dd9))
+
 # [1.928.0](https://github.com/HankHuang0516/EClaw/compare/v1.927.3...v1.928.0) (2026-04-09)
 
 
