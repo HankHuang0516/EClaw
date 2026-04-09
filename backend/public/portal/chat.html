@@ -1089,6 +1089,47 @@
 
         .attach-menu.active { display: block; }
 
+        /* ── Env Var Reference Popup ── */
+        .env-var-btn-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        .env-var-popup {
+            display: none;
+            position: absolute;
+            bottom: 52px;
+            left: 0;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            padding: 8px;
+            z-index: 100;
+            min-width: 180px;
+            max-width: 260px;
+        }
+        .env-var-popup.active { display: block; }
+        .env-var-popup-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            padding: 2px 4px 6px;
+            white-space: nowrap;
+        }
+        .env-var-chip {
+            display: inline-block;
+            font-family: monospace;
+            font-size: 11px;
+            padding: 2px 7px;
+            margin: 2px;
+            border: 1px solid var(--card-border);
+            border-radius: 4px;
+            background: var(--input-bg);
+            color: var(--primary);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .env-var-chip:hover { background: var(--hover-bg, rgba(124,58,237,0.1)); }
+
         .attach-menu-item {
             display: flex;
             align-items: center;
@@ -1770,6 +1811,13 @@
                         </div>
                     </div>
                     <button class="btn-media" id="btnVoice" onclick="toggleRecording()">&#x1F3A4;</button>
+                    <div class="env-var-btn-wrapper" id="envVarBtnWrapper" style="display:none;">
+                        <button class="btn-media" id="btnEnvVar" onclick="toggleEnvVarPopup()" title="Insert env var reference">&#x1F4CE;</button>
+                        <div class="env-var-popup" id="envVarPopup">
+                            <div class="env-var-popup-label">📎 Insert {{KEY}} reference</div>
+                            <div id="envVarChips"></div>
+                        </div>
+                    </div>
                     <textarea class="chat-input" id="messageInput" rows="1"
                         data-i18n="chat_input_placeholder" placeholder="Type a message..."
                         oninput="renderSlashSuggestions(this.value); localStorage.setItem('chat_draft', this.value); this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,120)+'px'"
@@ -2084,6 +2132,7 @@
             const user = await checkAuth();
             if (!user) return;
             initPortalSocket();
+            initEnvVarBtn(user.deviceId);
 
             // Hide slash suggestions on blur
             document.getElementById('messageInput').addEventListener('blur', () => {
@@ -3852,11 +3901,43 @@
             menu.classList.toggle('active');
         }
 
+        // ── Env Var Reference ──
+        function initEnvVarBtn(deviceId) {
+            const storageKey = `eclawLocalVars_${deviceId}`;
+            let vars;
+            try { vars = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { vars = {}; }
+            const keys = Object.keys(vars);
+            if (!keys.length) return;
+
+            document.getElementById('envVarBtnWrapper').style.display = '';
+            const chipsEl = document.getElementById('envVarChips');
+            chipsEl.innerHTML = keys.map(k =>
+                `<button class="env-var-chip" onclick="insertEnvVarRef('${k.replace(/'/g, "\\'")}')">{{${k}}}</button>`
+            ).join('');
+        }
+
+        function toggleEnvVarPopup() {
+            document.getElementById('envVarPopup').classList.toggle('active');
+        }
+
+        function insertEnvVarRef(key) {
+            const input = document.getElementById('messageInput');
+            const ref = '{{' + key + '}}';
+            const s = input.selectionStart;
+            input.setRangeText(ref, s, input.selectionEnd, 'end');
+            input.focus();
+            document.getElementById('envVarPopup').classList.remove('active');
+        }
+
         // Close menu when clicking elsewhere
         document.addEventListener('click', (e) => {
             const wrapper = document.querySelector('.attach-menu-wrapper');
             if (wrapper && !wrapper.contains(e.target)) {
                 document.getElementById('attachMenu').classList.remove('active');
+            }
+            const evWrapper = document.getElementById('envVarBtnWrapper');
+            if (evWrapper && !evWrapper.contains(e.target)) {
+                document.getElementById('envVarPopup').classList.remove('active');
             }
             // Close target bar overflow when clicking outside
             const targetBar = document.getElementById('targetBar');
