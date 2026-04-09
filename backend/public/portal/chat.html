@@ -3191,10 +3191,24 @@
                         style="max-width:300px; max-height:240px; border-radius:8px; display:block;"></video>`;
                 } else if (msg.media_type === 'file' && msg.media_url) {
                     const fname = extractFileName(msg.text, msg.media_url);
-                    mediaHtml = `<a class="chat-file" href="${escapeHtml(msg.media_url)}" target="_blank" rel="noopener">
+                    const fileSlotId = 'fn-' + (msg.id || Math.random().toString(36).slice(2));
+                    mediaHtml = `<a class="chat-file" href="${escapeHtml(msg.media_url)}" onclick="event.preventDefault();window.open(this.href,'_blank','noopener,noreferrer')">
                         <span class="file-icon">&#x1F4CE;</span>
-                        <span class="file-name">${escapeHtml(fname)}</span>
+                        <span class="file-name" id="${escapeHtml(fileSlotId)}">${escapeHtml(fname)}</span>
                     </a>`;
+                    // Async-resolve real filename from Content-Disposition if we only have a UUID
+                    if (/^[0-9a-f-]{36}$/.test(fname)) {
+                        const url = msg.media_url;
+                        const slotId = fileSlotId;
+                        fetch(url, { method: 'HEAD' }).then(r => {
+                            const cd = r.headers.get('content-disposition') || '';
+                            const m = cd.match(/filename="?([^";\n]+)"?/i);
+                            if (m) {
+                                const el = document.getElementById(slotId);
+                                if (el) el.textContent = decodeURIComponent(m[1].replace(/\+/g, ' '));
+                            }
+                        }).catch(() => {});
+                    }
                 } else if (msg.media_type === 'voice' && msg.media_url) {
                     const durationMatch = (msg.text || '').match(/\d+/);
                     const seconds = durationMatch ? parseInt(durationMatch[0]) : 0;
