@@ -35,6 +35,54 @@ const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
 });
 
+// ENV VAR SUBSTITUTION — replaces {{KEY}} in skill steps, rules, souls with device var values
+const SEAL_KEY_HEX = process.env.SEAL_KEY;
+
+function decryptVarsLocal(encrypted, ivHex, authTagHex) {
+    if (!SEAL_KEY_HEX) return null;
+    const key = Buffer.from(SEAL_KEY_HEX, 'hex');
+    const iv = Buffer.from(ivHex, 'hex');
+    const authTag = Buffer.from(authTagHex, 'hex');
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+    decipher.setAuthTag(authTag);
+    let decrypted = decipher.update(encrypted, 'base64', 'utf8');
+    decrypted += decipher.final('utf8');
+    return JSON.parse(decrypted);
+}
+
+async function loadDeviceVarsForSubstitution(deviceId) {
+    try {
+        const r = await pool.query(
+            'SELECT encrypted_vars, iv, auth_tag, is_locked FROM device_vars WHERE device_id = $1',
+            [deviceId]
+        );
+        if (!r.rows.length || r.rows[0].is_locked) return null;
+        return decryptVarsLocal(r.rows[0].encrypted_vars, r.rows[0].iv, r.rows[0].auth_tag);
+    } catch {
+        return null;
+    }
+}
+
+function substituteEnvVars(text, vars) {
+    if (!text || !vars) return text;
+    return text.replace(/\{\{([A-Z0-9_]+)\}\}/g, (_, key) =>
+        Object.prototype.hasOwnProperty.call(vars, key) ? vars[key] : `{{${key}}}`
+    );
+}
+
+function applyVarSubstitution(dashboard, vars) {
+    if (!vars) return;
+    for (const skill of (dashboard.skills || [])) {
+        if (skill.steps) skill.steps = substituteEnvVars(skill.steps, vars);
+    }
+    for (const rule of (dashboard.rules || [])) {
+        if (rule.description) rule.description = substituteEnvVars(rule.description, vars);
+    }
+    for (const soul of (dashboard.souls || [])) {
+        if (soul.content) soul.content = substituteEnvVars(soul.content, vars);
+    }
+}
+
 // Initialize database tables from schema file
 async function initMissionDatabase() {
     try {
@@ -316,6 +364,10 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
                 souls: row.souls || [],
                 lastUpdated: new Date(row.updated_at).getTime()
             };
+
+            // Substitute {{KEY}} references in skills/rules/souls with actual device var values
+            const vars = await loadDeviceVarsForSubstitution(row.device_id);
+            applyVarSubstitution(dashboard, vars);
 
             res.json({ success: true, dashboard });
         } catch (error) {

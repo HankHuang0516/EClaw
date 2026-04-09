@@ -401,11 +401,33 @@
                     <div class="var-row-key">${esc(k)}</div>
                     <div class="var-row-val" id="varVal_${esc(k)}">••••••••</div>
                     <div class="var-row-actions">
+                        <button class="var-action-btn" onclick="copyVarRef('${esc(k)}')" title="Copy {{${esc(k)}}} reference">📎</button>
                         <button class="var-action-btn" onclick="toggleVarVal('${esc(k)}')" title="${i18n.t('common_toggle_visibility')}">👁</button>
                         <button class="var-action-btn" onclick="showVarDialog('${esc(k)}')" title="${i18n.t('common_edit')}">✏️</button>
                         <button class="var-action-btn delete" onclick="deleteVar('${esc(k)}')" title="${i18n.t('common_delete')}">×</button>
                     </div>
                 </div>`).join('');
+        }
+
+        async function copyVarRef(key) {
+            const ref = '{{' + key + '}}';
+            try {
+                await navigator.clipboard.writeText(ref);
+            } catch (e) {
+                const ta = document.createElement('textarea');
+                ta.value = ref;
+                ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+            }
+            // Brief visual feedback on the button
+            const btn = event.currentTarget;
+            const orig = btn.textContent;
+            btn.textContent = '✓';
+            btn.style.color = 'var(--success, #4caf50)';
+            setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1500);
         }
 
         function toggleVarVal(key) {

@@ -2865,6 +2865,7 @@
                     <input id="dlg_skill_url" placeholder="https://..." value="${esc(skill?.url || '')}" />
                     <div class="dialog-field-label">${esc(i18n.t('mc_skill_steps_label'))}</div>
                     <textarea id="dlg_skill_steps" placeholder="${esc(i18n.t('mc_skill_steps_placeholder'))}">${esc(skill?.steps || '')}</textarea>
+                    ${(()=>{const vk=Object.keys(loadLocalVars());return vk.length?`<div id="envVarHint" style="font-size:11px;color:var(--text-muted);margin:-6px 0 8px;line-height:1.6;">📎 Env refs: ${vk.map(k=>`<button type="button" onclick="const t=document.getElementById('dlg_skill_steps');const v='{{${k}}}';const s=t.selectionStart;t.setRangeText(v,s,t.selectionEnd,'end');t.focus();" style="font-family:monospace;font-size:11px;padding:1px 5px;margin:1px;border:1px solid var(--card-border);border-radius:3px;background:var(--input-bg);color:var(--primary);cursor:pointer;">{{${k}}}</button>`).join('')}</div>`:'';})()}
                     <div class="dialog-field-label">${esc(i18n.t('mc_dlg_category'))}</div>
                     <select id="dlg_skill_category">
                         ${renderCategorySelectHtml('skills', skill?.category)}
