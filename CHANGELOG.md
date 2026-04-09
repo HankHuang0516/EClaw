@@ -1,3 +1,10 @@
+# [1.923.0](https://github.com/HankHuang0516/EClaw/compare/v1.922.7...v1.923.0) (2026-04-09)
+
+
+### Features
+
+* **invite:** invite code system — DB schema, quota integration, and API routes ([758dd20](https://github.com/HankHuang0516/EClaw/commit/758dd20b4cdca574d4f6df615e254d58095f2358))
+
 ## [1.922.7](https://github.com/HankHuang0516/EClaw/compare/v1.922.6...v1.922.7) (2026-04-09)
 
 
