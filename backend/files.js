@@ -53,7 +53,7 @@ const upload = multer({
 // Initialize files table
 async function initFilesTable() {
     await pool.query(`
-        CREATE TABLE IF NOT EXISTS bot_files (
+        CREATE TABLE IF NOT EXISTS r2_files (
             file_id     TEXT PRIMARY KEY,
             device_id   TEXT NOT NULL,
             entity_id   INTEGER,
@@ -64,8 +64,8 @@ async function initFilesTable() {
             created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             expires_at  TIMESTAMPTZ NOT NULL
         );
-        CREATE INDEX IF NOT EXISTS idx_bot_files_device ON bot_files(device_id);
-        CREATE INDEX IF NOT EXISTS idx_bot_files_expires ON bot_files(expires_at);
+        CREATE INDEX IF NOT EXISTS idx_r2_files_device ON r2_files(device_id);
+        CREATE INDEX IF NOT EXISTS idx_r2_files_expires ON r2_files(expires_at);
     `);
 }
 
@@ -131,7 +131,7 @@ module.exports = function filesModule(devices) {
 
             // Check current device usage
             const usageResult = await pool.query(
-                'SELECT COALESCE(SUM(size), 0) AS total FROM bot_files WHERE device_id = $1 AND expires_at > NOW()',
+                'SELECT COALESCE(SUM(size), 0) AS total FROM r2_files WHERE device_id = $1 AND expires_at > NOW()',
                 [deviceId]
             );
             const currentUsage = parseInt(usageResult.rows[0].total);
@@ -139,7 +139,7 @@ module.exports = function filesModule(devices) {
             if (currentUsage + size > QUOTA_SOFT_BYTES) {
                 const oldestFiles = await pool.query(
                     `SELECT file_id, filename, size, created_at
-                     FROM bot_files WHERE device_id = $1 AND expires_at > NOW()
+                     FROM r2_files WHERE device_id = $1 AND expires_at > NOW()
                      ORDER BY created_at ASC LIMIT 5`,
                     [deviceId]
                 );
@@ -177,7 +177,7 @@ module.exports = function filesModule(devices) {
             }));
 
             await pool.query(
-                `INSERT INTO bot_files (file_id, device_id, entity_id, filename, size, mime_type, r2_key, expires_at)
+                `INSERT INTO r2_files (file_id, device_id, entity_id, filename, size, mime_type, r2_key, expires_at)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
                 [fileId, deviceId, entityId, originalname, size, mimetype, r2Key, expiresAt]
             );
@@ -207,7 +207,7 @@ module.exports = function filesModule(devices) {
 
             const result = await pool.query(
                 `SELECT file_id, filename, size, mime_type, created_at, expires_at, entity_id
-                 FROM bot_files WHERE device_id = $1 AND expires_at > NOW()
+                 FROM r2_files WHERE device_id = $1 AND expires_at > NOW()
                  ORDER BY created_at DESC`,
                 [creds.deviceId]
             );
@@ -248,7 +248,7 @@ module.exports = function filesModule(devices) {
 
             const { fileId } = req.params;
             const result = await pool.query(
-                'SELECT * FROM bot_files WHERE file_id = $1 AND device_id = $2 AND expires_at > NOW()',
+                'SELECT * FROM r2_files WHERE file_id = $1 AND device_id = $2 AND expires_at > NOW()',
                 [fileId, creds.deviceId]
             );
 
@@ -286,7 +286,7 @@ module.exports = function filesModule(devices) {
 
             const { fileId } = req.params;
             const result = await pool.query(
-                'SELECT r2_key FROM bot_files WHERE file_id = $1 AND device_id = $2',
+                'SELECT r2_key FROM r2_files WHERE file_id = $1 AND device_id = $2',
                 [fileId, creds.deviceId]
             );
 
@@ -297,7 +297,7 @@ module.exports = function filesModule(devices) {
             const { r2_key } = result.rows[0];
 
             await r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: r2_key }));
-            await pool.query('DELETE FROM bot_files WHERE file_id = $1', [fileId]);
+            await pool.query('DELETE FROM r2_files WHERE file_id = $1', [fileId]);
 
             return res.json({ success: true, fileId, deleted: true });
         } catch (err) {
@@ -312,14 +312,14 @@ module.exports = function filesModule(devices) {
 // Export cleanup function for daily cron
 module.exports.cleanupExpiredFiles = async function () {
     const expired = await pool.query(
-        'SELECT file_id, r2_key FROM bot_files WHERE expires_at < NOW()'
+        'SELECT file_id, r2_key FROM r2_files WHERE expires_at < NOW()'
     );
 
     let deleted = 0;
     for (const file of expired.rows) {
         try {
             await r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: file.r2_key }));
-            await pool.query('DELETE FROM bot_files WHERE file_id = $1', [file.file_id]);
+            await pool.query('DELETE FROM r2_files WHERE file_id = $1', [file.file_id]);
             deleted++;
         } catch (err) {
             console.error('[Files] Cleanup error for', file.file_id, err.message);
