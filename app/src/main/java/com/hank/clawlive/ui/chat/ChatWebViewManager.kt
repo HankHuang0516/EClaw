@@ -2,9 +2,13 @@ package com.hank.clawlive.ui.chat
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.net.Uri
+import android.os.Build
 import android.webkit.ConsoleMessage
 import android.webkit.PermissionRequest
 import android.webkit.ValueCallback
@@ -32,6 +36,7 @@ class ChatWebViewManager(
 
     private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
     private var hasLoadedSuccessfully = false
+    private var audioFocusRequest: AudioFocusRequest? = null
 
     @SuppressLint("SetJavaScriptEnabled")
     fun setup() {
@@ -76,6 +81,15 @@ class ChatWebViewManager(
     fun destroy() {
         webView.stopLoading()
         webView.destroy()
+        // Release audio focus if we acquired it for recording
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            audioFocusRequest?.let {
+                val audioManager = webView.context
+                    .getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                audioManager.abandonAudioFocusRequest(it)
+            }
+        }
+        audioFocusRequest = null
     }
 
     /**
@@ -165,6 +179,24 @@ class ChatWebViewManager(
                         webView.context, Manifest.permission.RECORD_AUDIO
                     ) == PackageManager.PERMISSION_GRANTED
                     if (hasAudioPermission) {
+                        // Acquire AudioFocus before granting WebView capture — required on Android
+                        // to initialize AudioRecord; without it getUserMedia throws NotReadableError.
+                        val audioManager = webView.context
+                            .getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            val focusReq = AudioFocusRequest.Builder(
+                                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
+                            ).build()
+                            audioFocusRequest = focusReq
+                            audioManager.requestAudioFocus(focusReq)
+                        } else {
+                            @Suppress("DEPRECATION")
+                            audioManager.requestAudioFocus(
+                                null,
+                                AudioManager.STREAM_VOICE_CALL,
+                                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
+                            )
+                        }
                         it.grant(resources)
                     } else {
                         it.deny()
