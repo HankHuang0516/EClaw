@@ -3542,20 +3542,37 @@
         }
 
         // ── Message Reactions ──
+
+        // Android WebView does not support window.open(); instead navigate the current
+        // window to the R2 URL — shouldOverrideUrlLoading intercepts it and opens the
+        // system browser, leaving chat.html in place.
+        const isAndroidWebView = navigator.userAgent.includes('EClawAndroid');
+
         // Preview: open file in new tab (PDF viewer, image viewer, etc.)
         async function previewAttachment(fileId) {
             if (!currentUser) return;
-            // Must open window synchronously (user gesture) — no noopener so we keep the reference
-            const win = window.open('', '_blank');
-            if (!win) { showToast('請允許彈出視窗後再試', 'error'); return; }
+            // On desktop, open blank tab synchronously before the async fetch (popup blocker guard)
+            let win = null;
+            if (!isAndroidWebView) {
+                win = window.open('', '_blank');
+                if (!win) { showToast('請允許彈出視窗後再試', 'error'); return; }
+            }
             try {
                 const params = new URLSearchParams({ deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret });
                 const res = await fetch(`/api/files/${encodeURIComponent(fileId)}?${params}`);
                 const data = await res.json();
-                if (!data.success || !data.url) { win.close(); showToast(data.error || 'Preview failed', 'error'); return; }
-                win.location.href = data.url;
+                if (!data.success || !data.url) {
+                    win?.close();
+                    showToast(data.error || 'Preview failed', 'error');
+                    return;
+                }
+                if (isAndroidWebView) {
+                    window.location.href = data.url; // intercepted by shouldOverrideUrlLoading → system browser
+                } else {
+                    win.location.href = data.url;
+                }
             } catch (e) {
-                win.close();
+                win?.close();
                 showToast('Preview failed: ' + e.message, 'error');
             }
         }
@@ -3563,16 +3580,27 @@
         // Download: force save-to-device via Content-Disposition: attachment (dl=1)
         async function downloadAttachment(fileId, filename) {
             if (!currentUser) return;
-            const win = window.open('', '_blank');
-            if (!win) { showToast('請允許彈出視窗後再試', 'error'); return; }
+            let win = null;
+            if (!isAndroidWebView) {
+                win = window.open('', '_blank');
+                if (!win) { showToast('請允許彈出視窗後再試', 'error'); return; }
+            }
             try {
                 const params = new URLSearchParams({ deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret, dl: '1' });
                 const res = await fetch(`/api/files/${encodeURIComponent(fileId)}?${params}`);
                 const data = await res.json();
-                if (!data.success || !data.url) { win.close(); showToast(data.error || 'Download failed', 'error'); return; }
-                win.location.href = data.url;
+                if (!data.success || !data.url) {
+                    win?.close();
+                    showToast(data.error || 'Download failed', 'error');
+                    return;
+                }
+                if (isAndroidWebView) {
+                    window.location.href = data.url; // intercepted → system browser download
+                } else {
+                    win.location.href = data.url;
+                }
             } catch (e) {
-                win.close();
+                win?.close();
                 showToast('Download failed: ' + e.message, 'error');
             }
         }
