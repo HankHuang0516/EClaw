@@ -1698,7 +1698,9 @@ const walletModule = require('./wallet')({
 app.use('/api/wallet', walletModule.router);
 // Defer schema init so user_accounts (auth) is created first — wallets
 // has a FK referencing it.
-setTimeout(() => walletModule.initWalletDatabase(), 2000);
+if (process.env.NODE_ENV !== 'test') {
+    setTimeout(() => walletModule.initWalletDatabase(), 2000);
+}
 
 // ============================================
 // RENTAL MARKETPLACE — bot listings, interviews, contracts (P1 foundation)
@@ -1712,7 +1714,9 @@ const rentalModule = require('./rental')({
 app.use('/api/rental', rentalModule.router);
 // Defer schema init: rental_contracts has FKs to user_accounts and
 // bot_listings, so user_accounts must be created first.
-setTimeout(() => rentalModule.initRentalDatabase(), 2500);
+if (process.env.NODE_ENV !== 'test') {
+    setTimeout(() => rentalModule.initRentalDatabase(), 2500);
+}
 
 // Rental metering proxy — loaded for cron jobs. Hooks into client/speak
 // and transform are conditional on entity.rental_contract_id (P2-F handover).
@@ -9143,8 +9147,14 @@ app.get('/api/client/pending', (req, res) => {
 });
 
 // ============================================
-// DEBUG ENDPOINTS
+// DEBUG ENDPOINTS — disabled in production (Issue #1595)
 // ============================================
+app.use('/api/debug', (req, res, next) => {
+    if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
+        return res.status(404).json({ error: 'Not found' });
+    }
+    next();
+});
 
 /**
  * GET /api/debug/devices
