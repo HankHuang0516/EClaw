@@ -1,3 +1,10 @@
+# [1.940.0](https://github.com/HankHuang0516/EClaw/compare/v1.939.7...v1.940.0) (2026-04-10)
+
+
+### Features
+
+* **chat:** add /model slash command for Claude Code model switching ([8ed1e20](https://github.com/HankHuang0516/EClaw/commit/8ed1e20fa09d3edf419ad2408e22ff2401b550c3))
+
 ## [1.939.7](https://github.com/HankHuang0516/EClaw/compare/v1.939.6...v1.939.7) (2026-04-10)
 
 
