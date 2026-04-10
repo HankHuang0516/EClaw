@@ -552,6 +552,7 @@
             <button class="plaza-chip" data-filter="support" onclick="setFilter('support', this)">🎧 Support</button>
             <button class="plaza-chip" data-filter="creative" onclick="setFilter('creative', this)">🎨 Creative</button>
             <button class="plaza-chip" data-filter="a2a" onclick="setFilter('a2a', this)">🤝 A2A</button>
+            <button class="plaza-chip" data-filter="rental" onclick="setFilter('rental', this)" data-i18n="community_filter_rental">🤖 出租</button>
         </div>
 
         <!-- Stats -->
@@ -631,24 +632,59 @@
     async function loadBots() {
         document.getElementById('loading').style.display = 'flex';
         try {
-            const p = new URLSearchParams({ limit:'50', sort:currentSort });
-            if (searchQuery) p.set('q', searchQuery);
-            if (currentFilter !== 'all') p.set('tag', currentFilter);
-            const data = await apiFetch('/api/community/search?' + p);
-            allBots = (data.results || []).map(r => ({
-                publicCode: r.publicCode, name: r.name || 'Unnamed', avatar: r.avatar || '🤖',
-                desc: r.description || '', tags: r.tags || [],
-                caps: (r.capabilities || []).map(c => c.name || c.id || c),
-                stars: r.avgRating || 0, reviews: r.messageCount || 0,
-                level: r.level || 1, xp: r.xp || 0
-            }));
-            renderGrid(allBots);
+            if (currentFilter === 'rental') {
+                await loadRentalListings();
+            } else {
+                const p = new URLSearchParams({ limit:'50', sort:currentSort });
+                if (searchQuery) p.set('q', searchQuery);
+                if (currentFilter !== 'all') p.set('tag', currentFilter);
+                const data = await apiFetch('/api/community/search?' + p);
+                allBots = (data.results || []).map(r => ({
+                    publicCode: r.publicCode, name: r.name || 'Unnamed', avatar: r.avatar || '🤖',
+                    desc: r.description || '', tags: r.tags || [],
+                    caps: (r.capabilities || []).map(c => c.name || c.id || c),
+                    stars: r.avgRating || 0, reviews: r.messageCount || 0,
+                    level: r.level || 1, xp: r.xp || 0,
+                    isRental: false
+                }));
+                renderGrid(allBots);
+            }
         } catch (e) {
             console.error('loadBots:', e);
             document.getElementById('emptyState').style.display = 'block';
         } finally {
             document.getElementById('loading').style.display = 'none';
         }
+    }
+
+    /* ══════ Rental Listings (from /api/rental/marketplace) ══════ */
+    async function loadRentalListings() {
+        const sortMap = { newest:'newest', popular:'rating', az:'rate_asc', za:'rate_desc' };
+        const sort = sortMap[currentSort] || 'rating';
+        const data = await apiFetch('/api/rental/marketplace?sort=' + sort + '&limit=50');
+        const listings = data.listings || [];
+        allBots = listings.map(l => {
+            const caps = l.capabilities ? Object.keys(l.capabilities).filter(k => l.capabilities[k]?.supported) : [];
+            return {
+                publicCode: l.id, name: l.title || 'Rental Bot', avatar: '🤖',
+                desc: l.description || (l.model_detected || ''),
+                tags: caps,
+                caps: caps,
+                stars: l.avg_rating || 0, reviews: l.total_rentals || 0,
+                level: 0, xp: 0,
+                isRental: true,
+                rateMli: l.rate_mli_per_ktoken,
+                minMin: l.min_rental_minutes, maxMin: l.max_rental_minutes,
+                uptimePct: l.uptime_pct || 100,
+                listingId: l.id,
+                modelDetected: l.model_detected
+            };
+        });
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            allBots = allBots.filter(b => b.name.toLowerCase().includes(q) || (b.modelDetected||'').toLowerCase().includes(q));
+        }
+        renderGrid(allBots);
     }
 
     /* ══════ Render ══════ */
@@ -659,27 +695,54 @@
         if (!bots.length) { grid.innerHTML = ''; empty.style.display = 'block'; document.getElementById('resultCount').textContent = '0'; return; }
         empty.style.display = 'none';
         document.getElementById('resultCount').textContent = bots.length;
-        grid.innerHTML = bots.map(bot => `
-            <div class="bot-card" onclick="openDetail('${bot.publicCode}')">
-                <span class="bot-card-level ${lvClass(bot.level)}">Lv.${bot.level}</span>
-                <div class="bot-card-header">
-                    <div class="bot-card-avatar">
-                        ${(bot.avatar||'').startsWith('http') ? `<img src="${esc(bot.avatar)}" alt="">` : (bot.avatar||'🤖')}
-                    </div>
-                    <div class="bot-card-info">
-                        <div class="bot-card-name">${esc(bot.name)}</div>
-                    </div>
+        grid.innerHTML = bots.map(bot => bot.isRental ? renderRentalCard(bot) : renderCommunityCard(bot)).join('');
+    }
+    function renderCommunityCard(bot) {
+        return `<div class="bot-card" onclick="openDetail('${bot.publicCode}')">
+            <span class="bot-card-level ${lvClass(bot.level)}">Lv.${bot.level}</span>
+            <div class="bot-card-header">
+                <div class="bot-card-avatar">
+                    ${(bot.avatar||'').startsWith('http') ? `<img src="${esc(bot.avatar)}" alt="">` : (bot.avatar||'🤖')}
                 </div>
-                <div class="bot-card-desc">${esc(bot.desc)}</div>
-                <div class="bot-card-footer">
-                    <div class="bot-card-tags">${bot.tags.slice(0,2).map(t=>`<span class="bot-card-tag">${esc(t)}</span>`).join('')}</div>
-                    <div class="bot-card-stats">
-                        ${bot.stars > 0 ? `<span class="stat"><span class="stars">★</span> ${bot.stars.toFixed(1)}</span>` : ''}
-                        <span class="stat">💬 ${bot.reviews}</span>
-                    </div>
+                <div class="bot-card-info"><div class="bot-card-name">${esc(bot.name)}</div></div>
+            </div>
+            <div class="bot-card-desc">${esc(bot.desc)}</div>
+            <div class="bot-card-footer">
+                <div class="bot-card-tags">${bot.tags.slice(0,2).map(t=>`<span class="bot-card-tag">${esc(t)}</span>`).join('')}</div>
+                <div class="bot-card-stats">
+                    ${bot.stars > 0 ? `<span class="stat"><span class="stars">★</span> ${bot.stars.toFixed(1)}</span>` : ''}
+                    <span class="stat">💬 ${bot.reviews}</span>
                 </div>
             </div>
-        `).join('');
+        </div>`;
+    }
+    function renderRentalCard(bot) {
+        const rate = (bot.rateMli / 1000).toFixed(1);
+        const deposit = (bot.rateMli * 20 / 1000).toFixed(0);
+        const stars = '★'.repeat(Math.round(bot.stars)) + '☆'.repeat(5 - Math.round(bot.stars));
+        const tt = (k, fb) => (typeof i18n !== 'undefined' ? i18n.t(k) : null) || fb;
+        return `<div class="bot-card" onclick="openRentalDetail('${bot.listingId}')" style="border-left:3px solid #10b981;">
+            <span class="bot-card-level" style="background:#10b981;color:#fff;">${tt('community_filter_rental','出租')}</span>
+            <div class="bot-card-header">
+                <div class="bot-card-avatar">🤖</div>
+                <div class="bot-card-info">
+                    <div class="bot-card-name">${esc(bot.name)}</div>
+                    <div style="font-size:11px;color:var(--text-secondary);">${esc(bot.modelDetected || '')}</div>
+                </div>
+            </div>
+            <div class="bot-card-desc">${esc(bot.desc)}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+                <div style="font-size:14px;font-weight:700;color:#10b981;">${rate} e幣/1K</div>
+                <div style="font-size:11px;color:var(--text-secondary);">${tt('mp_d_deposit','押金')}: ${deposit} e幣</div>
+            </div>
+            <div class="bot-card-footer" style="margin-top:6px;">
+                <div class="bot-card-tags">${bot.caps.slice(0,3).map(c=>`<span class="bot-card-tag" style="background:rgba(16,185,129,0.15);color:#10b981;border-color:rgba(16,185,129,0.3);">${esc(c)}</span>`).join('')}</div>
+                <div class="bot-card-stats">
+                    <span class="stat" style="color:#f59e0b;">${stars}</span>
+                    <span class="stat">${bot.reviews} ${tt('mp_d_rentals','次')}</span>
+                </div>
+            </div>
+        </div>`;
     }
 
     function filterAndSort() { loadBots(); }
@@ -773,6 +836,75 @@
 
     function closeDetail() { document.getElementById('detailModal').classList.remove('active'); document.body.style.overflow=''; currentDetailCode=null; }
 
+    /* ══════ Rental Detail Modal ══════ */
+    async function openRentalDetail(listingId) {
+        const modal = document.getElementById('detailModal');
+        const content = document.getElementById('detailContent');
+        content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">載入中...</div>';
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        try {
+            const data = await apiFetch('/api/rental/listing/' + listingId);
+            if (!data.success || !data.listing) throw new Error('Not found');
+            const l = data.listing;
+            const rate = (l.rate_mli_per_ktoken / 1000).toFixed(1);
+            const deposit = (l.rate_mli_per_ktoken * 20 / 1000).toFixed(0);
+            const caps = l.capabilities ? Object.keys(l.capabilities).filter(k => l.capabilities[k]?.supported) : [];
+            const stars = '★'.repeat(Math.round(l.avg_rating || 0)) + '☆'.repeat(5 - Math.round(l.avg_rating || 0));
+            const ttt = (k, fb) => (typeof i18n !== 'undefined' ? i18n.t(k) : null) || fb;
+
+            content.innerHTML = `
+                <button class="modal-close" onclick="closeDetail()">✕</button>
+                <div class="detail-header">
+                    <div class="detail-avatar">🤖</div>
+                    <div class="detail-name">${esc(l.title)}</div>
+                    <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${esc(l.model_detected || '')}</div>
+                    <div class="detail-desc">${esc(l.description || '')}</div>
+                </div>
+                ${caps.length ? `<div class="detail-tags">${caps.map(c=>`<span class="detail-tag" style="background:rgba(16,185,129,0.15);color:#10b981;">${esc(c)}</span>`).join('')}</div>` : ''}
+                <div style="margin:16px 0;border-top:1px solid var(--card-border);padding-top:12px;">
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-secondary);">${ttt('mp_d_rate','費率')}</span><span style="font-weight:700;color:#10b981;">${rate} e幣/1K tokens</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-secondary);">${ttt('mp_d_deposit','押金')}</span><span>${deposit} e幣</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-secondary);">${ttt('mp_d_duration','租期')}</span><span>${l.min_rental_minutes}–${l.max_rental_minutes} min</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-secondary);">${ttt('mp_d_rating','評分')}</span><span style="color:#f59e0b;">${stars} (${l.total_rentals || 0} ${ttt('mp_d_rentals','次')})</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-secondary);">${ttt('mp_d_uptime','上線率')}</span><span>${l.uptime_pct || 100}%</span></div>
+                </div>
+                <div style="margin-top:8px;">
+                    <label style="font-size:12px;color:var(--text-secondary);">${ttt('mp_d_rent_duration','租借時長（分鐘）')}</label>
+                    <input type="number" id="rentalDuration" value="${l.min_rental_minutes}" min="${l.min_rental_minutes}" max="${l.max_rental_minutes}" style="width:100%;margin-top:4px;padding:10px;border:1px solid var(--card-border);border-radius:var(--radius-sm);background:var(--input-bg);color:var(--text);font-size:14px;">
+                </div>
+                <button class="detail-btn primary" style="width:100%;margin-top:12px;padding:12px;font-size:14px;" onclick="doRentalFromPlaza('${l.id}')">${ttt('mp_rent_now','立即租借')}</button>
+                <p style="font-size:11px;color:var(--text-secondary);margin-top:8px;text-align:center;">${ttt('mp_rent_warning','⚠️ 您的訊息將傳送到出租者的伺服器。請避免透露敏感資訊。')}</p>
+            `;
+        } catch (e) {
+            content.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">載入失敗</div>';
+            console.error('openRentalDetail:', e);
+        }
+    }
+
+    async function doRentalFromPlaza(listingId) {
+        const ttt = (k, fb) => (typeof i18n !== 'undefined' ? i18n.t(k) : null) || fb;
+        try {
+            const user = await apiFetch('/api/auth/me');
+            if (!user?.user) { alert(ttt('mp_login_first','請先登入')); return; }
+            const duration = parseInt(document.getElementById('rentalDuration')?.value, 10) || 60;
+            const data = await apiPost('/api/rental/contract', {
+                listingId,
+                renterDeviceId: user.user.device_id || 'web',
+                durationMinutes: duration,
+            });
+            if (data?.success) {
+                closeDetail();
+                alert(ttt('mp_rent_success','租借成功！請至「我的租賃」查看詳情。'));
+                window.location.href = 'my-rentals.html';
+            } else {
+                alert(data?.error || 'Failed');
+            }
+        } catch (err) {
+            alert(err.message || 'Rental failed');
+        }
+    }
+
     function quoteToChat(source, title, excerpt) {
         if (window.self !== window.top) {
             window.parent.postMessage({ type: 'eclaw_quote', source, title, excerpt: excerpt || '' }, window.location.origin);
@@ -796,7 +928,13 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
     function checkModalScroll() { const mc = document.getElementById('detailContent'); if (mc && mc.scrollHeight > mc.clientHeight) mc.classList.add('has-scroll'); }
 
-    loadBots();
+    // Auto-switch to rental tab if URL hash is #rental
+    if (location.hash === '#rental') {
+        const rentalChip = document.querySelector('.plaza-chip[data-filter="rental"]');
+        if (rentalChip) { setFilter('rental', rentalChip); } else { loadBots(); }
+    } else {
+        loadBots();
+    }
     </script>
 </body>
 
