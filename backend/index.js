@@ -1759,9 +1759,9 @@ setTimeout(() => inviteModule.initInviteDatabase(), 3500);
 // ============================================
 const arenaModule = require('./interview-arena')({ serverLog, io });
 app.use('/api/arena', arenaModule.router);
-// Serve arena public pages
-app.get('/arena', (_req, res) => res.sendFile(path.join(__dirname, 'public/arena/index.html')));
-app.get('/arena/exam/:examId', (_req, res) => res.sendFile(path.join(__dirname, 'public/arena/exam.html')));
+// Serve arena public pages (no-cache to prevent CDN stale versions)
+app.get('/arena', (_req, res) => { res.set('Cache-Control', 'no-cache'); res.sendFile(path.join(__dirname, 'public/arena/index.html')); });
+app.get('/arena/exam/:examId', (_req, res) => { res.set('Cache-Control', 'no-cache'); res.sendFile(path.join(__dirname, 'public/arena/exam.html')); });
 // Bot entry point: returns exam sessions with tokens + challenge configs
 app.get('/arena/test/:examId', async (req, res) => {
     try {
