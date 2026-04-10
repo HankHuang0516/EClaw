@@ -1,3 +1,10 @@
+## [1.939.2](https://github.com/HankHuang0516/EClaw/compare/v1.939.1...v1.939.2) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** simplify review — schema parser, batch inserts, constants, dead code ([e2f9ed8](https://github.com/HankHuang0516/EClaw/commit/e2f9ed85c42ab8e9918e1400d967d9cb63c98905))
+
 ## [1.939.1](https://github.com/HankHuang0516/EClaw/compare/v1.939.0...v1.939.1) (2026-04-10)
 
 
