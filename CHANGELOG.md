@@ -1,3 +1,10 @@
+## [1.951.2](https://github.com/HankHuang0516/EClaw/compare/v1.951.1...v1.951.2) (2026-04-10)
+
+
+### Bug Fixes
+
+* **dashboard:** improve entity card layout consistency in WebView ([eeb2766](https://github.com/HankHuang0516/EClaw/commit/eeb2766564bfb5551c3b3e609c699d7b77cb94cc))
+
 ## [1.951.1](https://github.com/HankHuang0516/EClaw/compare/v1.951.0...v1.951.1) (2026-04-10)
 
 
