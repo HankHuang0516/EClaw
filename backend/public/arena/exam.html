@@ -540,8 +540,28 @@
         function generateCommentary(idx, pct, sc, mx, cfg, acts, raw) {
             if (acts.length === 0) return 'The agent did not engage with this challenge at all. In a real-world deployment scenario, this represents a critical gap — the agent would be unable to handle tasks requiring this capability. Consider whether the agent has the necessary tooling (browser control, file API access, etc.) to attempt this type of task.';
 
-            const find = (type) => acts.find(a => a.actionType === type);
-            const findAll = (type) => acts.filter(a => a.actionType === type);
+            // Flexible action matching — bots may use shortened names
+            const ALIASES = {
+                'description_submitted': ['description_submitted','describe','vision_describe','describe_image'],
+                'button_clicked': ['button_clicked','click','button_click','clicked'],
+                'form_submitted': ['form_submitted','submit','form_submit','submit_form'],
+                'element_dragged': ['element_dragged','drag','dragged','drop','drag_drop'],
+                'page_loaded': ['page_loaded','loaded','page_load','visit'],
+                'page_navigated': ['page_navigated','navigate','navigated','nav'],
+                'target_found': ['target_found','found','target','reached'],
+                'answer_submitted': ['answer_submitted','answer','respond','reply','submit_answer'],
+                'code_submitted': ['code_submitted','code','submit_code','run_code'],
+                'transcription_submitted': ['transcription_submitted','transcribe','transcription','speech'],
+                'file_downloaded': ['file_downloaded','download','downloaded'],
+                'file_renamed': ['file_renamed','rename','renamed'],
+                'file_uploaded': ['file_uploaded','upload','uploaded'],
+            };
+            const matchType = (actionType, canonical) => {
+                const aliases = ALIASES[canonical] || [canonical];
+                return aliases.includes(actionType);
+            };
+            const find = (type) => acts.find(a => matchType(a.actionType, type));
+            const findAll = (type) => acts.filter(a => matchType(a.actionType, type));
 
             switch (idx) {
                 case 0: { // Vision

@@ -350,15 +350,36 @@ const CHALLENGE_GENERATORS = {
     arena_tts: generateTtsChallenge,
 };
 
-// ============================================
-// Scoring engines (pure functions)
-// ============================================
+// Action type alias matching — bots often send shortened names
+const ACTION_ALIASES = {
+    'description_submitted': ['description_submitted','describe','vision_describe','describe_image'],
+    'button_clicked': ['button_clicked','click','button_click','clicked'],
+    'form_submitted': ['form_submitted','submit','form_submit','submit_form'],
+    'element_dragged': ['element_dragged','drag','dragged','drop','drag_drop'],
+    'page_loaded': ['page_loaded','loaded','page_load','visit'],
+    'page_navigated': ['page_navigated','navigate','navigated','nav'],
+    'target_found': ['target_found','found','target','reached'],
+    'answer_submitted': ['answer_submitted','answer','respond','reply','submit_answer'],
+    'code_submitted': ['code_submitted','code','submit_code','run_code'],
+    'transcription_submitted': ['transcription_submitted','transcribe','transcription','speech'],
+    'file_downloaded': ['file_downloaded','download','downloaded'],
+    'file_renamed': ['file_renamed','rename','renamed'],
+    'file_uploaded': ['file_uploaded','upload','uploaded'],
+};
+function findAction(actions, canonical) {
+    const aliases = ACTION_ALIASES[canonical] || [canonical];
+    return actions.find(a => aliases.includes(a.actionType));
+}
+function findAllActions(actions, canonical) {
+    const aliases = ACTION_ALIASES[canonical] || [canonical];
+    return actions.filter(a => aliases.includes(a.actionType));
+}
 
 function scoreVision(config, actionsLog) {
     let score = 0;
-    const hasPageLoad = actionsLog.some(a => a.actionType === 'page_loaded');
+    const hasPageLoad = findAction(actionsLog, 'page_loaded') != null;
     if (hasPageLoad) score += Math.round(config.weight * 0.1);
-    const descAction = actionsLog.find(a => a.actionType === 'description_submitted');
+    const descAction = findAction(actionsLog, 'description_submitted');
     if (descAction && descAction.payload && descAction.payload.text) {
         const text = descAction.payload.text.toLowerCase();
         const matched = (config.expectedKeywords || []).filter(k => text.includes(k.toLowerCase()));
@@ -370,14 +391,14 @@ function scoreVision(config, actionsLog) {
 }
 
 function scoreButtonClick(config, actionsLog) {
-    const click = actionsLog.find(a => a.actionType === 'button_clicked');
+    const click = findAction(actionsLog, 'button_clicked');
     if (!click) return { score: 0, maxScore: config.weight };
     const correct = click.payload && click.payload.buttonLabel === config.correctLabel;
     return { score: correct ? config.weight : 0, maxScore: config.weight };
 }
 
 function scoreFormFill(config, actionsLog) {
-    const submit = actionsLog.find(a => a.actionType === 'form_submitted');
+    const submit = findAction(actionsLog, 'form_submitted');
     if (!submit || !submit.payload || !submit.payload.fields) {
         return { score: 0, maxScore: config.weight };
     }
@@ -399,7 +420,7 @@ function scoreFormFill(config, actionsLog) {
 }
 
 function scoreDragDrop(config, actionsLog) {
-    const drag = actionsLog.find(a => a.actionType === 'element_dragged');
+    const drag = findAction(actionsLog, 'element_dragged');
     if (!drag) return { score: 0, maxScore: config.weight };
     const { dropX, dropY } = drag.payload || {};
     const t = config.targetRect;
@@ -412,21 +433,21 @@ function scoreDragDrop(config, actionsLog) {
 
 function scoreNavigation(config, actionsLog) {
     const maxDepth = config.depth || 3;
-    const navigated = actionsLog.filter(a => a.actionType === 'page_navigated');
+    const navigated = findAllActions(actionsLog, 'page_navigated');
     let deepest = 0;
     for (const nav of navigated) {
         if (nav.payload && typeof nav.payload.depth === 'number') {
             deepest = Math.max(deepest, nav.payload.depth);
         }
     }
-    const reached = actionsLog.some(a => a.actionType === 'target_found');
+    const reached = findAction(actionsLog, 'target_found') != null;
     if (reached) return { score: config.weight, maxScore: config.weight };
     const ratio = deepest / maxDepth;
     return { score: Math.round(config.weight * ratio * 0.75), maxScore: config.weight };
 }
 
 function scoreTableExtract(config, actionsLog) {
-    const answer = actionsLog.find(a => a.actionType === 'answer_submitted');
+    const answer = findAction(actionsLog, 'answer_submitted');
     if (!answer || !answer.payload) return { score: 0, maxScore: config.weight };
     const submitted = String(answer.payload.answer || '').replace(/[,\s]/g, '');
     const expected = String(config.correctAnswer).replace(/[,\s]/g, '');
@@ -440,7 +461,7 @@ function scoreTableExtract(config, actionsLog) {
         }
     }
     // Visited but wrong
-    if (actionsLog.some(a => a.actionType === 'page_loaded')) {
+    if (findAction(actionsLog, 'page_loaded') != null) {
         return { score: Math.round(config.weight * 0.1), maxScore: config.weight };
     }
     return { score: 0, maxScore: config.weight };
@@ -448,13 +469,11 @@ function scoreTableExtract(config, actionsLog) {
 
 function scoreDistraction(config, actionsLog) {
     let score = 0;
-    const realClicked = actionsLog.some(a =>
-        a.actionType === 'button_clicked' && a.payload && a.payload.buttonId === config.realButtonId
-    );
+    const allClicks = findAllActions(actionsLog, 'button_clicked');
+    const realClicked = allClicks.some(a => a.payload && a.payload.buttonId === config.realButtonId);
     if (realClicked) score += Math.round(config.weight * 0.6);
-    const fakeClicks = actionsLog.filter(a =>
-        a.actionType === 'button_clicked' && a.payload &&
-        config.fakeButtonIds.includes(a.payload.buttonId)
+    const fakeClicks = allClicks.filter(a =>
+        a.payload && config.fakeButtonIds.includes(a.payload.buttonId)
     );
     if (fakeClicks.length === 0) {
         score += Math.round(config.weight * 0.4);
@@ -465,7 +484,7 @@ function scoreDistraction(config, actionsLog) {
 }
 
 function scoreCoding(config, actionsLog) {
-    const submit = actionsLog.find(a => a.actionType === 'code_submitted');
+    const submit = findAction(actionsLog, 'code_submitted');
     if (!submit || !submit.payload) return { score: 0, maxScore: config.weight };
     const testResults = submit.payload.testResults || [];
     const totalTests = (config.testCases || []).length;
@@ -479,7 +498,7 @@ function scoreCoding(config, actionsLog) {
 }
 
 function scoreResponseTime(config, actionsLog) {
-    const answer = actionsLog.find(a => a.actionType === 'answer_submitted');
+    const answer = findAction(actionsLog, 'answer_submitted');
     if (!answer || !answer.payload) return { score: 0, maxScore: config.weight };
     // Keyword accuracy
     const text = String(answer.payload.answer || '').toLowerCase();
@@ -497,7 +516,7 @@ function scoreResponseTime(config, actionsLog) {
 }
 
 function scoreMemory(config, actionsLog) {
-    const answer = actionsLog.find(a => a.actionType === 'answer_submitted');
+    const answer = findAction(actionsLog, 'answer_submitted');
     if (!answer || !answer.payload) return { score: 0, maxScore: config.weight };
     const text = String(answer.payload.answer || '').toLowerCase().trim();
     const expected = String(config.expectedAnswer || '').toLowerCase().trim();
@@ -510,14 +529,14 @@ function scoreMemory(config, actionsLog) {
 
 function scoreFileMgmt(config, actionsLog) {
     let score = 0;
-    if (actionsLog.some(a => a.actionType === 'file_downloaded')) score += Math.round(config.weight * 0.3);
-    if (actionsLog.some(a => a.actionType === 'file_renamed')) score += Math.round(config.weight * 0.3);
-    if (actionsLog.some(a => a.actionType === 'file_uploaded')) score += Math.round(config.weight * 0.4);
+    if (findAction(actionsLog, 'file_downloaded') != null) score += Math.round(config.weight * 0.3);
+    if (findAction(actionsLog, 'file_renamed') != null) score += Math.round(config.weight * 0.3);
+    if (findAction(actionsLog, 'file_uploaded') != null) score += Math.round(config.weight * 0.4);
     return { score: Math.min(score, config.weight), maxScore: config.weight };
 }
 
 function scoreTts(config, actionsLog) {
-    const answer = actionsLog.find(a => a.actionType === 'transcription_submitted');
+    const answer = findAction(actionsLog, 'transcription_submitted');
     if (!answer || !answer.payload) return { score: 0, maxScore: config.weight };
     const text = String(answer.payload.text || '').toLowerCase();
     const keywords = config.keywords || [];
