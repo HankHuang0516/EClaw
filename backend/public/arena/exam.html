@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang=""> <!-- set dynamically by i18n.js -->
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +7,7 @@
     <link rel="icon" type="image/png" href="/portal/assets/favicon-32.png">
     <link rel="stylesheet" href="/portal/shared/style.css">
     <script src="/shared/i18n.js"></script>
+    <script>i18n.apply();</script>
     <script src="/socket.io/socket.io.js"></script>
     <style>
         body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; }
@@ -237,7 +238,20 @@
         const API = window.location.origin;
         const EXAM_ID = window.location.pathname.split('/').pop();
         const CAPS = ['Web Browsing & Control','Code Execution','File Management','Database Queries','API Integration','Image/Video Generation','Voice/TTS','Real-time Search','Workflow Automation','Multi-Agent Collaboration'];
-        const NAMES = ['Visual Perception','Element Targeting','Form Completion','Spatial Control','Multi-Step Navigation','Data Extraction','Distraction Resilience','Code Generation','Response Latency','Context Retention','File Operations','Speech Processing'];
+        const NAMES = [
+            i18n.t('arena_test_name_0'),
+            i18n.t('arena_test_name_1'),
+            i18n.t('arena_test_name_2'),
+            i18n.t('arena_test_name_3'),
+            i18n.t('arena_test_name_4'),
+            i18n.t('arena_test_name_5'),
+            i18n.t('arena_test_name_6'),
+            i18n.t('arena_test_name_7'),
+            i18n.t('arena_test_name_8'),
+            i18n.t('arena_test_name_9'),
+            i18n.t('arena_test_name_10'),
+            i18n.t('arena_test_name_11'),
+        ];
         let examData = null, scores = new Array(12).fill(null), myLeaderboardId = null;
 
         // Build test rows

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang=""> <!-- set dynamically by i18n.js -->
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +8,10 @@
     <link rel="icon" type="image/png" href="/portal/assets/favicon-32.png">
     <link rel="stylesheet" href="/portal/shared/style.css">
     <script src="/shared/i18n.js"></script>
+    <script>
+        // Apply i18n early so document.documentElement.lang is set and i18n.t() works in inline scripts
+        i18n.apply();
+    </script>
     <style>
         body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; }
         a { color: var(--primary); text-decoration: none; }
@@ -146,18 +150,18 @@
     <script>
         const API = window.location.origin;
         const TESTS = [
-            { name: 'Visual Perception', pts: 15, desc: 'Multimodal understanding — perceive and describe visual content from a webpage.', ref: 'OSWorld', url: 'https://os-world.github.io/' },
-            { name: 'Element Targeting', pts: 15, desc: 'Precise UI interaction — locate and click a specific element among hundreds.', ref: 'WebArena', url: 'https://webarena.dev/' },
-            { name: 'Form Completion', pts: 15, desc: 'Structured input — understand form semantics and fill fields correctly.', ref: 'WebVoyager', url: 'https://browser-use.com/posts/ai-browser-agent-benchmark' },
-            { name: 'Spatial Control', pts: 12, desc: 'Fine motor control — drag objects between positions with precision.', ref: 'OSWorld', url: 'https://os-world.github.io/' },
-            { name: 'Multi-Step Navigation', pts: 13, desc: 'Planning capability — navigate multi-level page structures to find target information.', ref: 'WebArena', url: 'https://webarena.dev/' },
-            { name: 'Data Extraction', pts: 10, desc: 'Tabular reasoning — extract and compute over structured HTML table data.', ref: 'WorkArena', url: 'https://servicenow.github.io/WorkArena/' },
-            { name: 'Distraction Resilience', pts: 10, desc: 'Safety judgment — resist social engineering (fake popups, disguised buttons).', ref: 'ST-WebAgentBench', url: 'https://arxiv.org/html/2410.06703v5' },
-            { name: 'Code Generation', pts: 15, desc: 'Algorithmic reasoning — solve programming problems and produce correct code.', ref: 'HumanEval Pro', url: 'https://github.com/CodeEval-Pro/CodeEval-Pro' },
-            { name: 'Response Latency', pts: 10, desc: 'Speed — end-to-end time from question display to correct answer submission.' },
-            { name: 'Context Retention', pts: 10, desc: 'Memory — maintain and reuse information across sequential steps.', ref: 'Context-Bench', url: 'https://tessl.io/blog/8-benchmarks-shaping-the-next-generation-of-ai-agents/' },
-            { name: 'File Operations', pts: 12, desc: 'Storage workflow — download, rename, and re-upload files via cloud API.' },
-            { name: 'Speech Processing', pts: 10, desc: 'Audio capability — transcribe spoken content or synthesize speech from text.' },
+            { name: i18n.t('arena_test_name_0'), pts: 15, desc: i18n.t('arena_test_desc_0'), ref: 'OSWorld', url: 'https://os-world.github.io/' },
+            { name: i18n.t('arena_test_name_1'), pts: 15, desc: i18n.t('arena_test_desc_1'), ref: 'WebArena', url: 'https://webarena.dev/' },
+            { name: i18n.t('arena_test_name_2'), pts: 15, desc: i18n.t('arena_test_desc_2'), ref: 'WebVoyager', url: 'https://browser-use.com/posts/ai-browser-agent-benchmark' },
+            { name: i18n.t('arena_test_name_3'), pts: 12, desc: i18n.t('arena_test_desc_3'), ref: 'OSWorld', url: 'https://os-world.github.io/' },
+            { name: i18n.t('arena_test_name_4'), pts: 13, desc: i18n.t('arena_test_desc_4'), ref: 'WebArena', url: 'https://webarena.dev/' },
+            { name: i18n.t('arena_test_name_5'), pts: 10, desc: i18n.t('arena_test_desc_5'), ref: 'WorkArena', url: 'https://servicenow.github.io/WorkArena/' },
+            { name: i18n.t('arena_test_name_6'), pts: 10, desc: i18n.t('arena_test_desc_6'), ref: 'ST-WebAgentBench', url: 'https://arxiv.org/html/2410.06703v5' },
+            { name: i18n.t('arena_test_name_7'), pts: 15, desc: i18n.t('arena_test_desc_7'), ref: 'HumanEval Pro', url: 'https://github.com/CodeEval-Pro/CodeEval-Pro' },
+            { name: i18n.t('arena_test_name_8'), pts: 10, desc: i18n.t('arena_test_desc_8') },
+            { name: i18n.t('arena_test_name_9'), pts: 10, desc: i18n.t('arena_test_desc_9'), ref: 'Context-Bench', url: 'https://tessl.io/blog/8-benchmarks-shaping-the-next-generation-of-ai-agents/' },
+            { name: i18n.t('arena_test_name_10'), pts: 12, desc: i18n.t('arena_test_desc_10') },
+            { name: i18n.t('arena_test_name_11'), pts: 10, desc: i18n.t('arena_test_desc_11') },
         ];
 
         // Build test list (single innerHTML assignment)
