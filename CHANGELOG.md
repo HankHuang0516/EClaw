@@ -1,3 +1,10 @@
+# [1.941.0](https://github.com/HankHuang0516/EClaw/compare/v1.940.3...v1.941.0) (2026-04-10)
+
+
+### Features
+
+* **arena:** bridge Arena results to rental interview + Agent Card capabilities ([bbe6d30](https://github.com/HankHuang0516/EClaw/commit/bbe6d3056fa98e04349f0664c4ef2a6d19832116))
+
 ## [1.940.3](https://github.com/HankHuang0516/EClaw/compare/v1.940.2...v1.940.3) (2026-04-10)
 
 
