@@ -1,3 +1,10 @@
+## [1.932.2](https://github.com/HankHuang0516/EClaw/compare/v1.932.1...v1.932.2) (2026-04-10)
+
+
+### Bug Fixes
+
+* **test:** add friend-system db mocks to cross-speak-channel test ([#1660](https://github.com/HankHuang0516/EClaw/issues/1660)) ([f18d12c](https://github.com/HankHuang0516/EClaw/commit/f18d12c11b14283772828f1d77edb8a979b1e54d))
+
 ## [1.932.1](https://github.com/HankHuang0516/EClaw/compare/v1.932.0...v1.932.1) (2026-04-10)
 
 
