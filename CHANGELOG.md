@@ -1,3 +1,10 @@
+# [1.932.0](https://github.com/HankHuang0516/EClaw/compare/v1.931.1...v1.932.0) (2026-04-10)
+
+
+### Features
+
+* **friends:** integrate friend system into card holder with messaging enforcement ([#1658](https://github.com/HankHuang0516/EClaw/issues/1658)) ([bab0bef](https://github.com/HankHuang0516/EClaw/commit/bab0bef69a2e6ae6a132d93be36b8db0847df6da))
+
 ## [1.931.1](https://github.com/HankHuang0516/EClaw/compare/v1.931.0...v1.931.1) (2026-04-10)
 
 
