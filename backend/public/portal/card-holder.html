@@ -126,6 +126,16 @@
         .filter-chip:hover { border-color: var(--primary); color: var(--text); }
         .filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
+        /* ── Friend badge ── */
+        .friend-badge { display:inline-block; font-size:11px; background:#4caf50; color:#fff; padding:1px 6px; border-radius:10px; margin-left:6px; vertical-align:middle; }
+        .req-badge { display:inline-block; font-size:10px; background:#f44336; color:#fff; padding:0 5px; border-radius:8px; min-width:14px; text-align:center; margin-left:4px; vertical-align:middle; }
+        .friend-req-card { background:var(--card-bg); border:1px solid var(--card-border); border-radius:var(--radius); padding:12px 16px; margin-bottom:8px; }
+        .friend-req-card .req-msg { font-size:13px; color:var(--text-secondary); margin:6px 0; font-style:italic; }
+        .friend-req-card .req-actions { display:flex; gap:8px; margin-top:8px; }
+        .friend-req-card .req-actions button { padding:5px 14px; border-radius:var(--radius); border:none; cursor:pointer; font-size:13px; }
+        .friend-req-card .req-accept { background:#4caf50; color:#fff; }
+        .friend-req-card .req-reject { background:var(--input-bg); color:var(--text); border:1px solid var(--card-border); }
+
         /* ── Section headers ── */
         .section-header {
             font-size: 13px;
@@ -644,6 +654,7 @@
             <span class="filter-chip active" data-filter="all" onclick="setFilter('all')" data-i18n="cardholder_filter_all">All</span>
             <span class="filter-chip" data-filter="friends" onclick="setFilter('friends')" data-i18n="cardholder_filter_friends">Friends</span>
             <span class="filter-chip" data-filter="pinned" onclick="setFilter('pinned')" data-i18n="cardholder_filter_pinned">Pinned</span>
+            <span class="filter-chip" data-filter="requests" onclick="setFilter('requests')" data-i18n="cardholder_filter_requests">Requests <span id="requestBadge" class="req-badge" style="display:none">0</span></span>
         </div>
 
         <!-- Main scrollable content (3 sections) -->
@@ -738,10 +749,26 @@
             if (location.hash === '#bot-plaza') switchChTab('bot-plaza');
         });
 
+        let friendRequests = [];
+
         // ── Data loading ──
         async function loadAllData() {
-            await Promise.all([loadMyCards(), loadRecent(), loadCollected()]);
+            await Promise.all([loadMyCards(), loadRecent(), loadCollected(), loadFriendRequests()]);
             rebuildContent();
+        }
+
+        async function loadFriendRequests() {
+            try {
+                const data = await apiCall('GET', `/api/contacts/friend-requests?deviceId=${currentUser.deviceId}&deviceSecret=${currentUser.deviceSecret}&direction=received&status=pending`);
+                friendRequests = data.requests || [];
+                const badge = document.getElementById('requestBadge');
+                if (badge) {
+                    badge.textContent = friendRequests.length;
+                    badge.style.display = friendRequests.length > 0 ? 'inline-block' : 'none';
+                }
+            } catch (err) {
+                console.error('Failed to load friend requests:', err);
+            }
         }
 
         async function loadMyCards() {
@@ -783,14 +810,16 @@
         // ── Filter logic (matches Android) ──
         function applyContactFilter(contacts) {
             const sorted = [...contacts].sort((a, b) => {
+                if (a.isFriend !== b.isFriend) return a.isFriend ? -1 : 1;
                 if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
                 const aTime = a.lastInteractedAt || a.addedAt || 0;
                 const bTime = b.lastInteractedAt || b.addedAt || 0;
                 return bTime - aTime;
             });
             switch (currentFilter) {
-                case 'friends': return sorted.filter(c => !c.blocked && c.exchangeType);
+                case 'friends': return sorted.filter(c => c.isFriend && !c.blocked);
                 case 'pinned': return sorted.filter(c => c.pinned);
+                case 'requests': return []; // handled separately in rebuildContent
                 default: return sorted;
             }
         }
@@ -809,6 +838,18 @@
 
             const container = document.getElementById('mainContent');
             let html = '';
+
+            // If showing friend requests tab
+            if (currentFilter === 'requests') {
+                html += `<div class="section-header">${t('cardholder_friend_requests', 'Friend Requests')}</div>`;
+                if (friendRequests.length > 0) {
+                    html += friendRequests.map(r => renderFriendRequestHtml(r)).join('');
+                } else {
+                    html += `<div class="empty-state"><div class="empty-state-icon">\u{1F4EC}</div><div class="empty-state-text">${t('cardholder_no_requests', 'No pending friend requests')}</div></div>`;
+                }
+                container.innerHTML = html;
+                return;
+            }
 
             // Section 1: My Cards
             if (myCards.length > 0) {
@@ -869,20 +910,41 @@
             return html;
         }
 
+        // ── Friend request rendering ──
+        function renderFriendRequestHtml(r) {
+            const avatar = r.avatar || '\u{1F99E}';
+            return `<div class="friend-req-card">
+                <div class="card-row">
+                    <span class="agent-avatar">${renderAvatarHtml(avatar, 42)}</span>
+                    <div class="agent-meta">
+                        <div class="agent-name">${escapeHtml(r.name || r.fromPublicCode)}</div>
+                        <span class="agent-code">${escapeHtml(r.fromPublicCode)}</span>
+                        <span class="agent-status ${r.online ? 'online' : 'offline'}"></span>
+                    </div>
+                </div>
+                ${r.message ? `<div class="req-msg">"${escapeHtml(r.message)}"</div>` : ''}
+                <div class="req-actions">
+                    <button class="req-accept" onclick="acceptFriendRequest(${r.id})">${t('cardholder_accept', 'Accept')}</button>
+                    <button class="req-reject" onclick="rejectFriendRequest(${r.id})">${t('cardholder_reject', 'Reject')}</button>
+                </div>
+            </div>`;
+        }
+
         // ── Recent rendering ──
         function renderRecentHtml(c) {
             const avatar = c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
             const snap = c.cardSnapshot || {};
+            const friendLabel = c.isFriend ? `<span class="friend-badge">${t('cardholder_friend', 'Friend')}</span>` : '';
             let html = `<div class="card-item" onclick="openDetail('${escapeAttr(c.publicCode)}')">
                 <div class="card-row">
                     <span class="agent-avatar">${renderAvatarHtml(avatar, 48)}</span>
                     <div class="agent-meta">
-                        <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
+                        <div class="agent-name">${escapeHtml(c.name || c.publicCode)}${friendLabel}</div>
                         <span class="agent-code" onclick="event.stopPropagation(); copyCode('${escapeAttr(c.publicCode)}')">${escapeHtml(c.publicCode)}</span>
                     </div>
                     <span class="agent-status ${c.online ? 'online' : 'offline'}"></span>
                     <div class="card-actions" onclick="event.stopPropagation()">
-                        <button class="card-action-btn add-friend" onclick="confirmAddFriend('${escapeAttr(c.publicCode)}', '${escapeAttr(c.name || c.publicCode)}')" title="${t('cardholder_add_friend', 'Add Friend')}">&#x2B;</button>
+                        ${c.isFriend ? '' : `<button class="card-action-btn add-friend" onclick="sendFriendRequest('${escapeAttr(c.publicCode)}', '${escapeAttr(c.name || c.publicCode)}')" title="${t('cardholder_send_friend_req', 'Send Friend Request')}">&#x1F91D;</button>`}
                         <button class="card-action-btn block-btn ${c.blocked ? 'blocked' : ''}" onclick="toggleBlockFromList('${escapeAttr(c.publicCode)}', ${!!c.blocked})" title="${c.blocked ? t('cardholder_unblock', 'Unblock') : t('cardholder_block', 'Block')}">&#x1F6AB;</button>
                     </div>
                 </div>`;
@@ -899,11 +961,12 @@
         function renderCollectedHtml(c) {
             const avatar = c.avatar || (c.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
             const snap = c.cardSnapshot || {};
+            const friendLabel = c.isFriend ? `<span class="friend-badge">${t('cardholder_friend', 'Friend')}</span>` : '';
             let html = `<div class="card-item ${c.pinned ? 'pinned' : ''} ${c.blocked ? 'blocked' : ''}" onclick="openDetail('${escapeAttr(c.publicCode)}')">
                 <div class="card-row">
                     <span class="agent-avatar">${renderAvatarHtml(avatar, 48)}</span>
                     <div class="agent-meta">
-                        <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
+                        <div class="agent-name">${escapeHtml(c.name || c.publicCode)}${friendLabel}</div>
                         <span class="agent-code" onclick="event.stopPropagation(); copyCode('${escapeAttr(c.publicCode)}')">${escapeHtml(c.publicCode)}</span>
                     </div>
                     <span class="agent-status ${c.online ? 'online' : 'offline'}"></span>
@@ -1150,6 +1213,7 @@
                         <h3>${escapeHtml(card.name || card.publicCode)}</h3>
                         <span class="agent-code" onclick="copyCode('${escapeAttr(card.publicCode)}')">${escapeHtml(card.publicCode)}</span>
                         <span class="agent-status ${card.online ? 'online' : 'offline'}" style="display:inline-block; margin-left:8px; vertical-align:middle;"></span>
+                        ${card.isFriend ? `<span class="friend-badge">${t('cardholder_friend', 'Friend')}</span>` : ''}
                         ${card.blocked ? `<span style="display:inline-block; margin-left:8px; font-size:12px; background:var(--danger); color:#fff; padding:1px 6px; border-radius:4px;">${t('cardholder_blocked_label', 'Blocked')}</span>` : ''}
                     </div>
                     <button class="modal-close" onclick="closeDetail()">&#x2715;</button>
@@ -1225,6 +1289,10 @@
 
                 <div class="modal-actions">
                     <button class="btn btn-outline btn-sm" onclick="quoteCardToChat('${escapeAttr(card.publicCode)}', '${escapeAttr(card.name || card.publicCode)}', '${escapeAttr(card.agentCard?.description || '')}')">📌 引用到聊天</button>
+                    ${card.isFriend
+                        ? `<button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger);" onclick="unfriend('${escapeAttr(card.publicCode)}')">${t('cardholder_unfriend', 'Unfriend')}</button>`
+                        : `<button class="btn btn-outline btn-sm" style="color:#4caf50;border-color:#4caf50;" onclick="sendFriendRequest('${escapeAttr(card.publicCode)}', '${escapeAttr(card.name || card.publicCode)}')">\u{1F91D} ${t('cardholder_add_friend', 'Add Friend')}</button>`
+                    }
                     <button class="btn btn-outline btn-sm" onclick="togglePin('${escapeAttr(card.publicCode)}')">
                         ${card.pinned ? t('cardholder_unpin', 'Unpin') : t('cardholder_pin', 'Pin')}
                     </button>
@@ -1496,6 +1564,78 @@
 
         function copyCode(code) {
             navigator.clipboard.writeText(code).then(() => showToast(t('common_copied', 'Copied')));
+        }
+
+        // ── Friend Request Actions ──
+        async function sendFriendRequest(publicCode, name) {
+            const msg = prompt(t('cardholder_friend_req_msg', 'Send a message with your friend request (optional):'), '');
+            if (msg === null) return; // user cancelled
+            try {
+                await apiCall('POST', `/api/contacts/${publicCode}/friend-request`, {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    message: msg || undefined
+                });
+                showToast(t('cardholder_friend_req_sent', 'Friend request sent!'));
+            } catch (err) {
+                if (err.status === 409) {
+                    showToast(t('cardholder_already_friends', 'Already friends or request pending'), 'error');
+                } else {
+                    showToast(err.message || 'Error', 'error');
+                }
+            }
+        }
+
+        async function acceptFriendRequest(requestId) {
+            try {
+                await apiCall('POST', `/api/contacts/friend-requests/${requestId}/accept`, {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret
+                });
+                showToast(t('cardholder_friend_accepted', 'Friend request accepted!'));
+                await Promise.all([loadFriendRequests(), loadCollected()]);
+                rebuildContent();
+            } catch (err) {
+                showToast(err.message || 'Error', 'error');
+            }
+        }
+
+        async function rejectFriendRequest(requestId) {
+            try {
+                await apiCall('POST', `/api/contacts/friend-requests/${requestId}/reject`, {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret
+                });
+                showToast(t('cardholder_friend_rejected', 'Friend request rejected'));
+                await loadFriendRequests();
+                rebuildContent();
+            } catch (err) {
+                showToast(err.message || 'Error', 'error');
+            }
+        }
+
+        async function unfriend(publicCode) {
+            if (!confirm(t('cardholder_unfriend_confirm', 'Remove this friend?'))) return;
+            try {
+                await apiCall('DELETE', `/api/contacts/${publicCode}/unfriend`, {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret
+                });
+                const card = collectedCards.find(c => c.publicCode === publicCode);
+                if (card) card.isFriend = false;
+                closeDetail();
+                rebuildContent();
+                showToast(t('cardholder_unfriended', 'Friend removed'));
+            } catch (err) {
+                showToast(err.message || 'Error', 'error');
+            }
+        }
+
+        // ── Socket.IO friend events ──
+        if (typeof socket !== 'undefined') {
+            socket.on('friend:request', () => loadFriendRequests());
+            socket.on('friend:accepted', () => { loadCollected(); loadFriendRequests(); });
+            socket.on('friend:removed', () => loadCollected());
         }
 
         // ── Helpers ──

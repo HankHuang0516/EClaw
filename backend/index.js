@@ -5037,6 +5037,11 @@ app.post('/api/transform', async (req, res) => {
                         results.push({ publicCode: code, success: false, reason: 'blocked' });
                         continue;
                     }
+                    // Friends-only check
+                    if (xdSettings.friends_only && !(await db.isFriend(target.deviceId, senderCode))) {
+                        results.push({ publicCode: code, success: false, reason: 'friends_only' });
+                        continue;
+                    }
                     if (xdSettings.blacklist.length > 0 && xdSettings.blacklist.includes(senderCode)) {
                         results.push({ publicCode: code, success: false, reason: 'blacklisted' });
                         continue;
@@ -7354,6 +7359,12 @@ app.post('/api/entity/cross-speak', async (req, res) => {
         return res.status(403).json({ success: false, message: 'Message rejected', reason: 'blocked' });
     }
 
+    // Friends-only check
+    if (xdSettings.friends_only && !(await db.isFriend(target.deviceId, senderCode))) {
+        const msg = xdSettings.reject_message || 'This entity only accepts messages from friends';
+        return res.status(403).json({ success: false, message: msg, reason: 'friends_only' });
+    }
+
     // Blacklist check
     if (xdSettings.blacklist.length > 0 && xdSettings.blacklist.includes(senderCode)) {
         const msg = xdSettings.reject_message || 'Message rejected';
@@ -7379,8 +7390,10 @@ app.post('/api/entity/cross-speak', async (req, res) => {
         const msg = xdSettings.reject_message || 'Media type not allowed';
         return res.status(403).json({ success: false, message: msg, reason: 'media_not_allowed' });
     }
-    // Per-sender rate limit (owner-defined, separate from system rate limit)
-    if (xdSettings.rate_limit_seconds > 0) {
+    // Friends bypass owner rate limit
+    const isFriendSender = await db.isFriend(target.deviceId, senderCode);
+    // Per-sender rate limit (owner-defined, separate from system rate limit) — friends exempt
+    if (xdSettings.rate_limit_seconds > 0 && !isFriendSender) {
         const rlKey = `xd_owner_rl:${target.deviceId}:${target.entityId}:${senderCode}`;
         const now = Date.now();
         const lastTime = crossDeviceOwnerRateLimit[rlKey] || 0;
@@ -8386,6 +8399,88 @@ app.get('/api/contacts/search', async (req, res) => {
 });
 
 /**
+ * GET /api/contacts/friend-requests/count — Get pending friend request count
+ * Query: ?deviceId=X&deviceSecret=Y
+ * NOTE: Must be defined BEFORE /api/contacts/:publicCode to avoid route conflict
+ */
+app.get('/api/contacts/friend-requests/count', async (req, res) => {
+    let deviceId = req.query.deviceId;
+    let deviceSecret = req.query.deviceSecret;
+    if (!deviceId && req.user) { deviceId = req.user.deviceId; deviceSecret = req.user.deviceSecret; }
+    if (!deviceId || !deviceSecret) return res.status(400).json({ success: false, error: 'Missing credentials' });
+
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        if (!req.user || req.user.deviceId !== deviceId) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+    }
+
+    const count = await db.getPendingFriendRequestCount(deviceId);
+    res.json({ success: true, count });
+});
+
+/**
+ * GET /api/contacts/friend-requests — List friend requests
+ * Query: ?deviceId=X&deviceSecret=Y&direction=received|sent&status=pending
+ * NOTE: Must be defined BEFORE /api/contacts/:publicCode to avoid route conflict
+ */
+app.get('/api/contacts/friend-requests', async (req, res) => {
+    let deviceId = req.query.deviceId;
+    let deviceSecret = req.query.deviceSecret;
+    if (!deviceId && req.user) { deviceId = req.user.deviceId; deviceSecret = req.user.deviceSecret; }
+    if (!deviceId || !deviceSecret) return res.status(400).json({ success: false, error: 'Missing credentials' });
+
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        if (!req.user || req.user.deviceId !== deviceId) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+    }
+
+    const direction = req.query.direction || 'received';
+    const status = req.query.status || null;
+    const requests = await db.getFriendRequests(deviceId, direction, status);
+
+    // Enrich with live entity data
+    const enriched = requests.map(r => {
+        const code = direction === 'received' ? r.fromPublicCode : r.toPublicCode;
+        const live = publicCodeIndex[code];
+        if (live) {
+            const dev = devices[live.deviceId];
+            const ent = dev?.entities?.[live.entityId];
+            return { ...r, name: ent?.name || null, character: ent?.character || null, avatar: ent?.avatar || null, online: true };
+        }
+        return { ...r, name: null, character: null, avatar: null, online: false };
+    });
+
+    res.json({ success: true, requests: enriched });
+});
+
+/**
+ * GET /api/contacts/friends — List all mutual friends
+ * Query: ?deviceId=X&deviceSecret=Y
+ * NOTE: Must be defined BEFORE /api/contacts/:publicCode to avoid route conflict
+ */
+app.get('/api/contacts/friends', async (req, res) => {
+    let deviceId = req.query.deviceId;
+    let deviceSecret = req.query.deviceSecret;
+    if (!deviceId && req.user) { deviceId = req.user.deviceId; deviceSecret = req.user.deviceSecret; }
+    if (!deviceId || !deviceSecret) return res.status(400).json({ success: false, error: 'Missing credentials' });
+
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        if (!req.user || req.user.deviceId !== deviceId) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+    }
+
+    const friends = await db.getFriends(deviceId);
+    const enriched = friends.map(enrichCardHolderEntry);
+    res.json({ success: true, friends: enriched });
+});
+
+/**
  * GET /api/contacts/:publicCode — Get a single card detail
  */
 app.get('/api/contacts/:publicCode', async (req, res) => {
@@ -8465,6 +8560,254 @@ app.post('/api/contacts/:publicCode/refresh', async (req, res) => {
     if (!result) return res.status(404).json({ success: false, error: 'Card not found in holder' });
 
     res.json({ success: true, card: result });
+});
+
+// ── Friend Request System ──
+
+/**
+ * POST /api/contacts/:publicCode/friend-request — Send a friend request
+ * Body: { deviceId, deviceSecret, message? }
+ */
+app.post('/api/contacts/:publicCode/friend-request', async (req, res) => {
+    let { deviceId, deviceSecret, message: friendMsg } = req.body;
+    if (!deviceId && req.user) { deviceId = req.user.deviceId; deviceSecret = req.user.deviceSecret; }
+    if (!deviceId) return res.status(400).json({ success: false, error: 'Missing deviceId' });
+
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        if (!req.user || req.user.deviceId !== deviceId) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+    }
+
+    const targetCode = req.params.publicCode.trim().toLowerCase();
+    if (!/^[a-z0-9]{3,8}$/.test(targetCode)) {
+        return res.status(400).json({ success: false, error: 'Invalid code format' });
+    }
+
+    // Find target entity
+    const target = publicCodeIndex[targetCode];
+    if (!target) return res.status(404).json({ success: false, error: 'Entity not found' });
+
+    // Cannot friend own entity
+    if (target.deviceId === deviceId) {
+        return res.status(400).json({ success: false, error: 'Cannot send friend request to own entity' });
+    }
+
+    // Check if already friends
+    const alreadyFriend = await db.isFriend(deviceId, targetCode);
+    if (alreadyFriend) {
+        return res.status(409).json({ success: false, error: 'Already friends' });
+    }
+
+    // Check if blocked by target
+    const senderEntities = Object.values(device.entities).filter(e => e.isBound && e.publicCode);
+    const senderCode = senderEntities[0]?.publicCode || null;
+    if (senderCode && await db.isBlocked(target.deviceId, senderCode)) {
+        return res.status(403).json({ success: false, error: 'Cannot send friend request' });
+    }
+
+    const request = await db.createFriendRequest(
+        deviceId, senderCode || deviceId.slice(0, 8),
+        targetCode, target.deviceId,
+        typeof friendMsg === 'string' ? friendMsg.slice(0, 200) : null
+    );
+    if (!request) return res.status(409).json({ success: false, error: 'Friend request already pending' });
+
+    // Real-time notification to target device
+    io.to(`device:${target.deviceId}`).emit('friend:request', {
+        requestId: request.id,
+        fromDeviceId: deviceId,
+        fromPublicCode: request.fromPublicCode,
+        fromName: senderEntities[0]?.name || null,
+        fromAvatar: senderEntities[0]?.avatar || null,
+        message: request.message
+    });
+
+    // Also send via notification system
+    notifyDevice(target.deviceId, {
+        type: 'friend_request',
+        category: 'friend',
+        title: senderEntities[0]?.name || 'Someone',
+        body: friendMsg ? friendMsg.slice(0, 100) : 'sent you a friend request',
+        link: 'card-holder.html',
+        metadata: { requestId: request.id, fromPublicCode: request.fromPublicCode }
+    }).catch(() => {});
+
+    serverLog('info', 'friend', `Friend request sent: ${senderCode} -> ${targetCode}`, { deviceId });
+    res.json({ success: true, request });
+});
+
+/**
+ * POST /api/contacts/friend-requests/:requestId/accept — Accept a friend request
+ * Body: { deviceId, deviceSecret }
+ */
+app.post('/api/contacts/friend-requests/:requestId/accept', async (req, res) => {
+    let { deviceId, deviceSecret } = req.body;
+    if (!deviceId && req.user) { deviceId = req.user.deviceId; deviceSecret = req.user.deviceSecret; }
+    if (!deviceId) return res.status(400).json({ success: false, error: 'Missing deviceId' });
+
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        if (!req.user || req.user.deviceId !== deviceId) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+    }
+
+    const requestId = parseInt(req.params.requestId);
+    if (isNaN(requestId)) return res.status(400).json({ success: false, error: 'Invalid request ID' });
+
+    const request = await db.getFriendRequestById(requestId);
+    if (!request) return res.status(404).json({ success: false, error: 'Request not found' });
+    if (request.toDeviceId !== deviceId) return res.status(403).json({ success: false, error: 'Not your request' });
+    if (request.status !== 'pending') return res.status(400).json({ success: false, error: `Request already ${request.status}` });
+
+    // Update request status
+    const updated = await db.updateFriendRequestStatus(requestId, 'accepted');
+
+    // Set is_friend=true on BOTH sides
+    // 1. Receiver's card holder: add/update sender's publicCode
+    const senderLive = publicCodeIndex[request.fromPublicCode];
+    const senderEnt = senderLive ? devices[senderLive.deviceId]?.entities?.[senderLive.entityId] : null;
+    await db.addCard(deviceId, request.fromPublicCode, {
+        name: senderEnt?.name || null,
+        character: senderEnt?.character || null,
+        avatar: senderEnt?.avatar || null,
+        cardSnapshot: senderEnt?.agentCard || null,
+        exchangeType: 'friend'
+    });
+    await db.setFriendStatus(deviceId, request.fromPublicCode, true);
+
+    // 2. Sender's card holder: add/update receiver's publicCode
+    const receiverLive = publicCodeIndex[request.toPublicCode];
+    const receiverEnt = receiverLive ? devices[receiverLive.deviceId]?.entities?.[receiverLive.entityId] : null;
+    await db.addCard(request.fromDeviceId, request.toPublicCode, {
+        name: receiverEnt?.name || null,
+        character: receiverEnt?.character || null,
+        avatar: receiverEnt?.avatar || null,
+        cardSnapshot: receiverEnt?.agentCard || null,
+        exchangeType: 'friend'
+    });
+    await db.setFriendStatus(request.fromDeviceId, request.toPublicCode, true);
+
+    // Notify sender that request was accepted
+    io.to(`device:${request.fromDeviceId}`).emit('friend:accepted', {
+        requestId: request.id,
+        toPublicCode: request.toPublicCode,
+        toName: receiverEnt?.name || null,
+        toAvatar: receiverEnt?.avatar || null
+    });
+
+    notifyDevice(request.fromDeviceId, {
+        type: 'friend_accepted',
+        category: 'friend',
+        title: receiverEnt?.name || request.toPublicCode,
+        body: 'accepted your friend request',
+        link: 'card-holder.html',
+        metadata: { requestId: request.id, toPublicCode: request.toPublicCode }
+    }).catch(() => {});
+
+    serverLog('info', 'friend', `Friend request accepted: ${request.fromPublicCode} <-> ${request.toPublicCode}`, { deviceId });
+    res.json({ success: true, request: updated });
+});
+
+/**
+ * POST /api/contacts/friend-requests/:requestId/reject — Reject a friend request
+ * Body: { deviceId, deviceSecret }
+ */
+app.post('/api/contacts/friend-requests/:requestId/reject', async (req, res) => {
+    let { deviceId, deviceSecret } = req.body;
+    if (!deviceId && req.user) { deviceId = req.user.deviceId; deviceSecret = req.user.deviceSecret; }
+    if (!deviceId) return res.status(400).json({ success: false, error: 'Missing deviceId' });
+
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        if (!req.user || req.user.deviceId !== deviceId) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+    }
+
+    const requestId = parseInt(req.params.requestId);
+    if (isNaN(requestId)) return res.status(400).json({ success: false, error: 'Invalid request ID' });
+
+    const request = await db.getFriendRequestById(requestId);
+    if (!request) return res.status(404).json({ success: false, error: 'Request not found' });
+    if (request.toDeviceId !== deviceId) return res.status(403).json({ success: false, error: 'Not your request' });
+    if (request.status !== 'pending') return res.status(400).json({ success: false, error: `Request already ${request.status}` });
+
+    const updated = await db.updateFriendRequestStatus(requestId, 'rejected');
+
+    io.to(`device:${request.fromDeviceId}`).emit('friend:rejected', {
+        requestId: request.id,
+        toPublicCode: request.toPublicCode
+    });
+
+    serverLog('info', 'friend', `Friend request rejected: ${request.fromPublicCode} -> ${request.toPublicCode}`, { deviceId });
+    res.json({ success: true, request: updated });
+});
+
+/**
+ * DELETE /api/contacts/friend-requests/:requestId — Cancel a sent friend request
+ * Body: { deviceId, deviceSecret }
+ */
+app.delete('/api/contacts/friend-requests/:requestId', async (req, res) => {
+    let { deviceId, deviceSecret } = req.body;
+    if (!deviceId && req.user) { deviceId = req.user.deviceId; deviceSecret = req.user.deviceSecret; }
+    if (!deviceId) return res.status(400).json({ success: false, error: 'Missing deviceId' });
+
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        if (!req.user || req.user.deviceId !== deviceId) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+    }
+
+    const requestId = parseInt(req.params.requestId);
+    if (isNaN(requestId)) return res.status(400).json({ success: false, error: 'Invalid request ID' });
+
+    const request = await db.getFriendRequestById(requestId);
+    if (!request) return res.status(404).json({ success: false, error: 'Request not found' });
+    if (request.fromDeviceId !== deviceId) return res.status(403).json({ success: false, error: 'Not your request' });
+
+    await db.deleteFriendRequest(requestId);
+    serverLog('info', 'friend', `Friend request cancelled: ${request.fromPublicCode} -> ${request.toPublicCode}`, { deviceId });
+    res.json({ success: true });
+});
+
+/**
+ * DELETE /api/contacts/:publicCode/unfriend — Remove a friend relationship
+ * Body: { deviceId, deviceSecret }
+ */
+app.delete('/api/contacts/:publicCode/unfriend', async (req, res) => {
+    let { deviceId, deviceSecret } = req.body;
+    if (!deviceId && req.user) { deviceId = req.user.deviceId; deviceSecret = req.user.deviceSecret; }
+    if (!deviceId) return res.status(400).json({ success: false, error: 'Missing deviceId' });
+
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        if (!req.user || req.user.deviceId !== deviceId) {
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+    }
+
+    const targetCode = req.params.publicCode.trim().toLowerCase();
+
+    // Remove friend status on this side
+    await db.setFriendStatus(deviceId, targetCode, false);
+
+    // Remove friend status on the other side too
+    const target = publicCodeIndex[targetCode];
+    if (target) {
+        const myEntities = Object.values(device.entities).filter(e => e.isBound && e.publicCode);
+        for (const ent of myEntities) {
+            await db.setFriendStatus(target.deviceId, ent.publicCode, false);
+        }
+        // Notify the other device
+        io.to(`device:${target.deviceId}`).emit('friend:removed', { publicCode: targetCode });
+    }
+
+    serverLog('info', 'friend', `Unfriended: ${deviceId} -> ${targetCode}`, { deviceId });
+    res.json({ success: true });
 });
 
 /**
@@ -8550,6 +8893,12 @@ app.post('/api/client/cross-speak', async (req, res) => {
         return res.status(403).json({ success: false, message: 'Message rejected', reason: 'blocked' });
     }
 
+    // Friends-only check
+    if (xdSettingsClient.friends_only && !(await db.isFriend(target.deviceId, senderCodeClient))) {
+        const msg = xdSettingsClient.reject_message || 'This entity only accepts messages from friends';
+        return res.status(403).json({ success: false, message: msg, reason: 'friends_only' });
+    }
+
     if (xdSettingsClient.blacklist.length > 0 && xdSettingsClient.blacklist.includes(senderCodeClient)) {
         const msg = xdSettingsClient.reject_message || 'Message rejected';
         return res.status(403).json({ success: false, message: msg, reason: 'blacklisted' });
@@ -8571,7 +8920,8 @@ app.post('/api/client/cross-speak', async (req, res) => {
         const msg = xdSettingsClient.reject_message || 'Media type not allowed';
         return res.status(403).json({ success: false, message: msg, reason: 'media_not_allowed' });
     }
-    if (xdSettingsClient.rate_limit_seconds > 0) {
+    const isFriendClient = await db.isFriend(target.deviceId, senderCodeClient);
+    if (xdSettingsClient.rate_limit_seconds > 0 && !isFriendClient) {
         const rlKey = `xd_owner_rl:${target.deviceId}:${target.entityId}:${senderCodeClient}`;
         const now = Date.now();
         const lastTime = crossDeviceOwnerRateLimit[rlKey] || 0;

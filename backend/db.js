@@ -253,6 +253,26 @@ async function createTables() {
         await client.query(`ALTER TABLE agent_card_holder ADD COLUMN IF NOT EXISTS blocked BOOLEAN DEFAULT false`);
         await client.query(`ALTER TABLE agent_card_holder ADD COLUMN IF NOT EXISTS last_interacted_at BIGINT DEFAULT NULL`);
         await client.query(`CREATE INDEX IF NOT EXISTS idx_card_holder_recent ON agent_card_holder(device_id, last_interacted_at DESC NULLS LAST)`);
+        // Migration: add is_friend column (Friend System)
+        await client.query(`ALTER TABLE agent_card_holder ADD COLUMN IF NOT EXISTS is_friend BOOLEAN DEFAULT false`);
+
+        // Friend Requests table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS friend_requests (
+                id SERIAL PRIMARY KEY,
+                from_device_id TEXT NOT NULL REFERENCES devices(device_id) ON DELETE CASCADE,
+                from_public_code VARCHAR(8) NOT NULL,
+                to_public_code VARCHAR(8) NOT NULL,
+                to_device_id TEXT NOT NULL,
+                status VARCHAR(20) DEFAULT 'pending',
+                message TEXT,
+                created_at BIGINT NOT NULL,
+                responded_at BIGINT,
+                UNIQUE(from_device_id, to_public_code)
+            )
+        `);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_friend_req_to ON friend_requests(to_device_id, status)`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_friend_req_from ON friend_requests(from_device_id, status)`);
 
         // Migration: copy cross_device_contacts → agent_card_holder (idempotent)
         await client.query(`
@@ -1059,14 +1079,15 @@ async function getCardHolder(deviceId, { pinned, category, limit, offset, includ
                     contact_avatar AS avatar, added_at AS "addedAt", card_snapshot AS "cardSnapshot",
                     exchange_type AS "exchangeType", last_refreshed AS "lastRefreshed",
                     notes, pinned, category, interaction_count AS "interactionCount",
-                    blocked, last_interacted_at AS "lastInteractedAt"
+                    blocked, last_interacted_at AS "lastInteractedAt",
+                    is_friend AS "isFriend"
                     FROM agent_card_holder WHERE device_id = $1`;
         const params = [deviceId];
         let idx = 2;
         if (!includeBlocked) { sql += ` AND (blocked = false OR blocked IS NULL)`; }
         if (pinned !== undefined) { sql += ` AND pinned = $${idx++}`; params.push(pinned); }
         if (category) { sql += ` AND category = $${idx++}`; params.push(category); }
-        sql += ` ORDER BY pinned DESC, added_at DESC`;
+        sql += ` ORDER BY is_friend DESC, pinned DESC, added_at DESC`;
         if (limit) { sql += ` LIMIT $${idx++}`; params.push(limit); }
         if (offset) { sql += ` OFFSET $${idx++}`; params.push(offset); }
         const result = await pool.query(sql, params);
@@ -1095,7 +1116,8 @@ async function addCard(deviceId, publicCode, { name, character, avatar, cardSnap
                 contact_avatar AS avatar, added_at AS "addedAt", card_snapshot AS "cardSnapshot",
                 exchange_type AS "exchangeType", last_refreshed AS "lastRefreshed",
                 notes, pinned, category, interaction_count AS "interactionCount",
-                blocked, last_interacted_at AS "lastInteractedAt"`,
+                blocked, last_interacted_at AS "lastInteractedAt",
+                is_friend AS "isFriend"`,
             [deviceId, publicCode, name || null, character || null, avatar || null, Date.now(),
              cardSnapshot ? JSON.stringify(cardSnapshot) : null, exchangeType || 'manual']
         );
@@ -1108,7 +1130,7 @@ async function addCard(deviceId, publicCode, { name, character, avatar, cardSnap
 
 async function updateCard(deviceId, publicCode, updates) {
     if (!pool) return null;
-    const allowed = ['notes', 'pinned', 'category', 'blocked'];
+    const allowed = ['notes', 'pinned', 'category', 'blocked', 'is_friend'];
     const sets = [];
     const params = [deviceId, publicCode];
     let idx = 3;
@@ -1123,7 +1145,7 @@ async function updateCard(deviceId, publicCode, updates) {
         const result = await pool.query(
             `UPDATE agent_card_holder SET ${sets.join(', ')}
              WHERE device_id = $1 AND public_code = $2
-             RETURNING public_code AS "publicCode", notes, pinned, category, blocked`,
+             RETURNING public_code AS "publicCode", notes, pinned, category, blocked, is_friend AS "isFriend"`,
             params
         );
         return result.rows[0] || null;
@@ -1163,7 +1185,8 @@ async function searchCards(deviceId, query) {
                     contact_avatar AS avatar, added_at AS "addedAt", card_snapshot AS "cardSnapshot",
                     exchange_type AS "exchangeType", last_refreshed AS "lastRefreshed",
                     notes, pinned, category, interaction_count AS "interactionCount",
-                    blocked, last_interacted_at AS "lastInteractedAt"
+                    blocked, last_interacted_at AS "lastInteractedAt",
+                    is_friend AS "isFriend"
              FROM agent_card_holder WHERE device_id = $1
              AND (blocked = false OR blocked IS NULL)
              AND (
@@ -1173,7 +1196,7 @@ async function searchCards(deviceId, query) {
                  OR notes ILIKE $2
                  OR card_snapshot::text ILIKE $2
              )
-             ORDER BY pinned DESC, interaction_count DESC, added_at DESC`,
+             ORDER BY is_friend DESC, pinned DESC, interaction_count DESC, added_at DESC`,
             [deviceId, pattern]
         );
         return result.rows;
@@ -1191,7 +1214,8 @@ async function getCardByCode(deviceId, publicCode) {
                     contact_avatar AS avatar, added_at AS "addedAt", card_snapshot AS "cardSnapshot",
                     exchange_type AS "exchangeType", last_refreshed AS "lastRefreshed",
                     notes, pinned, category, interaction_count AS "interactionCount",
-                    blocked, last_interacted_at AS "lastInteractedAt"
+                    blocked, last_interacted_at AS "lastInteractedAt",
+                    is_friend AS "isFriend"
              FROM agent_card_holder WHERE device_id = $1 AND public_code = $2`,
             [deviceId, publicCode]
         );
@@ -1252,7 +1276,8 @@ async function getRecentInteractions(deviceId, limit = 20) {
                     contact_avatar AS avatar, added_at AS "addedAt", card_snapshot AS "cardSnapshot",
                     exchange_type AS "exchangeType", last_refreshed AS "lastRefreshed",
                     notes, pinned, category, interaction_count AS "interactionCount",
-                    blocked, last_interacted_at AS "lastInteractedAt"
+                    blocked, last_interacted_at AS "lastInteractedAt",
+                    is_friend AS "isFriend"
              FROM agent_card_holder WHERE device_id = $1
              AND last_interacted_at IS NOT NULL
              AND (blocked = false OR blocked IS NULL)
@@ -1280,7 +1305,7 @@ async function upsertRecentInteraction(deviceId, publicCode, { name, character, 
                 card_snapshot = COALESCE(EXCLUDED.card_snapshot, agent_card_holder.card_snapshot),
                 last_interacted_at = EXCLUDED.last_interacted_at,
                 interaction_count = agent_card_holder.interaction_count + 1
-             RETURNING public_code AS "publicCode", blocked`,
+             RETURNING public_code AS "publicCode", blocked, is_friend AS "isFriend"`,
             [deviceId, publicCode, name || null, character || null, avatar || null, now,
              cardSnapshot ? JSON.stringify(cardSnapshot) : null]
         );
@@ -1302,6 +1327,168 @@ async function isBlocked(deviceId, publicCode) {
     } catch (err) {
         console.error('[DB] Failed to check blocked status:', err.message);
         return false;
+    }
+}
+
+async function isFriend(deviceId, publicCode) {
+    if (!pool) return false;
+    try {
+        const result = await pool.query(
+            `SELECT is_friend FROM agent_card_holder WHERE device_id = $1 AND public_code = $2`,
+            [deviceId, publicCode]
+        );
+        return result.rows.length > 0 && result.rows[0].is_friend === true;
+    } catch (err) {
+        console.error('[DB] Failed to check friend status:', err.message);
+        return false;
+    }
+}
+
+async function setFriendStatus(deviceId, publicCode, isFriendVal) {
+    if (!pool) return false;
+    try {
+        await pool.query(
+            `UPDATE agent_card_holder SET is_friend = $3 WHERE device_id = $1 AND public_code = $2`,
+            [deviceId, publicCode, isFriendVal]
+        );
+        return true;
+    } catch (err) {
+        console.error('[DB] Failed to set friend status:', err.message);
+        return false;
+    }
+}
+
+// ── Friend Requests ──
+
+async function createFriendRequest(fromDeviceId, fromPublicCode, toPublicCode, toDeviceId, message) {
+    if (!pool) return null;
+    try {
+        const result = await pool.query(
+            `INSERT INTO friend_requests (from_device_id, from_public_code, to_public_code, to_device_id, status, message, created_at)
+             VALUES ($1, $2, $3, $4, 'pending', $5, $6)
+             ON CONFLICT (from_device_id, to_public_code) DO UPDATE SET
+                status = 'pending', message = EXCLUDED.message, created_at = EXCLUDED.created_at, responded_at = NULL
+             RETURNING id, from_device_id AS "fromDeviceId", from_public_code AS "fromPublicCode",
+                to_public_code AS "toPublicCode", to_device_id AS "toDeviceId",
+                status, message, created_at AS "createdAt"`,
+            [fromDeviceId, fromPublicCode, toPublicCode, toDeviceId, message || null, Date.now()]
+        );
+        return result.rows[0] || null;
+    } catch (err) {
+        if (err.code === '23505') return null; // duplicate
+        console.error('[DB] Failed to create friend request:', err.message);
+        return null;
+    }
+}
+
+async function getFriendRequests(deviceId, direction, status) {
+    if (!pool) return [];
+    try {
+        let sql, params;
+        if (direction === 'received') {
+            sql = `SELECT id, from_device_id AS "fromDeviceId", from_public_code AS "fromPublicCode",
+                    to_public_code AS "toPublicCode", to_device_id AS "toDeviceId",
+                    status, message, created_at AS "createdAt", responded_at AS "respondedAt"
+                   FROM friend_requests WHERE to_device_id = $1`;
+            params = [deviceId];
+        } else {
+            sql = `SELECT id, from_device_id AS "fromDeviceId", from_public_code AS "fromPublicCode",
+                    to_public_code AS "toPublicCode", to_device_id AS "toDeviceId",
+                    status, message, created_at AS "createdAt", responded_at AS "respondedAt"
+                   FROM friend_requests WHERE from_device_id = $1`;
+            params = [deviceId];
+        }
+        if (status) {
+            sql += ` AND status = $2`;
+            params.push(status);
+        }
+        sql += ` ORDER BY created_at DESC LIMIT 100`;
+        const result = await pool.query(sql, params);
+        return result.rows;
+    } catch (err) {
+        console.error('[DB] Failed to get friend requests:', err.message);
+        return [];
+    }
+}
+
+async function getFriendRequestById(requestId) {
+    if (!pool) return null;
+    try {
+        const result = await pool.query(
+            `SELECT id, from_device_id AS "fromDeviceId", from_public_code AS "fromPublicCode",
+                    to_public_code AS "toPublicCode", to_device_id AS "toDeviceId",
+                    status, message, created_at AS "createdAt", responded_at AS "respondedAt"
+             FROM friend_requests WHERE id = $1`,
+            [requestId]
+        );
+        return result.rows[0] || null;
+    } catch (err) {
+        console.error('[DB] Failed to get friend request:', err.message);
+        return null;
+    }
+}
+
+async function updateFriendRequestStatus(requestId, newStatus) {
+    if (!pool) return null;
+    try {
+        const result = await pool.query(
+            `UPDATE friend_requests SET status = $2, responded_at = $3 WHERE id = $1
+             RETURNING id, from_device_id AS "fromDeviceId", from_public_code AS "fromPublicCode",
+                to_public_code AS "toPublicCode", to_device_id AS "toDeviceId",
+                status, message, created_at AS "createdAt", responded_at AS "respondedAt"`,
+            [requestId, newStatus, Date.now()]
+        );
+        return result.rows[0] || null;
+    } catch (err) {
+        console.error('[DB] Failed to update friend request:', err.message);
+        return null;
+    }
+}
+
+async function deleteFriendRequest(requestId) {
+    if (!pool) return false;
+    try {
+        await pool.query(`DELETE FROM friend_requests WHERE id = $1`, [requestId]);
+        return true;
+    } catch (err) {
+        console.error('[DB] Failed to delete friend request:', err.message);
+        return false;
+    }
+}
+
+async function getFriends(deviceId) {
+    if (!pool) return [];
+    try {
+        const result = await pool.query(
+            `SELECT public_code AS "publicCode", contact_name AS name, contact_character AS character,
+                    contact_avatar AS avatar, added_at AS "addedAt", card_snapshot AS "cardSnapshot",
+                    exchange_type AS "exchangeType", last_refreshed AS "lastRefreshed",
+                    notes, pinned, category, interaction_count AS "interactionCount",
+                    blocked, last_interacted_at AS "lastInteractedAt",
+                    is_friend AS "isFriend"
+             FROM agent_card_holder WHERE device_id = $1 AND is_friend = true
+             AND (blocked = false OR blocked IS NULL)
+             ORDER BY last_interacted_at DESC NULLS LAST, contact_name ASC`,
+            [deviceId]
+        );
+        return result.rows;
+    } catch (err) {
+        console.error('[DB] Failed to get friends:', err.message);
+        return [];
+    }
+}
+
+async function getPendingFriendRequestCount(deviceId) {
+    if (!pool) return 0;
+    try {
+        const result = await pool.query(
+            `SELECT COUNT(*) AS count FROM friend_requests WHERE to_device_id = $1 AND status = 'pending'`,
+            [deviceId]
+        );
+        return parseInt(result.rows[0].count);
+    } catch (err) {
+        console.error('[DB] Failed to count pending friend requests:', err.message);
+        return 0;
     }
 }
 
@@ -1945,6 +2132,16 @@ module.exports = {
     getRecentInteractions,
     upsertRecentInteraction,
     isBlocked,
+    isFriend,
+    setFriendStatus,
+    // Friend Requests
+    createFriendRequest,
+    getFriendRequests,
+    getFriendRequestById,
+    updateFriendRequestStatus,
+    deleteFriendRequest,
+    getFriends,
+    getPendingFriendRequestCount,
     // Legacy aliases (backward compat)
     getContacts,
     addContact,
