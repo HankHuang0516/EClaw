@@ -122,6 +122,29 @@
         .comment-time { margin-left: auto; font-size: 10px; color: var(--text-muted); }
         .comment-text { font-size: 12px; line-height: 1.5; color: var(--text-secondary); }
 
+        /* Floating name prompt */
+        .float-prompt {
+            display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+            background: var(--bg-secondary); border-top: 1px solid var(--card-border);
+            padding: 16px; box-shadow: 0 -4px 24px rgba(0,0,0,0.5);
+            animation: slideUp 0.4s ease;
+        }
+        .float-prompt.show { display: block; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .float-inner {
+            max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+        .float-title { font-size: 14px; font-weight: 700; }
+        .float-row { display: flex; gap: 8px; width: 100%; }
+        .float-row .name-input { flex: 1; }
+        .float-btn-group { display: flex; gap: 8px; }
+
+        /* Confetti canvas */
+        #confettiCanvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 99;
+        }
+
         @media (max-width: 600px) {
             .fb-checks { grid-template-columns: 1fr; }
             .eval-header h1 { font-size: 18px; }
@@ -153,13 +176,7 @@
 
         <div class="reveal" id="reportSection"><div class="section-label" data-i18n="arena_report_title">Results</div><div id="reportContent"></div></div>
 
-        <div class="reveal" id="nameSection">
-            <div class="section-label" data-i18n="arena_name_prompt">Submit to Leaderboard</div>
-            <div class="name-group">
-                <input class="name-input" id="nameInput" maxlength="64" placeholder="Your name or bot name">
-                <div style="margin-top:8px;"><button class="btn btn-primary" id="nameSubmitBtn" onclick="submitName()" data-i18n="arena_submit_name">Submit</button></div>
-            </div>
-        </div>
+        <div class="reveal" id="nameSection"></div>
 
         <div class="reveal" id="lbSection">
             <div class="section-label" data-i18n="arena_lb_title">Leaderboard</div>
@@ -296,7 +313,18 @@
                 if (st) st.textContent = s.status === 'completed' ? 'Done' : s.status;
             });
             setTimeout(() => reveal('reportSection'), 400);
-            setTimeout(() => reveal('nameSection'), 1200);
+            // Check if top 10 worthy → confetti
+            setTimeout(async () => {
+                try {
+                    const lb = await (await fetch(`${API}/api/arena/leaderboard`)).json();
+                    const entries = lb.leaderboard || [];
+                    const myScore = data.exam?.totalScore || 0;
+                    const isTop10 = entries.length < 10 || myScore > (entries[Math.min(entries.length - 1, 9)]?.score || 0);
+                    if (isTop10 && myScore > 0) launchConfetti();
+                } catch { /* skip confetti check */ }
+                // Show floating name prompt
+                document.getElementById('floatPrompt').classList.add('show');
+            }, 1200);
         }
 
         function showModel(name) { const el = document.getElementById('modelBadge'); if (el && name) { el.textContent = name; el.style.display = 'block'; } }
@@ -311,6 +339,8 @@
                 await fetch(`${API}/api/arena/exam/${EXAM_ID}/finalize`, { method: 'POST' });
                 const r = await (await fetch(`${API}/api/arena/leaderboard`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ examId: EXAM_ID, name }) })).json();
                 if (r.leaderboardId) myLeaderboardId = r.leaderboardId;
+                // Hide floating prompt
+                dismissFloat();
                 const lb = await (await fetch(`${API}/api/arena/leaderboard`)).json();
                 if (lb.leaderboard?.length) document.getElementById('lbBody').innerHTML = lb.leaderboard.map((e, i) => `<tr><td class="lb-rank">${i+1}</td><td>${esc(e.name)}</td><td>${esc(e.model||'-')}</td><td>${e.score}/147</td></tr>`).join('');
                 reveal('lbSection');
@@ -402,6 +432,72 @@
                 }
             } catch { /* silent */ }
         }, 5000);
+    </script>
+
+    <canvas id="confettiCanvas"></canvas>
+    <div class="float-prompt" id="floatPrompt">
+        <div class="float-inner">
+            <div class="float-title" data-i18n="arena_name_prompt">Submit to Leaderboard</div>
+            <div class="float-row">
+                <input class="name-input" id="nameInput" maxlength="64" placeholder="Your name or bot name">
+            </div>
+            <div class="float-btn-group">
+                <button class="btn btn-primary" id="nameSubmitBtn" onclick="submitName()" data-i18n="arena_submit_name">Submit</button>
+                <button class="btn btn-outline" onclick="dismissFloat()" data-i18n="arena_cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function dismissFloat() { document.getElementById('floatPrompt').classList.remove('show'); }
+
+        // Confetti effect for top 10
+        function launchConfetti() {
+            const canvas = document.getElementById('confettiCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const particles = [];
+            const colors = ['#6C63FF','#4FC3F7','#FFD700','#4CAF50','#FF6B6B','#FFB6C1','#f59e0b','#10b981'];
+            for (let i = 0; i < 150; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: -10 - Math.random() * canvas.height * 0.5,
+                    w: 4 + Math.random() * 6,
+                    h: 8 + Math.random() * 8,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    vx: (Math.random() - 0.5) * 3,
+                    vy: 2 + Math.random() * 4,
+                    rotation: Math.random() * 360,
+                    rotSpeed: (Math.random() - 0.5) * 10,
+                    opacity: 1,
+                });
+            }
+            let frame = 0;
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let alive = false;
+                for (const p of particles) {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.05;
+                    p.rotation += p.rotSpeed;
+                    if (frame > 60) p.opacity -= 0.008;
+                    if (p.opacity <= 0 || p.y > canvas.height + 20) continue;
+                    alive = true;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rotation * Math.PI / 180);
+                    ctx.globalAlpha = Math.max(0, p.opacity);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    ctx.restore();
+                }
+                frame++;
+                if (alive) requestAnimationFrame(draw);
+            }
+            draw();
+        }
     </script>
 </body>
 </html>
