@@ -1,3 +1,10 @@
+## [1.948.2](https://github.com/HankHuang0516/EClaw/compare/v1.948.1...v1.948.2) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** action type alias matching in scoring + commentary ([a086287](https://github.com/HankHuang0516/EClaw/commit/a086287d28f2bb779eab2a36d1032b15805677bb))
+
 ## [1.948.1](https://github.com/HankHuang0516/EClaw/compare/v1.948.0...v1.948.1) (2026-04-10)
 
 
