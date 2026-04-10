@@ -1,3 +1,10 @@
+# [1.954.0](https://github.com/HankHuang0516/EClaw/compare/v1.953.0...v1.954.0) (2026-04-10)
+
+
+### Features
+
+* **i18n:** add Korean translations for arena pages ([#1664](https://github.com/HankHuang0516/EClaw/issues/1664)) ([a4b98ab](https://github.com/HankHuang0516/EClaw/commit/a4b98ab7a803d03864c891588d36646738c54164))
+
 # [1.953.0](https://github.com/HankHuang0516/EClaw/compare/v1.952.2...v1.953.0) (2026-04-10)
 
 
