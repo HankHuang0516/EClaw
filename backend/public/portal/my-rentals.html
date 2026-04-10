@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title data-i18n="mr_title">EClawbot - My Rentals</title>
+    <link rel="icon" type="image/png" href="assets/favicon-32.png">
+    <link rel="stylesheet" href="shared/style.css">
+    <style>
+        .mr-tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--card-border); }
+        .mr-tab { padding: 10px 18px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-secondary); font-size: 13px; font-weight: 600; cursor: pointer; }
+        .mr-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+        .mr-section { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; }
+        .mr-contract { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .mr-contract-info { flex: 1; min-width: 200px; }
+        .mr-contract-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+        .mr-contract-meta { font-size: 12px; color: var(--text-secondary); }
+        .mr-status { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+        .mr-status.active { background: #10b981; color: #fff; }
+        .mr-status.ended { background: var(--input-bg); color: var(--text-secondary); border: 1px solid var(--card-border); }
+        .mr-status.suspended { background: #f59e0b; color: #000; }
+        .mr-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .mr-btn { padding: 6px 14px; border: 1px solid var(--card-border); border-radius: var(--radius-sm); background: var(--input-bg); color: var(--text); font-size: 12px; cursor: pointer; }
+        .mr-btn:hover { border-color: var(--primary); }
+        .mr-btn.danger { border-color: #ef4444; color: #ef4444; }
+        .mr-btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        .mr-empty { text-align: center; padding: 40px; color: var(--text-secondary); font-size: 13px; }
+
+        .mr-review-form { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--card-border); }
+        .mr-stars { font-size: 24px; cursor: pointer; letter-spacing: 2px; }
+        .mr-stars span { color: var(--card-border); transition: color 0.1s; }
+        .mr-stars span.filled { color: #f59e0b; }
+    </style>
+</head>
+<body>
+    <div id="navContainer"></div>
+
+    <main class="container" style="max-width: 760px; margin: 24px auto; padding: 0 16px;">
+        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;" data-i18n="mr_heading">My Rentals</h2>
+
+        <div class="mr-tabs">
+            <button class="mr-tab active" onclick="switchTab('renter')" id="tabRenter" data-i18n="mr_tab_renting">Renting</button>
+            <button class="mr-tab" onclick="switchTab('owner')" id="tabOwner" data-i18n="mr_tab_leasing">Leasing Out</button>
+            <button class="mr-tab" onclick="switchTab('disputes')" id="tabDisputes" data-i18n="mr_tab_disputes">Disputes</button>
+        </div>
+
+        <div id="mrContent">
+            <div class="mr-empty" data-i18n="mr_loading">Loading...</div>
+        </div>
+    </main>
+
+    <div id="footerContainer"></div>
+    <script src="shared/api.js"></script>
+    <script src="shared/nav.js"></script>
+    <script src="shared/auth.js"></script>
+    <script src="../shared/telemetry.js"></script>
+    <script src="../shared/i18n.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="shared/socket.js"></script>
+    <script src="shared/footer.js"></script>
+    <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
+    <script src="shared/ai-chat.js"></script>
+
+    <script>
+        let currentTab = 'renter';
+        function tt(k, fb) { return (typeof i18n !== 'undefined' ? i18n.t(k) : null) || fb; }
+        function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.mr-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tab === 'renter' ? 'tabRenter' : tab === 'owner' ? 'tabOwner' : 'tabDisputes').classList.add('active');
+            loadTab();
+        }
+
+        async function loadTab() {
+            const wrap = document.getElementById('mrContent');
+            wrap.innerHTML = `<div class="mr-empty">${tt('mr_loading', 'Loading...')}</div>`;
+            try {
+                if (currentTab === 'disputes') {
+                    const data = await apiCall('GET', '/api/rental/my-disputes?limit=50');
+                    renderDisputes(data?.disputes || []);
+                } else {
+                    const data = await apiCall('GET', `/api/rental/my-contracts?role=${currentTab}&limit=50`);
+                    renderContracts(data?.contracts || []);
+                }
+            } catch (err) {
+                wrap.innerHTML = `<div class="mr-empty">${tt('mr_load_error', 'Failed to load')}</div>`;
+            }
+        }
+
+        function statusClass(s) {
+            if (s === 'active' || s === 'reserved') return 'active';
+            if (s.startsWith('suspended')) return 'suspended';
+            return 'ended';
+        }
+
+        function renderContracts(contracts) {
+            const wrap = document.getElementById('mrContent');
+            if (contracts.length === 0) {
+                wrap.innerHTML = `<div class="mr-empty">${tt('mr_no_contracts', 'No contracts yet')}</div>`;
+                return;
+            }
+            wrap.innerHTML = contracts.map(c => {
+                const rate = (c.rate_mli_per_ktoken_snapshot / 1000).toFixed(1);
+                const tokensK = (c.tokens_consumed / 1000).toFixed(1);
+                const charged = (c.ecoin_charged_mli / 1000).toFixed(1);
+                const isActive = c.status === 'active' || c.status === 'reserved';
+                const isEnded = c.status.startsWith('ended');
+                const startDate = c.started_at ? new Date(c.started_at).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—';
+                const endDate = c.actual_ended_at ? new Date(c.actual_ended_at).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : (c.ends_at ? new Date(c.ends_at).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—');
+
+                let actions = '';
+                if (isActive && currentTab === 'renter') {
+                    actions = `
+                        <button class="mr-btn danger" onclick="endContract('${c.id}','ended_early_by_renter')">${tt('mr_end_early', 'End Early')}</button>
+                    `;
+                }
+                if (isEnded && currentTab === 'renter') {
+                    actions = `
+                        <button class="mr-btn primary" onclick="showReviewForm('${c.id}')">${tt('mr_review', 'Review')}</button>
+                        <button class="mr-btn" onclick="openDispute('${c.id}')">${tt('mr_dispute', 'Dispute')}</button>
+                    `;
+                }
+
+                return `<div class="mr-section" id="contract-${c.id}">
+                    <div class="mr-contract">
+                        <div class="mr-contract-info">
+                            <div class="mr-contract-title">${tt('mr_contract', 'Contract')} ${c.id.slice(0, 8)}…</div>
+                            <div class="mr-contract-meta">${rate} e幣/1K · ${tokensK}K tokens · ${charged} e幣 ${tt('mr_charged', 'charged')}</div>
+                            <div class="mr-contract-meta">${startDate} → ${endDate}</div>
+                        </div>
+                        <span class="mr-status ${statusClass(c.status)}">${c.status}</span>
+                        <div class="mr-actions">${actions}</div>
+                    </div>
+                    <div id="review-form-${c.id}"></div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderDisputes(disputes) {
+            const wrap = document.getElementById('mrContent');
+            if (disputes.length === 0) {
+                wrap.innerHTML = `<div class="mr-empty">${tt('mr_no_disputes', 'No disputes filed')}</div>`;
+                return;
+            }
+            wrap.innerHTML = disputes.map(d => {
+                const date = new Date(d.created_at).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+                return `<div class="mr-section">
+                    <div class="mr-contract">
+                        <div class="mr-contract-info">
+                            <div class="mr-contract-title">${esc(d.type)} — ${d.id.slice(0, 8)}…</div>
+                            <div class="mr-contract-meta">${tt('mr_filed', 'Filed')}: ${date}</div>
+                        </div>
+                        <span class="mr-status ${d.status === 'open' ? 'active' : 'ended'}">${d.status}</span>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function endContract(contractId, reason) {
+            if (!confirm(tt('mr_end_confirm', 'Are you sure? Early termination forfeits 50% of your deposit.'))) return;
+            try {
+                await apiCall('POST', `/api/rental/contract/${contractId}/end`, { endReason: reason });
+                loadTab();
+            } catch (err) { alert(err.message || 'Failed'); }
+        }
+
+        function showReviewForm(contractId) {
+            const wrap = document.getElementById(`review-form-${contractId}`);
+            if (wrap.innerHTML) { wrap.innerHTML = ''; return; }
+            wrap.innerHTML = `<div class="mr-review-form">
+                <div class="mr-stars" id="stars-${contractId}">
+                    ${[1,2,3,4,5].map(n => `<span onclick="setRating('${contractId}',${n})" data-n="${n}">☆</span>`).join('')}
+                </div>
+                <textarea id="comment-${contractId}" placeholder="${tt('mr_review_placeholder', 'Optional comment...')}" style="width:100%;margin-top:8px;padding:8px;border:1px solid var(--card-border);border-radius:var(--radius-sm);background:var(--input-bg);color:var(--text);font-size:13px;resize:vertical;min-height:60px;"></textarea>
+                <button class="mr-btn primary" style="margin-top:8px;" onclick="submitReview('${contractId}')">${tt('mr_submit_review', 'Submit Review')}</button>
+            </div>`;
+        }
+
+        let selectedRatings = {};
+        function setRating(contractId, n) {
+            selectedRatings[contractId] = n;
+            document.querySelectorAll(`#stars-${contractId} span`).forEach(s => {
+                s.classList.toggle('filled', parseInt(s.dataset.n) <= n);
+                s.textContent = parseInt(s.dataset.n) <= n ? '★' : '☆';
+            });
+        }
+
+        async function submitReview(contractId) {
+            const rating = selectedRatings[contractId];
+            if (!rating) { alert(tt('mr_select_rating', 'Please select a rating')); return; }
+            const comment = document.getElementById(`comment-${contractId}`).value;
+            try {
+                await apiCall('POST', `/api/rental/contract/${contractId}/review`, { rating, comment });
+                alert(tt('mr_review_submitted', 'Review submitted!'));
+                loadTab();
+            } catch (err) { alert(err.message || 'Failed'); }
+        }
+
+        async function openDispute(contractId) {
+            const type = prompt(tt('mr_dispute_type', 'Dispute type:\n1. bot_crash\n2. bot_quality\n3. capability_mismatch\n4. financial\n\nEnter type:'));
+            if (!type) return;
+            const evidence = prompt(tt('mr_dispute_evidence', 'Describe the issue (optional):'));
+            try {
+                await apiCall('POST', `/api/rental/contract/${contractId}/dispute`, { type, evidence });
+                alert(tt('mr_dispute_filed', 'Dispute filed!'));
+                switchTab('disputes');
+            } catch (err) { alert(err.message || 'Failed'); }
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            renderNav('settings');
+            if (typeof renderFooter === 'function') renderFooter();
+            if (typeof i18n !== 'undefined') i18n.apply();
+            const user = await checkAuth();
+            if (!user) return;
+            initPortalSocket();
+            loadTab();
+        });
+    </script>
+</body>
+</html>

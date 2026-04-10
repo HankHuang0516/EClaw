@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title data-i18n="inv_title">EClawbot - Invite Friends</title>
+    <link rel="icon" type="image/png" href="assets/favicon-32.png">
+    <link rel="stylesheet" href="shared/style.css">
+    <style>
+        .inv-hero { background: linear-gradient(135deg, #1e3a8a 0%, #6d28d9 100%); color: #fff; border-radius: var(--radius); padding: 32px; text-align: center; margin-bottom: 20px; }
+        .inv-hero h2 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+        .inv-hero p { opacity: 0.9; font-size: 13px; }
+
+        .inv-section { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+        .inv-section h3 { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+
+        .inv-code-box { display: flex; align-items: center; gap: 8px; }
+        .inv-code { flex: 1; padding: 14px; font-size: 24px; font-weight: 800; letter-spacing: 4px; text-align: center; background: var(--input-bg); border: 2px dashed var(--card-border); border-radius: var(--radius-sm); color: var(--primary); font-family: monospace; }
+        .inv-copy-btn { padding: 14px 20px; border: none; border-radius: var(--radius-sm); background: var(--primary); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .inv-copy-btn:hover { opacity: 0.9; }
+
+        .inv-share-url { margin-top: 10px; padding: 10px; font-size: 12px; color: var(--text-secondary); background: var(--input-bg); border-radius: var(--radius-sm); word-break: break-all; }
+
+        .inv-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+        .inv-stat { flex: 1; min-width: 120px; padding: 16px; border: 1px solid var(--card-border); border-radius: var(--radius-sm); text-align: center; }
+        .inv-stat-value { font-size: 24px; font-weight: 800; }
+        .inv-stat-label { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+
+        .inv-rewards { margin-top: 12px; }
+        .inv-reward-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--card-border); font-size: 13px; }
+        .inv-reward-label { color: var(--text-secondary); }
+        .inv-reward-value { font-weight: 700; color: #10b981; }
+
+        .inv-redeem { margin-top: 12px; display: flex; gap: 8px; }
+        .inv-redeem input { flex: 1; padding: 10px; border: 1px solid var(--card-border); border-radius: var(--radius-sm); background: var(--input-bg); color: var(--text); font-size: 14px; text-transform: uppercase; letter-spacing: 2px; }
+        .inv-redeem button { padding: 10px 18px; border: none; border-radius: var(--radius-sm); background: var(--primary); color: #fff; font-weight: 700; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="navContainer"></div>
+
+    <main class="container" style="max-width: 600px; margin: 24px auto; padding: 0 16px;">
+        <div class="inv-hero">
+            <h2 data-i18n="inv_heading">Invite Friends, Earn e-coin</h2>
+            <p data-i18n="inv_desc">Share your invite code. You earn 500 e幣, your friend gets 100 e幣.</p>
+        </div>
+
+        <!-- My Code -->
+        <div class="inv-section">
+            <h3 data-i18n="inv_my_code">My Invite Code</h3>
+            <div class="inv-code-box">
+                <div class="inv-code" id="invCode">------</div>
+                <button class="inv-copy-btn" onclick="copyCode()" data-i18n="inv_copy">Copy</button>
+            </div>
+            <div class="inv-share-url" id="invShareUrl"></div>
+        </div>
+
+        <!-- Stats -->
+        <div class="inv-section">
+            <h3 data-i18n="inv_stats">Referral Stats</h3>
+            <div class="inv-stats">
+                <div class="inv-stat"><div class="inv-stat-value" id="invTotal">0</div><div class="inv-stat-label" data-i18n="inv_invited">Friends Invited</div></div>
+                <div class="inv-stat"><div class="inv-stat-value" id="invEarned">0</div><div class="inv-stat-label" data-i18n="inv_earned">e幣 Earned</div></div>
+            </div>
+        </div>
+
+        <!-- Rewards info -->
+        <div class="inv-section">
+            <h3 data-i18n="inv_rewards_title">Reward Structure</h3>
+            <div class="inv-rewards">
+                <div class="inv-reward-row"><span class="inv-reward-label" data-i18n="inv_you_get">You get</span><span class="inv-reward-value">+500 e幣</span></div>
+                <div class="inv-reward-row"><span class="inv-reward-label" data-i18n="inv_friend_gets">Friend gets</span><span class="inv-reward-value">+100 e幣</span></div>
+                <div class="inv-reward-row"><span class="inv-reward-label" data-i18n="inv_first_topup">Friend's first top-up bonus (you)</span><span class="inv-reward-value">+500 e幣</span></div>
+            </div>
+        </div>
+
+        <!-- Redeem a code -->
+        <div class="inv-section">
+            <h3 data-i18n="inv_redeem_title">Have an Invite Code?</h3>
+            <div class="inv-redeem">
+                <input id="redeemInput" placeholder="ABCDEF" maxlength="8">
+                <button onclick="redeemCode()" data-i18n="inv_redeem_btn">Redeem</button>
+            </div>
+        </div>
+    </main>
+
+    <div id="footerContainer"></div>
+    <script src="shared/api.js"></script>
+    <script src="shared/nav.js"></script>
+    <script src="shared/auth.js"></script>
+    <script src="../shared/telemetry.js"></script>
+    <script src="../shared/i18n.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="shared/socket.js"></script>
+    <script src="shared/footer.js"></script>
+    <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
+    <script src="shared/ai-chat.js"></script>
+
+    <script>
+        function tt(k, fb) { return (typeof i18n !== 'undefined' ? i18n.t(k) : null) || fb; }
+
+        async function loadCode() {
+            try {
+                const data = await apiCall('GET', '/api/invite/my-code');
+                if (data?.success) {
+                    document.getElementById('invCode').textContent = data.code;
+                    document.getElementById('invShareUrl').textContent = data.shareUrl || `https://eclawbot.com/invite/${data.code}`;
+                }
+            } catch { /* not logged in */ }
+        }
+
+        async function loadStats() {
+            try {
+                const data = await apiCall('GET', '/api/invite/stats');
+                if (data?.success) {
+                    document.getElementById('invTotal').textContent = data.totalInvited || 0;
+                    document.getElementById('invEarned').textContent = ((parseInt(data.totalEarnedMli, 10) || 0) / 1000).toLocaleString();
+                }
+            } catch { /* ignore */ }
+        }
+
+        function copyCode() {
+            const code = document.getElementById('invCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = document.querySelector('.inv-copy-btn');
+                btn.textContent = '✓';
+                setTimeout(() => { btn.textContent = tt('inv_copy', 'Copy'); }, 1500);
+            });
+        }
+
+        async function redeemCode() {
+            const code = document.getElementById('redeemInput').value.trim();
+            if (!code) return;
+            try {
+                const data = await apiCall('POST', '/api/invite/redeem', { code });
+                if (data?.success) {
+                    alert(tt('inv_redeem_success', `Code redeemed! You received ${data.inviteeRewardEcoin} e幣.`));
+                    loadStats();
+                } else {
+                    alert(data?.error || 'Failed');
+                }
+            } catch (err) { alert(err.message || 'Failed'); }
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            renderNav('settings');
+            if (typeof renderFooter === 'function') renderFooter();
+            if (typeof i18n !== 'undefined') i18n.apply();
+            const user = await checkAuth();
+            if (!user) return;
+            initPortalSocket();
+            loadCode();
+            loadStats();
+        });
+    </script>
+</body>
+</html>
