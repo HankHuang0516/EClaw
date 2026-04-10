@@ -69,7 +69,79 @@ function generateToken(bytes = 8) {
 }
 
 // ============================================
-// Challenge config generators (pure functions)
+// Adaptive question weighting — harder questions appear more often
+// ============================================
+
+let _difficultyCache = null;
+let _difficultyCacheAt = 0;
+const DIFFICULTY_CACHE_TTL = 5 * 60_000;
+
+/**
+ * Query historical failure rates per test_type + question identifier.
+ * Returns Map<string, number[]> where key = test_type, value = array
+ * of failure weights per pool index (higher = more bots got it wrong).
+ */
+async function getDifficultyWeights() {
+    if (_difficultyCache && Date.now() - _difficultyCacheAt < DIFFICULTY_CACHE_TTL) {
+        return _difficultyCache;
+    }
+    try {
+        // Get average score ratio per challenge_config content for pool-based tests
+        const res = await pool.query(`
+            SELECT test_type,
+                   challenge_config->>'title' AS q_key,
+                   challenge_config->>'question' AS q_question,
+                   challenge_config->>'text' AS q_text,
+                   challenge_config->>'imageFile' AS q_image,
+                   challenge_config->>'description' AS q_desc,
+                   COUNT(*) AS attempts,
+                   AVG(CASE WHEN score > 0 THEN 1.0 ELSE 0.0 END) AS pass_rate
+            FROM arena_sessions
+            WHERE status = 'completed'
+            GROUP BY test_type, q_key, q_question, q_text, q_image, q_desc
+            HAVING COUNT(*) >= 2
+        `);
+        const weights = {};
+        for (const row of res.rows) {
+            if (!weights[row.test_type]) weights[row.test_type] = {};
+            // Use whichever identifier is non-null as the question key
+            const key = row.q_key || row.q_question || row.q_text || row.q_image || row.q_desc || 'unknown';
+            // Failure weight: questions with lower pass rates get higher weight
+            // Range: 1.0 (always passed) → 3.0 (never passed)
+            weights[row.test_type][key] = 1.0 + 2.0 * (1.0 - parseFloat(row.pass_rate));
+        }
+        _difficultyCache = weights;
+        _difficultyCacheAt = Date.now();
+        return weights;
+    } catch (err) {
+        console.warn('[Arena] difficulty query failed:', err.message);
+        return {};
+    }
+}
+
+/**
+ * Pick from an array using difficulty-weighted random selection.
+ * @param {Array} items — pool of items
+ * @param {function} keyFn — extracts the lookup key from an item
+ * @param {object} weights — { key: weight } from getDifficultyWeights
+ * @returns item from the pool
+ */
+function weightedPick(items, keyFn, weights) {
+    if (!weights || Object.keys(weights).length === 0) {
+        return items[Math.floor(Math.random() * items.length)];
+    }
+    const w = items.map(item => weights[keyFn(item)] || 1.0);
+    const total = w.reduce((s, v) => s + v, 0);
+    let r = Math.random() * total;
+    for (let i = 0; i < items.length; i++) {
+        r -= w[i];
+        if (r <= 0) return items[i];
+    }
+    return items[items.length - 1];
+}
+
+// ============================================
+// Challenge config generators
 // ============================================
 
 const VISION_IMAGES = [
@@ -101,9 +173,10 @@ const VISION_IMAGES = [
     { file: null, description: 'A gray gear/cog wheel icon', keywords: ['gear', 'cog', 'gray'] },
 ];
 
-function generateVisionChallenge() {
-    const img = VISION_IMAGES[Math.floor(Math.random() * VISION_IMAGES.length)];
-    return { imageFile: img.file, expectedKeywords: img.keywords };
+function generateVisionChallenge(weights) {
+    const w = weights && weights['arena_vision'] || {};
+    const img = weightedPick(VISION_IMAGES, v => v.file || v.description || '', w);
+    return { imageFile: img.file, description: img.description || null, expectedKeywords: img.keywords };
 }
 
 function generateButtonClickChallenge() {
@@ -247,8 +320,9 @@ const CODING_PROBLEMS = [
       testCases: [{ input: '[[1,2,3],[4,5,6],[7,8,9]]', expected: '[1,2,3,6,9,8,7,4,5]' }] },
 ];
 
-function generateCodingChallenge() {
-    const problem = CODING_PROBLEMS[Math.floor(Math.random() * CODING_PROBLEMS.length)];
+function generateCodingChallenge(weights) {
+    const w = weights && weights['arena_coding'] || {};
+    const problem = weightedPick(CODING_PROBLEMS, p => p.title, w);
     return { ...problem };
 }
 
@@ -274,8 +348,9 @@ const RESPONSE_QUESTIONS = [
     { question: 'What is the largest ocean on Earth?', expectedKeywords: ['pacific'] },
     { question: 'What is 13 × 17?', expectedKeywords: ['221'] },
 ];
-function generateResponseTimeChallenge() {
-    return RESPONSE_QUESTIONS[Math.floor(Math.random() * RESPONSE_QUESTIONS.length)];
+function generateResponseTimeChallenge(weights) {
+    const w = weights && weights['arena_response_time'] || {};
+    return weightedPick(RESPONSE_QUESTIONS, q => q.question, w);
 }
 
 function generateMemoryChallenge(previousSessions) {
@@ -331,8 +406,9 @@ const TTS_PHRASES = [
     { text: 'The library closes at nine pm on weekdays', keywords: ['library', 'closes', 'nine', 'weekdays'] },
     { text: 'Autonomous vehicles use sensors cameras and artificial intelligence', keywords: ['autonomous', 'vehicles', 'sensors', 'cameras', 'intelligence'] },
 ];
-function generateTtsChallenge() {
-    return TTS_PHRASES[Math.floor(Math.random() * TTS_PHRASES.length)];
+function generateTtsChallenge(weights) {
+    const w = weights && weights['arena_tts'] || {};
+    return weightedPick(TTS_PHRASES, p => p.text, w);
 }
 
 const CHALLENGE_GENERATORS = {
@@ -779,11 +855,16 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
             );
             const exam = examRes.rows[0];
 
+            // Fetch adaptive difficulty weights (cached 5min)
+            const diffWeights = await getDifficultyWeights();
+
             // Generate all configs in memory first (memory challenge depends on earlier configs)
             const sessionConfigs = [];
             for (let i = 0; i < TEST_TYPES.length; i++) {
                 const tt = TEST_TYPES[i];
-                const config = CHALLENGE_GENERATORS[tt.id](i === 9 ? sessionConfigs : undefined);
+                const gen = CHALLENGE_GENERATORS[tt.id];
+                // Pass weights to pool-based generators; memory test gets previous sessions
+                const config = i === 9 ? gen(sessionConfigs) : gen(diffWeights);
                 sessionConfigs.push({ ...config, weight: tt.weight });
             }
 
@@ -1187,6 +1268,16 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
                 [limit]
             );
             res.json({ success: true, feedback: result.rows });
+        } catch (err) {
+            res.status(500).json({ success: false, error: 'internal_error' });
+        }
+    });
+
+    // GET /api/arena/difficulty — view adaptive difficulty weights
+    router.get('/difficulty', async (_req, res) => {
+        try {
+            const weights = await getDifficultyWeights();
+            res.json({ success: true, weights, cachedAt: _difficultyCacheAt ? new Date(_difficultyCacheAt).toISOString() : null });
         } catch (err) {
             res.status(500).json({ success: false, error: 'internal_error' });
         }
