@@ -12270,6 +12270,9 @@ async function pushToBot(entity, deviceId, eventType, payload) {
 // Wire pushToBot into mission module (late binding — pushToBot defined after mission init)
 missionModule.setPushToBot(pushToBot);
 
+// Wire pushToBot + devices into rental module for interview probe dispatch
+rentalModule.setInterviewDeps({ pushToBot, devices });
+
 // ============================================
 // FEEDBACK ENDPOINTS (Enhanced with Log Snapshot + AI Prompt)
 // ============================================

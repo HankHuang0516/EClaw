@@ -2276,7 +2276,15 @@
                     deviceSecret: currentUser.deviceSecret,
                     entityId: entityId
                 });
-                if (result.success) {
+                if (result.restartTriggered) {
+                    // Channel bot restart was triggered
+                    if (result.success) {
+                        showToast(i18n.t('dash_restart_success') || '🔄 ' + (result.message || 'Channel restarted'), 'success');
+                    } else {
+                        showToast(i18n.t('dash_restart_failed') || '⚠️ ' + (result.error || 'Channel restart failed'), 'error');
+                    }
+                    setTimeout(function() { loadEntities(); }, 2000);
+                } else if (result.success) {
                     showToast(i18n.t('dash_refresh_success'), 'success');
                     setTimeout(function() { loadEntities(); }, 500);
                 } else if (result.webhookBroken) {
