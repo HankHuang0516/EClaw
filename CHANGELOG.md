@@ -1,3 +1,10 @@
+## [1.939.4](https://github.com/HankHuang0516/EClaw/compare/v1.939.3...v1.939.4) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** center copy button in exam page ([1715e0a](https://github.com/HankHuang0516/EClaw/commit/1715e0a009694b9de740cf5c663da31956a4ad7f))
+
 ## [1.939.3](https://github.com/HankHuang0516/EClaw/compare/v1.939.2...v1.939.3) (2026-04-10)
 
 
