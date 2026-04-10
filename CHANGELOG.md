@@ -1,3 +1,87 @@
+## [1.929.3](https://github.com/HankHuang0516/EClaw/compare/v1.929.2...v1.929.3) (2026-04-10)
+
+
+### Bug Fixes
+
+* **workspace:** prevent AI chat widget duplication in split-view panes ([#1657](https://github.com/HankHuang0516/EClaw/issues/1657)) ([e586e32](https://github.com/HankHuang0516/EClaw/commit/e586e32887bf7fa7ff8d513ff5472996c308e029))
+
+## [1.929.2](https://github.com/HankHuang0516/EClaw/compare/v1.929.1...v1.929.2) (2026-04-09)
+
+
+### Bug Fixes
+
+* sync env vars from server on chat init so Key Reference shows in WebView ([0020b32](https://github.com/HankHuang0516/EClaw/commit/0020b32c694f70b426ce8ec3f8831c41e22352bf))
+
+## [1.929.1](https://github.com/HankHuang0516/EClaw/compare/v1.929.0...v1.929.1) (2026-04-09)
+
+
+### Bug Fixes
+
+* **chat:** remove duplicate const isAndroidWebView — SyntaxError stuck loading spinner ([e019984](https://github.com/HankHuang0516/EClaw/commit/e0199842123212722452ff9a8d184d44c4eacdc4)), closes [#chatLoading](https://github.com/HankHuang0516/EClaw/issues/chatLoading)
+
+# [1.929.0](https://github.com/HankHuang0516/EClaw/compare/v1.928.6...v1.929.0) (2026-04-09)
+
+
+### Features
+
+* collapse input bar icons into + menu; fix overlay centering ([45750fe](https://github.com/HankHuang0516/EClaw/commit/45750feaac2ff23d1442ac3f9c4f95755c06ed72))
+
+## [1.928.6](https://github.com/HankHuang0516/EClaw/compare/v1.928.5...v1.928.6) (2026-04-09)
+
+
+### Bug Fixes
+
+* file preview/download blank page in Android WebView ([1c9afe3](https://github.com/HankHuang0516/EClaw/commit/1c9afe39dffa3d82cecafd2f940e9619025b8943))
+
+## [1.928.5](https://github.com/HankHuang0516/EClaw/compare/v1.928.4...v1.928.5) (2026-04-09)
+
+
+### Bug Fixes
+
+* acquire AudioFocus before WebView mic grant to prevent NotReadableError ([19599ce](https://github.com/HankHuang0516/EClaw/commit/19599cefc4a45c45262a2a45f225df10dd82c0fe))
+
+## [1.928.4](https://github.com/HankHuang0516/EClaw/compare/v1.928.3...v1.928.4) (2026-04-09)
+
+
+### Bug Fixes
+
+* voice messages routing to [#0](https://github.com/HankHuang0516/EClaw/issues/0) regardless of selected targets ([9185383](https://github.com/HankHuang0516/EClaw/commit/9185383e0f7f0ee3afc06bdb238aa4a697093246))
+
+## [1.928.3](https://github.com/HankHuang0516/EClaw/compare/v1.928.2...v1.928.3) (2026-04-09)
+
+
+### Bug Fixes
+
+* resolve Android WebView microphone permission denied error ([cf544aa](https://github.com/HankHuang0516/EClaw/commit/cf544aa9523a5f9127012df193f8196d043c6e8b))
+
+## [1.928.2](https://github.com/HankHuang0516/EClaw/compare/v1.928.1...v1.928.2) (2026-04-09)
+
+
+### Bug Fixes
+
+* **test:** use built-in FormData (Node 18+) instead of form-data package ([b05b555](https://github.com/HankHuang0516/EClaw/commit/b05b555f072986e42b7302860e45793628058a05))
+
+## [1.928.1](https://github.com/HankHuang0516/EClaw/compare/v1.928.0...v1.928.1) (2026-04-09)
+
+
+### Bug Fixes
+
+* **chat:** remove noopener from window.open blank — Chrome returns null with noopener causing about:blank tab ([8f47331](https://github.com/HankHuang0516/EClaw/commit/8f4733111b794f7b1f78d8a63b949344be576dd9))
+
+# [1.928.0](https://github.com/HankHuang0516/EClaw/compare/v1.927.3...v1.928.0) (2026-04-09)
+
+
+### Features
+
+* **files:** split preview vs force-download for attachment cards ([fc919f5](https://github.com/HankHuang0516/EClaw/commit/fc919f501be3e1e104655f26b42efac6af19bc05))
+
+## [1.927.3](https://github.com/HankHuang0516/EClaw/compare/v1.927.2...v1.927.3) (2026-04-09)
+
+
+### Bug Fixes
+
+* **chat:** fix downloadAttachment popup blocker on desktop web ([770d45f](https://github.com/HankHuang0516/EClaw/commit/770d45f5614d181aaf2442f8fe67efd2338cf51f))
+
 ## [1.927.2](https://github.com/HankHuang0516/EClaw/compare/v1.927.1...v1.927.2) (2026-04-09)
 
 

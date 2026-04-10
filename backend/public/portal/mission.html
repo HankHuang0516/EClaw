@@ -214,6 +214,8 @@
             position: fixed; inset: 0;
             background: rgba(0, 0, 0, 0.55);
             display: flex; align-items: center; justify-content: center;
+            /* Account for top nav height so the modal appears centered in the content area */
+            padding-top: 56px;
             z-index: 500;
         }
         .bulk-op-overlay .bulk-op-box {

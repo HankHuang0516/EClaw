@@ -1089,11 +1089,7 @@
 
         .attach-menu.active { display: block; }
 
-        /* ── Env Var Reference Popup ── */
-        .env-var-btn-wrapper {
-            position: relative;
-            display: inline-block;
-        }
+        /* ── Env Var Reference Popup (anchored to .attach-menu-wrapper) ── */
         .env-var-popup {
             display: none;
             position: absolute;
@@ -1104,7 +1100,7 @@
             border-radius: 10px;
             box-shadow: 0 4px 16px rgba(0,0,0,0.15);
             padding: 8px;
-            z-index: 100;
+            z-index: 101;
             min-width: 180px;
             max-width: 260px;
         }
@@ -1893,16 +1889,17 @@
                                 <span class="menu-icon">&#x1F4C1;</span>
                                 <span>我的檔案</span>
                             </button>
+                            <button class="attach-menu-item" id="attachMenuEnvBtn" style="display:none" onclick="openEnvVarFromMenu()">
+                                <span class="menu-icon">&#x1F511;</span>
+                                <span data-i18n="chat_attach_key_ref">Key Reference</span>
+                            </button>
                         </div>
-                    </div>
-                    <button class="btn-media" id="btnVoice" onclick="toggleRecording()">&#x1F3A4;</button>
-                    <div class="env-var-btn-wrapper" id="envVarBtnWrapper" style="display:none;">
-                        <button class="btn-media" id="btnEnvVar" onclick="toggleEnvVarPopup()" title="Insert env var reference">&#x1F4CE;</button>
                         <div class="env-var-popup" id="envVarPopup">
-                            <div class="env-var-popup-label">📎 Insert {{KEY}} reference</div>
+                            <div class="env-var-popup-label">🔑 Insert {{KEY}} reference</div>
                             <div id="envVarChips"></div>
                         </div>
                     </div>
+                    <button class="btn-media" id="btnVoice" onclick="toggleRecording()">&#x1F3A4;</button>
                     <textarea class="chat-input" id="messageInput" rows="1"
                         data-i18n="chat_input_placeholder" placeholder="Type a message..."
                         oninput="renderSlashSuggestions(this.value); localStorage.setItem('chat_draft', this.value); this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,120)+'px'"
@@ -2153,7 +2150,9 @@
         // are provided by shared/entity-utils.js
 
         // ── Android WebView Detection ──
-        const isAndroidWebView = typeof AndroidBridge !== 'undefined';
+        // Check both the injected JS bridge and the custom User-Agent suffix so
+        // late-binding environments don't miss either signal.
+        const isAndroidWebView = typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent);
 
         // ── Marked.js custom renderer for code blocks ──
         (function configureMarked() {
@@ -2237,7 +2236,7 @@
             const user = await checkAuth();
             if (!user) return;
             initPortalSocket();
-            initEnvVarBtn(user.deviceId);
+            initEnvVarBtn(user.deviceId, user.deviceSecret);
 
             // Hide slash suggestions on blur
             document.getElementById('messageInput').addEventListener('blur', () => {
@@ -3336,13 +3335,13 @@
                         const isImage = (a.mimeType || '').startsWith('image/');
                         const sizeStr = a.size > 0 ? (a.size >= 1048576 ? (a.size / 1048576).toFixed(1) + ' MB' : Math.round(a.size / 1024) + ' KB') : '';
                         const icon = isImage ? '🖼️' : (a.mimeType || '').includes('pdf') ? '📄' : (a.mimeType || '').includes('video') ? '🎬' : '📎';
-                        return `<div class="msg-attachment" onclick="downloadAttachment('${escapeHtml(a.fileId)}','${escapeHtml(a.filename)}','${escapeHtml(a.mimeType||'')}')">
+                        return `<div class="msg-attachment" onclick="previewAttachment('${escapeHtml(a.fileId)}')">
                             <span class="msg-attachment-icon">${icon}</span>
                             <div class="msg-attachment-info">
                                 <div class="msg-attachment-name">${escapeHtml(a.filename || 'file')}</div>
                                 ${sizeStr ? `<div class="msg-attachment-size">${sizeStr}</div>` : ''}
                             </div>
-                            <button class="msg-attachment-btn" onclick="event.stopPropagation();downloadAttachment('${escapeHtml(a.fileId)}','${escapeHtml(a.filename)}','${escapeHtml(a.mimeType||'')}')">⬇ 下載</button>
+                            <button class="msg-attachment-btn" onclick="event.stopPropagation();downloadAttachment('${escapeHtml(a.fileId)}','${escapeHtml(a.filename)}')">⬇ 下載</button>
                         </div>`;
                     }).join('');
                     attachmentsHtml = `<div class="msg-attachments">${cards}</div>`;
@@ -3542,21 +3541,64 @@
         }
 
         // ── Message Reactions ──
-        async function downloadAttachment(fileId, filename, mimeType) {
+
+        // Android WebView does not support window.open(); instead navigate the current
+        // window to the R2 URL — shouldOverrideUrlLoading intercepts it and opens the
+        // system browser, leaving chat.html in place.
+
+        // Preview: open file in new tab (PDF viewer, image viewer, etc.)
+        async function previewAttachment(fileId) {
             if (!currentUser) return;
+            // On desktop, open blank tab synchronously before the async fetch (popup blocker guard)
+            let win = null;
+            if (!isAndroidWebView) {
+                win = window.open('', '_blank');
+                if (!win) { showToast('請允許彈出視窗後再試', 'error'); return; }
+            }
             try {
                 const params = new URLSearchParams({ deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret });
                 const res = await fetch(`/api/files/${encodeURIComponent(fileId)}?${params}`);
                 const data = await res.json();
-                if (!data.success || !data.url) { showToast(data.error || 'Download failed', 'error'); return; }
-                const a = document.createElement('a');
-                a.href = data.url;
-                a.target = '_blank';
-                if (!(mimeType || '').startsWith('image/')) a.download = filename || 'file';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
+                if (!data.success || !data.url) {
+                    win?.close();
+                    showToast(data.error || 'Preview failed', 'error');
+                    return;
+                }
+                if (isAndroidWebView) {
+                    window.location.href = data.url; // intercepted by shouldOverrideUrlLoading → system browser
+                } else {
+                    win.location.href = data.url;
+                }
             } catch (e) {
+                win?.close();
+                showToast('Preview failed: ' + e.message, 'error');
+            }
+        }
+
+        // Download: force save-to-device via Content-Disposition: attachment (dl=1)
+        async function downloadAttachment(fileId, filename) {
+            if (!currentUser) return;
+            let win = null;
+            if (!isAndroidWebView) {
+                win = window.open('', '_blank');
+                if (!win) { showToast('請允許彈出視窗後再試', 'error'); return; }
+            }
+            try {
+                const params = new URLSearchParams({ deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret, dl: '1' });
+                const res = await fetch(`/api/files/${encodeURIComponent(fileId)}?${params}`);
+                const data = await res.json();
+                if (!data.success || !data.url) {
+                    win?.close();
+                    showToast(data.error || 'Download failed', 'error');
+                    return;
+                }
+                if (isAndroidWebView) {
+                    window.location.href = data.url; // intercepted → system browser download
+                } else {
+                    win.location.href = data.url;
+                }
+            } catch (e) {
+                win?.close();
                 showToast('Download failed: ' + e.message, 'error');
             }
         }
@@ -4021,18 +4063,35 @@
         }
 
         // ── Env Var Reference ──
-        function initEnvVarBtn(deviceId) {
+        async function initEnvVarBtn(deviceId, deviceSecret) {
             const storageKey = `eclawLocalVars_${deviceId}`;
             let vars;
             try { vars = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { vars = {}; }
+
+            // Sync from server so WebView / new sessions pick up vars set elsewhere
+            try {
+                const data = await apiCall('POST', '/api/device-vars', {
+                    deviceId, deviceSecret, vars, source: 'web'
+                });
+                if (data && data.mergedVars) {
+                    vars = data.mergedVars;
+                    localStorage.setItem(storageKey, JSON.stringify(vars));
+                }
+            } catch { /* non-critical — fall back to local */ }
+
             const keys = Object.keys(vars);
             if (!keys.length) return;
 
-            document.getElementById('envVarBtnWrapper').style.display = '';
+            document.getElementById('attachMenuEnvBtn').style.display = '';
             const chipsEl = document.getElementById('envVarChips');
             chipsEl.innerHTML = keys.map(k =>
                 `<button class="env-var-chip" onclick="insertEnvVarRef('${k.replace(/'/g, "\\'")}')">{{${k}}}</button>`
             ).join('');
+        }
+
+        function openEnvVarFromMenu() {
+            document.getElementById('attachMenu').classList.remove('active');
+            document.getElementById('envVarPopup').classList.toggle('active');
         }
 
         function toggleEnvVarPopup() {
@@ -4054,8 +4113,7 @@
             if (wrapper && !wrapper.contains(e.target)) {
                 document.getElementById('attachMenu').classList.remove('active');
             }
-            const evWrapper = document.getElementById('envVarBtnWrapper');
-            if (evWrapper && !evWrapper.contains(e.target)) {
+            if (wrapper && !wrapper.contains(e.target)) {
                 document.getElementById('envVarPopup').classList.remove('active');
             }
             // Close target bar overflow when clicking outside
@@ -4312,8 +4370,27 @@
 
         async function startRecording() {
             try {
+                // Verify getUserMedia is available (may be absent in some WebView contexts)
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    showToast('此裝置不支援錄音 (getUserMedia unavailable)', 'error');
+                    return;
+                }
+
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+
+                // Pick the first supported mimeType — audio/webm;codecs=opus is not
+                // available in all Android WebView versions, so fall back gracefully.
+                const candidateMimes = [
+                    'audio/webm;codecs=opus',
+                    'audio/webm',
+                    'audio/ogg;codecs=opus',
+                    'audio/mp4',
+                ];
+                const mimeType = candidateMimes.find(t => {
+                    try { return MediaRecorder.isTypeSupported(t); } catch { return false; }
+                }) || '';
+
+                mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
                 audioChunks = [];
 
                 mediaRecorder.ondataavailable = (e) => {
@@ -4338,7 +4415,16 @@
                 }, 500);
 
             } catch (e) {
-                showToast(i18n.t('chat_mic_denied'), 'error');
+                // Show specific message by error type to aid diagnosis
+                if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+                    showToast(i18n.t('chat_mic_denied'), 'error');
+                } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
+                    showToast('找不到麥克風裝置', 'error');
+                } else {
+                    // e.g. NotSupportedError from unsupported mimeType — log actual error
+                    console.error('[Voice] startRecording failed:', e.name, e.message);
+                    showToast(i18n.t('chat_mic_denied') + ' (' + (e.name || e.message) + ')', 'error');
+                }
             }
         }
 
@@ -4377,7 +4463,7 @@
 
         async function uploadVoice(blob, durationSec) {
             const targets = getSelectedTargets();
-            if (targets.length === 0) {
+            if (targets.local.length === 0 && targets.contacts.length === 0) {
                 showToast(i18n.t('chat_select_entity'), 'error');
                 return;
             }
@@ -4399,19 +4485,35 @@
                 const uploadData = await uploadRes.json();
                 if (!uploadData.success) throw new Error(uploadData.error || 'Upload failed');
 
-                const entityId = targets.length === 1 ? targets[0] : targets;
-                await apiCall('POST', '/api/client/speak', {
-                    deviceId: currentUser.deviceId,
-                    deviceSecret: currentUser.deviceSecret,
-                    entityId: entityId,
-                    text: `[Voice ${durationSec}s]`,
-                    source: 'web_chat',
-                    mediaType: 'voice',
-                    mediaUrl: uploadData.mediaUrl
-                });
+                // ── Local broadcast ──
+                if (targets.local.length > 0) {
+                    const entityId = targets.local.length === 1 ? targets.local[0] : targets.local;
+                    await apiCall('POST', '/api/client/speak', {
+                        deviceId: currentUser.deviceId,
+                        deviceSecret: currentUser.deviceSecret,
+                        entityId: entityId,
+                        text: `[Voice ${durationSec}s]`,
+                        source: 'web_chat',
+                        mediaType: 'voice',
+                        mediaUrl: uploadData.mediaUrl
+                    });
+                }
+
+                // ── Contact broadcast ──
+                for (const contactCode of targets.contacts) {
+                    await apiCall('POST', '/api/client/speak', {
+                        deviceId: currentUser.deviceId,
+                        deviceSecret: currentUser.deviceSecret,
+                        speakTo: contactCode,
+                        text: `[Voice ${durationSec}s]`,
+                        source: 'web_chat',
+                        mediaType: 'voice',
+                        mediaUrl: uploadData.mediaUrl
+                    });
+                }
 
                 if (currentUser.usageToday !== undefined) {
-                    currentUser.usageToday += targets.length;
+                    currentUser.usageToday += targets.local.length + targets.contacts.length;
                     updateUsageBadge();
                 }
 

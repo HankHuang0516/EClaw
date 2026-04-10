@@ -1048,11 +1048,14 @@ app.get('/api/help', (req, res) => {
             { title: 'Fetch web page content', curl: `curl -s "${apiBase}/api/bot/web-fetch?url=URL&deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` }
         ],
         files: [
-            { title: 'Upload file to R2 (multipart)', curl: `curl -s -X POST "${apiBase}/api/files/upload" -F "file=@/path/to/file.pdf" -F "deviceId=${deviceId}" -F "botSecret=${botSecret}" -F "entityId=${eId}"` },
-            { title: 'Get signed download URL', curl: `curl -s "${apiBase}/api/files/FILE_ID?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
+            { title: 'Upload file to R2 (multipart, botSecret)', curl: `curl -s -X POST "${apiBase}/api/files/upload" -F "file=@/path/to/file.pdf" -F "deviceId=${deviceId}" -F "botSecret=${botSecret}" -F "entityId=${eId}"` },
+            { title: 'Upload file to R2 (multipart, deviceSecret)', curl: `curl -s -X POST "${apiBase}/api/files/upload" -F "file=@/path/to/file.pdf" -F "deviceId=${deviceId}" -F "deviceSecret=DEVICE_SECRET"` },
+            { title: 'Get signed download URL (preview)', curl: `curl -s "${apiBase}/api/files/FILE_ID?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
+            { title: 'Get signed download URL (force-download, dl=1)', curl: `curl -s "${apiBase}/api/files/FILE_ID?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}&dl=1"` },
             { title: 'List uploaded files (with quota)', curl: `curl -s "${apiBase}/api/files/list?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
             { title: 'Delete file', curl: `curl -s -X DELETE "${apiBase}/api/files/FILE_ID" -H "Content-Type: application/json" -d ${d}}'` },
-            { title: 'Send message with attachments via transform', curl: `curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d ${d},"message":"Please review the file","state":"IDLE","attachments":[{"fileId":"FILE_ID","filename":"report.pdf","size":204800,"mimeType":"application/pdf"}]}'` }
+            { title: 'Send message with file attachment via transform', curl: `curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d ${d},"message":"Please review the file","state":"IDLE","speakTo":["TARGET_CODE"],"attachments":[{"fileId":"FILE_ID","filename":"report.pdf","size":204800,"mimeType":"application/pdf"}]}'` },
+            { title: 'Quota exceeded: send rich card for user to delete files', curl: `curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d ${d},"message":"Storage full. Select file to delete:","state":"IDLE","speakTo":["TARGET_CODE"],"card":{"ask_id":"cleanup-1234","buttons":[{"id":"FILE_ID","label":"🗑 filename.pdf (2.5 MB)","style":"danger"},{"id":"cancel","label":"✕ Cancel","style":"secondary"}]}}'` }
         ],
         entities: [
             { title: 'List all entities', curl: `curl -s "${apiBase}/api/entities?deviceId=${deviceId}&botSecret=${botSecret}"` },

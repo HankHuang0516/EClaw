@@ -129,14 +129,19 @@ module.exports = function filesModule(devices) {
             const { deviceId, entityId } = creds;
             const { originalname, mimetype, size, buffer } = req.file;
 
+            // testQuotaBytes: deviceSecret-only param for integration tests to simulate quota exceeded
+            const testQuotaBytes = creds.deviceSecret && req.body.testQuotaBytes
+                ? parseInt(req.body.testQuotaBytes) : null;
+
             // Check current device usage
             const usageResult = await pool.query(
                 'SELECT COALESCE(SUM(size), 0) AS total FROM r2_files WHERE device_id = $1 AND expires_at > NOW()',
                 [deviceId]
             );
             const currentUsage = parseInt(usageResult.rows[0].total);
+            const effectiveQuota = testQuotaBytes != null ? testQuotaBytes : QUOTA_SOFT_BYTES;
 
-            if (currentUsage + size > QUOTA_SOFT_BYTES) {
+            if (currentUsage + size > effectiveQuota) {
                 const oldestFiles = await pool.query(
                     `SELECT file_id, filename, size, created_at
                      FROM r2_files WHERE device_id = $1 AND expires_at > NOW()
@@ -146,9 +151,9 @@ module.exports = function filesModule(devices) {
                 return res.status(507).json({
                     success: false,
                     error: 'quota_exceeded',
-                    message: `Storage quota exceeded (${Math.round(currentUsage / 1024 / 1024)}MB / ${Math.round(QUOTA_SOFT_BYTES / 1024 / 1024)}MB). Please remove some old files first.`,
+                    message: `Storage quota exceeded (${Math.round(currentUsage / 1024 / 1024)}MB / ${Math.round(effectiveQuota / 1024 / 1024)}MB). Please remove some old files first.`,
                     currentUsageMB: Math.round(currentUsage / 1024 / 1024),
-                    quotaMB: Math.round(QUOTA_SOFT_BYTES / 1024 / 1024),
+                    quotaMB: Math.round(effectiveQuota / 1024 / 1024),
                     oldestFiles: oldestFiles.rows.map(f => ({
                         fileId: f.file_id,
                         filename: f.filename,
@@ -257,7 +262,10 @@ module.exports = function filesModule(devices) {
             }
 
             const file = result.rows[0];
-            const command = new GetObjectCommand({ Bucket: BUCKET, Key: file.r2_key });
+            const dl = req.query.dl === '1';
+            const cmdParams = { Bucket: BUCKET, Key: file.r2_key };
+            if (dl) cmdParams.ResponseContentDisposition = `attachment; filename="${encodeURIComponent(file.filename)}"`;
+            const command = new GetObjectCommand(cmdParams);
             const url = await getSignedUrl(r2, command, { expiresIn: SIGNED_URL_EXPIRES });
 
             return res.json({
