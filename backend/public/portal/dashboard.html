@@ -1735,9 +1735,12 @@
                         '<textarea id="acDesc' + entity.entityId + '" maxlength="500" placeholder="' + i18n.t('dash_id_public_desc_hint') + '" rows="2"></textarea>' +
                     '</div>' +
                     '<div class="xd-field">' +
-                        '<label>Capabilities</label>' +
-                        '<div class="ac-caps-list" id="acCaps' + entity.entityId + '"></div>' +
-                        '<button class="btn btn-sm btn-outline" onclick="addCapability(' + entity.entityId + ')" style="font-size:12px;">+ Add Capability</button>' +
+                        '<label>' + i18n.t('dash_capabilities') + ' <span style="font-size:10px;color:var(--text-secondary);font-weight:400;">(' + i18n.t('dash_caps_arena_only') + ')</span></label>' +
+                        '<div class="ac-caps-list" id="acCaps' + entity.entityId + '" style="pointer-events:none;opacity:0.8;"></div>' +
+                        '<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">' +
+                            '<button class="btn btn-sm" onclick="openArenaForEntity(' + entity.entityId + ')" style="font-size:12px;background:#10b981;color:#fff;border:none;">🏟️ ' + i18n.t('dash_run_arena') + '</button>' +
+                            '<button class="btn btn-sm btn-outline" onclick="listForRental(' + entity.entityId + ')" style="font-size:12px;">🤖 ' + i18n.t('dash_list_rental') + '</button>' +
+                        '</div>' +
                     '</div>' +
                     '<div class="xd-field">' +
                         '<label>Protocols</label>' +
@@ -1924,11 +1927,14 @@
                 el('acVersion' + entityId).value = pub.version || '';
                 el('acWebsite' + entityId).value = pub.website || '';
                 el('acEmail' + entityId).value = pub.contactEmail || '';
-                var capsEl = el('acCaps' + entityId);
-                capsEl.innerHTML = '';
-                (pub.capabilities || []).forEach(function(cap) {
-                    appendCapabilityRow(entityId, cap.name || '', cap.description || '');
-                });
+                // Render Arena-sourced capabilities as read-only badges
+                // interviewCapabilities comes from Arena test results (locked)
+                var arenaCaps = identity.interviewCapabilities || pub.interviewCapabilities || null;
+                if (!arenaCaps && pub.capabilities && !Array.isArray(pub.capabilities)) {
+                    // capabilities might be in rental format (object with supported flags)
+                    arenaCaps = pub.capabilities;
+                }
+                renderArenaCaps(entityId, arenaCaps);
                 renderTags('acProtos', entityId, pub.protocols || []);
                 renderTags('acTags', entityId, pub.tags || []);
             } catch (err) {
@@ -1936,24 +1942,95 @@
             }
         }
 
-        function appendCapabilityRow(entityId, name, desc) {
+        /** Render Arena-sourced capabilities as read-only badges */
+        function renderArenaCaps(entityId, caps) {
             var container = document.getElementById('acCaps' + entityId);
-            var row = document.createElement('div');
-            row.className = 'ac-cap-item';
-            row.innerHTML = '<input type="text" placeholder="Name" value="' + escapeHtml(name) + '" class="ac-cap-name" style="padding:6px 8px;border:1px solid var(--card-border);border-radius:4px;background:var(--input-bg);color:var(--text);font-size:12px;">' +
-                '<input type="text" placeholder="Description" value="' + escapeHtml(desc) + '" class="ac-cap-desc" style="padding:6px 8px;border:1px solid var(--card-border);border-radius:4px;background:var(--input-bg);color:var(--text);font-size:12px;">' +
-                '<button class="ac-cap-remove" title="Remove">&times;</button>';
-            row.querySelector('.ac-cap-remove').onclick = function() { row.remove(); };
-            container.appendChild(row);
-        }
-
-        function addCapability(entityId) {
-            var container = document.getElementById('acCaps' + entityId);
-            if (container.children.length >= 10) {
-                showToast(i18n.t('toast_max_capabilities'), 'warning');
+            container.innerHTML = '';
+            if (!caps || typeof caps !== 'object' || Object.keys(caps).length === 0) {
+                container.innerHTML = '<div style="font-size:12px;color:var(--text-secondary);padding:8px 0;">' +
+                    i18n.t('dash_caps_none') + '</div>';
                 return;
             }
-            appendCapabilityRow(entityId, '', '');
+            Object.entries(caps).forEach(function(entry) {
+                var key = entry[0], val = entry[1];
+                var supported = val && val.supported;
+                var badge = document.createElement('span');
+                badge.style.cssText = 'display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;margin:2px 4px 2px 0;' +
+                    (supported
+                        ? 'background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);'
+                        : 'background:var(--input-bg);color:var(--text-secondary);border:1px solid var(--card-border);');
+                badge.textContent = (supported ? '✅ ' : '❌ ') + key;
+                if (val.probes && val.probes[0] && val.probes[0].score != null) {
+                    var pct = val.probes[0].maxScore > 0 ? Math.round(val.probes[0].score / val.probes[0].maxScore * 100) : 0;
+                    badge.textContent += ' (' + pct + '%)';
+                }
+                container.appendChild(badge);
+            });
+        }
+
+        /** Open Arena with this entity's listing linked */
+        async function openArenaForEntity(entityId) {
+            try {
+                // Check if a listing already exists for this entity
+                var user = await apiCall('GET', '/api/auth/me');
+                var listings = await apiCall('GET', '/api/rental/my-listings');
+                var existing = (listings.listings || []).find(function(l) {
+                    return l.owner_entity_id === entityId || String(l.owner_entity_id) === String(entityId);
+                });
+                var listingId = existing ? existing.id : null;
+
+                // If no listing exists, create a draft listing first
+                if (!listingId) {
+                    var entity = currentEntities[entityId];
+                    var createRes = await apiCall('POST', '/api/rental/listing', {
+                        ownerDeviceId: currentDeviceId,
+                        ownerEntityId: entityId,
+                        title: (entity && entity.name) || 'My Bot',
+                        rateMliPerKtoken: 5000, // default rate, can be changed later
+                    });
+                    if (createRes.success) listingId = createRes.listing.id;
+                }
+
+                // Open Arena with listingId linked
+                if (listingId) {
+                    window.open('/arena?listingId=' + listingId, '_blank');
+                } else {
+                    window.open('/arena', '_blank');
+                }
+            } catch (err) {
+                console.error('[Arena] Error:', err);
+                window.open('/arena', '_blank');
+            }
+        }
+
+        /** Create or navigate to rental listing for this entity */
+        async function listForRental(entityId) {
+            try {
+                var listings = await apiCall('GET', '/api/rental/my-listings');
+                var existing = (listings.listings || []).find(function(l) {
+                    return String(l.owner_entity_id) === String(entityId);
+                });
+                if (existing) {
+                    showToast(i18n.t('dash_listing_exists') + ' (ID: ' + existing.id.slice(0, 8) + '...)', 'info');
+                    return;
+                }
+                var entity = currentEntities[entityId];
+                var rate = prompt(i18n.t('dash_listing_rate_prompt') || 'Set rate (e-coin per 1K tokens):', '5');
+                if (!rate) return;
+                var res = await apiCall('POST', '/api/rental/listing', {
+                    ownerDeviceId: currentDeviceId,
+                    ownerEntityId: entityId,
+                    title: (entity && entity.name) || 'My Bot',
+                    rateMliPerKtoken: parseInt(rate, 10) * 1000,
+                });
+                if (res.success) {
+                    showToast(i18n.t('dash_listing_created') || 'Listing created! Run Arena test to publish.', 'success');
+                } else {
+                    showToast(res.error || 'Failed', 'error');
+                }
+            } catch (err) {
+                showToast(err.message || 'Failed', 'error');
+            }
         }
 
         function renderTags(prefix, entityId, tags) {
@@ -1997,16 +2074,11 @@
 
         function collectAgentCard(entityId) {
             var el = function(id) { return document.getElementById(id); };
-            var caps = [];
-            document.querySelectorAll('#acCaps' + entityId + ' .ac-cap-item').forEach(function(row) {
-                var name = row.querySelector('.ac-cap-name').value.trim();
-                var desc = row.querySelector('.ac-cap-desc').value.trim();
-                if (name) caps.push({ id: name.toLowerCase().replace(/\s+/g, '-'), name: name, description: desc });
-            });
-
+            // Capabilities are NOT collected from the form — they are
+            // read-only Arena results. Only user-editable fields are sent.
             return {
                 description: el('acDesc' + entityId).value.trim(),
-                capabilities: caps,
+                // capabilities: omitted — locked by Arena interview results
                 protocols: collectTags('acProtos', entityId),
                 tags: collectTags('acTags', entityId),
                 version: el('acVersion' + entityId).value.trim(),
