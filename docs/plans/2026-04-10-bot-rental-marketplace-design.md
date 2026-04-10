@@ -725,10 +725,12 @@ Capability fields are **permanent** after the first passing interview. Re-interv
 | `ended_disputed` | 100 | 0 | Crash verified, owner's fault |
 | `ended_admin` | 100 | 0 | Admin override |
 | `ended_early_by_renter` | 50 | 50 | Soft penalty for cancellation |
-| `ended_zero_balance` | 0 | 100 | Renter ran out of money |
+| `ended_zero_balance` | remaining | 0 | Last-message cost already deducted from deposit by rental-proxy; remaining deposit refunded to renter |
 | `ended_violation` | 70 | 30 | 5-strike limit hit |
 
-Forfeited amounts route to the insurance pool by default (implemented in P4).
+Forfeited amounts are split via the standard 85/13/2 ratio: 85% to owner (as `RENTAL_INCOME`), 13% to platform wallet, 2% to insurance pool. All three credits run inside the same transaction as the contract status update.
+
+For `ended_zero_balance`: the token metering proxy (`chargeRentalUsage`) deducts the last-message shortfall directly from the deposit (`held_mli`) at charge time, splits it 85/13/2 to owner/platform/insurance, then signals `suspended: true`. When `endRental` subsequently runs, whatever deposit remains is refunded in full to the renter.
 
 ---
 

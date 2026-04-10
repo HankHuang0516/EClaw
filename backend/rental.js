@@ -494,26 +494,44 @@ async function endRental({ contractId, endReason, requesterUserId }, walletApi) 
 
         const depositMli = Number(contract.deposit_mli);
 
-        // Disposition matrix: how much of the deposit returns to renter
-        // vs gets forfeited (to the platform wallet or insurance pool).
+        // Read the ACTUAL remaining held_mli — it may be less than the
+        // original deposit if chargeRentalUsage already deducted the
+        // last-message shortfall from the deposit.
+        const heldRes = await client.query(
+            'SELECT held_mli FROM wallets WHERE user_id = $1',
+            [contract.renter_user_id]
+        );
+        const actualHeldMli = heldRes.rowCount > 0
+            ? Math.min(Number(heldRes.rows[0].held_mli), depositMli)
+            : 0;
+
+        // Disposition matrix: how much of the remaining held returns to
+        // renter vs gets forfeited.
+        //
+        // For ended_zero_balance: chargeRentalUsage already deducted the
+        // last-message cost from the deposit and split it to owner/platform/
+        // insurance. Whatever is left in held is the renter's to keep.
         let refundMli = 0;
         let forfeitMli = 0;
         switch (endReason) {
             case CONTRACT_STATUSES.ENDED_NORMAL:
             case CONTRACT_STATUSES.ENDED_DISPUTED:
             case CONTRACT_STATUSES.ENDED_ADMIN:
-                refundMli = depositMli;
+                refundMli = actualHeldMli;
                 break;
             case CONTRACT_STATUSES.ENDED_EARLY_BY_RENTER:
-                refundMli = Math.floor(depositMli / 2);
-                forfeitMli = depositMli - refundMli;
+                refundMli = Math.floor(actualHeldMli / 2);
+                forfeitMli = actualHeldMli - refundMli;
                 break;
             case CONTRACT_STATUSES.ENDED_ZERO_BALANCE:
-                forfeitMli = depositMli;
+                // Last-message cost already deducted by chargeRentalUsage.
+                // Remaining deposit is returned to renter.
+                refundMli = actualHeldMli;
+                forfeitMli = 0;
                 break;
             case CONTRACT_STATUSES.ENDED_VIOLATION:
-                forfeitMli = Math.floor(depositMli * 0.3);
-                refundMli = depositMli - forfeitMli;
+                forfeitMli = Math.floor(actualHeldMli * 0.3);
+                refundMli = actualHeldMli - forfeitMli;
                 break;
         }
 

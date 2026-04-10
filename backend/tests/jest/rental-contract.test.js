@@ -91,6 +91,12 @@ jest.mock('pg', () => {
             if (!w) return { rows: [], rowCount: 0 };
             return { rows: [{ balance_mli: w.balance_mli.toString() }], rowCount: 1 };
         }
+        // Read held_mli for endRental deposit refund calculation
+        if (/^SELECT held_mli FROM wallets WHERE user_id = \$1$/i.test(norm)) {
+            const w = state.wallets.get(params[0]);
+            if (!w) return { rows: [], rowCount: 0 };
+            return { rows: [{ held_mli: w.held_mli.toString() }], rowCount: 1 };
+        }
 
         // INSERT rental_contracts
         if (/^INSERT INTO rental_contracts/i.test(norm)) {
@@ -454,18 +460,27 @@ describe('rental: endRental deposit disposition', () => {
         expect(bal.held_mli).toBe('0');
     });
 
-    test('ended_zero_balance forfeits full deposit', async () => {
+    test('ended_zero_balance refunds remaining deposit (last-msg already deducted by proxy)', async () => {
         const contract = await startWithSeed();
+        // In real flow, chargeRentalUsage would have deducted the
+        // last-message shortfall from held_mli before ending.
+        // Simulate: deduct 35,000 mli from held (as if proxy did it).
+        const state = globalThis.__rcState;
+        const w = state.wallets.get(RENTER);
+        w.held_mli -= 35_000n; // simulate proxy deduction
+
         const ended = await rentalApi.endRental({
             contractId: contract.id,
             endReason: 'ended_zero_balance',
             requesterUserId: RENTER,
         }, walletApi);
 
-        expect(ended.refund_mli).toBe(0);
-        expect(ended.forfeit_mli).toBe(100_000);
+        // Remaining deposit (100k - 35k = 65k) refunded to renter.
+        expect(ended.refund_mli).toBe(65_000);
+        expect(ended.forfeit_mli).toBe(0);
         const bal = await walletApi.getBalance(RENTER);
-        expect(bal.balance_mli).toBe('900000'); // still down by deposit
+        // balance was 900k (after deposit hold), now +65k refund = 965k
+        expect(bal.balance_mli).toBe('965000');
         expect(bal.held_mli).toBe('0');
     });
 

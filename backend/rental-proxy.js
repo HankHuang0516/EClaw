@@ -160,22 +160,24 @@ async function chargeRentalUsage({
         );
         const currentBalance = balRes.rowCount > 0 ? Number(balRes.rows[0].balance_mli) : 0;
 
-        let actualChargeMli = grossCostMli;
+        let balanceChargeMli = grossCostMli;
+        let depositChargeMli = 0;
         let suspended = false;
 
         if (currentBalance < grossCostMli) {
-            // Charge whatever is left, then signal suspension
-            actualChargeMli = Math.max(0, currentBalance);
+            // Balance insufficient — drain balance to 0, cover shortfall
+            // from deposit (held_mli). This is the "last message" scenario.
+            balanceChargeMli = Math.max(0, currentBalance);
+            depositChargeMli = grossCostMli - balanceChargeMli;
             suspended = true;
         }
+        const totalChargeMli = balanceChargeMli + depositChargeMli;
 
-        if (actualChargeMli > 0) {
-            const actualFees = splitFees(actualChargeMli);
-
-            // 1. Debit renter
+        // --- Debit from main balance ---
+        if (balanceChargeMli > 0) {
             await walletModule.applyLedgerEntry(client, {
                 userId: renterUserId,
-                balanceDelta: -actualChargeMli,
+                balanceDelta: -balanceChargeMli,
                 heldDelta: 0,
                 type: walletModule.LEDGER_TYPES.RENTAL_SPEND,
                 refType: 'rental_contract',
@@ -184,31 +186,59 @@ async function chargeRentalUsage({
                 note: `${inputTokens}+${outputTokens} tok`,
                 idempotencyKey: `${idemBase}:spend`,
             });
+        }
 
-            // 2. Credit owner pending_income (not spendable yet — released by T+24h cron)
+        // --- Debit shortfall from deposit (held → void) ---
+        if (depositChargeMli > 0) {
+            // Read current held to cap the deduction
+            const heldRes = await client.query(
+                'SELECT held_mli FROM wallets WHERE user_id = $1',
+                [renterUserId]
+            );
+            const currentHeld = heldRes.rowCount > 0 ? Number(heldRes.rows[0].held_mli) : 0;
+            depositChargeMli = Math.min(depositChargeMli, currentHeld);
+
+            if (depositChargeMli > 0) {
+                await walletModule.applyLedgerEntry(client, {
+                    userId: renterUserId,
+                    balanceDelta: 0,
+                    heldDelta: -depositChargeMli,
+                    type: walletModule.LEDGER_TYPES.DEPOSIT_FORFEIT,
+                    refType: 'rental_contract',
+                    refId: contractId,
+                    note: `last-msg deposit deduction: ${depositChargeMli} mli`,
+                    idempotencyKey: `${idemBase}:dep-deduct`,
+                });
+            }
+        }
+
+        // --- Distribute total charge (balance + deposit portions) via 85/13/2 split ---
+        if (totalChargeMli > 0) {
+            const fees = splitFees(totalChargeMli);
+
+            // Credit owner pending_income
             await client.query(
                 `UPDATE wallets SET pending_income_mli = COALESCE(pending_income_mli, 0) + $1
                  WHERE user_id = $2`,
-                [actualFees.ownerNet, ownerUserId]
+                [fees.ownerNet, ownerUserId]
             );
-            // Also insert a ledger row so the owner can see it in history
             await walletModule.applyLedgerEntry(client, {
                 userId: ownerUserId,
-                balanceDelta: 0,  // goes to pending, not balance
+                balanceDelta: 0,
                 heldDelta: 0,
                 type: walletModule.LEDGER_TYPES.RENTAL_INCOME,
                 refType: 'rental_contract',
                 refId: contractId,
                 counterpartyUserId: renterUserId,
-                note: `pending: ${actualFees.ownerNet} mli (T+24h)`,
+                note: `pending: ${fees.ownerNet} mli (T+24h)`,
                 idempotencyKey: `${idemBase}:income`,
             });
 
-            // 3. Credit platform wallet
-            if (actualFees.platformNet > 0) {
+            // Credit platform wallet
+            if (fees.platformNet > 0) {
                 await walletModule.applyLedgerEntry(client, {
                     userId: PLATFORM_WALLET_USER_ID,
-                    balanceDelta: actualFees.platformNet,
+                    balanceDelta: fees.platformNet,
                     heldDelta: 0,
                     type: walletModule.LEDGER_TYPES.PLATFORM_FEE,
                     refType: 'rental_contract',
@@ -217,11 +247,11 @@ async function chargeRentalUsage({
                 });
             }
 
-            // 4. Credit insurance pool
-            if (actualFees.insuranceMli > 0) {
+            // Credit insurance pool
+            if (fees.insuranceMli > 0) {
                 await walletModule.applyLedgerEntry(client, {
                     userId: INSURANCE_POOL_USER_ID,
-                    balanceDelta: actualFees.insuranceMli,
+                    balanceDelta: fees.insuranceMli,
                     heldDelta: 0,
                     type: walletModule.LEDGER_TYPES.PLATFORM_FEE,
                     refType: 'rental_contract',
@@ -250,7 +280,7 @@ async function chargeRentalUsage({
              SET tokens_consumed = tokens_consumed + $1,
                  ecoin_charged_mli = ecoin_charged_mli + $2
              WHERE id = $3`,
-            [totalTokens, actualChargeMli, contractId]
+            [totalTokens, totalChargeMli, contractId]
         );
 
         // Read updated balance for caller
@@ -260,12 +290,14 @@ async function chargeRentalUsage({
         );
 
         return {
-            charged: actualChargeMli > 0,
-            costMli: actualChargeMli,
+            charged: totalChargeMli > 0,
+            costMli: totalChargeMli,
+            balanceChargeMli,
+            depositChargeMli,
             inputTokens,
             outputTokens,
             totalTokens,
-            fees: splitFees(actualChargeMli),
+            fees: splitFees(totalChargeMli),
             suspended,
             newBalanceMli: newBal.rowCount > 0 ? Number(newBal.rows[0].balance_mli) : 0,
         };
