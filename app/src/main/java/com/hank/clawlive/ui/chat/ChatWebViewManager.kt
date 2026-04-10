@@ -174,10 +174,12 @@ class ChatWebViewManager(
                 val resources = it.resources
                 val needsAudio = resources.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)
                 val needsVideo = resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)
+                Timber.d("[MIC_DEBUG] onPermissionRequest: resources=${resources.toList()}, needsAudio=$needsAudio, needsVideo=$needsVideo")
                 if (needsAudio || needsVideo) {
                     val hasAudioPermission = ContextCompat.checkSelfPermission(
                         webView.context, Manifest.permission.RECORD_AUDIO
                     ) == PackageManager.PERMISSION_GRANTED
+                    Timber.d("[MIC_DEBUG] RECORD_AUDIO granted=$hasAudioPermission")
                     if (hasAudioPermission) {
                         // Acquire AudioFocus before granting WebView capture — required on Android
                         // to initialize AudioRecord; without it getUserMedia throws NotReadableError.
@@ -188,21 +190,25 @@ class ChatWebViewManager(
                                 AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
                             ).build()
                             audioFocusRequest = focusReq
-                            audioManager.requestAudioFocus(focusReq)
+                            val focusResult = audioManager.requestAudioFocus(focusReq)
+                            Timber.d("[MIC_DEBUG] AudioFocus result=$focusResult (1=GRANTED, 0=FAILED)")
                         } else {
                             @Suppress("DEPRECATION")
-                            audioManager.requestAudioFocus(
+                            val focusResult = audioManager.requestAudioFocus(
                                 null,
                                 AudioManager.STREAM_VOICE_CALL,
                                 AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
                             )
+                            Timber.d("[MIC_DEBUG] AudioFocus (legacy) result=$focusResult")
                         }
+                        Timber.d("[MIC_DEBUG] Granting WebView permission for resources=${resources.toList()}")
                         it.grant(resources)
                     } else {
+                        Timber.w("[MIC_DEBUG] DENIED — WebView requested audio capture but RECORD_AUDIO not granted")
                         it.deny()
-                        Timber.w("WebView requested audio capture but RECORD_AUDIO not granted — check native permission flow")
                     }
                 } else {
+                    Timber.d("[MIC_DEBUG] Non-audio permission request denied: ${resources.toList()}")
                     it.deny()
                 }
             }

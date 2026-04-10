@@ -2233,7 +2233,9 @@
                 if (typeof renderFooter === 'function') renderFooter();
             }
 
+            console.log('[CHAT_DEBUG] checkAuth starting...');
             const user = await checkAuth();
+            console.log('[CHAT_DEBUG] checkAuth result:', user ? `deviceId=${user.deviceId}, hasSecret=${!!user.deviceSecret}` : 'NULL');
             if (!user) return;
             initPortalSocket();
             initEnvVarBtn(user.deviceId, user.deviceSecret);
@@ -2264,8 +2266,11 @@
             });
 
             updateUsageBadge();
+            console.log('[CHAT_DEBUG] loadBoundEntities starting...');
             await loadBoundEntities();
+            console.log('[CHAT_DEBUG] loadBoundEntities done, loading messages...');
             await loadMessages();
+            console.log('[CHAT_DEBUG] loadMessages done, count:', allMessages.length);
             isFirstLoad = false;
 
             // Pick up pending smart quote from other portal pages
@@ -2803,9 +2808,11 @@
         // ── Messages ──
         async function loadMessages() {
             try {
+                console.log('[CHAT_DEBUG] loadMessages: deviceId=' + (currentUser && currentUser.deviceId) + ', hasSecret=' + !!(currentUser && currentUser.deviceSecret));
                 const data = await apiCall('GET',
                     `/api/chat/history?deviceId=${currentUser.deviceId}&deviceSecret=${currentUser.deviceSecret}&limit=500`
                 );
+                console.log('[CHAT_DEBUG] loadMessages response: success=' + data.success + ', msgCount=' + (data.messages ? data.messages.length : 0));
 
                 if (data.success && data.messages) {
                     const prevCount = allMessages.length;
@@ -2817,6 +2824,7 @@
                     ChatIntegrityValidator.validateDataLayer(data.messages);
                 }
             } catch (e) {
+                console.error('[CHAT_DEBUG] loadMessages FAILED:', e.message || e);
                 if (isFirstLoad) {
                     const container = document.getElementById('chatMessages');
                     container.innerHTML = '<div class="chat-empty"><div class="chat-empty-icon">&#x26A0;</div><div>' + i18n.t('chat_load_failed') + '</div></div>';
@@ -4377,7 +4385,22 @@
                     return;
                 }
 
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                // Android WebView: AudioRecord may not be ready immediately after
+                // onPermissionRequest grant — retry up to 3 times with increasing delay.
+                let stream = null;
+                for (let _attempt = 0; _attempt < 3; _attempt++) {
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        break;
+                    } catch (retryErr) {
+                        console.warn('[MIC_DEBUG] getUserMedia attempt', _attempt + 1, 'failed:', retryErr.name, retryErr.message);
+                        if (retryErr.name === 'NotReadableError' && _attempt < 2) {
+                            await new Promise(r => setTimeout(r, 300 * (_attempt + 1)));
+                        } else {
+                            throw retryErr;
+                        }
+                    }
+                }
 
                 // Pick the first supported mimeType — audio/webm;codecs=opus is not
                 // available in all Android WebView versions, so fall back gracefully.
@@ -4416,13 +4439,16 @@
                 }, 500);
 
             } catch (e) {
+                // Log full error details for native logcat debugging
+                console.error('[MIC_DEBUG] getUserMedia error — name:', e.name, 'message:', e.message, 'stack:', e.stack);
+                console.error('[MIC_DEBUG] mediaDevices available:', !!navigator.mediaDevices, 'getUserMedia:', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
                 // Show specific message by error type to aid diagnosis
                 if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
                     showToast(i18n.t('chat_mic_denied'), 'error');
                 } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
                     showToast('找不到麥克風裝置', 'error');
                 } else {
-                    // e.g. NotSupportedError from unsupported mimeType — log actual error
+                    // e.g. NotReadableError, NotSupportedError — log actual error
                     console.error('[Voice] startRecording failed:', e.name, e.message);
                     showToast(i18n.t('chat_mic_denied') + ' (' + (e.name || e.message) + ')', 'error');
                 }

@@ -55,8 +55,9 @@ class ChatActivity : AppCompatActivity() {
     private val recordAudioPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
+        Timber.d("[MIC_DEBUG] Permission result callback: granted=$granted")
         if (!granted) {
-            Timber.w("Microphone permission denied")
+            Timber.w("[MIC_DEBUG] Microphone permission DENIED by user")
         }
     }
 
@@ -140,9 +141,10 @@ class ChatActivity : AppCompatActivity() {
         webView.addJavascriptInterface(bridge, ChatJsBridge.BRIDGE_NAME)
 
         // Request microphone permission proactively for voice recording
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
+        val micPerm = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+        Timber.d("[MIC_DEBUG] setupWebView: RECORD_AUDIO permission=${if (micPerm == PackageManager.PERMISSION_GRANTED) "GRANTED" else "DENIED"}")
+        if (micPerm != PackageManager.PERMISSION_GRANTED) {
+            Timber.d("[MIC_DEBUG] Launching runtime permission request for RECORD_AUDIO")
             recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
     }
