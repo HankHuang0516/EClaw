@@ -4369,7 +4369,18 @@
         let recordingTimer = null;
         const MAX_RECORD_SECONDS = 180;
 
+        // Native recording mode flag (Android WebView fallback)
+        let _useNativeRecording = false;
+
         function toggleRecording() {
+            if (_useNativeRecording) {
+                if (typeof AndroidBridge !== 'undefined' && AndroidBridge.isRecording()) {
+                    stopRecording(true);
+                } else {
+                    startRecording();
+                }
+                return;
+            }
             if (mediaRecorder && mediaRecorder.state === 'recording') {
                 stopRecording(true);
             } else {
@@ -4378,29 +4389,23 @@
         }
 
         async function startRecording() {
+            // Android WebView: use native MediaRecorder via JS Bridge
+            if (_useNativeRecording || (typeof AndroidBridge !== 'undefined' && typeof AndroidBridge.startRecording === 'function')) {
+                return startNativeRecording();
+            }
+
             try {
                 // Verify getUserMedia is available (may be absent in some WebView contexts)
                 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    // Fallback to native if available
+                    if (typeof AndroidBridge !== 'undefined' && typeof AndroidBridge.startRecording === 'function') {
+                        return startNativeRecording();
+                    }
                     showToast('此裝置不支援錄音 (getUserMedia unavailable)', 'error');
                     return;
                 }
 
-                // Android WebView: AudioRecord may not be ready immediately after
-                // onPermissionRequest grant — retry up to 3 times with increasing delay.
-                let stream = null;
-                for (let _attempt = 0; _attempt < 3; _attempt++) {
-                    try {
-                        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                        break;
-                    } catch (retryErr) {
-                        console.warn('[MIC_DEBUG] getUserMedia attempt', _attempt + 1, 'failed:', retryErr.name, retryErr.message);
-                        if (retryErr.name === 'NotReadableError' && _attempt < 2) {
-                            await new Promise(r => setTimeout(r, 300 * (_attempt + 1)));
-                        } else {
-                            throw retryErr;
-                        }
-                    }
-                }
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
                 // Pick the first supported mimeType — audio/webm;codecs=opus is not
                 // available in all Android WebView versions, so fall back gracefully.
@@ -4439,20 +4444,39 @@
                 }, 500);
 
             } catch (e) {
-                // Log full error details for native logcat debugging
-                console.error('[MIC_DEBUG] getUserMedia error — name:', e.name, 'message:', e.message, 'stack:', e.stack);
-                console.error('[MIC_DEBUG] mediaDevices available:', !!navigator.mediaDevices, 'getUserMedia:', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
-                // Show specific message by error type to aid diagnosis
+                console.error('[MIC_DEBUG] getUserMedia failed:', e.name, e.message);
+                // Android WebView NotReadableError → fall back to native recording
+                if (e.name === 'NotReadableError' && typeof AndroidBridge !== 'undefined' && typeof AndroidBridge.startRecording === 'function') {
+                    console.log('[MIC_DEBUG] Falling back to native recording');
+                    _useNativeRecording = true;
+                    return startNativeRecording();
+                }
                 if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
                     showToast(i18n.t('chat_mic_denied'), 'error');
                 } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
                     showToast('找不到麥克風裝置', 'error');
                 } else {
-                    // e.g. NotReadableError, NotSupportedError — log actual error
-                    console.error('[Voice] startRecording failed:', e.name, e.message);
                     showToast(i18n.t('chat_mic_denied') + ' (' + (e.name || e.message) + ')', 'error');
                 }
             }
+        }
+
+        function startNativeRecording() {
+            const result = AndroidBridge.startRecording();
+            if (result !== 'ok') {
+                console.error('[MIC_DEBUG] Native startRecording failed:', result);
+                showToast(i18n.t('chat_mic_denied') + ' (' + result + ')', 'error');
+                return;
+            }
+            recordingStartTime = Date.now();
+            document.getElementById('btnVoice').classList.add('recording');
+            document.getElementById('recordingIndicator').classList.add('active');
+            updateRecordingTime();
+            recordingTimer = setInterval(() => {
+                updateRecordingTime();
+                const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+                if (elapsed >= MAX_RECORD_SECONDS) stopRecording(true);
+            }, 500);
         }
 
         function updateRecordingTime() {
@@ -4463,13 +4487,31 @@
         }
 
         function stopRecording(send) {
-            if (!mediaRecorder) return;
-
             clearInterval(recordingTimer);
-            const durationSec = Math.floor((Date.now() - recordingStartTime) / 1000);
-
             document.getElementById('btnVoice').classList.remove('recording');
             document.getElementById('recordingIndicator').classList.remove('active');
+
+            // Native recording path
+            if (_useNativeRecording) {
+                if (typeof AndroidBridge === 'undefined') return;
+                const raw = AndroidBridge.stopRecording(!!send);
+                if (!raw) return;
+                try {
+                    const rec = JSON.parse(raw);
+                    const byteStr = atob(rec.data);
+                    const bytes = new Uint8Array(byteStr.length);
+                    for (let i = 0; i < byteStr.length; i++) bytes[i] = byteStr.charCodeAt(i);
+                    const blob = new Blob([bytes], { type: rec.mimeType || 'audio/mp4' });
+                    uploadVoice(blob, rec.duration);
+                } catch (e) {
+                    console.error('[MIC_DEBUG] Native stop parse error:', e);
+                }
+                return;
+            }
+
+            // WebView MediaRecorder path
+            if (!mediaRecorder) return;
+            const durationSec = Math.floor((Date.now() - recordingStartTime) / 1000);
 
             if (!send || durationSec < 1) {
                 mediaRecorder.stop();

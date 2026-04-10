@@ -37,6 +37,7 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var loadingIndicator: ProgressBar
     private lateinit var offlineView: View
     private lateinit var webViewManager: ChatWebViewManager
+    private var jsBridge: ChatJsBridge? = null
 
     companion object {
         private const val CHAT_URL = "https://eclawbot.com"
@@ -89,6 +90,7 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        jsBridge?.release()
         webViewManager.destroy()
     }
 
@@ -137,7 +139,8 @@ class ChatActivity : AppCompatActivity() {
         webViewManager.setup()
 
         // Inject JS Bridge
-        val bridge = ChatJsBridge(this, deviceManager, chatPrefs)
+        jsBridge = ChatJsBridge(this, deviceManager, chatPrefs)
+        val bridge = jsBridge!!
         webView.addJavascriptInterface(bridge, ChatJsBridge.BRIDGE_NAME)
 
         // Request microphone permission proactively for voice recording

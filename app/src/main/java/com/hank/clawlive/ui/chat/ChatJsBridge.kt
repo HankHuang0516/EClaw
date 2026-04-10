@@ -1,7 +1,10 @@
 package com.hank.clawlive.ui.chat
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.webkit.JavascriptInterface
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import com.hank.clawlive.data.local.ChatPreferences
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.widget.ChatWidgetProvider
@@ -16,6 +19,7 @@ class ChatJsBridge(
     private val deviceManager: DeviceManager,
     private val chatPrefs: ChatPreferences
 ) {
+    private val nativeRecorder = NativeAudioRecorder(activity)
 
     @JavascriptInterface
     fun getDeviceId(): String = deviceManager.deviceId
@@ -47,6 +51,34 @@ class ChatJsBridge(
             "warn" -> Timber.w("[ChatWebView] %s", message)
             else -> Timber.d("[ChatWebView] %s", message)
         }
+    }
+
+    /** Start native audio recording. Returns "ok" or "error:reason". */
+    @JavascriptInterface
+    fun startRecording(): String {
+        val hasPerm = ContextCompat.checkSelfPermission(
+            activity, Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!hasPerm) return "error:permission_denied"
+        return nativeRecorder.start()
+    }
+
+    /** Stop native recording. Returns JSON {duration, mimeType, data} or empty string. */
+    @JavascriptInterface
+    fun stopRecording(send: Boolean): String {
+        return nativeRecorder.stop(send) ?: ""
+    }
+
+    /** Check if native recorder is active. */
+    @JavascriptInterface
+    fun isRecording(): Boolean = nativeRecorder.isRecording
+
+    /** Get current recording duration in seconds. */
+    @JavascriptInterface
+    fun getRecordingDuration(): Int = nativeRecorder.getDurationSec()
+
+    fun release() {
+        nativeRecorder.release()
     }
 
     companion object {
