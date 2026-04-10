@@ -85,16 +85,30 @@ io.use((socket, next) => {
             } catch (e) { /* fall through */ }
         }
     }
+    // Arena viewer mode: allow anonymous connections that only join exam: rooms
+    const arenaMode = socket.handshake.auth?.arena || socket.handshake.query?.arena;
+    if (arenaMode === 'true' || arenaMode === true) {
+        socket.arenaOnly = true;
+        return next();
+    }
+
     next(new Error('Authentication failed'));
 });
 
 io.on('connection', (socket) => {
     const deviceId = socket.deviceId;
-    socket.join(`device:${deviceId}`);
+    if (deviceId) socket.join(`device:${deviceId}`);
     console.log(`[Socket.IO] Connected: device ${deviceId} (${io.engine.clientsCount} total)`);
 
     socket.on('disconnect', () => {
         console.log(`[Socket.IO] Disconnected: device ${deviceId}`);
+    });
+
+    // Arena exam room (public, no device auth needed for this room)
+    socket.on('join', (room) => {
+        if (typeof room === 'string' && (room.startsWith('exam:') || room === 'arena:lobby') && room.length < 80) {
+            socket.join(room);
+        }
     });
 });
 
@@ -1739,6 +1753,18 @@ const inviteModule = require('./invite')({
 });
 app.use('/api/invite', inviteModule.router);
 setTimeout(() => inviteModule.initInviteDatabase(), 3500);
+
+// ============================================
+// INTERVIEW ARENA — public bot capability testing
+// ============================================
+const arenaModule = require('./interview-arena')({ serverLog, io });
+app.use('/api/arena', arenaModule.router);
+// Serve arena public pages
+app.get('/arena', (_req, res) => res.sendFile(path.join(__dirname, 'public/arena/index.html')));
+app.get('/arena/exam/:examId', (_req, res) => res.sendFile(path.join(__dirname, 'public/arena/exam.html')));
+if (process.env.NODE_ENV !== 'test') {
+    setTimeout(() => arenaModule.initArenaDatabase(), 4000);
+}
 
 // Rental metering proxy — loaded for cron jobs. Hooks into client/speak
 // and transform are conditional on entity.rental_contract_id (P2-F handover).
@@ -7617,6 +7643,24 @@ app.get('/api/entity/lookup', (req, res) => {
         return res.status(404).json({ success: false, message: "Entity not found" });
     }
 
+    // Compute capabilities expiry status
+    let capabilitiesStatus = null;
+    const card = entity.agentCard;
+    if (card && card.capabilitiesExpiresAt) {
+        const expiresAt = new Date(card.capabilitiesExpiresAt);
+        const now = new Date();
+        const daysRemaining = Math.max(0, Math.ceil((expiresAt - now) / (24 * 60 * 60 * 1000)));
+        const expired = daysRemaining === 0;
+        capabilitiesStatus = {
+            verified: !expired,
+            expired,
+            daysRemaining,
+            expiresAt: card.capabilitiesExpiresAt,
+            interviewPassedAt: card.capabilitiesInterviewPassedAt || null,
+            benchmarkScore: card.capabilitiesBenchmarkScore || null,
+        };
+    }
+
     res.json({
         success: true,
         entity: {
@@ -7627,6 +7671,7 @@ app.get('/api/entity/lookup', (req, res) => {
             avatar: entity.avatar,
             level: entity.level,
             agentCard: entity.agentCard || null,
+            capabilitiesStatus,
             identity: entity.identity ? {
                 role: entity.identity.role || null,
                 description: entity.identity.description || null,
@@ -7641,15 +7686,17 @@ app.get('/api/entity/lookup', (req, res) => {
 
 // ── Agent Card: A2A Capability Discovery (Issue #174) ──
 
+/** Fields that can ONLY be set by the interview system, never by user/bot. */
+const INTERVIEW_ONLY_FIELDS = ['capabilities', 'capabilitiesExpiresAt', 'capabilitiesInterviewPassedAt', 'capabilitiesBenchmarkScore'];
+
 function validateAgentCard(card) {
     if (!card || typeof card !== 'object') return { valid: false, error: 'Agent card must be an object' };
     if (!card.description) return { valid: false, error: 'description is required' };
     if (String(card.description).length > 500) return { valid: false, error: 'description must be 500 characters or less' };
-    if (Array.isArray(card.capabilities) && card.capabilities.length > 10) return { valid: false, error: 'Maximum 10 capabilities allowed' };
     if (Array.isArray(card.tags) && card.tags.length > 20) return { valid: false, error: 'Maximum 20 tags allowed' };
     const cleaned = {};
     cleaned.description = String(card.description).substring(0, 500);
-    if (Array.isArray(card.capabilities)) cleaned.capabilities = card.capabilities.slice(0, 10).map(c => typeof c === 'object' ? { id: String(c.id || '').substring(0, 64), name: String(c.name || '').substring(0, 128), description: String(c.description || '').substring(0, 256) } : String(c).substring(0, 128));
+    // capabilities are interview-only — strip from user input (silently ignored)
     if (Array.isArray(card.protocols)) cleaned.protocols = card.protocols.slice(0, 10).map(p => String(p).substring(0, 64));
     if (Array.isArray(card.tags)) cleaned.tags = card.tags.slice(0, 20).map(t => String(t).substring(0, 64));
     if (card.version) cleaned.version = String(card.version).substring(0, 32);
@@ -8011,11 +8058,45 @@ function authEntityAccess(device, deviceSecret, botSecret, entityId) {
     return { entity, eid };
 }
 
-/** Atomically set agent card and sync identity.public */
+/** Atomically set agent card and sync identity.public.
+ *  Preserves interview-only fields (capabilities, expiry) from existing card. */
 function syncEntityCard(entity, card) {
+    const existing = entity.agentCard || {};
+    // Preserve interview-only fields that user/bot cannot overwrite
+    for (const field of INTERVIEW_ONLY_FIELDS) {
+        if (existing[field] !== undefined) card[field] = existing[field];
+    }
     entity.agentCard = card;
     if (!entity.identity) entity.identity = {};
     entity.identity.public = card;
+    entity.lastUpdated = Date.now();
+}
+
+/**
+ * Set interview-verified capabilities on an entity's agent card.
+ * Called ONLY by the interview system after a bot passes.
+ * These fields cannot be overwritten by PUT /api/entity/agent-card.
+ *
+ * @param {object} entity — in-memory entity object
+ * @param {object} interviewResult — { capabilities, score, rawScore, maxScore, probeResults }
+ * @param {number} [expiryDays=30] — days until capabilities expire
+ */
+function setInterviewCapabilities(entity, interviewResult, expiryDays = 30) {
+    if (!entity.agentCard) entity.agentCard = { description: '' };
+    const expiresAt = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000).toISOString();
+
+    entity.agentCard.capabilities = interviewResult.capabilities;
+    entity.agentCard.capabilitiesExpiresAt = expiresAt;
+    entity.agentCard.capabilitiesInterviewPassedAt = new Date().toISOString();
+    entity.agentCard.capabilitiesBenchmarkScore = {
+        score: interviewResult.score,
+        rawScore: interviewResult.rawScore,
+        maxScore: interviewResult.maxScore,
+    };
+
+    // Sync to identity.public
+    if (!entity.identity) entity.identity = {};
+    entity.identity.public = entity.agentCard;
     entity.lastUpdated = Date.now();
 }
 
@@ -12272,7 +12353,7 @@ missionModule.setPushToBot(pushToBot);
 
 // Wire pushToBot + devices into rental module for interview probe dispatch
 if (typeof rentalModule.setInterviewDeps === 'function') {
-    rentalModule.setInterviewDeps({ pushToBot, devices });
+    rentalModule.setInterviewDeps({ pushToBot, devices, arenaModule, setInterviewCapabilities });
 }
 
 // ============================================

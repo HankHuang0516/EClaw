@@ -1265,7 +1265,46 @@
             }
             html += '</div>';
 
+            // Arena Feedback section
+            html += '<div class="section-card">';
+            html += '<div class="section-title">🏟 Arena Feedback</div>';
+            html += '<div id="arenaFeedbackContent" style="color:var(--text-secondary);">Loading...</div>';
+            html += '</div>';
+
             content.innerHTML = html;
+
+            // Load arena feedback asynchronously
+            loadArenaFeedback();
+        }
+
+        async function loadArenaFeedback() {
+            const el = document.getElementById('arenaFeedbackContent');
+            if (!el) return;
+            try {
+                const data = await apiCall('GET', '/api/arena/feedback?limit=50');
+                if (!data.feedback || data.feedback.length === 0) {
+                    el.innerHTML = '<p style="padding:12px;">No feedback yet.</p>';
+                    return;
+                }
+                let fbHtml = '<div class="table-scroll"><table class="data-table"><thead><tr>';
+                fbHtml += '<th>Time</th><th>Model</th><th>Score</th><th>Desired Capabilities</th><th>Credibility</th><th>Comment</th>';
+                fbHtml += '</tr></thead><tbody>';
+                for (const f of data.feedback) {
+                    const caps = Array.isArray(f.desired_capabilities) ? f.desired_capabilities.join(', ') : '-';
+                    fbHtml += '<tr>';
+                    fbHtml += '<td>' + formatDate(f.created_at) + '</td>';
+                    fbHtml += '<td>' + escapeHtml(f.model || '-') + '</td>';
+                    fbHtml += '<td>' + (f.total_score != null ? f.total_score + '/147' : '-') + '</td>';
+                    fbHtml += '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(caps) + '</td>';
+                    fbHtml += '<td>' + (f.credibility_score != null ? f.credibility_score + '/10' : '-') + '</td>';
+                    fbHtml += '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(f.comment || '-') + '</td>';
+                    fbHtml += '</tr>';
+                }
+                fbHtml += '</tbody></table></div>';
+                el.innerHTML = fbHtml;
+            } catch (e) {
+                el.innerHTML = '<p style="color:var(--danger);">Failed to load: ' + escapeHtml(e.message) + '</p>';
+            }
         }
 
         async function revokeSkill(skillId) {

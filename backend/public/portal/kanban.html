@@ -185,9 +185,17 @@
         .kb-auto-body { display:none; padding:0 16px 16px; }
         .kb-auto-body.open { display:block; }
         .kb-auto-grid { display:flex; gap:10px; overflow-x:auto; padding:4px 0; }
-        .kb-auto-card { flex:0 0 200px; background:var(--input-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:12px; cursor:pointer; transition:border-color 0.2s; border-left:3px solid #fbbf24; }
+        .kb-auto-card { flex:0 0 200px; background:var(--input-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:12px; cursor:pointer; transition:border-color 0.2s,opacity 0.2s; border-left:3px solid #fbbf24; position:relative; }
         .kb-auto-card:hover { border-color:var(--primary); }
-        .kb-auto-card-title { font-size:12px; font-weight:600; margin-bottom:4px; display:flex; align-items:center; gap:4px; }
+        .kb-auto-card.paused { opacity:0.55; border-left-color:var(--text-muted); }
+        .kb-auto-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:4px; }
+        .kb-auto-card-title { font-size:12px; font-weight:600; margin-bottom:4px; display:flex; align-items:center; gap:4px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .kb-auto-card-quick { display:flex; gap:2px; flex-shrink:0; opacity:0; transition:opacity 0.15s; }
+        .kb-auto-card:hover .kb-auto-card-quick { opacity:1; }
+        .kb-auto-quick-btn { width:22px; height:22px; border:none; border-radius:4px; background:rgba(255,255,255,0.06); cursor:pointer; font-size:11px; display:flex; align-items:center; justify-content:center; transition:background 0.15s; padding:0; }
+        .kb-auto-quick-btn:hover { background:rgba(255,255,255,0.15); }
+        .kb-auto-quick-btn.del:hover { background:rgba(239,68,68,0.2); }
+        .kb-auto-card-paused { display:inline-block; font-size:9px; background:rgba(255,255,255,0.08); color:var(--text-muted); padding:1px 6px; border-radius:3px; margin-bottom:4px; }
         .kb-auto-card-cron { font-size:11px; color:var(--text-muted); margin-bottom:4px; }
         .kb-auto-card-next { font-size:10px; color:var(--text-secondary); }
         .kb-auto-card-result { font-size:10px; margin-top:4px; }

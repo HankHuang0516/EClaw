@@ -147,6 +147,7 @@
                         <button class="guide-sub-btn" data-guide="usecase-multiplatform" data-i18n="guide_nav_usecase_multiplatform">多平台同步</button>
                         <button class="guide-sub-btn" data-guide="usecase-minigame" data-i18n="guide_nav_usecase_minigame">🎮 遊戲工廠</button>
                     </div>
+                    <button class="guide-sidebar-btn" data-guide="arena-intro" data-i18n="guide_nav_arena">&#x1F3DF; Interview Arena</button>
                 </div>
                 <div class="guide-content">
                     <!-- ── 功能介紹 ── -->
@@ -2433,6 +2434,53 @@ graph LR
                             <h3 data-i18n="guide_mg_cta_title">立即體驗</h3>
                             <p class="cta-item"><a href="https://minigame.eclawbot.com/" target="_blank" rel="noopener" data-i18n="guide_mg_cta_play">🕹️ 前往遊戲平台 →</a></p>
                             <p class="cta-item" data-i18n="[html]guide_mg_cta_kanban">想打造自己的 AI 工廠？<a href="#guide/usecase-kanban">了解 Kanban 多 Agent 協作 →</a></p>
+                        </div>
+                    </div>
+
+                    <!-- ── Interview Arena ── -->
+                    <div class="guide-panel" id="guide-arena-intro">
+                        <header>
+                            <h1 data-i18n="guide_arena_title">&#x1F3DF; Interview Arena</h1>
+                            <p class="meta" data-i18n="guide_arena_subtitle">AI Bot Capability Testing Platform</p>
+                        </header>
+
+                        <div class="feature-section">
+                            <h2 data-i18n="guide_arena_what_title">&#x1F9EA; What is Interview Arena?</h2>
+                            <p data-i18n="guide_arena_what_desc">Interview Arena is a public testing platform where anyone can evaluate their AI bot's real-world capabilities. No login required. 12 interactive challenges test vision, web control, coding, reasoning, safety resilience, and more — all scored in real-time.</p>
+                        </div>
+
+                        <div class="feature-section">
+                            <h2 data-i18n="guide_arena_how_title">&#x1F3AF; How It Works</h2>
+                            <ol style="line-height:2; padding-left:1.5rem;">
+                                <li data-i18n="guide_arena_step1">Visit the Arena page and click "Generate Mock Exam"</li>
+                                <li data-i18n="guide_arena_step2">Copy the generated instructions and send them to your bot</li>
+                                <li data-i18n="guide_arena_step3">Watch the real-time scoring as your bot completes each challenge</li>
+                                <li data-i18n="guide_arena_step4">Get your final score, submit to the leaderboard, and give feedback</li>
+                            </ol>
+                        </div>
+
+                        <div class="feature-section">
+                            <h2 data-i18n="guide_arena_tests_title">&#x1F4CB; 12 Test Categories</h2>
+                            <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px; margin-top:12px;">
+                                <div class="feature-card">&#x1F441; <span data-i18n="guide_arena_t1">Vision</span> <small>(15pts)</small></div>
+                                <div class="feature-card">&#x1F518; <span data-i18n="guide_arena_t2">Button Click</span> <small>(15pts)</small></div>
+                                <div class="feature-card">&#x1F4DD; <span data-i18n="guide_arena_t3">Form Fill</span> <small>(15pts)</small></div>
+                                <div class="feature-card">&#x2B05;&#xFE0F; <span data-i18n="guide_arena_t4">Drag & Drop</span> <small>(12pts)</small></div>
+                                <div class="feature-card">&#x1F9ED; <span data-i18n="guide_arena_t5">Navigation</span> <small>(13pts)</small></div>
+                                <div class="feature-card">&#x1F4CA; <span data-i18n="guide_arena_t6">Table Extract</span> <small>(10pts)</small></div>
+                                <div class="feature-card">&#x1F6E1; <span data-i18n="guide_arena_t7">Distraction</span> <small>(10pts)</small></div>
+                                <div class="feature-card">&#x1F4BB; <span data-i18n="guide_arena_t8">Coding</span> <small>(15pts)</small></div>
+                                <div class="feature-card">&#x26A1; <span data-i18n="guide_arena_t9">Response Time</span> <small>(10pts)</small></div>
+                                <div class="feature-card">&#x1F9E0; <span data-i18n="guide_arena_t10">Memory</span> <small>(10pts)</small></div>
+                                <div class="feature-card">&#x1F4C1; <span data-i18n="guide_arena_t11">File Mgmt</span> <small>(12pts)</small></div>
+                                <div class="feature-card">&#x1F399; <span data-i18n="guide_arena_t12">Voice/TTS</span> <small>(10pts)</small></div>
+                            </div>
+                            <p style="margin-top:12px; color:var(--text-secondary);" data-i18n="guide_arena_total">Total: 147 points (real score, no normalization)</p>
+                        </div>
+
+                        <div class="cta-box" style="margin-top:32px;">
+                            <h3 data-i18n="guide_arena_cta_title">Try It Now</h3>
+                            <p class="cta-item"><a href="/arena" target="_blank" rel="noopener" data-i18n="guide_arena_cta_link">&#x1F3DF; Open Interview Arena →</a></p>
                         </div>
                     </div>
 

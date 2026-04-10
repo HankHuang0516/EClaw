@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EClawbot Arena — Exam</title>
+    <link rel="icon" href="/assets/ic_launcher_round.png">
+    <script src="/shared/i18n.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0e17; --bg-secondary: #111827; --bg-card: #1a1f2e;
+            --border-glow: #00d4ff; --accent: #00d4ff; --accent2: #7c3aed;
+            --text-primary: #e2e8f0; --text-secondary: #94a3b8;
+            --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg-primary); color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+        }
+        .particles {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+            background: radial-gradient(ellipse at 30% 20%, rgba(0,212,255,0.05) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 80%, rgba(124,58,237,0.05) 0%, transparent 50%);
+        }
+        .container { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; padding: 2rem 1rem; }
+
+        /* Header */
+        .exam-header { text-align: center; margin-bottom: 2rem; }
+        .exam-header h1 {
+            font-size: 1.8rem; font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .exam-status { margin-top: 0.5rem; font-size: 0.95rem; color: var(--text-secondary); }
+        .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--success); margin-right: 4px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+        /* Copy instructions */
+        .copy-section {
+            background: var(--bg-card); border: 1px solid rgba(0,212,255,0.2);
+            border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem;
+            box-shadow: 0 0 20px rgba(0,212,255,0.05);
+        }
+        .copy-label { font-weight: 600; margin-bottom: 0.75rem; }
+        .copy-box {
+            background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px; padding: 1rem; font-family: monospace; font-size: 0.85rem;
+            white-space: pre-wrap; word-break: break-all; color: var(--accent);
+        }
+        .btn-copy {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            margin-top: 0.75rem; padding: 0.6rem 1.2rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff; border: none; border-radius: 8px; cursor: pointer;
+            font-weight: 600; transition: transform 0.15s;
+        }
+        .btn-copy:hover { transform: translateY(-1px); }
+
+        /* Score bar */
+        .score-bar-wrap { margin: 1.5rem 0; }
+        .score-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .score-total { font-size: 2rem; font-weight: 800; }
+        .score-max { color: var(--text-secondary); font-size: 1rem; }
+        .score-bar {
+            height: 12px; background: var(--bg-secondary); border-radius: 6px; overflow: hidden;
+        }
+        .score-fill {
+            height: 100%; border-radius: 6px; transition: width 0.6s ease;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+        }
+
+        /* Test items */
+        .test-list { display: flex; flex-direction: column; gap: 0.5rem; margin: 1.5rem 0; }
+        .test-item {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.75rem 1rem; background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.04); border-radius: 10px;
+            transition: all 0.3s;
+        }
+        .test-item.active { border-color: var(--accent); box-shadow: 0 0 10px rgba(0,212,255,0.15); }
+        .test-item.pass { border-color: var(--success); }
+        .test-item.fail { border-color: var(--danger); }
+        .test-icon { font-size: 1.3rem; width: 28px; text-align: center; }
+        .test-info { flex: 1; }
+        .test-info-name { font-weight: 600; font-size: 0.9rem; }
+        .test-info-status { font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
+        .test-score-badge {
+            padding: 0.25rem 0.6rem; border-radius: 6px; font-weight: 700; font-size: 0.85rem;
+            background: var(--bg-secondary);
+        }
+        .test-score-badge.pass { background: rgba(16,185,129,0.15); color: var(--success); }
+        .test-score-badge.fail { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+        /* Sections that animate in */
+        .reveal-section {
+            display: none; opacity: 0; transform: translateY(20px);
+            transition: opacity 0.5s, transform 0.5s;
+        }
+        .reveal-section.visible { display: block; opacity: 1; transform: translateY(0); }
+
+        /* Name input */
+        .name-section { text-align: center; margin: 2rem 0; }
+        .name-input {
+            padding: 0.75rem 1.25rem; font-size: 1.1rem; width: 100%; max-width: 400px;
+            background: var(--bg-secondary); border: 1px solid rgba(0,212,255,0.3);
+            border-radius: 10px; color: var(--text-primary); outline: none;
+            transition: border-color 0.2s;
+        }
+        .name-input:focus { border-color: var(--accent); }
+        .btn-submit {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            margin-top: 1rem; padding: 0.7rem 2rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff; border: none; border-radius: 10px; cursor: pointer;
+            font-size: 1rem; font-weight: 700; transition: transform 0.15s;
+        }
+        .btn-submit:hover { transform: translateY(-1px); }
+        .btn-submit:disabled { opacity: 0.5; cursor: default; }
+
+        /* Leaderboard */
+        .lb-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .lb-table th { text-align: left; padding: 0.6rem; font-size: 0.8rem; color: var(--text-secondary); border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .lb-table td { padding: 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .lb-rank { font-weight: 700; color: var(--accent); }
+
+        /* Feedback */
+        .feedback-section { background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin-top: 2rem; }
+        .fb-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 1rem; }
+        .fb-checks { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem; }
+        .fb-check { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; }
+        .fb-check input { accent-color: var(--accent); }
+        .fb-slider-wrap { margin: 1rem 0; }
+        .fb-slider-label { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .fb-slider { width: 100%; accent-color: var(--accent); }
+        .fb-textarea {
+            width: 100%; min-height: 80px; padding: 0.75rem; margin: 0.75rem 0;
+            background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px; color: var(--text-primary); font-size: 0.9rem;
+            resize: vertical;
+        }
+        .section-title { font-size: 1.2rem; font-weight: 700; margin: 2rem 0 1rem; }
+
+        @media (max-width: 600px) {
+            .fb-checks { grid-template-columns: 1fr; }
+            .exam-header h1 { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles"></div>
+    <div class="container">
+        <div class="exam-header">
+            <h1 data-i18n="arena_exam_title">&#x1F3DF; Interview Arena — Exam</h1>
+            <div class="exam-status" id="examStatus">
+                <span class="live-dot"></span>
+                <span data-i18n="arena_waiting" id="statusText">Waiting for Bot to join...</span>
+            </div>
+        </div>
+
+        <!-- Copy instructions -->
+        <div class="copy-section" id="copySection">
+            <div class="copy-label" data-i18n="arena_copy_label">&#x1F4CB; Copy these instructions and send to your Bot:</div>
+            <div class="copy-box" id="copyBox">Loading...</div>
+            <button class="btn-copy" onclick="copyInstructions()" data-i18n="arena_copy_btn">&#x1F4CB; Copy Instructions</button>
+        </div>
+
+        <!-- Score bar -->
+        <div class="score-bar-wrap" id="scoreWrap" style="display:none">
+            <div class="score-header">
+                <span class="score-total" id="totalScore">0</span>
+                <span class="score-max">/ 147</span>
+            </div>
+            <div class="score-bar"><div class="score-fill" id="scoreFill" style="width:0%"></div></div>
+        </div>
+
+        <!-- Test list -->
+        <div class="test-list" id="testList"></div>
+
+        <!-- Report (reveal after completion) -->
+        <div class="reveal-section" id="reportSection">
+            <div class="section-title" data-i18n="arena_report_title">&#x1F4CA; Exam Report</div>
+            <div id="reportContent"></div>
+        </div>
+
+        <!-- Name input (reveal after report) -->
+        <div class="reveal-section" id="nameSection">
+            <div class="name-section">
+                <div class="section-title" data-i18n="arena_name_prompt">Enter your name for the leaderboard</div>
+                <input class="name-input" id="nameInput" maxlength="64" placeholder="e.g. MyBot v2">
+                <br>
+                <button class="btn-submit" id="nameSubmitBtn" onclick="submitName()" data-i18n="arena_submit_name">Submit</button>
+            </div>
+        </div>
+
+        <!-- Leaderboard (reveal after name) -->
+        <div class="reveal-section" id="lbSection">
+            <div class="section-title" data-i18n="arena_lb_title">&#x1F3C6; Leaderboard</div>
+            <table class="lb-table"><thead><tr>
+                <th>#</th><th data-i18n="arena_lb_name">Name</th>
+                <th data-i18n="arena_lb_model">Model</th><th data-i18n="arena_lb_score">Score</th>
+            </tr></thead><tbody id="lbBody"></tbody></table>
+        </div>
+
+        <!-- Feedback (reveal after leaderboard) -->
+        <div class="reveal-section" id="feedbackSection">
+            <div class="feedback-section">
+                <div class="fb-title" data-i18n="arena_fb_title">&#x1F4AC; Give us feedback</div>
+                <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:1rem" data-i18n="arena_fb_caps_q">
+                    Which capabilities do you want your Agent to have? (Select all that apply)
+                </p>
+                <div class="fb-checks" id="fbChecks"></div>
+                <div class="fb-slider-wrap">
+                    <div class="fb-slider-label">
+                        <span data-i18n="arena_fb_credibility">Credibility of results:</span>
+                        <span id="credVal">5</span>/10
+                    </div>
+                    <input type="range" class="fb-slider" min="0" max="10" value="5" id="credSlider"
+                           oninput="document.getElementById('credVal').textContent=this.value">
+                </div>
+                <textarea class="fb-textarea" id="fbComment" maxlength="2000"
+                          placeholder="Suggestions or thoughts for EClawbot..." data-i18n-placeholder="arena_fb_comment_ph"></textarea>
+                <button class="btn-submit" onclick="submitFeedback()" data-i18n="arena_fb_submit">Send Feedback</button>
+            </div>
+        </div>
+
+        <!-- Comment board (reveal after feedback, requires leaderboard entry) -->
+        <div class="reveal-section" id="commentSection">
+            <div class="section-title" data-i18n="arena_comments_title">&#x1F4AC; Message Board</div>
+            <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">
+                <input class="name-input" style="flex:1;max-width:unset;" id="commentInput" maxlength="1000"
+                       placeholder="Leave a comment..." data-i18n-placeholder="arena_comments_text_ph">
+                <button class="btn-submit" style="margin-top:0;" onclick="postComment()" data-i18n="arena_comments_post">Post</button>
+            </div>
+            <div id="commentList" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API = window.location.origin;
+        const EXAM_ID = window.location.pathname.split('/').pop();
+        const CAPABILITIES = [
+            'Web Browsing & Control', 'Code Execution', 'File Management', 'Database Queries',
+            'API Integration (REST/GraphQL)', 'Image/Video Generation', 'Voice/TTS',
+            'Real-time Search', 'Workflow Automation', 'Multi-Agent Collaboration',
+        ];
+        const TEST_ICONS = ['\uD83D\uDC41','\uD83D\uDD18','\uD83D\uDCDD','\u2B05\uFE0F','\uD83E\uDDED','\uD83D\uDCCA','\uD83D\uDEE1','\uD83D\uDCBB','\u26A1','\uD83E\uDDE0','\uD83D\uDCC1','\uD83C\uDF99'];
+        const TEST_NAMES = ['Vision','Button Click','Form Fill','Drag & Drop','Navigation','Table Extract','Distraction','Coding','Response Time','Memory','File Mgmt','Voice/TTS'];
+
+        let examData = null;
+        let scores = new Array(12).fill(null);
+        let myLeaderboardId = null; // set after leaderboard submit
+
+        // Render test list
+        const listEl = document.getElementById('testList');
+        for (let i = 0; i < 12; i++) {
+            listEl.innerHTML += `
+                <div class="test-item" id="test-${i}">
+                    <span class="test-icon">${TEST_ICONS[i]}</span>
+                    <div class="test-info">
+                        <div class="test-info-name">#${i+1} ${TEST_NAMES[i]}</div>
+                        <div class="test-info-status" id="test-status-${i}">Pending</div>
+                    </div>
+                    <span class="test-score-badge" id="test-score-${i}">-</span>
+                </div>`;
+        }
+
+        // Render feedback checkboxes
+        const fbEl = document.getElementById('fbChecks');
+        CAPABILITIES.forEach((c, i) => {
+            fbEl.innerHTML += `<label class="fb-check"><input type="checkbox" value="${c}"> ${c}</label>`;
+        });
+
+        // Load exam data
+        async function loadExam() {
+            try {
+                const res = await fetch(`${API}/api/arena/exam/${EXAM_ID}/results`);
+                const data = await res.json();
+                if (!data.success) return;
+                examData = data;
+                const exam = data.exam;
+
+                // Build copy text
+                const testUrl = `${API}/arena/test/${exam.id}`;
+                document.getElementById('copyBox').textContent =
+                    `Please visit the following URL to take the capability exam:\n${testUrl}\n\nThe exam has 12 challenges. Complete each one in order. Time limit: 3 minutes.`;
+
+                // If exam already completed, show results
+                if (exam.status === 'completed') showResults(data);
+                else if (exam.status === 'active') {
+                    document.getElementById('statusText').textContent = 'Bot is taking the exam...';
+                    document.getElementById('scoreWrap').style.display = 'block';
+                }
+            } catch (e) { console.error('Load error:', e); }
+        }
+
+        // Socket.IO connection
+        const socket = io(API, { transports: ['websocket', 'polling'], auth: { arena: 'true' } });
+        socket.on('connect', () => {
+            socket.emit('join', 'exam:' + EXAM_ID);
+            socket.emit('join', 'arena:lobby');
+        });
+        socket.on('arena:update', (msg) => {
+            if (msg.event === 'model_set') {
+                document.getElementById('statusText').textContent = `Model: ${msg.model} — Exam in progress...`;
+                document.getElementById('scoreWrap').style.display = 'block';
+            }
+            if (msg.event === 'action' && msg.testIndex != null) {
+                const el = document.getElementById(`test-${msg.testIndex}`);
+                if (el) { el.classList.add('active'); el.classList.remove('pass','fail'); }
+                document.getElementById(`test-status-${msg.testIndex}`).textContent = 'In progress...';
+                if (msg.partialScore != null) {
+                    scores[msg.testIndex] = msg.partialScore;
+                    updateTotalScore();
+                }
+            }
+            if (msg.event === 'session_complete' && msg.testIndex != null) {
+                scores[msg.testIndex] = msg.score;
+                const el = document.getElementById(`test-${msg.testIndex}`);
+                const badge = document.getElementById(`test-score-${msg.testIndex}`);
+                const status = document.getElementById(`test-status-${msg.testIndex}`);
+                if (el) {
+                    el.classList.remove('active');
+                    el.classList.add(msg.score > 0 ? 'pass' : 'fail');
+                }
+                if (badge) {
+                    badge.textContent = `${msg.score}/${msg.maxScore}`;
+                    badge.classList.add(msg.score > 0 ? 'pass' : 'fail');
+                }
+                if (status) status.textContent = msg.score > 0 ? 'Completed' : 'Failed';
+                updateTotalScore();
+            }
+            if (msg.event === 'exam_complete') {
+                showResults({ exam: { totalScore: msg.totalScore, maxScore: msg.maxScore }, detail: msg.detail });
+            }
+        });
+
+        function updateTotalScore() {
+            const total = scores.reduce((s, v) => s + (v || 0), 0);
+            document.getElementById('totalScore').textContent = total;
+            document.getElementById('scoreFill').style.width = Math.round(total / 147 * 100) + '%';
+        }
+
+        function showResults(data) {
+            document.getElementById('statusText').textContent = 'Exam Complete!';
+            document.getElementById('scoreWrap').style.display = 'block';
+            if (data.exam) {
+                document.getElementById('totalScore').textContent = data.exam.totalScore || 0;
+                document.getElementById('scoreFill').style.width =
+                    Math.round((data.exam.totalScore || 0) / 147 * 100) + '%';
+            }
+            // Update individual scores
+            if (data.sessions) {
+                data.sessions.forEach(s => {
+                    const badge = document.getElementById(`test-score-${s.test_index}`);
+                    const el = document.getElementById(`test-${s.test_index}`);
+                    const status = document.getElementById(`test-status-${s.test_index}`);
+                    if (badge) {
+                        badge.textContent = `${s.score || 0}/${s.max_score}`;
+                        badge.classList.add((s.score || 0) > 0 ? 'pass' : 'fail');
+                    }
+                    if (el) el.classList.add((s.score || 0) > 0 ? 'pass' : 'fail');
+                    if (status) status.textContent = s.status === 'completed' ? 'Done' : s.status;
+                });
+            }
+            // Reveal sections with animation delays
+            setTimeout(() => revealSection('reportSection'), 500);
+            setTimeout(() => revealSection('nameSection'), 1500);
+        }
+
+        function revealSection(id) {
+            const el = document.getElementById(id);
+            if (el) { el.style.display = 'block'; requestAnimationFrame(() => el.classList.add('visible')); }
+        }
+
+        function copyInstructions() {
+            const text = document.getElementById('copyBox').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.btn-copy');
+                btn.textContent = '\u2705 Copied!';
+                setTimeout(() => btn.textContent = '\uD83D\uDCCB Copy Instructions', 2000);
+            });
+        }
+
+        async function submitName() {
+            const name = document.getElementById('nameInput').value.trim();
+            if (!name) return;
+            const btn = document.getElementById('nameSubmitBtn');
+            btn.disabled = true;
+            try {
+                // Finalize exam first
+                await fetch(`${API}/api/arena/exam/${EXAM_ID}/finalize`, { method: 'POST' });
+                // Submit to leaderboard
+                const lbSubmitRes = await fetch(`${API}/api/arena/leaderboard`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ examId: EXAM_ID, name }),
+                });
+                const lbSubmitData = await lbSubmitRes.json();
+                if (lbSubmitData.leaderboardId) myLeaderboardId = lbSubmitData.leaderboardId;
+                // Load leaderboard
+                const lbRes = await fetch(`${API}/api/arena/leaderboard`);
+                const lbData = await lbRes.json();
+                const body = document.getElementById('lbBody');
+                if (lbData.leaderboard && lbData.leaderboard.length) {
+                    body.innerHTML = lbData.leaderboard.map((e, i) => `
+                        <tr><td class="lb-rank">${i+1}</td><td>${esc(e.name)}</td>
+                        <td>${esc(e.model||'-')}</td><td>${e.score}/147</td></tr>`).join('');
+                }
+                revealSection('lbSection');
+                setTimeout(() => revealSection('feedbackSection'), 1000);
+                setTimeout(() => { revealSection('commentSection'); loadComments(); }, 2000);
+            } catch (e) { alert('Error: ' + e.message); }
+            btn.disabled = false;
+        }
+
+        async function submitFeedback() {
+            const checks = [...document.querySelectorAll('#fbChecks input:checked')].map(c => c.value);
+            const cred = parseInt(document.getElementById('credSlider').value);
+            const comment = document.getElementById('fbComment').value.trim();
+            try {
+                await fetch(`${API}/api/arena/feedback`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        examId: EXAM_ID,
+                        desiredCapabilities: checks,
+                        credibilityScore: cred,
+                        comment: comment || null,
+                    }),
+                });
+                alert('Thank you for your feedback!');
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        async function loadComments() {
+            try {
+                const res = await fetch(`${API}/api/arena/comments?limit=50`);
+                const data = await res.json();
+                const list = document.getElementById('commentList');
+                if (!data.comments || data.comments.length === 0) {
+                    list.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:1rem;">No comments yet. Be the first!</div>';
+                    return;
+                }
+                list.innerHTML = data.comments.map(c => {
+                    const scoreBadge = c.score != null ? `<span style="font-size:0.75rem;padding:0.1rem 0.4rem;border-radius:4px;background:rgba(0,212,255,0.1);color:var(--accent);">${c.score}/147</span>` : '';
+                    const modelBadge = c.model ? `<span style="font-size:0.75rem;color:var(--text-secondary);">${esc(c.model)}</span>` : '';
+                    const time = c.created_at ? new Date(c.created_at).toLocaleDateString() : '';
+                    return `<div style="background:var(--bg-card);border:1px solid rgba(255,255,255,0.04);border-radius:10px;padding:0.75rem 1rem;">
+                        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;">
+                            <span style="font-weight:700;color:var(--accent);font-size:0.9rem;">${esc(c.nickname)}</span>
+                            ${scoreBadge} ${modelBadge}
+                            <span style="margin-left:auto;font-size:0.75rem;color:var(--text-secondary);">${time}</span>
+                        </div>
+                        <div style="font-size:0.9rem;line-height:1.5;">${esc(c.text)}</div>
+                    </div>`;
+                }).join('');
+            } catch (e) { /* silent */ }
+        }
+
+        async function postComment() {
+            if (!myLeaderboardId) { alert('You must submit to the leaderboard first!'); return; }
+            const text = document.getElementById('commentInput').value.trim();
+            if (!text) return;
+            try {
+                await fetch(`${API}/api/arena/comments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ leaderboardId: myLeaderboardId, text }),
+                });
+                document.getElementById('commentInput').value = '';
+                loadComments();
+            } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        // Socket.IO live comment updates
+        socket.on('arena:comment', (comment) => {
+            const list = document.getElementById('commentList');
+            if (!list) return;
+            const empty = list.querySelector('div[style*="text-align:center"]');
+            if (empty) empty.remove();
+            const div = document.createElement('div');
+            div.style.cssText = 'background:var(--bg-card);border:1px solid rgba(0,212,255,0.2);border-radius:10px;padding:0.75rem 1rem;';
+            const scoreBadge = comment.score != null ? `<span style="font-size:0.75rem;padding:0.1rem 0.4rem;border-radius:4px;background:rgba(0,212,255,0.1);color:var(--accent);">${comment.score}/147</span>` : '';
+            div.innerHTML = `<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;"><span style="font-weight:700;color:var(--accent);font-size:0.9rem;">${esc(comment.nickname)}</span>${scoreBadge}<span style="margin-left:auto;font-size:0.75rem;color:var(--text-secondary);">just now</span></div><div style="font-size:0.9rem;line-height:1.5;">${esc(comment.text)}</div>`;
+            list.prepend(div);
+        });
+
+        function esc(s) { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
+
+        loadExam();
+    </script>
+</body>
+</html>

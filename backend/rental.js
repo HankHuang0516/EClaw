@@ -1136,6 +1136,10 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
                  JSON.stringify(result.capabilities),
                  JSON.stringify({ score: result.score, rawScore: result.rawScore, maxScore: result.maxScore, probeResults: result.probeResults })]
             );
+            // Sync interview capabilities to entity's agent card (immutable, 30-day expiry)
+            if (_interviewDeps.setInterviewCapabilities) {
+                _interviewDeps.setInterviewCapabilities(entity, result);
+            }
         } else {
             await pool.query(
                 `UPDATE bot_listings SET status = 'draft', updated_at = NOW() WHERE id = $1`,

@@ -3745,7 +3745,12 @@ const TRANSLATIONS = {
         "guide_arena_t10": "Memory", "guide_arena_t11": "File Mgmt", "guide_arena_t12": "Voice/TTS",
         "guide_arena_total": "Total: 147 points (real score, no normalization)",
         "guide_arena_cta_title": "Try It Now",
-        "guide_arena_cta_link": "🏟 Open Interview Arena →"
+        "guide_arena_cta_link": "🏟 Open Interview Arena →",
+        "arena_comments_title": "💬 Message Board",
+        "arena_comments_hint": "Complete an exam and submit to the leaderboard to leave a comment.",
+        "arena_comments_text_ph": "Leave a comment...",
+        "arena_comments_post": "Post",
+        "arena_comments_loading": "Loading comments..."
     },
     zh: {
         // Mission Control (mission.html)
@@ -7479,7 +7484,12 @@ const TRANSLATIONS = {
         "guide_arena_t10": "記憶", "guide_arena_t11": "檔案管理", "guide_arena_t12": "語音/TTS",
         "guide_arena_total": "滿分：147 分（真實分數，不正規化）",
         "guide_arena_cta_title": "立即體驗",
-        "guide_arena_cta_link": "🏟 前往面試競技場 →"
+        "guide_arena_cta_link": "🏟 前往面試競技場 →",
+        "arena_comments_title": "💬 留言板",
+        "arena_comments_hint": "完成考試並登上排行榜後即可留言。",
+        "arena_comments_text_ph": "留下你的評論...",
+        "arena_comments_post": "發表",
+        "arena_comments_loading": "載入留言中..."
     },
     "zh-CN": {
         "mc_title": "EClawbot 任务控制",
