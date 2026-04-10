@@ -1,3 +1,10 @@
+# [1.933.0](https://github.com/HankHuang0516/EClaw/compare/v1.932.2...v1.933.0) (2026-04-10)
+
+
+### Features
+
+* **rental:** P3 trust layer + P4 risk management + P5 referral system ([c8592b6](https://github.com/HankHuang0516/EClaw/commit/c8592b6197a27c603851d7d118283952ff0b9d05)), closes [#27](https://github.com/HankHuang0516/EClaw/issues/27)
+
 ## [1.932.2](https://github.com/HankHuang0516/EClaw/compare/v1.932.1...v1.932.2) (2026-04-10)
 
 
