@@ -1,3 +1,10 @@
+## [1.939.6](https://github.com/HankHuang0516/EClaw/compare/v1.939.5...v1.939.6) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** add /arena/test/:token route for bot entry point ([0d89d9b](https://github.com/HankHuang0516/EClaw/commit/0d89d9b6edebe9f6d5baf9170cb754b071ab26e5))
+
 ## [1.939.5](https://github.com/HankHuang0516/EClaw/compare/v1.939.4...v1.939.5) (2026-04-10)
 
 
