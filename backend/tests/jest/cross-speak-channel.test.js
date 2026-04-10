@@ -24,7 +24,8 @@ crossDeviceSettings.getSettings = jest.fn().mockResolvedValue({
     whitelist_enabled: false,
     whitelist: [],
     reject_message: '',
-    allowed_media: ['text', 'photo', 'voice', 'video', 'file']
+    allowed_media: ['text', 'photo', 'voice', 'video', 'file'],
+    friends_only: false
 });
 
 // Add channel-api db functions needed
@@ -38,6 +39,12 @@ db.updateChannelCallback = jest.fn().mockResolvedValue(true);
 db.updateChannelE2eeCapable = jest.fn().mockResolvedValue(true);
 db.clearChannelCallback = jest.fn().mockResolvedValue(true);
 db.getChannelAccountByDevice = jest.fn().mockResolvedValue(null);
+// Friend system db functions (added in friend-system feature)
+db.isFriend = jest.fn().mockResolvedValue(false);
+db.setFriendStatus = jest.fn().mockResolvedValue(null);
+db.getFriendRequests = jest.fn().mockResolvedValue([]);
+db.getFriendRequestById = jest.fn().mockResolvedValue(null);
+db.getFriends = jest.fn().mockResolvedValue([]);
 
 const request = require('supertest');
 let app;
