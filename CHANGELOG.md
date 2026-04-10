@@ -1,3 +1,10 @@
+# [1.943.0](https://github.com/HankHuang0516/EClaw/compare/v1.942.0...v1.943.0) (2026-04-10)
+
+
+### Features
+
+* **arena:** speed bonus scoring + collapsible copy instructions ([33d37d1](https://github.com/HankHuang0516/EClaw/commit/33d37d1a3c2cf44240c4f45bb8ca9e8073ac3b8c))
+
 # [1.942.0](https://github.com/HankHuang0516/EClaw/compare/v1.941.5...v1.942.0) (2026-04-10)
 
 
