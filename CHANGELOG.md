@@ -1,3 +1,10 @@
+# [1.935.0](https://github.com/HankHuang0516/EClaw/compare/v1.934.0...v1.935.0) (2026-04-10)
+
+
+### Features
+
+* **refresh:** add channel bot restart via bridge /restart endpoint ([443a21d](https://github.com/HankHuang0516/EClaw/commit/443a21dd8240f3871a4021891622e62f4e88d878))
+
 # [1.934.0](https://github.com/HankHuang0516/EClaw/compare/v1.933.2...v1.934.0) (2026-04-10)
 
 
