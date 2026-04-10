@@ -1,3 +1,10 @@
+## [1.941.5](https://github.com/HankHuang0516/EClaw/compare/v1.941.4...v1.941.5) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** show model name as separate badge below title ([8370ff4](https://github.com/HankHuang0516/EClaw/commit/8370ff4ee61a01f6e2bdd193f9d36a7ad1acf58b))
+
 ## [1.941.4](https://github.com/HankHuang0516/EClaw/compare/v1.941.3...v1.941.4) (2026-04-10)
 
 
