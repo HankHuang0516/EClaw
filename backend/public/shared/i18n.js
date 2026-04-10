@@ -50170,7 +50170,12 @@ const TRANSLATIONS = {
         "arena_badge": "Agent Benchmark",
         "arena_cooldown_prefix": "Siguiente evaluación disponible en",
         "arena_lb_time": "Tiempo",
-        "guide_nav_arena": "🏌️ Arena de Entrevistas"
+        "guide_nav_arena": "🏌️ Arena de Entrevistas",
+        "arena_back": "Volver al Benchmark",
+        "arena_cancel": "Cancelar",
+        "arena_expand": "Expandir",
+        "arena_name_subtitle": "Ingresa tu nombre para registrar tu puntuación",
+        "arena_time_remaining": "Tiempo restante: "
     },
     de: {
         // General / Common
