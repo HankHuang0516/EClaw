@@ -494,6 +494,7 @@
                     return `<tr><td class="lb-rank">${i+1}</td><td>${esc(e.name)}</td><td>${esc(e.model||'-')}</td><td>${e.score}/147</td><td>${tm}</td></tr>`;
                 }).join('');
                 reveal('lbSection');
+                setTimeout(() => document.getElementById('lbSection').scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
                 setTimeout(() => reveal('feedbackSection'), 800);
                 setTimeout(() => { reveal('commentSection'); loadComments(); }, 1500);
             } catch (e) { alert('Error: ' + e.message); }
