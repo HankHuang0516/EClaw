@@ -1,3 +1,10 @@
+## [1.940.1](https://github.com/HankHuang0516/EClaw/compare/v1.940.0...v1.940.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** /arena/test/:id returns session tokens + challenge configs ([d3f5079](https://github.com/HankHuang0516/EClaw/commit/d3f50793ba8f91af6a27cf1eb25ed642d5133f30))
+
 # [1.940.0](https://github.com/HankHuang0516/EClaw/compare/v1.939.7...v1.940.0) (2026-04-10)
 
 
