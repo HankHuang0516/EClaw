@@ -1,3 +1,10 @@
+# [1.952.0](https://github.com/HankHuang0516/EClaw/compare/v1.951.2...v1.952.0) (2026-04-10)
+
+
+### Features
+
+* **interview:** webhook-based interview with Arena results page + shared editor ([882a17a](https://github.com/HankHuang0516/EClaw/commit/882a17aca0c7c7e617b76cca7525141c3f258e57))
+
 ## [1.951.2](https://github.com/HankHuang0516/EClaw/compare/v1.951.1...v1.951.2) (2026-04-10)
 
 
