@@ -358,3 +358,74 @@ describe('interview-arena: API endpoints', () => {
         expect(Array.isArray(res.body.leaderboard)).toBe(true);
     });
 });
+
+// ── Arena → Rental capability mapping ──────────────────────────────
+
+describe('Arena: mapArenaResultToCapabilities', () => {
+    const { mapArenaResultToCapabilities, ARENA_PASS_THRESHOLD, TEST_TYPES, MAX_TOTAL_SCORE } = require('../../interview-arena');
+
+    test('maps arena report to rental-compatible capabilities', () => {
+        const report = {
+            totalScore: 100,
+            maxScore: MAX_TOTAL_SCORE,
+            detail: TEST_TYPES.map(t => ({
+                testType: t.id,
+                score: Math.round(t.weight * 0.8), // 80% on each
+                maxScore: t.weight,
+            })),
+        };
+        const result = mapArenaResultToCapabilities(report);
+        expect(result.passed).toBe(true);
+        expect(result.normalizedScore).toBeGreaterThan(0);
+        expect(result.capabilities.python_exec).toBeDefined();
+        expect(result.capabilities.python_exec.supported).toBe(true);
+        expect(result.capabilities.web_browse).toBeDefined();
+        expect(result.capabilities.vision).toBeDefined();
+        expect(result.benchmarkScore.source).toBe('arena');
+    });
+
+    test('fails when score below threshold', () => {
+        const report = {
+            totalScore: 10,
+            maxScore: MAX_TOTAL_SCORE,
+            detail: TEST_TYPES.map(t => ({ testType: t.id, score: 0, maxScore: t.weight })),
+        };
+        const result = mapArenaResultToCapabilities(report);
+        expect(result.passed).toBe(false);
+        expect(result.normalizedScore).toBeLessThan(ARENA_PASS_THRESHOLD * 100);
+    });
+
+    test('capability supported only when probe scores >= 50%', () => {
+        const report = {
+            totalScore: 80,
+            maxScore: MAX_TOTAL_SCORE,
+            detail: TEST_TYPES.map(t => ({
+                testType: t.id,
+                // Only coding test passes at 80%, rest at 0%
+                score: t.id === 'arena_coding' ? Math.round(t.weight * 0.8) : 0,
+                maxScore: t.weight,
+            })),
+        };
+        const result = mapArenaResultToCapabilities(report);
+        expect(result.capabilities.python_exec?.supported).toBe(true);
+        expect(result.capabilities.web_browse?.supported).toBe(false);
+        expect(result.capabilities.vision?.supported).toBe(false);
+    });
+
+    test('handles null/empty report gracefully', () => {
+        expect(mapArenaResultToCapabilities(null).passed).toBe(false);
+        expect(mapArenaResultToCapabilities({}).passed).toBe(false);
+        expect(mapArenaResultToCapabilities({ detail: [] }).passed).toBe(false);
+    });
+
+    test('probes include source=arena tag', () => {
+        const report = {
+            totalScore: 100, maxScore: MAX_TOTAL_SCORE,
+            detail: [{ testType: 'arena_vision', score: 15, maxScore: 15 }],
+        };
+        const result = mapArenaResultToCapabilities(report);
+        const visionProbe = result.capabilities.vision?.probes?.[0];
+        expect(visionProbe?.source).toBe('arena');
+        expect(visionProbe?.id).toBe('arena_vision');
+    });
+});

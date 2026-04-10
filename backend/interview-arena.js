@@ -519,6 +519,110 @@ async function initArenaDatabase() {
 }
 
 // ============================================
+// Arena → Rental capability mapping
+// ============================================
+
+/**
+ * Arena pass threshold: 40% of MAX_TOTAL_SCORE (≈59 pts).
+ * Lower than the text-probe 60% because Arena's 12 interactive tests
+ * are significantly harder than the 8 text probes.
+ */
+const ARENA_PASS_THRESHOLD = 0.4;
+
+/**
+ * Map Arena test categories to rental interview capability categories.
+ * A capability is "supported" if the bot scored ≥ 50% on any Arena
+ * test in that category.
+ */
+const ARENA_TO_CAPABILITY_MAP = Object.freeze({
+    'web_vision':        'vision',
+    'web_interaction':   'web_browse',
+    'form_automation':   'web_browse',
+    'spatial_control':   'web_browse',
+    'multi_step':        'web_browse',
+    'data_extraction':   'reasoning',
+    'safety_resilience': 'refusal_safety',
+    'code_execution':    'python_exec',
+    'response_speed':    'latency',
+    'context_chain':     'reasoning',
+    'file_management':   'file_io',
+    'voice_tts':         'voice',
+});
+
+/**
+ * Convert Arena exam report to rental-compatible capabilities JSON +
+ * benchmark score. Returns the same structure as bot-interview.js's
+ * scoreInterview().capabilities.
+ *
+ * @param {{ detail: Array<{testType, score, maxScore}> }} report
+ * @returns {{ capabilities: Object, benchmarkScore: Object, passed: boolean, normalizedScore: number }}
+ */
+function mapArenaResultToCapabilities(report) {
+    if (!report || !Array.isArray(report.detail)) {
+        return { capabilities: {}, benchmarkScore: {}, passed: false, normalizedScore: 0 };
+    }
+
+    const capabilities = {};
+    const benchmarkDetail = {};
+
+    for (const d of report.detail) {
+        const testMeta = TEST_TYPES.find(t => t.id === d.testType);
+        if (!testMeta) continue;
+
+        const capKey = ARENA_TO_CAPABILITY_MAP[testMeta.category] || testMeta.category;
+        const pct = d.maxScore > 0 ? d.score / d.maxScore : 0;
+
+        // Aggregate by capability key
+        if (!capabilities[capKey]) {
+            capabilities[capKey] = { supported: false, probes: [], totalScore: 0, maxScore: 0 };
+        }
+        capabilities[capKey].probes.push({
+            id: d.testType,
+            name: testMeta.name,
+            passed: pct >= 0.5,
+            score: d.score,
+            maxScore: d.maxScore,
+            source: 'arena',
+        });
+        capabilities[capKey].totalScore += d.score;
+        capabilities[capKey].maxScore += d.maxScore;
+        // Supported if any probe in this category scored ≥ 50%
+        if (pct >= 0.5) capabilities[capKey].supported = true;
+
+        benchmarkDetail[d.testType] = {
+            name: testMeta.name,
+            score: d.score,
+            maxScore: d.maxScore,
+            pct: Math.round(pct * 100),
+        };
+    }
+
+    // Clean up internal aggregation fields
+    for (const key of Object.keys(capabilities)) {
+        delete capabilities[key].totalScore;
+        delete capabilities[key].maxScore;
+    }
+
+    const totalScore = report.totalScore || report.detail.reduce((s, d) => s + (d.score || 0), 0);
+    const maxScore = report.maxScore || MAX_TOTAL_SCORE;
+    const normalizedScore = Math.round((totalScore / maxScore) * 100);
+    const passed = totalScore / maxScore >= ARENA_PASS_THRESHOLD;
+
+    return {
+        capabilities,
+        benchmarkScore: {
+            source: 'arena',
+            totalScore,
+            maxScore,
+            normalizedScore,
+            detail: benchmarkDetail,
+        },
+        passed,
+        normalizedScore,
+    };
+}
+
+// ============================================
 // Express factory
 // ============================================
 
@@ -548,11 +652,14 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
             const examToken = generateToken(12);
             const expiresAt = new Date(Date.now() + EXAM_TTL_MS);
 
+            // Optional: link this exam to a rental listing for interview qualification
+            const listingId = req.body?.listingId || null;
+
             const examRes = await pool.query(
-                `INSERT INTO arena_exams (exam_token, status, max_score, expires_at)
-                 VALUES ($1, $2, $3, $4)
-                 RETURNING id, exam_token, status, created_at, expires_at`,
-                [examToken, EXAM_STATUS.WAITING, MAX_TOTAL_SCORE, expiresAt]
+                `INSERT INTO arena_exams (exam_token, listing_id, status, max_score, expires_at)
+                 VALUES ($1, $2, $3, $4, $5)
+                 RETURNING id, exam_token, listing_id, status, created_at, expires_at`,
+                [examToken, listingId, EXAM_STATUS.WAITING, MAX_TOTAL_SCORE, expiresAt]
             );
             const exam = examRes.rows[0];
 
@@ -785,13 +892,71 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
                 [req.params.examId, totalScore, JSON.stringify(report)]
             );
 
+            // ── Arena → Rental interview sync ──
+            // If this exam is linked to a listing, auto-qualify it for
+            // the rental marketplace. The Arena's public nature is
+            // unchanged — this just bridges the result.
+            let interviewSync = null;
+            try {
+                const examRow = await pool.query(
+                    'SELECT listing_id, model FROM arena_exams WHERE id = $1',
+                    [req.params.examId]
+                );
+                const examData = examRow.rows[0];
+                if (examData?.listing_id) {
+                    const mapped = mapArenaResultToCapabilities(report);
+                    // Update bot_listings with capabilities + interview status
+                    await pool.query(
+                        `UPDATE bot_listings SET
+                            interview_passed = $2,
+                            capabilities = $3,
+                            benchmark_score = $4,
+                            model_detected = COALESCE($5, model_detected),
+                            last_interview_at = NOW(),
+                            updated_at = NOW()
+                         WHERE id = $1`,
+                        [
+                            examData.listing_id,
+                            mapped.passed,
+                            JSON.stringify(mapped.capabilities),
+                            JSON.stringify(mapped.benchmarkScore),
+                            examData.model || null,
+                        ]
+                    );
+                    // Record in bot_interviews for audit trail
+                    await pool.query(
+                        `INSERT INTO bot_interviews
+                            (listing_id, probes_json, responses_json, passed, score, duration_ms, failure_reason)
+                         VALUES ($1, $2, $3, $4, $5, 0, $6)`,
+                        [
+                            examData.listing_id,
+                            JSON.stringify(TEST_TYPES.map(t => ({ id: t.id, name: t.name, weight: t.weight }))),
+                            JSON.stringify(detail),
+                            mapped.passed,
+                            mapped.normalizedScore,
+                            mapped.passed ? null : `Arena score ${mapped.normalizedScore}% < ${Math.round(ARENA_PASS_THRESHOLD * 100)}% threshold`,
+                        ]
+                    );
+                    interviewSync = {
+                        listingId: examData.listing_id,
+                        passed: mapped.passed,
+                        normalizedScore: mapped.normalizedScore,
+                        capabilities: mapped.capabilities,
+                    };
+                    audit('info', 'arena', `exam ${req.params.examId} synced to listing ${examData.listing_id}: passed=${mapped.passed} score=${mapped.normalizedScore}%`);
+                }
+            } catch (syncErr) {
+                console.warn('[Arena] Rental sync error (non-blocking):', syncErr.message);
+            }
+
             if (io) {
                 io.to('exam:' + req.params.examId).emit('arena:update', {
                     event: 'exam_complete', totalScore, maxScore: MAX_TOTAL_SCORE, detail,
+                    interviewSync,
                 });
             }
 
-            res.json({ success: true, report });
+            res.json({ success: true, report, interviewSync });
         } catch (err) {
             console.error('[Arena] finalize error:', err);
             res.status(500).json({ success: false, error: 'internal_error' });
@@ -966,6 +1131,9 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
         CHALLENGE_GENERATORS,
         SCORING_ENGINES,
         generateToken,
+        mapArenaResultToCapabilities,
+        ARENA_PASS_THRESHOLD,
+        ARENA_TO_CAPABILITY_MAP,
         _internals: { pool },
     };
 };
@@ -973,5 +1141,8 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
 // Static exports for testing
 module.exports.TEST_TYPES = TEST_TYPES;
 module.exports.MAX_TOTAL_SCORE = MAX_TOTAL_SCORE;
+module.exports.mapArenaResultToCapabilities = mapArenaResultToCapabilities;
+module.exports.ARENA_PASS_THRESHOLD = ARENA_PASS_THRESHOLD;
+module.exports.ARENA_TO_CAPABILITY_MAP = ARENA_TO_CAPABILITY_MAP;
 module.exports.SCORING_ENGINES = SCORING_ENGINES;
 module.exports.CHALLENGE_GENERATORS = CHALLENGE_GENERATORS;
