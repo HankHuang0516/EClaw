@@ -1,3 +1,10 @@
+## [1.933.2](https://github.com/HankHuang0516/EClaw/compare/v1.933.1...v1.933.2) (2026-04-10)
+
+
+### Bug Fixes
+
+* **roadmap:** update P3-P5 status from Planned to Complete ([ca52800](https://github.com/HankHuang0516/EClaw/commit/ca528006a364e4c2acd09915dfe574281667d0fe))
+
 ## [1.933.1](https://github.com/HankHuang0516/EClaw/compare/v1.933.0...v1.933.1) (2026-04-10)
 
 
