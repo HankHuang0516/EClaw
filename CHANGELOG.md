@@ -1,3 +1,10 @@
+## [1.951.1](https://github.com/HankHuang0516/EClaw/compare/v1.951.0...v1.951.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* **chat:** add debug logging for mic NotReadableError + chat message loading + getUserMedia retry ([bb0f373](https://github.com/HankHuang0516/EClaw/commit/bb0f373d4a520c375fed50dc6177cfd3a1a49723))
+
 # [1.951.0](https://github.com/HankHuang0516/EClaw/compare/v1.950.1...v1.951.0) (2026-04-10)
 
 
