@@ -11,7 +11,8 @@ const DEFAULTS = {
     whitelist_enabled: false,
     whitelist: [],
     reject_message: '',
-    allowed_media: ['text', 'photo', 'voice', 'video', 'file']
+    allowed_media: ['text', 'photo', 'voice', 'video', 'file'],
+    friends_only: false
 };
 
 let pool = null;
@@ -89,6 +90,9 @@ function validate(settings) {
         const arr = Array.isArray(settings.allowed_media) ? settings.allowed_media : [];
         clean.allowed_media = arr.filter(m => valid.includes(m));
         if (clean.allowed_media.length === 0) clean.allowed_media = [...valid];
+    }
+    if ('friends_only' in settings) {
+        clean.friends_only = !!settings.friends_only;
     }
     return clean;
 }
