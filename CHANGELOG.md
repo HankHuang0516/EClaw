@@ -1,3 +1,10 @@
+# [1.944.0](https://github.com/HankHuang0516/EClaw/compare/v1.943.0...v1.944.0) (2026-04-10)
+
+
+### Features
+
+* **arena:** expanded question pools + 5min cooldown + UI polish ([471d2f1](https://github.com/HankHuang0516/EClaw/commit/471d2f1a5d569960ba1cd8cc2eaf889d2a17fb67))
+
 # [1.943.0](https://github.com/HankHuang0516/EClaw/compare/v1.942.0...v1.943.0) (2026-04-10)
 
 
