@@ -1,3 +1,10 @@
+## [1.932.1](https://github.com/HankHuang0516/EClaw/compare/v1.932.0...v1.932.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* **security:** disable debug endpoints in prod, verify-email POST migration, fix CI leak ([#1659](https://github.com/HankHuang0516/EClaw/issues/1659)) ([7b48a52](https://github.com/HankHuang0516/EClaw/commit/7b48a5235dd208d6368ad3d134a3c3e53849456c)), closes [#1594](https://github.com/HankHuang0516/EClaw/issues/1594) [#1595](https://github.com/HankHuang0516/EClaw/issues/1595)
+
 # [1.932.0](https://github.com/HankHuang0516/EClaw/compare/v1.931.1...v1.932.0) (2026-04-10)
 
 
