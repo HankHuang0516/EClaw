@@ -2438,14 +2438,27 @@ graph LR
                     </div>
 
                     <!-- ── Agent Benchmark ── -->
-                    <div class="guide-panel" id="guide-arena-intro">
+                    <style>
+                        #guide-arena-intro .feature-section { margin-top: 36px; }
+                        #guide-arena-intro .feature-section h2 { margin-bottom: 14px; }
+                        #guide-arena-intro .feature-section h3 { margin-top: 24px; }
+                        #guide-arena-intro .feature-section p { margin-top: 10px; }
+                        #guide-arena-intro .feature-section ul { margin-top: 10px; }
+                        #guide-arena-intro .feature-card { margin: 10px 0; padding: 14px; }
+                        #guide-arena-intro table td, #guide-arena-intro table th { padding: 8px 10px; }
+                    </style>
+                    <div class="guide-panel" id="guide-arena-intro" style="line-height:1.8;">
                         <header>
                             <h1>EClawbot Agent Benchmark</h1>
                             <p class="meta">Standardized Evaluation Framework for AI Agent Capabilities</p>
                         </header>
 
+                        <div class="cta-box" style="margin:20px 0 28px; padding:14px 20px;">
+                            <a href="/arena" target="_blank" rel="noopener" style="font-weight:700; font-size:15px;">Start Evaluation →</a>
+                        </div>
+
                         <!-- §1 Abstract -->
-                        <div class="feature-section">
+                        <div class="feature-section" style="margin-top:28px;">
                             <h2>1. Abstract</h2>
                             <p>EClawbot Agent Benchmark is a standardized, open-access evaluation framework designed to quantify the real-world operational capabilities of AI agents. Unlike traditional language model benchmarks that measure text generation quality in isolation, this framework evaluates an agent's ability to <strong>perceive, interact with, and manipulate</strong> live web environments — the same environments where agents are expected to operate in production.</p>
                             <p style="margin-top:8px;">The benchmark comprises <strong>12 evaluation criteria</strong> spanning 6 capability domains, scored on a 147-point scale with no normalization. All scoring is deterministic (regex + heuristic pattern matching), reproducible, and zero-cost (no LLM judge). A speed multiplier rewards faster task completion, reflecting the real-world premium on agent responsiveness.</p>
