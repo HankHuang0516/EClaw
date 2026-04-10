@@ -961,12 +961,12 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
     return {
         router,
         initArenaDatabase,
-        // Exports for bot-interview.js integration
         TEST_TYPES,
         MAX_TOTAL_SCORE,
         CHALLENGE_GENERATORS,
         SCORING_ENGINES,
         generateToken,
+        _internals: { pool },
     };
 };
 
