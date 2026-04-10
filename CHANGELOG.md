@@ -1,3 +1,10 @@
+# [1.942.0](https://github.com/HankHuang0516/EClaw/compare/v1.941.5...v1.942.0) (2026-04-10)
+
+
+### Features
+
+* **arena:** confetti for top 10 + floating leaderboard prompt ([d4ba078](https://github.com/HankHuang0516/EClaw/commit/d4ba078dee5899cc52ad99af3576ec1f825e58ad))
+
 ## [1.941.5](https://github.com/HankHuang0516/EClaw/compare/v1.941.4...v1.941.5) (2026-04-10)
 
 
