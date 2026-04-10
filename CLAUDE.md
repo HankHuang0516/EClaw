@@ -436,9 +436,32 @@ EClaw/
 - 工作完成後 push feature branch、建立 PR、自行 merge 到 main，然後確認 main 的 CI actions 沒有 failed。
 - Codex 會在 git push 之前審查你的代碼
 
+### ⚠️ i18n Pre-PR Requirement (MANDATORY)
+
+**If your PR touches any of the following, you MUST run the i18n test locally and confirm it passes BEFORE opening the PR:**
+
+- `backend/public/shared/i18n.js`
+- Any `*.html` file under `backend/public/`
+
+```bash
+# Run from repo root — must pass with 0 failures before you open the PR
+cd backend && npm test -- --testPathPattern=i18n-syntax
+```
+
+**Why**: A SyntaxError in `i18n.js` (e.g. orphaned key-value pairs placed outside a language block, or a missing comma) crashes every portal page with `i18n is not defined`. CI catches it, but only after the PR is already merged and damage is done. Run locally first.
+
+**The test checks**:
+1. `i18n.js` parses without SyntaxError (`vm.Script`)
+2. All required language sections (`en zh ja ko fr es de`) exist and are valid objects
+3. `i18n.t()` returns translations, not raw keys
+4. French arena keys exist in the `fr` section (regression for #1667)
+5. All `<script src="...i18n.js">` paths in HTML files resolve to real files
+6. Pages calling `i18n.t()` actually load `i18n.js`
+7. Inline event handlers using `i18n` have `typeof i18n !== 'undefined'` guards
+
 ## CI/CD
 
-- **Backend CI** (`.github/workflows/backend-ci.yml`): ESLint + Jest on every push to `backend/`
+- **Backend CI** (`.github/workflows/backend-ci.yml`): ESLint + Jest on every push to `backend/`; includes `i18n-syntax.test.js`
 - **Android CI** (`.github/workflows/android-ci.yml`): Android build verification
 - **Entity Cards CI** (`.github/workflows/entity-cards-ci.yml`): Entity card tests
 - **Semantic Release** (`.github/workflows/semantic-release.yml`): Auto-versioning
