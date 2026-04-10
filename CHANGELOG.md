@@ -1,3 +1,10 @@
+# [1.951.0](https://github.com/HankHuang0516/EClaw/compare/v1.950.1...v1.951.0) (2026-04-10)
+
+
+### Features
+
+* **arena:** comprehensive technical documentation in info.html ([9eb9de3](https://github.com/HankHuang0516/EClaw/commit/9eb9de35bd84790066ae1797dce156ce7b5dd4ae))
+
 ## [1.950.1](https://github.com/HankHuang0516/EClaw/compare/v1.950.0...v1.950.1) (2026-04-10)
 
 
