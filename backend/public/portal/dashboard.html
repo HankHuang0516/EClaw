@@ -1389,6 +1389,7 @@
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
     <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
+    <script src="shared/agent-card-editor.js"></script>
     <script src="shared/ai-chat.js"></script>
     <script>if(typeof renderAvatarHtml==='undefined'){window.renderAvatarHtml=function(a){return a||'\u{1F99E}'};window.isAvatarUrl=function(){return false}}</script>
     <script>
@@ -1757,41 +1758,9 @@
                             '<span class="toggle-slider"></span>' +
                         '</label>' +
                     '</div>' +
-                    '<div class="xd-field">' +
-                        '<label>' + i18n.t('dash_id_public_desc') + '</label>' +
-                        '<textarea id="acDesc' + entity.entityId + '" maxlength="500" placeholder="' + i18n.t('dash_id_public_desc_hint') + '" rows="2"></textarea>' +
-                    '</div>' +
-                    '<div class="xd-field">' +
-                        '<label>' + i18n.t('dash_capabilities') + ' <span style="font-size:10px;color:var(--text-secondary);font-weight:400;">(' + i18n.t('dash_caps_arena_only') + ')</span></label>' +
-                        '<div class="ac-caps-list" id="acCaps' + entity.entityId + '" style="pointer-events:none;opacity:0.8;"></div>' +
-                        '<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">' +
-                            '<button class="btn btn-sm" onclick="openArenaForEntity(' + entity.entityId + ')" style="font-size:12px;background:#10b981;color:#fff;border:none;">🏟️ ' + i18n.t('dash_run_arena') + '</button>' +
-                            '<button class="btn btn-sm btn-outline" onclick="listForRental(' + entity.entityId + ')" style="font-size:12px;">🤖 ' + i18n.t('dash_list_rental') + '</button>' +
-                        '</div>' +
-                    '</div>' +
-                    '<div class="xd-field">' +
-                        '<label>Protocols</label>' +
-                        '<div class="ac-tags" id="acProtos' + entity.entityId + '"></div>' +
-                        '<div class="ac-tag-input"><input type="text" id="acProtoInput' + entity.entityId + '" placeholder="e.g. A2A, REST, gRPC" maxlength="64"><button class="btn btn-sm btn-outline" onclick="addTag(\'acProtos\',' + entity.entityId + ',\'acProtoInput\',10)">+</button></div>' +
-                    '</div>' +
-                    '<div class="xd-field">' +
-                        '<label>Tags</label>' +
-                        '<div class="ac-tags" id="acTags' + entity.entityId + '"></div>' +
-                        '<div class="ac-tag-input"><input type="text" id="acTagInput' + entity.entityId + '" placeholder="e.g. chat, IoT, automation" maxlength="64"><button class="btn btn-sm btn-outline" onclick="addTag(\'acTags\',' + entity.entityId + ',\'acTagInput\',20)">+</button></div>' +
-                    '</div>' +
-                    '<div class="xd-field">' +
-                        '<label>Version</label>' +
-                        '<input type="text" id="acVersion' + entity.entityId + '" maxlength="32" placeholder="e.g. 1.0.0">' +
-                    '</div>' +
-                    '<div class="xd-field">' +
-                        '<label>Website</label>' +
-                        '<input type="text" id="acWebsite' + entity.entityId + '" maxlength="500" placeholder="https://...">' +
-                    '</div>' +
-                    '<div class="xd-field">' +
-                        '<label>Contact Email</label>' +
-                        '<input type="text" id="acEmail' + entity.entityId + '" maxlength="255" placeholder="contact@example.com">' +
-                    '</div>' +
-                    '<div class="xd-actions">' +
+                    '<!-- Agent Card Editor (shared component) -->' +
+                    '<div id="aceEditor' + entity.entityId + '" class="xd-field"></div>' +
+                    '<div class="xd-actions" style="margin-top:12px;">' +
                         '<button class="btn btn-sm btn-primary" onclick="saveIdentity(' + entity.entityId + ')">' + i18n.t('dash_id_save') + '</button>' +
                         '<button class="btn btn-sm btn-outline" onclick="deleteIdentity(' + entity.entityId + ')">' + i18n.t('dash_id_clear') + '</button>' +
                     '</div>' +
@@ -1954,14 +1923,23 @@
                 el('acVersion' + entityId).value = pub.version || '';
                 el('acWebsite' + entityId).value = pub.website || '';
                 el('acEmail' + entityId).value = pub.contactEmail || '';
-                // Render Arena-sourced capabilities as read-only badges
-                // interviewCapabilities comes from Arena test results (locked)
-                var arenaCaps = identity.interviewCapabilities || pub.interviewCapabilities || null;
-                if (!arenaCaps && pub.capabilities && !Array.isArray(pub.capabilities)) {
-                    // capabilities might be in rental format (object with supported flags)
-                    arenaCaps = pub.capabilities;
+                // Init shared Agent Card editor component
+                var editorContainer = document.getElementById('aceEditor' + entityId);
+                if (editorContainer && typeof AgentCardEditor !== 'undefined') {
+                    var editor = new AgentCardEditor('aceEditor' + entityId, {
+                        entityId: entityId,
+                        deviceId: currentDeviceId,
+                        publicCode: currentEntities[entityId]?.publicCode || '',
+                        identity: identity,
+                        agentCard: pub,
+                        isOwner: true,
+                        onSave: function() { loadIdentity(entityId); },
+                    });
+                    editor.render();
+                    // Store editor instance for saveIdentity to use
+                    window._aceEditors = window._aceEditors || {};
+                    window._aceEditors[entityId] = editor;
                 }
-                renderArenaCaps(entityId, arenaCaps);
                 renderTags('acProtos', entityId, pub.protocols || []);
                 renderTags('acTags', entityId, pub.tags || []);
             } catch (err) {
@@ -2100,18 +2078,12 @@
         }
 
         function collectAgentCard(entityId) {
-            var el = function(id) { return document.getElementById(id); };
-            // Capabilities are NOT collected from the form — they are
-            // read-only Arena results. Only user-editable fields are sent.
-            return {
-                description: el('acDesc' + entityId).value.trim(),
-                // capabilities: omitted — locked by Arena interview results
-                protocols: collectTags('acProtos', entityId),
-                tags: collectTags('acTags', entityId),
-                version: el('acVersion' + entityId).value.trim(),
-                website: el('acWebsite' + entityId).value.trim(),
-                contactEmail: el('acEmail' + entityId).value.trim()
-            };
+            // Delegate to shared editor if available
+            if (window._aceEditors && window._aceEditors[entityId]) {
+                return window._aceEditors[entityId].collect();
+            }
+            // Fallback (should not reach here)
+            return { description: '' };
         }
 
         function collectIdentity(entityId) {

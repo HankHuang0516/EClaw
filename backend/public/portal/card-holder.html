@@ -708,6 +708,7 @@
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
     <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
+    <script src="shared/agent-card-editor.js"></script>
     <script src="shared/ai-chat.js"></script>
     <script>
         // ── Tab Switching ──
@@ -1084,39 +1085,8 @@
                         <textarea id="edit-desc" rows="3" maxlength="500" style="resize:vertical;" placeholder="${t('cardholder_desc_placeholder', 'Describe this entity\'s purpose and capabilities...')}">${escapeHtml(ac.description || '')}</textarea>
                     </div>
 
-                    <div class="edit-field">
-                        <label>${t('cardholder_capabilities', 'Capabilities')}</label>
-                        <div class="ac-caps-list" id="editCaps"></div>
-                        <button class="btn btn-sm btn-outline" onclick="addEditCapability()" style="font-size:12px;">+ ${t('cardholder_add_capability', 'Add Capability')}</button>
-                    </div>
-
-                    <div class="edit-field">
-                        <label>${t('cardholder_protocols', 'Protocols')}</label>
-                        <div class="ac-tags" id="editProtos"></div>
-                        <div class="ac-tag-input">
-                            <input type="text" id="editProtoInput" placeholder="${t('cardholder_proto_placeholder', 'e.g. A2A, REST, gRPC')}" maxlength="64">
-                            <button class="btn btn-sm btn-outline" onclick="addEditTag('editProtos', 'editProtoInput', 10)">+</button>
-                        </div>
-                    </div>
-
-                    <div class="edit-field">
-                        <label>${t('cardholder_tags', 'Tags')}</label>
-                        <div class="ac-tags" id="editTags"></div>
-                        <div class="ac-tag-input">
-                            <input type="text" id="editTagInput" placeholder="${t('cardholder_tags_placeholder', 'tag1, tag2, tag3')}" maxlength="64">
-                            <button class="btn btn-sm btn-outline" onclick="addEditTag('editTags', 'editTagInput', 20)">+</button>
-                        </div>
-                    </div>
-
-                    <div class="edit-field">
-                        <label>${t('cardholder_version_label', 'Version')}</label>
-                        <input type="text" id="edit-version" value="${escapeAttr(ac.version || '')}" maxlength="50" placeholder="1.0.0">
-                    </div>
-
-                    <div class="edit-field">
-                        <label>${t('cardholder_website_label', 'Website')}</label>
-                        <input type="url" id="edit-website" value="${escapeAttr(ac.website || '')}" maxlength="500" placeholder="https://...">
-                    </div>
+                    <!-- Shared Agent Card Editor component -->
+                    <div id="aceEditorCH" class="edit-field"></div>
 
                     <div class="edit-field">
                         <label>${t('cardholder_email_label', 'Email')}</label>
@@ -1129,16 +1099,20 @@
                     <button class="btn btn-outline btn-sm" onclick="closeDetail()">${t('common_cancel', 'Cancel')}</button>
                 </div>`;
 
-            // Populate capabilities
-            (ac.capabilities || []).forEach(function(cap) {
-                appendEditCapability(cap.name || '', cap.description || '');
-            });
-
-            // Populate protocols
-            renderEditTags('editProtos', ac.protocols || []);
-
-            // Populate tags
-            renderEditTags('editTags', ac.tags || []);
+            // Init shared Agent Card editor
+            if (typeof AgentCardEditor !== 'undefined') {
+                var chEditor = new AgentCardEditor('aceEditorCH', {
+                    entityId: card.entityId,
+                    deviceId: currentDeviceId,
+                    publicCode: card.publicCode,
+                    identity: card.identity || {},
+                    agentCard: ac,
+                    isOwner: true,
+                    onSave: function() { closeDetail(); },
+                });
+                chEditor.render();
+                window._chEditor = chEditor;
+            }
 
             document.getElementById('detailModal').classList.add('open');
         }
@@ -1359,41 +1333,14 @@
 
         // ── Actions ──
         async function saveAgentCard(publicCode) {
-            const desc = document.getElementById('edit-desc').value.trim();
-            const email = document.getElementById('edit-email').value.trim();
-            const website = document.getElementById('edit-website').value.trim();
-            const version = document.getElementById('edit-version').value.trim();
-
-            // Collect capabilities (dashboard-style)
-            const caps = [];
-            document.querySelectorAll('#editCaps .ac-cap-item').forEach(function(row) {
-                const name = row.querySelector('.ac-cap-name').value.trim();
-                const cdesc = row.querySelector('.ac-cap-desc').value.trim();
-                if (name) caps.push({ id: name.toLowerCase().replace(/\s+/g, '-'), name: name, description: cdesc });
-            });
-
-            // Collect protocols (tag chips)
-            const protocols = [];
-            document.querySelectorAll('#editProtos .ac-tag').forEach(function(tag) {
-                const v = tag.firstChild.textContent.trim();
-                if (v) protocols.push(v);
-            });
-
-            // Collect tags (tag chips)
-            const tags = [];
-            document.querySelectorAll('#editTags .ac-tag').forEach(function(tag) {
-                const v = tag.firstChild.textContent.trim();
-                if (v) tags.push(v);
-            });
-
+            // Use shared editor if available
+            if (window._chEditor) {
+                await window._chEditor.save();
+                return;
+            }
+            // Fallback: collect from description field only
             const agentCard = {
-                description: desc,
-                capabilities: caps,
-                protocols: protocols,
-                tags: tags,
-                version: version,
-                website: website,
-                contactEmail: email
+                description: (document.getElementById('edit-desc')?.value || '').trim(),
             };
 
             try {
