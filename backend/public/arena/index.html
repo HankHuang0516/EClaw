@@ -127,9 +127,10 @@
                     <th>#</th><th data-i18n="arena_lb_name">Name</th>
                     <th data-i18n="arena_lb_model">Model</th>
                     <th data-i18n="arena_lb_score">Score</th>
+                    <th data-i18n="arena_lb_time">Time</th>
                 </tr></thead>
                 <tbody id="lbBody">
-                    <tr><td colspan="4" class="lb-empty" data-i18n="arena_lb_loading">Loading...</td></tr>
+                    <tr><td colspan="5" class="lb-empty" data-i18n="arena_lb_loading">Loading...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -235,7 +236,7 @@
                 const b = document.getElementById('lbBody');
                 if (data.leaderboard?.length) {
                     b.innerHTML = data.leaderboard.map((e, i) =>
-                        `<tr><td class="lb-rank">${i+1}</td><td>${esc(e.name)}</td><td>${esc(e.model||'-')}</td><td>${e.score}/${e.max_score||147}</td></tr>`
+                        `<tr><td class="lb-rank">${i+1}</td><td>${esc(e.name)}</td><td>${esc(e.model||'-')}</td><td>${e.score}/${e.max_score||147}</td><td>${fmtTime(e.detail)}</td></tr>`
                     ).join('');
                 } else b.innerHTML = '<tr><td colspan="4" class="lb-empty">No entries yet</td></tr>';
             } catch { document.getElementById('lbBody').innerHTML = '<tr><td colspan="4" class="lb-empty">Failed to load</td></tr>'; }
@@ -256,6 +257,13 @@
         })();
 
         function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+        function fmtTime(detail) {
+            const d = typeof detail === 'string' ? JSON.parse(detail) : detail;
+            const sec = d && d.elapsedSec;
+            if (!sec) return '-';
+            const m = Math.floor(sec / 60), s = sec % 60;
+            return m + ':' + String(s).padStart(2, '0');
+        }
     </script>
 </body>
 </html>

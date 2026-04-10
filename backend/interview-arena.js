@@ -1099,17 +1099,21 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
                 return res.status(400).json({ success: false, error: 'examId_and_name_required' });
             }
             const examRes = await pool.query(
-                `SELECT id, model, total_score, max_score, report FROM arena_exams WHERE id = $1 AND status = 'completed'`,
+                `SELECT id, model, total_score, max_score, report, created_at FROM arena_exams WHERE id = $1 AND status = 'completed'`,
                 [examId]
             );
             if (examRes.rowCount === 0) return res.status(404).json({ success: false, error: 'exam_not_found_or_incomplete' });
             const exam = examRes.rows[0];
+            // Compute elapsed time
+            const elapsedSec = Math.round((Date.now() - new Date(exam.created_at).getTime()) / 1000);
+            const report = typeof exam.report === 'string' ? JSON.parse(exam.report) : (exam.report || {});
+            report.elapsedSec = elapsedSec;
 
             const lbRes = await pool.query(
                 `INSERT INTO arena_leaderboard (exam_id, name, model, score, max_score, detail)
                  VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
                 [exam.id, name.trim().slice(0, 64), exam.model, exam.total_score, exam.max_score,
-                 JSON.stringify(exam.report)]
+                 JSON.stringify(report)]
             );
             const leaderboardId = lbRes.rows[0] ? lbRes.rows[0].id : null;
             res.json({ success: true, leaderboardId });

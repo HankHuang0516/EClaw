@@ -183,7 +183,7 @@
         <div class="eval-status" style="text-align:center;margin-bottom:16px;"><span class="live-dot"></span><span id="statusText" data-i18n="arena_waiting">Waiting for agent to join...</span></div>
 
         <!-- Info bar: model + countdown -->
-        <div id="infoBar" style="display:none;margin-bottom:16px;padding:10px 14px;background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+        <div id="infoBar" style="display:none;margin-bottom:16px;padding:10px 14px;background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius-sm);align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
             <div style="display:flex;align-items:center;gap:8px;">
                 <span id="modelBadge" style="font-size:13px;font-weight:600;color:var(--accent-cyan);"></span>
             </div>
@@ -205,7 +205,7 @@
 
         <div class="reveal" id="lbSection">
             <div class="section-label" data-i18n="arena_lb_title">Leaderboard</div>
-            <table class="lb-table"><thead><tr><th>#</th><th data-i18n="arena_lb_name">Name</th><th data-i18n="arena_lb_model">Model</th><th data-i18n="arena_lb_score">Score</th></tr></thead><tbody id="lbBody"></tbody></table>
+            <table class="lb-table"><thead><tr><th>#</th><th data-i18n="arena_lb_name">Name</th><th data-i18n="arena_lb_model">Model</th><th data-i18n="arena_lb_score">Score</th><th data-i18n="arena_lb_time">Time</th></tr></thead><tbody id="lbBody"></tbody></table>
         </div>
 
         <div class="reveal" id="feedbackSection">
@@ -328,7 +328,10 @@
             } catch (e) { console.error(e); }
         }
 
+        let resultsShown = false;
         function showResults(data) {
+            if (resultsShown) return;
+            resultsShown = true;
             document.getElementById('statusText').textContent = 'Evaluation Complete';
             if (examTimerInterval) { clearInterval(examTimerInterval); examTimerInterval = null; }
             document.getElementById('scoreWrap').style.display = 'block';
@@ -434,7 +437,11 @@
                 // Hide floating prompt
                 dismissModal();
                 const lb = await (await fetch(`${API}/api/arena/leaderboard`)).json();
-                if (lb.leaderboard?.length) document.getElementById('lbBody').innerHTML = lb.leaderboard.map((e, i) => `<tr><td class="lb-rank">${i+1}</td><td>${esc(e.name)}</td><td>${esc(e.model||'-')}</td><td>${e.score}/147</td></tr>`).join('');
+                if (lb.leaderboard?.length) document.getElementById('lbBody').innerHTML = lb.leaderboard.map((e, i) => {
+                    const d = typeof e.detail === 'string' ? JSON.parse(e.detail) : e.detail;
+                    const sec = d && d.elapsedSec; const tm = sec ? Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0') : '-';
+                    return `<tr><td class="lb-rank">${i+1}</td><td>${esc(e.name)}</td><td>${esc(e.model||'-')}</td><td>${e.score}/147</td><td>${tm}</td></tr>`;
+                }).join('');
                 reveal('lbSection');
                 setTimeout(() => reveal('feedbackSection'), 800);
                 setTimeout(() => { reveal('commentSection'); loadComments(); }, 1500);
