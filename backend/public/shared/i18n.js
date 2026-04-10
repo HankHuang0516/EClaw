@@ -40589,7 +40589,39 @@ const TRANSLATIONS = {
         "guide_wp_style_abstract": "Abstrait",
         "guide_wp_style_cartoon": "Dessin Animé",
         "guide_wp_style_realistic": "Réaliste",
-        "guide_wp_title": "🖼️ Wallpaper Bot — Personnalisez le Wallpaper avec l'IA",    },
+        "guide_wp_title": "🖼️ Wallpaper Bot — Personnalisez le Wallpaper avec l'IA",
+        "arena_title": "EClawbot Agent Benchmark",
+        "arena_subtitle": "Cadre d'évaluation standardisé pour les agents IA. 12 critères couvrant la perception, l'interaction, le raisonnement, la génération de code et la résilience en sécurité — noté en temps réel.",
+        "arena_generate": "🎯 Générer un Examen Factice",
+        "arena_view_lb": "🏆 Voir le Classement",
+        "arena_tests_title": "🧪 Catégories d'Épreuves",
+        "arena_lb_title": "🏆 Classement",
+        "arena_lb_name": "Nom",
+        "arena_lb_model": "Modèle",
+        "arena_lb_score": "Score",
+        "arena_lb_loading": "Chargement...",
+        "arena_exam_title": "Arena d'Entretien — Examen",
+        "arena_waiting": "En attente que le Bot rejoigne...",
+        "arena_copy_label": "📋 Copiez ces instructions et envoyez-les à votre Bot :",
+        "arena_copy_btn": "📋 Copier les Instructions",
+        "arena_report_title": "📊 Rapport d'Examen",
+        "arena_name_prompt": "Entrez votre nom pour le classement",
+        "arena_submit_name": "Soumettre",
+        "arena_fb_title": "💬 Donnez-nous votre avis",
+        "arena_fb_caps_q": "Quelles capacités voulez-vous que votre Agent ait ? (Sélectionnez toutes les réponses applicables)",
+        "arena_fb_credibility": "Crédibilité des résultats :",
+        "arena_fb_comment_ph": "Suggestions ou commentaires pour EClawbot...",
+        "arena_fb_submit": "Envoyer les Commentaires",
+        "arena_comments_title": "💬 Tableau de Discussion",
+        "arena_comments_hint": "Complétez un examen et soumettez-le au classement pour laisser un commentaire.",
+        "arena_comments_text_ph": "Laissez un commentaire...",
+        "arena_comments_post": "Publier",
+        "arena_comments_loading": "Chargement des commentaires...",
+        "arena_badge": "Agent Benchmark",
+        "arena_cooldown_prefix": "Prochaine évaluation disponible dans",
+        "arena_lb_time": "Temps",
+        "guide_nav_arena": "⛳ Arena d'Entretien"
+    },
     es: {
         "mc_title": "EClawbot Centro de Misiones",
         "mc_auth_title": "Centro de Misiones",
@@ -50025,38 +50057,6 @@ const TRANSLATIONS = {
         "arena_lb_time": "Tiempo",
         "guide_nav_arena": "🏌️ Arena de Entrevistas"
     },
-        "arena_title": "EClawbot Agent Benchmark",
-        "arena_subtitle": "Cadre d'évaluation standardisé pour les agents IA. 12 critères couvrant la perception, l'interaction, le raisonnement, la génération de code et la résilience en sécurité — noté en temps réel.",
-        "arena_generate": "🎯 Générer un Examen Factice",
-        "arena_view_lb": "🏆 Voir le Classement",
-        "arena_tests_title": "🧪 Catégories d'Épreuves",
-        "arena_lb_title": "🏆 Classement",
-        "arena_lb_name": "Nom",
-        "arena_lb_model": "Modèle",
-        "arena_lb_score": "Score",
-        "arena_lb_loading": "Chargement...",
-        "arena_exam_title": "Arena d'Entretien — Examen",
-        "arena_waiting": "En attente que le Bot rejoigne...",
-        "arena_copy_label": "📋 Copiez ces instructions et envoyez-les à votre Bot :",
-        "arena_copy_btn": "📋 Copier les Instructions",
-        "arena_report_title": "📊 Rapport d'Examen",
-        "arena_name_prompt": "Entrez votre nom pour le classement",
-        "arena_submit_name": "Soumettre",
-        "arena_fb_title": "💬 Donnez-nous votre avis",
-        "arena_fb_caps_q": "Quelles capacités voulez-vous que votre Agent ait ? (Sélectionnez toutes les réponses applicables)",
-        "arena_fb_credibility": "Crédibilité des résultats :",
-        "arena_fb_comment_ph": "Suggestions ou commentaires pour EClawbot...",
-        "arena_fb_submit": "Envoyer les Commentaires",
-        "arena_comments_title": "💬 Tableau de Discussion",
-        "arena_comments_hint": "Complétez un examen et soumettez-le au classement pour laisser un commentaire.",
-        "arena_comments_text_ph": "Laissez un commentaire...",
-        "arena_comments_post": "Publier",
-        "arena_comments_loading": "Chargement des commentaires...",
-        "arena_badge": "Agent Benchmark",
-        "arena_cooldown_prefix": "Prochaine évaluation disponible dans",
-        "arena_lb_time": "Temps",
-        "guide_nav_arena": "⛳ Arena d'Entretien"
-
     de: {
         // General / Common
         "general_title": "Allgemein",
@@ -84452,8 +84452,8 @@ class I18n {
     }
 }
 
-// Global instance
-const i18n = new I18n();
+// Global instance (use var so window.i18n is set for cross-script access)
+var i18n = new I18n();
 
 // Auto-apply on load
 document.addEventListener('DOMContentLoaded', () => {
