@@ -486,12 +486,42 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
     });
 
     // ============================================
-    // GET /verify-email?token=xxx
+    // GET /verify-email?token=xxx — serves a page that auto-POSTs token
+    // (CWE-598 mitigation: token consumed via POST, not GET)
     // ============================================
-    router.get('/verify-email', async (req, res) => {
+    router.get('/verify-email', (req, res) => {
+        const { token, returnTo } = req.query;
+        if (!token) {
+            return res.status(400).send('Missing verification token');
+        }
+        // Serve a minimal HTML page that immediately submits the token via POST
+        const safeReturnTo = returnTo && returnTo.startsWith('/c/') ? returnTo : '';
+        res.send(`<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Verifying…</title>
+<style>body{background:#0D0D1A;color:#fff;font-family:Arial,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
+.box{text-align:center}.spinner{border:3px solid #333;border-top:3px solid #6C63FF;border-radius:50%;width:32px;height:32px;animation:spin 0.8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}</style></head>
+<body><div class="box"><div class="spinner"></div><p>Verifying your email…</p>
+<noscript><form method="POST" action="${BASE_URL}/api/auth/verify-email">
+<input type="hidden" name="token" value="${token.replace(/"/g, '&quot;')}">
+<input type="hidden" name="returnTo" value="${safeReturnTo.replace(/"/g, '&quot;')}">
+<button type="submit" style="background:#6C63FF;color:#fff;border:none;padding:12px 24px;border-radius:8px;cursor:pointer">Verify Email</button>
+</form></noscript>
+<form id="vf" method="POST" action="${BASE_URL}/api/auth/verify-email">
+<input type="hidden" name="token" value="${token.replace(/"/g, '&quot;')}">
+<input type="hidden" name="returnTo" value="${safeReturnTo.replace(/"/g, '&quot;')}">
+</form><script>document.getElementById('vf').submit();</script>
+</div></body></html>`);
+    });
+
+    // ============================================
+    // POST /verify-email — actual token redemption
+    // ============================================
+    router.post('/verify-email', async (req, res) => {
         try {
-            const { token, returnTo } = req.query;
-            console.log('[Auth] verify-email called', { hasToken: !!token, returnTo: returnTo || null });
+            const token = req.body.token || req.query.token;
+            const returnTo = req.body.returnTo || req.query.returnTo;
+            console.log('[Auth] verify-email POST called', { hasToken: !!token, returnTo: returnTo || null });
             if (!token) {
                 return res.status(400).send('Missing verification token');
             }
