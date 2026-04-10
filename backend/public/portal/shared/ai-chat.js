@@ -9,6 +9,9 @@
     // Skip if inline guard already blocked (Android WebView detected before this script loaded)
     if (window.__blockAiChatWidget) return;
 
+    // Skip inside iframes (e.g. workspace split-view panes) — the top-level window hosts the widget
+    try { if (window.self !== window.top) return; } catch (_) { return; }
+
     const STORAGE_KEY = 'eclaw_ai_chat_history';
     const PENDING_KEY = 'eclaw_ai_chat_pending';
     const MAX_HISTORY = 20;
