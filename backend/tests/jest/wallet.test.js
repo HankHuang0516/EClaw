@@ -24,6 +24,9 @@ jest.mock('pg', () => {
         wallets: new Map(),
         ledger: [],
         nextLedgerId: 1,
+        topupOrders: [],
+        nextOrderId: 1,
+        userAccounts: new Map(),  // user_id -> { is_admin }
     };
     globalThis.__walletFakeState = state;
 
@@ -127,6 +130,72 @@ jest.mock('pg', () => {
             rows = rows.slice(offsetParam, offsetParam + limitParam);
             return { rows, rowCount: rows.length };
         }
+
+        // ── topup_orders ────────────────────────────────────────────────
+        if (/^SELECT id, status, ecoin_total_mli FROM topup_orders WHERE channel = \$1 AND external_txn_id = \$2$/i.test(norm)) {
+            const [channel, txnId] = params;
+            const match = state.topupOrders.find(o => o.channel === channel && o.external_txn_id === txnId);
+            return { rows: match ? [{ id: match.id, status: match.status, ecoin_total_mli: String(match.ecoin_total_mli) }] : [], rowCount: match ? 1 : 0 };
+        }
+        if (/^INSERT INTO topup_orders/i.test(norm)) {
+            const [userId, channel, amountTwd, baseMli, bonusMli, totalMli, externalTxnId, externalRaw] = params;
+            const id = `order-${state.nextOrderId++}`;
+            const row = {
+                id, user_id: userId, channel, amount_twd: amountTwd,
+                ecoin_base_mli: baseMli, ecoin_bonus_mli: bonusMli, ecoin_total_mli: totalMli,
+                status: 'pending', external_txn_id: externalTxnId, external_raw: externalRaw,
+                created_at: new Date(), paid_at: null,
+            };
+            state.topupOrders.push(row);
+            return { rows: [{ id, status: 'pending', ecoin_total_mli: String(totalMli) }], rowCount: 1 };
+        }
+        if (/^SELECT id, status FROM topup_orders WHERE id = \$1 FOR UPDATE$/i.test(norm)) {
+            const order = state.topupOrders.find(o => o.id === params[0]);
+            if (!order) return { rows: [], rowCount: 0 };
+            return { rows: [{ id: order.id, status: order.status }], rowCount: 1 };
+        }
+        if (/^UPDATE topup_orders SET status = 'paid', paid_at = NOW\(\) WHERE id = \$1$/i.test(norm)) {
+            const order = state.topupOrders.find(o => o.id === params[0]);
+            if (!order) return { rows: [], rowCount: 0 };
+            order.status = 'paid';
+            order.paid_at = new Date();
+            return { rows: [], rowCount: 1 };
+        }
+
+        // ── user_accounts (admin check) ──────────────────────────────────
+        if (/^SELECT is_admin FROM user_accounts WHERE id = \$1$/i.test(norm)) {
+            const u = state.userAccounts.get(params[0]);
+            if (!u) return { rows: [], rowCount: 0 };
+            return { rows: [{ is_admin: u.is_admin }], rowCount: 1 };
+        }
+
+        // ── reconcile CTE — ledger vs wallet drift detection ─────────────
+        if (/^WITH agg AS/i.test(norm) && /FROM wallets w\s+LEFT JOIN agg/i.test(norm)) {
+            const limitParam = params[0];
+            const agg = new Map();
+            for (const row of state.ledger) {
+                const cur = agg.get(row.user_id) || { balance: 0n, held: 0n };
+                cur.balance += BigInt(row.delta_mli);
+                cur.held += BigInt(row.held_delta_mli);
+                agg.set(row.user_id, cur);
+            }
+            const rows = [];
+            for (const [userId, w] of state.wallets) {
+                const expected = agg.get(userId) || { balance: 0n, held: 0n };
+                if (w.balance_mli !== expected.balance || w.held_mli !== expected.held) {
+                    rows.push({
+                        user_id: userId,
+                        cached_balance_mli: w.balance_mli.toString(),
+                        cached_held_mli: w.held_mli.toString(),
+                        expected_balance_mli: expected.balance.toString(),
+                        expected_held_mli: expected.held.toString(),
+                    });
+                    if (rows.length >= limitParam) break;
+                }
+            }
+            return { rows, rowCount: rows.length };
+        }
+
         throw new Error(`[fake-pg] Unhandled SQL: ${norm}`);
     }
 
@@ -161,7 +230,9 @@ jest.mock('fs', () => {
 const wallet = require('../../wallet');
 
 // Factory instance (we only need the primitive methods, not the router).
-const walletApi = wallet({});
+// authMiddleware is hard-required, so pass a no-op stub.
+const noopMiddleware = (_req, _res, next) => next();
+const walletApi = wallet({ authMiddleware: noopMiddleware });
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
@@ -172,6 +243,9 @@ function resetState() {
     fake.state.wallets.clear();
     fake.state.ledger.length = 0;
     fake.state.nextLedgerId = 1;
+    fake.state.topupOrders.length = 0;
+    fake.state.nextOrderId = 1;
+    fake.state.userAccounts.clear();
 }
 
 beforeEach(() => { resetState(); });
@@ -448,5 +522,333 @@ describe('wallet: input validation', () => {
         const bal = await walletApi.getBalance(BOB);
         expect(bal.balance_mli).toBe('0');
         expect(bal.held_mli).toBe('0');
+    });
+});
+
+// ── TOPUP_TIERS catalog ────────────────────────────────────────────────
+
+describe('wallet: top-up tier catalog', () => {
+    test('TOPUP_TIERS is frozen and contains expected tiers', () => {
+        expect(Object.isFrozen(wallet.TOPUP_TIERS)).toBe(true);
+        expect(wallet.TOPUP_TIERS['ecoin_tier_starter']).toBeDefined();
+        expect(wallet.TOPUP_TIERS['ecoin_tier_premium']).toBeDefined();
+    });
+
+    test('starter tier: NT$170 → 17,000 e幣 base + 850 bonus', () => {
+        const t = wallet.TOPUP_TIERS['ecoin_tier_starter'];
+        expect(t.priceTwd).toBe(170);
+        expect(t.baseMli).toBe(17_000_000);   // 17,000 e幣 in mli
+        expect(t.bonusMli).toBe(850_000);     // 850 e幣 in mli
+    });
+
+    test('premium tier: NT$1990 → 199,000 e幣 base + 29,850 bonus', () => {
+        const t = wallet.TOPUP_TIERS['ecoin_tier_premium'];
+        expect(t.priceTwd).toBe(1990);
+        expect(t.baseMli).toBe(199_000_000);
+        expect(t.bonusMli).toBe(29_850_000);
+    });
+
+    test('getTopupTier returns null for unknown product', () => {
+        expect(wallet.getTopupTier('garbage_id')).toBeNull();
+        expect(wallet.getTopupTier('ecoin_tier_starter')).not.toBeNull();
+    });
+});
+
+// ── createTopupOrder + markTopupPaid ──────────────────────────────────
+
+describe('wallet: top-up order lifecycle', () => {
+    test('createTopupOrder inserts a pending row and returns id', async () => {
+        const tier = wallet.TOPUP_TIERS['ecoin_tier_starter'];
+        const order = await walletApi.createTopupOrder({
+            userId: ALICE,
+            channel: 'google_play',
+            priceTwd: tier.priceTwd,
+            baseMli: tier.baseMli,
+            bonusMli: tier.bonusMli,
+            externalTxnId: 'gp-token-aaa',
+            externalRaw: { productId: 'ecoin_tier_starter' },
+        });
+        expect(order.id).toMatch(/^order-/);
+        expect(order.status).toBe('pending');
+        expect(order.deduped).toBe(false);
+        expect(fake.state.topupOrders).toHaveLength(1);
+    });
+
+    test('createTopupOrder dedupes on (channel, external_txn_id)', async () => {
+        const tier = wallet.TOPUP_TIERS['ecoin_tier_starter'];
+        const args = {
+            userId: ALICE, channel: 'google_play',
+            priceTwd: tier.priceTwd, baseMli: tier.baseMli, bonusMli: tier.bonusMli,
+            externalTxnId: 'gp-dup-token',
+        };
+        const first = await walletApi.createTopupOrder(args);
+        const second = await walletApi.createTopupOrder(args);
+        expect(first.deduped).toBe(false);
+        expect(second.deduped).toBe(true);
+        expect(second.id).toBe(first.id);
+        expect(fake.state.topupOrders).toHaveLength(1);
+    });
+
+    test('markTopupPaid credits wallet and is idempotent', async () => {
+        const tier = wallet.TOPUP_TIERS['ecoin_tier_starter'];
+        const order = await walletApi.createTopupOrder({
+            userId: ALICE, channel: 'google_play',
+            priceTwd: tier.priceTwd, baseMli: tier.baseMli, bonusMli: tier.bonusMli,
+            externalTxnId: 'gp-pay-1',
+        });
+        const total = parseInt(order.ecoin_total_mli, 10);
+
+        await walletApi.markTopupPaid({
+            orderId: order.id, userId: ALICE,
+            amountMli: total, channel: 'google_play',
+        });
+        const bal1 = await walletApi.getBalance(ALICE);
+        expect(bal1.balance_mli).toBe(String(total));
+
+        // Second call should not double-credit (idempotency_key dedupes).
+        await walletApi.markTopupPaid({
+            orderId: order.id, userId: ALICE,
+            amountMli: total, channel: 'google_play',
+        });
+        const bal2 = await walletApi.getBalance(ALICE);
+        expect(bal2.balance_mli).toBe(String(total));
+    });
+
+    test('createTopupOrder rejects invalid input', async () => {
+        await expect(walletApi.createTopupOrder({
+            userId: ALICE, channel: '', priceTwd: 100, baseMli: 100, bonusMli: 0,
+        })).rejects.toThrow(/channel/);
+        await expect(walletApi.createTopupOrder({
+            userId: ALICE, channel: 'google_play', priceTwd: -1, baseMli: 100, bonusMli: 0,
+        })).rejects.toThrow(/price/);
+        await expect(walletApi.createTopupOrder({
+            userId: ALICE, channel: 'google_play', priceTwd: 100, baseMli: 0, bonusMli: 0,
+        })).rejects.toThrow(/base/);
+    });
+});
+
+// ── HTTP routes (using supertest against the Express factory) ──────────
+
+describe('wallet: HTTP routes', () => {
+    const express = require('express');
+    const supertest = require('supertest');
+
+    function buildApp({ user = null, isAdmin = false } = {}) {
+        const app = express();
+        app.use(express.json());
+        // Stub auth middleware that injects req.user (or skips if null).
+        const fakeAuth = (req, _res, next) => {
+            if (user) req.user = user;
+            next();
+        };
+        // Admin middleware: gate by isAdmin flag for tests.
+        const fakeAdmin = (req, res, next) => {
+            if (!req.user || !isAdmin) {
+                return res.status(403).json({ success: false, error: 'admin_only' });
+            }
+            next();
+        };
+        const w = wallet({ authMiddleware: fakeAuth, adminMiddleware: fakeAdmin });
+        app.use('/api/wallet', w.router);
+        return app;
+    }
+
+    test('GET /topup/tiers returns the tier list (no auth required)', async () => {
+        const res = await supertest(buildApp())
+            .get('/api/wallet/topup/tiers')
+            .expect(200);
+        expect(res.body.success).toBe(true);
+        expect(Array.isArray(res.body.tiers)).toBe(true);
+        expect(res.body.tiers.length).toBeGreaterThanOrEqual(5);
+        const starter = res.body.tiers.find(t => t.productId === 'ecoin_tier_starter');
+        expect(starter).toBeDefined();
+        expect(starter.priceTwd).toBe(170);
+        expect(starter.bonusPct).toBe(5);
+    });
+
+    test('GET /balance requires authentication', async () => {
+        const res = await supertest(buildApp())
+            .get('/api/wallet/balance')
+            .expect(401);
+        expect(res.body.error).toBe('unauthenticated');
+    });
+
+    test('GET /balance returns wallet for authenticated user', async () => {
+        const app = buildApp({ user: { userId: ALICE } });
+        // Seed a balance via the wallet primitive.
+        await walletApi.creditTopup({
+            userId: ALICE, amountMli: 5000, orderId: 'seed-bal',
+            channel: 'admin_grant', idempotencyKey: 'seed-bal-key',
+        });
+        const res = await supertest(app).get('/api/wallet/balance').expect(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.wallet.balance_mli).toBe('5000');
+        expect(res.body.wallet.balance_ecoin).toBe(5);
+    });
+
+    test('POST /topup/verify-google rejects missing fields', async () => {
+        const app = buildApp({ user: { userId: ALICE } });
+        await supertest(app).post('/api/wallet/topup/verify-google')
+            .send({}).expect(400);
+        await supertest(app).post('/api/wallet/topup/verify-google')
+            .send({ productId: 'ecoin_tier_starter' }).expect(400);
+        await supertest(app).post('/api/wallet/topup/verify-google')
+            .send({ productId: 'ecoin_tier_starter', purchaseToken: 'short' }).expect(400);
+    });
+
+    test('POST /topup/verify-google rejects unknown product', async () => {
+        const app = buildApp({ user: { userId: ALICE } });
+        const res = await supertest(app).post('/api/wallet/topup/verify-google')
+            .send({ productId: 'fake_tier', purchaseToken: 'long-enough-token' })
+            .expect(400);
+        expect(res.body.error).toBe('unknown_product');
+    });
+
+    test('POST /topup/verify-google credits wallet end-to-end', async () => {
+        const app = buildApp({ user: { userId: ALICE } });
+        const res = await supertest(app).post('/api/wallet/topup/verify-google')
+            .send({ productId: 'ecoin_tier_starter', purchaseToken: 'gp-real-token-12345' })
+            .expect(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.order.status).toBe('paid');
+        // 17000 + 850 bonus = 17850 e幣
+        expect(res.body.order.ecoinTotal).toBe(17850);
+        expect(res.body.order.deduped).toBe(false);
+
+        // Replaying the same token should dedupe (no double credit).
+        const replay = await supertest(app).post('/api/wallet/topup/verify-google')
+            .send({ productId: 'ecoin_tier_starter', purchaseToken: 'gp-real-token-12345' })
+            .expect(200);
+        expect(replay.body.order.deduped).toBe(true);
+
+        const bal = await walletApi.getBalance(ALICE);
+        expect(bal.balance_ecoin).toBe(17850);
+    });
+
+    test('POST /admin/grant rejects non-admin', async () => {
+        const app = buildApp({ user: { userId: ALICE }, isAdmin: false });
+        const res = await supertest(app).post('/api/wallet/admin/grant')
+            .send({ userId: BOB, ecoin: 100, reason: 'test' })
+            .expect(403);
+        expect(res.body.error).toBe('admin_only');
+    });
+
+    test('POST /admin/grant grants e-coin to target user', async () => {
+        const app = buildApp({ user: { userId: ALICE }, isAdmin: true });
+        await supertest(app).post('/api/wallet/admin/grant')
+            .send({ userId: BOB, ecoin: 500, reason: 'support_compensation' })
+            .expect(200);
+        const bal = await walletApi.getBalance(BOB);
+        expect(bal.balance_ecoin).toBe(500);
+        // Verify ledger note carries the reason.
+        const ledger = fake.state.ledger.find(r => r.user_id === BOB);
+        expect(ledger.note).toMatch(/support_compensation/);
+    });
+
+    test('POST /admin/grant validates input', async () => {
+        const app = buildApp({ user: { userId: ALICE }, isAdmin: true });
+        await supertest(app).post('/api/wallet/admin/grant')
+            .send({ ecoin: 100, reason: 'r' }).expect(400);
+        await supertest(app).post('/api/wallet/admin/grant')
+            .send({ userId: BOB, ecoin: 0, reason: 'r' }).expect(400);
+        await supertest(app).post('/api/wallet/admin/grant')
+            .send({ userId: BOB, ecoin: 100, reason: '' }).expect(400);
+    });
+
+    test('factory throws when authMiddleware is missing', () => {
+        expect(() => wallet({})).toThrow(/authMiddleware/);
+    });
+});
+
+// ── markTopupPaid order_not_found ──────────────────────────────────────
+
+describe('wallet: markTopupPaid edge cases', () => {
+    test('throws order_not_found when order id is unknown', async () => {
+        await expect(walletApi.markTopupPaid({
+            orderId: 'order-does-not-exist',
+            userId: ALICE,
+            amountMli: 100,
+            channel: 'google_play',
+        })).rejects.toThrow('order_not_found');
+    });
+});
+
+// ── reconcileBalances ──────────────────────────────────────────────────
+
+describe('wallet: reconcileBalances', () => {
+    test('clean wallet reports no drift', async () => {
+        await walletApi.creditTopup({
+            userId: ALICE, amountMli: 1_000_000, orderId: 'seed-recon',
+            channel: 'admin_grant', idempotencyKey: 'seed-recon-key',
+        });
+        const report = await walletApi.reconcileBalances();
+        expect(report.ok).toBe(true);
+        expect(report.discrepancies).toHaveLength(0);
+    });
+
+    test('detects manual drift (cached balance out of sync with ledger)', async () => {
+        await walletApi.creditTopup({
+            userId: ALICE, amountMli: 500_000, orderId: 'seed-drift',
+            channel: 'admin_grant', idempotencyKey: 'seed-drift-key',
+        });
+        // Simulate a buggy direct write that bypasses applyLedgerEntry.
+        fake.state.wallets.get(ALICE).balance_mli = 999_999n;
+
+        const report = await walletApi.reconcileBalances();
+        expect(report.ok).toBe(false);
+        expect(report.discrepancies).toHaveLength(1);
+        const d = report.discrepancies[0];
+        expect(d.userId).toBe(ALICE);
+        expect(d.cachedBalanceMli).toBe('999999');
+        expect(d.expectedBalanceMli).toBe('500000');
+        expect(d.deltaMli).toBe('499999');
+    });
+
+    test('transfers leave both sides reconciled', async () => {
+        await walletApi.creditTopup({
+            userId: ALICE, amountMli: 10_000, orderId: 'seed-xfer',
+            channel: 'admin_grant', idempotencyKey: 'seed-xfer-key',
+        });
+        await walletApi.transferEcoin({
+            fromUserId: ALICE, toUserId: BOB, amountMli: 4_000,
+            type: wallet.LEDGER_TYPES.RENTAL_INCOME,
+            idempotencyKey: 'xfer-recon-1',
+        });
+        const report = await walletApi.reconcileBalances();
+        expect(report.ok).toBe(true);
+    });
+});
+
+describe('wallet: /admin/reconcile route', () => {
+    const express = require('express');
+    const supertest = require('supertest');
+
+    function buildAdminApp(isAdmin) {
+        const app = express();
+        app.use(express.json());
+        const fakeAuth = (req, _res, next) => { req.user = { userId: ALICE }; next(); };
+        const fakeAdmin = (req, res, next) => isAdmin ? next() : res.status(403).json({ success: false, error: 'admin_only' });
+        const w = wallet({ authMiddleware: fakeAuth, adminMiddleware: fakeAdmin });
+        app.use('/api/wallet', w.router);
+        return app;
+    }
+
+    test('non-admin gets 403', async () => {
+        await supertest(buildAdminApp(false))
+            .get('/api/wallet/admin/reconcile')
+            .expect(403);
+    });
+
+    test('admin receives ok report when ledger matches', async () => {
+        await walletApi.creditTopup({
+            userId: ALICE, amountMli: 1_000, orderId: 'rc-clean',
+            channel: 'admin_grant', idempotencyKey: 'rc-clean-key',
+        });
+        const res = await supertest(buildAdminApp(true))
+            .get('/api/wallet/admin/reconcile')
+            .expect(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.report.ok).toBe(true);
+        expect(res.body.report.discrepancies).toHaveLength(0);
     });
 });

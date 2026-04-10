@@ -1,30 +1,21 @@
 /**
- * Wallet Module — Phase 0 of Bot Rental Marketplace
+ * Wallet Module — e-coin primitives for the bot rental marketplace.
  *
  * Mounted at: /api/wallet
  *
- * Provides the e-coin wallet primitives that all rental-marketplace
- * features build on:
+ * Units: all amounts stored in 厘 (mli), where 1 e幣 = 1000 厘 (avoids
+ * floating-point drift during fractional rental token charges).
+ * Exchange: 1 TWD = 100 e幣 = 100,000 厘 (fixed, see TWD_TO_MLI).
  *
- *   - transferEcoin()   — atomic p2p transfer (e.g. rental income payout)
- *   - holdDeposit()     — freeze spendable balance into deposit escrow
- *   - releaseDeposit()  — unfreeze deposit back to spendable balance
- *   - forfeitDeposit()  — remove deposit from user entirely (violation / fee)
- *   - creditTopup()     — credit e-coin from a top-up order (Google Play etc)
- *   - adminAdjust()     — manual balance adjustment (audited)
- *   - getBalance()      — read current balance (available + held)
- *   - getLedger()       — paginated ledger history
- *
- * All mutations go through a single transactional path and always
- * insert a corresponding wallet_ledger row. Every call must supply an
- * `idempotency_key` — duplicate keys are silently deduped.
- *
- * Units: all amounts are in 厘 (mli), where 1 e幣 = 1000 厘.
- * Exchange: 1 TWD = 100 e幣 = 100,000 厘. See TWD_TO_MLI.
- *
- * Design decisions are documented in memory/project_bot_rental_system.md
- * (design locked 2026-04-09).
+ * Every mutation flows through `applyLedgerEntry`, which writes a
+ * double-entry row to `wallet_ledger` and locks the wallet row with
+ * `SELECT ... FOR UPDATE`. Each call must supply `idempotencyKey`;
+ * duplicate keys silently dedupe and return the original entry.
  */
+/* @brm-crossref: ①②③ Wallet + Top-up + Transaction Systems
+ * Design doc: docs/plans/2026-04-10-bot-rental-marketplace-design.md
+ * Roadmap:    /portal/roadmap.html
+ * If this module is updated, also update the roadmap page status and the design doc §10 delivery tracker. */
 
 const express = require('express');
 const { Pool } = require('pg');
@@ -75,6 +66,43 @@ const LEDGER_TYPES = Object.freeze({
 });
 
 const ALLOWED_LEDGER_TYPES = new Set(Object.values(LEDGER_TYPES));
+
+/**
+ * Top-up tier catalog. Key is the Google Play / Apple IAP product ID,
+ * value is the credit amount in 厘. Frozen so it cannot be mutated at
+ * runtime — pricing changes require a code change + deploy.
+ */
+const TOPUP_TIERS = Object.freeze({
+    'ecoin_tier_small': {
+        priceTwd: 90,
+        baseMli: 90 * TWD_TO_MLI,      // 9,000,000 mli = 9,000 e幣
+        bonusMli: 0,
+    },
+    'ecoin_tier_starter': {
+        priceTwd: 170,
+        baseMli: 170 * TWD_TO_MLI,     // 17,000 e幣
+        bonusMli: 850 * ECOIN_TO_MLI,  // +5% (850 e幣)
+    },
+    'ecoin_tier_standard': {
+        priceTwd: 340,
+        baseMli: 340 * TWD_TO_MLI,     // 34,000 e幣
+        bonusMli: 2720 * ECOIN_TO_MLI, // +8%
+    },
+    'ecoin_tier_advanced': {
+        priceTwd: 990,
+        baseMli: 990 * TWD_TO_MLI,     // 99,000 e幣
+        bonusMli: 11880 * ECOIN_TO_MLI, // +12%
+    },
+    'ecoin_tier_premium': {
+        priceTwd: 1990,
+        baseMli: 1990 * TWD_TO_MLI,    // 199,000 e幣
+        bonusMli: 29850 * ECOIN_TO_MLI, // +15%
+    },
+});
+
+function getTopupTier(productId) {
+    return TOPUP_TIERS[productId] || null;
+}
 
 // ============================================
 // Helpers
@@ -296,7 +324,9 @@ async function withTransaction(fn) {
         await client.query('COMMIT');
         return result;
     } catch (err) {
-        try { await client.query('ROLLBACK'); } catch { /* noop */ }
+        try { await client.query('ROLLBACK'); } catch (rbErr) {
+            console.warn('[Wallet] ROLLBACK failed:', rbErr.message);
+        }
         throw err;
     } finally {
         client.release();
@@ -461,6 +491,85 @@ async function adminAdjust({ userId, deltaMli, reason, adminUserId, idempotencyK
 }
 
 // ============================================
+// Top-up order lifecycle
+// ============================================
+
+/**
+ * Insert a new topup_orders row and return its ID. Idempotent on
+ * (channel, external_txn_id) — if the same transaction is verified
+ * twice, returns the existing row instead of duplicating.
+ */
+async function createTopupOrder({
+    userId, channel, priceTwd, baseMli, bonusMli, externalTxnId, externalRaw = null,
+}) {
+    assertUuidLike('user_id', userId);
+    if (!channel || typeof channel !== 'string') throw new Error('channel_invalid');
+    if (!Number.isInteger(priceTwd) || priceTwd < 0) throw new Error('price_twd_invalid');
+    assertPositiveInt('base_mli', baseMli);
+    if (!Number.isInteger(bonusMli) || bonusMli < 0) throw new Error('bonus_mli_invalid');
+
+    // Dedupe on external_txn_id when present.
+    if (externalTxnId) {
+        const existing = await pool.query(
+            `SELECT id, status, ecoin_total_mli FROM topup_orders
+             WHERE channel = $1 AND external_txn_id = $2`,
+            [channel, externalTxnId]
+        );
+        if (existing.rowCount > 0) {
+            return { ...existing.rows[0], deduped: true };
+        }
+    }
+
+    const totalMli = baseMli + bonusMli;
+    const res = await pool.query(
+        `INSERT INTO topup_orders
+            (user_id, channel, amount_twd, ecoin_base_mli, ecoin_bonus_mli, ecoin_total_mli,
+             status, external_txn_id, external_raw)
+         VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8)
+         RETURNING id, status, ecoin_total_mli`,
+        [userId, channel, priceTwd, baseMli, bonusMli, totalMli, externalTxnId || null, externalRaw]
+    );
+    return { ...res.rows[0], deduped: false };
+}
+
+/**
+ * Mark a topup_order paid and credit the wallet in a single transaction.
+ * Throws `order_not_found` if the order does not exist (distinct from
+ * already-paid, which is a no-op idempotent path).
+ */
+async function markTopupPaid({ orderId, userId, amountMli, channel }) {
+    assertRefString('order_id', orderId);
+    assertUuidLike('user_id', userId);
+    assertPositiveInt('amount_mli', amountMli);
+
+    return withTransaction(async (client) => {
+        const ord = await client.query(
+            `SELECT id, status FROM topup_orders WHERE id = $1 FOR UPDATE`,
+            [orderId]
+        );
+        if (ord.rowCount === 0) {
+            throw new Error('order_not_found');
+        }
+        if (ord.rows[0].status !== 'paid') {
+            await client.query(
+                `UPDATE topup_orders SET status = 'paid', paid_at = NOW() WHERE id = $1`,
+                [orderId]
+            );
+        }
+        return applyLedgerEntry(client, {
+            userId,
+            balanceDelta: amountMli,
+            heldDelta: 0,
+            type: LEDGER_TYPES.TOPUP,
+            refType: 'topup_order',
+            refId: orderId,
+            note: `topup:${channel}`,
+            idempotencyKey: `topup:${orderId}`,
+        });
+    });
+}
+
+// ============================================
 // Read APIs
 // ============================================
 
@@ -486,6 +595,53 @@ async function getBalance(userId) {
         lifetime_spent_mli: String(row.lifetime_spent_mli),
         balance_ecoin: mliToEcoin(row.balance_mli),
         held_ecoin: mliToEcoin(row.held_mli),
+    };
+}
+
+/**
+ * Reconciliation — verify every wallet's cached balance + held matches
+ * the signed sum of its ledger rows. Returns a list of discrepancies.
+ *
+ * Expected to report an empty array. Any drift indicates a bug in
+ * `applyLedgerEntry` or a direct write that bypassed the ledger — both
+ * should page the team.
+ *
+ * Can be called periodically (daily cron) or on-demand from an admin
+ * endpoint. Runs a single SQL query so cost is O(rows in ledger) on
+ * the DB side; holds no state in Node.
+ */
+async function reconcileBalances({ limit = 100 } = {}) {
+    const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 100, 1), 1000);
+    const res = await pool.query(
+        `WITH agg AS (
+            SELECT user_id,
+                   COALESCE(SUM(delta_mli), 0)       AS ledger_balance_mli,
+                   COALESCE(SUM(held_delta_mli), 0)  AS ledger_held_mli
+            FROM wallet_ledger
+            GROUP BY user_id
+        )
+        SELECT w.user_id,
+               w.balance_mli        AS cached_balance_mli,
+               w.held_mli           AS cached_held_mli,
+               COALESCE(a.ledger_balance_mli, 0) AS expected_balance_mli,
+               COALESCE(a.ledger_held_mli, 0)    AS expected_held_mli
+        FROM wallets w
+        LEFT JOIN agg a ON a.user_id = w.user_id
+        WHERE w.balance_mli <> COALESCE(a.ledger_balance_mli, 0)
+           OR w.held_mli    <> COALESCE(a.ledger_held_mli, 0)
+        LIMIT $1`,
+        [safeLimit]
+    );
+    return {
+        discrepancies: res.rows.map(r => ({
+            userId: r.user_id,
+            cachedBalanceMli: String(r.cached_balance_mli),
+            cachedHeldMli: String(r.cached_held_mli),
+            expectedBalanceMli: String(r.expected_balance_mli),
+            expectedHeldMli: String(r.expected_held_mli),
+            deltaMli: String(BigInt(r.cached_balance_mli) - BigInt(r.expected_balance_mli)),
+        })),
+        ok: res.rowCount === 0,
     };
 }
 
@@ -518,41 +674,150 @@ async function getLedger(userId, { limit = 50, offset = 0, type = null } = {}) {
 // Express factory
 // ============================================
 
-module.exports = function walletFactory({ authMiddleware, serverLog } = {}) {
+module.exports = function walletFactory({ authMiddleware, adminMiddleware, serverLog } = {}) {
+    if (typeof authMiddleware !== 'function') {
+        throw new Error('wallet: authMiddleware is required');
+    }
     const router = express.Router();
     const audit = serverLog || (() => {});
 
-    // GET /api/wallet/balance
-    router.get('/balance', authMiddleware || ((_req, _res, next) => next()), async (req, res) => {
-        try {
-            if (!req.user || !req.user.userId) {
-                return res.status(401).json({ success: false, error: 'unauthenticated' });
+    // Errors thrown from handlers whose message matches this pattern are
+    // mapped to HTTP 400 (input validation). Anything else becomes 500.
+    const INPUT_ERROR_RE = /^(?:[a-z][a-z0-9_]*_(?:invalid|required)|unknown_[a-z_]+|order_not_found|insufficient_balance|insufficient_held|self_transfer_forbidden)$/;
+
+    function walletRoute(fn) {
+        return async (req, res) => {
+            try {
+                if (!req.user || !req.user.userId) {
+                    return res.status(401).json({ success: false, error: 'unauthenticated' });
+                }
+                await fn(req, res);
+            } catch (err) {
+                if (INPUT_ERROR_RE.test(err.message)) {
+                    return res.status(400).json({ success: false, error: err.message });
+                }
+                console.error('[Wallet] handler error:', err);
+                res.status(500).json({ success: false, error: 'internal_error' });
             }
-            const data = await getBalance(req.user.userId);
-            res.json({ success: true, wallet: data });
-        } catch (err) {
-            console.error('[Wallet] /balance error:', err);
-            res.status(500).json({ success: false, error: 'internal_error' });
-        }
-    });
+        };
+    }
+
+    // GET /api/wallet/balance
+    router.get('/balance', authMiddleware, walletRoute(async (req, res) => {
+        const data = await getBalance(req.user.userId);
+        res.json({ success: true, wallet: data });
+    }));
 
     // GET /api/wallet/history?limit=&offset=&type=
-    router.get('/history', authMiddleware || ((_req, _res, next) => next()), async (req, res) => {
-        try {
-            if (!req.user || !req.user.userId) {
-                return res.status(401).json({ success: false, error: 'unauthenticated' });
-            }
-            const { limit, offset, type } = req.query;
-            const rows = await getLedger(req.user.userId, { limit, offset, type });
-            res.json({ success: true, entries: rows });
-        } catch (err) {
-            if (/unknown_ledger_type/.test(err.message)) {
-                return res.status(400).json({ success: false, error: err.message });
-            }
-            console.error('[Wallet] /history error:', err);
-            res.status(500).json({ success: false, error: 'internal_error' });
-        }
+    router.get('/history', authMiddleware, walletRoute(async (req, res) => {
+        const { limit, offset, type } = req.query;
+        const rows = await getLedger(req.user.userId, { limit, offset, type });
+        res.json({ success: true, entries: rows });
+    }));
+
+    // GET /api/wallet/topup/tiers — public catalog of available top-up tiers
+    router.get('/topup/tiers', (_req, res) => {
+        const tiers = Object.entries(TOPUP_TIERS).map(([productId, t]) => ({
+            productId,
+            priceTwd: t.priceTwd,
+            ecoinBase: Math.round(t.baseMli / ECOIN_TO_MLI),
+            ecoinBonus: Math.round(t.bonusMli / ECOIN_TO_MLI),
+            ecoinTotal: Math.round((t.baseMli + t.bonusMli) / ECOIN_TO_MLI),
+            bonusPct: t.baseMli > 0 ? Math.round((t.bonusMli / t.baseMli) * 100) : 0,
+        }));
+        res.json({ success: true, tiers });
     });
+
+    // POST /api/wallet/topup/verify-google
+    // Body: { productId, purchaseToken }
+    //
+    // TODO: validate purchaseToken via Google androidpublisher API once
+    // GOOGLE_PLAY_SERVICE_ACCOUNT is provisioned. Until then we trust the
+    // token and rely on UNIQUE(channel, external_txn_id) for dedupe.
+    router.post('/topup/verify-google', authMiddleware, walletRoute(async (req, res) => {
+        const { productId, purchaseToken } = req.body || {};
+        if (!productId || typeof productId !== 'string') {
+            throw new Error('product_id_required');
+        }
+        if (!purchaseToken || typeof purchaseToken !== 'string' || purchaseToken.length < 8) {
+            throw new Error('purchase_token_invalid');
+        }
+        const tier = getTopupTier(productId);
+        if (!tier) throw new Error('unknown_product');
+
+        const order = await createTopupOrder({
+            userId: req.user.userId,
+            channel: 'google_play',
+            priceTwd: tier.priceTwd,
+            baseMli: tier.baseMli,
+            bonusMli: tier.bonusMli,
+            externalTxnId: purchaseToken,
+            externalRaw: { productId, source: 'verify-google' },
+        });
+
+        const ledger = await markTopupPaid({
+            orderId: order.id,
+            userId: req.user.userId,
+            amountMli: parseInt(order.ecoin_total_mli, 10),
+            channel: 'google_play',
+        });
+
+        audit('info', 'wallet', `topup verified user=${req.user.userId} product=${productId} order=${order.id}`, {
+            userId: req.user.userId, action: 'topup_verify', resource: order.id, result: 'success',
+        });
+
+        res.json({
+            success: true,
+            order: {
+                id: order.id,
+                status: 'paid',
+                ecoinTotal: Math.round(parseInt(order.ecoin_total_mli, 10) / ECOIN_TO_MLI),
+                deduped: !!order.deduped || !!ledger.deduped,
+            },
+        });
+    }));
+
+    // POST /api/wallet/admin/grant — admin manual e-coin grant (audited)
+    // Body: { userId, ecoin, reason }
+    //
+    // Falls through to walletRoute's 401 if unauthenticated. The
+    // adminMiddleware (when supplied) enforces admin role; tests that
+    // omit it must seed `req.user.is_admin` themselves.
+    const adminGate = adminMiddleware || ((_req, _res, next) => next());
+    // GET /api/wallet/admin/reconcile — run full ledger-vs-wallet audit
+    router.get('/admin/reconcile', authMiddleware, adminGate, walletRoute(async (req, res) => {
+        const limit = parseInt(req.query.limit, 10) || 100;
+        const report = await reconcileBalances({ limit });
+        if (!report.ok) {
+            audit('error', 'wallet', `reconcile FAIL: ${report.discrepancies.length} drift`, {
+                userId: req.user.userId, action: 'reconcile', result: 'drift',
+            });
+        }
+        res.json({ success: true, report });
+    }));
+
+    router.post('/admin/grant', authMiddleware, adminGate, walletRoute(async (req, res) => {
+        const { userId, ecoin, reason } = req.body || {};
+        if (!userId || typeof userId !== 'string') throw new Error('user_id_required');
+        if (!Number.isFinite(ecoin) || ecoin === 0) throw new Error('ecoin_invalid');
+        if (!reason || typeof reason !== 'string' || reason.length > 200) {
+            throw new Error('reason_invalid');
+        }
+
+        const deltaMli = Math.round(ecoin * ECOIN_TO_MLI);
+        const idemKey = `admin-grant:${req.user.userId}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
+        const result = await adminAdjust({
+            userId, deltaMli, reason,
+            adminUserId: req.user.userId,
+            idempotencyKey: idemKey,
+        });
+
+        audit('warn', 'wallet', `admin grant ${ecoin} e幣 to ${userId}: ${reason}`, {
+            userId: req.user.userId, action: 'admin_grant', resource: userId, result: 'success',
+        });
+
+        res.json({ success: true, ledger_id: result.id });
+    }));
 
     return {
         router,
@@ -564,8 +829,16 @@ module.exports = function walletFactory({ authMiddleware, serverLog } = {}) {
         releaseDeposit,
         forfeitDeposit,
         adminAdjust,
+        createTopupOrder,
+        markTopupPaid,
         getBalance,
         getLedger,
+        reconcileBalances,
+        // Transaction primitives for other modules (e.g. rental.js) that
+        // need to write wallet ledger entries inside their own business
+        // transactions (atomic cross-module operations).
+        withTransaction,
+        applyLedgerEntry,
         // Constants
         LEDGER_TYPES,
         TWD_TO_MLI,
@@ -574,14 +847,14 @@ module.exports = function walletFactory({ authMiddleware, serverLog } = {}) {
         INSURANCE_POOL_BPS,
         PLATFORM_WALLET_USER_ID,
         INSURANCE_POOL_USER_ID,
+        TOPUP_TIERS,
+        getTopupTier,
         // Conversion helpers
         twdToMli,
         ecoinToMli,
         mliToEcoin,
         // Internals exposed for testing
         _internals: { applyLedgerEntry, withTransaction, pool },
-        // Mark audit as touched so lint doesn't flag it
-        _audit: audit,
     };
 };
 
@@ -596,3 +869,5 @@ module.exports.INSURANCE_POOL_USER_ID = INSURANCE_POOL_USER_ID;
 module.exports.twdToMli = twdToMli;
 module.exports.ecoinToMli = ecoinToMli;
 module.exports.mliToEcoin = mliToEcoin;
+module.exports.TOPUP_TIERS = TOPUP_TIERS;
+module.exports.getTopupTier = getTopupTier;

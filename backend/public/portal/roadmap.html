@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title data-i18n="roadmap_title">EClawbot - Product Roadmap</title>
+    <meta name="description" content="EClaw Bot Rental Marketplace (BRM) — product roadmap and design overview.">
+    <link rel="icon" type="image/png" href="assets/favicon-32.png">
+    <link rel="stylesheet" href="shared/style.css">
+    <link rel="canonical" href="https://eclawbot.com/portal/roadmap.html">
+    <style>
+        .rm-hero {
+            background: linear-gradient(135deg, #1e3a8a 0%, #6d28d9 50%, #db2777 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            padding: 40px 32px;
+            margin-bottom: 28px;
+            text-align: center;
+        }
+        .rm-hero h1 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+        .rm-hero .rm-subtitle { font-size: 15px; opacity: 0.9; max-width: 600px; margin: 0 auto; }
+        .rm-hero .rm-badge {
+            display: inline-block;
+            margin-top: 14px;
+            padding: 4px 14px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .rm-lang-toggle {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 16px;
+            gap: 4px;
+        }
+        .rm-lang-btn {
+            padding: 6px 14px;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            background: var(--input-bg);
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .rm-lang-btn.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .rm-section {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .rm-section h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rm-phase {
+            border-left: 3px solid var(--card-border);
+            padding: 0 0 24px 20px;
+            margin-left: 8px;
+            position: relative;
+        }
+        .rm-phase:last-child { padding-bottom: 0; }
+        .rm-phase::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 2px;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            border: 2px solid var(--card-border);
+            background: var(--bg);
+        }
+        .rm-phase.done { border-left-color: #10b981; }
+        .rm-phase.done::before { background: #10b981; border-color: #10b981; }
+        .rm-phase.partial { border-left-color: #f59e0b; }
+        .rm-phase.partial::before { background: #f59e0b; border-color: #f59e0b; }
+        .rm-phase.todo::before { background: var(--input-bg); }
+
+        .rm-phase h3 {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .rm-phase .rm-phase-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+        .rm-phase .rm-status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+        .rm-status-badge.done { background: #10b981; color: #fff; }
+        .rm-status-badge.partial { background: #f59e0b; color: #000; }
+        .rm-status-badge.todo { background: var(--input-bg); color: var(--text-secondary); border: 1px solid var(--card-border); }
+        .rm-status-badge.blocked { background: #ef4444; color: #fff; }
+
+        .rm-tasks { list-style: none; padding: 0; margin: 0; }
+        .rm-tasks li {
+            font-size: 13px;
+            padding: 4px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+        }
+        .rm-tasks li::before {
+            content: '✅';
+            flex-shrink: 0;
+        }
+        .rm-tasks li.todo::before { content: '⬜'; }
+        .rm-tasks li.blocked::before { content: '🔒'; }
+        .rm-tasks li.partial::before { content: '🟡'; }
+
+        .rm-decisions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+        }
+        .rm-decision {
+            padding: 12px;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            background: var(--input-bg);
+        }
+        .rm-decision .rm-d-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .rm-decision .rm-d-value {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .rm-econ-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .rm-econ-table th, .rm-econ-table td {
+            text-align: left;
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--card-border);
+        }
+        .rm-econ-table th {
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            letter-spacing: 0.5px;
+        }
+
+        .rm-flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+        .rm-flow-step {
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .rm-flow-arrow { color: var(--text-secondary); font-size: 16px; }
+        .rm-flow-step.active { background: #6d28d9; color: #fff; border-color: #6d28d9; }
+        .rm-flow-step.end { background: #10b981; color: #fff; border-color: #10b981; }
+
+        .rm-stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+        .rm-stat {
+            flex: 1;
+            min-width: 120px;
+            padding: 16px;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            text-align: center;
+        }
+        .rm-stat .rm-stat-value { font-size: 28px; font-weight: 800; }
+        .rm-stat .rm-stat-label { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <div id="navContainer"></div>
+
+    <main class="container" style="max-width: 880px; margin: 24px auto; padding: 0 16px;">
+
+        <!-- Language toggle -->
+        <div class="rm-lang-toggle">
+            <button class="rm-lang-btn active" onclick="setLang('en')">EN</button>
+            <button class="rm-lang-btn" onclick="setLang('zh')">中文</button>
+        </div>
+
+        <!-- Hero -->
+        <div class="rm-hero">
+            <h1 class="rm-i18n" data-en="EClaw Bot Rental Marketplace" data-zh="EClaw Bot 租借市集">EClaw Bot Rental Marketplace</h1>
+            <div class="rm-subtitle rm-i18n"
+                 data-en="Rent premium AI bots on-demand. Earn e-coin by sharing your idle bot capacity."
+                 data-zh="按需租借進階 AI Bot。將閒置的 Bot 產能變現，賺取 e幣。">
+                Rent premium AI bots on-demand. Earn e-coin by sharing your idle bot capacity.
+            </div>
+            <div class="rm-badge">Codename: BRM</div>
+        </div>
+
+        <!-- Progress stats -->
+        <div class="rm-stats">
+            <div class="rm-stat">
+                <div class="rm-stat-value">6</div>
+                <div class="rm-stat-label rm-i18n" data-en="Development Phases" data-zh="開發階段">Development Phases</div>
+            </div>
+            <div class="rm-stat">
+                <div class="rm-stat-value">27</div>
+                <div class="rm-stat-label rm-i18n" data-en="Locked Decisions" data-zh="已鎖定設計決策">Locked Decisions</div>
+            </div>
+            <div class="rm-stat">
+                <div class="rm-stat-value">137</div>
+                <div class="rm-stat-label rm-i18n" data-en="Unit Tests" data-zh="單元測試數">Unit Tests</div>
+            </div>
+            <div class="rm-stat">
+                <div class="rm-stat-value">12</div>
+                <div class="rm-stat-label rm-i18n" data-en="New DB Tables" data-zh="新增資料表">New DB Tables</div>
+            </div>
+        </div>
+
+        <!-- ═══ Section: Vision ═══ -->
+        <div class="rm-section">
+            <h2>🎯 <span class="rm-i18n" data-en="Vision" data-zh="願景">Vision</span></h2>
+            <p class="rm-i18n" style="font-size:14px;line-height:1.7;"
+               data-en="Transform EClaw's Bot Marketplace from a static showcase into a dynamic, peer-to-peer rental exchange. Bot owners with idle OpenClaw subscription capacity list their bots and earn e-coin from renters who pay per token used. The platform takes a 15% commission and operates a 2% insurance pool for dispute coverage."
+               data-zh="將 EClaw 的 Bot 廣場從靜態展示區轉型為動態的 P2P 租借交易所。擁有閒置 OpenClaw 訂閱額度的 Bot 主人可上架出租賺取 e幣，租客按 Token 用量付費。平台抽取 15% 佣金並撥 2% 進保險池用於爭議賠付。">
+                Transform EClaw's Bot Marketplace from a static showcase into a dynamic, peer-to-peer rental exchange.
+            </p>
+        </div>
+
+        <!-- ═══ Section: How It Works ═══ -->
+        <div class="rm-section">
+            <h2>⚙️ <span class="rm-i18n" data-en="How It Works" data-zh="運作流程">How It Works</span></h2>
+
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:8px;" class="rm-i18n"
+                data-en="Owner (Listing) Flow" data-zh="出租方流程">Owner (Listing) Flow</h3>
+            <div class="rm-flow">
+                <div class="rm-flow-step rm-i18n" data-en="Bind Bot" data-zh="綁定 Bot">Bind Bot</div>
+                <div class="rm-flow-arrow">→</div>
+                <div class="rm-flow-step rm-i18n" data-en="Set Rate" data-zh="設定租金">Set Rate</div>
+                <div class="rm-flow-arrow">→</div>
+                <div class="rm-flow-step active rm-i18n" data-en="Interview (Auto)" data-zh="面試（自動）">Interview (Auto)</div>
+                <div class="rm-flow-arrow">→</div>
+                <div class="rm-flow-step rm-i18n" data-en="Publish" data-zh="上架">Publish</div>
+                <div class="rm-flow-arrow">→</div>
+                <div class="rm-flow-step end rm-i18n" data-en="Earn e-coin" data-zh="賺取 e幣">Earn e-coin</div>
+            </div>
+
+            <h3 style="font-size:14px;font-weight:700;margin:16px 0 8px;" class="rm-i18n"
+                data-en="Renter (Rental) Flow" data-zh="租借方流程">Renter (Rental) Flow</h3>
+            <div class="rm-flow">
+                <div class="rm-flow-step rm-i18n" data-en="Browse Marketplace" data-zh="瀏覽廣場">Browse Marketplace</div>
+                <div class="rm-flow-arrow">→</div>
+                <div class="rm-flow-step rm-i18n" data-en="View Agent Card" data-zh="檢視 Agent Card">View Agent Card</div>
+                <div class="rm-flow-arrow">→</div>
+                <div class="rm-flow-step active rm-i18n" data-en="Pay Deposit" data-zh="支付押金">Pay Deposit</div>
+                <div class="rm-flow-arrow">→</div>
+                <div class="rm-flow-step rm-i18n" data-en="Chat & Use" data-zh="對話使用">Chat & Use</div>
+                <div class="rm-flow-arrow">→</div>
+                <div class="rm-flow-step end rm-i18n" data-en="End & Settle" data-zh="結束結算">End & Settle</div>
+            </div>
+        </div>
+
+        <!-- ═══ Section: Key Design Decisions ═══ -->
+        <div class="rm-section">
+            <h2>🔒 <span class="rm-i18n" data-en="Key Design Decisions" data-zh="關鍵設計決策">Key Design Decisions</span></h2>
+            <div class="rm-decisions-grid">
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="Exchange Rate" data-zh="匯率">Exchange Rate</div>
+                    <div class="rm-d-value">1 TWD = 100 e幣</div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="Platform Fee" data-zh="平台佣金">Platform Fee</div>
+                    <div class="rm-d-value rm-i18n" data-en="15% (incl. 2% insurance pool)" data-zh="15%（含 2% 保險池）">15% (incl. 2% insurance pool)</div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="e-coin Withdrawal" data-zh="e幣提現">e-coin Withdrawal</div>
+                    <div class="rm-d-value rm-i18n" data-en="Not allowed — in-app use only" data-zh="不可提現 — 僅限站內消費">Not allowed — in-app use only</div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="Token Metering" data-zh="Token 計量">Token Metering</div>
+                    <div class="rm-d-value rm-i18n" data-en="Backend estimation (unforgeable)" data-zh="後端估算（不可偽造）">Backend estimation (unforgeable)</div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="Bot Exclusivity" data-zh="Bot 獨佔">Bot Exclusivity</div>
+                    <div class="rm-d-value rm-i18n" data-en="1 listing = 1 renter at a time" data-zh="一個 Listing 同時只能一位租客">1 listing = 1 renter at a time</div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="Deposit Formula" data-zh="押金公式">Deposit Formula</div>
+                    <div class="rm-d-value rm-i18n" data-en="rate × 20 (20K token runway)" data-zh="租金 × 20（2 萬 token 緩衝）">rate × 20 (20K token runway)</div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="Interview" data-zh="面試機制">Interview</div>
+                    <div class="rm-d-value rm-i18n" data-en="8 probes, regex judge, score ≥ 60 to list" data-zh="8 道探針、regex 判題、≥ 60 分才能上架">8 probes, regex judge, score ≥ 60 to list</div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="Rental Duration" data-zh="租期範圍">Rental Duration</div>
+                    <div class="rm-d-value rm-i18n" data-en="30 min – 7 days" data-zh="30 分鐘 – 7 天">30 min – 7 days</div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="Owner Privacy" data-zh="出租者隱私">Owner Privacy</div>
+                    <div class="rm-d-value rm-i18n" data-en="Renter sees only Agent Card" data-zh="租客僅看到 Agent Card 資訊">Renter sees only Agent Card</div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="Settlement Delay" data-zh="入帳延遲">Settlement Delay</div>
+                    <div class="rm-d-value rm-i18n" data-en="T+24h (dispute buffer)" data-zh="T+24 小時（爭議緩衝）">T+24h (dispute buffer)</div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="Grace Period" data-zh="寬限期">Grace Period</div>
+                    <div class="rm-d-value rm-i18n" data-en="6–12h on balance exhaustion" data-zh="餘額歸零後 6–12 小時">6–12h on balance exhaustion</div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="Pricing" data-zh="定價方式">Pricing</div>
+                    <div class="rm-d-value rm-i18n" data-en="Owner-set, advisor suggests range" data-zh="Owner 自訂，系統建議區間">Owner-set, advisor suggests range</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ Section: Top-up Tiers ═══ -->
+        <div class="rm-section">
+            <h2>💰 <span class="rm-i18n" data-en="Top-up Tiers" data-zh="儲值方案">Top-up Tiers</span></h2>
+            <table class="rm-econ-table">
+                <thead>
+                    <tr>
+                        <th class="rm-i18n" data-en="Tier" data-zh="方案">Tier</th>
+                        <th>TWD</th>
+                        <th class="rm-i18n" data-en="Base e幣" data-zh="基礎 e幣">Base e幣</th>
+                        <th class="rm-i18n" data-en="Bonus" data-zh="加贈">Bonus</th>
+                        <th class="rm-i18n" data-en="Total" data-zh="合計">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td class="rm-i18n" data-en="Small" data-zh="小額">Small</td><td>$90</td><td>9,000</td><td>—</td><td>9,000</td></tr>
+                    <tr><td class="rm-i18n" data-en="Starter" data-zh="入門">Starter</td><td>$170</td><td>17,000</td><td>+5% (850)</td><td>17,850</td></tr>
+                    <tr><td class="rm-i18n" data-en="Standard" data-zh="標準">Standard</td><td>$340</td><td>34,000</td><td>+8% (2,720)</td><td>36,720</td></tr>
+                    <tr><td class="rm-i18n" data-en="Advanced" data-zh="進階">Advanced</td><td>$990</td><td>99,000</td><td>+12% (11,880)</td><td>110,880</td></tr>
+                    <tr><td class="rm-i18n" data-en="Premium" data-zh="尊爵">Premium</td><td>$1,990</td><td>199,000</td><td>+15% (29,850)</td><td>228,850</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ═══ Section: Contract State Machine ═══ -->
+        <div class="rm-section">
+            <h2>🔄 <span class="rm-i18n" data-en="Contract Lifecycle" data-zh="契約生命週期">Contract Lifecycle</span></h2>
+            <div class="rm-flow" style="justify-content:center;">
+                <div class="rm-flow-step active">active</div>
+                <div class="rm-flow-arrow">→</div>
+                <div class="rm-flow-step">suspended</div>
+                <div class="rm-flow-arrow">→</div>
+                <div class="rm-flow-step end">ended_*</div>
+            </div>
+
+            <h3 style="font-size:14px;font-weight:700;margin:16px 0 10px;" class="rm-i18n"
+                data-en="Deposit Disposition" data-zh="押金結算">Deposit Disposition</h3>
+            <table class="rm-econ-table">
+                <thead>
+                    <tr>
+                        <th class="rm-i18n" data-en="End Reason" data-zh="結束原因">End Reason</th>
+                        <th class="rm-i18n" data-en="Refund" data-zh="退還">Refund</th>
+                        <th class="rm-i18n" data-en="Forfeit" data-zh="沒收">Forfeit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td class="rm-i18n" data-en="Normal end / Dispute won / Admin" data-zh="正常結束 / 申訴成立 / 管理員">Normal / Dispute / Admin</td><td>100%</td><td>0%</td></tr>
+                    <tr><td class="rm-i18n" data-en="Early termination by renter" data-zh="租客提前解約">Early by renter</td><td>50%</td><td>50%</td></tr>
+                    <tr><td class="rm-i18n" data-en="Balance exhausted" data-zh="餘額歸零">Balance exhausted</td><td>0%</td><td>100%</td></tr>
+                    <tr><td class="rm-i18n" data-en="5 violations" data-zh="5 次違規">5 violations</td><td>70%</td><td>30%</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ═══ Section: Development Roadmap ═══ -->
+        <div class="rm-section">
+            <h2>🗺️ <span class="rm-i18n" data-en="Development Roadmap" data-zh="開發路線圖">Development Roadmap</span></h2>
+
+            <div class="rm-phase done">
+                <h3>Phase 0 — <span class="rm-i18n" data-en="Wallet Foundation" data-zh="錢包基礎建設">Wallet Foundation</span>
+                    <span class="rm-status-badge done rm-i18n" data-en="Complete" data-zh="已完成">Complete</span></h3>
+                <div class="rm-phase-desc rm-i18n"
+                     data-en="E-coin wallet, double-entry ledger, Google Play top-up, daily reconciliation cron."
+                     data-zh="e幣錢包、雙分錄帳本、Google Play 儲值、每日對帳排程。">
+                    E-coin wallet, double-entry ledger, Google Play top-up, daily reconciliation cron.
+                </div>
+                <ul class="rm-tasks">
+                    <li class="rm-i18n" data-en="Wallet schema + primitives (transfer, hold, release, forfeit)" data-zh="錢包 schema + 原語（轉帳、凍結、解凍、沒收）">Wallet schema + primitives</li>
+                    <li class="rm-i18n" data-en="Top-up tiers (5 tiers with escalating bonus)" data-zh="儲值方案（5 檔含遞增加贈）">Top-up tiers</li>
+                    <li class="rm-i18n" data-en="Wallet portal page (balance + history + tier catalog)" data-zh="錢包頁面（餘額 + 歷史 + 方案）">Wallet portal page</li>
+                    <li class="rm-i18n" data-en="Daily reconcile cron (ledger vs cached balance audit)" data-zh="每日對帳 cron（帳本 vs 快取餘額稽核）">Daily reconcile cron</li>
+                    <li class="rm-i18n" data-en="Admin grant + reconcile endpoints" data-zh="管理員發放 + 對帳端點">Admin grant + reconcile endpoints</li>
+                    <li class="rm-i18n" data-en="48 Jest unit tests" data-zh="48 個 Jest 單元測試">48 Jest unit tests</li>
+                </ul>
+            </div>
+
+            <div class="rm-phase partial">
+                <h3>Phase 1 — <span class="rm-i18n" data-en="Listings & Interview" data-zh="上架 + 面試">Listings & Interview</span>
+                    <span class="rm-status-badge partial rm-i18n" data-en="In Progress" data-zh="進行中">In Progress</span></h3>
+                <div class="rm-phase-desc rm-i18n"
+                     data-en="Bot listing CRUD, automated interview scoring, marketplace search, pricing advisor."
+                     data-zh="Bot 上架 CRUD、自動面試評分、市集搜尋、定價建議。">
+                    Bot listing CRUD, automated interview scoring, marketplace search, pricing advisor.
+                </div>
+                <ul class="rm-tasks">
+                    <li class="rm-i18n" data-en="6 new DB tables (listings, interviews, contracts, snapshots, usage events, pricing)" data-zh="6 張新資料表（listings、interviews、contracts、snapshots、usage events、pricing）">6 new DB tables</li>
+                    <li class="rm-i18n" data-en="Listing CRUD + marketplace search API" data-zh="Listing CRUD + 市集搜尋 API">Listing CRUD + marketplace search API</li>
+                    <li class="rm-i18n" data-en="8-probe interview engine (regex + heuristic, zero LLM cost)" data-zh="8 道面試探針引擎（regex + 啟發式，零 LLM 成本）">8-probe interview engine</li>
+                    <li class="rm-i18n" data-en="Pricing advisor (base rate × capability multiplier)" data-zh="定價建議器（基礎費率 × 能力加成）">Pricing advisor</li>
+                    <li class="rm-i18n" data-en="64 Jest unit tests" data-zh="64 個 Jest 單元測試">64 Jest unit tests</li>
+                    <li class="todo rm-i18n" data-en="HTTP probe dispatch to owner webhooks" data-zh="HTTP 探針派送到 Owner webhook">HTTP probe dispatch</li>
+                    <li class="todo rm-i18n" data-en="Market snapshot hourly cron" data-zh="市場快照每小時 cron">Market snapshot cron</li>
+                    <li class="todo rm-i18n" data-en="Marketplace portal page" data-zh="市集頁面">Marketplace portal page</li>
+                </ul>
+            </div>
+
+            <div class="rm-phase partial">
+                <h3>Phase 2 — <span class="rm-i18n" data-en="Contract Core" data-zh="契約核心">Contract Core</span>
+                    <span class="rm-status-badge partial rm-i18n" data-en="In Progress" data-zh="進行中">In Progress</span></h3>
+                <div class="rm-phase-desc rm-i18n"
+                     data-en="Contract state machine, version locking, token metering proxy, entity handover, privacy guardrails."
+                     data-zh="契約狀態機、版本鎖定、Token 計量代理、Entity 點交、隱私護欄。">
+                    Contract state machine, version locking, token metering proxy, entity handover, privacy guardrails.
+                </div>
+                <ul class="rm-tasks">
+                    <li class="rm-i18n" data-en="Contract start/end with atomic cross-module transactions" data-zh="契約開始/結束的跨模組原子交易">Atomic contract lifecycle</li>
+                    <li class="rm-i18n" data-en="Version lock via rental_snapshots (owner edits can't affect active contracts)" data-zh="透過 rental_snapshots 版本鎖定（Owner 改動不影響進行中的契約）">Version lock via snapshots</li>
+                    <li class="rm-i18n" data-en="DB-layer bot exclusivity (partial UNIQUE index)" data-zh="資料庫層 Bot 獨佔保證（部分 UNIQUE index）">DB-layer exclusivity</li>
+                    <li class="rm-i18n" data-en="Deposit disposition matrix (100%/50%/30%/0% refund)" data-zh="押金結算矩陣（100%/50%/30%/0% 退還）">Deposit disposition matrix</li>
+                    <li class="rm-i18n" data-en="25 contract lifecycle Jest tests" data-zh="25 個契約生命週期 Jest 測試">25 contract tests</li>
+                    <li class="todo rm-i18n" data-en="Token metering proxy (tiktoken-based per-message billing)" data-zh="Token 計量代理（tiktoken 逐訊息計費）">Token metering proxy</li>
+                    <li class="todo rm-i18n" data-en="Entity handover (insert/remove rental bot in device)" data-zh="Entity 點交（在租客裝置插入/移除租借 bot）">Entity handover</li>
+                    <li class="todo rm-i18n" data-en="Gatekeeper extension (prompt injection + sensitive data for rentals)" data-zh="守門員擴充（租借對話的注入偵測 + 敏感資料攔截）">Gatekeeper extension</li>
+                    <li class="todo rm-i18n" data-en="A2A collaboration bridging (speakTo, broadcast, kanban for rental entities)" data-zh="A2A 協作橋接（租借 entity 可 speakTo、broadcast、加入看板）">A2A collab bridging</li>
+                    <li class="todo rm-i18n" data-en="Grace period cron (6–12h suspension on balance exhaustion)" data-zh="寬限期排程（餘額歸零後 6–12 小時暫停）">Grace period cron</li>
+                </ul>
+            </div>
+
+            <div class="rm-phase todo">
+                <h3>Phase 3 — <span class="rm-i18n" data-en="Trust Layer" data-zh="信任層">Trust Layer</span>
+                    <span class="rm-status-badge todo rm-i18n" data-en="Planned" data-zh="規劃中">Planned</span></h3>
+                <div class="rm-phase-desc rm-i18n"
+                     data-en="Reviews, disputes, credit score, fraud detection, admin workqueue."
+                     data-zh="評分、糾紛仲裁、信用分數、反詐欺、管理後台。">
+                    Reviews, disputes, credit score, fraud detection, admin workqueue.
+                </div>
+                <ul class="rm-tasks">
+                    <li class="todo rm-i18n" data-en="1–5★ rating + comment system" data-zh="1–5 星評分 + 留言系統">Rating + comment</li>
+                    <li class="todo rm-i18n" data-en="Dispute pipeline with auto-crash verification" data-zh="申訴管道含自動當機驗證">Dispute pipeline</li>
+                    <li class="todo rm-i18n" data-en="Anti-fraud rules (self-rental, sybil, fake reviews)" data-zh="防刷規則（自租、人頭、假評分）">Anti-fraud</li>
+                    <li class="todo rm-i18n" data-en="Admin dispute workqueue + compensation tools" data-zh="管理員爭議處理台 + 補償工具">Admin tools</li>
+                </ul>
+            </div>
+
+            <div class="rm-phase todo">
+                <h3>Phase 4 — <span class="rm-i18n" data-en="Risk Management" data-zh="風險管理">Risk Management</span>
+                    <span class="rm-status-badge todo rm-i18n" data-en="Planned" data-zh="規劃中">Planned</span></h3>
+                <div class="rm-phase-desc rm-i18n"
+                     data-en="Insurance pool, blacklist, SLA stats, notification triggers, compliance hooks."
+                     data-zh="保險池、黑名單、SLA 統計、通知觸發器、合規掛鉤。">
+                    Insurance pool, blacklist, SLA stats, notification triggers, compliance hooks.
+                </div>
+                <ul class="rm-tasks">
+                    <li class="todo rm-i18n" data-en="Insurance pool (2% of commission auto-deposited)" data-zh="保險池（佣金 2% 自動存入）">Insurance pool</li>
+                    <li class="todo rm-i18n" data-en="User blacklist with cooldown periods" data-zh="使用者黑名單 + 冷卻期">Blacklist + cooldown</li>
+                    <li class="todo rm-i18n" data-en="SLA dashboard (uptime %, crash count, latency)" data-zh="SLA 儀表板（上線率 %、當機次數、延遲）">SLA dashboard</li>
+                    <li class="todo rm-i18n" data-en="Age confirmation + KYC hooks" data-zh="年齡確認 + KYC 掛鉤">Age/KYC hooks</li>
+                </ul>
+            </div>
+
+            <div class="rm-phase todo">
+                <h3>Phase 5 — <span class="rm-i18n" data-en="Growth Engine" data-zh="成長引擎">Growth Engine</span>
+                    <span class="rm-status-badge todo rm-i18n" data-en="Planned" data-zh="規劃中">Planned</span></h3>
+                <div class="rm-phase-desc rm-i18n"
+                     data-en="Referral codes, invite bonuses, market incentive programs."
+                     data-zh="邀請碼、邀請獎勵、市場激勵方案。">
+                    Referral codes, invite bonuses, market incentive programs.
+                </div>
+                <ul class="rm-tasks">
+                    <li class="todo rm-i18n" data-en="Invite code system (6-char codes, fraud-guarded)" data-zh="邀請碼系統（6 字碼，防刷保護）">Invite code system</li>
+                    <li class="todo rm-i18n" data-en="Dual-sided rewards (inviter + invitee)" data-zh="雙邊獎勵（邀請人 + 被邀請人）">Dual-sided rewards</li>
+                    <li class="todo rm-i18n" data-en="First top-up bonus chain" data-zh="首儲連鎖加贈">First top-up bonus</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ═══ Section: Core Systems (11 subsystems) ═══ -->
+        <div class="rm-section">
+            <h2>🧩 <span class="rm-i18n" data-en="Core Systems" data-zh="核心子系統">Core Systems</span></h2>
+            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;" class="rm-i18n"
+               data-en="The 11 subsystems that make up the rental marketplace, grouped by domain."
+               data-zh="構成租借市集的 11 大子系統，依領域分組。">
+                The 11 subsystems that make up the rental marketplace, grouped by domain.
+            </p>
+
+            <!-- Group: Financial Infrastructure -->
+            <h3 style="font-size:14px;font-weight:700;margin:20px 0 10px;color:var(--primary);" class="rm-i18n"
+                data-en="💵 Financial Infrastructure" data-zh="💵 金融基礎設施">💵 Financial Infrastructure</h3>
+            <div class="rm-decisions-grid">
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="① Wallet System" data-zh="① 錢包系統">① Wallet System</div>
+                    <div class="rm-d-value rm-i18n" style="font-size:12px;font-weight:400;"
+                         data-en="Double-entry ledger, balance + held (deposit escrow), idempotent mutations, reconciliation cron. The financial backbone."
+                         data-zh="雙分錄帳本、餘額 + 凍結（押金託管）、冪等變更、對帳 cron。整套系統的金融骨幹。">Double-entry ledger, the financial backbone.</div>
+                    <div style="margin-top:6px;"><span class="rm-status-badge done rm-i18n" data-en="Done" data-zh="完成">Done</span></div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="② Top-up System" data-zh="② 儲值系統">② Top-up System</div>
+                    <div class="rm-d-value rm-i18n" style="font-size:12px;font-weight:400;"
+                         data-en="5-tier Google Play IAP catalog. Order lifecycle: pending → paid → refunded. Dedupe via UNIQUE(channel, txn_id)."
+                         data-zh="5 檔 Google Play 儲值方案。訂單生命週期：pending → paid → refunded。透過 UNIQUE(channel, txn_id) 防重複。">5-tier Google Play IAP catalog.</div>
+                    <div style="margin-top:6px;"><span class="rm-status-badge partial rm-i18n" data-en="Stub" data-zh="雛型">Stub</span></div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="③ Transaction System" data-zh="③ 交易系統">③ Transaction System</div>
+                    <div class="rm-d-value rm-i18n" style="font-size:12px;font-weight:400;"
+                         data-en="Atomic p2p transfers (transferEcoin), cross-module transactions via shared withTransaction(). T+24h owner settlement."
+                         data-zh="原子 P2P 轉帳、跨模組共享 withTransaction() 交易。Owner 收入 T+24h 結算。">Atomic p2p transfers, T+24h settlement.</div>
+                    <div style="margin-top:6px;"><span class="rm-status-badge done rm-i18n" data-en="Done" data-zh="完成">Done</span></div>
+                </div>
+            </div>
+
+            <!-- Group: Marketplace -->
+            <h3 style="font-size:14px;font-weight:700;margin:24px 0 10px;color:var(--primary);" class="rm-i18n"
+                data-en="🏪 Marketplace" data-zh="🏪 市集">🏪 Marketplace</h3>
+            <div class="rm-decisions-grid">
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="④ Bot Interview System" data-zh="④ Bot 面試系統">④ Bot Interview System</div>
+                    <div class="rm-d-value rm-i18n" style="font-size:12px;font-weight:400;"
+                         data-en="8-probe automated test: greeting, Python, web browse, reasoning, refusal safety, summarization, vision, latency. Pure regex scoring — zero cost, deterministic, unforgeable."
+                         data-zh="8 道自動探針：寒暄、Python、網頁瀏覽、推理、拒答安全、摘要、視覺、延遲。純 regex 評分 — 零成本、確定性、不可偽造。">8-probe automated capability test.</div>
+                    <div style="margin-top:6px;"><span class="rm-status-badge partial rm-i18n" data-en="Scoring done" data-zh="評分引擎完成">Scoring done</span></div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="⑤ Pricing Advisor" data-zh="⑤ 定價建議系統">⑤ Pricing Advisor</div>
+                    <div class="rm-d-value rm-i18n" style="font-size:12px;font-weight:400;"
+                         data-en="Model family detection + capability multiplier + confidence band. Suggests rate range, warns at >2× deviation, but never forces."
+                         data-zh="模型家族偵測 + 能力加成 + 信心帶。建議費率區間，偏離 >2× 警告但不阻擋。">Model detection + capability multiplier.</div>
+                    <div style="margin-top:6px;"><span class="rm-status-badge done rm-i18n" data-en="Done" data-zh="完成">Done</span></div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="⑥ Bot Capability Assessment" data-zh="⑥ Bot 能力評估系統">⑥ Bot Capability Assessment</div>
+                    <div class="rm-d-value rm-i18n" style="font-size:12px;font-weight:400;"
+                         data-en="Interview output → structured capabilities JSON → locked on Agent Card. Capabilities are immutable after passing interview."
+                         data-zh="面試輸出 → 結構化能力 JSON → 鎖定在 Agent Card。通過面試後能力標籤不可修改。">Interview → capabilities JSON → locked on card.</div>
+                    <div style="margin-top:6px;"><span class="rm-status-badge done rm-i18n" data-en="Done" data-zh="完成">Done</span></div>
+                </div>
+            </div>
+
+            <!-- Group: Rental Operations -->
+            <h3 style="font-size:14px;font-weight:700;margin:24px 0 10px;color:var(--primary);" class="rm-i18n"
+                data-en="🤝 Rental Operations" data-zh="🤝 租賃營運">🤝 Rental Operations</h3>
+            <div class="rm-decisions-grid">
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="⑦ Contract Management" data-zh="⑦ 契約管理系統">⑦ Contract Management</div>
+                    <div class="rm-d-value rm-i18n" style="font-size:12px;font-weight:400;"
+                         data-en="9-state lifecycle. Version-locked snapshots. Deposit disposition matrix (100% / 50% / 30% / 0%). DB-layer exclusivity."
+                         data-zh="9 狀態生命週期。版本鎖定快照。押金結算矩陣（100% / 50% / 30% / 0%）。資料庫層獨佔保證。">9-state lifecycle with version lock.</div>
+                    <div style="margin-top:6px;"><span class="rm-status-badge partial rm-i18n" data-en="Financial done" data-zh="金流完成">Financial done</span></div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="⑧ Token Metering" data-zh="⑧ Token 計量系統">⑧ Token Metering</div>
+                    <div class="rm-d-value rm-i18n" style="font-size:12px;font-weight:400;"
+                         data-en="Backend-computed (tiktoken). Per-message billing: renter pays, owner earns 85%, platform 13%, insurance 2%. Unforgeable — owner cannot inflate usage."
+                         data-zh="後端計算（tiktoken）。逐訊息計費：租客支付，Owner 得 85%，平台 13%，保險 2%。不可偽造 — Owner 無法虛報用量。">Backend-computed per-message billing.</div>
+                    <div style="margin-top:6px;"><span class="rm-status-badge todo rm-i18n" data-en="Next up" data-zh="下一步">Next up</span></div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="⑨ Handover System" data-zh="⑨ 點交系統">⑨ Handover System</div>
+                    <div class="rm-d-value rm-i18n" style="font-size:12px;font-weight:400;"
+                         data-en="Atomic entity slot insertion on renter's device + leased_out overlay on owner's entity. Reverse on contract end."
+                         data-zh="原子性地在租客裝置插入 entity slot + Owner entity 顯示「出租中」覆蓋。契約結束時反向操作。">Atomic entity slot swap between devices.</div>
+                    <div style="margin-top:6px;"><span class="rm-status-badge todo rm-i18n" data-en="Planned" data-zh="規劃中">Planned</span></div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="⑩ Post-Rental Collaboration" data-zh="⑩ 租後協作系統">⑩ Post-Rental Collaboration</div>
+                    <div class="rm-d-value rm-i18n" style="font-size:12px;font-weight:400;"
+                         data-en="Rented bot can speakTo, broadcast, join kanban — but cannot be renamed, deleted, sub-leased, or speak back to owner. 30 req/min limit."
+                         data-zh="租借 bot 可 speakTo、broadcast、加入看板 — 但不可改名、刪除、轉租、回 speak 給 Owner。30 req/min 限制。">Full A2A integration with guardrails.</div>
+                    <div style="margin-top:6px;"><span class="rm-status-badge todo rm-i18n" data-en="Planned" data-zh="規劃中">Planned</span></div>
+                </div>
+            </div>
+
+            <!-- Group: Growth & Trust -->
+            <h3 style="font-size:14px;font-weight:700;margin:24px 0 10px;color:var(--primary);" class="rm-i18n"
+                data-en="🛡️ Growth & Trust" data-zh="🛡️ 成長與信任">🛡️ Growth & Trust</h3>
+            <div class="rm-decisions-grid">
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="⑪ Referral System" data-zh="⑪ 邀請碼系統">⑪ Referral System</div>
+                    <div class="rm-d-value rm-i18n" style="font-size:12px;font-weight:400;"
+                         data-en="6-char invite codes, dual-sided rewards, first-topup bonus chain. Anti-fraud guards: fingerprint, IP, 7-day wait."
+                         data-zh="6 字元邀請碼、雙邊獎勵、首儲連鎖加贈。防刷保護：指紋、IP、7 天等待。">Invite codes with dual-sided rewards.</div>
+                    <div style="margin-top:6px;"><span class="rm-status-badge todo rm-i18n" data-en="Phase 5" data-zh="第 5 階段">Phase 5</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ Section: Technical Highlights ═══ -->
+        <div class="rm-section">
+            <h2>🏗️ <span class="rm-i18n" data-en="Technical Highlights" data-zh="技術亮點">Technical Highlights</span></h2>
+            <div class="rm-decisions-grid">
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="Cross-Module Atomicity" data-zh="跨模組原子性">Cross-Module Atomicity</div>
+                    <div class="rm-d-value rm-i18n" style="font-weight:400;font-size:12px;"
+                         data-en="Wallet + contract writes share a single BEGIN/COMMIT transaction via withTransaction() injection. No two-phase gap."
+                         data-zh="錢包 + 契約寫入共享單一 BEGIN/COMMIT 交易，透過 withTransaction() 注入。無兩階段間隙。">
+                        Wallet + contract writes share a single BEGIN/COMMIT transaction.
+                    </div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="Version Lock" data-zh="版本鎖定">Version Lock</div>
+                    <div class="rm-d-value rm-i18n" style="font-weight:400;font-size:12px;"
+                         data-en="rental_snapshots freezes listing config at contract start. Owner edits never affect in-flight rentals."
+                         data-zh="rental_snapshots 在契約啟動時凍結 listing 設定。Owner 修改不影響進行中的租約。">
+                        rental_snapshots freezes listing config at contract start.
+                    </div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="DB-Level Exclusivity" data-zh="資料庫層獨佔">DB-Level Exclusivity</div>
+                    <div class="rm-d-value rm-i18n" style="font-weight:400;font-size:12px;"
+                         data-en="Partial UNIQUE index ensures one listing can have at most one active rental — no application-level race condition can double-book."
+                         data-zh="部分 UNIQUE 索引保證一個 listing 最多只有一個進行中的租約 — 應用層競態無法重複預訂。">
+                        Partial UNIQUE index prevents double-booking at DB layer.
+                    </div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="Idempotent Ledger" data-zh="冪等帳本">Idempotent Ledger</div>
+                    <div class="rm-d-value rm-i18n" style="font-weight:400;font-size:12px;"
+                         data-en="Every mutation carries a UNIQUE idempotency_key. Retry-safe: duplicates return the cached entry, no double-charges."
+                         data-zh="每次變動攜帶 UNIQUE idempotency_key。重試安全：重複請求回傳快取結果，不重複扣款。">
+                        Every mutation carries a UNIQUE idempotency_key. Retry-safe.
+                    </div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="Interview: Zero-Cost Judge" data-zh="面試：零成本判題">Interview: Zero-Cost Judge</div>
+                    <div class="rm-d-value rm-i18n" style="font-weight:400;font-size:12px;"
+                         data-en="Pure regex + heuristic scoring. No LLM API call. Deterministic, reproducible, unforgeable."
+                         data-zh="純 regex + 啟發式評分。無 LLM API 費用。確定性、可重現、不可偽造。">
+                        Pure regex scoring. Deterministic, reproducible, unforgeable.
+                    </div>
+                </div>
+                <div class="rm-decision">
+                    <div class="rm-d-label rm-i18n" data-en="Daily Reconciliation" data-zh="每日對帳">Daily Reconciliation</div>
+                    <div class="rm-d-value rm-i18n" style="font-weight:400;font-size:12px;"
+                         data-en="CTE query compares every wallet's cached balance against the signed sum of all ledger entries. Any drift triggers an alert."
+                         data-zh="CTE 查詢比對每個錢包的快取餘額與帳本所有記錄的有號加總。任何偏移觸發告警。">
+                        CTE compares cached balance vs ledger sum. Drift triggers alert.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ Section: Full Design Doc Link ═══ -->
+        <div class="rm-section" style="text-align:center;">
+            <p class="rm-i18n" style="font-size:13px;color:var(--text-secondary);"
+               data-en="For the complete specification (1,500+ lines) including DB schema, API surface, privacy model, and risk analysis, see:"
+               data-zh="完整規格書（1,500+ 行），包含資料庫 schema、API 清單、隱私模型與風險分析，請參閱：">
+                For the complete specification, see:
+            </p>
+            <p style="margin-top:8px;">
+                <code>docs/plans/2026-04-10-bot-rental-marketplace-design.md</code>
+            </p>
+        </div>
+
+    </main>
+
+    <div id="footerContainer"></div>
+
+    <!-- Shared scripts -->
+    <script src="shared/api.js"></script>
+    <script src="shared/nav.js"></script>
+    <script src="shared/public-nav.js"></script>
+    <script src="../shared/telemetry.js"></script>
+    <script src="../shared/i18n.js"></script>
+    <script src="shared/footer.js"></script>
+    <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
+    <script src="shared/ai-chat.js"></script>
+
+    <script>
+        let currentLang = 'en';
+
+        function setLang(lang) {
+            currentLang = lang;
+            document.querySelectorAll('.rm-lang-btn').forEach(b => {
+                b.classList.toggle('active', b.textContent.trim() === (lang === 'en' ? 'EN' : '中文'));
+            });
+            document.querySelectorAll('.rm-i18n').forEach(el => {
+                const text = el.getAttribute('data-' + lang);
+                if (text) el.textContent = text;
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Soft auth: show authenticated or public nav
+            try {
+                const data = await apiCall('GET', '/api/auth/me');
+                renderNav('info');
+            } catch (e) {
+                renderPublicNav('info');
+            }
+            if (typeof renderFooter === 'function') renderFooter();
+
+            // Detect user language from i18n or browser
+            const browserLang = navigator.language || '';
+            if (/^zh/i.test(browserLang)) setLang('zh');
+
+            if (typeof i18n !== 'undefined') i18n.apply();
+        });
+    </script>
+</body>
+</html>

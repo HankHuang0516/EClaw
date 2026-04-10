@@ -1688,6 +1688,80 @@ app.use('/api/subscription', subscriptionModule.router);
 setTimeout(() => subscriptionModule.loadPremiumStatus(), 5000);
 
 // ============================================
+// WALLET (e-coin) — bot rental marketplace foundation
+// ============================================
+const walletModule = require('./wallet')({
+    authMiddleware: authModule.authMiddleware,
+    adminMiddleware: authModule.adminMiddleware,
+    serverLog,
+});
+app.use('/api/wallet', walletModule.router);
+// Defer schema init so user_accounts (auth) is created first — wallets
+// has a FK referencing it.
+setTimeout(() => walletModule.initWalletDatabase(), 2000);
+
+// ============================================
+// RENTAL MARKETPLACE — bot listings, interviews, contracts (P1 foundation)
+// ============================================
+const rentalModule = require('./rental')({
+    authMiddleware: authModule.authMiddleware,
+    adminMiddleware: authModule.adminMiddleware,
+    walletModule,
+    serverLog,
+});
+app.use('/api/rental', rentalModule.router);
+// Defer schema init: rental_contracts has FKs to user_accounts and
+// bot_listings, so user_accounts must be created first.
+setTimeout(() => rentalModule.initRentalDatabase(), 2500);
+
+// Rental metering proxy — loaded for cron jobs. Hooks into client/speak
+// and transform are conditional on entity.rental_contract_id (P2-F handover).
+const rentalProxy = require('./rental-proxy');
+
+// Per-minute contract expiration + grace period sweep
+nodeCron.schedule('* * * * *', async () => {
+    try {
+        const expired = await rentalProxy.expireContracts(rentalModule, walletModule);
+        const graced = await rentalProxy.expireGracePeriods(rentalModule, walletModule);
+        if (expired > 0 || graced > 0) {
+            serverLog('info', 'rental', `[Cron] expired=${expired} graced=${graced}`);
+        }
+    } catch (err) {
+        serverLog('error', 'rental', `[Cron] expire sweep error: ${err.message}`);
+    }
+});
+
+// T+24h pending_income release — runs every 6 hours
+nodeCron.schedule('17 */6 * * *', async () => {
+    try {
+        const released = await rentalProxy.releasePendingIncome(walletModule);
+        if (released > 0) {
+            serverLog('info', 'rental', `[Cron] released pending income for ${released} owner(s)`);
+        }
+    } catch (err) {
+        serverLog('error', 'rental', `[Cron] income release error: ${err.message}`);
+    }
+});
+
+// Daily wallet reconcile cron — runs at 04:23 server time. Any drift
+// between cached wallet balance and the signed sum of the ledger gets
+// logged as an error-level audit event for paging.
+nodeCron.schedule('23 4 * * *', async () => {
+    try {
+        const report = await walletModule.reconcileBalances({ limit: 500 });
+        if (report.ok) {
+            serverLog('info', 'wallet', '[Reconcile] daily audit OK — 0 drift');
+        } else {
+            serverLog('error', 'wallet', `[Reconcile] DRIFT detected: ${report.discrepancies.length} wallets`, {
+                metadata: { sample: report.discrepancies.slice(0, 5) },
+            });
+        }
+    } catch (err) {
+        serverLog('error', 'wallet', `[Reconcile] cron error: ${err.message}`);
+    }
+});
+
+// ============================================
 // GATEKEEPER - Free Bot Abuse Prevention
 // ============================================
 gatekeeper.initGatekeeperTable();

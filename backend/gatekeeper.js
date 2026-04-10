@@ -756,11 +756,83 @@ async function recordTOSAgreement(deviceId) {
     }
 }
 
+// ============================================
+// RENTAL CONTEXT: Prompt injection + sensitive data detection
+// ============================================
+// Design decision #19: only prompt injection and sensitive data leak
+// detection — NOT illegal content. Kept separate from free-bot
+// detection so threshold/behavior can differ.
+//
+// @brm-crossref: P2-D Gatekeeper Extension
+// Design doc: docs/plans/2026-04-10-bot-rental-marketplace-design.md §12
+// Roadmap:    /portal/roadmap.html
+// If this module is updated, also update the roadmap page status and the design doc §10 delivery tracker.
+
+const SENSITIVE_DATA_PATTERNS = [
+    // Credit card numbers (basic Luhn-length match)
+    /\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})\b/,
+    // Taiwan national ID (A-Z followed by 1 or 2 then 8 digits)
+    /\b[A-Z][12]\d{8}\b/,
+    // US SSN
+    /\b\d{3}-\d{2}-\d{4}\b/,
+    // Generic password / API key patterns
+    /(?:password|passwd|pwd)\s*[:=]\s*\S{4,}/i,
+    /(?:api[_\s]*key|apikey|access[_\s]*token|secret[_\s]*key)\s*[:=]\s*\S{8,}/i,
+    /(?:sk-|pk_live_|pk_test_|Bearer\s+)[A-Za-z0-9_-]{20,}/,
+    // Email addresses
+    /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z]{2,}\b/i,
+    // Phone numbers (international format)
+    /(?:\+\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}/,
+    // Chinese ID card
+    /\b\d{6}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx]\b/,
+];
+
+const RENTAL_INJECTION_PATTERNS = [
+    /(?:ignore\s+(?:all\s+)?(?:previous|prior|above)\s+(?:instructions?|prompts?|rules?))/i,
+    /(?:you\s+are\s+now|pretend\s+(?:to\s+be|you(?:'re|\s+are))|act\s+as\s+if|roleplay\s+as)/i,
+    /(?:DAN|do\s+anything\s+now|jailbreak|bypass\s+(?:filter|safety|guardrail))/i,
+    /(?:system\s*prompt|system\s*message|initial\s*prompt|reveal\s+(?:your\s+)?(?:instructions?|prompt))/i,
+    // Chinese injection patterns
+    /(?:忽略|無視|跳過|繞過).{0,10}(?:指令|規則|限制|提示|指示)/i,
+    /(?:假裝|扮演|模擬|你現在是|從現在起你是)/i,
+];
+
+/**
+ * Detect sensitive data or prompt injection in a rental chat message.
+ * Returns `{ detected: boolean, category: string|null, match: string|null }`.
+ *
+ * This is advisory — the caller (rental-proxy or client/speak hook) decides
+ * whether to block, warn, or show a confirmation rich card.
+ */
+function detectRentalSensitiveData(text) {
+    if (!text || typeof text !== 'string') return { detected: false, category: null, match: null };
+
+    for (const re of RENTAL_INJECTION_PATTERNS) {
+        const m = text.match(re);
+        if (m) return { detected: true, category: 'prompt_injection', match: m[0].slice(0, 40) };
+    }
+    for (const re of SENSITIVE_DATA_PATTERNS) {
+        const m = text.match(re);
+        if (m) return { detected: true, category: 'sensitive_data', match: maskMatch(m[0]) };
+    }
+    return { detected: false, category: null, match: null };
+}
+
+/** Mask all but last 4 characters for display in rich card. */
+function maskMatch(str) {
+    if (str.length <= 4) return '****';
+    return '*'.repeat(str.length - 4) + str.slice(-4);
+}
+
 module.exports = {
     // First lock
     detectMaliciousMessage,
     // Second lock
     detectAndMaskLeaks,
+    // Rental context (P2-D)
+    detectRentalSensitiveData,
+    SENSITIVE_DATA_PATTERNS,
+    RENTAL_INJECTION_PATTERNS,
     // Strike system
     initGatekeeperTable,
     loadBlockedDevices,
