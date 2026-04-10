@@ -1,3 +1,10 @@
+# [1.947.0](https://github.com/HankHuang0516/EClaw/compare/v1.946.0...v1.947.0) (2026-04-10)
+
+
+### Features
+
+* **arena:** precise per-test commentary based on actual bot actions ([eb30b63](https://github.com/HankHuang0516/EClaw/commit/eb30b63ed06fcb63bc3a67a89b1f82694f8c4933))
+
 # [1.946.0](https://github.com/HankHuang0516/EClaw/compare/v1.945.0...v1.946.0) (2026-04-10)
 
 
