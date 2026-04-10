@@ -1,3 +1,16 @@
+# [1.930.0](https://github.com/HankHuang0516/EClaw/compare/v1.929.4...v1.930.0) (2026-04-10)
+
+
+### Features
+
+* **portal:** add BRM product roadmap page with EN/ZH toggle ([3e3c3fb](https://github.com/HankHuang0516/EClaw/commit/3e3c3fb2be31ec18b0f1690203807a39075b12b1))
+* **rental:** contract state machine with atomic cross-module transactions (P2-A/B) ([267c09d](https://github.com/HankHuang0516/EClaw/commit/267c09d7286bab4e133c7749ba4db2ed11d118cf))
+* **rental:** gatekeeper extension + entity guardrails + handover (P2-D/E/F) ([5a0e31a](https://github.com/HankHuang0516/EClaw/commit/5a0e31a28885f85fa24ae7a0ed746fa713aa652a)), closes [#19](https://github.com/HankHuang0516/EClaw/issues/19)
+* **rental:** reconcile cron (P0 wrap) + listing/interview/pricing foundation (P1) ([073a125](https://github.com/HankHuang0516/EClaw/commit/073a125b218135c6033fe4ff7510fc3ccd0c2e4b)), closes [#14](https://github.com/HankHuang0516/EClaw/issues/14) [hi#confidence](https://github.com/hi/issues/confidence)
+* **rental:** token metering proxy + crons + cross-reference annotations (P2-C) ([508e1ac](https://github.com/HankHuang0516/EClaw/commit/508e1ace8d54cd2ac373d6f074f252b2b11e0d1a)), closes [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+* **rental:** wallet module foundation (P0 of bot rental marketplace) ([a5dd33e](https://github.com/HankHuang0516/EClaw/commit/a5dd33ea7838d8e769bc038c4d0728b0d7273800))
+* **rental:** wire wallet routes, top-up flow, and portal page (P0 cont.) ([6938c92](https://github.com/HankHuang0516/EClaw/commit/6938c92d5f824f7dbc8bf89cf7a0418bed3a2e3c))
+
 ## [1.929.4](https://github.com/HankHuang0516/EClaw/compare/v1.929.3...v1.929.4) (2026-04-10)
 
 
