@@ -353,7 +353,9 @@
             else if (pct >= 50) { grade = 'C'; gradeColor = 'var(--warning)'; }
             else if (pct >= 30) { grade = 'D'; gradeColor = 'var(--text-muted)'; }
 
-            const passed = (data.sessions || []).filter(s => s.score > 0).length;
+            const passed = data.sessions
+                ? data.sessions.filter(s => (s.score || 0) > 0).length
+                : scores.filter(s => s != null && s > 0).length;
             const failed = 12 - passed;
             document.getElementById('reportContent').innerHTML = `
                 <div style="text-align:center;padding:16px 0;">
