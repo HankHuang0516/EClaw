@@ -395,7 +395,7 @@
 
     <!-- Language selector for login page -->
     <div style="position:fixed; top:20px; right:20px;">
-        <select onchange="i18n.setLanguage(this.value)"
+        <select onchange="if(typeof i18n!=='undefined')i18n.setLanguage(this.value)"
             style="background:#1a1a2e;border:1px solid #333;color:#aaa;cursor:pointer;padding:4px 8px;border-radius:6px;font-size:13px;">
             <option value="en">EN</option>
             <option value="zh">繁中</option>
