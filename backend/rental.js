@@ -599,6 +599,245 @@ async function getMyContracts(userId, { role = null, limit = 50, offset = 0 } = 
 }
 
 // ============================================
+// P2-E: Rental entity guardrails
+// ============================================
+
+/**
+ * Blocked operations on rental entities. These checks are intended to
+ * be called from index.js entity routes before allowing the action.
+ *
+ * Design decision #15: ✅ speakTo, broadcast, kanban
+ *                      ❌ rename, delete, identity update, sub-lease
+ *
+ * @brm-crossref: P2-E A2A Collaboration Bridging
+ */
+
+/** Check if an entity is a rental entity (has an active rental contract). */
+function isRentalEntity(entity) {
+    return !!(entity && entity.rental_contract_id);
+}
+
+/**
+ * List of entity route path fragments that are BLOCKED for rental entities.
+ * Used by `rentalEntityGuard` middleware.
+ */
+const BLOCKED_RENTAL_OPERATIONS = Object.freeze([
+    '/rename',
+    '/permanent',          // permanent delete
+    '/identity',           // PUT /api/entity/identity
+]);
+
+/**
+ * Express middleware factory: blocks certain operations on rental entities.
+ * Attach AFTER auth middleware on entity-scoped routes.
+ *
+ * Usage in index.js:
+ *   app.use('/api/device/entity', rentalEntityGuard(devices));
+ *   app.use('/api/entity', rentalEntityGuard(devices));
+ */
+function createRentalEntityGuard(devices) {
+    return (req, res, next) => {
+        // Extract entity from request
+        const deviceId = req.body?.deviceId || req.query?.deviceId || req.params?.deviceId;
+        const entityId = req.body?.entityId ?? req.query?.entityId ?? req.params?.entityId;
+        if (!deviceId || entityId == null) return next();
+
+        const device = devices[deviceId];
+        if (!device) return next();
+
+        const entity = device.entities[parseInt(entityId, 10)];
+        if (!entity || !isRentalEntity(entity)) return next();
+
+        // Check if the current route is blocked (use originalUrl for full path)
+        const fullPath = (req.originalUrl || req.path || '').toLowerCase();
+        const method = req.method.toUpperCase();
+
+        for (const blocked of BLOCKED_RENTAL_OPERATIONS) {
+            if (fullPath.includes(blocked)) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'rental_entity_operation_blocked',
+                    message: `This operation is not allowed on rental entities: ${blocked}`,
+                    rental_contract_id: entity.rental_contract_id,
+                });
+            }
+        }
+
+        // Block sub-leasing: rental entity cannot create a new listing
+        if (fullPath.includes('/rental/listing') && method === 'POST') {
+            return res.status(403).json({
+                success: false,
+                error: 'rental_sub_lease_forbidden',
+                message: 'Rental entities cannot be sub-leased',
+            });
+        }
+
+        next();
+    };
+}
+
+/** Rate limit constant for rental entities: 30 requests per minute. */
+const RENTAL_RATE_LIMIT_RPM = 30;
+
+/**
+ * Simple in-memory rate limiter for rental entity operations.
+ * Keyed by contract_id. Returns { allowed, remaining, resetAt }.
+ */
+const _rentalRateBuckets = new Map();
+
+function checkRentalRateLimit(contractId) {
+    const now = Date.now();
+    const window = 60_000; // 1 minute
+
+    let bucket = _rentalRateBuckets.get(contractId);
+    if (!bucket || now > bucket.resetAt) {
+        bucket = { count: 0, resetAt: now + window };
+        _rentalRateBuckets.set(contractId, bucket);
+    }
+
+    bucket.count++;
+    const allowed = bucket.count <= RENTAL_RATE_LIMIT_RPM;
+    return {
+        allowed,
+        remaining: Math.max(0, RENTAL_RATE_LIMIT_RPM - bucket.count),
+        resetAt: bucket.resetAt,
+    };
+}
+
+// Periodic cleanup of stale rate-limit buckets (every 5 min)
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, bucket] of _rentalRateBuckets) {
+        if (now > bucket.resetAt + 60_000) _rentalRateBuckets.delete(key);
+    }
+}, 5 * 60_000).unref();
+
+// ============================================
+// P2-F: Entity handover
+// ============================================
+
+/**
+ * Insert a rental entity into the renter's device. Called after
+ * startRental() succeeds financially.
+ *
+ * @param {Object} devices - The in-memory devices map from index.js
+ * @param {Object} params
+ * @param {string} params.renterDeviceId
+ * @param {string} params.contractId
+ * @param {Object} params.listing - The bot_listings row
+ * @param {number} params.rateMliPerKtoken
+ * @returns {{ slot: number }} The entity slot assigned to the rental
+ *
+ * @brm-crossref: P2-F Entity Handover (⑨ Handover System)
+ */
+function insertRentalEntity(devices, {
+    renterDeviceId, contractId, listing, rateMliPerKtoken,
+}) {
+    const device = devices[renterDeviceId];
+    if (!device) throw new Error('renter_device_not_found');
+
+    // Find the next empty (unbound) slot, or create a new one
+    let slot = null;
+    for (const [id, entity] of Object.entries(device.entities)) {
+        if (!entity.isBound) {
+            slot = parseInt(id, 10);
+            break;
+        }
+    }
+    if (slot === null) {
+        // Auto-expand: find max existing + 1
+        const maxId = Math.max(-1, ...Object.keys(device.entities).map(Number));
+        slot = maxId + 1;
+        device.entities[slot] = createDefaultRentalEntity();
+    }
+
+    // Populate the rental entity
+    const entity = device.entities[slot];
+    entity.isBound = true;
+    entity.character = listing.title || 'Rental Bot';
+    entity.name = listing.title || 'Rental Bot';
+    entity.state = 'IDLE';
+    entity.message = `Rented from marketplace (${rateMliPerKtoken / 1000} e幣/1K)`;
+    entity.lastUpdated = Date.now();
+    entity.rental_contract_id = contractId;
+    entity.rental_status = 'leased_in';
+    // Webhook points to a proxy URL — real webhook is in rental_snapshots
+    entity.webhook = { url: `__rental_proxy__:${contractId}`, type: 'rental_proxy' };
+
+    return { slot };
+}
+
+/**
+ * Mark the owner's entity as leased out.
+ */
+function markOwnerEntityLeasedOut(devices, { ownerDeviceId, ownerEntityId, contractId }) {
+    const device = devices[ownerDeviceId];
+    if (!device) return;
+    const entity = device.entities[ownerEntityId];
+    if (!entity) return;
+
+    entity.rental_status = 'leased_out';
+    entity.rental_contract_id = contractId;
+}
+
+/**
+ * Remove a rental entity from the renter's device (contract end).
+ */
+function removeRentalEntity(devices, { renterDeviceId, contractId }) {
+    const device = devices[renterDeviceId];
+    if (!device) return;
+
+    for (const [, entity] of Object.entries(device.entities)) {
+        if (entity.rental_contract_id === contractId) {
+            // Reset to unbound default
+            entity.isBound = false;
+            entity.character = '🤖';
+            entity.name = null;
+            entity.state = 'IDLE';
+            entity.message = '';
+            entity.webhook = null;
+            entity.rental_contract_id = null;
+            entity.rental_status = null;
+            break;
+        }
+    }
+}
+
+/**
+ * Clear the leased_out status on the owner's entity (contract end).
+ */
+function clearOwnerEntityLeasedOut(devices, { ownerDeviceId, ownerEntityId }) {
+    const device = devices[ownerDeviceId];
+    if (!device) return;
+    const entity = device.entities[ownerEntityId];
+    if (!entity) return;
+
+    entity.rental_status = null;
+    entity.rental_contract_id = null;
+}
+
+/** Minimal entity stub for a new rental slot. */
+function createDefaultRentalEntity() {
+    return {
+        character: '🤖',
+        state: 'IDLE',
+        message: '',
+        parts: {},
+        batteryLevel: 100,
+        lastUpdated: Date.now(),
+        messageQueue: [],
+        isBound: false,
+        webhook: null,
+        xp: 0,
+        level: 1,
+        avatar: null,
+        publicCode: null,
+        rental_contract_id: null,
+        rental_status: null,
+    };
+}
+
+// ============================================
 // Express factory
 // ============================================
 
@@ -770,6 +1009,17 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         startRental,
         endRental,
         getMyContracts,
+        // P2-E: Guardrails
+        isRentalEntity,
+        createRentalEntityGuard,
+        checkRentalRateLimit,
+        RENTAL_RATE_LIMIT_RPM,
+        BLOCKED_RENTAL_OPERATIONS,
+        // P2-F: Handover
+        insertRentalEntity,
+        markOwnerEntityLeasedOut,
+        removeRentalEntity,
+        clearOwnerEntityLeasedOut,
         // Helpers + constants
         computeDepositMli,
         DEPOSIT_TOKEN_MULTIPLIER,
