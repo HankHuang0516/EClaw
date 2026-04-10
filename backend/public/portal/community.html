@@ -629,17 +629,22 @@
     }
 
     /* ══════ Load ══════ */
+    // Default: merge rental listings + community bots in one grid.
+    // "出租" filter narrows to rental-only; other filters narrow to community-only.
     async function loadBots() {
         document.getElementById('loading').style.display = 'flex';
         try {
-            if (currentFilter === 'rental') {
-                await loadRentalListings();
-            } else {
+            const isRentalOnly = currentFilter === 'rental';
+            const isCommunityFilter = currentFilter !== 'all' && currentFilter !== 'rental';
+
+            // 1. Load community bots (skip when rental-only filter)
+            let communityBots = [];
+            if (!isRentalOnly) {
                 const p = new URLSearchParams({ limit:'50', sort:currentSort });
                 if (searchQuery) p.set('q', searchQuery);
-                if (currentFilter !== 'all') p.set('tag', currentFilter);
+                if (isCommunityFilter) p.set('tag', currentFilter);
                 const data = await apiFetch('/api/community/search?' + p);
-                allBots = (data.results || []).map(r => ({
+                communityBots = (data.results || []).map(r => ({
                     publicCode: r.publicCode, name: r.name || 'Unnamed', avatar: r.avatar || '🤖',
                     desc: r.description || '', tags: r.tags || [],
                     caps: (r.capabilities || []).map(c => c.name || c.id || c),
@@ -647,44 +652,50 @@
                     level: r.level || 1, xp: r.xp || 0,
                     isRental: false
                 }));
-                renderGrid(allBots);
             }
+
+            // 2. Load rental listings (always, unless a community-specific filter is active)
+            let rentalBots = [];
+            if (!isCommunityFilter) {
+                try {
+                    const sortMap = { newest:'newest', popular:'rating', az:'rate_asc', za:'rate_desc' };
+                    const sort = sortMap[currentSort] || 'rating';
+                    const data = await apiFetch('/api/rental/marketplace?sort=' + sort + '&limit=50');
+                    rentalBots = (data.listings || []).map(l => {
+                        const caps = l.capabilities ? Object.keys(l.capabilities).filter(k => l.capabilities[k]?.supported) : [];
+                        return {
+                            publicCode: l.id, name: l.title || 'Rental Bot', avatar: '🤖',
+                            desc: l.description || (l.model_detected || ''),
+                            tags: caps, caps: caps,
+                            stars: l.avg_rating || 0, reviews: l.total_rentals || 0,
+                            level: 0, xp: 0,
+                            isRental: true,
+                            rateMli: l.rate_mli_per_ktoken,
+                            minMin: l.min_rental_minutes, maxMin: l.max_rental_minutes,
+                            uptimePct: l.uptime_pct || 100,
+                            listingId: l.id,
+                            modelDetected: l.model_detected
+                        };
+                    });
+                    // Client-side search filter for rental bots
+                    if (searchQuery) {
+                        const q = searchQuery.toLowerCase();
+                        rentalBots = rentalBots.filter(b =>
+                            b.name.toLowerCase().includes(q) ||
+                            (b.modelDetected || '').toLowerCase().includes(q));
+                    }
+                } catch { /* rental API unavailable — show community only */ }
+            }
+
+            // 3. Merge: rental listings first (highlighted), then community
+            allBots = [...rentalBots, ...communityBots];
+            renderGrid(allBots);
         } catch (e) {
             console.error('loadBots:', e);
             document.getElementById('emptyState').style.display = 'block';
         } finally {
             document.getElementById('loading').style.display = 'none';
         }
-    }
-
-    /* ══════ Rental Listings (from /api/rental/marketplace) ══════ */
-    async function loadRentalListings() {
-        const sortMap = { newest:'newest', popular:'rating', az:'rate_asc', za:'rate_desc' };
-        const sort = sortMap[currentSort] || 'rating';
-        const data = await apiFetch('/api/rental/marketplace?sort=' + sort + '&limit=50');
-        const listings = data.listings || [];
-        allBots = listings.map(l => {
-            const caps = l.capabilities ? Object.keys(l.capabilities).filter(k => l.capabilities[k]?.supported) : [];
-            return {
-                publicCode: l.id, name: l.title || 'Rental Bot', avatar: '🤖',
-                desc: l.description || (l.model_detected || ''),
-                tags: caps,
-                caps: caps,
-                stars: l.avg_rating || 0, reviews: l.total_rentals || 0,
-                level: 0, xp: 0,
-                isRental: true,
-                rateMli: l.rate_mli_per_ktoken,
-                minMin: l.min_rental_minutes, maxMin: l.max_rental_minutes,
-                uptimePct: l.uptime_pct || 100,
-                listingId: l.id,
-                modelDetected: l.model_detected
-            };
-        });
-        if (searchQuery) {
-            const q = searchQuery.toLowerCase();
-            allBots = allBots.filter(b => b.name.toLowerCase().includes(q) || (b.modelDetected||'').toLowerCase().includes(q));
-        }
-        renderGrid(allBots);
     }
 
     /* ══════ Render ══════ */
