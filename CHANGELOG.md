@@ -1,3 +1,10 @@
+# [1.953.0](https://github.com/HankHuang0516/EClaw/compare/v1.952.2...v1.953.0) (2026-04-10)
+
+
+### Features
+
+* **i18n:** add ja translations for arena/index.html and arena/exam.html keys ([#1662](https://github.com/HankHuang0516/EClaw/issues/1662)) ([b6b4fba](https://github.com/HankHuang0516/EClaw/commit/b6b4fba2cb7e27356dd4e0bd70b7bf7b3e8f2991))
+
 ## [1.952.2](https://github.com/HankHuang0516/EClaw/compare/v1.952.1...v1.952.2) (2026-04-10)
 
 
