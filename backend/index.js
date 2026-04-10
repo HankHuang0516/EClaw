@@ -1718,6 +1718,28 @@ if (process.env.NODE_ENV !== 'test') {
     setTimeout(() => rentalModule.initRentalDatabase(), 2500);
 }
 
+// ============================================
+// TRUST & RISK MANAGEMENT (P3 + P4)
+// ============================================
+const trustModule = require('./trust')({
+    authMiddleware: authModule.authMiddleware,
+    adminMiddleware: authModule.adminMiddleware,
+    serverLog,
+});
+app.use('/api/rental', trustModule.router); // extends /api/rental with review/dispute routes
+setTimeout(() => trustModule.initTrustDatabase(), 3000);
+
+// ============================================
+// INVITE / REFERRAL SYSTEM (P5)
+// ============================================
+const inviteModule = require('./invite')({
+    authMiddleware: authModule.authMiddleware,
+    walletModule,
+    serverLog,
+});
+app.use('/api/invite', inviteModule.router);
+setTimeout(() => inviteModule.initInviteDatabase(), 3500);
+
 // Rental metering proxy — loaded for cron jobs. Hooks into client/speak
 // and transform are conditional on entity.rental_contract_id (P2-F handover).
 const rentalProxy = require('./rental-proxy');
@@ -10592,7 +10614,74 @@ app.post('/api/entity/refresh', async (req, res) => {
         });
 
     } else {
-        // ---- Non-official (user-bound) bot: verify webhook ----
+        // ---- Non-official (user-bound) bot ----
+
+        // ---- Channel bot: restart via bridge /restart endpoint ----
+        if (entity.bindingType === 'channel' && entity.channelAccountId) {
+            let account;
+            try {
+                account = await db.getChannelAccountById(entity.channelAccountId);
+            } catch { /* ignore */ }
+
+            if (account && account.callback_url) {
+                // Derive restart URL from callback_url (e.g., https://a.eclawbot.com/eclaw-webhook → https://a.eclawbot.com/restart)
+                const restartUrl = account.callback_url.replace(/\/eclaw-webhook\/?$/, '/restart');
+                const mode = req.body.force ? '--force' : '--smart';
+
+                console.log(`[Refresh] Channel bot restart: ${restartUrl} mode=${mode} device=${deviceId} entity=${eId}`);
+
+                try {
+                    const restartHeaders = { 'Content-Type': 'application/json' };
+                    // Use channel API key for auth
+                    restartHeaders['X-API-Key'] = account.channel_api_key;
+
+                    const restartResp = await fetch(restartUrl, {
+                        method: 'POST',
+                        headers: restartHeaders,
+                        body: JSON.stringify({ mode, deviceId, entityId: eId }),
+                        signal: AbortSignal.timeout(95000) // bridge restart can take up to 90s
+                    });
+
+                    const restartData = await restartResp.json().catch(() => ({}));
+
+                    refreshCooldowns[cooldownKey] = Date.now();
+
+                    if (restartResp.ok && restartData.ok) {
+                        entity.lastUpdated = Date.now();
+                        await saveData();
+                        console.log(`[Refresh] Channel bot restart OK for device ${deviceId} entity ${eId}: ${restartData.message || restartData.action}`);
+                        return res.json({
+                            success: true,
+                            message: restartData.message || '通道已重啟',
+                            restartTriggered: true,
+                            restartAction: restartData.action || 'unknown'
+                        });
+                    } else {
+                        console.warn(`[Refresh] Channel bot restart FAILED for device ${deviceId} entity ${eId}: ${JSON.stringify(restartData)}`);
+                        return res.json({
+                            success: false,
+                            webhookBroken: true,
+                            restartTriggered: true,
+                            restartAction: restartData.action || 'failed',
+                            error: restartData.message || restartData.error || '通道重啟失敗',
+                            hint: 'Channel bridge may be down. Check bridge process.'
+                        });
+                    }
+                } catch (restartErr) {
+                    refreshCooldowns[cooldownKey] = Date.now();
+                    console.error(`[Refresh] Channel bot restart error for device ${deviceId} entity ${eId}: ${restartErr.message}`);
+                    return res.json({
+                        success: false,
+                        webhookBroken: true,
+                        error: `通道重啟失敗: ${restartErr.message}`,
+                        hint: 'Channel bridge is unreachable.'
+                    });
+                }
+            }
+            // Fall through to polling mode if no callback_url
+        }
+
+        // ---- Webhook bot: verify connectivity ----
         if (!entity.webhook || !entity.webhook.url) {
             // Polling mode bot — no webhook to refresh
             refreshCooldowns[cooldownKey] = Date.now();
