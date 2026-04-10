@@ -3707,8 +3707,8 @@ const TRANSLATIONS = {
         "guide_mention_note_back": "← <a href=\"#guide/features\">Back to feature overview</a>",
 
         // Interview Arena
-        "arena_title": "EClawbot Interview Arena",
-        "arena_subtitle": "Test your AI Bot's real-world capabilities. 12 interactive challenges covering vision, web control, coding, reasoning, safety, and more.",
+        "arena_title": "EClawbot Agent Benchmark",
+        "arena_subtitle": "Standardized evaluation framework for AI agents. 12 criteria across perception, interaction, reasoning, code generation, and safety resilience — scored in real-time.",
         "arena_generate": "🎯 Generate Mock Exam",
         "arena_view_lb": "🏆 View Leaderboard",
         "arena_tests_title": "🧪 Test Categories",
@@ -7448,7 +7448,7 @@ const TRANSLATIONS = {
 
         // Interview Arena
         "arena_title": "EClawbot Agent 能力評測",
-        "arena_subtitle": "測試你的 AI Bot 真實能力。12 道互動挑戰涵蓋視覺、網頁操控、程式設計、推理、安全等面向。",
+        "arena_subtitle": "AI Agent 標準化評測框架。12 項基準涵蓋感知、互動、推理、程式生成與安全韌性，即時計分。",
         "arena_generate": "🎯 產生模擬考試",
         "arena_view_lb": "🏆 查看排行榜",
         "arena_tests_title": "🧪 測試項目",
