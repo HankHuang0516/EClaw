@@ -12,6 +12,10 @@
  * This module is pure: no DB writes, only reads. The snapshot table is
  * populated by a separate hourly cron (added in a follow-up PR).
  */
+/* @brm-crossref: ⑤ Pricing Advisor
+ * Design doc: docs/plans/2026-04-10-bot-rental-marketplace-design.md
+ * Roadmap:    /portal/roadmap.html
+ * If this module is updated, also update the roadmap page status and the design doc §10 delivery tracker. */
 
 const ECOIN_TO_MLI = 1000;
 

@@ -1,3 +1,7 @@
+-- @brm-crossref: ④⑦⑧⑨ Bot Interview + Contract + Token Metering + Reviews schema
+-- Design doc: docs/plans/2026-04-10-bot-rental-marketplace-design.md
+-- Roadmap:    /portal/roadmap.html
+-- If this module is updated, also update the roadmap page status and the design doc §10 delivery tracker.
 -- ============================================
 -- Bot Rental Marketplace Schema (Phase 1 foundation)
 -- ============================================

@@ -17,6 +17,10 @@
  * Key constants shared with wallet.js: 1 e幣 = 1000 厘, deposit formula =
  * rate × 20 (20,000 tokens).
  */
+/* @brm-crossref: ④⑦ Bot Interview (listing CRUD) + Contract Management + Marketplace
+ * Design doc: docs/plans/2026-04-10-bot-rental-marketplace-design.md
+ * Roadmap:    /portal/roadmap.html
+ * If this module is updated, also update the roadmap page status and the design doc §10 delivery tracker. */
 
 const express = require('express');
 const { Pool } = require('pg');

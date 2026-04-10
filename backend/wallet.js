@@ -12,6 +12,10 @@
  * `SELECT ... FOR UPDATE`. Each call must supply `idempotencyKey`;
  * duplicate keys silently dedupe and return the original entry.
  */
+/* @brm-crossref: ①②③ Wallet + Top-up + Transaction Systems
+ * Design doc: docs/plans/2026-04-10-bot-rental-marketplace-design.md
+ * Roadmap:    /portal/roadmap.html
+ * If this module is updated, also update the roadmap page status and the design doc §10 delivery tracker. */
 
 const express = require('express');
 const { Pool } = require('pg');

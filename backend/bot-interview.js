@@ -18,6 +18,10 @@
  * collect /api/transform callback) is hooked up alongside rental-proxy
  * in the P2 PR.
  */
+/* @brm-crossref: ④⑥ Bot Interview System + Bot Capability Assessment
+ * Design doc: docs/plans/2026-04-10-bot-rental-marketplace-design.md
+ * Roadmap:    /portal/roadmap.html
+ * If this module is updated, also update the roadmap page status and the design doc §10 delivery tracker. */
 
 /**
  * Probe catalogue. Each probe defines how to score a bot's response.

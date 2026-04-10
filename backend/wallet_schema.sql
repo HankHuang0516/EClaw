@@ -1,3 +1,7 @@
+-- @brm-crossref: ①②③ Wallet + Top-up + Transaction schema
+-- Design doc: docs/plans/2026-04-10-bot-rental-marketplace-design.md
+-- Roadmap:    /portal/roadmap.html
+-- If this module is updated, also update the roadmap page status and the design doc §10 delivery tracker.
 -- ============================================
 -- Wallet System Schema (Phase 0 of Bot Rental Marketplace)
 -- ============================================
@@ -34,6 +38,10 @@ CREATE TABLE IF NOT EXISTS wallets (
     CONSTRAINT fk_wallet_user FOREIGN KEY (user_id)
         REFERENCES user_accounts(id) ON DELETE CASCADE
 );
+
+-- pending_income_mli: rental income awaiting T+24h settlement delay.
+-- Released to balance_mli by the daily income-release cron.
+ALTER TABLE wallets ADD COLUMN IF NOT EXISTS pending_income_mli BIGINT NOT NULL DEFAULT 0;
 
 CREATE INDEX IF NOT EXISTS idx_wallets_updated ON wallets(updated_at DESC);
 
