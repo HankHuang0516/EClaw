@@ -1,3 +1,10 @@
+# [1.945.0](https://github.com/HankHuang0516/EClaw/compare/v1.944.3...v1.945.0) (2026-04-10)
+
+
+### Features
+
+* **arena:** detailed exam report with expandable per-test breakdown ([e5ad539](https://github.com/HankHuang0516/EClaw/commit/e5ad539331935ad6bda8efedbefb9d1b9bb8685e))
+
 ## [1.944.3](https://github.com/HankHuang0516/EClaw/compare/v1.944.2...v1.944.3) (2026-04-10)
 
 
