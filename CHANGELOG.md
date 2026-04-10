@@ -1,3 +1,10 @@
+# [1.939.0](https://github.com/HankHuang0516/EClaw/compare/v1.938.1...v1.939.0) (2026-04-10)
+
+
+### Features
+
+* **arena:** Interview Arena — public bot capability testing platform ([31a6fab](https://github.com/HankHuang0516/EClaw/commit/31a6fab672dd5e9f12dcb6fd6d8a3742e300d4e8))
+
 ## [1.938.1](https://github.com/HankHuang0516/EClaw/compare/v1.938.0...v1.938.1) (2026-04-10)
 
 
