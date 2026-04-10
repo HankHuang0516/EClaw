@@ -477,8 +477,10 @@ const SCORING_ENGINES = {
 async function initArenaDatabase() {
     try {
         const schemaPath = path.join(__dirname, 'interview_arena_schema.sql');
-        const schema = fs.readFileSync(schemaPath, 'utf8');
-        const statements = schema.split(';').map(s => s.trim()).filter(s => s && !s.startsWith('--'));
+        const raw = fs.readFileSync(schemaPath, 'utf8');
+        // Strip line comments before splitting by semicolons
+        const schema = raw.split('\n').filter(line => !line.trim().startsWith('--')).join('\n');
+        const statements = schema.split(';').map(s => s.trim()).filter(s => s.length > 0);
         for (const stmt of statements) {
             try {
                 await pool.query(stmt);
