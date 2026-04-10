@@ -194,6 +194,34 @@ a:hover { text-decoration: underline; }
 /* ==========================================
    Notification Bell + Dropdown
    ========================================== */
+/* ── e-coin balance badge (nav bar) ── */
+.ecoin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px 4px 6px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(109, 40, 217, 0.2), rgba(16, 185, 129, 0.15));
+    border: 1px solid rgba(109, 40, 217, 0.3);
+    text-decoration: none;
+    color: #a78bfa;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    transition: all 0.2s;
+    cursor: pointer;
+    white-space: nowrap;
+    margin-right: 4px;
+}
+.ecoin-badge:hover {
+    background: linear-gradient(135deg, rgba(109, 40, 217, 0.35), rgba(16, 185, 129, 0.25));
+    border-color: rgba(109, 40, 217, 0.5);
+    color: #c4b5fd;
+    transform: translateY(-1px);
+}
+.ecoin-icon { color: #10b981; flex-shrink: 0; }
+.ecoin-amount { font-variant-numeric: tabular-nums; }
+
 .notif-bell {
     position: relative;
     cursor: pointer;

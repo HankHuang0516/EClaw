@@ -5,7 +5,7 @@
  *
  * Units: all amounts stored in 厘 (mli), where 1 e幣 = 1000 厘 (avoids
  * floating-point drift during fractional rental token charges).
- * Exchange: 1 TWD = 100 e幣 = 100,000 厘 (fixed, see TWD_TO_MLI).
+ * Exchange: 1 TWD = 100 e幣 = 100,000 厘 (fixed, see USD_TO_MLI).
  *
  * Every mutation flows through `applyLedgerEntry`, which writes a
  * double-entry row to `wallet_ledger` and locks the wallet row with
@@ -30,8 +30,8 @@ const pool = new Pool({
 // Constants
 // ============================================
 
-/** 1 TWD converts to 100,000 厘 (mli). */
-const TWD_TO_MLI = 100_000;
+/** 1 USD converts to 3,000,000 厘 (mli) = 3,000 e幣. */
+const USD_TO_MLI = 3_000_000;
 
 /** 1 e幣 = 1000 厘. */
 const ECOIN_TO_MLI = 1000;
@@ -74,29 +74,29 @@ const ALLOWED_LEDGER_TYPES = new Set(Object.values(LEDGER_TYPES));
  */
 const TOPUP_TIERS = Object.freeze({
     'ecoin_tier_small': {
-        priceTwd: 90,
-        baseMli: 90 * TWD_TO_MLI,      // 9,000,000 mli = 9,000 e幣
+        priceUsd: 1,                              // $1
+        baseMli: 1 * USD_TO_MLI,                  // 3,000 e幣
         bonusMli: 0,
     },
     'ecoin_tier_starter': {
-        priceTwd: 170,
-        baseMli: 170 * TWD_TO_MLI,     // 17,000 e幣
-        bonusMli: 850 * ECOIN_TO_MLI,  // +5% (850 e幣)
+        priceUsd: 3,                              // $3
+        baseMli: 3 * USD_TO_MLI,                  // 9,000 e幣
+        bonusMli: 450 * ECOIN_TO_MLI,             // +5% (450 e幣)
     },
     'ecoin_tier_standard': {
-        priceTwd: 340,
-        baseMli: 340 * TWD_TO_MLI,     // 34,000 e幣
-        bonusMli: 2720 * ECOIN_TO_MLI, // +8%
+        priceUsd: 5,                              // $5
+        baseMli: 5 * USD_TO_MLI,                  // 15,000 e幣
+        bonusMli: 1200 * ECOIN_TO_MLI,            // +8%
     },
     'ecoin_tier_advanced': {
-        priceTwd: 990,
-        baseMli: 990 * TWD_TO_MLI,     // 99,000 e幣
-        bonusMli: 11880 * ECOIN_TO_MLI, // +12%
+        priceUsd: 10,                             // $10
+        baseMli: 10 * USD_TO_MLI,                 // 30,000 e幣
+        bonusMli: 3600 * ECOIN_TO_MLI,            // +12%
     },
     'ecoin_tier_premium': {
-        priceTwd: 1990,
-        baseMli: 1990 * TWD_TO_MLI,    // 199,000 e幣
-        bonusMli: 29850 * ECOIN_TO_MLI, // +15%
+        priceUsd: 20,                             // $20
+        baseMli: 20 * USD_TO_MLI,                 // 60,000 e幣
+        bonusMli: 9000 * ECOIN_TO_MLI,            // +15%
     },
 });
 
@@ -108,9 +108,9 @@ function getTopupTier(productId) {
 // Helpers
 // ============================================
 
-function twdToMli(twd) {
-    if (!Number.isFinite(twd) || twd < 0) throw new Error('invalid_twd');
-    return Math.round(twd) * TWD_TO_MLI;
+function usdToMli(usd) {
+    if (!Number.isFinite(usd) || usd < 0) throw new Error('invalid_usd');
+    return Math.round(usd) * USD_TO_MLI;
 }
 
 function ecoinToMli(ecoin) {
@@ -500,11 +500,11 @@ async function adminAdjust({ userId, deltaMli, reason, adminUserId, idempotencyK
  * twice, returns the existing row instead of duplicating.
  */
 async function createTopupOrder({
-    userId, channel, priceTwd, baseMli, bonusMli, externalTxnId, externalRaw = null,
+    userId, channel, priceUsd, baseMli, bonusMli, externalTxnId, externalRaw = null,
 }) {
     assertUuidLike('user_id', userId);
     if (!channel || typeof channel !== 'string') throw new Error('channel_invalid');
-    if (!Number.isInteger(priceTwd) || priceTwd < 0) throw new Error('price_twd_invalid');
+    if (!Number.isInteger(priceUsd) || priceUsd < 0) throw new Error('price_usd_invalid');
     assertPositiveInt('base_mli', baseMli);
     if (!Number.isInteger(bonusMli) || bonusMli < 0) throw new Error('bonus_mli_invalid');
 
@@ -527,7 +527,7 @@ async function createTopupOrder({
              status, external_txn_id, external_raw)
          VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8)
          RETURNING id, status, ecoin_total_mli`,
-        [userId, channel, priceTwd, baseMli, bonusMli, totalMli, externalTxnId || null, externalRaw]
+        [userId, channel, priceUsd, baseMli, bonusMli, totalMli, externalTxnId || null, externalRaw]
     );
     return { ...res.rows[0], deduped: false };
 }
@@ -719,7 +719,7 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
     router.get('/topup/tiers', (_req, res) => {
         const tiers = Object.entries(TOPUP_TIERS).map(([productId, t]) => ({
             productId,
-            priceTwd: t.priceTwd,
+            priceUsd: t.priceUsd,
             ecoinBase: Math.round(t.baseMli / ECOIN_TO_MLI),
             ecoinBonus: Math.round(t.bonusMli / ECOIN_TO_MLI),
             ecoinTotal: Math.round((t.baseMli + t.bonusMli) / ECOIN_TO_MLI),
@@ -748,7 +748,7 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
         const order = await createTopupOrder({
             userId: req.user.userId,
             channel: 'google_play',
-            priceTwd: tier.priceTwd,
+            priceUsd: tier.priceUsd,
             baseMli: tier.baseMli,
             bonusMli: tier.bonusMli,
             externalTxnId: purchaseToken,
@@ -841,7 +841,7 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
         applyLedgerEntry,
         // Constants
         LEDGER_TYPES,
-        TWD_TO_MLI,
+        USD_TO_MLI,
         ECOIN_TO_MLI,
         PLATFORM_FEE_BPS,
         INSURANCE_POOL_BPS,
@@ -850,7 +850,7 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
         TOPUP_TIERS,
         getTopupTier,
         // Conversion helpers
-        twdToMli,
+        usdToMli,
         ecoinToMli,
         mliToEcoin,
         // Internals exposed for testing
@@ -860,13 +860,13 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
 
 // Also expose static constants + helpers at module level for convenience
 module.exports.LEDGER_TYPES = LEDGER_TYPES;
-module.exports.TWD_TO_MLI = TWD_TO_MLI;
+module.exports.USD_TO_MLI = USD_TO_MLI;
 module.exports.ECOIN_TO_MLI = ECOIN_TO_MLI;
 module.exports.PLATFORM_FEE_BPS = PLATFORM_FEE_BPS;
 module.exports.INSURANCE_POOL_BPS = INSURANCE_POOL_BPS;
 module.exports.PLATFORM_WALLET_USER_ID = PLATFORM_WALLET_USER_ID;
 module.exports.INSURANCE_POOL_USER_ID = INSURANCE_POOL_USER_ID;
-module.exports.twdToMli = twdToMli;
+module.exports.usdToMli = usdToMli;
 module.exports.ecoinToMli = ecoinToMli;
 module.exports.mliToEcoin = mliToEcoin;
 module.exports.TOPUP_TIERS = TOPUP_TIERS;

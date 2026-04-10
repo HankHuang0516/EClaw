@@ -531,9 +531,10 @@ async function endRental({ contractId, endReason, requesterUserId }, walletApi) 
             });
         }
 
-        // 2. Forfeit portion (held → void; caller can credit platform
-        //    wallet in a follow-up entry if desired).
+        // 2. Forfeit portion → split 85% owner / 13% platform / 2% insurance
+        //    (same ratio as regular rental spend, design decision).
         if (forfeitMli > 0) {
+            // Remove from renter's held bucket.
             await walletApi.applyLedgerEntry(client, {
                 userId: contract.renter_user_id,
                 balanceDelta: 0,
@@ -544,6 +545,46 @@ async function endRental({ contractId, endReason, requesterUserId }, walletApi) 
                 note: `forfeit on ${endReason}`,
                 idempotencyKey: `rental-forfeit:${contract.id}`,
             });
+            // Split and distribute: owner 85%, platform 13%, insurance 2%.
+            const insuranceMli = Math.floor(forfeitMli * 200 / 10000);
+            const platformGross = Math.floor(forfeitMli * 1500 / 10000);
+            const platformNet = platformGross - insuranceMli;
+            const ownerShare = forfeitMli - platformGross;
+            if (ownerShare > 0) {
+                await walletApi.applyLedgerEntry(client, {
+                    userId: contract.owner_user_id,
+                    balanceDelta: ownerShare,
+                    heldDelta: 0,
+                    type: walletApi.LEDGER_TYPES.RENTAL_INCOME,
+                    refType: 'rental_contract',
+                    refId: contract.id,
+                    note: `forfeit compensation: ${endReason}`,
+                    idempotencyKey: `rental-forfeit-income:${contract.id}`,
+                });
+            }
+            if (platformNet > 0) {
+                await walletApi.applyLedgerEntry(client, {
+                    userId: '00000000-0000-0000-0000-000000000001',
+                    balanceDelta: platformNet,
+                    heldDelta: 0,
+                    type: walletApi.LEDGER_TYPES.PLATFORM_FEE,
+                    refType: 'rental_contract',
+                    refId: contract.id,
+                    idempotencyKey: `rental-forfeit-pfee:${contract.id}`,
+                });
+            }
+            if (insuranceMli > 0) {
+                await walletApi.applyLedgerEntry(client, {
+                    userId: '00000000-0000-0000-0000-000000000002',
+                    balanceDelta: insuranceMli,
+                    heldDelta: 0,
+                    type: walletApi.LEDGER_TYPES.PLATFORM_FEE,
+                    refType: 'rental_contract',
+                    refId: contract.id,
+                    note: 'insurance',
+                    idempotencyKey: `rental-forfeit-ins:${contract.id}`,
+                });
+            }
         }
 
         // 3. Update contract status.

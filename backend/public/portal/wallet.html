@@ -156,7 +156,7 @@
         <div class="balance-card">
             <div class="balance-label" data-i18n="wallet_available_balance">Available Balance</div>
             <div class="balance-amount"><span id="balanceEcoin">0</span> <span style="font-size:18px;opacity:0.8;">e幣</span></div>
-            <div class="balance-twd">≈ NT$<span id="balanceTwd">0</span></div>
+            <div class="balance-twd">≈ $<span id="balanceUsd">0</span> USD</div>
             <div class="balance-row">
                 <div class="balance-mini">
                     <div class="mini-label" data-i18n="wallet_held_deposit">Held (Deposit)</div>
@@ -212,13 +212,13 @@
 
     <script>
         const ECOIN_TO_MLI = 1000;
-        const MLI_PER_TWD = 100_000;
+        const MLI_PER_USD = 3_000_000;
 
         function mliToEcoin(mli) {
             return Math.round(Number(mli || 0) / ECOIN_TO_MLI);
         }
-        function mliToTwd(mli) {
-            return (Number(mli || 0) / MLI_PER_TWD).toFixed(2);
+        function mliToUsd(mli) {
+            return (Number(mli || 0) / MLI_PER_USD).toFixed(2);
         }
 
         function ledgerTypeLabel(type) {
@@ -239,7 +239,7 @@
                 if (!data || !data.success) return;
                 const w = data.wallet;
                 document.getElementById('balanceEcoin').textContent = w.balance_ecoin.toLocaleString();
-                document.getElementById('balanceTwd').textContent = (w.balance_ecoin / 100).toFixed(2);
+                document.getElementById('balanceUsd').textContent = (w.balance_ecoin / 3000).toFixed(2);
                 document.getElementById('heldEcoin').textContent = (w.held_ecoin || 0).toLocaleString();
                 document.getElementById('lifetimeEarned').textContent =
                     mliToEcoin(w.lifetime_earned_mli).toLocaleString();
@@ -268,7 +268,7 @@
                         : '';
                     card.innerHTML = `
                         ${bonusBadge}
-                        <div class="tier-twd">NT$${t.priceTwd}</div>
+                        <div class="tier-twd">$${t.priceUsd} USD</div>
                         <div class="tier-ecoin">${t.ecoinTotal.toLocaleString()} e幣</div>
                         ${bonusLine}
                     `;

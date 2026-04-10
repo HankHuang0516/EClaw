@@ -253,10 +253,10 @@ beforeEach(() => { resetState(); });
 // ── Conversion helpers ──────────────────────────────────────────────────
 
 describe('wallet: conversion helpers', () => {
-    test('twdToMli: 1 TWD = 100,000 mli', () => {
-        expect(wallet.twdToMli(1)).toBe(100_000);
-        expect(wallet.twdToMli(170)).toBe(17_000_000);
-        expect(wallet.twdToMli(0)).toBe(0);
+    test('usdToMli: 1 USD = 3,000,000 mli', () => {
+        expect(wallet.usdToMli(1)).toBe(3_000_000);
+        expect(wallet.usdToMli(10)).toBe(30_000_000);
+        expect(wallet.usdToMli(0)).toBe(0);
     });
 
     test('ecoinToMli: 1 e幣 = 1000 mli', () => {
@@ -269,9 +269,9 @@ describe('wallet: conversion helpers', () => {
         expect(wallet.mliToEcoin(17_000_000)).toBe(17_000);
     });
 
-    test('twdToMli rejects invalid input', () => {
-        expect(() => wallet.twdToMli(-1)).toThrow('invalid_twd');
-        expect(() => wallet.twdToMli(NaN)).toThrow('invalid_twd');
+    test('usdToMli rejects invalid input', () => {
+        expect(() => wallet.usdToMli(-1)).toThrow('invalid_usd');
+        expect(() => wallet.usdToMli(NaN)).toThrow('invalid_usd');
     });
 
     test('LEDGER_TYPES is frozen and complete', () => {
@@ -534,18 +534,18 @@ describe('wallet: top-up tier catalog', () => {
         expect(wallet.TOPUP_TIERS['ecoin_tier_premium']).toBeDefined();
     });
 
-    test('starter tier: NT$170 → 17,000 e幣 base + 850 bonus', () => {
+    test('starter tier: $3 → 9,000 e幣 base + 450 bonus', () => {
         const t = wallet.TOPUP_TIERS['ecoin_tier_starter'];
-        expect(t.priceTwd).toBe(170);
-        expect(t.baseMli).toBe(17_000_000);   // 17,000 e幣 in mli
-        expect(t.bonusMli).toBe(850_000);     // 850 e幣 in mli
+        expect(t.priceUsd).toBe(3);
+        expect(t.baseMli).toBe(9_000_000);   // 9,000 e幣 in mli
+        expect(t.bonusMli).toBe(450_000);    // 450 e幣 in mli
     });
 
-    test('premium tier: NT$1990 → 199,000 e幣 base + 29,850 bonus', () => {
+    test('premium tier: $20 → 60,000 e幣 base + 9,000 bonus', () => {
         const t = wallet.TOPUP_TIERS['ecoin_tier_premium'];
-        expect(t.priceTwd).toBe(1990);
-        expect(t.baseMli).toBe(199_000_000);
-        expect(t.bonusMli).toBe(29_850_000);
+        expect(t.priceUsd).toBe(20);
+        expect(t.baseMli).toBe(60_000_000);
+        expect(t.bonusMli).toBe(9_000_000);
     });
 
     test('getTopupTier returns null for unknown product', () => {
@@ -562,7 +562,7 @@ describe('wallet: top-up order lifecycle', () => {
         const order = await walletApi.createTopupOrder({
             userId: ALICE,
             channel: 'google_play',
-            priceTwd: tier.priceTwd,
+            priceUsd: tier.priceUsd,
             baseMli: tier.baseMli,
             bonusMli: tier.bonusMli,
             externalTxnId: 'gp-token-aaa',
@@ -578,7 +578,7 @@ describe('wallet: top-up order lifecycle', () => {
         const tier = wallet.TOPUP_TIERS['ecoin_tier_starter'];
         const args = {
             userId: ALICE, channel: 'google_play',
-            priceTwd: tier.priceTwd, baseMli: tier.baseMli, bonusMli: tier.bonusMli,
+            priceUsd: tier.priceUsd, baseMli: tier.baseMli, bonusMli: tier.bonusMli,
             externalTxnId: 'gp-dup-token',
         };
         const first = await walletApi.createTopupOrder(args);
@@ -593,7 +593,7 @@ describe('wallet: top-up order lifecycle', () => {
         const tier = wallet.TOPUP_TIERS['ecoin_tier_starter'];
         const order = await walletApi.createTopupOrder({
             userId: ALICE, channel: 'google_play',
-            priceTwd: tier.priceTwd, baseMli: tier.baseMli, bonusMli: tier.bonusMli,
+            priceUsd: tier.priceUsd, baseMli: tier.baseMli, bonusMli: tier.bonusMli,
             externalTxnId: 'gp-pay-1',
         });
         const total = parseInt(order.ecoin_total_mli, 10);
@@ -616,13 +616,13 @@ describe('wallet: top-up order lifecycle', () => {
 
     test('createTopupOrder rejects invalid input', async () => {
         await expect(walletApi.createTopupOrder({
-            userId: ALICE, channel: '', priceTwd: 100, baseMli: 100, bonusMli: 0,
+            userId: ALICE, channel: '', priceUsd: 100, baseMli: 100, bonusMli: 0,
         })).rejects.toThrow(/channel/);
         await expect(walletApi.createTopupOrder({
-            userId: ALICE, channel: 'google_play', priceTwd: -1, baseMli: 100, bonusMli: 0,
+            userId: ALICE, channel: 'google_play', priceUsd: -1, baseMli: 100, bonusMli: 0,
         })).rejects.toThrow(/price/);
         await expect(walletApi.createTopupOrder({
-            userId: ALICE, channel: 'google_play', priceTwd: 100, baseMli: 0, bonusMli: 0,
+            userId: ALICE, channel: 'google_play', priceUsd: 100, baseMli: 0, bonusMli: 0,
         })).rejects.toThrow(/base/);
     });
 });
@@ -662,7 +662,7 @@ describe('wallet: HTTP routes', () => {
         expect(res.body.tiers.length).toBeGreaterThanOrEqual(5);
         const starter = res.body.tiers.find(t => t.productId === 'ecoin_tier_starter');
         expect(starter).toBeDefined();
-        expect(starter.priceTwd).toBe(170);
+        expect(starter.priceUsd).toBe(3);
         expect(starter.bonusPct).toBe(5);
     });
 
@@ -711,8 +711,8 @@ describe('wallet: HTTP routes', () => {
             .expect(200);
         expect(res.body.success).toBe(true);
         expect(res.body.order.status).toBe('paid');
-        // 17000 + 850 bonus = 17850 e幣
-        expect(res.body.order.ecoinTotal).toBe(17850);
+        // 9000 + 450 bonus = 9450 e幣
+        expect(res.body.order.ecoinTotal).toBe(9450);
         expect(res.body.order.deduped).toBe(false);
 
         // Replaying the same token should dedupe (no double credit).
@@ -722,7 +722,7 @@ describe('wallet: HTTP routes', () => {
         expect(replay.body.order.deduped).toBe(true);
 
         const bal = await walletApi.getBalance(ALICE);
-        expect(bal.balance_ecoin).toBe(17850);
+        expect(bal.balance_ecoin).toBe(9450);
     });
 
     test('POST /admin/grant rejects non-admin', async () => {

@@ -63,6 +63,14 @@ function renderNav(activePage) {
             `).join('')}
         </div>
         <div class="nav-user" id="navUser">
+            <a href="wallet.html" class="ecoin-badge" id="ecoinBadge" title="${t('nav_wallet', 'My Wallet')}" style="display:none;">
+                <svg class="ecoin-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <hexagon cx="12" cy="12" r="10"/>
+                    <path d="M12 2l10 5.5v11L12 22 2 18.5v-11z"/>
+                    <path d="M12 8v8M9 12h6"/>
+                </svg>
+                <span class="ecoin-amount" id="ecoinAmount">0</span>
+            </a>
             <div class="notif-bell" id="notifBell" onclick="toggleNotifDropdown(event)" role="button" tabindex="0" aria-label="${t('notif_title', 'Notifications')}" title="${t('notif_title', 'Notifications')}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleNotifDropdown(event)}">
                 <svg class="bell-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -117,3 +125,21 @@ async function logout() {
 
 // Alias for pages that call doLogout()
 function doLogout() { logout(); }
+
+// ── e-coin balance loader (for nav badge) ──
+// Called after auth check succeeds. Fetches wallet balance and shows
+// the ecoin-badge in the nav bar. Silently skips if wallet API fails
+// (e.g. user has no wallet yet).
+async function _loadNavEcoinBadge() {
+    try {
+        const badge = document.getElementById('ecoinBadge');
+        const amountEl = document.getElementById('ecoinAmount');
+        if (!badge || !amountEl) return;
+        const data = await apiCall('GET', '/api/wallet/balance');
+        if (!data || !data.success) return;
+        amountEl.textContent = (data.wallet.balance_ecoin || 0).toLocaleString();
+        badge.style.display = '';
+    } catch { /* wallet not available yet — hide badge */ }
+}
+// Auto-load after a short delay (auth must complete first)
+setTimeout(() => _loadNavEcoinBadge(), 1500);
