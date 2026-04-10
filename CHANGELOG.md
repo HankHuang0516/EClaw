@@ -1,3 +1,11 @@
+## [1.944.3](https://github.com/HankHuang0516/EClaw/compare/v1.944.2...v1.944.3) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** fix passed/failed count showing 0/12 on Socket.IO completion ([7f2e78d](https://github.com/HankHuang0516/EClaw/commit/7f2e78dd14a2f7a2914f6a57d90c1f306e1e82c3))
+* **arena:** leaderboard time column + fix double modal/confetti ([67ae74b](https://github.com/HankHuang0516/EClaw/commit/67ae74bc92fcacb455a25b8188362eb7e860ca5c))
+
 ## [1.944.2](https://github.com/HankHuang0516/EClaw/compare/v1.944.1...v1.944.2) (2026-04-10)
 
 
