@@ -24,12 +24,11 @@ const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot',
 });
 
-// ============================================
-// Constants
-// ============================================
-
-const EXAM_TTL_MS = 60_000; // 1 minute
+const EXAM_TTL_MS = 3 * 60_000; // 3 minutes (matches UI copy)
 const MAX_ACTIONS_PER_SESSION = 50;
+
+const EXAM_STATUS = Object.freeze({ WAITING: 'waiting', ACTIVE: 'active', COMPLETED: 'completed' });
+const SESSION_STATUS = Object.freeze({ PENDING: 'pending', ACTIVE: 'active', COMPLETED: 'completed' });
 
 /** All 12 test types with metadata. */
 const TEST_TYPES = Object.freeze([
@@ -109,8 +108,12 @@ function generateFormFillChallenge() {
         { name: 'message', type: 'textarea', label: 'Message', expectedValue: 'Hello World' },
     ];
     const extraCount = 1 + Math.floor(Math.random() * 2);
-    const shuffled = extras.sort(() => Math.random() - 0.5);
-    return { fields: [...fields, ...shuffled.slice(0, extraCount)] };
+    // Fisher-Yates shuffle
+    for (let i = extras.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [extras[i], extras[j]] = [extras[j], extras[i]];
+    }
+    return { fields: [...fields, ...extras.slice(0, extraCount)] };
 }
 
 function generateDragDropChallenge() {
@@ -474,13 +477,32 @@ const SCORING_ENGINES = {
 // Schema init
 // ============================================
 
+function parseConfig(raw) {
+    return typeof raw === 'string' ? JSON.parse(raw) : raw;
+}
+
 async function initArenaDatabase() {
     try {
         const schemaPath = path.join(__dirname, 'interview_arena_schema.sql');
-        const raw = fs.readFileSync(schemaPath, 'utf8');
-        // Strip line comments before splitting by semicolons
-        const schema = raw.split('\n').filter(line => !line.trim().startsWith('--')).join('\n');
-        const statements = schema.split(';').map(s => s.trim()).filter(s => s.length > 0);
+        const schema = fs.readFileSync(schemaPath, 'utf8');
+        // $$-aware SQL splitter (same pattern as rental.js / wallet.js)
+        const statements = [];
+        let current = '';
+        let inDollarBlock = false;
+        for (const line of schema.split('\n')) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('--')) continue;
+            current += line + '\n';
+            const dollarCount = (line.match(/\$\$/g) || []).length;
+            if (dollarCount % 2 === 1) inDollarBlock = !inDollarBlock;
+            if (!inDollarBlock && trimmed.endsWith(';')) {
+                const stmt = current.trim();
+                if (stmt && stmt !== ';') statements.push(stmt);
+                current = '';
+            }
+        }
+        if (current.trim()) statements.push(current.trim());
+
         for (const stmt of statements) {
             try {
                 await pool.query(stmt);
@@ -502,39 +524,63 @@ async function initArenaDatabase() {
 
 module.exports = function arenaFactory({ serverLog, io } = {}) {
     const router = express.Router();
-    const audit = serverLog || (() => {}); void audit;
+    const audit = serverLog || (() => {});
 
-    // POST /api/arena/exam — create a new exam (no auth required)
+    // Simple per-IP rate limit for exam creation (10 per 15 min)
+    const examRateMap = new Map();
+    const EXAM_RATE_LIMIT = 10;
+    const EXAM_RATE_WINDOW_MS = 15 * 60_000;
+
+    // POST /api/arena/exam — create a new exam (no auth, rate limited)
     router.post('/exam', async (req, res) => {
         try {
+            // Rate limit by IP
+            const ip = req.ip || req.connection.remoteAddress || 'unknown';
+            const now = Date.now();
+            const history = examRateMap.get(ip) || [];
+            const recent = history.filter(t => t > now - EXAM_RATE_WINDOW_MS);
+            if (recent.length >= EXAM_RATE_LIMIT) {
+                return res.status(429).json({ success: false, error: 'rate_limited' });
+            }
+            recent.push(now);
+            examRateMap.set(ip, recent);
+
             const examToken = generateToken(12);
             const expiresAt = new Date(Date.now() + EXAM_TTL_MS);
 
             const examRes = await pool.query(
-                `INSERT INTO arena_exams (exam_token, status, expires_at)
-                 VALUES ($1, 'waiting', $2)
+                `INSERT INTO arena_exams (exam_token, status, max_score, expires_at)
+                 VALUES ($1, $2, $3, $4)
                  RETURNING id, exam_token, status, created_at, expires_at`,
-                [examToken, expiresAt]
+                [examToken, EXAM_STATUS.WAITING, MAX_TOTAL_SCORE, expiresAt]
             );
             const exam = examRes.rows[0];
 
-            // Create 12 sessions
-            const sessions = [];
+            // Generate all configs in memory first (memory challenge depends on earlier configs)
+            const sessionConfigs = [];
             for (let i = 0; i < TEST_TYPES.length; i++) {
                 const tt = TEST_TYPES[i];
-                const sessionToken = generateToken(10);
-                const config = CHALLENGE_GENERATORS[tt.id](i === 9 ? sessions : undefined);
-                const configWithWeight = { ...config, weight: tt.weight };
-
-                const sessRes = await pool.query(
-                    `INSERT INTO arena_sessions
-                        (exam_id, session_token, test_type, test_index, challenge_config, max_score)
-                     VALUES ($1, $2, $3, $4, $5, $6)
-                     RETURNING id, session_token, test_type, test_index, status`,
-                    [exam.id, sessionToken, tt.id, i, JSON.stringify(configWithWeight), tt.weight]
-                );
-                sessions.push({ ...sessRes.rows[0], challenge_config: configWithWeight });
+                const config = CHALLENGE_GENERATORS[tt.id](i === 9 ? sessionConfigs : undefined);
+                sessionConfigs.push({ ...config, weight: tt.weight });
             }
+
+            // Batch INSERT all 12 sessions in one query
+            const values = [];
+            const placeholders = [];
+            for (let i = 0; i < TEST_TYPES.length; i++) {
+                const tt = TEST_TYPES[i];
+                const token = generateToken(10);
+                const off = i * 6;
+                placeholders.push(`($${off+1},$${off+2},$${off+3},$${off+4},$${off+5},$${off+6})`);
+                values.push(exam.id, token, tt.id, i, JSON.stringify(sessionConfigs[i]), tt.weight);
+            }
+            const sessRes = await pool.query(
+                `INSERT INTO arena_sessions (exam_id, session_token, test_type, test_index, challenge_config, max_score)
+                 VALUES ${placeholders.join(',')}
+                 RETURNING id, session_token, test_type, test_index, status`,
+                values
+            );
+            const sessions = sessRes.rows;
 
             const apiBase = process.env.API_BASE || 'https://eclawbot.com';
             res.json({
@@ -604,37 +650,35 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
                 return res.status(409).json({ success: false, error: 'session_already_completed' });
             }
 
-            // Append action
+            // Check action count (from DB, avoid read-modify-write)
             const actions = Array.isArray(session.actions_log) ? session.actions_log : [];
             if (actions.length >= MAX_ACTIONS_PER_SESSION) {
                 return res.status(429).json({ success: false, error: 'too_many_actions' });
             }
-            actions.push({ actionType, payload: payload || {}, timestamp: timestamp || Date.now() });
 
-            // Mark started if first action
-            const updates = [`actions_log = $2`];
-            const params = [session.id, JSON.stringify(actions)];
-            if (!session.started_at && actionType === 'page_loaded') {
-                updates.push(`started_at = NOW()`);
-                updates.push(`status = 'active'`);
-            }
+            const actionObj = { actionType, payload: payload || {}, timestamp: timestamp || Date.now() };
 
+            // Server-side jsonb append + conditional status update
+            const startedClause = (!session.started_at && actionType === 'page_loaded')
+                ? `, started_at = NOW(), status = '${SESSION_STATUS.ACTIVE}'` : '';
             await pool.query(
-                `UPDATE arena_sessions SET ${updates.join(', ')} WHERE id = $1`,
-                params
+                `UPDATE arena_sessions
+                 SET actions_log = COALESCE(actions_log, '[]'::jsonb) || $2::jsonb ${startedClause}
+                 WHERE id = $1`,
+                [session.id, JSON.stringify([actionObj])]
             );
+            actions.push(actionObj);
 
             // Activate exam if waiting
-            if (session.exam_status === 'waiting') {
+            if (session.exam_status === EXAM_STATUS.WAITING) {
                 await pool.query(
-                    `UPDATE arena_exams SET status = 'active' WHERE id = $1 AND status = 'waiting'`,
-                    [session.exam_id]
+                    `UPDATE arena_exams SET status = $2 WHERE id = $1 AND status = $3`,
+                    [session.exam_id, EXAM_STATUS.ACTIVE, EXAM_STATUS.WAITING]
                 );
             }
 
             // Real-time score update
-            const config = typeof session.challenge_config === 'string'
-                ? JSON.parse(session.challenge_config) : session.challenge_config;
+            const config = parseConfig(session.challenge_config);
             const scorer = SCORING_ENGINES[session.test_type];
             let partialScore = null;
             if (scorer) {
@@ -668,12 +712,11 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
             );
             if (sessRes.rowCount === 0) return res.status(404).json({ success: false, error: 'not_found' });
             const session = sessRes.rows[0];
-            if (session.status === 'completed') {
+            if (session.status === SESSION_STATUS.COMPLETED) {
                 return res.json({ success: true, score: session.score });
             }
 
-            const config = typeof session.challenge_config === 'string'
-                ? JSON.parse(session.challenge_config) : session.challenge_config;
+            const config = parseConfig(session.challenge_config);
             const actions = Array.isArray(session.actions_log) ? session.actions_log : [];
             const scorer = SCORING_ENGINES[session.test_type];
             const result = scorer ? scorer(config, actions) : { score: 0, maxScore: config.weight || 0 };
@@ -712,9 +755,8 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
             const detail = [];
             for (const s of sessions.rows) {
                 let score = s.score;
-                if (s.status !== 'completed') {
-                    const config = typeof s.challenge_config === 'string'
-                        ? JSON.parse(s.challenge_config) : s.challenge_config;
+                if (s.status !== SESSION_STATUS.COMPLETED) {
+                    const config = parseConfig(s.challenge_config);
                     const actions = Array.isArray(s.actions_log) ? s.actions_log : [];
                     const scorer = SCORING_ENGINES[s.test_type];
                     const result = scorer ? scorer(config, actions) : { score: 0 };

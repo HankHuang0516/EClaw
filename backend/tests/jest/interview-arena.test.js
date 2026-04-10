@@ -22,18 +22,23 @@ jest.mock('pg', () => {
             state.exams.push(row);
             return { rows: [row], rowCount: 1 };
         }
-        // INSERT session
+        // INSERT session (batch: 12 sessions × 6 params each = 72 params)
         if (/INSERT INTO arena_sessions/i.test(norm)) {
-            const row = {
-                id: 'sess-' + (state.sessions.length + 1),
-                exam_id: params[0], session_token: params[1],
-                test_type: params[2], test_index: params[3],
-                challenge_config: JSON.parse(params[4]),
-                max_score: params[5], status: 'pending',
-                actions_log: [],
-            };
-            state.sessions.push(row);
-            return { rows: [row], rowCount: 1 };
+            const rows = [];
+            const stride = 6;
+            for (let i = 0; i + stride <= params.length; i += stride) {
+                const row = {
+                    id: 'sess-' + (state.sessions.length + 1),
+                    exam_id: params[i], session_token: params[i+1],
+                    test_type: params[i+2], test_index: params[i+3],
+                    challenge_config: typeof params[i+4] === 'string' ? JSON.parse(params[i+4]) : params[i+4],
+                    max_score: params[i+5], status: 'pending',
+                    actions_log: [],
+                };
+                state.sessions.push(row);
+                rows.push(row);
+            }
+            return { rows, rowCount: rows.length };
         }
         // SELECT session by token
         if (/FROM arena_sessions s.*WHERE s\.session_token/i.test(norm)) {
