@@ -34,7 +34,8 @@ const pool = new Pool({
 const DISPUTE_TYPES = Object.freeze(['bot_crash', 'bot_quality', 'capability_mismatch', 'financial']);
 const DISPUTE_STATUSES = Object.freeze(['open', 'investigating', 'resolved', 'rejected']);
 const COOLDOWN_HOURS = 24;
-const CREDIT_SCORE_MIN = 0; // eslint-disable-line no-unused-vars — referenced in credit formula docs
+// Credit score bounds (MIN used in GREATEST() formula in recalculateCreditScore)
+void 0; // score range: 0–10
 const AUTO_DELIST_THRESHOLD = 3.0;
 
 // SLA times in milliseconds (design decision #27)
