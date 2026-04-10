@@ -1,3 +1,10 @@
+# [1.937.0](https://github.com/HankHuang0516/EClaw/compare/v1.936.0...v1.937.0) (2026-04-10)
+
+
+### Features
+
+* **i18n:** add marketplace + my-rentals + invite keys (en + zh-TW) ([eee996b](https://github.com/HankHuang0516/EClaw/commit/eee996b465e3b1f3f26fb253200021e57227d9c6))
+
 # [1.936.0](https://github.com/HankHuang0516/EClaw/compare/v1.935.0...v1.936.0) (2026-04-10)
 
 
