@@ -1706,6 +1706,7 @@ setTimeout(() => walletModule.initWalletDatabase(), 2000);
 const rentalModule = require('./rental')({
     authMiddleware: authModule.authMiddleware,
     adminMiddleware: authModule.adminMiddleware,
+    walletModule,
     serverLog,
 });
 app.use('/api/rental', rentalModule.router);

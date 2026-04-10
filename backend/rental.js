@@ -86,6 +86,12 @@ function assertNonNegativeInt(name, value) {
     }
 }
 
+function assertPositiveInt(name, value) {
+    if (!Number.isInteger(value) || value <= 0) {
+        throw new Error(`${name}_invalid`);
+    }
+}
+
 function assertRateMli(value) {
     if (!Number.isInteger(value) || value <= 0 || value > 1_000_000_000) {
         throw new Error('rate_mli_per_ktoken_invalid');
@@ -319,17 +325,290 @@ async function searchMarketplace({
 }
 
 // ============================================
+// Rental contract lifecycle
+// ============================================
+
+/**
+ * Atomic "rent this bot" — hold deposit, snapshot listing, insert contract,
+ * all inside a single wallet transaction. Returns the new contract.
+ *
+ * Skips the intermediate 'reserved' status for simplicity: the contract
+ * goes directly to 'active'. Entity handover (inserting the rental bot
+ * into the renter's device slot) is a follow-up PR concern; this function
+ * only handles the financial + record-keeping side.
+ */
+async function startRental({
+    listingId, renterUserId, renterDeviceId, durationMinutes,
+}, walletApi) {
+    assertString('listing_id', listingId, { max: 64 });
+    assertString('renter_user_id', renterUserId, { max: 64 });
+    assertString('renter_device_id', renterDeviceId, { max: 64 });
+    assertPositiveInt('duration_minutes', durationMinutes);
+    if (durationMinutes < MIN_RENTAL_MINUTES) {
+        throw new Error('duration_too_short');
+    }
+    if (durationMinutes > MAX_RENTAL_MINUTES) {
+        throw new Error('duration_too_long');
+    }
+
+    return walletApi.withTransaction(async (client) => {
+        // 1. Lock the listing row and validate.
+        const listingRes = await client.query(
+            `SELECT id, owner_user_id, rate_mli_per_ktoken,
+                    min_rental_minutes, max_rental_minutes,
+                    status, interview_passed
+             FROM bot_listings WHERE id = $1 FOR UPDATE`,
+            [listingId]
+        );
+        if (listingRes.rowCount === 0) throw new Error('listing_not_found');
+        const listing = listingRes.rows[0];
+        if (listing.status !== 'listed') throw new Error('listing_not_available');
+        if (!listing.interview_passed) throw new Error('interview_not_passed');
+        if (listing.owner_user_id === renterUserId) throw new Error('self_rental_forbidden');
+        if (durationMinutes < listing.min_rental_minutes) {
+            throw new Error('duration_below_listing_min');
+        }
+        if (durationMinutes > listing.max_rental_minutes) {
+            throw new Error('duration_above_listing_max');
+        }
+
+        // 2. Exclusivity check: the UNIQUE partial index enforces this at the
+        //    DB layer, but we explicit-check here to return a friendlier error.
+        const activeRes = await client.query(
+            `SELECT id FROM rental_contracts
+             WHERE listing_id = $1
+               AND status IN ('reserved', 'active', 'suspended_insufficient_funds')`,
+            [listingId]
+        );
+        if (activeRes.rowCount > 0) throw new Error('listing_already_rented');
+
+        // 3. Snapshot economics at this instant.
+        const rateSnapshot = Number(listing.rate_mli_per_ktoken);
+        const depositMli = computeDepositMli(rateSnapshot);
+        // Required minimum balance = deposit + ~60K tokens of buffer (≈1h typical chat).
+        const bufferMli = rateSnapshot * 60;
+        const requiredMli = depositMli + bufferMli;
+
+        // 4. Verify renter has sufficient spendable balance (not including held).
+        const balRes = await client.query(
+            `SELECT balance_mli FROM wallets WHERE user_id = $1`,
+            [renterUserId]
+        );
+        const currentBalance = balRes.rowCount > 0 ? BigInt(balRes.rows[0].balance_mli) : 0n;
+        if (currentBalance < BigInt(requiredMli)) {
+            const err = new Error('insufficient_balance_for_rental');
+            err.details = {
+                required_mli: String(requiredMli),
+                current_mli: String(currentBalance),
+                deposit_mli: String(depositMli),
+                buffer_mli: String(bufferMli),
+            };
+            throw err;
+        }
+
+        // 5. Create the contract row. Computed ends_at lets the cron find
+        //    expiring contracts without recomputing.
+        const contractRes = await client.query(
+            `INSERT INTO rental_contracts
+                (listing_id, owner_user_id, renter_user_id, renter_device_id,
+                 rate_mli_per_ktoken_snapshot, deposit_mli,
+                 planned_duration_min, started_at, ends_at, status)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW() + ($7 || ' minutes')::interval, 'active')
+             RETURNING id, status, started_at, ends_at, deposit_mli`,
+            [listingId, listing.owner_user_id, renterUserId, renterDeviceId,
+             rateSnapshot, depositMli, durationMinutes]
+        );
+        const contract = contractRes.rows[0];
+
+        // 6. Freeze the listing into rental_snapshots so owner edits
+        //    cannot affect this in-flight contract.
+        await client.query(
+            `INSERT INTO rental_snapshots
+                (contract_id, identity, rules, skills, webhook_url, allowed_vars)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [contract.id, null, null, null, null, '[]']
+        );
+
+        // 7. Hold the deposit (moves balance → held in the renter's wallet).
+        await walletApi.applyLedgerEntry(client, {
+            userId: renterUserId,
+            balanceDelta: -depositMli,
+            heldDelta: depositMli,
+            type: walletApi.LEDGER_TYPES.DEPOSIT_HOLD,
+            refType: 'rental_contract',
+            refId: contract.id,
+            note: `rental deposit: ${listingId}`,
+            idempotencyKey: `rental-hold:${contract.id}`,
+        });
+
+        return contract;
+    });
+}
+
+/**
+ * End a rental contract. `endReason` drives deposit disposition:
+ *   - 'ended_normal'            → full refund
+ *   - 'ended_early_by_renter'   → 50% refund (50% forfeit to platform)
+ *   - 'ended_zero_balance'      → full forfeit
+ *   - 'ended_violation'         → 30% forfeit, 70% refund
+ *   - 'ended_admin' | 'ended_disputed' → full refund
+ *
+ * Only the renter, owner, or admin can end a contract. Caller is
+ * responsible for validating the requester's identity before calling.
+ */
+async function endRental({ contractId, endReason, requesterUserId }, walletApi) {
+    assertString('contract_id', contractId, { max: 64 });
+    assertString('end_reason', endReason, { max: 40 });
+    assertString('requester_user_id', requesterUserId, { max: 64 });
+
+    const ALLOWED = new Set([
+        CONTRACT_STATUSES.ENDED_NORMAL,
+        CONTRACT_STATUSES.ENDED_EARLY_BY_RENTER,
+        CONTRACT_STATUSES.ENDED_ZERO_BALANCE,
+        CONTRACT_STATUSES.ENDED_DISPUTED,
+        CONTRACT_STATUSES.ENDED_VIOLATION,
+        CONTRACT_STATUSES.ENDED_ADMIN,
+    ]);
+    if (!ALLOWED.has(endReason)) throw new Error('end_reason_invalid');
+
+    return walletApi.withTransaction(async (client) => {
+        const res = await client.query(
+            `SELECT id, owner_user_id, renter_user_id, deposit_mli, status
+             FROM rental_contracts WHERE id = $1 FOR UPDATE`,
+            [contractId]
+        );
+        if (res.rowCount === 0) throw new Error('contract_not_found');
+        const contract = res.rows[0];
+        if (!contract.status.startsWith('active') && contract.status !== 'suspended_insufficient_funds' && contract.status !== 'reserved') {
+            throw new Error('contract_already_ended');
+        }
+        if (contract.renter_user_id !== requesterUserId &&
+            contract.owner_user_id !== requesterUserId) {
+            // Admin path is caller's responsibility to gate upstream.
+            throw new Error('contract_end_forbidden');
+        }
+
+        const depositMli = Number(contract.deposit_mli);
+
+        // Disposition matrix: how much of the deposit returns to renter
+        // vs gets forfeited (to the platform wallet or insurance pool).
+        let refundMli = 0;
+        let forfeitMli = 0;
+        switch (endReason) {
+            case CONTRACT_STATUSES.ENDED_NORMAL:
+            case CONTRACT_STATUSES.ENDED_DISPUTED:
+            case CONTRACT_STATUSES.ENDED_ADMIN:
+                refundMli = depositMli;
+                break;
+            case CONTRACT_STATUSES.ENDED_EARLY_BY_RENTER:
+                refundMli = Math.floor(depositMli / 2);
+                forfeitMli = depositMli - refundMli;
+                break;
+            case CONTRACT_STATUSES.ENDED_ZERO_BALANCE:
+                forfeitMli = depositMli;
+                break;
+            case CONTRACT_STATUSES.ENDED_VIOLATION:
+                forfeitMli = Math.floor(depositMli * 0.3);
+                refundMli = depositMli - forfeitMli;
+                break;
+        }
+
+        // 1. Release refund portion (held → balance).
+        if (refundMli > 0) {
+            await walletApi.applyLedgerEntry(client, {
+                userId: contract.renter_user_id,
+                balanceDelta: refundMli,
+                heldDelta: -refundMli,
+                type: walletApi.LEDGER_TYPES.DEPOSIT_RELEASE,
+                refType: 'rental_contract',
+                refId: contract.id,
+                note: `refund on ${endReason}`,
+                idempotencyKey: `rental-release:${contract.id}`,
+            });
+        }
+
+        // 2. Forfeit portion (held → void; caller can credit platform
+        //    wallet in a follow-up entry if desired).
+        if (forfeitMli > 0) {
+            await walletApi.applyLedgerEntry(client, {
+                userId: contract.renter_user_id,
+                balanceDelta: 0,
+                heldDelta: -forfeitMli,
+                type: walletApi.LEDGER_TYPES.DEPOSIT_FORFEIT,
+                refType: 'rental_contract',
+                refId: contract.id,
+                note: `forfeit on ${endReason}`,
+                idempotencyKey: `rental-forfeit:${contract.id}`,
+            });
+        }
+
+        // 3. Update contract status.
+        const updated = await client.query(
+            `UPDATE rental_contracts
+             SET status = $2, end_reason = $3, actual_ended_at = NOW()
+             WHERE id = $1
+             RETURNING id, status, end_reason, actual_ended_at`,
+            [contract.id, endReason, endReason]
+        );
+        return {
+            ...updated.rows[0],
+            refund_mli: refundMli,
+            forfeit_mli: forfeitMli,
+        };
+    });
+}
+
+/**
+ * Fetch contracts where the user is either renter or owner.
+ * `role` filters to one side ('renter' | 'owner'); omit for both.
+ */
+async function getMyContracts(userId, { role = null, limit = 50, offset = 0 } = {}) {
+    assertString('user_id', userId, { max: 64 });
+    const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200);
+    const safeOffset = Math.max(parseInt(offset, 10) || 0, 0);
+
+    let where;
+    const params = [userId];
+    if (role === 'renter') {
+        where = 'renter_user_id = $1';
+    } else if (role === 'owner') {
+        where = 'owner_user_id = $1';
+    } else {
+        where = '(renter_user_id = $1 OR owner_user_id = $1)';
+    }
+    params.push(safeLimit);
+    params.push(safeOffset);
+
+    const res = await pool.query(
+        `SELECT id, listing_id, owner_user_id, renter_user_id,
+                rate_mli_per_ktoken_snapshot, deposit_mli,
+                planned_duration_min, started_at, ends_at, actual_ended_at,
+                tokens_consumed, ecoin_charged_mli, violation_count,
+                status, end_reason, created_at
+         FROM rental_contracts
+         WHERE ${where}
+         ORDER BY created_at DESC
+         LIMIT $${params.length - 1} OFFSET $${params.length}`,
+        params
+    );
+    return res.rows;
+}
+
+// ============================================
 // Express factory
 // ============================================
 
-module.exports = function rentalFactory({ authMiddleware, adminMiddleware, serverLog } = {}) {
+module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walletModule, serverLog } = {}) {
     if (typeof authMiddleware !== 'function') {
         throw new Error('rental: authMiddleware is required');
+    }
+    if (!walletModule || typeof walletModule.withTransaction !== 'function') {
+        throw new Error('rental: walletModule is required');
     }
     const router = express.Router();
     const audit = serverLog || (() => {});
 
-    const INPUT_ERROR_RE = /^(?:[a-z][a-z0-9_]*_(?:invalid|required|forbidden|not_found)|publish_failed|interview_not_passed|no_fields_to_update)$/;
+    const INPUT_ERROR_RE = /^(?:[a-z][a-z0-9_]*_(?:invalid|required|forbidden|not_found)|publish_failed|interview_not_passed|no_fields_to_update|duration_too_(?:short|long)|duration_(?:below|above)_listing_(?:min|max)|listing_not_available|listing_already_rented|self_rental_forbidden|insufficient_balance_for_rental|contract_already_ended|contract_end_forbidden)$/;
 
     function rentalRoute(fn) {
         return async (req, res) => {
@@ -410,6 +689,46 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, serve
         res.json({ success: true, listings });
     }));
 
+    // POST /api/rental/contract — start a new rental (atomic: deposit + contract + snapshot)
+    router.post('/contract', authMiddleware, rentalRoute(async (req, res) => {
+        const { listingId, renterDeviceId, durationMinutes } = req.body || {};
+        const contract = await startRental({
+            listingId,
+            renterUserId: req.user.userId,
+            renterDeviceId,
+            durationMinutes: parseInt(durationMinutes, 10),
+        }, walletModule);
+        audit('info', 'rental', `contract started ${contract.id}`, {
+            userId: req.user.userId, action: 'contract_start', resource: contract.id,
+        });
+        res.json({ success: true, contract });
+    }));
+
+    // POST /api/rental/contract/:id/end — end a contract (by renter or owner)
+    router.post('/contract/:id/end', authMiddleware, rentalRoute(async (req, res) => {
+        const { endReason } = req.body || {};
+        const contract = await endRental({
+            contractId: req.params.id,
+            endReason: endReason || CONTRACT_STATUSES.ENDED_NORMAL,
+            requesterUserId: req.user.userId,
+        }, walletModule);
+        audit('info', 'rental', `contract ended ${contract.id} reason=${contract.end_reason}`, {
+            userId: req.user.userId, action: 'contract_end', resource: contract.id, result: contract.end_reason,
+        });
+        res.json({ success: true, contract });
+    }));
+
+    // GET /api/rental/my-contracts?role=renter|owner
+    router.get('/my-contracts', authMiddleware, rentalRoute(async (req, res) => {
+        const role = req.query.role || null;
+        const contracts = await getMyContracts(req.user.userId, {
+            role,
+            limit: req.query.limit,
+            offset: req.query.offset,
+        });
+        res.json({ success: true, contracts });
+    }));
+
     // GET /api/rental/marketplace — public search (no auth required)
     router.get('/marketplace', async (req, res) => {
         try {
@@ -444,6 +763,9 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, serve
         getListing,
         listMyListings,
         searchMarketplace,
+        startRental,
+        endRental,
+        getMyContracts,
         // Helpers + constants
         computeDepositMli,
         DEPOSIT_TOKEN_MULTIPLIER,

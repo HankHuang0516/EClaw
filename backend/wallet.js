@@ -830,6 +830,11 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
         getBalance,
         getLedger,
         reconcileBalances,
+        // Transaction primitives for other modules (e.g. rental.js) that
+        // need to write wallet ledger entries inside their own business
+        // transactions (atomic cross-module operations).
+        withTransaction,
+        applyLedgerEntry,
         // Constants
         LEDGER_TYPES,
         TWD_TO_MLI,

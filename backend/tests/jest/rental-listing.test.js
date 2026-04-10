@@ -192,7 +192,13 @@ jest.mock('fs', () => {
 const rental = require('../../rental');
 
 const noopAuth = (_req, _res, next) => next();
-const api = rental({ authMiddleware: noopAuth });
+// The listing tests don't exercise contract code, but the factory now
+// hard-requires walletModule — pass a stub with just withTransaction.
+const stubWallet = {
+    withTransaction: async () => { throw new Error('not_used_in_listing_tests'); },
+    LEDGER_TYPES: {},
+};
+const api = rental({ authMiddleware: noopAuth, walletModule: stubWallet });
 
 const OWNER = '11111111-1111-1111-1111-111111111111';
 const OTHER = '22222222-2222-2222-2222-222222222222';
@@ -419,6 +425,6 @@ describe('rental: searchMarketplace', () => {
 
 describe('rental: factory hard-fail', () => {
     test('throws when authMiddleware is missing', () => {
-        expect(() => rental({})).toThrow(/authMiddleware/);
+        expect(() => rental({ walletModule: stubWallet })).toThrow(/authMiddleware/);
     });
 });
