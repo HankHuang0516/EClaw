@@ -357,16 +357,59 @@
                 ? data.sessions.filter(s => (s.score || 0) > 0).length
                 : scores.filter(s => s != null && s > 0).length;
             const failed = 12 - passed;
-            document.getElementById('reportContent').innerHTML = `
-                <div style="text-align:center;padding:16px 0;">
-                    <div style="font-size:48px;font-weight:900;color:${gradeColor};margin-bottom:4px;">Grade: ${grade}</div>
-                    <div style="font-size:14px;color:var(--text-secondary);">${total} / ${maxS} (${pct}%) &mdash; ${passed} passed, ${failed} failed</div>
-                    <div style="font-size:13px;color:var(--text-muted);margin-top:8px;">
-                        ${pct >= 80 ? 'Excellent performance. This agent demonstrates strong real-world capabilities.' :
-                          pct >= 50 ? 'Solid performance with room for improvement in some areas.' :
-                          'This agent may need additional capabilities to handle complex tasks.'}
+
+            // Build detailed report with expandable per-test breakdown
+            const commentary = pct >= 80 ? 'Excellent performance. This agent demonstrates strong real-world capabilities.'
+                : pct >= 50 ? 'Solid performance with room for improvement in some areas.'
+                : 'This agent may need additional capabilities to handle complex tasks.';
+
+            let detailRows = '';
+            const REFS = ['OSWorld','WebArena','WebVoyager','OSWorld','WebArena','WorkArena','ST-WebAgentBench','HumanEval Pro','—','Context-Bench','—','Web Speech API'];
+            NAMES.forEach((name, i) => {
+                const s = data.sessions ? data.sessions.find(x => x.test_index === i) : null;
+                const sc = s ? (s.score || 0) : (scores[i] || 0);
+                const mx = s ? s.max_score : [15,15,15,12,13,10,10,15,10,10,12,10][i];
+                const scPct = mx > 0 ? Math.round(sc / mx * 100) : 0;
+                const icon = sc > 0 ? '\u2705' : '\u274C';
+                const barW = Math.round(sc / mx * 100);
+                const barColor = scPct >= 80 ? 'var(--success)' : scPct >= 50 ? 'var(--warning)' : 'var(--danger)';
+                const raw = s && s.raw_result ? (typeof s.raw_result === 'string' ? JSON.parse(s.raw_result) : s.raw_result) : {};
+                const speedInfo = raw.elapsedSec ? `${raw.elapsedSec}s` : (raw.speedMult ? `${raw.speedMult}x` : '');
+
+                detailRows += `
+                <div style="border:1px solid var(--card-border);border-radius:var(--radius-sm);margin-bottom:6px;overflow:hidden;">
+                    <div class="report-row-header" style="display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;background:var(--card);">
+                        <span style="font-size:13px;">${icon}</span>
+                        <span style="font-size:13px;font-weight:600;flex:1;">${name}</span>
+                        <span style="font-size:11px;color:var(--text-muted);">${REFS[i]}</span>
+                        <span style="font-size:12px;font-weight:700;min-width:50px;text-align:right;">${sc}/${mx}</span>
+                        <span style="font-size:10px;color:var(--text-muted);width:28px;text-align:right;">${scPct}%</span>
+                    </div>
+                    <div style="height:3px;background:var(--input-bg);"><div style="height:100%;width:${barW}%;background:${barColor};transition:width 0.5s;"></div></div>
+                    <div class="report-detail" style="display:none;padding:10px 12px;background:var(--bg-secondary);font-size:12px;color:var(--text-secondary);line-height:1.7;">
+                        <div><strong>Score:</strong> ${sc} / ${mx} (${scPct}%)</div>
+                        ${speedInfo ? `<div><strong>Speed:</strong> ${speedInfo}</div>` : ''}
+                        ${raw.score !== undefined && raw.maxScore !== undefined ? `<div><strong>Base accuracy:</strong> ${raw.score} / ${raw.maxScore}</div>` : ''}
+                        <div><strong>Status:</strong> ${s ? s.status : (sc > 0 ? 'completed' : 'no data')}</div>
+                        <div style="margin-top:4px;font-size:11px;color:var(--text-muted);">Reference: ${REFS[i]}</div>
                     </div>
                 </div>`;
+            });
+
+            document.getElementById('reportContent').innerHTML = `
+                <div style="text-align:center;padding:16px 0 20px;">
+                    <div style="font-size:48px;font-weight:900;color:${gradeColor};margin-bottom:4px;">Grade: ${grade}</div>
+                    <div style="font-size:14px;color:var(--text-secondary);">${total} / ${maxS} (${pct}%) &mdash; ${passed} passed, ${failed} failed</div>
+                    <div style="font-size:13px;color:var(--text-muted);margin-top:8px;">${commentary}</div>
+                </div>
+                <div style="margin-top:8px;">${detailRows}</div>`;
+
+            document.querySelectorAll('.report-row-header').forEach(hdr => {
+                hdr.addEventListener('click', () => {
+                    const detail = hdr.parentElement.querySelector('.report-detail');
+                    if (detail) detail.style.display = detail.style.display === 'none' ? 'block' : 'none';
+                });
+            });
             setTimeout(() => reveal('reportSection'), 400);
 
             // Confetti for top 10 → then modal after 3s
