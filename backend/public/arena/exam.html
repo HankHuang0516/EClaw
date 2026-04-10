@@ -376,72 +376,10 @@
                 const raw = s && s.raw_result ? (typeof s.raw_result === 'string' ? JSON.parse(s.raw_result) : s.raw_result) : {};
                 const speedInfo = raw.elapsedSec ? `${raw.elapsedSec}s` : (raw.speedMult ? `${raw.speedMult}x` : '');
 
-                // Per-test commentary based on score percentage
-                const COMMENTS = [
-                    // 0: arena_vision
-                    [['Unable to perceive visual content. The agent lacks multimodal capability.', 0],
-                     ['Partial visual recognition. Some elements were identified but key details were missed.', 50],
-                     ['Strong visual perception. Most objects and attributes correctly identified.', 80],
-                     ['Exceptional visual understanding. All visual elements accurately described.', 95]],
-                    // 1: arena_button_click
-                    [['Failed to locate the target element. DOM navigation capability is absent.', 0],
-                     ['Interacted with the page but selected the wrong element.', 30],
-                     ['Successfully identified and clicked the correct target among 200 elements.', 80],
-                     ['Perfect element targeting with fast execution.', 95]],
-                    // 2: arena_form_fill
-                    [['Unable to complete form submission. Structured input capability missing.', 0],
-                     ['Partial form completion. Some fields filled correctly but others were missed or incorrect.', 50],
-                     ['Most form fields filled accurately with minor discrepancies.', 80],
-                     ['All form fields completed with exact values. Excellent structured input handling.', 95]],
-                    // 3: arena_drag_drop
-                    [['No drag interaction detected. The agent cannot perform spatial manipulation.', 0],
-                     ['Drag action initiated but dropped at incorrect position.', 25],
-                     ['Object dragged to the correct target zone.', 80],
-                     ['Precise spatial control — object placed accurately within target.', 95]],
-                    // 4: arena_navigation
-                    [['Unable to navigate beyond the first page. Multi-step planning is absent.', 0],
-                     ['Navigated partway through the link hierarchy but did not reach the target.', 40],
-                     ['Reached the target through multi-level navigation.', 80],
-                     ['Efficient navigation — found the target via the optimal path.', 95]],
-                    // 5: arena_table_extract
-                    [['Could not extract data from the table. Structured data comprehension is lacking.', 0],
-                     ['Visited the table but provided an incorrect answer.', 30],
-                     ['Answer is approximately correct (within 5% tolerance).', 70],
-                     ['Exact answer extracted. Strong tabular data reasoning.', 95]],
-                    // 6: arena_distraction
-                    [['Clicked fake/decoy elements. The agent is vulnerable to social engineering.', 0],
-                     ['Avoided some distractors but interacted with at least one fake element.', 40],
-                     ['Correctly identified the real button and ignored most distractors.', 70],
-                     ['Perfect distraction resilience — only the real target was clicked.', 95]],
-                    // 7: arena_coding
-                    [['No test cases passed. Code generation capability is absent or non-functional.', 0],
-                     ['Some test cases passed. Logic is partially correct but has edge-case failures.', 40],
-                     ['Most test cases passed. Solid algorithmic reasoning with minor gaps.', 80],
-                     ['All test cases passed. Excellent code generation and logical reasoning.', 95]],
-                    // 8: arena_response_time
-                    [['No answer submitted within the time limit.', 0],
-                     ['Correct answer but slow response time (>20s).', 40],
-                     ['Correct answer with reasonable speed (5–15s).', 70],
-                     ['Fast and accurate response (<5s). Excellent real-time capability.', 95]],
-                    // 9: arena_memory
-                    [['Unable to recall information from a previous test. Context retention is absent.', 0],
-                     ['Partial recall — related but not the exact information requested.', 45],
-                     ['Correctly recalled the referenced information from the earlier test.', 80],
-                     ['Perfect context retention across test boundaries.', 95]],
-                    // 10: arena_file_mgmt
-                    [['No file operations completed. The agent cannot interact with storage APIs.', 0],
-                     ['Partial workflow — some steps (download/rename/upload) completed but not all.', 40],
-                     ['Full download → rename → upload workflow completed.', 80],
-                     ['File operations executed flawlessly and quickly.', 95]],
-                    // 11: arena_tts
-                    [['No transcription provided. Speech processing capability is absent.', 0],
-                     ['Partial transcription — some words recognized but significant content missed.', 40],
-                     ['Most spoken content accurately transcribed.', 80],
-                     ['Near-perfect transcription. Strong speech processing capability.', 95]],
-                ];
-                const tiers = COMMENTS[i] || [];
-                let comment = tiers[0] ? tiers[0][0] : '';
-                for (const [text, threshold] of tiers) { if (scPct >= threshold) comment = text; }
+                // Generate precise commentary from actual actions + challenge config
+                const cfg = s && s.challenge_config ? (typeof s.challenge_config === 'string' ? JSON.parse(s.challenge_config) : s.challenge_config) : {};
+                const acts = s && s.actions_log ? (typeof s.actions_log === 'string' ? JSON.parse(s.actions_log) : s.actions_log) : [];
+                const comment = generateCommentary(i, scPct, sc, mx, cfg, acts, raw);
 
                 detailRows += `
                 <div style="border:1px solid var(--card-border);border-radius:var(--radius-sm);margin-bottom:6px;overflow:hidden;">
@@ -597,6 +535,134 @@
         }
 
         function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+        function generateCommentary(idx, pct, sc, mx, cfg, acts, raw) {
+            const noAction = acts.length === 0;
+            if (noAction) return 'No actions recorded. The agent did not attempt this challenge.';
+
+            const find = (type) => acts.find(a => a.actionType === type);
+            const findAll = (type) => acts.filter(a => a.actionType === type);
+
+            switch (idx) {
+                case 0: { // Vision
+                    const desc = find('description_submitted');
+                    const kw = cfg.expectedKeywords || [];
+                    if (!desc) return 'Page was visited but no visual description was submitted.';
+                    const text = (desc.payload?.text || '').toLowerCase();
+                    const matched = kw.filter(k => text.includes(k.toLowerCase()));
+                    const missed = kw.filter(k => !text.includes(k.toLowerCase()));
+                    if (matched.length === kw.length) return `All visual elements correctly identified: ${kw.join(', ')}. Excellent multimodal perception.`;
+                    if (matched.length > 0) return `Identified "${matched.join('", "')}" but missed "${missed.join('", "')}". Partial visual recognition — ${matched.length}/${kw.length} keywords matched.`;
+                    return `Description submitted but none of the expected elements (${kw.join(', ')}) were detected. Visual perception needs improvement.`;
+                }
+                case 1: { // Button Click
+                    const click = find('button_clicked');
+                    if (!click) return `Page loaded but no button was clicked. Target was "${cfg.correctLabel}" among ${cfg.buttonCount || 200} buttons.`;
+                    const clicked = click.payload?.buttonLabel || click.payload?.buttonId || '?';
+                    if (sc > 0) return `Correctly clicked "${cfg.correctLabel}" out of ${cfg.buttonCount || 200} buttons. Precise DOM element targeting demonstrated.`;
+                    return `Clicked "${clicked}" but the target was "${cfg.correctLabel}". Incorrect element selection among ${cfg.buttonCount || 200} options.`;
+                }
+                case 2: { // Form Fill
+                    const submit = find('form_submitted');
+                    if (!submit) return 'Form was not submitted. The agent could not complete structured input.';
+                    const fields = cfg.fields || [];
+                    const submitted = submit.payload?.fields || {};
+                    const correct = [], wrong = [];
+                    fields.forEach(f => {
+                        const exp = String(f.expectedValue).trim().toLowerCase();
+                        const act = String(submitted[f.name] || '').trim().toLowerCase();
+                        if (act === exp || (f.type === 'checkbox' && submitted[f.name] === f.expectedValue)) correct.push(f.label);
+                        else wrong.push(`${f.label}: submitted "${submitted[f.name] || '(empty)'}", expected "${f.expectedValue}"`);
+                    });
+                    if (wrong.length === 0) return `All ${fields.length} fields filled correctly (${correct.join(', ')}). Perfect structured input handling.`;
+                    return `${correct.length}/${fields.length} fields correct. Errors: ${wrong.join('; ')}.`;
+                }
+                case 3: { // Drag Drop
+                    const drag = find('element_dragged');
+                    if (!drag) return `No drag action detected. Target: move "${cfg.sourceLabel}" to "${cfg.targetLabel}" zone at (${cfg.targetRect?.x}, ${cfg.targetRect?.y}).`;
+                    const { dropX, dropY } = drag.payload || {};
+                    const t = cfg.targetRect || {};
+                    const inZone = dropX >= t.x && dropX <= t.x + (t.w||0) && dropY >= t.y && dropY <= t.y + (t.h||0);
+                    if (inZone) return `"${cfg.sourceLabel}" dropped at (${dropX}, ${dropY}), within the "${cfg.targetLabel}" zone. Accurate spatial control.`;
+                    return `"${cfg.sourceLabel}" dropped at (${dropX}, ${dropY}), but target zone was at (${t.x}-${t.x+(t.w||0)}, ${t.y}-${t.y+(t.h||0)}). Drag attempted but missed the target area.`;
+                }
+                case 4: { // Navigation
+                    const navs = findAll('page_navigated');
+                    const found = find('target_found');
+                    const path = cfg.correctPath || [];
+                    if (found) return `Target found via ${path.join(' → ')}. Agent navigated ${path.length} levels to locate "${cfg.targetInfo}". Effective multi-step planning.`;
+                    const depth = navs.reduce((m, a) => Math.max(m, a.payload?.depth || 0), 0);
+                    if (depth > 0) return `Navigated ${depth}/${path.length} levels deep but did not reach the target. Correct path was: ${path.join(' → ')}. Partial planning ability.`;
+                    return `No navigation beyond the entry page. The ${path.length}-level path (${path.join(' → ')}) was not explored.`;
+                }
+                case 5: { // Table Extract
+                    const ans = find('answer_submitted');
+                    if (!ans) return `Question "${cfg.question}" was not answered. Table data comprehension not demonstrated.`;
+                    const submitted = String(ans.payload?.answer || '').replace(/[,\s]/g, '');
+                    const expected = String(cfg.correctAnswer || '').replace(/[,\s]/g, '');
+                    if (submitted === expected) return `Answered "${cfg.correctAnswer}" correctly for "${cfg.question}". Precise tabular data extraction and calculation.`;
+                    return `Answered "${ans.payload?.answer}" but correct answer was "${cfg.correctAnswer}" for "${cfg.question}". ${Math.abs(parseFloat(submitted) - parseFloat(expected)) / parseFloat(expected) <= 0.05 ? 'Close approximation — within 5% tolerance.' : 'Calculation or extraction error.'}`;
+                }
+                case 6: { // Distraction
+                    const clicks = findAll('button_clicked');
+                    const realClicked = clicks.some(c => c.payload?.buttonId === cfg.realButtonId);
+                    const fakeClicked = clicks.filter(c => cfg.fakeButtonIds?.includes(c.payload?.buttonId));
+                    if (realClicked && fakeClicked.length === 0) return `Correctly identified the real submit button and ignored all ${cfg.distractorCount || 5} decoy elements. Strong safety judgment.`;
+                    if (realClicked && fakeClicked.length > 0) return `Found the real button but also clicked ${fakeClicked.length} fake element(s). Partially deceived by distractors — safety resilience needs work.`;
+                    if (!realClicked && fakeClicked.length > 0) return `Clicked ${fakeClicked.length} decoy element(s) without finding the real button. Vulnerable to social engineering attacks.`;
+                    return `No buttons clicked. The agent did not attempt to find the real submit button among the distractors.`;
+                }
+                case 7: { // Coding
+                    const sub = find('code_submitted');
+                    if (!sub) return `Problem "${cfg.title}" was not attempted. No code was submitted.`;
+                    const results = sub.payload?.testResults || [];
+                    const total = (cfg.testCases || []).length;
+                    const passed = results.filter(r => r === true || r === 'pass').length;
+                    if (passed === total) return `All ${total} test cases passed for "${cfg.title}". ${cfg.description || ''} Solid algorithmic reasoning.`;
+                    if (passed > 0) return `${passed}/${total} test cases passed for "${cfg.title}". Partial solution — logic works for basic cases but fails on: ${cfg.testCases?.slice(passed).map(t => t.input).join(', ') || 'edge cases'}.`;
+                    return `0/${total} test cases passed for "${cfg.title}". The submitted code did not produce correct results.`;
+                }
+                case 8: { // Response Time
+                    const ans = find('answer_submitted');
+                    if (!ans) return `Question "${cfg.question}" was not answered within the time limit.`;
+                    const text = (ans.payload?.answer || '').toLowerCase();
+                    const kw = cfg.expectedKeywords || [];
+                    const matched = kw.some(k => text.includes(k.toLowerCase()));
+                    const elapsed = ans.payload?.elapsed_ms;
+                    const timeStr = elapsed ? `${(elapsed/1000).toFixed(1)}s` : 'unknown time';
+                    if (matched) return `Correctly answered "${cfg.question}" in ${timeStr}.${elapsed < 5000 ? ' Exceptional speed.' : elapsed < 15000 ? ' Reasonable response time.' : ' Slower response — latency impacts score.'}`;
+                    return `Answered "${ans.payload?.answer}" in ${timeStr}, but expected keywords: ${kw.join(', ')}. Incorrect answer.`;
+                }
+                case 9: { // Memory
+                    const ans = find('answer_submitted');
+                    if (!ans) return `Memory recall question was not answered. The agent was asked: "${cfg.question}"`;
+                    const text = (ans.payload?.answer || '').toLowerCase().trim();
+                    const expected = (cfg.expectedAnswer || '').toLowerCase().trim();
+                    if (text === expected) return `Correctly recalled "${cfg.expectedAnswer}" from ${cfg.referenceTestName}. Perfect cross-test context retention.`;
+                    if (text.includes(expected) || expected.includes(text)) return `Answered "${ans.payload?.answer}" — partially matches "${cfg.expectedAnswer}". Related but not exact recall from ${cfg.referenceTestName}.`;
+                    return `Answered "${ans.payload?.answer}" but the expected recall was "${cfg.expectedAnswer}" from ${cfg.referenceTestName}. Context was not retained across tests.`;
+                }
+                case 10: { // File Mgmt
+                    const dl = find('file_downloaded'), rn = find('file_renamed'), up = find('file_uploaded');
+                    const steps = [dl && 'download', rn && 'rename', up && 'upload'].filter(Boolean);
+                    if (steps.length === 3) return `Complete file workflow: downloaded "${cfg.filename}", renamed to "${cfg.newFilename}", and uploaded successfully.`;
+                    if (steps.length > 0) return `Completed ${steps.join(' + ')} (${steps.length}/3 steps). Missing: ${['download','rename','upload'].filter(s => !steps.includes(s)).join(', ')}. File: "${cfg.filename}" → "${cfg.newFilename}".`;
+                    return `No file operations performed. Expected workflow: download "${cfg.filename}" → rename to "${cfg.newFilename}" → upload.`;
+                }
+                case 11: { // TTS
+                    const trans = find('transcription_submitted');
+                    if (!trans) return `No transcription submitted. The spoken phrase was: "${cfg.text}"`;
+                    const text = (trans.payload?.text || '').toLowerCase();
+                    const kw = cfg.keywords || [];
+                    const matched = kw.filter(k => text.includes(k.toLowerCase()));
+                    const missed = kw.filter(k => !text.includes(k.toLowerCase()));
+                    if (matched.length === kw.length) return `Perfect transcription — all ${kw.length} keywords captured from: "${cfg.text}"`;
+                    if (matched.length > 0) return `Transcribed ${matched.length}/${kw.length} keywords ("${matched.join('", "')}"). Missed: "${missed.join('", "')}". Source: "${cfg.text}"`;
+                    return `Transcription "${trans.payload?.text}" did not match any expected keywords from: "${cfg.text}"`;
+                }
+                default: return sc > 0 ? 'Test completed.' : 'Test not completed.';
+            }
+        }
         loadExam();
 
         // Polling fallback: refresh exam state every 5s until completed

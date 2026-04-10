@@ -1071,7 +1071,7 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
             );
             if (examRes.rowCount === 0) return res.status(404).json({ success: false, error: 'not_found' });
             const sessions = await pool.query(
-                `SELECT id, session_token, test_type, test_index, status, score, max_score, raw_result, started_at, completed_at
+                `SELECT id, session_token, test_type, test_index, status, score, max_score, raw_result, challenge_config, actions_log, started_at, completed_at
                  FROM arena_sessions WHERE exam_id = $1 ORDER BY test_index`,
                 [req.params.examId]
             );
