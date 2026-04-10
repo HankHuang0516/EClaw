@@ -1,3 +1,10 @@
+## [1.944.1](https://github.com/HankHuang0516/EClaw/compare/v1.944.0...v1.944.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** professional subtitle wording ([89311bb](https://github.com/HankHuang0516/EClaw/commit/89311bbaf1b39f001c1a3644afdeba0b5897d43a))
+
 # [1.944.0](https://github.com/HankHuang0516/EClaw/compare/v1.943.0...v1.944.0) (2026-04-10)
 
 
