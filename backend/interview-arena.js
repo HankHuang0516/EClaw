@@ -150,27 +150,35 @@ const VISION_IMAGES = [
     { file: 'green-triangle.svg', keywords: ['green', 'triangle'] },
     { file: 'yellow-star.svg', keywords: ['yellow', 'star'] },
     { file: 'cat-orange.svg', keywords: ['cat', 'orange'] },
-    // Procedurally generated descriptions (no SVG file needed — scored by keyword match on bot's text response)
-    { file: null, description: 'A purple pentagon on a gray background', keywords: ['purple', 'pentagon'] },
-    { file: null, description: 'Three overlapping red, green, and blue circles', keywords: ['three', 'circles', 'overlapping'] },
-    { file: null, description: 'A white arrow pointing right on a black background', keywords: ['arrow', 'right', 'white'] },
-    { file: null, description: 'A yellow crescent moon with two small stars', keywords: ['moon', 'crescent', 'stars'] },
+    // ── Easy tier (20%) — basic shape/object recognition ──
+    { file: null, description: 'A red heart shape centered on a white background', keywords: ['heart', 'red'] },
     { file: null, description: 'A green checkmark inside a circle', keywords: ['checkmark', 'green', 'circle'] },
-    { file: null, description: 'A bar chart with four bars of different heights', keywords: ['bar', 'chart', 'four'] },
-    { file: null, description: 'A red heart shape centered on white', keywords: ['heart', 'red'] },
-    { file: null, description: 'Two interlocking gold rings', keywords: ['rings', 'gold', 'two'] },
-    { file: null, description: 'A blue diamond shape rotated 45 degrees', keywords: ['diamond', 'blue'] },
-    { file: null, description: 'A pie chart split into three equal colored sections', keywords: ['pie', 'chart', 'three'] },
-    { file: null, description: 'An orange lightning bolt on dark background', keywords: ['lightning', 'orange'] },
+    { file: null, description: 'A blue water droplet shape on gray', keywords: ['water', 'droplet', 'blue'] },
+    { file: null, description: 'A yellow sun with eight rays extending outward', keywords: ['sun', 'yellow', 'rays'] },
     { file: null, description: 'A simple house with a red roof and brown door', keywords: ['house', 'roof', 'door'] },
-    { file: null, description: 'A clock showing 3 o\'clock', keywords: ['clock', 'three'] },
-    { file: null, description: 'A green tree with a brown trunk', keywords: ['tree', 'green', 'trunk'] },
-    { file: null, description: 'A blue water droplet shape', keywords: ['water', 'droplet', 'blue'] },
-    { file: null, description: 'A red stop sign octagon', keywords: ['stop', 'octagon', 'red'] },
-    { file: null, description: 'A yellow sun with eight rays', keywords: ['sun', 'yellow', 'rays'] },
-    { file: null, description: 'A black and white chess board pattern', keywords: ['chess', 'board', 'pattern'] },
-    { file: null, description: 'A pink flower with five petals', keywords: ['flower', 'pink', 'petals'] },
-    { file: null, description: 'A gray gear/cog wheel icon', keywords: ['gear', 'cog', 'gray'] },
+    // ── Medium tier (50%) — counting, labels, multi-object scenes ──
+    { file: null, description: 'A bar chart with four bars labeled Q1 through Q4 where Q3 is the tallest', keywords: ['bar', 'chart', 'four', 'Q3'] },
+    { file: null, description: 'A desk with a laptop, two coffee cups, and a stack of three books', keywords: ['laptop', 'two', 'cups', 'three', 'books'] },
+    { file: null, description: 'Five colored pencils arranged in a row: red, orange, yellow, green, blue', keywords: ['five', 'pencils', 'red', 'blue'] },
+    { file: null, description: 'A pie chart divided into four sections: blue 40%, green 30%, red 20%, yellow 10%', keywords: ['pie', 'chart', 'four', 'blue'] },
+    { file: null, description: 'A Venn diagram with three overlapping circles labeled A, B, and C', keywords: ['venn', 'three', 'circles'] },
+    { file: null, description: 'A road sign reading SPEED LIMIT 65 against a blue sky', keywords: ['sign', 'speed', '65'] },
+    { file: null, description: 'A calendar page showing March with the 15th circled in red', keywords: ['calendar', 'march', '15', 'red'] },
+    { file: null, description: 'Three overlapping translucent circles in red, green, and blue forming additive color mix', keywords: ['three', 'circles', 'red', 'green', 'blue'] },
+    { file: null, description: 'A whiteboard with the equation E = mc² written in blue marker', keywords: ['whiteboard', 'equation', 'blue'] },
+    { file: null, description: 'A clock face showing the time 7:45', keywords: ['clock', 'seven', 'forty-five'] },
+    { file: null, description: 'Two interlocking gold rings on a dark velvet surface', keywords: ['rings', 'gold', 'two'] },
+    { file: null, description: 'An arrow pointing right with a dashed trail on black background', keywords: ['arrow', 'right', 'dashed'] },
+    { file: null, description: 'A flowchart with a diamond decision node labeled "Is valid?" branching to Yes and No paths', keywords: ['flowchart', 'diamond', 'decision', 'yes', 'no'] },
+    // ── Hard tier (30%) — OCR, spatial reasoning, complex counting ──
+    { file: null, description: 'A grocery shelf with six cans of soup on the top row and two boxes of cereal on the bottom row', keywords: ['six', 'cans', 'soup', 'two', 'cereal'] },
+    { file: null, description: 'An aerial parking lot with twelve cars, three of which are red', keywords: ['twelve', 'cars', 'three', 'red'] },
+    { file: null, description: 'A chemistry lab bench with three beakers: left contains blue liquid, middle is empty, right has green precipitate at the bottom', keywords: ['three', 'beakers', 'blue', 'empty', 'green'] },
+    { file: null, description: 'A handwritten note on lined paper reading Meeting at 3pm Room 204 with the time and room number underlined', keywords: ['meeting', '3pm', '204', 'underlined'] },
+    { file: null, description: 'A phone home screen showing 16 app icons in a 4x4 grid and a weather widget displaying 72 degrees', keywords: ['phone', '16', 'apps', 'weather', '72'] },
+    { file: null, description: 'A line chart showing quarterly revenue: Q1 at $10K, Q2 at $15K, Q3 dips to $8K, Q4 recovers to $20K', keywords: ['chart', 'revenue', 'Q3', 'dip', 'Q4'] },
+    { file: null, description: 'A world map with five red pins marking cities: New York, London, Tokyo, Sydney, and São Paulo', keywords: ['map', 'five', 'pins', 'Tokyo'] },
+    { file: null, description: 'A receipt from a store dated 03/15 showing total $47.83 with three itemized lines and a barcode at bottom', keywords: ['receipt', 'total', '47', 'three', 'barcode'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -187,12 +195,12 @@ function generateButtonClickChallenge() {
     return { correctIndex, correctLabel, buttonCount, seed: Math.floor(Math.random() * 1e9) };
 }
 
-const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva'];
-const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br'];
-const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea'];
-const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123'];
-const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17'];
-const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission'];
+const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson'];
+const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se'];
+const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore'];
+const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567'];
+const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17','1993-08-09','1986-02-14','1994-10-31','1989-05-20'];
+const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund'];
 
 function generateFormFillChallenge() {
     const nameIdx = Math.floor(Math.random() * FORM_NAMES.length);
@@ -234,21 +242,23 @@ function generateDragDropChallenge() {
 }
 
 function generateNavigationChallenge() {
-    const categories = ['Products', 'Services', 'Company', 'Support', 'Resources'];
-    const subcategories = ['Electronics', 'Software', 'Hardware', 'Analytics', 'Cloud'];
+    const categories = ['Products', 'Services', 'Company', 'Support', 'Resources', 'Developers', 'Partners', 'Solutions'];
+    const subcategories = ['Electronics', 'Software', 'Hardware', 'Analytics', 'Cloud', 'Security', 'Networking', 'AI Tools'];
+    const sections = ['Documentation', 'Downloads', 'Tutorials', 'API Reference', 'Release Notes', 'FAQ', 'Pricing', 'Contact'];
     const items = ['Item #' + (100 + Math.floor(Math.random() * 900))];
     const correctPath = [
         categories[Math.floor(Math.random() * categories.length)],
         subcategories[Math.floor(Math.random() * subcategories.length)],
+        sections[Math.floor(Math.random() * sections.length)],
         items[0],
     ];
     const targetInfo = `Serial: ${generateToken(4).toUpperCase()}`;
-    return { correctPath, targetInfo, depth: 3, linksPerLevel: 6 };
+    return { correctPath, targetInfo, depth: 4, linksPerLevel: 8 };
 }
 
 function generateTableExtractChallenge() {
     const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
-    const departments = ['Engineering', 'Marketing', 'Sales', 'Operations', 'HR'];
+    const departments = ['Engineering', 'Marketing', 'Sales', 'Operations', 'HR', 'Finance', 'Legal', 'R&D', 'Customer Support', 'Product'];
     const tableData = [];
     for (const dept of departments) {
         const row = { department: dept };
@@ -271,10 +281,10 @@ function generateTableExtractChallenge() {
 function generateDistractionChallenge() {
     const realButtonId = 'real-submit-' + generateToken(3);
     const fakeIds = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 8; i++) {
         fakeIds.push('fake-' + generateToken(3));
     }
-    return { realButtonId, fakeButtonIds: fakeIds, distractorCount: 5 };
+    return { realButtonId, fakeButtonIds: fakeIds, distractorCount: 8 };
 }
 
 const CODING_PROBLEMS = [
@@ -318,6 +328,17 @@ const CODING_PROBLEMS = [
       testCases: [{ input: '[1,3,5], [2,4,6]', expected: '[1,2,3,4,5,6]' },{ input: '[], [1]', expected: '[1]' }] },
     { title: 'Spiral Order', description: 'Write `solve(matrix)` — return elements in spiral order.',
       testCases: [{ input: '[[1,2,3],[4,5,6],[7,8,9]]', expected: '[1,2,3,6,9,8,7,4,5]' }] },
+    // ── Added harder problems (DP, BFS/DFS, Sliding Window) ──
+    { title: 'Climbing Stairs', description: 'Write `solve(n)` — you can climb 1 or 2 steps at a time. Return the number of distinct ways to reach step n.',
+      testCases: [{ input: '2', expected: '2' },{ input: '5', expected: '8' },{ input: '10', expected: '89' }] },
+    { title: 'Coin Change', description: 'Write `solve(coins, amount)` — return the fewest number of coins needed to make the amount, or -1 if impossible.',
+      testCases: [{ input: '[1,5,10,25], 30', expected: '2' },{ input: '[2], 3', expected: '-1' },{ input: '[1,2,5], 11', expected: '3' }] },
+    { title: 'Number of Islands', description: 'Write `solve(grid)` — grid is a 2D array of "1" (land) and "0" (water). Return the number of islands (groups of connected land cells, horizontally or vertically).',
+      testCases: [{ input: '[["1","1","0"],["1","1","0"],["0","0","1"]]', expected: '2' },{ input: '[["1","0","1"],["0","0","0"],["1","0","1"]]', expected: '4' },{ input: '[["0","0","0"]]', expected: '0' }] },
+    { title: 'Longest Substring No Repeat', description: 'Write `solve(s)` — return the length of the longest substring without any repeating characters.',
+      testCases: [{ input: '"abcabcbb"', expected: '3' },{ input: '"bbbbb"', expected: '1' },{ input: '"pwwkew"', expected: '3' },{ input: '""', expected: '0' }] },
+    { title: 'Group Anagrams', description: 'Write `solve(strs)` — group anagrams together. Return an array of arrays where each inner array contains words that are anagrams of each other (each group sorted alphabetically).',
+      testCases: [{ input: '["eat","tea","tan","ate","nat","bat"]', expected: '[["ate","eat","tea"],["bat"],["nat","tan"]]' },{ input: '[""]', expected: '[[""]]' },{ input: '["a"]', expected: '[["a"]]' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -327,26 +348,34 @@ function generateCodingChallenge(weights) {
 }
 
 const RESPONSE_QUESTIONS = [
+    // ── Easy tier (20%) — basic facts ──
     { question: 'What is the capital of France?', expectedKeywords: ['paris'] },
     { question: 'What is 17 × 23?', expectedKeywords: ['391'] },
     { question: 'Name the largest planet in our solar system.', expectedKeywords: ['jupiter'] },
-    { question: 'What chemical element has the symbol "Au"?', expectedKeywords: ['gold'] },
-    { question: 'What is the square root of 144?', expectedKeywords: ['12'] },
-    { question: 'Which country has the most population?', expectedKeywords: ['india', 'china'] },
-    { question: 'What is the chemical formula for water?', expectedKeywords: ['h2o'] },
-    { question: 'How many continents are there?', expectedKeywords: ['7', 'seven'] },
-    { question: 'What is 256 ÷ 16?', expectedKeywords: ['16'] },
-    { question: 'What planet is known as the Red Planet?', expectedKeywords: ['mars'] },
-    { question: 'What is the boiling point of water in Celsius?', expectedKeywords: ['100'] },
-    { question: 'Who wrote "Romeo and Juliet"?', expectedKeywords: ['shakespeare'] },
-    { question: 'What is 2^8?', expectedKeywords: ['256'] },
     { question: 'What is the longest river in the world?', expectedKeywords: ['nile', 'amazon'] },
-    { question: 'How many degrees in a triangle?', expectedKeywords: ['180'] },
-    { question: 'What gas do plants absorb from the atmosphere?', expectedKeywords: ['co2', 'carbon'] },
+    { question: 'What is 13 × 17?', expectedKeywords: ['221'] },
+    // ── Medium tier (50%) — multi-step math, applied reasoning ──
+    { question: 'A pool fills in 3 hours with pipe A alone and 6 hours with pipe B alone. How many hours to fill it with both pipes open together?', expectedKeywords: ['2'] },
+    { question: 'If you buy 3 items at $4.75 each and pay with a $20 bill, how much change do you get?', expectedKeywords: ['5.75'] },
+    { question: 'A train travels 240 km in 3 hours. What is its average speed in km/h?', expectedKeywords: ['80'] },
+    { question: 'What is the next number in the sequence: 2, 6, 18, 54, ...?', expectedKeywords: ['162'] },
+    { question: 'A rectangle has sides of length 12 cm and 5 cm. What is the length of its diagonal?', expectedKeywords: ['13'] },
+    { question: 'If 5 machines take 5 minutes to make 5 widgets, how many minutes would 100 machines take to make 100 widgets?', expectedKeywords: ['5'] },
+    { question: 'A shirt originally costs $80 and is discounted by 25%. What is the sale price?', expectedKeywords: ['60'] },
+    { question: 'What is the sum of all integers from 1 to 100?', expectedKeywords: ['5050'] },
+    { question: 'How many prime numbers are there between 1 and 20?', expectedKeywords: ['8'] },
+    { question: 'All cats are mammals. All mammals are warm-blooded. Are all cats warm-blooded?', expectedKeywords: ['yes'] },
     { question: 'What is the speed of light in km/s (approximately)?', expectedKeywords: ['300000', '299792'] },
     { question: 'What year did the Berlin Wall fall?', expectedKeywords: ['1989'] },
-    { question: 'What is the largest ocean on Earth?', expectedKeywords: ['pacific'] },
-    { question: 'What is 13 × 17?', expectedKeywords: ['221'] },
+    // ── Hard tier (30%) — multi-step reasoning, tricky logic ──
+    { question: 'A clock shows 3:15. What is the exact angle in degrees between the hour and minute hands?', expectedKeywords: ['7.5'] },
+    { question: 'A farmer has chickens and cows. Together they have 30 heads and 74 legs. How many chickens does the farmer have?', expectedKeywords: ['23'] },
+    { question: 'What is the sum of the interior angles of a hexagon in degrees?', expectedKeywords: ['720'] },
+    { question: 'A 6-sided die is rolled twice. What is the probability that the sum is exactly 7? Express as a simplified fraction.', expectedKeywords: ['1/6'] },
+    { question: 'If log base 2 of x equals 5, what is x?', expectedKeywords: ['32'] },
+    { question: 'A ball is dropped from 100 meters. Each bounce reaches half the previous height. What is the total distance traveled after exactly 3 bounces (including all ups and downs)?', expectedKeywords: ['275'] },
+    { question: 'Three people check into a hotel room that costs $30. They each pay $10. The manager realizes the room is only $25 and gives $5 to the bellboy to return. The bellboy keeps $2 and gives $1 back to each person. Each person paid $9 (total $27) plus $2 the bellboy kept = $29. Where is the missing dollar?', expectedKeywords: ['no missing', 'accounting', 'error', 'fallacy'] },
+    { question: 'A snail climbs 3 meters up a wall during the day but slides back 2 meters at night. If the wall is 10 meters high, how many days does it take the snail to reach the top?', expectedKeywords: ['8'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -385,26 +414,34 @@ function generateFileMgmtChallenge() {
 }
 
 const TTS_PHRASES = [
+    // ── Easy tier (20%) — clear, common phrases ──
     { text: 'The quick brown fox jumps over the lazy dog', keywords: ['quick', 'brown', 'fox', 'lazy', 'dog'] },
     { text: 'Hello world this is a test message', keywords: ['hello', 'world', 'test', 'message'] },
-    { text: 'Artificial intelligence is transforming the world', keywords: ['artificial', 'intelligence', 'transforming', 'world'] },
     { text: 'Please remember to save your work before closing', keywords: ['remember', 'save', 'work', 'closing'] },
-    { text: 'The weather forecast predicts rain tomorrow morning', keywords: ['weather', 'forecast', 'rain', 'tomorrow'] },
-    { text: 'Open the settings menu and click on notifications', keywords: ['settings', 'menu', 'click', 'notifications'] },
-    { text: 'The database migration completed successfully at midnight', keywords: ['database', 'migration', 'successfully', 'midnight'] },
-    { text: 'A journey of a thousand miles begins with a single step', keywords: ['journey', 'thousand', 'miles', 'single', 'step'] },
-    { text: 'The server responded with a four hundred error code', keywords: ['server', 'responded', 'four', 'hundred', 'error'] },
-    { text: 'Machine learning models require large datasets for training', keywords: ['machine', 'learning', 'models', 'datasets', 'training'] },
-    { text: 'The conference will be held in Tokyo next September', keywords: ['conference', 'held', 'tokyo', 'september'] },
-    { text: 'Renewable energy sources include solar wind and hydropower', keywords: ['renewable', 'energy', 'solar', 'wind', 'hydropower'] },
     { text: 'The package was delivered to the front door yesterday', keywords: ['package', 'delivered', 'front', 'door', 'yesterday'] },
-    { text: 'Quantum computing promises to solve complex optimization problems', keywords: ['quantum', 'computing', 'complex', 'optimization'] },
-    { text: 'The restaurant serves breakfast from seven until eleven', keywords: ['restaurant', 'breakfast', 'seven', 'eleven'] },
-    { text: 'Version control helps teams collaborate on software projects', keywords: ['version', 'control', 'teams', 'collaborate', 'software'] },
-    { text: 'The stock market closed at a record high on Friday', keywords: ['stock', 'market', 'record', 'high', 'friday'] },
-    { text: 'Encryption protects sensitive data during transmission', keywords: ['encryption', 'protects', 'sensitive', 'data', 'transmission'] },
     { text: 'The library closes at nine pm on weekdays', keywords: ['library', 'closes', 'nine', 'weekdays'] },
-    { text: 'Autonomous vehicles use sensors cameras and artificial intelligence', keywords: ['autonomous', 'vehicles', 'sensors', 'cameras', 'intelligence'] },
+    // ── Medium tier (50%) — numbers, proper nouns, technical terms ──
+    { text: 'Flight BA-274 departs at 14:30 from Terminal 5', keywords: ['flight', '274', 'terminal'] },
+    { text: 'The patient blood pressure is 120 over 80 millimeters of mercury', keywords: ['blood', 'pressure', '120', '80'] },
+    { text: 'Please dial extension 4072 for the accounting department', keywords: ['extension', '4072', 'accounting'] },
+    { text: 'The GPS coordinates are 35.6762 degrees north 139.6503 degrees east', keywords: ['GPS', 'coordinates', '35', '139'] },
+    { text: 'Doctor Zhang appointment is at 2:45 PM in Building C Room 301', keywords: ['Zhang', 'appointment', '2', '45', 'room', '301'] },
+    { text: 'The Dow Jones index fell 2.3 percent to close at 38,547 points', keywords: ['Dow', 'Jones', 'percent', '38'] },
+    { text: 'Machine learning models require large datasets for training', keywords: ['machine', 'learning', 'models', 'datasets', 'training'] },
+    { text: 'Renewable energy sources include solar wind and hydropower', keywords: ['renewable', 'energy', 'solar', 'wind', 'hydropower'] },
+    { text: 'Quantum computing promises to solve complex optimization problems', keywords: ['quantum', 'computing', 'complex', 'optimization'] },
+    { text: 'Version control helps teams collaborate on software projects', keywords: ['version', 'control', 'teams', 'collaborate', 'software'] },
+    { text: 'The server returned HTTP status code 503 service unavailable', keywords: ['server', 'HTTP', '503', 'service', 'unavailable'] },
+    { text: 'Encryption protects sensitive data during transmission', keywords: ['encryption', 'protects', 'sensitive', 'data', 'transmission'] },
+    // ── Hard tier (30%) — acronyms, mixed content, technical jargon ──
+    { text: 'The IPv4 address 192.168.1.1 is commonly used as a default gateway', keywords: ['IPv4', '192', '168', 'gateway'] },
+    { text: 'Tokyo Narita Airport code NRT handles approximately 45 million passengers annually', keywords: ['Narita', 'NRT', '45', 'million'] },
+    { text: 'Resume and naive are English words borrowed from French that retain their diacritical marks', keywords: ['resume', 'naive', 'French', 'diacritical'] },
+    { text: 'Worcestershire sauce and Lieutenant Colonel are two commonly mispronounced English terms', keywords: ['worcestershire', 'lieutenant', 'colonel', 'mispronounced'] },
+    { text: 'The Fibonacci sequence 1 1 2 3 5 8 13 21 grows approximately exponentially', keywords: ['fibonacci', 'sequence', '13', '21', 'exponentially'] },
+    { text: 'The chemical compound CH3COOH commonly known as acetic acid has a pH of approximately 2.4', keywords: ['chemical', 'acetic', 'acid', 'pH'] },
+    { text: 'Euler identity states that e to the power of i times pi plus 1 equals zero', keywords: ['euler', 'identity', 'pi', 'zero'] },
+    { text: 'The UNESCO World Heritage site Machu Picchu is located at 2430 meters elevation in Peru', keywords: ['UNESCO', 'Machu Picchu', '2430', 'Peru'] },
 ];
 function generateTtsChallenge(weights) {
     const w = weights && weights['arena_tts'] || {};

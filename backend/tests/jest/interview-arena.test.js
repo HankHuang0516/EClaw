@@ -155,13 +155,13 @@ describe('interview-arena: challenge generators', () => {
 
     test('navigation challenge has correctPath and depth', () => {
         const c = CHALLENGE_GENERATORS.arena_navigation();
-        expect(c.correctPath.length).toBe(3);
-        expect(c.depth).toBe(3);
+        expect(c.correctPath.length).toBe(4);
+        expect(c.depth).toBe(4);
     });
 
     test('table_extract challenge has tableData and question', () => {
         const c = CHALLENGE_GENERATORS.arena_table_extract();
-        expect(c.tableData.length).toBe(5);
+        expect(c.tableData.length).toBe(10);
         expect(c.question).toContain('total revenue');
         expect(c.correctAnswer).toBeTruthy();
     });
@@ -305,7 +305,7 @@ describe('interview-arena: scoring engines', () => {
             const config = { weight: t.weight, expectedKeywords: [], fields: [], testCases: [],
                              correctLabel: 'x', targetRect: { x: 0, y: 0, w: 1, h: 1 },
                              realButtonId: 'x', fakeButtonIds: ['f1'], keywords: [],
-                             expectedAnswer: 'x', correctAnswer: '0', depth: 3 };
+                             expectedAnswer: 'x', correctAnswer: '0', depth: 4 };
             const result = scorer(config, []);
             // Most return 0; distraction may give partial for "not clicking fake" but with fake present it won't
             expect(result.score).toBeLessThanOrEqual(t.weight);
