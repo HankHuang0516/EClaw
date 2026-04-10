@@ -1,3 +1,10 @@
+## [1.939.5](https://github.com/HankHuang0516/EClaw/compare/v1.939.4...v1.939.5) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** remove stadium emoji from all arena references ([da8b77f](https://github.com/HankHuang0516/EClaw/commit/da8b77fb154a94dd515edb422c40db2b9f6a334f))
+
 ## [1.939.4](https://github.com/HankHuang0516/EClaw/compare/v1.939.3...v1.939.4) (2026-04-10)
 
 
