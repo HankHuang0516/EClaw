@@ -1,3 +1,10 @@
+# [1.931.0](https://github.com/HankHuang0516/EClaw/compare/v1.930.0...v1.931.0) (2026-04-10)
+
+
+### Features
+
+* **rental:** switch to USD, forfeit→owner split, nav e-coin badge, wallet entry in settings ([329d97b](https://github.com/HankHuang0516/EClaw/commit/329d97b2361dfff238546141b29159bbefa76afd))
+
 # [1.930.0](https://github.com/HankHuang0516/EClaw/compare/v1.929.4...v1.930.0) (2026-04-10)
 
 
