@@ -1,3 +1,11 @@
+## [1.944.2](https://github.com/HankHuang0516/EClaw/compare/v1.944.1...v1.944.2) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** copy button feedback — green flash + border glow on success ([900ba50](https://github.com/HankHuang0516/EClaw/commit/900ba5012fd05d035ff82b15524f78fd31c45564))
+* **arena:** move status text below copy instructions, above score bar ([916c658](https://github.com/HankHuang0516/EClaw/commit/916c658123cc8e4c52cd8112b09968bf0cd9a306))
+
 ## [1.944.1](https://github.com/HankHuang0516/EClaw/compare/v1.944.0...v1.944.1) (2026-04-10)
 
 
