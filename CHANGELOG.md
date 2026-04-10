@@ -1,3 +1,10 @@
+## [1.933.1](https://github.com/HankHuang0516/EClaw/compare/v1.933.0...v1.933.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* **trust:** remove invalid eslint-disable comment that broke CI ([082beed](https://github.com/HankHuang0516/EClaw/commit/082beedb0d01d38da44ac7ff3be7f76bc2c0ffc5))
+
 # [1.933.0](https://github.com/HankHuang0516/EClaw/compare/v1.932.2...v1.933.0) (2026-04-10)
 
 
