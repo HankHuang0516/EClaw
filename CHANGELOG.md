@@ -1,3 +1,10 @@
+## [1.939.1](https://github.com/HankHuang0516/EClaw/compare/v1.939.0...v1.939.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** fix SQL schema parsing that skipped CREATE TABLE statements ([bef384e](https://github.com/HankHuang0516/EClaw/commit/bef384e57998b535fbf0c4afddf29314d4cfba2b))
+
 # [1.939.0](https://github.com/HankHuang0516/EClaw/compare/v1.938.1...v1.939.0) (2026-04-10)
 
 
