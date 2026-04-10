@@ -169,6 +169,33 @@ jest.mock('pg', () => {
             return { rows: [{ is_admin: u.is_admin }], rowCount: 1 };
         }
 
+        // ── reconcile CTE — ledger vs wallet drift detection ─────────────
+        if (/^WITH agg AS/i.test(norm) && /FROM wallets w\s+LEFT JOIN agg/i.test(norm)) {
+            const limitParam = params[0];
+            const agg = new Map();
+            for (const row of state.ledger) {
+                const cur = agg.get(row.user_id) || { balance: 0n, held: 0n };
+                cur.balance += BigInt(row.delta_mli);
+                cur.held += BigInt(row.held_delta_mli);
+                agg.set(row.user_id, cur);
+            }
+            const rows = [];
+            for (const [userId, w] of state.wallets) {
+                const expected = agg.get(userId) || { balance: 0n, held: 0n };
+                if (w.balance_mli !== expected.balance || w.held_mli !== expected.held) {
+                    rows.push({
+                        user_id: userId,
+                        cached_balance_mli: w.balance_mli.toString(),
+                        cached_held_mli: w.held_mli.toString(),
+                        expected_balance_mli: expected.balance.toString(),
+                        expected_held_mli: expected.held.toString(),
+                    });
+                    if (rows.length >= limitParam) break;
+                }
+            }
+            return { rows, rowCount: rows.length };
+        }
+
         throw new Error(`[fake-pg] Unhandled SQL: ${norm}`);
     }
 
@@ -743,5 +770,85 @@ describe('wallet: markTopupPaid edge cases', () => {
             amountMli: 100,
             channel: 'google_play',
         })).rejects.toThrow('order_not_found');
+    });
+});
+
+// ── reconcileBalances ──────────────────────────────────────────────────
+
+describe('wallet: reconcileBalances', () => {
+    test('clean wallet reports no drift', async () => {
+        await walletApi.creditTopup({
+            userId: ALICE, amountMli: 1_000_000, orderId: 'seed-recon',
+            channel: 'admin_grant', idempotencyKey: 'seed-recon-key',
+        });
+        const report = await walletApi.reconcileBalances();
+        expect(report.ok).toBe(true);
+        expect(report.discrepancies).toHaveLength(0);
+    });
+
+    test('detects manual drift (cached balance out of sync with ledger)', async () => {
+        await walletApi.creditTopup({
+            userId: ALICE, amountMli: 500_000, orderId: 'seed-drift',
+            channel: 'admin_grant', idempotencyKey: 'seed-drift-key',
+        });
+        // Simulate a buggy direct write that bypasses applyLedgerEntry.
+        fake.state.wallets.get(ALICE).balance_mli = 999_999n;
+
+        const report = await walletApi.reconcileBalances();
+        expect(report.ok).toBe(false);
+        expect(report.discrepancies).toHaveLength(1);
+        const d = report.discrepancies[0];
+        expect(d.userId).toBe(ALICE);
+        expect(d.cachedBalanceMli).toBe('999999');
+        expect(d.expectedBalanceMli).toBe('500000');
+        expect(d.deltaMli).toBe('499999');
+    });
+
+    test('transfers leave both sides reconciled', async () => {
+        await walletApi.creditTopup({
+            userId: ALICE, amountMli: 10_000, orderId: 'seed-xfer',
+            channel: 'admin_grant', idempotencyKey: 'seed-xfer-key',
+        });
+        await walletApi.transferEcoin({
+            fromUserId: ALICE, toUserId: BOB, amountMli: 4_000,
+            type: wallet.LEDGER_TYPES.RENTAL_INCOME,
+            idempotencyKey: 'xfer-recon-1',
+        });
+        const report = await walletApi.reconcileBalances();
+        expect(report.ok).toBe(true);
+    });
+});
+
+describe('wallet: /admin/reconcile route', () => {
+    const express = require('express');
+    const supertest = require('supertest');
+
+    function buildAdminApp(isAdmin) {
+        const app = express();
+        app.use(express.json());
+        const fakeAuth = (req, _res, next) => { req.user = { userId: ALICE }; next(); };
+        const fakeAdmin = (req, res, next) => isAdmin ? next() : res.status(403).json({ success: false, error: 'admin_only' });
+        const w = wallet({ authMiddleware: fakeAuth, adminMiddleware: fakeAdmin });
+        app.use('/api/wallet', w.router);
+        return app;
+    }
+
+    test('non-admin gets 403', async () => {
+        await supertest(buildAdminApp(false))
+            .get('/api/wallet/admin/reconcile')
+            .expect(403);
+    });
+
+    test('admin receives ok report when ledger matches', async () => {
+        await walletApi.creditTopup({
+            userId: ALICE, amountMli: 1_000, orderId: 'rc-clean',
+            channel: 'admin_grant', idempotencyKey: 'rc-clean-key',
+        });
+        const res = await supertest(buildAdminApp(true))
+            .get('/api/wallet/admin/reconcile')
+            .expect(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.report.ok).toBe(true);
+        expect(res.body.report.discrepancies).toHaveLength(0);
     });
 });

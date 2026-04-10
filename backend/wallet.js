@@ -594,6 +594,53 @@ async function getBalance(userId) {
     };
 }
 
+/**
+ * Reconciliation — verify every wallet's cached balance + held matches
+ * the signed sum of its ledger rows. Returns a list of discrepancies.
+ *
+ * Expected to report an empty array. Any drift indicates a bug in
+ * `applyLedgerEntry` or a direct write that bypassed the ledger — both
+ * should page the team.
+ *
+ * Can be called periodically (daily cron) or on-demand from an admin
+ * endpoint. Runs a single SQL query so cost is O(rows in ledger) on
+ * the DB side; holds no state in Node.
+ */
+async function reconcileBalances({ limit = 100 } = {}) {
+    const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 100, 1), 1000);
+    const res = await pool.query(
+        `WITH agg AS (
+            SELECT user_id,
+                   COALESCE(SUM(delta_mli), 0)       AS ledger_balance_mli,
+                   COALESCE(SUM(held_delta_mli), 0)  AS ledger_held_mli
+            FROM wallet_ledger
+            GROUP BY user_id
+        )
+        SELECT w.user_id,
+               w.balance_mli        AS cached_balance_mli,
+               w.held_mli           AS cached_held_mli,
+               COALESCE(a.ledger_balance_mli, 0) AS expected_balance_mli,
+               COALESCE(a.ledger_held_mli, 0)    AS expected_held_mli
+        FROM wallets w
+        LEFT JOIN agg a ON a.user_id = w.user_id
+        WHERE w.balance_mli <> COALESCE(a.ledger_balance_mli, 0)
+           OR w.held_mli    <> COALESCE(a.ledger_held_mli, 0)
+        LIMIT $1`,
+        [safeLimit]
+    );
+    return {
+        discrepancies: res.rows.map(r => ({
+            userId: r.user_id,
+            cachedBalanceMli: String(r.cached_balance_mli),
+            cachedHeldMli: String(r.cached_held_mli),
+            expectedBalanceMli: String(r.expected_balance_mli),
+            expectedHeldMli: String(r.expected_held_mli),
+            deltaMli: String(BigInt(r.cached_balance_mli) - BigInt(r.expected_balance_mli)),
+        })),
+        ok: res.rowCount === 0,
+    };
+}
+
 async function getLedger(userId, { limit = 50, offset = 0, type = null } = {}) {
     assertUuidLike('user_id', userId);
     const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200);
@@ -733,6 +780,18 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
     // adminMiddleware (when supplied) enforces admin role; tests that
     // omit it must seed `req.user.is_admin` themselves.
     const adminGate = adminMiddleware || ((_req, _res, next) => next());
+    // GET /api/wallet/admin/reconcile — run full ledger-vs-wallet audit
+    router.get('/admin/reconcile', authMiddleware, adminGate, walletRoute(async (req, res) => {
+        const limit = parseInt(req.query.limit, 10) || 100;
+        const report = await reconcileBalances({ limit });
+        if (!report.ok) {
+            audit('error', 'wallet', `reconcile FAIL: ${report.discrepancies.length} drift`, {
+                userId: req.user.userId, action: 'reconcile', result: 'drift',
+            });
+        }
+        res.json({ success: true, report });
+    }));
+
     router.post('/admin/grant', authMiddleware, adminGate, walletRoute(async (req, res) => {
         const { userId, ecoin, reason } = req.body || {};
         if (!userId || typeof userId !== 'string') throw new Error('user_id_required');
@@ -770,6 +829,7 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
         markTopupPaid,
         getBalance,
         getLedger,
+        reconcileBalances,
         // Constants
         LEDGER_TYPES,
         TWD_TO_MLI,
