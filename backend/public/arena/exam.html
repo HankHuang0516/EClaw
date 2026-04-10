@@ -354,6 +354,51 @@
 
         function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
         loadExam();
+
+        // Polling fallback: refresh exam state every 5s until completed
+        // (covers cases where Socket.IO misses events)
+        let pollTimer = setInterval(async () => {
+            try {
+                const data = await (await fetch(`${API}/api/arena/exam/${EXAM_ID}/results`)).json();
+                if (!data.success) return;
+                const exam = data.exam;
+                // Update status text
+                if (exam.status === 'active') {
+                    const el = document.getElementById('statusText');
+                    if (el.textContent.includes('Waiting') || el.textContent.includes('等待')) {
+                        el.textContent = (exam.model || '') + ' — Evaluation in progress...';
+                        document.getElementById('scoreWrap').style.display = 'block';
+                    }
+                }
+                // Update session scores from DB
+                if (data.sessions) {
+                    let total = 0;
+                    data.sessions.forEach(s => {
+                        if (s.score != null) {
+                            scores[s.test_index] = s.score;
+                            const sc = document.getElementById('tc' + s.test_index);
+                            const r = document.getElementById('t' + s.test_index);
+                            const st = document.getElementById('ts' + s.test_index);
+                            if (sc && !sc.classList.contains('pass') && !sc.classList.contains('fail')) {
+                                sc.textContent = s.score + '/' + s.max_score;
+                                sc.classList.add(s.score > 0 ? 'pass' : 'fail');
+                            }
+                            if (r && !r.classList.contains('pass') && !r.classList.contains('fail')) {
+                                r.classList.add(s.score > 0 ? 'pass' : 'fail');
+                            }
+                            if (st) st.textContent = s.status === 'completed' ? (s.score > 0 ? 'Done' : 'Failed') : s.status;
+                        }
+                        total += (s.score || 0);
+                    });
+                    updateTotal();
+                }
+                // If completed, show results and stop polling
+                if (exam.status === 'completed') {
+                    clearInterval(pollTimer);
+                    showResults(data);
+                }
+            } catch { /* silent */ }
+        }, 5000);
     </script>
 </body>
 </html>
