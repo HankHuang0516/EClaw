@@ -1,3 +1,10 @@
+## [1.954.2](https://github.com/HankHuang0516/EClaw/compare/v1.954.1...v1.954.2) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** use i18n keys for test names and html lang attribute ([#1670](https://github.com/HankHuang0516/EClaw/issues/1670)) ([de8e394](https://github.com/HankHuang0516/EClaw/commit/de8e3949f834792b2c163c76fb5f8ca0b3a29858))
+
 ## [1.954.1](https://github.com/HankHuang0516/EClaw/compare/v1.954.0...v1.954.1) (2026-04-10)
 
 
