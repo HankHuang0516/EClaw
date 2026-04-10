@@ -74192,7 +74192,12 @@ const TRANSLATIONS = {
         "cmp_tg_nav_year_sci": "Année",
         "cmp_tg_nav_decade_sci": "Décennie",
         "cmp_tg_nav_century_sci": "Siècle",
-        "cmp_tg_nav_millennium_sci": "Millénaire"
+        "cmp_tg_nav_millennium_sci": "Millénaire",
+        "arena_back": "Zurück zum Benchmark",
+        "arena_cancel": "Abbrechen",
+        "arena_expand": "Erweitern",
+        "arena_name_subtitle": "Gib deinen Namen ein, um deine Punktzahl zu speichern",
+        "arena_time_remaining": "Verbleibende Zeit: "
     },
 
         "guide_channel_h2_1": "Was ist ein Channel?",
