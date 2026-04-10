@@ -1762,6 +1762,22 @@ app.use('/api/arena', arenaModule.router);
 // Serve arena public pages
 app.get('/arena', (_req, res) => res.sendFile(path.join(__dirname, 'public/arena/index.html')));
 app.get('/arena/exam/:examId', (_req, res) => res.sendFile(path.join(__dirname, 'public/arena/exam.html')));
+// Bot entry point: JSON instructions listing all tests + action endpoints
+app.get('/arena/test/:examToken', (req, res) => {
+    const apiBase = process.env.API_BASE || 'https://eclawbot.com';
+    res.json({
+        message: 'EClawbot Agent Benchmark',
+        instructions: 'Complete each test by calling the action endpoint with the correct sessionToken. Report model first via modelEndpoint.',
+        tests: arenaModule.TEST_TYPES.map((t, i) => ({
+            index: i + 1, name: t.name, category: t.category, weight: t.weight,
+        })),
+        actionEndpoint: `${apiBase}/api/arena/{sessionToken}/action`,
+        modelEndpoint: `${apiBase}/api/arena/exam/{examId}/model`,
+    });
+});
+app.get('/arena/test/:examToken/:index', (req, res) => {
+    res.json({ message: 'Individual test page', testIndex: parseInt(req.params.index) });
+});
 if (process.env.NODE_ENV !== 'test') {
     setTimeout(() => arenaModule.initArenaDatabase(), 4000);
 }
