@@ -135,6 +135,7 @@
         <div class="eval-header">
             <h1 data-i18n="arena_exam_title">Agent Benchmark — Evaluation</h1>
             <div class="eval-status"><span class="live-dot"></span><span id="statusText" data-i18n="arena_waiting">Waiting for agent to join...</span></div>
+            <div id="modelBadge" style="display:none;margin-top:8px;font-size:13px;color:var(--accent-cyan);"></div>
         </div>
 
         <div class="copy-card" id="copySection">
@@ -208,7 +209,7 @@
         const socket = io(API, { transports: ['websocket','polling'], auth: { arena: 'true' } });
         socket.on('connect', () => { socket.emit('join', 'exam:' + EXAM_ID); socket.emit('join', 'arena:lobby'); });
         socket.on('arena:update', (m) => {
-            if (m.event === 'model_set') { document.getElementById('statusText').textContent = m.model + ' — in progress'; document.getElementById('scoreWrap').style.display = 'block'; }
+            if (m.event === 'model_set') { showModel(m.model); document.getElementById('statusText').textContent = 'Evaluation in progress...'; document.getElementById('scoreWrap').style.display = 'block'; }
             if (m.event === 'action' && m.testIndex != null) {
                 // Switch from waiting to active on first action
                 if (document.getElementById('statusText').textContent.includes('Waiting') || document.getElementById('statusText').textContent.includes('等待')) {
@@ -280,7 +281,7 @@
 `  → Returns total score and per-test breakdown.`,
                 ].join('\n');
                 if (data.exam.status === 'completed') showResults(data);
-                else if (data.exam.status === 'active') { document.getElementById('statusText').textContent = 'Evaluation in progress...'; document.getElementById('scoreWrap').style.display = 'block'; }
+                else if (data.exam.status === 'active') { document.getElementById('statusText').textContent = 'Evaluation in progress...'; document.getElementById('scoreWrap').style.display = 'block'; if (data.exam.model) showModel(data.exam.model); }
             } catch (e) { console.error(e); }
         }
 
@@ -298,6 +299,7 @@
             setTimeout(() => reveal('nameSection'), 1200);
         }
 
+        function showModel(name) { const el = document.getElementById('modelBadge'); if (el && name) { el.textContent = name; el.style.display = 'block'; } }
         function reveal(id) { const e = document.getElementById(id); if (e) { e.style.display = 'block'; requestAnimationFrame(() => e.classList.add('show')); } }
         function copyInstructions() { navigator.clipboard.writeText(document.getElementById('copyBox').textContent).then(() => { const b = event.target; b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1500); }); }
 
@@ -366,7 +368,8 @@
                 if (exam.status === 'active') {
                     const el = document.getElementById('statusText');
                     if (el.textContent.includes('Waiting') || el.textContent.includes('等待')) {
-                        el.textContent = (exam.model || '') + ' — Evaluation in progress...';
+                        el.textContent = 'Evaluation in progress...';
+                        if (exam.model) showModel(exam.model);
                         document.getElementById('scoreWrap').style.display = 'block';
                     }
                 }
