@@ -1,3 +1,10 @@
+# [1.938.0](https://github.com/HankHuang0516/EClaw/compare/v1.937.0...v1.938.0) (2026-04-10)
+
+
+### Features
+
+* **community:** integrate rental marketplace into Bot Plaza as filter tab ([3f729e7](https://github.com/HankHuang0516/EClaw/commit/3f729e771fda87525ccee22fc0c9b41960a72ec0)), closes [#rental](https://github.com/HankHuang0516/EClaw/issues/rental) [community.html#rental](https://github.com/community.html/issues/rental)
+
 # [1.937.0](https://github.com/HankHuang0516/EClaw/compare/v1.936.0...v1.937.0) (2026-04-10)
 
 
