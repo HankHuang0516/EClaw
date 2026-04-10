@@ -210,6 +210,11 @@
         socket.on('arena:update', (m) => {
             if (m.event === 'model_set') { document.getElementById('statusText').textContent = m.model + ' — in progress'; document.getElementById('scoreWrap').style.display = 'block'; }
             if (m.event === 'action' && m.testIndex != null) {
+                // Switch from waiting to active on first action
+                if (document.getElementById('statusText').textContent.includes('Waiting') || document.getElementById('statusText').textContent.includes('等待')) {
+                    document.getElementById('statusText').textContent = 'Evaluation in progress...';
+                    document.getElementById('scoreWrap').style.display = 'block';
+                }
                 const r = document.getElementById('t' + m.testIndex);
                 if (r) { r.classList.add('active'); r.classList.remove('pass','fail'); }
                 document.getElementById('ts' + m.testIndex).textContent = 'In progress';
