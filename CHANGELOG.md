@@ -1,3 +1,10 @@
+## [1.941.3](https://github.com/HankHuang0516/EClaw/compare/v1.941.2...v1.941.3) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** add 5s polling fallback for exam status sync ([e78357e](https://github.com/HankHuang0516/EClaw/commit/e78357e75e759df39e91f2721f052196a0d8cb20))
+
 ## [1.941.2](https://github.com/HankHuang0516/EClaw/compare/v1.941.1...v1.941.2) (2026-04-10)
 
 
