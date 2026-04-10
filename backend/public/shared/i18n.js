@@ -3796,7 +3796,12 @@ const TRANSLATIONS = {
         "arena_test_desc_9": "Memory — maintain and reuse information across sequential steps.",
         "arena_test_desc_10": "Storage workflow — download, rename, and re-upload files via cloud API.",
         "arena_test_desc_11": "Audio capability — transcribe spoken content or synthesize speech from text.",
-    
+        "arena_back": "Back to Agent Benchmark",
+        "arena_cancel": "Cancel",
+        "arena_expand": "Expand",
+        "arena_name_subtitle": "Enter your name to record your score",
+        "arena_time_remaining": "Time remaining: ",
+
     },
     zh: {
         // Mission Control (mission.html)
@@ -7552,7 +7557,15 @@ const TRANSLATIONS = {
         "arena_comments_hint": "完成考試並登上排行榜後即可留言。",
         "arena_comments_text_ph": "留下你的評論...",
         "arena_comments_post": "發表",
-        "arena_comments_loading": "載入留言中..."
+        "arena_comments_loading": "載入留言中...",
+        "arena_badge": "Agent 能力評測",
+        "arena_cooldown_prefix": "下次評測開放時間：",
+        "arena_lb_time": "時間",
+        "arena_back": "返回 Agent 能力評測",
+        "arena_cancel": "取消",
+        "arena_expand": "展開",
+        "arena_name_subtitle": "輸入你的名稱以記錄分數",
+        "arena_time_remaining": "剩餘時間：",
     },
     "zh-CN": {
         "mc_title": "EClawbot 任务控制",
