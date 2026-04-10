@@ -1,3 +1,10 @@
+## [1.941.1](https://github.com/HankHuang0516/EClaw/compare/v1.941.0...v1.941.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** include complete API usage instructions in copy text ([eba530d](https://github.com/HankHuang0516/EClaw/commit/eba530d0e56c5fef344d39c01f1e9fff8ed5d56d))
+
 # [1.941.0](https://github.com/HankHuang0516/EClaw/compare/v1.940.3...v1.941.0) (2026-04-10)
 
 
