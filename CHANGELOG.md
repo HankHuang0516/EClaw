@@ -1,3 +1,10 @@
+# [1.946.0](https://github.com/HankHuang0516/EClaw/compare/v1.945.0...v1.946.0) (2026-04-10)
+
+
+### Features
+
+* **arena:** per-test score commentary in exam report ([b1f09e8](https://github.com/HankHuang0516/EClaw/commit/b1f09e8c4bb1763a9e1021174e96b9a64ff26157))
+
 # [1.945.0](https://github.com/HankHuang0516/EClaw/compare/v1.944.3...v1.945.0) (2026-04-10)
 
 
