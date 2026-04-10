@@ -40743,7 +40743,12 @@ const TRANSLATIONS = {
         "arena_badge": "Agent Benchmark",
         "arena_cooldown_prefix": "Prochaine évaluation disponible dans",
         "arena_lb_time": "Temps",
-        "guide_nav_arena": "⛳ Arena d'Entretien"
+        "guide_nav_arena": "⛳ Arena d'Entretien",
+        "arena_back": "Retour au Benchmark",
+        "arena_cancel": "Annuler",
+        "arena_expand": "Développer",
+        "arena_name_subtitle": "Entrez votre nom pour enregistrer votre score",
+        "arena_time_remaining": "Temps restant : "
     },
     es: {
         "mc_title": "EClawbot Centro de Misiones",
