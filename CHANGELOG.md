@@ -1,3 +1,10 @@
+## [1.948.1](https://github.com/HankHuang0516/EClaw/compare/v1.948.0...v1.948.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** auto-scroll to leaderboard after name submission ([1321371](https://github.com/HankHuang0516/EClaw/commit/1321371454e2f55dcf41927f0f8242fb700fa921))
+
 # [1.948.0](https://github.com/HankHuang0516/EClaw/compare/v1.947.0...v1.948.0) (2026-04-10)
 
 
