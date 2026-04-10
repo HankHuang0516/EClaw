@@ -1,3 +1,10 @@
+## [1.939.7](https://github.com/HankHuang0516/EClaw/compare/v1.939.6...v1.939.7) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** include session_token in exam results API response ([15a36eb](https://github.com/HankHuang0516/EClaw/commit/15a36ebd0b933d617a55d15bcac98adc34ac2080))
+
 ## [1.939.6](https://github.com/HankHuang0516/EClaw/compare/v1.939.5...v1.939.6) (2026-04-10)
 
 
