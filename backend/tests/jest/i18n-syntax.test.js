@@ -1,9 +1,11 @@
 /**
- * i18n.js syntax and structure regression tests
+ * i18n.js syntax, structure, and HTML integration regression tests
  *
- * Ensures the i18n translation file parses correctly and all language
- * sections are properly structured. Catches misplaced translations
- * and missing commas between language blocks.
+ * 1. Ensures the i18n translation file parses correctly
+ * 2. Validates all language sections are properly structured
+ * 3. Checks every HTML page that uses i18n has a valid script path
+ * 4. Checks pages calling i18n.t() actually load i18n.js
+ * 5. Checks inline handlers referencing i18n have typeof guards
  *
  * Regression: orphaned French arena translations between es/de sections
  * caused a SyntaxError preventing the entire i18n.js from loading,
@@ -13,9 +15,25 @@
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
+const { globSync } = (() => {
+    try { return require('glob'); } catch { return { globSync: null }; }
+})();
 
-const I18N_PATH = path.join(__dirname, '../../public/shared/i18n.js');
+const PUBLIC_DIR = path.join(__dirname, '../../public');
+const I18N_PATH = path.join(PUBLIC_DIR, 'shared/i18n.js');
 
+// Collect all HTML files under public/
+function findHtmlFiles(dir) {
+    const results = [];
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) results.push(...findHtmlFiles(full));
+        else if (entry.name.endsWith('.html')) results.push(full);
+    }
+    return results;
+}
+
+// ── i18n.js file validation ────────────────────────────────────────────────
 describe('i18n.js syntax and structure', () => {
     let content;
 
@@ -29,7 +47,7 @@ describe('i18n.js syntax and structure', () => {
         }).not.toThrow();
     });
 
-    test('TRANSLATIONS object is valid and contains expected languages', () => {
+    test('TRANSLATIONS object contains all required languages', () => {
         const sandbox = {
             localStorage: { getItem: () => null, setItem: () => {} },
             navigator: { language: 'en' },
@@ -75,7 +93,6 @@ describe('i18n.js syntax and structure', () => {
         vm.runInContext(content + '\n_result.i18n = i18n;', sandbox);
 
         const { i18n } = sandbox._result;
-        // Should return a translated string, not the key itself
         const result = i18n.t('mc_title');
         expect(result).not.toBe('mc_title');
         expect(result).toBe('EClawbot Mission Control');
@@ -102,5 +119,96 @@ describe('i18n.js syntax and structure', () => {
         expect(fr['arena_title']).toBeDefined();
         expect(fr['arena_subtitle']).toBeDefined();
         expect(fr['arena_generate']).toBeDefined();
+    });
+});
+
+// ── HTML page i18n integration ─────────────────────────────────────────────
+describe('HTML pages i18n integration', () => {
+    const htmlFiles = findHtmlFiles(PUBLIC_DIR);
+
+    test('all HTML files that load i18n.js use a valid path', () => {
+        const errors = [];
+
+        for (const file of htmlFiles) {
+            const html = fs.readFileSync(file, 'utf8');
+            // Find all <script src="...i18n.js..."> tags
+            const scriptMatches = html.matchAll(/<script\s+src=["']([^"']*i18n\.js[^"']*)["']/g);
+
+            for (const match of scriptMatches) {
+                const src = match[1];
+                const rel = path.relative(PUBLIC_DIR, file);
+
+                // Resolve the script path relative to the HTML file's directory
+                const htmlDir = path.dirname(file);
+                let resolvedPath;
+
+                if (src.startsWith('/')) {
+                    // Absolute path from web root
+                    resolvedPath = path.join(PUBLIC_DIR, src.split('?')[0]);
+                } else {
+                    // Relative path from HTML file
+                    resolvedPath = path.join(htmlDir, src.split('?')[0]);
+                }
+
+                if (!fs.existsSync(resolvedPath)) {
+                    errors.push(`${rel}: script src="${src}" → file not found (resolved: ${path.relative(PUBLIC_DIR, resolvedPath)})`);
+                }
+            }
+        }
+
+        if (errors.length > 0) {
+            throw new Error('Invalid i18n.js paths:\n  ' + errors.join('\n  '));
+        }
+    });
+
+    test('pages calling i18n.t() or i18n.setLanguage() actually load i18n.js', () => {
+        const errors = [];
+
+        for (const file of htmlFiles) {
+            const html = fs.readFileSync(file, 'utf8');
+            const rel = path.relative(PUBLIC_DIR, file);
+
+            // Check if page calls i18n.t() or i18n.setLanguage() in JS
+            const usesI18n = /\bi18n\.(t|setLanguage|apply|applyPage)\s*\(/.test(html);
+            if (!usesI18n) continue;
+
+            // Check if page loads i18n.js
+            const loadsI18n = /<script\s+src=["'][^"']*i18n\.js[^"']*["']/.test(html);
+            if (!loadsI18n) {
+                errors.push(`${rel}: calls i18n methods but does not load i18n.js`);
+            }
+        }
+
+        if (errors.length > 0) {
+            throw new Error('Pages missing i18n.js script:\n  ' + errors.join('\n  '));
+        }
+    });
+
+    test('inline HTML handlers referencing i18n have typeof guards', () => {
+        const errors = [];
+        // Match inline handlers like onchange="i18n.xxx()" onclick="i18n.xxx()"
+        const inlineHandlerRe = /\bon\w+\s*=\s*["']([^"']*\bi18n\b[^"']*)["']/g;
+
+        for (const file of htmlFiles) {
+            const html = fs.readFileSync(file, 'utf8');
+            const rel = path.relative(PUBLIC_DIR, file);
+            const lines = html.split('\n');
+
+            for (let i = 0; i < lines.length; i++) {
+                let match;
+                inlineHandlerRe.lastIndex = 0;
+                while ((match = inlineHandlerRe.exec(lines[i])) !== null) {
+                    const handler = match[1];
+                    // Must have typeof guard or optional chaining
+                    if (!handler.includes('typeof i18n') && !handler.includes('i18n?.')) {
+                        errors.push(`${rel}:${i + 1}: inline handler "${handler.substring(0, 60)}" lacks typeof i18n guard`);
+                    }
+                }
+            }
+        }
+
+        if (errors.length > 0) {
+            throw new Error('Unguarded inline i18n handlers:\n  ' + errors.join('\n  '));
+        }
     });
 });
