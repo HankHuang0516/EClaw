@@ -1,3 +1,10 @@
+# [1.948.0](https://github.com/HankHuang0516/EClaw/compare/v1.947.0...v1.948.0) (2026-04-10)
+
+
+### Features
+
+* **arena:** professor-grade evaluation commentary per test ([e3877c3](https://github.com/HankHuang0516/EClaw/commit/e3877c38a68408e445fe4c1f72b1d38b3bd5c7ea))
+
 # [1.947.0](https://github.com/HankHuang0516/EClaw/compare/v1.946.0...v1.947.0) (2026-04-10)
 
 
