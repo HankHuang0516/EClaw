@@ -1,3 +1,10 @@
+## [1.954.1](https://github.com/HankHuang0516/EClaw/compare/v1.954.0...v1.954.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* **i18n:** fix SyntaxError in i18n.js causing all portal pages to crash ([#1667](https://github.com/HankHuang0516/EClaw/issues/1667)) ([60a816f](https://github.com/HankHuang0516/EClaw/commit/60a816fada9fcc7f2736506e8ec7665ce26fbd85))
+
 # [1.954.0](https://github.com/HankHuang0516/EClaw/compare/v1.953.0...v1.954.0) (2026-04-10)
 
 
