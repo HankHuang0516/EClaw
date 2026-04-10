@@ -1,3 +1,10 @@
+# [1.950.0](https://github.com/HankHuang0516/EClaw/compare/v1.949.0...v1.950.0) (2026-04-10)
+
+
+### Features
+
+* **dashboard:** lock Agent Card capabilities to Arena results + add rental listing buttons ([2a78769](https://github.com/HankHuang0516/EClaw/commit/2a78769c45e20c6795d5dfd049bacc583ca02235))
+
 # [1.949.0](https://github.com/HankHuang0516/EClaw/compare/v1.948.2...v1.949.0) (2026-04-10)
 
 
