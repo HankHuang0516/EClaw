@@ -38,6 +38,49 @@ jobs:
         run: npm run lint
         working-directory: backend
 
+  # ── i18n validation (fast, no npm ci needed) ────────────────────────────────
+  i18n:
+    name: i18n syntax check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate i18n.js syntax
+        run: node --check public/shared/i18n.js
+        working-directory: backend
+
+      - name: Check i18n.js script paths in HTML
+        run: |
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          const PUBLIC = path.resolve('public');
+          const errors = [];
+          (function walk(dir) {
+            for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+              const f = path.join(dir, e.name);
+              if (e.isDirectory()) { walk(f); continue; }
+              if (!e.name.endsWith('.html')) continue;
+              const html = fs.readFileSync(f, 'utf8');
+              for (const m of html.matchAll(/<script\s+src=[\"']([^\"']*i18n\.js[^\"']*)[\"']/g)) {
+                const src = m[1].split('?')[0];
+                const resolved = src.startsWith('/')
+                  ? path.join(PUBLIC, src)
+                  : path.join(path.dirname(f), src);
+                if (!fs.existsSync(resolved))
+                  errors.push(path.relative(PUBLIC, f) + ': bad path \"' + m[1] + '\"');
+              }
+            }
+          })(PUBLIC);
+          if (errors.length) { console.error('Invalid i18n.js paths:\n  ' + errors.join('\n  ')); process.exit(1); }
+          console.log('✅ All i18n.js paths valid');
+          "
+        working-directory: backend
+
   # ── Jest + Supertest ────────────────────────────────────────────────────────
   jest:
     name: Jest unit tests
@@ -66,7 +109,7 @@ jobs:
   preview:
     name: Deploy preview to Railway
     runs-on: ubuntu-latest
-    needs: [lint, jest]
+    needs: [lint, i18n, jest]
     if: github.event_name == 'pull_request'
     permissions:
       pull-requests: write
