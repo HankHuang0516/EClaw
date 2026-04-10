@@ -1,3 +1,10 @@
+## [1.952.1](https://github.com/HankHuang0516/EClaw/compare/v1.952.0...v1.952.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** add spacing to info.html benchmark docs + evaluation link at top ([cff17e8](https://github.com/HankHuang0516/EClaw/commit/cff17e8b9ee6c345dc5bf2e43fa18af06ca528a9))
+
 # [1.952.0](https://github.com/HankHuang0516/EClaw/compare/v1.951.2...v1.952.0) (2026-04-10)
 
 
