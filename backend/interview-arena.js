@@ -458,6 +458,28 @@ function scoreTts(config, actionsLog) {
     return { score: Math.round(config.weight * ratio), maxScore: config.weight };
 }
 
+/**
+ * Speed bonus: faster completion → higher score.
+ * Each scorer returns a base accuracy score. This wrapper multiplies
+ * by a time factor based on elapsed seconds (first action → last action).
+ *
+ * Tiers: <5s → 1.0x, 5-10s → 0.95x, 10-20s → 0.85x, 20-30s → 0.75x, >30s → 0.65x
+ * The result is capped at the test's max weight.
+ */
+function applySpeedBonus(baseResult, actionsLog) {
+    if (baseResult.score === 0 || actionsLog.length < 1) return baseResult;
+    const timestamps = actionsLog.map(a => a.timestamp).filter(t => typeof t === 'number');
+    if (timestamps.length < 1) return baseResult;
+    const elapsed = (Math.max(...timestamps) - Math.min(...timestamps)) / 1000;
+    let mult = 0.65;
+    if (elapsed < 5) mult = 1.0;
+    else if (elapsed < 10) mult = 0.95;
+    else if (elapsed < 20) mult = 0.85;
+    else if (elapsed < 30) mult = 0.75;
+    const boosted = Math.round(baseResult.score * mult);
+    return { ...baseResult, score: Math.min(boosted, baseResult.maxScore), elapsedSec: Math.round(elapsed), speedMult: mult };
+}
+
 const SCORING_ENGINES = {
     arena_vision: scoreVision,
     arena_button_click: scoreButtonClick,
@@ -789,7 +811,8 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
             const scorer = SCORING_ENGINES[session.test_type];
             let partialScore = null;
             if (scorer) {
-                const result = scorer(config, actions);
+                const raw = scorer(config, actions);
+                const result = applySpeedBonus(raw, actions);
                 partialScore = result.score;
             }
 
@@ -826,7 +849,8 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
             const config = parseConfig(session.challenge_config);
             const actions = Array.isArray(session.actions_log) ? session.actions_log : [];
             const scorer = SCORING_ENGINES[session.test_type];
-            const result = scorer ? scorer(config, actions) : { score: 0, maxScore: config.weight || 0 };
+            const raw = scorer ? scorer(config, actions) : { score: 0, maxScore: config.weight || 0 };
+            const result = applySpeedBonus(raw, actions);
 
             await pool.query(
                 `UPDATE arena_sessions SET status = 'completed', score = $2, raw_result = $3, completed_at = NOW()
@@ -866,7 +890,8 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
                     const config = parseConfig(s.challenge_config);
                     const actions = Array.isArray(s.actions_log) ? s.actions_log : [];
                     const scorer = SCORING_ENGINES[s.test_type];
-                    const result = scorer ? scorer(config, actions) : { score: 0 };
+                    const raw = scorer ? scorer(config, actions) : { score: 0 };
+                    const result = applySpeedBonus(raw, actions);
                     score = result.score;
                     await pool.query(
                         `UPDATE arena_sessions SET status = 'completed', score = $2, raw_result = $3, completed_at = NOW()

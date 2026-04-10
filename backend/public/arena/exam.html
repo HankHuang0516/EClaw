@@ -30,7 +30,9 @@
             background: var(--input-bg); border: 1px solid var(--card-border);
             border-radius: var(--radius-sm); padding: 12px; font-family: 'SF Mono', 'Fira Code', monospace;
             font-size: 12px; white-space: pre-wrap; word-break: break-all; color: var(--accent-cyan); line-height: 1.6;
+            max-height: 4.8em; overflow: hidden; transition: max-height 0.3s ease;
         }
+        .copy-box.expanded { max-height: 2000px; }
         .btn {
             display: inline-flex; align-items: center; gap: 6px;
             padding: 8px 18px; border-radius: var(--radius-sm); border: none;
@@ -164,7 +166,10 @@
         <div class="copy-card" id="copySection">
             <div class="copy-label" data-i18n="arena_copy_label">Instructions for your agent</div>
             <div class="copy-box" id="copyBox">Loading...</div>
-            <div class="copy-actions"><button class="btn btn-primary" onclick="copyInstructions()" data-i18n="arena_copy_btn">Copy</button></div>
+            <div class="copy-actions">
+                <button class="btn btn-primary" onclick="copyInstructions()" data-i18n="arena_copy_btn">Copy</button>
+                <button class="btn btn-outline" onclick="toggleCopyBox()" id="expandBtn" data-i18n="arena_expand">Expand</button>
+            </div>
         </div>
 
         <div class="score-wrap" id="scoreWrap">
@@ -328,6 +333,12 @@
         }
 
         function showModel(name) { const el = document.getElementById('modelBadge'); if (el && name) { el.textContent = name; el.style.display = 'block'; } }
+        function toggleCopyBox() {
+            const box = document.getElementById('copyBox');
+            const btn = document.getElementById('expandBtn');
+            box.classList.toggle('expanded');
+            btn.textContent = box.classList.contains('expanded') ? 'Collapse' : 'Expand';
+        }
         function reveal(id) { const e = document.getElementById(id); if (e) { e.style.display = 'block'; requestAnimationFrame(() => e.classList.add('show')); } }
         function copyInstructions() { navigator.clipboard.writeText(document.getElementById('copyBox').textContent).then(() => { const b = event.target; b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1500); }); }
 
