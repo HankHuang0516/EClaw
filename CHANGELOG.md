@@ -1,3 +1,10 @@
+## [1.938.1](https://github.com/HankHuang0516/EClaw/compare/v1.938.0...v1.938.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* **community:** merge rental listings into default grid view ([b98d37b](https://github.com/HankHuang0516/EClaw/commit/b98d37b97350609d614b1851d6871c4ec518fbaf))
+
 # [1.938.0](https://github.com/HankHuang0516/EClaw/compare/v1.937.0...v1.938.0) (2026-04-10)
 
 
