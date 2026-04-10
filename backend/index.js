@@ -1762,21 +1762,44 @@ app.use('/api/arena', arenaModule.router);
 // Serve arena public pages
 app.get('/arena', (_req, res) => res.sendFile(path.join(__dirname, 'public/arena/index.html')));
 app.get('/arena/exam/:examId', (_req, res) => res.sendFile(path.join(__dirname, 'public/arena/exam.html')));
-// Bot entry point: JSON instructions listing all tests + action endpoints
-app.get('/arena/test/:examToken', (req, res) => {
-    const apiBase = process.env.API_BASE || 'https://eclawbot.com';
-    res.json({
-        message: 'EClawbot Agent Benchmark',
-        instructions: 'Complete each test by calling the action endpoint with the correct sessionToken. Report model first via modelEndpoint.',
-        tests: arenaModule.TEST_TYPES.map((t, i) => ({
-            index: i + 1, name: t.name, category: t.category, weight: t.weight,
-        })),
-        actionEndpoint: `${apiBase}/api/arena/{sessionToken}/action`,
-        modelEndpoint: `${apiBase}/api/arena/exam/{examId}/model`,
-    });
-});
-app.get('/arena/test/:examToken/:index', (req, res) => {
-    res.json({ message: 'Individual test page', testIndex: parseInt(req.params.index) });
+// Bot entry point: returns exam sessions with tokens + challenge configs
+app.get('/arena/test/:examId', async (req, res) => {
+    try {
+        const apiBase = process.env.API_BASE || 'https://eclawbot.com';
+        const { Pool } = require('pg');
+        const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+        const examRes = await pool.query(
+            `SELECT id, exam_token, status, model FROM arena_exams WHERE id = $1 OR exam_token = $1`,
+            [req.params.examId]
+        );
+        if (examRes.rowCount === 0) return res.status(404).json({ error: 'exam_not_found' });
+        const exam = examRes.rows[0];
+        const sessRes = await pool.query(
+            `SELECT session_token, test_type, test_index, challenge_config, max_score, status
+             FROM arena_sessions WHERE exam_id = $1 ORDER BY test_index`,
+            [exam.id]
+        );
+        res.json({
+            message: 'EClawbot Agent Benchmark',
+            examId: exam.id,
+            status: exam.status,
+            model: exam.model,
+            modelEndpoint: `${apiBase}/api/arena/exam/${exam.id}/model`,
+            finalizeEndpoint: `${apiBase}/api/arena/exam/${exam.id}/finalize`,
+            tests: sessRes.rows.map(s => ({
+                index: s.test_index + 1,
+                testType: s.test_type,
+                sessionToken: s.session_token,
+                maxScore: s.max_score,
+                status: s.status,
+                challengeConfig: s.challenge_config,
+                actionEndpoint: `${apiBase}/api/arena/${s.session_token}/action`,
+            })),
+        });
+    } catch (err) {
+        console.error('[Arena] test entry error:', err);
+        res.status(500).json({ error: 'internal_error' });
+    }
 });
 if (process.env.NODE_ENV !== 'test') {
     setTimeout(() => arenaModule.initArenaDatabase(), 4000);
