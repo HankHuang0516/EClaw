@@ -376,6 +376,73 @@
                 const raw = s && s.raw_result ? (typeof s.raw_result === 'string' ? JSON.parse(s.raw_result) : s.raw_result) : {};
                 const speedInfo = raw.elapsedSec ? `${raw.elapsedSec}s` : (raw.speedMult ? `${raw.speedMult}x` : '');
 
+                // Per-test commentary based on score percentage
+                const COMMENTS = [
+                    // 0: arena_vision
+                    [['Unable to perceive visual content. The agent lacks multimodal capability.', 0],
+                     ['Partial visual recognition. Some elements were identified but key details were missed.', 50],
+                     ['Strong visual perception. Most objects and attributes correctly identified.', 80],
+                     ['Exceptional visual understanding. All visual elements accurately described.', 95]],
+                    // 1: arena_button_click
+                    [['Failed to locate the target element. DOM navigation capability is absent.', 0],
+                     ['Interacted with the page but selected the wrong element.', 30],
+                     ['Successfully identified and clicked the correct target among 200 elements.', 80],
+                     ['Perfect element targeting with fast execution.', 95]],
+                    // 2: arena_form_fill
+                    [['Unable to complete form submission. Structured input capability missing.', 0],
+                     ['Partial form completion. Some fields filled correctly but others were missed or incorrect.', 50],
+                     ['Most form fields filled accurately with minor discrepancies.', 80],
+                     ['All form fields completed with exact values. Excellent structured input handling.', 95]],
+                    // 3: arena_drag_drop
+                    [['No drag interaction detected. The agent cannot perform spatial manipulation.', 0],
+                     ['Drag action initiated but dropped at incorrect position.', 25],
+                     ['Object dragged to the correct target zone.', 80],
+                     ['Precise spatial control — object placed accurately within target.', 95]],
+                    // 4: arena_navigation
+                    [['Unable to navigate beyond the first page. Multi-step planning is absent.', 0],
+                     ['Navigated partway through the link hierarchy but did not reach the target.', 40],
+                     ['Reached the target through multi-level navigation.', 80],
+                     ['Efficient navigation — found the target via the optimal path.', 95]],
+                    // 5: arena_table_extract
+                    [['Could not extract data from the table. Structured data comprehension is lacking.', 0],
+                     ['Visited the table but provided an incorrect answer.', 30],
+                     ['Answer is approximately correct (within 5% tolerance).', 70],
+                     ['Exact answer extracted. Strong tabular data reasoning.', 95]],
+                    // 6: arena_distraction
+                    [['Clicked fake/decoy elements. The agent is vulnerable to social engineering.', 0],
+                     ['Avoided some distractors but interacted with at least one fake element.', 40],
+                     ['Correctly identified the real button and ignored most distractors.', 70],
+                     ['Perfect distraction resilience — only the real target was clicked.', 95]],
+                    // 7: arena_coding
+                    [['No test cases passed. Code generation capability is absent or non-functional.', 0],
+                     ['Some test cases passed. Logic is partially correct but has edge-case failures.', 40],
+                     ['Most test cases passed. Solid algorithmic reasoning with minor gaps.', 80],
+                     ['All test cases passed. Excellent code generation and logical reasoning.', 95]],
+                    // 8: arena_response_time
+                    [['No answer submitted within the time limit.', 0],
+                     ['Correct answer but slow response time (>20s).', 40],
+                     ['Correct answer with reasonable speed (5–15s).', 70],
+                     ['Fast and accurate response (<5s). Excellent real-time capability.', 95]],
+                    // 9: arena_memory
+                    [['Unable to recall information from a previous test. Context retention is absent.', 0],
+                     ['Partial recall — related but not the exact information requested.', 45],
+                     ['Correctly recalled the referenced information from the earlier test.', 80],
+                     ['Perfect context retention across test boundaries.', 95]],
+                    // 10: arena_file_mgmt
+                    [['No file operations completed. The agent cannot interact with storage APIs.', 0],
+                     ['Partial workflow — some steps (download/rename/upload) completed but not all.', 40],
+                     ['Full download → rename → upload workflow completed.', 80],
+                     ['File operations executed flawlessly and quickly.', 95]],
+                    // 11: arena_tts
+                    [['No transcription provided. Speech processing capability is absent.', 0],
+                     ['Partial transcription — some words recognized but significant content missed.', 40],
+                     ['Most spoken content accurately transcribed.', 80],
+                     ['Near-perfect transcription. Strong speech processing capability.', 95]],
+                ];
+                const tiers = COMMENTS[i] || [];
+                let comment = tiers[0] ? tiers[0][0] : '';
+                for (const [text, threshold] of tiers) { if (scPct >= threshold) comment = text; }
+
                 detailRows += `
                 <div style="border:1px solid var(--card-border);border-radius:var(--radius-sm);margin-bottom:6px;overflow:hidden;">
                     <div class="report-row-header" style="display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;background:var(--card);">
@@ -387,6 +454,7 @@
                     </div>
                     <div style="height:3px;background:var(--input-bg);"><div style="height:100%;width:${barW}%;background:${barColor};transition:width 0.5s;"></div></div>
                     <div class="report-detail" style="display:none;padding:10px 12px;background:var(--bg-secondary);font-size:12px;color:var(--text-secondary);line-height:1.7;">
+                        <div style="margin-bottom:6px;color:var(--text);font-size:13px;">${comment}</div>
                         <div><strong>Score:</strong> ${sc} / ${mx} (${scPct}%)</div>
                         ${speedInfo ? `<div><strong>Speed:</strong> ${speedInfo}</div>` : ''}
                         ${raw.score !== undefined && raw.maxScore !== undefined ? `<div><strong>Base accuracy:</strong> ${raw.score} / ${raw.maxScore}</div>` : ''}
