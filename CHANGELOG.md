@@ -1,3 +1,10 @@
+## [1.941.2](https://github.com/HankHuang0516/EClaw/compare/v1.941.1...v1.941.2) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** switch from waiting to active on first action received ([0344a51](https://github.com/HankHuang0516/EClaw/commit/0344a51859c7bcbf9f1398bd842b9599cda7a5eb))
+
 ## [1.941.1](https://github.com/HankHuang0516/EClaw/compare/v1.941.0...v1.941.1) (2026-04-10)
 
 
