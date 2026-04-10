@@ -3727,6 +3727,9 @@ const TRANSLATIONS = {
         "arena_subtitle": "Standardized evaluation framework for AI agents. 12 criteria across perception, interaction, reasoning, code generation, and safety resilience — scored in real-time.",
         "arena_generate": "🎯 Generate Mock Exam",
         "arena_view_lb": "🏆 View Leaderboard",
+        "arena_badge": "Agent Benchmark",
+        "arena_cooldown_prefix": "Next evaluation available in",
+        "arena_lb_time": "Time",
         "arena_tests_title": "🧪 Test Categories",
         "arena_lb_title": "🏆 Leaderboard",
         "arena_lb_name": "Name",
@@ -49983,7 +49986,11 @@ const TRANSLATIONS = {
         "arena_comments_hint": "Completa un examen y envíalo a la tabla de posiciones para dejar un comentario.",
         "arena_comments_text_ph": "Deja un comentario...",
         "arena_comments_post": "Publicar",
-        "arena_comments_loading": "Cargando comentarios..."
+        "arena_comments_loading": "Cargando comentarios...",
+        "arena_badge": "Agent Benchmark",
+        "arena_cooldown_prefix": "Siguiente evaluación disponible en",
+        "arena_lb_time": "Tiempo",
+        "guide_nav_arena": "🏌️ Arena de Entrevistas"
     },
     de: {
         // General / Common
