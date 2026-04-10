@@ -1,3 +1,10 @@
+## [1.940.3](https://github.com/HankHuang0516/EClaw/compare/v1.940.2...v1.940.3) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** add back link to benchmark home on exam page ([45f3ca5](https://github.com/HankHuang0516/EClaw/commit/45f3ca581a57542a2daf3802046081244940cd6e))
+
 ## [1.940.2](https://github.com/HankHuang0516/EClaw/compare/v1.940.1...v1.940.2) (2026-04-10)
 
 
