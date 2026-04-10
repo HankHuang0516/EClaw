@@ -267,6 +267,8 @@ const TRANSLATIONS = {
         "info_tab_guide": "User Guide",
         "info_tab_faq": "FAQ",
         "info_tab_release_notes": "Release Notes",
+        "info_tab_roadmap": "Roadmap",
+        "roadmap_title": "EClawbot - Product Roadmap",
         "info_tab_compare": "Compare",
 
         // Quick Start & Info Hub tabs (info.html)
@@ -3646,6 +3648,8 @@ const TRANSLATIONS = {
         "info_tab_guide": "使用指南",
         "info_tab_faq": "常見問題",
         "info_tab_release_notes": "更新日誌",
+        "info_tab_roadmap": "產品路線圖",
+        "roadmap_title": "EClawbot - 產品路線圖",
         "info_tab_compare": "頻道比較",
 
         // Quick Start & Info Hub tabs (info.html)
