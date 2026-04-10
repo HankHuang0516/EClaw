@@ -1,3 +1,10 @@
+## [1.929.3](https://github.com/HankHuang0516/EClaw/compare/v1.929.2...v1.929.3) (2026-04-10)
+
+
+### Bug Fixes
+
+* **workspace:** prevent AI chat widget duplication in split-view panes ([#1657](https://github.com/HankHuang0516/EClaw/issues/1657)) ([e586e32](https://github.com/HankHuang0516/EClaw/commit/e586e32887bf7fa7ff8d513ff5472996c308e029))
+
 ## [1.929.2](https://github.com/HankHuang0516/EClaw/compare/v1.929.1...v1.929.2) (2026-04-09)
 
 
