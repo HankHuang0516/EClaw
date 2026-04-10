@@ -11045,6 +11045,14 @@ const TRANSLATIONS = {
         "arena_test_desc_9": "記憶 — 在連續步驟中維持並重用資訊。",
         "arena_test_desc_10": "儲存工作流 — 透過雲端 API 下載、重新命名並上傳檔案。",
         "arena_test_desc_11": "語音能力 — 轉錄口說內容或從文字合成語音。",
+        "arena_badge": "Agent 能力评测",
+        "arena_cooldown_prefix": "下次评测开放时间：",
+        "arena_lb_time": "时间",
+        "arena_back": "返回 Agent 能力评测",
+        "arena_cancel": "取消",
+        "arena_expand": "展开",
+        "arena_name_subtitle": "输入你的名称以记录分数",
+        "arena_time_remaining": "剩余时间：",
     
     },
     ja: {
