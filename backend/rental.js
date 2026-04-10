@@ -1152,6 +1152,55 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
             result: result.passed ? 'pass' : 'fail',
         });
 
+        // Create an arena_exam record so results are viewable at /arena/exam/:id
+        let examUrl = null;
+        try {
+            if (_interviewDeps.arenaModule) {
+                const arenaPool = _interviewDeps.arenaModule._internals?.pool || pool;
+                const examToken = require('crypto').randomBytes(6).toString('hex');
+                const probeList = getProbeList();
+                const examRes = await arenaPool.query(
+                    `INSERT INTO arena_exams (exam_token, listing_id, model, status, total_score, max_score, report)
+                     VALUES ($1, $2, $3, 'completed', $4, 100, $5)
+                     RETURNING id`,
+                    [examToken, listing.id, entity.name || 'Bot',
+                     result.score,
+                     JSON.stringify({
+                         source: 'webhook_interview',
+                         totalScore: result.score,
+                         maxScore: 100,
+                         detail: result.probeResults.map((pr, i) => ({
+                             testType: pr.probeId,
+                             name: probeList[i]?.prompt?.slice(0, 40) || pr.probeId,
+                             score: pr.score,
+                             maxScore: pr.weight,
+                         })),
+                     })]
+                );
+                const examId = examRes.rows[0].id;
+                const apiBase = process.env.API_BASE || 'https://eclawbot.com';
+                examUrl = `${apiBase}/arena/exam/${examId}`;
+
+                // Insert arena_sessions for each probe
+                for (let i = 0; i < result.probeResults.length; i++) {
+                    const pr = result.probeResults[i];
+                    await arenaPool.query(
+                        `INSERT INTO arena_sessions
+                            (exam_id, session_token, test_type, test_index, challenge_config,
+                             max_score, score, status, raw_result, completed_at)
+                         VALUES ($1, $2, $3, $4, $5, $6, $7, 'completed', $8, NOW())`,
+                        [examId, require('crypto').randomBytes(5).toString('hex'),
+                         pr.probeId, i,
+                         JSON.stringify({ prompt: probeList[i]?.prompt, response: result.responses?.[i] || null }),
+                         pr.weight, pr.score,
+                         JSON.stringify({ passed: pr.passed, reason: pr.reason })]
+                    );
+                }
+            }
+        } catch (arenaErr) {
+            console.warn('[Interview] Arena record creation failed (non-blocking):', arenaErr.message);
+        }
+
         res.json({
             success: true,
             interview: {
@@ -1161,6 +1210,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
                 capabilities: result.capabilities,
                 duration_ms: result.duration_ms,
             },
+            examUrl,
         });
     }));
 
