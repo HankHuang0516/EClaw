@@ -1,3 +1,10 @@
+## [1.952.2](https://github.com/HankHuang0516/EClaw/compare/v1.952.1...v1.952.2) (2026-04-10)
+
+
+### Bug Fixes
+
+* **chat:** native audio recording fallback for Android WebView NotReadableError ([7e10e66](https://github.com/HankHuang0516/EClaw/commit/7e10e6645e3fa6d171b50597c2e000c82241d10f))
+
 ## [1.952.1](https://github.com/HankHuang0516/EClaw/compare/v1.952.0...v1.952.1) (2026-04-10)
 
 
