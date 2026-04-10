@@ -1,3 +1,10 @@
+# [1.934.0](https://github.com/HankHuang0516/EClaw/compare/v1.933.2...v1.934.0) (2026-04-10)
+
+
+### Features
+
+* **portal:** add marketplace, my-rentals, and invite pages + navigation ([d992c7c](https://github.com/HankHuang0516/EClaw/commit/d992c7c97c2e5a45e06f75083a60da92429680e1))
+
 ## [1.933.2](https://github.com/HankHuang0516/EClaw/compare/v1.933.1...v1.933.2) (2026-04-10)
 
 
