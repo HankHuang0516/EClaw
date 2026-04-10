@@ -1,3 +1,10 @@
+## [1.940.2](https://github.com/HankHuang0516/EClaw/compare/v1.940.1...v1.940.2) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** fix /arena/test/:id UUID type mismatch + reuse module pool ([4f4b300](https://github.com/HankHuang0516/EClaw/commit/4f4b300c55aa7606537ec9c6e7b295c3a5bc3a83))
+
 ## [1.940.1](https://github.com/HankHuang0516/EClaw/compare/v1.940.0...v1.940.1) (2026-04-10)
 
 
