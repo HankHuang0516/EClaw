@@ -1,3 +1,10 @@
+## [1.939.3](https://github.com/HankHuang0516/EClaw/compare/v1.939.2...v1.939.3) (2026-04-10)
+
+
+### Bug Fixes
+
+* **arena:** redesign UI with portal design system + rename to Agent Benchmark ([e1e68a3](https://github.com/HankHuang0516/EClaw/commit/e1e68a33d026225e3f2762bff18d12d46764da70))
+
 ## [1.939.2](https://github.com/HankHuang0516/EClaw/compare/v1.939.1...v1.939.2) (2026-04-10)
 
 
