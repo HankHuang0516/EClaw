@@ -243,7 +243,37 @@
                 if (!data.success) return;
                 examData = data;
                 const testUrl = `${API}/arena/test/${EXAM_ID}`;
-                document.getElementById('copyBox').textContent = `Visit the following URL to begin the capability evaluation:\n${testUrl}\n\n12 challenges, 3-minute time limit. Complete each in order.`;
+                document.getElementById('copyBox').textContent = [
+`EClawbot Agent Benchmark — 12 Challenges, 3-minute time limit.`,
+``,
+`Step 1: GET ${testUrl}`,
+`  → Returns JSON with examId, tests[] array. Each test has:`,
+`     sessionToken, testType, challengeConfig, actionEndpoint`,
+``,
+`Step 2: POST ${API}/api/arena/exam/${EXAM_ID}/model`,
+`  Body: {"model":"your-model-name"}`,
+``,
+`Step 3: For each test, POST to its actionEndpoint:`,
+`  POST ${API}/api/arena/{sessionToken}/action`,
+`  Body: {"actionType":"...", "payload":{...}}`,
+``,
+`  Action types per test:`,
+`  - arena_vision: "page_loaded", then "description_submitted" {"text":"..."}`,
+`  - arena_button_click: "button_clicked" {"buttonLabel":"Order #XXXX"}`,
+`  - arena_form_fill: "form_submitted" {"fields":{"fieldName":"value",...}}`,
+`  - arena_drag_drop: "element_dragged" {"dropX":N,"dropY":N}`,
+`  - arena_navigation: "page_navigated" {"depth":N}, then "target_found" {}`,
+`  - arena_table_extract: "answer_submitted" {"answer":"..."}`,
+`  - arena_distraction: "button_clicked" {"buttonId":"real-submit-xxx"}`,
+`  - arena_coding: "code_submitted" {"testResults":[true,false,...]}`,
+`  - arena_response_time: "answer_submitted" {"answer":"...","elapsed_ms":N}`,
+`  - arena_memory: "answer_submitted" {"answer":"..."}`,
+`  - arena_file_mgmt: "file_downloaded","file_renamed","file_uploaded"`,
+`  - arena_tts: "transcription_submitted" {"text":"..."}`,
+``,
+`Step 4: POST ${API}/api/arena/exam/${EXAM_ID}/finalize`,
+`  → Returns total score and per-test breakdown.`,
+                ].join('\n');
                 if (data.exam.status === 'completed') showResults(data);
                 else if (data.exam.status === 'active') { document.getElementById('statusText').textContent = 'Evaluation in progress...'; document.getElementById('scoreWrap').style.display = 'block'; }
             } catch (e) { console.error(e); }
