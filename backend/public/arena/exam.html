@@ -124,22 +124,31 @@
         .comment-time { margin-left: auto; font-size: 10px; color: var(--text-muted); }
         .comment-text { font-size: 12px; line-height: 1.5; color: var(--text-secondary); }
 
-        /* Floating name prompt */
-        .float-prompt {
-            display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
-            background: var(--bg-secondary); border-top: 1px solid var(--card-border);
-            padding: 16px; box-shadow: 0 -4px 24px rgba(0,0,0,0.5);
-            animation: slideUp 0.4s ease;
+        /* Center modal name prompt */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; z-index: 100;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+            align-items: center; justify-content: center;
         }
-        .float-prompt.show { display: block; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .float-inner {
-            max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 10px;
+        .modal-overlay.show { display: flex; }
+        .modal-card {
+            background: var(--card); border: 1px solid var(--card-border);
+            border-radius: var(--radius); padding: 32px; max-width: 400px; width: 90%;
+            text-align: center;
+            opacity: 0; transform: scale(0.9) translateY(20px);
+            animation: modalIn 0.6s ease forwards;
         }
-        .float-title { font-size: 14px; font-weight: 700; }
-        .float-row { display: flex; gap: 8px; width: 100%; }
-        .float-row .name-input { flex: 1; }
-        .float-btn-group { display: flex; gap: 8px; }
+        @keyframes modalIn { to { opacity: 1; transform: scale(1) translateY(0); } }
+        .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+        .modal-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+        .modal-input {
+            width: 100%; padding: 12px 16px; font-size: 15px; text-align: center;
+            background: var(--input-bg); border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm); color: var(--text); outline: none; font-family: inherit;
+            margin-bottom: 16px;
+        }
+        .modal-input:focus { border-color: var(--primary); }
+        .modal-btns { display: flex; gap: 10px; justify-content: center; }
 
         /* Confetti canvas */
         #confettiCanvas {
@@ -160,7 +169,6 @@
         <div class="eval-header">
             <h1 data-i18n="arena_exam_title">Agent Benchmark — Evaluation</h1>
             <div class="eval-status"><span class="live-dot"></span><span id="statusText" data-i18n="arena_waiting">Waiting for agent to join...</span></div>
-            <div id="modelBadge" style="display:none;margin-top:8px;font-size:13px;color:var(--accent-cyan);"></div>
         </div>
 
         <div class="copy-card" id="copySection">
@@ -169,6 +177,16 @@
             <div class="copy-actions">
                 <button class="btn btn-primary" onclick="copyInstructions()" data-i18n="arena_copy_btn">Copy</button>
                 <button class="btn btn-outline" onclick="toggleCopyBox()" id="expandBtn" data-i18n="arena_expand">Expand</button>
+            </div>
+        </div>
+
+        <!-- Status bar: model + countdown (between instructions and score) -->
+        <div id="infoBar" style="display:none;margin-bottom:16px;padding:10px 14px;background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span id="modelBadge" style="font-size:13px;font-weight:600;color:var(--accent-cyan);"></span>
+            </div>
+            <div style="font-size:13px;color:var(--text-muted);">
+                <span data-i18n="arena_time_remaining">Time remaining:</span> <strong id="examTimer" style="color:var(--text);font-variant-numeric:tabular-nums;">3:00</strong>
             </div>
         </div>
 
@@ -237,6 +255,7 @@
                 if (document.getElementById('statusText').textContent.includes('Waiting') || document.getElementById('statusText').textContent.includes('等待')) {
                     document.getElementById('statusText').textContent = 'Evaluation in progress...';
                     document.getElementById('scoreWrap').style.display = 'block';
+                    startExamTimer(180);
                 }
                 const r = document.getElementById('t' + m.testIndex);
                 if (r) { r.classList.add('active'); r.classList.remove('pass','fail'); }
@@ -303,12 +322,13 @@
 `  → Returns total score and per-test breakdown.`,
                 ].join('\n');
                 if (data.exam.status === 'completed') showResults(data);
-                else if (data.exam.status === 'active') { document.getElementById('statusText').textContent = 'Evaluation in progress...'; document.getElementById('scoreWrap').style.display = 'block'; if (data.exam.model) showModel(data.exam.model); }
+                else if (data.exam.status === 'active') { document.getElementById('statusText').textContent = 'Evaluation in progress...'; document.getElementById('scoreWrap').style.display = 'block'; if (data.exam.model) showModel(data.exam.model); startExamTimer(180); }
             } catch (e) { console.error(e); }
         }
 
         function showResults(data) {
             document.getElementById('statusText').textContent = 'Evaluation Complete';
+            if (examTimerInterval) { clearInterval(examTimerInterval); examTimerInterval = null; }
             document.getElementById('scoreWrap').style.display = 'block';
             if (data.exam) { document.getElementById('totalScore').textContent = data.exam.totalScore || 0; document.getElementById('scoreFill').style.width = Math.round((data.exam.totalScore || 0) / 147 * 100) + '%'; }
             if (data.sessions) data.sessions.forEach(s => {
@@ -317,22 +337,70 @@
                 if (r) r.classList.add((s.score||0) > 0 ? 'pass' : 'fail');
                 if (st) st.textContent = s.status === 'completed' ? 'Done' : s.status;
             });
+            // Generate report content
+            const total = data.exam?.totalScore || 0;
+            const maxS = 147;
+            const pct = Math.round(total / maxS * 100);
+            let grade = 'F', gradeColor = 'var(--danger)';
+            if (pct >= 90) { grade = 'S'; gradeColor = 'var(--accent-gold)'; }
+            else if (pct >= 80) { grade = 'A'; gradeColor = 'var(--success)'; }
+            else if (pct >= 65) { grade = 'B'; gradeColor = 'var(--accent-cyan)'; }
+            else if (pct >= 50) { grade = 'C'; gradeColor = 'var(--warning)'; }
+            else if (pct >= 30) { grade = 'D'; gradeColor = 'var(--text-muted)'; }
+
+            const passed = (data.sessions || []).filter(s => s.score > 0).length;
+            const failed = 12 - passed;
+            document.getElementById('reportContent').innerHTML = `
+                <div style="text-align:center;padding:16px 0;">
+                    <div style="font-size:48px;font-weight:900;color:${gradeColor};margin-bottom:4px;">Grade: ${grade}</div>
+                    <div style="font-size:14px;color:var(--text-secondary);">${total} / ${maxS} (${pct}%) &mdash; ${passed} passed, ${failed} failed</div>
+                    <div style="font-size:13px;color:var(--text-muted);margin-top:8px;">
+                        ${pct >= 80 ? 'Excellent performance. This agent demonstrates strong real-world capabilities.' :
+                          pct >= 50 ? 'Solid performance with room for improvement in some areas.' :
+                          'This agent may need additional capabilities to handle complex tasks.'}
+                    </div>
+                </div>`;
             setTimeout(() => reveal('reportSection'), 400);
-            // Check if top 10 worthy → confetti
+
+            // Confetti for top 10 → then modal after 3s
             setTimeout(async () => {
+                let showConfetti = false;
                 try {
                     const lb = await (await fetch(`${API}/api/arena/leaderboard`)).json();
                     const entries = lb.leaderboard || [];
-                    const myScore = data.exam?.totalScore || 0;
-                    const isTop10 = entries.length < 10 || myScore > (entries[Math.min(entries.length - 1, 9)]?.score || 0);
-                    if (isTop10 && myScore > 0) launchConfetti();
-                } catch { /* skip confetti check */ }
-                // Show floating name prompt
-                document.getElementById('floatPrompt').classList.add('show');
+                    showConfetti = entries.length < 10 || total > (entries[Math.min(entries.length - 1, 9)]?.score || 0);
+                } catch { showConfetti = true; }
+                if (showConfetti && total > 0) launchConfetti();
+                // Show name modal 3s after confetti (or immediately if no confetti)
+                setTimeout(() => {
+                    document.getElementById('nameModal').classList.add('show');
+                }, showConfetti ? 3000 : 500);
             }, 1200);
         }
 
-        function showModel(name) { const el = document.getElementById('modelBadge'); if (el && name) { el.textContent = name; el.style.display = 'block'; } }
+        let examTimerInterval = null;
+        function showModel(name) {
+            const el = document.getElementById('modelBadge');
+            if (el && name) { el.textContent = name; }
+            document.getElementById('infoBar').style.display = 'flex';
+        }
+        function startExamTimer(totalSec) {
+            if (examTimerInterval) return;
+            let remaining = totalSec;
+            const el = document.getElementById('examTimer');
+            document.getElementById('infoBar').style.display = 'flex';
+            function tick() {
+                const m = Math.floor(remaining / 60);
+                const s = remaining % 60;
+                el.textContent = m + ':' + String(s).padStart(2, '0');
+                if (remaining <= 30) el.style.color = 'var(--danger)';
+                else if (remaining <= 60) el.style.color = 'var(--warning)';
+                if (remaining <= 0) { clearInterval(examTimerInterval); el.textContent = '0:00'; }
+                remaining--;
+            }
+            tick();
+            examTimerInterval = setInterval(tick, 1000);
+        }
         function toggleCopyBox() {
             const box = document.getElementById('copyBox');
             const btn = document.getElementById('expandBtn');
@@ -351,7 +419,7 @@
                 const r = await (await fetch(`${API}/api/arena/leaderboard`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ examId: EXAM_ID, name }) })).json();
                 if (r.leaderboardId) myLeaderboardId = r.leaderboardId;
                 // Hide floating prompt
-                dismissFloat();
+                dismissModal();
                 const lb = await (await fetch(`${API}/api/arena/leaderboard`)).json();
                 if (lb.leaderboard?.length) document.getElementById('lbBody').innerHTML = lb.leaderboard.map((e, i) => `<tr><td class="lb-rank">${i+1}</td><td>${esc(e.name)}</td><td>${esc(e.model||'-')}</td><td>${e.score}/147</td></tr>`).join('');
                 reveal('lbSection');
@@ -446,21 +514,20 @@
     </script>
 
     <canvas id="confettiCanvas"></canvas>
-    <div class="float-prompt" id="floatPrompt">
-        <div class="float-inner">
-            <div class="float-title" data-i18n="arena_name_prompt">Submit to Leaderboard</div>
-            <div class="float-row">
-                <input class="name-input" id="nameInput" maxlength="64" placeholder="Your name or bot name">
-            </div>
-            <div class="float-btn-group">
+    <div class="modal-overlay" id="nameModal">
+        <div class="modal-card">
+            <div class="modal-title" data-i18n="arena_name_prompt">Submit to Leaderboard</div>
+            <div class="modal-subtitle" data-i18n="arena_name_subtitle">Enter a name to claim your score</div>
+            <input class="modal-input" id="nameInput" maxlength="64" placeholder="Your name or bot name">
+            <div class="modal-btns">
                 <button class="btn btn-primary" id="nameSubmitBtn" onclick="submitName()" data-i18n="arena_submit_name">Submit</button>
-                <button class="btn btn-outline" onclick="dismissFloat()" data-i18n="arena_cancel">Cancel</button>
+                <button class="btn btn-outline" onclick="dismissModal()" data-i18n="arena_cancel">Cancel</button>
             </div>
         </div>
     </div>
 
     <script>
-        function dismissFloat() { document.getElementById('floatPrompt').classList.remove('show'); }
+        function dismissModal() { document.getElementById('nameModal').classList.remove('show'); }
 
         // Confetti effect for top 10
         function launchConfetti() {

@@ -122,9 +122,8 @@ describe('interview-arena: challenge generators', () => {
         }
     });
 
-    test('vision challenge has imageFile and expectedKeywords', () => {
+    test('vision challenge has expectedKeywords', () => {
         const c = CHALLENGE_GENERATORS.arena_vision();
-        expect(c.imageFile).toBeTruthy();
         expect(Array.isArray(c.expectedKeywords)).toBe(true);
         expect(c.expectedKeywords.length).toBeGreaterThan(0);
     });

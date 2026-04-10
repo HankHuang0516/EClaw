@@ -115,6 +115,9 @@
                 <button class="btn btn-primary" id="btnGenerate" onclick="createExam()" data-i18n="arena_generate">Start Evaluation</button>
                 <button class="btn btn-outline" onclick="toggleLeaderboard()" data-i18n="arena_view_lb">Leaderboard</button>
             </div>
+            <div id="cooldownBar" style="display:none;margin-top:12px;font-size:13px;color:var(--text-muted);text-align:center;">
+                <span data-i18n="arena_cooldown_prefix">Next evaluation available in</span> <strong id="cooldownTimer">--</strong>
+            </div>
         </div>
 
         <div class="lb-panel" id="lbPanel">
@@ -177,11 +180,49 @@
             try {
                 const res = await fetch(API + '/api/arena/exam', { method: 'POST' });
                 const data = await res.json();
-                if (data.success) window.location.href = '/arena/exam/' + data.exam.id;
-                else alert('Error: ' + (data.error || 'unknown'));
+                if (data.success) {
+                    window.location.href = '/arena/exam/' + data.exam.id;
+                } else if (data.error === 'cooldown') {
+                    startCooldownTimer(data.remainingSec);
+                } else {
+                    alert('Error: ' + (data.error || 'unknown'));
+                }
             } catch (e) { alert('Error: ' + e.message); }
             finally { btn.disabled = false; btn.textContent = 'Start Evaluation'; }
         }
+
+        let cooldownInterval = null;
+        function startCooldownTimer(sec) {
+            const bar = document.getElementById('cooldownBar');
+            const timer = document.getElementById('cooldownTimer');
+            const btn = document.getElementById('btnGenerate');
+            bar.style.display = 'block';
+            btn.disabled = true;
+            let remaining = sec;
+            function tick() {
+                const m = Math.floor(remaining / 60);
+                const s = remaining % 60;
+                timer.textContent = m + ':' + String(s).padStart(2, '0');
+                if (remaining <= 0) {
+                    clearInterval(cooldownInterval);
+                    bar.style.display = 'none';
+                    btn.disabled = false;
+                    btn.textContent = 'Start Evaluation';
+                }
+                remaining--;
+            }
+            tick();
+            if (cooldownInterval) clearInterval(cooldownInterval);
+            cooldownInterval = setInterval(tick, 1000);
+        }
+
+        // Check cooldown on page load
+        (async function checkCooldown() {
+            try {
+                const data = await (await fetch(API + '/api/arena/cooldown')).json();
+                if (data.cooldown && data.remainingSec > 0) startCooldownTimer(data.remainingSec);
+            } catch { /* ignore */ }
+        })();
 
         let lbLoaded = false;
         async function toggleLeaderboard() {

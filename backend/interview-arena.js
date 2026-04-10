@@ -78,6 +78,27 @@ const VISION_IMAGES = [
     { file: 'green-triangle.svg', keywords: ['green', 'triangle'] },
     { file: 'yellow-star.svg', keywords: ['yellow', 'star'] },
     { file: 'cat-orange.svg', keywords: ['cat', 'orange'] },
+    // Procedurally generated descriptions (no SVG file needed — scored by keyword match on bot's text response)
+    { file: null, description: 'A purple pentagon on a gray background', keywords: ['purple', 'pentagon'] },
+    { file: null, description: 'Three overlapping red, green, and blue circles', keywords: ['three', 'circles', 'overlapping'] },
+    { file: null, description: 'A white arrow pointing right on a black background', keywords: ['arrow', 'right', 'white'] },
+    { file: null, description: 'A yellow crescent moon with two small stars', keywords: ['moon', 'crescent', 'stars'] },
+    { file: null, description: 'A green checkmark inside a circle', keywords: ['checkmark', 'green', 'circle'] },
+    { file: null, description: 'A bar chart with four bars of different heights', keywords: ['bar', 'chart', 'four'] },
+    { file: null, description: 'A red heart shape centered on white', keywords: ['heart', 'red'] },
+    { file: null, description: 'Two interlocking gold rings', keywords: ['rings', 'gold', 'two'] },
+    { file: null, description: 'A blue diamond shape rotated 45 degrees', keywords: ['diamond', 'blue'] },
+    { file: null, description: 'A pie chart split into three equal colored sections', keywords: ['pie', 'chart', 'three'] },
+    { file: null, description: 'An orange lightning bolt on dark background', keywords: ['lightning', 'orange'] },
+    { file: null, description: 'A simple house with a red roof and brown door', keywords: ['house', 'roof', 'door'] },
+    { file: null, description: 'A clock showing 3 o\'clock', keywords: ['clock', 'three'] },
+    { file: null, description: 'A green tree with a brown trunk', keywords: ['tree', 'green', 'trunk'] },
+    { file: null, description: 'A blue water droplet shape', keywords: ['water', 'droplet', 'blue'] },
+    { file: null, description: 'A red stop sign octagon', keywords: ['stop', 'octagon', 'red'] },
+    { file: null, description: 'A yellow sun with eight rays', keywords: ['sun', 'yellow', 'rays'] },
+    { file: null, description: 'A black and white chess board pattern', keywords: ['chess', 'board', 'pattern'] },
+    { file: null, description: 'A pink flower with five petals', keywords: ['flower', 'pink', 'petals'] },
+    { file: null, description: 'A gray gear/cog wheel icon', keywords: ['gear', 'cog', 'gray'] },
 ];
 
 function generateVisionChallenge() {
@@ -93,27 +114,37 @@ function generateButtonClickChallenge() {
     return { correctIndex, correctLabel, buttonCount, seed: Math.floor(Math.random() * 1e9) };
 }
 
+const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva'];
+const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br'];
+const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea'];
+const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123'];
+const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17'];
+const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission'];
+
 function generateFormFillChallenge() {
+    const nameIdx = Math.floor(Math.random() * FORM_NAMES.length);
+    const countryIdx = Math.floor(Math.random() * FORM_COUNTRIES.length);
     const fields = [
-        { name: 'fullName', type: 'text', label: 'Full Name', expectedValue: 'John Smith' },
-        { name: 'email', type: 'email', label: 'Email', expectedValue: 'john@example.com' },
-        { name: 'country', type: 'select', label: 'Country', expectedValue: 'Japan',
-          options: ['USA', 'Japan', 'Germany', 'Brazil', 'Australia'] },
+        { name: 'fullName', type: 'text', label: 'Full Name', expectedValue: FORM_NAMES[nameIdx] },
+        { name: 'email', type: 'email', label: 'Email', expectedValue: FORM_EMAILS[nameIdx % FORM_EMAILS.length] },
+        { name: 'country', type: 'select', label: 'Country', expectedValue: FORM_COUNTRIES[countryIdx],
+          options: shuffle([...FORM_COUNTRIES]).slice(0, 5) },
         { name: 'agreeTerms', type: 'checkbox', label: 'Agree to Terms', expectedValue: true },
     ];
-    // Add 1-2 random extra fields
     const extras = [
-        { name: 'phone', type: 'tel', label: 'Phone', expectedValue: '+81-90-1234-5678' },
-        { name: 'birthDate', type: 'date', label: 'Birth Date', expectedValue: '1990-06-15' },
-        { name: 'message', type: 'textarea', label: 'Message', expectedValue: 'Hello World' },
+        { name: 'phone', type: 'tel', label: 'Phone', expectedValue: FORM_PHONES[Math.floor(Math.random() * FORM_PHONES.length)] },
+        { name: 'birthDate', type: 'date', label: 'Birth Date', expectedValue: FORM_DATES[Math.floor(Math.random() * FORM_DATES.length)] },
+        { name: 'message', type: 'textarea', label: 'Message', expectedValue: FORM_MESSAGES[Math.floor(Math.random() * FORM_MESSAGES.length)] },
+        { name: 'company', type: 'text', label: 'Company', expectedValue: ['Acme Corp','TechStart','GlobalCo','DataInc'][Math.floor(Math.random() * 4)] },
+        { name: 'role', type: 'select', label: 'Role', expectedValue: 'Developer', options: ['Designer','Developer','Manager','Analyst','Other'] },
     ];
-    const extraCount = 1 + Math.floor(Math.random() * 2);
-    // Fisher-Yates shuffle
-    for (let i = extras.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [extras[i], extras[j]] = [extras[j], extras[i]];
-    }
-    return { fields: [...fields, ...extras.slice(0, extraCount)] };
+    return { fields: [...fields, ...shuffle(extras).slice(0, 1 + Math.floor(Math.random() * 2))] };
+}
+
+function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
 }
 
 function generateDragDropChallenge() {
@@ -174,42 +205,46 @@ function generateDistractionChallenge() {
 }
 
 const CODING_PROBLEMS = [
-    {
-        title: 'Array Dedup & Sort',
-        description: 'Write a function `solve(arr)` that removes duplicates from `arr` and returns the sorted result.',
-        testCases: [
-            { input: '[3,1,2,1,3]', expected: '[1,2,3]' },
-            { input: '[5,5,5]', expected: '[5]' },
-            { input: '[]', expected: '[]' },
-        ],
-    },
-    {
-        title: 'Palindrome Check',
-        description: 'Write a function `solve(s)` that returns `true` if `s` is a palindrome (case-insensitive, ignoring non-alpha), `false` otherwise.',
-        testCases: [
-            { input: '"racecar"', expected: 'true' },
-            { input: '"A man a plan a canal Panama"', expected: 'true' },
-            { input: '"hello"', expected: 'false' },
-        ],
-    },
-    {
-        title: 'Fibonacci',
-        description: 'Write a function `solve(n)` that returns the nth Fibonacci number (0-indexed, F(0)=0, F(1)=1).',
-        testCases: [
-            { input: '0', expected: '0' },
-            { input: '10', expected: '55' },
-            { input: '20', expected: '6765' },
-        ],
-    },
-    {
-        title: 'Max Subarray Sum',
-        description: 'Write a function `solve(arr)` that returns the maximum sum of a contiguous subarray (Kadane\'s algorithm).',
-        testCases: [
-            { input: '[-2,1,-3,4,-1,2,1,-5,4]', expected: '6' },
-            { input: '[1]', expected: '1' },
-            { input: '[-1,-2,-3]', expected: '-1' },
-        ],
-    },
+    { title: 'Array Dedup & Sort', description: 'Write `solve(arr)` — remove duplicates, return sorted.',
+      testCases: [{ input: '[3,1,2,1,3]', expected: '[1,2,3]' },{ input: '[5,5,5]', expected: '[5]' },{ input: '[]', expected: '[]' }] },
+    { title: 'Palindrome Check', description: 'Write `solve(s)` — return true if palindrome (case-insensitive, alpha only).',
+      testCases: [{ input: '"racecar"', expected: 'true' },{ input: '"hello"', expected: 'false' }] },
+    { title: 'Fibonacci', description: 'Write `solve(n)` — return nth Fibonacci (0-indexed, F(0)=0, F(1)=1).',
+      testCases: [{ input: '0', expected: '0' },{ input: '10', expected: '55' },{ input: '20', expected: '6765' }] },
+    { title: 'Max Subarray Sum', description: 'Write `solve(arr)` — return maximum contiguous subarray sum.',
+      testCases: [{ input: '[-2,1,-3,4,-1,2,1,-5,4]', expected: '6' },{ input: '[1]', expected: '1' },{ input: '[-1,-2,-3]', expected: '-1' }] },
+    { title: 'Reverse Words', description: 'Write `solve(s)` — reverse word order in string (trim spaces).',
+      testCases: [{ input: '"hello world"', expected: '"world hello"' },{ input: '"  a  b  "', expected: '"b a"' }] },
+    { title: 'Two Sum', description: 'Write `solve(nums, target)` — return indices of two numbers that add to target.',
+      testCases: [{ input: '[2,7,11,15], 9', expected: '[0,1]' },{ input: '[3,2,4], 6', expected: '[1,2]' }] },
+    { title: 'Valid Parentheses', description: 'Write `solve(s)` — return true if brackets ()[]{}  are balanced.',
+      testCases: [{ input: '"()[]{}"', expected: 'true' },{ input: '"(]"', expected: 'false' },{ input: '"([)]"', expected: 'false' }] },
+    { title: 'FizzBuzz Array', description: 'Write `solve(n)` — return array [1..n] with Fizz/Buzz/FizzBuzz replacements.',
+      testCases: [{ input: '5', expected: '["1","2","Fizz","4","Buzz"]' },{ input: '15', expected: 'ends with "FizzBuzz"' }] },
+    { title: 'Binary Search', description: 'Write `solve(arr, target)` — return index of target in sorted array, or -1.',
+      testCases: [{ input: '[1,3,5,7,9], 5', expected: '2' },{ input: '[1,3,5], 4', expected: '-1' }] },
+    { title: 'Matrix Transpose', description: 'Write `solve(matrix)` — return transposed matrix.',
+      testCases: [{ input: '[[1,2],[3,4]]', expected: '[[1,3],[2,4]]' },{ input: '[[1,2,3]]', expected: '[[1],[2],[3]]' }] },
+    { title: 'Count Vowels', description: 'Write `solve(s)` — return count of vowels (aeiouAEIOU).',
+      testCases: [{ input: '"Hello World"', expected: '3' },{ input: '"aEiOu"', expected: '5' }] },
+    { title: 'Flatten Array', description: 'Write `solve(arr)` — flatten nested arrays to single level.',
+      testCases: [{ input: '[[1,2],[3,[4,5]]]', expected: '[1,2,3,4,5]' },{ input: '[1,[2,[3]]]', expected: '[1,2,3]' }] },
+    { title: 'Roman to Integer', description: 'Write `solve(s)` — convert Roman numeral string to integer.',
+      testCases: [{ input: '"III"', expected: '3' },{ input: '"XIV"', expected: '14' },{ input: '"MCMXC"', expected: '1990' }] },
+    { title: 'Anagram Check', description: 'Write `solve(a, b)` — return true if a and b are anagrams.',
+      testCases: [{ input: '"listen", "silent"', expected: 'true' },{ input: '"hello", "world"', expected: 'false' }] },
+    { title: 'GCD', description: 'Write `solve(a, b)` — return greatest common divisor.',
+      testCases: [{ input: '12, 8', expected: '4' },{ input: '17, 5', expected: '1' },{ input: '100, 75', expected: '25' }] },
+    { title: 'Remove Nth from End', description: 'Write `solve(arr, n)` — remove nth element from end, return new array.',
+      testCases: [{ input: '[1,2,3,4,5], 2', expected: '[1,2,3,5]' },{ input: '[1], 1', expected: '[]' }] },
+    { title: 'String Compression', description: 'Write `solve(s)` — compress "aabcccccaaa" → "a2b1c5a3".',
+      testCases: [{ input: '"aabcccccaaa"', expected: '"a2b1c5a3"' },{ input: '"abc"', expected: '"a1b1c1"' }] },
+    { title: 'Power of Two', description: 'Write `solve(n)` — return true if n is a power of 2.',
+      testCases: [{ input: '16', expected: 'true' },{ input: '18', expected: 'false' },{ input: '1', expected: 'true' }] },
+    { title: 'Merge Sorted Arrays', description: 'Write `solve(a, b)` — merge two sorted arrays into one sorted array.',
+      testCases: [{ input: '[1,3,5], [2,4,6]', expected: '[1,2,3,4,5,6]' },{ input: '[], [1]', expected: '[1]' }] },
+    { title: 'Spiral Order', description: 'Write `solve(matrix)` — return elements in spiral order.',
+      testCases: [{ input: '[[1,2,3],[4,5,6],[7,8,9]]', expected: '[1,2,3,6,9,8,7,4,5]' }] },
 ];
 
 function generateCodingChallenge() {
@@ -217,14 +252,30 @@ function generateCodingChallenge() {
     return { ...problem };
 }
 
+const RESPONSE_QUESTIONS = [
+    { question: 'What is the capital of France?', expectedKeywords: ['paris'] },
+    { question: 'What is 17 × 23?', expectedKeywords: ['391'] },
+    { question: 'Name the largest planet in our solar system.', expectedKeywords: ['jupiter'] },
+    { question: 'What chemical element has the symbol "Au"?', expectedKeywords: ['gold'] },
+    { question: 'What is the square root of 144?', expectedKeywords: ['12'] },
+    { question: 'Which country has the most population?', expectedKeywords: ['india', 'china'] },
+    { question: 'What is the chemical formula for water?', expectedKeywords: ['h2o'] },
+    { question: 'How many continents are there?', expectedKeywords: ['7', 'seven'] },
+    { question: 'What is 256 ÷ 16?', expectedKeywords: ['16'] },
+    { question: 'What planet is known as the Red Planet?', expectedKeywords: ['mars'] },
+    { question: 'What is the boiling point of water in Celsius?', expectedKeywords: ['100'] },
+    { question: 'Who wrote "Romeo and Juliet"?', expectedKeywords: ['shakespeare'] },
+    { question: 'What is 2^8?', expectedKeywords: ['256'] },
+    { question: 'What is the longest river in the world?', expectedKeywords: ['nile', 'amazon'] },
+    { question: 'How many degrees in a triangle?', expectedKeywords: ['180'] },
+    { question: 'What gas do plants absorb from the atmosphere?', expectedKeywords: ['co2', 'carbon'] },
+    { question: 'What is the speed of light in km/s (approximately)?', expectedKeywords: ['300000', '299792'] },
+    { question: 'What year did the Berlin Wall fall?', expectedKeywords: ['1989'] },
+    { question: 'What is the largest ocean on Earth?', expectedKeywords: ['pacific'] },
+    { question: 'What is 13 × 17?', expectedKeywords: ['221'] },
+];
 function generateResponseTimeChallenge() {
-    const questions = [
-        { question: 'What is the capital of France?', expectedKeywords: ['paris'] },
-        { question: 'What is 17 × 23?', expectedKeywords: ['391'] },
-        { question: 'Name the largest planet in our solar system.', expectedKeywords: ['jupiter'] },
-        { question: 'What chemical element has the symbol "Au"?', expectedKeywords: ['gold'] },
-    ];
-    return questions[Math.floor(Math.random() * questions.length)];
+    return RESPONSE_QUESTIONS[Math.floor(Math.random() * RESPONSE_QUESTIONS.length)];
 }
 
 function generateMemoryChallenge(previousSessions) {
@@ -258,13 +309,30 @@ function generateFileMgmtChallenge() {
     return { filename, newFilename, fileContent };
 }
 
+const TTS_PHRASES = [
+    { text: 'The quick brown fox jumps over the lazy dog', keywords: ['quick', 'brown', 'fox', 'lazy', 'dog'] },
+    { text: 'Hello world this is a test message', keywords: ['hello', 'world', 'test', 'message'] },
+    { text: 'Artificial intelligence is transforming the world', keywords: ['artificial', 'intelligence', 'transforming', 'world'] },
+    { text: 'Please remember to save your work before closing', keywords: ['remember', 'save', 'work', 'closing'] },
+    { text: 'The weather forecast predicts rain tomorrow morning', keywords: ['weather', 'forecast', 'rain', 'tomorrow'] },
+    { text: 'Open the settings menu and click on notifications', keywords: ['settings', 'menu', 'click', 'notifications'] },
+    { text: 'The database migration completed successfully at midnight', keywords: ['database', 'migration', 'successfully', 'midnight'] },
+    { text: 'A journey of a thousand miles begins with a single step', keywords: ['journey', 'thousand', 'miles', 'single', 'step'] },
+    { text: 'The server responded with a four hundred error code', keywords: ['server', 'responded', 'four', 'hundred', 'error'] },
+    { text: 'Machine learning models require large datasets for training', keywords: ['machine', 'learning', 'models', 'datasets', 'training'] },
+    { text: 'The conference will be held in Tokyo next September', keywords: ['conference', 'held', 'tokyo', 'september'] },
+    { text: 'Renewable energy sources include solar wind and hydropower', keywords: ['renewable', 'energy', 'solar', 'wind', 'hydropower'] },
+    { text: 'The package was delivered to the front door yesterday', keywords: ['package', 'delivered', 'front', 'door', 'yesterday'] },
+    { text: 'Quantum computing promises to solve complex optimization problems', keywords: ['quantum', 'computing', 'complex', 'optimization'] },
+    { text: 'The restaurant serves breakfast from seven until eleven', keywords: ['restaurant', 'breakfast', 'seven', 'eleven'] },
+    { text: 'Version control helps teams collaborate on software projects', keywords: ['version', 'control', 'teams', 'collaborate', 'software'] },
+    { text: 'The stock market closed at a record high on Friday', keywords: ['stock', 'market', 'record', 'high', 'friday'] },
+    { text: 'Encryption protects sensitive data during transmission', keywords: ['encryption', 'protects', 'sensitive', 'data', 'transmission'] },
+    { text: 'The library closes at nine pm on weekdays', keywords: ['library', 'closes', 'nine', 'weekdays'] },
+    { text: 'Autonomous vehicles use sensors cameras and artificial intelligence', keywords: ['autonomous', 'vehicles', 'sensors', 'cameras', 'intelligence'] },
+];
 function generateTtsChallenge() {
-    const phrases = [
-        { text: 'The quick brown fox jumps over the lazy dog', keywords: ['quick', 'brown', 'fox', 'lazy', 'dog'] },
-        { text: 'Hello world this is a test message', keywords: ['hello', 'world', 'test', 'message'] },
-        { text: 'Artificial intelligence is transforming the world', keywords: ['artificial', 'intelligence', 'transforming', 'world'] },
-    ];
-    return phrases[Math.floor(Math.random() * phrases.length)];
+    return TTS_PHRASES[Math.floor(Math.random() * TTS_PHRASES.length)];
 }
 
 const CHALLENGE_GENERATORS = {
@@ -652,24 +720,31 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
     const router = express.Router();
     const audit = serverLog || (() => {});
 
-    // Simple per-IP rate limit for exam creation (10 per 15 min)
-    const examRateMap = new Map();
-    const EXAM_RATE_LIMIT = 10;
-    const EXAM_RATE_WINDOW_MS = 15 * 60_000;
+    // Per-IP cooldown: 1 exam per 5 minutes
+    const examCooldownMap = new Map(); // ip → last exam timestamp
+    const COOLDOWN_MS = 5 * 60_000;
 
-    // POST /api/arena/exam — create a new exam (no auth, rate limited)
+    // GET /api/arena/cooldown — check remaining cooldown for this IP
+    router.get('/cooldown', (req, res) => {
+        const ip = req.ip || req.connection.remoteAddress || 'unknown';
+        const last = examCooldownMap.get(ip) || 0;
+        const elapsed = Date.now() - last;
+        const remaining = Math.max(0, COOLDOWN_MS - elapsed);
+        res.json({ success: true, cooldown: remaining > 0, remainingMs: remaining, remainingSec: Math.ceil(remaining / 1000) });
+    });
+
+    // POST /api/arena/exam — create a new exam (no auth, 5-min cooldown)
     router.post('/exam', async (req, res) => {
         try {
-            // Rate limit by IP
             const ip = req.ip || req.connection.remoteAddress || 'unknown';
             const now = Date.now();
-            const history = examRateMap.get(ip) || [];
-            const recent = history.filter(t => t > now - EXAM_RATE_WINDOW_MS);
-            if (recent.length >= EXAM_RATE_LIMIT) {
-                return res.status(429).json({ success: false, error: 'rate_limited' });
+            const last = examCooldownMap.get(ip) || 0;
+            const elapsed = now - last;
+            if (elapsed < COOLDOWN_MS) {
+                const remaining = Math.ceil((COOLDOWN_MS - elapsed) / 1000);
+                return res.status(429).json({ success: false, error: 'cooldown', remainingSec: remaining });
             }
-            recent.push(now);
-            examRateMap.set(ip, recent);
+            examCooldownMap.set(ip, now);
 
             const examToken = generateToken(12);
             const expiresAt = new Date(Date.now() + EXAM_TTL_MS);
