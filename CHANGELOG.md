@@ -1,3 +1,10 @@
+## [1.931.1](https://github.com/HankHuang0516/EClaw/compare/v1.931.0...v1.931.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* **rental:** ended_zero_balance refunds remaining deposit instead of full forfeit ([47caa85](https://github.com/HankHuang0516/EClaw/commit/47caa85e92f08803cc80f84f84b45b8b2e536c17))
+
 # [1.931.0](https://github.com/HankHuang0516/EClaw/compare/v1.930.0...v1.931.0) (2026-04-10)
 
 
