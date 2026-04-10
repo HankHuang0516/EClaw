@@ -12,11 +12,11 @@
  * A listing is pushed to `interview` status while the runner is active,
  * and lands at `interview_passed = TRUE` only if score >= 60.
  *
- * This module is intentionally self-contained and does NOT open an
- * HTTP connection to the real bot in this PR — it exposes the scoring
- * and runner skeleton. The actual probe dispatch (HTTP POST to webhook,
- * collect /api/transform callback) is hooked up alongside rental-proxy
- * in the P2 PR.
+ * The scoring engine is pure (no I/O). The `runInterview()` async
+ * function orchestrates the actual dispatch: it sends each probe to
+ * the bot's webhook via `pushToBot()`, polls for the response
+ * (bot replies via POST /api/transform which mutates entity.message
+ * + entity.lastUpdated in memory), then scores all responses.
  */
 /* @brm-crossref: ④⑥ Bot Interview System + Bot Capability Assessment
  * Design doc: docs/plans/2026-04-10-bot-rental-marketplace-design.md
@@ -182,10 +182,86 @@ function getProbeList() {
     return PROBES.map(p => ({ id: p.id, prompt: p.prompt, category: p.category, weight: p.weight }));
 }
 
+// ============================================
+// Interview runner — HTTP probe dispatch
+// ============================================
+
+/** Default per-probe timeout (ms). */
+const DEFAULT_PROBE_TIMEOUT_MS = 30_000;
+
+/** Poll interval when waiting for bot response (ms). */
+const POLL_INTERVAL_MS = 500;
+
+/**
+ * Poll `entity.lastUpdated` until it exceeds `beforeTimestamp`,
+ * then return `entity.message`. Returns `null` on timeout.
+ */
+async function pollForResponse(entity, beforeTimestamp, timeoutMs = DEFAULT_PROBE_TIMEOUT_MS) {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+        if ((entity.lastUpdated || 0) > beforeTimestamp) {
+            return entity.message || null;
+        }
+        await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
+    }
+    return null;
+}
+
+/**
+ * Run a full interview against a live bot entity.
+ *
+ * Sends each probe sequentially via `pushToBot()`, waits for the bot
+ * to respond via `/api/transform` (detected by polling entity.lastUpdated),
+ * then scores all collected responses.
+ *
+ * @param {object} opts
+ * @param {object} opts.entity        — in-memory entity object (from devices map)
+ * @param {string} opts.deviceId      — owner's device ID
+ * @param {function} opts.pushToBot   — pushToBot(entity, deviceId, eventType, payload)
+ * @param {number} [opts.probeTimeoutMs=30000] — per-probe timeout
+ * @returns {Promise<object>} — scoreInterview result + responses[] + duration_ms
+ */
+async function runInterview({ entity, deviceId, pushToBot, probeTimeoutMs = DEFAULT_PROBE_TIMEOUT_MS }) {
+    if (!entity) throw new Error('entity_required');
+    if (!pushToBot) throw new Error('pushToBot_required');
+
+    const startTime = Date.now();
+    const responses = [];
+    entity._interviewInProgress = true;
+
+    try {
+        for (const probe of PROBES) {
+            const beforeTs = entity.lastUpdated || 0;
+
+            const pushResult = await pushToBot(entity, deviceId, 'interview_probe', {
+                message: `[INTERVIEW_PROBE:${probe.id}] ${probe.prompt}`,
+            });
+
+            if (!pushResult || !pushResult.pushed) {
+                responses.push(null);
+                continue;
+            }
+
+            const response = await pollForResponse(entity, beforeTs, probeTimeoutMs);
+            responses.push(response);
+        }
+    } finally {
+        entity._interviewInProgress = false;
+    }
+
+    const result = scoreInterview(responses);
+    result.duration_ms = Date.now() - startTime;
+    result.responses = responses;
+    return result;
+}
+
 module.exports = {
     PROBES,
     MAX_SCORE,
     scoreProbeResponse,
     scoreInterview,
     getProbeList,
+    runInterview,
+    pollForResponse,
+    DEFAULT_PROBE_TIMEOUT_MS,
 };

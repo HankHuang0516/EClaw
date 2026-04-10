@@ -26,6 +26,7 @@ const express = require('express');
 const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
+const { runInterview, getProbeList } = require('./bot-interview');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
@@ -136,6 +137,11 @@ async function initRentalDatabase() {
                 }
             }
         }
+        // Startup cleanup: revert any listings stuck in 'interview' (server crashed mid-run)
+        await pool.query(
+            `UPDATE bot_listings SET status = 'draft', updated_at = NOW() WHERE status = 'interview'`
+        );
+
         console.log('[Rental] Database initialized');
     } catch (error) {
         console.error('[Rental] Failed to init database:', error);
@@ -910,7 +916,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
     const router = express.Router();
     const audit = serverLog || (() => {});
 
-    const INPUT_ERROR_RE = /^(?:[a-z][a-z0-9_]*_(?:invalid|required|forbidden|not_found)|publish_failed|interview_not_passed|no_fields_to_update|duration_too_(?:short|long)|duration_(?:below|above)_listing_(?:min|max)|listing_not_available|listing_already_rented|self_rental_forbidden|insufficient_balance_for_rental|contract_already_ended|contract_end_forbidden)$/;
+    const INPUT_ERROR_RE = /^(?:[a-z][a-z0-9_]*_(?:invalid|required|forbidden|not_found)|publish_failed|interview_not_passed|no_fields_to_update|duration_too_(?:short|long)|duration_(?:below|above)_listing_(?:min|max)|listing_not_available|listing_already_rented|self_rental_forbidden|insufficient_balance_for_rental|contract_already_ended|contract_end_forbidden|interview_rate_limited|interview_already_running|owner_device_offline|owner_entity_not_bound|owner_entity_no_webhook|listing_status_invalid_for_interview)$/;
 
     function rentalRoute(fn) {
         return async (req, res) => {
@@ -1049,6 +1055,142 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         }
     });
 
+    // ── Interview probe dispatch ──────────────────────────────────
+
+    /** Late-bound deps injected via setInterviewDeps() after pushToBot is defined. */
+    let _interviewDeps = { pushToBot: null, devices: null };
+
+    // POST /api/rental/listing/:id/interview/start — run interview probes against owner's bot
+    router.post('/listing/:id/interview/start', authMiddleware, rentalRoute(async (req, res) => {
+        const listing = await getListing(req.params.id);
+        if (!listing) throw new Error('listing_not_found');
+        if (listing.owner_user_id !== req.user.userId) throw new Error('listing_forbidden');
+
+        // Status gate: only draft / paused / listed can (re-)interview
+        if (!['draft', 'paused', 'listed'].includes(listing.status)) {
+            throw new Error('listing_status_invalid_for_interview');
+        }
+
+        // Rate limit: max 3 attempts per 7 days
+        const recentRes = await pool.query(
+            `SELECT COUNT(*) FROM bot_interviews
+             WHERE listing_id = $1 AND created_at > NOW() - INTERVAL '7 days'`,
+            [listing.id]
+        );
+        if (parseInt(recentRes.rows[0].count) >= INTERVIEW_RATE_LIMIT) {
+            throw new Error('interview_rate_limited');
+        }
+
+        // Resolve the owner's entity from the in-memory devices map
+        if (!_interviewDeps.pushToBot || !_interviewDeps.devices) {
+            throw new Error('interview_deps_not_ready');
+        }
+        const device = _interviewDeps.devices[listing.owner_device_id];
+        if (!device) throw new Error('owner_device_offline');
+        const entity = device.entities[listing.owner_entity_id];
+        if (!entity || !entity.isBound) throw new Error('owner_entity_not_bound');
+        if (!entity.webhook) throw new Error('owner_entity_no_webhook');
+        if (entity._interviewInProgress) throw new Error('interview_already_running');
+
+        // Set listing to 'interview' status
+        await pool.query(
+            `UPDATE bot_listings SET status = 'interview', updated_at = NOW() WHERE id = $1`,
+            [listing.id]
+        );
+
+        let result;
+        try {
+            result = await runInterview({
+                entity,
+                deviceId: listing.owner_device_id,
+                pushToBot: _interviewDeps.pushToBot,
+            });
+        } catch (err) {
+            // Revert status on unexpected failure
+            await pool.query(
+                `UPDATE bot_listings SET status = 'draft', updated_at = NOW() WHERE id = $1`,
+                [listing.id]
+            );
+            throw err;
+        }
+
+        // Persist interview record
+        await pool.query(
+            `INSERT INTO bot_interviews
+                (listing_id, probes_json, responses_json, passed, score, duration_ms, failure_reason)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [listing.id, JSON.stringify(getProbeList()), JSON.stringify(result.responses),
+             result.passed, result.score, result.duration_ms,
+             result.passed ? null : 'score_below_threshold']
+        );
+
+        // Update listing based on result
+        if (result.passed) {
+            await pool.query(
+                `UPDATE bot_listings
+                 SET interview_passed = TRUE, last_interview_at = NOW(),
+                     capabilities = $2, benchmark_score = $3,
+                     status = 'draft', updated_at = NOW()
+                 WHERE id = $1`,
+                [listing.id,
+                 JSON.stringify(result.capabilities),
+                 JSON.stringify({ score: result.score, rawScore: result.rawScore, maxScore: result.maxScore, probeResults: result.probeResults })]
+            );
+        } else {
+            await pool.query(
+                `UPDATE bot_listings SET status = 'draft', updated_at = NOW() WHERE id = $1`,
+                [listing.id]
+            );
+        }
+
+        audit('info', 'rental', `interview ${result.passed ? 'PASSED' : 'FAILED'} listing=${listing.id} score=${result.score}`, {
+            userId: req.user.userId, action: 'interview_run', resource: listing.id,
+            result: result.passed ? 'pass' : 'fail',
+        });
+
+        res.json({
+            success: true,
+            interview: {
+                passed: result.passed,
+                score: result.score,
+                probeResults: result.probeResults,
+                capabilities: result.capabilities,
+                duration_ms: result.duration_ms,
+            },
+        });
+    }));
+
+    // GET /api/rental/listing/:id/interviews — interview history (owner only)
+    router.get('/listing/:id/interviews', authMiddleware, rentalRoute(async (req, res) => {
+        const listing = await getListing(req.params.id);
+        if (!listing) throw new Error('listing_not_found');
+        if (listing.owner_user_id !== req.user.userId) throw new Error('listing_forbidden');
+
+        const interviews = await pool.query(
+            `SELECT id, passed, score, duration_ms, failure_reason, created_at
+             FROM bot_interviews WHERE listing_id = $1
+             ORDER BY created_at DESC LIMIT 20`,
+            [req.params.id]
+        );
+        res.json({ success: true, interviews: interviews.rows });
+    }));
+
+    // GET /api/rental/listing/:id/interview/:interviewId — interview detail (owner only)
+    router.get('/listing/:id/interview/:interviewId', authMiddleware, rentalRoute(async (req, res) => {
+        const listing = await getListing(req.params.id);
+        if (!listing) throw new Error('listing_not_found');
+        if (listing.owner_user_id !== req.user.userId) throw new Error('listing_forbidden');
+
+        const interview = await pool.query(
+            `SELECT id, listing_id, probes_json, responses_json, passed, score,
+                    duration_ms, failure_reason, created_at
+             FROM bot_interviews WHERE id = $1 AND listing_id = $2`,
+            [req.params.interviewId, req.params.id]
+        );
+        if (interview.rowCount === 0) throw new Error('interview_not_found');
+        res.json({ success: true, interview: interview.rows[0] });
+    }));
+
     // adminMiddleware is currently unused but accepted for future P3
     // endpoints (force-delist, admin listing audit, etc).
     void adminMiddleware;
@@ -1079,6 +1221,8 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         markOwnerEntityLeasedOut,
         removeRentalEntity,
         clearOwnerEntityLeasedOut,
+        // Interview dispatch (late-bound)
+        setInterviewDeps: (deps) => { _interviewDeps = deps; },
         // Helpers + constants
         computeDepositMli,
         DEPOSIT_TOKEN_MULTIPLIER,

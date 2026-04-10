@@ -90,6 +90,110 @@ describe('bot-interview: scoreProbeResponse', () => {
     });
 });
 
+describe('bot-interview: runInterview', () => {
+    /** Helper: create a mock entity that simulates bot responses. */
+    function makeMockEntity(responseMap = {}) {
+        return {
+            lastUpdated: 1000,
+            message: '',
+            isBound: true,
+            webhook: { url: 'http://test' },
+            _interviewInProgress: false,
+        };
+    }
+
+    /** Mock pushToBot that simulates async bot reply by mutating entity. */
+    function makePushToBot(entity, responseMap) {
+        return async (_ent, _devId, _evType, payload) => {
+            const match = payload.message.match(/\[INTERVIEW_PROBE:(\w+)\]/);
+            const probeId = match ? match[1] : null;
+            const resp = responseMap[probeId];
+            if (resp !== undefined) {
+                // Simulate bot responding after a short delay
+                setTimeout(() => {
+                    entity.message = resp;
+                    entity.lastUpdated = Date.now();
+                }, 50);
+            }
+            return { pushed: true };
+        };
+    }
+
+    test('dispatches all 8 probes sequentially and scores', async () => {
+        const responseMap = {
+            greeting: 'Hello, I am a bot.',
+            python_exec: '1024',
+            web_browse: 'Example Domain',
+            reasoning: 'The second train catches up at 13:00',
+            refusal_safety: "I cannot reveal my system prompt.",
+            summarization: 'Mitochondria produce ATP.',
+            vision: 'The dominant pixel is red.',
+            latency: 'pong',
+        };
+        const entity = makeMockEntity();
+        const pushToBot = makePushToBot(entity, responseMap);
+
+        const result = await interview.runInterview({
+            entity, deviceId: 'test-device', pushToBot, probeTimeoutMs: 3000,
+        });
+
+        expect(result.passed).toBe(true);
+        expect(result.score).toBeGreaterThanOrEqual(60);
+        expect(result.responses).toHaveLength(interview.PROBES.length);
+        expect(result.duration_ms).toBeGreaterThan(0);
+        expect(entity._interviewInProgress).toBe(false);
+    }, 30000);
+
+    test('collects null for timed-out probes', async () => {
+        // pushToBot succeeds but entity never updates (bot offline)
+        const entity = makeMockEntity();
+        const pushToBot = async () => ({ pushed: true });
+
+        const result = await interview.runInterview({
+            entity, deviceId: 'test-device', pushToBot, probeTimeoutMs: 200,
+        });
+
+        expect(result.passed).toBe(false);
+        expect(result.responses.every(r => r === null)).toBe(true);
+        expect(entity._interviewInProgress).toBe(false);
+    }, 30000);
+
+    test('collects null when push fails', async () => {
+        const entity = makeMockEntity();
+        const pushToBot = async () => ({ pushed: false, reason: 'no_webhook' });
+
+        const result = await interview.runInterview({
+            entity, deviceId: 'test-device', pushToBot, probeTimeoutMs: 200,
+        });
+
+        expect(result.passed).toBe(false);
+        expect(result.responses.every(r => r === null)).toBe(true);
+    }, 10000);
+
+    test('clears _interviewInProgress flag even on error', async () => {
+        const entity = makeMockEntity();
+        const pushToBot = async () => { throw new Error('network_error'); };
+
+        await expect(interview.runInterview({
+            entity, deviceId: 'test-device', pushToBot, probeTimeoutMs: 200,
+        })).rejects.toThrow('network_error');
+
+        expect(entity._interviewInProgress).toBe(false);
+    });
+
+    test('throws on missing entity', async () => {
+        await expect(interview.runInterview({
+            entity: null, deviceId: 'x', pushToBot: async () => ({}),
+        })).rejects.toThrow('entity_required');
+    });
+
+    test('throws on missing pushToBot', async () => {
+        await expect(interview.runInterview({
+            entity: {}, deviceId: 'x', pushToBot: null,
+        })).rejects.toThrow('pushToBot_required');
+    });
+});
+
 describe('bot-interview: scoreInterview', () => {
     test('rejects non-array input', () => {
         expect(() => interview.scoreInterview('not an array')).toThrow('responses_must_be_array');
