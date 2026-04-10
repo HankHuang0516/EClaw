@@ -1,3 +1,10 @@
+# [1.936.0](https://github.com/HankHuang0516/EClaw/compare/v1.935.0...v1.936.0) (2026-04-10)
+
+
+### Features
+
+* **rental:** interview probe dispatch + stuck-listing cleanup ([ba8cd31](https://github.com/HankHuang0516/EClaw/commit/ba8cd31e6a8d3978dc850f09b20e031955c235a0))
+
 # [1.935.0](https://github.com/HankHuang0516/EClaw/compare/v1.934.0...v1.935.0) (2026-04-10)
 
 
