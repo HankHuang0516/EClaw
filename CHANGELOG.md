@@ -1,3 +1,10 @@
+## [1.929.4](https://github.com/HankHuang0516/EClaw/compare/v1.929.3...v1.929.4) (2026-04-10)
+
+
+### Bug Fixes
+
+* **mission:** remove duplicate decryptVarsLocal declaration ([392ecd5](https://github.com/HankHuang0516/EClaw/commit/392ecd54c74aa4b003c577ac50673a431d766276))
+
 ## [1.929.3](https://github.com/HankHuang0516/EClaw/compare/v1.929.2...v1.929.3) (2026-04-10)
 
 
