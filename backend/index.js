@@ -1688,6 +1688,19 @@ app.use('/api/subscription', subscriptionModule.router);
 setTimeout(() => subscriptionModule.loadPremiumStatus(), 5000);
 
 // ============================================
+// WALLET (e-coin) — bot rental marketplace foundation
+// ============================================
+const walletModule = require('./wallet')({
+    authMiddleware: authModule.authMiddleware,
+    adminMiddleware: authModule.adminMiddleware,
+    serverLog,
+});
+app.use('/api/wallet', walletModule.router);
+// Defer schema init so user_accounts (auth) is created first — wallets
+// has a FK referencing it.
+setTimeout(() => walletModule.initWalletDatabase(), 2000);
+
+// ============================================
 // GATEKEEPER - Free Bot Abuse Prevention
 // ============================================
 gatekeeper.initGatekeeperTable();
