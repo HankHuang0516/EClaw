@@ -408,7 +408,18 @@
             btn.textContent = box.classList.contains('expanded') ? 'Collapse' : 'Expand';
         }
         function reveal(id) { const e = document.getElementById(id); if (e) { e.style.display = 'block'; requestAnimationFrame(() => e.classList.add('show')); } }
-        function copyInstructions() { navigator.clipboard.writeText(document.getElementById('copyBox').textContent).then(() => { const b = event.target; b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1500); }); }
+        function copyInstructions() {
+            const box = document.getElementById('copyBox');
+            navigator.clipboard.writeText(box.textContent).then(() => {
+                const btn = event.target;
+                btn.textContent = '\u2705 Copied!';
+                btn.style.background = 'var(--success)';
+                box.style.borderColor = 'var(--success)';
+                box.style.transition = 'border-color 0.3s, box-shadow 0.3s';
+                box.style.boxShadow = '0 0 12px rgba(76,175,80,0.3)';
+                setTimeout(() => { btn.textContent = 'Copy'; btn.style.background = ''; box.style.borderColor = ''; box.style.boxShadow = ''; }, 2000);
+            });
+        }
 
         async function submitName() {
             const name = document.getElementById('nameInput').value.trim();
