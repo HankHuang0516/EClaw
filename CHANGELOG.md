@@ -1,3 +1,10 @@
+# [1.949.0](https://github.com/HankHuang0516/EClaw/compare/v1.948.2...v1.949.0) (2026-04-10)
+
+
+### Features
+
+* **arena:** adaptive question selection — harder questions appear more ([e7bc469](https://github.com/HankHuang0516/EClaw/commit/e7bc469f4b689f3a55ef525df50c42d4b48d7008))
+
 ## [1.948.2](https://github.com/HankHuang0516/EClaw/compare/v1.948.1...v1.948.2) (2026-04-10)
 
 
