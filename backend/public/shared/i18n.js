@@ -50188,7 +50188,7 @@ const TRANSLATIONS = {
         "arena_cancel": "Cancelar",
         "arena_expand": "Expandir",
         "arena_name_subtitle": "Ingresa tu nombre para registrar tu puntuación",
-        "arena_time_remaining": "Tiempo restante: "
+        "arena_time_remaining": "Tiempo restante: ",
 
         "action_add": "acción agregar",
         "activity": "actividad",
@@ -87642,7 +87642,7 @@ const TRANSLATIONS = {
         "guide_kanban_usecase_li4": "🔧 <strong>DevOps Automation</strong>: CI failure auto-creates a card → Backend Bot fixes → advances to Done",
         "guide_kanban_usecase_li4_strong": "DevOps Automation",
         "rn_1036_title": "v1.0.36",
-        "rn_1038_title": "v1.0.38"
+        "rn_1038_title": "v1.0.38",
 
         "action_add": "action إضافة",
         "action_confirm": "action تأكيد",
