@@ -856,5 +856,20 @@ If you have any questions, please contact us via our official email.
     <string name="log_info">INFO</string>
     <string name="log_warn">WARN</string>
     <string name="log_error">ERROR</string>
+    <string name="debug_log_category_api">API</string>
+    <string name="debug_log_category_socket">Socket</string>
+    <string name="debug_log_category_ui">UI</string>
+    <string name="debug_log_category_lifecycle">Lifecycle</string>
+    <string name="agent_card_entity_name">Entity Name</string>
+    <string name="agent_card_state_idle">IDLE</string>
+    <string name="agent_card_level">Lv.%s</string>
+    <string name="agent_card_last_message">Last message…</string>
+    <string name="agent_card_just_now">Just now</string>
+    <string name="entity_card_title">Entity %s (Main)</string>
+    <string name="entity_card_platform_lobster">LOBSTER</string>
+    <string name="entity_card_greeting">Hello, I'm here!</string>
+    <string name="entity_card_last_updated">Last updated: just now</string>
+    <string name="template_gallery_select">Select</string>
+
 </resources>
 

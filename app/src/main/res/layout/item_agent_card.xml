@@ -95,7 +95,7 @@
                 android:layout_height="wrap_content"
                 android:paddingHorizontal="12dp"
                 android:paddingVertical="4dp"
-                android:text="IDLE"
+                android:text="@string/agent_card_state_idle"
                 android:textColor="@android:color/white"
                 android:textSize="12sp"
                 android:background="@drawable/badge_background" />
@@ -145,7 +145,7 @@
                 android:id="@+id/tvLevel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Lv.1"
+                android:text="@string/agent_card_level"
                 android:textColor="@color/warning_gold"
                 android:textSize="12sp"
                 android:textStyle="bold"
