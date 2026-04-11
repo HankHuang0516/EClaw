@@ -177,28 +177,28 @@
                 android:id="@+id/chipCatApi"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="API"
+                android:text="@string/debug_log_category_api"
                 style="@style/Widget.Material3.Chip.Filter"/>
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipCatSocket"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Socket"
+                android:text="@string/debug_log_category_socket"
                 style="@style/Widget.Material3.Chip.Filter"/>
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipCatUi"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="UI"
+                android:text="@string/debug_log_category_ui"
                 style="@style/Widget.Material3.Chip.Filter"/>
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipCatLifecycle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Lifecycle"
+                android:text="@string/debug_log_category_lifecycle"
                 style="@style/Widget.Material3.Chip.Filter"/>
 
         </com.google.android.material.chip.ChipGroup>
