@@ -1,3 +1,10 @@
+## [1.955.3](https://github.com/HankHuang0516/EClaw/compare/v1.955.2...v1.955.3) (2026-04-11)
+
+
+### Bug Fixes
+
+* **rental:** rename owner_device_offline → owner_device_not_found ([1d0a217](https://github.com/HankHuang0516/EClaw/commit/1d0a21753ed669ba7f458bcc6c5f7b5d825aee3d))
+
 ## [1.955.2](https://github.com/HankHuang0516/EClaw/compare/v1.955.1...v1.955.2) (2026-04-11)
 
 
