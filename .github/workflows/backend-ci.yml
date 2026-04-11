@@ -9,11 +9,13 @@ on:
     branches: ['**']
     paths:
       - 'backend/**'
+      - 'backend/public/shared/i18n.js'
       - '.github/workflows/backend-ci.yml'
   pull_request:
     branches: [main]
     paths:
       - 'backend/**'
+      - 'backend/public/shared/i18n.js'
       - '.github/workflows/backend-ci.yml'
 
 jobs:
@@ -78,6 +80,35 @@ jobs:
           })(PUBLIC);
           if (errors.length) { console.error('Invalid i18n.js paths:\n  ' + errors.join('\n  ')); process.exit(1); }
           console.log('✅ All i18n.js paths valid');
+          "
+        working-directory: backend
+
+      - name: Check i18n key consistency across languages
+        run: |
+          node -e "
+          const fs = require('fs');
+          const vm = require('vm');
+          const content = fs.readFileSync('public/shared/i18n.js', 'utf8');
+          const sandbox = { _result: {} };
+          vm.createContext(sandbox);
+          vm.runInContext(content + '\n_result = TRANSLATIONS;', sandbox);
+          const TRANSLATIONS = sandbox._result;
+          const langs = Object.keys(TRANSLATIONS).sort();
+          console.log('Languages found:', langs.join(', '));
+          // Report key counts per language
+          for (const lang of langs) {
+            const keys = Object.keys(TRANSLATIONS[lang] || {});
+            console.log(lang + ': ' + keys.length + ' keys');
+          }
+          // Warn if any language has drastically fewer keys than English
+          const enKeys = Object.keys(TRANSLATIONS.en || {}).length;
+          for (const lang of langs) {
+            if (lang === 'en') continue;
+            const langKeys = Object.keys(TRANSLATIONS[lang] || {}).length;
+            if (langKeys < enKeys * 0.5) {
+              console.warn('⚠️ ' + lang + ' has only ' + langKeys + ' keys vs English ' + enKeys + ' (' + Math.round(langKeys/enKeys*100) + '% coverage)');
+            }
+          }
           "
         working-directory: backend
 

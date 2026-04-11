@@ -1,0 +1,91 @@
+name: iOS App i18n Validation
+
+# Validates that all locale JSON files in ios-app/i18n/ have
+# consistent keys — no missing or orphaned entries.
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'ios-app/i18n/**'
+      - '.github/workflows/ios-i18n-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'ios-app/i18n/**'
+      - '.github/workflows/ios-i18n-ci.yml'
+
+jobs:
+  ios-i18n:
+    name: i18n key consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check i18n key consistency
+        run: |
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          const I18N_DIR = 'ios-app/i18n';
+
+          const files = fs.readdirSync(I18N_DIR).filter(f => f.endsWith('.json'));
+          console.log('Locale files:', files.join(', '));
+
+          const locales = {};
+          for (const file of files) {
+            const lang = file.replace('.json', '');
+            const content = fs.readFileSync(path.join(I18N_DIR, file), 'utf8');
+            try {
+              locales[lang] = JSON.parse(content);
+            } catch(e) {
+              console.error('❌ Failed to parse ' + file + ': ' + e.message);
+              process.exit(1);
+            }
+          }
+
+          // Collect all unique keys (flatten nested)
+          function flattenKeys(obj, prefix = '') {
+            const keys = [];
+            for (const [k, v] of Object.entries(obj)) {
+              const fullKey = prefix ? prefix + '.' + k : k;
+              if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
+                keys.push(...flattenKeys(v, fullKey));
+              } else {
+                keys.push(fullKey);
+              }
+            }
+            return keys;
+          }
+
+          const allKeys = new Set();
+          for (const [lang, data] of Object.entries(locales)) {
+            for (const key of flattenKeys(data)) {
+              allKeys.add(key);
+            }
+          }
+
+          console.log('Total unique keys across all locales:', allKeys.size);
+
+          // Check each locale for missing keys
+          let hasErrors = false;
+          for (const [lang, data] of Object.entries(locales)) {
+            const langKeys = new Set(flattenKeys(data));
+            const missing = [...allKeys].filter(k => !langKeys.has(k));
+            const extra = [...langKeys].filter(k => !allKeys.has(k));
+
+            console.log(lang + ': ' + langKeys.size + ' keys (' + Math.round(langKeys.size/allKeys.size*100) + '% coverage)');
+
+            if (missing.length > 0 && missing.length <= 20) {
+              console.warn('  ⚠️ Missing keys: ' + missing.join(', '));
+            } else if (missing.length > 20) {
+              console.warn('  ⚠️ Missing ' + missing.length + ' keys (first 10: ' + missing.slice(0, 10).join(', ') + '...)');
+            }
+
+            if (extra.length > 0) {
+              console.warn('  ⚠️ Extra keys (not in other locales): ' + extra.slice(0, 10).join(', '));
+            }
+          }
+
+          console.log('✅ i18n key consistency check complete');
+          "
