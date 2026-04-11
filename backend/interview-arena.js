@@ -179,6 +179,11 @@ const VISION_IMAGES = [
     { file: null, description: 'A line chart showing quarterly revenue: Q1 at $10K, Q2 at $15K, Q3 dips to $8K, Q4 recovers to $20K', keywords: ['chart', 'revenue', 'Q3', 'dip', 'Q4'] },
     { file: null, description: 'A world map with five red pins marking cities: New York, London, Tokyo, Sydney, and São Paulo', keywords: ['map', 'five', 'pins', 'Tokyo'] },
     { file: null, description: 'A receipt from a store dated 03/15 showing total $47.83 with three itemized lines and a barcode at bottom', keywords: ['receipt', 'total', '47', 'three', 'barcode'] },
+    // ── Hard tier additions (difficulty update 2026-04-11) ──
+    { file: null, description: 'A subway map with four colored lines (red, blue, green, orange) where the blue and orange lines intersect at two stations labeled Central and Midtown', keywords: ['subway', 'four', 'blue', 'orange', 'intersect', 'central'] },
+    { file: null, description: 'A spreadsheet screenshot with 8 columns and 15 rows where cell E7 contains the value 4,829 highlighted in yellow', keywords: ['spreadsheet', 'cell', 'E7', '4829', 'yellow'] },
+    { file: null, description: 'A terminal screenshot showing a git log with five commits where the third commit message reads "fix: resolve null pointer exception"', keywords: ['terminal', 'git', 'five', 'null', 'pointer', 'fix'] },
+    { file: null, description: 'A nutrition label showing serving size 28g, calories 150, total fat 8g of which saturated fat 3g, sodium 270mg, and protein 5g', keywords: ['nutrition', 'calories', '150', 'sodium', '270', 'protein'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -339,6 +344,17 @@ const CODING_PROBLEMS = [
       testCases: [{ input: '"abcabcbb"', expected: '3' },{ input: '"bbbbb"', expected: '1' },{ input: '"pwwkew"', expected: '3' },{ input: '""', expected: '0' }] },
     { title: 'Group Anagrams', description: 'Write `solve(strs)` — group anagrams together. Return an array of arrays where each inner array contains words that are anagrams of each other (each group sorted alphabetically).',
       testCases: [{ input: '["eat","tea","tan","ate","nat","bat"]', expected: '[["ate","eat","tea"],["bat"],["nat","tan"]]' },{ input: '[""]', expected: '[[""]]' },{ input: '["a"]', expected: '[["a"]]' }] },
+    // ── Hard tier additions (difficulty update 2026-04-11) ──
+    { title: '0/1 Knapsack', description: 'Write `solve(weights, values, capacity)` — classic 0/1 knapsack. Each item can be taken at most once. Return the maximum total value achievable without exceeding `capacity`.',
+      testCases: [{ input: '[1,3,4,5], [1,4,5,7], 7', expected: '9' },{ input: '[2,3,4,5], [3,4,5,6], 5', expected: '7' },{ input: '[1], [10], 0', expected: '0' }] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(a, b)` — return the length of the longest common subsequence of strings a and b (characters need not be contiguous).',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"oxcpqrsvwf", "shmtulqrypy"', expected: '2' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(heights)` — given an array of non-negative integers representing an elevation map (each bar width 1), compute the total water trapped after raining.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[3,0,2,0,4]', expected: '7' },{ input: '[1,0,1]', expected: '1' }] },
+    { title: 'Merge Intervals', description: 'Write `solve(intervals)` — merge all overlapping intervals and return the result sorted by start time.',
+      testCases: [{ input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },{ input: '[[1,4],[4,5]]', expected: '[[1,5]]' },{ input: '[[1,4],[0,4]]', expected: '[[0,4]]' }] },
+    { title: 'Word Break', description: 'Write `solve(s, wordDict)` — return true if string s can be segmented into a space-separated sequence of one or more dictionary words (words may be reused).',
+      testCases: [{ input: '"leetcode", ["leet","code"]', expected: 'true' },{ input: '"applepenapple", ["apple","pen"]', expected: 'true' },{ input: '"catsandog", ["cats","dog","sand","and","cat"]', expected: 'false' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -376,6 +392,12 @@ const RESPONSE_QUESTIONS = [
     { question: 'A ball is dropped from 100 meters. Each bounce reaches half the previous height. What is the total distance traveled after exactly 3 bounces (including all ups and downs)?', expectedKeywords: ['275'] },
     { question: 'Three people check into a hotel room that costs $30. They each pay $10. The manager realizes the room is only $25 and gives $5 to the bellboy to return. The bellboy keeps $2 and gives $1 back to each person. Each person paid $9 (total $27) plus $2 the bellboy kept = $29. Where is the missing dollar?', expectedKeywords: ['no missing', 'accounting', 'error', 'fallacy'] },
     { question: 'A snail climbs 3 meters up a wall during the day but slides back 2 meters at night. If the wall is 10 meters high, how many days does it take the snail to reach the top?', expectedKeywords: ['8'] },
+    // ── Hard tier additions (difficulty update 2026-04-11) ──
+    { question: 'A car travels 60 km at 60 km/h, then another 60 km at 120 km/h. What is the average speed for the entire journey in km/h?', expectedKeywords: ['80'] },
+    { question: 'In a room of 23 people, what is the approximate probability that at least two share the same birthday? Answer: above or below 50%?', expectedKeywords: ['above', '50', 'greater', 'more'] },
+    { question: 'You have a 3-litre jug and a 5-litre jug with no markings. What is the minimum number of pour steps needed to measure exactly 4 litres?', expectedKeywords: ['6', 'seven', '7'] },
+    { question: 'You need to determine which of three switches outside a room controls which of three light bulbs inside. You may only enter the room once. What technique uses bulb heat to distinguish all three?', expectedKeywords: ['heat', 'warm', 'temperature', 'incandescent'] },
+    { question: 'A rope is wrapped tightly around the Earth at the equator. If you add exactly 1 metre of extra rope and suspend the slack uniformly all the way around, approximately how high above the surface does the rope float? (Answer in cm, rounded to nearest whole number)', expectedKeywords: ['16'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -416,7 +438,7 @@ function generateFileMgmtChallenge() {
 const TTS_PHRASES = [
     // ── Easy tier (20%) — clear, common phrases ──
     { text: 'The quick brown fox jumps over the lazy dog', keywords: ['quick', 'brown', 'fox', 'lazy', 'dog'] },
-    { text: 'Hello world this is a test message', keywords: ['hello', 'world', 'test', 'message'] },
+    { text: 'Open the settings menu and navigate to the notifications section', keywords: ['settings', 'menu', 'navigate', 'notifications', 'section'] },
     { text: 'Please remember to save your work before closing', keywords: ['remember', 'save', 'work', 'closing'] },
     { text: 'The package was delivered to the front door yesterday', keywords: ['package', 'delivered', 'front', 'door', 'yesterday'] },
     { text: 'The library closes at nine pm on weekdays', keywords: ['library', 'closes', 'nine', 'weekdays'] },
@@ -442,6 +464,13 @@ const TTS_PHRASES = [
     { text: 'The chemical compound CH3COOH commonly known as acetic acid has a pH of approximately 2.4', keywords: ['chemical', 'acetic', 'acid', 'pH'] },
     { text: 'Euler identity states that e to the power of i times pi plus 1 equals zero', keywords: ['euler', 'identity', 'pi', 'zero'] },
     { text: 'The UNESCO World Heritage site Machu Picchu is located at 2430 meters elevation in Peru', keywords: ['UNESCO', 'Machu Picchu', '2430', 'Peru'] },
+    // ── Hard tier additions (difficulty update 2026-04-11) ──
+    { text: 'The defendant\'s counsel filed a writ of certiorari with the Supreme Court on November 3rd', keywords: ['defendant', 'certiorari', 'supreme', 'november'] },
+    { text: 'The dosage is two point five milligrams of metformin hydrochloride twice daily with meals', keywords: ['milligrams', 'metformin', 'hydrochloride', 'twice', 'daily'] },
+    { text: 'Please authenticate using your OAuth 2.0 bearer token in the Authorization header', keywords: ['authenticate', 'OAuth', 'bearer', 'authorization', 'header'] },
+    { text: 'The Yangtze River at 6300 kilometers is the longest river in Asia and the third longest in the world', keywords: ['Yangtze', '6300', 'kilometers', 'Asia', 'third'] },
+    { text: 'The satellite position is 51 degrees 30 minutes north and 0 degrees 7 minutes west at 408 kilometers altitude', keywords: ['satellite', '51', 'north', '408', 'kilometers'] },
+    { text: 'The API rate limit is 1000 requests per minute with exponential backoff starting at 100 milliseconds', keywords: ['rate', 'limit', '1000', 'exponential', 'backoff'] },
 ];
 function generateTtsChallenge(weights) {
     const w = weights && weights['arena_tts'] || {};
