@@ -142,7 +142,16 @@
     "keep_local": "로컬 유지",
     "use_remote": "원격 사용",
     "sync_success": "동기화됨",
-    "soul_templates": "캐릭터 템플릿"
+    "soul_templates": "캐릭터 템플릿",
+    "all_vars_configured": "모든 변수가 구성되었습니다",
+    "browse_templates": "템플릿 찾아보기",
+    "builtin": "기본 제공",
+    "needs_vars": "필요: {{vars}}",
+    "no_api_key_needed": "API 키가 필요하지 않습니다",
+    "no_rules": "규칙 템플릿 없음",
+    "no_skills": "스킬 템플릿 없음",
+    "no_souls": "소울 템플릿 없음",
+    "search_placeholder": "검색…"
   },
   "settings": {
     "title": "설정",

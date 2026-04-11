@@ -142,7 +142,16 @@
     "keep_local": "ローカルを保持",
     "use_remote": "リモートを使用",
     "sync_success": "同期しました",
-    "soul_templates": "キャラクターテンプレート"
+    "soul_templates": "キャラクターテンプレート",
+    "all_vars_configured": "すべての変数が設定されました",
+    "browse_templates": "テンプレートを参照",
+    "builtin": "組み込み",
+    "needs_vars": "必要: {{vars}}",
+    "no_api_key_needed": "APIキーが不要です",
+    "no_rules": "ルールテンプレートがありません",
+    "no_skills": "スキルテンプレートがありません",
+    "no_souls": "ソウルテンプレートがありません",
+    "search_placeholder": "検索…"
   },
   "settings": {
     "title": "設定",

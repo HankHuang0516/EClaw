@@ -93,7 +93,8 @@
     "entity_idle": "Inactivo",
     "unbind_title": "Desvincular entidad",
     "unbind_message": "¿Está seguro de que desea desvincular {{name}}?",
-    "unbind_success": "Entidad desvinculada"
+    "unbind_success": "Entidad desvinculada",
+    "channel_ai_agent_hint": "🤖 Se recomienda encarecidamente usar Claude Code u otros agentes de IA para la instalación asistida."
   },
   "chat": {
     "title": "Chat",
@@ -148,7 +149,9 @@
     "browse_templates": "Explorar plantillas",
     "no_api_key_needed": "No se necesita clave API",
     "all_vars_configured": "Todas las variables configuradas",
-    "needs_vars": "Necesita: {{vars}}"
+    "needs_vars": "Necesita: {{vars}}",
+    "deprecated_msg": "Por favor, use el tablero Kanban para agregar nuevos elementos. El tablero Kanban tiene un ecosistema completo — deje que los bots migren los elementos existentes allí gradualmente.",
+    "deprecated_title": "Función Obsoleta"
   },
   "settings": {
     "title": "Configuración",
