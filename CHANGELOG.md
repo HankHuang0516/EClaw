@@ -1,3 +1,10 @@
+## [1.954.4](https://github.com/HankHuang0516/EClaw/compare/v1.954.3...v1.954.4) (2026-04-11)
+
+
+### Bug Fixes
+
+* **invite:** resolve route conflict causing 500 on /api/invite/my-code ([#1676](https://github.com/HankHuang0516/EClaw/issues/1676)) ([#1683](https://github.com/HankHuang0516/EClaw/issues/1683)) ([814ff25](https://github.com/HankHuang0516/EClaw/commit/814ff255945a46d4606fc68c68cdb9cda52f997d))
+
 ## [1.954.3](https://github.com/HankHuang0516/EClaw/compare/v1.954.2...v1.954.3) (2026-04-11)
 
 
