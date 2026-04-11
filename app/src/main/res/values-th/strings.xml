@@ -601,4 +601,16 @@ GPS: ตามคำร้องขอเท่านั้น ไม่ติ�
     <string name="error_generic">เกิดข้อผิดพลาด</string>
     <string name="select_bot">เลือกบอท:</string>
     <string name="active_users">ผู้ใช้งานอยู่</string>
+    <string name="entity_name">ชื่อเอนทิตี้</string>
+    <string name="last_message">ข้อความล่าสุด…</string>
+    <string name="just_now">เมื่อกี้</string>
+    <string name="select">เลือก</string>
+    <string name="entity_main">เอนทิตี้ 0 (หลัก)</string>
+    <string name="hello_im_here">สวัสดี ฉันอยู่ที่นี่!</string>
+    <string name="last_updated">อัปเดตล่าสุด: เมื่อกี้</string>
+    <string name="agent_card">การ์ดเอเจนต์</string>
+    <string name="log_debug">ดีบัก</string>
+    <string name="log_info">ข้อมูล</string>
+    <string name="log_warn">เตือน</string>
+    <string name="log_error">ข้อผิดพลาด</string>
 </resources>

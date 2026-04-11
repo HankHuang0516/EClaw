@@ -601,4 +601,16 @@ Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ qua email chín
     <string name="error_generic">Đã xảy ra lỗi</string>
     <string name="select_bot">Chọn bot:</string>
     <string name="active_users">Người dùng đang hoạt động</string>
+    <string name="entity_name">Tên thực thể</string>
+    <string name="last_message">Tin nhắn cuối…</string>
+    <string name="just_now">Vừa xong</string>
+    <string name="select">Chọn</string>
+    <string name="entity_main">Thực thể 0 (Chính)</string>
+    <string name="hello_im_here">Xin chào, tôi ở đây!</string>
+    <string name="last_updated">Cập nhật lần cuối: vừa xong</string>
+    <string name="agent_card">Thẻ đại lý</string>
+    <string name="log_debug">Gỡ lỗi</string>
+    <string name="log_info">Thông tin</string>
+    <string name="log_warn">Cảnh báo</string>
+    <string name="log_error">Lỗi</string>
 </resources>

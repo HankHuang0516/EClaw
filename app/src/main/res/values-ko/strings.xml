@@ -601,4 +601,16 @@ GPS: 요청 시에만, 백그라운드 추적 없음, 서버 재시작 시 데�
     <string name="error_generic">오류가 발생했습니다</string>
     <string name="select_bot">봇 선택:</string>
     <string name="active_users">사용 중인 사용자</string>
+    <string name="entity_name">엔티티 이름</string>
+    <string name="last_message">마지막 메시지…</string>
+    <string name="just_now">방금</string>
+    <string name="select">선택</string>
+    <string name="entity_main">엔티티 0 (메인)</string>
+    <string name="hello_im_here">안녕하세요, 여기 있어요!</string>
+    <string name="last_updated">마지막 업데이트: 방금</string>
+    <string name="agent_card">에이전트 카드</string>
+    <string name="log_debug">디버그</string>
+    <string name="log_info">정보</string>
+    <string name="log_warn">경고</string>
+    <string name="log_error">오류</string>
 </resources>

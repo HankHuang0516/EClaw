@@ -122,28 +122,28 @@
                 android:id="@+id/chipDebug"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="DEBUG"
+                android:text="@string/log_debug"
                 style="@style/Widget.Material3.Chip.Filter"/>
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipInfo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="INFO"
+                android:text="@string/log_info"
                 style="@style/Widget.Material3.Chip.Filter"/>
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipWarn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="WARN"
+                android:text="@string/log_warn"
                 style="@style/Widget.Material3.Chip.Filter"/>
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipError"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="ERROR"
+                android:text="@string/log_error"
                 style="@style/Widget.Material3.Chip.Filter"/>
 
         </com.google.android.material.chip.ChipGroup>

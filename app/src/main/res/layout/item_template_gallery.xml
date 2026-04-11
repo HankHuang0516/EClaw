@@ -54,7 +54,7 @@
         style="@style/Widget.Material3.Button.OutlinedButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Select"
+        android:text="@string/select"
         android:textSize="12sp"
         android:paddingStart="12dp"
         android:paddingEnd="12dp" />

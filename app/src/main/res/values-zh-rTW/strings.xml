@@ -712,4 +712,16 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。\n
     <string name="error_generic">發生錯誤</string>
     <string name="select_bot">選擇機器人：</string>
     <string name="active_users">使用中人數</string>
+    <string name="entity_name">實體名稱</string>
+    <string name="last_message">最後訊息…</string>
+    <string name="just_now">剛剛</string>
+    <string name="select">選擇</string>
+    <string name="entity_main">實體 0 (主)</string>
+    <string name="hello_im_here">你好，我來了！</string>
+    <string name="last_updated">最後更新：剛剛</string>
+    <string name="agent_card">代理卡</string>
+    <string name="log_debug">偵錯</string>
+    <string name="log_info">資訊</string>
+    <string name="log_warn">警告</string>
+    <string name="log_error">錯誤</string>
 </resources>

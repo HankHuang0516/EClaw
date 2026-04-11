@@ -30,4 +30,16 @@
     <string name="microphone_permission_denied">Permiso de micrófono denegado</string>
     <string name="recording">Grabando...</string>
     <string name="language">Idioma</string>
+    <string name="entity_name">Nombre de entidad</string>
+    <string name="last_message">Último mensaje…</string>
+    <string name="just_now">Ahora mismo</string>
+    <string name="select">Seleccionar</string>
+    <string name="entity_main">Entidad 0 (Principal)</string>
+    <string name="hello_im_here">¡Hola, estoy aquí!</string>
+    <string name="last_updated">Última actualización: ahora mismo</string>
+    <string name="agent_card">Tarjeta de agente</string>
+    <string name="log_debug">Depuración</string>
+    <string name="log_info">Información</string>
+    <string name="log_warn">Advertencia</string>
+    <string name="log_error">Error</string>
 </resources>
