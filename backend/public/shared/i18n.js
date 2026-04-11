@@ -75150,8 +75150,7 @@ const TRANSLATIONS = {
         "arena_cancel": "Abbrechen",
         "arena_expand": "Erweitern",
         "arena_name_subtitle": "Gib deinen Namen ein, um deine Punktzahl zu speichern",
-        "arena_time_remaining": "Verbleibende Zeit: "
-    },
+        "arena_time_remaining": "Verbleibende Zeit: ",
 
         "guide_channel_h2_1": "Was ist ein Channel?",
         "guide_channel_h2_2": "Voraussetzungen",
@@ -75649,7 +75648,7 @@ const TRANSLATIONS = {
         "arena_cooldown_prefix": "Nächste Bewertung verfügbar in",
         "arena_lb_time": "Zeit",
         "guide_nav_arena": "⛳ Interview Arena",
-
+    },
     ms: {
         "guide_intent_categories": "Kategori Intent yang Disokong",
         "guide_intent_col_apis": "API yang Disuntik",
