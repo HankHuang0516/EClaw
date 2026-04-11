@@ -1,3 +1,10 @@
+## [1.954.3](https://github.com/HankHuang0516/EClaw/compare/v1.954.2...v1.954.3) (2026-04-11)
+
+
+### Bug Fixes
+
+* **card-holder:** use currentUser.deviceId instead of undefined currentDeviceId ([22c82de](https://github.com/HankHuang0516/EClaw/commit/22c82de4619d601e24f18188eb2a6ebd1e02817c))
+
 ## [1.954.2](https://github.com/HankHuang0516/EClaw/compare/v1.954.1...v1.954.2) (2026-04-10)
 
 
