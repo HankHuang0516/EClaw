@@ -1,3 +1,10 @@
+# [1.955.0](https://github.com/HankHuang0516/EClaw/compare/v1.954.4...v1.955.0) (2026-04-11)
+
+
+### Features
+
+* **android:** refactor 12 hardcoded layout strings to @string/ resources ([#1682](https://github.com/HankHuang0516/EClaw/issues/1682)) ([e755cbe](https://github.com/HankHuang0516/EClaw/commit/e755cbea48856442c08a820a0638426bdbf66dc2))
+
 ## [1.954.4](https://github.com/HankHuang0516/EClaw/compare/v1.954.3...v1.954.4) (2026-04-11)
 
 
