@@ -1,3 +1,10 @@
+## [1.955.1](https://github.com/HankHuang0516/EClaw/compare/v1.955.0...v1.955.1) (2026-04-11)
+
+
+### Bug Fixes
+
+* **agent-card:** remove dead inline code + add static audit test ([2196131](https://github.com/HankHuang0516/EClaw/commit/219613176235a5f85a68b4273c5bb0d5ad53fe34))
+
 # [1.955.0](https://github.com/HankHuang0516/EClaw/compare/v1.954.4...v1.955.0) (2026-04-11)
 
 
