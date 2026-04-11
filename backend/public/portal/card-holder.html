@@ -1103,7 +1103,7 @@
             if (typeof AgentCardEditor !== 'undefined') {
                 var chEditor = new AgentCardEditor('aceEditorCH', {
                     entityId: card.entityId,
-                    deviceId: currentDeviceId,
+                    deviceId: currentUser?.deviceId || currentUser?.device_id || '',
                     publicCode: card.publicCode,
                     identity: card.identity || {},
                     agentCard: ac,
