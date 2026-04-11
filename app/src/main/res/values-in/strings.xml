@@ -601,4 +601,16 @@ Jika Anda memiliki pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="error_generic">Terjadi kesalahan</string>
     <string name="select_bot">Pilih bot:</string>
     <string name="active_users">Pengguna aktif</string>
+    <string name="entity_name">Nama entitas</string>
+    <string name="last_message">Pesan terakhir…</string>
+    <string name="just_now">Baru saja</string>
+    <string name="select">Pilih</string>
+    <string name="entity_main">Entitas 0 (Utama)</string>
+    <string name="hello_im_here">Halo, saya di sini!</string>
+    <string name="last_updated">Terakhir diperbarui: baru saja</string>
+    <string name="agent_card">Kartu agen</string>
+    <string name="log_debug">Debug</string>
+    <string name="log_info">Info</string>
+    <string name="log_warn">Peringatan</string>
+    <string name="log_error">Kesalahan</string>
 </resources>

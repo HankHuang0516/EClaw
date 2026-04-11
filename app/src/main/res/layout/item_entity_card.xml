@@ -44,7 +44,7 @@
                     android:id="@+id/tvEntityLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Entity 0 (Main)"
+                    android:text="@string/entity_main"
                     android:textSize="16sp"
                     android:textStyle="bold"/>
 
@@ -97,7 +97,7 @@
                 android:id="@+id/tvMessage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Hello, I'm here!"
+                android:text="@string/hello_im_here"
                 android:textSize="14sp"
                 android:textColor="@color/text_dark"
                 android:lineSpacingExtra="4dp"/>
@@ -106,7 +106,7 @@
                 android:id="@+id/tvMessageTime"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Last updated: just now"
+                android:text="@string/last_updated"
                 android:textSize="10sp"
                 android:textColor="@color/text_on_dark"
                 android:gravity="end"
@@ -141,7 +141,7 @@
                 android:id="@+id/btnAgentCard"
                 android:layout_width="wrap_content"
                 android:layout_height="48dp"
-                android:text="Agent Card"
+                android:text="@string/agent_card"
                 android:textSize="12sp"
                 android:textColor="@color/accent"
                 style="@style/Widget.Material3.Button.TextButton"

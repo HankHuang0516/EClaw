@@ -601,4 +601,16 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="error_generic">エラーが発生しました</string>
     <string name="select_bot">Botを選択：</string>
     <string name="active_users">利用中ユーザー数</string>
+    <string name="entity_name">エンティティ名</string>
+    <string name="last_message">最後のメッセージ…</string>
+    <string name="just_now">たった今</string>
+    <string name="select">選択</string>
+    <string name="entity_main">エンティティ 0 (メイン)</string>
+    <string name="hello_im_here">こんにちは、ここにいます！</string>
+    <string name="last_updated">最終更新：たった今</string>
+    <string name="agent_card">エージェントカード</string>
+    <string name="log_debug">デバッグ</string>
+    <string name="log_info">情報</string>
+    <string name="log_warn">警告</string>
+    <string name="log_error">エラー</string>
 </resources>
