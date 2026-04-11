@@ -1,3 +1,10 @@
+## [1.955.4](https://github.com/HankHuang0516/EClaw/compare/v1.955.3...v1.955.4) (2026-04-11)
+
+
+### Bug Fixes
+
+* **portal:** dashboard SyntaxError + CSP whitelist for TapPay/Cloudflare ([#1690](https://github.com/HankHuang0516/EClaw/issues/1690)) ([b6f82db](https://github.com/HankHuang0516/EClaw/commit/b6f82db10314f6b9a128c9d0aa05a1bc948e7cb4))
+
 ## [1.955.3](https://github.com/HankHuang0516/EClaw/compare/v1.955.2...v1.955.3) (2026-04-11)
 
 
