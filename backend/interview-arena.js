@@ -179,6 +179,11 @@ const VISION_IMAGES = [
     { file: null, description: 'A line chart showing quarterly revenue: Q1 at $10K, Q2 at $15K, Q3 dips to $8K, Q4 recovers to $20K', keywords: ['chart', 'revenue', 'Q3', 'dip', 'Q4'] },
     { file: null, description: 'A world map with five red pins marking cities: New York, London, Tokyo, Sydney, and São Paulo', keywords: ['map', 'five', 'pins', 'Tokyo'] },
     { file: null, description: 'A receipt from a store dated 03/15 showing total $47.83 with three itemized lines and a barcode at bottom', keywords: ['receipt', 'total', '47', 'three', 'barcode'] },
+    // ── Additional hard tier ──
+    { file: null, description: 'A terminal window showing the command "git commit -m feat: add user authentication" with output "1 file changed, 47 insertions(+), 3 deletions(-)"', keywords: ['terminal', 'git', 'commit', '47', 'insertions'] },
+    { file: null, description: 'A product price tag showing original price $129.99 crossed out, new sale price $97.49, with a coupon code SAVE20 printed in the bottom right corner', keywords: ['price', '97', 'coupon', 'SAVE20'] },
+    { file: null, description: 'A subway map with four colored lines: red and blue lines intersect at Central Station; a green line runs parallel to the red line; the orange line terminates at East Terminal', keywords: ['subway', 'four', 'central', 'intersect', 'orange'] },
+    { file: null, description: 'A spreadsheet showing five rows of sales data: the third row is highlighted yellow and shows "Alice Chen, Region West, $82,400, Q2, Exceeded"', keywords: ['spreadsheet', 'Alice', 'West', '82400', 'Exceeded'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -195,9 +200,9 @@ function generateButtonClickChallenge() {
     return { correctIndex, correctLabel, buttonCount, seed: Math.floor(Math.random() * 1e9) };
 }
 
-const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson'];
-const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se'];
-const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore'];
+const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Kwame Mensah','Nadia Al-Farsi','Hiroshi Watanabe','Isabella Rossi','Emeka Okonkwo'];
+const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','kwame@example.gh','nadia@test.ae','hiroshi@demo.co.jp','isabella@test.it','emeka@example.ng'];
+const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','Nigeria','Italy','Netherlands','Poland','Argentina'];
 const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567'];
 const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17','1993-08-09','1986-02-14','1994-10-31','1989-05-20'];
 const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund'];
@@ -339,6 +344,42 @@ const CODING_PROBLEMS = [
       testCases: [{ input: '"abcabcbb"', expected: '3' },{ input: '"bbbbb"', expected: '1' },{ input: '"pwwkew"', expected: '3' },{ input: '""', expected: '0' }] },
     { title: 'Group Anagrams', description: 'Write `solve(strs)` — group anagrams together. Return an array of arrays where each inner array contains words that are anagrams of each other (each group sorted alphabetically).',
       testCases: [{ input: '["eat","tea","tan","ate","nat","bat"]', expected: '[["ate","eat","tea"],["bat"],["nat","tan"]]' },{ input: '[""]', expected: '[[""]]' },{ input: '["a"]', expected: '[["a"]]' }] },
+    // ── Hard tier additions (DP, Greedy, Graphs) ──
+    { title: 'Knapsack 0/1',
+      description: 'Write `solve(weights, values, capacity)` — given item weights and values arrays and a weight capacity, return the maximum total value obtainable (each item used at most once).',
+      testCases: [
+        { input: '[2,3,4,5], [3,4,5,6], 8', expected: '10' },
+        { input: '[1,2,3], [6,10,12], 5', expected: '22' },
+        { input: '[5], [10], 4', expected: '0' },
+      ] },
+    { title: 'Merge Intervals',
+      description: 'Write `solve(intervals)` — given an array of [start, end] intervals, merge all overlapping ones and return the result sorted by start time.',
+      testCases: [
+        { input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },
+        { input: '[[1,4],[4,5]]', expected: '[[1,5]]' },
+        { input: '[[1,4],[2,3]]', expected: '[[1,4]]' },
+      ] },
+    { title: 'Trapping Rain Water',
+      description: 'Write `solve(height)` — given an array of bar heights, return the total units of rain water trapped between them.',
+      testCases: [
+        { input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },
+        { input: '[4,2,0,3,2,5]', expected: '9' },
+        { input: '[3,0,2,0,4]', expected: '7' },
+      ] },
+    { title: 'Minimum Path Sum',
+      description: 'Write `solve(grid)` — given a 2D grid of non-negative integers, find the path from top-left to bottom-right (moving only right or down) that minimizes the total sum.',
+      testCases: [
+        { input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },
+        { input: '[[1,2],[5,6]]', expected: '9' },
+        { input: '[[1,2,3],[4,5,6]]', expected: '12' },
+      ] },
+    { title: 'Word Break',
+      description: 'Write `solve(s, wordDict)` — return true if string s can be segmented into one or more space-separated words all present in wordDict.',
+      testCases: [
+        { input: '"leetcode", ["leet","code"]', expected: 'true' },
+        { input: '"applepenapple", ["apple","pen"]', expected: 'true' },
+        { input: '"catsandog", ["cats","dog","sand","and","cat"]', expected: 'false' },
+      ] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -376,6 +417,12 @@ const RESPONSE_QUESTIONS = [
     { question: 'A ball is dropped from 100 meters. Each bounce reaches half the previous height. What is the total distance traveled after exactly 3 bounces (including all ups and downs)?', expectedKeywords: ['275'] },
     { question: 'Three people check into a hotel room that costs $30. They each pay $10. The manager realizes the room is only $25 and gives $5 to the bellboy to return. The bellboy keeps $2 and gives $1 back to each person. Each person paid $9 (total $27) plus $2 the bellboy kept = $29. Where is the missing dollar?', expectedKeywords: ['no missing', 'accounting', 'error', 'fallacy'] },
     { question: 'A snail climbs 3 meters up a wall during the day but slides back 2 meters at night. If the wall is 10 meters high, how many days does it take the snail to reach the top?', expectedKeywords: ['8'] },
+    // ── Additional hard tier ──
+    { question: 'You pick Box 1 from three identical boxes where exactly one contains a prize. The host opens Box 3 (which is empty) and asks if you want to switch to Box 2. What is the probability of winning the prize if you switch?', expectedKeywords: ['2/3', '67', '66'] },
+    { question: 'A bacteria culture doubles every 3 hours. Starting with 100 bacteria at noon, how many bacteria will there be at midnight (12 hours later)?', expectedKeywords: ['1600'] },
+    { question: 'A circle is inscribed in a square with side length 10. What is the area of the region inside the square but outside the circle? (Use π ≈ 3.14159, round to 2 decimal places)', expectedKeywords: ['21.46', '21.5'] },
+    { question: 'Two fair dice are rolled. What is the probability that the product of the two numbers rolled is even? Express as a simplified fraction.', expectedKeywords: ['3/4'] },
+    { question: 'If x + y = 10 and x² + y² = 58, what is the value of xy?', expectedKeywords: ['21'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -442,6 +489,12 @@ const TTS_PHRASES = [
     { text: 'The chemical compound CH3COOH commonly known as acetic acid has a pH of approximately 2.4', keywords: ['chemical', 'acetic', 'acid', 'pH'] },
     { text: 'Euler identity states that e to the power of i times pi plus 1 equals zero', keywords: ['euler', 'identity', 'pi', 'zero'] },
     { text: 'The UNESCO World Heritage site Machu Picchu is located at 2430 meters elevation in Peru', keywords: ['UNESCO', 'Machu Picchu', '2430', 'Peru'] },
+    // ── Additional medium/hard tier ──
+    { text: 'The International Space Station orbits Earth at approximately 28000 kilometers per hour', keywords: ['International', 'Space', 'Station', '28000', 'kilometers'] },
+    { text: 'Please confirm your reservation for two adults at restaurant Le Bernardin on Friday the 14th at 7:30 PM', keywords: ['reservation', 'two', 'Le Bernardin', '14th', '7:30'] },
+    { text: 'The SQL query SELECT COUNT DISTINCT user underscore id FROM events WHERE timestamp returned 14287 unique users in the past year', keywords: ['SQL', 'COUNT', 'DISTINCT', '14287', 'unique'] },
+    { text: 'Cryptocurrency XRP traded at 0.5823 US dollars a decrease of 3.47 percent from the previous closing price', keywords: ['XRP', '0.5823', 'percent', '3.47'] },
+    { text: 'The CRISPR-Cas9 gene editing technique won the Nobel Prize in Chemistry in 2020 awarded to Jennifer Doudna and Emmanuelle Charpentier', keywords: ['CRISPR', 'Nobel', 'Chemistry', '2020', 'Doudna'] },
 ];
 function generateTtsChallenge(weights) {
     const w = weights && weights['arena_tts'] || {};
