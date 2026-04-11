@@ -1746,12 +1746,14 @@ setTimeout(() => trustModule.initTrustDatabase(), 3000);
 // ============================================
 // INVITE / REFERRAL SYSTEM (P5)
 // ============================================
+// invite.js (Phase 5 JWT-based) router removed — conflicts with device-auth
+// invite routes below (line ~3662). Schema init kept for table idempotency.
 const inviteModule = require('./invite')({
     authMiddleware: authModule.authMiddleware,
     walletModule,
     serverLog,
 });
-app.use('/api/invite', inviteModule.router);
+// NOTE: router NOT mounted — device-auth routes in index.js handle /api/invite/*
 setTimeout(() => inviteModule.initInviteDatabase(), 3500);
 
 // ============================================
@@ -3657,14 +3659,37 @@ function generateInviteCode() {
     return code;
 }
 
-// GET /api/invite/my-code — get (or auto-generate) the caller's invite code
-// Auth: deviceId + deviceSecret
-app.get('/api/invite/my-code', async (req, res) => {
-    const { deviceId, deviceSecret } = req.query;
-    if (!deviceId || !deviceSecret) return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
-    if (!devices[deviceId] || !safeEqual(devices[deviceId].deviceSecret, deviceSecret)) {
-        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+// Helper: extract authenticated deviceId from device-auth params OR JWT cookie
+function resolveInviteAuth(req) {
+    // 1) Device auth via query/body params
+    const qDeviceId = req.query.deviceId || (req.body && req.body.deviceId);
+    const qDeviceSecret = req.query.deviceSecret || (req.body && req.body.deviceSecret);
+    if (qDeviceId && qDeviceSecret) {
+        if (!devices[qDeviceId] || !safeEqual(devices[qDeviceId].deviceSecret, qDeviceSecret)) {
+            return { error: 'Invalid credentials', status: 403 };
+        }
+        return { deviceId: qDeviceId };
     }
+    // 2) JWT cookie auth (for invite.html which uses apiCall with credentials:'include')
+    const token = req.cookies && req.cookies.eclaw_session;
+    if (token) {
+        try {
+            const jwt = require('jsonwebtoken');
+            const decoded = jwt.verify(token, JWT_SECRET_FALLBACK);
+            if (decoded && decoded.deviceId && devices[decoded.deviceId]) {
+                return { deviceId: decoded.deviceId };
+            }
+        } catch (_) { /* invalid token — fall through */ }
+    }
+    return { error: 'deviceId and deviceSecret required, or valid session cookie', status: 401 };
+}
+
+// GET /api/invite/my-code — get (or auto-generate) the caller's invite code
+// Auth: deviceId+deviceSecret OR JWT cookie
+app.get('/api/invite/my-code', async (req, res) => {
+    const auth = resolveInviteAuth(req);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    const deviceId = auth.deviceId;
 
     const pg = authModule.pool;
     try {
@@ -3697,15 +3722,15 @@ app.get('/api/invite/my-code', async (req, res) => {
 });
 
 // POST /api/invite/redeem — redeem an invite code
-// Body: { deviceId, deviceSecret, code }
+// Body: { deviceId, deviceSecret, code } OR JWT cookie + { code }
 // Reward: invitee +300 bonus, inviter +50 bonus
 app.post('/api/invite/redeem', async (req, res) => {
-    const { deviceId, deviceSecret, code } = req.body;
-    if (!deviceId || !deviceSecret || !code) {
-        return res.status(400).json({ success: false, error: 'deviceId, deviceSecret, and code required' });
-    }
-    if (!devices[deviceId] || !safeEqual(devices[deviceId].deviceSecret, deviceSecret)) {
-        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    const { code } = req.body;
+    const auth = resolveInviteAuth(req);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    const deviceId = auth.deviceId;
+    if (!code) {
+        return res.status(400).json({ success: false, error: 'code required' });
     }
 
     const pg = authModule.pool;
@@ -3756,13 +3781,11 @@ app.post('/api/invite/redeem', async (req, res) => {
 });
 
 // GET /api/invite/stats — get invite stats and remaining bonus
-// Auth: deviceId + deviceSecret
+// Auth: deviceId+deviceSecret OR JWT cookie
 app.get('/api/invite/stats', async (req, res) => {
-    const { deviceId, deviceSecret } = req.query;
-    if (!deviceId || !deviceSecret) return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
-    if (!devices[deviceId] || !safeEqual(devices[deviceId].deviceSecret, deviceSecret)) {
-        return res.status(403).json({ success: false, error: 'Invalid credentials' });
-    }
+    const auth = resolveInviteAuth(req);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    const deviceId = auth.deviceId;
 
     const pg = authModule.pool;
     try {
