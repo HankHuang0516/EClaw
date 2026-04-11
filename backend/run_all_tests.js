@@ -110,6 +110,7 @@ const TEST_FILES = [
     'test-entity-trash.js',         // Entity trash: soft-delete recovery, 7-day retention
     'test-channel-push-text.js',    // Channel push text format verification
     'test-note-pages.js',           // Note page CRUD, public/private toggle, visitor analytics
+    'test-invite-auth.js',          // Invite auth: device+cookie dual auth, route conflict fix (#1676)
 ];
 
 // Manual UI tests (run on device, not automated):
