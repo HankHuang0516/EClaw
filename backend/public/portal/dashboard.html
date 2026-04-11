@@ -1926,10 +1926,11 @@
                 // Init shared Agent Card editor component
                 var editorContainer = document.getElementById('aceEditor' + entityId);
                 if (editorContainer && typeof AgentCardEditor !== 'undefined') {
+                    var thisEntity = entities.find(function(e) { return e.entityId === entityId; }) || {};
                     var editor = new AgentCardEditor('aceEditor' + entityId, {
                         entityId: entityId,
-                        deviceId: currentDeviceId,
-                        publicCode: currentEntities[entityId]?.publicCode || '',
+                        deviceId: currentUser?.deviceId || currentUser?.device_id || '',
+                        publicCode: thisEntity.publicCode || '',
                         identity: identity,
                         agentCard: pub,
                         isOwner: true,
@@ -1947,95 +1948,8 @@
             }
         }
 
-        /** Render Arena-sourced capabilities as read-only badges */
-        function renderArenaCaps(entityId, caps) {
-            var container = document.getElementById('acCaps' + entityId);
-            container.innerHTML = '';
-            if (!caps || typeof caps !== 'object' || Object.keys(caps).length === 0) {
-                container.innerHTML = '<div style="font-size:12px;color:var(--text-secondary);padding:8px 0;">' +
-                    i18n.t('dash_caps_none') + '</div>';
-                return;
-            }
-            Object.entries(caps).forEach(function(entry) {
-                var key = entry[0], val = entry[1];
-                var supported = val && val.supported;
-                var badge = document.createElement('span');
-                badge.style.cssText = 'display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;margin:2px 4px 2px 0;' +
-                    (supported
-                        ? 'background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);'
-                        : 'background:var(--input-bg);color:var(--text-secondary);border:1px solid var(--card-border);');
-                badge.textContent = (supported ? '✅ ' : '❌ ') + key;
-                if (val.probes && val.probes[0] && val.probes[0].score != null) {
-                    var pct = val.probes[0].maxScore > 0 ? Math.round(val.probes[0].score / val.probes[0].maxScore * 100) : 0;
-                    badge.textContent += ' (' + pct + '%)';
-                }
-                container.appendChild(badge);
-            });
-        }
-
-        /** Open Arena with this entity's listing linked */
-        async function openArenaForEntity(entityId) {
-            try {
-                // Check if a listing already exists for this entity
-                var user = await apiCall('GET', '/api/auth/me');
-                var listings = await apiCall('GET', '/api/rental/my-listings');
-                var existing = (listings.listings || []).find(function(l) {
-                    return l.owner_entity_id === entityId || String(l.owner_entity_id) === String(entityId);
-                });
-                var listingId = existing ? existing.id : null;
-
-                // If no listing exists, create a draft listing first
-                if (!listingId) {
-                    var entity = currentEntities[entityId];
-                    var createRes = await apiCall('POST', '/api/rental/listing', {
-                        ownerDeviceId: currentDeviceId,
-                        ownerEntityId: entityId,
-                        title: (entity && entity.name) || 'My Bot',
-                        rateMliPerKtoken: 5000, // default rate, can be changed later
-                    });
-                    if (createRes.success) listingId = createRes.listing.id;
-                }
-
-                // Open Arena with listingId linked
-                if (listingId) {
-                    window.open('/arena?listingId=' + listingId, '_blank');
-                } else {
-                    window.open('/arena', '_blank');
-                }
-            } catch (err) {
-                console.error('[Arena] Error:', err);
-                window.open('/arena', '_blank');
-            }
-        }
-
-        /** Create or navigate to rental listing for this entity */
-        async function listForRental(entityId) {
-            try {
-                var listings = await apiCall('GET', '/api/rental/my-listings');
-                var existing = (listings.listings || []).find(function(l) {
-                    return String(l.owner_entity_id) === String(entityId);
-                });
-                if (existing) {
-                    showToast(i18n.t('dash_listing_exists') + ' (ID: ' + existing.id.slice(0, 8) + '...)', 'info');
-                    return;
-                }
-                var entity = currentEntities[entityId];
-                var rate = prompt(i18n.t('dash_listing_rate_prompt') || 'Set rate (e-coin per 1K tokens):', '5');
-                if (!rate) return;
-                var res = await apiCall('POST', '/api/rental/listing', {
-                    ownerDeviceId: currentDeviceId,
-                    ownerEntityId: entityId,
-                    title: (entity && entity.name) || 'My Bot',
-                    rateMliPerKtoken: parseInt(rate, 10) * 1000,
-                });
-                if (res.success) {
-                    showToast(i18n.t('dash_listing_created') || 'Listing created! Run Arena test to publish.', 'success');
-                } else {
-                    showToast(res.error || 'Failed', 'error');
-                }
-            } catch (err) {
-                showToast(err.message || 'Failed', 'error');
-            }
+        // renderArenaCaps / openArenaForEntity / listForRental removed —
+        // now handled by shared/agent-card-editor.js via AgentCardEditor class.
         }
 
         function renderTags(prefix, entityId, tags) {

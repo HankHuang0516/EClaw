@@ -1117,29 +1117,12 @@
             document.getElementById('detailModal').classList.add('open');
         }
 
-        // ── Dashboard-style edit helpers ──
-        function appendEditCapability(name, desc) {
-            const container = document.getElementById('editCaps');
-            const row = document.createElement('div');
-            row.className = 'ac-cap-item';
-            row.innerHTML = '<input type="text" placeholder="' + escapeHtml(t('cardholder_cap_name', 'Name')) + '" value="' + escapeHtml(name) + '" class="ac-cap-name" style="padding:6px 8px;border:1px solid var(--card-border);border-radius:4px;background:var(--input-bg);color:var(--text);font-size:12px;">' +
-                '<input type="text" placeholder="' + escapeHtml(t('cardholder_cap_desc', 'Description')) + '" value="' + escapeHtml(desc) + '" class="ac-cap-desc" style="padding:6px 8px;border:1px solid var(--card-border);border-radius:4px;background:var(--input-bg);color:var(--text);font-size:12px;">' +
-                '<button class="ac-cap-remove" title="Remove">&times;</button>';
-            row.querySelector('.ac-cap-remove').onclick = function() { row.remove(); };
-            container.appendChild(row);
-        }
-
-        function addEditCapability() {
-            const container = document.getElementById('editCaps');
-            if (container.children.length >= 10) {
-                showToast(t('cardholder_max_capabilities', 'Maximum 10 capabilities'), 'error');
-                return;
-            }
-            appendEditCapability('', '');
-        }
+        // appendEditCapability / addEditCapability removed —
+        // now handled by shared/agent-card-editor.js
 
         function renderEditTags(containerId, tags) {
             const container = document.getElementById(containerId);
+            if (!container) return;
             container.innerHTML = '';
             tags.forEach(function(tag) {
                 const span = document.createElement('span');
