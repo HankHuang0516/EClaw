@@ -1,3 +1,10 @@
+## [1.955.2](https://github.com/HankHuang0516/EClaw/compare/v1.955.1...v1.955.2) (2026-04-11)
+
+
+### Bug Fixes
+
+* **i18n:** add missing commas in Spanish and Arabic sections causing CI parse failure ([#1689](https://github.com/HankHuang0516/EClaw/issues/1689)) ([4ccb2d2](https://github.com/HankHuang0516/EClaw/commit/4ccb2d29d233be6ac52312e641dcda86c3f78757))
+
 ## [1.955.1](https://github.com/HankHuang0516/EClaw/compare/v1.955.0...v1.955.1) (2026-04-11)
 
 
