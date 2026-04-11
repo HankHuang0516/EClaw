@@ -89,7 +89,16 @@ jobs:
           const fs = require('fs');
           const vm = require('vm');
           const content = fs.readFileSync('public/shared/i18n.js', 'utf8');
-          const sandbox = { _result: {} };
+          const noop = () => {};
+          const sandbox = {
+            _result: {},
+            localStorage: { getItem: noop, setItem: noop },
+            navigator: { language: 'en' },
+            document: { querySelectorAll: () => [], documentElement: { lang: 'en' }, addEventListener: noop, getElementById: () => null },
+            window: { location: { search: '' } },
+            setTimeout: noop,
+            console,
+          };
           vm.createContext(sandbox);
           vm.runInContext(content + '\n_result = TRANSLATIONS;', sandbox);
           const TRANSLATIONS = sandbox._result;
