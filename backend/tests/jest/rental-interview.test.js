@@ -320,8 +320,8 @@ describe('rental interview endpoints', () => {
                 .set(authHeader(USER))
                 .send();
 
-            expect(res.status).toBe(400);
-            expect(res.body.error).toBe('owner_device_offline');
+            expect(res.status).toBe(404);
+            expect(res.body.error).toBe('owner_device_not_found');
         });
 
         test('rejects when interview already running', async () => {

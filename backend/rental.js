@@ -916,7 +916,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
     const router = express.Router();
     const audit = serverLog || (() => {});
 
-    const INPUT_ERROR_RE = /^(?:[a-z][a-z0-9_]*_(?:invalid|required|forbidden|not_found)|publish_failed|interview_not_passed|no_fields_to_update|duration_too_(?:short|long)|duration_(?:below|above)_listing_(?:min|max)|listing_not_available|listing_already_rented|self_rental_forbidden|insufficient_balance_for_rental|contract_already_ended|contract_end_forbidden|interview_rate_limited|interview_already_running|owner_device_offline|owner_entity_not_bound|owner_entity_no_webhook|listing_status_invalid_for_interview)$/;
+    const INPUT_ERROR_RE = /^(?:[a-z][a-z0-9_]*_(?:invalid|required|forbidden|not_found)|publish_failed|interview_not_passed|no_fields_to_update|duration_too_(?:short|long)|duration_(?:below|above)_listing_(?:min|max)|listing_not_available|listing_already_rented|self_rental_forbidden|insufficient_balance_for_rental|contract_already_ended|contract_end_forbidden|interview_rate_limited|interview_already_running|owner_device_not_found|owner_entity_not_bound|owner_entity_no_webhook|listing_status_invalid_for_interview)$/;
 
     function rentalRoute(fn) {
         return async (req, res) => {
@@ -1086,7 +1086,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
             throw new Error('interview_deps_not_ready');
         }
         const device = _interviewDeps.devices[listing.owner_device_id];
-        if (!device) throw new Error('owner_device_offline');
+        if (!device) throw new Error('owner_device_not_found');
         const entity = device.entities[listing.owner_entity_id];
         if (!entity || !entity.isBound) throw new Error('owner_entity_not_bound');
         if (!entity.webhook) throw new Error('owner_entity_no_webhook');
