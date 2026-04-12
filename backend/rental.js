@@ -1088,7 +1088,11 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
                 const ent = dev.entities?.[l.owner_entity_id];
                 entityInfo = ent ? {
                     isBound: !!ent.isBound, hasWebhook: !!ent.webhook,
-                    webhookPrefix: ent.webhook ? ent.webhook.substring(0, 40) + '...' : null,
+                    webhookPrefix: ent.webhook ? ent.webhook.url?.substring(0, 40) + '...' : null,
+                    bindingType: ent.bindingType || 'webhook',
+                    channelAccountId: ent.channelAccountId || null,
+                    isChannelBound: ent.bindingType === 'channel' && !!ent.channelAccountId,
+                    canInterview: !!(ent.webhook || (ent.bindingType === 'channel' && ent.channelAccountId)),
                     interviewInProgress: !!ent._interviewInProgress, name: ent.name || null,
                 } : 'entity_not_found_in_device';
             }
@@ -1139,8 +1143,21 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         if (!device) throw new Error('owner_device_not_found');
         const entity = device.entities[listing.owner_entity_id];
         if (!entity || !entity.isBound) throw new Error('owner_entity_not_bound');
-        if (!entity.webhook) throw new Error('owner_entity_no_webhook');
+        const isChannelBound = entity.bindingType === 'channel' && !!entity.channelAccountId;
+        if (!entity.webhook && !isChannelBound) throw new Error('owner_entity_no_webhook_or_channel');
         if (entity._interviewInProgress) throw new Error('interview_already_running');
+
+        // Build a unified push function that works for both webhook and channel bots
+        const unifiedPush = async (ent, devId, eventType, payload) => {
+            if (isChannelBound && _interviewDeps.pushToChannelCallback) {
+                const pushResult = await _interviewDeps.pushToChannelCallback(devId, listing.owner_entity_id, {
+                    event: 'interview_probe',
+                    text: payload.message || JSON.stringify(payload),
+                }, ent.channelAccountId);
+                return { pushed: !!pushResult?.pushed };
+            }
+            return _interviewDeps.pushToBot(ent, devId, eventType, payload);
+        };
 
         // Set listing to 'interview' status
         await pool.query(
@@ -1153,7 +1170,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
             result = await runInterview({
                 entity,
                 deviceId: listing.owner_device_id,
-                pushToBot: _interviewDeps.pushToBot,
+                pushToBot: unifiedPush,
             });
         } catch (err) {
             // Revert status on unexpected failure
