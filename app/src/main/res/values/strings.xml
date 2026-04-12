@@ -877,14 +877,21 @@ If you have any questions, please contact us via our official email.
     <string name="card_holder">Card Holder</string>
     <string name="chat">Chat</string>
     <string name="confirm">Confirm</string>
+    <string name="enter_binding_code">Enter 6-digit binding code</string>
     <string name="error_occurred">An error occurred</string>
     <string name="info">Info</string>
     <string name="language">Language</string>
     <string name="loading">Loading…</string>
     <string name="microphone_permission_denied">Microphone permission denied</string>
     <string name="recording">Recording…</string>
+    <string name="schedule">Schedule</string>
+    <string name="settings">Settings</string>
+    <string name="voice_message">Voice message</string>
 
     <!-- Wallet / Top-up / Subscription -->
+    <string name="wallet_title">Wallet</string>
+    <string name="my_rentals_title">My Rentals</string>
+    <string name="invite_title">Invite Friends</string>
     <string name="topup_ecoin_title">Top Up e-Coins</string>
     <string name="topup_ecoin">Top Up</string>
     <string name="topup_success">e-Coins added to your wallet!</string>
