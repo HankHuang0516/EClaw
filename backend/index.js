@@ -12511,14 +12511,7 @@ if (typeof rentalModule.setInterviewDeps === 'function') {
     rentalModule.setInterviewDeps({ pushToBot, devices, arenaModule, setInterviewCapabilities, get pushToChannelCallback() { return channelModule?.pushToChannelCallback?.bind(channelModule); } });
 }
 
-// Wire auto-push deps into arena module (so interview-linked exams auto-push to bot)
-if (typeof arenaModule.setAutoPushDeps === 'function') {
-    arenaModule.setAutoPushDeps({
-        devices,
-        pushToBot,
-        get pushToChannelCallback() { try { return channelModule?.pushToChannelCallback?.bind(channelModule); } catch { return null; } },
-    });
-}
+// NOTE: arenaModule.setAutoPushDeps is called AFTER channelModule init (see below ~line 13180+)
 
 // ============================================
 // FEEDBACK ENDPOINTS (Enhanced with Log Snapshot + AI Prompt)
@@ -13197,6 +13190,15 @@ const channelModule = require('./channel-api')(devices, {
     chatPool
 });
 app.use('/api/channel', channelModule.router);
+
+// Wire auto-push deps into arena module — MUST be after channelModule init to avoid TDZ
+if (typeof arenaModule.setAutoPushDeps === 'function') {
+    arenaModule.setAutoPushDeps({
+        devices,
+        pushToBot,
+        pushToChannelCallback: channelModule.pushToChannelCallback.bind(channelModule),
+    });
+}
 // Wire channel push into mission module (Bot Push Parity Rule — must be after channelModule init)
 missionModule.setPushToChannelCallback(channelModule.pushToChannelCallback.bind(channelModule));
 // Wire kanban auto-review into channel module (so channel bot replies also trigger card auto-done)
