@@ -1,3 +1,11 @@
+# [1.961.0](https://github.com/HankHuang0516/EClaw/compare/v1.960.0...v1.961.0) (2026-04-12)
+
+
+### Features
+
+* **interview:** auto-push exam instructions to bot + hide copy UI in interview mode ([e3e3795](https://github.com/HankHuang0516/EClaw/commit/e3e3795327dbe3990686acb8634789fb6b116e16))
+* **kanban:** entity bind validation, stale escalation, automation separation, entity status API ([#1700](https://github.com/HankHuang0516/EClaw/issues/1700) [#1701](https://github.com/HankHuang0516/EClaw/issues/1701) [#1702](https://github.com/HankHuang0516/EClaw/issues/1702) [#1703](https://github.com/HankHuang0516/EClaw/issues/1703)) ([#1704](https://github.com/HankHuang0516/EClaw/issues/1704)) ([72562ed](https://github.com/HankHuang0516/EClaw/commit/72562eda067a863dacd2bc7afce12668cfeae589)), closes [#15](https://github.com/HankHuang0516/EClaw/issues/15)
+
 # [1.960.0](https://github.com/HankHuang0516/EClaw/compare/v1.959.5...v1.960.0) (2026-04-12)
 
 
