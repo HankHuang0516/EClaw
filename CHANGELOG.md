@@ -1,3 +1,10 @@
+## [1.959.5](https://github.com/HankHuang0516/EClaw/compare/v1.959.4...v1.959.5) (2026-04-12)
+
+
+### Bug Fixes
+
+* **rental:** add owner_device_id/owner_entity_id to getListing + listMyListings queries ([afd431f](https://github.com/HankHuang0516/EClaw/commit/afd431f02c9923ff2e982ae03a70b781796e17c2))
+
 ## [1.959.4](https://github.com/HankHuang0516/EClaw/compare/v1.959.3...v1.959.4) (2026-04-12)
 
 
