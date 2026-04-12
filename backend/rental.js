@@ -48,6 +48,9 @@ const MAX_RENTAL_MINUTES = 7 * 24 * 60;  // 7 days
 /** Interview gate: listings need score >= 60 to publish. */
 const INTERVIEW_PASS_SCORE = 60;
 
+/** 24-hour cooldown between successive rentals of the same listing by the same renter. */
+const COOLDOWN_HOURS = 24;
+
 /** Interview rate limit: 3 attempts per listing per 7 days. */
 const INTERVIEW_RATE_LIMIT = 3;
 
@@ -383,6 +386,19 @@ async function startRental({
             throw new Error('duration_above_listing_max');
         }
 
+        // 1b. Cooldown check: reject if renter ended a contract for this listing within 24h.
+        const cooldownRes = await client.query(
+            `SELECT cooldown_until FROM rental_cooldowns
+             WHERE user_id = $1 AND listing_id = $2 AND cooldown_until > NOW()`,
+            [renterUserId, listingId]
+        );
+        if (cooldownRes.rowCount > 0) {
+            const until = cooldownRes.rows[0].cooldown_until;
+            const err = new Error('cooldown_active');
+            err.cooldownUntil = until;
+            throw err;
+        }
+
         // 2. Exclusivity check: the UNIQUE partial index enforces this at the
         //    DB layer, but we explicit-check here to return a friendlier error.
         const activeRes = await client.query(
@@ -484,7 +500,7 @@ async function endRental({ contractId, endReason, requesterUserId }, walletApi) 
 
     return walletApi.withTransaction(async (client) => {
         const res = await client.query(
-            `SELECT id, owner_user_id, renter_user_id, deposit_mli, status
+            `SELECT id, listing_id, owner_user_id, renter_user_id, deposit_mli, status
              FROM rental_contracts WHERE id = $1 FOR UPDATE`,
             [contractId]
         );
@@ -620,6 +636,16 @@ async function endRental({ contractId, endReason, requesterUserId }, walletApi) 
              RETURNING id, status, end_reason, actual_ended_at`,
             [contract.id, endReason, endReason]
         );
+
+        // 4. Set 24h cooldown so the same renter cannot immediately re-rent this listing.
+        const cooldownUntil = new Date(Date.now() + COOLDOWN_HOURS * 3600 * 1000);
+        await client.query(
+            `INSERT INTO rental_cooldowns (user_id, listing_id, cooldown_until)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (user_id, listing_id) DO UPDATE SET cooldown_until = $3`,
+            [contract.renter_user_id, contract.listing_id, cooldownUntil]
+        );
+
         return {
             ...updated.rows[0],
             refund_mli: refundMli,
@@ -917,7 +943,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
     const router = express.Router();
     const audit = serverLog || (() => {});
 
-    const INPUT_ERROR_RE = /^(?:[a-z][a-z0-9_]*_(?:invalid|required|forbidden|not_found)|publish_failed|interview_not_passed|no_fields_to_update|duration_too_(?:short|long)|duration_(?:below|above)_listing_(?:min|max)|listing_not_available|listing_already_rented|self_rental_forbidden|insufficient_balance_for_rental|contract_already_ended|contract_end_forbidden|interview_rate_limited|interview_already_running|owner_device_not_found|owner_entity_not_bound|owner_entity_no_webhook|listing_status_invalid_for_interview)$/;
+    const INPUT_ERROR_RE = /^(?:[a-z][a-z0-9_]*_(?:invalid|required|forbidden|not_found)|publish_failed|interview_not_passed|no_fields_to_update|duration_too_(?:short|long)|duration_(?:below|above)_listing_(?:min|max)|listing_not_available|listing_already_rented|self_rental_forbidden|insufficient_balance_for_rental|contract_already_ended|contract_end_forbidden|interview_rate_limited|interview_already_running|owner_device_not_found|owner_entity_not_bound|owner_entity_no_webhook|listing_status_invalid_for_interview|cooldown_active)$/;
 
     function rentalRoute(fn) {
         return async (req, res) => {
