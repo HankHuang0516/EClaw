@@ -677,14 +677,16 @@ async function getMyContracts(userId, { role = null, limit = 50, offset = 0 } = 
     params.push(safeOffset);
 
     const res = await pool.query(
-        `SELECT id, listing_id, owner_user_id, renter_user_id,
-                rate_mli_per_ktoken_snapshot, deposit_mli,
-                planned_duration_min, started_at, ends_at, actual_ended_at,
-                tokens_consumed, ecoin_charged_mli, violation_count,
-                status, end_reason, created_at
-         FROM rental_contracts
-         WHERE ${where}
-         ORDER BY created_at DESC
+        `SELECT c.id, c.listing_id, c.owner_user_id, c.renter_user_id,
+                c.rate_mli_per_ktoken_snapshot, c.deposit_mli,
+                c.planned_duration_min, c.started_at, c.ends_at, c.actual_ended_at,
+                c.tokens_consumed, c.ecoin_charged_mli, c.violation_count,
+                c.status, c.end_reason, c.created_at,
+                l.title AS listing_title
+         FROM rental_contracts c
+         LEFT JOIN bot_listings l ON l.id = c.listing_id
+         WHERE ${where.replace(/\b(renter_user_id|owner_user_id)\b/g, 'c.$1')}
+         ORDER BY c.created_at DESC
          LIMIT $${params.length - 1} OFFSET $${params.length}`,
         params
     );

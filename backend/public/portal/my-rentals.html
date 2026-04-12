@@ -16,11 +16,18 @@
         .mr-contract { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .mr-contract-info { flex: 1; min-width: 200px; }
         .mr-contract-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
-        .mr-contract-meta { font-size: 12px; color: var(--text-secondary); }
+        .mr-contract-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
         .mr-status { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 700; }
         .mr-status.active { background: #10b981; color: #fff; }
         .mr-status.ended { background: var(--input-bg); color: var(--text-secondary); border: 1px solid var(--card-border); }
+        .mr-status.ended_early { background: #f97316; color: #fff; }
+        .mr-status.ended_zero_balance, .mr-status.ended_violation { background: #ef4444; color: #fff; }
+        .mr-status.ended_disputed { background: #8b5cf6; color: #fff; }
+        .mr-status.ended_admin { background: #374151; color: #fff; }
         .mr-status.suspended { background: #f59e0b; color: #000; }
+        .mr-status.dispute_open { background: #10b981; color: #fff; }
+        .mr-status.dispute_resolved { background: #3b82f6; color: #fff; }
+        .mr-status.dispute_rejected { background: #ef4444; color: #fff; }
         .mr-actions { display: flex; gap: 6px; flex-wrap: wrap; }
         .mr-btn { padding: 6px 14px; border: 1px solid var(--card-border); border-radius: var(--radius-sm); background: var(--input-bg); color: var(--text); font-size: 12px; cursor: pointer; }
         .mr-btn:hover { border-color: var(--primary); }
@@ -33,6 +40,38 @@
         .mr-stars { font-size: 24px; cursor: pointer; letter-spacing: 2px; }
         .mr-stars span { color: var(--card-border); transition: color 0.1s; }
         .mr-stars span.filled { color: #f59e0b; }
+
+        /* Progress bar for remaining time */
+        .mr-progress-bar { height: 8px; background: var(--input-bg); border-radius: 4px; margin: 6px 0; overflow: hidden; }
+        .mr-progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #10b981); border-radius: 4px; transition: width 0.3s; }
+
+        /* Deposit disposition box */
+        .mr-deposit-box { font-size: 12px; margin-top: 6px; padding: 6px 10px; border-radius: var(--radius-sm); }
+        .mr-deposit-box.success { background: rgba(16,185,129,0.1); color: #10b981; }
+        .mr-deposit-box.warning { background: rgba(249,115,22,0.1); color: #f97316; }
+        .mr-deposit-box.info { background: rgba(59,130,246,0.1); color: #3b82f6; }
+
+        /* Owner income info */
+        .mr-income { font-size: 12px; color: #10b981; font-weight: 600; }
+
+        /* Modal overlay */
+        .mr-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .mr-modal { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 24px; max-width: 440px; width: 90%; max-height: 90vh; overflow-y: auto; }
+        .mr-modal h3 { margin: 0 0 12px; font-size: 16px; }
+        .mr-modal p { font-size: 13px; color: var(--text-secondary); margin: 8px 0; }
+        .mr-modal ul { font-size: 13px; padding-left: 20px; margin: 8px 0; }
+        .mr-modal ul li { margin: 4px 0; }
+        .mr-modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+        .mr-modal-actions .mr-btn { flex: 1; text-align: center; padding: 10px; }
+
+        /* Dispute form */
+        .mr-dispute-form label { display: block; font-size: 13px; margin: 6px 0 2px; cursor: pointer; }
+        .mr-dispute-form textarea { width: 100%; min-height: 80px; padding: 8px; border: 1px solid var(--card-border); border-radius: var(--radius-sm); background: var(--input-bg); color: var(--text); font-size: 13px; resize: vertical; margin-top: 8px; }
+        .mr-sla-info { font-size: 12px; color: var(--text-secondary); background: var(--input-bg); border-radius: var(--radius-sm); padding: 8px 10px; margin-top: 10px; }
+        .mr-sla-info div { margin: 2px 0; }
+
+        /* Dispute SLA countdown */
+        .mr-dispute-sla { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -69,6 +108,62 @@
         function tt(k, fb) { return (typeof i18n !== 'undefined' ? i18n.t(k) : null) || fb; }
         function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
+        /* ── Status helpers ── */
+        const STATUS_MAP = {
+            active:                          { class: 'active',              i18n: 'mr_status_active',              fb: 'Active' },
+            reserved:                        { class: 'active',              i18n: 'mr_status_active',              fb: 'Active' },
+            ended_normal:                    { class: 'ended',               i18n: 'mr_status_ended_normal',        fb: 'Ended (Normal)' },
+            ended_early_by_renter:           { class: 'ended_early',         i18n: 'mr_status_ended_early',         fb: 'Ended (Early)' },
+            ended_zero_balance:              { class: 'ended_zero_balance',  i18n: 'mr_status_ended_zero_balance',  fb: 'Ended (Zero Balance)' },
+            ended_violation:                 { class: 'ended_violation',     i18n: 'mr_status_ended_violation',     fb: 'Ended (Violation)' },
+            ended_disputed:                  { class: 'ended_disputed',      i18n: 'mr_status_ended_disputed',      fb: 'Ended (Disputed)' },
+            ended_admin:                     { class: 'ended_admin',         i18n: 'mr_status_ended_admin',         fb: 'Ended (Admin)' },
+            suspended_insufficient_funds:    { class: 'suspended',           i18n: 'mr_status_suspended',           fb: 'Suspended (Low Balance)' },
+        };
+
+        function statusBadge(s) {
+            const m = STATUS_MAP[s] || { class: 'ended', i18n: '', fb: s };
+            return `<span class="mr-status ${m.class}">${tt(m.i18n, m.fb)}</span>`;
+        }
+
+        /* ── Deposit disposition helper ── */
+        function depositDisposition(c) {
+            if (!c.deposit_mli) return '';
+            const dep = (c.deposit_mli / 1000).toFixed(1);
+            const half = (c.deposit_mli / 2000).toFixed(1);
+            const seventy = (c.deposit_mli * 0.7 / 1000).toFixed(1);
+            const thirty = (c.deposit_mli * 0.3 / 1000).toFixed(1);
+            switch (c.status) {
+                case 'ended_normal':
+                case 'ended_disputed':
+                case 'ended_admin':
+                    return `<div class="mr-deposit-box success">${tt('mr_deposit_full_refund', 'Full refund')} ${dep} e${tt('mr_ecoin', 'coins')}</div>`;
+                case 'ended_early_by_renter':
+                    return `<div class="mr-deposit-box warning">${tt('mr_deposit_early_end', 'Refund {refund} e-coins, forfeit {forfeit} e-coins (50%)').replace('{refund}', half).replace('{forfeit}', half)}</div>`;
+                case 'ended_violation':
+                    return `<div class="mr-deposit-box warning">${tt('mr_deposit_violation', 'Refund {refund} e-coins, forfeit {forfeit} e-coins (30%)').replace('{refund}', seventy).replace('{forfeit}', thirty)}</div>`;
+                case 'ended_zero_balance':
+                    return `<div class="mr-deposit-box info">${tt('mr_deposit_zero_balance', 'Remaining deposit returned')}</div>`;
+                default:
+                    return '';
+            }
+        }
+
+        /* ── Progress bar helper ── */
+        function progressBar(c) {
+            if (c.status !== 'active' && c.status !== 'reserved') return '';
+            if (!c.started_at || !c.ends_at) return '';
+            const start = new Date(c.started_at).getTime();
+            const end = new Date(c.ends_at).getTime();
+            const now = Date.now();
+            const pct = Math.min(100, Math.max(0, ((now - start) / (end - start)) * 100));
+            const remaining = Math.max(0, end - now);
+            const rh = Math.floor(remaining / 3600000);
+            const rm = Math.floor((remaining % 3600000) / 60000);
+            return `<div class="mr-contract-meta">${tt('mr_remaining_time', 'Remaining')}: ${rh}h ${rm}m</div>
+                <div class="mr-progress-bar"><div class="mr-progress-fill" style="width:${pct.toFixed(1)}%"></div></div>`;
+        }
+
         function switchTab(tab) {
             currentTab = tab;
             document.querySelectorAll('.mr-tab').forEach(t => t.classList.remove('active'));
@@ -92,12 +187,6 @@
             }
         }
 
-        function statusClass(s) {
-            if (s === 'active' || s === 'reserved') return 'active';
-            if (s.startsWith('suspended')) return 'suspended';
-            return 'ended';
-        }
-
         function renderContracts(contracts) {
             const wrap = document.getElementById('mrContent');
             if (contracts.length === 0) {
@@ -108,32 +197,66 @@
                 const rate = (c.rate_mli_per_ktoken_snapshot / 1000).toFixed(1);
                 const tokensK = (c.tokens_consumed / 1000).toFixed(1);
                 const charged = (c.ecoin_charged_mli / 1000).toFixed(1);
+                const deposit = c.deposit_mli ? (c.deposit_mli / 1000).toFixed(1) : '0';
                 const isActive = c.status === 'active' || c.status === 'reserved';
+                const isSuspended = c.status === 'suspended_insufficient_funds';
                 const isEnded = c.status.startsWith('ended');
-                const startDate = c.started_at ? new Date(c.started_at).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—';
-                const endDate = c.actual_ended_at ? new Date(c.actual_ended_at).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : (c.ends_at ? new Date(c.ends_at).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—');
+                const title = c.listing_title || `${tt('mr_contract', 'Contract')} ${c.id.slice(0, 8)}...`;
+                const startDate = c.started_at ? new Date(c.started_at).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '--';
+                const endDate = c.actual_ended_at ? new Date(c.actual_ended_at).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : (c.ends_at ? new Date(c.ends_at).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }) : '--');
 
                 let actions = '';
                 if (isActive && currentTab === 'renter') {
                     actions = `
-                        <button class="mr-btn danger" onclick="endContract('${c.id}','ended_early_by_renter')">${tt('mr_end_early', 'End Early')}</button>
+                        <button class="mr-btn primary" onclick="openChat('${c.id}')">${tt('mr_chat', 'Chat')}</button>
+                        <button class="mr-btn danger" onclick="showEndEarlyModal('${c.id}', ${c.deposit_mli || 0})">${tt('mr_end_early', 'End Early')}</button>
+                        <button class="mr-btn" onclick="showUsage('${c.id}')">${tt('mr_usage_details', 'Usage Details')}</button>
+                    `;
+                }
+                if (isSuspended && currentTab === 'renter') {
+                    actions = `
+                        <button class="mr-btn primary" onclick="window.location='/portal/wallet.html#topup'">${tt('mr_topup', 'Top Up')}</button>
+                        <button class="mr-btn danger" onclick="showEndEarlyModal('${c.id}', ${c.deposit_mli || 0})">${tt('mr_end_early', 'End Early')}</button>
                     `;
                 }
                 if (isEnded && currentTab === 'renter') {
                     actions = `
                         <button class="mr-btn primary" onclick="showReviewForm('${c.id}')">${tt('mr_review', 'Review')}</button>
-                        <button class="mr-btn" onclick="openDispute('${c.id}')">${tt('mr_dispute', 'Dispute')}</button>
+                        <button class="mr-btn" onclick="showDisputeModal('${c.id}')">${tt('mr_dispute', 'Dispute')}</button>
                     `;
+                }
+
+                /* Owner tab actions & info */
+                let ownerInfo = '';
+                if (currentTab === 'owner') {
+                    const income = (c.ecoin_charged_mli * 0.85 / 1000).toFixed(1);
+                    ownerInfo = `<div class="mr-contract-meta mr-income">${tt('mr_income', 'Income')}: ${income} e${tt('mr_ecoin', 'coins')} (85%)</div>`;
+                    if (isActive) {
+                        ownerInfo += `<div class="mr-contract-meta">${tt('mr_settlement_status', 'Settlement')}: ${tt('mr_settlement_pending', 'Settling...')}</div>`;
+                    } else if (isEnded) {
+                        ownerInfo += `<div class="mr-contract-meta">${tt('mr_settlement_status', 'Settlement')}: ${tt('mr_settlement_done', 'Settled')}</div>`;
+                    }
+                    actions = isActive ? `<button class="mr-btn" onclick="showUsage('${c.id}')">${tt('mr_income_details', 'Income Details')}</button>` : '';
+                }
+
+                /* Deposit display for active */
+                let depositInfo = '';
+                if ((isActive || isSuspended) && c.deposit_mli) {
+                    depositInfo = `<div class="mr-contract-meta">${tt('mr_deposit', 'Deposit')}: ${deposit} e${tt('mr_ecoin', 'coins')} (${tt('mr_deposit_frozen', 'frozen')})</div>`;
                 }
 
                 return `<div class="mr-section" id="contract-${c.id}">
                     <div class="mr-contract">
                         <div class="mr-contract-info">
-                            <div class="mr-contract-title">${tt('mr_contract', 'Contract')} ${c.id.slice(0, 8)}…</div>
-                            <div class="mr-contract-meta">${rate} e幣/1K · ${tokensK}K tokens · ${charged} e幣 ${tt('mr_charged', 'charged')}</div>
+                            <div class="mr-contract-title">${esc(title)}</div>
+                            <div class="mr-contract-meta">${rate} e${tt('mr_ecoin', 'coins')}/1K · ${tokensK}K tokens · ${charged} e${tt('mr_ecoin', 'coins')} ${tt('mr_charged', 'charged')}</div>
                             <div class="mr-contract-meta">${startDate} → ${endDate}</div>
+                            ${depositInfo}
+                            ${ownerInfo}
+                            ${progressBar(c)}
+                            ${isEnded ? depositDisposition(c) : ''}
                         </div>
-                        <span class="mr-status ${statusClass(c.status)}">${c.status}</span>
+                        ${statusBadge(c.status)}
                         <div class="mr-actions">${actions}</div>
                     </div>
                     <div id="review-form-${c.id}"></div>
@@ -147,34 +270,149 @@
                 wrap.innerHTML = `<div class="mr-empty">${tt('mr_no_disputes', 'No disputes filed')}</div>`;
                 return;
             }
+            const DISPUTE_STATUS = {
+                open:          { class: 'dispute_open',     i18n: 'mr_dispute_status_open',     fb: 'Open' },
+                investigating: { class: 'dispute_open',     i18n: 'mr_dispute_status_open',     fb: 'Investigating' },
+                resolved:      { class: 'dispute_resolved', i18n: 'mr_dispute_status_resolved', fb: 'Resolved' },
+                rejected:      { class: 'dispute_rejected', i18n: 'mr_dispute_status_rejected', fb: 'Rejected' },
+            };
+            const DISPUTE_TYPE_I18N = {
+                bot_quality:         'mr_dtype_bot_quality',
+                capability_mismatch: 'mr_dtype_capability_mismatch',
+                financial:           'mr_dtype_financial',
+                bot_crash:           'mr_dtype_bot_crash',
+            };
             wrap.innerHTML = disputes.map(d => {
                 const date = new Date(d.created_at).toLocaleString('zh-TW', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+                const ds = DISPUTE_STATUS[d.status] || { class: 'dispute_open', fb: d.status };
+                const typeKey = DISPUTE_TYPE_I18N[d.type];
+                const typeText = typeKey ? tt(typeKey, d.type) : esc(d.type);
+                /* SLA countdown */
+                let slaHtml = '';
+                if (d.sla_resolve_by && (d.status === 'open' || d.status === 'investigating')) {
+                    const slaEnd = new Date(d.sla_resolve_by).getTime();
+                    const remaining = Math.max(0, slaEnd - Date.now());
+                    const rh = Math.floor(remaining / 3600000);
+                    const rm = Math.floor((remaining % 3600000) / 60000);
+                    slaHtml = `<div class="mr-dispute-sla">${tt('mr_sla_remaining', 'SLA')}: ${rh}h ${rm}m ${tt('mr_sla_remaining_suffix', 'remaining')}</div>`;
+                }
                 return `<div class="mr-section">
                     <div class="mr-contract">
                         <div class="mr-contract-info">
-                            <div class="mr-contract-title">${esc(d.type)} — ${d.id.slice(0, 8)}…</div>
+                            <div class="mr-contract-title">${typeText} — ${d.id.slice(0, 8)}...</div>
                             <div class="mr-contract-meta">${tt('mr_filed', 'Filed')}: ${date}</div>
+                            ${slaHtml}
                         </div>
-                        <span class="mr-status ${d.status === 'open' ? 'active' : 'ended'}">${d.status}</span>
+                        <span class="mr-status ${ds.class}">${tt(ds.i18n, ds.fb)}</span>
                     </div>
                 </div>`;
             }).join('');
         }
 
-        async function endContract(contractId, reason) {
-            if (!confirm(tt('mr_end_confirm', 'Are you sure? Early termination forfeits 50% of your deposit.'))) return;
-            try {
-                await apiCall('POST', `/api/rental/contract/${contractId}/end`, { endReason: reason });
-                loadTab();
-            } catch (err) { alert(err.message || 'Failed'); }
+        /* ── End Early Modal ── */
+        function showEndEarlyModal(contractId, depositMli) {
+            const dep = (depositMli / 1000).toFixed(1);
+            const half = (depositMli / 2000).toFixed(1);
+            const forfeit = depositMli / 2000;
+            const ownerShare = (forfeit * 0.85).toFixed(1);
+            const platformShare = (forfeit * 0.13).toFixed(1);
+            const insuranceShare = (forfeit * 0.02).toFixed(1);
+            const overlay = document.createElement('div');
+            overlay.className = 'mr-modal-overlay';
+            overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+            overlay.innerHTML = `<div class="mr-modal">
+                <h3>${tt('mr_end_early_title', 'Confirm Early Termination?')}</h3>
+                <p>${tt('mr_end_early_irreversible', 'This action cannot be undone. Per early termination terms:')}</p>
+                <ul>
+                    <li>${tt('mr_end_early_forfeit', 'Deposit 50% ({forfeit} e-coins) will be forfeited').replace('{forfeit}', half)}</li>
+                    <li>${tt('mr_end_early_refund', 'Deposit 50% ({refund} e-coins) will be refunded').replace('{refund}', half)}</li>
+                    <li>${tt('mr_end_early_split', 'Forfeit split')}:
+                        <ul>
+                            <li>${tt('mr_end_early_owner', 'Owner 85%')} = ${ownerShare} e${tt('mr_ecoin', 'coins')}</li>
+                            <li>${tt('mr_end_early_platform', 'Platform 13%')} = ${platformShare} e${tt('mr_ecoin', 'coins')}</li>
+                            <li>${tt('mr_end_early_insurance', 'Insurance 2%')} = ${insuranceShare} e${tt('mr_ecoin', 'coins')}</li>
+                        </ul>
+                    </li>
+                </ul>
+                <div class="mr-modal-actions">
+                    <button class="mr-btn" onclick="this.closest('.mr-modal-overlay').remove()">${tt('mr_cancel', 'Cancel')}</button>
+                    <button class="mr-btn danger" onclick="confirmEndEarly('${contractId}', this)">${tt('mr_confirm_end', 'Confirm End')}</button>
+                </div>
+            </div>`;
+            document.body.appendChild(overlay);
         }
 
+        async function confirmEndEarly(contractId, btn) {
+            btn.disabled = true;
+            btn.textContent = '...';
+            try {
+                await apiCall('POST', `/api/rental/contract/${contractId}/end`, { endReason: 'ended_early_by_renter' });
+                const overlay = btn.closest('.mr-modal-overlay');
+                if (overlay) overlay.remove();
+                loadTab();
+            } catch (err) {
+                alert(err.message || 'Failed');
+                btn.disabled = false;
+                btn.textContent = tt('mr_confirm_end', 'Confirm End');
+            }
+        }
+
+        /* ── Dispute Modal ── */
+        function showDisputeModal(contractId) {
+            const overlay = document.createElement('div');
+            overlay.className = 'mr-modal-overlay';
+            overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+            overlay.innerHTML = `<div class="mr-modal">
+                <h3>${tt('mr_dispute_title', 'File a Dispute')}</h3>
+                <div class="mr-dispute-form">
+                    <p style="font-size:13px; margin-bottom:8px;">${tt('mr_dispute_select_type', 'Select dispute type:')}</p>
+                    <label><input type="radio" name="dtype" value="bot_quality"> ${tt('mr_dtype_bot_quality', 'Bot Quality - Poor bot quality')}</label>
+                    <label><input type="radio" name="dtype" value="capability_mismatch"> ${tt('mr_dtype_capability_mismatch', 'Capability Mismatch - Does not match description')}</label>
+                    <label><input type="radio" name="dtype" value="financial"> ${tt('mr_dtype_financial', 'Financial - Billing error')}</label>
+                    <label><input type="radio" name="dtype" value="bot_crash"> ${tt('mr_dtype_bot_crash', 'Bot Crash - Bot unresponsive')}</label>
+                    <textarea id="dispute-evidence" placeholder="${tt('mr_dispute_evidence_placeholder', 'Describe the issue (optional)...')}"></textarea>
+                    <div class="mr-sla-info">
+                        <div><strong>${tt('mr_sla_title', 'SLA Information')}:</strong></div>
+                        <div>bot_crash: ${tt('mr_sla_bot_crash', '5min auto-verify')}</div>
+                        <div>capability_mismatch: ${tt('mr_sla_capability', '24h response / 48h resolve')}</div>
+                        <div>financial: ${tt('mr_sla_financial', '12h response / 48h resolve')}</div>
+                        <div>bot_quality: ${tt('mr_sla_quality', '24h response / 72h resolve')}</div>
+                    </div>
+                </div>
+                <div class="mr-modal-actions">
+                    <button class="mr-btn" onclick="this.closest('.mr-modal-overlay').remove()">${tt('mr_cancel', 'Cancel')}</button>
+                    <button class="mr-btn primary" onclick="submitDispute('${contractId}', this)">${tt('mr_submit_dispute', 'Submit Dispute')}</button>
+                </div>
+            </div>`;
+            document.body.appendChild(overlay);
+        }
+
+        async function submitDispute(contractId, btn) {
+            const overlay = btn.closest('.mr-modal-overlay');
+            const selected = overlay.querySelector('input[name="dtype"]:checked');
+            if (!selected) { alert(tt('mr_dispute_select_required', 'Please select a dispute type')); return; }
+            const evidence = overlay.querySelector('#dispute-evidence').value;
+            btn.disabled = true;
+            btn.textContent = '...';
+            try {
+                await apiCall('POST', `/api/rental/contract/${contractId}/dispute`, { type: selected.value, evidence });
+                overlay.remove();
+                alert(tt('mr_dispute_filed', 'Dispute filed!'));
+                switchTab('disputes');
+            } catch (err) {
+                alert(err.message || 'Failed');
+                btn.disabled = false;
+                btn.textContent = tt('mr_submit_dispute', 'Submit Dispute');
+            }
+        }
+
+        /* ── Review ── */
         function showReviewForm(contractId) {
             const wrap = document.getElementById(`review-form-${contractId}`);
             if (wrap.innerHTML) { wrap.innerHTML = ''; return; }
             wrap.innerHTML = `<div class="mr-review-form">
                 <div class="mr-stars" id="stars-${contractId}">
-                    ${[1,2,3,4,5].map(n => `<span onclick="setRating('${contractId}',${n})" data-n="${n}">☆</span>`).join('')}
+                    ${[1,2,3,4,5].map(n => `<span onclick="setRating('${contractId}',${n})" data-n="${n}">&#9734;</span>`).join('')}
                 </div>
                 <textarea id="comment-${contractId}" placeholder="${tt('mr_review_placeholder', 'Optional comment...')}" style="width:100%;margin-top:8px;padding:8px;border:1px solid var(--card-border);border-radius:var(--radius-sm);background:var(--input-bg);color:var(--text);font-size:13px;resize:vertical;min-height:60px;"></textarea>
                 <button class="mr-btn primary" style="margin-top:8px;" onclick="submitReview('${contractId}')">${tt('mr_submit_review', 'Submit Review')}</button>
@@ -186,7 +424,7 @@
             selectedRatings[contractId] = n;
             document.querySelectorAll(`#stars-${contractId} span`).forEach(s => {
                 s.classList.toggle('filled', parseInt(s.dataset.n) <= n);
-                s.textContent = parseInt(s.dataset.n) <= n ? '★' : '☆';
+                s.textContent = parseInt(s.dataset.n) <= n ? '\u2605' : '\u2606';
             });
         }
 
@@ -201,15 +439,12 @@
             } catch (err) { alert(err.message || 'Failed'); }
         }
 
-        async function openDispute(contractId) {
-            const type = prompt(tt('mr_dispute_type', 'Dispute type:\n1. bot_crash\n2. bot_quality\n3. capability_mismatch\n4. financial\n\nEnter type:'));
-            if (!type) return;
-            const evidence = prompt(tt('mr_dispute_evidence', 'Describe the issue (optional):'));
-            try {
-                await apiCall('POST', `/api/rental/contract/${contractId}/dispute`, { type, evidence });
-                alert(tt('mr_dispute_filed', 'Dispute filed!'));
-                switchTab('disputes');
-            } catch (err) { alert(err.message || 'Failed'); }
+        /* ── Stub actions ── */
+        function openChat(contractId) {
+            window.location = `/portal/chat.html?rental=${contractId}`;
+        }
+        function showUsage(contractId) {
+            alert(tt('mr_usage_coming_soon', 'Usage details coming soon'));
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
