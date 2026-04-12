@@ -1,9 +1,11 @@
 /**
- * Bot Interview — deterministic (regex + heuristic) capability evaluator.
+ * LEGACY: 8-probe text-based scoring engine.
+ * The interview flow now uses interview-arena.js (12 interactive challenges).
+ * This module is kept for backward compatibility (rental.js interview/start
+ * still references runInterview), but new interview UX goes through Arena.
  *
- * Design decision: no LLM judge. Interview probes are sent to a
- * candidate listing's webhook, and responses are scored by pattern
- * matching. This keeps interviews:
+ * Original design: deterministic (regex + heuristic) capability evaluator.
+ * No LLM judge. Probes sent to webhook, scored by pattern matching.
  *   - free (no API bill)
  *   - reproducible (deterministic scoring)
  *   - unforgeable (response to probe #2 `print(2**10)` either contains

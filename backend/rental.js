@@ -1115,7 +1115,8 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
     } catch (err) { res.status(500).json({ success: false, error: err.message }); } });
 
 
-    // POST /api/rental/listing/:id/interview/start — run interview probes against owner's bot
+    // POST /api/rental/listing/:id/interview/start — DEPRECATED: frontend now uses POST /api/arena/exam directly.
+    // Kept for backward compatibility. The 8-probe flow below is legacy; Arena 12-challenge is the current system.
     router.post('/listing/:id/interview/start', authMiddleware, rentalRoute(async (req, res) => {
         const listing = await getListing(req.params.id);
         if (!listing) throw new Error('listing_not_found');

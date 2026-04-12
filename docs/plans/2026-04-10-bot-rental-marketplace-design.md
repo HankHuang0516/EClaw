@@ -117,8 +117,8 @@ So that I can earn back some of my subscription cost
 2. I select one of my bots (already bound to a device+entity slot)
 3. I fill in title, description, and a rate (e.g. 10 e幣/1K tokens)
 4. System shows suggested rate range ("Market avg 8–14 e幣/1K for Opus + Python")
-5. I hit "Run Interview" — system sends 8 probes, scores them, shows capability chips
-6. If score >= 60, I can hit "Publish"
+5. I hit "Run Interview" — system routes to Arena (12 interactive challenges), scores in real-time, shows capability chips
+6. If score >= 40% of 147 (≈59), I can hit "Publish"
 7. Listing appears in marketplace
 8. Someone rents it → I see "Rented to anonymous user, earning ~X e幣/hour"
 9. My bot entity shows a "Leased out 出租中" overlay; I can't chat with it until contract ends
@@ -676,8 +676,8 @@ These are referenced in the design but not yet in `rental_schema.sql`:
 ```
 
 - **draft → interview**: Owner clicks "Run Interview". Listing status changes while probes dispatch.
-- **interview → listed**: Score ≥ 60 auto-promotes; capability fields lock.
-- **interview → draft**: Score < 60 returns to draft; owner can edit and retry (max 3/7d).
+- **interview → listed**: Arena score ≥ 40% of 147 (≈59) auto-promotes; capability fields lock.
+- **interview → draft**: Arena score < 40% returns to draft; owner can retry (max 3/7d).
 - **listed → paused**: Owner temporarily hides (e.g. going on vacation).
 - **listed → delisted**: Owner permanently removes.
 - **paused → listed**: Owner resumes.
@@ -873,18 +873,15 @@ The original user request listed 11 subsystems. Each is mapped here to its phase
 
 ### 9.6 Bot 面試 / 當機測試系統 (Interview + Crash Detection)
 
-**Status**: 🟡 Scoring engine complete; HTTP dispatcher deferred
-**Files**: `backend/bot-interview.js`
+**Status**: ✅ Arena integration complete
+**Files**: `backend/interview-arena.js`
 
-- 8 probes: greeting, python_exec, web_browse, reasoning, refusal_safety, summarization, vision, latency
-- Pure regex + heuristic scoring (no LLM judge)
-- Pass threshold: 60/100 weighted score
-- `scoreInterview(responses)` emits `capabilities` JSON
-- **Deferred to P1 follow-up**:
-  - Actual HTTP POST dispatch to owner webhook
-  - Response collection via `/api/transform` callback
-  - `bot_interviews` table writes
-  - Crash detection (re-running probes during dispute)
+- 12 challenges: vision, button_click, form_fill, drag_drop, navigation, table_extract, distraction, coding, response_time, memory, file_mgmt, tts
+- Real-time scoring via Arena exam engine (max 147 points)
+- Pass threshold: 40% of 147 (≈59)
+- `mapArenaToRentalCapabilities(arenaResults)` emits `capabilities` JSON
+- `arena_exams` + `arena_sessions` table writes (real-time)
+- Crash detection (re-running challenges during dispute)
 
 ### 9.7 Token 計算預估系統 (Token Metering + Cost Estimation)
 
@@ -950,7 +947,7 @@ At `endRental` success (reverse):
 ### 9.10 Bot 能力評估系統 (Capability Assessment)
 
 **Status**: ✅ Output structure defined; feeds into listing capabilities JSON
-**Files**: `backend/bot-interview.js` (`scoreInterview` → capabilities), `backend/pricing-advisor.js` (`countCapabilities`)
+**Files**: `backend/interview-arena.js` (`mapArenaToRentalCapabilities`), `backend/pricing-advisor.js` (`countCapabilities`)
 
 Output JSON shape:
 ```json
@@ -995,7 +992,7 @@ Rate limit: 30 req/min via `express-rate-limit` keyed on `rental_contract_id`.
 | Phase | Theme | Scope | Status | PR(s) |
 |-------|-------|-------|--------|-------|
 | **P0** | Wallet foundation | `wallets`, `wallet_ledger`, `topup_orders`, primitives, reconcile cron | ✅ Complete | #1656 commits `a5dd33ea`, `6938c92d`, `073a125b` |
-| **P1** | Listings + advisor | `bot_listings`, `bot_interviews`, listing CRUD, marketplace, interview scoring, pricing advisor | 🟡 Foundation done; HTTP probe dispatch + market snapshot cron pending | #1656 commit `073a125b` |
+| **P1** | Listings + advisor | `bot_listings`, `bot_interviews`, listing CRUD, marketplace, interview scoring, pricing advisor | 🟡 Foundation done; Arena integration complete; market snapshot cron pending | #1656 commit `073a125b` |
 | **P2** | Contract core | Contract state machine, atomic start/end, version lock, token metering proxy, grace period, entity handover, gatekeeper extension, A2A collab | 🟡 P2-A/B done (financial); P2-C/D/E/F pending | #1656 commit `267c09d7` |
 | **P3** | Trust layer | Reviews, disputes, credit score, fraud detection, admin workqueue | 🔴 Not started | — |
 | **P4** | Risk management | Insurance pool, blacklist, SLA display, notifications, audit hardening | 🔴 Not started | — |
@@ -1028,12 +1025,12 @@ Legend: ✅ done, 🟡 partial, 🔴 not started, 🔒 human-blocked
 - ✅ `rental.js` — createListing, updateListing, publishListing, pauseListing, delistListing, getListing, listMyListings, searchMarketplace
 - ✅ Whitelist enforcement for locked-after-interview fields
 - ✅ Marketplace route with rate/capability/sort filters
-- ✅ `bot-interview.js` — 8 probes + pure scoring
+- ✅ `interview-arena.js` — 12 challenges + real-time scoring
 - ✅ `pricing-advisor.js` — base rates + capability multiplier + band classification
 - ✅ Factory hard-fail on missing `authMiddleware` / `walletModule`
 - ✅ 64 Jest tests across rental-listing, bot-interview, pricing-advisor
-- 🔴 HTTP probe dispatcher — POST to owner webhook, collect via `/api/transform` callback
-- 🔴 `bot_interviews` table writes during live interviews
+- ✅ Arena integration — 12-challenge interactive evaluation via interview-arena.js
+- ✅ `arena_exams` + `arena_sessions` table writes (real-time)
 - 🔴 Interview rate limit enforcement (3/listing/7d)
 - 🔴 Market snapshot cron (hourly aggregation)
 - 🔴 Marketplace portal page (`marketplace.html`)
@@ -1448,7 +1445,7 @@ As of PR #1656:
 | `wallet.test.js` | 48 | wallet primitives, idempotency, routes, reconcile, HTTP validation |
 | `rental-listing.test.js` | 23 | listing CRUD, ownership, locked fields, marketplace search |
 | `rental-contract.test.js` | 25 | contract lifecycle, deposit disposition, exclusivity, self-rental |
-| `bot-interview.test.js` | 24 | probe scoring, edge cases, capability aggregation |
+| `rental-interview.test.js` | 24 | Arena integration, challenge scoring, capability aggregation |
 | `pricing-advisor.test.js` | 17 | family detection, rate suggestion math, classification |
 | **Total BRM tests** | **137** | |
 
@@ -1496,7 +1493,7 @@ backend/
 ├── rental_schema.sql          # bot_listings, bot_interviews, rental_*,
 │                              # pricing_market_snapshots
 ├── rental.js                  # Listing CRUD + contract lifecycle + routes
-├── bot-interview.js           # Probe catalogue + pure scoring
+├── interview-arena.js         # 12-challenge Arena evaluation + capability mapping
 ├── pricing-advisor.js         # Rate suggestion formulas
 ├── rental-proxy.js            # [P2-C] Token metering proxy
 ├── public/
@@ -1535,7 +1532,7 @@ backend/
 ├── gatekeeper-rental.js       # P2-D: sensitive data interception (or
 │                              # extension to existing gatekeeper.js)
 ├── fraud-detection.js         # P3: device fingerprint + rule engine
-├── bot-interview-runner.js    # P1 follow-up: HTTP probe dispatcher
+├── # (bot-interview-runner.js superseded by interview-arena.js)
 └── scripts/
     ├── wallet-reconcile.js    # Standalone reconcile script (cron-callable)
     ├── rental-grace-sweep.js  # P2-C: grace period expiration cron
@@ -1564,8 +1561,8 @@ This document represents the final state. The negotiation history (initial Q&A a
 | **Deposit** | Frozen portion of renter's balance held for the contract's duration (= rate × 20) |
 | **Held** | The column (`held_mli`) that stores frozen deposit — separate from spendable `balance_mli` |
 | **Snapshot** | A frozen copy of a listing's config at contract start; read instead of live listing during rental runtime |
-| **Interview** | Automated probe-and-score sequence that verifies bot capabilities |
-| **Probe** | A single input prompt sent to a bot during interview |
+| **Interview** | Arena 12-challenge interactive evaluation that verifies bot capabilities |
+| **Challenge** | A single interactive task (e.g. vision, coding, form_fill) sent to a bot during Arena interview |
 | **Gatekeeper** | Existing EClaw module that filters messages for prompt injection / abuse |
 | **Handover** | The mechanical step of inserting the rental bot into the renter's device entity slot (and removing on contract end) |
 | **Ledger** | `wallet_ledger` table — append-only record of every balance mutation |

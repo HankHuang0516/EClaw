@@ -44,6 +44,14 @@ EClaw/
 │   ├── flickr-auth.js        # Flickr OAuth authentication
 │   ├── discord-integration.js # Native Discord slash command integration
 │   ├── grpc-server.js        # gRPC transport layer
+│   ├── interview-arena.js    # Interview Arena — 12-challenge bot evaluation (current interview system)
+│   ├── bot-interview.js      # LEGACY 8-probe text scoring (superseded by interview-arena.js)
+│   ├── rental.js             # Bot Rental Marketplace (listings, contracts, metering)
+│   ├── wallet.js             # E-coin wallet + top-up + transaction ledger
+│   ├── trust.js              # Reviews, disputes, credit scoring
+│   ├── invite.js             # Referral/invite code system
+│   ├── pricing-advisor.js    # Bot rental pricing recommendations
+│   ├── fraud-detection.js    # Rental fraud detection
 │   ├── feedback-email.js     # Email notifications for feedback (Resend)
 │   ├── openapi.yaml          # OpenAPI 3.0 specification
 │   ├── auth_schema.sql       # User accounts + auth SQL schema
@@ -341,7 +349,7 @@ EClaw/
    ### Active Debug Endpoints
    | Bug | Endpoint | Created | Status |
    |-----|----------|---------|--------|
-   | _(none currently)_ | | | |
+   | Interview start fails with owner_device_not_found | `GET /api/rental/debug/interview-start-fail?deviceId=X&deviceSecret=Y` | 2026-04-12 | Active |
 
 6. **Demand Elegance (Balanced)** — 在保持 minimal change 的前提下，追求可讀、一致的程式風格；不為了「漂亮」而過度重構，但也不容忍明顯的 code smell 在新增的程式碼中出現。
 

@@ -232,6 +232,10 @@
             </div>
             <div class="comment-list" id="commentList"></div>
         </div>
+
+        <div class="reveal" id="returnSection" style="text-align:center;padding:24px 0;">
+            <button class="btn btn-outline" id="returnBtn" onclick="handleReturn()" style="font-size:14px;padding:10px 28px;" data-i18n="arena_return">← Back</button>
+        </div>
     </div>
 
     <script>
@@ -510,7 +514,7 @@
                 reveal('lbSection');
                 setTimeout(() => document.getElementById('lbSection').scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
                 setTimeout(() => reveal('feedbackSection'), 800);
-                setTimeout(() => { reveal('commentSection'); loadComments(); }, 1500);
+                setTimeout(() => { reveal('commentSection'); loadComments(); reveal('returnSection'); }, 1500);
             } catch (e) { alert('Error: ' + e.message); }
             btn.disabled = false;
         }
@@ -525,6 +529,13 @@
                 })});
                 alert('Thank you for your feedback!');
             } catch (e) { alert('Error: ' + e.message); }
+        }
+
+        function handleReturn() {
+            var returnUrl = new URLSearchParams(window.location.search).get('returnUrl');
+            if (returnUrl) { window.location.href = decodeURIComponent(returnUrl); }
+            else if (window.opener) { window.close(); }
+            else { window.location.href = '/portal/dashboard.html'; }
         }
 
         async function loadComments() {

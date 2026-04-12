@@ -272,42 +272,27 @@ window.AgentCardEditor = (function() {
                 return;
             }
 
-            // Start the interview
+            // Create Arena exam linked to listing, then redirect
             btn.disabled = true;
             btn.textContent = '⏳ ' + t('dash_interview_running', 'Running...');
             if (statusEl) statusEl.innerHTML = '<span style="color:#f59e0b;">⏳ ' +
-                t('dash_interview_progress', 'Sending 8 probes to your bot via webhook... This may take 30-90 seconds.') + '</span>';
+                t('dash_interview_creating', 'Creating evaluation...') + '</span>';
 
-            var res = await apiCall('POST', '/api/rental/listing/' + listingId + '/interview/start', {});
+            var examRes = await apiCall('POST', '/api/arena/exam', { listingId: listingId });
 
             btn.disabled = false;
             btn.textContent = '🧪 ' + t('dash_run_interview', 'Run Interview');
 
-            if (res.success && res.interview) {
-                var iv = res.interview;
-                var color = iv.passed ? '#10b981' : '#ef4444';
-                var icon = iv.passed ? '✅' : '❌';
-                var examLink = res.examUrl
-                    ? ' <a href="' + res.examUrl + '" target="_blank" style="color:var(--primary);">' + t('dash_interview_view_results', 'View Results →') + '</a>'
-                    : '';
-                if (statusEl) statusEl.innerHTML =
-                    '<span style="color:' + color + ';">' + icon + ' ' +
-                    t('dash_interview_score', 'Score') + ': ' + iv.score + '/100 — ' +
-                    (iv.passed ? t('dash_interview_passed', 'Passed! Capabilities locked on Agent Card.') :
-                                 t('dash_interview_failed', 'Not passed. Minimum 60% required.')) +
-                    '</span>' + examLink;
-
-                // Open exam results page automatically
-                if (res.examUrl) {
-                    window.open(res.examUrl, '_blank');
-                }
-
-                // Refresh capabilities display
-                if (iv.capabilities) {
-                    this._renderCaps(iv.capabilities);
-                }
+            if (examRes.success && examRes.exam) {
+                var returnUrl = encodeURIComponent(window.location.href);
+                var examUrl = examRes.exam.examUrl || ('/arena/exam/' + examRes.exam.id);
+                window.open(examUrl + '?returnUrl=' + returnUrl, '_blank');
+                if (statusEl) statusEl.innerHTML = '<span style="color:#10b981;">✅ ' +
+                    t('dash_interview_opened', 'Evaluation opened in new tab') +
+                    ' <a href="' + examUrl + '?returnUrl=' + returnUrl + '" target="_blank" style="color:var(--primary);">' +
+                    t('dash_interview_view_results', 'View Results →') + '</a></span>';
             } else {
-                if (statusEl) statusEl.innerHTML = '<span style="color:#ef4444;">❌ ' + (res.error || 'Interview failed') + '</span>';
+                if (statusEl) statusEl.innerHTML = '<span style="color:#ef4444;">❌ ' + (examRes.error || 'Failed to create exam') + '</span>';
             }
         } catch (err) {
             btn.disabled = false;
