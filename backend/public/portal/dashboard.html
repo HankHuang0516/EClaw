@@ -1120,6 +1120,195 @@
             font-size: 11px;
             color: var(--text-secondary);
         }
+
+        /* ═══════════════════════════ Dashboard Tab Bar ═══════════════════════════ */
+        .dash-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 16px;
+            border-bottom: 2px solid var(--card-border);
+        }
+        .dash-tab {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border: none;
+            background: none;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: color 0.2s, border-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .dash-tab:hover { color: var(--text); }
+        .dash-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        .dash-tab:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* ═══════════════════════════ Org Chart ═══════════════════════════ */
+        .org-chart-container {
+            display: none;
+            padding: 20px 0;
+        }
+        .org-chart-container.active { display: block; }
+        .org-tree {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            padding: 20px;
+            overflow-x: auto;
+        }
+        .org-level {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            position: relative;
+        }
+        .org-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 16px;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            cursor: grab;
+            transition: transform 0.5s ease, opacity 0.3s;
+            position: relative;
+            min-width: 80px;
+            user-select: none;
+        }
+        .org-node.user-node {
+            background: var(--card);
+            border-color: var(--primary);
+            cursor: default;
+        }
+        .org-node .org-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            overflow: hidden;
+            margin-bottom: 4px;
+        }
+        .org-node .org-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        .org-node .org-name {
+            font-size: 12px;
+            color: var(--text);
+            text-align: center;
+            max-width: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .org-node.dragging { opacity: 0.4; transform: scale(0.95); }
+        .org-node.org-drop-target {
+            outline: 2px solid var(--primary);
+            outline-offset: 4px;
+            background: rgba(108, 99, 255, 0.1);
+        }
+        /* Connectors (SVG overlay) */
+        .org-connectors {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .org-connectors line {
+            stroke: var(--card-border);
+            stroke-width: 2;
+            stroke-dasharray: 6 4;
+        }
+        .org-connectors line.animated {
+            animation: marchingAnts 0.8s linear infinite;
+        }
+        @keyframes marchingAnts {
+            to { stroke-dashoffset: -10; }
+        }
+
+        /* Behavior options */
+        .org-options {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .org-option-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .org-option-card:hover { border-color: var(--primary); }
+        .org-option-card input[type="checkbox"] {
+            margin-top: 3px;
+            accent-color: var(--primary);
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+        .org-option-card .org-opt-text strong {
+            display: block;
+            font-size: 13px;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+        .org-option-card .org-opt-text span {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .org-hint {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 12px;
+        }
+        .org-actions {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .org-actions button {
+            font-size: 12px;
+            padding: 6px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--card-border);
+            background: var(--input-bg);
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .org-actions button:hover { border-color: var(--primary); color: var(--text); }
+        .org-min-entities {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
     </style>
     <link rel="canonical" href="https://eclawbot.com/portal/dashboard.html">
 </head>
@@ -1138,8 +1327,18 @@
             </div>
         </div>
 
-        <!-- Entity Cards Grid -->
-        <div class="entity-grid" id="entityGrid">
+        <!-- Dashboard Tab Bar -->
+        <div class="dash-tabs" id="dashTabs">
+            <button class="dash-tab active" data-tab="entities" onclick="switchDashTab('entities')">
+                🤖 <span data-i18n="org_tab_entities">Entities</span>
+            </button>
+            <button class="dash-tab" data-tab="orgchart" id="orgChartTab" onclick="switchDashTab('orgchart')">
+                🏢 <span data-i18n="org_tab_chart">Org Chart</span>
+            </button>
+        </div>
+
+        <!-- Tab: Entity Cards Grid -->
+        <div class="entity-grid" id="entityGrid" data-tab-content="entities">
             <div class="empty-state" id="loadingState">
                 <div class="spinner" style="margin: 0 auto 12px;"></div>
                 <div data-i18n="dash_loading">Loading entities...</div>
@@ -1152,6 +1351,45 @@
             <div style="font-size:16px;color:var(--text-secondary);margin-bottom:4px;" data-i18n="dash_empty_title">No
                 entities bound yet</div>
             <div data-i18n="dash_empty_desc">Add your first entity below to get started!</div>
+        </div>
+
+        <!-- Tab: Organization Chart -->
+        <div class="org-chart-container" id="orgChartContainer" data-tab-content="orgchart">
+            <div id="orgChartMinEntities" class="org-min-entities" style="display:none;">
+                <div style="font-size:36px;margin-bottom:8px;">🏢</div>
+                <span data-i18n="org_min_entities">Need 2+ entities for org chart</span>
+            </div>
+            <div id="orgChartContent" style="display:none;">
+                <div class="org-tree" id="orgTree" style="position:relative;"></div>
+                <div class="org-hint" data-i18n="org_drag_hint">Drag entity onto another to set hierarchy</div>
+                <div class="org-actions">
+                    <button onclick="resetOrgChart()" data-i18n="org_reset">Reset to Default</button>
+                </div>
+                <!-- Behavior Options -->
+                <div class="org-options">
+                    <label class="org-option-card">
+                        <input type="checkbox" id="orgOptKanban" onchange="saveOrgOptions()">
+                        <div class="org-opt-text">
+                            <strong data-i18n="org_opt1_title">Low Interference</strong>
+                            <span data-i18n="org_opt1_desc">Superior becomes default kanban reviewer</span>
+                        </div>
+                    </label>
+                    <label class="org-option-card">
+                        <input type="checkbox" id="orgOptTask" onchange="saveOrgOptions()">
+                        <div class="org-opt-text">
+                            <strong data-i18n="org_opt2_title">Recommended</strong>
+                            <span data-i18n="org_opt2_desc">Auto-route messages to superior when tasks incomplete</span>
+                        </div>
+                    </label>
+                    <label class="org-option-card">
+                        <input type="checkbox" id="orgOptAll" onchange="saveOrgOptions()">
+                        <div class="org-opt-text">
+                            <strong data-i18n="org_opt3_title">Close Supervision</strong>
+                            <span data-i18n="org_opt3_desc">All messages auto-routed to superior</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
         </div>
 
         <!-- Add Entity Section -->
@@ -1458,12 +1696,12 @@
         // --- Socket Event Handlers ---
         function onSocketEntityAdded(data) {
             console.log('[Dashboard] entityAdded event', data);
-            loadEntities();
+            loadEntities().then(() => onOrgChartEntityChange());
         }
 
         function onSocketEntityDeleted(data) {
             console.log('[Dashboard] entityDeleted event', data);
-            loadEntities();
+            loadEntities().then(() => onOrgChartEntityChange());
         }
 
         // --- Entity Loading ---
@@ -2573,6 +2811,404 @@
             });
             overlay.querySelector('.rename-cancel').addEventListener('click', function() { overlay.remove(); });
             overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+        }
+
+        // ═══════════════════════════════════════════════════
+        // ORGANIZATION HIERARCHY CHART
+        // ═══════════════════════════════════════════════════
+
+        let orgChartData = { hierarchy: {}, options: { kanbanReviewer: false, taskForward: false, allForward: false } };
+        let orgChartLoaded = false;
+        let orgSaveTimer = null;
+
+        function switchDashTab(tab) {
+            document.querySelectorAll('.dash-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+            // Toggle entity grid + empty state
+            const entityGrid = document.getElementById('entityGrid');
+            const emptyState = document.getElementById('emptyState');
+            const orgContainer = document.getElementById('orgChartContainer');
+            if (tab === 'entities') {
+                entityGrid.style.display = '';
+                if (emptyState) emptyState.style.display = entities.filter(e => e.isBound).length === 0 ? '' : 'none';
+                orgContainer.classList.remove('active');
+            } else {
+                entityGrid.style.display = 'none';
+                if (emptyState) emptyState.style.display = 'none';
+                orgContainer.classList.add('active');
+                if (!orgChartLoaded) loadOrgChart();
+            }
+        }
+
+        async function loadOrgChart() {
+            try {
+                const data = await apiCall('GET', '/api/device/org-chart?deviceId=' + currentUser.deviceId + '&deviceSecret=' + currentUser.deviceSecret);
+                if (data.success && data.orgChart) {
+                    orgChartData = data.orgChart;
+                }
+            } catch (err) {
+                console.warn('[OrgChart] Failed to load:', err.message);
+            }
+            orgChartLoaded = true;
+            renderOrgChart();
+        }
+
+        function renderOrgChart() {
+            const boundEntities = entities.filter(e => e.isBound);
+            const minEl = document.getElementById('orgChartMinEntities');
+            const contentEl = document.getElementById('orgChartContent');
+            const tabBtn = document.getElementById('orgChartTab');
+
+            if (boundEntities.length < 2) {
+                if (minEl) minEl.style.display = '';
+                if (contentEl) contentEl.style.display = 'none';
+                if (tabBtn) tabBtn.disabled = true;
+                return;
+            }
+            if (minEl) minEl.style.display = 'none';
+            if (contentEl) contentEl.style.display = '';
+            if (tabBtn) tabBtn.disabled = false;
+
+            // Build default hierarchy if empty
+            const validIds = boundEntities.map(e => e.entityId);
+            if (!orgChartData.hierarchy || !orgChartData.hierarchy.USER) {
+                orgChartData.hierarchy = { USER: validIds.sort((a, b) => a - b) };
+            }
+
+            // Ensure all bound entities are in hierarchy (add missing to USER)
+            const allInHierarchy = new Set();
+            for (const children of Object.values(orgChartData.hierarchy)) {
+                if (Array.isArray(children)) children.forEach(c => allInHierarchy.add(c));
+            }
+            for (const eid of validIds) {
+                if (!allInHierarchy.has(eid)) {
+                    orgChartData.hierarchy.USER = orgChartData.hierarchy.USER || [];
+                    orgChartData.hierarchy.USER.push(eid);
+                }
+            }
+
+            // Update options checkboxes
+            document.getElementById('orgOptKanban').checked = !!orgChartData.options.kanbanReviewer;
+            document.getElementById('orgOptTask').checked = !!orgChartData.options.taskForward;
+            document.getElementById('orgOptAll').checked = !!orgChartData.options.allForward;
+
+            // Render tree
+            renderOrgTree();
+        }
+
+        function renderOrgTree() {
+            const tree = document.getElementById('orgTree');
+            tree.innerHTML = '';
+            tree.style.position = 'relative';
+
+            // Build tree structure from hierarchy
+            const hierarchy = orgChartData.hierarchy;
+            const nodeEls = {}; // entityId|USER -> DOM element
+
+            // Recursively build levels
+            function buildLevel(parentKey, depth) {
+                const children = hierarchy[String(parentKey)] || [];
+                if (children.length === 0 && parentKey !== 'USER') return null;
+
+                const levelDiv = document.createElement('div');
+                levelDiv.className = 'org-level';
+                levelDiv.style.marginTop = depth === 0 ? '0' : '32px';
+
+                if (parentKey === 'USER') {
+                    // USER node
+                    const userNode = document.createElement('div');
+                    userNode.className = 'org-node user-node';
+                    userNode.dataset.nodeId = 'USER';
+                    userNode.innerHTML = '<div class="org-avatar" style="font-size:24px;">👤</div>' +
+                        '<div class="org-name" data-i18n="org_user_node">' + (typeof i18n !== 'undefined' ? i18n.t('org_user_node') : 'You (Owner)') + '</div>';
+                    nodeEls['USER'] = userNode;
+
+                    // USER is also a drop target
+                    setupDropTarget(userNode, 'USER');
+
+                    const wrapper = document.createElement('div');
+                    wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:center;';
+                    wrapper.appendChild(userNode);
+
+                    // Children level
+                    if (children.length > 0) {
+                        const childLevel = document.createElement('div');
+                        childLevel.className = 'org-level';
+                        childLevel.style.marginTop = '32px';
+                        for (const childId of children) {
+                            const childWrapper = buildEntityNode(childId, depth + 1);
+                            if (childWrapper) childLevel.appendChild(childWrapper);
+                        }
+                        wrapper.appendChild(childLevel);
+                    }
+                    levelDiv.appendChild(wrapper);
+                } else {
+                    for (const childId of children) {
+                        const childWrapper = buildEntityNode(childId, depth);
+                        if (childWrapper) levelDiv.appendChild(childWrapper);
+                    }
+                }
+                return levelDiv;
+            }
+
+            function buildEntityNode(entityId, depth) {
+                const entity = entities.find(e => e.entityId === entityId && e.isBound);
+                if (!entity) return null;
+
+                const node = document.createElement('div');
+                node.className = 'org-node';
+                node.dataset.nodeId = String(entityId);
+                node.draggable = true;
+
+                const avatar = getAvatarForEntity(entityId);
+                const name = getEntityDisplayName(entityId);
+                node.innerHTML = '<div class="org-avatar">' + renderAvatarHtml(avatar, 36) + '</div>' +
+                    '<div class="org-name" title="' + name + '">' + name + '</div>';
+
+                // Drag events
+                node.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', String(entityId));
+                    node.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                node.addEventListener('dragend', () => {
+                    node.classList.remove('dragging');
+                    document.querySelectorAll('.org-drop-target').forEach(el => el.classList.remove('org-drop-target'));
+                });
+
+                // Drop target
+                setupDropTarget(node, entityId);
+
+                // Touch support for mobile
+                let touchDragId = null;
+                node.addEventListener('touchstart', (e) => {
+                    touchDragId = entityId;
+                    node.classList.add('dragging');
+                }, { passive: true });
+                node.addEventListener('touchmove', (e) => {
+                    if (touchDragId == null) return;
+                    const touch = e.touches[0];
+                    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+                    document.querySelectorAll('.org-drop-target').forEach(n => n.classList.remove('org-drop-target'));
+                    const target = el?.closest('.org-node');
+                    if (target && target.dataset.nodeId !== String(touchDragId)) {
+                        target.classList.add('org-drop-target');
+                    }
+                }, { passive: true });
+                node.addEventListener('touchend', (e) => {
+                    if (touchDragId == null) return;
+                    node.classList.remove('dragging');
+                    const dropTarget = document.querySelector('.org-drop-target');
+                    document.querySelectorAll('.org-drop-target').forEach(n => n.classList.remove('org-drop-target'));
+                    if (dropTarget) {
+                        const targetId = dropTarget.dataset.nodeId;
+                        const tId = targetId === 'USER' ? 'USER' : Number(targetId);
+                        if (!isDescendant(orgChartData.hierarchy, touchDragId, tId)) {
+                            moveInHierarchy(touchDragId, tId);
+                            renderOrgTree();
+                            scheduleOrgSave();
+                        }
+                    }
+                    touchDragId = null;
+                });
+
+                nodeEls[String(entityId)] = node;
+
+                // Check if this entity has children
+                const childIds = hierarchy[String(entityId)] || [];
+                const wrapper = document.createElement('div');
+                wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:center;';
+                wrapper.appendChild(node);
+
+                if (childIds.length > 0) {
+                    const childLevel = document.createElement('div');
+                    childLevel.className = 'org-level';
+                    childLevel.style.marginTop = '32px';
+                    for (const cid of childIds) {
+                        const cw = buildEntityNode(cid, depth + 1);
+                        if (cw) childLevel.appendChild(cw);
+                    }
+                    wrapper.appendChild(childLevel);
+                }
+                return wrapper;
+            }
+
+            const root = buildLevel('USER', 0);
+            if (root) tree.appendChild(root);
+
+            // Draw SVG connectors
+            requestAnimationFrame(() => drawConnectors(tree, nodeEls));
+        }
+
+        function setupDropTarget(node, targetId) {
+            node.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                const draggedId = e.dataTransfer.types.includes('text/plain') ? true : false;
+                if (!draggedId) return;
+
+                const rect = node.getBoundingClientRect();
+                const cx = e.clientX, cy = e.clientY;
+                const inX = cx >= rect.left && cx <= rect.right;
+                const inY = cy >= rect.top && cy <= rect.bottom;
+                if (inX && inY) {
+                    node.classList.add('org-drop-target');
+                } else {
+                    node.classList.remove('org-drop-target');
+                }
+            });
+            node.addEventListener('dragleave', () => {
+                node.classList.remove('org-drop-target');
+            });
+            node.addEventListener('drop', (e) => {
+                e.preventDefault();
+                node.classList.remove('org-drop-target');
+                const draggedIdStr = e.dataTransfer.getData('text/plain');
+                const draggedId = Number(draggedIdStr);
+                const dropTargetId = targetId;
+
+                // Can't drop on self
+                if (String(draggedId) === String(dropTargetId)) return;
+                // Can't make USER a child
+                if (draggedIdStr === 'USER') return;
+                // Can't create circular reference (dropping parent onto its own descendant)
+                if (isDescendant(orgChartData.hierarchy, draggedId, dropTargetId)) return;
+
+                // Record old position for FLIP animation
+                const draggedNode = document.querySelector(`.org-node[data-node-id="${draggedId}"]`);
+                const oldRect = draggedNode ? draggedNode.getBoundingClientRect() : null;
+
+                // Move in hierarchy: remove from old parent, add under new parent
+                moveInHierarchy(draggedId, dropTargetId);
+
+                // Re-render
+                renderOrgTree();
+
+                // FLIP animation
+                if (oldRect) {
+                    const newNode = document.querySelector(`.org-node[data-node-id="${draggedId}"]`);
+                    if (newNode) {
+                        const newRect = newNode.getBoundingClientRect();
+                        const dx = oldRect.left - newRect.left;
+                        const dy = oldRect.top - newRect.top;
+                        newNode.style.transition = 'none';
+                        newNode.style.transform = `translate(${dx}px, ${dy}px)`;
+                        newNode.offsetHeight; // force reflow for FLIP
+                        newNode.style.transition = 'transform 0.5s ease';
+                        newNode.style.transform = 'translate(0, 0)';
+                    }
+                }
+
+                // Auto-save (debounce)
+                scheduleOrgSave();
+            });
+        }
+
+        function isDescendant(hierarchy, parentId, checkId) {
+            // Check if checkId is a descendant of parentId
+            const children = hierarchy[String(parentId)] || [];
+            for (const c of children) {
+                if (c === checkId || c === Number(checkId)) return true;
+                if (isDescendant(hierarchy, c, checkId)) return true;
+            }
+            return false;
+        }
+
+        function moveInHierarchy(entityId, newParentId) {
+            const h = orgChartData.hierarchy;
+            // Remove from current parent
+            for (const [key, children] of Object.entries(h)) {
+                if (Array.isArray(children)) {
+                    const idx = children.indexOf(Number(entityId));
+                    if (idx >= 0) {
+                        children.splice(idx, 1);
+                        if (children.length === 0 && key !== 'USER') delete h[key];
+                        break;
+                    }
+                }
+            }
+            // Add under new parent
+            const parentKey = newParentId === 'USER' ? 'USER' : String(newParentId);
+            if (!h[parentKey]) h[parentKey] = [];
+            h[parentKey].push(Number(entityId));
+        }
+
+        function drawConnectors(tree, nodeEls) {
+            // Remove old SVG
+            const oldSvg = tree.querySelector('.org-connectors');
+            if (oldSvg) oldSvg.remove();
+
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.classList.add('org-connectors');
+            const treeRect = tree.getBoundingClientRect();
+            svg.setAttribute('width', treeRect.width);
+            svg.setAttribute('height', treeRect.height);
+            svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;';
+
+            const hierarchy = orgChartData.hierarchy;
+            for (const [parentKey, children] of Object.entries(hierarchy)) {
+                if (!Array.isArray(children)) continue;
+                const parentEl = nodeEls[parentKey];
+                if (!parentEl) continue;
+                const pRect = parentEl.getBoundingClientRect();
+                const px = pRect.left + pRect.width / 2 - treeRect.left;
+                const py = pRect.bottom - treeRect.top;
+
+                for (const childId of children) {
+                    const childEl = nodeEls[String(childId)];
+                    if (!childEl) continue;
+                    const cRect = childEl.getBoundingClientRect();
+                    const cx = cRect.left + cRect.width / 2 - treeRect.left;
+                    const cy = cRect.top - treeRect.top;
+
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', px);
+                    line.setAttribute('y1', py);
+                    line.setAttribute('x2', cx);
+                    line.setAttribute('y2', cy);
+                    if (parentKey === 'USER') line.classList.add('animated');
+                    svg.appendChild(line);
+                }
+            }
+            tree.appendChild(svg);
+        }
+
+        function scheduleOrgSave() {
+            if (orgSaveTimer) clearTimeout(orgSaveTimer);
+            orgSaveTimer = setTimeout(saveOrgChart, 500);
+        }
+
+        async function saveOrgChart() {
+            try {
+                await apiCall('PUT', '/api/device/org-chart', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    hierarchy: orgChartData.hierarchy,
+                    options: orgChartData.options
+                });
+                showToast(typeof i18n !== 'undefined' ? i18n.t('org_saved') : 'Organization chart saved');
+            } catch (err) {
+                console.error('[OrgChart] Save failed:', err.message);
+            }
+        }
+
+        function saveOrgOptions() {
+            orgChartData.options.kanbanReviewer = document.getElementById('orgOptKanban').checked;
+            orgChartData.options.taskForward = document.getElementById('orgOptTask').checked;
+            orgChartData.options.allForward = document.getElementById('orgOptAll').checked;
+            scheduleOrgSave();
+        }
+
+        async function resetOrgChart() {
+            const validIds = entities.filter(e => e.isBound).map(e => e.entityId).sort((a, b) => a - b);
+            orgChartData.hierarchy = { USER: validIds };
+            renderOrgTree();
+            scheduleOrgSave();
+        }
+
+        // Update org chart when entities change
+        function onOrgChartEntityChange() {
+            if (!orgChartLoaded) return;
+            renderOrgChart();
         }
 
         // --- Add Entity ---

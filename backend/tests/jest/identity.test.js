@@ -133,6 +133,21 @@ jest.mock('../../device-preferences', () => ({
     initTable: jest.fn().mockResolvedValue(undefined),
 }));
 
+jest.mock('../../org-chart', () => ({
+    initTable: jest.fn().mockResolvedValue(undefined),
+    getOrgChart: jest.fn().mockResolvedValue({ hierarchy: {}, options: { kanbanReviewer: false, taskForward: false, allForward: false } }),
+    updateOrgChart: jest.fn().mockResolvedValue({ success: true, orgChart: { hierarchy: {}, options: {} } }),
+    getSuperior: jest.fn().mockReturnValue(null),
+    getSubordinates: jest.fn().mockReturnValue([]),
+    buildDefault: jest.fn().mockReturnValue({ USER: [] }),
+    pruneHierarchy: jest.fn().mockImplementation((h) => h),
+    validateHierarchy: jest.fn().mockReturnValue({ valid: true }),
+    validateOptions: jest.fn().mockImplementation((o) => o),
+    onEntityDeleted: jest.fn().mockResolvedValue(undefined),
+    invalidateCache: jest.fn(),
+    DEFAULT_OPTIONS: { kanbanReviewer: false, taskForward: false, allForward: false },
+}));
+
 const request = require('supertest');
 const app = require('../../index');
 

@@ -793,4 +793,10 @@ GPS: 온디맨드만, 백그라운드 추적 없음, 서버 재시작 시 데이
     <string name="xd_whitelist">화이트리스트 (퍼블릭 코드)</string>
     <string name="xd_whitelist_mode">화이트리스트 모드</string>
     <string name="you">나</string>
+    <string name="topup_ecoin_title">e코인 충전</string>
+    <string name="topup_ecoin">충전</string>
+    <string name="topup_success">e코인이 지갑에 추가되었습니다!</string>
+    <string name="topup_failed">충전에 실패했습니다. 다시 시도해주세요</string>
+    <string name="choose_plan_title">플랜 선택</string>
+    <string name="upgrade_plan">플랜 업그레이드</string>
 </resources>

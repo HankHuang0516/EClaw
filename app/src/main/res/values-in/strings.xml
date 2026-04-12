@@ -793,4 +793,10 @@ Jika ada pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="xd_whitelist">Daftar Putih (kode publik)</string>
     <string name="xd_whitelist_mode">Mode Daftar Putih</string>
     <string name="you">Anda</string>
+    <string name="topup_ecoin_title">Isi Ulang e-Coins</string>
+    <string name="topup_ecoin">Isi Ulang</string>
+    <string name="topup_success">e-Coins telah ditambahkan ke dompet!</string>
+    <string name="topup_failed">Isi ulang gagal. Silakan coba lagi.</string>
+    <string name="choose_plan_title">Pilih Paket</string>
+    <string name="upgrade_plan">Tingkatkan Paket</string>
 </resources>

@@ -121,7 +121,7 @@ async function initKanbanDatabase() {
 /**
  * Factory: receives in-memory devices object from index.js
  */
-module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pushToChannelCallback, saveChatMessage, getMissionApiHints, pushToBot } = {}) {
+module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pushToChannelCallback, saveChatMessage, getMissionApiHints, pushToBot, orgChart } = {}) {
     const router = express.Router();
 
     // Health check
@@ -380,7 +380,26 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         const cardPriority = PRIORITIES.includes(priority) ? priority : 'P2';
         const cardStatus = STATUSES.includes(status) ? status : 'backlog';
         const createdBy = parseInt(entityId || 0);
-        const reviewer = reviewerEntityId != null ? parseInt(reviewerEntityId) : null;
+        let reviewer = reviewerEntityId != null ? parseInt(reviewerEntityId) : null;
+
+        // Org chart: auto-set reviewer from hierarchy if not explicitly set
+        if (reviewer == null && orgChart && bots.length > 0) {
+            try {
+                const orgData = await orgChart.getOrgChart(deviceId);
+                if (orgData.options.kanbanReviewer && orgData.hierarchy && orgData.hierarchy.USER) {
+                    const superior = orgChart.getSuperior(orgData.hierarchy, bots[0]);
+                    if (superior != null && superior !== 'USER' && typeof superior === 'number') {
+                        const device = devices[deviceId];
+                        if (device && device.entities?.[superior]?.isBound) {
+                            reviewer = superior;
+                            console.log(`[Kanban] Org chart auto-set reviewer #${reviewer} for card assigned to [${bots.join(',')}]`);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('[Kanban] Org chart reviewer auto-set error:', err.message);
+            }
+        }
 
         // Inline automation + schedule support
         const wantAutomation = !!isAutomation;
