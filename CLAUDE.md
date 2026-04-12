@@ -350,6 +350,7 @@ EClaw/
    | Bug | Endpoint | Created | Status |
    |-----|----------|---------|--------|
    | Interview start fails with owner_device_not_found | `GET /api/rental/debug/interview-start-fail?deviceId=X&deviceSecret=Y` | 2026-04-12 | Active |
+   | Rental entity not visible on renter dashboard (#1713) | `GET /api/rental/debug/rental-entity-visibility?deviceId=X&deviceSecret=Y` | 2026-04-12 | Active |
 
 6. **Demand Elegance (Balanced)** — 在保持 minimal change 的前提下，追求可讀、一致的程式風格；不為了「漂亮」而過度重構，但也不容忍明顯的 code smell 在新增的程式碼中出現。
 
