@@ -1,3 +1,10 @@
+## [1.961.11](https://github.com/HankHuang0516/EClaw/compare/v1.961.10...v1.961.11) (2026-04-12)
+
+
+### Bug Fixes
+
+* **rental-ui:** use correct deviceId field from /api/auth/me response ([#1719](https://github.com/HankHuang0516/EClaw/issues/1719)) ([5e74efd](https://github.com/HankHuang0516/EClaw/commit/5e74efdb26c2069fac5fe2fe843a9740d94ac065)), closes [#1713](https://github.com/HankHuang0516/EClaw/issues/1713)
+
 ## [1.961.10](https://github.com/HankHuang0516/EClaw/compare/v1.961.9...v1.961.10) (2026-04-12)
 
 
