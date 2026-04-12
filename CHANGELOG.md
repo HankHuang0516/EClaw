@@ -1,3 +1,19 @@
+# [1.956.0](https://github.com/HankHuang0516/EClaw/compare/v1.955.6...v1.956.0) (2026-04-12)
+
+
+### Bug Fixes
+
+* **i18n:** correct 16 format string mismatches in zh-CN ([6bb2af3](https://github.com/HankHuang0516/EClaw/commit/6bb2af3d0a7ab2381216663f7624f8cffb7cd10c))
+* **i18n:** correct 16 format string mismatches in zh-TW ([cbc7138](https://github.com/HankHuang0516/EClaw/commit/cbc71382d4978fbb25dd0ec72d5a3f6d76e975d5))
+* **i18n:** deduplicate zh-CN strings.xml and remove invalid keys ([8559afc](https://github.com/HankHuang0516/EClaw/commit/8559afc8a19cc64d21e81de312bab8399a6c6661))
+* **i18n:** deduplicate zh-TW strings.xml and remove invalid keys ([1dfa224](https://github.com/HankHuang0516/EClaw/commit/1dfa224187870380240a4f661c3839e063965001))
+
+
+### Features
+
+* **i18n:** add zh-CN translation 165 keys ([f2a16e3](https://github.com/HankHuang0516/EClaw/commit/f2a16e337d8b6611e297172710a4e8aaf3a54996))
+* **i18n:** add zh-TW translation 128 keys ([033f007](https://github.com/HankHuang0516/EClaw/commit/033f00795a3f518430238b3aabaa299d964be2d0))
+
 ## [1.955.6](https://github.com/HankHuang0516/EClaw/compare/v1.955.5...v1.955.6) (2026-04-12)
 
 
