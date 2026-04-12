@@ -1060,6 +1060,57 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
     /** Late-bound deps injected via setInterviewDeps() after pushToBot is defined. */
     let _interviewDeps = { pushToBot: null, devices: null };
 
+    // ── Debug: interview-start-fail (DO NOT REMOVE until user confirms fix) ──
+    router.get('/debug/interview-start-fail', rentalRoute(async (req, res) => {
+        const { deviceId, deviceSecret } = req.query;
+        if (!deviceId || !deviceSecret) {
+            return res.json({ success: false, error: 'deviceId and deviceSecret required' });
+        }
+        const devRes = await pool.query(
+            'SELECT device_id, device_secret FROM devices WHERE device_id = $1', [deviceId]
+        );
+        if (!devRes.rows.length || devRes.rows[0].device_secret !== deviceSecret) {
+            return res.json({ success: false, error: 'auth_failed' });
+        }
+        const userRes = await pool.query(
+            'SELECT id, email FROM user_accounts WHERE virtual_device_id = $1', [deviceId]
+        );
+        const userId = userRes.rows[0]?.id;
+        const listingsRes = await pool.query(
+            `SELECT id, owner_device_id, owner_entity_id, status, interview_passed, last_interview_at
+             FROM bot_listings WHERE owner_user_id = $1 ORDER BY created_at DESC LIMIT 5`, [userId]
+        );
+        const diagnostics = listingsRes.rows.map(l => {
+            const deviceInMemory = _interviewDeps.devices ? !!_interviewDeps.devices[l.owner_device_id] : null;
+            let entityInfo = null;
+            if (deviceInMemory && _interviewDeps.devices[l.owner_device_id]) {
+                const dev = _interviewDeps.devices[l.owner_device_id];
+                const ent = dev.entities?.[l.owner_entity_id];
+                entityInfo = ent ? {
+                    isBound: !!ent.isBound, hasWebhook: !!ent.webhook,
+                    webhookPrefix: ent.webhook ? ent.webhook.substring(0, 40) + '...' : null,
+                    interviewInProgress: !!ent._interviewInProgress, name: ent.name || null,
+                } : 'entity_not_found_in_device';
+            }
+            return {
+                listingId: l.id, ownerDeviceId: l.owner_device_id, ownerEntityId: l.owner_entity_id,
+                status: l.status, interviewPassed: l.interview_passed, lastInterviewAt: l.last_interview_at,
+                deviceInMemory, entityInfo,
+            };
+        });
+        res.json({
+            success: true, bug: 'interview-start-fail',
+            diagnostics: {
+                userId, email: userRes.rows[0]?.email, requestDeviceId: deviceId,
+                devicesMapSize: _interviewDeps.devices ? Object.keys(_interviewDeps.devices).length : 0,
+                hasPushToBot: !!_interviewDeps.pushToBot, listings: diagnostics,
+            },
+            timestamp: new Date().toISOString(),
+        });
+    }));
+
+
+
     // POST /api/rental/listing/:id/interview/start — run interview probes against owner's bot
     router.post('/listing/:id/interview/start', authMiddleware, rentalRoute(async (req, res) => {
         const listing = await getListing(req.params.id);
