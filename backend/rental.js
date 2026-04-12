@@ -424,7 +424,7 @@ async function startRental({
                 (listing_id, owner_user_id, renter_user_id, renter_device_id,
                  rate_mli_per_ktoken_snapshot, deposit_mli,
                  planned_duration_min, started_at, ends_at, status)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW() + ($7 || ' minutes')::interval, 'active')
+             VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW() + make_interval(mins => $7), 'active')
              RETURNING id, status, started_at, ends_at, deposit_mli`,
             [listingId, listing.owner_user_id, renterUserId, renterDeviceId,
              rateSnapshot, depositMli, durationMinutes]
