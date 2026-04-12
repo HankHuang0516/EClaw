@@ -18,14 +18,33 @@ import timber.log.Timber
 import kotlin.coroutines.resume
 
 /**
- * Manages Google Play Billing for subscription purchases.
- * Handles connection, purchase, acknowledgment, and restoration.
+ * Manages Google Play Billing for subscriptions and e-coin top-up purchases.
+ * Handles connection, purchase, acknowledgment, consumption, and restoration.
  */
 class BillingManager(private val context: Context) : PurchasesUpdatedListener {
 
     companion object {
+        // Legacy subscription IDs (kept for migration / existing subscribers)
         const val SUBSCRIPTION_ID = "e_claw_premium"
         const val BORROW_SUBSCRIPTION_ID = "e_claw_borrow_personal"
+
+        // New subscription plan IDs (only starter is live on Google Play for now)
+        const val SUB_STARTER_ID = "ec.sub.starter"
+        const val SUB_PRO_ID = "" // TODO: create on Google Play when needed
+        const val SUB_BUSINESS_ID = "" // TODO: create on Google Play when needed
+
+        // Top-up consumable product IDs (5 tiers with increasing bonuses)
+        val TOPUP_PRODUCT_IDS = listOf(
+            "ec.topup.small",      // $0.99 → 3,000 e幣 (0%)
+            "ec.topup.starter",    // $2.99 → 9,450 e幣 (+5%)
+            "ec.topup.standard",   // $4.99 → 16,200 e幣 (+8%)
+            "ec.topup.advanced",   // $9.99 → 33,600 e幣 (+12%)
+            "ec.topup.premium"     // $19.99 → 69,000 e幣 (+15%)
+        )
+
+        val ALL_SUB_IDS = listOfNotNull(SUBSCRIPTION_ID, BORROW_SUBSCRIPTION_ID, SUB_STARTER_ID)
+            .filter { it.isNotEmpty() }
+
         private const val TAG = "BillingManager"
 
         @Volatile
@@ -54,6 +73,17 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
     private var productDetails: ProductDetails? = null
     private var borrowProductDetails: ProductDetails? = null
 
+    // New subscription plan details
+    private var subStarterDetails: ProductDetails? = null
+    private var subProDetails: ProductDetails? = null
+    private var subBusinessDetails: ProductDetails? = null
+
+    // Top-up consumable product details (keyed by product ID)
+    private val topupDetailsMap = mutableMapOf<String, ProductDetails>()
+
+    /** Callback for top-up purchase completion */
+    var onTopupComplete: ((productId: String, success: Boolean) -> Unit)? = null
+
     init {
         connectToBillingService()
     }
@@ -73,6 +103,7 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
                     Timber.tag(TAG).d("Billing service connected")
                     querySubscriptionStatus()
                     queryProductDetails()
+                    queryTopupProductDetails()
                 } else {
                     Timber.tag(TAG).e("Billing setup failed: ${billingResult.debugMessage}")
                 }
@@ -80,7 +111,6 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
 
             override fun onBillingServiceDisconnected() {
                 Timber.tag(TAG).w("Billing service disconnected")
-                // Reconnect on next operation
             }
         })
     }
@@ -96,11 +126,21 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
 
             billingClient.queryPurchasesAsync(params) { billingResult, purchases ->
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    val premiumPurchase = purchases.firstOrNull { purchase ->
+                    // Detect any active subscription (legacy or new plans)
+                    val activeSub = purchases.firstOrNull { purchase ->
                         purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
-                        purchase.products.contains(SUBSCRIPTION_ID)
+                        purchase.products.any { it in ALL_SUB_IDS }
                     }
-                    val hasActiveSubscription = premiumPurchase != null
+                    val hasActiveSubscription = activeSub != null
+
+                    // Determine current plan tier
+                    val currentPlan = when {
+                        activeSub?.products?.contains(SUB_BUSINESS_ID) == true -> "business"
+                        activeSub?.products?.contains(SUB_PRO_ID) == true -> "pro"
+                        activeSub?.products?.contains(SUB_STARTER_ID) == true -> "starter"
+                        activeSub?.products?.contains(SUBSCRIPTION_ID) == true -> "starter"
+                        else -> "free"
+                    }
 
                     val hasBorrowSub = purchases.any { purchase ->
                         purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
@@ -109,41 +149,37 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
 
                     usageManager.isPremium = hasActiveSubscription
                     _subscriptionState.value = _subscriptionState.value.copy(
-                        hasBorrowSubscription = hasBorrowSub
+                        hasBorrowSubscription = hasBorrowSub,
+                        currentPlan = currentPlan
                     )
                     updateState()
 
-                    // Sync premium status with server (ensures server-side limit is lifted)
                     if (hasActiveSubscription) {
-                        syncPremiumWithServer(premiumPurchase?.purchaseToken, SUBSCRIPTION_ID)
+                        val activeProductId = activeSub?.products?.firstOrNull { it in ALL_SUB_IDS }
+                        syncPremiumWithServer(activeSub?.purchaseToken, activeProductId)
                     }
 
-                    // Acknowledge any unacknowledged purchases
                     purchases.filter { !it.isAcknowledged }.forEach { purchase ->
                         acknowledgePurchase(purchase)
                     }
 
-                    Timber.tag(TAG).d("Subscription status: premium=$hasActiveSubscription, borrow=$hasBorrowSub")
+                    Timber.tag(TAG).d("Subscription status: premium=$hasActiveSubscription, plan=$currentPlan, borrow=$hasBorrowSub")
                 }
             }
         }
     }
 
     /**
-     * Query product details for display
+     * Query subscription product details for display
      */
     private fun queryProductDetails() {
         scope.launch {
-            val productList = listOf(
+            val productList = ALL_SUB_IDS.map { id ->
                 QueryProductDetailsParams.Product.newBuilder()
-                    .setProductId(SUBSCRIPTION_ID)
-                    .setProductType(BillingClient.ProductType.SUBS)
-                    .build(),
-                QueryProductDetailsParams.Product.newBuilder()
-                    .setProductId(BORROW_SUBSCRIPTION_ID)
+                    .setProductId(id)
                     .setProductType(BillingClient.ProductType.SUBS)
                     .build()
-            )
+            }
 
             val params = QueryProductDetailsParams.newBuilder()
                 .setProductList(productList)
@@ -153,33 +189,61 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                     productDetails = productDetailsList.firstOrNull { it.productId == SUBSCRIPTION_ID }
                     borrowProductDetails = productDetailsList.firstOrNull { it.productId == BORROW_SUBSCRIPTION_ID }
+                    subStarterDetails = productDetailsList.firstOrNull { it.productId == SUB_STARTER_ID }
+                    subProDetails = productDetailsList.firstOrNull { it.productId == SUB_PRO_ID }
+                    subBusinessDetails = productDetailsList.firstOrNull { it.productId == SUB_BUSINESS_ID }
 
-                    val price = productDetails?.subscriptionOfferDetails
-                        ?.firstOrNull()
-                        ?.pricingPhases
-                        ?.pricingPhaseList
-                        ?.firstOrNull()
-                        ?.formattedPrice ?: ""
-
-                    val borrowPrice = borrowProductDetails?.subscriptionOfferDetails
-                        ?.firstOrNull()
-                        ?.pricingPhases
-                        ?.pricingPhaseList
-                        ?.firstOrNull()
-                        ?.formattedPrice ?: ""
+                    fun getSubPrice(details: ProductDetails?): String =
+                        details?.subscriptionOfferDetails
+                            ?.firstOrNull()
+                            ?.pricingPhases
+                            ?.pricingPhaseList
+                            ?.firstOrNull()
+                            ?.formattedPrice ?: ""
 
                     _subscriptionState.value = _subscriptionState.value.copy(
-                        subscriptionPrice = price,
-                        borrowSubscriptionPrice = borrowPrice
+                        subscriptionPrice = getSubPrice(productDetails),
+                        borrowSubscriptionPrice = getSubPrice(borrowProductDetails),
+                        starterPrice = getSubPrice(subStarterDetails),
+                        proPrice = getSubPrice(subProDetails),
+                        businessPrice = getSubPrice(subBusinessDetails)
                     )
-                    Timber.tag(TAG).d("Product details loaded: premium=$price, borrow=$borrowPrice")
+                    Timber.tag(TAG).d("Subscription details loaded")
                 }
             }
         }
     }
 
     /**
-     * Launch subscription purchase flow
+     * Query top-up consumable product details
+     */
+    private fun queryTopupProductDetails() {
+        scope.launch {
+            val productList = TOPUP_PRODUCT_IDS.map { id ->
+                QueryProductDetailsParams.Product.newBuilder()
+                    .setProductId(id)
+                    .setProductType(BillingClient.ProductType.INAPP)
+                    .build()
+            }
+
+            val params = QueryProductDetailsParams.newBuilder()
+                .setProductList(productList)
+                .build()
+
+            billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    topupDetailsMap.clear()
+                    productDetailsList.forEach { details ->
+                        topupDetailsMap[details.productId] = details
+                    }
+                    Timber.tag(TAG).d("Top-up product details loaded: ${topupDetailsMap.keys}")
+                }
+            }
+        }
+    }
+
+    /**
+     * Launch subscription purchase flow (legacy)
      */
     fun launchPurchaseFlow(activity: Activity) {
         val details = productDetails
@@ -197,17 +261,78 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
             return
         }
 
-        val productDetailsParams = BillingFlowParams.ProductDetailsParams.newBuilder()
-            .setProductDetails(details)
-            .setOfferToken(offerToken)
-            .build()
-
         val billingFlowParams = BillingFlowParams.newBuilder()
-            .setProductDetailsParamsList(listOf(productDetailsParams))
+            .setProductDetailsParamsList(listOf(
+                BillingFlowParams.ProductDetailsParams.newBuilder()
+                    .setProductDetails(details)
+                    .setOfferToken(offerToken)
+                    .build()
+            ))
             .build()
 
         val result = billingClient.launchBillingFlow(activity, billingFlowParams)
         Timber.tag(TAG).d("Launch purchase flow result: ${result.responseCode}")
+    }
+
+    /**
+     * Launch top-up consumable purchase flow.
+     */
+    fun launchTopupPurchaseFlow(activity: Activity, productId: String) {
+        val details = topupDetailsMap[productId]
+        if (details == null) {
+            Timber.tag(TAG).e("Top-up product details not available for $productId")
+            android.widget.Toast.makeText(activity, "Google Play 商品載入中，請稍後再試", android.widget.Toast.LENGTH_SHORT).show()
+            connectToBillingService()
+            return
+        }
+
+        val billingFlowParams = BillingFlowParams.newBuilder()
+            .setProductDetailsParamsList(listOf(
+                BillingFlowParams.ProductDetailsParams.newBuilder()
+                    .setProductDetails(details)
+                    .build()
+            ))
+            .build()
+
+        val result = billingClient.launchBillingFlow(activity, billingFlowParams)
+        Timber.tag(TAG).d("Launch top-up purchase flow ($productId) result: ${result.responseCode}")
+    }
+
+    /**
+     * Launch a new subscription plan purchase flow.
+     */
+    fun launchPlanPurchaseFlow(activity: Activity, planId: String) {
+        val details = when (planId) {
+            SUB_STARTER_ID -> subStarterDetails
+            SUB_PRO_ID -> subProDetails
+            SUB_BUSINESS_ID -> subBusinessDetails
+            else -> null
+        }
+        if (details == null) {
+            Timber.tag(TAG).e("Plan product details not available for $planId")
+            android.widget.Toast.makeText(activity, "Google Play 商品載入中，請稍後再試", android.widget.Toast.LENGTH_SHORT).show()
+            connectToBillingService()
+            return
+        }
+
+        val offerToken = details.subscriptionOfferDetails?.firstOrNull()?.offerToken
+        if (offerToken == null) {
+            Timber.tag(TAG).e("Offer token not available for $planId")
+            android.widget.Toast.makeText(activity, "無法取得訂閱方案，請稍後再試", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val billingFlowParams = BillingFlowParams.newBuilder()
+            .setProductDetailsParamsList(listOf(
+                BillingFlowParams.ProductDetailsParams.newBuilder()
+                    .setProductDetails(details)
+                    .setOfferToken(offerToken)
+                    .build()
+            ))
+            .build()
+
+        val result = billingClient.launchBillingFlow(activity, billingFlowParams)
+        Timber.tag(TAG).d("Launch plan purchase flow ($planId) result: ${result.responseCode}")
     }
 
     /**
@@ -218,14 +343,34 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
             BillingClient.BillingResponseCode.OK -> {
                 purchases?.forEach { purchase ->
                     if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
+                        val productId = purchase.products.firstOrNull() ?: return@forEach
+
+                        // Top-up consumable: consume + verify with server
+                        if (productId in TOPUP_PRODUCT_IDS) {
+                            consumeAndVerifyTopup(purchase, productId)
+                            return@forEach
+                        }
+
+                        // Subscription: acknowledge + sync
                         if (!purchase.isAcknowledged) {
                             acknowledgePurchase(purchase)
                         }
-                        if (purchase.products.contains(SUBSCRIPTION_ID)) {
+
+                        val activeSubId = purchase.products.firstOrNull { it in ALL_SUB_IDS }
+                        if (activeSubId != null) {
                             usageManager.isPremium = true
-                            syncPremiumWithServer(purchase.purchaseToken, SUBSCRIPTION_ID)
+                            syncPremiumWithServer(purchase.purchaseToken, activeSubId)
                             refreshEntityLimitFromServer()
+
+                            val plan = when (activeSubId) {
+                                SUB_BUSINESS_ID -> "business"
+                                SUB_PRO_ID -> "pro"
+                                SUB_STARTER_ID -> "starter"
+                                else -> "starter"
+                            }
+                            _subscriptionState.value = _subscriptionState.value.copy(currentPlan = plan)
                         }
+
                         if (purchase.products.contains(BORROW_SUBSCRIPTION_ID)) {
                             _subscriptionState.value = _subscriptionState.value.copy(
                                 hasBorrowSubscription = true
@@ -263,17 +408,94 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
             return
         }
 
-        val productDetailsParams = BillingFlowParams.ProductDetailsParams.newBuilder()
-            .setProductDetails(details)
-            .setOfferToken(offerToken)
-            .build()
-
         val billingFlowParams = BillingFlowParams.newBuilder()
-            .setProductDetailsParamsList(listOf(productDetailsParams))
+            .setProductDetailsParamsList(listOf(
+                BillingFlowParams.ProductDetailsParams.newBuilder()
+                    .setProductDetails(details)
+                    .setOfferToken(offerToken)
+                    .build()
+            ))
             .build()
 
         val result = billingClient.launchBillingFlow(activity, billingFlowParams)
         Timber.tag(TAG).d("Launch borrow purchase flow result: ${result.responseCode}")
+    }
+
+    /**
+     * Consume a top-up purchase and verify with the backend to credit e-coins.
+     */
+    private fun consumeAndVerifyTopup(purchase: Purchase, productId: String) {
+        scope.launch {
+            val consumeParams = ConsumeParams.newBuilder()
+                .setPurchaseToken(purchase.purchaseToken)
+                .build()
+
+            billingClient.consumeAsync(consumeParams) { billingResult, _ ->
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    Timber.tag(TAG).d("Top-up consumed: $productId")
+                    verifyTopupWithServer(purchase.purchaseToken, productId)
+                } else {
+                    Timber.tag(TAG).e("Top-up consume failed: ${billingResult.debugMessage}")
+                    onTopupComplete?.invoke(productId, false)
+                }
+            }
+        }
+    }
+
+    /**
+     * Send top-up purchase token to backend for e-coin credit.
+     */
+    private fun verifyTopupWithServer(purchaseToken: String, productId: String) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                val body = mapOf(
+                    "deviceId" to deviceManager.deviceId,
+                    "deviceSecret" to (deviceManager.deviceSecret ?: ""),
+                    "purchaseToken" to purchaseToken,
+                    "productId" to productId
+                )
+                api.verifyGoogleTopup(body)
+                Timber.tag(TAG).d("Top-up verified with server: $productId")
+                scope.launch(Dispatchers.Main) {
+                    onTopupComplete?.invoke(productId, true)
+                }
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Failed to verify top-up with server")
+                scope.launch(Dispatchers.Main) {
+                    onTopupComplete?.invoke(productId, false)
+                }
+            }
+        }
+    }
+
+    /**
+     * Get available top-up tiers with prices for UI display.
+     */
+    fun getTopupTiers(): List<TopupTier> {
+        return TOPUP_PRODUCT_IDS.mapNotNull { id ->
+            val details = topupDetailsMap[id] ?: return@mapNotNull null
+            val price = details.oneTimePurchaseOfferDetails?.formattedPrice ?: return@mapNotNull null
+            TopupTier(
+                productId = id,
+                formattedPrice = price,
+                baseEcoin = when (id) {
+                    "ec.topup.small" -> 3000
+                    "ec.topup.starter" -> 9000
+                    "ec.topup.standard" -> 15000
+                    "ec.topup.advanced" -> 30000
+                    "ec.topup.premium" -> 60000
+                    else -> 0
+                },
+                bonusPercent = when (id) {
+                    "ec.topup.small" -> 0
+                    "ec.topup.starter" -> 5
+                    "ec.topup.standard" -> 8
+                    "ec.topup.advanced" -> 12
+                    "ec.topup.premium" -> 15
+                    else -> 0
+                }
+            )
+        }
     }
 
     /**
@@ -351,7 +573,6 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
 
     /**
      * Fetch actual usage count from server and sync local state.
-     * This ensures the client displays the correct usage even after app updates or reinstalls.
      */
     private fun syncUsageFromServer() {
         scope.launch(Dispatchers.IO) {

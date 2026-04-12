@@ -73,7 +73,7 @@ describe('Subscription Plans constants', () => {
         expect(starter.messageLimit).toBeNull();
         expect(starter.maxConcurrentRentals).toBe(2);
         expect(starter.marketplaceDiscountBps).toBe(500);
-        expect(starter.googlePlayProductId).toBe('eclaw_sub_starter');
+        expect(starter.googlePlayProductId).toBe('ec.sub.starter');
     });
 
     test('pro plan grants 8000 e-coins with 10% discount', () => {
@@ -138,26 +138,26 @@ describe('Wallet top-up tiers', () => {
 
         const tierIds = Object.keys(TOPUP_TIERS);
         expect(tierIds).toHaveLength(5);
-        expect(tierIds).toContain('ecoin_tier_small');
-        expect(tierIds).toContain('ecoin_tier_starter');
-        expect(tierIds).toContain('ecoin_tier_standard');
-        expect(tierIds).toContain('ecoin_tier_advanced');
-        expect(tierIds).toContain('ecoin_tier_premium');
+        expect(tierIds).toContain('ec.topup.small');
+        expect(tierIds).toContain('ec.topup.starter');
+        expect(tierIds).toContain('ec.topup.standard');
+        expect(tierIds).toContain('ec.topup.advanced');
+        expect(tierIds).toContain('ec.topup.premium');
     });
 
     test('bonus percentages are 0%, 5%, 8%, 12%, 15%', () => {
         const { TOPUP_TIERS, USD_TO_MLI } = require('../../wallet');
 
-        const small = TOPUP_TIERS.ecoin_tier_small;
+        const small = TOPUP_TIERS['ec.topup.small'];
         expect(small.bonusMli).toBe(0);
         expect(small.priceUsd).toBe(1);
         expect(small.baseMli).toBe(1 * USD_TO_MLI);
 
-        const starter = TOPUP_TIERS.ecoin_tier_starter;
+        const starter = TOPUP_TIERS['ec.topup.starter'];
         const starterBonus = starter.bonusMli / starter.baseMli;
         expect(starterBonus).toBeCloseTo(0.05, 2);
 
-        const premium = TOPUP_TIERS.ecoin_tier_premium;
+        const premium = TOPUP_TIERS['ec.topup.premium'];
         const premiumBonus = premium.bonusMli / premium.baseMli;
         expect(premiumBonus).toBeCloseTo(0.15, 2);
     });

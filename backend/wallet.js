@@ -74,27 +74,27 @@ const ALLOWED_LEDGER_TYPES = new Set(Object.values(LEDGER_TYPES));
  * runtime — pricing changes require a code change + deploy.
  */
 const TOPUP_TIERS = Object.freeze({
-    'ecoin_tier_small': {
+    'ec.topup.small': {
         priceUsd: 1,                              // $1
         baseMli: 1 * USD_TO_MLI,                  // 3,000 e幣
         bonusMli: 0,
     },
-    'ecoin_tier_starter': {
+    'ec.topup.starter': {
         priceUsd: 3,                              // $3
         baseMli: 3 * USD_TO_MLI,                  // 9,000 e幣
         bonusMli: 450 * ECOIN_TO_MLI,             // +5% (450 e幣)
     },
-    'ecoin_tier_standard': {
+    'ec.topup.standard': {
         priceUsd: 5,                              // $5
         baseMli: 5 * USD_TO_MLI,                  // 15,000 e幣
         bonusMli: 1200 * ECOIN_TO_MLI,            // +8%
     },
-    'ecoin_tier_advanced': {
+    'ec.topup.advanced': {
         priceUsd: 10,                             // $10
         baseMli: 10 * USD_TO_MLI,                 // 30,000 e幣
         bonusMli: 3600 * ECOIN_TO_MLI,            // +12%
     },
-    'ecoin_tier_premium': {
+    'ec.topup.premium': {
         priceUsd: 20,                             // $20
         baseMli: 20 * USD_TO_MLI,                 // 60,000 e幣
         bonusMli: 9000 * ECOIN_TO_MLI,            // +15%

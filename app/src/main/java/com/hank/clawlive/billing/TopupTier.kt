@@ -20,11 +20,11 @@ data class TopupTier(
     /** Display label for the tier */
     val label: String
         get() = when (productId) {
-            "ecoin_tier_small" -> "Small"
-            "ecoin_tier_starter" -> "Starter"
-            "ecoin_tier_standard" -> "Standard"
-            "ecoin_tier_advanced" -> "Advanced"
-            "ecoin_tier_premium" -> "Premium"
+            "ec.topup.small" -> "Small"
+            "ec.topup.starter" -> "Starter"
+            "ec.topup.standard" -> "Standard"
+            "ec.topup.advanced" -> "Advanced"
+            "ec.topup.premium" -> "Premium"
             else -> productId
         }
 }
