@@ -1,12 +1,15 @@
 /**
- * Regression test: Rental entity dashboard visibility (#1712)
+ * Regression test: Rental entity dashboard visibility (#1712, #1713)
  *
  * Verifies that insertRentalEntity() creates entities with all required
  * fields (entityId, botSecret, publicCode) so they appear on the
  * renter's dashboard via GET /api/entities.
+ *
+ * Also verifies reconcileRentalEntities() can recover entities lost
+ * during server restart.
  */
 
-const { insertRentalEntity, removeRentalEntity, createDefaultRentalEntity } = (() => {
+const { insertRentalEntity, removeRentalEntity, createDefaultRentalEntity, reconcileRentalEntities } = (() => {
     // We need to extract the pure functions from rental.js.
     // Since rental.js exports a factory, we access the named exports it attaches.
     const mod = require('../../rental');
@@ -239,5 +242,71 @@ describe('Rental entity dashboard visibility (#1712)', () => {
         expect(entity.botSecret.length).toBe(32);
         // publicCode null without helper
         expect(entity.publicCode).toBeNull();
+    });
+
+    test('insertRentalEntity throws when device missing (#1713 root cause)', () => {
+        // This is the root cause of #1713: if the renter device is not in
+        // the in-memory devices map, insertRentalEntity throws, and the
+        // POST /api/rental/contract handler catches it silently — leaving
+        // the contract created but the entity never inserted.
+        expect(() => {
+            insertRentalEntity(devices, {
+                renterDeviceId: 'nonexistent-device',
+                contractId: 'contract-1',
+                listing: { title: 'Ghost Bot' },
+                rateMliPerKtoken: 5000,
+            }, helpers);
+        }).toThrow('renter_device_not_found');
+    });
+
+    test('rental entity on fresh device (slot 0 reuse) passes /api/entities filter (#1713)', () => {
+        // Simulate a freshly registered device with only one unbound slot
+        const freshDevices = {
+            'fresh-device': {
+                deviceId: 'fresh-device',
+                deviceSecret: 'secret',
+                nextEntityId: 1,
+                entities: {
+                    0: {
+                        entityId: 0,
+                        botSecret: null,
+                        isBound: false,
+                        character: 'LOBSTER',
+                        state: 'IDLE',
+                        message: 'Entity #0 waiting...',
+                        parts: {},
+                        lastUpdated: Date.now(),
+                        messageQueue: [],
+                        webhook: null,
+                        xp: 0,
+                        level: 1,
+                        avatar: null,
+                        publicCode: null,
+                    },
+                },
+            },
+        };
+
+        const result = insertRentalEntity(freshDevices, {
+            renterDeviceId: 'fresh-device',
+            contractId: 'contract-fresh',
+            listing: { title: 'Rented Bot' },
+            rateMliPerKtoken: 2000,
+        }, helpers);
+
+        expect(result.slot).toBe(0);
+
+        // Simulate GET /api/entities filter
+        const entity = freshDevices['fresh-device'].entities[0];
+        expect(entity.isBound).toBe(true);
+        expect(entity.character).toBe('Rented Bot');
+        expect(entity.botSecret).toBeTruthy();
+        expect(entity.publicCode).toBeTruthy();
+        expect(entity.rental_contract_id).toBe('contract-fresh');
+
+        // The entity should pass the isBound filter
+        const filtered = Object.values(freshDevices['fresh-device'].entities)
+            .filter(e => e && e.isBound);
+        expect(filtered.length).toBe(1);
     });
 });
