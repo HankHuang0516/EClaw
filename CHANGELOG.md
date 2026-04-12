@@ -1,3 +1,10 @@
+## [1.962.5](https://github.com/HankHuang0516/EClaw/compare/v1.962.4...v1.962.5) (2026-04-12)
+
+
+### Bug Fixes
+
+* chat.html single-page layout + remove vault whitelist entirely ([cde56ab](https://github.com/HankHuang0516/EClaw/commit/cde56ab456abbfdca33bd300764f170524282ce0))
+
 ## [1.962.4](https://github.com/HankHuang0516/EClaw/compare/v1.962.3...v1.962.4) (2026-04-12)
 
 
