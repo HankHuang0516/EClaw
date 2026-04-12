@@ -317,6 +317,15 @@
     <string name="file_broadcast">ブロードキャスト</string>
     <string name="file_btn_delete">削除</string>
     <string name="file_btn_download">ダウンロード</string>
+    <string name="main_agent_card_deleted">Agent Card を削除しました</string>
+    <string name="main_agent_card_saved">Agent Card を保存しました</string>
+    <string name="main_delete_failed">削除に失敗しました</string>
+    <string name="main_description_required">説明は必須です</string>
+    <string name="main_max_capabilities">キャパビリティは最大10個まで</string>
+    <string name="main_max_items">最大 %d 個のアイテム</string>
+    <string name="main_save_error">エラーが発生しました</string>
+    <string name="main_save_failed">保存に失敗しました</string>
+    <string name="main_save_failed_msg">保存に失敗しました：%s</string>
     <string name="chat_ai_analyzing">AIがメッセージを分析中…</string>
     <string name="chat_failed_to_send">メッセージの送信に失敗しました。</string>
     <string name="chat_failed_to_send_v2">メッセージの送信に失敗しました。</string>

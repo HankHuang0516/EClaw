@@ -320,6 +320,15 @@
     <string name="file_broadcast">广播</string>
     <string name="file_btn_delete">删除</string>
     <string name="file_btn_download">下载</string>
+    <string name="main_agent_card_deleted">Agent Card 已删除</string>
+    <string name="main_agent_card_saved">Agent Card 已储存</string>
+    <string name="main_delete_failed">删除失败</string>
+    <string name="main_description_required">描述为必填</string>
+    <string name="main_max_capabilities">最多 10 个能力</string>
+    <string name="main_max_items">最多 %d 个项目</string>
+    <string name="main_save_error">发生错误</string>
+    <string name="main_save_failed">储存失败</string>
+    <string name="main_save_failed_msg">储存失败：%s</string>
     <string name="chat_ai_analyzing">AI 正在分析您的消息…</string>
     <string name="chat_failed_to_send">发送消息失败。</string>
     <string name="chat_failed_to_send_v2">发送消息失败。</string>
