@@ -1,3 +1,10 @@
+## [1.961.3](https://github.com/HankHuang0516/EClaw/compare/v1.961.2...v1.961.3) (2026-04-12)
+
+
+### Bug Fixes
+
+* **rental:** use make_interval for contract ends_at calculation ([#1705](https://github.com/HankHuang0516/EClaw/issues/1705)) ([7615480](https://github.com/HankHuang0516/EClaw/commit/761548063f5c387651c8640f839deb45216a0bca))
+
 ## [1.961.2](https://github.com/HankHuang0516/EClaw/compare/v1.961.1...v1.961.2) (2026-04-12)
 
 
