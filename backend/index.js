@@ -12508,7 +12508,7 @@ missionModule.setPushToBot(pushToBot);
 
 // Wire pushToBot + devices into rental module for interview probe dispatch
 if (typeof rentalModule.setInterviewDeps === 'function') {
-    rentalModule.setInterviewDeps({ pushToBot, devices, arenaModule, setInterviewCapabilities, get pushToChannelCallback() { return channelModule?.pushToChannelCallback?.bind(channelModule); } });
+    rentalModule.setInterviewDeps({ pushToBot, devices, arenaModule, setInterviewCapabilities, generateBotSecret, generatePublicCode, publicCodeIndex, ensureOneEmptySlot, get pushToChannelCallback() { return channelModule?.pushToChannelCallback?.bind(channelModule); } });
 }
 
 // NOTE: arenaModule.setAutoPushDeps is called AFTER channelModule init (see below ~line 13180+)
