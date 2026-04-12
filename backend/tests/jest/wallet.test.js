@@ -530,19 +530,19 @@ describe('wallet: input validation', () => {
 describe('wallet: top-up tier catalog', () => {
     test('TOPUP_TIERS is frozen and contains expected tiers', () => {
         expect(Object.isFrozen(wallet.TOPUP_TIERS)).toBe(true);
-        expect(wallet.TOPUP_TIERS['ecoin_tier_starter']).toBeDefined();
-        expect(wallet.TOPUP_TIERS['ecoin_tier_premium']).toBeDefined();
+        expect(wallet.TOPUP_TIERS['ec.topup.starter']).toBeDefined();
+        expect(wallet.TOPUP_TIERS['ec.topup.premium']).toBeDefined();
     });
 
     test('starter tier: $3 → 9,000 e幣 base + 450 bonus', () => {
-        const t = wallet.TOPUP_TIERS['ecoin_tier_starter'];
+        const t = wallet.TOPUP_TIERS['ec.topup.starter'];
         expect(t.priceUsd).toBe(3);
         expect(t.baseMli).toBe(9_000_000);   // 9,000 e幣 in mli
         expect(t.bonusMli).toBe(450_000);    // 450 e幣 in mli
     });
 
     test('premium tier: $20 → 60,000 e幣 base + 9,000 bonus', () => {
-        const t = wallet.TOPUP_TIERS['ecoin_tier_premium'];
+        const t = wallet.TOPUP_TIERS['ec.topup.premium'];
         expect(t.priceUsd).toBe(20);
         expect(t.baseMli).toBe(60_000_000);
         expect(t.bonusMli).toBe(9_000_000);
@@ -550,7 +550,7 @@ describe('wallet: top-up tier catalog', () => {
 
     test('getTopupTier returns null for unknown product', () => {
         expect(wallet.getTopupTier('garbage_id')).toBeNull();
-        expect(wallet.getTopupTier('ecoin_tier_starter')).not.toBeNull();
+        expect(wallet.getTopupTier('ec.topup.starter')).not.toBeNull();
     });
 });
 
@@ -558,7 +558,7 @@ describe('wallet: top-up tier catalog', () => {
 
 describe('wallet: top-up order lifecycle', () => {
     test('createTopupOrder inserts a pending row and returns id', async () => {
-        const tier = wallet.TOPUP_TIERS['ecoin_tier_starter'];
+        const tier = wallet.TOPUP_TIERS['ec.topup.starter'];
         const order = await walletApi.createTopupOrder({
             userId: ALICE,
             channel: 'google_play',
@@ -566,7 +566,7 @@ describe('wallet: top-up order lifecycle', () => {
             baseMli: tier.baseMli,
             bonusMli: tier.bonusMli,
             externalTxnId: 'gp-token-aaa',
-            externalRaw: { productId: 'ecoin_tier_starter' },
+            externalRaw: { productId: 'ec.topup.starter' },
         });
         expect(order.id).toMatch(/^order-/);
         expect(order.status).toBe('pending');
@@ -575,7 +575,7 @@ describe('wallet: top-up order lifecycle', () => {
     });
 
     test('createTopupOrder dedupes on (channel, external_txn_id)', async () => {
-        const tier = wallet.TOPUP_TIERS['ecoin_tier_starter'];
+        const tier = wallet.TOPUP_TIERS['ec.topup.starter'];
         const args = {
             userId: ALICE, channel: 'google_play',
             priceUsd: tier.priceUsd, baseMli: tier.baseMli, bonusMli: tier.bonusMli,
@@ -590,7 +590,7 @@ describe('wallet: top-up order lifecycle', () => {
     });
 
     test('markTopupPaid credits wallet and is idempotent', async () => {
-        const tier = wallet.TOPUP_TIERS['ecoin_tier_starter'];
+        const tier = wallet.TOPUP_TIERS['ec.topup.starter'];
         const order = await walletApi.createTopupOrder({
             userId: ALICE, channel: 'google_play',
             priceUsd: tier.priceUsd, baseMli: tier.baseMli, bonusMli: tier.bonusMli,
@@ -660,7 +660,7 @@ describe('wallet: HTTP routes', () => {
         expect(res.body.success).toBe(true);
         expect(Array.isArray(res.body.tiers)).toBe(true);
         expect(res.body.tiers.length).toBeGreaterThanOrEqual(5);
-        const starter = res.body.tiers.find(t => t.productId === 'ecoin_tier_starter');
+        const starter = res.body.tiers.find(t => t.productId === 'ec.topup.starter');
         expect(starter).toBeDefined();
         expect(starter.priceUsd).toBe(3);
         expect(starter.bonusPct).toBe(5);
@@ -691,9 +691,9 @@ describe('wallet: HTTP routes', () => {
         await supertest(app).post('/api/wallet/topup/verify-google')
             .send({}).expect(400);
         await supertest(app).post('/api/wallet/topup/verify-google')
-            .send({ productId: 'ecoin_tier_starter' }).expect(400);
+            .send({ productId: 'ec.topup.starter' }).expect(400);
         await supertest(app).post('/api/wallet/topup/verify-google')
-            .send({ productId: 'ecoin_tier_starter', purchaseToken: 'short' }).expect(400);
+            .send({ productId: 'ec.topup.starter', purchaseToken: 'short' }).expect(400);
     });
 
     test('POST /topup/verify-google rejects unknown product', async () => {
@@ -707,7 +707,7 @@ describe('wallet: HTTP routes', () => {
     test('POST /topup/verify-google credits wallet end-to-end', async () => {
         const app = buildApp({ user: { userId: ALICE } });
         const res = await supertest(app).post('/api/wallet/topup/verify-google')
-            .send({ productId: 'ecoin_tier_starter', purchaseToken: 'gp-real-token-12345' })
+            .send({ productId: 'ec.topup.starter', purchaseToken: 'gp-real-token-12345' })
             .expect(200);
         expect(res.body.success).toBe(true);
         expect(res.body.order.status).toBe('paid');
@@ -717,7 +717,7 @@ describe('wallet: HTTP routes', () => {
 
         // Replaying the same token should dedupe (no double credit).
         const replay = await supertest(app).post('/api/wallet/topup/verify-google')
-            .send({ productId: 'ecoin_tier_starter', purchaseToken: 'gp-real-token-12345' })
+            .send({ productId: 'ec.topup.starter', purchaseToken: 'gp-real-token-12345' })
             .expect(200);
         expect(replay.body.order.deduped).toBe(true);
 

@@ -10,7 +10,12 @@ data class SubscriptionState(
     val canSendMessage: Boolean = true,
     val subscriptionPrice: String = "",
     val hasBorrowSubscription: Boolean = false,
-    val borrowSubscriptionPrice: String = ""
+    val borrowSubscriptionPrice: String = "",
+    // New plan system
+    val currentPlan: String = "free",  // "free", "starter", "pro", "business"
+    val starterPrice: String = "",
+    val proPrice: String = "",
+    val businessPrice: String = ""
 ) {
     /**
      * Usage display string (e.g., "5" or "∞")
