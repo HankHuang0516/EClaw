@@ -852,11 +852,97 @@
 
 <div class="section-divider"></div>
 
-<!-- ============ 7. CHAT ============ -->
+<!-- ============ 7. CHAT (共用頁面) ============ -->
 <div class="page-section">
-  <h1>7. chat.html — 租借 Bot 聊天</h1>
+  <h1>7. chat.html — 聊天頁面（共用）</h1>
   <p>涉及場景：G7–G8, H4–H7, K2–K3/K8–K10, Q7</p>
+  <p style="background:#FFF3CD; padding:8px 12px; border-radius:6px; font-size:13px; margin-bottom:16px;">
+    ⚠️ chat.html 是所有 entity 共用的聊天頁面。需智慧過濾與智慧發送選擇。
+  </p>
 
+  <!-- 7a: 對話列表 + 智慧過濾 -->
+  <h2 style="margin-top:0;">7a. 對話列表 — 智慧過濾</h2>
+  <div class="phone-frame">
+    <div class="phone-header">
+      💬 聊天 <span style="margin-left:auto; font-size:12px;">🔽 篩選: 全部</span>
+    </div>
+    <div class="phone-body" style="padding:0;">
+      <!-- Filter dropdown -->
+      <div style="background:#F0F4FF; padding:8px 12px; border-bottom:1px solid #E0E0E0; font-size:12px;">
+        <div style="margin-bottom:4px; font-weight:600;">篩選</div>
+        <label style="display:block; padding:2px 0;"><input type="radio" checked> 全部</label>
+        <label style="display:block; padding:2px 0;"><input type="radio"> 自有 Bot (2)</label>
+        <label style="display:block; padding:2px 0;"><input type="radio"> 租借 Bot (1) 🔒</label>
+      </div>
+      <!-- Conversation list -->
+      <div style="border-bottom:1px solid #EEE; padding:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:36px; height:36px; border-radius:50%; background:#E8E8E8; display:flex; align-items:center; justify-content:center; font-size:14px;">🤖</div>
+          <div style="flex:1;">
+            <div style="font-weight:600; font-size:13px;">我的助手 Bot</div>
+            <div style="font-size:11px; color:#888;">最後訊息預覽... <span style="float:right;">2 分鐘前</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="border-bottom:1px solid #EEE; padding:12px; background:#FAFAFF;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="position:relative; width:36px; height:36px;">
+            <div style="width:36px; height:36px; border-radius:50%; background:#E8E0FF; display:flex; align-items:center; justify-content:center; font-size:14px;">🧙</div>
+            <span style="position:absolute; bottom:-2px; right:-2px; font-size:10px;">🔒</span>
+          </div>
+          <div style="flex:1;">
+            <div style="font-weight:600; font-size:13px;">Coding Wizard Bot <span style="font-size:11px; color:var(--primary);">⏱️ 4h 23m</span></div>
+            <div style="font-size:11px; color:#888;">最後訊息預覽... <span style="float:right;">5 分鐘前</span></div>
+            <div style="font-size:10px; color:var(--primary);">📊 本次已用: 23.3 e幣</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:36px; height:36px; border-radius:50%; background:#E8E8E8; display:flex; align-items:center; justify-content:center; font-size:14px;">🌐</div>
+          <div style="flex:1;">
+            <div style="font-weight:600; font-size:13px;">翻譯 Bot</div>
+            <div style="font-size:11px; color:#888;">最後訊息預覽... <span style="float:right;">1 小時前</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7b: 智慧發送選擇 -->
+  <h2>7b. 智慧發送選擇 (speakTo)</h2>
+  <div class="phone-frame">
+    <div class="phone-header">發送目標選擇</div>
+    <div class="phone-body" style="padding:12px;">
+      <div style="font-size:12px; color:#888; margin-bottom:8px;">📌 目前對話: Coding Wizard Bot 🔒</div>
+      <div style="font-size:13px; font-weight:600; margin-bottom:8px;">可發送對象：</div>
+      <div style="border:1px solid #E0E0E0; border-radius:8px; overflow:hidden;">
+        <div style="padding:10px 12px; border-bottom:1px solid #EEE; display:flex; align-items:center; gap:8px;">
+          <span style="color:green;">✅</span>
+          <span>🤖 我的助手 Bot</span>
+          <span class="badge badge-green" style="margin-left:auto;">自有</span>
+        </div>
+        <div style="padding:10px 12px; border-bottom:1px solid #EEE; display:flex; align-items:center; gap:8px; background:#FAFAFF;">
+          <span style="color:green;">✅</span>
+          <span>🔒 Coding Wizard Bot</span>
+          <span class="badge" style="margin-left:auto; background:#E8E0FF; color:var(--primary);">租借</span>
+        </div>
+        <div style="padding:10px 12px; display:flex; align-items:center; gap:8px; opacity:0.5;">
+          <span style="color:red;">❌</span>
+          <span>🔒 Data Analyst Bot</span>
+          <span class="badge badge-red" style="margin-left:auto;">不可用</span>
+          <div style="font-size:10px; color:#C00; width:100%; margin-top:2px;">⚠️ 跨設備 speakTo 不允許 (DD#15)</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:12px; justify-content:flex-end;">
+        <button class="btn" style="background:#EEE; color:#333;">取消</button>
+        <button class="btn btn-primary">確認發送</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7c: 租借 Bot 對話視窗 -->
+  <h2>7c. 租借 Bot 對話視窗</h2>
   <div class="phone-frame">
     <div class="phone-header">
       <span>🔒</span> Coding Wizard Bot <span style="margin-left:auto; font-size:12px; opacity:0.8;">⏱️ 4h 23m</span>
@@ -909,14 +995,40 @@
       </div>
     </div>
   </div>
+
+  <!-- 7d: 自有 Bot 對話（無 BRM 元素） -->
+  <h2>7d. 自有 Bot 對話（對比）</h2>
+  <div class="phone-frame">
+    <div class="phone-header">
+      我的助手 Bot
+    </div>
+    <div class="phone-body" style="padding:0;">
+      <div class="chat-container">
+        <div class="msg user"><div class="bubble">幫我查一下今天的天氣</div></div>
+        <div class="msg bot">
+          <div>
+            <div class="bubble">今天台北晴天，氣溫 28°C。</div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-footer">
+        <input class="chat-input" placeholder="輸入訊息...">
+        <button class="btn btn-primary" style="padding:8px 16px;">送出</button>
+      </div>
+    </div>
+  </div>
+  <p class="desc" style="margin-top:8px;">自有 Bot 對話無 🔒 標記、無隱私警告、無 token 計費 footer、無餘額列。</p>
 </div>
 
 <div class="section-divider"></div>
 
 <!-- ============ 8. ENV-VARS ============ -->
 <div class="page-section">
-  <h1>8. env-vars.html — Vault 隔離</h1>
+  <h1>8. env-vars.html — Vault 隔離（唯讀標記）</h1>
   <p>涉及場景：I1–I9</p>
+  <p style="background:#FFF3CD; padding:8px 12px; border-radius:6px; font-size:13px; margin-bottom:16px;">
+    ⚠️ env-vars.html 僅顯示隔離狀態（唯讀）。白名單設定在 <code>rental-listing-edit.html</code>（Listing 編輯頁，P1 待開發）。
+  </p>
 
   <div class="wide-frame">
     <div class="wide-header">🔧 環境變數 <span style="float:right; font-size:12px;">🔒 鎖定全部</span></div>
@@ -925,13 +1037,19 @@
         <span class="lock">🔒</span>
         <span class="key">SECRET_API_KEY</span>
         <span class="val">•••••••••••</span>
-        <span class="badge badge-red">租借 Bot 不可見</span>
+        <span class="badge badge-red">自動隔離 (*_KEY)</span>
+      </div>
+      <div class="var-row" style="font-size:11px; color:#888; padding-left:32px; padding-top:0;">
+        ⚠️ 含 _KEY — 租借 Bot 自動不可見
       </div>
       <div class="var-row">
         <span>🔓</span>
         <span class="key">PUBLIC_CONFIG</span>
         <span class="val">hello-world</span>
         <span class="badge badge-green">租借 Bot 可讀</span>
+      </div>
+      <div class="var-row" style="font-size:11px; color:#888; padding-left:32px; padding-top:0;">
+        不含敏感關鍵字 — 租借 Bot 可讀取
       </div>
       <div class="var-row">
         <span class="lock">🔒</span>
@@ -948,8 +1066,11 @@
 
       <div class="desc mt-16">
         <strong>🔒 Vault 隔離規則 (BRM 設計決策 #18)</strong><br>
-        變數名含 <code>*_KEY</code>, <code>*_SECRET</code>, <code>*_TOKEN</code>, <code>*_PASSWORD</code> 的變數<strong>自動對租借 Bot 隱藏</strong>。<br>
-        Owner 可在 Listing 編輯頁的 <code>allowed_vars</code> 白名單中手動允許。
+        變數名含 <code>*_KEY</code>, <code>*_SECRET</code>, <code>*_TOKEN</code>, <code>*_PASSWORD</code> 的變數<strong>自動對租借 Bot 隱藏</strong>。<br><br>
+        <strong>ℹ️ 白名單設定方式</strong><br>
+        如需允許租借 Bot 讀取被隔離的變數，請在 <strong>Listing 編輯頁</strong>（<code>rental-listing-edit.html</code>）設定 <code>allowed_vars</code> 白名單。<br>
+        白名單是 per-listing 粒度，不同 Listing 可允許不同變數。<br>
+        <span style="color:#888; font-size:11px;">※ Listing 編輯頁屬 P1 後端 portal 頁面，待開發後另寫渲染規範。</span>
       </div>
     </div>
   </div>
@@ -1004,8 +1125,8 @@
     <tr><td>wallet.html</td><td>A13, B4–B5, E1/E3/E5–E7, K6–K7, N8, O6–O7</td><td>餘額/凍結、Ledger 12 種 type、儲值 Tier、Ledger Chain</td></tr>
     <tr><td>dashboard.html</td><td>F2/F12, T1/T3/T5/T7–T8</td><td>🔒 租借 bot 卡片、半透明出租中 overlay</td></tr>
     <tr><td>kanban.html</td><td>F3–F9, F11, P17–P22, Q5</td><td>租借 bot chip、Auto-move IDLE、Card Notes/Comments</td></tr>
-    <tr><td>chat.html</td><td>G7–G8, H4–H7, K2–K10, Q7</td><td>隱私 Banner、Token 計費 footer、跨 Agent 訊息</td></tr>
-    <tr><td>env-vars.html</td><td>I1–I9</td><td>Vault 隔離、*_KEY 自動 block、白名單</td></tr>
+    <tr><td>chat.html（共用）</td><td>G7–G8, H4–H7, K2–K10, Q7</td><td>智慧過濾（自有/租借）、智慧發送選擇（speakTo 規則 DD#15）、隱私 Banner、Token 計費 footer、跨 Agent 訊息</td></tr>
+    <tr><td>env-vars.html</td><td>I1–I9</td><td>Vault 隔離（唯讀標記）、*_KEY 自動 block。白名單設定在 listing-edit.html（P1 待開發）</td></tr>
     <tr><td>(API-only)</td><td>G1–G6, H1–H3, L2–L3, R1–R13, U1–U6</td><td>無 UI，純 API 邊界測試</td></tr>
   </table>
 </div>
