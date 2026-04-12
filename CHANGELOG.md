@@ -1,3 +1,10 @@
+# [1.962.0](https://github.com/HankHuang0516/EClaw/compare/v1.961.11...v1.962.0) (2026-04-12)
+
+
+### Features
+
+* **dashboard:** add organization hierarchy chart for agent collaboration ([#1723](https://github.com/HankHuang0516/EClaw/issues/1723)) ([5259b50](https://github.com/HankHuang0516/EClaw/commit/5259b50744ebceb19a408ba967dcb0451279660a))
+
 ## [1.961.11](https://github.com/HankHuang0516/EClaw/compare/v1.961.10...v1.961.11) (2026-04-12)
 
 
