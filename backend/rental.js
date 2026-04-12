@@ -1073,7 +1073,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
             return res.json({ success: false, error: 'auth_failed' });
         }
         const userRes = await pool.query(
-            'SELECT id, email FROM user_accounts WHERE virtual_device_id = $1', [deviceId]
+            'SELECT id, email FROM user_accounts WHERE device_id = $1', [deviceId]
         );
         const userId = userRes.rows[0]?.id;
         const listingsRes = await pool.query(
