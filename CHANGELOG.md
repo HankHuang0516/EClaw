@@ -1,3 +1,10 @@
+# [1.957.0](https://github.com/HankHuang0516/EClaw/compare/v1.956.0...v1.957.0) (2026-04-12)
+
+
+### Features
+
+* **wallet:** admin e-coin display + 1M seed grant + subscription plans ([#1691](https://github.com/HankHuang0516/EClaw/issues/1691)) ([f9832d3](https://github.com/HankHuang0516/EClaw/commit/f9832d30d109a624adfe2dcca45b0259e1cbb9df))
+
 # [1.956.0](https://github.com/HankHuang0516/EClaw/compare/v1.955.6...v1.956.0) (2026-04-12)
 
 
