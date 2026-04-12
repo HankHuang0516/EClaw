@@ -1,3 +1,10 @@
+## [1.957.1](https://github.com/HankHuang0516/EClaw/compare/v1.957.0...v1.957.1) (2026-04-12)
+
+
+### Bug Fixes
+
+* **android:** add missing default string resources for locale keys ([48a6a38](https://github.com/HankHuang0516/EClaw/commit/48a6a387197ff27d9455846dfc837b8bbf8b90cc))
+
 # [1.957.0](https://github.com/HankHuang0516/EClaw/compare/v1.956.0...v1.957.0) (2026-04-12)
 
 
