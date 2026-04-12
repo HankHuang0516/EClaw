@@ -333,6 +333,15 @@ Tus comentarios enviados aparecerán aquí.</string>
     <string name="file_broadcast">Broadcast</string>
     <string name="file_btn_delete">Eliminar</string>
     <string name="file_btn_download">Descargar</string>
+    <string name="main_agent_card_deleted">Agent Card eliminado</string>
+    <string name="main_agent_card_saved">Agent Card guardado</string>
+    <string name="main_delete_failed">Error al eliminar</string>
+    <string name="main_description_required">La descripción es obligatoria</string>
+    <string name="main_max_capabilities">Máximo 10 capacidades</string>
+    <string name="main_max_items">Máximo %d elementos</string>
+    <string name="main_save_error">Se produjo un error</string>
+    <string name="main_save_failed">Error al guardar</string>
+    <string name="main_save_failed_msg">Error al guardar：%s</string>
     <string name="chat_ai_analyzing">IA está analizando tu mensaje…</string>
     <string name="chat_failed_to_send">Error al enviar el mensaje.</string>
     <string name="chat_failed_to_send_v2">Error al enviar el mensaje.</string>

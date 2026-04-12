@@ -53,6 +53,7 @@ import com.hank.clawlive.data.local.UsageManager
 import com.hank.clawlive.data.model.AvatarUploadResponse
 import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.data.model.UpdateAvatarRequest
+import com.hank.clawlive.R
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.data.repository.StateRepository
@@ -1037,7 +1038,7 @@ class MainActivity : AppCompatActivity() {
                         Toast.makeText(this@MainActivity, getString(R.string.xd_saved), Toast.LENGTH_SHORT).show()
                         dialog.dismiss()
                     } else {
-                        Toast.makeText(this@MainActivity, resp.message ?: "Error", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MainActivity, resp.message ?: getString(R.string.main_save_error), Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to save cross-device settings")
@@ -1060,7 +1061,7 @@ class MainActivity : AppCompatActivity() {
                         Toast.makeText(this@MainActivity, getString(R.string.xd_reset_done), Toast.LENGTH_SHORT).show()
                         dialog.dismiss()
                     } else {
-                        Toast.makeText(this@MainActivity, resp.message ?: "Error", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MainActivity, resp.message ?: getString(R.string.main_save_error), Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
                     Timber.e(e, "Failed to reset cross-device settings")
@@ -1139,7 +1140,7 @@ class MainActivity : AppCompatActivity() {
                 if (capsContainer.childCount < 10) {
                     capsContainer.addView(buildCapabilityRowForDialog("", "", capsContainer))
                 } else {
-                    Toast.makeText(this@MainActivity, "Maximum 10 capabilities", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, getString(R.string.main_max_capabilities), Toast.LENGTH_SHORT).show()
                 }
             }
         })
@@ -1318,7 +1319,7 @@ class MainActivity : AppCompatActivity() {
                     val v = input.text.toString().trim()
                     if (v.isEmpty()) return@setOnClickListener
                     if (chipContainer.childCount >= maxItems) {
-                        Toast.makeText(this@MainActivity, "Maximum $maxItems items", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MainActivity, getString(R.string.main_max_items, maxItems), Toast.LENGTH_SHORT).show()
                         return@setOnClickListener
                     }
                     chipContainer.addView(makeChipForDialog(v, chipContainer))
@@ -1357,7 +1358,7 @@ class MainActivity : AppCompatActivity() {
                               capabilities: List<Map<String, String>>, protocols: List<String>,
                               tags: List<String>, version: String, website: String, email: String) {
         if (description.isEmpty()) {
-            Toast.makeText(this, "Description is required", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.main_description_required), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -1373,13 +1374,13 @@ class MainActivity : AppCompatActivity() {
                 )
                 val response = api.updateAgentCard(body)
                 if (response.success) {
-                    Toast.makeText(this@MainActivity, "Agent Card saved", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, getString(R.string.main_agent_card_saved), Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(this@MainActivity, response.message ?: "Save failed", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, response.message ?: getString(R.string.main_save_failed), Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to save agent card")
-                Toast.makeText(this@MainActivity, "Save failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, getString(R.string.main_save_failed_msg, e.message), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -1394,9 +1395,9 @@ class MainActivity : AppCompatActivity() {
                 )
                 val response = api.deleteAgentCard(body)
                 if (response.success) {
-                    Toast.makeText(this@MainActivity, "Agent Card deleted", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, getString(R.string.main_agent_card_deleted), Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(this@MainActivity, response.message ?: "Delete failed", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, response.message ?: getString(R.string.main_delete_failed), Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to delete agent card")
