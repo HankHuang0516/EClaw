@@ -1,3 +1,10 @@
+## [1.955.6](https://github.com/HankHuang0516/EClaw/compare/v1.955.5...v1.955.6) (2026-04-12)
+
+
+### Bug Fixes
+
+* **i18n:** escape apostrophes and fix format strings in base strings.xml ([aa71994](https://github.com/HankHuang0516/EClaw/commit/aa7199405e4c407cac85635c83c9b93135ae409a))
+
 ## [1.955.5](https://github.com/HankHuang0516/EClaw/compare/v1.955.4...v1.955.5) (2026-04-12)
 
 
