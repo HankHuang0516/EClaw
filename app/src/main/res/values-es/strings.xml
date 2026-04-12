@@ -333,6 +333,8 @@ Tus comentarios enviados aparecerán aquí.</string>
     <string name="file_broadcast">Broadcast</string>
     <string name="file_btn_delete">Eliminar</string>
     <string name="file_btn_download">Descargar</string>
+    <string name="chat_load_image_failed">Error al cargar imagen</string>
+    <string name="wallpaper_no_bound_entities">Sin entidades vinculadas</string>
     <string name="main_agent_card_deleted">Agent Card eliminado</string>
     <string name="main_agent_card_saved">Agent Card guardado</string>
     <string name="main_delete_failed">Error al eliminar</string>

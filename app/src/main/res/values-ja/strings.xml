@@ -317,6 +317,8 @@
     <string name="file_broadcast">ブロードキャスト</string>
     <string name="file_btn_delete">削除</string>
     <string name="file_btn_download">ダウンロード</string>
+    <string name="chat_load_image_failed">画像の読み込みに失敗しました</string>
+    <string name="wallpaper_no_bound_entities">バインドされたエンティティがありません</string>
     <string name="main_agent_card_deleted">Agent Card を削除しました</string>
     <string name="main_agent_card_saved">Agent Card を保存しました</string>
     <string name="main_delete_failed">削除に失敗しました</string>

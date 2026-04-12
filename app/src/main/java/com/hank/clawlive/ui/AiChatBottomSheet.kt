@@ -240,7 +240,7 @@ class AiChatBottomSheet : BottomSheetDialogFragment() {
             renderImagePreview()
             updateSendButton()
         } catch (e: Exception) {
-            Toast.makeText(requireContext(), "Failed to load image", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), getString(R.string.chat_load_image_failed), Toast.LENGTH_SHORT).show()
         }
     }
 

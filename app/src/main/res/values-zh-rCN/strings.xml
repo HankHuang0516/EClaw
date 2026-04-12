@@ -320,6 +320,8 @@
     <string name="file_broadcast">广播</string>
     <string name="file_btn_delete">删除</string>
     <string name="file_btn_download">下载</string>
+    <string name="chat_load_image_failed">载入图片失败</string>
+    <string name="wallpaper_no_bound_entities">无已绑定实体</string>
     <string name="main_agent_card_deleted">Agent Card 已删除</string>
     <string name="main_agent_card_saved">Agent Card 已储存</string>
     <string name="main_delete_failed">删除失败</string>
