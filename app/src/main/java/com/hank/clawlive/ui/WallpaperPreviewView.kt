@@ -12,6 +12,7 @@ import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
 import com.hank.clawlive.data.local.LayoutPreferences
+import com.hank.clawlive.R
 import com.hank.clawlive.data.model.EntityStatus
 import timber.log.Timber
 
@@ -202,7 +203,7 @@ class WallpaperPreviewView @JvmOverloads constructor(
         if (entities.isEmpty()) {
             labelPaint.textSize = 36f
             labelPaint.color = Color.GRAY
-            canvas.drawText("No bound entities", width / 2f, height / 2f, labelPaint)
+            canvas.drawText(context.getString(R.string.wallpaper_no_bound_entities), width / 2f, height / 2f, labelPaint)
             return
         }
 

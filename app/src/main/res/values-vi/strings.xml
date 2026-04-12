@@ -317,6 +317,8 @@
     <string name="file_broadcast">Phát chung</string>
     <string name="file_btn_delete">Xóa</string>
     <string name="file_btn_download">Tải xuống</string>
+    <string name="chat_load_image_failed">Tải hình ảnh thất bại</string>
+    <string name="wallpaper_no_bound_entities">Không có thực thể được liên kết</string>
     <string name="main_agent_card_deleted">Đã xóa Agent Card</string>
     <string name="main_agent_card_saved">Đã lưu Agent Card</string>
     <string name="main_delete_failed">Xóa thất bại</string>
