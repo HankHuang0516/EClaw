@@ -1,3 +1,11 @@
+## [1.961.5](https://github.com/HankHuang0516/EClaw/compare/v1.961.4...v1.961.5) (2026-04-12)
+
+
+### Bug Fixes
+
+* enforce 24h rental cooldown after contract ends ([#1707](https://github.com/HankHuang0516/EClaw/issues/1707)) ([#1710](https://github.com/HankHuang0516/EClaw/issues/1710)) ([d4d7057](https://github.com/HankHuang0516/EClaw/commit/d4d7057840c9088919597fae03db9bc3dd8863fb))
+* wire rental entity handover into contract handlers ([#1708](https://github.com/HankHuang0516/EClaw/issues/1708)) ([307c851](https://github.com/HankHuang0516/EClaw/commit/307c85117538b71712e0c0c1c676beb7d9ead3fb)), closes [#1707](https://github.com/HankHuang0516/EClaw/issues/1707) [#1707](https://github.com/HankHuang0516/EClaw/issues/1707)
+
 ## [1.961.4](https://github.com/HankHuang0516/EClaw/compare/v1.961.3...v1.961.4) (2026-04-12)
 
 
