@@ -1,3 +1,10 @@
+## [1.961.8](https://github.com/HankHuang0516/EClaw/compare/v1.961.7...v1.961.8) (2026-04-12)
+
+
+### Bug Fixes
+
+* **rental-ui:** translate rental error codes with proper i18n.t fallback ([#1716](https://github.com/HankHuang0516/EClaw/issues/1716)) ([e08503f](https://github.com/HankHuang0516/EClaw/commit/e08503f53bc134aa52c842c50465d3f1aec6afc4)), closes [#1712](https://github.com/HankHuang0516/EClaw/issues/1712)
+
 ## [1.961.7](https://github.com/HankHuang0516/EClaw/compare/v1.961.6...v1.961.7) (2026-04-12)
 
 
