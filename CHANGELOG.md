@@ -1,3 +1,10 @@
+## [1.961.2](https://github.com/HankHuang0516/EClaw/compare/v1.961.1...v1.961.2) (2026-04-12)
+
+
+### Bug Fixes
+
+* **interview:** move arena setAutoPushDeps after channelModule init to fix TDZ ([a266d77](https://github.com/HankHuang0516/EClaw/commit/a266d77935081e871ab76faccfceb14aff128600))
+
 ## [1.961.1](https://github.com/HankHuang0516/EClaw/compare/v1.961.0...v1.961.1) (2026-04-12)
 
 
