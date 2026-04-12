@@ -333,6 +333,9 @@ Tus comentarios enviados aparecerán aquí.</string>
     <string name="file_broadcast">Broadcast</string>
     <string name="file_btn_delete">Eliminar</string>
     <string name="file_btn_download">Descargar</string>
+    <string name="invite_title">Invitar Amigos</string>
+    <string name="my_rentals_title">Mis Alquileres</string>
+    <string name="wallet_title">Billetera</string>
     <string name="file_btn_share">Compartir</string>
     <string name="file_delete_confirm">¿Estás seguro de que quieres eliminar este archivo?</string>
     <string name="file_delete_title">Eliminar Archivo</string>
