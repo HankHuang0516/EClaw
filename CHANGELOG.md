@@ -1,3 +1,10 @@
+## [1.959.2](https://github.com/HankHuang0516/EClaw/compare/v1.959.1...v1.959.2) (2026-04-12)
+
+
+### Bug Fixes
+
+* **rental:** debug endpoint bypass JWT auth, use deviceId/deviceSecret query params ([32e46b4](https://github.com/HankHuang0516/EClaw/commit/32e46b4f04514c9808f55a8d23b408030d5b9ae6))
+
 ## [1.959.1](https://github.com/HankHuang0516/EClaw/compare/v1.959.0...v1.959.1) (2026-04-12)
 
 
