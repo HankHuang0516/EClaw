@@ -20,6 +20,7 @@ const JWT_SECRET_FALLBACK = process.env.JWT_SECRET || require('crypto').randomBy
 
 const notifModule = require('./notifications');
 const devicePrefs = require('./device-preferences');
+const orgChartModule = require('./org-chart');
 const crossDeviceSettings = require('./entity-cross-device-settings');
 const feedbackEmail = require('./feedback-email');
 const multer = require('multer');
@@ -1228,6 +1229,7 @@ try {
         saveChatMessage,
         getMissionApiHints,
         pushToBot,
+        orgChart: orgChartModule,
     });
     app.use('/api/mission', kanbanModule.router);
     console.log('[Kanban] Module loaded successfully');
@@ -5102,6 +5104,11 @@ app.post('/api/transform', async (req, res) => {
         });
     }
 
+    // Org chart: auto-forward message to superior entity (fire-and-forget)
+    if (finalMessage && entity) {
+        orgChartForward(entity, deviceId, finalMessage).catch(() => {});
+    }
+
     // ── @mention auto-fill ──
     // If the bot's message contains <@publicCode> tokens or @all and speakTo/broadcast
     // were not explicitly provided, auto-fill them from the parsed mentions so bots can
@@ -5944,6 +5951,12 @@ app.delete('/api/device/entity/:entityId/permanent', async (req, res) => {
 
     console.log(`[DynamicEntity] Permanent delete complete: deviceId=${deviceId}, entityId=${eId}, totalSlotsAfter=${entityCount(device)}`);
     serverLog('info', 'entity_delete', `Entity #${eId} permanently deleted`, { deviceId, entityId: eId });
+
+    // Prune org chart hierarchy (fire-and-forget)
+    const remainingEntityIds = Object.keys(device.entities).map(Number);
+    orgChartModule.onEntityDeleted(deviceId, remainingEntityIds).catch(err => {
+        console.error(`[OrgChart] Failed to prune after entity #${eId} deleted:`, err.message);
+    });
 
     // Notify clients
     io.to(deviceId).emit('entityDeleted', { entityId: eId, totalSlots: entityCount(device) });
@@ -12503,6 +12516,64 @@ async function pushToBot(entity, deviceId, eventType, payload) {
     }
 }
 
+/**
+ * Org chart message forwarding (fire-and-forget).
+ * Called after pushToBot succeeds to auto-route messages to superior entities.
+ * Options 2 (taskForward) and 3 (allForward) from org chart.
+ */
+const ORG_FWD_PREFIX = '[📢 FWD';
+const ORG_TASK_FWD_PREFIX = '[📋 TASK FWD';
+
+async function orgChartForward(entity, deviceId, message) {
+    if (!message || message.startsWith(ORG_TASK_FWD_PREFIX) || message.startsWith(ORG_FWD_PREFIX)) return;
+
+    try {
+        const orgData = await orgChartModule.getOrgChart(deviceId);
+        if (!orgData.options.taskForward && !orgData.options.allForward) return;
+        if (!orgData.hierarchy || !orgData.hierarchy.USER) return;
+
+        const superiorId = orgChartModule.getSuperior(orgData.hierarchy, entity.entityId);
+        if (superiorId == null || superiorId === 'USER') return; // USER is not a pushable entity
+
+        const device = devices[deviceId];
+        if (!device) return;
+        const superiorEntity = device.entities?.[superiorId];
+        if (!superiorEntity || !superiorEntity.isBound) return;
+
+        let shouldForward = false;
+        let prefix = '';
+
+        if (orgData.options.allForward) {
+            // Option 3: forward everything
+            shouldForward = true;
+            prefix = `${ORG_FWD_PREFIX} from #${entity.entityId}] `;
+        } else if (orgData.options.taskForward && chatPool) {
+            // Option 2: forward only if entity has incomplete kanban tasks
+            try {
+                const taskCheck = await chatPool.query(
+                    `SELECT 1 FROM kanban_cards WHERE device_id = $1 AND assigned_bots @> $2::jsonb AND status IN ('todo', 'in_progress') LIMIT 1`,
+                    [deviceId, JSON.stringify([entity.entityId])]
+                );
+                if (taskCheck.rows.length > 0) {
+                    shouldForward = true;
+                    prefix = `${ORG_TASK_FWD_PREFIX} from #${entity.entityId}] `;
+                }
+            } catch (err) {
+                console.error('[OrgChart] Task check failed:', err.message);
+            }
+        }
+
+        if (shouldForward) {
+            console.log(`[OrgChart] Forwarding message from #${entity.entityId} to superior #${superiorId}`);
+            pushToBot(superiorEntity, deviceId, 'org_forward', { message: prefix + message }).catch(err => {
+                console.error(`[OrgChart] Forward to #${superiorId} failed:`, err.message);
+            });
+        }
+    } catch (err) {
+        console.error('[OrgChart] orgChartForward error:', err.message);
+    }
+}
+
 // Wire pushToBot into mission module (late binding — pushToBot defined after mission init)
 missionModule.setPushToBot(pushToBot);
 
@@ -13120,6 +13191,7 @@ feedbackModule.initFeedbackTable(chatPool);
 feedbackModule.initFeedbackPhotosTable(chatPool);
 notifModule.initNotificationTables(chatPool);
 devicePrefs.initTable(chatPool);
+orgChartModule.initTable(chatPool);
 crossDeviceSettings.initTable(chatPool);
 chatIntegrity.initIntegrityTable(chatPool);
 articlePublisher.initPublisherTable(chatPool);
@@ -13396,6 +13468,42 @@ app.put('/api/device-preferences', async (req, res) => {
     await devicePrefs.updatePrefs(deviceId, prefs);
     const updated = await devicePrefs.getPrefs(deviceId);
     res.json({ success: true, prefs: updated });
+});
+
+// ============================================
+// ORGANIZATION HIERARCHY CHART
+// ============================================
+
+app.get('/api/device/org-chart', async (req, res) => {
+    const deviceId = authDevice(req);
+    if (!deviceId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const orgChart = await orgChartModule.getOrgChart(deviceId);
+    res.json({ success: true, orgChart });
+});
+
+app.put('/api/device/org-chart', async (req, res) => {
+    const deviceId = authDevice(req);
+    if (!deviceId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const { hierarchy, options } = req.body;
+    if (hierarchy === undefined && options === undefined) {
+        return res.status(400).json({ success: false, error: 'hierarchy or options required' });
+    }
+
+    const updates = {};
+    if (hierarchy !== undefined) updates.hierarchy = hierarchy;
+    if (options !== undefined) updates.options = options;
+
+    const result = await orgChartModule.updateOrgChart(deviceId, updates);
+    if (!result.success) {
+        return res.status(400).json({ success: false, error: result.error });
+    }
+
+    // Notify connected clients
+    io.to(deviceId).emit('org-chart:updated', result.orgChart);
+
+    res.json({ success: true, orgChart: result.orgChart });
 });
 
 // ============================================

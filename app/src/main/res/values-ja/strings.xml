@@ -793,4 +793,10 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="xd_whitelist">ホワイトリスト（パブリックコード）</string>
     <string name="xd_whitelist_mode">ホワイトリストモード</string>
     <string name="you">あなた</string>
+    <string name="topup_ecoin_title">eコインをチャージ</string>
+    <string name="topup_ecoin">チャージ</string>
+    <string name="topup_success">eコインがウォレットに追加されました！</string>
+    <string name="topup_failed">チャージに失敗しました。もう一度お試しください</string>
+    <string name="choose_plan_title">プランを選択</string>
+    <string name="upgrade_plan">プランをアップグレード</string>
 </resources>

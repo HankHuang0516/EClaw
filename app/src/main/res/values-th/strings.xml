@@ -793,4 +793,10 @@ GPS：รับตามความต้องการเท่านั้�
     <string name="xd_whitelist">บัญชีขาว (รหัสสาธารณะ)</string>
     <string name="xd_whitelist_mode">โหมดบัญชีขาว</string>
     <string name="you">คุณ</string>
+    <string name="topup_ecoin_title">เติม e-Coins</string>
+    <string name="topup_ecoin">เติม</string>
+    <string name="topup_success">e-Coins ถูกเพิ่มในกระเป๋าเงินของคุณ!</string>
+    <string name="topup_failed">เติมเงินล้มเหลว กรุณาลองใหม่</string>
+    <string name="choose_plan_title">เลือกแผน</string>
+    <string name="upgrade_plan">อัปเกรดแผน</string>
 </resources>

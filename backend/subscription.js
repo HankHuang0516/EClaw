@@ -62,7 +62,7 @@ const SUBSCRIPTION_PLANS = Object.freeze({
         messageLimit: null,
         maxConcurrentRentals: 2,
         marketplaceDiscountBps: 500,
-        googlePlayProductId: 'ec.sub.starter',
+        googlePlayProductId: 'eclaw_sub_starter',
     },
     pro: {
         id: 'pro',
@@ -72,7 +72,7 @@ const SUBSCRIPTION_PLANS = Object.freeze({
         messageLimit: null,
         maxConcurrentRentals: 5,
         marketplaceDiscountBps: 1000,
-        googlePlayProductId: null, // TODO: create on Google Play when needed
+        googlePlayProductId: 'eclaw_sub_pro',
     },
     business: {
         id: 'business',
@@ -82,15 +82,15 @@ const SUBSCRIPTION_PLANS = Object.freeze({
         messageLimit: null,
         maxConcurrentRentals: -1,
         marketplaceDiscountBps: 1500,
-        googlePlayProductId: null, // TODO: create on Google Play when needed
+        googlePlayProductId: 'eclaw_sub_business',
     },
 });
 
 /** Map Google Play product ID → plan ID */
 const GOOGLE_PLAY_TO_PLAN = Object.freeze({
-    'ec.sub.starter': 'starter',
-    // 'ec.sub.pro': 'pro',       // uncomment when created
-    // 'ec.sub.business': 'business', // uncomment when created
+    'eclaw_sub_starter': 'starter',
+    'eclaw_sub_pro': 'pro',
+    'eclaw_sub_business': 'business',
     'e_claw_premium': 'starter',
     'e_claw_borrow_personal': 'starter',
 });

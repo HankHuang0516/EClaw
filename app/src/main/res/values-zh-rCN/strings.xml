@@ -799,4 +799,18 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="xd_whitelist">白名单（公开代码）</string>
     <string name="xd_whitelist_mode">白名单模式</string>
     <string name="you">你</string>
+    <string name="entity_main">实体 0 (主)</string>
+    <string name="hello_im_here">你好，我来了！</string>
+    <string name="last_updated">最后更新：刚刚</string>
+    <string name="agent_card">代理卡</string>
+    <string name="log_debug">调试</string>
+    <string name="log_info">信息</string>
+    <string name="log_warn">警告</string>
+    <string name="log_error">错误</string>
+    <string name="topup_ecoin_title">充值 e 币</string>
+    <string name="topup_ecoin">充值</string>
+    <string name="topup_success">e 币已加入钱包！</string>
+    <string name="topup_failed">充值失败，请重试</string>
+    <string name="choose_plan_title">选择方案</string>
+    <string name="upgrade_plan">升级方案</string>
 </resources>

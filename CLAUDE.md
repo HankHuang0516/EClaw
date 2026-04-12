@@ -47,6 +47,7 @@ EClaw/
 │   ├── interview-arena.js    # Interview Arena — 12-challenge bot evaluation (current interview system)
 │   ├── bot-interview.js      # LEGACY 8-probe text scoring (superseded by interview-arena.js)
 │   ├── rental.js             # Bot Rental Marketplace (listings, contracts, metering)
+│   ├── org-chart.js          # Organization Hierarchy Chart (entity hierarchy + behavior options)
 │   ├── wallet.js             # E-coin wallet + top-up + transaction ledger
 │   ├── trust.js              # Reviews, disputes, credit scoring
 │   ├── invite.js             # Referral/invite code system
@@ -214,6 +215,7 @@ EClaw/
 | `message_reactions` | Chat message like/dislike tracking |
 | `pending_cross_messages` | Cross-device message queue |
 | `discord_bots` | Discord application registrations per entity |
+| `device_preferences` | Per-device settings (prefs JSONB, org_chart JSONB for hierarchy + behavior options) |
 
 ### API Route Groups
 
@@ -259,6 +261,7 @@ EClaw/
 | `/api/link-preview` | index.js | URL link preview extraction (Open Graph/Twitter meta) |
 | `/api/gatekeeper/stats` | index.js | Gatekeeper aggregate interception statistics |
 | `/api/gps/recommendations` | gps-recommendations.js | GPS-based entity recommendations (demo) |
+| `/api/device/org-chart` | org-chart.js + index.js | Organization hierarchy chart (GET/PUT hierarchy + behavior options) |
 | `/api/kanban/cards/summary` | index.js | Kanban card summary endpoint |
 | `/api/health`, `/api/version` | index.js | Health check and version |
 | `/c/:code` | index.js | Shareable chat link (read-only view) |
@@ -782,6 +785,10 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Kanban Auto-Move (v1.217)**: Auto-move child cards to review when bot transforms IDLE
 - **App Version**: Updated to 1.0.63 (versionCode 69)
 
+### Recent Features (v1.363.x+)
+
+- **Organization Hierarchy Chart**: Interactive drag-and-drop org chart on Dashboard (new Tab Bar: Entities | Org Chart); `backend/org-chart.js` module with JSONB hierarchy storage on `device_preferences.org_chart`; `GET/PUT /api/device/org-chart` API with cycle detection, max depth 5, partial update; three behavior options (kanbanReviewer auto-set, taskForward for incomplete tasks, allForward for all messages); backend auto-route forwarding in pushToBot/transform; animated dashed SVG connectors; FLIP drag-drop animation; WebView-compatible for Android/iOS; Jest + integration tests; skill template sync
+
 ---
 
 ## Test Coverage Summary
@@ -799,7 +806,8 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 | Official Borrow | 100% (6/6) | All 6 endpoints tested |
 | Article Publisher | ~75% (37/49) | Extended: Blogger, Hashnode, X/Twitter, Tumblr, Reddit, LinkedIn, Mastodon |
 | Mission | 54% (14/26) | Missing: reorder, move, archive |
-| Core API (index.js) | ~75% (111/148) | +screen control, telemetry, logs, vars, cross-speak, link preview |
+| Core API (index.js) | ~75% (113/150) | +screen control, telemetry, logs, vars, cross-speak, link preview, org-chart |
+| Org Chart | 100% (2/2) | GET/PUT org-chart endpoints |
 
 Full analysis: `docs/reports/2026-03-14-test-coverage-analysis.md`
 
@@ -871,8 +879,9 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Entity Trash | `node backend/tests/test-entity-trash.js` | Device ID + Secret | Entity soft-delete, restore, 7-day retention |
 | Note Pages | `node backend/tests/test-note-pages.js` | Device ID + Secret | Note page public/private toggle, visitor analytics, custom domain |
 | AI Chat WebView Guard | `node backend/tests/test-ai-chat-webview-guard.js` | Device ID + Secret | AI chat widget hidden in Android WebView contexts |
+| Org Chart | `node backend/tests/test-org-chart.js` | Device ID + Secret | Org chart CRUD lifecycle, cycle detection, partial update, auth validation |
 
-### Jest Unit Tests (CI-run, `npm test`, 61 files)
+### Jest Unit Tests (CI-run, `npm test`, 62 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -930,6 +939,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Speak-To Delivery | `tests/jest/speak-to-delivery.test.js` | Entity speak-to message delivery validation |
 | Cross-Speak Channel | `tests/jest/cross-speak-channel.test.js` | Cross-speak channel push parity — entity/client cross-speak channel-bound delivery |
 | Auth /me Contract | `tests/jest/auth-me-contract.test.js` | API/frontend contract test for /api/auth/me response fields |
+| Org Chart | `tests/jest/org-chart.test.js` | Org chart helpers (getSuperior, validateHierarchy, pruneHierarchy), GET/PUT endpoint auth validation |
 
 ### Running All Tests
 ```bash

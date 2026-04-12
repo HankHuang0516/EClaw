@@ -793,4 +793,10 @@ Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua
     <string name="xd_whitelist">Danh sách trắng (mã công khai)</string>
     <string name="xd_whitelist_mode">Chế độ danh sách trắng</string>
     <string name="you">Bạn</string>
+    <string name="topup_ecoin_title">Nạp e-Coins</string>
+    <string name="topup_ecoin">Nạp tiền</string>
+    <string name="topup_success">e-Coins đã được thêm vào ví!</string>
+    <string name="topup_failed">Nạp tiền thất bại. Vui lòng thử lại.</string>
+    <string name="choose_plan_title">Chọn gói</string>
+    <string name="upgrade_plan">Nâng cấp gói</string>
 </resources>
