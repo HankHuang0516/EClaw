@@ -189,6 +189,41 @@ async function initWalletDatabase() {
                 }
             }
         }
+        // Seed virtual system users (platform + insurance) into user_accounts
+        // so the FK constraint on wallets.user_id is satisfied.
+        const virtualUsers = [
+            { id: PLATFORM_WALLET_USER_ID, email: 'system+platform@eclawbot.com', deviceId: 'system-platform-wallet' },
+            { id: INSURANCE_POOL_USER_ID,  email: 'system+insurance@eclawbot.com', deviceId: 'system-insurance-pool' },
+        ];
+        for (const vu of virtualUsers) {
+            try {
+                await pool.query(
+                    `INSERT INTO user_accounts (id, email, password_hash, device_id, device_secret)
+                     VALUES ($1, $2, 'SYSTEM_NO_LOGIN', $3, 'SYSTEM_NO_LOGIN')
+                     ON CONFLICT (id) DO NOTHING`,
+                    [vu.id, vu.email, vu.deviceId]
+                );
+            } catch (err) {
+                // Ignore duplicate key on email/device_id unique constraints
+                if (!err.message.includes('duplicate key') && !err.message.includes('already exists')) {
+                    console.warn(`[Wallet] Virtual user ${vu.id} seed warning:`, err.message);
+                }
+            }
+        }
+        // Ensure wallet rows exist for virtual users
+        for (const vu of virtualUsers) {
+            try {
+                await pool.query(
+                    `INSERT INTO wallets (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING`,
+                    [vu.id]
+                );
+            } catch (err) {
+                if (!err.message.includes('duplicate key') && !err.message.includes('already exists')) {
+                    console.warn(`[Wallet] Virtual wallet ${vu.id} seed warning:`, err.message);
+                }
+            }
+        }
+
         console.log('[Wallet] Database initialized');
     } catch (error) {
         console.error('[Wallet] Failed to init database:', error);
