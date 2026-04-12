@@ -492,6 +492,32 @@
             border-left: 2px solid rgba(108, 99, 255, 0.4);
         }
 
+        .bot-card.rented { opacity: 0.6; }
+        .rental-status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 600; margin-top: 8px; }
+        .rental-status-badge.available { background: rgba(76,175,80,0.15); color: #4CAF50; cursor: pointer; }
+        .rental-status-badge.rented-badge { background: rgba(244,67,54,0.12); color: #F44336; cursor: not-allowed; }
+        .cap-chip { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .cap-chip.python_exec { background: rgba(76,175,80,0.15); color: #4CAF50; }
+        .cap-chip.web_browse { background: rgba(33,150,243,0.15); color: #2196F3; }
+        .cap-chip.vision { background: rgba(156,39,176,0.15); color: #9C27B0; }
+        .cap-chip.reasoning { background: rgba(255,152,0,0.15); color: #FF9800; }
+        .cap-chip.coding { background: rgba(255,235,59,0.2); color: #F9A825; }
+        .cap-chip.default-cap { background: rgba(108,99,255,0.12); color: var(--primary); }
+        .rental-cost-box { background: var(--input-bg); border: 1px solid var(--card-border); border-radius: var(--radius-sm); padding: 12px; margin-top: 8px; font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+        .rental-cost-box .cost-line { display: flex; justify-content: space-between; padding: 2px 0; }
+        .rental-cost-box .cost-total { font-weight: 700; color: var(--text); font-size: 14px; border-top: 1px solid var(--card-border); margin-top: 6px; padding-top: 6px; }
+        .balance-indicator { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 13px; font-weight: 600; flex-wrap: wrap; }
+        .balance-indicator.sufficient { color: #4CAF50; }
+        .balance-indicator.insufficient { color: #F44336; }
+        .balance-indicator .topup-link { display: inline-block; margin-left: 8px; padding: 4px 12px; background: var(--primary); color: #fff; border-radius: var(--radius-pill); font-size: 12px; font-weight: 600; text-decoration: none; }
+        .privacy-check-row { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; padding: 10px 12px; background: rgba(255,210,63,0.08); border: 1px solid rgba(255,210,63,0.25); border-radius: var(--radius-sm); font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+        .privacy-check-row input[type=checkbox] { margin-top: 2px; flex-shrink: 0; accent-color: var(--primary); }
+        .rental-success-overlay { text-align: center; padding: 40px 20px; }
+        .rental-success-overlay .success-icon { font-size: 64px; animation: successPop 0.5s ease; }
+        .rental-success-overlay .success-text { font-size: 18px; font-weight: 700; margin-top: 12px; color: var(--success); }
+        .rental-success-overlay .success-actions { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        @keyframes successPop { 0% { transform: scale(0); } 60% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .interview-score-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
         /* ── Responsive ── */
         @media (max-width: 768px) {
             .plaza-hero-title { font-size: 22px; }
@@ -670,15 +696,15 @@
                         return {
                             publicCode: l.id, name: l.title || 'Rental Bot', avatar: '🤖',
                             desc: l.description || (l.model_detected || ''),
-                            tags: caps, caps: caps,
+                            tags: caps, caps: caps, _capsObj: l.capabilities || {},
                             stars: l.avg_rating || 0, reviews: l.total_rentals || 0,
-                            level: 0, xp: 0,
-                            isRental: true,
+                            level: 0, xp: 0, isRental: true,
                             rateMli: l.rate_mli_per_ktoken,
                             minMin: l.min_rental_minutes, maxMin: l.max_rental_minutes,
                             uptimePct: l.uptime_pct || 100,
                             listingId: l.id,
-                            modelDetected: l.model_detected
+                            modelDetected: l.model_detected,
+                            hasActiveContract: !!l.has_active_contract,
                         };
                     });
                     // Client-side search filter for rental bots
@@ -731,32 +757,44 @@
             </div>
         </div>`;
     }
+    function capChipClass(cap) {
+        return { python_exec:'python_exec', web_browse:'web_browse', vision:'vision', reasoning:'reasoning', coding:'coding' }[cap] || 'default-cap';
+    }
     function renderRentalCard(bot) {
         const rate = (bot.rateMli / 1000).toFixed(1);
         const deposit = (bot.rateMli * 20 / 1000).toFixed(0);
-        const stars = '★'.repeat(Math.round(bot.stars)) + '☆'.repeat(5 - Math.round(bot.stars));
+        const stars = '\u2605'.repeat(Math.round(bot.stars)) + '\u2606'.repeat(5 - Math.round(bot.stars));
         const tt = (k, fb) => (typeof i18n !== 'undefined' ? i18n.t(k) : null) || fb;
-        return `<div class="bot-card" onclick="openRentalDetail('${bot.listingId}')" style="border-left:3px solid #10b981;">
-            <span class="bot-card-level" style="background:#10b981;color:#fff;">${tt('community_filter_rental','出租')}</span>
+        const isRented = !!bot.hasActiveContract;
+        const borderColor = isRented ? '#F44336' : '#10b981';
+        const statusBadge = isRented
+            ? `<div class="rental-status-badge rented-badge">\ud83d\udd34 ${tt('mp_status_rented','\u5df2\u51fa\u79df')}</div>`
+            : `<div class="rental-status-badge available">\ud83d\udfe2 ${tt('mp_status_available','\u53ef\u79df\u501f')}</div>`;
+        return `<div class="${isRented ? 'bot-card rented' : 'bot-card'}" onclick="${isRented ? '' : "openRentalDetail('" + bot.listingId + "')"}" style="border-left:3px solid ${borderColor};">
+            <span class="bot-card-level" style="background:${borderColor};color:#fff;">${isRented ? tt('mp_status_rented','\u5df2\u51fa\u79df') : tt('community_filter_rental','\u51fa\u79df')}</span>
             <div class="bot-card-header">
-                <div class="bot-card-avatar">🤖</div>
+                <div class="bot-card-avatar">\ud83e\udd16</div>
                 <div class="bot-card-info">
                     <div class="bot-card-name">${esc(bot.name)}</div>
-                    <div style="font-size:11px;color:var(--text-secondary);">${esc(bot.modelDetected || '')}</div>
+                    ${bot.modelDetected ? `<div style="font-size:11px;color:var(--text-secondary);">\ud83e\udd16 ${esc(bot.modelDetected)}</div>` : ''}
                 </div>
             </div>
             <div class="bot-card-desc">${esc(bot.desc)}</div>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
-                <div style="font-size:14px;font-weight:700;color:#10b981;">${rate} e幣/1K</div>
-                <div style="font-size:11px;color:var(--text-secondary);">${tt('mp_d_deposit','押金')}: ${deposit} e幣</div>
+                <div style="font-size:14px;font-weight:700;color:#10b981;">${rate} e\u5e63/1K</div>
+                <div style="font-size:11px;color:var(--text-secondary);">${tt('mp_d_deposit','\u62bc\u91d1')}: ${deposit} e\u5e63</div>
             </div>
             <div class="bot-card-footer" style="margin-top:6px;">
-                <div class="bot-card-tags">${bot.caps.slice(0,3).map(c=>`<span class="bot-card-tag" style="background:rgba(16,185,129,0.15);color:#10b981;border-color:rgba(16,185,129,0.3);">${esc(c)}</span>`).join('')}</div>
+                <div class="bot-card-tags">${bot.caps.slice(0,3).map(c => {
+                    const sup = bot._capsObj && bot._capsObj[c]?.supported;
+                    return `<span class="bot-card-tag cap-chip ${capChipClass(c)}">${esc(c)}${sup ? ' \u2713' : ' \u2717'}</span>`;
+                }).join('')}</div>
                 <div class="bot-card-stats">
                     <span class="stat" style="color:#f59e0b;">${stars}</span>
-                    <span class="stat">${bot.reviews} ${tt('mp_d_rentals','次')}</span>
+                    <span class="stat">${bot.reviews} ${tt('mp_d_rentals','\u6b21')}</span>
                 </div>
             </div>
+            ${statusBadge}
         </div>`;
     }
 
@@ -852,47 +890,114 @@
     function closeDetail() { document.getElementById('detailModal').classList.remove('active'); document.body.style.overflow=''; currentDetailCode=null; }
 
     /* ══════ Rental Detail Modal ══════ */
+    let _rentalWalletBalance = null;
+    function updateRentalEstimate(rateMli, depositEcoin) {
+        const hoursEl = document.getElementById('rentalDurationHours');
+        const costBox = document.getElementById('rentalCostBox');
+        const balBox = document.getElementById('rentalBalanceBox');
+        const rentBtn = document.getElementById('rentalConfirmBtn');
+        const privacyCb = document.getElementById('privacyConsent');
+        if (!hoursEl || !costBox) return;
+        const hours = parseFloat(hoursEl.value) || 0;
+        const rateEcoin = rateMli / 1000;
+        const usageEcoin = hours * 60000 * rateEcoin / 1000;
+        const totalEcoin = depositEcoin + usageEcoin;
+        const t = (k, fb) => (typeof i18n !== 'undefined' ? i18n.t(k) : null) || fb;
+        costBox.innerHTML = `<div class="cost-line"><span>${t('mp_est_deposit','Deposit')}</span><span>${depositEcoin} e\u5e63</span></div><div class="cost-line"><span>${t('mp_est_usage','Est. usage')}</span><span>~${usageEcoin.toFixed(1)} e\u5e63</span></div><div class="cost-line cost-total"><span>${t('mp_est_total','Est. total')}</span><span>~${totalEcoin.toFixed(1)} e\u5e63</span></div>`;
+        if (_rentalWalletBalance !== null && balBox) {
+            const balEcoin = _rentalWalletBalance / 1000;
+            const required = depositEcoin + rateEcoin * 60;
+            if (balEcoin >= required) {
+                balBox.innerHTML = `<div class="balance-indicator sufficient">\u2705 ${t('mp_bal_your','Balance')}: ${balEcoin.toFixed(0)} e\u5e63 \u2014 ${t('mp_bal_sufficient','Sufficient')}</div>`;
+                if (rentBtn) rentBtn.disabled = !(privacyCb && privacyCb.checked);
+            } else {
+                const deficit = (required - balEcoin).toFixed(0);
+                balBox.innerHTML = `<div class="balance-indicator insufficient">\u274c ${t('mp_bal_insufficient','Insufficient')} \u2014 ${t('mp_bal_need','Need')} ${required.toFixed(0)}, ${t('mp_bal_current','Current')} ${balEcoin.toFixed(0)} (${t('mp_bal_deficit','Deficit')} ${deficit}) <a class="topup-link" href="wallet.html#topup">${t('mp_bal_topup','Top Up')}</a></div>`;
+                if (rentBtn) rentBtn.disabled = true;
+            }
+        }
+    }
+    function checkRentalBtnState() {
+        const cb = document.getElementById('privacyConsent');
+        const btn = document.getElementById('rentalConfirmBtn');
+        const balBox = document.getElementById('rentalBalanceBox');
+        if (!btn || !cb) return;
+        btn.disabled = !cb.checked || !!(balBox && balBox.querySelector('.insufficient'));
+    }
     async function openRentalDetail(listingId) {
         const modal = document.getElementById('detailModal');
         const content = document.getElementById('detailContent');
-        content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">載入中...</div>';
+        content.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">\u8f09\u5165\u4e2d...</div>';
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
         try {
-            const data = await apiFetch('/api/rental/listing/' + listingId);
-            if (!data.success || !data.listing) throw new Error('Not found');
-            const l = data.listing;
-            const rate = (l.rate_mli_per_ktoken / 1000).toFixed(1);
-            const deposit = (l.rate_mli_per_ktoken * 20 / 1000).toFixed(0);
-            const caps = l.capabilities ? Object.keys(l.capabilities).filter(k => l.capabilities[k]?.supported) : [];
-            const stars = '★'.repeat(Math.round(l.avg_rating || 0)) + '☆'.repeat(5 - Math.round(l.avg_rating || 0));
+            const [listingData, meData] = await Promise.all([
+                apiFetch('/api/rental/listing/' + listingId),
+                apiFetch('/api/auth/me').catch(() => null),
+            ]);
+            if (!listingData.success || !listingData.listing) throw new Error('Not found');
+            const l = listingData.listing;
+            const rateMli = l.rate_mli_per_ktoken;
+            const rateEcoin = (rateMli / 1000).toFixed(1);
+            const depositEcoin = Math.round(rateMli * 20 / 1000);
+            const allCaps = l.capabilities ? Object.keys(l.capabilities) : [];
+            const stars = '\u2605'.repeat(Math.round(l.avg_rating || 0)) + '\u2606'.repeat(5 - Math.round(l.avg_rating || 0));
             const ttt = (k, fb) => (typeof i18n !== 'undefined' ? i18n.t(k) : null) || fb;
-
+            const minH = (l.min_rental_minutes / 60).toFixed(1);
+            const maxH = (l.max_rental_minutes / 60).toFixed(1);
+            const defaultH = Math.max(parseFloat(minH), 1);
+            const isRented = !!l.has_active_contract;
+            _rentalWalletBalance = null;
+            if (meData?.user) {
+                apiFetch('/api/wallet/balance?deviceId=' + encodeURIComponent(meData.user.deviceId || meData.user.device_id))
+                    .then(wb => { _rentalWalletBalance = parseInt(wb.balance_mli, 10) || 0; updateRentalEstimate(rateMli, depositEcoin); })
+                    .catch(() => {});
+            }
+            let interviewHtml = '';
+            if (l.interview_score != null && l.interview_max_score) {
+                const pct = Math.round((l.interview_score / l.interview_max_score) * 100);
+                interviewHtml = `<div class="interview-score-badge">\ud83d\udcca ${ttt('mp_interview_score','Interview')}: ${l.interview_score}/${l.interview_max_score} (${pct}%)</div>`;
+            }
+            const capsHtml = allCaps.length ? `<div class="detail-tags" style="padding:8px 20px;">${allCaps.map(c => {
+                const sup = l.capabilities[c]?.supported;
+                return `<span class="detail-tag cap-chip ${capChipClass(c)}">${esc(c)}${sup ? ' \u2713' : ' \u2717'}</span>`;
+            }).join('')}</div>` : '';
             content.innerHTML = `
-                <button class="modal-close" onclick="closeDetail()">✕</button>
+                <button class="modal-close" onclick="closeDetail()">\u2715</button>
                 <div class="detail-header">
-                    <div class="detail-avatar">🤖</div>
+                    <div class="detail-avatar">\ud83e\udd16</div>
                     <div class="detail-name">${esc(l.title)}</div>
-                    <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${esc(l.model_detected || '')}</div>
+                    ${l.model_detected ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">\ud83e\udd16 ${esc(l.model_detected)}</div>` : ''}
+                    <div class="detail-level-xp"><span style="color:#f59e0b;">${stars} (${l.total_rentals || 0} ${ttt('mp_d_rentals','rentals')})</span></div>
+                    ${interviewHtml}
                     <div class="detail-desc">${esc(l.description || '')}</div>
                 </div>
-                ${caps.length ? `<div class="detail-tags">${caps.map(c=>`<span class="detail-tag" style="background:rgba(16,185,129,0.15);color:#10b981;">${esc(c)}</span>`).join('')}</div>` : ''}
-                <div style="margin:16px 0;border-top:1px solid var(--card-border);padding-top:12px;">
-                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-secondary);">${ttt('mp_d_rate','費率')}</span><span style="font-weight:700;color:#10b981;">${rate} e幣/1K tokens</span></div>
-                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-secondary);">${ttt('mp_d_deposit','押金')}</span><span>${deposit} e幣</span></div>
-                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-secondary);">${ttt('mp_d_duration','租期')}</span><span>${l.min_rental_minutes}–${l.max_rental_minutes} min</span></div>
-                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-secondary);">${ttt('mp_d_rating','評分')}</span><span style="color:#f59e0b;">${stars} (${l.total_rentals || 0} ${ttt('mp_d_rentals','次')})</span></div>
-                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-secondary);">${ttt('mp_d_uptime','上線率')}</span><span>${l.uptime_pct || 100}%</span></div>
+                ${capsHtml}
+                <div style="margin:0 20px;border-top:1px solid var(--card-border);padding:12px 0;">
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-secondary);">${ttt('mp_d_rate','Rate')}</span><span style="font-weight:700;color:#10b981;">${rateEcoin} e\u5e63/1K tokens</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-secondary);">${ttt('mp_d_deposit','Deposit')}</span><span>${depositEcoin} e\u5e63</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-secondary);">${ttt('mp_d_duration','Duration')}</span><span>${minH}\u2013${maxH} ${ttt('mp_hours','hrs')}</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-secondary);">${ttt('mp_d_rating','Rating')}</span><span style="color:#f59e0b;">${stars} (${l.total_rentals || 0} ${ttt('mp_d_rentals','rentals')})</span></div>
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-secondary);">${ttt('mp_d_uptime','Uptime')}</span><span>${l.uptime_pct || 100}%</span></div>
                 </div>
-                <div style="margin-top:8px;">
-                    <label style="font-size:12px;color:var(--text-secondary);">${ttt('mp_d_rent_duration','租借時長（分鐘）')}</label>
-                    <input type="number" id="rentalDuration" value="${l.min_rental_minutes}" min="${l.min_rental_minutes}" max="${l.max_rental_minutes}" style="width:100%;margin-top:4px;padding:10px;border:1px solid var(--card-border);border-radius:var(--radius-sm);background:var(--input-bg);color:var(--text);font-size:14px;">
+                <div style="margin:0 20px;">
+                    <label style="font-size:12px;color:var(--text-secondary);font-weight:600;">\u23f1\ufe0f ${ttt('mp_d_rent_duration_hours','Duration (hours)')}</label>
+                    <input type="number" id="rentalDurationHours" value="${defaultH}" min="${minH}" max="${maxH}" step="0.5" style="width:100%;margin-top:4px;padding:10px;border:1px solid var(--card-border);border-radius:var(--radius-sm);background:var(--input-bg);color:var(--text);font-size:14px;" oninput="updateRentalEstimate(${rateMli},${depositEcoin})">
+                    <div class="rental-cost-box" id="rentalCostBox"></div>
+                    <div id="rentalBalanceBox"></div>
                 </div>
-                <button class="detail-btn primary" style="width:100%;margin-top:12px;padding:12px;font-size:14px;" onclick="doRentalFromPlaza('${l.id}')">${ttt('mp_rent_now','立即租借')}</button>
-                <p style="font-size:11px;color:var(--text-secondary);margin-top:8px;text-align:center;">${ttt('mp_rent_warning','⚠️ 您的訊息將傳送到出租者的伺服器。請避免透露敏感資訊。')}</p>
-            `;
+                <div class="privacy-check-row" style="margin:12px 20px 0;">
+                    <input type="checkbox" id="privacyConsent" onchange="checkRentalBtnState()">
+                    <label for="privacyConsent">${ttt('mp_privacy_warning','Your conversation will be processed through the lessor server.')} <strong>${ttt('mp_privacy_agree','I understand and agree')}</strong></label>
+                </div>
+                <div style="margin:12px 20px 20px;">
+                    ${isRented
+                        ? `<button class="detail-btn primary" style="width:100%;padding:12px;font-size:14px;opacity:0.5;cursor:not-allowed;" disabled>\ud83d\udd34 ${ttt('mp_status_rented','Rented')}</button>`
+                        : `<button class="detail-btn primary" style="width:100%;padding:12px;font-size:14px;" id="rentalConfirmBtn" disabled onclick="doRentalFromPlaza('${l.id}',${rateMli})">\ud83d\udd12 ${ttt('mp_rent_now','Rent Now')}</button>`}
+                </div>`;
+            updateRentalEstimate(rateMli, depositEcoin);
         } catch (e) {
-            content.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">載入失敗</div>';
+            content.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">\u8f09\u5165\u5931\u6557</div>';
             console.error('openRentalDetail:', e);
         }
     }
@@ -919,28 +1024,42 @@
         return fallbacks[i18nKey];
     }
 
-    async function doRentalFromPlaza(listingId) {
+    async function doRentalFromPlaza(listingId, rateMli) {
         const ttt = (k, fb) => (typeof i18n !== 'undefined' ? i18n.t(k) : null) || fb;
+        const btn = document.getElementById('rentalConfirmBtn');
+        const btnLabel = '\ud83d\udd12 ' + ttt('mp_rent_now','Rent Now');
+        if (btn) { btn.disabled = true; btn.textContent = ttt('mp_renting','Processing...'); }
         try {
             const user = await apiFetch('/api/auth/me');
-            if (!user?.user) { alert(ttt('mp_login_first','請先登入')); return; }
-            const duration = parseInt(document.getElementById('rentalDuration')?.value, 10) || 60;
+            if (!user?.user) { alert(ttt('mp_login_first','Please login')); if (btn) { btn.disabled = false; btn.textContent = btnLabel; } return; }
+            const hours = parseFloat(document.getElementById('rentalDurationHours')?.value) || 1;
             const data = await apiPost('/api/rental/contract', {
                 listingId,
                 renterDeviceId: user.user.deviceId || user.user.device_id || 'web',
-                durationMinutes: duration,
+                durationMinutes: Math.round(hours * 60),
             });
             if (data?.success) {
-                closeDetail();
-                alert(ttt('mp_rent_success','租借成功！請至「我的租賃」查看詳情。'));
-                window.location.href = 'my-rentals.html';
+                const content = document.getElementById('detailContent');
+                if (content) {
+                    content.innerHTML = `<div class="rental-success-overlay">
+                        <div class="success-icon">\u2705</div>
+                        <div class="success-text">${ttt('mp_rent_success_title','Rental successful!')}</div>
+                        <p style="color:var(--text-secondary);font-size:13px;margin-top:8px;">${ttt('mp_rent_success_desc','Bot has been added to your device.')}</p>
+                        <div class="success-actions">
+                            <button class="detail-btn primary" onclick="window.location.href='chat.html'">\ud83d\udde3\ufe0f ${ttt('mp_start_chat','Start Chat')}</button>
+                            <button class="detail-btn outline" onclick="window.location.href='my-rentals.html'">\ud83d\udccb ${ttt('mp_view_contract','View Contract')}</button>
+                        </div></div>`;
+                }
+                setTimeout(() => { closeDetail(); loadBots(); }, 3000);
             } else {
                 const errCode = data?.error || '';
                 alert(translateRentalError(errCode) || errCode || 'Failed');
+                if (btn) { btn.disabled = false; btn.textContent = btnLabel; }
             }
         } catch (err) {
             const errCode = err.message || '';
             alert(translateRentalError(errCode) || errCode || 'Rental failed');
+            if (btn) { btn.disabled = false; btn.textContent = btnLabel; }
         }
     }
 

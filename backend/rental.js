@@ -299,38 +299,41 @@ async function searchMarketplace({
     const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100);
     const safeOffset = Math.max(parseInt(offset, 10) || 0, 0);
     const params = [];
-    const where = [`status = 'listed'`, `interview_passed = TRUE`];
+    const where = [`bl.status = 'listed'`, `bl.interview_passed = TRUE`];
 
     if (minRateMli != null) {
         params.push(minRateMli);
-        where.push(`rate_mli_per_ktoken >= $${params.length}`);
+        where.push(`bl.rate_mli_per_ktoken >= $${params.length}`);
     }
     if (maxRateMli != null) {
         params.push(maxRateMli);
-        where.push(`rate_mli_per_ktoken <= $${params.length}`);
+        where.push(`bl.rate_mli_per_ktoken <= $${params.length}`);
     }
     if (capability) {
         params.push(capability);
-        where.push(`capabilities ? $${params.length}`);
+        where.push(`bl.capabilities ? $${params.length}`);
     }
 
     let orderBy;
     switch (sort) {
-        case 'rate_asc':  orderBy = 'rate_mli_per_ktoken ASC'; break;
-        case 'rate_desc': orderBy = 'rate_mli_per_ktoken DESC'; break;
-        case 'newest':    orderBy = 'created_at DESC'; break;
+        case 'rate_asc':  orderBy = 'bl.rate_mli_per_ktoken ASC'; break;
+        case 'rate_desc': orderBy = 'bl.rate_mli_per_ktoken DESC'; break;
+        case 'newest':    orderBy = 'bl.created_at DESC'; break;
         case 'rating':
-        default:          orderBy = 'avg_rating DESC, total_rentals DESC'; break;
+        default:          orderBy = 'bl.avg_rating DESC, bl.total_rentals DESC'; break;
     }
 
     params.push(safeLimit);
     params.push(safeOffset);
     const res = await pool.query(
-        `SELECT id, title, description, rate_mli_per_ktoken,
-                min_rental_minutes, max_rental_minutes,
-                model_detected, capabilities, benchmark_score,
-                avg_rating, total_rentals, uptime_pct
-         FROM bot_listings
+        `SELECT bl.id, bl.title, bl.description, bl.rate_mli_per_ktoken,
+                bl.min_rental_minutes, bl.max_rental_minutes,
+                bl.model_detected, bl.capabilities, bl.benchmark_score,
+                bl.avg_rating, bl.total_rentals, bl.uptime_pct,
+                CASE WHEN ac.id IS NOT NULL THEN TRUE ELSE FALSE END AS has_active_contract
+         FROM bot_listings bl
+         LEFT JOIN rental_contracts ac
+           ON ac.listing_id = bl.id AND ac.status LIKE 'active%'
          WHERE ${where.join(' AND ')}
          ORDER BY ${orderBy}
          LIMIT $${params.length - 1} OFFSET $${params.length}`,
@@ -1116,9 +1119,25 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
     router.get('/listing/:id', rentalRoute(async (req, res) => {
         const listing = await getListing(req.params.id);
         if (!listing) throw new Error('listing_not_found');
-        // Hide owner identity for non-owner viewers (design decision #14).
         if (!req.user || listing.owner_user_id !== req.user.userId) {
             delete listing.owner_user_id;
+        }
+        // Availability: check for active contract
+        const acRes = await pool.query(
+            `SELECT id FROM rental_contracts WHERE listing_id = $1 AND status LIKE 'active%' LIMIT 1`,
+            [listing.id]
+        );
+        listing.has_active_contract = acRes.rows.length > 0;
+        // Interview score from latest completed exam
+        const ivRes = await pool.query(
+            `SELECT total_score, max_score FROM arena_exams
+             WHERE listing_id = $1 AND status = 'completed'
+             ORDER BY created_at DESC LIMIT 1`,
+            [listing.id]
+        );
+        if (ivRes.rows.length > 0) {
+            listing.interview_score = parseInt(ivRes.rows[0].total_score, 10) || 0;
+            listing.interview_max_score = parseInt(ivRes.rows[0].max_score, 10) || 0;
         }
         res.json({ success: true, listing });
     }));
