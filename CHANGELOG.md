@@ -1,3 +1,10 @@
+## [1.961.1](https://github.com/HankHuang0516/EClaw/compare/v1.961.0...v1.961.1) (2026-04-12)
+
+
+### Bug Fixes
+
+* **interview:** add diagnostic logging for arena auto-push + fix false positive log ([9f6dfe7](https://github.com/HankHuang0516/EClaw/commit/9f6dfe793e454141eabe50b60095cd332c1ce6bc))
+
 # [1.961.0](https://github.com/HankHuang0516/EClaw/compare/v1.960.0...v1.961.0) (2026-04-12)
 
 
