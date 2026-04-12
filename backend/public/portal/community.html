@@ -1086,6 +1086,9 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
     function checkModalScroll() { const mc = document.getElementById('detailContent'); if (mc && mc.scrollHeight > mc.clientHeight) mc.classList.add('has-scroll'); }
 
+    // Apply i18n translations to static data-i18n elements
+    if (typeof i18n !== 'undefined') i18n.apply();
+
     // Auto-switch to rental tab if URL hash is #rental
     if (location.hash === '#rental') {
         const rentalChip = document.querySelector('.plaza-chip[data-filter="rental"]');
