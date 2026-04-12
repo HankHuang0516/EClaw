@@ -871,5 +871,26 @@ If you have any questions, please contact us via our official email.
     <string name="entity_card_last_updated">Last updated: just now</string>
     <string name="template_gallery_select">Select</string>
 
+    <!-- Common UI strings -->
+    <string name="bind_button">Bind</string>
+    <string name="unbind_button">Unbind</string>
+    <string name="card_holder">Card Holder</string>
+    <string name="chat">Chat</string>
+    <string name="confirm">Confirm</string>
+    <string name="error_occurred">An error occurred</string>
+    <string name="info">Info</string>
+    <string name="language">Language</string>
+    <string name="loading">Loading…</string>
+    <string name="microphone_permission_denied">Microphone permission denied</string>
+    <string name="recording">Recording…</string>
+
+    <!-- Wallet / Top-up / Subscription -->
+    <string name="topup_ecoin_title">Top Up e-Coins</string>
+    <string name="topup_ecoin">Top Up</string>
+    <string name="topup_success">e-Coins added to your wallet!</string>
+    <string name="topup_failed">Top-up failed. Please try again.</string>
+    <string name="choose_plan_title">Choose Plan</string>
+    <string name="upgrade_plan">Upgrade Plan</string>
+
 </resources>
 
