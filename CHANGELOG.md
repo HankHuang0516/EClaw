@@ -1,3 +1,10 @@
+## [1.962.2](https://github.com/HankHuang0516/EClaw/compare/v1.962.1...v1.962.2) (2026-04-12)
+
+
+### Bug Fixes
+
+* **MainActivity:** move 9 hardcoded Toast strings to strings.xml + i18n ([#1727](https://github.com/HankHuang0516/EClaw/issues/1727)) ([f12b17b](https://github.com/HankHuang0516/EClaw/commit/f12b17bc03c1176a2857a58939cf29c975353676)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 ## [1.962.1](https://github.com/HankHuang0516/EClaw/compare/v1.962.0...v1.962.1) (2026-04-12)
 
 
