@@ -161,8 +161,9 @@ describe('interview-arena: challenge generators', () => {
 
     test('table_extract challenge has tableData and question', () => {
         const c = CHALLENGE_GENERATORS.arena_table_extract();
-        expect(c.tableData.length).toBe(10);
-        expect(c.question).toContain('total revenue');
+        expect(c.tableData.length).toBeGreaterThanOrEqual(10);
+        expect(c.tableData.length).toBeLessThanOrEqual(20);
+        expect(c.question).toContain('revenue');
         expect(c.correctAnswer).toBeTruthy();
     });
 

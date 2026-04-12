@@ -171,14 +171,17 @@ const VISION_IMAGES = [
     { file: null, description: 'An arrow pointing right with a dashed trail on black background', keywords: ['arrow', 'right', 'dashed'] },
     { file: null, description: 'A flowchart with a diamond decision node labeled "Is valid?" branching to Yes and No paths', keywords: ['flowchart', 'diamond', 'decision', 'yes', 'no'] },
     // ── Hard tier (30%) — OCR, spatial reasoning, complex counting ──
-    { file: null, description: 'A grocery shelf with six cans of soup on the top row and two boxes of cereal on the bottom row', keywords: ['six', 'cans', 'soup', 'two', 'cereal'] },
     { file: null, description: 'An aerial parking lot with twelve cars, three of which are red', keywords: ['twelve', 'cars', 'three', 'red'] },
+    { file: null, description: 'A GitHub commit history panel showing five commits; the third entry reads "fix: resolve null pointer in auth module"', keywords: ['github', 'five', 'fix', 'auth', 'null'] },
+    { file: null, description: 'A bus schedule board with three routes: Route 12 to Downtown at 08:15, Route 34 to Airport at 09:00, Route 56 to University at 08:45', keywords: ['bus', 'three', 'routes', '12', '34', '56', '08:15'] },
+    { file: null, description: 'A spreadsheet showing five products and their Q1 sales; the Laptop row reads 120 units in column B', keywords: ['spreadsheet', 'laptop', '120', 'products', 'Q1'] },
     { file: null, description: 'A chemistry lab bench with three beakers: left contains blue liquid, middle is empty, right has green precipitate at the bottom', keywords: ['three', 'beakers', 'blue', 'empty', 'green'] },
     { file: null, description: 'A handwritten note on lined paper reading Meeting at 3pm Room 204 with the time and room number underlined', keywords: ['meeting', '3pm', '204', 'underlined'] },
     { file: null, description: 'A phone home screen showing 16 app icons in a 4x4 grid and a weather widget displaying 72 degrees', keywords: ['phone', '16', 'apps', 'weather', '72'] },
     { file: null, description: 'A line chart showing quarterly revenue: Q1 at $10K, Q2 at $15K, Q3 dips to $8K, Q4 recovers to $20K', keywords: ['chart', 'revenue', 'Q3', 'dip', 'Q4'] },
     { file: null, description: 'A world map with five red pins marking cities: New York, London, Tokyo, Sydney, and São Paulo', keywords: ['map', 'five', 'pins', 'Tokyo'] },
     { file: null, description: 'A receipt from a store dated 03/15 showing total $47.83 with three itemized lines and a barcode at bottom', keywords: ['receipt', 'total', '47', 'three', 'barcode'] },
+    { file: null, description: 'A network topology diagram with one router at the top connected to three switches, each switch connected to two desktop computers', keywords: ['router', 'three', 'switches', 'six', 'computers', 'network'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -195,12 +198,12 @@ function generateButtonClickChallenge() {
     return { correctIndex, correctLabel, buttonCount, seed: Math.floor(Math.random() * 1e9) };
 }
 
-const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson'];
-const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se'];
-const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore'];
-const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567'];
-const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17','1993-08-09','1986-02-14','1994-10-31','1989-05-20'];
-const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund'];
+const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Nguyen Van Minh','Zanele Mokoena','Alejandro Rodrigo','Sven Lindqvist','Amara Osei'];
+const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','nguyen@example.vn','zanele@demo.za','alejandro@test.mx','sven@example.se','amara@demo.gh'];
+const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','Vietnam','South Africa','Netherlands','Norway','New Zealand'];
+const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567','+84-90-123-4567','+27-71-123-4567','+31-6-1234-5678'];
+const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17','1993-08-09','1986-02-14','1994-10-31','1989-05-20','1997-03-07','1982-11-19','1996-08-28'];
+const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund','Reporting a bug in checkout flow','Requesting account upgrade to Pro','Issue with two-factor authentication','Please update my billing address','Inquiry about enterprise licensing'];
 
 function generateFormFillChallenge() {
     const nameIdx = Math.floor(Math.random() * FORM_NAMES.length);
@@ -258,7 +261,7 @@ function generateNavigationChallenge() {
 
 function generateTableExtractChallenge() {
     const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
-    const departments = ['Engineering', 'Marketing', 'Sales', 'Operations', 'HR', 'Finance', 'Legal', 'R&D', 'Customer Support', 'Product'];
+    const departments = ['Engineering', 'Marketing', 'Sales', 'Operations', 'HR', 'Finance', 'Legal', 'R&D', 'Customer Support', 'Product', 'Design', 'DevOps', 'QA', 'Business Development', 'IT'];
     const tableData = [];
     for (const dept of departments) {
         const row = { department: dept };
@@ -267,14 +270,24 @@ function generateTableExtractChallenge() {
         }
         tableData.push(row);
     }
-    // Pick a random question
+    // Randomly select between two question types for additional difficulty
+    const questionType = Math.random() < 0.5 ? 'total' : 'max';
     const targetQ = quarters[Math.floor(Math.random() * quarters.length)];
-    const total = tableData.reduce((s, r) => s + r[targetQ], 0);
+    let question, correctAnswer;
+    if (questionType === 'total') {
+        const total = tableData.reduce((s, r) => s + r[targetQ], 0);
+        question = `What is the total revenue for ${targetQ}?`;
+        correctAnswer = String(total);
+    } else {
+        const maxRow = tableData.reduce((best, r) => r[targetQ] > best[targetQ] ? r : best, tableData[0]);
+        question = `Which department had the highest revenue in ${targetQ}?`;
+        correctAnswer = maxRow.department;
+    }
     return {
         tableData,
         columns: ['department', ...quarters],
-        question: `What is the total revenue for ${targetQ}?`,
-        correctAnswer: String(total),
+        question,
+        correctAnswer,
     };
 }
 
@@ -339,6 +352,14 @@ const CODING_PROBLEMS = [
       testCases: [{ input: '"abcabcbb"', expected: '3' },{ input: '"bbbbb"', expected: '1' },{ input: '"pwwkew"', expected: '3' },{ input: '""', expected: '0' }] },
     { title: 'Group Anagrams', description: 'Write `solve(strs)` — group anagrams together. Return an array of arrays where each inner array contains words that are anagrams of each other (each group sorted alphabetically).',
       testCases: [{ input: '["eat","tea","tan","ate","nat","bat"]', expected: '[["ate","eat","tea"],["bat"],["nat","tan"]]' },{ input: '[""]', expected: '[[""]]' },{ input: '["a"]', expected: '[["a"]]' }] },
+    { title: 'Minimum Path Sum', description: 'Write `solve(grid)` — given a 2D grid of non-negative integers, find the path from top-left to bottom-right that minimizes the sum of numbers along the path. You can only move right or down.',
+      testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' },{ input: '[[1,2],[1,1]]', expected: '3' }] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(s1, s2)` — return the length of the longest common subsequence of two strings (characters do not need to be contiguous).',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"oxcpqrsvwf", "shmtulqrypy"', expected: '2' }] },
+    { title: 'Decode Ways', description: 'Write `solve(s)` — a message is encoded where "A"=1, "B"=2, ..., "Z"=26. Return the number of ways to decode the digit string.',
+      testCases: [{ input: '"12"', expected: '2' },{ input: '"226"', expected: '3' },{ input: '"06"', expected: '0' },{ input: '"11106"', expected: '2' }] },
+    { title: '0-1 Knapsack', description: 'Write `solve(weights, values, capacity)` — given items with weights and values and a knapsack capacity, return the maximum total value you can carry. Each item can only be used once.',
+      testCases: [{ input: '[1,2,3], [6,10,12], 5', expected: '22' },{ input: '[2,3,4,5], [3,4,5,6], 8', expected: '10' },{ input: '[1], [10], 0', expected: '0' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -356,8 +377,9 @@ const RESPONSE_QUESTIONS = [
     { question: 'What is 13 × 17?', expectedKeywords: ['221'] },
     // ── Medium tier (50%) — multi-step math, applied reasoning ──
     { question: 'A pool fills in 3 hours with pipe A alone and 6 hours with pipe B alone. How many hours to fill it with both pipes open together?', expectedKeywords: ['2'] },
-    { question: 'If you buy 3 items at $4.75 each and pay with a $20 bill, how much change do you get?', expectedKeywords: ['5.75'] },
     { question: 'A train travels 240 km in 3 hours. What is its average speed in km/h?', expectedKeywords: ['80'] },
+    { question: 'A car rental costs $45 per day plus $0.20 per mile. How much does a 5-day rental with 200 miles driven cost in dollars?', expectedKeywords: ['265'] },
+    { question: 'How many seconds are there in one week?', expectedKeywords: ['604800'] },
     { question: 'What is the next number in the sequence: 2, 6, 18, 54, ...?', expectedKeywords: ['162'] },
     { question: 'A rectangle has sides of length 12 cm and 5 cm. What is the length of its diagonal?', expectedKeywords: ['13'] },
     { question: 'If 5 machines take 5 minutes to make 5 widgets, how many minutes would 100 machines take to make 100 widgets?', expectedKeywords: ['5'] },
@@ -376,6 +398,9 @@ const RESPONSE_QUESTIONS = [
     { question: 'A ball is dropped from 100 meters. Each bounce reaches half the previous height. What is the total distance traveled after exactly 3 bounces (including all ups and downs)?', expectedKeywords: ['275'] },
     { question: 'Three people check into a hotel room that costs $30. They each pay $10. The manager realizes the room is only $25 and gives $5 to the bellboy to return. The bellboy keeps $2 and gives $1 back to each person. Each person paid $9 (total $27) plus $2 the bellboy kept = $29. Where is the missing dollar?', expectedKeywords: ['no missing', 'accounting', 'error', 'fallacy'] },
     { question: 'A snail climbs 3 meters up a wall during the day but slides back 2 meters at night. If the wall is 10 meters high, how many days does it take the snail to reach the top?', expectedKeywords: ['8'] },
+    { question: 'A bat and a ball together cost $1.10. The bat costs $1.00 more than the ball. How much does the ball cost in cents?', expectedKeywords: ['5', '0.05', 'five cents'] },
+    { question: 'An O(n²) algorithm takes 2 seconds to process 1000 items. Approximately how many seconds would it take for 3000 items?', expectedKeywords: ['18'] },
+    { question: 'You have a 3-litre jug and a 5-litre jug and need to measure exactly 4 litres. What is the minimum number of pour operations required?', expectedKeywords: ['6', 'six'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -442,6 +467,13 @@ const TTS_PHRASES = [
     { text: 'The chemical compound CH3COOH commonly known as acetic acid has a pH of approximately 2.4', keywords: ['chemical', 'acetic', 'acid', 'pH'] },
     { text: 'Euler identity states that e to the power of i times pi plus 1 equals zero', keywords: ['euler', 'identity', 'pi', 'zero'] },
     { text: 'The UNESCO World Heritage site Machu Picchu is located at 2430 meters elevation in Peru', keywords: ['UNESCO', 'Machu Picchu', '2430', 'Peru'] },
+    // ── Additional medium-tier phrases ──
+    { text: 'The S and P 500 index rose 0.73 percent to close at 5234 points on Friday', keywords: ['S&P', '500', '0.73', 'percent', '5234'] },
+    { text: 'Download the updated PDF from docs slash releases slash version 3.4.1 and review the changelog', keywords: ['download', 'docs', 'releases', '3.4.1', 'changelog'] },
+    { text: 'Passenger Ahmed Al-Farouk please proceed to gate B-17 for boarding', keywords: ['Ahmed', 'Al-Farouk', 'gate', 'B-17', 'boarding'] },
+    // ── Additional hard-tier phrases ──
+    { text: 'Patient chart ID A-7392 shows hemoglobin 11.2 grams per deciliter measured at 07:30 hours', keywords: ['A-7392', 'hemoglobin', '11.2', '07:30'] },
+    { text: 'The API endpoint returns HTTP 429 Too Many Requests after exceeding 100 calls per 15 minute window', keywords: ['API', '429', 'Too Many Requests', '100', '15'] },
 ];
 function generateTtsChallenge(weights) {
     const w = weights && weights['arena_tts'] || {};
