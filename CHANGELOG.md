@@ -1,3 +1,10 @@
+## [1.959.3](https://github.com/HankHuang0516/EClaw/compare/v1.959.2...v1.959.3) (2026-04-12)
+
+
+### Bug Fixes
+
+* **rental:** correct column name virtual_device_id → device_id in debug endpoint ([e85ffa0](https://github.com/HankHuang0516/EClaw/commit/e85ffa05431f02b9952523632b87cbbe95bc9263))
+
 ## [1.959.2](https://github.com/HankHuang0516/EClaw/compare/v1.959.1...v1.959.2) (2026-04-12)
 
 
