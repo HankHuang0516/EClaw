@@ -1,3 +1,10 @@
+# [1.960.0](https://github.com/HankHuang0516/EClaw/compare/v1.959.5...v1.960.0) (2026-04-12)
+
+
+### Features
+
+* **interview:** unify interview UX with Arena 12-challenge system ([9a99e27](https://github.com/HankHuang0516/EClaw/commit/9a99e277c3eb3555ef269765a79dfe868839cd02))
+
 ## [1.959.5](https://github.com/HankHuang0516/EClaw/compare/v1.959.4...v1.959.5) (2026-04-12)
 
 
