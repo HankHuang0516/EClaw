@@ -58,6 +58,10 @@ const PORTAL_PAGES = [
     'info.html',
     'delete-account.html',
     'screen-control.html',
+    'wallet.html',
+    'my-rentals.html',
+    'invite.html',
+    'community.html',
 ];
 
 const SHARED_ASSETS = [
