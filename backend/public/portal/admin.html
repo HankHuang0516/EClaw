@@ -1111,7 +1111,7 @@
             html += '<div class="section-title">' + i18n.t('admin_sec_users') + ' (' + realUsers.length + ') &mdash; ' + i18n.t('admin_registered') + ': ' + registeredUsers.length + ' / ' + i18n.t('admin_app_device') + ': ' + appDevices.length + (testUsers.length > 0 ? ' / <span style="color:var(--text-secondary);font-weight:400;">' + i18n.t('admin_test_devices') + ': ' + testUsers.length + '</span>' : '') + '</div>';
             html += '<div class="table-scroll">';
             html += '<table class="data-table">';
-            html += '<thead><tr><th>' + i18n.t('admin_col_source') + '</th><th>' + i18n.t('admin_col_email') + '</th><th>' + i18n.t('admin_col_verified') + '</th><th>' + i18n.t('admin_col_sub') + '</th><th>' + i18n.t('admin_col_role') + '</th><th>' + i18n.t('admin_col_device') + '</th><th>' + i18n.t('admin_col_registered') + '</th><th>' + i18n.t('admin_col_last_login') + '</th></tr></thead>';
+            html += '<thead><tr><th>' + i18n.t('admin_col_source') + '</th><th>' + i18n.t('admin_col_email') + '</th><th>' + i18n.t('admin_col_verified') + '</th><th>' + i18n.t('admin_col_sub') + '</th><th>' + i18n.t('admin_col_role') + '</th><th>' + i18n.t('admin_col_ecoin') + '</th><th>' + i18n.t('admin_col_device') + '</th><th>' + i18n.t('admin_col_registered') + '</th><th>' + i18n.t('admin_col_last_login') + '</th></tr></thead>';
             const USERS_PAGE_SIZE = 50;
             const usersTotalPages = Math.max(1, Math.ceil(realUsers.length / USERS_PAGE_SIZE));
             if (usersPage >= usersTotalPages) usersPage = usersTotalPages - 1;
@@ -1128,19 +1128,23 @@
                     const emailDisplay = isApp
                         ? '<span style="color:var(--text-secondary);font-style:italic;">(' + i18n.t('admin_app_only') + ')</span>'
                         : escapeHtml(u.email);
+                    const ecoinDisplay = (u.balanceEcoin != null && u.source !== 'app_device')
+                        ? '<span class="mono">' + Number(u.balanceEcoin).toLocaleString() + '</span>' + (u.heldEcoin > 0 ? ' <span style="color:var(--text-muted);font-size:0.8em;">(held: ' + Number(u.heldEcoin).toLocaleString() + ')</span>' : '')
+                        : '-';
                     html += '<tr>' +
                         '<td>' + sourceBadge + '</td>' +
                         '<td>' + emailDisplay + '</td>' +
                         '<td>' + (isApp ? '-' : (u.emailVerified ? '<span style="color:var(--success)">Yes</span>' : '<span style="color:var(--text-muted)">No</span>')) + '</td>' +
                         '<td><span class="type-badge ' + subCls + '">' + escapeHtml(u.subscriptionStatus) + '</span></td>' +
                         '<td>' + (u.isAdmin ? '<span class="type-badge type-admin">Admin</span>' : (isApp ? '-' : 'User')) + '</td>' +
+                        '<td>' + ecoinDisplay + '</td>' +
                         '<td class="mono">' + escapeHtml(u.deviceId).substring(0, 8) + '...</td>' +
                         '<td>' + formatDate(u.createdAt) + '</td>' +
                         '<td>' + (isApp ? '-' : formatDate(u.lastLoginAt)) + '</td>' +
                         '</tr>';
                 }
             } else {
-                html += '<tr><td colspan="8" style="text-align:center;color:var(--text-secondary);">' + i18n.t('admin_no_users') + '</td></tr>';
+                html += '<tr><td colspan="9" style="text-align:center;color:var(--text-secondary);">' + i18n.t('admin_no_users') + '</td></tr>';
             }
             html += '</tbody></table></div>';
             if (usersTotalPages > 1) {

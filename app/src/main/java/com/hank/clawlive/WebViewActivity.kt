@@ -1,0 +1,174 @@
+package com.hank.clawlive
+
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Intent
+import android.graphics.Color
+import android.net.Uri
+import android.os.Bundle
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import com.hank.clawlive.data.local.DeviceManager
+import com.hank.clawlive.data.remote.TelemetryHelper
+import com.hank.clawlive.ui.BottomNavHelper
+import com.hank.clawlive.ui.NavItem
+import com.hank.clawlive.ui.RecordingIndicatorHelper
+import timber.log.Timber
+
+/**
+ * Generic WebView host activity for portal pages (Wallet, Rentals, Invite, etc.).
+ *
+ * Launch via [WebViewActivity.launch] with a URL and title.
+ * Credentials are injected via query params and localStorage.
+ */
+class WebViewActivity : AppCompatActivity() {
+
+    companion object {
+        const val EXTRA_URL = "extra_url"
+        const val EXTRA_TITLE = "extra_title"
+
+        fun launch(context: Context, url: String, title: String) {
+            context.startActivity(Intent(context, WebViewActivity::class.java).apply {
+                putExtra(EXTRA_URL, url)
+                putExtra(EXTRA_TITLE, title)
+            })
+        }
+    }
+
+    private val deviceManager: DeviceManager by lazy { DeviceManager.getInstance(this) }
+    private var webView: WebView? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        setContentView(R.layout.activity_webview)
+
+        BottomNavHelper.setup(this, NavItem.SETTINGS)
+        setupWindowInsets()
+
+        val title = intent.getStringExtra(EXTRA_TITLE) ?: ""
+        findViewById<TextView>(R.id.tvWebviewTitle).text = title
+        findViewById<ImageView>(R.id.btnWebviewBack).setOnClickListener { onBackPressedCompat() }
+
+        setupWebView()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val title = intent.getStringExtra(EXTRA_TITLE) ?: "webview"
+        TelemetryHelper.trackPageView(this, title.lowercase().replace(" ", "_"))
+        RecordingIndicatorHelper.attach(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        RecordingIndicatorHelper.detach()
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun setupWebView() {
+        val container = findViewById<FrameLayout>(R.id.webviewContainer)
+        val wv = WebView(this).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+            setBackgroundColor(Color.parseColor("#0D0D1A"))
+
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            settings.defaultTextEncodingName = "UTF-8"
+            settings.loadWithOverviewMode = false
+            settings.useWideViewPort = false
+            settings.userAgentString = settings.userAgentString + " EClawAndroid"
+
+            webViewClient = object : WebViewClient() {
+                override fun shouldOverrideUrlLoading(
+                    view: WebView?,
+                    request: WebResourceRequest?
+                ): Boolean {
+                    val url = request?.url?.toString() ?: return false
+                    if (url.contains("eclawbot.com")) return false
+                    try {
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                    } catch (e: Exception) {
+                        Timber.e(e, "[WebView] Failed to open external URL: $url")
+                    }
+                    return true
+                }
+
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    Timber.d("[WebView] Page loaded: $url")
+                    injectCredentials(view)
+                }
+            }
+            webChromeClient = WebChromeClient()
+        }
+
+        container.addView(wv)
+        webView = wv
+
+        val baseUrl = intent.getStringExtra(EXTRA_URL) ?: return
+        val deviceId = deviceManager.deviceId
+        val deviceSecret = deviceManager.deviceSecret
+        val sep = if (baseUrl.contains("?")) "&" else "?"
+        val url = if (deviceId != null && deviceSecret != null)
+            "$baseUrl${sep}deviceId=$deviceId&deviceSecret=$deviceSecret&embed=1"
+        else "$baseUrl${sep}embed=1"
+        wv.loadUrl(url)
+    }
+
+    private fun injectCredentials(webView: WebView?) {
+        val deviceId = deviceManager.deviceId ?: return
+        val deviceSecret = deviceManager.deviceSecret ?: return
+        val js = """
+            (function() {
+                try {
+                    if (!localStorage.getItem('deviceId')) {
+                        localStorage.setItem('deviceId', '$deviceId');
+                        localStorage.setItem('deviceSecret', '$deviceSecret');
+                    }
+                } catch(e) {}
+            })();
+        """.trimIndent()
+        webView?.evaluateJavascript(js, null)
+    }
+
+    private fun setupWindowInsets() {
+        val topBar = findViewById<android.widget.LinearLayout>(R.id.webviewTopBar)
+        ViewCompat.setOnApplyWindowInsetsListener(topBar) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(v.paddingLeft, systemBars.top, v.paddingRight, v.paddingBottom)
+            insets
+        }
+    }
+
+    private fun onBackPressedCompat() {
+        if (webView?.canGoBack() == true) {
+            webView?.goBack()
+            return
+        }
+        finish()
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        onBackPressedCompat()
+    }
+
+    override fun onDestroy() {
+        webView?.destroy()
+        webView = null
+        super.onDestroy()
+    }
+}

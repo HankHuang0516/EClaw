@@ -58,11 +58,12 @@ const LEDGER_TYPES = Object.freeze({
     DEPOSIT_HOLD:    'deposit_hold',
     DEPOSIT_RELEASE: 'deposit_release',
     DEPOSIT_FORFEIT: 'deposit_forfeit',
-    REFERRAL_BONUS:  'referral_bonus',
-    SIGNUP_BONUS:    'signup_bonus',
-    REFUND:          'refund',
-    ADMIN_ADJUST:    'admin_adjust',
-    WITHDRAW:        'withdraw',
+    REFERRAL_BONUS:      'referral_bonus',
+    SIGNUP_BONUS:        'signup_bonus',
+    SUBSCRIPTION_GRANT:  'subscription_grant',
+    REFUND:              'refund',
+    ADMIN_ADJUST:        'admin_adjust',
+    WITHDRAW:            'withdraw',
 });
 
 const ALLOWED_LEDGER_TYPES = new Set(Object.values(LEDGER_TYPES));
@@ -355,6 +356,28 @@ async function creditTopup({ userId, amountMli, orderId, channel, idempotencyKey
         refId: orderId,
         note: note || `topup:${channel}`,
         idempotencyKey,
+    }));
+}
+
+/**
+ * Grant monthly subscription e-coins to a user.
+ * Called from subscription.js when a plan is activated or renewed.
+ * Uses idempotent key based on userId + planId + month to prevent double-grant.
+ */
+async function grantSubscriptionEcoin(userId, planId, ecoinAmount) {
+    const amountMli = ecoinAmount * ECOIN_TO_MLI;
+    const monthKey = new Date().toISOString().slice(0, 7); // e.g. "2026-04"
+    const idemKey = `sub-grant:${userId}:${planId}:${monthKey}`;
+
+    return withTransaction(client => applyLedgerEntry(client, {
+        userId,
+        balanceDelta: amountMli,
+        heldDelta: 0,
+        type: LEDGER_TYPES.SUBSCRIPTION_GRANT,
+        refType: 'subscription',
+        refId: planId,
+        note: `Monthly ${planId} grant: ${ecoinAmount} e幣`,
+        idempotencyKey: idemKey,
     }));
 }
 
@@ -824,6 +847,7 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
         initWalletDatabase,
         // Core primitives (for other modules like rental-contract.js)
         creditTopup,
+        grantSubscriptionEcoin,
         transferEcoin,
         holdDeposit,
         releaseDeposit,

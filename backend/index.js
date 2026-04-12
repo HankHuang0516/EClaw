@@ -1710,10 +1710,52 @@ const walletModule = require('./wallet')({
     serverLog,
 });
 app.use('/api/wallet', walletModule.router);
+// Inject wallet into subscription for monthly e-coin grants (deferred DI)
+if (subscriptionModule.setWalletModule) subscriptionModule.setWalletModule(walletModule);
 // Defer schema init so user_accounts (auth) is created first — wallets
 // has a FK referencing it.
 if (process.env.NODE_ENV !== 'test') {
     setTimeout(() => walletModule.initWalletDatabase(), 2000);
+
+    // One-time admin wallet seed — grant 1,000,000 e幣 to platform admins
+    setTimeout(async () => {
+        const ADMIN_SEED_EMAILS = ['hankhuang0516@gmail.com', 'bbb880008@gmail.com'];
+        const GRANT_ECOIN = 1_000_000;
+        const GRANT_MLI = GRANT_ECOIN * 1000; // 1 e幣 = 1000 mli
+        try {
+            const pg = authModule.pool;
+            for (const email of ADMIN_SEED_EMAILS) {
+                const userRes = await pg.query(
+                    'SELECT id FROM user_accounts WHERE email = $1', [email]
+                );
+                if (userRes.rowCount === 0) {
+                    serverLog('warn', 'wallet', `[AdminSeed] user not found: ${email}`);
+                    continue;
+                }
+                const userId = userRes.rows[0].id;
+                const idemKey = `admin-seed:${email}:1000000ecoin`;
+                try {
+                    await walletModule.adminAdjust({
+                        userId,
+                        deltaMli: GRANT_MLI,
+                        reason: 'Platform admin initial grant (1M e幣)',
+                        adminUserId: userId,
+                        idempotencyKey: idemKey,
+                    });
+                    serverLog('info', 'wallet', `[AdminSeed] granted ${GRANT_ECOIN} e幣 to ${email}`);
+                } catch (err) {
+                    // idempotency_key duplicate = already granted, skip silently
+                    if (err.message?.includes('duplicate') || err.code === '23505') {
+                        serverLog('info', 'wallet', `[AdminSeed] already granted to ${email}, skipping`);
+                    } else {
+                        serverLog('error', 'wallet', `[AdminSeed] grant failed for ${email}: ${err.message}`);
+                    }
+                }
+            }
+        } catch (err) {
+            serverLog('error', 'wallet', `[AdminSeed] seed error: ${err.message}`);
+        }
+    }, 5000); // 5s delay — wallet schema + user_accounts must be ready
 }
 
 // ============================================
@@ -2837,8 +2879,11 @@ app.get('/api/admin/users', adminAuth, adminCheck, async (req, res) => {
     try {
         const pg = authModule.pool;
         const result = await pg.query(
-            `SELECT id, email, email_verified, device_id, subscription_status, subscription_expires_at, is_admin, created_at, last_login_at
-             FROM user_accounts ORDER BY created_at DESC LIMIT 2000`
+            `SELECT u.id, u.email, u.email_verified, u.device_id, u.subscription_status, u.subscription_expires_at, u.is_admin, u.created_at, u.last_login_at,
+                    COALESCE(w.balance_mli, 0) AS balance_mli, COALESCE(w.held_mli, 0) AS held_mli
+             FROM user_accounts u
+             LEFT JOIN wallets w ON u.id = w.user_id
+             ORDER BY u.created_at DESC LIMIT 2000`
         );
 
         // Registered users
@@ -2846,6 +2891,8 @@ app.get('/api/admin/users', adminAuth, adminCheck, async (req, res) => {
         const users = result.rows.map(r => {
             if (r.device_id) registeredDeviceIds.add(r.device_id);
             const dev = r.device_id ? devices[r.device_id] : null;
+            const balanceMli = parseInt(r.balance_mli) || 0;
+            const heldMli = parseInt(r.held_mli) || 0;
             return {
                 id: r.id,
                 email: r.email,
@@ -2857,7 +2904,9 @@ app.get('/api/admin/users', adminAuth, adminCheck, async (req, res) => {
                 createdAt: r.created_at ? (r.created_at instanceof Date ? r.created_at.getTime() : parseInt(r.created_at)) : null,
                 lastLoginAt: r.last_login_at ? (r.last_login_at instanceof Date ? r.last_login_at.getTime() : parseInt(r.last_login_at)) : null,
                 source: 'registered',
-                isTestDevice: isTestDeviceCheck(r.device_id, dev)
+                isTestDevice: isTestDeviceCheck(r.device_id, dev),
+                balanceEcoin: Math.floor(balanceMli / 1000),
+                heldEcoin: Math.floor(heldMli / 1000),
             };
         });
 
