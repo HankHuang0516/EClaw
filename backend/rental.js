@@ -1061,7 +1061,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
     let _interviewDeps = { pushToBot: null, devices: null };
 
     // ── Debug: interview-start-fail (DO NOT REMOVE until user confirms fix) ──
-    router.get('/debug/interview-start-fail', rentalRoute(async (req, res) => {
+    router.get('/debug/interview-start-fail', async (req, res) => { try {
         const { deviceId, deviceSecret } = req.query;
         if (!deviceId || !deviceSecret) {
             return res.json({ success: false, error: 'deviceId and deviceSecret required' });
@@ -1107,8 +1107,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
             },
             timestamp: new Date().toISOString(),
         });
-    }));
-
+    } catch (err) { res.status(500).json({ success: false, error: err.message }); } });
 
 
     // POST /api/rental/listing/:id/interview/start — run interview probes against owner's bot
