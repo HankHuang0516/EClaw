@@ -183,6 +183,19 @@
         <!-- Status: waiting / in progress (between instructions and score) -->
         <div class="eval-status" style="text-align:center;margin-bottom:16px;"><span class="live-dot"></span><span id="statusText" data-i18n="arena_waiting">Waiting for agent to join...</span></div>
 
+        <script>
+        // Interview mode: hide copy instructions (bot gets auto-pushed), update status text
+        (function() {
+            var params = new URLSearchParams(window.location.search);
+            if (params.get('returnUrl')) {
+                var cs = document.getElementById('copySection');
+                if (cs) cs.style.display = 'none';
+                var st = document.getElementById('statusText');
+                if (st) st.textContent = 'Pushing exam to your bot automatically...';
+            }
+        })();
+        </script>
+
         <!-- Info bar: model + countdown -->
         <div id="infoBar" style="display:none;margin-bottom:16px;padding:10px 14px;background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius-sm);align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
             <div style="display:flex;align-items:center;gap:8px;">

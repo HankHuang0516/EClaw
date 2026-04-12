@@ -924,6 +924,9 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
             const sessions = sessRes.rows;
 
             const apiBase = process.env.API_BASE || 'https://eclawbot.com';
+            const examUrl = `${apiBase}/arena/exam/${exam.id}`;
+            const testUrl = `${apiBase}/arena/test/${examToken}`;
+
             res.json({
                 success: true,
                 exam: {
@@ -931,8 +934,8 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
                     examToken: exam.exam_token,
                     status: exam.status,
                     expiresAt: exam.expires_at,
-                    testUrl: `${apiBase}/arena/test/${examToken}`,
-                    examUrl: `${apiBase}/arena/exam/${exam.id}`,
+                    testUrl,
+                    examUrl,
                 },
                 sessions: sessions.map(s => ({
                     id: s.id,
@@ -941,6 +944,67 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
                     status: s.status,
                 })),
             });
+
+            // ── Auto-push: if linked to a listing, push exam instructions to the bot ──
+            if (listingId && _autoPushDeps.devices) {
+                try {
+                    const listingRes = await pool.query(
+                        'SELECT owner_device_id, owner_entity_id FROM bot_listings WHERE id = $1', [listingId]
+                    );
+                    const listing = listingRes.rows[0];
+                    if (listing) {
+                        const device = _autoPushDeps.devices[listing.owner_device_id];
+                        const entity = device?.entities?.[listing.owner_entity_id];
+                        if (entity && (entity.isBound)) {
+                            const instructions = [
+                                `[ARENA_EXAM] EClawbot Agent Benchmark — 12 Challenges, 3-minute time limit.`,
+                                ``,
+                                `Step 1: GET ${testUrl}`,
+                                `  → Returns JSON with examId, tests[] array. Each test has: sessionToken, testType, challengeConfig, actionEndpoint`,
+                                ``,
+                                `Step 2: POST ${apiBase}/api/arena/exam/${exam.id}/model`,
+                                `  Body: {"model":"your-model-name"}`,
+                                ``,
+                                `Step 3: For each test, POST to its actionEndpoint:`,
+                                `  POST ${apiBase}/api/arena/{sessionToken}/action`,
+                                `  Body: {"actionType":"...", "payload":{...}}`,
+                                ``,
+                                `  Action types per test:`,
+                                `  - arena_vision: "page_loaded", then "description_submitted" {"text":"..."}`,
+                                `  - arena_button_click: "button_clicked" {"buttonLabel":"Order #XXXX"}`,
+                                `  - arena_form_fill: "form_submitted" {"fields":{"fieldName":"value",...}}`,
+                                `  - arena_drag_drop: "element_dragged" {"dropX":N,"dropY":N}`,
+                                `  - arena_navigation: "page_navigated" {"depth":N}, then "target_found" {}`,
+                                `  - arena_table_extract: "answer_submitted" {"answer":"..."}`,
+                                `  - arena_distraction: "button_clicked" {"buttonId":"real-submit-xxx"}`,
+                                `  - arena_coding: "code_submitted" {"testResults":[true,false,...]}`,
+                                `  - arena_response_time: "answer_submitted" {"answer":"...","elapsed_ms":N}`,
+                                `  - arena_memory: "answer_submitted" {"answer":"..."}`,
+                                `  - arena_file_mgmt: "file_downloaded","file_renamed","file_uploaded"`,
+                                `  - arena_tts: "transcription_submitted" {"text":"..."}`,
+                                ``,
+                                `Step 4: POST ${apiBase}/api/arena/exam/${exam.id}/finalize`,
+                                `  → Returns total score and per-test breakdown.`,
+                            ].join('\n');
+
+                            const isChannelBound = entity.bindingType === 'channel' && entity.channelAccountId;
+                            if (isChannelBound && _autoPushDeps.pushToChannelCallback) {
+                                _autoPushDeps.pushToChannelCallback(listing.owner_device_id, listing.owner_entity_id, {
+                                    event: 'arena_exam', text: instructions,
+                                }, entity.channelAccountId).catch(e => audit('error', 'arena', `Auto-push channel failed: ${e.message}`));
+                            } else if (entity.webhook && _autoPushDeps.pushToBot) {
+                                _autoPushDeps.pushToBot(entity, listing.owner_device_id, 'arena_exam', {
+                                    message: instructions,
+                                }).catch(e => audit('error', 'arena', `Auto-push webhook failed: ${e.message}`));
+                            }
+                            audit('info', 'arena', `Auto-pushed exam ${exam.id} to listing ${listingId} entity ${listing.owner_entity_id}`);
+                        }
+                    }
+                } catch (pushErr) {
+                    // Non-critical: exam is created, just push failed
+                    audit('error', 'arena', `Auto-push failed for exam ${exam.id}: ${pushErr.message}`);
+                }
+            }
         } catch (err) {
             console.error('[Arena] create exam error:', err);
             res.status(500).json({ success: false, error: 'internal_error' });
@@ -1374,9 +1438,14 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
         }
     });
 
+    // Late-bound deps for auto-push (interview mode: push exam instructions to bot)
+    let _autoPushDeps = { devices: null, pushToBot: null, pushToChannelCallback: null };
+    function setAutoPushDeps(deps) { Object.assign(_autoPushDeps, deps); }
+
     return {
         router,
         initArenaDatabase,
+        setAutoPushDeps,
         TEST_TYPES,
         MAX_TOTAL_SCORE,
         CHALLENGE_GENERATORS,
@@ -1385,7 +1454,7 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
         mapArenaResultToCapabilities,
         ARENA_PASS_THRESHOLD,
         ARENA_TO_CAPABILITY_MAP,
-        _internals: { pool },
+        _internals: { pool, getAutoPushDeps: () => _autoPushDeps },
     };
 };
 

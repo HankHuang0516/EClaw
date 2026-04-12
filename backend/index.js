@@ -12466,6 +12466,15 @@ if (typeof rentalModule.setInterviewDeps === 'function') {
     rentalModule.setInterviewDeps({ pushToBot, devices, arenaModule, setInterviewCapabilities, get pushToChannelCallback() { return channelModule?.pushToChannelCallback?.bind(channelModule); } });
 }
 
+// Wire auto-push deps into arena module (so interview-linked exams auto-push to bot)
+if (typeof arenaModule.setAutoPushDeps === 'function') {
+    arenaModule.setAutoPushDeps({
+        devices,
+        pushToBot,
+        get pushToChannelCallback() { try { return channelModule?.pushToChannelCallback?.bind(channelModule); } catch { return null; } },
+    });
+}
+
 // ============================================
 // FEEDBACK ENDPOINTS (Enhanced with Log Snapshot + AI Prompt)
 // ============================================
