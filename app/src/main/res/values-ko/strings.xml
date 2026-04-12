@@ -317,6 +317,15 @@
     <string name="file_broadcast">브로드캐스트</string>
     <string name="file_btn_delete">삭제</string>
     <string name="file_btn_download">다운로드</string>
+    <string name="main_agent_card_deleted">Agent Card 삭제됨</string>
+    <string name="main_agent_card_saved">Agent Card 저장됨</string>
+    <string name="main_delete_failed">삭제 실패</string>
+    <string name="main_description_required">설명은 필수입니다</string>
+    <string name="main_max_capabilities">최대 10개의 역량만 가능합니다</string>
+    <string name="main_max_items">최대 %d개 항목</string>
+    <string name="main_save_error">오류가 발생했습니다</string>
+    <string name="main_save_failed">저장 실패</string>
+    <string name="main_save_failed_msg">저장 실패：%s</string>
     <string name="chat_ai_analyzing">AI가 메시지 분석 중…</string>
     <string name="chat_failed_to_send">메시지 전송에 실패했습니다.</string>
     <string name="chat_failed_to_send_v2">메시지 전송에 실패했습니다.</string>

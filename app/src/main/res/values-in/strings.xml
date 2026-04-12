@@ -317,6 +317,15 @@
     <string name="file_broadcast">Siaran</string>
     <string name="file_btn_delete">Hapus</string>
     <string name="file_btn_download">Unduh</string>
+    <string name="main_agent_card_deleted">Agent Card dihapus</string>
+    <string name="main_agent_card_saved">Agent Card disimpan</string>
+    <string name="main_delete_failed">Penghapusan gagal</string>
+    <string name="main_description_required">Deskripsi wajib diisi</string>
+    <string name="main_max_capabilities">Maksimum 10 kapabilitas</string>
+    <string name="main_max_items">Maksimum %d item</string>
+    <string name="main_save_error">Terjadi kesalahan</string>
+    <string name="main_save_failed">Penyimpanan gagal</string>
+    <string name="main_save_failed_msg">Penyimpanan gagal：%s</string>
     <string name="chat_ai_analyzing">AI sedang menganalisis pesan Anda…</string>
     <string name="chat_failed_to_send">Gagal mengirim pesan.</string>
     <string name="chat_failed_to_send_v2">Gagal mengirim pesan.</string>

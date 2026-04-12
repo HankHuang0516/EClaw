@@ -317,6 +317,15 @@
     <string name="file_broadcast">ส่งถึงทุกคน</string>
     <string name="file_btn_delete">ลบ</string>
     <string name="file_btn_download">ดาวน์โหลด</string>
+    <string name="main_agent_card_deleted">ลบ Agent Card แล้ว</string>
+    <string name="main_agent_card_saved">บันทึก Agent Card แล้ว</string>
+    <string name="main_delete_failed">ลบล้มเหลว</string>
+    <string name="main_description_required">ต้องระบุคำอธิบาย</string>
+    <string name="main_max_capabilities">สูงสุด 10 ความสามารถ</string>
+    <string name="main_max_items">สูงสุด %d รายการ</string>
+    <string name="main_save_error">เกิดข้อผิดพลาด</string>
+    <string name="main_save_failed">บันทึกล้มเหลว</string>
+    <string name="main_save_failed_msg">บันทึกล้มเหลว：%s</string>
     <string name="chat_ai_analyzing">AI กำลังวิเคราะห์ข้อความของคุณ…</string>
     <string name="chat_failed_to_send">ส่งข้อความไม่สำเร็จ</string>
     <string name="chat_failed_to_send_v2">ส่งข้อความไม่สำเร็จ</string>
