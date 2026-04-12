@@ -1015,6 +1015,11 @@ async function reconcileRentalEntities(devices, helpers) {
                     rateMliPerKtoken: Number(row.rate_mli_per_ktoken_snapshot),
                 }, helpers);
 
+                // Persist reconciled entity to DB
+                if (helpers?.saveDeviceData && devices[row.renter_device_id]) {
+                    await helpers.saveDeviceData(row.renter_device_id, devices[row.renter_device_id]);
+                }
+
                 result.reconciled++;
                 console.log(`[Rental] Reconciled entity for contract ${row.id} on device ${row.renter_device_id}`);
             } catch (err) {
@@ -1167,6 +1172,12 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
                     audit('info', 'rental', `entity handover: slot ${slot} on ${renterDeviceId}`, {
                         userId: req.user.userId, action: 'rental_entity_insert', resource: contract.id,
                     });
+
+                    // Persist to DB so entity poll reads the updated state
+                    if (_interviewDeps.saveDeviceData) {
+                        await _interviewDeps.saveDeviceData(renterDeviceId, _interviewDeps.devices[renterDeviceId]);
+                        await _interviewDeps.saveDeviceData(listing.owner_device_id, _interviewDeps.devices[listing.owner_device_id]);
+                    }
                 }
             } catch (handoverErr) {
                 // Log but don't fail the contract — the DB contract is the source of truth.
@@ -1220,6 +1231,14 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
                     audit('info', 'rental', `entity handover cleanup: ${info.renter_device_id}`, {
                         userId: req.user.userId, action: 'rental_entity_remove', resource: contract.id,
                     });
+
+                    // Persist cleanup to DB
+                    if (_interviewDeps.saveDeviceData && _interviewDeps.devices[info.renter_device_id]) {
+                        await _interviewDeps.saveDeviceData(info.renter_device_id, _interviewDeps.devices[info.renter_device_id]);
+                    }
+                    if (_interviewDeps.saveDeviceData && _interviewDeps.devices[info.owner_device_id]) {
+                        await _interviewDeps.saveDeviceData(info.owner_device_id, _interviewDeps.devices[info.owner_device_id]);
+                    }
                 }
             } catch (cleanupErr) {
                 console.error('[Rental] entity handover cleanup failed:', cleanupErr.message);

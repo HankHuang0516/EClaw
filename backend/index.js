@@ -12508,7 +12508,7 @@ missionModule.setPushToBot(pushToBot);
 
 // Wire pushToBot + devices into rental module for interview probe dispatch
 if (typeof rentalModule.setInterviewDeps === 'function') {
-    rentalModule.setInterviewDeps({ pushToBot, devices, arenaModule, setInterviewCapabilities, generateBotSecret, generatePublicCode, publicCodeIndex, ensureOneEmptySlot, getOrCreateDevice, get pushToChannelCallback() { return channelModule?.pushToChannelCallback?.bind(channelModule); } });
+    rentalModule.setInterviewDeps({ pushToBot, devices, arenaModule, setInterviewCapabilities, generateBotSecret, generatePublicCode, publicCodeIndex, ensureOneEmptySlot, getOrCreateDevice, saveDeviceData: db.saveDeviceData, get pushToChannelCallback() { return channelModule?.pushToChannelCallback?.bind(channelModule); } });
 }
 
 // Reconcile rental entities that may have been lost during server restart (#1713).
@@ -12516,7 +12516,7 @@ if (typeof rentalModule.setInterviewDeps === 'function') {
 if (persistenceReady && typeof rentalModule.reconcileRentalEntities === 'function') {
     rentalModule.reconcileRentalEntities(devices, {
         generateBotSecret, generatePublicCode, publicCodeIndex,
-        ensureOneEmptySlot, getOrCreateDevice,
+        ensureOneEmptySlot, getOrCreateDevice, saveDeviceData: db.saveDeviceData,
     }).then(result => {
         if (result.reconciled > 0 || result.errors.length > 0) {
             console.log(`[Rental] Reconciled ${result.reconciled} rental entities` +
