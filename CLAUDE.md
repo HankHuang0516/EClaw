@@ -320,6 +320,29 @@ EClaw/
    - **新增的 test 檔案必須登錄到本文件的「Regression Tests」清單**，含說明、執行指令、所需 credentials
    - Close issue 時在 comment 中附上測試 case 的檔案與行號
 
+5a. **Bug Report → Debug API Required** — 當使用者回報 bug 時，除了建立驗證測試，**必須**同時建立該 bug 專屬的 debug API endpoint，直到使用者明確確認 bug 已修復才可移除。
+
+   ### 流程
+   1. **收到 bug report** → 建立 `GET /api/debug/<bug-slug>` endpoint，回傳與該 bug 相關的所有診斷資訊（相關 DB 狀態、config、最近 log、變數值等）
+   2. **Debug endpoint 規格**：
+      - Route: `GET /api/debug/<bug-slug>?deviceId=X&deviceSecret=Y`
+      - 驗證: 需 deviceId + deviceSecret（同 `/api/logs` 的 auth 模式）
+      - Response: `{ success: true, bug: "<slug>", diagnostics: { ... }, timestamp: ISO }`
+      - 包含所有能幫助判斷 root cause 的資訊（不只 error，也包含正常路徑的狀態）
+   3. **在修復過程中**，每次嘗試修復後都用 debug API 驗證狀態變化，而非只靠主觀判斷
+   4. **修復完成後**，告知使用者 debug endpoint 存在，讓使用者自行驗證
+   5. **只有使用者明確說「已修復」或「可以移除」時**，才可刪除 debug endpoint
+   6. **登記追蹤**：在下方「Active Debug Endpoints」清單中登記，包含 bug 描述、endpoint、建立日期
+
+   ### 命名慣例
+   - Endpoint slug 用 kebab-case，簡短描述 bug：`/api/debug/wallet-auth-fail`、`/api/debug/entity-limit-stuck`
+   - 若 bug 與特定 issue 相關：`/api/debug/issue-1693-embed-mode`
+
+   ### Active Debug Endpoints
+   | Bug | Endpoint | Created | Status |
+   |-----|----------|---------|--------|
+   | _(none currently)_ | | | |
+
 6. **Demand Elegance (Balanced)** — 在保持 minimal change 的前提下，追求可讀、一致的程式風格；不為了「漂亮」而過度重構，但也不容忍明顯的 code smell 在新增的程式碼中出現。
 
 7. **Autonomous Bug Fixing** — 當執行過程中遇到錯誤（build fail、test fail、runtime error），不要立刻停下來問使用者，先自行分析 log 並嘗試修復，連續失敗 3 次才 escalate。
