@@ -1,3 +1,10 @@
+## [1.957.2](https://github.com/HankHuang0516/EClaw/compare/v1.957.1...v1.957.2) (2026-04-12)
+
+
+### Bug Fixes
+
+* **android:** add remaining missing default string resources ([77cf4df](https://github.com/HankHuang0516/EClaw/commit/77cf4dfed63b0cd48971d6a25308fa9dcd7b755d))
+
 ## [1.957.1](https://github.com/HankHuang0516/EClaw/compare/v1.957.0...v1.957.1) (2026-04-12)
 
 
