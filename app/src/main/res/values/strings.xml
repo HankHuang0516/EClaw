@@ -498,6 +498,71 @@
     <!-- Privacy Policy -->
     <string name="privacy_policy_title">Privacy Policy</string>
     <string name="delete_account">Delete Account</string>
+    <string name="bind_button">Bind</string>
+    <string name="card_holder">Card Holder</string>
+    <string name="chat">Chat</string>
+    <string name="choose_plan_title">Choose a Plan</string>
+    <string name="confirm">Confirm</string>
+    <string name="enter_binding_code">Enter Binding Code</string>
+    <string name="error_occurred">An error occurred</string>
+    <string name="info">Info</string>
+    <string name="invite_title">Invite</string>
+    <string name="language">Language</string>
+    <string name="loading">Loading…</string>
+    <string name="microphone_permission_denied">Microphone permission denied</string>
+    <string name="my_rentals_title">My Rentals</string>
+    <string name="privacy_policy_content">
+<b>1. Commitment to Privacy First</b>
+
+The E-claw team understands the importance of privacy to you. We hereby solemnly declare: <b>We will never sell, leak, or misuse any of your personal data.</b>
+
+
+<b>2. What Data Do We Collect?</b>
+
+To provide our service, we only collect the minimum data necessary for operation:
+- Device ID: Used to distinguish different devices.
+- App Version: Used for compatibility checks.
+- Binding Data: Agent name and status.
+- GPS Location (Optional): Only when your AI Agent requests it. Stored in memory only, not persisted.
+- Voice Messages (Optional): Only when you press the record button in chat. Uploaded as part of chat history.
+
+
+<b>We do NOT collect:</b>
+
+- Your name, phone number, or email.
+- Your camera data.
+- Information about other apps on your phone.
+
+
+<b>3. OpenClaw Protocol</b>
+
+We are firm supporters of the OpenClaw ecosystem. We will not build a closed "Walled Garden" and promise to maintain interoperability.
+
+
+<b>4. AI Conversation Privacy</b>
+Messages are sent via encrypted HTTPS to your bound AI Agent. Data flow is controlled by you.
+
+
+<b>5. GPS and Microphone</b>
+GPS: On-demand only, no background tracking, data lost on server restart.
+Microphone: Active only while recording, no background listening.
+Neither is shared with third parties.
+
+<b>6. Contact Us</b>
+If you have any questions, please contact us via our official email.
+    
+    </string>
+    <string name="recording">Recording…</string>
+    <string name="schedule">Schedule</string>
+    <string name="settings">Settings</string>
+    <string name="topup_ecoin">Top up E-Coin</string>
+    <string name="topup_ecoin_title">Top up E-Coin</string>
+    <string name="topup_failed">Top up failed</string>
+    <string name="topup_success">Top up successful</string>
+    <string name="unbind_button">Unbind</string>
+    <string name="upgrade_plan">Upgrade Plan</string>
+    <string name="voice_message">Voice Message</string>
+    <string name="wallet_title">Wallet</string>
     <string name="web_portal">Web Portal</string>
     <string name="privacy_policy_content">
 <b>1. Commitment to Privacy First</b>\n

@@ -408,6 +408,30 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。\n
 如有任何疑问，请通过官方邮箱与我们联系。
     </string>
     <string name="version_conflict_title">版本冲突</string>
+    <string name="bind_button">绑定</string>
+    <string name="card_holder">名片夹</string>
+    <string name="chat">聊天</string>
+    <string name="choose_plan_title">选择方案</string>
+    <string name="confirm">确认</string>
+    <string name="enter_binding_code">输入绑定码</string>
+    <string name="error_occurred">发生错误</string>
+    <string name="info">信息</string>
+    <string name="invite_title">邀请</string>
+    <string name="language">语言</string>
+    <string name="loading">加载中…</string>
+    <string name="microphone_permission_denied">麦克风权限被拒绝</string>
+    <string name="my_rentals_title">我的租赁</string>
+    <string name="recording">录音中…</string>
+    <string name="schedule">定时任务</string>
+    <string name="settings">设置</string>
+    <string name="topup_ecoin">充值 E-Coin</string>
+    <string name="topup_ecoin_title">充值 E-Coin</string>
+    <string name="topup_failed">充值失败</string>
+    <string name="topup_success">充值成功</string>
+    <string name="unbind_button">解除绑定</string>
+    <string name="upgrade_plan">升级方案</string>
+    <string name="voice_message">语音消息</string>
+    <string name="wallet_title">钱包</string>
     <string name="version_conflict_message">仪表盘已被其他客户端更新（您的版本：%1$d，服务器：%2$d）。是否下载最新版本？</string>
     <string name="download_latest">下载最新版本</string>
     <string name="action_move_to_mission">➡️ 移至任务</string>
