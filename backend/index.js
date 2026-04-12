@@ -4412,6 +4412,8 @@ app.get('/api/entities', (req, res) => {
                     bindingType: entity.bindingType || null,
                     encryptionStatus: entity.encryptionStatus || null,
                     isPublic: !!entity.isPublic,
+                    rental_status: entity.rental_status || null,  // 'leased_in', 'leased_out', or null
+                    rental_contract_id: entity.rental_contract_id || null,
                     messageQueue: (entity.messageQueue || []).map(m => ({
                         text: m.text,
                         from: m.from,
@@ -4567,6 +4569,8 @@ app.get('/api/status', (req, res) => {
         parts: entity.parts,
         lastUpdated: entity.lastUpdated,
         isBound: entity.isBound,
+        rental_status: entity.rental_status || null,  // 'leased_in', 'leased_out', or null
+        rental_contract_id: entity.rental_contract_id || null,
         versionInfo: getVersionInfo(appVersion || entity.appVersion)
     });
 });
