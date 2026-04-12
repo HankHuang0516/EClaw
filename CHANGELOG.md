@@ -1,3 +1,10 @@
+## [1.955.5](https://github.com/HankHuang0516/EClaw/compare/v1.955.4...v1.955.5) (2026-04-12)
+
+
+### Bug Fixes
+
+* **i18n:** repair broken XML in ja/vi/th/ko/in strings.xml ([4d1bc15](https://github.com/HankHuang0516/EClaw/commit/4d1bc15d9e46a6ed2681335dfdb5f9a5bc5097a9))
+
 ## [1.955.4](https://github.com/HankHuang0516/EClaw/compare/v1.955.3...v1.955.4) (2026-04-11)
 
 
