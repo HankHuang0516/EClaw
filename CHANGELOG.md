@@ -1,3 +1,10 @@
+# [1.963.0](https://github.com/HankHuang0516/EClaw/compare/v1.962.5...v1.963.0) (2026-04-12)
+
+
+### Features
+
+* **my-rentals:** UIUX spec compliance for contract cards, status badges, modals ([#1731](https://github.com/HankHuang0516/EClaw/issues/1731)) ([7bbfb16](https://github.com/HankHuang0516/EClaw/commit/7bbfb167d0246ecf96edba3f1459ffcf29a4e5ae))
+
 ## [1.962.5](https://github.com/HankHuang0516/EClaw/compare/v1.962.4...v1.962.5) (2026-04-12)
 
 
