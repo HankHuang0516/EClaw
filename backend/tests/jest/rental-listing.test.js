@@ -117,7 +117,7 @@ jest.mock('pg', () => {
         }
 
         // GET single listing
-        if (/^SELECT id, owner_user_id, title, description, rate_mli_per_ktoken/i.test(norm)) {
+        if (/^SELECT id, owner_user_id.*title.*description.*rate_mli_per_ktoken/i.test(norm)) {
             const row = state.listings.find(l => l.id === params[0]);
             if (!row) return { rows: [], rowCount: 0 };
             return { rows: [{ ...row }], rowCount: 1 };

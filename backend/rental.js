@@ -258,7 +258,8 @@ async function delistListing(listingId, ownerUserId) {
 
 async function getListing(listingId) {
     const res = await pool.query(
-        `SELECT id, owner_user_id, title, description, rate_mli_per_ktoken,
+        `SELECT id, owner_user_id, owner_device_id, owner_entity_id,
+                title, description, rate_mli_per_ktoken,
                 min_rental_minutes, max_rental_minutes, availability_windows,
                 model_detected, capabilities, benchmark_score, interview_passed,
                 last_interview_at, avg_rating, total_rentals, uptime_pct, status,
@@ -272,8 +273,8 @@ async function getListing(listingId) {
 async function listMyListings(ownerUserId) {
     assertString('owner_user_id', ownerUserId, { max: 64 });
     const res = await pool.query(
-        `SELECT id, title, rate_mli_per_ktoken, status, interview_passed,
-                avg_rating, total_rentals, created_at
+        `SELECT id, owner_device_id, owner_entity_id, title, rate_mli_per_ktoken,
+                status, interview_passed, avg_rating, total_rentals, created_at
          FROM bot_listings WHERE owner_user_id = $1
          ORDER BY created_at DESC`,
         [ownerUserId]
