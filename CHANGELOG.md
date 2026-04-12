@@ -1,3 +1,10 @@
+## [1.961.6](https://github.com/HankHuang0516/EClaw/compare/v1.961.5...v1.961.6) (2026-04-12)
+
+
+### Bug Fixes
+
+* set entityId, botSecret, publicCode on rental entities for dashboard visibility ([#1714](https://github.com/HankHuang0516/EClaw/issues/1714)) ([5715285](https://github.com/HankHuang0516/EClaw/commit/5715285e3b1dc9d90f58d4ec370c5f087d5ffcef)), closes [#1712](https://github.com/HankHuang0516/EClaw/issues/1712)
+
 ## [1.961.5](https://github.com/HankHuang0516/EClaw/compare/v1.961.4...v1.961.5) (2026-04-12)
 
 
