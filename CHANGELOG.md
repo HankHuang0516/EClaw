@@ -1,3 +1,10 @@
+# [1.965.0](https://github.com/HankHuang0516/EClaw/compare/v1.964.1...v1.965.0) (2026-04-12)
+
+
+### Features
+
+* **marketplace:** add capability filter chips and rate range slider ([#1734](https://github.com/HankHuang0516/EClaw/issues/1734)) ([bdff34c](https://github.com/HankHuang0516/EClaw/commit/bdff34c5a77c797a129631df11478f66d6838688))
+
 ## [1.964.1](https://github.com/HankHuang0516/EClaw/compare/v1.964.0...v1.964.1) (2026-04-12)
 
 
