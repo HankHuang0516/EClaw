@@ -1033,6 +1033,37 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
             renterDeviceId,
             durationMinutes: parseInt(durationMinutes, 10),
         }, walletModule);
+
+        // P2-F Entity Handover: create rental entity on renter's device
+        // and mark the owner's entity as leased out.
+        if (_interviewDeps.devices) {
+            try {
+                const listing = await getListing(listingId);
+                if (listing) {
+                    const { slot } = insertRentalEntity(_interviewDeps.devices, {
+                        renterDeviceId,
+                        contractId: contract.id,
+                        listing,
+                        rateMliPerKtoken: Number(listing.rate_mli_per_ktoken),
+                    });
+                    markOwnerEntityLeasedOut(_interviewDeps.devices, {
+                        ownerDeviceId: listing.owner_device_id,
+                        ownerEntityId: listing.owner_entity_id,
+                        contractId: contract.id,
+                    });
+                    audit('info', 'rental', `entity handover: slot ${slot} on ${renterDeviceId}`, {
+                        userId: req.user.userId, action: 'rental_entity_insert', resource: contract.id,
+                    });
+                }
+            } catch (handoverErr) {
+                // Log but don't fail the contract — the DB contract is the source of truth.
+                console.error('[Rental] entity handover failed:', handoverErr.message);
+                audit('error', 'rental', `entity handover failed: ${handoverErr.message}`, {
+                    userId: req.user.userId, action: 'rental_entity_insert_fail', resource: contract.id,
+                });
+            }
+        }
+
         audit('info', 'rental', `contract started ${contract.id}`, {
             userId: req.user.userId, action: 'contract_start', resource: contract.id,
         });
@@ -1047,6 +1078,42 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
             endReason: endReason || CONTRACT_STATUSES.ENDED_NORMAL,
             requesterUserId: req.user.userId,
         }, walletModule);
+
+        // P2-F Entity Handover cleanup: remove rental entity from renter's
+        // device and clear leased_out status on the owner's entity.
+        if (_interviewDeps.devices) {
+            try {
+                // Fetch contract + listing details needed for cleanup.
+                const cRow = await pool.query(
+                    `SELECT c.renter_device_id, c.listing_id,
+                            l.owner_device_id, l.owner_entity_id
+                     FROM rental_contracts c
+                     JOIN bot_listings l ON l.id = c.listing_id
+                     WHERE c.id = $1`,
+                    [contract.id]
+                );
+                if (cRow.rowCount > 0) {
+                    const info = cRow.rows[0];
+                    removeRentalEntity(_interviewDeps.devices, {
+                        renterDeviceId: info.renter_device_id,
+                        contractId: contract.id,
+                    });
+                    clearOwnerEntityLeasedOut(_interviewDeps.devices, {
+                        ownerDeviceId: info.owner_device_id,
+                        ownerEntityId: info.owner_entity_id,
+                    });
+                    audit('info', 'rental', `entity handover cleanup: ${info.renter_device_id}`, {
+                        userId: req.user.userId, action: 'rental_entity_remove', resource: contract.id,
+                    });
+                }
+            } catch (cleanupErr) {
+                console.error('[Rental] entity handover cleanup failed:', cleanupErr.message);
+                audit('error', 'rental', `entity handover cleanup failed: ${cleanupErr.message}`, {
+                    userId: req.user.userId, action: 'rental_entity_remove_fail', resource: contract.id,
+                });
+            }
+        }
+
         audit('info', 'rental', `contract ended ${contract.id} reason=${contract.end_reason}`, {
             userId: req.user.userId, action: 'contract_end', resource: contract.id, result: contract.end_reason,
         });
