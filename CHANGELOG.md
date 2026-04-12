@@ -1,3 +1,10 @@
+## [1.962.4](https://github.com/HankHuang0516/EClaw/compare/v1.962.3...v1.962.4) (2026-04-12)
+
+
+### Bug Fixes
+
+* chat.html shared entity filtering + env-vars vault whitelist correction ([89af49f](https://github.com/HankHuang0516/EClaw/commit/89af49f0bd387b190556ad101c2a2e10d7aa62ba)), closes [DD#15](https://github.com/DD/issues/15)
+
 ## [1.962.3](https://github.com/HankHuang0516/EClaw/compare/v1.962.2...v1.962.3) (2026-04-12)
 
 
