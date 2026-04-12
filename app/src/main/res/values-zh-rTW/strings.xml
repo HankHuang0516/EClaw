@@ -320,6 +320,30 @@
     <string name="file_broadcast">廣播</string>
     <string name="file_btn_delete">刪除</string>
     <string name="file_btn_download">下載</string>
+    <string name="bind_button">綁定</string>
+    <string name="card_holder">名片夾</string>
+    <string name="chat">聊天</string>
+    <string name="choose_plan_title">選擇方案</string>
+    <string name="confirm">確認</string>
+    <string name="enter_binding_code">輸入綁定碼</string>
+    <string name="error_occurred">發生錯誤</string>
+    <string name="info">資訊</string>
+    <string name="invite_title">邀請</string>
+    <string name="language">語言</string>
+    <string name="loading">載入中…</string>
+    <string name="microphone_permission_denied">麥克風權限被拒絕</string>
+    <string name="my_rentals_title">我的租用</string>
+    <string name="recording">錄音中…</string>
+    <string name="schedule">排程</string>
+    <string name="settings">設定</string>
+    <string name="topup_ecoin">儲值 E-Coin</string>
+    <string name="topup_ecoin_title">儲值 E-Coin</string>
+    <string name="topup_failed">儲值失敗</string>
+    <string name="topup_success">儲值成功</string>
+    <string name="unbind_button">解除綁定</string>
+    <string name="upgrade_plan">升級方案</string>
+    <string name="voice_message">語音訊息</string>
+    <string name="wallet_title">錢包</string>
     <string name="file_btn_share">分享</string>
     <string name="file_delete_confirm">確定刪除檔案？</string>
     <string name="file_delete_title">刪除檔案</string>
@@ -485,6 +509,42 @@
     <string name="premium_badge">尊爵會員</string>
     <string name="priority">優先權</string>
     <string name="privacy_policy_title">隱私權政策</string>
+    <string name="privacy_policy_content">
+<b>1. 隱私權至上承諾</b>
+
+E-claw (電子蝦) 團隊深知隱私對您的重要性。我們在此鄭重聲明：<b>我們絕不會販賣、洩露或濫用您的任何個人資料。</b>
+
+<b>2. 我們收集什麼資料？</b>
+
+為了提供服務，我們僅收集運作所需的最少資料：
+- 裝置 ID：用於區分不同裝置。
+- App 版本：用於相容性檢查。
+- 綁定資料：Agent 名稱與狀態。
+- GPS 位置（選擇性）：僅在您的 AI Agent 主動請求時取得。僅存於記憶體，不永久儲存。
+- 語音訊息（選擇性）：僅在您按下聊天中的錄音按鈕時。作為聊天記錄的一部分上傳。
+
+<b>我們「不」收集：</b>
+- 您的姓名、電話或 Email。
+- 您的相機資料。
+- 您手機上的其他應用程式資訊。
+
+
+<b>3. OpenClaw 協議</b>
+我們是 OpenClaw 生態系統的堅定支持者。我們不會建立封閉的「圍牆花園」，並承諾保持互通性。
+
+
+<b>4. AI 對話隱私</b>
+訊息透過加密 HTTPS 傳送至您綁定的 AI Agent。資料流向由您掌控。
+
+<b>5. GPS 與麥克風</b>
+GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
+麥克風：僅在錄音時啟用，不會背景監聽。
+兩者均不會分享給第三方。
+
+<b>6. 聯絡我們</b>
+如有任何疑問，請透過我們的官方 Email 聯繫。
+    
+    </string>
     <string name="processing_payment">付款處理中…</string>
     <string name="public_code_label">Public Code · 點擊複製</string>
     <string name="publish_notification">發布通知</string>

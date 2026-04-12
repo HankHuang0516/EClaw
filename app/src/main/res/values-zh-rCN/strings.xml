@@ -320,6 +320,30 @@
     <string name="file_broadcast">广播</string>
     <string name="file_btn_delete">删除</string>
     <string name="file_btn_download">下载</string>
+    <string name="bind_button">绑定</string>
+    <string name="card_holder">名片夹</string>
+    <string name="chat">聊天</string>
+    <string name="choose_plan_title">选择方案</string>
+    <string name="confirm">确认</string>
+    <string name="enter_binding_code">输入绑定码</string>
+    <string name="error_occurred">发生错误</string>
+    <string name="info">信息</string>
+    <string name="invite_title">邀请</string>
+    <string name="language">语言</string>
+    <string name="loading">加载中…</string>
+    <string name="microphone_permission_denied">麦克风权限被拒绝</string>
+    <string name="my_rentals_title">我的租赁</string>
+    <string name="recording">录音中…</string>
+    <string name="schedule">定时任务</string>
+    <string name="settings">设置</string>
+    <string name="topup_ecoin">充值 E-Coin</string>
+    <string name="topup_ecoin_title">充值 E-Coin</string>
+    <string name="topup_failed">充值失败</string>
+    <string name="topup_success">充值成功</string>
+    <string name="unbind_button">解除绑定</string>
+    <string name="upgrade_plan">升级方案</string>
+    <string name="voice_message">语音消息</string>
+    <string name="wallet_title">钱包</string>
     <string name="file_btn_share">分享</string>
     <string name="file_delete_confirm">确定删除文件？</string>
     <string name="file_delete_title">删除文件</string>
@@ -485,6 +509,43 @@
     <string name="premium_badge">高级版</string>
     <string name="priority">优先级</string>
     <string name="privacy_policy_title">隐私政策</string>
+    <string name="privacy_policy_content">
+<b>1. 隐私至上的承诺</b>
+
+E-claw 团队深知隐私对您的重要性。我们在此郑重声明：<b>我们绝不会出售、泄露或滥用您的任何个人数据。</b>
+
+
+<b>2. 我们收集哪些数据？</b>
+
+为提供服务，我们仅收集运营所需的最少数据：
+- 设备 ID：用于区分不同设备。
+- 应用版本：用于兼容性检查。
+- 绑定数据：智能体名称和状态。
+- GPS 位置（可选）：仅当您的 AI 智能体主动请求时获取。仅存于内存，不持久化存储。
+- 语音消息（可选）：仅当您在聊天中按下录音按钮时。作为聊天记录的一部分上传。
+
+<b>我们不会收集：</b>
+- 您的姓名、电话号码或邮箱。
+- 您的相机数据。
+- 您手机上其他应用的信息。
+
+
+<b>3. OpenClaw 协议</b>
+我们是 OpenClaw 生态系统的坚定支持者。我们不会构建封闭的"围墙花园"，并承诺保持互操作性。
+
+<b>4. AI 对话隐私</b>
+消息通过加密的 HTTPS 发送至您绑定的 AI 智能体。数据流向由您掌控。
+
+<b>5. GPS 与麦克风</b>
+GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
+麦克风：仅在录音时启用，不会后台监听。
+两者均不会分享给第三方。
+
+
+<b>6. 联系我们</b>
+如有任何疑问，请通过官方邮箱与我们联系。
+    
+    </string>
     <string name="processing_payment">正在处理付款…</string>
     <string name="public_code_label">Public Code · 点击复制</string>
     <string name="publish_notification">发布通知</string>
