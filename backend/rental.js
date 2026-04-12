@@ -23,6 +23,7 @@
  * If this module is updated, also update the roadmap page status and the design doc §10 delivery tracker. */
 
 const express = require('express');
+const crypto = require('crypto');
 const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
@@ -824,7 +825,7 @@ setInterval(() => {
  */
 function insertRentalEntity(devices, {
     renterDeviceId, contractId, listing, rateMliPerKtoken,
-}) {
+}, helpers) {
     const device = devices[renterDeviceId];
     if (!device) throw new Error('renter_device_not_found');
 
@@ -840,12 +841,24 @@ function insertRentalEntity(devices, {
         // Auto-expand: find max existing + 1
         const maxId = Math.max(-1, ...Object.keys(device.entities).map(Number));
         slot = maxId + 1;
-        device.entities[slot] = createDefaultRentalEntity();
+        device.entities[slot] = createDefaultRentalEntity(slot);
     }
+
+    // Generate botSecret and publicCode for the rental entity so it is
+    // fully functional (visible on dashboard, usable for chat/kanban/etc.)
+    const botSecret = helpers?.generateBotSecret
+        ? helpers.generateBotSecret()
+        : crypto.randomBytes(16).toString('hex');
+    const publicCode = helpers?.generatePublicCode
+        ? helpers.generatePublicCode()
+        : null;
 
     // Populate the rental entity
     const entity = device.entities[slot];
+    entity.entityId = slot;
     entity.isBound = true;
+    entity.botSecret = botSecret;
+    entity.publicCode = publicCode;
     entity.character = listing.title || 'Rental Bot';
     entity.name = listing.title || 'Rental Bot';
     entity.state = 'IDLE';
@@ -856,7 +869,17 @@ function insertRentalEntity(devices, {
     // Webhook points to a proxy URL — real webhook is in rental_snapshots
     entity.webhook = { url: `__rental_proxy__:${contractId}`, type: 'rental_proxy' };
 
-    return { slot };
+    // Register publicCode in the global index for cross-device messaging
+    if (publicCode && helpers?.publicCodeIndex) {
+        helpers.publicCodeIndex[publicCode] = { deviceId: renterDeviceId, entityId: slot };
+    }
+
+    // Ensure at least one empty slot remains after rental insertion
+    if (helpers?.ensureOneEmptySlot) {
+        helpers.ensureOneEmptySlot(device);
+    }
+
+    return { slot, botSecret, publicCode };
 }
 
 /**
@@ -875,14 +898,20 @@ function markOwnerEntityLeasedOut(devices, { ownerDeviceId, ownerEntityId, contr
 /**
  * Remove a rental entity from the renter's device (contract end).
  */
-function removeRentalEntity(devices, { renterDeviceId, contractId }) {
+function removeRentalEntity(devices, { renterDeviceId, contractId }, helpers) {
     const device = devices[renterDeviceId];
     if (!device) return;
 
     for (const [, entity] of Object.entries(device.entities)) {
         if (entity.rental_contract_id === contractId) {
+            // Clean up publicCode from global index before resetting
+            if (entity.publicCode && helpers?.publicCodeIndex) {
+                delete helpers.publicCodeIndex[entity.publicCode];
+            }
             // Reset to unbound default
             entity.isBound = false;
+            entity.botSecret = null;
+            entity.publicCode = null;
             entity.character = '🤖';
             entity.name = null;
             entity.state = 'IDLE';
@@ -909,8 +938,10 @@ function clearOwnerEntityLeasedOut(devices, { ownerDeviceId, ownerEntityId }) {
 }
 
 /** Minimal entity stub for a new rental slot. */
-function createDefaultRentalEntity() {
+function createDefaultRentalEntity(entityId) {
     return {
+        entityId: entityId,
+        botSecret: null,
         character: '🤖',
         state: 'IDLE',
         message: '',
@@ -924,6 +955,7 @@ function createDefaultRentalEntity() {
         level: 1,
         avatar: null,
         publicCode: null,
+        bindingType: null,
         rental_contract_id: null,
         rental_status: null,
     };
@@ -1045,6 +1077,11 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
                         contractId: contract.id,
                         listing,
                         rateMliPerKtoken: Number(listing.rate_mli_per_ktoken),
+                    }, {
+                        generateBotSecret: _interviewDeps.generateBotSecret,
+                        generatePublicCode: _interviewDeps.generatePublicCode,
+                        publicCodeIndex: _interviewDeps.publicCodeIndex,
+                        ensureOneEmptySlot: _interviewDeps.ensureOneEmptySlot,
                     });
                     markOwnerEntityLeasedOut(_interviewDeps.devices, {
                         ownerDeviceId: listing.owner_device_id,
@@ -1097,6 +1134,8 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
                     removeRentalEntity(_interviewDeps.devices, {
                         renterDeviceId: info.renter_device_id,
                         contractId: contract.id,
+                    }, {
+                        publicCodeIndex: _interviewDeps.publicCodeIndex,
                     });
                     clearOwnerEntityLeasedOut(_interviewDeps.devices, {
                         ownerDeviceId: info.owner_device_id,
