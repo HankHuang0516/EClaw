@@ -1,3 +1,10 @@
+## [1.961.9](https://github.com/HankHuang0516/EClaw/compare/v1.961.8...v1.961.9) (2026-04-12)
+
+
+### Bug Fixes
+
+* rental entity visibility — ensure device exists before handover ([#1713](https://github.com/HankHuang0516/EClaw/issues/1713)) ([#1717](https://github.com/HankHuang0516/EClaw/issues/1717)) ([180b328](https://github.com/HankHuang0516/EClaw/commit/180b328946741d6be1b86b8d38cc4011d2f990f6))
+
 ## [1.961.8](https://github.com/HankHuang0516/EClaw/compare/v1.961.7...v1.961.8) (2026-04-12)
 
 
