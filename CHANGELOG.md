@@ -1,3 +1,10 @@
+## [1.962.1](https://github.com/HankHuang0516/EClaw/compare/v1.962.0...v1.962.1) (2026-04-12)
+
+
+### Bug Fixes
+
+* **AiChat:** move 5 hardcoded strings to strings.xml + i18n ([#1725](https://github.com/HankHuang0516/EClaw/issues/1725)) ([980711e](https://github.com/HankHuang0516/EClaw/commit/980711ec8e7de063042fa2d31fe21ea91483c26a)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.962.0](https://github.com/HankHuang0516/EClaw/compare/v1.961.11...v1.962.0) (2026-04-12)
 
 
