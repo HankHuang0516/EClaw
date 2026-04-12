@@ -317,6 +317,65 @@
     <string name="file_broadcast">ส่งถึงทุกคน</string>
     <string name="file_btn_delete">ลบ</string>
     <string name="file_btn_download">ดาวน์โหลด</string>
+    <string name="bind_button">ผูก</string>
+    <string name="card_holder">ที่ใส่นามบัตร</string>
+    <string name="chat">แชท</string>
+    <string name="choose_plan_title">เลือกแผน</string>
+    <string name="confirm">ยืนยัน</string>
+    <string name="enter_binding_code">ใส่รหัสผูก</string>
+    <string name="error_occurred">เกิดข้อผิดพลาด</string>
+    <string name="info">ข้อมูล</string>
+    <string name="invite_title">เชิญ</string>
+    <string name="language">ภาษา</string>
+    <string name="loading">กำลังโหลด…</string>
+    <string name="microphone_permission_denied">สิทธิ์ไมโครโฟนถูกปฏิเสธ</string>
+    <string name="my_rentals_title">การเช่าของฉัน</string>
+    <string name="privacy_policy_content">
+
+<b>1. คำมั่นสัญญาด้านความเป็นส่วนตัวตอนแรก</b>
+
+ทีมงาน E-claw ตระหนักถึงความสำคัญของความเป็นส่วนตัวของคุณ เราขอประกาศอย่างเป็นทางการว่า：<b>เราจะไม่ขาย เปิดเผย หรือใช้ข้อมูลส่วนบุคคลของคุณในทางที่ผิดโดยเด็ดขาด</b>
+
+<b>2. เราเก็บข้อมูลอะไรบ้าง？</b>
+
+เพื่อให้บริการ เราเก็บเฉพาะข้อมูลที่จำเป็นสำหรับการดำเนินงาน：
+- รหัสอุปกรณ์：ใช้แยกความแตกต่างของอุปกรณ์ต่างๆ
+- เวอร์ชันแอป：ใช้ตรวจสอบความเข้ากันได้
+- ข้อมูลการผูก：ชื่อและสถานะของเอเจนต์
+- ตำแหน่ง GPS（ตัวเลือก）：รับเฉพาะเมื่อเอไอเอเจนต์ของคุณร้องขออย่างกระตือรือร้น เก็บในหน่วยความจำเท่านั้น ไม่เก็บถาวร
+- ข้อความเสียง（ตัวเลือก）：เฉพาะเมื่อคุณกดปุ่มบันทึกในแชท อัปโหลดเป็นส่วนหนึ่งของประวัติแชท
+
+<b>เราไม่เก็บ：</b>
+- ชื่อ เบอร์โทร หรืออีเมลของคุณ
+- ข้อมูลกล้องของคุณ
+- ข้อมูลแอปอื่นๆ บนโทรศัพท์ของคุณ
+
+<b>3. ข้อตกลง OpenClaw</b>
+เราเป็นผู้สนับสนุนที่มั่นคงของระบบนิเวศ OpenClaw เราจะไม่สร้าง "สวนกำแพง" ที่ปิดกั้น และสัญญาว่าจะรักษาความสามารถในการทำงานร่วมกัน
+
+<b>4. ความเป็นส่วนตัวของการสนทนา AI</b>
+ข้อความถูกส่งผ่าน HTTPS ที่เข้ารหัสไปยังเอไอเอเจนต์ที่ผูกไว้ การไหลของข้อมูลอยู่ภายใต้การควบคุมของคุณ
+
+<b>5. GPS และไมโครโฟน</b>
+GPS：รับตามความต้องการเท่านั้น ไม่ติดตามเบื้องหลัง ข้อมูลจะหายเมื่อรีสตาร์ทเซิร์ฟเวอร์
+ไมโครโฟน：ทำงานเฉพาะตอนบันทึกเท่านั้น ไม่ฟังเบื้องหลัง
+ทั้งสองไม่แชร์กับบุคคลที่สาม
+
+<b>6. ติดต่อเรา</b>
+หากมีคำถามใดๆ โปรดติดต่อเราผ่านอีเมลทางการ
+    
+    </string>
+    <string name="recording">กำลังบันทึก…</string>
+    <string name="schedule">กำหนดการ</string>
+    <string name="settings">ตั้งค่า</string>
+    <string name="topup_ecoin">เติม E-Coin</string>
+    <string name="topup_ecoin_title">เติม E-Coin</string>
+    <string name="topup_failed">เติมเงินล้มเหลว</string>
+    <string name="topup_success">เติมเงินสำเร็จ</string>
+    <string name="unbind_button">ยกเลิกการผูก</string>
+    <string name="upgrade_plan">อัพเกรดแผน</string>
+    <string name="voice_message">ข้อความเสียง</string>
+    <string name="wallet_title">กระเป๋าเงิน</string>
     <string name="file_btn_share">แชร์</string>
     <string name="file_delete_confirm">คุณแน่ใจหรือไม่ว่าต้องการลบไฟล์นี้?</string>
     <string name="file_delete_title">ลบไฟล์</string>

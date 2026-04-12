@@ -317,6 +317,65 @@
     <string name="file_broadcast">Siaran</string>
     <string name="file_btn_delete">Hapus</string>
     <string name="file_btn_download">Unduh</string>
+    <string name="bind_button">Ikatan</string>
+    <string name="card_holder">Pemegang Kartu</string>
+    <string name="chat">Obrolan</string>
+    <string name="choose_plan_title">Pilih Paket</string>
+    <string name="confirm">Konfirmasi</string>
+    <string name="enter_binding_code">Masukkan kode ikatan</string>
+    <string name="error_occurred">Terjadi kesalahan</string>
+    <string name="info">Info</string>
+    <string name="invite_title">Undang</string>
+    <string name="language">Bahasa</string>
+    <string name="loading">Memuat…</string>
+    <string name="microphone_permission_denied">Izin mikrofon ditolak</string>
+    <string name="my_rentals_title">Sewa Saya</string>
+    <string name="privacy_policy_content">
+
+<b>1. Komitmen Privasi Utama</b>
+
+Tim E-claw memahami pentingnya privasi bagi Anda. Kami dengan ini menyatakan dengan tegas：<b>Kami tidak akan pernah menjual, membocorkan, atau menyalahgunakan data pribadi Anda.</b>
+
+<b>2. Data Apa yang Kami Kumpulkan？</b>
+
+Untuk menyediakan layanan, kami hanya mengumpulkan data minimum yang diperlukan untuk operasi：
+- ID Perangkat：Digunakan untuk membedakan perangkat berbeda
+- Versi Aplikasi：Digunakan untuk pemeriksaan kompatibilitas
+- Data Pengikatan：Nama dan status agen
+- Lokasi GPS（opsional）：Hanya diperoleh ketika agen AI Anda secara aktif memintanya. Hanya disimpan di memori, tidak secara permanen
+- Pesan Suara（opsional）：Hanya ketika Anda menekan tombol rekam di obrolan. Diunggah sebagai bagian dari riwayat obrolan
+
+<b>Kami TIDAK mengumpulkan：</b>
+- Nama, nomor telepon, atau email Anda
+- Data kamera Anda
+- Informasi aplikasi lain di ponsel Anda
+
+<b>3. Protokol OpenClaw</b>
+Kami adalah pendukung tegas ekosistem OpenClaw. Kami tidak akan membangun "Taman Tertutup" dan berjanji untuk mempertahankan interoperabilitas.
+
+<b>4. Privasi Percakapan AI</b>
+Pesan dikirim melalui HTTPS terenkripsi ke agen AI yang terikat. Aliran data dikendalikan oleh Anda.
+
+<b>5. GPS dan Mikrofon</b>
+GPS：Hanya sesuai permintaan, tidak ada pelacakan latar belakang, data hilang setelah restart server
+Mikrofon：Hanya aktif saat merekam, tidak ada penyadapan latar belakang
+Keduanya tidak akan dibagikan ke pihak ketiga
+
+<b>6. Hubungi Kami</b>
+Jika ada pertanyaan, silakan hubungi kami melalui email resmi kami.
+    
+    </string>
+    <string name="recording">Merekam…</string>
+    <string name="schedule">Jadwal</string>
+    <string name="settings">Pengaturan</string>
+    <string name="topup_ecoin">Isi Ulang E-Coin</string>
+    <string name="topup_ecoin_title">Isi Ulang E-Coin</string>
+    <string name="topup_failed">Isi ulang gagal</string>
+    <string name="topup_success">Isi ulang berhasil</string>
+    <string name="unbind_button">Lepas Ikatan</string>
+    <string name="upgrade_plan">Upgrade Paket</string>
+    <string name="voice_message">Pesan Suara</string>
+    <string name="wallet_title">Dompet</string>
     <string name="file_btn_share">Bagikan</string>
     <string name="file_delete_confirm">Apakah Anda yakin ingin menghapus file ini?</string>
     <string name="file_delete_title">Hapus File</string>

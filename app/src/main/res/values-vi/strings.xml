@@ -317,6 +317,65 @@
     <string name="file_broadcast">Phát chung</string>
     <string name="file_btn_delete">Xóa</string>
     <string name="file_btn_download">Tải xuống</string>
+    <string name="bind_button">Liên kết</string>
+    <string name="card_holder">Người giữ thẻ</string>
+    <string name="chat">Trò chuyện</string>
+    <string name="choose_plan_title">Chọn gói</string>
+    <string name="confirm">Xác nhận</string>
+    <string name="enter_binding_code">Nhập mã liên kết</string>
+    <string name="error_occurred">Đã xảy ra lỗi</string>
+    <string name="info">Thông tin</string>
+    <string name="invite_title">Mời</string>
+    <string name="language">Ngôn ngữ</string>
+    <string name="loading">Đang tải…</string>
+    <string name="microphone_permission_denied">Quyền microphone bị từ chối</string>
+    <string name="my_rentals_title">Cho thuê của tôi</string>
+    <string name="privacy_policy_content">
+
+<b>1. Cam kết bảo mật quyền riêng tư</b>
+
+Đội ngũ E-claw hiểu rõ tầm quan trọng của quyền riêng tư đối với bạn. Chúng tôi nghiêm túc tuyên bố：<b>Chúng tôi sẽ không bao giờ bán, tiết lộ hoặc lạm dụng bất kỳ dữ liệu cá nhân nào của bạn.</b>
+
+<b>2. Chúng tôi thu thập dữ liệu gì？</b>
+
+Để cung cấp dịch vụ, chúng tôi chỉ thu thập dữ liệu tối thiểu cần thiết cho hoạt động：
+- ID thiết bị：Dùng để phân biệt các thiết bị khác nhau
+- Phiên bản ứng dụng：Dùng để kiểm tra tính tương thích
+- Dữ liệu liên kết：Tên và trạng thái của tác nhân
+- Vị trí GPS（tùy chọn）：Chỉ lấy khi tác nhân AI chủ động yêu cầu. Chỉ lưu trong bộ nhớ, không lưu trữ vĩnh viễn
+- Tin nhắn thoại（tùy chọn）：Chỉ khi bạn nhấn nút ghi âm trong trò chuyện. Được tải lên như một phần của lịch sử trò chuyện
+
+<b>Chúng tôi KHÔNG thu thập：</b>
+- Tên, số điện thoại hoặc email của bạn
+- Dữ liệu camera của bạn
+- Thông tin về các ứng dụng khác trên điện thoại của bạn
+
+<b>3. Giao thức OpenClaw</b>
+Chúng tôi là người ủng hộ kiên định của hệ sinh thái OpenClaw. Chúng tôi sẽ không xây dựng "vườn có tường bao" đóng kín và cam kết duy trì khả năng tương tác
+
+<b>4. Quyền riêng tư trò chuyện AI</b>
+Tin nhắn được gửi qua HTTPS được mã hóa đến tác nhân AI được liên kết. Luồng dữ liệu do bạn kiểm soát
+
+<b>5. GPS và Microphone</b>
+GPS：Chỉ theo yêu cầu, không theo dõi nền, dữ liệu biến mất khi khởi động lại máy chủ
+Microphone：Chỉ kích hoạt khi ghi âm, không nghe lén nền
+Cả hai đều không được chia sẻ với bên thứ ba
+
+<b>6. Liên hệ với chúng tôi</b>
+Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua email chính thức
+    
+    </string>
+    <string name="recording">Đang ghi âm…</string>
+    <string name="schedule">Lịch trình</string>
+    <string name="settings">Cài đặt</string>
+    <string name="topup_ecoin">Nạp E-Coin</string>
+    <string name="topup_ecoin_title">Nạp E-Coin</string>
+    <string name="topup_failed">Nạp tiền thất bại</string>
+    <string name="topup_success">Nạp tiền thành công</string>
+    <string name="unbind_button">Hủy liên kết</string>
+    <string name="upgrade_plan">Nâng cấp gói</string>
+    <string name="voice_message">Tin nhắn thoại</string>
+    <string name="wallet_title">Ví</string>
     <string name="file_btn_share">Chia sẻ</string>
     <string name="file_delete_confirm">Bạn có chắc muốn xóa tệp này không?</string>
     <string name="file_delete_title">Xóa tệp</string>
