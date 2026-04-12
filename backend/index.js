@@ -4465,6 +4465,51 @@ app.get('/api/entities', (req, res) => {
 });
 
 /**
+ * GET /api/entities/status
+ * Query all entity binding status using botSecret (Issue #1702).
+ * Designed for bots (e.g. commander bot) that need to check which entities are bound
+ * before dispatching tasks, without requiring deviceSecret.
+ *
+ * Returns rental status for each entity (leased_out, leased_in, null).
+ */
+app.get('/api/entities/status', (req, res) => {
+    const { deviceId, botSecret, entityId } = req.query;
+
+    if (!deviceId) return res.status(400).json({ success: false, error: 'Missing deviceId' });
+    if (!botSecret) return res.status(400).json({ success: false, error: 'Missing botSecret' });
+
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+
+    // Authenticate via botSecret of requesting entity
+    const reqEntityId = parseInt(entityId || '0');
+    const reqEntity = device.entities?.[reqEntityId];
+    if (!reqEntity || !reqEntity.isBound || !safeEqual(reqEntity.botSecret, botSecret)) {
+        return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    }
+
+    const entityList = [];
+    for (const id of Object.keys(device.entities).map(Number)) {
+        const entity = device.entities[id];
+        if (!entity) continue;
+        entityList.push({
+            entityId: id,
+            isBound: !!entity.isBound,
+            character: entity.character || '',
+            state: entity.state || 'IDLE',
+            rentalStatus: entity.rental_status || null, // 'leased_out', 'leased_in', or null
+            rentalContractId: entity.rental_contract_id || null,
+        });
+    }
+
+    res.json({
+        success: true,
+        entities: entityList,
+        activeCount: entityList.filter(e => e.isBound).length,
+    });
+});
+
+/**
  * GET /api/status
  * Get status for specific device + entity.
  * Auth: deviceId+deviceSecret OR JWT cookie

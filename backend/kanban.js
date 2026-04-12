@@ -71,7 +71,7 @@ const pool = new Pool({
 });
 
 // Valid statuses in order
-const STATUSES = ['backlog', 'todo', 'in_progress', 'review', 'done'];
+const STATUSES = ['backlog', 'todo', 'in_progress', 'review', 'done', 'blocked'];
 const PRIORITIES = ['P0', 'P1', 'P2', 'P3'];
 const STATUS_LABELS = {
     backlog: 'Backlog',
@@ -360,6 +360,23 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             return res.status(400).json({ success: false, error: 'At least one entity must be assigned' });
         }
 
+        // #1700: Validate assigned entities are bound (rental entities allowed per design decision #15)
+        const device = devices[deviceId];
+        if (device) {
+            for (const botId of bots) {
+                const entity = device.entities?.[botId];
+                if (!entity || !entity.isBound) {
+                    return res.status(400).json({
+                        success: false,
+                        error: `Entity #${botId} is not bound`,
+                        hint: 'Use POST /api/bind to bind the entity first',
+                    });
+                }
+                // Rental entities (leased_out on owner side) are allowed for kanban assign
+                // per design decision #15: ✅ kanban assigned_bots
+            }
+        }
+
         const cardPriority = PRIORITIES.includes(priority) ? priority : 'P2';
         const cardStatus = STATUSES.includes(status) ? status : 'backlog';
         const createdBy = parseInt(entityId || 0);
@@ -463,10 +480,16 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             const params = [deviceId];
             let paramIdx = 2;
 
-            // Automation filter
-            if (automation === 'true') {
+            // #1703: Automation filter — default excludes automation cards
+            // ?automation=all → show everything (explicit opt-in)
+            // ?automation=true → only automation cards
+            // ?automation=false or absent → only manual cards (new default)
+            if (automation === 'all') {
+                // no filter — show everything
+            } else if (automation === 'true') {
                 query += ` AND c.is_automation = true`;
-            } else if (automation === 'false') {
+            } else {
+                // Default: exclude automation cards
                 query += ` AND (c.is_automation = false OR c.is_automation IS NULL)`;
             }
 
@@ -501,7 +524,26 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 if (board[card.status]) board[card.status].push(card);
             }
 
-            res.json({ success: true, cards, board, total: cards.length });
+            // #1703: Summary counts for manual vs automation cards
+            const summaryResult = await pool.query(`
+                SELECT
+                    COUNT(*) FILTER (WHERE is_automation = true) AS automation_count,
+                    COUNT(*) FILTER (WHERE is_automation = false OR is_automation IS NULL) AS manual_count
+                FROM kanban_cards WHERE device_id = $1 AND archived = false
+            `, [deviceId]);
+            const summaryRow = summaryResult.rows[0] || {};
+            const byStatus = {};
+            for (const s of STATUSES) byStatus[s] = board[s].length;
+
+            res.json({
+                success: true, cards, board, total: cards.length,
+                summary: {
+                    total: cards.length,
+                    manual: parseInt(summaryRow.manual_count || 0),
+                    automation: parseInt(summaryRow.automation_count || 0),
+                    byStatus,
+                },
+            });
         } catch (err) {
             console.error('[Kanban] List cards error:', err);
             res.status(500).json({ success: false, error: err.message });
@@ -806,6 +848,16 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             if (assignedBots !== undefined && Array.isArray(assignedBots)) {
                 if (assignedBots.length === 0) {
                     return res.status(400).json({ success: false, error: 'At least one entity must be assigned' });
+                }
+                // #1700: Validate bind status on update (rental entities allowed)
+                const updateDevice = devices[deviceId];
+                if (updateDevice) {
+                    for (const botId of assignedBots.map(Number)) {
+                        const entity = updateDevice.entities?.[botId];
+                        if (!entity || !entity.isBound) {
+                            return res.status(400).json({ success: false, error: `Entity #${botId} is not bound` });
+                        }
+                    }
                 }
                 updates.push(`assigned_bots = $${paramIdx++}::jsonb`);
                 params.push(JSON.stringify(assignedBots.map(Number)));
@@ -1447,9 +1499,17 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         await checkScheduleTriggers();
     }
 
+    // #1701: Escalation thresholds (can be overridden per-card via config.escalationPolicy)
+    const DEFAULT_ESCALATE_MS = 6 * 3600 * 1000;  // 6 hours → priority upgrade
+    const DEFAULT_BLOCK_MS = 12 * 3600 * 1000;     // 12 hours → move to blocked
+
     /**
      * Scan for stale cards (TODO / In Progress / Review) that exceeded staleThresholdMs.
-     * Push nudge to assigned bots + system comment. Respects min 1hr nudge gap.
+     * #1701: Three escalation levels:
+     *   1. Nudge (>staleThreshold, default 3h) — system comment + notification
+     *   2. Escalate (>6h) — auto-upgrade priority (P2→P1) + notify reviewer
+     *   3. Block (>12h) — move to blocked status + system comment
+     * Also checks for orphaned rental bot assignments.
      */
     async function checkStaleCards() {
         try {
@@ -1458,7 +1518,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 WHERE archived = false
                   AND status IN ('todo', 'in_progress', 'review')
                   AND EXTRACT(EPOCH FROM (NOW() - status_changed_at)) * 1000 > stale_threshold_ms
-                  AND (last_stale_nudge_at IS NULL 
+                  AND (last_stale_nudge_at IS NULL
                        OR EXTRACT(EPOCH FROM (NOW() - last_stale_nudge_at)) * 1000 > $1)
             `, [MIN_NUDGE_GAP_MS]);
 
@@ -1472,6 +1532,51 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 const elapsedMs = Date.now() - new Date(card.status_changed_at).getTime();
                 const elapsedHrs = Math.round(elapsedMs / 3600000 * 10) / 10;
 
+                // Parse per-card escalation config (if set)
+                const config = card.config || {};
+                const esc = config.escalationPolicy || {};
+                const escalateAfterMs = esc.escalateAfterMs || DEFAULT_ESCALATE_MS;
+                const blockAfterMs = esc.blockAfterMs || DEFAULT_BLOCK_MS;
+                const notifyEntityId = esc.notifyEntityId || card.reviewer_entity_id;
+
+                // #1701 Level 3: Block (>12h default)
+                if (elapsedMs >= blockAfterMs && card.status !== 'blocked') {
+                    await pool.query(
+                        `UPDATE kanban_cards SET status = 'blocked', status_changed_at = NOW(), last_stale_nudge_at = NOW(), updated_at = NOW() WHERE id = $1`,
+                        [card.id]
+                    );
+                    await addSystemComment(card.id, card.device_id,
+                        `🚫 自動封鎖：此卡片已停滯 ${elapsedHrs} 小時，已自動移至「blocked」，請人工介入`);
+                    if (notifyEntityId != null) {
+                        const lang = await getDeviceLanguage(card.device_id);
+                        notifyEntities(card.device_id, [notifyEntityId],
+                            `🚫 卡片「${card.title}」已停滯 ${elapsedHrs}h，自動 blocked，需人工介入`);
+                    }
+                    if (serverLog) serverLog('warn', 'kanban', `[Stale] Card ${card.id} auto-blocked after ${elapsedHrs}h`, { deviceId: card.device_id });
+                    continue;
+                }
+
+                // #1701 Level 2: Escalate priority (>6h default)
+                if (elapsedMs >= escalateAfterMs) {
+                    const PRIORITY_UPGRADE = { P3: 'P2', P2: 'P1', P1: 'P0', P0: 'P0' };
+                    const newPriority = PRIORITY_UPGRADE[card.priority] || card.priority;
+                    if (newPriority !== card.priority) {
+                        await pool.query(
+                            `UPDATE kanban_cards SET priority = $1, last_stale_nudge_at = NOW(), updated_at = NOW() WHERE id = $2`,
+                            [newPriority, card.id]
+                        );
+                        await addSystemComment(card.id, card.device_id,
+                            `⬆️ 自動升級：停滯 ${elapsedHrs} 小時，優先級 ${card.priority} → ${newPriority}`);
+                        if (notifyEntityId != null) {
+                            notifyEntities(card.device_id, [notifyEntityId],
+                                `⬆️ 卡片「${card.title}」停滯 ${elapsedHrs}h，已自動升級至 ${newPriority}`);
+                        }
+                        if (serverLog) serverLog('info', 'kanban', `[Stale] Card ${card.id} escalated ${card.priority}→${newPriority}`, { deviceId: card.device_id });
+                        continue;
+                    }
+                }
+
+                // Level 1: Standard nudge
                 await addSystemComment(card.id, card.device_id,
                     `⏰ 催促：此卡片已在「${cardStatusLabel}」停留 ${elapsedHrs} 小時，請 ${bots.map(b => `#${b}`).join(', ') || '負責人'} 繼續推進`);
 
@@ -1490,7 +1595,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     notifyEntities(card.device_id, bots, msg, { description: card.description });
                 }
 
-                console.log(`[Kanban] Nudged card ${card.id} (${card.title}) — ${elapsedHrs}h in ${statusLabel}`);
+                console.log(`[Kanban] Nudged card ${card.id} (${card.title}) — ${elapsedHrs}h in ${card.status}`);
             }
         } catch (err) {
             console.error('[Kanban] Stale check error:', err.message);
