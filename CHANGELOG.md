@@ -1,3 +1,10 @@
+# [1.964.0](https://github.com/HankHuang0516/EClaw/compare/v1.963.0...v1.964.0) (2026-04-12)
+
+
+### Features
+
+* **rental-modal:** UIUX spec compliance for marketplace cards and rental detail modal ([#1732](https://github.com/HankHuang0516/EClaw/issues/1732)) ([a27a9d3](https://github.com/HankHuang0516/EClaw/commit/a27a9d382df43c64e5bf83848b4958ce73a042e8))
+
 # [1.963.0](https://github.com/HankHuang0516/EClaw/compare/v1.962.5...v1.963.0) (2026-04-12)
 
 
