@@ -1,3 +1,10 @@
+## [1.964.1](https://github.com/HankHuang0516/EClaw/compare/v1.964.0...v1.964.1) (2026-04-12)
+
+
+### Bug Fixes
+
+* **i18n:** add missing mp_ marketplace translations for zh/ja/ko/fr/es/de ([#1733](https://github.com/HankHuang0516/EClaw/issues/1733)) ([cda54a6](https://github.com/HankHuang0516/EClaw/commit/cda54a69600b76ccb5711f2b92a9e4a2bfbda60c))
+
 # [1.964.0](https://github.com/HankHuang0516/EClaw/compare/v1.963.0...v1.964.0) (2026-04-12)
 
 
