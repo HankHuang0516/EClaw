@@ -927,7 +927,7 @@
             const duration = parseInt(document.getElementById('rentalDuration')?.value, 10) || 60;
             const data = await apiPost('/api/rental/contract', {
                 listingId,
-                renterDeviceId: user.user.device_id || 'web',
+                renterDeviceId: user.user.deviceId || user.user.device_id || 'web',
                 durationMinutes: duration,
             });
             if (data?.success) {
