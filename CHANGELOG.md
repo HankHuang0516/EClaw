@@ -1,3 +1,10 @@
+# [1.959.0](https://github.com/HankHuang0516/EClaw/compare/v1.958.0...v1.959.0) (2026-04-12)
+
+
+### Features
+
+* **cross-platform:** iOS WebView parity + Android Wallet/Rentals/Invite pages ([#1693](https://github.com/HankHuang0516/EClaw/issues/1693)) ([2dc3469](https://github.com/HankHuang0516/EClaw/commit/2dc34694fa9b3673f729480e16b18caab627dc58))
+
 # [1.958.0](https://github.com/HankHuang0516/EClaw/compare/v1.957.2...v1.958.0) (2026-04-12)
 
 
