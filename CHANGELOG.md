@@ -1,3 +1,10 @@
+## [1.961.7](https://github.com/HankHuang0516/EClaw/compare/v1.961.6...v1.961.7) (2026-04-12)
+
+
+### Bug Fixes
+
+* translate rental error codes to user-friendly i18n messages ([#1709](https://github.com/HankHuang0516/EClaw/issues/1709)) ([#1715](https://github.com/HankHuang0516/EClaw/issues/1715)) ([363a3d6](https://github.com/HankHuang0516/EClaw/commit/363a3d6b4bf1c84bead3eab2ea0951c5d3468986))
+
 ## [1.961.6](https://github.com/HankHuang0516/EClaw/compare/v1.961.5...v1.961.6) (2026-04-12)
 
 
