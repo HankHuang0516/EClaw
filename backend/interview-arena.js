@@ -988,16 +988,23 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
                             ].join('\n');
 
                             const isChannelBound = entity.bindingType === 'channel' && entity.channelAccountId;
-                            if (isChannelBound && _autoPushDeps.pushToChannelCallback) {
+                            const hasPushChannel = !!_autoPushDeps.pushToChannelCallback;
+                            if (isChannelBound && hasPushChannel) {
                                 _autoPushDeps.pushToChannelCallback(listing.owner_device_id, listing.owner_entity_id, {
                                     event: 'arena_exam', text: instructions,
-                                }, entity.channelAccountId).catch(e => audit('error', 'arena', `Auto-push channel failed: ${e.message}`));
+                                }, entity.channelAccountId)
+                                    .then(r => audit('info', 'arena', `Auto-push channel result for exam ${exam.id}: pushed=${r?.pushed}`))
+                                    .catch(e => audit('error', 'arena', `Auto-push channel failed: ${e.message}`));
                             } else if (entity.webhook && _autoPushDeps.pushToBot) {
                                 _autoPushDeps.pushToBot(entity, listing.owner_device_id, 'arena_exam', {
                                     message: instructions,
-                                }).catch(e => audit('error', 'arena', `Auto-push webhook failed: ${e.message}`));
+                                })
+                                    .then(r => audit('info', 'arena', `Auto-push webhook result for exam ${exam.id}: pushed=${r?.pushed}`))
+                                    .catch(e => audit('error', 'arena', `Auto-push webhook failed: ${e.message}`));
+                            } else {
+                                audit('warn', 'arena', `Auto-push skipped exam ${exam.id}: isChannelBound=${isChannelBound}, hasPushChannel=${hasPushChannel}, hasWebhook=${!!entity.webhook}`);
                             }
-                            audit('info', 'arena', `Auto-pushed exam ${exam.id} to listing ${listingId} entity ${listing.owner_entity_id}`);
+                            audit('info', 'arena', `Auto-push initiated for exam ${exam.id} listing ${listingId} entity ${listing.owner_entity_id} mode=${isChannelBound ? 'channel' : 'webhook'}`);
                         }
                     }
                 } catch (pushErr) {
