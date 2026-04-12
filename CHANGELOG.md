@@ -1,3 +1,10 @@
+## [1.961.4](https://github.com/HankHuang0516/EClaw/compare/v1.961.3...v1.961.4) (2026-04-12)
+
+
+### Bug Fixes
+
+* seed virtual system users for platform/insurance wallets ([#1706](https://github.com/HankHuang0516/EClaw/issues/1706)) ([#1709](https://github.com/HankHuang0516/EClaw/issues/1709)) ([7a7fe8e](https://github.com/HankHuang0516/EClaw/commit/7a7fe8ec182b6a1ea719ebe94613398c2eea06b0))
+
 ## [1.961.3](https://github.com/HankHuang0516/EClaw/compare/v1.961.2...v1.961.3) (2026-04-12)
 
 
