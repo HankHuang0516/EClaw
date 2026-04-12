@@ -554,6 +554,8 @@ If you have any questions, please contact us via our official email.
     <string name="file_type_photo">Photo</string>
     <string name="file_type_voice">Voice</string>
     <string name="file_btn_download">Download</string>
+    <string name="chat_load_image_failed">Failed to load image</string>
+    <string name="wallpaper_no_bound_entities">No bound entities</string>
     <string name="main_agent_card_deleted">Agent Card deleted</string>
     <string name="main_agent_card_saved">Agent Card saved</string>
     <string name="main_delete_failed">Delete failed</string>

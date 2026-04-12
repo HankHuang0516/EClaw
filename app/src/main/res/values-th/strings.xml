@@ -317,6 +317,8 @@
     <string name="file_broadcast">ส่งถึงทุกคน</string>
     <string name="file_btn_delete">ลบ</string>
     <string name="file_btn_download">ดาวน์โหลด</string>
+    <string name="chat_load_image_failed">โหลดรูปภาพไม่สำเร็จ</string>
+    <string name="wallpaper_no_bound_entities">ไม่มีเอนทิตีที่ถูกผูกไว้</string>
     <string name="main_agent_card_deleted">ลบ Agent Card แล้ว</string>
     <string name="main_agent_card_saved">บันทึก Agent Card แล้ว</string>
     <string name="main_delete_failed">ลบล้มเหลว</string>
