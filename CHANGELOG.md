@@ -1,3 +1,10 @@
+## [1.959.1](https://github.com/HankHuang0516/EClaw/compare/v1.959.0...v1.959.1) (2026-04-12)
+
+
+### Bug Fixes
+
+* **rental:** add debug API for interview-start-fail diagnosis ([#1695](https://github.com/HankHuang0516/EClaw/issues/1695)) ([29c5527](https://github.com/HankHuang0516/EClaw/commit/29c55276ae54f6c17aaf2003e58bcf6f82fd7120))
+
 # [1.959.0](https://github.com/HankHuang0516/EClaw/compare/v1.958.0...v1.959.0) (2026-04-12)
 
 
