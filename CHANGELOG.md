@@ -1,3 +1,10 @@
+# [1.958.0](https://github.com/HankHuang0516/EClaw/compare/v1.957.2...v1.958.0) (2026-04-12)
+
+
+### Features
+
+* **billing:** add e-coin top-up consumables + subscription plan tiers ([#1692](https://github.com/HankHuang0516/EClaw/issues/1692)) ([1fbbf2d](https://github.com/HankHuang0516/EClaw/commit/1fbbf2d467d1640d18fbf29778aef693e670d4e7))
+
 ## [1.957.2](https://github.com/HankHuang0516/EClaw/compare/v1.957.1...v1.957.2) (2026-04-12)
 
 
