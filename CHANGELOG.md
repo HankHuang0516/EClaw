@@ -1,3 +1,10 @@
+## [1.965.1](https://github.com/HankHuang0516/EClaw/compare/v1.965.0...v1.965.1) (2026-04-12)
+
+
+### Bug Fixes
+
+* add rental_status and rental_contract_id to /api/entities and /api/status responses ([#1735](https://github.com/HankHuang0516/EClaw/issues/1735)) ([0ec04f0](https://github.com/HankHuang0516/EClaw/commit/0ec04f011c44031ff18e593c4265a37059763eb3))
+
 # [1.965.0](https://github.com/HankHuang0516/EClaw/compare/v1.964.1...v1.965.0) (2026-04-12)
 
 
