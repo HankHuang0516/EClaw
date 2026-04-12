@@ -317,6 +317,11 @@
     <string name="file_broadcast">Phát chung</string>
     <string name="file_btn_delete">Xóa</string>
     <string name="file_btn_download">Tải xuống</string>
+    <string name="chat_ai_analyzing">AI đang phân tích tin nhắn của bạn…</string>
+    <string name="chat_failed_to_send">Gửi tin nhắn thất bại.</string>
+    <string name="chat_failed_to_send_v2">Gửi tin nhắn thất bại.</string>
+    <string name="chat_images_too_large">Hình ảnh quá lớn. Vui lòng thử ít hơn hoặc hình ảnh nhỏ hơn, hoặc mô tả vấn đề của bạn bằng văn bản.</string>
+    <string name="chat_network_error">Lỗi mạng. Vui lòng thử lại.</string>
     <string name="bind_button">Liên kết</string>
     <string name="card_holder">Người giữ thẻ</string>
     <string name="chat">Trò chuyện</string>

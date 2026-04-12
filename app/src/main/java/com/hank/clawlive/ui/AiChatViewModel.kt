@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.hank.clawlive.data.local.DeviceManager
+import com.hank.clawlive.R
 import com.hank.clawlive.data.remote.AiChatPollResponse
 import com.hank.clawlive.data.remote.NetworkModule
 import kotlinx.coroutines.Job
@@ -120,12 +121,12 @@ class AiChatViewModel(application: Application) : AndroidViewModel(application) 
             }
 
             if (!submitResponse.success) {
-                finishWithError(submitResponse.message ?: submitResponse.error ?: "Failed to send message.")
+                finishWithError(submitResponse.message ?: submitResponse.error ?: context.getString(R.string.chat_failed_to_send))
                 return
             }
 
             val requestId = submitResponse.requestId ?: run {
-                finishWithError("Failed to send message.")
+                finishWithError(context.getString(R.string.chat_failed_to_send_v2))
                 return
             }
             savePendingRequestId(requestId)
@@ -134,7 +135,7 @@ class AiChatViewModel(application: Application) : AndroidViewModel(application) 
             statusJob?.cancel()
             statusJob = viewModelScope.launch {
                 delay(5000)
-                _uiState.update { it.copy(typingText = "AI is analyzing your message…") }
+                _uiState.update { it.copy(typingText = context.getString(R.string.chat_ai_analyzing)) }
                 delay(10000)
                 _uiState.update { it.copy(typingText = "Still working on it…") }
                 delay(45000)
@@ -386,7 +387,7 @@ class AiChatViewModel(application: Application) : AndroidViewModel(application) 
                 is java.net.SocketTimeoutException -> "Response timed out. Trying again…"
                 is java.net.UnknownHostException -> "No internet connection. Please check your network."
                 is java.io.IOException -> "Connection error. Please try again."
-                else -> "Network error. Please try again."
+                else -> context.getString(R.string.chat_network_error)
             }
         }
         val errorBody = try { e.response()?.errorBody()?.string() } catch (_: Exception) { null }
@@ -396,7 +397,7 @@ class AiChatViewModel(application: Application) : AndroidViewModel(application) 
             401 -> json.optString("message", "").ifEmpty {
                 "Device not registered. Please restart the app."
             }
-            413 -> "Images are too large. Please try with fewer or smaller images, or describe your issue in text."
+            413 -> context.getString(R.string.chat_images_too_large)
             429 -> {
                 val retryMs = json.optLong("retry_after_ms", 0)
                 if (retryMs > 0) "Message limit reached. Try again in ${retryMs / 1000}s."

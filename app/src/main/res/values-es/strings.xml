@@ -333,6 +333,11 @@ Tus comentarios enviados aparecerán aquí.</string>
     <string name="file_broadcast">Broadcast</string>
     <string name="file_btn_delete">Eliminar</string>
     <string name="file_btn_download">Descargar</string>
+    <string name="chat_ai_analyzing">IA está analizando tu mensaje…</string>
+    <string name="chat_failed_to_send">Error al enviar el mensaje.</string>
+    <string name="chat_failed_to_send_v2">Error al enviar el mensaje.</string>
+    <string name="chat_images_too_large">Las imágenes son demasiado grandes. Intenta con menos imágenes o más pequeñas, o describe tu problema con texto.</string>
+    <string name="chat_network_error">Error de red. Inténtalo de nuevo.</string>
     <string name="invite_title">Invitar Amigos</string>
     <string name="my_rentals_title">Mis Alquileres</string>
     <string name="wallet_title">Billetera</string>

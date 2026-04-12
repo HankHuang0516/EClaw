@@ -317,6 +317,11 @@
     <string name="file_broadcast">브로드캐스트</string>
     <string name="file_btn_delete">삭제</string>
     <string name="file_btn_download">다운로드</string>
+    <string name="chat_ai_analyzing">AI가 메시지 분석 중…</string>
+    <string name="chat_failed_to_send">메시지 전송에 실패했습니다.</string>
+    <string name="chat_failed_to_send_v2">메시지 전송에 실패했습니다.</string>
+    <string name="chat_images_too_large">이미지가 너무 큽니다. 이미지를 줄이거나 작은 이미지를 사용하거나 텍스트로 문제를 설명해 주세요.</string>
+    <string name="chat_network_error">네트워크 오류. 다시 시도해 주세요.</string>
     <string name="bind_button">바인드</string>
     <string name="card_holder">명함함</string>
     <string name="chat">채팅</string>

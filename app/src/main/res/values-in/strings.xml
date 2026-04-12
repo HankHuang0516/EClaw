@@ -317,6 +317,11 @@
     <string name="file_broadcast">Siaran</string>
     <string name="file_btn_delete">Hapus</string>
     <string name="file_btn_download">Unduh</string>
+    <string name="chat_ai_analyzing">AI sedang menganalisis pesan Anda…</string>
+    <string name="chat_failed_to_send">Gagal mengirim pesan.</string>
+    <string name="chat_failed_to_send_v2">Gagal mengirim pesan.</string>
+    <string name="chat_images_too_large">Gambar terlalu besar. Coba gunakan lebih sedikit atau gambar yang lebih kecil, atau jelaskan masalah Anda dalam teks.</string>
+    <string name="chat_network_error">Kesalahan jaringan. Silakan coba lagi.</string>
     <string name="bind_button">Ikatan</string>
     <string name="card_holder">Pemegang Kartu</string>
     <string name="chat">Obrolan</string>

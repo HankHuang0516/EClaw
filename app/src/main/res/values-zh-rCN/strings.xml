@@ -320,6 +320,11 @@
     <string name="file_broadcast">广播</string>
     <string name="file_btn_delete">删除</string>
     <string name="file_btn_download">下载</string>
+    <string name="chat_ai_analyzing">AI 正在分析您的消息…</string>
+    <string name="chat_failed_to_send">发送消息失败。</string>
+    <string name="chat_failed_to_send_v2">发送消息失败。</string>
+    <string name="chat_images_too_large">图片太大，请减少图片数量或使用较小的图片，或以文字描述您的问题。</string>
+    <string name="chat_network_error">网络错误，请重试。</string>
     <string name="bind_button">绑定</string>
     <string name="card_holder">名片夹</string>
     <string name="chat">聊天</string>

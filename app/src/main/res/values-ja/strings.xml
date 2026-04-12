@@ -317,6 +317,11 @@
     <string name="file_broadcast">ブロードキャスト</string>
     <string name="file_btn_delete">削除</string>
     <string name="file_btn_download">ダウンロード</string>
+    <string name="chat_ai_analyzing">AIがメッセージを分析中…</string>
+    <string name="chat_failed_to_send">メッセージの送信に失敗しました。</string>
+    <string name="chat_failed_to_send_v2">メッセージの送信に失敗しました。</string>
+    <string name="chat_images_too_large">画像が大きすぎます。画像を減らすか、小さな画像を使用するか、テキストで問題を説明してください。</string>
+    <string name="chat_network_error">ネットワークエラー。再試行してください。</string>
     <string name="bind_button">バインド</string>
     <string name="card_holder">名刺ホルダー</string>
     <string name="chat">チャット</string>

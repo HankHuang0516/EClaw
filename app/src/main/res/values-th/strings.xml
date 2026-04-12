@@ -317,6 +317,11 @@
     <string name="file_broadcast">ส่งถึงทุกคน</string>
     <string name="file_btn_delete">ลบ</string>
     <string name="file_btn_download">ดาวน์โหลด</string>
+    <string name="chat_ai_analyzing">AI กำลังวิเคราะห์ข้อความของคุณ…</string>
+    <string name="chat_failed_to_send">ส่งข้อความไม่สำเร็จ</string>
+    <string name="chat_failed_to_send_v2">ส่งข้อความไม่สำเร็จ</string>
+    <string name="chat_images_too_large">รูปภาพใหญ่เกินไป กรุณาลองใช้รูปภาพน้อยลงหรือขนาดเล็กลง หรืออธิบายปัญหาของคุณเป็นข้อความ</string>
+    <string name="chat_network_error">ข้อผิดพลาดเครือข่าย กรุณาลองอีกครั้ง</string>
     <string name="bind_button">ผูก</string>
     <string name="card_holder">ที่ใส่นามบัตร</string>
     <string name="chat">แชท</string>
