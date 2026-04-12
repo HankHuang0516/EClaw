@@ -317,6 +317,65 @@
     <string name="file_broadcast">ブロードキャスト</string>
     <string name="file_btn_delete">削除</string>
     <string name="file_btn_download">ダウンロード</string>
+    <string name="bind_button">バインド</string>
+    <string name="card_holder">名刺ホルダー</string>
+    <string name="chat">チャット</string>
+    <string name="choose_plan_title">プランを選択</string>
+    <string name="confirm">確認</string>
+    <string name="enter_binding_code">バインディングコードを入力</string>
+    <string name="error_occurred">エラーが発生しました</string>
+    <string name="info">情報</string>
+    <string name="invite_title">招待</string>
+    <string name="language">言語</string>
+    <string name="loading">読み込み中…</string>
+    <string name="microphone_permission_denied">マイクの許可が拒否されました</string>
+    <string name="my_rentals_title">私のレンタル</string>
+    <string name="privacy_policy_content">
+
+<b>1. プライバシー最優先の約束</b>
+
+E-claw チームは一切個人のデータを販売、流用、乱用しないことをここに明記します。
+
+<b>2. 収集するデータ</b>
+
+本サービスの運営に必要な最小限のデータのみを収集します：
+- デバイスID：デバイスの識別用
+- アプリバージョン：互換性チェック用
+- バインディングデータ：エージェント名とステータス
+- GPS位置（任意）：AIエージェントが能動的に要求した場合のみ取得。メモリにのみ保存され、永続化されません。
+- 音声メッセージ（任意）：チャット内で録音ボタンを押した場合のみ。チャット履歴の一部としてアップロードされます。
+
+<b>収集しないもの：</b>
+- 氏名、電話番号、メール
+- カメラデータ
+- スマートフォン上の他のアプリ情報
+
+<b>3. OpenClawプロトコル</b>
+我々はOpenClawエコシステムの坚定的支持者です。閉鎖的な「垣根の庭」を構築せず、相互運用性を維持することを約束します。
+
+<b>4. AI会話のプライバシー</b>
+メッセージは暗号化されたHTTPSを通じてバインドされたAIエージェントに送信されます。データフローはあなたが制御します。
+
+<b>5. GPSとマイク</b>
+GPS：オンデマンドのみ、バックグラウンド追跡なし、サーバー再起動後にデータは消失します。
+マイク：録音中のみアクティブ、バックグラウンド監視なし。
+両方も第三者とは共有されません。
+
+<b>6. お問い合わせ</b>
+ご質問がございましたら、公式メールでお問い合わせください。
+    
+    </string>
+    <string name="recording">録音中…</string>
+    <string name="schedule">スケジュール</string>
+    <string name="settings">設定</string>
+    <string name="topup_ecoin">E-Coinをチャージ</string>
+    <string name="topup_ecoin_title">E-Coinをチャージ</string>
+    <string name="topup_failed">チャージに失敗しました</string>
+    <string name="topup_success">チャージに成功しました</string>
+    <string name="unbind_button">バインド解除</string>
+    <string name="upgrade_plan">プランをアップグレード</string>
+    <string name="voice_message">音声メッセージ</string>
+    <string name="wallet_title">ウォレット</string>
     <string name="file_btn_share">共有</string>
     <string name="file_delete_confirm">このファイルを削除してもよろしいですか？</string>
     <string name="file_delete_title">ファイルを削除</string>
