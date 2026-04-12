@@ -190,6 +190,9 @@ interface ClawApiService {
     // SUBSCRIPTION
     // ============================================
 
+    @POST("api/wallet/topup/verify-google")
+    suspend fun verifyGoogleTopup(@Body body: Map<String, @JvmSuppressWildcards Any>): ApiResponse
+
     @POST("api/subscription/verify-google")
     suspend fun verifyGoogleSubscription(@Body body: Map<String, @JvmSuppressWildcards Any>): ApiResponse
 

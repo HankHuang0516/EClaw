@@ -306,7 +306,7 @@
     <string name="feedback_photo_uploaded">已上傳 %d 張照片</string>
     <string name="feedback_photo_uploading">照片上傳中…</string>
     <string name="feedback_result_issue">查看 GitHub Issue #%d</string>
-    <string name="feedback_result_logs">已擷取：%d 個 API 請求、%d 筆伺服器紀錄</string>
+    <string name="feedback_result_logs">已擷取：%1$d 個 API 請求、%2$d 筆伺服器紀錄</string>
     <string name="feedback_result_severity">嚴重程度：%s</string>
     <string name="feedback_result_title">意見 #%d 已收到</string>
     <string name="feedback_sending">傳送中…</string>
