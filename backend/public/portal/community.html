@@ -897,6 +897,18 @@
         }
     }
 
+    function translateRentalError(code) {
+        const ttt = (k, fb) => (typeof i18n !== 'undefined' ? i18n.t(k) : null) || fb;
+        const map = {
+            'cooldown_active': ttt('rental_error_cooldown', 'This bot has a 24-hour cooldown period. Please try again later.'),
+            'self_rental_forbidden': ttt('rental_error_self_rent', 'You cannot rent your own bot.'),
+            'listing_already_rented': ttt('rental_error_already_rented', 'This bot is already rented by someone else.'),
+            'insufficient_balance_for_rental': ttt('rental_error_insufficient', 'Insufficient e-coin balance for this rental.'),
+            'listing_not_available': ttt('rental_error_not_available', 'This listing is no longer available.'),
+        };
+        return map[code] || null;
+    }
+
     async function doRentalFromPlaza(listingId) {
         const ttt = (k, fb) => (typeof i18n !== 'undefined' ? i18n.t(k) : null) || fb;
         try {
@@ -913,10 +925,12 @@
                 alert(ttt('mp_rent_success','租借成功！請至「我的租賃」查看詳情。'));
                 window.location.href = 'my-rentals.html';
             } else {
-                alert(data?.error || 'Failed');
+                const errCode = data?.error || '';
+                alert(translateRentalError(errCode) || errCode || 'Failed');
             }
         } catch (err) {
-            alert(err.message || 'Rental failed');
+            const errCode = err.message || '';
+            alert(translateRentalError(errCode) || errCode || 'Rental failed');
         }
     }
 

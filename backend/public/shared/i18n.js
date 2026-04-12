@@ -2060,6 +2060,11 @@ const TRANSLATIONS = {
         "mp_renting": "Processing...",
         "mp_rent_success": "Rental started! Check My Rentals for details.",
         "mp_rent_warning": "⚠️ Your messages will be sent to the bot owner's server. Avoid sharing sensitive data.",
+        "rental_error_cooldown": "This bot has a 24-hour cooldown period. Please try again later.",
+        "rental_error_self_rent": "You cannot rent your own bot.",
+        "rental_error_already_rented": "This bot is already rented by someone else.",
+        "rental_error_insufficient": "Insufficient e-coin balance for this rental.",
+        "rental_error_not_available": "This listing is no longer available.",
 
         // My Rentals (my-rentals.html)
         "mr_title": "EClawbot - My Rentals",
@@ -5853,6 +5858,11 @@ const TRANSLATIONS = {
         "mp_renting": "處理中...",
         "mp_rent_success": "租借成功！請至「我的租賃」查看詳情。",
         "mp_rent_warning": "⚠️ 您的訊息將傳送到出租者的伺服器。請避免透露敏感資訊。",
+        "rental_error_cooldown": "此 Bot 有 24 小時冷卻期，請稍後再試。",
+        "rental_error_self_rent": "不能租借自己的 Bot。",
+        "rental_error_already_rented": "此 Bot 已被其他人租借。",
+        "rental_error_insufficient": "e 幣餘額不足，無法租借。",
+        "rental_error_not_available": "此上架項目已無法使用。",
 
         // My Rentals (my-rentals.html)
         "mr_title": "EClawbot - 我的租賃",
@@ -13848,7 +13858,12 @@ const TRANSLATIONS = {
         "arena_test_desc_9": "記憶 — 連続したステップ間で情報を維持・再利用する。",
         "arena_test_desc_10": "ストレージワークフロー — クラウドAPI経由でファイルをダウンロード、リネーム、再アップロードする。",
         "arena_test_desc_11": "音声能力 — 音声内容を文字起こし、またはテキストから音声を合成する。",
-    
+        "rental_error_cooldown": "このBotは24時間のクールダウン中です。後でお試しください。",
+        "rental_error_self_rent": "自分のBotはレンタルできません。",
+        "rental_error_already_rented": "このBotはすでに他のユーザーにレンタルされています。",
+        "rental_error_insufficient": "eコイン残高が不足しています。",
+        "rental_error_not_available": "このリスティングは利用できなくなりました。",
+
     },
     ko: {
         "mc_title": "EClawbot 미션 컨트롤",
@@ -16640,7 +16655,12 @@ const TRANSLATIONS = {
         "arena_test_desc_9": "기억 — 순차적 단계에서 정보를 유지하고 재사용합니다.",
         "arena_test_desc_10": "스토리지 워크플로우 — 클라우드 API를 통해 파일을 다운로드, 이름 변경, 다시 업로드합니다.",
         "arena_test_desc_11": "오디오 기능 — 음성 내용을 전사하거나 텍스트에서 음성을 합성합니다.",
-    
+        "rental_error_cooldown": "이 봇은 24시간 쿨다운 중입니다. 나중에 다시 시도해 주세요.",
+        "rental_error_self_rent": "자신의 봇은 대여할 수 없습니다.",
+        "rental_error_already_rented": "이 봇은 이미 다른 사용자가 대여 중입니다.",
+        "rental_error_insufficient": "e코인 잔액이 부족합니다.",
+        "rental_error_not_available": "이 리스팅은 더 이상 이용할 수 없습니다.",
+
     },
     th: {
         "mc_title": "EClawbot ศูนย์ควบคุมภารกิจ",
@@ -40757,7 +40777,12 @@ const TRANSLATIONS = {
         "arena_cancel": "Annuler",
         "arena_expand": "Développer",
         "arena_name_subtitle": "Entrez votre nom pour enregistrer votre score",
-        "arena_time_remaining": "Temps restant : "
+        "arena_time_remaining": "Temps restant : ",
+        "rental_error_cooldown": "Ce bot a une période de refroidissement de 24 heures. Veuillez réessayer plus tard.",
+        "rental_error_self_rent": "Vous ne pouvez pas louer votre propre bot.",
+        "rental_error_already_rented": "Ce bot est déjà loué par quelqu'un d'autre.",
+        "rental_error_insufficient": "Solde d'e-coins insuffisant pour cette location.",
+        "rental_error_not_available": "Cette annonce n'est plus disponible."
     },
     es: {
         "mc_title": "EClawbot Centro de Misiones",
@@ -51134,7 +51159,13 @@ const TRANSLATIONS = {
         "work": "trabajo",
         "wrong": "incorrecto",
         "yes": "sí",
-        "young": "young",    },
+        "young": "young",
+        "rental_error_cooldown": "Este bot tiene un período de enfriamiento de 24 horas. Inténtelo de nuevo más tarde.",
+        "rental_error_self_rent": "No puedes alquilar tu propio bot.",
+        "rental_error_already_rented": "Este bot ya está alquilado por otra persona.",
+        "rental_error_insufficient": "Saldo de e-coins insuficiente para este alquiler.",
+        "rental_error_not_available": "Este anuncio ya no está disponible."
+    },
     de: {
         // General / Common
         "general_title": "Allgemein",
@@ -75658,6 +75689,11 @@ const TRANSLATIONS = {
         "arena_cooldown_prefix": "Nächste Bewertung verfügbar in",
         "arena_lb_time": "Zeit",
         "guide_nav_arena": "⛳ Interview Arena",
+        "rental_error_cooldown": "Dieser Bot hat eine 24-Stunden-Abkühlzeit. Bitte versuchen Sie es später erneut.",
+        "rental_error_self_rent": "Sie können Ihren eigenen Bot nicht mieten.",
+        "rental_error_already_rented": "Dieser Bot wird bereits von jemand anderem gemietet.",
+        "rental_error_insufficient": "Unzureichendes e-Coin-Guthaben für diese Anmietung.",
+        "rental_error_not_available": "Dieses Angebot ist nicht mehr verfügbar."
     },
     ms: {
         "guide_intent_categories": "Kategori Intent yang Disokong",
