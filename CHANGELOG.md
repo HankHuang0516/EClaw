@@ -1,3 +1,10 @@
+## [1.961.10](https://github.com/HankHuang0516/EClaw/compare/v1.961.9...v1.961.10) (2026-04-12)
+
+
+### Bug Fixes
+
+* **rental:** persist rental entity to DB after in-memory insert ([#1718](https://github.com/HankHuang0516/EClaw/issues/1718)) ([53ceb96](https://github.com/HankHuang0516/EClaw/commit/53ceb96f63e245766462c5c32751e55158732d2b)), closes [#1713](https://github.com/HankHuang0516/EClaw/issues/1713)
+
 ## [1.961.9](https://github.com/HankHuang0516/EClaw/compare/v1.961.8...v1.961.9) (2026-04-12)
 
 
