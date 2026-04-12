@@ -961,6 +961,72 @@ function createDefaultRentalEntity(entityId) {
     };
 }
 
+/**
+ * Reconcile rental entities after server restart (#1713).
+ *
+ * Checks for active rental contracts where the renter's device entity
+ * slot is unbound (entity handover was lost due to server restart or
+ * earlier error). Re-runs insertRentalEntity for each missing entity.
+ *
+ * @param {Object} devices - In-memory devices map
+ * @param {Object} helpers - { generateBotSecret, generatePublicCode, publicCodeIndex, ensureOneEmptySlot, getOrCreateDevice }
+ * @returns {Promise<{ reconciled: number, errors: string[] }>}
+ */
+async function reconcileRentalEntities(devices, helpers) {
+    const result = { reconciled: 0, errors: [] };
+    try {
+        const activeContracts = await pool.query(
+            `SELECT c.id, c.renter_device_id, c.listing_id,
+                    c.rate_mli_per_ktoken_snapshot, c.renter_user_id
+             FROM rental_contracts c
+             WHERE c.status IN ('active', 'reserved', 'suspended_insufficient_funds')`
+        );
+
+        for (const row of activeContracts.rows) {
+            try {
+                // Ensure device exists in memory
+                if (!devices[row.renter_device_id]) {
+                    if (helpers.getOrCreateDevice) {
+                        helpers.getOrCreateDevice(row.renter_device_id);
+                    } else {
+                        result.errors.push(`device_missing:${row.renter_device_id}`);
+                        continue;
+                    }
+                }
+
+                const device = devices[row.renter_device_id];
+                // Check if any entity already has this contract ID
+                const alreadyExists = Object.values(device.entities).some(
+                    e => e && e.rental_contract_id === row.id && e.isBound
+                );
+                if (alreadyExists) continue;
+
+                // Entity handover was lost — re-create it
+                const listing = await getListing(row.listing_id);
+                if (!listing) {
+                    result.errors.push(`listing_missing:${row.listing_id}`);
+                    continue;
+                }
+
+                insertRentalEntity(devices, {
+                    renterDeviceId: row.renter_device_id,
+                    contractId: row.id,
+                    listing,
+                    rateMliPerKtoken: Number(row.rate_mli_per_ktoken_snapshot),
+                }, helpers);
+
+                result.reconciled++;
+                console.log(`[Rental] Reconciled entity for contract ${row.id} on device ${row.renter_device_id}`);
+            } catch (err) {
+                result.errors.push(`contract_${row.id}:${err.message}`);
+            }
+        }
+    } catch (err) {
+        result.errors.push(`query_failed:${err.message}`);
+    }
+    return result;
+}
+
 // ============================================
 // Express factory
 // ============================================
@@ -1070,6 +1136,16 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         // and mark the owner's entity as leased out.
         if (_interviewDeps.devices) {
             try {
+                // Ensure the renter device exists in memory (#1713).
+                // The device may exist in PostgreSQL but not yet in the
+                // in-memory map (e.g. created via web portal auth flow).
+                if (!_interviewDeps.devices[renterDeviceId] && _interviewDeps.getOrCreateDevice) {
+                    _interviewDeps.getOrCreateDevice(renterDeviceId);
+                    audit('info', 'rental', `created in-memory device for renter ${renterDeviceId}`, {
+                        userId: req.user.userId, action: 'rental_ensure_device',
+                    });
+                }
+
                 const listing = await getListing(listingId);
                 if (listing) {
                     const { slot } = insertRentalEntity(_interviewDeps.devices, {
@@ -1192,6 +1268,60 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
 
     /** Late-bound deps injected via setInterviewDeps() after pushToBot is defined. */
     let _interviewDeps = { pushToBot: null, devices: null };
+
+    // ── Debug: rental-entity-visibility (#1713) (DO NOT REMOVE until user confirms fix) ──
+    router.get('/debug/rental-entity-visibility', async (req, res) => { try {
+        const { deviceId, deviceSecret } = req.query;
+        if (!deviceId || !deviceSecret) {
+            return res.json({ success: false, error: 'deviceId and deviceSecret required' });
+        }
+        const devRes = await pool.query(
+            'SELECT device_id, device_secret FROM devices WHERE device_id = $1', [deviceId]
+        );
+        if (!devRes.rows.length || devRes.rows[0].device_secret !== deviceSecret) {
+            return res.json({ success: false, error: 'auth_failed' });
+        }
+        // In-memory device state
+        const inMemDevice = _interviewDeps.devices?.[deviceId];
+        const entitySlots = inMemDevice ? Object.entries(inMemDevice.entities).map(([id, e]) => ({
+            slot: parseInt(id),
+            isBound: e?.isBound,
+            character: e?.character,
+            rental_contract_id: e?.rental_contract_id,
+            rental_status: e?.rental_status,
+            botSecret: e?.botSecret ? 'set' : 'null',
+            publicCode: e?.publicCode,
+            webhook: e?.webhook ? (typeof e.webhook === 'object' ? e.webhook.type || 'object' : 'string') : 'null',
+        })) : null;
+        // Active contracts for this device
+        const contractsRes = await pool.query(
+            `SELECT id, listing_id, status, started_at, ends_at, renter_device_id
+             FROM rental_contracts
+             WHERE renter_device_id = $1 AND status IN ('active', 'reserved', 'suspended_insufficient_funds')
+             ORDER BY started_at DESC LIMIT 10`, [deviceId]
+        );
+        // DB entities
+        const dbEntities = await pool.query(
+            'SELECT entity_id, is_bound, character, webhook FROM entities WHERE device_id = $1', [deviceId]
+        );
+        res.json({
+            success: true,
+            bug: 'rental-entity-visibility',
+            diagnostics: {
+                deviceInMemory: !!inMemDevice,
+                entitySlots,
+                activeContracts: contractsRes.rows,
+                dbEntities: dbEntities.rows.map(r => ({
+                    entity_id: r.entity_id,
+                    is_bound: r.is_bound,
+                    character: r.character,
+                    webhook: r.webhook ? 'set' : 'null',
+                })),
+                hasInterviewDeps: !!_interviewDeps.devices,
+            },
+            timestamp: new Date().toISOString(),
+        });
+    } catch (err) { res.status(500).json({ success: false, error: err.message }); } });
 
     // ── Debug: interview-start-fail (DO NOT REMOVE until user confirms fix) ──
     router.get('/debug/interview-start-fail', async (req, res) => { try {
@@ -1476,6 +1606,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         markOwnerEntityLeasedOut,
         removeRentalEntity,
         clearOwnerEntityLeasedOut,
+        reconcileRentalEntities,
         // Interview dispatch (late-bound)
         setInterviewDeps: (deps) => { _interviewDeps = deps; },
         // Helpers + constants

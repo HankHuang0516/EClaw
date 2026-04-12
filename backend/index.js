@@ -12508,7 +12508,23 @@ missionModule.setPushToBot(pushToBot);
 
 // Wire pushToBot + devices into rental module for interview probe dispatch
 if (typeof rentalModule.setInterviewDeps === 'function') {
-    rentalModule.setInterviewDeps({ pushToBot, devices, arenaModule, setInterviewCapabilities, generateBotSecret, generatePublicCode, publicCodeIndex, ensureOneEmptySlot, get pushToChannelCallback() { return channelModule?.pushToChannelCallback?.bind(channelModule); } });
+    rentalModule.setInterviewDeps({ pushToBot, devices, arenaModule, setInterviewCapabilities, generateBotSecret, generatePublicCode, publicCodeIndex, ensureOneEmptySlot, getOrCreateDevice, get pushToChannelCallback() { return channelModule?.pushToChannelCallback?.bind(channelModule); } });
+}
+
+// Reconcile rental entities that may have been lost during server restart (#1713).
+// Runs after persistence + rental deps are both ready.
+if (persistenceReady && typeof rentalModule.reconcileRentalEntities === 'function') {
+    rentalModule.reconcileRentalEntities(devices, {
+        generateBotSecret, generatePublicCode, publicCodeIndex,
+        ensureOneEmptySlot, getOrCreateDevice,
+    }).then(result => {
+        if (result.reconciled > 0 || result.errors.length > 0) {
+            console.log(`[Rental] Reconciled ${result.reconciled} rental entities` +
+                (result.errors.length ? `, errors: ${result.errors.join('; ')}` : ''));
+        }
+    }).catch(err => {
+        console.error('[Rental] Reconciliation failed:', err.message);
+    });
 }
 
 // NOTE: arenaModule.setAutoPushDeps is called AFTER channelModule init (see below ~line 13180+)
