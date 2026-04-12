@@ -1,3 +1,10 @@
+## [1.959.4](https://github.com/HankHuang0516/EClaw/compare/v1.959.3...v1.959.4) (2026-04-12)
+
+
+### Bug Fixes
+
+* **interview:** support channel-bound bots in interview system ([d97d292](https://github.com/HankHuang0516/EClaw/commit/d97d292a887b41012d9f7f79e4a0f7bb1d58885a))
+
 ## [1.959.3](https://github.com/HankHuang0516/EClaw/compare/v1.959.2...v1.959.3) (2026-04-12)
 
 
