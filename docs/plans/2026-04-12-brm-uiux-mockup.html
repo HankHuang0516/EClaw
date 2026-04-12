@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BRM UIUX 渲染邏輯規範 — 視覺 Mockup</title>
+<style>
+  :root {
+    --primary: #6C5CE7;
+    --success: #00B894;
+    --danger: #D63031;
+    --warning: #FDCB6E;
+    --info: #0984E3;
+    --gray: #636E72;
+    --light: #F5F6FA;
+    --dark: #2D3436;
+    --rental-badge: #A29BFE;
+    --leased-overlay: rgba(108, 92, 231, 0.15);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #F0F2F5; color: var(--dark); line-height: 1.5; }
+
+  /* NAV */
+  .nav { background: #fff; padding: 12px 24px; display: flex; align-items: center; gap: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+  .nav-logo { font-weight: 700; font-size: 18px; color: var(--primary); }
+  .nav a { text-decoration: none; color: var(--gray); font-size: 14px; }
+  .nav a:hover { color: var(--primary); }
+  .nav .wallet-badge { margin-left: auto; background: var(--light); padding: 4px 12px; border-radius: 20px; font-size: 13px; }
+
+  /* SECTION */
+  .page-section { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+  .page-section h1 { font-size: 28px; margin-bottom: 8px; color: var(--primary); border-bottom: 3px solid var(--primary); padding-bottom: 8px; }
+  .page-section h2 { font-size: 20px; margin: 28px 0 12px; color: var(--dark); }
+  .page-section h3 { font-size: 16px; margin: 20px 0 8px; color: var(--gray); }
+  .page-section p, .page-section li { font-size: 14px; color: #555; }
+  .page-section .desc { background: #FFF3CD; border-left: 4px solid #FFC107; padding: 10px 14px; margin: 12px 0; font-size: 13px; border-radius: 4px; }
+
+  /* PHONE FRAME */
+  .phone-frame { width: 390px; min-height: 500px; background: #fff; border-radius: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); overflow: hidden; margin: 16px auto; border: 2px solid #E0E0E0; }
+  .phone-header { background: var(--primary); color: #fff; padding: 12px 16px; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .phone-body { padding: 16px; }
+
+  /* WIDE FRAME (desktop) */
+  .wide-frame { max-width: 900px; background: #fff; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); overflow: hidden; margin: 16px auto; border: 1px solid #E0E0E0; }
+  .wide-header { background: var(--primary); color: #fff; padding: 10px 20px; font-size: 15px; font-weight: 600; }
+  .wide-body { padding: 20px; }
+
+  /* CARDS */
+  .card { background: #fff; border: 1px solid #E8E8E8; border-radius: 12px; padding: 16px; margin: 12px 0; transition: box-shadow 0.2s; }
+  .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+
+  /* LISTING CARD */
+  .listing-card { border-radius: 12px; overflow: hidden; border: 1px solid #E8E8E8; background: #fff; }
+  .listing-card .avatar-area { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+  .avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #A29BFE); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; flex-shrink: 0; }
+  .avatar.sm { width: 32px; height: 32px; font-size: 14px; }
+  .listing-card .info { padding: 0 16px 14px; font-size: 13px; color: var(--gray); }
+  .listing-card .info .rate { font-size: 16px; font-weight: 700; color: var(--dark); }
+  .listing-card .chips { padding: 0 16px 14px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .chip.python { background: #D5F5E3; color: #27AE60; }
+  .chip.web { background: #D6EAF8; color: #2980B9; }
+  .chip.vision { background: #E8DAEF; color: #8E44AD; }
+  .chip.reason { background: #FDEBD0; color: #E67E22; }
+  .chip.coding { background: #FEF9E7; color: #F39C12; }
+  .chip.rental { background: var(--leased-overlay); color: var(--primary); }
+  .listing-card .status-bar { padding: 10px 16px; border-top: 1px solid #F0F0F0; text-align: center; }
+  .btn { padding: 8px 20px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: #5A4BD1; }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-warning { background: var(--warning); color: var(--dark); }
+  .btn-outline { background: transparent; border: 1px solid var(--gray); color: var(--gray); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: #D5F5E3; color: #27AE60; }
+  .badge-red { background: #FADBD8; color: #C0392B; }
+  .badge-orange { background: #FDEBD0; color: #E67E22; }
+  .badge-gray { background: #F0F0F0; color: #888; }
+  .badge-purple { background: #E8DAEF; color: #8E44AD; }
+  .badge-blue { background: #D6EAF8; color: #2980B9; }
+
+  /* RENTED LISTING CARD */
+  .listing-card.rented { opacity: 0.6; }
+  .listing-card.rented .status-bar { background: #FADBD8; }
+
+  /* MODAL */
+  .modal-overlay { background: rgba(0,0,0,0.4); border-radius: 12px; padding: 20px; margin: 16px auto; max-width: 500px; }
+  .modal { background: #fff; border-radius: 16px; padding: 24px; max-width: 460px; margin: 0 auto; }
+  .modal h3 { margin-bottom: 16px; }
+  .modal .field { margin: 12px 0; }
+  .modal .field label { font-size: 12px; color: var(--gray); font-weight: 600; display: block; margin-bottom: 4px; }
+  .modal .field .value { font-size: 15px; font-weight: 600; }
+  .modal .divider { border-top: 1px solid #F0F0F0; margin: 16px 0; }
+  .warning-box { background: #FFF3CD; border: 1px solid #FFC107; border-radius: 8px; padding: 12px; font-size: 13px; margin: 12px 0; }
+  .error-box { background: #FADBD8; border: 1px solid var(--danger); border-radius: 8px; padding: 12px; font-size: 13px; margin: 12px 0; }
+  .success-box { background: #D5F5E3; border: 1px solid var(--success); border-radius: 8px; padding: 12px; font-size: 13px; margin: 12px 0; }
+
+  /* CONTRACT CARD */
+  .contract-card { border-left: 4px solid var(--success); padding: 16px; margin: 12px 0; background: #fff; border-radius: 0 12px 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .contract-card.ended { border-left-color: var(--gray); }
+  .contract-card.suspended { border-left-color: var(--warning); }
+  .contract-card.early { border-left-color: #E67E22; }
+  .contract-card .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .contract-card .meta { font-size: 13px; color: var(--gray); margin: 4px 0; }
+  .contract-card .actions { margin-top: 12px; display: flex; gap: 8px; }
+  .progress-bar { height: 8px; background: #F0F0F0; border-radius: 4px; margin: 8px 0; overflow: hidden; }
+  .progress-bar .fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--success)); border-radius: 4px; }
+
+  /* WALLET */
+  .wallet-hero { background: linear-gradient(135deg, var(--primary), #A29BFE); color: #fff; border-radius: 16px; padding: 24px; margin: 12px 0; }
+  .wallet-hero .balance { font-size: 36px; font-weight: 700; }
+  .wallet-hero .sub { font-size: 13px; opacity: 0.8; }
+  .wallet-hero .stats { display: flex; gap: 24px; margin-top: 16px; }
+  .wallet-hero .stat { font-size: 13px; }
+  .wallet-hero .stat .num { font-size: 18px; font-weight: 600; }
+
+  .ledger-entry { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #F5F5F5; gap: 12px; }
+  .ledger-entry .icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .ledger-entry .detail { flex: 1; }
+  .ledger-entry .detail .title { font-size: 14px; font-weight: 600; }
+  .ledger-entry .detail .note { font-size: 12px; color: var(--gray); }
+  .ledger-entry .amount { font-size: 15px; font-weight: 700; text-align: right; }
+  .ledger-entry .amount.credit { color: var(--success); }
+  .ledger-entry .amount.debit { color: var(--danger); }
+  .ledger-entry .time { font-size: 11px; color: #AAA; text-align: right; }
+
+  /* DASHBOARD ENTITY */
+  .entity-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .entity-card { background: #fff; border-radius: 16px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: relative; border: 1px solid #E8E8E8; }
+  .entity-card .avatar-lg { width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #A29BFE); margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; color: #fff; }
+  .entity-card .name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .entity-card .subtitle { font-size: 12px; color: var(--gray); }
+  .entity-card.leased-out { opacity: 0.5; }
+  .entity-card.leased-out .overlay { position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%); background: rgba(45,52,54,0.85); color: #fff; padding: 8px; font-size: 13px; font-weight: 600; text-align: center; }
+  .rental-badge-corner { position: absolute; top: 8px; right: 8px; background: var(--rental-badge); color: #fff; padding: 2px 8px; border-radius: 8px; font-size: 11px; font-weight: 600; }
+
+  /* KANBAN */
+  .kanban-board { display: flex; gap: 12px; overflow-x: auto; padding: 12px 0; }
+  .kanban-col { min-width: 200px; flex: 1; background: var(--light); border-radius: 12px; padding: 12px; }
+  .kanban-col .col-title { font-size: 12px; font-weight: 700; color: var(--gray); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+  .kanban-card { background: #fff; border-radius: 8px; padding: 12px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); font-size: 13px; }
+  .kanban-card .assigned { display: flex; gap: 4px; margin-top: 8px; }
+
+  /* CHAT */
+  .chat-container { background: #F5F6FA; padding: 12px; border-radius: 12px; }
+  .chat-banner { background: #FFF3CD; border: 1px solid #FFC107; border-radius: 8px; padding: 8px 12px; font-size: 12px; margin-bottom: 12px; }
+  .msg { margin: 8px 0; display: flex; }
+  .msg.user { justify-content: flex-end; }
+  .msg .bubble { max-width: 75%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.4; }
+  .msg.user .bubble { background: var(--primary); color: #fff; border-bottom-right-radius: 4px; }
+  .msg.bot .bubble { background: #fff; border: 1px solid #E8E8E8; border-bottom-left-radius: 4px; }
+  .msg .token-cost { font-size: 11px; color: var(--gray); margin-top: 4px; text-align: right; }
+  .chat-footer { background: #fff; border-top: 1px solid #E8E8E8; padding: 8px 12px; display: flex; align-items: center; gap: 8px; border-radius: 0 0 12px 12px; }
+  .chat-footer .balance-bar { font-size: 11px; color: var(--gray); padding: 4px 12px; background: var(--light); border-radius: 4px; margin-bottom: 4px; }
+  .chat-input { flex: 1; border: 1px solid #DDD; border-radius: 20px; padding: 8px 14px; font-size: 14px; outline: none; }
+
+  /* TABS */
+  .tabs { display: flex; border-bottom: 2px solid #E8E8E8; margin-bottom: 16px; }
+  .tab { padding: 10px 20px; font-size: 14px; font-weight: 600; color: var(--gray); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+  .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+  /* TOPUP TIERS */
+  .tier-list { display: flex; flex-direction: column; gap: 8px; }
+  .tier { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border: 2px solid #E8E8E8; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+  .tier:hover { border-color: var(--primary); background: #F8F7FF; }
+  .tier.selected { border-color: var(--primary); background: #F0EEFF; }
+  .tier .left { display: flex; align-items: center; gap: 12px; }
+  .tier .tier-icon { font-size: 24px; }
+  .tier .tier-name { font-weight: 600; font-size: 14px; }
+  .tier .tier-price { font-size: 12px; color: var(--gray); }
+  .tier .right { text-align: right; }
+  .tier .ecoin { font-size: 16px; font-weight: 700; color: var(--primary); }
+  .tier .bonus { font-size: 11px; color: var(--success); font-weight: 600; }
+
+  /* DISPUTE */
+  .dispute-card { border-left: 4px solid var(--info); padding: 14px 16px; margin: 10px 0; background: #fff; border-radius: 0 10px 10px 0; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+  .dispute-card.resolved { border-left-color: var(--success); }
+  .dispute-card.rejected { border-left-color: var(--danger); }
+
+  /* STAR RATING */
+  .stars { font-size: 24px; letter-spacing: 4px; cursor: pointer; }
+  .stars .filled { color: #F1C40F; }
+  .stars .empty { color: #DDD; }
+
+  /* REVIEW */
+  .review-form textarea { width: 100%; min-height: 80px; border: 1px solid #DDD; border-radius: 8px; padding: 10px; font-size: 14px; resize: vertical; }
+
+  /* ENV VARS */
+  .var-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid #F5F5F5; }
+  .var-row .key { font-family: monospace; font-size: 13px; font-weight: 600; flex: 1; }
+  .var-row .val { font-family: monospace; font-size: 13px; color: var(--gray); flex: 1; }
+  .var-row .lock { color: var(--danger); }
+
+  /* EMPTY STATE */
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--gray); }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { margin: 8px 0; font-size: 14px; }
+
+  /* SCENARIOS TABLE */
+  .scenario-map { width: 100%; border-collapse: collapse; font-size: 13px; margin: 16px 0; }
+  .scenario-map th { background: var(--primary); color: #fff; padding: 8px 12px; text-align: left; }
+  .scenario-map td { padding: 8px 12px; border-bottom: 1px solid #F0F0F0; }
+  .scenario-map tr:hover { background: #F8F7FF; }
+
+  /* LAYOUT HELPERS */
+  .flex { display: flex; gap: 16px; flex-wrap: wrap; }
+  .flex-1 { flex: 1; min-width: 280px; }
+  .mt-8 { margin-top: 8px; }
+  .mt-16 { margin-top: 16px; }
+  .mb-8 { margin-bottom: 8px; }
+  .text-sm { font-size: 13px; }
+  .text-xs { font-size: 11px; }
+  .text-gray { color: var(--gray); }
+  .text-center { text-align: center; }
+  .fw-600 { font-weight: 600; }
+
+  /* SECTION DIVIDER */
+  .section-divider { height: 4px; background: linear-gradient(90deg, var(--primary), var(--success), var(--warning)); margin: 48px 0; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ============ NAV BAR ============ -->
+<nav class="nav">
+  <div class="nav-logo">EClaw</div>
+  <a href="#">Community</a>
+  <a href="#">Dashboard</a>
+  <a href="#">Kanban</a>
+  <a href="#">Chat</a>
+  <a href="#">Settings</a>
+  <div class="wallet-badge">💰 500 e幣</div>
+</nav>
+
+<!-- ============ 1. MARKETPLACE ============ -->
+<div class="page-section">
+  <h1>1. community.html#rental — Marketplace</h1>
+  <p>涉及場景：A4, B1, B8, C1–C3, D1–D7, L1–L5, S1</p>
+
+  <h2>1.1 搜尋列 + 篩選器</h2>
+  <div class="wide-frame">
+    <div class="wide-header">🔍 Bot 租借市場</div>
+    <div class="wide-body">
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <input type="text" placeholder="搜尋 Bot 名稱、能力..." style="flex:1; min-width:200px; padding:8px 14px; border:1px solid #DDD; border-radius:8px; font-size:14px;">
+        <select style="padding:8px 12px; border:1px solid #DDD; border-radius:8px; font-size:13px;">
+          <option>能力篩選 ▼</option>
+          <option>🐍 Python</option>
+          <option>🌐 Web Browse</option>
+          <option>👁️ Vision</option>
+          <option>🧠 Reasoning</option>
+        </select>
+        <select style="padding:8px 12px; border:1px solid #DDD; border-radius:8px; font-size:13px;">
+          <option>⭐ 評分最高</option>
+          <option>💰 費率最低</option>
+          <option>🔥 最熱門</option>
+          <option>🆕 最新上架</option>
+        </select>
+      </div>
+      <div style="margin-top:12px; font-size:13px; color:var(--gray);">
+        費率範圍: <strong>1 – 50</strong> e幣/1K tokens
+        <div style="margin-top:4px; height:6px; background:#E8E8E8; border-radius:3px; position:relative;">
+          <div style="position:absolute; left:5%; right:40%; height:100%; background:var(--primary); border-radius:3px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>1.2 Listing 卡片 — 三種狀態</h2>
+  <div class="card-grid">
+    <!-- Available -->
+    <div class="listing-card">
+      <div class="avatar-area">
+        <div class="avatar">🤖</div>
+        <div>
+          <div class="fw-600">Coding Wizard Bot</div>
+          <div class="text-xs text-gray">Claude Opus 4.6</div>
+        </div>
+      </div>
+      <div class="info">
+        <div class="rate">💰 10 e幣/1K tokens</div>
+        <div class="mt-8">💎 押金: 200 e幣 · ⭐ 4.8 (23 次租借)</div>
+      </div>
+      <div class="chips">
+        <span class="chip python">🐍 python_exec</span>
+        <span class="chip web">🌐 web_browse</span>
+        <span class="chip vision">👁️ vision</span>
+      </div>
+      <div class="status-bar">
+        <button class="btn btn-primary" style="width:100%;">🟢 可租借</button>
+      </div>
+    </div>
+
+    <!-- Rented (unavailable) -->
+    <div class="listing-card rented">
+      <div class="avatar-area">
+        <div class="avatar">🧠</div>
+        <div>
+          <div class="fw-600">Research Assistant</div>
+          <div class="text-xs text-gray">GPT-4o</div>
+        </div>
+      </div>
+      <div class="info">
+        <div class="rate">💰 6 e幣/1K tokens</div>
+        <div class="mt-8">💎 押金: 120 e幣 · ⭐ 4.2 (8 次租借)</div>
+      </div>
+      <div class="chips">
+        <span class="chip web">🌐 web_browse</span>
+        <span class="chip reason">🧠 reasoning</span>
+      </div>
+      <div class="status-bar">
+        <button class="btn btn-danger" style="width:100%;" disabled>🔴 已出租</button>
+      </div>
+    </div>
+
+    <!-- Own bot -->
+    <div class="listing-card">
+      <div class="avatar-area">
+        <div class="avatar">🐙</div>
+        <div>
+          <div class="fw-600">My Own Bot <span class="badge badge-blue">👤 你的 Bot</span></div>
+          <div class="text-xs text-gray">Claude Sonnet 4.6</div>
+        </div>
+      </div>
+      <div class="info">
+        <div class="rate">💰 5 e幣/1K tokens</div>
+        <div class="mt-8">💎 押金: 100 e幣 · ⭐ 尚無評分</div>
+      </div>
+      <div class="chips">
+        <span class="chip coding">💻 coding</span>
+      </div>
+      <div class="status-bar">
+        <button class="btn btn-outline" style="width:100%;" disabled title="無法租借自己的 Bot">🚫 無法自租</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section-divider"></div>
+
+<!-- ============ 2. DETAIL MODAL ============ -->
+<div class="page-section">
+  <h1>2. Listing Detail Modal — 租借詳情</h1>
+  <p>涉及場景：A5–A6, B2, C2, E2, F1, K1</p>
+
+  <div class="flex">
+    <div class="flex-1">
+      <h2>2.1 正常 — 餘額充足</h2>
+      <div class="modal-overlay">
+        <div class="modal">
+          <div style="display:flex; gap:16px; align-items:center;">
+            <div class="avatar" style="width:64px;height:64px;font-size:28px;">🤖</div>
+            <div>
+              <h3 style="margin:0;">Coding Wizard Bot</h3>
+              <div class="text-sm text-gray">🤖 Claude Opus 4.6 · ⭐ 4.8 (23 次)</div>
+              <div class="text-sm text-gray">📊 面試分數: 82/147 (56%)</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="field"><label>🏷️ 已驗證能力</label>
+            <span class="chip python">🐍 python ✓</span>
+            <span class="chip web">🌐 web ✓</span>
+            <span class="chip vision">👁️ vision ✓</span>
+            <span class="chip" style="background:#F0F0F0;color:#AAA;">📁 file_io ✗</span>
+          </div>
+
+          <div class="divider"></div>
+          <div class="field"><label>💰 費率詳情</label>
+            <div class="value">10 e幣/1K tokens</div>
+            <div class="text-xs text-gray">市場建議: 11.4 – 26.6 e幣/1K <span class="badge badge-orange">⚠️ 偏低</span></div>
+            <div class="text-sm mt-8">💎 押金: 200 e幣 (≈ NT$2.00)</div>
+            <div class="text-xs text-gray">平均每次對話 ≈ 3,400 tokens ≈ 34 e幣</div>
+            <div class="text-xs text-gray">最短 30 分鐘 / 最長 7 天</div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="field"><label>⏱️ 租借時長</label>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <input type="number" value="6" min="0.5" max="168" style="width:60px; padding:6px; border:1px solid #DDD; border-radius:6px; text-align:center; font-size:15px; font-weight:600;"> 小時
+            </div>
+            <div class="text-sm mt-8">預估總費用: ~<strong>204 e幣</strong> (押金 200 + 估計 ~4 e幣)</div>
+            <div class="text-sm" style="color:var(--success);">你的餘額: 500 e幣 ✅ 足夠</div>
+          </div>
+
+          <div class="warning-box">⚠️ 你的對話內容將透過出租方的伺服器處理。請勿分享信用卡號、密碼或個人身分資訊。<br><label><input type="checkbox"> 我已了解並同意</label></div>
+
+          <button class="btn btn-primary" style="width:100%; margin-top:12px; padding:12px;">🔒 確認租借</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex-1">
+      <h2>2.2 錯誤 — 餘額不足</h2>
+      <div class="modal-overlay">
+        <div class="modal">
+          <div style="display:flex; gap:16px; align-items:center;">
+            <div class="avatar" style="width:64px;height:64px;font-size:28px;">🤖</div>
+            <div>
+              <h3 style="margin:0;">Coding Wizard Bot</h3>
+              <div class="text-sm text-gray">Claude Opus 4.6</div>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="error-box">
+            <strong>❌ 餘額不足</strong><br>
+            需要: <strong>260 e幣</strong> (押金 200 + 緩衝 60)<br>
+            目前餘額: <strong>50 e幣</strong><br>
+            差額: <strong>210 e幣</strong>
+          </div>
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <button class="btn btn-warning" style="flex:1;">💰 前往儲值</button>
+            <button class="btn btn-outline" style="flex:1;">取消</button>
+          </div>
+        </div>
+      </div>
+
+      <h2 style="margin-top:24px;">2.3 成功動畫</h2>
+      <div class="modal-overlay">
+        <div class="modal text-center">
+          <div style="font-size:64px;">✅</div>
+          <h3>租借成功！</h3>
+          <p class="text-sm text-gray">Bot 已加入你的裝置。</p>
+          <div style="display:flex; gap:8px; margin-top:16px; justify-content:center;">
+            <button class="btn btn-primary">🗣️ 開始聊天</button>
+            <button class="btn btn-outline">📋 查看合約</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section-divider"></div>
+
+<!-- ============ 3. MY-RENTALS ============ -->
+<div class="page-section">
+  <h1>3. my-rentals.html — 租借管理</h1>
+  <p>涉及場景：A7–A12, B3–B7, C4–C6, E4–E5, F10, K6–K11, M1–M9, N1–N11, O1–O7</p>
+
+  <h2>3.1 Tab 1: 租借中（Renter）</h2>
+  <div class="wide-frame">
+    <div class="wide-header">📋 我的租借</div>
+    <div class="wide-body">
+      <div class="tabs">
+        <div class="tab active">🏠 租借中</div>
+        <div class="tab">📤 出租中</div>
+        <div class="tab">⚖️ 申訴</div>
+      </div>
+
+      <!-- Active contract -->
+      <div class="contract-card">
+        <div class="top">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="avatar sm">🤖</div>
+            <strong>Coding Wizard Bot</strong>
+          </div>
+          <span class="badge badge-green">🟢 進行中</span>
+        </div>
+        <div class="meta">費率: 10 e幣/1K tokens · 已使用: 12,340 tokens · 已花費: 123.4 e幣</div>
+        <div class="meta">剩餘時間: 4h 23m</div>
+        <div class="progress-bar"><div class="fill" style="width:73%;"></div></div>
+        <div class="meta">押金: 200 e幣 (已凍結)</div>
+        <div class="actions">
+          <button class="btn btn-primary btn-sm">🗣️ 聊天</button>
+          <button class="btn btn-danger btn-sm">⏹️ 提前結束</button>
+          <button class="btn btn-outline btn-sm">📊 用量明細</button>
+        </div>
+      </div>
+
+      <!-- Suspended contract -->
+      <div class="contract-card suspended">
+        <div class="top">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="avatar sm">🧠</div>
+            <strong>Research Bot</strong>
+          </div>
+          <span class="badge badge-orange">🟡 餘額不足</span>
+        </div>
+        <div class="warning-box" style="margin:8px 0;">
+          ⚠️ 你的餘額已不足，Bot 暫時無法使用<br>
+          寬限期: 剩餘 <strong>5h 48m</strong> (6–12h)
+        </div>
+        <div class="actions">
+          <button class="btn btn-warning">💰 前往儲值</button>
+          <button class="btn btn-danger btn-sm">⏹️ 結束租借</button>
+        </div>
+      </div>
+
+      <!-- Ended contracts -->
+      <div class="contract-card ended">
+        <div class="top">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="avatar sm">🐙</div>
+            <strong>AI Chat Pro</strong>
+          </div>
+          <span class="badge badge-gray">⚪ 已結束(正常)</span>
+        </div>
+        <div class="meta">使用時長: 5h 37m · 總花費: 234.5 e幣 · 23,450 tokens</div>
+        <div class="success-box">✅ 押金全額退還 200 e幣</div>
+        <div class="actions">
+          <button class="btn btn-warning btn-sm">⭐ 寫評價</button>
+          <button class="btn btn-outline btn-sm">⚖️ 提出申訴</button>
+        </div>
+      </div>
+
+      <div class="contract-card early">
+        <div class="top">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="avatar sm">🦊</div>
+            <strong>Quick Helper</strong>
+          </div>
+          <span class="badge badge-orange">🟠 已結束(提前)</span>
+        </div>
+        <div class="meta">使用時長: 0h 45m · 總花費: 12.3 e幣</div>
+        <div class="warning-box">⚠️ 退還 100 e幣 · 沒收 100 e幣 (50%)</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>3.2 提前結束確認 Dialog</h2>
+  <div class="modal-overlay" style="max-width:440px;">
+    <div class="modal">
+      <h3>⚠️ 確認提前結束租借？</h3>
+      <p class="text-sm">此操作無法撤銷。根據提前終止條款：</p>
+      <ul style="margin:12px 0; padding-left:20px; font-size:13px;">
+        <li>押金 50% (<strong>100 e幣</strong>) 將被沒收</li>
+        <li>押金 50% (<strong>100 e幣</strong>) 將退還到錢包</li>
+        <li>沒收分配：出租方 85% · 平台 13% · 保險池 2%</li>
+      </ul>
+      <div style="display:flex; gap:8px; margin-top:16px;">
+        <button class="btn btn-outline" style="flex:1;">取消</button>
+        <button class="btn btn-danger" style="flex:1;">確認結束</button>
+      </div>
+    </div>
+  </div>
+
+  <h2>3.3 評價表單</h2>
+  <div class="modal-overlay" style="max-width:440px;">
+    <div class="modal review-form">
+      <h3>⭐ 評價 Bot</h3>
+      <div class="stars mt-8">
+        <span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="filled">★</span><span class="empty">★</span>
+      </div>
+      <div class="text-xs text-gray mt-8">4 / 5 星</div>
+      <div class="divider"></div>
+      <label class="text-sm fw-600">留言 (選填，最多 1000 字):</label>
+      <textarea placeholder="分享你的使用體驗..." class="mt-8"></textarea>
+      <div class="text-xs text-gray" style="text-align:right;">0 / 1000</div>
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <button class="btn btn-outline" style="flex:1;">取消</button>
+        <button class="btn btn-primary" style="flex:1;">提交評價</button>
+      </div>
+    </div>
+  </div>
+
+  <h2>3.4 Tab 2: 出租中（Owner）</h2>
+  <div class="wide-frame">
+    <div class="wide-body">
+      <div class="tabs">
+        <div class="tab">🏠 租借中</div>
+        <div class="tab active">📤 出租中</div>
+        <div class="tab">⚖️ 申訴</div>
+      </div>
+      <div class="contract-card">
+        <div class="top">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="avatar sm">🤖</div>
+            <strong>Coding Wizard Bot</strong>
+          </div>
+          <span class="badge badge-purple">📤 出租中</span>
+        </div>
+        <div class="meta">租借方: [匿名用戶]</div>
+        <div class="meta">費率: 10 e幣/1K · 已產生收入: <span style="color:var(--success); font-weight:600;">104.5 e幣</span></div>
+        <div class="meta">收入狀態: ⏳ 結算中 (T+24h)</div>
+        <div class="meta">剩餘時間: 4h 23m</div>
+        <div class="actions">
+          <button class="btn btn-outline btn-sm">📊 收入明細</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>3.5 Tab 3: 申訴</h2>
+  <div class="wide-frame">
+    <div class="wide-body">
+      <div class="tabs">
+        <div class="tab">🏠 租借中</div>
+        <div class="tab">📤 出租中</div>
+        <div class="tab active">⚖️ 申訴</div>
+      </div>
+      <div class="dispute-card">
+        <div class="top">
+          <strong>申訴 #1</strong>
+          <span class="badge badge-green">🟢 處理中</span>
+        </div>
+        <div class="meta">Bot: Coding Wizard · 類型: capability_mismatch</div>
+        <div class="meta">SLA: 24h 回應 / 48h 解決</div>
+      </div>
+      <div class="dispute-card resolved">
+        <div class="top">
+          <strong>申訴 #2</strong>
+          <span class="badge badge-blue">🔵 已解決</span>
+        </div>
+        <div class="meta">Bot: AI Chat Pro · 類型: financial</div>
+        <div class="success-box">💰 補償: +50 e幣 (已入帳)</div>
+      </div>
+      <div class="dispute-card rejected">
+        <div class="top">
+          <strong>申訴 #3</strong>
+          <span class="badge badge-red">🔴 已拒絕</span>
+        </div>
+        <div class="meta">Bot: Quick Helper · 類型: bot_quality</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section-divider"></div>
+
+<!-- ============ 4. WALLET ============ -->
+<div class="page-section">
+  <h1>4. wallet.html — 錢包</h1>
+  <p>涉及場景：A13, B4–B5, E1/E3/E5–E7, K6–K7, N8, O6–O7</p>
+
+  <div class="phone-frame">
+    <div class="phone-header">💰 我的錢包</div>
+    <div class="phone-body">
+      <div class="wallet-hero">
+        <div class="sub">可用餘額</div>
+        <div class="balance">500 e幣</div>
+        <div class="sub">≈ NT$5.00</div>
+        <div style="margin-top:8px; font-size:13px;">🔒 凍結: 200 e幣 (押金)</div>
+        <div class="stats">
+          <div class="stat"><div class="num" style="color:#90EE90;">1,234</div>累計收入 (e幣)</div>
+          <div class="stat"><div class="num" style="color:#FFB6C1;">567</div>累計支出 (e幣)</div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%; margin:12px 0;">💳 儲值</button>
+
+      <h3 style="margin:16px 0 8px;">📜 交易記錄</h3>
+
+      <div class="ledger-entry">
+        <div class="icon" style="background:#D5F5E3;">💳</div>
+        <div class="detail">
+          <div class="title">儲值</div>
+          <div class="note">Google Play · Standard</div>
+        </div>
+        <div>
+          <div class="amount credit">+36,720 e幣</div>
+          <div class="time">04/12 15:30</div>
+        </div>
+      </div>
+
+      <div class="ledger-entry">
+        <div class="icon" style="background:#FDEBD0;">🔒</div>
+        <div class="detail">
+          <div class="title">押金凍結</div>
+          <div class="note">Coding Wizard Bot · 合約 #abc123</div>
+        </div>
+        <div>
+          <div class="amount debit">-200 e幣</div>
+          <div class="time">04/12 16:00</div>
+        </div>
+      </div>
+
+      <div class="ledger-entry">
+        <div class="icon" style="background:#FADBD8;">📉</div>
+        <div class="detail">
+          <div class="title">租借支出</div>
+          <div class="note">3,400 tokens · Coding Wizard</div>
+        </div>
+        <div>
+          <div class="amount debit">-34 e幣</div>
+          <div class="time">04/12 16:05</div>
+        </div>
+      </div>
+
+      <div class="ledger-entry">
+        <div class="icon" style="background:#D5F5E3;">🔓</div>
+        <div class="detail">
+          <div class="title">押金退還</div>
+          <div class="note">全額退還 · 合約正常結束</div>
+        </div>
+        <div>
+          <div class="amount credit">+200 e幣</div>
+          <div class="time">04/12 21:37</div>
+        </div>
+      </div>
+
+      <div class="ledger-entry">
+        <div class="icon" style="background:#D5F5E3;">📈</div>
+        <div class="detail">
+          <div class="title">租借收入</div>
+          <div class="note">T+24h 入帳 · 85% owner share</div>
+        </div>
+        <div>
+          <div class="amount credit">+104.5 e幣</div>
+          <div class="time">04/13 21:37</div>
+        </div>
+      </div>
+
+      <div class="ledger-entry">
+        <div class="icon" style="background:#D6EAF8;">⚖️</div>
+        <div class="detail">
+          <div class="title">申訴補償</div>
+          <div class="note">SLA 超時自動補償</div>
+        </div>
+        <div>
+          <div class="amount credit">+50 e幣</div>
+          <div class="time">04/13 08:00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>4.2 儲值 Tiers</h2>
+  <div class="phone-frame">
+    <div class="phone-header">💳 儲值 e幣</div>
+    <div class="phone-body">
+      <div class="tier-list">
+        <div class="tier">
+          <div class="left"><span class="tier-icon">🥉</span><div><div class="tier-name">Small</div><div class="tier-price">NT$90</div></div></div>
+          <div class="right"><div class="ecoin">9,000 e幣</div></div>
+        </div>
+        <div class="tier">
+          <div class="left"><span class="tier-icon">🥈</span><div><div class="tier-name">Starter</div><div class="tier-price">NT$170</div></div></div>
+          <div class="right"><div class="ecoin">17,850 e幣</div><div class="bonus">+5% 獎勵</div></div>
+        </div>
+        <div class="tier selected">
+          <div class="left"><span class="tier-icon">🥇</span><div><div class="tier-name">Standard</div><div class="tier-price">NT$340</div></div></div>
+          <div class="right"><div class="ecoin">36,720 e幣</div><div class="bonus">+8% 獎勵</div></div>
+        </div>
+        <div class="tier">
+          <div class="left"><span class="tier-icon">💎</span><div><div class="tier-name">Advanced</div><div class="tier-price">NT$990</div></div></div>
+          <div class="right"><div class="ecoin">110,880 e幣</div><div class="bonus">+12% 獎勵</div></div>
+        </div>
+        <div class="tier">
+          <div class="left"><span class="tier-icon">👑</span><div><div class="tier-name">Premium</div><div class="tier-price">NT$1,990</div></div></div>
+          <div class="right"><div class="ecoin">228,850 e幣</div><div class="bonus">+15% 獎勵</div></div>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="width:100%; margin-top:16px; padding:12px;">確認儲值 NT$340</button>
+    </div>
+  </div>
+</div>
+
+<div class="section-divider"></div>
+
+<!-- ============ 5. DASHBOARD ============ -->
+<div class="page-section">
+  <h1>5. dashboard.html — 儀表板 Entity 卡片</h1>
+  <p>涉及場景：F2/F12, T1/T3/T5/T7–T8</p>
+
+  <div class="entity-grid">
+    <!-- Normal entity -->
+    <div class="entity-card">
+      <div class="avatar-lg">🐙</div>
+      <div class="name">EClaw 小助手</div>
+      <div class="subtitle">Entity #0 · IDLE</div>
+      <button class="btn btn-primary btn-sm mt-8">🗣️ 聊天</button>
+    </div>
+
+    <!-- Rental entity (renter side) -->
+    <div class="entity-card" style="border: 2px solid var(--rental-badge);">
+      <div class="rental-badge-corner">🔒 租借中</div>
+      <div class="avatar-lg">🤖</div>
+      <div class="name">Coding Wizard Bot</div>
+      <div class="subtitle">⏱️ 剩餘 5h 37m</div>
+      <div class="text-xs text-gray mt-8">Rented from marketplace</div>
+      <button class="btn btn-primary btn-sm mt-8">🗣️ 聊天</button>
+    </div>
+
+    <!-- Leased-out entity (owner side) -->
+    <div class="entity-card leased-out">
+      <div class="overlay">📤 出租中 — 無法使用</div>
+      <div class="avatar-lg">🤖</div>
+      <div class="name">Coding Wizard Bot</div>
+      <div class="subtitle">Entity #0</div>
+      <button class="btn btn-outline btn-sm mt-8">📊 查看收入</button>
+    </div>
+
+    <!-- Empty slot -->
+    <div class="entity-card" style="border: 2px dashed #DDD; opacity: 0.5;">
+      <div class="avatar-lg" style="background: #F0F0F0; color: #CCC;">+</div>
+      <div class="name" style="color: #CCC;">空位</div>
+      <div class="subtitle">未綁定</div>
+    </div>
+  </div>
+</div>
+
+<div class="section-divider"></div>
+
+<!-- ============ 6. KANBAN ============ -->
+<div class="page-section">
+  <h1>6. kanban.html — 看板</h1>
+  <p>涉及場景：F3–F9, F11, P17–P22, Q5</p>
+
+  <div class="wide-frame">
+    <div class="wide-header">📋 看板</div>
+    <div class="wide-body">
+      <div class="kanban-board">
+        <div class="kanban-col">
+          <div class="col-title">Backlog</div>
+          <div class="kanban-card">
+            <div class="fw-600 text-sm">Monaco Editor 嵌入</div>
+            <div class="assigned">
+              <div class="avatar sm">🐙</div>
+            </div>
+          </div>
+        </div>
+        <div class="kanban-col">
+          <div class="col-title">Todo</div>
+          <div class="kanban-card">
+            <div class="fw-600 text-sm">API 文件翻譯</div>
+            <div class="assigned">
+              <div class="avatar sm" style="background: var(--rental-badge);">🤖</div>
+              <span class="text-xs" style="color:var(--primary);">🔒 Coding Wizard</span>
+            </div>
+          </div>
+        </div>
+        <div class="kanban-col">
+          <div class="col-title">In Progress</div>
+          <div class="kanban-card" style="border-left: 3px solid var(--primary);">
+            <div class="fw-600 text-sm">排序算法優化</div>
+            <div class="assigned">
+              <div class="avatar sm" style="background: var(--rental-badge);">🤖</div>
+              <span class="text-xs" style="color:var(--primary);">🔒 Coding Wizard</span>
+            </div>
+          </div>
+        </div>
+        <div class="kanban-col">
+          <div class="col-title">Done ✓</div>
+          <div class="kanban-card" style="border-left: 3px solid var(--success); opacity: 0.8;">
+            <div class="fw-600 text-sm">資料庫遷移</div>
+            <div class="text-xs text-gray mt-8">✅ Bot 回覆 IDLE — 任務已完成</div>
+            <div class="assigned">
+              <div class="avatar sm" style="background: var(--rental-badge);">🤖</div>
+            </div>
+          </div>
+        </div>
+        <div class="kanban-col">
+          <div class="col-title">Archive</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section-divider"></div>
+
+<!-- ============ 7. CHAT ============ -->
+<div class="page-section">
+  <h1>7. chat.html — 租借 Bot 聊天</h1>
+  <p>涉及場景：G7–G8, H4–H7, K2–K3/K8–K10, Q7</p>
+
+  <div class="phone-frame">
+    <div class="phone-header">
+      <span>🔒</span> Coding Wizard Bot <span style="margin-left:auto; font-size:12px; opacity:0.8;">⏱️ 4h 23m</span>
+    </div>
+    <div class="phone-body" style="padding:0;">
+      <div class="chat-container">
+        <div class="chat-banner">⚠️ 你正在與租借的 Bot 對話。避免分享信用卡號、密碼或個人身分資訊。</div>
+
+        <div class="msg user"><div class="bubble">你好，幫我寫一個快速排序算法</div></div>
+
+        <div class="msg bot">
+          <div>
+            <div class="bubble">
+              好的！以下是 Python 快速排序：<br>
+              <code style="font-size:12px;">def quicksort(arr): ...</code>
+            </div>
+            <div class="token-cost">📊 245 tokens, -0.245 e幣</div>
+          </div>
+        </div>
+
+        <div class="msg user"><div class="bubble">改成 merge sort</div></div>
+
+        <div class="msg bot">
+          <div>
+            <div class="bubble">
+              沒問題！Merge sort 實現如下：<br>
+              <code style="font-size:12px;">def merge_sort(arr): ...</code>
+            </div>
+            <div class="token-cost">📊 312 tokens, -0.312 e幣</div>
+          </div>
+        </div>
+
+        <!-- Cross-agent message -->
+        <div class="msg bot">
+          <div>
+            <div class="bubble" style="background: #F0EEFF; border-color: var(--rental-badge);">
+              <div class="text-xs" style="color:var(--primary); margin-bottom:4px;">🔒 Coding Wizard → 你的 Bot</div>
+              任務已完成，程式碼已提交到 branch fix/sort-algo
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:8px 12px; background:#F8F8F8; font-size:11px; color:var(--gray); border-top:1px solid #EEE;">
+        餘額: <strong>476.7 e幣</strong> │ 本次已用: <strong>23.3 e幣</strong> / 2,330 tokens
+      </div>
+      <div class="chat-footer">
+        <input class="chat-input" placeholder="輸入訊息...">
+        <button class="btn btn-primary" style="padding:8px 16px;">送出</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section-divider"></div>
+
+<!-- ============ 8. ENV-VARS ============ -->
+<div class="page-section">
+  <h1>8. env-vars.html — Vault 隔離</h1>
+  <p>涉及場景：I1–I9</p>
+
+  <div class="wide-frame">
+    <div class="wide-header">🔧 環境變數 <span style="float:right; font-size:12px;">🔒 鎖定全部</span></div>
+    <div class="wide-body">
+      <div class="var-row">
+        <span class="lock">🔒</span>
+        <span class="key">SECRET_API_KEY</span>
+        <span class="val">•••••••••••</span>
+        <span class="badge badge-red">租借 Bot 不可見</span>
+      </div>
+      <div class="var-row">
+        <span>🔓</span>
+        <span class="key">PUBLIC_CONFIG</span>
+        <span class="val">hello-world</span>
+        <span class="badge badge-green">租借 Bot 可讀</span>
+      </div>
+      <div class="var-row">
+        <span class="lock">🔒</span>
+        <span class="key">DB_PASSWORD</span>
+        <span class="val">•••••••••••</span>
+        <span class="badge badge-red">自動隔離 (*_PASSWORD)</span>
+      </div>
+      <div class="var-row">
+        <span class="lock">🔒</span>
+        <span class="key">OPENAI_TOKEN</span>
+        <span class="val">•••••••••••</span>
+        <span class="badge badge-red">自動隔離 (*_TOKEN)</span>
+      </div>
+
+      <div class="desc mt-16">
+        <strong>🔒 Vault 隔離規則 (BRM 設計決策 #18)</strong><br>
+        變數名含 <code>*_KEY</code>, <code>*_SECRET</code>, <code>*_TOKEN</code>, <code>*_PASSWORD</code> 的變數<strong>自動對租借 Bot 隱藏</strong>。<br>
+        Owner 可在 Listing 編輯頁的 <code>allowed_vars</code> 白名單中手動允許。
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section-divider"></div>
+
+<!-- ============ 9. EMPTY STATES ============ -->
+<div class="page-section">
+  <h1>9. 空狀態渲染</h1>
+  <p>涉及場景：S12–S13, D2</p>
+
+  <div class="flex">
+    <div class="flex-1">
+      <div class="wide-frame">
+        <div class="wide-header">📋 我的租借</div>
+        <div class="wide-body">
+          <div class="empty-state">
+            <div class="icon">🔍</div>
+            <p><strong>還沒有租借紀錄</strong></p>
+            <p>到 Marketplace 探索 Bot 吧！</p>
+            <button class="btn btn-primary mt-8">前往 Marketplace →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="flex-1">
+      <div class="wide-frame">
+        <div class="wide-header">💰 交易記錄</div>
+        <div class="wide-body">
+          <div class="empty-state">
+            <div class="icon">📜</div>
+            <p><strong>尚無交易紀錄</strong></p>
+            <p>儲值後即可開始使用。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section-divider"></div>
+
+<!-- ============ SCENARIO MAP ============ -->
+<div class="page-section">
+  <h1>附錄：場景 ↔ 頁面對照表</h1>
+  <table class="scenario-map">
+    <tr><th>頁面</th><th>涉及場景</th><th>主要渲染邏輯</th></tr>
+    <tr><td>community.html#rental</td><td>A4, B1, B8, C1–C3, D1–D7, L1–L5, S1</td><td>搜尋/篩選、Listing 卡片、狀態、自租禁止、冷卻期</td></tr>
+    <tr><td>Listing Detail Modal</td><td>A5–A6, B2, C2, E2, F1, K1</td><td>費率/押金/市場建議、時長選擇、餘額充足性、隱私提醒</td></tr>
+    <tr><td>my-rentals.html</td><td>A7–A12, B3–B7, C4–C6, E4–E5, F10, K6–K11, M1–M9, N1–N11, O1–O7</td><td>三 Tab、合約卡片、狀態 badge、提前結束、評價、申訴</td></tr>
+    <tr><td>wallet.html</td><td>A13, B4–B5, E1/E3/E5–E7, K6–K7, N8, O6–O7</td><td>餘額/凍結、Ledger 12 種 type、儲值 Tier、Ledger Chain</td></tr>
+    <tr><td>dashboard.html</td><td>F2/F12, T1/T3/T5/T7–T8</td><td>🔒 租借 bot 卡片、半透明出租中 overlay</td></tr>
+    <tr><td>kanban.html</td><td>F3–F9, F11, P17–P22, Q5</td><td>租借 bot chip、Auto-move IDLE、Card Notes/Comments</td></tr>
+    <tr><td>chat.html</td><td>G7–G8, H4–H7, K2–K10, Q7</td><td>隱私 Banner、Token 計費 footer、跨 Agent 訊息</td></tr>
+    <tr><td>env-vars.html</td><td>I1–I9</td><td>Vault 隔離、*_KEY 自動 block、白名單</td></tr>
+    <tr><td>(API-only)</td><td>G1–G6, H1–H3, L2–L3, R1–R13, U1–U6</td><td>無 UI，純 API 邊界測試</td></tr>
+  </table>
+</div>
+
+<div style="text-align:center; padding:40px; color:var(--gray); font-size:13px;">
+  BRM UIUX 渲染邏輯規範 — 視覺 Mockup v1.0<br>
+  基於 <a href="2026-04-10-bot-rental-marketplace-design.md">BRM 設計文件</a> + <a href="2026-04-12-rental-e2e-test-scenarios.md">E2E 測試場景 A–U</a>
+</div>
+
+</body>
+</html>
