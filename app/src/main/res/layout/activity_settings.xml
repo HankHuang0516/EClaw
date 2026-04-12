@@ -607,6 +607,67 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Wallet Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnWallet"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/wallet_title"
+                android:textColor="@color/text_white_80"
+                app:backgroundTint="@color/surface_input"
+                android:layout_marginTop="16dp"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_wallet"
+                app:iconTint="@color/text_white_80"
+                app:strokeColor="@color/text_dark"
+                app:strokeWidth="1dp"
+                style="@style/Widget.Material3.Button.TonalButton"/>
+
+            <!-- Top Up e-Coins Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTopup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/topup_ecoin"
+                android:textColor="@color/text_white_80"
+                app:backgroundTint="@color/surface_input"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_wallet"
+                app:iconTint="#FFD700"
+                app:strokeColor="@color/text_dark"
+                app:strokeWidth="1dp"
+                style="@style/Widget.Material3.Button.TonalButton"/>
+
+            <!-- My Rentals Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnMyRentals"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/my_rentals_title"
+                android:textColor="@color/text_white_80"
+                app:backgroundTint="@color/surface_input"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_robot"
+                app:iconTint="@color/text_white_80"
+                app:strokeColor="@color/text_dark"
+                app:strokeWidth="1dp"
+                style="@style/Widget.Material3.Button.TonalButton"/>
+
+            <!-- Invite Friends Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnInvite"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/invite_title"
+                android:textColor="@color/text_white_80"
+                app:backgroundTint="@color/surface_input"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_invite"
+                app:iconTint="@color/text_white_80"
+                app:strokeColor="@color/text_dark"
+                app:strokeWidth="1dp"
+                style="@style/Widget.Material3.Button.TonalButton"/>
+
             <!-- File Manager Button (moved from bottom nav) -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnFileManager"

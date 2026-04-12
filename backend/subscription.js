@@ -33,12 +33,73 @@ const TAPPAY_CARD_TOKEN_URL = TAPPAY_SANDBOX
     ? 'https://sandbox.tappaysdk.com/tpc/payment/pay-by-card-token'
     : 'https://prod.tappaysdk.com/tpc/payment/pay-by-card-token';
 
-const SUBSCRIPTION_AMOUNT = 99; // NT$99/month (general premium)
-const BORROW_AMOUNT = 288; // NT$288/month (official bot rental)
+const SUBSCRIPTION_AMOUNT = 99; // NT$99/month (general premium) — legacy
+const BORROW_AMOUNT = 288; // NT$288/month (official bot rental) — legacy
 const SUBSCRIPTION_CURRENCY = 'TWD';
 const SUBSCRIPTION_PERIOD_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
+// ============================================
+// New subscription plan tiers (e-coin integrated)
+// ============================================
+const ECOIN_TO_MLI = 1000;
+
+const SUBSCRIPTION_PLANS = Object.freeze({
+    free: {
+        id: 'free',
+        name: 'Free',
+        priceUsd: 0,
+        monthlyEcoinGrant: 0,
+        messageLimit: 15,
+        maxConcurrentRentals: 1,
+        marketplaceDiscountBps: 0,
+        googlePlayProductId: null,
+    },
+    starter: {
+        id: 'starter',
+        name: 'Starter',
+        priceUsd: 2.99,
+        monthlyEcoinGrant: 2000,
+        messageLimit: null,
+        maxConcurrentRentals: 2,
+        marketplaceDiscountBps: 500,
+        googlePlayProductId: 'eclaw_sub_starter',
+    },
+    pro: {
+        id: 'pro',
+        name: 'Pro',
+        priceUsd: 7.99,
+        monthlyEcoinGrant: 8000,
+        messageLimit: null,
+        maxConcurrentRentals: 5,
+        marketplaceDiscountBps: 1000,
+        googlePlayProductId: 'eclaw_sub_pro',
+    },
+    business: {
+        id: 'business',
+        name: 'Business',
+        priceUsd: 14.99,
+        monthlyEcoinGrant: 20000,
+        messageLimit: null,
+        maxConcurrentRentals: -1,
+        marketplaceDiscountBps: 1500,
+        googlePlayProductId: 'eclaw_sub_business',
+    },
+});
+
+/** Map Google Play product ID → plan ID */
+const GOOGLE_PLAY_TO_PLAN = Object.freeze({
+    'eclaw_sub_starter': 'starter',
+    'eclaw_sub_pro': 'pro',
+    'eclaw_sub_business': 'business',
+    'e_claw_premium': 'starter',
+    'e_claw_borrow_personal': 'starter',
+});
+
+/** Official bot monthly rental cost (e幣) — MiniMax 2.5/2.7 */
+const OFFICIAL_BOT_MONTHLY_ECOIN = 30000;
+
 module.exports = function (devices, authMiddleware, _unused, serverLog) {
+    let walletModule = null;
     const router = express.Router();
 
     // ============================================
@@ -91,6 +152,23 @@ module.exports = function (devices, authMiddleware, _unused, serverLog) {
             console.error('[Subscription] Status error:', error);
             res.status(500).json({ success: false, error: 'Failed to get status' });
         }
+    });
+
+    // ============================================
+    // GET /plans — list available subscription plans
+    // ============================================
+    router.get('/plans', (_req, res) => {
+        const plans = Object.values(SUBSCRIPTION_PLANS).map(p => ({
+            id: p.id,
+            name: p.name,
+            priceUsd: p.priceUsd,
+            monthlyEcoinGrant: p.monthlyEcoinGrant,
+            messageLimit: p.messageLimit,
+            maxConcurrentRentals: p.maxConcurrentRentals,
+            marketplaceDiscountBps: p.marketplaceDiscountBps,
+            googlePlayProductId: p.googlePlayProductId,
+        }));
+        res.json({ success: true, plans, officialBotMonthlyEcoin: OFFICIAL_BOT_MONTHLY_ECOIN });
     });
 
     // ============================================
@@ -526,5 +604,8 @@ module.exports = function (devices, authMiddleware, _unused, serverLog) {
         }
     }
 
-    return { router, enforceUsageLimit, loadPremiumStatus };
+    /** Inject walletModule after both modules are initialized (deferred DI). */
+    function setWalletModule(wm) { walletModule = wm; }
+
+    return { router, enforceUsageLimit, loadPremiumStatus, setWalletModule, SUBSCRIPTION_PLANS, OFFICIAL_BOT_MONTHLY_ECOIN };
 };

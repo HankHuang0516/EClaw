@@ -816,4 +816,10 @@ Tu suscripción permanece activa y puedes reenlazar en cualquier momento (sujeto
     <string name="xd_whitelist">Lista Blanca (códigos públicos)</string>
     <string name="xd_whitelist_mode">Modo Lista Blanca</string>
     <string name="you">Tú</string>
+    <string name="topup_ecoin_title">Recargar e-Coins</string>
+    <string name="topup_ecoin">Recargar</string>
+    <string name="topup_success">¡e-Coins añadidos a tu billetera!</string>
+    <string name="topup_failed">Recarga fallida. Inténtalo de nuevo.</string>
+    <string name="choose_plan_title">Elegir Plan</string>
+    <string name="upgrade_plan">Mejorar Plan</string>
 </resources>
