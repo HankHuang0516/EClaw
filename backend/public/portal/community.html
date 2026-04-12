@@ -898,15 +898,25 @@
     }
 
     function translateRentalError(code) {
-        const ttt = (k, fb) => (typeof i18n !== 'undefined' ? i18n.t(k) : null) || fb;
-        const map = {
-            'cooldown_active': ttt('rental_error_cooldown', 'This bot has a 24-hour cooldown period. Please try again later.'),
-            'self_rental_forbidden': ttt('rental_error_self_rent', 'You cannot rent your own bot.'),
-            'listing_already_rented': ttt('rental_error_already_rented', 'This bot is already rented by someone else.'),
-            'insufficient_balance_for_rental': ttt('rental_error_insufficient', 'Insufficient e-coin balance for this rental.'),
-            'listing_not_available': ttt('rental_error_not_available', 'This listing is no longer available.'),
+        const i18nKey = {
+            'cooldown_active': 'rental_error_cooldown',
+            'self_rental_forbidden': 'rental_error_self_rent',
+            'listing_already_rented': 'rental_error_already_rented',
+            'insufficient_balance_for_rental': 'rental_error_insufficient',
+            'listing_not_available': 'rental_error_not_available',
+        }[code];
+        if (!i18nKey) return null;
+        const translated = typeof i18n !== 'undefined' ? i18n.t(i18nKey) : null;
+        // i18n.t may return the key itself if not found — fall back to English
+        if (translated && translated !== i18nKey) return translated;
+        const fallbacks = {
+            'rental_error_cooldown': 'This bot has a 24-hour cooldown period. Please try again later.',
+            'rental_error_self_rent': 'You cannot rent your own bot.',
+            'rental_error_already_rented': 'This bot is already rented by someone else.',
+            'rental_error_insufficient': 'Insufficient e-coin balance for this rental.',
+            'rental_error_not_available': 'This listing is no longer available.',
         };
-        return map[code] || null;
+        return fallbacks[i18nKey];
     }
 
     async function doRentalFromPlaza(listingId) {
