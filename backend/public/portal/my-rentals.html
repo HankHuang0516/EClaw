@@ -213,6 +213,8 @@
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
+            const _isEmbed = new URLSearchParams(window.location.search).get('embed') === '1' || window.self !== window.top;
+            if (_isEmbed) document.body.classList.add('embed-mode');
             renderNav('settings');
             if (typeof renderFooter === 'function') renderFooter();
             if (typeof i18n !== 'undefined') i18n.apply();

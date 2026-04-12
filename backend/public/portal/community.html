@@ -516,7 +516,11 @@
 
 <body>
     <script src="shared/nav.js"></script>
-    <script>renderNav('community');</script>
+    <script>
+    const _isEmbed = new URLSearchParams(window.location.search).get('embed') === '1' || window.self !== window.top;
+    if (_isEmbed) document.body.classList.add('embed-mode');
+    renderNav('community');
+    </script>
 
     <main class="community-container">
 

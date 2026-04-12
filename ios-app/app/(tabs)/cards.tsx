@@ -15,6 +15,7 @@ import {
 import { useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'expo-router';
 import { contactsApi } from '../../services/api';
 
 interface AgentCardSnapshot {
@@ -65,6 +66,7 @@ type Section = 'my-cards' | 'recent' | 'collected';
 export default function CardsScreen() {
   const theme = useTheme();
   const { t } = useTranslation();
+  const router = useRouter();
 
   const [section, setSection] = useState<Section>('my-cards');
   const [myCards, setMyCards] = useState<MyCard[]>([]);
@@ -496,6 +498,9 @@ export default function CardsScreen() {
             </Text>
           </TouchableOpacity>
         ))}
+        <TouchableOpacity onPress={() => router.push('/community')} style={[styles.addBtnHeader, { marginRight: 4 }]}>
+          <Text style={styles.addBtnText}>🏪</Text>
+        </TouchableOpacity>
         <TouchableOpacity onPress={showAddDialog} style={styles.addBtnHeader}>
           <Text style={styles.addBtnText}>+</Text>
         </TouchableOpacity>

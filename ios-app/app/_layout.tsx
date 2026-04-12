@@ -45,6 +45,10 @@ export default function RootLayout() {
           <Stack.Screen name="official-borrow" options={{ presentation: 'card' }} />
           <Stack.Screen name="feedback" options={{ presentation: 'card' }} />
           <Stack.Screen name="card-holder" options={{ presentation: 'card' }} />
+          <Stack.Screen name="community" options={{ presentation: 'card' }} />
+          <Stack.Screen name="wallet" options={{ presentation: 'card' }} />
+          <Stack.Screen name="my-rentals" options={{ presentation: 'card' }} />
+          <Stack.Screen name="invite" options={{ presentation: 'card' }} />
         </Stack>
       </PaperProvider>
     </SafeAreaProvider>

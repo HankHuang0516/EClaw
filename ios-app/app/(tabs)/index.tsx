@@ -45,9 +45,9 @@ export default function HomeScreen() {
     setSnackVisible(true);
   };
 
-  // Find next empty slot (max 4 entities, index 0-3)
+  // Find next empty slot (max 20 entities, index 0-19)
   const nextEmptySlot = () => {
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 20; i++) {
       if (!entities.find((e) => e.entityIndex === i)) return i;
     }
     return -1;
@@ -56,7 +56,7 @@ export default function HomeScreen() {
   const handleGenerateCode = async () => {
     const slotIndex = nextEmptySlot();
     if (slotIndex === -1) {
-      showSnack('All 4 slots are occupied');
+      showSnack(t('home.all_slots_full', 'All 20 slots are occupied'));
       return;
     }
     if (!deviceId) return;

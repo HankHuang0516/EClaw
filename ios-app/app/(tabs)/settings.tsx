@@ -132,6 +132,30 @@ export default function SettingsScreen() {
 
         <Divider />
 
+        {/* Services */}
+        <List.Section title={t('settings.services', 'Services')}>
+          <List.Item
+            title={t('settings.wallet', 'My Wallet')}
+            left={(props) => <List.Icon {...props} icon="wallet" />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            onPress={() => router.push('/wallet')}
+          />
+          <List.Item
+            title={t('settings.my_rentals', 'My Rentals')}
+            left={(props) => <List.Icon {...props} icon="robot" />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            onPress={() => router.push('/my-rentals')}
+          />
+          <List.Item
+            title={t('settings.invite_friends', 'Invite Friends')}
+            left={(props) => <List.Icon {...props} icon="account-plus" />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            onPress={() => router.push('/invite')}
+          />
+        </List.Section>
+
+        <Divider />
+
         {/* More */}
         <List.Section>
           <List.Item
