@@ -503,6 +503,61 @@
         .cap-chip.reasoning { background: rgba(255,152,0,0.15); color: #FF9800; }
         .cap-chip.coding { background: rgba(255,235,59,0.2); color: #F9A825; }
         .cap-chip.default-cap { background: rgba(108,99,255,0.12); color: var(--primary); }
+        .cap-chip.file_io { background: rgba(121,85,72,0.15); color: #8D6E63; }
+        .cap-chip.tts { background: rgba(0,188,212,0.15); color: #00BCD4; }
+
+        /* ── Capability Filter Chips ── */
+        .cap-filter-row {
+            display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; align-items: center;
+        }
+        .cap-filter-label {
+            font-size: 12px; color: var(--text-muted); font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px; margin-right: 4px;
+        }
+        .cap-filter-chip {
+            padding: 4px 12px; border-radius: var(--radius-pill);
+            background: var(--input-bg); border: 1px solid var(--card-border);
+            color: var(--text-secondary); font-size: 12px; font-weight: 500;
+            cursor: pointer; transition: all 0.2s; font-family: inherit; white-space: nowrap;
+        }
+        .cap-filter-chip:hover { border-color: var(--primary); color: var(--text); }
+        .cap-filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        /* ── Rate Range Slider ── */
+        .rate-slider-row {
+            display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap;
+        }
+        .rate-slider-label {
+            font-size: 12px; color: var(--text-muted); font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+        }
+        .rate-slider-track {
+            flex: 1; min-width: 180px; position: relative; height: 36px; display: flex; align-items: center;
+        }
+        .rate-slider-track input[type=range] {
+            -webkit-appearance: none; appearance: none; width: 100%; position: absolute;
+            background: transparent; pointer-events: none; height: 6px;
+        }
+        .rate-slider-track input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: var(--primary); border: 2px solid #fff; cursor: pointer;
+            pointer-events: auto; box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        }
+        .rate-slider-track input[type=range]::-moz-range-thumb {
+            width: 20px; height: 20px; border-radius: 50%;
+            background: var(--primary); border: 2px solid #fff; cursor: pointer;
+            pointer-events: auto; box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        }
+        .rate-slider-track input[type=range]::-webkit-slider-runnable-track {
+            height: 6px; border-radius: 3px; background: var(--card-border);
+        }
+        .rate-slider-track input[type=range]::-moz-range-track {
+            height: 6px; border-radius: 3px; background: var(--card-border);
+        }
+        .rate-slider-value {
+            font-size: 13px; color: var(--text); font-weight: 600; white-space: nowrap; min-width: 120px; text-align: right;
+        }
         .rental-cost-box { background: var(--input-bg); border: 1px solid var(--card-border); border-radius: var(--radius-sm); padding: 12px; margin-top: 8px; font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
         .rental-cost-box .cost-line { display: flex; justify-content: space-between; padding: 2px 0; }
         .rental-cost-box .cost-total { font-weight: 700; color: var(--text); font-size: 14px; border-top: 1px solid var(--card-border); margin-top: 6px; padding-top: 6px; }
@@ -585,6 +640,28 @@
             <button class="plaza-chip" data-filter="rental" onclick="setFilter('rental', this)" data-i18n="community_filter_rental">🤖 出租</button>
         </div>
 
+        <!-- Capability Filter Chips (§1.2) -->
+        <div class="cap-filter-row" id="capFilterRow">
+            <span class="cap-filter-label" data-i18n="mp_cap_filter_label">Capabilities</span>
+            <button class="cap-filter-chip" data-cap="python_exec" onclick="toggleCapFilter(this)">🐍 python_exec</button>
+            <button class="cap-filter-chip" data-cap="web_browse" onclick="toggleCapFilter(this)">🌐 web_browse</button>
+            <button class="cap-filter-chip" data-cap="vision" onclick="toggleCapFilter(this)">👁 vision</button>
+            <button class="cap-filter-chip" data-cap="file_io" onclick="toggleCapFilter(this)">📁 file_io</button>
+            <button class="cap-filter-chip" data-cap="reasoning" onclick="toggleCapFilter(this)">🧠 reasoning</button>
+            <button class="cap-filter-chip" data-cap="coding" onclick="toggleCapFilter(this)">💻 coding</button>
+            <button class="cap-filter-chip" data-cap="tts" onclick="toggleCapFilter(this)">🔊 tts</button>
+        </div>
+
+        <!-- Rate Range Slider (§1.2) -->
+        <div class="rate-slider-row" id="rateSliderRow">
+            <span class="rate-slider-label" data-i18n="mp_rate_range_label">Rate</span>
+            <div class="rate-slider-track">
+                <input type="range" id="rateMin" min="1" max="50" value="1" step="1" oninput="onRateSliderChange()">
+                <input type="range" id="rateMax" min="1" max="50" value="50" step="1" oninput="onRateSliderChange()">
+            </div>
+            <span class="rate-slider-value" id="rateSliderValue">1 – 50 e&#24163;/1K</span>
+        </div>
+
         <!-- Stats -->
         <div class="plaza-stats">
             <span><span class="count" id="resultCount">0</span> <span data-i18n="community_bots_found">個 Bot</span></span>
@@ -646,6 +723,10 @@
     let currentFilter = 'all';
     let currentSort = 'newest';
     let searchQuery = '';
+    let selectedCaps = new Set();
+    let rateMin = 1;
+    let rateMax = 50;
+    let _rateDebounce = null;
 
     /* ══════ API ══════ */
     async function apiFetch(path) {
@@ -690,7 +771,11 @@
                 try {
                     const sortMap = { newest:'newest', popular:'rating', az:'rate_asc', za:'rate_desc' };
                     const sort = sortMap[currentSort] || 'rating';
-                    const data = await apiFetch('/api/rental/marketplace?sort=' + sort + '&limit=50');
+                    const rp = new URLSearchParams({ sort, limit: '50' });
+                    if (selectedCaps.size === 1) rp.set('capability', [...selectedCaps][0]);
+                    if (rateMin > 1) rp.set('minRateMli', String(rateMin * 1000));
+                    if (rateMax < 50) rp.set('maxRateMli', String(rateMax * 1000));
+                    const data = await apiFetch('/api/rental/marketplace?' + rp);
                     rentalBots = (data.listings || []).map(l => {
                         const caps = l.capabilities ? Object.keys(l.capabilities).filter(k => l.capabilities[k]?.supported) : [];
                         return {
@@ -713,6 +798,11 @@
                         rentalBots = rentalBots.filter(b =>
                             b.name.toLowerCase().includes(q) ||
                             (b.modelDetected || '').toLowerCase().includes(q));
+                    }
+                    // Client-side multi-capability filter (API supports only 1)
+                    if (selectedCaps.size > 1) {
+                        rentalBots = rentalBots.filter(b =>
+                            [...selectedCaps].every(c => b.caps.includes(c)));
                     }
                 } catch { /* rental API unavailable — show community only */ }
             }
@@ -1070,6 +1160,25 @@
             localStorage.setItem('eclaw_pending_quote', JSON.stringify({ source, title, excerpt: excerpt || '', ts: Date.now() }));
             window.location.href = '/portal/chat.html';
         }
+    }
+
+    /* ══════ Capability & Rate Filters ══════ */
+    function toggleCapFilter(el) {
+        const cap = el.dataset.cap;
+        if (selectedCaps.has(cap)) { selectedCaps.delete(cap); el.classList.remove('active'); }
+        else { selectedCaps.add(cap); el.classList.add('active'); }
+        filterAndSort();
+    }
+    function onRateSliderChange() {
+        const minEl = document.getElementById('rateMin');
+        const maxEl = document.getElementById('rateMax');
+        let lo = parseInt(minEl.value, 10), hi = parseInt(maxEl.value, 10);
+        if (lo > hi) { const tmp = lo; lo = hi; hi = tmp; minEl.value = lo; maxEl.value = hi; }
+        rateMin = lo; rateMax = hi;
+        const tt = (k, fb) => (typeof i18n !== 'undefined' ? i18n.t(k) : null) || fb;
+        document.getElementById('rateSliderValue').textContent = lo + ' \u2013 ' + hi + ' ' + tt('mp_rate_unit', 'e\u5e63/1K');
+        clearTimeout(_rateDebounce);
+        _rateDebounce = setTimeout(filterAndSort, 300);
     }
 
     /* ══════ Utilities ══════ */

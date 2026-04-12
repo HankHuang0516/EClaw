@@ -2102,6 +2102,9 @@ const TRANSLATIONS = {
         "mp_rent_success_desc": "Bot has been added to your device.",
         "mp_start_chat": "Start Chat",
         "mp_view_contract": "View Contract",
+        "mp_cap_filter_label": "Capabilities",
+        "mp_rate_range_label": "Rate",
+        "mp_rate_unit": "e\u5e63/1K",
 
         // My Rentals (my-rentals.html)
         "mr_title": "EClawbot - My Rentals",
@@ -7754,6 +7757,9 @@ const TRANSLATIONS = {
         "mp_rent_success_desc": "Bot 已加入您的裝置。",
         "mp_start_chat": "開始聊天",
         "mp_view_contract": "查看契約",
+        "mp_cap_filter_label": "能力篩選",
+        "mp_rate_range_label": "費率",
+        "mp_rate_unit": "e幣/1K",
     },
     "zh-CN": {
         "mc_title": "EClawbot 任务控制",
@@ -14193,6 +14199,9 @@ const TRANSLATIONS = {
         "mp_rent_success_desc": "ボットがデバイスに追加されました。",
         "mp_start_chat": "チャット開始",
         "mp_view_contract": "契約を見る",
+        "mp_cap_filter_label": "能力フィルター",
+        "mp_rate_range_label": "料金",
+        "mp_rate_unit": "eコイン/1K",
 
     },
     ko: {
@@ -17127,6 +17136,9 @@ const TRANSLATIONS = {
         "mp_rent_success_desc": "봇이 디바이스에 추가되었습니다.",
         "mp_start_chat": "채팅 시작",
         "mp_view_contract": "계약 보기",
+        "mp_cap_filter_label": "능력 필터",
+        "mp_rate_range_label": "요금",
+        "mp_rate_unit": "e코인/1K",
 
     },
     th: {
@@ -41438,6 +41450,9 @@ const TRANSLATIONS = {
         "mp_rent_success_desc": "Le bot a été ajouté à votre appareil.",
         "mp_start_chat": "Démarrer le chat",
         "mp_view_contract": "Voir le contrat",
+        "mp_cap_filter_label": "Capacit\u00e9s",
+        "mp_rate_range_label": "Tarif",
+        "mp_rate_unit": "e-coins/1K",
     },
     es: {
         "mc_title": "EClawbot Centro de Misiones",
@@ -51957,6 +51972,9 @@ const TRANSLATIONS = {
         "mp_rent_success_desc": "El bot ha sido añadido a tu dispositivo.",
         "mp_start_chat": "Iniciar chat",
         "mp_view_contract": "Ver contrato",
+        "mp_cap_filter_label": "Capacidades",
+        "mp_rate_range_label": "Tarifa",
+        "mp_rate_unit": "e-monedas/1K",
     },
     de: {
         // General / Common
@@ -76524,6 +76542,9 @@ const TRANSLATIONS = {
         "mp_rent_success_desc": "Bot wurde zu Ihrem Gerät hinzugefügt.",
         "mp_start_chat": "Chat starten",
         "mp_view_contract": "Vertrag ansehen",
+        "mp_cap_filter_label": "F\u00e4higkeiten",
+        "mp_rate_range_label": "Tarif",
+        "mp_rate_unit": "e-M\u00fcnzen/1K",
 
         // My Rentals (my-rentals.html)
         "mr_title": "EClawbot - Meine Vermietungen",
