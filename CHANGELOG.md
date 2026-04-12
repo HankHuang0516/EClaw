@@ -1,3 +1,10 @@
+## [1.962.3](https://github.com/HankHuang0516/EClaw/compare/v1.962.2...v1.962.3) (2026-04-12)
+
+
+### Bug Fixes
+
+* move 2 hardcoded strings to strings.xml + i18n ([#1730](https://github.com/HankHuang0516/EClaw/issues/1730)) ([529b694](https://github.com/HankHuang0516/EClaw/commit/529b694e940b80d876a6562fb7284c162f8f8a1f)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 ## [1.962.2](https://github.com/HankHuang0516/EClaw/compare/v1.962.1...v1.962.2) (2026-04-12)
 
 
