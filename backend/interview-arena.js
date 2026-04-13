@@ -1284,12 +1284,14 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
                 [req.params.examId]
             );
             const exam = examRes.rows[0];
+            console.log(`[Arena DEBUG] exam ${exam.id} status=${exam.status} expires_at=${exam.expires_at} created_at=${exam.created_at} now=${new Date().toISOString()}`);
             res.json({
                 success: true,
                 exam: {
                     id: exam.id, model: exam.model, status: exam.status,
                     totalScore: exam.total_score, maxScore: exam.max_score,
                     report: exam.report, createdAt: exam.created_at,
+                    expiresAt: exam.expires_at,
                 },
                 sessions: sessions.rows,
                 testTypes: TEST_TYPES,

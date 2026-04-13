@@ -286,6 +286,7 @@
             if (m.event === 'action' && m.testIndex != null) {
                 // Switch from waiting to active on first action
                 if (document.getElementById('statusText').textContent.includes('Waiting') || document.getElementById('statusText').textContent.includes('等待')) {
+                    console.log('[Arena DEBUG] first action received via socket, switching to active');
                     document.getElementById('statusText').textContent = 'Evaluation in progress...';
                     document.getElementById('scoreWrap').style.display = 'block';
                     startExamTimer(180);
@@ -354,8 +355,23 @@
 `Step 4: POST ${API}/api/arena/exam/${EXAM_ID}/finalize`,
 `  → Returns total score and per-test breakdown.`,
                 ].join('\n');
+                console.log('[Arena DEBUG] loadExam response:', JSON.stringify({ status: data.exam.status, expiresAt: data.exam.expiresAt, createdAt: data.exam.createdAt }));
                 if (data.exam.status === 'completed') showResults(data);
-                else if (data.exam.status === 'active') { document.getElementById('statusText').textContent = 'Evaluation in progress...'; document.getElementById('scoreWrap').style.display = 'block'; if (data.exam.model) showModel(data.exam.model); startExamTimer(180); }
+                else if (data.exam.status === 'active') {
+                    document.getElementById('statusText').textContent = 'Evaluation in progress...';
+                    document.getElementById('scoreWrap').style.display = 'block';
+                    if (data.exam.model) showModel(data.exam.model);
+                    // Calculate actual remaining time from expiresAt
+                    let remainingSec = 180;
+                    if (data.exam.expiresAt) {
+                        const diff = Math.floor((new Date(data.exam.expiresAt).getTime() - Date.now()) / 1000);
+                        remainingSec = Math.max(0, Math.min(180, diff));
+                        console.log('[Arena DEBUG] timer: expiresAt=' + data.exam.expiresAt + ' diff=' + diff + 's remaining=' + remainingSec + 's');
+                    } else {
+                        console.warn('[Arena DEBUG] no expiresAt in response, falling back to 180s');
+                    }
+                    startExamTimer(remainingSec);
+                }
             } catch (e) { console.error(e); }
         }
 
@@ -472,7 +488,8 @@
             document.getElementById('infoBar').style.display = 'flex';
         }
         function startExamTimer(totalSec) {
-            if (examTimerInterval) return;
+            console.log('[Arena DEBUG] startExamTimer called, totalSec=' + totalSec + ', existingInterval=' + !!examTimerInterval);
+            if (examTimerInterval) { console.warn('[Arena DEBUG] timer already running, skipping'); return; }
             let remaining = totalSec;
             const el = document.getElementById('examTimer');
             document.getElementById('infoBar').style.display = 'flex';
