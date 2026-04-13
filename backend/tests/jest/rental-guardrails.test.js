@@ -314,7 +314,7 @@ describe('P2-F: markOwnerEntityLeasedOut + clearOwnerEntityLeasedOut', () => {
 });
 
 describe('P2-F: removeRentalEntity', () => {
-    test('resets the rental entity to unbound default', () => {
+    test('deletes the rental entity slot entirely on contract end', () => {
         const devices = {
             'renter-dev': {
                 entities: {
@@ -324,11 +324,10 @@ describe('P2-F: removeRentalEntity', () => {
             },
         };
         rentalApi.removeRentalEntity(devices, { renterDeviceId: 'renter-dev', contractId: 'c-4' });
-        const entity = devices['renter-dev'].entities[1];
-        expect(entity.isBound).toBe(false);
-        expect(entity.rental_contract_id).toBeNull();
-        expect(entity.rental_status).toBeNull();
-        expect(entity.character).toBe('🤖');
+        // BUG-D3: Entity slot should be fully deleted, not just reset
+        expect(devices['renter-dev'].entities[1]).toBeUndefined();
+        // Other entities should not be affected
+        expect(devices['renter-dev'].entities[0]).toBeDefined();
     });
 
     test('does nothing if contract not found', () => {

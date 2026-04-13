@@ -218,11 +218,9 @@ describe('Rental entity dashboard visibility (#1712)', () => {
 
         // publicCode should be removed from index
         expect(publicCodeIndex[code]).toBeUndefined();
-        // Entity should be unbound and cleared
+        // BUG-D3: Entity slot should be fully deleted (not just reset)
         const entity = devices['renter-device-1'].entities[result.slot];
-        expect(entity.isBound).toBe(false);
-        expect(entity.botSecret).toBeNull();
-        expect(entity.publicCode).toBeNull();
+        expect(entity).toBeUndefined();
     });
 
     test('insertRentalEntity works without helpers (fallback)', () => {

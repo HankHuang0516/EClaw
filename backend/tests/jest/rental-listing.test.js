@@ -23,6 +23,20 @@ jest.mock('pg', () => {
         if (/^(BEGIN|COMMIT|ROLLBACK)$/i.test(norm)) return { rows: [], rowCount: 0 };
         if (/^CREATE (TABLE|INDEX|UNIQUE INDEX)/i.test(norm)) return { rows: [], rowCount: 0 };
 
+        // BUG-M2: Duplicate listing check (SELECT before INSERT)
+        if (/^SELECT id, status FROM bot_listings WHERE owner_device_id/i.test(norm)) {
+            const [ownerDeviceId, ownerEntityId] = params;
+            const existing = state.listings.find(l =>
+                l.owner_device_id === ownerDeviceId &&
+                l.owner_entity_id === ownerEntityId &&
+                ['draft', 'listed', 'paused', 'interview'].includes(l.status)
+            );
+            if (existing) {
+                return { rows: [{ id: existing.id, status: existing.status }], rowCount: 1 };
+            }
+            return { rows: [], rowCount: 0 };
+        }
+
         // INSERT new listing
         if (/^INSERT INTO bot_listings/i.test(norm)) {
             const [ownerUserId, ownerDeviceId, ownerEntityId, title, description,

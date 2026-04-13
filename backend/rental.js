@@ -172,6 +172,22 @@ async function createListing({
     if (maxRentalMinutes > MAX_RENTAL_MINUTES) throw new Error('max_rental_minutes_invalid');
     if (minRentalMinutes > maxRentalMinutes) throw new Error('rental_duration_range_invalid');
 
+    // BUG-M2: Prevent duplicate listings for the same owner+entity combination.
+    // Only one active (draft/listed/paused/interview) listing allowed per entity.
+    const existingRes = await pool.query(
+        `SELECT id, status FROM bot_listings
+         WHERE owner_device_id = $1 AND owner_entity_id = $2
+           AND status IN ('draft', 'listed', 'paused', 'interview')
+         ORDER BY created_at DESC LIMIT 1`,
+        [ownerDeviceId, ownerEntityId]
+    );
+    if (existingRes.rowCount > 0) {
+        const err = new Error('duplicate_listing');
+        err.existingListingId = existingRes.rows[0].id;
+        err.existingStatus = existingRes.rows[0].status;
+        throw err;
+    }
+
     const res = await pool.query(
         `INSERT INTO bot_listings
             (owner_user_id, owner_device_id, owner_entity_id, title, description,
@@ -316,25 +332,37 @@ async function searchMarketplace({
 
     let orderBy;
     switch (sort) {
-        case 'rate_asc':  orderBy = 'bl.rate_mli_per_ktoken ASC'; break;
-        case 'rate_desc': orderBy = 'bl.rate_mli_per_ktoken DESC'; break;
-        case 'newest':    orderBy = 'bl.created_at DESC'; break;
+        case 'rate_asc':  orderBy = 'rate_mli_per_ktoken ASC'; break;
+        case 'rate_desc': orderBy = 'rate_mli_per_ktoken DESC'; break;
+        case 'newest':    orderBy = 'bl_created_at DESC'; break;
         case 'rating':
-        default:          orderBy = 'bl.avg_rating DESC, bl.total_rentals DESC'; break;
+        default:          orderBy = 'avg_rating DESC, total_rentals DESC'; break;
     }
 
     params.push(safeLimit);
     params.push(safeOffset);
+    // BUG-M3: Check ANY active contract (reserved/active/suspended), not just
+    // the current user's. Use EXISTS subquery to avoid duplicate rows.
+    // BUG-M2: Deduplicate by owner+entity — only show the most recent listing
+    // per owner_device_id + owner_entity_id combination using DISTINCT ON.
     const res = await pool.query(
-        `SELECT bl.id, bl.title, bl.description, bl.rate_mli_per_ktoken,
+        `SELECT * FROM (
+            SELECT DISTINCT ON (bl.owner_device_id, bl.owner_entity_id)
+                bl.id, bl.title, bl.description, bl.rate_mli_per_ktoken,
                 bl.min_rental_minutes, bl.max_rental_minutes,
                 bl.model_detected, bl.capabilities, bl.benchmark_score,
                 bl.avg_rating, bl.total_rentals, bl.uptime_pct,
-                CASE WHEN ac.id IS NOT NULL THEN TRUE ELSE FALSE END AS has_active_contract
-         FROM bot_listings bl
-         LEFT JOIN rental_contracts ac
-           ON ac.listing_id = bl.id AND ac.status LIKE 'active%'
-         WHERE ${where.join(' AND ')}
+                bl.owner_device_id, bl.owner_entity_id,
+                bl.created_at AS bl_created_at,
+                EXISTS (
+                    SELECT 1 FROM rental_contracts ac
+                    WHERE ac.listing_id = bl.id
+                      AND ac.status IN ('reserved', 'active', 'suspended_insufficient_funds')
+                ) AS has_active_contract
+            FROM bot_listings bl
+            WHERE ${where.join(' AND ')}
+            ORDER BY bl.owner_device_id, bl.owner_entity_id, bl.created_at DESC
+         ) deduped
          ORDER BY ${orderBy}
          LIMIT $${params.length - 1} OFFSET $${params.length}`,
         params
@@ -907,23 +935,16 @@ function removeRentalEntity(devices, { renterDeviceId, contractId }, helpers) {
     const device = devices[renterDeviceId];
     if (!device) return;
 
-    for (const [, entity] of Object.entries(device.entities)) {
+    for (const [slotId, entity] of Object.entries(device.entities)) {
         if (entity.rental_contract_id === contractId) {
-            // Clean up publicCode from global index before resetting
+            // Clean up publicCode from global index before deleting
             if (entity.publicCode && helpers?.publicCodeIndex) {
                 delete helpers.publicCodeIndex[entity.publicCode];
             }
-            // Reset to unbound default
-            entity.isBound = false;
-            entity.botSecret = null;
-            entity.publicCode = null;
-            entity.character = '🤖';
-            entity.name = null;
-            entity.state = 'IDLE';
-            entity.message = '';
-            entity.webhook = null;
-            entity.rental_contract_id = null;
-            entity.rental_status = null;
+            // BUG-D3: Delete the rental entity slot entirely instead of
+            // resetting to unbound defaults. Resetting left a ghost entity
+            // visible on the renter's dashboard after contract end.
+            delete device.entities[slotId];
             break;
         }
     }
@@ -1051,7 +1072,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
     const router = express.Router();
     const audit = serverLog || (() => {});
 
-    const INPUT_ERROR_RE = /^(?:[a-z][a-z0-9_]*_(?:invalid|required|forbidden|not_found)|publish_failed|interview_not_passed|no_fields_to_update|duration_too_(?:short|long)|duration_(?:below|above)_listing_(?:min|max)|listing_not_available|listing_already_rented|self_rental_forbidden|insufficient_balance_for_rental|contract_already_ended|contract_end_forbidden|interview_rate_limited|interview_already_running|owner_device_not_found|owner_entity_not_bound|owner_entity_no_webhook|listing_status_invalid_for_interview|cooldown_active)$/;
+    const INPUT_ERROR_RE = /^(?:[a-z][a-z0-9_]*_(?:invalid|required|forbidden|not_found)|publish_failed|interview_not_passed|no_fields_to_update|duration_too_(?:short|long)|duration_(?:below|above)_listing_(?:min|max)|listing_not_available|listing_already_rented|self_rental_forbidden|insufficient_balance_for_rental|contract_already_ended|contract_end_forbidden|interview_rate_limited|interview_already_running|owner_device_not_found|owner_entity_not_bound|owner_entity_no_webhook|listing_status_invalid_for_interview|cooldown_active|duplicate_listing)$/;
 
     function rentalRoute(fn) {
         return async (req, res) => {
@@ -1065,7 +1086,12 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
                     const code = /forbidden/.test(err.message) ? 403
                                : /not_found/.test(err.message) ? 404
                                : 400;
-                    return res.status(code).json({ success: false, error: err.message });
+                    const body = { success: false, error: err.message };
+                    if (err.existingListingId) body.existing_listing_id = err.existingListingId;
+                    if (err.existingStatus) body.existing_status = err.existingStatus;
+                    if (err.cooldownUntil) body.cooldown_until = err.cooldownUntil;
+                    if (err.details) body.details = err.details;
+                    return res.status(code).json(body);
                 }
                 console.error('[Rental] handler error:', err);
                 res.status(500).json({ success: false, error: 'internal_error' });
