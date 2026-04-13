@@ -999,45 +999,65 @@ function clearOwnerEntityLeasedOut(devices, { ownerDeviceId, ownerEntityId }) {
 async function reconcileRentalEntities(devices, helpers) {
     let reconciled = 0;
     const errors = [];
+
+    // Phase 1: Reconcile entities WITH rental metadata
     for (const [deviceId, device] of Object.entries(devices)) {
         if (!device?.entities) continue;
         for (const [slotId, entity] of Object.entries(device.entities)) {
-            // Catch rental entities by rental_status, rental_contract_id, or
-            // __rental_proxy__ webhook (old entities may lack newer fields)
             let contractId = entity.rental_contract_id;
             if (!contractId && entity.webhook?.url?.startsWith('__rental_proxy__:')) {
                 contractId = entity.webhook.url.split(':').slice(1).join(':');
-                entity.rental_contract_id = contractId; // backfill
+                entity.rental_contract_id = contractId;
             }
             if (!contractId && entity.rental_status !== 'leased_in') continue;
             if (!contractId) continue;
             try {
                 const res = await pool.query(
-                    `SELECT status FROM rental_contracts WHERE id = $1`,
-                    [contractId]
+                    `SELECT status FROM rental_contracts WHERE id = $1`, [contractId]
                 );
                 const status = res.rows[0]?.status;
                 const isActive = status && ['reserved', 'active', 'suspended_insufficient_funds'].includes(status);
                 if (!isActive) {
-                    // Contract ended or missing — remove ghost entity
-                    if (entity.publicCode && helpers?.publicCodeIndex) {
-                        delete helpers.publicCodeIndex[entity.publicCode];
-                    }
+                    if (entity.publicCode && helpers?.publicCodeIndex) delete helpers.publicCodeIndex[entity.publicCode];
                     delete device.entities[slotId];
                     reconciled++;
-                    if (helpers?.saveDeviceData) {
-                        await helpers.saveDeviceData(deviceId, device);
-                    }
+                    if (helpers?.saveDeviceData) await helpers.saveDeviceData(deviceId, device);
                 } else if (!entity.rental_status) {
-                    // Active contract but missing rental_status — backfill it
                     entity.rental_status = 'leased_in';
-                    if (helpers?.saveDeviceData) {
-                        await helpers.saveDeviceData(deviceId, device);
-                    }
+                    if (helpers?.saveDeviceData) await helpers.saveDeviceData(deviceId, device);
                 }
             } catch (e) { errors.push(`${deviceId}/${slotId}: ${e.message}`); }
         }
     }
+
+    // Phase 2: Catch legacy ghost entities without rental metadata.
+    // Query ended contracts and match by renter_device_id + listing title ≈ entity name.
+    try {
+        const ended = await pool.query(
+            `SELECT c.id, c.renter_device_id, bl.title
+             FROM rental_contracts c JOIN bot_listings bl ON bl.id = c.listing_id
+             WHERE c.status IN ('ended_normal','ended_early','ended_expired','ended_violation','ended_disputed')`
+        );
+        for (const row of ended.rows) {
+            const device = devices[row.renter_device_id];
+            if (!device?.entities) continue;
+            for (const [slotId, entity] of Object.entries(device.entities)) {
+                if (!entity.isBound) continue;
+                // Skip entities that already have rental metadata (handled in Phase 1)
+                if (entity.rental_contract_id || entity.rental_status) continue;
+                // Match by name pattern: insertRentalEntity sets name = listing.title
+                const name = entity.name || entity.character || '';
+                if (name === row.title || name === `EClaw 小助手 — ${row.title}`) {
+                    if (entity.publicCode && helpers?.publicCodeIndex) delete helpers.publicCodeIndex[entity.publicCode];
+                    delete device.entities[slotId];
+                    reconciled++;
+                    if (helpers?.saveDeviceData) await helpers.saveDeviceData(row.renter_device_id, device);
+                    console.log(`[Rental] Phase 2 reconciled ghost: ${row.renter_device_id}/${slotId} name="${name}"`);
+                }
+            }
+        }
+    } catch (e) { errors.push(`phase2: ${e.message}`); }
+
     return { reconciled, errors };
 }
 
