@@ -1,3 +1,10 @@
+## [1.968.1](https://github.com/HankHuang0516/EClaw/compare/v1.968.0...v1.968.1) (2026-04-13)
+
+
+### Bug Fixes
+
+* orgChartForward now supports channel-bound entities ([558dd94](https://github.com/HankHuang0516/EClaw/commit/558dd94fd01c517b2c1b686631a4d48649f46765))
+
 # [1.968.0](https://github.com/HankHuang0516/EClaw/compare/v1.967.2...v1.968.0) (2026-04-13)
 
 
