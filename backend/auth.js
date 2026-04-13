@@ -1966,7 +1966,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
             }
             const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
             const result = await pool.query(
-                `UPDATE user_accounts SET password_hash = $1 WHERE email = $2 RETURNING id, email`,
+                `UPDATE user_accounts SET password_hash = $1, email_verified = TRUE WHERE email = $2 RETURNING id, email`,
                 [passwordHash, email]
             );
             if (result.rowCount === 0) return res.status(404).json({ success: false, error: 'user_not_found' });
