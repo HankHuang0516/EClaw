@@ -12548,23 +12548,36 @@ async function pushToBot(entity, deviceId, eventType, payload) {
             const { owner_device_id, owner_entity_id } = cRes.rows[0];
             const ownerDevice = devices[owner_device_id];
             const ownerEntity = ownerDevice?.entities?.[owner_entity_id];
-            if (!ownerEntity || !ownerEntity.webhook) {
-                console.error(`[Push] Rental proxy: owner entity ${owner_device_id}/${owner_entity_id} has no webhook`);
-                return { pushed: false, reason: 'owner_entity_no_webhook' };
+            if (!ownerEntity) {
+                console.error(`[Push] Rental proxy: owner entity ${owner_device_id}/${owner_entity_id} not found`);
+                return { pushed: false, reason: 'owner_entity_not_found' };
             }
-            console.log(`[Push] Rental proxy: forwarding from ${deviceId}/${entity.entityId} → ${owner_device_id}/${owner_entity_id}`);
-            // Forward to the owner's entity with rental context
-            const rentalPayload = { ...payload };
-            rentalPayload.message = `[Rental message from renter]\n${payload.message || ''}`;
-            rentalPayload._rentalContext = { contractId, renterDeviceId: deviceId, renterEntityId: entity.entityId };
-            const result = await pushToBot(ownerEntity, owner_device_id, eventType, rentalPayload);
-            // Copy response back to rental entity
-            if (result.pushed && ownerEntity.lastUpdated > (entity.lastUpdated || 0)) {
+            console.log(`[Push] Rental proxy: forwarding from ${deviceId}/${entity.entityId} → ${owner_device_id}/${owner_entity_id} (binding=${ownerEntity.bindingType})`);
+            const rentalMsg = `[Rental message from renter]\n${payload.message || ''}`;
+            let result;
+            // Channel-bound entities use pushToChannelCallback
+            if (ownerEntity.bindingType === 'channel' && channelModule?.pushToChannelCallback) {
+                result = await channelModule.pushToChannelCallback(owner_device_id, owner_entity_id, {
+                    event: 'message',
+                    from: entity.name || `Rental Entity`,
+                    text: rentalMsg,
+                    _rentalContext: { contractId, renterDeviceId: deviceId, renterEntityId: entity.entityId },
+                }, ownerEntity.channelAccountId);
+            } else if (ownerEntity.webhook) {
+                // Direct webhook entities
+                const rentalPayload = { ...payload, message: rentalMsg };
+                result = await pushToBot(ownerEntity, owner_device_id, eventType, rentalPayload);
+            } else {
+                console.error(`[Push] Rental proxy: owner entity has no webhook or channel`);
+                return { pushed: false, reason: 'owner_entity_no_push_method' };
+            }
+            // Copy response back to rental entity if synchronous
+            if (result?.pushed && ownerEntity.lastUpdated > (entity.lastUpdated || 0)) {
                 entity.state = ownerEntity.state;
                 entity.message = ownerEntity.message;
                 entity.lastUpdated = Date.now();
             }
-            return result;
+            return result || { pushed: false, reason: 'unknown' };
         } catch (err) {
             console.error(`[Push] Rental proxy error:`, err.message);
             return { pushed: false, reason: `rental_proxy_error: ${err.message}` };
