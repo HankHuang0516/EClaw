@@ -1,3 +1,10 @@
+## [1.968.8](https://github.com/HankHuang0516/EClaw/compare/v1.968.7...v1.968.8) (2026-04-13)
+
+
+### Bug Fixes
+
+* deduplicate orgChartForward in broadcast path ([44968c8](https://github.com/HankHuang0516/EClaw/commit/44968c89d939a0af2af080e22b18c9d343eb798b))
+
 ## [1.968.7](https://github.com/HankHuang0516/EClaw/compare/v1.968.6...v1.968.7) (2026-04-13)
 
 
