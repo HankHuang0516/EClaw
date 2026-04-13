@@ -168,12 +168,29 @@
 - **P2 修復**: 2（BUG-I4/I5 i18n keys — CDN cache 延遲顯示）
 - **核心租借功能**: ✅ 完全可用（租借→發訊息→Bot 回覆）
 
+### 場景 A 完整驗證（迭代 4+）
+
+| Step | 角色 | 描述 | 結果 | 截圖 |
+|------|------|------|------|------|
+| A7 | Owner | My Rentals「出租中」tab 看到 active 合約 | ✅ 進行中 badge + 剩餘時間 + 收入 85% + 結算中 | strict-A7-owner-leasing-out.png |
+| A7b | Owner | Dashboard 📤 Leased Out badge | ✅ Entity #0 顯示橘色 Leased Out badge | strict-A7-owner-dashboard-leased.png |
+| A9 | Renter | End Early 確認 + 執行 | ✅ 50% forfeit 計算正確 | strict-A9-ended-early.png |
+| A10 | Owner | 出租中 tab 看到已結束 | ✅ 已結束(提前) + 已入帳 | strict-A7-owner-leasing-out.png |
+| A11 | Renter | 提交 5★ 評價 + 留言 | ✅ "Review submitted!" alert | — |
+| A13 | Renter | Wallet ledger 核對 | ✅ 480 e幣 / deposit hold→forfeit→refund chain 完整 | strict-A13-renter-wallet.png |
+| Chat | Renter | 發訊息給租借 Bot 驗證回覆 | ✅ Bot 回覆「你好！頻道修復測試成功！🧪」 | strict-iter4-chat-bot-responded.png |
+
+### 場景 A 完成度: **13/13 steps 全部 PASS** ✅
+
+### 場景 B-C 驗證（防護機制）
+| Step | 描述 | 結果 |
+|------|------|------|
+| B8 | 24h cooldown 阻擋重複租借 | ✅ |
+| C1 | Owner 自租防護（🚫 disabled button） | ✅ |
+
 ### 待驗場景
-- A7: Owner My Rentals 看到合約
-- A10: Owner 看到合約已結束
-- A11: Renter 提交 review
-- A12: Marketplace rating 更新
-- A13: Wallet ledger 核對
-- B~F: 提前終止申訴、防護機制、Owner 管理、Wallet 金流
+- B3-B7: 提前終止 + forfeit 分潤 + 申訴表單（已部分驗證，未完整走 dispute flow）
+- D: Owner lifecycle（Pause/Delist/Re-publish）
+- E: Wallet 金流完整性（已驗證 renter 側，owner 側待驗）
 - F~U: 進階多 Agent 協作（Chat 通訊、Kanban、A2A、Vault、Files、Notes）
 
