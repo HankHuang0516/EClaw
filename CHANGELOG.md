@@ -1,3 +1,10 @@
+## [1.965.6](https://github.com/HankHuang0516/EClaw/compare/v1.965.5...v1.965.6) (2026-04-13)
+
+
+### Bug Fixes
+
+* resolve 7 rental UIUX bugs (M1/M3/M8/D1/D2/D3/D4) ([#1739](https://github.com/HankHuang0516/EClaw/issues/1739)) ([a339afe](https://github.com/HankHuang0516/EClaw/commit/a339afed907edcf97bf5ed2a676a797975b4e38f))
+
 ## [1.965.5](https://github.com/HankHuang0516/EClaw/compare/v1.965.4...v1.965.5) (2026-04-13)
 
 
