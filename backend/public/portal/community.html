@@ -1037,7 +1037,10 @@
             const maxH = (l.max_rental_minutes / 60).toFixed(1);
             const defaultH = Math.max(parseFloat(minH), 1);
             const isRented = !!l.has_active_contract;
-            const isSelfOwned = !!(meData?.user && l.owner_user_id && l.owner_user_id === meData.user.userId);
+            const isSelfOwned = !!(meData?.user && (
+                (l.owner_user_id && l.owner_user_id === meData.user.userId) ||
+                (l.owner_device_id && l.owner_device_id === (meData.user.deviceId || meData.user.device_id))
+            ));
             _rentalWalletBalance = null;
             if (meData?.user && !isSelfOwned) {
                 apiFetch('/api/wallet/balance?deviceId=' + encodeURIComponent(meData.user.deviceId || meData.user.device_id))

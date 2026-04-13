@@ -1262,7 +1262,12 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
     router.get('/listing/:id', rentalRoute(async (req, res) => {
         const listing = await getListing(req.params.id);
         if (!listing) throw new Error('listing_not_found');
-        if (!req.user || listing.owner_user_id !== req.user.userId) {
+        // BUG-M8: Match by userId OR deviceId (Device-login has userId=null)
+        const isOwner = req.user && (
+            (req.user.userId && listing.owner_user_id === req.user.userId) ||
+            (req.user.deviceId && listing.owner_device_id === req.user.deviceId)
+        );
+        if (!isOwner) {
             delete listing.owner_user_id;
         }
         // Availability: check for active contract
