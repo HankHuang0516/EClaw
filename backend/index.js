@@ -13537,6 +13537,8 @@ missionModule.setPushToChannelCallback(channelModule.pushToChannelCallback.bind(
 if (kanbanModule && kanbanModule.autoReviewOnTransform) {
     channelModule.setKanbanAutoReview(kanbanModule.autoReviewOnTransform);
 }
+// Wire org chart forward into channel module (so channel bot replies also trigger superior forwarding)
+channelModule.setOrgChartForward(orgChartForward);
 
 // ============================================
 // DISCORD INTEGRATION — Slash Commands

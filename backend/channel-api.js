@@ -63,6 +63,10 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
     // Late-bound kanban auto-review hook (set after kanbanModule init)
     let kanbanAutoReview = null;
     function setKanbanAutoReview(fn) { kanbanAutoReview = fn; }
+
+    // Late-bound org chart forward hook (set after orgChartForward defined in index.js)
+    let orgChartForwardFn = null;
+    function setOrgChartForward(fn) { orgChartForwardFn = fn; }
     const router = express.Router();
 
     // ── In-memory test sink (for self-testing without ngrok) ──
@@ -801,6 +805,11 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 });
             }
 
+            // Org chart: auto-forward channel bot response to superior entity (fire-and-forget)
+            if (finalMessage && entity && orgChartForwardFn) {
+                orgChartForwardFn(entity, deviceId, finalMessage).catch(() => {});
+            }
+
             // ── speakTo / broadcast delivery ──
             const warnings = [];
             let deliveryResults = null;
@@ -1168,6 +1177,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
     return {
         router,
         pushToChannelCallback,
-        setKanbanAutoReview
+        setKanbanAutoReview,
+        setOrgChartForward
     };
 };
