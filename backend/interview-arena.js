@@ -179,6 +179,11 @@ const VISION_IMAGES = [
     { file: null, description: 'A line chart showing quarterly revenue: Q1 at $10K, Q2 at $15K, Q3 dips to $8K, Q4 recovers to $20K', keywords: ['chart', 'revenue', 'Q3', 'dip', 'Q4'] },
     { file: null, description: 'A world map with five red pins marking cities: New York, London, Tokyo, Sydney, and São Paulo', keywords: ['map', 'five', 'pins', 'Tokyo'] },
     { file: null, description: 'A receipt from a store dated 03/15 showing total $47.83 with three itemized lines and a barcode at bottom', keywords: ['receipt', 'total', '47', 'three', 'barcode'] },
+    // ── Extra hard tier additions ──
+    { file: null, description: 'A scoreboard showing three teams: Team A with 47 points, Team B with 52 points, Team C with 39 points', keywords: ['scoreboard', 'three', 'teams', '52'] },
+    { file: null, description: 'A circuit diagram with a battery, two resistors in series and an ammeter; first resistor labeled 10Ω, second labeled 20Ω', keywords: ['circuit', 'battery', 'resistors', 'ammeter', '20'] },
+    { file: null, description: 'A nutrition label showing 230 calories per serving, 8 servings per container, with sodium highlighted at 35 percent daily value', keywords: ['nutrition', 'calories', '230', 'sodium', '35'] },
+    { file: null, description: 'A street map showing three intersections; the highlighted route turns left at Oak St, right at Main Ave, then left again at 3rd St', keywords: ['street', 'map', 'oak', 'main', 'third'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -195,10 +200,10 @@ function generateButtonClickChallenge() {
     return { correctIndex, correctLabel, buttonCount, seed: Math.floor(Math.random() * 1e9) };
 }
 
-const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson'];
-const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se'];
-const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore'];
-const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567'];
+const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Amara Osei','Dmitri Volkov','Isabel Ferreira','Ngo Thi Lan','Rafael Espinoza'];
+const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','amara@demo.gh','dmitri@test.ru','isabel@sample.pt','lan@demo.vn','rafael@mail.mx'];
+const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','Netherlands','Poland','Argentina','Thailand','Nigeria'];
+const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567','+31-6-12345678','+48-501-234-567','+66-81-234-5678','+234-803-123-4567'];
 const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17','1993-08-09','1986-02-14','1994-10-31','1989-05-20'];
 const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund'];
 
@@ -339,6 +344,17 @@ const CODING_PROBLEMS = [
       testCases: [{ input: '"abcabcbb"', expected: '3' },{ input: '"bbbbb"', expected: '1' },{ input: '"pwwkew"', expected: '3' },{ input: '""', expected: '0' }] },
     { title: 'Group Anagrams', description: 'Write `solve(strs)` — group anagrams together. Return an array of arrays where each inner array contains words that are anagrams of each other (each group sorted alphabetically).',
       testCases: [{ input: '["eat","tea","tan","ate","nat","bat"]', expected: '[["ate","eat","tea"],["bat"],["nat","tan"]]' },{ input: '[""]', expected: '[[""]]' },{ input: '["a"]', expected: '[["a"]]' }] },
+    // ── Additional medium/hard problems ──
+    { title: 'Merge Intervals', description: 'Write `solve(intervals)` — merge all overlapping intervals. Return the sorted, merged list.',
+      testCases: [{ input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },{ input: '[[1,4],[4,5]]', expected: '[[1,5]]' },{ input: '[[1,4],[2,3]]', expected: '[[1,4]]' }] },
+    { title: 'Rotate Image 90°', description: 'Write `solve(matrix)` — rotate an n×n matrix 90 degrees clockwise in-place and return it.',
+      testCases: [{ input: '[[1,2,3],[4,5,6],[7,8,9]]', expected: '[[7,4,1],[8,5,2],[9,6,3]]' },{ input: '[[5,1],[2,3]]', expected: '[[2,5],[3,1]]' },{ input: '[[1]]', expected: '[[1]]' }] },
+    { title: 'Word Break', description: 'Write `solve(s, wordDict)` — return true if s can be segmented into a space-separated sequence of dictionary words.',
+      testCases: [{ input: '"leetcode", ["leet","code"]', expected: 'true' },{ input: '"applepenapple", ["apple","pen"]', expected: 'true' },{ input: '"catsandog", ["cats","dog","sand","and","cat"]', expected: 'false' }] },
+    { title: '0/1 Knapsack', description: 'Write `solve(weights, values, capacity)` — return the maximum total value where total weight ≤ capacity.',
+      testCases: [{ input: '[1,3,4,5], [1,4,5,7], 7', expected: '9' },{ input: '[2,3,4], [3,4,5], 5', expected: '7' },{ input: '[1,1,1], [5,5,5], 0', expected: '0' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array of bar heights, compute how much water can be trapped after rain.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[3,0,2,0,4]', expected: '7' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -376,6 +392,12 @@ const RESPONSE_QUESTIONS = [
     { question: 'A ball is dropped from 100 meters. Each bounce reaches half the previous height. What is the total distance traveled after exactly 3 bounces (including all ups and downs)?', expectedKeywords: ['275'] },
     { question: 'Three people check into a hotel room that costs $30. They each pay $10. The manager realizes the room is only $25 and gives $5 to the bellboy to return. The bellboy keeps $2 and gives $1 back to each person. Each person paid $9 (total $27) plus $2 the bellboy kept = $29. Where is the missing dollar?', expectedKeywords: ['no missing', 'accounting', 'error', 'fallacy'] },
     { question: 'A snail climbs 3 meters up a wall during the day but slides back 2 meters at night. If the wall is 10 meters high, how many days does it take the snail to reach the top?', expectedKeywords: ['8'] },
+    // ── Additional medium/hard questions ──
+    { question: 'A car travels 120 km at 60 km/h, then 270 km at 90 km/h. What is the average speed for the entire journey in km/h?', expectedKeywords: ['78'] },
+    { question: 'A restaurant bill is $120. After adding a 15% tip, three friends split it equally. How much does each person pay?', expectedKeywords: ['46'] },
+    { question: 'What is the next number in the sequence: 1, 4, 9, 16, 25, ___?', expectedKeywords: ['36'] },
+    { question: 'In a class of 30 students, 18 play football and 15 play basketball. 7 play both sports. How many students play neither?', expectedKeywords: ['4'] },
+    { question: 'A boat sails north 3 km, then east 4 km, then south 3 km. How many km is it from the starting point?', expectedKeywords: ['4'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -442,6 +464,12 @@ const TTS_PHRASES = [
     { text: 'The chemical compound CH3COOH commonly known as acetic acid has a pH of approximately 2.4', keywords: ['chemical', 'acetic', 'acid', 'pH'] },
     { text: 'Euler identity states that e to the power of i times pi plus 1 equals zero', keywords: ['euler', 'identity', 'pi', 'zero'] },
     { text: 'The UNESCO World Heritage site Machu Picchu is located at 2430 meters elevation in Peru', keywords: ['UNESCO', 'Machu Picchu', '2430', 'Peru'] },
+    // ── Additional medium/hard phrases ──
+    { text: 'The central bank raised interest rates by 0.25 percent to 5.50 percent in the third quarter', keywords: ['central', 'bank', 'interest', 'percent', 'quarter'] },
+    { text: 'API endpoint GET slash api slash users returns a JSON array paginated by limit and offset parameters', keywords: ['API', 'endpoint', 'users', 'JSON', 'paginated'] },
+    { text: 'Heinrich Schliemann discovered the ruins of ancient Troy in northwestern Turkey in 1871', keywords: ['schliemann', 'troy', 'turkey', '1871'] },
+    { text: 'The medication dosage is 500 milligrams taken twice daily with food for seven days', keywords: ['medication', '500', 'milligrams', 'twice', 'daily'] },
+    { text: 'Photosynthesis converts carbon dioxide and water into glucose using sunlight energy', keywords: ['photosynthesis', 'carbon', 'dioxide', 'glucose', 'sunlight'] },
 ];
 function generateTtsChallenge(weights) {
     const w = weights && weights['arena_tts'] || {};
