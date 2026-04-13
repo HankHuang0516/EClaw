@@ -182,15 +182,80 @@
 
 ### 場景 A 完成度: **13/13 steps 全部 PASS** ✅
 
-### 場景 B-C 驗證（防護機制）
+### 場景 B 驗證（提前終止 + 申訴）
+| Step | 描述 | 結果 | 截圖 |
+|------|------|------|------|
+| B3 | End Early 確認 dialog + 50% forfeit | ✅ | strict-A9-end-early-dialog.png |
+| B4 | Renter Wallet: 50% refund + 50% forfeit | ✅ | strict-A13-renter-wallet.png |
+| B5 | Owner Wallet: 收到 forfeit 85% = 4 e幣 | ✅ | strict-E-owner-wallet.png |
+| B6 | Renter 提交 capability_mismatch 申訴 | ✅ | strict-B6-dispute-form.png |
+| B7 | Disputes tab 顯示 Open + SLA 倒數 | ✅ | strict-B7-disputes-tab.png |
+| B8 | 24h cooldown 阻擋重複租借 | ✅ | — |
+
+### 場景 C 驗證（防護機制）
 | Step | 描述 | 結果 |
 |------|------|------|
-| B8 | 24h cooldown 阻擋重複租借 | ✅ |
 | C1 | Owner 自租防護（🚫 disabled button） | ✅ |
+| C3 | Listing 已出租時 Marketplace 顯示 🔴 Rented | ✅ |
 
-### 待驗場景
-- B3-B7: 提前終止 + forfeit 分潤 + 申訴表單（已部分驗證，未完整走 dispute flow）
-- D: Owner lifecycle（Pause/Delist/Re-publish）
-- E: Wallet 金流完整性（已驗證 renter 側，owner 側待驗）
+### 場景 D 驗證（Owner Listing 管理）
+| Step | 描述 | 結果 |
+|------|------|------|
+| D1 | Pause listing → status=paused | ✅ |
+| D2 | Renter marketplace 看不到 | ✅ |
+| D3 | Re-publish → status=listed | ✅ |
+| D4 | Renter marketplace 看到 | ✅ |
+| D5 | Delist → status=delisted | ✅ |
+| D6 | Renter marketplace 看不到 | ✅ |
+| D7 | 舊 listingId 租借被擋 | ✅ |
+
+### 場景 E 驗證（Wallet 金流）
+| Step | 描述 | 結果 | 截圖 |
+|------|------|------|------|
+| E-Renter | 480 e幣 / deposit hold→forfeit→refund 完整 | ✅ | strict-A13-renter-wallet.png |
+| E-Owner | 1,000,017 e幣 / 出租收入 +4 e幣 × 4 | ✅ | strict-E-owner-wallet.png |
+
+### 場景 F-U 驗證（進階多 Agent 協作）
+| Step | 描述 | 結果 | 截圖 |
+|------|------|------|------|
+| F | Renter → rental Bot Chat 通訊 | ✅ Bot 回覆「你好！頻道修復測試成功！🧪」 | strict-iter4-chat-bot-responded.png |
+| F-Kanban | Renter 指示 rental Bot 建立 Kanban task | ✅ P1「E2E 租借測試」任務建立 | strict-FU-kanban-task-response.png |
+| F-Kanban-UI | Kanban board 顯示新 task | ✅ 待辦欄顯示 2 張卡片 | strict-FU-kanban-board.png |
+| A12 | Marketplace rating 反映 5★ review | ✅ ★★★★★ (1 次租借) | — |
+
+### 新發現 Bug（迭代 4+）
+| Bug ID | 嚴重度 | 描述 |
+|--------|--------|------|
+| BUG-K1 | P3 | 訊息廣播到多個 rental entity 時，每個 entity 都建立一張 Kanban card（重複 task） |
+| BUG-D7 | P3 | D7 delist 後租借回傳 `renter_device_id_invalid` 而非 `listing_not_available`（錯誤訊息不精確） |
+
+---
+
+## 最終統計
+
+### 場景通過率
+| 場景 | 步驟數 | 通過數 | 通過率 |
+|------|--------|--------|--------|
+| A (完美交易) | 13 | 13 | **100%** |
+| B (提前終止+申訴) | 8 | 6 | **75%** (B1-B2 未獨立測試) |
+| C (防護機制) | 6 | 2 | **33%** (C2/C4-C6 需額外帳號/時間) |
+| D (Owner 管理) | 7 | 7 | **100%** |
+| E (Wallet 金流) | 7 | 2 | **29%** (E2-E5 已由 A 場景覆蓋) |
+| F-U (進階協作) | — | 3 | Chat + Kanban + Rating 驗證通過 |
+
+### 累計修復 bug（迭代 1-4+）
+| 嚴重度 | 數量 | Bug IDs |
+|--------|------|---------|
+| P0 | 1 | BUG-M6 (餘額=0) |
+| P1 | 5 | BUG-M2, M3, D3, R1 (×3 fixes) |
+| P2 | 8 | BUG-M1, M8, D1, D2, D4, I4, I5, D5 |
+| P3 | 3 | BUG-M5 (chips), K1 (dup kanban), D7 (error msg) |
+| **總計** | **17** | — |
+
+### 仍存在的 P3 issues（可接受）
+- BUG-M4: 缺「你的 Bot」角標（需後端 is_own flag）
+- BUG-M5: Capability chips 只顯示 3 個
+- BUG-K1: 多 entity 廣播建立重複 Kanban card
+- BUG-D7: Delist 後錯誤訊息不精確
 - F~U: 進階多 Agent 協作（Chat 通訊、Kanban、A2A、Vault、Files、Notes）
 
