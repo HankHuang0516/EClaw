@@ -1,3 +1,10 @@
+## [1.968.12](https://github.com/HankHuang0516/EClaw/compare/v1.968.11...v1.968.12) (2026-04-13)
+
+
+### Bug Fixes
+
+* use devices param instead of _interviewDeps in insertRentalEntity ([#1744](https://github.com/HankHuang0516/EClaw/issues/1744)) ([0820d46](https://github.com/HankHuang0516/EClaw/commit/0820d46abdf2049968737f0258d3779f3edf0924))
+
 ## [1.968.11](https://github.com/HankHuang0516/EClaw/compare/v1.968.10...v1.968.11) (2026-04-13)
 
 
