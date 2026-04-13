@@ -1507,11 +1507,11 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
     } catch (err) { res.status(500).json({ success: false, error: err.message }); } });
 
     // ── Debug: ghost entity cleanup (BUG-D3) ──
-    router.post('/debug/cleanup-ghosts', async (req, res) => { try {
-        const { deviceId, deviceSecret } = req.body || req.query;
-        if (!deviceId || !deviceSecret) return res.json({ success: false, error: 'deviceId+deviceSecret required' });
+    router.post('/debug/cleanup-ghosts', authMiddleware, async (req, res) => { try {
+        const deviceId = req.user?.deviceId || req.body?.deviceId;
+        if (!deviceId) return res.json({ success: false, error: 'deviceId required' });
         const dev = _interviewDeps.devices?.[deviceId];
-        if (!dev || dev.deviceSecret !== deviceSecret) return res.status(403).json({ success: false, error: 'forbidden' });
+        if (!dev) return res.status(404).json({ success: false, error: 'device_not_found' });
         // Find all listing titles (active and inactive)
         const allTitles = new Set();
         const activeTitles = new Set();
