@@ -1,3 +1,11 @@
+## [1.968.2](https://github.com/HankHuang0516/EClaw/compare/v1.968.1...v1.968.2) (2026-04-13)
+
+
+### Bug Fixes
+
+* **i18n:** add chat_date_today + chat_empty_hint to all 14 languages ([19ffd05](https://github.com/HankHuang0516/EClaw/commit/19ffd0568080adafce05bbe48d44dfc9af49afdf))
+* **BUG-R1:** implement rental proxy webhook message forwarding ([39ad6de](https://github.com/HankHuang0516/EClaw/commit/39ad6de452bdf2137fae8ae5f613a1165cb6413e))
+
 ## [1.968.1](https://github.com/HankHuang0516/EClaw/compare/v1.968.0...v1.968.1) (2026-04-13)
 
 
