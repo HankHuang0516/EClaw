@@ -9137,8 +9137,7 @@
         "dash_slot": "スロット",
         "dash_new_slot": "新規スロット",
 
-        // Organization Chart (dashboard.html) // TODO: translate
-        "org_tab_entities": "Entities",
+                "org_tab_entities": "Entities",
         "org_tab_chart": "Org Chart",
         "org_title": "Organization Chart",
         "org_user_node": "You (Owner)",
@@ -12958,8 +12957,7 @@
         "dash_slot": "슬롯",
         "dash_new_slot": "새 슬롯",
 
-        // Organization Chart (dashboard.html) // TODO: translate
-        "org_tab_entities": "Entities",
+                "org_tab_entities": "Entities",
         "org_tab_chart": "Org Chart",
         "org_title": "Organization Chart",
         "org_user_node": "You (Owner)",
@@ -16915,8 +16913,7 @@
         "dash_slot": "สล็อต",
         "dash_new_slot": "สล็อตใหม่",
 
-        // Organization Chart (dashboard.html) // TODO: translate
-        "org_tab_entities": "Entities",
+                "org_tab_entities": "Entities",
         "org_tab_chart": "Org Chart",
         "org_title": "Organization Chart",
         "org_user_node": "You (Owner)",
@@ -20666,8 +20663,7 @@
         "dash_slot": "Slot",
         "dash_new_slot": "Slot mới",
 
-        // Organization Chart (dashboard.html) // TODO: translate
-        "org_tab_entities": "Entities",
+                "org_tab_entities": "Entities",
         "org_tab_chart": "Org Chart",
         "org_title": "Organization Chart",
         "org_user_node": "You (Owner)",
@@ -24416,8 +24412,7 @@
         "dash_slot": "Slot",
         "dash_new_slot": "Slot Baru",
 
-        // Organization Chart (dashboard.html) // TODO: translate
-        "org_tab_entities": "Entities",
+                "org_tab_entities": "Entities",
         "org_tab_chart": "Org Chart",
         "org_title": "Organization Chart",
         "org_user_node": "You (Owner)",
@@ -40021,8 +40016,7 @@
         "dash_slot": "Créneau",
         "dash_new_slot": "Nouveau créneau",
 
-        // Organization Chart (dashboard.html) // TODO: translate
-        "org_tab_entities": "Entities",
+                "org_tab_entities": "Entities",
         "org_tab_chart": "Org Chart",
         "org_title": "Organization Chart",
         "org_user_node": "You (Owner)",
@@ -45444,8 +45438,7 @@
         "dash_err_load_entities": "Error al cargar entidades...",
         "dash_new_slot": "Nuevo Slot...",
 
-        // Organization Chart (dashboard.html) // TODO: translate
-        "org_tab_entities": "Entities",
+                "org_tab_entities": "Entities",
         "org_tab_chart": "Org Chart",
         "org_title": "Organization Chart",
         "org_user_node": "You (Owner)",
@@ -74792,8 +74785,7 @@
         "dash_slot": "Slot",
         "dash_new_slot": "Neuer Slot",
 
-        // Organization Chart (dashboard.html) // TODO: translate
-        "org_tab_entities": "Entities",
+                "org_tab_entities": "Entities",
         "org_tab_chart": "Org Chart",
         "org_title": "Organization Chart",
         "org_user_node": "You (Owner)",
@@ -80524,8 +80516,7 @@
         "dash_loading": "Memuatkan entiti...",
         "dash_new_slot": "Slot Baharu",
 
-        // Organization Chart (dashboard.html) // TODO: translate
-        "org_tab_entities": "Entities",
+                "org_tab_entities": "Entities",
         "org_tab_chart": "Org Chart",
         "org_title": "Organization Chart",
         "org_user_node": "You (Owner)",
@@ -85597,8 +85588,7 @@
         "dash_loading": "جارٍ تحميل الكيانات...",
         "dash_new_slot": "فتحة جديدة",
 
-        // Organization Chart (dashboard.html) // TODO: translate
-        "org_tab_entities": "Entities",
+                "org_tab_entities": "Entities",
         "org_tab_chart": "Org Chart",
         "org_title": "Organization Chart",
         "org_user_node": "You (Owner)",
@@ -90137,8 +90127,7 @@
         "dash_loading": "جارٍ تحميل الكيانات...",
         "dash_new_slot": "فتحة جديدة",
 
-        // Organization Chart (dashboard.html) // TODO: translate
-        "org_tab_entities": "Entities",
+                "org_tab_entities": "Entities",
         "org_tab_chart": "Org Chart",
         "org_title": "Organization Chart",
         "org_user_node": "You (Owner)",
