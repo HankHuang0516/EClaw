@@ -1,3 +1,10 @@
+## [1.967.1](https://github.com/HankHuang0516/EClaw/compare/v1.967.0...v1.967.1) (2026-04-13)
+
+
+### Bug Fixes
+
+* admin reset-password also verifies email ([ec3a94d](https://github.com/HankHuang0516/EClaw/commit/ec3a94d97f01a6165332bc25c224b1988f295d23))
+
 # [1.967.0](https://github.com/HankHuang0516/EClaw/compare/v1.966.2...v1.967.0) (2026-04-13)
 
 
