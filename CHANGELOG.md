@@ -1,3 +1,10 @@
+## [1.966.1](https://github.com/HankHuang0516/EClaw/compare/v1.966.0...v1.966.1) (2026-04-13)
+
+
+### Bug Fixes
+
+* cleanup-ghosts endpoint uses JWT auth instead of deviceSecret ([ecac8b7](https://github.com/HankHuang0516/EClaw/commit/ecac8b7b7580d760b35a8958f3823f278ade09ff))
+
 # [1.966.0](https://github.com/HankHuang0516/EClaw/compare/v1.965.11...v1.966.0) (2026-04-13)
 
 
