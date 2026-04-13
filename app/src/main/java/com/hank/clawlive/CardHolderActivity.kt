@@ -939,7 +939,7 @@ class CardHolderActivity : AppCompatActivity() {
                 Toast.makeText(this@CardHolderActivity, R.string.card_holder_saved, Toast.LENGTH_SHORT).show()
                 loadAllData()
             } catch (e: Exception) {
-                Toast.makeText(this@CardHolderActivity, e.message ?: "Error", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@CardHolderActivity, e.message ?: getString(R.string.card_holder_error), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -1191,7 +1191,7 @@ class CardHolderActivity : AppCompatActivity() {
             setOnClickListener {
                 val clip = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 clip.setPrimaryClip(ClipData.newPlainText("publicCode", publicCode))
-                Toast.makeText(this@CardHolderActivity, "Copied: $publicCode", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@CardHolderActivity, getString(R.string.card_holder_copied, publicCode), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -1221,8 +1221,8 @@ class CardHolderActivity : AppCompatActivity() {
 
     private fun confirmAddFriend(contact: Contact) {
         AlertDialog.Builder(this, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
-            .setTitle("Add Friend")
-            .setMessage("Add ${contact.name ?: contact.publicCode} to your contacts?")
+            .setTitle(getString(R.string.dialog_add_friend_title))
+            .setMessage(getString(R.string.dialog_add_friend_message, contact.name ?: contact.publicCode))
             .setPositiveButton(R.string.card_holder_add) { _, _ -> addCard(contact.publicCode) }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
@@ -1230,8 +1230,8 @@ class CardHolderActivity : AppCompatActivity() {
 
     private fun confirmBlock(contact: Contact) {
         AlertDialog.Builder(this, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
-            .setTitle("Block")
-            .setMessage("Block ${contact.name ?: contact.publicCode}? They will no longer be able to interact with you.")
+            .setTitle(getString(R.string.dialog_block_title))
+            .setMessage(getString(R.string.dialog_block_contact, contact.name ?: contact.publicCode))
             .setPositiveButton("Block") { _, _ -> setBlocked(contact.publicCode, true) }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
@@ -1239,8 +1239,8 @@ class CardHolderActivity : AppCompatActivity() {
 
     private fun confirmUnblock(contact: Contact) {
         AlertDialog.Builder(this, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
-            .setTitle("Unblock")
-            .setMessage("Unblock ${contact.name ?: contact.publicCode}?")
+            .setTitle(getString(R.string.dialog_unblock_title))
+            .setMessage(getString(R.string.dialog_unblock_message, contact.name ?: contact.publicCode))
             .setPositiveButton("Unblock") { _, _ -> setBlocked(contact.publicCode, false) }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
@@ -1263,7 +1263,7 @@ class CardHolderActivity : AppCompatActivity() {
                 ).show()
                 loadAllData()
             } catch (e: Exception) {
-                Toast.makeText(this@CardHolderActivity, e.message ?: "Error", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@CardHolderActivity, e.message ?: getString(R.string.card_holder_error), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -1278,7 +1278,7 @@ class CardHolderActivity : AppCompatActivity() {
                 loadAllData()
                 onSuccess()
             } catch (e: Exception) {
-                Toast.makeText(this@CardHolderActivity, e.message ?: "Error", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@CardHolderActivity, e.message ?: getString(R.string.card_holder_error), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -1299,7 +1299,7 @@ class CardHolderActivity : AppCompatActivity() {
                     loadAllData()
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@CardHolderActivity, e.message ?: "Error", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@CardHolderActivity, e.message ?: getString(R.string.card_holder_error), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -1601,7 +1601,7 @@ class CardHolderActivity : AppCompatActivity() {
                 Toast.makeText(this@CardHolderActivity, R.string.card_holder_saved, Toast.LENGTH_SHORT).show()
                 loadAllData()
             } catch (e: Exception) {
-                Toast.makeText(this@CardHolderActivity, e.message ?: "Error", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@CardHolderActivity, e.message ?: getString(R.string.card_holder_error), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -1619,7 +1619,7 @@ class CardHolderActivity : AppCompatActivity() {
                 Toast.makeText(this@CardHolderActivity, R.string.card_holder_removed, Toast.LENGTH_SHORT).show()
                 loadAllData()
             } catch (e: Exception) {
-                Toast.makeText(this@CardHolderActivity, e.message ?: "Error", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@CardHolderActivity, e.message ?: getString(R.string.card_holder_error), Toast.LENGTH_SHORT).show()
             }
         }
     }

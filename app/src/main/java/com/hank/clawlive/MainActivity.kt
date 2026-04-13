@@ -1184,7 +1184,7 @@ class MainActivity : AppCompatActivity() {
         layout.addView(makeChipInputForDialog(tagsChipContainer, 20))
 
         MaterialAlertDialogBuilder(this)
-            .setTitle("Agent Card — Entity #$entityId")
+            .setTitle(getString(R.string.dialog_agent_card_title, entityId))
             .setView(scrollView)
             .setPositiveButton("Save") { _, _ ->
                 saveAgentCard(entityId,
@@ -1199,8 +1199,8 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Cancel", null)
             .setNeutralButton("Delete") { _, _ ->
                 MaterialAlertDialogBuilder(this)
-                    .setTitle("Delete Agent Card?")
-                    .setMessage("This action cannot be undone.")
+                    .setTitle(getString(R.string.dialog_delete_agent_card))
+                    .setMessage(getString(R.string.dialog_delete_agent_card_message))
                     .setPositiveButton("Delete") { _, _ -> deleteAgentCard(entityId) }
                     .setNegativeButton("Cancel", null)
                     .show()
@@ -1401,7 +1401,7 @@ class MainActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to delete agent card")
-                Toast.makeText(this@MainActivity, "Delete failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, getString(R.string.main_delete_failed_msg, e.message), Toast.LENGTH_SHORT).show()
             }
         }
     }

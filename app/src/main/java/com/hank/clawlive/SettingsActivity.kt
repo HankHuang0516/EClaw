@@ -350,7 +350,7 @@ class SettingsActivity : AppCompatActivity() {
             layoutPrefs.debugEntityLimit = newLimit
             updateDebugEntityLimitButton()
             updateEntityCount()
-            Toast.makeText(this, "Entity limit: $newLimit", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.settings_entity_limit, newLimit), Toast.LENGTH_SHORT).show()
         }
 
         // Language selection

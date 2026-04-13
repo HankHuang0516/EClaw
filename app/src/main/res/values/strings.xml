@@ -915,5 +915,26 @@ If you have any questions, please contact us via our official email.
     <string name="choose_plan_title">Choose Plan</string>
     <string name="upgrade_plan">Upgrade Plan</string>
 
+
+    <!-- Hardcoded string externalization -->
+    <string name="schedule_failed_to_load">Failed to load: %s</string>
+    <string name="schedule_error_generic">Error: %s</string>
+    <string name="schedule_operation_failed">Operation failed</string>
+    <string name="card_holder_copied">Copied: %s</string>
+    <string name="card_holder_error">Error</string>
+    <string name="main_delete_failed_msg">Delete failed: %s</string>
+    <string name="billing_subscription_unavailable">無法取得訂閱方案，請稍後再試</string>
+    <string name="dialog_delete_agent_card">Delete Agent Card?</string>
+    <string name="dialog_delete_agent_card_message">This action cannot be undone.</string>
+    <string name="dialog_agent_card_title">Agent Card — Entity #%d</string>
+    <string name="dialog_block_contact">Block %s? They will no longer be able to interact with you.</string>
+    <string name="dialog_add_friend_title">Add Friend</string>
+    <string name="dialog_add_friend_message">Add %s to your contacts?</string>
+    <!-- End hardcoded string externalization -->
+
+
+    <string name="dialog_block_title">Block</string>
+    <string name="dialog_unblock_title">Unblock</string>
+
 </resources>
 

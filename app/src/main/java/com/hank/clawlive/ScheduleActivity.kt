@@ -165,7 +165,7 @@ class ScheduleActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load schedules")
-                Toast.makeText(this@ScheduleActivity, "Failed to load: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@ScheduleActivity, getString(R.string.schedule_failed_to_load, e.message), Toast.LENGTH_SHORT).show()
             } finally {
                 setLoading(false)
             }
@@ -318,11 +318,11 @@ class ScheduleActivity : AppCompatActivity() {
                     TelemetryHelper.trackAction("schedule_create", mapOf("repeatType" to "cron"))
                     loadSchedules()
                 } else {
-                    Toast.makeText(this@ScheduleActivity, response.error ?: "Failed", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@ScheduleActivity, response.error ?: getString(R.string.schedule_operation_failed), Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to create cron schedule")
-                Toast.makeText(this@ScheduleActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@ScheduleActivity, getString(R.string.schedule_error_generic, e.message), Toast.LENGTH_SHORT).show()
             } finally {
                 setLoading(false)
             }
@@ -365,11 +365,11 @@ class ScheduleActivity : AppCompatActivity() {
                     TelemetryHelper.trackAction("schedule_create", mapOf("repeatType" to repeatType))
                     loadSchedules()
                 } else {
-                    Toast.makeText(this@ScheduleActivity, response.error ?: "Failed", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@ScheduleActivity, response.error ?: getString(R.string.schedule_operation_failed), Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to create schedule")
-                Toast.makeText(this@ScheduleActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@ScheduleActivity, getString(R.string.schedule_error_generic, e.message), Toast.LENGTH_SHORT).show()
             } finally {
                 setLoading(false)
             }
@@ -557,11 +557,11 @@ class ScheduleActivity : AppCompatActivity() {
                     TelemetryHelper.trackAction("schedule_edit", mapOf("scheduleId" to id.toString()))
                     loadSchedules()
                 } else {
-                    Toast.makeText(this@ScheduleActivity, response.message ?: "Failed", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@ScheduleActivity, response.message ?: getString(R.string.schedule_operation_failed), Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to update schedule")
-                Toast.makeText(this@ScheduleActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@ScheduleActivity, getString(R.string.schedule_error_generic, e.message), Toast.LENGTH_SHORT).show()
             } finally {
                 setLoading(false)
             }
@@ -577,7 +577,7 @@ class ScheduleActivity : AppCompatActivity() {
                     deviceSecret = deviceManager.deviceSecret
                 )
                 if (!data.success) {
-                    Toast.makeText(this@ScheduleActivity, data.error ?: "Failed", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@ScheduleActivity, data.error ?: getString(R.string.schedule_operation_failed), Toast.LENGTH_SHORT).show()
                     return@launch
                 }
 
@@ -611,7 +611,7 @@ class ScheduleActivity : AppCompatActivity() {
                     .show()
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load execution context")
-                Toast.makeText(this@ScheduleActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@ScheduleActivity, getString(R.string.schedule_error_generic, e.message), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -633,7 +633,7 @@ class ScheduleActivity : AppCompatActivity() {
                 loadSchedules()
             } catch (e: Exception) {
                 Timber.e(e, "Failed to delete schedule")
-                Toast.makeText(this@ScheduleActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@ScheduleActivity, getString(R.string.schedule_error_generic, e.message), Toast.LENGTH_SHORT).show()
             } finally {
                 setLoading(false)
             }
