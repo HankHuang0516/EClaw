@@ -115,3 +115,42 @@
 | commit (main) | BUG-D3 cleanup-ghosts debug endpoint |
 | commit (main) | BUG-M8 self-rental deviceId matching |
 
+---
+
+## 迭代 3 — 場景 A Steps 4-13 純 UI 偵錯
+
+### 已驗證 PASS
+| Step | 角色 | 描述 | 結果 | 截圖 |
+|------|------|------|------|------|
+| A4 | Renter | 瀏覽 Marketplace，看到 listing | ✅ 卡片正確顯示 rate/deposit/avatar/availability | strict-A4-renter-marketplace.png |
+| A5 | Renter | 點進 Modal，查看 capabilities | ✅ 面試分數/能力 chips/費用估算/餘額充足 | strict-A5-renter-modal.png |
+| A6 | Renter | 租借 6hr | ✅ 合約建立成功，marketplace 更新為 🔴 Rented | strict-A6-rental-success.png |
+| A8 | Renter | My Rentals 看到 active 合約 | ✅ Active badge / 5h54m 剩餘 / Chat+End+Usage 按鈕 | strict-A8-myrentals-active.png |
+| A9 | Renter | 提前終止合約 | ✅ End Early 確認 dialog + 50% forfeit 計算正確 | strict-A9-end-early-dialog.png, strict-A9-ended-early.png |
+| B8 | Renter | 24h cooldown 驗證 | ✅ cooldown_active 正確阻擋重複租借 | — |
+| C1 | Owner | 自租防護 | ✅ Modal 顯示「🚫 不能租借自己的 Bot」 | strict-verify-M8-fixed.png |
+| D2 | — | BUG-D2 rental badge | ✅ 新 rental entity 顯示「🤖 Rented」紫色 badge | strict-A6-renter-dashboard-after-rent.png |
+
+### 新發現 Bug
+| Bug ID | 嚴重度 | 描述 | 截圖 |
+|--------|--------|------|------|
+| BUG-R1 | **P1** | **Rental proxy webhook 不轉發訊息** — 租借 entity 的 `__rental_proxy__` webhook 不路由訊息到 owner bot，Renter 發的訊息永遠收不到回覆（status 停在 Sent） | strict-A6-chat-no-response.png |
+| BUG-I4 | P2 | `chat_date_today` i18n key 未翻譯，顯示原始 key text | strict-A6-chat-message-sent.png |
+| BUG-I5 | P2 | `chat_empty_hint` i18n key 未翻譯，顯示原始 key text | — |
+| BUG-D5 | P2 | Ghost entities #0/#1 在 cleanup-ghosts 後因 server redeploy 又重新出現 — reconciliation 啟動時序問題 | strict-A6-renter-dashboard-after-rent.png |
+
+### 迭代 3 統計
+- **P0**: 0
+- **P1**: 1（BUG-R1 rental proxy 不轉發 — 核心租借功能缺口）
+- **P2**: 3（i18n keys × 2 + ghost entity 時序）
+- **場景 A 通過率**: 8/13 steps 已驗證，A6 chat 通訊功能缺失（BUG-R1）
+
+### 待驗場景（需修復 BUG-R1 後才能完整驗證）
+- A7: Owner My Rentals 看到合約
+- A10: Owner 看到合約已結束
+- A11: Renter 提交 review
+- A12: Marketplace rating 更新
+- A13: Wallet ledger 核對
+- B~F: 提前終止申訴、防護機制、Owner 管理、Wallet 金流
+- F~U: 進階多 Agent 協作（Chat 通訊、Kanban、A2A、Vault、Files、Notes）
+
