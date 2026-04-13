@@ -1,3 +1,10 @@
+## [1.965.10](https://github.com/HankHuang0516/EClaw/compare/v1.965.9...v1.965.10) (2026-04-13)
+
+
+### Bug Fixes
+
+* phase 2 reconciliation — match by listing title set, not device ID ([570d4c2](https://github.com/HankHuang0516/EClaw/commit/570d4c267320f275abcb3e323b5e9acbccdaefe5))
+
 ## [1.965.9](https://github.com/HankHuang0516/EClaw/compare/v1.965.8...v1.965.9) (2026-04-13)
 
 
