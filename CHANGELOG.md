@@ -1,3 +1,15 @@
+## [1.969.2](https://github.com/HankHuang0516/EClaw/compare/v1.969.1...v1.969.2) (2026-04-13)
+
+
+### Bug Fixes
+
+* **android:** add locale translations for 17 new strings ([7317cd8](https://github.com/HankHuang0516/EClaw/commit/7317cd84578099dd568bbf2c29e90cc9ab61af4a))
+* **i18n:** deduplicate translation keys across all languages ([168ca8d](https://github.com/HankHuang0516/EClaw/commit/168ca8d6ff08ea6236187628a0e4e431b5abcf13))
+* **android:** externalize hardcoded Toast and dialog strings ([9e4b92c](https://github.com/HankHuang0516/EClaw/commit/9e4b92c05f9fb44279af5e76e100d589bfa7b7bd))
+* **i18n:** fill missing translation keys with EN fallback ([5b03b68](https://github.com/HankHuang0516/EClaw/commit/5b03b685bde8c3eb7f7735a61f7681789534192e))
+* move 2 hardcoded strings to strings.xml + i18n ([408e667](https://github.com/HankHuang0516/EClaw/commit/408e66743a4a6ee8014532cb5307935843e7aeb4))
+* **i18n:** remove 11 TODO markers from org chart translations ([ce57289](https://github.com/HankHuang0516/EClaw/commit/ce572899832b60d93c52f680ec7d7a5cc71f8a86))
+
 ## [1.969.1](https://github.com/HankHuang0516/EClaw/compare/v1.969.0...v1.969.1) (2026-04-13)
 
 
