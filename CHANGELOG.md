@@ -1,3 +1,10 @@
+## [1.968.4](https://github.com/HankHuang0516/EClaw/compare/v1.968.3...v1.968.4) (2026-04-13)
+
+
+### Bug Fixes
+
+* **BUG-R1:** rental proxy supports channel-bound owner entities ([f9e957d](https://github.com/HankHuang0516/EClaw/commit/f9e957da974d792aabd7eeb09a92cf9da6b043b6))
+
 ## [1.968.3](https://github.com/HankHuang0516/EClaw/compare/v1.968.2...v1.968.3) (2026-04-13)
 
 
