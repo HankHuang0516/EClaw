@@ -1775,20 +1775,27 @@ app.use('/api/rental', rentalModule.router);
 if (process.env.NODE_ENV !== 'test') {
     setTimeout(async () => {
         await rentalModule.initRentalDatabase();
-        // BUG-D3: Run reconciliation after DB + devices are loaded
+        // BUG-D3: Wait for persistence before reconciliation (685+ devices)
+        const maxWait = 60;
+        for (let i = 0; i < maxWait && !persistenceReady; i++) {
+            await new Promise(r => setTimeout(r, 1000));
+        }
         if (persistenceReady && typeof rentalModule.reconcileRentalEntities === 'function') {
+            console.log(`[Rental] Running reconciliation (${Object.keys(devices).length} devices)...`);
             try {
                 const result = await rentalModule.reconcileRentalEntities(devices, {
                     generateBotSecret, generatePublicCode, publicCodeIndex,
                     ensureOneEmptySlot, getOrCreateDevice, saveDeviceData: db.saveDeviceData,
                 });
-                if (result.reconciled > 0 || result.errors.length > 0) {
-                    console.log(`[Rental] Reconciled ${result.reconciled} rental entities` +
-                        (result.errors.length ? `, errors: ${result.errors.join('; ')}` : ''));
+                console.log(`[Rental] Reconciliation done: reconciled=${result.reconciled} errors=${result.errors.length}`);
+                if (result.errors.length > 0) {
+                    console.log(`[Rental] Reconciliation errors: ${result.errors.join('; ')}`);
                 }
             } catch (err) {
                 console.error('[Rental] Reconciliation failed:', err.message);
             }
+        } else {
+            console.warn('[Rental] Skipped reconciliation — persistence not ready after 60s');
         }
     }, 2500);
 }
