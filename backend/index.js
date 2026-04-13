@@ -5187,14 +5187,16 @@ app.post('/api/transform', async (req, res) => {
 
     // Auto-move child cards to review when bot replies (any non-BUSY state with a message)
     // Previously required state === 'IDLE', but some bots don't send state explicitly
-    if (state !== 'BUSY' && finalMessage && kanbanModule && kanbanModule.autoReviewOnTransform) {
+    // Skip for leased_out entities — rental bot responses belong to the renter's context
+    if (state !== 'BUSY' && finalMessage && entity.rental_status !== 'leased_out' && kanbanModule && kanbanModule.autoReviewOnTransform) {
         kanbanModule.autoReviewOnTransform(deviceId, eId, finalMessage).catch(err => {
             console.error(`[Transform] autoReviewOnTransform failed:`, err.message);
         });
     }
 
     // Org chart: auto-forward message to superior entity (fire-and-forget)
-    if (finalMessage && entity) {
+    // Skip for leased_out entities — owner's org chart should not apply to rental responses
+    if (finalMessage && entity && entity.rental_status !== 'leased_out') {
         orgChartForward(entity, deviceId, finalMessage).catch(() => {});
     }
 
