@@ -1,3 +1,10 @@
+## [1.968.6](https://github.com/HankHuang0516/EClaw/compare/v1.968.5...v1.968.6) (2026-04-13)
+
+
+### Bug Fixes
+
+* persist rental_status/rental_contract_id to DB and reconcile on restart ([#1741](https://github.com/HankHuang0516/EClaw/issues/1741)) ([c87e03b](https://github.com/HankHuang0516/EClaw/commit/c87e03b235e7723776c40e773b457eb7c79252bb))
+
 ## [1.968.5](https://github.com/HankHuang0516/EClaw/compare/v1.968.4...v1.968.5) (2026-04-13)
 
 
