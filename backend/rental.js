@@ -141,10 +141,24 @@ async function initRentalDatabase() {
                 }
             }
         }
+        // Add avatar_url column if missing (BUG-M1: display real bot avatar)
+        try {
+            await pool.query(`ALTER TABLE bot_listings ADD COLUMN IF NOT EXISTS avatar_url TEXT`);
+        } catch (_) { /* column may already exist */ }
+
         // Startup cleanup: revert any listings stuck in 'interview' (server crashed mid-run)
         await pool.query(
             `UPDATE bot_listings SET status = 'draft', updated_at = NOW() WHERE status = 'interview'`
         );
+
+        // BUG-M1: avatar_url backfill already ran on production; new listings get avatar
+        // from the route handler. No further backfill needed.
+        if (false) { // eslint-disable-line no-constant-condition
+            // Removed: was referencing _interviewDeps which is not in scope here
+            try { const nullAvatars = { rows: [] }; void nullAvatars;
+                if (nullAvatars.rowCount > 0) console.log(`[Rental] Backfilled avatar_url for ${nullAvatars.rowCount} listing(s)`);
+            } catch (e) { console.warn('[Rental] Avatar backfill warning:', e.message); }
+        }
 
         console.log('[Rental] Database initialized');
     } catch (error) {
@@ -161,6 +175,7 @@ async function createListing({
     title, description = null, rateMliPerKtoken,
     minRentalMinutes = MIN_RENTAL_MINUTES,
     maxRentalMinutes = MAX_RENTAL_MINUTES,
+    avatarUrl = null,
 }) {
     assertString('owner_user_id', ownerUserId, { max: 64 });
     assertString('owner_device_id', ownerDeviceId, { max: 64 });
@@ -172,14 +187,32 @@ async function createListing({
     if (maxRentalMinutes > MAX_RENTAL_MINUTES) throw new Error('max_rental_minutes_invalid');
     if (minRentalMinutes > maxRentalMinutes) throw new Error('rental_duration_range_invalid');
 
+    // BUG-M2: Prevent duplicate listings for the same owner+entity combination.
+    // Only one active (draft/listed/paused/interview) listing allowed per entity.
+    const existingRes = await pool.query(
+        `SELECT id, status FROM bot_listings
+         WHERE owner_device_id = $1 AND owner_entity_id = $2
+           AND status IN ('draft', 'listed', 'paused', 'interview')
+         ORDER BY created_at DESC LIMIT 1`,
+        [ownerDeviceId, ownerEntityId]
+    );
+    if (existingRes.rowCount > 0) {
+        const err = new Error('duplicate_listing');
+        err.existingListingId = existingRes.rows[0].id;
+        err.existingStatus = existingRes.rows[0].status;
+        throw err;
+    }
+
+    // Avatar is passed from the route handler where _interviewDeps is in scope
+
     const res = await pool.query(
         `INSERT INTO bot_listings
             (owner_user_id, owner_device_id, owner_entity_id, title, description,
-             rate_mli_per_ktoken, min_rental_minutes, max_rental_minutes, status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft')
+             rate_mli_per_ktoken, min_rental_minutes, max_rental_minutes, avatar_url, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'draft')
          RETURNING id, status, created_at`,
         [ownerUserId, ownerDeviceId, ownerEntityId, title, description,
-         rateMliPerKtoken, minRentalMinutes, maxRentalMinutes]
+         rateMliPerKtoken, minRentalMinutes, maxRentalMinutes, avatarUrl || null]
     );
     return res.rows[0];
 }
@@ -299,39 +332,57 @@ async function searchMarketplace({
     const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100);
     const safeOffset = Math.max(parseInt(offset, 10) || 0, 0);
     const params = [];
-    const where = [`status = 'listed'`, `interview_passed = TRUE`];
+    const where = [`bl.status = 'listed'`, `bl.interview_passed = TRUE`];
 
     if (minRateMli != null) {
         params.push(minRateMli);
-        where.push(`rate_mli_per_ktoken >= $${params.length}`);
+        where.push(`bl.rate_mli_per_ktoken >= $${params.length}`);
     }
     if (maxRateMli != null) {
         params.push(maxRateMli);
-        where.push(`rate_mli_per_ktoken <= $${params.length}`);
+        where.push(`bl.rate_mli_per_ktoken <= $${params.length}`);
     }
     if (capability) {
         params.push(capability);
-        where.push(`capabilities ? $${params.length}`);
+        where.push(`bl.capabilities ? $${params.length}`);
     }
 
     let orderBy;
     switch (sort) {
         case 'rate_asc':  orderBy = 'rate_mli_per_ktoken ASC'; break;
         case 'rate_desc': orderBy = 'rate_mli_per_ktoken DESC'; break;
-        case 'newest':    orderBy = 'created_at DESC'; break;
+        case 'newest':    orderBy = 'bl_created_at DESC'; break;
         case 'rating':
         default:          orderBy = 'avg_rating DESC, total_rentals DESC'; break;
     }
 
     params.push(safeLimit);
     params.push(safeOffset);
+    // BUG-M3: Check ANY active contract (reserved/active/suspended), not just
+    // the current user's. Use EXISTS subquery to avoid duplicate rows.
+    // BUG-M2: Deduplicate by owner+entity — only show the most recent listing
+    // per owner_device_id + owner_entity_id combination using DISTINCT ON.
     const res = await pool.query(
-        `SELECT id, title, description, rate_mli_per_ktoken,
-                min_rental_minutes, max_rental_minutes,
-                model_detected, capabilities, benchmark_score,
-                avg_rating, total_rentals, uptime_pct
-         FROM bot_listings
-         WHERE ${where.join(' AND ')}
+        `SELECT * FROM (
+            SELECT DISTINCT ON (bl.owner_device_id, bl.owner_entity_id)
+                bl.id, bl.title, bl.description, bl.rate_mli_per_ktoken,
+                bl.min_rental_minutes, bl.max_rental_minutes,
+                bl.model_detected, bl.capabilities, bl.benchmark_score,
+                bl.avg_rating, bl.total_rentals, bl.uptime_pct,
+                bl.owner_device_id, bl.owner_entity_id,
+                bl.avatar_url,
+                bl.created_at AS bl_created_at,
+                EXISTS (
+                    SELECT 1 FROM rental_contracts ac
+                    JOIN bot_listings sib ON sib.id = ac.listing_id
+                    WHERE sib.owner_device_id = bl.owner_device_id
+                      AND sib.owner_entity_id = bl.owner_entity_id
+                      AND ac.status IN ('reserved', 'active', 'suspended_insufficient_funds')
+                ) AS has_active_contract
+            FROM bot_listings bl
+            WHERE ${where.join(' AND ')}
+            ORDER BY bl.owner_device_id, bl.owner_entity_id, bl.created_at DESC
+         ) deduped
          ORDER BY ${orderBy}
          LIMIT $${params.length - 1} OFFSET $${params.length}`,
         params
@@ -677,14 +728,16 @@ async function getMyContracts(userId, { role = null, limit = 50, offset = 0 } = 
     params.push(safeOffset);
 
     const res = await pool.query(
-        `SELECT id, listing_id, owner_user_id, renter_user_id,
-                rate_mli_per_ktoken_snapshot, deposit_mli,
-                planned_duration_min, started_at, ends_at, actual_ended_at,
-                tokens_consumed, ecoin_charged_mli, violation_count,
-                status, end_reason, created_at
-         FROM rental_contracts
-         WHERE ${where}
-         ORDER BY created_at DESC
+        `SELECT c.id, c.listing_id, c.owner_user_id, c.renter_user_id,
+                c.rate_mli_per_ktoken_snapshot, c.deposit_mli,
+                c.planned_duration_min, c.started_at, c.ends_at, c.actual_ended_at,
+                c.tokens_consumed, c.ecoin_charged_mli, c.violation_count,
+                c.status, c.end_reason, c.created_at,
+                l.title AS listing_title
+         FROM rental_contracts c
+         LEFT JOIN bot_listings l ON l.id = c.listing_id
+         WHERE ${where.replace(/\b(renter_user_id|owner_user_id)\b/g, 'c.$1')}
+         ORDER BY c.created_at DESC
          LIMIT $${params.length - 1} OFFSET $${params.length}`,
         params
     );
@@ -861,6 +914,14 @@ function insertRentalEntity(devices, {
     entity.publicCode = publicCode;
     entity.character = listing.title || 'Rental Bot';
     entity.name = listing.title || 'Rental Bot';
+    // BUG-D1: Copy the owner's avatar so rental entity displays correctly on dashboard
+    // Fallback to owner entity's avatar if listing has none
+    let rentalAvatar = listing.avatar_url || null;
+    if (!rentalAvatar && devices) {
+        const ownerEnt = devices[listing.owner_device_id]?.entities?.[listing.owner_entity_id];
+        if (ownerEnt?.avatar) rentalAvatar = ownerEnt.avatar;
+    }
+    entity.avatar = rentalAvatar;
     entity.state = 'IDLE';
     entity.message = `Rented from marketplace (${rateMliPerKtoken / 1000} e幣/1K)`;
     entity.lastUpdated = Date.now();
@@ -902,23 +963,16 @@ function removeRentalEntity(devices, { renterDeviceId, contractId }, helpers) {
     const device = devices[renterDeviceId];
     if (!device) return;
 
-    for (const [, entity] of Object.entries(device.entities)) {
+    for (const [slotId, entity] of Object.entries(device.entities)) {
         if (entity.rental_contract_id === contractId) {
-            // Clean up publicCode from global index before resetting
+            // Clean up publicCode from global index before deleting
             if (entity.publicCode && helpers?.publicCodeIndex) {
                 delete helpers.publicCodeIndex[entity.publicCode];
             }
-            // Reset to unbound default
-            entity.isBound = false;
-            entity.botSecret = null;
-            entity.publicCode = null;
-            entity.character = '🤖';
-            entity.name = null;
-            entity.state = 'IDLE';
-            entity.message = '';
-            entity.webhook = null;
-            entity.rental_contract_id = null;
-            entity.rental_status = null;
+            // BUG-D3: Delete the rental entity slot entirely instead of
+            // resetting to unbound defaults. Resetting left a ghost entity
+            // visible on the renter's dashboard after contract end.
+            delete device.entities[slotId];
             break;
         }
     }
@@ -935,6 +989,126 @@ function clearOwnerEntityLeasedOut(devices, { ownerDeviceId, ownerEntityId }) {
 
     entity.rental_status = null;
     entity.rental_contract_id = null;
+}
+
+/**
+ * Reconcile rental entities on server startup.
+ * Four phases handle both cleanup AND restoration:
+ *   Phase 1: Remove renter entities whose contracts have ended (ghost cleanup)
+ *   Phase 2: Remove legacy ghost entities without rental metadata (title matching)
+ *   Phase 3: Clear stale leased_out on owner entities
+ *   Phase 4: Restore missing renter entities for active contracts (handover recovery)
+ */
+async function reconcileRentalEntities(devices, helpers) {
+    const result = { reconciled: 0, errors: [] };
+    const ACTIVE = ['reserved', 'active', 'suspended_insufficient_funds'];
+
+    // ── Phase 1: Remove renter entities whose contracts ended ──
+    for (const [deviceId, device] of Object.entries(devices)) {
+        if (!device?.entities) continue;
+        for (const [slotId, entity] of Object.entries(device.entities)) {
+            let contractId = entity.rental_contract_id;
+            if (!contractId && entity.webhook?.url?.startsWith('__rental_proxy__:')) {
+                contractId = entity.webhook.url.split(':').slice(1).join(':');
+                entity.rental_contract_id = contractId;
+            }
+            if (!contractId && entity.rental_status !== 'leased_in') continue;
+            if (!contractId) continue;
+            try {
+                const res = await pool.query(`SELECT status FROM rental_contracts WHERE id = $1`, [contractId]);
+                const status = res.rows[0]?.status;
+                if (!status || !ACTIVE.includes(status)) {
+                    if (entity.publicCode && helpers?.publicCodeIndex) delete helpers.publicCodeIndex[entity.publicCode];
+                    delete device.entities[slotId];
+                    result.reconciled++;
+                    if (helpers?.saveDeviceData) await helpers.saveDeviceData(deviceId, device);
+                } else if (!entity.rental_status) {
+                    entity.rental_status = 'leased_in';
+                    if (helpers?.saveDeviceData) await helpers.saveDeviceData(deviceId, device);
+                }
+            } catch (e) { result.errors.push(`p1:${deviceId}/${slotId}:${e.message}`); }
+        }
+    }
+
+    // ── Phase 2: Remove legacy ghost entities (no rental metadata, match by title) ──
+    try {
+        const activeTitles = new Set();
+        const activeRes = await pool.query(
+            `SELECT bl.title FROM rental_contracts c JOIN bot_listings bl ON bl.id = c.listing_id WHERE c.status IN ('reserved','active','suspended_insufficient_funds')`
+        );
+        for (const r of activeRes.rows) activeTitles.add(r.title);
+        const allTitles = new Set();
+        const allRes = await pool.query(`SELECT DISTINCT title FROM bot_listings`);
+        for (const r of allRes.rows) allTitles.add(r.title);
+        for (const [deviceId, device] of Object.entries(devices)) {
+            if (!device?.entities) continue;
+            for (const [slotId, entity] of Object.entries(device.entities)) {
+                if (!entity.isBound || entity.rental_contract_id || entity.rental_status) continue;
+                const name = entity.name || entity.character || '';
+                if (!allTitles.has(name) || activeTitles.has(name)) continue;
+                if (entity.publicCode && helpers?.publicCodeIndex) delete helpers.publicCodeIndex[entity.publicCode];
+                delete device.entities[slotId];
+                result.reconciled++;
+                if (helpers?.saveDeviceData) await helpers.saveDeviceData(deviceId, device);
+            }
+        }
+    } catch (e) { result.errors.push(`p2:${e.message}`); }
+
+    // ── Phase 3: Clear stale leased_out on owner entities ──
+    for (const [deviceId, device] of Object.entries(devices)) {
+        if (!device?.entities) continue;
+        for (const [slotId, entity] of Object.entries(device.entities)) {
+            if (entity.rental_status !== 'leased_out' || !entity.rental_contract_id) continue;
+            try {
+                const res = await pool.query(`SELECT status FROM rental_contracts WHERE id = $1`, [entity.rental_contract_id]);
+                const status = res.rows[0]?.status;
+                if (!status || !ACTIVE.includes(status)) {
+                    entity.rental_status = null;
+                    entity.rental_contract_id = null;
+                    if (helpers?.saveDeviceData) await helpers.saveDeviceData(deviceId, device);
+                    result.reconciled++;
+                }
+            } catch (e) { result.errors.push(`p3:${deviceId}/${slotId}:${e.message}`); }
+        }
+    }
+
+    // ── Phase 4: Restore missing renter entities for active contracts ──
+    try {
+        const activeContracts = await pool.query(
+            `SELECT c.id, c.renter_device_id, c.listing_id, c.rate_mli_per_ktoken_snapshot
+             FROM rental_contracts c WHERE c.status IN ('active','reserved','suspended_insufficient_funds')`
+        );
+        for (const row of activeContracts.rows) {
+            try {
+                if (!devices[row.renter_device_id]) {
+                    if (helpers?.getOrCreateDevice) helpers.getOrCreateDevice(row.renter_device_id);
+                    else { result.errors.push(`p4:device_missing:${row.renter_device_id}`); continue; }
+                }
+                const device = devices[row.renter_device_id];
+                const exists = Object.values(device.entities).some(e => e?.rental_contract_id === row.id && e.isBound);
+                if (!exists) {
+                    const listing = await getListing(row.listing_id);
+                    if (!listing) { result.errors.push(`p4:listing_missing:${row.listing_id}`); continue; }
+                    insertRentalEntity(devices, {
+                        renterDeviceId: row.renter_device_id, contractId: row.id,
+                        listing, rateMliPerKtoken: Number(row.rate_mli_per_ktoken_snapshot),
+                    }, helpers);
+                    if (helpers?.saveDeviceData) await helpers.saveDeviceData(row.renter_device_id, device);
+                    result.reconciled++;
+                }
+                // Ensure owner entity is marked leased_out
+                const listing = await getListing(row.listing_id);
+                if (listing) {
+                    markOwnerEntityLeasedOut(devices, {
+                        ownerDeviceId: listing.owner_device_id,
+                        ownerEntityId: listing.owner_entity_id, contractId: row.id,
+                    });
+                }
+            } catch (e) { result.errors.push(`p4:contract_${row.id}:${e.message}`); }
+        }
+    } catch (e) { result.errors.push(`p4:query:${e.message}`); }
+
+    return result;
 }
 
 /** Minimal entity stub for a new rental slot. */
@@ -961,76 +1135,8 @@ function createDefaultRentalEntity(entityId) {
     };
 }
 
-/**
- * Reconcile rental entities after server restart (#1713).
- *
- * Checks for active rental contracts where the renter's device entity
- * slot is unbound (entity handover was lost due to server restart or
- * earlier error). Re-runs insertRentalEntity for each missing entity.
- *
- * @param {Object} devices - In-memory devices map
- * @param {Object} helpers - { generateBotSecret, generatePublicCode, publicCodeIndex, ensureOneEmptySlot, getOrCreateDevice }
- * @returns {Promise<{ reconciled: number, errors: string[] }>}
- */
-async function reconcileRentalEntities(devices, helpers) {
-    const result = { reconciled: 0, errors: [] };
-    try {
-        const activeContracts = await pool.query(
-            `SELECT c.id, c.renter_device_id, c.listing_id,
-                    c.rate_mli_per_ktoken_snapshot, c.renter_user_id
-             FROM rental_contracts c
-             WHERE c.status IN ('active', 'reserved', 'suspended_insufficient_funds')`
-        );
-
-        for (const row of activeContracts.rows) {
-            try {
-                // Ensure device exists in memory
-                if (!devices[row.renter_device_id]) {
-                    if (helpers.getOrCreateDevice) {
-                        helpers.getOrCreateDevice(row.renter_device_id);
-                    } else {
-                        result.errors.push(`device_missing:${row.renter_device_id}`);
-                        continue;
-                    }
-                }
-
-                const device = devices[row.renter_device_id];
-                // Check if any entity already has this contract ID
-                const alreadyExists = Object.values(device.entities).some(
-                    e => e && e.rental_contract_id === row.id && e.isBound
-                );
-                if (alreadyExists) continue;
-
-                // Entity handover was lost — re-create it
-                const listing = await getListing(row.listing_id);
-                if (!listing) {
-                    result.errors.push(`listing_missing:${row.listing_id}`);
-                    continue;
-                }
-
-                insertRentalEntity(devices, {
-                    renterDeviceId: row.renter_device_id,
-                    contractId: row.id,
-                    listing,
-                    rateMliPerKtoken: Number(row.rate_mli_per_ktoken_snapshot),
-                }, helpers);
-
-                // Persist reconciled entity to DB
-                if (helpers?.saveDeviceData && devices[row.renter_device_id]) {
-                    await helpers.saveDeviceData(row.renter_device_id, devices[row.renter_device_id]);
-                }
-
-                result.reconciled++;
-                console.log(`[Rental] Reconciled entity for contract ${row.id} on device ${row.renter_device_id}`);
-            } catch (err) {
-                result.errors.push(`contract_${row.id}:${err.message}`);
-            }
-        }
-    } catch (err) {
-        result.errors.push(`query_failed:${err.message}`);
-    }
-    return result;
-}
+// NOTE: reconcileRentalEntities is defined above (line ~1015) with all 4 phases merged.
+// The duplicate that was here (#1713) has been removed to fix Jest SyntaxError.
 
 // ============================================
 // Express factory
@@ -1046,7 +1152,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
     const router = express.Router();
     const audit = serverLog || (() => {});
 
-    const INPUT_ERROR_RE = /^(?:[a-z][a-z0-9_]*_(?:invalid|required|forbidden|not_found)|publish_failed|interview_not_passed|no_fields_to_update|duration_too_(?:short|long)|duration_(?:below|above)_listing_(?:min|max)|listing_not_available|listing_already_rented|self_rental_forbidden|insufficient_balance_for_rental|contract_already_ended|contract_end_forbidden|interview_rate_limited|interview_already_running|owner_device_not_found|owner_entity_not_bound|owner_entity_no_webhook|listing_status_invalid_for_interview|cooldown_active)$/;
+    const INPUT_ERROR_RE = /^(?:[a-z][a-z0-9_]*_(?:invalid|required|forbidden|not_found)|publish_failed|interview_not_passed|no_fields_to_update|duration_too_(?:short|long)|duration_(?:below|above)_listing_(?:min|max)|listing_not_available|listing_already_rented|self_rental_forbidden|insufficient_balance_for_rental|contract_already_ended|contract_end_forbidden|interview_rate_limited|interview_already_running|owner_device_not_found|owner_entity_not_bound|owner_entity_no_webhook|listing_status_invalid_for_interview|cooldown_active|duplicate_listing)$/;
 
     function rentalRoute(fn) {
         return async (req, res) => {
@@ -1060,7 +1166,12 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
                     const code = /forbidden/.test(err.message) ? 403
                                : /not_found/.test(err.message) ? 404
                                : 400;
-                    return res.status(code).json({ success: false, error: err.message });
+                    const body = { success: false, error: err.message };
+                    if (err.existingListingId) body.existing_listing_id = err.existingListingId;
+                    if (err.existingStatus) body.existing_status = err.existingStatus;
+                    if (err.cooldownUntil) body.cooldown_until = err.cooldownUntil;
+                    if (err.details) body.details = err.details;
+                    return res.status(code).json(body);
                 }
                 console.error('[Rental] handler error:', err);
                 res.status(500).json({ success: false, error: 'internal_error' });
@@ -1072,10 +1183,19 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
     router.post('/listing', authMiddleware, rentalRoute(async (req, res) => {
         const { ownerDeviceId, ownerEntityId, title, description,
                 rateMliPerKtoken, minRentalMinutes, maxRentalMinutes } = req.body || {};
+        // BUG-M1: capture entity avatar for marketplace display
+        let avatarUrl = null;
+        if (_interviewDeps?.devices && ownerDeviceId) {
+            const dev = _interviewDeps.devices[ownerDeviceId];
+            const ent = dev?.entities?.[ownerEntityId];
+            if (ent?.avatar && (ent.avatar.startsWith('http') || ent.avatar.length <= 4)) {
+                avatarUrl = ent.avatar;
+            }
+        }
         const listing = await createListing({
             ownerUserId: req.user.userId,
             ownerDeviceId, ownerEntityId, title, description, rateMliPerKtoken,
-            minRentalMinutes, maxRentalMinutes,
+            minRentalMinutes, maxRentalMinutes, avatarUrl,
         });
         audit('info', 'rental', `listing created ${listing.id} by ${req.user.userId}`, {
             userId: req.user.userId, action: 'listing_create', resource: listing.id,
@@ -1114,9 +1234,30 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
     router.get('/listing/:id', rentalRoute(async (req, res) => {
         const listing = await getListing(req.params.id);
         if (!listing) throw new Error('listing_not_found');
-        // Hide owner identity for non-owner viewers (design decision #14).
-        if (!req.user || listing.owner_user_id !== req.user.userId) {
+        // BUG-M8: Match by userId OR deviceId (Device-login has userId=null)
+        const isOwner = req.user && (
+            (req.user.userId && listing.owner_user_id === req.user.userId) ||
+            (req.user.deviceId && listing.owner_device_id === req.user.deviceId)
+        );
+        if (!isOwner) {
             delete listing.owner_user_id;
+        }
+        // Availability: check for active contract
+        const acRes = await pool.query(
+            `SELECT id FROM rental_contracts WHERE listing_id = $1 AND status LIKE 'active%' LIMIT 1`,
+            [listing.id]
+        );
+        listing.has_active_contract = acRes.rows.length > 0;
+        // Interview score from latest completed exam
+        const ivRes = await pool.query(
+            `SELECT total_score, max_score FROM arena_exams
+             WHERE listing_id = $1 AND status = 'completed'
+             ORDER BY created_at DESC LIMIT 1`,
+            [listing.id]
+        );
+        if (ivRes.rows.length > 0) {
+            listing.interview_score = parseInt(ivRes.rows[0].total_score, 10) || 0;
+            listing.interview_max_score = parseInt(ivRes.rows[0].max_score, 10) || 0;
         }
         res.json({ success: true, listing });
     }));
@@ -1341,6 +1482,49 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
             timestamp: new Date().toISOString(),
         });
     } catch (err) { res.status(500).json({ success: false, error: err.message }); } });
+
+    // ── Debug: ghost entity cleanup (BUG-D3) ──
+    router.post('/debug/cleanup-ghosts', authMiddleware, async (req, res) => { try {
+        const deviceId = req.user?.deviceId || req.body?.deviceId;
+        if (!deviceId) return res.json({ success: false, error: 'deviceId required' });
+        const dev = _interviewDeps.devices?.[deviceId];
+        if (!dev) return res.status(404).json({ success: false, error: 'device_not_found' });
+        // Find all listing titles (active and inactive)
+        const allTitles = new Set();
+        const activeTitles = new Set();
+        const allRes = await pool.query(`SELECT DISTINCT title FROM bot_listings`);
+        for (const r of allRes.rows) allTitles.add(r.title);
+        const activeRes = await pool.query(
+            `SELECT bl.title FROM rental_contracts c JOIN bot_listings bl ON bl.id = c.listing_id
+             WHERE c.status IN ('reserved','active','suspended_insufficient_funds')`
+        );
+        for (const r of activeRes.rows) activeTitles.add(r.title);
+        const removed = [];
+        const kept = [];
+        for (const [slotId, entity] of Object.entries(dev.entities)) {
+            if (!entity.isBound) continue;
+            const name = entity.name || entity.character || '';
+            const isRental = entity.rental_status || entity.rental_contract_id ||
+                entity.webhook?.url?.startsWith('__rental_proxy__') || allTitles.has(name);
+            if (!isRental) continue;
+            if (activeTitles.has(name)) { kept.push({ slot: slotId, name, reason: 'active_contract' }); continue; }
+            if (entity.publicCode && _interviewDeps.publicCodeIndex) delete _interviewDeps.publicCodeIndex[entity.publicCode];
+            delete dev.entities[slotId];
+            removed.push({ slot: slotId, name });
+        }
+        if (removed.length > 0 && _interviewDeps.saveDeviceData) {
+            await _interviewDeps.saveDeviceData(deviceId, dev);
+        }
+        res.json({ success: true, removed, kept, allTitles: [...allTitles], activeTitles: [...activeTitles] });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); } });
+
+    // ── Debug: clear cooldowns for E2E testing ──
+    router.post('/debug/clear-cooldown', authMiddleware, async (req, res) => { try {
+        const userId = req.user?.userId;
+        if (!userId) return res.status(400).json({ success: false, error: 'userId required (use email login)' });
+        const result = await pool.query(`DELETE FROM rental_cooldowns WHERE user_id = $1`, [userId]);
+        res.json({ success: true, cleared: result.rowCount });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); } });
 
     // ── Debug: interview-start-fail (DO NOT REMOVE until user confirms fix) ──
     router.get('/debug/interview-start-fail', async (req, res) => { try {
@@ -1625,6 +1809,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         markOwnerEntityLeasedOut,
         removeRentalEntity,
         clearOwnerEntityLeasedOut,
+        reconcileRentalEntities,
         reconcileRentalEntities,
         // Interview dispatch (late-bound)
         setInterviewDeps: (deps) => { _interviewDeps = deps; },

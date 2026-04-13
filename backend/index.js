@@ -1773,7 +1773,31 @@ app.use('/api/rental', rentalModule.router);
 // Defer schema init: rental_contracts has FKs to user_accounts and
 // bot_listings, so user_accounts must be created first.
 if (process.env.NODE_ENV !== 'test') {
-    setTimeout(() => rentalModule.initRentalDatabase(), 2500);
+    setTimeout(async () => {
+        await rentalModule.initRentalDatabase();
+        // BUG-D3: Wait for persistence before reconciliation (685+ devices)
+        const maxWait = 60;
+        for (let i = 0; i < maxWait && !persistenceReady; i++) {
+            await new Promise(r => setTimeout(r, 1000));
+        }
+        if (persistenceReady && typeof rentalModule.reconcileRentalEntities === 'function') {
+            console.log(`[Rental] Running reconciliation (${Object.keys(devices).length} devices)...`);
+            try {
+                const result = await rentalModule.reconcileRentalEntities(devices, {
+                    generateBotSecret, generatePublicCode, publicCodeIndex,
+                    ensureOneEmptySlot, getOrCreateDevice, saveDeviceData: db.saveDeviceData,
+                });
+                console.log(`[Rental] Reconciliation done: reconciled=${result.reconciled} errors=${result.errors.length}`);
+                if (result.errors.length > 0) {
+                    console.log(`[Rental] Reconciliation errors: ${result.errors.join('; ')}`);
+                }
+            } catch (err) {
+                console.error('[Rental] Reconciliation failed:', err.message);
+            }
+        } else {
+            console.warn('[Rental] Skipped reconciliation — persistence not ready after 60s');
+        }
+    }, 2500);
 }
 
 // ============================================
@@ -4412,6 +4436,8 @@ app.get('/api/entities', (req, res) => {
                     bindingType: entity.bindingType || null,
                     encryptionStatus: entity.encryptionStatus || null,
                     isPublic: !!entity.isPublic,
+                    rental_status: entity.rental_status || null,  // 'leased_in', 'leased_out', or null
+                    rental_contract_id: entity.rental_contract_id || null,
                     messageQueue: (entity.messageQueue || []).map(m => ({
                         text: m.text,
                         from: m.from,
@@ -4567,6 +4593,8 @@ app.get('/api/status', (req, res) => {
         parts: entity.parts,
         lastUpdated: entity.lastUpdated,
         isBound: entity.isBound,
+        rental_status: entity.rental_status || null,  // 'leased_in', 'leased_out', or null
+        rental_contract_id: entity.rental_contract_id || null,
         versionInfo: getVersionInfo(appVersion || entity.appVersion)
     });
 });
@@ -4977,10 +5005,12 @@ app.post('/api/transform', async (req, res) => {
             : entity.name || `Entity ${eId}`;
 
         // Only save self chat message if NOT doing speakTo/broadcast delivery (avoid duplicate)
-        if (!hasDelivery) {
+        // Skip saving to owner's chat when entity is leased_out — rental mirror handles renter's copy
+        const isLeasedOut = entity.rental_status === 'leased_out';
+        if (!hasDelivery && !isLeasedOut) {
             saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments);
         }
-        markMessagesAsRead(deviceId, eId);
+        if (!isLeasedOut) markMessagesAsRead(deviceId, eId);
         if (pendingA2A) {
             serverLog('info', 'speakto_push', `[A2A_BOT_REPLY] Entity ${eId} responded via transform after A2A from ${pendingA2A.from}: "${(finalMessage || '').slice(0, 60)}" | mqLen=${entity.messageQueue.length}`, {
                 deviceId, entityId: eId,
@@ -5069,19 +5099,78 @@ app.post('/api/transform', async (req, res) => {
         }
     });
 
+    // ── Rental response mirroring: if owner entity is leased_out, copy response to renter ──
+    if (entity.rental_status === 'leased_out' && entity.rental_contract_id && finalMessage) {
+        try {
+            const cRow = await db._getPool().query(
+                `SELECT c.renter_device_id FROM rental_contracts c WHERE c.id = $1 AND c.status IN ('active','reserved','suspended_insufficient_funds')`,
+                [entity.rental_contract_id]
+            );
+            if (cRow.rowCount > 0) {
+                const renterDev = devices[cRow.rows[0].renter_device_id];
+                if (renterDev) {
+                    for (const [slotId, rentalEntity] of Object.entries(renterDev.entities)) {
+                        if (rentalEntity.rental_contract_id === entity.rental_contract_id) {
+                            rentalEntity.state = entity.state;
+                            rentalEntity.message = finalMessage;
+                            rentalEntity.lastUpdated = Date.now();
+                            // Save to renter's chat history
+                            saveChatMessage(cRow.rows[0].renter_device_id, parseInt(slotId), finalMessage,
+                                rentalEntity.name || `Rental Bot`, false, true);
+                            // Notify renter via Socket.IO
+                            if (io) {
+                                io.to(`device:${cRow.rows[0].renter_device_id}`).emit('entity:update', {
+                                    deviceId: cRow.rows[0].renter_device_id, entityId: parseInt(slotId),
+                                    name: rentalEntity.name, character: rentalEntity.character,
+                                    state: rentalEntity.state, message: rentalEntity.message,
+                                    lastUpdated: rentalEntity.lastUpdated
+                                });
+                            }
+                            // Send push notification to renter
+                            notifyDevice(cRow.rows[0].renter_device_id, {
+                                type: 'chat', category: 'bot_reply',
+                                title: rentalEntity.name || `Rental Bot`,
+                                body: (finalMessage || '').slice(0, 100),
+                                link: 'chat.html',
+                                metadata: { entityId: parseInt(slotId), character: rentalEntity.character }
+                            }).catch(() => {});
+                            console.log(`[Transform] Rental mirror: owner ${deviceId}/${eId} → renter ${cRow.rows[0].renter_device_id}/${slotId}`);
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (err) {
+            console.error(`[Transform] Rental mirror error:`, err.message);
+        }
+    }
+
     // Emit entity:update via Socket.IO for real-time wallpaper/dashboard refresh
+    // For leased_out entities, only emit state (not message) to avoid chat content leaking to owner
     if (io) {
-        io.to(`device:${deviceId}`).emit('entity:update', {
-            deviceId, entityId: eId,
-            name: entity.name, character: entity.character,
-            state: entity.state, message: entity.message,
-            parts: entity.parts, lastUpdated: entity.lastUpdated,
-            xp: entity.xp || 0, level: entity.level || 1
-        });
+        if (entity.rental_status === 'leased_out') {
+            io.to(`device:${deviceId}`).emit('entity:update', {
+                deviceId, entityId: eId,
+                name: entity.name, character: entity.character,
+                state: entity.state,
+                parts: entity.parts, lastUpdated: entity.lastUpdated,
+                xp: entity.xp || 0, level: entity.level || 1
+            });
+        } else {
+            io.to(`device:${deviceId}`).emit('entity:update', {
+                deviceId, entityId: eId,
+                name: entity.name, character: entity.character,
+                state: entity.state, message: entity.message,
+                parts: entity.parts, lastUpdated: entity.lastUpdated,
+                xp: entity.xp || 0, level: entity.level || 1
+            });
+        }
     }
 
     // Notify device about bot reply (fire-and-forget)
-    if (finalMessage) {
+    // Skip owner notification for leased_out entities — renter gets notified via rental mirror
+    const isLeasedOutForNotify = entity.rental_status === 'leased_out';
+    if (finalMessage && !isLeasedOutForNotify) {
         notifyDevice(deviceId, {
             type: 'chat', category: 'bot_reply',
             title: entity.name || `Entity ${eId}`,
@@ -5098,14 +5187,16 @@ app.post('/api/transform', async (req, res) => {
 
     // Auto-move child cards to review when bot replies (any non-BUSY state with a message)
     // Previously required state === 'IDLE', but some bots don't send state explicitly
-    if (state !== 'BUSY' && finalMessage && kanbanModule && kanbanModule.autoReviewOnTransform) {
+    // Skip for leased_out entities — rental bot responses belong to the renter's context
+    if (state !== 'BUSY' && finalMessage && entity.rental_status !== 'leased_out' && kanbanModule && kanbanModule.autoReviewOnTransform) {
         kanbanModule.autoReviewOnTransform(deviceId, eId, finalMessage).catch(err => {
             console.error(`[Transform] autoReviewOnTransform failed:`, err.message);
         });
     }
 
     // Org chart: auto-forward message to superior entity (fire-and-forget)
-    if (finalMessage && entity) {
+    // Skip for leased_out entities — owner's org chart should not apply to rental responses
+    if (finalMessage && entity && entity.rental_status !== 'leased_out') {
         orgChartForward(entity, deviceId, finalMessage).catch(() => {});
     }
 
@@ -5294,6 +5385,11 @@ app.post('/api/transform', async (req, res) => {
                     isCrossDevice,
                     card: validatedCard
                 });
+
+                // Org chart: auto-forward incoming speakTo message to superior (same-device only, fire-and-forget)
+                if (!isCrossDevice && toEntity.isBound) {
+                    orgChartForward(toEntity, target.deviceId, deliveryText).catch(() => {});
+                }
 
                 // Notify both devices
                 notifyDevice(target.deviceId, {
@@ -7148,6 +7244,24 @@ app.post('/api/client/speak', async (req, res) => {
         }
     }
 
+    // Org chart: auto-forward incoming message to superior for entities with incomplete tasks (fire-and-forget)
+    // Deduplicate: if multiple targets share the same superior, forward only once per superior
+    {
+        const forwardedSuperiors = new Set();
+        for (const eId of targetIds) {
+            const targetEntity = device.entities[eId];
+            if (!targetEntity || !targetEntity.isBound) continue;
+            try {
+                const orgData = await orgChartModule.getOrgChart(deviceId);
+                const superiorId = orgChartModule.getSuperior(orgData.hierarchy, eId);
+                if (superiorId != null && superiorId !== 'USER' && !forwardedSuperiors.has(superiorId)) {
+                    forwardedSuperiors.add(superiorId);
+                    orgChartForward(targetEntity, deviceId, text).catch(() => {});
+                }
+            } catch (_) { /* non-critical */ }
+        }
+    }
+
     const clientSpeakResponse = {
         success: true,
         message: `Sent to ${results.length} entity(s)`,
@@ -7413,6 +7527,11 @@ app.post('/api/entity/speak-to', async (req, res) => {
                 }
             }
         }
+    }
+
+    // Org chart: auto-forward incoming message to superior for target entity with incomplete tasks (fire-and-forget)
+    if (toEntity && toEntity.isBound) {
+        orgChartForward(toEntity, deviceId, speakToText).catch(() => {});
     }
 
     const speakToResponse = {
@@ -9875,6 +9994,78 @@ app.post('/api/debug/reset', (req, res) => {
  * Directly set XP/level on an entity (test devices only).
  * Body: { deviceId, deviceSecret, entityId, xp }
  */
+/**
+ * GET /api/debug/org-forward-no-route
+ * Debug endpoint for org chart taskForward not routing.
+ * Returns org chart config, hierarchy, incomplete tasks for each entity, and superior mapping.
+ */
+app.get('/api/debug/org-forward-no-route', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query;
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    try {
+        const orgData = await orgChartModule.getOrgChart(deviceId);
+        const diagnostics = {
+            orgChart: orgData,
+            entities: {},
+            forwardingPaths: []
+        };
+
+        // Check each entity's superior and task status
+        for (const eIdStr of Object.keys(device.entities)) {
+            const eId = parseInt(eIdStr);
+            const entity = device.entities[eId];
+            if (!entity) continue;
+
+            const superiorId = orgData.hierarchy ? orgChartModule.getSuperior(orgData.hierarchy, eId) : null;
+            const superiorEntity = superiorId != null && superiorId !== 'USER' ? device.entities[superiorId] : null;
+
+            let incompleteTasks = [];
+            if (chatPool) {
+                try {
+                    const taskCheck = await chatPool.query(
+                        `SELECT id, title, status FROM kanban_cards WHERE device_id = $1 AND assigned_bots @> $2::jsonb AND status IN ('todo', 'in_progress', 'backlog') AND (archived IS NULL OR archived = false)`,
+                        [deviceId, JSON.stringify([eId])]
+                    );
+                    incompleteTasks = taskCheck.rows;
+                } catch (err) {
+                    incompleteTasks = [{ error: err.message }];
+                }
+            }
+
+            diagnostics.entities[eId] = {
+                name: entity.name || entity.character,
+                isBound: entity.isBound,
+                hasWebhook: !!entity.webhook,
+                superiorId,
+                superiorName: superiorEntity ? (superiorEntity.name || superiorEntity.character) : (superiorId === 'USER' ? 'USER (owner)' : null),
+                superiorIsBound: superiorEntity ? superiorEntity.isBound : false,
+                incompleteTasks
+            };
+
+            if (incompleteTasks.length > 0 && superiorId != null && superiorId !== 'USER') {
+                diagnostics.forwardingPaths.push({
+                    from: `#${eId} (${entity.name || entity.character})`,
+                    to: `#${superiorId} (${superiorEntity?.name || superiorEntity?.character || 'N/A'})`,
+                    wouldForward: orgData.options.taskForward || orgData.options.allForward,
+                    superiorBound: superiorEntity?.isBound || false,
+                    taskCount: incompleteTasks.length,
+                    blocked: !superiorEntity?.isBound ? 'superior not bound' : (!orgData.options.taskForward && !orgData.options.allForward) ? 'options disabled' : null
+                });
+            }
+        }
+
+        res.json({ success: true, bug: 'org-forward-no-route', diagnostics, timestamp: new Date().toISOString() });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 app.post('/api/debug/set-entity-xp', (req, res) => {
     const { deviceId, deviceSecret, entityId, xp } = req.body || {};
     if (!deviceId || !deviceSecret || entityId === undefined || xp === undefined) {
@@ -12375,6 +12566,59 @@ async function pushToBot(entity, deviceId, eventType, payload) {
         }
     }
 
+    // ── Rental proxy: forward message to the owner's bot ──
+    if (entity.webhook.type === 'rental_proxy' || (url && url.startsWith('__rental_proxy__:'))) {
+        try {
+            const contractId = url.replace('__rental_proxy__:', '');
+            // Look up contract → listing → owner entity
+            const cRes = await db._getPool().query(
+                `SELECT c.listing_id, l.owner_device_id, l.owner_entity_id
+                 FROM rental_contracts c JOIN bot_listings l ON l.id = c.listing_id
+                 WHERE c.id = $1`, [contractId]
+            );
+            if (cRes.rowCount === 0) {
+                console.error(`[Push] Rental proxy: contract ${contractId} not found`);
+                return { pushed: false, reason: 'rental_contract_not_found' };
+            }
+            const { owner_device_id, owner_entity_id } = cRes.rows[0];
+            const ownerDevice = devices[owner_device_id];
+            const ownerEntity = ownerDevice?.entities?.[owner_entity_id];
+            if (!ownerEntity) {
+                console.error(`[Push] Rental proxy: owner entity ${owner_device_id}/${owner_entity_id} not found`);
+                return { pushed: false, reason: 'owner_entity_not_found' };
+            }
+            console.log(`[Push] Rental proxy: forwarding from ${deviceId}/${entity.entityId} → ${owner_device_id}/${owner_entity_id} (binding=${ownerEntity.bindingType})`);
+            const rentalMsg = `[Rental message from renter]\n${payload.message || ''}`;
+            let result;
+            // Channel-bound entities use pushToChannelCallback
+            if (ownerEntity.bindingType === 'channel' && channelModule?.pushToChannelCallback) {
+                result = await channelModule.pushToChannelCallback(owner_device_id, owner_entity_id, {
+                    event: 'message',
+                    from: entity.name || `Rental Entity`,
+                    text: rentalMsg,
+                    _rentalContext: { contractId, renterDeviceId: deviceId, renterEntityId: entity.entityId },
+                }, ownerEntity.channelAccountId);
+            } else if (ownerEntity.webhook) {
+                // Direct webhook entities
+                const rentalPayload = { ...payload, message: rentalMsg };
+                result = await pushToBot(ownerEntity, owner_device_id, eventType, rentalPayload);
+            } else {
+                console.error(`[Push] Rental proxy: owner entity has no webhook or channel`);
+                return { pushed: false, reason: 'owner_entity_no_push_method' };
+            }
+            // Copy response back to rental entity if synchronous
+            if (result?.pushed && ownerEntity.lastUpdated > (entity.lastUpdated || 0)) {
+                entity.state = ownerEntity.state;
+                entity.message = ownerEntity.message;
+                entity.lastUpdated = Date.now();
+            }
+            return result || { pushed: false, reason: 'unknown' };
+        } catch (err) {
+            console.error(`[Push] Rental proxy error:`, err.message);
+            return { pushed: false, reason: `rental_proxy_error: ${err.message}` };
+        }
+    }
+
     // ── OpenClaw webhook: sessions_send format ──
     // Record entity state before push so we can detect if bot responded via transform during the push
     const pushStartedAt = entity.lastUpdated || 0;
@@ -12564,10 +12808,31 @@ async function orgChartForward(entity, deviceId, message) {
         }
 
         if (shouldForward) {
+            const fwdMsg = prefix + message;
             console.log(`[OrgChart] Forwarding message from #${entity.entityId} to superior #${superiorId}`);
-            pushToBot(superiorEntity, deviceId, 'org_forward', { message: prefix + message }).catch(err => {
-                console.error(`[OrgChart] Forward to #${superiorId} failed:`, err.message);
+            serverLog('info', 'org_forward', `#${entity.entityId} -> #${superiorId}: "${fwdMsg.slice(0, 80)}"`, { deviceId, entityId: entity.entityId });
+
+            // Save forwarded message to superior's chat history so it renders as bot-to-bot
+            const fwdSource = `entity:${entity.entityId}:${entity.character || entity.name || entity.entityId}->${superiorId}`;
+            saveChatMessage(deviceId, superiorId, fwdMsg, fwdSource, false, true).catch(err => {
+                console.error(`[OrgChart] Save fwd chat failed:`, err.message);
             });
+
+            if (superiorEntity.bindingType === 'channel' && channelModule && channelModule.pushToChannelCallback) {
+                // Channel-bound superior: use channel callback
+                channelModule.pushToChannelCallback(deviceId, superiorId, {
+                    event: 'org_forward',
+                    from: `entity:${entity.entityId}`,
+                    text: fwdMsg
+                }, superiorEntity.channelAccountId).catch(err => {
+                    console.error(`[OrgChart] Channel forward to #${superiorId} failed:`, err.message);
+                });
+            } else {
+                // Traditional webhook
+                pushToBot(superiorEntity, deviceId, 'org_forward', { message: fwdMsg }).catch(err => {
+                    console.error(`[OrgChart] Forward to #${superiorId} failed:`, err.message);
+                });
+            }
         }
     } catch (err) {
         console.error('[OrgChart] orgChartForward error:', err.message);
@@ -12582,21 +12847,8 @@ if (typeof rentalModule.setInterviewDeps === 'function') {
     rentalModule.setInterviewDeps({ pushToBot, devices, arenaModule, setInterviewCapabilities, generateBotSecret, generatePublicCode, publicCodeIndex, ensureOneEmptySlot, getOrCreateDevice, saveDeviceData: db.saveDeviceData, get pushToChannelCallback() { return channelModule?.pushToChannelCallback?.bind(channelModule); } });
 }
 
-// Reconcile rental entities that may have been lost during server restart (#1713).
-// Runs after persistence + rental deps are both ready.
-if (persistenceReady && typeof rentalModule.reconcileRentalEntities === 'function') {
-    rentalModule.reconcileRentalEntities(devices, {
-        generateBotSecret, generatePublicCode, publicCodeIndex,
-        ensureOneEmptySlot, getOrCreateDevice, saveDeviceData: db.saveDeviceData,
-    }).then(result => {
-        if (result.reconciled > 0 || result.errors.length > 0) {
-            console.log(`[Rental] Reconciled ${result.reconciled} rental entities` +
-                (result.errors.length ? `, errors: ${result.errors.join('; ')}` : ''));
-        }
-    }).catch(err => {
-        console.error('[Rental] Reconciliation failed:', err.message);
-    });
-}
+// NOTE: reconcileRentalEntities now runs inside the initRentalDatabase
+// setTimeout above, after persistence is ready (BUG-D3 fix).
 
 // NOTE: arenaModule.setAutoPushDeps is called AFTER channelModule init (see below ~line 13180+)
 
@@ -13293,6 +13545,8 @@ missionModule.setPushToChannelCallback(channelModule.pushToChannelCallback.bind(
 if (kanbanModule && kanbanModule.autoReviewOnTransform) {
     channelModule.setKanbanAutoReview(kanbanModule.autoReviewOnTransform);
 }
+// Wire org chart forward into channel module (so channel bot replies also trigger superior forwarding)
+channelModule.setOrgChartForward(orgChartForward);
 
 // ============================================
 // DISCORD INTEGRATION — Slash Commands

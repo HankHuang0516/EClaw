@@ -23,6 +23,20 @@ jest.mock('pg', () => {
         if (/^(BEGIN|COMMIT|ROLLBACK)$/i.test(norm)) return { rows: [], rowCount: 0 };
         if (/^CREATE (TABLE|INDEX|UNIQUE INDEX)/i.test(norm)) return { rows: [], rowCount: 0 };
 
+        // BUG-M2: Duplicate listing check (SELECT before INSERT)
+        if (/^SELECT id, status FROM bot_listings WHERE owner_device_id/i.test(norm)) {
+            const [ownerDeviceId, ownerEntityId] = params;
+            const existing = state.listings.find(l =>
+                l.owner_device_id === ownerDeviceId &&
+                l.owner_entity_id === ownerEntityId &&
+                ['draft', 'listed', 'paused', 'interview'].includes(l.status)
+            );
+            if (existing) {
+                return { rows: [{ id: existing.id, status: existing.status }], rowCount: 1 };
+            }
+            return { rows: [], rowCount: 0 };
+        }
+
         // INSERT new listing
         if (/^INSERT INTO bot_listings/i.test(norm)) {
             const [ownerUserId, ownerDeviceId, ownerEntityId, title, description,
@@ -138,11 +152,9 @@ jest.mock('pg', () => {
             return { rows, rowCount: rows.length };
         }
 
-        // Marketplace search
-        if (/FROM bot_listings WHERE status = 'listed'/i.test(norm)) {
+        // Marketplace search (handles bl. table alias prefix from LEFT JOIN query)
+        if (/FROM bot_listings\b.*WHERE\b.*status\s*=\s*'listed'/i.test(norm)) {
             let rows = state.listings.filter(l => l.status === 'listed' && l.interview_passed);
-            // Dynamic params are $N (min/max rate, capability), then limit + offset at the end.
-            // For simplicity the simulator only checks rate_mli upper/lower filters.
             const limitParam = params[params.length - 2];
             const offsetParam = params[params.length - 1];
             rows = rows.slice(offsetParam, offsetParam + limitParam);
@@ -158,6 +170,7 @@ jest.mock('pg', () => {
                     avg_rating: r.avg_rating,
                     total_rentals: r.total_rentals,
                     uptime_pct: r.uptime_pct,
+                    has_active_contract: false,
                 })),
                 rowCount: rows.length,
             };

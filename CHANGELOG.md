@@ -1,3 +1,282 @@
+## [1.969.1](https://github.com/HankHuang0516/EClaw/compare/v1.969.0...v1.969.1) (2026-04-13)
+
+
+### Bug Fixes
+
+* skip owner org-chart/kanban for leased_out + chat_date_yesterday i18n ([#1745](https://github.com/HankHuang0516/EClaw/issues/1745)) ([1522151](https://github.com/HankHuang0516/EClaw/commit/152215109a2e54af772fa81482fedc9217ed4610))
+
+# [1.969.0](https://github.com/HankHuang0516/EClaw/compare/v1.968.12...v1.969.0) (2026-04-13)
+
+
+### Bug Fixes
+
+* merge duplicate reconcileRentalEntities + fix test mocks ([9aada10](https://github.com/HankHuang0516/EClaw/commit/9aada105ab32642776fed0692f9bd3bd66cc035c))
+
+
+### Features
+
+* add /auto_approve slash command to chat autocomplete ([462f86e](https://github.com/HankHuang0516/EClaw/commit/462f86ee6944e2b0e4d68d1cb17de7cab8f5f049))
+
+## [1.968.12](https://github.com/HankHuang0516/EClaw/compare/v1.968.11...v1.968.12) (2026-04-13)
+
+
+### Bug Fixes
+
+* use devices param instead of _interviewDeps in insertRentalEntity ([#1744](https://github.com/HankHuang0516/EClaw/issues/1744)) ([0820d46](https://github.com/HankHuang0516/EClaw/commit/0820d46abdf2049968737f0258d3779f3edf0924))
+
+## [1.968.11](https://github.com/HankHuang0516/EClaw/compare/v1.968.10...v1.968.11) (2026-04-13)
+
+
+### Bug Fixes
+
+* auto-fill rental entity avatar from owner entity ([#1743](https://github.com/HankHuang0516/EClaw/issues/1743)) ([333acb6](https://github.com/HankHuang0516/EClaw/commit/333acb69d555f0c53112194de3db225e11a689a4))
+
+## [1.968.10](https://github.com/HankHuang0516/EClaw/compare/v1.968.9...v1.968.10) (2026-04-13)
+
+
+### Bug Fixes
+
+* save orgChartForward message to chat history for b2b rendering ([b55b609](https://github.com/HankHuang0516/EClaw/commit/b55b609bcab9eda0c27d687bcd4476c1ce4588cc))
+
+## [1.968.9](https://github.com/HankHuang0516/EClaw/compare/v1.968.8...v1.968.9) (2026-04-13)
+
+
+### Bug Fixes
+
+* add orgChartForward to channel-api /message handler ([ca62fbb](https://github.com/HankHuang0516/EClaw/commit/ca62fbb130525ca06221333793931394c964fb23))
+
+## [1.968.8](https://github.com/HankHuang0516/EClaw/compare/v1.968.7...v1.968.8) (2026-04-13)
+
+
+### Bug Fixes
+
+* deduplicate orgChartForward in broadcast path ([44968c8](https://github.com/HankHuang0516/EClaw/commit/44968c89d939a0af2af080e22b18c9d343eb798b))
+
+## [1.968.7](https://github.com/HankHuang0516/EClaw/compare/v1.968.6...v1.968.7) (2026-04-13)
+
+
+### Bug Fixes
+
+* clear stale leased_out on reconcile + strip message from owner socket emit ([#1742](https://github.com/HankHuang0516/EClaw/issues/1742)) ([94b05f9](https://github.com/HankHuang0516/EClaw/commit/94b05f97414e656ac6fba6e075fa0c7f8e5e26e5))
+
+## [1.968.6](https://github.com/HankHuang0516/EClaw/compare/v1.968.5...v1.968.6) (2026-04-13)
+
+
+### Bug Fixes
+
+* persist rental_status/rental_contract_id to DB and reconcile on restart ([#1741](https://github.com/HankHuang0516/EClaw/issues/1741)) ([c87e03b](https://github.com/HankHuang0516/EClaw/commit/c87e03b235e7723776c40e773b457eb7c79252bb))
+
+## [1.968.5](https://github.com/HankHuang0516/EClaw/compare/v1.968.4...v1.968.5) (2026-04-13)
+
+
+### Bug Fixes
+
+* isolate rental bot responses from owner's chat page ([#1740](https://github.com/HankHuang0516/EClaw/issues/1740)) ([cbeb667](https://github.com/HankHuang0516/EClaw/commit/cbeb6673ba580940d8c26078701cdd81debce2af))
+
+## [1.968.4](https://github.com/HankHuang0516/EClaw/compare/v1.968.3...v1.968.4) (2026-04-13)
+
+
+### Bug Fixes
+
+* **BUG-R1:** rental proxy supports channel-bound owner entities ([f9e957d](https://github.com/HankHuang0516/EClaw/commit/f9e957da974d792aabd7eeb09a92cf9da6b043b6))
+
+## [1.968.3](https://github.com/HankHuang0516/EClaw/compare/v1.968.2...v1.968.3) (2026-04-13)
+
+
+### Bug Fixes
+
+* use db._getPool() instead of db.pool in rental proxy queries ([6b57b78](https://github.com/HankHuang0516/EClaw/commit/6b57b788575fc8c0ebc66df8548e7c5fd3fa55df))
+
+## [1.968.2](https://github.com/HankHuang0516/EClaw/compare/v1.968.1...v1.968.2) (2026-04-13)
+
+
+### Bug Fixes
+
+* **i18n:** add chat_date_today + chat_empty_hint to all 14 languages ([19ffd05](https://github.com/HankHuang0516/EClaw/commit/19ffd0568080adafce05bbe48d44dfc9af49afdf))
+* **BUG-R1:** implement rental proxy webhook message forwarding ([39ad6de](https://github.com/HankHuang0516/EClaw/commit/39ad6de452bdf2137fae8ae5f613a1165cb6413e))
+
+## [1.968.1](https://github.com/HankHuang0516/EClaw/compare/v1.968.0...v1.968.1) (2026-04-13)
+
+
+### Bug Fixes
+
+* orgChartForward now supports channel-bound entities ([558dd94](https://github.com/HankHuang0516/EClaw/commit/558dd94fd01c517b2c1b686631a4d48649f46765))
+
+# [1.968.0](https://github.com/HankHuang0516/EClaw/compare/v1.967.2...v1.968.0) (2026-04-13)
+
+
+### Features
+
+* add debug/clear-cooldown endpoint for E2E testing ([cb91814](https://github.com/HankHuang0516/EClaw/commit/cb91814eb100516667ec6fc77903f47a29d836f4))
+
+## [1.967.2](https://github.com/HankHuang0516/EClaw/compare/v1.967.1...v1.967.2) (2026-04-13)
+
+
+### Bug Fixes
+
+* add orgChartForward to client/speak and speakTo paths ([c2b1e0e](https://github.com/HankHuang0516/EClaw/commit/c2b1e0e492df7538e6c9842ae145ef4fa4d64cbf))
+
+## [1.967.1](https://github.com/HankHuang0516/EClaw/compare/v1.967.0...v1.967.1) (2026-04-13)
+
+
+### Bug Fixes
+
+* admin reset-password also verifies email ([ec3a94d](https://github.com/HankHuang0516/EClaw/commit/ec3a94d97f01a6165332bc25c224b1988f295d23))
+
+# [1.967.0](https://github.com/HankHuang0516/EClaw/compare/v1.966.2...v1.967.0) (2026-04-13)
+
+
+### Features
+
+* add admin/reset-password endpoint for E2E testing ([8cdbd38](https://github.com/HankHuang0516/EClaw/commit/8cdbd388eb3a4b556f1dbf8afb9c48e7619510ce))
+
+## [1.966.2](https://github.com/HankHuang0516/EClaw/compare/v1.966.1...v1.966.2) (2026-04-13)
+
+
+### Bug Fixes
+
+* **BUG-M8:** self-rental detection for Device-login users ([9e97415](https://github.com/HankHuang0516/EClaw/commit/9e974158c0ba20c32c3b50049f5ced03a0cd132f))
+
+## [1.966.1](https://github.com/HankHuang0516/EClaw/compare/v1.966.0...v1.966.1) (2026-04-13)
+
+
+### Bug Fixes
+
+* cleanup-ghosts endpoint uses JWT auth instead of deviceSecret ([ecac8b7](https://github.com/HankHuang0516/EClaw/commit/ecac8b7b7580d760b35a8958f3823f278ade09ff))
+
+# [1.966.0](https://github.com/HankHuang0516/EClaw/compare/v1.965.11...v1.966.0) (2026-04-13)
+
+
+### Features
+
+* add debug/cleanup-ghosts endpoint for BUG-D3 ([4466c7d](https://github.com/HankHuang0516/EClaw/commit/4466c7d10576e05beea4188a823aa551a4b28154))
+
+## [1.965.11](https://github.com/HankHuang0516/EClaw/compare/v1.965.10...v1.965.11) (2026-04-13)
+
+
+### Bug Fixes
+
+* wait for persistence before rental reconciliation ([066ca57](https://github.com/HankHuang0516/EClaw/commit/066ca57656ef0011c4458db88b35e9ab095ec29a))
+
+## [1.965.10](https://github.com/HankHuang0516/EClaw/compare/v1.965.9...v1.965.10) (2026-04-13)
+
+
+### Bug Fixes
+
+* phase 2 reconciliation — match by listing title set, not device ID ([570d4c2](https://github.com/HankHuang0516/EClaw/commit/570d4c267320f275abcb3e323b5e9acbccdaefe5))
+
+## [1.965.9](https://github.com/HankHuang0516/EClaw/compare/v1.965.8...v1.965.9) (2026-04-13)
+
+
+### Bug Fixes
+
+* phase 2 ghost entity reconciliation — match by contract + name ([d535e4a](https://github.com/HankHuang0516/EClaw/commit/d535e4aba2c6ff9cfe10ee8a6687b262603f9578))
+
+## [1.965.8](https://github.com/HankHuang0516/EClaw/compare/v1.965.7...v1.965.8) (2026-04-13)
+
+
+### Bug Fixes
+
+* move rental reconciliation to run after persistence is ready (BUG-D3) ([3d23a55](https://github.com/HankHuang0516/EClaw/commit/3d23a5580759eb451f3731b27246ec14489ccec3))
+
+## [1.965.7](https://github.com/HankHuang0516/EClaw/compare/v1.965.6...v1.965.7) (2026-04-13)
+
+
+### Bug Fixes
+
+* improve rental entity reconciliation to catch legacy ghost entities ([d3b79da](https://github.com/HankHuang0516/EClaw/commit/d3b79da16a34564ed7fc942ad1a0de0dddfb4176))
+
+## [1.965.6](https://github.com/HankHuang0516/EClaw/compare/v1.965.5...v1.965.6) (2026-04-13)
+
+
+### Bug Fixes
+
+* resolve 7 rental UIUX bugs (M1/M3/M8/D1/D2/D3/D4) ([#1739](https://github.com/HankHuang0516/EClaw/issues/1739)) ([a339afe](https://github.com/HankHuang0516/EClaw/commit/a339afed907edcf97bf5ed2a676a797975b4e38f))
+
+## [1.965.5](https://github.com/HankHuang0516/EClaw/compare/v1.965.4...v1.965.5) (2026-04-13)
+
+
+### Bug Fixes
+
+* **rental:** dedup listings, fix contract status, clean up ended entities ([#1738](https://github.com/HankHuang0516/EClaw/issues/1738)) ([a0068a2](https://github.com/HankHuang0516/EClaw/commit/a0068a266c2914baff604b5a242ab18c27ea797c)), closes [#1736](https://github.com/HankHuang0516/EClaw/issues/1736)
+
+## [1.965.4](https://github.com/HankHuang0516/EClaw/compare/v1.965.3...v1.965.4) (2026-04-13)
+
+
+### Bug Fixes
+
+* **portal:** rental modal shows 0 balance for authenticated owner ([#1737](https://github.com/HankHuang0516/EClaw/issues/1737)) ([f5adb95](https://github.com/HankHuang0516/EClaw/commit/f5adb9595000ca8bb54f3fe9cf39348c0a922f87)), closes [#1736](https://github.com/HankHuang0516/EClaw/issues/1736)
+
+## [1.965.3](https://github.com/HankHuang0516/EClaw/compare/v1.965.2...v1.965.3) (2026-04-13)
+
+
+### Bug Fixes
+
+* **arena:** add debug logs + fix countdown timer using actual expiresAt ([5efdf58](https://github.com/HankHuang0516/EClaw/commit/5efdf58460fa16074668166f177a10f4fe0ca166))
+
+## [1.965.2](https://github.com/HankHuang0516/EClaw/compare/v1.965.1...v1.965.2) (2026-04-13)
+
+
+### Bug Fixes
+
+* **org-chart:** redraw connectors after FLIP animation + animate all lines ([c2d8bcf](https://github.com/HankHuang0516/EClaw/commit/c2d8bcfc5877595bbf12eeda0410696f60dab69e))
+
+## [1.965.1](https://github.com/HankHuang0516/EClaw/compare/v1.965.0...v1.965.1) (2026-04-12)
+
+
+### Bug Fixes
+
+* add rental_status and rental_contract_id to /api/entities and /api/status responses ([#1735](https://github.com/HankHuang0516/EClaw/issues/1735)) ([0ec04f0](https://github.com/HankHuang0516/EClaw/commit/0ec04f011c44031ff18e593c4265a37059763eb3))
+
+# [1.965.0](https://github.com/HankHuang0516/EClaw/compare/v1.964.1...v1.965.0) (2026-04-12)
+
+
+### Features
+
+* **marketplace:** add capability filter chips and rate range slider ([#1734](https://github.com/HankHuang0516/EClaw/issues/1734)) ([bdff34c](https://github.com/HankHuang0516/EClaw/commit/bdff34c5a77c797a129631df11478f66d6838688))
+
+## [1.964.1](https://github.com/HankHuang0516/EClaw/compare/v1.964.0...v1.964.1) (2026-04-12)
+
+
+### Bug Fixes
+
+* **i18n:** add missing mp_ marketplace translations for zh/ja/ko/fr/es/de ([#1733](https://github.com/HankHuang0516/EClaw/issues/1733)) ([cda54a6](https://github.com/HankHuang0516/EClaw/commit/cda54a69600b76ccb5711f2b92a9e4a2bfbda60c))
+
+# [1.964.0](https://github.com/HankHuang0516/EClaw/compare/v1.963.0...v1.964.0) (2026-04-12)
+
+
+### Features
+
+* **rental-modal:** UIUX spec compliance for marketplace cards and rental detail modal ([#1732](https://github.com/HankHuang0516/EClaw/issues/1732)) ([a27a9d3](https://github.com/HankHuang0516/EClaw/commit/a27a9d382df43c64e5bf83848b4958ce73a042e8))
+
+# [1.963.0](https://github.com/HankHuang0516/EClaw/compare/v1.962.5...v1.963.0) (2026-04-12)
+
+
+### Features
+
+* **my-rentals:** UIUX spec compliance for contract cards, status badges, modals ([#1731](https://github.com/HankHuang0516/EClaw/issues/1731)) ([7bbfb16](https://github.com/HankHuang0516/EClaw/commit/7bbfb167d0246ecf96edba3f1459ffcf29a4e5ae))
+
+## [1.962.5](https://github.com/HankHuang0516/EClaw/compare/v1.962.4...v1.962.5) (2026-04-12)
+
+
+### Bug Fixes
+
+* chat.html single-page layout + remove vault whitelist entirely ([cde56ab](https://github.com/HankHuang0516/EClaw/commit/cde56ab456abbfdca33bd300764f170524282ce0))
+
+## [1.962.4](https://github.com/HankHuang0516/EClaw/compare/v1.962.3...v1.962.4) (2026-04-12)
+
+
+### Bug Fixes
+
+* chat.html shared entity filtering + env-vars vault whitelist correction ([89af49f](https://github.com/HankHuang0516/EClaw/commit/89af49f0bd387b190556ad101c2a2e10d7aa62ba)), closes [DD#15](https://github.com/DD/issues/15)
+
+## [1.962.3](https://github.com/HankHuang0516/EClaw/compare/v1.962.2...v1.962.3) (2026-04-12)
+
+
+### Bug Fixes
+
+* move 2 hardcoded strings to strings.xml + i18n ([#1730](https://github.com/HankHuang0516/EClaw/issues/1730)) ([529b694](https://github.com/HankHuang0516/EClaw/commit/529b694e940b80d876a6562fb7284c162f8f8a1f)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 ## [1.962.2](https://github.com/HankHuang0516/EClaw/compare/v1.962.1...v1.962.2) (2026-04-12)
 
 
