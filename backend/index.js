@@ -5100,7 +5100,7 @@ app.post('/api/transform', async (req, res) => {
     // ── Rental response mirroring: if owner entity is leased_out, copy response to renter ──
     if (entity.rental_status === 'leased_out' && entity.rental_contract_id && finalMessage) {
         try {
-            const cRow = await db.pool.query(
+            const cRow = await db._getPool().query(
                 `SELECT c.renter_device_id FROM rental_contracts c WHERE c.id = $1 AND c.status IN ('active','reserved','suspended_insufficient_funds')`,
                 [entity.rental_contract_id]
             );
@@ -12536,7 +12536,7 @@ async function pushToBot(entity, deviceId, eventType, payload) {
         try {
             const contractId = url.replace('__rental_proxy__:', '');
             // Look up contract → listing → owner entity
-            const cRes = await db.pool.query(
+            const cRes = await db._getPool().query(
                 `SELECT c.listing_id, l.owner_device_id, l.owner_entity_id
                  FROM rental_contracts c JOIN bot_listings l ON l.id = c.listing_id
                  WHERE c.id = $1`, [contractId]
