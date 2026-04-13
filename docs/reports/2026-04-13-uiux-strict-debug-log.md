@@ -145,7 +145,30 @@
 - **P2**: 3（i18n keys × 2 + ghost entity 時序）
 - **場景 A 通過率**: 8/13 steps 已驗證，A6 chat 通訊功能缺失（BUG-R1）
 
-### 待驗場景（需修復 BUG-R1 後才能完整驗證）
+---
+
+## 迭代 4 — BUG-R1 修復驗證 + Bot 通訊測試
+
+### BUG-R1 修復過程
+1. 初版：`db.pool.query` → `Cannot read properties of undefined` → 改為 `db._getPool().query`
+2. 二版：`owner_entity_no_webhook` → Owner entity 是 channel-bound（無直接 webhook）→ 新增 `channelModule.pushToChannelCallback` 路徑
+3. 最終版：channel push OK → Bot 回應 **「你好！頻道修復測試成功！🧪」**
+
+### 驗證結果
+| 項目 | 結果 | 截圖 |
+|------|------|------|
+| Rental proxy → channel push | ✅ Entity 1/2/3 push OK | — |
+| Bot 回應（12 秒內） | ✅ 「你好！頻道修復測試成功！🧪」 | strict-iter4-chat-bot-responded.png |
+| 回應鏡像到 renter chat | ✅ 兩個 rental entity 都顯示回覆 | strict-iter4-chat-bot-responded.png |
+| Like/Dislike 按鈕 | ✅ 顯示在回覆下方 | strict-iter4-chat-bot-responded.png |
+| 通知 badge | ✅ 導航欄顯示 5 個通知 | strict-iter4-chat-bot-responded.png |
+
+### 迭代 4 統計
+- **P1 修復**: 1（BUG-R1 rental proxy 完全修復）
+- **P2 修復**: 2（BUG-I4/I5 i18n keys — CDN cache 延遲顯示）
+- **核心租借功能**: ✅ 完全可用（租借→發訊息→Bot 回覆）
+
+### 待驗場景
 - A7: Owner My Rentals 看到合約
 - A10: Owner 看到合約已結束
 - A11: Renter 提交 review
