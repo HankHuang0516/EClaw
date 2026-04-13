@@ -3083,7 +3083,7 @@
                 // Re-render
                 renderOrgTree();
 
-                // FLIP animation
+                // FLIP animation + redraw connectors after transition
                 if (oldRect) {
                     const newNode = document.querySelector(`.org-node[data-node-id="${draggedId}"]`);
                     if (newNode) {
@@ -3095,6 +3095,14 @@
                         newNode.offsetHeight; // force reflow for FLIP
                         newNode.style.transition = 'transform 0.5s ease';
                         newNode.style.transform = 'translate(0, 0)';
+                        // Redraw connectors after FLIP animation completes
+                        newNode.addEventListener('transitionend', function onEnd() {
+                            newNode.removeEventListener('transitionend', onEnd);
+                            const tree = document.getElementById('orgTree');
+                            const nodeEls = {};
+                            tree.querySelectorAll('.org-node').forEach(n => { nodeEls[n.dataset.nodeId] = n; });
+                            drawConnectors(tree, nodeEls);
+                        });
                     }
                 }
 
@@ -3165,7 +3173,7 @@
                     line.setAttribute('y1', py);
                     line.setAttribute('x2', cx);
                     line.setAttribute('y2', cy);
-                    if (parentKey === 'USER') line.classList.add('animated');
+                    line.classList.add('animated');
                     svg.appendChild(line);
                 }
             }
