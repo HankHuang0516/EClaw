@@ -1002,21 +1002,35 @@ async function reconcileRentalEntities(devices, helpers) {
     for (const [deviceId, device] of Object.entries(devices)) {
         if (!device?.entities) continue;
         for (const [slotId, entity] of Object.entries(device.entities)) {
-            if (entity.rental_status !== 'leased_in' || !entity.rental_contract_id) continue;
-            // Check if the contract is still active
+            // Catch rental entities by rental_status, rental_contract_id, or
+            // __rental_proxy__ webhook (old entities may lack newer fields)
+            let contractId = entity.rental_contract_id;
+            if (!contractId && entity.webhook?.url?.startsWith('__rental_proxy__:')) {
+                contractId = entity.webhook.url.split(':').slice(1).join(':');
+                entity.rental_contract_id = contractId; // backfill
+            }
+            if (!contractId && entity.rental_status !== 'leased_in') continue;
+            if (!contractId) continue;
             try {
                 const res = await pool.query(
                     `SELECT status FROM rental_contracts WHERE id = $1`,
-                    [entity.rental_contract_id]
+                    [contractId]
                 );
                 const status = res.rows[0]?.status;
-                if (!status || !['reserved', 'active', 'suspended_insufficient_funds'].includes(status)) {
+                const isActive = status && ['reserved', 'active', 'suspended_insufficient_funds'].includes(status);
+                if (!isActive) {
                     // Contract ended or missing — remove ghost entity
                     if (entity.publicCode && helpers?.publicCodeIndex) {
                         delete helpers.publicCodeIndex[entity.publicCode];
                     }
                     delete device.entities[slotId];
                     reconciled++;
+                    if (helpers?.saveDeviceData) {
+                        await helpers.saveDeviceData(deviceId, device);
+                    }
+                } else if (!entity.rental_status) {
+                    // Active contract but missing rental_status — backfill it
+                    entity.rental_status = 'leased_in';
                     if (helpers?.saveDeviceData) {
                         await helpers.saveDeviceData(deviceId, device);
                     }
