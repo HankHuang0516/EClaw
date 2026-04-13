@@ -1,3 +1,10 @@
+## [1.969.1](https://github.com/HankHuang0516/EClaw/compare/v1.969.0...v1.969.1) (2026-04-13)
+
+
+### Bug Fixes
+
+* skip owner org-chart/kanban for leased_out + chat_date_yesterday i18n ([#1745](https://github.com/HankHuang0516/EClaw/issues/1745)) ([1522151](https://github.com/HankHuang0516/EClaw/commit/152215109a2e54af772fa81482fedc9217ed4610))
+
 # [1.969.0](https://github.com/HankHuang0516/EClaw/compare/v1.968.12...v1.969.0) (2026-04-13)
 
 
