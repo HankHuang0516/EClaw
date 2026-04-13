@@ -1,3 +1,10 @@
+## [1.965.7](https://github.com/HankHuang0516/EClaw/compare/v1.965.6...v1.965.7) (2026-04-13)
+
+
+### Bug Fixes
+
+* improve rental entity reconciliation to catch legacy ghost entities ([d3b79da](https://github.com/HankHuang0516/EClaw/commit/d3b79da16a34564ed7fc942ad1a0de0dddfb4176))
+
 ## [1.965.6](https://github.com/HankHuang0516/EClaw/compare/v1.965.5...v1.965.6) (2026-04-13)
 
 
