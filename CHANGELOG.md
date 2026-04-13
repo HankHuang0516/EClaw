@@ -1,3 +1,10 @@
+# [1.966.0](https://github.com/HankHuang0516/EClaw/compare/v1.965.11...v1.966.0) (2026-04-13)
+
+
+### Features
+
+* add debug/cleanup-ghosts endpoint for BUG-D3 ([4466c7d](https://github.com/HankHuang0516/EClaw/commit/4466c7d10576e05beea4188a823aa551a4b28154))
+
 ## [1.965.11](https://github.com/HankHuang0516/EClaw/compare/v1.965.10...v1.965.11) (2026-04-13)
 
 
