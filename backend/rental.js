@@ -1068,6 +1068,29 @@ async function reconcileRentalEntities(devices, helpers) {
         }
     } catch (e) { errors.push(`phase2: ${e.message}`); }
 
+    // Phase 3: Clear stale leased_out on owner entities whose contracts have ended.
+    // Prevents permanent chat blackout if clearOwnerEntityLeasedOut failed (crash, etc.).
+    for (const [deviceId, device] of Object.entries(devices)) {
+        if (!device?.entities) continue;
+        for (const [slotId, entity] of Object.entries(device.entities)) {
+            if (entity.rental_status !== 'leased_out' || !entity.rental_contract_id) continue;
+            try {
+                const res = await pool.query(
+                    `SELECT status FROM rental_contracts WHERE id = $1`, [entity.rental_contract_id]
+                );
+                const status = res.rows[0]?.status;
+                const isActive = status && ['reserved', 'active', 'suspended_insufficient_funds'].includes(status);
+                if (!isActive) {
+                    entity.rental_status = null;
+                    entity.rental_contract_id = null;
+                    if (helpers?.saveDeviceData) await helpers.saveDeviceData(deviceId, device);
+                    reconciled++;
+                    console.log(`[Rental] Phase 3 cleared stale leased_out: ${deviceId}/${slotId} (contract status=${status || 'not_found'})`);
+                }
+            } catch (e) { errors.push(`phase3_${deviceId}/${slotId}: ${e.message}`); }
+        }
+    }
+
     return { reconciled, errors };
 }
 

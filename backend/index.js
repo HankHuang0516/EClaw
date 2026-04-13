@@ -5146,14 +5146,25 @@ app.post('/api/transform', async (req, res) => {
     }
 
     // Emit entity:update via Socket.IO for real-time wallpaper/dashboard refresh
+    // For leased_out entities, only emit state (not message) to avoid chat content leaking to owner
     if (io) {
-        io.to(`device:${deviceId}`).emit('entity:update', {
-            deviceId, entityId: eId,
-            name: entity.name, character: entity.character,
-            state: entity.state, message: entity.message,
-            parts: entity.parts, lastUpdated: entity.lastUpdated,
-            xp: entity.xp || 0, level: entity.level || 1
-        });
+        if (entity.rental_status === 'leased_out') {
+            io.to(`device:${deviceId}`).emit('entity:update', {
+                deviceId, entityId: eId,
+                name: entity.name, character: entity.character,
+                state: entity.state,
+                parts: entity.parts, lastUpdated: entity.lastUpdated,
+                xp: entity.xp || 0, level: entity.level || 1
+            });
+        } else {
+            io.to(`device:${deviceId}`).emit('entity:update', {
+                deviceId, entityId: eId,
+                name: entity.name, character: entity.character,
+                state: entity.state, message: entity.message,
+                parts: entity.parts, lastUpdated: entity.lastUpdated,
+                xp: entity.xp || 0, level: entity.level || 1
+            });
+        }
     }
 
     // Notify device about bot reply (fire-and-forget)
