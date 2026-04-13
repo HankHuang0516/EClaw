@@ -930,8 +930,8 @@ function insertRentalEntity(devices, {
     // BUG-D1: Copy the owner's avatar so rental entity displays correctly on dashboard
     // Fallback to owner entity's avatar if listing has none
     let rentalAvatar = listing.avatar_url || null;
-    if (!rentalAvatar && _interviewDeps.devices) {
-        const ownerEnt = _interviewDeps.devices[listing.owner_device_id]?.entities?.[listing.owner_entity_id];
+    if (!rentalAvatar && devices) {
+        const ownerEnt = devices[listing.owner_device_id]?.entities?.[listing.owner_entity_id];
         if (ownerEnt?.avatar) rentalAvatar = ownerEnt.avatar;
     }
     entity.avatar = rentalAvatar;
