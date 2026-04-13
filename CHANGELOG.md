@@ -1,3 +1,10 @@
+# [1.970.0](https://github.com/HankHuang0516/EClaw/compare/v1.969.2...v1.970.0) (2026-04-13)
+
+
+### Features
+
+* **arena:** add radar chart, social sharing, agent cards, SEO for public launch ([4b32fa8](https://github.com/HankHuang0516/EClaw/commit/4b32fa8bb9efbd049ad91f78e85f14fd85ccb425))
+
 ## [1.969.2](https://github.com/HankHuang0516/EClaw/compare/v1.969.1...v1.969.2) (2026-04-13)
 
 
