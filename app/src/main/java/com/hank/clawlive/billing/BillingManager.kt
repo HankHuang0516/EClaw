@@ -249,7 +249,7 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
         val details = productDetails
         if (details == null) {
             Timber.tag(TAG).e("Product details not available")
-            android.widget.Toast.makeText(activity, "Google Play 商品載入中，請稍後再試", android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(activity, context.getString(R.string.billing_google_play_loading), android.widget.Toast.LENGTH_SHORT).show()
             connectToBillingService()
             return
         }
@@ -257,7 +257,7 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
         val offerToken = details.subscriptionOfferDetails?.firstOrNull()?.offerToken
         if (offerToken == null) {
             Timber.tag(TAG).e("Offer token not available")
-            android.widget.Toast.makeText(activity, "無法取得訂閱方案，請稍後再試", android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(activity, context.getString(R.string.billing_subscription_unavailable), android.widget.Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -281,7 +281,7 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
         val details = topupDetailsMap[productId]
         if (details == null) {
             Timber.tag(TAG).e("Top-up product details not available for $productId")
-            android.widget.Toast.makeText(activity, "Google Play 商品載入中，請稍後再試", android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(activity, context.getString(R.string.billing_google_play_loading), android.widget.Toast.LENGTH_SHORT).show()
             connectToBillingService()
             return
         }
@@ -310,7 +310,7 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
         }
         if (details == null) {
             Timber.tag(TAG).e("Plan product details not available for $planId")
-            android.widget.Toast.makeText(activity, "Google Play 商品載入中，請稍後再試", android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(activity, context.getString(R.string.billing_google_play_loading), android.widget.Toast.LENGTH_SHORT).show()
             connectToBillingService()
             return
         }
@@ -318,7 +318,7 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
         val offerToken = details.subscriptionOfferDetails?.firstOrNull()?.offerToken
         if (offerToken == null) {
             Timber.tag(TAG).e("Offer token not available for $planId")
-            android.widget.Toast.makeText(activity, "無法取得訂閱方案，請稍後再試", android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(activity, context.getString(R.string.billing_subscription_unavailable), android.widget.Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -396,7 +396,7 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
         val details = borrowProductDetails
         if (details == null) {
             Timber.tag(TAG).e("Borrow product details not available")
-            android.widget.Toast.makeText(activity, "Google Play 商品載入中，請稍後再試", android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(activity, context.getString(R.string.billing_google_play_loading), android.widget.Toast.LENGTH_SHORT).show()
             connectToBillingService()
             return
         }
@@ -404,7 +404,7 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
         val offerToken = details.subscriptionOfferDetails?.firstOrNull()?.offerToken
         if (offerToken == null) {
             Timber.tag(TAG).e("Borrow offer token not available")
-            android.widget.Toast.makeText(activity, "無法取得訂閱方案，請稍後再試", android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(activity, context.getString(R.string.billing_subscription_unavailable), android.widget.Toast.LENGTH_SHORT).show()
             return
         }
 
