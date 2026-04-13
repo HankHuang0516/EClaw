@@ -5005,10 +5005,12 @@ app.post('/api/transform', async (req, res) => {
             : entity.name || `Entity ${eId}`;
 
         // Only save self chat message if NOT doing speakTo/broadcast delivery (avoid duplicate)
-        if (!hasDelivery) {
+        // Skip saving to owner's chat when entity is leased_out — rental mirror handles renter's copy
+        const isLeasedOut = entity.rental_status === 'leased_out';
+        if (!hasDelivery && !isLeasedOut) {
             saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments);
         }
-        markMessagesAsRead(deviceId, eId);
+        if (!isLeasedOut) markMessagesAsRead(deviceId, eId);
         if (pendingA2A) {
             serverLog('info', 'speakto_push', `[A2A_BOT_REPLY] Entity ${eId} responded via transform after A2A from ${pendingA2A.from}: "${(finalMessage || '').slice(0, 60)}" | mqLen=${entity.messageQueue.length}`, {
                 deviceId, entityId: eId,
@@ -5124,6 +5126,14 @@ app.post('/api/transform', async (req, res) => {
                                     lastUpdated: rentalEntity.lastUpdated
                                 });
                             }
+                            // Send push notification to renter
+                            notifyDevice(cRow.rows[0].renter_device_id, {
+                                type: 'chat', category: 'bot_reply',
+                                title: rentalEntity.name || `Rental Bot`,
+                                body: (finalMessage || '').slice(0, 100),
+                                link: 'chat.html',
+                                metadata: { entityId: parseInt(slotId), character: rentalEntity.character }
+                            }).catch(() => {});
                             console.log(`[Transform] Rental mirror: owner ${deviceId}/${eId} → renter ${cRow.rows[0].renter_device_id}/${slotId}`);
                             break;
                         }
@@ -5147,7 +5157,9 @@ app.post('/api/transform', async (req, res) => {
     }
 
     // Notify device about bot reply (fire-and-forget)
-    if (finalMessage) {
+    // Skip owner notification for leased_out entities — renter gets notified via rental mirror
+    const isLeasedOutForNotify = entity.rental_status === 'leased_out';
+    if (finalMessage && !isLeasedOutForNotify) {
         notifyDevice(deviceId, {
             type: 'chat', category: 'bot_reply',
             title: entity.name || `Entity ${eId}`,
