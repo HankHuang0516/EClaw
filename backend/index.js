@@ -12810,6 +12810,12 @@ async function orgChartForward(entity, deviceId, message) {
             console.log(`[OrgChart] Forwarding message from #${entity.entityId} to superior #${superiorId}`);
             serverLog('info', 'org_forward', `#${entity.entityId} -> #${superiorId}: "${fwdMsg.slice(0, 80)}"`, { deviceId, entityId: entity.entityId });
 
+            // Save forwarded message to superior's chat history so it renders as bot-to-bot
+            const fwdSource = `entity:${entity.entityId}:${entity.character || entity.name || entity.entityId}->${superiorId}`;
+            saveChatMessage(deviceId, superiorId, fwdMsg, fwdSource, false, true).catch(err => {
+                console.error(`[OrgChart] Save fwd chat failed:`, err.message);
+            });
+
             if (superiorEntity.bindingType === 'channel' && channelModule && channelModule.pushToChannelCallback) {
                 // Channel-bound superior: use channel callback
                 channelModule.pushToChannelCallback(deviceId, superiorId, {
