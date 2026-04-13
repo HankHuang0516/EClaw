@@ -211,6 +211,13 @@ async function createListing({
         throw err;
     }
 
+    // Auto-fill avatar from owner entity if not provided
+    let finalAvatarUrl = avatarUrl || null;
+    if (!finalAvatarUrl && _interviewDeps.devices) {
+        const ownerEntity = _interviewDeps.devices[ownerDeviceId]?.entities?.[ownerEntityId];
+        if (ownerEntity?.avatar) finalAvatarUrl = ownerEntity.avatar;
+    }
+
     const res = await pool.query(
         `INSERT INTO bot_listings
             (owner_user_id, owner_device_id, owner_entity_id, title, description,
@@ -218,7 +225,7 @@ async function createListing({
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'draft')
          RETURNING id, status, created_at`,
         [ownerUserId, ownerDeviceId, ownerEntityId, title, description,
-         rateMliPerKtoken, minRentalMinutes, maxRentalMinutes, avatarUrl || null]
+         rateMliPerKtoken, minRentalMinutes, maxRentalMinutes, finalAvatarUrl]
     );
     return res.rows[0];
 }
@@ -921,7 +928,13 @@ function insertRentalEntity(devices, {
     entity.character = listing.title || 'Rental Bot';
     entity.name = listing.title || 'Rental Bot';
     // BUG-D1: Copy the owner's avatar so rental entity displays correctly on dashboard
-    entity.avatar = listing.avatar_url || null;
+    // Fallback to owner entity's avatar if listing has none
+    let rentalAvatar = listing.avatar_url || null;
+    if (!rentalAvatar && _interviewDeps.devices) {
+        const ownerEnt = _interviewDeps.devices[listing.owner_device_id]?.entities?.[listing.owner_entity_id];
+        if (ownerEnt?.avatar) rentalAvatar = ownerEnt.avatar;
+    }
+    entity.avatar = rentalAvatar;
     entity.state = 'IDLE';
     entity.message = `Rented from marketplace (${rateMliPerKtoken / 1000} e幣/1K)`;
     entity.lastUpdated = Date.now();
