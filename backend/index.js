@@ -5323,6 +5323,11 @@ app.post('/api/transform', async (req, res) => {
                     card: validatedCard
                 });
 
+                // Org chart: auto-forward incoming speakTo message to superior (same-device only, fire-and-forget)
+                if (!isCrossDevice && toEntity.isBound) {
+                    orgChartForward(toEntity, target.deviceId, deliveryText).catch(() => {});
+                }
+
                 // Notify both devices
                 notifyDevice(target.deviceId, {
                     type: 'chat', category: isCrossDevice ? 'cross_speak' : 'speak_to',
@@ -7176,6 +7181,14 @@ app.post('/api/client/speak', async (req, res) => {
         }
     }
 
+    // Org chart: auto-forward incoming message to superior for entities with incomplete tasks (fire-and-forget)
+    for (const eId of targetIds) {
+        const targetEntity = device.entities[eId];
+        if (targetEntity && targetEntity.isBound) {
+            orgChartForward(targetEntity, deviceId, text).catch(() => {});
+        }
+    }
+
     const clientSpeakResponse = {
         success: true,
         message: `Sent to ${results.length} entity(s)`,
@@ -7441,6 +7454,11 @@ app.post('/api/entity/speak-to', async (req, res) => {
                 }
             }
         }
+    }
+
+    // Org chart: auto-forward incoming message to superior for target entity with incomplete tasks (fire-and-forget)
+    if (toEntity && toEntity.isBound) {
+        orgChartForward(toEntity, deviceId, speakToText).catch(() => {});
     }
 
     const speakToResponse = {
@@ -9903,6 +9921,78 @@ app.post('/api/debug/reset', (req, res) => {
  * Directly set XP/level on an entity (test devices only).
  * Body: { deviceId, deviceSecret, entityId, xp }
  */
+/**
+ * GET /api/debug/org-forward-no-route
+ * Debug endpoint for org chart taskForward not routing.
+ * Returns org chart config, hierarchy, incomplete tasks for each entity, and superior mapping.
+ */
+app.get('/api/debug/org-forward-no-route', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query;
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    try {
+        const orgData = await orgChartModule.getOrgChart(deviceId);
+        const diagnostics = {
+            orgChart: orgData,
+            entities: {},
+            forwardingPaths: []
+        };
+
+        // Check each entity's superior and task status
+        for (const eIdStr of Object.keys(device.entities)) {
+            const eId = parseInt(eIdStr);
+            const entity = device.entities[eId];
+            if (!entity) continue;
+
+            const superiorId = orgData.hierarchy ? orgChartModule.getSuperior(orgData.hierarchy, eId) : null;
+            const superiorEntity = superiorId != null && superiorId !== 'USER' ? device.entities[superiorId] : null;
+
+            let incompleteTasks = [];
+            if (chatPool) {
+                try {
+                    const taskCheck = await chatPool.query(
+                        `SELECT id, title, status FROM kanban_cards WHERE device_id = $1 AND assigned_bots @> $2::jsonb AND status IN ('todo', 'in_progress', 'backlog') AND (archived IS NULL OR archived = false)`,
+                        [deviceId, JSON.stringify([eId])]
+                    );
+                    incompleteTasks = taskCheck.rows;
+                } catch (err) {
+                    incompleteTasks = [{ error: err.message }];
+                }
+            }
+
+            diagnostics.entities[eId] = {
+                name: entity.name || entity.character,
+                isBound: entity.isBound,
+                hasWebhook: !!entity.webhook,
+                superiorId,
+                superiorName: superiorEntity ? (superiorEntity.name || superiorEntity.character) : (superiorId === 'USER' ? 'USER (owner)' : null),
+                superiorIsBound: superiorEntity ? superiorEntity.isBound : false,
+                incompleteTasks
+            };
+
+            if (incompleteTasks.length > 0 && superiorId != null && superiorId !== 'USER') {
+                diagnostics.forwardingPaths.push({
+                    from: `#${eId} (${entity.name || entity.character})`,
+                    to: `#${superiorId} (${superiorEntity?.name || superiorEntity?.character || 'N/A'})`,
+                    wouldForward: orgData.options.taskForward || orgData.options.allForward,
+                    superiorBound: superiorEntity?.isBound || false,
+                    taskCount: incompleteTasks.length,
+                    blocked: !superiorEntity?.isBound ? 'superior not bound' : (!orgData.options.taskForward && !orgData.options.allForward) ? 'options disabled' : null
+                });
+            }
+        }
+
+        res.json({ success: true, bug: 'org-forward-no-route', diagnostics, timestamp: new Date().toISOString() });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 app.post('/api/debug/set-entity-xp', (req, res) => {
     const { deviceId, deviceSecret, entityId, xp } = req.body || {};
     if (!deviceId || !deviceSecret || entityId === undefined || xp === undefined) {
