@@ -128,6 +128,10 @@ async function createTables() {
 
         // Bot Identity Layer: unified identity JSONB (role, instructions, boundaries, public profile)
         await client.query(`ALTER TABLE entities ADD COLUMN IF NOT EXISTS identity JSONB`);
+
+        // Rental status persistence: track leased_in/leased_out and contract reference
+        await client.query(`ALTER TABLE entities ADD COLUMN IF NOT EXISTS rental_status TEXT`);
+        await client.query(`ALTER TABLE entities ADD COLUMN IF NOT EXISTS rental_contract_id TEXT`);
         // Migrate existing agent_card data into identity.public
         await client.query(`
             UPDATE entities SET identity = jsonb_build_object('public', agent_card)
@@ -560,15 +564,17 @@ async function saveDeviceData(deviceId, deviceData) {
                     entity.channelAccountId || null,
                     entity.agentCard ? JSON.stringify(entity.agentCard) : null,
                     entity.encryptionStatus || null,
-                    entity.identity ? JSON.stringify(entity.identity) : null
+                    entity.identity ? JSON.stringify(entity.identity) : null,
+                    entity.rental_status || null,
+                    entity.rental_contract_id || null
                 ];
                 const entitySql = `INSERT INTO entities (
                         device_id, entity_id, bot_secret, is_bound, name,
                         character, state, message, parts,
                         last_updated, message_queue, webhook, app_version,
                         xp, level, avatar, public_code, binding_type, channel_account_id, agent_card,
-                        encryption_status, identity
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+                        encryption_status, identity, rental_status, rental_contract_id
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
                     ON CONFLICT (device_id, entity_id)
                     DO UPDATE SET
                         bot_secret = $3,
@@ -590,7 +596,9 @@ async function saveDeviceData(deviceId, deviceData) {
                         channel_account_id = $19,
                         agent_card = $20,
                         encryption_status = $21,
-                        identity = $22`;
+                        identity = $22,
+                        rental_status = $23,
+                        rental_contract_id = $24`;
 
                 await client.query(`SAVEPOINT entity_${i}`);
                 try {
@@ -722,7 +730,9 @@ async function loadAllDevices() {
                 encryptionStatus: row.encryption_status || null,
                 identity: row.identity ? (typeof row.identity === 'string' ? JSON.parse(row.identity) : row.identity) : null,
                 isPublic: !!row.is_public,
-                publishedAt: row.published_at ? new Date(row.published_at).getTime() : null
+                publishedAt: row.published_at ? new Date(row.published_at).getTime() : null,
+                rental_status: row.rental_status || null,
+                rental_contract_id: row.rental_contract_id || null
             };
         }
 

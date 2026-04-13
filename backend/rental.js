@@ -1128,34 +1128,42 @@ async function reconcileRentalEntities(devices, helpers) {
                     }
                 }
 
-                const device = devices[row.renter_device_id];
-                // Check if any entity already has this contract ID
-                const alreadyExists = Object.values(device.entities).some(
-                    e => e && e.rental_contract_id === row.id && e.isBound
-                );
-                if (alreadyExists) continue;
-
-                // Entity handover was lost — re-create it
                 const listing = await getListing(row.listing_id);
                 if (!listing) {
                     result.errors.push(`listing_missing:${row.listing_id}`);
                     continue;
                 }
 
-                insertRentalEntity(devices, {
-                    renterDeviceId: row.renter_device_id,
-                    contractId: row.id,
-                    listing,
-                    rateMliPerKtoken: Number(row.rate_mli_per_ktoken_snapshot),
-                }, helpers);
+                // Reconcile renter entity
+                const device = devices[row.renter_device_id];
+                // Check if any entity already has this contract ID
+                const alreadyExists = Object.values(device.entities).some(
+                    e => e && e.rental_contract_id === row.id && e.isBound
+                );
+                if (!alreadyExists) {
+                    // Entity handover was lost — re-create it
+                    insertRentalEntity(devices, {
+                        renterDeviceId: row.renter_device_id,
+                        contractId: row.id,
+                        listing,
+                        rateMliPerKtoken: Number(row.rate_mli_per_ktoken_snapshot),
+                    }, helpers);
 
-                // Persist reconciled entity to DB
-                if (helpers?.saveDeviceData && devices[row.renter_device_id]) {
-                    await helpers.saveDeviceData(row.renter_device_id, devices[row.renter_device_id]);
+                    // Persist reconciled entity to DB
+                    if (helpers?.saveDeviceData && devices[row.renter_device_id]) {
+                        await helpers.saveDeviceData(row.renter_device_id, devices[row.renter_device_id]);
+                    }
+
+                    result.reconciled++;
+                    console.log(`[Rental] Reconciled renter entity for contract ${row.id} on device ${row.renter_device_id}`);
                 }
 
-                result.reconciled++;
-                console.log(`[Rental] Reconciled entity for contract ${row.id} on device ${row.renter_device_id}`);
+                // Reconcile owner entity leased_out status (lost on server restart)
+                markOwnerEntityLeasedOut(devices, {
+                    ownerDeviceId: listing.owner_device_id,
+                    ownerEntityId: listing.owner_entity_id,
+                    contractId: row.id,
+                });
             } catch (err) {
                 result.errors.push(`contract_${row.id}:${err.message}`);
             }
