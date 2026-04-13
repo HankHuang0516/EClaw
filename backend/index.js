@@ -12682,10 +12682,25 @@ async function orgChartForward(entity, deviceId, message) {
         }
 
         if (shouldForward) {
+            const fwdMsg = prefix + message;
             console.log(`[OrgChart] Forwarding message from #${entity.entityId} to superior #${superiorId}`);
-            pushToBot(superiorEntity, deviceId, 'org_forward', { message: prefix + message }).catch(err => {
-                console.error(`[OrgChart] Forward to #${superiorId} failed:`, err.message);
-            });
+            serverLog('info', 'org_forward', `#${entity.entityId} -> #${superiorId}: "${fwdMsg.slice(0, 80)}"`, { deviceId, entityId: entity.entityId });
+
+            if (superiorEntity.bindingType === 'channel' && channelModule && channelModule.pushToChannelCallback) {
+                // Channel-bound superior: use channel callback
+                channelModule.pushToChannelCallback(deviceId, superiorId, {
+                    event: 'org_forward',
+                    from: `entity:${entity.entityId}`,
+                    text: fwdMsg
+                }, superiorEntity.channelAccountId).catch(err => {
+                    console.error(`[OrgChart] Channel forward to #${superiorId} failed:`, err.message);
+                });
+            } else {
+                // Traditional webhook
+                pushToBot(superiorEntity, deviceId, 'org_forward', { message: fwdMsg }).catch(err => {
+                    console.error(`[OrgChart] Forward to #${superiorId} failed:`, err.message);
+                });
+            }
         }
     } catch (err) {
         console.error('[OrgChart] orgChartForward error:', err.message);
