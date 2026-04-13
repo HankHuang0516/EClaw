@@ -1264,12 +1264,16 @@
             transition: border-color 0.2s;
         }
         .org-option-card:hover { border-color: var(--primary); }
-        .org-option-card input[type="checkbox"] {
+        .org-option-card input[type="radio"] {
             margin-top: 3px;
             accent-color: var(--primary);
             width: 16px;
             height: 16px;
             flex-shrink: 0;
+        }
+        .org-option-card:has(input:checked) {
+            border-color: var(--primary);
+            background: rgba(108, 99, 255, 0.05);
         }
         .org-option-card .org-opt-text strong {
             display: block;
@@ -1365,27 +1369,34 @@
                 <div class="org-actions">
                     <button onclick="resetOrgChart()" data-i18n="org_reset">Reset to Default</button>
                 </div>
-                <!-- Behavior Options -->
+                <!-- Behavior Options (single-select) -->
                 <div class="org-options">
                     <label class="org-option-card">
-                        <input type="checkbox" id="orgOptKanban" onchange="saveOrgOptions()">
+                        <input type="radio" name="orgMode" value="none" onchange="saveOrgOptions()">
+                        <div class="org-opt-text">
+                            <strong data-i18n="org_opt_none_title">None</strong>
+                            <span data-i18n="org_opt_none_desc">No hierarchy behavior enabled</span>
+                        </div>
+                    </label>
+                    <label class="org-option-card">
+                        <input type="radio" name="orgMode" value="low" onchange="saveOrgOptions()">
                         <div class="org-opt-text">
                             <strong data-i18n="org_opt1_title">Low Interference</strong>
-                            <span data-i18n="org_opt1_desc">Superior becomes default kanban reviewer</span>
+                            <span data-i18n="org_opt1_desc">Superior becomes default kanban task reviewer</span>
                         </div>
                     </label>
                     <label class="org-option-card">
-                        <input type="checkbox" id="orgOptTask" onchange="saveOrgOptions()">
+                        <input type="radio" name="orgMode" value="recommended" onchange="saveOrgOptions()">
                         <div class="org-opt-text">
                             <strong data-i18n="org_opt2_title">Recommended</strong>
-                            <span data-i18n="org_opt2_desc">Auto-route messages to superior when tasks incomplete</span>
+                            <span data-i18n="org_opt2_desc">Auto-route messages to superior when kanban tasks incomplete</span>
                         </div>
                     </label>
                     <label class="org-option-card">
-                        <input type="checkbox" id="orgOptAll" onchange="saveOrgOptions()">
+                        <input type="radio" name="orgMode" value="strict" onchange="saveOrgOptions()">
                         <div class="org-opt-text">
                             <strong data-i18n="org_opt3_title">Close Supervision</strong>
-                            <span data-i18n="org_opt3_desc">All messages auto-routed to superior</span>
+                            <span data-i18n="org_opt3_desc">Superior becomes kanban reviewer + all messages auto-routed to superior</span>
                         </div>
                     </label>
                 </div>
@@ -2886,10 +2897,13 @@
                 }
             }
 
-            // Update options checkboxes
-            document.getElementById('orgOptKanban').checked = !!orgChartData.options.kanbanReviewer;
-            document.getElementById('orgOptTask').checked = !!orgChartData.options.taskForward;
-            document.getElementById('orgOptAll').checked = !!orgChartData.options.allForward;
+            // Map backend booleans → radio mode
+            let mode = 'none';
+            if (orgChartData.options.kanbanReviewer && orgChartData.options.allForward) mode = 'strict';
+            else if (orgChartData.options.taskForward) mode = 'recommended';
+            else if (orgChartData.options.kanbanReviewer) mode = 'low';
+            const radio = document.querySelector(`input[name="orgMode"][value="${mode}"]`);
+            if (radio) radio.checked = true;
 
             // Render tree
             renderOrgTree();
@@ -3200,9 +3214,11 @@
         }
 
         function saveOrgOptions() {
-            orgChartData.options.kanbanReviewer = document.getElementById('orgOptKanban').checked;
-            orgChartData.options.taskForward = document.getElementById('orgOptTask').checked;
-            orgChartData.options.allForward = document.getElementById('orgOptAll').checked;
+            const mode = document.querySelector('input[name="orgMode"]:checked')?.value || 'none';
+            // Map radio mode → backend booleans
+            orgChartData.options.kanbanReviewer = (mode === 'low' || mode === 'strict');
+            orgChartData.options.taskForward = (mode === 'recommended');
+            orgChartData.options.allForward = (mode === 'strict');
             scheduleOrgSave();
         }
 
