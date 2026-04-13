@@ -1,3 +1,10 @@
+## [1.965.4](https://github.com/HankHuang0516/EClaw/compare/v1.965.3...v1.965.4) (2026-04-13)
+
+
+### Bug Fixes
+
+* **portal:** rental modal shows 0 balance for authenticated owner ([#1737](https://github.com/HankHuang0516/EClaw/issues/1737)) ([f5adb95](https://github.com/HankHuang0516/EClaw/commit/f5adb9595000ca8bb54f3fe9cf39348c0a922f87)), closes [#1736](https://github.com/HankHuang0516/EClaw/issues/1736)
+
 ## [1.965.3](https://github.com/HankHuang0516/EClaw/compare/v1.965.2...v1.965.3) (2026-04-13)
 
 
