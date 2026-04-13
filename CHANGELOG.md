@@ -1,3 +1,10 @@
+## [1.968.3](https://github.com/HankHuang0516/EClaw/compare/v1.968.2...v1.968.3) (2026-04-13)
+
+
+### Bug Fixes
+
+* use db._getPool() instead of db.pool in rental proxy queries ([6b57b78](https://github.com/HankHuang0516/EClaw/commit/6b57b788575fc8c0ebc66df8548e7c5fd3fa55df))
+
 ## [1.968.2](https://github.com/HankHuang0516/EClaw/compare/v1.968.1...v1.968.2) (2026-04-13)
 
 
