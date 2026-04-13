@@ -7243,10 +7243,20 @@ app.post('/api/client/speak', async (req, res) => {
     }
 
     // Org chart: auto-forward incoming message to superior for entities with incomplete tasks (fire-and-forget)
-    for (const eId of targetIds) {
-        const targetEntity = device.entities[eId];
-        if (targetEntity && targetEntity.isBound) {
-            orgChartForward(targetEntity, deviceId, text).catch(() => {});
+    // Deduplicate: if multiple targets share the same superior, forward only once per superior
+    {
+        const forwardedSuperiors = new Set();
+        for (const eId of targetIds) {
+            const targetEntity = device.entities[eId];
+            if (!targetEntity || !targetEntity.isBound) continue;
+            try {
+                const orgData = await orgChartModule.getOrgChart(deviceId);
+                const superiorId = orgChartModule.getSuperior(orgData.hierarchy, eId);
+                if (superiorId != null && superiorId !== 'USER' && !forwardedSuperiors.has(superiorId)) {
+                    forwardedSuperiors.add(superiorId);
+                    orgChartForward(targetEntity, deviceId, text).catch(() => {});
+                }
+            } catch (_) { /* non-critical */ }
         }
     }
 
