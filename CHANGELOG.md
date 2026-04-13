@@ -1,3 +1,10 @@
+## [1.966.2](https://github.com/HankHuang0516/EClaw/compare/v1.966.1...v1.966.2) (2026-04-13)
+
+
+### Bug Fixes
+
+* **BUG-M8:** self-rental detection for Device-login users ([9e97415](https://github.com/HankHuang0516/EClaw/commit/9e974158c0ba20c32c3b50049f5ced03a0cd132f))
+
 ## [1.966.1](https://github.com/HankHuang0516/EClaw/compare/v1.966.0...v1.966.1) (2026-04-13)
 
 
