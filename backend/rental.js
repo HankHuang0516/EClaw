@@ -1546,6 +1546,14 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         res.json({ success: true, removed, kept, allTitles: [...allTitles], activeTitles: [...activeTitles] });
     } catch (e) { res.status(500).json({ success: false, error: e.message }); } });
 
+    // ── Debug: clear cooldowns for E2E testing ──
+    router.post('/debug/clear-cooldown', authMiddleware, async (req, res) => { try {
+        const userId = req.user?.userId;
+        if (!userId) return res.status(400).json({ success: false, error: 'userId required (use email login)' });
+        const result = await pool.query(`DELETE FROM rental_cooldowns WHERE user_id = $1`, [userId]);
+        res.json({ success: true, cleared: result.rowCount });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); } });
+
     // ── Debug: interview-start-fail (DO NOT REMOVE until user confirms fix) ──
     router.get('/debug/interview-start-fail', async (req, res) => { try {
         const { deviceId, deviceSecret } = req.query;
