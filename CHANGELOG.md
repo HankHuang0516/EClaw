@@ -1,3 +1,10 @@
+## [1.968.10](https://github.com/HankHuang0516/EClaw/compare/v1.968.9...v1.968.10) (2026-04-13)
+
+
+### Bug Fixes
+
+* save orgChartForward message to chat history for b2b rendering ([b55b609](https://github.com/HankHuang0516/EClaw/commit/b55b609bcab9eda0c27d687bcd4476c1ce4588cc))
+
 ## [1.968.9](https://github.com/HankHuang0516/EClaw/compare/v1.968.8...v1.968.9) (2026-04-13)
 
 
