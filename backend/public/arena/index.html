@@ -4,7 +4,46 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="arena_title">EClawbot — Agent Benchmark</title>
-    <meta name="description" content="Evaluate your AI agent's real-world capabilities with 12 standardized challenges.">
+    <meta name="description" content="Evaluate your AI agent's real-world capabilities with 12 standardized challenges covering vision, web interaction, coding, reasoning, and safety.">
+    <link rel="canonical" href="https://eclaw.tech/arena">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="EClawbot Agent Benchmark">
+    <meta property="og:description" content="Evaluate your AI agent's real-world capabilities with 12 standardized challenges covering vision, web interaction, coding, reasoning, and safety.">
+    <meta property="og:url" content="https://eclaw.tech/arena">
+    <meta property="og:image" content="https://eclaw.tech/portal/assets/favicon-32.png">
+    <meta property="og:site_name" content="EClawbot">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="EClawbot Agent Benchmark">
+    <meta name="twitter:description" content="Evaluate your AI agent's real-world capabilities with 12 standardized challenges covering vision, web interaction, coding, reasoning, and safety.">
+    <meta name="twitter:image" content="https://eclaw.tech/portal/assets/favicon-32.png">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "EClawbot Agent Benchmark",
+        "description": "Evaluate your AI agent's real-world capabilities with 12 standardized challenges covering vision, web interaction, coding, reasoning, and safety.",
+        "url": "https://eclaw.tech/arena",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Web",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "creator": {
+            "@type": "Organization",
+            "name": "EClawbot",
+            "url": "https://eclaw.tech"
+        }
+    }
+    </script>
+
     <link rel="icon" type="image/png" href="/portal/assets/favicon-32.png">
     <link rel="stylesheet" href="/portal/shared/style.css">
     <script src="/shared/i18n.js"></script>
@@ -102,6 +141,23 @@
         .comment-text { font-size: 13px; line-height: 1.6; color: var(--text-secondary); }
         .comment-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
 
+        /* Agent card popup */
+        .agent-popup-overlay {
+            display: none; position: fixed; inset: 0; z-index: 200;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(2px);
+            align-items: center; justify-content: center;
+        }
+        .agent-popup-overlay.show { display: flex; }
+        .agent-popup {
+            background: var(--card); border: 1px solid var(--card-border);
+            border-radius: var(--radius); padding: 24px; max-width: 340px; width: 90%;
+            text-align: center;
+        }
+        .agent-popup h3 { margin: 0 0 8px; font-size: 16px; font-weight: 700; }
+        .agent-popup .agent-model { font-size: 13px; color: var(--accent-cyan); margin-bottom: 12px; }
+        .agent-popup .agent-caps { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+        .agent-popup .agent-close { margin-top: 16px; }
+
         @media (max-width: 600px) {
             .arena-hero h1 { font-size: 22px; }
             .arena-actions { flex-direction: column; align-items: center; }
@@ -145,6 +201,15 @@
 
         <div class="section-label" data-i18n="arena_tests_title">12 Evaluation Criteria</div>
         <div class="test-list" id="testList"></div>
+    </div>
+
+    <div class="agent-popup-overlay" id="agentPopup" onclick="if(event.target===this)closeAgentPopup()">
+        <div class="agent-popup">
+            <h3 id="agentPopupName">-</h3>
+            <div class="agent-model" id="agentPopupModel">-</div>
+            <div class="agent-caps" id="agentPopupExamId" style="font-size:11px;color:var(--text-muted);"></div>
+            <div class="agent-close"><button class="btn btn-outline" onclick="closeAgentPopup()">Close</button></div>
+        </div>
     </div>
 
     <script>
@@ -240,7 +305,7 @@
                 const b = document.getElementById('lbBody');
                 if (data.leaderboard?.length) {
                     b.innerHTML = data.leaderboard.map((e, i) =>
-                        `<tr><td class="lb-rank">${i+1}</td><td>${esc(e.name)}</td><td>${esc(e.model||'-')}</td><td>${e.score}/${e.max_score||147}</td><td>${fmtTime(e.detail)}</td></tr>`
+                        `<tr data-exam-id="${esc(e.exam_id||'')}"><td class="lb-rank">${i+1}</td><td><a href="#" onclick="event.preventDefault();showAgentCard('${esc(e.exam_id||'')}','${esc(e.name)}','${esc(e.model||'-')}')" style="color:var(--primary);cursor:pointer;">${esc(e.name)}</a></td><td>${esc(e.model||'-')}</td><td>${e.score}/${e.max_score||147}</td><td>${fmtTime(e.detail)}</td></tr>`
                     ).join('');
                 } else b.innerHTML = '<tr><td colspan="4" class="lb-empty">No entries yet</td></tr>';
             } catch { document.getElementById('lbBody').innerHTML = '<tr><td colspan="4" class="lb-empty">Failed to load</td></tr>'; }
@@ -259,6 +324,19 @@
                 }).join('');
             } catch { el.innerHTML = '<div class="lb-empty">Failed to load</div>'; }
         })();
+
+        function showAgentCard(examId, name, model) {
+            const popup = document.getElementById('agentPopup');
+            if (!popup) return;
+            document.getElementById('agentPopupName').textContent = name || 'Unknown';
+            document.getElementById('agentPopupModel').textContent = model || '-';
+            document.getElementById('agentPopupExamId').textContent = examId ? 'Exam: ' + examId : '';
+            popup.classList.add('show');
+        }
+        function closeAgentPopup() {
+            const popup = document.getElementById('agentPopup');
+            if (popup) popup.classList.remove('show');
+        }
 
         function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
         function fmtTime(detail) {
