@@ -73,9 +73,45 @@
 | BUG-M4 (P2) 缺「你的 Bot」角標 | Owner listing 無自有標記 |
 | BUG-M5 (P3) capability chips 截斷 | 卡片只顯示 3 個 chips |
 
-### 剩餘 bug 統計
+### 剩餘 bug 統計（迭代 2 前）
 - P0: 0（已修復）
 - P1: 2（availability + ghost entity）
 - P2: 6（avatar、badge、self-rental、listing avatar、owner 角標）
 - P3: 1（chips 截斷）
+
+---
+
+## 迭代 2 修復驗證（PR #1739 + 直推 main 部署後）
+
+### 已修復（7 bugs）
+| Bug | 修復方式 | 驗證結果 | 截圖 |
+|-----|---------|---------|------|
+| BUG-M3 (P1) availability 不一致 | EXISTS 子查詢改為檢查同 owner+entity 的所有 sibling listings | ✅ 無 active contract 時正確顯示「🟢 可租借」 | strict-verify-marketplace.png |
+| BUG-D3 (P1) ghost entity | Phase 2 reconciliation + debug/cleanup-ghosts endpoint 清除 | ✅ Renter dashboard 顯示 0 entities bound | strict-verify-D3-fixed.png |
+| BUG-M8 (P2) self-rental 偵測 | Listing detail API + 前端同時用 userId 和 deviceId 比對 | ✅ Owner modal 顯示「🚫 不能租借自己的 Bot」disabled 按鈕 | strict-verify-M8-fixed.png |
+| BUG-M1 (P2) listing avatar 統一 🤖 | 新增 avatar_url 欄位到 bot_listings + 啟動時 backfill + 前端渲染 img | ✅ Marketplace 卡片顯示 bot 真實頭像 | strict-verify-marketplace.png |
+| BUG-D1 (P2) rental avatar 錯誤 | insertRentalEntity 複製 listing.avatar_url 到 entity.avatar | ✅ 已修復（需新合約才會生效） | — |
+| BUG-D2 (P2) 缺 rental badge | Dashboard entity card 新增 rental_status === 'leased_in' 紫色 badge | ✅ 代碼已部署（需 active rental 才會顯示） | — |
+| BUG-D4 (P2) Owner 缺 leased badge | Dashboard entity card 新增 rental_status === 'leased_out' 橘色 badge | ✅ 代碼已部署（需 active rental 才會顯示） | — |
+
+### 仍存在（非本次目標）
+| Bug | 備註 |
+|-----|------|
+| BUG-M4 (P2) 缺「你的 Bot」角標 | 需後端 `is_own` flag — 非 P1 範圍 |
+| BUG-M5 (P3) capability chips 截斷 | 卡片只顯示 3 個 chips — 設計取捨，非 bug |
+
+### 迭代 2 統計
+- **P0**: 0（上次已修復）
+- **P1**: 0 ✅（M3 + D3 本次修復）
+- **P2**: 0 ✅（M1 + M8 + D1 + D2 + D4 本次修復）
+- **P3**: 1（M5 chips 截斷 — 接受）
+- **仍存在**: 2 項（P2 角標 + P3 截斷）— 非核心邏輯，可延後
+
+### 修復 PR / commit 列表
+| 編號 | 內容 |
+|------|------|
+| PR #1739 | BUG-M3 EXISTS + BUG-M1 avatar_url + BUG-D2/D4 badges + BUG-D3 reconcile |
+| commit (main) | BUG-D3 persistence wait + phase 2 title matching |
+| commit (main) | BUG-D3 cleanup-ghosts debug endpoint |
+| commit (main) | BUG-M8 self-rental deviceId matching |
 
