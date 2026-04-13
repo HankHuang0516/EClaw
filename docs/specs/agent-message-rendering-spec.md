@@ -1,7 +1,8 @@
 # 智能體協作訊息渲染規範 (Agent Collaboration Message Rendering Spec)
 
-> **版本**: 1.0.0
+> **版本**: 1.1.0
 > **建立日期**: 2026-03-23
+> **最後更新**: 2026-04-13
 > **適用範圍**: Web Portal (`chat.html`, `share-chat.html`, `ai-chat.js`)
 > **目的**: 定義所有智能體訊息的分類、資料結構與渲染行為，作為所有後續 UI 改動的唯一標準。
 
@@ -18,6 +19,7 @@
 | `PLATFORM` | 平台智能體 | EClawbot 系統自動回覆 | `source='platform'`, `is_from_user=false`, `is_from_bot=false` |
 | `REMOTE_USER` | 跨裝置用戶 | 來自其他裝置的用戶 | `is_from_user=true` + source 符合 `xdevice:` + `fromPublicCode` 不在本裝置 |
 | `REMOTE_BOT` | 跨裝置智能體 | 來自其他裝置的智能體 | `is_from_bot=true` + source 含外部裝置的 publicCode |
+| `RENTAL_BOT` | 租借智能體 | 從市場租借的智能體 | `LOCAL_BOT` + entity 的 `rental_status='leased_out'` |
 
 ### 1.1 模型身份結構（Identity Schema）
 
@@ -121,11 +123,15 @@ interface ChatMessage {
 | 用戶從 Web 發送 | `web_chat` | `web_chat` |
 | 用戶從 Android 發送 | `android_chat` | `android_chat` |
 | Widget 發送 | `widget` | `widget` |
+| Android 桌面小工具 | `android_widget` | `android_widget` |
 | 排程訊息 | `scheduled` | `scheduled` |
 | Mission 通知 | `mission_notify` | `mission_notify` |
+| 看板通知 | `kanban_notify` | `kanban_notify` |
+| 表單提交 | `form_submission` | `form_submission` |
 | Bot 回覆（單一） | `entity:{id}:{char}` | `entity:0:🦞` |
 | Bot → Bot（多目標） | `entity:{id}:{char}->{id1},{id2}` | `entity:0:🦞->1,2` |
 | Bot 廣播 | `entity:{id}:{char}->broadcast` | `entity:0:🦞->broadcast` |
+| 組織架構轉發 | `entity:{id}:{char}->{superiorId}` | `entity:3:🐶->2` |
 | 跨裝置發出 | `xdevice:{fromCode}:{char}->{toCode}` | `xdevice:ABC123:🦞->XYZ456` |
 | 平台系統訊息 | `platform` | `platform` |
 
@@ -300,6 +306,144 @@ is_from_user: true
 
 ---
 
+### 4.1.5 租借 Bot 訊息（Rental Bot Messages）
+
+**場景**：從 Bot 市場租借的智能體發送訊息。
+
+```
+發送方向: RentalBot → User / RentalBot → OtherEntity
+Source 格式: entity:{id}:{char}          （單一回覆）
+             entity:{id}:{char}->{ids}   （speak-to / broadcast）
+is_from_bot: true
+```
+
+**關鍵規則**：租借 Bot 的 source 格式**與本地 Bot 完全相同**（`entity:` 開頭），不使用特殊前綴。租借身份由以下 DB 欄位判定，非 source 欄位：
+
+| 判定欄位 | 位置 | 說明 |
+|---------|------|------|
+| `rental_status` | entity 物件 | `'leased_out'` 表示已出租 |
+| `rental_contract_id` | entity 物件 | 關聯的租約 ID |
+| `official_bot_bindings` | DB 表 | 綁定關係（`bot_type: 'free' \| 'personal'`） |
+
+**渲染規則**：
+
+```
+┌─────────────────────────────────────────────────┐
+│ [Bot頭像]                                        │
+│ 🐶 Mac_E (#3) → You          🤖 Rented          │
+│ ┌──────────────────────┐                         │
+│ │  租借 Bot 回覆文字   │                         │
+│ └──────────────────────┘                         │
+│ 👍  👎                                           │
+└─────────────────────────────────────────────────┘
+```
+
+- 標籤格式與一般 Bot 相同：`{entityLabel} → You`
+- Entity 卡片（Dashboard）顯示 `🤖 Rented` 徽章
+- 租金資訊（e.g. `0.5 e幣/1K`）顯示在 Dashboard Entity 卡片，不顯示在 Chat 泡泡
+- Chat 渲染不區分租借/自有 Bot — 統一走 `parseEntitySource()` 解析
+
+---
+
+### 4.1.6 組織架構自動轉發訊息（Org Chart Auto-Forward）
+
+**場景**：下屬 Entity 有未完成看板任務時，訊息自動轉發給組織圖中的上級。
+
+```
+發送方向: Entity[N] → Entity[Superior]（自動觸發，非手動發送）
+Source 格式: entity:{subordinateId}:{char}->{superiorId}
+is_from_bot: true
+```
+
+**觸發條件**（`orgChartForward` 函式）：
+
+1. 裝置組織圖已設定 `taskForward: true`
+2. 目標 Entity 有未完成看板任務（`status IN ('todo', 'in_progress')`）
+3. 目標 Entity 在階層中有上級（非 `USER`）
+4. 上級 Entity 已綁定（`isBound=true`）
+
+**訊息前綴**：
+
+| 選項 | 前綴 | 說明 |
+|------|------|------|
+| `taskForward` | `[📋 TASK FWD from #N]` | 僅在有未完成任務時轉發 |
+| `allForward` | `[📢 FWD from #N]` | 轉發所有訊息 |
+
+**渲染規則**：
+
+```
+┌─────────────────────────────────────────────────┐
+│ [下屬Bot頭像]                                    │
+│ 🐶 Mac_E (#3) → 發送至 🦸 主管 (#2)             │
+│ ┌──────────────────────────────────────────────┐ │
+│ │  [📋 TASK FWD from #3] 原始訊息內容          │ │
+│ └──────────────────────────────────────────────┘ │
+│ 👍  👎                                           │
+└─────────────────────────────────────────────────┘
+```
+
+- Source 走 `entity:` 格式 → `parseEntitySource()` 解析為 bot-to-bot
+- 標籤渲染：`{下屬Label} → 發送至 {上級Label}`
+- 訊息前綴 `[📋 TASK FWD from #N]` 為純文字，不做特殊渲染
+- **不做廣播合併**：轉發訊息不參與 `groupBroadcastMessages` 分組
+- **防無限迴圈**：以 `[📋 TASK FWD` / `[📢 FWD` 開頭的訊息不會被再次轉發
+
+**觸發路徑**（所有入站管道均支援）：
+
+| 路徑 | Handler | 說明 |
+|------|---------|------|
+| `POST /api/client/speak` | `index.js` | 用戶發訊 → 下屬 → 轉發上級 |
+| `POST /api/transform` | `index.js` | Bot 回覆 → 轉發上級 |
+| `POST /api/channel/message` | `channel-api.js` | Channel bot 回覆 → 轉發上級 |
+| `POST /api/entity/speak-to` | `index.js` | Entity 互傳 → 轉發上級（deprecated） |
+| Transform `speakTo` | `index.js` | Bot speakTo 另一 entity → 轉發上級 |
+
+---
+
+### 4.1.7 看板通知訊息（Kanban Notification）
+
+**場景**：看板自動化觸發、任務狀態變更、任務催促等系統通知。
+
+```
+Source 格式: kanban_notify
+is_from_user: false
+is_from_bot: false
+```
+
+**渲染規則**：
+
+```
+┌─────────────────────────────────────────────────┐
+│ [Bot頭像]                                        │
+│ 🐶 Mac_E (#3) · kanban_notify                   │
+│ ┌──────────────────────────────────────────────┐ │
+│ │  🗓️ 自動化觸發：[任務名稱]                   │ │
+│ │  子卡已建立: [Auto] 任務名稱                  │ │
+│ └──────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────┘
+```
+
+- 標籤：`{entityLabel} · kanban_notify`
+- sourceTag 渲染為 `kanban_notify`（與 `mission_notify` 同級，作為系統通知類別）
+- 泡泡靠左，無反應按鈕（系統通知）
+
+---
+
+### 4.1.8 表單提交訊息（Form Submission）
+
+**場景**：訪客在公開 Note Page 提交表單，回傳存入 Entity 聊天記錄。
+
+```
+Source 格式: form_submission
+is_from_user: false
+is_from_bot: false
+```
+
+- 標籤：`{entityLabel} · form_submission`
+- 泡泡靠左，顯示表單欄位內容
+
+---
+
 ## 4.2 尹代理訊息介面（Yi Agent / AI Assistant Interface）
 
 「尹代理」為 EClawbot 內建的 AI 客服助理，透過 `ai-chat.js` 提供浮動聊天視窗，後端對接 `POST /api/ai-support/chat`（async submit/poll 模式）。
@@ -423,10 +567,12 @@ AI 回覆:
 2. 類型識別  →  parseEntitySource(source) → { crossDevice, entityId, fromPublicCode, toPublicCode }
 3. 標籤建構  →  buildSourceLabel(msg, entities, myPublicCodeMap)
 4. 分組判斷  →  groupBroadcastMessages (同 source entity + 5s 內 + 相同文字)
-5. 媒體渲染  →  photo / video / file / voice
-6. 文字渲染  →  linkify → link-preview slot
-7. 反應按鈕  →  僅 bot 訊息（is_from_bot=true）且非發送方
-8. 已讀回執  →  僅發送方訊息（isSent=true）
+                ⚠️ 組織架構轉發訊息（[📋 TASK FWD / [📢 FWD 開頭）不參與分組
+5. sourceTag →  kanban_notify / form_submission / mission_notify / scheduled / platform
+6. 媒體渲染  →  photo / video / file / voice
+7. 文字渲染  →  linkify → link-preview slot
+8. 反應按鈕  →  僅 bot 訊息（is_from_bot=true）且非發送方
+9. 已讀回執  →  僅發送方訊息（isSent=true）
 ```
 
 ### 5.2 禁止行為
@@ -436,6 +582,8 @@ AI 回覆:
 - ❌ 不得在 share-chat（只讀模式）顯示反應按鈕或輸入框
 - ❌ 不得在 Android WebView 渲染 `ai-chat.js` 浮動視窗
 - ❌ 不得跨裝置訊息做廣播合併
+- ❌ 不得在 Chat 泡泡中顯示租借 Bot 的租金資訊（租金僅顯示在 Dashboard Entity 卡片）
+- ❌ 不得對組織架構轉發訊息做廣播合併（`[📋 TASK FWD` / `[📢 FWD` 前綴訊息）
 
 ### 5.3 標籤文字 i18n 規範
 
@@ -453,7 +601,10 @@ AI 回覆:
 | `chat_gatekeeper_blocked` | 訊息被安全過濾器攔截 | Message blocked by security filter |
 | `chat_schedule_tag` | 排程 | Schedule |
 | `chat_mission_control` | 任務控制 | Mission Control |
+| `chat_kanban_notify` | 看板通知 | Kanban |
+| `chat_form_submission` | 表單提交 | Form |
 | `chat_cross_device` | 跨裝置 | Cross-Device |
+| `chat_rented_badge` | 租借中 | Rented |
 
 ### 5.4 Filter 狀態與渲染的關係
 
@@ -473,6 +624,7 @@ Chat 頁面支援四種 filter，各 filter 下的訊息可見性：
 | 版本 | 日期 | 說明 |
 |------|------|------|
 | 1.0.0 | 2026-03-23 | 初始版本，依現有 chat.html 邏輯整理 |
+| 1.1.0 | 2026-04-13 | 新增：租借 Bot (§4.1.5)、組織架構轉發 (§4.1.6)、看板通知 (§4.1.7)、表單提交 (§4.1.8)；新增 source 格式 `kanban_notify`、`form_submission`、`android_widget`、org-forward；新增 `RENTAL_BOT` 模型類型；更新 §5.1 分組排除規則、§5.2 禁止行為、§5.3 i18n keys |
 
 ---
 
