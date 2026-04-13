@@ -1506,6 +1506,41 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         });
     } catch (err) { res.status(500).json({ success: false, error: err.message }); } });
 
+    // ── Debug: ghost entity cleanup (BUG-D3) ──
+    router.post('/debug/cleanup-ghosts', async (req, res) => { try {
+        const { deviceId, deviceSecret } = req.body || req.query;
+        if (!deviceId || !deviceSecret) return res.json({ success: false, error: 'deviceId+deviceSecret required' });
+        const dev = _interviewDeps.devices?.[deviceId];
+        if (!dev || dev.deviceSecret !== deviceSecret) return res.status(403).json({ success: false, error: 'forbidden' });
+        // Find all listing titles (active and inactive)
+        const allTitles = new Set();
+        const activeTitles = new Set();
+        const allRes = await pool.query(`SELECT DISTINCT title FROM bot_listings`);
+        for (const r of allRes.rows) allTitles.add(r.title);
+        const activeRes = await pool.query(
+            `SELECT bl.title FROM rental_contracts c JOIN bot_listings bl ON bl.id = c.listing_id
+             WHERE c.status IN ('reserved','active','suspended_insufficient_funds')`
+        );
+        for (const r of activeRes.rows) activeTitles.add(r.title);
+        const removed = [];
+        const kept = [];
+        for (const [slotId, entity] of Object.entries(dev.entities)) {
+            if (!entity.isBound) continue;
+            const name = entity.name || entity.character || '';
+            const isRental = entity.rental_status || entity.rental_contract_id ||
+                entity.webhook?.url?.startsWith('__rental_proxy__') || allTitles.has(name);
+            if (!isRental) continue;
+            if (activeTitles.has(name)) { kept.push({ slot: slotId, name, reason: 'active_contract' }); continue; }
+            if (entity.publicCode && _interviewDeps.publicCodeIndex) delete _interviewDeps.publicCodeIndex[entity.publicCode];
+            delete dev.entities[slotId];
+            removed.push({ slot: slotId, name });
+        }
+        if (removed.length > 0 && _interviewDeps.saveDeviceData) {
+            await _interviewDeps.saveDeviceData(deviceId, dev);
+        }
+        res.json({ success: true, removed, kept, allTitles: [...allTitles], activeTitles: [...activeTitles] });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); } });
+
     // ── Debug: interview-start-fail (DO NOT REMOVE until user confirms fix) ──
     router.get('/debug/interview-start-fail', async (req, res) => { try {
         const { deviceId, deviceSecret } = req.query;
