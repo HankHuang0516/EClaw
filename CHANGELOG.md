@@ -1,3 +1,10 @@
+## [1.968.9](https://github.com/HankHuang0516/EClaw/compare/v1.968.8...v1.968.9) (2026-04-13)
+
+
+### Bug Fixes
+
+* add orgChartForward to channel-api /message handler ([ca62fbb](https://github.com/HankHuang0516/EClaw/commit/ca62fbb130525ca06221333793931394c964fb23))
+
 ## [1.968.8](https://github.com/HankHuang0516/EClaw/compare/v1.968.7...v1.968.8) (2026-04-13)
 
 
