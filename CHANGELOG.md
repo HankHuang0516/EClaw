@@ -1,3 +1,10 @@
+## [1.968.11](https://github.com/HankHuang0516/EClaw/compare/v1.968.10...v1.968.11) (2026-04-13)
+
+
+### Bug Fixes
+
+* auto-fill rental entity avatar from owner entity ([#1743](https://github.com/HankHuang0516/EClaw/issues/1743)) ([333acb6](https://github.com/HankHuang0516/EClaw/commit/333acb69d555f0c53112194de3db225e11a689a4))
+
 ## [1.968.10](https://github.com/HankHuang0516/EClaw/compare/v1.968.9...v1.968.10) (2026-04-13)
 
 
