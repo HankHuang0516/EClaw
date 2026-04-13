@@ -1,3 +1,10 @@
+## [1.965.2](https://github.com/HankHuang0516/EClaw/compare/v1.965.1...v1.965.2) (2026-04-13)
+
+
+### Bug Fixes
+
+* **org-chart:** redraw connectors after FLIP animation + animate all lines ([c2d8bcf](https://github.com/HankHuang0516/EClaw/commit/c2d8bcfc5877595bbf12eeda0410696f60dab69e))
+
 ## [1.965.1](https://github.com/HankHuang0516/EClaw/compare/v1.965.0...v1.965.1) (2026-04-12)
 
 
