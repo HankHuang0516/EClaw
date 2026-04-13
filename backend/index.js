@@ -1773,7 +1773,24 @@ app.use('/api/rental', rentalModule.router);
 // Defer schema init: rental_contracts has FKs to user_accounts and
 // bot_listings, so user_accounts must be created first.
 if (process.env.NODE_ENV !== 'test') {
-    setTimeout(() => rentalModule.initRentalDatabase(), 2500);
+    setTimeout(async () => {
+        await rentalModule.initRentalDatabase();
+        // BUG-D3: Run reconciliation after DB + devices are loaded
+        if (persistenceReady && typeof rentalModule.reconcileRentalEntities === 'function') {
+            try {
+                const result = await rentalModule.reconcileRentalEntities(devices, {
+                    generateBotSecret, generatePublicCode, publicCodeIndex,
+                    ensureOneEmptySlot, getOrCreateDevice, saveDeviceData: db.saveDeviceData,
+                });
+                if (result.reconciled > 0 || result.errors.length > 0) {
+                    console.log(`[Rental] Reconciled ${result.reconciled} rental entities` +
+                        (result.errors.length ? `, errors: ${result.errors.join('; ')}` : ''));
+                }
+            } catch (err) {
+                console.error('[Rental] Reconciliation failed:', err.message);
+            }
+        }
+    }, 2500);
 }
 
 // ============================================
@@ -12586,21 +12603,8 @@ if (typeof rentalModule.setInterviewDeps === 'function') {
     rentalModule.setInterviewDeps({ pushToBot, devices, arenaModule, setInterviewCapabilities, generateBotSecret, generatePublicCode, publicCodeIndex, ensureOneEmptySlot, getOrCreateDevice, saveDeviceData: db.saveDeviceData, get pushToChannelCallback() { return channelModule?.pushToChannelCallback?.bind(channelModule); } });
 }
 
-// Reconcile rental entities that may have been lost during server restart (#1713).
-// Runs after persistence + rental deps are both ready.
-if (persistenceReady && typeof rentalModule.reconcileRentalEntities === 'function') {
-    rentalModule.reconcileRentalEntities(devices, {
-        generateBotSecret, generatePublicCode, publicCodeIndex,
-        ensureOneEmptySlot, getOrCreateDevice, saveDeviceData: db.saveDeviceData,
-    }).then(result => {
-        if (result.reconciled > 0 || result.errors.length > 0) {
-            console.log(`[Rental] Reconciled ${result.reconciled} rental entities` +
-                (result.errors.length ? `, errors: ${result.errors.join('; ')}` : ''));
-        }
-    }).catch(err => {
-        console.error('[Rental] Reconciliation failed:', err.message);
-    });
-}
+// NOTE: reconcileRentalEntities now runs inside the initRentalDatabase
+// setTimeout above, after persistence is ready (BUG-D3 fix).
 
 // NOTE: arenaModule.setAutoPushDeps is called AFTER channelModule init (see below ~line 13180+)
 
