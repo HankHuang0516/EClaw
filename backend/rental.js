@@ -1031,29 +1031,39 @@ async function reconcileRentalEntities(devices, helpers) {
     }
 
     // Phase 2: Catch legacy ghost entities without rental metadata.
-    // Query ended contracts and match by renter_device_id + listing title ≈ entity name.
+    // Build a set of listing titles that have active contracts.
     try {
-        const ended = await pool.query(
-            `SELECT c.id, c.renter_device_id, bl.title
-             FROM rental_contracts c JOIN bot_listings bl ON bl.id = c.listing_id
-             WHERE c.status IN ('ended_normal','ended_early','ended_expired','ended_violation','ended_disputed')`
+        const activeTitles = new Set();
+        const activeRes = await pool.query(
+            `SELECT bl.title FROM rental_contracts c
+             JOIN bot_listings bl ON bl.id = c.listing_id
+             WHERE c.status IN ('reserved','active','suspended_insufficient_funds')`
         );
-        for (const row of ended.rows) {
-            const device = devices[row.renter_device_id];
+        for (const r of activeRes.rows) activeTitles.add(r.title);
+
+        // Get all listing titles (to identify rental entity names)
+        const allTitles = new Set();
+        const allRes = await pool.query(`SELECT DISTINCT title FROM bot_listings`);
+        for (const r of allRes.rows) allTitles.add(r.title);
+
+        // Scan all devices for entities whose name matches a listing title
+        // but the listing has NO active contract — ghost entity
+        for (const [deviceId, device] of Object.entries(devices)) {
             if (!device?.entities) continue;
             for (const [slotId, entity] of Object.entries(device.entities)) {
                 if (!entity.isBound) continue;
-                // Skip entities that already have rental metadata (handled in Phase 1)
                 if (entity.rental_contract_id || entity.rental_status) continue;
-                // Match by name pattern: insertRentalEntity sets name = listing.title
                 const name = entity.name || entity.character || '';
-                if (name === row.title || name === `EClaw 小助手 — ${row.title}`) {
-                    if (entity.publicCode && helpers?.publicCodeIndex) delete helpers.publicCodeIndex[entity.publicCode];
-                    delete device.entities[slotId];
-                    reconciled++;
-                    if (helpers?.saveDeviceData) await helpers.saveDeviceData(row.renter_device_id, device);
-                    console.log(`[Rental] Phase 2 reconciled ghost: ${row.renter_device_id}/${slotId} name="${name}"`);
-                }
+                // Check if entity name matches any listing title
+                if (!allTitles.has(name)) continue;
+                // If the title has an active contract, don't remove — it's legit
+                if (activeTitles.has(name)) continue;
+                // Ghost: name matches a listing but no active contract
+                if (entity.publicCode && helpers?.publicCodeIndex) delete helpers.publicCodeIndex[entity.publicCode];
+                delete device.entities[slotId];
+                reconciled++;
+                if (helpers?.saveDeviceData) await helpers.saveDeviceData(deviceId, device);
+                console.log(`[Rental] Phase 2 reconciled ghost: ${deviceId}/${slotId} name="${name}"`);
             }
         }
     } catch (e) { errors.push(`phase2: ${e.message}`); }
