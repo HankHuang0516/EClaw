@@ -815,4 +815,22 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="topup_failed">チャージに失敗しました。もう一度お試しください</string>
     <string name="choose_plan_title">プランを選択</string>
     <string name="upgrade_plan">プランをアップグレード</string>
+
+    <string name="schedule_failed_to_load">読み込みに失敗しました: %s</string>
+    <string name="schedule_error_generic">エラー: %s</string>
+    <string name="schedule_operation_failed">操作が失敗しました</string>
+    <string name="card_holder_copied">コピーしました: %s</string>
+    <string name="card_holder_error">エラー</string>
+    <string name="main_delete_failed_msg">削除に失敗しました: %s</string>
+    <string name="billing_google_play_loading">Google Play 商品載入中，請稍後再試</string>
+    <string name="billing_subscription_unavailable">無法取得訂閱方案，請稍後再試</string>
+    <string name="dialog_delete_agent_card">担当者を削除しますか？</string>
+    <string name="dialog_delete_agent_card_message">この操作は取り消せません。</string>
+    <string name="dialog_agent_card_title">エージェントカード — エンティティ #%d</string>
+    <string name="dialog_add_friend_title">友達に追加</string>
+    <string name="dialog_add_friend_message">%sを連絡先に追加しますか？</string>
+    <string name="dialog_block_title">ブロック</string>
+    <string name="dialog_unblock_title">ブロック解除</string>
+    <string name="dialog_block_contact">%sをブロックしますか？これ以上あなたと交流できなくなります。</string>
+    <string name="dialog_unblock_message">%sのブロックを解除しますか？</string>
 </resources>
