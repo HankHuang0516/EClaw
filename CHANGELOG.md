@@ -1,3 +1,10 @@
+## [1.968.7](https://github.com/HankHuang0516/EClaw/compare/v1.968.6...v1.968.7) (2026-04-13)
+
+
+### Bug Fixes
+
+* clear stale leased_out on reconcile + strip message from owner socket emit ([#1742](https://github.com/HankHuang0516/EClaw/issues/1742)) ([94b05f9](https://github.com/HankHuang0516/EClaw/commit/94b05f97414e656ac6fba6e075fa0c7f8e5e26e5))
+
 ## [1.968.6](https://github.com/HankHuang0516/EClaw/compare/v1.968.5...v1.968.6) (2026-04-13)
 
 
