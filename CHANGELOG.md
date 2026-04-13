@@ -1,3 +1,15 @@
+# [1.969.0](https://github.com/HankHuang0516/EClaw/compare/v1.968.12...v1.969.0) (2026-04-13)
+
+
+### Bug Fixes
+
+* merge duplicate reconcileRentalEntities + fix test mocks ([9aada10](https://github.com/HankHuang0516/EClaw/commit/9aada105ab32642776fed0692f9bd3bd66cc035c))
+
+
+### Features
+
+* add /auto_approve slash command to chat autocomplete ([462f86e](https://github.com/HankHuang0516/EClaw/commit/462f86ee6944e2b0e4d68d1cb17de7cab8f5f049))
+
 ## [1.968.12](https://github.com/HankHuang0516/EClaw/compare/v1.968.11...v1.968.12) (2026-04-13)
 
 
