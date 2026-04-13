@@ -1,3 +1,10 @@
+# [1.968.0](https://github.com/HankHuang0516/EClaw/compare/v1.967.2...v1.968.0) (2026-04-13)
+
+
+### Features
+
+* add debug/clear-cooldown endpoint for E2E testing ([cb91814](https://github.com/HankHuang0516/EClaw/commit/cb91814eb100516667ec6fc77903f47a29d836f4))
+
 ## [1.967.2](https://github.com/HankHuang0516/EClaw/compare/v1.967.1...v1.967.2) (2026-04-13)
 
 
