@@ -141,10 +141,32 @@ async function initRentalDatabase() {
                 }
             }
         }
+        // Add avatar_url column if missing (BUG-M1: display real bot avatar)
+        try {
+            await pool.query(`ALTER TABLE bot_listings ADD COLUMN IF NOT EXISTS avatar_url TEXT`);
+        } catch (_) { /* column may already exist */ }
+
         // Startup cleanup: revert any listings stuck in 'interview' (server crashed mid-run)
         await pool.query(
             `UPDATE bot_listings SET status = 'draft', updated_at = NOW() WHERE status = 'interview'`
         );
+
+        // BUG-M1: Backfill avatar_url from in-memory entity data for existing listings
+        if (_interviewDeps.devices) {
+            try {
+                const nullAvatars = await pool.query(
+                    `SELECT id, owner_device_id, owner_entity_id FROM bot_listings WHERE avatar_url IS NULL`
+                );
+                for (const row of nullAvatars.rows) {
+                    const dev = _interviewDeps.devices[row.owner_device_id];
+                    const ent = dev?.entities?.[row.owner_entity_id];
+                    if (ent?.avatar) {
+                        await pool.query(`UPDATE bot_listings SET avatar_url = $1 WHERE id = $2`, [ent.avatar, row.id]);
+                    }
+                }
+                if (nullAvatars.rowCount > 0) console.log(`[Rental] Backfilled avatar_url for ${nullAvatars.rowCount} listing(s)`);
+            } catch (e) { console.warn('[Rental] Avatar backfill warning:', e.message); }
+        }
 
         console.log('[Rental] Database initialized');
     } catch (error) {
@@ -161,6 +183,7 @@ async function createListing({
     title, description = null, rateMliPerKtoken,
     minRentalMinutes = MIN_RENTAL_MINUTES,
     maxRentalMinutes = MAX_RENTAL_MINUTES,
+    avatarUrl = null,
 }) {
     assertString('owner_user_id', ownerUserId, { max: 64 });
     assertString('owner_device_id', ownerDeviceId, { max: 64 });
@@ -191,11 +214,11 @@ async function createListing({
     const res = await pool.query(
         `INSERT INTO bot_listings
             (owner_user_id, owner_device_id, owner_entity_id, title, description,
-             rate_mli_per_ktoken, min_rental_minutes, max_rental_minutes, status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft')
+             rate_mli_per_ktoken, min_rental_minutes, max_rental_minutes, avatar_url, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'draft')
          RETURNING id, status, created_at`,
         [ownerUserId, ownerDeviceId, ownerEntityId, title, description,
-         rateMliPerKtoken, minRentalMinutes, maxRentalMinutes]
+         rateMliPerKtoken, minRentalMinutes, maxRentalMinutes, avatarUrl || null]
     );
     return res.rows[0];
 }
@@ -353,10 +376,13 @@ async function searchMarketplace({
                 bl.model_detected, bl.capabilities, bl.benchmark_score,
                 bl.avg_rating, bl.total_rentals, bl.uptime_pct,
                 bl.owner_device_id, bl.owner_entity_id,
+                bl.avatar_url,
                 bl.created_at AS bl_created_at,
                 EXISTS (
                     SELECT 1 FROM rental_contracts ac
-                    WHERE ac.listing_id = bl.id
+                    JOIN bot_listings sib ON sib.id = ac.listing_id
+                    WHERE sib.owner_device_id = bl.owner_device_id
+                      AND sib.owner_entity_id = bl.owner_entity_id
                       AND ac.status IN ('reserved', 'active', 'suspended_insufficient_funds')
                 ) AS has_active_contract
             FROM bot_listings bl
@@ -894,6 +920,8 @@ function insertRentalEntity(devices, {
     entity.publicCode = publicCode;
     entity.character = listing.title || 'Rental Bot';
     entity.name = listing.title || 'Rental Bot';
+    // BUG-D1: Copy the owner's avatar so rental entity displays correctly on dashboard
+    entity.avatar = listing.avatar_url || null;
     entity.state = 'IDLE';
     entity.message = `Rented from marketplace (${rateMliPerKtoken / 1000} e幣/1K)`;
     entity.lastUpdated = Date.now();
@@ -961,6 +989,42 @@ function clearOwnerEntityLeasedOut(devices, { ownerDeviceId, ownerEntityId }) {
 
     entity.rental_status = null;
     entity.rental_contract_id = null;
+}
+
+/**
+ * BUG-D3: Reconcile rental entities — remove orphaned rental entities
+ * whose contracts have ended but weren't cleaned up (e.g. server crash,
+ * deployed before removeRentalEntity was implemented).
+ */
+async function reconcileRentalEntities(devices, helpers) {
+    let reconciled = 0;
+    const errors = [];
+    for (const [deviceId, device] of Object.entries(devices)) {
+        if (!device?.entities) continue;
+        for (const [slotId, entity] of Object.entries(device.entities)) {
+            if (entity.rental_status !== 'leased_in' || !entity.rental_contract_id) continue;
+            // Check if the contract is still active
+            try {
+                const res = await pool.query(
+                    `SELECT status FROM rental_contracts WHERE id = $1`,
+                    [entity.rental_contract_id]
+                );
+                const status = res.rows[0]?.status;
+                if (!status || !['reserved', 'active', 'suspended_insufficient_funds'].includes(status)) {
+                    // Contract ended or missing — remove ghost entity
+                    if (entity.publicCode && helpers?.publicCodeIndex) {
+                        delete helpers.publicCodeIndex[entity.publicCode];
+                    }
+                    delete device.entities[slotId];
+                    reconciled++;
+                    if (helpers?.saveDeviceData) {
+                        await helpers.saveDeviceData(deviceId, device);
+                    }
+                }
+            } catch (e) { errors.push(`${deviceId}/${slotId}: ${e.message}`); }
+        }
+    }
+    return { reconciled, errors };
 }
 
 /** Minimal entity stub for a new rental slot. */
@@ -1103,10 +1167,19 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
     router.post('/listing', authMiddleware, rentalRoute(async (req, res) => {
         const { ownerDeviceId, ownerEntityId, title, description,
                 rateMliPerKtoken, minRentalMinutes, maxRentalMinutes } = req.body || {};
+        // BUG-M1: capture entity avatar for marketplace display
+        let avatarUrl = null;
+        if (_interviewDeps.devices && ownerDeviceId) {
+            const dev = _interviewDeps.devices[ownerDeviceId];
+            const ent = dev?.entities?.[ownerEntityId];
+            if (ent?.avatar && (ent.avatar.startsWith('http') || ent.avatar.length <= 4)) {
+                avatarUrl = ent.avatar;
+            }
+        }
         const listing = await createListing({
             ownerUserId: req.user.userId,
             ownerDeviceId, ownerEntityId, title, description, rateMliPerKtoken,
-            minRentalMinutes, maxRentalMinutes,
+            minRentalMinutes, maxRentalMinutes, avatarUrl,
         });
         audit('info', 'rental', `listing created ${listing.id} by ${req.user.userId}`, {
             userId: req.user.userId, action: 'listing_create', resource: listing.id,
@@ -1672,6 +1745,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         markOwnerEntityLeasedOut,
         removeRentalEntity,
         clearOwnerEntityLeasedOut,
+        reconcileRentalEntities,
         reconcileRentalEntities,
         // Interview dispatch (late-bound)
         setInterviewDeps: (deps) => { _interviewDeps = deps; },

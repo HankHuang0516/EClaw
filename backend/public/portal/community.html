@@ -779,7 +779,7 @@
                     rentalBots = (data.listings || []).map(l => {
                         const caps = l.capabilities ? Object.keys(l.capabilities).filter(k => l.capabilities[k]?.supported) : [];
                         return {
-                            publicCode: l.id, name: l.title || 'Rental Bot', avatar: '🤖',
+                            publicCode: l.id, name: l.title || 'Rental Bot', avatar: l.avatar_url || '🤖',
                             desc: l.description || (l.model_detected || ''),
                             tags: caps, caps: caps, _capsObj: l.capabilities || {},
                             stars: l.avg_rating || 0, reviews: l.total_rentals || 0,
@@ -863,7 +863,7 @@
         return `<div class="${isRented ? 'bot-card rented' : 'bot-card'}" onclick="${isRented ? '' : "openRentalDetail('" + bot.listingId + "')"}" style="border-left:3px solid ${borderColor};">
             <span class="bot-card-level" style="background:${borderColor};color:#fff;">${isRented ? tt('mp_status_rented','\u5df2\u51fa\u79df') : tt('community_filter_rental','\u51fa\u79df')}</span>
             <div class="bot-card-header">
-                <div class="bot-card-avatar">\ud83e\udd16</div>
+                <div class="bot-card-avatar">${bot.avatar && bot.avatar.startsWith('http') ? '<img src="' + esc(bot.avatar) + '" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">' : (bot.avatar || '\ud83e\udd16')}</div>
                 <div class="bot-card-info">
                     <div class="bot-card-name">${esc(bot.name)}</div>
                     ${bot.modelDetected ? `<div style="font-size:11px;color:var(--text-secondary);">\ud83e\udd16 ${esc(bot.modelDetected)}</div>` : ''}
@@ -1056,7 +1056,7 @@
             content.innerHTML = `
                 <button class="modal-close" onclick="closeDetail()">\u2715</button>
                 <div class="detail-header">
-                    <div class="detail-avatar">\ud83e\udd16</div>
+                    <div class="detail-avatar">${l.avatar_url && l.avatar_url.startsWith('http') ? '<img src="' + esc(l.avatar_url) + '" style="width:60px;height:60px;border-radius:50%;object-fit:cover;">' : (l.avatar_url || '\ud83e\udd16')}</div>
                     <div class="detail-name">${esc(l.title)}</div>
                     ${l.model_detected ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">\ud83e\udd16 ${esc(l.model_detected)}</div>` : ''}
                     <div class="detail-level-xp"><span style="color:#f59e0b;">${stars} (${l.total_rentals || 0} ${ttt('mp_d_rentals','rentals')})</span></div>
