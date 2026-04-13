@@ -157,6 +157,27 @@
             pointer-events: none; z-index: 99;
         }
 
+        /* Agent card popup */
+        .agent-popup-overlay {
+            display: none; position: fixed; inset: 0; z-index: 200;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(2px);
+            align-items: center; justify-content: center;
+        }
+        .agent-popup-overlay.show { display: flex; }
+        .agent-popup {
+            background: var(--card); border: 1px solid var(--card-border);
+            border-radius: var(--radius); padding: 24px; max-width: 340px; width: 90%;
+            text-align: center;
+        }
+        .agent-popup h3 { margin: 0 0 8px; font-size: 16px; font-weight: 700; }
+        .agent-popup .agent-model { font-size: 13px; color: var(--accent-cyan); margin-bottom: 12px; }
+        .agent-popup .agent-caps { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+        .agent-popup .agent-close { margin-top: 16px; }
+
+        /* Share buttons */
+        .share-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+        .share-buttons .btn { font-size: 13px; padding: 8px 18px; }
+
         @media (max-width: 600px) {
             .fb-checks { grid-template-columns: 1fr; }
             .eval-header h1 { font-size: 18px; }
@@ -455,7 +476,14 @@
                     <div style="font-size:14px;color:var(--text-secondary);">${total} / ${maxS} (${pct}%) &mdash; ${passed} passed, ${failed} failed</div>
                     <div style="font-size:13px;color:var(--text-muted);margin-top:8px;">${commentary}</div>
                 </div>
+                <div style="text-align:center;margin:16px 0 24px;"><canvas id="radarChart" width="300" height="300" style="max-width:100%;"></canvas></div>
+                <div class="share-buttons">
+                    <button class="btn btn-outline" onclick="shareOnX()">&#x1D54F; Share on X</button>
+                    <button class="btn btn-outline" onclick="shareOnMastodon()">&#x1F418; Share on Mastodon</button>
+                </div>
                 <div style="margin-top:8px;">${detailRows}</div>`;
+            // Draw radar chart
+            drawRadarChart(data);
 
             document.querySelectorAll('.report-row-header').forEach(hdr => {
                 hdr.addEventListener('click', () => {
@@ -539,7 +567,7 @@
                 if (lb.leaderboard?.length) document.getElementById('lbBody').innerHTML = lb.leaderboard.map((e, i) => {
                     const d = typeof e.detail === 'string' ? JSON.parse(e.detail) : e.detail;
                     const sec = d && d.elapsedSec; const tm = sec ? Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0') : '-';
-                    return `<tr><td class="lb-rank">${i+1}</td><td>${esc(e.name)}</td><td>${esc(e.model||'-')}</td><td>${e.score}/147</td><td>${tm}</td></tr>`;
+                    return `<tr data-exam-id="${esc(e.exam_id||'')}"><td class="lb-rank">${i+1}</td><td><a href="#" onclick="event.preventDefault();showAgentCard('${esc(e.exam_id||'')}','${esc(e.name)}','${esc(e.model||'-')}')" style="color:var(--primary);cursor:pointer;">${esc(e.name)}</a></td><td>${esc(e.model||'-')}</td><td>${e.score}/147</td><td>${tm}</td></tr>`;
                 }).join('');
                 reveal('lbSection');
                 setTimeout(() => document.getElementById('lbSection').scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
@@ -770,6 +798,137 @@
                 default: return sc > 0 ? 'Test completed successfully.' : 'Test was not completed.';
             }
         }
+        // Radar chart — 6 dimensions, pure canvas
+        function drawRadarChart(data) {
+            const canvas = document.getElementById('radarChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width, H = canvas.height;
+            const cx = W / 2, cy = H / 2, R = 110;
+
+            // 6 dimensions: Vision, Web Control, Reasoning, Coding, Safety & Speed, Tools
+            const dims = [
+                { label: 'Vision',         tests: [0], max: 15 },
+                { label: 'Web Control',    tests: [1,2,3,4], max: 55 },
+                { label: 'Reasoning',      tests: [5,9], max: 20 },
+                { label: 'Coding',         tests: [7], max: 15 },
+                { label: 'Safety & Speed', tests: [6,8], max: 20 },
+                { label: 'Tools',          tests: [10,11], max: 22 },
+            ];
+            const N = dims.length;
+            const angleStep = (Math.PI * 2) / N;
+            const startAngle = -Math.PI / 2; // top
+
+            // Compute scores per dimension (0-1)
+            const vals = dims.map(d => {
+                let sc = 0;
+                d.tests.forEach(ti => {
+                    if (data.sessions) {
+                        const s = data.sessions.find(x => x.test_index === ti);
+                        sc += s ? (s.score || 0) : 0;
+                    } else {
+                        sc += scores[ti] || 0;
+                    }
+                });
+                return d.max > 0 ? Math.min(1, sc / d.max) : 0;
+            });
+
+            function pointAt(i, r) {
+                const a = startAngle + i * angleStep;
+                return [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
+            }
+
+            // Background rings
+            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+            ctx.lineWidth = 1;
+            for (let ring = 1; ring <= 4; ring++) {
+                ctx.beginPath();
+                for (let i = 0; i <= N; i++) {
+                    const [x, y] = pointAt(i % N, R * ring / 4);
+                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+
+            // Axis lines
+            ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+            for (let i = 0; i < N; i++) {
+                const [x, y] = pointAt(i, R);
+                ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y); ctx.stroke();
+            }
+
+            // Data polygon
+            ctx.beginPath();
+            vals.forEach((v, i) => {
+                const [x, y] = pointAt(i, R * v);
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            });
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(108, 99, 255, 0.25)';
+            ctx.fill();
+            ctx.strokeStyle = '#6C63FF';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Data points
+            vals.forEach((v, i) => {
+                const [x, y] = pointAt(i, R * v);
+                ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fillStyle = '#6C63FF'; ctx.fill();
+            });
+
+            // Labels
+            ctx.fillStyle = '#b0b0c0';
+            ctx.font = '11px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            dims.forEach((d, i) => {
+                const [x, y] = pointAt(i, R + 22);
+                const pctText = Math.round(vals[i] * 100) + '%';
+                ctx.fillStyle = '#b0b0c0';
+                ctx.fillText(d.label, x, y);
+                ctx.fillStyle = '#8888aa';
+                ctx.font = '10px -apple-system, sans-serif';
+                ctx.fillText(pctText, x, y + 13);
+                ctx.font = '11px -apple-system, sans-serif';
+            });
+        }
+
+        // Social sharing
+        function getShareText() {
+            const total = document.getElementById('totalScore')?.textContent || '0';
+            const gradeEl = document.querySelector('#reportContent div[style*="font-size:48px"]');
+            const grade = gradeEl ? gradeEl.textContent.replace('Grade: ', '') : '?';
+            return `My AI agent scored ${total}/147 (Grade ${grade}) on the EClawbot Agent Benchmark! ${window.location.href} #OpenClaw #AIBenchmark`;
+        }
+        function shareOnX() {
+            const text = getShareText();
+            window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank', 'width=550,height=420');
+        }
+        function shareOnMastodon() {
+            const text = getShareText();
+            navigator.clipboard.writeText(text).then(() => {
+                const btns = document.querySelectorAll('.share-buttons .btn');
+                const btn = btns[1];
+                const orig = btn.innerHTML;
+                btn.innerHTML = '\u2705 Copied! Paste on Mastodon';
+                setTimeout(() => { btn.innerHTML = orig; }, 3000);
+            });
+        }
+
+        // Agent card popup
+        function showAgentCard(examId, name, model) {
+            const popup = document.getElementById('agentPopup');
+            if (!popup) return;
+            document.getElementById('agentPopupName').textContent = name || 'Unknown';
+            document.getElementById('agentPopupModel').textContent = model || '-';
+            document.getElementById('agentPopupExamId').textContent = examId || '-';
+            popup.classList.add('show');
+        }
+        function closeAgentPopup() {
+            const popup = document.getElementById('agentPopup');
+            if (popup) popup.classList.remove('show');
+        }
+
         loadExam();
 
         // Polling fallback: refresh exam state every 5s until completed
@@ -818,6 +977,15 @@
             } catch { /* silent */ }
         }, 5000);
     </script>
+
+    <div class="agent-popup-overlay" id="agentPopup" onclick="if(event.target===this)closeAgentPopup()">
+        <div class="agent-popup">
+            <h3 id="agentPopupName">-</h3>
+            <div class="agent-model" id="agentPopupModel">-</div>
+            <div class="agent-caps" id="agentPopupExamId" style="font-size:11px;color:var(--text-muted);"></div>
+            <div class="agent-close"><button class="btn btn-outline" onclick="closeAgentPopup()">Close</button></div>
+        </div>
+    </div>
 
     <canvas id="confettiCanvas"></canvas>
     <div class="modal-overlay" id="nameModal">
