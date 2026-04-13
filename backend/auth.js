@@ -1955,6 +1955,28 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
     });
 
     /**
+     * POST /admin/reset-password — Admin force-reset a user's password (testing only)
+     * Body: { email, newPassword }
+     */
+    router.post('/admin/reset-password', authMiddleware, adminMiddleware, async (req, res) => {
+        try {
+            const { email, newPassword } = req.body;
+            if (!email || !newPassword || newPassword.length < 6) {
+                return res.status(400).json({ success: false, error: 'email + newPassword (6+ chars) required' });
+            }
+            const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+            const result = await pool.query(
+                `UPDATE user_accounts SET password_hash = $1 WHERE email = $2 RETURNING id, email`,
+                [passwordHash, email]
+            );
+            if (result.rowCount === 0) return res.status(404).json({ success: false, error: 'user_not_found' });
+            res.json({ success: true, message: `Password reset for ${email}` });
+        } catch (err) {
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    /**
      * DELETE /user-roles — Revoke role from user (admin only)
      * Body: { userId, roleId, deviceId? }
      */
