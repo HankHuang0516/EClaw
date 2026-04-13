@@ -1,3 +1,10 @@
+## [1.968.5](https://github.com/HankHuang0516/EClaw/compare/v1.968.4...v1.968.5) (2026-04-13)
+
+
+### Bug Fixes
+
+* isolate rental bot responses from owner's chat page ([#1740](https://github.com/HankHuang0516/EClaw/issues/1740)) ([cbeb667](https://github.com/HankHuang0516/EClaw/commit/cbeb6673ba580940d8c26078701cdd81debce2af))
+
 ## [1.968.4](https://github.com/HankHuang0516/EClaw/compare/v1.968.3...v1.968.4) (2026-04-13)
 
 
