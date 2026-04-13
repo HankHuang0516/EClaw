@@ -151,19 +151,11 @@ async function initRentalDatabase() {
             `UPDATE bot_listings SET status = 'draft', updated_at = NOW() WHERE status = 'interview'`
         );
 
-        // BUG-M1: Backfill avatar_url from in-memory entity data for existing listings
-        if (_interviewDeps.devices) {
-            try {
-                const nullAvatars = await pool.query(
-                    `SELECT id, owner_device_id, owner_entity_id FROM bot_listings WHERE avatar_url IS NULL`
-                );
-                for (const row of nullAvatars.rows) {
-                    const dev = _interviewDeps.devices[row.owner_device_id];
-                    const ent = dev?.entities?.[row.owner_entity_id];
-                    if (ent?.avatar) {
-                        await pool.query(`UPDATE bot_listings SET avatar_url = $1 WHERE id = $2`, [ent.avatar, row.id]);
-                    }
-                }
+        // BUG-M1: avatar_url backfill already ran on production; new listings get avatar
+        // from the route handler. No further backfill needed.
+        if (false) { // eslint-disable-line no-constant-condition
+            // Removed: was referencing _interviewDeps which is not in scope here
+            try { const nullAvatars = { rows: [] }; void nullAvatars;
                 if (nullAvatars.rowCount > 0) console.log(`[Rental] Backfilled avatar_url for ${nullAvatars.rowCount} listing(s)`);
             } catch (e) { console.warn('[Rental] Avatar backfill warning:', e.message); }
         }
@@ -211,12 +203,7 @@ async function createListing({
         throw err;
     }
 
-    // Auto-fill avatar from owner entity if not provided
-    let finalAvatarUrl = avatarUrl || null;
-    if (!finalAvatarUrl && _interviewDeps.devices) {
-        const ownerEntity = _interviewDeps.devices[ownerDeviceId]?.entities?.[ownerEntityId];
-        if (ownerEntity?.avatar) finalAvatarUrl = ownerEntity.avatar;
-    }
+    // Avatar is passed from the route handler where _interviewDeps is in scope
 
     const res = await pool.query(
         `INSERT INTO bot_listings
@@ -225,7 +212,7 @@ async function createListing({
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'draft')
          RETURNING id, status, created_at`,
         [ownerUserId, ownerDeviceId, ownerEntityId, title, description,
-         rateMliPerKtoken, minRentalMinutes, maxRentalMinutes, finalAvatarUrl]
+         rateMliPerKtoken, minRentalMinutes, maxRentalMinutes, avatarUrl || null]
     );
     return res.rows[0];
 }
@@ -1005,15 +992,18 @@ function clearOwnerEntityLeasedOut(devices, { ownerDeviceId, ownerEntityId }) {
 }
 
 /**
- * BUG-D3: Reconcile rental entities — remove orphaned rental entities
- * whose contracts have ended but weren't cleaned up (e.g. server crash,
- * deployed before removeRentalEntity was implemented).
+ * Reconcile rental entities on server startup.
+ * Four phases handle both cleanup AND restoration:
+ *   Phase 1: Remove renter entities whose contracts have ended (ghost cleanup)
+ *   Phase 2: Remove legacy ghost entities without rental metadata (title matching)
+ *   Phase 3: Clear stale leased_out on owner entities
+ *   Phase 4: Restore missing renter entities for active contracts (handover recovery)
  */
 async function reconcileRentalEntities(devices, helpers) {
-    let reconciled = 0;
-    const errors = [];
+    const result = { reconciled: 0, errors: [] };
+    const ACTIVE = ['reserved', 'active', 'suspended_insufficient_funds'];
 
-    // Phase 1: Reconcile entities WITH rental metadata
+    // ── Phase 1: Remove renter entities whose contracts ended ──
     for (const [deviceId, device] of Object.entries(devices)) {
         if (!device?.entities) continue;
         for (const [slotId, entity] of Object.entries(device.entities)) {
@@ -1025,86 +1015,100 @@ async function reconcileRentalEntities(devices, helpers) {
             if (!contractId && entity.rental_status !== 'leased_in') continue;
             if (!contractId) continue;
             try {
-                const res = await pool.query(
-                    `SELECT status FROM rental_contracts WHERE id = $1`, [contractId]
-                );
+                const res = await pool.query(`SELECT status FROM rental_contracts WHERE id = $1`, [contractId]);
                 const status = res.rows[0]?.status;
-                const isActive = status && ['reserved', 'active', 'suspended_insufficient_funds'].includes(status);
-                if (!isActive) {
+                if (!status || !ACTIVE.includes(status)) {
                     if (entity.publicCode && helpers?.publicCodeIndex) delete helpers.publicCodeIndex[entity.publicCode];
                     delete device.entities[slotId];
-                    reconciled++;
+                    result.reconciled++;
                     if (helpers?.saveDeviceData) await helpers.saveDeviceData(deviceId, device);
                 } else if (!entity.rental_status) {
                     entity.rental_status = 'leased_in';
                     if (helpers?.saveDeviceData) await helpers.saveDeviceData(deviceId, device);
                 }
-            } catch (e) { errors.push(`${deviceId}/${slotId}: ${e.message}`); }
+            } catch (e) { result.errors.push(`p1:${deviceId}/${slotId}:${e.message}`); }
         }
     }
 
-    // Phase 2: Catch legacy ghost entities without rental metadata.
-    // Build a set of listing titles that have active contracts.
+    // ── Phase 2: Remove legacy ghost entities (no rental metadata, match by title) ──
     try {
         const activeTitles = new Set();
         const activeRes = await pool.query(
-            `SELECT bl.title FROM rental_contracts c
-             JOIN bot_listings bl ON bl.id = c.listing_id
-             WHERE c.status IN ('reserved','active','suspended_insufficient_funds')`
+            `SELECT bl.title FROM rental_contracts c JOIN bot_listings bl ON bl.id = c.listing_id WHERE c.status IN ('reserved','active','suspended_insufficient_funds')`
         );
         for (const r of activeRes.rows) activeTitles.add(r.title);
-
-        // Get all listing titles (to identify rental entity names)
         const allTitles = new Set();
         const allRes = await pool.query(`SELECT DISTINCT title FROM bot_listings`);
         for (const r of allRes.rows) allTitles.add(r.title);
-
-        // Scan all devices for entities whose name matches a listing title
-        // but the listing has NO active contract — ghost entity
         for (const [deviceId, device] of Object.entries(devices)) {
             if (!device?.entities) continue;
             for (const [slotId, entity] of Object.entries(device.entities)) {
-                if (!entity.isBound) continue;
-                if (entity.rental_contract_id || entity.rental_status) continue;
+                if (!entity.isBound || entity.rental_contract_id || entity.rental_status) continue;
                 const name = entity.name || entity.character || '';
-                // Check if entity name matches any listing title
-                if (!allTitles.has(name)) continue;
-                // If the title has an active contract, don't remove — it's legit
-                if (activeTitles.has(name)) continue;
-                // Ghost: name matches a listing but no active contract
+                if (!allTitles.has(name) || activeTitles.has(name)) continue;
                 if (entity.publicCode && helpers?.publicCodeIndex) delete helpers.publicCodeIndex[entity.publicCode];
                 delete device.entities[slotId];
-                reconciled++;
+                result.reconciled++;
                 if (helpers?.saveDeviceData) await helpers.saveDeviceData(deviceId, device);
-                console.log(`[Rental] Phase 2 reconciled ghost: ${deviceId}/${slotId} name="${name}"`);
             }
         }
-    } catch (e) { errors.push(`phase2: ${e.message}`); }
+    } catch (e) { result.errors.push(`p2:${e.message}`); }
 
-    // Phase 3: Clear stale leased_out on owner entities whose contracts have ended.
-    // Prevents permanent chat blackout if clearOwnerEntityLeasedOut failed (crash, etc.).
+    // ── Phase 3: Clear stale leased_out on owner entities ──
     for (const [deviceId, device] of Object.entries(devices)) {
         if (!device?.entities) continue;
         for (const [slotId, entity] of Object.entries(device.entities)) {
             if (entity.rental_status !== 'leased_out' || !entity.rental_contract_id) continue;
             try {
-                const res = await pool.query(
-                    `SELECT status FROM rental_contracts WHERE id = $1`, [entity.rental_contract_id]
-                );
+                const res = await pool.query(`SELECT status FROM rental_contracts WHERE id = $1`, [entity.rental_contract_id]);
                 const status = res.rows[0]?.status;
-                const isActive = status && ['reserved', 'active', 'suspended_insufficient_funds'].includes(status);
-                if (!isActive) {
+                if (!status || !ACTIVE.includes(status)) {
                     entity.rental_status = null;
                     entity.rental_contract_id = null;
                     if (helpers?.saveDeviceData) await helpers.saveDeviceData(deviceId, device);
-                    reconciled++;
-                    console.log(`[Rental] Phase 3 cleared stale leased_out: ${deviceId}/${slotId} (contract status=${status || 'not_found'})`);
+                    result.reconciled++;
                 }
-            } catch (e) { errors.push(`phase3_${deviceId}/${slotId}: ${e.message}`); }
+            } catch (e) { result.errors.push(`p3:${deviceId}/${slotId}:${e.message}`); }
         }
     }
 
-    return { reconciled, errors };
+    // ── Phase 4: Restore missing renter entities for active contracts ──
+    try {
+        const activeContracts = await pool.query(
+            `SELECT c.id, c.renter_device_id, c.listing_id, c.rate_mli_per_ktoken_snapshot
+             FROM rental_contracts c WHERE c.status IN ('active','reserved','suspended_insufficient_funds')`
+        );
+        for (const row of activeContracts.rows) {
+            try {
+                if (!devices[row.renter_device_id]) {
+                    if (helpers?.getOrCreateDevice) helpers.getOrCreateDevice(row.renter_device_id);
+                    else { result.errors.push(`p4:device_missing:${row.renter_device_id}`); continue; }
+                }
+                const device = devices[row.renter_device_id];
+                const exists = Object.values(device.entities).some(e => e?.rental_contract_id === row.id && e.isBound);
+                if (!exists) {
+                    const listing = await getListing(row.listing_id);
+                    if (!listing) { result.errors.push(`p4:listing_missing:${row.listing_id}`); continue; }
+                    insertRentalEntity(devices, {
+                        renterDeviceId: row.renter_device_id, contractId: row.id,
+                        listing, rateMliPerKtoken: Number(row.rate_mli_per_ktoken_snapshot),
+                    }, helpers);
+                    if (helpers?.saveDeviceData) await helpers.saveDeviceData(row.renter_device_id, device);
+                    result.reconciled++;
+                }
+                // Ensure owner entity is marked leased_out
+                const listing = await getListing(row.listing_id);
+                if (listing) {
+                    markOwnerEntityLeasedOut(devices, {
+                        ownerDeviceId: listing.owner_device_id,
+                        ownerEntityId: listing.owner_entity_id, contractId: row.id,
+                    });
+                }
+            } catch (e) { result.errors.push(`p4:contract_${row.id}:${e.message}`); }
+        }
+    } catch (e) { result.errors.push(`p4:query:${e.message}`); }
+
+    return result;
 }
 
 /** Minimal entity stub for a new rental slot. */
@@ -1131,84 +1135,8 @@ function createDefaultRentalEntity(entityId) {
     };
 }
 
-/**
- * Reconcile rental entities after server restart (#1713).
- *
- * Checks for active rental contracts where the renter's device entity
- * slot is unbound (entity handover was lost due to server restart or
- * earlier error). Re-runs insertRentalEntity for each missing entity.
- *
- * @param {Object} devices - In-memory devices map
- * @param {Object} helpers - { generateBotSecret, generatePublicCode, publicCodeIndex, ensureOneEmptySlot, getOrCreateDevice }
- * @returns {Promise<{ reconciled: number, errors: string[] }>}
- */
-async function reconcileRentalEntities(devices, helpers) {
-    const result = { reconciled: 0, errors: [] };
-    try {
-        const activeContracts = await pool.query(
-            `SELECT c.id, c.renter_device_id, c.listing_id,
-                    c.rate_mli_per_ktoken_snapshot, c.renter_user_id
-             FROM rental_contracts c
-             WHERE c.status IN ('active', 'reserved', 'suspended_insufficient_funds')`
-        );
-
-        for (const row of activeContracts.rows) {
-            try {
-                // Ensure device exists in memory
-                if (!devices[row.renter_device_id]) {
-                    if (helpers.getOrCreateDevice) {
-                        helpers.getOrCreateDevice(row.renter_device_id);
-                    } else {
-                        result.errors.push(`device_missing:${row.renter_device_id}`);
-                        continue;
-                    }
-                }
-
-                const listing = await getListing(row.listing_id);
-                if (!listing) {
-                    result.errors.push(`listing_missing:${row.listing_id}`);
-                    continue;
-                }
-
-                // Reconcile renter entity
-                const device = devices[row.renter_device_id];
-                // Check if any entity already has this contract ID
-                const alreadyExists = Object.values(device.entities).some(
-                    e => e && e.rental_contract_id === row.id && e.isBound
-                );
-                if (!alreadyExists) {
-                    // Entity handover was lost — re-create it
-                    insertRentalEntity(devices, {
-                        renterDeviceId: row.renter_device_id,
-                        contractId: row.id,
-                        listing,
-                        rateMliPerKtoken: Number(row.rate_mli_per_ktoken_snapshot),
-                    }, helpers);
-
-                    // Persist reconciled entity to DB
-                    if (helpers?.saveDeviceData && devices[row.renter_device_id]) {
-                        await helpers.saveDeviceData(row.renter_device_id, devices[row.renter_device_id]);
-                    }
-
-                    result.reconciled++;
-                    console.log(`[Rental] Reconciled renter entity for contract ${row.id} on device ${row.renter_device_id}`);
-                }
-
-                // Reconcile owner entity leased_out status (lost on server restart)
-                markOwnerEntityLeasedOut(devices, {
-                    ownerDeviceId: listing.owner_device_id,
-                    ownerEntityId: listing.owner_entity_id,
-                    contractId: row.id,
-                });
-            } catch (err) {
-                result.errors.push(`contract_${row.id}:${err.message}`);
-            }
-        }
-    } catch (err) {
-        result.errors.push(`query_failed:${err.message}`);
-    }
-    return result;
-}
+// NOTE: reconcileRentalEntities is defined above (line ~1015) with all 4 phases merged.
+// The duplicate that was here (#1713) has been removed to fix Jest SyntaxError.
 
 // ============================================
 // Express factory
@@ -1257,7 +1185,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
                 rateMliPerKtoken, minRentalMinutes, maxRentalMinutes } = req.body || {};
         // BUG-M1: capture entity avatar for marketplace display
         let avatarUrl = null;
-        if (_interviewDeps.devices && ownerDeviceId) {
+        if (_interviewDeps?.devices && ownerDeviceId) {
             const dev = _interviewDeps.devices[ownerDeviceId];
             const ent = dev?.entities?.[ownerEntityId];
             if (ent?.avatar && (ent.avatar.startsWith('http') || ent.avatar.length <= 4)) {

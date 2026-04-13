@@ -37,6 +37,18 @@ jest.mock('pg', () => {
         if (/^CREATE (TABLE|INDEX|UNIQUE INDEX)/i.test(norm)) return { rows: [], rowCount: 0 };
 
         // ── bot_listings ─────────────────────────────────────────────────
+        // BUG-M2: Duplicate listing check
+        if (/^SELECT id, status FROM bot_listings WHERE owner_device_id/i.test(norm)) {
+            return { rows: [], rowCount: 0 };
+        }
+        // Cooldown check
+        if (/^SELECT cooldown_until FROM rental_cooldowns/i.test(norm)) {
+            return { rows: [], rowCount: 0 };
+        }
+        // Cooldown insert
+        if (/^INSERT INTO rental_cooldowns/i.test(norm)) {
+            return { rows: [], rowCount: 1 };
+        }
         if (/^INSERT INTO bot_listings/i.test(norm)) {
             const id = `listing-${state.nextListingId++}`;
             state.listings.push({
@@ -141,7 +153,7 @@ jest.mock('pg', () => {
         }
 
         // SELECT contract FOR UPDATE (used by endRental)
-        if (/^SELECT id, owner_user_id, renter_user_id, deposit_mli, status\s*FROM rental_contracts WHERE id = \$1 FOR UPDATE$/i.test(norm)) {
+        if (/^SELECT id,.*deposit_mli, status\s*FROM rental_contracts WHERE id = \$1 FOR UPDATE$/i.test(norm)) {
             const row = state.contracts.find(c => c.id === params[0]);
             if (!row) return { rows: [], rowCount: 0 };
             return { rows: [{
@@ -168,7 +180,7 @@ jest.mock('pg', () => {
 
         // my-contracts list — distinguish the 3 WHERE shapes by presence
         // of `renter_user_id = $1` and/or `owner_user_id = $1`.
-        if (/FROM rental_contracts\s+WHERE /i.test(norm) && /ORDER BY created_at DESC/i.test(norm)) {
+        if (/FROM rental_contracts/i.test(norm) && /ORDER BY.*created_at DESC/i.test(norm)) {
             const userId = params[0];
             const hasRenter = /renter_user_id = \$1/i.test(norm);
             const hasOwner = /owner_user_id = \$1/i.test(norm);
