@@ -1,3 +1,10 @@
+## [1.965.8](https://github.com/HankHuang0516/EClaw/compare/v1.965.7...v1.965.8) (2026-04-13)
+
+
+### Bug Fixes
+
+* move rental reconciliation to run after persistence is ready (BUG-D3) ([3d23a55](https://github.com/HankHuang0516/EClaw/commit/3d23a5580759eb451f3731b27246ec14489ccec3))
+
 ## [1.965.7](https://github.com/HankHuang0516/EClaw/compare/v1.965.6...v1.965.7) (2026-04-13)
 
 
