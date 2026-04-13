@@ -1,3 +1,10 @@
+## [1.965.9](https://github.com/HankHuang0516/EClaw/compare/v1.965.8...v1.965.9) (2026-04-13)
+
+
+### Bug Fixes
+
+* phase 2 ghost entity reconciliation — match by contract + name ([d535e4a](https://github.com/HankHuang0516/EClaw/commit/d535e4aba2c6ff9cfe10ee8a6687b262603f9578))
+
 ## [1.965.8](https://github.com/HankHuang0516/EClaw/compare/v1.965.7...v1.965.8) (2026-04-13)
 
 
