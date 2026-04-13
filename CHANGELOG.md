@@ -1,3 +1,10 @@
+## [1.965.11](https://github.com/HankHuang0516/EClaw/compare/v1.965.10...v1.965.11) (2026-04-13)
+
+
+### Bug Fixes
+
+* wait for persistence before rental reconciliation ([066ca57](https://github.com/HankHuang0516/EClaw/commit/066ca57656ef0011c4458db88b35e9ab095ec29a))
+
 ## [1.965.10](https://github.com/HankHuang0516/EClaw/compare/v1.965.9...v1.965.10) (2026-04-13)
 
 
