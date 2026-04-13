@@ -5097,6 +5097,44 @@ app.post('/api/transform', async (req, res) => {
         }
     });
 
+    // ── Rental response mirroring: if owner entity is leased_out, copy response to renter ──
+    if (entity.rental_status === 'leased_out' && entity.rental_contract_id && finalMessage) {
+        try {
+            const cRow = await db.pool.query(
+                `SELECT c.renter_device_id FROM rental_contracts c WHERE c.id = $1 AND c.status IN ('active','reserved','suspended_insufficient_funds')`,
+                [entity.rental_contract_id]
+            );
+            if (cRow.rowCount > 0) {
+                const renterDev = devices[cRow.rows[0].renter_device_id];
+                if (renterDev) {
+                    for (const [slotId, rentalEntity] of Object.entries(renterDev.entities)) {
+                        if (rentalEntity.rental_contract_id === entity.rental_contract_id) {
+                            rentalEntity.state = entity.state;
+                            rentalEntity.message = finalMessage;
+                            rentalEntity.lastUpdated = Date.now();
+                            // Save to renter's chat history
+                            saveChatMessage(cRow.rows[0].renter_device_id, parseInt(slotId), finalMessage,
+                                rentalEntity.name || `Rental Bot`, false, true);
+                            // Notify renter via Socket.IO
+                            if (io) {
+                                io.to(`device:${cRow.rows[0].renter_device_id}`).emit('entity:update', {
+                                    deviceId: cRow.rows[0].renter_device_id, entityId: parseInt(slotId),
+                                    name: rentalEntity.name, character: rentalEntity.character,
+                                    state: rentalEntity.state, message: rentalEntity.message,
+                                    lastUpdated: rentalEntity.lastUpdated
+                                });
+                            }
+                            console.log(`[Transform] Rental mirror: owner ${deviceId}/${eId} → renter ${cRow.rows[0].renter_device_id}/${slotId}`);
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (err) {
+            console.error(`[Transform] Rental mirror error:`, err.message);
+        }
+    }
+
     // Emit entity:update via Socket.IO for real-time wallpaper/dashboard refresh
     if (io) {
         io.to(`device:${deviceId}`).emit('entity:update', {
@@ -12490,6 +12528,46 @@ async function pushToBot(entity, deviceId, eventType, payload) {
             serverLog('error', 'push_error', `Discord push exception for Entity ${entity.entityId}: ${err.message}`, { deviceId, entityId: entity.entityId });
             entity.pushStatus = { ok: false, reason: err.message, at: Date.now() };
             return { pushed: false, reason: err.message };
+        }
+    }
+
+    // ── Rental proxy: forward message to the owner's bot ──
+    if (entity.webhook.type === 'rental_proxy' || (url && url.startsWith('__rental_proxy__:'))) {
+        try {
+            const contractId = url.replace('__rental_proxy__:', '');
+            // Look up contract → listing → owner entity
+            const cRes = await db.pool.query(
+                `SELECT c.listing_id, l.owner_device_id, l.owner_entity_id
+                 FROM rental_contracts c JOIN bot_listings l ON l.id = c.listing_id
+                 WHERE c.id = $1`, [contractId]
+            );
+            if (cRes.rowCount === 0) {
+                console.error(`[Push] Rental proxy: contract ${contractId} not found`);
+                return { pushed: false, reason: 'rental_contract_not_found' };
+            }
+            const { owner_device_id, owner_entity_id } = cRes.rows[0];
+            const ownerDevice = devices[owner_device_id];
+            const ownerEntity = ownerDevice?.entities?.[owner_entity_id];
+            if (!ownerEntity || !ownerEntity.webhook) {
+                console.error(`[Push] Rental proxy: owner entity ${owner_device_id}/${owner_entity_id} has no webhook`);
+                return { pushed: false, reason: 'owner_entity_no_webhook' };
+            }
+            console.log(`[Push] Rental proxy: forwarding from ${deviceId}/${entity.entityId} → ${owner_device_id}/${owner_entity_id}`);
+            // Forward to the owner's entity with rental context
+            const rentalPayload = { ...payload };
+            rentalPayload.message = `[Rental message from renter]\n${payload.message || ''}`;
+            rentalPayload._rentalContext = { contractId, renterDeviceId: deviceId, renterEntityId: entity.entityId };
+            const result = await pushToBot(ownerEntity, owner_device_id, eventType, rentalPayload);
+            // Copy response back to rental entity
+            if (result.pushed && ownerEntity.lastUpdated > (entity.lastUpdated || 0)) {
+                entity.state = ownerEntity.state;
+                entity.message = ownerEntity.message;
+                entity.lastUpdated = Date.now();
+            }
+            return result;
+        } catch (err) {
+            console.error(`[Push] Rental proxy error:`, err.message);
+            return { pushed: false, reason: `rental_proxy_error: ${err.message}` };
         }
     }
 
