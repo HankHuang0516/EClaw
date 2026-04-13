@@ -730,12 +730,12 @@
 
     /* ══════ API ══════ */
     async function apiFetch(path) {
-        const r = await fetch(location.origin + path);
+        const r = await fetch(location.origin + path, { credentials: 'include' });
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();
     }
     async function apiPost(path, body) {
-        const r = await fetch(location.origin + path, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+        const r = await fetch(location.origin + path, { method:'POST', headers:{'Content-Type':'application/json'}, credentials: 'include', body:JSON.stringify(body) });
         return r.json();
     }
 
@@ -1037,10 +1037,11 @@
             const maxH = (l.max_rental_minutes / 60).toFixed(1);
             const defaultH = Math.max(parseFloat(minH), 1);
             const isRented = !!l.has_active_contract;
+            const isSelfOwned = !!(meData?.user && l.owner_user_id && l.owner_user_id === meData.user.userId);
             _rentalWalletBalance = null;
-            if (meData?.user) {
+            if (meData?.user && !isSelfOwned) {
                 apiFetch('/api/wallet/balance?deviceId=' + encodeURIComponent(meData.user.deviceId || meData.user.device_id))
-                    .then(wb => { _rentalWalletBalance = parseInt(wb.balance_mli, 10) || 0; updateRentalEstimate(rateMli, depositEcoin); })
+                    .then(wb => { const w = wb.wallet || wb; _rentalWalletBalance = parseInt(w.balance_mli, 10) || 0; updateRentalEstimate(rateMli, depositEcoin); })
                     .catch(() => {});
             }
             let interviewHtml = '';
@@ -1070,7 +1071,7 @@
                     <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-secondary);">${ttt('mp_d_rating','Rating')}</span><span style="color:#f59e0b;">${stars} (${l.total_rentals || 0} ${ttt('mp_d_rentals','rentals')})</span></div>
                     <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-secondary);">${ttt('mp_d_uptime','Uptime')}</span><span>${l.uptime_pct || 100}%</span></div>
                 </div>
-                <div style="margin:0 20px;">
+                ${isSelfOwned ? '' : `<div style="margin:0 20px;">
                     <label style="font-size:12px;color:var(--text-secondary);font-weight:600;">\u23f1\ufe0f ${ttt('mp_d_rent_duration_hours','Duration (hours)')}</label>
                     <input type="number" id="rentalDurationHours" value="${defaultH}" min="${minH}" max="${maxH}" step="0.5" style="width:100%;margin-top:4px;padding:10px;border:1px solid var(--card-border);border-radius:var(--radius-sm);background:var(--input-bg);color:var(--text);font-size:14px;" oninput="updateRentalEstimate(${rateMli},${depositEcoin})">
                     <div class="rental-cost-box" id="rentalCostBox"></div>
@@ -1079,9 +1080,11 @@
                 <div class="privacy-check-row" style="margin:12px 20px 0;">
                     <input type="checkbox" id="privacyConsent" onchange="checkRentalBtnState()">
                     <label for="privacyConsent">${ttt('mp_privacy_warning','Your conversation will be processed through the lessor server.')} <strong>${ttt('mp_privacy_agree','I understand and agree')}</strong></label>
-                </div>
+                </div>`}
                 <div style="margin:12px 20px 20px;">
-                    ${isRented
+                    ${isSelfOwned
+                        ? `<button class="detail-btn primary" style="width:100%;padding:12px;font-size:14px;opacity:0.5;cursor:not-allowed;" disabled>\ud83d\udeab ${ttt('rental_error_self_rent','Cannot rent your own bot')}</button>`
+                        : isRented
                         ? `<button class="detail-btn primary" style="width:100%;padding:12px;font-size:14px;opacity:0.5;cursor:not-allowed;" disabled>\ud83d\udd34 ${ttt('mp_status_rented','Rented')}</button>`
                         : `<button class="detail-btn primary" style="width:100%;padding:12px;font-size:14px;" id="rentalConfirmBtn" disabled onclick="doRentalFromPlaza('${l.id}',${rateMli})">\ud83d\udd12 ${ttt('mp_rent_now','Rent Now')}</button>`}
                 </div>`;
