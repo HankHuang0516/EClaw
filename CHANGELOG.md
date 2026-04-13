@@ -1,3 +1,10 @@
+## [1.965.5](https://github.com/HankHuang0516/EClaw/compare/v1.965.4...v1.965.5) (2026-04-13)
+
+
+### Bug Fixes
+
+* **rental:** dedup listings, fix contract status, clean up ended entities ([#1738](https://github.com/HankHuang0516/EClaw/issues/1738)) ([a0068a2](https://github.com/HankHuang0516/EClaw/commit/a0068a266c2914baff604b5a242ab18c27ea797c)), closes [#1736](https://github.com/HankHuang0516/EClaw/issues/1736)
+
 ## [1.965.4](https://github.com/HankHuang0516/EClaw/compare/v1.965.3...v1.965.4) (2026-04-13)
 
 
