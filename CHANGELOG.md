@@ -1,3 +1,10 @@
+# [1.967.0](https://github.com/HankHuang0516/EClaw/compare/v1.966.2...v1.967.0) (2026-04-13)
+
+
+### Features
+
+* add admin/reset-password endpoint for E2E testing ([8cdbd38](https://github.com/HankHuang0516/EClaw/commit/8cdbd388eb3a4b556f1dbf8afb9c48e7619510ce))
+
 ## [1.966.2](https://github.com/HankHuang0516/EClaw/compare/v1.966.1...v1.966.2) (2026-04-13)
 
 
