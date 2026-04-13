@@ -1,3 +1,10 @@
+## [1.965.3](https://github.com/HankHuang0516/EClaw/compare/v1.965.2...v1.965.3) (2026-04-13)
+
+
+### Bug Fixes
+
+* **arena:** add debug logs + fix countdown timer using actual expiresAt ([5efdf58](https://github.com/HankHuang0516/EClaw/commit/5efdf58460fa16074668166f177a10f4fe0ca166))
+
 ## [1.965.2](https://github.com/HankHuang0516/EClaw/compare/v1.965.1...v1.965.2) (2026-04-13)
 
 
