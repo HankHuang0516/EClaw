@@ -1,3 +1,10 @@
+## [1.975.4](https://github.com/HankHuang0516/EClaw/compare/v1.975.3...v1.975.4) (2026-04-14)
+
+
+### Bug Fixes
+
+* URI-encode R2 metadata originalName for non-ASCII filenames ([444e460](https://github.com/HankHuang0516/EClaw/commit/444e460b2b987b5ddedf65e165701492867af9ce))
+
 ## [1.975.3](https://github.com/HankHuang0516/EClaw/compare/v1.975.2...v1.975.3) (2026-04-14)
 
 
