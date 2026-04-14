@@ -336,6 +336,7 @@
     <string name="bind_button">Ikatan</string>
     <string name="card_holder">Pemegang Kartu</string>
     <string name="chat">Obrolan</string>
+    <string name="choose_plan_title">Pilih Paket</string>
     <string name="confirm">Konfirmasi</string>
     <string name="enter_binding_code">Masukkan kode ikatan</string>
     <string name="error_occurred">Terjadi kesalahan</string>
@@ -383,7 +384,12 @@ Jika ada pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="recording">Merekam…</string>
     <string name="schedule">Jadwal</string>
     <string name="settings">Pengaturan</string>
+    <string name="topup_ecoin">Isi Ulang E-Coin</string>
+    <string name="topup_ecoin_title">Isi Ulang E-Coin</string>
+    <string name="topup_failed">Isi ulang gagal</string>
+    <string name="topup_success">Isi ulang berhasil</string>
     <string name="unbind_button">Lepas Ikatan</string>
+    <string name="upgrade_plan">Upgrade Paket</string>
     <string name="voice_message">Pesan Suara</string>
     <string name="wallet_title">Dompet</string>
     <string name="file_btn_share">Bagikan</string>
@@ -462,7 +468,7 @@ Jika ada pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="log_error">Kesalahan</string>
     <string name="log_info">Info</string>
     <string name="log_warn">Peringatan</string>
-    <string name="main_title">EClawbot</string>
+    <string name="main_title">E-Claw</string>
     <string name="manage_entities">Kelola Entitas</string>
     <string name="message_copied">Pesan disalin</string>
     <string name="message_hint">Pesan untuk %s…</string>
@@ -725,7 +731,7 @@ Jika ada pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="submit">Kirim</string>
     <string name="subscribe_and_bind">Beli Paket Bulanan</string>
     <string name="subscription_required">Diperlukan langganan</string>
-    <string name="tab_bot_plaza">Bot Plaza</string>
+    <string name="tab_bot_plaza">Plaza Bot</string>
     <string name="tab_kanban">Kanban</string>
     <string name="tab_mission_center">Pusat Misi</string>
     <string name="tab_my_cards">Kartu Saya</string>
@@ -803,35 +809,4 @@ Jika ada pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="xd_whitelist">Daftar Putih (kode publik)</string>
     <string name="xd_whitelist_mode">Mode Daftar Putih</string>
     <string name="you">Anda</string>
-    <string name="topup_ecoin_title">Isi Ulang e-Coins</string>
-    <string name="topup_ecoin">Isi Ulang</string>
-    <string name="topup_success">e-Coins telah ditambahkan ke dompet!</string>
-    <string name="topup_failed">Isi ulang gagal. Silakan coba lagi.</string>
-    <string name="choose_plan_title">Pilih Paket</string>
-    <string name="upgrade_plan">Tingkatkan Paket</string>
-
-    <string name="billing_subscription_unavailable">Tidak dapat mengambil paket langganan, coba lagi nanti</string>
-    <string name="card_holder_copied">Disalin: %s</string>
-    <string name="card_holder_error">Kesalahan</string>
-    <string name="dialog_add_friend_message">Tambahkan %s ke kontak Anda?</string>
-    <string name="dialog_add_friend_title">Tambah teman</string>
-    <string name="dialog_agent_card_title">Kartu agen — Entitas #%d</string>
-    <string name="dialog_block_contact">Blokir %s? Mereka tidak akan bisa berinteraksi dengan Anda lagi.</string>
-    <string name="dialog_block_title">Blokir</string>
-    <string name="dialog_delete_agent_card">Hapus kartu agen?</string>
-    <string name="dialog_delete_agent_card_message">Tindakan ini tidak dapat dibatalkan.</string>
-    <string name="dialog_unblock_title">Buka blokir</string>
-    <string name="main_delete_failed_msg">Gagal menghapus: %s</string>
-    <string name="schedule_error_generic">Kesalahan: %s</string>
-    <string name="schedule_failed_to_load">Gagal memuat: %s</string>
-    <string name="schedule_operation_failed">Operasi gagal</string>
-    <string name="search_saved_results">Hasil Tersimpan</string>
-    <string name="search_external_results">Hasil Eksternal</string>
-    <string name="card_loading">Memuat...</string>
-    <string name="card_chat_history">Riwayat Obrolan</string>
-    <string name="card_details">Detail</string>
-    <string name="card_no_results">Tidak ada hasil</string>
-    <string name="card_no_chat_history">Tidak ada riwayat</string>
-    <string name="card_chat_history_failed">Gagal memuat riwayat</string>
-    <string name="feedback_photo_upload_failed">Unggah foto gagal: %s</string>
 </resources>

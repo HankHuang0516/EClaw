@@ -468,7 +468,7 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="log_error">エラー</string>
     <string name="log_info">情報</string>
     <string name="log_warn">警告</string>
-    <string name="main_title">EClawbot</string>
+    <string name="main_title">E-Claw</string>
     <string name="manage_entities">エンティティ管理</string>
     <string name="message_copied">メッセージをコピーしました</string>
     <string name="message_hint">%s へのメッセージ…</string>
@@ -731,7 +731,7 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="submit">送信</string>
     <string name="subscribe_and_bind">月額プランを購入</string>
     <string name="subscription_required">サブスクリプションが必要です</string>
-    <string name="tab_bot_plaza">ボットプラザ</string>
+    <string name="tab_bot_plaza">ボット plaza</string>
     <string name="tab_kanban">カンバン</string>
     <string name="tab_mission_center">ミッションセンター</string>
     <string name="tab_my_cards">マイカード</string>
@@ -809,13 +809,4 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="xd_whitelist">ホワイトリスト（パブリックコード）</string>
     <string name="xd_whitelist_mode">ホワイトリストモード</string>
     <string name="you">あなた</string>
-    <string name="search_saved_results">保存済み結果</string>
-    <string name="search_external_results">外部結果</string>
-    <string name="card_loading">読み込み中...</string>
-    <string name="card_chat_history">チャット履歴</string>
-    <string name="card_details">詳細</string>
-    <string name="card_no_results">結果が見つかりません</string>
-    <string name="card_no_chat_history">チャット履歴なし</string>
-    <string name="card_chat_history_failed">チャット履歴の読み込みに失敗しました</string>
-    <string name="feedback_photo_upload_failed">写真のアップロード失敗: %s</string>
 </resources>
