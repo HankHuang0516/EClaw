@@ -1,3 +1,10 @@
+## [1.970.3](https://github.com/HankHuang0516/EClaw/compare/v1.970.2...v1.970.3) (2026-04-14)
+
+
+### Bug Fixes
+
+* **rental:** clarify deposit disposition copy per perspective ([9618477](https://github.com/HankHuang0516/EClaw/commit/961847721144f0ebed0789cb75255db8e29d5815))
+
 ## [1.970.2](https://github.com/HankHuang0516/EClaw/compare/v1.970.1...v1.970.2) (2026-04-14)
 
 
