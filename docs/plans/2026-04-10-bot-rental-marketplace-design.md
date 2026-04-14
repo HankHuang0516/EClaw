@@ -735,9 +735,11 @@ The my-rentals.html page has two tabs (`renter` / `owner`) showing the **same co
 | Status | Renter tab (租借中) — you are the renter | Owner tab (出租中) — you are the lessor |
 |--------|------------------------------------------|------------------------------------------|
 | `ended_normal` / `_disputed` / `_admin` | **押金全額退回給你** | **押金已全額退回給承租方** |
-| `ended_early_by_renter` | 退回你 50% · 沒收 50% | 退回承租方 50% · 你獲得違約金 50% |
-| `ended_violation` | 退回你 70% · 30% 沒收至保險金池 | 退回承租方 70% · 30% 進入保險金池 |
-| `ended_zero_balance` | 扣除用量後剩餘押金已退回給你 | 扣除用量後剩餘押金已退回給承租方 |
+| `ended_early_by_renter` | **押金**：退回你 50% · 沒收 50% | **押金**：退回承租方 50% · 你獲得違約金 50% |
+| `ended_violation` | **押金**：退回你 70% · 30% 進入保險金池 | **押金**：退回承租方 70% · 30% 進入保險金池 |
+| `ended_zero_balance` | **押金**扣除用量後剩餘已退回給你 | **押金**扣除用量後剩餘已退回給承租方 |
+
+**規則**：**每一條文案必須帶「押金」二字**，明確標示這筆錢的性質。沒有主詞的百分比（如「退回你 50%」）會讓使用者疑惑是什麼的 50%。
 
 **Implementation**: `depositDisposition(c)` in `my-rentals.html` reads `currentTab` and picks the matching i18n key family:
 
