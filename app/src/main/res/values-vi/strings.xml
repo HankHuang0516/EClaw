@@ -809,4 +809,6 @@ Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua
     <string name="xd_whitelist">Danh sách trắng (mã công khai)</string>
     <string name="xd_whitelist_mode">Chế độ danh sách trắng</string>
     <string name="you">Bạn</string>
+    <string name="search_saved_results">Kết quả đã lưu</string>
+    <string name="search_external_results">Kết quả bên ngoài</string>
 </resources>

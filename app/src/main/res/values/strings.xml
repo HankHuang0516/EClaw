@@ -938,5 +938,7 @@ If you have any questions, please contact us via our official email.
     <string name="dialog_unblock_title">Unblock</string>
     <string name="dialog_unblock_message">Unblock %s? They will be able to interact with you again.</string>
 
+    <string name="search_saved_results">Saved Results</string>
+    <string name="search_external_results">External Results</string>
 </resources>
 

@@ -725,7 +725,7 @@ Jika ada pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="submit">Kirim</string>
     <string name="subscribe_and_bind">Beli Paket Bulanan</string>
     <string name="subscription_required">Diperlukan langganan</string>
-    <string name="tab_bot_plaza">Plaza Bot</string>
+    <string name="tab_bot_plaza">Bot Plaza</string>
     <string name="tab_kanban">Kanban</string>
     <string name="tab_mission_center">Pusat Misi</string>
     <string name="tab_my_cards">Kartu Saya</string>
@@ -825,4 +825,6 @@ Jika ada pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="schedule_error_generic">Kesalahan: %s</string>
     <string name="schedule_failed_to_load">Gagal memuat: %s</string>
     <string name="schedule_operation_failed">Operasi gagal</string>
+    <string name="search_saved_results">Hasil Tersimpan</string>
+    <string name="search_external_results">Hasil Eksternal</string>
 </resources>

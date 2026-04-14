@@ -747,7 +747,7 @@ Puedes enviar una solicitud de demanda de alquiler y te notificaremos cuando est
     <string name="submit">Enviar</string>
     <string name="subscribe_and_bind">Comprar Plan Mensual</string>
     <string name="subscription_required">Suscripción requerida</string>
-    <string name="tab_bot_plaza">Plaza de Bots</string>
+    <string name="tab_bot_plaza">Bot Plaza</string>
     <string name="tab_kanban">Kanban</string>
     <string name="tab_mission_center">Centro de Misiones</string>
     <string name="tab_my_cards">Mis Tarjetas</string>
@@ -853,4 +853,6 @@ Tu suscripción permanece activa y puedes reenlazar en cualquier momento (sujeto
     <string name="schedule_error_generic">Error: %s</string>
     <string name="schedule_failed_to_load">Error al cargar: %s</string>
     <string name="schedule_operation_failed">Operación fallida</string>
+    <string name="search_saved_results">Resultados guardados</string>
+    <string name="search_external_results">Resultados externos</string>
 </resources>
