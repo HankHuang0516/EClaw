@@ -1,3 +1,10 @@
+## [1.977.2](https://github.com/HankHuang0516/EClaw/compare/v1.977.1...v1.977.2) (2026-04-14)
+
+
+### Bug Fixes
+
+* **android:** restore i18n keys lost in commit 1fd413c8 merge resolution ([798e306](https://github.com/HankHuang0516/EClaw/commit/798e306ca46174b5069fcb350732507aeed6d13f))
+
 ## [1.977.1](https://github.com/HankHuang0516/EClaw/compare/v1.977.0...v1.977.1) (2026-04-14)
 
 
