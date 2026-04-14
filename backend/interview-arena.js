@@ -159,7 +159,6 @@ const VISION_IMAGES = [
     // ── Medium tier (50%) — counting, labels, multi-object scenes ──
     { file: null, description: 'A bar chart with four bars labeled Q1 through Q4 where Q3 is the tallest', keywords: ['bar', 'chart', 'four', 'Q3'] },
     { file: null, description: 'A desk with a laptop, two coffee cups, and a stack of three books', keywords: ['laptop', 'two', 'cups', 'three', 'books'] },
-    { file: null, description: 'Five colored pencils arranged in a row: red, orange, yellow, green, blue', keywords: ['five', 'pencils', 'red', 'blue'] },
     { file: null, description: 'A pie chart divided into four sections: blue 40%, green 30%, red 20%, yellow 10%', keywords: ['pie', 'chart', 'four', 'blue'] },
     { file: null, description: 'A Venn diagram with three overlapping circles labeled A, B, and C', keywords: ['venn', 'three', 'circles'] },
     { file: null, description: 'A road sign reading SPEED LIMIT 65 against a blue sky', keywords: ['sign', 'speed', '65'] },
@@ -171,7 +170,6 @@ const VISION_IMAGES = [
     { file: null, description: 'An arrow pointing right with a dashed trail on black background', keywords: ['arrow', 'right', 'dashed'] },
     { file: null, description: 'A flowchart with a diamond decision node labeled "Is valid?" branching to Yes and No paths', keywords: ['flowchart', 'diamond', 'decision', 'yes', 'no'] },
     // ── Hard tier (30%) — OCR, spatial reasoning, complex counting ──
-    { file: null, description: 'A grocery shelf with six cans of soup on the top row and two boxes of cereal on the bottom row', keywords: ['six', 'cans', 'soup', 'two', 'cereal'] },
     { file: null, description: 'An aerial parking lot with twelve cars, three of which are red', keywords: ['twelve', 'cars', 'three', 'red'] },
     { file: null, description: 'A chemistry lab bench with three beakers: left contains blue liquid, middle is empty, right has green precipitate at the bottom', keywords: ['three', 'beakers', 'blue', 'empty', 'green'] },
     { file: null, description: 'A handwritten note on lined paper reading Meeting at 3pm Room 204 with the time and room number underlined', keywords: ['meeting', '3pm', '204', 'underlined'] },
@@ -179,6 +177,9 @@ const VISION_IMAGES = [
     { file: null, description: 'A line chart showing quarterly revenue: Q1 at $10K, Q2 at $15K, Q3 dips to $8K, Q4 recovers to $20K', keywords: ['chart', 'revenue', 'Q3', 'dip', 'Q4'] },
     { file: null, description: 'A world map with five red pins marking cities: New York, London, Tokyo, Sydney, and São Paulo', keywords: ['map', 'five', 'pins', 'Tokyo'] },
     { file: null, description: 'A receipt from a store dated 03/15 showing total $47.83 with three itemized lines and a barcode at bottom', keywords: ['receipt', 'total', '47', 'three', 'barcode'] },
+    { file: null, description: 'A weather dashboard panel showing temperature 28°C, humidity 65%, wind speed 12 km/h, and UV index 7 in four separate tiles', keywords: ['temperature', '28', 'humidity', '65', 'UV', '7'] },
+    { file: null, description: 'A printed circuit board with fourteen resistors, eight capacitors, and one microcontroller chip labeled ATmega328P', keywords: ['circuit', 'fourteen', 'resistors', 'eight', 'capacitors', 'ATmega'] },
+    { file: null, description: 'A hotel room floor plan: bedroom 18m² on the left, bathroom 6m² top right, living area 22m² bottom right, with a corridor connecting all rooms', keywords: ['floor', 'plan', 'bedroom', '18', 'bathroom', '6', 'living', '22'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -195,9 +196,9 @@ function generateButtonClickChallenge() {
     return { correctIndex, correctLabel, buttonCount, seed: Math.floor(Math.random() * 1e9) };
 }
 
-const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson'];
-const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se'];
-const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore'];
+const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Wei Zhang','Amara Osei','Ravi Kapoor','Isabella Rossi','Dmitri Volkov'];
+const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','wei@demo.cn','amara@test.gh','ravi@sample.in','isabella@demo.it','dmitri@test.ru'];
+const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','China','Ghana','Italy','Russia','Netherlands'];
 const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567'];
 const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17','1993-08-09','1986-02-14','1994-10-31','1989-05-20'];
 const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund'];
@@ -339,6 +340,15 @@ const CODING_PROBLEMS = [
       testCases: [{ input: '"abcabcbb"', expected: '3' },{ input: '"bbbbb"', expected: '1' },{ input: '"pwwkew"', expected: '3' },{ input: '""', expected: '0' }] },
     { title: 'Group Anagrams', description: 'Write `solve(strs)` — group anagrams together. Return an array of arrays where each inner array contains words that are anagrams of each other (each group sorted alphabetically).',
       testCases: [{ input: '["eat","tea","tan","ate","nat","bat"]', expected: '[["ate","eat","tea"],["bat"],["nat","tan"]]' },{ input: '[""]', expected: '[[""]]' },{ input: '["a"]', expected: '[["a"]]' }] },
+    // ── Additional DP / medium-hard problems ──
+    { title: 'Decode Ways', description: 'Write `solve(s)` — a string of digits can be decoded using A=1, B=2, ..., Z=26. Return the number of distinct ways to decode the string.',
+      testCases: [{ input: '"12"', expected: '2' },{ input: '"226"', expected: '3' },{ input: '"06"', expected: '0' },{ input: '"11106"', expected: '2' }] },
+    { title: 'Maximum Product Subarray', description: 'Write `solve(nums)` — return the maximum product of a contiguous subarray.',
+      testCases: [{ input: '[2,3,-2,4]', expected: '6' },{ input: '[-2,0,-1]', expected: '0' },{ input: '[-2,3,-4]', expected: '24' },{ input: '[0,2]', expected: '2' }] },
+    { title: 'Longest Palindromic Substring', description: 'Write `solve(s)` — return the longest palindromic substring. If multiple with equal length, return the first occurring.',
+      testCases: [{ input: '"babad"', expected: '"bab"' },{ input: '"cbbd"', expected: '"bb"' },{ input: '"a"', expected: '"a"' },{ input: '"racecar"', expected: '"racecar"' }] },
+    { title: '0-1 Knapsack', description: 'Write `solve(weights, values, capacity)` — given items with weights and values arrays and a knapsack of given capacity, return the maximum total value (each item used at most once).',
+      testCases: [{ input: '[1,3,4,5], [1,4,5,7], 7', expected: '9' },{ input: '[2,3,4,5], [3,4,5,6], 5', expected: '7' },{ input: '[1], [10], 0', expected: '0' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -356,7 +366,6 @@ const RESPONSE_QUESTIONS = [
     { question: 'What is 13 × 17?', expectedKeywords: ['221'] },
     // ── Medium tier (50%) — multi-step math, applied reasoning ──
     { question: 'A pool fills in 3 hours with pipe A alone and 6 hours with pipe B alone. How many hours to fill it with both pipes open together?', expectedKeywords: ['2'] },
-    { question: 'If you buy 3 items at $4.75 each and pay with a $20 bill, how much change do you get?', expectedKeywords: ['5.75'] },
     { question: 'A train travels 240 km in 3 hours. What is its average speed in km/h?', expectedKeywords: ['80'] },
     { question: 'What is the next number in the sequence: 2, 6, 18, 54, ...?', expectedKeywords: ['162'] },
     { question: 'A rectangle has sides of length 12 cm and 5 cm. What is the length of its diagonal?', expectedKeywords: ['13'] },
@@ -376,6 +385,12 @@ const RESPONSE_QUESTIONS = [
     { question: 'A ball is dropped from 100 meters. Each bounce reaches half the previous height. What is the total distance traveled after exactly 3 bounces (including all ups and downs)?', expectedKeywords: ['275'] },
     { question: 'Three people check into a hotel room that costs $30. They each pay $10. The manager realizes the room is only $25 and gives $5 to the bellboy to return. The bellboy keeps $2 and gives $1 back to each person. Each person paid $9 (total $27) plus $2 the bellboy kept = $29. Where is the missing dollar?', expectedKeywords: ['no missing', 'accounting', 'error', 'fallacy'] },
     { question: 'A snail climbs 3 meters up a wall during the day but slides back 2 meters at night. If the wall is 10 meters high, how many days does it take the snail to reach the top?', expectedKeywords: ['8'] },
+    // ── Additional medium/hard questions ──
+    { question: 'A car drives 150 km at 60 km/h, then 120 km at 80 km/h. What is the total travel time in hours?', expectedKeywords: ['4'] },
+    { question: 'In how many different ways can the letters of the word "LISTEN" be arranged?', expectedKeywords: ['720'] },
+    { question: 'What is 2 to the power of 10?', expectedKeywords: ['1024'] },
+    { question: 'A store sells apples for $0.75 each and oranges for $1.20 each. If someone buys 4 apples and 3 oranges, what is the total cost?', expectedKeywords: ['6.6', '6.60'] },
+    { question: 'The sides of a right triangle are in the ratio 3:4:5. If the hypotenuse is 20 cm, what is the perimeter?', expectedKeywords: ['48'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -442,6 +457,10 @@ const TTS_PHRASES = [
     { text: 'The chemical compound CH3COOH commonly known as acetic acid has a pH of approximately 2.4', keywords: ['chemical', 'acetic', 'acid', 'pH'] },
     { text: 'Euler identity states that e to the power of i times pi plus 1 equals zero', keywords: ['euler', 'identity', 'pi', 'zero'] },
     { text: 'The UNESCO World Heritage site Machu Picchu is located at 2430 meters elevation in Peru', keywords: ['UNESCO', 'Machu Picchu', '2430', 'Peru'] },
+    // ── Additional hard phrases ──
+    { text: 'Your one-time verification code is 8 4 3 7 2 and expires in five minutes', keywords: ['verification', 'code', '84372', 'five', 'minutes'] },
+    { text: 'The SQL query selects all records from the users table where the account status equals active and the score is greater than 100', keywords: ['SQL', 'query', 'users', 'active', 'score', '100'] },
+    { text: 'Bernoulli and Euler each contributed foundational theorems to both fluid dynamics and graph theory', keywords: ['bernoulli', 'euler', 'fluid', 'dynamics', 'graph', 'theory'] },
 ];
 function generateTtsChallenge(weights) {
     const w = weights && weights['arena_tts'] || {};
