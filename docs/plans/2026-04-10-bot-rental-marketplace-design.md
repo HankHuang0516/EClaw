@@ -728,6 +728,26 @@ Capability fields are **permanent** after the first passing interview. Re-interv
 | `ended_zero_balance` | remaining | 0 | Last-message cost already deducted from deposit by rental-proxy; remaining deposit refunded to renter |
 | `ended_violation` | 70 | 30 | 5-strike limit hit |
 
+#### 7.3.1 UI copy per perspective (MANDATORY)
+
+The my-rentals.html page has two tabs (`renter` / `owner`) showing the **same contract** from different angles. Deposit disposition copy MUST differ by perspective — the word "退還" (refund) is ambiguous without a subject.
+
+| Status | Renter tab (租借中) — you are the renter | Owner tab (出租中) — you are the lessor |
+|--------|------------------------------------------|------------------------------------------|
+| `ended_normal` / `_disputed` / `_admin` | **押金全額退回給你** | **押金已全額退回給承租方** |
+| `ended_early_by_renter` | 退回你 50% · 沒收 50% | 退回承租方 50% · 你獲得違約金 50% |
+| `ended_violation` | 退回你 70% · 30% 沒收至保險金池 | 退回承租方 70% · 30% 進入保險金池 |
+| `ended_zero_balance` | 扣除用量後剩餘押金已退回給你 | 扣除用量後剩餘押金已退回給承租方 |
+
+**Implementation**: `depositDisposition(c)` in `my-rentals.html` reads `currentTab` and picks the matching i18n key family:
+
+- `mr_deposit_renter_*` — for `currentTab === 'renter'`
+- `mr_deposit_owner_*` — for `currentTab === 'owner'`
+
+The legacy keys (`mr_deposit_full_refund`, `mr_deposit_early_end`, `mr_deposit_violation`, `mr_deposit_zero_balance`) are kept for backward compatibility but SHOULD NOT be used for new UI — they lack the subject ("who is refunding whom") and cause user confusion.
+
+**Why this matters**: A single contract appears in BOTH tabs (once under each party's perspective). Without subject-aware copy, users see "退還 10 e幣" in 出租中 and wonder "我要退錢嗎？"; in 租借中 and wonder "我會收到錢嗎？". Subject-prefixed copy eliminates the ambiguity.
+
 Forfeited amounts are split via the standard 85/13/2 ratio: 85% to owner (as `RENTAL_INCOME`), 13% to platform wallet, 2% to insurance pool. All three credits run inside the same transaction as the contract status update.
 
 For `ended_zero_balance`: the token metering proxy (`chargeRentalUsage`) deducts the last-message shortfall directly from the deposit (`held_mli`) at charge time, splits it 85/13/2 to owner/platform/insurance, then signals `suspended: true`. When `endRental` subsequently runs, whatever deposit remains is refunded in full to the renter.

@@ -126,24 +126,42 @@
             return `<span class="mr-status ${m.class}">${tt(m.i18n, m.fb)}</span>`;
         }
 
-        /* ── Deposit disposition helper ── */
+        /* ── Deposit disposition helper ──
+         * UI copy differs by perspective (renter vs owner) per agent-message-rendering-spec
+         * and bot-rental-marketplace-design §7.3.
+         * - renter: 你「拿回」押金
+         * - owner:  你「退還」押金給承租方（押金從未是你的，違約部分才是你的收益）
+         */
         function depositDisposition(c) {
             if (!c.deposit_mli) return '';
             const dep = (c.deposit_mli / 1000).toFixed(1);
             const half = (c.deposit_mli / 2000).toFixed(1);
             const seventy = (c.deposit_mli * 0.7 / 1000).toFixed(1);
             const thirty = (c.deposit_mli * 0.3 / 1000).toFixed(1);
+            const isOwner = currentTab === 'owner';
             switch (c.status) {
                 case 'ended_normal':
                 case 'ended_disputed':
                 case 'ended_admin':
-                    return `<div class="mr-deposit-box success">${tt('mr_deposit_full_refund', 'Full refund')} ${dep} e${tt('mr_ecoin', 'coins')}</div>`;
+                    if (isOwner) {
+                        return `<div class="mr-deposit-box success">${tt('mr_deposit_owner_full_returned', 'Deposit fully returned to renter')}: ${dep} e${tt('mr_ecoin', 'coins')}</div>`;
+                    }
+                    return `<div class="mr-deposit-box success">${tt('mr_deposit_renter_full_refund', 'Full deposit refunded to you')}: ${dep} e${tt('mr_ecoin', 'coins')}</div>`;
                 case 'ended_early_by_renter':
-                    return `<div class="mr-deposit-box warning">${tt('mr_deposit_early_end', 'Refund {refund} e-coins, forfeit {forfeit} e-coins (50%)').replace('{refund}', half).replace('{forfeit}', half)}</div>`;
+                    if (isOwner) {
+                        return `<div class="mr-deposit-box warning">${tt('mr_deposit_owner_early_end', 'Returned {refund} e-coins to renter · Received {forfeit} e-coins forfeit (50%)').replace('{refund}', half).replace('{forfeit}', half)}</div>`;
+                    }
+                    return `<div class="mr-deposit-box warning">${tt('mr_deposit_renter_early_end', 'Refunded {refund} e-coins to you · Forfeit {forfeit} e-coins (50%)').replace('{refund}', half).replace('{forfeit}', half)}</div>`;
                 case 'ended_violation':
-                    return `<div class="mr-deposit-box warning">${tt('mr_deposit_violation', 'Refund {refund} e-coins, forfeit {forfeit} e-coins (30%)').replace('{refund}', seventy).replace('{forfeit}', thirty)}</div>`;
+                    if (isOwner) {
+                        return `<div class="mr-deposit-box warning">${tt('mr_deposit_owner_violation', 'Returned {refund} e-coins to renter · {forfeit} e-coins to insurance pool (30%)').replace('{refund}', seventy).replace('{forfeit}', thirty)}</div>`;
+                    }
+                    return `<div class="mr-deposit-box warning">${tt('mr_deposit_renter_violation', 'Refunded {refund} e-coins to you · Forfeit {forfeit} e-coins to insurance (30%)').replace('{refund}', seventy).replace('{forfeit}', thirty)}</div>`;
                 case 'ended_zero_balance':
-                    return `<div class="mr-deposit-box info">${tt('mr_deposit_zero_balance', 'Remaining deposit returned')}</div>`;
+                    if (isOwner) {
+                        return `<div class="mr-deposit-box info">${tt('mr_deposit_owner_zero_balance', 'Remaining deposit returned to renter after usage deduction')}</div>`;
+                    }
+                    return `<div class="mr-deposit-box info">${tt('mr_deposit_renter_zero_balance', 'Remaining deposit returned to you after usage deduction')}</div>`;
                 default:
                     return '';
             }
