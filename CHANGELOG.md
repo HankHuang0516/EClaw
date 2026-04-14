@@ -1,3 +1,10 @@
+# [1.973.0](https://github.com/HankHuang0516/EClaw/compare/v1.972.0...v1.973.0) (2026-04-14)
+
+
+### Features
+
+* **seo:** Add OG meta tags to community.html and invite.html ([4aae226](https://github.com/HankHuang0516/EClaw/commit/4aae22668c3bdc87a09a0bd6e5d9257a3d31617c))
+
 # [1.972.0](https://github.com/HankHuang0516/EClaw/compare/v1.971.4...v1.972.0) (2026-04-14)
 
 
