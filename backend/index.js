@@ -12846,13 +12846,22 @@ async function orgChartForward(entity, deviceId, message) {
         } else if (orgData.options.taskForward && chatPool) {
             // Option 2: forward only if entity has incomplete kanban tasks
             try {
+                // DEBUG: use full SELECT to see WHAT matched
                 const taskCheck = await chatPool.query(
-                    `SELECT 1 FROM kanban_cards WHERE device_id = $1 AND assigned_bots @> $2::jsonb AND status IN ('todo', 'in_progress') LIMIT 1`,
+                    `SELECT id, title, status, assigned_bots, is_automation, archived FROM kanban_cards WHERE device_id = $1 AND assigned_bots @> $2::jsonb AND status IN ('todo', 'in_progress') LIMIT 5`,
                     [deviceId, JSON.stringify([entity.entityId])]
                 );
+                // DEBUG LOG: print exactly what the SQL found
                 if (taskCheck.rows.length > 0) {
+                    console.log(`[OrgChart][DEBUG] taskForward SQL matched ${taskCheck.rows.length} rows for entity #${entity.entityId}:`);
+                    for (const r of taskCheck.rows) {
+                        console.log(`  [DEBUG] id=${r.id?.substring(0,8)} title="${(r.title||'').substring(0,50)}" status=${r.status} assigned=${JSON.stringify(r.assigned_bots)} auto=${r.is_automation} archived=${r.archived}`);
+                    }
+                    serverLog('info', 'org_forward_debug', `entity #${entity.entityId}: ${taskCheck.rows.length} matching tasks: ${taskCheck.rows.map(r => r.title?.substring(0,30)+'('+r.status+')').join(', ')}`, { deviceId, entityId: entity.entityId });
                     shouldForward = true;
                     prefix = `${ORG_TASK_FWD_PREFIX} from #${entity.entityId}] `;
+                } else {
+                    console.log(`[OrgChart][DEBUG] taskForward: NO matching tasks for entity #${entity.entityId} (query param: ${JSON.stringify([entity.entityId])})`);
                 }
             } catch (err) {
                 console.error('[OrgChart] Task check failed:', err.message);
