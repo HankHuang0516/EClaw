@@ -47,7 +47,11 @@ object EntityChipHelper {
         val limit = getEntityLimit(context)
         val avatarManager = EntityAvatarManager.getInstance(context)
         val chips = mutableMapOf<Int, Chip>()
-        val format = labelFormat ?: { id -> "${avatarManager.getAvatar(id)} #$id" }
+        val format = labelFormat ?: { id ->
+            val av = avatarManager.getAvatar(id)
+            val display = if (avatarManager.isImageUrl(av)) (EntityAvatarManager.DEFAULT_AVATARS[id] ?: "🦞") else av
+            "$display #$id"
+        }
 
         for (i in 0 until limit) {
             val chip = createChip(context, format(i), i, i == checkedByDefault)
@@ -75,7 +79,11 @@ object EntityChipHelper {
         val limit = getEntityLimit(context)
         val avatarManager = EntityAvatarManager.getInstance(context)
         val chips = mutableMapOf<Int, Chip>()
-        val format = labelFormat ?: { id -> "${avatarManager.getAvatar(id)} #$id" }
+        val format = labelFormat ?: { id ->
+            val av = avatarManager.getAvatar(id)
+            val display = if (avatarManager.isImageUrl(av)) (EntityAvatarManager.DEFAULT_AVATARS[id] ?: "🦞") else av
+            "$display #$id"
+        }
 
         for (i in 0 until limit) {
             val chip = createChip(context, format(i), i, i == checkedByDefault)
