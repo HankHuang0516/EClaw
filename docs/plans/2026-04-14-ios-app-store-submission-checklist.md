@@ -49,15 +49,53 @@
 - ⬜ 宣告 Required Reason API（UserDefaults、FileTimestamp、DiskSpace 等）
 - ⬜ `NSPrivacyTracking: false`（確認無 3rd party tracking）
 
-### 4. Sign in with Apple
+### 4. 完整帳號系統（方案 C — 見 [iOS Auth Implementation Plan](./2026-04-14-ios-auth-implementation-plan.md)）
 
-- ⬜ `expo-apple-authentication` 安裝
+**iOS 現況是純裝置認證，需完整重做帳號系統。**
+
+#### 4.1 後端（Phase 1）
+
+- ⬜ 新增 `POST /api/auth/oauth/apple` endpoint
+- ⬜ Apple JWKS 公鑰驗證邏輯
+- ⬜ Jest test 覆蓋（`backend/tests/jest/apple-oauth.test.js`）
+
+#### 4.2 iOS AuthStore（Phase 2）
+
+- ⬜ 安裝 `expo-apple-authentication`
+- ⬜ 安裝 `expo-auth-session expo-crypto expo-web-browser`
+- ⬜ 重寫 `authStore.ts` 支援 5 種登入方式
+- ⬜ API client 改用 `Authorization: Bearer` header
+
+#### 4.3 iOS 頁面（Phase 3）
+
+- ⬜ `app/(auth)/_layout.tsx`
+- ⬜ `app/login.tsx`（4 種登入 + 裝置認證折疊）
+- ⬜ `app/register.tsx`
+- ⬜ `app/forgot-password.tsx`
+- ⬜ `app/_layout.tsx` 加入 auth gate
+- ⬜ `app/bind-email.tsx`
+
+#### 4.4 Settings 整合（Phase 4）
+
+- ⬜ 顯示當前登入 provider
+- ⬜ 綁定 Email CTA（for 裝置用戶）
+- ⬜ 登出按鈕
+- ⬜ 刪除帳號按鈕（Apple §5.1.1(v) 強制）
+
+#### 4.5 Capabilities 設定（Phase 7）
+
 - ⬜ Xcode Capabilities 啟用 `Sign in with Apple`
-- ⬜ App Store Connect → App ID → Capabilities 勾選 Sign in with Apple
-- ⬜ iOS 登入頁加入 Apple Sign-In 按鈕
-- ⬜ 後端新增 `POST /api/auth/oauth/apple`
-- ⬜ 後端驗證 Apple identity token（用 Apple 公鑰 JWKS）
-- ⬜ 與 Google/Facebook 登入一起顯示（不可只有 Apple）
+- ⬜ Apple Developer → Identifiers → Bundle ID → Capabilities 勾選
+- ⬜ App Store Connect → App ID → Capabilities 勾選
+- ⬜ `app.json` `ios.usesAppleSignIn: true`
+
+#### 4.6 驗收條件
+
+- ⬜ Sign in with Apple 與 Google/Facebook 三者並存（不可只有 Apple，不可缺 Apple）
+- ⬜ Apple 按鈕標準樣式（Black, HIG-compliant）
+- ⬜ 既有裝置用戶升級後資料保留
+- ⬜ 刪除帳號可用且真的刪除
+- ⬜ 14 語系 i18n 補齊
 
 ### 5. `eas.json` 填入真實值
 

@@ -250,19 +250,39 @@ const colorScheme = useColorScheme(); // 'light' | 'dark'
 
 ## 6. 認證規範
 
-### 6.1 登入方式優先級
+採用**方案 C：完整帳號系統**（方案 A/B 已棄用，詳見 [iOS Auth Implementation Plan](../plans/2026-04-14-ios-auth-implementation-plan.md)）。
 
-| 方式 | iOS | 備註 |
-|------|-----|------|
-| Email + 密碼 | ✅ | |
-| Device ID + Secret | ✅ | 從 Android App 匯入 |
-| **Sign in with Apple** | 🔴 **上架前必加** | Apple 政策：若有 3rd party sign-in，必須有 Apple sign-in |
-| Google OAuth | ⚠️ 若留需同時加 Apple | |
-| Facebook OAuth | ⚠️ 若留需同時加 Apple | |
+### 6.1 支援的登入方式
 
-### 6.2 Sign in with Apple 實作
+| 方式 | iOS | 後端 endpoint | 備註 |
+|------|-----|--------------|------|
+| **Email + 密碼** | ✅ 主要 | `POST /api/auth/login` + `/register` | 跨平台通用 |
+| **Sign in with Apple** | ✅ 必加 | `POST /api/auth/oauth/apple`（新增） | Apple §4.8 強制 |
+| **Google OAuth** | ✅ | `POST /api/auth/oauth/google` | 觸發 §4.8，須與 Apple 並存 |
+| **Facebook OAuth** | ✅ | `POST /api/auth/oauth/facebook` | 觸發 §4.8，須與 Apple 並存 |
+| **裝置認證** | ✅ 進階 | `POST /api/auth/device-login` | 保留向下相容，預設折疊 |
 
-使用 `expo-auth-session/providers/apple`：
+**Apple §4.8 關鍵**：一旦 App 提供 Google / Facebook / Twitter 等第三方登入，**必須**同時提供 Sign in with Apple。四者並存，**Sign in with Apple 必須置頂或同等突出**。
+
+### 6.2 Token 管理
+
+**儲存位置**：`expo-secure-store`（比 AsyncStorage 安全）
+
+| Key | 內容 | 清除時機 |
+|-----|------|---------|
+| `auth_token` | JWT（30 天） | 登出、過期、刪帳號 |
+| `user_id` | user_accounts.id | 登出、刪帳號 |
+| `user_email` | 顯示用 | 登出 |
+| `device_id` | 裝置識別 | 刪帳號才清 |
+| `device_secret` | 裝置認證備援 | 刪帳號才清 |
+
+**API 請求**：`Authorization: Bearer ${authToken}` header，不再把 deviceSecret 塞進 body（除非純裝置認證路徑）。
+
+**過期處理**：JWT 401 → 嘗試用 device credential refresh → 仍失敗 → 清 token 導登入頁。
+
+### 6.3 Sign in with Apple 實作
+
+使用 `expo-apple-authentication`：
 
 ```typescript
 import * as AppleAuthentication from 'expo-apple-authentication';
@@ -276,19 +296,31 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 />
 ```
 
-後端新增：
+按下後取得 `identityToken`、`authorizationCode`，送後端 `POST /api/auth/oauth/apple` 交換 JWT。後端用 Apple JWKS 公鑰驗證 token。
+
+### 6.4 登入頁排版（§2 Login Screen Layout）
+
 ```
-POST /api/auth/oauth/apple
-Body: { identityToken, authorizationCode, fullName?, email? }
+1. Apple 按鈕（頂部、標準黑色）
+2. Google 按鈕
+3. Facebook 按鈕
+4. ── or ──
+5. Email + Password 表單
+6. Register / Forgot Password 連結
+7. 裝置認證（折疊，標示「進階」）
 ```
 
-後端驗證 JWT（用 Apple 公鑰），建立或連結 user account。
+### 6.5 既有用戶遷移
 
-### 6.3 權杖儲存
+現有純裝置認證用戶（升級前）：
+1. App 啟動 → 讀到 device_id + device_secret，無 authToken
+2. 自動呼叫 `/api/auth/device-login` 換 JWT
+3. 進 Dashboard + 顯示「綁定 Email」banner
+4. 用戶可忽略或點按綁定（走 `/api/auth/bind-email`）
 
-- `authToken` 存 `AsyncStorage`，key = `eclawbot_auth_token`
-- 不存 `deviceSecret` 到 AsyncStorage（除非用戶明確「記住此裝置」）
-- Session 過期自動跳登入頁
+### 6.6 刪除帳號（Apple §5.1.1(v) 強制）
+
+Settings → 刪除帳號 → 呼叫 `DELETE /api/auth/account` → 清 SecureStore → 導登入頁。
 
 ---
 
