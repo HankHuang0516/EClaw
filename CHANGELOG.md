@@ -1,3 +1,10 @@
+## [1.974.2](https://github.com/HankHuang0516/EClaw/compare/v1.974.1...v1.974.2) (2026-04-14)
+
+
+### Bug Fixes
+
+* **android:** My Cards empty due to Gson capabilities deserialize mismatch ([744f475](https://github.com/HankHuang0516/EClaw/commit/744f475421f357bdd137b8213a79d290a5ab5c21))
+
 ## [1.974.1](https://github.com/HankHuang0516/EClaw/compare/v1.974.0...v1.974.1) (2026-04-14)
 
 
