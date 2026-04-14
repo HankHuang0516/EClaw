@@ -276,11 +276,8 @@
     <string name="error_open_settings">无法打开壁纸设置</string>
     <string name="expand">展开</string>
     <string name="expires_in">%d秒后过期</string>
-    <string name="facebook_app_id">Facebook App ID</string>
-    <string name="facebook_client_token">Facebook Client Token</string>
     <string name="failed_add_slot">添加槽位失败</string>
     <string name="failed_format">失败：%s</string>
-    <string name="fb_login_protocol_scheme">fb 登录协议</string>
     <string name="feedback">反馈</string>
     <string name="feedback_auto_log_hint">将自动捕获最近 5 分钟的日志，以便诊断问题。</string>
     <string name="feedback_cancel_mark">取消标记</string>
@@ -404,7 +401,6 @@
     <string name="gatekeeper_blocked_message">⚠️ %1$s（%2$d/%3$d）</string>
     <string name="gatekeeper_blocked_permanent">⚠️ %1$s</string>
     <string name="generate">生成</string>
-    <string name="google_server_client_id">Google Server Client ID</string>
     <string name="handshaking_bot">正在与机器人握手…</string>
     <string name="hello_im_here">你好，我来了！</string>
     <string name="hide_label">隐藏</string>
