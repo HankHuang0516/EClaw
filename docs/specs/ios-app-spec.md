@@ -1,0 +1,416 @@
+# iOS App 平台規範書 (iOS App Spec)
+
+> **版本**: 1.0.0
+> **建立日期**: 2026-04-14
+> **適用範圍**: `ios-app/` (React Native + Expo Router)
+> **目的**: 定義 iOS App 的架構、導航、UI 規範、功能範圍，作為所有 iOS 改動的唯一標準。
+> **依據**: Apple Human Interface Guidelines、[Mobile Parity Gap](../plans/2026-04-14-brm-mobile-parity-gap.md)、CLAUDE.md §Feature Parity Rule
+
+---
+
+## 1. App 定位
+
+| 項目 | 內容 |
+|------|------|
+| App 名稱 | EClawbot |
+| Bundle ID | `com.eclawbot.app` |
+| 版本 | 1.0.0（buildNumber 另計） |
+| 最低 iOS 版本 | iOS 15.1（Expo SDK 55 要求） |
+| 支援裝置 | iPhone + iPad（universal） |
+| 方向 | Portrait 為主，chat/kanban 支援 landscape |
+| 類別 | Productivity（主） / Social Networking（副） |
+| 年齡分級 | 4+ |
+
+---
+
+## 2. 架構總覽
+
+### 2.1 技術堆疊
+
+| 層 | 技術 | 備註 |
+|----|------|------|
+| UI Framework | React Native 0.83.2 | |
+| 路由 | Expo Router (file-based) | `app/` 目錄結構 = 導航 |
+| 平台 | Expo SDK 55 | |
+| 狀態管理 | React Context + useState | 不引入 Redux |
+| HTTP | fetch API + 自訂 `services/api.ts` | |
+| 即時通訊 | Socket.IO client | |
+| 本地存儲 | `@react-native-async-storage/async-storage` | 替代 localStorage |
+| 推播 | `expo-notifications` → APNs | |
+
+### 2.2 檔案結構
+
+```
+ios-app/
+├── app/                          # Expo Router 頁面
+│   ├── _layout.tsx               # Root layout（auth gate）
+│   ├── (tabs)/                   # Tab Bar 五大主頁
+│   │   ├── _layout.tsx           # Tab Bar 配置
+│   │   ├── index.tsx             # 🏠 首頁（Dashboard / Entity list）
+│   │   ├── chat.tsx              # 💬 聊天列表
+│   │   ├── mission.tsx           # 📋 Mission Control（notes/kanban）
+│   │   ├── cards.tsx             # 🎴 Card Holder（名片夾）
+│   │   └── settings.tsx          # ⚙️ 設定
+│   ├── chat/[entityId].tsx       # 個別聊天頁
+│   ├── ai-chat.tsx               # 🤖 AI 助理
+│   ├── wallet.tsx                # 💰 錢包（iOS 必須 native + IAP）
+│   ├── my-rentals.tsx            # 租借管理（我的租賃）
+│   ├── community.tsx             # 社群 / 市場（Marketplace）
+│   ├── card-holder.tsx           # （獨立名片夾頁，與 tab cards 重疊待整理）
+│   ├── entity-manager.tsx        # 實體管理
+│   ├── schedule.tsx              # 排程
+│   ├── file-manager.tsx          # 檔案
+│   ├── feedback.tsx              # 意見回饋
+│   ├── invite.tsx                # 邀請碼
+│   └── official-borrow.tsx       # 官方 Bot 借用
+├── components/                   # 共用元件
+├── services/                     # API wrapper + Socket + Telemetry
+├── store/                        # Context providers
+├── hooks/                        # Custom hooks
+├── i18n/                         # 多語系
+├── assets/                       # 圖示、啟動畫面
+├── app.json                      # Expo 配置
+└── eas.json                      # EAS Build / Submit 設定
+```
+
+### 2.3 Tab Bar 五大主頁（不可變更，對齊 Android）
+
+| Tab | 圖示 | 路由 | 內容 |
+|-----|------|------|------|
+| 🏠 首頁 | `home` | `(tabs)/index` | Dashboard + Entity 列表 + Org Chart |
+| 💬 聊天 | `chatbubbles` | `(tabs)/chat` | Chat 列表，進入聊天頁 |
+| 📋 任務 | `clipboard` | `(tabs)/mission` | Mission Control（notes + kanban 入口） |
+| 🎴 名片 | `albums` | `(tabs)/cards` | Card Holder（名片夾） |
+| ⚙️ 設定 | `settings` | `(tabs)/settings` | 設定 + wallet + my-rentals 入口 |
+
+---
+
+## 3. 功能範圍決策
+
+### 3.1 Native vs WebView 決策矩陣
+
+對每個功能，依以下標準決定採用原生或 WebView：
+
+| 標準 | 選 Native | 選 WebView |
+|------|----------|-----------|
+| 涉及 Apple IAP / 支付 | ✅ 必須 | ❌ 會被 Apple 拒 |
+| 高頻使用（每日） | ✅ | ⚠️ 考慮 |
+| 低頻/複雜表單 | ⚠️ | ✅ 可接受 |
+| 重度互動（drag/drop） | ✅ | ⚠️ |
+| 需相機/檔案存取 | ✅ 透過 Expo API | ⚠️ 權限問題 |
+| 跨裝置訊息預覽 | ✅ | ❌ 會失去推播整合 |
+
+### 3.2 現況分類
+
+| 功能 | 當前實作 | 建議 | 上架前優先級 |
+|------|---------|------|-------------|
+| Dashboard / Entity 列表 | Native | ✅ 保持 | — |
+| 聊天列表 | Native | ✅ 保持 | — |
+| 個別聊天頁 | Native | ✅ 保持 | — |
+| AI 助理 | Native | ✅ 保持 | — |
+| Mission Control | Native | ✅ 保持 | — |
+| Card Holder | Native | ✅ 保持 | — |
+| 設定 | Native | ✅ 保持 | — |
+| **Wallet** | WebView | 🔴 **必改 Native + IAP** | P0 |
+| My Rentals | WebView wrapper | 🟡 可保留但加 native entry | P1 |
+| Community / Marketplace | WebView | 🟡 可保留但加 native entry | P1 |
+| Arena 面試 | ❌ 無 | 🟡 WebView wrapper 即可 | P2 |
+| Kanban Board | 透過 Mission 導 WebView | 🟡 可保留 | P2 |
+| Entity Manager | Native | ✅ | — |
+| File Manager | Native | ✅ | — |
+| Feedback | Native | ✅ | — |
+
+### 3.3 WebView 使用規範
+
+當必須用 WebView 時：
+
+- ✅ 使用 `react-native-webview`
+- ✅ URL 限定 `eclawbot.com` 或子網域，不得開外站
+- ✅ 注入 auth token（透過 URL query 或 postMessage）
+- ✅ 攔截 `mailto:` / `tel:` 交給系統處理
+- ❌ 不得在 WebView 內顯示任何付款頁（違反 Apple §3.1.1）
+- ❌ 不得在 WebView 內開啟 TapPay / Stripe iframe
+- ✅ WebView 內的 JS 需知道自己在 App 內（透過 User-Agent 偵測 `EClawbotApp/1.0`）
+
+---
+
+## 4. UI 規範（Apple HIG 合規）
+
+### 4.1 顏色
+
+遵循系統主題，支援深色模式：
+
+```typescript
+// 使用 useColorScheme()
+const colorScheme = useColorScheme(); // 'light' | 'dark'
+```
+
+**品牌色**：`#7E57C2`（紫）— 與 Web Portal 一致
+**強調色**：`#00C853`（綠，成功、加值按鈕）
+**警告色**：`#FF5252`（紅，刪除、違規）
+
+### 4.2 字型
+
+- iOS 系統字型：`San Francisco`（SF Pro）
+- 不得嵌入自訂中文字型（增加 bundle size，Review 會擋）
+- 中文字支援：使用系統字體自動回退
+
+### 4.3 圖示規範
+
+**App Icon**：
+- 1024×1024 PNG，無透明通道、無圓角（Apple 自動加圓角）
+- 位置：`ios-app/assets/icon.png`
+- 現況：✅ 存在，尺寸正確
+
+**各尺寸**（Expo 會自動產生，不需手動提供）：
+- 20pt (1x/2x/3x), 29pt, 40pt, 60pt, 76pt, 83.5pt, 1024pt
+
+**Launch Screen / Splash**：
+- 位置：`ios-app/assets/splash.png`
+- 背景色 `#7E57C2`（與 `app.json` 同步）
+- 避免文字（避免未 localized 的 Review 風險）
+
+### 4.4 安全區（Safe Area）
+
+- ✅ 所有 Screen 包 `<SafeAreaView>` 或使用 `useSafeAreaInsets()`
+- ✅ Tab Bar 底部自動 respect home indicator
+
+### 4.5 觸控目標
+
+- 最小 44×44 points（HIG 要求）
+- 圖示按鈕：48×48
+- 列表項目高度：≥ 44
+
+### 4.6 Haptic Feedback
+
+使用 `expo-haptics`：
+- 按鈕點擊：`Haptics.selectionAsync()`
+- 成功動作：`Haptics.notificationAsync(Success)`
+- 刪除、錯誤：`Haptics.notificationAsync(Warning / Error)`
+
+---
+
+## 5. 權限規範（Info.plist NSUsageDescription）
+
+現況已設定（`app.json`）：
+
+| 權限 | Info.plist Key | 說明文字（需 localized） |
+|------|---------------|---------------------|
+| 相機 | `NSCameraUsageDescription` | 「EClawbot 需要相機以拍攝頭像或附件」 |
+| 相簿（讀） | `NSPhotoLibraryUsageDescription` | 「EClawbot 需要存取相簿以選擇頭像或附件」 |
+| 相簿（寫） | `NSPhotoLibraryAddUsageDescription` | 「EClawbot 需將圖片儲存至您的相簿」 |
+| 麥克風 | `NSMicrophoneUsageDescription` | 「EClawbot 需要麥克風錄製語音訊息」 |
+
+**重要**：每個權限都必須**說明具體用途**，含糊的「為了 App 功能」會被 Review 拒。
+
+### 5.1 Privacy Manifest（2024-05 起強制）
+
+需建立 `ios-app/ios/PrivacyInfo.xcprivacy`：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>NSPrivacyCollectedDataTypes</key>
+    <array>
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeEmailAddress</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <true/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
+        <!-- 其他資料類型：UserID, DeviceID, ProductInteraction 等 -->
+    </array>
+    <key>NSPrivacyAccessedAPITypes</key>
+    <array>
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>CA92.1</string>
+            </array>
+        </dict>
+        <!-- FileTimestamp, SystemBootTime, DiskSpace -->
+    </array>
+    <key>NSPrivacyTracking</key>
+    <false/>
+</dict>
+</plist>
+```
+
+---
+
+## 6. 認證規範
+
+### 6.1 登入方式優先級
+
+| 方式 | iOS | 備註 |
+|------|-----|------|
+| Email + 密碼 | ✅ | |
+| Device ID + Secret | ✅ | 從 Android App 匯入 |
+| **Sign in with Apple** | 🔴 **上架前必加** | Apple 政策：若有 3rd party sign-in，必須有 Apple sign-in |
+| Google OAuth | ⚠️ 若留需同時加 Apple | |
+| Facebook OAuth | ⚠️ 若留需同時加 Apple | |
+
+### 6.2 Sign in with Apple 實作
+
+使用 `expo-auth-session/providers/apple`：
+
+```typescript
+import * as AppleAuthentication from 'expo-apple-authentication';
+
+<AppleAuthentication.AppleAuthenticationButton
+  buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+  buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+  cornerRadius={8}
+  style={{ width: '100%', height: 48 }}
+  onPress={handleAppleSignIn}
+/>
+```
+
+後端新增：
+```
+POST /api/auth/oauth/apple
+Body: { identityToken, authorizationCode, fullName?, email? }
+```
+
+後端驗證 JWT（用 Apple 公鑰），建立或連結 user account。
+
+### 6.3 權杖儲存
+
+- `authToken` 存 `AsyncStorage`，key = `eclawbot_auth_token`
+- 不存 `deviceSecret` 到 AsyncStorage（除非用戶明確「記住此裝置」）
+- Session 過期自動跳登入頁
+
+---
+
+## 7. 通訊規範
+
+### 7.1 HTTP Base URL
+
+```typescript
+const API_BASE = __DEV__
+  ? 'https://eclawbot.com'  // 一律用 prod，不搞 localhost
+  : 'https://eclawbot.com';
+```
+
+### 7.2 Socket.IO
+
+- 連線到 `wss://eclawbot.com`
+- 認證：query `?deviceId=X&deviceSecret=Y`（或 JWT）
+- 房間：`device:{deviceId}`
+- 事件：`entity:update`, `chat:new`, `chat:reaction`
+
+### 7.3 推播（APNs）
+
+- 取得 token：`Notifications.getDevicePushTokenAsync()`
+- 註冊到後端：`POST /api/notifications/register-ios`
+  - Body: `{ deviceId, apnsToken, bundleId }`
+- 後端：`notifications.js` 已支援 FCM，需新增 APNs 分支
+
+### 7.4 Deep Link / Universal Link
+
+- URL Scheme：`eclawbot://`（app.json 已設定）
+- Universal Link：`https://eclawbot.com/...`（需 `associatedDomains`）
+- 後端需放 `/.well-known/apple-app-site-association`
+
+---
+
+## 8. 跨平台 Feature Parity
+
+### 8.1 必須與 Web/Android 一致的功能
+
+| 功能 | Web | Android | iOS |
+|------|-----|---------|-----|
+| Entity CRUD | ✅ | ✅ | ✅ |
+| Chat | ✅ | ✅ | ✅ |
+| AI 助理 | ✅ | ✅ | ✅ |
+| Mission Control | ✅ | ✅ | ✅ |
+| Kanban | ✅ | ⚠️ WebView | ⚠️ WebView（可接受） |
+| Card Holder | ✅ | ✅ | ✅ |
+| Wallet | ✅ | ✅ Google Play | 🔴 **需 IAP** |
+| BRM Marketplace | ✅ | ⚠️ WebView | ⚠️ WebView（可接受） |
+| My Rentals | ✅ | ⚠️ WebView | ⚠️ WebView（可接受） |
+| Arena 面試 | ✅ | ❌ | ❌ 上架前需 WebView wrapper |
+| Org Chart | ✅ | ⚠️ WebView | ⚠️ WebView |
+
+### 8.2 差異可接受的項目
+
+- 深色模式：iOS 跟系統，Android 跟系統，Web 自選
+- Haptic feedback：僅 iOS + Android 有
+- Widget：Android 有首頁 widget，iOS 未實作（P3）
+
+---
+
+## 9. 建置與發行
+
+### 9.1 EAS Build 設定
+
+`eas.json` 需填入：
+
+```json
+{
+  "cli": { "version": ">= 5.0.0" },
+  "build": {
+    "development": { "developmentClient": true, "distribution": "internal" },
+    "preview": { "distribution": "internal", "ios": { "simulator": true } },
+    "production": {
+      "ios": {
+        "autoIncrement": true,
+        "resourceClass": "m-medium"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "hank@eclawbot.com",
+        "ascAppId": "1234567890",
+        "appleTeamId": "ABC123XYZ"
+      }
+    }
+  }
+}
+```
+
+### 9.2 版本號規範
+
+- `version`（marketing version）：`1.0.0` 主版本號，遇重大改版才升
+- `buildNumber`：EAS autoIncrement，每次 submit 自動 +1
+- 與 Android 保持一致性：iOS 1.0.x ↔ Android 1.0.x
+
+---
+
+## 10. 禁止行為（Apple 會拒的紅線）
+
+- ❌ **iOS 加值走 IAP 以外的任何管道**（參見 [ios-iap-spec.md](./ios-iap-spec.md)）
+- ❌ 若有 Google/FB 登入，**沒有 Sign in with Apple**
+- ❌ 缺少 `PrivacyInfo.xcprivacy`
+- ❌ Info.plist 權限說明含糊（例如：「為了 App 功能」）
+- ❌ 開啟外部瀏覽器到付款頁
+- ❌ 提示用戶「網頁版更便宜」
+- ❌ 使用未宣告的 Required Reason API
+- ❌ 上架時開發者連結指向 404
+- ❌ 沒有測試帳號給審查員
+- ❌ App 功能需要 Jailbreak 或 side-load
+- ❌ 儲存 Apple IAP `transactionId` 但不驗證 receipt
+
+---
+
+## 11. 版本歷史
+
+| 版本 | 日期 | 說明 |
+|------|------|------|
+| 1.0.0 | 2026-04-14 | 初版，定義 iOS App 架構、UI、認證、通訊、feature parity、合規要求 |
+
+---
+
+> **關鍵提醒**：本文件為 iOS 上架的唯一標準。任何與本規範不符的實作或改動均視為 bug，應優先修復。
