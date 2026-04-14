@@ -815,4 +815,24 @@ Jika ada pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="topup_failed">Isi ulang gagal. Silakan coba lagi.</string>
     <string name="choose_plan_title">Pilih Paket</string>
     <string name="upgrade_plan">Tingkatkan Paket</string>
+
+    <string name="billing_subscription_unavailable">Tidak dapat mengambil paket langganan, coba lagi nanti</string>
+    <string name="card_holder_copied">Disalin: %s</string>
+    <string name="card_holder_error">Kesalahan</string>
+    <string name="dialog_add_friend_message">Tambahkan %s ke kontak Anda?</string>
+    <string name="dialog_add_friend_title">Tambah teman</string>
+    <string name="dialog_agent_card_title">Kartu agen — Entitas #%d</string>
+    <string name="dialog_block_contact">Blokir %s? Mereka tidak akan bisa berinteraksi dengan Anda lagi.</string>
+    <string name="dialog_block_title">Blokir</string>
+    <string name="dialog_delete_agent_card">Hapus kartu agen?</string>
+    <string name="dialog_delete_agent_card_message">Tindakan ini tidak dapat dibatalkan.</string>
+    <string name="dialog_unblock_title">Buka blokir</string>
+    <string name="main_delete_failed_msg">Gagal menghapus: %s</string>
+    <string name="schedule_error_generic">Kesalahan: %s</string>
+    <string name="schedule_failed_to_load">Gagal memuat: %s</string>
+    <string name="schedule_operation_failed">Operasi gagal</string>
+    <string name="facebook_app_id">FB_APP_ID_PLACEHOLDER</string>
+    <string name="facebook_client_token">FB_CLIENT_TOKEN_PLACEHOLDER</string>
+    <string name="fb_login_protocol_scheme">fb{app_id}://authorize</string>
+    <string name="google_server_client_id">GOOGLE_SERVER_CLIENT_ID_PLACEHOLDER</string>
 </resources>

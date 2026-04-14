@@ -829,4 +829,20 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="topup_failed">充值失败，请重试</string>
     <string name="choose_plan_title">选择方案</string>
     <string name="upgrade_plan">升级方案</string>
+
+    <string name="billing_subscription_unavailable">无法取得订阅方案，请稍后再试</string>
+    <string name="card_holder_copied">已复制：%s</string>
+    <string name="card_holder_error">错误</string>
+    <string name="dialog_add_friend_message">将 %s 加入联系人？</string>
+    <string name="dialog_add_friend_title">添加好友</string>
+    <string name="dialog_agent_card_title">代理卡 — 实体 #%d</string>
+    <string name="dialog_block_contact">封锁 %s？他们将无法再与您互动。</string>
+    <string name="dialog_block_title">封锁</string>
+    <string name="dialog_delete_agent_card">删除代理卡？</string>
+    <string name="dialog_delete_agent_card_message">此操作无法撤销。</string>
+    <string name="dialog_unblock_title">解除封锁</string>
+    <string name="main_delete_failed_msg">删除失败：%s</string>
+    <string name="schedule_error_generic">错误：%s</string>
+    <string name="schedule_failed_to_load">载入失败：%s</string>
+    <string name="schedule_operation_failed">操作失败</string>
 </resources>
