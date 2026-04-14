@@ -1,3 +1,10 @@
+## [1.970.2](https://github.com/HankHuang0516/EClaw/compare/v1.970.1...v1.970.2) (2026-04-14)
+
+
+### Bug Fixes
+
+* prevent owner entity deletion on cron-expired rentals ([#1748](https://github.com/HankHuang0516/EClaw/issues/1748)) ([4ce14be](https://github.com/HankHuang0516/EClaw/commit/4ce14bea2a7a4c17b38b29365f09fc8f1879cde7)), closes [#1741](https://github.com/HankHuang0516/EClaw/issues/1741)
+
 ## [1.970.1](https://github.com/HankHuang0516/EClaw/compare/v1.970.0...v1.970.1) (2026-04-13)
 
 
