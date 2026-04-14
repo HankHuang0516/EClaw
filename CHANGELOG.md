@@ -1,3 +1,12 @@
+## [1.971.3](https://github.com/HankHuang0516/EClaw/compare/v1.971.2...v1.971.3) (2026-04-14)
+
+
+### Bug Fixes
+
+* **android:** add missing translations for 4 locales ([5c1fe79](https://github.com/HankHuang0516/EClaw/commit/5c1fe795cdef0a2533f52a61188ae53be12ccd39))
+* **android:** externalize hardcoded Save/Cancel/Delete strings in MainActivity ([e518345](https://github.com/HankHuang0516/EClaw/commit/e51834581000a838b7f91ec90ef08d3f51a435b6))
+* **android:** replace 4 remaining hardcoded dialog button strings ([bd7e143](https://github.com/HankHuang0516/EClaw/commit/bd7e1439a4db067370573e22f9eeeb731729504f))
+
 ## [1.971.2](https://github.com/HankHuang0516/EClaw/compare/v1.971.1...v1.971.2) (2026-04-14)
 
 
