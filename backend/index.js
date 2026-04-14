@@ -10003,7 +10003,7 @@ app.post('/api/debug/reset', (req, res) => {
  *
  * Body: { deviceId, deviceSecret, entityId, publicCode }
  */
-app.post('/api/debug/restore-entity-public-code', async (req, res) => {
+app.post('/api/device/restore-entity-public-code', async (req, res) => {
     const { deviceId, deviceSecret, entityId, publicCode } = req.body || {};
     if (!deviceId || !deviceSecret || entityId === undefined || !publicCode) {
         return res.status(400).json({ success: false, error: 'deviceId, deviceSecret, entityId, publicCode required' });
