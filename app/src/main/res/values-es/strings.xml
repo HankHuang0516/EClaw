@@ -286,11 +286,8 @@ Los registros aparecerán aquí mientras la app funciona.</string>
     <string name="error_open_settings">No se puede abrir la configuración del fondo</string>
     <string name="expand">Expandir</string>
     <string name="expires_in">Expira en %ds</string>
-    <string name="facebook_app_id">772387505935344</string>
-    <string name="facebook_client_token">139b350cf525d7785d370b1813e77838</string>
     <string name="failed_add_slot">Error al agregar ranura</string>
     <string name="failed_format">Falló: %s</string>
-    <string name="fb_login_protocol_scheme">fb772387505935344</string>
     <string name="feedback">Comentarios</string>
     <string name="feedback_auto_log_hint">Los registros de los últimos 5 minutos serán capturados automáticamente para ayudar a diagnosticar el problema.</string>
     <string name="feedback_cancel_mark">Cancelar Marca</string>
@@ -397,7 +394,6 @@ Tus comentarios enviados aparecerán aquí.</string>
     <string name="gatekeeper_blocked_message">⚠️ %1$s（%2$d/%3$d）</string>
     <string name="gatekeeper_blocked_permanent">⚠️ %1$s</string>
     <string name="generate">Generar</string>
-    <string name="google_server_client_id">857252321032-3e8ajfc30up4957l8lqns562dee7ll72.apps.googleusercontent.com</string>
     <string name="handshaking_bot">Estableciendo handshake con bot…</string>
     <string name="hello_im_here">¡Hola, estoy aquí!</string>
     <string name="hide_label">Ocultar</string>

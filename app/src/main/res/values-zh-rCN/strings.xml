@@ -276,11 +276,8 @@
     <string name="error_open_settings">无法打开壁纸设置</string>
     <string name="expand">展开</string>
     <string name="expires_in">%d秒后过期</string>
-    <string name="facebook_app_id">Facebook App ID</string>
-    <string name="facebook_client_token">Facebook Client Token</string>
     <string name="failed_add_slot">添加槽位失败</string>
     <string name="failed_format">失败：%s</string>
-    <string name="fb_login_protocol_scheme">fb 登录协议</string>
     <string name="feedback">反馈</string>
     <string name="feedback_auto_log_hint">将自动捕获最近 5 分钟的日志，以便诊断问题。</string>
     <string name="feedback_cancel_mark">取消标记</string>
@@ -404,7 +401,6 @@
     <string name="gatekeeper_blocked_message">⚠️ %1$s（%2$d/%3$d）</string>
     <string name="gatekeeper_blocked_permanent">⚠️ %1$s</string>
     <string name="generate">生成</string>
-    <string name="google_server_client_id">Google Server Client ID</string>
     <string name="handshaking_bot">正在与机器人握手…</string>
     <string name="hello_im_here">你好，我来了！</string>
     <string name="hide_label">隐藏</string>
@@ -815,21 +811,7 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="xd_whitelist">白名单（公开代码）</string>
     <string name="xd_whitelist_mode">白名单模式</string>
     <string name="you">你</string>
-    <string name="entity_main">实体 0 (主)</string>
-    <string name="hello_im_here">你好，我来了！</string>
-    <string name="last_updated">最后更新：刚刚</string>
-    <string name="agent_card">代理卡</string>
-    <string name="log_debug">调试</string>
-    <string name="log_info">信息</string>
-    <string name="log_warn">警告</string>
-    <string name="log_error">错误</string>
-    <string name="topup_ecoin_title">充值 e 币</string>
-    <string name="topup_ecoin">充值</string>
-    <string name="topup_success">e 币已加入钱包！</string>
-    <string name="topup_failed">充值失败，请重试</string>
-    <string name="choose_plan_title">选择方案</string>
-    <string name="upgrade_plan">升级方案</string>
-
+                                                        
     <string name="billing_subscription_unavailable">无法取得订阅方案，请稍后再试</string>
     <string name="card_holder_copied">已复制：%s</string>
     <string name="card_holder_error">错误</string>
