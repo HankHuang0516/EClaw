@@ -468,7 +468,7 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="log_error">エラー</string>
     <string name="log_info">情報</string>
     <string name="log_warn">警告</string>
-    <string name="main_title">E-Claw</string>
+    <string name="main_title">EClawbot</string>
     <string name="manage_entities">エンティティ管理</string>
     <string name="message_copied">メッセージをコピーしました</string>
     <string name="message_hint">%s へのメッセージ…</string>

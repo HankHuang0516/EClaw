@@ -468,7 +468,7 @@ GPS：รับตามความต้องการเท่านั้�
     <string name="log_error">ข้อผิดพลาด</string>
     <string name="log_info">ข้อมูล</string>
     <string name="log_warn">เตือน</string>
-    <string name="main_title">E-Claw</string>
+    <string name="main_title">EClawbot</string>
     <string name="manage_entities">จัดการ Entity</string>
     <string name="message_copied">คัดลอกข้อความแล้ว</string>
     <string name="message_hint">ข้อความถึง %s…</string>

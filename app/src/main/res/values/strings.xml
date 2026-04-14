@@ -3,7 +3,7 @@
     <string name="wallpaper_description">Live status of your AI agent</string>
 
     <!-- Main Activity -->
-    <string name="main_title">E-Claw</string>
+    <string name="main_title">EClawbot</string>
     <string name="no_agents_connected">No agents connected</string>
     <string name="tap_to_add_entity">Tap + Add Entity to connect your first agent</string>
     <string name="add_entity">+ Add Entity</string>

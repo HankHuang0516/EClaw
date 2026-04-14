@@ -433,7 +433,7 @@
     <string name="log_error">错误</string>
     <string name="log_info">信息</string>
     <string name="log_warn">警告</string>
-    <string name="main_title">E-Claw</string>
+    <string name="main_title">EClawbot</string>
     <string name="manage_entities">管理实体</string>
     <string name="message_copied">消息已复制</string>
     <string name="message_hint">发送消息给 %s…</string>

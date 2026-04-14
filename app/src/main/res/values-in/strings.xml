@@ -462,7 +462,7 @@ Jika ada pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="log_error">Kesalahan</string>
     <string name="log_info">Info</string>
     <string name="log_warn">Peringatan</string>
-    <string name="main_title">E-Claw</string>
+    <string name="main_title">EClawbot</string>
     <string name="manage_entities">Kelola Entitas</string>
     <string name="message_copied">Pesan disalin</string>
     <string name="message_hint">Pesan untuk %s…</string>
