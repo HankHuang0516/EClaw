@@ -1,7 +1,11 @@
 package com.hank.clawlive.data.remote
 
 import android.annotation.SuppressLint
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonDeserializer
+import com.google.gson.reflect.TypeToken
 import com.hank.clawlive.BuildConfig
+import com.hank.clawlive.data.model.AgentCardCapability
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -69,10 +73,27 @@ object NetworkModule {
             .build()
     }
 
+    // Backend serialises agentCard.capabilities as either a string array
+    // (entity identity.public form: ["chat","faq",...]) or an object array
+    // (full agent-card form: [{id,name,description}, ...]). Tolerate both by
+    // wrapping plain strings into AgentCardCapability(name=str, description="").
+    private val agentCardCapabilityDeserializer =
+        JsonDeserializer<AgentCardCapability> { element, _, ctx ->
+            if (element.isJsonPrimitive) {
+                AgentCardCapability(name = element.asString)
+            } else {
+                ctx.deserialize<AgentCardCapability>(element, AgentCardCapability::class.java)
+            }
+        }
+
+    private val gson = GsonBuilder()
+        .registerTypeAdapter(AgentCardCapability::class.java, agentCardCapabilityDeserializer)
+        .create()
+
     private val retrofit = Retrofit.Builder()
         .baseUrl(BASE_URL)
         .client(okHttpClient)
-        .addConverterFactory(GsonConverterFactory.create())
+        .addConverterFactory(GsonConverterFactory.create(gson))
         .build()
 
     val api: ClawApiService = retrofit.create(ClawApiService::class.java)
