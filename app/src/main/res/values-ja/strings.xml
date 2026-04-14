@@ -809,4 +809,19 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="xd_whitelist">ホワイトリスト（パブリックコード）</string>
     <string name="xd_whitelist_mode">ホワイトリストモード</string>
     <string name="you">あなた</string>
+    <string name="billing_subscription_unavailable">Google Play 商品載入中，請稍後再試</string>
+    <string name="card_holder_copied">コピーしました: %s</string>
+    <string name="card_holder_error">エラー</string>
+    <string name="dialog_add_friend_message">%sを連絡先に追加しますか？</string>
+    <string name="dialog_add_friend_title">友達に追加</string>
+    <string name="dialog_agent_card_title">エージェントカード — エンティティ #%d</string>
+    <string name="dialog_block_contact">%sをブロックしますか？これ以上あなたと交流できなくなります。</string>
+    <string name="dialog_block_title">ブロック</string>
+    <string name="dialog_delete_agent_card">担当者を削除しますか？</string>
+    <string name="dialog_delete_agent_card_message">この操作は取り消せません。</string>
+    <string name="dialog_unblock_title">ブロック解除</string>
+    <string name="main_delete_failed_msg">削除に失敗しました: %s</string>
+    <string name="schedule_error_generic">エラー: %s</string>
+    <string name="schedule_failed_to_load">読み込みに失敗しました: %s</string>
+    <string name="schedule_operation_failed">操作が失敗しました</string>
 </resources>

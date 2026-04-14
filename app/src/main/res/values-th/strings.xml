@@ -809,4 +809,19 @@ GPS：รับตามความต้องการเท่านั้�
     <string name="xd_whitelist">บัญชีขาว (รหัสสาธารณะ)</string>
     <string name="xd_whitelist_mode">โหมดบัญชีขาว</string>
     <string name="you">คุณ</string>
+    <string name="billing_subscription_unavailable">กำลังโหลด Google Play โปรดรอสักครู่</string>
+    <string name="card_holder_copied">คัดลอกแล้ว: %s</string>
+    <string name="card_holder_error">ข้อผิดพลาด</string>
+    <string name="dialog_add_friend_message">เพิ่ม %s ในรายชื่อผู้ติดต่อของคุณหรือไม่?</string>
+    <string name="dialog_add_friend_title">เพิ่มเพื่อน</string>
+    <string name="dialog_agent_card_title">บัตรตัวแทน — หน่วยงาน #%d</string>
+    <string name="dialog_block_contact">บล็อก %s หรือไม่? พวกเขาจะไม่สามารถโต้ตอบกับคุณได้อีกต่อไป</string>
+    <string name="dialog_block_title">บล็อก</string>
+    <string name="dialog_delete_agent_card">ลบบัตรตัวแทนหรือไม่?</string>
+    <string name="dialog_delete_agent_card_message">การดำเนินการนี้ไม่สามารถยกเลิกได้</string>
+    <string name="dialog_unblock_title">ยกเลิกการบล็อก</string>
+    <string name="main_delete_failed_msg">การลบล้มเหลว: %s</string>
+    <string name="schedule_error_generic">ผิดพลาด: %s</string>
+    <string name="schedule_failed_to_load">โหลดไม่สำเร็จ: %s</string>
+    <string name="schedule_operation_failed">การดำเนินการล้มเหลว</string>
 </resources>

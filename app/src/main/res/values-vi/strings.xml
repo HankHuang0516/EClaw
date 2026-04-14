@@ -809,4 +809,19 @@ Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua
     <string name="xd_whitelist">Danh sách trắng (mã công khai)</string>
     <string name="xd_whitelist_mode">Chế độ danh sách trắng</string>
     <string name="you">Bạn</string>
+    <string name="billing_subscription_unavailable">Đang tải Google Play, vui lòng đợi</string>
+    <string name="card_holder_copied">Đã sao chép: %s</string>
+    <string name="card_holder_error">Lỗi</string>
+    <string name="dialog_add_friend_message">Thêm %s vào danh bạ của bạn?</string>
+    <string name="dialog_add_friend_title">Thêm bạn</string>
+    <string name="dialog_agent_card_title">Thẻ đại lý — Thực thể #%d</string>
+    <string name="dialog_block_contact">Chặn %s? Họ sẽ không thể tương tác với bạn nữa.</string>
+    <string name="dialog_block_title">Chặn</string>
+    <string name="dialog_delete_agent_card">Xóa thẻ đại lý?</string>
+    <string name="dialog_delete_agent_card_message">Hành động này không thể hoàn tác.</string>
+    <string name="dialog_unblock_title">Bỏ chặn</string>
+    <string name="main_delete_failed_msg">Xóa không thành công: %s</string>
+    <string name="schedule_error_generic">Lỗi: %s</string>
+    <string name="schedule_failed_to_load">Không thể tải: %s</string>
+    <string name="schedule_operation_failed">Thao tác không thành công</string>
 </resources>
