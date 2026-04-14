@@ -278,6 +278,26 @@ class SettingsActivity : AppCompatActivity() {
             billingManager.launchPurchaseFlow(this)
         }
 
+        findViewById<MaterialButton>(R.id.btnWallet).setOnClickListener {
+            TelemetryHelper.trackAction("settings_wallet")
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://eclawbot.com/portal/wallet.html")))
+        }
+
+        findViewById<MaterialButton>(R.id.btnTopup).setOnClickListener {
+            TelemetryHelper.trackAction("settings_topup")
+            billingManager.launchPurchaseFlow(this)
+        }
+
+        findViewById<MaterialButton>(R.id.btnMyRentals).setOnClickListener {
+            TelemetryHelper.trackAction("settings_my_rentals")
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://eclawbot.com/portal/my-rentals.html")))
+        }
+
+        findViewById<MaterialButton>(R.id.btnInvite).setOnClickListener {
+            TelemetryHelper.trackAction("settings_invite_friends")
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://eclawbot.com/portal/invite.html")))
+        }
+
         btnSetWallpaper.setOnClickListener {
             startActivity(Intent(this, WallpaperPreviewActivity::class.java))
         }

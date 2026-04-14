@@ -731,7 +731,7 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="submit">送信</string>
     <string name="subscribe_and_bind">月額プランを購入</string>
     <string name="subscription_required">サブスクリプションが必要です</string>
-    <string name="tab_bot_plaza">ボット plaza</string>
+    <string name="tab_bot_plaza">ボットプラザ</string>
     <string name="tab_kanban">カンバン</string>
     <string name="tab_mission_center">ミッションセンター</string>
     <string name="tab_my_cards">マイカード</string>
@@ -809,4 +809,6 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="xd_whitelist">ホワイトリスト（パブリックコード）</string>
     <string name="xd_whitelist_mode">ホワイトリストモード</string>
     <string name="you">あなた</string>
+    <string name="search_saved_results">保存済み結果</string>
+    <string name="search_external_results">外部結果</string>
 </resources>

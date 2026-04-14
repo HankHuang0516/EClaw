@@ -731,7 +731,7 @@ GPS：รับตามความต้องการเท่านั้�
     <string name="submit">ส่ง</string>
     <string name="subscribe_and_bind">ซื้อแพ็กเกจรายเดือน</string>
     <string name="subscription_required">จำเป็นต้องสมัครสมาชิก</string>
-    <string name="tab_bot_plaza">พลาซ่าบอท</string>
+    <string name="tab_bot_plaza">Bot Plaza</string>
     <string name="tab_kanban">คัมบัง</string>
     <string name="tab_mission_center">ศูนย์ภารกิจ</string>
     <string name="tab_my_cards">การ์ดของฉัน</string>
@@ -809,4 +809,6 @@ GPS：รับตามความต้องการเท่านั้�
     <string name="xd_whitelist">บัญชีขาว (รหัสสาธารณะ)</string>
     <string name="xd_whitelist_mode">โหมดบัญชีขาว</string>
     <string name="you">คุณ</string>
+    <string name="search_saved_results">ผลลัพธ์ที่บันทึกไว้</string>
+    <string name="search_external_results">ผลลัพธ์ภายนอก</string>
 </resources>

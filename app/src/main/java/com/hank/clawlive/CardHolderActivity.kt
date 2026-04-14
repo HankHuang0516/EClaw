@@ -271,9 +271,9 @@ class CardHolderActivity : AppCompatActivity() {
             isSingleSelection = true
             isSingleLine = true
         }
-        val chipAll = createFilterChip("All", true) { setFilter(FilterMode.ALL) }
-        val chipFriends = createFilterChip("Friends", false) { setFilter(FilterMode.FRIENDS) }
-        val chipPinned = createFilterChip("Pinned", false) { setFilter(FilterMode.PINNED) }
+        val chipAll = createFilterChip(getString(R.string.filter_all), true) { setFilter(FilterMode.ALL) }
+        val chipFriends = createFilterChip(getString(R.string.filter_friends), false) { setFilter(FilterMode.FRIENDS) }
+        val chipPinned = createFilterChip(getString(R.string.filter_pinned), false) { setFilter(FilterMode.PINNED) }
         chipGroup.addView(chipAll)
         chipGroup.addView(chipFriends)
         chipGroup.addView(chipPinned)
@@ -477,7 +477,7 @@ class CardHolderActivity : AppCompatActivity() {
 
         // Section 1: My Cards
         if (myCards.isNotEmpty()) {
-            addSectionHeader("My Cards")
+            addSectionHeader(getString(R.string.my_cards_section))
             for (card in myCards) {
                 contentLayout.addView(buildMyCardView(card))
             }
@@ -486,7 +486,7 @@ class CardHolderActivity : AppCompatActivity() {
         // Section 2: Recent
         val filteredRecent = applyContactFilter(recentContacts)
         if (filteredRecent.isNotEmpty()) {
-            addSectionHeader("Recent")
+            addSectionHeader(getString(R.string.recent_interactions))
             for (contact in filteredRecent) {
                 contentLayout.addView(buildRecentContactView(contact))
             }
@@ -495,7 +495,7 @@ class CardHolderActivity : AppCompatActivity() {
         // Section 3: Collected
         val filteredCollected = applyContactFilter(collectedContacts)
         if (filteredCollected.isNotEmpty()) {
-            addSectionHeader("Collected")
+            addSectionHeader(getString(R.string.collected_cards))
             for (contact in filteredCollected) {
                 contentLayout.addView(buildContactCardView(contact))
             }
@@ -526,13 +526,13 @@ class CardHolderActivity : AppCompatActivity() {
 
     private fun buildSearchResults() {
         if (searchSaved.isNotEmpty()) {
-            addSectionHeader("Saved Results")
+            addSectionHeader(getString(R.string.search_saved_results))
             for (contact in searchSaved) {
                 contentLayout.addView(buildContactCardView(contact))
             }
         }
         if (searchExternal.isNotEmpty()) {
-            addSectionHeader("External Results")
+            addSectionHeader(getString(R.string.search_external_results))
             for (ext in searchExternal) {
                 contentLayout.addView(buildExternalCardView(ext))
             }
