@@ -1,3 +1,11 @@
+# [1.972.0](https://github.com/HankHuang0516/EClaw/compare/v1.971.4...v1.972.0) (2026-04-14)
+
+
+### Features
+
+* **viral:** Add 'Create your own Bot' CTA to Proxy Window ([5cb9803](https://github.com/HankHuang0516/EClaw/commit/5cb98036814520330ef8fdd7b09f69db15aacc81))
+* **android:** refactor 12 hardcoded layout strings to @string/ resources ([d3052bd](https://github.com/HankHuang0516/EClaw/commit/d3052bd481551a7575c7581e7e45c45877fd62d7))
+
 ## [1.971.4](https://github.com/HankHuang0516/EClaw/compare/v1.971.3...v1.971.4) (2026-04-14)
 
 
