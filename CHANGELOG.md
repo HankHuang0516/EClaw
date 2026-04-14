@@ -1,3 +1,10 @@
+# [1.978.0](https://github.com/HankHuang0516/EClaw/compare/v1.977.2...v1.978.0) (2026-04-14)
+
+
+### Features
+
+* **publisher:** add media upload for X + Mastodon; update Arena OG meta ([4898c76](https://github.com/HankHuang0516/EClaw/commit/4898c7679a03a22bac2c4b56410f90ac81dc2570))
+
 ## [1.977.2](https://github.com/HankHuang0516/EClaw/compare/v1.977.1...v1.977.2) (2026-04-14)
 
 
