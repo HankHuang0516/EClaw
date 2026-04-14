@@ -92,8 +92,8 @@ describe('Phase 1: ended contract cleanup', () => {
                 },
             },
         };
-        // Phase 1: contract is active
-        mockQuery.mockResolvedValueOnce({ rows: [{ status: 'active' }] });
+        // Phase 1: contract is active, and this entity is NOT the owner slot
+        mockQuery.mockResolvedValueOnce({ rows: [{ status: 'active', renter_device_id: 'dev-1', owner_device_id: 'dev-owner', owner_entity_id: 5 }] });
         // Phase 2
         mockQuery.mockResolvedValueOnce({ rows: [] });
         mockQuery.mockResolvedValueOnce({ rows: [] });
@@ -104,6 +104,80 @@ describe('Phase 1: ended contract cleanup', () => {
 
         expect(devices['dev-1'].entities[0]).toBeDefined();
         expect(devices['dev-1'].entities[0].rental_status).toBe('leased_in');
+    });
+
+    // Regression: Phase 1 must NOT delete owner entities when contract has
+    // ended but clearOwnerEntityLeasedOut / saveDeviceData left stale metadata.
+    // Before fix: owner entity 0 with rental_contract_id persisted would be
+    // deleted (losing identity, channel binding, chat). After fix: owner slot
+    // identified via listing.owner_device_id + owner_entity_id and skipped.
+    test('owner entity with ended contract is NOT deleted by Phase 1', async () => {
+        const devices = {
+            'owner-dev': {
+                entities: {
+                    0: {
+                        isBound: true,
+                        character: 'MyBot',
+                        publicCode: 'OWNER0',
+                        // Stale: leased_out not cleared, contract already ended
+                        rental_contract_id: 'c-ended-stale',
+                        // rental_status may be missing (reset by some code path)
+                        rental_status: undefined,
+                    },
+                },
+            },
+        };
+        // Phase 1: contract ended; entity slot matches owner_entity_id
+        mockQuery.mockResolvedValueOnce({ rows: [{
+            status: 'ended_normal',
+            renter_device_id: 'renter-dev',
+            owner_device_id: 'owner-dev',
+            owner_entity_id: 0,
+        }] });
+        // Phase 2 + Phase 3 + Phase 4 queries
+        mockQuery.mockResolvedValueOnce({ rows: [] });
+        mockQuery.mockResolvedValueOnce({ rows: [] });
+        mockQuery.mockResolvedValueOnce({ rows: [] });
+
+        const helpers = makeHelpers();
+        await rentalApi.reconcileRentalEntities(devices, helpers);
+
+        // CRITICAL: owner entity must still exist
+        expect(devices['owner-dev'].entities[0]).toBeDefined();
+        expect(devices['owner-dev'].entities[0].character).toBe('MyBot');
+        // publicCode index must not have been mutated
+        expect(helpers.publicCodeIndex['OWNER0']).toBeUndefined();
+    });
+
+    // Regression: renter entity whose contract ended IS deleted (unchanged).
+    test('renter entity with ended contract is still deleted', async () => {
+        const devices = {
+            'renter-dev': {
+                entities: {
+                    5: {
+                        isBound: true,
+                        rental_contract_id: 'c-ended',
+                        rental_status: 'leased_in',
+                        publicCode: 'R5',
+                    },
+                },
+            },
+        };
+        // Phase 1: contract ended; entity slot is NOT the owner slot
+        mockQuery.mockResolvedValueOnce({ rows: [{
+            status: 'ended_normal',
+            renter_device_id: 'renter-dev',
+            owner_device_id: 'owner-dev',
+            owner_entity_id: 0,
+        }] });
+        mockQuery.mockResolvedValueOnce({ rows: [] });
+        mockQuery.mockResolvedValueOnce({ rows: [] });
+        mockQuery.mockResolvedValueOnce({ rows: [] });
+
+        const helpers = makeHelpers();
+        await rentalApi.reconcileRentalEntities(devices, helpers);
+
+        expect(devices['renter-dev'].entities[5]).toBeUndefined();
     });
 });
 
