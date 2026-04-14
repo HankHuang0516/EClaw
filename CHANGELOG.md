@@ -1,3 +1,11 @@
+## [1.975.3](https://github.com/HankHuang0516/EClaw/compare/v1.975.2...v1.975.3) (2026-04-14)
+
+
+### Bug Fixes
+
+* **android:** entity slot chip showed full Flickr URL instead of emoji ([486dca0](https://github.com/HankHuang0516/EClaw/commit/486dca0668654146468c0d4bb990194f35241cba))
+* orgChartForward only on bot response, not user message ([65752f3](https://github.com/HankHuang0516/EClaw/commit/65752f380ad4b3989a0526dddcba2b8b6f2df73c))
+
 ## [1.975.2](https://github.com/HankHuang0516/EClaw/compare/v1.975.1...v1.975.2) (2026-04-14)
 
 
