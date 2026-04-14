@@ -326,6 +326,12 @@ async function expireContracts(rentalModule, walletModule) {
                 endReason: 'ended_normal',
                 requesterUserId: row.renter_user_id,
             }, walletModule);
+            // CRITICAL: run in-memory cleanup so owner entity's leased_out
+            // status is cleared. Without this, Phase 1 reconcile on next
+            // restart would delete the owner's entity (see issue #XXX).
+            if (typeof rentalModule.runContractCleanup === 'function') {
+                await rentalModule.runContractCleanup(row.id, { action: 'cron_expire' });
+            }
             count++;
         } catch (err) {
             console.warn(`[RentalProxy] Failed to expire contract ${row.id}: ${err.message}`);
@@ -359,6 +365,9 @@ async function expireGracePeriods(rentalModule, walletModule) {
                 endReason: 'ended_zero_balance',
                 requesterUserId: row.renter_user_id,
             }, walletModule);
+            if (typeof rentalModule.runContractCleanup === 'function') {
+                await rentalModule.runContractCleanup(row.id, { action: 'cron_grace_expire' });
+            }
             count++;
         } catch (err) {
             console.warn(`[RentalProxy] Failed to expire grace for ${row.id}: ${err.message}`);

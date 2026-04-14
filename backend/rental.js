@@ -1003,20 +1003,49 @@ async function reconcileRentalEntities(devices, helpers) {
     const result = { reconciled: 0, errors: [] };
     const ACTIVE = ['reserved', 'active', 'suspended_insufficient_funds'];
 
-    // ── Phase 1: Remove renter entities whose contracts ended ──
+    // ── Phase 1: Reconcile RENTER entities (delete if contract ended,
+    //              backfill rental_status='leased_in' if contract active) ──
+    // CRITICAL: this phase must NOT delete owner-side entities. Before taking
+    // any action, we identify ownership by joining the contract to its listing
+    // — if the entity lives on the contract's renter_device_id and the slot
+    // has rental proxy signals, it's a renter entity. Owner entities (on the
+    // listing's owner_device_id at owner_entity_id) must only have their
+    // status cleared (Phase 3), never deleted — losing an owner entity
+    // destroys the user's bot slot (identity, channel binding, chat history).
     for (const [deviceId, device] of Object.entries(devices)) {
         if (!device?.entities) continue;
         for (const [slotId, entity] of Object.entries(device.entities)) {
+            // Hard guard: owner-side leased_out entity — never touched here.
+            if (entity.rental_status === 'leased_out') continue;
+
             let contractId = entity.rental_contract_id;
-            if (!contractId && entity.webhook?.url?.startsWith('__rental_proxy__:')) {
+            const hasRentalProxyWebhook = entity.webhook?.url?.startsWith('__rental_proxy__:');
+            if (!contractId && hasRentalProxyWebhook) {
                 contractId = entity.webhook.url.split(':').slice(1).join(':');
                 entity.rental_contract_id = contractId;
             }
             if (!contractId && entity.rental_status !== 'leased_in') continue;
             if (!contractId) continue;
+
             try {
-                const res = await pool.query(`SELECT status FROM rental_contracts WHERE id = $1`, [contractId]);
-                const status = res.rows[0]?.status;
+                // Resolve contract + owner info so we can distinguish owner
+                // entities (which happen to still have rental_contract_id set
+                // from stale persistence) from true renter entities.
+                const res = await pool.query(
+                    `SELECT c.status, c.renter_device_id, l.owner_device_id, l.owner_entity_id
+                     FROM rental_contracts c
+                     LEFT JOIN bot_listings l ON l.id = c.listing_id
+                     WHERE c.id = $1`,
+                    [contractId]
+                );
+                const row = res.rows[0] || {};
+                const status = row.status;
+                // If this entity is the contract's owner entity, do NOT treat
+                // it as a renter entity here — leave it to Phase 3.
+                const isOwnerSlot = row.owner_device_id === deviceId
+                    && Number(row.owner_entity_id) === Number(slotId);
+                if (isOwnerSlot) continue;
+
                 if (!status || !ACTIVE.includes(status)) {
                     if (entity.publicCode && helpers?.publicCodeIndex) delete helpers.publicCodeIndex[entity.publicCode];
                     delete device.entities[slotId];
@@ -1335,6 +1364,54 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         res.json({ success: true, contract });
     }));
 
+    // Shared post-endRental cleanup: removes renter entity + clears owner
+    // leased_out status + persists both. Called by both the HTTP handler and
+    // the cron (rental-proxy.expireContracts / expireGracePeriods) so that
+    // cron-expired contracts don't leave stale owner leased_out state (which
+    // Phase 1 reconcile could then mis-interpret and delete the owner's entity).
+    async function runContractCleanup(contractId, auditCtx = {}) {
+        if (!_interviewDeps.devices) return;
+        try {
+            const cRow = await pool.query(
+                `SELECT c.renter_device_id, c.listing_id,
+                        l.owner_device_id, l.owner_entity_id
+                 FROM rental_contracts c
+                 JOIN bot_listings l ON l.id = c.listing_id
+                 WHERE c.id = $1`,
+                [contractId]
+            );
+            if (cRow.rowCount === 0) return;
+            const info = cRow.rows[0];
+            removeRentalEntity(_interviewDeps.devices, {
+                renterDeviceId: info.renter_device_id,
+                contractId,
+            }, {
+                publicCodeIndex: _interviewDeps.publicCodeIndex,
+            });
+            clearOwnerEntityLeasedOut(_interviewDeps.devices, {
+                ownerDeviceId: info.owner_device_id,
+                ownerEntityId: info.owner_entity_id,
+            });
+            audit('info', 'rental', `entity handover cleanup: ${info.renter_device_id}`, {
+                ...auditCtx, action: 'rental_entity_remove', resource: contractId,
+            });
+
+            if (_interviewDeps.saveDeviceData) {
+                if (_interviewDeps.devices[info.renter_device_id]) {
+                    await _interviewDeps.saveDeviceData(info.renter_device_id, _interviewDeps.devices[info.renter_device_id]);
+                }
+                if (_interviewDeps.devices[info.owner_device_id]) {
+                    await _interviewDeps.saveDeviceData(info.owner_device_id, _interviewDeps.devices[info.owner_device_id]);
+                }
+            }
+        } catch (cleanupErr) {
+            console.error('[Rental] runContractCleanup error:', cleanupErr.message);
+            audit('error', 'rental', `contract cleanup failed: ${cleanupErr.message}`, {
+                ...auditCtx, action: 'rental_entity_remove_fail', resource: contractId,
+            });
+        }
+    }
+
     // POST /api/rental/contract/:id/end — end a contract (by renter or owner)
     router.post('/contract/:id/end', authMiddleware, rentalRoute(async (req, res) => {
         const { endReason } = req.body || {};
@@ -1344,50 +1421,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
             requesterUserId: req.user.userId,
         }, walletModule);
 
-        // P2-F Entity Handover cleanup: remove rental entity from renter's
-        // device and clear leased_out status on the owner's entity.
-        if (_interviewDeps.devices) {
-            try {
-                // Fetch contract + listing details needed for cleanup.
-                const cRow = await pool.query(
-                    `SELECT c.renter_device_id, c.listing_id,
-                            l.owner_device_id, l.owner_entity_id
-                     FROM rental_contracts c
-                     JOIN bot_listings l ON l.id = c.listing_id
-                     WHERE c.id = $1`,
-                    [contract.id]
-                );
-                if (cRow.rowCount > 0) {
-                    const info = cRow.rows[0];
-                    removeRentalEntity(_interviewDeps.devices, {
-                        renterDeviceId: info.renter_device_id,
-                        contractId: contract.id,
-                    }, {
-                        publicCodeIndex: _interviewDeps.publicCodeIndex,
-                    });
-                    clearOwnerEntityLeasedOut(_interviewDeps.devices, {
-                        ownerDeviceId: info.owner_device_id,
-                        ownerEntityId: info.owner_entity_id,
-                    });
-                    audit('info', 'rental', `entity handover cleanup: ${info.renter_device_id}`, {
-                        userId: req.user.userId, action: 'rental_entity_remove', resource: contract.id,
-                    });
-
-                    // Persist cleanup to DB
-                    if (_interviewDeps.saveDeviceData && _interviewDeps.devices[info.renter_device_id]) {
-                        await _interviewDeps.saveDeviceData(info.renter_device_id, _interviewDeps.devices[info.renter_device_id]);
-                    }
-                    if (_interviewDeps.saveDeviceData && _interviewDeps.devices[info.owner_device_id]) {
-                        await _interviewDeps.saveDeviceData(info.owner_device_id, _interviewDeps.devices[info.owner_device_id]);
-                    }
-                }
-            } catch (cleanupErr) {
-                console.error('[Rental] entity handover cleanup failed:', cleanupErr.message);
-                audit('error', 'rental', `entity handover cleanup failed: ${cleanupErr.message}`, {
-                    userId: req.user.userId, action: 'rental_entity_remove_fail', resource: contract.id,
-                });
-            }
-        }
+        await runContractCleanup(contract.id, { userId: req.user.userId });
 
         audit('info', 'rental', `contract ended ${contract.id} reason=${contract.end_reason}`, {
             userId: req.user.userId, action: 'contract_end', resource: contract.id, result: contract.end_reason,
@@ -1810,7 +1844,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         removeRentalEntity,
         clearOwnerEntityLeasedOut,
         reconcileRentalEntities,
-        reconcileRentalEntities,
+        runContractCleanup,
         // Interview dispatch (late-bound)
         setInterviewDeps: (deps) => { _interviewDeps = deps; },
         // Helpers + constants
