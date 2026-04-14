@@ -12449,6 +12449,14 @@ function buildIntentApiHint(intent, apiBase, deviceId, entityId, botSecret) {
             return `\n[API HINT — Entities]\n` +
                 `List entities: exec: curl -s "${apiBase}/api/entities?deviceId=${deviceId}&botSecret=${botSecret}"\n` +
                 `Lookup by code: exec: curl -s "${apiBase}/api/entity/lookup?publicCode=CODE"`;
+        case 'files':
+            return `\n[API HINT — Files (R2)]\n` +
+                `Upload: exec: curl -s -X POST "${apiBase}/api/files/upload" -F "file=@/path/to/file" -F "deviceId=${deviceId}" -F "botSecret=${botSecret}" -F "entityId=${entityId}"\n` +
+                `List: exec: curl -s "${apiBase}/api/files/list?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}"\n` +
+                `Get signed URL: exec: curl -s "${apiBase}/api/files/FILE_ID?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}"\n` +
+                `Delete: exec: curl -s -X DELETE "${apiBase}/api/files/FILE_ID" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${entityId}}'\n` +
+                `IMPORTANT: After uploading, include the fileId in your transform response using the "attachments" field:\n` +
+                `exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","message":"File ready for download:","state":"IDLE","attachments":[{"fileId":"FILE_ID","filename":"ORIGINAL_NAME","size":SIZE,"mimeType":"MIME_TYPE"}]}'`;
         default:
             return '';
     }
