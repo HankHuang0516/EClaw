@@ -41,6 +41,7 @@ data class AiImageData(val data: String, val mimeType: String)
 
 class AiChatViewModel(application: Application) : AndroidViewModel(application) {
 
+    private val context: Context get() = getApplication()
     private val api = NetworkModule.api
     private val deviceManager = DeviceManager.getInstance(application)
     private val prefs = application.getSharedPreferences("ai_chat", Context.MODE_PRIVATE)

@@ -251,21 +251,25 @@ async function updateListing(listingId, ownerUserId, patch) {
 
 async function publishListing(listingId, ownerUserId) {
     assertString('listing_id', listingId, { max: 64 });
+    // V5 fix: only draft/paused can be published — prevents delisted resurrection
     const res = await pool.query(
         `UPDATE bot_listings SET status = 'listed', updated_at = NOW()
          WHERE id = $1 AND owner_user_id = $2 AND interview_passed = TRUE
+           AND status IN ('draft', 'paused')
          RETURNING id, status`,
         [listingId, ownerUserId]
     );
     if (res.rowCount === 0) {
-        // Check whether the listing exists at all to give a precise error.
         const check = await pool.query(
-            `SELECT interview_passed, owner_user_id FROM bot_listings WHERE id = $1`,
+            `SELECT interview_passed, owner_user_id, status FROM bot_listings WHERE id = $1`,
             [listingId]
         );
         if (check.rowCount === 0) throw new Error('listing_not_found');
         if (check.rows[0].owner_user_id !== ownerUserId) throw new Error('listing_forbidden');
         if (!check.rows[0].interview_passed) throw new Error('interview_not_passed');
+        if (check.rows[0].status === 'listed') throw new Error('already_listed');
+        if (check.rows[0].status === 'delisted') throw new Error('listing_permanently_delisted');
+        if (check.rows[0].status === 'interview') throw new Error('interview_in_progress');
         throw new Error('publish_failed');
     }
     return res.rows[0];
@@ -1624,6 +1628,17 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         // Status gate: only draft / paused / listed can (re-)interview
         if (!['draft', 'paused', 'listed'].includes(listing.status)) {
             throw new Error('listing_status_invalid_for_interview');
+        }
+
+        // V6 fix: block interview if listing has active contracts
+        const activeContractCheck = await pool.query(
+            `SELECT id FROM rental_contracts
+             WHERE listing_id = $1 AND status IN ('active','reserved','suspended_insufficient_funds')
+             LIMIT 1`,
+            [listing.id]
+        );
+        if (activeContractCheck.rowCount > 0) {
+            throw new Error('interview_blocked_active_contract');
         }
 
         // Rate limit: max 3 attempts per 7 days

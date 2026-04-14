@@ -809,28 +809,4 @@ GPS: 온디맨드만, 백그라운드 추적 없음, 서버 재시작 시 데이
     <string name="xd_whitelist">화이트리스트 (퍼블릭 코드)</string>
     <string name="xd_whitelist_mode">화이트리스트 모드</string>
     <string name="you">나</string>
-    <string name="topup_ecoin_title">e코인 충전</string>
-    <string name="topup_ecoin">충전</string>
-    <string name="topup_success">e코인이 지갑에 추가되었습니다!</string>
-    <string name="topup_failed">충전에 실패했습니다. 다시 시도해주세요</string>
-    <string name="choose_plan_title">플랜 선택</string>
-    <string name="upgrade_plan">플랜 업그레이드</string>
-
-    <string name="schedule_failed_to_load">불러오기 실패: %s</string>
-    <string name="schedule_error_generic">오류: %s</string>
-    <string name="schedule_operation_failed">작업 실패</string>
-    <string name="card_holder_copied">복사됨: %s</string>
-    <string name="card_holder_error">오류</string>
-    <string name="main_delete_failed_msg">삭제 실패: %s</string>
-    <string name="billing_google_play_loading">Google Play 商品載入中，請稍後再試</string>
-    <string name="billing_subscription_unavailable">無法取得訂閱方案，請稍後再試</string>
-    <string name="dialog_delete_agent_card">에이전트 카드를 삭제하시겠습니까?</string>
-    <string name="dialog_delete_agent_card_message">이 작업은 되돌릴 수 없습니다.</string>
-    <string name="dialog_agent_card_title">에이전트 카드 — 엔티티 #%d</string>
-    <string name="dialog_add_friend_title">친구 추가</string>
-    <string name="dialog_add_friend_message">연락처에 %s을(를) 추가하시겠습니까?</string>
-    <string name="dialog_block_title">차단</string>
-    <string name="dialog_unblock_title">차단 해제</string>
-    <string name="dialog_block_contact">%s님을 차단하시겠습니까? 더 이상 회원님과 소통할 수 없게 됩니다.</string>
-    <string name="dialog_unblock_message">%s님의 차단을 해제하시겠습니까?</string>
 </resources>

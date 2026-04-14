@@ -104,11 +104,21 @@ async function submitReview({ contractId, reviewerUserId, rating, comment = null
     if (!contract.status.startsWith('ended')) throw new Error('contract_not_ended');
     if (contract.renter_user_id !== reviewerUserId) throw new Error('review_forbidden');
 
-    // Check 48h window
+    // Check duplicate review
     const existingRes = await pool.query(
         'SELECT id FROM bot_reviews WHERE contract_id = $1', [contractId]
     );
     if (existingRes.rowCount > 0) throw new Error('review_already_exists');
+
+    // C5 fix: Check 48h review window (only allow reviews within 48h of contract end)
+    const endedRes = await pool.query(
+        'SELECT actual_ended_at FROM rental_contracts WHERE id = $1', [contractId]
+    );
+    const endedAt = endedRes.rows[0]?.actual_ended_at;
+    if (endedAt) {
+        const hoursSinceEnd = (Date.now() - new Date(endedAt).getTime()) / (1000 * 60 * 60);
+        if (hoursSinceEnd > 48) throw new Error('review_window_expired');
+    }
 
     const res = await pool.query(
         `INSERT INTO bot_reviews (contract_id, listing_id, reviewer_user_id, owner_user_id, rating, comment)
@@ -145,6 +155,13 @@ async function getListingReviews(listingId, { limit = 20, offset = 0 } = {}) {
 async function openDispute({ contractId, raisedBy, type, evidence = null }) {
     if (!contractId || !raisedBy) throw new Error('contract_id_required');
     if (!DISPUTE_TYPES.includes(type)) throw new Error('dispute_type_invalid');
+
+    // W4 fix: prevent duplicate dispute of same type on same contract
+    const dupCheck = await pool.query(
+        `SELECT id FROM disputes WHERE contract_id = $1 AND type = $2 AND status IN ('open','investigating')`,
+        [contractId, type]
+    );
+    if (dupCheck.rowCount > 0) throw new Error('dispute_already_open');
 
     const sla = SLA_MS[type] || SLA_MS.bot_quality;
     const now = new Date();

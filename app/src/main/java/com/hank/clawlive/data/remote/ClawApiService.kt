@@ -532,6 +532,11 @@ interface ClawApiService {
         @Query("deviceId") deviceId: String,
         @Query("botSecret") botSecret: String
     ): retrofit2.Response<com.google.gson.JsonObject>
+
+    // ============ Wallet / Top-up ============
+
+    @POST("api/wallet/topup/verify-google")
+    suspend fun verifyGoogleTopup(@Body body: Map<String, @JvmSuppressWildcards Any>): GenericResponse
 }
 
 // ============ Skill Templates Models ============

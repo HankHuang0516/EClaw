@@ -71,11 +71,12 @@ jest.mock('pg', () => {
         // Specific status-transition handlers MUST come before the generic
         // UPDATE handler, because the generic one would otherwise match.
 
-        // Publish: UPDATE ... WHERE id AND owner AND interview_passed = TRUE
+        // Publish: UPDATE ... WHERE id AND owner AND interview_passed AND status IN (draft,paused)
         if (/^UPDATE bot_listings SET status = 'listed'/i.test(norm)) {
             const [id, ownerUserId] = params;
             const row = state.listings.find(l => l.id === id);
-            if (!row || row.owner_user_id !== ownerUserId || !row.interview_passed) {
+            if (!row || row.owner_user_id !== ownerUserId || !row.interview_passed
+                || !['draft', 'paused'].includes(row.status)) {
                 return { rows: [], rowCount: 0 };
             }
             row.status = 'listed';
@@ -83,11 +84,11 @@ jest.mock('pg', () => {
             return { rows: [{ id: row.id, status: row.status }], rowCount: 1 };
         }
 
-        // SELECT interview_passed, owner_user_id FROM bot_listings WHERE id = $1
-        if (/^SELECT interview_passed, owner_user_id FROM bot_listings WHERE id = \$1$/i.test(norm)) {
+        // SELECT interview_passed, owner_user_id, status FROM bot_listings WHERE id = $1
+        if (/^SELECT interview_passed, owner_user_id.*FROM bot_listings WHERE id = \$1$/i.test(norm)) {
             const row = state.listings.find(l => l.id === params[0]);
             if (!row) return { rows: [], rowCount: 0 };
-            return { rows: [{ interview_passed: row.interview_passed, owner_user_id: row.owner_user_id }], rowCount: 1 };
+            return { rows: [{ interview_passed: row.interview_passed, owner_user_id: row.owner_user_id, status: row.status }], rowCount: 1 };
         }
 
         // Pause: UPDATE ... status='paused' WHERE id AND owner AND status='listed'

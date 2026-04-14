@@ -1214,6 +1214,8 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
                 if (examData?.listing_id) {
                     const mapped = mapArenaResultToCapabilities(report);
                     // Update bot_listings with capabilities + interview status
+                    // V3 fix: reset status from 'interview' back to 'draft' on completion
+                    // (allows owner to publish after interview passes)
                     await pool.query(
                         `UPDATE bot_listings SET
                             interview_passed = $2,
@@ -1221,6 +1223,7 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
                             benchmark_score = $4,
                             model_detected = COALESCE($5, model_detected),
                             last_interview_at = NOW(),
+                            status = CASE WHEN status = 'interview' THEN 'draft' ELSE status END,
                             updated_at = NOW()
                          WHERE id = $1`,
                         [

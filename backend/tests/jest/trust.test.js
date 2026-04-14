@@ -35,6 +35,16 @@ jest.mock('pg', () => {
             return r ? { rows: [r], rowCount: 1 } : { rows: [], rowCount: 0 };
         }
 
+        // 48h review window check
+        if (/^SELECT actual_ended_at FROM rental_contracts/i.test(norm)) {
+            return { rows: [{ actual_ended_at: new Date() }], rowCount: 1 }; // just ended — within window
+        }
+
+        // Dispute duplicate check
+        if (/^SELECT id FROM disputes WHERE contract_id.*AND type/i.test(norm)) {
+            return { rows: [], rowCount: 0 }; // no duplicate
+        }
+
         // Insert review
         if (/^INSERT INTO bot_reviews/i.test(norm)) {
             const row = { id: `rev-${state.nextId++}`, contract_id: params[0], listing_id: params[1], reviewer_user_id: params[2], owner_user_id: params[3], rating: params[4], comment: params[5], created_at: new Date() };
