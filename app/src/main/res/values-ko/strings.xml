@@ -317,6 +317,65 @@
     <string name="file_broadcast">브로드캐스트</string>
     <string name="file_btn_delete">삭제</string>
     <string name="file_btn_download">다운로드</string>
+    <string name="bind_button">바인드</string>
+    <string name="card_holder">명함함</string>
+    <string name="chat">채팅</string>
+    <string name="choose_plan_title">요금제 선택</string>
+    <string name="confirm">확인</string>
+    <string name="enter_binding_code">바인딩 코드 입력</string>
+    <string name="error_occurred">오류가 발생했습니다</string>
+    <string name="info">정보</string>
+    <string name="invite_title">초대</string>
+    <string name="language">언어</string>
+    <string name="loading">로딩 중…</string>
+    <string name="microphone_permission_denied">마이크 권한이 거부되었습니다</string>
+    <string name="my_rentals_title">내 대여</string>
+    <string name="privacy_policy_content">
+
+<b>1. 개인정보 보호 최우선 약속</b>
+
+E-claw 팀은 개인 데이터를 판매, 유출 또는 오용하지 않을 것을 엄숙히 선언합니다.
+
+<b>2. 수집하는 데이터</b>
+
+서비스를 제공하기 위해 필요한 최소한의 데이터만 수집합니다：
+- 기기 ID: 기기 구분용
+- 앱 버전: 호환성 검사용
+- 바인딩 데이터: 에이전트 이름과 상태
+- GPS 위치(선택): AI 에이전트가 능동적으로 요청할 때만 가져옴. 메모리에만 저장되며 영구 보관되지 않음
+- 음성 메시지(선택): 채팅에서 녹음 버튼을 누를 때만. 채팅 기록의 일부로 업로드됨
+
+<b>수집하지 않음：</b>
+- 성명, 전화번호 또는 이메일
+- 카메라 데이터
+- 스마트폰의 다른 앱 정보
+
+<b>3. OpenClaw 프로토콜</b>
+저희는 OpenClaw 생태계의 확고한 지지자입니다. 폐쇄적인 "방파장 정원"을 구축하지 않으며 상호운용성을 유지할 것을 약속합니다.
+
+<b>4. AI 대화 프라이버시</b>
+메시지는 암호화된 HTTPS를 통해 바인딩된 AI 에이전트에 전송됩니다. 데이터 흐름은 귀하가 제어합니다.
+
+<b>5. GPS와 마이크</b>
+GPS: 온디맨드만, 백그라운드 추적 없음, 서버 재시작 시 데이터 소멸
+마이크: 녹음 중에만 활성화, 백그라운드 감청 없음
+둘 다 제3자와 공유되지 않습니다.
+
+<b>6. 연락처</b>
+문의사항이 있으시면 공식 이메일을 통해 연락 주세요.
+    
+    </string>
+    <string name="recording">녹음 중…</string>
+    <string name="schedule">일정</string>
+    <string name="settings">설정</string>
+    <string name="topup_ecoin">E-Coin 충전</string>
+    <string name="topup_ecoin_title">E-Coin 충전</string>
+    <string name="topup_failed">충전 실패</string>
+    <string name="topup_success">충전 성공</string>
+    <string name="unbind_button">바인드 해제</string>
+    <string name="upgrade_plan">요금제 업그레이드</string>
+    <string name="voice_message">음성 메시지</string>
+    <string name="wallet_title">지갑</string>
     <string name="file_btn_share">공유</string>
     <string name="file_delete_confirm">이 파일을 삭제하시겠습니까?</string>
     <string name="file_delete_title">파일 삭제</string>
