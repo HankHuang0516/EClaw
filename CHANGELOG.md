@@ -1,3 +1,10 @@
+## [1.978.1](https://github.com/HankHuang0516/EClaw/compare/v1.978.0...v1.978.1) (2026-04-14)
+
+
+### Bug Fixes
+
+* **portal:** card-holder chat history field name mismatch ([0b700fd](https://github.com/HankHuang0516/EClaw/commit/0b700fd8921001ba59917af1c84ea983b95d3876))
+
 # [1.978.0](https://github.com/HankHuang0516/EClaw/compare/v1.977.2...v1.978.0) (2026-04-14)
 
 
