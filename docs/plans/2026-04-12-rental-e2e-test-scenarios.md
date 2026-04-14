@@ -375,6 +375,254 @@
 
 ---
 
+## 邊緣案例驗證（非正常路徑）
+
+> 新增日期：2026-04-14
+> 目的：覆蓋使用者不按正常順序操作、重複操作、併發操作等真實場景
+> 來源：使用者回報「面試前上架 → 面試後仍看不到 listing」bug
+
+---
+
+### 劇本 V：操作順序錯亂
+
+#### V1：面試前上架（使用者回報的 bug）
+
+| Step | 角色 | 操作 | 預期結果 |
+|------|------|------|---------|
+| V1-1 | Owner | 建立 Listing | status=draft, interview_passed=false |
+| V1-2 | Owner | 直接 POST `/listing/:id/publish` | ❌ 400 `interview_not_passed` |
+| V1-3 | Owner | GET listing 確認狀態 | status 仍為 draft（不能被改成 listed） |
+| V1-4 | Owner | 跑面試 → 通過 | interview_passed=true, status=draft |
+| V1-5 | Owner | 再次 POST publish | ✅ status=listed |
+| V1-6 | Renter | Marketplace 搜尋 | listing 可見 |
+
+#### V2：面試進行中上架（Race Condition）
+
+| Step | 角色 | 操作 | 預期結果 |
+|------|------|------|---------|
+| V2-1 | Owner | 建立 Listing → 開始面試 | status=interview |
+| V2-2 | Owner | 面試未完成，另一個 tab 按上架 | ❌ `interview_not_passed`（面試中 passed 仍為 false） |
+| V2-3 | — | 面試完成（通過） | status 回到 draft, interview_passed=true |
+| V2-4 | Owner | 上架 | ✅ status=listed |
+
+**⚠️ 潛在 bug**：如果面試完成時把 status 覆蓋為 draft（rental.js 第 1701 行），但 V2-2 已把 status 改為 listed，則面試完成會「降級」回 draft。
+
+#### V3：上架後重新面試
+
+| Step | 角色 | 操作 | 預期結果 |
+|------|------|------|---------|
+| V3-1 | Owner | 建立 → 面試通過 → 上架 | status=listed |
+| V3-2 | Owner | 重新跑面試 | status 變 interview |
+| V3-3 | Renter | Marketplace 搜尋 | ⚠️ listing 消失（status 不是 listed） |
+| V3-4 | — | 面試完成 | status 回到 draft（不是 listed！） |
+| V3-5 | Renter | Marketplace 搜尋 | ❌ listing 仍不可見 — 必須手動重新上架 |
+| V3-6 | Owner | 重新上架 | ✅ status=listed |
+
+**⚠️ 已知問題**：面試後 status 一律回 draft，不恢復面試前狀態。
+
+#### V4：Draft 狀態被直接租借
+
+| Step | 角色 | 操作 | 預期結果 |
+|------|------|------|---------|
+| V4-1 | Owner | 建立 Listing（draft） | status=draft |
+| V4-2 | Renter | 用 listing ID 直接 POST `/rental/contract` | ❌ `listing_not_available` |
+| V4-3 | — | 確認無合約/金流被建立 | contract count=0, wallet 無變動 |
+
+#### V5：Delist 後嘗試重新上架
+
+| Step | 角色 | 操作 | 預期結果 |
+|------|------|------|---------|
+| V5-1 | Owner | 建立 → 面試 → 上架 → 下架（delist） | status=delisted |
+| V5-2 | Owner | POST publish | ⚠️ **Bug**：目前會成功（SQL 無 status guard），應該失敗 |
+| V5-3 | — | 預期修復後 | ❌ `listing_permanently_delisted` |
+
+**⚠️ 已知問題**：`publishListing()` 缺少 `AND status IN ('draft','paused')` 條件。
+
+#### V6：有 Active Contract 時重新面試
+
+| Step | 角色 | 操作 | 預期結果 |
+|------|------|------|---------|
+| V6-1 | — | Listing 已上架，有 active contract | status=listed |
+| V6-2 | Owner | 開始重新面試 | ⚠️ status 變 interview，但合約仍 active |
+| V6-3 | Renter | Marketplace 搜尋 | listing 消失（status=interview） |
+| V6-4 | — | 面試完成 | status=draft，合約仍 active 但 listing 下線 |
+
+**⚠️ 已知問題**：面試前未檢查 active contract。
+
+---
+
+### 劇本 W：重複操作
+
+| Step | 操作 | 預期結果 |
+|------|------|---------|
+| W1 | 連續兩次 POST publish（同一 listing） | 第二次應回傳 `already_listed` 或冪等成功 |
+| W2 | 合約結束後再次 POST end-rental | ❌ `contract_already_ended`（第 562 行已實作） |
+| W3 | 同合約重複提交 review | ❌ `review_already_exists`（trust.js 第 111 行已實作） |
+| W4 | 同合約同 type 重複提交 dispute | ⚠️ 目前無檢查，可重複建立 |
+| W5 | Listing 已有 active contract，再次租借 | ❌ `listing_already_rented`（第 462 行已實作） |
+
+---
+
+### 劇本 X：快取過期 / 併發衝突
+
+#### X1：瀏覽器快取舊 rate
+
+| Step | 角色 | 操作 | 預期結果 |
+|------|------|------|---------|
+| X1-1 | Renter | 打開 Marketplace，看到 rate=500 | UI 顯示 500 |
+| X1-2 | Owner | 另一 tab 改 rate 為 800 | PATCH 成功 |
+| X1-3 | Renter | 不刷新頁面，直接點「租借」 | ✅ 合約 rate snapshot=800（DB 最新值，非 UI 快取值） |
+
+**驗證重點**：`startRental()` 用 `FOR UPDATE` 從 DB 讀最新值，不信任前端。
+
+#### X2：Owner 改 rate 同時 Renter 租借
+
+| Step | 操作 | 預期結果 |
+|------|------|---------|
+| X2-1 | `Promise.all([ PATCH rate, POST contract ])` | `FOR UPDATE` 序列化，兩者不會同時執行 |
+| X2-2 | 驗證 | 合約 rate 為其中一個一致的值，無資料不一致 |
+
+#### X3：面試完成後 UI 未自動刷新
+
+| Step | 角色 | 操作（Playwright） | 預期結果 |
+|------|------|-------------------|---------|
+| X3-1 | Owner | 在 A tab 開始面試 | status=interview |
+| X3-2 | — | 面試完成（通過） | API 回傳 passed=true |
+| X3-3 | Owner | 回到 B tab（listing 管理頁） | ⚠️ UI 是否自動刷新？「上架」按鈕是否出現？ |
+| X3-4 | Owner | 按「上架」 | 如果 UI 沒刷新，按鈕可能 disabled 或不可見 |
+
+---
+
+### 劇本 Y：邊界時序
+
+#### Y1：合約到期瞬間手動結束
+
+| Step | 操作 | 預期結果 |
+|------|------|---------|
+| Y1-1 | 租借 30 分鐘（最短） | ends_at = now + 30min |
+| Y1-2 | 在 ends_at 前 1 秒呼叫 end-rental（ended_early） | ✅ 50% forfeit |
+| Y1-3 | Cron 同一秒也觸發自動結束 | ⚠️ 不能 double refund/forfeit — 需 `FOR UPDATE` 保護 |
+
+#### Y2：Cooldown 邊界值
+
+| Step | 操作 | 預期結果 |
+|------|------|---------|
+| Y2-1 | 租借 → 提前終止 | cooldown_until = now + 24h |
+| Y2-2 | 23h59m 後嘗試租借 | ❌ `cooldown_active` |
+| Y2-3 | 24h01m 後嘗試租借 | ✅ 成功 |
+
+#### Y3：面試次數限制（3 次 / 7 天）
+
+| Step | 操作 | 預期結果 |
+|------|------|---------|
+| Y3-1 | 跑 3 次面試（全失敗） | 每次記錄到 bot_interviews |
+| Y3-2 | 第 4 次面試 | ❌ `interview_rate_limited` |
+| Y3-3 | 7 天後再試 | ✅ 成功 |
+
+#### Y4：Suspended 合約結束
+
+| Step | 操作 | 預期結果 |
+|------|------|---------|
+| Y4-1 | 租借，餘額逐漸消耗至 0 | status=suspended_insufficient_funds |
+| Y4-2 | Suspended 狀態下呼叫 end-rental | ✅ 成功（第 561 行允許） |
+| Y4-3 | 驗證 deposit refund | actualHeldMli 可能 < 原始 deposit（已被 chargeUsage 扣過） |
+
+---
+
+### 劇本 Z：權限違規
+
+| Step | 角色 | 操作 | 預期結果 |
+|------|------|------|---------|
+| Z1 | Renter | POST publish（Owner 的 listing） | ❌ `listing_forbidden` |
+| Z2 | Owner B | POST end-rental（Owner A 的合約） | ❌ `contract_end_forbidden` |
+| Z3 | Renter | PATCH listing 改 rate | ❌ `listing_not_found_or_forbidden` |
+| Z4 | Owner | POST contract（租自己的 listing） | ❌ `self_rental_forbidden` |
+| Z5-1 | 未登入 | POST publish | ❌ 401 `unauthenticated` |
+| Z5-2 | 未登入 | POST contract | ❌ 401 |
+| Z5-3 | 未登入 | GET marketplace | ✅ 公開（無需認證） |
+
+---
+
+### 劇本 AA：資料不一致恢復
+
+#### AA1：孤兒合約（listing 被刪但合約仍 active）
+
+| Step | 操作 | 預期結果 |
+|------|------|---------|
+| AA1-1 | DB 直接刪 listing，但 active contract 仍在 | 資料不一致 |
+| AA1-2 | Renter GET my-contracts | ✅ 合約仍顯示，listing_title=NULL（LEFT JOIN） |
+| AA1-3 | Renter 結束合約 | ✅ 成功（endRental 不依賴 listing） |
+
+#### AA2：伺服器重啟時面試進行中
+
+| Step | 操作 | 預期結果 |
+|------|------|---------|
+| AA2-1 | Listing status=interview 時 server crash | — |
+| AA2-2 | Server 重啟 → initRentalDatabase | status 重設為 draft（第 150 行） |
+| AA2-3 | Owner 回到頁面 | status=draft，可重新面試 |
+
+#### AA3：Rental entity 在重啟後消失
+
+| Step | 操作 | 預期結果 |
+|------|------|---------|
+| AA3-1 | Active contract，但 renter device 無 rental entity | entity 遺失 |
+| AA3-2 | Server 重啟 → reconcileRentalEntities Phase 4 | entity 自動恢復 |
+| AA3-3 | Renter dashboard | rental entity 重新出現，可正常使用 |
+
+#### AA4：Duplicate listing 防護
+
+| Step | 角色 | 操作 | 預期結果 |
+|------|------|------|---------|
+| AA4-1 | Owner | 建立 Listing（entity 0, draft） | ✅ 成功 |
+| AA4-2 | Owner | 再建一個（同一 entity 0） | ❌ `duplicate_listing`，附帶 existing_listing_id |
+| AA4-3 | Owner | Delist 第一個 listing | status=delisted |
+| AA4-4 | Owner | 再建一個（同一 entity 0） | ✅ 成功（delisted 不算 active） |
+
+---
+
+### 劇本 BB：UI / API 狀態不同步
+
+#### BB1：面試完成後 UI 自動刷新
+
+| Step | 角色 | 操作（Playwright） | 預期結果 |
+|------|------|-------------------|---------|
+| BB1-1 | Owner | 建立 Listing | UI 顯示 draft |
+| BB1-2 | Owner | 按「面試」 | UI 顯示 interview in progress |
+| BB1-3 | — | 面試完成（通過） | API 回傳 passed=true |
+| BB1-4 | Owner | **不刷新頁面** | UI 應自動更新，「上架」按鈕出現 |
+| BB1-5 | Owner | 按「上架」 | ✅ 成功 |
+
+#### BB2：面試失敗後的 UI 回饋
+
+| Step | 角色 | 操作（Playwright） | 預期結果 |
+|------|------|-------------------|---------|
+| BB2-1 | Owner | 面試失敗（score < 60%） | API 回傳 passed=false |
+| BB2-2 | Owner | 檢查 UI | 應顯示「面試未通過」+ 分數 + 「重試」按鈕 |
+| BB2-3 | Owner | 「上架」按鈕狀態 | disabled 或不可見 |
+
+#### BB3：publish 錯誤碼的完整覆蓋
+
+| 情境 | 錯誤碼 |
+|------|--------|
+| listing 不存在 | `listing_not_found` |
+| 不是 owner | `listing_forbidden` |
+| 未面試或面試未通過 | `interview_not_passed` |
+| 已上架（重複操作） | `already_listed` 或冪等成功 |
+| 已永久下架 | `listing_permanently_delisted` |
+| 其他 DB 錯誤 | `publish_failed` |
+
+---
+
+### 已發現的代碼問題（需修復）
+
+| # | 問題 | 嚴重度 | 影響場景 | 修復方式 |
+|---|------|--------|---------|---------|
+| 1 | `publishListing()` 缺 status guard — delisted 可復活 | **P1** | V5 | SQL 加 `AND status IN ('draft','paused')` |
+| 2 | 面試完成後 status 一律回 draft — 不恢復面試前狀態 | **P2** | V3, V6 | 面試前記錄原始 status，完成後恢復 |
+| 3 | 面試前無 active contract 檢查 | **P2** | V6 | startInterview 加 active contract guard |
+| 4 | review 48h 窗口未實作 | P3 | C5, Y | submitReview 加時間檢查 |
+| 5 | openDispute 無重複 type 檢查 | P3 | W4 | 加 unique constraint on (contract_id, type) |
+
 ---
 
 ## 場景統計
@@ -383,7 +631,8 @@
 |------|------|--------|------|
 | 初階 | A–E | 5 劇本 ~45 步 | 基礎交錯流程、金流、防護 |
 | 進階 | F–U | 16 劇本 ~180 步 | 多 Agent 協作、A2A、Vault、Kanban、Notes、計費 |
-| **合計** | **A–U** | **21 劇本 ~225 步** | |
+| 邊緣案例 | V–BB | 7 劇本 ~60 步 | 非正常路徑、重複操作、併發、權限、資料恢復 |
+| **合計** | **A–BB** | **28 劇本 ~285 步** | |
 
 ## 執行注意事項
 
