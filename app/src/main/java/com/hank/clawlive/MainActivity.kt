@@ -1186,7 +1186,7 @@ class MainActivity : AppCompatActivity() {
         MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.dialog_agent_card_title, entityId))
             .setView(scrollView)
-            .setPositiveButton("Save") { _, _ ->
+            .setPositiveButton(getString(R.string.save)) { _, _ ->
                 saveAgentCard(entityId,
                     descEdit.text.toString().trim(),
                     collectCapabilitiesFromDialog(capsContainer),
@@ -1196,13 +1196,13 @@ class MainActivity : AppCompatActivity() {
                     websiteEdit.text.toString().trim(),
                     emailEdit.text.toString().trim())
             }
-            .setNegativeButton("Cancel", null)
-            .setNeutralButton("Delete") { _, _ ->
+            .setNegativeButton(getString(R.string.cancel), null)
+            .setNeutralButton(getString(R.string.action_delete)) { _, _ ->
                 MaterialAlertDialogBuilder(this)
                     .setTitle(getString(R.string.dialog_delete_agent_card))
                     .setMessage(getString(R.string.dialog_delete_agent_card_message))
-                    .setPositiveButton("Delete") { _, _ -> deleteAgentCard(entityId) }
-                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton(getString(R.string.action_delete)) { _, _ -> deleteAgentCard(entityId) }
+                    .setNegativeButton(getString(R.string.cancel), null)
                     .show()
             }
             .show()

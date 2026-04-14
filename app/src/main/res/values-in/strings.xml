@@ -831,8 +831,4 @@ Jika ada pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="schedule_error_generic">Kesalahan: %s</string>
     <string name="schedule_failed_to_load">Gagal memuat: %s</string>
     <string name="schedule_operation_failed">Operasi gagal</string>
-    <string name="facebook_app_id">FB_APP_ID_PLACEHOLDER</string>
-    <string name="facebook_client_token">FB_CLIENT_TOKEN_PLACEHOLDER</string>
-    <string name="fb_login_protocol_scheme">fb{app_id}://authorize</string>
-    <string name="google_server_client_id">GOOGLE_SERVER_CLIENT_ID_PLACEHOLDER</string>
 </resources>
