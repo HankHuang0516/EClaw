@@ -109,3 +109,79 @@ bugs_found: [BUG-AUTH1(P2): device-login userId=null breaks publish/interview AP
 **Session 1 結果：Batch 0-5 全部 PASS（31/31 步驟）**
 **發現 1 個新 P2 bug（BUG-AUTH1: device-login userId=null）**
 
+## Batch 6：X 快取/併發 ✅
+
+| Step | 結果 | 備註 |
+|------|------|------|
+| X1 Rate change snapshot | ✅ | Owner 改 rate=2000 → contract snapshot=2000（DB 最新值） |
+| X2 Concurrent PATCH+POST | ✅ | FOR UPDATE 序列化（Jest verified） |
+
+## Batch 7：BB UI 狀態同步 ✅
+
+| Step | 結果 | 備註 |
+|------|------|------|
+| BB1 面試後 UI 刷新 | ✅ | 迭代 4 已用純 UI 完整驗證（面試→租借→chat→回覆） |
+| BB3 Publish error codes | ✅ | interview_not_passed / delisted / already_listed / forbidden 全覆蓋 |
+
+## Batch 8：G-H A2A 通訊 ✅
+
+| Step | 結果 | 備註 |
+|------|------|------|
+| G Chat | ✅ | Bot 回覆「你好！頻道修復測試成功！🧪」（迭代 4） |
+| G Kanban | ✅ | Bot 建立 P1「E2E 租借測試」kanban card（迭代 4） |
+
+## Batch 9：I+U 安全隔離 ✅
+
+| Step | 結果 | 備註 |
+|------|------|------|
+| I4 Rental bot 讀 owner vars | ✅ | **403 blocked** — 安全隔離正確 |
+| U Rate limit | ✅ | RENTAL_RATE_LIMIT_RPM=30（Jest verified） |
+
+## Batch 11：L+M+T 併發+合約鎖定+Entity Lifecycle ✅
+
+| Step | 結果 | 備註 |
+|------|------|------|
+| L 併發搶租 | ✅ | Promise.all → exactly 1 succeeded, other `listing_already_rented` |
+| M5 Rate snapshot 隔離 | ✅ | 合約中改 rate → snapshot 不受影響 |
+| T5 Owner leased_out 標記 | ✅ | entity has leased_out |
+| T8 合約結束清除 leased_out | ✅ | leased_out cleared |
+
+## Batch 14：R 邊界值 ✅
+
+| Step | 結果 | 備註 |
+|------|------|------|
+| R1 duration 29min (below min) | ✅ | `duration_too_short` |
+| R3 duration 0 | ✅ | `duration_minutes_invalid` |
+| R4 duration -1 | ✅ | `duration_minutes_invalid` |
+| R5 duration 30min (exact min) | ✅ | 成功 |
+
+## 最終結果
+
+| Batch | 狀態 | 步驟 |
+|-------|------|------|
+| 0 環境預檢 | ✅ | 4/4 |
+| 1 D Listing 生命週期 | ✅ | 7/7 |
+| 2 V 操作順序 | ✅ | 6/6 |
+| 3 C 防護機制 | ✅ | 3/3 |
+| 4 W 重複操作 | ✅ | 5/5 |
+| 5 Z 權限違規 | ✅ | 6/6 |
+| 6 X 快取/併發 | ✅ | 2/2 |
+| 7 BB UI 同步 | ✅ | 2/2 |
+| 8 G-H A2A | ✅ | 2/2 |
+| 9 I+U 安全隔離 | ✅ | 2/2 |
+| 10 J+K 檔案+計費 | ⏭️ SKIP | 非 BLOCKER |
+| 11 L+M+T 併發+鎖定 | ✅ | 4/4 |
+| 12 N+O 申訴+信任 | ✅ (iter4) | 已在迭代 4 驗證 |
+| 13 P+Q 筆記+跨頁 | ⏭️ SKIP | 非 BLOCKER |
+| 14 R 邊界值 | ✅ | 4/4 |
+| 15 清理 | ✅ | — |
+| **BLOCKER 合計** | **✅ ALL PASS** | **47/47** |
+
+### 發現的 bug
+| Bug | 嚴重度 | 描述 | 是否阻擋上線 |
+|-----|--------|------|-------------|
+| BUG-AUTH1 | P2 | device-login userId=null 導致 publish/interview API 回傳 internal_error（非 UI 路徑） | ❌ 不阻擋（真實使用者用 UI） |
+
+### 結論
+**所有 LAUNCH_BLOCKER 場景全部 PASS。可以上線。**
+
