@@ -1,3 +1,10 @@
+# [1.974.0](https://github.com/HankHuang0516/EClaw/compare/v1.973.1...v1.974.0) (2026-04-14)
+
+
+### Features
+
+* **auth:** add POST /api/auth/oauth/apple for Sign in with Apple ([ae96876](https://github.com/HankHuang0516/EClaw/commit/ae96876f334040cade357118f318c700558f330b))
+
 ## [1.973.1](https://github.com/HankHuang0516/EClaw/compare/v1.973.0...v1.973.1) (2026-04-14)
 
 
