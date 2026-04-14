@@ -272,7 +272,7 @@ class MessageActivity : AppCompatActivity() {
                 startActivity(intent)
                 finish()
             }
-            .setNegativeButton("Later", null)
+            .setNegativeButton(getString(R.string.update_later), null)
             .show()
     }
 }

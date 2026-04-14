@@ -607,7 +607,7 @@ class ScheduleActivity : AppCompatActivity() {
                 AlertDialog.Builder(this@ScheduleActivity)
                     .setTitle("\uD83D\uDCC5 $entityName")
                     .setMessage(sb.toString().trimEnd())
-                    .setPositiveButton("OK", null)
+                    .setPositiveButton(android.R.string.ok, null)
                     .show()
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load execution context")

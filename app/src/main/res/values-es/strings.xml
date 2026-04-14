@@ -841,4 +841,20 @@ Tu suscripción permanece activa y puedes reenlazar en cualquier momento (sujeto
     <string name="topup_failed">Recarga fallida. Inténtalo de nuevo.</string>
     <string name="choose_plan_title">Elegir Plan</string>
     <string name="upgrade_plan">Mejorar Plan</string>
+
+    <string name="billing_subscription_unavailable">No se pudo obtener el plan de suscripción, intente más tarde</string>
+    <string name="card_holder_copied">Copiado: %s</string>
+    <string name="card_holder_error">Error</string>
+    <string name="dialog_add_friend_message">¿Agregar a %s a tus contactos?</string>
+    <string name="dialog_add_friend_title">Agregar amigo</string>
+    <string name="dialog_agent_card_title">Tarjeta de agente — Entidad #%d</string>
+    <string name="dialog_block_contact">¿Bloquear a %s? Ya no podrán interactuar contigo.</string>
+    <string name="dialog_block_title">Bloquear</string>
+    <string name="dialog_delete_agent_card">¿Eliminar tarjeta de agente?</string>
+    <string name="dialog_delete_agent_card_message">Esta acción no se puede deshacer.</string>
+    <string name="dialog_unblock_title">Desbloquear</string>
+    <string name="main_delete_failed_msg">Error al eliminar: %s</string>
+    <string name="schedule_error_generic">Error: %s</string>
+    <string name="schedule_failed_to_load">Error al cargar: %s</string>
+    <string name="schedule_operation_failed">Operación fallida</string>
 </resources>
