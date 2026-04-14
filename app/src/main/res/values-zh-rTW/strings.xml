@@ -276,11 +276,8 @@
     <string name="error_open_settings">無法開啟桌布設定</string>
     <string name="expand">展開</string>
     <string name="expires_in">%d 秒後過期</string>
-    <string name="facebook_app_id">Facebook App ID</string>
-    <string name="facebook_client_token">Facebook Client Token</string>
     <string name="failed_add_slot">新增欄位失敗</string>
     <string name="failed_format">失敗：%s</string>
-    <string name="fb_login_protocol_scheme">fb 登入協定</string>
     <string name="feedback">意見回饋</string>
     <string name="feedback_auto_log_hint">系統將自動擷取最近 5 分鐘的紀錄以協助問題診斷。</string>
     <string name="feedback_cancel_mark">取消標記</string>
@@ -404,7 +401,6 @@
     <string name="gatekeeper_blocked_message">⚠️ %1$s（%2$d/%3$d）</string>
     <string name="gatekeeper_blocked_permanent">⚠️ %1$s</string>
     <string name="generate">產生</string>
-    <string name="google_server_client_id">Google Server Client ID</string>
     <string name="handshaking_bot">正在與機器人交握中…</string>
     <string name="hello_im_here">你好，我來了！</string>
     <string name="hide_label">隱藏</string>
