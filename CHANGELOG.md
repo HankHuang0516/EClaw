@@ -1,3 +1,10 @@
+# [1.977.0](https://github.com/HankHuang0516/EClaw/compare/v1.976.1...v1.977.0) (2026-04-14)
+
+
+### Features
+
+* **iap:** Apple In-App Purchase end-to-end (backend + iOS) ([e3b5222](https://github.com/HankHuang0516/EClaw/commit/e3b5222514a27e833c3253b35808bf6af9143037))
+
 ## [1.976.1](https://github.com/HankHuang0516/EClaw/compare/v1.976.0...v1.976.1) (2026-04-14)
 
 
