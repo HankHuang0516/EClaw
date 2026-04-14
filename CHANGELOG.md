@@ -1,3 +1,10 @@
+## [1.975.2](https://github.com/HankHuang0516/EClaw/compare/v1.975.1...v1.975.2) (2026-04-14)
+
+
+### Bug Fixes
+
+* **e2e-iter3:** wire dead Settings buttons + Card Holder i18n ([#1750](https://github.com/HankHuang0516/EClaw/issues/1750)) ([ce5d591](https://github.com/HankHuang0516/EClaw/commit/ce5d59193545c664199543638bc5d53617c9e795)), closes [#1691](https://github.com/HankHuang0516/EClaw/issues/1691)
+
 ## [1.975.1](https://github.com/HankHuang0516/EClaw/compare/v1.975.0...v1.975.1) (2026-04-14)
 
 
