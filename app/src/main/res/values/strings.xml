@@ -924,6 +924,7 @@ If you have any questions, please contact us via our official email.
     <string name="card_holder_error">Error</string>
     <string name="main_delete_failed_msg">Delete failed: %s</string>
     <string name="billing_subscription_unavailable">無法取得訂閱方案，請稍後再試</string>
+    <string name="billing_google_play_loading">Google Play 載入中，請稍後再試</string>
     <string name="dialog_delete_agent_card">Delete Agent Card?</string>
     <string name="dialog_delete_agent_card_message">This action cannot be undone.</string>
     <string name="dialog_agent_card_title">Agent Card — Entity #%d</string>
@@ -935,6 +936,7 @@ If you have any questions, please contact us via our official email.
 
     <string name="dialog_block_title">Block</string>
     <string name="dialog_unblock_title">Unblock</string>
+    <string name="dialog_unblock_message">Unblock %s? They will be able to interact with you again.</string>
 
 </resources>
 

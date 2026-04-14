@@ -3,6 +3,7 @@ package com.hank.clawlive.billing
 import android.app.Activity
 import android.content.Context
 import com.android.billingclient.api.*
+import com.hank.clawlive.R
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.local.UsageManager
