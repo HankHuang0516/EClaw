@@ -1178,7 +1178,7 @@
                 // Re-fetch to get consistent rendering with entity info
                 await refreshChannelAccounts();
             } catch (e) {
-                alert(i18n.t('toast_generate_key_failed') + ': ' + e.message);
+                showToast(i18n.t('toast_generate_key_failed') + ': ' + e.message, 'error');
             } finally {
                 btn.disabled = false;
                 btn.textContent = '+ New Key';
@@ -1209,13 +1209,13 @@
         }
 
         async function deleteChannelAccount(id) {
-            if (!confirm(i18n.t('toast_delete_channel_confirm'))) return;
+            if (!await showConfirm({ message: i18n.t('toast_delete_channel_confirm'), danger: true })) return;
             try {
                 await apiCall('DELETE', `/api/channel/account/${id}`);
                 // Re-fetch fresh user data to sync channel accounts
                 await refreshChannelAccounts();
             } catch (e) {
-                alert(i18n.t('toast_delete_failed') + ': ' + e.message);
+                showToast(i18n.t('toast_delete_failed') + ': ' + e.message, 'error');
             }
         }
 

@@ -442,8 +442,8 @@
             syncVarsToServer();
         }
 
-        function deleteVar(key) {
-            if (!confirm(i18n.t('env_confirm_delete').replace('{key}', key))) return;
+        async function deleteVar(key) {
+            if (!await showConfirm({ message: i18n.t('env_confirm_delete').replace('{key}', key), danger: true })) return;
             const vars = loadLocalVars();
             delete vars[key];
             saveLocalVars(vars);

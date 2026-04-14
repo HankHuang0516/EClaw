@@ -57,6 +57,107 @@ function showToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 3000);
 }
 
+/**
+ * showConfirm — styled replacement for window.confirm()
+ * @param {Object} opts
+ * @param {string} opts.message - Main message text
+ * @param {string} [opts.title] - Optional dialog title
+ * @param {string} [opts.confirmText='OK'] - Confirm button label
+ * @param {string} [opts.cancelText='Cancel'] - Cancel button label
+ * @param {boolean} [opts.danger=false] - Red confirm button for destructive actions
+ * @returns {Promise<boolean>}
+ */
+function showConfirm({ message, title, confirmText, cancelText, danger } = {}) {
+    return new Promise((resolve) => {
+        const t = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t.bind(i18n) : (k, fb) => fb || k;
+        const overlay = document.createElement('div');
+        overlay.className = 'dialog-overlay eclaw-confirm-overlay';
+        overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog">
+            ${title ? `<div class="dialog-title">${_escHtml(title)}</div>` : ''}
+            <div class="dialog-body"><p style="margin:0;line-height:1.6;color:var(--text-secondary)">${_escHtml(message)}</p></div>
+            <div class="dialog-actions">
+                <button class="btn btn-outline eclaw-confirm-cancel">${_escHtml(cancelText || t('dialog_cancel', 'Cancel'))}</button>
+                <button class="btn ${danger ? 'btn-danger' : 'btn-primary'} eclaw-confirm-ok">${_escHtml(confirmText || t('dialog_ok', 'OK'))}</button>
+            </div>
+        </div>`;
+        document.body.appendChild(overlay);
+        const cleanup = (result) => { overlay.remove(); resolve(result); };
+        overlay.querySelector('.eclaw-confirm-ok').focus();
+        overlay.querySelector('.eclaw-confirm-ok').addEventListener('click', () => cleanup(true));
+        overlay.querySelector('.eclaw-confirm-cancel').addEventListener('click', () => cleanup(false));
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(false); });
+        overlay.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') cleanup(false);
+            if (e.key === 'Enter') cleanup(true);
+        });
+    });
+}
+
+/**
+ * showPrompt — styled replacement for window.prompt()
+ * @param {Object} opts
+ * @param {string} opts.message - Label / instruction text
+ * @param {string} [opts.title] - Optional dialog title
+ * @param {string} [opts.defaultValue=''] - Pre-filled input value
+ * @param {string} [opts.placeholder=''] - Input placeholder
+ * @param {string} [opts.confirmText='OK'] - Confirm button label
+ * @param {string} [opts.cancelText='Cancel'] - Cancel button label
+ * @returns {Promise<string|null>} The entered string, or null if cancelled
+ */
+function showPrompt({ message, title, defaultValue, placeholder, confirmText, cancelText } = {}) {
+    return new Promise((resolve) => {
+        const t = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t.bind(i18n) : (k, fb) => fb || k;
+        const overlay = document.createElement('div');
+        overlay.className = 'dialog-overlay eclaw-confirm-overlay';
+        overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog">
+            ${title ? `<div class="dialog-title">${_escHtml(title)}</div>` : ''}
+            <div class="dialog-body">
+                <p style="margin:0 0 12px;line-height:1.6;color:var(--text-secondary)">${_escHtml(message)}</p>
+                <input type="text" class="eclaw-prompt-input" value="${_escAttr(defaultValue || '')}" placeholder="${_escAttr(placeholder || '')}" style="width:100%;padding:8px 12px;border:1px solid var(--card-border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;box-sizing:border-box;">
+            </div>
+            <div class="dialog-actions">
+                <button class="btn btn-outline eclaw-confirm-cancel">${_escHtml(cancelText || t('dialog_cancel', 'Cancel'))}</button>
+                <button class="btn btn-primary eclaw-confirm-ok">${_escHtml(confirmText || t('dialog_ok', 'OK'))}</button>
+            </div>
+        </div>`;
+        document.body.appendChild(overlay);
+        const input = overlay.querySelector('.eclaw-prompt-input');
+        input.focus();
+        input.select();
+        const cleanup = (result) => { overlay.remove(); resolve(result); };
+        overlay.querySelector('.eclaw-confirm-ok').addEventListener('click', () => cleanup(input.value));
+        overlay.querySelector('.eclaw-confirm-cancel').addEventListener('click', () => cleanup(null));
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(null); });
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') cleanup(input.value); });
+        overlay.addEventListener('keydown', (e) => { if (e.key === 'Escape') cleanup(null); });
+    });
+}
+
+// HTML escape helpers for dialog content
+function _escHtml(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function _escAttr(s) { return (s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+
+// ─── DEV GUARD: Prevent native alert/confirm/prompt ───
+// Wraps native dialogs with console warnings so developers notice and migrate.
+// In production the dialogs still work but log a deprecation trace.
+(function() {
+    const _nativeAlert = window.alert;
+    const _nativeConfirm = window.confirm;
+    const _nativePrompt = window.prompt;
+    window.alert = function(msg) {
+        console.warn('[DEPRECATED] alert() used — migrate to showToast(). Message:', msg, new Error().stack);
+        return _nativeAlert.call(window, msg);
+    };
+    window.confirm = function(msg) {
+        console.warn('[DEPRECATED] confirm() used — migrate to showConfirm(). Message:', msg, new Error().stack);
+        return _nativeConfirm.call(window, msg);
+    };
+    window.prompt = function(msg, def) {
+        console.warn('[DEPRECATED] prompt() used — migrate to showPrompt(). Message:', msg, new Error().stack);
+        return _nativePrompt.call(window, msg, def);
+    };
+})();
+
 // Format timestamp
 function formatTime(ts) {
     if (!ts) return '';

@@ -1251,9 +1251,9 @@
                     if (form) form.dispatchEvent(new Event('submit'));
                 }
             } else {
-                alert(result.error || ((typeof i18n !== 'undefined' && i18n.t) ? i18n.t('sc_order_failed') : 'Order failed'));
+                showToast(result.error || ((typeof i18n !== 'undefined' && i18n.t) ? i18n.t('sc_order_failed') : 'Order failed'), 'error');
             }
-        } catch (e) { alert(((typeof i18n !== 'undefined' && i18n.t) ? i18n.t('sc_order_error') : 'Error: ') + e.message); }
+        } catch (e) { showToast(((typeof i18n !== 'undefined' && i18n.t) ? i18n.t('sc_order_error') : 'Error: ') + e.message, 'error'); }
         btn.disabled = false; btn.textContent = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t('sc_order_confirm') : 'Confirm Order';
     }
 

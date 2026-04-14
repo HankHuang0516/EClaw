@@ -1312,35 +1312,35 @@
         }
 
         async function revokeSkill(skillId) {
-            if (!confirm(i18n.t('skill_contrib_revoke_confirm'))) return;
+            if (!await showConfirm({ message: i18n.t('skill_contrib_revoke_confirm'), danger: true })) return;
             try {
                 await apiCall('DELETE', '/api/skill-templates/' + encodeURIComponent(skillId));
-                alert(i18n.t('skill_contrib_revoked'));
+                showToast(i18n.t('skill_contrib_revoked'), 'success');
                 loadAll();
             } catch (e) {
-                alert('Error: ' + e.message);
+                showToast('Error: ' + e.message, 'error');
             }
         }
 
         async function revokeSoul(soulId) {
-            if (!confirm(i18n.t('soul_contrib_revoke_confirm'))) return;
+            if (!await showConfirm({ message: i18n.t('soul_contrib_revoke_confirm'), danger: true })) return;
             try {
                 await apiCall('DELETE', '/api/soul-templates/' + encodeURIComponent(soulId));
-                alert(i18n.t('soul_contrib_revoked'));
+                showToast(i18n.t('soul_contrib_revoked'), 'success');
                 loadAll();
             } catch (e) {
-                alert('Error: ' + e.message);
+                showToast('Error: ' + e.message, 'error');
             }
         }
 
         async function revokeRule(ruleId) {
-            if (!confirm(i18n.t('rule_contrib_revoke_confirm'))) return;
+            if (!await showConfirm({ message: i18n.t('rule_contrib_revoke_confirm'), danger: true })) return;
             try {
                 await apiCall('DELETE', '/api/rule-templates/' + encodeURIComponent(ruleId));
-                alert(i18n.t('rule_contrib_revoked'));
+                showToast(i18n.t('rule_contrib_revoked'), 'success');
                 loadAll();
             } catch (e) {
-                alert('Error: ' + e.message);
+                showToast('Error: ' + e.message, 'error');
             }
         }
 

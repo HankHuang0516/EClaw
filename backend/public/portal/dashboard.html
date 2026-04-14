@@ -2124,7 +2124,7 @@
         }
 
         async function resetXdSettings(entityId) {
-            if (!confirm(i18n.t('dash_xd_reset_confirm'))) return;
+            if (!await showConfirm({ message: i18n.t('dash_xd_reset_confirm'), danger: true })) return;
             try {
                 var data = await apiCall('DELETE', '/api/entity/cross-device-settings', {
                     deviceId: currentUser.deviceId,
@@ -2328,7 +2328,7 @@
         }
 
         async function deleteIdentity(entityId) {
-            if (!confirm(i18n.t('dash_id_clear_confirm') + entityId + '?')) return;
+            if (!await showConfirm({ message: i18n.t('dash_id_clear_confirm') + entityId + '?', danger: true })) return;
             try {
                 var data = await apiCall('DELETE', '/api/entity/identity', {
                     deviceId: currentUser.deviceId,

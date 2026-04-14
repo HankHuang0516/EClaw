@@ -964,7 +964,7 @@
         if (!text || !currentDetailCode) return;
         const deviceId = localStorage.getItem('eclaw_device_id');
         const deviceSecret = localStorage.getItem('eclaw_device_secret');
-        if (!deviceId || !deviceSecret) { alert('請先登入才能留言'); return; }
+        if (!deviceId || !deviceSecret) { showToast(ttt('mp_login_first', '請先登入才能留言'), 'error'); return; }
         input.disabled = true;
         try {
             const data = await apiPost('/api/community/card/' + currentDetailCode + '/message', { deviceId, deviceSecret, text });
@@ -972,8 +972,8 @@
                 currentDetailMessages.unshift(data.message);
                 document.getElementById('commentList').innerHTML = renderComments(currentDetailMessages);
                 input.value = '';
-            } else { alert(data.error || '留言失敗'); }
-        } catch (e) { alert('留言失敗'); }
+            } else { showToast(data.error || '留言失敗', 'error'); }
+        } catch (e) { showToast('留言失敗', 'error'); }
         finally { input.disabled = false; input.focus(); }
     }
 
@@ -1127,7 +1127,7 @@
         if (btn) { btn.disabled = true; btn.textContent = ttt('mp_renting','Processing...'); }
         try {
             const user = await apiFetch('/api/auth/me');
-            if (!user?.user) { alert(ttt('mp_login_first','Please login')); if (btn) { btn.disabled = false; btn.textContent = btnLabel; } return; }
+            if (!user?.user) { showToast(ttt('mp_login_first','Please login'), 'error'); if (btn) { btn.disabled = false; btn.textContent = btnLabel; } return; }
             const hours = parseFloat(document.getElementById('rentalDurationHours')?.value) || 1;
             const data = await apiPost('/api/rental/contract', {
                 listingId,
@@ -1149,12 +1149,12 @@
                 setTimeout(() => { closeDetail(); loadBots(); }, 3000);
             } else {
                 const errCode = data?.error || '';
-                alert(translateRentalError(errCode) || errCode || 'Failed');
+                showToast(translateRentalError(errCode) || errCode || 'Failed', 'error');
                 if (btn) { btn.disabled = false; btn.textContent = btnLabel; }
             }
         } catch (err) {
             const errCode = err.message || '';
-            alert(translateRentalError(errCode) || errCode || 'Rental failed');
+            showToast(translateRentalError(errCode) || errCode || 'Rental failed', 'error');
             if (btn) { btn.disabled = false; btn.textContent = btnLabel; }
         }
     }

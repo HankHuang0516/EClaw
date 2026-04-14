@@ -47,6 +47,7 @@
     <link rel="icon" type="image/png" href="/portal/assets/favicon-32.png">
     <link rel="stylesheet" href="/portal/shared/style.css">
     <script src="/shared/i18n.js"></script>
+    <script src="/portal/shared/api.js"></script>
     <script>
         // Apply i18n early so document.documentElement.lang is set and i18n.t() works in inline scripts
         i18n.apply();
@@ -255,9 +256,9 @@
                 } else if (data.error === 'cooldown') {
                     startCooldownTimer(data.remainingSec);
                 } else {
-                    alert('Error: ' + (data.error || 'unknown'));
+                    showToast('Error: ' + (data.error || 'unknown'), 'error');
                 }
-            } catch (e) { alert('Error: ' + e.message); }
+            } catch (e) { showToast('Error: ' + e.message, 'error'); }
             finally { btn.disabled = false; btn.textContent = 'Start Evaluation'; }
         }
 

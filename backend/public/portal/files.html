@@ -666,8 +666,8 @@
             updateStats();
         }
 
-        function addFolder() {
-            const name = prompt(i18n.t('files_folder_name_hint'));
+        async function addFolder() {
+            const name = await showPrompt({ message: i18n.t('files_folder_name_hint') });
             if (!name || !name.trim()) return;
             const trimmed = name.trim().substring(0, 50);
             const folders = getFileFolders();
@@ -680,8 +680,8 @@
             renderFolderChips();
         }
 
-        function deleteFolder(name) {
-            if (!confirm(i18n.t('files_folder_delete_confirm').replace('%1$s', name))) return;
+        async function deleteFolder(name) {
+            if (!await showConfirm({ message: i18n.t('files_folder_delete_confirm').replace('%1$s', name), danger: true })) return;
             const folders = getFileFolders().filter(f => f !== name);
             saveFileFolders(folders);
             // Remove folder assignments
@@ -692,18 +692,18 @@
             updateStats();
         }
 
-        function moveFileToFolder(idx) {
+        async function moveFileToFolder(idx) {
             const file = allFiles[idx];
             if (!file) return;
             const folders = getFileFolders();
-            if (folders.length === 0) { addFolder(); return; }
+            if (folders.length === 0) { await addFolder(); return; }
             const currentFileFolder = getFileFolder(file.id);
             const options = [];
             if (currentFileFolder) options.push(i18n.t('files_folder_remove_from'));
             folders.forEach(f => { if (f !== currentFileFolder) options.push('📁 ' + f); });
             if (options.length === 0) return;
             // Use a simple select menu
-            const choice = prompt(i18n.t('files_folder_move_to') + '\n\n' + options.map((o, i) => (i + 1) + '. ' + o).join('\n') + '\n\n' + i18n.t('files_folder_enter_number'));
+            const choice = await showPrompt({ message: i18n.t('files_folder_move_to') + '\n\n' + options.map((o, i) => (i + 1) + '. ' + o).join('\n') + '\n\n' + i18n.t('files_folder_enter_number') });
             if (!choice) return;
             const num = parseInt(choice, 10);
             if (isNaN(num) || num < 1 || num > options.length) return;
@@ -1113,7 +1113,7 @@
         async function deleteFile(idx) {
             const file = allFiles[idx];
             if (!file) return;
-            if (!confirm(i18n.t('files_delete_confirm', 'Are you sure you want to delete this file?'))) return;
+            if (!await showConfirm({ message: i18n.t('files_delete_confirm', 'Are you sure you want to delete this file?'), danger: true })) return;
 
             try {
                 const resp = await apiCall('/api/device/files/' + file.id + '?deviceId=' + encodeURIComponent(deviceId) + '&deviceSecret=' + encodeURIComponent(deviceSecret), { method: 'DELETE' });

@@ -948,6 +948,16 @@ a:hover { text-decoration: underline; }
     flex-shrink: 0;
 }
 
+/* Danger button (destructive actions) */
+.btn-danger {
+    background: #e53e3e;
+    color: #fff;
+    border: none;
+}
+.btn-danger:hover {
+    background: #c53030;
+}
+
 /* ==========================================
    Loading spinner
    ========================================== */

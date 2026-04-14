@@ -369,7 +369,7 @@
                 if (overlay) overlay.remove();
                 loadTab();
             } catch (err) {
-                alert(err.message || 'Failed');
+                showToast(err.message || 'Failed', 'error');
                 btn.disabled = false;
                 btn.textContent = tt('mr_confirm_end', 'Confirm End');
             }
@@ -408,17 +408,17 @@
         async function submitDispute(contractId, btn) {
             const overlay = btn.closest('.mr-modal-overlay');
             const selected = overlay.querySelector('input[name="dtype"]:checked');
-            if (!selected) { alert(tt('mr_dispute_select_required', 'Please select a dispute type')); return; }
+            if (!selected) { showToast(tt('mr_dispute_select_required', 'Please select a dispute type'), 'error'); return; }
             const evidence = overlay.querySelector('#dispute-evidence').value;
             btn.disabled = true;
             btn.textContent = '...';
             try {
                 await apiCall('POST', `/api/rental/contract/${contractId}/dispute`, { type: selected.value, evidence });
                 overlay.remove();
-                alert(tt('mr_dispute_filed', 'Dispute filed!'));
+                showToast(tt('mr_dispute_filed', 'Dispute filed!'), 'success');
                 switchTab('disputes');
             } catch (err) {
-                alert(err.message || 'Failed');
+                showToast(err.message || 'Failed', 'error');
                 btn.disabled = false;
                 btn.textContent = tt('mr_submit_dispute', 'Submit Dispute');
             }
@@ -448,13 +448,13 @@
 
         async function submitReview(contractId) {
             const rating = selectedRatings[contractId];
-            if (!rating) { alert(tt('mr_select_rating', 'Please select a rating')); return; }
+            if (!rating) { showToast(tt('mr_select_rating', 'Please select a rating'), 'error'); return; }
             const comment = document.getElementById(`comment-${contractId}`).value;
             try {
                 await apiCall('POST', `/api/rental/contract/${contractId}/review`, { rating, comment });
-                alert(tt('mr_review_submitted', 'Review submitted!'));
+                showToast(tt('mr_review_submitted', 'Review submitted!'), 'success');
                 loadTab();
-            } catch (err) { alert(err.message || 'Failed'); }
+            } catch (err) { showToast(err.message || 'Failed', 'error'); }
         }
 
         /* ── Stub actions ── */
@@ -462,7 +462,7 @@
             window.location = `/portal/chat.html?rental=${contractId}`;
         }
         function showUsage(contractId) {
-            alert(tt('mr_usage_coming_soon', 'Usage details coming soon'));
+            showToast(tt('mr_usage_coming_soon', 'Usage details coming soon'), 'info');
         }
 
         window.addEventListener('DOMContentLoaded', async () => {

@@ -7,6 +7,7 @@
     <link rel="icon" type="image/png" href="/portal/assets/favicon-32.png">
     <link rel="stylesheet" href="/portal/shared/style.css">
     <script src="/shared/i18n.js"></script>
+    <script src="/portal/shared/api.js"></script>
     <script>i18n.apply();</script>
     <script src="/socket.io/socket.io.js"></script>
     <style>
@@ -573,7 +574,7 @@
                 setTimeout(() => document.getElementById('lbSection').scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
                 setTimeout(() => reveal('feedbackSection'), 800);
                 setTimeout(() => { reveal('commentSection'); loadComments(); reveal('returnSection'); }, 1500);
-            } catch (e) { alert('Error: ' + e.message); }
+            } catch (e) { showToast('Error: ' + e.message, 'error'); }
             btn.disabled = false;
         }
 
@@ -585,8 +586,8 @@
                     credibilityScore: parseInt(document.getElementById('credSlider').value),
                     comment: document.getElementById('fbComment').value.trim() || null,
                 })});
-                alert('Thank you for your feedback!');
-            } catch (e) { alert('Error: ' + e.message); }
+                showToast('Thank you for your feedback!', 'success');
+            } catch (e) { showToast('Error: ' + e.message, 'error'); }
         }
 
         function handleReturn() {
@@ -610,7 +611,7 @@
         }
 
         async function postComment() {
-            if (!myLeaderboardId) { alert('Submit to the leaderboard first'); return; }
+            if (!myLeaderboardId) { showToast('Submit to the leaderboard first', 'error'); return; }
             const text = document.getElementById('commentInput').value.trim();
             if (!text) return;
             await fetch(`${API}/api/arena/comments`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ leaderboardId: myLeaderboardId, text }) });

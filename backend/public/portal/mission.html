@@ -1175,7 +1175,7 @@
                         isSyncing = false;
                         renderSyncBar();
                         btn.disabled = false;
-                        if (confirm(i18n.t('mc_confirm_version', { you: version, server: data.currentVersion }))) {
+                        if (await showConfirm({ message: i18n.t('mc_confirm_version', { you: version, server: data.currentVersion }) })) {
                             await downloadDashboard();
                         }
                         return;
@@ -1464,8 +1464,8 @@
             else if (action === 'delete') deleteCategory(section, category);
         }
 
-        function addCategory(section) {
-            const name = prompt(i18n.t('mc_prompt_category_name') || 'Category name:');
+        async function addCategory(section) {
+            const name = await showPrompt({ message: i18n.t('mc_prompt_category_name') || 'Category name:' });
             if (!name || !name.trim()) return;
             const trimmed = name.trim().slice(0, 50);
             const order = getCategoryOrder(section);
@@ -1479,8 +1479,8 @@
             renderAll();
         }
 
-        function renameCategory(section, oldName) {
-            const newName = prompt(i18n.t('mc_prompt_rename_category') || 'New category name:', oldName);
+        async function renameCategory(section, oldName) {
+            const newName = await showPrompt({ message: i18n.t('mc_prompt_rename_category') || 'New category name:', defaultValue: oldName });
             if (!newName || !newName.trim() || newName.trim() === oldName) return;
             const trimmed = newName.trim().slice(0, 50);
 
@@ -1553,7 +1553,7 @@
 
         // Unified bulk operation: apply mutation, save immediately, offer undo on success.
         async function bulkOp({ confirmMsg, applyFn, restoreFn, overlayMsg, successMsg }) {
-            if (!confirm(confirmMsg)) return;
+            if (!await showConfirm({ message: confirmMsg, danger: true })) return;
             applyFn();
             showBulkOverlay(overlayMsg);
             try {
@@ -1936,8 +1936,8 @@
             });
         }
 
-        function deleteNote(id) {
-            if (confirm(i18n.t('mc_confirm_delete'))) {
+        async function deleteNote(id) {
+            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
                 dashboard.notes = dashboard.notes.filter(n => n.id !== id);
                 markChanged();
                 renderNotes();
@@ -1952,8 +1952,8 @@
             menu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
             menu.style.top = e.clientY + 'px';
 
-            menu.querySelector('.context-menu-item').onclick = () => {
-                if (confirm(i18n.t('mc_confirm_delete'))) {
+            menu.querySelector('.context-menu-item').onclick = async () => {
+                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
                     dashboard.notes = dashboard.notes.filter(n => n.id !== id);
                     markChanged();
                     renderNotes();
@@ -2123,7 +2123,7 @@
             const newPublic = !isCurrentlyPublic;
             if (newPublic) {
                 const msg = i18n.t('mc_note_confirm_public') || 'This page will be visible to everyone without login. Are you sure you want to make it public?';
-                if (!confirm(msg)) return;
+                if (!await showConfirm({ message: msg })) return;
             }
             try {
                 await apiCall('PATCH', '/api/mission/note/page/public', {
@@ -2218,8 +2218,8 @@
             document.getElementById('wvEraserBtn').classList.toggle('active', eraserMode);
         }
 
-        function clearDrawing() {
-            if (!confirm(i18n.t('mc_note_draw_clear_confirm') || 'Clear all drawings?')) return;
+        async function clearDrawing() {
+            if (!await showConfirm({ message: i18n.t('mc_note_draw_clear_confirm') || 'Clear all drawings?', danger: true })) return;
             drawStrokes = [];
             redrawCanvas();
         }
@@ -2451,7 +2451,7 @@
         }
 
         async function deleteNotePage(noteId) {
-            if (!confirm(i18n.t('mc_confirm_delete'))) return;
+            if (!await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) return;
             try {
                 await apiCall('DELETE', '/api/mission/note/page', {
                     deviceId: currentUser.deviceId,
@@ -2932,8 +2932,8 @@
             setTimeout(() => document.getElementById('dlg_skill_title').focus(), 50);
         }
 
-        function deleteSkill(id) {
-            if (confirm(i18n.t('mc_confirm_delete'))) {
+        async function deleteSkill(id) {
+            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
                 dashboard.skills = dashboard.skills.filter(s => s.id !== id);
                 markChanged();
                 renderSkills();
@@ -2948,8 +2948,8 @@
             menu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
             menu.style.top = e.clientY + 'px';
 
-            menu.querySelector('.context-menu-item').onclick = () => {
-                if (confirm(i18n.t('mc_confirm_delete'))) {
+            menu.querySelector('.context-menu-item').onclick = async () => {
+                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
                     dashboard.skills = dashboard.skills.filter(s => s.id !== id);
                     markChanged();
                     renderSkills();
@@ -3059,8 +3059,8 @@
             setTimeout(() => document.getElementById('dlg_rule_name').focus(), 50);
         }
 
-        function deleteRule(id) {
-            if (confirm(i18n.t('mc_confirm_delete'))) {
+        async function deleteRule(id) {
+            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
                 dashboard.rules = dashboard.rules.filter(r => r.id !== id);
                 markChanged();
                 renderRules();
@@ -3075,8 +3075,8 @@
             menu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
             menu.style.top = e.clientY + 'px';
 
-            menu.querySelector('.context-menu-item').onclick = () => {
-                if (confirm(i18n.t('mc_confirm_delete'))) {
+            menu.querySelector('.context-menu-item').onclick = async () => {
+                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
                     dashboard.rules = dashboard.rules.filter(r => r.id !== id);
                     markChanged();
                     renderRules();
@@ -3262,8 +3262,8 @@
             setTimeout(() => document.getElementById('dlg_soul_name').focus(), 50);
         }
 
-        function deleteSoul(id) {
-            if (confirm(i18n.t('mc_confirm_delete'))) {
+        async function deleteSoul(id) {
+            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
                 dashboard.souls = dashboard.souls.filter(s => s.id !== id);
                 markChanged();
                 renderSouls();
@@ -3278,8 +3278,8 @@
             menu.style.left = Math.min(e.clientX, window.innerWidth - 180) + 'px';
             menu.style.top = e.clientY + 'px';
 
-            menu.querySelector('.context-menu-item').onclick = () => {
-                if (confirm(i18n.t('mc_confirm_delete'))) {
+            menu.querySelector('.context-menu-item').onclick = async () => {
+                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
                     dashboard.souls = dashboard.souls.filter(s => s.id !== id);
                     markChanged();
                     renderSouls();

@@ -135,12 +135,12 @@
             try {
                 const data = await apiCall('POST', '/api/invite/redeem', { code });
                 if (data?.success) {
-                    alert(tt('inv_redeem_success', `Code redeemed! You received ${data.inviteeRewardEcoin} e幣.`));
+                    showToast(tt('inv_redeem_success', `Code redeemed! You received ${data.inviteeRewardEcoin} e幣.`), 'success');
                     loadStats();
                 } else {
-                    alert(data?.error || 'Failed');
+                    showToast(data?.error || 'Failed', 'error');
                 }
-            } catch (err) { alert(err.message || 'Failed'); }
+            } catch (err) { showToast(err.message || 'Failed', 'error'); }
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
