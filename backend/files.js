@@ -177,7 +177,8 @@ module.exports = function filesModule(devices) {
                 Metadata: {
                     deviceId,
                     entityId: entityId != null ? String(entityId) : '',
-                    originalName: originalname,
+                    // URI-encode originalName to avoid S3 signature errors with non-ASCII chars
+                    originalName: encodeURIComponent(originalname),
                 },
             }));
 
