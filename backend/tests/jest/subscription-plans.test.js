@@ -73,7 +73,7 @@ describe('Subscription Plans constants', () => {
         expect(starter.messageLimit).toBeNull();
         expect(starter.maxConcurrentRentals).toBe(2);
         expect(starter.marketplaceDiscountBps).toBe(500);
-        expect(starter.googlePlayProductId).toBe('ec.sub.starter');
+        expect(starter.googlePlayProductId).toBe('eclaw_sub_starter');
     });
 
     test('pro plan grants 8000 e-coins with 10% discount', () => {

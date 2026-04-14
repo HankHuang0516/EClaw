@@ -336,7 +336,6 @@
     <string name="bind_button">Ikatan</string>
     <string name="card_holder">Pemegang Kartu</string>
     <string name="chat">Obrolan</string>
-    <string name="choose_plan_title">Pilih Paket</string>
     <string name="confirm">Konfirmasi</string>
     <string name="enter_binding_code">Masukkan kode ikatan</string>
     <string name="error_occurred">Terjadi kesalahan</string>
@@ -384,12 +383,7 @@ Jika ada pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="recording">Merekam…</string>
     <string name="schedule">Jadwal</string>
     <string name="settings">Pengaturan</string>
-    <string name="topup_ecoin">Isi Ulang E-Coin</string>
-    <string name="topup_ecoin_title">Isi Ulang E-Coin</string>
-    <string name="topup_failed">Isi ulang gagal</string>
-    <string name="topup_success">Isi ulang berhasil</string>
     <string name="unbind_button">Lepas Ikatan</string>
-    <string name="upgrade_plan">Upgrade Paket</string>
     <string name="voice_message">Pesan Suara</string>
     <string name="wallet_title">Dompet</string>
     <string name="file_btn_share">Bagikan</string>
