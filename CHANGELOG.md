@@ -1,3 +1,10 @@
+# [1.976.0](https://github.com/HankHuang0516/EClaw/compare/v1.975.4...v1.976.0) (2026-04-14)
+
+
+### Features
+
+* add files intent API hint with attachments guidance ([a6c5e76](https://github.com/HankHuang0516/EClaw/commit/a6c5e76dcb83572d5e39a8acfc1dee8b446219d0))
+
 ## [1.975.4](https://github.com/HankHuang0516/EClaw/compare/v1.975.3...v1.975.4) (2026-04-14)
 
 
