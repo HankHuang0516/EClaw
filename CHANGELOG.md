@@ -1,3 +1,10 @@
+## [1.977.1](https://github.com/HankHuang0516/EClaw/compare/v1.977.0...v1.977.1) (2026-04-14)
+
+
+### Bug Fixes
+
+* **ios:** add .npmrc with legacy-peer-deps to unblock EAS build ([b52a971](https://github.com/HankHuang0516/EClaw/commit/b52a97153ee224bf48938bec38520b204492969e))
+
 # [1.977.0](https://github.com/HankHuang0516/EClaw/compare/v1.976.1...v1.977.0) (2026-04-14)
 
 
