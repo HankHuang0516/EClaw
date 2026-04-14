@@ -1,3 +1,10 @@
+## [1.971.1](https://github.com/HankHuang0516/EClaw/compare/v1.971.0...v1.971.1) (2026-04-14)
+
+
+### Bug Fixes
+
+* move restore-entity-public-code out of /api/debug (blocked in prod) ([9401b3a](https://github.com/HankHuang0516/EClaw/commit/9401b3a92621f2d8221cf42c8a7760a8c146ac4d))
+
 # [1.971.0](https://github.com/HankHuang0516/EClaw/compare/v1.970.4...v1.971.0) (2026-04-14)
 
 
