@@ -1,3 +1,10 @@
+## [1.971.4](https://github.com/HankHuang0516/EClaw/compare/v1.971.3...v1.971.4) (2026-04-14)
+
+
+### Bug Fixes
+
+* **android:** remove platform config keys from all locale files ([d98098e](https://github.com/HankHuang0516/EClaw/commit/d98098e62a9fa884fd230ff8690f3db34e4037c2))
+
 ## [1.971.3](https://github.com/HankHuang0516/EClaw/compare/v1.971.2...v1.971.3) (2026-04-14)
 
 
