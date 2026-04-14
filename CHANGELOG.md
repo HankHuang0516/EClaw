@@ -1,3 +1,10 @@
+## [1.978.2](https://github.com/HankHuang0516/EClaw/compare/v1.978.1...v1.978.2) (2026-04-14)
+
+
+### Bug Fixes
+
+* **i18n:** remove zh-rCN string overrides of Facebook/Google credentials ([a683284](https://github.com/HankHuang0516/EClaw/commit/a683284e4a0e10f1ef0e65e0dc763c7b70f69467))
+
 ## [1.978.1](https://github.com/HankHuang0516/EClaw/compare/v1.978.0...v1.978.1) (2026-04-14)
 
 
