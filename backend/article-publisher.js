@@ -5,7 +5,30 @@ const express = require('express');
 const crypto = require('crypto');
 const OAuth = require('oauth-1.0a');
 const multer = require('multer');
+const twitterText = require('twitter-text');
 const router = express.Router();
+
+const X_TWEET_WEIGHTED_LIMIT = 280;
+
+function truncateTweet(text) {
+    const parsed = twitterText.parseTweet(text);
+    if (parsed.valid && parsed.weightedLength <= X_TWEET_WEIGHTED_LIMIT) {
+        return { text, truncated: false, originalWeighted: parsed.weightedLength };
+    }
+    const ellipsis = '…';
+    let lo = 0;
+    let hi = text.length;
+    while (lo < hi) {
+        const mid = Math.ceil((lo + hi) / 2);
+        const candidate = text.slice(0, mid) + ellipsis;
+        if (twitterText.parseTweet(candidate).weightedLength <= X_TWEET_WEIGHTED_LIMIT) {
+            lo = mid;
+        } else {
+            hi = mid - 1;
+        }
+    }
+    return { text: text.slice(0, lo) + ellipsis, truncated: true, originalWeighted: parsed.weightedLength };
+}
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } }); // 15 MB limit
 
 // ============================================
@@ -610,7 +633,12 @@ router.post('/x/tweet', express.json(), async (req, res) => {
     if (!text) return res.status(400).json({ error: 'text required' });
 
     try {
-        const body = { text };
+        const { text: finalText, truncated, originalWeighted } = truncateTweet(text);
+        if (truncated) {
+            console.warn(`[Publisher] X tweet truncated from weighted ${originalWeighted} to ${X_TWEET_WEIGHTED_LIMIT}`);
+        }
+
+        const body = { text: finalText };
         if (reply_to) body.reply = { in_reply_to_tweet_id: reply_to };
         if (media_ids && Array.isArray(media_ids) && media_ids.length > 0) {
             body.media = { media_ids };
@@ -623,7 +651,9 @@ router.post('/x/tweet', express.json(), async (req, res) => {
             platform: 'x',
             tweetId: data.data?.id,
             text: data.data?.text,
-            isReply: !!reply_to
+            isReply: !!reply_to,
+            truncated,
+            originalWeightedLength: originalWeighted
         });
     } catch (err) {
         console.error('[Publisher] X tweet error:', err);
@@ -2049,4 +2079,4 @@ router.get('/health', async (req, res) => {
     });
 });
 
-module.exports = { router, initPublisherTable };
+module.exports = { router, initPublisherTable, truncateTweet, X_TWEET_WEIGHTED_LIMIT };
