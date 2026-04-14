@@ -1232,7 +1232,7 @@ class CardHolderActivity : AppCompatActivity() {
         AlertDialog.Builder(this, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
             .setTitle(getString(R.string.dialog_block_title))
             .setMessage(getString(R.string.dialog_block_contact, contact.name ?: contact.publicCode))
-            .setPositiveButton("Block") { _, _ -> setBlocked(contact.publicCode, true) }
+            .setPositiveButton(getString(R.string.dialog_block_title)) { _, _ -> setBlocked(contact.publicCode, true) }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
     }
@@ -1241,7 +1241,7 @@ class CardHolderActivity : AppCompatActivity() {
         AlertDialog.Builder(this, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
             .setTitle(getString(R.string.dialog_unblock_title))
             .setMessage(getString(R.string.dialog_unblock_message, contact.name ?: contact.publicCode))
-            .setPositiveButton("Unblock") { _, _ -> setBlocked(contact.publicCode, false) }
+            .setPositiveButton(getString(R.string.dialog_unblock_title)) { _, _ -> setBlocked(contact.publicCode, false) }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
     }
