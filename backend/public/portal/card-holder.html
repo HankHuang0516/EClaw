@@ -1302,10 +1302,10 @@
                     return;
                 }
                 container.innerHTML = messages.map(m => {
-                    const isSent = m.direction === 'outgoing' || m.fromDevice === currentUser.deviceId;
-                    const time = m.timestamp ? new Date(m.timestamp).toLocaleString() : '';
+                    const isSent = m.is_from_user === true || m.device_id === currentUser.deviceId;
+                    const time = m.created_at ? new Date(m.created_at).toLocaleString() : '';
                     return `<div class="chat-msg ${isSent ? 'sent' : 'received'}">
-                        <div>${escapeHtml(m.content || m.message || '')}</div>
+                        <div>${escapeHtml(m.text || '')}</div>
                         <div class="chat-time">${time}</div>
                     </div>`;
                 }).join('');
