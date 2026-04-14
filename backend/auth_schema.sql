@@ -98,6 +98,7 @@ UPDATE user_accounts SET is_admin = TRUE WHERE email IN ('hankhuang0516@gmail.co
 -- ============================================
 ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS google_id VARCHAR(128);
 ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS facebook_id VARCHAR(128);
+ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS apple_id VARCHAR(128);
 ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS display_name VARCHAR(255);
 ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS auth_provider VARCHAR(32) DEFAULT 'email';
@@ -105,12 +106,13 @@ ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS auth_provider VARCHAR(32) DEF
 -- Make password_hash nullable (OAuth users have no password)
 ALTER TABLE user_accounts ALTER COLUMN password_hash DROP NOT NULL;
 
--- Make email nullable (Facebook users may not share email)
+-- Make email nullable (Facebook users may not share email; Apple users may use "Hide My Email")
 ALTER TABLE user_accounts ALTER COLUMN email DROP NOT NULL;
 
 -- Unique indexes on provider IDs (NULLs are allowed in UNIQUE)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_user_accounts_google_id ON user_accounts(google_id) WHERE google_id IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_user_accounts_facebook_id ON user_accounts(facebook_id) WHERE facebook_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_accounts_apple_id ON user_accounts(apple_id) WHERE apple_id IS NOT NULL;
 
 -- ============================================
 -- Migration: Generic OIDC SSO (Issue #175)

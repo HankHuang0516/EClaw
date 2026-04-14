@@ -1170,7 +1170,14 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
     // OAuth: Shared account merge logic
     // ============================================
     async function handleOAuthLogin(provider, providerId, email, displayName, avatarUrl, deviceId, deviceSecret, req, res) {
-        const providerCol = provider === 'google' ? 'google_id' : 'facebook_id';
+        const providerCol =
+            provider === 'google' ? 'google_id' :
+            provider === 'facebook' ? 'facebook_id' :
+            provider === 'apple' ? 'apple_id' :
+            null;
+        if (!providerCol) {
+            return res.status(400).json({ success: false, error: `Unsupported OAuth provider: ${provider}` });
+        }
 
         // Step 1: Lookup by provider ID
         const byProvider = await pool.query(
@@ -1201,7 +1208,8 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                     avatarUrl: avatarUrl || user.avatar_url,
                     isNewAccount: false,
                     subscriptionStatus: user.subscription_status,
-                    googleLinked: !!user.google_id, facebookLinked: !!user.facebook_id
+                    googleLinked: !!user.google_id, facebookLinked: !!user.facebook_id,
+                    appleLinked: !!user.apple_id
                 }
             });
         }
@@ -1237,7 +1245,8 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                         isNewAccount: false,
                         subscriptionStatus: user.subscription_status,
                         googleLinked: provider === 'google' ? true : !!user.google_id,
-                        facebookLinked: provider === 'facebook' ? true : !!user.facebook_id
+                        facebookLinked: provider === 'facebook' ? true : !!user.facebook_id,
+                        appleLinked: provider === 'apple' ? true : !!user.apple_id
                     }
                 });
             }
@@ -1274,7 +1283,8 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                             isNewAccount: false,
                             subscriptionStatus: user.subscription_status,
                             googleLinked: provider === 'google' ? true : !!user.google_id,
-                            facebookLinked: provider === 'facebook' ? true : !!user.facebook_id
+                            facebookLinked: provider === 'facebook' ? true : !!user.facebook_id,
+                            appleLinked: provider === 'apple' ? true : !!user.apple_id
                         }
                     });
                 }
@@ -1313,7 +1323,8 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                 isNewAccount: true,
                 subscriptionStatus: 'free',
                 googleLinked: provider === 'google',
-                facebookLinked: provider === 'facebook'
+                facebookLinked: provider === 'facebook',
+                appleLinked: provider === 'apple'
             }
         });
     }
@@ -1324,7 +1335,9 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
     router.get('/oauth/config', (req, res) => {
         res.json({
             googleClientId: GOOGLE_CLIENT_ID || null,
-            facebookAppId: FACEBOOK_APP_ID || null
+            facebookAppId: FACEBOOK_APP_ID || null,
+            appleBundleId: process.env.APPLE_BUNDLE_ID || 'com.eclawbot.app',
+            appleEnabled: true
         });
     });
 
@@ -1445,6 +1458,158 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
         } catch (err) {
             console.error('[Auth] Facebook data deletion parse error:', err.message);
             res.json({ url: `${BASE_URL}/portal/index.html`, confirmation_code: 'parse_error' });
+        }
+    });
+
+    // ============================================
+    // POST /oauth/apple — Verify Apple Sign-In identity token
+    // ============================================
+    // Required env: APPLE_BUNDLE_ID (iOS app Bundle ID, default: com.eclawbot.app)
+    // Apple JWKS: https://appleid.apple.com/auth/keys (cached 24h)
+
+    const APPLE_BUNDLE_ID = process.env.APPLE_BUNDLE_ID || 'com.eclawbot.app';
+    const APPLE_JWKS_URI = 'https://appleid.apple.com/auth/keys';
+    const APPLE_ISSUER = 'https://appleid.apple.com';
+    let appleJwksCache = { keys: null, fetchedAt: 0 };
+    const APPLE_JWKS_TTL_MS = 24 * 60 * 60 * 1000;
+
+    async function getAppleJwks() {
+        if (appleJwksCache.keys && Date.now() - appleJwksCache.fetchedAt < APPLE_JWKS_TTL_MS) {
+            return appleJwksCache.keys;
+        }
+        const resp = await fetch(APPLE_JWKS_URI);
+        if (!resp.ok) throw new Error(`Apple JWKS fetch failed: ${resp.status}`);
+        const data = await resp.json();
+        appleJwksCache = { keys: data.keys, fetchedAt: Date.now() };
+        return data.keys;
+    }
+
+    /**
+     * Convert Apple JWK (RSA public key) to PEM format for jsonwebtoken verify.
+     * Apple uses RS256 with modulus (n) and exponent (e).
+     */
+    function appleJwkToPem(jwk) {
+        const nBuf = Buffer.from(jwk.n, 'base64url');
+        const eBuf = Buffer.from(jwk.e, 'base64url');
+
+        // ASN.1 DER encoding for RSA public key
+        function encodeLength(len) {
+            if (len < 128) return Buffer.from([len]);
+            const bytes = [];
+            let v = len;
+            while (v > 0) { bytes.unshift(v & 0xff); v >>= 8; }
+            return Buffer.concat([Buffer.from([0x80 | bytes.length]), Buffer.from(bytes)]);
+        }
+        function encodeInteger(buf) {
+            // Prepend 0x00 if high bit set (to keep positive)
+            const needsPad = buf[0] & 0x80;
+            const content = needsPad ? Buffer.concat([Buffer.from([0x00]), buf]) : buf;
+            return Buffer.concat([Buffer.from([0x02]), encodeLength(content.length), content]);
+        }
+
+        const n = encodeInteger(nBuf);
+        const e = encodeInteger(eBuf);
+        const rsaSeq = Buffer.concat([n, e]);
+        const rsaSeqEncoded = Buffer.concat([Buffer.from([0x30]), encodeLength(rsaSeq.length), rsaSeq]);
+
+        // Wrap in SubjectPublicKeyInfo
+        const algOid = Buffer.from('300d06092a864886f70d0101010500', 'hex'); // rsaEncryption OID
+        const bitStringContent = Buffer.concat([Buffer.from([0x00]), rsaSeqEncoded]);
+        const bitString = Buffer.concat([Buffer.from([0x03]), encodeLength(bitStringContent.length), bitStringContent]);
+        const spki = Buffer.concat([algOid, bitString]);
+        const outer = Buffer.concat([Buffer.from([0x30]), encodeLength(spki.length), spki]);
+
+        const b64 = outer.toString('base64');
+        const lines = b64.match(/.{1,64}/g).join('\n');
+        return `-----BEGIN PUBLIC KEY-----\n${lines}\n-----END PUBLIC KEY-----\n`;
+    }
+
+    router.post('/oauth/apple', async (req, res) => {
+        try {
+            // authorizationCode is received but unused in P1 — reserved for future server-to-server
+            // token exchange (refresh token flow) per Apple docs
+            const { identityToken, fullName, email: emailHint, deviceId, deviceSecret } = req.body;
+            if (!identityToken) {
+                return res.status(400).json({ success: false, error: 'identityToken required' });
+            }
+
+            // Decode token header to find kid
+            const parts = identityToken.split('.');
+            if (parts.length !== 3) {
+                return res.status(400).json({ success: false, error: 'Invalid identityToken format' });
+            }
+            let header;
+            try {
+                header = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf-8'));
+            } catch {
+                return res.status(400).json({ success: false, error: 'Invalid identityToken header' });
+            }
+            if (header.alg !== 'RS256') {
+                return res.status(400).json({ success: false, error: `Unexpected Apple token alg: ${header.alg}` });
+            }
+
+            // Fetch Apple JWKS and find matching key
+            const keys = await getAppleJwks();
+            const jwk = keys.find(k => k.kid === header.kid);
+            if (!jwk) {
+                // Key may have rotated — force refetch once
+                appleJwksCache = { keys: null, fetchedAt: 0 };
+                const freshKeys = await getAppleJwks();
+                const freshJwk = freshKeys.find(k => k.kid === header.kid);
+                if (!freshJwk) {
+                    return res.status(401).json({ success: false, error: 'Apple key id not found' });
+                }
+                // Use fresh key
+                const pem = appleJwkToPem(freshJwk);
+                var verified = jwt.verify(identityToken, pem, {
+                    algorithms: ['RS256'],
+                    audience: APPLE_BUNDLE_ID,
+                    issuer: APPLE_ISSUER
+                });
+            } else {
+                const pem = appleJwkToPem(jwk);
+                var verified = jwt.verify(identityToken, pem, {
+                    algorithms: ['RS256'],
+                    audience: APPLE_BUNDLE_ID,
+                    issuer: APPLE_ISSUER
+                });
+            }
+
+            // verified.sub is the Apple user ID (stable per team+app)
+            // verified.email may be absent on second+ sign-in (only sent first time)
+            const appleId = verified.sub;
+            const verifiedEmail = verified.email || emailHint || null;
+            const isPrivateRelay = verifiedEmail && verifiedEmail.endsWith('@privaterelay.appleid.com');
+            const displayName = fullName
+                ? [fullName.givenName, fullName.familyName].filter(Boolean).join(' ') || null
+                : null;
+
+            await handleOAuthLogin(
+                'apple',
+                appleId,
+                verifiedEmail,
+                displayName,
+                null, // Apple doesn't provide avatar
+                deviceId,
+                deviceSecret,
+                req,
+                res
+            );
+
+            audit('info', 'auth', 'Apple Sign-In success', {
+                ipAddress: req?.ip,
+                action: 'oauth_login',
+                resource: 'session',
+                result: 'success',
+                metadata: { provider: 'apple', isPrivateRelay, hasEmail: !!verifiedEmail }
+            });
+        } catch (error) {
+            console.error('[Auth] Apple OAuth error:', error.message);
+            const status = error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError' ? 401 : 500;
+            res.status(status).json({
+                success: false,
+                error: 'Apple sign-in failed: ' + (error.message || 'Invalid token')
+            });
         }
     });
 

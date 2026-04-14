@@ -274,6 +274,20 @@ jest.mock('../../auth', () => {
         return res.status(400).json({ success: false, error: 'Provider not configured' });
     });
 
+    // POST /oauth/apple
+    router.post('/oauth/apple', (req, res) => {
+        const { identityToken } = req.body || {};
+        if (!identityToken) {
+            return res.status(400).json({ success: false, error: 'identityToken required' });
+        }
+        // Malformed token (missing dots) → 400
+        if (!identityToken.includes('.') || identityToken.split('.').length !== 3) {
+            return res.status(400).json({ success: false, error: 'Invalid identityToken format' });
+        }
+        // Any well-formed token reaches verification which fails in test env → 401
+        return res.status(401).json({ success: false, error: 'Apple sign-in failed: Invalid token' });
+    });
+
     // DELETE /account
     router.delete('/account', authMiddleware, (_req, res) => {
         return res.json({ success: true, message: 'Account deleted' });
@@ -614,6 +628,54 @@ describe('POST /api/auth/oauth/oidc', () => {
         const res = await post('/api/auth/oauth/oidc')
             .send({ provider: 'unknown', code: 'abc', redirectUri: 'http://localhost' });
         expect(res.status).toBe(400);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
+// POST /api/auth/oauth/apple
+// ════════════════════════════════════════════════════════════════
+describe('POST /api/auth/oauth/apple', () => {
+    it('returns 400 when identityToken is missing', async () => {
+        const res = await post('/api/auth/oauth/apple').send({});
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/identityToken/i);
+    });
+
+    it('returns 400 for malformed identityToken (no dots)', async () => {
+        const res = await post('/api/auth/oauth/apple').send({ identityToken: 'invalid' });
+        expect(res.status).toBe(400);
+    });
+
+    it('returns 400 for malformed identityToken (wrong segment count)', async () => {
+        const res = await post('/api/auth/oauth/apple').send({ identityToken: 'a.b' });
+        expect(res.status).toBe(400);
+    });
+
+    it('returns 401 for well-formed but invalid identityToken', async () => {
+        // Well-formed JWT structure but invalid signature/payload
+        const fakeToken = 'eyJhbGciOiJSUzI1NiIsImtpZCI6InRlc3Qifg.eyJzdWIiOiJ0ZXN0In0.fakesig';
+        const res = await post('/api/auth/oauth/apple').send({ identityToken: fakeToken });
+        expect(res.status).toBe(401);
+    });
+
+    it('accepts optional fullName + email hints without 400', async () => {
+        const fakeToken = 'aaa.bbb.ccc';
+        const res = await post('/api/auth/oauth/apple').send({
+            identityToken: fakeToken,
+            fullName: { givenName: 'Test', familyName: 'User' },
+            email: 'test@example.com'
+        });
+        expect(res.status).toBe(401); // Invalid token, but passed shape validation
+    });
+
+    it('accepts optional deviceId + deviceSecret for device merge', async () => {
+        const fakeToken = 'aaa.bbb.ccc';
+        const res = await post('/api/auth/oauth/apple').send({
+            identityToken: fakeToken,
+            deviceId: 'some-device-id',
+            deviceSecret: 'some-device-secret'
+        });
+        expect(res.status).toBe(401); // Invalid token
     });
 });
 
