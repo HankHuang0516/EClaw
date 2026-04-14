@@ -1,3 +1,10 @@
+## [1.973.1](https://github.com/HankHuang0516/EClaw/compare/v1.973.0...v1.973.1) (2026-04-14)
+
+
+### Bug Fixes
+
+* release v1.0.64 build blockers ([c6bd12f](https://github.com/HankHuang0516/EClaw/commit/c6bd12f570c64d282e70bfc4afc29da200f1f21c)), closes [#24380240784](https://github.com/HankHuang0516/EClaw/issues/24380240784)
+
 # [1.973.0](https://github.com/HankHuang0516/EClaw/compare/v1.972.0...v1.973.0) (2026-04-14)
 
 
