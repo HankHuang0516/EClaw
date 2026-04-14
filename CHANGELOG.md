@@ -1,3 +1,10 @@
+## [1.975.1](https://github.com/HankHuang0516/EClaw/compare/v1.975.0...v1.975.1) (2026-04-14)
+
+
+### Bug Fixes
+
+* **android+web:** E2E iteration 1 bug fixes ([#1749](https://github.com/HankHuang0516/EClaw/issues/1749)) ([d05b86b](https://github.com/HankHuang0516/EClaw/commit/d05b86b1937c10fc488b3f8e1f07f89fd25ebdac))
+
 # [1.975.0](https://github.com/HankHuang0516/EClaw/compare/v1.974.2...v1.975.0) (2026-04-14)
 
 
