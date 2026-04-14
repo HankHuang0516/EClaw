@@ -947,5 +947,6 @@ If you have any questions, please contact us via our official email.
     <string name="card_no_chat_history">No chat history</string>
     <string name="card_chat_history_failed">Failed to load chat history</string>
     <string name="feedback_photo_upload_failed">Photo upload failed: %s</string>
+    <string name="wallpaper_load_entities_failed">Failed to load entities: %s</string>
 </resources>
 

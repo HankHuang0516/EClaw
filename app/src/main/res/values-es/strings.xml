@@ -862,4 +862,7 @@ Tu suscripción permanece activa y puedes reenlazar en cualquier momento (sujeto
     <string name="card_no_chat_history">Sin historial</string>
     <string name="card_chat_history_failed">No se pudo cargar historial</string>
     <string name="feedback_photo_upload_failed">Error al subir foto: %s</string>
+    <string name="wallpaper_load_entities_failed">Error al cargar entidades: %s</string>
+    <string name="billing_google_play_loading">Cargando Google Play...</string>
+    <string name="dialog_unblock_message">¿Desbloquear %s?</string>
 </resources>

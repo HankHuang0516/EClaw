@@ -249,7 +249,7 @@ class WallpaperPreviewActivity : AppCompatActivity() {
                 Timber.e(e, "Failed to load entities")
                 Toast.makeText(
                     this@WallpaperPreviewActivity,
-                    "Failed to load entities: ${e.message}",
+                    getString(R.string.wallpaper_load_entities_failed, e.message ?: ""),
                     Toast.LENGTH_LONG
                 ).show()
             }

@@ -835,4 +835,7 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="card_no_chat_history">沒有聊天記錄</string>
     <string name="card_chat_history_failed">無法載入聊天記錄</string>
     <string name="feedback_photo_upload_failed">照片上傳失敗: %s</string>
+    <string name="wallpaper_load_entities_failed">載入實體失敗: %s</string>
+    <string name="billing_google_play_loading">正在載入 Google Play...</string>
+    <string name="dialog_unblock_message">確定要解除封鎖 %s 嗎？</string>
 </resources>
