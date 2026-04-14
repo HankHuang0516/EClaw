@@ -827,4 +827,11 @@ Jika ada pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="schedule_operation_failed">Operasi gagal</string>
     <string name="search_saved_results">Hasil Tersimpan</string>
     <string name="search_external_results">Hasil Eksternal</string>
+    <string name="card_loading">Memuat...</string>
+    <string name="card_chat_history">Riwayat Obrolan</string>
+    <string name="card_details">Detail</string>
+    <string name="card_no_results">Tidak ada hasil</string>
+    <string name="card_no_chat_history">Tidak ada riwayat</string>
+    <string name="card_chat_history_failed">Gagal memuat riwayat</string>
+    <string name="feedback_photo_upload_failed">Unggah foto gagal: %s</string>
 </resources>

@@ -811,4 +811,11 @@ Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua
     <string name="you">Bạn</string>
     <string name="search_saved_results">Kết quả đã lưu</string>
     <string name="search_external_results">Kết quả bên ngoài</string>
+    <string name="card_loading">Đang tải...</string>
+    <string name="card_chat_history">Lịch sử trò chuyện</string>
+    <string name="card_details">Chi tiết</string>
+    <string name="card_no_results">Không tìm thấy kết quả</string>
+    <string name="card_no_chat_history">Không có lịch sử</string>
+    <string name="card_chat_history_failed">Không tải được lịch sử</string>
+    <string name="feedback_photo_upload_failed">Tải ảnh thất bại: %s</string>
 </resources>

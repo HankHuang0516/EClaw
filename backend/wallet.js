@@ -835,6 +835,128 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
         });
     }));
 
+    // ============================================
+    // POST /api/wallet/topup/verify-apple
+    // Body: { productId, transactionId, receipt }
+    //   - productId: Apple IAP product identifier (must match TOPUP_TIERS)
+    //   - transactionId: Apple transaction ID (for idempotency)
+    //   - receipt: base64-encoded receipt-data from StoreKit
+    //
+    // Verifies receipt via Apple's /verifyReceipt endpoint (prod → sandbox fallback)
+    // and credits wallet. Uses UNIQUE(channel='apple_iap', external_txn_id) for dedupe.
+    // ============================================
+    const APPLE_VERIFY_PROD = 'https://buy.itunes.apple.com/verifyReceipt';
+    const APPLE_VERIFY_SANDBOX = 'https://sandbox.itunes.apple.com/verifyReceipt';
+
+    async function verifyAppleReceipt(receipt, sharedSecret, useSandbox = false) {
+        const url = useSandbox ? APPLE_VERIFY_SANDBOX : APPLE_VERIFY_PROD;
+        const body = {
+            'receipt-data': receipt,
+            ...(sharedSecret ? { password: sharedSecret } : {}),
+            'exclude-old-transactions': true,
+        };
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        if (!resp.ok) {
+            throw new Error(`apple_verify_http_${resp.status}`);
+        }
+        const data = await resp.json();
+        // status 21007 → receipt is from sandbox, retry sandbox endpoint
+        if (data.status === 21007 && !useSandbox) {
+            return verifyAppleReceipt(receipt, sharedSecret, true);
+        }
+        if (data.status !== 0) {
+            const err = new Error(`apple_verify_status_${data.status}`);
+            err.appleStatus = data.status;
+            throw err;
+        }
+        return data;
+    }
+
+    router.post('/topup/verify-apple', authMiddleware, walletRoute(async (req, res) => {
+        const { productId, transactionId, receipt } = req.body || {};
+        if (!productId || typeof productId !== 'string') {
+            throw new Error('product_id_required');
+        }
+        if (!transactionId || typeof transactionId !== 'string' || transactionId.length < 4) {
+            throw new Error('transaction_id_invalid');
+        }
+        if (!receipt || typeof receipt !== 'string' || receipt.length < 20) {
+            throw new Error('receipt_invalid');
+        }
+        const tier = getTopupTier(productId);
+        if (!tier) throw new Error('unknown_product');
+
+        const sharedSecret = process.env.APPLE_IAP_SHARED_SECRET || null;
+        const envForceSandbox = process.env.APPLE_IAP_ENV === 'sandbox';
+
+        // Verify with Apple (prod by default; falls back to sandbox on status 21007)
+        const verified = await verifyAppleReceipt(receipt, sharedSecret, envForceSandbox);
+
+        // Find the matching in-app purchase record
+        const inApp = Array.isArray(verified.receipt?.in_app) ? verified.receipt.in_app : [];
+        const latestInApp = Array.isArray(verified.latest_receipt_info) ? verified.latest_receipt_info : [];
+        const allTxns = [...inApp, ...latestInApp];
+        const matched = allTxns.find(
+            (t) => (t.transaction_id === transactionId || t.original_transaction_id === transactionId)
+                && t.product_id === productId
+        );
+        if (!matched) {
+            throw new Error('transaction_not_found_in_receipt');
+        }
+
+        // Verify bundle ID matches (belt-and-suspenders check)
+        const expectedBundleId = process.env.APPLE_BUNDLE_ID || 'com.eclawbot.app';
+        if (verified.receipt?.bundle_id && verified.receipt.bundle_id !== expectedBundleId) {
+            throw new Error('bundle_id_mismatch');
+        }
+
+        const order = await createTopupOrder({
+            userId: req.user.userId,
+            channel: 'apple_iap',
+            priceUsd: tier.priceUsd,
+            baseMli: tier.baseMli,
+            bonusMli: tier.bonusMli,
+            externalTxnId: transactionId,
+            externalRaw: {
+                productId,
+                source: 'verify-apple',
+                originalTransactionId: matched.original_transaction_id,
+                purchaseDate: matched.purchase_date,
+                environment: verified.environment || (envForceSandbox ? 'Sandbox' : 'Production'),
+            },
+        });
+
+        const ledger = await markTopupPaid({
+            orderId: order.id,
+            userId: req.user.userId,
+            amountMli: parseInt(order.ecoin_total_mli, 10),
+            channel: 'apple_iap',
+        });
+
+        audit('info', 'wallet', `apple topup verified user=${req.user.userId} product=${productId} order=${order.id}`, {
+            userId: req.user.userId,
+            action: 'topup_verify',
+            resource: order.id,
+            result: 'success',
+            metadata: { channel: 'apple_iap', environment: verified.environment },
+        });
+
+        res.json({
+            success: true,
+            order: {
+                id: order.id,
+                status: 'paid',
+                ecoinTotal: Math.round(parseInt(order.ecoin_total_mli, 10) / ECOIN_TO_MLI),
+                deduped: !!order.deduped || !!ledger.deduped,
+                environment: verified.environment || 'Production',
+            },
+        });
+    }));
+
     // POST /api/wallet/admin/grant — admin manual e-coin grant (audited)
     // Body: { userId, ecoin, reason }
     //

@@ -828,4 +828,11 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="schedule_operation_failed">操作失敗</string>
     <string name="search_saved_results">已儲存結果</string>
     <string name="search_external_results">外部結果</string>
+    <string name="card_loading">載入中...</string>
+    <string name="card_chat_history">聊天記錄</string>
+    <string name="card_details">詳細資訊</string>
+    <string name="card_no_results">未找到結果</string>
+    <string name="card_no_chat_history">沒有聊天記錄</string>
+    <string name="card_chat_history_failed">無法載入聊天記錄</string>
+    <string name="feedback_photo_upload_failed">照片上傳失敗: %s</string>
 </resources>

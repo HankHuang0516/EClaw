@@ -16,12 +16,16 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.eclawbot.app",
       "usesAppleSignIn": true,
-      "associatedDomains": ["applinks:eclawbot.com"],
+      "associatedDomains": [
+        "applinks:eclawbot.com",
+        "applinks:eclawbot.com"
+      ],
       "infoPlist": {
         "NSCameraUsageDescription": "E-Claw needs camera access to send photos to your entities.",
         "NSPhotoLibraryUsageDescription": "E-Claw needs photo library access to send images to your entities.",
         "NSMicrophoneUsageDescription": "E-Claw needs microphone access to record voice messages.",
-        "NSPhotoLibraryAddUsageDescription": "E-Claw saves media files to your photo library."
+        "NSPhotoLibraryAddUsageDescription": "E-Claw saves media files to your photo library.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -30,7 +34,11 @@
         "monochromeImage": "./assets/android-icon-monochrome.png",
         "backgroundColor": "#1a1a2e"
       },
-      "package": "com.eclawbot.app"
+      "package": "com.eclawbot.app",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -68,6 +76,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9e492c28-9aa9-4bab-997d-780d7eb500ed"
+      }
     }
   }
 }

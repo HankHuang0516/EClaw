@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 16.0.0"
+    "version": ">= 16.0.0",
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
@@ -13,23 +14,24 @@
     "preview": {
       "distribution": "internal",
       "ios": {
-        "buildConfiguration": "Release"
-      },
-      "channel": "preview"
+        "buildConfiguration": "Release",
+        "resourceClass": "m-medium"
+      }
     },
     "production": {
       "ios": {
-        "buildConfiguration": "Release"
-      },
-      "channel": "production"
+        "buildConfiguration": "Release",
+        "resourceClass": "m-medium",
+        "autoIncrement": "buildNumber"
+      }
     }
   },
   "submit": {
     "production": {
       "ios": {
-        "appleId": "YOUR_APPLE_ID@example.com",
-        "ascAppId": "YOUR_APP_STORE_CONNECT_APP_ID",
-        "appleTeamId": "YOUR_APPLE_TEAM_ID"
+        "appleId": "bbb880008@yahoo.com.tw",
+        "ascAppId": "6762198865",
+        "appleTeamId": "KLBQRT47CT"
       }
     }
   }

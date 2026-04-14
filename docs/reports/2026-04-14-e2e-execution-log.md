@@ -185,3 +185,24 @@ bugs_found: [BUG-AUTH1(P2): device-login userId=null breaks publish/interview AP
 ### 結論
 **所有 LAUNCH_BLOCKER 場景全部 PASS。可以上線。**
 
+---
+
+## 上線後修復記錄（2026-04-14）
+
+### orgChartForward 重複訊息
+- **用戶回報**：傳訊息給 #0 時，#2 (上級) 會收到重複的 [TASK FWD] 訊息
+- **Root cause**：`orgChartForward` 在 client/speak（user 發訊息時）和 transform（bot 回覆時）都被呼叫，導致每條訊息在 superior 的 chat 出現兩次
+- **觸發條件**：entity 有 assigned 的 kanban card 且 status=todo/in_progress + taskForward=true
+- **調查過程**：初查時 API 回傳 `assigned_bots=[]`（因為 API 用 camelCase `assignedBots`，查詢用 snake_case）→ 誤以為無 tasks → 加 debug log → 重新用正確 key 查到 entity #0/#3 確實有 incomplete tasks
+- **修復**：移除 client/speak 的 orgChartForward，只保留 transform（bot response）的轉發
+
+### R2 上傳中文檔名失敗
+- **用戶回報**：Bot 上傳 `存證信函_催繳租金_鄭翔之.pdf` 失敗，簽名不匹配
+- **Root cause**：`PutObjectCommand` 的 `Metadata.originalName` 包含中文字，S3 SDK 簽名時無法處理非 ASCII 的 HTTP header 值
+- **修復**：`encodeURIComponent(originalname)` 確保 Metadata 值只有 ASCII
+- **驗證**：中文檔名上傳成功 ✅
+
+### Files Intent API Hint 注入
+- **問題**：bot 收到檔案相關訊息時不知道要用 `attachments` 欄位回覆
+- **修復**：在 `buildIntentApiHint` 新增 `files` case，自動注入 Upload/List/Download/Delete API hint + attachments 回覆格式提示
+- **關鍵詞**：上傳、檔案、file、附件、attachment、download

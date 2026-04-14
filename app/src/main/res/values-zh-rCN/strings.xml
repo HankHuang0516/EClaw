@@ -829,4 +829,11 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="schedule_operation_failed">操作失败</string>
     <string name="search_saved_results">已保存结果</string>
     <string name="search_external_results">外部结果</string>
+    <string name="card_loading">加载中...</string>
+    <string name="card_chat_history">聊天记录</string>
+    <string name="card_details">详细信息</string>
+    <string name="card_no_results">未找到结果</string>
+    <string name="card_no_chat_history">没有聊天记录</string>
+    <string name="card_chat_history_failed">无法加载聊天记录</string>
+    <string name="feedback_photo_upload_failed">照片上传失败: %s</string>
 </resources>

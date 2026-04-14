@@ -274,7 +274,7 @@ class FeedbackActivity : AppCompatActivity() {
                         tvPhotoStatus.text = getString(R.string.feedback_photo_uploaded, photosUploaded)
                     } catch (photoErr: Exception) {
                         Timber.e(photoErr, "Photo upload failed")
-                        tvPhotoStatus.text = "Photo upload failed: ${photoErr.message}"
+                        tvPhotoStatus.text = getString(R.string.feedback_photo_upload_failed, photoErr.message ?: "")
                         tvPhotoStatus.setTextColor(0xFFF44336.toInt())
                     }
                 }

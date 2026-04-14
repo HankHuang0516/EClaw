@@ -855,4 +855,11 @@ Tu suscripción permanece activa y puedes reenlazar en cualquier momento (sujeto
     <string name="schedule_operation_failed">Operación fallida</string>
     <string name="search_saved_results">Resultados guardados</string>
     <string name="search_external_results">Resultados externos</string>
+    <string name="card_loading">Cargando...</string>
+    <string name="card_chat_history">Historial de chat</string>
+    <string name="card_details">Detalles</string>
+    <string name="card_no_results">Sin resultados</string>
+    <string name="card_no_chat_history">Sin historial</string>
+    <string name="card_chat_history_failed">No se pudo cargar historial</string>
+    <string name="feedback_photo_upload_failed">Error al subir foto: %s</string>
 </resources>

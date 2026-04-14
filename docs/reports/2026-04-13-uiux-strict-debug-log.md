@@ -243,19 +243,35 @@
 | E (Wallet 金流) | 7 | 2 | **29%** (E2-E5 已由 A 場景覆蓋) |
 | F-U (進階協作) | — | 3 | Chat + Kanban + Rating 驗證通過 |
 
-### 累計修復 bug（迭代 1-4+）
+### 累計修復 bug（迭代 1-4+ 及上線前修復）
 | 嚴重度 | 數量 | Bug IDs |
 |--------|------|---------|
 | P0 | 1 | BUG-M6 (餘額=0) |
-| P1 | 5 | BUG-M2, M3, D3, R1 (×3 fixes) |
-| P2 | 8 | BUG-M1, M8, D1, D2, D4, I4, I5, D5 |
-| P3 | 3 | BUG-M5 (chips), K1 (dup kanban), D7 (error msg) |
-| **總計** | **17** | — |
+| P1 | 6 | BUG-M2, M3, D3, R1 (×3 fixes), publishListing status guard (V5) |
+| P2 | 11 | BUG-M1, M8, D1, D2, D4, I4, I5, D5, interview status reset (V3), interview active contract guard (V6), R2 中文檔名簽名失敗 |
+| P3 | 5 | BUG-M5 (chips), K1 (dup kanban), D7 (error msg), review 48h window (C5), dispute duplicate check (W4) |
+| **總計** | **23** | — |
+
+### 上線前邊緣案例修復（2026-04-14）
+| # | 問題 | 嚴重度 | 場景 |
+|---|------|--------|------|
+| 1 | `publishListing()` 缺 status guard — delisted 可復活 | P1 | V5 |
+| 2 | 面試完成後 status 一律回 draft — 不恢復面試前狀態 | P2 | V3 |
+| 3 | 面試前無 active contract 檢查 | P2 | V6 |
+| 4 | review 48h 窗口未實作 | P3 | C5 |
+| 5 | openDispute 無重複 type 檢查 | P3 | W4 |
+
+### 上線後修復（2026-04-14）
+| # | 問題 | 嚴重度 |
+|---|------|--------|
+| 6 | orgChartForward 在 client/speak + transform 雙重觸發 → superior chat 訊息重複 | P2 |
+| 7 | R2 上傳中文檔名 → S3 Metadata 簽名失敗 | P2 |
+| 8 | Files intent API hint 未注入 → bot 不知道用 attachments 回覆 | P3 |
 
 ### 仍存在的 P3 issues（可接受）
 - BUG-M4: 缺「你的 Bot」角標（需後端 is_own flag）
 - BUG-M5: Capability chips 只顯示 3 個
 - BUG-K1: 多 entity 廣播建立重複 Kanban card
 - BUG-D7: Delist 後錯誤訊息不精確
-- F~U: 進階多 Agent 協作（Chat 通訊、Kanban、A2A、Vault、Files、Notes）
+- BUG-AUTH1: device-login userId=null 導致 publish/interview API internal_error（非 UI 路徑）
 

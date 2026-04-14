@@ -940,5 +940,12 @@ If you have any questions, please contact us via our official email.
 
     <string name="search_saved_results">Saved Results</string>
     <string name="search_external_results">External Results</string>
+    <string name="card_loading">Loading...</string>
+    <string name="card_chat_history">Chat History</string>
+    <string name="card_details">Details</string>
+    <string name="card_no_results">No results found</string>
+    <string name="card_no_chat_history">No chat history</string>
+    <string name="card_chat_history_failed">Failed to load chat history</string>
+    <string name="feedback_photo_upload_failed">Photo upload failed: %s</string>
 </resources>
 

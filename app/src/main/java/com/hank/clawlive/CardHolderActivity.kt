@@ -539,7 +539,7 @@ class CardHolderActivity : AppCompatActivity() {
         }
         if (searchSaved.isEmpty() && searchExternal.isEmpty()) {
             contentLayout.addView(TextView(this).apply {
-                text = "No results found"
+                text = getString(R.string.card_no_results)
                 setTextColor(Color.parseColor("#777777"))
                 textSize = 14f
                 gravity = Gravity.CENTER
@@ -1405,7 +1405,7 @@ class CardHolderActivity : AppCompatActivity() {
         }
 
         val detailsTab = TextView(this).apply {
-            text = "Details"
+            text = getString(R.string.card_details)
             setTextColor(Color.WHITE)
             textSize = 13f
             typeface = Typeface.DEFAULT_BOLD
@@ -1416,7 +1416,7 @@ class CardHolderActivity : AppCompatActivity() {
             }
         }
         val chatTab = TextView(this).apply {
-            text = "Chat History"
+            text = getString(R.string.card_chat_history)
             setTextColor(Color.parseColor("#AAAAAA"))
             textSize = 13f
             setPadding(dp(12), dp(6), dp(12), dp(6))
@@ -1509,7 +1509,7 @@ class CardHolderActivity : AppCompatActivity() {
 
         // Chat history panel (loaded on tab click)
         chatPanel.addView(TextView(this).apply {
-            text = "Loading..."
+            text = getString(R.string.card_loading)
             setTextColor(Color.parseColor("#777777"))
             textSize = 13f
         })
@@ -1541,7 +1541,7 @@ class CardHolderActivity : AppCompatActivity() {
                     }
                 } else {
                     panel.addView(TextView(this@CardHolderActivity).apply {
-                        text = "No chat history"
+                        text = getString(R.string.card_no_chat_history)
                         setTextColor(Color.parseColor("#777777"))
                         textSize = 13f
                         setPadding(0, dp(8), 0, dp(8))
@@ -1550,7 +1550,7 @@ class CardHolderActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 panel.removeAllViews()
                 panel.addView(TextView(this@CardHolderActivity).apply {
-                    text = "Failed to load chat history"
+                    text = getString(R.string.card_chat_history_failed)
                     setTextColor(Color.parseColor("#F44336"))
                     textSize = 13f
                 })

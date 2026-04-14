@@ -811,4 +811,11 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="you">あなた</string>
     <string name="search_saved_results">保存済み結果</string>
     <string name="search_external_results">外部結果</string>
+    <string name="card_loading">読み込み中...</string>
+    <string name="card_chat_history">チャット履歴</string>
+    <string name="card_details">詳細</string>
+    <string name="card_no_results">結果が見つかりません</string>
+    <string name="card_no_chat_history">チャット履歴なし</string>
+    <string name="card_chat_history_failed">チャット履歴の読み込みに失敗しました</string>
+    <string name="feedback_photo_upload_failed">写真のアップロード失敗: %s</string>
 </resources>
