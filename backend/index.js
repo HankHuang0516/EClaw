@@ -9995,6 +9995,58 @@ app.post('/api/debug/reset', (req, res) => {
  * Body: { deviceId, deviceSecret, entityId, xp }
  */
 /**
+ * POST /api/debug/restore-entity-public-code
+ * One-shot recovery for entities whose publicCode was lost due to the Phase 1
+ * reconcile bug (pre-PR #1748) — where stale rental_contract_id on an owner
+ * entity caused in-memory delete, which left public_code NULL in DB after
+ * saveDeviceData's clear-then-reinsert cycle.
+ *
+ * Body: { deviceId, deviceSecret, entityId, publicCode }
+ */
+app.post('/api/debug/restore-entity-public-code', async (req, res) => {
+    const { deviceId, deviceSecret, entityId, publicCode } = req.body || {};
+    if (!deviceId || !deviceSecret || entityId === undefined || !publicCode) {
+        return res.status(400).json({ success: false, error: 'deviceId, deviceSecret, entityId, publicCode required' });
+    }
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    const eId = parseInt(entityId, 10);
+    const entity = device.entities[eId];
+    if (!entity || !entity.isBound) {
+        return res.status(404).json({ success: false, error: 'entity_not_found_or_unbound' });
+    }
+    // Validate publicCode format
+    if (!/^[a-z0-9]{6}$/.test(publicCode)) {
+        return res.status(400).json({ success: false, error: 'publicCode must be 6 lowercase alphanumerics' });
+    }
+    // Check collision
+    const existing = publicCodeIndex[publicCode];
+    if (existing && (existing.deviceId !== deviceId || existing.entityId !== eId)) {
+        return res.status(409).json({
+            success: false,
+            error: 'publicCode_in_use',
+            conflictDeviceId: existing.deviceId,
+            conflictEntityId: existing.entityId,
+        });
+    }
+    const oldCode = entity.publicCode;
+    if (oldCode) delete publicCodeIndex[oldCode];
+    entity.publicCode = publicCode;
+    publicCodeIndex[publicCode] = { deviceId, entityId: eId };
+    try {
+        await db.saveDeviceData(deviceId, device);
+        serverLog('info', 'entity_add', `PublicCode restored for entity ${eId}: ${oldCode} → ${publicCode}`, {
+            deviceId, entityId: eId, action: 'restore_public_code', result: 'success',
+        });
+        res.json({ success: true, deviceId, entityId: eId, oldPublicCode: oldCode, newPublicCode: publicCode });
+    } catch (err) {
+        res.status(500).json({ success: false, error: `persist_failed: ${err.message}` });
+    }
+});
+
+/**
  * GET /api/debug/org-forward-no-route
  * Debug endpoint for org chart taskForward not routing.
  * Returns org chart config, hierarchy, incomplete tasks for each entity, and superior mapping.
