@@ -1,3 +1,10 @@
+## [1.974.1](https://github.com/HankHuang0516/EClaw/compare/v1.974.0...v1.974.1) (2026-04-14)
+
+
+### Bug Fixes
+
+* v1.0.64 build — missing R import and string resources ([a893676](https://github.com/HankHuang0516/EClaw/commit/a893676ad8af4ec51488acf07b65ea0b925af585))
+
 # [1.974.0](https://github.com/HankHuang0516/EClaw/compare/v1.973.1...v1.974.0) (2026-04-14)
 
 
