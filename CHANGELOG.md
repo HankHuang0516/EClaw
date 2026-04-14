@@ -1,3 +1,10 @@
+## [1.970.4](https://github.com/HankHuang0516/EClaw/compare/v1.970.3...v1.970.4) (2026-04-14)
+
+
+### Bug Fixes
+
+* **rental:** prefix deposit disposition copy with 押金/Deposit keyword ([6683563](https://github.com/HankHuang0516/EClaw/commit/6683563288f51849149cd5110edeadd00536242e))
+
 ## [1.970.3](https://github.com/HankHuang0516/EClaw/compare/v1.970.2...v1.970.3) (2026-04-14)
 
 
