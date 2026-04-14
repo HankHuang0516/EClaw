@@ -4,7 +4,9 @@
 const express = require('express');
 const crypto = require('crypto');
 const OAuth = require('oauth-1.0a');
+const multer = require('multer');
 const router = express.Router();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } }); // 15 MB limit
 
 // ============================================
 // PUBLISHER AUTH — optional API key gate
@@ -566,14 +568,53 @@ async function xApiRequest(method, path, body = null) {
     return data;
 }
 
+// POST /api/publisher/x/media/upload — Upload media for X (Twitter) via v1.1 API
+router.post('/x/media/upload', upload.single('media'), async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'media file required (multipart field: media)' });
+
+    try {
+        const oauth = getXOAuth();
+        const token = getXToken();
+        const uploadUrl = 'https://upload.twitter.com/1.1/media/upload.json';
+
+        // Build multipart form-data with base64-encoded media
+        const FormData = (await import('undici')).FormData;
+        const formData = new FormData();
+        formData.append('media_data', req.file.buffer.toString('base64'));
+
+        // OAuth 1.0a header — sign without body params for multipart
+        const authHeader = oauth.toHeader(oauth.authorize({ url: uploadUrl, method: 'POST' }, token));
+
+        const uploadRes = await fetch(uploadUrl, {
+            method: 'POST',
+            headers: { ...authHeader },
+            body: formData
+        });
+        const data = await uploadRes.json();
+        if (!uploadRes.ok) {
+            const errMsg = data?.errors?.[0]?.message || `HTTP ${uploadRes.status}`;
+            return res.status(uploadRes.status).json({ error: errMsg, xResponse: data });
+        }
+
+        console.log(`[Publisher] X media uploaded: ${data.media_id_string}`);
+        res.json({ success: true, platform: 'x', media_id: data.media_id_string });
+    } catch (err) {
+        console.error('[Publisher] X media upload error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // POST /api/publisher/x/tweet — Create a tweet (or reply if reply_to is set)
 router.post('/x/tweet', express.json(), async (req, res) => {
-    const { text, reply_to } = req.body;
+    const { text, reply_to, media_ids } = req.body;
     if (!text) return res.status(400).json({ error: 'text required' });
 
     try {
         const body = { text };
         if (reply_to) body.reply = { in_reply_to_tweet_id: reply_to };
+        if (media_ids && Array.isArray(media_ids) && media_ids.length > 0) {
+            body.media = { media_ids };
+        }
 
         const data = await xApiRequest('POST', '/tweets', body);
         console.log(`[Publisher] X tweet created: ${data.data?.id} ${reply_to ? '(reply to ' + reply_to + ')' : ''}`);
@@ -1747,10 +1788,42 @@ router.get('/mastodon/me', async (req, res) => {
     }
 });
 
+// POST /api/publisher/mastodon/media/upload — Upload media for Mastodon
+router.post('/mastodon/media/upload', upload.single('file'), async (req, res) => {
+    if (!requireMastodon(res)) return;
+    if (!req.file) return res.status(400).json({ error: 'file required (multipart field: file)' });
+
+    try {
+        const FormData = (await import('undici')).FormData;
+        const formData = new FormData();
+        const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
+        formData.append('file', blob, req.file.originalname);
+        if (req.body.description) formData.append('description', req.body.description);
+
+        const uploadRes = await fetch(`${MASTODON_INSTANCE_URL}/api/v2/media`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${MASTODON_ACCESS_TOKEN}` },
+            body: formData
+        });
+        const data = await uploadRes.json();
+        if (!uploadRes.ok) {
+            const err = new Error(data.error || `HTTP ${uploadRes.status}`);
+            err.status = uploadRes.status;
+            throw err;
+        }
+
+        console.log(`[Publisher] Mastodon media uploaded: ${data.id} on ${MASTODON_INSTANCE_URL}`);
+        res.json({ success: true, platform: 'mastodon', media_id: data.id, type: data.type, url: data.url });
+    } catch (err) {
+        console.error('[Publisher] Mastodon media upload error:', err);
+        res.status(err.status || 500).json({ error: err.message });
+    }
+});
+
 // POST /api/publisher/mastodon/publish — Post a status (toot)
 router.post('/mastodon/publish', express.json(), async (req, res) => {
     if (!requireMastodon(res)) return;
-    const { status, visibility, language, scheduled_at, in_reply_to_id } = req.body;
+    const { status, visibility, language, scheduled_at, in_reply_to_id, media_ids } = req.body;
     if (!status) return res.status(400).json({ error: 'status required' });
 
     try {
@@ -1758,6 +1831,9 @@ router.post('/mastodon/publish', express.json(), async (req, res) => {
         if (language) postBody.language = language;
         if (scheduled_at) postBody.scheduled_at = scheduled_at;
         if (in_reply_to_id) postBody.in_reply_to_id = in_reply_to_id;
+        if (media_ids && Array.isArray(media_ids) && media_ids.length > 0) {
+            postBody.media_ids = media_ids;
+        }
 
         const data = await mastodonRequest('POST', '/api/v1/statuses', postBody);
         console.log(`[Publisher] Mastodon status posted: ${data.id} on ${MASTODON_INSTANCE_URL}`);
