@@ -1,3 +1,10 @@
+## [1.971.2](https://github.com/HankHuang0516/EClaw/compare/v1.971.1...v1.971.2) (2026-04-14)
+
+
+### Bug Fixes
+
+* 5 edge case code issues (V5/V3/V6/C5/W4) ([00038f7](https://github.com/HankHuang0516/EClaw/commit/00038f78367f4e8db6cd903076580621db7a9b84))
+
 ## [1.971.1](https://github.com/HankHuang0516/EClaw/compare/v1.971.0...v1.971.1) (2026-04-14)
 
 
