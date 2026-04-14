@@ -1,3 +1,10 @@
+# [1.975.0](https://github.com/HankHuang0516/EClaw/compare/v1.974.2...v1.975.0) (2026-04-14)
+
+
+### Features
+
+* **ios:** full account system — Apple + Email + Device auth (Phase 2-6) ([71e8858](https://github.com/HankHuang0516/EClaw/commit/71e88580f0290f80041815972dfa1cfaa8abeda8))
+
 ## [1.974.2](https://github.com/HankHuang0516/EClaw/compare/v1.974.1...v1.974.2) (2026-04-14)
 
 
