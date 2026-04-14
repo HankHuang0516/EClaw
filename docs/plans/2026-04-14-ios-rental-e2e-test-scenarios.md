@@ -68,16 +68,76 @@ iOS 的 BRM 測試涵蓋：
 | C9 | App | `finishTransaction` 後更新 UI | wallet.tsx | 顯示新餘額 |
 | C10 | Renter | 重新租借同一 bot | Community WebView | 成功 |
 
-### 劇本 D：Sign in with Apple
+### 劇本 D：認證系統（完整帳號系統，方案 C）
 
-| Step | 角色 | 操作 | 頁面 | 驗證 |
-|------|------|------|------|------|
-| D1 | 新用戶 | App 開啟，點 Sign in with Apple | 登入頁 | Apple 驗證彈窗 |
-| D2 | 新用戶 | 允許 Apple 登入，選「分享 email」 | Apple 系統 | 回 identityToken |
-| D3 | App | 呼叫 `POST /api/auth/oauth/apple` | Backend | 建立 user + device |
-| D4 | App | 收到 authToken，導向 (tabs)/index | Dashboard | 顯示空 entity 列表（新用戶） |
-| D5 | 新用戶 | 綁定 Bot, 看到 UI 正常 | 各頁 | 與 email 登入一致 |
-| D6 | 同用戶 | 登出，重開 App | 登入頁 | 可再次 Apple 登入，不需重填 |
+#### D1: Email 註冊
+| Step | 操作 | 驗證 |
+|------|------|------|
+| D1-1 | 開 App → 登入頁 → 點「Register」 | 導向 `/(auth)/register` |
+| D1-2 | 填 email + password + 確認密碼 | 密碼驗證：≥6 字、兩次一致 |
+| D1-3 | 點「Register」 | `POST /api/auth/register`，成功彈窗 |
+| D1-4 | 查收驗證信 → 點連結 | `/api/auth/verify-email` |
+| D1-5 | 回 App 登入 | Dashboard |
+
+#### D2: Email 登入
+| Step | 操作 | 驗證 |
+|------|------|------|
+| D2-1 | 登入頁填 email + password → 點 Login | `POST /api/auth/login` |
+| D2-2 | 成功 → 存 authToken + user → 導向 (tabs) | Dashboard |
+| D2-3 | Token 存於 SecureStore | `auth_token` key 有值 |
+| D2-4 | 關 App 再開 | 不需再登入，直接 (tabs) |
+
+#### D3: Sign in with Apple
+| Step | 操作 | 驗證 |
+|------|------|------|
+| D3-1 | 首次：登入頁 → 點 Apple 按鈕 | Apple 系統彈窗 |
+| D3-2 | 允許 + 選「分享 email」 | 回 identityToken + fullName + email |
+| D3-3 | App call `/api/auth/oauth/apple` | JWKS 驗證 → 建 user |
+| D3-4 | 回 authToken → 存 SecureStore → (tabs) | Dashboard |
+| D3-5 | 登出再登入（同 Apple ID） | 不重建 user，直接找到 apple_id |
+| D3-6 | 「Hide My Email」選項 | 以 `@privaterelay.appleid.com` email 建立 |
+
+#### D4: Google 登入（若有啟用）
+| Step | 操作 | 驗證 |
+|------|------|------|
+| D4-1 | 登入頁 → Google 按鈕 | Google OAuth web flow |
+| D4-2 | 允許 | 回 idToken |
+| D4-3 | App call `/api/auth/oauth/google` | 後端驗證 → user |
+
+#### D5: Facebook 登入（若有啟用）
+與 D4 相同流程，用 `accessToken`。
+
+#### D6: 裝置認證登入
+| Step | 操作 | 驗證 |
+|------|------|------|
+| D6-1 | 登入頁 → 展開「Device Login (Advanced)」 | 顯示兩欄輸入 |
+| D6-2 | 貼 deviceId + deviceSecret | 可從 Android App 取得 |
+| D6-3 | 點「Login with Device」 | `POST /api/auth/device-login` |
+| D6-4 | 成功 → 存 authToken 和 device credentials | Dashboard |
+
+#### D7: 裝置→Email 綁定遷移
+| Step | 操作 | 驗證 |
+|------|------|------|
+| D7-1 | 以裝置認證登入，無 email | Settings 顯示「Device-only authentication」 |
+| D7-2 | Settings 點「Bind Email」 | 開 `/bind-email` |
+| D7-3 | 填 email + password | `POST /api/auth/bind-email` |
+| D7-4 | 成功 → 登出 | authToken 清除 |
+| D7-5 | 用綁定的 email 重新登入 | 資料保留（entity、wallet、chat） |
+
+#### D8: 登出重登
+| Step | 操作 | 驗證 |
+|------|------|------|
+| D8-1 | Settings → Logout | `POST /api/auth/logout` → 清 authToken |
+| D8-2 | 自動導向登入頁 | deviceId/deviceSecret 保留 |
+| D8-3 | 重新登入 | 資料全部恢復 |
+
+#### D9: 刪除帳號
+| Step | 操作 | 驗證 |
+|------|------|------|
+| D9-1 | Settings → Delete Account | Alert 確認彈窗 |
+| D9-2 | 確認 | `DELETE /api/auth/account` |
+| D9-3 | 全部資料清除 | `clearAll()` 清除所有 SecureStore |
+| D9-4 | 導向登入頁 | 無法再用同 email 登入（帳號已刪） |
 
 ---
 

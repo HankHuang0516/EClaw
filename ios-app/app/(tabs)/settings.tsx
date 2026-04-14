@@ -9,8 +9,10 @@ import {
   Dialog,
   Portal,
   RadioButton,
+  TextInput,
   useTheme,
   Snackbar,
+  ActivityIndicator,
 } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,6 +20,7 @@ import { useRouter } from 'expo-router';
 import i18next from 'i18next';
 import { useAuthStore } from '../../store/authStore';
 import { authApi } from '../../services/api';
+import { Alert } from 'react-native';
 import { SUPPORTED_LANGUAGES } from '../../i18n';
 import Constants from 'expo-constants';
 
@@ -25,14 +28,57 @@ export default function SettingsScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
   const router = useRouter();
-  const { deviceId, clearCredentials, language, setLanguage } = useAuthStore();
+  const { deviceId, user, authToken, clearUserSession, clearAll, language, setLanguage } = useAuthStore();
 
   const [langDialogVisible, setLangDialogVisible] = useState(false);
+  const [emailDialogVisible, setEmailDialogVisible] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [boundEmail, setBoundEmail] = useState<string | null>(null);
   const [snack, setSnack] = useState('');
   const [notifBotReply, setNotifBotReply] = useState(true);
   const [notifBroadcast, setNotifBroadcast] = useState(true);
 
   const appVersion = Constants.expoConfig?.version ?? '1.0.0';
+
+  // Mirrors Android SettingsActivity.showBindEmailDialog() — this is
+  // account REGISTRATION (bind device to new email), not login.
+  const handleBindEmail = async () => {
+    if (!email.trim() || !password.trim()) {
+      setSnack(t('settings.bind_email_fill_all', 'Please fill in all fields'));
+      return;
+    }
+    // Password rules: ≥6 chars, must contain both letters and digits
+    if (password.length < 6 || !/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
+      setSnack(t('settings.bind_email_password_invalid', 'Password must be at least 6 characters with both letters and numbers'));
+      return;
+    }
+    if (password !== confirmPassword) {
+      setSnack(t('settings.bind_email_password_mismatch', 'Passwords do not match'));
+      return;
+    }
+    setEmailLoading(true);
+    try {
+      const res = await authApi.bindEmail(email.trim(), password.trim());
+      if (res.data?.success) {
+        setBoundEmail(email.trim());
+        setEmailDialogVisible(false);
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        setSnack(t('settings.bind_email_success', 'Email bound successfully'));
+      } else {
+        setSnack(res.data?.message || res.data?.error || t('settings.bind_email_fail', 'Binding failed'));
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.response?.data?.message || err.message || 'Error';
+      setSnack(msg);
+    } finally {
+      setEmailLoading(false);
+    }
+  };
 
   const handleLanguageChange = async (code: string) => {
     setLanguage(code);
@@ -46,8 +92,48 @@ export default function SettingsScreen() {
   };
 
   const handleLogout = async () => {
-    await clearCredentials();
-    setSnack(t('settings.logout'));
+    try {
+      if (authToken) {
+        await authApi.logout().catch(() => {}); // best-effort; invalidate server-side JWT
+      }
+    } finally {
+      await clearUserSession();
+      router.replace('/(auth)/login');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      t('auth.delete_account', 'Delete Account'),
+      t('auth.delete_account_confirm', 'This will permanently delete your account and all data. This cannot be undone.'),
+      [
+        { text: t('common.cancel', 'Cancel'), style: 'cancel' },
+        {
+          text: t('auth.delete_account', 'Delete Account'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await authApi.deleteAccount();
+              await clearAll();
+              router.replace('/(auth)/login');
+            } catch (err: any) {
+              setSnack(err.message || String(err));
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const providerLabel = () => {
+    if (!user) return t('auth.current_provider_device', 'Device-only authentication');
+    switch (user.provider) {
+      case 'apple': return t('auth.current_provider_apple', 'Signed in with Apple');
+      case 'google': return t('auth.current_provider_google', 'Signed in with Google');
+      case 'facebook': return t('auth.current_provider_facebook', 'Signed in with Facebook');
+      case 'email': return t('auth.current_provider_email', 'Signed in with Email');
+      default: return t('auth.current_provider_device', 'Device-only authentication');
+    }
   };
 
   const currentLang = SUPPORTED_LANGUAGES.find((l) => l.code === language);
@@ -58,16 +144,19 @@ export default function SettingsScreen() {
         {/* Account Section */}
         <List.Section title={t('settings.account')}>
           <List.Item
-            title={t('settings.email_not_bound')}
-            description={deviceId ? `Device: ${deviceId.slice(0, 8)}...` : ''}
+            title={user?.email || boundEmail || t('settings.email_not_bound')}
+            description={providerLabel()}
             left={(props) => <List.Icon {...props} icon="account" />}
           />
-          <List.Item
-            title={t('settings.bind_email')}
-            left={(props) => <List.Icon {...props} icon="email" />}
-            right={(props) => <List.Icon {...props} icon="chevron-right" />}
-            onPress={() => {}}
-          />
+          {!user?.email && !boundEmail && (
+            <List.Item
+              title={t('auth.bind_email_cta', 'Bind Email')}
+              description={t('auth.bind_email_banner', 'Bind an email to secure your account across devices')}
+              left={(props) => <List.Icon {...props} icon="email-plus" />}
+              right={(props) => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => router.push('/bind-email')}
+            />
+          )}
         </List.Section>
 
         <Divider />
@@ -174,7 +263,7 @@ export default function SettingsScreen() {
             title={t('settings.privacy_policy')}
             left={(props) => <List.Icon {...props} icon="shield-check" />}
             right={(props) => <List.Icon {...props} icon="chevron-right" />}
-            onPress={() => {}}
+            onPress={() => router.push({ pathname: '/card-holder', params: { url: 'https://eclawbot.com/privacy-policy.html' } })}
           />
         </List.Section>
 
@@ -190,6 +279,15 @@ export default function SettingsScreen() {
           >
             {t('settings.logout')}
           </Button>
+          <Button
+            mode="text"
+            onPress={handleDeleteAccount}
+            icon="account-remove"
+            textColor={theme.colors.error}
+            style={styles.deleteBtn}
+          >
+            {t('auth.delete_account', 'Delete Account')}
+          </Button>
           <Text
             variant="bodySmall"
             style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}
@@ -198,6 +296,56 @@ export default function SettingsScreen() {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Bind Email Dialog */}
+      <Portal>
+        <Dialog visible={emailDialogVisible} onDismiss={() => setEmailDialogVisible(false)}>
+          <Dialog.Title>{t('settings.bind_email')}</Dialog.Title>
+          <Dialog.Content>
+            <TextInput
+              label={t('settings.email_label', 'Email')}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              mode="outlined"
+              style={{ marginBottom: 12 }}
+            />
+            <TextInput
+              label={t('settings.password_label', 'Password')}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              mode="outlined"
+              style={{ marginBottom: 12 }}
+            />
+            <TextInput
+              label={t('settings.confirm_password_label', 'Confirm Password')}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+              mode="outlined"
+              style={{ marginBottom: 8 }}
+            />
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+              {t('settings.bind_email_password_hint', 'Password must be at least 6 characters with both letters and numbers')}
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setEmailDialogVisible(false)}>
+              {t('common.cancel', 'Cancel')}
+            </Button>
+            <Button
+              mode="contained"
+              onPress={handleBindEmail}
+              loading={emailLoading}
+              disabled={emailLoading}
+            >
+              {t('settings.bind_email_confirm', 'Bind')}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
 
       {/* Language Dialog */}
       <Portal>
@@ -241,6 +389,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoutBtn: {
+    width: '100%',
+  },
+  deleteBtn: {
     width: '100%',
   },
 });

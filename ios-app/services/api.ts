@@ -7,6 +7,8 @@ const BASE_URL = 'https://eclawbot.com';
 export const STORAGE_KEYS = {
   DEVICE_ID: 'device_id',
   DEVICE_SECRET: 'device_secret',
+  AUTH_TOKEN: 'auth_token',
+  USER_PROFILE: 'user_profile',
 } as const;
 
 // Create base axios instance
@@ -18,13 +20,23 @@ const apiClient: AxiosInstance = axios.create({
   },
 });
 
-// Request interceptor: auto-inject deviceId + deviceSecret
+// Request interceptor:
+//   1. If authToken present → Authorization: Bearer header
+//   2. Always inject deviceId + deviceSecret (bot API handlers still need them)
 apiClient.interceptors.request.use(async (config) => {
-  const deviceId = await SecureStore.getItemAsync(STORAGE_KEYS.DEVICE_ID);
-  const deviceSecret = await SecureStore.getItemAsync(STORAGE_KEYS.DEVICE_SECRET);
+  const [authToken, deviceId, deviceSecret] = await Promise.all([
+    SecureStore.getItemAsync(STORAGE_KEYS.AUTH_TOKEN),
+    SecureStore.getItemAsync(STORAGE_KEYS.DEVICE_ID),
+    SecureStore.getItemAsync(STORAGE_KEYS.DEVICE_SECRET),
+  ]);
+
+  if (authToken) {
+    config.headers = config.headers ?? {};
+    (config.headers as any).Authorization = `Bearer ${authToken}`;
+  }
 
   if (deviceId && deviceSecret) {
-    if (config.data && typeof config.data === 'object') {
+    if (config.data && typeof config.data === 'object' && !(config.data instanceof FormData)) {
       config.data = { ...config.data, deviceId, deviceSecret };
     } else if (config.method === 'get' || config.method === 'delete') {
       config.params = { ...config.params, deviceId, deviceSecret };
@@ -34,10 +46,20 @@ apiClient.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Response interceptor: unified error handling
+// Response interceptor: unified error handling + 401 token refresh hint
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    // 401 with authToken → token expired, clear it so app re-auths
+    if (error.response?.status === 401) {
+      const hasToken = await SecureStore.getItemAsync(STORAGE_KEYS.AUTH_TOKEN);
+      if (hasToken && !error.config?.url?.includes('/api/auth/')) {
+        // Non-auth endpoint returned 401 with a token → token is stale
+        await SecureStore.deleteItemAsync(STORAGE_KEYS.AUTH_TOKEN);
+        await SecureStore.deleteItemAsync(STORAGE_KEYS.USER_PROFILE);
+        // Caller should detect and redirect to login
+      }
+    }
     const message = error.response?.data?.error || error.message || 'Unknown error';
     return Promise.reject(new Error(message));
   }
@@ -244,12 +266,70 @@ export const feedbackApi = {
 // ── Auth APIs ────────────────────────────────────────────────
 
 export const authApi = {
-  deviceLogin: (deviceId: string) =>
-    apiClient.post('/auth/device-login', { deviceId }),
+  /** Email + password login */
+  login: (email: string, password: string) =>
+    apiClient.post('/api/auth/login', { email, password }),
+
+  /** Register new account with email + password */
+  register: (email: string, password: string, displayName?: string) =>
+    apiClient.post('/api/auth/register', { email, password, displayName }),
+
+  /** Login with device credentials (returns JWT) */
+  deviceLogin: (deviceId: string, deviceSecret: string) =>
+    apiClient.post('/api/auth/device-login', { deviceId, deviceSecret }),
+
+  /** Forgot password — sends reset email */
+  forgotPassword: (email: string) =>
+    apiClient.post('/api/auth/forgot-password', { email }),
+
+  /** Reset password with token from email */
+  resetPassword: (token: string, newPassword: string) =>
+    apiClient.post('/api/auth/reset-password', { token, newPassword }),
+
+  /** Bind email to current device account */
   bindEmail: (email: string, password: string) =>
-    apiClient.post('/api/device/bind-email', { email, password }),
+    apiClient.post('/api/auth/bind-email', { email, password }),
+
+  /** Get current user profile (validates JWT) */
+  me: () => apiClient.get('/api/auth/me'),
+
+  /** Logout — invalidates JWT on server */
+  logout: () => apiClient.post('/api/auth/logout'),
+
+  /** Permanently delete account */
+  deleteAccount: () => apiClient.delete('/api/auth/account'),
+
+  /** OAuth: Sign in with Apple */
+  oauthApple: (params: {
+    identityToken: string;
+    authorizationCode?: string;
+    fullName?: { givenName?: string | null; familyName?: string | null };
+    email?: string;
+    deviceId?: string;
+    deviceSecret?: string;
+  }) => apiClient.post('/api/auth/oauth/apple', params),
+
+  /** OAuth: Google */
+  oauthGoogle: (params: {
+    idToken?: string;
+    accessToken?: string;
+    deviceId?: string;
+    deviceSecret?: string;
+  }) => apiClient.post('/api/auth/oauth/google', params),
+
+  /** OAuth: Facebook */
+  oauthFacebook: (params: {
+    accessToken: string;
+    deviceId?: string;
+    deviceSecret?: string;
+  }) => apiClient.post('/api/auth/oauth/facebook', params),
+
+  /** Get OAuth config (client IDs) */
+  oauthConfig: () => apiClient.get('/api/auth/oauth/config'),
+
+  /** Change app language */
   setLanguage: (language: string) =>
-    apiClient.patch('/auth/language', { language }),
+    apiClient.patch('/api/auth/language', { language }),
 };
 
 // ── Notification APIs ────────────────────────────────────────
