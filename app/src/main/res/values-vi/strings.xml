@@ -468,7 +468,7 @@ Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua
     <string name="log_error">Lỗi</string>
     <string name="log_info">Thông tin</string>
     <string name="log_warn">Cảnh báo</string>
-    <string name="main_title">E-Claw</string>
+    <string name="main_title">EClawbot</string>
     <string name="manage_entities">Quản lý thực thể</string>
     <string name="message_copied">Đã sao chép tin nhắn</string>
     <string name="message_hint">Tin nhắn đến %s…</string>

@@ -468,7 +468,7 @@ GPS: 온디맨드만, 백그라운드 추적 없음, 서버 재시작 시 데이
     <string name="log_error">오류</string>
     <string name="log_info">정보</string>
     <string name="log_warn">경고</string>
-    <string name="main_title">E-Claw</string>
+    <string name="main_title">EClawbot</string>
     <string name="manage_entities">엔티티 관리</string>
     <string name="message_copied">메시지가 복사되었습니다</string>
     <string name="message_hint">%s에게 보낼 메시지…</string>

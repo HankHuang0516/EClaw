@@ -122,7 +122,7 @@ class UsageManager private constructor(context: Context) {
      */
     fun getUsageDisplay(): String {
         return if (com.hank.clawlive.BuildConfig.DEBUG) {
-            "DEBUG"
+            "$dailyMessageCount/∞"
         } else if (isPremium) {
             "∞"
         } else {

@@ -429,7 +429,7 @@ Tus comentarios enviados aparecerán aquí.</string>
     <string name="log_error">Error</string>
     <string name="log_info">Información</string>
     <string name="log_warn">Advertencia</string>
-    <string name="main_title">E-Claw</string>
+    <string name="main_title">EClawbot</string>
     <string name="manage_entities">Gestionar Entidades</string>
     <string name="message_copied">Mensaje copiado</string>
     <string name="message_hint">Mensaje a %s…</string>
