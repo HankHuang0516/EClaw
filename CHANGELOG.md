@@ -1,3 +1,10 @@
+## [1.976.1](https://github.com/HankHuang0516/EClaw/compare/v1.976.0...v1.976.1) (2026-04-14)
+
+
+### Bug Fixes
+
+* **android:** remaining hardcoded English strings in Card Holder + Feedback ([c433543](https://github.com/HankHuang0516/EClaw/commit/c433543f022340fc2dbc90430b3d77da606443bb))
+
 # [1.976.0](https://github.com/HankHuang0516/EClaw/compare/v1.975.4...v1.976.0) (2026-04-14)
 
 
