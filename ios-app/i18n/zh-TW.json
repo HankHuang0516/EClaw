@@ -153,6 +153,20 @@
     "all_vars_configured": "所有變數已設定",
     "needs_vars": "需要：{{vars}}"
   },
+  "wallet": {
+    "title": "錢包",
+    "balance": "餘額",
+    "ecoin_unit": "e幣",
+    "topup_via_apple": "加值（透過 Apple IAP）",
+    "topup_hint": "所有購買均透過 Apple 安全處理。",
+    "topup_success": "加值成功",
+    "topup_failed": "加值失敗",
+    "topup_credited": "已入帳 {{ecoin}} e幣到您的錢包。",
+    "no_products": "暫無可用商品，請稍後再試。",
+    "bonus_label": "紅利",
+    "transaction_history": "交易紀錄",
+    "iap_compliance": "付款由 Apple 處理，條款與條件適用。"
+  },
   "auth": {
     "login": "登入",
     "login_tagline": "登入以繼續",

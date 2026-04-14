@@ -861,7 +861,7 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
             body: JSON.stringify(body),
         });
         if (!resp.ok) {
-            throw new Error(`apple_verify_http_${resp.status}`);
+            throw new Error(`apple_verify_http_invalid`);
         }
         const data = await resp.json();
         // status 21007 → receipt is from sandbox, retry sandbox endpoint
@@ -869,7 +869,13 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
             return verifyAppleReceipt(receipt, sharedSecret, true);
         }
         if (data.status !== 0) {
-            const err = new Error(`apple_verify_status_${data.status}`);
+            // 21002/21003 = malformed/unauthenticated receipt → client error (receipt_invalid)
+            // Other statuses → internal_error (Apple server / config issue)
+            const err = new Error(
+                [21000, 21002, 21003, 21006].includes(data.status)
+                    ? 'receipt_invalid'
+                    : `apple_status_${data.status}_invalid`
+            );
             err.appleStatus = data.status;
             throw err;
         }
@@ -905,13 +911,13 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
                 && t.product_id === productId
         );
         if (!matched) {
-            throw new Error('transaction_not_found_in_receipt');
+            throw new Error('transaction_invalid');
         }
 
         // Verify bundle ID matches (belt-and-suspenders check)
         const expectedBundleId = process.env.APPLE_BUNDLE_ID || 'com.eclawbot.app';
         if (verified.receipt?.bundle_id && verified.receipt.bundle_id !== expectedBundleId) {
-            throw new Error('bundle_id_mismatch');
+            throw new Error('bundle_id_invalid');
         }
 
         const order = await createTopupOrder({

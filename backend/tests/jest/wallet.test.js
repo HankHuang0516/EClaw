@@ -725,6 +725,176 @@ describe('wallet: HTTP routes', () => {
         expect(bal.balance_ecoin).toBe(9450);
     });
 
+    // ── Apple IAP verification ──────────────────────────────────────
+
+    function mockAppleFetch({
+        status = 0,
+        productId = 'ec.topup.standard',
+        transactionId = 'apple-txn-001',
+        bundleId = 'com.eclawbot.app',
+        environment = 'Production',
+    } = {}) {
+        global.fetch = jest.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                status,
+                environment,
+                receipt: {
+                    bundle_id: bundleId,
+                    in_app: [
+                        {
+                            product_id: productId,
+                            transaction_id: transactionId,
+                            original_transaction_id: transactionId,
+                            purchase_date: '2026-04-14 12:00:00 Etc/GMT',
+                        },
+                    ],
+                },
+            }),
+        });
+    }
+
+    test('POST /topup/verify-apple rejects missing fields', async () => {
+        const app = buildApp({ user: { userId: ALICE } });
+        await supertest(app).post('/api/wallet/topup/verify-apple').send({}).expect(400);
+        await supertest(app).post('/api/wallet/topup/verify-apple')
+            .send({ productId: 'ec.topup.starter' }).expect(400);
+        await supertest(app).post('/api/wallet/topup/verify-apple')
+            .send({ productId: 'ec.topup.starter', transactionId: 'abc' }).expect(400);
+        await supertest(app).post('/api/wallet/topup/verify-apple')
+            .send({
+                productId: 'ec.topup.starter',
+                transactionId: 'abc1234',
+                receipt: 'short',
+            }).expect(400);
+    });
+
+    test('POST /topup/verify-apple rejects unknown product', async () => {
+        const app = buildApp({ user: { userId: ALICE } });
+        const res = await supertest(app).post('/api/wallet/topup/verify-apple')
+            .send({
+                productId: 'fake_tier',
+                transactionId: 'apple-txn-abc',
+                receipt: 'base64-receipt-data-long-enough',
+            })
+            .expect(400);
+        expect(res.body.error).toBe('unknown_product');
+    });
+
+    test('POST /topup/verify-apple credits wallet end-to-end', async () => {
+        mockAppleFetch({ productId: 'ec.topup.standard', transactionId: 'apple-txn-std-001' });
+        const app = buildApp({ user: { userId: ALICE } });
+        const res = await supertest(app).post('/api/wallet/topup/verify-apple')
+            .send({
+                productId: 'ec.topup.standard',
+                transactionId: 'apple-txn-std-001',
+                receipt: 'base64-receipt-data-long-enough',
+            })
+            .expect(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.order.status).toBe('paid');
+        // standard: 15000 base + 1200 bonus = 16200 e幣
+        expect(res.body.order.ecoinTotal).toBe(16200);
+        expect(res.body.order.deduped).toBe(false);
+
+        // Replay with same transactionId → dedupe
+        mockAppleFetch({ productId: 'ec.topup.standard', transactionId: 'apple-txn-std-001' });
+        const replay = await supertest(app).post('/api/wallet/topup/verify-apple')
+            .send({
+                productId: 'ec.topup.standard',
+                transactionId: 'apple-txn-std-001',
+                receipt: 'base64-receipt-data-long-enough',
+            })
+            .expect(200);
+        expect(replay.body.order.deduped).toBe(true);
+
+        const bal = await walletApi.getBalance(ALICE);
+        expect(bal.balance_ecoin).toBe(16200);
+    });
+
+    test('POST /topup/verify-apple falls back to sandbox on status 21007', async () => {
+        let callCount = 0;
+        global.fetch = jest.fn().mockImplementation(async (url) => {
+            callCount += 1;
+            if (url.includes('buy.itunes.apple.com') && callCount === 1) {
+                return { ok: true, json: async () => ({ status: 21007 }) };
+            }
+            return {
+                ok: true,
+                json: async () => ({
+                    status: 0,
+                    environment: 'Sandbox',
+                    receipt: {
+                        bundle_id: 'com.eclawbot.app',
+                        in_app: [{
+                            product_id: 'ec.topup.small',
+                            transaction_id: 'sandbox-txn-1',
+                            original_transaction_id: 'sandbox-txn-1',
+                            purchase_date: '2026-04-14 12:00:00 Etc/GMT',
+                        }],
+                    },
+                }),
+            };
+        });
+
+        const app = buildApp({ user: { userId: ALICE } });
+        const res = await supertest(app).post('/api/wallet/topup/verify-apple')
+            .send({
+                productId: 'ec.topup.small',
+                transactionId: 'sandbox-txn-1',
+                receipt: 'base64-receipt-data-long-enough',
+            })
+            .expect(200);
+        expect(res.body.order.environment).toBe('Sandbox');
+        expect(callCount).toBe(2); // prod → sandbox fallback
+    });
+
+    test('POST /topup/verify-apple rejects when transaction not in receipt', async () => {
+        mockAppleFetch({ productId: 'ec.topup.standard', transactionId: 'different-txn' });
+        const app = buildApp({ user: { userId: ALICE } });
+        const res = await supertest(app).post('/api/wallet/topup/verify-apple')
+            .send({
+                productId: 'ec.topup.standard',
+                transactionId: 'requested-txn',
+                receipt: 'base64-receipt-data-long-enough',
+            })
+            .expect(400);
+        expect(res.body.error).toBe('transaction_invalid');
+    });
+
+    test('POST /topup/verify-apple rejects bundle ID mismatch', async () => {
+        mockAppleFetch({
+            bundleId: 'com.malicious.app',
+            productId: 'ec.topup.standard',
+            transactionId: 'apple-txn-002',
+        });
+        const app = buildApp({ user: { userId: ALICE } });
+        const res = await supertest(app).post('/api/wallet/topup/verify-apple')
+            .send({
+                productId: 'ec.topup.standard',
+                transactionId: 'apple-txn-002',
+                receipt: 'base64-receipt-data-long-enough',
+            })
+            .expect(400);
+        expect(res.body.error).toBe('bundle_id_invalid');
+    });
+
+    test('POST /topup/verify-apple rejects malformed receipt (status 21002)', async () => {
+        global.fetch = jest.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ status: 21002 }),
+        });
+        const app = buildApp({ user: { userId: ALICE } });
+        const res = await supertest(app).post('/api/wallet/topup/verify-apple')
+            .send({
+                productId: 'ec.topup.standard',
+                transactionId: 'bad-txn',
+                receipt: 'base64-receipt-data-long-enough',
+            })
+            .expect(400);
+        expect(res.body.error).toBe('receipt_invalid');
+    });
+
     test('POST /admin/grant rejects non-admin', async () => {
         const app = buildApp({ user: { userId: ALICE }, isAdmin: false });
         const res = await supertest(app).post('/api/wallet/admin/grant')

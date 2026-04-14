@@ -153,6 +153,20 @@
     "all_vars_configured": "All vars configured",
     "needs_vars": "Needs: {{vars}}"
   },
+  "wallet": {
+    "title": "Wallet",
+    "balance": "Balance",
+    "ecoin_unit": "e-coins",
+    "topup_via_apple": "Top Up (via Apple IAP)",
+    "topup_hint": "All purchases are processed securely through Apple.",
+    "topup_success": "Top-up successful",
+    "topup_failed": "Top-up failed",
+    "topup_credited": "Credited {{ecoin}} e-coins to your wallet.",
+    "no_products": "No products available. Try again later.",
+    "bonus_label": "bonus",
+    "transaction_history": "Transaction History",
+    "iap_compliance": "Payments are processed by Apple. Terms and conditions apply."
+  },
   "auth": {
     "login": "Login",
     "login_tagline": "Sign in to continue",
