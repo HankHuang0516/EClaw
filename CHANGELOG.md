@@ -1,3 +1,10 @@
+# [1.971.0](https://github.com/HankHuang0516/EClaw/compare/v1.970.4...v1.971.0) (2026-04-14)
+
+
+### Features
+
+* add debug endpoint to restore lost publicCode ([d02fc98](https://github.com/HankHuang0516/EClaw/commit/d02fc98261c3d85cae007f83182b829253cc24ba)), closes [#1748](https://github.com/HankHuang0516/EClaw/issues/1748)
+
 ## [1.970.4](https://github.com/HankHuang0516/EClaw/compare/v1.970.3...v1.970.4) (2026-04-14)
 
 
