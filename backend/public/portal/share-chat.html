@@ -165,6 +165,12 @@
         /* ── Powered by ── */
         .powered-by { text-align: center; padding: 12px 0; font-size: 11px; color: var(--text-muted); }
         .powered-by a { color: var(--primary); text-decoration: none; }
+
+        /* ── Proxy Window CTA (Viral) ── */
+        .proxy-cta { margin-top: 10px; padding: 14px 16px; background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%); border-radius: var(--radius); text-align: center; }
+        .proxy-cta-text { font-size: 13px; color: rgba(255,255,255,0.9); margin-bottom: 8px; font-weight: 500; }
+        .proxy-cta-btn { display: inline-block; padding: 8px 20px; background: #fff; color: var(--primary); font-size: 13px; font-weight: 700; border-radius: 20px; text-decoration: none; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .proxy-cta-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
     </style>
 </head>
 
@@ -199,6 +205,12 @@
         <div class="input-bar">
             <input type="text" id="msgInput" data-i18n-placeholder="sc_placeholder" placeholder="Type a message..." maxlength="5000" autocomplete="off">
             <button id="sendBtn" onclick="handleSend()" data-i18n="sc_send">Send</button>
+        </div>
+
+        <!-- Viral CTA: Create your own Bot -->
+        <div class="proxy-cta">
+            <div class="proxy-cta-text" data-i18n="sc_cta_create_bot">Like this bot? Create your own — it's free!</div>
+            <a class="proxy-cta-btn" href="#" onclick="showRegisterMode(); return false;" data-i18n="sc_cta_create_bot_btn">Create your own Bot</a>
         </div>
 
         <div class="powered-by"><span data-i18n="sc_powered_by">Powered by</span> <a href="/" target="_blank">EClawbot</a></div>
