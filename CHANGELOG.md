@@ -1,3 +1,10 @@
+## [1.978.3](https://github.com/HankHuang0516/EClaw/compare/v1.978.2...v1.978.3) (2026-04-14)
+
+
+### Bug Fixes
+
+* enforce X 280 weighted-length on /x/tweet ([87884b1](https://github.com/HankHuang0516/EClaw/commit/87884b1de9d2d8dc52360928bb3e831fbc451960))
+
 ## [1.978.2](https://github.com/HankHuang0516/EClaw/compare/v1.978.1...v1.978.2) (2026-04-14)
 
 
