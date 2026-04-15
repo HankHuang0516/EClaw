@@ -241,7 +241,7 @@ curl -s -X POST "https://eclawbot.com/api/auth/login" \
 **實際測試 production deviceId 的值**：
 ```
 deviceId: 480def4c-2183-4d8e-afd0-b131ae89adcc
-deviceSecret: 3a4ddb10-2609-42b6-908a-f9d446c97ff9-7cff9697-6391-415d-a282-4e8aea3be49a
+deviceSecret: REDACTED-ASK-HANK-FOR-VALUE
 ```
 （這是 hank 的裝置，**不要真的 bind email**，只是測 UI）
 
@@ -296,7 +296,7 @@ hank 的 deviceId/deviceSecret 可以換 JWT，登入後 App 應看到所有綁�
 2. 登入頁 → Device Login (Advanced)
 3. 填：
    - deviceId: `480def4c-2183-4d8e-afd0-b131ae89adcc`
-   - deviceSecret: `3a4ddb10-2609-42b6-908a-f9d446c97ff9-7cff9697-6391-415d-a282-4e8aea3be49a`
+   - deviceSecret: `REDACTED-ASK-HANK-FOR-VALUE`
 4. 點 Login with Device
 
 **預期**：
@@ -310,7 +310,7 @@ hank 的 deviceId/deviceSecret 可以換 JWT，登入後 App 應看到所有綁�
 **後端驗證**：
 ```bash
 # 這個 deviceId 真的存在 + 有 entity
-curl -s "https://eclawbot.com/api/entities?deviceId=480def4c-2183-4d8e-afd0-b131ae89adcc&deviceSecret=3a4ddb10-2609-42b6-908a-f9d446c97ff9-7cff9697-6391-415d-a282-4e8aea3be49a" | python3 -c "import json,sys; print('entity count:', len([e for e in json.load(sys.stdin).get('entities',[]) if e.get('isBound')]))"
+curl -s "https://eclawbot.com/api/entities?deviceId=480def4c-2183-4d8e-afd0-b131ae89adcc&deviceSecret=REDACTED-ASK-HANK-FOR-VALUE" | python3 -c "import json,sys; print('entity count:', len([e for e in json.load(sys.stdin).get('entities',[]) if e.get('isBound')]))"
 # 應為 4
 ```
 
