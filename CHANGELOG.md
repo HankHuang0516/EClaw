@@ -1,3 +1,11 @@
+## [1.981.1](https://github.com/HankHuang0516/EClaw/compare/v1.981.0...v1.981.1) (2026-04-15)
+
+
+### Bug Fixes
+
+* **i18n:** clean 5.98MB → 3.88MB — remove 45K orphan + 427 leaked keys ([#1758](https://github.com/HankHuang0516/EClaw/issues/1758)) ([1fb619c](https://github.com/HankHuang0516/EClaw/commit/1fb619c9aa338fbcba5a86b300e73d1ebcaf6448))
+* **auth:** return authToken in response body for mobile clients ([06488ee](https://github.com/HankHuang0516/EClaw/commit/06488ee55f1c9bc81621a395219034fa388a6877))
+
 # [1.981.0](https://github.com/HankHuang0516/EClaw/compare/v1.980.4...v1.981.0) (2026-04-15)
 
 
