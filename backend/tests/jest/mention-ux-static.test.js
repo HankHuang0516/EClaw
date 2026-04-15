@@ -116,16 +116,16 @@ describe('Mention feature — Fix A: displayText propagation (regression)', () =
     });
 
     test('channel push uses pushText (not raw text)', () => {
-        // Locate the pushToChannelCallback call inside /api/client/speak.
-        // The payload.text field must be pushText, not the raw `text`.
+        // After unifiedPush refactoring, the client/speak channel path calls
+        // unifiedPush with message: pushText, which internally calls pushToChannelCallback.
         const speakIdx = indexJs.indexOf("app.post('/api/client/speak'");
         expect(speakIdx).toBeGreaterThan(0);
-        const channelIdx = indexJs.indexOf('channelModule.pushToChannelCallback', speakIdx);
-        const closingParen = indexJs.indexOf(', entity.channelAccountId', channelIdx);
-        expect(channelIdx).toBeGreaterThan(speakIdx);
-        expect(closingParen).toBeGreaterThan(channelIdx);
-        const callSnippet = indexJs.slice(channelIdx, closingParen);
-        expect(callSnippet).toContain('text: pushText');
+        // Check that unifiedPush is called with pushText in the channel path
+        const channelSection = indexJs.indexOf("entity.bindingType === 'channel'", speakIdx);
+        expect(channelSection).toBeGreaterThan(speakIdx);
+        const nextElse = indexJs.indexOf('} else if (entity.webhook)', channelSection);
+        const channelSnippet = indexJs.slice(channelSection, nextElse);
+        expect(channelSnippet).toContain('message: pushText');
     });
 
     test('OpenClaw webhook pushMsg uses pushText in Content: line', () => {

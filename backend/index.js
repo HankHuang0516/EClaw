@@ -7092,41 +7092,29 @@ app.post('/api/client/speak', async (req, res) => {
 
         console.log(`[Client] Device ${deviceId} -> Entity ${eId}: "${text}" (source: ${source})`);
 
-        // Push to bot — channel callback (structured JSON) or traditional webhook (instruction-first)
+        // Push to bot — unifiedPush for channel, traditional webhook for others
         let pushResult = { pushed: false, reason: "no_webhook" };
 
-        // Append intent-based API hints for channel bots (pushToBot does this internally
-        // for webhook bots, but channel push bypasses pushToBot entirely)
-        let channelPushText = pushText;
-        try {
-            const apiBase = process.env.API_BASE || 'https://eclawbot.com';
-            const intentHint = await detectIntentApiHints(
-                text, apiBase, deviceId, eId, entity.botSecret
-            );
-            if (intentHint) channelPushText += intentHint;
-        } catch (_) { /* non-critical */ }
-
         if (entity.bindingType === 'channel') {
-            // Channel plugin: send structured JSON to registered callback URL
-            console.log(`[Push] Attempting channel callback for Device ${deviceId} Entity ${eId}`);
-            pushResult = await channelModule.pushToChannelCallback(deviceId, eId, {
-                event: targetIds.length > 1 ? 'broadcast' : 'message',
+            // Channel plugin: use unifiedPush (applies middleware + routes to channel callback)
+            console.log(`[Push] Attempting channel push via unifiedPush for Device ${deviceId} Entity ${eId}`);
+            pushResult = await unifiedPush(entity, deviceId, 'new_message', {
+                message: pushText,
                 from: source,
-                text: channelPushText,
                 mediaType: mediaType || null,
                 mediaUrl: mediaUrl || null,
-                backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
-                isBroadcast: targetIds.length > 1,
-                broadcastRecipients: targetIds.length > 1 ? targetIds : null,
-                ...(mentionsContext ? { eclaw_context: { mentions: mentionsContext.mentions, hasAll: mentionsContext.hasAll } } : {})
-            }, entity.channelAccountId);
+            }, {
+                event: targetIds.length > 1 ? 'broadcast' : 'message',
+                from: source,
+                channelPayload: null, // let unifiedPush build it with enriched text
+            });
 
             if (pushResult.pushed) {
                 messageObj.delivered = true;
-                console.log(`[Push] ✓ Channel callback OK for Device ${deviceId} Entity ${eId}`);
-                serverLog('info', 'client_push', `Entity ${eId} channel push OK`, { deviceId, entityId: eId, metadata: { source, mode: 'channel', webhookUrl: entity.webhook?.url } });
+                console.log(`[Push] ✓ Channel push OK for Device ${deviceId} Entity ${eId}`);
+                serverLog('info', 'client_push', `Entity ${eId} channel push OK`, { deviceId, entityId: eId, metadata: { source, mode: 'channel' } });
             } else {
-                console.warn(`[Push] ✗ Channel callback failed for Device ${deviceId} Entity ${eId}: ${pushResult.reason}`);
+                console.warn(`[Push] ✗ Channel push failed for Device ${deviceId} Entity ${eId}: ${pushResult.reason}`);
                 serverLog('warn', 'client_push', `Entity ${eId} channel push failed: ${pushResult.reason}`, { deviceId, entityId: eId });
             }
         } else if (entity.webhook) {
@@ -12540,10 +12528,82 @@ function buildIdentitySetupHint(entity, apiBase, deviceId, entityId, botSecret) 
 }
 
 /**
+ * Unified push: single entry point for all entity push operations.
+ * Applies middleware (rename, vars hint, intent hint) then routes
+ * to the correct transport (channel callback OR pushToBot/webhook).
+ *
+ * This eliminates the channel/webhook if-else duplication that caused
+ * BUG-R1, intent hint gap, and orgChartForward issues.
+ */
+async function unifiedPush(entity, deviceId, eventType, payload, opts = {}) {
+    if (!entity) return { pushed: false, reason: 'entity_null' };
+
+    // ── Middleware: enrich payload.message with hints ──
+    let enrichedMessage = payload.message || '';
+
+    if (!opts.skipMiddleware) {
+        // 1. Pending rename
+        if (entity.pendingRename) {
+            const { oldName, newName } = entity.pendingRename;
+            enrichedMessage = `[SYSTEM:NAME_CHANGED] 你的名字已從「${oldName}」更改為「${newName}」。請記住你現在的名字是「${newName}」。\n\n` + enrichedMessage;
+        }
+
+        // 2. Local vars hint
+        try {
+            const varsMeta = await db.getDeviceVarsMeta(deviceId);
+            if (varsMeta && !varsMeta.is_locked && varsMeta.var_keys && varsMeta.var_keys.length > 0) {
+                const varKeys = varsMeta.var_keys.join(', ');
+                const apiBase = process.env.API_BASE || 'https://eclawbot.com';
+                enrichedMessage += `\n\n[Local Variables available: ${varKeys}]\nexec: curl -s "${apiBase}/api/device-vars?deviceId=${deviceId}&botSecret=${entity.botSecret}"`;
+            }
+        } catch (_) { /* non-critical */ }
+
+        // 3. Intent API hints
+        try {
+            const apiBase = process.env.API_BASE || 'https://eclawbot.com';
+            const intentHint = await detectIntentApiHints(
+                payload.message || '', apiBase, deviceId, entity.entityId, entity.botSecret
+            );
+            if (intentHint) enrichedMessage += intentHint;
+        } catch (_) { /* non-critical */ }
+    }
+
+    const enrichedPayload = { ...payload, message: enrichedMessage };
+
+    // ── Route to correct transport ──
+    if (entity.bindingType === 'channel' && channelModule?.pushToChannelCallback) {
+        // Channel transport: structured JSON
+        const channelPayload = opts.channelPayload || {
+            event: opts.event || eventType || 'message',
+            from: opts.from || payload.from || `Entity ${entity.entityId}`,
+            text: enrichedMessage,
+            mediaType: payload.mediaType || null,
+            mediaUrl: payload.mediaUrl || null,
+            ...(payload._rentalContext ? { _rentalContext: payload._rentalContext } : {}),
+            ...(payload.eclaw_context ? { eclaw_context: payload.eclaw_context } : {}),
+        };
+        const result = await channelModule.pushToChannelCallback(
+            deviceId, entity.entityId, channelPayload, entity.channelAccountId
+        );
+        if (result?.pushed && entity.pendingRename) entity.pendingRename = null;
+        return result || { pushed: false, reason: 'channel_push_failed' };
+    }
+
+    if (entity.webhook) {
+        // Webhook transport: pushToBot handles Discord, rental proxy, OpenClaw
+        // Pass skipMiddleware flag so pushToBot doesn't re-run middleware
+        return pushToBot(entity, deviceId, eventType, enrichedPayload, { _fromUnified: true });
+    }
+
+    // Polling-only entity (no webhook, no channel)
+    return { pushed: false, reason: 'no_push_method' };
+}
+
+/**
  * Helper: Push notification to bot webhook
  * Supports OpenClaw format: POST to /tools/invoke with tool invocation payload
  */
-async function pushToBot(entity, deviceId, eventType, payload) {
+async function pushToBot(entity, deviceId, eventType, payload, opts = {}) {
     if (!entity.webhook) {
         return { pushed: false, reason: "no_webhook" };
     }
@@ -12559,37 +12619,28 @@ async function pushToBot(entity, deviceId, eventType, payload) {
         effectiveSessionKey = officialBinding.session_key;
     }
 
-    // Prepend pending rename notification if exists
+    // If called from unifiedPush, middleware already ran — use payload.message as-is
     let messageContent = payload.message || JSON.stringify(payload);
-    if (entity.pendingRename) {
-        const { oldName, newName } = entity.pendingRename;
-        const renameNotice = `[SYSTEM:NAME_CHANGED] 你的名字已從「${oldName}」更改為「${newName}」。請記住你現在的名字是「${newName}」。\n\n`;
-        messageContent = renameNotice + messageContent;
-        console.log(`[Push] Including pending rename notification: "${oldName}" -> "${newName}"`);
-    }
 
-    // Append local vars hint from DB (keys only, no decryption needed)
-    try {
-        const varsMeta = await db.getDeviceVarsMeta(deviceId);
-        if (varsMeta && !varsMeta.is_locked && varsMeta.var_keys && varsMeta.var_keys.length > 0) {
-            const varKeys = varsMeta.var_keys.join(', ');
-            const apiBase = process.env.API_BASE || 'https://eclawbot.com';
-            messageContent += `\n\n[Local Variables available: ${varKeys}]\nexec: curl -s "${apiBase}/api/device-vars?deviceId=${deviceId}&botSecret=${entity.botSecret}"`;
+    if (!opts._fromUnified) {
+        // Legacy direct call: run middleware here (backward compat)
+        if (entity.pendingRename) {
+            const { oldName, newName } = entity.pendingRename;
+            messageContent = `[SYSTEM:NAME_CHANGED] 你的名字已從「${oldName}」更改為「${newName}」。請記住你現在的名字是「${newName}」。\n\n` + messageContent;
         }
-    } catch (err) {
-        // Non-critical — just skip the hint
-    }
-
-    // Append intent-based API hints based on incoming message content
-    try {
-        const apiBase = process.env.API_BASE || 'https://eclawbot.com';
-        const intentHint = await detectIntentApiHints(
-            payload.message || '',
-            apiBase, deviceId, entity.entityId, entity.botSecret
-        );
-        if (intentHint) messageContent += intentHint;
-    } catch (err) {
-        // Non-critical — skip
+        try {
+            const varsMeta = await db.getDeviceVarsMeta(deviceId);
+            if (varsMeta && !varsMeta.is_locked && varsMeta.var_keys && varsMeta.var_keys.length > 0) {
+                const varKeys = varsMeta.var_keys.join(', ');
+                const apiBase = process.env.API_BASE || 'https://eclawbot.com';
+                messageContent += `\n\n[Local Variables available: ${varKeys}]\nexec: curl -s "${apiBase}/api/device-vars?deviceId=${deviceId}&botSecret=${entity.botSecret}"`;
+            }
+        } catch (_) {}
+        try {
+            const apiBase = process.env.API_BASE || 'https://eclawbot.com';
+            const intentHint = await detectIntentApiHints(payload.message || '', apiBase, deviceId, entity.entityId, entity.botSecret);
+            if (intentHint) messageContent += intentHint;
+        } catch (_) {}
     }
 
     // ── Discord webhook: direct POST, no session key needed ──
@@ -12657,23 +12708,12 @@ async function pushToBot(entity, deviceId, eventType, payload) {
             }
             console.log(`[Push] Rental proxy: forwarding from ${deviceId}/${entity.entityId} → ${owner_device_id}/${owner_entity_id} (binding=${ownerEntity.bindingType})`);
             const rentalMsg = `[Rental message from renter]\n${payload.message || ''}`;
-            let result;
-            // Channel-bound entities use pushToChannelCallback
-            if (ownerEntity.bindingType === 'channel' && channelModule?.pushToChannelCallback) {
-                result = await channelModule.pushToChannelCallback(owner_device_id, owner_entity_id, {
-                    event: 'message',
-                    from: entity.name || `Rental Entity`,
-                    text: rentalMsg,
-                    _rentalContext: { contractId, renterDeviceId: deviceId, renterEntityId: entity.entityId },
-                }, ownerEntity.channelAccountId);
-            } else if (ownerEntity.webhook) {
-                // Direct webhook entities
-                const rentalPayload = { ...payload, message: rentalMsg };
-                result = await pushToBot(ownerEntity, owner_device_id, eventType, rentalPayload);
-            } else {
-                console.error(`[Push] Rental proxy: owner entity has no webhook or channel`);
-                return { pushed: false, reason: 'owner_entity_no_push_method' };
-            }
+            // Use unifiedPush — handles both channel and webhook automatically
+            const result = await unifiedPush(ownerEntity, owner_device_id, eventType, {
+                ...payload,
+                message: rentalMsg,
+                _rentalContext: { contractId, renterDeviceId: deviceId, renterEntityId: entity.entityId },
+            }, { from: entity.name || 'Rental Entity' });
             // Copy response back to rental entity if synchronous
             if (result?.pushed && ownerEntity.lastUpdated > (entity.lastUpdated || 0)) {
                 entity.state = ownerEntity.state;
@@ -12886,21 +12926,13 @@ async function orgChartForward(entity, deviceId, message) {
                 console.error(`[OrgChart] Save fwd chat failed:`, err.message);
             });
 
-            if (superiorEntity.bindingType === 'channel' && channelModule && channelModule.pushToChannelCallback) {
-                // Channel-bound superior: use channel callback
-                channelModule.pushToChannelCallback(deviceId, superiorId, {
-                    event: 'org_forward',
-                    from: `entity:${entity.entityId}`,
-                    text: fwdMsg
-                }, superiorEntity.channelAccountId).catch(err => {
-                    console.error(`[OrgChart] Channel forward to #${superiorId} failed:`, err.message);
-                });
-            } else {
-                // Traditional webhook
-                pushToBot(superiorEntity, deviceId, 'org_forward', { message: fwdMsg }).catch(err => {
-                    console.error(`[OrgChart] Forward to #${superiorId} failed:`, err.message);
-                });
-            }
+            // Use unifiedPush — handles both channel and webhook automatically
+            unifiedPush(superiorEntity, deviceId, 'org_forward', { message: fwdMsg }, {
+                skipMiddleware: true, // forwarded messages don't need hints
+                from: `entity:${entity.entityId}`,
+            }).catch(err => {
+                console.error(`[OrgChart] Forward to #${superiorId} failed:`, err.message);
+            });
         }
     } catch (err) {
         console.error('[OrgChart] orgChartForward error:', err.message);
