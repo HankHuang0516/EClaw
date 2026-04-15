@@ -1,21 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
-import { Text, Avatar, Badge, useTheme, Divider } from 'react-native-paper';
+import { Text, Avatar, Badge, useTheme, Divider, Button, ActivityIndicator } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useEntityStore } from '../../store/entityStore';
+import { useAuthStore } from '../../store/authStore';
 import { useChatStore } from '../../store/chatStore';
 import { useEntities } from '../../hooks/useEntities';
+import { deviceApi } from '../../services/api';
 import { CHARACTER_COLORS, STATUS_COLORS } from '../../constants/colors';
 
 export default function ChatListScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
   const router = useRouter();
-  const { entities } = useEntityStore();
+  const { entities, bindingCodes, setBindingCode } = useEntityStore();
+  const { deviceId } = useAuthStore();
   const { unreadCounts } = useChatStore();
   useEntities(); // Keep entity list updated
+
+  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
 
   const CHARACTER_ICONS = { LOBSTER: '🦞', PIG: '🐷' };
 
@@ -23,14 +28,51 @@ export default function ChatListScreen() {
     router.push(`/chat/${entityId}`);
   };
 
+  const handleGenerateCode = async () => {
+    // Find next empty slot
+    for (let i = 0; i < 20; i++) {
+      if (!entities.find((e) => e.entityIndex === i)) {
+        if (!deviceId) return;
+        setIsGeneratingCode(true);
+        try {
+          const res = await deviceApi.register(i);
+          setBindingCode(i, res.data.bindingCode);
+        } catch {
+          // silently fail — home screen will show errors
+        } finally {
+          setIsGeneratingCode(false);
+        }
+        return;
+      }
+    }
+  };
+
   if (entities.length === 0) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={styles.empty}>
           <Text variant="headlineSmall">💬</Text>
-          <Text variant="titleMedium">{t('home.no_entities')}</Text>
-          <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-            {t('home.no_entities_desc')}
+          <Text variant="titleMedium">{t('home.chat_empty_title')}</Text>
+          <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
+            {t('home.chat_empty_desc')}
+          </Text>
+          <Button
+            mode="contained"
+            icon="plus"
+            onPress={handleGenerateCode}
+            loading={isGeneratingCode}
+            disabled={isGeneratingCode}
+            style={styles.ctaButton}
+            contentStyle={styles.ctaButtonContent}
+            labelStyle={styles.ctaButtonLabel}
+          >
+            {t('home.generate_binding_code')}
+          </Button>
+          <Text
+            variant="bodySmall"
+            style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center', marginTop: 4 }}
+          >
+            {t('home.binding_code_hint')}
           </Text>
         </View>
       </SafeAreaView>
@@ -102,6 +144,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     padding: 32,
+  },
+  ctaButton: {
+    marginTop: 20,
+    borderRadius: 28,
+    elevation: 3,
+  },
+  ctaButtonContent: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  ctaButtonLabel: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   row: {
     flexDirection: 'row',

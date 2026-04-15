@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   FlatList,
@@ -6,6 +6,7 @@ import {
   RefreshControl,
   Alert,
   Image,
+  Animated,
 } from 'react-native';
 import {
   FAB,
@@ -40,6 +41,21 @@ export default function HomeScreen() {
   const [snackMessage, setSnackMessage] = useState('');
   const [snackVisible, setSnackVisible] = useState(false);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+
+  // Pulse animation for + FAB when no entities (first-time user guidance)
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (entities.length === 0) {
+      const animation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 1.15, duration: 800, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+        ])
+      );
+      animation.start();
+      return () => animation.stop();
+    }
+  }, [entities.length]);
 
   const showSnack = (msg: string) => {
     setSnackMessage(msg);
@@ -152,6 +168,24 @@ export default function HomeScreen() {
           >
             {t('home.no_entities_desc')}
           </Text>
+          <Button
+            mode="contained"
+            icon="plus"
+            onPress={handleGenerateCode}
+            loading={isGeneratingCode}
+            disabled={isGeneratingCode}
+            style={styles.ctaButton}
+            contentStyle={styles.ctaButtonContent}
+            labelStyle={styles.ctaButtonLabel}
+          >
+            {t('home.generate_binding_code')}
+          </Button>
+          <Text
+            variant="bodySmall"
+            style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center', marginTop: 4 }}
+          >
+            {t('home.binding_code_hint')}
+          </Text>
         </View>
       ) : (
         <FlatList
@@ -172,20 +206,24 @@ export default function HomeScreen() {
 
       {/* FAB buttons */}
       <View style={styles.fabContainer}>
-        <FAB
-          icon="bullhorn"
-          label={t('home.broadcast')}
-          onPress={() => setBroadcastVisible(true)}
-          variant="secondary"
-          size="small"
-          style={styles.broadcastFab}
-        />
-        <FAB
-          icon={isGeneratingCode ? 'loading' : 'plus'}
-          onPress={handleGenerateCode}
-          loading={isGeneratingCode}
-          style={styles.fab}
-        />
+        {entities.length > 0 && (
+          <FAB
+            icon="bullhorn"
+            label={t('home.broadcast')}
+            onPress={() => setBroadcastVisible(true)}
+            variant="secondary"
+            size="small"
+            style={styles.broadcastFab}
+          />
+        )}
+        <Animated.View style={{ transform: [{ scale: entities.length === 0 ? pulseAnim : 1 }] }}>
+          <FAB
+            icon={isGeneratingCode ? 'loading' : 'plus'}
+            onPress={handleGenerateCode}
+            loading={isGeneratingCode}
+            style={styles.fab}
+          />
+        </Animated.View>
       </View>
 
       {/* Broadcast Dialog */}
@@ -236,6 +274,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 32,
     gap: 8,
+  },
+  ctaButton: {
+    marginTop: 20,
+    borderRadius: 28,
+    elevation: 3,
+  },
+  ctaButtonContent: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  ctaButtonLabel: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   list: { paddingVertical: 8, paddingBottom: 100 },
   fabContainer: {

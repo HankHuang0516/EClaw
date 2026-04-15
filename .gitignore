@@ -56,3 +56,4 @@ app/build/
 nul
 compile_log.txt
 logs/
+ios-app/*.ipa
