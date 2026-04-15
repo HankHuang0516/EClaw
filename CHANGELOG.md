@@ -1,3 +1,10 @@
+## [1.980.4](https://github.com/HankHuang0516/EClaw/compare/v1.980.3...v1.980.4) (2026-04-15)
+
+
+### Bug Fixes
+
+* **eslint:** 0 errors 0 warnings — CI should now pass ([870aee3](https://github.com/HankHuang0516/EClaw/commit/870aee30e52c8395666df8c953f2e257dce08d23))
+
 ## [1.980.3](https://github.com/HankHuang0516/EClaw/compare/v1.980.2...v1.980.3) (2026-04-15)
 
 
