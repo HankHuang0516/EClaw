@@ -111,6 +111,7 @@ const TEST_FILES = [
     'test-channel-push-text.js',    // Channel push text format verification
     'test-note-pages.js',           // Note page CRUD, public/private toggle, visitor analytics
     'test-invite-auth.js',          // Invite auth: device+cookie dual auth, route conflict fix (#1676)
+    'test-org-chart.js',            // Org chart CRUD lifecycle, cycle detection, partial update, auth
 ];
 
 // Manual UI tests (run on device, not automated):
