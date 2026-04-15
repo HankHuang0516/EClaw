@@ -43,8 +43,8 @@ export default function EntityCard({ entity, onLongPress }: EntityCardProps) {
           ) : (
             <Avatar.Text
               size={56}
-              label={CHARACTER_ICONS[entity.character]}
-              style={{ backgroundColor: CHARACTER_COLORS[entity.character] }}
+              label={CHARACTER_ICONS[entity.character] || '🦞'}
+              style={{ backgroundColor: CHARACTER_COLORS[entity.character] || '#7C3AED' }}
             />
           )}
           {/* Online indicator */}

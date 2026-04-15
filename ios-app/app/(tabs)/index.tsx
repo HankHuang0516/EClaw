@@ -291,7 +291,9 @@ const styles = StyleSheet.create({
   list: { paddingVertical: 8, paddingBottom: 100 },
   fabContainer: {
     position: 'absolute',
-    bottom: 24,
+    // tab bar is ~49pt + safe-area bottom; FAB at bottom:24 was overlapping the
+    // Cards + Settings tab hit targets, making them untappable.
+    bottom: 96,
     right: 16,
     alignItems: 'flex-end',
     gap: 12,
