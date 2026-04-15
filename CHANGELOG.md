@@ -1,3 +1,11 @@
+## [1.981.10](https://github.com/HankHuang0516/EClaw/compare/v1.981.9...v1.981.10) (2026-04-15)
+
+
+### Bug Fixes
+
+* **ios/feedback:** use dedicated type_label key for feedback type heading ([a88a05a](https://github.com/HankHuang0516/EClaw/commit/a88a05af7934f582c11ec09815b97e56d0fcbd8f)), closes [#1777](https://github.com/HankHuang0516/EClaw/issues/1777)
+* **ios/entity-manager:** wrap hardcoded English strings with i18n ([b07a6bd](https://github.com/HankHuang0516/EClaw/commit/b07a6bdd0ba268a1c88a0517f3709e1113919d90)), closes [#1776](https://github.com/HankHuang0516/EClaw/issues/1776)
+
 ## [1.981.9](https://github.com/HankHuang0516/EClaw/compare/v1.981.8...v1.981.9) (2026-04-15)
 
 
