@@ -1,3 +1,10 @@
+## [1.980.3](https://github.com/HankHuang0516/EClaw/compare/v1.980.2...v1.980.3) (2026-04-15)
+
+
+### Bug Fixes
+
+* **ios:** remove deprecated expo-av (SDK 55 incompatible) ([0ea3e45](https://github.com/HankHuang0516/EClaw/commit/0ea3e45cd95532a557e5ca2c2754a03fba85fb42))
+
 ## [1.980.2](https://github.com/HankHuang0516/EClaw/compare/v1.980.1...v1.980.2) (2026-04-15)
 
 
