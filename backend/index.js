@@ -12799,7 +12799,7 @@ async function pushToBot(entity, deviceId, eventType, payload, opts = {}) {
     };
 
     try {
-        console.log(`[Push] Sending to ${url} with sessionKey: ${effectiveSessionKey.substring(0, 20)}...`);
+        console.log(`[Push] Sending to ${url} with sessionKey: ${(effectiveSessionKey || '(none)').substring(0, 20)}...`);
         console.log(`[Push] Payload:`, JSON.stringify(requestPayload, null, 2));
 
         // OpenClaw /tools/invoke format
@@ -12837,8 +12837,8 @@ async function pushToBot(entity, deviceId, eventType, payload, opts = {}) {
                         entity.pushStatus = { ok: true, at: Date.now() };
                         return { pushed: true };
                     } else {
-                        console.error(`[Push] ✗ Retry with discovered session failed: ${retryText.substring(0, 200)}`);
-                        serverLog('error', 'push_error', `Session discovery retry failed for Entity ${entity.entityId}`, { deviceId, entityId: entity.entityId, metadata: { error: retryText.substring(0, 200) } });
+                        console.error(`[Push] ✗ Retry with discovered session failed: ${(retryText || '').substring(0, 200)}`);
+                        serverLog('error', 'push_error', `Session discovery retry failed for Entity ${entity.entityId}`, { deviceId, entityId: entity.entityId, metadata: { error: (retryText || '').substring(0, 200) } });
                         entity.pushStatus = { ok: false, reason: 'session_discovery_failed', at: Date.now() };
                         return { pushed: false, reason: 'session_discovery_retry_failed', error: retryText };
                     }
@@ -12880,7 +12880,7 @@ async function pushToBot(entity, deviceId, eventType, payload, opts = {}) {
             const errorText = await response.text().catch(() => '');
             console.error(`[Push] ✗ Device ${deviceId} Entity ${entity.entityId}: Push failed with status ${response.status}`);
             console.error(`[Push] Error response: ${errorText}`);
-            serverLog('error', 'push_error', `Entity ${entity.entityId} push HTTP ${response.status}`, { deviceId, entityId: entity.entityId, metadata: { status: response.status, error: errorText.substring(0, 300) } });
+            serverLog('error', 'push_error', `Entity ${entity.entityId} push HTTP ${response.status}`, { deviceId, entityId: entity.entityId, metadata: { status: response.status, error: (errorText || '').substring(0, 300) } });
 
             // Build debug hint based on error status
             let debugHint = '';

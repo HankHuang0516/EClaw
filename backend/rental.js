@@ -1304,7 +1304,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
 
         // P2-F Entity Handover: create rental entity on renter's device
         // and mark the owner's entity as leased out.
-        if (_interviewDeps.devices) {
+        if (_interviewDeps && _interviewDeps.devices) {
             try {
                 // Ensure the renter device exists in memory (#1713).
                 // The device may exist in PostgreSQL but not yet in the
@@ -1365,7 +1365,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
     // cron-expired contracts don't leave stale owner leased_out state (which
     // Phase 1 reconcile could then mis-interpret and delete the owner's entity).
     async function runContractCleanup(contractId, auditCtx = {}) {
-        if (!_interviewDeps.devices) return;
+        if (!_interviewDeps || !_interviewDeps.devices) return;
         try {
             const cRow = await pool.query(
                 `SELECT c.renter_device_id, c.listing_id,
@@ -1643,7 +1643,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         }
 
         // Resolve the owner's entity from the in-memory devices map
-        if (!_interviewDeps.pushToBot || !_interviewDeps.devices) {
+        if (!_interviewDeps || !_interviewDeps.pushToBot || !_interviewDeps.devices) {
             throw new Error('interview_deps_not_ready');
         }
         const device = _interviewDeps.devices[listing.owner_device_id];

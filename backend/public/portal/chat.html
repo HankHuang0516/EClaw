@@ -1801,9 +1801,9 @@
                 </div>
                 <div class="chip-group-wrapper">
                     <div class="chip-group" id="filterChips">
-                        <span class="filter-chip active" data-filter="all" onclick="setFilter('all')" data-i18n="chat_filter_all">All</span>
+                        <button class="filter-chip active" data-filter="all" onclick="setFilter('all')" data-i18n="chat_filter_all">All</button>
                         <!-- Entity chips injected dynamically -->
-                        <span class="filter-chip" data-filter="my" onclick="setFilter('my')" data-i18n="chat_filter_my">My Messages</span>
+                        <button class="filter-chip" data-filter="my" onclick="setFilter('my')" data-i18n="chat_filter_my">My Messages</button>
                     </div>
                     <span class="filter-chip-toggle" id="filterToggle" onclick="toggleFilterExpand()" style="display:none;"></span>
                 </div>
@@ -1871,7 +1871,7 @@
                 <div class="slash-suggestions" id="slashSuggestions"></div>
                 <div class="input-row">
                     <div class="attach-menu-wrapper">
-                        <button class="btn-media" id="btnAttach" onclick="toggleAttachMenu()">&#x2B;</button>
+                        <button class="btn-media" id="btnAttach" onclick="toggleAttachMenu()" aria-label="Attach media">&#x2B;</button>
                         <div class="attach-menu" id="attachMenu">
                             <button class="attach-menu-item" onclick="openPhotoPicker()">
                                 <span class="menu-icon">&#x1F4F7;</span>
@@ -1887,7 +1887,7 @@
                             </button>
                             <button class="attach-menu-item" onclick="openR2FilesPanel()">
                                 <span class="menu-icon">&#x1F4C1;</span>
-                                <span>我的檔案</span>
+                                <span data-i18n="chat_attach_my_files">My Files</span>
                             </button>
                             <button class="attach-menu-item" id="attachMenuEnvBtn" style="display:none" onclick="openEnvVarFromMenu()">
                                 <span class="menu-icon">&#x1F511;</span>
@@ -1899,7 +1899,7 @@
                             <div id="envVarChips"></div>
                         </div>
                     </div>
-                    <button class="btn-media" id="btnVoice" onclick="toggleRecording()">&#x1F3A4;</button>
+                    <button class="btn-media" id="btnVoice" onclick="toggleRecording()" aria-label="Record voice message">&#x1F3A4;</button>
                     <textarea class="chat-input" id="messageInput" rows="1"
                         data-i18n="chat_input_placeholder" placeholder="Type a message..."
                         oninput="renderSlashSuggestions(this.value); localStorage.setItem('chat_draft', this.value); this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,120)+'px'"
@@ -1937,7 +1937,7 @@
     <!-- Photo Lightbox -->
     <div class="lightbox" id="lightbox" onclick="if(event.target===this)closeLightbox()">
         <button class="lightbox-arrow prev" onclick="event.stopPropagation();lightboxNav(-1)">&#8249;</button>
-        <img id="lightboxImg" src="" alt="" onclick="event.stopPropagation();toggleLightboxZoom()">
+        <img id="lightboxImg" src="" alt="Enlarged chat image" onclick="event.stopPropagation();toggleLightboxZoom()">
         <button class="lightbox-arrow next" onclick="event.stopPropagation();lightboxNav(1)">&#8250;</button>
         <div class="lightbox-counter" id="lightboxCounter"></div>
     </div>
@@ -2876,7 +2876,7 @@
                     return;
                 }
 
-                const chip = document.createElement('span');
+                const chip = document.createElement('button');
                 chip.className = `filter-chip filter-chip-entity${currentFilter === 'entity-' + id ? ' active' : ''}`;
                 chip.dataset.filter = `entity-${id}`;
                 chip.onclick = () => setFilter(`entity-${id}`);
@@ -2890,7 +2890,7 @@
                 if (existing) return;
                 const shortCode = code.length > 12 ? code.slice(0, 8) : code;
                 const label = xdeviceLabelCache[code] || `\u{1F310} ${shortCode}`;
-                const chip = document.createElement('span');
+                const chip = document.createElement('button');
                 chip.className = `filter-chip filter-chip-entity filter-chip-contact${currentFilter === 'xdevice-' + code ? ' active' : ''}`;
                 chip.dataset.filter = `xdevice-${code}`;
                 chip.onclick = () => setFilter(`xdevice-${code}`);
