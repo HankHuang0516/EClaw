@@ -20,7 +20,6 @@ Disallow: /portal/env-vars.html
 Disallow: /portal/files.html
 Disallow: /portal/feedback.html
 Disallow: /portal/admin.html
-Disallow: /portal/info.html
 Disallow: /portal/screen-control.html
 Disallow: /portal/delete-account.html
 Disallow: /portal/card-holder.html
