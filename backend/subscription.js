@@ -14,7 +14,7 @@ const safeEqual = require('./safe-equal');
 
 const express = require('express');
 const { Pool } = require('pg');
-const crypto = require('crypto');
+const _crypto = require('crypto');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
@@ -41,7 +41,7 @@ const SUBSCRIPTION_PERIOD_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 // ============================================
 // New subscription plan tiers (e-coin integrated)
 // ============================================
-const ECOIN_TO_MLI = 1000;
+const _ECOIN_TO_MLI = 1000;
 
 const SUBSCRIPTION_PLANS = Object.freeze({
     free: {
@@ -87,7 +87,7 @@ const SUBSCRIPTION_PLANS = Object.freeze({
 });
 
 /** Map Google Play product ID → plan ID */
-const GOOGLE_PLAY_TO_PLAN = Object.freeze({
+const _GOOGLE_PLAY_TO_PLAN = Object.freeze({
     'eclaw_sub_starter': 'starter',
     'eclaw_sub_pro': 'pro',
     'eclaw_sub_business': 'business',
@@ -99,7 +99,7 @@ const GOOGLE_PLAY_TO_PLAN = Object.freeze({
 const OFFICIAL_BOT_MONTHLY_ECOIN = 30000;
 
 module.exports = function (devices, authMiddleware, _unused, serverLog) {
-    let walletModule = null;
+    let _walletModule = null;
     const router = express.Router();
 
     // ============================================
@@ -340,7 +340,7 @@ module.exports = function (devices, authMiddleware, _unused, serverLog) {
     // ============================================
     router.post('/verify-google', async (req, res) => {
         try {
-            const { deviceId, deviceSecret, purchaseToken, productId } = req.body;
+            const { deviceId, deviceSecret, purchaseToken: _purchaseToken, productId: _productId } = req.body;
 
             if (!deviceId || !deviceSecret) {
                 return res.status(400).json({ success: false, error: 'Missing credentials' });
@@ -605,7 +605,7 @@ module.exports = function (devices, authMiddleware, _unused, serverLog) {
     }
 
     /** Inject walletModule after both modules are initialized (deferred DI). */
-    function setWalletModule(wm) { walletModule = wm; }
+    function setWalletModule(wm) { _walletModule = wm; }
 
     return { router, enforceUsageLimit, loadPremiumStatus, setWalletModule, SUBSCRIPTION_PLANS, OFFICIAL_BOT_MONTHLY_ECOIN };
 };

@@ -151,15 +151,6 @@ async function initRentalDatabase() {
             `UPDATE bot_listings SET status = 'draft', updated_at = NOW() WHERE status = 'interview'`
         );
 
-        // BUG-M1: avatar_url backfill already ran on production; new listings get avatar
-        // from the route handler. No further backfill needed.
-        if (false) { // eslint-disable-line no-constant-condition
-            // Removed: was referencing _interviewDeps which is not in scope here
-            try { const nullAvatars = { rows: [] }; void nullAvatars;
-                if (nullAvatars.rowCount > 0) console.log(`[Rental] Backfilled avatar_url for ${nullAvatars.rowCount} listing(s)`);
-            } catch (e) { console.warn('[Rental] Avatar backfill warning:', e.message); }
-        }
-
         console.log('[Rental] Database initialized');
     } catch (error) {
         console.error('[Rental] Failed to init database:', error);

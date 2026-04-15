@@ -58,7 +58,7 @@ async function assertPublicCallbackUrl(callbackUrl) {
     if (isPrivateIp(address)) throw new Error('callback_url must not resolve to a private/internal IP');
 }
 
-module.exports = function (devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase, awardEntityXP, XP_AMOUNTS, notifyDevice, deliverToEntity, gatekeeperCheckText, resolveSpeakToTarget, checkBotToBotRateLimit, checkCrossSpeakRateLimit, crossDeviceSettings, devicePrefs, recentBroadcasts, BOT2BOT_MAX_MESSAGES, db: dbRef, getMissionApiHints, buildIdentitySetupHint, buildBroadcastRecipientBlock, chatPool }) {
+module.exports = function (devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase, awardEntityXP, XP_AMOUNTS, notifyDevice, deliverToEntity, gatekeeperCheckText, resolveSpeakToTarget, checkBotToBotRateLimit, checkCrossSpeakRateLimit, crossDeviceSettings, devicePrefs, recentBroadcasts: _recentBroadcasts, BOT2BOT_MAX_MESSAGES: _BOT2BOT_MAX_MESSAGES, db: dbRef, getMissionApiHints, buildIdentitySetupHint, buildBroadcastRecipientBlock, chatPool }) {
     const pushContextHelpers = { getMissionApiHints, buildIdentitySetupHint, buildBroadcastRecipientBlock };
     // Late-bound kanban auto-review hook (set after kanbanModule init)
     let kanbanAutoReview = null;
@@ -279,7 +279,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
     // ============================================
     router.post('/test-sink', (req, res) => {
         const slot = req.query.slot || 'default';
-        const expectedToken = req.query.token; // token embedded in callback_url for retrieval
+        const _expectedToken = req.query.token; // token embedded in callback_url for retrieval
         const authHeader = req.headers.authorization || '';
         const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
 

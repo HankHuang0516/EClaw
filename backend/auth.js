@@ -1437,7 +1437,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
         }
 
         try {
-            const [encodedSig, payload] = signedRequest.split('.');
+            const [_encodedSig, payload] = signedRequest.split('.');
             const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf-8'));
             const userId = data.user_id;
 

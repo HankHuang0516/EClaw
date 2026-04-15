@@ -2680,7 +2680,7 @@ app.post('/api/gatekeeper/appeal', async (req, res) => {
 app.get('/api/admin/gatekeeper/debug', adminAuth, adminCheck, async (req, res) => {
     const { deviceId } = req.query;
     if (!deviceId) return res.status(400).json({ error: 'deviceId required' });
-    const device = devices[deviceId];
+    const _device = devices[deviceId];
     // Query DB for is_admin
     let dbAdmin = null;
     try {
@@ -3324,7 +3324,7 @@ function createDefaultEntity(entityId) {
 // ============================================
 // XP / LEVEL SYSTEM
 // ============================================
-const XP_PER_PRIORITY = { LOW: 10, MEDIUM: 25, HIGH: 50, CRITICAL: 100 };
+const _XP_PER_PRIORITY = { LOW: 10, MEDIUM: 25, HIGH: 50, CRITICAL: 100 };
 
 // Extended XP amounts for all channels
 const XP_AMOUNTS = {
@@ -3358,7 +3358,7 @@ function calculateLevel(xp) {
     return Math.floor(Math.sqrt(xp / 100)) + 1;
 }
 
-function getXpProgress(xp) {
+function _getXpProgress(xp) {
     const level = calculateLevel(xp);
     const currentThreshold = xpForLevel(level);
     const nextThreshold = xpForLevel(level + 1);
@@ -3455,7 +3455,7 @@ function getOrCreateDevice(deviceId, deviceSecret = null, opts = {}) {
 }
 
 // Helper: Get entity by deviceId and entityId
-function getEntity(deviceId, entityId) {
+function _getEntity(deviceId, entityId) {
     const device = devices[deviceId];
     if (!device) return null;
     return device.entities[entityId] || null;
@@ -14619,7 +14619,7 @@ app.post('/api/device-vars', async (req, res) => {
                     mergedSources[k] = src;
                 } else {
                     // Conflict: same key, different value, different source
-                    const otherSrc = existingSrc;
+                    const _otherSrc = existingSrc;
                     const webSuffix = '_Web';
                     const appSuffix = '_APP';
 

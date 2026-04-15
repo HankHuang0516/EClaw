@@ -1092,7 +1092,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         }
 
         // Stage C: Forward to Claude CLI proxy
-        const { recentLogs, recentFailures, recentCrashes } = deviceId
+        const { recentLogs, recentFailures, recentCrashes: _recentCrashes } = deviceId
             ? await fetchRecentData(deviceId)
             : { recentLogs: [], recentFailures: [], recentCrashes: [] };
 

@@ -178,7 +178,7 @@ function pruneHierarchy(hierarchy, validEntityIds) {
  * Validate hierarchy structure.
  * Returns { valid: true } or { valid: false, error: string }.
  */
-function validateHierarchy(hierarchy, validEntityIds) {
+function validateHierarchy(hierarchy, _validEntityIds) {
     if (!hierarchy || typeof hierarchy !== 'object' || Array.isArray(hierarchy)) {
         return { valid: false, error: 'hierarchy must be an object' };
     }

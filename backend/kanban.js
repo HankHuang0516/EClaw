@@ -34,7 +34,7 @@
 
 const express = require('express');
 const { Pool } = require('pg');
-const crypto = require('crypto');
+const _crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const safeEqual = require('./safe-equal');
@@ -1567,7 +1567,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     await addSystemComment(card.id, card.device_id,
                         `🚫 自動封鎖：此卡片已停滯 ${elapsedHrs} 小時，已自動移至「blocked」，請人工介入`);
                     if (notifyEntityId != null) {
-                        const lang = await getDeviceLanguage(card.device_id);
+                        const _lang = await getDeviceLanguage(card.device_id);
                         notifyEntities(card.device_id, [notifyEntityId],
                             `🚫 卡片「${card.title}」已停滯 ${elapsedHrs}h，自動 blocked，需人工介入`);
                     }

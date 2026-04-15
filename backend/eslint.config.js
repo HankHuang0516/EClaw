@@ -40,10 +40,18 @@ module.exports = [
                 AbortController: 'readonly',
                 TextDecoder: 'readonly',
                 TextEncoder: 'readonly',
+                Blob: 'readonly',
+                FormData: 'readonly',
+                Headers: 'readonly',
+                Request: 'readonly',
+                Response: 'readonly',
+                structuredClone: 'readonly',
             },
         },
         rules: {
-            'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+            // argsIgnorePattern: params starting with _ are OK
+            // caughtErrors: 'none' — catch(err/e/_) are always OK (never flag unused catch params)
+            'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrors: 'none' }],
             'no-undef': 'error',
             'no-console': 'off',
         },

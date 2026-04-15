@@ -142,7 +142,7 @@ function escapeHtmlServer(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 const PRIORITY_MAP = { 1: 'LOW', 2: 'MEDIUM', 3: 'HIGH', 4: 'CRITICAL' };
-function toPriorityName(val) {
+function _toPriorityName(val) {
     if (typeof val === 'string' && Object.values(PRIORITY_MAP).includes(val)) return val;
     return PRIORITY_MAP[parseInt(val)] || 'MEDIUM';
 }
@@ -165,7 +165,7 @@ function strSimilarity(a, b) {
     return 1 - dp[m][n] / Math.max(m, n);
 }
 
-module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
+module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } = {}) {
     const router = express.Router();
 
     // ── Notification Debounce (per-device, 5s window) ──
@@ -1306,9 +1306,9 @@ module.exports = function(devices, { awardEntityXP, serverLog } = {}) {
         }
 
         // Rate limit: 5 orders per IP per hour
-        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+        const _ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
         try {
-            const rateCheck = await pool.query(
+            const _rateCheck = await pool.query(
                 "SELECT COUNT(*) as cnt FROM chat_orders WHERE device_id IN (SELECT device_id FROM chat_orders WHERE public_code = $1 LIMIT 1) AND created_at > NOW() - INTERVAL '1 hour'",
                 [publicCode]
             );

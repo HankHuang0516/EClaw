@@ -126,7 +126,7 @@ module.exports = function (devices, { publicCodeIndex, serverLog, missionPool })
     return map[status] || 'submitted';
   }
 
-  function a2aStatusToEclaw(status) {
+  function _a2aStatusToEclaw(status) {
     const map = {
       'submitted': 'PENDING',
       'working': 'IN_PROGRESS',

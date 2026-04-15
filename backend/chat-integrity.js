@@ -91,7 +91,7 @@ async function report(pool, mismatch, { serverLog }) {
     );
 
     // Persist to DB
-    let savedId = null;
+    let _savedId = null;
     if (pool) {
         try {
             const result = await pool.query(
@@ -101,7 +101,7 @@ async function report(pool, mismatch, { serverLog }) {
                 [deviceId, platform, layer, checkType, fingerprint,
                  JSON.stringify({ description, expected, actual, affectedIds, appVersion }), now]
             );
-            savedId = result.rows[0]?.id;
+            _savedId = result.rows[0]?.id;
         } catch (err) {
             console.error('[ChatIntegrity] DB insert error:', err.message);
         }

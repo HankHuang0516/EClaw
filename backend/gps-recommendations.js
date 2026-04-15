@@ -10,7 +10,7 @@
 'use strict';
 
 const console_log = console.log.bind(console);
-const console_error = console.error.bind(console);
+const _console_error = console.error.bind(console);
 
 console_log('[GpsRec] Module loading');
 

@@ -27,7 +27,7 @@ const path = require('path');
 
 const JWT_SECRET = process.env.JWT_SECRET || require('crypto').randomBytes(32).toString('hex');
 const ACCESS_TOKEN_TTL = 15 * 60; // 15 minutes in seconds
-const REFRESH_TOKEN_TTL = 30 * 24 * 60 * 60; // 30 days in seconds
+const _REFRESH_TOKEN_TTL = 30 * 24 * 60 * 60; // 30 days in seconds
 const AUTH_CODE_TTL = 10 * 60; // 10 minutes in seconds
 const VALID_SCOPES = ['read', 'write', 'entity:manage', 'mission:manage', 'admin'];
 
