@@ -1,3 +1,10 @@
+## [1.981.6](https://github.com/HankHuang0516/EClaw/compare/v1.981.5...v1.981.6) (2026-04-15)
+
+
+### Bug Fixes
+
+* **i18n:** add 537 missing Arabic (ar) keys — 0 missing now ([#1759](https://github.com/HankHuang0516/EClaw/issues/1759)) ([f9d9448](https://github.com/HankHuang0516/EClaw/commit/f9d94481677034e24fd5d58680cff3669b319372))
+
 ## [1.981.5](https://github.com/HankHuang0516/EClaw/compare/v1.981.4...v1.981.5) (2026-04-15)
 
 
