@@ -1,3 +1,10 @@
+## [1.981.14](https://github.com/HankHuang0516/EClaw/compare/v1.981.13...v1.981.14) (2026-04-15)
+
+
+### Bug Fixes
+
+* **ios:** move Home FAB above tab bar so Cards+Settings tabs are tappable ([7e90a84](https://github.com/HankHuang0516/EClaw/commit/7e90a8498a8923a928b7b9d1f4ffd54118dee583))
+
 ## [1.981.13](https://github.com/HankHuang0516/EClaw/compare/v1.981.12...v1.981.13) (2026-04-15)
 
 
