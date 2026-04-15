@@ -214,7 +214,7 @@ export default function OfficialBorrowScreen() {
                   <Card.Content>
                     <View style={styles.entityRow}>
                       <Text variant="titleMedium" style={{ flex: 1 }}>
-                        {entity.name}
+                        {entity.name || `Bot #${entity.entityId}`}
                       </Text>
                       {bound && (
                         <Chip compact mode="outlined">

@@ -11,15 +11,19 @@ export default function ChatScreen() {
   const { entities } = useEntityStore();
   const entity = entities.find((e) => e.entityId === entityId) ?? null;
 
+  const entityTitle = entity
+    ? (entity.name || `${entity.character || 'Entity'} #${entity.entityId}`)
+    : 'Chat';
+
   React.useLayoutEffect(() => {
     if (entity) {
-      navigation.setOptions({ title: entity.name, headerShown: true });
+      navigation.setOptions({ title: entityTitle, headerShown: true });
     }
-  }, [entity, navigation]);
+  }, [entity, entityTitle, navigation]);
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <Stack.Screen options={{ title: entity?.name ?? 'Chat' }} />
+      <Stack.Screen options={{ title: entityTitle }} />
       <WebViewScreen
         url={`https://eclawbot.com/portal/chat.html${entityId ? `?filterEntity=${entityId}` : ''}`}
       />

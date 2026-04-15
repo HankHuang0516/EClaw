@@ -111,7 +111,7 @@ export default function ChatListScreen() {
 
               {/* Info */}
               <View style={styles.info}>
-                <Text variant="titleMedium">{item.name}</Text>
+                <Text variant="titleMedium">{item.name || `${item.character || 'Entity'} #${item.entityId}`}</Text>
                 <Text
                   variant="bodySmall"
                   numberOfLines={1}

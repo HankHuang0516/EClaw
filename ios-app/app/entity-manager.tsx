@@ -107,7 +107,7 @@ export default function EntityManagerScreen() {
     }
     Alert.alert(
       t('entity.remove'),
-      t('entity.remove_confirm', { name: entity.name }),
+      t('entity.remove_confirm', { name: entity.name || `${entity.character || 'Entity'} #${entity.entityId}` }),
       [
         { text: t('common.cancel'), style: 'cancel' },
         {
@@ -234,7 +234,7 @@ export default function EntityManagerScreen() {
 
               {/* Info */}
               <View style={styles.info}>
-                <Text variant="titleMedium">{item.name}</Text>
+                <Text variant="titleMedium">{item.name || `${item.character || 'Entity'} #${item.entityId}`}</Text>
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
                   {t(`entity.character_${item.character.toLowerCase()}`)} • {t('entityManager.slot_label', 'Slot {{num}}', { num: item.entityIndex + 1 })}
                 </Text>
@@ -252,7 +252,7 @@ export default function EntityManagerScreen() {
                   size={20}
                   onPress={() => {
                     setSelectedEntity(item);
-                    setNewName(item.name);
+                    setNewName(item.name || '');
                     setRenameVisible(true);
                   }}
                 />
@@ -318,7 +318,7 @@ export default function EntityManagerScreen() {
       {/* Agent Card Dialog */}
       <Portal>
         <Dialog visible={acVisible} onDismiss={() => setAcVisible(false)} style={{ maxHeight: '85%' }}>
-          <Dialog.Title>{t('entityManager.agent_card', 'Agent Card')}{acEntity ? ` — ${acEntity.name}` : ''}</Dialog.Title>
+          <Dialog.Title>{t('entityManager.agent_card', 'Agent Card')}{acEntity ? ` — ${acEntity.name || `${acEntity.character || 'Entity'} #${acEntity.entityId}`}` : ''}</Dialog.Title>
           <Dialog.ScrollArea style={{ paddingHorizontal: 0 }}>
             <ScrollView contentContainerStyle={{ paddingHorizontal: 24, gap: 8, paddingBottom: 8 }}>
               <TextInput mode="outlined" dense label={t('entityManager.label_description', 'Description *')} value={acDesc} onChangeText={setAcDesc}
