@@ -268,6 +268,11 @@
 | 7 | R2 上傳中文檔名 → S3 Metadata 簽名失敗 | P2 |
 | 8 | Files intent API hint 未注入 → bot 不知道用 attachments 回覆 | P3 |
 
+### 架構重構
+| # | 問題 | 影響 |
+|---|------|------|
+| 9 | **unifiedPush() 統一推送**：消除 11 個 channel/webhook if-else 分叉，根除 BUG-R1 類反覆出現的 bug 模式 | 全部 push 路徑 |
+
 ### 仍存在的 P3 issues（可接受）
 - BUG-M4: 缺「你的 Bot」角標（需後端 is_own flag）
 - BUG-M5: Capability chips 只顯示 3 個

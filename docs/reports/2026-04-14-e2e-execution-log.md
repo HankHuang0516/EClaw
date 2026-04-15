@@ -206,3 +206,17 @@ bugs_found: [BUG-AUTH1(P2): device-login userId=null breaks publish/interview AP
 - **問題**：bot 收到檔案相關訊息時不知道要用 `attachments` 欄位回覆
 - **修復**：在 `buildIntentApiHint` 新增 `files` case，自動注入 Upload/List/Download/Delete API hint + attachments 回覆格式提示
 - **關鍵詞**：上傳、檔案、file、附件、attachment、download
+
+### unifiedPush() 架構重構（根除 channel/webhook 分叉）
+- **問題**：`pushToBot()` 和 `channelModule.pushToChannelCallback()` 是兩個獨立函式，每次加新功能（hints、proxy、forward）都只改一邊，導致 BUG-R1、intent hint 缺失、orgChartForward 重複等反覆出現的 bug
+- **Root cause**：index.js 中有 **11 個** `if (channel) → pushToChannel / else → pushToBot` 的分叉
+- **修復**：建立 `unifiedPush()` 統一入口函式
+  - Middleware 層：pendingRename + varsHint + intentApiHints（統一執行一次）
+  - Transport 層：自動判斷 channel callback 或 webhook
+  - `_fromUnified` flag 防止 pushToBot 重複執行 middleware
+- **覆蓋範圍**：11/11 分叉全部替換
+  - Phase 1（3 個）：client/speak channel、rental proxy、orgChartForward
+  - Phase 2（5 個）：transform deliverToEntity、legacy speakTo、legacy broadcast、3 × cross-device
+  - Phase 3（3 個）：compact notify、reorder notify、rename push（skipMiddleware: true）
+- **驗證**：Jest 1557/1557 pass
+- **效果**：以後新增任何 push 相關功能，只需改 `unifiedPush` 的 middleware 區塊
