@@ -328,7 +328,7 @@
                     esc(i18n.t('pub_chip_rate', 'Rate: ')) +
                     (p.rateLimit.remaining ?? '?') + '/' + (p.rateLimit.maxPerDay ?? '?') +
                     ' ' + esc(i18n.t('pub_chip_rate_day', '/day')) + '</div>');
-                return '<div class="' + classes.join(' ') + '" onclick="selectPlatform(\'' + esc(p.id) + '\')">' +
+                return '<div class="' + classes.join(' ') + '" data-platform-id="' + esc(p.id) + '">' +
                     '<div class="chip-row"><span class="chip-name">' + esc(p.name) + '</span>' + badge + '</div>' +
                     '<div class="chip-row">' +
                     '<span class="chip-region">' + esc(p.region || '') + '</span>' +
@@ -336,6 +336,10 @@
                     '</div>' + extra.join('') +
                     '</div>';
             }).join('');
+            // Attach click handlers via dataset instead of inline onclick — avoids JS-string-escape pitfalls
+            grid.querySelectorAll('.platform-chip').forEach(el => {
+                el.addEventListener('click', () => selectPlatform(el.dataset.platformId));
+            });
         }
 
         function selectPlatform(id) {
@@ -420,9 +424,18 @@
                 fields: [
                     { key: 'title', type: 'text', label: 'Title', required: true },
                     { key: 'content', type: 'textarea', label: 'HTML content', required: true, tall: true },
-                    { key: 'labels', type: 'text', label: 'Labels (comma-separated)' }
+                    { key: 'labels', type: 'text', label: 'Labels (comma-separated)' },
+                    { key: 'blogId', type: 'text', label: 'Blog ID (optional — uses last OAuth-bound blog if empty)' }
                 ],
-                toBody: s => ({ title: s.title, content: s.content, labels: splitTags(s.labels) }),
+                // Blogger uses per-device OAuth tokens; deviceId is required by backend
+                // and resolved from the logged-in portal session.
+                toBody: s => ({
+                    deviceId: (window.currentUser && window.currentUser.deviceId) || '',
+                    title: s.title,
+                    content: s.content,
+                    labels: splitTags(s.labels),
+                    blogId: s.blogId || undefined
+                }),
                 path: '/api/publisher/blogger/publish'
             },
             wordpress: {
@@ -430,27 +443,30 @@
                     { key: 'title', type: 'text', label: 'Title', required: true },
                     { key: 'content', type: 'textarea', label: 'HTML content', required: true, tall: true },
                     { key: 'tags', type: 'text', label: 'Tags (comma-separated)' },
-                    { key: 'categories', type: 'text', label: 'Categories (comma-separated)' }
+                    { key: 'categories', type: 'text', label: 'Categories (comma-separated)' },
+                    { key: 'siteId', type: 'text', label: 'Site ID (required for WordPress.com OAuth2; leave empty if using Application Password)',
+                        hint: 'For OAuth2 mode backend returns 400 without siteId. App-Password mode ignores this field.' }
                 ],
                 toBody: s => ({
                     title: s.title,
                     content: s.content,
                     tags: splitTags(s.tags),
-                    categories: splitTags(s.categories)
+                    categories: splitTags(s.categories),
+                    siteId: s.siteId || undefined
                 }),
                 path: '/api/publisher/wordpress/publish'
             },
             tumblr: {
                 fields: [
-                    { key: 'blog_name', type: 'text', label: 'Blog name (slug, e.g. your-blog)', required: true },
-                    { key: 'title', type: 'text', label: 'Title (optional)' },
-                    { key: 'body', type: 'textarea', label: 'Body (markdown or plain)', required: true, tall: true },
+                    { key: 'blogName', type: 'text', label: 'Blog name (slug, e.g. your-blog)', required: true },
+                    { key: 'title', type: 'text', label: 'Title (optional, prepended as H1)' },
+                    { key: 'content', type: 'textarea', label: 'Content (plain text)', required: true, tall: true },
                     { key: 'tags', type: 'text', label: 'Tags (comma-separated)' }
                 ],
                 toBody: s => ({
-                    blog_name: s.blog_name,
+                    blogName: s.blogName,
                     title: s.title || undefined,
-                    body: s.body,
+                    content: s.content,
                     tags: splitTags(s.tags)
                 }),
                 path: '/api/publisher/tumblr/publish'
@@ -472,9 +488,19 @@
             wechat: {
                 fields: [
                     { key: 'title', type: 'text', label: 'Title', required: true },
-                    { key: 'content', type: 'textarea', label: 'HTML content', required: true, tall: true }
+                    { key: 'content', type: 'textarea', label: 'HTML content', required: true, tall: true },
+                    { key: 'thumb_media_id', type: 'text', label: 'Thumbnail media_id', required: true,
+                        hint: 'Upload a cover image via POST /api/publisher/wechat/upload-image first to get this id. WeChat rejects drafts without a thumbnail.' },
+                    { key: 'author', type: 'text', label: 'Author (optional)' },
+                    { key: 'digest', type: 'text', label: 'Digest / summary (optional, defaults to title)' }
                 ],
-                toBody: s => ({ articles: [{ title: s.title, content: s.content }] }),
+                toBody: s => ({
+                    title: s.title,
+                    content: s.content,
+                    thumb_media_id: s.thumb_media_id,
+                    author: s.author || undefined,
+                    digest: s.digest || undefined
+                }),
                 path: '/api/publisher/wechat/draft'
             }
         };
