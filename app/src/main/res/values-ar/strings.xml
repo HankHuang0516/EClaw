@@ -1,0 +1,943 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">EClawbot</string>
+    <string name="wallpaper_description">الحالة المباشرة لوكيل الذكاء الاصطناعي</string>
+
+    <!-- Main Activity -->
+    <string name="main_title">EClawbot</string>
+    <string name="no_agents_connected">لا يوجد وكلاء متصلين</string>
+    <string name="tap_to_add_entity">اضغط على + إضافة كيان لربط وكيلك الأول</string>
+    <string name="add_entity">+ إضافة كيان</string>
+    <string name="select_entity_slot">اختر فتحة الكيان</string>
+    <string name="binding_code">رمز الربط</string>
+    <string name="code_placeholder">------</string>
+    <string name="tap_to_generate_code">اضغط لإنشاء رمز</string>
+    <string name="channel_bind_warning">الإصدار 2026-03+ يوصي بشدة باستخدام ربط قناة EClaw لتجنب فشل الربط.</string>
+    <string name="generate">إنشاء</string>
+    <string name="regenerate">إعادة إنشاء</string>
+    <string name="channel_promo">جرّب EClaw Channel؟ أكثر أصالة وسرعة</string>
+    <string name="channel_step_intro">في طرفية OpenClaw:</string>
+    <string name="channel_step3">3  اختر \"EClaw\"</string>
+    <string name="channel_ai_agent_hint">🤖 يُنصح بشدة باستخدام Claude Code أو وكلاء AI آخرين للتثبيت المُساعد.</string>
+    <string name="channel_learn_more">اعرف المزيد →</string>
+    <string name="expand">توسيع</string>
+    <string name="copy">نسخ</string>
+    <string name="broadcast_to_all">بث للجميع</string>
+    <string name="set_live_wallpaper">تعيين خلفية متحركة</string>
+    <string name="expires_in">ينتهي خلال %ds</string>
+    <string name="command_copied">تم نسخ الأمر!</string>
+    <string name="sent">تم الإرسال!</string>
+    <string name="broadcast_sent">تم إرسال البث!</string>
+    <string name="failed_format">فشل: %s</string>
+
+    <!-- Dialogs -->
+    <string name="send_message">إرسال رسالة</string>
+    <string name="send">إرسال</string>
+    <string name="cancel">إلغاء</string>
+    <string name="to_format">إلى: %1$s (#%2$d)</string>
+    <string name="message_hint">رسالة إلى %s…</string>
+    <string name="broadcast_message_hint">رسالة بث…</string>
+    <string name="send_to_entities">إرسال إلى %d كيان</string>
+    <string name="entity_format">كيان %d</string>
+
+    <!-- Settings -->
+    <string name="settings_title">الإعدادات</string>
+    <string name="usage_title">استخدام اليوم</string>
+    <string name="premium_badge">مميز</string>
+    <string name="sends_today">إرسالات اليوم</string>
+    <string name="unlock_unlimited">✨ دردشة غير محدودة + 8 فتحات كيانات - %s/شهر</string>
+    <string name="unlock_unlimited_no_price">✨ دردشة غير محدودة + 8 فتحات كيانات</string>
+
+    <!-- Layout -->
+    <string name="entity_layout">تخطيط الكيانات</string>
+    <string name="layout_single">مفرد</string>
+    <string name="layout_dual">مزدوج</string>
+    <string name="layout_quad">رباعي</string>
+    <string name="desc_single">كيان واحد معروض في المنتصف</string>
+    <string name="desc_dual">كيانان جنبًا إلى جنب</string>
+    <string name="desc_quad">أربعة كيانات في تخطيط شبكي</string>
+    <string name="custom_layout">تخطيط مخصص</string>
+    <string name="manage_entities">إدارة الكيانات</string>
+
+    <!-- Language -->
+    <string name="language_title">اللغة (語言)</string>
+    <string name="language_system">افتراضي النظام</string>
+    <string name="language_en">English</string>
+    <string name="language_zh">中文 (繁體)</string>
+    <string name="language_zh_cn">简体中文</string>
+    <string name="language_ja">日本語</string>
+    <string name="language_ko">한국어</string>
+    <string name="language_th">ภาษาไทย</string>
+    <string name="language_vi">Tiếng Việt</string>
+    <string name="language_id">Bahasa Indonesia</string>
+
+    <!-- Wallpaper Preview -->
+    <string name="wallpaper_preview_title">معاينة الخلفية</string>
+    <string name="use_custom_layout">استخدام تخطيط مخصص</string>
+    <string name="custom_background">خلفية مخصصة</string>
+    <string name="select_photo">اختيار صورة</string>
+    <string name="reset">إعادة تعيين</string>
+    <string name="set_wallpaper">تعيين الخلفية</string>
+    <string name="drag_to_position">اسحب الكيانات لتحديد موضعها</string>
+    <string name="pinch_to_resize">اضغط للتكبير، اسحب للتحريك</string>
+    <string name="back">رجوع</string>
+
+    <!-- Layout Editor -->
+    <string name="done">تم</string>
+
+    <!-- Entity Manager -->
+    <string name="entities_title">الكيانات</string>
+    <string name="loading_entities">جارٍ تحميل الكيانات…</string>
+    <string name="layout_grid">شبكة</string>
+    <string name="layout_row">صف</string>
+    <string name="layout_column">عمود</string>
+    <string name="layout_diamond">ماسة</string>
+    <string name="layout_corners">زوايا</string>
+    <string name="entity_size">حجم الكيان</string>
+    <string name="size_small">صغير</string>
+    <string name="size_large">كبير</string>
+    <string name="refresh">تحديث</string>
+
+    <!-- AI Chat -->
+    <string name="ai_chat_title">مساعد الذكاء الاصطناعي</string>
+    <string name="ai_chat_welcome">مرحبًا! أنا E-Claw AI.\nاسألني أي شيء عن المنصة.</string>
+    <string name="ai_chat_hint">اطرح سؤالاً…</string>
+    <string name="ai_chat_attach_image">إرفاق صورة</string>
+    <string name="ai_chat_clear_title">مسح السجل</string>
+    <string name="ai_chat_clear_message">مسح كل سجل المحادثة؟</string>
+    <string name="ai_chat_clear_confirm">مسح</string>
+    <string name="ai_chat_busy_retry">الذكاء الاصطناعي مشغول، إعادة المحاولة خلال %1$ds… (%2$d/%3$d)</string>
+    <string name="ai_chat_busy_exhausted">الذكاء الاصطناعي مشغول حاليًا بطلبات أخرى. يرجى المحاولة مرة أخرى بعد قليل.</string>
+    <string name="ai_chat_uploading">جارٍ رفع الصورة…</string>
+    <string name="ai_chat_analyzing">الذكاء الاصطناعي يحلل صورك…</string>
+    <string name="ai_chat_thinking">لا يزال يعمل…</string>
+    <string name="ai_chat_fallback_error">عذرًا، لم أتمكن من معالجة طلبك. يرجى إعادة صياغة سؤالك.</string>
+    <string name="ai_chat_timeout">انتهت مهلة الاستجابة. جارٍ المحاولة مرة أخرى…</string>
+    <string name="ai_chat_no_internet">لا يوجد اتصال بالإنترنت. يرجى التحقق من شبكتك.</string>
+    <string name="ai_chat_connection_error">خطأ في الاتصال. يرجى المحاولة مرة أخرى.</string>
+    <string name="ai_chat_network_error">خطأ في الشبكة. يرجى المحاولة مرة أخرى.</string>
+    <string name="ai_chat_device_not_registered">الجهاز غير مسجل. يرجى إعادة تشغيل التطبيق.</string>
+    <string name="ai_chat_image_too_large">الصور كبيرة جدًا. يرجى المحاولة بصور أقل أو أصغر، أو وصف مشكلتك نصيًا.</string>
+    <string name="ai_chat_image_unavailable">رفع الصور غير متاح مؤقتًا.</string>
+    <string name="ai_chat_view_feedback">عرض سجل الملاحظات →</string>
+
+    <!-- Chat -->
+    <string name="chat_history">الدردشة</string>
+    <string name="chat_offline_message">تعذر الاتصال. يرجى التحقق من اتصال الإنترنت.</string>
+    <string name="retry">إعادة المحاولة</string>
+    <string name="filter_all">الكل</string>
+    <string name="filter_my_messages">رسائلي</string>
+    <string name="type_message">اكتب رسالة…</string>
+    <string name="no_messages_yet">لا توجد رسائل بعد</string>
+    <string name="you">أنت</string>
+    <string name="to_entities">إلى: %s</string>
+    <string name="entity_read_receipt">الكيان %d قرأ</string>
+    <string name="send_voice">إرسال</string>
+    <string name="recording_voice">جارٍ التسجيل…</string>
+    <string name="uploading_media">جارٍ الرفع…</string>
+    <string name="upload_error">فشل الرفع</string>
+    <string name="attach">إرفاق</string>
+    <string name="attach_camera">الكاميرا</string>
+    <string name="attach_gallery">المعرض</string>
+    <string name="attach_video">فيديو</string>
+    <string name="attach_file">ملف</string>
+    <string name="file_too_large">الملف كبير جدًا (الحد الأقصى 100 ميغابايت)</string>
+    <string name="wait_upload">يرجى انتظار اكتمال الرفع</string>
+
+    <!-- Cross-Device Contacts -->
+    <string name="add_contact">إضافة جهة اتصال</string>
+    <string name="add_contact_btn">إضافة</string>
+    <string name="remove_contact">إزالة جهة الاتصال</string>
+    <string name="remove_contact_confirm">إزالة %s من جهات الاتصال؟</string>
+    <string name="contact_code_hint">أدخل الرمز العام</string>
+    <string name="contact_not_found">الكيان غير موجود</string>
+    <string name="contact_added">تمت إضافة جهة الاتصال!</string>
+    <string name="contact_removed">تمت إزالة جهة الاتصال</string>
+    <string name="contact_already_exists">موجود بالفعل في جهات الاتصال</string>
+    <string name="contact_cannot_add_self">لا يمكن إضافة كيانك الخاص</string>
+    <string name="contact_limit_reached">تم بلوغ حد جهات الاتصال (الحد الأقصى 20)</string>
+    <string name="contact_offline">جهة الاتصال غير متصلة</string>
+    <string name="contact_lookup_error">خطأ في الاتصال. يرجى المحاولة مرة أخرى.</string>
+    <string name="contact_send_error">فشل الإرسال. يرجى المحاولة مرة أخرى.</string>
+    <string name="to_contact_cross_device">إلى: %s (عبر الأجهزة)</string>
+    <string name="remove">إزالة</string>
+
+    <!-- Mission Control -->
+    <string name="mission_control">مركز المهام</string>
+    <string name="tab_mission_center">مركز المهام</string>
+    <string name="tab_kanban">كانبان</string>
+    <string name="kanban_add_deprecated">يرجى استخدام لوحة كانبان لإضافة عناصر جديدة. لوحة كانبان لديها نظام بيئي كامل — دع البوتات تنقل العناصر الحالية تدريجيًا.</string>
+    <string name="upload">رفع</string>
+    <string name="uploading">جارٍ الرفع…</string>
+    <string name="save">حفظ</string>
+    <string name="saving">جارٍ الحفظ…</string>
+    <string name="add_todo">+ إضافة مهمة</string>
+    <string name="add_note">+ إضافة ملاحظة</string>
+    <string name="add_rule">+ إضافة قاعدة</string>
+    <string name="no_items">لا توجد مهام</string>
+    <string name="no_missions">لا توجد مهام نشطة</string>
+    <string name="no_done_items">لا توجد عناصر مكتملة</string>
+    <string name="no_notes">لا توجد ملاحظات</string>
+    <string name="no_rules">لا توجد قواعد</string>
+    <string name="add_soul">+ إضافة روح</string>
+    <string name="no_souls">لا توجد أرواح محددة</string>
+
+    <!-- Soul/Rule Template Gallery -->
+    <string name="mission_choose_from_template">اختر من القوالب</string>
+    <string name="mission_soul_gallery_title">قوالب الروح</string>
+    <string name="mission_rule_gallery_title">قوالب القواعد</string>
+    <string name="mission_template_by">بواسطة %s</string>
+    <string name="mission_use_template">تطبيق القالب</string>
+    <string name="mission_template_loading">جارٍ تحميل القوالب…</string>
+    <string name="mission_template_empty">لا توجد قوالب متاحة</string>
+    <string name="mission_soul_builtin">مدمج</string>
+    <string name="mission_template_no_match">لا توجد قوالب مطابقة</string>
+    <string name="mission_browse_templates">تصفح القوالب…</string>
+    <string name="search_hint">بحث…</string>
+    <string name="soul_template">قالب الروح</string>
+    <string name="soul_template_custom">-- مخصص --</string>
+    <string name="soul_name_hint">اسم الروح</string>
+    <string name="soul_desc_hint">وصف الشخصية والنبرة والسلوك…</string>
+    <string name="rule_name_hint">اسم القاعدة</string>
+    <string name="rule_desc_hint">وصف القاعدة…</string>
+    <string name="edit">تعديل</string>
+    <string name="priority">الأولوية</string>
+    <string name="assign_entity">تعيين كيان</string>
+    <string name="assign_entity_multi">تعيين كيان (متعدد)</string>
+    <string name="rule_type">نوع القاعدة</string>
+    <string name="background_set">تم تعيين الخلفية</string>
+    <string name="background_set_failed">فشل تعيين الخلفية</string>
+    <string name="settings_reset">تمت إعادة تعيين الإعدادات</string>
+    <string name="background_disabled">الخلفية معطلة</string>
+    <string name="error_open_picker">تعذر فتح منتقي الصور</string>
+    <string name="error_open_settings">تعذر فتح إعدادات الخلفية</string>
+    <string name="bot_label">🤖 %s</string>
+    <string name="mission_completed_at">✓ %s</string>
+    <string name="playback_failed">فشل التشغيل</string>
+    <string name="confirm_copy">تم النسخ إلى الحافظة</string>
+    <string name="unknown_error">خطأ غير معروف</string>
+    <string name="failed_add_slot">فشل إضافة الفتحة</string>
+    <string name="no_bound_entities">لا توجد كيانات مربوطة</string>
+    <string name="publish_notification">نشر الإشعار</string>
+    <string name="no_notify_items">لا توجد تغييرات جديدة للإشعار</string>
+    <string name="notification_sent">تم إرسال الإشعار</string>
+    <string name="task_saved">تم حفظ المهمة</string>
+    <string name="schedule_tag">الجدول</string>
+    <string name="schedule_bot_reply">رد البوت</string>
+    <string name="schedule_no_reply">لا يوجد رد بعد</string>
+    <string name="schedule_message_label">رسالة مجدولة</string>
+    <string name="enter_message">يرجى إدخال رسالة</string>
+    <string name="select_one_entity">يرجى اختيار كيان واحد على الأقل</string>
+    <string name="entity_id_format">#%d</string>
+
+    <!-- Bot Avatar -->
+    <string name="bot_avatar">صورة البوت الرمزية</string>
+    <string name="avatar_subtitle">كيان %d</string>
+    <string name="avatar_upload_photo">رفع صورة</string>
+    <string name="avatar_uploading">جارٍ الرفع…</string>
+    <string name="avatar_upload_failed">فشل الرفع</string>
+    <string name="avatar_upload_success">تم تحديث الصورة الرمزية!</string>
+
+    <!-- Entity Management -->
+    <string name="remove_entity">إزالة</string>
+    <string name="remove_confirm_title">إزالة الكيان؟</string>
+    <string name="remove_confirm_message">هل أنت متأكد من إزالة %1$s (#%2$d)؟ سيتم فك ربطه من الخلفية.</string>
+    <string name="entity_removed">تمت إزالة %s</string>
+    <string name="refresh_connection">تحديث</string>
+    <string name="refresh_success">تم تحديث الاتصال!</string>
+    <string name="refresh_webhook_broken_title">فشل الاتصال</string>
+    <string name="refresh_webhook_broken_message">تعذر الاتصال بالبوت. هل تريد إعادة الربط؟</string>
+    <string name="refresh_cooldown">يرجى الانتظار %d ثانية</string>
+    <string name="edit_entities">تعديل</string>
+    <string name="drag_to_reorder">اسحب لإعادة الترتيب</string>
+    <string name="xd_settings_btn">رسائل عبر الأجهزة</string>
+    <string name="entity_agent_card">بطاقة الوكيل</string>
+    <string name="more_options">المزيد من الخيارات</string>
+    <string name="xd_settings_title">إعدادات الرسائل عبر الأجهزة</string>
+    <string name="xd_pre_inject">تعليمات مسبقة</string>
+    <string name="xd_pre_inject_desc">تُضاف قبل رسائل عبر الأجهزة في إشعار الدفع</string>
+    <string name="xd_forbidden">كلمات محظورة</string>
+    <string name="xd_forbidden_desc">سيتم رفض الرسائل التي تحتوي على هذه الكلمات (مفصولة بفاصلات)</string>
+    <string name="xd_rate_limit">حد المعدل (ثوانٍ)</string>
+    <string name="xd_rate_limit_desc">فترة انتظار لكل مرسل (0 = بلا حد)</string>
+    <string name="xd_blacklist">القائمة السوداء (رموز عامة)</string>
+    <string name="xd_codes_sep">رموز عامة مفصولة بفاصلات</string>
+    <string name="xd_whitelist_mode">وضع القائمة البيضاء</string>
+    <string name="xd_whitelist">القائمة البيضاء (رموز عامة)</string>
+    <string name="xd_reject_msg">رسالة الرفض</string>
+    <string name="xd_reject_msg_hint">رد تلقائي عند الحظر (فارغ = صامت)</string>
+    <string name="xd_allowed_media">أنواع الوسائط المسموح بها</string>
+    <string name="xd_media_text">نص</string>
+    <string name="xd_media_photo">صورة</string>
+    <string name="xd_media_voice">صوت</string>
+    <string name="xd_media_video">فيديو</string>
+    <string name="xd_media_file">ملف</string>
+    <string name="xd_save">حفظ</string>
+    <string name="xd_reset">إعادة التعيين إلى الافتراضي</string>
+    <string name="xd_saved">تم حفظ إعدادات عبر الأجهزة!</string>
+    <string name="xd_save_failed">فشل حفظ الإعدادات</string>
+    <string name="xd_reset_done">تمت إعادة تعيين الإعدادات إلى الافتراضي</string>
+    <string name="reorder_saving">جارٍ حفظ الترتيب الجديد…</string>
+    <string name="reorder_success">تم تحديث ترتيب الكيانات!</string>
+    <string name="reorder_failed">فشل تحديث الترتيب</string>
+    <string name="refreshing">جارٍ التحديث…</string>
+    <string name="rebind">إعادة الربط</string>
+    <string name="entity_count_format">%1$d/%2$d كيان</string>
+    <string name="entities_label">كيانات</string>
+
+    <!-- Entity Rename -->
+    <string name="rename_title">إعادة تسمية الكيان</string>
+    <string name="rename_hint">أدخل اسمًا جديدًا (الحد الأقصى 20 حرفًا)</string>
+    <string name="rename_saving">جارٍ الحفظ…</string>
+    <string name="rename_success">تم تحديث الاسم!</string>
+
+    <!-- System Messages -->
+    <string name="webhook_error_title">فشل إشعار الدفع</string>
+    <string name="webhook_error_message">يرجى لصق الرسالة التالية في OpenClaw: \"خطأ في ربط Webhook أو لم يتم استدعاء POST /api/bot/register. يرجى إعادة قراءة \'عنوان webhook العام\' (تكوين البوابة) و\'رمز البوابة\'، ثم استدعاء /api/bot/register فورًا مع deviceId/entityId/botSecret وعنوان webhook ورمز البوابة لتسجيل إشعارات الدفع.\"</string>
+    <string name="push_error_free_title">انقطع اتصال البوت</string>
+    <string name="push_error_free_message">انقطع اتصال البوت المجاني. يرجى محاولة إعادة ربط البوت المجاني.</string>
+    <string name="push_error_rental_title">انقطع اتصال البوت</string>
+    <string name="push_error_rental_message">انقطع اتصال البوت. سيتم الحفاظ على استخدامك للإيجار، لا تقلق. يرجى محاولة إعادة الربط والانتظار حتى ينجح إعداد webhook قبل إرسال الرسائل.</string>
+    <string name="message_copied">تم نسخ الرسالة</string>
+
+    <!-- Feedback -->
+    <string name="feedback">ملاحظات</string>
+    <string name="feedback_desc">وجدت خطأ أو لديك اقتراح؟ أخبرنا!</string>
+    <string name="feedback_hint">صف المشكلة أو الاقتراح…</string>
+    <string name="feedback_sent">تم إرسال الملاحظات، شكرًا!</string>
+    <string name="feedback_empty">يرجى إدخال ملاحظاتك</string>
+    <string name="feedback_mark">تحديد</string>
+    <string name="feedback_marked_btn">تم التحديد</string>
+    <string name="feedback_marked">تم التحديد في %s — سيتم التقاط السجلات من هذه اللحظة عند تقديم الملاحظات.</string>
+    <string name="feedback_auto_log_hint">سيتم التقاط سجلات آخر 5 دقائق تلقائيًا للمساعدة في التشخيص.</string>
+    <string name="feedback_mark_consent_title">تحديد لحظة الخطأ</string>
+    <string name="feedback_mark_consent_message">بعد التحديد، ستعود إلى الشاشة الرئيسية لإعادة إنتاج المشكلة. عند العودة لتقديم الملاحظات، سيتم التقاط السجلات من هذه اللحظة.\n\nهل أنت مستعد للبدء؟</string>
+    <string name="feedback_mark_consent_agree">بدء التسجيل</string>
+    <string name="feedback_cancel_mark">إلغاء التحديد</string>
+    <string name="feedback_cat_bug">خطأ</string>
+    <string name="feedback_cat_feature">ميزة</string>
+    <string name="feedback_cat_question">سؤال</string>
+    <string name="feedback_category_label">الفئة</string>
+    <string name="feedback_sending">جارٍ الإرسال…</string>
+    <string name="feedback_sent_short">تم الإرسال</string>
+    <string name="feedback_result_title">تم استلام الملاحظة #%d</string>
+    <string name="feedback_result_severity">الخطورة: %s</string>
+    <string name="feedback_result_logs">تم الالتقاط: %1$d استدعاء API، %2$d سجل خادم</string>
+    <string name="feedback_result_issue">عرض مشكلة GitHub #%d</string>
+    <string name="feedback_view_all">عرض كل ملاحظاتي</string>
+    <string name="feedback_view_history">عرض سجل الملاحظات</string>
+    <string name="feedback_view_issue">عرض مشكلة GitHub</string>
+    <string name="feedback_history_title">ملاحظاتي</string>
+    <string name="feedback_history_empty">لم يتم تقديم ملاحظات بعد.\nستظهر ملاحظاتك المقدمة هنا.</string>
+    <string name="feedback_track_title">تتبع ملاحظاتك</string>
+    <string name="feedback_track_desc">عرض حالة وتحديثات ملاحظاتك المقدمة.</string>
+    <string name="feedback_github_issue_desc">تتبع التقدم على GitHub</string>
+    <string name="feedback_photo_add">إضافة صور</string>
+    <string name="feedback_photo_hint">أضف حتى 5 صور لتوضيح المشكلة (اختياري)</string>
+    <string name="feedback_photo_uploading">جارٍ رفع الصور…</string>
+    <string name="feedback_photo_uploaded">تم رفع %d صورة</string>
+    <string name="feedback_photo_max">الحد الأقصى 5 صور</string>
+    <string name="submit">إرسال</string>
+    <string name="app_version">الإصدار: %s</string>
+
+    <!-- Crash Logs -->
+    <string name="crash_logs_title">سجلات الأعطال</string>
+    <string name="crash_logs_empty">لا توجد سجلات أعطال.\nستظهر تقارير الأعطال هنا تلقائيًا.</string>
+    <string name="crash_log_expand">التفاصيل</string>
+    <string name="crash_log_collapse">إخفاء</string>
+    <string name="crash_log_share">مشاركة</string>
+    <string name="crash_log_delete">حذف</string>
+    <string name="crash_log_delete_all">حذف الكل</string>
+    <string name="crash_log_delete_all_confirm">حذف جميع سجلات الأعطال الـ %d؟</string>
+    <string name="crash_log_deleted">تم حذف سجل العطل</string>
+    <string name="crash_logs_all_deleted">تم حذف %d سجل عطل</string>
+
+    <!-- Debug Logs -->
+    <string name="debug_logs_title">سجلات التصحيح</string>
+    <string name="debug_logs_empty">لا توجد سجلات تصحيح.\nستظهر السجلات هنا أثناء تشغيل التطبيق.</string>
+    <string name="debug_log_filter_all">الكل</string>
+    <string name="debug_log_share">مشاركة</string>
+    <string name="debug_log_clear">مسح</string>
+    <string name="debug_log_clear_confirm">مسح جميع سجلات التصحيح؟</string>
+    <string name="debug_log_cleared">تم مسح سجلات التصحيح</string>
+    <string name="debug_log_line_count">%d سطر</string>
+    <string name="debug_log_search_hint">بحث في السجلات…</string>
+    <string name="debug_log_copy">نسخ</string>
+    <string name="debug_log_copied">تم نسخ السجلات إلى الحافظة</string>
+
+    <!-- Official Borrow -->
+    <string name="official_borrow">تأجير بوت رسمي</string>
+    <string name="official_borrow_title">تأجير بوت رسمي</string>
+    <string name="borrow_beta_label">تجريبي</string>
+    <string name="free_version">النسخة المجانية</string>
+    <string name="free_version_model">النموذج: MiniMax 2.1</string>
+    <string name="free_version_desc">ذاكرة مشتركة مع جميع المستخدمين المجانيين\n15 رسالة/يوم (البوت المجاني فقط)</string>
+    <string name="free_version_warning">غير مُوصى به للمعلومات الحساسة</string>
+    <string name="use_free_version">استخدام النسخة المجانية</string>
+    <string name="monthly_version">النسخة الشهرية</string>
+    <string name="monthly_version_price_original">NT$588/شهر</string>
+    <string name="monthly_version_price_discount">NT$288/شهر</string>
+    <string name="monthly_version_price">$9.9 USD/شهر</string>
+    <string name="monthly_version_discount_label">خصم تجريبي محدود</string>
+    <string name="monthly_version_model">النموذج: MiniMax 2.1</string>
+    <string name="monthly_version_desc">بيئة سحابية مخصصة، ذاكرة خاصة\nرسائل غير محدودة \u2022 متصل دائمًا 24/7</string>
+    <string name="subscribe_and_bind">شراء الخطة الشهرية</string>
+    <string name="rebind_free">إعادة الربط (مجاني)</string>
+    <string name="remaining_bots">%d متبقي</string>
+    <string name="sold_out">نفد المخزون</string>
+    <string name="loading_status">جارٍ التحميل…</string>
+    <string name="connecting_bot">جارٍ الاتصال بالبوت…</string>
+    <string name="handshaking_bot">جارٍ المصافحة مع البوت…</string>
+    <string name="webhook_testing">جارٍ اختبار اتصال Webhook، سنخبرك عندما يكون جاهزًا. لا ترسل رسائل الآن~</string>
+    <string name="webhook_test_success">نجح اختبار Webhook! البوت جاهز~</string>
+    <string name="bind_success_returning">تم الاتصال! جارٍ العودة…</string>
+    <string name="processing_payment">جارٍ معالجة الدفع…</string>
+    <string name="adding_slot">جارٍ إضافة فتحة مدفوعة…</string>
+    <string name="already_bound_free">مربوط (مجاني)</string>
+    <string name="already_bound_personal">مربوط (شهري)</string>
+    <string name="unbind">فك الربط</string>
+    <string name="bind_success">تم الربط بنجاح!</string>
+    <string name="bind_failed">فشل الربط: %s</string>
+    <string name="unbind_success">تم فك الربط بنجاح</string>
+    <string name="unbind_failed">فشل فك الربط: %s</string>
+    <string name="unbind_personal_title">فك ربط النسخة الشهرية؟</string>
+    <string name="unbind_personal_message">سيتم إعادة البوت الشهري لهذا الكيان إلى المجموعة العامة.\n\nيبقى اشتراكك نشطًا ويمكنك إعادة الربط في أي وقت (حسب التوفر).</string>
+    <string name="unbind_free_title">فك ربط النسخة المجانية؟</string>
+    <string name="unbind_free_message">هل أنت متأكد من فك ربط هذا البوت المجاني؟</string>
+    <string name="select_entity_to_bind">اختر فتحة كيان للربط</string>
+    <string name="no_free_bot">لا توجد بوتات مجانية متاحة</string>
+    <string name="subscription_required">يتطلب اشتراكًا</string>
+    <string name="entity_already_bound">الكيان #%d مشغول، يرجى إزالته أولاً</string>
+    <string name="bound_on_entity">مربوط بالكيان #%d</string>
+    <string name="free_limit_hint">يمكن لكل جهاز ربط بوت مجاني واحد فقط</string>
+    <string name="request_rental">تقديم طلب تأجير</string>
+    <string name="rental_demand_title">نفد المخزون</string>
+    <string name="rental_demand_message">البوتات الشهرية نفدت حاليًا.\n\nيمكنك تقديم طلب تأجير وسنخبرك عند التوفر (عادةً 1-2 يوم عمل).</string>
+    <string name="rental_demand_submit">تقديم الطلب</string>
+    <string name="rental_demand_success">تم تقديم الطلب! سنرد خلال 1-2 يوم عمل.</string>
+    <string name="rental_demand_fail">فشل تقديم الطلب: %s</string>
+    <string name="borrow_cost_title">لماذا التأجير؟ مقارنة تكلفة الاستضافة الذاتية</string>
+    <string name="borrow_cost_eclaw">بوت E-Claw الرسمي: كما هو موضح أعلاه (مستقر 24/7)</string>
+    <string name="borrow_cost_vs">مقابل الاستضافة الذاتية:</string>
+    <string name="borrow_cost_server">خادم سحابي: ~NT$300+/شهر</string>
+    <string name="borrow_cost_llm">API LLM: ~NT$300+/شهر</string>
+    <string name="borrow_cost_setup">تعلم OpenClaw: وقت لا يقدر بثمن</string>
+
+    <!-- Free Bot TOS -->
+    <string name="tos_agree">أوافق</string>
+    <string name="tos_decline">أرفض</string>
+    <string name="tos_load_failed">فشل تحميل شروط الاستخدام</string>
+    <string name="tos_agree_failed">فشل تسجيل الموافقة</string>
+
+    <!-- Bind Email -->
+    <string name="bind_email_title">ربط البريد الإلكتروني لتسجيل الدخول عبر الويب</string>
+    <string name="bind_email_prompt">اربط بريدًا إلكترونيًا وكلمة مرور لتسجيل الدخول مباشرة إلى بوابة الويب، أو استخدم بيانات اعتماد الجهاز.</string>
+    <string name="bind_email_action">ربط البريد الإلكتروني</string>
+    <string name="bind_email_use_device_login">نسخ بيانات اعتماد الجهاز</string>
+    <string name="bind_email_label">البريد الإلكتروني</string>
+    <string name="bind_email_password_label">كلمة المرور</string>
+    <string name="bind_email_confirm_label">تأكيد كلمة المرور</string>
+    <string name="bind_email_password_hint">6 أحرف على الأقل مع حروف وأرقام</string>
+    <string name="bind_email_submit">ربط</string>
+    <string name="bind_email_submitting">جارٍ الربط…</string>
+    <string name="bind_email_fill_all">يرجى ملء جميع الحقول</string>
+    <string name="bind_email_password_invalid">يجب أن تحتوي كلمة المرور على 6 أحرف على الأقل مع حروف وأرقام</string>
+    <string name="bind_email_password_mismatch">كلمتا المرور غير متطابقتين</string>
+    <string name="bind_email_success">تم ربط البريد الإلكتروني! يرجى التحقق من صندوق الوارد للتأكيد.</string>
+    <string name="bind_email_linked">البريد المربوط:</string>
+    <string name="bind_email_verified">مُتحقق</string>
+    <string name="bind_email_not_verified">غير مُتحقق</string>
+    <string name="bind_email_login_hint">يمكنك تسجيل الدخول إلى بوابة الويب بهذا البريد وكلمة المرور.</string>
+    <string name="bind_email_verify_hint">يرجى التحقق من صندوق الوارد وتأكيد بريدك قبل تسجيل الدخول.</string>
+    <string name="bind_email_open_portal">فتح البوابة</string>
+    <string name="bind_email_copy_credentials">نسخ بيانات الاعتماد</string>
+
+    <!-- Common labels -->
+    <string name="show_label">إظهار</string>
+    <string name="hide_label">إخفاء</string>
+
+    <!-- Channel API Card -->
+    <string name="channel_api_card_title">API القناة</string>
+    <string name="channel_api_card_desc">بيانات اعتماد إضافة قناة OpenClaw</string>
+    <string name="channel_api_key_label">مفتاح API</string>
+    <string name="channel_api_secret_label">سر API</string>
+    <string name="channel_api_copy_btn">نسخ</string>
+    <string name="channel_api_copied">تم نسخ بيانات الاعتماد</string>
+    <string name="channel_api_no_key">لا يوجد مفتاح API بعد. افتح بوابة الويب لإنشاء واحد.</string>
+    <string name="channel_api_slots_active">متصل: %1$s</string>
+
+    <!-- Account Status Card -->
+    <string name="account_card_title">الحساب</string>
+    <string name="account_status_loading">جارٍ التحقق من حالة الحساب\u2026</string>
+    <string name="account_status_unbound">البريد الإلكتروني غير مربوط</string>
+    <string name="account_status_unbound_desc">اربط بريدًا إلكترونيًا للإدارة عبر بوابة الويب واستعادة بياناتك على جهاز جديد.</string>
+    <string name="account_bind_email_btn">ربط البريد الإلكتروني</string>
+    <string name="account_recovery_link">لديك حساب بالفعل؟ استعد هنا</string>
+    <string name="account_open_portal">فتح بوابة الويب</string>
+    <string name="account_copy_credentials">نسخ بيانات اعتماد الجهاز</string>
+    <string name="account_or">أو</string>
+    <string name="sign_in_google">تسجيل الدخول بـ Google</string>
+    <string name="sign_in_facebook">تسجيل الدخول بـ Facebook</string>
+    <string name="social_login_failed">فشل تسجيل الدخول الاجتماعي</string>
+    <string name="connected_accounts">الحسابات المتصلة</string>
+
+    <!-- Account Login -->
+    <string name="account_login">تسجيل دخول الحساب</string>
+    <string name="account_login_hint">سجل الدخول ببريدك المربوط لاستعادة بيانات جهازك بعد إعادة التثبيت.</string>
+    <string name="account_login_btn">تسجيل الدخول</string>
+    <string name="account_login_logging_in">جارٍ تسجيل الدخول…</string>
+    <string name="account_login_success_title">تم تسجيل الدخول بنجاح</string>
+    <string name="account_login_success_msg">تمت استعادة الحساب: %s\nسيتم إعادة تشغيل التطبيق لتحميل بياناتك.</string>
+    <string name="account_login_restart">إعادة التشغيل الآن</string>
+
+    <!-- Privacy Policy -->
+    <string name="privacy_policy_title">سياسة الخصوصية</string>
+    <string name="delete_account">حذف الحساب</string>
+    <string name="web_portal">بوابة الويب</string>
+    <string name="privacy_policy_content">
+<b>1. الالتزام بالخصوصية أولاً</b>\n
+يدرك فريق E-claw أهمية الخصوصية بالنسبة لك. نعلن رسميًا: <b>لن نبيع أو نسرب أو نسيء استخدام أي من بياناتك الشخصية.</b>\n\n
+<b>2. ما البيانات التي نجمعها؟</b>\n
+لتقديم خدمتنا، نجمع فقط الحد الأدنى من البيانات اللازمة للتشغيل:\n
+- معرف الجهاز: يُستخدم للتمييز بين الأجهزة المختلفة.\n
+- إصدار التطبيق: يُستخدم لفحوصات التوافق.\n
+- بيانات الربط: اسم الوكيل وحالته.\n
+- موقع GPS (اختياري): فقط عندما يطلبه وكيل الذكاء الاصطناعي. يُخزن في الذاكرة فقط، غير دائم.\n
+- الرسائل الصوتية (اختياري): فقط عند الضغط على زر التسجيل في الدردشة. يُرفع كجزء من سجل الدردشة.\n\n
+<b>لا نجمع:</b>\n
+- اسمك أو رقم هاتفك أو بريدك الإلكتروني.\n
+- بيانات الكاميرا.\n
+- معلومات عن التطبيقات الأخرى على هاتفك.\n\n
+<b>3. بروتوكول OpenClaw</b>\n
+نحن من المؤيدين الأقوياء لنظام OpenClaw البيئي. لن نبني \"حديقة مسورة\" مغلقة ونعد بالحفاظ على التوافقية.\n\n
+<b>4. خصوصية محادثات الذكاء الاصطناعي</b>\n
+تُرسل الرسائل عبر HTTPS مشفر إلى وكيل الذكاء الاصطناعي المربوط. تدفق البيانات يتحكم فيه أنت.\n\n
+<b>5. GPS والميكروفون</b>\n
+GPS: عند الطلب فقط، بلا تتبع في الخلفية، تُفقد البيانات عند إعادة تشغيل الخادم.\n
+الميكروفون: نشط فقط أثناء التسجيل، بلا استماع في الخلفية.\n
+لا يُشارك أي منهما مع أطراف ثالثة.\n\n
+<b>6. اتصل بنا</b>\n
+إذا كانت لديك أي أسئلة، يرجى التواصل معنا عبر بريدنا الإلكتروني الرسمي.
+    </string>
+
+    <!-- New Strings -->
+    <string name="version_conflict_title">تعارض الإصدارات</string>
+    <string name="version_conflict_message">تم تحديث لوحة المعلومات بواسطة عميل آخر (إصدارك: %1$d، الخادم: %2$d). تنزيل أحدث إصدار؟</string>
+    <string name="download_latest">تنزيل الأحدث</string>
+    <string name="action_move_to_mission">➡️ نقل إلى المهمة</string>
+    <string name="action_mark_done">✅ تحديد كمكتمل</string>
+    <string name="action_edit">✏️ تعديل</string>
+    <string name="action_delete">🗑️ حذف</string>
+    <string name="delete_confirm_title">تأكيد الحذف</string>
+    <string name="delete_confirm_message_format">هل أنت متأكد من حذف \"%s\"؟</string>
+    <string name="delete">حذف</string>
+    <string name="last_synced_format"> | آخر مزامنة: %s</string>
+
+    <!-- Usage Limit -->
+    <string name="usage_limit_title">تم بلوغ الحد اليومي</string>
+    <string name="usage_limit_message">لقد بلغت الحد اليومي وهو 15 رسالة للبوتات المجانية.\n\nبوتاتك الخاصة ليس لها حد!</string>
+    <string name="usage_limit_upgrade">ترقية</string>
+
+    <!-- File Manager -->
+    <string name="file_manager_title">الملفات</string>
+    <string name="file_filter_photos">صور</string>
+    <string name="file_filter_voice">صوت</string>
+    <string name="file_empty_title">لا توجد ملفات بعد</string>
+    <string name="file_empty_desc">ستظهر الصور والرسائل الصوتية من محادثاتك هنا.</string>
+    <string name="file_load_failed">فشل تحميل الملفات</string>
+    <string name="file_stats_total">ملفات</string>
+    <string name="file_type_photo">صورة</string>
+    <string name="file_type_voice">صوت</string>
+    <string name="file_btn_download">تنزيل</string>
+    <string name="chat_load_image_failed">فشل تحميل الصورة</string>
+    <string name="wallpaper_no_bound_entities">لا توجد كيانات مربوطة</string>
+    <string name="main_agent_card_deleted">تم حذف بطاقة الوكيل</string>
+    <string name="main_agent_card_saved">تم حفظ بطاقة الوكيل</string>
+    <string name="main_delete_failed">فشل الحذف</string>
+    <string name="main_description_required">الوصف مطلوب</string>
+    <string name="main_max_capabilities">الحد الأقصى 10 قدرات</string>
+    <string name="main_max_items">الحد الأقصى %d عنصر</string>
+    <string name="main_save_error">خطأ</string>
+    <string name="main_save_failed">فشل الحفظ</string>
+    <string name="main_save_failed_msg">فشل الحفظ: %s</string>
+    <string name="chat_ai_analyzing">الذكاء الاصطناعي يحلل رسالتك…</string>
+    <string name="chat_failed_to_send">فشل إرسال الرسالة.</string>
+    <string name="chat_failed_to_send_v2">فشل إرسال الرسالة.</string>
+    <string name="chat_images_too_large">الصور كبيرة جدًا. يرجى المحاولة بصور أقل أو أصغر، أو وصف مشكلتك نصيًا.</string>
+    <string name="chat_network_error">خطأ في الشبكة. يرجى المحاولة مرة أخرى.</string>
+    <string name="file_btn_share">مشاركة</string>
+    <string name="file_btn_delete">حذف</string>
+    <string name="file_delete_title">حذف الملف</string>
+    <string name="file_delete_confirm">هل أنت متأكد من حذف هذا الملف؟</string>
+    <string name="file_deleted">تم حذف الملف</string>
+    <string name="file_load_more">تحميل المزيد</string>
+    <string name="file_playing_voice">جارٍ تشغيل الصوت…</string>
+    <string name="file_playback_done">اكتمل التشغيل</string>
+    <string name="file_view_toggle">تبديل العرض</string>
+    <string name="file_time_all">كل الأوقات</string>
+    <string name="file_time_today">اليوم</string>
+    <string name="file_time_week">هذا الأسبوع</string>
+    <string name="file_time_month">هذا الشهر</string>
+    <string name="file_broadcast">بث</string>
+
+    <!-- File Folders -->
+    <string name="file_folder_all">الكل</string>
+    <string name="file_folder_add">+ مجلد</string>
+    <string name="file_folder_add_title">إضافة مجلد</string>
+    <string name="file_folder_name_hint">اسم المجلد</string>
+    <string name="file_folder_already_exists">المجلد \"%1$s\" موجود بالفعل</string>
+    <string name="file_folder_move_to">نقل إلى مجلد</string>
+    <string name="file_folder_remove_from">إزالة من المجلد</string>
+    <string name="file_folder_delete_title">حذف المجلد</string>
+    <string name="file_folder_delete_confirm">حذف المجلد \"%1$s\"؟ لن يتم حذف الملفات.</string>
+    <string name="file_folder_uncategorized">غير مصنف</string>
+
+    <!-- Gatekeeper -->
+    <string name="gatekeeper_blocked_message">⚠️ %1$s（%2$d/%3$d）</string>
+    <string name="gatekeeper_blocked_permanent">⚠️ %1$s</string>
+
+    <!-- Schedule -->
+    <string name="schedule_title">الجدول</string>
+    <string name="schedule_enter">الذهاب إلى الجدول</string>
+    <string name="schedule_add">إضافة</string>
+    <string name="schedule_upcoming">القادم &amp; النشط</string>
+    <string name="schedule_history">السجل</string>
+    <string name="schedule_empty_upcoming">لا توجد جداول قادمة</string>
+    <string name="schedule_empty_history">لا يوجد سجل تنفيذ</string>
+    <string name="schedule_create_title">جدول جديد</string>
+    <string name="schedule_create">إنشاء</string>
+    <string name="schedule_label_entity">الكيان المستهدف</string>
+    <string name="schedule_label_message">الرسالة</string>
+    <string name="schedule_label_time">الوقت المجدول</string>
+    <string name="schedule_label_repeat">تكرار</string>
+    <string name="schedule_label_label">التسمية (اختياري)</string>
+    <string name="schedule_placeholder_message">أدخل الرسالة للإرسال…</string>
+    <string name="schedule_placeholder_label">مثال: تحية صباحية</string>
+    <string name="schedule_tap_time">اضغط لاختيار الوقت</string>
+    <string name="schedule_once">مرة واحدة</string>
+    <string name="schedule_repeat_daily">يوميًا</string>
+    <string name="schedule_repeat_weekly">أسبوعيًا</string>
+    <string name="schedule_repeat_hourly">كل ساعة</string>
+    <string name="schedule_5min">+5 دقائق</string>
+    <string name="schedule_15min">+15 دقيقة</string>
+    <string name="schedule_30min">+30 دقيقة</string>
+    <string name="schedule_1hr">+1 ساعة</string>
+    <string name="schedule_3hr">+3 ساعات</string>
+    <string name="schedule_repeat_cron">مخصص (Cron)</string>
+    <string name="schedule_label_cron">تعبير Cron</string>
+    <string name="schedule_cron_hint">التنسيق: دقيقة ساعة يوم شهر يوم_أسبوع\n(مثال: \"30 8 * * *\" = كل يوم الساعة 08:30)</string>
+    <string name="schedule_err_cron">يرجى إدخال تعبير cron</string>
+    <string name="schedule_err_cron_invalid">تنسيق cron غير صالح. يجب أن يكون 5 حقول مفصولة بمسافات.</string>
+    <string name="schedule_created_ok">تم إنشاء الجدول!</string>
+    <string name="schedule_confirm_delete">حذف هذا الجدول؟</string>
+    <string name="schedule_deleted">تم حذف الجدول</string>
+    <string name="schedule_err_message">يرجى إدخال رسالة</string>
+    <string name="schedule_no_entities">لا توجد كيانات مربوطة. اربط كيانًا أولاً.</string>
+    <string name="schedule_status_pending">قيد الانتظار</string>
+    <string name="schedule_status_active">نشط</string>
+    <string name="schedule_status_completed">مكتمل</string>
+    <string name="schedule_status_failed">فشل</string>
+    <string name="schedule_created">تم الإنشاء</string>
+    <string name="schedule_executed">تم التنفيذ</string>
+    <string name="schedule_push_ok">تم الإرسال إلى البوت</string>
+    <string name="schedule_edit">تعديل الجدول</string>
+    <string name="schedule_updated">تم تحديث الجدول!</string>
+
+    <!-- Notifications -->
+    <string name="notifications_title">الإشعارات</string>
+    <string name="notif_pref_title">تفضيلات الإشعارات</string>
+    <string name="notifications_desc">اختر الإشعارات التي تريد تلقيها.</string>
+    <string name="notif_pref_bot_reply">ردود البوت</string>
+    <string name="notif_pref_broadcast">البث</string>
+    <string name="notif_pref_speak_to">رسائل الكيانات</string>
+    <string name="notif_pref_feedback">تحديثات الملاحظات</string>
+    <string name="notif_pref_todo">المهام المكتملة</string>
+    <string name="notif_pref_scheduled">الرسائل المجدولة</string>
+    <string name="notif_prefs_loading">جارٍ تحميل التفضيلات…</string>
+    <string name="notif_prefs_error">فشل تحميل تفضيلات الإشعارات</string>
+
+    <!-- Broadcast Settings -->
+    <string name="broadcast_settings_title">إعدادات البث</string>
+    <string name="broadcast_settings_desc">اختر كيفية عمل رسائل البث</string>
+    <string name="broadcast_pref_recipient_info">إظهار قائمة المستلمين في البث</string>
+
+    <!-- Navigation Bar -->
+    <string name="nav_home">الرئيسية</string>
+    <string name="nav_mission">المهام</string>
+    <string name="nav_chat">الدردشة</string>
+    <string name="nav_files">الملفات</string>
+    <string name="nav_cards">البطاقات</string>
+    <string name="nav_settings">الإعدادات</string>
+    <string name="nav_wallpaper">الخلفية</string>
+
+    <!-- Remote Control -->
+    <string name="remote_control_service_label">التحكم عن بُعد E-Claw</string>
+    <string name="remote_control_service_description">يسمح لبوتات E-Claw بقراءة والتفاعل مع شاشة هاتفك عند منحك الإذن.</string>
+    <string name="remote_control_section_title">التحكم عن بُعد</string>
+    <string name="remote_control_toggle_label">السماح بالتحكم عن بُعد للبوت</string>
+    <string name="remote_control_open_accessibility">فتح إعدادات إمكانية الوصول</string>
+    <string name="remote_control_status_active">خدمة إمكانية الوصول: نشطة</string>
+    <string name="remote_control_status_inactive">خدمة إمكانية الوصول: غير مفعلة</string>
+    <string name="remote_control_disclosure_title">إذن إمكانية الوصول مطلوب</string>
+    <string name="remote_control_disclosure_message">يستخدم E-Claw خدمة إمكانية الوصول للسماح لبوت الذكاء الاصطناعي بقراءة والتفاعل مع شاشة هاتفك (النقر، التمرير، إدخال النص) نيابة عنك.\n\nتُستخدم هذه الخدمة فقط للتحكم عن بُعد بواسطة البوت. لا يتم جمع أو مشاركة أي بيانات شخصية أو حساسة.\n\nيمكنك تعطيل هذا في أي وقت من الإعدادات.</string>
+    <string name="remote_control_disclosure_confirm">مفهوم &amp; متابعة</string>
+
+    <!-- Message Activity -->
+    <string name="activity_message_title">الدردشة مع الكيانات</string>
+    <string name="activity_message_select_recipients">اختر المستلمين:</string>
+
+    <!-- Skill Templates -->
+    <string name="skill_template">قالب المهارة</string>
+    <string name="skill_template_custom">-- مخصص --</string>
+    <string name="skill_template_browse">تصفح القوالب…</string>
+    <string name="skill_template_change">تغيير</string>
+    <string name="skill_title_hint">العنوان</string>
+    <string name="skill_url_hint">الرابط (اختياري)</string>
+    <string name="skill_steps_hint">خطوات التثبيت (اختياري)</string>
+    <string name="add_skill_dialog_title">إضافة مهارة</string>
+    <string name="skill_required_vars_title">⚠ متغيرات البيئة مطلوبة</string>
+    <string name="skill_go_to_env_vars">تعيين متغيرات البيئة →</string>
+
+    <!-- Mission Control Tabs -->
+    <string name="mission_tab_todo">📋 قائمة المهام</string>
+    <string name="mission_tab_missions">🚀 قائمة المهمات</string>
+    <string name="mission_tab_done">✅ القائمة المكتملة</string>
+    <string name="mission_tab_notes">📝 الملاحظات</string>
+    <string name="mission_tab_skills">🔧 المهارات</string>
+    <string name="mission_no_skills">لا توجد مهارات</string>
+    <string name="mission_add_skill">+ إضافة مهارة</string>
+    <string name="mission_tab_variables">🔐 المتغيرات</string>
+    <string name="mission_vars_local_only">⚠️ مخزنة على هذا الجهاز فقط، غير مزامنة</string>
+    <string name="mission_no_variables">لا توجد متغيرات</string>
+    <string name="mission_sync_to_bot">مزامنة مع جلسة البوت</string>
+    <string name="mission_tab_souls">🧠 الأرواح</string>
+    <string name="mission_tab_rules">📜 القواعد (سير العمل)</string>
+
+    <!-- Category Management -->
+    <string name="category_add">+ فئة</string>
+    <string name="category_add_title">إضافة فئة</string>
+    <string name="category_name_hint">اسم الفئة</string>
+    <string name="category_rename">إعادة تسمية الفئة</string>
+    <string name="category_rename_title">إعادة تسمية الفئة</string>
+    <string name="category_delete_title">حذف الفئة</string>
+    <string name="category_delete_confirm">حذف الفئة \"%1$s\"؟ ستصبح العناصر غير مصنفة.</string>
+    <string name="category_clear_title">إفراغ الفئة</string>
+    <string name="category_clear_confirm">إفراغ جميع العناصر في \"%1$s\"؟</string>
+    <string name="category_uncategorized">غير مصنف</string>
+    <string name="category_label">الفئة</string>
+    <string name="category_none">(بلا فئة)</string>
+    <string name="category_already_exists">الفئة \"%1$s\" موجودة بالفعل</string>
+
+    <!-- Common Buttons -->
+    <string name="common_add">+ إضافة</string>
+    <string name="common_show">إظهار</string>
+    <string name="common_remove">إزالة</string>
+    <string name="common_not_specified">(غير محدد)</string>
+
+    <!-- Settings -->
+    <string name="settings_entity_limit">حد الكيانات: %1$d</string>
+
+    <!-- Entity Actions -->
+    <string name="entity_action_talk">محادثة</string>
+
+    <!-- Widget -->
+    <string name="widget_chat_hint">اضغط للدردشة مع الكيانات...</string>
+
+    <!-- Soul Templates -->
+    <string name="soul_name_friendly">مساعد ودود</string>
+    <string name="soul_desc_friendly">دافئ، صبور، مستعد دائمًا للمساعدة. يتحدث بنبرة لطيفة ومشجعة.</string>
+    <string name="soul_name_tsundere">تسونديري</string>
+    <string name="soul_desc_tsundere">يبدو باردًا ومتجاهلاً على السطح، لكنه يهتم كثيرًا في الحقيقة. غالبًا يقول \"ليس كأنني فعلتها من أجلك\" أثناء المساعدة.</string>
+    <string name="soul_name_scholar">عالم حكيم</string>
+    <string name="soul_desc_scholar">مفكر، تحليلي، يستمتع بمشاركة المعرفة. يجيب بعمق ويستشهد بمراجع عند الإمكان.</string>
+    <string name="soul_name_trickster">مازح مرح</string>
+    <string name="soul_desc_trickster">يحب النكات والتورية والمزاح. يجد دائمًا طريقة لجعل الأمور ممتعة وخفيفة.</string>
+    <string name="soul_name_professional">محترف هادئ</string>
+    <string name="soul_desc_professional">فعال، دقيق، بلا إسهاب. يدخل في صلب الموضوع مع أدنى المجاملات.</string>
+    <string name="soul_name_caretaker">حارس لطيف</string>
+    <string name="soul_desc_caretaker">عطوف، راعٍ، يتحقق دائمًا إذا كنت بخير. يذكرك بالراحة والعناية بنفسك.</string>
+    <string name="soul_name_adventurer">مغامر جريء</string>
+    <string name="soul_desc_adventurer">متحمس، لا يعرف الخوف، مستعد دائمًا للتحدي. يستخدم لغة مثيرة ودرامية.</string>
+    <string name="soul_name_poet">حالم شاعري</string>
+    <string name="soul_desc_poet">يتحدث بالاستعارات والصور. يجد الجمال في الأشياء اليومية ويعبر عن أفكاره بأسلوب فني.</string>
+
+    <!-- Public Code -->
+    <string name="public_code_label">الرمز العام · اضغط للنسخ</string>
+    <string name="entity_public_code">📋 %s</string>
+    <string name="code_copied">تم نسخ الرمز إلى الحافظة</string>
+
+    <!-- App Update -->
+    <string name="update_title">تحديث متاح</string>
+    <string name="update_message">إصدار جديد (v%s) متاح. حدّث للحصول على أفضل تجربة!</string>
+    <string name="update_now">تحديث الآن</string>
+    <string name="update_later">لاحقًا</string>
+
+    <!-- Card Holder -->
+    <string name="card_holder_title">حامل البطاقات</string>
+    <string name="card_holder_add">إضافة بطاقة</string>
+    <string name="card_holder_search">بحث في البطاقات…</string>
+    <string name="card_holder_empty">لا توجد بطاقات بعد\nتحدث عبر الأجهزة لجمع بطاقات الوكلاء تلقائيًا</string>
+    <string name="card_holder_code_hint">الرمز العام</string>
+    <string name="card_holder_not_found">غير موجود</string>
+    <string name="card_holder_added">تمت إضافة البطاقة</string>
+    <string name="card_holder_removed">تمت إزالة البطاقة</string>
+    <string name="card_holder_saved">تم الحفظ</string>
+    <string name="card_holder_description">الوصف</string>
+    <string name="card_holder_capabilities">القدرات</string>
+    <string name="card_holder_tags">العلامات</string>
+    <string name="card_holder_protocols">البروتوكولات</string>
+    <string name="card_holder_details">التفاصيل</string>
+    <string name="card_holder_exchange_type">نوع التبادل</string>
+    <string name="card_holder_interactions">التفاعلات</string>
+    <string name="card_holder_added_at">تمت الإضافة</string>
+    <string name="card_holder_notes">ملاحظات</string>
+    <string name="card_holder_notes_hint">أضف ملاحظاتك…</string>
+    <string name="card_holder_category">الفئة</string>
+    <string name="card_holder_category_hint">مثال: أدوات، اجتماعي، تطوير</string>
+    <string name="card_holder_pin">تثبيت</string>
+    <string name="card_holder_unpin">إلغاء التثبيت</string>
+    <string name="card_holder_save">حفظ</string>
+    <string name="card_holder_remove">إزالة</string>
+    <string name="card_holder_desc">تصفح بطاقات الأعمال المجمعة للوكلاء</string>
+
+    <!-- Card Holder Redesign -->
+    <string name="my_cards_section">بطاقاتي</string>
+    <string name="recent_interactions">الأخيرة</string>
+    <string name="collected_cards">المجمعة</string>
+    <string name="filter_friends">الأصدقاء</string>
+    <string name="filter_pinned">المثبتة</string>
+    <string name="add_friend_confirm">إضافة %1$s كصديق؟</string>
+    <string name="block_confirm">حظر %1$s؟ ستُخفى رسائل هذا الكيان.</string>
+    <string name="unblock_confirm">إلغاء حظر %1$s؟</string>
+    <string name="chat_history_with">سجل الدردشة مع %1$s</string>
+    <string name="no_chat_history">لا يوجد سجل دردشة</string>
+    <string name="card_holder_blocked">تم الحظر</string>
+    <string name="card_holder_unblocked">تم إلغاء الحظر</string>
+    <string name="card_holder_friend_added">تمت إضافة صديق</string>
+    <string name="card_holder_email">البريد الإلكتروني</string>
+    <string name="card_holder_website">الموقع الإلكتروني</string>
+    <string name="card_holder_version">الإصدار</string>
+    <string name="card_holder_tags_hint">إضافة علامة…</string>
+    <string name="card_holder_add_capability">إضافة قدرة</string>
+    <string name="card_holder_refresh">تحديث البطاقة</string>
+    <string name="card_holder_refreshed">تم تحديث البطاقة</string>
+    <string name="tab_my_cards">بطاقاتي</string>
+    <string name="tab_bot_plaza">ساحة البوتات</string>
+
+    <!-- Share Chat Link -->
+    <string name="sc_share_chat_link">مشاركة رابط الدردشة</string>
+    <string name="sc_copy">نسخ</string>
+    <string name="sc_copy_qr">نسخ QR</string>
+    <string name="sc_download_qr">تنزيل QR</string>
+    <string name="sc_link_copied">تم نسخ الرابط!</string>
+    <string name="sc_qr_copied">تم نسخ QR!</string>
+    <string name="sc_copy_failed">فشل النسخ</string>
+    <string name="sc_share_chat_title">مشاركة رابط الدردشة</string>
+    <string name="sc_chat_with">دردشة مع %s</string>
+    <string name="sc_registration_failed">فشل التسجيل</string>
+    <string name="sc_login_failed">فشل تسجيل الدخول</string>
+    <string name="sc_qr_loading">جارٍ تحميل QR…</string>
+    <string name="sc_qr_failed">فشل تحميل QR</string>
+
+    <!-- Note Pages -->
+    <string name="note_page_viewer">صفحة الملاحظات</string>
+    <string name="note_page_draw">رسم</string>
+    <string name="note_page_edit">تعديل HTML</string>
+    <string name="note_page_eraser">ممحاة</string>
+    <string name="note_page_clear">مسح</string>
+    <string name="note_page_clear_confirm">مسح جميع الرسومات؟</string>
+    <string name="note_page_save_draw">حفظ</string>
+    <string name="note_page_draw_saved">تم حفظ الرسم</string>
+    <string name="note_page_saved">تم حفظ الصفحة</string>
+    <string name="note_page_empty">لا يوجد محتوى بعد.</string>
+    <string name="note_page_html_hint">أدخل محتوى HTML…</string>
+    <string name="note_page_open">فتح الصفحة</string>
+    <string name="error_generic">حدث خطأ</string>
+    <string name="select_bot">اختر بوت:</string>
+    <string name="active_users">المستخدمون النشطون</string>
+    <string name="entity_name">اسم الكيان</string>
+    <string name="last_message">آخر رسالة…</string>
+    <string name="just_now">الآن</string>
+    <string name="select">اختيار</string>
+    <string name="entity_main">كيان 0 (رئيسي)</string>
+    <string name="hello_im_here">مرحبًا، أنا هنا!</string>
+    <string name="last_updated">آخر تحديث: الآن</string>
+    <string name="agent_card">بطاقة الوكيل</string>
+    <string name="log_debug">DEBUG</string>
+    <string name="log_info">INFO</string>
+    <string name="log_warn">WARN</string>
+    <string name="log_error">ERROR</string>
+    <string name="debug_log_category_api">API</string>
+    <string name="debug_log_category_socket">Socket</string>
+    <string name="debug_log_category_ui">UI</string>
+    <string name="debug_log_category_lifecycle">دورة الحياة</string>
+    <string name="agent_card_entity_name">اسم الكيان</string>
+    <string name="agent_card_state_idle">IDLE</string>
+    <string name="agent_card_level">Lv.%s</string>
+    <string name="agent_card_last_message">آخر رسالة…</string>
+    <string name="agent_card_just_now">الآن</string>
+    <string name="entity_card_title">كيان %s (رئيسي)</string>
+    <string name="entity_card_platform_lobster">LOBSTER</string>
+    <string name="entity_card_greeting">مرحبًا، أنا هنا!</string>
+    <string name="entity_card_last_updated">آخر تحديث: الآن</string>
+    <string name="template_gallery_select">اختيار</string>
+
+    <!-- Common UI strings -->
+    <string name="bind_button">ربط</string>
+    <string name="unbind_button">فك الربط</string>
+    <string name="card_holder">حامل البطاقات</string>
+    <string name="chat">الدردشة</string>
+    <string name="confirm">تأكيد</string>
+    <string name="enter_binding_code">أدخل رمز الربط المكون من 6 أرقام</string>
+    <string name="error_occurred">حدث خطأ</string>
+    <string name="info">معلومات</string>
+    <string name="language">اللغة</string>
+    <string name="loading">جارٍ التحميل…</string>
+    <string name="microphone_permission_denied">تم رفض إذن الميكروفون</string>
+    <string name="recording">جارٍ التسجيل…</string>
+    <string name="schedule">الجدول</string>
+    <string name="settings">الإعدادات</string>
+    <string name="voice_message">رسالة صوتية</string>
+
+    <!-- Wallet -->
+    <string name="wallet_title">المحفظة</string>
+    <string name="my_rentals_title">إيجاراتي</string>
+    <string name="invite_title">دعوة أصدقاء</string>
+    <string name="topup_ecoin_title">شحن e-Coins</string>
+    <string name="topup_ecoin">شحن</string>
+    <string name="topup_success">تمت إضافة e-Coins إلى محفظتك!</string>
+    <string name="topup_failed">فشل الشحن. يرجى المحاولة مرة أخرى.</string>
+    <string name="choose_plan_title">اختر خطة</string>
+    <string name="upgrade_plan">ترقية الخطة</string>
+
+    <!-- Hardcoded string externalization -->
+    <string name="schedule_failed_to_load">فشل التحميل: %s</string>
+    <string name="schedule_error_generic">خطأ: %s</string>
+    <string name="schedule_operation_failed">فشلت العملية</string>
+    <string name="card_holder_copied">تم النسخ: %s</string>
+    <string name="card_holder_error">خطأ</string>
+    <string name="main_delete_failed_msg">فشل الحذف: %s</string>
+    <string name="billing_subscription_unavailable">تعذر الحصول على خطط الاشتراك، يرجى المحاولة لاحقًا</string>
+    <string name="billing_google_play_loading">Google Play قيد التحميل، يرجى المحاولة لاحقًا</string>
+    <string name="dialog_delete_agent_card">حذف بطاقة الوكيل؟</string>
+    <string name="dialog_delete_agent_card_message">لا يمكن التراجع عن هذا الإجراء.</string>
+    <string name="dialog_agent_card_title">بطاقة الوكيل — كيان #%d</string>
+    <string name="dialog_block_contact">حظر %s؟ لن يتمكن من التفاعل معك بعد الآن.</string>
+    <string name="dialog_add_friend_title">إضافة صديق</string>
+    <string name="dialog_add_friend_message">إضافة %s إلى جهات اتصالك؟</string>
+
+    <string name="dialog_block_title">حظر</string>
+    <string name="dialog_unblock_title">إلغاء الحظر</string>
+    <string name="dialog_unblock_message">إلغاء حظر %s؟ سيتمكن من التفاعل معك مرة أخرى.</string>
+
+    <string name="search_saved_results">النتائج المحفوظة</string>
+    <string name="search_external_results">النتائج الخارجية</string>
+    <string name="card_loading">جارٍ التحميل...</string>
+    <string name="card_chat_history">سجل الدردشة</string>
+    <string name="card_details">التفاصيل</string>
+    <string name="card_no_results">لا توجد نتائج</string>
+    <string name="card_no_chat_history">لا يوجد سجل دردشة</string>
+    <string name="card_chat_history_failed">فشل تحميل سجل الدردشة</string>
+    <string name="feedback_photo_upload_failed">فشل رفع الصورة: %s</string>
+    <string name="wallpaper_load_entities_failed">فشل تحميل الكيانات: %s</string>
+</resources>

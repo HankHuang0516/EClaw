@@ -227,18 +227,6 @@ export const templateApi = {
     apiClient.get<{ success: boolean; templates: RuleTemplate[] }>('/api/rule-templates'),
 };
 
-// ── Schedule APIs ────────────────────────────────────────────
-
-export const scheduleApi = {
-  list: () => apiClient.get('/api/schedules'),
-  create: (schedule: object) => apiClient.post('/api/schedules', schedule),
-  update: (id: string, schedule: object) => apiClient.put(`/api/schedules/${id}`, schedule),
-  toggle: (id: string) => apiClient.patch(`/api/schedules/${id}/toggle`),
-  delete: (id: string) => apiClient.delete(`/api/schedules/${id}`),
-  getExecutions: (scheduleId?: string) =>
-    apiClient.get('/api/schedule-executions', { params: { scheduleId } }),
-};
-
 // ── File Manager APIs ────────────────────────────────────────
 
 export const fileApi = {

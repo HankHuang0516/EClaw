@@ -1,0 +1,943 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">EClawbot</string>
+    <string name="wallpaper_description">आपके AI एजेंट की लाइव स्थिति</string>
+
+    <!-- Main Activity -->
+    <string name="main_title">EClawbot</string>
+    <string name="no_agents_connected">कोई एजेंट कनेक्ट नहीं है</string>
+    <string name="tap_to_add_entity">अपना पहला एजेंट कनेक्ट करने के लिए + एंटिटी जोड़ें पर टैप करें</string>
+    <string name="add_entity">+ एंटिटी जोड़ें</string>
+    <string name="select_entity_slot">एंटिटी स्लॉट चुनें</string>
+    <string name="binding_code">बाइंडिंग कोड</string>
+    <string name="code_placeholder">------</string>
+    <string name="tap_to_generate_code">कोड जनरेट करने के लिए टैप करें</string>
+    <string name="channel_bind_warning">वर्शन 2026-03+ बाइंडिंग विफलताओं से बचने के लिए EClaw चैनल बाइंडिंग का उपयोग करने की दृढ़ता से सिफारिश करता है।</string>
+    <string name="generate">जनरेट करें</string>
+    <string name="regenerate">फिर से जनरेट करें</string>
+    <string name="channel_promo">EClaw Channel आज़माएं? अधिक नेटिव, तेज़</string>
+    <string name="channel_step_intro">OpenClaw टर्मिनल में:</string>
+    <string name="channel_step3">3  \"EClaw\" चुनें</string>
+    <string name="channel_ai_agent_hint">🤖 सहायक इंस्टॉलेशन के लिए Claude Code या अन्य AI एजेंट का उपयोग करने की दृढ़ता से सिफारिश की जाती है।</string>
+    <string name="channel_learn_more">और जानें →</string>
+    <string name="expand">विस्तार करें</string>
+    <string name="copy">कॉपी करें</string>
+    <string name="broadcast_to_all">सभी को प्रसारित करें</string>
+    <string name="set_live_wallpaper">लाइव वॉलपेपर सेट करें</string>
+    <string name="expires_in">%ds में समाप्त होगा</string>
+    <string name="command_copied">कमांड कॉपी हो गया!</string>
+    <string name="sent">भेजा गया!</string>
+    <string name="broadcast_sent">प्रसारण भेजा गया!</string>
+    <string name="failed_format">विफल: %s</string>
+
+    <!-- Dialogs -->
+    <string name="send_message">संदेश भेजें</string>
+    <string name="send">भेजें</string>
+    <string name="cancel">रद्द करें</string>
+    <string name="to_format">प्रति: %1$s (#%2$d)</string>
+    <string name="message_hint">%s को संदेश…</string>
+    <string name="broadcast_message_hint">प्रसारण संदेश…</string>
+    <string name="send_to_entities">%d एंटिटी को भेजें</string>
+    <string name="entity_format">एंटिटी %d</string>
+
+    <!-- Settings -->
+    <string name="settings_title">सेटिंग्स</string>
+    <string name="usage_title">आज का उपयोग</string>
+    <string name="premium_badge">प्रीमियम</string>
+    <string name="sends_today">आज भेजे गए</string>
+    <string name="unlock_unlimited">✨ असीमित चैट + 8 एंटिटी स्लॉट - %s/माह</string>
+    <string name="unlock_unlimited_no_price">✨ असीमित चैट + 8 एंटिटी स्लॉट</string>
+
+    <!-- Layout -->
+    <string name="entity_layout">एंटिटी लेआउट</string>
+    <string name="layout_single">एकल</string>
+    <string name="layout_dual">दोहरा</string>
+    <string name="layout_quad">चौगुना</string>
+    <string name="desc_single">एक एंटिटी केंद्र में प्रदर्शित</string>
+    <string name="desc_dual">दो एंटिटी साथ-साथ</string>
+    <string name="desc_quad">चार एंटिटी ग्रिड लेआउट में</string>
+    <string name="custom_layout">कस्टम लेआउट</string>
+    <string name="manage_entities">एंटिटी प्रबंधित करें</string>
+
+    <!-- Language -->
+    <string name="language_title">भाषा (語言)</string>
+    <string name="language_system">सिस्टम डिफ़ॉल्ट</string>
+    <string name="language_en">English</string>
+    <string name="language_zh">中文 (繁體)</string>
+    <string name="language_zh_cn">简体中文</string>
+    <string name="language_ja">日本語</string>
+    <string name="language_ko">한국어</string>
+    <string name="language_th">ภาษาไทย</string>
+    <string name="language_vi">Tiếng Việt</string>
+    <string name="language_id">Bahasa Indonesia</string>
+
+    <!-- Wallpaper Preview -->
+    <string name="wallpaper_preview_title">वॉलपेपर पूर्वावलोकन</string>
+    <string name="use_custom_layout">कस्टम लेआउट उपयोग करें</string>
+    <string name="custom_background">कस्टम बैकग्राउंड</string>
+    <string name="select_photo">फोटो चुनें</string>
+    <string name="reset">रीसेट करें</string>
+    <string name="set_wallpaper">वॉलपेपर सेट करें</string>
+    <string name="drag_to_position">एंटिटी को स्थिति में खींचें</string>
+    <string name="pinch_to_resize">आकार बदलने के लिए पिंच करें, मूव करने के लिए खींचें</string>
+    <string name="back">वापस</string>
+
+    <!-- Layout Editor -->
+    <string name="done">हो गया</string>
+
+    <!-- Entity Manager -->
+    <string name="entities_title">एंटिटी</string>
+    <string name="loading_entities">एंटिटी लोड हो रही हैं…</string>
+    <string name="layout_grid">ग्रिड</string>
+    <string name="layout_row">पंक्ति</string>
+    <string name="layout_column">स्तंभ</string>
+    <string name="layout_diamond">हीरा</string>
+    <string name="layout_corners">कोने</string>
+    <string name="entity_size">एंटिटी का आकार</string>
+    <string name="size_small">छोटा</string>
+    <string name="size_large">बड़ा</string>
+    <string name="refresh">रिफ्रेश करें</string>
+
+    <!-- AI Chat -->
+    <string name="ai_chat_title">AI सहायक</string>
+    <string name="ai_chat_welcome">नमस्ते! मैं E-Claw AI हूं।\nमुझसे प्लेटफॉर्म के बारे में कुछ भी पूछें।</string>
+    <string name="ai_chat_hint">सवाल पूछें…</string>
+    <string name="ai_chat_attach_image">इमेज जोड़ें</string>
+    <string name="ai_chat_clear_title">इतिहास मिटाएं</string>
+    <string name="ai_chat_clear_message">सभी चैट इतिहास मिटाएं?</string>
+    <string name="ai_chat_clear_confirm">मिटाएं</string>
+    <string name="ai_chat_busy_retry">AI व्यस्त है, %1$ds में पुनः प्रयास… (%2$d/%3$d)</string>
+    <string name="ai_chat_busy_exhausted">AI वर्तमान में अन्य अनुरोधों में व्यस्त है। कृपया कुछ समय बाद पुनः प्रयास करें।</string>
+    <string name="ai_chat_uploading">इमेज अपलोड हो रही है…</string>
+    <string name="ai_chat_analyzing">AI आपकी इमेज का विश्लेषण कर रहा है…</string>
+    <string name="ai_chat_thinking">अभी भी काम कर रहा है…</string>
+    <string name="ai_chat_fallback_error">क्षमा करें, मैं आपका अनुरोध संसाधित नहीं कर सका। कृपया अपना प्रश्न दोबारा बनाएं।</string>
+    <string name="ai_chat_timeout">प्रतिक्रिया का समय समाप्त। पुनः प्रयास…</string>
+    <string name="ai_chat_no_internet">इंटरनेट कनेक्शन नहीं है। कृपया अपना नेटवर्क जांचें।</string>
+    <string name="ai_chat_connection_error">कनेक्शन त्रुटि। कृपया पुनः प्रयास करें।</string>
+    <string name="ai_chat_network_error">नेटवर्क त्रुटि। कृपया पुनः प्रयास करें।</string>
+    <string name="ai_chat_device_not_registered">डिवाइस पंजीकृत नहीं है। कृपया ऐप पुनः आरंभ करें।</string>
+    <string name="ai_chat_image_too_large">इमेज बहुत बड़ी हैं। कृपया कम या छोटी इमेज के साथ प्रयास करें, या अपनी समस्या टेक्स्ट में बताएं।</string>
+    <string name="ai_chat_image_unavailable">इमेज अपलोड अस्थायी रूप से अनुपलब्ध है।</string>
+    <string name="ai_chat_view_feedback">फीडबैक इतिहास देखें →</string>
+
+    <!-- Chat -->
+    <string name="chat_history">चैट</string>
+    <string name="chat_offline_message">कनेक्ट नहीं हो पा रहा। कृपया अपना इंटरनेट कनेक्शन जांचें।</string>
+    <string name="retry">पुनः प्रयास</string>
+    <string name="filter_all">सभी</string>
+    <string name="filter_my_messages">मेरे संदेश</string>
+    <string name="type_message">संदेश टाइप करें…</string>
+    <string name="no_messages_yet">अभी कोई संदेश नहीं</string>
+    <string name="you">आप</string>
+    <string name="to_entities">प्रति: %s</string>
+    <string name="entity_read_receipt">एंटिटी %d ने पढ़ा</string>
+    <string name="send_voice">भेजें</string>
+    <string name="recording_voice">रिकॉर्डिंग…</string>
+    <string name="uploading_media">अपलोड हो रहा है…</string>
+    <string name="upload_error">अपलोड विफल</string>
+    <string name="attach">जोड़ें</string>
+    <string name="attach_camera">कैमरा</string>
+    <string name="attach_gallery">गैलरी</string>
+    <string name="attach_video">वीडियो</string>
+    <string name="attach_file">फ़ाइल</string>
+    <string name="file_too_large">फ़ाइल बहुत बड़ी है (अधिकतम 100MB)</string>
+    <string name="wait_upload">कृपया अपलोड पूरा होने तक प्रतीक्षा करें</string>
+
+    <!-- Cross-Device Contacts -->
+    <string name="add_contact">संपर्क जोड़ें</string>
+    <string name="add_contact_btn">जोड़ें</string>
+    <string name="remove_contact">संपर्क हटाएं</string>
+    <string name="remove_contact_confirm">%s को संपर्कों से हटाएं?</string>
+    <string name="contact_code_hint">सार्वजनिक कोड दर्ज करें</string>
+    <string name="contact_not_found">एंटिटी नहीं मिली</string>
+    <string name="contact_added">संपर्क जोड़ा गया!</string>
+    <string name="contact_removed">संपर्क हटाया गया</string>
+    <string name="contact_already_exists">पहले से संपर्कों में है</string>
+    <string name="contact_cannot_add_self">अपनी एंटिटी नहीं जोड़ सकते</string>
+    <string name="contact_limit_reached">संपर्क सीमा पूरी (अधिकतम 20)</string>
+    <string name="contact_offline">संपर्क ऑफ़लाइन है</string>
+    <string name="contact_lookup_error">कनेक्शन त्रुटि। कृपया पुनः प्रयास करें।</string>
+    <string name="contact_send_error">भेजने में विफल। कृपया पुनः प्रयास करें।</string>
+    <string name="to_contact_cross_device">प्रति: %s (क्रॉस-डिवाइस)</string>
+    <string name="remove">हटाएं</string>
+
+    <!-- Mission Control -->
+    <string name="mission_control">मिशन कंट्रोल</string>
+    <string name="tab_mission_center">मिशन सेंटर</string>
+    <string name="tab_kanban">कानबान</string>
+    <string name="kanban_add_deprecated">कृपया नए आइटम जोड़ने के लिए कानबान बोर्ड का उपयोग करें। कानबान बोर्ड में पूर्ण इकोसिस्टम है — बॉट को मौजूदा आइटम धीरे-धीरे माइग्रेट करने दें।</string>
+    <string name="upload">अपलोड</string>
+    <string name="uploading">अपलोड हो रहा है…</string>
+    <string name="save">सहेजें</string>
+    <string name="saving">सहेजा जा रहा है…</string>
+    <string name="add_todo">+ TODO जोड़ें</string>
+    <string name="add_note">+ नोट जोड़ें</string>
+    <string name="add_rule">+ नियम जोड़ें</string>
+    <string name="no_items">कोई TODO आइटम नहीं</string>
+    <string name="no_missions">कोई सक्रिय मिशन नहीं</string>
+    <string name="no_done_items">कोई पूर्ण आइटम नहीं</string>
+    <string name="no_notes">कोई नोट नहीं</string>
+    <string name="no_rules">कोई नियम नहीं</string>
+    <string name="add_soul">+ सोल जोड़ें</string>
+    <string name="no_souls">कोई सोल परिभाषित नहीं</string>
+
+    <!-- Soul/Rule Template Gallery -->
+    <string name="mission_choose_from_template">टेम्पलेट से चुनें</string>
+    <string name="mission_soul_gallery_title">सोल टेम्पलेट</string>
+    <string name="mission_rule_gallery_title">नियम टेम्पलेट</string>
+    <string name="mission_template_by">%s द्वारा</string>
+    <string name="mission_use_template">टेम्पलेट लागू करें</string>
+    <string name="mission_template_loading">टेम्पलेट लोड हो रहे हैं…</string>
+    <string name="mission_template_empty">कोई टेम्पलेट उपलब्ध नहीं</string>
+    <string name="mission_soul_builtin">बिल्ट-इन</string>
+    <string name="mission_template_no_match">कोई मिलता टेम्पलेट नहीं</string>
+    <string name="mission_browse_templates">टेम्पलेट ब्राउज़ करें…</string>
+    <string name="search_hint">खोजें…</string>
+    <string name="soul_template">सोल टेम्पलेट</string>
+    <string name="soul_template_custom">-- कस्टम --</string>
+    <string name="soul_name_hint">सोल का नाम</string>
+    <string name="soul_desc_hint">व्यक्तित्व, लहजा, व्यवहार का वर्णन करें…</string>
+    <string name="rule_name_hint">नियम का नाम</string>
+    <string name="rule_desc_hint">नियम का वर्णन करें…</string>
+    <string name="edit">संपादित करें</string>
+    <string name="priority">प्राथमिकता</string>
+    <string name="assign_entity">एंटिटी असाइन करें</string>
+    <string name="assign_entity_multi">एंटिटी असाइन करें (एकाधिक)</string>
+    <string name="rule_type">नियम प्रकार</string>
+    <string name="background_set">बैकग्राउंड सेट हो गया</string>
+    <string name="background_set_failed">बैकग्राउंड सेट करने में विफल</string>
+    <string name="settings_reset">सेटिंग्स रीसेट हो गईं</string>
+    <string name="background_disabled">बैकग्राउंड अक्षम</string>
+    <string name="error_open_picker">फोटो पिकर नहीं खुल सकता</string>
+    <string name="error_open_settings">वॉलपेपर सेटिंग्स नहीं खुल सकतीं</string>
+    <string name="bot_label">🤖 %s</string>
+    <string name="mission_completed_at">✓ %s</string>
+    <string name="playback_failed">प्लेबैक विफल</string>
+    <string name="confirm_copy">क्लिपबोर्ड पर कॉपी हो गया</string>
+    <string name="unknown_error">अज्ञात त्रुटि</string>
+    <string name="failed_add_slot">स्लॉट जोड़ने में विफल</string>
+    <string name="no_bound_entities">कोई बाउंड एंटिटी नहीं</string>
+    <string name="publish_notification">सूचना प्रकाशित करें</string>
+    <string name="no_notify_items">सूचित करने के लिए कोई नए बदलाव नहीं</string>
+    <string name="notification_sent">सूचना भेजी गई</string>
+    <string name="task_saved">कार्य सहेजा गया</string>
+    <string name="schedule_tag">शेड्यूल</string>
+    <string name="schedule_bot_reply">बॉट का जवाब</string>
+    <string name="schedule_no_reply">अभी तक कोई जवाब नहीं</string>
+    <string name="schedule_message_label">शेड्यूल किया गया संदेश</string>
+    <string name="enter_message">कृपया एक संदेश दर्ज करें</string>
+    <string name="select_one_entity">कृपया कम से कम एक एंटिटी चुनें</string>
+    <string name="entity_id_format">#%d</string>
+
+    <!-- Bot Avatar -->
+    <string name="bot_avatar">बॉट अवतार</string>
+    <string name="avatar_subtitle">एंटिटी %d</string>
+    <string name="avatar_upload_photo">फोटो अपलोड करें</string>
+    <string name="avatar_uploading">अपलोड हो रहा है…</string>
+    <string name="avatar_upload_failed">अपलोड विफल</string>
+    <string name="avatar_upload_success">अवतार अपडेट हो गया!</string>
+
+    <!-- Entity Management -->
+    <string name="remove_entity">हटाएं</string>
+    <string name="remove_confirm_title">एंटिटी हटाएं?</string>
+    <string name="remove_confirm_message">क्या आप वाकई %1$s (#%2$d) को हटाना चाहते हैं? यह इसे वॉलपेपर से अनबाइंड कर देगा।</string>
+    <string name="entity_removed">%s हटाया गया</string>
+    <string name="refresh_connection">रिफ्रेश करें</string>
+    <string name="refresh_success">कनेक्शन रिफ्रेश हो गया!</string>
+    <string name="refresh_webhook_broken_title">कनेक्शन विफल</string>
+    <string name="refresh_webhook_broken_message">बॉट से कनेक्ट नहीं हो पा रहा। क्या आप रीबाइंड करना चाहेंगे?</string>
+    <string name="refresh_cooldown">कृपया %d सेकंड प्रतीक्षा करें</string>
+    <string name="edit_entities">संपादित करें</string>
+    <string name="drag_to_reorder">पुनर्व्यवस्थित करने के लिए खींचें</string>
+    <string name="xd_settings_btn">क्रॉस-डिवाइस संदेश</string>
+    <string name="entity_agent_card">एजेंट कार्ड</string>
+    <string name="more_options">अधिक विकल्प</string>
+    <string name="xd_settings_title">क्रॉस-डिवाइस संदेश सेटिंग्स</string>
+    <string name="xd_pre_inject">प्री-इंजेक्ट निर्देश</string>
+    <string name="xd_pre_inject_desc">पुश नोटिफिकेशन में क्रॉस-डिवाइस संदेशों से पहले जोड़ा जाता है</string>
+    <string name="xd_forbidden">प्रतिबंधित शब्द</string>
+    <string name="xd_forbidden_desc">इन शब्दों वाले संदेश अस्वीकार किए जाएंगे (कॉमा-पृथक)</string>
+    <string name="xd_rate_limit">दर सीमा (सेकंड)</string>
+    <string name="xd_rate_limit_desc">प्रति प्रेषक कूलडाउन (0 = कोई सीमा नहीं)</string>
+    <string name="xd_blacklist">ब्लैकलिस्ट (सार्वजनिक कोड)</string>
+    <string name="xd_codes_sep">कॉमा-पृथक सार्वजनिक कोड</string>
+    <string name="xd_whitelist_mode">व्हाइटलिस्ट मोड</string>
+    <string name="xd_whitelist">व्हाइटलिस्ट (सार्वजनिक कोड)</string>
+    <string name="xd_reject_msg">अस्वीकृति संदेश</string>
+    <string name="xd_reject_msg_hint">ब्लॉक होने पर ऑटो-रिप्लाई (खाली = मौन)</string>
+    <string name="xd_allowed_media">अनुमत मीडिया प्रकार</string>
+    <string name="xd_media_text">टेक्स्ट</string>
+    <string name="xd_media_photo">फोटो</string>
+    <string name="xd_media_voice">वॉइस</string>
+    <string name="xd_media_video">वीडियो</string>
+    <string name="xd_media_file">फ़ाइल</string>
+    <string name="xd_save">सहेजें</string>
+    <string name="xd_reset">डिफ़ॉल्ट पर रीसेट करें</string>
+    <string name="xd_saved">क्रॉस-डिवाइस सेटिंग्स सहेजी गईं!</string>
+    <string name="xd_save_failed">सेटिंग्स सहेजने में विफल</string>
+    <string name="xd_reset_done">सेटिंग्स डिफ़ॉल्ट पर रीसेट हो गईं</string>
+    <string name="reorder_saving">नया क्रम सहेजा जा रहा है…</string>
+    <string name="reorder_success">एंटिटी क्रम अपडेट हो गया!</string>
+    <string name="reorder_failed">क्रम अपडेट करने में विफल</string>
+    <string name="refreshing">रिफ्रेश हो रहा है…</string>
+    <string name="rebind">रीबाइंड करें</string>
+    <string name="entity_count_format">%1$d/%2$d एंटिटी</string>
+    <string name="entities_label">एंटिटी</string>
+
+    <!-- Entity Rename -->
+    <string name="rename_title">एंटिटी का नाम बदलें</string>
+    <string name="rename_hint">नया नाम दर्ज करें (अधिकतम 20 अक्षर)</string>
+    <string name="rename_saving">सहेजा जा रहा है…</string>
+    <string name="rename_success">नाम अपडेट हो गया!</string>
+
+    <!-- System Messages -->
+    <string name="webhook_error_title">पुश नोटिफिकेशन विफल</string>
+    <string name="webhook_error_message">कृपया OpenClaw में निम्नलिखित संदेश पेस्ट करें: \"Webhook बाइंडिंग त्रुटि या POST /api/bot/register नहीं बुलाया गया। कृपया \'सार्वजनिक webhook URL\' (गेटवे कॉन्फिग) और \'गेटवे टोकन\' पुनः पढ़ें, फिर तुरंत deviceId/entityId/botSecret के साथ webhook_url और गेटवे टोकन सहित /api/bot/register कॉल करें।\"</string>
+    <string name="push_error_free_title">बॉट कनेक्शन बाधित</string>
+    <string name="push_error_free_message">मुफ्त बॉट कनेक्शन बाधित हो गया। कृपया मुफ्त बॉट को रीबाइंड करने का प्रयास करें।</string>
+    <string name="push_error_rental_title">बॉट कनेक्शन बाधित</string>
+    <string name="push_error_rental_message">बॉट कनेक्शन बाधित हो गया। आपका रेंटल उपयोग सुरक्षित रहेगा, चिंता न करें। कृपया रीबाइंड करने का प्रयास करें और संदेश भेजने से पहले webhook सेटअप सफल होने तक प्रतीक्षा करें।</string>
+    <string name="message_copied">संदेश कॉपी हो गया</string>
+
+    <!-- Feedback -->
+    <string name="feedback">फीडबैक</string>
+    <string name="feedback_desc">बग मिला या कोई सुझाव है? हमें बताएं!</string>
+    <string name="feedback_hint">समस्या या सुझाव का वर्णन करें…</string>
+    <string name="feedback_sent">फीडबैक भेजा गया, धन्यवाद!</string>
+    <string name="feedback_empty">कृपया अपना फीडबैक दर्ज करें</string>
+    <string name="feedback_mark">मार्क करें</string>
+    <string name="feedback_marked_btn">मार्क किया गया</string>
+    <string name="feedback_marked">%s पर मार्क किया — इस बिंदु से लॉग कैप्चर किए जाएंगे जब आप फीडबैक सबमिट करेंगे।</string>
+    <string name="feedback_auto_log_hint">निदान में मदद के लिए पिछले 5 मिनट के लॉग स्वचालित रूप से कैप्चर किए जाएंगे।</string>
+    <string name="feedback_mark_consent_title">बग का क्षण मार्क करें</string>
+    <string name="feedback_mark_consent_message">मार्क करने के बाद, आपको समस्या दोहराने के लिए मुख्य स्क्रीन पर वापस ले जाया जाएगा। जब आप फीडबैक सबमिट करने वापस आएंगे, तो इस क्षण से लॉग कैप्चर किए जाएंगे।\n\nशुरू करने के लिए तैयार?</string>
+    <string name="feedback_mark_consent_agree">रिकॉर्डिंग शुरू करें</string>
+    <string name="feedback_cancel_mark">मार्क रद्द करें</string>
+    <string name="feedback_cat_bug">बग</string>
+    <string name="feedback_cat_feature">फीचर</string>
+    <string name="feedback_cat_question">प्रश्न</string>
+    <string name="feedback_category_label">श्रेणी</string>
+    <string name="feedback_sending">भेजा जा रहा है…</string>
+    <string name="feedback_sent_short">भेजा गया</string>
+    <string name="feedback_result_title">फीडबैक #%d प्राप्त</string>
+    <string name="feedback_result_severity">गंभीरता: %s</string>
+    <string name="feedback_result_logs">कैप्चर किया: %1$d API कॉल, %2$d सर्वर लॉग</string>
+    <string name="feedback_result_issue">GitHub Issue #%d देखें</string>
+    <string name="feedback_view_all">मेरे सभी फीडबैक देखें</string>
+    <string name="feedback_view_history">फीडबैक इतिहास देखें</string>
+    <string name="feedback_view_issue">GitHub Issue देखें</string>
+    <string name="feedback_history_title">मेरा फीडबैक</string>
+    <string name="feedback_history_empty">अभी तक कोई फीडबैक सबमिट नहीं किया।\nआपका सबमिट किया गया फीडबैक यहां दिखाई देगा।</string>
+    <string name="feedback_track_title">अपना फीडबैक ट्रैक करें</string>
+    <string name="feedback_track_desc">अपने सबमिट किए गए फीडबैक की स्थिति और अपडेट देखें।</string>
+    <string name="feedback_github_issue_desc">GitHub पर प्रगति ट्रैक करें</string>
+    <string name="feedback_photo_add">फोटो जोड़ें</string>
+    <string name="feedback_photo_hint">समस्या दिखाने के लिए 5 तक फोटो जोड़ें (वैकल्पिक)</string>
+    <string name="feedback_photo_uploading">फोटो अपलोड हो रही हैं…</string>
+    <string name="feedback_photo_uploaded">%d फोटो अपलोड हुई</string>
+    <string name="feedback_photo_max">अधिकतम 5 फोटो अनुमत</string>
+    <string name="submit">सबमिट करें</string>
+    <string name="app_version">वर्शन: %s</string>
+
+    <!-- Crash Logs -->
+    <string name="crash_logs_title">क्रैश लॉग</string>
+    <string name="crash_logs_empty">कोई क्रैश लॉग नहीं।\nक्रैश रिपोर्ट यहां स्वचालित रूप से दिखाई देंगी।</string>
+    <string name="crash_log_expand">विवरण</string>
+    <string name="crash_log_collapse">छिपाएं</string>
+    <string name="crash_log_share">शेयर करें</string>
+    <string name="crash_log_delete">हटाएं</string>
+    <string name="crash_log_delete_all">सभी हटाएं</string>
+    <string name="crash_log_delete_all_confirm">सभी %d क्रैश लॉग हटाएं?</string>
+    <string name="crash_log_deleted">क्रैश लॉग हटाया गया</string>
+    <string name="crash_logs_all_deleted">%d क्रैश लॉग हटाए गए</string>
+
+    <!-- Debug Logs -->
+    <string name="debug_logs_title">डीबग लॉग</string>
+    <string name="debug_logs_empty">कोई डीबग लॉग नहीं।\nऐप चलते समय लॉग यहां दिखाई देंगे।</string>
+    <string name="debug_log_filter_all">सभी</string>
+    <string name="debug_log_share">शेयर करें</string>
+    <string name="debug_log_clear">साफ़ करें</string>
+    <string name="debug_log_clear_confirm">सभी डीबग लॉग साफ़ करें?</string>
+    <string name="debug_log_cleared">डीबग लॉग साफ़ हो गए</string>
+    <string name="debug_log_line_count">%d पंक्तियां</string>
+    <string name="debug_log_search_hint">लॉग खोजें…</string>
+    <string name="debug_log_copy">कॉपी करें</string>
+    <string name="debug_log_copied">लॉग क्लिपबोर्ड पर कॉपी हो गए</string>
+
+    <!-- Official Borrow -->
+    <string name="official_borrow">आधिकारिक बॉट रेंटल</string>
+    <string name="official_borrow_title">आधिकारिक बॉट रेंटल</string>
+    <string name="borrow_beta_label">बीटा</string>
+    <string name="free_version">मुफ्त वर्शन</string>
+    <string name="free_version_model">मॉडल: MiniMax 2.1</string>
+    <string name="free_version_desc">साझा मेमोरी, सभी मुफ्त उपयोगकर्ताओं के साथ साझा\n15 संदेश/दिन (केवल मुफ्त बॉट)</string>
+    <string name="free_version_warning">संवेदनशील जानकारी के लिए अनुशंसित नहीं</string>
+    <string name="use_free_version">मुफ्त वर्शन उपयोग करें</string>
+    <string name="monthly_version">मासिक वर्शन</string>
+    <string name="monthly_version_price_original">NT$588/माह</string>
+    <string name="monthly_version_price_discount">NT$288/माह</string>
+    <string name="monthly_version_price">$9.9 USD/माह</string>
+    <string name="monthly_version_discount_label">सीमित समय बीटा छूट</string>
+    <string name="monthly_version_model">मॉडल: MiniMax 2.1</string>
+    <string name="monthly_version_desc">समर्पित क्लाउड वातावरण, निजी मेमोरी\nअसीमित संदेश \u2022 24/7 हमेशा ऑनलाइन</string>
+    <string name="subscribe_and_bind">मासिक प्लान खरीदें</string>
+    <string name="rebind_free">रीबाइंड (मुफ्त)</string>
+    <string name="remaining_bots">%d शेष</string>
+    <string name="sold_out">बिक गया</string>
+    <string name="loading_status">लोड हो रहा है…</string>
+    <string name="connecting_bot">बॉट से कनेक्ट हो रहा है…</string>
+    <string name="handshaking_bot">बॉट से हैंडशेक हो रहा है…</string>
+    <string name="webhook_testing">Webhook कनेक्शन का परीक्षण हो रहा है, तैयार होने पर बताएंगे। अभी संदेश न भेजें~</string>
+    <string name="webhook_test_success">Webhook परीक्षण पास! बॉट तैयार है~</string>
+    <string name="bind_success_returning">कनेक्ट हो गया! वापस जा रहा है…</string>
+    <string name="processing_payment">भुगतान प्रोसेस हो रहा है…</string>
+    <string name="adding_slot">पेड स्लॉट जोड़ा जा रहा है…</string>
+    <string name="already_bound_free">बाउंड (मुफ्त)</string>
+    <string name="already_bound_personal">बाउंड (मासिक)</string>
+    <string name="unbind">अनबाइंड</string>
+    <string name="bind_success">बाइंड सफल!</string>
+    <string name="bind_failed">बाइंड विफल: %s</string>
+    <string name="unbind_success">सफलतापूर्वक अनबाउंड</string>
+    <string name="unbind_failed">अनबाइंड विफल: %s</string>
+    <string name="unbind_personal_title">मासिक वर्शन अनबाइंड करें?</string>
+    <string name="unbind_personal_message">इस एंटिटी का मासिक बॉट सार्वजनिक पूल में वापस जाएगा।\n\nआपकी सब्सक्रिप्शन सक्रिय रहेगी और आप किसी भी समय रीबाइंड कर सकते हैं (उपलब्धता के अनुसार)।</string>
+    <string name="unbind_free_title">मुफ्त वर्शन अनबाइंड करें?</string>
+    <string name="unbind_free_message">क्या आप वाकई इस मुफ्त बॉट को अनबाइंड करना चाहते हैं?</string>
+    <string name="select_entity_to_bind">बाइंड करने के लिए एंटिटी स्लॉट चुनें</string>
+    <string name="no_free_bot">कोई मुफ्त बॉट उपलब्ध नहीं</string>
+    <string name="subscription_required">सब्सक्रिप्शन आवश्यक</string>
+    <string name="entity_already_bound">एंटिटी #%d पहले से भरा है, कृपया पहले हटाएं</string>
+    <string name="bound_on_entity">एंटिटी #%d पर बाउंड</string>
+    <string name="free_limit_hint">प्रत्येक डिवाइस केवल एक मुफ्त बॉट बाइंड कर सकता है</string>
+    <string name="request_rental">रेंटल अनुरोध सबमिट करें</string>
+    <string name="rental_demand_title">बिक गया</string>
+    <string name="rental_demand_message">मासिक बॉट वर्तमान में बिक गए हैं।\n\nआप रेंटल अनुरोध सबमिट कर सकते हैं और उपलब्ध होने पर हम आपको सूचित करेंगे (आमतौर पर 1-2 कार्य दिवस)।</string>
+    <string name="rental_demand_submit">अनुरोध सबमिट करें</string>
+    <string name="rental_demand_success">अनुरोध सबमिट हो गया! हम 1-2 कार्य दिवसों में उत्तर देंगे।</string>
+    <string name="rental_demand_fail">अनुरोध सबमिट करने में विफल: %s</string>
+    <string name="borrow_cost_title">किराए पर क्यों? सेल्फ-होस्टिंग लागत तुलना</string>
+    <string name="borrow_cost_eclaw">E-Claw आधिकारिक बॉट: जैसा ऊपर दिखाया गया (24/7 स्थिर)</string>
+    <string name="borrow_cost_vs">VS सेल्फ-होस्टिंग:</string>
+    <string name="borrow_cost_server">क्लाउड सर्वर: ~NT$300+/माह</string>
+    <string name="borrow_cost_llm">LLM API: ~NT$300+/माह</string>
+    <string name="borrow_cost_setup">OpenClaw सीखना: अमूल्य समय</string>
+
+    <!-- Free Bot TOS -->
+    <string name="tos_agree">मैं सहमत हूं</string>
+    <string name="tos_decline">अस्वीकार</string>
+    <string name="tos_load_failed">उपयोग की शर्तें लोड करने में विफल</string>
+    <string name="tos_agree_failed">सहमति दर्ज करने में विफल</string>
+
+    <!-- Bind Email -->
+    <string name="bind_email_title">वेब लॉगिन के लिए ईमेल लिंक करें</string>
+    <string name="bind_email_prompt">वेब पोर्टल पर सीधे लॉग इन करने के लिए ईमेल और पासवर्ड लिंक करें, या डिवाइस क्रेडेंशियल्स का उपयोग करें।</string>
+    <string name="bind_email_action">ईमेल लिंक करें</string>
+    <string name="bind_email_use_device_login">डिवाइस क्रेडेंशियल्स कॉपी करें</string>
+    <string name="bind_email_label">ईमेल</string>
+    <string name="bind_email_password_label">पासवर्ड</string>
+    <string name="bind_email_confirm_label">पासवर्ड की पुष्टि करें</string>
+    <string name="bind_email_password_hint">अक्षरों और संख्याओं के साथ कम से कम 6 अक्षर</string>
+    <string name="bind_email_submit">लिंक करें</string>
+    <string name="bind_email_submitting">लिंक हो रहा है…</string>
+    <string name="bind_email_fill_all">कृपया सभी फ़ील्ड भरें</string>
+    <string name="bind_email_password_invalid">पासवर्ड में अक्षरों और संख्याओं के साथ कम से कम 6 अक्षर होने चाहिए</string>
+    <string name="bind_email_password_mismatch">पासवर्ड मेल नहीं खाते</string>
+    <string name="bind_email_success">ईमेल लिंक हो गया! कृपया सत्यापन के लिए अपना इनबॉक्स जांचें।</string>
+    <string name="bind_email_linked">लिंक किया गया ईमेल:</string>
+    <string name="bind_email_verified">सत्यापित</string>
+    <string name="bind_email_not_verified">सत्यापित नहीं</string>
+    <string name="bind_email_login_hint">आप इस ईमेल और पासवर्ड से वेब पोर्टल पर लॉग इन कर सकते हैं।</string>
+    <string name="bind_email_verify_hint">कृपया लॉग इन करने से पहले अपना इनबॉक्स जांचें और ईमेल सत्यापित करें।</string>
+    <string name="bind_email_open_portal">पोर्टल खोलें</string>
+    <string name="bind_email_copy_credentials">क्रेडेंशियल्स कॉपी करें</string>
+
+    <!-- Common labels -->
+    <string name="show_label">दिखाएं</string>
+    <string name="hide_label">छिपाएं</string>
+
+    <!-- Channel API Card -->
+    <string name="channel_api_card_title">चैनल API</string>
+    <string name="channel_api_card_desc">OpenClaw चैनल प्लगइन क्रेडेंशियल्स</string>
+    <string name="channel_api_key_label">API कुंजी</string>
+    <string name="channel_api_secret_label">API सीक्रेट</string>
+    <string name="channel_api_copy_btn">कॉपी करें</string>
+    <string name="channel_api_copied">क्रेडेंशियल्स कॉपी हो गए</string>
+    <string name="channel_api_no_key">अभी तक कोई API कुंजी नहीं। जनरेट करने के लिए वेब पोर्टल खोलें।</string>
+    <string name="channel_api_slots_active">कनेक्टेड: %1$s</string>
+
+    <!-- Account Status Card -->
+    <string name="account_card_title">खाता</string>
+    <string name="account_status_loading">खाता स्थिति जांची जा रही है\u2026</string>
+    <string name="account_status_unbound">ईमेल लिंक नहीं है</string>
+    <string name="account_status_unbound_desc">वेब पोर्टल से प्रबंधित करने और नए डिवाइस पर डेटा पुनर्प्राप्त करने के लिए ईमेल लिंक करें।</string>
+    <string name="account_bind_email_btn">ईमेल लिंक करें</string>
+    <string name="account_recovery_link">पहले से खाता है? यहां पुनर्स्थापित करें</string>
+    <string name="account_open_portal">वेब पोर्टल खोलें</string>
+    <string name="account_copy_credentials">डिवाइस क्रेडेंशियल्स कॉपी करें</string>
+    <string name="account_or">या</string>
+    <string name="sign_in_google">Google से साइन इन करें</string>
+    <string name="sign_in_facebook">Facebook से साइन इन करें</string>
+    <string name="social_login_failed">सोशल लॉगिन विफल</string>
+    <string name="connected_accounts">कनेक्टेड खाते</string>
+
+    <!-- Account Login -->
+    <string name="account_login">खाता लॉगिन</string>
+    <string name="account_login_hint">पुनः इंस्टॉल के बाद अपने डिवाइस डेटा को पुनर्स्थापित करने के लिए अपने लिंक किए गए ईमेल से लॉग इन करें।</string>
+    <string name="account_login_btn">लॉग इन</string>
+    <string name="account_login_logging_in">लॉग इन हो रहा है…</string>
+    <string name="account_login_success_title">लॉगिन सफल</string>
+    <string name="account_login_success_msg">खाता पुनर्स्थापित: %s\nआपका डेटा लोड करने के लिए ऐप पुनः आरंभ होगा।</string>
+    <string name="account_login_restart">अभी पुनः आरंभ करें</string>
+
+    <!-- Privacy Policy -->
+    <string name="privacy_policy_title">गोपनीयता नीति</string>
+    <string name="delete_account">खाता हटाएं</string>
+    <string name="web_portal">वेब पोर्टल</string>
+    <string name="privacy_policy_content">
+<b>1. गोपनीयता के प्रति प्रतिबद्धता</b>\n
+E-claw टीम आपके लिए गोपनीयता के महत्व को समझती है। हम गंभीरता से घोषणा करते हैं: <b>हम कभी भी आपके किसी भी व्यक्तिगत डेटा को बेचेंगे, लीक या दुरुपयोग नहीं करेंगे।</b>\n\n
+<b>2. हम कौन सा डेटा एकत्र करते हैं?</b>\n
+अपनी सेवा प्रदान करने के लिए, हम केवल संचालन के लिए आवश्यक न्यूनतम डेटा एकत्र करते हैं:\n
+- डिवाइस ID: विभिन्न डिवाइस की पहचान के लिए।\n
+- ऐप वर्शन: संगतता जांच के लिए।\n
+- बाइंडिंग डेटा: एजेंट का नाम और स्थिति।\n
+- GPS स्थान (वैकल्पिक): केवल जब आपका AI एजेंट इसकी अनुरोध करता है। केवल मेमोरी में संग्रहीत, स्थायी नहीं।\n
+- वॉइस संदेश (वैकल्पिक): केवल जब आप चैट में रिकॉर्ड बटन दबाते हैं। चैट इतिहास के हिस्से के रूप में अपलोड किया गया।\n\n
+<b>हम एकत्र नहीं करते:</b>\n
+- आपका नाम, फोन नंबर, या ईमेल।\n
+- आपका कैमरा डेटा।\n
+- आपके फोन पर अन्य ऐप्स की जानकारी।\n\n
+<b>3. OpenClaw प्रोटोकॉल</b>\n
+हम OpenClaw इकोसिस्टम के कट्टर समर्थक हैं। हम बंद \"Walled Garden\" नहीं बनाएंगे और इंटरऑपरेबिलिटी बनाए रखने का वादा करते हैं।\n\n
+<b>4. AI वार्तालाप गोपनीयता</b>\n
+संदेश एन्क्रिप्टेड HTTPS के माध्यम से आपके बाउंड AI एजेंट को भेजे जाते हैं। डेटा प्रवाह आपके द्वारा नियंत्रित है।\n\n
+<b>5. GPS और माइक्रोफ़ोन</b>\n
+GPS: केवल अनुरोध पर, कोई बैकग्राउंड ट्रैकिंग नहीं, सर्वर पुनः आरंभ पर डेटा खो जाता है।\n
+माइक्रोफ़ोन: केवल रिकॉर्डिंग के दौरान सक्रिय, कोई बैकग्राउंड सुनना नहीं।\n
+दोनों तीसरे पक्ष के साथ साझा नहीं किए जाते।\n\n
+<b>6. हमसे संपर्क करें</b>\n
+यदि आपके कोई प्रश्न हैं, तो कृपया हमारे आधिकारिक ईमेल के माध्यम से हमसे संपर्क करें।
+    </string>
+
+    <!-- New Strings -->
+    <string name="version_conflict_title">वर्शन विवाद</string>
+    <string name="version_conflict_message">डैशबोर्ड किसी अन्य क्लाइंट द्वारा अपडेट किया गया है (आपका वर्शन: %1$d, सर्वर: %2$d)। नवीनतम वर्शन डाउनलोड करें?</string>
+    <string name="download_latest">नवीनतम डाउनलोड करें</string>
+    <string name="action_move_to_mission">➡️ मिशन में ले जाएं</string>
+    <string name="action_mark_done">✅ पूर्ण चिह्नित करें</string>
+    <string name="action_edit">✏️ संपादित करें</string>
+    <string name="action_delete">🗑️ हटाएं</string>
+    <string name="delete_confirm_title">हटाने की पुष्टि</string>
+    <string name="delete_confirm_message_format">क्या आप वाकई \"%s\" को हटाना चाहते हैं?</string>
+    <string name="delete">हटाएं</string>
+    <string name="last_synced_format"> | अंतिम सिंक: %s</string>
+
+    <!-- Usage Limit -->
+    <string name="usage_limit_title">दैनिक सीमा पूरी</string>
+    <string name="usage_limit_message">आपने मुफ्त बॉट के लिए 15 संदेशों की दैनिक सीमा पूरी कर ली है।\n\nआपके अपने बॉट की कोई सीमा नहीं!</string>
+    <string name="usage_limit_upgrade">अपग्रेड करें</string>
+
+    <!-- File Manager -->
+    <string name="file_manager_title">फ़ाइलें</string>
+    <string name="file_filter_photos">फोटो</string>
+    <string name="file_filter_voice">वॉइस</string>
+    <string name="file_empty_title">अभी कोई फ़ाइल नहीं</string>
+    <string name="file_empty_desc">आपकी चैट से फोटो और वॉइस संदेश यहां दिखाई देंगे।</string>
+    <string name="file_load_failed">फ़ाइलें लोड करने में विफल</string>
+    <string name="file_stats_total">फ़ाइलें</string>
+    <string name="file_type_photo">फोटो</string>
+    <string name="file_type_voice">वॉइस</string>
+    <string name="file_btn_download">डाउनलोड</string>
+    <string name="chat_load_image_failed">इमेज लोड करने में विफल</string>
+    <string name="wallpaper_no_bound_entities">कोई बाउंड एंटिटी नहीं</string>
+    <string name="main_agent_card_deleted">एजेंट कार्ड हटाया गया</string>
+    <string name="main_agent_card_saved">एजेंट कार्ड सहेजा गया</string>
+    <string name="main_delete_failed">हटाना विफल</string>
+    <string name="main_description_required">विवरण आवश्यक है</string>
+    <string name="main_max_capabilities">अधिकतम 10 क्षमताएं</string>
+    <string name="main_max_items">अधिकतम %d आइटम</string>
+    <string name="main_save_error">त्रुटि</string>
+    <string name="main_save_failed">सहेजना विफल</string>
+    <string name="main_save_failed_msg">सहेजना विफल: %s</string>
+    <string name="chat_ai_analyzing">AI आपका संदेश विश्लेषित कर रहा है…</string>
+    <string name="chat_failed_to_send">संदेश भेजने में विफल।</string>
+    <string name="chat_failed_to_send_v2">संदेश भेजने में विफल।</string>
+    <string name="chat_images_too_large">इमेज बहुत बड़ी हैं। कृपया कम या छोटी इमेज के साथ प्रयास करें, या अपनी समस्या टेक्स्ट में बताएं।</string>
+    <string name="chat_network_error">नेटवर्क त्रुटि। कृपया पुनः प्रयास करें।</string>
+    <string name="file_btn_share">शेयर करें</string>
+    <string name="file_btn_delete">हटाएं</string>
+    <string name="file_delete_title">फ़ाइल हटाएं</string>
+    <string name="file_delete_confirm">क्या आप वाकई इस फ़ाइल को हटाना चाहते हैं?</string>
+    <string name="file_deleted">फ़ाइल हटाई गई</string>
+    <string name="file_load_more">और लोड करें</string>
+    <string name="file_playing_voice">वॉइस प्ले हो रही है…</string>
+    <string name="file_playback_done">प्लेबैक पूर्ण</string>
+    <string name="file_view_toggle">व्यू बदलें</string>
+    <string name="file_time_all">सभी समय</string>
+    <string name="file_time_today">आज</string>
+    <string name="file_time_week">इस सप्ताह</string>
+    <string name="file_time_month">इस माह</string>
+    <string name="file_broadcast">प्रसारण</string>
+
+    <!-- File Folders -->
+    <string name="file_folder_all">सभी</string>
+    <string name="file_folder_add">+ फ़ोल्डर</string>
+    <string name="file_folder_add_title">फ़ोल्डर जोड़ें</string>
+    <string name="file_folder_name_hint">फ़ोल्डर का नाम</string>
+    <string name="file_folder_already_exists">फ़ोल्डर \"%1$s\" पहले से मौजूद है</string>
+    <string name="file_folder_move_to">फ़ोल्डर में ले जाएं</string>
+    <string name="file_folder_remove_from">फ़ोल्डर से हटाएं</string>
+    <string name="file_folder_delete_title">फ़ोल्डर हटाएं</string>
+    <string name="file_folder_delete_confirm">फ़ोल्डर \"%1$s\" हटाएं? फ़ाइलें नहीं हटाई जाएंगी।</string>
+    <string name="file_folder_uncategorized">अवर्गीकृत</string>
+
+    <!-- Gatekeeper -->
+    <string name="gatekeeper_blocked_message">⚠️ %1$s（%2$d/%3$d）</string>
+    <string name="gatekeeper_blocked_permanent">⚠️ %1$s</string>
+
+    <!-- Schedule -->
+    <string name="schedule_title">शेड्यूल</string>
+    <string name="schedule_enter">शेड्यूल पर जाएं</string>
+    <string name="schedule_add">जोड़ें</string>
+    <string name="schedule_upcoming">आगामी &amp; सक्रिय</string>
+    <string name="schedule_history">इतिहास</string>
+    <string name="schedule_empty_upcoming">कोई आगामी शेड्यूल नहीं</string>
+    <string name="schedule_empty_history">कोई निष्पादन इतिहास नहीं</string>
+    <string name="schedule_create_title">नया शेड्यूल</string>
+    <string name="schedule_create">बनाएं</string>
+    <string name="schedule_label_entity">लक्ष्य एंटिटी</string>
+    <string name="schedule_label_message">संदेश</string>
+    <string name="schedule_label_time">निर्धारित समय</string>
+    <string name="schedule_label_repeat">दोहराएं</string>
+    <string name="schedule_label_label">लेबल (वैकल्पिक)</string>
+    <string name="schedule_placeholder_message">भेजने के लिए संदेश दर्ज करें…</string>
+    <string name="schedule_placeholder_label">उदा. सुबह की अभिवादन</string>
+    <string name="schedule_tap_time">समय चुनने के लिए टैप करें</string>
+    <string name="schedule_once">एक बार</string>
+    <string name="schedule_repeat_daily">दैनिक</string>
+    <string name="schedule_repeat_weekly">साप्ताहिक</string>
+    <string name="schedule_repeat_hourly">प्रति घंटा</string>
+    <string name="schedule_5min">+5 मिनट</string>
+    <string name="schedule_15min">+15 मिनट</string>
+    <string name="schedule_30min">+30 मिनट</string>
+    <string name="schedule_1hr">+1 घंटा</string>
+    <string name="schedule_3hr">+3 घंटे</string>
+    <string name="schedule_repeat_cron">कस्टम (Cron)</string>
+    <string name="schedule_label_cron">Cron एक्सप्रेशन</string>
+    <string name="schedule_cron_hint">प्रारूप: मिनट घंटा दिन माह सप्ताह_दिन\n(उदा. \"30 8 * * *\" = हर दिन 08:30 पर)</string>
+    <string name="schedule_err_cron">कृपया cron एक्सप्रेशन दर्ज करें</string>
+    <string name="schedule_err_cron_invalid">अमान्य cron प्रारूप। 5 स्पेस-पृथक फ़ील्ड होने चाहिए।</string>
+    <string name="schedule_created_ok">शेड्यूल बनाया गया!</string>
+    <string name="schedule_confirm_delete">यह शेड्यूल हटाएं?</string>
+    <string name="schedule_deleted">शेड्यूल हटाया गया</string>
+    <string name="schedule_err_message">कृपया एक संदेश दर्ज करें</string>
+    <string name="schedule_no_entities">कोई बाउंड एंटिटी नहीं। पहले एक एंटिटी बाइंड करें।</string>
+    <string name="schedule_status_pending">लंबित</string>
+    <string name="schedule_status_active">सक्रिय</string>
+    <string name="schedule_status_completed">पूर्ण</string>
+    <string name="schedule_status_failed">विफल</string>
+    <string name="schedule_created">बनाया गया</string>
+    <string name="schedule_executed">निष्पादित</string>
+    <string name="schedule_push_ok">बॉट को भेजा गया</string>
+    <string name="schedule_edit">शेड्यूल संपादित करें</string>
+    <string name="schedule_updated">शेड्यूल अपडेट हो गया!</string>
+
+    <!-- Notifications -->
+    <string name="notifications_title">सूचनाएं</string>
+    <string name="notif_pref_title">सूचना प्राथमिकताएं</string>
+    <string name="notifications_desc">कॉन्फ़िगर करें कि आप कौन सी सूचनाएं प्राप्त करना चाहते हैं।</string>
+    <string name="notif_pref_bot_reply">बॉट के जवाब</string>
+    <string name="notif_pref_broadcast">प्रसारण</string>
+    <string name="notif_pref_speak_to">एंटिटी संदेश</string>
+    <string name="notif_pref_feedback">फीडबैक अपडेट</string>
+    <string name="notif_pref_todo">TODO पूर्ण</string>
+    <string name="notif_pref_scheduled">शेड्यूल किए गए संदेश</string>
+    <string name="notif_prefs_loading">प्राथमिकताएं लोड हो रही हैं…</string>
+    <string name="notif_prefs_error">सूचना प्राथमिकताएं लोड करने में विफल</string>
+
+    <!-- Broadcast Settings -->
+    <string name="broadcast_settings_title">प्रसारण सेटिंग्स</string>
+    <string name="broadcast_settings_desc">कॉन्फ़िगर करें कि प्रसारण संदेश कैसे काम करते हैं</string>
+    <string name="broadcast_pref_recipient_info">प्रसारण में प्राप्तकर्ता सूची दिखाएं</string>
+
+    <!-- Navigation Bar -->
+    <string name="nav_home">होम</string>
+    <string name="nav_mission">मिशन</string>
+    <string name="nav_chat">चैट</string>
+    <string name="nav_files">फ़ाइलें</string>
+    <string name="nav_cards">कार्ड</string>
+    <string name="nav_settings">सेटिंग्स</string>
+    <string name="nav_wallpaper">वॉलपेपर</string>
+
+    <!-- Remote Control -->
+    <string name="remote_control_service_label">E-Claw रिमोट कंट्रोल</string>
+    <string name="remote_control_service_description">जब आप अनुमति देते हैं तो E-Claw बॉट को आपकी फोन स्क्रीन पढ़ने और उसके साथ इंटरैक्ट करने की अनुमति देता है।</string>
+    <string name="remote_control_section_title">रिमोट कंट्रोल</string>
+    <string name="remote_control_toggle_label">बॉट रिमोट कंट्रोल की अनुमति दें</string>
+    <string name="remote_control_open_accessibility">एक्सेसिबिलिटी सेटिंग्स खोलें</string>
+    <string name="remote_control_status_active">एक्सेसिबिलिटी सेवा: सक्रिय</string>
+    <string name="remote_control_status_inactive">एक्सेसिबिलिटी सेवा: सक्षम नहीं</string>
+    <string name="remote_control_disclosure_title">एक्सेसिबिलिटी अनुमति आवश्यक</string>
+    <string name="remote_control_disclosure_message">E-Claw आपके AI बॉट को आपकी ओर से आपकी फोन स्क्रीन पढ़ने और इंटरैक्ट करने (टैप, स्वाइप, टेक्स्ट इनपुट) के लिए एक्सेसिबिलिटी सेवा का उपयोग करता है।\n\nयह सेवा केवल बॉट-संचालित रिमोट कंट्रोल के लिए उपयोग की जाती है। कोई व्यक्तिगत या संवेदनशील डेटा एकत्र या साझा नहीं किया जाता।\n\nआप इसे किसी भी समय सेटिंग्स में बंद कर सकते हैं।</string>
+    <string name="remote_control_disclosure_confirm">समझ गया &amp; जारी रखें</string>
+
+    <!-- Message Activity -->
+    <string name="activity_message_title">एंटिटी से चैट करें</string>
+    <string name="activity_message_select_recipients">प्राप्तकर्ता चुनें:</string>
+
+    <!-- Skill Templates -->
+    <string name="skill_template">स्किल टेम्पलेट</string>
+    <string name="skill_template_custom">-- कस्टम --</string>
+    <string name="skill_template_browse">टेम्पलेट ब्राउज़ करें…</string>
+    <string name="skill_template_change">बदलें</string>
+    <string name="skill_title_hint">शीर्षक</string>
+    <string name="skill_url_hint">URL (वैकल्पिक)</string>
+    <string name="skill_steps_hint">इंस्टॉलेशन चरण (वैकल्पिक)</string>
+    <string name="add_skill_dialog_title">स्किल जोड़ें</string>
+    <string name="skill_required_vars_title">⚠ एनवायरनमेंट वेरिएबल आवश्यक</string>
+    <string name="skill_go_to_env_vars">एनवायरनमेंट वेरिएबल सेट करें →</string>
+
+    <!-- Mission Control Tabs -->
+    <string name="mission_tab_todo">📋 TODO सूची</string>
+    <string name="mission_tab_missions">🚀 मिशन सूची</string>
+    <string name="mission_tab_done">✅ पूर्ण सूची</string>
+    <string name="mission_tab_notes">📝 नोट्स</string>
+    <string name="mission_tab_skills">🔧 स्किल्स</string>
+    <string name="mission_no_skills">कोई स्किल नहीं</string>
+    <string name="mission_add_skill">+ स्किल जोड़ें</string>
+    <string name="mission_tab_variables">🔐 वेरिएबल्स</string>
+    <string name="mission_vars_local_only">⚠️ केवल इस डिवाइस पर संग्रहीत, सिंक नहीं</string>
+    <string name="mission_no_variables">कोई वेरिएबल नहीं</string>
+    <string name="mission_sync_to_bot">बॉट सेशन से सिंक करें</string>
+    <string name="mission_tab_souls">🧠 सोल्स</string>
+    <string name="mission_tab_rules">📜 नियम (वर्कफ़्लो)</string>
+
+    <!-- Category Management -->
+    <string name="category_add">+ श्रेणी</string>
+    <string name="category_add_title">श्रेणी जोड़ें</string>
+    <string name="category_name_hint">श्रेणी का नाम</string>
+    <string name="category_rename">श्रेणी का नाम बदलें</string>
+    <string name="category_rename_title">श्रेणी का नाम बदलें</string>
+    <string name="category_delete_title">श्रेणी हटाएं</string>
+    <string name="category_delete_confirm">श्रेणी \"%1$s\" हटाएं? आइटम अवर्गीकृत हो जाएंगे।</string>
+    <string name="category_clear_title">श्रेणी खाली करें</string>
+    <string name="category_clear_confirm">\"%1$s\" के सभी आइटम खाली करें?</string>
+    <string name="category_uncategorized">अवर्गीकृत</string>
+    <string name="category_label">श्रेणी</string>
+    <string name="category_none">(कोई श्रेणी नहीं)</string>
+    <string name="category_already_exists">श्रेणी \"%1$s\" पहले से मौजूद है</string>
+
+    <!-- Common Buttons -->
+    <string name="common_add">+ जोड़ें</string>
+    <string name="common_show">दिखाएं</string>
+    <string name="common_remove">हटाएं</string>
+    <string name="common_not_specified">(निर्दिष्ट नहीं)</string>
+
+    <!-- Settings -->
+    <string name="settings_entity_limit">एंटिटी सीमा: %1$d</string>
+
+    <!-- Entity Actions -->
+    <string name="entity_action_talk">बात करें</string>
+
+    <!-- Widget -->
+    <string name="widget_chat_hint">एंटिटी से चैट करने के लिए टैप करें...</string>
+
+    <!-- Soul Templates -->
+    <string name="soul_name_friendly">मैत्रीपूर्ण सहायक</string>
+    <string name="soul_desc_friendly">गर्मजोशी, धैर्यवान, हमेशा मदद के लिए तैयार। कोमल और प्रोत्साहक लहजे में बोलता है।</string>
+    <string name="soul_name_tsundere">सुंडेरे</string>
+    <string name="soul_desc_tsundere">बाहर से ठंडा और उदासीन दिखता है, लेकिन अंदर से बहुत परवाह करता है। अक्सर कहता है \"ऐसा नहीं कि मैंने तुम्हारे लिए किया\" जबकि मदद कर रहा होता है।</string>
+    <string name="soul_name_scholar">बुद्धिमान विद्वान</string>
+    <string name="soul_desc_scholar">विचारशील, विश्लेषणात्मक, ज्ञान साझा करना पसंद करता है। गहराई से उत्तर देता है और जब संभव हो संदर्भ देता है।</string>
+    <string name="soul_name_trickster">शरारती मसखरा</string>
+    <string name="soul_desc_trickster">चुटकुले, शब्दों का खेल और मजाकिया छेड़छाड़ पसंद करता है। हमेशा चीजों को मज़ेदार और हल्का बनाने का तरीका ढूंढता है।</string>
+    <string name="soul_name_professional">शांत पेशेवर</string>
+    <string name="soul_desc_professional">कुशल, सटीक, बिना बकवास। न्यूनतम शिष्टाचार के साथ सीधे मुद्दे पर आता है।</string>
+    <string name="soul_name_caretaker">कोमल देखभालकर्ता</string>
+    <string name="soul_desc_caretaker">देखभाल करने वाला, पोषण करने वाला, हमेशा जांचता है कि आप ठीक हैं। आपको आराम करने और अपना ध्यान रखने की याद दिलाता है।</string>
+    <string name="soul_name_adventurer">साहसी अन्वेषक</string>
+    <string name="soul_desc_adventurer">उत्साही, निडर, हमेशा चुनौती के लिए तैयार। रोमांचक और नाटकीय भाषा का उपयोग करता है।</string>
+    <string name="soul_name_poet">काव्यात्मक स्वप्नदर्शी</string>
+    <string name="soul_desc_poet">रूपकों और कल्पनाओं में बोलता है। रोज़मर्रा की चीज़ों में सुंदरता पाता है और विचारों को कलात्मक रूप से व्यक्त करता है।</string>
+
+    <!-- Public Code -->
+    <string name="public_code_label">सार्वजनिक कोड · कॉपी करने के लिए टैप करें</string>
+    <string name="entity_public_code">📋 %s</string>
+    <string name="code_copied">कोड क्लिपबोर्ड पर कॉपी हो गया</string>
+
+    <!-- App Update -->
+    <string name="update_title">अपडेट उपलब्ध</string>
+    <string name="update_message">एक नया वर्शन (v%s) उपलब्ध है। सर्वोत्तम अनुभव के लिए अपडेट करें!</string>
+    <string name="update_now">अभी अपडेट करें</string>
+    <string name="update_later">बाद में</string>
+
+    <!-- Card Holder -->
+    <string name="card_holder_title">कार्ड होल्डर</string>
+    <string name="card_holder_add">कार्ड जोड़ें</string>
+    <string name="card_holder_search">कार्ड खोजें…</string>
+    <string name="card_holder_empty">अभी कोई कार्ड नहीं\nएजेंट कार्ड स्वचालित रूप से एकत्र करने के लिए क्रॉस-डिवाइस चैट करें</string>
+    <string name="card_holder_code_hint">सार्वजनिक कोड</string>
+    <string name="card_holder_not_found">नहीं मिला</string>
+    <string name="card_holder_added">कार्ड जोड़ा गया</string>
+    <string name="card_holder_removed">कार्ड हटाया गया</string>
+    <string name="card_holder_saved">सहेजा गया</string>
+    <string name="card_holder_description">विवरण</string>
+    <string name="card_holder_capabilities">क्षमताएं</string>
+    <string name="card_holder_tags">टैग</string>
+    <string name="card_holder_protocols">प्रोटोकॉल</string>
+    <string name="card_holder_details">विवरण</string>
+    <string name="card_holder_exchange_type">एक्सचेंज प्रकार</string>
+    <string name="card_holder_interactions">इंटरैक्शन</string>
+    <string name="card_holder_added_at">जोड़ा गया</string>
+    <string name="card_holder_notes">नोट्स</string>
+    <string name="card_holder_notes_hint">अपने नोट्स जोड़ें…</string>
+    <string name="card_holder_category">श्रेणी</string>
+    <string name="card_holder_category_hint">उदा. टूल्स, सोशल, dev</string>
+    <string name="card_holder_pin">पिन करें</string>
+    <string name="card_holder_unpin">अनपिन करें</string>
+    <string name="card_holder_save">सहेजें</string>
+    <string name="card_holder_remove">हटाएं</string>
+    <string name="card_holder_desc">एकत्रित एजेंट बिजनेस कार्ड ब्राउज़ करें</string>
+
+    <!-- Card Holder Redesign -->
+    <string name="my_cards_section">मेरे कार्ड</string>
+    <string name="recent_interactions">हाल के</string>
+    <string name="collected_cards">एकत्रित</string>
+    <string name="filter_friends">मित्र</string>
+    <string name="filter_pinned">पिन किए गए</string>
+    <string name="add_friend_confirm">%1$s को मित्र में जोड़ें?</string>
+    <string name="block_confirm">%1$s को ब्लॉक करें? इस एंटिटी के संदेश छिपाए जाएंगे।</string>
+    <string name="unblock_confirm">%1$s को अनब्लॉक करें?</string>
+    <string name="chat_history_with">%1$s के साथ चैट इतिहास</string>
+    <string name="no_chat_history">कोई चैट इतिहास नहीं</string>
+    <string name="card_holder_blocked">ब्लॉक किया गया</string>
+    <string name="card_holder_unblocked">अनब्लॉक किया गया</string>
+    <string name="card_holder_friend_added">मित्र जोड़ा गया</string>
+    <string name="card_holder_email">ईमेल</string>
+    <string name="card_holder_website">वेबसाइट</string>
+    <string name="card_holder_version">वर्शन</string>
+    <string name="card_holder_tags_hint">टैग जोड़ें…</string>
+    <string name="card_holder_add_capability">क्षमता जोड़ें</string>
+    <string name="card_holder_refresh">कार्ड रिफ्रेश करें</string>
+    <string name="card_holder_refreshed">कार्ड रिफ्रेश हो गया</string>
+    <string name="tab_my_cards">मेरे कार्ड</string>
+    <string name="tab_bot_plaza">बॉट प्लाज़ा</string>
+
+    <!-- Share Chat Link -->
+    <string name="sc_share_chat_link">चैट लिंक शेयर करें</string>
+    <string name="sc_copy">कॉपी करें</string>
+    <string name="sc_copy_qr">QR कॉपी करें</string>
+    <string name="sc_download_qr">QR डाउनलोड करें</string>
+    <string name="sc_link_copied">लिंक कॉपी हो गया!</string>
+    <string name="sc_qr_copied">QR कॉपी हो गया!</string>
+    <string name="sc_copy_failed">कॉपी विफल</string>
+    <string name="sc_share_chat_title">चैट लिंक शेयर करें</string>
+    <string name="sc_chat_with">%s से चैट करें</string>
+    <string name="sc_registration_failed">पंजीकरण विफल</string>
+    <string name="sc_login_failed">लॉगिन विफल</string>
+    <string name="sc_qr_loading">QR लोड हो रहा है…</string>
+    <string name="sc_qr_failed">QR लोड होने में विफल</string>
+
+    <!-- Note Pages -->
+    <string name="note_page_viewer">नोट पेज</string>
+    <string name="note_page_draw">ड्रॉ करें</string>
+    <string name="note_page_edit">HTML संपादित करें</string>
+    <string name="note_page_eraser">इरेज़र</string>
+    <string name="note_page_clear">साफ़ करें</string>
+    <string name="note_page_clear_confirm">सभी चित्र साफ़ करें?</string>
+    <string name="note_page_save_draw">सहेजें</string>
+    <string name="note_page_draw_saved">चित्र सहेजा गया</string>
+    <string name="note_page_saved">पेज सहेजा गया</string>
+    <string name="note_page_empty">अभी कोई पेज सामग्री नहीं।</string>
+    <string name="note_page_html_hint">HTML सामग्री दर्ज करें…</string>
+    <string name="note_page_open">पेज खोलें</string>
+    <string name="error_generic">एक त्रुटि हुई</string>
+    <string name="select_bot">बॉट चुनें:</string>
+    <string name="active_users">सक्रिय उपयोगकर्ता</string>
+    <string name="entity_name">एंटिटी का नाम</string>
+    <string name="last_message">अंतिम संदेश…</string>
+    <string name="just_now">अभी</string>
+    <string name="select">चुनें</string>
+    <string name="entity_main">एंटिटी 0 (मुख्य)</string>
+    <string name="hello_im_here">नमस्ते, मैं यहां हूं!</string>
+    <string name="last_updated">अंतिम अपडेट: अभी</string>
+    <string name="agent_card">एजेंट कार्ड</string>
+    <string name="log_debug">DEBUG</string>
+    <string name="log_info">INFO</string>
+    <string name="log_warn">WARN</string>
+    <string name="log_error">ERROR</string>
+    <string name="debug_log_category_api">API</string>
+    <string name="debug_log_category_socket">Socket</string>
+    <string name="debug_log_category_ui">UI</string>
+    <string name="debug_log_category_lifecycle">लाइफसाइकल</string>
+    <string name="agent_card_entity_name">एंटिटी का नाम</string>
+    <string name="agent_card_state_idle">IDLE</string>
+    <string name="agent_card_level">Lv.%s</string>
+    <string name="agent_card_last_message">अंतिम संदेश…</string>
+    <string name="agent_card_just_now">अभी</string>
+    <string name="entity_card_title">एंटिटी %s (मुख्य)</string>
+    <string name="entity_card_platform_lobster">LOBSTER</string>
+    <string name="entity_card_greeting">नमस्ते, मैं यहां हूं!</string>
+    <string name="entity_card_last_updated">अंतिम अपडेट: अभी</string>
+    <string name="template_gallery_select">चुनें</string>
+
+    <!-- Common UI strings -->
+    <string name="bind_button">बाइंड करें</string>
+    <string name="unbind_button">अनबाइंड करें</string>
+    <string name="card_holder">कार्ड होल्डर</string>
+    <string name="chat">चैट</string>
+    <string name="confirm">पुष्टि करें</string>
+    <string name="enter_binding_code">6 अंकों का बाइंडिंग कोड दर्ज करें</string>
+    <string name="error_occurred">एक त्रुटि हुई</string>
+    <string name="info">जानकारी</string>
+    <string name="language">भाषा</string>
+    <string name="loading">लोड हो रहा है…</string>
+    <string name="microphone_permission_denied">माइक्रोफ़ोन अनुमति अस्वीकृत</string>
+    <string name="recording">रिकॉर्डिंग…</string>
+    <string name="schedule">शेड्यूल</string>
+    <string name="settings">सेटिंग्स</string>
+    <string name="voice_message">वॉइस संदेश</string>
+
+    <!-- Wallet -->
+    <string name="wallet_title">वॉलेट</string>
+    <string name="my_rentals_title">मेरे रेंटल</string>
+    <string name="invite_title">मित्रों को आमंत्रित करें</string>
+    <string name="topup_ecoin_title">e-Coins टॉप अप करें</string>
+    <string name="topup_ecoin">टॉप अप</string>
+    <string name="topup_success">e-Coins आपके वॉलेट में जोड़े गए!</string>
+    <string name="topup_failed">टॉप अप विफल। कृपया पुनः प्रयास करें।</string>
+    <string name="choose_plan_title">प्लान चुनें</string>
+    <string name="upgrade_plan">प्लान अपग्रेड करें</string>
+
+    <!-- Hardcoded string externalization -->
+    <string name="schedule_failed_to_load">लोड करने में विफल: %s</string>
+    <string name="schedule_error_generic">त्रुटि: %s</string>
+    <string name="schedule_operation_failed">ऑपरेशन विफल</string>
+    <string name="card_holder_copied">कॉपी किया: %s</string>
+    <string name="card_holder_error">त्रुटि</string>
+    <string name="main_delete_failed_msg">हटाना विफल: %s</string>
+    <string name="billing_subscription_unavailable">सब्सक्रिप्शन प्लान प्राप्त नहीं हो सके, कृपया बाद में पुनः प्रयास करें</string>
+    <string name="billing_google_play_loading">Google Play लोड हो रहा है, कृपया बाद में पुनः प्रयास करें</string>
+    <string name="dialog_delete_agent_card">एजेंट कार्ड हटाएं?</string>
+    <string name="dialog_delete_agent_card_message">यह क्रिया पूर्ववत नहीं की जा सकती।</string>
+    <string name="dialog_agent_card_title">एजेंट कार्ड — एंटिटी #%d</string>
+    <string name="dialog_block_contact">%s को ब्लॉक करें? वे अब आपसे इंटरैक्ट नहीं कर पाएंगे।</string>
+    <string name="dialog_add_friend_title">मित्र जोड़ें</string>
+    <string name="dialog_add_friend_message">%s को अपने संपर्कों में जोड़ें?</string>
+
+    <string name="dialog_block_title">ब्लॉक करें</string>
+    <string name="dialog_unblock_title">अनब्लॉक करें</string>
+    <string name="dialog_unblock_message">%s को अनब्लॉक करें? वे फिर से आपसे इंटरैक्ट कर पाएंगे।</string>
+
+    <string name="search_saved_results">सहेजे गए परिणाम</string>
+    <string name="search_external_results">बाहरी परिणाम</string>
+    <string name="card_loading">लोड हो रहा है...</string>
+    <string name="card_chat_history">चैट इतिहास</string>
+    <string name="card_details">विवरण</string>
+    <string name="card_no_results">कोई परिणाम नहीं मिला</string>
+    <string name="card_no_chat_history">कोई चैट इतिहास नहीं</string>
+    <string name="card_chat_history_failed">चैट इतिहास लोड करने में विफल</string>
+    <string name="feedback_photo_upload_failed">फोटो अपलोड विफल: %s</string>
+    <string name="wallpaper_load_entities_failed">एंटिटी लोड करने में विफल: %s</string>
+</resources>

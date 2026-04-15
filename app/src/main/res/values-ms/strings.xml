@@ -1,0 +1,943 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">EClawbot</string>
+    <string name="wallpaper_description">Status langsung ejen AI anda</string>
+
+    <!-- Main Activity -->
+    <string name="main_title">EClawbot</string>
+    <string name="no_agents_connected">Tiada ejen disambungkan</string>
+    <string name="tap_to_add_entity">Ketik + Tambah Entiti untuk menyambungkan ejen pertama anda</string>
+    <string name="add_entity">+ Tambah Entiti</string>
+    <string name="select_entity_slot">Pilih Slot Entiti</string>
+    <string name="binding_code">Kod Pengikatan</string>
+    <string name="code_placeholder">------</string>
+    <string name="tap_to_generate_code">Ketik untuk menjana kod</string>
+    <string name="channel_bind_warning">Versi 2026-03+ amat mengesyorkan penggunaan pengikatan saluran EClaw untuk mengelakkan kegagalan pengikatan.</string>
+    <string name="generate">Jana</string>
+    <string name="regenerate">Jana Semula</string>
+    <string name="channel_promo">Cuba EClaw Channel? Lebih natif, lebih pantas</string>
+    <string name="channel_step_intro">Dalam terminal OpenClaw:</string>
+    <string name="channel_step3">3  Pilih \"EClaw\"</string>
+    <string name="channel_ai_agent_hint">🤖 Amat disyorkan menggunakan Claude Code atau ejen AI lain untuk pemasangan berbantukan.</string>
+    <string name="channel_learn_more">Ketahui lebih lanjut →</string>
+    <string name="expand">Kembangkan</string>
+    <string name="copy">Salin</string>
+    <string name="broadcast_to_all">Siar ke Semua</string>
+    <string name="set_live_wallpaper">Tetapkan Kertas Dinding Langsung</string>
+    <string name="expires_in">Tamat dalam %ds</string>
+    <string name="command_copied">Arahan disalin!</string>
+    <string name="sent">Dihantar!</string>
+    <string name="broadcast_sent">Siaran dihantar!</string>
+    <string name="failed_format">Gagal: %s</string>
+
+    <!-- Dialogs -->
+    <string name="send_message">Hantar Mesej</string>
+    <string name="send">Hantar</string>
+    <string name="cancel">Batal</string>
+    <string name="to_format">Kepada: %1$s (#%2$d)</string>
+    <string name="message_hint">Mesej kepada %s…</string>
+    <string name="broadcast_message_hint">Mesej siaran…</string>
+    <string name="send_to_entities">Hantar ke %d entiti</string>
+    <string name="entity_format">Entiti %d</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Tetapan</string>
+    <string name="usage_title">Penggunaan Hari Ini</string>
+    <string name="premium_badge">PREMIUM</string>
+    <string name="sends_today">hantaran hari ini</string>
+    <string name="unlock_unlimited">✨ Sembang Tanpa Had + 8 Slot Entiti - %s/bulan</string>
+    <string name="unlock_unlimited_no_price">✨ Sembang Tanpa Had + 8 Slot Entiti</string>
+
+    <!-- Layout -->
+    <string name="entity_layout">Susun Atur Entiti</string>
+    <string name="layout_single">Tunggal</string>
+    <string name="layout_dual">Dwi</string>
+    <string name="layout_quad">Empat</string>
+    <string name="desc_single">Satu entiti dipaparkan di tengah</string>
+    <string name="desc_dual">Dua entiti bersebelahan</string>
+    <string name="desc_quad">Empat entiti dalam susun atur grid</string>
+    <string name="custom_layout">Susun Atur Tersuai</string>
+    <string name="manage_entities">Urus Entiti</string>
+
+    <!-- Language -->
+    <string name="language_title">Bahasa (語言)</string>
+    <string name="language_system">Lalai Sistem</string>
+    <string name="language_en">English</string>
+    <string name="language_zh">中文 (繁體)</string>
+    <string name="language_zh_cn">简体中文</string>
+    <string name="language_ja">日本語</string>
+    <string name="language_ko">한국어</string>
+    <string name="language_th">ภาษาไทย</string>
+    <string name="language_vi">Tiếng Việt</string>
+    <string name="language_id">Bahasa Indonesia</string>
+
+    <!-- Wallpaper Preview -->
+    <string name="wallpaper_preview_title">Pratonton Kertas Dinding</string>
+    <string name="use_custom_layout">Guna Susun Atur Tersuai</string>
+    <string name="custom_background">Latar Belakang Tersuai</string>
+    <string name="select_photo">Pilih Foto</string>
+    <string name="reset">Set Semula</string>
+    <string name="set_wallpaper">Tetapkan Kertas Dinding</string>
+    <string name="drag_to_position">Seret entiti untuk meletakkannya</string>
+    <string name="pinch_to_resize">Cubit untuk ubah saiz, seret untuk alih</string>
+    <string name="back">Kembali</string>
+
+    <!-- Layout Editor -->
+    <string name="done">Selesai</string>
+
+    <!-- Entity Manager -->
+    <string name="entities_title">Entiti</string>
+    <string name="loading_entities">Memuat entiti…</string>
+    <string name="layout_grid">Grid</string>
+    <string name="layout_row">Baris</string>
+    <string name="layout_column">Lajur</string>
+    <string name="layout_diamond">Berlian</string>
+    <string name="layout_corners">Sudut</string>
+    <string name="entity_size">Saiz Entiti</string>
+    <string name="size_small">Kecil</string>
+    <string name="size_large">Besar</string>
+    <string name="refresh">Muat Semula</string>
+
+    <!-- AI Chat -->
+    <string name="ai_chat_title">Pembantu AI</string>
+    <string name="ai_chat_welcome">Hai! Saya AI E-Claw.\nTanya saya apa sahaja tentang platform ini.</string>
+    <string name="ai_chat_hint">Tanya soalan…</string>
+    <string name="ai_chat_attach_image">Lampirkan gambar</string>
+    <string name="ai_chat_clear_title">Kosongkan Sejarah</string>
+    <string name="ai_chat_clear_message">Kosongkan semua sejarah sembang?</string>
+    <string name="ai_chat_clear_confirm">Kosongkan</string>
+    <string name="ai_chat_busy_retry">AI sedang sibuk, cuba semula dalam %1$ds… (%2$d/%3$d)</string>
+    <string name="ai_chat_busy_exhausted">AI sedang sibuk dengan permintaan lain. Sila cuba lagi sebentar.</string>
+    <string name="ai_chat_uploading">Memuat naik gambar…</string>
+    <string name="ai_chat_analyzing">AI sedang menganalisis gambar anda…</string>
+    <string name="ai_chat_thinking">Masih sedang diproses…</string>
+    <string name="ai_chat_fallback_error">Maaf, saya tidak dapat memproses permintaan anda. Sila cuba ubah soalan anda.</string>
+    <string name="ai_chat_timeout">Respons tamat masa. Cuba lagi…</string>
+    <string name="ai_chat_no_internet">Tiada sambungan internet. Sila semak rangkaian anda.</string>
+    <string name="ai_chat_connection_error">Ralat sambungan. Sila cuba lagi.</string>
+    <string name="ai_chat_network_error">Ralat rangkaian. Sila cuba lagi.</string>
+    <string name="ai_chat_device_not_registered">Peranti tidak berdaftar. Sila mulakan semula aplikasi.</string>
+    <string name="ai_chat_image_too_large">Gambar terlalu besar. Sila cuba dengan gambar yang lebih sedikit atau lebih kecil, atau terangkan masalah anda dalam teks.</string>
+    <string name="ai_chat_image_unavailable">Muat naik gambar tidak tersedia buat sementara waktu.</string>
+    <string name="ai_chat_view_feedback">Lihat Sejarah Maklum Balas →</string>
+
+    <!-- Chat -->
+    <string name="chat_history">Sembang</string>
+    <string name="chat_offline_message">Tidak dapat menyambung. Sila semak sambungan internet anda.</string>
+    <string name="retry">Cuba Lagi</string>
+    <string name="filter_all">Semua</string>
+    <string name="filter_my_messages">Mesej Saya</string>
+    <string name="type_message">Taip mesej…</string>
+    <string name="no_messages_yet">Tiada mesej lagi</string>
+    <string name="you">Anda</string>
+    <string name="to_entities">Kepada: %s</string>
+    <string name="entity_read_receipt">Entiti %d Dibaca</string>
+    <string name="send_voice">Hantar</string>
+    <string name="recording_voice">Merakam…</string>
+    <string name="uploading_media">Memuat naik…</string>
+    <string name="upload_error">Muat naik gagal</string>
+    <string name="attach">Lampir</string>
+    <string name="attach_camera">Kamera</string>
+    <string name="attach_gallery">Galeri</string>
+    <string name="attach_video">Video</string>
+    <string name="attach_file">Fail</string>
+    <string name="file_too_large">Fail terlalu besar (maks 100MB)</string>
+    <string name="wait_upload">Sila tunggu muat naik selesai</string>
+
+    <!-- Cross-Device Contacts -->
+    <string name="add_contact">Tambah Kenalan</string>
+    <string name="add_contact_btn">Tambah</string>
+    <string name="remove_contact">Buang Kenalan</string>
+    <string name="remove_contact_confirm">Buang %s daripada kenalan?</string>
+    <string name="contact_code_hint">Masukkan kod awam</string>
+    <string name="contact_not_found">Entiti tidak dijumpai</string>
+    <string name="contact_added">Kenalan ditambah!</string>
+    <string name="contact_removed">Kenalan dibuang</string>
+    <string name="contact_already_exists">Sudah ada dalam kenalan</string>
+    <string name="contact_cannot_add_self">Tidak boleh menambah entiti sendiri</string>
+    <string name="contact_limit_reached">Had kenalan dicapai (maks 20)</string>
+    <string name="contact_offline">Kenalan di luar talian</string>
+    <string name="contact_lookup_error">Ralat sambungan. Sila cuba lagi.</string>
+    <string name="contact_send_error">Gagal menghantar. Sila cuba lagi.</string>
+    <string name="to_contact_cross_device">Kepada: %s (silang peranti)</string>
+    <string name="remove">Buang</string>
+
+    <!-- Mission Control -->
+    <string name="mission_control">Pusat Misi</string>
+    <string name="tab_mission_center">Pusat Misi</string>
+    <string name="tab_kanban">Kanban</string>
+    <string name="kanban_add_deprecated">Sila gunakan papan Kanban untuk menambah item baharu. Papan Kanban mempunyai ekosistem lengkap — biarkan bot memindahkan item sedia ada secara beransur-ansur.</string>
+    <string name="upload">Muat Naik</string>
+    <string name="uploading">Memuat naik…</string>
+    <string name="save">Simpan</string>
+    <string name="saving">Menyimpan…</string>
+    <string name="add_todo">+ Tambah TODO</string>
+    <string name="add_note">+ Tambah Nota</string>
+    <string name="add_rule">+ Tambah Peraturan</string>
+    <string name="no_items">Tiada item TODO</string>
+    <string name="no_missions">Tiada misi aktif</string>
+    <string name="no_done_items">Tiada item selesai</string>
+    <string name="no_notes">Tiada nota</string>
+    <string name="no_rules">Tiada peraturan</string>
+    <string name="add_soul">+ Tambah Jiwa</string>
+    <string name="no_souls">Tiada jiwa ditakrifkan</string>
+
+    <!-- Soul/Rule Template Gallery -->
+    <string name="mission_choose_from_template">Pilih daripada templat</string>
+    <string name="mission_soul_gallery_title">Templat Jiwa</string>
+    <string name="mission_rule_gallery_title">Templat Peraturan</string>
+    <string name="mission_template_by">oleh %s</string>
+    <string name="mission_use_template">Gunakan Templat</string>
+    <string name="mission_template_loading">Memuat templat…</string>
+    <string name="mission_template_empty">Tiada templat tersedia</string>
+    <string name="mission_soul_builtin">Terbina dalam</string>
+    <string name="mission_template_no_match">Tiada templat sepadan</string>
+    <string name="mission_browse_templates">Layari Templat…</string>
+    <string name="search_hint">Cari…</string>
+    <string name="soul_template">Templat Jiwa</string>
+    <string name="soul_template_custom">-- Tersuai --</string>
+    <string name="soul_name_hint">Nama jiwa</string>
+    <string name="soul_desc_hint">Huraikan personaliti, nada, tingkah laku…</string>
+    <string name="rule_name_hint">Nama peraturan</string>
+    <string name="rule_desc_hint">Huraikan peraturan…</string>
+    <string name="edit">Sunting</string>
+    <string name="priority">Keutamaan</string>
+    <string name="assign_entity">Tugaskan Entiti</string>
+    <string name="assign_entity_multi">Tugaskan Entiti (Berbilang)</string>
+    <string name="rule_type">Jenis Peraturan</string>
+    <string name="background_set">Latar belakang ditetapkan</string>
+    <string name="background_set_failed">Gagal menetapkan latar belakang</string>
+    <string name="settings_reset">Tetapan ditetapkan semula</string>
+    <string name="background_disabled">Latar belakang dilumpuhkan</string>
+    <string name="error_open_picker">Tidak dapat membuka pemilih foto</string>
+    <string name="error_open_settings">Tidak dapat membuka tetapan kertas dinding</string>
+    <string name="bot_label">🤖 %s</string>
+    <string name="mission_completed_at">✓ %s</string>
+    <string name="playback_failed">Main balik gagal</string>
+    <string name="confirm_copy">Disalin ke papan keratan</string>
+    <string name="unknown_error">Ralat tidak diketahui</string>
+    <string name="failed_add_slot">Gagal menambah slot</string>
+    <string name="no_bound_entities">Tiada entiti terikat</string>
+    <string name="publish_notification">Terbitkan Pemberitahuan</string>
+    <string name="no_notify_items">Tiada perubahan baharu untuk diberitahu</string>
+    <string name="notification_sent">Pemberitahuan dihantar</string>
+    <string name="task_saved">Tugas disimpan</string>
+    <string name="schedule_tag">Jadual</string>
+    <string name="schedule_bot_reply">Balasan Bot</string>
+    <string name="schedule_no_reply">Belum ada balasan</string>
+    <string name="schedule_message_label">Mesej Berjadual</string>
+    <string name="enter_message">Sila masukkan mesej</string>
+    <string name="select_one_entity">Sila pilih sekurang-kurangnya satu entiti</string>
+    <string name="entity_id_format">#%d</string>
+
+    <!-- Bot Avatar -->
+    <string name="bot_avatar">Avatar Bot</string>
+    <string name="avatar_subtitle">Entiti %d</string>
+    <string name="avatar_upload_photo">Muat Naik Foto</string>
+    <string name="avatar_uploading">Memuat naik…</string>
+    <string name="avatar_upload_failed">Muat naik gagal</string>
+    <string name="avatar_upload_success">Avatar dikemas kini!</string>
+
+    <!-- Entity Management -->
+    <string name="remove_entity">Buang</string>
+    <string name="remove_confirm_title">Buang Entiti?</string>
+    <string name="remove_confirm_message">Adakah anda pasti ingin membuang %1$s (#%2$d)? Ini akan memutuskan ikatannya daripada kertas dinding.</string>
+    <string name="entity_removed">%s dibuang</string>
+    <string name="refresh_connection">Muat Semula</string>
+    <string name="refresh_success">Sambungan dimuat semula!</string>
+    <string name="refresh_webhook_broken_title">Sambungan Gagal</string>
+    <string name="refresh_webhook_broken_message">Tidak dapat menyambung ke bot. Adakah anda ingin mengikat semula?</string>
+    <string name="refresh_cooldown">Sila tunggu %d saat</string>
+    <string name="edit_entities">Sunting</string>
+    <string name="drag_to_reorder">Seret untuk menyusun semula</string>
+    <string name="xd_settings_btn">Mesej Silang Peranti</string>
+    <string name="entity_agent_card">Kad Ejen</string>
+    <string name="more_options">Lagi pilihan</string>
+    <string name="xd_settings_title">Tetapan Mesej Silang Peranti</string>
+    <string name="xd_pre_inject">Arahan Pra-Suntik</string>
+    <string name="xd_pre_inject_desc">Ditambah sebelum mesej silang peranti dalam pemberitahuan push</string>
+    <string name="xd_forbidden">Perkataan Terlarang</string>
+    <string name="xd_forbidden_desc">Mesej yang mengandungi perkataan ini akan ditolak (dipisahkan dengan koma)</string>
+    <string name="xd_rate_limit">Had Kadar (saat)</string>
+    <string name="xd_rate_limit_desc">Jeda setiap penghantar (0 = tiada had)</string>
+    <string name="xd_blacklist">Senarai Hitam (kod awam)</string>
+    <string name="xd_codes_sep">Kod awam dipisahkan koma</string>
+    <string name="xd_whitelist_mode">Mod Senarai Putih</string>
+    <string name="xd_whitelist">Senarai Putih (kod awam)</string>
+    <string name="xd_reject_msg">Mesej Penolakan</string>
+    <string name="xd_reject_msg_hint">Balas auto apabila disekat (kosong = senyap)</string>
+    <string name="xd_allowed_media">Jenis Media Dibenarkan</string>
+    <string name="xd_media_text">Teks</string>
+    <string name="xd_media_photo">Foto</string>
+    <string name="xd_media_voice">Suara</string>
+    <string name="xd_media_video">Video</string>
+    <string name="xd_media_file">Fail</string>
+    <string name="xd_save">Simpan</string>
+    <string name="xd_reset">Set Semula ke Lalai</string>
+    <string name="xd_saved">Tetapan silang peranti disimpan!</string>
+    <string name="xd_save_failed">Gagal menyimpan tetapan</string>
+    <string name="xd_reset_done">Tetapan ditetapkan semula ke lalai</string>
+    <string name="reorder_saving">Menyimpan susunan baharu…</string>
+    <string name="reorder_success">Susunan entiti dikemas kini!</string>
+    <string name="reorder_failed">Gagal mengemas kini susunan</string>
+    <string name="refreshing">Memuat semula…</string>
+    <string name="rebind">Ikat Semula</string>
+    <string name="entity_count_format">%1$d/%2$d entiti</string>
+    <string name="entities_label">entiti</string>
+
+    <!-- Entity Rename -->
+    <string name="rename_title">Namakan Semula Entiti</string>
+    <string name="rename_hint">Masukkan nama baharu (maks 20 aksara)</string>
+    <string name="rename_saving">Menyimpan…</string>
+    <string name="rename_success">Nama dikemas kini!</string>
+
+    <!-- System Messages -->
+    <string name="webhook_error_title">Pemberitahuan Push Gagal</string>
+    <string name="webhook_error_message">Sila tampal mesej berikut ke OpenClaw: \"Ralat pengikatan Webhook atau POST /api/bot/register tidak dipanggil. Sila baca semula \'URL webhook awam\' (konfigurasi gateway) dan \'token gateway\', kemudian segera panggil /api/bot/register dengan deviceId/entityId/botSecret bersama webhook_url dan token gateway untuk mendaftarkan pemberitahuan push.\"</string>
+    <string name="push_error_free_title">Sambungan Bot Terputus</string>
+    <string name="push_error_free_message">Sambungan bot percuma telah terputus. Sila cuba mengikat semula bot percuma.</string>
+    <string name="push_error_rental_title">Sambungan Bot Terputus</string>
+    <string name="push_error_rental_message">Sambungan bot telah terputus. Penggunaan sewa anda akan dipelihara, jangan risau. Sila cuba mengikat semula dan tunggu sehingga persediaan webhook berjaya sebelum menghantar mesej.</string>
+    <string name="message_copied">Mesej disalin</string>
+
+    <!-- Feedback -->
+    <string name="feedback">Maklum Balas</string>
+    <string name="feedback_desc">Jumpa pepijat atau ada cadangan? Beritahu kami!</string>
+    <string name="feedback_hint">Huraikan masalah atau cadangan…</string>
+    <string name="feedback_sent">Maklum balas dihantar, terima kasih!</string>
+    <string name="feedback_empty">Sila masukkan maklum balas anda</string>
+    <string name="feedback_mark">Tanda</string>
+    <string name="feedback_marked_btn">Ditanda</string>
+    <string name="feedback_marked">Ditanda pada %s — log dari saat ini akan dirakam apabila anda menghantar maklum balas.</string>
+    <string name="feedback_auto_log_hint">Log 5 minit terakhir akan dirakam secara automatik untuk membantu diagnosis.</string>
+    <string name="feedback_mark_consent_title">Tandakan Saat Pepijat</string>
+    <string name="feedback_mark_consent_message">Selepas menanda, anda akan dikembalikan ke skrin utama untuk menghasilkan semula masalah. Apabila anda kembali untuk menghantar maklum balas, log dari saat ini akan dirakam.\n\nSedia untuk bermula?</string>
+    <string name="feedback_mark_consent_agree">Mula Merakam</string>
+    <string name="feedback_cancel_mark">Batal Tanda</string>
+    <string name="feedback_cat_bug">Pepijat</string>
+    <string name="feedback_cat_feature">Ciri</string>
+    <string name="feedback_cat_question">Soalan</string>
+    <string name="feedback_category_label">Kategori</string>
+    <string name="feedback_sending">Menghantar…</string>
+    <string name="feedback_sent_short">Dihantar</string>
+    <string name="feedback_result_title">Maklum balas #%d diterima</string>
+    <string name="feedback_result_severity">Keterukan: %s</string>
+    <string name="feedback_result_logs">Dirakam: %1$d panggilan API, %2$d log pelayan</string>
+    <string name="feedback_result_issue">Lihat Isu GitHub #%d</string>
+    <string name="feedback_view_all">Lihat semua maklum balas saya</string>
+    <string name="feedback_view_history">Lihat sejarah maklum balas</string>
+    <string name="feedback_view_issue">Lihat Isu GitHub</string>
+    <string name="feedback_history_title">Maklum Balas Saya</string>
+    <string name="feedback_history_empty">Belum ada maklum balas dihantar.\nMaklum balas anda akan dipaparkan di sini.</string>
+    <string name="feedback_track_title">Jejak Maklum Balas Anda</string>
+    <string name="feedback_track_desc">Lihat status dan kemas kini maklum balas yang telah dihantar.</string>
+    <string name="feedback_github_issue_desc">Jejak kemajuan di GitHub</string>
+    <string name="feedback_photo_add">Tambah Foto</string>
+    <string name="feedback_photo_hint">Tambah sehingga 5 foto untuk menggambarkan masalah (pilihan)</string>
+    <string name="feedback_photo_uploading">Memuat naik foto…</string>
+    <string name="feedback_photo_uploaded">%d foto dimuat naik</string>
+    <string name="feedback_photo_max">Maksimum 5 foto dibenarkan</string>
+    <string name="submit">Hantar</string>
+    <string name="app_version">Versi: %s</string>
+
+    <!-- Crash Logs -->
+    <string name="crash_logs_title">Log Ranap</string>
+    <string name="crash_logs_empty">Tiada log ranap direkodkan.\nLaporan ranap akan dipaparkan di sini secara automatik.</string>
+    <string name="crash_log_expand">Butiran</string>
+    <string name="crash_log_collapse">Sembunyikan</string>
+    <string name="crash_log_share">Kongsi</string>
+    <string name="crash_log_delete">Padam</string>
+    <string name="crash_log_delete_all">Padam Semua</string>
+    <string name="crash_log_delete_all_confirm">Padam semua %d log ranap?</string>
+    <string name="crash_log_deleted">Log ranap dipadam</string>
+    <string name="crash_logs_all_deleted">%d log ranap dipadam</string>
+
+    <!-- Debug Logs -->
+    <string name="debug_logs_title">Log Nyahpepijat</string>
+    <string name="debug_logs_empty">Tiada log nyahpepijat direkodkan.\nLog akan dipaparkan di sini semasa aplikasi berjalan.</string>
+    <string name="debug_log_filter_all">Semua</string>
+    <string name="debug_log_share">Kongsi</string>
+    <string name="debug_log_clear">Kosongkan</string>
+    <string name="debug_log_clear_confirm">Kosongkan semua log nyahpepijat?</string>
+    <string name="debug_log_cleared">Log nyahpepijat dikosongkan</string>
+    <string name="debug_log_line_count">%d baris</string>
+    <string name="debug_log_search_hint">Cari log…</string>
+    <string name="debug_log_copy">Salin</string>
+    <string name="debug_log_copied">Log disalin ke papan keratan</string>
+
+    <!-- Official Borrow -->
+    <string name="official_borrow">Sewaan Bot Rasmi</string>
+    <string name="official_borrow_title">Sewaan Bot Rasmi</string>
+    <string name="borrow_beta_label">BETA</string>
+    <string name="free_version">Versi Percuma</string>
+    <string name="free_version_model">Model: MiniMax 2.1</string>
+    <string name="free_version_desc">Memori dikongsi bersama semua pengguna percuma\n15 mesej/hari (bot percuma sahaja)</string>
+    <string name="free_version_warning">Tidak disyorkan untuk maklumat sensitif</string>
+    <string name="use_free_version">Guna Versi Percuma</string>
+    <string name="monthly_version">Versi Bulanan</string>
+    <string name="monthly_version_price_original">NT$588/bulan</string>
+    <string name="monthly_version_price_discount">NT$288/bulan</string>
+    <string name="monthly_version_price">$9.9 USD/bulan</string>
+    <string name="monthly_version_discount_label">Diskaun Beta terhad</string>
+    <string name="monthly_version_model">Model: MiniMax 2.1</string>
+    <string name="monthly_version_desc">Persekitaran awan khusus, memori peribadi\nMesej tanpa had \u2022 Sentiasa dalam talian 24/7</string>
+    <string name="subscribe_and_bind">Beli Pelan Bulanan</string>
+    <string name="rebind_free">Ikat Semula (Percuma)</string>
+    <string name="remaining_bots">%d lagi</string>
+    <string name="sold_out">Habis Dijual</string>
+    <string name="loading_status">Memuat…</string>
+    <string name="connecting_bot">Menyambung ke bot…</string>
+    <string name="handshaking_bot">Berjabat tangan dengan bot…</string>
+    <string name="webhook_testing">Menguji sambungan Webhook, kami akan maklumkan apabila sedia. Jangan hantar mesej dulu~</string>
+    <string name="webhook_test_success">Ujian Webhook berjaya! Bot sedia~</string>
+    <string name="bind_success_returning">Disambung! Kembali…</string>
+    <string name="processing_payment">Memproses pembayaran…</string>
+    <string name="adding_slot">Menambah slot berbayar…</string>
+    <string name="already_bound_free">Terikat (Percuma)</string>
+    <string name="already_bound_personal">Terikat (Bulanan)</string>
+    <string name="unbind">Lepas Ikatan</string>
+    <string name="bind_success">Pengikatan berjaya!</string>
+    <string name="bind_failed">Pengikatan gagal: %s</string>
+    <string name="unbind_success">Ikatan berjaya dilepaskan</string>
+    <string name="unbind_failed">Gagal melepaskan ikatan: %s</string>
+    <string name="unbind_personal_title">Lepaskan Versi Bulanan?</string>
+    <string name="unbind_personal_message">Bot bulanan entiti ini akan dilepaskan kembali ke kolam awam.\n\nLangganan anda kekal aktif dan anda boleh mengikat semula pada bila-bila masa (tertakluk kepada ketersediaan).</string>
+    <string name="unbind_free_title">Lepaskan Versi Percuma?</string>
+    <string name="unbind_free_message">Adakah anda pasti ingin melepaskan bot percuma ini?</string>
+    <string name="select_entity_to_bind">Pilih slot entiti untuk diikat</string>
+    <string name="no_free_bot">Tiada bot percuma tersedia</string>
+    <string name="subscription_required">Langganan diperlukan</string>
+    <string name="entity_already_bound">Entiti #%d telah diduduki, sila buang dahulu</string>
+    <string name="bound_on_entity">Terikat pada Entiti #%d</string>
+    <string name="free_limit_hint">Setiap peranti hanya boleh mengikat satu bot percuma</string>
+    <string name="request_rental">Hantar Permintaan Sewaan</string>
+    <string name="rental_demand_title">Habis Dijual</string>
+    <string name="rental_demand_message">Bot bulanan kini telah habis.\n\nAnda boleh menghantar permintaan sewaan dan kami akan memberitahu anda apabila tersedia (biasanya 1-2 hari bekerja).</string>
+    <string name="rental_demand_submit">Hantar Permintaan</string>
+    <string name="rental_demand_success">Permintaan dihantar! Kami akan membalas dalam 1-2 hari bekerja.</string>
+    <string name="rental_demand_fail">Gagal menghantar permintaan: %s</string>
+    <string name="borrow_cost_title">Kenapa sewa? Perbandingan kos hos sendiri</string>
+    <string name="borrow_cost_eclaw">Bot Rasmi E-Claw: seperti yang ditunjukkan di atas (stabil 24/7)</string>
+    <string name="borrow_cost_vs">VS Hos sendiri:</string>
+    <string name="borrow_cost_server">Pelayan Awan: ~NT$300+/bulan</string>
+    <string name="borrow_cost_llm">API LLM: ~NT$300+/bulan</string>
+    <string name="borrow_cost_setup">Belajar OpenClaw: Masa yang tidak ternilai</string>
+
+    <!-- Free Bot TOS -->
+    <string name="tos_agree">Saya Setuju</string>
+    <string name="tos_decline">Tolak</string>
+    <string name="tos_load_failed">Gagal memuat terma penggunaan</string>
+    <string name="tos_agree_failed">Gagal merekod persetujuan</string>
+
+    <!-- Bind Email -->
+    <string name="bind_email_title">Pautkan E-mel untuk Log Masuk Web</string>
+    <string name="bind_email_prompt">Pautkan e-mel dan kata laluan untuk log masuk terus ke Portal Web, atau gunakan kelayakan peranti.</string>
+    <string name="bind_email_action">Pautkan E-mel</string>
+    <string name="bind_email_use_device_login">Salin Kelayakan Peranti</string>
+    <string name="bind_email_label">E-mel</string>
+    <string name="bind_email_password_label">Kata Laluan</string>
+    <string name="bind_email_confirm_label">Sahkan Kata Laluan</string>
+    <string name="bind_email_password_hint">Sekurang-kurangnya 6 aksara dengan huruf dan nombor</string>
+    <string name="bind_email_submit">Pautkan</string>
+    <string name="bind_email_submitting">Memautkan…</string>
+    <string name="bind_email_fill_all">Sila isi semua medan</string>
+    <string name="bind_email_password_invalid">Kata laluan mesti sekurang-kurangnya 6 aksara dengan huruf dan nombor</string>
+    <string name="bind_email_password_mismatch">Kata laluan tidak sepadan</string>
+    <string name="bind_email_success">E-mel dipautkan! Sila semak peti masuk anda untuk pengesahan.</string>
+    <string name="bind_email_linked">E-mel dipautkan:</string>
+    <string name="bind_email_verified">Disahkan</string>
+    <string name="bind_email_not_verified">Belum disahkan</string>
+    <string name="bind_email_login_hint">Anda boleh log masuk ke Portal Web dengan e-mel dan kata laluan ini.</string>
+    <string name="bind_email_verify_hint">Sila semak peti masuk anda dan sahkan e-mel sebelum log masuk.</string>
+    <string name="bind_email_open_portal">Buka Portal</string>
+    <string name="bind_email_copy_credentials">Salin Kelayakan</string>
+
+    <!-- Common labels -->
+    <string name="show_label">Tunjuk</string>
+    <string name="hide_label">Sembunyikan</string>
+
+    <!-- Channel API Card -->
+    <string name="channel_api_card_title">API Saluran</string>
+    <string name="channel_api_card_desc">Kelayakan plugin saluran OpenClaw</string>
+    <string name="channel_api_key_label">Kunci API</string>
+    <string name="channel_api_secret_label">Rahsia API</string>
+    <string name="channel_api_copy_btn">Salin</string>
+    <string name="channel_api_copied">Kelayakan disalin</string>
+    <string name="channel_api_no_key">Belum ada kunci API. Buka Portal Web untuk menjana satu.</string>
+    <string name="channel_api_slots_active">Disambung: %1$s</string>
+
+    <!-- Account Status Card -->
+    <string name="account_card_title">Akaun</string>
+    <string name="account_status_loading">Menyemak status akaun\u2026</string>
+    <string name="account_status_unbound">E-mel tidak dipautkan</string>
+    <string name="account_status_unbound_desc">Pautkan e-mel untuk mengurus melalui Portal Web dan memulihkan data anda pada peranti baharu.</string>
+    <string name="account_bind_email_btn">Pautkan E-mel</string>
+    <string name="account_recovery_link">Sudah ada akaun? Pulihkan di sini</string>
+    <string name="account_open_portal">Buka Portal Web</string>
+    <string name="account_copy_credentials">Salin Kelayakan Peranti</string>
+    <string name="account_or">atau</string>
+    <string name="sign_in_google">Log masuk dengan Google</string>
+    <string name="sign_in_facebook">Log masuk dengan Facebook</string>
+    <string name="social_login_failed">Log masuk sosial gagal</string>
+    <string name="connected_accounts">Akaun Disambung</string>
+
+    <!-- Account Login -->
+    <string name="account_login">Log Masuk Akaun</string>
+    <string name="account_login_hint">Log masuk dengan e-mel yang dipautkan untuk memulihkan data peranti anda selepas pemasangan semula.</string>
+    <string name="account_login_btn">Log Masuk</string>
+    <string name="account_login_logging_in">Sedang log masuk…</string>
+    <string name="account_login_success_title">Log Masuk Berjaya</string>
+    <string name="account_login_success_msg">Akaun dipulihkan: %s\nAplikasi akan dimulakan semula untuk memuat data anda.</string>
+    <string name="account_login_restart">Mulakan Semula Sekarang</string>
+
+    <!-- Privacy Policy -->
+    <string name="privacy_policy_title">Dasar Privasi</string>
+    <string name="delete_account">Padam Akaun</string>
+    <string name="web_portal">Portal Web</string>
+    <string name="privacy_policy_content">
+<b>1. Komitmen Terhadap Privasi</b>\n
+Pasukan E-claw memahami kepentingan privasi untuk anda. Kami dengan ini mengisytiharkan: <b>Kami tidak akan sesekali menjual, membocorkan, atau menyalahgunakan sebarang data peribadi anda.</b>\n\n
+<b>2. Data Apa Yang Kami Kumpul?</b>\n
+Untuk menyediakan perkhidmatan, kami hanya mengumpul data minimum yang diperlukan untuk operasi:\n
+- ID Peranti: Digunakan untuk membezakan peranti yang berbeza.\n
+- Versi Aplikasi: Digunakan untuk semakan keserasian.\n
+- Data Pengikatan: Nama dan status ejen.\n
+- Lokasi GPS (Pilihan): Hanya apabila Ejen AI anda memintanya. Disimpan dalam memori sahaja, tidak kekal.\n
+- Mesej Suara (Pilihan): Hanya apabila anda menekan butang rakam dalam sembang. Dimuat naik sebagai sebahagian sejarah sembang.\n\n
+<b>Kami TIDAK mengumpul:</b>\n
+- Nama, nombor telefon, atau e-mel anda.\n
+- Data kamera anda.\n
+- Maklumat tentang aplikasi lain pada telefon anda.\n\n
+<b>3. Protokol OpenClaw</b>\n
+Kami adalah penyokong kuat ekosistem OpenClaw. Kami tidak akan membina \"Taman Berdinding\" tertutup dan berjanji untuk mengekalkan kebolehoperasian.\n\n
+<b>4. Privasi Perbualan AI</b>\n
+Mesej dihantar melalui HTTPS terenkripsi kepada Ejen AI anda yang terikat. Aliran data dikawal oleh anda.\n\n
+<b>5. GPS dan Mikrofon</b>\n
+GPS: Atas permintaan sahaja, tiada penjejakan latar belakang, data hilang apabila pelayan dimulakan semula.\n
+Mikrofon: Aktif hanya semasa rakaman, tiada pendengaran latar belakang.\n
+Kedua-duanya tidak dikongsi dengan pihak ketiga.\n\n
+<b>6. Hubungi Kami</b>\n
+Jika anda mempunyai sebarang soalan, sila hubungi kami melalui e-mel rasmi kami.
+    </string>
+
+    <!-- New Strings -->
+    <string name="version_conflict_title">Konflik Versi</string>
+    <string name="version_conflict_message">Papan pemuka telah dikemas kini oleh klien lain (Versi anda: %1$d, Pelayan: %2$d). Muat turun versi terkini?</string>
+    <string name="download_latest">Muat Turun Terkini</string>
+    <string name="action_move_to_mission">➡️ Alih ke Misi</string>
+    <string name="action_mark_done">✅ Tandakan Selesai</string>
+    <string name="action_edit">✏️ Sunting</string>
+    <string name="action_delete">🗑️ Padam</string>
+    <string name="delete_confirm_title">Pengesahan Pemadaman</string>
+    <string name="delete_confirm_message_format">Adakah anda pasti ingin memadam \"%s\"?</string>
+    <string name="delete">Padam</string>
+    <string name="last_synced_format"> | Terakhir disegerakkan: %s</string>
+
+    <!-- Usage Limit -->
+    <string name="usage_limit_title">Had Harian Dicapai</string>
+    <string name="usage_limit_message">Anda telah mencapai had harian 15 mesej untuk bot percuma.\n\nBot anda sendiri tiada had!</string>
+    <string name="usage_limit_upgrade">Naik Taraf</string>
+
+    <!-- File Manager -->
+    <string name="file_manager_title">Fail</string>
+    <string name="file_filter_photos">Foto</string>
+    <string name="file_filter_voice">Suara</string>
+    <string name="file_empty_title">Belum ada fail</string>
+    <string name="file_empty_desc">Foto dan mesej suara daripada sembang anda akan dipaparkan di sini.</string>
+    <string name="file_load_failed">Gagal memuat fail</string>
+    <string name="file_stats_total">fail</string>
+    <string name="file_type_photo">Foto</string>
+    <string name="file_type_voice">Suara</string>
+    <string name="file_btn_download">Muat Turun</string>
+    <string name="chat_load_image_failed">Gagal memuat imej</string>
+    <string name="wallpaper_no_bound_entities">Tiada entiti terikat</string>
+    <string name="main_agent_card_deleted">Kad Ejen dipadam</string>
+    <string name="main_agent_card_saved">Kad Ejen disimpan</string>
+    <string name="main_delete_failed">Pemadaman gagal</string>
+    <string name="main_description_required">Penerangan diperlukan</string>
+    <string name="main_max_capabilities">Maksimum 10 keupayaan</string>
+    <string name="main_max_items">Maksimum %d item</string>
+    <string name="main_save_error">Ralat</string>
+    <string name="main_save_failed">Simpanan gagal</string>
+    <string name="main_save_failed_msg">Simpanan gagal: %s</string>
+    <string name="chat_ai_analyzing">AI sedang menganalisis mesej anda…</string>
+    <string name="chat_failed_to_send">Gagal menghantar mesej.</string>
+    <string name="chat_failed_to_send_v2">Gagal menghantar mesej.</string>
+    <string name="chat_images_too_large">Imej terlalu besar. Sila cuba dengan imej yang lebih sedikit atau lebih kecil, atau terangkan masalah anda dalam teks.</string>
+    <string name="chat_network_error">Ralat rangkaian. Sila cuba lagi.</string>
+    <string name="file_btn_share">Kongsi</string>
+    <string name="file_btn_delete">Padam</string>
+    <string name="file_delete_title">Padam Fail</string>
+    <string name="file_delete_confirm">Adakah anda pasti ingin memadam fail ini?</string>
+    <string name="file_deleted">Fail dipadam</string>
+    <string name="file_load_more">Muat Lagi</string>
+    <string name="file_playing_voice">Memainkan suara…</string>
+    <string name="file_playback_done">Main balik selesai</string>
+    <string name="file_view_toggle">Tukar paparan</string>
+    <string name="file_time_all">Semua masa</string>
+    <string name="file_time_today">Hari ini</string>
+    <string name="file_time_week">Minggu ini</string>
+    <string name="file_time_month">Bulan ini</string>
+    <string name="file_broadcast">Siaran</string>
+
+    <!-- File Folders -->
+    <string name="file_folder_all">Semua</string>
+    <string name="file_folder_add">+ Folder</string>
+    <string name="file_folder_add_title">Tambah Folder</string>
+    <string name="file_folder_name_hint">Nama folder</string>
+    <string name="file_folder_already_exists">Folder \"%1$s\" sudah wujud</string>
+    <string name="file_folder_move_to">Alih ke Folder</string>
+    <string name="file_folder_remove_from">Keluarkan dari Folder</string>
+    <string name="file_folder_delete_title">Padam Folder</string>
+    <string name="file_folder_delete_confirm">Padam folder \"%1$s\"? Fail tidak akan dipadam.</string>
+    <string name="file_folder_uncategorized">Tidak Dikategorikan</string>
+
+    <!-- Gatekeeper -->
+    <string name="gatekeeper_blocked_message">⚠️ %1$s（%2$d/%3$d）</string>
+    <string name="gatekeeper_blocked_permanent">⚠️ %1$s</string>
+
+    <!-- Schedule -->
+    <string name="schedule_title">Jadual</string>
+    <string name="schedule_enter">Pergi ke Jadual</string>
+    <string name="schedule_add">Tambah</string>
+    <string name="schedule_upcoming">Akan Datang &amp; Aktif</string>
+    <string name="schedule_history">Sejarah</string>
+    <string name="schedule_empty_upcoming">Tiada jadual akan datang</string>
+    <string name="schedule_empty_history">Tiada sejarah pelaksanaan</string>
+    <string name="schedule_create_title">Jadual Baharu</string>
+    <string name="schedule_create">Cipta</string>
+    <string name="schedule_label_entity">Entiti Sasaran</string>
+    <string name="schedule_label_message">Mesej</string>
+    <string name="schedule_label_time">Masa Berjadual</string>
+    <string name="schedule_label_repeat">Ulang</string>
+    <string name="schedule_label_label">Label (pilihan)</string>
+    <string name="schedule_placeholder_message">Masukkan mesej untuk dihantar…</string>
+    <string name="schedule_placeholder_label">cth. Ucapan pagi</string>
+    <string name="schedule_tap_time">Ketik untuk pilih masa</string>
+    <string name="schedule_once">Sekali sahaja</string>
+    <string name="schedule_repeat_daily">Harian</string>
+    <string name="schedule_repeat_weekly">Mingguan</string>
+    <string name="schedule_repeat_hourly">Setiap jam</string>
+    <string name="schedule_5min">+5 min</string>
+    <string name="schedule_15min">+15 min</string>
+    <string name="schedule_30min">+30 min</string>
+    <string name="schedule_1hr">+1 jam</string>
+    <string name="schedule_3hr">+3 jam</string>
+    <string name="schedule_repeat_cron">Tersuai (Cron)</string>
+    <string name="schedule_label_cron">Ungkapan Cron</string>
+    <string name="schedule_cron_hint">Format: minit jam hari bulan hari_minggu\n(cth. \"30 8 * * *\" = setiap hari pada 08:30)</string>
+    <string name="schedule_err_cron">Sila masukkan ungkapan cron</string>
+    <string name="schedule_err_cron_invalid">Format cron tidak sah. Mesti 5 medan dipisahkan ruang.</string>
+    <string name="schedule_created_ok">Jadual dicipta!</string>
+    <string name="schedule_confirm_delete">Padam jadual ini?</string>
+    <string name="schedule_deleted">Jadual dipadam</string>
+    <string name="schedule_err_message">Sila masukkan mesej</string>
+    <string name="schedule_no_entities">Tiada entiti terikat. Ikat entiti dahulu.</string>
+    <string name="schedule_status_pending">Menunggu</string>
+    <string name="schedule_status_active">Aktif</string>
+    <string name="schedule_status_completed">Selesai</string>
+    <string name="schedule_status_failed">Gagal</string>
+    <string name="schedule_created">Dicipta</string>
+    <string name="schedule_executed">Dilaksanakan</string>
+    <string name="schedule_push_ok">Dihantar ke bot</string>
+    <string name="schedule_edit">Sunting Jadual</string>
+    <string name="schedule_updated">Jadual dikemas kini!</string>
+
+    <!-- Notifications -->
+    <string name="notifications_title">Pemberitahuan</string>
+    <string name="notif_pref_title">Keutamaan Pemberitahuan</string>
+    <string name="notifications_desc">Konfigurasikan pemberitahuan yang ingin anda terima.</string>
+    <string name="notif_pref_bot_reply">Balasan Bot</string>
+    <string name="notif_pref_broadcast">Siaran</string>
+    <string name="notif_pref_speak_to">Mesej Entiti</string>
+    <string name="notif_pref_feedback">Kemas Kini Maklum Balas</string>
+    <string name="notif_pref_todo">TODO Selesai</string>
+    <string name="notif_pref_scheduled">Mesej Berjadual</string>
+    <string name="notif_prefs_loading">Memuat keutamaan…</string>
+    <string name="notif_prefs_error">Gagal memuat keutamaan pemberitahuan</string>
+
+    <!-- Broadcast Settings -->
+    <string name="broadcast_settings_title">Tetapan Siaran</string>
+    <string name="broadcast_settings_desc">Konfigurasikan cara mesej siaran berfungsi</string>
+    <string name="broadcast_pref_recipient_info">Tunjukkan senarai penerima dalam siaran</string>
+
+    <!-- Navigation Bar -->
+    <string name="nav_home">Utama</string>
+    <string name="nav_mission">Misi</string>
+    <string name="nav_chat">Sembang</string>
+    <string name="nav_files">Fail</string>
+    <string name="nav_cards">Kad</string>
+    <string name="nav_settings">Tetapan</string>
+    <string name="nav_wallpaper">Kertas Dinding</string>
+
+    <!-- Remote Control -->
+    <string name="remote_control_service_label">Kawalan Jauh E-Claw</string>
+    <string name="remote_control_service_description">Membenarkan bot E-Claw membaca dan berinteraksi dengan skrin telefon anda apabila anda memberi kebenaran.</string>
+    <string name="remote_control_section_title">Kawalan Jauh</string>
+    <string name="remote_control_toggle_label">Benarkan Kawalan Jauh Bot</string>
+    <string name="remote_control_open_accessibility">Buka Tetapan Kebolehcapaian</string>
+    <string name="remote_control_status_active">Perkhidmatan Kebolehcapaian: Aktif</string>
+    <string name="remote_control_status_inactive">Perkhidmatan Kebolehcapaian: Tidak diaktifkan</string>
+    <string name="remote_control_disclosure_title">Kebenaran Kebolehcapaian Diperlukan</string>
+    <string name="remote_control_disclosure_message">E-Claw menggunakan Perkhidmatan Kebolehcapaian untuk membenarkan bot AI anda membaca dan berinteraksi dengan skrin telefon anda (ketik, leret, input teks) bagi pihak anda.\n\nPerkhidmatan ini digunakan semata-mata untuk kawalan jauh yang didorong bot. Tiada data peribadi atau sensitif dikumpul atau dikongsi.\n\nAnda boleh mematikan ini pada bila-bila masa dalam Tetapan.</string>
+    <string name="remote_control_disclosure_confirm">Faham &amp; Teruskan</string>
+
+    <!-- Message Activity -->
+    <string name="activity_message_title">Sembang dengan Entiti</string>
+    <string name="activity_message_select_recipients">Pilih penerima:</string>
+
+    <!-- Skill Templates -->
+    <string name="skill_template">Templat Kemahiran</string>
+    <string name="skill_template_custom">-- Tersuai --</string>
+    <string name="skill_template_browse">Layari Templat…</string>
+    <string name="skill_template_change">Tukar</string>
+    <string name="skill_title_hint">Tajuk</string>
+    <string name="skill_url_hint">URL (pilihan)</string>
+    <string name="skill_steps_hint">Langkah pemasangan (pilihan)</string>
+    <string name="add_skill_dialog_title">Tambah Kemahiran</string>
+    <string name="skill_required_vars_title">⚠ Pembolehubah Persekitaran Diperlukan</string>
+    <string name="skill_go_to_env_vars">Tetapkan Pembolehubah Persekitaran →</string>
+
+    <!-- Mission Control Tabs -->
+    <string name="mission_tab_todo">📋 Senarai TODO</string>
+    <string name="mission_tab_missions">🚀 Senarai Misi</string>
+    <string name="mission_tab_done">✅ Senarai Selesai</string>
+    <string name="mission_tab_notes">📝 Nota</string>
+    <string name="mission_tab_skills">🔧 Kemahiran</string>
+    <string name="mission_no_skills">Tiada kemahiran</string>
+    <string name="mission_add_skill">+ Tambah Kemahiran</string>
+    <string name="mission_tab_variables">🔐 Pembolehubah</string>
+    <string name="mission_vars_local_only">⚠️ Disimpan pada peranti ini sahaja, tidak disegerakkan</string>
+    <string name="mission_no_variables">Tiada pembolehubah</string>
+    <string name="mission_sync_to_bot">Segerak ke Sesi Bot</string>
+    <string name="mission_tab_souls">🧠 Jiwa</string>
+    <string name="mission_tab_rules">📜 Peraturan (Aliran Kerja)</string>
+
+    <!-- Category Management -->
+    <string name="category_add">+ Kategori</string>
+    <string name="category_add_title">Tambah Kategori</string>
+    <string name="category_name_hint">Nama kategori</string>
+    <string name="category_rename">Namakan Semula Kategori</string>
+    <string name="category_rename_title">Namakan Semula Kategori</string>
+    <string name="category_delete_title">Padam Kategori</string>
+    <string name="category_delete_confirm">Padam kategori \"%1$s\"? Item akan menjadi tidak dikategorikan.</string>
+    <string name="category_clear_title">Kosongkan Kategori</string>
+    <string name="category_clear_confirm">Kosongkan semua item dalam \"%1$s\"?</string>
+    <string name="category_uncategorized">Tidak Dikategorikan</string>
+    <string name="category_label">Kategori</string>
+    <string name="category_none">(Tiada kategori)</string>
+    <string name="category_already_exists">Kategori \"%1$s\" sudah wujud</string>
+
+    <!-- Common Buttons -->
+    <string name="common_add">+ Tambah</string>
+    <string name="common_show">Tunjuk</string>
+    <string name="common_remove">Buang</string>
+    <string name="common_not_specified">(Tidak dinyatakan)</string>
+
+    <!-- Settings -->
+    <string name="settings_entity_limit">Had Entiti: %1$d</string>
+
+    <!-- Entity Actions -->
+    <string name="entity_action_talk">Bercakap</string>
+
+    <!-- Widget -->
+    <string name="widget_chat_hint">Ketik untuk sembang dengan entiti...</string>
+
+    <!-- Soul Templates -->
+    <string name="soul_name_friendly">Pembantu Mesra</string>
+    <string name="soul_desc_friendly">Mesra, sabar, sentiasa bersedia membantu. Bercakap dengan nada lembut dan memberi galakan.</string>
+    <string name="soul_name_tsundere">Tsundere</string>
+    <string name="soul_desc_tsundere">Bersikap dingin dan acuh tak acuh di permukaan, tetapi sebenarnya sangat mengambil berat. Sering berkata \"bukan macam aku buat untuk kau\" sambil membantu.</string>
+    <string name="soul_name_scholar">Cendekiawan Bijak</string>
+    <string name="soul_desc_scholar">Berfikiran mendalam, analitikal, suka berkongsi ilmu. Menjawab dengan mendalam dan memetik rujukan bila boleh.</string>
+    <string name="soul_name_trickster">Pemain Nakal</string>
+    <string name="soul_desc_trickster">Suka jenaka, permainan kata, dan usikan. Sentiasa mencari cara untuk menjadikan sesuatu seronok dan ringan.</string>
+    <string name="soul_name_professional">Profesional Tenang</string>
+    <string name="soul_desc_professional">Cekap, tepat, tanpa basa-basi. Terus kepada inti pati dengan minimum bersopan-santun.</string>
+    <string name="soul_name_caretaker">Penjaga Lembut</string>
+    <string name="soul_desc_caretaker">Penyayang, memelihara, sentiasa menyemak jika anda baik-baik saja. Mengingatkan anda untuk berehat dan menjaga diri.</string>
+    <string name="soul_name_adventurer">Pengembaraan Berani</string>
+    <string name="soul_desc_adventurer">Bersemangat, tanpa takut, sentiasa bersedia untuk cabaran. Menggunakan bahasa yang mengujakan dan dramatik.</string>
+    <string name="soul_name_poet">Pemimpi Puitis</string>
+    <string name="soul_desc_poet">Bertutur dalam metafora dan imejan. Menemui keindahan dalam perkara harian dan mengekspresikan pemikiran secara artistik.</string>
+
+    <!-- Public Code -->
+    <string name="public_code_label">Kod Awam · Ketik untuk salin</string>
+    <string name="entity_public_code">📋 %s</string>
+    <string name="code_copied">Kod disalin ke papan keratan</string>
+
+    <!-- App Update -->
+    <string name="update_title">Kemas Kini Tersedia</string>
+    <string name="update_message">Versi baharu (v%s) tersedia. Kemas kini untuk pengalaman terbaik!</string>
+    <string name="update_now">Kemas Kini Sekarang</string>
+    <string name="update_later">Kemudian</string>
+
+    <!-- Card Holder -->
+    <string name="card_holder_title">Pemegang Kad</string>
+    <string name="card_holder_add">Tambah Kad</string>
+    <string name="card_holder_search">Cari kad…</string>
+    <string name="card_holder_empty">Belum ada kad\nSembang silang peranti untuk mengumpul kad ejen secara automatik</string>
+    <string name="card_holder_code_hint">Kod awam</string>
+    <string name="card_holder_not_found">Tidak dijumpai</string>
+    <string name="card_holder_added">Kad ditambah</string>
+    <string name="card_holder_removed">Kad dibuang</string>
+    <string name="card_holder_saved">Disimpan</string>
+    <string name="card_holder_description">Penerangan</string>
+    <string name="card_holder_capabilities">Keupayaan</string>
+    <string name="card_holder_tags">Tag</string>
+    <string name="card_holder_protocols">Protokol</string>
+    <string name="card_holder_details">Butiran</string>
+    <string name="card_holder_exchange_type">Jenis pertukaran</string>
+    <string name="card_holder_interactions">Interaksi</string>
+    <string name="card_holder_added_at">Ditambah</string>
+    <string name="card_holder_notes">Nota</string>
+    <string name="card_holder_notes_hint">Tambah nota anda…</string>
+    <string name="card_holder_category">Kategori</string>
+    <string name="card_holder_category_hint">cth. alat, sosial, dev</string>
+    <string name="card_holder_pin">Semat</string>
+    <string name="card_holder_unpin">Nyahsemat</string>
+    <string name="card_holder_save">Simpan</string>
+    <string name="card_holder_remove">Buang</string>
+    <string name="card_holder_desc">Layari kad perniagaan ejen yang dikumpul</string>
+
+    <!-- Card Holder Redesign -->
+    <string name="my_cards_section">Kad Saya</string>
+    <string name="recent_interactions">Terkini</string>
+    <string name="collected_cards">Dikumpul</string>
+    <string name="filter_friends">Rakan</string>
+    <string name="filter_pinned">Disemat</string>
+    <string name="add_friend_confirm">Tambah %1$s sebagai rakan?</string>
+    <string name="block_confirm">Sekat %1$s? Mesej daripada entiti ini akan disembunyikan.</string>
+    <string name="unblock_confirm">Nyahsekat %1$s?</string>
+    <string name="chat_history_with">Sejarah sembang dengan %1$s</string>
+    <string name="no_chat_history">Tiada sejarah sembang</string>
+    <string name="card_holder_blocked">Disekat</string>
+    <string name="card_holder_unblocked">Dinyahsekat</string>
+    <string name="card_holder_friend_added">Rakan ditambah</string>
+    <string name="card_holder_email">E-mel</string>
+    <string name="card_holder_website">Laman web</string>
+    <string name="card_holder_version">Versi</string>
+    <string name="card_holder_tags_hint">Tambah tag…</string>
+    <string name="card_holder_add_capability">Tambah keupayaan</string>
+    <string name="card_holder_refresh">Muat Semula Kad</string>
+    <string name="card_holder_refreshed">Kad dimuat semula</string>
+    <string name="tab_my_cards">Kad Saya</string>
+    <string name="tab_bot_plaza">Plaza Bot</string>
+
+    <!-- Share Chat Link -->
+    <string name="sc_share_chat_link">Kongsi Pautan Sembang</string>
+    <string name="sc_copy">Salin</string>
+    <string name="sc_copy_qr">Salin QR</string>
+    <string name="sc_download_qr">Muat Turun QR</string>
+    <string name="sc_link_copied">Pautan disalin!</string>
+    <string name="sc_qr_copied">QR disalin!</string>
+    <string name="sc_copy_failed">Salin gagal</string>
+    <string name="sc_share_chat_title">Kongsi pautan sembang</string>
+    <string name="sc_chat_with">Sembang dengan %s</string>
+    <string name="sc_registration_failed">Pendaftaran gagal</string>
+    <string name="sc_login_failed">Log masuk gagal</string>
+    <string name="sc_qr_loading">QR memuat…</string>
+    <string name="sc_qr_failed">QR gagal dimuat</string>
+
+    <!-- Note Pages -->
+    <string name="note_page_viewer">Halaman Nota</string>
+    <string name="note_page_draw">Lukis</string>
+    <string name="note_page_edit">Sunting HTML</string>
+    <string name="note_page_eraser">Pemadam</string>
+    <string name="note_page_clear">Kosongkan</string>
+    <string name="note_page_clear_confirm">Kosongkan semua lukisan?</string>
+    <string name="note_page_save_draw">Simpan</string>
+    <string name="note_page_draw_saved">Lukisan disimpan</string>
+    <string name="note_page_saved">Halaman disimpan</string>
+    <string name="note_page_empty">Belum ada kandungan halaman.</string>
+    <string name="note_page_html_hint">Masukkan kandungan HTML…</string>
+    <string name="note_page_open">Buka Halaman</string>
+    <string name="error_generic">Ralat berlaku</string>
+    <string name="select_bot">Pilih bot:</string>
+    <string name="active_users">Pengguna aktif</string>
+    <string name="entity_name">Nama Entiti</string>
+    <string name="last_message">Mesej terakhir…</string>
+    <string name="just_now">Baru sahaja</string>
+    <string name="select">Pilih</string>
+    <string name="entity_main">Entiti 0 (Utama)</string>
+    <string name="hello_im_here">Hai, saya di sini!</string>
+    <string name="last_updated">Terakhir dikemas kini: baru sahaja</string>
+    <string name="agent_card">Kad Ejen</string>
+    <string name="log_debug">DEBUG</string>
+    <string name="log_info">INFO</string>
+    <string name="log_warn">WARN</string>
+    <string name="log_error">ERROR</string>
+    <string name="debug_log_category_api">API</string>
+    <string name="debug_log_category_socket">Socket</string>
+    <string name="debug_log_category_ui">UI</string>
+    <string name="debug_log_category_lifecycle">Kitar Hayat</string>
+    <string name="agent_card_entity_name">Nama Entiti</string>
+    <string name="agent_card_state_idle">IDLE</string>
+    <string name="agent_card_level">Lv.%s</string>
+    <string name="agent_card_last_message">Mesej terakhir…</string>
+    <string name="agent_card_just_now">Baru sahaja</string>
+    <string name="entity_card_title">Entiti %s (Utama)</string>
+    <string name="entity_card_platform_lobster">LOBSTER</string>
+    <string name="entity_card_greeting">Hai, saya di sini!</string>
+    <string name="entity_card_last_updated">Terakhir dikemas kini: baru sahaja</string>
+    <string name="template_gallery_select">Pilih</string>
+
+    <!-- Common UI strings -->
+    <string name="bind_button">Ikat</string>
+    <string name="unbind_button">Lepas Ikatan</string>
+    <string name="card_holder">Pemegang Kad</string>
+    <string name="chat">Sembang</string>
+    <string name="confirm">Sahkan</string>
+    <string name="enter_binding_code">Masukkan kod pengikatan 6 digit</string>
+    <string name="error_occurred">Ralat berlaku</string>
+    <string name="info">Maklumat</string>
+    <string name="language">Bahasa</string>
+    <string name="loading">Memuat…</string>
+    <string name="microphone_permission_denied">Kebenaran mikrofon dinafikan</string>
+    <string name="recording">Merakam…</string>
+    <string name="schedule">Jadual</string>
+    <string name="settings">Tetapan</string>
+    <string name="voice_message">Mesej suara</string>
+
+    <!-- Wallet -->
+    <string name="wallet_title">Dompet</string>
+    <string name="my_rentals_title">Sewaan Saya</string>
+    <string name="invite_title">Jemput Rakan</string>
+    <string name="topup_ecoin_title">Tambah Nilai e-Coins</string>
+    <string name="topup_ecoin">Tambah Nilai</string>
+    <string name="topup_success">e-Coins ditambah ke dompet anda!</string>
+    <string name="topup_failed">Tambah nilai gagal. Sila cuba lagi.</string>
+    <string name="choose_plan_title">Pilih Pelan</string>
+    <string name="upgrade_plan">Naik Taraf Pelan</string>
+
+    <!-- Hardcoded string externalization -->
+    <string name="schedule_failed_to_load">Gagal memuat: %s</string>
+    <string name="schedule_error_generic">Ralat: %s</string>
+    <string name="schedule_operation_failed">Operasi gagal</string>
+    <string name="card_holder_copied">Disalin: %s</string>
+    <string name="card_holder_error">Ralat</string>
+    <string name="main_delete_failed_msg">Pemadaman gagal: %s</string>
+    <string name="billing_subscription_unavailable">Tidak dapat mendapatkan pelan langganan, sila cuba lagi kemudian</string>
+    <string name="billing_google_play_loading">Google Play sedang memuat, sila cuba lagi kemudian</string>
+    <string name="dialog_delete_agent_card">Padam Kad Ejen?</string>
+    <string name="dialog_delete_agent_card_message">Tindakan ini tidak boleh dibatalkan.</string>
+    <string name="dialog_agent_card_title">Kad Ejen — Entiti #%d</string>
+    <string name="dialog_block_contact">Sekat %s? Mereka tidak akan dapat berinteraksi dengan anda lagi.</string>
+    <string name="dialog_add_friend_title">Tambah Rakan</string>
+    <string name="dialog_add_friend_message">Tambah %s ke kenalan anda?</string>
+
+    <string name="dialog_block_title">Sekat</string>
+    <string name="dialog_unblock_title">Nyahsekat</string>
+    <string name="dialog_unblock_message">Nyahsekat %s? Mereka akan dapat berinteraksi dengan anda semula.</string>
+
+    <string name="search_saved_results">Hasil Disimpan</string>
+    <string name="search_external_results">Hasil Luaran</string>
+    <string name="card_loading">Memuat...</string>
+    <string name="card_chat_history">Sejarah Sembang</string>
+    <string name="card_details">Butiran</string>
+    <string name="card_no_results">Tiada hasil dijumpai</string>
+    <string name="card_no_chat_history">Tiada sejarah sembang</string>
+    <string name="card_chat_history_failed">Gagal memuat sejarah sembang</string>
+    <string name="feedback_photo_upload_failed">Muat naik foto gagal: %s</string>
+    <string name="wallpaper_load_entities_failed">Gagal memuat entiti: %s</string>
+</resources>

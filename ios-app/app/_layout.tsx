@@ -69,7 +69,6 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="chat/[entityId]" options={{ presentation: 'card' }} />
             <Stack.Screen name="entity-manager" options={{ presentation: 'modal' }} />
-            <Stack.Screen name="schedule" options={{ presentation: 'card' }} />
             <Stack.Screen name="file-manager" options={{ presentation: 'card' }} />
             <Stack.Screen name="ai-chat" options={{ presentation: 'card' }} />
             <Stack.Screen name="official-borrow" options={{ presentation: 'card' }} />

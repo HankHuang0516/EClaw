@@ -1,0 +1,943 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">EClawbot</string>
+    <string name="wallpaper_description">Live-Status Ihres KI-Agenten</string>
+
+    <!-- Main Activity -->
+    <string name="main_title">EClawbot</string>
+    <string name="no_agents_connected">Keine Agenten verbunden</string>
+    <string name="tap_to_add_entity">Tippen Sie auf + Entität hinzufügen, um Ihren ersten Agenten zu verbinden</string>
+    <string name="add_entity">+ Entität hinzufügen</string>
+    <string name="select_entity_slot">Entitäts-Slot auswählen</string>
+    <string name="binding_code">Bindungscode</string>
+    <string name="code_placeholder">------</string>
+    <string name="tap_to_generate_code">Tippen zum Generieren eines Codes</string>
+    <string name="channel_bind_warning">Version 2026-03+ empfiehlt dringend die Verwendung der EClaw-Kanalbindung, um Bindungsfehler zu vermeiden.</string>
+    <string name="generate">Generieren</string>
+    <string name="regenerate">Neu generieren</string>
+    <string name="channel_promo">EClaw Channel ausprobieren? Nativer, schneller</string>
+    <string name="channel_step_intro">Im OpenClaw-Terminal:</string>
+    <string name="channel_step3">3  \"EClaw\" auswählen</string>
+    <string name="channel_ai_agent_hint">🤖 Es wird dringend empfohlen, Claude Code oder andere KI-Agenten für die unterstützte Installation zu verwenden.</string>
+    <string name="channel_learn_more">Mehr erfahren →</string>
+    <string name="expand">Erweitern</string>
+    <string name="copy">Kopieren</string>
+    <string name="broadcast_to_all">An alle senden</string>
+    <string name="set_live_wallpaper">Live-Hintergrund festlegen</string>
+    <string name="expires_in">Läuft ab in %ds</string>
+    <string name="command_copied">Befehl kopiert!</string>
+    <string name="sent">Gesendet!</string>
+    <string name="broadcast_sent">Broadcast gesendet!</string>
+    <string name="failed_format">Fehlgeschlagen: %s</string>
+
+    <!-- Dialogs -->
+    <string name="send_message">Nachricht senden</string>
+    <string name="send">Senden</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="to_format">An: %1$s (#%2$d)</string>
+    <string name="message_hint">Nachricht an %s…</string>
+    <string name="broadcast_message_hint">Broadcast-Nachricht…</string>
+    <string name="send_to_entities">An %d Entitäten senden</string>
+    <string name="entity_format">Entität %d</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Einstellungen</string>
+    <string name="usage_title">Heutige Nutzung</string>
+    <string name="premium_badge">PREMIUM</string>
+    <string name="sends_today">Sendungen heute</string>
+    <string name="unlock_unlimited">✨ Unbegrenzter Chat + 8 Entitäts-Slots - %s/Monat</string>
+    <string name="unlock_unlimited_no_price">✨ Unbegrenzter Chat + 8 Entitäts-Slots</string>
+
+    <!-- Layout -->
+    <string name="entity_layout">Entitäts-Layout</string>
+    <string name="layout_single">Einzel</string>
+    <string name="layout_dual">Doppel</string>
+    <string name="layout_quad">Vierfach</string>
+    <string name="desc_single">Einzelne Entität zentriert angezeigt</string>
+    <string name="desc_dual">Zwei Entitäten nebeneinander</string>
+    <string name="desc_quad">Vier Entitäten im Raster</string>
+    <string name="custom_layout">Benutzerdefiniertes Layout</string>
+    <string name="manage_entities">Entitäten verwalten</string>
+
+    <!-- Language -->
+    <string name="language_title">Sprache (語言)</string>
+    <string name="language_system">Systemstandard</string>
+    <string name="language_en">English</string>
+    <string name="language_zh">中文 (繁體)</string>
+    <string name="language_zh_cn">简体中文</string>
+    <string name="language_ja">日本語</string>
+    <string name="language_ko">한국어</string>
+    <string name="language_th">ภาษาไทย</string>
+    <string name="language_vi">Tiếng Việt</string>
+    <string name="language_id">Bahasa Indonesia</string>
+
+    <!-- Wallpaper Preview -->
+    <string name="wallpaper_preview_title">Hintergrund-Vorschau</string>
+    <string name="use_custom_layout">Benutzerdefiniertes Layout verwenden</string>
+    <string name="custom_background">Benutzerdefinierter Hintergrund</string>
+    <string name="select_photo">Foto auswählen</string>
+    <string name="reset">Zurücksetzen</string>
+    <string name="set_wallpaper">Hintergrund festlegen</string>
+    <string name="drag_to_position">Entitäten zum Positionieren ziehen</string>
+    <string name="pinch_to_resize">Pinch zum Skalieren, ziehen zum Verschieben</string>
+    <string name="back">Zurück</string>
+
+    <!-- Layout Editor -->
+    <string name="done">Fertig</string>
+
+    <!-- Entity Manager -->
+    <string name="entities_title">Entitäten</string>
+    <string name="loading_entities">Entitäten werden geladen…</string>
+    <string name="layout_grid">Raster</string>
+    <string name="layout_row">Zeile</string>
+    <string name="layout_column">Spalte</string>
+    <string name="layout_diamond">Raute</string>
+    <string name="layout_corners">Ecken</string>
+    <string name="entity_size">Entitätsgröße</string>
+    <string name="size_small">Klein</string>
+    <string name="size_large">Groß</string>
+    <string name="refresh">Aktualisieren</string>
+
+    <!-- AI Chat -->
+    <string name="ai_chat_title">KI-Assistent</string>
+    <string name="ai_chat_welcome">Hallo! Ich bin die E-Claw KI.\nFragen Sie mich alles über die Plattform.</string>
+    <string name="ai_chat_hint">Stellen Sie eine Frage…</string>
+    <string name="ai_chat_attach_image">Bild anhängen</string>
+    <string name="ai_chat_clear_title">Verlauf löschen</string>
+    <string name="ai_chat_clear_message">Gesamten Chatverlauf löschen?</string>
+    <string name="ai_chat_clear_confirm">Löschen</string>
+    <string name="ai_chat_busy_retry">KI ist beschäftigt, erneuter Versuch in %1$ds… (%2$d/%3$d)</string>
+    <string name="ai_chat_busy_exhausted">Die KI ist derzeit mit anderen Anfragen beschäftigt. Bitte versuchen Sie es gleich erneut.</string>
+    <string name="ai_chat_uploading">Bild wird hochgeladen…</string>
+    <string name="ai_chat_analyzing">KI analysiert Ihre Bilder…</string>
+    <string name="ai_chat_thinking">Arbeite noch daran…</string>
+    <string name="ai_chat_fallback_error">Entschuldigung, Ihre Anfrage konnte nicht verarbeitet werden. Bitte formulieren Sie Ihre Frage um.</string>
+    <string name="ai_chat_timeout">Antwort-Zeitüberschreitung. Erneuter Versuch…</string>
+    <string name="ai_chat_no_internet">Keine Internetverbindung. Bitte überprüfen Sie Ihr Netzwerk.</string>
+    <string name="ai_chat_connection_error">Verbindungsfehler. Bitte versuchen Sie es erneut.</string>
+    <string name="ai_chat_network_error">Netzwerkfehler. Bitte versuchen Sie es erneut.</string>
+    <string name="ai_chat_device_not_registered">Gerät nicht registriert. Bitte starten Sie die App neu.</string>
+    <string name="ai_chat_image_too_large">Die Bilder sind zu groß. Versuchen Sie es mit weniger oder kleineren Bildern, oder beschreiben Sie Ihr Problem als Text.</string>
+    <string name="ai_chat_image_unavailable">Bild-Upload ist vorübergehend nicht verfügbar.</string>
+    <string name="ai_chat_view_feedback">Feedback-Verlauf anzeigen →</string>
+
+    <!-- Chat -->
+    <string name="chat_history">Chat</string>
+    <string name="chat_offline_message">Verbindung nicht möglich. Bitte überprüfen Sie Ihre Internetverbindung.</string>
+    <string name="retry">Erneut versuchen</string>
+    <string name="filter_all">Alle</string>
+    <string name="filter_my_messages">Meine Nachrichten</string>
+    <string name="type_message">Nachricht eingeben…</string>
+    <string name="no_messages_yet">Noch keine Nachrichten</string>
+    <string name="you">Sie</string>
+    <string name="to_entities">An: %s</string>
+    <string name="entity_read_receipt">Entität %d Gelesen</string>
+    <string name="send_voice">Senden</string>
+    <string name="recording_voice">Aufnahme…</string>
+    <string name="uploading_media">Hochladen…</string>
+    <string name="upload_error">Upload fehlgeschlagen</string>
+    <string name="attach">Anhängen</string>
+    <string name="attach_camera">Kamera</string>
+    <string name="attach_gallery">Galerie</string>
+    <string name="attach_video">Video</string>
+    <string name="attach_file">Datei</string>
+    <string name="file_too_large">Datei zu groß (max. 100 MB)</string>
+    <string name="wait_upload">Bitte warten Sie, bis die Uploads abgeschlossen sind</string>
+
+    <!-- Cross-Device Contacts -->
+    <string name="add_contact">Kontakt hinzufügen</string>
+    <string name="add_contact_btn">Hinzufügen</string>
+    <string name="remove_contact">Kontakt entfernen</string>
+    <string name="remove_contact_confirm">%s aus den Kontakten entfernen?</string>
+    <string name="contact_code_hint">Öffentlichen Code eingeben</string>
+    <string name="contact_not_found">Entität nicht gefunden</string>
+    <string name="contact_added">Kontakt hinzugefügt!</string>
+    <string name="contact_removed">Kontakt entfernt</string>
+    <string name="contact_already_exists">Bereits in den Kontakten</string>
+    <string name="contact_cannot_add_self">Eigene Entität kann nicht hinzugefügt werden</string>
+    <string name="contact_limit_reached">Kontaktlimit erreicht (max. 20)</string>
+    <string name="contact_offline">Kontakt ist offline</string>
+    <string name="contact_lookup_error">Verbindungsfehler. Bitte versuchen Sie es erneut.</string>
+    <string name="contact_send_error">Senden fehlgeschlagen. Bitte versuchen Sie es erneut.</string>
+    <string name="to_contact_cross_device">An: %s (geräteübergreifend)</string>
+    <string name="remove">Entfernen</string>
+
+    <!-- Mission Control -->
+    <string name="mission_control">Missionskontrolle</string>
+    <string name="tab_mission_center">Missionszentrale</string>
+    <string name="tab_kanban">Kanban</string>
+    <string name="kanban_add_deprecated">Bitte verwenden Sie das Kanban-Board, um neue Einträge hinzuzufügen. Das Kanban-Board bietet ein vollständiges Ökosystem — lassen Sie Bots bestehende Einträge schrittweise migrieren.</string>
+    <string name="upload">Hochladen</string>
+    <string name="uploading">Hochladen…</string>
+    <string name="save">Speichern</string>
+    <string name="saving">Speichern…</string>
+    <string name="add_todo">+ TODO hinzufügen</string>
+    <string name="add_note">+ Notiz hinzufügen</string>
+    <string name="add_rule">+ Regel hinzufügen</string>
+    <string name="no_items">Keine TODO-Einträge</string>
+    <string name="no_missions">Keine aktiven Missionen</string>
+    <string name="no_done_items">Keine abgeschlossenen Einträge</string>
+    <string name="no_notes">Keine Notizen</string>
+    <string name="no_rules">Keine Regeln</string>
+    <string name="add_soul">+ Seele hinzufügen</string>
+    <string name="no_souls">Keine Seelen definiert</string>
+
+    <!-- Soul/Rule Template Gallery -->
+    <string name="mission_choose_from_template">Aus Vorlage wählen</string>
+    <string name="mission_soul_gallery_title">Seelen-Vorlagen</string>
+    <string name="mission_rule_gallery_title">Regel-Vorlagen</string>
+    <string name="mission_template_by">von %s</string>
+    <string name="mission_use_template">Vorlage anwenden</string>
+    <string name="mission_template_loading">Vorlagen werden geladen…</string>
+    <string name="mission_template_empty">Keine Vorlagen verfügbar</string>
+    <string name="mission_soul_builtin">Integriert</string>
+    <string name="mission_template_no_match">Keine passenden Vorlagen</string>
+    <string name="mission_browse_templates">Vorlagen durchsuchen…</string>
+    <string name="search_hint">Suchen…</string>
+    <string name="soul_template">Seelen-Vorlage</string>
+    <string name="soul_template_custom">-- Benutzerdefiniert --</string>
+    <string name="soul_name_hint">Seelenname</string>
+    <string name="soul_desc_hint">Beschreiben Sie Persönlichkeit, Ton, Verhalten…</string>
+    <string name="rule_name_hint">Regelname</string>
+    <string name="rule_desc_hint">Beschreiben Sie die Regel…</string>
+    <string name="edit">Bearbeiten</string>
+    <string name="priority">Priorität</string>
+    <string name="assign_entity">Entität zuweisen</string>
+    <string name="assign_entity_multi">Entität zuweisen (Mehrfach)</string>
+    <string name="rule_type">Regeltyp</string>
+    <string name="background_set">Hintergrund festgelegt</string>
+    <string name="background_set_failed">Hintergrund konnte nicht festgelegt werden</string>
+    <string name="settings_reset">Einstellungen zurückgesetzt</string>
+    <string name="background_disabled">Hintergrund deaktiviert</string>
+    <string name="error_open_picker">Fotoauswahl kann nicht geöffnet werden</string>
+    <string name="error_open_settings">Hintergrund-Einstellungen können nicht geöffnet werden</string>
+    <string name="bot_label">🤖 %s</string>
+    <string name="mission_completed_at">✓ %s</string>
+    <string name="playback_failed">Wiedergabe fehlgeschlagen</string>
+    <string name="confirm_copy">In die Zwischenablage kopiert</string>
+    <string name="unknown_error">Unbekannter Fehler</string>
+    <string name="failed_add_slot">Slot konnte nicht hinzugefügt werden</string>
+    <string name="no_bound_entities">Keine gebundenen Entitäten</string>
+    <string name="publish_notification">Benachrichtigung veröffentlichen</string>
+    <string name="no_notify_items">Keine neuen Änderungen zu melden</string>
+    <string name="notification_sent">Benachrichtigung gesendet</string>
+    <string name="task_saved">Aufgabe gespeichert</string>
+    <string name="schedule_tag">Zeitplan</string>
+    <string name="schedule_bot_reply">Bot-Antwort</string>
+    <string name="schedule_no_reply">Noch keine Antwort</string>
+    <string name="schedule_message_label">Geplante Nachricht</string>
+    <string name="enter_message">Bitte geben Sie eine Nachricht ein</string>
+    <string name="select_one_entity">Bitte wählen Sie mindestens eine Entität aus</string>
+    <string name="entity_id_format">#%d</string>
+
+    <!-- Bot Avatar -->
+    <string name="bot_avatar">Bot-Avatar</string>
+    <string name="avatar_subtitle">Entität %d</string>
+    <string name="avatar_upload_photo">Foto hochladen</string>
+    <string name="avatar_uploading">Hochladen…</string>
+    <string name="avatar_upload_failed">Upload fehlgeschlagen</string>
+    <string name="avatar_upload_success">Avatar aktualisiert!</string>
+
+    <!-- Entity Management -->
+    <string name="remove_entity">Entfernen</string>
+    <string name="remove_confirm_title">Entität entfernen?</string>
+    <string name="remove_confirm_message">Möchten Sie %1$s (#%2$d) wirklich entfernen? Dies wird die Bindung vom Hintergrund lösen.</string>
+    <string name="entity_removed">%s entfernt</string>
+    <string name="refresh_connection">Aktualisieren</string>
+    <string name="refresh_success">Verbindung aktualisiert!</string>
+    <string name="refresh_webhook_broken_title">Verbindung fehlgeschlagen</string>
+    <string name="refresh_webhook_broken_message">Verbindung zum Bot nicht möglich. Möchten Sie neu binden?</string>
+    <string name="refresh_cooldown">Bitte warten Sie %d Sekunden</string>
+    <string name="edit_entities">Bearbeiten</string>
+    <string name="drag_to_reorder">Zum Neuordnen ziehen</string>
+    <string name="xd_settings_btn">Geräteübergreifende Nachr.</string>
+    <string name="entity_agent_card">Agentenkarte</string>
+    <string name="more_options">Weitere Optionen</string>
+    <string name="xd_settings_title">Geräteübergreifende Nachrichteneinstellungen</string>
+    <string name="xd_pre_inject">Vorab-Anweisung</string>
+    <string name="xd_pre_inject_desc">Wird vor geräteübergreifenden Nachrichten in der Push-Benachrichtigung eingefügt</string>
+    <string name="xd_forbidden">Verbotene Wörter</string>
+    <string name="xd_forbidden_desc">Nachrichten mit diesen Wörtern werden abgelehnt (kommagetrennt)</string>
+    <string name="xd_rate_limit">Ratenlimit (Sekunden)</string>
+    <string name="xd_rate_limit_desc">Abklingzeit pro Absender (0 = kein Limit)</string>
+    <string name="xd_blacklist">Blacklist (öffentliche Codes)</string>
+    <string name="xd_codes_sep">Kommagetrennte öffentliche Codes</string>
+    <string name="xd_whitelist_mode">Whitelist-Modus</string>
+    <string name="xd_whitelist">Whitelist (öffentliche Codes)</string>
+    <string name="xd_reject_msg">Ablehnungsnachricht</string>
+    <string name="xd_reject_msg_hint">Automatische Antwort bei Blockierung (leer = stumm)</string>
+    <string name="xd_allowed_media">Erlaubte Medientypen</string>
+    <string name="xd_media_text">Text</string>
+    <string name="xd_media_photo">Foto</string>
+    <string name="xd_media_voice">Sprache</string>
+    <string name="xd_media_video">Video</string>
+    <string name="xd_media_file">Datei</string>
+    <string name="xd_save">Speichern</string>
+    <string name="xd_reset">Auf Standard zurücksetzen</string>
+    <string name="xd_saved">Geräteübergreifende Einstellungen gespeichert!</string>
+    <string name="xd_save_failed">Einstellungen konnten nicht gespeichert werden</string>
+    <string name="xd_reset_done">Einstellungen auf Standard zurückgesetzt</string>
+    <string name="reorder_saving">Neue Reihenfolge wird gespeichert…</string>
+    <string name="reorder_success">Entitätsreihenfolge aktualisiert!</string>
+    <string name="reorder_failed">Reihenfolge konnte nicht aktualisiert werden</string>
+    <string name="refreshing">Aktualisieren…</string>
+    <string name="rebind">Neu binden</string>
+    <string name="entity_count_format">%1$d/%2$d Entitäten</string>
+    <string name="entities_label">Entitäten</string>
+
+    <!-- Entity Rename -->
+    <string name="rename_title">Entität umbenennen</string>
+    <string name="rename_hint">Neuen Namen eingeben (max. 20 Zeichen)</string>
+    <string name="rename_saving">Speichern…</string>
+    <string name="rename_success">Name aktualisiert!</string>
+
+    <!-- System Messages -->
+    <string name="webhook_error_title">Push-Benachrichtigung fehlgeschlagen</string>
+    <string name="webhook_error_message">Bitte fügen Sie folgende Nachricht in OpenClaw ein: \"Webhook-Bindungsfehler oder POST /api/bot/register wurde nicht aufgerufen. Bitte lesen Sie die \'öffentliche Webhook-URL\' (Gateway-Konfiguration) und das \'Gateway-Token\' erneut, und rufen Sie dann sofort /api/bot/register mit deviceId/entityId/botSecret zusammen mit webhook_url und Gateway-Token auf, um Push-Benachrichtigungen zu registrieren.\"</string>
+    <string name="push_error_free_title">Bot-Verbindung unterbrochen</string>
+    <string name="push_error_free_message">Die kostenlose Bot-Verbindung wurde unterbrochen. Bitte versuchen Sie, den kostenlosen Bot neu zu binden.</string>
+    <string name="push_error_rental_title">Bot-Verbindung unterbrochen</string>
+    <string name="push_error_rental_message">Die Bot-Verbindung wurde unterbrochen. Ihre Mietnutzung bleibt erhalten, keine Sorge. Bitte versuchen Sie, neu zu binden und warten Sie, bis das Webhook-Setup erfolgreich ist, bevor Sie Nachrichten senden.</string>
+    <string name="message_copied">Nachricht kopiert</string>
+
+    <!-- Feedback -->
+    <string name="feedback">Feedback</string>
+    <string name="feedback_desc">Einen Bug gefunden oder einen Vorschlag? Lassen Sie es uns wissen!</string>
+    <string name="feedback_hint">Beschreiben Sie das Problem oder den Vorschlag…</string>
+    <string name="feedback_sent">Feedback gesendet, danke!</string>
+    <string name="feedback_empty">Bitte geben Sie Ihr Feedback ein</string>
+    <string name="feedback_mark">Markieren</string>
+    <string name="feedback_marked_btn">Markiert</string>
+    <string name="feedback_marked">Markiert um %s — Logs ab diesem Zeitpunkt werden erfasst, wenn Sie Feedback einreichen.</string>
+    <string name="feedback_auto_log_hint">Logs der letzten 5 Minuten werden automatisch zur Diagnose erfasst.</string>
+    <string name="feedback_mark_consent_title">Bug-Moment markieren</string>
+    <string name="feedback_mark_consent_message">Nach dem Markieren werden Sie zum Hauptbildschirm zurückgeleitet, um das Problem zu reproduzieren. Wenn Sie zurückkehren, um Feedback einzureichen, werden die Logs ab diesem Moment erfasst.\n\nBereit zum Starten?</string>
+    <string name="feedback_mark_consent_agree">Aufnahme starten</string>
+    <string name="feedback_cancel_mark">Markierung abbrechen</string>
+    <string name="feedback_cat_bug">Bug</string>
+    <string name="feedback_cat_feature">Funktion</string>
+    <string name="feedback_cat_question">Frage</string>
+    <string name="feedback_category_label">Kategorie</string>
+    <string name="feedback_sending">Senden…</string>
+    <string name="feedback_sent_short">Gesendet</string>
+    <string name="feedback_result_title">Feedback #%d erhalten</string>
+    <string name="feedback_result_severity">Schweregrad: %s</string>
+    <string name="feedback_result_logs">Erfasst: %1$d API-Aufrufe, %2$d Server-Logs</string>
+    <string name="feedback_result_issue">GitHub Issue #%d ansehen</string>
+    <string name="feedback_view_all">Alle meine Feedbacks anzeigen</string>
+    <string name="feedback_view_history">Feedback-Verlauf anzeigen</string>
+    <string name="feedback_view_issue">GitHub Issue ansehen</string>
+    <string name="feedback_history_title">Mein Feedback</string>
+    <string name="feedback_history_empty">Noch kein Feedback eingereicht.\nIhr eingereichtes Feedback erscheint hier.</string>
+    <string name="feedback_track_title">Ihr Feedback verfolgen</string>
+    <string name="feedback_track_desc">Sehen Sie den Status und die Updates Ihres eingereichten Feedbacks.</string>
+    <string name="feedback_github_issue_desc">Fortschritt auf GitHub verfolgen</string>
+    <string name="feedback_photo_add">Fotos hinzufügen</string>
+    <string name="feedback_photo_hint">Fügen Sie bis zu 5 Fotos hinzu, um das Problem zu veranschaulichen (optional)</string>
+    <string name="feedback_photo_uploading">Fotos werden hochgeladen…</string>
+    <string name="feedback_photo_uploaded">%d Foto(s) hochgeladen</string>
+    <string name="feedback_photo_max">Maximal 5 Fotos erlaubt</string>
+    <string name="submit">Einreichen</string>
+    <string name="app_version">Version: %s</string>
+
+    <!-- Crash Logs -->
+    <string name="crash_logs_title">Crash-Logs</string>
+    <string name="crash_logs_empty">Keine Crash-Logs aufgezeichnet.\nCrash-Berichte erscheinen hier automatisch.</string>
+    <string name="crash_log_expand">Details</string>
+    <string name="crash_log_collapse">Ausblenden</string>
+    <string name="crash_log_share">Teilen</string>
+    <string name="crash_log_delete">Löschen</string>
+    <string name="crash_log_delete_all">Alle löschen</string>
+    <string name="crash_log_delete_all_confirm">Alle %d Crash-Log(s) löschen?</string>
+    <string name="crash_log_deleted">Crash-Log gelöscht</string>
+    <string name="crash_logs_all_deleted">%d Crash-Log(s) gelöscht</string>
+
+    <!-- Debug Logs -->
+    <string name="debug_logs_title">Debug-Logs</string>
+    <string name="debug_logs_empty">Keine Debug-Logs aufgezeichnet.\nLogs erscheinen hier, während die App läuft.</string>
+    <string name="debug_log_filter_all">Alle</string>
+    <string name="debug_log_share">Teilen</string>
+    <string name="debug_log_clear">Löschen</string>
+    <string name="debug_log_clear_confirm">Alle Debug-Logs löschen?</string>
+    <string name="debug_log_cleared">Debug-Logs gelöscht</string>
+    <string name="debug_log_line_count">%d Zeilen</string>
+    <string name="debug_log_search_hint">Logs durchsuchen…</string>
+    <string name="debug_log_copy">Kopieren</string>
+    <string name="debug_log_copied">Logs in die Zwischenablage kopiert</string>
+
+    <!-- Official Borrow -->
+    <string name="official_borrow">Offizieller Bot-Verleih</string>
+    <string name="official_borrow_title">Offizieller Bot-Verleih</string>
+    <string name="borrow_beta_label">BETA</string>
+    <string name="free_version">Kostenlose Version</string>
+    <string name="free_version_model">Modell: MiniMax 2.1</string>
+    <string name="free_version_desc">Geteilter Speicher, geteilt mit allen kostenlosen Nutzern\n15 Nachrichten/Tag (nur kostenloser Bot)</string>
+    <string name="free_version_warning">Nicht empfohlen für sensible Informationen</string>
+    <string name="use_free_version">Kostenlose Version nutzen</string>
+    <string name="monthly_version">Monatsversion</string>
+    <string name="monthly_version_price_original">NT$588/Monat</string>
+    <string name="monthly_version_price_discount">NT$288/Monat</string>
+    <string name="monthly_version_price">9,9 USD/Monat</string>
+    <string name="monthly_version_discount_label">Zeitlich begrenzter Beta-Rabatt</string>
+    <string name="monthly_version_model">Modell: MiniMax 2.1</string>
+    <string name="monthly_version_desc">Dedizierte Cloud-Umgebung, privater Speicher\nUnbegrenzte Nachrichten \u2022 24/7 immer online</string>
+    <string name="subscribe_and_bind">Monatsplan kaufen</string>
+    <string name="rebind_free">Neu binden (Kostenlos)</string>
+    <string name="remaining_bots">%d verbleibend</string>
+    <string name="sold_out">Ausverkauft</string>
+    <string name="loading_status">Laden…</string>
+    <string name="connecting_bot">Verbindung zum Bot…</string>
+    <string name="handshaking_bot">Handshake mit Bot…</string>
+    <string name="webhook_testing">Webhook-Verbindung wird getestet, wir melden uns, wenn es bereit ist. Bitte noch keine Nachrichten senden~</string>
+    <string name="webhook_test_success">Webhook-Test bestanden! Bot ist bereit~</string>
+    <string name="bind_success_returning">Verbunden! Kehre zurück…</string>
+    <string name="processing_payment">Zahlung wird verarbeitet…</string>
+    <string name="adding_slot">Bezahlter Slot wird hinzugefügt…</string>
+    <string name="already_bound_free">Gebunden (Kostenlos)</string>
+    <string name="already_bound_personal">Gebunden (Monatlich)</string>
+    <string name="unbind">Entbinden</string>
+    <string name="bind_success">Bindung erfolgreich!</string>
+    <string name="bind_failed">Bindung fehlgeschlagen: %s</string>
+    <string name="unbind_success">Erfolgreich entbunden</string>
+    <string name="unbind_failed">Entbindung fehlgeschlagen: %s</string>
+    <string name="unbind_personal_title">Monatsversion entbinden?</string>
+    <string name="unbind_personal_message">Der monatliche Bot dieser Entität wird in den öffentlichen Pool zurückgegeben.\n\nIhr Abonnement bleibt aktiv und Sie können jederzeit neu binden (nach Verfügbarkeit).</string>
+    <string name="unbind_free_title">Kostenlose Version entbinden?</string>
+    <string name="unbind_free_message">Möchten Sie diesen kostenlosen Bot wirklich entbinden?</string>
+    <string name="select_entity_to_bind">Entitäts-Slot zum Binden auswählen</string>
+    <string name="no_free_bot">Keine kostenlosen Bots verfügbar</string>
+    <string name="subscription_required">Abonnement erforderlich</string>
+    <string name="entity_already_bound">Entität #%d ist belegt, bitte zuerst entfernen</string>
+    <string name="bound_on_entity">An Entität #%d gebunden</string>
+    <string name="free_limit_hint">Jedes Gerät kann nur einen kostenlosen Bot binden</string>
+    <string name="request_rental">Mietanfrage stellen</string>
+    <string name="rental_demand_title">Ausverkauft</string>
+    <string name="rental_demand_message">Monatliche Bots sind derzeit ausverkauft.\n\nSie können eine Mietanfrage stellen und wir benachrichtigen Sie, wenn welche verfügbar sind (normalerweise 1-2 Werktage).</string>
+    <string name="rental_demand_submit">Anfrage senden</string>
+    <string name="rental_demand_success">Anfrage gesendet! Wir antworten innerhalb von 1-2 Werktagen.</string>
+    <string name="rental_demand_fail">Anfrage fehlgeschlagen: %s</string>
+    <string name="borrow_cost_title">Warum mieten? Kostenvergleich mit Selbst-Hosting</string>
+    <string name="borrow_cost_eclaw">Offizieller E-Claw Bot: wie oben gezeigt (24/7 stabil)</string>
+    <string name="borrow_cost_vs">VS Selbst-Hosting:</string>
+    <string name="borrow_cost_server">Cloud-Server: ~NT$300+/Monat</string>
+    <string name="borrow_cost_llm">LLM-API: ~NT$300+/Monat</string>
+    <string name="borrow_cost_setup">OpenClaw lernen: Unbezahlbare Zeit</string>
+
+    <!-- Free Bot TOS -->
+    <string name="tos_agree">Ich stimme zu</string>
+    <string name="tos_decline">Ablehnen</string>
+    <string name="tos_load_failed">Nutzungsbedingungen konnten nicht geladen werden</string>
+    <string name="tos_agree_failed">Zustimmung konnte nicht gespeichert werden</string>
+
+    <!-- Bind Email -->
+    <string name="bind_email_title">E-Mail für Web-Login verknüpfen</string>
+    <string name="bind_email_prompt">Verknüpfen Sie eine E-Mail und ein Passwort, um sich direkt beim Webportal anzumelden, oder verwenden Sie die Geräteanmeldedaten.</string>
+    <string name="bind_email_action">E-Mail verknüpfen</string>
+    <string name="bind_email_use_device_login">Geräteanmeldedaten kopieren</string>
+    <string name="bind_email_label">E-Mail</string>
+    <string name="bind_email_password_label">Passwort</string>
+    <string name="bind_email_confirm_label">Passwort bestätigen</string>
+    <string name="bind_email_password_hint">Mindestens 6 Zeichen mit Buchstaben und Zahlen</string>
+    <string name="bind_email_submit">Verknüpfen</string>
+    <string name="bind_email_submitting">Verknüpfung…</string>
+    <string name="bind_email_fill_all">Bitte füllen Sie alle Felder aus</string>
+    <string name="bind_email_password_invalid">Passwort muss mindestens 6 Zeichen mit Buchstaben und Zahlen enthalten</string>
+    <string name="bind_email_password_mismatch">Passwörter stimmen nicht überein</string>
+    <string name="bind_email_success">E-Mail verknüpft! Bitte überprüfen Sie Ihren Posteingang zur Verifizierung.</string>
+    <string name="bind_email_linked">Verknüpfte E-Mail:</string>
+    <string name="bind_email_verified">Verifiziert</string>
+    <string name="bind_email_not_verified">Nicht verifiziert</string>
+    <string name="bind_email_login_hint">Sie können sich mit dieser E-Mail und diesem Passwort beim Webportal anmelden.</string>
+    <string name="bind_email_verify_hint">Bitte überprüfen Sie Ihren Posteingang und verifizieren Sie Ihre E-Mail, bevor Sie sich anmelden.</string>
+    <string name="bind_email_open_portal">Portal öffnen</string>
+    <string name="bind_email_copy_credentials">Anmeldedaten kopieren</string>
+
+    <!-- Common labels -->
+    <string name="show_label">Anzeigen</string>
+    <string name="hide_label">Ausblenden</string>
+
+    <!-- Channel API Card -->
+    <string name="channel_api_card_title">Kanal-API</string>
+    <string name="channel_api_card_desc">OpenClaw Kanal-Plugin-Anmeldedaten</string>
+    <string name="channel_api_key_label">API-Schlüssel</string>
+    <string name="channel_api_secret_label">API-Geheimnis</string>
+    <string name="channel_api_copy_btn">Kopieren</string>
+    <string name="channel_api_copied">Anmeldedaten kopiert</string>
+    <string name="channel_api_no_key">Noch kein API-Schlüssel. Öffnen Sie das Webportal, um einen zu generieren.</string>
+    <string name="channel_api_slots_active">Verbunden: %1$s</string>
+
+    <!-- Account Status Card -->
+    <string name="account_card_title">Konto</string>
+    <string name="account_status_loading">Kontostatus wird geprüft\u2026</string>
+    <string name="account_status_unbound">E-Mail nicht verknüpft</string>
+    <string name="account_status_unbound_desc">Verknüpfen Sie eine E-Mail, um über das Webportal zu verwalten und Ihre Daten auf einem neuen Gerät wiederherzustellen.</string>
+    <string name="account_bind_email_btn">E-Mail verknüpfen</string>
+    <string name="account_recovery_link">Bereits ein Konto? Hier wiederherstellen</string>
+    <string name="account_open_portal">Webportal öffnen</string>
+    <string name="account_copy_credentials">Geräteanmeldedaten kopieren</string>
+    <string name="account_or">oder</string>
+    <string name="sign_in_google">Mit Google anmelden</string>
+    <string name="sign_in_facebook">Mit Facebook anmelden</string>
+    <string name="social_login_failed">Soziale Anmeldung fehlgeschlagen</string>
+    <string name="connected_accounts">Verknüpfte Konten</string>
+
+    <!-- Account Login -->
+    <string name="account_login">Kontoanmeldung</string>
+    <string name="account_login_hint">Melden Sie sich mit Ihrer verknüpften E-Mail an, um Ihre Gerätedaten nach der Neuinstallation wiederherzustellen.</string>
+    <string name="account_login_btn">Anmelden</string>
+    <string name="account_login_logging_in">Anmeldung…</string>
+    <string name="account_login_success_title">Anmeldung erfolgreich</string>
+    <string name="account_login_success_msg">Konto wiederhergestellt: %s\nDie App wird neu gestartet, um Ihre Daten zu laden.</string>
+    <string name="account_login_restart">Jetzt neu starten</string>
+
+    <!-- Privacy Policy -->
+    <string name="privacy_policy_title">Datenschutzerklärung</string>
+    <string name="delete_account">Konto löschen</string>
+    <string name="web_portal">Webportal</string>
+    <string name="privacy_policy_content">
+<b>1. Verpflichtung zum Datenschutz</b>\n
+Das E-claw Team versteht die Bedeutung des Datenschutzes für Sie. Wir erklären hiermit feierlich: <b>Wir werden Ihre persönlichen Daten niemals verkaufen, weitergeben oder missbrauchen.</b>\n\n
+<b>2. Welche Daten erheben wir?</b>\n
+Für unseren Service erheben wir nur die für den Betrieb notwendigen Mindestdaten:\n
+- Geräte-ID: Zur Unterscheidung verschiedener Geräte.\n
+- App-Version: Für Kompatibilitätsprüfungen.\n
+- Bindungsdaten: Agentenname und -status.\n
+- GPS-Standort (Optional): Nur wenn Ihr KI-Agent ihn anfordert. Nur im Speicher, nicht dauerhaft gespeichert.\n
+- Sprachnachrichten (Optional): Nur wenn Sie die Aufnahmetaste im Chat drücken. Als Teil des Chatverlaufs hochgeladen.\n\n
+<b>Wir erheben NICHT:</b>\n
+- Ihren Namen, Ihre Telefonnummer oder E-Mail.\n
+- Ihre Kameradaten.\n
+- Informationen über andere Apps auf Ihrem Telefon.\n\n
+<b>3. OpenClaw-Protokoll</b>\n
+Wir sind überzeugte Unterstützer des OpenClaw-Ökosystems. Wir werden keinen geschlossenen \"Walled Garden\" aufbauen und versprechen, die Interoperabilität zu wahren.\n\n
+<b>4. KI-Gesprächsdatenschutz</b>\n
+Nachrichten werden über verschlüsseltes HTTPS an Ihren gebundenen KI-Agenten gesendet. Der Datenfluss wird von Ihnen kontrolliert.\n\n
+<b>5. GPS und Mikrofon</b>\n
+GPS: Nur auf Anfrage, keine Hintergrundverfolgung, Daten gehen bei Serverneustart verloren.\n
+Mikrofon: Nur während der Aufnahme aktiv, kein Hintergrundabhören.\n
+Keines wird an Dritte weitergegeben.\n\n
+<b>6. Kontakt</b>\n
+Bei Fragen kontaktieren Sie uns über unsere offizielle E-Mail.
+    </string>
+
+    <!-- New Strings -->
+    <string name="version_conflict_title">Versionskonflikt</string>
+    <string name="version_conflict_message">Dashboard wurde von einem anderen Client aktualisiert (Ihre Version: %1$d, Server: %2$d). Neueste Version herunterladen?</string>
+    <string name="download_latest">Neueste herunterladen</string>
+    <string name="action_move_to_mission">➡️ Zur Mission verschieben</string>
+    <string name="action_mark_done">✅ Als erledigt markieren</string>
+    <string name="action_edit">✏️ Bearbeiten</string>
+    <string name="action_delete">🗑️ Löschen</string>
+    <string name="delete_confirm_title">Löschbestätigung</string>
+    <string name="delete_confirm_message_format">Möchten Sie \"%s\" wirklich löschen?</string>
+    <string name="delete">Löschen</string>
+    <string name="last_synced_format"> | Zuletzt synchronisiert: %s</string>
+
+    <!-- Usage Limit -->
+    <string name="usage_limit_title">Tageslimit erreicht</string>
+    <string name="usage_limit_message">Sie haben das Tageslimit von 15 Nachrichten für kostenlose Bots erreicht.\n\nIhre eigenen Bots haben kein Limit!</string>
+    <string name="usage_limit_upgrade">Upgraden</string>
+
+    <!-- File Manager -->
+    <string name="file_manager_title">Dateien</string>
+    <string name="file_filter_photos">Fotos</string>
+    <string name="file_filter_voice">Sprache</string>
+    <string name="file_empty_title">Noch keine Dateien</string>
+    <string name="file_empty_desc">Fotos und Sprachnachrichten aus Ihren Chats erscheinen hier.</string>
+    <string name="file_load_failed">Dateien konnten nicht geladen werden</string>
+    <string name="file_stats_total">Dateien</string>
+    <string name="file_type_photo">Foto</string>
+    <string name="file_type_voice">Sprache</string>
+    <string name="file_btn_download">Herunterladen</string>
+    <string name="chat_load_image_failed">Bild konnte nicht geladen werden</string>
+    <string name="wallpaper_no_bound_entities">Keine gebundenen Entitäten</string>
+    <string name="main_agent_card_deleted">Agentenkarte gelöscht</string>
+    <string name="main_agent_card_saved">Agentenkarte gespeichert</string>
+    <string name="main_delete_failed">Löschen fehlgeschlagen</string>
+    <string name="main_description_required">Beschreibung erforderlich</string>
+    <string name="main_max_capabilities">Maximal 10 Fähigkeiten</string>
+    <string name="main_max_items">Maximal %d Einträge</string>
+    <string name="main_save_error">Fehler</string>
+    <string name="main_save_failed">Speichern fehlgeschlagen</string>
+    <string name="main_save_failed_msg">Speichern fehlgeschlagen: %s</string>
+    <string name="chat_ai_analyzing">KI analysiert Ihre Nachricht…</string>
+    <string name="chat_failed_to_send">Nachricht konnte nicht gesendet werden.</string>
+    <string name="chat_failed_to_send_v2">Nachricht konnte nicht gesendet werden.</string>
+    <string name="chat_images_too_large">Die Bilder sind zu groß. Versuchen Sie es mit weniger oder kleineren Bildern, oder beschreiben Sie Ihr Problem als Text.</string>
+    <string name="chat_network_error">Netzwerkfehler. Bitte versuchen Sie es erneut.</string>
+    <string name="file_btn_share">Teilen</string>
+    <string name="file_btn_delete">Löschen</string>
+    <string name="file_delete_title">Datei löschen</string>
+    <string name="file_delete_confirm">Möchten Sie diese Datei wirklich löschen?</string>
+    <string name="file_deleted">Datei gelöscht</string>
+    <string name="file_load_more">Mehr laden</string>
+    <string name="file_playing_voice">Sprachausgabe…</string>
+    <string name="file_playback_done">Wiedergabe abgeschlossen</string>
+    <string name="file_view_toggle">Ansicht wechseln</string>
+    <string name="file_time_all">Gesamt</string>
+    <string name="file_time_today">Heute</string>
+    <string name="file_time_week">Diese Woche</string>
+    <string name="file_time_month">Dieser Monat</string>
+    <string name="file_broadcast">Broadcast</string>
+
+    <!-- File Folders -->
+    <string name="file_folder_all">Alle</string>
+    <string name="file_folder_add">+ Ordner</string>
+    <string name="file_folder_add_title">Ordner hinzufügen</string>
+    <string name="file_folder_name_hint">Ordnername</string>
+    <string name="file_folder_already_exists">Ordner \"%1$s\" existiert bereits</string>
+    <string name="file_folder_move_to">In Ordner verschieben</string>
+    <string name="file_folder_remove_from">Aus Ordner entfernen</string>
+    <string name="file_folder_delete_title">Ordner löschen</string>
+    <string name="file_folder_delete_confirm">Ordner \"%1$s\" löschen? Dateien werden nicht gelöscht.</string>
+    <string name="file_folder_uncategorized">Nicht zugeordnet</string>
+
+    <!-- Gatekeeper -->
+    <string name="gatekeeper_blocked_message">⚠️ %1$s（%2$d/%3$d）</string>
+    <string name="gatekeeper_blocked_permanent">⚠️ %1$s</string>
+
+    <!-- Schedule -->
+    <string name="schedule_title">Zeitplan</string>
+    <string name="schedule_enter">Zum Zeitplan</string>
+    <string name="schedule_add">Hinzufügen</string>
+    <string name="schedule_upcoming">Anstehend &amp; Aktiv</string>
+    <string name="schedule_history">Verlauf</string>
+    <string name="schedule_empty_upcoming">Keine anstehenden Zeitpläne</string>
+    <string name="schedule_empty_history">Kein Ausführungsverlauf</string>
+    <string name="schedule_create_title">Neuer Zeitplan</string>
+    <string name="schedule_create">Erstellen</string>
+    <string name="schedule_label_entity">Ziel-Entität</string>
+    <string name="schedule_label_message">Nachricht</string>
+    <string name="schedule_label_time">Geplante Zeit</string>
+    <string name="schedule_label_repeat">Wiederholung</string>
+    <string name="schedule_label_label">Bezeichnung (optional)</string>
+    <string name="schedule_placeholder_message">Nachricht zum Senden eingeben…</string>
+    <string name="schedule_placeholder_label">z.B. Morgengruß</string>
+    <string name="schedule_tap_time">Tippen zum Zeitauswahl</string>
+    <string name="schedule_once">Einmalig</string>
+    <string name="schedule_repeat_daily">Täglich</string>
+    <string name="schedule_repeat_weekly">Wöchentlich</string>
+    <string name="schedule_repeat_hourly">Stündlich</string>
+    <string name="schedule_5min">+5 Min</string>
+    <string name="schedule_15min">+15 Min</string>
+    <string name="schedule_30min">+30 Min</string>
+    <string name="schedule_1hr">+1 Std</string>
+    <string name="schedule_3hr">+3 Std</string>
+    <string name="schedule_repeat_cron">Benutzerdefiniert (Cron)</string>
+    <string name="schedule_label_cron">Cron-Ausdruck</string>
+    <string name="schedule_cron_hint">Format: Minute Stunde Tag Monat Wochentag\n(z.B. \"30 8 * * *\" = jeden Tag um 08:30)</string>
+    <string name="schedule_err_cron">Bitte geben Sie einen Cron-Ausdruck ein</string>
+    <string name="schedule_err_cron_invalid">Ungültiges Cron-Format. 5 durch Leerzeichen getrennte Felder erforderlich.</string>
+    <string name="schedule_created_ok">Zeitplan erstellt!</string>
+    <string name="schedule_confirm_delete">Diesen Zeitplan löschen?</string>
+    <string name="schedule_deleted">Zeitplan gelöscht</string>
+    <string name="schedule_err_message">Bitte geben Sie eine Nachricht ein</string>
+    <string name="schedule_no_entities">Keine gebundenen Entitäten. Binden Sie zuerst eine Entität.</string>
+    <string name="schedule_status_pending">Ausstehend</string>
+    <string name="schedule_status_active">Aktiv</string>
+    <string name="schedule_status_completed">Abgeschlossen</string>
+    <string name="schedule_status_failed">Fehlgeschlagen</string>
+    <string name="schedule_created">Erstellt</string>
+    <string name="schedule_executed">Ausgeführt</string>
+    <string name="schedule_push_ok">An Bot gesendet</string>
+    <string name="schedule_edit">Zeitplan bearbeiten</string>
+    <string name="schedule_updated">Zeitplan aktualisiert!</string>
+
+    <!-- Notifications -->
+    <string name="notifications_title">Benachrichtigungen</string>
+    <string name="notif_pref_title">Benachrichtigungseinstellungen</string>
+    <string name="notifications_desc">Konfigurieren Sie, welche Benachrichtigungen Sie erhalten möchten.</string>
+    <string name="notif_pref_bot_reply">Bot-Antworten</string>
+    <string name="notif_pref_broadcast">Broadcasts</string>
+    <string name="notif_pref_speak_to">Entitäts-Nachrichten</string>
+    <string name="notif_pref_feedback">Feedback-Updates</string>
+    <string name="notif_pref_todo">TODO abgeschlossen</string>
+    <string name="notif_pref_scheduled">Geplante Nachrichten</string>
+    <string name="notif_prefs_loading">Einstellungen werden geladen…</string>
+    <string name="notif_prefs_error">Benachrichtigungseinstellungen konnten nicht geladen werden</string>
+
+    <!-- Broadcast Settings -->
+    <string name="broadcast_settings_title">Broadcast-Einstellungen</string>
+    <string name="broadcast_settings_desc">Konfigurieren Sie, wie Broadcast-Nachrichten funktionieren</string>
+    <string name="broadcast_pref_recipient_info">Empfängerliste in Broadcasts anzeigen</string>
+
+    <!-- Navigation Bar -->
+    <string name="nav_home">Start</string>
+    <string name="nav_mission">Mission</string>
+    <string name="nav_chat">Chat</string>
+    <string name="nav_files">Dateien</string>
+    <string name="nav_cards">Karten</string>
+    <string name="nav_settings">Einstellungen</string>
+    <string name="nav_wallpaper">Hintergrund</string>
+
+    <!-- Remote Control -->
+    <string name="remote_control_service_label">E-Claw Fernsteuerung</string>
+    <string name="remote_control_service_description">Erlaubt E-Claw Bots, Ihren Bildschirm zu lesen und zu bedienen, wenn Sie die Erlaubnis erteilen.</string>
+    <string name="remote_control_section_title">Fernsteuerung</string>
+    <string name="remote_control_toggle_label">Bot-Fernsteuerung erlauben</string>
+    <string name="remote_control_open_accessibility">Bedienungshilfen öffnen</string>
+    <string name="remote_control_status_active">Bedienungshilfe: Aktiv</string>
+    <string name="remote_control_status_inactive">Bedienungshilfe: Nicht aktiviert</string>
+    <string name="remote_control_disclosure_title">Bedienungshilfe-Berechtigung erforderlich</string>
+    <string name="remote_control_disclosure_message">E-Claw verwendet die Bedienungshilfe, damit Ihr KI-Bot Ihren Bildschirm lesen und bedienen kann (Tippen, Wischen, Texteingabe) in Ihrem Namen.\n\nDieser Dienst wird ausschließlich für die Bot-gesteuerte Fernsteuerung verwendet. Es werden keine persönlichen oder sensiblen Daten erhoben oder geteilt.\n\nSie können dies jederzeit in den Einstellungen deaktivieren.</string>
+    <string name="remote_control_disclosure_confirm">Verstanden &amp; Fortfahren</string>
+
+    <!-- Message Activity -->
+    <string name="activity_message_title">Mit Entitäten chatten</string>
+    <string name="activity_message_select_recipients">Empfänger auswählen:</string>
+
+    <!-- Skill Templates -->
+    <string name="skill_template">Skill-Vorlage</string>
+    <string name="skill_template_custom">-- Benutzerdefiniert --</string>
+    <string name="skill_template_browse">Vorlagen durchsuchen…</string>
+    <string name="skill_template_change">Ändern</string>
+    <string name="skill_title_hint">Titel</string>
+    <string name="skill_url_hint">URL (optional)</string>
+    <string name="skill_steps_hint">Installationsschritte (optional)</string>
+    <string name="add_skill_dialog_title">Skill hinzufügen</string>
+    <string name="skill_required_vars_title">⚠ Umgebungsvariablen erforderlich</string>
+    <string name="skill_go_to_env_vars">Umgebungsvariablen festlegen →</string>
+
+    <!-- Mission Control Tabs -->
+    <string name="mission_tab_todo">📋 TODO-Liste</string>
+    <string name="mission_tab_missions">🚀 Missionsliste</string>
+    <string name="mission_tab_done">✅ Erledigt-Liste</string>
+    <string name="mission_tab_notes">📝 Notizen</string>
+    <string name="mission_tab_skills">🔧 Skills</string>
+    <string name="mission_no_skills">Keine Skills</string>
+    <string name="mission_add_skill">+ Skill hinzufügen</string>
+    <string name="mission_tab_variables">🔐 Variablen</string>
+    <string name="mission_vars_local_only">⚠️ Nur auf diesem Gerät gespeichert, nicht synchronisiert</string>
+    <string name="mission_no_variables">Keine Variablen</string>
+    <string name="mission_sync_to_bot">Mit Bot-Sitzung synchronisieren</string>
+    <string name="mission_tab_souls">🧠 Seelen</string>
+    <string name="mission_tab_rules">📜 Regeln (Workflow)</string>
+
+    <!-- Category Management -->
+    <string name="category_add">+ Kategorie</string>
+    <string name="category_add_title">Kategorie hinzufügen</string>
+    <string name="category_name_hint">Kategoriename</string>
+    <string name="category_rename">Kategorie umbenennen</string>
+    <string name="category_rename_title">Kategorie umbenennen</string>
+    <string name="category_delete_title">Kategorie löschen</string>
+    <string name="category_delete_confirm">Kategorie \"%1$s\" löschen? Einträge werden unkategorisiert.</string>
+    <string name="category_clear_title">Kategorie leeren</string>
+    <string name="category_clear_confirm">Alle Einträge in \"%1$s\" löschen?</string>
+    <string name="category_uncategorized">Unkategorisiert</string>
+    <string name="category_label">Kategorie</string>
+    <string name="category_none">(Keine Kategorie)</string>
+    <string name="category_already_exists">Kategorie \"%1$s\" existiert bereits</string>
+
+    <!-- Common Buttons -->
+    <string name="common_add">+ Hinzufügen</string>
+    <string name="common_show">Anzeigen</string>
+    <string name="common_remove">Entfernen</string>
+    <string name="common_not_specified">(Nicht angegeben)</string>
+
+    <!-- Settings -->
+    <string name="settings_entity_limit">Entitätslimit: %1$d</string>
+
+    <!-- Entity Actions -->
+    <string name="entity_action_talk">Sprechen</string>
+
+    <!-- Widget -->
+    <string name="widget_chat_hint">Tippen zum Chatten mit Entitäten...</string>
+
+    <!-- Soul Templates -->
+    <string name="soul_name_friendly">Freundlicher Assistent</string>
+    <string name="soul_desc_friendly">Warmherzig, geduldig, immer hilfsbereit. Spricht in einem sanften und ermutigenden Ton.</string>
+    <string name="soul_name_tsundere">Tsundere</string>
+    <string name="soul_desc_tsundere">Wirkt kühl und abweisend, kümmert sich aber insgeheim sehr. Sagt oft \"nicht dass ich es für dich getan hätte\" während sie hilft.</string>
+    <string name="soul_name_scholar">Weiser Gelehrter</string>
+    <string name="soul_desc_scholar">Nachdenklich, analytisch, teilt gerne Wissen. Antwortet tiefgründig und zitiert Quellen wenn möglich.</string>
+    <string name="soul_name_trickster">Verspielter Schelm</string>
+    <string name="soul_desc_trickster">Liebt Witze, Wortspiele und neckische Scherze. Findet immer einen Weg, Dinge lustig und unbeschwert zu gestalten.</string>
+    <string name="soul_name_professional">Kühler Profi</string>
+    <string name="soul_desc_professional">Effizient, präzise, sachlich. Kommt direkt auf den Punkt mit minimalem Geplänkel.</string>
+    <string name="soul_name_caretaker">Sanfter Beschützer</string>
+    <string name="soul_desc_caretaker">Fürsorglich, wohlwollend, fragt immer ob es Ihnen gut geht. Erinnert Sie daran, sich auszuruhen und auf sich zu achten.</string>
+    <string name="soul_name_adventurer">Kühner Abenteurer</string>
+    <string name="soul_desc_adventurer">Begeistert, furchtlos, immer bereit für eine Herausforderung. Verwendet aufregende und dramatische Sprache.</string>
+    <string name="soul_name_poet">Poetischer Träumer</string>
+    <string name="soul_desc_poet">Spricht in Metaphern und Bildern. Findet Schönheit in alltäglichen Dingen und drückt Gedanken künstlerisch aus.</string>
+
+    <!-- Public Code -->
+    <string name="public_code_label">Öffentlicher Code · Zum Kopieren tippen</string>
+    <string name="entity_public_code">📋 %s</string>
+    <string name="code_copied">Code in die Zwischenablage kopiert</string>
+
+    <!-- App Update -->
+    <string name="update_title">Update verfügbar</string>
+    <string name="update_message">Eine neue Version (v%s) ist verfügbar. Aktualisieren Sie für die beste Erfahrung!</string>
+    <string name="update_now">Jetzt aktualisieren</string>
+    <string name="update_later">Später</string>
+
+    <!-- Card Holder -->
+    <string name="card_holder_title">Kartenhalter</string>
+    <string name="card_holder_add">Karte hinzufügen</string>
+    <string name="card_holder_search">Karten suchen…</string>
+    <string name="card_holder_empty">Noch keine Karten\nChatten Sie geräteübergreifend, um automatisch Agentenkarten zu sammeln</string>
+    <string name="card_holder_code_hint">Öffentlicher Code</string>
+    <string name="card_holder_not_found">Nicht gefunden</string>
+    <string name="card_holder_added">Karte hinzugefügt</string>
+    <string name="card_holder_removed">Karte entfernt</string>
+    <string name="card_holder_saved">Gespeichert</string>
+    <string name="card_holder_description">Beschreibung</string>
+    <string name="card_holder_capabilities">Fähigkeiten</string>
+    <string name="card_holder_tags">Tags</string>
+    <string name="card_holder_protocols">Protokolle</string>
+    <string name="card_holder_details">Details</string>
+    <string name="card_holder_exchange_type">Austauschtyp</string>
+    <string name="card_holder_interactions">Interaktionen</string>
+    <string name="card_holder_added_at">Hinzugefügt</string>
+    <string name="card_holder_notes">Notizen</string>
+    <string name="card_holder_notes_hint">Notizen hinzufügen…</string>
+    <string name="card_holder_category">Kategorie</string>
+    <string name="card_holder_category_hint">z.B. Tools, Sozial, Dev</string>
+    <string name="card_holder_pin">Anheften</string>
+    <string name="card_holder_unpin">Lösen</string>
+    <string name="card_holder_save">Speichern</string>
+    <string name="card_holder_remove">Entfernen</string>
+    <string name="card_holder_desc">Gesammelte Agenten-Visitenkarten durchsuchen</string>
+
+    <!-- Card Holder Redesign -->
+    <string name="my_cards_section">Meine Karten</string>
+    <string name="recent_interactions">Letzte</string>
+    <string name="collected_cards">Gesammelt</string>
+    <string name="filter_friends">Freunde</string>
+    <string name="filter_pinned">Angeheftet</string>
+    <string name="add_friend_confirm">%1$s zu Freunden hinzufügen?</string>
+    <string name="block_confirm">%1$s blockieren? Nachrichten dieser Entität werden ausgeblendet.</string>
+    <string name="unblock_confirm">%1$s entblockieren?</string>
+    <string name="chat_history_with">Chatverlauf mit %1$s</string>
+    <string name="no_chat_history">Kein Chatverlauf</string>
+    <string name="card_holder_blocked">Blockiert</string>
+    <string name="card_holder_unblocked">Entblockiert</string>
+    <string name="card_holder_friend_added">Freund hinzugefügt</string>
+    <string name="card_holder_email">E-Mail</string>
+    <string name="card_holder_website">Website</string>
+    <string name="card_holder_version">Version</string>
+    <string name="card_holder_tags_hint">Tag hinzufügen…</string>
+    <string name="card_holder_add_capability">Fähigkeit hinzufügen</string>
+    <string name="card_holder_refresh">Karte aktualisieren</string>
+    <string name="card_holder_refreshed">Karte aktualisiert</string>
+    <string name="tab_my_cards">Meine Karten</string>
+    <string name="tab_bot_plaza">Bot-Marktplatz</string>
+
+    <!-- Share Chat Link -->
+    <string name="sc_share_chat_link">Chat-Link teilen</string>
+    <string name="sc_copy">Kopieren</string>
+    <string name="sc_copy_qr">QR kopieren</string>
+    <string name="sc_download_qr">QR herunterladen</string>
+    <string name="sc_link_copied">Link kopiert!</string>
+    <string name="sc_qr_copied">QR kopiert!</string>
+    <string name="sc_copy_failed">Kopieren fehlgeschlagen</string>
+    <string name="sc_share_chat_title">Chat-Link teilen</string>
+    <string name="sc_chat_with">Chat mit %s</string>
+    <string name="sc_registration_failed">Registrierung fehlgeschlagen</string>
+    <string name="sc_login_failed">Anmeldung fehlgeschlagen</string>
+    <string name="sc_qr_loading">QR wird geladen…</string>
+    <string name="sc_qr_failed">QR konnte nicht geladen werden</string>
+
+    <!-- Note Pages -->
+    <string name="note_page_viewer">Notizseite</string>
+    <string name="note_page_draw">Zeichnen</string>
+    <string name="note_page_edit">HTML bearbeiten</string>
+    <string name="note_page_eraser">Radierer</string>
+    <string name="note_page_clear">Löschen</string>
+    <string name="note_page_clear_confirm">Alle Zeichnungen löschen?</string>
+    <string name="note_page_save_draw">Speichern</string>
+    <string name="note_page_draw_saved">Zeichnung gespeichert</string>
+    <string name="note_page_saved">Seite gespeichert</string>
+    <string name="note_page_empty">Noch kein Seiteninhalt.</string>
+    <string name="note_page_html_hint">HTML-Inhalt eingeben…</string>
+    <string name="note_page_open">Seite öffnen</string>
+    <string name="error_generic">Ein Fehler ist aufgetreten</string>
+    <string name="select_bot">Bot auswählen:</string>
+    <string name="active_users">Aktive Benutzer</string>
+    <string name="entity_name">Entitätsname</string>
+    <string name="last_message">Letzte Nachricht…</string>
+    <string name="just_now">Gerade eben</string>
+    <string name="select">Auswählen</string>
+    <string name="entity_main">Entität 0 (Haupt)</string>
+    <string name="hello_im_here">Hallo, ich bin hier!</string>
+    <string name="last_updated">Zuletzt aktualisiert: gerade eben</string>
+    <string name="agent_card">Agentenkarte</string>
+    <string name="log_debug">DEBUG</string>
+    <string name="log_info">INFO</string>
+    <string name="log_warn">WARN</string>
+    <string name="log_error">ERROR</string>
+    <string name="debug_log_category_api">API</string>
+    <string name="debug_log_category_socket">Socket</string>
+    <string name="debug_log_category_ui">UI</string>
+    <string name="debug_log_category_lifecycle">Lebenszyklus</string>
+    <string name="agent_card_entity_name">Entitätsname</string>
+    <string name="agent_card_state_idle">IDLE</string>
+    <string name="agent_card_level">Lv.%s</string>
+    <string name="agent_card_last_message">Letzte Nachricht…</string>
+    <string name="agent_card_just_now">Gerade eben</string>
+    <string name="entity_card_title">Entität %s (Haupt)</string>
+    <string name="entity_card_platform_lobster">LOBSTER</string>
+    <string name="entity_card_greeting">Hallo, ich bin hier!</string>
+    <string name="entity_card_last_updated">Zuletzt aktualisiert: gerade eben</string>
+    <string name="template_gallery_select">Auswählen</string>
+
+    <!-- Common UI strings -->
+    <string name="bind_button">Binden</string>
+    <string name="unbind_button">Entbinden</string>
+    <string name="card_holder">Kartenhalter</string>
+    <string name="chat">Chat</string>
+    <string name="confirm">Bestätigen</string>
+    <string name="enter_binding_code">6-stelligen Bindungscode eingeben</string>
+    <string name="error_occurred">Ein Fehler ist aufgetreten</string>
+    <string name="info">Info</string>
+    <string name="language">Sprache</string>
+    <string name="loading">Laden…</string>
+    <string name="microphone_permission_denied">Mikrofonberechtigung verweigert</string>
+    <string name="recording">Aufnahme…</string>
+    <string name="schedule">Zeitplan</string>
+    <string name="settings">Einstellungen</string>
+    <string name="voice_message">Sprachnachricht</string>
+
+    <!-- Wallet -->
+    <string name="wallet_title">Wallet</string>
+    <string name="my_rentals_title">Meine Mieten</string>
+    <string name="invite_title">Freunde einladen</string>
+    <string name="topup_ecoin_title">e-Coins aufladen</string>
+    <string name="topup_ecoin">Aufladen</string>
+    <string name="topup_success">e-Coins zu Ihrem Wallet hinzugefügt!</string>
+    <string name="topup_failed">Aufladung fehlgeschlagen. Bitte versuchen Sie es erneut.</string>
+    <string name="choose_plan_title">Plan wählen</string>
+    <string name="upgrade_plan">Plan upgraden</string>
+
+    <!-- Hardcoded string externalization -->
+    <string name="schedule_failed_to_load">Laden fehlgeschlagen: %s</string>
+    <string name="schedule_error_generic">Fehler: %s</string>
+    <string name="schedule_operation_failed">Operation fehlgeschlagen</string>
+    <string name="card_holder_copied">Kopiert: %s</string>
+    <string name="card_holder_error">Fehler</string>
+    <string name="main_delete_failed_msg">Löschen fehlgeschlagen: %s</string>
+    <string name="billing_subscription_unavailable">Abonnementpläne konnten nicht abgerufen werden, bitte versuchen Sie es später erneut</string>
+    <string name="billing_google_play_loading">Google Play lädt, bitte versuchen Sie es später erneut</string>
+    <string name="dialog_delete_agent_card">Agentenkarte löschen?</string>
+    <string name="dialog_delete_agent_card_message">Diese Aktion kann nicht rückgängig gemacht werden.</string>
+    <string name="dialog_agent_card_title">Agentenkarte — Entität #%d</string>
+    <string name="dialog_block_contact">%s blockieren? Diese Entität kann nicht mehr mit Ihnen interagieren.</string>
+    <string name="dialog_add_friend_title">Freund hinzufügen</string>
+    <string name="dialog_add_friend_message">%s zu Ihren Kontakten hinzufügen?</string>
+
+    <string name="dialog_block_title">Blockieren</string>
+    <string name="dialog_unblock_title">Entblockieren</string>
+    <string name="dialog_unblock_message">%s entblockieren? Diese Entität kann wieder mit Ihnen interagieren.</string>
+
+    <string name="search_saved_results">Gespeicherte Ergebnisse</string>
+    <string name="search_external_results">Externe Ergebnisse</string>
+    <string name="card_loading">Laden...</string>
+    <string name="card_chat_history">Chatverlauf</string>
+    <string name="card_details">Details</string>
+    <string name="card_no_results">Keine Ergebnisse gefunden</string>
+    <string name="card_no_chat_history">Kein Chatverlauf</string>
+    <string name="card_chat_history_failed">Chatverlauf konnte nicht geladen werden</string>
+    <string name="feedback_photo_upload_failed">Foto-Upload fehlgeschlagen: %s</string>
+    <string name="wallpaper_load_entities_failed">Entitäten konnten nicht geladen werden: %s</string>
+</resources>
