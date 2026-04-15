@@ -309,6 +309,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                 success: true,
                 message: 'Account created. Please check your email to verify.',
                 userId: user.id,
+                authToken: token,
                 user: {
                     id: user.id,
                     email: user.email,
@@ -396,6 +397,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
 
             res.json({
                 success: true,
+                authToken: token,
                 user: {
                     id: user.id,
                     email: user.email,
@@ -469,7 +471,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                 path: '/'
             });
 
-            res.json({ success: true, user: userInfo });
+            res.json({ success: true, authToken: token, user: userInfo });
         } catch (error) {
             console.error('[Auth] Device login error:', error);
             res.status(500).json({ success: false, error: 'Device login failed' });
@@ -1201,6 +1203,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
             });
             return res.json({
                 success: true,
+                authToken: token,
                 user: {
                     id: user.id, email: user.email,
                     deviceId: user.device_id,
@@ -1237,6 +1240,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                 });
                 return res.json({
                     success: true,
+                    authToken: token,
                     user: {
                         id: user.id, email: user.email,
                         deviceId: user.device_id,
@@ -1275,6 +1279,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                     });
                     return res.json({
                         success: true,
+                        authToken: token,
                         user: {
                             id: user.id, email: email || user.email,
                             deviceId: user.device_id,
@@ -1316,6 +1321,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
 
         return res.json({
             success: true,
+            authToken: token,
             user: {
                 id: newUser.id, email: newUser.email,
                 deviceId: newUser.device_id,
