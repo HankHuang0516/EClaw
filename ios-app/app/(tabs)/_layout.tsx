@@ -28,6 +28,16 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
           borderTopColor: theme.colors.outline,
+          // Without explicit height + safe-area padding the bar was collapsing to a
+          // ~1-2pt strip at the bottom (home-indicator area consumed all space), making
+          // every tab button unhittable. Pin a usable tap target.
+          height: 83,
+          paddingTop: 6,
+          paddingBottom: 34,
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          marginTop: 0,
         },
         headerStyle: { backgroundColor: theme.colors.surface },
         headerTintColor: theme.colors.onSurface,
