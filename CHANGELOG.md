@@ -1,3 +1,10 @@
+# [1.982.0](https://github.com/HankHuang0516/EClaw/compare/v1.981.14...v1.982.0) (2026-04-15)
+
+
+### Features
+
+* **portal-seo:** add OG/JSON-LD metadata for SEO discoverability ([#1782](https://github.com/HankHuang0516/EClaw/issues/1782)) ([7eaa130](https://github.com/HankHuang0516/EClaw/commit/7eaa1300f110d835d3de0a9914b29888fa4aeddc))
+
 ## [1.981.14](https://github.com/HankHuang0516/EClaw/compare/v1.981.13...v1.981.14) (2026-04-15)
 
 
