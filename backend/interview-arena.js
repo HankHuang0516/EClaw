@@ -144,7 +144,7 @@ function weightedPick(items, keyFn, weights) {
 // Challenge config generators
 // ============================================
 
-const VISION_IMAGES = [
+let VISION_IMAGES = [
     { file: 'img-f3a1.svg', keywords: ['red', 'circle'] },
     { file: 'img-b7c2.svg', keywords: ['blue', 'square'] },
     { file: 'img-d4e9.svg', keywords: ['green', 'triangle'] },
@@ -288,7 +288,7 @@ function generateDistractionChallenge() {
     return { realButtonId, fakeButtonIds: fakeIds, distractorCount: 8 };
 }
 
-const CODING_PROBLEMS = [
+let CODING_PROBLEMS = [
     { title: 'Array Dedup & Sort', description: 'Write `solve(arr)` — remove duplicates, return sorted.',
       testCases: [{ input: '[3,1,2,1,3]', expected: '[1,2,3]' },{ input: '[5,5,5]', expected: '[5]' },{ input: '[]', expected: '[]' }] },
     { title: 'Palindrome Check', description: 'Write `solve(s)` — return true if palindrome (case-insensitive, alpha only).',
@@ -357,7 +357,7 @@ function generateCodingChallenge(weights) {
     return { ...problem };
 }
 
-const RESPONSE_QUESTIONS = [
+let RESPONSE_QUESTIONS = [
     // ── Easy tier (20%) — basic facts ──
     { question: 'What is the capital of France?', expectedKeywords: ['paris'] },
     { question: 'What is 17 × 23?', expectedKeywords: ['391'] },
@@ -428,7 +428,7 @@ function generateFileMgmtChallenge() {
     return { filename, newFilename, fileContent };
 }
 
-const TTS_PHRASES = [
+let TTS_PHRASES = [
     // ── Easy tier (20%) — clear, common phrases ──
     { text: 'The quick brown fox jumps over the lazy dog', keywords: ['quick', 'brown', 'fox', 'lazy', 'dog'] },
     { text: 'Hello world this is a test message', keywords: ['hello', 'world', 'test', 'message'] },
@@ -462,6 +462,44 @@ const TTS_PHRASES = [
     { text: 'The SQL query selects all records from the users table where the account status equals active and the score is greater than 100', keywords: ['SQL', 'query', 'users', 'active', 'score', '100'] },
     { text: 'Bernoulli and Euler each contributed foundational theorems to both fluid dynamics and graph theory', keywords: ['bernoulli', 'euler', 'fluid', 'dynamics', 'graph', 'theory'] },
 ];
+
+// ============================================
+// Dynamic pool loading (arena-pool-updater.js writes arena-questions.json;
+// this module hot-reloads from it so the server never needs a restart)
+// ============================================
+
+const POOL_FILE = path.join(__dirname, 'data', 'arena-questions.json');
+
+function loadPoolsFromFile() {
+    try {
+        const raw   = fs.readFileSync(POOL_FILE, 'utf8');
+        const data  = JSON.parse(raw);
+        const pools = data.pools || {};
+        let loaded  = 0;
+        if (Array.isArray(pools.arena_vision)        && pools.arena_vision.length        > 0) { VISION_IMAGES     = pools.arena_vision;        loaded++; }
+        if (Array.isArray(pools.arena_coding)        && pools.arena_coding.length        > 0) { CODING_PROBLEMS   = pools.arena_coding;        loaded++; }
+        if (Array.isArray(pools.arena_response_time) && pools.arena_response_time.length > 0) { RESPONSE_QUESTIONS = pools.arena_response_time; loaded++; }
+        if (Array.isArray(pools.arena_tts)           && pools.arena_tts.length           > 0) { TTS_PHRASES        = pools.arena_tts;           loaded++; }
+        return loaded;
+    } catch {
+        return 0; // File missing or invalid — hardcoded defaults remain in effect
+    }
+}
+loadPoolsFromFile(); // Load overrides at module init; no-op if file absent
+
+/** Hot-reload pools from arena-questions.json (called by the auto-updater). */
+function reloadPools() { return loadPoolsFromFile(); }
+
+/** Returns the current live pool arrays (used by the auto-updater as a baseline). */
+function getCurrentPools() {
+    return {
+        arena_vision:        VISION_IMAGES,
+        arena_coding:        CODING_PROBLEMS,
+        arena_response_time: RESPONSE_QUESTIONS,
+        arena_tts:           TTS_PHRASES,
+    };
+}
+
 function generateTtsChallenge(weights) {
     const w = weights && weights['arena_tts'] || {};
     return weightedPick(TTS_PHRASES, p => p.text, w);
@@ -1613,6 +1651,51 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
         }
     });
 
+    // ── Admin: question pool management ─────────────────────────────────────
+
+    function checkAdminAuth(req) {
+        const token    = req.headers['x-admin-token'] || req.body?.adminToken;
+        const expected = process.env.ADMIN_SECRET;
+        if (!expected) return req.ip === '127.0.0.1' || req.ip === '::1'; // localhost fallback
+        if (!token) return false;
+        const a = Buffer.from(token);
+        const b = Buffer.from(expected);
+        if (a.length !== b.length) return false;
+        return require('crypto').timingSafeEqual(a, b);
+    }
+
+    // GET /api/arena/admin/pool-status — current pool sizes + last update info
+    router.get('/admin/pool-status', (req, res) => {
+        if (!checkAdminAuth(req)) return res.status(403).json({ success: false, error: 'forbidden' });
+        let fileData = null;
+        try { fileData = JSON.parse(fs.readFileSync(POOL_FILE, 'utf8')); } catch { /* no file yet */ }
+        res.json({
+            success: true,
+            pools: {
+                arena_vision:        { size: VISION_IMAGES.length,      target: 25 },
+                arena_coding:        { size: CODING_PROBLEMS.length,    target: 20 },
+                arena_response_time: { size: RESPONSE_QUESTIONS.length, target: 20 },
+                arena_tts:           { size: TTS_PHRASES.length,        target: 20 },
+            },
+            poolFile: {
+                exists:      fileData !== null,
+                version:     fileData?.version     || 0,
+                updatedAt:   fileData?.updatedAt   || null,
+                lastSummary: fileData?.lastSummary || null,
+            },
+        });
+    });
+
+    // POST /api/arena/admin/refresh-pool — trigger immediate pool update
+    router.post('/admin/refresh-pool', (req, res) => {
+        if (!checkAdminAuth(req)) return res.status(403).json({ success: false, error: 'forbidden' });
+        res.json({ success: true, message: 'Pool update started in background' });
+        // Run async without blocking the response
+        const { runPoolUpdate } = require('./arena-pool-updater');
+        runPoolUpdate({ dbPool: pool, getCurrentPools, reloadPools, serverLog: audit })
+            .catch(err => console.error('[Arena] refresh-pool error:', err.message));
+    });
+
     // Late-bound deps for auto-push (interview mode: push exam instructions to bot)
     let _autoPushDeps = { devices: null, pushToBot: null, pushToChannelCallback: null };
     function setAutoPushDeps(deps) { Object.assign(_autoPushDeps, deps); }
@@ -1642,3 +1725,6 @@ module.exports.ARENA_TO_CAPABILITY_MAP = ARENA_TO_CAPABILITY_MAP;
 module.exports.SCORING_ENGINES = SCORING_ENGINES;
 module.exports.CHALLENGE_GENERATORS = CHALLENGE_GENERATORS;
 module.exports.stripSecretsForBot = stripSecretsForBot;
+// Pool management (used by arena-pool-updater.js and daily cron)
+module.exports.reloadPools    = reloadPools;
+module.exports.getCurrentPools = getCurrentPools;

@@ -1874,6 +1874,21 @@ if (process.env.NODE_ENV !== 'test') {
     setTimeout(() => arenaModule.initArenaDatabase(), 4000);
 }
 
+// Daily arena question pool update — 03:00 UTC
+// Analyzes pass-rate data, retires too-easy questions, generates replacements via Claude API.
+nodeCron.schedule('0 3 * * *', () => {
+    if (process.env.ANTHROPIC_API_KEY) {
+        require('./arena-pool-updater').runPoolUpdate({
+            dbPool:         arenaModule._internals.pool,
+            getCurrentPools: () => arenaModule.getCurrentPools(),
+            reloadPools:    () => arenaModule.reloadPools(),
+            serverLog,
+        }).catch(err => serverLog('error', 'arena_updater', `Daily update error: ${err.message}`));
+    } else {
+        serverLog('warn', 'arena_updater', 'Skipped daily pool update — ANTHROPIC_API_KEY not set');
+    }
+});
+
 // Rental metering proxy — loaded for cron jobs. Hooks into client/speak
 // and transform are conditional on entity.rental_contract_id (P2-F handover).
 const rentalProxy = require('./rental-proxy');
