@@ -1,3 +1,12 @@
+## [1.981.2](https://github.com/HankHuang0516/EClaw/compare/v1.981.1...v1.981.2) (2026-04-15)
+
+
+### Bug Fixes
+
+* **i18n:** add 367 missing keys to ja/ko/th/vi/id — 0 missing now ([#1762](https://github.com/HankHuang0516/EClaw/issues/1762)) ([2ec6997](https://github.com/HankHuang0516/EClaw/commit/2ec69979c43a488a194208b4e47aad96dd044cdf))
+* **auth+ios:** return deviceSecret on login + harden WebView URL guard ([0816189](https://github.com/HankHuang0516/EClaw/commit/081618922197e550da585afef44da1ffc47b40af)), closes [#490](https://github.com/HankHuang0516/EClaw/issues/490)
+* **i18n:** wallet.html + my-rentals.html hardcoded strings + iOS wallet/auth ([#1757](https://github.com/HankHuang0516/EClaw/issues/1757) [#1760](https://github.com/HankHuang0516/EClaw/issues/1760)) ([b120f1e](https://github.com/HankHuang0516/EClaw/commit/b120f1e132a39cc31295dccc33a25fdb1f605f2b))
+
 ## [1.981.1](https://github.com/HankHuang0516/EClaw/compare/v1.981.0...v1.981.1) (2026-04-15)
 
 
