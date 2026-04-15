@@ -48,14 +48,22 @@ async function checkAuth() {
             }
         }
 
-        // iOS WebView (and any other WebView host that can't use a JS bridge) — the native
-        // shell stashes deviceId/deviceSecret into localStorage via injected JS before the
-        // page runs, so fall back to device-login here. This lets native-authenticated users
-        // hit embedded portal pages (mission, wallet, invite, community, chat) without being
-        // bounced back to the portal's login form.
+        // iOS WebView (and any other WebView host that can't use a JS bridge) — read
+        // credentials from the URL query string first (native shell puts them there) and
+        // fall back to localStorage (native shell may also stash them via injected JS).
+        // Once we device-login, the server sets the session cookie on the WebView.
         try {
-            const deviceId = localStorage.getItem('deviceId');
-            const deviceSecret = localStorage.getItem('deviceSecret');
+            let deviceId = null;
+            let deviceSecret = null;
+            try {
+                const params = new URLSearchParams(window.location.search);
+                deviceId = params.get('deviceId');
+                deviceSecret = params.get('deviceSecret');
+            } catch (_) { /* ignore */ }
+            if (!deviceId) deviceId = localStorage.getItem('deviceId');
+            if (!deviceSecret) deviceSecret = localStorage.getItem('deviceSecret');
+            console.log('[Auth] iOS WebView fallback: deviceId=', deviceId ? 'present' : 'missing',
+                        'deviceSecret=', deviceSecret ? 'present' : 'missing');
             if (deviceId && deviceSecret) {
                 const loginData = await apiCall('POST', '/api/auth/device-login', { deviceId, deviceSecret });
                 if (loginData && loginData.success && loginData.user) {
@@ -63,8 +71,14 @@ async function checkAuth() {
                     if (!currentUser.deviceSecret) currentUser.deviceSecret = deviceSecret;
                     if (!currentUser.deviceId) currentUser.deviceId = deviceId;
                     window.currentUser = currentUser;
+                    // Persist so future reloads skip this branch
+                    try {
+                        if (!localStorage.getItem('deviceId')) localStorage.setItem('deviceId', deviceId);
+                        if (!localStorage.getItem('deviceSecret')) localStorage.setItem('deviceSecret', deviceSecret);
+                    } catch (_) { /* ignore */ }
                     return currentUser;
                 }
+                console.warn('[Auth] device-login returned non-success:', loginData);
             }
         } catch (iosErr) {
             console.error('[Auth] iOS WebView device-login failed:', iosErr);
