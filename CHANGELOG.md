@@ -1,3 +1,10 @@
+## [1.980.1](https://github.com/HankHuang0516/EClaw/compare/v1.980.0...v1.980.1) (2026-04-15)
+
+
+### Bug Fixes
+
+* inject intent API hints for channel-bound bots in client/speak ([0637608](https://github.com/HankHuang0516/EClaw/commit/0637608d090da3c65fe56a80e0647830871ba60b)), closes [#2](https://github.com/HankHuang0516/EClaw/issues/2)
+
 # [1.980.0](https://github.com/HankHuang0516/EClaw/compare/v1.979.0...v1.980.0) (2026-04-15)
 
 
