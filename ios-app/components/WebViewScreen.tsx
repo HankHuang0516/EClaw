@@ -14,13 +14,36 @@ const INJECTED_JS = `
     const params = new URLSearchParams(window.location.search);
     const did = params.get('deviceId');
     const ds  = params.get('deviceSecret');
+    const tok = params.get('authToken');
     if (did && !localStorage.getItem('deviceId')) {
       localStorage.setItem('deviceId', did);
     }
     if (ds && !localStorage.getItem('deviceSecret')) {
       localStorage.setItem('deviceSecret', ds);
     }
-  } catch(e) {}
+    if (tok) {
+      try { localStorage.setItem('authToken', tok); } catch (_) {}
+      try { document.cookie = 'eclaw_session=' + tok + '; path=/; SameSite=Lax; Secure'; } catch (_) {}
+    }
+    // Post auth diagnostic to RN so we can see it without Safari Inspector
+    if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'auth-diag',
+        url: window.location.href,
+        cookieHas_eclaw_session: document.cookie.indexOf('eclaw_session=') !== -1,
+        lsAuth: !!localStorage.getItem('authToken'),
+        lsDid: !!localStorage.getItem('deviceId'),
+        lsDs: !!localStorage.getItem('deviceSecret'),
+        urlAuth: !!tok,
+        urlDid: !!did,
+        urlDs: !!ds
+      }));
+    }
+  } catch(e) {
+    if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'auth-diag-error', err: String(e) }));
+    }
+  }
 })();
 true;
 `;
@@ -48,7 +71,15 @@ export default function WebViewScreen({ url }: WebViewScreenProps) {
         domStorageEnabled
         startInLoadingState
         allowsBackForwardNavigationGestures
+        webviewDebuggingEnabled={__DEV__}
         onLoadEnd={() => setLoading(false)}
+        onMessage={(event) => {
+          // Bridge console.log from WebView to RN logs (visible via Expo Go / Metro)
+          try {
+            const data = JSON.parse(event.nativeEvent.data);
+            console.log('[WebView]', data);
+          } catch { /* ignore */ }
+        }}
         userAgent="Mozilla/5.0 EClawIOS"
         onShouldStartLoadWithRequest={(request) => {
           const u = request.url || '';
