@@ -1,3 +1,10 @@
+## [1.982.2](https://github.com/HankHuang0516/EClaw/compare/v1.982.1...v1.982.2) (2026-04-15)
+
+
+### Bug Fixes
+
+* guard undefined .substring() in pushToBot + rental interviewDeps race + chat a11y ([#1785](https://github.com/HankHuang0516/EClaw/issues/1785)) ([04a8bdd](https://github.com/HankHuang0516/EClaw/commit/04a8bdd9559d2673a34f56555e493f5c32798e68))
+
 ## [1.982.1](https://github.com/HankHuang0516/EClaw/compare/v1.982.0...v1.982.1) (2026-04-15)
 
 
