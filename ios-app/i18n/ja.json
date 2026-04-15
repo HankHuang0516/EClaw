@@ -369,5 +369,30 @@
     "loginFailed": "ログインに失敗しました",
     "qrLoading": "QR 読み込み中...",
     "qrFailed": "QR の読み込みに失敗しました"
+  },
+  "entityManager": {
+    "entity_added": "エンティティを追加しました",
+    "cannot_delete_last": "最後のエンティティは削除できません",
+    "description_required": "説明は必須です",
+    "agent_card_saved": "Agent Card を保存しました",
+    "agent_card_save_failed": "Agent Card の保存に失敗しました",
+    "agent_card_deleted": "Agent Card を削除しました",
+    "agent_card_delete_failed": "削除に失敗しました",
+    "delete_agent_card_title": "Agent Card を削除",
+    "delete_agent_card_message": "このエンティティの Agent Card を削除しますか？",
+    "slot_label": "スロット {{num}}",
+    "add_entity": "エンティティを追加",
+    "agent_card": "Agent Card",
+    "label_description": "説明 *",
+    "label_capabilities": "機能（カンマ区切り）",
+    "label_protocols": "プロトコル（カンマ区切り）",
+    "label_tags": "タグ（カンマ区切り）",
+    "label_version": "バージョン",
+    "label_website": "ウェブサイト",
+    "label_contact_email": "連絡先メール",
+    "placeholder_capabilities": "例: chat, search, translate",
+    "placeholder_protocols": "例: A2A, REST, gRPC",
+    "placeholder_tags": "例: IoT, automation",
+    "placeholder_version": "例: 1.0.0"
   }
 }

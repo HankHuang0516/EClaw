@@ -369,5 +369,30 @@
     "loginFailed": "로그인 실패",
     "qrLoading": "QR 로딩 중...",
     "qrFailed": "QR 로드 실패"
+  },
+  "entityManager": {
+    "entity_added": "엔티티가 추가되었습니다",
+    "cannot_delete_last": "마지막 엔티티는 삭제할 수 없습니다",
+    "description_required": "설명은 필수입니다",
+    "agent_card_saved": "Agent Card가 저장되었습니다",
+    "agent_card_save_failed": "Agent Card 저장 실패",
+    "agent_card_deleted": "Agent Card가 삭제되었습니다",
+    "agent_card_delete_failed": "삭제 실패",
+    "delete_agent_card_title": "Agent Card 삭제",
+    "delete_agent_card_message": "이 엔티티의 Agent Card를 삭제하시겠습니까?",
+    "slot_label": "슬롯 {{num}}",
+    "add_entity": "엔티티 추가",
+    "agent_card": "Agent Card",
+    "label_description": "설명 *",
+    "label_capabilities": "기능 (쉼표로 구분)",
+    "label_protocols": "프로토콜 (쉼표로 구분)",
+    "label_tags": "태그 (쉼표로 구분)",
+    "label_version": "버전",
+    "label_website": "웹사이트",
+    "label_contact_email": "연락처 이메일",
+    "placeholder_capabilities": "예: chat, search, translate",
+    "placeholder_protocols": "예: A2A, REST, gRPC",
+    "placeholder_tags": "예: IoT, automation",
+    "placeholder_version": "예: 1.0.0"
   }
 }

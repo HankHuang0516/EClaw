@@ -92,7 +92,7 @@ export default function EntityManagerScreen() {
     try {
       await deviceApi.addEntity();
       await refetch();
-      setSnack('Entity added');
+      setSnack(t('entityManager.entity_added', 'Entity added'));
     } catch {
       setSnack(t('errors.server'));
     } finally {
@@ -102,7 +102,7 @@ export default function EntityManagerScreen() {
 
   const handleDelete = (entity: Entity) => {
     if (entities.length <= 1) {
-      setSnack('Cannot delete the last entity');
+      setSnack(t('entityManager.cannot_delete_last', 'Cannot delete the last entity'));
       return;
     }
     Alert.alert(
@@ -152,7 +152,7 @@ export default function EntityManagerScreen() {
 
   const saveAgentCard = async () => {
     if (!acEntity || !acDesc.trim()) {
-      setSnack('Description is required');
+      setSnack(t('entityManager.description_required', 'Description is required'));
       return;
     }
     setAcLoading(true);
@@ -172,9 +172,9 @@ export default function EntityManagerScreen() {
         contactEmail: acEmail.trim(),
       });
       setAcVisible(false);
-      setSnack('Agent Card saved');
+      setSnack(t('entityManager.agent_card_saved', 'Agent Card saved'));
     } catch {
-      setSnack('Failed to save Agent Card');
+      setSnack(t('entityManager.agent_card_save_failed', 'Failed to save Agent Card'));
     } finally {
       setAcLoading(false);
     }
@@ -182,21 +182,25 @@ export default function EntityManagerScreen() {
 
   const deleteAgentCard = () => {
     if (!acEntity) return;
-    Alert.alert('Delete Agent Card', 'Remove the Agent Card for this entity?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete', style: 'destructive',
-        onPress: async () => {
-          try {
-            await deviceApi.deleteAgentCard(acEntity.entityId);
-            setAcVisible(false);
-            setSnack('Agent Card deleted');
-          } catch {
-            setSnack('Failed to delete');
-          }
+    Alert.alert(
+      t('entityManager.delete_agent_card_title', 'Delete Agent Card'),
+      t('entityManager.delete_agent_card_message', 'Remove the Agent Card for this entity?'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'), style: 'destructive',
+          onPress: async () => {
+            try {
+              await deviceApi.deleteAgentCard(acEntity.entityId);
+              setAcVisible(false);
+              setSnack(t('entityManager.agent_card_deleted', 'Agent Card deleted'));
+            } catch {
+              setSnack(t('entityManager.agent_card_delete_failed', 'Failed to delete'));
+            }
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   const CHARACTER_ICONS = { LOBSTER: '🦞', PIG: '🐷' };
@@ -232,7 +236,7 @@ export default function EntityManagerScreen() {
               <View style={styles.info}>
                 <Text variant="titleMedium">{item.name}</Text>
                 <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                  {t(`entity.character_${item.character.toLowerCase()}`)} • Slot {item.entityIndex + 1}
+                  {t(`entity.character_${item.character.toLowerCase()}`)} • {t('entityManager.slot_label', 'Slot {{num}}', { num: item.entityIndex + 1 })}
                 </Text>
               </View>
 
@@ -278,7 +282,7 @@ export default function EntityManagerScreen() {
             loading={isLoading}
             style={{ marginTop: 8 }}
           >
-            Add Entity
+            {t('entityManager.add_entity', 'Add Entity')}
           </Button>
         }
       />
@@ -314,27 +318,27 @@ export default function EntityManagerScreen() {
       {/* Agent Card Dialog */}
       <Portal>
         <Dialog visible={acVisible} onDismiss={() => setAcVisible(false)} style={{ maxHeight: '85%' }}>
-          <Dialog.Title>Agent Card{acEntity ? ` — ${acEntity.name}` : ''}</Dialog.Title>
+          <Dialog.Title>{t('entityManager.agent_card', 'Agent Card')}{acEntity ? ` — ${acEntity.name}` : ''}</Dialog.Title>
           <Dialog.ScrollArea style={{ paddingHorizontal: 0 }}>
             <ScrollView contentContainerStyle={{ paddingHorizontal: 24, gap: 8, paddingBottom: 8 }}>
-              <TextInput mode="outlined" dense label="Description *" value={acDesc} onChangeText={setAcDesc}
+              <TextInput mode="outlined" dense label={t('entityManager.label_description', 'Description *')} value={acDesc} onChangeText={setAcDesc}
                 maxLength={500} multiline numberOfLines={3} />
-              <TextInput mode="outlined" dense label="Capabilities (comma-separated)" value={acCaps}
-                onChangeText={setAcCaps} placeholder="e.g. chat, search, translate" />
-              <TextInput mode="outlined" dense label="Protocols (comma-separated)" value={acProtos}
-                onChangeText={setAcProtos} placeholder="e.g. A2A, REST, gRPC" />
-              <TextInput mode="outlined" dense label="Tags (comma-separated)" value={acTags}
-                onChangeText={setAcTags} placeholder="e.g. IoT, automation" />
-              <TextInput mode="outlined" dense label="Version" value={acVersion}
-                onChangeText={setAcVersion} maxLength={32} placeholder="e.g. 1.0.0" />
-              <TextInput mode="outlined" dense label="Website" value={acWebsite}
+              <TextInput mode="outlined" dense label={t('entityManager.label_capabilities', 'Capabilities (comma-separated)')} value={acCaps}
+                onChangeText={setAcCaps} placeholder={t('entityManager.placeholder_capabilities', 'e.g. chat, search, translate')} />
+              <TextInput mode="outlined" dense label={t('entityManager.label_protocols', 'Protocols (comma-separated)')} value={acProtos}
+                onChangeText={setAcProtos} placeholder={t('entityManager.placeholder_protocols', 'e.g. A2A, REST, gRPC')} />
+              <TextInput mode="outlined" dense label={t('entityManager.label_tags', 'Tags (comma-separated)')} value={acTags}
+                onChangeText={setAcTags} placeholder={t('entityManager.placeholder_tags', 'e.g. IoT, automation')} />
+              <TextInput mode="outlined" dense label={t('entityManager.label_version', 'Version')} value={acVersion}
+                onChangeText={setAcVersion} maxLength={32} placeholder={t('entityManager.placeholder_version', 'e.g. 1.0.0')} />
+              <TextInput mode="outlined" dense label={t('entityManager.label_website', 'Website')} value={acWebsite}
                 onChangeText={setAcWebsite} maxLength={500} keyboardType="url" />
-              <TextInput mode="outlined" dense label="Contact Email" value={acEmail}
+              <TextInput mode="outlined" dense label={t('entityManager.label_contact_email', 'Contact Email')} value={acEmail}
                 onChangeText={setAcEmail} maxLength={255} keyboardType="email-address" />
             </ScrollView>
           </Dialog.ScrollArea>
           <Dialog.Actions>
-            <Button onPress={deleteAgentCard} textColor={theme.colors.error}>Delete</Button>
+            <Button onPress={deleteAgentCard} textColor={theme.colors.error}>{t('common.delete')}</Button>
             <Button onPress={() => setAcVisible(false)}>{t('common.cancel')}</Button>
             <Button mode="contained" onPress={saveAgentCard} loading={acLoading}
               disabled={!acDesc.trim() || acLoading}>

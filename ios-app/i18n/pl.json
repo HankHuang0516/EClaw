@@ -307,5 +307,30 @@
     "loginFailed": "Logowanie nie powiodło",
     "qrLoading": "Ładowanie QR...",
     "qrFailed": "Nie udało się załadować QR"
+  },
+  "entityManager": {
+    "entity_added": "Entity added",
+    "cannot_delete_last": "Cannot delete the last entity",
+    "description_required": "Description is required",
+    "agent_card_saved": "Agent Card saved",
+    "agent_card_save_failed": "Failed to save Agent Card",
+    "agent_card_deleted": "Agent Card deleted",
+    "agent_card_delete_failed": "Failed to delete",
+    "delete_agent_card_title": "Delete Agent Card",
+    "delete_agent_card_message": "Remove the Agent Card for this entity?",
+    "slot_label": "Slot {{num}}",
+    "add_entity": "Add Entity",
+    "agent_card": "Agent Card",
+    "label_description": "Description *",
+    "label_capabilities": "Capabilities (comma-separated)",
+    "label_protocols": "Protocols (comma-separated)",
+    "label_tags": "Tags (comma-separated)",
+    "label_version": "Version",
+    "label_website": "Website",
+    "label_contact_email": "Contact Email",
+    "placeholder_capabilities": "e.g. chat, search, translate",
+    "placeholder_protocols": "e.g. A2A, REST, gRPC",
+    "placeholder_tags": "e.g. IoT, automation",
+    "placeholder_version": "e.g. 1.0.0"
   }
 }

@@ -368,5 +368,30 @@
     "loginFailed": "登入失敗",
     "qrLoading": "QR 載入中...",
     "qrFailed": "QR 載入失敗"
+  },
+  "entityManager": {
+    "entity_added": "已新增實體",
+    "cannot_delete_last": "無法刪除最後一個實體",
+    "description_required": "描述為必填",
+    "agent_card_saved": "已儲存 Agent Card",
+    "agent_card_save_failed": "儲存 Agent Card 失敗",
+    "agent_card_deleted": "已刪除 Agent Card",
+    "agent_card_delete_failed": "刪除失敗",
+    "delete_agent_card_title": "刪除 Agent Card",
+    "delete_agent_card_message": "要移除此實體的 Agent Card 嗎？",
+    "slot_label": "插槽 {{num}}",
+    "add_entity": "新增實體",
+    "agent_card": "Agent Card",
+    "label_description": "描述 *",
+    "label_capabilities": "能力（以逗號分隔）",
+    "label_protocols": "協議（以逗號分隔）",
+    "label_tags": "標籤（以逗號分隔）",
+    "label_version": "版本",
+    "label_website": "網站",
+    "label_contact_email": "聯絡 Email",
+    "placeholder_capabilities": "例如：chat, search, translate",
+    "placeholder_protocols": "例如：A2A, REST, gRPC",
+    "placeholder_tags": "例如：IoT, automation",
+    "placeholder_version": "例如：1.0.0"
   }
 }

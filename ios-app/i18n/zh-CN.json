@@ -369,5 +369,30 @@
     "loginFailed": "登录失败",
     "qrLoading": "QR 加载中...",
     "qrFailed": "QR 加载失败"
+  },
+  "entityManager": {
+    "entity_added": "已添加实体",
+    "cannot_delete_last": "无法删除最后一个实体",
+    "description_required": "描述为必填",
+    "agent_card_saved": "已保存 Agent Card",
+    "agent_card_save_failed": "保存 Agent Card 失败",
+    "agent_card_deleted": "已删除 Agent Card",
+    "agent_card_delete_failed": "删除失败",
+    "delete_agent_card_title": "删除 Agent Card",
+    "delete_agent_card_message": "要移除此实体的 Agent Card 吗？",
+    "slot_label": "槽位 {{num}}",
+    "add_entity": "添加实体",
+    "agent_card": "Agent Card",
+    "label_description": "描述 *",
+    "label_capabilities": "能力（以逗号分隔）",
+    "label_protocols": "协议（以逗号分隔）",
+    "label_tags": "标签（以逗号分隔）",
+    "label_version": "版本",
+    "label_website": "网站",
+    "label_contact_email": "联系邮箱",
+    "placeholder_capabilities": "例如：chat, search, translate",
+    "placeholder_protocols": "例如：A2A, REST, gRPC",
+    "placeholder_tags": "例如：IoT, automation",
+    "placeholder_version": "例如：1.0.0"
   }
 }
