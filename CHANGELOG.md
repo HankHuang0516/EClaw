@@ -1,3 +1,10 @@
+## [1.981.13](https://github.com/HankHuang0516/EClaw/compare/v1.981.12...v1.981.13) (2026-04-15)
+
+
+### Bug Fixes
+
+* **ios:** apply entity name fallback across all remaining screens ([e05a160](https://github.com/HankHuang0516/EClaw/commit/e05a16027452daa10afe0ce8b56f4a2abf54e476)), closes [#0](https://github.com/HankHuang0516/EClaw/issues/0)
+
 ## [1.981.12](https://github.com/HankHuang0516/EClaw/compare/v1.981.11...v1.981.12) (2026-04-15)
 
 
