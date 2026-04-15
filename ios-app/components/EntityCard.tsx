@@ -54,7 +54,7 @@ export default function EntityCard({ entity, onLongPress }: EntityCardProps) {
         {/* Info */}
         <View style={styles.info}>
           <Text variant="titleMedium" numberOfLines={1}>
-            {entity.name}
+            {entity.name || `${entity.character || 'Entity'} #${entity.entityId}`}
           </Text>
           <Text
             variant="bodySmall"

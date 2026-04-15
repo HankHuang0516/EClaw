@@ -92,7 +92,7 @@ export default function HomeScreen() {
 
   const handleEntityLongPress = (entity: Entity) => {
     if (entities.length <= 1) return;
-    Alert.alert(entity.name, undefined, [
+    Alert.alert((entity.name || `${entity.character || 'Entity'} #${entity.entityId}`), undefined, [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('entity.remove'),
@@ -103,7 +103,7 @@ export default function HomeScreen() {
   };
 
   const handleDelete = async (entity: Entity) => {
-    Alert.alert(t('entity.remove'), t('entity.remove_confirm', { name: entity.name }), [
+    Alert.alert(t('entity.remove'), t('entity.remove_confirm', { name: (entity.name || `${entity.character || 'Entity'} #${entity.entityId}`) }), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('common.delete'),
