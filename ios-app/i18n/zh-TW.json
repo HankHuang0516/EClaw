@@ -312,7 +312,8 @@
     "history_title": "我的反饋",
     "status_open": "待處理",
     "status_closed": "已關閉",
-    "status_in_progress": "處理中"
+    "status_in_progress": "處理中",
+    "type_label": "反饋類型"
   },
   "ai_chat": {
     "title": "AI 助手",

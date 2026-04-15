@@ -251,7 +251,8 @@
     "history_title": "I miei feedback",
     "status_open": "Aperto",
     "status_closed": "Chiuso",
-    "status_in_progress": "In corso"
+    "status_in_progress": "In corso",
+    "type_label": "Feedback Type"
   },
   "ai_chat": {
     "title": "Assistente IA",

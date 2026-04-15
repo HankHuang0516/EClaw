@@ -313,7 +313,8 @@
     "history_title": "Mein Feedback",
     "status_open": "Offen",
     "status_closed": "Geschlossen",
-    "status_in_progress": "In Bearbeitung"
+    "status_in_progress": "In Bearbeitung",
+    "type_label": "Feedback Type"
   },
   "ai_chat": {
     "title": "KI-Assistent",

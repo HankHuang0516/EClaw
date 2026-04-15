@@ -75,7 +75,7 @@ export default function FeedbackScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
       <ScrollView contentContainerStyle={styles.content}>
         {/* Type selector */}
-        <Text variant="labelLarge" style={styles.label}>{t('feedback.type_bug')}</Text>
+        <Text variant="labelLarge" style={styles.label}>{t('feedback.type_label', 'Feedback Type')}</Text>
         <View style={styles.chipRow}>
           {(['bug', 'feature', 'question'] as FeedbackType[]).map((tp) => (
             <Chip

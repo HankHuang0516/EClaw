@@ -251,7 +251,8 @@
     "history_title": "Meus comentários",
     "status_open": "Aberto",
     "status_closed": "Fechado",
-    "status_in_progress": "Em andamento"
+    "status_in_progress": "Em andamento",
+    "type_label": "Feedback Type"
   },
   "ai_chat": {
     "title": "Assistente de IA",

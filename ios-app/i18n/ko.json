@@ -313,7 +313,8 @@
     "history_title": "내 피드백",
     "status_open": "열림",
     "status_closed": "닫힘",
-    "status_in_progress": "진행 중"
+    "status_in_progress": "진행 중",
+    "type_label": "피드백 유형"
   },
   "ai_chat": {
     "title": "AI 어시스턴트",

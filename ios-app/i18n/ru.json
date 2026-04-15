@@ -251,7 +251,8 @@
     "history_title": "Мои отзывы",
     "status_open": "Открыто",
     "status_closed": "Закрыто",
-    "status_in_progress": "В работе"
+    "status_in_progress": "В работе",
+    "type_label": "Feedback Type"
   },
   "ai_chat": {
     "title": "ИИ-ассистент",

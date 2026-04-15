@@ -313,7 +313,8 @@
     "history_title": "Góp ý của tôi",
     "status_open": "Mở",
     "status_closed": "Đã đóng",
-    "status_in_progress": "Đang xử lý"
+    "status_in_progress": "Đang xử lý",
+    "type_label": "Feedback Type"
   },
   "ai_chat": {
     "title": "Trợ lý AI",

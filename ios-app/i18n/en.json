@@ -313,7 +313,8 @@
     "history_title": "My Feedback",
     "status_open": "Open",
     "status_closed": "Closed",
-    "status_in_progress": "In Progress"
+    "status_in_progress": "In Progress",
+    "type_label": "Feedback Type"
   },
   "ai_chat": {
     "title": "AI Assistant",

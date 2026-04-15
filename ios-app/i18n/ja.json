@@ -313,7 +313,8 @@
     "history_title": "マイフィードバック",
     "status_open": "オープン",
     "status_closed": "クローズ",
-    "status_in_progress": "対応中"
+    "status_in_progress": "対応中",
+    "type_label": "フィードバック種別"
   },
   "ai_chat": {
     "title": "AI アシスタント",

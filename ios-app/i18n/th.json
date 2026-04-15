@@ -313,7 +313,8 @@
     "history_title": "ความคิดเห็นของฉัน",
     "status_open": "เปิด",
     "status_closed": "ปิด",
-    "status_in_progress": "กำลังดำเนินการ"
+    "status_in_progress": "กำลังดำเนินการ",
+    "type_label": "Feedback Type"
   },
   "ai_chat": {
     "title": "AI ผู้ช่วย",

@@ -313,7 +313,8 @@
     "history_title": "Umpan Balik Saya",
     "status_open": "Terbuka",
     "status_closed": "Ditutup",
-    "status_in_progress": "Sedang Diproses"
+    "status_in_progress": "Sedang Diproses",
+    "type_label": "Feedback Type"
   },
   "ai_chat": {
     "title": "Asisten AI",

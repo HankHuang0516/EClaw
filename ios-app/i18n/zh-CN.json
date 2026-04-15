@@ -313,7 +313,8 @@
     "history_title": "我的反馈",
     "status_open": "待处理",
     "status_closed": "已关闭",
-    "status_in_progress": "处理中"
+    "status_in_progress": "处理中",
+    "type_label": "反馈类型"
   },
   "ai_chat": {
     "title": "AI 助手",
