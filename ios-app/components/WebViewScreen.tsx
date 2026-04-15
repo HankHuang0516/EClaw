@@ -26,15 +26,16 @@ true;
 `;
 
 export default function WebViewScreen({ url }: WebViewScreenProps) {
-  const { deviceId, deviceSecret } = useAuthStore();
+  const { deviceId, deviceSecret, authToken } = useAuthStore();
   const webViewRef = useRef<WebView>(null);
   const [loading, setLoading] = useState(true);
 
   const sep = url.includes('?') ? '&' : '?';
-  const fullUrl =
-    deviceId && deviceSecret
-      ? `${url}${sep}deviceId=${encodeURIComponent(deviceId)}&deviceSecret=${encodeURIComponent(deviceSecret)}&embed=1`
-      : `${url}${sep}embed=1`;
+  const qs: string[] = ['embed=1'];
+  if (deviceId) qs.push(`deviceId=${encodeURIComponent(deviceId)}`);
+  if (deviceSecret) qs.push(`deviceSecret=${encodeURIComponent(deviceSecret)}`);
+  if (authToken) qs.push(`authToken=${encodeURIComponent(authToken)}`);
+  const fullUrl = `${url}${sep}${qs.join('&')}`;
 
   return (
     <View style={styles.container}>

@@ -4,6 +4,20 @@
 let currentUser = null;
 
 async function checkAuth() {
+    // If WebView host passed an authToken in the URL (iOS shell), stash it as a cookie
+    // so apiCall's default credentials include it on /me. Also mirror to localStorage
+    // so subsequent reloads inside the same WebView see it.
+    try {
+        const qp = new URLSearchParams(window.location.search);
+        const qToken = qp.get('authToken');
+        if (qToken) {
+            // Set a short-lived cookie for this origin; HttpOnly flag is not settable from JS
+            // but the server-side eclaw_session cookie is still authoritative for web.
+            try { document.cookie = 'eclaw_session=' + qToken + '; path=/; SameSite=Lax'; } catch (_) {}
+            try { localStorage.setItem('authToken', qToken); } catch (_) {}
+        }
+    } catch (_) { /* ignore */ }
+
     try {
         const data = await apiCall('GET', '/api/auth/me');
         currentUser = data.user;
