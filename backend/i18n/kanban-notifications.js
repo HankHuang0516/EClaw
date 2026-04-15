@@ -158,6 +158,18 @@ const TRANSLATIONS = {
         scheduleRecurringWithStatus: '🗓️ تم تشغيل الجدول: [{title}]\nالحالة: {from} → {to}, يرجى متابعة هذه المهمة',
         reviewerNotify: '🔍 المهمة مكتملة، بانتظار المراجعة: [{title}]\nBot #{entityId} أبلغ: {reply}\nإذا كانت هناك مشكلات، يرجى إنشاء بطاقة جديدة.',
         reviewerNoReply: '(لا يوجد محتوى رد)'
+    },
+    de: {
+        statusLabels: { backlog: 'Backlog', todo: 'Zu erledigen', in_progress: 'In Bearbeitung', review: 'Überprüfung', done: 'Erledigt' },
+        cardCreated: '📋 Neue Aufgabe zugewiesen: {priorityIcon} [{priority}] {title}\nStatus: {status}',
+        statusChanged: '{direction} Aufgabenstatus geändert: [{title}]\n{from} → {to}',
+        staleNudge: '⏰ Aufgaben-Erinnerung: [{title}]\nSteckt in "{status}" seit {hours}h fest, bitte fortfahren',
+        scheduleOnce: '🗓️ Zeitplan ausgelöst: [{title}]\nBitte diese Aufgabe beginnen',
+        automationTrigger: '🗓️ Automatisierung ausgelöst: [{title}]\nUnterkarte erstellt: {childTitle}\nBitte beginnen',
+        scheduleRecurring: '🗓️ Zeitplan ausgelöst: [{title}]\nBitte diese Aufgabe fortführen',
+        scheduleRecurringWithStatus: '🗓️ Zeitplan ausgelöst: [{title}]\nStatus: {from} → {to}, bitte diese Aufgabe fortführen',
+        reviewerNotify: '🔍 Aufgabe erledigt, wartet auf Überprüfung: [{title}]\nBot #{entityId} berichtet: {reply}\nBei Problemen bitte neue Karte erstellen.',
+        reviewerNoReply: '(keine Antwortinhalte)'
     }
 };
 
