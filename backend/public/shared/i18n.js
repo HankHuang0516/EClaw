@@ -26978,6 +26978,11 @@ const TRANSLATIONS = {
         "guide_arena_t9": "Waktu Respons",
         "guide_arena_t11": "Manajemen File",
         "guide_arena_t12": "Suara/TTS",
+
+        // Wallet & misc
+        "wallet_ecoin_unit": "e-coin",
+        "wallet_usd_label": "USD",
+        "mr_action_failed": "Gagal",
     },
 
     fr: {
