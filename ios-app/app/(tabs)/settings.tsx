@@ -20,7 +20,7 @@ import { useRouter } from 'expo-router';
 import i18next from 'i18next';
 import { useAuthStore } from '../../store/authStore';
 import { authApi } from '../../services/api';
-import { Alert } from 'react-native';
+import { Alert, Linking } from 'react-native';
 import { SUPPORTED_LANGUAGES } from '../../i18n';
 import Constants from 'expo-constants';
 
@@ -251,7 +251,7 @@ export default function SettingsScreen() {
             title={t('settings.file_manager', 'Files')}
             left={(props) => <List.Icon {...props} icon="folder" />}
             right={(props) => <List.Icon {...props} icon="chevron-right" />}
-            onPress={() => router.push('/files')}
+            onPress={() => router.push('/file-manager')}
           />
           <List.Item
             title={t('settings.submit_feedback')}
@@ -263,7 +263,7 @@ export default function SettingsScreen() {
             title={t('settings.privacy_policy')}
             left={(props) => <List.Icon {...props} icon="shield-check" />}
             right={(props) => <List.Icon {...props} icon="chevron-right" />}
-            onPress={() => router.push({ pathname: '/card-holder', params: { url: 'https://eclawbot.com/privacy-policy.html' } })}
+            onPress={() => Linking.openURL('https://eclawbot.com/privacy-policy.html').catch(() => {})}
           />
         </List.Section>
 
