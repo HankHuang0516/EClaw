@@ -7094,13 +7094,25 @@ app.post('/api/client/speak', async (req, res) => {
 
         // Push to bot — channel callback (structured JSON) or traditional webhook (instruction-first)
         let pushResult = { pushed: false, reason: "no_webhook" };
+
+        // Append intent-based API hints for channel bots (pushToBot does this internally
+        // for webhook bots, but channel push bypasses pushToBot entirely)
+        let channelPushText = pushText;
+        try {
+            const apiBase = process.env.API_BASE || 'https://eclawbot.com';
+            const intentHint = await detectIntentApiHints(
+                text, apiBase, deviceId, eId, entity.botSecret
+            );
+            if (intentHint) channelPushText += intentHint;
+        } catch (_) { /* non-critical */ }
+
         if (entity.bindingType === 'channel') {
             // Channel plugin: send structured JSON to registered callback URL
             console.log(`[Push] Attempting channel callback for Device ${deviceId} Entity ${eId}`);
             pushResult = await channelModule.pushToChannelCallback(deviceId, eId, {
                 event: targetIds.length > 1 ? 'broadcast' : 'message',
                 from: source,
-                text: pushText,
+                text: channelPushText,
                 mediaType: mediaType || null,
                 mediaUrl: mediaUrl || null,
                 backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
