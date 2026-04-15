@@ -1,3 +1,10 @@
+## [1.982.3](https://github.com/HankHuang0516/EClaw/compare/v1.982.2...v1.982.3) (2026-04-15)
+
+
+### Bug Fixes
+
+* **tests:** register test-org-chart.js in integration test runner ([#1788](https://github.com/HankHuang0516/EClaw/issues/1788)) ([bb2c2a9](https://github.com/HankHuang0516/EClaw/commit/bb2c2a9e69ead87da0447861c797975a8e4fe373))
+
 ## [1.982.2](https://github.com/HankHuang0516/EClaw/compare/v1.982.1...v1.982.2) (2026-04-15)
 
 
