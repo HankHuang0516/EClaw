@@ -1,3 +1,10 @@
+## [1.981.3](https://github.com/HankHuang0516/EClaw/compare/v1.981.2...v1.981.3) (2026-04-15)
+
+
+### Bug Fixes
+
+* **auth:** accept Authorization: Bearer header in cookie-based middleware ([462d134](https://github.com/HankHuang0516/EClaw/commit/462d1343fd1630fae01666616b56f80cbcd53771))
+
 ## [1.981.2](https://github.com/HankHuang0516/EClaw/compare/v1.981.1...v1.981.2) (2026-04-15)
 
 
