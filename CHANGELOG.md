@@ -1,3 +1,11 @@
+## [1.981.7](https://github.com/HankHuang0516/EClaw/compare/v1.981.6...v1.981.7) (2026-04-15)
+
+
+### Bug Fixes
+
+* **ios:** fallback entity display name when backend returns null ([977408a](https://github.com/HankHuang0516/EClaw/commit/977408ab953864d57dfc3ada1f95086c6a4cc287)), closes [#0](https://github.com/HankHuang0516/EClaw/issues/0)
+* **i18n:** index.html input placeholders use data-i18n-placeholder ([#1763](https://github.com/HankHuang0516/EClaw/issues/1763)) ([ebb5e3a](https://github.com/HankHuang0516/EClaw/commit/ebb5e3ac349c6d22725873fa161e2b27914c1476))
+
 ## [1.981.6](https://github.com/HankHuang0516/EClaw/compare/v1.981.5...v1.981.6) (2026-04-15)
 
 
