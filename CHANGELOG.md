@@ -1,3 +1,10 @@
+## [1.981.4](https://github.com/HankHuang0516/EClaw/compare/v1.981.3...v1.981.4) (2026-04-15)
+
+
+### Bug Fixes
+
+* **ios:** correct Settings routing for Files and Privacy Policy ([4d83542](https://github.com/HankHuang0516/EClaw/commit/4d83542b06fea90e205277b22dddb0df382b32db)), closes [#1771](https://github.com/HankHuang0516/EClaw/issues/1771)
+
 ## [1.981.3](https://github.com/HankHuang0516/EClaw/compare/v1.981.2...v1.981.3) (2026-04-15)
 
 
