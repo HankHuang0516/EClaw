@@ -60,12 +60,6 @@
           "cameraPermission": "E-Claw needs camera access to take photos."
         }
       ],
-      [
-        "expo-av",
-        {
-          "microphonePermission": "E-Claw needs microphone access to record voice messages."
-        }
-      ],
       "expo-localization",
       "expo-secure-store",
       "expo-sharing",
