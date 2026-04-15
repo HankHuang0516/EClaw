@@ -48,6 +48,28 @@ async function checkAuth() {
             }
         }
 
+        // iOS WebView (and any other WebView host that can't use a JS bridge) — the native
+        // shell stashes deviceId/deviceSecret into localStorage via injected JS before the
+        // page runs, so fall back to device-login here. This lets native-authenticated users
+        // hit embedded portal pages (mission, wallet, invite, community, chat) without being
+        // bounced back to the portal's login form.
+        try {
+            const deviceId = localStorage.getItem('deviceId');
+            const deviceSecret = localStorage.getItem('deviceSecret');
+            if (deviceId && deviceSecret) {
+                const loginData = await apiCall('POST', '/api/auth/device-login', { deviceId, deviceSecret });
+                if (loginData && loginData.success && loginData.user) {
+                    currentUser = loginData.user;
+                    if (!currentUser.deviceSecret) currentUser.deviceSecret = deviceSecret;
+                    if (!currentUser.deviceId) currentUser.deviceId = deviceId;
+                    window.currentUser = currentUser;
+                    return currentUser;
+                }
+            }
+        } catch (iosErr) {
+            console.error('[Auth] iOS WebView device-login failed:', iosErr);
+        }
+
         console.error('[Auth] checkAuth failed, redirecting to login:', e.message || e);
         window.location.href = 'index.html';
         return null;
