@@ -108,12 +108,15 @@ export default function AiChatScreen() {
     // Build history for API
     const history = messages.map((m) => ({ role: m.role, content: m.content }));
 
-    // Auto-inject device context on first message so AI customer service knows who the user is
+    // Auto-inject device context on first message so AI customer service knows who the user is.
+    // NEVER include deviceSecret here — the message body is forwarded to Anthropic and stored in
+    // logs/telemetry, so leaking the secret would let anyone replaying the transcript impersonate
+    // the device. The backend already authenticates the caller via Bearer header / cookie and can
+    // look up deviceSecret server-side from the deviceId if it needs to call bot APIs on the
+    // user's behalf.
     let messageForApi = text;
     if (history.length === 0 && deviceId) {
-      const ctxParts = [`Device ID: ${deviceId}`];
-      if (deviceSecret) ctxParts.push(`Device Secret: ${deviceSecret}`);
-      messageForApi = `[Auto-injected device context]\n${ctxParts.join('\n')}\n\n${text}`;
+      messageForApi = `[Auto-injected device context]\nDevice ID: ${deviceId}\n\n${text}`;
     }
 
     try {
