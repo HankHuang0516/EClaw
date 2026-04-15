@@ -1,3 +1,11 @@
+## [1.981.11](https://github.com/HankHuang0516/EClaw/compare/v1.981.10...v1.981.11) (2026-04-15)
+
+
+### Bug Fixes
+
+* **portal:** read deviceId/deviceSecret from URL query before localStorage ([0365c2a](https://github.com/HankHuang0516/EClaw/commit/0365c2aa117e001bd2d6d334279376dc0fa23352)), closes [#1765](https://github.com/HankHuang0516/EClaw/issues/1765)
+* **ios:** replace 🦞 emoji logo with actual app icon image ([#1767](https://github.com/HankHuang0516/EClaw/issues/1767)) ([39b562e](https://github.com/HankHuang0516/EClaw/commit/39b562e2436a63c73d38b82ef64a8842c458e75d))
+
 ## [1.981.10](https://github.com/HankHuang0516/EClaw/compare/v1.981.9...v1.981.10) (2026-04-15)
 
 
