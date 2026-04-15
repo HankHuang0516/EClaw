@@ -1,3 +1,10 @@
+## [1.982.4](https://github.com/HankHuang0516/EClaw/compare/v1.982.3...v1.982.4) (2026-04-15)
+
+
+### Bug Fixes
+
+* **security:** replace Math.random() with crypto.randomBytes() in secret generation ([#1789](https://github.com/HankHuang0516/EClaw/issues/1789)) ([483f945](https://github.com/HankHuang0516/EClaw/commit/483f9453e6169a704ca295d70d06bd60930dc28d))
+
 ## [1.982.3](https://github.com/HankHuang0516/EClaw/compare/v1.982.2...v1.982.3) (2026-04-15)
 
 
