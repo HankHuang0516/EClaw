@@ -37,7 +37,16 @@ export default function BindEmailScreen() {
       Alert.alert(
         t('auth.bind_email_success', 'Email bound successfully'),
         t('auth.bind_email_verify_hint', 'Check your email to verify the address.'),
-        [{ text: 'OK', onPress: () => router.back() }]
+        [{
+          text: 'OK',
+          onPress: () => {
+            if (router.canDismiss && router.canDismiss()) {
+              router.dismiss();
+            } else {
+              router.replace('/(tabs)');
+            }
+          },
+        }]
       );
     } catch (err: any) {
       if (err.message?.includes('409')) {
