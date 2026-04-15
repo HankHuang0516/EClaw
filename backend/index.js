@@ -1238,6 +1238,15 @@ try {
     kanbanModule = { initKanbanDatabase: () => {}, startBackgroundTimers: () => {} };
 }
 
+// Growth metrics — botSecret + admin-owner gated, aggregate-only
+try {
+    const growthModule = require('./growth')(devices);
+    app.use('/api/growth', growthModule.router);
+    console.log('[Growth] Module loaded successfully');
+} catch (err) {
+    console.error('[Growth] Failed to load module:', err.message);
+}
+
 // ============================================
 // PAGE VIEW TRACKING (fire-and-forget)
 // ============================================

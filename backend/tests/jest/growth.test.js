@@ -1,0 +1,168 @@
+/**
+ * Growth Metrics endpoint tests
+ *
+ * Covers GET /api/growth/daily auth chain + aggregation contract.
+ * pg Pool is mocked; queries are intercepted to return canned rows so we
+ * verify the route's handling of each branch (signups, retention, plaza).
+ */
+
+let mockQuery;
+
+jest.mock('pg', () => ({
+    Pool: jest.fn().mockImplementation(() => ({
+        query: (...args) => mockQuery(...args),
+        connect: jest.fn(),
+        end: jest.fn(),
+    })),
+}));
+
+const express = require('express');
+const request = require('supertest');
+
+let app;
+let growthModule;
+
+beforeEach(() => {
+    jest.resetModules();
+    mockQuery = jest.fn();
+
+    app = express();
+    app.use(express.json());
+
+    const mockDevices = {
+        'admin-dev': {
+            deviceSecret: 'sec',
+            entities: {
+                2: { isBound: true, botSecret: 'admin-bot-sec', character: 'A' },
+            },
+        },
+        'user-dev': {
+            deviceSecret: 'sec2',
+            entities: {
+                2: { isBound: true, botSecret: 'user-bot-sec', character: 'U' },
+            },
+        },
+        'unknown-dev': {
+            deviceSecret: 'sec3',
+            entities: {
+                2: { isBound: true, botSecret: 'orphan-bot-sec', character: 'O' },
+            },
+        },
+    };
+
+    growthModule = require('../../growth')(mockDevices);
+    app.use('/api/growth', growthModule.router);
+
+    // clear rate buckets between tests
+    growthModule._internal.rateBuckets.clear();
+});
+
+const get = (qs) => request(app).get('/api/growth/daily' + qs);
+
+function setupAdminQueries({ signups = 5, cohort = 10, active = 4, plaza = 2 } = {}) {
+    // is_admin lookup → then 3 metric queries (parallel order: signups, retention, plaza)
+    mockQuery
+        .mockResolvedValueOnce({ rows: [{ is_admin: true }] })
+        .mockResolvedValueOnce({ rows: [{ c: signups }] })
+        .mockResolvedValueOnce({ rows: [{ cohort_size: cohort, active_size: active }] })
+        .mockResolvedValueOnce({ rows: [{ c: plaza }] });
+}
+
+describe('Growth /daily auth', () => {
+    it('rejects missing query params (400)', async () => {
+        const res = await get('?deviceId=admin-dev');
+        expect(res.status).toBe(400);
+    });
+
+    it('rejects invalid botSecret (401)', async () => {
+        const res = await get('?deviceId=admin-dev&botSecret=wrong&entityId=2');
+        expect(res.status).toBe(401);
+    });
+
+    it('rejects unknown deviceId (401)', async () => {
+        const res = await get('?deviceId=ghost&botSecret=admin-bot-sec&entityId=2');
+        expect(res.status).toBe(401);
+    });
+
+    it('rejects when owner is not admin (403)', async () => {
+        mockQuery.mockResolvedValueOnce({ rows: [{ is_admin: false }] });
+        const res = await get('?deviceId=user-dev&botSecret=user-bot-sec&entityId=2');
+        expect(res.status).toBe(403);
+    });
+
+    it('rejects when no user_account row matches deviceId (403)', async () => {
+        mockQuery.mockResolvedValueOnce({ rows: [] });
+        const res = await get('?deviceId=unknown-dev&botSecret=orphan-bot-sec&entityId=2');
+        expect(res.status).toBe(403);
+    });
+});
+
+describe('Growth /daily aggregation contract', () => {
+    it('returns the 3 metrics + date + follow-ups list', async () => {
+        setupAdminQueries({ signups: 7, cohort: 20, active: 8, plaza: 3 });
+        const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2');
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.today_signups).toBe(7);
+        expect(res.body.retention_7d).toEqual({ cohort_size: 20, active_size: 8, pct: 40 });
+        expect(res.body.plaza_new_listed_today).toBe(3);
+        expect(res.body.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        expect(Array.isArray(res.body.follow_ups)).toBe(true);
+        expect(res.body.follow_ups.length).toBe(2);
+    });
+
+    it('reports retention pct as null when cohort empty', async () => {
+        setupAdminQueries({ cohort: 0, active: 0 });
+        const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2');
+        expect(res.status).toBe(200);
+        expect(res.body.retention_7d.pct).toBeNull();
+        expect(res.body.retention_7d.cohort_size).toBe(0);
+    });
+
+    it('rounds retention pct to one decimal', async () => {
+        setupAdminQueries({ cohort: 7, active: 1 });
+        const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2');
+        expect(res.body.retention_7d.pct).toBe(14.3);
+    });
+
+    it('returns 500 on db error in metric query', async () => {
+        mockQuery
+            .mockResolvedValueOnce({ rows: [{ is_admin: true }] })
+            .mockRejectedValueOnce(new Error('boom'));
+        const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2');
+        expect(res.status).toBe(500);
+    });
+
+    it('returns 500 on db error in admin check', async () => {
+        mockQuery.mockRejectedValueOnce(new Error('admin check failed'));
+        const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2');
+        expect(res.status).toBe(500);
+    });
+});
+
+describe('Growth /daily rate limit', () => {
+    it('allows up to 60 requests per botSecret per hour', async () => {
+        // Simulate 60 successful calls
+        for (let i = 0; i < 60; i++) {
+            setupAdminQueries();
+            const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2');
+            expect(res.status).toBe(200);
+        }
+        // 61st should 429
+        mockQuery.mockResolvedValueOnce({ rows: [{ is_admin: true }] });
+        const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2');
+        expect(res.status).toBe(429);
+    });
+
+    it('separates rate buckets per botSecret', async () => {
+        // exhaust admin-bot-sec
+        for (let i = 0; i < 60; i++) {
+            setupAdminQueries();
+            await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2');
+        }
+        // user-dev with its own secret should still work (assuming admin)
+        setupAdminQueries();
+        const res = await get('?deviceId=user-dev&botSecret=user-bot-sec&entityId=2');
+        expect(res.status).toBe(200);
+    });
+});
