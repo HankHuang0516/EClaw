@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>EClawbot - Publisher</title>
+    <meta name="description" content="EClawbot cross-platform article and post publisher.">
+    <link rel="icon" type="image/png" href="assets/favicon-32.png">
+    <link rel="stylesheet" href="shared/style.css">
+    <link rel="canonical" href="https://eclawbot.com/portal/publisher.html">
+    <style>
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0;
+        }
+        .header-actions { display: flex; gap: 8px; align-items: center; }
+
+        .sub-tabs {
+            display: flex; gap: 0; margin-bottom: 20px;
+            border-bottom: 1px solid var(--card-border);
+            overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+        }
+        .sub-tabs::-webkit-scrollbar { display: none; }
+        .sub-tab {
+            padding: 10px 20px; font-size: 14px; font-weight: 500;
+            color: var(--text-secondary); text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: color 0.15s, border-color 0.15s;
+            cursor: pointer; display: flex; align-items: center;
+            gap: 6px; white-space: nowrap; flex-shrink: 0;
+        }
+        .sub-tab:hover { color: var(--text); }
+        .sub-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+        .section-title {
+            font-size: 13px; font-weight: 600; color: var(--text-secondary);
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
+        }
+
+        /* Platform grid */
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 10px;
+        }
+        .platform-chip {
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            cursor: pointer;
+            background: var(--input-bg);
+            transition: border-color 0.15s, background 0.15s;
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .platform-chip:hover { border-color: var(--primary); }
+        .platform-chip.active { border-color: var(--primary); background: rgba(255,68,68,0.08); }
+        .platform-chip.unconfigured { opacity: 0.55; }
+        .chip-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+        .chip-name { font-size: 14px; font-weight: 600; color: var(--text); }
+        .chip-region { font-size: 11px; color: var(--text-muted); }
+        .chip-format {
+            font-size: 10px; padding: 2px 6px; border-radius: 8px;
+            background: rgba(255,255,255,0.06); color: var(--text-secondary);
+        }
+        .chip-badge {
+            font-size: 10px; padding: 2px 6px; border-radius: 8px;
+        }
+        .chip-badge.ok { background: rgba(76,175,80,0.15); color: var(--success); }
+        .chip-badge.warn { background: rgba(255,152,0,0.15); color: var(--warning-hover, #ffb74d); }
+
+        /* Compose form */
+        .compose-field { margin-bottom: 12px; }
+        .compose-field label {
+            display: block; font-size: 12px; color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        .compose-field input[type="text"],
+        .compose-field input[type="password"],
+        .compose-field textarea {
+            width: 100%; padding: 10px 12px;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            color: var(--text); font-size: 13px;
+            font-family: inherit; outline: none;
+            transition: border-color 0.2s; box-sizing: border-box;
+        }
+        .compose-field input:focus,
+        .compose-field textarea:focus { border-color: var(--primary); }
+        .compose-field textarea { min-height: 180px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .field-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+        .counter {
+            font-size: 11px; color: var(--text-muted);
+            float: right;
+        }
+        .counter.warn { color: var(--warning-hover, #ffb74d); }
+        .counter.err { color: var(--error, #f44336); }
+
+        .key-bar {
+            display: flex; gap: 8px; align-items: center;
+            padding: 10px 12px;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            margin-bottom: 12px;
+        }
+        .key-bar input {
+            flex: 1; padding: 6px 8px;
+            background: transparent; border: none; outline: none;
+            color: var(--text); font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 12px;
+        }
+        .key-bar .key-status {
+            font-size: 11px; padding: 2px 8px; border-radius: 8px;
+            white-space: nowrap;
+        }
+        .key-bar .key-status.set { background: rgba(76,175,80,0.15); color: var(--success); }
+        .key-bar .key-status.unset { background: rgba(255,152,0,0.15); color: var(--warning-hover, #ffb74d); }
+
+        .result-box {
+            margin-top: 12px; padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            word-break: break-word;
+        }
+        .result-box.success {
+            background: rgba(76,175,80,0.10);
+            border: 1px solid rgba(76,175,80,0.35);
+            color: var(--success);
+        }
+        .result-box.error {
+            background: rgba(244,67,54,0.10);
+            border: 1px solid rgba(244,67,54,0.35);
+            color: var(--error, #f44336);
+        }
+        .result-box a { color: inherit; text-decoration: underline; }
+
+        .empty-state {
+            text-align: center; padding: 40px 20px;
+            color: var(--text-muted); font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">📰 <span data-i18n="pub_title">Publisher</span></h1>
+        </div>
+
+        <!-- Sub-tab Navigation -->
+        <div class="sub-tabs">
+            <a class="sub-tab" href="mission.html">🎯 <span data-i18n="mc_title">Mission Control</span></a>
+            <a class="sub-tab" href="kanban.html">📋 <span data-i18n="kanban_tab">Kanban Board</span></a>
+            <a class="sub-tab" href="env-vars.html">🔐 <span data-i18n="nav_env_vars">Env Variables</span></a>
+            <a class="sub-tab" href="screen-control.html">📱 <span data-i18n="nav_remote_control">Remote Control</span></a>
+            <a class="sub-tab active" href="publisher.html">📰 <span data-i18n="nav_publisher">Publisher</span></a>
+        </div>
+        <script>
+        (function() {
+            if (new URLSearchParams(window.location.search).get('embed') !== '1') return;
+            document.querySelectorAll('.sub-tab').forEach(a => {
+                const href = a.getAttribute('href');
+                if (href && !href.includes('embed=')) a.setAttribute('href', href + '?embed=1');
+            });
+        })();
+        </script>
+
+        <!-- Loading State -->
+        <div class="loading-center" id="loadingState" style="text-align:center;padding:40px 0;">
+            <div class="spinner" style="margin:0 auto 12px;"></div>
+            <div style="color:var(--text-secondary);" data-i18n="common_loading">Loading...</div>
+        </div>
+
+        <!-- Content -->
+        <div id="pageContent" style="display:none;">
+
+            <!-- API Key bar -->
+            <div class="card" style="margin-bottom:16px;">
+                <div class="section-title" data-i18n="pub_apikey_title">Publisher API Key</div>
+                <div class="key-bar">
+                    <span style="font-size:16px;">🔑</span>
+                    <input type="password" id="apiKeyInput"
+                        data-i18n-placeholder="pub_apikey_placeholder"
+                        placeholder="X-Publisher-Key (from device-vars: PUBLISHER_API_KEY)">
+                    <button class="btn btn-sm btn-outline" onclick="togglePasswordVisibility('apiKeyInput', this)">👁</button>
+                    <button class="btn btn-sm btn-primary" onclick="saveApiKey()" data-i18n="pub_apikey_save">Save</button>
+                    <span id="apiKeyStatus" class="key-status unset" data-i18n="pub_apikey_unset">not set</span>
+                </div>
+                <div class="field-hint" data-i18n="pub_apikey_hint">
+                    Stored in this browser's localStorage only. Never sent to any third party. Required for POST /publish requests.
+                </div>
+            </div>
+
+            <!-- Platform grid -->
+            <div class="card" style="margin-bottom:16px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                    <div class="section-title" style="margin-bottom:0;" data-i18n="pub_platforms_title">Platforms</div>
+                    <button class="btn btn-sm btn-outline" onclick="loadPlatforms()" data-i18n="pub_btn_refresh">Refresh</button>
+                </div>
+                <div id="platformGrid" class="platform-grid">
+                    <div class="empty-state" data-i18n="pub_platforms_loading">Loading platforms…</div>
+                </div>
+            </div>
+
+            <!-- Compose form -->
+            <div class="card" id="composeCard" style="display:none;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                    <div>
+                        <div class="section-title" style="margin-bottom:2px;" data-i18n="pub_compose_title">Compose</div>
+                        <div id="composeSubtitle" style="font-size:13px;color:var(--text);font-weight:500;"></div>
+                    </div>
+                    <div id="composeMeta" style="font-size:11px;color:var(--text-muted);text-align:right;"></div>
+                </div>
+
+                <div id="composeFields"></div>
+
+                <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+                    <button class="btn btn-outline" onclick="clearCompose()" data-i18n="pub_btn_clear">Clear</button>
+                    <button class="btn btn-primary" id="publishBtn" onclick="publishNow()" data-i18n="pub_btn_publish">Publish</button>
+                </div>
+
+                <div id="composeResult"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="../shared/i18n.js"></script>
+    <script src="shared/auth.js"></script>
+    <script src="shared/api.js"></script>
+    <script src="shared/nav.js"></script>
+    <script src="../shared/telemetry.js"></script>
+    <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
+    <script src="shared/ai-chat.js"></script>
+    <script>
+        // ─── State ───
+        let allPlatforms = [];
+        let selected = null;
+        const API_KEY_STORAGE = 'eclawPublisherApiKey';
+
+        // ─── Utils ───
+        function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+        function getApiKey() { return localStorage.getItem(API_KEY_STORAGE) || ''; }
+        function togglePasswordVisibility(inputId, btn) {
+            const el = document.getElementById(inputId);
+            el.type = el.type === 'password' ? 'text' : 'password';
+            btn.textContent = el.type === 'password' ? '👁' : '🙈';
+        }
+
+        // ─── Init ───
+        async function init() {
+            renderNav('mission');
+            if (typeof renderFooter === 'function') renderFooter();
+            currentUser = await checkAuth();
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('pageContent').style.display = 'block';
+            hydrateApiKey();
+            loadPlatforms();
+        }
+
+        function hydrateApiKey() {
+            const k = getApiKey();
+            const input = document.getElementById('apiKeyInput');
+            const status = document.getElementById('apiKeyStatus');
+            if (k) {
+                input.value = k;
+                status.className = 'key-status set';
+                status.textContent = i18n.t('pub_apikey_set', 'saved (' + k.length + ' chars)');
+            } else {
+                status.className = 'key-status unset';
+                status.textContent = i18n.t('pub_apikey_unset', 'not set');
+            }
+        }
+
+        function saveApiKey() {
+            const v = document.getElementById('apiKeyInput').value.trim();
+            if (!v) {
+                localStorage.removeItem(API_KEY_STORAGE);
+                showToast(i18n.t('pub_apikey_cleared', 'Key cleared'), 'info');
+            } else {
+                localStorage.setItem(API_KEY_STORAGE, v);
+                showToast(i18n.t('pub_apikey_saved', 'Key saved to this browser'), 'success');
+            }
+            hydrateApiKey();
+        }
+
+        // ─── Platforms ───
+        async function loadPlatforms() {
+            const grid = document.getElementById('platformGrid');
+            grid.innerHTML = '<div class="empty-state">' + esc(i18n.t('pub_platforms_loading', 'Loading platforms…')) + '</div>';
+            try {
+                const res = await fetch('/api/publisher/platforms');
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || 'load failed');
+                allPlatforms = data.platforms || [];
+                renderPlatforms();
+            } catch (e) {
+                grid.innerHTML = '<div class="empty-state" style="color:var(--error);">' +
+                    esc(i18n.t('pub_platforms_err', 'Failed to load platforms: ') + (e.message || e)) + '</div>';
+            }
+        }
+
+        function renderPlatforms() {
+            const grid = document.getElementById('platformGrid');
+            if (!allPlatforms.length) {
+                grid.innerHTML = '<div class="empty-state">' +
+                    esc(i18n.t('pub_platforms_none', 'No platforms registered.')) + '</div>';
+                return;
+            }
+            grid.innerHTML = allPlatforms.map(p => {
+                const classes = ['platform-chip'];
+                if (!p.configured) classes.push('unconfigured');
+                if (selected && selected.id === p.id) classes.push('active');
+                const badge = p.configured
+                    ? '<span class="chip-badge ok">' + esc(i18n.t('pub_chip_ready', 'ready')) + '</span>'
+                    : '<span class="chip-badge warn">' + esc(i18n.t('pub_chip_unconfigured', 'unconfigured')) + '</span>';
+                const extra = [];
+                if (p.warning) extra.push('<div style="font-size:11px;color:var(--warning-hover,#ffb74d);">⚠ ' + esc(p.warning) + '</div>');
+                if (p.rateLimit) extra.push('<div style="font-size:11px;color:var(--text-muted);">' +
+                    esc(i18n.t('pub_chip_rate', 'Rate: ')) +
+                    (p.rateLimit.remaining ?? '?') + '/' + (p.rateLimit.maxPerDay ?? '?') +
+                    ' ' + esc(i18n.t('pub_chip_rate_day', '/day')) + '</div>');
+                return '<div class="' + classes.join(' ') + '" onclick="selectPlatform(\'' + esc(p.id) + '\')">' +
+                    '<div class="chip-row"><span class="chip-name">' + esc(p.name) + '</span>' + badge + '</div>' +
+                    '<div class="chip-row">' +
+                    '<span class="chip-region">' + esc(p.region || '') + '</span>' +
+                    '<span class="chip-format">' + esc(p.contentFormat) + '</span>' +
+                    '</div>' + extra.join('') +
+                    '</div>';
+            }).join('');
+        }
+
+        function selectPlatform(id) {
+            selected = allPlatforms.find(p => p.id === id) || null;
+            renderPlatforms();
+            renderCompose();
+        }
+
+        // ─── Compose form schemas ───
+        // Each platform defines: fields[] and toBody(state) → request body
+        const SCHEMAS = {
+            x: {
+                fields: [{ key: 'text', type: 'textarea', label: 'Tweet text',
+                    hint: 'X weighted length limit = 280. Auto-counted below.',
+                    counter: 'weightedX', required: true }],
+                toBody: s => ({ text: s.text }),
+                path: '/api/publisher/x/tweet'
+            },
+            mastodon: {
+                fields: [{ key: 'status', type: 'textarea', label: 'Status',
+                    hint: 'Mastodon character limit is typically 500.',
+                    counter: 'plain500', required: true }],
+                toBody: s => ({ status: s.status }),
+                path: '/api/publisher/mastodon/publish'
+            },
+            devto: {
+                fields: [
+                    { key: 'title', type: 'text', label: 'Title', required: true },
+                    { key: 'body_markdown', type: 'textarea', label: 'Markdown body', required: true, tall: true },
+                    { key: 'tags', type: 'text', label: 'Tags (comma-separated, max 4)',
+                        hint: 'Letters/digits only, e.g. "api, privacy, nodejs".' }
+                ],
+                toBody: s => ({
+                    title: s.title,
+                    body_markdown: s.body_markdown,
+                    tags: splitTags(s.tags).slice(0, 4),
+                    published: true
+                }),
+                path: '/api/publisher/devto/publish'
+            },
+            hashnode: {
+                fields: [
+                    { key: 'publicationId', type: 'text', label: 'Publication ID',
+                        hint: 'Hashnode publicationId — required. Add to device-vars as HASHNODE_PUBLICATION_ID and paste here, or use your workspace URL.' ,
+                        required: true },
+                    { key: 'title', type: 'text', label: 'Title', required: true },
+                    { key: 'contentMarkdown', type: 'textarea', label: 'Markdown body', required: true, tall: true },
+                    { key: 'tags', type: 'text', label: 'Tags (comma-separated)' }
+                ],
+                toBody: s => ({
+                    publicationId: s.publicationId,
+                    title: s.title,
+                    contentMarkdown: s.contentMarkdown,
+                    tags: splitTags(s.tags)
+                }),
+                path: '/api/publisher/hashnode/publish'
+            },
+            qiita: {
+                fields: [
+                    { key: 'title', type: 'text', label: 'Title', required: true },
+                    { key: 'body', type: 'textarea', label: 'Markdown body', required: true, tall: true },
+                    { key: 'tags', type: 'text', label: 'Tags (comma-separated)' }
+                ],
+                toBody: s => ({
+                    title: s.title,
+                    body: s.body,
+                    tags: splitTags(s.tags).map(name => ({ name, versions: ['1.0'] }))
+                }),
+                path: '/api/publisher/qiita/publish'
+            },
+            telegraph: {
+                fields: [
+                    { key: 'title', type: 'text', label: 'Title', required: true },
+                    { key: 'content', type: 'textarea', label: 'HTML content', required: true, tall: true,
+                        hint: 'Basic HTML: <p>, <h3>, <h4>, <a>, <blockquote>, <img>, <figure>.' },
+                    { key: 'author_name', type: 'text', label: 'Author (optional)' }
+                ],
+                toBody: s => ({ title: s.title, content: s.content, author_name: s.author_name || undefined }),
+                path: '/api/publisher/telegraph/publish'
+            },
+            blogger: {
+                fields: [
+                    { key: 'title', type: 'text', label: 'Title', required: true },
+                    { key: 'content', type: 'textarea', label: 'HTML content', required: true, tall: true },
+                    { key: 'labels', type: 'text', label: 'Labels (comma-separated)' }
+                ],
+                toBody: s => ({ title: s.title, content: s.content, labels: splitTags(s.labels) }),
+                path: '/api/publisher/blogger/publish'
+            },
+            wordpress: {
+                fields: [
+                    { key: 'title', type: 'text', label: 'Title', required: true },
+                    { key: 'content', type: 'textarea', label: 'HTML content', required: true, tall: true },
+                    { key: 'tags', type: 'text', label: 'Tags (comma-separated)' },
+                    { key: 'categories', type: 'text', label: 'Categories (comma-separated)' }
+                ],
+                toBody: s => ({
+                    title: s.title,
+                    content: s.content,
+                    tags: splitTags(s.tags),
+                    categories: splitTags(s.categories)
+                }),
+                path: '/api/publisher/wordpress/publish'
+            },
+            tumblr: {
+                fields: [
+                    { key: 'blog_name', type: 'text', label: 'Blog name (slug, e.g. your-blog)', required: true },
+                    { key: 'title', type: 'text', label: 'Title (optional)' },
+                    { key: 'body', type: 'textarea', label: 'Body (markdown or plain)', required: true, tall: true },
+                    { key: 'tags', type: 'text', label: 'Tags (comma-separated)' }
+                ],
+                toBody: s => ({
+                    blog_name: s.blog_name,
+                    title: s.title || undefined,
+                    body: s.body,
+                    tags: splitTags(s.tags)
+                }),
+                path: '/api/publisher/tumblr/publish'
+            },
+            reddit: {
+                fields: [
+                    { key: 'subreddit', type: 'text', label: 'Subreddit (without r/)', required: true },
+                    { key: 'title', type: 'text', label: 'Title', required: true },
+                    { key: 'text', type: 'textarea', label: 'Body (markdown, optional)' }
+                ],
+                toBody: s => ({ subreddit: s.subreddit, title: s.title, text: s.text || '' }),
+                path: '/api/publisher/reddit/submit'
+            },
+            linkedin: {
+                fields: [{ key: 'text', type: 'textarea', label: 'Post text', required: true }],
+                toBody: s => ({ text: s.text }),
+                path: '/api/publisher/linkedin/publish'
+            },
+            wechat: {
+                fields: [
+                    { key: 'title', type: 'text', label: 'Title', required: true },
+                    { key: 'content', type: 'textarea', label: 'HTML content', required: true, tall: true }
+                ],
+                toBody: s => ({ articles: [{ title: s.title, content: s.content }] }),
+                path: '/api/publisher/wechat/draft'
+            }
+        };
+
+        function splitTags(s) {
+            if (!s) return [];
+            return s.split(',').map(t => t.trim()).filter(Boolean);
+        }
+
+        // ─── Character counters ───
+        function plainLength(s) { return (s || '').length; }
+        function weightedXLength(s) {
+            // Rough approximation of X weighted length — not 100% RFC-accurate.
+            // Counts CJK/emoji as 2, ASCII as 1. Server-side enforces actual limit.
+            s = s || '';
+            let c = 0;
+            for (const ch of s) c += /[\x00-\x7F]/.test(ch) ? 1 : 2;
+            return c;
+        }
+        const COUNTERS = {
+            plain500: { fn: plainLength, limit: 500 },
+            weightedX: { fn: weightedXLength, limit: 280 }
+        };
+
+        // ─── Compose render ───
+        function renderCompose() {
+            const card = document.getElementById('composeCard');
+            if (!selected) { card.style.display = 'none'; return; }
+            card.style.display = 'block';
+
+            const schema = SCHEMAS[selected.id];
+            document.getElementById('composeSubtitle').textContent = selected.name +
+                ' (' + (selected.contentFormat || '?') + ')';
+            const meta = [];
+            if (selected.authType) meta.push('auth: ' + selected.authType);
+            if (selected.region) meta.push(selected.region);
+            if (selected.draftsOnly) meta.push(i18n.t('pub_compose_draftsonly', 'drafts only'));
+            if (selected.warning) meta.push('⚠ ' + selected.warning);
+            document.getElementById('composeMeta').innerHTML = meta.map(esc).join('<br>');
+
+            const container = document.getElementById('composeFields');
+            if (!schema) {
+                container.innerHTML = '<div class="empty-state">' +
+                    esc(i18n.t('pub_compose_no_schema',
+                        'No compose form defined for this platform yet — publish via API directly or add a schema.')) +
+                    '</div>';
+                document.getElementById('publishBtn').disabled = true;
+                return;
+            }
+            document.getElementById('publishBtn').disabled = false;
+            container.innerHTML = schema.fields.map((f, i) => {
+                const id = 'fld_' + f.key;
+                const counterId = f.counter ? 'cnt_' + f.key : null;
+                const counterHtml = counterId
+                    ? '<span id="' + counterId + '" class="counter">0</span>'
+                    : '';
+                let ctrl;
+                if (f.type === 'textarea') {
+                    ctrl = '<textarea id="' + id + '"' +
+                        (f.tall ? ' style="min-height:260px;"' : '') +
+                        (f.required ? ' required' : '') +
+                        (f.counter ? ' oninput="updateCounter(\'' + f.key + '\')"' : '') +
+                        '></textarea>';
+                } else {
+                    ctrl = '<input type="text" id="' + id + '"' +
+                        (f.required ? ' required' : '') + '>';
+                }
+                return '<div class="compose-field">' +
+                    '<label>' + counterHtml + esc(f.label) +
+                    (f.required ? ' <span style="color:var(--error,#f44336)">*</span>' : '') +
+                    '</label>' +
+                    ctrl +
+                    (f.hint ? '<div class="field-hint">' + esc(f.hint) + '</div>' : '') +
+                    '</div>';
+            }).join('');
+
+            document.getElementById('composeResult').innerHTML = '';
+        }
+
+        function updateCounter(key) {
+            const field = SCHEMAS[selected.id].fields.find(f => f.key === key);
+            if (!field || !field.counter) return;
+            const cfg = COUNTERS[field.counter];
+            if (!cfg) return;
+            const val = document.getElementById('fld_' + key).value;
+            const used = cfg.fn(val);
+            const el = document.getElementById('cnt_' + key);
+            el.textContent = used + ' / ' + cfg.limit;
+            el.classList.remove('warn', 'err');
+            if (used > cfg.limit) el.classList.add('err');
+            else if (used > cfg.limit * 0.9) el.classList.add('warn');
+        }
+
+        function clearCompose() {
+            if (!selected) return;
+            const schema = SCHEMAS[selected.id];
+            if (!schema) return;
+            schema.fields.forEach(f => {
+                const el = document.getElementById('fld_' + f.key);
+                if (el) el.value = '';
+                if (f.counter) updateCounter(f.key);
+            });
+            document.getElementById('composeResult').innerHTML = '';
+        }
+
+        // ─── Publish ───
+        async function publishNow() {
+            if (!selected) return;
+            const schema = SCHEMAS[selected.id];
+            if (!schema) return;
+
+            const key = getApiKey();
+            if (!key) {
+                showToast(i18n.t('pub_err_no_key',
+                    'Save your Publisher API key first (top of page).'), 'error');
+                return;
+            }
+
+            const state = {};
+            for (const f of schema.fields) {
+                const el = document.getElementById('fld_' + f.key);
+                const v = el ? el.value.trim() : '';
+                if (f.required && !v) {
+                    showToast(i18n.t('pub_err_missing_field', 'Missing required field: ') + f.label, 'error');
+                    return;
+                }
+                state[f.key] = v;
+            }
+
+            const body = schema.toBody(state);
+            const btn = document.getElementById('publishBtn');
+            const resultEl = document.getElementById('composeResult');
+            btn.disabled = true;
+            const originalLabel = btn.textContent;
+            btn.textContent = i18n.t('pub_btn_publishing', 'Publishing…');
+            resultEl.innerHTML = '';
+
+            try {
+                const res = await fetch(schema.path, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Publisher-Key': key
+                    },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.ok && data.success !== false) {
+                    const url = data.url || data.post_url || data.link;
+                    const idLine = data.postId || data.tweetId || data.id || data.slug;
+                    resultEl.innerHTML = '<div class="result-box success">' +
+                        '✓ ' + esc(i18n.t('pub_result_ok', 'Published on ') + selected.name) +
+                        (idLine ? ' · <code>' + esc(String(idLine)) + '</code>' : '') +
+                        (url ? '<br><a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(url) + '</a>' : '') +
+                        '</div>';
+                    telemetry.trackAction('publisher_publish_success', { platform: selected.id });
+                } else {
+                    const msg = data.error || data.message || ('HTTP ' + res.status);
+                    resultEl.innerHTML = '<div class="result-box error">✗ ' +
+                        esc(i18n.t('pub_result_err', 'Publish failed: ') + msg) +
+                        '</div>';
+                    telemetry.trackError('publisher_publish_failed', {
+                        platform: selected.id, status: res.status, error: msg
+                    });
+                }
+            } catch (e) {
+                resultEl.innerHTML = '<div class="result-box error">✗ ' +
+                    esc(i18n.t('pub_result_network_err', 'Network error: ') + (e.message || e)) +
+                    '</div>';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalLabel;
+            }
+        }
+
+        init();
+    </script>
+    </main>
+</body>
+</html>
