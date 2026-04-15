@@ -17,7 +17,6 @@
       "bundleIdentifier": "com.eclawbot.app",
       "usesAppleSignIn": true,
       "associatedDomains": [
-        "applinks:eclawbot.com",
         "applinks:eclawbot.com"
       ],
       "infoPlist": {
