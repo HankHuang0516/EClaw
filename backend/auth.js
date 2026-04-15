@@ -132,9 +132,17 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
         }
     }
 
-    // Middleware: extract user from cookie
+    // Extract bearer token from Authorization header (mobile clients can't carry httpOnly cookies)
+    function extractBearer(req) {
+        const h = req.headers && (req.headers.authorization || req.headers.Authorization);
+        if (!h || typeof h !== 'string') return null;
+        const m = /^Bearer\s+(.+)$/i.exec(h.trim());
+        return m ? m[1] : null;
+    }
+
+    // Middleware: extract user from cookie OR Authorization: Bearer header
     function authMiddleware(req, res, next) {
-        const token = req.cookies && req.cookies.eclaw_session;
+        const token = (req.cookies && req.cookies.eclaw_session) || extractBearer(req);
         if (!token) {
             return res.status(401).json({ success: false, error: 'Not authenticated' });
         }
@@ -2002,9 +2010,9 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
         }
     });
 
-    // Soft auth: populate req.user from cookie if valid, but never reject
+    // Soft auth: populate req.user from cookie OR Bearer header if valid, but never reject
     function softAuthMiddleware(req, res, next) {
-        const token = req.cookies && req.cookies.eclaw_session;
+        const token = (req.cookies && req.cookies.eclaw_session) || extractBearer(req);
         if (token) {
             const decoded = verifyToken(token);
             if (decoded) {
