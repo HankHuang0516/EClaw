@@ -1,3 +1,10 @@
+## [1.981.5](https://github.com/HankHuang0516/EClaw/compare/v1.981.4...v1.981.5) (2026-04-15)
+
+
+### Bug Fixes
+
+* **ios:** stop leaking deviceSecret into AI chat message body ([1c1a7fb](https://github.com/HankHuang0516/EClaw/commit/1c1a7fb5fb3e722dd6e30c62d9ec4bd42b4ca360)), closes [#1774](https://github.com/HankHuang0516/EClaw/issues/1774)
+
 ## [1.981.4](https://github.com/HankHuang0516/EClaw/compare/v1.981.3...v1.981.4) (2026-04-15)
 
 
