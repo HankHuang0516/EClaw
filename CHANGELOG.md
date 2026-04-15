@@ -1,3 +1,10 @@
+# [1.979.0](https://github.com/HankHuang0516/EClaw/compare/v1.978.3...v1.979.0) (2026-04-15)
+
+
+### Features
+
+* GET /api/growth/daily aggregate metrics endpoint ([e747afe](https://github.com/HankHuang0516/EClaw/commit/e747afe583e32cfbd0884d0dd379c934b23b45a5))
+
 ## [1.978.3](https://github.com/HankHuang0516/EClaw/compare/v1.978.2...v1.978.3) (2026-04-14)
 
 
