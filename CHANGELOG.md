@@ -1,3 +1,11 @@
+## [1.981.9](https://github.com/HankHuang0516/EClaw/compare/v1.981.8...v1.981.9) (2026-04-15)
+
+
+### Bug Fixes
+
+* **ios/card-holder:** check response.data.success before mutating local state ([b4b31b1](https://github.com/HankHuang0516/EClaw/commit/b4b31b122295d76bcdbf31126b7ea0dcfe476f7d)), closes [#1778](https://github.com/HankHuang0516/EClaw/issues/1778)
+* **ios/bind-email:** use router.dismiss() with safe fallback after bind ([8b584b8](https://github.com/HankHuang0516/EClaw/commit/8b584b8d6bd8ac0d70a827b612160c2cebad2d9a)), closes [#1780](https://github.com/HankHuang0516/EClaw/issues/1780)
+
 ## [1.981.8](https://github.com/HankHuang0516/EClaw/compare/v1.981.7...v1.981.8) (2026-04-15)
 
 
