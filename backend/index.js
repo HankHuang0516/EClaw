@@ -3241,32 +3241,29 @@ app.post('/api/admin/bots/create', adminAuth, adminCheck, async (req, res) => {
     }
 });
 
-// Helper: Generate 6-digit binding code
+// Helper: Generate 6-digit binding code (cryptographically secure)
 function generateBindingCode() {
     let code;
     do {
-        code = Math.floor(100000 + Math.random() * 900000).toString();
+        const buf = crypto.randomBytes(4);
+        code = (100000 + (buf.readUInt32BE(0) % 900000)).toString();
     } while (pendingBindings[code]); // Ensure unique
     return code;
 }
 
 // Helper: Generate secure bot secret (32 character hex string)
 function generateBotSecret() {
-    const chars = 'abcdef0123456789';
-    let secret = '';
-    for (let i = 0; i < 32; i++) {
-        secret += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return secret;
+    return crypto.randomBytes(16).toString('hex');
 }
 
-// Helper: Generate 6-char public code for cross-device messaging
+// Helper: Generate 6-char public code for cross-device messaging (cryptographically secure)
 function generatePublicCode() {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     for (let attempt = 0; attempt < 10; attempt++) {
+        const bytes = crypto.randomBytes(6);
         let code = '';
         for (let i = 0; i < 6; i++) {
-            code += chars.charAt(Math.floor(Math.random() * chars.length));
+            code += chars.charAt(bytes[i] % chars.length);
         }
         if (!publicCodeIndex[code]) return code;
     }
