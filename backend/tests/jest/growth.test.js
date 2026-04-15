@@ -108,7 +108,22 @@ describe('Growth /daily aggregation contract', () => {
         expect(res.body.plaza_new_listed_today).toBe(3);
         expect(res.body.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         expect(Array.isArray(res.body.follow_ups)).toBe(true);
-        expect(res.body.follow_ups.length).toBe(2);
+        expect(res.body.follow_ups.length).toBe(3);
+    });
+
+    it('never leaks PII fields (id/email/ip/device_id) in response', async () => {
+        setupAdminQueries({ signups: 1, cohort: 1, active: 1, plaza: 1 });
+        const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2');
+        const body = JSON.stringify(res.body);
+        expect(body).not.toMatch(/\bid\b\s*:/i);
+        expect(body).not.toMatch(/email/i);
+        expect(body).not.toMatch(/ip_address|"ip"/i);
+        expect(body).not.toMatch(/device_id|deviceId/);
+    });
+
+    it('handles non-numeric entityId as 401 (NaN safe)', async () => {
+        const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=abc');
+        expect(res.status).toBe(401);
     });
 
     it('reports retention pct as null when cohort empty', async () => {

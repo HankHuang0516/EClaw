@@ -56,31 +56,37 @@ async function isOwnerAdmin(deviceId) {
     return r.rows.length > 0 && r.rows[0].is_admin === true;
 }
 
+const TZ = 'Asia/Taipei';
+
 async function fetchTodaySignups() {
     const r = await pool.query(
         `SELECT COUNT(*)::int AS c FROM user_accounts
-         WHERE created_at >= date_trunc('day', NOW())
-           AND created_at <  date_trunc('day', NOW()) + INTERVAL '1 day'`
+         WHERE created_at >= date_trunc('day', NOW() AT TIME ZONE $1) AT TIME ZONE $1
+           AND created_at <  (date_trunc('day', NOW() AT TIME ZONE $1) + INTERVAL '1 day') AT TIME ZONE $1`,
+        [TZ]
     );
     return r.rows[0].c;
 }
 
 async function fetchRetention7d() {
     const r = await pool.query(
-        `WITH cohort AS (
-           SELECT id FROM user_accounts
-           WHERE created_at >= date_trunc('day', NOW() - INTERVAL '7 days')
-             AND created_at <  date_trunc('day', NOW() - INTERVAL '6 days')
+        `WITH today_start AS (
+           SELECT date_trunc('day', NOW() AT TIME ZONE $1) AS d
+         ),
+         cohort AS (
+           SELECT id FROM user_accounts, today_start
+           WHERE created_at >= (d - INTERVAL '7 days') AT TIME ZONE $1
+             AND created_at <  (d - INTERVAL '6 days') AT TIME ZONE $1
          ),
          active AS (
-           SELECT id FROM cohort
-           WHERE id IN (
-             SELECT id FROM user_accounts
-             WHERE last_login_at >= NOW() - INTERVAL '24 hours'
-           )
+           SELECT c.id FROM cohort c
+           JOIN user_accounts u ON u.id = c.id, today_start
+           WHERE u.last_login_at >= d AT TIME ZONE $1
+             AND u.last_login_at <  (d + INTERVAL '1 day') AT TIME ZONE $1
          )
          SELECT (SELECT COUNT(*) FROM cohort)::int AS cohort_size,
-                (SELECT COUNT(*) FROM active)::int AS active_size`
+                (SELECT COUNT(*) FROM active)::int AS active_size`,
+        [TZ]
     );
     const { cohort_size, active_size } = r.rows[0];
     if (cohort_size === 0) return { cohort_size: 0, active_size: 0, pct: null };
@@ -95,8 +101,9 @@ async function fetchPlazaNewListed() {
     const r = await pool.query(
         `SELECT COUNT(*)::int AS c FROM bot_listings
          WHERE status = 'listed'
-           AND created_at >= date_trunc('day', NOW())
-           AND created_at <  date_trunc('day', NOW()) + INTERVAL '1 day'`
+           AND created_at >= date_trunc('day', NOW() AT TIME ZONE $1) AT TIME ZONE $1
+           AND created_at <  (date_trunc('day', NOW() AT TIME ZONE $1) + INTERVAL '1 day') AT TIME ZONE $1`,
+        [TZ]
     );
     return r.rows[0].c;
 }
@@ -116,6 +123,10 @@ module.exports = function(devices) {
             return res.status(401).json({ success: false, error: 'Invalid credentials' });
         }
 
+        if (!checkRate(botSecret)) {
+            return res.status(429).json({ success: false, error: 'Rate limit exceeded (60/hour)' });
+        }
+
         let admin;
         try {
             admin = await isOwnerAdmin(deviceId);
@@ -125,10 +136,6 @@ module.exports = function(devices) {
         }
         if (!admin) {
             return res.status(403).json({ success: false, error: 'Owner is not admin' });
-        }
-
-        if (!checkRate(botSecret)) {
-            return res.status(429).json({ success: false, error: 'Rate limit exceeded (60/hour)' });
         }
 
         try {
@@ -145,7 +152,8 @@ module.exports = function(devices) {
                 plaza_new_listed_today,
                 follow_ups: [
                     'source_channel: schema lacks signup_source column',
-                    'visitor_to_signup_conversion: page_views has no FK to user_accounts'
+                    'visitor_to_signup_conversion: page_views has no FK to user_accounts',
+                    'plaza_new_listed_today: counts created_at not status_changed_at (bot_listings has no listed_at column)'
                 ]
             });
         } catch (err) {
