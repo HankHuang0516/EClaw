@@ -1,3 +1,10 @@
+## [1.982.1](https://github.com/HankHuang0516/EClaw/compare/v1.982.0...v1.982.1) (2026-04-15)
+
+
+### Bug Fixes
+
+* **ios:** pin bottom tab bar height so tabs are tappable ([fe03255](https://github.com/HankHuang0516/EClaw/commit/fe03255d3dee1f50c0c93ad6b985b7f734efa6dc))
+
 # [1.982.0](https://github.com/HankHuang0516/EClaw/compare/v1.981.14...v1.982.0) (2026-04-15)
 
 
