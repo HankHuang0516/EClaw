@@ -369,7 +369,7 @@
                 if (overlay) overlay.remove();
                 loadTab();
             } catch (err) {
-                showToast(err.message || 'Failed', 'error');
+                showToast(err.message || tt('mr_action_failed', 'Failed'), 'error');
                 btn.disabled = false;
                 btn.textContent = tt('mr_confirm_end', 'Confirm End');
             }
@@ -418,7 +418,7 @@
                 showToast(tt('mr_dispute_filed', 'Dispute filed!'), 'success');
                 switchTab('disputes');
             } catch (err) {
-                showToast(err.message || 'Failed', 'error');
+                showToast(err.message || tt('mr_action_failed', 'Failed'), 'error');
                 btn.disabled = false;
                 btn.textContent = tt('mr_submit_dispute', 'Submit Dispute');
             }
@@ -454,7 +454,7 @@
                 await apiCall('POST', `/api/rental/contract/${contractId}/review`, { rating, comment });
                 showToast(tt('mr_review_submitted', 'Review submitted!'), 'success');
                 loadTab();
-            } catch (err) { showToast(err.message || 'Failed', 'error'); }
+            } catch (err) { showToast(err.message || tt('mr_action_failed', 'Failed'), 'error'); }
         }
 
         /* ── Stub actions ── */

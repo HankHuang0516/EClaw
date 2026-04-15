@@ -155,29 +155,29 @@
         <!-- Balance summary -->
         <div class="balance-card">
             <div class="balance-label" data-i18n="wallet_available_balance">Available Balance</div>
-            <div class="balance-amount"><span id="balanceEcoin">0</span> <span style="font-size:18px;opacity:0.8;">e幣</span></div>
-            <div class="balance-twd">≈ $<span id="balanceUsd">0</span> USD</div>
+            <div class="balance-amount"><span id="balanceEcoin">0</span> <span style="font-size:18px;opacity:0.8;" data-i18n="wallet_ecoin_unit">e-coin</span></div>
+            <div class="balance-twd">≈ $<span id="balanceUsd">0</span> <span data-i18n="wallet_usd_label">USD</span></div>
             <div class="balance-row">
                 <div class="balance-mini">
                     <div class="mini-label" data-i18n="wallet_held_deposit">Held (Deposit)</div>
-                    <div class="mini-value"><span id="heldEcoin">0</span> e幣</div>
+                    <div class="mini-value"><span id="heldEcoin">0</span> <span data-i18n="wallet_ecoin_unit">e-coin</span></div>
                 </div>
                 <div class="balance-mini">
                     <div class="mini-label" data-i18n="wallet_lifetime_earned">Lifetime Earned</div>
-                    <div class="mini-value"><span id="lifetimeEarned">0</span> e幣</div>
+                    <div class="mini-value"><span id="lifetimeEarned">0</span> <span data-i18n="wallet_ecoin_unit">e-coin</span></div>
                 </div>
                 <div class="balance-mini">
                     <div class="mini-label" data-i18n="wallet_lifetime_spent">Lifetime Spent</div>
-                    <div class="mini-value"><span id="lifetimeSpent">0</span> e幣</div>
+                    <div class="mini-value"><span id="lifetimeSpent">0</span> <span data-i18n="wallet_ecoin_unit">e-coin</span></div>
                 </div>
             </div>
         </div>
 
         <!-- Top-up tiers -->
         <div class="section">
-            <h3 data-i18n="wallet_topup">Top up e幣</h3>
+            <h3 data-i18n="wallet_topup">Top up e-coin</h3>
             <p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;" data-i18n="wallet_topup_desc">
-                Pay via Google Play. Higher tiers earn bonus e幣.
+                Pay via Google Play. Higher tiers earn bonus e-coin.
             </p>
             <div class="tier-grid" id="tierGrid">
                 <!-- populated by JS -->
@@ -258,6 +258,8 @@
                 grid.innerHTML = '';
                 const bonusTpl = tt('wallet_bonus_label', 'incl. +%s bonus');
                 const titleHint = tt('wallet_topup_via_app', 'Please top up via the Android app');
+                const ecoinUnit = tt('wallet_ecoin_unit', 'e-coin');
+                const usdLabel = tt('wallet_usd_label', 'USD');
                 for (const t of data.tiers) {
                     const card = document.createElement('div');
                     card.className = 'tier-card';
@@ -268,8 +270,8 @@
                         : '';
                     card.innerHTML = `
                         ${bonusBadge}
-                        <div class="tier-twd">$${t.priceUsd} USD</div>
-                        <div class="tier-ecoin">${t.ecoinTotal.toLocaleString()} e幣</div>
+                        <div class="tier-twd">$${t.priceUsd} ${usdLabel}</div>
+                        <div class="tier-ecoin">${t.ecoinTotal.toLocaleString()} ${ecoinUnit}</div>
                         ${bonusLine}
                     `;
                     card.title = titleHint;
@@ -293,6 +295,7 @@
                 const colType = tt('wallet_col_type', 'Type');
                 const colNote = tt('wallet_col_note', 'Note');
                 const colAmount = tt('wallet_col_amount', 'Amount');
+                const ledgerUnit = tt('wallet_ecoin_unit', 'e-coin');
                 let html = '<table class="ledger-table"><thead><tr>'
                     + `<th>${colTime}</th><th>${colType}</th><th>${colNote}</th><th style="text-align:right;">${colAmount}</th>`
                     + '</tr></thead><tbody>';
@@ -310,7 +313,7 @@
                         <td>${dateStr}</td>
                         <td><span class="ledger-type">${ledgerTypeLabel(e.type)}</span></td>
                         <td style="color:var(--text-secondary);font-size:12px;">${e.note || ''}</td>
-                        <td class="ledger-amount ${cls}" style="text-align:right;">${sign}${ecoin.toLocaleString()} e幣</td>
+                        <td class="ledger-amount ${cls}" style="text-align:right;">${sign}${ecoin.toLocaleString()} ${ledgerUnit}</td>
                     </tr>`;
                 }
                 html += '</tbody></table>';
