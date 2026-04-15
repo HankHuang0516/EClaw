@@ -1,3 +1,10 @@
+## [1.981.8](https://github.com/HankHuang0516/EClaw/compare/v1.981.7...v1.981.8) (2026-04-15)
+
+
+### Bug Fixes
+
+* **portal:** add iOS WebView device-login fallback in checkAuth ([ad7000c](https://github.com/HankHuang0516/EClaw/commit/ad7000ca473308004a3e5067ab556c237d725757)), closes [#1765](https://github.com/HankHuang0516/EClaw/issues/1765)
+
 ## [1.981.7](https://github.com/HankHuang0516/EClaw/compare/v1.981.6...v1.981.7) (2026-04-15)
 
 
