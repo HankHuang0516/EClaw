@@ -1667,26 +1667,28 @@ authModule.setOnEmailVerified(async (deviceId) => {
             toEntity.lastUpdated = Date.now();
 
             if (toEntity.bindingType === 'channel') {
-                // Channel plugin: send structured JSON
+                // Channel plugin: send structured JSON via unifiedPush
                 const flushXdSettings = await crossDeviceSettings.getSettings(target.deviceId, target.entityId);
-                channelModule.pushToChannelCallback(target.deviceId, target.entityId, {
-                    event: 'cross_device_message',
-                    from: `New User (${deviceId})`,
-                    text: msg.text,
-                    mediaType: msg.media_type || null,
-                    mediaUrl: msg.media_url || null,
-                    backupUrl: msg.media_type === 'photo' ? getBackupUrl(msg.media_url) : null,
-                    fromEntityId: -1,
-                    fromPublicCode: null,
-                    fromDeviceId: deviceId,
-                    isOwnerMode: true,
-                    eclaw_context: {
-                        missionHints: getMissionApiHints('https://eclawbot.com', target.deviceId, target.entityId, toEntity.botSecret),
-                        silentToken: '[SILENT]',
-                        identitySetupRequired: !toEntity.identity,
-                        preInject: flushXdSettings.pre_inject || null
+                unifiedPush(toEntity, target.deviceId, 'cross_device_message', { message: msg.text }, {
+                    channelPayload: {
+                        event: 'cross_device_message',
+                        from: `New User (${deviceId})`,
+                        text: msg.text,
+                        mediaType: msg.media_type || null,
+                        mediaUrl: msg.media_url || null,
+                        backupUrl: msg.media_type === 'photo' ? getBackupUrl(msg.media_url) : null,
+                        fromEntityId: -1,
+                        fromPublicCode: null,
+                        fromDeviceId: deviceId,
+                        isOwnerMode: true,
+                        eclaw_context: {
+                            missionHints: getMissionApiHints('https://eclawbot.com', target.deviceId, target.entityId, toEntity.botSecret),
+                            silentToken: '[SILENT]',
+                            identitySetupRequired: !toEntity.identity,
+                            preInject: flushXdSettings.pre_inject || null
+                        }
                     }
-                }, toEntity.channelAccountId).catch(() => {});
+                }).catch(() => {});
             } else if (toEntity.webhook) {
                 const apiBase = 'https://eclawbot.com';
                 let pushMsg = `[ACTION REQUIRED] You MUST use exec tool with curl to call the API. Your text reply is DISCARDED.\n`;
@@ -4743,28 +4745,37 @@ async function deliverToEntity(opts) {
 
     // Fire-and-forget push
     if (isChannelBound) {
-        channelModule.pushToChannelCallback(targetDeviceId, toId, {
-            event: isBroadcast ? 'broadcast' : 'entity_message',
+        // Use unifiedPush for channel — applies middleware (hints, vars, rename)
+        unifiedPush(toEntity, targetDeviceId, isBroadcast ? 'entity_broadcast' : 'entity_message', {
+            message: text,
             from: sourceLabel,
-            text,
-            card: card || null,
             mediaType: mediaType || null,
             mediaUrl: mediaUrl || null,
-            backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
-            isBroadcast,
-            ...(isBroadcast && broadcastTargetIds ? { broadcastRecipients: broadcastTargetIds } : {}),
-            fromEntityId: fromId,
-            fromCharacter: fromEntity.character,
-            eclaw_context: {
-                b2bRemaining: getBotToBotRemaining(targetDeviceId, toId),
-                b2bMax: BOT2BOT_MAX_MESSAGES,
-                expectsReply,
-                missionHints: getMissionApiHints(apiBase, targetDeviceId, toId, toEntity.botSecret),
-                silentToken: '[SILENT]',
-                identitySetupRequired: !toEntity.identity
-            }
-        }, toEntity.channelAccountId).then(pushResult => {
-            if (pushResult.pushed) {
+        }, {
+            from: sourceLabel,
+            channelPayload: {
+                event: isBroadcast ? 'broadcast' : 'entity_message',
+                from: sourceLabel,
+                text, // unifiedPush will enrich this via middleware
+                card: card || null,
+                mediaType: mediaType || null,
+                mediaUrl: mediaUrl || null,
+                backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
+                isBroadcast,
+                ...(isBroadcast && broadcastTargetIds ? { broadcastRecipients: broadcastTargetIds } : {}),
+                fromEntityId: fromId,
+                fromCharacter: fromEntity.character,
+                eclaw_context: {
+                    b2bRemaining: getBotToBotRemaining(targetDeviceId, toId),
+                    b2bMax: BOT2BOT_MAX_MESSAGES,
+                    expectsReply,
+                    missionHints: getMissionApiHints(apiBase, targetDeviceId, toId, toEntity.botSecret),
+                    silentToken: '[SILENT]',
+                    identitySetupRequired: !toEntity.identity
+                }
+            },
+        }).then(pushResult => {
+            if (pushResult?.pushed) {
                 messageObj.delivered = true;
                 markChatMessageDelivered(chatMsgId, String(toId));
             }
@@ -5914,12 +5925,16 @@ UPDATED CREDENTIALS:
 exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${newSlot},"botSecret":"${entity.botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'`;
 
         if (entity.bindingType === 'channel') {
-            channelModule.pushToChannelCallback(deviceId, newSlot, {
-                event: 'message',
-                from: 'system',
-                text: notifyMsg,
-                eclaw_context: { expectsReply: false, silentToken: '[SILENT]', missionHints: '' }
-            }, entity.channelAccountId)
+            unifiedPush(entity, deviceId, 'message', { message: notifyMsg }, {
+                skipMiddleware: true,
+                channelPayload: {
+                    event: 'message',
+                    from: 'system',
+                    text: notifyMsg,
+                    eclaw_context: { expectsReply: false, silentToken: '[SILENT]', missionHints: '' }
+                },
+                from: 'system'
+            })
                 .then(r => {
                     if (r.pushed) console.log(`[Compact] ✓ Notified channel bot at entity ${newSlot} (was ${oldSlot})`);
                     else console.warn(`[Compact] ✗ Failed to notify channel bot: ${r.reason}`);
@@ -6525,13 +6540,17 @@ UPDATED CREDENTIALS:
 exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${newSlot},"botSecret":"${entity.botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'`;
 
         if (entity.bindingType === 'channel') {
-            // Bot Push Parity Rule: notify channel bot via callback
-            channelModule.pushToChannelCallback(deviceId, newSlot, {
-                event: 'message',
-                from: 'system',
-                text: notifyMsg,
-                eclaw_context: { expectsReply: false, silentToken: '[SILENT]', missionHints: '' }
-            }, entity.channelAccountId)
+            // Bot Push Parity Rule: notify channel bot via unifiedPush
+            unifiedPush(entity, deviceId, 'message', { message: notifyMsg }, {
+                skipMiddleware: true,
+                channelPayload: {
+                    event: 'message',
+                    from: 'system',
+                    text: notifyMsg,
+                    eclaw_context: { expectsReply: false, silentToken: '[SILENT]', missionHints: '' }
+                },
+                from: 'system'
+            })
                 .then(r => {
                     if (r.pushed) console.log(`[Reorder] ✓ Notified channel bot at entity ${newSlot} (was ${oldSlot})`);
                     else console.warn(`[Reorder] ✗ Failed to notify channel bot at entity ${newSlot}: ${r.reason}`);
@@ -6628,12 +6647,14 @@ app.put('/api/device/entity/name', async (req, res) => {
     if (entity.bindingType === 'channel' && entity.channelAccountId) {
         const { oldName: oN, newName: nN } = entity.pendingRename;
         // Fire-and-forget with timeout — don't block the response
-        const pushPromise = channelModule.pushToChannelCallback(deviceId, eId, {
-            event: 'message',
-            from: 'system',
-            text: `[SYSTEM:NAME_CHANGED] 你的名字已從「${oN}」更改為「${nN}」。請記住你現在的名字是「${nN}」。`,
-            eclaw_context: { expectsReply: false, silentToken: '[SILENT]', missionHints: '' }
-        }, entity.channelAccountId);
+        const renameMsg = `[SYSTEM:NAME_CHANGED] 你的名字已從「${oN}」更改為「${nN}」。請記住你現在的名字是「${nN}」。`;
+        const pushPromise = unifiedPush(entity, deviceId, 'message', { message: renameMsg }, {
+            skipMiddleware: true, from: 'system',
+            channelPayload: {
+                event: 'message', from: 'system', text: renameMsg,
+                eclaw_context: { expectsReply: false, silentToken: '[SILENT]', missionHints: '' }
+            }
+        });
         // 5s timeout guard — never block rename response
         Promise.race([
             pushPromise,
@@ -7411,39 +7432,46 @@ app.post('/api/entity/speak-to', async (req, res) => {
 
     console.log(`[Entity] Device ${deviceId} Entity ${fromId} -> Entity ${toId}: "${speakToText}" (b2b remaining: ${b2bRemaining})`);
 
-    // Fire-and-forget: push to target bot — channel callback or traditional webhook
+    // Fire-and-forget: push to target bot
     const isChannelBound = toEntity.bindingType === 'channel';
     const hasWebhook = !!toEntity.webhook;
     if (isChannelBound) {
-        // Channel plugin: send structured JSON
-        channelModule.pushToChannelCallback(deviceId, toId, {
-            event: 'entity_message',
+        // Use unifiedPush — applies middleware (hints, vars, rename) + routes to channel
+        unifiedPush(toEntity, deviceId, 'entity_message', {
+            message: speakToText,
             from: sourceLabel,
-            text: speakToText,
             mediaType: mediaType || null,
             mediaUrl: mediaUrl || null,
-            backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
-            fromEntityId: fromId,
-            fromCharacter: fromEntity.character,
-            eclaw_context: {
-                b2bRemaining: getBotToBotRemaining(deviceId, toId),
-                b2bMax: BOT2BOT_MAX_MESSAGES,
-                expectsReply,
-                missionHints: getMissionApiHints('https://eclawbot.com', deviceId, toId, toEntity.botSecret),
-                silentToken: '[SILENT]',
-                identitySetupRequired: !toEntity.identity
-            }
-        }, toEntity.channelAccountId).then(pushResult => {
-            if (pushResult.pushed) {
+        }, {
+            channelPayload: {
+                event: 'entity_message',
+                from: sourceLabel,
+                text: speakToText,
+                mediaType: mediaType || null,
+                mediaUrl: mediaUrl || null,
+                backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
+                fromEntityId: fromId,
+                fromCharacter: fromEntity.character,
+                eclaw_context: {
+                    b2bRemaining: getBotToBotRemaining(deviceId, toId),
+                    b2bMax: BOT2BOT_MAX_MESSAGES,
+                    expectsReply,
+                    missionHints: getMissionApiHints('https://eclawbot.com', deviceId, toId, toEntity.botSecret),
+                    silentToken: '[SILENT]',
+                    identitySetupRequired: !toEntity.identity
+                }
+            },
+        }).then(pushResult => {
+            if (pushResult?.pushed) {
                 messageObj.delivered = true;
                 markChatMessageDelivered(chatMsgId, String(toId));
-                serverLog('info', 'speakto_push', `[A2A_PUSH_RESULT] Entity ${fromId} -> ${toId} channel push OK | delivered=true`, { deviceId, entityId: fromId, metadata: { tag: 'A2A_PUSH_RESULT', toId, mode: 'channel', pushed: true } });
+                serverLog('info', 'speakto_push', `[A2A_PUSH_RESULT] Entity ${fromId} -> ${toId} channel push OK`, { deviceId, entityId: fromId, metadata: { tag: 'A2A_PUSH_RESULT', toId, mode: 'channel', pushed: true } });
             } else {
-                serverLog('warn', 'speakto_push', `[A2A_PUSH_RESULT] Entity ${fromId} -> ${toId} channel push FAILED: ${pushResult.reason}`, { deviceId, entityId: fromId, metadata: { tag: 'A2A_PUSH_RESULT', toId, mode: 'channel', pushed: false, reason: pushResult.reason } });
+                serverLog('warn', 'speakto_push', `[A2A_PUSH_RESULT] Entity ${fromId} -> ${toId} push FAILED: ${pushResult?.reason}`, { deviceId, entityId: fromId, metadata: { tag: 'A2A_PUSH_RESULT', toId, pushed: false, reason: pushResult?.reason } });
             }
         }).catch(err => {
-            console.error(`[SpeakTo] Channel push failed: ${err.message}`);
-            serverLog('error', 'speakto_push', `[A2A_PUSH_RESULT] Entity ${fromId} -> ${toId} channel push ERROR: ${err.message}`, { deviceId, entityId: fromId, metadata: { tag: 'A2A_PUSH_RESULT', toId, mode: 'channel', error: err.message } });
+            console.error(`[SpeakTo] Push failed: ${err.message}`);
+            serverLog('error', 'speakto_push', `[A2A_PUSH_RESULT] Entity ${fromId} -> ${toId} push ERROR: ${err.message}`, { deviceId, entityId: fromId });
         });
     } else if (hasWebhook) {
         // Instruction-first push format with pre-filled curl templates
@@ -7811,27 +7839,30 @@ app.post('/api/entity/cross-speak', async (req, res) => {
     const isChannelBound = toEntity.bindingType === 'channel';
     const hasWebhook = !!toEntity.webhook;
     if (isChannelBound) {
-        // Channel plugin: send structured JSON
-        channelModule.pushToChannelCallback(target.deviceId, target.entityId, {
-            event: 'cross_device_message',
-            from: `${fromEntity.name || 'Entity'} (${fromEntity.publicCode})`,
-            text: crossText,
-            mediaType: mediaType || null,
-            mediaUrl: mediaUrl || null,
-            backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
-            fromEntityId: fromId,
-            fromPublicCode: fromEntity.publicCode,
-            fromCharacter: fromEntity.character,
-            fromDeviceId: deviceId,
-            eclaw_context: {
-                csRemaining: getCrossSpeakRemaining(target.deviceId, target.entityId),
-                csMax: CROSS_SPEAK_MAX_MESSAGES,
-                missionHints: getMissionApiHints('https://eclawbot.com', target.deviceId, target.entityId, toEntity.botSecret),
-                silentToken: '[SILENT]',
-                identitySetupRequired: !toEntity.identity,
-                preInject: xdSettings.pre_inject || null
-            }
-        }, toEntity.channelAccountId).then(pushResult => {
+        // Channel plugin: send structured JSON via unifiedPush
+        unifiedPush(toEntity, target.deviceId, 'cross_device_message', { message: crossText }, {
+            channelPayload: {
+                event: 'cross_device_message',
+                from: `${fromEntity.name || 'Entity'} (${fromEntity.publicCode})`,
+                text: crossText,
+                mediaType: mediaType || null,
+                mediaUrl: mediaUrl || null,
+                backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
+                fromEntityId: fromId,
+                fromPublicCode: fromEntity.publicCode,
+                fromCharacter: fromEntity.character,
+                fromDeviceId: deviceId,
+                eclaw_context: {
+                    csRemaining: getCrossSpeakRemaining(target.deviceId, target.entityId),
+                    csMax: CROSS_SPEAK_MAX_MESSAGES,
+                    missionHints: getMissionApiHints('https://eclawbot.com', target.deviceId, target.entityId, toEntity.botSecret),
+                    silentToken: '[SILENT]',
+                    identitySetupRequired: !toEntity.identity,
+                    preInject: xdSettings.pre_inject || null
+                }
+            },
+            from: `${fromEntity.name || 'Entity'} (${fromEntity.publicCode})`
+        }).then(pushResult => {
             if (pushResult.pushed) {
                 messageObj.delivered = true;
                 markChatMessageDelivered(chatMsgId, String(target.entityId));
@@ -9377,25 +9408,29 @@ app.post('/api/client/cross-speak', async (req, res) => {
     const webhookUrl = hasWebhook ? (typeof toEntity.webhook === 'object' ? toEntity.webhook.url : toEntity.webhook) : null;
     console.log(`[ClientCrossSpeak:DEBUG] isChannelBound=${isChannelBound}, hasWebhook=${hasWebhook}, webhookUrl=${webhookUrl ? String(webhookUrl).slice(0, 40) + '...' : 'null'}`);
     if (isChannelBound) {
-        // Channel plugin: send structured JSON
-        channelModule.pushToChannelCallback(target.deviceId, target.entityId, {
-            event: 'cross_device_message',
-            from: isOwnerMode ? `Device Owner (${senderName})` : `${fromEntity.name || 'User'} (${fromEntity.publicCode})`,
-            text,
-            mediaType: mediaType || null,
-            mediaUrl: mediaUrl || null,
-            backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
-            fromEntityId: isOwnerMode ? -1 : fromId,
-            fromPublicCode: isOwnerMode ? null : fromEntity.publicCode,
-            fromDeviceId: deviceId,
-            isOwnerMode,
-            eclaw_context: {
-                missionHints: getMissionApiHints('https://eclawbot.com', target.deviceId, target.entityId, toEntity.botSecret),
-                silentToken: '[SILENT]',
-                identitySetupRequired: !toEntity.identity,
-                preInject: xdSettingsClient.pre_inject || null
-            }
-        }, toEntity.channelAccountId).then(pushResult => {
+        // Channel plugin: send structured JSON via unifiedPush
+        const channelFrom = isOwnerMode ? `Device Owner (${senderName})` : `${fromEntity.name || 'User'} (${fromEntity.publicCode})`;
+        unifiedPush(toEntity, target.deviceId, 'cross_device_message', { message: text }, {
+            channelPayload: {
+                event: 'cross_device_message',
+                from: channelFrom,
+                text,
+                mediaType: mediaType || null,
+                mediaUrl: mediaUrl || null,
+                backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
+                fromEntityId: isOwnerMode ? -1 : fromId,
+                fromPublicCode: isOwnerMode ? null : fromEntity.publicCode,
+                fromDeviceId: deviceId,
+                isOwnerMode,
+                eclaw_context: {
+                    missionHints: getMissionApiHints('https://eclawbot.com', target.deviceId, target.entityId, toEntity.botSecret),
+                    silentToken: '[SILENT]',
+                    identitySetupRequired: !toEntity.identity,
+                    preInject: xdSettingsClient.pre_inject || null
+                }
+            },
+            from: channelFrom
+        }).then(pushResult => {
             if (pushResult.pushed) {
                 messageObj.delivered = true;
                 markChatMessageDelivered(chatMsgId, String(target.entityId));
@@ -9694,27 +9729,30 @@ app.post('/api/entity/broadcast', async (req, res) => {
 
         // Fire-and-forget: push to target bot — channel callback or traditional webhook
         if (isChannelBoundBcast) {
-            // Channel plugin: send structured JSON
-            channelModule.pushToChannelCallback(deviceId, toId, {
-                event: 'broadcast',
-                from: sourceLabel,
-                text: broadcastText,
-                mediaType: mediaType || null,
-                mediaUrl: mediaUrl || null,
-                backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
-                isBroadcast: true,
-                broadcastRecipients: targetIds,
-                fromEntityId: fromId,
-                fromCharacter: fromEntity.character,
-                eclaw_context: {
-                    b2bRemaining: getBotToBotRemaining(deviceId, toId),
-                    b2bMax: BOT2BOT_MAX_MESSAGES,
-                    expectsReply: expectsReplyBcast,
-                    missionHints: getMissionApiHints('https://eclawbot.com', deviceId, toId, toEntity.botSecret),
-                    silentToken: '[SILENT]',
-                    identitySetupRequired: !toEntity.identity
-                }
-            }, toEntity.channelAccountId).then(pushResult => {
+            // Channel plugin: send structured JSON via unifiedPush
+            unifiedPush(toEntity, deviceId, 'entity_broadcast', { message: broadcastText }, {
+                channelPayload: {
+                    event: 'broadcast',
+                    from: sourceLabel,
+                    text: broadcastText,
+                    mediaType: mediaType || null,
+                    mediaUrl: mediaUrl || null,
+                    backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
+                    isBroadcast: true,
+                    broadcastRecipients: targetIds,
+                    fromEntityId: fromId,
+                    fromCharacter: fromEntity.character,
+                    eclaw_context: {
+                        b2bRemaining: getBotToBotRemaining(deviceId, toId),
+                        b2bMax: BOT2BOT_MAX_MESSAGES,
+                        expectsReply: expectsReplyBcast,
+                        missionHints: getMissionApiHints('https://eclawbot.com', deviceId, toId, toEntity.botSecret),
+                        silentToken: '[SILENT]',
+                        identitySetupRequired: !toEntity.identity
+                    }
+                },
+                from: sourceLabel
+            }).then(pushResult => {
                 if (pushResult.pushed) {
                     messageObj.delivered = true;
                     markChatMessageDelivered(broadcastChatMsgId, String(toId));
@@ -12573,6 +12611,10 @@ async function unifiedPush(entity, deviceId, eventType, payload, opts = {}) {
     // ── Route to correct transport ──
     if (entity.bindingType === 'channel' && channelModule?.pushToChannelCallback) {
         // Channel transport: structured JSON
+        // If caller provided channelPayload, inject enriched text into it
+        if (opts.channelPayload && enrichedMessage !== (payload.message || '')) {
+            opts.channelPayload.text = enrichedMessage;
+        }
         const channelPayload = opts.channelPayload || {
             event: opts.event || eventType || 'message',
             from: opts.from || payload.from || `Entity ${entity.entityId}`,
