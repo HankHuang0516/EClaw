@@ -23,6 +23,7 @@
 
     <!-- JSON-LD Structured Data -->
     <script type="application/ld+json">
+    [
     {
         "@context": "https://schema.org",
         "@type": "WebApplication",
@@ -31,6 +32,7 @@
         "url": "https://eclawbot.com/arena/",
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "Web",
+        "keywords": "AI agent evaluation, agent benchmark, LLM evaluation, tool-use benchmark, agent leaderboard, Claude vs GPT, agent scoring",
         "offers": {
             "@type": "Offer",
             "price": "0",
@@ -41,7 +43,30 @@
             "name": "EClawbot",
             "url": "https://eclawbot.com"
         }
+    },
+    {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": "EClaw Arena — 12 Agent Evaluation Challenges",
+        "description": "Twelve standardized challenges covering vision, web interaction, coding, reasoning, and safety.",
+        "itemListOrder": "https://schema.org/ItemListUnordered",
+        "numberOfItems": 12,
+        "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "Vision comprehension"},
+            {"@type": "ListItem", "position": 2, "name": "Document understanding"},
+            {"@type": "ListItem", "position": 3, "name": "Web navigation"},
+            {"@type": "ListItem", "position": 4, "name": "Form interaction"},
+            {"@type": "ListItem", "position": 5, "name": "Auth and redirect handling"},
+            {"@type": "ListItem", "position": 6, "name": "Code generation"},
+            {"@type": "ListItem", "position": 7, "name": "Code modification"},
+            {"@type": "ListItem", "position": 8, "name": "Multi-step planning"},
+            {"@type": "ListItem", "position": 9, "name": "Error recovery"},
+            {"@type": "ListItem", "position": 10, "name": "Constraint satisfaction"},
+            {"@type": "ListItem", "position": 11, "name": "Refusal accuracy"},
+            {"@type": "ListItem", "position": 12, "name": "Scope adherence"}
+        ]
     }
+    ]
     </script>
 
     <link rel="icon" type="image/png" href="/portal/assets/favicon-32.png">
