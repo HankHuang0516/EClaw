@@ -180,6 +180,10 @@ let VISION_IMAGES = [
     { file: null, description: 'A weather dashboard panel showing temperature 28°C, humidity 65%, wind speed 12 km/h, and UV index 7 in four separate tiles', keywords: ['temperature', '28', 'humidity', '65', 'UV', '7'] },
     { file: null, description: 'A printed circuit board with fourteen resistors, eight capacitors, and one microcontroller chip labeled ATmega328P', keywords: ['circuit', 'fourteen', 'resistors', 'eight', 'capacitors', 'ATmega'] },
     { file: null, description: 'A hotel room floor plan: bedroom 18m² on the left, bathroom 6m² top right, living area 22m² bottom right, with a corridor connecting all rooms', keywords: ['floor', 'plan', 'bedroom', '18', 'bathroom', '6', 'living', '22'] },
+    // ── Additional hard tier — dashboard OCR, spatial layout, fine counting ──
+    { file: null, description: 'A system monitoring dashboard with four panels: CPU usage 87%, RAM 14.2 GB of 16 GB used, disk I/O 340 MB/s, and network throughput 1.2 Gbps, each shown as a colored ring gauge', keywords: ['CPU', '87', 'RAM', '14', 'disk', '340', 'network', '1.2'] },
+    { file: null, description: 'An invoice image showing company logo top-left, a line-items table with 5 rows, subtotal $842.50, tax 8% ($67.40), and total $909.90 in bold at bottom-right', keywords: ['invoice', 'subtotal', '842', 'tax', '8', 'total', '909'] },
+    { file: null, description: 'A 6×6 grid of colored dots: all dots are white except a diagonal stripe of 6 blue dots from top-left to bottom-right and a red dot in the exact center', keywords: ['grid', 'six', 'blue', 'diagonal', 'red', 'center'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -349,6 +353,15 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '"babad"', expected: '"bab"' },{ input: '"cbbd"', expected: '"bb"' },{ input: '"a"', expected: '"a"' },{ input: '"racecar"', expected: '"racecar"' }] },
     { title: '0-1 Knapsack', description: 'Write `solve(weights, values, capacity)` — given items with weights and values arrays and a knapsack of given capacity, return the maximum total value (each item used at most once).',
       testCases: [{ input: '[1,3,4,5], [1,4,5,7], 7', expected: '9' },{ input: '[2,3,4,5], [3,4,5,6], 5', expected: '7' },{ input: '[1], [10], 0', expected: '0' }] },
+    // ── Sliding Window / Interval merging / Advanced DP ──
+    { title: 'Merge Intervals', description: 'Write `solve(intervals)` — given an array of `[start, end]` intervals, merge all overlapping intervals and return the result sorted by start.',
+      testCases: [{ input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },{ input: '[[1,4],[4,5]]', expected: '[[1,5]]' },{ input: '[[1,2],[3,4]]', expected: '[[1,2],[3,4]]' },{ input: '[[1,4],[2,3]]', expected: '[[1,4]]' }] },
+    { title: 'Minimum Window Substring', description: 'Write `solve(s, t)` — return the minimum-length substring of s that contains every character in t (including duplicates). Return `""` if no such substring exists.',
+      testCases: [{ input: '"ADOBECODEBANC", "ABC"', expected: '"BANC"' },{ input: '"a", "a"', expected: '"a"' },{ input: '"a", "b"', expected: '""' },{ input: '"aa", "aa"', expected: '"aa"' }] },
+    { title: 'Word Break', description: 'Write `solve(s, wordDict)` — return true if string s can be segmented into a sequence of one or more dictionary words from wordDict.',
+      testCases: [{ input: '"leetcode", ["leet","code"]', expected: 'true' },{ input: '"applepenapple", ["apple","pen"]', expected: 'true' },{ input: '"catsandog", ["cats","dog","sand","and","cat"]', expected: 'false' },{ input: '"cars", ["car","ca","rs"]', expected: 'true' }] },
+    { title: 'Min Cost Climbing Stairs', description: 'Write `solve(cost)` — cost[i] is the cost to step on stair i. You can start at index 0 or 1 and take 1 or 2 steps. Find the minimum total cost to reach beyond the last stair.',
+      testCases: [{ input: '[10,15,20]', expected: '15' },{ input: '[1,100,1,1,1,100,1,1,100,1]', expected: '6' },{ input: '[0,0,0,0]', expected: '0' },{ input: '[5,10]', expected: '5' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -391,6 +404,12 @@ let RESPONSE_QUESTIONS = [
     { question: 'What is 2 to the power of 10?', expectedKeywords: ['1024'] },
     { question: 'A store sells apples for $0.75 each and oranges for $1.20 each. If someone buys 4 apples and 3 oranges, what is the total cost?', expectedKeywords: ['6.6', '6.60'] },
     { question: 'The sides of a right triangle are in the ratio 3:4:5. If the hypotenuse is 20 cm, what is the perimeter?', expectedKeywords: ['48'] },
+    // ── Additional hard reasoning / math ──
+    { question: 'A bacteria colony doubles every 3 hours. Starting from 1 bacterium at time zero, how many bacteria are there after 12 hours?', expectedKeywords: ['16'] },
+    { question: 'A car travels from city A to city B at 60 km/h, then returns from B to A at 40 km/h. What is the average speed for the entire round trip in km/h?', expectedKeywords: ['48'] },
+    { question: 'A 3×3×3 cube has all outside faces painted red. When cut into 27 unit cubes, how many unit cubes have exactly 2 red faces?', expectedKeywords: ['12'] },
+    { question: 'What is the compound interest earned on $1000 invested at 10% annual interest rate after 2 years, compounded annually?', expectedKeywords: ['210'] },
+    { question: 'Alice is twice as old as Bob was when Alice was as old as Bob is now. Bob is currently 24. How old is Alice?', expectedKeywords: ['32'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -461,6 +480,11 @@ let TTS_PHRASES = [
     { text: 'Your one-time verification code is 8 4 3 7 2 and expires in five minutes', keywords: ['verification', 'code', '84372', 'five', 'minutes'] },
     { text: 'The SQL query selects all records from the users table where the account status equals active and the score is greater than 100', keywords: ['SQL', 'query', 'users', 'active', 'score', '100'] },
     { text: 'Bernoulli and Euler each contributed foundational theorems to both fluid dynamics and graph theory', keywords: ['bernoulli', 'euler', 'fluid', 'dynamics', 'graph', 'theory'] },
+    // ── Additional medium/hard TTS phrases ──
+    { text: 'Your account balance is 1247 dollars and 83 cents and your next payment of 85 dollars is due on April 30th', keywords: ['balance', '1247', '85', 'april', '30'] },
+    { text: 'The REST API endpoint returns a JSON response with HTTP status 200 and an access token valid for 3600 seconds', keywords: ['REST', 'API', 'JSON', '200', 'access', 'token', '3600'] },
+    { text: 'According to WHO 2023 data hypertension affects approximately 1.28 billion adults worldwide', keywords: ['WHO', 'hypertension', '1.28', 'billion'] },
+    { text: 'Photosynthesis converts carbon dioxide and water into glucose and oxygen using light energy from the sun', keywords: ['photosynthesis', 'carbon', 'dioxide', 'glucose', 'oxygen'] },
 ];
 
 // ============================================
