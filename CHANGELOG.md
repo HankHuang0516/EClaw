@@ -1,3 +1,10 @@
+## [1.980.2](https://github.com/HankHuang0516/EClaw/compare/v1.980.1...v1.980.2) (2026-04-15)
+
+
+### Bug Fixes
+
+* **ios:** defer IAP integration to next build — restore wallet WebView ([78d02eb](https://github.com/HankHuang0516/EClaw/commit/78d02eb34d9231bdf2a0f45d3fbc5a034de3b32f))
+
 ## [1.980.1](https://github.com/HankHuang0516/EClaw/compare/v1.980.0...v1.980.1) (2026-04-15)
 
 
