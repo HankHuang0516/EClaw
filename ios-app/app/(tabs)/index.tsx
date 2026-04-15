@@ -5,6 +5,7 @@ import {
   StyleSheet,
   RefreshControl,
   Alert,
+  Image,
 } from 'react-native';
 import {
   FAB,
@@ -140,9 +141,10 @@ export default function HomeScreen() {
         </View>
       ) : entities.length === 0 ? (
         <View style={styles.centered}>
-          <Text variant="headlineSmall" style={{ marginBottom: 8 }}>
-            🦞
-          </Text>
+          <Image
+            source={require('../../assets/icon.png')}
+            style={{ width: 64, height: 64, borderRadius: 16, marginBottom: 8 }}
+          />
           <Text variant="titleMedium">{t('home.no_entities')}</Text>
           <Text
             variant="bodyMedium"

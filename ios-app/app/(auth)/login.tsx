@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Platform, KeyboardAvoidingView, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, Platform, KeyboardAvoidingView, ScrollView, Alert, Image } from 'react-native';
 import { Text, TextInput, Button, Divider, useTheme, ActivityIndicator } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -130,9 +130,10 @@ export default function LoginScreen() {
       >
         <ScrollView contentContainerStyle={styles.scroll}>
           <View style={styles.header}>
-            <Text variant="displayMedium" style={{ color: theme.colors.primary }}>
-              🦞
-            </Text>
+            <Image
+              source={require('../../assets/icon.png')}
+              style={{ width: 80, height: 80, borderRadius: 20 }}
+            />
             <Text variant="headlineLarge" style={styles.title}>
               EClawbot
             </Text>
