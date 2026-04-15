@@ -314,6 +314,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                     id: user.id,
                     email: user.email,
                     deviceId: user.device_id,
+                    deviceSecret: user.device_secret,
                     emailVerified: false
                 }
             });
@@ -402,6 +403,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                     id: user.id,
                     email: user.email,
                     deviceId: user.device_id,
+                    deviceSecret: user.device_secret,
                     language: user.language,
                     subscriptionStatus: user.subscription_status,
                     subscriptionExpiresAt: user.subscription_expires_at
@@ -447,6 +449,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                     id: user.id,
                     email: user.email,
                     deviceId: user.device_id,
+                    deviceSecret: user.device_secret,
                     language: user.language,
                     subscriptionStatus: user.subscription_status
                 };
@@ -457,6 +460,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                     id: null,
                     email: null,
                     deviceId: deviceId,
+                    deviceSecret: deviceSecret,
                     language: 'en',
                     subscriptionStatus: 'free'
                 };
@@ -1207,6 +1211,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                 user: {
                     id: user.id, email: user.email,
                     deviceId: user.device_id,
+                    deviceSecret: user.device_secret,
                     displayName: displayName || user.display_name,
                     avatarUrl: avatarUrl || user.avatar_url,
                     isNewAccount: false,
@@ -1244,6 +1249,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                     user: {
                         id: user.id, email: user.email,
                         deviceId: user.device_id,
+                        deviceSecret: user.device_secret,
                         displayName: displayName || user.display_name,
                         avatarUrl: avatarUrl || user.avatar_url,
                         isNewAccount: false,
@@ -1283,6 +1289,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                         user: {
                             id: user.id, email: email || user.email,
                             deviceId: user.device_id,
+                            deviceSecret: user.device_secret,
                             displayName: displayName || user.display_name,
                             avatarUrl: avatarUrl || user.avatar_url,
                             isNewAccount: false,
@@ -1325,6 +1332,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
             user: {
                 id: newUser.id, email: newUser.email,
                 deviceId: newUser.device_id,
+                deviceSecret: newUser.device_secret,
                 displayName, avatarUrl,
                 isNewAccount: true,
                 subscriptionStatus: 'free',

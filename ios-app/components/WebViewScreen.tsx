@@ -50,9 +50,16 @@ export default function WebViewScreen({ url }: WebViewScreenProps) {
         onLoadEnd={() => setLoading(false)}
         userAgent="Mozilla/5.0 EClawIOS"
         onShouldStartLoadWithRequest={(request) => {
-          if (request.url.includes('eclawbot.com')) return true;
-          Linking.openURL(request.url);
-          return false;
+          const u = request.url || '';
+          // Allow internal WebView navigations (blank, data, intra-page anchors, OAuth iframes etc).
+          // Only hand off to the system browser for http(s) URLs that are outside our own domain —
+          // otherwise iOS throws "Unable to open URL: about:blank" on the WebView's own internal loads.
+          if (u.startsWith('http://') || u.startsWith('https://')) {
+            if (u.includes('eclawbot.com')) return true;
+            Linking.openURL(u).catch(() => { /* swallow — URL may be unsupported */ });
+            return false;
+          }
+          return true;
         }}
       />
       {loading && (
