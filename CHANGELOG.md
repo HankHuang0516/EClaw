@@ -1,3 +1,10 @@
+# [1.981.0](https://github.com/HankHuang0516/EClaw/compare/v1.980.4...v1.981.0) (2026-04-15)
+
+
+### Features
+
+* **arena:** self-updating question pool + answer leakage fix + decoy strategy ([#1764](https://github.com/HankHuang0516/EClaw/issues/1764)) ([068fc5c](https://github.com/HankHuang0516/EClaw/commit/068fc5cd612de10cb508d65b8626bf9f92a974a5))
+
 ## [1.980.4](https://github.com/HankHuang0516/EClaw/compare/v1.980.3...v1.980.4) (2026-04-15)
 
 
