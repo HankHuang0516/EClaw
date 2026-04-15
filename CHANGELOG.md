@@ -1,3 +1,11 @@
+## [1.981.12](https://github.com/HankHuang0516/EClaw/compare/v1.981.11...v1.981.12) (2026-04-15)
+
+
+### Bug Fixes
+
+* **ios:** empty state CTA + pulse animation + hide broadcast FAB ([#1768](https://github.com/HankHuang0516/EClaw/issues/1768)) ([8c31b74](https://github.com/HankHuang0516/EClaw/commit/8c31b74e730fec25a3dc1af7c5458cdbec734312))
+* **ios+portal:** forward authToken to WebView and accept via URL ([da4708a](https://github.com/HankHuang0516/EClaw/commit/da4708acf79cb6a48f0c276e5c893b42bc21ef66)), closes [#1765](https://github.com/HankHuang0516/EClaw/issues/1765)
+
 ## [1.981.11](https://github.com/HankHuang0516/EClaw/compare/v1.981.10...v1.981.11) (2026-04-15)
 
 
