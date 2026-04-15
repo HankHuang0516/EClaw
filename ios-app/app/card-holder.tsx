@@ -113,9 +113,11 @@ export default function CardHolderScreen() {
         if (!code) return;
         try {
           const resp = await contactsApi.add(code.trim().toLowerCase());
-          if (resp.data?.success) {
-            loadCards();
+          if (!resp.data?.success) {
+            Alert.alert('Error', resp.data?.error || resp.data?.message || 'Failed to add card');
+            return;
           }
+          loadCards();
         } catch (e: any) {
           Alert.alert('Error', e.response?.data?.error || e.message);
         }
@@ -137,10 +139,14 @@ export default function CardHolderScreen() {
   const saveCard = async () => {
     if (!selectedCard) return;
     try {
-      await contactsApi.update(selectedCard.publicCode, {
+      const resp = await contactsApi.update(selectedCard.publicCode, {
         notes: editNotes,
         category: editCategory || null,
       });
+      if (!resp.data?.success) {
+        Alert.alert('Error', resp.data?.error || resp.data?.message || 'Failed to save card');
+        return;
+      }
       setCards(prev => prev.map(c =>
         c.publicCode === selectedCard.publicCode
           ? { ...c, notes: editNotes, category: editCategory || undefined }
@@ -155,7 +161,11 @@ export default function CardHolderScreen() {
   const togglePin = async () => {
     if (!selectedCard) return;
     try {
-      await contactsApi.update(selectedCard.publicCode, { pinned: !selectedCard.pinned });
+      const resp = await contactsApi.update(selectedCard.publicCode, { pinned: !selectedCard.pinned });
+      if (!resp.data?.success) {
+        Alert.alert('Error', resp.data?.error || resp.data?.message || 'Failed to update pin');
+        return;
+      }
       setCards(prev => prev.map(c =>
         c.publicCode === selectedCard.publicCode ? { ...c, pinned: !c.pinned } : c
       ));
@@ -169,6 +179,10 @@ export default function CardHolderScreen() {
     if (!selectedCard) return;
     try {
       const resp = await contactsApi.refresh(selectedCard.publicCode);
+      if (!resp.data?.success) {
+        Alert.alert('Error', resp.data?.error || resp.data?.message || 'Failed to refresh card');
+        return;
+      }
       if (resp.data?.card) {
         setCards(prev => prev.map(c =>
           c.publicCode === selectedCard.publicCode
@@ -194,7 +208,11 @@ export default function CardHolderScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await contactsApi.remove(selectedCard.publicCode);
+              const resp = await contactsApi.remove(selectedCard.publicCode);
+              if (!resp.data?.success) {
+                Alert.alert('Error', resp.data?.error || resp.data?.message || 'Failed to remove card');
+                return;
+              }
               setCards(prev => prev.filter(c => c.publicCode !== selectedCard.publicCode));
               closeDetail();
             } catch (e: any) {
