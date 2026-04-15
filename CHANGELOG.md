@@ -1,3 +1,10 @@
+# [1.980.0](https://github.com/HankHuang0516/EClaw/compare/v1.979.0...v1.980.0) (2026-04-15)
+
+
+### Features
+
+* /portal/publisher.html cross-platform publisher UI ([#1756](https://github.com/HankHuang0516/EClaw/issues/1756)) ([2d7ce2b](https://github.com/HankHuang0516/EClaw/commit/2d7ce2b1be4c5da8a06f00cae2883ad83665f800)), closes [#3](https://github.com/HankHuang0516/EClaw/issues/3)
+
 # [1.979.0](https://github.com/HankHuang0516/EClaw/compare/v1.978.3...v1.979.0) (2026-04-15)
 
 
