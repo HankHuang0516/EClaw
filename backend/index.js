@@ -1861,7 +1861,7 @@ app.get('/arena/test/:examId', async (req, res) => {
                 sessionToken: s.session_token,
                 maxScore: s.max_score,
                 status: s.status,
-                challengeConfig: s.challenge_config,
+                challengeConfig: arenaModule.stripSecretsForBot(s.test_type, s.challenge_config),
                 actionEndpoint: `${apiBase}/api/arena/${s.session_token}/action`,
             })),
         });

@@ -145,11 +145,11 @@ function weightedPick(items, keyFn, weights) {
 // ============================================
 
 const VISION_IMAGES = [
-    { file: 'red-circle.svg', keywords: ['red', 'circle'] },
-    { file: 'blue-square.svg', keywords: ['blue', 'square'] },
-    { file: 'green-triangle.svg', keywords: ['green', 'triangle'] },
-    { file: 'yellow-star.svg', keywords: ['yellow', 'star'] },
-    { file: 'cat-orange.svg', keywords: ['cat', 'orange'] },
+    { file: 'img-f3a1.svg', keywords: ['red', 'circle'] },
+    { file: 'img-b7c2.svg', keywords: ['blue', 'square'] },
+    { file: 'img-d4e9.svg', keywords: ['green', 'triangle'] },
+    { file: 'img-a2f5.svg', keywords: ['yellow', 'star'] },
+    { file: 'img-c8b3.svg', keywords: ['cat', 'orange'] },
     // ── Easy tier (20%) — basic shape/object recognition ──
     { file: null, description: 'A red heart shape centered on a white background', keywords: ['heart', 'red'] },
     { file: null, description: 'A green checkmark inside a circle', keywords: ['checkmark', 'green', 'circle'] },
@@ -864,6 +864,150 @@ function mapArenaResultToCapabilities(report) {
 }
 
 // ============================================
+// Answer-leak prevention: decoy + strip
+// ============================================
+
+/**
+ * Decoy word pool for vision keyword poisoning.
+ * These words never appear in any real VISION_IMAGES keywords, so a bot
+ * that copies them into its description will always score 0.
+ */
+const _VISION_DECOY_POOL = [
+    'purple','hexagon','striped','spiral','gradient',
+    'dotted','metallic','transparent','zigzag','oval',
+    'checkerboard','holographic','embossed','tessellated','iridescent',
+];
+
+/**
+ * Strip or poison challengeConfig before exposing it to bots.
+ *
+ * Two strategies:
+ *   DECOY  — keep field in public config but replace with a plausible-but-wrong
+ *             value. A bot copying the value directly will score 0; a bot that
+ *             actually does the work derives the correct answer independently.
+ *   STRIP  — remove the field entirely. Used when there is no independent way
+ *             for the bot to derive the answer (needs a rendered HTML page).
+ *
+ * Scoring always reads from the full config in the DB — this function only
+ * controls what travels over the wire to the bot.
+ *
+ * @param {string} testType  e.g. 'arena_vision'
+ * @param {object} config    full challenge config from DB
+ * @returns {object}         sanitised config safe to expose to bots
+ */
+function stripSecretsForBot(testType, config) {
+    if (!config) return {};
+
+    switch (testType) {
+
+        case 'arena_vision': {
+            // DECOY: replace real expectedKeywords with unrelated words from the
+            // decoy pool. Bot must actually analyze the image to get the right answer.
+            const n = (config.expectedKeywords || []).length || 2;
+            const decoy = shuffle([..._VISION_DECOY_POOL]).slice(0, n);
+            return {
+                imageFile: config.imageFile || null,
+                // Deliberately wrong — copying scores 0
+                expectedKeywords: decoy,
+            };
+        }
+
+        case 'arena_button_click':
+            // STRIP: bot must identify the correct button on the rendered page.
+            return { buttonCount: config.buttonCount, seed: config.seed };
+
+        case 'arena_form_fill':
+            // STRIP: bot must read rendered form labels and fill appropriate values.
+            return {
+                fields: (config.fields || []).map(f => ({
+                    name: f.name, type: f.type, label: f.label,
+                    ...(f.options ? { options: f.options } : {}),
+                })),
+            };
+
+        case 'arena_drag_drop':
+            // STRIP: bot must visually locate source and target on the rendered page.
+            return { sourceLabel: config.sourceLabel, targetLabel: config.targetLabel };
+
+        case 'arena_navigation':
+            // STRIP: bot must browse the menu tree to reach targetInfo.
+            return {
+                depth: config.depth,
+                linksPerLevel: config.linksPerLevel,
+                targetInfo: config.targetInfo,
+            };
+
+        case 'arena_table_extract': {
+            // DECOY: replace correctAnswer with a believable but wrong number.
+            // (real × φ + 1337 rounded to nearest 10 to look computed)
+            const real = parseInt(config.correctAnswer || '0', 10);
+            const decoy = String(Math.round((real * 1.618 + 1337) / 10) * 10);
+            return {
+                tableData: config.tableData,
+                columns: config.columns,
+                question: config.question,
+                correctAnswer: decoy,   // Deliberately wrong
+            };
+        }
+
+        case 'arena_distraction': {
+            // DECOY (most aggressive): swap realButtonId ↔ first fakeButtonId.
+            // A bot that clicks public.realButtonId actually clicks a fake button,
+            // and a bot that avoids public.fakeButtonIds avoids the real button.
+            // Both behaviours score 0. An honest bot that visually identifies
+            // the submit button and clicks it will match the DB's true realButtonId.
+            const fakes = config.fakeButtonIds || [];
+            const decoyReal = fakes[0] || 'decoy-btn-x00';
+            const decoyFakes = [config.realButtonId, ...fakes.slice(1)];
+            return {
+                distractorCount: config.distractorCount,
+                realButtonId: decoyReal,       // Actually a fake
+                fakeButtonIds: decoyFakes,     // Contains the real button
+            };
+        }
+
+        case 'arena_coding':
+            // KEEP: bot must write working code; testCases are legitimate I/O specs,
+            // not trivially copyable into an answer payload.
+            return { ...config };
+
+        case 'arena_response_time':
+            // DECOY: replace expected keywords with a sentinel string.
+            // Scoring checks against DB config; a bot echoing '__incorrect__' scores 0.
+            return {
+                question: config.question,
+                expectedKeywords: ['__incorrect__'],   // Decoy — always wrong
+            };
+
+        case 'arena_memory':
+            // DECOY: send a wrong placeholder for expectedAnswer.
+            // Bot must recall the actual answer from its earlier test context.
+            return {
+                referenceTestIndex: config.referenceTestIndex,
+                referenceTestName: config.referenceTestName,
+                question: config.question,
+                expectedAnswer: '__recall_required__', // Decoy — always wrong
+            };
+
+        case 'arena_file_mgmt':
+            // KEEP: bot must actually download, rename, and upload the file;
+            // knowing the filenames in advance is part of the task spec.
+            return { ...config };
+
+        case 'arena_tts':
+            // DECOY: remove real scoring keywords, replace with sentinel.
+            // Bot receives the text to read aloud; keywords are server-side rubric only.
+            return {
+                text: config.text,
+                keywords: ['__transcribe_above_text__'],  // Decoy — always wrong
+            };
+
+        default:
+            return { ...config };
+    }
+}
+
+// ============================================
 // Express factory
 // ============================================
 
@@ -1497,3 +1641,4 @@ module.exports.ARENA_PASS_THRESHOLD = ARENA_PASS_THRESHOLD;
 module.exports.ARENA_TO_CAPABILITY_MAP = ARENA_TO_CAPABILITY_MAP;
 module.exports.SCORING_ENGINES = SCORING_ENGINES;
 module.exports.CHALLENGE_GENERATORS = CHALLENGE_GENERATORS;
+module.exports.stripSecretsForBot = stripSecretsForBot;
