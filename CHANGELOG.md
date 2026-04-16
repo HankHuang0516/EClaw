@@ -1,3 +1,11 @@
+## [1.987.2](https://github.com/HankHuang0516/EClaw/compare/v1.987.1...v1.987.2) (2026-04-16)
+
+
+### Bug Fixes
+
+* **i18n:** fill hi (Hindi) translation gaps - 112 keys ([31e0905](https://github.com/HankHuang0516/EClaw/commit/31e09058d318d5b8f4619a56d5e96f177ede326f))
+* **i18n:** fill ms (Malay) translation gaps - 114 keys ([a9776fc](https://github.com/HankHuang0516/EClaw/commit/a9776fc8fca10d184f73b72308205d4514e6634a))
+
 ## [1.987.1](https://github.com/HankHuang0516/EClaw/compare/v1.987.0...v1.987.1) (2026-04-16)
 
 
