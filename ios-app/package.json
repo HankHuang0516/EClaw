@@ -4,8 +4,8 @@
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web"
   },
   "dependencies": {
@@ -36,6 +36,8 @@
     "react": "19.2.0",
     "react-i18next": "^16.5.6",
     "react-native": "0.83.4",
+    "react-native-iap": "^15.0.2",
+    "react-native-nitro-modules": "^0.35.0",
     "react-native-paper": "^5.15.0",
     "react-native-safe-area-context": "~5.6.2",
     "react-native-screens": "~4.23.0",
