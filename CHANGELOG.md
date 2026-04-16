@@ -1,3 +1,10 @@
+## [1.983.2](https://github.com/HankHuang0516/EClaw/compare/v1.983.1...v1.983.2) (2026-04-16)
+
+
+### Bug Fixes
+
+* require "Note" prefix for all note-link chip matching ([64adb02](https://github.com/HankHuang0516/EClaw/commit/64adb022da9dc6822b14e6db406f2903bacef8ab))
+
 ## [1.983.1](https://github.com/HankHuang0516/EClaw/compare/v1.983.0...v1.983.1) (2026-04-16)
 
 
