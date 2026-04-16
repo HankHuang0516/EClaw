@@ -1,3 +1,10 @@
+# [1.983.0](https://github.com/HankHuang0516/EClaw/compare/v1.982.4...v1.983.0) (2026-04-16)
+
+
+### Features
+
+* add Note ID auto-detection in Chat UI ([653d4b9](https://github.com/HankHuang0516/EClaw/commit/653d4b94cdf9f8540b129ae16878e31f8c69719a))
+
 ## [1.982.4](https://github.com/HankHuang0516/EClaw/compare/v1.982.3...v1.982.4) (2026-04-15)
 
 
