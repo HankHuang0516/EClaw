@@ -5051,6 +5051,76 @@
             archived: '📦', review: '👀'
         };
 
+        // ── @Mention Profile Popup ──
+        async function openMentionProfile(publicCode) {
+            const typeEl = document.getElementById('entityModalType');
+            const titleEl = document.getElementById('entityModalTitle');
+            const idEl = document.getElementById('entityModalId');
+            const bodyEl = document.getElementById('entityModalBody');
+
+            typeEl.textContent = 'Entity';
+            typeEl.style.color = '#a5b4fc';
+            titleEl.textContent = 'Loading...';
+            idEl.textContent = publicCode;
+            bodyEl.innerHTML = '<div class="entity-modal-loading">Loading...</div>';
+            openModal('entityPreviewModal');
+
+            try {
+                const resp = await apiCall('GET', `/api/entity/lookup?code=${encodeURIComponent(publicCode)}`);
+                if (!resp || !resp.entity) {
+                    bodyEl.innerHTML = '<div class="entity-modal-error">Entity not found</div>';
+                    return;
+                }
+
+                const e = resp.entity;
+                titleEl.textContent = e.name || publicCode;
+
+                const stateColor = e.state === 'IDLE' ? '#4ade80' : e.state === 'BUSY' ? '#fbbf24' : '#94a3b8';
+                const avatarHtml = e.avatar
+                    ? `<img src="${escapeHtml(e.avatar)}" style="width:48px;height:48px;border-radius:50%;margin-right:12px;object-fit:cover;" onerror="this.style.display='none'">`
+                    : '';
+
+                let html = `<div style="display:flex;align-items:center;margin-bottom:16px;">
+                    ${avatarHtml}
+                    <div>
+                        <div style="font-size:18px;font-weight:700;">${escapeHtml(e.name || publicCode)}</div>
+                        <div style="font-size:13px;color:var(--text-secondary);">${escapeHtml(e.character || '')}</div>
+                        <div style="font-size:12px;margin-top:4px;"><span style="color:${stateColor};">●</span> ${escapeHtml(e.state || 'UNKNOWN')}</div>
+                    </div>
+                </div>`;
+
+                html += '<div class="entity-meta">';
+                html += `<div class="entity-meta-item"><div class="entity-meta-label">Public Code</div><div class="entity-meta-value">${escapeHtml(publicCode)}</div></div>`;
+                html += `<div class="entity-meta-item"><div class="entity-meta-label">Level</div><div class="entity-meta-value">${e.level || '-'}</div></div>`;
+
+                if (e.identity) {
+                    if (e.identity.role) html += `<div class="entity-meta-item"><div class="entity-meta-label">Role</div><div class="entity-meta-value">${escapeHtml(e.identity.role)}</div></div>`;
+                    if (e.identity.language) html += `<div class="entity-meta-item"><div class="entity-meta-label">Language</div><div class="entity-meta-value">${escapeHtml(e.identity.language)}</div></div>`;
+                }
+
+                if (e.capabilitiesStatus) {
+                    const cap = e.capabilitiesStatus;
+                    const verified = cap.verified ? '✅ Verified' : '❌ Expired';
+                    html += `<div class="entity-meta-item"><div class="entity-meta-label">Capabilities</div><div class="entity-meta-value">${verified}</div></div>`;
+                    if (cap.benchmarkScore) html += `<div class="entity-meta-item"><div class="entity-meta-label">Benchmark</div><div class="entity-meta-value">${cap.benchmarkScore}</div></div>`;
+                }
+                html += '</div>';
+
+                if (e.identity && e.identity.description) {
+                    html += `<div class="entity-description">${escapeHtml(e.identity.description)}</div>`;
+                }
+
+                if (e.agentCard && e.agentCard.description) {
+                    html += `<div style="margin-top:12px;"><strong>Agent Card:</strong></div>`;
+                    html += `<div class="entity-description">${escapeHtml(e.agentCard.description)}</div>`;
+                }
+
+                bodyEl.innerHTML = html;
+            } catch (err) {
+                bodyEl.innerHTML = `<div class="entity-modal-error">Failed to load: ${err.message || err}</div>`;
+            }
+        }
+
         async function openEntityModal(type, entityId) {
             const typeEl = document.getElementById('entityModalType');
             const titleEl = document.getElementById('entityModalTitle');

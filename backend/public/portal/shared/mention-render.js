@@ -34,7 +34,7 @@
             // Note: name is already-untrusted — re-escape to be safe
             const div = document.createElement('div');
             div.textContent = name;
-            return `<span class="mention-chip${cross}" data-code="${code}" title="@${div.innerHTML}#${code}">@${div.innerHTML}</span>`;
+            return `<span class="mention-chip${cross}" data-code="${code}" title="@${div.innerHTML}#${code}" onclick="openMentionProfile('${code}')" style="cursor:pointer;">@${div.innerHTML}</span>`;
         });
         out = out.replace(ESCAPED_ALL_RE, (m, lead) => {
             return `${lead}<span class="mention-chip mention-chip-all" title="@all">@all</span>`;
