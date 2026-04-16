@@ -1,3 +1,10 @@
+## [1.987.1](https://github.com/HankHuang0516/EClaw/compare/v1.987.0...v1.987.1) (2026-04-16)
+
+
+### Bug Fixes
+
+* **android:** show topup tier selection instead of subscription on E-coin recharge ([15d6f1c](https://github.com/HankHuang0516/EClaw/commit/15d6f1c8bee07fa07b26b647a8945237c4083275))
+
 # [1.987.0](https://github.com/HankHuang0516/EClaw/compare/v1.986.0...v1.987.0) (2026-04-16)
 
 
