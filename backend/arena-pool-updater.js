@@ -350,7 +350,37 @@ async function runPoolUpdate({ dbPool, getCurrentPools, reloadPools, serverLog }
         }
     }
 
-    // ── 4. Persist to JSON ────────────────────────────────────────────────────
+    // ── 4. Validate candidate pools BEFORE persisting ─────────────────────────
+    // Catches malformed entries (bad shape, unserializable config, scorer
+    // mismatch) that would blow up GET /arena/test/:examId for every taker.
+    let validationReport = null;
+    try {
+        const { validateCandidatePools } = require('./arena-pool-validator');
+        validationReport = validateCandidatePools(updatedPools, { log });
+        summary.validation = {
+            ok: validationReport.ok,
+            trials: validationReport.trials,
+            failureCount: validationReport.issues.length,
+            sampleIssues: validationReport.issues.slice(0, 5),
+        };
+        if (!validationReport.ok) {
+            log('error',
+                `Validation FAILED — ${validationReport.issues.length} issue(s) across ${validationReport.trials} trials. ` +
+                `Skipping pool file write; keeping existing pools. First issue: ${validationReport.issues[0]}`);
+            summary.errors.push(`validation_failed: ${validationReport.issues[0]}`);
+            // Do not persist a broken pool. Return early with the error reported.
+            log('info', `Update ABORTED — retired: ${summary.retired}, added (validated=no): ${summary.added}, errors: ${summary.errors.length}`);
+            return summary;
+        }
+        log('info', `Validation passed — ${validationReport.trials} trials, all OK`);
+    } catch (valErr) {
+        // Validator crash is itself a warning, but we still abort to be safe.
+        log('error', `Validator crashed: ${valErr.message} — skipping pool file write`);
+        summary.errors.push(`validator_crash: ${valErr.message}`);
+        return summary;
+    }
+
+    // ── 5. Persist to JSON (only after validation passes) ─────────────────────
     try {
         writePoolFile({
             version:     (fileData?.version || 0) + 1,
@@ -364,7 +394,7 @@ async function runPoolUpdate({ dbPool, getCurrentPools, reloadPools, serverLog }
         summary.errors.push(`write: ${writeErr.message}`);
     }
 
-    // ── 5. Hot-reload in-memory arrays ────────────────────────────────────────
+    // ── 6. Hot-reload in-memory arrays ────────────────────────────────────────
     try {
         reloadPools();
         log('info', 'In-memory pools reloaded');

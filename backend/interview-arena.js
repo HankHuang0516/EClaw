@@ -1712,6 +1712,13 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
         mapArenaResultToCapabilities,
         ARENA_PASS_THRESHOLD,
         ARENA_TO_CAPABILITY_MAP,
+        // Exposed for callers outside the factory (index.js:1877 for the
+        // secret-stripping transform; arena-pool-updater cron for hot reload).
+        // These also live on module.exports for direct-require consumers (tests,
+        // the pool validator), but the factory return is what index.js uses.
+        stripSecretsForBot,
+        reloadPools,
+        getCurrentPools,
         _internals: { pool, getAutoPushDeps: () => _autoPushDeps },
     };
 };
