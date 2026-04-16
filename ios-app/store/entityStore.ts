@@ -12,6 +12,12 @@ export interface Entity {
   avatarUrl?: string;
   lastActive?: number;
   encryptionStatus?: 'e2ee' | 'transport' | null;
+  // Fields for Android-parity entity card display
+  xp?: number;
+  level?: number;
+  xpForNextLevel?: number;
+  channelBound?: boolean;
+  messageTime?: number; // timestamp ms of last message
 }
 
 interface EntityState {

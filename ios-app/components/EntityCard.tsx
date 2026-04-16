@@ -1,8 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Card, Text, Chip, Avatar, useTheme } from 'react-native-paper';
+import { Card, Text, Avatar, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
-import { useRouter } from 'expo-router';
 import { Entity } from '../store/entityStore';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { CHARACTER_COLORS, STATUS_COLORS } from '../constants/colors';
@@ -10,96 +9,134 @@ import { CHARACTER_COLORS, STATUS_COLORS } from '../constants/colors';
 interface EntityCardProps {
   entity: Entity;
   onLongPress?: () => void;
+  onAvatarPress?: () => void;
+  onNamePress?: () => void;
 }
 
-const CHARACTER_ICONS = {
+const CHARACTER_ICONS: Record<string, string> = {
   LOBSTER: '🦞',
   PIG: '🐷',
 };
 
-export default function EntityCard({ entity, onLongPress }: EntityCardProps) {
+const STATE_COLORS: Record<string, string> = {
+  online: '#4CAF50',
+  IDLE: '#4CAF50',
+  idle: '#4CAF50',
+  BUSY: '#FFC107',
+  busy: '#FFC107',
+  ERROR: '#F44336',
+  error: '#F44336',
+  offline: '#9E9E9E',
+};
+
+function formatTime(ts?: number): string {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+function getStateLabel(state: string): string {
+  const s = state?.toUpperCase() || 'OFFLINE';
+  if (s === 'ONLINE') return 'IDLE';
+  return s;
+}
+
+export default function EntityCard({ entity, onLongPress, onAvatarPress, onNamePress }: EntityCardProps) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const router = useRouter();
 
-  const isOnline = entity.state === 'online' || entity.isBound;
-  const statusColor = isOnline ? STATUS_COLORS.online : theme.colors.onSurfaceVariant;
+  const stateLabel = getStateLabel(entity.state);
+  const stateColor = STATE_COLORS[entity.state] || STATE_COLORS[stateLabel.toLowerCase()] || '#9E9E9E';
+  const displayName = entity.name || `${entity.character || 'Entity'} #${entity.entityId}`;
 
-  const handlePress = () => {
-    router.push(`/chat/${entity.entityId}`);
-  };
+  const xp = entity.xp ?? 0;
+  const level = entity.level ?? 0;
+  const xpNext = entity.xpForNextLevel ?? 100;
+  const xpProgress = xpNext > 0 ? Math.min(xp / xpNext, 1) : 0;
 
   return (
     <Card
       style={[styles.card, { backgroundColor: theme.colors.surfaceVariant }]}
-      onPress={handlePress}
       onLongPress={onLongPress}
     >
       <Card.Content style={styles.content}>
-        {/* Avatar */}
-        <View style={styles.avatarContainer}>
-          {entity.avatarUrl ? (
-            <Avatar.Image size={56} source={{ uri: entity.avatarUrl }} />
-          ) : (
-            <Avatar.Text
-              size={56}
-              label={CHARACTER_ICONS[entity.character] || '🦞'}
-              style={{ backgroundColor: CHARACTER_COLORS[entity.character] || '#7C3AED' }}
-            />
-          )}
-          {/* Online indicator */}
-          <View style={[styles.onlineIndicator, { backgroundColor: statusColor }]} />
-        </View>
-
-        {/* Info */}
-        <View style={styles.info}>
-          <Text variant="titleMedium" numberOfLines={1}>
-            {entity.name || `${entity.character || 'Entity'} #${entity.entityId}`}
-          </Text>
-          <Text
-            variant="bodySmall"
-            style={{ color: theme.colors.onSurfaceVariant }}
-            numberOfLines={1}
-          >
-            {entity.message || t(`home.entity_${isOnline ? 'online' : 'offline'}`)}
-          </Text>
-          <View style={styles.chips}>
-            <Chip
-              compact
-              icon={() => (
-                <MaterialCommunityIcons
-                  name="circle"
-                  size={8}
-                  color={statusColor}
-                />
-              )}
-              style={styles.statusChip}
-            >
-              {t(`home.entity_${isOnline ? 'online' : 'offline'}`)}
-            </Chip>
-            <Chip compact style={styles.charChip}>
-              {t(`entity.character_${entity.character.toLowerCase()}`)}
-            </Chip>
-            {entity.encryptionStatus === 'e2ee' && (
-              <Chip
-                compact
-                icon={() => (
-                  <MaterialCommunityIcons name="lock" size={10} color="#60A5FA" />
-                )}
-                style={styles.e2eeChip}
-              >
-                E2EE
-              </Chip>
+        {/* Avatar — tap to change */}
+        <TouchableOpacity onPress={onAvatarPress} activeOpacity={0.7}>
+          <View style={styles.avatarContainer}>
+            {entity.avatarUrl ? (
+              <Avatar.Image size={48} source={{ uri: entity.avatarUrl }} />
+            ) : (
+              <Avatar.Text
+                size={48}
+                label={CHARACTER_ICONS[entity.character] || '🦞'}
+                style={{ backgroundColor: CHARACTER_COLORS[entity.character] || '#7C3AED' }}
+              />
             )}
           </View>
-        </View>
+        </TouchableOpacity>
 
-        {/* Chat arrow */}
-        <MaterialCommunityIcons
-          name="chevron-right"
-          size={24}
-          color={theme.colors.onSurfaceVariant}
-        />
+        {/* Info section */}
+        <View style={styles.info}>
+          {/* Row 1: Name + ID + State badge */}
+          <View style={styles.headerRow}>
+            <TouchableOpacity onPress={onNamePress} activeOpacity={0.7} style={styles.nameContainer}>
+              <Text variant="titleMedium" numberOfLines={1} style={styles.name}>
+                {entity.name || entity.character || 'Entity'}
+              </Text>
+              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                #{entity.entityIndex}
+              </Text>
+            </TouchableOpacity>
+            <View style={[styles.stateBadge, { backgroundColor: stateColor + '22', borderColor: stateColor }]}>
+              <Text style={[styles.stateText, { color: stateColor }]}>{stateLabel}</Text>
+            </View>
+          </View>
+
+          {/* Badges row: Channel + E2EE */}
+          {(entity.channelBound || entity.encryptionStatus === 'e2ee') && (
+            <View style={styles.badgeRow}>
+              {entity.channelBound && (
+                <View style={[styles.badge, { backgroundColor: '#4CAF5022' }]}>
+                  <Text style={[styles.badgeText, { color: '#4CAF50' }]}>⚡ Channel</Text>
+                </View>
+              )}
+              {entity.encryptionStatus === 'e2ee' && (
+                <View style={[styles.badge, { backgroundColor: '#60A5FA22' }]}>
+                  <Text style={[styles.badgeText, { color: '#60A5FA' }]}>🔒 E2EE</Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* XP / Level bar */}
+          {level > 0 && (
+            <View style={styles.xpRow}>
+              <Text style={styles.levelText}>Lv.{level}</Text>
+              <View style={styles.xpBarBg}>
+                <View style={[styles.xpBarFill, { width: `${xpProgress * 100}%` }]} />
+              </View>
+              <Text style={[styles.xpText, { color: theme.colors.onSurfaceVariant }]}>
+                {xp}/{xpNext} XP
+              </Text>
+            </View>
+          )}
+
+          {/* Last message bubble */}
+          {entity.message ? (
+            <View style={styles.messageBubble}>
+              <Text
+                variant="bodySmall"
+                numberOfLines={3}
+                style={styles.messageText}
+              >
+                {entity.message}
+              </Text>
+              {entity.messageTime ? (
+                <Text style={styles.messageTime}>{formatTime(entity.messageTime)}</Text>
+              ) : null}
+            </View>
+          ) : null}
+        </View>
       </Card.Content>
     </Card>
   );
@@ -110,43 +147,98 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginVertical: 6,
     borderRadius: 16,
+    elevation: 4,
   },
   content: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 12,
     paddingVertical: 12,
   },
   avatarContainer: {
-    position: 'relative',
-  },
-  onlineIndicator: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: 'white',
+    marginTop: 2,
   },
   info: {
     flex: 1,
-    gap: 4,
+    gap: 6,
   },
-  chips: {
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  nameContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+  },
+  name: {
+    fontWeight: '700',
+    flexShrink: 1,
+  },
+  stateBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  stateText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  badgeRow: {
     flexDirection: 'row',
     gap: 6,
-    flexWrap: 'wrap',
   },
-  statusChip: {
-    height: 24,
+  badge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 8,
   },
-  charChip: {
-    height: 24,
+  badgeText: {
+    fontSize: 10,
+    fontWeight: '600',
   },
-  e2eeChip: {
-    height: 24,
-    backgroundColor: '#1a2a3a',
+  xpRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  levelText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFC107',
+  },
+  xpBarBg: {
+    flex: 1,
+    height: 6,
+    backgroundColor: '#333',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  xpBarFill: {
+    height: '100%',
+    backgroundColor: '#FFC107',
+    borderRadius: 3,
+  },
+  xpText: {
+    fontSize: 10,
+  },
+  messageBubble: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 10,
+    padding: 10,
+    marginTop: 2,
+  },
+  messageText: {
+    color: '#E0E0E0',
+    fontSize: 13,
+  },
+  messageTime: {
+    fontSize: 10,
+    color: '#999',
+    textAlign: 'right',
+    marginTop: 4,
   },
 });

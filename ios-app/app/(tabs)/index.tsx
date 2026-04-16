@@ -7,9 +7,12 @@ import {
   Alert,
   Image,
   Animated,
+  TouchableOpacity,
+  LayoutAnimation,
+  Platform,
+  UIManager,
 } from 'react-native';
 import {
-  FAB,
   Text,
   Dialog,
   Portal,
@@ -18,21 +21,33 @@ import {
   useTheme,
   ActivityIndicator,
   Snackbar,
+  Card,
+  Chip,
+  IconButton,
 } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
+import * as ImagePicker from 'expo-image-picker';
 import { useEntities } from '../../hooks/useEntities';
 import { useEntityStore, Entity } from '../../store/entityStore';
 import { useAuthStore } from '../../store/authStore';
 import { deviceApi } from '../../services/api';
 import EntityCard from '../../components/EntityCard';
 import BindingCodeCard from '../../components/BindingCodeCard';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export default function HomeScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
+  const router = useRouter();
   const { entities, isLoading, refetch } = useEntities();
-  const { bindingCodes, setBindingCode, clearBindingCode, removeEntity } = useEntityStore();
+  const { bindingCodes, setBindingCode, clearBindingCode, removeEntity, updateEntity } = useEntityStore();
   const { deviceId } = useAuthStore();
 
   const [broadcastVisible, setBroadcastVisible] = useState(false);
@@ -42,18 +57,20 @@ export default function HomeScreen() {
   const [snackVisible, setSnackVisible] = useState(false);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
 
-  // Pulse animation for + FAB when no entities (first-time user guidance)
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  // Add Entity section — collapsible (match Android)
+  const [addEntityExpanded, setAddEntityExpanded] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+
+  // Rename dialog
+  const [renameVisible, setRenameVisible] = useState(false);
+  const [renameEntity, setRenameEntity] = useState<Entity | null>(null);
+  const [newName, setNewName] = useState('');
+  const [isRenaming, setIsRenaming] = useState(false);
+
+  // Auto-expand add section when no entities
   useEffect(() => {
     if (entities.length === 0) {
-      const animation = Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1.15, duration: 800, useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
-        ])
-      );
-      animation.start();
-      return () => animation.stop();
+      setAddEntityExpanded(true);
     }
   }, [entities.length]);
 
@@ -71,7 +88,7 @@ export default function HomeScreen() {
   };
 
   const handleGenerateCode = async () => {
-    const slotIndex = nextEmptySlot();
+    const slotIndex = selectedSlot ?? nextEmptySlot();
     if (slotIndex === -1) {
       showSnack(t('home.all_slots_full', 'All 20 slots are occupied'));
       return;
@@ -107,50 +124,111 @@ export default function HomeScreen() {
     }
   };
 
+  // Avatar picker
+  const handleAvatarPress = async (entity: Entity) => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.5,
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
+    if (!result.canceled && result.assets[0].uri) {
+      try {
+        const response = await deviceApi.uploadAvatar(entity.entityId, result.assets[0].uri);
+        if (response.data?.avatar) {
+          updateEntity(entity.entityId, { avatarUrl: response.data.avatar });
+        }
+        showSnack(t('common.success'));
+      } catch {
+        showSnack(t('errors.server'));
+      }
+    }
+  };
+
+  // Name rename
+  const handleNamePress = (entity: Entity) => {
+    setRenameEntity(entity);
+    setNewName(entity.name || '');
+    setRenameVisible(true);
+  };
+
+  const handleRename = async () => {
+    if (!renameEntity || !newName.trim()) return;
+    setIsRenaming(true);
+    try {
+      await deviceApi.renameEntity(renameEntity.entityId, newName.trim());
+      updateEntity(renameEntity.entityId, { name: newName.trim() });
+      setRenameVisible(false);
+      showSnack(t('common.success'));
+    } catch {
+      showSnack(t('errors.server'));
+    } finally {
+      setIsRenaming(false);
+    }
+  };
+
+  // Long press → ActionSheet
   const handleEntityLongPress = (entity: Entity) => {
-    if (entities.length <= 1) return;
-    Alert.alert((entity.name || `${entity.character || 'Entity'} #${entity.entityId}`), undefined, [
+    const buttons: any[] = [
       { text: t('common.cancel'), style: 'cancel' },
       {
+        text: t('entity.rename'),
+        onPress: () => handleNamePress(entity),
+      },
+      {
+        text: t('entityManager.agent_card', 'Agent Card'),
+        onPress: () => router.push('/entity-manager'),
+      },
+    ];
+    if (entities.length > 1) {
+      buttons.push({
         text: t('entity.remove'),
         style: 'destructive',
         onPress: () => handleDelete(entity),
-      },
-    ]);
+      });
+    }
+    Alert.alert(
+      entity.name || `${entity.character || 'Entity'} #${entity.entityId}`,
+      undefined,
+      buttons,
+    );
   };
 
   const handleDelete = async (entity: Entity) => {
-    Alert.alert(t('entity.remove'), t('entity.remove_confirm', { name: (entity.name || `${entity.character || 'Entity'} #${entity.entityId}`) }), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.delete'),
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deviceApi.deleteEntityPermanent(entity.entityIndex);
-            removeEntity(entity.entityId);
-            showSnack(t('entity.deleted'));
-          } catch {
-            showSnack(t('errors.server'));
-          }
+    Alert.alert(
+      t('entity.remove'),
+      t('entity.remove_confirm', { name: entity.name || `${entity.character || 'Entity'} #${entity.entityId}` }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deviceApi.deleteEntityPermanent(entity.entityIndex);
+              removeEntity(entity.entityId);
+              showSnack(t('entity.deleted'));
+            } catch {
+              showSnack(t('errors.server'));
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
+
+  const toggleAddEntity = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setAddEntityExpanded(!addEntityExpanded);
+  };
+
+  // Available slots for chip selector
+  const availableSlots = Array.from({ length: 20 }, (_, i) => i).filter(
+    (i) => !entities.find((e) => e.entityIndex === i)
+  );
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom']}>
-      {/* Binding code cards */}
-      {Object.entries(bindingCodes).map(([slotIndex, code]) => (
-        <BindingCodeCard
-          key={slotIndex}
-          code={code}
-          entityIndex={Number(slotIndex)}
-          onDismiss={() => clearBindingCode(Number(slotIndex))}
-        />
-      ))}
-
-      {/* Entity list */}
       {isLoading && entities.length === 0 ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" />
@@ -168,24 +246,6 @@ export default function HomeScreen() {
           >
             {t('home.no_entities_desc')}
           </Text>
-          <Button
-            mode="contained"
-            icon="plus"
-            onPress={handleGenerateCode}
-            loading={isGeneratingCode}
-            disabled={isGeneratingCode}
-            style={styles.ctaButton}
-            contentStyle={styles.ctaButtonContent}
-            labelStyle={styles.ctaButtonLabel}
-          >
-            {t('home.generate_binding_code')}
-          </Button>
-          <Text
-            variant="bodySmall"
-            style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center', marginTop: 4 }}
-          >
-            {t('home.binding_code_hint')}
-          </Text>
         </View>
       ) : (
         <FlatList
@@ -195,36 +255,150 @@ export default function HomeScreen() {
             <EntityCard
               entity={item}
               onLongPress={() => handleEntityLongPress(item)}
+              onAvatarPress={() => handleAvatarPress(item)}
+              onNamePress={() => handleNamePress(item)}
             />
           )}
           refreshControl={
             <RefreshControl refreshing={isLoading} onRefresh={refetch} />
           }
           contentContainerStyle={styles.list}
+          ListFooterComponent={
+            <View style={styles.footer}>
+              {/* Binding code cards */}
+              {Object.entries(bindingCodes).map(([slotIndex, code]) => (
+                <BindingCodeCard
+                  key={slotIndex}
+                  code={code}
+                  entityIndex={Number(slotIndex)}
+                  onDismiss={() => clearBindingCode(Number(slotIndex))}
+                />
+              ))}
+
+              {/* Collapsible Add Entity section — matches Android */}
+              <Card style={[styles.addEntityCard, { backgroundColor: theme.colors.surfaceVariant }]}>
+                <TouchableOpacity onPress={toggleAddEntity} activeOpacity={0.7}>
+                  <View style={styles.addEntityHeader}>
+                    <MaterialCommunityIcons name="plus-circle-outline" size={20} color={theme.colors.primary} />
+                    <Text variant="titleSmall" style={{ flex: 1, color: theme.colors.onSurface }}>
+                      {t('entityManager.add_entity', 'Add Entity')}
+                    </Text>
+                    <MaterialCommunityIcons
+                      name={addEntityExpanded ? 'chevron-up' : 'chevron-down'}
+                      size={20}
+                      color={theme.colors.onSurfaceVariant}
+                    />
+                  </View>
+                </TouchableOpacity>
+
+                {addEntityExpanded && (
+                  <Card.Content style={styles.addEntityContent}>
+                    {/* Slot selector chips */}
+                    {availableSlots.length > 0 && (
+                      <>
+                        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 4 }}>
+                          {t('home.select_slot', 'Select Slot:')}
+                        </Text>
+                        <View style={styles.slotChips}>
+                          {availableSlots.slice(0, 10).map((slot) => (
+                            <Chip
+                              key={slot}
+                              selected={selectedSlot === slot}
+                              onPress={() => setSelectedSlot(slot)}
+                              compact
+                              style={styles.slotChip}
+                            >
+                              {String(slot)}
+                            </Chip>
+                          ))}
+                        </View>
+                      </>
+                    )}
+
+                    {/* Generate + Copy buttons */}
+                    <View style={styles.addEntityButtons}>
+                      <Button
+                        mode="contained"
+                        icon="key-variant"
+                        onPress={handleGenerateCode}
+                        loading={isGeneratingCode}
+                        disabled={isGeneratingCode}
+                        style={{ flex: 1 }}
+                      >
+                        {t('home.generate_binding_code')}
+                      </Button>
+                    </View>
+                    <Text
+                      variant="bodySmall"
+                      style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center', marginTop: 4 }}
+                    >
+                      {t('home.binding_code_hint')}
+                    </Text>
+
+                    {/* Official Borrow button */}
+                    <Button
+                      mode="outlined"
+                      icon="robot"
+                      onPress={() => router.push('/official-borrow')}
+                      style={{ marginTop: 12 }}
+                    >
+                      {t('official_borrow.title', 'Official Bot Borrow')}
+                    </Button>
+                  </Card.Content>
+                )}
+              </Card>
+
+              {/* Entity count — matches Android tvEntityCount */}
+              <Text
+                variant="bodySmall"
+                style={[styles.entityCount, { color: theme.colors.onSurfaceVariant }]}
+              >
+                {entities.length} / 20 entities
+              </Text>
+
+              {/* Broadcast button */}
+              {entities.length > 0 && (
+                <Button
+                  mode="outlined"
+                  icon="bullhorn"
+                  onPress={() => setBroadcastVisible(true)}
+                  style={{ marginHorizontal: 16, marginTop: 8 }}
+                >
+                  {t('home.broadcast')}
+                </Button>
+              )}
+            </View>
+          }
         />
       )}
 
-      {/* FAB buttons */}
-      <View style={styles.fabContainer}>
-        {entities.length > 0 && (
-          <FAB
-            icon="bullhorn"
-            label={t('home.broadcast')}
-            onPress={() => setBroadcastVisible(true)}
-            variant="secondary"
-            size="small"
-            style={styles.broadcastFab}
-          />
-        )}
-        <Animated.View style={{ transform: [{ scale: entities.length === 0 ? pulseAnim : 1 }] }}>
-          <FAB
-            icon={isGeneratingCode ? 'loading' : 'plus'}
-            onPress={handleGenerateCode}
-            loading={isGeneratingCode}
-            style={styles.fab}
-          />
-        </Animated.View>
-      </View>
+      {/* Rename Dialog */}
+      <Portal>
+        <Dialog visible={renameVisible} onDismiss={() => setRenameVisible(false)}>
+          <Dialog.Title>{t('entity.rename')}</Dialog.Title>
+          <Dialog.Content>
+            <TextInput
+              mode="outlined"
+              label={t('entity.rename_placeholder')}
+              value={newName}
+              onChangeText={setNewName}
+              maxLength={30}
+              autoFocus
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setRenameVisible(false)}>{t('common.cancel')}</Button>
+            <Button
+              mode="contained"
+              onPress={handleRename}
+              loading={isRenaming}
+              disabled={!newName.trim() || isRenaming}
+            >
+              {t('common.save')}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
 
       {/* Broadcast Dialog */}
       <Portal>
@@ -275,29 +449,42 @@ const styles = StyleSheet.create({
     padding: 32,
     gap: 8,
   },
-  ctaButton: {
-    marginTop: 20,
-    borderRadius: 28,
-    elevation: 3,
+  list: { paddingVertical: 8, paddingBottom: 24 },
+  footer: {
+    paddingBottom: 40,
   },
-  ctaButtonContent: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+  addEntityCard: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    borderRadius: 16,
+    overflow: 'hidden',
   },
-  ctaButtonLabel: {
-    fontSize: 16,
-    fontWeight: '600',
+  addEntityHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 14,
   },
-  list: { paddingVertical: 8, paddingBottom: 100 },
-  fabContainer: {
-    position: 'absolute',
-    // tab bar is ~49pt + safe-area bottom; FAB at bottom:24 was overlapping the
-    // Cards + Settings tab hit targets, making them untappable.
-    bottom: 96,
-    right: 16,
-    alignItems: 'flex-end',
-    gap: 12,
+  addEntityContent: {
+    paddingTop: 0,
+    paddingBottom: 16,
+    gap: 8,
   },
-  fab: {},
-  broadcastFab: {},
+  slotChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 8,
+  },
+  slotChip: {
+    height: 28,
+  },
+  addEntityButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  entityCount: {
+    textAlign: 'center',
+    marginTop: 12,
+  },
 });

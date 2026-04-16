@@ -11,6 +11,8 @@ interface WebViewScreenProps {
 const INJECTED_JS = `
 (function() {
   try {
+    // Block AI chat widget in app WebView (same as Android EClawAndroid UA check)
+    window.__blockAiChatWidget = true;
     const params = new URLSearchParams(window.location.search);
     const did = params.get('deviceId');
     const ds  = params.get('deviceSecret');
@@ -25,29 +27,6 @@ const INJECTED_JS = `
       try { localStorage.setItem('authToken', tok); } catch (_) {}
       try { document.cookie = 'eclaw_session=' + tok + '; path=/; SameSite=Lax; Secure'; } catch (_) {}
     }
-    // Render a visible diag banner so we can confirm what the WebView sees
-    // without needing Safari Web Inspector.
-    var diag = {
-      urlAuth: !!tok,
-      urlDid: !!did,
-      urlDs: !!ds,
-      lsAuth: !!localStorage.getItem('authToken'),
-      lsDid: !!localStorage.getItem('deviceId'),
-      lsDs: !!localStorage.getItem('deviceSecret'),
-      cookie: document.cookie.indexOf('eclaw_session=') !== -1
-    };
-    function renderDiag() {
-      if (!document.body) { setTimeout(renderDiag, 50); return; }
-      var bar = document.createElement('div');
-      bar.id = '__eclaw_diag__';
-      bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#222;color:#0f0;font:11px monospace;padding:6px 8px;white-space:pre-wrap;line-height:1.3;border-bottom:1px solid #0f0';
-      bar.textContent = 'DIAG url=' + location.pathname +
-        '\n  urlToken='+diag.urlAuth+' urlDid='+diag.urlDid+' urlDs='+diag.urlDs +
-        '\n  lsToken='+diag.lsAuth+' lsDid='+diag.lsDid+' lsDs='+diag.lsDs +
-        '\n  cookie_eclaw_session='+diag.cookie;
-      document.body.insertBefore(bar, document.body.firstChild);
-    }
-    renderDiag();
   } catch(e) {
     if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
       window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'auth-diag-error', err: String(e) }));
