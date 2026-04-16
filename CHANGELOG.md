@@ -1,3 +1,10 @@
+## [1.988.4](https://github.com/HankHuang0516/EClaw/compare/v1.988.3...v1.988.4) (2026-04-16)
+
+
+### Bug Fixes
+
+* **android:** topup dialog i18n + activity leak from simplify review ([39d9107](https://github.com/HankHuang0516/EClaw/commit/39d9107f74b6f777ae563487a5d9f10439c9b1a0))
+
 ## [1.988.3](https://github.com/HankHuang0516/EClaw/compare/v1.988.2...v1.988.3) (2026-04-16)
 
 
