@@ -1,3 +1,15 @@
+# [1.989.0](https://github.com/HankHuang0516/EClaw/compare/v1.988.7...v1.989.0) (2026-04-16)
+
+
+### Bug Fixes
+
+* detect EClawIOS user agent for AI chat widget blocking ([aa87c2f](https://github.com/HankHuang0516/EClaw/commit/aa87c2f188ed63e1df8f29da343625c77e66fa5e))
+
+
+### Features
+
+* add collapsible Developer section in Settings ([1d4a507](https://github.com/HankHuang0516/EClaw/commit/1d4a507a2d0ebc1ad78072acd57816537086d41a))
+
 ## [1.988.7](https://github.com/HankHuang0516/EClaw/compare/v1.988.6...v1.988.7) (2026-04-16)
 
 
