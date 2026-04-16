@@ -1,3 +1,10 @@
+## [1.988.6](https://github.com/HankHuang0516/EClaw/compare/v1.988.5...v1.988.6) (2026-04-16)
+
+
+### Bug Fixes
+
+* topup BottomSheet UI + speakTo echo prevention ([682d539](https://github.com/HankHuang0516/EClaw/commit/682d53945b3ee8eb79c7ef709fff997933f18554))
+
 ## [1.988.5](https://github.com/HankHuang0516/EClaw/compare/v1.988.4...v1.988.5) (2026-04-16)
 
 
