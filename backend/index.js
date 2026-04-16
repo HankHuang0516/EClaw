@@ -7019,7 +7019,25 @@ app.post('/api/client/speak', async (req, res) => {
     // @Name so the receiving LLM sees recognisable identifiers instead of
     // raw publicCodes. The raw `text` variable (with tokens) is still what
     // gets stored in chat_messages so the frontend can re-render chips.
-    const pushText = (mentionParse && mentionParse.displayText) || text;
+    let pushText = (mentionParse && mentionParse.displayText) || text;
+
+    // ── Vault variable interpolation: {{KEY_NAME}} → actual value ──
+    // Resolve {{KEY_NAME}} tokens in pushText only (bot-facing).
+    // Original text (with {{KEY_NAME}}) is stored in chat_messages for privacy.
+    const vaultTokenRe = /\{\{(\w+)\}\}/g;
+    if (vaultTokenRe.test(pushText)) {
+        try {
+            const varsRow = await db.getDeviceVars(deviceId);
+            if (varsRow && !varsRow.is_locked) {
+                const vars = decryptVars(varsRow.encrypted_vars, varsRow.iv, varsRow.auth_tag);
+                pushText = pushText.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+                    return vars[key] !== undefined ? String(vars[key]) : match;
+                });
+            }
+        } catch (varsErr) {
+            console.warn(`[VaultInterp] Failed to resolve vars for ${deviceId}:`, varsErr.message);
+        }
+    }
 
     // Determine target entity IDs
     let targetIds = [];
@@ -9369,6 +9387,23 @@ app.post('/api/client/cross-speak', async (req, res) => {
     // Reset b2b counter on human message (same as /api/client/speak)
     resetBotToBotCounter(deviceId);
 
+    // ── Vault variable interpolation for cross-speak ──
+    let pushText = text;
+    const vaultTokenReXD = /\{\{(\w+)\}\}/g;
+    if (vaultTokenReXD.test(text)) {
+        try {
+            const varsRow = await db.getDeviceVars(deviceId);
+            if (varsRow && !varsRow.is_locked) {
+                const vars = decryptVars(varsRow.encrypted_vars, varsRow.iv, varsRow.auth_tag);
+                pushText = text.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+                    return vars[key] !== undefined ? String(vars[key]) : match;
+                });
+            }
+        } catch (varsErr) {
+            console.warn(`[VaultInterp:CrossSpeak] Failed to resolve vars for ${deviceId}:`, varsErr.message);
+        }
+    }
+
     const senderName = isOwnerMode ? (req.user && req.user.email ? req.user.email.split('@')[0] : 'User') : (fromEntity.name || fromEntity.publicCode);
     const sourceLabel = isOwnerMode ? `xdevice:${deviceId}:owner` : `xdevice:${fromEntity.publicCode}:${fromEntity.character}`;
 
@@ -9422,11 +9457,11 @@ app.post('/api/client/cross-speak', async (req, res) => {
     if (isChannelBound) {
         // Channel plugin: send structured JSON via unifiedPush
         const channelFrom = isOwnerMode ? `Device Owner (${senderName})` : `${fromEntity.name || 'User'} (${fromEntity.publicCode})`;
-        unifiedPush(toEntity, target.deviceId, 'cross_device_message', { message: text }, {
+        unifiedPush(toEntity, target.deviceId, 'cross_device_message', { message: pushText }, {
             channelPayload: {
                 event: 'cross_device_message',
                 from: channelFrom,
-                text,
+                text: pushText,
                 mediaType: mediaType || null,
                 mediaUrl: mediaUrl || null,
                 backupUrl: mediaType === 'photo' ? getBackupUrl(mediaUrl) : null,
@@ -9470,8 +9505,8 @@ app.post('/api/client/cross-speak', async (req, res) => {
             pushMsg += `[DEVICE OWNER INSTRUCTION]\n${xdSettingsClient.pre_inject}\n\n`;
         }
         pushMsg += isOwnerMode
-            ? `[MESSAGE from Device Owner] ${senderName} (device: ${deviceId})\nContent: ${text}`
-            : `[CROSS-DEVICE MESSAGE from Human User] From: ${fromEntity.name || 'User'} (code: ${fromEntity.publicCode}, device: ${deviceId})\nContent: ${text}`;
+            ? `[MESSAGE from Device Owner] ${senderName} (device: ${deviceId})\nContent: ${pushText}`
+            : `[CROSS-DEVICE MESSAGE from Human User] From: ${fromEntity.name || 'User'} (code: ${fromEntity.publicCode}, device: ${deviceId})\nContent: ${pushText}`;
         if (mediaType === 'photo') {
             pushMsg += `\n[Attachment: Photo]\nmedia_type: photo\nmedia_url: ${mediaUrl}`;
             const bkUrl = getBackupUrl(mediaUrl);
