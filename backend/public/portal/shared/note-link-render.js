@@ -40,25 +40,46 @@
             // Even indices = outside code, odd = inside code tags
             if (i % 2 === 1) continue;
 
-            // Phase 1: replace full UUIDs
+            // Phase 1: replace full UUIDs with placeholders
             parts[i] = parts[i].replace(UUID_RE, (match, uuid) => {
                 const short = uuid.substring(0, 8);
                 resolvedIds[short] = uuid;
-                return buildChip(uuid, short);
+                return queueChip(uuid, short);
             });
 
-            // Phase 2: replace "Note <shortId>" patterns
+            // Phase 2: replace "Note <shortId>" patterns with placeholders
             parts[i] = parts[i].replace(SHORT_NOTE_RE, (match, noteWord, shortId) => {
                 const fullId = resolvedIds[shortId] || shortId;
-                return buildChip(fullId, shortId);
+                return queueChip(fullId, shortId);
             });
         }
 
-        return parts.join('');
+        return flushChips(parts.join(''));
     }
 
-    function buildChip(noteId, displayId) {
-        return `<span class="note-link" data-note-id="${noteId}" onclick="openNoteModal('${noteId}')" title="Note ${displayId}">` +
+    // Use a placeholder marker during rendering to prevent Phase 2 from matching
+    // inside Phase 1's output. Replaced with final HTML at the end.
+    const CHIP_PLACEHOLDER_PREFIX = '\x00NOTECHIP[';
+    const CHIP_PLACEHOLDER_SUFFIX = ']\x00';
+    const pendingChips = [];
+
+    function queueChip(noteId, displayId) {
+        const idx = pendingChips.length;
+        pendingChips.push({ noteId, displayId });
+        return `${CHIP_PLACEHOLDER_PREFIX}${idx}${CHIP_PLACEHOLDER_SUFFIX}`;
+    }
+
+    function flushChips(html) {
+        const result = html.replace(/\x00NOTECHIP\[(\d+)\]\x00/g, (m, idx) => {
+            const c = pendingChips[parseInt(idx)];
+            return buildChipHtml(c.noteId, c.displayId);
+        });
+        pendingChips.length = 0;
+        return result;
+    }
+
+    function buildChipHtml(noteId, displayId) {
+        return `<span class="note-link" data-note-id="${noteId}" onclick="openNoteModal('${noteId}')" title="${displayId}">` +
                `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:3px;">` +
                `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>` +
                `</svg>${displayId}</span>`;
