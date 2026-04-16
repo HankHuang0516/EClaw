@@ -1779,6 +1779,92 @@
             background: rgba(239, 68, 68, 0.2);
             color: #fca5a5;
         }
+
+        /* ── Note link chip inside message bubbles ── */
+        .note-link {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 10px;
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            font-weight: 600;
+            font-size: 0.92em;
+            cursor: pointer;
+            transition: background 0.15s;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+        .note-link:hover {
+            background: rgba(245, 158, 11, 0.35);
+        }
+
+        /* ── Note Preview Modal ── */
+        #notePreviewModal .modal-box {
+            max-width: 680px;
+            text-align: left;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        #notePreviewModal .note-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--card-border);
+        }
+        #notePreviewModal .note-modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        #notePreviewModal .note-modal-id {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+        #notePreviewModal .note-modal-body {
+            color: var(--text-primary);
+            line-height: 1.7;
+            font-size: 14px;
+        }
+        #notePreviewModal .note-modal-body h1,
+        #notePreviewModal .note-modal-body h2,
+        #notePreviewModal .note-modal-body h3 {
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+        #notePreviewModal .note-modal-body pre {
+            background: rgba(0,0,0,0.3);
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        #notePreviewModal .note-modal-body code {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+        }
+        #notePreviewModal .note-modal-loading {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--text-secondary);
+        }
+        #notePreviewModal .note-modal-error {
+            text-align: center;
+            padding: 24px 0;
+            color: #f87171;
+        }
+        #notePreviewModal .note-modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+        #notePreviewModal .note-modal-close:hover {
+            background: rgba(255,255,255,0.1);
+        }
     </style>
     <link rel="canonical" href="https://eclawbot.com/portal/chat.html">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -1980,12 +2066,29 @@
         </div>
     </div>
 
+    <!-- Note Preview Modal -->
+    <div class="modal-overlay" id="notePreviewModal">
+        <div class="modal-box">
+            <div class="note-modal-header">
+                <div>
+                    <div class="note-modal-title" id="noteModalTitle">Note</div>
+                    <div class="note-modal-id" id="noteModalId"></div>
+                </div>
+                <button class="note-modal-close" onclick="closeModal('notePreviewModal')">&times;</button>
+            </div>
+            <div class="note-modal-body" id="noteModalBody">
+                <div class="note-modal-loading">Loading...</div>
+            </div>
+        </div>
+    </div>
+
     <script src="shared/api.js"></script>
     <script src="shared/nav.js"></script>
     <script src="shared/auth.js"></script>
     <script src="shared/entity-utils.js"></script>
     <script src="shared/mention-autocomplete.js"></script>
     <script src="shared/mention-render.js"></script>
+    <script src="shared/note-link-render.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -3254,6 +3357,10 @@
                     // Render @mention tokens as chips (applies to both bot and user messages)
                     if (window.MentionRender) {
                         textHtml = MentionRender.renderMentionTokens(textHtml, buildMentionEntityMap(msg));
+                    }
+                    // Render Note ID patterns as clickable chips
+                    if (window.NoteLinkRender) {
+                        textHtml = NoteLinkRender.renderNoteLinks(textHtml);
                     }
                 }
                 const firstUrlIsImage = firstUrl && isImageUrl(firstUrl);
@@ -4713,6 +4820,95 @@
         function closeUsageLimitModal() { closeModal('usageLimitModal'); }
         function showWebhookTroubleModal() { openModal('webhookTroubleModal'); }
         function closeWebhookTroubleModal() { closeModal('webhookTroubleModal'); }
+
+        // ── Note Preview Modal ──
+        // Cache of note pages list for short-ID resolution
+        let _notePagesList = null;
+
+        async function resolveShortNoteId(shortId) {
+            // Check render cache first
+            if (window.NoteLinkRender) {
+                const cached = NoteLinkRender.getResolvedId(shortId);
+                if (cached && cached.length > 8) return cached;
+            }
+            // Fetch full list of note pages and find prefix match
+            if (!_notePagesList) {
+                const resp = await apiCall('GET', `/api/mission/note/pages?deviceId=${currentUser.deviceId}&deviceSecret=${currentUser.deviceSecret}`);
+                if (resp && resp.pages) _notePagesList = resp.pages;
+            }
+            if (_notePagesList) {
+                const match = _notePagesList.find(p => p.noteId && p.noteId.startsWith(shortId));
+                if (match) {
+                    if (window.NoteLinkRender) NoteLinkRender.cacheResolvedId(shortId, match.noteId);
+                    return match.noteId;
+                }
+            }
+            return null;
+        }
+
+        async function openNoteModal(noteId) {
+            const titleEl = document.getElementById('noteModalTitle');
+            const idEl = document.getElementById('noteModalId');
+            const bodyEl = document.getElementById('noteModalBody');
+
+            titleEl.textContent = 'Note';
+            idEl.textContent = noteId.substring(0, 8);
+            bodyEl.innerHTML = '<div class="note-modal-loading">Loading...</div>';
+            openModal('notePreviewModal');
+
+            try {
+                // If short ID (8 chars), resolve to full UUID first
+                let resolvedId = noteId;
+                if (noteId.length === 8) {
+                    const fullId = await resolveShortNoteId(noteId);
+                    if (fullId) {
+                        resolvedId = fullId;
+                    } else {
+                        bodyEl.innerHTML = '<div class="note-modal-error">Note not found — could not resolve short ID</div>';
+                        return;
+                    }
+                }
+
+                const resp = await apiCall('GET',
+                    `/api/mission/note/page?deviceId=${currentUser.deviceId}&deviceSecret=${currentUser.deviceSecret}&noteId=${encodeURIComponent(resolvedId)}`
+                );
+
+                if (!resp || resp.error) {
+                    bodyEl.innerHTML = `<div class="note-modal-error">${resp && resp.error ? resp.error : 'Note not found'}</div>`;
+                    return;
+                }
+
+                idEl.textContent = (resp.noteId || resolvedId).substring(0, 8);
+
+                // Render content — support HTML or Markdown
+                let html = '';
+                if (resp.htmlContent) {
+                    html = resp.htmlContent;
+                } else if (resp.markdownContent) {
+                    html = typeof marked !== 'undefined'
+                        ? marked.parse(resp.markdownContent)
+                        : resp.markdownContent.replace(/\n/g, '<br>');
+                } else {
+                    html = '<em>Empty note</em>';
+                }
+
+                if (typeof DOMPurify !== 'undefined') {
+                    html = DOMPurify.sanitize(html);
+                }
+                bodyEl.innerHTML = html;
+
+                // Extract title from first heading in content, or use "Note"
+                const firstH = bodyEl.querySelector('h1, h2, h3');
+                titleEl.textContent = firstH ? firstH.textContent.trim() : 'Note';
+
+                // Syntax highlight code blocks
+                if (typeof hljs !== 'undefined') {
+                    bodyEl.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+                }
+            } catch (err) {
+                bodyEl.innerHTML = `<div class="note-modal-error">Failed to load note: ${err.message || err}</div>`;
+            }
+        }
 
         function hasNoWebhookWarning(resp) {
             return resp && resp.warning && resp.warning.includes('no webhook');
