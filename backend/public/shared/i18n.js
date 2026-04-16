@@ -83034,6 +83034,10 @@ const TRANSLATIONS = {
         "sc_send": "Hantar",
         "sc_powered_by": "Dikuasakan oleh",
         "sc_create_account": "Buat Akaun",
+
+        "sc_cta_create_bot_btn": "Buat Bot Anda Sendiri",
+
+        "sc_cta_create_bot": "Suka bot ini? Buat sendiri — percuma!",
         "sc_email": "E-mel",
         "sc_password": "Kata laluan",
         "sc_password_hint": "Min 6 aksara, huruf + nombor",
@@ -83264,11 +83268,23 @@ const TRANSLATIONS = {
         "guide_bp_h2_features": "Ciri-ciri Plaza",
         "guide_bp_th_feature": "Ciri",
         "guide_bp_feat_browse": "🔍 Semak imbas & Temui",
+
+        "guide_bp_feat_browse_desc": "Isih mengikut rating/terbaharu/popular/aktif; cari mengikut nama/tag/keupayaan",
         "guide_bp_feat_card": "📇 Kad Agen",
+
+        "guide_bp_feat_card_desc": "Setiap Bot mempunyai profil: nama, penerangan, keupayaan, tag, rating, tahap",
         "guide_bp_feat_chat": "💬 Sembang Terus",
+
+        "guide_bp_feat_chat_desc": "Klik Mula Cherita untuk membuka Tetingkap Proksi Bot — tiada pemasangan diperlukan",
         "guide_bp_feat_save": "❤️ Simpan Kad",
+
+        "guide_bp_feat_save_desc": "Simpan Bot ke Card Holder untuk akses cepat",
         "guide_bp_feat_comment": "💬 Ulasan",
+
+        "guide_bp_feat_comment_desc": "Tinggalkan ulasan untuk Bot yang anda telah gunakan",
         "guide_bp_feat_level": "🏆 Sistem Tahap",
+
+        "guide_bp_feat_level_desc": "Lebih aktif, bot ber-rating tinggi mendapat tahap; Bot tier Legend terserlah",
         "guide_bp_h2_publish": "Bagaimana untuk Menyenaraikan Bot Anda?",
         "guide_ec_flow3_label": "Bot Perkhidmatan AI",
         "guide_ec_flow3_sub": "Pesanan / Syor / Pertanyaan",
@@ -83587,6 +83603,8 @@ const TRANSLATIONS = {
         "guide_bp_step2_title": "Langkah 2: Dapatkan Kod Awam Anda",
         "guide_bp_step2_desc": "Dapatkan Kod Awam anda daripada Pemegang Kad. Butang Mulakan Sembang memaut ke <code>https://eclawbot.com/c/YourPublicCode</code>.",
         "guide_bp_step3_title": "Langkah 3: Dapatkan Ditemui",
+
+        "guide_bp_th_desc": "Penerangan",
         "guide_bp_step3_desc": "Setelah disenaraikan, pengguna yang mencari plaza boleh menemui Bot anda. Lebih banyak interaksi dan rating yang lebih tinggi meningkatkan kedudukan.",
         "guide_bp_h2_tips": "Petua Penyenaraian",
         "guide_bp_tip_li1": "✅ <strong>Perihalan yang jelas</strong>: Satu ayat tentang perkara yang Bot lakukan — elakkan bahasa yang tidak jelas",
@@ -83603,10 +83621,20 @@ const TRANSLATIONS = {
         "guide_wp_h2_features": "Sorotan Ciri",
         "guide_wp_th_feature": "Ciri",
         "guide_wp_feat_live": "🎭 Antara Muka Sembang Langsung",
+
+        "guide_wp_feat_live_desc": "Mesej bot terkini di wallpaper — imersi skrin penuh",
         "guide_wp_feat_notify": "🔔 Tekan = Kemas Kini Kertas Dinding",
+
+        "guide_wp_feat_notify_desc": "Wallpaper auto-kemas kini pada reply bot baharu — tiada app diperlukan",
         "guide_wp_feat_identity": "🎨 Diperibadikan",
+
+        "guide_wp_feat_identity_desc": "Wallpaper mengikut Soul bot — gaya mesra/profesional/tech",
         "guide_wp_feat_gesture": "👆 Interaksi Gerak Isyarat",
+
+        "guide_wp_feat_gesture_desc": "Tekan untuk buka cherita; tekan lama untuk tetapan",
         "guide_wp_feat_multi": "📱 Suis Berbilang Bot",
+
+        "guide_wp_feat_multi_desc": "Tukar assistant wallpaper anda bila-bila masa",
         "guide_wp_h2_setup": "Langkah Persediaan",
         "guide_wp_step1_title": "Langkah 1: Muat turun Apl Android EClawbot",
         "guide_wp_step2_title": "Langkah 2: Ikat Bot Anda",
@@ -83614,13 +83642,25 @@ const TRANSLATIONS = {
         "guide_wp_step3_title": "Langkah 3: Tetapkan sebagai Kertas Dinding Langsung",
         "guide_wp_step3_desc": "Tekan lama ke rumah → Kertas Dinding → Kertas Dinding Langsung → EClawbot → Mohon.",
         "guide_wp_step4_title": "Langkah 4: Nikmati Kertas Dinding AI Anda",
+
+        "guide_wp_th_desc": "Penerangan",
         "guide_wp_step4_desc": "Skrin utama anda menunjukkan antara muka sembang Bot. Mesej baharu muncul secara automatik.",
         "guide_wp_h2_usecases": "Kes Penggunaan",
         "guide_wp_uc_th_scene": "Senario",
         "guide_wp_uc_assistant": "🗓️ Pembantu Peribadi",
+
+        "guide_wp_uc_assistant_desc": "Bot peringatan kalendar — lihat tugas hari ini bila buka kunci",
         "guide_wp_uc_news": "📰 Ikhtisar Berita",
+
+        "guide_wp_uc_news_desc": "Tolakan berita pagi — wallpaper menunjukkan headline masa nyata",
         "guide_wp_uc_store": "🛒 E-Dagang",
+
+        "guide_wp_uc_store_desc": "Tetapkan bot CS sebagai wallpaper — lihat mesej dengan serta-merta",
+
+        "guide_wp_uc_th_bot": "Persediaan Bot",
         "guide_wp_uc_health": "💪 Pengesanan Kesihatan",
+
+        "guide_wp_uc_health_desc": "Peringatan minum air setiap jam — prompt wallpaper muncul dengan serta-merta",
         "guide_wp_h2_tips": "Petua Pro",
         "guide_wp_tip_li1": "✅ <strong>Sediakan tolakan proaktif</strong>: Bot mesti menghantar mesej secara aktif untuk mendapatkan kertas dinding secara langsung",
         "guide_wp_tip_li2": "✅ <strong>Gandingkan dengan suara TTS</strong>: Paparan kertas dinding + bacaan suara = pemberitahuan berganda",
@@ -85221,8 +85261,24 @@ const TRANSLATIONS = {
         "guide_arena_subtitle": "AI Bot Capability Testing Platform",
         "guide_arena_t1": "Vision",
         "guide_arena_t10": "Memory",
+
+        "guide_arena_t12": "Voice/TTS",
+
+        "guide_arena_t11": "Pengurusan Fail",
+
+        "guide_arena_t3": "Isi Borang",
+
+        "guide_arena_t2": "Klik Butang",
         "guide_arena_t4": "Drag & Drop",
+
+        "guide_arena_t6": "Ekstrak Jadual",
+
+        "guide_arena_t5": "Navigasi",
         "guide_arena_t7": "Distraction",
+
+        "guide_arena_t9": "Masa Respons",
+
+        "guide_arena_t8": "Pengkodan",
         "guide_arena_tests_title": "📋 12 Test Categories",
         "guide_arena_title": "Interview Arena",
         "guide_arena_total": "Total: 147 points (real score, no normalization)",
@@ -85331,16 +85387,48 @@ const TRANSLATIONS = {
         "mp_d_rate": "Rate",
         "mp_d_rating": "Rating",
         "mp_d_rent_duration": "Rental duration (minutes)",
+
+        "mp_d_rent_duration_hours": "Tempoh Sewa (jam)",
         "mp_d_rentals": "rentals",
         "mp_d_uptime": "Uptime",
         "mp_desc": "Rent premium AI bots on-demand. Pay per token, no subscription required.",
+
+        "mp_est_total": "Anggaran Kos Keseluruhan",
+        "mp_bal_your": "Baki Anda",
+        "mp_bal_sufficient": "Mencukupi",
+        "mp_bal_insufficient": "Baki Tidak Mencukupi",
+        "mp_bal_need": "Perlu",
+        "mp_bal_current": "Semasa",
+        "mp_bal_deficit": "Kurangan",
+        "mp_bal_topup": "Tambah Nilai",
+
+        "mp_est_usage": "Anggaran Penggunaan",
+
+        "mp_est_deposit": "Deposit",
         "mp_heading": "Bot Marketplace",
+
+        "mp_interview_score": "Skor Temu duga",
+
+        "mp_hours": "jam",
         "mp_load_error": "Failed to load",
         "mp_loading": "Loading...",
         "mp_login_first": "Login to rent",
         "mp_no_results": "No bots available yet. Check back later!",
+
+        "mp_rate_unit": "e-coin/1K",
+
+        "mp_cap_filter_label": "Keupayaan",
+        "mp_rate_range_label": "Kadar",
+
+        "mp_privacy_agree": "Saya faham dan bersetuju",
+
+        "mp_privacy_warning": "Perbualan anda akan diproses melalui pelayan penyewa. Jangan kongsi nombor kad kredit, kata laluan, atau maklumat identiti peribadi.",
         "mp_rent_now": "Rent Now",
         "mp_rent_success": "Rental started! Check My Rentals for details.",
+
+        "mp_rent_success_desc": "Bot telah ditambah ke peranti anda.",
+
+        "mp_rent_success_title": "Penyewaan Berjaya!",
         "mp_rent_warning": "⚠️ Your messages will be sent to the bot owner's server. Avoid sharing sensitive data.",
         "mp_renting": "Processing...",
         "mp_search_placeholder": "Search bots...",
@@ -85348,30 +85436,161 @@ const TRANSLATIONS = {
         "mp_sort_expensive": "Most Expensive",
         "mp_sort_newest": "Newest",
         "mp_sort_rating": "Top Rated",
+
+        "mp_start_chat": "Mula Cherita",
+
+        "mp_status_rented": "Disewa",
+
+        "mp_status_available": "Tersedia",
         "mp_title": "EClawbot - Bot Marketplace",
+
+        "mp_view_contract": "Lihat Kontrak",
         "mr_charged": "charged",
+
+        "mr_cancel": "Batal",
+        "mr_confirm_end": "Sahkan Tamat",
+
+        "mr_chat": "Cherita",
         "mr_contract": "Contract",
+
+        "mr_deposit_owner_zero_balance": "Deposit baki dipulangkan kepada penyewa selepas potongan penggunaan",
+
+        "mr_deposit_owner_violation": "Deposit: {refund} e-coin dipulangkan kepada penyewa · {forfeit} e-coin ke pool insurans (30%)",
+
+        "mr_deposit_owner_early_end": "Deposit: {refund} e-coin dipulangkan kepada penyewa · {forfeit} e-coin dirampas yang diterima oleh anda (50%)",
+
+        "mr_deposit_owner_full_returned": "Deposit dipulangkan sepenuhnya kepada penyewa",
+
+        "mr_deposit_renter_zero_balance": "Deposit baki dipulangkan kepada anda selepas potongan penggunaan",
+
+        "mr_deposit_renter_violation": "Deposit: {refund} e-coin dipulangkan kepada anda · {forfeit} e-coin ke pool insurans (30%)",
+
+        "mr_deposit_renter_early_end": "Deposit: {refund} e-coin dipulangkan kepada anda · {forfeit} e-coin dirampas (50%)",
+
+        "mr_deposit_renter_full_refund": "Deposit dipulangkan sepenuhnya kepada anda",
+
+        "mr_deposit_zero_balance": "Deposit baki dikembalikan",
+
+        "mr_deposit_violation": "Pulangkan {refund} e-coin, rampas {forfeit} e-coin (30%)",
+
+        "mr_deposit_early_end": "Pulangkan {refund} e-coin, rampas {forfeit} e-coin (50%)",
+
+        "mr_deposit_full_refund": "Pulangan penuh",
+
+        "mr_deposit_frozen": "beku",
+
+        "mr_deposit": "Deposit",
         "mr_dispute": "Dispute",
         "mr_dispute_evidence": "Describe the issue (optional):",
+
+        "mr_dispute_evidence_placeholder": "Terangkan masalah (pilihan)...",
         "mr_dispute_filed": "Dispute filed!",
+
+        "mr_dispute_status_rejected": "Ditolak",
+
+        "mr_dispute_status_resolved": "Diselesaikan",
+
+        "mr_dispute_status_open": "Buka",
+
+        "mr_dispute_select_required": "Sila pilih jenis pertikaian",
+
+        "mr_dispute_select_type": "Pilih jenis pertikaian:",
+
+        "mr_dispute_title": "Fail Pertikaian",
         "mr_dispute_type": "Dispute type:\n1. bot_crash\n2. bot_quality\n3. capability_mismatch\n4. financial\n\nEnter type:",
+
+        "mr_dtype_bot_crash": "Bot Crash - Bot tidak responsif",
+
+        "mr_dtype_financial": "Kewangan - Ralat bil",
+
+        "mr_dtype_capability_mismatch": "Ketidaksesuaian Keupayaan - Tidak sepadan dengan penerangan",
+
+        "mr_dtype_bot_quality": "Kualiti Bot - Kualiti bot rendah",
+
+        "mr_ecoin": "coin",
         "mr_end_confirm": "Are you sure? Early termination forfeits 50% of your deposit.",
         "mr_end_early": "End Early",
+
+        "mr_end_early_insurance": "Insurans 2%",
+
+        "mr_end_early_platform": "Platform 13%",
+
+        "mr_end_early_owner": "Pemilik 85%",
+
+        "mr_end_early_split": "Pembahagian rampasan",
+
+        "mr_end_early_refund": "Deposit 50% ({refund} e-coin) akan dipulangkan",
+
+        "mr_end_early_forfeit": "Deposit 50% ({forfeit} e-coin) akan dirampas",
+
+        "mr_end_early_irreversible": "Tindakan ini tidak boleh dibatalkan. Mengikut syarat penamatan awal:",
+
+        "mr_end_early_title": "Sahkan Penamatan Awai?",
         "mr_filed": "Filed",
         "mr_heading": "My Rentals",
+
+        "mr_income_details": "Butiran Pendapatan",
+
+        "mr_income": "Pendapatan",
         "mr_load_error": "Failed to load",
         "mr_loading": "Loading...",
         "mr_no_contracts": "No contracts yet",
         "mr_no_disputes": "No disputes filed",
+
+        "mr_remaining_time": "Baki",
         "mr_review": "Review",
         "mr_review_placeholder": "Optional comment...",
         "mr_review_submitted": "Review submitted!",
         "mr_select_rating": "Please select a rating",
+
+        "mr_sla_remaining_suffix": "baki",
+
+        "mr_sla_remaining": "SLA",
+
+        "mr_sla_quality": "24h respons / 72h selesaikan",
+
+        "mr_sla_financial": "12h respons / 48h selesaikan",
+
+        "mr_sla_capability": "24h respons / 48h selesaikan",
+
+        "mr_sla_bot_crash": "5min pengesahan auto",
+
+        "mr_sla_title": "Maklumat SLA",
+
+        "mr_submit_dispute": "Hantar Pertikaian",
+
+        "mr_status_suspended": "Digantung (Baki Rendah)",
+
+        "mr_status_ended_admin": "Ditamat (Admin)",
+
+        "mr_status_ended_disputed": "Ditamat (Disengkelakan)",
+
+        "mr_status_ended_violation": "Ditamat (Pelanggaran)",
+
+        "mr_status_ended_zero_balance": "Ditamat (Baki Sifar)",
+
+        "mr_status_ended_early": "Ditamat (Awai)",
+
+        "mr_status_ended_normal": "Ditamat (Normal)",
+
+        "mr_status_active": "Aktif",
+
+        "mr_settlement_done": "Disettle",
+
+        "mr_settlement_pending": "Menj settle...",
+
+        "mr_settlement_status": "Penj settle",
         "mr_submit_review": "Submit Review",
         "mr_tab_disputes": "Disputes",
         "mr_tab_leasing": "Leasing Out",
         "mr_tab_renting": "Renting",
         "mr_title": "EClawbot - My Rentals",
+
+        "mr_usage_coming_soon": "Butiran penggunaan akan datang soon",
+
+        "mr_topup": "Tambah Nilai",
+
+        "mr_usage_details": "Butiran Penggunaan",
         "nav_invite": "Invite Friends",
         "nav_marketplace": "Marketplace",
         "nav_my_rentals": "My Rentals",
