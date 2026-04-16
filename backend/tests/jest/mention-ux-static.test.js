@@ -112,7 +112,7 @@ describe('Mention feature — Fix A: displayText propagation (regression)', () =
         // mentionParse.displayText (tokens replaced with @name) when
         // pushing to the bot, while still storing raw text in chat_messages
         // so the frontend can re-render chips.
-        expect(indexJs).toMatch(/const\s+pushText\s*=\s*\(mentionParse\s*&&\s*mentionParse\.displayText\)\s*\|\|\s*text/);
+        expect(indexJs).toMatch(/(const|let)\s+pushText\s*=\s*\(mentionParse\s*&&\s*mentionParse\.displayText\)\s*\|\|\s*text/);
     });
 
     test('channel push uses pushText (not raw text)', () => {
