@@ -752,7 +752,7 @@
 
     // ── Init ──────────────────────────────────
     function isAndroidWebView() {
-        return typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent || '');
+        return typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent || '');
     }
 
     function init() {

@@ -636,7 +636,7 @@
     <script src="shared/footer.js"></script>
     <script>
     (function(){
-        var isApp = typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent);
+        var isApp = typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent);
         if (isApp) {
             window.__blockAiChatWidget = true;
             window.__isAppWebView = true;

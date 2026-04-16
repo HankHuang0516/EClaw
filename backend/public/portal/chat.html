@@ -2220,7 +2220,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
-    <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
+    <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
     <script src="shared/ai-chat.js"></script>
     <script>if(typeof renderAvatarHtml==='undefined'){window.renderAvatarHtml=function(a){return a||'\u{1F99E}'};window.isAvatarUrl=function(){return false}}</script>
     <script>
@@ -2381,7 +2381,7 @@
         // ── Android WebView Detection ──
         // Check both the injected JS bridge and the custom User-Agent suffix so
         // late-binding environments don't miss either signal.
-        const isAndroidWebView = typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent);
+        const isAndroidWebView = typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent);
 
         // ── Marked.js custom renderer for code blocks ──
         (function configureMarked() {
