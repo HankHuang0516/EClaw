@@ -1,3 +1,10 @@
+## [1.988.7](https://github.com/HankHuang0516/EClaw/compare/v1.988.6...v1.988.7) (2026-04-16)
+
+
+### Bug Fixes
+
+* **android:** WebViewActivity missing from AndroidManifest — crash fix ([606b04c](https://github.com/HankHuang0516/EClaw/commit/606b04cadaca3e80ab765a83a06e1023c4b8c7c3))
+
 ## [1.988.6](https://github.com/HankHuang0516/EClaw/compare/v1.988.5...v1.988.6) (2026-04-16)
 
 
