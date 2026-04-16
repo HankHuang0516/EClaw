@@ -5116,8 +5116,66 @@
                 }
 
                 bodyEl.innerHTML = html;
+
+                // Async: fetch kanban tasks assigned to this entity
+                fetchEntityKanbanTasks(publicCode, bodyEl);
             } catch (err) {
                 bodyEl.innerHTML = `<div class="entity-modal-error">Failed to load: ${err.message || err}</div>`;
+            }
+        }
+
+        async function fetchEntityKanbanTasks(publicCode, containerEl) {
+            // Resolve publicCode to entityId via myPublicCodeMap (same-device only)
+            const mapEntry = myPublicCodeMap[publicCode];
+            if (!mapEntry || mapEntry.entityId < 0) return; // skip for 'You' or unknown
+
+            const entityId = mapEntry.entityId;
+            try {
+                const auth = `deviceId=${currentUser.deviceId}&deviceSecret=${currentUser.deviceSecret}`;
+                const resp = await apiCall('GET', `/api/mission/cards?${auth}&entityId=${entityId}`);
+                if (!resp || !resp.cards) return;
+
+                // Filter cards assigned to this entity, exclude archived/done
+                const activeStatuses = ['blocked', 'todo', 'in_progress', 'doing', 'review'];
+                const assigned = resp.cards.filter(c =>
+                    c.assignedBots && c.assignedBots.includes(entityId) &&
+                    activeStatuses.includes(c.status) && !c.archived
+                );
+
+                if (assigned.length === 0) return;
+
+                // Group by status
+                const groups = {};
+                for (const c of assigned) {
+                    const s = c.status;
+                    if (!groups[s]) groups[s] = [];
+                    groups[s].push(c);
+                }
+
+                let html = `<div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--card-border);">`;
+                html += `<strong>Kanban Tasks (${assigned.length})</strong>`;
+
+                const statusOrder = ['blocked', 'in_progress', 'doing', 'review', 'todo'];
+                const statusLabels = { blocked: '🚫 Blocked', todo: '📋 Todo', in_progress: '🔄 In Progress', doing: '🔄 Doing', review: '👀 Review' };
+
+                for (const status of statusOrder) {
+                    if (!groups[status]) continue;
+                    html += `<div style="margin-top:8px;font-size:12px;color:var(--text-secondary);font-weight:600;">${statusLabels[status] || status} (${groups[status].length})</div>`;
+                    for (const c of groups[status].slice(0, 5)) {
+                        const title = (c.title || '').replace(/^\[Auto\]\s*/, '');
+                        const priority = c.priority ? `<span style="font-size:11px;color:var(--text-secondary);margin-left:4px;">${escapeHtml(c.priority)}</span>` : '';
+                        html += `<div style="padding:4px 0;font-size:13px;cursor:pointer;" onclick="closeModal('entityPreviewModal');openEntityModal('card','${c.id}')">` +
+                                `${escapeHtml(title.substring(0, 60))}${priority}</div>`;
+                    }
+                    if (groups[status].length > 5) {
+                        html += `<div style="font-size:12px;color:var(--text-secondary);">+${groups[status].length - 5} more</div>`;
+                    }
+                }
+                html += '</div>';
+
+                containerEl.insertAdjacentHTML('beforeend', html);
+            } catch (err) {
+                // Silently fail — kanban tasks are optional enhancement
             }
         }
 
