@@ -280,7 +280,7 @@ class SettingsActivity : AppCompatActivity() {
 
         findViewById<MaterialButton>(R.id.btnWallet).setOnClickListener {
             TelemetryHelper.trackAction("settings_wallet")
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://eclawbot.com/portal/wallet.html")))
+            WebViewActivity.launch(this, "https://eclawbot.com/portal/wallet.html", getString(R.string.settings_wallet))
         }
 
         findViewById<MaterialButton>(R.id.btnTopup).setOnClickListener {
@@ -290,12 +290,12 @@ class SettingsActivity : AppCompatActivity() {
 
         findViewById<MaterialButton>(R.id.btnMyRentals).setOnClickListener {
             TelemetryHelper.trackAction("settings_my_rentals")
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://eclawbot.com/portal/my-rentals.html")))
+            WebViewActivity.launch(this, "https://eclawbot.com/portal/my-rentals.html", getString(R.string.settings_my_rentals))
         }
 
         findViewById<MaterialButton>(R.id.btnInvite).setOnClickListener {
             TelemetryHelper.trackAction("settings_invite_friends")
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://eclawbot.com/portal/invite.html")))
+            WebViewActivity.launch(this, "https://eclawbot.com/portal/invite.html", getString(R.string.settings_invite))
         }
 
         btnSetWallpaper.setOnClickListener {
@@ -316,7 +316,7 @@ class SettingsActivity : AppCompatActivity() {
 
         btnDeleteAccount.setOnClickListener {
             TelemetryHelper.trackAction("settings_delete_account")
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://eclawbot.com/portal/delete-account.html")))
+            WebViewActivity.launch(this, "https://eclawbot.com/portal/delete-account.html", getString(R.string.settings_delete_account))
         }
 
         btnCrashLogs.setOnClickListener {
@@ -330,7 +330,7 @@ class SettingsActivity : AppCompatActivity() {
         // Account Status Card listeners
         btnAccountOpenPortal.setOnClickListener {
             TelemetryHelper.trackAction("account_card_open_portal")
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://eclawbot.com/portal/")))
+            WebViewActivity.launch(this, "https://eclawbot.com/portal/dashboard.html", "EClawbot Portal")
         }
 
         tvAccountCopyCredentials.setOnClickListener {
@@ -1382,6 +1382,11 @@ class SettingsActivity : AppCompatActivity() {
             clip.setPrimaryClip(ClipData.newPlainText("channel_api", text))
             Toast.makeText(this, getString(R.string.channel_api_copied), Toast.LENGTH_SHORT).show()
             TelemetryHelper.trackAction("channel_api_copy")
+        }
+
+        findViewById<com.google.android.material.button.MaterialButton>(R.id.btnChannelApiManage).setOnClickListener {
+            TelemetryHelper.trackAction("channel_api_manage_all")
+            WebViewActivity.launch(this, "https://eclawbot.com/portal/settings.html", getString(R.string.channel_api_card_title))
         }
     }
 

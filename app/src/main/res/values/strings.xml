@@ -464,6 +464,7 @@
     <string name="channel_api_secret_label">API Secret</string>
     <string name="channel_api_copy_btn">Copy</string>
     <string name="channel_api_copied">Credentials copied</string>
+    <string name="channel_api_manage_all">Manage All Keys →</string>
     <string name="channel_api_no_key">No API key yet. Open the Web Portal to generate one.</string>
     <string name="channel_api_slots_active">Connected: %1$s</string>
 
