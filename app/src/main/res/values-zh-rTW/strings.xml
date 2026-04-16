@@ -303,7 +303,7 @@
     <string name="feedback_photo_uploaded">已上傳 %d 張照片</string>
     <string name="feedback_photo_uploading">照片上傳中…</string>
     <string name="feedback_result_issue">查看 GitHub Issue #%d</string>
-    <string name="feedback_result_logs">已擷取：%d 個 API 請求、%d 筆伺服器紀錄</string>
+    <string name="feedback_result_logs">已擷取：%1$d 個 API 請求、%2$d 筆伺服器紀錄</string>
     <string name="feedback_result_severity">嚴重程度：%s</string>
     <string name="feedback_result_title">意見 #%d 已收到</string>
     <string name="feedback_sending">傳送中…</string>
@@ -701,6 +701,10 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="settings_entity_limit">實體上限：%1$d</string>
     <string name="settings_reset">設定已重置</string>
     <string name="settings_title">設定</string>
+    <string name="settings_wallet">錢包</string>
+    <string name="settings_my_rentals">我的租借</string>
+    <string name="settings_invite">邀請好友</string>
+    <string name="settings_delete_account">刪除帳戶</string>
     <string name="show_label">顯示</string>
     <string name="sign_in_facebook">使用 Facebook 登入</string>
     <string name="sign_in_google">使用 Google 登入</string>

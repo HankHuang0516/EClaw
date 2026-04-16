@@ -42,6 +42,10 @@
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
+    <string name="settings_wallet">Wallet</string>
+    <string name="settings_my_rentals">My Rentals</string>
+    <string name="settings_invite">Invite Friends</string>
+    <string name="settings_delete_account">Delete Account</string>
     <string name="usage_title">Today\'s Usage</string>
     <string name="premium_badge">PREMIUM</string>
     <string name="sends_today">sends today</string>
