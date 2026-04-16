@@ -423,45 +423,42 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
     }
 
     /**
-     * Consume a top-up purchase and verify with the backend to credit e-coins.
+     * Verify top-up with backend first, then consume the purchase.
+     * This ensures e-coins are credited before the purchase token is consumed,
+     * preventing lost purchases on server verification failure.
      */
     private fun consumeAndVerifyTopup(purchase: Purchase, productId: String) {
-        scope.launch {
-            val consumeParams = ConsumeParams.newBuilder()
-                .setPurchaseToken(purchase.purchaseToken)
-                .build()
-
-            billingClient.consumeAsync(consumeParams) { billingResult, _ ->
-                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    Timber.tag(TAG).d("Top-up consumed: $productId")
-                    verifyTopupWithServer(purchase.purchaseToken, productId)
-                } else {
-                    Timber.tag(TAG).e("Top-up consume failed: ${billingResult.debugMessage}")
-                    onTopupComplete?.invoke(productId, false)
-                }
-            }
-        }
-    }
-
-    /**
-     * Send top-up purchase token to backend for e-coin credit.
-     */
-    private fun verifyTopupWithServer(purchaseToken: String, productId: String) {
         scope.launch(Dispatchers.IO) {
             try {
+                // Step 1: Verify with server (credits e-coins)
                 val body = mapOf(
                     "deviceId" to deviceManager.deviceId,
                     "deviceSecret" to (deviceManager.deviceSecret ?: ""),
-                    "purchaseToken" to purchaseToken,
+                    "purchaseToken" to purchase.purchaseToken,
                     "productId" to productId
                 )
                 api.verifyGoogleTopup(body)
                 Timber.tag(TAG).d("Top-up verified with server: $productId")
-                scope.launch(Dispatchers.Main) {
-                    onTopupComplete?.invoke(productId, true)
+
+                // Step 2: Consume on Google Play (only after server success)
+                val consumeParams = ConsumeParams.newBuilder()
+                    .setPurchaseToken(purchase.purchaseToken)
+                    .build()
+
+                billingClient.consumeAsync(consumeParams) { billingResult, _ ->
+                    if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                        Timber.tag(TAG).d("Top-up consumed: $productId")
+                    } else {
+                        Timber.tag(TAG).w("Top-up consume failed (e-coins already credited): ${billingResult.debugMessage}")
+                    }
+                    // Success: e-coins credited regardless of consume result
+                    scope.launch(Dispatchers.Main) {
+                        onTopupComplete?.invoke(productId, true)
+                    }
                 }
             } catch (e: Exception) {
                 Timber.tag(TAG).e(e, "Failed to verify top-up with server")
+                // Don't consume — purchase remains on Google Play for retry
                 scope.launch(Dispatchers.Main) {
                     onTopupComplete?.invoke(productId, false)
                 }

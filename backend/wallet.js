@@ -732,7 +732,7 @@ async function getLedger(userId, { limit = 50, offset = 0, type = null } = {}) {
 // Express factory
 // ============================================
 
-module.exports = function walletFactory({ authMiddleware, adminMiddleware, serverLog } = {}) {
+module.exports = function walletFactory({ authMiddleware, adminMiddleware, serverLog, devices, safeEqual } = {}) {
     if (typeof authMiddleware !== 'function') {
         throw new Error('wallet: authMiddleware is required');
     }
@@ -787,53 +787,93 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
     });
 
     // POST /api/wallet/topup/verify-google
-    // Body: { productId, purchaseToken }
+    // Body: { productId, purchaseToken, deviceId?, deviceSecret? }
+    //   — Device auth (Android app): { deviceId, deviceSecret } in body
+    //   — JWT auth (portal): cookie/Authorization header
     //
     // TODO: validate purchaseToken via Google androidpublisher API once
     // GOOGLE_PLAY_SERVICE_ACCOUNT is provisioned. Until then we trust the
     // token and rely on UNIQUE(channel, external_txn_id) for dedupe.
-    router.post('/topup/verify-google', authMiddleware, walletRoute(async (req, res) => {
-        const { productId, purchaseToken } = req.body || {};
-        if (!productId || typeof productId !== 'string') {
-            throw new Error('product_id_required');
+    router.post('/topup/verify-google', async (req, res) => {
+        try {
+            const { productId, purchaseToken, deviceId, deviceSecret: devSecret } = req.body || {};
+
+            // --- Resolve userId: device auth first, JWT fallback ---
+            let userId;
+
+            if (deviceId && devSecret && devices && safeEqual) {
+                // Device auth (Android app sends deviceId + deviceSecret)
+                const device = devices[deviceId];
+                if (!device || !safeEqual(device.deviceSecret, devSecret)) {
+                    return res.status(401).json({ success: false, error: 'invalid_credentials' });
+                }
+                const userResult = await pool.query(
+                    'SELECT id FROM user_accounts WHERE device_id = $1',
+                    [deviceId]
+                );
+                if (userResult.rows.length === 0) {
+                    return res.status(404).json({ success: false, error: 'no_account_for_device' });
+                }
+                userId = userResult.rows[0].id;
+            } else {
+                // JWT auth fallback (portal web) — use a fake res to prevent 401 from being sent
+                const authed = await new Promise((resolve) => {
+                    const fakeRes = { status: () => ({ json: () => resolve(false) }) };
+                    authMiddleware(req, fakeRes, () => resolve(true));
+                });
+                if (!authed || !req.user || !req.user.userId) {
+                    return res.status(401).json({ success: false, error: 'unauthenticated' });
+                }
+                userId = req.user.userId;
+            }
+
+            // --- Validate inputs ---
+            if (!productId || typeof productId !== 'string') {
+                return res.status(400).json({ success: false, error: 'product_id_required' });
+            }
+            if (!purchaseToken || typeof purchaseToken !== 'string' || purchaseToken.length < 8) {
+                return res.status(400).json({ success: false, error: 'purchase_token_invalid' });
+            }
+            const tier = getTopupTier(productId);
+            if (!tier) {
+                return res.status(400).json({ success: false, error: 'unknown_product' });
+            }
+
+            const order = await createTopupOrder({
+                userId,
+                channel: 'google_play',
+                priceUsd: tier.priceUsd,
+                baseMli: tier.baseMli,
+                bonusMli: tier.bonusMli,
+                externalTxnId: purchaseToken,
+                externalRaw: { productId, source: 'verify-google' },
+            });
+
+            const ledger = await markTopupPaid({
+                orderId: order.id,
+                userId,
+                amountMli: parseInt(order.ecoin_total_mli, 10),
+                channel: 'google_play',
+            });
+
+            audit('info', 'wallet', `topup verified user=${userId} product=${productId} order=${order.id}`, {
+                userId, action: 'topup_verify', resource: order.id, result: 'success',
+            });
+
+            res.json({
+                success: true,
+                order: {
+                    id: order.id,
+                    status: 'paid',
+                    ecoinTotal: Math.round(parseInt(order.ecoin_total_mli, 10) / ECOIN_TO_MLI),
+                    deduped: !!order.deduped || !!ledger.deduped,
+                },
+            });
+        } catch (err) {
+            console.error('[Wallet] topup verify-google error:', err);
+            res.status(500).json({ success: false, error: 'internal_error' });
         }
-        if (!purchaseToken || typeof purchaseToken !== 'string' || purchaseToken.length < 8) {
-            throw new Error('purchase_token_invalid');
-        }
-        const tier = getTopupTier(productId);
-        if (!tier) throw new Error('unknown_product');
-
-        const order = await createTopupOrder({
-            userId: req.user.userId,
-            channel: 'google_play',
-            priceUsd: tier.priceUsd,
-            baseMli: tier.baseMli,
-            bonusMli: tier.bonusMli,
-            externalTxnId: purchaseToken,
-            externalRaw: { productId, source: 'verify-google' },
-        });
-
-        const ledger = await markTopupPaid({
-            orderId: order.id,
-            userId: req.user.userId,
-            amountMli: parseInt(order.ecoin_total_mli, 10),
-            channel: 'google_play',
-        });
-
-        audit('info', 'wallet', `topup verified user=${req.user.userId} product=${productId} order=${order.id}`, {
-            userId: req.user.userId, action: 'topup_verify', resource: order.id, result: 'success',
-        });
-
-        res.json({
-            success: true,
-            order: {
-                id: order.id,
-                status: 'paid',
-                ecoinTotal: Math.round(parseInt(order.ecoin_total_mli, 10) / ECOIN_TO_MLI),
-                deduped: !!order.deduped || !!ledger.deduped,
-            },
-        });
-    }));
+    });
 
     // ============================================
     // POST /api/wallet/topup/verify-apple

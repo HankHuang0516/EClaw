@@ -1721,6 +1721,8 @@ const walletModule = require('./wallet')({
     authMiddleware: authModule.authMiddleware,
     adminMiddleware: authModule.adminMiddleware,
     serverLog,
+    devices,
+    safeEqual,
 });
 app.use('/api/wallet', walletModule.router);
 // Inject wallet into subscription for monthly e-coin grants (deferred DI)

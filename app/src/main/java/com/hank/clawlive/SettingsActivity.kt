@@ -146,6 +146,13 @@ class SettingsActivity : AppCompatActivity() {
         BottomNavHelper.setup(this, NavItem.SETTINGS)
         AiChatFabHelper.setup(this, "settings")
         billingManager = BillingManager.getInstance(this)
+        billingManager.onTopupComplete = { productId, success ->
+            if (success) {
+                Toast.makeText(this, getString(R.string.topup_success), Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this, getString(R.string.topup_failed), Toast.LENGTH_LONG).show()
+            }
+        }
         usageManager = UsageManager.getInstance(this)
 
         initViews()
