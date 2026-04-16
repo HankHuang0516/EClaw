@@ -3,9 +3,11 @@
  * message text and render them as clickable chips that open a modal.
  *
  * Recognised patterns (in already-escaped HTML):
- *   1. Full UUID:  xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  (36 chars)
- *   2. Short prefix preceded by "note" / "Note" context:
- *      "Note a51136e1", "note: a51136e1", "note a51136e1"
+ *   1. "Note" + full UUID:  Note a51136e1-f0fd-44f0-83ef-f9b2d0731b5a
+ *   2. "Note" + short prefix: Note a51136e1, note: a51136e1
+ *
+ * Bare UUIDs without "Note" prefix are NOT matched to avoid false positives
+ * with deviceId, deviceSecret, session IDs, etc.
  *
  * All render functions expect already-escaped HTML as input (post-DOMPurify
  * or post-escapeHtml), consistent with MentionRender.
@@ -13,11 +15,12 @@
 (function (global) {
     'use strict';
 
-    // Full UUID pattern (hex-8-4-4-4-12)
-    const UUID_RE = /\b([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\b/gi;
+    // "Note" + full UUID (case-insensitive)
+    // Matches: "Note a51136e1-...", "note: a51136e1-...", "Note：a51136e1-..."
+    const UUID_NOTE_RE = /\b(note)\s*[:：]?\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\b/gi;
 
-    // Short note ID — 8 hex chars preceded by "note" keyword (case-insensitive)
-    // Matches: "Note a51136e1", "note:a51136e1", "Note: a51136e1", "note a51136e1"
+    // "Note" + short 8-char hex ID (case-insensitive)
+    // Matches: "Note a51136e1", "note:a51136e1", "Note: a51136e1"
     const SHORT_NOTE_RE = /\b(note)\s*[:：]?\s*([0-9a-f]{8})\b/gi;
 
     // Cache: short prefix → full noteId (populated on successful API fetches)
@@ -33,21 +36,21 @@
         if (!escapedHtml) return escapedHtml;
 
         // Split HTML into code/non-code segments to avoid transforming inside <code>/<pre>
-        // Simple approach: split by code blocks, only transform odd segments (outside code)
         const parts = escapedHtml.split(/(<code[\s>][\s\S]*?<\/code>|<pre[\s>][\s\S]*?<\/pre>)/gi);
 
         for (let i = 0; i < parts.length; i++) {
             // Even indices = outside code, odd = inside code tags
             if (i % 2 === 1) continue;
 
-            // Phase 1: replace full UUIDs with placeholders
-            parts[i] = parts[i].replace(UUID_RE, (match, uuid) => {
+            // Phase 1: replace "Note <fullUUID>" patterns with placeholders
+            parts[i] = parts[i].replace(UUID_NOTE_RE, (match, noteWord, uuid) => {
                 const short = uuid.substring(0, 8);
                 resolvedIds[short] = uuid;
                 return queueChip(uuid, short);
             });
 
             // Phase 2: replace "Note <shortId>" patterns with placeholders
+            // (only matches short IDs not already consumed by Phase 1)
             parts[i] = parts[i].replace(SHORT_NOTE_RE, (match, noteWord, shortId) => {
                 const fullId = resolvedIds[shortId] || shortId;
                 return queueChip(fullId, shortId);
@@ -57,8 +60,7 @@
         return flushChips(parts.join(''));
     }
 
-    // Use a placeholder marker during rendering to prevent Phase 2 from matching
-    // inside Phase 1's output. Replaced with final HTML at the end.
+    // Placeholder system to prevent Phase 2 from matching inside Phase 1's output
     const CHIP_PLACEHOLDER_PREFIX = '\x00NOTECHIP[';
     const CHIP_PLACEHOLDER_SUFFIX = ']\x00';
     const pendingChips = [];
