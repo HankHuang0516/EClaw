@@ -1,3 +1,10 @@
+# [1.985.0](https://github.com/HankHuang0516/EClaw/compare/v1.984.0...v1.985.0) (2026-04-16)
+
+
+### Features
+
+* add clickable [@mention](https://github.com/mention) profiles and entity preview modal ([10b2521](https://github.com/HankHuang0516/EClaw/commit/10b25219701e2edb27fe8c011f26e96cf7d0a2b8))
+
 # [1.984.0](https://github.com/HankHuang0516/EClaw/compare/v1.983.2...v1.984.0) (2026-04-16)
 
 
