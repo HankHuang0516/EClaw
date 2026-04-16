@@ -1865,6 +1865,114 @@
         #notePreviewModal .note-modal-close:hover {
             background: rgba(255,255,255,0.1);
         }
+
+        /* ── Entity link chips (Card, Skill, Rule, etc.) ── */
+        .entity-link {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.92em;
+            cursor: pointer;
+            transition: filter 0.15s;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+        .entity-link:hover {
+            filter: brightness(1.3);
+        }
+
+        /* ── Entity Preview Modal ── */
+        #entityPreviewModal .modal-box {
+            max-width: 600px;
+            text-align: left;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        #entityPreviewModal .entity-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--card-border);
+        }
+        #entityPreviewModal .entity-modal-type {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        #entityPreviewModal .entity-modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        #entityPreviewModal .entity-modal-id {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+        #entityPreviewModal .entity-modal-body {
+            color: var(--text-primary);
+            line-height: 1.7;
+            font-size: 14px;
+        }
+        #entityPreviewModal .entity-modal-loading {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--text-secondary);
+        }
+        #entityPreviewModal .entity-modal-error {
+            text-align: center;
+            padding: 24px 0;
+            color: #f87171;
+        }
+        #entityPreviewModal .entity-modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+        #entityPreviewModal .entity-modal-close:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        #entityPreviewModal .entity-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        #entityPreviewModal .entity-meta-item {
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+        }
+        #entityPreviewModal .entity-meta-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        #entityPreviewModal .entity-meta-value {
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+        #entityPreviewModal .entity-description {
+            padding: 12px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            white-space: pre-wrap;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 300px;
+            overflow-y: auto;
+        }
     </style>
     <link rel="canonical" href="https://eclawbot.com/portal/chat.html">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -2066,6 +2174,23 @@
         </div>
     </div>
 
+    <!-- Entity Preview Modal (Card, Skill, Rule, Listing, etc.) -->
+    <div class="modal-overlay" id="entityPreviewModal">
+        <div class="modal-box">
+            <div class="entity-modal-header">
+                <div>
+                    <div class="entity-modal-type" id="entityModalType"></div>
+                    <div class="entity-modal-title" id="entityModalTitle">Loading...</div>
+                    <div class="entity-modal-id" id="entityModalId"></div>
+                </div>
+                <button class="entity-modal-close" onclick="closeModal('entityPreviewModal')">&times;</button>
+            </div>
+            <div class="entity-modal-body" id="entityModalBody">
+                <div class="entity-modal-loading">Loading...</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Note Preview Modal -->
     <div class="modal-overlay" id="notePreviewModal">
         <div class="modal-box">
@@ -2089,6 +2214,7 @@
     <script src="shared/mention-autocomplete.js"></script>
     <script src="shared/mention-render.js"></script>
     <script src="shared/note-link-render.js"></script>
+    <script src="shared/entity-link-render.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -3361,6 +3487,10 @@
                     // Render Note ID patterns as clickable chips
                     if (window.NoteLinkRender) {
                         textHtml = NoteLinkRender.renderNoteLinks(textHtml);
+                    }
+                    // Render entity references (Card, Skill, Rule, etc.) as clickable chips
+                    if (window.EntityLinkRender) {
+                        textHtml = EntityLinkRender.renderEntityLinks(textHtml);
                     }
                 }
                 const firstUrlIsImage = firstUrl && isImageUrl(firstUrl);
@@ -4908,6 +5038,167 @@
             } catch (err) {
                 bodyEl.innerHTML = `<div class="note-modal-error">Failed to load note: ${err.message || err}</div>`;
             }
+        }
+
+        // ── Entity Preview Modal (Card, Skill, Rule, etc.) ──
+        const entityTypeLabels = {
+            card: 'Kanban Card', skill: 'Skill', rule: 'Rule',
+            listing: 'Rental Listing', exam: 'Arena Exam', contract: 'Rental Contract'
+        };
+
+        const statusEmojis = {
+            todo: '📋', in_progress: '🔄', doing: '🔄', done: '✅',
+            archived: '📦', review: '👀'
+        };
+
+        async function openEntityModal(type, entityId) {
+            const typeEl = document.getElementById('entityModalType');
+            const titleEl = document.getElementById('entityModalTitle');
+            const idEl = document.getElementById('entityModalId');
+            const bodyEl = document.getElementById('entityModalBody');
+
+            const t = (window.EntityLinkRender && EntityLinkRender.ENTITY_TYPES[type]) || {};
+            typeEl.textContent = entityTypeLabels[type] || type;
+            typeEl.style.color = t.color || 'var(--text-secondary)';
+            titleEl.textContent = 'Loading...';
+            idEl.textContent = entityId.substring(0, 8);
+            bodyEl.innerHTML = '<div class="entity-modal-loading">Loading...</div>';
+            openModal('entityPreviewModal');
+
+            try {
+                const auth = `deviceId=${currentUser.deviceId}&deviceSecret=${currentUser.deviceSecret}`;
+                let data;
+
+                if (type === 'card') {
+                    data = await fetchCardData(auth, entityId);
+                } else if (type === 'skill' || type === 'rule' || type === 'soul') {
+                    data = await fetchDashboardItem(auth, type, entityId);
+                } else if (type === 'listing') {
+                    data = await fetchListingData(auth, entityId);
+                } else if (type === 'exam') {
+                    data = await fetchExamData(auth, entityId);
+                } else if (type === 'contract') {
+                    data = await fetchContractData(auth, entityId);
+                } else {
+                    bodyEl.innerHTML = `<div class="entity-modal-error">Unknown entity type: ${type}</div>`;
+                    return;
+                }
+
+                if (!data) {
+                    bodyEl.innerHTML = '<div class="entity-modal-error">Not found</div>';
+                    return;
+                }
+
+                titleEl.textContent = data.title || 'Untitled';
+                idEl.textContent = (data.id || entityId).substring(0, 8);
+                bodyEl.innerHTML = data.html;
+            } catch (err) {
+                bodyEl.innerHTML = `<div class="entity-modal-error">Failed to load: ${err.message || err}</div>`;
+            }
+        }
+
+        async function fetchCardData(auth, cardId) {
+            const resp = await apiCall('GET', `/api/mission/card/${cardId}?${auth}`);
+            if (!resp || !resp.card) return null;
+            const c = resp.card;
+            const status = c.status || 'unknown';
+            const emoji = statusEmojis[status] || '❓';
+            const priority = c.priority || '-';
+            const assigned = (c.assignedBots || []).map(b => `#${b}`).join(', ') || 'None';
+            const created = c.createdAt ? new Date(c.createdAt).toLocaleString() : '-';
+            const updated = c.updatedAt ? new Date(c.updatedAt).toLocaleString() : '-';
+
+            let html = `<div class="entity-meta">
+                <div class="entity-meta-item"><div class="entity-meta-label">Status</div><div class="entity-meta-value">${emoji} ${status}</div></div>
+                <div class="entity-meta-item"><div class="entity-meta-label">Priority</div><div class="entity-meta-value">${escapeHtml(priority)}</div></div>
+                <div class="entity-meta-item"><div class="entity-meta-label">Assigned</div><div class="entity-meta-value">${escapeHtml(assigned)}</div></div>
+                <div class="entity-meta-item"><div class="entity-meta-label">Comments</div><div class="entity-meta-value">${c.commentCount || 0}</div></div>
+                <div class="entity-meta-item"><div class="entity-meta-label">Created</div><div class="entity-meta-value">${created}</div></div>
+                <div class="entity-meta-item"><div class="entity-meta-label">Updated</div><div class="entity-meta-value">${updated}</div></div>
+            </div>`;
+
+            if (c.description) {
+                html += `<div class="entity-description">${escapeHtml(c.description)}</div>`;
+            }
+
+            return { title: c.title, id: c.id, html };
+        }
+
+        async function fetchDashboardItem(auth, type, itemId) {
+            const resp = await apiCall('GET', `/api/mission/dashboard?${auth}`);
+            if (!resp) return null;
+
+            const list = type === 'skill' ? (resp.skills || [])
+                       : type === 'rule' ? (resp.rules || [])
+                       : (resp.souls || []);
+
+            const item = list.find(i => i.id && i.id.startsWith(itemId));
+            if (!item) return null;
+
+            let html = '<div class="entity-meta">';
+            for (const [k, v] of Object.entries(item)) {
+                if (k === 'id' || k === 'title' || k === 'name') continue;
+                if (typeof v === 'object') continue;
+                html += `<div class="entity-meta-item"><div class="entity-meta-label">${escapeHtml(k)}</div><div class="entity-meta-value">${escapeHtml(String(v))}</div></div>`;
+            }
+            html += '</div>';
+
+            if (item.description || item.content) {
+                html += `<div class="entity-description">${escapeHtml(item.description || item.content)}</div>`;
+            }
+
+            return { title: item.title || item.name || 'Untitled', id: item.id, html };
+        }
+
+        async function fetchListingData(auth, listingId) {
+            const resp = await apiCall('GET', `/api/rental/listing/${listingId}?${auth}`);
+            if (!resp || !resp.listing) return null;
+            const l = resp.listing;
+
+            let html = `<div class="entity-meta">
+                <div class="entity-meta-item"><div class="entity-meta-label">Rate</div><div class="entity-meta-value">${l.rate_per_1k_tokens || '-'} mli/1k</div></div>
+                <div class="entity-meta-item"><div class="entity-meta-label">Status</div><div class="entity-meta-value">${l.status || '-'}</div></div>
+                <div class="entity-meta-item"><div class="entity-meta-label">Rating</div><div class="entity-meta-value">${l.avg_rating ? l.avg_rating.toFixed(1) : '-'}</div></div>
+                <div class="entity-meta-item"><div class="entity-meta-label">Rentals</div><div class="entity-meta-value">${l.total_rentals || 0}</div></div>
+            </div>`;
+
+            if (l.description) {
+                html += `<div class="entity-description">${escapeHtml(l.description)}</div>`;
+            }
+
+            return { title: l.title || l.bot_name || 'Untitled', id: l.id, html };
+        }
+
+        async function fetchExamData(auth, examId) {
+            const resp = await apiCall('GET', `/api/arena/exam/${examId}/results?${auth}`);
+            if (!resp) return null;
+
+            const exam = resp.exam || resp;
+            let html = `<div class="entity-meta">
+                <div class="entity-meta-item"><div class="entity-meta-label">Status</div><div class="entity-meta-value">${exam.status || '-'}</div></div>
+                <div class="entity-meta-item"><div class="entity-meta-label">Score</div><div class="entity-meta-value">${exam.total_score || '-'} / ${exam.max_score || '-'}</div></div>
+                <div class="entity-meta-item"><div class="entity-meta-label">Model</div><div class="entity-meta-value">${exam.model_name || '-'}</div></div>
+            </div>`;
+
+            return { title: `Exam ${examId.substring(0, 8)}`, id: examId, html };
+        }
+
+        async function fetchContractData(auth, contractId) {
+            // Contracts endpoint returns list — filter by ID
+            const resp = await apiCall('GET', `/api/rental/my-contracts?${auth}`);
+            if (!resp || !resp.contracts) return null;
+            const c = resp.contracts.find(x => x.id === contractId || x.id.startsWith(contractId));
+            if (!c) return null;
+
+            const start = c.started_at ? new Date(c.started_at).toLocaleString() : '-';
+            let html = `<div class="entity-meta">
+                <div class="entity-meta-item"><div class="entity-meta-label">Status</div><div class="entity-meta-value">${c.status || '-'}</div></div>
+                <div class="entity-meta-item"><div class="entity-meta-label">Rate</div><div class="entity-meta-value">${c.rate_snapshot || '-'} mli/1k</div></div>
+                <div class="entity-meta-item"><div class="entity-meta-label">Started</div><div class="entity-meta-value">${start}</div></div>
+                <div class="entity-meta-item"><div class="entity-meta-label">Tokens Used</div><div class="entity-meta-value">${c.total_tokens || 0}</div></div>
+            </div>`;
+
+            return { title: c.listing_title || `Contract ${contractId.substring(0, 8)}`, id: c.id, html };
         }
 
         function hasNoWebhookWarning(resp) {
