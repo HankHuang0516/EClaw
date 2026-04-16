@@ -1,3 +1,10 @@
+## [1.988.5](https://github.com/HankHuang0516/EClaw/compare/v1.988.4...v1.988.5) (2026-04-16)
+
+
+### Bug Fixes
+
+* org chart forwarding is now silent — no duplicate chat bubbles ([84b1040](https://github.com/HankHuang0516/EClaw/commit/84b1040bfe970efe91861676b39176b715d38780))
+
 ## [1.988.4](https://github.com/HankHuang0516/EClaw/compare/v1.988.3...v1.988.4) (2026-04-16)
 
 
