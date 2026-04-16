@@ -1,3 +1,10 @@
+## [1.983.1](https://github.com/HankHuang0516/EClaw/compare/v1.983.0...v1.983.1) (2026-04-16)
+
+
+### Bug Fixes
+
+* prevent double-nesting in note-link chip rendering ([2a36dd8](https://github.com/HankHuang0516/EClaw/commit/2a36dd8e0128bb9ac6dd7ad23a4da44ae53228f6))
+
 # [1.983.0](https://github.com/HankHuang0516/EClaw/compare/v1.982.4...v1.983.0) (2026-04-16)
 
 
