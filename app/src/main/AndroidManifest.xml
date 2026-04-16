@@ -144,6 +144,11 @@
             android:label="@string/file_manager_title"
             android:parentActivityName=".MainActivity" />
 
+        <activity
+            android:name=".WebViewActivity"
+            android:exported="false"
+            android:parentActivityName=".SettingsActivity" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
