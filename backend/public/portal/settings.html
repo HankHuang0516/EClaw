@@ -802,18 +802,30 @@
             </div>
         </div>
 
-        <!-- Broadcast Settings Card -->
+        <!-- Developer Section (collapsible) -->
         <div class="card">
-            <div class="card-title">
-                <span>📡 <span data-i18n="broadcast_settings_title">Broadcast Settings</span></span>
+            <div class="notif-header" onclick="toggleDeveloperSection()">
+                <div class="card-title" style="margin-bottom:0;">
+                    <span>🛠️ <span data-i18n="developer_section_title">Developer</span></span>
+                </div>
+                <span class="expand-arrow" id="developerArrow">&#9662;</span>
             </div>
-            <p class="section-desc" data-i18n="broadcast_settings_desc">Configure how broadcast messages work</p>
-            <div class="setting-row">
-                <span class="setting-row-label" data-i18n="broadcast_pref_recipient_info">Show recipient list in broadcasts</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="toggleBroadcastRecipientInfo" onchange="toggleDevicePref('broadcast_recipient_info', this.checked)">
-                    <span class="toggle-slider"></span>
-                </label>
+
+            <div class="notif-content" id="developerContent">
+                <!-- Broadcast Settings -->
+                <div style="margin-top:8px;">
+                    <div class="card-title" style="font-size:14px;">
+                        <span>📡 <span data-i18n="broadcast_settings_title">Broadcast Settings</span></span>
+                    </div>
+                    <p class="section-desc" data-i18n="broadcast_settings_desc">Configure how broadcast messages work</p>
+                    <div class="setting-row">
+                        <span class="setting-row-label" data-i18n="broadcast_pref_recipient_info">Show recipient list in broadcasts</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggleBroadcastRecipientInfo" onchange="toggleDevicePref('broadcast_recipient_info', this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -973,7 +985,7 @@
     <script src="shared/entity-utils.js"></script>
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
-    <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
+    <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
     <script src="shared/ai-chat.js"></script>
 
     <script>
@@ -1602,6 +1614,13 @@
             isNotifExpanded = !isNotifExpanded;
             document.getElementById('notifContent').classList.toggle('visible', isNotifExpanded);
             document.getElementById('notifArrow').classList.toggle('expanded', isNotifExpanded);
+        }
+
+        let isDeveloperExpanded = false;
+        function toggleDeveloperSection() {
+            isDeveloperExpanded = !isDeveloperExpanded;
+            document.getElementById('developerContent').classList.toggle('visible', isDeveloperExpanded);
+            document.getElementById('developerArrow').classList.toggle('expanded', isDeveloperExpanded);
         }
 
         const NOTIF_PREF_CATEGORIES = [

@@ -117,6 +117,10 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var remoteControlContentLayout: LinearLayout
     private lateinit var remoteControlExpandArrow: ImageView
     private lateinit var remoteControlContainer: LinearLayout
+    private lateinit var developerHeader: LinearLayout
+    private lateinit var developerContentLayout: LinearLayout
+    private lateinit var developerExpandArrow: ImageView
+    private var isDeveloperExpanded = false
     private var isRemoteControlExpanded = false
     private lateinit var langHeader: LinearLayout
     private lateinit var langContentLayout: LinearLayout
@@ -164,6 +168,7 @@ class SettingsActivity : AppCompatActivity() {
         observeSubscriptionState()
         updateEntityCount()
         displayAppVersion()
+        setupDeveloperCollapsible()
         setupNotifCollapsible()
         setupBroadcastSettingsCollapsible()
         setupRemoteControlCollapsible()
@@ -260,6 +265,9 @@ class SettingsActivity : AppCompatActivity() {
         remoteControlHeader = findViewById(R.id.remoteControlHeader)
         remoteControlContentLayout = findViewById(R.id.remoteControlContentLayout)
         remoteControlExpandArrow = findViewById(R.id.remoteControlExpandArrow)
+        developerHeader = findViewById(R.id.developerHeader)
+        developerContentLayout = findViewById(R.id.developerContentLayout)
+        developerExpandArrow = findViewById(R.id.developerExpandArrow)
         remoteControlContainer = findViewById(R.id.remoteControlContainer)
         langHeader = findViewById(R.id.langHeader)
         langContentLayout = findViewById(R.id.langContentLayout)
@@ -975,6 +983,17 @@ class SettingsActivity : AppCompatActivity() {
     // ============================================
     // NOTIFICATION PREFERENCES
     // ============================================
+
+    private fun setupDeveloperCollapsible() {
+        developerHeader.setOnClickListener {
+            isDeveloperExpanded = !isDeveloperExpanded
+            developerContentLayout.visibility = if (isDeveloperExpanded) View.VISIBLE else View.GONE
+            developerExpandArrow.animate()
+                .rotation(if (isDeveloperExpanded) 180f else 0f)
+                .setDuration(200)
+                .start()
+        }
+    }
 
     private var notifPrefsLoaded = false
 

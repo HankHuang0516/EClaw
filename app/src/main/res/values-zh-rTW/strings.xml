@@ -221,6 +221,7 @@
     <string name="crash_logs_all_deleted">已刪除 %d 筆閃退紀錄</string>
     <string name="crash_logs_empty">尚無閃退紀錄。\n閃退報告將自動記錄於此。</string>
     <string name="crash_logs_title">閃退紀錄</string>
+    <string name="developer_section_title">開發者</string>
     <string name="custom_background">自訂背景</string>
     <string name="custom_layout">自訂佈局</string>
     <string name="debug_log_category_api">API</string>

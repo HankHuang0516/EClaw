@@ -747,39 +747,250 @@
                 app:strokeWidth="1dp"
                 style="@style/Widget.Material3.Button.TonalButton"/>
 
-            <!-- Crash Logs Button -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnCrashLogs"
+            <!-- Developer Section (collapsible) -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/crash_logs_title"
-                android:textColor="@color/text_white_80"
-                app:backgroundTint="@color/surface_input"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="12dp"
-                app:cornerRadius="12dp"
-                app:icon="@drawable/ic_feedback"
-                app:iconTint="@color/error_light"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="@color/surface_input"
                 app:strokeColor="@color/text_dark"
-                app:strokeWidth="1dp"
-                style="@style/Widget.Material3.Button.TonalButton"/>
+                app:strokeWidth="1dp">
 
-            <!-- Debug Logs Button (admin/developer only) -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDebugLogs"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/debug_logs_title"
-                android:textColor="@color/text_white_80"
-                app:backgroundTint="@color/surface_input"
-                android:layout_marginBottom="12dp"
-                android:visibility="gone"
-                app:cornerRadius="12dp"
-                app:icon="@drawable/ic_feedback"
-                app:iconTint="@color/text_white_80"
-                app:strokeColor="@color/text_dark"
-                app:strokeWidth="1dp"
-                style="@style/Widget.Material3.Button.TonalButton"/>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="12dp">
+
+                    <!-- Collapsible header -->
+                    <LinearLayout
+                        android:id="@+id/developerHeader"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_settings"
+                            android:contentDescription="Developer"
+                            app:tint="@color/text_white_80"/>
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="16dp"
+                            android:text="@string/developer_section_title"
+                            android:textSize="14sp"
+                            android:textColor="@color/text_white_80"
+                            android:gravity="center"/>
+
+                        <ImageView
+                            android:id="@+id/developerExpandArrow"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_expand_more"
+                            android:contentDescription="Expand"
+                            app:tint="@color/text_white_60"/>
+                    </LinearLayout>
+
+                    <!-- Collapsible content (default GONE) -->
+                    <LinearLayout
+                        android:id="@+id/developerContentLayout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone"
+                        android:layout_marginTop="12dp">
+
+                        <!-- Crash Logs Button -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnCrashLogs"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/crash_logs_title"
+                            android:textColor="@color/text_white_80"
+                            app:backgroundTint="@color/surface"
+                            android:layout_marginBottom="8dp"
+                            app:cornerRadius="12dp"
+                            app:icon="@drawable/ic_feedback"
+                            app:iconTint="@color/error_light"
+                            app:strokeColor="@color/text_dark"
+                            app:strokeWidth="1dp"
+                            style="@style/Widget.Material3.Button.TonalButton"/>
+
+                        <!-- Debug Logs Button -->
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnDebugLogs"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/debug_logs_title"
+                            android:textColor="@color/text_white_80"
+                            app:backgroundTint="@color/surface"
+                            android:layout_marginBottom="8dp"
+                            android:visibility="gone"
+                            app:cornerRadius="12dp"
+                            app:icon="@drawable/ic_feedback"
+                            app:iconTint="@color/text_white_80"
+                            app:strokeColor="@color/text_dark"
+                            app:strokeWidth="1dp"
+                            style="@style/Widget.Material3.Button.TonalButton"/>
+
+                        <!-- Broadcast Settings (collapsible sub-section) -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="0dp"
+                            app:cardBackgroundColor="@color/surface"
+                            app:strokeColor="@color/text_dark"
+                            app:strokeWidth="1dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:paddingHorizontal="16dp"
+                                android:paddingVertical="12dp">
+
+                                <LinearLayout
+                                    android:id="@+id/broadcastSettingsHeader"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical">
+
+                                    <ImageView
+                                        android:layout_width="24dp"
+                                        android:layout_height="24dp"
+                                        android:src="@drawable/ic_broadcast"
+                                        android:contentDescription="Broadcast"
+                                        app:tint="@color/text_white_80"/>
+
+                                    <TextView
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:layout_marginStart="16dp"
+                                        android:text="@string/broadcast_settings_title"
+                                        android:textSize="14sp"
+                                        android:textColor="@color/text_white_80"
+                                        android:gravity="center"/>
+
+                                    <ImageView
+                                        android:id="@+id/broadcastSettingsExpandArrow"
+                                        android:layout_width="24dp"
+                                        android:layout_height="24dp"
+                                        android:src="@drawable/ic_expand_more"
+                                        android:contentDescription="Expand"
+                                        app:tint="@color/text_white_60"/>
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:id="@+id/broadcastSettingsContentLayout"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:visibility="gone"
+                                    android:layout_marginTop="12dp">
+
+                                    <TextView
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="@string/broadcast_settings_desc"
+                                        android:textSize="13sp"
+                                        android:textColor="@color/text_white_60"
+                                        android:layout_marginBottom="8dp"/>
+
+                                    <LinearLayout
+                                        android:id="@+id/broadcastPrefsContainer"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:orientation="vertical"/>
+                                </LinearLayout>
+
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <!-- Remote Control (collapsible sub-section) -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            app:cardCornerRadius="12dp"
+                            app:cardElevation="0dp"
+                            app:cardBackgroundColor="@color/surface"
+                            app:strokeColor="@color/text_dark"
+                            app:strokeWidth="1dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:paddingHorizontal="16dp"
+                                android:paddingVertical="12dp">
+
+                                <LinearLayout
+                                    android:id="@+id/remoteControlHeader"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical">
+
+                                    <ImageView
+                                        android:layout_width="24dp"
+                                        android:layout_height="24dp"
+                                        android:src="@drawable/ic_settings"
+                                        android:contentDescription="Remote Control"
+                                        app:tint="@color/text_white_80"/>
+
+                                    <TextView
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:layout_marginStart="16dp"
+                                        android:text="@string/remote_control_section_title"
+                                        android:textSize="14sp"
+                                        android:textColor="@color/text_white_80"
+                                        android:gravity="center"/>
+
+                                    <ImageView
+                                        android:id="@+id/remoteControlExpandArrow"
+                                        android:layout_width="24dp"
+                                        android:layout_height="24dp"
+                                        android:src="@drawable/ic_expand_more"
+                                        android:contentDescription="Expand"
+                                        app:tint="@color/text_white_60"/>
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:id="@+id/remoteControlContentLayout"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:visibility="gone"
+                                    android:layout_marginTop="12dp">
+
+                                    <LinearLayout
+                                        android:id="@+id/remoteControlContainer"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:orientation="vertical"/>
+                                </LinearLayout>
+
+                            </LinearLayout>
+                        </com.google.android.material.card.MaterialCardView>
+
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Set Wallpaper Button -->
             <com.google.android.material.button.MaterialButton
@@ -886,158 +1097,6 @@
                         <!-- Notification preference toggles container (populated programmatically) -->
                         <LinearLayout
                             android:id="@+id/notifPrefsContainer"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"/>
-                    </LinearLayout>
-
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Broadcast Settings (collapsible) -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="@color/surface_input"
-                app:strokeColor="@color/text_dark"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="12dp">
-
-                    <!-- Collapsible header — icon + title + expand arrow -->
-                    <LinearLayout
-                        android:id="@+id/broadcastSettingsHeader"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/ic_broadcast"
-                            android:contentDescription="Broadcast"
-                            app:tint="@color/text_white_80"/>
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginStart="16dp"
-                            android:text="@string/broadcast_settings_title"
-                            android:textSize="14sp"
-                            android:textColor="@color/text_white_80"
-                            android:gravity="center"/>
-
-                        <ImageView
-                            android:id="@+id/broadcastSettingsExpandArrow"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/ic_expand_more"
-                            android:contentDescription="Expand"
-                            app:tint="@color/text_white_60"/>
-                    </LinearLayout>
-
-                    <!-- Collapsible content (default GONE) -->
-                    <LinearLayout
-                        android:id="@+id/broadcastSettingsContentLayout"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:visibility="gone"
-                        android:layout_marginTop="12dp">
-
-                        <TextView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/broadcast_settings_desc"
-                            android:textSize="13sp"
-                            android:textColor="@color/text_white_60"
-                            android:layout_marginBottom="8dp"/>
-
-                        <!-- Broadcast preference toggles container (populated programmatically) -->
-                        <LinearLayout
-                            android:id="@+id/broadcastPrefsContainer"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"/>
-                    </LinearLayout>
-
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Remote Control (collapsible) -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="@color/surface_input"
-                app:strokeColor="@color/text_dark"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="12dp">
-
-                    <!-- Collapsible header -->
-                    <LinearLayout
-                        android:id="@+id/remoteControlHeader"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/ic_settings"
-                            android:contentDescription="Remote Control"
-                            app:tint="@color/text_white_80"/>
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginStart="16dp"
-                            android:text="@string/remote_control_section_title"
-                            android:textSize="14sp"
-                            android:textColor="@color/text_white_80"
-                            android:gravity="center"/>
-
-                        <ImageView
-                            android:id="@+id/remoteControlExpandArrow"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/ic_expand_more"
-                            android:contentDescription="Expand"
-                            app:tint="@color/text_white_60"/>
-                    </LinearLayout>
-
-                    <!-- Collapsible content (default GONE) -->
-                    <LinearLayout
-                        android:id="@+id/remoteControlContentLayout"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:visibility="gone"
-                        android:layout_marginTop="12dp">
-
-                        <!-- Remote control preference container (populated programmatically) -->
-                        <LinearLayout
-                            android:id="@+id/remoteControlContainer"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"/>

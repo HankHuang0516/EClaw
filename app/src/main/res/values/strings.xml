@@ -345,6 +345,9 @@
     <string name="submit">Submit</string>
     <string name="app_version">Version: %s</string>
 
+    <!-- Developer Section -->
+    <string name="developer_section_title">Developer</string>
+
     <!-- Crash Logs -->
     <string name="crash_logs_title">Crash Logs</string>
     <string name="crash_logs_empty">No crash logs recorded.\nCrash reports will appear here automatically.</string>
