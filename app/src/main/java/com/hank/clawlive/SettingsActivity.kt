@@ -285,7 +285,7 @@ class SettingsActivity : AppCompatActivity() {
 
         findViewById<MaterialButton>(R.id.btnTopup).setOnClickListener {
             TelemetryHelper.trackAction("settings_topup")
-            billingManager.launchPurchaseFlow(this)
+            showTopupTierDialog()
         }
 
         findViewById<MaterialButton>(R.id.btnMyRentals).setOnClickListener {
@@ -1420,5 +1420,28 @@ class SettingsActivity : AppCompatActivity() {
             tvChannelApiSecret.visibility = View.GONE
             channelApiActions.visibility = View.GONE
         }
+    }
+
+    private fun showTopupTierDialog() {
+        val tiers = billingManager.getTopupTiers()
+        if (tiers.isEmpty()) {
+            Toast.makeText(this, getString(R.string.billing_google_play_loading), Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val tierLabels = tiers.map { tier ->
+            val bonusText = if (tier.bonusPercent > 0) " (+${tier.bonusPercent}% bonus)" else ""
+            "${tier.label} — ${tier.formattedPrice}\n${String.format("%,d", tier.totalEcoin)} e幣${bonusText}"
+        }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.topup_ecoin_title))
+            .setItems(tierLabels) { _, which ->
+                val selected = tiers[which]
+                TelemetryHelper.trackAction("topup_tier_${selected.productId}")
+                billingManager.launchTopupPurchaseFlow(this, selected.productId)
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 }
