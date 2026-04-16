@@ -353,6 +353,14 @@
     <string name="topup_ecoin_title">儲值 E-Coin</string>
     <string name="topup_failed">儲值失敗</string>
     <string name="topup_success">儲值成功</string>
+    <string name="ecoin_unit">e 幣</string>
+    <string name="topup_tier_small">小額</string>
+    <string name="topup_tier_starter">入門</string>
+    <string name="topup_tier_standard">標準</string>
+    <string name="topup_tier_advanced">進階</string>
+    <string name="topup_tier_premium">尊享</string>
+    <string name="topup_tier_format">%1$s — %2$s\n%3$s %4$s%5$s</string>
+    <string name="topup_bonus_format"> (+%d%% 加贈)</string>
     <string name="unbind_button">解除綁定</string>
     <string name="upgrade_plan">升級方案</string>
     <string name="voice_message">語音訊息</string>

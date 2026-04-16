@@ -205,6 +205,11 @@ class SettingsActivity : AppCompatActivity() {
         RecordingIndicatorHelper.detach()
     }
 
+    override fun onDestroy() {
+        billingManager.onTopupComplete = null
+        super.onDestroy()
+    }
+
     private fun initViews() {
         cardSubscription = findViewById(R.id.cardSubscription)
         layoutPremiumBadge = findViewById(R.id.layoutPremiumBadge)
@@ -1441,9 +1446,12 @@ class SettingsActivity : AppCompatActivity() {
             return
         }
 
+        val ecoinUnit = getString(R.string.ecoin_unit)
         val tierLabels = tiers.map { tier ->
-            val bonusText = if (tier.bonusPercent > 0) " (+${tier.bonusPercent}% bonus)" else ""
-            "${tier.label} — ${tier.formattedPrice}\n${String.format("%,d", tier.totalEcoin)} e幣${bonusText}"
+            val bonusText = if (tier.bonusPercent > 0) getString(R.string.topup_bonus_format, tier.bonusPercent) else ""
+            getString(R.string.topup_tier_format,
+                tier.getLabel(this), tier.formattedPrice,
+                String.format("%,d", tier.totalEcoin), ecoinUnit, bonusText)
         }.toTypedArray()
 
         AlertDialog.Builder(this)

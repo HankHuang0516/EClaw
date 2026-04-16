@@ -913,6 +913,14 @@ If you have any questions, please contact us via our official email.
     <string name="topup_ecoin">Top Up</string>
     <string name="topup_success">e-Coins added to your wallet!</string>
     <string name="topup_failed">Top-up failed. Please try again.</string>
+    <string name="ecoin_unit">e-Coins</string>
+    <string name="topup_tier_small">Small</string>
+    <string name="topup_tier_starter">Starter</string>
+    <string name="topup_tier_standard">Standard</string>
+    <string name="topup_tier_advanced">Advanced</string>
+    <string name="topup_tier_premium">Premium</string>
+    <string name="topup_tier_format">%1$s — %2$s\n%3$s %4$s%5$s</string>
+    <string name="topup_bonus_format"> (+%d%% bonus)</string>
     <string name="choose_plan_title">Choose Plan</string>
     <string name="upgrade_plan">Upgrade Plan</string>
 

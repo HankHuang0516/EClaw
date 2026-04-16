@@ -430,7 +430,6 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
     private fun consumeAndVerifyTopup(purchase: Purchase, productId: String) {
         scope.launch(Dispatchers.IO) {
             try {
-                // Step 1: Verify with server (credits e-coins)
                 val body = mapOf(
                     "deviceId" to deviceManager.deviceId,
                     "deviceSecret" to (deviceManager.deviceSecret ?: ""),
@@ -440,7 +439,6 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
                 api.verifyGoogleTopup(body)
                 Timber.tag(TAG).d("Top-up verified with server: $productId")
 
-                // Step 2: Consume on Google Play (only after server success)
                 val consumeParams = ConsumeParams.newBuilder()
                     .setPurchaseToken(purchase.purchaseToken)
                     .build()

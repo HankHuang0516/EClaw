@@ -816,7 +816,10 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
                 }
                 userId = userResult.rows[0].id;
             } else {
-                // JWT auth fallback (portal web) — use a fake res to prevent 401 from being sent
+                // JWT auth fallback (portal web).
+                // fakeRes intercepts authMiddleware's res.status(401).json() path
+                // so it resolves false instead of sending a response. Coupled to
+                // auth.js:144-159 which only calls status().json() or next().
                 const authed = await new Promise((resolve) => {
                     const fakeRes = { status: () => ({ json: () => resolve(false) }) };
                     authMiddleware(req, fakeRes, () => resolve(true));
