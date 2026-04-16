@@ -1,3 +1,10 @@
+## [1.988.1](https://github.com/HankHuang0516/EClaw/compare/v1.988.0...v1.988.1) (2026-04-16)
+
+
+### Bug Fixes
+
+* e-coin topup payment not crediting — auth mismatch + consume order ([4c4c44a](https://github.com/HankHuang0516/EClaw/commit/4c4c44a53240b9e0d571c7ec32931d3eaacd229d))
+
 # [1.988.0](https://github.com/HankHuang0516/EClaw/compare/v1.987.3...v1.988.0) (2026-04-16)
 
 
