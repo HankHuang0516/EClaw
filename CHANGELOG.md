@@ -1,3 +1,10 @@
+## [1.988.3](https://github.com/HankHuang0516/EClaw/compare/v1.988.2...v1.988.3) (2026-04-16)
+
+
+### Bug Fixes
+
+* **test:** mention-ux-static accepts let pushText (was const) ([68b9379](https://github.com/HankHuang0516/EClaw/commit/68b93791488a0d30078f4463c44e92d2ec8975b0))
+
 ## [1.988.2](https://github.com/HankHuang0516/EClaw/compare/v1.988.1...v1.988.2) (2026-04-16)
 
 
