@@ -1,3 +1,10 @@
+## [1.987.3](https://github.com/HankHuang0516/EClaw/compare/v1.987.2...v1.987.3) (2026-04-16)
+
+
+### Bug Fixes
+
+* **android:** Settings URLs use in-app WebView + Channel API manage button ([ddadca9](https://github.com/HankHuang0516/EClaw/commit/ddadca9eebf823c78ce9662ed5a07ed2b112d319))
+
 ## [1.987.2](https://github.com/HankHuang0516/EClaw/compare/v1.987.1...v1.987.2) (2026-04-16)
 
 
