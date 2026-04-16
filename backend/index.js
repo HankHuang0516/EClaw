@@ -12976,7 +12976,21 @@ async function orgChartForward(entity, deviceId, message) {
         if (!orgData.hierarchy || !orgData.hierarchy.USER) return;
 
         const superiorId = orgChartModule.getSuperior(orgData.hierarchy, entity.entityId);
-        if (superiorId == null || superiorId === 'USER') return; // USER is not a pushable entity
+        if (superiorId == null) return;
+        // USER is the top — not a pushable entity. If direct superior is USER, skip.
+        if (superiorId === 'USER') return;
+
+        // Verify this entity's path eventually reaches USER (not a disconnected branch).
+        // Walk up the chain: entity → superior → ... → must reach USER.
+        let walkId = superiorId;
+        let reachesUser = false;
+        const visited = new Set();
+        while (walkId != null && !visited.has(walkId)) {
+            visited.add(walkId);
+            if (walkId === 'USER') { reachesUser = true; break; }
+            walkId = orgChartModule.getSuperior(orgData.hierarchy, walkId);
+        }
+        if (!reachesUser) return; // disconnected branch — don't route
 
         const device = devices[deviceId];
         if (!device) return;
@@ -13008,18 +13022,14 @@ async function orgChartForward(entity, deviceId, message) {
 
         if (shouldForward) {
             const fwdMsg = prefix + message;
-            console.log(`[OrgChart] Forwarding message from #${entity.entityId} to superior #${superiorId}`);
+            console.log(`[OrgChart] Silent forward #${entity.entityId} -> #${superiorId}`);
             serverLog('info', 'org_forward', `#${entity.entityId} -> #${superiorId}: "${fwdMsg.slice(0, 80)}"`, { deviceId, entityId: entity.entityId });
 
-            // Save forwarded message to superior's chat history so it renders as bot-to-bot
-            const fwdSource = `entity:${entity.entityId}:${entity.character || entity.name || entity.entityId}->${superiorId}`;
-            saveChatMessage(deviceId, superiorId, fwdMsg, fwdSource, false, true).catch(err => {
-                console.error(`[OrgChart] Save fwd chat failed:`, err.message);
-            });
-
-            // Use unifiedPush — handles both channel and webhook automatically
+            // Silent push — NO saveChatMessage. The forwarded message goes directly
+            // to the superior bot via push only, without creating a chat bubble.
+            // This prevents duplicate messages in the user's chat view.
             unifiedPush(superiorEntity, deviceId, 'org_forward', { message: fwdMsg }, {
-                skipMiddleware: true, // forwarded messages don't need hints
+                skipMiddleware: true,
                 from: `entity:${entity.entityId}`,
             }).catch(err => {
                 console.error(`[OrgChart] Forward to #${superiorId} failed:`, err.message);
