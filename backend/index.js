@@ -5422,7 +5422,7 @@ app.post('/api/transform', async (req, res) => {
 
                 // Org chart: auto-forward incoming speakTo message to superior (same-device only, fire-and-forget)
                 if (!isCrossDevice && toEntity.isBound) {
-                    orgChartForward(toEntity, target.deviceId, deliveryText).catch(() => {});
+                    orgChartForward(toEntity, target.deviceId, deliveryText, { fromEntityId: eId }).catch(() => {});
                 }
 
                 // Notify both devices
@@ -7587,7 +7587,7 @@ app.post('/api/entity/speak-to', async (req, res) => {
 
     // Org chart: auto-forward incoming message to superior for target entity with incomplete tasks (fire-and-forget)
     if (toEntity && toEntity.isBound) {
-        orgChartForward(toEntity, deviceId, speakToText).catch(() => {});
+        orgChartForward(toEntity, deviceId, speakToText, { fromEntityId: fromId }).catch(() => {});
     }
 
     const speakToResponse = {
@@ -12967,7 +12967,7 @@ async function pushToBot(entity, deviceId, eventType, payload, opts = {}) {
 const ORG_FWD_PREFIX = '[📢 FWD';
 const ORG_TASK_FWD_PREFIX = '[📋 TASK FWD';
 
-async function orgChartForward(entity, deviceId, message) {
+async function orgChartForward(entity, deviceId, message, opts = {}) {
     if (!message || message.startsWith(ORG_TASK_FWD_PREFIX) || message.startsWith(ORG_FWD_PREFIX)) return;
 
     try {
@@ -12979,6 +12979,8 @@ async function orgChartForward(entity, deviceId, message) {
         if (superiorId == null) return;
         // USER is the top — not a pushable entity. If direct superior is USER, skip.
         if (superiorId === 'USER') return;
+        // Skip if superior is the original sender — they already have the message (prevents speakTo echo)
+        if (opts.fromEntityId != null && superiorId == opts.fromEntityId) return;
 
         // Verify this entity's path eventually reaches USER (not a disconnected branch).
         // Walk up the chain: entity → superior → ... → must reach USER.

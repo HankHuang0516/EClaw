@@ -21,6 +21,8 @@ import androidx.core.view.updatePadding
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import android.view.LayoutInflater
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.Chip
@@ -1446,22 +1448,35 @@ class SettingsActivity : AppCompatActivity() {
             return
         }
 
+        val dialog = BottomSheetDialog(this)
+        val sheetView = LayoutInflater.from(this).inflate(R.layout.dialog_topup_tiers, null)
+        val container = sheetView.findViewById<LinearLayout>(R.id.tierContainer)
         val ecoinUnit = getString(R.string.ecoin_unit)
-        val tierLabels = tiers.map { tier ->
-            val bonusText = if (tier.bonusPercent > 0) getString(R.string.topup_bonus_format, tier.bonusPercent) else ""
-            getString(R.string.topup_tier_format,
-                tier.getLabel(this), tier.formattedPrice,
-                String.format("%,d", tier.totalEcoin), ecoinUnit, bonusText)
-        }.toTypedArray()
 
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.topup_ecoin_title))
-            .setItems(tierLabels) { _, which ->
-                val selected = tiers[which]
-                TelemetryHelper.trackAction("topup_tier_${selected.productId}")
-                billingManager.launchTopupPurchaseFlow(this, selected.productId)
+        for (tier in tiers) {
+            val card = LayoutInflater.from(this).inflate(R.layout.item_topup_tier, container, false)
+            val label = tier.getLabel(this)
+            val ecoinText = String.format("%,d %s", tier.totalEcoin, ecoinUnit)
+            card.findViewById<TextView>(R.id.tvTierLabel).text = label
+            card.findViewById<TextView>(R.id.tvEcoinAmount).text = ecoinText
+            card.findViewById<TextView>(R.id.tvPrice).text = tier.formattedPrice
+            card.contentDescription = "$label, ${tier.formattedPrice}, $ecoinText"
+
+            val bonusBadge = card.findViewById<TextView>(R.id.tvBonusBadge)
+            if (tier.bonusPercent > 0) {
+                bonusBadge.text = "+${tier.bonusPercent}%"
+                bonusBadge.visibility = View.VISIBLE
             }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
+
+            card.setOnClickListener {
+                dialog.dismiss()
+                TelemetryHelper.trackAction("topup_tier_${tier.productId}")
+                billingManager.launchTopupPurchaseFlow(this, tier.productId)
+            }
+            container.addView(card)
+        }
+
+        dialog.setContentView(sheetView)
+        dialog.show()
     }
 }

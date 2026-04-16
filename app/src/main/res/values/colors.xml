@@ -57,6 +57,7 @@
     <!-- Semantic -->
     <color name="success">#4CAF50</color>
     <color name="success_light">#4ade80</color>
+    <color name="bonus_green">#10b981</color>
     <color name="warning">#FFD23F</color>
     <color name="warning_gold">#FFD700</color>
     <color name="error">#F44336</color>
