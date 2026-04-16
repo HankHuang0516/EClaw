@@ -1,3 +1,10 @@
+# [1.987.0](https://github.com/HankHuang0516/EClaw/compare/v1.986.0...v1.987.0) (2026-04-16)
+
+
+### Features
+
+* add {{KEY_NAME}} vault interpolation in chat + rename My Files to Cloud Drive ([308b30d](https://github.com/HankHuang0516/EClaw/commit/308b30dd50e71e29b4b9b5eafa9fa81f82017320))
+
 # [1.986.0](https://github.com/HankHuang0516/EClaw/compare/v1.985.0...v1.986.0) (2026-04-16)
 
 
