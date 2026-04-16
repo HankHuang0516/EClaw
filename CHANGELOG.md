@@ -1,3 +1,10 @@
+# [1.988.0](https://github.com/HankHuang0516/EClaw/compare/v1.987.3...v1.988.0) (2026-04-16)
+
+
+### Features
+
+* **ios:** integrate react-native-iap v15 + nitro-modules for Apple IAP ([5f48f35](https://github.com/HankHuang0516/EClaw/commit/5f48f35c432655cb62e8bf3a09c9c797c4fe5b14))
+
 ## [1.987.3](https://github.com/HankHuang0516/EClaw/compare/v1.987.2...v1.987.3) (2026-04-16)
 
 
