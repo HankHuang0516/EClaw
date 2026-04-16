@@ -1,3 +1,10 @@
+# [1.986.0](https://github.com/HankHuang0516/EClaw/compare/v1.985.0...v1.986.0) (2026-04-16)
+
+
+### Features
+
+* show assigned kanban tasks in [@mention](https://github.com/mention) entity profile ([f1022e4](https://github.com/HankHuang0516/EClaw/commit/f1022e499a13fd035eb50f8aebb79deb2fe80ce9))
+
 # [1.985.0](https://github.com/HankHuang0516/EClaw/compare/v1.984.0...v1.985.0) (2026-04-16)
 
 
