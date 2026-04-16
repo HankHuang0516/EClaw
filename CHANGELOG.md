@@ -1,3 +1,10 @@
+## [1.988.2](https://github.com/HankHuang0516/EClaw/compare/v1.988.1...v1.988.2) (2026-04-16)
+
+
+### Bug Fixes
+
+* **i18n:** fill fr/de/th/vi/id/ar/zh translation gaps — 74 keys ([21ba8c5](https://github.com/HankHuang0516/EClaw/commit/21ba8c5ed6b685e654bc8deb6b333178c1f19c75)), closes [#3](https://github.com/HankHuang0516/EClaw/issues/3) [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 ## [1.988.1](https://github.com/HankHuang0516/EClaw/compare/v1.988.0...v1.988.1) (2026-04-16)
 
 
