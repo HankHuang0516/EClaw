@@ -1,3 +1,10 @@
+# [1.984.0](https://github.com/HankHuang0516/EClaw/compare/v1.983.2...v1.984.0) (2026-04-16)
+
+
+### Features
+
+* add unified entity link chips for Card, Skill, Rule, Listing, Exam, Contract ([5f56059](https://github.com/HankHuang0516/EClaw/commit/5f5605901bd24c606eaa3e561c0b3258c35356d7))
+
 ## [1.983.2](https://github.com/HankHuang0516/EClaw/compare/v1.983.1...v1.983.2) (2026-04-16)
 
 
