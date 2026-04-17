@@ -164,6 +164,9 @@
 
     <!-- Mission Control -->
     <string name="mission_control">Centre de mission</string>
+    <string name="dashboard_entry_title">Tableau de bord complet</string>
+    <string name="dashboard_entry_subtitle">avec organigramme</string>
+    <string name="dashboard_entry_content_description">Ouvrir le tableau de bord complet</string>
     <string name="tab_mission_center">Centre de mission</string>
     <string name="tab_kanban">Kanban</string>
     <string name="kanban_add_deprecated">Veuillez utiliser le tableau Kanban pour ajouter de nouveaux éléments. Le tableau Kanban dispose d\'un écosystème complet — laissez les bots migrer progressivement les éléments existants.</string>

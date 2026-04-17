@@ -164,6 +164,9 @@
 
     <!-- Mission Control -->
     <string name="mission_control">Missionskontrolle</string>
+    <string name="dashboard_entry_title">Vollständiges Dashboard</string>
+    <string name="dashboard_entry_subtitle">mit Organigramm</string>
+    <string name="dashboard_entry_content_description">Vollständiges Dashboard öffnen</string>
     <string name="tab_mission_center">Missionszentrale</string>
     <string name="tab_kanban">Kanban</string>
     <string name="kanban_add_deprecated">Bitte verwenden Sie das Kanban-Board, um neue Einträge hinzuzufügen. Das Kanban-Board bietet ein vollständiges Ökosystem — lassen Sie Bots bestehende Einträge schrittweise migrieren.</string>

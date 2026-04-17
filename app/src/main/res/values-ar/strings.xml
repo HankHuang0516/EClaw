@@ -164,6 +164,9 @@
 
     <!-- Mission Control -->
     <string name="mission_control">مركز المهام</string>
+    <string name="dashboard_entry_title">لوحة التحكم الكاملة</string>
+    <string name="dashboard_entry_subtitle">مع المخطط التنظيمي</string>
+    <string name="dashboard_entry_content_description">فتح لوحة التحكم الكاملة</string>
     <string name="tab_mission_center">مركز المهام</string>
     <string name="tab_kanban">كانبان</string>
     <string name="kanban_add_deprecated">يرجى استخدام لوحة كانبان لإضافة عناصر جديدة. لوحة كانبان لديها نظام بيئي كامل — دع البوتات تنقل العناصر الحالية تدريجيًا.</string>

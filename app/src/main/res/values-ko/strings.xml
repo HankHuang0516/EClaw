@@ -477,6 +477,9 @@ GPS: 온디맨드만, 백그라운드 추적 없음, 서버 재시작 시 데이
     <string name="mission_choose_from_template">템플릿에서 선택</string>
     <string name="mission_completed_at">✓ %s</string>
     <string name="mission_control">미션 컨트롤</string>
+    <string name="dashboard_entry_title">전체 대시보드</string>
+    <string name="dashboard_entry_subtitle">조직도 포함</string>
+    <string name="dashboard_entry_content_description">전체 대시보드 열기</string>
     <string name="mission_no_skills">스킬 없음</string>
     <string name="mission_no_variables">변수 없음</string>
     <string name="mission_rule_gallery_title">규칙 템플릿</string>
