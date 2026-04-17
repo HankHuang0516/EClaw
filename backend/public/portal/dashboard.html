@@ -1702,7 +1702,8 @@
 
         // --- Init ---
         window.addEventListener('DOMContentLoaded', async () => {
-            const __embeddedOrg = new URLSearchParams(window.location.search).get('view') === 'orgchart';
+            const __fromCommunity = /\/portal\/community\.html(?:$|[?#])/.test(document.referrer || '');
+            const __embeddedOrg = new URLSearchParams(window.location.search).get('view') === 'orgchart' || __fromCommunity;
             if (__embeddedOrg) document.body.classList.add('embedded-orgchart');
             renderNav('dashboard');
             if (typeof renderFooter === 'function') renderFooter();
