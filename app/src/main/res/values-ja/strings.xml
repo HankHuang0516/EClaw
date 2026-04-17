@@ -839,4 +839,21 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="schedule_error_generic">Error: %s</string>
     <string name="schedule_failed_to_load">Failed to load: %s</string>
     <string name="schedule_operation_failed">Operation failed</string>
+    <string name="close">閉じる</string>
+    <string name="developer_section_title">開発者</string>
+    <string name="ecoin_unit">eコイン</string>
+    <string name="org_chart_sheet_title">組織図</string>
+    <string name="settings_delete_account">アカウントを削除</string>
+    <string name="settings_invite">友達を招待</string>
+    <string name="settings_my_rentals">マイレンタル</string>
+    <string name="settings_wallet">ウォレット</string>
+    <string name="topup_bonus_format"> (+%d%% ボーナス)</string>
+    <string name="topup_tier_advanced">アドバンスト</string>
+    <string name="topup_tier_format">%1$s — %2$s
+%3$s %4$s%5$s</string>
+    <string name="topup_tier_premium">プレミアム</string>
+    <string name="topup_tier_small">スモール</string>
+    <string name="topup_tier_standard">スタンダード</string>
+    <string name="topup_tier_starter">スターター</string>
+    <string name="channel_api_manage_all">すべてのキーを管理 →</string>
 </resources>
