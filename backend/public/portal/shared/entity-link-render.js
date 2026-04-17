@@ -3,12 +3,15 @@
  * in chat messages and render them as colour-coded clickable chips.
  *
  * Supported patterns (all case-insensitive, with optional colon/space):
- *   Card xxxxxxxx[-...]     → blue chip,  opens kanban card modal
- *   Skill xxxxxxxx[-...]    → purple chip, opens skill modal
- *   Rule xxxxxxxx[-...]     → red chip,    opens rule modal
- *   Listing xxxxxxxx[-...]  → orange chip, opens listing modal
- *   Exam xxxxxxxx[-...]     → teal chip,   opens exam modal
- *   Contract xxxxxxxx[-...] → green chip,  opens contract modal
+ *   Card / 卡號 / 卡片 / 任務 + id     → blue chip,  opens kanban card modal
+ *   Skill / 技能 + id                  → purple chip, opens skill modal
+ *   Rule / 規則 + id                   → red chip,    opens rule modal
+ *   Listing / 掛牌 / 上架 + id         → orange chip, opens listing modal
+ *   Exam / 考試 / 測驗 + id            → teal chip,   opens exam modal
+ *   Contract / 合約 + id               → green chip,  opens contract modal
+ *
+ * IDs can be full UUIDs (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) or 8-char short
+ * prefixes; optional ":", "：" or "#" separator between keyword and id.
  *
  * All render functions expect already-escaped HTML (post-DOMPurify / post-escapeHtml).
  */
@@ -25,27 +28,53 @@
         contract: { color: '#4ade80', bg: 'rgba(74,222,128,0.2)',  icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8' }
     };
 
-    // Build a combined regex: (card|skill|rule|listing|exam|contract) + optional colon + UUID or 8-char hex
-    const TYPE_NAMES = Object.keys(ENTITY_TYPES).join('|');
+    // Keyword → entity type. ASCII keys are matched case-insensitively (regex 'i').
+    // CJK keys are matched verbatim; both traditional and simplified forms are listed.
+    const KEYWORD_TO_TYPE = {
+        'card': 'card', 'cards': 'card',
+        '卡號': 'card', '卡号': 'card', '卡片': 'card', '任務': 'card', '任务': 'card',
+        'skill': 'skill', 'skills': 'skill',
+        '技能': 'skill',
+        'rule': 'rule', 'rules': 'rule',
+        '規則': 'rule', '规则': 'rule',
+        'listing': 'listing', 'listings': 'listing',
+        '掛牌': 'listing', '挂牌': 'listing', '上架': 'listing',
+        'exam': 'exam', 'exams': 'exam',
+        '考試': 'exam', '考试': 'exam', '測驗': 'exam', '测验': 'exam',
+        'contract': 'contract', 'contracts': 'contract',
+        '合約': 'contract', '合约': 'contract'
+    };
+
+    const ASCII_KEYWORDS = Object.keys(KEYWORD_TO_TYPE).filter(k => /^[a-z]+$/i.test(k));
+    const CJK_KEYWORDS = Object.keys(KEYWORD_TO_TYPE).filter(k => !/^[a-z]+$/i.test(k));
+
+    // Keyword alternation: ASCII keywords get \b boundary; CJK keywords don't need one.
+    // Two capture groups — exactly one is non-empty per match.
+    const KW = '(?:\\b(' + ASCII_KEYWORDS.join('|') + ')|(' + CJK_KEYWORDS.join('|') + '))';
+
+    function resolveKeyword(asciiKw, cjkKw) {
+        const raw = (asciiKw || cjkKw || '').toLowerCase();
+        return KEYWORD_TO_TYPE[raw] || 'card';
+    }
 
     // Full UUID after keyword
     const FULL_RE = new RegExp(
-        '\\b(' + TYPE_NAMES + ')\\s*[:：]?\\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\\b', 'gi'
+        KW + '\\s*[:：#＃]?\\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\\b', 'gi'
     );
 
     // Short 8-char hex after keyword
     const SHORT_RE = new RegExp(
-        '\\b(' + TYPE_NAMES + ')\\s*[:：]?\\s*([0-9a-f]{8})\\b', 'gi'
+        KW + '\\s*[:：#＃]?\\s*([0-9a-f]{8})\\b', 'gi'
     );
 
     // Markdown renders `backtick-wrapped` IDs as <code>ID</code>, and the code-segment
     // skip in renderEntityLinks() hides them from the patterns above. Match
     // "<type> <code>ID</code>" explicitly before the split.
     const CODE_FULL_RE = new RegExp(
-        '\\b(' + TYPE_NAMES + ')\\s*[:：]?\\s*<code[^>]*>\\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\\s*</code>', 'gi'
+        KW + '\\s*[:：#＃]?\\s*<code[^>]*>\\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\\s*</code>', 'gi'
     );
     const CODE_SHORT_RE = new RegExp(
-        '\\b(' + TYPE_NAMES + ')\\s*[:：]?\\s*<code[^>]*>\\s*([0-9a-f]{8})\\s*</code>', 'gi'
+        KW + '\\s*[:：#＃]?\\s*<code[^>]*>\\s*([0-9a-f]{8})\\s*</code>', 'gi'
     );
 
     // Placeholder system (same approach as note-link-render)
@@ -83,13 +112,13 @@
         if (!escapedHtml) return escapedHtml;
 
         // Phase 0: "<type> <code>fullUUID</code>" → chip placeholder (consumes the <code> wrapper)
-        escapedHtml = escapedHtml.replace(CODE_FULL_RE, (match, type, uuid) => {
+        escapedHtml = escapedHtml.replace(CODE_FULL_RE, (match, asciiKw, cjkKw, uuid) => {
             const short = uuid.substring(0, 8);
-            return queueChip(type.toLowerCase(), uuid, short);
+            return queueChip(resolveKeyword(asciiKw, cjkKw), uuid, short);
         });
         // Phase 0b: "<type> <code>shortId</code>" → chip placeholder
-        escapedHtml = escapedHtml.replace(CODE_SHORT_RE, (match, type, shortId) => {
-            return queueChip(type.toLowerCase(), shortId, shortId);
+        escapedHtml = escapedHtml.replace(CODE_SHORT_RE, (match, asciiKw, cjkKw, shortId) => {
+            return queueChip(resolveKeyword(asciiKw, cjkKw), shortId, shortId);
         });
 
         // Split by code/pre to skip code blocks
@@ -99,14 +128,14 @@
             if (i % 2 === 1) continue; // skip code blocks
 
             // Phase 1: full UUID patterns
-            parts[i] = parts[i].replace(FULL_RE, (match, type, uuid) => {
+            parts[i] = parts[i].replace(FULL_RE, (match, asciiKw, cjkKw, uuid) => {
                 const short = uuid.substring(0, 8);
-                return queueChip(type.toLowerCase(), uuid, short);
+                return queueChip(resolveKeyword(asciiKw, cjkKw), uuid, short);
             });
 
             // Phase 2: short 8-char hex patterns
-            parts[i] = parts[i].replace(SHORT_RE, (match, type, shortId) => {
-                return queueChip(type.toLowerCase(), shortId, shortId);
+            parts[i] = parts[i].replace(SHORT_RE, (match, asciiKw, cjkKw, shortId) => {
+                return queueChip(resolveKeyword(asciiKw, cjkKw), shortId, shortId);
             });
         }
 
