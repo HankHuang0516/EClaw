@@ -1703,7 +1703,11 @@
         // --- Init ---
         window.addEventListener('DOMContentLoaded', async () => {
             const __embeddedOrg = new URLSearchParams(window.location.search).get('view') === 'orgchart';
-            if (__embeddedOrg) document.body.classList.add('embedded-orgchart');
+            if (__embeddedOrg) {
+                document.body.classList.add('embedded-orgchart');
+                // Lock: remove tab bar entirely so it can't be re-enabled by JS
+                document.getElementById('dashTabs')?.remove();
+            }
             renderNav('dashboard');
             if (typeof renderFooter === 'function') renderFooter();
             const user = await checkAuth();
@@ -2853,6 +2857,8 @@
         let orgSaveTimer = null;
 
         function switchDashTab(tab) {
+            // Embedded orgchart mode: tab bar is removed, ignore any tab switch attempts
+            if (document.body.classList.contains('embedded-orgchart')) return;
             document.querySelectorAll('.dash-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
             // Toggle entity grid + empty state
             const entityGrid = document.getElementById('entityGrid');
