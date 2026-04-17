@@ -29,7 +29,8 @@
     "mission": "Misión",
     "settings": "Configuración",
     "cards": "Tarjetas",
-    "dashboard": "Panel"
+    "dashboard": "Panel",
+    "orgChart": "Organigrama"
   },
   "cardHolder": {
     "title": "Porta tarjetas",

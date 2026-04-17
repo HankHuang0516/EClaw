@@ -29,7 +29,8 @@
     "mission": "ミッション",
     "settings": "設定",
     "cards": "カード",
-    "dashboard": "ダッシュボード"
+    "dashboard": "ダッシュボード",
+    "orgChart": "組織図"
   },
   "cardHolder": {
     "title": "カードホルダー",

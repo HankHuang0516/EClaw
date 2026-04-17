@@ -29,7 +29,8 @@
     "mission": "任务",
     "settings": "设置",
     "cards": "名片夹",
-    "dashboard": "仪表板"
+    "dashboard": "仪表板",
+    "orgChart": "组织图"
   },
   "cardHolder": {
     "title": "名片夹",

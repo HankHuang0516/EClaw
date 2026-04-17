@@ -29,7 +29,8 @@
     "mission": "Миссия",
     "settings": "Настройки",
     "cards": "Карты",
-    "dashboard": "Панель"
+    "dashboard": "Панель",
+    "orgChart": "Оргструктура"
   },
   "cardHolder": {
     "title": "Держатель карт",

@@ -29,7 +29,8 @@
     "mission": "미션",
     "settings": "설정",
     "cards": "카드",
-    "dashboard": "대시보드"
+    "dashboard": "대시보드",
+    "orgChart": "조직도"
   },
   "cardHolder": {
     "title": "카드 홀더",

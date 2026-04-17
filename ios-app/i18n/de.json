@@ -29,7 +29,8 @@
     "mission": "Mission",
     "settings": "Einstellungen",
     "cards": "Karten",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "orgChart": "Organigramm"
   },
   "cardHolder": {
     "title": "Karteninhaber",

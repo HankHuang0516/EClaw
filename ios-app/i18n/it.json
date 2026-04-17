@@ -29,7 +29,8 @@
     "mission": "Missione",
     "settings": "Impostazioni",
     "cards": "Schede",
-    "dashboard": "Cruscotto"
+    "dashboard": "Cruscotto",
+    "orgChart": "Organigramma"
   },
   "cardHolder": {
     "title": "Titolare scheda",

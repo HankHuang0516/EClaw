@@ -29,7 +29,8 @@
     "mission": "Mission",
     "settings": "Settings",
     "cards": "Cards",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "orgChart": "Org Chart"
   },
   "cardHolder": {
     "title": "Card Holder",

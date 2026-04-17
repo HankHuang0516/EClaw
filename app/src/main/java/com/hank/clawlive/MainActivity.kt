@@ -63,6 +63,7 @@ import com.hank.clawlive.ui.EntityCardAdapter
 import com.hank.clawlive.ui.EntityChipHelper
 import com.hank.clawlive.ui.MainViewModel
 import com.hank.clawlive.ui.NavItem
+import com.hank.clawlive.ui.OrgChartBottomSheetFragment
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -375,7 +376,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<ImageButton>(R.id.btnDashboard).setOnClickListener {
-            startActivity(Intent(this, DashboardActivity::class.java))
+            OrgChartBottomSheetFragment.newInstance()
+                .show(supportFragmentManager, OrgChartBottomSheetFragment.TAG)
         }
 
         // Add Entity expandable section

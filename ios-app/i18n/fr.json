@@ -29,7 +29,8 @@
     "mission": "Mission",
     "settings": "Paramètres",
     "cards": "Cartes",
-    "dashboard": "Tableau de bord"
+    "dashboard": "Tableau de bord",
+    "orgChart": "Organigramme"
   },
   "cardHolder": {
     "title": "Porteur de cartes",
