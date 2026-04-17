@@ -1,7 +1,10 @@
 import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { PaperProvider, MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
-import { useColorScheme, View, ActivityIndicator } from 'react-native';
+import { useColorScheme, View, ActivityIndicator, LogBox } from 'react-native';
+
+// Silence dev warnings overlay so it doesn't cover the tab bar.
+LogBox.ignoreAllLogs();
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import '../i18n';
@@ -67,12 +70,10 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: true }}>
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="entity-manager" options={{ presentation: 'modal' }} />
             <Stack.Screen name="file-manager" options={{ presentation: 'card' }} />
             <Stack.Screen name="ai-chat" options={{ presentation: 'card' }} />
             <Stack.Screen name="official-borrow" options={{ presentation: 'card' }} />
             <Stack.Screen name="feedback" options={{ presentation: 'card' }} />
-            <Stack.Screen name="card-holder" options={{ presentation: 'card' }} />
             <Stack.Screen name="community" options={{ presentation: 'card' }} />
             <Stack.Screen name="wallet" options={{ presentation: 'card' }} />
             <Stack.Screen name="my-rentals" options={{ presentation: 'card' }} />

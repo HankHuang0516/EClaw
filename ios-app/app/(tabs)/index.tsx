@@ -36,6 +36,7 @@ import { useAuthStore } from '../../store/authStore';
 import { deviceApi } from '../../services/api';
 import EntityCard from '../../components/EntityCard';
 import BindingCodeCard from '../../components/BindingCodeCard';
+import AgentCardDialog from '../../components/AgentCardDialog';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -66,6 +67,10 @@ export default function HomeScreen() {
   const [renameEntity, setRenameEntity] = useState<Entity | null>(null);
   const [newName, setNewName] = useState('');
   const [isRenaming, setIsRenaming] = useState(false);
+
+  // Agent Card dialog
+  const [agentCardVisible, setAgentCardVisible] = useState(false);
+  const [agentCardEntity, setAgentCardEntity] = useState<Entity | null>(null);
 
   // Auto-expand add section when no entities
   useEffect(() => {
@@ -167,7 +172,18 @@ export default function HomeScreen() {
     }
   };
 
-  // Long press → ActionSheet
+  // Refresh entity connection (matches Android refreshEntity)
+  const handleRefresh = async (entity: Entity) => {
+    try {
+      await deviceApi.refreshEntity(entity.entityId);
+      showSnack(t('common.success'));
+      refetch();
+    } catch {
+      showSnack(t('errors.server'));
+    }
+  };
+
+  // Long press → ActionSheet (matches Android Edit Mode actions)
   const handleEntityLongPress = (entity: Entity) => {
     const buttons: any[] = [
       { text: t('common.cancel'), style: 'cancel' },
@@ -176,8 +192,15 @@ export default function HomeScreen() {
         onPress: () => handleNamePress(entity),
       },
       {
+        text: t('entityManager.refresh_connection', 'Refresh Connection'),
+        onPress: () => handleRefresh(entity),
+      },
+      {
         text: t('entityManager.agent_card', 'Agent Card'),
-        onPress: () => router.push('/entity-manager'),
+        onPress: () => {
+          setAgentCardEntity(entity);
+          setAgentCardVisible(true);
+        },
       },
     ];
     if (entities.length > 1) {
@@ -427,6 +450,23 @@ export default function HomeScreen() {
           </Dialog.Actions>
         </Dialog>
       </Portal>
+
+      {/* Agent Card Dialog (inline — matches Android showAgentCardDialog) */}
+      {agentCardEntity && (
+        <AgentCardDialog
+          visible={agentCardVisible}
+          entityId={agentCardEntity.entityId}
+          entityName={agentCardEntity.name || `${agentCardEntity.character || 'Entity'} #${agentCardEntity.entityId}`}
+          onDismiss={() => {
+            setAgentCardVisible(false);
+            setAgentCardEntity(null);
+          }}
+          onSaved={() => {
+            showSnack(t('common.success'));
+            refetch();
+          }}
+        />
+      )}
 
       {/* Snackbar */}
       <Snackbar

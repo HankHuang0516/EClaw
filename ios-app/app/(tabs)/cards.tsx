@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { contactsApi } from '../../services/api';
+import WebViewScreen from '../../components/WebViewScreen';
 
 interface AgentCardSnapshot {
   description?: string;
@@ -62,12 +63,14 @@ interface ChatMessage {
 }
 
 type Section = 'my-cards' | 'recent' | 'collected';
+type TopTab = 'card-holder' | 'bot-plaza';
 
 export default function CardsScreen() {
   const theme = useTheme();
   const { t } = useTranslation();
   const router = useRouter();
 
+  const [topTab, setTopTab] = useState<TopTab>('card-holder');
   const [section, setSection] = useState<Section>('my-cards');
   const [myCards, setMyCards] = useState<MyCard[]>([]);
   const [recentCards, setRecentCards] = useState<CardEntry[]>([]);
@@ -482,7 +485,33 @@ export default function CardsScreen() {
   // ── Main view ──
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      {/* Section Tabs */}
+      {/* Top-level Tabs (Card Holder / Bot Plaza) — matches Android CardHolderActivity */}
+      <View style={styles.topTabs}>
+        <TouchableOpacity
+          style={[styles.topTab, topTab === 'card-holder' && styles.topTabActive]}
+          onPress={() => setTopTab('card-holder')}
+        >
+          <Text style={[styles.topTabText, topTab === 'card-holder' && styles.topTabTextActive]}>
+            {t('cardHolder.tab_card_holder', 'Card Holder')}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.topTab, topTab === 'bot-plaza' && styles.topTabActive]}
+          onPress={() => setTopTab('bot-plaza')}
+        >
+          <Text style={[styles.topTabText, topTab === 'bot-plaza' && styles.topTabTextActive]}>
+            {t('cardHolder.tab_bot_plaza', 'Bot Plaza')}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Bot Plaza — WebView community.html */}
+      {topTab === 'bot-plaza' && (
+        <WebViewScreen url="https://eclawbot.com/portal/community.html" />
+      )}
+
+      {/* Section Tabs — only visible in card-holder top-tab */}
+      {topTab === 'card-holder' && (
       <View style={styles.sectionTabs}>
         {(['my-cards', 'recent', 'collected'] as Section[]).map(s => (
           <TouchableOpacity
@@ -498,16 +527,14 @@ export default function CardsScreen() {
             </Text>
           </TouchableOpacity>
         ))}
-        <TouchableOpacity onPress={() => router.push('/community')} style={[styles.addBtnHeader, { marginRight: 4 }]}>
-          <Text style={styles.addBtnText}>🏪</Text>
-        </TouchableOpacity>
         <TouchableOpacity onPress={showAddDialog} style={styles.addBtnHeader}>
           <Text style={styles.addBtnText}>+</Text>
         </TouchableOpacity>
       </View>
+      )}
 
       {/* My Cards Section */}
-      {section === 'my-cards' && (
+      {topTab === 'card-holder' && section === 'my-cards' && (
         <ScrollView
           style={styles.sectionContent}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -542,7 +569,7 @@ export default function CardsScreen() {
       )}
 
       {/* Recent Section */}
-      {section === 'recent' && (
+      {topTab === 'card-holder' && section === 'recent' && (
         <ScrollView
           style={styles.sectionContent}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -570,7 +597,7 @@ export default function CardsScreen() {
       )}
 
       {/* Collected Section */}
-      {section === 'collected' && (
+      {topTab === 'card-holder' && section === 'collected' && (
         <View style={{ flex: 1 }}>
           <View style={styles.filterBar}>
             {['all', 'pinned', 'blocked'].map(f => (
@@ -614,6 +641,11 @@ export default function CardsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0D0D1A' },
+  topTabs: { flexDirection: 'row', backgroundColor: '#1A1A2E', borderBottomWidth: 1, borderBottomColor: '#333355' },
+  topTab: { flex: 1, paddingVertical: 14, alignItems: 'center' },
+  topTabActive: { backgroundColor: '#252540' },
+  topTabText: { color: '#888', fontSize: 14, fontWeight: '600' },
+  topTabTextActive: { color: '#6C63FF' },
   sectionTabs: { flexDirection: 'row', borderBottomWidth: 2, borderBottomColor: '#333355', paddingHorizontal: 8 },
   sectionTab: { paddingVertical: 12, paddingHorizontal: 16 },
   sectionTabActive: { borderBottomWidth: 2, borderBottomColor: '#6C63FF', marginBottom: -2 },

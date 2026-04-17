@@ -129,6 +129,10 @@ export const deviceApi = {
   /** Delete Agent Card */
   deleteAgentCard: (entityId: string) =>
     apiClient.delete('/api/entity/agent-card', { data: { entityId } }),
+
+  /** Refresh entity connection (test webhook) */
+  refreshEntity: (entityId: string) =>
+    apiClient.post(`/api/device/entity/${entityId}/refresh`, {}),
 };
 
 // ── Chat APIs ────────────────────────────────────────────────
