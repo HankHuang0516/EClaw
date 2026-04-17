@@ -1703,8 +1703,12 @@
         // --- Init ---
         window.addEventListener('DOMContentLoaded', async () => {
             const __fromCommunity = /\/portal\/community\.html(?:$|[?#])/.test(document.referrer || '');
-            const __embeddedOrg = new URLSearchParams(window.location.search).get('view') === 'orgchart' || __fromCommunity;
-            if (__embeddedOrg) document.body.classList.add('embedded-orgchart');
+            const __isAndroidApp = /EClawAndroid/.test(navigator.userAgent || '');
+            const __embeddedOrg = new URLSearchParams(window.location.search).get('view') === 'orgchart' || __fromCommunity || __isAndroidApp;
+            if (__embeddedOrg) {
+                document.body.classList.add('embedded-orgchart');
+                document.getElementById('dashTabs')?.remove();
+            }
             renderNav('dashboard');
             if (typeof renderFooter === 'function') renderFooter();
             const user = await checkAuth();
@@ -2854,6 +2858,7 @@
         let orgSaveTimer = null;
 
         function switchDashTab(tab) {
+            if (document.body.classList.contains('embedded-orgchart') && tab !== 'orgchart') return;
             document.querySelectorAll('.dash-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
             // Toggle entity grid + empty state
             const entityGrid = document.getElementById('entityGrid');
