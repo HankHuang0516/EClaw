@@ -1,3 +1,10 @@
+## [1.991.1](https://github.com/HankHuang0516/EClaw/compare/v1.991.0...v1.991.1) (2026-04-17)
+
+
+### Bug Fixes
+
+* **dashboard:** add touch-action:none to org chart nodes for mobile drag ([#1802](https://github.com/HankHuang0516/EClaw/issues/1802)) ([4378767](https://github.com/HankHuang0516/EClaw/commit/43787674d0eac086a95f135bf9099592afb61b48))
+
 # [1.991.0](https://github.com/HankHuang0516/EClaw/compare/v1.990.3...v1.991.0) (2026-04-17)
 
 
