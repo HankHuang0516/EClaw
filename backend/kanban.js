@@ -759,9 +759,32 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     router.get('/card/:id', async (req, res) => {
         if (!authenticate(req, res)) return;
         const { deviceId } = { ...req.query, ...req.body };
-        const cardId = req.params.id;
+        const rawId = req.params.id;
 
         try {
+            // Resolve short-ID prefixes to the full card ID, scoped to this device.
+            // Users commonly mention cards in chat with 8-hex shorthand (e.g. `card_7b7dd9e3`);
+            // fall back to a prefix match only when the raw id is an obvious shorthand
+            // (hex-only, ≤ 12 chars, optionally with a `card_` prefix).
+            let cardId = rawId;
+            const shortBody = /^card_([a-f0-9]{6,12})$/i.test(rawId)
+                ? rawId.slice(5)
+                : (/^[a-f0-9]{6,12}$/i.test(rawId) ? rawId : null);
+            if (shortBody) {
+                const match = await pool.query(
+                    `SELECT id FROM kanban_cards
+                     WHERE device_id = $1
+                       AND (id = $2 OR id LIKE $3 OR id LIKE $4)
+                     ORDER BY created_at DESC
+                     LIMIT 2`,
+                    [deviceId, rawId, shortBody + '%', 'card_' + shortBody + '%']
+                );
+                if (match.rows.length === 1) cardId = match.rows[0].id;
+                // If 2+ cards share this prefix we fall through to the exact-match
+                // query below, which will return 404 and force the caller to
+                // disambiguate with a longer id.
+            }
+
             const cardResult = await pool.query(
                 `SELECT c.*,
                     COALESCE(cm.cnt, 0) AS comment_count,

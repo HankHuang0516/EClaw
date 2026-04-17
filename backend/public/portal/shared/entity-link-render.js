@@ -79,9 +79,14 @@
 
     // Prefixed IDs like "card_7b7dd9e3a4c2..." — self-identifying, no keyword needed.
     // The prefix itself tells us the entity type, so the chip can route directly.
-    const PREFIXED_RE = new RegExp('\\b(card|skill|rule|listing|exam|contract)_([a-f0-9]{24})\\b', 'gi');
+    // Accepted hex forms after the prefix:
+    //   - 8 hex   (short prefix, resolved by backend LIKE lookup): card_7b7dd9e3
+    //   - 24 hex  (legacy full-suffix form):                      card_d3cdda1455152e3caee8d4ac
+    //   - UUID    (8-4-4-4-12):                                    card_7b7dd9e3-55e1-4074-b101-40c47161d8de
+    const PREFIXED_HEX = '[a-f0-9]{8}(?:[a-f0-9]{16}|-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})?';
+    const PREFIXED_RE = new RegExp('\\b(card|skill|rule|listing|exam|contract)_(' + PREFIXED_HEX + ')\\b', 'gi');
     // Code-wrapped variant: <code>card_xxx</code> (e.g. backtick-quoted in markdown).
-    const CODE_PREFIXED_RE = new RegExp('<code[^>]*>\\s*(card|skill|rule|listing|exam|contract)_([a-f0-9]{24})\\s*</code>', 'gi');
+    const CODE_PREFIXED_RE = new RegExp('<code[^>]*>\\s*(card|skill|rule|listing|exam|contract)_(' + PREFIXED_HEX + ')\\s*</code>', 'gi');
 
     // Placeholder system (same approach as note-link-render)
     const pendingChips = [];
