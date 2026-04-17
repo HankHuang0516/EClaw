@@ -1,3 +1,10 @@
+## [1.994.1](https://github.com/HankHuang0516/EClaw/compare/v1.994.0...v1.994.1) (2026-04-17)
+
+
+### Bug Fixes
+
+* **schema:** add USING ::text to UUID→VARCHAR(48) migration ([#1813](https://github.com/HankHuang0516/EClaw/issues/1813)) ([788b88d](https://github.com/HankHuang0516/EClaw/commit/788b88d08b63f09ed83c8aee397008edf71e78c7)), closes [#1812](https://github.com/HankHuang0516/EClaw/issues/1812)
+
 # [1.994.0](https://github.com/HankHuang0516/EClaw/compare/v1.993.0...v1.994.0) (2026-04-17)
 
 
