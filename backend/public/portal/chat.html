@@ -145,6 +145,46 @@
             gap: 14px;
         }
 
+        /* ── Density Modes ── */
+        body.density-compact .chat-messages { padding: 10px; padding-right: 26px; gap: 6px; }
+        body.density-compact .chat-bubble { padding: 6px 10px; font-size: 13px; line-height: 1.35; }
+        body.density-compact .chat-msg { max-width: 88%; }
+        body.density-compact .chat-source { font-size: 10px; margin-bottom: 2px; }
+
+        body.density-comfortable .chat-messages { padding: 20px; padding-right: 36px; gap: 18px; }
+        body.density-comfortable .chat-bubble { padding: 12px 18px; font-size: 15px; line-height: 1.5; }
+        body.density-comfortable .chat-msg { max-width: 75%; }
+        body.density-comfortable .chat-source { font-size: 12px; margin-bottom: 4px; }
+
+        /* Segmented switcher in chat header */
+        .density-switcher {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            margin-left: 8px;
+            padding: 2px;
+            border-radius: 14px;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+        }
+        .density-switcher button {
+            background: transparent;
+            border: 0;
+            color: var(--text-muted);
+            padding: 2px 8px;
+            border-radius: 11px;
+            cursor: pointer;
+            line-height: 1;
+            font-family: inherit;
+        }
+        .density-switcher button[data-density="compact"]     { font-size: 10px; }
+        .density-switcher button[data-density="normal"]      { font-size: 13px; }
+        .density-switcher button[data-density="comfortable"] { font-size: 16px; }
+        .density-switcher button.active {
+            background: var(--primary);
+            color: #fff;
+        }
+
         .chat-messages::-webkit-scrollbar { width: 6px; }
         .chat-messages::-webkit-scrollbar-track { background: transparent; }
         .chat-messages::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 3px; }
@@ -1982,6 +2022,24 @@
 </head>
 
 <body>
+    <script>
+        // Apply chat density class before paint (avoid FOUC).
+        // Default: mobile WebView/touch → compact; desktop → normal.
+        (function () {
+            try {
+                var saved = localStorage.getItem('eclaw_chat_density');
+                if (!saved) {
+                    var isMobile = /EClawAndroid|EClawIOS/i.test(navigator.userAgent)
+                        || (window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
+                    saved = isMobile ? 'compact' : 'normal';
+                }
+                if (saved === 'compact' || saved === 'comfortable') {
+                    document.body.classList.add('density-' + saved);
+                }
+                window.__eclawChatDensity = saved;
+            } catch (e) { /* localStorage may be blocked in private mode */ }
+        })();
+    </script>
     <main>
     <div class="container">
         <div class="chat-container">
@@ -1992,6 +2050,11 @@
                     <span class="usage-badge" id="usageBadge">
                         <span class="spinner" style="width:12px;height:12px;border-width:2px;"></span>
                     </span>
+                    <div class="density-switcher" id="densitySwitcher" role="group" aria-label="Chat density">
+                        <button type="button" data-density="compact" onclick="setChatDensity('compact')" title="Compact" data-i18n-title="chat_density_compact">A</button>
+                        <button type="button" data-density="normal" onclick="setChatDensity('normal')" title="Normal" data-i18n-title="chat_density_normal">A</button>
+                        <button type="button" data-density="comfortable" onclick="setChatDensity('comfortable')" title="Comfortable" data-i18n-title="chat_density_comfortable">A</button>
+                    </div>
                 </div>
                 <div class="chip-group-wrapper">
                     <div class="chip-group" id="filterChips">
@@ -2445,6 +2508,9 @@
             if (new URLSearchParams(window.location.search).get('embed') === '1') {
                 document.body.classList.add('embed-mode');
             }
+
+            // Highlight current density button (value already applied pre-paint)
+            highlightDensityButton(window.__eclawChatDensity || 'normal');
 
             if (isAndroidWebView) {
                 // Hide web nav/footer — Android has its own bottom navigation
@@ -3201,6 +3267,21 @@
             ensureActiveChipVisible();
 
             renderMessages(false);
+        }
+
+        // ── Chat Density (Compact / Normal / Comfortable) ──
+        function setChatDensity(value) {
+            if (value !== 'compact' && value !== 'normal' && value !== 'comfortable') return;
+            document.body.classList.remove('density-compact', 'density-comfortable');
+            if (value !== 'normal') document.body.classList.add('density-' + value);
+            try { localStorage.setItem('eclaw_chat_density', value); } catch (e) {}
+            window.__eclawChatDensity = value;
+            highlightDensityButton(value);
+        }
+        function highlightDensityButton(value) {
+            document.querySelectorAll('#densitySwitcher button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.density === value);
+            });
         }
 
         function getFilteredMessages() {
