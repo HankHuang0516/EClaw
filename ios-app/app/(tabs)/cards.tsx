@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { contactsApi } from '../../services/api';
 import WebViewScreen from '../../components/WebViewScreen';
+import AgentCardDialog from '../../components/AgentCardDialog';
 
 interface AgentCardSnapshot {
   description?: string;
@@ -81,6 +82,7 @@ export default function CardsScreen() {
   const [editCategory, setEditCategory] = useState('');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [filter, setFilter] = useState('all');
+  const [editingCard, setEditingCard] = useState<MyCard | null>(null);
 
   const loadAll = useCallback(async () => {
     await Promise.all([loadMyCards(), loadRecent(), loadCollected()]);
@@ -552,15 +554,23 @@ export default function CardsScreen() {
                   {renderAvatar(c, 56, 36)}
                   <Text style={styles.myCardName}>{c.name || c.publicCode}</Text>
                   <Text style={styles.cardCode}>{c.publicCode}</Text>
-                  <TouchableOpacity
-                    style={styles.copyBtn}
-                    onPress={() => {
-                      Clipboard.setString(c.publicCode);
-                      Alert.alert('', t('common.copy', 'Copied'));
-                    }}
-                  >
-                    <Text style={styles.copyBtnText}>{t('common.copy', 'Copy')}</Text>
-                  </TouchableOpacity>
+                  <View style={styles.myCardActions}>
+                    <TouchableOpacity
+                      style={styles.copyBtn}
+                      onPress={() => {
+                        Clipboard.setString(c.publicCode);
+                        Alert.alert('', t('common.copy', 'Copied'));
+                      }}
+                    >
+                      <Text style={styles.copyBtnText}>{t('common.copy', 'Copy')}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.editBtn}
+                      onPress={() => setEditingCard(c)}
+                    >
+                      <Text style={styles.editBtnText}>{t('common.edit', 'Edit')}</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               ))}
             </View>
@@ -635,6 +645,19 @@ export default function CardsScreen() {
           />
         </View>
       )}
+
+      {editingCard && (
+        <AgentCardDialog
+          visible={!!editingCard}
+          entityId={String(editingCard.entityId)}
+          entityName={editingCard.name || editingCard.publicCode}
+          onDismiss={() => setEditingCard(null)}
+          onSaved={() => {
+            setEditingCard(null);
+            onRefresh();
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -660,8 +683,11 @@ const styles = StyleSheet.create({
   myCardItem: { backgroundColor: '#1A1A2E', borderRadius: 12, borderWidth: 1, borderColor: '#333355', padding: 16, alignItems: 'center', width: 160 },
   myCardAvatar: { fontSize: 36, marginBottom: 6 },
   myCardName: { color: '#fff', fontSize: 14, fontWeight: '600', textAlign: 'center' },
-  copyBtn: { marginTop: 6, borderWidth: 1, borderColor: '#333355', borderRadius: 4, paddingHorizontal: 10, paddingVertical: 3 },
+  myCardActions: { flexDirection: 'row', gap: 6, marginTop: 6 },
+  copyBtn: { borderWidth: 1, borderColor: '#333355', borderRadius: 4, paddingHorizontal: 10, paddingVertical: 3 },
   copyBtnText: { color: '#777', fontSize: 11 },
+  editBtn: { borderWidth: 1, borderColor: '#6C63FF', borderRadius: 4, paddingHorizontal: 10, paddingVertical: 3 },
+  editBtnText: { color: '#6C63FF', fontSize: 11 },
   // Recent
   recentItem: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: '#1A1A2E', borderRadius: 12, borderWidth: 1, borderColor: '#333355', marginBottom: 8 },
   timeAgo: { color: '#777', fontSize: 11 },
