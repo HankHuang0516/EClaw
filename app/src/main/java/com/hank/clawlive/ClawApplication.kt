@@ -2,10 +2,15 @@ package com.hank.clawlive
 
 import android.app.Application
 import android.content.Context
+import com.google.firebase.messaging.FirebaseMessaging
 import com.hank.clawlive.data.local.DeviceManager
+import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.debug.CrashLogManager
 import com.hank.clawlive.debug.FileTimberTree
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.OutputStreamWriter
 import java.io.PrintWriter
@@ -48,7 +53,43 @@ class ClawApplication : Application() {
         // 5. Upload any pending crash logs from previous session
         uploadPendingCrashLogs()
 
+        // 6. Self-heal FCM token registration on every launch.
+        // onNewToken() only fires when the token changes (install / clear-data / reinstall).
+        // If the very first registration failed (e.g. before deviceSecret was provisioned),
+        // the device would stay unregistered forever. Pulling the current token at startup
+        // and POSTing it unconditionally fixes that class of silent failures.
+        refreshAndRegisterFcmToken()
+
         Timber.i("ClawApplication initialized")
+    }
+
+    private fun refreshAndRegisterFcmToken() {
+        val dm = DeviceManager.getInstance(this)
+        if (dm.deviceId.isBlank() || dm.deviceSecret.isBlank()) {
+            Timber.d("[FCM] Skipping startup token registration — device not provisioned yet")
+            return
+        }
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Timber.w(task.exception, "[FCM] Failed to fetch token at startup")
+                return@addOnCompleteListener
+            }
+            val token = task.result ?: return@addOnCompleteListener
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    NetworkModule.api.registerFcmToken(
+                        mapOf(
+                            "deviceId" to dm.deviceId,
+                            "deviceSecret" to dm.deviceSecret,
+                            "fcmToken" to token
+                        )
+                    )
+                    Timber.d("[FCM] Startup token registered: ${token.take(20)}...")
+                } catch (e: Exception) {
+                    Timber.e(e, "[FCM] Startup token register failed")
+                }
+            }
+        }
     }
 
     /**
