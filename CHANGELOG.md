@@ -1,3 +1,10 @@
+## [1.994.3](https://github.com/HankHuang0516/EClaw/compare/v1.994.2...v1.994.3) (2026-04-17)
+
+
+### Bug Fixes
+
+* **android:** force view=orgchart when CardHolder nav → dashboard.html ([#1815](https://github.com/HankHuang0516/EClaw/issues/1815)) ([ddf5e58](https://github.com/HankHuang0516/EClaw/commit/ddf5e586a7fa24ae0a3c5aaecab70f48c0fd305b))
+
 ## [1.994.2](https://github.com/HankHuang0516/EClaw/compare/v1.994.1...v1.994.2) (2026-04-17)
 
 
