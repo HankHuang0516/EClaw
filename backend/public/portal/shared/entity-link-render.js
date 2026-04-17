@@ -38,6 +38,16 @@
         '\\b(' + TYPE_NAMES + ')\\s*[:：]?\\s*([0-9a-f]{8})\\b', 'gi'
     );
 
+    // Markdown renders `backtick-wrapped` IDs as <code>ID</code>, and the code-segment
+    // skip in renderEntityLinks() hides them from the patterns above. Match
+    // "<type> <code>ID</code>" explicitly before the split.
+    const CODE_FULL_RE = new RegExp(
+        '\\b(' + TYPE_NAMES + ')\\s*[:：]?\\s*<code[^>]*>\\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\\s*</code>', 'gi'
+    );
+    const CODE_SHORT_RE = new RegExp(
+        '\\b(' + TYPE_NAMES + ')\\s*[:：]?\\s*<code[^>]*>\\s*([0-9a-f]{8})\\s*</code>', 'gi'
+    );
+
     // Placeholder system (same approach as note-link-render)
     const pendingChips = [];
 
@@ -71,6 +81,16 @@
      */
     function renderEntityLinks(escapedHtml) {
         if (!escapedHtml) return escapedHtml;
+
+        // Phase 0: "<type> <code>fullUUID</code>" → chip placeholder (consumes the <code> wrapper)
+        escapedHtml = escapedHtml.replace(CODE_FULL_RE, (match, type, uuid) => {
+            const short = uuid.substring(0, 8);
+            return queueChip(type.toLowerCase(), uuid, short);
+        });
+        // Phase 0b: "<type> <code>shortId</code>" → chip placeholder
+        escapedHtml = escapedHtml.replace(CODE_SHORT_RE, (match, type, shortId) => {
+            return queueChip(type.toLowerCase(), shortId, shortId);
+        });
 
         // Split by code/pre to skip code blocks
         const parts = escapedHtml.split(/(<code[\s>][\s\S]*?<\/code>|<pre[\s>][\s\S]*?<\/pre>)/gi);
