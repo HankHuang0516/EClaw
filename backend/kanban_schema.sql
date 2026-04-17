@@ -45,10 +45,10 @@ CREATE INDEX IF NOT EXISTS idx_kanban_cards_schedule ON kanban_cards(schedule_en
 -- Migration: Automation (母卡/子卡) fields
 -- ============================================
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS is_automation BOOLEAN DEFAULT FALSE;
-ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS parent_card_id UUID DEFAULT NULL;
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS parent_card_id VARCHAR(48) DEFAULT NULL;
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS is_auto_generated BOOLEAN DEFAULT FALSE;
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS last_run_result TEXT DEFAULT NULL;
-ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS active_child_id UUID DEFAULT NULL;
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS active_child_id VARCHAR(48) DEFAULT NULL;
 
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS reviewer_entity_id INTEGER DEFAULT NULL;
 
@@ -122,3 +122,5 @@ ALTER TABLE kanban_files ALTER COLUMN card_id TYPE VARCHAR(48);
 ALTER TABLE kanban_comments ADD CONSTRAINT kanban_comments_card_id_fkey FOREIGN KEY (card_id) REFERENCES kanban_cards(id) ON DELETE CASCADE;
 ALTER TABLE kanban_notes ADD CONSTRAINT kanban_notes_card_id_fkey FOREIGN KEY (card_id) REFERENCES kanban_cards(id) ON DELETE CASCADE;
 ALTER TABLE kanban_files ADD CONSTRAINT kanban_files_card_id_fkey FOREIGN KEY (card_id) REFERENCES kanban_cards(id) ON DELETE CASCADE;
+ALTER TABLE kanban_cards ALTER COLUMN parent_card_id TYPE VARCHAR(48);
+ALTER TABLE kanban_cards ALTER COLUMN active_child_id TYPE VARCHAR(48);

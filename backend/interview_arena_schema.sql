@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS arena_exams (
     id VARCHAR(48) PRIMARY KEY DEFAULT ('exam_' || encode(gen_random_bytes(12), 'hex')),
     exam_token VARCHAR(32) NOT NULL UNIQUE,
     interview_id UUID,
-    listing_id UUID,
+    listing_id VARCHAR(48),
     model VARCHAR(64),
     status VARCHAR(16) NOT NULL DEFAULT 'waiting',
     total_score INTEGER DEFAULT NULL,
@@ -103,6 +103,7 @@ ALTER TABLE arena_comments DROP CONSTRAINT IF EXISTS arena_comments_exam_id_fkey
 ALTER TABLE arena_exams ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE arena_exams ALTER COLUMN id TYPE VARCHAR(48);
 ALTER TABLE arena_exams ALTER COLUMN id SET DEFAULT ('exam_' || encode(gen_random_bytes(12), 'hex'));
+ALTER TABLE arena_exams ALTER COLUMN listing_id TYPE VARCHAR(48);
 ALTER TABLE arena_sessions ALTER COLUMN exam_id TYPE VARCHAR(48);
 ALTER TABLE arena_leaderboard ALTER COLUMN exam_id TYPE VARCHAR(48);
 ALTER TABLE arena_feedback ALTER COLUMN exam_id TYPE VARCHAR(48);

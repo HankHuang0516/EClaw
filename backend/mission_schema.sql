@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS mission_sync_log (
     device_id VARCHAR(64) NOT NULL,
     action VARCHAR(64) NOT NULL, -- 'CREATE', 'UPDATE', 'DELETE', 'SYNC'
     item_type VARCHAR(32), -- 'ITEM', 'NOTE', 'RULE'
-    item_id UUID,
+    item_id VARCHAR(48),
     old_version INTEGER,
     new_version INTEGER,
     performed_by VARCHAR(64),
@@ -162,7 +162,7 @@ CREATE OR REPLACE FUNCTION record_sync_action(
     p_device_id VARCHAR(64),
     p_action VARCHAR(64),
     p_item_type VARCHAR(32),
-    p_item_id UUID,
+    p_item_id VARCHAR(48),
     p_old_version INTEGER,
     p_new_version INTEGER,
     p_performed_by VARCHAR(64)
@@ -332,3 +332,4 @@ ALTER TABLE mission_notes ALTER COLUMN id SET DEFAULT ('note_' || encode(gen_ran
 ALTER TABLE mission_rules ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE mission_rules ALTER COLUMN id TYPE VARCHAR(48);
 ALTER TABLE mission_rules ALTER COLUMN id SET DEFAULT ('rule_' || encode(gen_random_bytes(12), 'hex'));
+ALTER TABLE mission_sync_log ALTER COLUMN item_id TYPE VARCHAR(48);
