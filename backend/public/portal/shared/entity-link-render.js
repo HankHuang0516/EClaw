@@ -77,6 +77,12 @@
         KW + '\\s*[:：#＃]?\\s*<code[^>]*>\\s*([0-9a-f]{8})\\s*</code>', 'gi'
     );
 
+    // Prefixed IDs like "card_7b7dd9e3a4c2..." — self-identifying, no keyword needed.
+    // The prefix itself tells us the entity type, so the chip can route directly.
+    const PREFIXED_RE = new RegExp('\\b(card|skill|rule|listing|exam|contract)_([a-f0-9]{24})\\b', 'gi');
+    // Code-wrapped variant: <code>card_xxx</code> (e.g. backtick-quoted in markdown).
+    const CODE_PREFIXED_RE = new RegExp('<code[^>]*>\\s*(card|skill|rule|listing|exam|contract)_([a-f0-9]{24})\\s*</code>', 'gi');
+
     // Placeholder system (same approach as note-link-render)
     const pendingChips = [];
 
@@ -111,6 +117,13 @@
     function renderEntityLinks(escapedHtml) {
         if (!escapedHtml) return escapedHtml;
 
+        // Phase -1: "<code>type_hex</code>" → chip placeholder (consumes the <code> wrapper).
+        // Runs before Phase 0 so the prefix-form isn't shadowed by the keyword code regex.
+        escapedHtml = escapedHtml.replace(CODE_PREFIXED_RE, (match, type, hex) => {
+            const fullId = `${type.toLowerCase()}_${hex.toLowerCase()}`;
+            return queueChip(type.toLowerCase(), fullId, fullId);
+        });
+
         // Phase 0: "<type> <code>fullUUID</code>" → chip placeholder (consumes the <code> wrapper)
         escapedHtml = escapedHtml.replace(CODE_FULL_RE, (match, asciiKw, cjkKw, uuid) => {
             const short = uuid.substring(0, 8);
@@ -126,6 +139,14 @@
 
         for (let i = 0; i < parts.length; i++) {
             if (i % 2 === 1) continue; // skip code blocks
+
+            // Phase 0c: bare prefixed IDs like "card_7b7dd9e3a4c2..." — self-identifying,
+            // no keyword needed. Runs before keyword phases; keyword phases require a
+            // keyword prefix so they wouldn't accidentally double-match anyway.
+            parts[i] = parts[i].replace(PREFIXED_RE, (match, type, hex) => {
+                const fullId = `${type.toLowerCase()}_${hex.toLowerCase()}`;
+                return queueChip(type.toLowerCase(), fullId, fullId);
+            });
 
             // Phase 1: full UUID patterns
             parts[i] = parts[i].replace(FULL_RE, (match, asciiKw, cjkKw, uuid) => {

@@ -33,6 +33,10 @@
     const CODE_UUID_NOTE_RE = new RegExp(NOTE_KW + '\\s*[:：#＃]?\\s*<code[^>]*>\\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\\s*</code>', 'gi');
     const CODE_SHORT_NOTE_RE = new RegExp(NOTE_KW + '\\s*[:：#＃]?\\s*<code[^>]*>\\s*([0-9a-f]{8})\\s*</code>', 'gi');
 
+    // Prefixed note IDs like "note_b7dd9e3a4c2..." — self-identifying, no keyword needed.
+    const PREFIXED_NOTE_RE = /\bnote_([a-f0-9]{24})\b/gi;
+    const CODE_PREFIXED_NOTE_RE = /<code[^>]*>\s*note_([a-f0-9]{24})\s*<\/code>/gi;
+
     // Cache: short prefix → full noteId (populated on successful API fetches)
     const resolvedIds = {};
 
@@ -44,6 +48,13 @@
      */
     function renderNoteLinks(escapedHtml) {
         if (!escapedHtml) return escapedHtml;
+
+        // Phase -1: "<code>note_hex</code>" → chip placeholder. Runs before Phase 0
+        // so the prefix-form isn't shadowed by the keyword code regex.
+        escapedHtml = escapedHtml.replace(CODE_PREFIXED_NOTE_RE, (match, hex) => {
+            const fullId = 'note_' + hex.toLowerCase();
+            return queueChip(fullId, fullId);
+        });
 
         // Phase 0: "note <code>fullUUID</code>" → chip placeholder (consumes the <code> wrapper)
         escapedHtml = escapedHtml.replace(CODE_UUID_NOTE_RE, (match, asciiKw, cjkKw, uuid) => {
@@ -63,6 +74,13 @@
         for (let i = 0; i < parts.length; i++) {
             // Even indices = outside code, odd = inside code tags
             if (i % 2 === 1) continue;
+
+            // Phase 0c: bare prefixed note IDs like "note_b7dd9e3a4c2..." — self-identifying.
+            // Runs before keyword phases; passes the full prefixed form so clicks resolve.
+            parts[i] = parts[i].replace(PREFIXED_NOTE_RE, (match, hex) => {
+                const fullId = 'note_' + hex.toLowerCase();
+                return queueChip(fullId, fullId);
+            });
 
             // Phase 1: replace "<keyword> <fullUUID>" patterns with placeholders
             parts[i] = parts[i].replace(UUID_NOTE_RE, (match, asciiKw, cjkKw, uuid) => {
