@@ -1403,6 +1403,14 @@ class CardHolderActivity : AppCompatActivity() {
                 }
             }
             actionRow.addView(plazaChip)
+            actionRow.addView(actionChip(getString(R.string.action_run_interview)) {
+                try {
+                    val url = "https://eclawbot.com/portal/card-holder.html"
+                    startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(url)))
+                } catch (e: Exception) {
+                    Toast.makeText(this@CardHolderActivity, e.message ?: "", Toast.LENGTH_SHORT).show()
+                }
+            })
             layout.addView(actionRow)
         }
         if (!card.description.isNullOrEmpty()) {
