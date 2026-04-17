@@ -1,3 +1,11 @@
+# [1.996.0](https://github.com/HankHuang0516/EClaw/compare/v1.995.0...v1.996.0) (2026-04-17)
+
+
+### Features
+
+* **card-holder:** add Edit action in card detail dialog ([#1824](https://github.com/HankHuang0516/EClaw/issues/1824)) ([0bd25de](https://github.com/HankHuang0516/EClaw/commit/0bd25def8164d2a586a1cabe1e50199b92a63935))
+* **ios/cards:** add Edit button + AgentCardDialog in My Cards ([#1825](https://github.com/HankHuang0516/EClaw/issues/1825)) ([aeda986](https://github.com/HankHuang0516/EClaw/commit/aeda986e31b885363d6a8c4543d23f89e18d109c))
+
 # [1.995.0](https://github.com/HankHuang0516/EClaw/compare/v1.994.5...v1.995.0) (2026-04-17)
 
 
