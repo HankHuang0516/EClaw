@@ -1,3 +1,10 @@
+# [1.990.0](https://github.com/HankHuang0516/EClaw/compare/v1.989.0...v1.990.0) (2026-04-17)
+
+
+### Features
+
+* **ios:** align Home, Cards, Settings with Android — v1.2.0 ([ef4c6f8](https://github.com/HankHuang0516/EClaw/commit/ef4c6f8973c515e6ff00bef85f9ddfb50c187ab1)), closes [#1795](https://github.com/HankHuang0516/EClaw/issues/1795)
+
 # [1.989.0](https://github.com/HankHuang0516/EClaw/compare/v1.988.7...v1.989.0) (2026-04-16)
 
 
