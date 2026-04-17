@@ -1,3 +1,10 @@
+## [1.992.4](https://github.com/HankHuang0516/EClaw/compare/v1.992.3...v1.992.4) (2026-04-17)
+
+
+### Bug Fixes
+
+* **dashboard:** show org chart inline instead of routing to full dashboard ([f9497a0](https://github.com/HankHuang0516/EClaw/commit/f9497a07cef15e3e1e71f8d5aa6836d9f838799f))
+
 ## [1.992.3](https://github.com/HankHuang0516/EClaw/compare/v1.992.2...v1.992.3) (2026-04-17)
 
 
