@@ -334,3 +334,89 @@ describe('GET /cards/projections', () => {
         expect(res.body.projections['card-bad']).toEqual([]);
     });
 });
+
+// ════════════════════════════════════════════════════════════════
+// GET /card/:id — Short-ID prefix resolution
+// ════════════════════════════════════════════════════════════════
+describe('GET /card/:id — short-ID prefix resolution', () => {
+    const fullCard = {
+        id: 'card_d3cdda1455152e3caee8d4ac',
+        device_id: 'test-dev',
+        title: 'Full card',
+        description: '',
+        priority: 'P2',
+        status: 'review',
+        assigned_bots: [0],
+        created_by: 0,
+        created_at: new Date(),
+        updated_at: new Date(),
+        status_changed_at: new Date(),
+        archived: false,
+        comment_count: 0,
+        note_count: 0,
+        file_count: 0,
+    };
+
+    it('resolves "card_<8hex>" shorthand to the full card id', async () => {
+        mockQuery
+            .mockResolvedValueOnce({ rows: [{ id: fullCard.id }] }) // prefix lookup
+            .mockResolvedValueOnce({ rows: [fullCard] })            // main query
+            .mockResolvedValueOnce({ rows: [] })                    // comments
+            .mockResolvedValueOnce({ rows: [] })                    // notes
+            .mockResolvedValueOnce({ rows: [] });                   // files
+
+        const res = await get('/api/mission/card/card_d3cdda14').query({ ...AUTH });
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.card.id).toBe(fullCard.id);
+        // prefix lookup should run first with the stripped hex in both forms
+        const prefixParams = mockQuery.mock.calls[0][1];
+        expect(prefixParams).toContain('d3cdda14%');
+        expect(prefixParams).toContain('card_d3cdda14%');
+    });
+
+    it('resolves bare 8-hex UUID prefix (no card_ wrapper)', async () => {
+        const uuidCard = { ...fullCard, id: '7b7dd9e3-55e1-4074-b101-40c47161d8de' };
+        mockQuery
+            .mockResolvedValueOnce({ rows: [{ id: uuidCard.id }] })
+            .mockResolvedValueOnce({ rows: [uuidCard] })
+            .mockResolvedValueOnce({ rows: [] })
+            .mockResolvedValueOnce({ rows: [] })
+            .mockResolvedValueOnce({ rows: [] });
+
+        const res = await get('/api/mission/card/7b7dd9e3').query({ ...AUTH });
+
+        expect(res.status).toBe(200);
+        expect(res.body.card.id).toBe(uuidCard.id);
+    });
+
+    it('passes full ids through unchanged (no prefix query)', async () => {
+        mockQuery
+            .mockResolvedValueOnce({ rows: [fullCard] })
+            .mockResolvedValueOnce({ rows: [] })
+            .mockResolvedValueOnce({ rows: [] })
+            .mockResolvedValueOnce({ rows: [] });
+
+        const res = await get(`/api/mission/card/${fullCard.id}`).query({ ...AUTH });
+
+        expect(res.status).toBe(200);
+        // First call should be the main SELECT, not a prefix lookup
+        expect(mockQuery.mock.calls[0][0]).toMatch(/FROM kanban_cards c/);
+    });
+
+    it('returns 404 when the prefix is ambiguous (2+ matches)', async () => {
+        mockQuery
+            .mockResolvedValueOnce({
+                rows: [
+                    { id: 'card_d3cdda1400000000aaaaaaaa' },
+                    { id: 'card_d3cdda14ffffffffbbbbbbbb' },
+                ],
+            })
+            .mockResolvedValueOnce({ rows: [] }); // main lookup with raw id → miss
+
+        const res = await get('/api/mission/card/d3cdda14').query({ ...AUTH });
+
+        expect(res.status).toBe(404);
+    });
+});
