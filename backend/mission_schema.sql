@@ -56,7 +56,7 @@ ON mission_items(priority DESC);
 -- Notes Table
 -- ============================================
 CREATE TABLE IF NOT EXISTS mission_notes (
-    id UUID PRIMARY KEY,
+    id VARCHAR(48) PRIMARY KEY DEFAULT ('note_' || encode(gen_random_bytes(12), 'hex')),
     device_id VARCHAR(64) NOT NULL REFERENCES mission_dashboard(device_id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
@@ -76,7 +76,7 @@ ON mission_notes(category);
 -- Rules Table
 -- ============================================
 CREATE TABLE IF NOT EXISTS mission_rules (
-    id UUID PRIMARY KEY,
+    id VARCHAR(48) PRIMARY KEY DEFAULT ('rule_' || encode(gen_random_bytes(12), 'hex')),
     device_id VARCHAR(64) NOT NULL REFERENCES mission_dashboard(device_id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS mission_sync_log (
     device_id VARCHAR(64) NOT NULL,
     action VARCHAR(64) NOT NULL, -- 'CREATE', 'UPDATE', 'DELETE', 'SYNC'
     item_type VARCHAR(32), -- 'ITEM', 'NOTE', 'RULE'
-    item_id UUID,
+    item_id VARCHAR(48),
     old_version INTEGER,
     new_version INTEGER,
     performed_by VARCHAR(64),
@@ -162,7 +162,7 @@ CREATE OR REPLACE FUNCTION record_sync_action(
     p_device_id VARCHAR(64),
     p_action VARCHAR(64),
     p_item_type VARCHAR(32),
-    p_item_id UUID,
+    p_item_id VARCHAR(48),
     p_old_version INTEGER,
     p_new_version INTEGER,
     p_performed_by VARCHAR(64)
@@ -319,3 +319,17 @@ ALTER TABLE note_pages ADD COLUMN IF NOT EXISTS drawing_snapshot TEXT DEFAULT NU
 -- Grant execute to app user (adjust as needed)
 -- GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO app_user;
 -- GRANT ALL ON ALL TABLES IN SCHEMA public TO app_user;
+
+-- ============================================
+-- ID prefix migration (idempotent; no-ops after first run)
+-- Widen mission_notes.id + mission_rules.id UUID → VARCHAR(48) so
+-- Stripe-style prefixed IDs (note_<24hex>, rule_<24hex>) can coexist
+-- with legacy UUIDs. These tables have no FK children.
+-- ============================================
+ALTER TABLE mission_notes ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE mission_notes ALTER COLUMN id TYPE VARCHAR(48);
+ALTER TABLE mission_notes ALTER COLUMN id SET DEFAULT ('note_' || encode(gen_random_bytes(12), 'hex'));
+ALTER TABLE mission_rules ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE mission_rules ALTER COLUMN id TYPE VARCHAR(48);
+ALTER TABLE mission_rules ALTER COLUMN id SET DEFAULT ('rule_' || encode(gen_random_bytes(12), 'hex'));
+ALTER TABLE mission_sync_log ALTER COLUMN item_id TYPE VARCHAR(48);

@@ -20,7 +20,7 @@
 -- ============================================
 -- status lifecycle: draft → interview → listed → paused → delisted
 CREATE TABLE IF NOT EXISTS bot_listings (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id VARCHAR(48) PRIMARY KEY DEFAULT ('listing_' || encode(gen_random_bytes(12), 'hex')),
     owner_user_id UUID NOT NULL,
     owner_device_id TEXT NOT NULL,
     owner_entity_id INTEGER NOT NULL,
@@ -61,7 +61,7 @@ CREATE INDEX IF NOT EXISTS idx_listings_rating ON bot_listings(avg_rating DESC)
 -- ============================================
 CREATE TABLE IF NOT EXISTS bot_interviews (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    listing_id UUID NOT NULL,
+    listing_id VARCHAR(48) NOT NULL,
     probes_json JSONB NOT NULL DEFAULT '[]'::jsonb,
     responses_json JSONB NOT NULL DEFAULT '[]'::jsonb,
     passed BOOLEAN NOT NULL DEFAULT FALSE,
@@ -83,8 +83,8 @@ CREATE INDEX IF NOT EXISTS idx_interviews_listing ON bot_interviews(listing_id, 
 --   reserved → active → ended_normal / ended_early_by_renter /
 --              ended_zero_balance / ended_disputed / ended_violation / ended_admin
 CREATE TABLE IF NOT EXISTS rental_contracts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    listing_id UUID NOT NULL,
+    id VARCHAR(48) PRIMARY KEY DEFAULT ('contract_' || encode(gen_random_bytes(12), 'hex')),
+    listing_id VARCHAR(48) NOT NULL,
     owner_user_id UUID NOT NULL,
     renter_user_id UUID NOT NULL,
     renter_device_id TEXT NOT NULL,
@@ -133,7 +133,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_contracts_exclusive_active
 -- the snapshot, not the live listing. Guarantees renter gets the bot
 -- they signed up for.
 CREATE TABLE IF NOT EXISTS rental_snapshots (
-    contract_id UUID PRIMARY KEY,
+    contract_id VARCHAR(48) PRIMARY KEY,
     identity JSONB,
     rules JSONB,
     skills JSONB,
@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS rental_snapshots (
 -- Each row pairs with a wallet_ledger entry (by idempotency_key).
 CREATE TABLE IF NOT EXISTS rental_usage_events (
     id BIGSERIAL PRIMARY KEY,
-    contract_id UUID NOT NULL,
+    contract_id VARCHAR(48) NOT NULL,
     direction VARCHAR(8) NOT NULL CHECK (direction IN ('in', 'out')),
     tokens INTEGER NOT NULL CHECK (tokens >= 0),
     ecoin_charged_mli BIGINT NOT NULL DEFAULT 0,
@@ -183,3 +183,42 @@ CREATE TABLE IF NOT EXISTS pricing_market_snapshots (
 
 CREATE INDEX IF NOT EXISTS idx_pricing_family_time
     ON pricing_market_snapshots(model_family, snapshot_at DESC);
+
+-- ============================================
+-- ID prefix migration (idempotent; no-ops after first run)
+-- Widen bot_listings.id and rental_contracts.id UUID → VARCHAR(48) so
+-- Stripe-style prefixed IDs (listing_<24hex>, contract_<24hex>) can coexist
+-- with legacy UUIDs.
+--
+-- trust_schema children (bot_reviews.contract_id, bot_reviews.listing_id,
+-- disputes.contract_id) are also widened here because rental_schema and
+-- trust_schema init independently; we cannot rely on ordering. Duplicate
+-- idempotent statements in trust_schema.sql handle the reverse ordering.
+-- ============================================
+ALTER TABLE bot_interviews DROP CONSTRAINT IF EXISTS fk_interview_listing;
+ALTER TABLE rental_contracts DROP CONSTRAINT IF EXISTS fk_contract_listing;
+ALTER TABLE rental_snapshots DROP CONSTRAINT IF EXISTS fk_snapshot_contract;
+ALTER TABLE rental_usage_events DROP CONSTRAINT IF EXISTS fk_usage_contract;
+ALTER TABLE bot_reviews DROP CONSTRAINT IF EXISTS fk_review_contract;
+ALTER TABLE bot_reviews DROP CONSTRAINT IF EXISTS fk_review_listing;
+ALTER TABLE disputes DROP CONSTRAINT IF EXISTS fk_dispute_contract;
+ALTER TABLE bot_listings ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE bot_listings ALTER COLUMN id TYPE VARCHAR(48);
+ALTER TABLE bot_listings ALTER COLUMN id SET DEFAULT ('listing_' || encode(gen_random_bytes(12), 'hex'));
+ALTER TABLE rental_contracts ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE rental_contracts ALTER COLUMN id TYPE VARCHAR(48);
+ALTER TABLE rental_contracts ALTER COLUMN id SET DEFAULT ('contract_' || encode(gen_random_bytes(12), 'hex'));
+ALTER TABLE bot_interviews ALTER COLUMN listing_id TYPE VARCHAR(48);
+ALTER TABLE rental_contracts ALTER COLUMN listing_id TYPE VARCHAR(48);
+ALTER TABLE rental_snapshots ALTER COLUMN contract_id TYPE VARCHAR(48);
+ALTER TABLE rental_usage_events ALTER COLUMN contract_id TYPE VARCHAR(48);
+ALTER TABLE bot_reviews ALTER COLUMN contract_id TYPE VARCHAR(48);
+ALTER TABLE bot_reviews ALTER COLUMN listing_id TYPE VARCHAR(48);
+ALTER TABLE disputes ALTER COLUMN contract_id TYPE VARCHAR(48);
+ALTER TABLE bot_interviews ADD CONSTRAINT fk_interview_listing FOREIGN KEY (listing_id) REFERENCES bot_listings(id) ON DELETE CASCADE;
+ALTER TABLE rental_contracts ADD CONSTRAINT fk_contract_listing FOREIGN KEY (listing_id) REFERENCES bot_listings(id) ON DELETE RESTRICT;
+ALTER TABLE rental_snapshots ADD CONSTRAINT fk_snapshot_contract FOREIGN KEY (contract_id) REFERENCES rental_contracts(id) ON DELETE CASCADE;
+ALTER TABLE rental_usage_events ADD CONSTRAINT fk_usage_contract FOREIGN KEY (contract_id) REFERENCES rental_contracts(id) ON DELETE CASCADE;
+ALTER TABLE bot_reviews ADD CONSTRAINT fk_review_contract FOREIGN KEY (contract_id) REFERENCES rental_contracts(id) ON DELETE CASCADE;
+ALTER TABLE bot_reviews ADD CONSTRAINT fk_review_listing FOREIGN KEY (listing_id) REFERENCES bot_listings(id) ON DELETE CASCADE;
+ALTER TABLE disputes ADD CONSTRAINT fk_dispute_contract FOREIGN KEY (contract_id) REFERENCES rental_contracts(id) ON DELETE CASCADE;

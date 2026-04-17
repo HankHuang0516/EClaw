@@ -5,7 +5,7 @@
 -- Kanban Cards Table
 -- ============================================
 CREATE TABLE IF NOT EXISTS kanban_cards (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id VARCHAR(48) PRIMARY KEY DEFAULT ('card_' || encode(gen_random_bytes(12), 'hex')),
     device_id VARCHAR(64) NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT DEFAULT '',
@@ -45,10 +45,10 @@ CREATE INDEX IF NOT EXISTS idx_kanban_cards_schedule ON kanban_cards(schedule_en
 -- Migration: Automation (母卡/子卡) fields
 -- ============================================
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS is_automation BOOLEAN DEFAULT FALSE;
-ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS parent_card_id UUID DEFAULT NULL;
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS parent_card_id VARCHAR(48) DEFAULT NULL;
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS is_auto_generated BOOLEAN DEFAULT FALSE;
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS last_run_result TEXT DEFAULT NULL;
-ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS active_child_id UUID DEFAULT NULL;
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS active_child_id VARCHAR(48) DEFAULT NULL;
 
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS reviewer_entity_id INTEGER DEFAULT NULL;
 
@@ -62,7 +62,7 @@ CREATE INDEX IF NOT EXISTS idx_kanban_cards_parent ON kanban_cards(parent_card_i
 -- ============================================
 CREATE TABLE IF NOT EXISTS kanban_comments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    card_id UUID NOT NULL REFERENCES kanban_cards(id) ON DELETE CASCADE,
+    card_id VARCHAR(48) NOT NULL REFERENCES kanban_cards(id) ON DELETE CASCADE,
     device_id VARCHAR(64) NOT NULL,
     from_entity_id INTEGER NOT NULL,
     text TEXT NOT NULL,
@@ -77,7 +77,7 @@ CREATE INDEX IF NOT EXISTS idx_kanban_comments_card ON kanban_comments(card_id, 
 -- ============================================
 CREATE TABLE IF NOT EXISTS kanban_notes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    card_id UUID NOT NULL REFERENCES kanban_cards(id) ON DELETE CASCADE,
+    card_id VARCHAR(48) NOT NULL REFERENCES kanban_cards(id) ON DELETE CASCADE,
     device_id VARCHAR(64) NOT NULL,
     title VARCHAR(255) NOT NULL DEFAULT '',
     content TEXT NOT NULL DEFAULT '',
@@ -93,7 +93,7 @@ CREATE INDEX IF NOT EXISTS idx_kanban_notes_card ON kanban_notes(card_id);
 -- ============================================
 CREATE TABLE IF NOT EXISTS kanban_files (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    card_id UUID NOT NULL REFERENCES kanban_cards(id) ON DELETE CASCADE,
+    card_id VARCHAR(48) NOT NULL REFERENCES kanban_cards(id) ON DELETE CASCADE,
     device_id VARCHAR(64) NOT NULL,
     filename VARCHAR(255) NOT NULL,
     url TEXT NOT NULL,                                   -- link to file (S3, external URL, etc.)
@@ -104,3 +104,23 @@ CREATE TABLE IF NOT EXISTS kanban_files (
 );
 
 CREATE INDEX IF NOT EXISTS idx_kanban_files_card ON kanban_files(card_id);
+
+-- ============================================
+-- ID prefix migration (idempotent; no-ops after first run)
+-- Widen kanban_cards.id UUID → VARCHAR(48) so Stripe-style prefixed IDs
+-- (card_<24hex>) can coexist with legacy UUIDs.
+-- ============================================
+ALTER TABLE kanban_comments DROP CONSTRAINT IF EXISTS kanban_comments_card_id_fkey;
+ALTER TABLE kanban_notes DROP CONSTRAINT IF EXISTS kanban_notes_card_id_fkey;
+ALTER TABLE kanban_files DROP CONSTRAINT IF EXISTS kanban_files_card_id_fkey;
+ALTER TABLE kanban_cards ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE kanban_cards ALTER COLUMN id TYPE VARCHAR(48);
+ALTER TABLE kanban_cards ALTER COLUMN id SET DEFAULT ('card_' || encode(gen_random_bytes(12), 'hex'));
+ALTER TABLE kanban_comments ALTER COLUMN card_id TYPE VARCHAR(48);
+ALTER TABLE kanban_notes ALTER COLUMN card_id TYPE VARCHAR(48);
+ALTER TABLE kanban_files ALTER COLUMN card_id TYPE VARCHAR(48);
+ALTER TABLE kanban_comments ADD CONSTRAINT kanban_comments_card_id_fkey FOREIGN KEY (card_id) REFERENCES kanban_cards(id) ON DELETE CASCADE;
+ALTER TABLE kanban_notes ADD CONSTRAINT kanban_notes_card_id_fkey FOREIGN KEY (card_id) REFERENCES kanban_cards(id) ON DELETE CASCADE;
+ALTER TABLE kanban_files ADD CONSTRAINT kanban_files_card_id_fkey FOREIGN KEY (card_id) REFERENCES kanban_cards(id) ON DELETE CASCADE;
+ALTER TABLE kanban_cards ALTER COLUMN parent_card_id TYPE VARCHAR(48);
+ALTER TABLE kanban_cards ALTER COLUMN active_child_id TYPE VARCHAR(48);

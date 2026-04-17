@@ -11,8 +11,8 @@
 -- ============================================
 CREATE TABLE IF NOT EXISTS bot_reviews (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    contract_id UUID NOT NULL UNIQUE,
-    listing_id UUID NOT NULL,
+    contract_id VARCHAR(48) NOT NULL UNIQUE,
+    listing_id VARCHAR(48) NOT NULL,
     reviewer_user_id UUID NOT NULL,
     owner_user_id UUID NOT NULL,
     rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
@@ -34,7 +34,7 @@ CREATE INDEX IF NOT EXISTS idx_reviews_reviewer ON bot_reviews(reviewer_user_id)
 -- ============================================
 CREATE TABLE IF NOT EXISTS disputes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    contract_id UUID NOT NULL,
+    contract_id VARCHAR(48) NOT NULL,
     raised_by UUID NOT NULL,
     type VARCHAR(32) NOT NULL,
     evidence TEXT,
@@ -111,7 +111,25 @@ CREATE INDEX IF NOT EXISTS idx_blacklist_active ON user_blacklist(expires_at)
 -- ============================================
 CREATE TABLE IF NOT EXISTS rental_cooldowns (
     user_id UUID NOT NULL,
-    listing_id UUID NOT NULL,
+    listing_id VARCHAR(48) NOT NULL,
     cooldown_until TIMESTAMP WITH TIME ZONE NOT NULL,
     PRIMARY KEY (user_id, listing_id)
 );
+
+-- ============================================
+-- ID prefix migration (idempotent; no-ops after first run)
+-- Mirror of rental_schema.sql migration for the FK columns owned by trust_schema.
+-- rental_schema runs first in normal boot order, but kept here for defensive
+-- idempotency. If the referenced rental tables haven't been widened yet, the
+-- runner tolerates the "cannot alter" error and logs a warning.
+-- ============================================
+ALTER TABLE bot_reviews DROP CONSTRAINT IF EXISTS fk_review_contract;
+ALTER TABLE bot_reviews DROP CONSTRAINT IF EXISTS fk_review_listing;
+ALTER TABLE disputes DROP CONSTRAINT IF EXISTS fk_dispute_contract;
+ALTER TABLE bot_reviews ALTER COLUMN contract_id TYPE VARCHAR(48);
+ALTER TABLE bot_reviews ALTER COLUMN listing_id TYPE VARCHAR(48);
+ALTER TABLE disputes ALTER COLUMN contract_id TYPE VARCHAR(48);
+ALTER TABLE rental_cooldowns ALTER COLUMN listing_id TYPE VARCHAR(48);
+ALTER TABLE bot_reviews ADD CONSTRAINT fk_review_contract FOREIGN KEY (contract_id) REFERENCES rental_contracts(id) ON DELETE CASCADE;
+ALTER TABLE bot_reviews ADD CONSTRAINT fk_review_listing FOREIGN KEY (listing_id) REFERENCES bot_listings(id) ON DELETE CASCADE;
+ALTER TABLE disputes ADD CONSTRAINT fk_dispute_contract FOREIGN KEY (contract_id) REFERENCES rental_contracts(id) ON DELETE CASCADE;

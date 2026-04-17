@@ -30,6 +30,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const safeEqual = require('./safe-equal');
+const { newNoteId, newSkillId, newRuleId } = require('./entity-id');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
@@ -686,7 +687,7 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
             return res.status(400).json({ success: false, error: 'Missing title' });
         }
 
-        const noteId = crypto.randomUUID();
+        const noteId = newNoteId();
         // Create dashboard note entry
         const client = await pool.connect();
         try {
@@ -918,7 +919,7 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
                 noteId = req.body.noteId;
             } else {
                 // Generate new noteId for title-based creation
-                noteId = crypto.randomUUID();
+                noteId = newNoteId();
             }
 
             // Ensure dashboard note entry exists
@@ -1772,7 +1773,7 @@ async function submitPayment() {
                 resultRule = existing;
             } else {
                 resultRule = {
-                    id: crypto.randomUUID(),
+                    id: newRuleId(),
                     name: name.trim(),
                     description: descNorm,
                     ruleType: ruleType || 'WORKFLOW',
@@ -1963,7 +1964,7 @@ async function submitPayment() {
                 resultSkill = existing;
             } else {
                 resultSkill = {
-                    id: crypto.randomUUID(),
+                    id: newSkillId(),
                     title: title.trim(),
                     url: urlNorm,
                     assignedEntities: entities,
