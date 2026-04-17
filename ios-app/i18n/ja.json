@@ -78,7 +78,7 @@
     "version": "バージョン"
   },
   "home": {
-    "title": "E-Claw",
+    "title": "EClawbot",
     "no_entities": "まだエンティティがバインドされていません",
     "no_entities_desc": "+ をタップしてバインドコードを生成し、最初のエンティティを接続してください",
     "generate_binding_code": "バインドコードを生成",
@@ -100,7 +100,10 @@
     "entity_idle": "アイドル",
     "unbind_title": "バインド解除",
     "unbind_message": "{{name}} のバインドを解除しますか？",
-    "unbind_success": "エンティティのバインドを解除しました"
+    "unbind_success": "エンティティのバインドを解除しました",
+    "edit_mode": "編集",
+    "edit_mode_on": "完了",
+    "org_chart": "組織図"
   },
   "chat": {
     "title": "チャット",

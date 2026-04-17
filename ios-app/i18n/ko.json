@@ -78,7 +78,7 @@
     "version": "버전"
   },
   "home": {
-    "title": "E-Claw",
+    "title": "EClawbot",
     "no_entities": "연결된 엔티티가 없습니다",
     "no_entities_desc": "+ 를 탭하여 바인딩 코드를 생성하고 첫 번째 엔티티를 연결하세요",
     "generate_binding_code": "바인딩 코드 생성",
@@ -100,7 +100,10 @@
     "entity_idle": "유휴",
     "unbind_title": "바인딩 해제",
     "unbind_message": "{{name}}의 바인딩을 해제하시겠습니까?",
-    "unbind_success": "엔티티 바인딩이 해제되었습니다"
+    "unbind_success": "엔티티 바인딩이 해제되었습니다",
+    "edit_mode": "편집",
+    "edit_mode_on": "완료",
+    "org_chart": "조직도"
   },
   "chat": {
     "title": "채팅",

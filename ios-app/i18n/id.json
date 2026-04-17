@@ -78,7 +78,7 @@
     "version": "Versi"
   },
   "home": {
-    "title": "E-Claw",
+    "title": "EClawbot",
     "no_entities": "Belum ada entitas yang terikat",
     "no_entities_desc": "Ketuk + untuk membuat kode pengikatan dan hubungkan entitas pertama Anda",
     "generate_binding_code": "Buat Kode Pengikatan",
@@ -100,7 +100,10 @@
     "entity_idle": "Tidak aktif",
     "unbind_title": "Lepas Ikatan",
     "unbind_message": "Yakin ingin melepas ikatan {{name}}?",
-    "unbind_success": "Ikatan entitas dilepas"
+    "unbind_success": "Ikatan entitas dilepas",
+    "edit_mode": "Sunting",
+    "edit_mode_on": "Selesai",
+    "org_chart": "Bagan Organisasi"
   },
   "chat": {
     "title": "Obrolan",

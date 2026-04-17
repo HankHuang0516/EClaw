@@ -78,7 +78,7 @@
     "version": "Версия"
   },
   "home": {
-    "title": "E-Claw",
+    "title": "EClawbot",
     "no_entities": "Нет привязанных сущностей",
     "no_entities_desc": "Нажмите +, чтобы сгенерировать код привязки и подключить первую сущность",
     "generate_binding_code": "Сгенерировать код привязки",
@@ -99,7 +99,10 @@
     "entity_idle": "Неактивен",
     "unbind_title": "Отвязать сущность",
     "unbind_message": "Вы уверены, что хотите отвязать {{name}}?",
-    "unbind_success": "Сущность отвязана"
+    "unbind_success": "Сущность отвязана",
+    "edit_mode": "Изменить",
+    "edit_mode_on": "Готово",
+    "org_chart": "Оргсхема"
   },
   "chat": {
     "title": "Чат",

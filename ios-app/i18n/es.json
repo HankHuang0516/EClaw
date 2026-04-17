@@ -78,7 +78,7 @@
     "version": "Versión"
   },
   "home": {
-    "title": "E-Claw",
+    "title": "EClawbot",
     "no_entities": "Aún no hay entidades vinculadas",
     "no_entities_desc": "Toque + para generar un código de vinculación y conectar su primera entidad",
     "generate_binding_code": "Generar código de vinculación",
@@ -100,7 +100,10 @@
     "unbind_title": "Desvincular entidad",
     "unbind_message": "¿Está seguro de que desea desvincular {{name}}?",
     "unbind_success": "Entidad desvinculada",
-    "channel_ai_agent_hint": "🤖 Se recomienda encarecidamente usar Claude Code u otros agentes de IA para la instalación asistida."
+    "channel_ai_agent_hint": "🤖 Se recomienda encarecidamente usar Claude Code u otros agentes de IA para la instalación asistida.",
+    "edit_mode": "Editar",
+    "edit_mode_on": "Hecho",
+    "org_chart": "Organigrama"
   },
   "chat": {
     "title": "Chat",

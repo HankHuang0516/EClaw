@@ -78,7 +78,7 @@
     "version": "版本"
   },
   "home": {
-    "title": "电子虾",
+    "title": "EClawbot",
     "no_entities": "尚未绑定任何实体",
     "no_entities_desc": "点击 + 生成绑定码，连接您的第一个实体",
     "generate_binding_code": "生成绑定码",
@@ -100,7 +100,10 @@
     "entity_idle": "空闲",
     "unbind_title": "解除绑定",
     "unbind_message": "确定要解除 {{name}} 的绑定吗？",
-    "unbind_success": "实体已解除绑定"
+    "unbind_success": "实体已解除绑定",
+    "edit_mode": "编辑",
+    "edit_mode_on": "完成",
+    "org_chart": "组织图"
   },
   "chat": {
     "title": "聊天",

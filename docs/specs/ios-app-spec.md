@@ -1,7 +1,8 @@
 # iOS App 平台規範書 (iOS App Spec)
 
-> **版本**: 1.2.0
+> **版本**: 1.3.0
 > **建立日期**: 2026-04-14
+> **最新修訂**: 2026-04-17 — 首頁對齊 Android MainActivity：header 標題改為 "EClawbot"、加入 Edit Mode 與 Org Chart 入口、移除獨立 Dashboard tab（Android 沒有此 tab）
 > **適用範圍**: `ios-app/` (React Native + Expo Router)
 > **目的**: 定義 iOS App 的架構、導航、UI 規範、功能範圍，作為所有 iOS 改動的唯一標準。
 > **依據**: Apple Human Interface Guidelines、[Mobile Parity Gap](../plans/2026-04-14-brm-mobile-parity-gap.md)、CLAUDE.md §Feature Parity Rule
@@ -44,20 +45,18 @@
 ios-app/
 ├── app/                          # Expo Router 頁面
 │   ├── _layout.tsx               # Root layout（auth gate, headerShown: true default）
-│   ├── (tabs)/                   # Tab Bar 五大主頁
+│   ├── (tabs)/                   # Tab Bar 五大主頁（對齊 Android BottomNavHelper）
 │   │   ├── _layout.tsx           # Tab Bar 配置（height:83, paddingBottom:34）
-│   │   ├── index.tsx             # 🏠 首頁（Entity 列表 + 管理，對齊 Android MainActivity）
-│   │   ├── dashboard.tsx         # 📊 儀表板（WebView dashboard.html，Entity grid + Org Chart）
+│   │   ├── index.tsx             # 🏠 首頁（Entity 列表 + Edit Mode + Org Chart 入口，對齊 Android MainActivity）
 │   │   ├── chat.tsx              # 💬 聊天（WebView chat.html，對齊 Android ChatActivity）
 │   │   ├── mission.tsx           # 📋 Mission Control（WebView mission.html）
 │   │   ├── cards.tsx             # 🎴 Card Holder（名片夾）
 │   │   └── settings.tsx          # ⚙️ 設定
+│   ├── org-chart.tsx             # 🗂️ Org Chart modal（WebView dashboard.html?view=orgchart，從首頁 header 入口打開）
 │   ├── ai-chat.tsx               # 🤖 AI 助理
 │   ├── wallet.tsx                # 💰 錢包（iOS 必須 native + IAP）
 │   ├── my-rentals.tsx            # 租借管理（我的租賃）
 │   ├── community.tsx             # 社群 / 市場（Marketplace）
-│   ├── card-holder.tsx           # （獨立名片夾頁，與 tab cards 重疊待整理）
-│   ├── entity-manager.tsx        # 實體管理
 │   ├── file-manager.tsx          # 檔案
 │   ├── feedback.tsx              # 意見回饋
 │   ├── invite.tsx                # 邀請碼
@@ -75,20 +74,21 @@ ios-app/
 └── eas.json                      # EAS Build / Submit 設定
 ```
 
-> **已移除**：`chat/[entityId].tsx`（個別聊天頁）和 `schedule.tsx`（已廢棄）不再需要。聊天功能統一由 chat tab 的 WebView 處理。
+> **已移除**：`chat/[entityId].tsx`、`schedule.tsx`、`entity-manager.tsx`、`card-holder.tsx`、`(tabs)/dashboard.tsx` 已廢棄。聊天由 chat tab WebView 處理；Org Chart 由首頁 header button 開啟 `/org-chart` modal。
 
-### 2.3 Tab Bar 五大主頁（不可變更，對齊 Android）
+### 2.3 Tab Bar 五大主頁（不可變更，對齊 Android `BottomNavHelper`）
 
 | Tab | 圖示 | 路由 | 內容 |
 |-----|------|------|------|
-| 🏠 首頁 | `home` | `(tabs)/index` | Dashboard + Entity 列表（詳見 §3.4） |
-| 📊 儀表板 | `view-dashboard` | `(tabs)/dashboard` | WebView 載入 `portal/dashboard.html`（Entity grid + Org Chart 四種模式） |
+| 🏠 首頁 | `home` | `(tabs)/index` | Entity 列表 + Edit Mode + Org Chart 入口（詳見 §3.4） |
 | 💬 聊天 | `chat` | `(tabs)/chat` | WebView 載入 chat.html（詳見 §3.5） |
 | 📋 任務 | `target` | `(tabs)/mission` | Mission Control（notes + kanban 入口） |
 | 🎴 名片 | `card-account-details` | `(tabs)/cards` | Card Holder（名片夾） |
 | ⚙️ 設定 | `cog` | `(tabs)/settings` | 設定 + wallet + my-rentals 入口 |
 
 > **重要**：聊天 tab 必須與 Android `ChatActivity` 體驗一致 — 直接載入 WebView chat.html，tab bar 始終可見。不得使用原生列表 → push stack screen 的二層導航（會讓 tab bar 消失）。
+
+> **v1.3.0 對齊修正**：Android `BottomNavHelper` 只有 5 tab（HOME / MISSION / CHAT / CARDS / SETTINGS），沒有獨立 Dashboard/Org Chart tab。Org Chart 由首頁 top bar 的 `btnDashboard` 按鈕觸發 `OrgChartBottomSheetFragment`（WebView 載入 `dashboard.html?view=orgchart`）。iOS 移除 `(tabs)/dashboard.tsx`，改為首頁 header button + `/org-chart` modal 路由。
 
 ---
 
@@ -111,8 +111,8 @@ ios-app/
 
 | 功能 | 實作方式 | 對齊 Android | 上架前優先級 |
 |------|---------|-------------|-------------|
-| Dashboard / Entity 列表 | Native | ✅ 對齊 MainActivity（詳見 §3.4） | P0 |
-| 完整儀表板 + Org Chart | WebView (`portal/dashboard.html`) | ✅ 對齊 Android `DashboardActivity` | P0 |
+| 首頁 Entity 列表 + Edit Mode | Native | ✅ 對齊 MainActivity（詳見 §3.4） | P0 |
+| Org Chart（組織圖） | 首頁 header button → modal WebView (`dashboard.html?view=orgchart`) | ✅ 對齊 Android `btnDashboard` + `OrgChartBottomSheetFragment` | P0 |
 | **聊天** | **WebView chat.html** | ✅ 對齊 ChatActivity（詳見 §3.5） | P0 |
 | AI 助理 | Native | ✅ | — |
 | Mission Control | WebView mission.html | ✅ | — |
@@ -149,6 +149,30 @@ ios-app/
 ### 3.4 首頁 UX 規範（對齊 Android `MainActivity`）
 
 首頁是使用者最常見的畫面，必須與 Android 體驗一致。
+
+#### 3.4.0 Header（對齊 Android `activity_main.xml` topBar）
+
+```
+┌──────────────────────────────────────────────┐
+│  EClawbot                          🗂️  ✏️    │  ← header
+├──────────────────────────────────────────────┤
+│                                              │
+│  [ Entity 卡片列表 ]                          │
+│                                              │
+```
+
+| 元素 | 對齊 Android | 說明 |
+|------|-------------|------|
+| 標題 | `R.string.main_title` = "EClawbot" | 不使用 `tabs.home`，與 Android `TextView android:text="@string/main_title"` 一致 |
+| 🗂️ Org Chart button | `btnDashboard` → `OrgChartBottomSheetFragment` | `sitemap-outline` icon；點擊導航到 `/org-chart` modal（WebView 載 `dashboard.html?embed=1&view=orgchart&deviceId=…&deviceSecret=…`） |
+| ✏️ Edit button | `btnEditMode` → `toggleEditMode()` | `pencil-outline` / `pencil` icon；點擊切換 Edit Mode state |
+
+Edit Mode 開啟時：
+- Icon 從 `pencil-outline` 切換到 `pencil`（高亮色 primary）
+- 每張 entity 卡片右上角顯示小叉叉（✕）可直接刪除
+- （P2 backlog：拖曳排序 handle，與 Android `ItemTouchHelper` 等價）
+
+Edit Mode 關閉時：回到一般長按觸發 ActionSheet 的行為。
 
 #### 3.4.1 Entity 卡片（對齊 `item_agent_card.xml`）
 
@@ -188,7 +212,7 @@ Entity 卡片**不是導航入口**（不導向聊天頁），而是資訊展示
 | **點擊名稱** | 開啟重新命名 Dialog | ✅ 對齊 Android `showRenameDialog()` |
 | **長按卡片** | 顯示 ActionSheet：Refresh Connection / Agent Card / Cross-Device / 刪除 | ✅ 對齊 Android Edit Mode overflow menu |
 
-> **注意**：Android 使用 Edit Mode toggle（top-right pencil icon）+ 拖曳排序 + 每張卡片顯示 action buttons。iOS v1.1 暫不實作 Edit Mode toggle 和 drag-to-reorder（RN 實作成本高），改以長按 ActionSheet 提供等價功能入口。Edit Mode 列入 P2 backlog。
+> **v1.3.0 更新**：iOS 已實作 Edit Mode toggle（header pencil icon）對齊 Android `btnEditMode`。Edit Mode 開啟時每張卡片顯示刪除叉叉，一般長按 ActionSheet 保留做為快速功能入口。拖曳排序（drag-to-reorder）仍列入 P2 backlog，RN 實作成本高。
 
 > **重要**：Entity 卡片**不顯示** `chevron-right` 箭頭（Android 也沒有）。卡片是管理用途，不是聊天入口。
 

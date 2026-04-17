@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Card, Text, Avatar, useTheme } from 'react-native-paper';
+import { Card, Text, Avatar, IconButton, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { Entity } from '../store/entityStore';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -8,9 +8,11 @@ import { CHARACTER_COLORS, STATUS_COLORS } from '../constants/colors';
 
 interface EntityCardProps {
   entity: Entity;
+  editMode?: boolean;
   onLongPress?: () => void;
   onAvatarPress?: () => void;
   onNamePress?: () => void;
+  onRemovePress?: () => void;
 }
 
 const CHARACTER_ICONS: Record<string, string> = {
@@ -41,7 +43,7 @@ function getStateLabel(state: string): string {
   return s;
 }
 
-export default function EntityCard({ entity, onLongPress, onAvatarPress, onNamePress }: EntityCardProps) {
+export default function EntityCard({ entity, editMode, onLongPress, onAvatarPress, onNamePress, onRemovePress }: EntityCardProps) {
   const { t } = useTranslation();
   const theme = useTheme();
 
@@ -101,6 +103,15 @@ export default function EntityCard({ entity, onLongPress, onAvatarPress, onNameP
             <View style={[styles.stateBadge, { backgroundColor: stateColor + '22', borderColor: stateColor }]}>
               <Text style={[styles.stateText, { color: stateColor }]}>{stateLabel}</Text>
             </View>
+            {editMode && onRemovePress ? (
+              <IconButton
+                icon="close-circle"
+                size={20}
+                iconColor="#F44336"
+                onPress={onRemovePress}
+                style={styles.removeBtn}
+              />
+            ) : null}
           </View>
 
           {/* Badges row: Channel + E2EE */}
@@ -197,6 +208,10 @@ const styles = StyleSheet.create({
   stateText: {
     fontSize: 11,
     fontWeight: '600',
+  },
+  removeBtn: {
+    margin: 0,
+    marginLeft: -4,
   },
   badgeRow: {
     flexDirection: 'row',

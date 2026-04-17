@@ -78,7 +78,7 @@
     "version": "Versão"
   },
   "home": {
-    "title": "E-Claw",
+    "title": "EClawbot",
     "no_entities": "Nenhuma entidade vinculada ainda",
     "no_entities_desc": "Toque em + para gerar um código de vinculação e conectar sua primeira entidade",
     "generate_binding_code": "Gerar código de vinculação",
@@ -99,7 +99,10 @@
     "entity_idle": "Inativo",
     "unbind_title": "Desvincular entidade",
     "unbind_message": "Tem certeza de que deseja desvincular {{name}}?",
-    "unbind_success": "Entidade desvinculada"
+    "unbind_success": "Entidade desvinculada",
+    "edit_mode": "Editar",
+    "edit_mode_on": "Concluído",
+    "org_chart": "Organograma"
   },
   "chat": {
     "title": "Chat",
