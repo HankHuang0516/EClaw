@@ -1,3 +1,10 @@
+# [1.997.0](https://github.com/HankHuang0516/EClaw/compare/v1.996.0...v1.997.0) (2026-04-17)
+
+
+### Features
+
+* **card-holder:** add 開始對話 + 分享 actions on MyCard (Android + iOS) ([#1826](https://github.com/HankHuang0516/EClaw/issues/1826)) ([964a626](https://github.com/HankHuang0516/EClaw/commit/964a6266c7b725a1879af33deb268faf25de80fa))
+
 # [1.996.0](https://github.com/HankHuang0516/EClaw/compare/v1.995.0...v1.996.0) (2026-04-17)
 
 
