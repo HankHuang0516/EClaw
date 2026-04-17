@@ -2097,7 +2097,7 @@
                     <textarea class="chat-input" id="messageInput" rows="1"
                         data-i18n="chat_input_placeholder" placeholder="Type a message..."
                         oninput="renderSlashSuggestions(this.value); localStorage.setItem('chat_draft', this.value); this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,120)+'px'"
-                        onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing&&event.keyCode!==229){event.preventDefault();sendMessage()}"></textarea>
+                        onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing&&event.keyCode!==229){if(window.__eclawMobileInput===undefined){window.__eclawMobileInput=/EClawAndroid|EClawIOS/i.test(navigator.userAgent)||(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches)}if(!window.__eclawMobileInput){event.preventDefault();sendMessage()}}"></textarea>
                     <button class="btn btn-primary btn-send" id="btnSend" onclick="sendMessage()"
                         data-i18n="chat_btn_send" title="Send">&#10148;</button>
                 </div>
