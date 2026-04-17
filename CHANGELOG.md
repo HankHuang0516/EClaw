@@ -1,3 +1,10 @@
+## [1.992.2](https://github.com/HankHuang0516/EClaw/compare/v1.992.1...v1.992.2) (2026-04-17)
+
+
+### Bug Fixes
+
+* **fcm:** include title/body in android.notification so killed-app display isn't blank ([07466d7](https://github.com/HankHuang0516/EClaw/commit/07466d71fd8357a192496714165487763e8fb180))
+
 ## [1.992.1](https://github.com/HankHuang0516/EClaw/compare/v1.992.0...v1.992.1) (2026-04-17)
 
 
