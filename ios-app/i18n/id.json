@@ -28,7 +28,8 @@
     "chat": "Obrolan",
     "mission": "Misi",
     "settings": "Pengaturan",
-    "cards": "Kartu"
+    "cards": "Kartu",
+    "dashboard": "Dasbor"
   },
   "cardHolder": {
     "title": "Pemegang Kartu",

@@ -54,6 +54,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="dashboard"
+        options={{
+          title: t('tabs.dashboard'),
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name={focused ? 'view-dashboard' : 'view-dashboard-outline'} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="chat"
         options={{
           title: t('tabs.chat'),

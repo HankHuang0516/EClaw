@@ -127,6 +127,12 @@
             android:parentActivityName=".MainActivity" />
 
         <activity
+            android:name=".DashboardActivity"
+            android:exported="false"
+            android:label="@string/dashboard_entry_title"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
             android:name=".ScheduleActivity"
             android:exported="false"
             android:label="@string/schedule_title"

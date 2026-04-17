@@ -166,6 +166,11 @@
     <string name="to_contact_cross_device">To: %s (cross-device)</string>
     <string name="remove">Remove</string>
 
+    <!-- Dashboard (WebView host for portal/dashboard.html) -->
+    <string name="dashboard_entry_title">Full Dashboard</string>
+    <string name="dashboard_entry_subtitle">with Org Chart</string>
+    <string name="dashboard_entry_content_description">Open full dashboard</string>
+
     <!-- Mission Control -->
     <!-- Mission Control -->
     <string name="mission_control">Mission Control</string>

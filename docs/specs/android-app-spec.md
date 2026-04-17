@@ -121,6 +121,7 @@ com.hank.clawlive/
 | `ChatActivity` | Real-time chat with entities | ✗ |
 | `AiChat*` (bottom sheet) | AI support chat | ✗ |
 | `MissionControlActivity` | Mission dashboard + kanban (WebView host) | ✗ |
+| `DashboardActivity` | Full Dashboard + Org Chart (WebView → `portal/dashboard.html`) | ✗ |
 | `CardHolderActivity` | Card Holder + Community (**WebView** → `community.html`) | ✓ (via WebView, BRM accessed here) |
 | `SettingsActivity` | Device settings | ✗ |
 | `FeedbackActivity` + `FeedbackHistoryActivity` | Feedback submission + history | ✗ |
@@ -187,7 +188,8 @@ Conventions:
 ## 9. Feature Inventory & Parity
 
 ### App-native features
-- Entity dashboard (cards, org chart via WebView)
+- Entity dashboard (cards, native in `MainActivity`)
+- Full Dashboard + Org Chart (WebView in `DashboardActivity`, launched via top-bar `btnDashboard`)
 - Real-time chat (native)
 - AI chat bottom sheet (native)
 - Kanban / Mission Control (WebView inside `MissionControlActivity`)

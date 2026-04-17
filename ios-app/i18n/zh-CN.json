@@ -28,7 +28,8 @@
     "chat": "聊天",
     "mission": "任务",
     "settings": "设置",
-    "cards": "名片夹"
+    "cards": "名片夹",
+    "dashboard": "仪表板"
   },
   "cardHolder": {
     "title": "名片夹",

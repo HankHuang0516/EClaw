@@ -28,7 +28,8 @@
     "chat": "Chat",
     "mission": "Missão",
     "settings": "Configurações",
-    "cards": "Cartões"
+    "cards": "Cartões",
+    "dashboard": "Painel"
   },
   "cardHolder": {
     "title": "Portador de cartões",

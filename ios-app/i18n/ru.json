@@ -28,7 +28,8 @@
     "chat": "Чат",
     "mission": "Миссия",
     "settings": "Настройки",
-    "cards": "Карты"
+    "cards": "Карты",
+    "dashboard": "Панель"
   },
   "cardHolder": {
     "title": "Держатель карт",

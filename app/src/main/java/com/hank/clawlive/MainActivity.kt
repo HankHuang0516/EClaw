@@ -374,6 +374,10 @@ class MainActivity : AppCompatActivity() {
             toggleEditMode()
         }
 
+        findViewById<ImageButton>(R.id.btnDashboard).setOnClickListener {
+            startActivity(Intent(this, DashboardActivity::class.java))
+        }
+
         // Add Entity expandable section
         addEntityHeader.setOnClickListener {
             toggleAddEntitySection()
