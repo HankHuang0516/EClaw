@@ -56,9 +56,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="dashboard"
         options={{
-          title: t('tabs.dashboard'),
+          title: t('tabs.orgChart'),
           tabBarIcon: ({ focused }) => (
-            <TabIcon name={focused ? 'view-dashboard' : 'view-dashboard-outline'} focused={focused} />
+            <TabIcon name={focused ? 'sitemap' : 'sitemap-outline'} focused={focused} />
           ),
         }}
       />

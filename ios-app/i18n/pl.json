@@ -29,7 +29,8 @@
     "mission": "Misja",
     "settings": "Ustawienia",
     "cards": "Karty",
-    "dashboard": "Panel"
+    "dashboard": "Panel",
+    "orgChart": "Schemat organizacyjny"
   },
   "cardHolder": {
     "title": "Posiadacz kart",

@@ -29,7 +29,8 @@
     "mission": "Misi",
     "settings": "Pengaturan",
     "cards": "Kartu",
-    "dashboard": "Dasbor"
+    "dashboard": "Dasbor",
+    "orgChart": "Bagan Organisasi"
   },
   "cardHolder": {
     "title": "Pemegang Kartu",

@@ -29,7 +29,8 @@
     "mission": "Missão",
     "settings": "Configurações",
     "cards": "Cartões",
-    "dashboard": "Painel"
+    "dashboard": "Painel",
+    "orgChart": "Organograma"
   },
   "cardHolder": {
     "title": "Portador de cartões",

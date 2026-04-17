@@ -6,7 +6,7 @@ import WebViewScreen from '../../components/WebViewScreen';
 export default function DashboardScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <WebViewScreen url="https://eclawbot.com/portal/dashboard.html" />
+      <WebViewScreen url="https://eclawbot.com/portal/dashboard.html?embed=1&view=orgchart" />
     </SafeAreaView>
   );
 }

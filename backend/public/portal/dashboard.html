@@ -1314,6 +1314,19 @@
             color: var(--text-muted);
             font-size: 14px;
         }
+        /* Embedded Org-Chart mode — opened from native app (Android bottom sheet / iOS tab).
+           Query: ?embed=1&view=orgchart. Hides non-org sections so the sheet shows
+           only the tree + 4 mode options + reset, keeping the app's own chrome. */
+        body.embedded-orgchart { padding: 0 !important; margin: 0 !important; }
+        body.embedded-orgchart main,
+        body.embedded-orgchart .container { padding: 12px; max-width: 100%; }
+        body.embedded-orgchart .page-header,
+        body.embedded-orgchart .dash-tabs,
+        body.embedded-orgchart #entityGrid,
+        body.embedded-orgchart #emptyState,
+        body.embedded-orgchart #addEntityCard,
+        body.embedded-orgchart #borrowCard { display: none !important; }
+        body.embedded-orgchart .org-chart-container { display: block !important; }
     </style>
     <link rel="canonical" href="https://eclawbot.com/portal/dashboard.html">
 </head>
@@ -1689,6 +1702,8 @@
 
         // --- Init ---
         window.addEventListener('DOMContentLoaded', async () => {
+            const __embeddedOrg = new URLSearchParams(window.location.search).get('view') === 'orgchart';
+            if (__embeddedOrg) document.body.classList.add('embedded-orgchart');
             renderNav('dashboard');
             if (typeof renderFooter === 'function') renderFooter();
             const user = await checkAuth();
@@ -1697,6 +1712,8 @@
             renderSlotSelector();
 
             await loadEntities();
+
+            if (__embeddedOrg) switchDashTab('orgchart');
 
             // Auto-refresh every 10 seconds
             refreshInterval = setInterval(async () => {

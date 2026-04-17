@@ -29,7 +29,8 @@
     "mission": "Missie",
     "settings": "Instellingen",
     "cards": "Kaarten",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "orgChart": "Organigram"
   },
   "cardHolder": {
     "title": "Kaarthouder",
