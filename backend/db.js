@@ -692,6 +692,8 @@ async function loadAllDevices() {
                 deviceSecret: row.device_secret,
                 createdAt: parseInt(row.created_at),
                 nextEntityId: parseInt(row.next_entity_id) || 1,
+                fcmToken: row.fcm_token || null,
+                apnsToken: row.apns_token || null,
                 entities: {}
             };
         }
