@@ -327,9 +327,9 @@ ALTER TABLE note_pages ADD COLUMN IF NOT EXISTS drawing_snapshot TEXT DEFAULT NU
 -- with legacy UUIDs. These tables have no FK children.
 -- ============================================
 ALTER TABLE mission_notes ALTER COLUMN id DROP DEFAULT;
-ALTER TABLE mission_notes ALTER COLUMN id TYPE VARCHAR(48);
+ALTER TABLE mission_notes ALTER COLUMN id TYPE VARCHAR(48) USING id::text;
 ALTER TABLE mission_notes ALTER COLUMN id SET DEFAULT ('note_' || encode(gen_random_bytes(12), 'hex'));
 ALTER TABLE mission_rules ALTER COLUMN id DROP DEFAULT;
-ALTER TABLE mission_rules ALTER COLUMN id TYPE VARCHAR(48);
+ALTER TABLE mission_rules ALTER COLUMN id TYPE VARCHAR(48) USING id::text;
 ALTER TABLE mission_rules ALTER COLUMN id SET DEFAULT ('rule_' || encode(gen_random_bytes(12), 'hex'));
-ALTER TABLE mission_sync_log ALTER COLUMN item_id TYPE VARCHAR(48);
+ALTER TABLE mission_sync_log ALTER COLUMN item_id TYPE VARCHAR(48) USING item_id::text;

@@ -126,10 +126,10 @@ CREATE TABLE IF NOT EXISTS rental_cooldowns (
 ALTER TABLE bot_reviews DROP CONSTRAINT IF EXISTS fk_review_contract;
 ALTER TABLE bot_reviews DROP CONSTRAINT IF EXISTS fk_review_listing;
 ALTER TABLE disputes DROP CONSTRAINT IF EXISTS fk_dispute_contract;
-ALTER TABLE bot_reviews ALTER COLUMN contract_id TYPE VARCHAR(48);
-ALTER TABLE bot_reviews ALTER COLUMN listing_id TYPE VARCHAR(48);
-ALTER TABLE disputes ALTER COLUMN contract_id TYPE VARCHAR(48);
-ALTER TABLE rental_cooldowns ALTER COLUMN listing_id TYPE VARCHAR(48);
+ALTER TABLE bot_reviews ALTER COLUMN contract_id TYPE VARCHAR(48) USING contract_id::text;
+ALTER TABLE bot_reviews ALTER COLUMN listing_id TYPE VARCHAR(48) USING listing_id::text;
+ALTER TABLE disputes ALTER COLUMN contract_id TYPE VARCHAR(48) USING contract_id::text;
+ALTER TABLE rental_cooldowns ALTER COLUMN listing_id TYPE VARCHAR(48) USING listing_id::text;
 ALTER TABLE bot_reviews ADD CONSTRAINT fk_review_contract FOREIGN KEY (contract_id) REFERENCES rental_contracts(id) ON DELETE CASCADE;
 ALTER TABLE bot_reviews ADD CONSTRAINT fk_review_listing FOREIGN KEY (listing_id) REFERENCES bot_listings(id) ON DELETE CASCADE;
 ALTER TABLE disputes ADD CONSTRAINT fk_dispute_contract FOREIGN KEY (contract_id) REFERENCES rental_contracts(id) ON DELETE CASCADE;
