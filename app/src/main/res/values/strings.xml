@@ -552,6 +552,7 @@ If you have any questions, please contact us via our official email.
     <string name="action_plaza_off">🏗 Bot Plaza: OFF</string>
     <string name="plaza_published">Published to Bot Plaza</string>
     <string name="plaza_unpublished">Removed from Bot Plaza</string>
+    <string name="action_run_interview">🧪 Run Interview</string>
     <string name="action_delete">🗑️ Delete</string>
     <string name="delete_confirm_title">Delete Confirmation</string>
     <string name="delete_confirm_message_format">Are you sure you want to delete "%s"?</string>

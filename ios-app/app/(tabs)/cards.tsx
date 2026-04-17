@@ -616,6 +616,14 @@ export default function CardsScreen() {
                           : t('cardHolder.plazaOff', '\u{1F3D7} Plaza: OFF')}
                       </Text>
                     </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.interviewBtn}
+                      onPress={() => {
+                        Linking.openURL('https://eclawbot.com/portal/card-holder.html').catch(() => {});
+                      }}
+                    >
+                      <Text style={styles.interviewBtnText}>{t('cardHolder.runInterview', '\u{1F9EA} Interview')}</Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
               ))}
@@ -742,6 +750,8 @@ const styles = StyleSheet.create({
   plazaBtnTextOn: { color: '#FFD700', fontSize: 11 },
   plazaBtnOff: { borderWidth: 1, borderColor: '#333355', borderRadius: 4, paddingHorizontal: 10, paddingVertical: 3 },
   plazaBtnTextOff: { color: '#777', fontSize: 11 },
+  interviewBtn: { borderWidth: 1, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.12)', borderRadius: 4, paddingHorizontal: 10, paddingVertical: 3 },
+  interviewBtnText: { color: '#10b981', fontSize: 11 },
   // Recent
   recentItem: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: '#1A1A2E', borderRadius: 12, borderWidth: 1, borderColor: '#333355', marginBottom: 8 },
   timeAgo: { color: '#777', fontSize: 11 },
