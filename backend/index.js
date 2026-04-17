@@ -14329,18 +14329,23 @@ app.post('/api/device/fcm-token', (req, res) => {
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
+    const prevToken = device.fcmToken || device.apnsToken;
+    const prevPrefix = prevToken ? prevToken.slice(0, 12) : 'none';
+    const newPrefix = resolvedToken.slice(0, 12);
+    const changed = prevToken !== resolvedToken;
+
     if (resolvedPlatform === 'apns') {
         // iOS APNs token
         device.apnsToken = resolvedToken;
         chatPool.query('ALTER TABLE devices ADD COLUMN IF NOT EXISTS apns_token TEXT').catch(() => {});
         chatPool.query('UPDATE devices SET apns_token = $1 WHERE device_id = $2', [resolvedToken, deviceId]).catch(() => {});
-        if (process.env.DEBUG === 'true') console.log(`[PUSH] APNs token registered for device ${deviceId}`);
+        console.log(`[PUSH] APNs token registered`, { deviceId, prevPrefix, newPrefix, changed });
     } else {
         // Android FCM token (default)
         device.fcmToken = resolvedToken;
         chatPool.query('ALTER TABLE devices ADD COLUMN IF NOT EXISTS fcm_token TEXT').catch(() => {});
         chatPool.query('UPDATE devices SET fcm_token = $1 WHERE device_id = $2', [resolvedToken, deviceId]).catch(() => {});
-        if (process.env.DEBUG === 'true') console.log(`[PUSH] FCM token registered for device ${deviceId}`);
+        console.log(`[PUSH] FCM token registered`, { deviceId, prevPrefix, newPrefix, changed });
     }
 
     res.json({ success: true, platform: resolvedPlatform });
