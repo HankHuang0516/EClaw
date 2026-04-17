@@ -14361,13 +14361,19 @@ try {
 }
 
 async function sendFcm(deviceId, notif) {
-    if (!firebaseAdmin) return;
+    if (!firebaseAdmin) {
+        console.log('[FCM] skip: firebaseAdmin not initialized', { deviceId });
+        return;
+    }
+    const device = devices[deviceId];
+    const token = device?.fcmToken;
+    if (!token) {
+        console.log('[FCM] skip: no fcmToken for device', { deviceId, deviceExists: !!device, category: notif?.category });
+        return;
+    }
+    const tokenPrefix = token.slice(0, 12);
     try {
-        const device = devices[deviceId];
-        const token = device?.fcmToken;
-        if (!token) return;
-
-        await firebaseAdmin.messaging().send({
+        const resp = await firebaseAdmin.messaging().send({
             token,
             data: {
                 title: notif.title || '',
@@ -14383,12 +14389,13 @@ async function sendFcm(deviceId, notif) {
                 }
             }
         });
+        console.log('[FCM] sent OK', { deviceId, tokenPrefix, category: notif?.category, messageId: resp });
     } catch (e) {
         if (e.code === 'messaging/registration-token-not-registered') {
             delete devices[deviceId]?.fcmToken;
             chatPool.query('UPDATE devices SET fcm_token = NULL WHERE device_id = $1', [deviceId]).catch(() => {});
         }
-        console.warn('[FCM] Send failed:', e.message);
+        console.warn('[FCM] Send failed:', { deviceId, tokenPrefix, code: e.code, message: e.message });
     }
 }
 
