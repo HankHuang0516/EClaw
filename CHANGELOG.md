@@ -1,3 +1,10 @@
+# [1.998.0](https://github.com/HankHuang0516/EClaw/compare/v1.997.0...v1.998.0) (2026-04-17)
+
+
+### Features
+
+* **card-holder:** add Bot Plaza publish toggle on MyCard (Android + iOS) ([#1827](https://github.com/HankHuang0516/EClaw/issues/1827)) ([0d6b50b](https://github.com/HankHuang0516/EClaw/commit/0d6b50bb1bc61b1ee33dd2436abe3c55e3d218b1))
+
 # [1.997.0](https://github.com/HankHuang0516/EClaw/compare/v1.996.0...v1.997.0) (2026-04-17)
 
 
