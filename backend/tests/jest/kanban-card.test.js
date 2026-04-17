@@ -188,7 +188,7 @@ describe('POST /card — inline automation + schedule', () => {
         expect(res.status).toBe(200);
         // finalAutomation should be true due to recurring schedule
         const insertParams = mockQuery.mock.calls[0][1];
-        expect(insertParams[8]).toBe(true); // finalAutomation param
+        expect(insertParams[9]).toBe(true); // finalAutomation param (index shifted by +1 after adding id as $1)
     });
 
     it('rejects recurring schedule with missing cron', async () => {
