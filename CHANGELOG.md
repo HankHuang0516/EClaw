@@ -1,3 +1,11 @@
+## [1.994.5](https://github.com/HankHuang0516/EClaw/compare/v1.994.4...v1.994.5) (2026-04-17)
+
+
+### Bug Fixes
+
+* **dashboard:** harden orgchart embed lock (DOM remove + UA + guard) ([#1822](https://github.com/HankHuang0516/EClaw/issues/1822)) ([e30ecf0](https://github.com/HankHuang0516/EClaw/commit/e30ecf09afcccd8becdca3741f0ccfa96505bd07)), closes [#1819](https://github.com/HankHuang0516/EClaw/issues/1819) [#dashTabs](https://github.com/HankHuang0516/EClaw/issues/dashTabs)
+* **ui:** replace dashboard grid icon with org-chart tree icon ([#1821](https://github.com/HankHuang0516/EClaw/issues/1821)) ([e19c5af](https://github.com/HankHuang0516/EClaw/commit/e19c5af0b5ab473251b1bdc3c2b4bf0de3160cc9))
+
 ## [1.994.4](https://github.com/HankHuang0516/EClaw/compare/v1.994.3...v1.994.4) (2026-04-17)
 
 
