@@ -545,6 +545,9 @@ If you have any questions, please contact us via our official email.
     <string name="action_move_to_mission">➡️ Move to Mission</string>
     <string name="action_mark_done">✅ Mark Done</string>
     <string name="action_edit">✏️ Edit</string>
+    <string name="action_start_chat">💬 Start Chat</string>
+    <string name="action_share_link">🔗 Share</string>
+    <string name="card_share_copied">Share link copied</string>
     <string name="action_delete">🗑️ Delete</string>
     <string name="delete_confirm_title">Delete Confirmation</string>
     <string name="delete_confirm_message_format">Are you sure you want to delete "%s"?</string>

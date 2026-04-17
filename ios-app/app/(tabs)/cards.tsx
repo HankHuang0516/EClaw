@@ -11,6 +11,7 @@ import {
   ScrollView,
   RefreshControl,
   Clipboard,
+  Linking,
 } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -570,6 +571,21 @@ export default function CardsScreen() {
                     >
                       <Text style={styles.editBtnText}>{t('common.edit', 'Edit')}</Text>
                     </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.chatBtn}
+                      onPress={() => Linking.openURL(`https://eclawbot.com/c/${c.publicCode}`)}
+                    >
+                      <Text style={styles.chatBtnText}>{t('cardHolder.startChat', '\u{1F4AC} Chat')}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.shareBtn}
+                      onPress={() => {
+                        Clipboard.setString(`https://eclawbot.com/c/${c.publicCode}`);
+                        Alert.alert('', t('cardHolder.shareCopied', 'Share link copied'));
+                      }}
+                    >
+                      <Text style={styles.shareBtnText}>{t('cardHolder.share', '\u{1F517} Share')}</Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
               ))}
@@ -683,11 +699,15 @@ const styles = StyleSheet.create({
   myCardItem: { backgroundColor: '#1A1A2E', borderRadius: 12, borderWidth: 1, borderColor: '#333355', padding: 16, alignItems: 'center', width: 160 },
   myCardAvatar: { fontSize: 36, marginBottom: 6 },
   myCardName: { color: '#fff', fontSize: 14, fontWeight: '600', textAlign: 'center' },
-  myCardActions: { flexDirection: 'row', gap: 6, marginTop: 6 },
+  myCardActions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginTop: 6 },
   copyBtn: { borderWidth: 1, borderColor: '#333355', borderRadius: 4, paddingHorizontal: 10, paddingVertical: 3 },
   copyBtnText: { color: '#777', fontSize: 11 },
   editBtn: { borderWidth: 1, borderColor: '#6C63FF', borderRadius: 4, paddingHorizontal: 10, paddingVertical: 3 },
   editBtnText: { color: '#6C63FF', fontSize: 11 },
+  chatBtn: { borderWidth: 1, borderColor: '#10b981', borderRadius: 4, paddingHorizontal: 10, paddingVertical: 3 },
+  chatBtnText: { color: '#10b981', fontSize: 11 },
+  shareBtn: { borderWidth: 1, borderColor: '#333355', borderRadius: 4, paddingHorizontal: 10, paddingVertical: 3 },
+  shareBtnText: { color: '#aaa', fontSize: 11 },
   // Recent
   recentItem: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: '#1A1A2E', borderRadius: 12, borderWidth: 1, borderColor: '#333355', marginBottom: 8 },
   timeAgo: { color: '#777', fontSize: 11 },
