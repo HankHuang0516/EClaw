@@ -1,3 +1,10 @@
+## [1.991.2](https://github.com/HankHuang0516/EClaw/compare/v1.991.1...v1.991.2) (2026-04-17)
+
+
+### Bug Fixes
+
+* **chat:** render Card/Skill/Rule/Listing/Exam/Contract chips when ID is wrapped in backticks ([#1803](https://github.com/HankHuang0516/EClaw/issues/1803)) ([df9c1fd](https://github.com/HankHuang0516/EClaw/commit/df9c1fd2e8fbdcfdebd59dbda24be8f1f606d4a1)), closes [#1799](https://github.com/HankHuang0516/EClaw/issues/1799)
+
 ## [1.991.1](https://github.com/HankHuang0516/EClaw/compare/v1.991.0...v1.991.1) (2026-04-17)
 
 
