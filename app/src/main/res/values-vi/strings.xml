@@ -477,6 +477,9 @@ Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua
     <string name="mission_choose_from_template">Chọn từ mẫu</string>
     <string name="mission_completed_at">✓ %s</string>
     <string name="mission_control">Trung tâm nhiệm vụ</string>
+    <string name="dashboard_entry_title">Bảng điều khiển đầy đủ</string>
+    <string name="dashboard_entry_subtitle">có sơ đồ tổ chức</string>
+    <string name="dashboard_entry_content_description">Mở bảng điều khiển đầy đủ</string>
     <string name="mission_no_skills">No skills</string>
     <string name="mission_no_variables">No variables</string>
     <string name="mission_rule_gallery_title">Mẫu quy tắc</string>

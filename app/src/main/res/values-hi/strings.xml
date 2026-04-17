@@ -164,6 +164,9 @@
 
     <!-- Mission Control -->
     <string name="mission_control">मिशन कंट्रोल</string>
+    <string name="dashboard_entry_title">पूर्ण डैशबोर्ड</string>
+    <string name="dashboard_entry_subtitle">ऑर्ग चार्ट के साथ</string>
+    <string name="dashboard_entry_content_description">पूर्ण डैशबोर्ड खोलें</string>
     <string name="tab_mission_center">मिशन सेंटर</string>
     <string name="tab_kanban">कानबान</string>
     <string name="kanban_add_deprecated">कृपया नए आइटम जोड़ने के लिए कानबान बोर्ड का उपयोग करें। कानबान बोर्ड में पूर्ण इकोसिस्टम है — बॉट को मौजूदा आइटम धीरे-धीरे माइग्रेट करने दें।</string>

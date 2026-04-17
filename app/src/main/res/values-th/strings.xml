@@ -477,6 +477,9 @@ GPS：รับตามความต้องการเท่านั้�
     <string name="mission_choose_from_template">เลือกจากเทมเพลต</string>
     <string name="mission_completed_at">✓ %s</string>
     <string name="mission_control">ศูนย์ภารกิจ</string>
+    <string name="dashboard_entry_title">แดชบอร์ดแบบเต็ม</string>
+    <string name="dashboard_entry_subtitle">พร้อมแผนผังองค์กร</string>
+    <string name="dashboard_entry_content_description">เปิดแดชบอร์ดแบบเต็ม</string>
     <string name="mission_no_skills">No skills</string>
     <string name="mission_no_variables">No variables</string>
     <string name="mission_rule_gallery_title">เทมเพลตกฎ</string>

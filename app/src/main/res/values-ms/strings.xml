@@ -164,6 +164,9 @@
 
     <!-- Mission Control -->
     <string name="mission_control">Pusat Misi</string>
+    <string name="dashboard_entry_title">Papan Pemuka Penuh</string>
+    <string name="dashboard_entry_subtitle">dengan Carta Organisasi</string>
+    <string name="dashboard_entry_content_description">Buka papan pemuka penuh</string>
     <string name="tab_mission_center">Pusat Misi</string>
     <string name="tab_kanban">Kanban</string>
     <string name="kanban_add_deprecated">Sila gunakan papan Kanban untuk menambah item baharu. Papan Kanban mempunyai ekosistem lengkap — biarkan bot memindahkan item sedia ada secara beransur-ansur.</string>
