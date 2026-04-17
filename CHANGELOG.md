@@ -1,3 +1,10 @@
+# [1.993.0](https://github.com/HankHuang0516/EClaw/compare/v1.992.4...v1.993.0) (2026-04-17)
+
+
+### Features
+
+* **linkify:** recognize CJK keywords for entity/note chips ([#1811](https://github.com/HankHuang0516/EClaw/issues/1811)) ([88c7a71](https://github.com/HankHuang0516/EClaw/commit/88c7a714669158756bf97e518ccde26abc584081))
+
 ## [1.992.4](https://github.com/HankHuang0516/EClaw/compare/v1.992.3...v1.992.4) (2026-04-17)
 
 
