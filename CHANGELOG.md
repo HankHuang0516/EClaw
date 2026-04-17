@@ -1,3 +1,10 @@
+## [1.990.3](https://github.com/HankHuang0516/EClaw/compare/v1.990.2...v1.990.3) (2026-04-17)
+
+
+### Bug Fixes
+
+* **chat:** render note modal content as Markdown when html_content has no tags ([#1800](https://github.com/HankHuang0516/EClaw/issues/1800)) ([b3196b6](https://github.com/HankHuang0516/EClaw/commit/b3196b6fa7214e7a97881bbbb71534ee7690c14c))
+
 ## [1.990.2](https://github.com/HankHuang0516/EClaw/compare/v1.990.1...v1.990.2) (2026-04-17)
 
 
