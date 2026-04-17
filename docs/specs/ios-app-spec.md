@@ -47,6 +47,7 @@ ios-app/
 │   ├── (tabs)/                   # Tab Bar 五大主頁
 │   │   ├── _layout.tsx           # Tab Bar 配置（height:83, paddingBottom:34）
 │   │   ├── index.tsx             # 🏠 首頁（Entity 列表 + 管理，對齊 Android MainActivity）
+│   │   ├── dashboard.tsx         # 📊 儀表板（WebView dashboard.html，Entity grid + Org Chart）
 │   │   ├── chat.tsx              # 💬 聊天（WebView chat.html，對齊 Android ChatActivity）
 │   │   ├── mission.tsx           # 📋 Mission Control（WebView mission.html）
 │   │   ├── cards.tsx             # 🎴 Card Holder（名片夾）
