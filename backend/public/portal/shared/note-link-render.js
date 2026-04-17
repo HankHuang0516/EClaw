@@ -23,6 +23,12 @@
     // Matches: "Note a51136e1", "note:a51136e1", "Note: a51136e1"
     const SHORT_NOTE_RE = /\b(note)\s*[:：]?\s*([0-9a-f]{8})\b/gi;
 
+    // Markdown renders `backtick-wrapped` IDs as <code>ID</code>, and the code-segment
+    // skip in renderNoteLinks() hides them from the patterns above. Match "note <code>ID</code>"
+    // explicitly before the split.
+    const CODE_UUID_NOTE_RE = /\b(note)\s*[:：]?\s*<code[^>]*>\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\s*<\/code>/gi;
+    const CODE_SHORT_NOTE_RE = /\b(note)\s*[:：]?\s*<code[^>]*>\s*([0-9a-f]{8})\s*<\/code>/gi;
+
     // Cache: short prefix → full noteId (populated on successful API fetches)
     const resolvedIds = {};
 
@@ -34,6 +40,18 @@
      */
     function renderNoteLinks(escapedHtml) {
         if (!escapedHtml) return escapedHtml;
+
+        // Phase 0: "note <code>fullUUID</code>" → chip placeholder (consumes the <code> wrapper)
+        escapedHtml = escapedHtml.replace(CODE_UUID_NOTE_RE, (match, noteWord, uuid) => {
+            const short = uuid.substring(0, 8);
+            resolvedIds[short] = uuid;
+            return queueChip(uuid, short);
+        });
+        // Phase 0b: "note <code>shortId</code>" → chip placeholder
+        escapedHtml = escapedHtml.replace(CODE_SHORT_NOTE_RE, (match, noteWord, shortId) => {
+            const fullId = resolvedIds[shortId] || shortId;
+            return queueChip(fullId, shortId);
+        });
 
         // Split HTML into code/non-code segments to avoid transforming inside <code>/<pre>
         const parts = escapedHtml.split(/(<code[\s>][\s\S]*?<\/code>|<pre[\s>][\s\S]*?<\/pre>)/gi);
