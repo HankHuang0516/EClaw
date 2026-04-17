@@ -1,3 +1,10 @@
+# [1.992.0](https://github.com/HankHuang0516/EClaw/compare/v1.991.2...v1.992.0) (2026-04-17)
+
+
+### Features
+
+* **chat:** group consecutive photos into a single grid bubble (LINE/WhatsApp style) ([#1804](https://github.com/HankHuang0516/EClaw/issues/1804)) ([fd4a26b](https://github.com/HankHuang0516/EClaw/commit/fd4a26b901becd54e492b12f8f9621a46461a879))
+
 ## [1.991.2](https://github.com/HankHuang0516/EClaw/compare/v1.991.1...v1.991.2) (2026-04-17)
 
 
