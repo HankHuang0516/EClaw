@@ -314,9 +314,14 @@ class CardHolderActivity : AppCompatActivity() {
             webViewClient = object : WebViewClient() {
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val url = request?.url?.toString() ?: return false
-                    // Keep community.html navigation inside the WebView
-                    if (url.contains("eclawbot.com")) return false
-                    // Open external links in browser
+                    if (url.contains("eclawbot.com")) {
+                        if (url.contains("/portal/dashboard.html") && !url.contains("view=orgchart")) {
+                            val separator = if (url.contains("?")) "&" else "?"
+                            view?.loadUrl("$url${separator}embed=1&view=orgchart")
+                            return true
+                        }
+                        return false
+                    }
                     try {
                         startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(url)))
                     } catch (e: Exception) {
