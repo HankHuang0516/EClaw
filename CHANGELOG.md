@@ -1,3 +1,10 @@
+# [1.994.0](https://github.com/HankHuang0516/EClaw/compare/v1.993.0...v1.994.0) (2026-04-17)
+
+
+### Features
+
+* Stripe-style prefixed entity IDs (card_xxx / note_xxx / ...) ([#1812](https://github.com/HankHuang0516/EClaw/issues/1812)) ([78d3b62](https://github.com/HankHuang0516/EClaw/commit/78d3b62c00b772781b90f434c22297ff074ec461))
+
 # [1.993.0](https://github.com/HankHuang0516/EClaw/compare/v1.992.4...v1.993.0) (2026-04-17)
 
 
