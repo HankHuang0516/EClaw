@@ -917,6 +917,52 @@
 
         .chat-photo:hover { opacity: 0.9; }
 
+        /* Multi-image grid bubble (WhatsApp/LINE/Telegram style).
+           Caps bubble at ~280px so 3~9 images never stretch the chat feed vertically. */
+        .chat-photo-grid {
+            display: grid;
+            gap: 2px;
+            margin-top: 6px;
+            border-radius: 8px;
+            overflow: hidden;
+            max-width: 280px;
+        }
+        .chat-photo-grid.count-2 { grid-template-columns: 1fr 1fr; }
+        .chat-photo-grid.count-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .chat-photo-grid.count-4 { grid-template-columns: 1fr 1fr; }
+        .chat-photo-grid.count-5,
+        .chat-photo-grid.count-6,
+        .chat-photo-grid.count-7,
+        .chat-photo-grid.count-8,
+        .chat-photo-grid.count-9 { grid-template-columns: 1fr 1fr 1fr; }
+        .chat-photo-grid-cell {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            background: rgba(0,0,0,0.05);
+            cursor: pointer;
+        }
+        .chat-photo-grid-cell img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .chat-photo-grid-cell:hover img { opacity: 0.9; }
+        .chat-photo-grid-more {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 600;
+            pointer-events: none;
+        }
+
         .chat-inline-img {
             max-width: 280px;
             max-height: 240px;
@@ -3361,6 +3407,51 @@
             return grouped;
         }
 
+        // Consecutive photo messages from the same sender within 60s are rendered
+        // as ONE grid bubble (LINE/WhatsApp style) so multi-image uploads don't
+        // stretch the feed vertically. The LAST message in the run keeps its
+        // metadata (timestamp / reactions / receipt); earlier ones are skipped.
+        // Only pure photo messages (no meaningful text) are grouped — if the user
+        // wrote a caption, it stays with its own photo so context isn't lost.
+        function groupPhotoRuns(messages) {
+            const PHOTO_RUN_WINDOW_MS = 60 * 1000;
+            const isGroupablePhoto = (m) => (
+                m && m.media_type === 'photo' && m.media_url
+                && (!m.text || m.text === '[Photo]' || m.text === '[照片]')
+            );
+            const senderSig = (m) => {
+                if (m.is_from_user) return 'u:' + (m._groupedEntityIds ? m._groupedEntityIds.slice().sort().join(',') : (m.entity_id ?? ''));
+                if (m.is_from_bot) return 'b:' + (m.entity_id ?? '') + ':' + (m.source || '');
+                return 'o:' + (m.source || '') + ':' + (m.entity_id ?? '');
+            };
+
+            for (let i = 0; i < messages.length; i++) {
+                if (!isGroupablePhoto(messages[i])) continue;
+
+                // Collect a run starting at i
+                const run = [messages[i]];
+                const sig = senderSig(messages[i]);
+                let lastTs = new Date(messages[i].created_at).getTime();
+                let j = i + 1;
+                while (j < messages.length && isGroupablePhoto(messages[j]) && senderSig(messages[j]) === sig) {
+                    const ts = new Date(messages[j].created_at).getTime();
+                    if (ts - lastTs > PHOTO_RUN_WINDOW_MS) break;
+                    run.push(messages[j]);
+                    lastTs = ts;
+                    j++;
+                }
+
+                if (run.length >= 2) {
+                    const urls = run.map(m => m.media_url);
+                    // Mark all but the last as skipped; attach grid to the last.
+                    for (let k = 0; k < run.length - 1; k++) run[k]._photoGroupSkip = true;
+                    run[run.length - 1]._photoGroupUrls = urls;
+                }
+                i = j - 1; // skip past the run
+            }
+            return messages;
+        }
+
         // ── Cross-Device Code Resolution ──
         function getXDeviceLabel(code) {
             if (myPublicCodeMap[code]) return myPublicCodeMap[code].label;
@@ -3438,7 +3529,7 @@
                 return;
             }
 
-            const displayMessages = groupBroadcastMessages(filtered);
+            const displayMessages = groupPhotoRuns(groupBroadcastMessages(filtered));
 
             // Helper: get sender key for grouping
             function senderKey(m) {
@@ -3472,7 +3563,14 @@
             }
 
             container.innerHTML = displayMessages.map((msg, idx) => {
-                const prev = idx > 0 ? displayMessages[idx - 1] : null;
+                // Skip earlier messages in a photo run — the last one renders the grid.
+                if (msg._photoGroupSkip) return '';
+                // Walk back over skipped photo-run entries so date separators
+                // and isGrouped detection compare against the previous *rendered* message.
+                let prev = null;
+                for (let p = idx - 1; p >= 0; p--) {
+                    if (!displayMessages[p]._photoGroupSkip) { prev = displayMessages[p]; break; }
+                }
                 const currTime = new Date(msg.created_at).getTime();
                 const prevTime = prev ? new Date(prev.created_at).getTime() : 0;
                 const gap = currTime - prevTime;
@@ -3496,7 +3594,21 @@
 
                 // Build media content
                 let mediaHtml = '';
-                if (msg.media_type === 'photo' && msg.media_url) {
+                if (Array.isArray(msg._photoGroupUrls) && msg._photoGroupUrls.length >= 2) {
+                    // Multi-image grid bubble
+                    const urls = msg._photoGroupUrls;
+                    const visibleCount = Math.min(urls.length, 9);
+                    const overflow = urls.length - visibleCount;
+                    const cells = urls.slice(0, visibleCount).map((url, i) => {
+                        const showMore = overflow > 0 && i === visibleCount - 1;
+                        const moreOverlay = showMore ? `<div class="chat-photo-grid-more">+${overflow}</div>` : '';
+                        return `<div class="chat-photo-grid-cell" onclick="openLightbox('${escapeHtml(url)}')">`
+                            + `<img class="chat-photo" src="${escapeHtml(url)}" alt="Photo" loading="lazy" onerror="this.style.display='none'">`
+                            + moreOverlay
+                            + `</div>`;
+                    }).join('');
+                    mediaHtml = `<div class="chat-photo-grid count-${visibleCount}">${cells}</div>`;
+                } else if (msg.media_type === 'photo' && msg.media_url) {
                     const backupSrc = msg.backup_url ? escapeHtml(msg.backup_url) : '';
                     const onerrorFallback = backupSrc
                         ? `onerror="if(!this.dataset.retried){this.dataset.retried='1';this.src='${backupSrc}'}else{this.style.display='none'}"`
