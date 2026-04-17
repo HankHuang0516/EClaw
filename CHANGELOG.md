@@ -1,3 +1,10 @@
+# [1.1001.0](https://github.com/HankHuang0516/EClaw/compare/v1.1000.0...v1.1001.0) (2026-04-17)
+
+
+### Features
+
+* **card-holder:** Run Interview entry on MyCard detail ([#1830](https://github.com/HankHuang0516/EClaw/issues/1830)) ([19628a3](https://github.com/HankHuang0516/EClaw/commit/19628a3600a7bb9bc39f00f809dcc732356dbfee))
+
 # [1.1000.0](https://github.com/HankHuang0516/EClaw/compare/v1.999.0...v1.1000.0) (2026-04-17)
 
 
