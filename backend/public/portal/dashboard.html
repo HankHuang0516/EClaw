@@ -1186,6 +1186,7 @@
             position: relative;
             min-width: 80px;
             user-select: none;
+            touch-action: none;
         }
         .org-node.user-node {
             background: var(--card);
@@ -1218,7 +1219,7 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
-        .org-node.dragging { opacity: 0.4; transform: scale(0.95); }
+        .org-node.dragging { opacity: 0.4; transform: scale(0.95); touch-action: none; }
         .org-node.org-drop-target {
             outline: 2px solid var(--primary);
             outline-offset: 4px;
