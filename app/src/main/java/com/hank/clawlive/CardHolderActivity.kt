@@ -1333,8 +1333,44 @@ class CardHolderActivity : AppCompatActivity() {
                 text = card.publicCode
                 textSize = 12f
                 setTextColor(Color.parseColor("#6C63FF"))
-                setPadding(0, 0, 0, dp(12))
+                setPadding(0, 0, 0, dp(8))
             })
+
+            val shareUrl = "https://eclawbot.com/c/${card.publicCode}"
+            val actionRow = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                setPadding(0, 0, 0, dp(12))
+            }
+            fun actionChip(label: String, onClick: () -> Unit): TextView = TextView(this).apply {
+                text = label
+                textSize = 12f
+                setTextColor(Color.parseColor("#6C63FF"))
+                background = GradientDrawable().apply {
+                    setColor(Color.parseColor("#1a1a3f"))
+                    cornerRadius = dp(6).toFloat()
+                }
+                setPadding(dp(12), dp(6), dp(12), dp(6))
+                val lp = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                lp.marginEnd = dp(8)
+                layoutParams = lp
+                setOnClickListener { onClick() }
+            }
+            actionRow.addView(actionChip(getString(R.string.action_start_chat)) {
+                try {
+                    startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(shareUrl)))
+                } catch (e: Exception) {
+                    Toast.makeText(this@CardHolderActivity, e.message ?: "", Toast.LENGTH_SHORT).show()
+                }
+            })
+            actionRow.addView(actionChip(getString(R.string.action_share_link)) {
+                val clip = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                clip.setPrimaryClip(ClipData.newPlainText("shareUrl", shareUrl))
+                Toast.makeText(this@CardHolderActivity, R.string.card_share_copied, Toast.LENGTH_SHORT).show()
+            })
+            layout.addView(actionRow)
         }
         if (!card.description.isNullOrEmpty()) {
             addDialogSection(layout, getString(R.string.card_holder_description), card.description)
