@@ -1,3 +1,10 @@
+## [1.994.2](https://github.com/HankHuang0516/EClaw/compare/v1.994.1...v1.994.2) (2026-04-17)
+
+
+### Bug Fixes
+
+* **kanban:** generate card id app-side (unblock prod) ([#1814](https://github.com/HankHuang0516/EClaw/issues/1814)) ([245bb75](https://github.com/HankHuang0516/EClaw/commit/245bb752175550580964d38b82db24f8322d3119)), closes [1812/#1813](https://github.com/HankHuang0516/EClaw/issues/1813)
+
 ## [1.994.1](https://github.com/HankHuang0516/EClaw/compare/v1.994.0...v1.994.1) (2026-04-17)
 
 
