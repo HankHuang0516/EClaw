@@ -1,3 +1,10 @@
+# [1.991.0](https://github.com/HankHuang0516/EClaw/compare/v1.990.3...v1.991.0) (2026-04-17)
+
+
+### Features
+
+* **chat:** user-adjustable chat density (compact / normal / comfortable) ([#1801](https://github.com/HankHuang0516/EClaw/issues/1801)) ([cf6d374](https://github.com/HankHuang0516/EClaw/commit/cf6d374790b9858e15a9efaf1bcbf2273d5272a6))
+
 ## [1.990.3](https://github.com/HankHuang0516/EClaw/compare/v1.990.2...v1.990.3) (2026-04-17)
 
 
