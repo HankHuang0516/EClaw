@@ -78,7 +78,7 @@
     "version": "Phiên bản"
   },
   "home": {
-    "title": "E-Claw",
+    "title": "EClawbot",
     "no_entities": "Chưa có thực thể nào được liên kết",
     "no_entities_desc": "Nhấn + để tạo mã liên kết và kết nối thực thể đầu tiên",
     "generate_binding_code": "Tạo mã liên kết",
@@ -100,7 +100,10 @@
     "entity_idle": "Nhàn rỗi",
     "unbind_title": "Hủy liên kết",
     "unbind_message": "Bạn có chắc muốn hủy liên kết {{name}}?",
-    "unbind_success": "Đã hủy liên kết thực thể"
+    "unbind_success": "Đã hủy liên kết thực thể",
+    "edit_mode": "Sửa",
+    "edit_mode_on": "Xong",
+    "org_chart": "Sơ đồ tổ chức"
   },
   "chat": {
     "title": "Trò chuyện",

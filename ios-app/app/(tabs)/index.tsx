@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import {
   View,
   FlatList,
@@ -27,7 +27,7 @@ import {
 } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
 import { useEntities } from '../../hooks/useEntities';
@@ -47,6 +47,7 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
   const router = useRouter();
+  const navigation = useNavigation();
   const { entities, isLoading, refetch } = useEntities();
   const { bindingCodes, setBindingCode, clearBindingCode, removeEntity, updateEntity } = useEntityStore();
   const { deviceId } = useAuthStore();
@@ -57,6 +58,7 @@ export default function HomeScreen() {
   const [snackMessage, setSnackMessage] = useState('');
   const [snackVisible, setSnackVisible] = useState(false);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Add Entity section — collapsible (match Android)
   const [addEntityExpanded, setAddEntityExpanded] = useState(false);
@@ -71,6 +73,30 @@ export default function HomeScreen() {
   // Agent Card dialog
   const [agentCardVisible, setAgentCardVisible] = useState(false);
   const [agentCardEntity, setAgentCardEntity] = useState<Entity | null>(null);
+
+  // Header: title "EClawbot" + [Org Chart] [Edit] buttons (match Android activity_main.xml topBar)
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: t('home.title'),
+      headerRight: () => (
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <IconButton
+            icon="sitemap-outline"
+            size={22}
+            onPress={() => router.push('/org-chart')}
+            accessibilityLabel={t('home.org_chart')}
+          />
+          <IconButton
+            icon={isEditMode ? 'pencil' : 'pencil-outline'}
+            iconColor={isEditMode ? theme.colors.primary : undefined}
+            size={22}
+            onPress={() => setIsEditMode((v) => !v)}
+            accessibilityLabel={t('home.edit_mode')}
+          />
+        </View>
+      ),
+    });
+  }, [navigation, t, router, isEditMode, theme.colors.primary]);
 
   // Auto-expand add section when no entities
   useEffect(() => {
@@ -277,9 +303,11 @@ export default function HomeScreen() {
           renderItem={({ item }) => (
             <EntityCard
               entity={item}
+              editMode={isEditMode}
               onLongPress={() => handleEntityLongPress(item)}
               onAvatarPress={() => handleAvatarPress(item)}
               onNamePress={() => handleNamePress(item)}
+              onRemovePress={() => handleDelete(item)}
             />
           )}
           refreshControl={

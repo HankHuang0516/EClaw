@@ -70,6 +70,7 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: true }}>
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="org-chart" options={{ presentation: 'modal' }} />
             <Stack.Screen name="file-manager" options={{ presentation: 'card' }} />
             <Stack.Screen name="ai-chat" options={{ presentation: 'card' }} />
             <Stack.Screen name="official-borrow" options={{ presentation: 'card' }} />

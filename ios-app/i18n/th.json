@@ -78,7 +78,7 @@
     "version": "เวอร์ชัน"
   },
   "home": {
-    "title": "E-Claw",
+    "title": "EClawbot",
     "no_entities": "ยังไม่มีเอนทิตีที่ผูก",
     "no_entities_desc": "แตะ + เพื่อสร้างรหัสผูก และเชื่อมต่อเอนทิตีแรกของคุณ",
     "generate_binding_code": "สร้างรหัสผูก",
@@ -100,7 +100,10 @@
     "entity_idle": "ไม่ได้ใช้งาน",
     "unbind_title": "ยกเลิกการผูก",
     "unbind_message": "ยืนยันยกเลิกการผูก {{name}}?",
-    "unbind_success": "ยกเลิกการผูกเอนทิตีแล้ว"
+    "unbind_success": "ยกเลิกการผูกเอนทิตีแล้ว",
+    "edit_mode": "แก้ไข",
+    "edit_mode_on": "เสร็จ",
+    "org_chart": "แผนผังองค์กร"
   },
   "chat": {
     "title": "แชท",

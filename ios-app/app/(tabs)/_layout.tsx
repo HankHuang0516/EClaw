@@ -48,17 +48,9 @@ export default function TabLayout() {
         name="index"
         options={{
           title: t('tabs.home'),
+          headerTitle: t('home.title'),
           tabBarIcon: ({ focused }) => (
             <TabIcon name={focused ? 'home' : 'home-outline'} focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="dashboard"
-        options={{
-          title: t('tabs.orgChart'),
-          tabBarIcon: ({ focused }) => (
-            <TabIcon name={focused ? 'sitemap' : 'sitemap-outline'} focused={focused} />
           ),
         }}
       />

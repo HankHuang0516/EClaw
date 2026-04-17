@@ -78,7 +78,10 @@
     "version": "Version"
   },
   "home": {
-    "title": "E-Claw",
+    "title": "EClawbot",
+    "edit_mode": "Edit",
+    "edit_mode_on": "Done",
+    "org_chart": "Org Chart",
     "no_entities": "No entities bound yet",
     "no_entities_desc": "Tap + to generate a binding code and connect your first entity",
     "generate_binding_code": "Generate Binding Code",
