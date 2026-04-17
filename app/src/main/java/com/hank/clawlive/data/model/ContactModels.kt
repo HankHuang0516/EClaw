@@ -75,7 +75,8 @@ data class MyCardEntry(
     val description: String? = null,
     val contactEmail: String? = null,
     val website: String? = null,
-    val agentCard: AgentCard? = null
+    val agentCard: AgentCard? = null,
+    val isPublic: Boolean = false
 )
 
 data class MyCardsResponse(

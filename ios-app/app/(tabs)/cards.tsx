@@ -54,6 +54,7 @@ interface MyCard {
   entityId: number;
   name?: string;
   avatar?: string;
+  isPublic?: boolean;
 }
 
 interface ChatMessage {
@@ -271,6 +272,25 @@ export default function CardsScreen() {
         },
       ]
     );
+  };
+
+  const togglePlaza = async (card: MyCard) => {
+    const newValue = !card.isPublic;
+    try {
+      const resp = await contactsApi.publishPlaza(card.entityId, newValue);
+      if (resp.data?.success) {
+        setMyCards(prev => prev.map(c =>
+          c.publicCode === card.publicCode ? { ...c, isPublic: newValue } : c
+        ));
+        Alert.alert('', newValue
+          ? t('cardHolder.plazaPublished', 'Published to Bot Plaza')
+          : t('cardHolder.plazaUnpublished', 'Removed from Bot Plaza'));
+      } else {
+        Alert.alert('Error', resp.data?.error || 'Failed');
+      }
+    } catch (e: any) {
+      Alert.alert('Error', e.response?.data?.error || e.message);
+    }
   };
 
   const showAddDialog = () => {
@@ -586,6 +606,16 @@ export default function CardsScreen() {
                     >
                       <Text style={styles.shareBtnText}>{t('cardHolder.share', '\u{1F517} Share')}</Text>
                     </TouchableOpacity>
+                    <TouchableOpacity
+                      style={c.isPublic ? styles.plazaBtnOn : styles.plazaBtnOff}
+                      onPress={() => togglePlaza(c)}
+                    >
+                      <Text style={c.isPublic ? styles.plazaBtnTextOn : styles.plazaBtnTextOff}>
+                        {c.isPublic
+                          ? t('cardHolder.plazaOn', '\u{1F3D7} Plaza: ON')
+                          : t('cardHolder.plazaOff', '\u{1F3D7} Plaza: OFF')}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
               ))}
@@ -708,6 +738,10 @@ const styles = StyleSheet.create({
   chatBtnText: { color: '#10b981', fontSize: 11 },
   shareBtn: { borderWidth: 1, borderColor: '#333355', borderRadius: 4, paddingHorizontal: 10, paddingVertical: 3 },
   shareBtnText: { color: '#aaa', fontSize: 11 },
+  plazaBtnOn: { borderWidth: 1, borderColor: '#FFD700', backgroundColor: 'rgba(255,215,0,0.15)', borderRadius: 4, paddingHorizontal: 10, paddingVertical: 3 },
+  plazaBtnTextOn: { color: '#FFD700', fontSize: 11 },
+  plazaBtnOff: { borderWidth: 1, borderColor: '#333355', borderRadius: 4, paddingHorizontal: 10, paddingVertical: 3 },
+  plazaBtnTextOff: { color: '#777', fontSize: 11 },
   // Recent
   recentItem: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: '#1A1A2E', borderRadius: 12, borderWidth: 1, borderColor: '#333355', marginBottom: 8 },
   timeAgo: { color: '#777', fontSize: 11 },

@@ -221,6 +221,9 @@ interface ClawApiService {
     @GET("api/contacts/my-cards")
     suspend fun getMyCards(@Query("deviceId") deviceId: String, @Query("deviceSecret") deviceSecret: String): MyCardsResponse
 
+    @POST("api/community/publish")
+    suspend fun publishToPlaza(@Body body: Map<String, @JvmSuppressWildcards Any>): ApiResponse
+
     @GET("api/contacts/recent")
     suspend fun getRecentContacts(@Query("deviceId") deviceId: String, @Query("deviceSecret") deviceSecret: String, @Query("limit") limit: Int = 20): ContactListResponse
 
