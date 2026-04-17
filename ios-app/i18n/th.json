@@ -28,7 +28,8 @@
     "chat": "แชท",
     "mission": "ภารกิจ",
     "settings": "การตั้งค่า",
-    "cards": "การ์ด"
+    "cards": "การ์ด",
+    "dashboard": "แดชบอร์ด"
   },
   "cardHolder": {
     "title": "ที่เก็บนามบัตร",

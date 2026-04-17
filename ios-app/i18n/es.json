@@ -28,7 +28,8 @@
     "chat": "Chat",
     "mission": "Misión",
     "settings": "Configuración",
-    "cards": "Tarjetas"
+    "cards": "Tarjetas",
+    "dashboard": "Panel"
   },
   "cardHolder": {
     "title": "Porta tarjetas",

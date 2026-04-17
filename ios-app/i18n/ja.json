@@ -28,7 +28,8 @@
     "chat": "チャット",
     "mission": "ミッション",
     "settings": "設定",
-    "cards": "カード"
+    "cards": "カード",
+    "dashboard": "ダッシュボード"
   },
   "cardHolder": {
     "title": "カードホルダー",

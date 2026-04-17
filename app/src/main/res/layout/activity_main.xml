@@ -27,6 +27,16 @@
             android:textColor="@android:color/white"/>
 
         <ImageButton
+            android:id="@+id/btnDashboard"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_dashboard"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/dashboard_entry_content_description"
+            app:tint="@android:color/white"
+            android:layout_marginEnd="4dp"/>
+
+        <ImageButton
             android:id="@+id/btnEditMode"
             android:layout_width="40dp"
             android:layout_height="40dp"

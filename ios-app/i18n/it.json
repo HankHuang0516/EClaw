@@ -28,7 +28,8 @@
     "chat": "Chat",
     "mission": "Missione",
     "settings": "Impostazioni",
-    "cards": "Schede"
+    "cards": "Schede",
+    "dashboard": "Cruscotto"
   },
   "cardHolder": {
     "title": "Titolare scheda",

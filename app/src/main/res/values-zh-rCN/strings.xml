@@ -442,6 +442,9 @@
     <string name="mission_choose_from_template">从模板选择</string>
     <string name="mission_completed_at">✓ %s</string>
     <string name="mission_control">任务控制</string>
+    <string name="dashboard_entry_title">完整仪表板</string>
+    <string name="dashboard_entry_subtitle">含组织架构</string>
+    <string name="dashboard_entry_content_description">打开完整仪表板</string>
     <string name="mission_no_skills">暂无技能</string>
     <string name="mission_no_variables">暂无变量</string>
     <string name="mission_rule_gallery_title">规则模板</string>

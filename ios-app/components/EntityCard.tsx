@@ -61,7 +61,12 @@ export default function EntityCard({ entity, onLongPress, onAvatarPress, onNameP
     >
       <Card.Content style={styles.content}>
         {/* Avatar — tap to change */}
-        <TouchableOpacity onPress={onAvatarPress} activeOpacity={0.7}>
+        <TouchableOpacity
+          onPress={onAvatarPress}
+          onLongPress={onLongPress}
+          delayLongPress={500}
+          activeOpacity={0.7}
+        >
           <View style={styles.avatarContainer}>
             {entity.avatarUrl ? (
               <Avatar.Image size={48} source={{ uri: entity.avatarUrl }} />
@@ -79,7 +84,13 @@ export default function EntityCard({ entity, onLongPress, onAvatarPress, onNameP
         <View style={styles.info}>
           {/* Row 1: Name + ID + State badge */}
           <View style={styles.headerRow}>
-            <TouchableOpacity onPress={onNamePress} activeOpacity={0.7} style={styles.nameContainer}>
+            <TouchableOpacity
+              onPress={onNamePress}
+              onLongPress={onLongPress}
+              delayLongPress={500}
+              activeOpacity={0.7}
+              style={styles.nameContainer}
+            >
               <Text variant="titleMedium" numberOfLines={1} style={styles.name}>
                 {entity.name || entity.character || 'Entity'}
               </Text>

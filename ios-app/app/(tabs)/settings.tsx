@@ -209,18 +209,6 @@ export default function SettingsScreen() {
 
         <Divider />
 
-        {/* Entities */}
-        <List.Section title={t('settings.entities')}>
-          <List.Item
-            title={t('settings.manage_entities')}
-            left={(props) => <List.Icon {...props} icon="account-multiple" />}
-            right={(props) => <List.Icon {...props} icon="chevron-right" />}
-            onPress={() => router.push('/entity-manager')}
-          />
-        </List.Section>
-
-        <Divider />
-
         {/* Services */}
         <List.Section title={t('settings.services', 'Services')}>
           <List.Item

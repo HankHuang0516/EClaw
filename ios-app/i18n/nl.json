@@ -28,7 +28,8 @@
     "chat": "Chat",
     "mission": "Missie",
     "settings": "Instellingen",
-    "cards": "Kaarten"
+    "cards": "Kaarten",
+    "dashboard": "Dashboard"
   },
   "cardHolder": {
     "title": "Kaarthouder",

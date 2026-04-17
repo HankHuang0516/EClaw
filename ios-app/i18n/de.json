@@ -28,7 +28,8 @@
     "chat": "Chat",
     "mission": "Mission",
     "settings": "Einstellungen",
-    "cards": "Karten"
+    "cards": "Karten",
+    "dashboard": "Dashboard"
   },
   "cardHolder": {
     "title": "Karteninhaber",

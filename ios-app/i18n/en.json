@@ -28,7 +28,8 @@
     "chat": "Chat",
     "mission": "Mission",
     "settings": "Settings",
-    "cards": "Cards"
+    "cards": "Cards",
+    "dashboard": "Dashboard"
   },
   "cardHolder": {
     "title": "Card Holder",

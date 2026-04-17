@@ -28,7 +28,8 @@
     "chat": "Discussion",
     "mission": "Mission",
     "settings": "Paramètres",
-    "cards": "Cartes"
+    "cards": "Cartes",
+    "dashboard": "Tableau de bord"
   },
   "cardHolder": {
     "title": "Porteur de cartes",

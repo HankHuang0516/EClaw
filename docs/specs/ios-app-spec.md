@@ -1,6 +1,6 @@
 # iOS App 平台規範書 (iOS App Spec)
 
-> **版本**: 1.1.0
+> **版本**: 1.2.0
 > **建立日期**: 2026-04-14
 > **適用範圍**: `ios-app/` (React Native + Expo Router)
 > **目的**: 定義 iOS App 的架構、導航、UI 規範、功能範圍，作為所有 iOS 改動的唯一標準。
@@ -47,6 +47,7 @@ ios-app/
 │   ├── (tabs)/                   # Tab Bar 五大主頁
 │   │   ├── _layout.tsx           # Tab Bar 配置（height:83, paddingBottom:34）
 │   │   ├── index.tsx             # 🏠 首頁（Entity 列表 + 管理，對齊 Android MainActivity）
+│   │   ├── dashboard.tsx         # 📊 儀表板（WebView dashboard.html，Entity grid + Org Chart）
 │   │   ├── chat.tsx              # 💬 聊天（WebView chat.html，對齊 Android ChatActivity）
 │   │   ├── mission.tsx           # 📋 Mission Control（WebView mission.html）
 │   │   ├── cards.tsx             # 🎴 Card Holder（名片夾）
@@ -81,6 +82,7 @@ ios-app/
 | Tab | 圖示 | 路由 | 內容 |
 |-----|------|------|------|
 | 🏠 首頁 | `home` | `(tabs)/index` | Dashboard + Entity 列表（詳見 §3.4） |
+| 📊 儀表板 | `view-dashboard` | `(tabs)/dashboard` | WebView 載入 `portal/dashboard.html`（Entity grid + Org Chart 四種模式） |
 | 💬 聊天 | `chat` | `(tabs)/chat` | WebView 載入 chat.html（詳見 §3.5） |
 | 📋 任務 | `target` | `(tabs)/mission` | Mission Control（notes + kanban 入口） |
 | 🎴 名片 | `card-account-details` | `(tabs)/cards` | Card Holder（名片夾） |
@@ -110,21 +112,25 @@ ios-app/
 | 功能 | 實作方式 | 對齊 Android | 上架前優先級 |
 |------|---------|-------------|-------------|
 | Dashboard / Entity 列表 | Native | ✅ 對齊 MainActivity（詳見 §3.4） | P0 |
+| 完整儀表板 + Org Chart | WebView (`portal/dashboard.html`) | ✅ 對齊 Android `DashboardActivity` | P0 |
 | **聊天** | **WebView chat.html** | ✅ 對齊 ChatActivity（詳見 §3.5） | P0 |
 | AI 助理 | Native | ✅ | — |
 | Mission Control | WebView mission.html | ✅ | — |
-| Card Holder | Native | ✅ | — |
-| 設定 | Native | ✅ | — |
+| Card Holder | Native | ✅ 對齊 CardHolderActivity（詳見 §3.6） | — |
+| 設定 | Native | 🟡 需移除「管理實體」入口（詳見 §3.7） | P0 |
 | **Wallet** | WebView | 🔴 **必改 Native + IAP** | P0 |
 | My Rentals | WebView wrapper | 🟡 可保留但加 native entry | P1 |
 | Community / Marketplace | WebView | 🟡 可保留但加 native entry | P1 |
 | Arena 面試 | ❌ 無 | 🟡 WebView wrapper 即可 | P2 |
 | Kanban Board | 透過 Mission 導 WebView | 🟡 可保留 | P2 |
-| Entity Manager | Native | ✅ | — |
+| ~~Entity Manager~~ | ~~Native modal~~ | ❌ **廢棄** — Android 無此頁面，功能已併入首頁 | P0 |
 | File Manager | Native | ✅ | — |
 | Feedback | Native | ✅ | — |
+| ~~card-holder.tsx~~ | ~~Native standalone~~ | ❌ **廢棄** — 與 Cards tab 重複 | P1 |
 
 > **重大變更（v1.1.0）**：聊天頁從「Native 列表 → push 個別聊天頁」改為「WebView chat.html 直接載入」，與 Android ChatActivity 完全一致。`chat/[entityId].tsx` 不再需要。
+
+> **重大變更（v1.2.0）**：Entity Manager 獨立頁面廢棄。Android 沒有 EntityManagerActivity，所有實體管理（rename、avatar、refresh、remove、agent card、cross-device）都在首頁 Edit Mode 內 inline 完成。iOS 首頁已支援 tap avatar（picker）、tap name（rename）、long press（ActionSheet 含 remove/agent card），與 Android 對齊。Settings 移除「管理實體」入口。
 
 ### 3.3 WebView 使用規範
 
@@ -288,6 +294,59 @@ export default function ChatScreen() {
 2. 在 WebView 內的 chat.html 中使用 filter chips 選擇 entity
 
 > **不需要**從首頁傳遞 entityId 到 chat tab。Android 也沒有此機制。
+
+### 3.6 名片夾 UX 規範（對齊 Android `CardHolderActivity`）
+
+#### 3.6.1 核心架構
+
+名片夾 tab 使用 **Native RN** 實作（與 Android 一致），三區佈局：
+
+| 區塊 | 說明 | API |
+|------|------|-----|
+| My Cards | 自己的 agent cards（有 publicCode 的 entity） | `contactsApi.myCards()` |
+| Recent | 最近互動的聯絡人，按 `lastInteractedAt` 排序 | `contactsApi.recent()` |
+| Collected | 所有收藏的聯絡人，支援搜尋/篩選 | `contactsApi.list()` |
+
+#### 3.6.2 與 Android 的對齊點
+
+| 項目 | Android | iOS 現況 | 一致性 |
+|------|---------|---------|--------|
+| 三區佈局 | ✅ My Cards / Recent / Collected | ✅ | ✅ |
+| My Card 編輯 | ✅ Edit mode（pencil icon toggle） | ✅ | ✅ |
+| 搜尋 | ✅ ≥2 字觸發 | ✅ | ✅ |
+| Filter chips | ✅ All / Friends / Pinned | ✅ All / Pinned / Blocked | ⚠️ 略有差異 |
+| Detail dialog | ✅ 含 Chat History tab | ✅ | ✅ |
+| Pin/Block/Remove | ✅ | ✅ | ✅ |
+| Bot Plaza tab | ✅ WebView community.html | ❌ 無 | ⚠️ P2 |
+
+> **card-holder.tsx（獨立頁面）已廢棄**。功能與 Cards tab 重複，不再使用。
+
+### 3.7 設定 UX 規範（對齊 Android `SettingsActivity`）
+
+#### 3.7.1 Android Settings 包含的項目
+
+| 項目 | Android SettingsActivity |
+|------|------------------------|
+| 帳號狀態 | ✅ Email 綁定、Google/FB 登入、複製 credentials |
+| 訂閱/用量 | ✅ 顯示用量 |
+| 錢包/儲值 | ✅ Wallet、Top-up |
+| 租賃管理 | ✅ My Rentals |
+| 邀請好友 | ✅ Invite Friends |
+| 檔案管理 | ✅ File Manager |
+| 意見回饋 | ✅ Feedback |
+| 隱私權政策 | ✅ Privacy Policy |
+| 語言選擇 | ✅ 8 語言 |
+| Channel API | ✅ 狀態 + 管理 |
+| 刪除帳號 | ✅ |
+| **管理實體** | ❌ **沒有** |
+
+#### 3.7.2 iOS Settings 必要修正
+
+- ❌ **移除「管理實體」(`Manage Entities`) 入口** — Android 沒有此功能在 Settings
+- ❌ **移除 `entity-manager` 路由** — Android 無獨立 EntityManagerActivity
+- ✅ 實體管理功能已併入首頁（tap avatar、tap name、long press ActionSheet）
+
+> **重要**：Android 的實體管理**全部在首頁 Edit Mode 完成**，不在 Settings。iOS 必須對齊此行為。
 
 ---
 
@@ -549,7 +608,7 @@ const API_BASE = __DEV__
 | BRM Marketplace | ✅ | ⚠️ WebView | ⚠️ WebView | 可接受 |
 | My Rentals | ✅ | ⚠️ WebView | ⚠️ WebView | 可接受 |
 | Arena 面試 | ✅ | ❌ | ❌ | 上架前需 WebView wrapper |
-| Org Chart | ✅ | ⚠️ WebView | ⚠️ WebView | |
+| Org Chart | ✅ | ✅ WebView (`DashboardActivity`) | ✅ WebView (`(tabs)/dashboard`) | 三平台共用 `portal/dashboard.html`，drag/drop + 4 模式一致 |
 
 ### 8.2 差異可接受的項目
 
@@ -618,6 +677,7 @@ const API_BASE = __DEV__
 
 | 版本 | 日期 | 說明 |
 |------|------|------|
+| 1.2.0 | 2026-04-17 | 名片夾對齊 Android（§3.6）；Settings 移除「管理實體」入口（§3.7）；entity-manager.tsx + card-holder.tsx 標記廢棄；實體管理全部併入首頁 |
 | 1.1.0 | 2026-04-16 | 首頁 + 聊天頁對齊 Android（經實際程式碼驗證）：Chat tab 改為 WebView chat.html（廢棄 native list + push）；首頁 entity card 豐富化（XP bar、狀態 badge、最後訊息）但不作為導航入口（對齊 Android：card 是管理用，非聊天入口）；新增 §3.4/§3.5 詳細 UX 規範；移除 DIAG debug banner；Root Stack 預設 headerShown:true |
 | 1.0.0 | 2026-04-14 | 初版，定義 iOS App 架構、UI、認證、通訊、feature parity、合規要求 |
 
