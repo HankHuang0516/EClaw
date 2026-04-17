@@ -14377,23 +14377,30 @@ async function sendFcm(deviceId, notif) {
         return;
     }
     const tokenPrefix = token.slice(0, 12);
+    // Silent categories handled by the app's FCM service (start TtsService,
+    // fetch GPS, etc). Sending an android.notification for these would make
+    // the OS display a visible tray notification when the app is killed.
+    const silent = notif.category === 'tts' || notif.category === 'location_request';
+    const fcmMessage = {
+        token,
+        data: {
+            title: notif.title || '',
+            body: notif.body || '',
+            category: notif.category || '',
+            link: notif.link || ''
+        },
+        android: { priority: 'high' }
+    };
+    if (!silent) {
+        fcmMessage.android.notification = {
+            title: notif.title || '',
+            body: notif.body || '',
+            channelId: 'eclaw_chat',
+            sound: 'default'
+        };
+    }
     try {
-        const resp = await firebaseAdmin.messaging().send({
-            token,
-            data: {
-                title: notif.title || '',
-                body: notif.body || '',
-                category: notif.category || '',
-                link: notif.link || ''
-            },
-            android: {
-                priority: 'high',
-                notification: {
-                    channelId: 'eclaw_chat',
-                    sound: 'default'
-                }
-            }
-        });
+        const resp = await firebaseAdmin.messaging().send(fcmMessage);
         console.log('[FCM] sent OK', { deviceId, tokenPrefix, category: notif?.category, messageId: resp });
     } catch (e) {
         if (e.code === 'messaging/registration-token-not-registered') {
