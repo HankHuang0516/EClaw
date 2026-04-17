@@ -38,6 +38,7 @@ const _crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const safeEqual = require('./safe-equal');
+const { newCardId } = require('./entity-id');
 const { tKanban, statusLabel } = require('./i18n/kanban-notifications');
 
 // Cache device→language to avoid repeated lookups
@@ -438,12 +439,12 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
         try {
             const result = await pool.query(
-                `INSERT INTO kanban_cards (device_id, title, description, priority, status, assigned_bots, created_by, reviewer_entity_id, status_changed_at,
+                `INSERT INTO kanban_cards (id, device_id, title, description, priority, status, assigned_bots, created_by, reviewer_entity_id, status_changed_at,
                     is_automation, schedule_enabled, schedule_type, schedule_cron, schedule_run_at, schedule_timezone, schedule_next_run_at)
-                 VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, NOW(),
-                    $9, $10, $11, $12, $13, $14, $15)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, NOW(),
+                    $10, $11, $12, $13, $14, $15, $16)
                  RETURNING *`,
-                [deviceId, title.trim(), description || '', cardPriority, cardStatus, JSON.stringify(bots), createdBy, reviewer,
+                [newCardId(), deviceId, title.trim(), description || '', cardPriority, cardStatus, JSON.stringify(bots), createdBy, reviewer,
                     finalAutomation, schedEnabled, schedType, schedCron, schedRunAt, schedTz, schedNextRunAt]
             );
 
@@ -1747,11 +1748,11 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
                     // Create child card (inherit reviewerEntityId from parent)
                     const childResult = await pool.query(
-                        `INSERT INTO kanban_cards (device_id, title, description, priority, status, assigned_bots, created_by,
+                        `INSERT INTO kanban_cards (id, device_id, title, description, priority, status, assigned_bots, created_by,
                             status_changed_at, stale_threshold_ms, done_retention_ms, parent_card_id, is_auto_generated, reviewer_entity_id)
-                         VALUES ($1, $2, $3, $4, 'todo', $5::jsonb, $6, NOW(), $7, $8, $9, true, $10)
+                         VALUES ($1, $2, $3, $4, $5, 'todo', $6::jsonb, $7, NOW(), $8, $9, $10, true, $11)
                          RETURNING *`,
-                        [card.device_id, childTitle, card.description || '', card.priority,
+                        [newCardId(), card.device_id, childTitle, card.description || '', card.priority,
                          JSON.stringify(bots), card.created_by,
                          card.stale_threshold_ms, card.done_retention_ms, card.id,
                          card.reviewer_entity_id || null]
