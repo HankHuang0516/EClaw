@@ -1370,6 +1370,39 @@ class CardHolderActivity : AppCompatActivity() {
                 clip.setPrimaryClip(ClipData.newPlainText("shareUrl", shareUrl))
                 Toast.makeText(this@CardHolderActivity, R.string.card_share_copied, Toast.LENGTH_SHORT).show()
             })
+            var plazaState = card.isPublic
+            lateinit var plazaChip: TextView
+            plazaChip = actionChip(getString(if (plazaState) R.string.action_plaza_on else R.string.action_plaza_off)) {
+                val deviceId = deviceManager.deviceId
+                val deviceSecret = deviceManager.deviceSecret
+                val newValue = !plazaState
+                plazaChip.isEnabled = false
+                lifecycleScope.launch {
+                    try {
+                        val resp = NetworkModule.api.publishToPlaza(mapOf(
+                            "deviceId" to deviceId,
+                            "deviceSecret" to deviceSecret,
+                            "entityId" to card.entityId,
+                            "public" to newValue
+                        ))
+                        if (resp.success) {
+                            plazaState = newValue
+                            plazaChip.text = getString(if (plazaState) R.string.action_plaza_on else R.string.action_plaza_off)
+                            Toast.makeText(this@CardHolderActivity,
+                                if (plazaState) R.string.plaza_published else R.string.plaza_unpublished,
+                                Toast.LENGTH_SHORT).show()
+                            loadAllData()
+                        } else {
+                            Toast.makeText(this@CardHolderActivity, resp.message, Toast.LENGTH_SHORT).show()
+                        }
+                    } catch (e: Exception) {
+                        Toast.makeText(this@CardHolderActivity, e.message ?: "", Toast.LENGTH_SHORT).show()
+                    } finally {
+                        plazaChip.isEnabled = true
+                    }
+                }
+            }
+            actionRow.addView(plazaChip)
             layout.addView(actionRow)
         }
         if (!card.description.isNullOrEmpty()) {

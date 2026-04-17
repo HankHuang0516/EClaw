@@ -401,6 +401,8 @@ export const contactsApi = {
     apiClient.post('/api/client/cross-speak', { toPublicCode, message }),
   myCards: () =>
     apiClient.get('/api/contacts/my-cards'),
+  publishPlaza: (entityId: number, isPublic: boolean) =>
+    apiClient.post('/api/community/publish', { entityId, public: isPublic }),
   recent: (limit = 20) =>
     apiClient.get('/api/contacts/recent', { params: { limit } }),
   chatHistoryByCode: (publicCode: string, limit = 30) =>
