@@ -1,3 +1,10 @@
+## [1.990.2](https://github.com/HankHuang0516/EClaw/compare/v1.990.1...v1.990.2) (2026-04-17)
+
+
+### Bug Fixes
+
+* **chat:** render Note chip when ID is wrapped in backticks ([#1799](https://github.com/HankHuang0516/EClaw/issues/1799)) ([c7a2348](https://github.com/HankHuang0516/EClaw/commit/c7a2348652715de99d19f1b413aadf6b60afc735))
+
 ## [1.990.1](https://github.com/HankHuang0516/EClaw/compare/v1.990.0...v1.990.1) (2026-04-17)
 
 
