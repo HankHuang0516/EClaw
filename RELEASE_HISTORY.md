@@ -5,7 +5,7 @@ Track git commits for each release to enable changelog generation via `git diff`
 ---
 
 ## Latest
-v1.0.71 | pending | 2026-04-17 | versionCode 77 | Internal 🚧 | Enter-newline, backtick Note chip, Note Markdown, chat density, org-chart touch-action
+v1.0.71 | 55d40068 | 2026-04-17 | versionCode 77 | Internal 🚧 | Enter-newline, backtick Note chip, Note Markdown, chat density, org-chart touch-action
 
 ## Recent
 v1.0.70 | c8eac429 | 2026-04-17 | versionCode 76 | Internal ✅ | Dashboard + Org Chart parity on Android & iOS (WebView → portal/dashboard.html)
