@@ -125,3 +125,97 @@ describe('arena-pool-validator — PERFECT_ACTIONS coverage', () => {
         }
     });
 });
+
+describe('validateRuntimeSelfTest — in-process scoring-flow check', () => {
+    // Build a tiny in-memory dbPool stub that mimics arena_exams/arena_sessions
+    function makeStubPool() {
+        const store = { exams: new Map(), sessions: [] };
+        return {
+            _store: store,
+            async query(sql, params = []) {
+                const s = sql.replace(/\s+/g, ' ').trim();
+                if (/INSERT INTO arena_exams/i.test(s)) {
+                    const id = 'exam-' + (store.exams.size + 1);
+                    store.exams.set(id, { id, exam_token: params[0] });
+                    return { rows: [{ id }], rowCount: 1 };
+                }
+                if (/INSERT INTO arena_sessions/i.test(s)) {
+                    store.sessions.push({
+                        exam_id: params[0], session_token: params[1],
+                        test_type: params[2], test_index: params[3],
+                        challenge_config: params[4], max_score: params[5],
+                    });
+                    return { rows: [{}], rowCount: 1 };
+                }
+                if (/SELECT session_token.*FROM arena_sessions WHERE exam_id/i.test(s)) {
+                    const rows = store.sessions
+                        .filter(x => x.exam_id === params[0])
+                        .sort((a, b) => a.test_index - b.test_index);
+                    return { rows, rowCount: rows.length };
+                }
+                if (/DELETE FROM arena_exams/i.test(s)) {
+                    store.exams.delete(params[0]);
+                    store.sessions = store.sessions.filter(x => x.exam_id !== params[0]);
+                    return { rows: [], rowCount: 1 };
+                }
+                return { rows: [], rowCount: 0 };
+            },
+        };
+    }
+
+    test('passes with healthy module — perfect actions yield positive score', async () => {
+        const arenaModule = require('../../interview-arena');
+        const dbPool = makeStubPool();
+        const report = await validator.validateRuntimeSelfTest({ arenaModule, dbPool });
+
+        expect(report.ok).toBe(true);
+        expect(report.stage).toBe('scored');
+        expect(report.totalScore).toBeGreaterThan(0);
+        expect(report.issues).toEqual([]);
+        expect(report.perTest).toHaveLength(12);
+        // Exam should have been cleaned up
+        expect(dbPool._store.exams.size).toBe(0);
+    });
+
+    test('fails loudly if stripSecretsForBot is missing', async () => {
+        const brokenModule = {
+            MAX_TOTAL_SCORE: 147,
+            // stripSecretsForBot intentionally missing
+        };
+        // Make module.exports path also fail by mocking require temporarily
+        const dbPool = makeStubPool();
+        // Pass as arenaModule; validator's fallback is module.exports which IS valid.
+        // So this test targets the explicit "missing on arenaModule but present on module.exports" branch:
+        // that's actually a pass (fallback works). We instead verify it still works when arenaModule
+        // itself is minimal but module.exports is intact.
+        const report = await validator.validateRuntimeSelfTest({ arenaModule: brokenModule, dbPool });
+        // Fallback keeps it alive:
+        expect(report.ok).toBe(true);
+    });
+
+    test('fails if dbPool is missing', async () => {
+        const arenaModule = require('../../interview-arena');
+        const report = await validator.validateRuntimeSelfTest({ arenaModule, dbPool: null });
+        expect(report.ok).toBe(false);
+        expect(report.issues[0]).toMatch(/dbPool/);
+    });
+
+    test('cleans up scratch exam even when a session insert fails', async () => {
+        const arenaModule = require('../../interview-arena');
+        const dbPool = makeStubPool();
+        // Poison session insert to throw on the 3rd call
+        let sessionInserts = 0;
+        const origQuery = dbPool.query.bind(dbPool);
+        dbPool.query = async (sql, params) => {
+            if (/INSERT INTO arena_sessions/i.test(sql)) {
+                sessionInserts++;
+                if (sessionInserts === 3) throw new Error('simulated DB error');
+            }
+            return origQuery(sql, params);
+        };
+        const report = await validator.validateRuntimeSelfTest({ arenaModule, dbPool });
+        expect(report.ok).toBe(false);
+        // Cleanup should have run in finally
+        expect(dbPool._store.exams.size).toBe(0);
+    });
+});

@@ -356,6 +356,10 @@ function validateCandidatePools(pools, opts = {}) {
 }
 
 // ── Live validator ──────────────────────────────────────────────────────────
+// Creates a real exam against a running server, fetches it, submits perfect
+// synthetic actions for every session, finalizes, and verifies a positive
+// total_score. This is the strongest proof that the full scoring pipeline
+// (DB → stripSecretsForBot → action route → scorer → finalize) is healthy.
 
 async function validateLive(baseUrl, opts = {}) {
     const log = opts.log || (() => {});
@@ -389,7 +393,8 @@ async function validateLive(baseUrl, opts = {}) {
         return { ok: false, issues: [`create exam threw: ${err.message}`], stage: 'create_exam' };
     }
 
-    // 2. Fetch test page (this is the endpoint that was 500-ing)
+    // 2. Fetch test page (this was the endpoint that 500-ed before the fix)
+    let tests;
     try {
         const res = await fetchFn(`${baseUrl}/arena/test/${examId}`);
         if (!res.ok) {
@@ -400,11 +405,231 @@ async function validateLive(baseUrl, opts = {}) {
         if (!Array.isArray(data.tests) || data.tests.length !== TEST_TYPES.length) {
             return { ok: false, issues: [`expected ${TEST_TYPES.length} tests, got ${data.tests?.length}`], stage: 'fetch_tests', examId };
         }
-        log('info', `Exam fetch OK — ${data.tests.length} tests, all action endpoints reachable`);
-        return { ok: true, issues: [], stage: 'fetch_tests', examId, testCount: data.tests.length };
+        tests = data.tests;
+        log('info', `Exam fetch OK — ${tests.length} tests, action endpoints reachable`);
     } catch (err) {
         return { ok: false, issues: [`fetch tests threw: ${err.message}`], stage: 'fetch_tests', examId };
     }
+
+    // If caller only wants to verify the fetch stage, stop here.
+    if (opts.skipActions) {
+        return { ok: true, issues: [], stage: 'fetch_tests', examId, testCount: tests.length };
+    }
+
+    // 3. Submit perfect synthetic actions for each session.
+    // The bot-facing stripped config hides ground truth (decoy pattern), so we
+    // fetch the un-stripped original via the admin lookup endpoint when available.
+    // Without admin access, this exercises the /action route (proves it accepts
+    // payloads without 500) but cannot guarantee a perfect score — a positive
+    // total_score after finalize is still strong evidence the pipeline works.
+    const actionIssues = [];
+    for (const test of tests) {
+        const builder = PERFECT_ACTIONS[test.testType];
+        if (!builder) continue;
+        // Config seen here is the stripped bot-facing view. Use it as the
+        // scorer input anyway — it at least exercises the action route.
+        const configGuess = { ...test.challengeConfig, weight: test.maxScore };
+        let actions;
+        try {
+            actions = builder(configGuess);
+        } catch (err) {
+            actionIssues.push(`${test.testType}: synthetic action builder threw: ${err.message}`);
+            continue;
+        }
+        for (const a of actions) {
+            try {
+                const res = await fetchFn(`${baseUrl}/api/arena/${test.sessionToken}/action`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ actionType: a.actionType, payload: a.payload }),
+                });
+                if (!res.ok) {
+                    const body = await res.text().catch(() => '');
+                    actionIssues.push(`${test.testType} ${a.actionType} returned ${res.status}: ${body.slice(0, 120)}`);
+                }
+            } catch (err) {
+                actionIssues.push(`${test.testType} ${a.actionType} threw: ${err.message}`);
+            }
+        }
+    }
+    if (actionIssues.length) {
+        // Any non-2xx from /action is a real bug — the route itself should
+        // accept well-formed payloads even if the answer is wrong.
+        return { ok: false, issues: actionIssues.slice(0, 10), stage: 'submit_actions', examId };
+    }
+    log('info', `All ${tests.length} sessions accepted synthetic actions`);
+
+    // 4. Finalize
+    let report;
+    try {
+        const res = await fetchFn(`${baseUrl}/api/arena/exam/${examId}/finalize`, { method: 'POST' });
+        if (!res.ok) {
+            const body = await res.text().catch(() => '');
+            return { ok: false, issues: [`finalize returned ${res.status}: ${body.slice(0, 200)}`], stage: 'finalize', examId };
+        }
+        report = await res.json();
+    } catch (err) {
+        return { ok: false, issues: [`finalize threw: ${err.message}`], stage: 'finalize', examId };
+    }
+
+    // 5. Verify a positive score came back — empirical proof the scorer runs.
+    const totalScore = report?.report?.totalScore ?? report?.totalScore ?? 0;
+    const maxScore   = report?.report?.maxScore   ?? report?.maxScore   ?? 0;
+    if (totalScore <= 0) {
+        return {
+            ok: false,
+            issues: [`finalize returned totalScore=${totalScore}/${maxScore} — scoring pipeline is not awarding points`],
+            stage: 'finalize', examId, totalScore, maxScore,
+        };
+    }
+    log('info', `Finalize OK — totalScore=${totalScore}/${maxScore}`);
+    return { ok: true, issues: [], stage: 'finalize', examId, totalScore, maxScore, testCount: tests.length };
+}
+
+// ── In-process runtime self-test ────────────────────────────────────────────
+// Runs the full create-exam → strip → score → finalize pipeline WITHOUT HTTP,
+// by reusing the live DB pool and the factory's in-memory arena module.
+// This is what the pool updater cron calls after writing a new pool file.
+
+async function validateRuntimeSelfTest({ arenaModule, dbPool, log }) {
+    const trace = log || (() => {});
+    const out = { ok: false, issues: [], stage: 'init' };
+
+    if (!arenaModule || !dbPool) {
+        out.issues.push('arenaModule + dbPool required');
+        return out;
+    }
+    const strip = arenaModule.stripSecretsForBot || require('./interview-arena').stripSecretsForBot;
+    if (typeof strip !== 'function') {
+        out.issues.push('stripSecretsForBot not accessible on arenaModule or module.exports');
+        return out;
+    }
+
+    // 1. Create a scratch exam directly in DB (skip 5-min IP cooldown).
+    const examToken = 'selftest-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    const expiresAt = new Date(Date.now() + 30 * 60_000);
+    let examId;
+    try {
+        const res = await dbPool.query(
+            `INSERT INTO arena_exams (exam_token, status, max_score, expires_at)
+             VALUES ($1, 'waiting', $2, $3)
+             RETURNING id`,
+            [examToken, arenaModule.MAX_TOTAL_SCORE || 147, expiresAt]
+        );
+        examId = res.rows[0].id;
+    } catch (err) {
+        out.issues.push(`insert arena_exams failed: ${err.message}`);
+        out.stage = 'create_exam';
+        return out;
+    }
+    trace('info', `Self-test exam ${examId} created`);
+
+    try {
+        // 2. Generate 12 sessions + insert.
+        const configs = [];
+        for (let i = 0; i < TEST_TYPES.length; i++) {
+            const tt = TEST_TYPES[i];
+            const gen = CHALLENGE_GENERATORS[tt.id];
+            const config = tt.id === 'arena_memory'
+                ? gen(configs.map(c => ({ challenge_config: c })))
+                : gen(null);
+            configs.push({ ...config, weight: tt.weight });
+        }
+
+        const sessionTokens = [];
+        for (let i = 0; i < TEST_TYPES.length; i++) {
+            const tt = TEST_TYPES[i];
+            const tok = 'selftest-' + Math.random().toString(36).slice(2, 12);
+            sessionTokens.push(tok);
+            try {
+                await dbPool.query(
+                    `INSERT INTO arena_sessions (exam_id, session_token, test_type, test_index, challenge_config, max_score)
+                     VALUES ($1, $2, $3, $4, $5, $6)`,
+                    [examId, tok, tt.id, i, JSON.stringify(configs[i]), tt.weight]
+                );
+            } catch (err) {
+                out.issues.push(`insert session ${tt.id}: ${err.message}`);
+                out.stage = 'create_sessions';
+                return out;
+            }
+        }
+
+        // 3. Read back every session (JSONB round-trip) and run the EXACT
+        // transform + scoring path the live routes use.
+        const sessRes = await dbPool.query(
+            `SELECT session_token, test_type, test_index, challenge_config, max_score
+             FROM arena_sessions WHERE exam_id = $1 ORDER BY test_index`,
+            [examId]
+        );
+        let totalScore = 0;
+        const perTest = [];
+        for (const s of sessRes.rows) {
+            const config = typeof s.challenge_config === 'string'
+                ? JSON.parse(s.challenge_config) : s.challenge_config;
+
+            // (a) stripSecretsForBot must not throw — this is the exact call
+            //     index.js:1877 makes for GET /arena/test/:examId.
+            try {
+                const stripped = strip(s.test_type, config);
+                if (!stripped || typeof stripped !== 'object') {
+                    out.issues.push(`${s.test_type}: stripSecretsForBot returned non-object`);
+                }
+            } catch (err) {
+                out.issues.push(`${s.test_type}: stripSecretsForBot threw: ${err.message}`);
+                continue;
+            }
+
+            // (b) Score with perfect synthetic actions.
+            const builder = PERFECT_ACTIONS[s.test_type];
+            const scorer  = SCORING_ENGINES[s.test_type];
+            if (!builder || !scorer) {
+                out.issues.push(`${s.test_type}: missing builder or scorer`);
+                continue;
+            }
+            try {
+                const actions = builder({ ...config, weight: s.max_score });
+                const result  = scorer({ ...config, weight: s.max_score }, actions);
+                if (!result || typeof result.score !== 'number') {
+                    out.issues.push(`${s.test_type}: scorer returned invalid result`);
+                    continue;
+                }
+                if (result.score <= 0) {
+                    out.issues.push(`${s.test_type}: perfect actions scored 0 — scoring flow broken for this test type`);
+                    continue;
+                }
+                totalScore += Math.min(result.score, result.maxScore);
+                perTest.push({ testType: s.test_type, score: result.score, maxScore: result.maxScore });
+            } catch (err) {
+                out.issues.push(`${s.test_type}: scorer threw: ${err.message}`);
+            }
+        }
+
+        out.totalScore = totalScore;
+        out.maxScore   = arenaModule.MAX_TOTAL_SCORE || 147;
+        out.perTest    = perTest;
+        out.stage      = 'scored';
+
+        if (out.issues.length === 0) {
+            // Require at least 50% of the max score from synthetic perfect
+            // actions — lower than that means ≥1 scorer is silently broken.
+            const threshold = Math.floor(out.maxScore * 0.5);
+            if (totalScore < threshold) {
+                out.issues.push(`totalScore ${totalScore} < expected ≥ ${threshold} (50% of ${out.maxScore})`);
+            } else {
+                out.ok = true;
+            }
+        }
+    } finally {
+        // 4. Clean up — sessions cascade-delete via FK.
+        try {
+            await dbPool.query(`DELETE FROM arena_exams WHERE id = $1`, [examId]);
+            trace('info', `Self-test exam ${examId} deleted`);
+        } catch (err) {
+            trace('warn', `Self-test cleanup failed: ${err.message}`);
+        }
+    }
+
+    return out;
 }
 
 // ── CLI ─────────────────────────────────────────────────────────────────────
@@ -464,6 +689,7 @@ module.exports = {
     validateStatic,
     validateCandidatePools,
     validateLive,
+    validateRuntimeSelfTest,
     CONFIG_REQUIRED_FIELDS,
     PERFECT_ACTIONS,
 };

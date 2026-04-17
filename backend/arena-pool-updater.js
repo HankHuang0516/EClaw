@@ -403,6 +403,57 @@ async function runPoolUpdate({ dbPool, getCurrentPools, reloadPools, serverLog }
         summary.errors.push(`reload: ${reloadErr.message}`);
     }
 
+    // ── 7. Runtime self-test — exercise the full scoring pipeline ─────────────
+    // Creates a scratch exam directly in DB, reads each session back, runs
+    // stripSecretsForBot + scorer with perfect synthetic actions, verifies a
+    // positive total score, then deletes the scratch exam. If this fails the
+    // pool is live but scoring is broken; we roll back to the previous file.
+    try {
+        const { validateRuntimeSelfTest } = require('./arena-pool-validator');
+        const arenaModule = require('./interview-arena');
+        const selfTest = await validateRuntimeSelfTest({
+            arenaModule,
+            dbPool,
+            log: (lv, m) => log(lv, `[self-test] ${m}`),
+        });
+        summary.selfTest = {
+            ok: selfTest.ok,
+            stage: selfTest.stage,
+            totalScore: selfTest.totalScore,
+            maxScore: selfTest.maxScore,
+            issues: selfTest.issues.slice(0, 5),
+        };
+        if (!selfTest.ok) {
+            log('error',
+                `Runtime self-test FAILED at stage=${selfTest.stage}. Score=${selfTest.totalScore}/${selfTest.maxScore}. ` +
+                `First issue: ${selfTest.issues[0]}. Rolling back pool file.`);
+            summary.errors.push(`self_test_failed: ${selfTest.issues[0] || selfTest.stage}`);
+            // Roll back: restore the previous pool file (or delete if brand-new)
+            try {
+                if (fileData) {
+                    writePoolFile(fileData);
+                    log('warn', 'Previous pool file restored');
+                } else if (fs.existsSync(POOL_FILE)) {
+                    fs.unlinkSync(POOL_FILE);
+                    log('warn', 'Brand-new broken pool file deleted');
+                }
+                reloadPools();
+            } catch (rbErr) {
+                log('error', `Rollback failed: ${rbErr.message}`);
+                summary.errors.push(`rollback_failed: ${rbErr.message}`);
+            }
+            return summary;
+        }
+        log('info',
+            `Runtime self-test PASSED — synthetic perfect actions scored ` +
+            `${selfTest.totalScore}/${selfTest.maxScore}`);
+    } catch (selfErr) {
+        // Self-test itself crashing means we cannot prove the pool is healthy.
+        // Do not roll back (the crash may be transient DB), but loudly flag it.
+        log('error', `Runtime self-test crashed: ${selfErr.message}`);
+        summary.errors.push(`self_test_crash: ${selfErr.message}`);
+    }
+
     log('info', `Update complete — retired: ${summary.retired}, added: ${summary.added}, errors: ${summary.errors.length}`);
     return summary;
 }

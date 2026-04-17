@@ -1696,6 +1696,28 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
             .catch(err => console.error('[Arena] refresh-pool error:', err.message));
     });
 
+    // POST /api/arena/admin/self-test — on-demand runtime self-test.
+    // The routine bot (or any admin) can call this anytime to verify the
+    // full scoring pipeline is healthy: creates a scratch exam, runs every
+    // scorer with synthetic perfect actions, deletes the exam, returns the
+    // report. Intended for the bot to call before/after refresh-pool.
+    router.post('/admin/self-test', async (req, res) => {
+        if (!checkAdminAuth(req)) return res.status(403).json({ success: false, error: 'forbidden' });
+        try {
+            const { validateRuntimeSelfTest } = require('./arena-pool-validator');
+            const selfModule = require('./interview-arena');
+            const report = await validateRuntimeSelfTest({
+                arenaModule: selfModule,
+                dbPool: pool,
+                log: (lv, m) => audit(lv, 'arena_selftest', m),
+            });
+            res.status(report.ok ? 200 : 500).json({ success: report.ok, report });
+        } catch (err) {
+            console.error('[Arena] self-test error:', err);
+            res.status(500).json({ success: false, error: 'internal_error', message: err.message });
+        }
+    });
+
     // Late-bound deps for auto-push (interview mode: push exam instructions to bot)
     let _autoPushDeps = { devices: null, pushToBot: null, pushToChannelCallback: null };
     function setAutoPushDeps(deps) { Object.assign(_autoPushDeps, deps); }
