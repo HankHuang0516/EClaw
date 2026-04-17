@@ -1,3 +1,10 @@
+## [1.990.1](https://github.com/HankHuang0516/EClaw/compare/v1.990.0...v1.990.1) (2026-04-17)
+
+
+### Bug Fixes
+
+* **chat:** Enter on mobile inserts newline, not send ([#1798](https://github.com/HankHuang0516/EClaw/issues/1798)) ([29a4de6](https://github.com/HankHuang0516/EClaw/commit/29a4de68583e1fcb56fa6b03545255bf252e39ef))
+
 # [1.990.0](https://github.com/HankHuang0516/EClaw/compare/v1.989.0...v1.990.0) (2026-04-17)
 
 
