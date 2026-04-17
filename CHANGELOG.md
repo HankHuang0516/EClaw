@@ -1,3 +1,10 @@
+## [1.992.1](https://github.com/HankHuang0516/EClaw/compare/v1.992.0...v1.992.1) (2026-04-17)
+
+
+### Bug Fixes
+
+* **fcm:** self-heal token registration at every app launch ([743f605](https://github.com/HankHuang0516/EClaw/commit/743f605dbb8c523924a5f5dc44bf731f5d8dbb9d))
+
 # [1.992.0](https://github.com/HankHuang0516/EClaw/compare/v1.991.2...v1.992.0) (2026-04-17)
 
 
