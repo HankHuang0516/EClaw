@@ -1,3 +1,10 @@
+## [1.992.3](https://github.com/HankHuang0516/EClaw/compare/v1.992.2...v1.992.3) (2026-04-17)
+
+
+### Bug Fixes
+
+* **db:** hydrate fcm_token / apns_token from PG on boot ([b1ab3b4](https://github.com/HankHuang0516/EClaw/commit/b1ab3b454a938b43808e91eb2b54cbefd8fa214e)), closes [#1808](https://github.com/HankHuang0516/EClaw/issues/1808)
+
 ## [1.992.2](https://github.com/HankHuang0516/EClaw/compare/v1.992.1...v1.992.2) (2026-04-17)
 
 
