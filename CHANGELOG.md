@@ -1,3 +1,10 @@
+# [1.995.0](https://github.com/HankHuang0516/EClaw/compare/v1.994.5...v1.995.0) (2026-04-17)
+
+
+### Features
+
+* **ios:** align home page with Android MainActivity ([#1823](https://github.com/HankHuang0516/EClaw/issues/1823)) ([5fec987](https://github.com/HankHuang0516/EClaw/commit/5fec987c196a3bb12e2f5f76a1b197db0fb13a4d))
+
 ## [1.994.5](https://github.com/HankHuang0516/EClaw/compare/v1.994.4...v1.994.5) (2026-04-17)
 
 
