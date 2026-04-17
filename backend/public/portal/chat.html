@@ -5010,14 +5010,20 @@
 
                 idEl.textContent = (resp.noteId || resolvedId).substring(0, 8);
 
-                // Render content — support HTML or Markdown
+                // Render content — support HTML or Markdown.
+                // /note/add writes plain/markdown text into html_content, so if we detect
+                // no HTML tags in htmlContent, parse it as markdown too.
                 let html = '';
+                const renderAsMarkdown = (src) => typeof marked !== 'undefined'
+                    ? marked.parse(src)
+                    : src.replace(/\n/g, '<br>');
                 if (resp.htmlContent) {
-                    html = resp.htmlContent;
+                    // Require a proper tag (name followed by space/>//>) so that autolinks
+                    // like <https://example.com> aren't mis-detected as HTML.
+                    const hasHtmlTags = /<\/?[a-z][\w-]*(?:\s|>|\/>)/i.test(resp.htmlContent);
+                    html = hasHtmlTags ? resp.htmlContent : renderAsMarkdown(resp.htmlContent);
                 } else if (resp.markdownContent) {
-                    html = typeof marked !== 'undefined'
-                        ? marked.parse(resp.markdownContent)
-                        : resp.markdownContent.replace(/\n/g, '<br>');
+                    html = renderAsMarkdown(resp.markdownContent);
                 } else {
                     html = '<em>Empty note</em>';
                 }
