@@ -407,6 +407,11 @@
         .chat-msg:hover .chat-reply-btn { opacity: 1; }
         .chat-reply-btn:hover { color: var(--primary); border-color: var(--primary); }
         .chat-msg.sent .chat-reply-btn { right: auto; left: -30px; }
+        /* Touch devices: hover never fires, so make the reply button persistently visible */
+        @media (hover: none) {
+            .chat-reply-btn { opacity: 0.75; width: 30px; height: 30px; font-size: 15px; }
+            .chat-reply-btn:active { opacity: 1; color: var(--primary); border-color: var(--primary); }
+        }
 
         /* ── Reply preview bar above input ── */
         .reply-preview-bar {
@@ -2547,6 +2552,49 @@
             const btn = e.target.closest('.code-copy-btn');
             if (btn) copyCodeBlock(btn);
         });
+
+        // Long-press on a message bubble triggers the quote-reply flow.
+        // Needed for mobile WebView where :hover-revealed reply button is hard to tap.
+        (function installLongPressQuote() {
+            const container = document.getElementById('chatMessages');
+            let timer = null;
+            let startX = 0;
+            let startY = 0;
+            const LONG_PRESS_MS = 450;
+            const MOVE_CANCEL_PX = 10;
+
+            const clear = () => { if (timer) { clearTimeout(timer); timer = null; } };
+
+            container.addEventListener('touchstart', (e) => {
+                const msg = e.target.closest('.chat-msg');
+                if (!msg) return;
+                // Don't intercept taps on interactive children (reply btn, links, images).
+                if (e.target.closest('a, button, .chat-reply-btn, .link-preview-slot, .chat-img, video')) return;
+                const btn = msg.querySelector('.chat-reply-btn');
+                if (!btn) return;
+                const touch = e.touches[0];
+                startX = touch.clientX;
+                startY = touch.clientY;
+                clear();
+                timer = setTimeout(() => {
+                    timer = null;
+                    if (navigator.vibrate) { try { navigator.vibrate(15); } catch (_) {} }
+                    handleReplyBtn(btn);
+                }, LONG_PRESS_MS);
+            }, { passive: true });
+
+            container.addEventListener('touchmove', (e) => {
+                if (!timer) return;
+                const touch = e.touches[0];
+                if (Math.abs(touch.clientX - startX) > MOVE_CANCEL_PX ||
+                    Math.abs(touch.clientY - startY) > MOVE_CANCEL_PX) {
+                    clear();
+                }
+            }, { passive: true });
+
+            container.addEventListener('touchend', clear, { passive: true });
+            container.addEventListener('touchcancel', clear, { passive: true });
+        })();
 
         // ── Init ──
         window.addEventListener('DOMContentLoaded', async () => {
