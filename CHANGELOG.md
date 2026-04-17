@@ -1,3 +1,10 @@
+# [1.999.0](https://github.com/HankHuang0516/EClaw/compare/v1.998.0...v1.999.0) (2026-04-17)
+
+
+### Features
+
+* **chat:** quote-reply reachable on mobile WebView ([#1828](https://github.com/HankHuang0516/EClaw/issues/1828)) ([367c76e](https://github.com/HankHuang0516/EClaw/commit/367c76e49b9b0a439cfb32a7fb02331502bf053e))
+
 # [1.998.0](https://github.com/HankHuang0516/EClaw/compare/v1.997.0...v1.998.0) (2026-04-17)
 
 
