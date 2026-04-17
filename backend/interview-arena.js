@@ -180,6 +180,12 @@ let VISION_IMAGES = [
     { file: null, description: 'A weather dashboard panel showing temperature 28°C, humidity 65%, wind speed 12 km/h, and UV index 7 in four separate tiles', keywords: ['temperature', '28', 'humidity', '65', 'UV', '7'] },
     { file: null, description: 'A printed circuit board with fourteen resistors, eight capacitors, and one microcontroller chip labeled ATmega328P', keywords: ['circuit', 'fourteen', 'resistors', 'eight', 'capacitors', 'ATmega'] },
     { file: null, description: 'A hotel room floor plan: bedroom 18m² on the left, bathroom 6m² top right, living area 22m² bottom right, with a corridor connecting all rooms', keywords: ['floor', 'plan', 'bedroom', '18', 'bathroom', '6', 'living', '22'] },
+    // ── Added harder: dashboards, diagrams, OCR-heavy scenes ──
+    { file: null, description: 'A system monitoring dashboard with four tiles: CPU at 87% shown as a red gauge, memory at 6.2 of 16 GB as a blue bar, network I/O at 142 MB/s upload and 38 MB/s download, and disk at 78% capacity', keywords: ['cpu', '87', 'memory', '6.2', 'network', '142', 'disk', '78'] },
+    { file: null, description: 'A neural network architecture diagram showing an input layer with 4 nodes, two hidden layers with 6 nodes each, and an output layer with 3 nodes, with labeled weight arrows connecting every adjacent layer', keywords: ['neural', 'network', 'input', '4', 'hidden', '6', 'output', '3'] },
+    { file: null, description: 'A spreadsheet view with columns A through F; row 5 is highlighted yellow; cell C5 contains the formula =SUM(A5:B5)*1.08 and displays 64.80; cell F1 shows the label TAX RATE in bold', keywords: ['spreadsheet', 'C5', 'SUM', '64', 'TAX', 'RATE'] },
+    { file: null, description: 'A GitHub-style contribution graph covering one full year; weeks 20 through 22 appear completely empty; the final two weeks are all darkest-green squares labeled 15+ commits per day', keywords: ['github', 'contribution', 'gap', 'empty', 'dark', 'green', '15'] },
+    { file: null, description: 'A product roadmap timeline from Q1 2024 to Q4 2025 with five labelled milestones on a horizontal line: MVP Launch, Beta Release, Series A, GA Release, and Global Expansion, each marked by a coloured diamond shape', keywords: ['roadmap', 'timeline', 'MVP', 'beta', 'series', 'GA', 'global'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -349,6 +355,21 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '"babad"', expected: '"bab"' },{ input: '"cbbd"', expected: '"bb"' },{ input: '"a"', expected: '"a"' },{ input: '"racecar"', expected: '"racecar"' }] },
     { title: '0-1 Knapsack', description: 'Write `solve(weights, values, capacity)` — given items with weights and values arrays and a knapsack of given capacity, return the maximum total value (each item used at most once).',
       testCases: [{ input: '[1,3,4,5], [1,4,5,7], 7', expected: '9' },{ input: '[2,3,4,5], [3,4,5,6], 5', expected: '7' },{ input: '[1], [10], 0', expected: '0' }] },
+    // ── Added: interval, graph, sliding window, combinatorics ──
+    { title: 'Merge Intervals', description: 'Write `solve(intervals)` — given an array of [start, end] intervals, merge all overlapping intervals and return non-overlapping intervals sorted by start.',
+      testCases: [{ input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },{ input: '[[1,4],[4,5]]', expected: '[[1,5]]' },{ input: '[[1,1]]', expected: '[[1,1]]' }] },
+    { title: 'Course Schedule (Cycle Detection)', description: 'Write `solve(numCourses, prerequisites)` — prerequisites are [a,b] pairs meaning course b must precede a. Return true if all courses can be completed (no dependency cycle), false otherwise.',
+      testCases: [{ input: '2, [[1,0]]', expected: 'true' },{ input: '2, [[1,0],[0,1]]', expected: 'false' },{ input: '4, [[1,0],[2,0],[3,1],[3,2]]', expected: 'true' }] },
+    { title: 'Minimum Window Substring', description: 'Write `solve(s, t)` — find the minimum-length substring of s that contains all characters of t (including duplicates). Return empty string if none exists.',
+      testCases: [{ input: '"ADOBECODEBANC", "ABC"', expected: '"BANC"' },{ input: '"a", "a"', expected: '"a"' },{ input: '"a", "b"', expected: '""' }] },
+    { title: 'Word Break (DP)', description: 'Write `solve(s, wordDict)` — return true if string s can be segmented into a space-separated sequence of one or more dictionary words.',
+      testCases: [{ input: '"leetcode", ["leet","code"]', expected: 'true' },{ input: '"applepenapple", ["apple","pen"]', expected: 'true' },{ input: '"catsandog", ["cats","dog","sand","and","cat"]', expected: 'false' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an elevation map where each bar has width 1, compute how much water can be trapped after raining.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[3,0,3]', expected: '3' }] },
+    { title: 'Longest Increasing Subsequence', description: 'Write `solve(nums)` — return the length of the longest strictly increasing subsequence.',
+      testCases: [{ input: '[10,9,2,5,3,7,101,18]', expected: '4' },{ input: '[0,1,0,3,2,3]', expected: '4' },{ input: '[7,7,7,7]', expected: '1' }] },
+    { title: 'All Permutations', description: 'Write `solve(nums)` — given an array of distinct integers, return all permutations as a sorted array of arrays (lexicographic order).',
+      testCases: [{ input: '[1,2,3]', expected: '[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]' },{ input: '[0,1]', expected: '[[0,1],[1,0]]' },{ input: '[1]', expected: '[[1]]' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -391,6 +412,13 @@ let RESPONSE_QUESTIONS = [
     { question: 'What is 2 to the power of 10?', expectedKeywords: ['1024'] },
     { question: 'A store sells apples for $0.75 each and oranges for $1.20 each. If someone buys 4 apples and 3 oranges, what is the total cost?', expectedKeywords: ['6.6', '6.60'] },
     { question: 'The sides of a right triangle are in the ratio 3:4:5. If the hypotenuse is 20 cm, what is the perimeter?', expectedKeywords: ['48'] },
+    // ── Added: logic puzzles, geometry, compound reasoning ──
+    { question: 'You have only a 3-liter jug and a 5-liter jug (no markings). How do you measure exactly 4 liters of water?', expectedKeywords: ['fill', 'pour', '3', '5', '4'] },
+    { question: 'Using the Rule of 72, at 8% annual compound interest, approximately how many years will it take a $10,000 investment to double?', expectedKeywords: ['9', 'nine'] },
+    { question: 'If all programmers drink coffee, and Sam does not drink coffee, what can we logically conclude about Sam?', expectedKeywords: ['not', 'programmer'] },
+    { question: 'A 10-meter ladder leans against a vertical wall with its base 6 meters from the wall. How high up the wall does the ladder reach?', expectedKeywords: ['8'] },
+    { question: 'What is the maximum number of non-overlapping regions that 4 straight lines can divide a plane into?', expectedKeywords: ['11'] },
+    { question: 'A frog starts at pad 0 and can jump 1, 2, or 3 pads at a time. How many distinct ways can it reach exactly pad 5?', expectedKeywords: ['13'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -461,6 +489,12 @@ let TTS_PHRASES = [
     { text: 'Your one-time verification code is 8 4 3 7 2 and expires in five minutes', keywords: ['verification', 'code', '84372', 'five', 'minutes'] },
     { text: 'The SQL query selects all records from the users table where the account status equals active and the score is greater than 100', keywords: ['SQL', 'query', 'users', 'active', 'score', '100'] },
     { text: 'Bernoulli and Euler each contributed foundational theorems to both fluid dynamics and graph theory', keywords: ['bernoulli', 'euler', 'fluid', 'dynamics', 'graph', 'theory'] },
+    // ── Added harder: medical, API specs, finance, multilingual names ──
+    { text: "The patient's echocardiogram showed left ventricular ejection fraction of 45 percent with mild mitral regurgitation and no pericardial effusion", keywords: ['echocardiogram', 'ventricular', 'ejection', 'fraction', '45', 'mitral'] },
+    { text: 'Configure the API gateway with TLS 1.3 mutual authentication using certificate fingerprint SHA-256 and a rate limit of 500 requests per second per tenant', keywords: ['TLS', 'mutual', 'authentication', 'SHA', '256', 'rate', '500'] },
+    { text: 'The S&P 500 index rose 0.73 percent to close at 5,248.42 while the 10-year Treasury yield fell 4 basis points to 4.31 percent', keywords: ['S&P', '500', '5248', 'Treasury', 'yield', '4.31'] },
+    { text: 'Reference number PO-2024-09-alpha-7 requires approval from three signatories before a wire transfer of one million two hundred fifty thousand dollars can proceed', keywords: ['PO', '2024', 'alpha', 'signatories', 'wire', 'transfer', 'million'] },
+    { text: 'Guadalajara Mexico and São Paulo Brazil are among the largest Spanish and Portuguese speaking metropolitan areas in Latin America respectively', keywords: ['guadalajara', 'paulo', 'brazil', 'portuguese', 'latin', 'america'] },
 ];
 
 // ============================================
