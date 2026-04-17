@@ -15,19 +15,23 @@
 (function (global) {
     'use strict';
 
-    // "Note" + full UUID (case-insensitive)
-    // Matches: "Note a51136e1-...", "note: a51136e1-...", "Note：a51136e1-..."
-    const UUID_NOTE_RE = /\b(note)\s*[:：]?\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\b/gi;
+    // Keyword alternation: ASCII "note/notes" (with \b) or CJK "筆記/笔记/備忘/备忘".
+    // Two capture groups — exactly one is non-empty per match. Case-insensitive via 'i' flag.
+    const NOTE_KW = '(?:\\b(note|notes)|(筆記|笔记|備忘|备忘))';
 
-    // "Note" + short 8-char hex ID (case-insensitive)
-    // Matches: "Note a51136e1", "note:a51136e1", "Note: a51136e1"
-    const SHORT_NOTE_RE = /\b(note)\s*[:：]?\s*([0-9a-f]{8})\b/gi;
+    // Keyword + full UUID
+    // Matches: "Note a51136e1-...", "note: a51136e1-...", "Note：a51136e1-...", "筆記 a51136e1-..."
+    const UUID_NOTE_RE = new RegExp(NOTE_KW + '\\s*[:：#＃]?\\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\\b', 'gi');
+
+    // Keyword + short 8-char hex ID
+    // Matches: "Note a51136e1", "note:a51136e1", "筆記 a51136e1"
+    const SHORT_NOTE_RE = new RegExp(NOTE_KW + '\\s*[:：#＃]?\\s*([0-9a-f]{8})\\b', 'gi');
 
     // Markdown renders `backtick-wrapped` IDs as <code>ID</code>, and the code-segment
-    // skip in renderNoteLinks() hides them from the patterns above. Match "note <code>ID</code>"
-    // explicitly before the split.
-    const CODE_UUID_NOTE_RE = /\b(note)\s*[:：]?\s*<code[^>]*>\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\s*<\/code>/gi;
-    const CODE_SHORT_NOTE_RE = /\b(note)\s*[:：]?\s*<code[^>]*>\s*([0-9a-f]{8})\s*<\/code>/gi;
+    // skip in renderNoteLinks() hides them from the patterns above. Match
+    // "<keyword> <code>ID</code>" explicitly before the split.
+    const CODE_UUID_NOTE_RE = new RegExp(NOTE_KW + '\\s*[:：#＃]?\\s*<code[^>]*>\\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\\s*</code>', 'gi');
+    const CODE_SHORT_NOTE_RE = new RegExp(NOTE_KW + '\\s*[:：#＃]?\\s*<code[^>]*>\\s*([0-9a-f]{8})\\s*</code>', 'gi');
 
     // Cache: short prefix → full noteId (populated on successful API fetches)
     const resolvedIds = {};
@@ -42,13 +46,13 @@
         if (!escapedHtml) return escapedHtml;
 
         // Phase 0: "note <code>fullUUID</code>" → chip placeholder (consumes the <code> wrapper)
-        escapedHtml = escapedHtml.replace(CODE_UUID_NOTE_RE, (match, noteWord, uuid) => {
+        escapedHtml = escapedHtml.replace(CODE_UUID_NOTE_RE, (match, asciiKw, cjkKw, uuid) => {
             const short = uuid.substring(0, 8);
             resolvedIds[short] = uuid;
             return queueChip(uuid, short);
         });
         // Phase 0b: "note <code>shortId</code>" → chip placeholder
-        escapedHtml = escapedHtml.replace(CODE_SHORT_NOTE_RE, (match, noteWord, shortId) => {
+        escapedHtml = escapedHtml.replace(CODE_SHORT_NOTE_RE, (match, asciiKw, cjkKw, shortId) => {
             const fullId = resolvedIds[shortId] || shortId;
             return queueChip(fullId, shortId);
         });
@@ -60,16 +64,16 @@
             // Even indices = outside code, odd = inside code tags
             if (i % 2 === 1) continue;
 
-            // Phase 1: replace "Note <fullUUID>" patterns with placeholders
-            parts[i] = parts[i].replace(UUID_NOTE_RE, (match, noteWord, uuid) => {
+            // Phase 1: replace "<keyword> <fullUUID>" patterns with placeholders
+            parts[i] = parts[i].replace(UUID_NOTE_RE, (match, asciiKw, cjkKw, uuid) => {
                 const short = uuid.substring(0, 8);
                 resolvedIds[short] = uuid;
                 return queueChip(uuid, short);
             });
 
-            // Phase 2: replace "Note <shortId>" patterns with placeholders
+            // Phase 2: replace "<keyword> <shortId>" patterns with placeholders
             // (only matches short IDs not already consumed by Phase 1)
-            parts[i] = parts[i].replace(SHORT_NOTE_RE, (match, noteWord, shortId) => {
+            parts[i] = parts[i].replace(SHORT_NOTE_RE, (match, asciiKw, cjkKw, shortId) => {
                 const fullId = resolvedIds[shortId] || shortId;
                 return queueChip(fullId, shortId);
             });
