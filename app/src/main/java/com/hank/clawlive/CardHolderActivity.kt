@@ -70,6 +70,7 @@ class CardHolderActivity : AppCompatActivity() {
 
     // Edit mode
     private var editMode = false
+    private var editToolbarBtn: ImageView? = null
 
     // Tab views
     private lateinit var tabLayout: TabLayout
@@ -143,6 +144,7 @@ class CardHolderActivity : AppCompatActivity() {
                 rebuildContent()
             }
         }
+        editToolbarBtn = editBtn
         toolbar.addView(title)
         toolbar.addView(editBtn)
         mainColumn.addView(toolbar)
@@ -1367,6 +1369,13 @@ class CardHolderActivity : AppCompatActivity() {
         AlertDialog.Builder(this, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
             .setView(scroll)
             .setPositiveButton(android.R.string.ok, null)
+            .setNeutralButton(getString(R.string.action_edit)) { _, _ ->
+                if (!editMode) {
+                    editMode = true
+                    editToolbarBtn?.setColorFilter(Color.parseColor("#6C63FF"))
+                    rebuildContent()
+                }
+            }
             .create()
             .show()
     }
