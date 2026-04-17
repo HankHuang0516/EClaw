@@ -1,3 +1,10 @@
+# [1.1000.0](https://github.com/HankHuang0516/EClaw/compare/v1.999.0...v1.1000.0) (2026-04-17)
+
+
+### Features
+
+* **chat:** clickable card_<shortId> references in chat ([#1829](https://github.com/HankHuang0516/EClaw/issues/1829)) ([14ab004](https://github.com/HankHuang0516/EClaw/commit/14ab004780c3c03ebc8f73f03ce4f090e0b605ec))
+
 # [1.999.0](https://github.com/HankHuang0516/EClaw/compare/v1.998.0...v1.999.0) (2026-04-17)
 
 
