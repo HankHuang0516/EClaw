@@ -5,9 +5,10 @@ Track git commits for each release to enable changelog generation via `git diff`
 ---
 
 ## Latest
-v1.0.69 | 57b5250b | 2026-04-16 | versionCode 75 | Internal ✅ + Production ✅ (submitted for review 2026-04-17 09:33 TW)
+v1.0.70 | 9a3a1c52 | 2026-04-17 | versionCode 76 | Dashboard + Org Chart parity on Android & iOS (WebView → portal/dashboard.html)
 
 ## Recent
+v1.0.69 | 57b5250b | 2026-04-16 | versionCode 75 | Internal ✅ + Production ✅ (submitted for review 2026-04-17 09:33 TW)
 v1.0.68 | 606b04ca | 2026-04-16
 v1.0.67 | ecbe48e0 | 2026-04-16
 v1.0.65 | c3769436 | 2026-04-16
