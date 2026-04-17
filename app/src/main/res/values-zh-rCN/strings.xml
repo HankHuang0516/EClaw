@@ -841,4 +841,21 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="schedule_error_generic">Error: %s</string>
     <string name="schedule_failed_to_load">Failed to load: %s</string>
     <string name="schedule_operation_failed">Operation failed</string>
+    <string name="close">关闭</string>
+    <string name="developer_section_title">开发者</string>
+    <string name="ecoin_unit">e币</string>
+    <string name="org_chart_sheet_title">组织图</string>
+    <string name="settings_delete_account">删除账户</string>
+    <string name="settings_invite">邀请好友</string>
+    <string name="settings_my_rentals">我的租借</string>
+    <string name="settings_wallet">钱包</string>
+    <string name="topup_bonus_format"> (+%d%% 加赠)</string>
+    <string name="topup_tier_advanced">进阶</string>
+    <string name="topup_tier_format">%1$s — %2$s
+%3$s %4$s%5$s</string>
+    <string name="topup_tier_premium">尊享</string>
+    <string name="topup_tier_small">小额</string>
+    <string name="topup_tier_standard">标准</string>
+    <string name="topup_tier_starter">入门</string>
+    <string name="channel_api_manage_all">管理所有密钥 →</string>
 </resources>
