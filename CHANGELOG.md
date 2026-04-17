@@ -1,3 +1,10 @@
+## [1.994.4](https://github.com/HankHuang0516/EClaw/compare/v1.994.3...v1.994.4) (2026-04-17)
+
+
+### Bug Fixes
+
+* **dashboard:** lock to orgchart when navigated from community.html ([#1819](https://github.com/HankHuang0516/EClaw/issues/1819)) ([a28b0eb](https://github.com/HankHuang0516/EClaw/commit/a28b0eb4d33429e78213e3d45bfe839c5d5d6a77)), closes [#1815](https://github.com/HankHuang0516/EClaw/issues/1815)
+
 ## [1.994.3](https://github.com/HankHuang0516/EClaw/compare/v1.994.2...v1.994.3) (2026-04-17)
 
 
