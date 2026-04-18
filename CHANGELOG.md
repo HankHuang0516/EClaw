@@ -1,3 +1,10 @@
+# [1.1003.0](https://github.com/HankHuang0516/EClaw/compare/v1.1002.7...v1.1003.0) (2026-04-18)
+
+
+### Features
+
+* **ios:** align App Store icon with Android launcher (brand parity) ([#1848](https://github.com/HankHuang0516/EClaw/issues/1848)) ([dfb49c2](https://github.com/HankHuang0516/EClaw/commit/dfb49c2f174521f8d66222726dbc5c7249858e21))
+
 ## [1.1002.7](https://github.com/HankHuang0516/EClaw/compare/v1.1002.6...v1.1002.7) (2026-04-18)
 
 
