@@ -14,7 +14,6 @@ import com.hank.clawlive.MissionControlActivity
 import com.hank.clawlive.R
 import com.hank.clawlive.SettingsActivity
 import com.hank.clawlive.WebViewActivity
-import com.hank.clawlive.data.local.DeviceManager
 import timber.log.Timber
 
 enum class NavItem {
@@ -69,14 +68,13 @@ object BottomNavHelper {
         }
 
         // CARDS routes to the portal card-holder.html WebView (no native screen).
+        // Pass base URL only — WebViewActivity appends embed/deviceId/deviceSecret
+        // centrally; appending them here as well would duplicate query params.
         activity.findViewById<LinearLayout>(R.id.navCards)?.setOnClickListener {
             if (currentItem != NavItem.CARDS) {
-                val dm = DeviceManager.getInstance(activity)
-                val url = "https://eclawbot.com/portal/card-holder.html?embed=1" +
-                    "&deviceId=${dm.deviceId}&deviceSecret=${dm.deviceSecret}"
                 WebViewActivity.launch(
                     activity,
-                    url,
+                    "https://eclawbot.com/portal/card-holder.html",
                     activity.getString(R.string.nav_cards),
                     NavItem.CARDS
                 )

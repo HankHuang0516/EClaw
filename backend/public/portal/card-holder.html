@@ -754,7 +754,8 @@
             if (typeof renderFooter === 'function') renderFooter();
             const user = await checkAuth();
             if (!user) return;
-            document.getElementById('navEmail').textContent = user.email || '';
+            const navEmailEl = document.getElementById('navEmail');
+            if (navEmailEl) navEmailEl.textContent = user.email || '';
             if (typeof initAiChat === 'function') initAiChat(user);
             loadAllData();
 
@@ -888,7 +889,8 @@
             if (myCards.length === 0 && filteredRecent.length === 0 && filteredCollected.length === 0) {
                 html = `<div class="empty-state">
                     <div class="empty-state-icon">&#x1F4C7;</div>
-                    <div class="empty-state-text">${t('cardholder_empty', 'No cards yet')}</div>
+                    <div class="empty-state-text" data-i18n="cardholder_empty">${t('cardholder_empty', '尚無名片')}</div>
+                    <button class="btn btn-primary" style="margin-top:12px;padding:10px 20px;border-radius:8px;border:none;background:#5B67F1;color:#fff;font-weight:600;cursor:pointer;" onclick="switchChTab('bot-plaza')" data-i18n="cardholder_tab_bot_plaza">${t('cardholder_tab_bot_plaza', '去 Bot 廣場')}</button>
                 </div>`;
             }
 
