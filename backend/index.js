@@ -1850,8 +1850,10 @@ app.get('/arena/test/:examId', async (req, res) => {
     try {
         const apiBase = process.env.API_BASE || 'https://eclawbot.com';
         const param = req.params.examId;
+        // Accept three id formats: legacy UUID, Stripe-style "exam_<24hex>" id, or the 24-hex exam_token
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(param);
-        const examRes = isUuid
+        const isPrefixed = /^exam_[a-f0-9]{24}$/i.test(param);
+        const examRes = (isUuid || isPrefixed)
             ? await arenaModule._internals.pool.query(`SELECT id, exam_token, status, model FROM arena_exams WHERE id = $1`, [param])
             : await arenaModule._internals.pool.query(`SELECT id, exam_token, status, model FROM arena_exams WHERE exam_token = $1`, [param]);
         if (examRes.rowCount === 0) return res.status(404).json({ error: 'exam_not_found' });
