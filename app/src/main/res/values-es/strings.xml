@@ -125,45 +125,8 @@ Pregúntame lo que quieras sobre la plataforma.</string>
     <string name="broadcast_settings_title">Configuración de Broadcast</string>
     <string name="broadcast_to_all">Broadcast a Todos</string>
     <string name="cancel">Cancelar</string>
-    <string name="card_holder">Tarjetero</string>
-    <string name="card_holder_add">Agregar Tarjeta</string>
-    <string name="card_holder_add_capability">Agregar capacidad</string>
-    <string name="card_holder_added">Tarjeta agregada</string>
-    <string name="card_holder_added_at">Agregado</string>
-    <string name="card_holder_blocked">Bloqueado</string>
-    <string name="card_holder_capabilities">Capacidades</string>
-    <string name="card_holder_category">Categoría</string>
-    <string name="card_holder_category_hint">ej., herramientas, social, dev</string>
-    <string name="card_holder_code_hint">Código público</string>
-    <string name="card_holder_desc">Explorar tarjetas de agente coleccionadas</string>
-    <string name="card_holder_description">Descripción</string>
-    <string name="card_holder_details">Detalles</string>
-    <string name="card_holder_email">Email</string>
-    <string name="card_holder_empty">Sin tarjetas aún
-Chat cross-device para auto-colectar tarjetas de agente</string>
-    <string name="card_holder_exchange_type">Tipo de intercambio</string>
-    <string name="card_holder_friend_added">Amigo agregado</string>
-    <string name="card_holder_interactions">Interacciones</string>
-    <string name="card_holder_not_found">No encontrado</string>
-    <string name="card_holder_notes">Notas</string>
-    <string name="card_holder_notes_hint">Agrega tus notas…</string>
-    <string name="card_holder_pin">Fijar</string>
-    <string name="card_holder_protocols">Protocolos</string>
-    <string name="card_holder_refresh">Actualizar Tarjeta</string>
-    <string name="card_holder_refreshed">Tarjeta actualizada</string>
-    <string name="card_holder_remove">Eliminar</string>
-    <string name="card_holder_removed">Tarjeta eliminada</string>
-    <string name="card_holder_save">Guardar</string>
-    <string name="card_holder_saved">Guardado</string>
-    <string name="card_holder_search">Buscar tarjetas…</string>
-    <string name="card_holder_tags">Etiquetas</string>
-    <string name="card_holder_tags_hint">Agregar etiqueta…</string>
-    <string name="card_holder_title">Tarjetero</string>
-    <string name="card_holder_unblocked">Desbloqueado</string>
-    <string name="card_holder_unpin">Desfijar</string>
-    <string name="card_holder_version">Versión</string>
-    <string name="card_holder_website">Sitio Web</string>
-    <string name="category_add">+ Categoría</string>
+    <string name="card_holder">Tarjetero</string>    <string name="card_holder_add_capability">Agregar capacidad</string>    <string name="card_holder_capabilities">Capacidades</string>    <string name="card_holder_protocols">Protocolos</string>    <string name="card_holder_tags">Etiquetas</string>
+    <string name="card_holder_tags_hint">Agregar etiqueta…</string>    <string name="category_add">+ Categoría</string>
     <string name="category_add_title">Agregar Categoría</string>
     <string name="category_already_exists">La categoría &quot;%1$s&quot; ya existe</string>
     <string name="category_clear_confirm">¿Limpiar todos los elementos en &quot;%1$s&quot;?</string>
@@ -841,10 +804,7 @@ Tu suscripción permanece activa y puedes reenlazar en cualquier momento (sujeto
     <string name="choose_plan_title">Elegir Plan</string>
     <string name="upgrade_plan">Mejorar Plan</string>
 
-    <string name="billing_subscription_unavailable">No se pudo obtener el plan de suscripción, intente más tarde</string>
-    <string name="card_holder_copied">Copiado: %s</string>
-    <string name="card_holder_error">Error</string>
-    <string name="dialog_add_friend_message">¿Agregar a %s a tus contactos?</string>
+    <string name="billing_subscription_unavailable">No se pudo obtener el plan de suscripción, intente más tarde</string>    <string name="dialog_add_friend_message">¿Agregar a %s a tus contactos?</string>
     <string name="dialog_add_friend_title">Agregar amigo</string>
     <string name="dialog_agent_card_title">Tarjeta de agente — Entidad #%d</string>
     <string name="dialog_block_contact">¿Bloquear a %s? Ya no podrán interactuar contigo.</string>
@@ -867,16 +827,7 @@ Tu suscripción permanece activa y puedes reenlazar en cualquier momento (sujeto
     <string name="feedback_photo_upload_failed">Error al subir foto: %s</string>
     <string name="wallpaper_load_entities_failed">Error al cargar entidades: %s</string>
     <string name="billing_google_play_loading">Cargando Google Play...</string>
-    <string name="dialog_unblock_message">¿Desbloquear %s?</string>
-    <string name="action_plaza_on">🏗 Bot Plaza: ENCENDIDO</string>
-    <string name="action_plaza_off">🏗 Bot Plaza: APAGADO</string>
-    <string name="action_run_interview">🧪 Ejecutar entrevista</string>
-    <string name="action_share_link">🔗 Compartir</string>
-    <string name="action_start_chat">💬 Iniciar chat</string>
-    <string name="card_share_copied">Enlace compartido copiado</string>
-    <string name="plaza_published">Publicado en Bot Plaza</string>
-    <string name="plaza_unpublished">Eliminado de Bot Plaza</string>
-    <string name="close">Cerrar</string>
+    <string name="dialog_unblock_message">¿Desbloquear %s?</string>    <string name="close">Cerrar</string>
     <string name="developer_section_title">Desarrollador</string>
     <string name="ecoin_unit">e-Monederos</string>
     <string name="org_chart_sheet_title">Gráfico de organización</string>

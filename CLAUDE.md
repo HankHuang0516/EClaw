@@ -122,7 +122,7 @@ EClaw/
 │       ├── SettingsActivity.kt    # Settings
 │       ├── FileManagerActivity.kt # File manager
 │       ├── FeedbackActivity.kt    # Feedback
-│       ├── CardHolderActivity.kt  # Agent card collection
+│       ├── WebViewActivity.kt     # Generic WebView host (wallet, invite, card-holder, …)
 │       ├── data/
 │       │   ├── local/             # SharedPreferences, Room DB
 │       │   ├── model/             # API data models
@@ -526,8 +526,16 @@ https://github.com/HankHuang0516/realbot/compare/main...<branch-name>
 
 ## Feature Parity Rule
 
-**All user-facing features must be kept in sync between the Web Portal and the Android App.**
-When implementing or modifying any feature on one platform, ensure the other platform is updated to match. This includes UI elements, API fields sent, string resources, and behavior.
+**All user-facing features must be kept in sync across all three client surfaces: Web Portal, Android App, and iOS App.**
+When implementing or modifying any feature on one platform, ensure the other platforms are updated to match. This includes UI elements, API fields sent, string resources, behavior, navigation structure, and tab bar layout.
+
+### Brand Asset Parity (NEW)
+
+**Brand assets must be identical across Android, iOS, and Web Portal** — app icon, splash screen, launch screen, store listing copy, screenshots, and marketing text. A user seeing the Android icon (red pixel creature on phone) and the iOS icon (default Expo triangle) at the same time is a brand failure, not a parity oversight. When replacing any brand asset on one platform, update the others in the same PR.
+
+Icon source of truth: `google_play/play_store_icon_512.png` (512×512, no alpha) — upscale with LANCZOS to 1024×1024 for `ios-app/assets/icon.png`; Android already consumes it via `ic_launcher*` mipmap variants.
+
+App Store / Play Store listing text (name, subtitle, description, keywords, promo text) must also stay in sync — changes to one store listing require updating the other.
 
 ---
 

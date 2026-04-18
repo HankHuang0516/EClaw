@@ -14,7 +14,7 @@
 3. [ChatActivity — 原生聊天](#3-chatactivity)
 4. [AiChatBottomSheet — AI 助手](#4-aichatbottomsheet)
 5. [MissionControlActivity — Kanban WebView](#5-missioncontrolactivity)
-6. [CardHolderActivity — 名片夾 + Community](#6-cardholderactivity)
+6. [Card Holder (WebViewActivity embed)](#6-card-holder-webviewactivity-embed)
 7. [FileManagerActivity — 檔案管理](#7-filemanageractivity)
 8. [SettingsActivity — 設定](#8-settingsactivity)
 9. [OfficialBorrowActivity + Billing Flow](#9-officialborrowactivity--billing)
@@ -337,35 +337,50 @@ WebView 包在 `SwipeRefreshLayout` 內，下拉觸發 `webView.reload()`。
 
 ---
 
-## 6. CardHolderActivity
+## 6. Card Holder (WebViewActivity embed)
+
+Since v1.0.74 the native `CardHolderActivity` was removed. The CARDS bottom-nav tab now launches the generic `WebViewActivity` pointed at the portal embed URL:
+
+```
+https://eclawbot.com/portal/card-holder.html?embed=1&deviceId=…&deviceSecret=…
+```
 
 ### 6.1 佈局
 
 ```
 ┌────────────────────────────────────────────────┐
-│  ← Cards                              [🔍]     │
+│  (App top bar with title "Cards" + back)       │
 ├────────────────────────────────────────────────┤
-│  [Card Holder] [Community] [Marketplace]       │ ← Sub-tabs
-├────────────────────────────────────────────────┤
-│  (WebView 填滿)                                 │
-│  URL: https://eclawbot.com/portal/             │
-│       ├─ card-holder.html (Card Holder tab)    │
-│       ├─ community.html   (Community tab)      │
-│       └─ community.html#rental (Marketplace)   │
+│  WebView 填滿：                                  │
+│  portal/card-holder.html?embed=1               │
+│  ├─ [📁 我的名片] [🏗 Bot 廣場]  (in-page tabs) │
+│  ├─ filter chips + search                       │
+│  └─ card list / detail modals                   │
 └────────────────────────────────────────────────┘
 ```
 
-### 6.2 Sub-tab 切換
+### 6.2 embed=1 contract
 
-- 每個 sub-tab 對應一個 URL，切換時 `webView.loadUrl()`
-- 保持 WebView instance 不重建（維持 session / cookie）
+`shared/nav.js` and `shared/footer.js` both read `?embed=1` and skip rendering so
+the portal loses its top-level nav/footer chrome. Within `card-holder.html`,
+`body.embedded` CSS hides the redundant page-title `h2` and trims the page-header
+to just the search bar.
 
-### 6.3 BRM 入口標示
+### 6.3 Feature parity (no native port)
 
-**Android 目前沒有獨立的 BRM nav**。從 `Community` tab 進入 Marketplace 是主要路徑。
-**建議**：未來在 Settings 或 Card Holder AppBar 加「Marketplace」shortcut。
+The MyCard detail modal already ships:
+- **Run Interview** — shared `AgentCardEditor` (`shared/agent-card-editor.js`)
+- **Bot Plaza publish toggle** — `togglePlazaCH`
+- **Start Chat** button (deep-links to `/c/<publicCode>`)
+- **Share** button (existing `openShareModal` + QR)
+- **Edit** capabilities/tags/protocols via `AgentCardEditor`
 
-詳見 `docs/plans/2026-04-14-brm-mobile-parity-gap.md`。
+### 6.4 BRM 入口標示
+
+BRM / Marketplace is reached by tapping the **Bot 廣場** sub-tab inside the portal
+(which iframes `community.html?embed=1`). No separate native BRM entry.
+
+詳見 `docs/plans/2026-04-14-brm-mobile-parity-gap.md`.
 
 ---
 
@@ -625,7 +640,7 @@ Push notification landing page — 當 app 被 kill 後從 push 開啟時經過�
 |-----|------|----------|
 | Dashboard | `ic_dashboard` | MainActivity |
 | Chat | `ic_chat_bubble` | ChatActivity |
-| Cards | `ic_badge` | CardHolderActivity |
+| Cards | `ic_badge` | WebViewActivity (→ `portal/card-holder.html?embed=1`) |
 | Mission | `ic_task` | MissionControlActivity |
 | Settings | `ic_settings` | SettingsActivity |
 

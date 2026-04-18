@@ -35,11 +35,13 @@ class WebViewActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_URL = "extra_url"
         const val EXTRA_TITLE = "extra_title"
+        const val EXTRA_NAV_ITEM = "extra_nav_item"
 
-        fun launch(context: Context, url: String, title: String) {
+        fun launch(context: Context, url: String, title: String, navItem: NavItem = NavItem.SETTINGS) {
             context.startActivity(Intent(context, WebViewActivity::class.java).apply {
                 putExtra(EXTRA_URL, url)
                 putExtra(EXTRA_TITLE, title)
+                putExtra(EXTRA_NAV_ITEM, navItem.name)
             })
         }
     }
@@ -52,7 +54,10 @@ class WebViewActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_webview)
 
-        BottomNavHelper.setup(this, NavItem.SETTINGS)
+        val navItem = intent.getStringExtra(EXTRA_NAV_ITEM)?.let {
+            runCatching { NavItem.valueOf(it) }.getOrNull()
+        } ?: NavItem.SETTINGS
+        BottomNavHelper.setup(this, navItem)
         setupWindowInsets()
 
         val title = intent.getStringExtra(EXTRA_TITLE) ?: ""

@@ -9,11 +9,12 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import com.hank.clawlive.ChatActivity
-import com.hank.clawlive.CardHolderActivity
 import com.hank.clawlive.MainActivity
 import com.hank.clawlive.MissionControlActivity
 import com.hank.clawlive.R
 import com.hank.clawlive.SettingsActivity
+import com.hank.clawlive.WebViewActivity
+import com.hank.clawlive.data.local.DeviceManager
 import timber.log.Timber
 
 enum class NavItem {
@@ -50,7 +51,6 @@ object BottomNavHelper {
             R.id.navHome to Pair(NavItem.HOME, MainActivity::class.java),
             R.id.navMission to Pair(NavItem.MISSION, MissionControlActivity::class.java),
             R.id.navChat to Pair(NavItem.CHAT, ChatActivity::class.java),
-            R.id.navCards to Pair(NavItem.CARDS, CardHolderActivity::class.java),
             R.id.navSettings to Pair(NavItem.SETTINGS, SettingsActivity::class.java),
         )
 
@@ -65,6 +65,23 @@ object BottomNavHelper {
                     @Suppress("DEPRECATION")
                     activity.overridePendingTransition(0, 0)
                 }
+            }
+        }
+
+        // CARDS routes to the portal card-holder.html WebView (no native screen).
+        activity.findViewById<LinearLayout>(R.id.navCards)?.setOnClickListener {
+            if (currentItem != NavItem.CARDS) {
+                val dm = DeviceManager.getInstance(activity)
+                val url = "https://eclawbot.com/portal/card-holder.html?embed=1" +
+                    "&deviceId=${dm.deviceId}&deviceSecret=${dm.deviceSecret}"
+                WebViewActivity.launch(
+                    activity,
+                    url,
+                    activity.getString(R.string.nav_cards),
+                    NavItem.CARDS
+                )
+                @Suppress("DEPRECATION")
+                activity.overridePendingTransition(0, 0)
             }
         }
     }

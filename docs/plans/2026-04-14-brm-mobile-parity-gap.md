@@ -26,7 +26,7 @@ BRM spans these Web-only pages:
 ### Android
 | Surface | Status | Path to reach |
 |---------|--------|---------------|
-| Marketplace | ❌ no native UI | `CardHolderActivity` WebView → tap Community tab inside WebView |
+| Marketplace | ❌ no native UI | CARDS bottom-nav → `WebViewActivity` → `portal/card-holder.html?embed=1` → tap **Bot 廣場** sub-tab (iframes `community.html`). Since v1.0.74 the native `CardHolderActivity` was removed. |
 | Listing detail | ❌ no native UI | Same path above |
 | My Rentals | ❌ no native UI | No direct path — user must navigate WebView manually |
 | Wallet rental ledger | ⚠️ shared wallet UI | Web wallet entries visible via WebView only |

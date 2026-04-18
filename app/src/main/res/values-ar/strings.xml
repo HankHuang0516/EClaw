@@ -775,34 +775,9 @@ GPS: عند الطلب فقط، بلا تتبع في الخلفية، تُفقد
     <string name="update_now">تحديث الآن</string>
     <string name="update_later">لاحقًا</string>
 
-    <!-- Card Holder -->
-    <string name="card_holder_title">حامل البطاقات</string>
-    <string name="card_holder_add">إضافة بطاقة</string>
-    <string name="card_holder_search">بحث في البطاقات…</string>
-    <string name="card_holder_empty">لا توجد بطاقات بعد\nتحدث عبر الأجهزة لجمع بطاقات الوكلاء تلقائيًا</string>
-    <string name="card_holder_code_hint">الرمز العام</string>
-    <string name="card_holder_not_found">غير موجود</string>
-    <string name="card_holder_added">تمت إضافة البطاقة</string>
-    <string name="card_holder_removed">تمت إزالة البطاقة</string>
-    <string name="card_holder_saved">تم الحفظ</string>
-    <string name="card_holder_description">الوصف</string>
-    <string name="card_holder_capabilities">القدرات</string>
+    <!-- Card Holder -->    <string name="card_holder_capabilities">القدرات</string>
     <string name="card_holder_tags">العلامات</string>
     <string name="card_holder_protocols">البروتوكولات</string>
-    <string name="card_holder_details">التفاصيل</string>
-    <string name="card_holder_exchange_type">نوع التبادل</string>
-    <string name="card_holder_interactions">التفاعلات</string>
-    <string name="card_holder_added_at">تمت الإضافة</string>
-    <string name="card_holder_notes">ملاحظات</string>
-    <string name="card_holder_notes_hint">أضف ملاحظاتك…</string>
-    <string name="card_holder_category">الفئة</string>
-    <string name="card_holder_category_hint">مثال: أدوات، اجتماعي، تطوير</string>
-    <string name="card_holder_pin">تثبيت</string>
-    <string name="card_holder_unpin">إلغاء التثبيت</string>
-    <string name="card_holder_save">حفظ</string>
-    <string name="card_holder_remove">إزالة</string>
-    <string name="card_holder_desc">تصفح بطاقات الأعمال المجمعة للوكلاء</string>
-
     <!-- Card Holder Redesign -->
     <string name="my_cards_section">بطاقاتي</string>
     <string name="recent_interactions">الأخيرة</string>
@@ -813,18 +788,8 @@ GPS: عند الطلب فقط، بلا تتبع في الخلفية، تُفقد
     <string name="block_confirm">حظر %1$s؟ ستُخفى رسائل هذا الكيان.</string>
     <string name="unblock_confirm">إلغاء حظر %1$s؟</string>
     <string name="chat_history_with">سجل الدردشة مع %1$s</string>
-    <string name="no_chat_history">لا يوجد سجل دردشة</string>
-    <string name="card_holder_blocked">تم الحظر</string>
-    <string name="card_holder_unblocked">تم إلغاء الحظر</string>
-    <string name="card_holder_friend_added">تمت إضافة صديق</string>
-    <string name="card_holder_email">البريد الإلكتروني</string>
-    <string name="card_holder_website">الموقع الإلكتروني</string>
-    <string name="card_holder_version">الإصدار</string>
-    <string name="card_holder_tags_hint">إضافة علامة…</string>
-    <string name="card_holder_add_capability">إضافة قدرة</string>
-    <string name="card_holder_refresh">تحديث البطاقة</string>
-    <string name="card_holder_refreshed">تم تحديث البطاقة</string>
-    <string name="tab_my_cards">بطاقاتي</string>
+    <string name="no_chat_history">لا يوجد سجل دردشة</string>    <string name="card_holder_tags_hint">إضافة علامة…</string>
+    <string name="card_holder_add_capability">إضافة قدرة</string>    <string name="tab_my_cards">بطاقاتي</string>
     <string name="tab_bot_plaza">ساحة البوتات</string>
 
     <!-- Share Chat Link -->
@@ -916,10 +881,7 @@ GPS: عند الطلب فقط، بلا تتبع في الخلفية، تُفقد
     <!-- Hardcoded string externalization -->
     <string name="schedule_failed_to_load">فشل التحميل: %s</string>
     <string name="schedule_error_generic">خطأ: %s</string>
-    <string name="schedule_operation_failed">فشلت العملية</string>
-    <string name="card_holder_copied">تم النسخ: %s</string>
-    <string name="card_holder_error">خطأ</string>
-    <string name="main_delete_failed_msg">فشل الحذف: %s</string>
+    <string name="schedule_operation_failed">فشلت العملية</string>    <string name="main_delete_failed_msg">فشل الحذف: %s</string>
     <string name="billing_subscription_unavailable">تعذر الحصول على خطط الاشتراك، يرجى المحاولة لاحقًا</string>
     <string name="billing_google_play_loading">Google Play قيد التحميل، يرجى المحاولة لاحقًا</string>
     <string name="dialog_delete_agent_card">حذف بطاقة الوكيل؟</string>
@@ -942,16 +904,7 @@ GPS: عند الطلب فقط، بلا تتبع في الخلفية، تُفقد
     <string name="card_no_chat_history">لا يوجد سجل دردشة</string>
     <string name="card_chat_history_failed">فشل تحميل سجل الدردشة</string>
     <string name="feedback_photo_upload_failed">فشل رفع الصورة: %s</string>
-    <string name="wallpaper_load_entities_failed">فشل تحميل الكيانات: %s</string>
-    <string name="action_plaza_on">🏗 بلازا البوت: تشغيل</string>
-    <string name="action_plaza_off">🏗 بلازا البوت: إيقاف</string>
-    <string name="action_run_interview">🧪 تشغيل المقابلة</string>
-    <string name="action_share_link">🔗 مشاركة</string>
-    <string name="action_start_chat">💬 بدء المحادثة</string>
-    <string name="card_share_copied">تم نسخ رابط المشاركة</string>
-    <string name="plaza_published">تم النشر في بلازا البوت</string>
-    <string name="plaza_unpublished">تمت الإزالة من بلازا البوت</string>
-    <string name="close">إغلاق</string>
+    <string name="wallpaper_load_entities_failed">فشل تحميل الكيانات: %s</string>    <string name="close">إغلاق</string>
     <string name="developer_section_title">المطور</string>
     <string name="ecoin_unit">عملات e</string>
     <string name="org_chart_sheet_title">الهيكل التنظيمي</string>
