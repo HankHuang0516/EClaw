@@ -31,11 +31,16 @@ class OrgChartBottomSheetFragment : BottomSheetDialogFragment() {
         dialog.setOnShowListener {
             val sheet = dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
             sheet?.let {
-                val behavior = BottomSheetBehavior.from(it)
                 val screenHeight = resources.displayMetrics.heightPixels
-                behavior.peekHeight = (screenHeight * 0.9).toInt()
-                behavior.state = BottomSheetBehavior.STATE_EXPANDED
+                val targetHeight = (screenHeight * 0.9).toInt()
+                it.layoutParams = it.layoutParams.apply { height = targetHeight }
+                it.requestLayout()
+                val behavior = BottomSheetBehavior.from(it)
+                behavior.isFitToContents = false
+                behavior.expandedOffset = (screenHeight * 0.1).toInt()
                 behavior.skipCollapsed = true
+                behavior.peekHeight = targetHeight
+                behavior.state = BottomSheetBehavior.STATE_EXPANDED
             }
         }
         return dialog
