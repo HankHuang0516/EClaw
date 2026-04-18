@@ -1,3 +1,10 @@
+## [1.1002.3](https://github.com/HankHuang0516/EClaw/compare/v1.1002.2...v1.1002.3) (2026-04-18)
+
+
+### Bug Fixes
+
+* **security+seo:** BOLA ownership checks, OAuth collision, Arena null ID, SQL param, SEO, chat spec ([#1839](https://github.com/HankHuang0516/EClaw/issues/1839)) ([a4044e6](https://github.com/HankHuang0516/EClaw/commit/a4044e6e2a60125665e14c9b21850fc1d118b9d9)), closes [#1790](https://github.com/HankHuang0516/EClaw/issues/1790)
+
 ## [1.1002.2](https://github.com/HankHuang0516/EClaw/compare/v1.1002.1...v1.1002.2) (2026-04-18)
 
 
