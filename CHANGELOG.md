@@ -1,3 +1,10 @@
+## [1.1002.6](https://github.com/HankHuang0516/EClaw/compare/v1.1002.5...v1.1002.6) (2026-04-18)
+
+
+### Bug Fixes
+
+* **arena:** timer + auto-finalize + elapsed-time leaderboard fixes ([#1844](https://github.com/HankHuang0516/EClaw/issues/1844)) ([dc6f3d3](https://github.com/HankHuang0516/EClaw/commit/dc6f3d3c66d9a95ce905b5dfad6e617bf723ddf6))
+
 ## [1.1002.5](https://github.com/HankHuang0516/EClaw/compare/v1.1002.4...v1.1002.5) (2026-04-18)
 
 
