@@ -1,3 +1,10 @@
+## [1.1003.6](https://github.com/HankHuang0516/EClaw/compare/v1.1003.5...v1.1003.6) (2026-04-18)
+
+
+### Bug Fixes
+
+* **security:** remove allowVulnerableTags XSS risk in note page sanitizer ([#1840](https://github.com/HankHuang0516/EClaw/issues/1840)) ([#1859](https://github.com/HankHuang0516/EClaw/issues/1859)) ([438df13](https://github.com/HankHuang0516/EClaw/commit/438df136daff154aeb48f514af997687c12f9f05))
+
 ## [1.1003.5](https://github.com/HankHuang0516/EClaw/compare/v1.1003.4...v1.1003.5) (2026-04-18)
 
 
