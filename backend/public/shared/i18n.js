@@ -3924,6 +3924,7 @@ const TRANSLATIONS = {
         "arena_expand": "Expand",
         "arena_name_subtitle": "Enter your name to record your score",
         "arena_time_remaining": "Time remaining: ",
+        "arena_total_time": "Total time: ",
 
     },
 
@@ -7643,6 +7644,7 @@ const TRANSLATIONS = {
         "arena_expand": "展開",
         "arena_name_subtitle": "輸入你的名稱以記錄分數",
         "arena_time_remaining": "剩餘時間：",
+        "arena_total_time": "總花時：",
     },
 
     "zh-CN": {
@@ -11709,6 +11711,7 @@ const TRANSLATIONS = {
         "arena_expand": "展開",
         "arena_name_subtitle": "スコアを記録する名前を入力",
         "arena_time_remaining": "残り時間：",
+        "arena_total_time": "所要時間：",
 
         // Rental deposit descriptions (renter)
         "mr_deposit_renter_full_refund": "デポジットは全額返金されました",
@@ -15530,6 +15533,7 @@ const TRANSLATIONS = {
         "arena_expand": "펼치기",
         "arena_name_subtitle": "점수를 기록할 이름을 입력하세요",
         "arena_time_remaining": "남은 시간:",
+        "arena_total_time": "총 소요 시간:",
 
         // Rental deposit descriptions (renter)
         "mr_deposit_renter_full_refund": "보증금이 전액 환불되었습니다",
@@ -19273,6 +19277,7 @@ const TRANSLATIONS = {
         "arena_expand": "Expand",
         "arena_name_subtitle": "Enter your name to record your score",
         "arena_time_remaining": "Time remaining: ",
+        "arena_total_time": "Total time: ",
 
         // Marketplace rental dialog
         "mp_d_rent_duration_hours": "ระยะเวลาเช่า (ชั่วโมง)",
@@ -23094,6 +23099,7 @@ const TRANSLATIONS = {
         "arena_expand": "Expand",
         "arena_name_subtitle": "Enter your name to record your score",
         "arena_time_remaining": "Time remaining: ",
+        "arena_total_time": "Total time: ",
 
         // Marketplace rental dialog
         "mp_d_rent_duration_hours": "Thời gian thuê (giờ)",
@@ -26922,6 +26928,7 @@ const TRANSLATIONS = {
         "arena_expand": "Expand",
         "arena_name_subtitle": "Enter your name to record your score",
         "arena_time_remaining": "Time remaining: ",
+        "arena_total_time": "Total time: ",
 
         // Marketplace rental dialog
         "mp_d_rent_duration_hours": "Durasi sewa (jam)",
@@ -30840,6 +30847,7 @@ const TRANSLATIONS = {
         "arena_expand": "Développer",
         "arena_name_subtitle": "Entrez votre nom pour enregistrer votre score",
         "arena_time_remaining": "Temps restant : ",
+        "arena_total_time": "Temps total : ",
     },
 
     es: {
@@ -34622,6 +34630,7 @@ const TRANSLATIONS = {
         "arena_expand": "Expandir",
         "arena_name_subtitle": "Ingresa tu nombre para registrar tu puntuación",
         "arena_time_remaining": "Tiempo restante: ",
+        "arena_total_time": "Tiempo total: ",
     },
 
     de: {
@@ -38431,6 +38440,7 @@ const TRANSLATIONS = {
         "arena_expand": "Erweitern",
         "arena_name_subtitle": "Gib deinen Namen ein, um deine Punktzahl zu speichern",
         "arena_time_remaining": "Verbleibende Zeit: ",
+        "arena_total_time": "Gesamtzeit: ",
     },
 
     ms: {
@@ -42355,6 +42365,7 @@ const TRANSLATIONS = {
         "arena_subtitle": "arena subtitle",
         "arena_tests_title": "arena tests tajuk",
         "arena_time_remaining": "arena masa remaining",
+        "arena_total_time": "arena jumlah masa",
         "arena_title": "arena tajuk",
         "arena_view_lb": "arena lihat lb",
         "arena_waiting": "arena waiting",
@@ -44140,6 +44151,7 @@ const TRANSLATIONS = {
         "arena_expand": "arena kembangkan",
         "arena_name_subtitle": "arena nama subtitle",
         "arena_time_remaining": "arena masa remaining",
+        "arena_total_time": "arena jumlah masa",
     },
 
     hi: {
@@ -49400,6 +49412,7 @@ const TRANSLATIONS = {
         "arena_subtitle": "arena subtitle",
         "arena_tests_title": "arena tests शीर्षक",
         "arena_time_remaining": "arena समय remaining",
+        "arena_total_time": "arena कुल समय",
         "arena_title": "arena शीर्षक",
         "arena_view_lb": "arena देखें lb",
         "arena_waiting": "arena waiting",
@@ -51099,6 +51112,7 @@ const TRANSLATIONS = {
         "arena_expand": "arena विस्तार करें",
         "arena_name_subtitle": "arena नाम subtitle",
         "arena_time_remaining": "arena समय remaining",
+        "arena_total_time": "arena कुल समय",
     },
 
     ar: {
@@ -54369,6 +54383,7 @@ const TRANSLATIONS = {
         "arena_expand": "arena توسيع",
         "arena_name_subtitle": "arena الاسم subtitle",
         "arena_time_remaining": "arena وقت remaining",
+        "arena_total_time": "arena الوقت الإجمالي",
         "arena_test_desc_0": "الفهم متعدد الوسائط — إدراك ووصف المحتوى المرئي من صفحة ويب.",
         "arena_test_desc_1": "التفاعل الدقيق مع واجهة المستخدم — تحديد والنقر على عنصر محدد من بين المئات.",
         "arena_test_desc_10": "سير عمل التخزين — تنزيل الملفات وإعادة تسميتها وإعادة رفعها عبر API السحابية.",

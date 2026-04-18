@@ -224,7 +224,7 @@
                 <span id="modelBadge" style="font-size:13px;font-weight:600;color:var(--accent-cyan);"></span>
             </div>
             <div style="font-size:13px;color:var(--text-muted);">
-                <span data-i18n="arena_time_remaining">Time remaining:</span> <strong id="examTimer" style="color:var(--text);font-variant-numeric:tabular-nums;">3:00</strong>
+                <span id="examTimerLabel" data-i18n="arena_time_remaining">Time remaining:</span> <strong id="examTimer" style="color:var(--text);font-variant-numeric:tabular-nums;">--:--</strong>
             </div>
         </div>
 
@@ -305,6 +305,13 @@
         socket.on('connect', () => { socket.emit('join', 'exam:' + EXAM_ID); socket.emit('join', 'arena:lobby'); });
         socket.on('arena:update', (m) => {
             if (m.event === 'model_set') { showModel(m.model); document.getElementById('statusText').textContent = 'Evaluation in progress...'; document.getElementById('scoreWrap').style.display = 'block'; }
+            if (m.event === 'timer_started') {
+                // Bot fetched the test — real 3-min clock starts now. Use the
+                // server-provided expiresAt so all viewers stay in sync.
+                const diff = m.expiresAt ? Math.floor((new Date(m.expiresAt).getTime() - Date.now()) / 1000) : 180;
+                startExamTimer(Math.max(0, Math.min(180, diff)));
+                document.getElementById('scoreWrap').style.display = 'block';
+            }
             if (m.event === 'action' && m.testIndex != null) {
                 // Switch from waiting to active on first action
                 if (document.getElementById('statusText').textContent.includes('Waiting') || document.getElementById('statusText').textContent.includes('等待')) {
@@ -403,6 +410,29 @@
             resultsShown = true;
             document.getElementById('statusText').textContent = 'Evaluation Complete';
             if (examTimerInterval) { clearInterval(examTimerInterval); examTimerInterval = null; }
+            // Exam is done — swap the "Time remaining" label to "Total time"
+            // and show the actual time taken (first_fetched_at → completed_at,
+            // capped at 3:00). Falls back to "--:--" if the exam never started.
+            const timerEl = document.getElementById('examTimer');
+            const timerLabel = document.getElementById('examTimerLabel');
+            if (timerLabel) {
+                const t = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t.bind(i18n) : (k, fb) => fb;
+                timerLabel.textContent = t('arena_total_time', 'Total time:');
+                timerLabel.removeAttribute('data-i18n');
+            }
+            if (timerEl) {
+                const secs = (data?.exam?.elapsedSec != null) ? data.exam.elapsedSec
+                           : (data?.exam?.report?.elapsedSec != null) ? data.exam.report.elapsedSec
+                           : null;
+                if (secs != null) {
+                    const m = Math.floor(secs / 60), s = secs % 60;
+                    timerEl.textContent = m + ':' + String(s).padStart(2, '0');
+                } else {
+                    timerEl.textContent = '--:--';
+                }
+                timerEl.style.color = 'var(--text-muted)';
+            }
+            if (data?.exam?.model) showModel(data.exam.model);
             document.getElementById('scoreWrap').style.display = 'block';
             if (data.exam) { document.getElementById('totalScore').textContent = data.exam.totalScore || 0; document.getElementById('scoreFill').style.width = Math.round((data.exam.totalScore || 0) / 147 * 100) + '%'; }
             if (data.sessions) data.sessions.forEach(s => {
@@ -516,6 +546,17 @@
             if (el && name) { el.textContent = name; }
             document.getElementById('infoBar').style.display = 'flex';
         }
+        let autoFinalizeTriggered = false;
+        async function autoFinalize() {
+            if (autoFinalizeTriggered) return;
+            autoFinalizeTriggered = true;
+            console.log('[Arena DEBUG] timer hit 0 — auto-finalizing exam');
+            try {
+                const r = await fetch(`${API}/api/arena/exam/${EXAM_ID}/finalize`, { method: 'POST' });
+                const data = await r.json().catch(() => ({}));
+                if (data && data.success) showResults({ exam: data.report });
+            } catch (e) { console.warn('[Arena DEBUG] auto-finalize failed:', e); }
+        }
         function startExamTimer(totalSec) {
             console.log('[Arena DEBUG] startExamTimer called, totalSec=' + totalSec + ', existingInterval=' + !!examTimerInterval);
             if (examTimerInterval) { console.warn('[Arena DEBUG] timer already running, skipping'); return; }
@@ -528,7 +569,15 @@
                 el.textContent = m + ':' + String(s).padStart(2, '0');
                 if (remaining <= 30) el.style.color = 'var(--danger)';
                 else if (remaining <= 60) el.style.color = 'var(--warning)';
-                if (remaining <= 0) { clearInterval(examTimerInterval); el.textContent = '0:00'; }
+                if (remaining <= 0) {
+                    clearInterval(examTimerInterval);
+                    examTimerInterval = null;
+                    el.textContent = '0:00';
+                    // Hard stop — send finalize so the server locks in whatever
+                    // actions have arrived by now. Single-shot via autoFinalizeTriggered.
+                    autoFinalize();
+                    return;
+                }
                 remaining--;
             }
             tick();
