@@ -1,3 +1,10 @@
+## [1.1003.4](https://github.com/HankHuang0516/EClaw/compare/v1.1003.3...v1.1003.4) (2026-04-18)
+
+
+### Bug Fixes
+
+* **ios:** declare newArchEnabled for NitroModules autolink ([#1852](https://github.com/HankHuang0516/EClaw/issues/1852)) ([9f90a3e](https://github.com/HankHuang0516/EClaw/commit/9f90a3ee5b86543ff1255d122a548d87380e6d31))
+
 ## [1.1003.3](https://github.com/HankHuang0516/EClaw/compare/v1.1003.2...v1.1003.3) (2026-04-18)
 
 
