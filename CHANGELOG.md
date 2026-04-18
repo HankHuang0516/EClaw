@@ -1,3 +1,10 @@
+## [1.1002.7](https://github.com/HankHuang0516/EClaw/compare/v1.1002.6...v1.1002.7) (2026-04-18)
+
+
+### Bug Fixes
+
+* **arena:** timer doesn't start until page refresh after bot pickup ([#1847](https://github.com/HankHuang0516/EClaw/issues/1847)) ([8736c86](https://github.com/HankHuang0516/EClaw/commit/8736c86867a585f808a4775248166ce9d9c40381))
+
 ## [1.1002.6](https://github.com/HankHuang0516/EClaw/compare/v1.1002.5...v1.1002.6) (2026-04-18)
 
 
