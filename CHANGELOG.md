@@ -1,3 +1,10 @@
+## [1.1003.2](https://github.com/HankHuang0516/EClaw/compare/v1.1003.1...v1.1003.2) (2026-04-18)
+
+
+### Bug Fixes
+
+* **card-holder:** null-guard navEmail in embed + empty-state CTA + URL-dup ([#1850](https://github.com/HankHuang0516/EClaw/issues/1850)) ([1be0680](https://github.com/HankHuang0516/EClaw/commit/1be0680dc2fb2e7af09b227634a94ba26b35464b))
+
 ## [1.1003.1](https://github.com/HankHuang0516/EClaw/compare/v1.1003.0...v1.1003.1) (2026-04-18)
 
 
