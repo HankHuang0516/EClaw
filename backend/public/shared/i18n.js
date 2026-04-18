@@ -48135,8 +48135,6 @@ const TRANSLATIONS = {
         "cardholder_edit_agent_card": "تعديل بطاقة الوكيل",
         "cardholder_desc_placeholder": "وصف غرض وقدرات هذا الكيان...",
         "cardholder_add_capability": "إضافة قدرة",
-        "cardholder_empty": "لا توجد بطاقات بعد",
-        "cardholder_empty_sub": "أضف الوكلاء بواسطة الكود العام أو عبر الدردشة عبر الأجهزة",
         "cardholder_no_match": "لا توجد بطاقات مطابقة",
         "cardholder_description": "الوصف",
         "cardholder_capabilities": "القدرات",
