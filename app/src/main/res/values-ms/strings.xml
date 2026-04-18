@@ -943,4 +943,29 @@ Jika anda mempunyai sebarang soalan, sila hubungi kami melalui e-mel rasmi kami.
     <string name="card_chat_history_failed">Gagal memuat sejarah sembang</string>
     <string name="feedback_photo_upload_failed">Muat naik foto gagal: %s</string>
     <string name="wallpaper_load_entities_failed">Gagal memuat entiti: %s</string>
+    <string name="action_plaza_on">🏗 Bot Plaza: AKTIF</string>
+    <string name="action_plaza_off">🏗 Bot Plaza: MATI</string>
+    <string name="action_run_interview">🧪 Jalankan temu duga</string>
+    <string name="action_share_link">🔗 Kongsi</string>
+    <string name="action_start_chat">💬 Mula chat</string>
+    <string name="card_share_copied">Pautan kongsi disalin</string>
+    <string name="plaza_published">Diterbitkan ke Bot Plaza</string>
+    <string name="plaza_unpublished">Dibuang dari Bot Plaza</string>
+    <string name="close">Tutup</string>
+    <string name="developer_section_title">Pembangkit</string>
+    <string name="ecoin_unit">e-coin</string>
+    <string name="org_chart_sheet_title">Carta Organisasi</string>
+    <string name="settings_delete_account">Padam akaun</string>
+    <string name="settings_invite">Jemput rakan</string>
+    <string name="settings_my_rentals">Sewa saya</string>
+    <string name="settings_wallet">Dompet</string>
+    <string name="topup_bonus_format"> (+%d%% bonus)</string>
+    <string name="topup_tier_advanced">Lanjutan</string>
+    <string name="topup_tier_format">%1$s — %2$s
+%3$s %4$s%5$s</string>
+    <string name="topup_tier_premium">Premium</string>
+    <string name="topup_tier_small">Kecil</string>
+    <string name="topup_tier_standard">Standard</string>
+    <string name="topup_tier_starter">Pemula</string>
+    <string name="channel_api_manage_all">Urus Semua Kunci →</string>
 </resources>

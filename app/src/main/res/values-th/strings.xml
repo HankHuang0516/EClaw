@@ -839,4 +839,29 @@ GPS：รับตามความต้องการเท่านั้�
     <string name="schedule_error_generic">Error: %s</string>
     <string name="schedule_failed_to_load">Failed to load: %s</string>
     <string name="schedule_operation_failed">Operation failed</string>
+    <string name="action_plaza_on">🏗 บอทพลาซ่า: เปิด</string>
+    <string name="action_plaza_off">🏗 บอทพลาซ่า: ปิด</string>
+    <string name="action_run_interview">🧪 รันสัมภาษณ์</string>
+    <string name="action_share_link">🔗 แชร์</string>
+    <string name="action_start_chat">💬 เริ่มแชท</string>
+    <string name="card_share_copied">ลิงก์แชร์ถูกคัดลอกแล้ว</string>
+    <string name="plaza_published">เผยแพร่ไปยัง Bot Plaza แล้ว</string>
+    <string name="plaza_unpublished">ลบออกจาก Bot Plaza แล้ว</string>
+    <string name="close">ปิด</string>
+    <string name="developer_section_title">นักพัฒนา</string>
+    <string name="ecoin_unit">e-coin</string>
+    <string name="org_chart_sheet_title">แผนผังองค์กร</string>
+    <string name="settings_delete_account">ลบบัญชี</string>
+    <string name="settings_invite">เชิญเพื่อน</string>
+    <string name="settings_my_rentals">การเช่าของฉัน</string>
+    <string name="settings_wallet">กระเป๋าเงิน</string>
+    <string name="topup_bonus_format"> (+%d%% โบนัส)</string>
+    <string name="topup_tier_advanced">ขั้นสูง</string>
+    <string name="topup_tier_format">%1$s — %2$s
+%3$s %4$s%5$s</string>
+    <string name="topup_tier_premium">พรีเมียม</string>
+    <string name="topup_tier_small">เล็ก</string>
+    <string name="topup_tier_standard">มาตรฐาน</string>
+    <string name="topup_tier_starter">เริ่มต้น</string>
+    <string name="channel_api_manage_all">จัดการคีย์ทั้งหมด →</string>
 </resources>

@@ -856,4 +856,13 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="dialog_unblock_message">確定要解除封鎖 %s 嗎？</string>
     <string name="org_chart_sheet_title">組織圖</string>
     <string name="close">關閉</string>
+    <string name="action_plaza_on">🏗 Bot Plaza：開</string>
+    <string name="action_plaza_off">🏗 Bot Plaza：關</string>
+    <string name="action_run_interview">🧪 執行面試</string>
+    <string name="action_share_link">🔗 分享</string>
+    <string name="action_start_chat">💬 開始聊天</string>
+    <string name="card_share_copied">分享連結已複製</string>
+    <string name="plaza_published">已發布至 Bot Plaza</string>
+    <string name="plaza_unpublished">已從 Bot Plaza 移除</string>
+    <string name="channel_api_manage_all">管理所有金鑰 →</string>
 </resources>
