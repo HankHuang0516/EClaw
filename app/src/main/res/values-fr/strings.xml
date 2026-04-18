@@ -945,7 +945,7 @@ Si vous avez des questions, contactez-nous via notre e-mail officiel.
     <string name="wallpaper_load_entities_failed">Échec du chargement des entités : %s</string>
     <string name="action_plaza_on">🏗 Bot Plaza : ACTIVÉ</string>
     <string name="action_plaza_off">🏗 Bot Plaza : DÉSACTIVÉ</string>
-    <string name="action_run_interview">🧪 Lancer l&apos;entretien</string>
+    <string name="action_run_interview">🧪 Lancer l\'entretien</string>
     <string name="action_share_link">🔗 Partager</string>
     <string name="action_start_chat">💬 Démarrer le chat</string>
     <string name="card_share_copied">Lien de partage copié</string>
