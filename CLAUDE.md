@@ -533,7 +533,8 @@ When implementing or modifying any feature on one platform, ensure the other pla
 
 **Brand assets must be identical across Android, iOS, and Web Portal** — app icon, splash screen, launch screen, store listing copy, screenshots, and marketing text. A user seeing the Android icon (red pixel creature on phone) and the iOS icon (default Expo triangle) at the same time is a brand failure, not a parity oversight. When replacing any brand asset on one platform, update the others in the same PR.
 
-Icon source of truth: `google_play/play_store_icon_512.png` (512×512, no alpha) — upscale with LANCZOS to 1024×1024 for `ios-app/assets/icon.png`; Android already consumes it via `ic_launcher*` mipmap variants.
+Icon source of truth for iOS App Store = **Android launcher icon**:
+`app/src/main/res/mipmap-xxxhdpi/ic_launcher_background.png` (432×432, has alpha). Flatten transparency with the sampled corner color, upscale with LANCZOS to 1024×1024 (no alpha), save to `ios-app/assets/icon.png`. Both stores then show the same brand icon users see on their Android home screen (red pixel creatures + phone + "E‑Claw by OpenClaw" text). `google_play/play_store_icon_512.png` is a *store-listing* variant (single creature on phone), not the launcher — do not use it as iOS icon.
 
 App Store / Play Store listing text (name, subtitle, description, keywords, promo text) must also stay in sync — changes to one store listing require updating the other.
 
