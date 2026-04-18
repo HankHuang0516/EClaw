@@ -1,3 +1,10 @@
+## [1.1002.2](https://github.com/HankHuang0516/EClaw/compare/v1.1002.1...v1.1002.2) (2026-04-18)
+
+
+### Bug Fixes
+
+* **arena:** generate exam id in code — prod DB DEFAULT is missing ([#1838](https://github.com/HankHuang0516/EClaw/issues/1838)) ([721ebe4](https://github.com/HankHuang0516/EClaw/commit/721ebe4749e171d3bfcacac2a7197416ad3da380))
+
 ## [1.1002.1](https://github.com/HankHuang0516/EClaw/compare/v1.1002.0...v1.1002.1) (2026-04-18)
 
 
