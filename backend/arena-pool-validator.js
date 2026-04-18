@@ -506,17 +506,20 @@ async function validateRuntimeSelfTest({ arenaModule, dbPool, log }) {
     }
 
     // 1. Create a scratch exam directly in DB (skip 5-min IP cooldown).
+    // Generate id explicitly — the column DEFAULT can be missing/broken on
+    // production (PR #1813 migration didn't always re-set the new DEFAULT).
+    // Mirrors the live POST /api/arena/exam path so this test catches the
+    // same NOT-NULL violation real users would hit.
+    const { newExamId } = require('./entity-id');
+    const examId = newExamId();
     const examToken = 'selftest-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     const expiresAt = new Date(Date.now() + 30 * 60_000);
-    let examId;
     try {
-        const res = await dbPool.query(
-            `INSERT INTO arena_exams (exam_token, status, max_score, expires_at)
-             VALUES ($1, 'waiting', $2, $3)
-             RETURNING id`,
-            [examToken, arenaModule.MAX_TOTAL_SCORE || 147, expiresAt]
+        await dbPool.query(
+            `INSERT INTO arena_exams (id, exam_token, status, max_score, expires_at)
+             VALUES ($1, $2, 'waiting', $3, $4)`,
+            [examId, examToken, arenaModule.MAX_TOTAL_SCORE || 147, expiresAt]
         );
-        examId = res.rows[0].id;
     } catch (err) {
         out.issues.push(`insert arena_exams failed: ${err.message}`);
         out.stage = 'create_exam';

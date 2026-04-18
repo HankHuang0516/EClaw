@@ -19,6 +19,7 @@ const crypto = require('crypto');
 const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
+const { newExamId } = require('./entity-id');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot',
@@ -1085,11 +1086,16 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
             // Optional: link this exam to a rental listing for interview qualification
             const listingId = req.body?.listingId || null;
 
+            // Generate id in code rather than relying on the column DEFAULT.
+            // The PR #1813 migration set the column DEFAULT to gen_random_bytes()
+            // (pgcrypto), but on production that DEFAULT is missing/non-functional
+            // — INSERTs without an explicit id violate the NOT NULL constraint.
+            const examId = newExamId();
             const examRes = await pool.query(
-                `INSERT INTO arena_exams (exam_token, listing_id, status, max_score, expires_at)
-                 VALUES ($1, $2, $3, $4, $5)
+                `INSERT INTO arena_exams (id, exam_token, listing_id, status, max_score, expires_at)
+                 VALUES ($1, $2, $3, $4, $5, $6)
                  RETURNING id, exam_token, listing_id, status, created_at, expires_at`,
-                [examToken, listingId, EXAM_STATUS.WAITING, MAX_TOTAL_SCORE, expiresAt]
+                [examId, examToken, listingId, EXAM_STATUS.WAITING, MAX_TOTAL_SCORE, expiresAt]
             );
             const exam = examRes.rows[0];
 
