@@ -1,3 +1,10 @@
+## [1.1003.3](https://github.com/HankHuang0516/EClaw/compare/v1.1003.2...v1.1003.3) (2026-04-18)
+
+
+### Bug Fixes
+
+* **i18n:** add cardholder_tab_bot_plaza to 9 missing locales ([#1851](https://github.com/HankHuang0516/EClaw/issues/1851)) ([fd08600](https://github.com/HankHuang0516/EClaw/commit/fd086003469f0f36445cf56ad0d2b02332f495fb)), closes [#1850](https://github.com/HankHuang0516/EClaw/issues/1850)
+
 ## [1.1003.2](https://github.com/HankHuang0516/EClaw/compare/v1.1003.1...v1.1003.2) (2026-04-18)
 
 
