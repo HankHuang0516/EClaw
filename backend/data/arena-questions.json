@@ -1,0 +1,414 @@
+{
+  "version": "2026-04-18",
+  "description": "Arena question pool — daily difficulty calibration, target 70/100 (20% easy / 50% medium / 30% hard)",
+  "pools": {
+    "arena_vision": [
+      { "file": "img-f3a1.svg", "keywords": ["red", "circle"] },
+      { "file": "img-b7c2.svg", "keywords": ["blue", "square"] },
+      { "file": "img-d4e9.svg", "keywords": ["green", "triangle"] },
+      { "file": "img-a2f5.svg", "keywords": ["yellow", "star"] },
+      { "file": "img-c8b3.svg", "keywords": ["cat", "orange"] },
+      { "description": "A red heart shape centered on a white background", "keywords": ["heart", "red"] },
+      { "description": "A green checkmark inside a circle", "keywords": ["checkmark", "green", "circle"] },
+      { "description": "A blue water droplet shape on a gray background", "keywords": ["water", "droplet", "blue"] },
+      { "description": "A bar chart with four bars labeled Q1 through Q4 where Q3 is the tallest", "keywords": ["bar", "chart", "four", "Q3"] },
+      { "description": "A desk with a laptop, two coffee cups, and a stack of three books", "keywords": ["laptop", "two", "cups", "three", "books"] },
+      { "description": "A pie chart divided into four sections: blue 40%, green 30%, red 20%, yellow 10%", "keywords": ["pie", "chart", "four", "blue"] },
+      { "description": "A Venn diagram with three overlapping circles labeled A, B, and C", "keywords": ["venn", "three", "circles"] },
+      { "description": "A road sign reading SPEED LIMIT 65 against a blue sky", "keywords": ["sign", "speed", "65"] },
+      { "description": "A calendar page showing March with the 15th circled in red", "keywords": ["calendar", "march", "15", "red"] },
+      { "description": "Three overlapping translucent circles in red, green, and blue forming an additive color mix", "keywords": ["three", "circles", "red", "green", "blue"] },
+      { "description": "A whiteboard with the equation E = mc² written in blue marker", "keywords": ["whiteboard", "equation", "blue"] },
+      { "description": "A clock face showing the time 7:45", "keywords": ["clock", "seven", "forty-five"] },
+      { "description": "Two interlocking gold rings on a dark velvet surface", "keywords": ["rings", "gold", "two"] },
+      { "description": "An arrow pointing right with a dashed trail on a black background", "keywords": ["arrow", "right", "dashed"] },
+      { "description": "A flowchart with a diamond decision node labeled 'Is valid?' branching to Yes and No paths", "keywords": ["flowchart", "diamond", "decision", "yes", "no"] },
+      { "description": "A grocery shelf with six cans of soup on the top row and two boxes of cereal on the bottom row", "keywords": ["shelf", "six", "cans", "two", "cereal"] },
+      { "description": "Five colored pencils arranged in a row: red, orange, yellow, green, blue", "keywords": ["five", "pencils", "red", "orange", "blue"] },
+      { "description": "A 3x3 tic-tac-toe board where X has won diagonally from top-left to bottom-right", "keywords": ["tic-tac-toe", "X", "diagonal", "won"] },
+      { "description": "A mobile phone home screen showing 4 notification banners: email, messages, calendar, and weather", "keywords": ["phone", "four", "notifications", "email", "calendar"] },
+      { "description": "A dashboard with three gauges showing CPU at 72%, memory at 45%, and disk usage at 88%", "keywords": ["dashboard", "CPU", "72", "memory", "disk", "88"] },
+      { "description": "A map of Europe with France highlighted in blue and Germany highlighted in red", "keywords": ["map", "europe", "france", "blue", "germany", "red"] },
+      { "description": "A data table with columns Name, Score, and Grade showing four students where Alice scored 98", "keywords": ["table", "columns", "alice", "98"] },
+      { "description": "An aerial parking lot with twelve cars, three of which are red", "keywords": ["twelve", "cars", "three", "red"] },
+      { "description": "A chemistry lab bench with three beakers: left contains blue liquid, middle is empty, right has green precipitate at the bottom", "keywords": ["three", "beakers", "blue", "empty", "green"] },
+      { "description": "A handwritten note on lined paper reading 'Meeting at 3pm Room 204' with the time and room number underlined", "keywords": ["meeting", "3pm", "204", "underlined"] },
+      { "description": "A phone home screen showing 16 app icons in a 4x4 grid and a weather widget displaying 72 degrees", "keywords": ["phone", "16", "apps", "weather", "72"] },
+      { "description": "A line chart showing quarterly revenue: Q1 at $10K, Q2 at $15K, Q3 dips to $8K, Q4 recovers to $20K", "keywords": ["chart", "revenue", "Q3", "dip", "Q4"] },
+      { "description": "A world map with five red pins marking cities: New York, London, Tokyo, Sydney, and São Paulo", "keywords": ["map", "five", "pins", "Tokyo"] },
+      { "description": "A store receipt dated 03/15 showing a total of $47.83 with three itemized lines and a barcode at the bottom", "keywords": ["receipt", "total", "47", "three", "barcode"] },
+      { "description": "A weather dashboard panel showing temperature 28°C, humidity 65%, wind speed 12 km/h, and UV index 7 in four separate tiles", "keywords": ["temperature", "28", "humidity", "65", "UV", "7"] },
+      { "description": "A printed circuit board with fourteen resistors, eight capacitors, and one microcontroller chip labeled ATmega328P", "keywords": ["circuit", "fourteen", "resistors", "eight", "capacitors", "ATmega"] },
+      { "description": "A hotel room floor plan: bedroom 18m² on the left, bathroom 6m² top right, living area 22m² bottom right, with a corridor connecting all rooms", "keywords": ["floor", "plan", "bedroom", "18", "bathroom", "6", "living", "22"] },
+      { "description": "A network topology diagram with five nodes labeled A through E: A connects to B, C, and D while E connects only to C", "keywords": ["network", "five", "nodes", "A", "E", "C"] }
+    ],
+    "arena_coding": [
+      {
+        "title": "Array Dedup & Sort",
+        "description": "Write `solve(arr)` — remove duplicates, return sorted.",
+        "testCases": [
+          { "input": "[3,1,2,1,3]", "expected": "[1,2,3]" },
+          { "input": "[5,5,5]", "expected": "[5]" },
+          { "input": "[]", "expected": "[]" }
+        ]
+      },
+      {
+        "title": "Palindrome Check",
+        "description": "Write `solve(s)` — return true if palindrome (case-insensitive, alpha only).",
+        "testCases": [
+          { "input": "\"racecar\"", "expected": "true" },
+          { "input": "\"hello\"", "expected": "false" },
+          { "input": "\"A man a plan a canal Panama\"", "expected": "true" }
+        ]
+      },
+      {
+        "title": "Fibonacci",
+        "description": "Write `solve(n)` — return nth Fibonacci (0-indexed, F(0)=0, F(1)=1).",
+        "testCases": [
+          { "input": "0", "expected": "0" },
+          { "input": "10", "expected": "55" },
+          { "input": "20", "expected": "6765" }
+        ]
+      },
+      {
+        "title": "Max Subarray Sum",
+        "description": "Write `solve(arr)` — return maximum contiguous subarray sum (Kadane's algorithm).",
+        "testCases": [
+          { "input": "[-2,1,-3,4,-1,2,1,-5,4]", "expected": "6" },
+          { "input": "[1]", "expected": "1" },
+          { "input": "[-1,-2,-3]", "expected": "-1" },
+          { "input": "[5,4,-1,7,8]", "expected": "23" }
+        ]
+      },
+      {
+        "title": "Reverse Words",
+        "description": "Write `solve(s)` — reverse word order in string (trim extra spaces).",
+        "testCases": [
+          { "input": "\"hello world\"", "expected": "\"world hello\"" },
+          { "input": "\"  a  b  \"", "expected": "\"b a\"" },
+          { "input": "\"the sky is blue\"", "expected": "\"blue is sky the\"" }
+        ]
+      },
+      {
+        "title": "Two Sum",
+        "description": "Write `solve(nums, target)` — return indices of two numbers that add to target.",
+        "testCases": [
+          { "input": "[2,7,11,15], 9", "expected": "[0,1]" },
+          { "input": "[3,2,4], 6", "expected": "[1,2]" },
+          { "input": "[3,3], 6", "expected": "[0,1]" }
+        ]
+      },
+      {
+        "title": "Valid Parentheses",
+        "description": "Write `solve(s)` — return true if brackets ()[]{} are balanced.",
+        "testCases": [
+          { "input": "\"()[]{}\"", "expected": "true" },
+          { "input": "\"(]\"", "expected": "false" },
+          { "input": "\"([)]\"", "expected": "false" },
+          { "input": "\"{[]}\"", "expected": "true" }
+        ]
+      },
+      {
+        "title": "FizzBuzz Array",
+        "description": "Write `solve(n)` — return array [1..n] with Fizz/Buzz/FizzBuzz replacements.",
+        "testCases": [
+          { "input": "5", "expected": "[\"1\",\"2\",\"Fizz\",\"4\",\"Buzz\"]" },
+          { "input": "15", "expected": "ends with \"FizzBuzz\"" }
+        ]
+      },
+      {
+        "title": "Binary Search",
+        "description": "Write `solve(arr, target)` — return index of target in sorted array, or -1.",
+        "testCases": [
+          { "input": "[1,3,5,7,9], 5", "expected": "2" },
+          { "input": "[1,3,5], 4", "expected": "-1" },
+          { "input": "[], 1", "expected": "-1" }
+        ]
+      },
+      {
+        "title": "Matrix Transpose",
+        "description": "Write `solve(matrix)` — return transposed matrix.",
+        "testCases": [
+          { "input": "[[1,2],[3,4]]", "expected": "[[1,3],[2,4]]" },
+          { "input": "[[1,2,3]]", "expected": "[[1],[2],[3]]" },
+          { "input": "[[1]]", "expected": "[[1]]" }
+        ]
+      },
+      {
+        "title": "Count Vowels",
+        "description": "Write `solve(s)` — return count of vowels (aeiouAEIOU).",
+        "testCases": [
+          { "input": "\"Hello World\"", "expected": "3" },
+          { "input": "\"aEiOu\"", "expected": "5" },
+          { "input": "\"rhythm\"", "expected": "0" }
+        ]
+      },
+      {
+        "title": "Flatten Array",
+        "description": "Write `solve(arr)` — flatten nested arrays to single level (arbitrary depth).",
+        "testCases": [
+          { "input": "[[1,2],[3,[4,5]]]", "expected": "[1,2,3,4,5]" },
+          { "input": "[1,[2,[3,[4]]]]", "expected": "[1,2,3,4]" },
+          { "input": "[]", "expected": "[]" }
+        ]
+      },
+      {
+        "title": "Roman to Integer",
+        "description": "Write `solve(s)` — convert Roman numeral string to integer.",
+        "testCases": [
+          { "input": "\"III\"", "expected": "3" },
+          { "input": "\"XIV\"", "expected": "14" },
+          { "input": "\"MCMXC\"", "expected": "1990" },
+          { "input": "\"LVIII\"", "expected": "58" }
+        ]
+      },
+      {
+        "title": "Anagram Check",
+        "description": "Write `solve(a, b)` — return true if a and b are anagrams (case-insensitive, alpha only).",
+        "testCases": [
+          { "input": "\"listen\", \"silent\"", "expected": "true" },
+          { "input": "\"hello\", \"world\"", "expected": "false" },
+          { "input": "\"anagram\", \"nagaram\"", "expected": "true" }
+        ]
+      },
+      {
+        "title": "GCD",
+        "description": "Write `solve(a, b)` — return greatest common divisor.",
+        "testCases": [
+          { "input": "12, 8", "expected": "4" },
+          { "input": "17, 5", "expected": "1" },
+          { "input": "100, 75", "expected": "25" }
+        ]
+      },
+      {
+        "title": "Remove Nth from End",
+        "description": "Write `solve(arr, n)` — remove nth element from end, return new array.",
+        "testCases": [
+          { "input": "[1,2,3,4,5], 2", "expected": "[1,2,3,5]" },
+          { "input": "[1], 1", "expected": "[]" },
+          { "input": "[1,2], 1", "expected": "[1]" }
+        ]
+      },
+      {
+        "title": "String Compression",
+        "description": "Write `solve(s)` — compress \"aabcccccaaa\" → \"a2b1c5a3\".",
+        "testCases": [
+          { "input": "\"aabcccccaaa\"", "expected": "\"a2b1c5a3\"" },
+          { "input": "\"abc\"", "expected": "\"a1b1c1\"" },
+          { "input": "\"aaaa\"", "expected": "\"a4\"" }
+        ]
+      },
+      {
+        "title": "Power of Two",
+        "description": "Write `solve(n)` — return true if n is a power of 2.",
+        "testCases": [
+          { "input": "16", "expected": "true" },
+          { "input": "18", "expected": "false" },
+          { "input": "1", "expected": "true" },
+          { "input": "0", "expected": "false" }
+        ]
+      },
+      {
+        "title": "Merge Sorted Arrays",
+        "description": "Write `solve(a, b)` — merge two sorted arrays into one sorted array.",
+        "testCases": [
+          { "input": "[1,3,5], [2,4,6]", "expected": "[1,2,3,4,5,6]" },
+          { "input": "[], [1]", "expected": "[1]" },
+          { "input": "[1,2,3], []", "expected": "[1,2,3]" }
+        ]
+      },
+      {
+        "title": "Spiral Order",
+        "description": "Write `solve(matrix)` — return elements in spiral order.",
+        "testCases": [
+          { "input": "[[1,2,3],[4,5,6],[7,8,9]]", "expected": "[1,2,3,6,9,8,7,4,5]" },
+          { "input": "[[1,2],[3,4]]", "expected": "[1,2,4,3]" },
+          { "input": "[[1]]", "expected": "[1]" }
+        ]
+      },
+      {
+        "title": "Climbing Stairs",
+        "description": "Write `solve(n)` — you can climb 1 or 2 steps at a time. Return the number of distinct ways to reach step n.",
+        "testCases": [
+          { "input": "1", "expected": "1" },
+          { "input": "2", "expected": "2" },
+          { "input": "5", "expected": "8" },
+          { "input": "10", "expected": "89" }
+        ]
+      },
+      {
+        "title": "Coin Change",
+        "description": "Write `solve(coins, amount)` — return the fewest number of coins needed to make the amount, or -1 if impossible.",
+        "testCases": [
+          { "input": "[1,5,10,25], 30", "expected": "2" },
+          { "input": "[2], 3", "expected": "-1" },
+          { "input": "[1,2,5], 11", "expected": "3" },
+          { "input": "[1], 0", "expected": "0" }
+        ]
+      },
+      {
+        "title": "Number of Islands",
+        "description": "Write `solve(grid)` — grid is a 2D array of \"1\" (land) and \"0\" (water). Return the number of islands (connected land cells, horizontally or vertically).",
+        "testCases": [
+          { "input": "[[\"1\",\"1\",\"0\"],[\"1\",\"1\",\"0\"],[\"0\",\"0\",\"1\"]]", "expected": "2" },
+          { "input": "[[\"1\",\"0\",\"1\"],[\"0\",\"0\",\"0\"],[\"1\",\"0\",\"1\"]]", "expected": "4" },
+          { "input": "[[\"0\",\"0\",\"0\"]]", "expected": "0" }
+        ]
+      },
+      {
+        "title": "Longest Substring No Repeat",
+        "description": "Write `solve(s)` — return the length of the longest substring without any repeating characters.",
+        "testCases": [
+          { "input": "\"abcabcbb\"", "expected": "3" },
+          { "input": "\"bbbbb\"", "expected": "1" },
+          { "input": "\"pwwkew\"", "expected": "3" },
+          { "input": "\"\"", "expected": "0" }
+        ]
+      },
+      {
+        "title": "Group Anagrams",
+        "description": "Write `solve(strs)` — group anagrams together. Sort each inner group alphabetically and sort outer array by each group's first element.",
+        "testCases": [
+          { "input": "[\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"]", "expected": "[[\"ate\",\"eat\",\"tea\"],[\"bat\"],[\"nat\",\"tan\"]]" },
+          { "input": "[\"\"]", "expected": "[[\"\"]]" },
+          { "input": "[\"a\"]", "expected": "[[\"a\"]]" }
+        ]
+      },
+      {
+        "title": "Decode Ways",
+        "description": "Write `solve(s)` — a string of digits can be decoded using A=1, B=2, ..., Z=26. Return the number of distinct ways to decode the string.",
+        "testCases": [
+          { "input": "\"12\"", "expected": "2" },
+          { "input": "\"226\"", "expected": "3" },
+          { "input": "\"06\"", "expected": "0" },
+          { "input": "\"11106\"", "expected": "2" }
+        ]
+      },
+      {
+        "title": "Maximum Product Subarray",
+        "description": "Write `solve(nums)` — return the maximum product of a contiguous subarray.",
+        "testCases": [
+          { "input": "[2,3,-2,4]", "expected": "6" },
+          { "input": "[-2,0,-1]", "expected": "0" },
+          { "input": "[-2,3,-4]", "expected": "24" },
+          { "input": "[0,2]", "expected": "2" }
+        ]
+      },
+      {
+        "title": "Longest Palindromic Substring",
+        "description": "Write `solve(s)` — return the longest palindromic substring. If multiple with equal length, return the first occurring.",
+        "testCases": [
+          { "input": "\"babad\"", "expected": "\"bab\"" },
+          { "input": "\"cbbd\"", "expected": "\"bb\"" },
+          { "input": "\"a\"", "expected": "\"a\"" },
+          { "input": "\"racecar\"", "expected": "\"racecar\"" }
+        ]
+      },
+      {
+        "title": "0-1 Knapsack",
+        "description": "Write `solve(weights, values, capacity)` — given items with weights and values arrays and a knapsack capacity, return the maximum total value (each item used at most once).",
+        "testCases": [
+          { "input": "[1,3,4,5], [1,4,5,7], 7", "expected": "9" },
+          { "input": "[2,3,4,5], [3,4,5,6], 5", "expected": "7" },
+          { "input": "[1], [10], 0", "expected": "0" }
+        ]
+      },
+      {
+        "title": "Trapping Rain Water",
+        "description": "Write `solve(height)` — given an elevation map array, compute how much water it can trap after raining.",
+        "testCases": [
+          { "input": "[0,1,0,2,1,0,1,3,2,1,2,1]", "expected": "6" },
+          { "input": "[4,2,0,3,2,5]", "expected": "9" },
+          { "input": "[1,0,1]", "expected": "1" },
+          { "input": "[3,0,0,2,0,4]", "expected": "10" }
+        ]
+      },
+      {
+        "title": "Word Break",
+        "description": "Write `solve(s, wordDict)` — return true if s can be segmented into a space-separated sequence of one or more dictionary words.",
+        "testCases": [
+          { "input": "\"leetcode\", [\"leet\",\"code\"]", "expected": "true" },
+          { "input": "\"applepenapple\", [\"apple\",\"pen\"]", "expected": "true" },
+          { "input": "\"catsandog\", [\"cats\",\"dog\",\"sand\",\"and\",\"cat\"]", "expected": "false" },
+          { "input": "\"a\", [\"a\"]", "expected": "true" }
+        ]
+      },
+      {
+        "title": "Course Schedule",
+        "description": "Write `solve(numCourses, prerequisites)` — prerequisites[i]=[a,b] means take b before a. Return true if you can finish all courses (no cycle).",
+        "testCases": [
+          { "input": "2, [[1,0]]", "expected": "true" },
+          { "input": "2, [[1,0],[0,1]]", "expected": "false" },
+          { "input": "4, [[1,0],[2,0],[3,1],[3,2]]", "expected": "true" },
+          { "input": "1, []", "expected": "true" }
+        ]
+      }
+    ],
+    "arena_response_time": [
+      { "question": "What is 17 × 23?", "expectedKeywords": ["391"] },
+      { "question": "What is 13 × 17?", "expectedKeywords": ["221"] },
+      { "question": "What is 2 to the power of 10?", "expectedKeywords": ["1024"] },
+      { "question": "If you buy 3 items at $4.75 each and pay with a $20 bill, how much change do you get?", "expectedKeywords": ["5.75"] },
+      { "question": "What year did the Berlin Wall fall?", "expectedKeywords": ["1989"] },
+      { "question": "A pool fills in 3 hours with pipe A alone and 6 hours with pipe B alone. How many hours to fill it with both pipes open together?", "expectedKeywords": ["2"] },
+      { "question": "A train travels 240 km in 3 hours. What is its average speed in km/h?", "expectedKeywords": ["80"] },
+      { "question": "What is the next number in the sequence: 2, 6, 18, 54, ...?", "expectedKeywords": ["162"] },
+      { "question": "A rectangle has sides of length 12 cm and 5 cm. What is the length of its diagonal?", "expectedKeywords": ["13"] },
+      { "question": "If 5 machines take 5 minutes to make 5 widgets, how many minutes would 100 machines take to make 100 widgets?", "expectedKeywords": ["5"] },
+      { "question": "A shirt originally costs $80 and is discounted by 25%. What is the sale price?", "expectedKeywords": ["60"] },
+      { "question": "What is the sum of all integers from 1 to 100?", "expectedKeywords": ["5050"] },
+      { "question": "How many prime numbers are there between 1 and 20?", "expectedKeywords": ["8"] },
+      { "question": "All cats are mammals. All mammals are warm-blooded. Are all cats warm-blooded?", "expectedKeywords": ["yes"] },
+      { "question": "What is the speed of light in km/s (approximately)?", "expectedKeywords": ["300000", "299792"] },
+      { "question": "A clock shows 3:15. What is the exact angle in degrees between the hour and minute hands?", "expectedKeywords": ["7.5"] },
+      { "question": "A farmer has chickens and cows. Together they have 30 heads and 74 legs. How many chickens does the farmer have?", "expectedKeywords": ["23"] },
+      { "question": "What is the sum of the interior angles of a hexagon in degrees?", "expectedKeywords": ["720"] },
+      { "question": "A 6-sided die is rolled twice. What is the probability that the sum is exactly 7? Express as a simplified fraction.", "expectedKeywords": ["1/6"] },
+      { "question": "If log base 2 of x equals 5, what is x?", "expectedKeywords": ["32"] },
+      { "question": "A ball is dropped from 100 meters. Each bounce reaches half the previous height. What is the total distance traveled after exactly 3 bounces (including all ups and downs)?", "expectedKeywords": ["275"] },
+      { "question": "Three people check into a hotel room that costs $30. They each pay $10. The manager gives $5 to the bellboy to return. The bellboy keeps $2 and gives $1 back to each person. Each person paid $9 (total $27) plus $2 the bellboy kept = $29. Where is the missing dollar?", "expectedKeywords": ["no missing", "fallacy", "accounting", "error", "25"] },
+      { "question": "A snail climbs 3 meters up a wall during the day but slides back 2 meters at night. If the wall is 10 meters high, how many days does it take the snail to reach the top?", "expectedKeywords": ["8"] },
+      { "question": "A car drives 150 km at 60 km/h, then 120 km at 80 km/h. What is the total travel time in hours?", "expectedKeywords": ["4"] },
+      { "question": "In how many different ways can the letters of the word 'LISTEN' be arranged?", "expectedKeywords": ["720"] },
+      { "question": "A store sells apples for $0.75 each and oranges for $1.20 each. If someone buys 4 apples and 3 oranges, what is the total cost?", "expectedKeywords": ["6.6", "6.60"] },
+      { "question": "The sides of a right triangle are in the ratio 3:4:5. If the hypotenuse is 20 cm, what is the perimeter?", "expectedKeywords": ["48"] },
+      { "question": "Two trains start from cities 300 km apart and travel toward each other. Train A travels at 90 km/h and Train B at 60 km/h. After how many hours do they meet?", "expectedKeywords": ["2"] },
+      { "question": "What is the minimum number of socks you must draw from a drawer containing 3 red socks and 2 blue socks (in the dark) to guarantee a matching pair?", "expectedKeywords": ["3"] },
+      { "question": "A ladder 10 meters long leans against a vertical wall with its base 6 meters from the wall. How high up the wall does the ladder reach?", "expectedKeywords": ["8"] },
+      { "question": "What is the remainder when 2 to the power of 100 is divided by 7?", "expectedKeywords": ["2"] },
+      { "question": "A fair coin is flipped 4 times. What is the probability of getting exactly 2 heads? Express as a simplified fraction.", "expectedKeywords": ["3/8"] }
+    ],
+    "arena_tts": [
+      { "text": "The quick brown fox jumps over the lazy dog", "keywords": ["quick", "brown", "fox", "lazy", "dog"] },
+      { "text": "Hello world this is a test message", "keywords": ["hello", "world", "test", "message"] },
+      { "text": "Please remember to save your work before closing", "keywords": ["remember", "save", "work", "closing"] },
+      { "text": "The package was delivered to the front door yesterday", "keywords": ["package", "delivered", "front", "door", "yesterday"] },
+      { "text": "The library closes at nine pm on weekdays", "keywords": ["library", "closes", "nine", "weekdays"] },
+      { "text": "Flight BA-274 departs at 14:30 from Terminal 5", "keywords": ["flight", "274", "terminal"] },
+      { "text": "The patient blood pressure is 120 over 80 millimeters of mercury", "keywords": ["blood", "pressure", "120", "80"] },
+      { "text": "Please dial extension 4072 for the accounting department", "keywords": ["extension", "4072", "accounting"] },
+      { "text": "The GPS coordinates are 35.6762 degrees north 139.6503 degrees east", "keywords": ["GPS", "coordinates", "35", "139"] },
+      { "text": "Doctor Zhang appointment is at 2:45 PM in Building C Room 301", "keywords": ["Zhang", "appointment", "2", "45", "room", "301"] },
+      { "text": "The Dow Jones index fell 2.3 percent to close at 38,547 points", "keywords": ["Dow", "Jones", "percent", "38"] },
+      { "text": "Machine learning models require large datasets for training", "keywords": ["machine", "learning", "models", "datasets", "training"] },
+      { "text": "Renewable energy sources include solar wind and hydropower", "keywords": ["renewable", "energy", "solar", "wind", "hydropower"] },
+      { "text": "Quantum computing promises to solve complex optimization problems", "keywords": ["quantum", "computing", "complex", "optimization"] },
+      { "text": "Version control helps teams collaborate on software projects", "keywords": ["version", "control", "teams", "collaborate", "software"] },
+      { "text": "The server returned HTTP status code 503 service unavailable", "keywords": ["server", "HTTP", "503", "service", "unavailable"] },
+      { "text": "Encryption protects sensitive data during transmission", "keywords": ["encryption", "protects", "sensitive", "data", "transmission"] },
+      { "text": "The IPv4 address 192.168.1.1 is commonly used as a default gateway", "keywords": ["IPv4", "192", "168", "gateway"] },
+      { "text": "Tokyo Narita Airport code NRT handles approximately 45 million passengers annually", "keywords": ["Narita", "NRT", "45", "million"] },
+      { "text": "Resume and naive are English words borrowed from French that retain their diacritical marks", "keywords": ["resume", "naive", "French", "diacritical"] },
+      { "text": "Worcestershire sauce and Lieutenant Colonel are two commonly mispronounced English terms", "keywords": ["worcestershire", "lieutenant", "colonel", "mispronounced"] },
+      { "text": "The Fibonacci sequence 1 1 2 3 5 8 13 21 grows approximately exponentially", "keywords": ["fibonacci", "sequence", "13", "21", "exponentially"] },
+      { "text": "The chemical compound CH3COOH commonly known as acetic acid has a pH of approximately 2.4", "keywords": ["chemical", "acetic", "acid", "pH"] },
+      { "text": "Euler identity states that e to the power of i times pi plus 1 equals zero", "keywords": ["euler", "identity", "pi", "zero"] },
+      { "text": "The UNESCO World Heritage site Machu Picchu is located at 2430 meters elevation in Peru", "keywords": ["UNESCO", "Machu Picchu", "2430", "Peru"] },
+      { "text": "Your one-time verification code is 8 4 3 7 2 and expires in five minutes", "keywords": ["verification", "code", "84372", "five", "minutes"] },
+      { "text": "The SQL query selects all records from the users table where the account status equals active and the score is greater than 100", "keywords": ["SQL", "query", "users", "active", "score", "100"] },
+      { "text": "Bernoulli and Euler each contributed foundational theorems to both fluid dynamics and graph theory", "keywords": ["bernoulli", "euler", "fluid", "dynamics", "graph", "theory"] },
+      { "text": "The hypotenuse of a right triangle with legs of 3 centimeters and 4 centimeters measures exactly 5 centimeters", "keywords": ["hypotenuse", "3", "4", "5", "centimeters"] },
+      { "text": "The maximum transmission unit MTU for standard Ethernet frames is 1500 bytes", "keywords": ["MTU", "Ethernet", "1500", "bytes"] }
+    ]
+  }
+}

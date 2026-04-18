@@ -27,6 +27,7 @@ data/*.json
 !data/skill-templates.json
 !data/soul-templates.json
 !data/rule-templates.json
+!data/arena-questions.json
 
 # Test files
 test-entity-info.json
