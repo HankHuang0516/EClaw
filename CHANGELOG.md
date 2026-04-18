@@ -1,3 +1,10 @@
+## [1.1002.1](https://github.com/HankHuang0516/EClaw/compare/v1.1002.0...v1.1002.1) (2026-04-18)
+
+
+### Bug Fixes
+
+* **arena:** repair GET /arena/test 500 + routine self-test for pool refresh ([#1836](https://github.com/HankHuang0516/EClaw/issues/1836)) ([04d07a2](https://github.com/HankHuang0516/EClaw/commit/04d07a2a1d0e4dea6bd2a708fdd45a51b889aa8a))
+
 # [1.1002.0](https://github.com/HankHuang0516/EClaw/compare/v1.1001.0...v1.1002.0) (2026-04-18)
 
 
