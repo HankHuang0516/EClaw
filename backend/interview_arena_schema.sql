@@ -118,3 +118,8 @@ ALTER TABLE arena_comments ADD CONSTRAINT arena_comments_exam_id_fkey FOREIGN KE
 -- user may delay copy-pasting the URL and the bot itself may have pickup
 -- latency. Populated idempotently on first GET.
 ALTER TABLE arena_exams ADD COLUMN IF NOT EXISTS first_fetched_at TIMESTAMP WITH TIME ZONE;
+
+-- Exam-level completion timestamp. Needed to compute an accurate total
+-- elapsed time for the leaderboard that isn't polluted by the user
+-- typing their display name after finalize.
+ALTER TABLE arena_exams ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP WITH TIME ZONE;

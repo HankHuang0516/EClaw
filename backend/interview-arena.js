@@ -1407,7 +1407,11 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
 
             const report = { totalScore, maxScore: MAX_TOTAL_SCORE, detail };
             await pool.query(
-                `UPDATE arena_exams SET status = 'completed', total_score = $2, report = $3
+                `UPDATE arena_exams
+                 SET status = 'completed',
+                     total_score = $2,
+                     report = $3,
+                     completed_at = COALESCE(completed_at, NOW())
                  WHERE id = $1`,
                 [req.params.examId, totalScore, JSON.stringify(report)]
             );
@@ -1500,6 +1504,14 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
             );
             const exam = examRes.rows[0];
             console.log(`[Arena DEBUG] exam ${exam.id} status=${exam.status} expires_at=${exam.expires_at} created_at=${exam.created_at} now=${new Date().toISOString()}`);
+            // Derive elapsed (from bot first-fetch to completion, clamped to 180s)
+            // so the UI can display total-time-taken on completed exams.
+            let elapsedSec = null;
+            if (exam.first_fetched_at && (exam.completed_at || exam.status === 'completed')) {
+                const startTs = new Date(exam.first_fetched_at).getTime();
+                const endTs = exam.completed_at ? new Date(exam.completed_at).getTime() : Date.now();
+                elapsedSec = Math.max(0, Math.min(180, Math.round((endTs - startTs) / 1000)));
+            }
             res.json({
                 success: true,
                 exam: {
@@ -1507,6 +1519,9 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
                     totalScore: exam.total_score, maxScore: exam.max_score,
                     report: exam.report, createdAt: exam.created_at,
                     expiresAt: exam.expires_at,
+                    firstFetchedAt: exam.first_fetched_at,
+                    completedAt: exam.completed_at,
+                    elapsedSec,
                 },
                 sessions: sessions.rows,
                 testTypes: TEST_TYPES,
@@ -1524,13 +1539,22 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
                 return res.status(400).json({ success: false, error: 'examId_and_name_required' });
             }
             const examRes = await pool.query(
-                `SELECT id, model, total_score, max_score, report, created_at FROM arena_exams WHERE id = $1 AND status = 'completed'`,
+                `SELECT id, model, total_score, max_score, report, created_at, first_fetched_at, completed_at
+                 FROM arena_exams WHERE id = $1 AND status = 'completed'`,
                 [examId]
             );
             if (examRes.rowCount === 0) return res.status(404).json({ success: false, error: 'exam_not_found_or_incomplete' });
             const exam = examRes.rows[0];
-            // Compute elapsed time
-            const elapsedSec = Math.round((Date.now() - new Date(exam.created_at).getTime()) / 1000);
+            // Elapsed = from bot's first fetch to exam completion, clamped to
+            // the 3-min ceiling so auto-timeout or clock drift can never put
+            // a >180s entry on the leaderboard.
+            const startTs = exam.first_fetched_at
+                ? new Date(exam.first_fetched_at).getTime()
+                : new Date(exam.created_at).getTime();
+            const endTs = exam.completed_at
+                ? new Date(exam.completed_at).getTime()
+                : Date.now();
+            const elapsedSec = Math.max(0, Math.min(180, Math.round((endTs - startTs) / 1000)));
             const report = typeof exam.report === 'string' ? JSON.parse(exam.report) : (exam.report || {});
             report.elapsedSec = elapsedSec;
 
