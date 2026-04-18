@@ -1,3 +1,10 @@
+## [1.1003.5](https://github.com/HankHuang0516/EClaw/compare/v1.1003.4...v1.1003.5) (2026-04-18)
+
+
+### Bug Fixes
+
+* **portal:** lazy-render mermaid only when sub-panel is visible ([#1853](https://github.com/HankHuang0516/EClaw/issues/1853)) ([b6f0fc0](https://github.com/HankHuang0516/EClaw/commit/b6f0fc0b8cfe90552e6c883eaa8fa5b1eeec5d12))
+
 ## [1.1003.4](https://github.com/HankHuang0516/EClaw/compare/v1.1003.3...v1.1003.4) (2026-04-18)
 
 
