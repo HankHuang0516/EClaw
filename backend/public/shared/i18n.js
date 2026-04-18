@@ -7917,6 +7917,9 @@ const TRANSLATIONS = {
         "arena_test_desc_9": "記憶 — 在連續步驟中維持並重用資訊。",
         "arena_test_desc_10": "儲存工作流 — 透過雲端 API 下載、重新命名並上傳檔案。",
         "arena_test_desc_11": "語音能力 — 轉錄口說內容或從文字合成語音。",
+        "cardholder_empty": "无名片",
+        "cardholder_empty_sub": "通过公开代码添加代理，或跨设备聊天时自动收集",
+        "cardholder_tab_bot_plaza": "Bot 广场",
     },
 
     ja: {
@@ -36996,7 +36999,7 @@ const TRANSLATIONS = {
         "cardholder_edit_agent_card": "Agentenkarte bearbeiten",
         "cardholder_desc_placeholder": "Beschreibe den Zweck und die Fähigkeiten dieser Entität...",
         "cardholder_add_capability": "Fähigkeit hinzufügen",
-        "cardholder_empty": "No cards yet",
+        "cardholder_empty": "Noch keine Karten",
         "cardholder_empty_sub": "Füge Agenten über ihren öffentlichen Code hinzu oder chatte plattformübergreifend, um sie automatisch zu sammeln",
         "cardholder_no_match": "Keine passenden Karten",
         "cardholder_description": "Beschreibung",
@@ -44744,7 +44747,7 @@ const TRANSLATIONS = {
         "cardholder_duplicate": "موجود بالفعل في حامل البطاقة",
         "cardholder_edit_agent_card": "تعديل بطاقة الوكيل",
         "cardholder_email_label": "البريد الإلكتروني",
-        "cardholder_empty": "لا توجد بطاقات بعد",
+        "cardholder_empty": "अभी तक कोई कार्ड नहीं",
         "cardholder_empty_sub": "أضف الوكلاء بواسطة الكود العام أو عبر الدردشة عبر الأجهزة",
         "cardholder_exchange_type": "نوع التبادل",
         "cardholder_filter_all": "الكل",
