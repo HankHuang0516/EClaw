@@ -1,3 +1,10 @@
+## [1.1002.5](https://github.com/HankHuang0516/EClaw/compare/v1.1002.4...v1.1002.5) (2026-04-18)
+
+
+### Bug Fixes
+
+* **arena:** remove duplicate examId declaration causing CI ESLint failure ([#1843](https://github.com/HankHuang0516/EClaw/issues/1843)) ([dd4ff17](https://github.com/HankHuang0516/EClaw/commit/dd4ff1762ef6fbbfcd11697ded5db7e5494c2afc))
+
 ## [1.1002.4](https://github.com/HankHuang0516/EClaw/compare/v1.1002.3...v1.1002.4) (2026-04-18)
 
 
