@@ -1,3 +1,10 @@
+# [1.1002.0](https://github.com/HankHuang0516/EClaw/compare/v1.1001.0...v1.1002.0) (2026-04-18)
+
+
+### Features
+
+* **android:** rip out CardHolderActivity → portal/card-holder.html?embed=1 ([#1834](https://github.com/HankHuang0516/EClaw/issues/1834)) ([1bd4b72](https://github.com/HankHuang0516/EClaw/commit/1bd4b729b718a78804f3a8ab6b362ddf94f11ed1))
+
 # [1.1001.0](https://github.com/HankHuang0516/EClaw/compare/v1.1000.0...v1.1001.0) (2026-04-17)
 
 
