@@ -419,15 +419,11 @@
             } catch (e) { console.error(e); }
         }
 
-        let resultsShown = false;
-        function showResults(data) {
-            if (resultsShown) return;
-            resultsShown = true;
-            document.getElementById('statusText').textContent = 'Evaluation Complete';
+        // Switch timer label to "Total time" and paint elapsedSec when we have it.
+        // Kept OUTSIDE the `resultsShown` guard so a later poll carrying elapsedSec
+        // can overwrite an earlier Socket.IO/autoFinalize call that lacked it.
+        function paintTotalTime(data) {
             if (examTimerInterval) { clearInterval(examTimerInterval); examTimerInterval = null; }
-            // Exam is done — swap the "Time remaining" label to "Total time"
-            // and show the actual time taken (first_fetched_at → completed_at,
-            // capped at 3:00). Falls back to "--:--" if the exam never started.
             const timerEl = document.getElementById('examTimer');
             const timerLabel = document.getElementById('examTimerLabel');
             if (timerLabel) {
@@ -442,11 +438,21 @@
                 if (secs != null) {
                     const m = Math.floor(secs / 60), s = secs % 60;
                     timerEl.textContent = m + ':' + String(s).padStart(2, '0');
-                } else {
-                    timerEl.textContent = '--:--';
                 }
+                // If secs is null, leave whatever was there ("--:--" or the last
+                // countdown value) and wait for a later call to overwrite.
                 timerEl.style.color = 'var(--text-muted)';
             }
+        }
+
+        let resultsShown = false;
+        function showResults(data) {
+            // Always refresh the timer — the 5s poll will catch up even if an
+            // earlier caller (Socket.IO, autoFinalize) arrived without elapsedSec.
+            paintTotalTime(data);
+            if (resultsShown) return;
+            resultsShown = true;
+            document.getElementById('statusText').textContent = 'Evaluation Complete';
             if (data?.exam?.model) showModel(data.exam.model);
             document.getElementById('scoreWrap').style.display = 'block';
             if (data.exam) { document.getElementById('totalScore').textContent = data.exam.totalScore || 0; document.getElementById('scoreFill').style.width = Math.round((data.exam.totalScore || 0) / 147 * 100) + '%'; }
