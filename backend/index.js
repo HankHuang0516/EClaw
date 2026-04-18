@@ -1409,10 +1409,24 @@ app.get('/p/:code/:noteId', async (req, res) => {
 
 function sanitizePublicHtml(html) {
     if (!html) return '';
-    // Sanitize HTML (strips <script> by default)
-    const sanitized = sanitizeHtml(html, {
-        allowVulnerableTags: true,
-        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'span', 'details', 'summary', 'mark', 'del', 'ins', 'sub', 'sup', 'style']),
+
+    // Extract <style> blocks before sanitization (sanitize-html strips them without allowVulnerableTags)
+    const extractedStyles = [];
+    const htmlWithoutStyles = html.replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, (_match, css) => {
+        // Strip dangerous CSS: @import, url(), expression(), behavior, -moz-binding
+        const safeCss = css
+            .replace(/@import\b[^;]*/gi, '/* @import removed */')
+            .replace(/expression\s*\([^)]*\)/gi, '/* expression removed */')
+            .replace(/behavior\s*:[^;]*/gi, '/* behavior removed */')
+            .replace(/-moz-binding\s*:[^;]*/gi, '/* -moz-binding removed */')
+            .replace(/url\s*\(\s*["']?(?!data:image\/)[^)]*\)/gi, '/* url() removed */');
+        if (safeCss.trim()) extractedStyles.push(safeCss);
+        return '';
+    });
+
+    // Sanitize HTML without allowVulnerableTags (no <style>/<script> in allowedTags)
+    const sanitized = sanitizeHtml(htmlWithoutStyles, {
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'span', 'details', 'summary', 'mark', 'del', 'ins', 'sub', 'sup']),
         allowedAttributes: {
             ...sanitizeHtml.defaults.allowedAttributes,
             img: ['src', 'alt', 'width', 'height', 'loading'],
@@ -1433,9 +1447,14 @@ function sanitizePublicHtml(html) {
         } }
     });
 
+    // Re-inject sanitized <style> blocks
+    const styleBlock = extractedStyles.length > 0
+        ? `<style>${extractedStyles.join('\n')}</style>`
+        : '';
+
     // If original HTML contains <script>, preserve them as blocked for consent-gated execution
     const hasScripts = /<script[\s>]/i.test(html);
-    if (!hasScripts) return sanitized;
+    if (!hasScripts) return styleBlock + sanitized;
 
     // Extract all <script> tags from original HTML, encode as data for deferred execution
     const scriptBlocks = [];
@@ -1443,11 +1462,11 @@ function sanitizePublicHtml(html) {
         const srcMatch = attrs.match(/src=["']([^"']+)["']/i);
         scriptBlocks.push(srcMatch ? { src: srcMatch[1] } : { inline: body });
     });
-    if (scriptBlocks.length === 0) return sanitized;
+    if (scriptBlocks.length === 0) return styleBlock + sanitized;
 
     // Embed blocked scripts as JSON data attribute for client-side consent activation
     const encoded = Buffer.from(JSON.stringify(scriptBlocks)).toString('base64');
-    return sanitized + `<div id="eclaw-blocked-scripts" data-scripts="${encoded}" style="display:none"></div>`;
+    return styleBlock + sanitized + `<div id="eclaw-blocked-scripts" data-scripts="${encoded}" style="display:none"></div>`;
 }
 
 /** Check if rendered content has blocked scripts that need consent */
@@ -16358,3 +16377,4 @@ module.exports.httpServer = httpServer;
 module.exports.io = io;
 module.exports.devices = devices;
 module.exports.safeEqual = safeEqual;
+module.exports._sanitizePublicHtml = sanitizePublicHtml;
