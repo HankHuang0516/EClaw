@@ -1,10 +1,34 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="privacy_title">隱私權政策 - EClawbot</title>
+    <title data-i18n="privacy_title">Privacy Policy - EClawbot</title>
+    <meta name="description" content="EClawbot privacy policy. Learn how we collect, use, and protect your data across our AI agent platform.">
+    <link rel="canonical" href="https://eclawbot.com/privacy-policy.html">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Privacy Policy - EClawbot">
+    <meta property="og:description" content="EClawbot privacy policy. Learn how we collect, use, and protect your data across our AI agent platform.">
+    <meta property="og:url" content="https://eclawbot.com/privacy-policy.html">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://eclawbot.com/assets/og-image.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Privacy Policy - EClawbot">
+    <meta name="twitter:description" content="EClawbot privacy policy. Learn how we collect, use, and protect your data across our AI agent platform.">
+
+    <!-- Hreflang -->
+    <link rel="alternate" hreflang="en" href="https://eclawbot.com/privacy-policy.html">
+    <link rel="alternate" hreflang="zh" href="https://eclawbot.com/privacy-policy.html">
+    <link rel="alternate" hreflang="ja" href="https://eclawbot.com/privacy-policy.html">
+    <link rel="alternate" hreflang="ko" href="https://eclawbot.com/privacy-policy.html">
+    <link rel="alternate" hreflang="th" href="https://eclawbot.com/privacy-policy.html">
+    <link rel="alternate" hreflang="vi" href="https://eclawbot.com/privacy-policy.html">
+    <link rel="alternate" hreflang="id" href="https://eclawbot.com/privacy-policy.html">
+    <link rel="alternate" hreflang="x-default" href="https://eclawbot.com/privacy-policy.html">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -74,6 +98,7 @@
 </head>
 
 <body>
+    <main>
     <div class="lang-switcher">
         <select id="langSelect" onchange="switchLang(this.value)">
             <option value="zh-TW">繁體中文</option>
@@ -88,7 +113,7 @@
     </div>
 
     <!-- ── 繁體中文 ── -->
-    <div data-lang="zh-TW" class="active">
+    <div data-lang="zh-TW">
         <h1>隱私權政策</h1>
         <p class="update-date">最近更新日期：2026年3月28日</p>
         <p>歡迎使用 EClawbot（以下簡稱本應用程式）。我們非常重視您的隱私，並致力於保護您的個人資訊。本隱私權政策旨在說明我們如何收集、使用、披露及保護您的資訊。</p>
@@ -182,7 +207,7 @@
     </div>
 
     <!-- ── English ── -->
-    <div data-lang="en">
+    <div data-lang="en" class="active">
         <h1>Privacy Policy</h1>
         <p class="update-date">Last updated: March 28, 2026</p>
         <p>Welcome to EClawbot. We take your privacy seriously and are committed to protecting your personal information. This privacy policy explains how we collect, use, disclose, and protect your information.</p>
@@ -416,6 +441,8 @@
         <p>Email: support@twopiggyhavefun.uk</p>
     </div>
 
+    </main>
+
     <footer>
         &copy; 2026 EClawbot Team. All rights reserved.
     </footer>
@@ -432,7 +459,7 @@
         (function () {
             const saved = localStorage.getItem('eclaw_privacy_lang');
             const browserLang = navigator.language || '';
-            let lang = 'zh-TW';
+            let lang = 'en';
 
             if (saved) {
                 lang = saved;

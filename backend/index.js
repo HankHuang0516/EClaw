@@ -15691,36 +15691,120 @@ function getBackupUrl(flickrUrl) {
 
 /**
  * GET /api/media/:id - Serve cached photo
+ * Security: requires device ownership (cookie JWT, query deviceId+deviceSecret, or botSecret)
  */
 app.get('/api/media/:id', (req, res) => {
     const cached = photoCache.get(req.params.id);
     if (!cached) {
         return res.status(404).json({ error: 'Media not found or expired' });
     }
+
+    // --- BOLA fix: verify requesting device owns this media ---
+    const ownerDeviceId = cached.deviceId;
+    let authedDeviceId = null;
+
+    // Path 1: cookie JWT (web portal)
+    const token = req.cookies && req.cookies.eclaw_session;
+    if (token) {
+        try {
+            const jwt = require('jsonwebtoken');
+            const decoded = jwt.verify(token, JWT_SECRET_FALLBACK);
+            authedDeviceId = decoded.deviceId;
+        } catch { /* invalid token */ }
+    }
+
+    // Path 2: query params (Android / API callers)
+    if (!authedDeviceId) {
+        const deviceId = req.query.deviceId;
+        const deviceSecret = req.query.deviceSecret;
+        if (deviceId && deviceSecret) {
+            const device = devices[deviceId];
+            if (device && safeEqual(device.deviceSecret, deviceSecret)) {
+                authedDeviceId = deviceId;
+            }
+        }
+    }
+
+    // Path 3: botSecret (bot callers accessing their own device's media)
+    if (!authedDeviceId && req.query.botSecret) {
+        for (const [did, device] of Object.entries(devices)) {
+            const entities = device.entities || [];
+            if (entities.some(e => e && e.botSecret && safeEqual(e.botSecret, req.query.botSecret))) {
+                authedDeviceId = did;
+                break;
+            }
+        }
+    }
+
+    if (!authedDeviceId || authedDeviceId !== ownerDeviceId) {
+        return res.status(403).json({ error: 'Access denied' });
+    }
+
     res.set('Content-Type', cached.contentType);
-    res.set('Cache-Control', 'public, max-age=86400');
+    res.set('Cache-Control', 'private, max-age=86400');
     res.send(cached.buffer);
 });
 
 /**
  * GET /api/chat/file/:id - Serve uploaded file from DB
+ * Security: requires device ownership (cookie JWT, query deviceId+deviceSecret, or botSecret)
  */
 app.get('/api/chat/file/:id', async (req, res) => {
     try {
-        // First query metadata only (no file_data) to support Range requests efficiently
+        // First query metadata + device_id for ownership check (no file_data)
         const metaResult = await chatPool.query(
-            'SELECT original_name, content_type, file_size FROM chat_uploads WHERE id = $1',
+            'SELECT device_id, original_name, content_type, file_size FROM chat_uploads WHERE id = $1',
             [req.params.id]
         );
         if (metaResult.rows.length === 0) {
             return res.status(404).json({ error: 'File not found' });
         }
-        const { original_name, content_type, file_size } = metaResult.rows[0];
+        const { device_id: ownerDeviceId, original_name, content_type, file_size } = metaResult.rows[0];
+
+        // --- BOLA fix: verify requesting device owns this file ---
+        let authedDeviceId = null;
+
+        // Path 1: cookie JWT (web portal)
+        const token = req.cookies && req.cookies.eclaw_session;
+        if (token) {
+            try {
+                const jwt = require('jsonwebtoken');
+                const decoded = jwt.verify(token, JWT_SECRET_FALLBACK);
+                authedDeviceId = decoded.deviceId;
+            } catch { /* invalid token */ }
+        }
+
+        // Path 2: query params (Android / API callers)
+        if (!authedDeviceId) {
+            const deviceId = req.query.deviceId;
+            const deviceSecret = req.query.deviceSecret;
+            if (deviceId && deviceSecret) {
+                const device = devices[deviceId];
+                if (device && safeEqual(device.deviceSecret, deviceSecret)) {
+                    authedDeviceId = deviceId;
+                }
+            }
+        }
+
+        // Path 3: botSecret (bot callers accessing their own device's files)
+        if (!authedDeviceId && req.query.botSecret) {
+            for (const [did, device] of Object.entries(devices)) {
+                const entities = device.entities || [];
+                if (entities.some(e => e && e.botSecret && safeEqual(e.botSecret, req.query.botSecret))) {
+                    authedDeviceId = did;
+                    break;
+                }
+            }
+        }
+
+        if (!authedDeviceId || authedDeviceId !== ownerDeviceId) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
         const totalSize = parseInt(file_size);
 
         res.set('Content-Type', content_type);
         res.set('Content-Disposition', `inline; filename="${encodeURIComponent(original_name)}"`);
-        res.set('Cache-Control', 'public, max-age=86400');
+        res.set('Cache-Control', 'private, max-age=86400');
         res.set('Accept-Ranges', 'bytes');
 
         const rangeHeader = req.headers.range;

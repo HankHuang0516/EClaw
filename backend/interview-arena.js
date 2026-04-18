@@ -1080,6 +1080,7 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
             }
             examCooldownMap.set(ip, now);
 
+            const examId = 'exam_' + generateToken(12);
             const examToken = generateToken(12);
             const expiresAt = new Date(Date.now() + EXAM_TTL_MS);
 
