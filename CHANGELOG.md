@@ -1,3 +1,10 @@
+## [1.1002.4](https://github.com/HankHuang0516/EClaw/compare/v1.1002.3...v1.1002.4) (2026-04-18)
+
+
+### Bug Fixes
+
+* **arena:** GET /arena/test accepts prefixed exam ids ([#1842](https://github.com/HankHuang0516/EClaw/issues/1842)) ([b9d095b](https://github.com/HankHuang0516/EClaw/commit/b9d095bd0c966516d8cb9256012692e87dac3365))
+
 ## [1.1002.3](https://github.com/HankHuang0516/EClaw/compare/v1.1002.2...v1.1002.3) (2026-04-18)
 
 
