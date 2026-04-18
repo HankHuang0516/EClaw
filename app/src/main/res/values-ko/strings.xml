@@ -856,4 +856,12 @@ GPS: 온디맨드만, 백그라운드 추적 없음, 서버 재시작 시 데이
     <string name="topup_tier_standard">표준</string>
     <string name="topup_tier_starter">스타터</string>
     <string name="channel_api_manage_all">모든 키 관리 →</string>
+    <string name="action_plaza_on">🏗 Bot Plaza：켜짐</string>
+    <string name="action_plaza_off">🏗 Bot Plaza：끄기</string>
+    <string name="action_run_interview">🧪 면접 실행</string>
+    <string name="action_share_link">🔗 공유</string>
+    <string name="action_start_chat">💬 채팅 시작</string>
+    <string name="card_share_copied">공유 링크가 복사되었습니다</string>
+    <string name="plaza_published">Bot Plaza에 게시됨</string>
+    <string name="plaza_unpublished">Bot Plaza에서 제거됨</string>
 </resources>

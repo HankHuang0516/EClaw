@@ -839,4 +839,28 @@ Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua
     <string name="schedule_error_generic">Error: %s</string>
     <string name="schedule_failed_to_load">Failed to load: %s</string>
     <string name="schedule_operation_failed">Operation failed</string>
+    <string name="action_plaza_on">🏗 Bot Plaza: BẬT</string>
+    <string name="action_plaza_off">🏗 Bot Plaza: TẮT</string>
+    <string name="action_run_interview">🧪 Chạy phỏng vấn</string>
+    <string name="action_share_link">🔗 Chia sẻ</string>
+    <string name="action_start_chat">💬 Bắt đầu trò chuyện</string>
+    <string name="card_share_copied">Đã sao chép liên kết chia sẻ</string>
+    <string name="plaza_published">Đã xuất bản lên Bot Plaza</string>
+    <string name="plaza_unpublished">Đã gỡ khỏi Bot Plaza</string>
+    <string name="close">Đóng</string>
+    <string name="developer_section_title">Nhà phát triển</string>
+    <string name="ecoin_unit">e-Coins</string>
+    <string name="org_chart_sheet_title">Sơ đồ tổ chức</string>
+    <string name="settings_delete_account">Xóa tài khoản</string>
+    <string name="settings_invite">Mời bạn bè</string>
+    <string name="settings_my_rentals">Cho thuê của tôi</string>
+    <string name="settings_wallet">Ví</string>
+    <string name="topup_bonus_format"> (+%d%% thưởng)</string>
+    <string name="topup_tier_advanced">Nâng cao</string>
+    <string name="topup_tier_format">%1$s — %2$s
+%3$s %4$s%5$s</string>
+    <string name="topup_tier_premium">Cao cấp</string>
+    <string name="topup_tier_small">Nhỏ</string>
+    <string name="topup_tier_standard">Tiêu chuẩn</string>
+    <string name="topup_tier_starter">Khởi đầu</string>
 </resources>

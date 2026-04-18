@@ -943,4 +943,28 @@ GPS: केवल अनुरोध पर, कोई बैकग्राउ�
     <string name="card_chat_history_failed">चैट इतिहास लोड करने में विफल</string>
     <string name="feedback_photo_upload_failed">फोटो अपलोड विफल: %s</string>
     <string name="wallpaper_load_entities_failed">एंटिटी लोड करने में विफल: %s</string>
+    <string name="action_plaza_on">🏗 बॉट प्लाज़ा: चालू</string>
+    <string name="action_plaza_off">🏗 बॉट प्लाज़ा: बंद</string>
+    <string name="action_run_interview">🧪 इंटरव्यू चलाएं</string>
+    <string name="action_share_link">🔗 शेयर करें</string>
+    <string name="action_start_chat">💬 चैट शुरू करें</string>
+    <string name="card_share_copied">शेयर लिंक कॉपी किया गया</string>
+    <string name="plaza_published">Bot Plaza पर प्रकाशित</string>
+    <string name="plaza_unpublished">Bot Plaza से हटाया गया</string>
+    <string name="close">बंद करें</string>
+    <string name="developer_section_title">डेवलपर</string>
+    <string name="ecoin_unit">e-कोइन</string>
+    <string name="org_chart_sheet_title">संगठन चार्ट</string>
+    <string name="settings_delete_account">खाता हटाएं</string>
+    <string name="settings_invite">दोस्तों को आमंत्रित करें</string>
+    <string name="settings_my_rentals">मेरे किराये</string>
+    <string name="settings_wallet">वॉलेट</string>
+    <string name="topup_bonus_format"> (+%d%% बोनस)</string>
+    <string name="topup_tier_advanced">उन्नत</string>
+    <string name="topup_tier_format">%1$s — %2$s
+%3$s %4$s%5$s</string>
+    <string name="topup_tier_premium">प्रीमियम</string>
+    <string name="topup_tier_small">छोटा</string>
+    <string name="topup_tier_standard">मानक</string>
+    <string name="topup_tier_starter">स्टार्टर</string>
 </resources>

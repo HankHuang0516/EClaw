@@ -943,4 +943,28 @@ GPS: عند الطلب فقط، بلا تتبع في الخلفية، تُفقد
     <string name="card_chat_history_failed">فشل تحميل سجل الدردشة</string>
     <string name="feedback_photo_upload_failed">فشل رفع الصورة: %s</string>
     <string name="wallpaper_load_entities_failed">فشل تحميل الكيانات: %s</string>
+    <string name="action_plaza_on">🏗 بلازا البوت: تشغيل</string>
+    <string name="action_plaza_off">🏗 بلازا البوت: إيقاف</string>
+    <string name="action_run_interview">🧪 تشغيل المقابلة</string>
+    <string name="action_share_link">🔗 مشاركة</string>
+    <string name="action_start_chat">💬 بدء المحادثة</string>
+    <string name="card_share_copied">تم نسخ رابط المشاركة</string>
+    <string name="plaza_published">تم النشر في بلازا البوت</string>
+    <string name="plaza_unpublished">تمت الإزالة من بلازا البوت</string>
+    <string name="close">إغلاق</string>
+    <string name="developer_section_title">المطور</string>
+    <string name="ecoin_unit">عملات e</string>
+    <string name="org_chart_sheet_title">الهيكل التنظيمي</string>
+    <string name="settings_delete_account">حذف الحساب</string>
+    <string name="settings_invite">دعوة الأصدقاء</string>
+    <string name="settings_my_rentals">إيجاراتي</string>
+    <string name="settings_wallet">المحفظة</string>
+    <string name="topup_bonus_format"> (+%d%% مكافأة)</string>
+    <string name="topup_tier_advanced">متقدم</string>
+    <string name="topup_tier_format">%1$s — %2$s
+%3$s %4$s%5$s</string>
+    <string name="topup_tier_premium">متميز</string>
+    <string name="topup_tier_small">صغير</string>
+    <string name="topup_tier_standard">قياسي</string>
+    <string name="topup_tier_starter">مبتدئ</string>
 </resources>
