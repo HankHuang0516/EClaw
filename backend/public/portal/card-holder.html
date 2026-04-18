@@ -103,6 +103,15 @@
 
         .search-bar input::placeholder { color: var(--text-muted); }
 
+        /* Embedded mode — opened from native app (Android WebViewActivity / iOS).
+           Query: ?embed=1. Nav + footer already auto-hide via shared/nav.js + footer.js;
+           here we drop the redundant page title so the host app's top bar is the only chrome. */
+        body.embedded { padding: 0 !important; margin: 0 !important; }
+        body.embedded main,
+        body.embedded .container { padding: 12px; max-width: 100%; }
+        body.embedded .page-header h2 { display: none; }
+        body.embedded .page-header { margin-bottom: 8px; justify-content: flex-end; }
+
         /* ── Filter chips ── */
         .filter-bar {
             display: flex;
@@ -737,6 +746,9 @@
         let searchDebounce = null;
 
         // ── Init ──
+        const __isEmbedded = new URLSearchParams(window.location.search).get('embed') === '1';
+        if (__isEmbedded) document.body.classList.add('embedded');
+
         window.addEventListener('DOMContentLoaded', async () => {
             renderNav('card-holder');
             if (typeof renderFooter === 'function') renderFooter();
@@ -1095,6 +1107,8 @@
                 </div>
 
                 <div class="modal-actions">
+                    <button class="btn btn-outline btn-sm" onclick="window.location.href='/c/${escapeAttr(card.publicCode)}'">&#x1F4AC; ${t('cardholder_start_chat', 'Start Chat')}</button>
+                    <button class="btn btn-outline btn-sm" onclick="openShareModal('${escapeAttr(card.publicCode)}', '${escapeAttr(card.name || card.publicCode)}')">&#x1F517; ${t('cardholder_share', 'Share')}</button>
                     <button class="btn btn-primary btn-sm" onclick="saveAgentCard('${escapeAttr(card.publicCode)}')">${t('common_save', 'Save')}</button>
                     <button class="btn btn-outline btn-sm" onclick="closeDetail()">${t('common_cancel', 'Cancel')}</button>
                 </div>`;

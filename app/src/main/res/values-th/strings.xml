@@ -122,44 +122,8 @@
     <string name="broadcast_settings_desc">กำหนดค่าการทำงานของข้อความแพร่ภาพ</string>
     <string name="broadcast_settings_title">การตั้งค่าการแพร่ภาพ</string>
     <string name="broadcast_to_all">ส่งถึงทุกคน</string>
-    <string name="cancel">ยกเลิก</string>
-    <string name="card_holder_add">เพิ่มการ์ด</string>
-    <string name="card_holder_add_capability">เพิ่มความสามารถ</string>
-    <string name="card_holder_added">เพิ่มการ์ดแล้ว</string>
-    <string name="card_holder_added_at">เพิ่มเมื่อ</string>
-    <string name="card_holder_blocked">ถูกบล็อก</string>
-    <string name="card_holder_capabilities">ความสามารถ</string>
-    <string name="card_holder_category">หมวดหมู่</string>
-    <string name="card_holder_category_hint">เช่น เครื่องมือ, โซเชียล, dev</string>
-    <string name="card_holder_code_hint">รหัสสาธารณะ</string>
-    <string name="card_holder_desc">เรียกดูนามบัตรตัวแทนที่เก็บรวบรวม</string>
-    <string name="card_holder_description">คำอธิบาย</string>
-    <string name="card_holder_details">รายละเอียด</string>
-    <string name="card_holder_email">อีเมล</string>
-    <string name="card_holder_empty">ยังไม่มีการ์ด\nแชทข้ามอุปกรณ์เพื่อรวบรวมนามบัตรตัวแทนอัตโนมัติ</string>
-    <string name="card_holder_exchange_type">ประเภทการแลกเปลี่ยน</string>
-    <string name="card_holder_friend_added">เพิ่มเพื่อนแล้ว</string>
-    <string name="card_holder_interactions">การโต้ตอบ</string>
-    <string name="card_holder_not_found">ไม่พบ</string>
-    <string name="card_holder_notes">บันทึก</string>
-    <string name="card_holder_notes_hint">เพิ่มบันทึกของคุณ…</string>
-    <string name="card_holder_pin">ปักหมุด</string>
-    <string name="card_holder_protocols">โปรโตคอล</string>
-    <string name="card_holder_refresh">รีเฟรชการ์ด</string>
-    <string name="card_holder_refreshed">รีเฟรชการ์ดแล้ว</string>
-    <string name="card_holder_remove">ลบ</string>
-    <string name="card_holder_removed">ลบการ์ดแล้ว</string>
-    <string name="card_holder_save">บันทึก</string>
-    <string name="card_holder_saved">บันทึกแล้ว</string>
-    <string name="card_holder_search">ค้นหาการ์ด…</string>
-    <string name="card_holder_tags">แท็ก</string>
-    <string name="card_holder_tags_hint">เพิ่มแท็ก…</string>
-    <string name="card_holder_title">ตัวจัดการการ์ด</string>
-    <string name="card_holder_unblocked">ปลดบล็อกแล้ว</string>
-    <string name="card_holder_unpin">ยกเลิกปักหมุด</string>
-    <string name="card_holder_version">เวอร์ชัน</string>
-    <string name="card_holder_website">เว็บไซต์</string>
-    <string name="category_add">+ หมวดหมู่</string>
+    <string name="cancel">ยกเลิก</string>    <string name="card_holder_add_capability">เพิ่มความสามารถ</string>    <string name="card_holder_capabilities">ความสามารถ</string>    <string name="card_holder_protocols">โปรโตคอล</string>    <string name="card_holder_tags">แท็ก</string>
+    <string name="card_holder_tags_hint">เพิ่มแท็ก…</string>    <string name="category_add">+ หมวดหมู่</string>
     <string name="category_add_title">เพิ่มหมวดหมู่</string>
     <string name="category_already_exists">หมวดหมู่ "%1$s" มีอยู่แล้ว</string>
     <string name="category_clear_confirm">ล้างรายการทั้งหมดใน "%1$s"?</string>
@@ -824,10 +788,7 @@ GPS：รับตามความต้องการเท่านั้�
     <string name="feedback_photo_upload_failed">อัปโหลดภาพล้มเหลว: %s</string>
     <string name="billing_google_play_loading">กำลังโหลด Google Play...</string>
     <string name="dialog_unblock_message">ปลดบล็อก %s หรือไม่？</string>
-    <string name="billing_subscription_unavailable">無法取得訂閱方案，請稍後再試</string>
-    <string name="card_holder_copied">Copied: %s</string>
-    <string name="card_holder_error">Error</string>
-    <string name="dialog_add_friend_message">Add %s to your contacts?</string>
+    <string name="billing_subscription_unavailable">無法取得訂閱方案，請稍後再試</string>    <string name="dialog_add_friend_message">Add %s to your contacts?</string>
     <string name="dialog_add_friend_title">Add Friend</string>
     <string name="dialog_agent_card_title">Agent Card — Entity #%d</string>
     <string name="dialog_block_contact">Block %s? They will no longer be able to interact with you.</string>
@@ -838,16 +799,7 @@ GPS：รับตามความต้องการเท่านั้�
     <string name="main_delete_failed_msg">Delete failed: %s</string>
     <string name="schedule_error_generic">Error: %s</string>
     <string name="schedule_failed_to_load">Failed to load: %s</string>
-    <string name="schedule_operation_failed">Operation failed</string>
-    <string name="action_plaza_on">🏗 บอทพลาซ่า: เปิด</string>
-    <string name="action_plaza_off">🏗 บอทพลาซ่า: ปิด</string>
-    <string name="action_run_interview">🧪 รันสัมภาษณ์</string>
-    <string name="action_share_link">🔗 แชร์</string>
-    <string name="action_start_chat">💬 เริ่มแชท</string>
-    <string name="card_share_copied">ลิงก์แชร์ถูกคัดลอกแล้ว</string>
-    <string name="plaza_published">เผยแพร่ไปยัง Bot Plaza แล้ว</string>
-    <string name="plaza_unpublished">ลบออกจาก Bot Plaza แล้ว</string>
-    <string name="close">ปิด</string>
+    <string name="schedule_operation_failed">Operation failed</string>    <string name="close">ปิด</string>
     <string name="developer_section_title">นักพัฒนา</string>
     <string name="ecoin_unit">e-coin</string>
     <string name="org_chart_sheet_title">แผนผังองค์กร</string>

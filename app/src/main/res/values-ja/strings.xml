@@ -122,44 +122,8 @@
     <string name="broadcast_settings_desc">ブロードキャストメッセージの動作を設定</string>
     <string name="broadcast_settings_title">ブロードキャスト設定</string>
     <string name="broadcast_to_all">全体にブロードキャスト</string>
-    <string name="cancel">キャンセル</string>
-    <string name="card_holder_add">カードを追加</string>
-    <string name="card_holder_add_capability">機能を追加</string>
-    <string name="card_holder_added">カードを追加しました</string>
-    <string name="card_holder_added_at">追加日</string>
-    <string name="card_holder_blocked">ブロック済み</string>
-    <string name="card_holder_capabilities">機能</string>
-    <string name="card_holder_category">カテゴリ</string>
-    <string name="card_holder_category_hint">例: ツール、SNS、開発</string>
-    <string name="card_holder_code_hint">パブリックコード</string>
-    <string name="card_holder_desc">収集したエージェント名刺を閲覧</string>
-    <string name="card_holder_description">説明</string>
-    <string name="card_holder_details">詳細</string>
-    <string name="card_holder_email">メール</string>
-    <string name="card_holder_empty">カードがありません\nクロスデバイスでチャットするとエージェントカードが自動収集されます</string>
-    <string name="card_holder_exchange_type">交換タイプ</string>
-    <string name="card_holder_friend_added">友達に追加しました</string>
-    <string name="card_holder_interactions">インタラクション</string>
-    <string name="card_holder_not_found">見つかりません</string>
-    <string name="card_holder_notes">メモ</string>
-    <string name="card_holder_notes_hint">メモを追加…</string>
-    <string name="card_holder_pin">ピン留め</string>
-    <string name="card_holder_protocols">プロトコル</string>
-    <string name="card_holder_refresh">カードを更新</string>
-    <string name="card_holder_refreshed">カードが更新されました</string>
-    <string name="card_holder_remove">削除</string>
-    <string name="card_holder_removed">カードを削除しました</string>
-    <string name="card_holder_save">保存</string>
-    <string name="card_holder_saved">保存済み</string>
-    <string name="card_holder_search">カードを検索…</string>
-    <string name="card_holder_tags">タグ</string>
-    <string name="card_holder_tags_hint">タグを追加…</string>
-    <string name="card_holder_title">カードホルダー</string>
-    <string name="card_holder_unblocked">ブロック解除</string>
-    <string name="card_holder_unpin">ピン留め解除</string>
-    <string name="card_holder_version">バージョン</string>
-    <string name="card_holder_website">ウェブサイト</string>
-    <string name="category_add">+ カテゴリ</string>
+    <string name="cancel">キャンセル</string>    <string name="card_holder_add_capability">機能を追加</string>    <string name="card_holder_capabilities">機能</string>    <string name="card_holder_protocols">プロトコル</string>    <string name="card_holder_tags">タグ</string>
+    <string name="card_holder_tags_hint">タグを追加…</string>    <string name="category_add">+ カテゴリ</string>
     <string name="category_add_title">カテゴリを追加</string>
     <string name="category_already_exists">カテゴリ「%1$s」は既に存在します</string>
     <string name="category_clear_confirm">「%1$s」のすべての項目をクリアしますか？</string>
@@ -824,10 +788,7 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="feedback_photo_upload_failed">写真のアップロード失敗: %s</string>
     <string name="billing_google_play_loading">Google Play を読み込み中...</string>
     <string name="dialog_unblock_message">%s のブロックを解除しますか？</string>
-    <string name="billing_subscription_unavailable">無法取得訂閱方案，請稍後再試</string>
-    <string name="card_holder_copied">Copied: %s</string>
-    <string name="card_holder_error">Error</string>
-    <string name="dialog_add_friend_message">Add %s to your contacts?</string>
+    <string name="billing_subscription_unavailable">無法取得訂閱方案，請稍後再試</string>    <string name="dialog_add_friend_message">Add %s to your contacts?</string>
     <string name="dialog_add_friend_title">Add Friend</string>
     <string name="dialog_agent_card_title">Agent Card — Entity #%d</string>
     <string name="dialog_block_contact">Block %s? They will no longer be able to interact with you.</string>
@@ -855,13 +816,4 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="topup_tier_small">スモール</string>
     <string name="topup_tier_standard">スタンダード</string>
     <string name="topup_tier_starter">スターター</string>
-    <string name="channel_api_manage_all">すべてのキーを管理 →</string>
-    <string name="action_plaza_on">🏗 Bot Plaza：オン</string>
-    <string name="action_plaza_off">🏗 Bot Plaza：オフ</string>
-    <string name="action_run_interview">🧪 面接を実行</string>
-    <string name="action_share_link">🔗 シェア</string>
-    <string name="action_start_chat">💬 チャット開始</string>
-    <string name="card_share_copied">共有リンクをコピーしました</string>
-    <string name="plaza_published">Bot Plaza に公開しました</string>
-    <string name="plaza_unpublished">Bot Plaza から削除しました</string>
-</resources>
+    <string name="channel_api_manage_all">すべてのキーを管理 →</string></resources>

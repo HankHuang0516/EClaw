@@ -5,9 +5,11 @@ Track git commits for each release to enable changelog generation via `git diff`
 ---
 
 ## Latest
-v1.0.71 | 55d40068 | 2026-04-17 | versionCode 77 | Internal 🚧 | Enter-newline, backtick Note chip, Note Markdown, chat density, org-chart touch-action
+v1.0.74 | TBD | 2026-04-18 | versionCode 80 | Internal 🚧 | CardHolderActivity ripped out (1758 LOC) → portal/card-holder.html?embed=1 WebView; full parity (Run Interview/Plaza/Start Chat/Share/Edit + BRM list entry); 41 android strings removed; docs updated
 
 ## Recent
+v1.0.73 | 23322191 | 2026-04-18 | versionCode 79 | Internal ✅ | MyCard Run Interview + Edit + 開始對話 + 分享 + Plaza toggle; chat chips (CJK/backtick/card_shortId/Stripe-prefix); photo grid; FCM self-heal; dashboard orgchart lock; i18n 13-locale fill
+v1.0.71 | 55d40068 | 2026-04-17 | versionCode 77 | Internal 🚧 | Enter-newline, backtick Note chip, Note Markdown, chat density, org-chart touch-action
 v1.0.70 | c8eac429 | 2026-04-17 | versionCode 76 | Internal ✅ | Dashboard + Org Chart parity on Android & iOS (WebView → portal/dashboard.html)
 v1.0.69 | 57b5250b | 2026-04-16 | versionCode 75 | Internal ✅ + Production ✅ (submitted for review 2026-04-17 09:33 TW)
 v1.0.68 | 606b04ca | 2026-04-16

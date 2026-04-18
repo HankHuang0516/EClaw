@@ -775,34 +775,9 @@ Bei Fragen kontaktieren Sie uns über unsere offizielle E-Mail.
     <string name="update_now">Jetzt aktualisieren</string>
     <string name="update_later">Später</string>
 
-    <!-- Card Holder -->
-    <string name="card_holder_title">Kartenhalter</string>
-    <string name="card_holder_add">Karte hinzufügen</string>
-    <string name="card_holder_search">Karten suchen…</string>
-    <string name="card_holder_empty">Noch keine Karten\nChatten Sie geräteübergreifend, um automatisch Agentenkarten zu sammeln</string>
-    <string name="card_holder_code_hint">Öffentlicher Code</string>
-    <string name="card_holder_not_found">Nicht gefunden</string>
-    <string name="card_holder_added">Karte hinzugefügt</string>
-    <string name="card_holder_removed">Karte entfernt</string>
-    <string name="card_holder_saved">Gespeichert</string>
-    <string name="card_holder_description">Beschreibung</string>
-    <string name="card_holder_capabilities">Fähigkeiten</string>
+    <!-- Card Holder -->    <string name="card_holder_capabilities">Fähigkeiten</string>
     <string name="card_holder_tags">Tags</string>
     <string name="card_holder_protocols">Protokolle</string>
-    <string name="card_holder_details">Details</string>
-    <string name="card_holder_exchange_type">Austauschtyp</string>
-    <string name="card_holder_interactions">Interaktionen</string>
-    <string name="card_holder_added_at">Hinzugefügt</string>
-    <string name="card_holder_notes">Notizen</string>
-    <string name="card_holder_notes_hint">Notizen hinzufügen…</string>
-    <string name="card_holder_category">Kategorie</string>
-    <string name="card_holder_category_hint">z.B. Tools, Sozial, Dev</string>
-    <string name="card_holder_pin">Anheften</string>
-    <string name="card_holder_unpin">Lösen</string>
-    <string name="card_holder_save">Speichern</string>
-    <string name="card_holder_remove">Entfernen</string>
-    <string name="card_holder_desc">Gesammelte Agenten-Visitenkarten durchsuchen</string>
-
     <!-- Card Holder Redesign -->
     <string name="my_cards_section">Meine Karten</string>
     <string name="recent_interactions">Letzte</string>
@@ -813,18 +788,8 @@ Bei Fragen kontaktieren Sie uns über unsere offizielle E-Mail.
     <string name="block_confirm">%1$s blockieren? Nachrichten dieser Entität werden ausgeblendet.</string>
     <string name="unblock_confirm">%1$s entblockieren?</string>
     <string name="chat_history_with">Chatverlauf mit %1$s</string>
-    <string name="no_chat_history">Kein Chatverlauf</string>
-    <string name="card_holder_blocked">Blockiert</string>
-    <string name="card_holder_unblocked">Entblockiert</string>
-    <string name="card_holder_friend_added">Freund hinzugefügt</string>
-    <string name="card_holder_email">E-Mail</string>
-    <string name="card_holder_website">Website</string>
-    <string name="card_holder_version">Version</string>
-    <string name="card_holder_tags_hint">Tag hinzufügen…</string>
-    <string name="card_holder_add_capability">Fähigkeit hinzufügen</string>
-    <string name="card_holder_refresh">Karte aktualisieren</string>
-    <string name="card_holder_refreshed">Karte aktualisiert</string>
-    <string name="tab_my_cards">Meine Karten</string>
+    <string name="no_chat_history">Kein Chatverlauf</string>    <string name="card_holder_tags_hint">Tag hinzufügen…</string>
+    <string name="card_holder_add_capability">Fähigkeit hinzufügen</string>    <string name="tab_my_cards">Meine Karten</string>
     <string name="tab_bot_plaza">Bot-Marktplatz</string>
 
     <!-- Share Chat Link -->
@@ -916,10 +881,7 @@ Bei Fragen kontaktieren Sie uns über unsere offizielle E-Mail.
     <!-- Hardcoded string externalization -->
     <string name="schedule_failed_to_load">Laden fehlgeschlagen: %s</string>
     <string name="schedule_error_generic">Fehler: %s</string>
-    <string name="schedule_operation_failed">Operation fehlgeschlagen</string>
-    <string name="card_holder_copied">Kopiert: %s</string>
-    <string name="card_holder_error">Fehler</string>
-    <string name="main_delete_failed_msg">Löschen fehlgeschlagen: %s</string>
+    <string name="schedule_operation_failed">Operation fehlgeschlagen</string>    <string name="main_delete_failed_msg">Löschen fehlgeschlagen: %s</string>
     <string name="billing_subscription_unavailable">Abonnementpläne konnten nicht abgerufen werden, bitte versuchen Sie es später erneut</string>
     <string name="billing_google_play_loading">Google Play lädt, bitte versuchen Sie es später erneut</string>
     <string name="dialog_delete_agent_card">Agentenkarte löschen?</string>
@@ -942,16 +904,7 @@ Bei Fragen kontaktieren Sie uns über unsere offizielle E-Mail.
     <string name="card_no_chat_history">Kein Chatverlauf</string>
     <string name="card_chat_history_failed">Chatverlauf konnte nicht geladen werden</string>
     <string name="feedback_photo_upload_failed">Foto-Upload fehlgeschlagen: %s</string>
-    <string name="wallpaper_load_entities_failed">Entitäten konnten nicht geladen werden: %s</string>
-    <string name="action_plaza_on">🏗 Bot Plaza: AN</string>
-    <string name="action_plaza_off">🏗 Bot Plaza: AUS</string>
-    <string name="action_run_interview">🧪 Interview starten</string>
-    <string name="action_share_link">🔗 Teilen</string>
-    <string name="action_start_chat">💬 Chat starten</string>
-    <string name="card_share_copied">Freigabe-Link kopiert</string>
-    <string name="plaza_published">Auf Bot Plaza veröffentlicht</string>
-    <string name="plaza_unpublished">Von Bot Plaza entfernt</string>
-    <string name="close">Schließen</string>
+    <string name="wallpaper_load_entities_failed">Entitäten konnten nicht geladen werden: %s</string>    <string name="close">Schließen</string>
     <string name="developer_section_title">Entwickler</string>
     <string name="ecoin_unit">e-Münzen</string>
     <string name="org_chart_sheet_title">Organigramm</string>

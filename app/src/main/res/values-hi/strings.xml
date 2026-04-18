@@ -775,34 +775,9 @@ GPS: केवल अनुरोध पर, कोई बैकग्राउ�
     <string name="update_now">अभी अपडेट करें</string>
     <string name="update_later">बाद में</string>
 
-    <!-- Card Holder -->
-    <string name="card_holder_title">कार्ड होल्डर</string>
-    <string name="card_holder_add">कार्ड जोड़ें</string>
-    <string name="card_holder_search">कार्ड खोजें…</string>
-    <string name="card_holder_empty">अभी कोई कार्ड नहीं\nएजेंट कार्ड स्वचालित रूप से एकत्र करने के लिए क्रॉस-डिवाइस चैट करें</string>
-    <string name="card_holder_code_hint">सार्वजनिक कोड</string>
-    <string name="card_holder_not_found">नहीं मिला</string>
-    <string name="card_holder_added">कार्ड जोड़ा गया</string>
-    <string name="card_holder_removed">कार्ड हटाया गया</string>
-    <string name="card_holder_saved">सहेजा गया</string>
-    <string name="card_holder_description">विवरण</string>
-    <string name="card_holder_capabilities">क्षमताएं</string>
+    <!-- Card Holder -->    <string name="card_holder_capabilities">क्षमताएं</string>
     <string name="card_holder_tags">टैग</string>
     <string name="card_holder_protocols">प्रोटोकॉल</string>
-    <string name="card_holder_details">विवरण</string>
-    <string name="card_holder_exchange_type">एक्सचेंज प्रकार</string>
-    <string name="card_holder_interactions">इंटरैक्शन</string>
-    <string name="card_holder_added_at">जोड़ा गया</string>
-    <string name="card_holder_notes">नोट्स</string>
-    <string name="card_holder_notes_hint">अपने नोट्स जोड़ें…</string>
-    <string name="card_holder_category">श्रेणी</string>
-    <string name="card_holder_category_hint">उदा. टूल्स, सोशल, dev</string>
-    <string name="card_holder_pin">पिन करें</string>
-    <string name="card_holder_unpin">अनपिन करें</string>
-    <string name="card_holder_save">सहेजें</string>
-    <string name="card_holder_remove">हटाएं</string>
-    <string name="card_holder_desc">एकत्रित एजेंट बिजनेस कार्ड ब्राउज़ करें</string>
-
     <!-- Card Holder Redesign -->
     <string name="my_cards_section">मेरे कार्ड</string>
     <string name="recent_interactions">हाल के</string>
@@ -813,18 +788,8 @@ GPS: केवल अनुरोध पर, कोई बैकग्राउ�
     <string name="block_confirm">%1$s को ब्लॉक करें? इस एंटिटी के संदेश छिपाए जाएंगे।</string>
     <string name="unblock_confirm">%1$s को अनब्लॉक करें?</string>
     <string name="chat_history_with">%1$s के साथ चैट इतिहास</string>
-    <string name="no_chat_history">कोई चैट इतिहास नहीं</string>
-    <string name="card_holder_blocked">ब्लॉक किया गया</string>
-    <string name="card_holder_unblocked">अनब्लॉक किया गया</string>
-    <string name="card_holder_friend_added">मित्र जोड़ा गया</string>
-    <string name="card_holder_email">ईमेल</string>
-    <string name="card_holder_website">वेबसाइट</string>
-    <string name="card_holder_version">वर्शन</string>
-    <string name="card_holder_tags_hint">टैग जोड़ें…</string>
-    <string name="card_holder_add_capability">क्षमता जोड़ें</string>
-    <string name="card_holder_refresh">कार्ड रिफ्रेश करें</string>
-    <string name="card_holder_refreshed">कार्ड रिफ्रेश हो गया</string>
-    <string name="tab_my_cards">मेरे कार्ड</string>
+    <string name="no_chat_history">कोई चैट इतिहास नहीं</string>    <string name="card_holder_tags_hint">टैग जोड़ें…</string>
+    <string name="card_holder_add_capability">क्षमता जोड़ें</string>    <string name="tab_my_cards">मेरे कार्ड</string>
     <string name="tab_bot_plaza">बॉट प्लाज़ा</string>
 
     <!-- Share Chat Link -->
@@ -916,10 +881,7 @@ GPS: केवल अनुरोध पर, कोई बैकग्राउ�
     <!-- Hardcoded string externalization -->
     <string name="schedule_failed_to_load">लोड करने में विफल: %s</string>
     <string name="schedule_error_generic">त्रुटि: %s</string>
-    <string name="schedule_operation_failed">ऑपरेशन विफल</string>
-    <string name="card_holder_copied">कॉपी किया: %s</string>
-    <string name="card_holder_error">त्रुटि</string>
-    <string name="main_delete_failed_msg">हटाना विफल: %s</string>
+    <string name="schedule_operation_failed">ऑपरेशन विफल</string>    <string name="main_delete_failed_msg">हटाना विफल: %s</string>
     <string name="billing_subscription_unavailable">सब्सक्रिप्शन प्लान प्राप्त नहीं हो सके, कृपया बाद में पुनः प्रयास करें</string>
     <string name="billing_google_play_loading">Google Play लोड हो रहा है, कृपया बाद में पुनः प्रयास करें</string>
     <string name="dialog_delete_agent_card">एजेंट कार्ड हटाएं?</string>
@@ -942,16 +904,7 @@ GPS: केवल अनुरोध पर, कोई बैकग्राउ�
     <string name="card_no_chat_history">कोई चैट इतिहास नहीं</string>
     <string name="card_chat_history_failed">चैट इतिहास लोड करने में विफल</string>
     <string name="feedback_photo_upload_failed">फोटो अपलोड विफल: %s</string>
-    <string name="wallpaper_load_entities_failed">एंटिटी लोड करने में विफल: %s</string>
-    <string name="action_plaza_on">🏗 बॉट प्लाज़ा: चालू</string>
-    <string name="action_plaza_off">🏗 बॉट प्लाज़ा: बंद</string>
-    <string name="action_run_interview">🧪 इंटरव्यू चलाएं</string>
-    <string name="action_share_link">🔗 शेयर करें</string>
-    <string name="action_start_chat">💬 चैट शुरू करें</string>
-    <string name="card_share_copied">शेयर लिंक कॉपी किया गया</string>
-    <string name="plaza_published">Bot Plaza पर प्रकाशित</string>
-    <string name="plaza_unpublished">Bot Plaza से हटाया गया</string>
-    <string name="close">बंद करें</string>
+    <string name="wallpaper_load_entities_failed">एंटिटी लोड करने में विफल: %s</string>    <string name="close">बंद करें</string>
     <string name="developer_section_title">डेवलपर</string>
     <string name="ecoin_unit">e-कोइन</string>
     <string name="org_chart_sheet_title">संगठन चार्ट</string>

@@ -122,7 +122,7 @@ com.hank.clawlive/
 | `AiChat*` (bottom sheet) | AI support chat | ✗ |
 | `MissionControlActivity` | Mission dashboard + kanban (WebView host) | ✗ |
 | `DashboardActivity` | Full Dashboard + Org Chart (WebView → `portal/dashboard.html`) | ✗ |
-| `CardHolderActivity` | Card Holder + Community (**WebView** → `community.html`) | ✓ (via WebView, BRM accessed here) |
+| `WebViewActivity` (CARDS nav) | Card Holder — **WebView** → `portal/card-holder.html?embed=1` (as of v1.0.74 the native `CardHolderActivity` was removed in favor of the portal embed; the BRM / Bot Plaza tab inside the portal is the entry point) | ✓ (via WebView, BRM accessed here) |
 | `SettingsActivity` | Device settings | ✗ |
 | `FeedbackActivity` + `FeedbackHistoryActivity` | Feedback submission + history | ✗ |
 | `FileManagerActivity` | File manager | ✗ |

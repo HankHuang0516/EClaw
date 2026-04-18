@@ -775,34 +775,9 @@ Jika anda mempunyai sebarang soalan, sila hubungi kami melalui e-mel rasmi kami.
     <string name="update_now">Kemas Kini Sekarang</string>
     <string name="update_later">Kemudian</string>
 
-    <!-- Card Holder -->
-    <string name="card_holder_title">Pemegang Kad</string>
-    <string name="card_holder_add">Tambah Kad</string>
-    <string name="card_holder_search">Cari kad…</string>
-    <string name="card_holder_empty">Belum ada kad\nSembang silang peranti untuk mengumpul kad ejen secara automatik</string>
-    <string name="card_holder_code_hint">Kod awam</string>
-    <string name="card_holder_not_found">Tidak dijumpai</string>
-    <string name="card_holder_added">Kad ditambah</string>
-    <string name="card_holder_removed">Kad dibuang</string>
-    <string name="card_holder_saved">Disimpan</string>
-    <string name="card_holder_description">Penerangan</string>
-    <string name="card_holder_capabilities">Keupayaan</string>
+    <!-- Card Holder -->    <string name="card_holder_capabilities">Keupayaan</string>
     <string name="card_holder_tags">Tag</string>
     <string name="card_holder_protocols">Protokol</string>
-    <string name="card_holder_details">Butiran</string>
-    <string name="card_holder_exchange_type">Jenis pertukaran</string>
-    <string name="card_holder_interactions">Interaksi</string>
-    <string name="card_holder_added_at">Ditambah</string>
-    <string name="card_holder_notes">Nota</string>
-    <string name="card_holder_notes_hint">Tambah nota anda…</string>
-    <string name="card_holder_category">Kategori</string>
-    <string name="card_holder_category_hint">cth. alat, sosial, dev</string>
-    <string name="card_holder_pin">Semat</string>
-    <string name="card_holder_unpin">Nyahsemat</string>
-    <string name="card_holder_save">Simpan</string>
-    <string name="card_holder_remove">Buang</string>
-    <string name="card_holder_desc">Layari kad perniagaan ejen yang dikumpul</string>
-
     <!-- Card Holder Redesign -->
     <string name="my_cards_section">Kad Saya</string>
     <string name="recent_interactions">Terkini</string>
@@ -813,18 +788,8 @@ Jika anda mempunyai sebarang soalan, sila hubungi kami melalui e-mel rasmi kami.
     <string name="block_confirm">Sekat %1$s? Mesej daripada entiti ini akan disembunyikan.</string>
     <string name="unblock_confirm">Nyahsekat %1$s?</string>
     <string name="chat_history_with">Sejarah sembang dengan %1$s</string>
-    <string name="no_chat_history">Tiada sejarah sembang</string>
-    <string name="card_holder_blocked">Disekat</string>
-    <string name="card_holder_unblocked">Dinyahsekat</string>
-    <string name="card_holder_friend_added">Rakan ditambah</string>
-    <string name="card_holder_email">E-mel</string>
-    <string name="card_holder_website">Laman web</string>
-    <string name="card_holder_version">Versi</string>
-    <string name="card_holder_tags_hint">Tambah tag…</string>
-    <string name="card_holder_add_capability">Tambah keupayaan</string>
-    <string name="card_holder_refresh">Muat Semula Kad</string>
-    <string name="card_holder_refreshed">Kad dimuat semula</string>
-    <string name="tab_my_cards">Kad Saya</string>
+    <string name="no_chat_history">Tiada sejarah sembang</string>    <string name="card_holder_tags_hint">Tambah tag…</string>
+    <string name="card_holder_add_capability">Tambah keupayaan</string>    <string name="tab_my_cards">Kad Saya</string>
     <string name="tab_bot_plaza">Plaza Bot</string>
 
     <!-- Share Chat Link -->
@@ -916,10 +881,7 @@ Jika anda mempunyai sebarang soalan, sila hubungi kami melalui e-mel rasmi kami.
     <!-- Hardcoded string externalization -->
     <string name="schedule_failed_to_load">Gagal memuat: %s</string>
     <string name="schedule_error_generic">Ralat: %s</string>
-    <string name="schedule_operation_failed">Operasi gagal</string>
-    <string name="card_holder_copied">Disalin: %s</string>
-    <string name="card_holder_error">Ralat</string>
-    <string name="main_delete_failed_msg">Pemadaman gagal: %s</string>
+    <string name="schedule_operation_failed">Operasi gagal</string>    <string name="main_delete_failed_msg">Pemadaman gagal: %s</string>
     <string name="billing_subscription_unavailable">Tidak dapat mendapatkan pelan langganan, sila cuba lagi kemudian</string>
     <string name="billing_google_play_loading">Google Play sedang memuat, sila cuba lagi kemudian</string>
     <string name="dialog_delete_agent_card">Padam Kad Ejen?</string>
@@ -942,16 +904,7 @@ Jika anda mempunyai sebarang soalan, sila hubungi kami melalui e-mel rasmi kami.
     <string name="card_no_chat_history">Tiada sejarah sembang</string>
     <string name="card_chat_history_failed">Gagal memuat sejarah sembang</string>
     <string name="feedback_photo_upload_failed">Muat naik foto gagal: %s</string>
-    <string name="wallpaper_load_entities_failed">Gagal memuat entiti: %s</string>
-    <string name="action_plaza_on">🏗 Bot Plaza: AKTIF</string>
-    <string name="action_plaza_off">🏗 Bot Plaza: MATI</string>
-    <string name="action_run_interview">🧪 Jalankan temu duga</string>
-    <string name="action_share_link">🔗 Kongsi</string>
-    <string name="action_start_chat">💬 Mula chat</string>
-    <string name="card_share_copied">Pautan kongsi disalin</string>
-    <string name="plaza_published">Diterbitkan ke Bot Plaza</string>
-    <string name="plaza_unpublished">Dibuang dari Bot Plaza</string>
-    <string name="close">Tutup</string>
+    <string name="wallpaper_load_entities_failed">Gagal memuat entiti: %s</string>    <string name="close">Tutup</string>
     <string name="developer_section_title">Pembangkit</string>
     <string name="ecoin_unit">e-coin</string>
     <string name="org_chart_sheet_title">Carta Organisasi</string>

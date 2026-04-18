@@ -122,44 +122,8 @@
     <string name="broadcast_settings_desc">Konfigurasi cara kerja pesan siaran</string>
     <string name="broadcast_settings_title">Pengaturan Siaran</string>
     <string name="broadcast_to_all">Siarkan ke Semua</string>
-    <string name="cancel">Batal</string>
-    <string name="card_holder_add">Tambah Kartu</string>
-    <string name="card_holder_add_capability">Tambah kemampuan</string>
-    <string name="card_holder_added">Kartu ditambahkan</string>
-    <string name="card_holder_added_at">Ditambahkan</string>
-    <string name="card_holder_blocked">Diblokir</string>
-    <string name="card_holder_capabilities">Kemampuan</string>
-    <string name="card_holder_category">Kategori</string>
-    <string name="card_holder_category_hint">contoh: alat, sosial, dev</string>
-    <string name="card_holder_code_hint">Kode publik</string>
-    <string name="card_holder_desc">Jelajahi kartu bisnis agen yang dikumpulkan</string>
-    <string name="card_holder_description">Deskripsi</string>
-    <string name="card_holder_details">Detail</string>
-    <string name="card_holder_email">Email</string>
-    <string name="card_holder_empty">Belum ada kartu\nObrolan lintas perangkat untuk otomatis mengumpulkan kartu agen</string>
-    <string name="card_holder_exchange_type">Jenis pertukaran</string>
-    <string name="card_holder_friend_added">Teman ditambahkan</string>
-    <string name="card_holder_interactions">Interaksi</string>
-    <string name="card_holder_not_found">Tidak ditemukan</string>
-    <string name="card_holder_notes">Catatan</string>
-    <string name="card_holder_notes_hint">Tambahkan catatan Anda…</string>
-    <string name="card_holder_pin">Sematkan</string>
-    <string name="card_holder_protocols">Protokol</string>
-    <string name="card_holder_refresh">Segarkan Kartu</string>
-    <string name="card_holder_refreshed">Kartu disegarkan</string>
-    <string name="card_holder_remove">Hapus</string>
-    <string name="card_holder_removed">Kartu dihapus</string>
-    <string name="card_holder_save">Simpan</string>
-    <string name="card_holder_saved">Tersimpan</string>
-    <string name="card_holder_search">Cari kartu…</string>
-    <string name="card_holder_tags">Tag</string>
-    <string name="card_holder_tags_hint">Tambah tag…</string>
-    <string name="card_holder_title">Pemegang Kartu</string>
-    <string name="card_holder_unblocked">Dibuka blokir</string>
-    <string name="card_holder_unpin">Lepas sematan</string>
-    <string name="card_holder_version">Versi</string>
-    <string name="card_holder_website">Situs web</string>
-    <string name="category_add">+ Kategori</string>
+    <string name="cancel">Batal</string>    <string name="card_holder_add_capability">Tambah kemampuan</string>    <string name="card_holder_capabilities">Kemampuan</string>    <string name="card_holder_protocols">Protokol</string>    <string name="card_holder_tags">Tag</string>
+    <string name="card_holder_tags_hint">Tambah tag…</string>    <string name="category_add">+ Kategori</string>
     <string name="category_add_title">Tambah Kategori</string>
     <string name="category_already_exists">Kategori "%1$s" sudah ada</string>
     <string name="category_clear_confirm">Hapus semua item dalam "%1$s"?</string>
@@ -824,10 +788,7 @@ Jika ada pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="feedback_photo_upload_failed">Unggah foto gagal: %s</string>
     <string name="billing_google_play_loading">Memuat Google Play...</string>
     <string name="dialog_unblock_message">Buka blokir %s?</string>
-    <string name="billing_subscription_unavailable">無法取得訂閱方案，請稍後再試</string>
-    <string name="card_holder_copied">Copied: %s</string>
-    <string name="card_holder_error">Error</string>
-    <string name="dialog_add_friend_message">Add %s to your contacts?</string>
+    <string name="billing_subscription_unavailable">無法取得訂閱方案，請稍後再試</string>    <string name="dialog_add_friend_message">Add %s to your contacts?</string>
     <string name="dialog_add_friend_title">Add Friend</string>
     <string name="dialog_agent_card_title">Agent Card — Entity #%d</string>
     <string name="dialog_block_contact">Block %s? They will no longer be able to interact with you.</string>
@@ -838,16 +799,7 @@ Jika ada pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="main_delete_failed_msg">Delete failed: %s</string>
     <string name="schedule_error_generic">Error: %s</string>
     <string name="schedule_failed_to_load">Failed to load: %s</string>
-    <string name="schedule_operation_failed">Operation failed</string>
-    <string name="action_plaza_on">🏗 Bot Plaza: HIDUP</string>
-    <string name="action_plaza_off">🏗 Bot Plaza: MATI</string>
-    <string name="action_run_interview">🧪 Jalankan wawancara</string>
-    <string name="action_share_link">🔗 Bagikan</string>
-    <string name="action_start_chat">💬 Mulai obrolan</string>
-    <string name="card_share_copied">Tautan bagikan disalin</string>
-    <string name="plaza_published">Diterbitkan ke Bot Plaza</string>
-    <string name="plaza_unpublished">Dihapus dari Bot Plaza</string>
-    <string name="close">Tutup</string>
+    <string name="schedule_operation_failed">Operation failed</string>    <string name="close">Tutup</string>
     <string name="developer_section_title">Pengembang</string>
     <string name="ecoin_unit">e-Koin</string>
     <string name="org_chart_sheet_title">Bagan Organisasi</string>
