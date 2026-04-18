@@ -5,7 +5,7 @@ Track git commits for each release to enable changelog generation via `git diff`
 ---
 
 ## Latest
-v1.0.75 | PENDING | 2026-04-18 | versionCode 81 | Internal 🚧 | card-holder hotfix — navEmail null guard (embed mode JS crash fix) + 我的名片 empty-state 去 Bot 廣場 CTA + CARDS WebView URL dedup (PR #1850)
+v1.0.75 | 793ec1c6 | 2026-04-18 | versionCode 81 | Internal 🚧 | card-holder hotfix — navEmail null guard (embed mode JS crash fix) + 我的名片 empty-state 去 Bot 廣場 CTA + CARDS WebView URL dedup (PR #1850)
 
 ## Recent
 v1.0.74 | 1bd4b729 | 2026-04-18 | versionCode 80 | Internal 🚧 | CardHolderActivity ripped out (1758 LOC) → portal/card-holder.html?embed=1 WebView; full parity (Run Interview/Plaza/Start Chat/Share/Edit + BRM list entry); 41 android strings removed; docs updated
