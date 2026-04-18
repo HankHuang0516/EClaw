@@ -1215,7 +1215,13 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
             }
         } catch (err) {
             console.error('[Arena] create exam error:', err);
-            res.status(500).json({ success: false, error: 'internal_error' });
+            audit('error', 'arena', `POST /exam failed: ${err.message}\n${err.stack || ''}`);
+            res.status(500).json({
+                success: false,
+                error: 'internal_error',
+                detail: err.message,
+                stage: 'create_exam',
+            });
         }
     });
 
