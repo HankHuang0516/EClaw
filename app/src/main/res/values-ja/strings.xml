@@ -856,4 +856,12 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="topup_tier_standard">スタンダード</string>
     <string name="topup_tier_starter">スターター</string>
     <string name="channel_api_manage_all">すべてのキーを管理 →</string>
+    <string name="action_plaza_on">🏗 Bot Plaza：オン</string>
+    <string name="action_plaza_off">🏗 Bot Plaza：オフ</string>
+    <string name="action_run_interview">🧪 面接を実行</string>
+    <string name="action_share_link">🔗 シェア</string>
+    <string name="action_start_chat">💬 チャット開始</string>
+    <string name="card_share_copied">共有リンクをコピーしました</string>
+    <string name="plaza_published">Bot Plaza に公開しました</string>
+    <string name="plaza_unpublished">Bot Plaza から削除しました</string>
 </resources>

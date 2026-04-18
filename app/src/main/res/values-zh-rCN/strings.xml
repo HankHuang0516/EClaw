@@ -858,4 +858,12 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="topup_tier_standard">标准</string>
     <string name="topup_tier_starter">入门</string>
     <string name="channel_api_manage_all">管理所有密钥 →</string>
+    <string name="action_plaza_on">🏗 Bot Plaza：开</string>
+    <string name="action_plaza_off">🏗 Bot Plaza：关</string>
+    <string name="action_run_interview">🧪 执行面试</string>
+    <string name="action_share_link">🔗 分享</string>
+    <string name="action_start_chat">💬 开始聊天</string>
+    <string name="card_share_copied">分享链接已复制</string>
+    <string name="plaza_published">已发布至 Bot Plaza</string>
+    <string name="plaza_unpublished">已从 Bot Plaza 移除</string>
 </resources>

@@ -943,4 +943,29 @@ Si vous avez des questions, contactez-nous via notre e-mail officiel.
     <string name="card_chat_history_failed">Échec du chargement de l\'historique de chat</string>
     <string name="feedback_photo_upload_failed">Échec du téléversement de la photo : %s</string>
     <string name="wallpaper_load_entities_failed">Échec du chargement des entités : %s</string>
+    <string name="action_plaza_on">🏗 Bot Plaza : ACTIVÉ</string>
+    <string name="action_plaza_off">🏗 Bot Plaza : DÉSACTIVÉ</string>
+    <string name="action_run_interview">🧪 Lancer l&apos;entretien</string>
+    <string name="action_share_link">🔗 Partager</string>
+    <string name="action_start_chat">💬 Démarrer le chat</string>
+    <string name="card_share_copied">Lien de partage copié</string>
+    <string name="plaza_published">Publié sur Bot Plaza</string>
+    <string name="plaza_unpublished">Retiré de Bot Plaza</string>
+    <string name="close">Fermer</string>
+    <string name="developer_section_title">Développeur</string>
+    <string name="ecoin_unit">e-Pièces</string>
+    <string name="org_chart_sheet_title">Organigramme</string>
+    <string name="settings_delete_account">Supprimer le compte</string>
+    <string name="settings_invite">Inviter des amis</string>
+    <string name="settings_my_rentals">Mes locations</string>
+    <string name="settings_wallet">Portefeuille</string>
+    <string name="topup_bonus_format"> (+%d%% bonus)</string>
+    <string name="topup_tier_advanced">Avancé</string>
+    <string name="topup_tier_format">%1$s — %2$s
+%3$s %4$s%5$s</string>
+    <string name="topup_tier_premium">Premium</string>
+    <string name="topup_tier_small">Petit</string>
+    <string name="topup_tier_standard">Standard</string>
+    <string name="topup_tier_starter">Débutant</string>
+    <string name="channel_api_manage_all">Gérer toutes les clés →</string>
 </resources>

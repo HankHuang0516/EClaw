@@ -868,4 +868,29 @@ Tu suscripción permanece activa y puedes reenlazar en cualquier momento (sujeto
     <string name="wallpaper_load_entities_failed">Error al cargar entidades: %s</string>
     <string name="billing_google_play_loading">Cargando Google Play...</string>
     <string name="dialog_unblock_message">¿Desbloquear %s?</string>
+    <string name="action_plaza_on">🏗 Bot Plaza: ENCENDIDO</string>
+    <string name="action_plaza_off">🏗 Bot Plaza: APAGADO</string>
+    <string name="action_run_interview">🧪 Ejecutar entrevista</string>
+    <string name="action_share_link">🔗 Compartir</string>
+    <string name="action_start_chat">💬 Iniciar chat</string>
+    <string name="card_share_copied">Enlace compartido copiado</string>
+    <string name="plaza_published">Publicado en Bot Plaza</string>
+    <string name="plaza_unpublished">Eliminado de Bot Plaza</string>
+    <string name="close">Cerrar</string>
+    <string name="developer_section_title">Desarrollador</string>
+    <string name="ecoin_unit">e-Monederos</string>
+    <string name="org_chart_sheet_title">Gráfico de organización</string>
+    <string name="settings_delete_account">Eliminar cuenta</string>
+    <string name="settings_invite">Invitar amigos</string>
+    <string name="settings_my_rentals">Mis alquileres</string>
+    <string name="settings_wallet">Cartera</string>
+    <string name="topup_bonus_format"> (+%d%% bono)</string>
+    <string name="topup_tier_advanced">Avanzado</string>
+    <string name="topup_tier_format">%1$s — %2$s
+%3$s %4$s%5$s</string>
+    <string name="topup_tier_premium">Premium</string>
+    <string name="topup_tier_small">Pequeño</string>
+    <string name="topup_tier_standard">Estándar</string>
+    <string name="topup_tier_starter">Inicio</string>
+    <string name="channel_api_manage_all">Administrar todas las claves →</string>
 </resources>

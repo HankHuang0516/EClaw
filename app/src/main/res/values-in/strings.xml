@@ -839,4 +839,29 @@ Jika ada pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="schedule_error_generic">Error: %s</string>
     <string name="schedule_failed_to_load">Failed to load: %s</string>
     <string name="schedule_operation_failed">Operation failed</string>
+    <string name="action_plaza_on">🏗 Bot Plaza: HIDUP</string>
+    <string name="action_plaza_off">🏗 Bot Plaza: MATI</string>
+    <string name="action_run_interview">🧪 Jalankan wawancara</string>
+    <string name="action_share_link">🔗 Bagikan</string>
+    <string name="action_start_chat">💬 Mulai obrolan</string>
+    <string name="card_share_copied">Tautan bagikan disalin</string>
+    <string name="plaza_published">Diterbitkan ke Bot Plaza</string>
+    <string name="plaza_unpublished">Dihapus dari Bot Plaza</string>
+    <string name="close">Tutup</string>
+    <string name="developer_section_title">Pengembang</string>
+    <string name="ecoin_unit">e-Koin</string>
+    <string name="org_chart_sheet_title">Bagan Organisasi</string>
+    <string name="settings_delete_account">Hapus akun</string>
+    <string name="settings_invite">Undang teman</string>
+    <string name="settings_my_rentals">Sewa saya</string>
+    <string name="settings_wallet">Dompet</string>
+    <string name="topup_bonus_format"> (+%d%% bonus)</string>
+    <string name="topup_tier_advanced">Lanjutan</string>
+    <string name="topup_tier_format">%1$s — %2$s
+%3$s %4$s%5$s</string>
+    <string name="topup_tier_premium">Premium</string>
+    <string name="topup_tier_small">Kecil</string>
+    <string name="topup_tier_standard">Standar</string>
+    <string name="topup_tier_starter">Pemula</string>
+    <string name="channel_api_manage_all">Kelola Semua Kunci →</string>
 </resources>
