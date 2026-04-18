@@ -1,3 +1,10 @@
+## [1.1003.1](https://github.com/HankHuang0516/EClaw/compare/v1.1003.0...v1.1003.1) (2026-04-18)
+
+
+### Bug Fixes
+
+* **arena:** total-time stuck on --:-- when exam finishes fast ([#1849](https://github.com/HankHuang0516/EClaw/issues/1849)) ([a9875d4](https://github.com/HankHuang0516/EClaw/commit/a9875d482b43256c5f59dab4c3abf7932e0d95b4))
+
 # [1.1003.0](https://github.com/HankHuang0516/EClaw/compare/v1.1002.7...v1.1003.0) (2026-04-18)
 
 
