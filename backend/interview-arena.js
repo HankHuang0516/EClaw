@@ -1079,6 +1079,7 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
             }
             examCooldownMap.set(ip, now);
 
+            const examId = 'exam_' + generateToken(12);
             const examToken = generateToken(12);
             const expiresAt = new Date(Date.now() + EXAM_TTL_MS);
 
@@ -1086,10 +1087,10 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
             const listingId = req.body?.listingId || null;
 
             const examRes = await pool.query(
-                `INSERT INTO arena_exams (exam_token, listing_id, status, max_score, expires_at)
-                 VALUES ($1, $2, $3, $4, $5)
+                `INSERT INTO arena_exams (id, exam_token, listing_id, status, max_score, expires_at)
+                 VALUES ($1, $2, $3, $4, $5, $6)
                  RETURNING id, exam_token, listing_id, status, created_at, expires_at`,
-                [examToken, listingId, EXAM_STATUS.WAITING, MAX_TOTAL_SCORE, expiresAt]
+                [examId, examToken, listingId, EXAM_STATUS.WAITING, MAX_TOTAL_SCORE, expiresAt]
             );
             const exam = examRes.rows[0];
 

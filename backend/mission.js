@@ -1112,7 +1112,7 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
             const [totalResult, uniqueResult, dailyResult, topPagesResult] = await Promise.all([
                 pool.query(`SELECT COUNT(*) as total FROM page_views WHERE ${baseWhere}`, params),
                 pool.query(`SELECT COUNT(DISTINCT visitor_ip) as unique_visitors FROM page_views WHERE ${baseWhere}`, params),
-                pool.query(`SELECT DATE(created_at) as day, COUNT(*) as views FROM page_views WHERE ${baseWhere} GROUP BY DATE(created_at) ORDER BY day DESC LIMIT ${days}`, params),
+                pool.query(`SELECT DATE(created_at) as day, COUNT(*) as views FROM page_views WHERE ${baseWhere} GROUP BY DATE(created_at) ORDER BY day DESC LIMIT $${params.length + 1}`, [...params, days]),
                 noteId ? Promise.resolve({ rows: [] }) :
                     pool.query(`SELECT note_id, COUNT(*) as views FROM page_views WHERE device_id = $1 AND note_id IS NOT NULL AND created_at >= $2 GROUP BY note_id ORDER BY views DESC LIMIT 20`, [deviceId, since])
             ]);
@@ -1373,7 +1373,8 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
             let query = 'SELECT * FROM chat_orders WHERE device_id = $1';
             const params = [deviceId];
             if (status) { query += ' AND status = $2'; params.push(status); }
-            query += ` ORDER BY created_at DESC LIMIT ${limit}`;
+            query += ` ORDER BY created_at DESC LIMIT $${params.length + 1}`;
+            params.push(limit);
             const result = await pool.query(query, params);
             res.json({ success: true, orders: result.rows });
         } catch (error) {

@@ -108,7 +108,8 @@ module.exports = function (devices, { serverLog } = {}) {
       type: 'oauth_access',
       client_id: clientId,
       device_id: deviceId,
-      scope: scopes.join(' ')
+      scope: scopes.join(' '),
+      jti: crypto.randomBytes(16).toString('hex')
     }, JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL });
   }
 
@@ -372,28 +373,38 @@ module.exports = function (devices, { serverLog } = {}) {
     }
   });
 
-  async function issueTokens(res, clientId, deviceId, scopes) {
-    const accessToken = signAccessToken(clientId, deviceId, scopes);
-    const refreshToken = generateSecret(48);
-    const tokenId = generateId('tok_');
+  async function issueTokens(res, clientId, deviceId, scopes, _retries = 3) {
+    for (let attempt = 1; attempt <= _retries; attempt++) {
+      const accessToken = signAccessToken(clientId, deviceId, scopes);
+      const refreshToken = generateSecret(48);
+      const tokenId = generateId('tok_');
 
-    await pool.query(
-      `INSERT INTO oauth_tokens (id, access_token, refresh_token, client_id, device_id, scopes, expires_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [tokenId, accessToken, refreshToken, clientId, deviceId, JSON.stringify(scopes), Date.now() + ACCESS_TOKEN_TTL * 1000]
-    );
+      try {
+        await pool.query(
+          `INSERT INTO oauth_tokens (id, access_token, refresh_token, client_id, device_id, scopes, expires_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [tokenId, accessToken, refreshToken, clientId, deviceId, JSON.stringify(scopes), Date.now() + ACCESS_TOKEN_TTL * 1000]
+        );
 
-    if (serverLog) {
-      serverLog('info', 'oauth', `[OAuth] Token issued for client ${clientId}`, { deviceId });
+        if (serverLog) {
+          serverLog('info', 'oauth', `[OAuth] Token issued for client ${clientId}`, { deviceId });
+        }
+
+        return res.json({
+          access_token: accessToken,
+          token_type: 'Bearer',
+          expires_in: ACCESS_TOKEN_TTL,
+          refresh_token: refreshToken,
+          scope: scopes.join(' ')
+        });
+      } catch (err) {
+        if (err.code === '23505' && attempt < _retries) {
+          // Unique constraint violation — retry with fresh tokens
+          continue;
+        }
+        throw err;
+      }
     }
-
-    res.json({
-      access_token: accessToken,
-      token_type: 'Bearer',
-      expires_in: ACCESS_TOKEN_TTL,
-      refresh_token: refreshToken,
-      scope: scopes.join(' ')
-    });
   }
 
   // ── POST /revoke — Token revocation (RFC 7009) ──
