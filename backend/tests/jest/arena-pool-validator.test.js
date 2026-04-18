@@ -135,8 +135,10 @@ describe('validateRuntimeSelfTest — in-process scoring-flow check', () => {
             async query(sql, params = []) {
                 const s = sql.replace(/\s+/g, ' ').trim();
                 if (/INSERT INTO arena_exams/i.test(s)) {
-                    const id = 'exam-' + (store.exams.size + 1);
-                    store.exams.set(id, { id, exam_token: params[0] });
+                    // Validator now passes id explicitly to mirror the production fix —
+                    // production's column DEFAULT was missing so we generate id in code.
+                    const id = params[0];
+                    store.exams.set(id, { id, exam_token: params[1] });
                     return { rows: [{ id }], rowCount: 1 };
                 }
                 if (/INSERT INTO arena_sessions/i.test(s)) {
@@ -198,6 +200,50 @@ describe('validateRuntimeSelfTest — in-process scoring-flow check', () => {
         const report = await validator.validateRuntimeSelfTest({ arenaModule, dbPool: null });
         expect(report.ok).toBe(false);
         expect(report.issues[0]).toMatch(/dbPool/);
+    });
+
+    test('regression: passing id explicitly avoids prod-style NOT NULL violation', async () => {
+        // Simulate production's broken state: column DEFAULT for arena_exams.id
+        // is missing/non-functional, so any INSERT that omits id violates NOT NULL.
+        const arenaModule = require('../../interview-arena');
+        const store = { exams: new Map(), sessions: [] };
+        const dbPool = {
+            async query(sql, params = []) {
+                const s = sql.replace(/\s+/g, ' ').trim();
+                if (/INSERT INTO arena_exams/i.test(s)) {
+                    // First positional param MUST be a non-null id (production fix)
+                    if (!params[0]) {
+                        const err = new Error('null value in column "id" of relation "arena_exams" violates not-null constraint');
+                        throw err;
+                    }
+                    const id = params[0];
+                    store.exams.set(id, { id, exam_token: params[1] });
+                    return { rows: [{ id }], rowCount: 1 };
+                }
+                if (/INSERT INTO arena_sessions/i.test(s)) {
+                    store.sessions.push({
+                        exam_id: params[0], session_token: params[1],
+                        test_type: params[2], test_index: params[3],
+                        challenge_config: params[4], max_score: params[5],
+                    });
+                    return { rows: [{}], rowCount: 1 };
+                }
+                if (/SELECT session_token.*FROM arena_sessions WHERE exam_id/i.test(s)) {
+                    const rows = store.sessions
+                        .filter(x => x.exam_id === params[0])
+                        .sort((a, b) => a.test_index - b.test_index);
+                    return { rows, rowCount: rows.length };
+                }
+                if (/DELETE FROM arena_exams/i.test(s)) {
+                    store.exams.delete(params[0]);
+                    return { rows: [], rowCount: 1 };
+                }
+                return { rows: [], rowCount: 0 };
+            },
+        };
+        const report = await validator.validateRuntimeSelfTest({ arenaModule, dbPool });
+        expect(report.ok).toBe(true);
+        expect(report.totalScore).toBeGreaterThan(0);
     });
 
     test('cleans up scratch exam even when a session insert fails', async () => {
