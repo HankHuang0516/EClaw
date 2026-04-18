@@ -12,6 +12,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#1a1a2e"
     },
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.eclawbot.app",
