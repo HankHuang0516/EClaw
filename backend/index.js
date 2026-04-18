@@ -1854,10 +1854,33 @@ app.get('/arena/test/:examId', async (req, res) => {
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(param);
         const isPrefixed = /^exam_[a-f0-9]{24}$/i.test(param);
         const examRes = (isUuid || isPrefixed)
-            ? await arenaModule._internals.pool.query(`SELECT id, exam_token, status, model FROM arena_exams WHERE id = $1`, [param])
-            : await arenaModule._internals.pool.query(`SELECT id, exam_token, status, model FROM arena_exams WHERE exam_token = $1`, [param]);
+            ? await arenaModule._internals.pool.query(`SELECT id, exam_token, status, model, first_fetched_at FROM arena_exams WHERE id = $1`, [param])
+            : await arenaModule._internals.pool.query(`SELECT id, exam_token, status, model, first_fetched_at FROM arena_exams WHERE exam_token = $1`, [param]);
         if (examRes.rowCount === 0) return res.status(404).json({ error: 'exam_not_found' });
         const exam = examRes.rows[0];
+
+        // Start the 3-min clock on the bot's FIRST fetch of the test payload,
+        // not at exam creation. The user may delay copy-pasting the URL, and
+        // the bot itself may have pickup latency — neither should eat into
+        // the bot's solving time. Atomic update so concurrent first-fetches
+        // from retry/duplicate requests only reset the timer once.
+        if (!exam.first_fetched_at) {
+            const bumped = await arenaModule._internals.pool.query(
+                `UPDATE arena_exams
+                 SET first_fetched_at = NOW(),
+                     expires_at = NOW() + INTERVAL '3 minutes'
+                 WHERE id = $1 AND first_fetched_at IS NULL
+                 RETURNING expires_at`,
+                [exam.id]
+            );
+            if (bumped.rowCount > 0) {
+                // Notify any open UI that the countdown just (re)started
+                if (io) io.to('exam:' + exam.id).emit('arena:update', {
+                    event: 'timer_started',
+                    expiresAt: bumped.rows[0].expires_at,
+                });
+            }
+        }
         const sessRes = await arenaModule._internals.pool.query(
             `SELECT session_token, test_type, test_index, challenge_config, max_score, status
              FROM arena_sessions WHERE exam_id = $1 ORDER BY test_index`,

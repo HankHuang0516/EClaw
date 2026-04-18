@@ -112,3 +112,9 @@ ALTER TABLE arena_sessions ADD CONSTRAINT arena_sessions_exam_id_fkey FOREIGN KE
 ALTER TABLE arena_leaderboard ADD CONSTRAINT arena_leaderboard_exam_id_fkey FOREIGN KEY (exam_id) REFERENCES arena_exams(id) ON DELETE CASCADE;
 ALTER TABLE arena_feedback ADD CONSTRAINT arena_feedback_exam_id_fkey FOREIGN KEY (exam_id) REFERENCES arena_exams(id) ON DELETE SET NULL;
 ALTER TABLE arena_comments ADD CONSTRAINT arena_comments_exam_id_fkey FOREIGN KEY (exam_id) REFERENCES arena_exams(id) ON DELETE SET NULL;
+
+-- Track when the bot first fetches the exam (GET /arena/test). The 3-min
+-- TTL should measure from the bot's first fetch, not exam creation — the
+-- user may delay copy-pasting the URL and the bot itself may have pickup
+-- latency. Populated idempotently on first GET.
+ALTER TABLE arena_exams ADD COLUMN IF NOT EXISTS first_fetched_at TIMESTAMP WITH TIME ZONE;

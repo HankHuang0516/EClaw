@@ -224,7 +224,7 @@
                 <span id="modelBadge" style="font-size:13px;font-weight:600;color:var(--accent-cyan);"></span>
             </div>
             <div style="font-size:13px;color:var(--text-muted);">
-                <span data-i18n="arena_time_remaining">Time remaining:</span> <strong id="examTimer" style="color:var(--text);font-variant-numeric:tabular-nums;">3:00</strong>
+                <span data-i18n="arena_time_remaining">Time remaining:</span> <strong id="examTimer" style="color:var(--text);font-variant-numeric:tabular-nums;">--:--</strong>
             </div>
         </div>
 
@@ -305,6 +305,13 @@
         socket.on('connect', () => { socket.emit('join', 'exam:' + EXAM_ID); socket.emit('join', 'arena:lobby'); });
         socket.on('arena:update', (m) => {
             if (m.event === 'model_set') { showModel(m.model); document.getElementById('statusText').textContent = 'Evaluation in progress...'; document.getElementById('scoreWrap').style.display = 'block'; }
+            if (m.event === 'timer_started') {
+                // Bot fetched the test — real 3-min clock starts now. Use the
+                // server-provided expiresAt so all viewers stay in sync.
+                const diff = m.expiresAt ? Math.floor((new Date(m.expiresAt).getTime() - Date.now()) / 1000) : 180;
+                startExamTimer(Math.max(0, Math.min(180, diff)));
+                document.getElementById('scoreWrap').style.display = 'block';
+            }
             if (m.event === 'action' && m.testIndex != null) {
                 // Switch from waiting to active on first action
                 if (document.getElementById('statusText').textContent.includes('Waiting') || document.getElementById('statusText').textContent.includes('等待')) {
@@ -403,6 +410,11 @@
             resultsShown = true;
             document.getElementById('statusText').textContent = 'Evaluation Complete';
             if (examTimerInterval) { clearInterval(examTimerInterval); examTimerInterval = null; }
+            // Exam is done — the static "3:00" placeholder in the timer element
+            // should not linger. Show a neutral "--:--" indicator instead.
+            const timerEl = document.getElementById('examTimer');
+            if (timerEl) { timerEl.textContent = '--:--'; timerEl.style.color = 'var(--text-muted)'; }
+            if (data?.exam?.model) showModel(data.exam.model);
             document.getElementById('scoreWrap').style.display = 'block';
             if (data.exam) { document.getElementById('totalScore').textContent = data.exam.totalScore || 0; document.getElementById('scoreFill').style.width = Math.round((data.exam.totalScore || 0) / 147 * 100) + '%'; }
             if (data.sessions) data.sessions.forEach(s => {
