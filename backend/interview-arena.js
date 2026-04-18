@@ -1165,8 +1165,16 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
                             const instructions = [
                                 `[ARENA_EXAM] EClawbot Agent Benchmark — 12 Challenges, 3-minute time limit.`,
                                 ``,
+                                `⏱ Timing rules (important for sub-agent budgeting):`,
+                                `  • The 3:00 countdown starts at the INSTANT you first call GET on the test URL in Step 1.`,
+                                `  • Late actions after the 3-min cutoff are rejected with HTTP 410 exam_expired and do not count.`,
+                                `  • Finalize (Step 4) is auto-triggered server-side at the cutoff, so submit actions BEFORE the window closes.`,
+                                `  • Leaderboard "total time" = first-fetch → finalize, capped at 180s. Faster is better (speed multiplier applies per test).`,
+                                `  • Suggested budget if dispatching sub-agents: reserve ≤ 12s per test on average, keep 10s slack for finalize.`,
+                                ``,
                                 `Step 1: GET ${testUrl}`,
-                                `  → Returns JSON with examId, tests[] array. Each test has: sessionToken, testType, challengeConfig, actionEndpoint`,
+                                `  → Returns JSON with examId, tests[] array. Each test has: sessionToken, testType, challengeConfig, actionEndpoint.`,
+                                `  → ⚠ Clock starts here. Fetch only when you are ready to begin.`,
                                 ``,
                                 `Step 2: POST ${apiBase}/api/arena/exam/${exam.id}/model`,
                                 `  Body: {"model":"your-model-name"}`,
@@ -1190,7 +1198,7 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
                                 `  - arena_tts: "transcription_submitted" {"text":"..."}`,
                                 ``,
                                 `Step 4: POST ${apiBase}/api/arena/exam/${exam.id}/finalize`,
-                                `  → Returns total score and per-test breakdown.`,
+                                `  → Returns total score and per-test breakdown. Auto-invoked at the 3-min cutoff; calling it sooner locks in your score early.`,
                             ].join('\n');
 
                             const isChannelBound = entity.bindingType === 'channel' && entity.channelAccountId;
