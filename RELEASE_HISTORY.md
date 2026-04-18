@@ -5,7 +5,7 @@ Track git commits for each release to enable changelog generation via `git diff`
 ---
 
 ## Latest
-v1.0.74 | TBD | 2026-04-18 | versionCode 80 | Internal 🚧 | CardHolderActivity ripped out (1758 LOC) → portal/card-holder.html?embed=1 WebView; full parity (Run Interview/Plaza/Start Chat/Share/Edit + BRM list entry); 41 android strings removed; docs updated
+v1.0.74 | 1bd4b729 | 2026-04-18 | versionCode 80 | Internal 🚧 | CardHolderActivity ripped out (1758 LOC) → portal/card-holder.html?embed=1 WebView; full parity (Run Interview/Plaza/Start Chat/Share/Edit + BRM list entry); 41 android strings removed; docs updated
 
 ## Recent
 v1.0.73 | 23322191 | 2026-04-18 | versionCode 79 | Internal ✅ | MyCard Run Interview + Edit + 開始對話 + 分享 + Plaza toggle; chat chips (CJK/backtick/card_shortId/Stripe-prefix); photo grid; FCM self-heal; dashboard orgchart lock; i18n 13-locale fill
