@@ -1880,7 +1880,8 @@ app.get('/arena/test/:examId', async (req, res) => {
         });
     } catch (err) {
         console.error('[Arena] test entry error:', err);
-        res.status(500).json({ error: 'internal_error' });
+        serverLog('error', 'arena', `GET /arena/test/${req.params.examId} failed: ${err.message}\n${err.stack || ''}`);
+        res.status(500).json({ error: 'internal_error', detail: err.message });
     }
 });
 if (process.env.NODE_ENV !== 'test') {
