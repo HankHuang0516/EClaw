@@ -392,22 +392,29 @@
 `Step 4: POST ${API}/api/arena/exam/${EXAM_ID}/finalize`,
 `  → Returns total score and per-test breakdown. Auto-invoked at the 3-min cutoff; calling it sooner locks in your score early.`,
                 ].join('\n');
-                console.log('[Arena DEBUG] loadExam response:', JSON.stringify({ status: data.exam.status, expiresAt: data.exam.expiresAt, createdAt: data.exam.createdAt }));
-                if (data.exam.status === 'completed') showResults(data);
-                else if (data.exam.status === 'active') {
+                console.log('[Arena DEBUG] loadExam response:', JSON.stringify({ status: data.exam.status, expiresAt: data.exam.expiresAt, firstFetchedAt: data.exam.firstFetchedAt, createdAt: data.exam.createdAt }));
+                if (data.exam.status === 'completed') {
+                    showResults(data);
+                } else if (data.exam.firstFetchedAt) {
+                    // Bot has already fetched the test → the 3-min clock is
+                    // running. Drive the timer off expiresAt regardless of
+                    // whether status is still 'waiting' (no actions yet) or
+                    // already 'active' (first action received). Without this
+                    // the timer sat at "--:--" until the page was reloaded.
                     document.getElementById('statusText').textContent = 'Evaluation in progress...';
                     document.getElementById('scoreWrap').style.display = 'block';
                     if (data.exam.model) showModel(data.exam.model);
-                    // Calculate actual remaining time from expiresAt
                     let remainingSec = 180;
                     if (data.exam.expiresAt) {
                         const diff = Math.floor((new Date(data.exam.expiresAt).getTime() - Date.now()) / 1000);
                         remainingSec = Math.max(0, Math.min(180, diff));
-                        console.log('[Arena DEBUG] timer: expiresAt=' + data.exam.expiresAt + ' diff=' + diff + 's remaining=' + remainingSec + 's');
-                    } else {
-                        console.warn('[Arena DEBUG] no expiresAt in response, falling back to 180s');
                     }
                     startExamTimer(remainingSec);
+                } else {
+                    // Bot hasn't fetched yet — clock genuinely hasn't started.
+                    // Leave the timer at "--:--"; the socket "timer_started"
+                    // event will start it the moment the bot picks up.
+                    document.getElementById('statusText').textContent = 'Waiting for bot to fetch the test…';
                 }
             } catch (e) { console.error(e); }
         }
