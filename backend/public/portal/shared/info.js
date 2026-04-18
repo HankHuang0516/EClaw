@@ -54,7 +54,10 @@ window.addEventListener('DOMContentLoaded', async () => {
         clearGuideActive();
         btn.classList.add('active');
         const panel = document.getElementById('guide-' + tabId);
-        if (panel) panel.classList.add('active');
+        if (panel) {
+            panel.classList.add('active');
+            renderMermaidIn(panel);
+        }
         history.replaceState(null, '', '#guide/' + tabId);
     }
 
@@ -125,6 +128,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     window.addEventListener('hashchange', handleHash);
 });
 
+function renderMermaidIn(root) {
+    if (!root || typeof mermaid === 'undefined') return;
+    const nodes = [...root.querySelectorAll('pre.mermaid:not([data-processed])')]
+        .filter(n => n.offsetParent !== null && n.getBoundingClientRect().width > 0);
+    if (nodes.length) mermaid.run({ nodes });
+}
+
 function switchInfoTab(target) {
     const infoTabs = document.querySelectorAll('.info-tab');
     const infoPanels = document.querySelectorAll('.info-panel');
@@ -135,11 +145,7 @@ function switchInfoTab(target) {
     if (tab) tab.classList.add('active');
     if (panel) {
         panel.classList.add('active');
-        // Render Mermaid diagrams deferred until panel is visible (avoids translate(NaN) errors)
-        const unrendered = panel.querySelectorAll('pre.mermaid:not([data-processed])');
-        if (unrendered.length && typeof mermaid !== 'undefined') {
-            mermaid.run({ nodes: unrendered });
-        }
+        renderMermaidIn(panel);
     }
     history.replaceState(null, '', '#' + target);
     window.scrollTo({ top: 0, behavior: 'smooth' });
