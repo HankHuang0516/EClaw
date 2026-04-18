@@ -1080,18 +1080,16 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
             }
             examCooldownMap.set(ip, now);
 
-            const examId = 'exam_' + generateToken(12);
-            const examToken = generateToken(12);
-            const expiresAt = new Date(Date.now() + EXAM_TTL_MS);
-
-            // Optional: link this exam to a rental listing for interview qualification
-            const listingId = req.body?.listingId || null;
-
             // Generate id in code rather than relying on the column DEFAULT.
             // The PR #1813 migration set the column DEFAULT to gen_random_bytes()
             // (pgcrypto), but on production that DEFAULT is missing/non-functional
             // — INSERTs without an explicit id violate the NOT NULL constraint.
             const examId = newExamId();
+            const examToken = generateToken(12);
+            const expiresAt = new Date(Date.now() + EXAM_TTL_MS);
+
+            // Optional: link this exam to a rental listing for interview qualification
+            const listingId = req.body?.listingId || null;
             const examRes = await pool.query(
                 `INSERT INTO arena_exams (id, exam_token, listing_id, status, max_score, expires_at)
                  VALUES ($1, $2, $3, $4, $5, $6)
