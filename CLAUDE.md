@@ -7,8 +7,8 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.905.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
-- **Android app version**: 1.0.63 (versionCode 69); `LATEST_APP_VERSION` constant in `backend/index.js`
+- **Current version**: 1.1015.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **Android app version**: 1.0.76 (versionCode 82); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
 ---
@@ -303,7 +303,7 @@ EClaw/
 - Billing: Google Play Billing (`BillingManager.kt`)
 - AI Chat: `AiChatViewModel.kt` manages state (fixes message loss, typing race condition)
 - Bottom nav: FILES tab renamed to CARDS (Card Holder); Files link moved to Settings
-- App version: 1.0.63 (versionCode 69)
+- App version: 1.0.76 (versionCode 82)
 
 ### iOS/React Native App (Expo)
 
@@ -792,17 +792,29 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Privacy Policy Page**: `/privacy-policy.html` with full i18n support; linked from registration terms dialog
 - **Admin Kanban Migration (v1.359)**: One-time migration from legacy mission + schedules to kanban cards
 - **Kanban Auto-Move (v1.217)**: Auto-move child cards to review when bot transforms IDLE
-- **App Version**: Updated to 1.0.63 (versionCode 69)
+- **App Version**: Updated to 1.0.76 (versionCode 82)
 
 ### Recent Features (v1.363.x+)
 
 - **Organization Hierarchy Chart**: Interactive drag-and-drop org chart on Dashboard (new Tab Bar: Entities | Org Chart); `backend/org-chart.js` module with JSONB hierarchy storage on `device_preferences.org_chart`; `GET/PUT /api/device/org-chart` API with cycle detection, max depth 5, partial update; three behavior options (kanbanReviewer auto-set, taskForward for incomplete tasks, allForward for all messages); backend auto-route forwarding in pushToBot/transform; animated dashed SVG connectors; FLIP drag-drop animation; WebView-compatible for Android/iOS; Jest + integration tests; skill template sync
 
+### Recent Features (v1.1003.x – v1.1015.x)
+
+- **Bot Rental Marketplace**: Full rental system with listings, contracts, metering; `backend/rental.js` + `backend/wallet.js` + `backend/trust.js` + `backend/invite.js`; interview arena (`interview-arena.js`) for bot evaluation; pricing advisor; fraud detection; e-coin wallet with Apple/Google IAP top-up
+- **Wallet & IAP**: E-coin wallet system (`wallet.js`) with balance, history, top-up tiers; Google Play purchase verification via androidpublisher v3; ack-retry sweep for revenue leak prevention; Apple IAP verification
+- **Trust & Reviews**: Credit scoring, reviews, disputes system (`trust.js`); age verification; admin blacklist
+- **Invite/Referral System**: Invite codes (`invite.js`), referral stats dashboard, QR-code share image generator, CTA banner on dashboard, referral footer on published articles
+- **Monaco Editor Integration**: Online text editor for chat attachments and note page HTML editing via Monaco (`?editor=monaco`)
+- **Rental Fleet Monitoring**: `GET /api/monitoring/rental-health` endpoint + admin dashboard; 15-minute auto health checks; gated admin access
+- **Info Hub Marketing**: 3 marketing hooks + 11-subsystem value propositions on info page; Terminal Bridge + Bridge-Auth combo usecase panel
+- **PublicCode Allocator Fix**: Tombstone freed publicCodes to prevent stale-QR re-routing
+- **Entity ID Never-Reuse**: Removed auto-compact on delete to preserve entity ID invariant; monotonically increasing IDs never reused
+
 ---
 
 ## Test Coverage Summary
 
-**~308 total API routes** across all modules, **~75% covered** (~231 routes tested).
+**~425 total API routes** across all modules (374 excluding Article Publisher), **~75% covered** by Jest + integration tests (~1686 test cases across 97 Jest files + 76 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -889,8 +901,12 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Note Pages | `node backend/tests/test-note-pages.js` | Device ID + Secret | Note page public/private toggle, visitor analytics, custom domain |
 | AI Chat WebView Guard | `node backend/tests/test-ai-chat-webview-guard.js` | Device ID + Secret | AI chat widget hidden in Android WebView contexts |
 | Org Chart | `node backend/tests/test-org-chart.js` | Device ID + Secret | Org chart CRUD lifecycle, cycle detection, partial update, auth validation |
+| Parity Prober | `node backend/tests/test-parity-prober.js` | Device ID + Secret | API-UI parity prober (Layer 4) |
+| R2 Files | `node backend/tests/test-r2-files.js` | Device ID + Secret | R2 file storage CRUD validation |
+| R2 Quota Rich Card | `node backend/tests/test-r2-quota-rich-card.js` | Device ID + Secret | R2 quota exceeded rich card E2E |
+| Subscription Plans Live | `node backend/tests/test-subscription-plans-live.js` | Device ID + Secret | Subscription plans + wallet live verification |
 
-### Jest Unit Tests (CI-run, `npm test`, 62 files)
+### Jest Unit Tests (CI-run, `npm test`, 97 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -953,7 +969,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (61 files)
+cd backend && npm test                  # Jest unit tests (97 files)
 cd backend && npm run lint              # ESLint
 ```
 

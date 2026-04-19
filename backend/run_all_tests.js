@@ -112,6 +112,10 @@ const TEST_FILES = [
     'test-note-pages.js',           // Note page CRUD, public/private toggle, visitor analytics
     'test-invite-auth.js',          // Invite auth: device+cookie dual auth, route conflict fix (#1676)
     'test-org-chart.js',            // Org chart CRUD lifecycle, cycle detection, partial update, auth
+    'test-parity-prober.js',        // API-UI parity prober (Layer 4)
+    'test-r2-files.js',             // R2 file storage CRUD validation
+    'test-r2-quota-rich-card.js',   // R2 quota exceeded rich card E2E
+    'test-subscription-plans-live.js', // Subscription plans + wallet live verification
 ];
 
 // Manual UI tests (run on device, not automated):

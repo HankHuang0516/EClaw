@@ -3422,8 +3422,10 @@
             for (let i = 0; i < messages.length; i++) {
                 const msg = messages[i];
                 // Only group user-sent, non-special messages
+                const msgText = msg.text || '';
                 if (!msg.is_from_user
                     || (msg.source && (msg.source.startsWith('mission_notify') || msg.source === 'scheduled'))
+                    || msgText.startsWith('[TASK FWD') || msgText.startsWith('[FWD')
                 ) {
                     grouped.push(msg);
                     continue;
@@ -4028,6 +4030,21 @@
             // Platform command response
             if (msg.source === 'platform') {
                 return '\uD83E\uDD9E EClawbot Platform';
+            }
+
+            // Kanban notification (is_from_user=false, is_from_bot=false)
+            if (msg.source === 'kanban_notify') {
+                return `📋 ${i18n.t('chat_kanban_notify') || 'Kanban'} &rarr; ${entityHtml}`;
+            }
+
+            // Form submission (is_from_user=false, is_from_bot=false)
+            if (msg.source === 'form_submission') {
+                return `📝 ${i18n.t('chat_form_submission') || 'Form'} &rarr; ${entityHtml}`;
+            }
+
+            // Mission notify (is_from_user=false, is_from_bot=false)
+            if (msg.source && msg.source.startsWith('mission_notify')) {
+                return i18n.t('chat_mission_control');
             }
 
             // Fallback for other sources
