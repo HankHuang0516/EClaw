@@ -119,7 +119,24 @@ const TEST_FILES = [
 // - test_entity_communication.js - Manual device UI testing
 // - test_name_feature.js         - Manual device UI testing
 
-const TEST_TIMEOUT = 600000; // 600 seconds per test (stress tests need more time when running in full suite)
+// Per-test hard cap. Default 120s — enough for every current suite under a
+// healthy backend; trips fast when Railway is unreachable instead of hanging
+// the release gate for 10 minutes.
+//
+// Override via env TEST_HARD_CAP_MS (e.g. 600000 for slow stress reruns).
+// Per-suite overrides live in TEST_TIMEOUT_OVERRIDES below.
+const DEFAULT_TEST_TIMEOUT_MS = 120_000;
+const TEST_TIMEOUT = Number.isFinite(Number(process.env.TEST_HARD_CAP_MS)) && Number(process.env.TEST_HARD_CAP_MS) > 0
+    ? Number(process.env.TEST_HARD_CAP_MS)
+    : DEFAULT_TEST_TIMEOUT_MS;
+
+// Stress tests that legitimately need more than the default cap.
+const TEST_TIMEOUT_OVERRIDES = {
+    'test_entity_delete.js':       600_000, // 40-entity stress
+    'test-dynamic-entities.js':    300_000, // 20-entity extreme + sparse delete cycles
+    'test-entity-trash.js':        300_000, // soft-delete + 7-day retention
+    'test_ux_coverage.js':         300_000, // coverage aggregation
+};
 
 /**
  * Clean up test environment before/after tests
@@ -189,15 +206,18 @@ async function runTest(testFile) {
         let output = '';
         let resolved = false;
 
-        // Timeout handler
+        // Per-test hard cap. If a test hangs (e.g. bare fetch() against a slow
+        // Railway instance) kill the child and emit a clear failure line so the
+        // release gate fails in minutes instead of hours.
+        const perTestTimeout = TEST_TIMEOUT_OVERRIDES[testFile] || TEST_TIMEOUT;
         const timeout = setTimeout(() => {
             if (!resolved) {
                 resolved = true;
-                child.kill();
-                console.log(`\n⏱️ TIMEOUT: ${testFile} (${TEST_TIMEOUT / 1000}s)`);
-                resolve({ file: testFile, passed: false, timeout: true });
+                try { child.kill('SIGKILL'); } catch { /* noop */ }
+                console.log(`\n⏱️  TEST TIMED OUT: ${testFile} (exceeded ${perTestTimeout / 1000}s hard cap)`);
+                resolve({ file: testFile, passed: false, timeout: true, timeoutMs: perTestTimeout });
             }
-        }, TEST_TIMEOUT);
+        }, perTestTimeout);
 
         child.stdout.on('data', (data) => {
             const str = data.toString();
@@ -280,7 +300,8 @@ async function main() {
             console.log(`⏭️  SKIP: ${r.file}`);
             skipCount++;
         } else if (r.timeout) {
-            console.log(`⏱️  TIMEOUT: ${r.file}`);
+            const s = r.timeoutMs ? ` (${r.timeoutMs / 1000}s cap)` : '';
+            console.log(`⏱️  TEST TIMED OUT: ${r.file}${s}`);
             failCount++;
         } else if (r.passed) {
             console.log(`✅ PASS: ${r.file}`);

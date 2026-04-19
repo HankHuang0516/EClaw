@@ -19,6 +19,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const { fetchWithTimeout, getDefaultTimeoutMs } = require('./helpers/fetch-with-timeout');
 
 // ── Load .env ────────────────────────────────────────────────
 const envPath = path.resolve(__dirname, '../.env');
@@ -169,23 +170,15 @@ function warn(name, detail = '') {
 }
 
 // ── HTTP Helper ─────────────────────────────────────────────
+// Default 15s here (portal pages), overridable via TEST_FETCH_TIMEOUT_MS.
+const HTTP_TIMEOUT_MS = Math.min(getDefaultTimeoutMs(), 15000);
 async function httpGet(urlPath, opts = {}) {
     const url = `${API_BASE}${urlPath}`;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
-    try {
-        const res = await fetch(url, {
-            method: opts.method || 'GET',
-            headers: opts.headers || {},
-            redirect: opts.redirect || 'follow',
-            signal: controller.signal,
-        });
-        clearTimeout(timeout);
-        return res;
-    } catch (err) {
-        clearTimeout(timeout);
-        throw err;
-    }
+    return fetchWithTimeout(url, {
+        method: opts.method || 'GET',
+        headers: opts.headers || {},
+        redirect: opts.redirect || 'follow',
+    }, { timeoutMs: HTTP_TIMEOUT_MS });
 }
 
 // ── Main ────────────────────────────────────────────────────

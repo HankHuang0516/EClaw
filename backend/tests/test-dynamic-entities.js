@@ -21,12 +21,15 @@
 
 const path = require('path');
 const fs = require('fs');
+const { fetchWithTimeout, getDefaultTimeoutMs, TimeoutError } = require('./helpers/fetch-with-timeout');
 
 const args = process.argv.slice(2);
 const API_BASE = args.includes('--local') ? 'http://localhost:3000' : 'https://eclawbot.com';
 const skipCleanup = args.includes('--skip-cleanup');
 
 const TAG = '[DynamicEntity Test]';
+const FETCH_TIMEOUT_MS = getDefaultTimeoutMs();
+console.log(`${TAG} fetch timeout = ${FETCH_TIMEOUT_MS}ms (override via TEST_FETCH_TIMEOUT_MS)`);
 
 // ── .env loader ─────────────────────────────────────────────
 function loadEnvFile() {
@@ -43,52 +46,82 @@ function loadEnvFile() {
 }
 
 // ── HTTP Helpers ────────────────────────────────────────────
+// All helpers run through fetchWithTimeout() so a stuck Railway / DNS / TCP
+// connect aborts after TEST_FETCH_TIMEOUT_MS instead of hanging the suite.
 async function fetchJSON(url) {
     console.log(`${TAG} GET ${url}`);
-    const res = await fetch(url);
-    let data;
-    try { data = await res.json(); } catch { data = null; }
-    console.log(`${TAG}   -> status=${res.status} body=${JSON.stringify(data).slice(0, 300)}`);
-    return { status: res.status, data };
+    try {
+        const res = await fetchWithTimeout(url);
+        let data;
+        try { data = await res.json(); } catch { data = null; }
+        console.log(`${TAG}   -> status=${res.status} body=${JSON.stringify(data).slice(0, 300)}`);
+        return { status: res.status, data };
+    } catch (err) {
+        if (err instanceof TimeoutError) {
+            console.log(`${TAG}   -> TIMEOUT after ${err.timeoutMs}ms: ${url}`);
+        }
+        throw err;
+    }
 }
 
 async function postJSON(url, body) {
     console.log(`${TAG} POST ${url} body=${JSON.stringify(body).slice(0, 200)}`);
-    const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-    });
-    let data;
-    try { data = await res.json(); } catch { data = null; }
-    console.log(`${TAG}   -> status=${res.status} body=${JSON.stringify(data).slice(0, 300)}`);
-    return { status: res.status, data };
+    try {
+        const res = await fetchWithTimeout(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        let data;
+        try { data = await res.json(); } catch { data = null; }
+        console.log(`${TAG}   -> status=${res.status} body=${JSON.stringify(data).slice(0, 300)}`);
+        return { status: res.status, data };
+    } catch (err) {
+        if (err instanceof TimeoutError) {
+            console.log(`${TAG}   -> TIMEOUT after ${err.timeoutMs}ms: ${url}`);
+        }
+        throw err;
+    }
 }
 
 async function deleteJSON(url, body) {
     console.log(`${TAG} DELETE ${url} body=${JSON.stringify(body).slice(0, 200)}`);
-    const res = await fetch(url, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-    });
-    let data;
-    try { data = await res.json(); } catch { data = null; }
-    console.log(`${TAG}   -> status=${res.status} body=${JSON.stringify(data).slice(0, 300)}`);
-    return { status: res.status, data };
+    try {
+        const res = await fetchWithTimeout(url, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        let data;
+        try { data = await res.json(); } catch { data = null; }
+        console.log(`${TAG}   -> status=${res.status} body=${JSON.stringify(data).slice(0, 300)}`);
+        return { status: res.status, data };
+    } catch (err) {
+        if (err instanceof TimeoutError) {
+            console.log(`${TAG}   -> TIMEOUT after ${err.timeoutMs}ms: ${url}`);
+        }
+        throw err;
+    }
 }
 
 async function putJSON(url, body) {
     console.log(`${TAG} PUT ${url} body=${JSON.stringify(body).slice(0, 200)}`);
-    const res = await fetch(url, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-    });
-    let data;
-    try { data = await res.json(); } catch { data = null; }
-    console.log(`${TAG}   -> status=${res.status} body=${JSON.stringify(data).slice(0, 300)}`);
-    return { status: res.status, data };
+    try {
+        const res = await fetchWithTimeout(url, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        let data;
+        try { data = await res.json(); } catch { data = null; }
+        console.log(`${TAG}   -> status=${res.status} body=${JSON.stringify(data).slice(0, 300)}`);
+        return { status: res.status, data };
+    } catch (err) {
+        if (err instanceof TimeoutError) {
+            console.log(`${TAG}   -> TIMEOUT after ${err.timeoutMs}ms: ${url}`);
+        }
+        throw err;
+    }
 }
 
 // ── Test Result Tracking ────────────────────────────────────
