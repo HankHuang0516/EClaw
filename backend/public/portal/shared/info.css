@@ -691,6 +691,70 @@
     margin: 0 auto 36px;
     line-height: 1.6;
 }
+.qs-hooks-section {
+    max-width: 980px;
+    margin: 0 auto 36px;
+    padding: 0 16px;
+}
+.qs-hooks-title {
+    text-align: center;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+.qs-hooks-subtitle {
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    max-width: 640px;
+    margin: 0 auto 20px;
+    line-height: 1.55;
+}
+.qs-hooks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+}
+.qs-hook-card {
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(79, 195, 247, 0.05));
+    border: 1px solid var(--card-border);
+    border-left: 3px solid var(--primary);
+    border-radius: var(--radius);
+    padding: 22px 20px;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+.qs-hook-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(124, 58, 237, 0.18);
+}
+.qs-hook-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+.qs-hook-card h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text);
+}
+.qs-hook-card p {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 14px;
+    flex: 1;
+}
+.qs-hook-cta {
+    font-size: 0.85rem;
+    color: var(--primary);
+    font-weight: 600;
+}
 .qs-intent-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -895,6 +959,8 @@
     .cmp-cta-buttons { flex-direction: column; }
     .cmp-cta-buttons .btn { width: 100%; justify-content: center; }
     .qs-hero h1 { font-size: 1.6rem; }
+    .qs-hooks-grid { grid-template-columns: 1fr; }
+    .qs-hooks-title { font-size: 1.2rem; }
     .qs-intent-grid { grid-template-columns: 1fr; }
     .qs-steps { grid-template-columns: 1fr; }
     .qs-demo-grid { grid-template-columns: 1fr; }
