@@ -1,3 +1,10 @@
+## [1.1003.10](https://github.com/HankHuang0516/EClaw/compare/v1.1003.9...v1.1003.10) (2026-04-19)
+
+
+### Bug Fixes
+
+* **allocator:** tombstone freed publicCodes — prevent stale-QR re-routing ([#1868](https://github.com/HankHuang0516/EClaw/issues/1868)) ([dd1b6b9](https://github.com/HankHuang0516/EClaw/commit/dd1b6b9c2f5168e03b524426480a9bc7bcb672d7)), closes [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+
 ## [1.1003.9](https://github.com/HankHuang0516/EClaw/compare/v1.1003.8...v1.1003.9) (2026-04-19)
 
 
