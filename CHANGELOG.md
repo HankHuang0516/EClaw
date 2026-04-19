@@ -1,3 +1,10 @@
+# [1.1007.0](https://github.com/HankHuang0516/EClaw/compare/v1.1006.0...v1.1007.0) (2026-04-19)
+
+
+### Features
+
+* **publisher:** append referral CTA footer to long-form publishes ([#1872](https://github.com/HankHuang0516/EClaw/issues/1872)) ([e0a5776](https://github.com/HankHuang0516/EClaw/commit/e0a577697595861586b3a99a2a4efbfc76053114))
+
 # [1.1006.0](https://github.com/HankHuang0516/EClaw/compare/v1.1005.0...v1.1006.0) (2026-04-19)
 
 
