@@ -149,6 +149,68 @@ function rateLimitInfo(platform) {
     return { rateLimit: { maxPerDay: limit.maxPerDay, usedToday: used, remaining: Math.max(0, limit.maxPerDay - used) } };
 }
 
+// ============================================
+// REFERRAL CTA FOOTER — appended to long-form article publishes (slice 4/4)
+// Generic link only (no per-device invite code) since handlers don't always have deviceId context.
+// Caller can opt-out by passing `includeReferralCTA: false` in request body.
+// ============================================
+const REFERRAL_CTA_URL = 'https://eclawbot.com/portal/invite.html';
+const REFERRAL_CTA_COPY = {
+    'zh-TW': {
+        header: '— 喜歡這篇嗎？用我的邀請碼開始 EClaw —',
+        rewards: '邀請人 +500 e幣 / 被邀請 +100 e幣 / 首充 +500 e幣',
+        cta: '👉 開啟邀請頁',
+        disclaimer: '此連結會帶你到官方 EClaw 邀請頁'
+    },
+    en: {
+        header: '— Enjoyed this? Start EClaw with my invite code —',
+        rewards: 'You get +100 e-coins / I get +500 / First top-up +500 bonus',
+        cta: 'Claim your bonus',
+        disclaimer: 'This link goes to the official EClaw invite page'
+    }
+};
+
+function buildReferralCTA({ format = 'md', locale = 'zh-TW', url = REFERRAL_CTA_URL } = {}) {
+    const t = REFERRAL_CTA_COPY[locale] || REFERRAL_CTA_COPY['zh-TW'];
+    if (format === 'md') {
+        return `\n\n---\n\n**${t.header}**\n\n${t.rewards}\n\n[${t.cta}](${url})\n\n_${t.disclaimer}_\n`;
+    }
+    if (format === 'html') {
+        return `\n<hr/>\n<p><strong>${t.header}</strong></p>\n<p>${t.rewards}</p>\n<p><a href="${url}">${t.cta}</a></p>\n<p><em>${t.disclaimer}</em></p>\n`;
+    }
+    if (format === 'npf') {
+        // Tumblr Neue Post Format — return array of blocks to append to content array
+        return [
+            { type: 'text', subtype: 'heading2', text: t.header },
+            { type: 'text', text: t.rewards },
+            { type: 'text', text: t.cta, formatting: [{ type: 'link', start: 0, end: t.cta.length, url }] },
+            { type: 'text', text: t.disclaimer, formatting: [{ type: 'italic', start: 0, end: t.disclaimer.length }] }
+        ];
+    }
+    if (format === 'telegraph-nodes') {
+        // Telegraph Node format — htmlToTelegraphNodes is too naive to parse our CTA HTML,
+        // so emit native node objects directly and concat after content conversion.
+        return [
+            { tag: 'hr' },
+            { tag: 'p', children: [{ tag: 'strong', children: [t.header] }] },
+            { tag: 'p', children: [t.rewards] },
+            { tag: 'p', children: [{ tag: 'a', attrs: { href: url }, children: [t.cta] }] },
+            { tag: 'p', children: [{ tag: 'em', children: [t.disclaimer] }] }
+        ];
+    }
+    throw new Error(`Unknown referral CTA format: ${format}`);
+}
+
+function appendReferralCTA(body, { format = 'md', locale = 'zh-TW', skip = false } = {}) {
+    if (skip) return body;
+    const cta = buildReferralCTA({ format, locale });
+    if (format === 'npf' || format === 'telegraph-nodes') {
+        // body is an array of blocks/nodes; cta is also an array — concat
+        return [...(body || []), ...cta];
+    }
+    return (body || '') + cta;
+}
+
 // Token store: DB-backed with in-memory cache
 let _pool = null;
 const bloggerTokens = new Map(); // in-memory cache: deviceId -> { access_token, refresh_token, expires_at, blog_id, blogs }
@@ -392,7 +454,7 @@ router.get('/blogger/status', (req, res) => {
 // ============================================
 
 router.post('/blogger/publish', express.json(), async (req, res) => {
-    const { deviceId, title, content, labels, blogId, isDraft } = req.body;
+    const { deviceId, title, content, labels, blogId, isDraft, includeReferralCTA } = req.body;
     if (!deviceId || !title || !content) {
         return res.status(400).json({ error: 'deviceId, title, content required' });
     }
@@ -402,6 +464,8 @@ router.post('/blogger/publish', express.json(), async (req, res) => {
         const targetBlogId = blogId || bloggerTokens.get(deviceId)?.blog_id;
         if (!targetBlogId) return res.status(400).json({ error: 'No blog_id. Complete OAuth first.' });
 
+        const finalContent = appendReferralCTA(content, { format: 'html', skip: includeReferralCTA === false });
+
         const url = `https://www.googleapis.com/blogger/v3/blogs/${targetBlogId}/posts` +
             (isDraft ? '?isDraft=true' : '');
         const postRes = await fetch(url, {
@@ -410,7 +474,7 @@ router.post('/blogger/publish', express.json(), async (req, res) => {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ kind: 'blogger#post', title, content, labels: labels || [] })
+            body: JSON.stringify({ kind: 'blogger#post', title, content: finalContent, labels: labels || [] })
         });
         const post = await postRes.json();
         if (post.error) return res.status(postRes.status).json(post);
@@ -478,12 +542,14 @@ router.get('/hashnode/me', async (req, res) => {
 });
 
 router.post('/hashnode/publish', express.json(), async (req, res) => {
-    const { publicationId, title, contentMarkdown, tags, slug } = req.body;
+    const { publicationId, title, contentMarkdown, tags, slug, includeReferralCTA } = req.body;
     if (!publicationId || !title || !contentMarkdown) {
         return res.status(400).json({ error: 'publicationId, title, contentMarkdown required' });
     }
 
     try {
+        const finalMarkdown = appendReferralCTA(contentMarkdown, { format: 'md', locale: 'en', skip: includeReferralCTA === false });
+
         const data = await hashnodeGQL(`
             mutation PublishPost($input: PublishPostInput!) {
                 publishPost(input: $input) {
@@ -494,7 +560,7 @@ router.post('/hashnode/publish', express.json(), async (req, res) => {
             input: {
                 publicationId,
                 title,
-                contentMarkdown,
+                contentMarkdown: finalMarkdown,
                 slug: slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
                 tags: tags ? tags.map(t => typeof t === 'string' ? { slug: t, name: t } : t) : []
             }
@@ -728,11 +794,12 @@ router.get('/devto/me', async (req, res) => {
 // POST /api/publisher/devto/publish
 router.post('/devto/publish', express.json(), async (req, res) => {
     if (!requireDevto(res)) return;
-    const { title, body_markdown, published, tags, series, canonical_url } = req.body;
+    const { title, body_markdown, published, tags, series, canonical_url, includeReferralCTA } = req.body;
     if (!title || !body_markdown) return res.status(400).json({ error: 'title, body_markdown required' });
 
     try {
-        const article = { title, body_markdown, published: published !== false };
+        const finalBody = appendReferralCTA(body_markdown, { format: 'md', locale: 'en', skip: includeReferralCTA === false });
+        const article = { title, body_markdown: finalBody, published: published !== false };
         if (tags) article.tags = tags;
         if (series) article.series = series;
         if (canonical_url) article.canonical_url = canonical_url;
@@ -968,12 +1035,13 @@ router.post('/wordpress/publish', express.json(), async (req, res) => {
     if (!requireWordpress(res)) return;
     const rateLimitMsg = checkPublishRateLimit('wordpress');
     if (rateLimitMsg) return res.status(429).json({ error: rateLimitMsg });
-    const { siteId, title, content, status, categories, tags } = req.body;
+    const { siteId, title, content, status, categories, tags, includeReferralCTA } = req.body;
     if (!title || !content) return res.status(400).json({ error: 'title, content required' });
     if (!WP_USE_APP_PASSWORD && !siteId) return res.status(400).json({ error: 'siteId required for OAuth2 mode' });
 
     try {
-        const postBody = { title, content, status: status || 'publish' };
+        const finalContent = appendReferralCTA(content, { format: 'html', skip: includeReferralCTA === false });
+        const postBody = { title, content: finalContent, status: status || 'publish' };
         if (categories) postBody.categories = categories;
         if (tags) postBody.tags = tags;
 
@@ -1122,15 +1190,19 @@ router.post('/telegraph/account', express.json(), async (req, res) => {
 
 // POST /api/publisher/telegraph/publish
 router.post('/telegraph/publish', express.json(), async (req, res) => {
-    const { title, content, author_name, author_url } = req.body;
+    const { title, content, author_name, author_url, includeReferralCTA } = req.body;
     if (!title || !content) return res.status(400).json({ error: 'title, content required' });
 
     try {
         const token = await ensureTelegraphAccount();
+        const contentNodes = appendReferralCTA(htmlToTelegraphNodes(content), {
+            format: 'telegraph-nodes',
+            skip: includeReferralCTA === false
+        });
         const page = await telegraphRequest('createPage', {
             access_token: token,
             title,
-            content: htmlToTelegraphNodes(content),
+            content: contentNodes,
             author_name: author_name || 'EClaw Platform',
             author_url: author_url || 'https://eclawbot.com',
             return_content: false
@@ -1230,13 +1302,14 @@ router.post('/qiita/publish', express.json(), async (req, res) => {
     if (!requireQiita(res)) return;
     const rateLimitMsg = checkPublishRateLimit('qiita');
     if (rateLimitMsg) return res.status(429).json({ error: rateLimitMsg });
-    const { title, body, tags, private: isPrivate, tweet } = req.body;
+    const { title, body, tags, private: isPrivate, tweet, includeReferralCTA } = req.body;
     if (!title || !body) return res.status(400).json({ error: 'title, body required' });
 
     try {
+        const finalBody = appendReferralCTA(body, { format: 'md', skip: includeReferralCTA === false });
         const item = {
             title,
-            body,
+            body: finalBody,
             private: isPrivate || false,
             tweet: tweet || false,
             tags: (tags || []).map(t => typeof t === 'string' ? { name: t, versions: [] } : t)
@@ -1505,13 +1578,14 @@ router.get('/tumblr/me', async (req, res) => {
 // POST /api/publisher/tumblr/publish
 router.post('/tumblr/publish', express.json(), async (req, res) => {
     if (!requireTumblr(res)) return;
-    const { blogName, title, content, tags, state } = req.body;
+    const { blogName, title, content, tags, state, includeReferralCTA } = req.body;
     if (!blogName || !content) return res.status(400).json({ error: 'blogName, content required' });
 
     try {
         // Use NPF (Neue Post Format)
+        const contentBlocks = [{ type: 'text', text: content, formatting: [] }];
         const postBody = {
-            content: [{ type: 'text', text: content, formatting: [] }],
+            content: appendReferralCTA(contentBlocks, { format: 'npf', skip: includeReferralCTA === false }),
             state: state || 'published',
             tags: tags ? tags.join(',') : ''
         };
@@ -2079,4 +2153,4 @@ router.get('/health', async (req, res) => {
     });
 });
 
-module.exports = { router, initPublisherTable, truncateTweet, X_TWEET_WEIGHTED_LIMIT };
+module.exports = { router, initPublisherTable, truncateTweet, X_TWEET_WEIGHTED_LIMIT, appendReferralCTA, buildReferralCTA, REFERRAL_CTA_URL };
