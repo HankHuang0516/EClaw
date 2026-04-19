@@ -664,10 +664,12 @@ const recentBroadcasts = {}; // deviceId -> [{fromEntityId, text, timestamp}] fo
 // flagged in the allocator audit, card_0256a6c043d20be35b8388d1).
 const _publicCodeStore = {};
 const deletedPublicCodes = new Set();
+let lastTombstoneAddedAt = null;
 const publicCodeIndex = new Proxy(_publicCodeStore, {
     deleteProperty(target, prop) {
         if (typeof prop === 'string' && prop in target) {
             deletedPublicCodes.add(prop);
+            lastTombstoneAddedAt = new Date().toISOString();
         }
         return delete target[prop];
     },
@@ -4007,6 +4009,124 @@ app.get('/api/invite/stats', async (req, res) => {
 
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: Date.now(), build: SERVER_BUILD_TAG, uptime: process.uptime(), startedAt: SERVER_STARTED_AT.toISOString() });
+});
+
+// GET /api/monitoring/rental-health — aggregated rental fleet + DB + publisher status.
+// Auth: either MONITORING_KEY env var via ?key= / X-Monitoring-Key header,
+// OR a valid deviceId+deviceSecret pair (same pattern as /api/logs).
+app.get('/api/monitoring/rental-health', async (req, res) => {
+    const monitoringKey = process.env.MONITORING_KEY;
+    const providedKey = req.query.key || req.headers['x-monitoring-key'];
+    const keyOk = monitoringKey && providedKey && safeEqual(monitoringKey, String(providedKey));
+    if (!keyOk) {
+        const { deviceId, deviceSecret } = req.query;
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({ success: false, error: 'monitoring key or deviceId+deviceSecret required' });
+        }
+        const device = devices[deviceId];
+        if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+            return res.status(401).json({ success: false, error: 'invalid credentials' });
+        }
+    }
+
+    const TOMBSTONE_WARN = 10000;
+    const issues = [];
+    let dbStatus = 'down';
+    let dbLatencyMs = null;
+    let dbCounts = { trashTotal: null, trash24h: null, trashOldestAgeSec: null, listingsActive: null, contractsActive: null };
+
+    try {
+        const t0 = Date.now();
+        await chatPool.query('SELECT 1');
+        dbLatencyMs = Date.now() - t0;
+        dbStatus = 'up';
+        if (dbLatencyMs > 500) issues.push(`db_latency_high:${dbLatencyMs}ms`);
+
+        try {
+            const aggSql = `SELECT
+                (SELECT COUNT(*)::int FROM entity_trash) AS trash_total,
+                (SELECT COUNT(*)::int FROM entity_trash WHERE deleted_at > NOW() - INTERVAL '24 hours') AS trash_24h,
+                (SELECT COALESCE(EXTRACT(EPOCH FROM (NOW() - MIN(deleted_at)))::int, 0) FROM entity_trash) AS trash_oldest_age_sec,
+                (SELECT COUNT(*)::int FROM bot_listings WHERE status = 'listed') AS listings_active,
+                (SELECT COUNT(*)::int FROM rental_contracts WHERE status IN ('reserved', 'active', 'suspended_insufficient_funds')) AS contracts_active`;
+            const aggRes = await chatPool.query(aggSql);
+            const r = aggRes.rows[0] || {};
+            dbCounts = {
+                trashTotal: r.trash_total,
+                trash24h: r.trash_24h,
+                trashOldestAgeSec: r.trash_oldest_age_sec,
+                listingsActive: r.listings_active,
+                contractsActive: r.contracts_active,
+            };
+        } catch (aggErr) {
+            issues.push(`db_aggregate_failed:${aggErr.code || aggErr.message}`);
+        }
+    } catch (pingErr) {
+        issues.push(`db_disconnected:${pingErr.code || pingErr.message}`);
+    }
+
+    const tombstoneSize = deletedPublicCodes.size;
+    if (tombstoneSize > TOMBSTONE_WARN) issues.push(`tombstone_size_high:${tombstoneSize}`);
+    const publicCodeIndexSize = Object.keys(_publicCodeStore).length;
+
+    let platforms = [];
+    try {
+        platforms = articlePublisher.getPlatformsStatus().map(p => ({
+            id: p.id,
+            name: p.name,
+            connected: !!p.configured,
+            lastError: p.error || null,
+            expiresAt: p.expiresAt || null,
+        }));
+    } catch (e) {
+        issues.push(`publisher_status_failed:${e.message}`);
+    }
+    const disconnectedPlatforms = platforms.filter(p => !p.connected);
+    if (disconnectedPlatforms.length === 1) issues.push(`publisher_disconnected:${disconnectedPlatforms[0].id}`);
+    if (disconnectedPlatforms.length > 1) issues.push(`publisher_multi_disconnected:${disconnectedPlatforms.length}`);
+
+    let status = 'green';
+    if (dbStatus === 'down' || disconnectedPlatforms.length > 1) status = 'red';
+    else if (issues.length > 0) status = 'yellow';
+
+    res.json({
+        success: true,
+        timestamp: Date.now(),
+        uptime: {
+            seconds: process.uptime(),
+            startedAt: SERVER_STARTED_AT.toISOString(),
+            currentTime: new Date().toISOString(),
+            build: SERVER_BUILD_TAG,
+        },
+        db: {
+            status: dbStatus,
+            latencyMs: dbLatencyMs,
+            entityTrash: {
+                totalRows: dbCounts.trashTotal,
+                rowsLast24h: dbCounts.trash24h,
+                oldestRowAgeSeconds: dbCounts.trashOldestAgeSec,
+            },
+        },
+        rentalFleet: {
+            listingsActive: dbCounts.listingsActive,
+            contractsActive: dbCounts.contractsActive,
+        },
+        publicCodeTombstone: {
+            size: tombstoneSize,
+            indexSize: publicCodeIndexSize,
+            lastAddedAt: lastTombstoneAddedAt,
+        },
+        recentErrors: {
+            last24hCount: null,
+            note: 'No in-memory error counter; future add — sample from server_logs if needed',
+        },
+        publishers: platforms,
+        thresholds: {
+            status,
+            issues,
+            limits: { dbLatencyMaxMs: 500, tombstoneMaxSize: TOMBSTONE_WARN },
+        },
+    });
 });
 
 
