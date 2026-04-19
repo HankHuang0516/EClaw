@@ -1,3 +1,11 @@
+## [1.1003.7](https://github.com/HankHuang0516/EClaw/compare/v1.1003.6...v1.1003.7) (2026-04-19)
+
+
+### Bug Fixes
+
+* **android:** force orgchart bottom sheet to 90% height ([#1854](https://github.com/HankHuang0516/EClaw/issues/1854)) ([ea12d15](https://github.com/HankHuang0516/EClaw/commit/ea12d1594b33d494fd07474bc110b7dcef83de73))
+* **orgchart:** guard same-parent drops + confirm reset ([#1855](https://github.com/HankHuang0516/EClaw/issues/1855)) ([ce770e5](https://github.com/HankHuang0516/EClaw/commit/ce770e5c60af4be34078897bba8ff2c438153ec4))
+
 ## [1.1003.6](https://github.com/HankHuang0516/EClaw/compare/v1.1003.5...v1.1003.6) (2026-04-18)
 
 
