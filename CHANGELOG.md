@@ -1,3 +1,10 @@
+## [1.1015.2](https://github.com/HankHuang0516/EClaw/compare/v1.1015.1...v1.1015.2) (2026-04-19)
+
+
+### Bug Fixes
+
+* **chat+docs:** spec-compliant rendering for kanban_notify/form_submission + CLAUDE.md refresh ([#1883](https://github.com/HankHuang0516/EClaw/issues/1883)) ([c2a538f](https://github.com/HankHuang0516/EClaw/commit/c2a538f9f3c334f4d2940561ba399cc200b661c9))
+
 ## [1.1015.1](https://github.com/HankHuang0516/EClaw/compare/v1.1015.0...v1.1015.1) (2026-04-19)
 
 
