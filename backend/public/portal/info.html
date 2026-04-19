@@ -146,6 +146,7 @@
                         <button class="guide-sub-btn" data-guide="usecase-gatekeeper" data-i18n="guide_nav_usecase_gatekeeper">安全守門員</button>
                         <button class="guide-sub-btn" data-guide="usecase-multiplatform" data-i18n="guide_nav_usecase_multiplatform">多平台同步</button>
                         <button class="guide-sub-btn" data-guide="usecase-minigame" data-i18n="guide_nav_usecase_minigame">🎮 遊戲工廠</button>
+                        <button class="guide-sub-btn" data-guide="usecase-bridge" data-i18n="guide_nav_usecase_bridge">🌉 終端橋接組合技</button>
                     </div>
                     <button class="guide-sidebar-btn" data-guide="arena-intro" data-i18n="guide_nav_arena">&#x1F3DF; Interview Arena</button>
                 </div>
@@ -2434,6 +2435,102 @@ graph LR
                             <h3 data-i18n="guide_mg_cta_title">立即體驗</h3>
                             <p class="cta-item"><a href="https://minigame.eclawbot.com/" target="_blank" rel="noopener" data-i18n="guide_mg_cta_play">🕹️ 前往遊戲平台 →</a></p>
                             <p class="cta-item" data-i18n="[html]guide_mg_cta_kanban">想打造自己的 AI 工廠？<a href="#guide/usecase-kanban">了解 Kanban 多 Agent 協作 →</a></p>
+                        </div>
+                    </div>
+
+                    <!-- ── 終端橋接 + 橋接授權 組合技 ── -->
+                    <div class="guide-panel" id="guide-usecase-bridge">
+                        <header>
+                            <h1 data-i18n="guide_bridge_title">🌉 終端橋接 + 橋接授權 — Claude Code 多 session 自動化</h1>
+                            <p class="meta" data-i18n="guide_bridge_meta">讓一個 main Claude Code 指揮多個 sub-Claude，在各自的 terminal 跑平行任務；sub 的 MCP 授權由 main 自動按鍵完成，全流程無人介入。</p>
+                        </header>
+
+                        <h2 data-i18n="guide_bridge_h2_what">什麼是這個組合技？</h2>
+                        <p data-i18n="guide_bridge_p_what">兩個機制合起來，讓 Claude Code 能夠「一人指揮多人」：</p>
+                        <table class="feature-table">
+                            <thead><tr><th data-i18n="guide_bridge_th_name">機制</th><th data-i18n="guide_bridge_th_desc">做什麼</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>🪟 終端橋接<br>Terminal Bridge</strong></td>
+                                    <td data-i18n="[html]guide_bridge_td_terminal">main Claude 透過 <code>osascript do script in window id</code> 把指令送進另一個 Terminal.app 視窗，再用 <code>get contents of selected tab</code> 把輸出讀回來。不需要 broker、不搶焦點。</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>🔑 橋接授權<br>Bridge-Auth</strong></td>
+                                    <td data-i18n="[html]guide_bridge_td_auth">sub-Claude 遇到 MCP elicitation（「允許存取？」對話框）時，TTY 被彈窗鎖住無法自回答。main 透過 <code>osascript</code> 發送 key codes（124/125/36/36 = 右/左/Enter/Enter）替 sub 選「Allow all」。</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_bridge_h2_why">為什麼需要這個組合？</h2>
+                        <p data-i18n="guide_bridge_p_why">長時間 E2E 自動化的兩個經典卡點：</p>
+                        <ul class="tips-list">
+                            <li data-i18n="[html]guide_bridge_li_why1">❌ 傳統 <code>claude -p</code> 無頭模式遇到 MCP elicitation 會卡死，因為彈窗需要人工同意</li>
+                            <li data-i18n="guide_bridge_li_why2">❌ 開新 Claude Code session 做平行 drill，每次都要人工按「Allow」授權 MCP 工具</li>
+                            <li data-i18n="guide_bridge_li_why3">✅ 組合技解法：main 透過 Terminal Bridge 監控 sub 畫面，偵測到 elicitation 就用 key code 自動授權 → sub 拿到 allowAll 繼續跑，全程無人介入</li>
+                        </ul>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_bridge_h2_flow">執行流程</h2>
+                        <div class="arch-mermaid"><pre class="mermaid">
+sequenceDiagram
+    participant User
+    participant Main as Main Claude
+    participant Sub as Sub Claude
+    participant MCP
+    User->>Main: 交辦 E2E 任務
+    Main->>Sub: unit.py dispatch (自然語言 prompt)
+    Sub->>MCP: 呼叫 screenshot / click
+    MCP-->>Sub: 需要授權 (elicitation)
+    Note over Sub: TTY 被彈窗鎖住
+    Main->>Main: eye 螢幕全覽偵測彈窗
+    Main->>Sub: osascript 送 124/125/36/36
+    Sub->>MCP: Allow all
+    MCP-->>Sub: 截圖 / 點擊成功
+    Sub->>Main: 回報結果 / 發現 bug
+    Main->>User: 驗證完成 + PR 連結
+                        </pre></div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_bridge_h2_case">實戰案例：Android org chart E2E（2026-04-18）</h2>
+                        <p data-i18n="guide_bridge_p_case">當天就是透過這組合技發現並修好一個 Android 原生 bug：</p>
+                        <ol style="line-height:2">
+                            <li data-i18n="guide_bridge_case_li1">main Claude 派 sub（U12）去 Android emulator 跑 org-chart drag / reset drill</li>
+                            <li data-i18n="guide_bridge_case_li2">sub 用 computer MCP 截圖時觸發 elicitation，TTY 被鎖</li>
+                            <li data-i18n="[html]guide_bridge_case_li3">main 用 <code>eye</code>（macOS 螢幕全覽工具）看到彈窗 → osascript 自動按「Allow all」</li>
+                            <li data-i18n="guide_bridge_case_li4">sub 拿到 allowAll → 繼續 drill → 發現 BottomSheet 只展開 ~20% 的 bug</li>
+                            <li data-i18n="[html]guide_bridge_case_li5">main 分析 <code>OrgChartBottomSheetFragment</code> → 定位到 BottomSheetDialog 把 <code>match_parent</code> 測為 <code>wrap_content</code> 的特性</li>
+                            <li data-i18n="guide_bridge_case_li6">修復 (PR #1854) → 再派 sub 驗證 → 確認展開到 90% → 閉環完成</li>
+                        </ol>
+                        <div class="note" data-i18n="guide_bridge_note_loop">人類只下了一次指令。整個「發現 → 修復 → 驗證 → 合併」閉環都由 main + sub 自動完成。</div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_bridge_h2_prereq">前置準備</h2>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_bridge_pre_li1">✅ macOS（需要 Terminal.app + osascript）</li>
+                            <li data-i18n="guide_bridge_pre_li2">✅ Claude Code CLI（main 和 sub 都需要）</li>
+                            <li data-i18n="guide_bridge_pre_li3">✅ 已安裝的 MCP 工具（例如 computer MCP、playwright MCP）</li>
+                            <li data-i18n="guide_bridge_pre_li4">✅ System Settings → Privacy → Accessibility 已授權 Terminal.app 發送按鍵</li>
+                        </ul>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_bridge_h2_limit">適用場景 & 限制</h2>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_bridge_lim_li1">✅ 適合：長時間 E2E drill、多平台平行測試、涉及 MCP 授權的自動化</li>
+                            <li data-i18n="guide_bridge_lim_li2">✅ 適合：main Claude 需要「隨時接手」的場景（eye 工具讓 main 看得到 sub 的畫面）</li>
+                            <li data-i18n="guide_bridge_lim_li3">⚠️ 目前僅支援 macOS；Linux / Windows 需要替換底層 AppleScript 呼叫</li>
+                            <li data-i18n="guide_bridge_lim_li4">⚠️ key code 授權只處理「Allow all」類的 elicitation；需要輸入資料的授權仍需人工</li>
+                        </ul>
+
+                        <div class="cta-links">
+                            <h3 data-i18n="guide_bridge_cta_title">相關資源</h3>
+                            <p class="cta-item" data-i18n="[html]guide_bridge_cta_claude">Claude Code CLI：<a href="https://docs.anthropic.com/en/docs/claude-code" target="_blank" rel="noopener">官方文件</a></p>
+                            <p class="cta-item" data-i18n="[html]guide_bridge_cta_info">搭配「用 Claude 指揮 OpenClaw」：<a href="#guide/usecase-claude-openclaw">查看教學</a></p>
                         </div>
                     </div>
 
