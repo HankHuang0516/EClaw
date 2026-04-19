@@ -3042,7 +3042,9 @@
                     if (dropTarget) {
                         const targetId = dropTarget.dataset.nodeId;
                         const tId = targetId === 'USER' ? 'USER' : Number(targetId);
-                        if (!isDescendant(orgChartData.hierarchy, touchDragId, tId)) {
+                        const curParent = getCurrentParent(orgChartData.hierarchy, touchDragId);
+                        const tgtKey = tId === 'USER' ? 'USER' : String(tId);
+                        if (!isDescendant(orgChartData.hierarchy, touchDragId, tId) && curParent !== tgtKey) {
                             moveInHierarchy(touchDragId, tId);
                             renderOrgTree();
                             scheduleOrgSave();
@@ -3112,6 +3114,11 @@
                 if (draggedIdStr === 'USER') return;
                 // Can't create circular reference (dropping parent onto its own descendant)
                 if (isDescendant(orgChartData.hierarchy, draggedId, dropTargetId)) return;
+                // No-op if target is already the direct parent (prevents churn + the
+                // transient multi-parent state that renders a "dangling" child node)
+                const currentParentKey = getCurrentParent(orgChartData.hierarchy, draggedId);
+                const targetParentKey = dropTargetId === 'USER' ? 'USER' : String(dropTargetId);
+                if (currentParentKey === targetParentKey) return;
 
                 // Record old position for FLIP animation
                 const draggedNode = document.querySelector(`.org-node[data-node-id="${draggedId}"]`);
@@ -3159,6 +3166,14 @@
                 if (isDescendant(hierarchy, c, checkId)) return true;
             }
             return false;
+        }
+
+        function getCurrentParent(hierarchy, entityId) {
+            const id = Number(entityId);
+            for (const [key, children] of Object.entries(hierarchy)) {
+                if (Array.isArray(children) && children.includes(id)) return key;
+            }
+            return null;
         }
 
         function moveInHierarchy(entityId, newParentId) {
@@ -3249,6 +3264,10 @@
         }
 
         async function resetOrgChart() {
+            const confirmMsg = (typeof i18n !== 'undefined' && i18n.t)
+                ? i18n.t('org_reset_confirm')
+                : 'Reset organization chart to default? All hierarchy relationships will be flattened.';
+            if (!await showConfirm({ message: confirmMsg, danger: true })) return;
             const validIds = entities.filter(e => e.isBound).map(e => e.entityId).sort((a, b) => a - b);
             orgChartData.hierarchy = { USER: validIds };
             renderOrgTree();
