@@ -1838,6 +1838,7 @@ if (process.env.NODE_ENV !== 'test') {
                 const result = await rentalModule.reconcileRentalEntities(devices, {
                     generateBotSecret, generatePublicCode, publicCodeIndex,
                     ensureOneEmptySlot, getOrCreateDevice, saveDeviceData: db.saveDeviceData,
+                    saveToEntityTrash,
                 });
                 console.log(`[Rental] Reconciliation done: reconciled=${result.reconciled} errors=${result.errors.length}`);
                 if (result.errors.length > 0) {
@@ -13152,7 +13153,7 @@ missionModule.setPushToBot(pushToBot);
 
 // Wire pushToBot + devices into rental module for interview probe dispatch
 if (typeof rentalModule.setInterviewDeps === 'function') {
-    rentalModule.setInterviewDeps({ pushToBot, devices, arenaModule, setInterviewCapabilities, generateBotSecret, generatePublicCode, publicCodeIndex, ensureOneEmptySlot, getOrCreateDevice, saveDeviceData: db.saveDeviceData, get pushToChannelCallback() { return channelModule?.pushToChannelCallback?.bind(channelModule); } });
+    rentalModule.setInterviewDeps({ pushToBot, devices, arenaModule, setInterviewCapabilities, generateBotSecret, generatePublicCode, publicCodeIndex, ensureOneEmptySlot, getOrCreateDevice, saveDeviceData: db.saveDeviceData, saveToEntityTrash, get pushToChannelCallback() { return channelModule?.pushToChannelCallback?.bind(channelModule); } });
 }
 
 // NOTE: reconcileRentalEntities now runs inside the initRentalDatabase

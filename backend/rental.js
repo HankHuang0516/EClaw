@@ -954,13 +954,19 @@ function markOwnerEntityLeasedOut(devices, { ownerDeviceId, ownerEntityId, contr
 /**
  * Remove a rental entity from the renter's device (contract end).
  */
-function removeRentalEntity(devices, { renterDeviceId, contractId }, helpers) {
+async function removeRentalEntity(devices, { renterDeviceId, contractId }, helpers) {
     const device = devices[renterDeviceId];
     if (!device) return;
 
     for (const [slotId, entity] of Object.entries(device.entities)) {
         if (entity.rental_contract_id === contractId) {
-            // Clean up publicCode from global index before deleting
+            // Persist to entity_trash BEFORE tombstoning publicCode so that
+            // loadTombstonesFromTrash() can reseed the tombstone on restart.
+            if (helpers?.saveToEntityTrash) {
+                try { await helpers.saveToEntityTrash(renterDeviceId, parseInt(slotId), entity); }
+                catch (_) { /* best-effort, continue */ }
+            }
+            // Clean up publicCode from global index (fires tombstone trap)
             if (entity.publicCode && helpers?.publicCodeIndex) {
                 delete helpers.publicCodeIndex[entity.publicCode];
             }
@@ -1042,6 +1048,10 @@ async function reconcileRentalEntities(devices, helpers) {
                 if (isOwnerSlot) continue;
 
                 if (!status || !ACTIVE.includes(status)) {
+                    if (helpers?.saveToEntityTrash) {
+                        try { await helpers.saveToEntityTrash(deviceId, parseInt(slotId), entity); }
+                        catch (_) { /* best-effort */ }
+                    }
                     if (entity.publicCode && helpers?.publicCodeIndex) delete helpers.publicCodeIndex[entity.publicCode];
                     delete device.entities[slotId];
                     result.reconciled++;
@@ -1070,6 +1080,10 @@ async function reconcileRentalEntities(devices, helpers) {
                 if (!entity.isBound || entity.rental_contract_id || entity.rental_status) continue;
                 const name = entity.name || entity.character || '';
                 if (!allTitles.has(name) || activeTitles.has(name)) continue;
+                if (helpers?.saveToEntityTrash) {
+                    try { await helpers.saveToEntityTrash(deviceId, parseInt(slotId), entity); }
+                    catch (_) { /* best-effort */ }
+                }
                 if (entity.publicCode && helpers?.publicCodeIndex) delete helpers.publicCodeIndex[entity.publicCode];
                 delete device.entities[slotId];
                 result.reconciled++;
@@ -1377,11 +1391,12 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
             );
             if (cRow.rowCount === 0) return;
             const info = cRow.rows[0];
-            removeRentalEntity(_interviewDeps.devices, {
+            await removeRentalEntity(_interviewDeps.devices, {
                 renterDeviceId: info.renter_device_id,
                 contractId,
             }, {
                 publicCodeIndex: _interviewDeps.publicCodeIndex,
+                saveToEntityTrash: _interviewDeps.saveToEntityTrash,
             });
             clearOwnerEntityLeasedOut(_interviewDeps.devices, {
                 ownerDeviceId: info.owner_device_id,
@@ -1537,6 +1552,10 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
                 entity.webhook?.url?.startsWith('__rental_proxy__') || allTitles.has(name);
             if (!isRental) continue;
             if (activeTitles.has(name)) { kept.push({ slot: slotId, name, reason: 'active_contract' }); continue; }
+            if (_interviewDeps.saveToEntityTrash) {
+                try { await _interviewDeps.saveToEntityTrash(deviceId, parseInt(slotId), entity); }
+                catch (_) { /* best-effort */ }
+            }
             if (entity.publicCode && _interviewDeps.publicCodeIndex) delete _interviewDeps.publicCodeIndex[entity.publicCode];
             delete dev.entities[slotId];
             removed.push({ slot: slotId, name });
