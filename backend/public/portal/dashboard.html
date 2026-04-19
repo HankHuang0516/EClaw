@@ -1162,14 +1162,18 @@
         .org-tree {
             display: flex;
             flex-direction: column;
-            align-items: center;
+            /* safe center: keeps tree centered when it fits, falls back to flex-start
+               on overflow so overflowing content stays reachable via horizontal scroll
+               (plain `center` makes the left side unreachable). */
+            align-items: safe center;
             gap: 0;
             padding: 20px;
             overflow-x: auto;
+            overflow-y: visible;
         }
         .org-level {
             display: flex;
-            justify-content: center;
+            justify-content: safe center;
             gap: 32px;
             position: relative;
         }
@@ -2887,6 +2891,11 @@
             }
             orgChartLoaded = true;
             renderOrgChart();
+            // Snapshot on first load if no default persisted. Uses the rendered
+            // hierarchy (which is already backfilled with bound entities in renderOrgChart).
+            if (!loadOrgChartDefault() && orgChartData.hierarchy && orgChartData.hierarchy.USER) {
+                persistOrgChartDefault(orgChartData.hierarchy);
+            }
         }
 
         function renderOrgChart() {
@@ -3034,23 +3043,17 @@
                         target.classList.add('org-drop-target');
                     }
                 }, { passive: true });
-                node.addEventListener('touchend', (e) => {
+                node.addEventListener('touchend', async () => {
                     if (touchDragId == null) return;
                     node.classList.remove('dragging');
                     const dropTarget = document.querySelector('.org-drop-target');
                     document.querySelectorAll('.org-drop-target').forEach(n => n.classList.remove('org-drop-target'));
-                    if (dropTarget) {
-                        const targetId = dropTarget.dataset.nodeId;
-                        const tId = targetId === 'USER' ? 'USER' : Number(targetId);
-                        const curParent = getCurrentParent(orgChartData.hierarchy, touchDragId);
-                        const tgtKey = tId === 'USER' ? 'USER' : String(tId);
-                        if (!isDescendant(orgChartData.hierarchy, touchDragId, tId) && curParent !== tgtKey) {
-                            moveInHierarchy(touchDragId, tId);
-                            renderOrgTree();
-                            scheduleOrgSave();
-                        }
-                    }
+                    const draggedTouchId = touchDragId;
                     touchDragId = null;
+                    if (!dropTarget) return;
+                    const targetId = dropTarget.dataset.nodeId;
+                    const tId = targetId === 'USER' ? 'USER' : Number(targetId);
+                    await attemptReparent(draggedTouchId, tId);
                 });
 
                 nodeEls[String(entityId)] = node;
@@ -3101,60 +3104,14 @@
             node.addEventListener('dragleave', () => {
                 node.classList.remove('org-drop-target');
             });
-            node.addEventListener('drop', (e) => {
+            node.addEventListener('drop', async (e) => {
                 e.preventDefault();
                 node.classList.remove('org-drop-target');
                 const draggedIdStr = e.dataTransfer.getData('text/plain');
-                const draggedId = Number(draggedIdStr);
-                const dropTargetId = targetId;
-
-                // Can't drop on self
-                if (String(draggedId) === String(dropTargetId)) return;
-                // Can't make USER a child
+                // Can't make USER a child — reject before coercion
                 if (draggedIdStr === 'USER') return;
-                // Can't create circular reference (dropping parent onto its own descendant)
-                if (isDescendant(orgChartData.hierarchy, draggedId, dropTargetId)) return;
-                // No-op if target is already the direct parent (prevents churn + the
-                // transient multi-parent state that renders a "dangling" child node)
-                const currentParentKey = getCurrentParent(orgChartData.hierarchy, draggedId);
-                const targetParentKey = dropTargetId === 'USER' ? 'USER' : String(dropTargetId);
-                if (currentParentKey === targetParentKey) return;
-
-                // Record old position for FLIP animation
-                const draggedNode = document.querySelector(`.org-node[data-node-id="${draggedId}"]`);
-                const oldRect = draggedNode ? draggedNode.getBoundingClientRect() : null;
-
-                // Move in hierarchy: remove from old parent, add under new parent
-                moveInHierarchy(draggedId, dropTargetId);
-
-                // Re-render
-                renderOrgTree();
-
-                // FLIP animation + redraw connectors after transition
-                if (oldRect) {
-                    const newNode = document.querySelector(`.org-node[data-node-id="${draggedId}"]`);
-                    if (newNode) {
-                        const newRect = newNode.getBoundingClientRect();
-                        const dx = oldRect.left - newRect.left;
-                        const dy = oldRect.top - newRect.top;
-                        newNode.style.transition = 'none';
-                        newNode.style.transform = `translate(${dx}px, ${dy}px)`;
-                        newNode.offsetHeight; // force reflow for FLIP
-                        newNode.style.transition = 'transform 0.5s ease';
-                        newNode.style.transform = 'translate(0, 0)';
-                        // Redraw connectors after FLIP animation completes
-                        newNode.addEventListener('transitionend', function onEnd() {
-                            newNode.removeEventListener('transitionend', onEnd);
-                            const tree = document.getElementById('orgTree');
-                            const nodeEls = {};
-                            tree.querySelectorAll('.org-node').forEach(n => { nodeEls[n.dataset.nodeId] = n; });
-                            drawConnectors(tree, nodeEls);
-                        });
-                    }
-                }
-
-                // Auto-save (debounce)
-                scheduleOrgSave();
+                const draggedId = Number(draggedIdStr);
+                await attemptReparent(draggedId, targetId, { animate: true });
             });
         }
 
@@ -3195,6 +3152,94 @@
             h[parentKey].push(Number(entityId));
         }
 
+        // Peer-onto-peer drags silently reparented before #1855+ follow-up; now every
+        // cross-parent drop asks for explicit confirmation before mutating the tree.
+        async function attemptReparent(draggedId, dropTargetId, opts) {
+            if (draggedId == null) return false;
+            // Can't drop on self
+            if (String(draggedId) === String(dropTargetId)) return false;
+            // Can't create circular reference (dropping parent onto its own descendant)
+            if (isDescendant(orgChartData.hierarchy, draggedId, dropTargetId)) return false;
+            // No-op if target is already the direct parent
+            const currentParentKey = getCurrentParent(orgChartData.hierarchy, draggedId);
+            const targetParentKey = dropTargetId === 'USER' ? 'USER' : String(dropTargetId);
+            if (currentParentKey === targetParentKey) return false;
+
+            const t = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t.bind(i18n) : (k, fb) => fb || k;
+            // Fall back to "#<id>" if entity was unbound between render and drop,
+            // otherwise .replace stringifies `undefined` literally.
+            const draggedName = getEntityDisplayName(Number(draggedId)) || ('#' + draggedId);
+            const targetName = dropTargetId === 'USER'
+                ? t('org_user_node', 'You (Owner)')
+                : (getEntityDisplayName(Number(dropTargetId)) || ('#' + dropTargetId));
+            const message = t('org_reparent_confirm', 'Make {child} a child of {parent}?')
+                .replace('{child}', draggedName)
+                .replace('{parent}', targetName);
+            const ok = await showConfirm({ message });
+            if (!ok) return false;
+
+            const draggedNode = opts && opts.animate
+                ? document.querySelector(`.org-node[data-node-id="${draggedId}"]`)
+                : null;
+            const oldRect = draggedNode ? draggedNode.getBoundingClientRect() : null;
+
+            moveInHierarchy(draggedId, dropTargetId);
+            renderOrgTree();
+
+            if (oldRect) {
+                const newNode = document.querySelector(`.org-node[data-node-id="${draggedId}"]`);
+                if (newNode) {
+                    const newRect = newNode.getBoundingClientRect();
+                    const dx = oldRect.left - newRect.left;
+                    const dy = oldRect.top - newRect.top;
+                    newNode.style.transition = 'none';
+                    newNode.style.transform = `translate(${dx}px, ${dy}px)`;
+                    newNode.offsetHeight; // force reflow for FLIP
+                    newNode.style.transition = 'transform 0.5s ease';
+                    newNode.style.transform = 'translate(0, 0)';
+                    newNode.addEventListener('transitionend', function onEnd() {
+                        newNode.removeEventListener('transitionend', onEnd);
+                        const tree = document.getElementById('orgTree');
+                        const nodeEls = {};
+                        tree.querySelectorAll('.org-node').forEach(n => { nodeEls[n.dataset.nodeId] = n; });
+                        drawConnectors(tree, nodeEls);
+                    });
+                }
+            }
+
+            scheduleOrgSave();
+            return true;
+        }
+
+        // ── Default hierarchy snapshot (for Reset to Default) ──
+        // Persisted per-device in localStorage so Reset restores the user's original
+        // tree instead of flattening it. Captured on first org-chart load; can be
+        // re-captured explicitly via saveOrgChartDefault().
+        function orgChartDefaultKey() {
+            // Without a deviceId we can't scope the snapshot — return null so callers
+            // skip rather than write to a shared "orgChart_default_" key that every
+            // user would stomp on.
+            const did = (typeof currentUser !== 'undefined' && currentUser && currentUser.deviceId) || '';
+            return did ? ('orgChart_default_' + did) : null;
+        }
+        function loadOrgChartDefault() {
+            try {
+                const key = orgChartDefaultKey();
+                if (!key) return null;
+                const raw = localStorage.getItem(key);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                return (parsed && typeof parsed === 'object' && Array.isArray(parsed.USER)) ? parsed : null;
+            } catch (_) { return null; }
+        }
+        function persistOrgChartDefault(hierarchy) {
+            try {
+                const key = orgChartDefaultKey();
+                if (!key) return;
+                localStorage.setItem(key, JSON.stringify(hierarchy));
+            } catch (_) { /* quota / private-mode — snapshot is best-effort */ }
+        }
+
         function drawConnectors(tree, nodeEls) {
             // Remove old SVG
             const oldSvg = tree.querySelector('.org-connectors');
@@ -3203,25 +3248,31 @@
             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svg.classList.add('org-connectors');
             const treeRect = tree.getBoundingClientRect();
-            svg.setAttribute('width', treeRect.width);
-            svg.setAttribute('height', treeRect.height);
-            svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;';
+            // When the tree overflows horizontally, pin SVG to the scroll width so
+            // connectors still reach nodes outside the visible viewport.
+            const svgWidth = Math.max(tree.scrollWidth, treeRect.width);
+            const svgHeight = Math.max(tree.scrollHeight, treeRect.height);
+            svg.setAttribute('width', svgWidth);
+            svg.setAttribute('height', svgHeight);
+            svg.style.cssText = 'position:absolute;top:0;left:0;width:' + svgWidth + 'px;height:' + svgHeight + 'px;pointer-events:none;';
 
             const hierarchy = orgChartData.hierarchy;
+            const scrollLeft = tree.scrollLeft || 0;
+            const scrollTop = tree.scrollTop || 0;
             for (const [parentKey, children] of Object.entries(hierarchy)) {
                 if (!Array.isArray(children)) continue;
                 const parentEl = nodeEls[parentKey];
                 if (!parentEl) continue;
                 const pRect = parentEl.getBoundingClientRect();
-                const px = pRect.left + pRect.width / 2 - treeRect.left;
-                const py = pRect.bottom - treeRect.top;
+                const px = pRect.left + pRect.width / 2 - treeRect.left + scrollLeft;
+                const py = pRect.bottom - treeRect.top + scrollTop;
 
                 for (const childId of children) {
                     const childEl = nodeEls[String(childId)];
                     if (!childEl) continue;
                     const cRect = childEl.getBoundingClientRect();
-                    const cx = cRect.left + cRect.width / 2 - treeRect.left;
-                    const cy = cRect.top - treeRect.top;
+                    const cx = cRect.left + cRect.width / 2 - treeRect.left + scrollLeft;
+                    const cy = cRect.top - treeRect.top + scrollTop;
 
                     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                     line.setAttribute('x1', px);
@@ -3264,12 +3315,29 @@
         }
 
         async function resetOrgChart() {
-            const confirmMsg = (typeof i18n !== 'undefined' && i18n.t)
-                ? i18n.t('org_reset_confirm')
-                : 'Reset organization chart to default? All hierarchy relationships will be flattened.';
-            if (!await showConfirm({ message: confirmMsg, danger: true })) return;
-            const validIds = entities.filter(e => e.isBound).map(e => e.entityId).sort((a, b) => a - b);
-            orgChartData.hierarchy = { USER: validIds };
+            const t = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t.bind(i18n) : (k, fb) => fb || k;
+            if (!await showConfirm({ message: t('org_reset_confirm', 'Reset organization chart to saved default?'), danger: true })) return;
+            const validIds = entities.filter(e => e.isBound).map(e => e.entityId);
+            const validSet = new Set(validIds);
+            const saved = loadOrgChartDefault();
+            let restored = null;
+            if (saved) {
+                // Clone snapshot but prune IDs that are no longer bound; re-home orphans under USER.
+                restored = {};
+                const seen = new Set();
+                for (const [k, v] of Object.entries(saved)) {
+                    if (!Array.isArray(v)) continue;
+                    if (k !== 'USER' && !validSet.has(Number(k))) continue;
+                    const filtered = v.filter(c => validSet.has(Number(c)) && !seen.has(Number(c)));
+                    filtered.forEach(c => seen.add(Number(c)));
+                    if (filtered.length > 0 || k === 'USER') restored[k] = filtered;
+                }
+                if (!Array.isArray(restored.USER)) restored.USER = [];
+                for (const eid of validIds) {
+                    if (!seen.has(eid)) restored.USER.push(eid);
+                }
+            }
+            orgChartData.hierarchy = restored || { USER: validIds.slice().sort((a, b) => a - b) };
             renderOrgTree();
             scheduleOrgSave();
         }
