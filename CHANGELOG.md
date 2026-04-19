@@ -1,3 +1,10 @@
+## [1.1015.1](https://github.com/HankHuang0516/EClaw/compare/v1.1015.0...v1.1015.1) (2026-04-19)
+
+
+### Bug Fixes
+
+* **wallet:** ack sweep skips terminal failed rows ([#1882](https://github.com/HankHuang0516/EClaw/issues/1882)) ([5ffa970](https://github.com/HankHuang0516/EClaw/commit/5ffa970b514fa04d6b042e5ebac3f2a2c04e338c)), closes [#1881](https://github.com/HankHuang0516/EClaw/issues/1881)
+
 # [1.1015.0](https://github.com/HankHuang0516/EClaw/compare/v1.1014.1...v1.1015.0) (2026-04-19)
 
 
