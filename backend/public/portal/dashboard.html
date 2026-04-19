@@ -384,6 +384,71 @@
             color: var(--warning);
         }
 
+        /* Invite friends banner (viral loop entry) */
+        .invite-banner {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #6c63ff 0%, #5046e5 100%);
+            border-radius: var(--radius-md, 12px);
+            color: #fff;
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(108, 99, 255, 0.25);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .invite-banner:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(108, 99, 255, 0.35);
+        }
+        .invite-banner-icon {
+            font-size: 28px;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+        .invite-banner-text {
+            flex: 1;
+            min-width: 0;
+        }
+        .invite-banner-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 2px;
+            line-height: 1.3;
+        }
+        .invite-banner-subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+            line-height: 1.3;
+        }
+        .invite-banner-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.18);
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: background 0.15s;
+        }
+        .invite-banner:hover .invite-banner-cta {
+            background: rgba(255, 255, 255, 0.28);
+        }
+        @media (max-width: 480px) {
+            .invite-banner {
+                padding: 12px 14px;
+                gap: 10px;
+            }
+            .invite-banner-icon { font-size: 22px; }
+            .invite-banner-title { font-size: 13px; }
+            .invite-banner-subtitle { font-size: 11px; }
+            .invite-banner-cta { padding: 5px 10px; font-size: 11px; }
+        }
+
         /* EClaw Channel promotion */
         .channel-promo {
             margin-top: 14px;
@@ -1420,6 +1485,19 @@
                 </div>
             </div>
         </div>
+
+        <!-- Invite Friends Banner (viral loop entry) -->
+        <a class="invite-banner" href="/portal/invite.html" id="inviteBanner">
+            <span class="invite-banner-icon" aria-hidden="true">🎁</span>
+            <div class="invite-banner-text">
+                <div class="invite-banner-title" data-i18n="dash_invite_title">Invite friends, earn 500 e-coin per signup</div>
+                <div class="invite-banner-subtitle" data-i18n="dash_invite_subtitle">Your friend gets 100 e-coin too. Share your code now.</div>
+            </div>
+            <span class="invite-banner-cta">
+                <span data-i18n="dash_invite_cta">View my code</span>
+                <span aria-hidden="true">→</span>
+            </span>
+        </a>
 
         <!-- Add Entity Section -->
         <div class="card" id="addEntityCard">
